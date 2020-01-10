@@ -224,12 +224,12 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             hcargs = [hcprops, hc_e2ds_file, fiber, combine, rawhcfiles,
                       qc_params, iwprops, wprops]
-            hcwavefile = wave.hc_write_wavesolution(params, recipe, *hcargs)
+            hcwavefile = wave.hc_write_wavesol_master(params, recipe, *hcargs)
             # --------------------------------------------------------------
             # write resolution and line profiles to file
             # --------------------------------------------------------------
             hcargs = [hcprops, hc_e2ds_file, hcwavefile, fiber]
-            wave.hc_write_resmap(params, recipe, *hcargs)
+            wave.hc_write_resmap_master(params, recipe, *hcargs)
 
             # --------------------------------------------------------------
             # Update calibDB with HC solution
@@ -285,20 +285,20 @@ def __main__(recipe, params):
                 # ----------------------------------------------------------
                 # write FP wavelength solution to file
                 # ----------------------------------------------------------
-                fpargs = [fpprops, hc_e2ds_file, fp_e2ds_file, fiber, combine,
-                          rawhcfiles, rawfpfiles,  qc_params, wprops,
+                fpargs = [recipe, fpprops, hc_e2ds_file, fp_e2ds_file, fiber,
+                          combine, rawhcfiles, rawfpfiles,  qc_params, wprops,
                           hcwavefile]
-                fpwavefile = wave.fp_write_wavesolution(params, recipe, *fpargs)
+                fpwavefile = wave.fp_write_wavesol_master(params, *fpargs)
                 # ----------------------------------------------------------
                 # write FP result table to file
                 # ----------------------------------------------------------
                 fpargs = [fpprops, hc_e2ds_file, fiber]
-                wave.fp_write_results_table(params, recipe, *fpargs)
+                wave.fpm_write_results_table(params, recipe, *fpargs)
                 # ----------------------------------------------------------
                 # Save line list table file
                 # ----------------------------------------------------------
                 fpargs = [fpprops, hc_e2ds_file, fiber]
-                wave.fp_write_linelist_table(params, recipe, *fpargs)
+                wave.fpm_write_linelist_table(params, recipe, *fpargs)
                 # ----------------------------------------------------------
                 # Update calibDB with FP solution
                 # ----------------------------------------------------------
