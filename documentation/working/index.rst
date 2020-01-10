@@ -40,4 +40,4 @@ Other
 
    misc/pythoninstallation.rst
    misc/glossary.rst
-   misc/changelog.rst\n
+   misc/changelog.rst
