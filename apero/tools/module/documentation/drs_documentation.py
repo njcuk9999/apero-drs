@@ -11,13 +11,12 @@ Created on 2020-01-07 at 14:59
 """
 import os
 import shutil
-import glob
 from distutils.dir_util import copy_tree
 
 from apero import core
 from apero.core import constants
 from apero import locale
-from apero.tools.module.documentation import drs_documentation
+
 
 # =============================================================================
 # Define variables
@@ -44,6 +43,12 @@ LATEX_DIR = '../documentation/working/_build/latex/'
 LATEX_FILE = 'apero-docs.tex'
 PDF_FILE = 'apero-docs.pdf'
 # -----------------------------------------------------------------------------
+RSYNC_CMD = 'rsync -avz -e "{SSH}" {INPATH} {USER}@{HOST}:{OUTPATH}'
+# -----------------------------------------------------------------------------
+SSH_OPTIONS = 'ssh -oport=5822'
+SSH_USER = 'cpapir'
+SSH_HOST = 'genesis.astro.umontreal.ca'
+SSH_PATH = '/home/cpapir/www/apero-drs/'
 
 
 # =============================================================================
@@ -148,6 +153,22 @@ def compile_docs(params):
         os.chdir(cwd)
         # raise exception
         raise e
+
+
+def upload(params):
+    # get package
+    package = params['DRS_PACKAGE']
+    # get paths
+    out_dir = constants.get_relative_folder(package, OUT_DIR)
+    # get rsync dict
+    rdict = dict()
+    rdict['SSH'] = SSH_OPTIONS
+    rdict['USER'] = SSH_USER
+    rdict['HOST'] = SSH_HOST
+    rdict['INPATH'] = out_dir
+    rdict['OUTPATH'] = SSH_PATH
+    # run command (will require password)
+    os.system(RSYNC_CMD.format(**rdict))
 
 
 # =============================================================================
