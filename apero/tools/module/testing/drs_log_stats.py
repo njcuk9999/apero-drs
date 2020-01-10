@@ -154,6 +154,10 @@ def get_log_files(params, recipe, path, nightname=None):
         WLOG(params, '', 'Found {0} night directories'.format(len(nights)))
     else:
         WLOG(params, 'error', 'No night directories found.')
+
+    # any recipes without a night name will be saved above the night directories
+    #    level so we must add the input path to the list of nights
+    nights += [path]
     # ----------------------------------------------------------------------
     # locate log files
     logfitsfile = params['DRS_LOG_FITS_NAME']
@@ -243,6 +247,10 @@ def make_log_table(params, logfiles, nightnames, recipename, since=None,
     mastertable = Table()
     for col in masterdict:
         mastertable[col] = masterdict[col]
+
+    # for convienence sort by HTIME
+    sortmask = np.argsort(mastertable['HTIME'])
+    mastertable = mastertable[sortmask]
 
     # return master table
     return mastertable
