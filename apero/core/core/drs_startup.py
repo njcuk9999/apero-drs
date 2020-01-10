@@ -610,7 +610,7 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
 
 
 def get_file_definition(name, instrument, kind='raw', return_all=False,
-                        fiber=None):
+                        fiber=None, required=True):
     """
     Finds a given recipe in the instruments definitions
 
@@ -621,6 +621,8 @@ def get_file_definition(name, instrument, kind='raw', return_all=False,
                        just the last entry (if False)
     :param fiber: string, some files require a fiber to choose the correct file
                   (i.e. to add a suffix)
+    :param required: bool, if False then does not throw error when no files
+                     found (only use if checking for return = None)
 
     :type name: str
     :type instrument: str
@@ -676,7 +678,10 @@ def get_file_definition(name, instrument, kind='raw', return_all=False,
     if instrument is None and len(found_files) == 0:
         empty = drs_file.DrsFitsFile('Empty')
         return empty
-    if len(found_files) == 0:
+
+    if (len(found_files) == 0) and (not required):
+        return None
+    elif len(found_files) == 0:
         eargs = [name, modules[0], func_name]
         WLOG(None, 'error', TextEntry('00-008-00011', args=eargs))
 
