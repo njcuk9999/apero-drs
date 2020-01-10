@@ -2,6 +2,49 @@ Changelog
 =========
 
 
+0.6.018 (2020-01-10)
+--------------------
+- Recipes.spirou.obj_mk_template_spirou.py - add logging for when file
+  is skipped (and qc passes) [Neil Cook]
+- Recipe.dev.apero_changelog.py and
+  module.documentation.drs_changelog.py - need to format changelog so it
+  works as .rst file (for documentation) [Neil Cook]
+- Update documentation. [Neil Cook]
+- Tools.module.documentation.drs_documentation.py - make sure we copy
+  the contents of output folder not the folder itself. [Neil Cook]
+- Tools.recipes.dev.apero_documentation.py - add update option to making
+  documentation (for updating doc website) [Neil Cook]
+- Tools.module.testing.drs_log_stats.py - make sure path is in nights
+  list + sort by htime. [Neil Cook]
+- Tools.resources.setup.apero.bash.setup* - correct typo -- missing
+  speech mark. [Neil Cook]
+- Science.calib.wave.py - seperate master and old wave writing functions
+  + add in night qc and write functions. [Neil Cook]
+- Cal_wave_night_spirou.py - add in ccf computation. [Neil Cook]
+- Cal_wave_master_spirou.py - change writing functions to master
+  functions (to separate from cal_wave -- old) - master now writes to
+  key WAVEM. [Neil Cook]
+- Update the master_*_SPIROU.txt files - default master files now
+  WAVEM_D_{fiber} [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - need a set of files
+  for master (can remove non-master if we go with master/night recipes)
+  [Neil Cook]
+- Core.instruments.spirou.file_definitions.py - need a set of files for
+  master (can remove non-master if we go with master/night recipes)
+  [Neil Cook]
+- Core.instruments.spirou.default_keywords.py - group all wave header
+  keys. [Neil Cook]
+- Core.core.drs_startup.py - add argument 'required' to
+  get_file_definition to allow not finding a key and return None if this
+  is the case. [Neil Cook]
+- Core.core.drs_log.py - add pipes to the end of each qc to ease
+  splitting in log analysis. [Neil Cook]
+- Update language database. [Neil Cook]
+- Science.calib.wave.py - move logs to language database. [Neil Cook]
+- Setup.install.py - remove blank spaces. [Neil Cook]
+- Update date/version/changelog/documentation. [Neil Cook]
+
+
 0.6.017 (2020-01-08)
 --------------------
 - Setup.install.py - add dev section to modules (sphinx, ipdb,
