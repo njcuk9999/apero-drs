@@ -47,7 +47,7 @@ HelpText = drs_text.HelpDict
 # define columns from log files
 RECIPECOL = 'RECIPE'
 STARTCOL = 'STARTED'
-PASSEDCOL = 'PASSED_QC'
+PASSEDCOL = 'PASSED_ALL_QC'
 ENDCOL = 'ENDED'
 LOGCOL = 'LOGFILE'
 ERRORSTR = '-!|'
