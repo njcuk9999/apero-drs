@@ -704,6 +704,12 @@ def calculate_telluric_absorption(params, recipe, image, template,
         # vector used to mask invalid regions
         keep = fit_image != 0
         # only fit where the transmission is greater than a certain value
+
+
+        good_domain = (wavemap>1500) & (wavemap<1750)
+
+        keep &= good_domain
+
         keep &= tau1 > threshold_transmission_fit
         # considered bad if the spectrum is larger than '. This is
         #     likely an OH line or a cosmic ray
