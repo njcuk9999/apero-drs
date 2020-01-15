@@ -705,10 +705,8 @@ def calculate_telluric_absorption(params, recipe, image, template,
         keep = fit_image != 0
         # only fit where the transmission is greater than a certain value
 
-
+        # TODO : we are going to have trouble
         good_domain = (wavemap>1500) & (wavemap<1750)
-
-        keep &= good_domain
 
         keep &= tau1 > threshold_transmission_fit
         # considered bad if the spectrum is larger than '. This is
@@ -718,7 +716,8 @@ def calculate_telluric_absorption(params, recipe, image, template,
         # ---------------------------------------------------------------------
         # fit telluric absorption of the spectrum
         with warnings.catch_warnings(record=True) as _:
-            popt, pcov = curve_fit(tapas_fit, keep, fit_image.ravel(), p0=guess)
+            popt, pcov = curve_fit(tapas_fit, keep & good_domain,
+                                   fit_image.ravel(), p0=guess)
         # update our guess
         guess = np.array(popt)
         # ---------------------------------------------------------------------
