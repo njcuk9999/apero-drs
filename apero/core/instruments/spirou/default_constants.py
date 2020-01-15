@@ -1608,7 +1608,17 @@ MKTELLU_QC_SNR_MIN.value = 100
 
 # Define the allowed difference between recovered and input airmass
 MKTELLU_QC_AIRMASS_DIFF = MKTELLU_QC_AIRMASS_DIFF.copy(__NAME__)
-MKTELLU_QC_AIRMASS_DIFF.value = 0.1
+MKTELLU_QC_AIRMASS_DIFF.value = 0.3
+
+# Define the MKO H-band limit limit [nm]
+#    from http://www.ifa.hawaii.edu/~tokunaga/MKO-NIR_filter_set.html
+MKTELLU_HBAND_LOWER = MKTELLU_HBAND_LOWER.copy(__NAME__)
+MKTELLU_HBAND_LOWER.value = 1490
+
+# Define the MKO H-band upper limit [nm]
+#    from http://www.ifa.hawaii.edu/~tokunaga/MKO-NIR_filter_set.html
+MKTELLU_HBAND_UPPER = MKTELLU_HBAND_UPPER.copy(__NAME__)
+MKTELLU_HBAND_UPPER.value = 1780
 
 # =============================================================================
 # OBJECT: FIT TELLURIC SETTINGS

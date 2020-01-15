@@ -176,7 +176,8 @@ __all__ = [
     'MKTELLU_SMALL_WEIGHTING_ERROR', 'MKTELLU_PLOT_ORDER_NUMS',
     'MKTELLU_TAU_WATER_ULIMIT', 'MKTELLU_TAU_OTHER_LLIMIT',
     'MKTELLU_TAU_OTHER_ULIMIT', 'MKTELLU_SMALL_LIMIT', 'MKTELLU_QC_SNR_ORDER',
-    'MKTELLU_QC_SNR_MIN', 'MKTELLU_QC_AIRMASS_DIFF',
+    'MKTELLU_QC_SNR_MIN', 'MKTELLU_QC_AIRMASS_DIFF', 'MKTELLU_HBAND_LOWER',
+    'MKTELLU_HBAND_UPPER',
     # fit telluric constants,
     'FTELLU_NUM_PRINCIPLE_COMP', 'FTELLU_ADD_DERIV_PC', 'FTELLU_FIT_DERIV_PC',
     'FTELLU_FIT_KEEP_NUM', 'FTELLU_FIT_MIN_TRANS', 'FTELLU_LAMBDA_MIN',
@@ -1957,6 +1958,16 @@ MKTELLU_QC_SNR_MIN = Const('MKTELLU_QC_SNR_MIN', value=None, dtype=float,
 # Define the allowed difference between recovered and input airmass
 MKTELLU_QC_AIRMASS_DIFF = Const('MKTELLU_QC_AIRMASS_DIFF', value=None,
                                 dtype=float, source=__NAME__, group=cgroup)
+
+# Define the MKO H-band limit limit [nm]
+#    from http://www.ifa.hawaii.edu/~tokunaga/MKO-NIR_filter_set.html
+MKTELLU_HBAND_LOWER = Const('MKTELLU_HBAND_LOWER', value=None,
+                            dtype=float, source=__NAME__, group=cgroup)
+
+# Define the MKO H-band upper limit [nm]
+#    from http://www.ifa.hawaii.edu/~tokunaga/MKO-NIR_filter_set.html
+MKTELLU_HBAND_UPPER = Const('MKTELLU_HBAND_UPPER', value=None,
+                            dtype=float, source=__NAME__, group=cgroup)
 
 # =============================================================================
 # OBJECT: FIT TELLURIC SETTINGS
