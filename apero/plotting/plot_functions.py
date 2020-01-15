@@ -2840,6 +2840,11 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
         y4 = oimage[order_num] * template[order_num]
         y5 = sed[order_num] * template[order_num]
 
+        # normalise
+        corr_norm = mp.nanmedian(y2/y4)
+        y3 = y3 / corr_norm
+        y2 = y2 / corr_norm
+
         # ------------------------------------------------------------------
         # set up plot
         fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
