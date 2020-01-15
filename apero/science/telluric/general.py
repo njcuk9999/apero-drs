@@ -275,6 +275,10 @@ def load_templates(params, header, objname, fiber):
     # get file definition
     out_temp = core.get_file_definition('TELLU_TEMP', params['INSTRUMENT'],
                                         kind='red', fiber=fiber)
+    # deal with user not using template
+    if 'USE_TEMPLATE' in params['INPUTS']:
+        if not params['INPUTS']['USE_TEMPLATE']:
+            return None, None
     # get key
     temp_key = out_temp.get_dbkey(fiber=fiber)
     # load tellu file, header and abspaths
