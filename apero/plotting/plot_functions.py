@@ -2850,7 +2850,7 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
         fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
         # ------------------------------------------------------------------
         # plot data
-        frame.plot(x, y1, color='c', label='tapas fit')
+        frame.plot(x, y1, color='c', marker='+', label='tapas fit')
         frame.plot(x, y2, color='k', label='input spectrum')
         frame.plot(x, y3, color='b', label='measured transmission')
 
