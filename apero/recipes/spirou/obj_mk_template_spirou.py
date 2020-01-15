@@ -129,7 +129,7 @@ def __main__(recipe, params):
         wargs = [objname, filetype]
         WLOG(params, 'warning', TextEntry('10-019-00005', args=wargs))
         # dummy pass of qc --> pass
-        qc_params = ['None', 'None', 'None', 1]
+        qc_params = [['None'], ['None'], ['None'], [1]]
         # update recipe log
         recipe.log.add_qc(params, qc_params, True)
         # update recipe log file

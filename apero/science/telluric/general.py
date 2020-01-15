@@ -2506,6 +2506,12 @@ def mk_template_qc(params):
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names = [], [], [],
     qc_logic, qc_pass = [], []
+
+    # add to qc header lists
+    qc_values.append('None')
+    qc_names.append('None')
+    qc_logic.append('None')
+    qc_pass.append(1)
     # ----------------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
@@ -2516,11 +2522,6 @@ def mk_template_qc(params):
         for farg in fail_msg:
             WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
         passed = 0
-    # add to qc header lists
-    qc_values.append('None')
-    qc_names.append('None')
-    qc_logic.append('None')
-    qc_pass.append(1)
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
     # return qc params and passed
