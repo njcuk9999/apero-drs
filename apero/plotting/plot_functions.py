@@ -2836,7 +2836,7 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
         x = wavemap[order_num]
         y1 = tau1[order_num]
         y2 = sp[order_num]
-        y3 = sp[order_num] * template[order_num] / sed[order_num]
+        y3 = (sp[order_num] / template[order_num]) / sed[order_num]
         y4 = oimage[order_num] * template[order_num]
         y5 = sed[order_num] * template[order_num]
 
