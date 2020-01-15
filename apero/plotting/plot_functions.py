@@ -2818,6 +2818,8 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
     sed = kwargs['sed']
     oimage = kwargs['oimage']
     order = kwargs.get('order', None)
+    has_template = kwargs.get('has_template', False)
+    template = kwargs.get('template', None)
     # ------------------------------------------------------------------
     if order is None:
         order_gen = plotter.plotloop(np.arange(len(keep)))
@@ -2834,9 +2836,10 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
         x = wavemap[order_num]
         y1 = tau1[order_num]
         y2 = sp[order_num]
-        y3 = sp[order_num] / sed[order_num]
-        y4 = oimage[order_num]
-        y5 = sed[order_num]
+        y3 = sp[order_num] * template[order_num] / sed[order_num]
+        y4 = oimage[order_num] * template[order_num]
+        y5 = sed[order_num] * template[order_num]
+
         # ------------------------------------------------------------------
         # set up plot
         fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
@@ -2846,9 +2849,15 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
         frame.plot(x, y2, color='k', label='input spectrum')
         frame.plot(x, y3, color='b', label='measured transmission')
 
+        # deal with labels with and without template
+        if has_template:
+            label4 = 'Update to SED (with Template)'
+        else:
+            label4 = 'SED calculation value (No template)'
+
         frame.plot(x[good], y4[good], color='r', marker='.', linestyle='None',
                    label='SED calculation value')
-        frame.plot(x, y5, color='g', linestyle='--', label='SED best guess')
+        frame.plot(x, y5, color='g', linestyle='--', label=label4)
 
         # get max / min y
         values = list(y1[good]) + list(y2[good]) + list(y3[good])
