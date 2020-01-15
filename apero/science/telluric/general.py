@@ -887,6 +887,10 @@ def calculate_telluric_absorption(params, recipe, image, template,
         recipe.plot('SUM_MKTELLU_WAVE_FLUX', keep=keep, wavemap=wavemap,
                     tau1=tau1, sp=image, oimage=oimage2_arr, sed=sed,
                     order=order_num)
+
+    # TODO: Remove breakpoint
+    constants.breakpoint(params)
+
     # ---------------------------------------------------------------------
     # calculate transmission map
     transmission_map = image1 / sed
