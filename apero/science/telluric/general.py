@@ -868,7 +868,8 @@ def calculate_telluric_absorption(params, recipe, image, template,
         # ---------------------------------------------------------------------
         # debug wave flux plot
         recipe.plot('MKTELLU_WAVE_FLUX1', keep=keep, wavemap=wavemap, tau1=tau1,
-                    sp=image, oimage=oimage2_arr, sed=sed, order=None)
+                    sp=image, oimage=oimage2_arr, sed=sed, order=None,
+                    has_template=(not template_flag), template=template)
         # ---------------------------------------------------------------------
         # update the iteration number
         iteration += 1
@@ -882,11 +883,13 @@ def calculate_telluric_absorption(params, recipe, image, template,
     for order_num in plot_order_nums:
         # plot debug plot
         recipe.plot('MKTELLU_WAVE_FLUX2', keep=keep, wavemap=wavemap, tau1=tau1,
-                    sp=image, oimage=oimage2_arr, sed=sed, order=order_num)
+                    sp=image, oimage=oimage2_arr, sed=sed, order=order_num,
+                    has_template=(not template_flag), template=template)
         # plot summary plot
         recipe.plot('SUM_MKTELLU_WAVE_FLUX', keep=keep, wavemap=wavemap,
                     tau1=tau1, sp=image, oimage=oimage2_arr, sed=sed,
-                    order=order_num)
+                    order=order_num, has_template=(not template_flag),
+                    template=template)
 
     # TODO: Remove breakpoint
     constants.breakpoint(params)
