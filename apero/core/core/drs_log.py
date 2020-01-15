@@ -642,10 +642,10 @@ class RecipeLog:
             # deal with qc set
             qargs = [qc_names[it], qc_values[it], qc_logic[it], pass_str]
             self.qc_string += '{0}={1} [{2}] {3} ||'.format(*qargs)
-            self.qc_name = '{0}||'.format(qc_names[it])
-            self.qc_value = '{0}||'.format(qc_values[it])
-            self.qc_pass = '{0}||'.format(qc_logic[it])
-            self.qc_logic = '{0}||'.format(qc_pass[it])
+            self.qc_name += '{0}||'.format(qc_names[it])
+            self.qc_value += '{0}||'.format(qc_values[it])
+            self.qc_logic += '{0}||'.format(qc_logic[it])
+            self.qc_pass += '{0}||'.format(qc_pass[it])
 
         # whether to write (update) recipe log file
         if write:
