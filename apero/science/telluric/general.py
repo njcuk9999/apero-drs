@@ -550,6 +550,10 @@ def calculate_telluric_absorption(params, recipe, image, template,
                               'tau_others_upper', kwargs, func_name)
     tapas_small_number = pcheck(params, 'MKTELLU_SMALL_LIMIT',
                                 'tapas_small_number', kwargs, func_name)
+    hbandlower = pcheck(params, 'MKTELLU_HBAND_LOWER', 'hbandlower', kwargs,
+                        func_name)
+    hbandupper = pcheck(params, 'MKTELLU_HBAND_UPPER', 'hbandupper', kwargs,
+                        func_name)
     # ------------------------------------------------------------------
     # copy image
     image1 = np.array(image)
@@ -701,13 +705,11 @@ def calculate_telluric_absorption(params, recipe, image, template,
         nanmask = ~np.isfinite(fit_image)
         fit_image[nanmask] = 0
         # ---------------------------------------------------------------------
+        # define where we should fit (in photometeric bands)
+        good_domain = (wavemap > hbandlower) & (wavemap < hbandupper)
         # vector used to mask invalid regions
         keep = fit_image != 0
         # only fit where the transmission is greater than a certain value
-
-        # TODO : we are going to have trouble
-        good_domain = (wavemap>1500) & (wavemap<1750)
-
         keep &= tau1 > threshold_transmission_fit
         # considered bad if the spectrum is larger than '. This is
         #     likely an OH line or a cosmic ray
