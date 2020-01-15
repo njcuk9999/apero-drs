@@ -584,8 +584,8 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, **kwargs):
     func_name = display_func(params, __NAME__, 'get_master_lines')
     # get parameters from params and kwargs
     nsig_min = pcheck(params, 'WAVEREF_NSIG_MIN', 'nsig_min', kwargs, func_name)
-    wmax = pcheck(params, 'WAVEREF_E2DS_WMAX', 'wmax', kwargs, func_name)
-    hcboxsize = pcheck(params, 'WAVEREEF_HC_BOXSIZE', 'hcboxsize', kwargs,
+    wmax = pcheck(params, 'WAVEREF_EDGE_WMAX', 'wmax', kwargs, func_name)
+    hcboxsize = pcheck(params, 'WAVEREF_HC_BOXSIZE', 'hcboxsize', kwargs,
                        func_name)
     hcfibtypes = pcheck(params, 'WAVEREF_HC_FIBTYPES', 'hcfibtypes', kwargs,
                         func_name, mapf='list', dtype=str)
@@ -627,6 +627,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, **kwargs):
             # we have a wavelength value, we get an approximate pixel
             # value by fitting wavelength to pixel
             owave = wavemap[order_num]
+            # TODO: Question: Get RankWarning Polyfit may be poorly conditioned
             fit_reverse = np.polyfit(owave, xpix, fitdeg)
             # we find lines within the order
             good = (wavell > np.min(owave)) & (wavell < np.max(owave))
@@ -748,7 +749,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, **kwargs):
         # get order lines
         order_waves = list_waves[good]
         order_pixels = list_pixels[good]
-        order_wfit = list_pixels[good]
+        order_wfit = list_wfit[good]
         # ------------------------------------------------------------------
         # loop around lines
         for it in range(len(order_waves)):
@@ -766,7 +767,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, **kwargs):
                 # get ypix max and min
                 ymax, ymin = mp.nanmax(ypix), mp.nanmin(ypix)
                 # get up a gauss fit guess
-                guess = [ymax - ymin, xpix, 1, ymin]
+                guess = [ymax - ymin, xpix, 1, ymin, 0]
                 # try fitting a gaussian with a slope
                 try:
                     out = mp.fit_gauss_with_slope(index, ypix, guess, True)
@@ -823,7 +824,7 @@ def write_master_lines(params, recipe, hce2ds, fpe2ds, hclines, fplines,
     # write hc lines
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    hcfile = recipe.outputs['WAVEM_HCLIST'].newcopy(recipe=recipe,
+    hcfile = recipe.outputs['WAVE_HCLIST'].newcopy(recipe=recipe,
                                                    fiber=fiber)
     # construct the filename from file instance
     hcfile.construct_filename(params, infile=hce2ds)
@@ -966,15 +967,20 @@ def hc_wavesol(params, recipe, iprops, e2dsfile, fiber, **kwargs):
                       iteration=1, fiber=fiber)
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    wavefile = recipe.outputs['WAVE_HCMAP'].newcopy(recipe=recipe,
-                                                    fiber=fiber)
+    # TODO: remove if once we only use cal_wave or cal_wave_master/night
+    if 'WAVEM_HCMAP' in recipe.outputs:
+        wavefile = recipe.outputs['WAVEM_HCMAP'].newcopy(recipe=recipe,
+                                                        fiber=fiber)
+    else:
+        wavefile = recipe.outputs['WAVE_HCMAP'].newcopy(recipe=recipe,
+                                                        fiber=fiber)
     # construct the filename from file instance
     wavefile.construct_filename(params, infile=e2dsfile)
     # ----------------------------------------------------------------------
     # set wprops values (expected for output)
     wprops = ParamDict()
     wprops['WAVEFILE'] = wavefile.filename
-    wprops['WAVESOURCE'] = recipe.name
+    wprops['WAVESOURCE'] = recipe.name + 'HC'
     wprops['COEFFS'] = llprops['POLY_WAVE_SOL']
     wprops['WAVEMAP'] = llprops['WAVE_MAP2']
     wprops['NBO'] = llprops['NBO']
@@ -1132,8 +1138,13 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
     llprops.merge(rvprops)
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    wavefile = recipe.outputs['WAVE_FPMAP'].newcopy(recipe=recipe,
-                                                    fiber=fiber)
+    # TODO: remove if once we only use cal_wave or cal_wave_master/night
+    if 'WAVEM_FPMAP' in recipe.outputs:
+        wavefile = recipe.outputs['WAVEM_FPMAP'].newcopy(recipe=recipe,
+                                                        fiber=fiber)
+    else:
+        wavefile = recipe.outputs['WAVE_FPMAP'].newcopy(recipe=recipe,
+                                                        fiber=fiber)
     # construct the filename from file instance
     wavefile.construct_filename(params, infile=hce2dsfile)
     # ----------------------------------------------------------------------
@@ -2103,9 +2114,6 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
     lin_mod_slice = []
     recon0 = []
 
-    # TODO: remove breakpoint
-    constants.breakpoint(params)
-
     # ------------------------------------------------------------------
     # triplet loop
     # ------------------------------------------------------------------
@@ -2576,10 +2584,6 @@ def wave_lmfit(orders, xgau, wave_catalog, recon0, order_fit_cont, nbo):
 
 def generate_resolution_map(params, recipe, llprops, e2dsfile, **kwargs):
     func_name = __NAME__ + '.generate_resolution_map()'
-
-
-    # TODO: remove breakpoint
-    constants.breakpoint(params)
 
     # get constants from params / kwargs
     resmap_size = pcheck(params, 'WAVE_HC_RESMAP_SIZE', 'resmap_size',
