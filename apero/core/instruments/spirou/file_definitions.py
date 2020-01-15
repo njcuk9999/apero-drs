@@ -699,14 +699,6 @@ out_wavem_fp = drs_finput('WAVE_FP', KW_OUTPUT='WAVE_FP',
                          dbname='calibration', dbkey='WAVEM',
                          outfunc=out.calib_file)
 
-# hc initial linelist
-out_wavem_hcline = drs_input('WAVEHCLL', KW_OUTPUT='WAVEHCLL',
-                            fibers=['AB', 'A', 'B', 'C'],
-                            filetype='.dat',
-                            intype=[out_ext_e2ds, out_ext_e2dsff],
-                            suffix='_mlinelist',
-                            outfunc=out.calib_file)
-
 # hc resolution map
 out_wavem_hcres = drs_finput('WAVERES', KW_OUTPUT='WAVE_RES',
                             fibers=['AB', 'A', 'B', 'C'],
@@ -765,7 +757,6 @@ out_wave_master = drs_finput('WAVEM_D', KW_OUTPUT='WAVEM_SOL',
 # add wave outputs to output fileset
 out_file.addset(out_wavem_hc)
 out_file.addset(out_wavem_fp)
-out_file.addset(out_wavem_hcline)
 out_file.addset(out_wavem_hcres)
 out_file.addset(out_wavem_res_table)
 out_file.addset(out_wavem_ll_table)
