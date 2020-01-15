@@ -848,6 +848,11 @@ obj_mk_tellu.set_kwarg(**add_db)
 obj_mk_tellu.set_kwarg(**blazefile)
 obj_mk_tellu.set_kwarg(**plot)
 obj_mk_tellu.set_kwarg(**wavefile)
+# TODO: Add to language DB
+obj_mk_tellu.set_kwarg(name='--use_template', dtype='bool', default=True,
+                       helpstr='Whether to use the template provided from '
+                               'the telluric database')
+
 
 # -----------------------------------------------------------------------------
 # obj_mk_tellu_db
@@ -910,6 +915,10 @@ obj_fit_tellu.set_arg(name='files', dtype='files', pos='1+',
                       files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
                       helpstr=Help['FILES_HELP'] + Help['FTELLU_FILES_HELP'],
                       limit=1)
+# TODO: Add to language DB
+obj_fit_tellu.set_kwarg(name='--use_template', dtype='bool', default=True,
+                        helpstr='Whether to use the template provided from '
+                                'the telluric database')
 obj_fit_tellu.set_kwarg(**add_db)
 obj_fit_tellu.set_kwarg(**blazefile)
 obj_fit_tellu.set_kwarg(**plot)
