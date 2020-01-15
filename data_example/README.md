@@ -15,4 +15,10 @@ File structure should be as follows:
 
 - ```/data/tmp/```
 
-These paths can be changed in ```/INTROOT/config/config.py```
+- ```/data/plot/```
+
+- ```/data/runs/```
+
+- ```/data/telluDB/```
+
+These paths can be changed in ```{DRS_UCONFIG}/{INSTRUMENT}/user_config.ini```

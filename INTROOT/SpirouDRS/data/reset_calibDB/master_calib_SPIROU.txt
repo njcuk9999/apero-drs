@@ -1,5 +1,0 @@
-# H4RG File (Copied from SpirouDRS data folder)
-WAVE_AB None MASTER_WAVE.fits 1970-01-01_00:00:00.000000 0.0
-WAVE_C None MASTER_WAVE.fits 1970-01-01_00:00:00.000000 0.0
-
-# DRS processed

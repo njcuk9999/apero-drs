@@ -1,0 +1,8 @@
+# Calibrations
+run001 = ['cal_DARK_spirou', 'TEST1/20180805', 'dark_dark_P5_003d_pp.fits']
+run002 = ['cal_BADPIX_spirou', 'TEST1/20180805', '2295524f_pp.fits', 'dark_dark_P5_003d_pp.fits']
+run003a = ['cal_loc_RAW_spirou', 'TEST1/20180805', '2295510f_pp.fits', '2295511f_pp.fits', '2295512f_pp.fits', '2295513f_pp.fits', '2295514f_pp.fits']
+run003b = ['cal_loc_RAW_spirou', 'TEST1/20180805', '2295515f_pp.fits', '2295516f_pp.fits', '2295517f_pp.fits', '2295518f_pp.fits', '2295519f_pp.fits']
+run004a = ['cal_SLIT_spirou', 'TEST1/20180805', '2295525a_pp.fits']
+run004b = ['cal_SHAPE_spirou', 'TEST1/20180805', '2295680c_pp.fits', '2295525a_pp.fits']
+run005 = ['cal_FF_RAW_spirou', 'TEST1/20180805', '2295520f_pp.fits', '2295521f_pp.fits', '2295522f_pp.fits', '2295523f_pp.fits', '2295524f_pp.fits']
