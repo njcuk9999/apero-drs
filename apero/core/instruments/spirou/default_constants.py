@@ -1366,6 +1366,45 @@ WAVE_CCF_N_ORD_MAX.value = 48
 
 
 # =============================================================================
+# CALIBRATION: WAVE MASTER REFERENCE SETTINGS
+# =============================================================================
+# min SNR to consider the line
+WAVEREF_NSIG_MIN = WAVEREF_NSIG_MIN.copy(__NAME__)
+WAVEREF_NSIG_MIN.value = 15
+
+# minimum distance to the edge of the array to consider a line
+WAVEREF_EDGE_WMAX = WAVEREF_EDGE_WMAX.copy(__NAME__)
+WAVEREF_EDGE_WMAX.value = 20
+
+# value in pixel (+/-) for the box size around each HC line to perform fit
+WAVEREF_HC_BOXSIZE = WAVEREF_HC_BOXSIZE.copy(__NAME__)
+WAVEREF_HC_BOXSIZE.value = 5
+
+# get valid hc dprtypes (string list separated by commas)
+WAVEREF_HC_FIBTYPES = WAVEREF_HC_FIBTYPES.copy(__NAME__)
+WAVEREF_HC_FIBTYPES.value = 'HCONE, HCTWO'
+
+# get valid fp dprtypes (string list separated by commas)
+WAVEREF_FP_FIBTYPES = WAVEREF_FP_FIBTYPES.copy(__NAME__)
+WAVEREF_FP_FIBTYPES.value = 'FP'
+
+# get the degree to fix master wavelength to in hc mode
+WAVEREF_FITDEG = WAVEREF_FITDEG.copy(__NAME__)
+WAVEREF_FITDEG.value = 5
+
+# define the lowest N for fp peaks
+WAVEREF_FP_NLOW = WAVEREF_FP_NLOW.copy(__NAME__)
+WAVEREF_FP_NLOW.value = 9000
+
+# define the highest N for fp peaks
+WAVEREF_FP_NHIGH = WAVEREF_FP_NHIGH.copy(__NAME__)
+WAVEREF_FP_NHIGH.value = 30000
+
+# define the number of iterations required to do the Fp polynomial inversion
+WAVEREF_FP_POLYINV = WAVEREF_FP_POLYINV.copy(__NAME__)
+WAVEREF_FP_POLYINV.value = 4
+
+# =============================================================================
 # CALIBRATION: WAVE NIGHT SETTINGS
 # =============================================================================
 # high-order wavelength solution correction cannot be smaller than 2,

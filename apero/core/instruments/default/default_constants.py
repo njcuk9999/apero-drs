@@ -154,6 +154,10 @@ __all__ = [
     'WAVE_CCF_DETNOISE', 'WAVE_CCF_MASK', 'WAVE_CCF_MASK_UNITS',
     'WAVE_CCF_MASK_PATH', 'WAVE_CCF_MASK_FMT', 'WAVE_CCF_MASK_MIN_WEIGHT',
     'WAVE_CCF_MASK_WIDTH', 'WAVE_CCF_N_ORD_MAX',
+    # wave master reference constants
+    'WAVEREF_NSIG_MIN', 'WAVEREF_EDGE_WMAX', 'WAVEREF_HC_BOXSIZE',
+    'WAVEREF_HC_FIBTYPES', 'WAVEREF_FP_FIBTYPES', 'WAVEREF_FITDEG',
+    'WAVEREF_FP_NLOW', 'WAVEREF_FP_NHIGH', 'WAVEREF_FP_POLYINV',
     # wave night constants
     'WAVE_NIGHT_HIGHF_CORR_DEG', 'WAVE_NIGHT_NITERATIONS', 'WAVE_NIGHT_DCAVITY',
     'WAVE_NIGHT_NSIG_MIN', 'WAVE_NIGHT_REDEND_CUTOFF', 'WAVE_NIGHT_DWAVE_BIN',
@@ -1712,6 +1716,47 @@ WAVE_CCF_MASK_WIDTH = Const('WAVE_CCF_MASK_WIDTH', value=None, dtype=float,
 #      to calculate the FP CCF
 WAVE_CCF_N_ORD_MAX = Const('WAVE_CCF_N_ORD_MAX', value=None, dtype=int,
                            source=__NAME__, minimum=1, group=cgroup)
+
+
+# =============================================================================
+# CALIBRATION: WAVE MASTER REFERENCE SETTINGS
+# =============================================================================
+cgroup = 'CALIBRATION: WAVE MASTER REFERENCE SETTINGS'
+# min SNR to consider the line
+WAVEREF_NSIG_MIN = Const('WAVEREF_NSIG_MIN', value=None, dtype=int,
+                         source=__NAME__, minimum=0, group=cgroup)
+
+# minimum distance to the edge of the array to consider a line
+WAVEREF_EDGE_WMAX = Const('WAVEREF_EDGE_WMAX', value=None, dtype=int,
+                          source=__NAME__, minimum=0, group=cgroup)
+
+# value in pixel (+/-) for the box size around each HC line to perform fit
+WAVEREF_HC_BOXSIZE = Const('WAVEREF_HC_BOXSIZE', value=None, dtype=int,
+                           source=__NAME__, minimum=0, group=cgroup)
+
+# get valid hc dprtypes (string list separated by commas)
+WAVEREF_HC_FIBTYPES = Const('WAVEREF_HC_FIBTYPES', value=None, dtype=str,
+                            source=__NAME__, group=cgroup)
+
+# get valid fp dprtypes (string list separated by commas)
+WAVEREF_FP_FIBTYPES = Const('WAVEREF_HC_FIBTYPES', value=None, dtype=str,
+                            source=__NAME__, group=cgroup)
+
+# get the degree to fix master wavelength to in hc mode
+WAVEREF_FITDEG = Const('WAVEREF_FITDEG', value=None, dtype=int,
+                       source=__NAME__, minimum=1, group=cgroup)
+
+# define the lowest N for fp peaks
+WAVEREF_FP_NLOW = Const('WAVEREF_FP_NLOW', value=None, dtype=int,
+                        source=__NAME__, minimum=0, group=cgroup)
+
+# define the highest N for fp peaks
+WAVEREF_FP_NHIGH = Const('WAVEREF_FP_NHIGH', value=None, dtype=int,
+                         source=__NAME__, minimum=1, group=cgroup)
+
+# define the number of iterations required to do the Fp polynomial inversion
+WAVEREF_FP_POLYINV = Const('WAVEREF_FP_POLYINV', value=None, dtype=int,
+                       source=__NAME__, minimum=1, group=cgroup)
 
 
 # =============================================================================
