@@ -28,7 +28,7 @@ If you already use anaconda/conda skip to step 3
 
 4. Create a new conda environment
     ```bash
-    conda create -n aperoenv --clone base
+    conda create -n aperoenv --python=3.7
     ```
 
 5. Activate conda environment (you will have to do this each time to use apero)
@@ -39,9 +39,23 @@ If you already use anaconda/conda skip to step 3
    conda activate aperoenv
    ```
 
-6. Install python packages not in anaconda:
+6. Install anaconda on environment:
+    ```bash
+    conda install anaconda
+    ```
+
+7. Install python packages not in anaconda:
     ```
     conda install astroquery
-    conda install numba
+    pip install barycorrpy
     conda install yagmail
+    conda install ipdb
+    pip install gitchangelog
+    ```
+
+.. note::
+    If experiencing trouble with barycorrpy with the error:
+    `Cannot remove entries from nonexistent` run the following:
+    ```
+    pip install barycorrpy --ignore-installed
     ```
