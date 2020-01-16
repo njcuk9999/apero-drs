@@ -557,29 +557,8 @@ def check_wave_consistency(params, props, **kwargs):
 # =============================================================================
 # Define wave ref functions
 # =============================================================================
-def get_master_lines(params, recipe, e2dsfile, wavemap, **kwargs):
-
-    # TODO: Move to constants file
-    params.unlock()
-    # min SNR to consider the line
-    params['WAVEREF_NSIG_MIN'] = 15
-    # minimum distance to the edge of the array to consider a line
-    params['WAVEREF_EDGE_WMAX'] = 20
-    # value in pixel (+/-) for the box size around each HC line to perform fit
-    params['WAVEREF_HC_BOXSIZE'] = 5
-    # get valid hc dprtypes
-    params['WAVEREF_HC_FIBTYPES'] = 'HCONE, HCTWO'
-    # get valid fp dprtypes
-    params['WAVEREF_FP_FIBTYPES'] = 'FP'
-    # get the degree to fix master wavelength to in hc mode
-    params['WAVEREF_FITDEG'] = 5
-    # define the lowest N for fp peaks
-    params['WAVEREF_FP_NLOW'] = 9000
-    # define the highest N for fp peaks
-    params['WAVEREF_FP_NHIGH'] = 30000
-    # define the number of iterations required to do the Fp polynomial inversion
-    params['WAVEREF_FP_POLYINV'] = 4
-
+def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
+                     **kwargs):
     # set the function name
     func_name = display_func(params, __NAME__, 'get_master_lines')
     # get parameters from params and kwargs
@@ -617,6 +596,12 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, **kwargs):
     # get the lines for HC files
     # ----------------------------------------------------------------------
     if fibtype in hcfibtypes:
+        # print progress
+        # TODO: Move to language DB
+        wmsg = 'Running get ref lines for {0}'
+        wargs = ['HC']
+        WLOG(params, 'info', wmsg.format(*wargs))
+
         # load the line list
         wavell, ampll = drs_data.load_linelist(params, **kwargs)
         # storage for outputs
@@ -627,8 +612,8 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, **kwargs):
             # we have a wavelength value, we get an approximate pixel
             # value by fitting wavelength to pixel
             owave = wavemap[order_num]
-            # TODO: Question: Get RankWarning Polyfit may be poorly conditioned
-            fit_reverse = np.polyfit(owave, xpix, fitdeg)
+            with warnings.catch_warnings(record=True) as _:
+                fit_reverse = np.polyfit(owave, xpix, fitdeg)
             # we find lines within the order
             good = (wavell > np.min(owave)) & (wavell < np.max(owave))
             # we check that there is at least 1 line and append our line list
@@ -656,8 +641,20 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, **kwargs):
     # get the lines for FP files
     # ----------------------------------------------------------------------
     elif fibtype in fpfibtypes:
-        # load the cavity polynomial from file
-        cavity_length_poly = drs_data.load_cavity_file(params, raw=True)
+        # print progress
+        # TODO: Move to language DB
+        wmsg = 'Running get ref lines for {0}'
+        wargs = ['FP']
+        WLOG(params, 'info', wmsg.format(*wargs))
+        # ------------------------------------------------------------------
+        # deal with getting cavity poly
+        if cavity_poly is not None:
+            cavity_length_poly = np.array(cavity_poly)
+        else:
+            # load the cavity polynomial from file
+            _, fit_ll = drs_data.load_cavity_files(params)
+            cavity_length_poly = fit_ll[::-1]
+        # ------------------------------------------------------------------
         # range of the N FP peaks
         nth_peak = np.arange(fp_nlow, fp_nhigh)
         # storage for the wavelength centers
@@ -681,7 +678,8 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, **kwargs):
             # we have a wavelength value, we get an approximate pixel
             # value by fitting wavelength to pixel
             owave = wavemap[order_num]
-            fit_reverse = np.polyfit(owave, xpix, fitdeg)
+            with warnings.catch_warnings(record=True) as _:
+                fit_reverse = np.polyfit(owave, xpix, fitdeg)
             # we find lines within the order
             good = (wave0 > np.min(owave)) & (wave0 < np.max(owave))
             # we check that there is at least 1 line and append our line list
@@ -689,9 +687,9 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, **kwargs):
                 # get the pixels positions based on out owave fit
                 pixfit = np.polyval(fit_reverse, wave0[good])
                 # get the dpix coeffs
-                dpixc = np.polyfit(pixfit[1:], xpix[1:] - xpix[:-1], 2)
+                dpixc = np.polyfit(pixfit[1:], pixfit[1:] - pixfit[:-1], 2)
                 # use this to get the rounded width?
-                wfit = np.ceil(np.polyval(dpixc, pixfit), 2)
+                wfit = np.ceil(np.polyval(dpixc, pixfit) / 2)
                 # append to the lists
                 list_waves += list(wave0[good])
                 list_orders += list(np.repeat(order_num, np.sum(good)))
@@ -737,11 +735,6 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, **kwargs):
     # ----------------------------------------------------------------------
     # loop around orders
     for order_num in range(nbo):
-        # log progress
-        # TODO: Move to language DB
-        eargs = [order_num, nbo, fiber, fibtype]
-        emsg = 'Order {0}/{1} Fiber {2} (type={3})'
-        WLOG(params, '', emsg.format(*eargs))
         # get the order spectrum
         sorder = e2dsfile.data[order_num]
         # find all lines in this order
@@ -752,22 +745,27 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, **kwargs):
         order_wfit = list_wfit[good]
         # ------------------------------------------------------------------
         # loop around lines
+        valid_lines = 0
         for it in range(len(order_waves)):
             # get the x pixel position
-            xpix = int(np.round(order_pixels[it]))
+            xpixi = int(np.round(order_pixels[it]))
             # get the width
             wfit = int(np.round(order_wfit[it]))
             # get the pixels within this peak
-            index = np.arange(xpix - wfit, xpix + wfit + 1)
+            index = np.arange(xpixi - wfit, xpixi + wfit + 1)
             # get the flux value in this peak
             ypix = sorder[index]
+            # deal with less points than fit (shouldn't happen but worth
+            #    catching before an exception happens in fit_gauss_with_slope)
+            if len(ypix) < 5:
+                continue
             # --------------------------------------------------------------
             # only continue if we have some finite values
-            if np.sum(np.isfinite(ypix)) > 0:
+            if np.all(np.isfinite(ypix)):
                 # get ypix max and min
                 ymax, ymin = mp.nanmax(ypix), mp.nanmin(ypix)
                 # get up a gauss fit guess
-                guess = [ymax - ymin, xpix, 1, ymin, 0]
+                guess = [ymax - ymin, xpixi, 1, ymin, 0]
                 # try fitting a gaussian with a slope
                 try:
                     out = mp.fit_gauss_with_slope(index, ypix, guess, True)
@@ -775,21 +773,31 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, **kwargs):
                     # calculate the RMS of the fit
                     rms = mp.nanstd(ypix - model)
                     # if we find 'good' values add to storage
-                    cond1 = np.abs(popt[1] - xpix) < 1
+                    cond1 = np.abs(popt[1] - xpixi) < 1
                     cond2 = (popt[2] < 2) and (popt[2] > 0.5)
                     if cond1 and cond2:
                         amp[good[it]] = popt[0]
                         pixel_m[good[it]] = popt[1]
                         ewidth[good[it]] = popt[2]
                         nsig[good[it]] = popt[0] / rms
+                        # line is valid
+                        valid_lines += 1
                 # ignore any bad lines
                 except RuntimeError:
                     pass
+        # log progress
+        # TODO: Move to language DB
+        eargs = [order_num, nbo - 1, fiber, valid_lines, len(order_waves),
+                 fibtype]
+        emsg = 'Order {0}/{1} Fiber {2} Valid lines: {3}/{4} (type={5})'
+        WLOG(params, '', emsg.format(*eargs))
+
 
     # lines that are not at a high enough SNR are flagged as NaN
     # we do NOT remove these lines as we want all tables to have
     # exactly the same length
-    bad = ~(nsig > nsig_min)
+    with warnings.catch_warnings(record=True) as _:
+        bad = ~(nsig > nsig_min)
     nsig[bad] = np.nan
     ewidth[bad] = np.nan
     amp[bad] = np.nan
@@ -824,8 +832,8 @@ def write_master_lines(params, recipe, hce2ds, fpe2ds, hclines, fplines,
     # write hc lines
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    hcfile = recipe.outputs['WAVE_HCLIST'].newcopy(recipe=recipe,
-                                                   fiber=fiber)
+    hcfile = recipe.outputs['WAVEM_HCLIST'].newcopy(recipe=recipe,
+                                                    fiber=fiber)
     # construct the filename from file instance
     hcfile.construct_filename(params, infile=hce2ds)
     # ------------------------------------------------------------------
@@ -1226,6 +1234,19 @@ def fp_wavesol_bauer(params, recipe, llprops, fpe2dsfile, blaze, fiber,
                               errx_min, ll_fit_degree, max_ll_fit_rms,
                               t_order_start, weight_thres, iteration=2)
     # ----------------------------------------------------------------------
+    # add data to llprops (set in lovis method only
+    llprops['FP_ONE_M_D'] = None
+    llprops['FP_D_ARR'] = None
+    llprops['FP_HC_LL_TEST'] = None
+    llprops['FP_ORD_TEST'] = None
+    llprops['FP_FIT_1M_D'] = None
+    llprops['FP_FIT_LL_D'] = None
+    # add sources
+    keys = ['FP_ONE_M_D', 'FP_D_ARR', 'FP_HC_LL_TEST', 'FP_ORD_TEST',
+            'FP_FIT_1M_D', 'FP_FIT_LL_D']
+    llprops.set_sources(keys, func_name)
+
+    # ----------------------------------------------------------------------
     # Add constants to llprops
     # ----------------------------------------------------------------------
     llprops['USED_N_INIT'] = start
@@ -1375,6 +1396,19 @@ def fp_wavesol_lovis(params, recipe, llprops, fpe2dsfile, hce2dsfile,
         recipe.plot('WAVE_FP_MULTI_ORDER', hc_ll=hc_ll_test, hc_ord=hc_ord_test,
                     hcdata=hce2dsfile.data, wave=llprops['LL_OUT_2'],
                     init=n_plot_init, fin=n_fin, nbo=n_nbo, params=params)
+
+    # ----------------------------------------------------------------------
+    # add data to llprops
+    llprops['FP_ONE_M_D'] = one_m_d
+    llprops['FP_D_ARR'] = d_arr
+    llprops['FP_HC_LL_TEST'] = hc_ll_test
+    llprops['FP_ORD_TEST'] = hc_ord_test
+    llprops['FP_FIT_1M_D'] = fit_1m_d
+    llprops['FP_FIT_LL_D'] = fit_ll_d
+    # add sources
+    keys = ['FP_ONE_M_D', 'FP_D_ARR', 'FP_HC_LL_TEST', 'FP_ORD_TEST',
+            'FP_FIT_1M_D', 'FP_FIT_LL_D']
+    llprops.set_sources(keys, func_name)
 
     # ----------------------------------------------------------------------
     # Add constants to llprops (Needs to have all from fp_wavesol_bauer
@@ -4198,6 +4232,7 @@ def find_num_fppeak_diff(llprops, blaze, n_init, n_fin, wave_blaze_thres,
     # FP peak amplitudes
     fp_amp = []
     # loop over orders
+    # TODO: Question: Should this be n_fin + 1
     for order_num in range(n_init, n_fin):
         # ------------------------------------------------------------------
         # Number FP peaks differentially and identify gaps
@@ -4457,10 +4492,9 @@ def fit_1m_vs_d(params, recipe, one_m_d, d_arr, hc_ll_test, update_cavity,
         # fit d v wavelength w/sigma-clipping
         fit_ll_d, mask = sigclip_polyfit(params, hc_ll_test, d_arr, degree=9)
         # plot d vs 1/m fit and residuals
-        if __name__ == '__main__':
-            recipe.plot('WAVE_FP_IPT_CWID_1MHC', one_m_d=one_m_d, d_arr=d_arr,
-                        m_init=m_init, fit_1m_d_func=fit_1m_d_func,
-                        res_d_final=res_d_final, dopd0=dopd0)
+        recipe.plot('WAVE_FP_IPT_CWID_1MHC', one_m_d=one_m_d, d_arr=d_arr,
+                    m_init=m_init, fit_1m_d_func=fit_1m_d_func,
+                    res_d_final=res_d_final, dopd0=dopd0)
 
         # save the parameters
         drs_data.save_cavity_files(params, fit_1m_d, fit_ll_d)
@@ -4498,10 +4532,10 @@ def update_fp_peak_wavelengths(params, recipe, llprops, fit_ll_d, m_vec,
             # calculate wavelength from fit to 1/m vs d
             fp_ll_new.append(2 * np.polyval(fit_ll_d, 1. / m_vec[i]) / m_vec[i])
     elif fp_cavfit_mode == 1:
+        # get the midpoint wavelength as a starting point
+        midpoint = np.median(llprops['LL_OUT_1'])
         # from the d v wavelength fit - iterative fit
-        # TODO: Melissa - Why 1600 - should this be a constant?
-        # TODO: ---> Ask Etienne
-        fp_ll_new = np.ones_like(m_vec) * 1600.
+        fp_ll_new = np.ones_like(m_vec) * midpoint
         for ite in range(6):
             recon_d = np.polyval(fit_ll_d, fp_ll_new)
             fp_ll_new = recon_d / m_vec * 2
