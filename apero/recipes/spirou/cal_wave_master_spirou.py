@@ -149,6 +149,12 @@ def __main__(recipe, params):
     fiber_types = drs_image.get_fiber_types(params)
 
     # ----------------------------------------------------------------------
+    # For wave master may need update cavity file
+    # TODO: Figure out when we should do this - if it is every time we
+    # TODO:    do a master may need to move cavity_length files to calibDB
+    # params.set('WAVE_FP_UPDATE_CAVITY', value=True, source=mainname)
+
+    # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
     for it in range(num_files):
@@ -334,14 +340,11 @@ def __main__(recipe, params):
                 # Construct master line reference files
                 # ----------------------------------------------------------
                 wavemap = fpprops['LL_FINAL']
-                cavity_poly = fpprops['FP_FIT_LL_D'][::-1]
                 # generate the hc reference lines
-                hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wavemap,
-                              cavity_poly=cavity_poly)
+                hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wavemap)
                 hclines = wave.get_master_lines(params, recipe, **hcargs)
                 # generate the fp reference lines
-                fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=wavemap,
-                              cavity_poly=cavity_poly)
+                fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=wavemap)
                 fplines = wave.get_master_lines(params, recipe, **fpargs)
 
                 # ----------------------------------------------------------
