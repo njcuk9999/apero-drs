@@ -23,9 +23,7 @@ __all__ = [
     'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_BLUE_LOW',
     'IMAGE_PIXEL_SIZE', 'FWHM_PIXEL_LSF',
     # general calib constants
-    'CAVITY_LENGTH_FILE', 'CAVITY_LENGTH_FILE_FMT', 'CAVITY_1M_FILE',
-    'CAVITY_LENGTH_FILE_COLS', 'CAVITY_LENGTH_FILE_START', 'CAVITY_LL_FILE',
-    'CAVITY_LENGTH_FILE_WAVECOL', 'OBJ_LIST_FILE', 'OBJ_LIST_FILE_FMT',
+    'CAVITY_1M_FILE', 'CAVITY_LL_FILE', 'OBJ_LIST_FILE', 'OBJ_LIST_FILE_FMT',
     'OBJ_LIST_CROSS_MATCH_RADIUS', 'OBJ_LIST_GAIA_URL', 'OBJ_LIST_SIMBAD_URL',
     'OBJ_LIST_GAIA_MAG_CUT', 'OBJ_LIST_GAIA_EPOCH', 'OBJ_LIST_GAIA_PLX_LIM',
     # qc constants
@@ -337,26 +335,6 @@ FWHM_PIXEL_LSF = Const('FWHM_PIXEL_LSF', value=None, dtype=float,
 # CALIBRATION: GENERAL SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION: GENERAL SETTINGS'
-# Define the cavity length file (located in the DRS_CALIB_DATA directory)
-CAVITY_LENGTH_FILE = Const('CAVITY_LENGTH_FILE', value=None, dtype=str,
-                           source=__NAME__, group=cgroup)
-
-# Define the cavity length file format (must be astropy.table format)
-CAVITY_LENGTH_FILE_FMT = Const('CAVITY_LENGTH_FILE_FMT', value=None,
-                               dtype=str, source=__NAME__, group=cgroup)
-
-# Define the cavity length file column names (must be separated by commas
-# and must be equal to the number of columns in file)
-CAVITY_LENGTH_FILE_COLS = Const('CAVITY_LENGTH_FILE_COLS', value=None,
-                                dtype=str, source=__NAME__, group=cgroup)
-
-# Define the cavity length file row the data starts
-CAVITY_LENGTH_FILE_START = Const('CAVITY_LENGTH_FILE_START', value=None,
-                                 dtype=str, source=__NAME__, group=cgroup)
-
-# Define coefficent column (Must be in CAVITY_LENGTH_FILE_COLS)
-CAVITY_LENGTH_FILE_WAVECOL = Const('CAVITY_LENGTH_FILE_WAVECOL', value=None,
-                                   dtype=str, source=__NAME__, group=cgroup)
 
 # Define the coefficients of the fit of 1/m vs d
 CAVITY_1M_FILE = Const('CAVITY_1M_FILE', value=None, dtype=str, source=__NAME__,
