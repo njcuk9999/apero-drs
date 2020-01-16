@@ -1906,7 +1906,7 @@ def plot_wave_hc_brightest_lines(plotter, graph, kwargs):
     # plot title and labels
     title = 'Delta-v error for matched lines (Iteration {0} of {1})'
     frame.set(title=title.format(iteration + 1, niters),
-              xlabel='Wavelength [nm]', ylabel='dv [km/s]')
+              xlabel='Wavelength [nm]', ylabel='dv [m/s]')
     # ------------------------------------------------------------------
     # adjust plot
     plt.subplots_adjust(top=0.9, bottom=0.1, left=0.05, right=0.95)
@@ -2574,11 +2574,11 @@ def plot_waveref_expected(plotter, graph, kwargs):
     # set up plot
     fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
     # ------------------------------------------------------------------
-    for order_num in nbo:
+    for order_num in range(nbo):
         # get order mask
         omask = order_num == orders
         # plot points
-        frame.scatter(wavemap[omask], diff[omask])
+        frame.scatter(wavemap[omask], diff[omask], s=5)
     # set labels
     frame.set(xlabel='Wavelength [nm]', ylabel='Pixel difference')
     # ------------------------------------------------------------------
