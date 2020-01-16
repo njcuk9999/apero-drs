@@ -334,12 +334,15 @@ def __main__(recipe, params):
                 # Construct master line reference files
                 # ----------------------------------------------------------
                 wavemap = fpprops['LL_FINAL']
+                cavity_poly = fpprops['FP_FIT_LL_D'][::-1]
                 # generate the hc reference lines
-                hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wavemap)
-                hclines = wave.get_master_lines(params, recipe, *hcargs)
+                hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wavemap,
+                              cavity_poly=cavity_poly)
+                hclines = wave.get_master_lines(params, recipe, **hcargs)
                 # generate the fp reference lines
-                fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=wavemap)
-                fplines = wave.get_master_lines(params, recipe, *fpargs)
+                fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=wavemap,
+                              cavity_poly=cavity_poly)
+                fplines = wave.get_master_lines(params, recipe, **fpargs)
 
                 # ----------------------------------------------------------
                 # Write master line references to file
