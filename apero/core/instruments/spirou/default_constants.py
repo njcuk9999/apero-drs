@@ -74,27 +74,6 @@ FWHM_PIXEL_LSF.value = 2.1
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
 # =============================================================================
-# Define the cavity length file (located in the DRS_CALIB_DATA directory)
-CAVITY_LENGTH_FILE = CAVITY_LENGTH_FILE.copy(__NAME__)
-CAVITY_LENGTH_FILE.value = 'cavity_length.dat'
-
-# Define the cavity length file format (must be astropy.table format)
-CAVITY_LENGTH_FILE_FMT = CAVITY_LENGTH_FILE_FMT.copy(__NAME__)
-CAVITY_LENGTH_FILE_FMT.value = 'ascii'
-
-# Define the cavity length file column names (must be separated by commas
-#   and must be equal to the number of columns in file)
-CAVITY_LENGTH_FILE_COLS = CAVITY_LENGTH_FILE_COLS.copy(__NAME__)
-CAVITY_LENGTH_FILE_COLS.value = 'NTH_ORDER, WAVELENGTH_COEFF'
-
-# Define the cavity length file row the data starts
-CAVITY_LENGTH_FILE_START = CAVITY_LENGTH_FILE_START.copy(__NAME__)
-CAVITY_LENGTH_FILE_START.value = 0
-
-# Define coefficent column (Must be in CAVITY_LENGTH_FILE_COLS)
-CAVITY_LENGTH_FILE_WAVECOL = CAVITY_LENGTH_FILE_WAVECOL.copy(__NAME__)
-CAVITY_LENGTH_FILE_WAVECOL.value = 'WAVELENGTH_COEFF'
-
 # Define the coefficients of the fit of 1/m vs d
 CAVITY_1M_FILE = CAVITY_1M_FILE.copy(__NAME__)
 CAVITY_1M_FILE.value = 'cavity_length_m_fit.dat'
