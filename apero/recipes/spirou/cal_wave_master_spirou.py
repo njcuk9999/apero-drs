@@ -344,7 +344,10 @@ def __main__(recipe, params):
                 hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wavemap)
                 hclines = wave.get_master_lines(params, recipe, **hcargs)
                 # generate the fp reference lines
-                fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=wavemap)
+                # TODO: Should we always use the most up-to-date even when
+                # TODO:    not saving?
+                fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=wavemap,
+                              cavity_poly=fpprops['FP_FIT_LL_D'][::-1])
                 fplines = wave.get_master_lines(params, recipe, **fpargs)
 
                 # ----------------------------------------------------------
