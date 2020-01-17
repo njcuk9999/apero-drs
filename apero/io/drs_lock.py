@@ -131,6 +131,9 @@ class Lock:
         :param name:
         :return:
         """
+        # check that path exists
+        if not os.path.exists(self.path):
+            self.__makelockdir()
         # clean name
         name = self.__clean_name(name)
         filename = name + '.lock'
