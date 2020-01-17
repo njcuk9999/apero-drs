@@ -17,6 +17,7 @@ from __future__ import division
 import os
 import time
 import numpy as np
+import random
 
 from apero.core import constants
 from apero.locale import drs_text
@@ -80,7 +81,7 @@ class Lock:
                 # add one to the number of tries
                 it += 1
                 # sleep for one second to allow another process to complete this
-                time.sleep(1)
+                time.sleep(1 + 0.1 * random.random())
         # if we had an error and got to 10 tries then cause an error
         if error is not None and it == 10:
             eargs = [type(error), error, lockpath, func_name]
@@ -112,7 +113,7 @@ class Lock:
                     break
                 except:
                     # whatever the problem sleep for a second
-                    time.sleep(0.1)
+                    time.sleep(0.1 * random.random())
                     # add to the timer
                     timer += 1
                     # update user every 10 seconds file is locked
@@ -153,7 +154,7 @@ class Lock:
                     break
                 except:
                     # whatever the problem sleep for a second
-                    time.sleep(0.1)
+                    time.sleep(0.1 * random.random())
                     # add to the timer
                     timer += 1
                     # update user every 10 seconds file is locked
@@ -244,7 +245,7 @@ class Lock:
         # add unique name to queue
         self.__makelockfile(name)
         # put in just to see if we are appending too quickly
-        time.sleep(0.1)
+        time.sleep(0.1 * random.random())
 
     def myturn(self, name):
         """
@@ -330,12 +331,18 @@ def synchronized(lock, name):
             timer = 0
             # find whether it is this name's turn
             cond, error = lock.myturn(name)
+            time.sleep(0.1 * random.random())
             # while the lock is active do not run function
             while not cond:
                 # sleep
                 time.sleep(1)
-                # update user every 10 seconds file is locked
-                if (timer % 10 == 0) and (timer != 0):
+                # if we reach 240 seconds reset the timer and reset the lock
+                #   directory (something has clashed)
+                if timer > 240:
+                    timer = 0
+                    lock.reset()
+                # update user every 60 seconds file is locked
+                if (timer % 60 == 0) and (timer != 0):
                     # log that we are waiting in a queue
                     wargs = [lock.path, name, timer]
                     wmsg = TextEntry('10-101-00003', args=wargs)
