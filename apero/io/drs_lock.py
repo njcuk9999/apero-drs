@@ -339,7 +339,12 @@ def synchronized(lock, name):
                 # if we reach 240 seconds reset the timer and reset the lock
                 #   directory (something has clashed)
                 if timer > 240:
+                    # reset the timer
                     timer = 0
+                    # wait 1 second + a bit (so two or more don't hit this
+                    #   at the same time)
+                    time.sleep(1 + random.random())
+                    # reset all lock files
                     lock.reset()
                 # update user every 60 seconds file is locked
                 if (timer % 60 == 0) and (timer != 0):
