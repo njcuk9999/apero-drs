@@ -547,8 +547,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
     acc = lprops['CENT_COEFFS']
     poly_wave_ref = wprops['COEFFS']
     une_lines, une_amps = drs_data.load_linelist(params)
-    _, fit_ll = drs_data.load_cavity_files(params)
-    poly_cavity = fit_ll[::-1]
+    _, poly_cavity = drs_data.load_cavity_files(params)
     # get the dimensions
     dim1, dim2 = fpdata.shape
     # -------------------------------------------------------------------------
