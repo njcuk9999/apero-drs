@@ -951,7 +951,7 @@ WAVE_EXTRACT_TYPE.value = 'E2DSFF'
 
 # define the fit degree for the wavelength solution
 WAVE_FIT_DEGREE = WAVE_FIT_DEGREE.copy(__NAME__)
-WAVE_FIT_DEGREE.value = 4
+WAVE_FIT_DEGREE.value = 5
 
 # Define intercept and slope for a pixel shift
 WAVE_PIXEL_SHIFT_INTER = WAVE_PIXEL_SHIFT_INTER.copy(__NAME__)
