@@ -2510,7 +2510,7 @@ def plot_wave_fp_single_order(plotter, graph, kwargs):
     all_lines = llprops['ALL_LINES_1']
     wave = llprops['LL_OUT_2']
     # get number of orders
-    nbo = len(all_lines)
+    nbo = llprops['LL_OUT_2'].shape[0]
     # ------------------------------------------------------------------
     # get order generator
     if order is None:
@@ -2570,6 +2570,7 @@ def plot_waveref_expected(plotter, graph, kwargs):
     fiber = kwargs['fiber']
     fibtype = kwargs['fibtype']
     nbo = kwargs['nbo']
+    iteration = kwargs.get('iteration', None)
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
@@ -2579,8 +2580,14 @@ def plot_waveref_expected(plotter, graph, kwargs):
         omask = order_num == orders
         # plot points
         frame.scatter(wavemap[omask], diff[omask], s=5)
+    # add title (with or without iteration)
+    if iteration is not None:
+        title = 'Pixel difference Fiber {0} Type {1} (Iteration = {2})'
+    else:
+        title = 'Pixel difference Fiber {0} Type {1}'
     # set labels
-    frame.set(xlabel='Wavelength [nm]', ylabel='Pixel difference')
+    frame.set(xlabel='Wavelength [nm]', ylabel='Pixel difference',
+              title=title.format(fiber, fibtype, iteration))
     # ------------------------------------------------------------------
     # update filename (adding order_num to end)
     suffix = 'mode{0}_fiber{1}'.format(fibtype, fiber)
