@@ -54,7 +54,7 @@ pcheck = drs_log.find_param
 class Database():
     def __init__(self, params, dbname):
         # set function name
-        func_name = display_func(params, __NAME__, '__init__', 'Database')
+        func_name = display_func(params, '__init__', __NAME__, 'Database')
         # set value from construction
         self.params = params
         self.dbname = dbname
