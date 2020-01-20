@@ -255,7 +255,7 @@ def __main__(recipe, params):
                 # create copy of infile
                 hc_update = hc_e2ds_file.completecopy(hc_e2ds_file)
                 # update wave solution
-                hc_update = wave.add_wave_keys(hc_update, wprops)
+                hc_update = wave.add_wave_keys(params, hc_update, wprops)
                 # write hc update
                 hc_update.write_file()
                 # add to output files (for indexing)
@@ -322,7 +322,7 @@ def __main__(recipe, params):
                     # create copy of input e2ds hc file
                     hc_update = hc_e2ds_file.completecopy(hc_e2ds_file)
                     # update wave solution
-                    hc_update = wave.add_wave_keys(hc_update, wprops)
+                    hc_update = wave.add_wave_keys(params, hc_update, wprops)
                     # write hc update
                     hc_update.write_file()
                     # log that we are updating the HC file with wave params
@@ -331,7 +331,7 @@ def __main__(recipe, params):
                     # create copy of input e2ds fp file
                     fp_update = fp_e2ds_file.completecopy(fp_e2ds_file)
                     # update wave solution
-                    fp_update = wave.add_wave_keys(fp_update, wprops)
+                    fp_update = wave.add_wave_keys(params, fp_update, wprops)
                     # write hc update
                     fp_update.write_file()
                     # add to output files (for indexing)

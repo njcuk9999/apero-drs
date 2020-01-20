@@ -65,7 +65,8 @@ display_func = drs_log.display_func
 # Define user functions
 # =============================================================================
 def get_masterwave_filename(params, fiber):
-    func_name = __NAME__ + '.get_masterwave_filename()'
+    # set function name
+    _ = display_func(params, 'get_masterwave_filename', __NAME__)
     # get pseudo constants
     pconst = constants.pload(params['INSTRUMENT'])
     # deal with fibers that we don't have
@@ -125,7 +126,8 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
                        this will overwrite all other options
     :return:
     """
-    func_name = __NAME__ + '.get_wavesolution()'
+    # set function name
+    func_name = display_func(params, 'get_wavesolution', __NAME__)
     # get parameters from params/kwargs
     filename = kwargs.get('filename', None)
     force = pcheck(params, 'CALIB_DB_FORCE_WAVESOL', 'force', kwargs,
@@ -364,7 +366,7 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
             wprops[wfp_keys[wfpi]] = wfp_values[wfpi]
     # set the source
     keys = ['WAVEMAP', 'WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG', 'COEFFS',
-            'WAVETIME',  'WAVEINST', 'NBPIX'] + wfp_keys
+            'WAVETIME', 'WAVEINST', 'NBPIX'] + wfp_keys
     wprops.set_sources(keys, func_name)
 
     # -------------------------------------------------------------------------
@@ -374,7 +376,7 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
 
 def get_wavelines(params, recipe, header=None, infile=None, **kwargs):
     # set up function name
-    func_name = display_func(params, __NAME__, 'get_wavelines')
+    func_name = display_func(params, 'get_wavelines', __NAME__)
     # get parameters from params/kwargs
     hclinefile = kwargs.get('hclinefile', None)
     fplinefile = kwargs.get('fplinefile', None)
@@ -428,7 +430,7 @@ def get_wavelines(params, recipe, header=None, infile=None, **kwargs):
     else:
         # get the wave entries
         hcentries = drs_database.get_key_from_db(params, key_hc, cdb, header,
-                                                   n_ent=1, required=False)
+                                                 n_ent=1, required=False)
         # if there are still no wave entries use master wave file
         if len(hcentries) == 0:
             # Raise error - no master hc lines found
@@ -459,7 +461,7 @@ def get_wavelines(params, recipe, header=None, infile=None, **kwargs):
     else:
         # get the wave entries
         fpentries = drs_database.get_key_from_db(params, key_fp, cdb, header,
-                                                   n_ent=1, required=False)
+                                                 n_ent=1, required=False)
         # if there are still no wave entries use master wave file
         if len(fpentries) == 0:
             # Raise error - no master fp lines found
@@ -484,7 +486,9 @@ def get_wavelines(params, recipe, header=None, infile=None, **kwargs):
     return hclines, hcsource, fplines, fpsource
 
 
-def add_wave_keys(infile, props):
+def add_wave_keys(params, infile, props):
+    # set function name
+    _ = display_func(params, 'add_wave_keys', __NAME__)
     # add wave parameters
     infile.add_hkey('KW_WAVEFILE', value=props['WAVEFILE'])
     infile.add_hkey('KW_WAVESOURCE', value=props['WAVESOURCE'])
@@ -514,7 +518,7 @@ def add_wave_keys(infile, props):
 
 
 def check_wave_consistency(params, props, **kwargs):
-    func_name = __NAME__ + '.check_wave_consistency()'
+    func_name = display_func(params, 'check_wave_consistency', __NAME__)
     # get constants from params/kwargs
     required_deg = pcheck(params, 'WAVE_FIT_DEGREE', 'num_coeffs', kwargs,
                           func_name)
@@ -532,7 +536,7 @@ def check_wave_consistency(params, props, **kwargs):
         wargs = [deg, required_deg]
         WLOG(params, 'warning', TextEntry('10-017-00003', args=wargs))
         # setup output storage
-        output_coeffs = np.zeros_like(props['COEFFS'])
+        output_coeffs = np.zeros([nbo, required_deg + 1])
         output_map = np.zeros_like(props['WAVEMAP'])
         # define pixel array
         xfit = np.arange(output_map.shape[1])
@@ -547,7 +551,7 @@ def check_wave_consistency(params, props, **kwargs):
             output_map[order_num] = yfit
         # update props
         props['WAVEMAP'] = output_map
-        props['COEFFS'] = output_map
+        props['COEFFS'] = output_coeffs
         props['DEG'] = required_deg
         props.set_sources(['WAVEMAP', 'COEFFS', 'DEG'], func_name)
     # return props
@@ -560,7 +564,7 @@ def check_wave_consistency(params, props, **kwargs):
 def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
                      **kwargs):
     # set the function name
-    func_name = display_func(params, __NAME__, 'get_master_lines')
+    func_name = display_func(params, 'get_master_lines', __NAME__)
     # get parameters from params and kwargs
     nsig_min = pcheck(params, 'WAVEREF_NSIG_MIN', 'nsig_min', kwargs, func_name)
     wmax = pcheck(params, 'WAVEREF_EDGE_WMAX', 'wmax', kwargs, func_name)
@@ -577,6 +581,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
                       func_name)
     fp_inv_itr = pcheck(params, 'WAVEREF_FP_POLYINV', 'fp_inv_itr', kwargs,
                         func_name)
+    iteration = kwargs.get('iteration', None)
 
     # ------------------------------------------------------------------
     # get psuedo constants
@@ -779,7 +784,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
                     # calculate the RMS of the fit
                     rms = mp.nanstd(ypix - model)
                     # if we find 'good' values add to storage
-                    cond1 = np.abs(popt[1] - xpixi) < 1
+                    cond1 = np.abs(popt[1] - xpixi) < wfit
                     cond2 = (popt[2] < 2) and (popt[2] > 0.5)
                     if cond1 and cond2:
                         amp[good[it]] = popt[0]
@@ -797,7 +802,6 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
                  fibtype]
         emsg = 'Order {0}/{1} Fiber {2} Valid lines: {3}/{4} (type={5})'
         WLOG(params, '', emsg.format(*eargs))
-
 
     # lines that are not at a high enough SNR are flagged as NaN
     # we do NOT remove these lines as we want all tables to have
@@ -817,7 +821,8 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
     # ----------------------------------------------------------------------
     # debug plot expected lines vs measured positions
     recipe.plot('WAVEREF_EXPECTED', orders=list_orders, wavemap=list_waves,
-                diff=diffpix, fiber=fiber, nbo=nbo, fibtype=fibtype)
+                diff=diffpix, fiber=fiber, nbo=nbo, fibtype=fibtype,
+                iteration=iteration)
 
     # ----------------------------------------------------------------------
     # Create table to store them in
@@ -834,6 +839,8 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
 
 def write_master_lines(params, recipe, hce2ds, fpe2ds, hclines, fplines,
                        fpwavefile, fiber):
+    # set function name
+    _ = display_func(params, 'write_master_lines', __NAME__)
     # ------------------------------------------------------------------
     # write hc lines
     # ------------------------------------------------------------------
@@ -863,7 +870,7 @@ def write_master_lines(params, recipe, hce2ds, fpe2ds, hclines, fplines,
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     fpfile = recipe.outputs['WAVEM_FPLIST'].newcopy(recipe=recipe,
-                                                   fiber=fiber)
+                                                    fiber=fiber)
     # construct the filename from file instance
     fpfile.construct_filename(params, infile=fpe2ds)
     # ------------------------------------------------------------------
@@ -897,13 +904,14 @@ def update_wavelength_measured(params, reftable, wavemap, kind):
     :param params:
     :param reftable:
     :param wavemap:
+    :param kind:
 
     :return:
     """
     # set function name
-    func_name = display_func(params, __NAME__, 'update_wavelength_measured')
+    func_name = display_func(params, 'update_wavelength_measured', __NAME__)
     # check columns for table
-    keys  = ['ORDER', 'PIXEL_MEAS', 'WAVE_MEAS']
+    keys = ['ORDER', 'PIXEL_MEAS', 'WAVE_MEAS']
     for key in keys:
         if key not in reftable:
             eargs = [key, kind, func_name]
@@ -934,7 +942,8 @@ def update_wavelength_measured(params, reftable, wavemap, kind):
 # Define wave solution functions
 # =============================================================================
 def hc_wavesol(params, recipe, iprops, e2dsfile, fiber, **kwargs):
-    func_name = __NAME__ + '.hc_wavesol()'
+    # set function name
+    func_name = display_func(params, 'hc_wavesol', __NAME__)
     # get parameters from params / kwargs
     wave_mode_hc = pcheck(params, 'WAVE_MODE_HC', 'wave_mode_hc', kwargs,
                           func_name)
@@ -984,7 +993,7 @@ def hc_wavesol(params, recipe, iprops, e2dsfile, fiber, **kwargs):
     # TODO: remove if once we only use cal_wave or cal_wave_master/night
     if 'WAVEM_HCMAP' in recipe.outputs:
         wavefile = recipe.outputs['WAVEM_HCMAP'].newcopy(recipe=recipe,
-                                                        fiber=fiber)
+                                                         fiber=fiber)
     else:
         wavefile = recipe.outputs['WAVE_HCMAP'].newcopy(recipe=recipe,
                                                         fiber=fiber)
@@ -1044,6 +1053,8 @@ def hc_wavesol(params, recipe, iprops, e2dsfile, fiber, **kwargs):
 
 
 def hc_wavesol_ea(params, recipe, iprops, e2dsfile, fiber, wavell, ampll):
+    # set function name
+    _ = display_func(params, 'hc_wavesol_ea', __NAME__)
     # ------------------------------------------------------------------
     # Find Gaussian Peaks in HC spectrum
     # ------------------------------------------------------------------
@@ -1069,7 +1080,8 @@ def hc_wavesol_ea(params, recipe, iprops, e2dsfile, fiber, wavell, ampll):
 
 def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
                blaze, fiber, **kwargs):
-    func_name = __NAME__ + '.fp_wavesol()'
+    # set function name
+    func_name = display_func(params, 'fp_wavesol', __NAME__)
     # get parameters from params / kwargs
     wave_mode_fp = pcheck(params, 'WAVE_MODE_FP', 'wave_mode_fp', kwargs,
                           func_name)
@@ -1162,7 +1174,7 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
     # TODO: remove if once we only use cal_wave or cal_wave_master/night
     if 'WAVEM_FPMAP' in recipe.outputs:
         wavefile = recipe.outputs['WAVEM_FPMAP'].newcopy(recipe=recipe,
-                                                        fiber=fiber)
+                                                         fiber=fiber)
     else:
         wavefile = recipe.outputs['WAVE_FPMAP'].newcopy(recipe=recipe,
                                                         fiber=fiber)
@@ -1202,7 +1214,8 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
 
 def fp_wavesol_bauer(params, recipe, llprops, fpe2dsfile, blaze, fiber,
                      **kwargs):
-    func_name = __NAME__ + '.fp_wavesol_bauer()'
+    # set function name
+    func_name = display_func(params, 'fp_wavesol_bauer', __NAME__)
     # get parameters from params/kwargs
     start = pcheck(params, 'WAVE_N_ORD_START')
     end = pcheck(params, 'WAVE_N_ORD_FINAL')
@@ -1295,7 +1308,8 @@ def fp_wavesol_bauer(params, recipe, llprops, fpe2dsfile, blaze, fiber,
 
 def fp_wavesol_lovis(params, recipe, llprops, fpe2dsfile, hce2dsfile,
                      blaze, fiber, **kwargs):
-    func_name = __NAME__ + '.fp_wavesol_lovis()'
+    # set function name
+    func_name = display_func(params, 'fp_wavesol_lovis', __NAME__)
     # get parameters from params/kwargs
     n_init = pcheck(params, 'WAVE_N_ORD_START', 'n_init', kwargs, func_name)
     n_fin = pcheck(params, 'WAVE_N_ORD_FINAL', 'n_fin', kwargs, func_name)
@@ -1362,7 +1376,7 @@ def fp_wavesol_lovis(params, recipe, llprops, fpe2dsfile, hce2dsfile,
     # Assign absolute FP numbers for rest of orders by wavelength matching
     # ----------------------------------------------------------------------
     m_vec = assign_abs_fp_numbers(params, fp_ll, dif_n, m_vec, m_ord_prev,
-                                 n_init, n_fin, ll_offset)
+                                  n_init, n_fin, ll_offset)
 
     # ----------------------------------------------------------------------
     # Derive d for each HC line
@@ -1379,7 +1393,6 @@ def fp_wavesol_lovis(params, recipe, llprops, fpe2dsfile, hce2dsfile,
                        update_cavity, m_init, fp_ll, fiber)
     fit_1m_d, fit_ll_d, one_m_d, d_arr = fout
 
-
     # ----------------------------------------------------------------------
     # Get lines from the fp now that we have a proper cavity length
     #   including orders that we didn't fit before
@@ -1392,7 +1405,7 @@ def fp_wavesol_lovis(params, recipe, llprops, fpe2dsfile, hce2dsfile,
     xdetails2, lldetails2, scale2, totallines2 = llout[4:]
     # update llprops
     llprops['LL_OUT_2'] = ll_out_2
-    llprops['LL_PARAMS_2'] = ll_params_2[::-1]
+    llprops['LL_PARAM_2'] = ll_params_2[::-1]
     # TODO: Need to calculate
     llprops['X_MEAN_2'] = xmean2
     # TODO: Need to calculate
@@ -1406,12 +1419,10 @@ def fp_wavesol_lovis(params, recipe, llprops, fpe2dsfile, hce2dsfile,
     # TODO: Need to calculate
     llprops['TOTAL_LINES_2'] = totallines2
     # set source
-    keys = ['LL_OUT_2', 'LL_PARAMS_2', 'X_MEAN_2', 'X_VAR_2', 'X_DETAILS_2',
+    keys = ['LL_OUT_2', 'LL_PARAM_2', 'X_MEAN_2', 'X_VAR_2', 'X_DETAILS_2',
             'LL_DETAILS_2', 'LL_DETAILS_2', 'SCALE_2']
     llprops.set_sources(keys, func_name)
 
-    # TODO: remove breakpoint
-    constants.breakpoint(params)
     # # ----------------------------------------------------------------------
     # # Update FP peak wavelengths
     # # ----------------------------------------------------------------------
@@ -1494,23 +1505,29 @@ def fp_wavesol_lovis(params, recipe, llprops, fpe2dsfile, hce2dsfile,
 
 def fit_wavemap_cav_iteratively(params, recipe, inwavemap, e2dsfile,
                                 cavity_poly):
-
+    # set function name
+    display_func(params, __NAME__, 'fit_wavemap_cav_iteratively')
     # get parameters from params and/or kwargs
-    n_iterations = 4
+    n_iterations = 5
     fit_deg = params['WAVE_FIT_DEGREE']
+    fit_deg = 5
     nsig = params['WAVE_NIGHT_NSIG_FIT_CUT']
     # copy wave map
     wavemap = np.array(inwavemap)
     # get the number of orders and number of pixels
     nbo, nbpix = wavemap.shape
     # set up coefficient storage
-    wcoeffs_arr = np.zeros(nbo, fit_deg + 1)
+    wcoeffs_arr = np.zeros((nbo, fit_deg + 1))
+    # set fp lines for stats storage
+    fplines = None
     # loop around iterations
     for ite in range(n_iterations):
+        # TODO: language database
+        WLOG(params, 'info', 'Iteration {0} of {1}'.format(ite + 1, n_iterations))
+        # get master line table
         fpargs = dict(e2dsfile=e2dsfile, wavemap=wavemap,
-                      cavity_poly=cavity_poly)
+                      cavity_poly=cavity_poly, iteration=(ite + 1))
         fplines = get_master_lines(params, recipe, **fpargs)
-
         # get data from table
         pixel_meas = fplines['PIXEL_MEAS']
         wave_ref = fplines['WAVE_REF']
@@ -1521,24 +1538,87 @@ def fit_wavemap_cav_iteratively(params, recipe, inwavemap, e2dsfile,
             # only keep valid lines
             good &= np.isfinite(pixel_meas)
             # fit the lines in this order
-            wcoeffs, mask = mp.robust_polyfit(pixel_meas[good], wave_ref[good],
-                                              fit_deg, nsig)
+            # We do *not* use a sigma-clipping here as some orders may
+            #  have very structured residuals that would be seen as
+            #  high-sigma outliers. The last 2 iterations will have
+            #  a sigma-clipping
+
+            # for the first iteration just polyfit - update the coefficients
+            if ite == 0:
+                # fit the pixels to wavelength
+                wcoeffs = mp.nanpolyfit(pixel_meas[good], wave_ref[good],
+                                        fit_deg)
+                # update the coefficient array
+                wcoeffs_arr[order_num] = wcoeffs
+            # for other iterations we are fitting the residuals
+            #   thus we must add to the wcoeffs from iteration = 0
+            else:
+                # calculate the difference between wavelength from coeffs
+                #   and model predicted wavelength
+                wavemap_coeff = np.polyval(wcoeffs_arr[order_num],
+                                           pixel_meas[good])
+                diffwavemap = wave_ref[good] - wavemap_coeff
+                # fit the residuals (of the lines) in this order
+                #   if we are on early iterations do not sigma clip (just use
+                #   a poly fit
+                if ite < (n_iterations - 2):
+                    wcoeffs = mp.nanpolyfit(pixel_meas[good], diffwavemap,
+                                            fit_deg)
+                # if we are on the last two iterations sigma clip
+                else:
+                    wcoeffs, mask = mp.robust_polyfit(pixel_meas[good],
+                                                      diffwavemap, fit_deg,
+                                                      nsig)
+                # update the coefficient array (add as we fit the residuals
+                wcoeffs_arr[order_num] += wcoeffs
+                # calculate the dv of the lines (in m/s)
+                dv_lines = diffwavemap / wave_ref[good] * speed_of_light_ms
+                # log message: Order: median abs dev for order m/s
+                wargs = [order_num, np.nanmedian(np.abs(dv_lines))]
+                WLOG(params, '', TextEntry('40-017-00041', args=wargs))
             # update the wave map
-            wavemap[order_num] = np.polyval(wcoeffs, np.arange(nbpix))
-
-            wcoeffs[order_num] = wcoeffs
-
-    # TODO: Figure out with EA how to get values for xmean, xvar, xdetails
-    # TODO      lldetails, scale and tlines
-
+            wavemap[order_num] = np.polyval(wcoeffs_arr[order_num],
+                                            np.arange(nbpix))
+    # get stats for storage
+    scale = []
+    xdetails, lldetails = [], []
+    # loop around orders
+    for order_num in range(nbo):
+        # get the lines for this order
+        good = fplines['ORDER'] == order_num
+        good &= np.isfinite(fplines['WAVE_MEAS'])
+        # get values
+        x_fit = fplines['PIXEL_MEAS'][good]
+        lines = fplines['WAVE_REF'][good]
+        cfit = np.repeat(np.nan, len(x_fit))
+        weight = np.ones_like(x_fit)
+        # get the derivative of the central pixel
+        cent_wder = np.polyval(np.polyder(wcoeffs_arr[order_num]), lines)
+        # get the wave value at the central pixel
+        cent_wave = np.polyval(wcoeffs_arr[order_num], lines)
+        # get the scale
+        scale.append((cent_wder / cent_wave) * speed_of_light)
+        xdetails.append([lines, x_fit, cfit, weight])
+        icfit = np.polyval(wcoeffs_arr[order_num], x_fit)
+        res = icfit - lines
+        nres = speed_of_light * (res / lines)
+        lldetails.append([nres, weight])
+    # get mean, variance and total number of lines
+    xmean = mp.nanmean(fplines['PIXEL_REF']-fplines['PIXEL_MEAS'])
+    xvar = mp.nanstd(fplines['PIXEL_REF']-fplines['PIXEL_MEAS'])
+    tlines = np.sum(np.isfinite(fplines['WAVE_MEAS']))
+    # need to flip coefficients
+    wave_params = wcoeffs_arr[:, ::-1]
     # return parameters
-    return wavemap, wcoeffs_arr, xmean, xvar, xdetails, lldetails, scale, tlines
+    return wavemap, wave_params, xmean, xvar, xdetails, lldetails, scale, tlines
 
 
 # =============================================================================
 # Define hc aux functions
 # =============================================================================
 def hc_quality_control(params, hcprops):
+    # set function name
+    _ = display_func(params, 'hc_quality_control', __NAME__)
     # set passed variable and fail message list
     fail_msg = []
     qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
@@ -1606,6 +1686,8 @@ def hc_quality_control(params, hcprops):
 
 
 def hc_log_global_stats(params, hcprops, e2dsfile, fiber):
+    # set function name
+    _ = display_func(params, 'hc_log_global_stats', __NAME__)
     # calculate catalog-fit residuals in km/s
     res_hc = []
     sumres_hc = 0.0
@@ -1635,6 +1717,8 @@ def hc_log_global_stats(params, hcprops, e2dsfile, fiber):
 # TODO: remove if we are using master/night recipes
 def hc_write_wavesolution(params, recipe, llprops, infile, fiber, combine,
                           rawhcfiles, qc_params, iwprops, wprops):
+    # set function name
+    _ = display_func(params, 'hc_write_wavesolution', __NAME__)
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     wavefile = recipe.outputs['WAVE_HCMAP'].newcopy(recipe=recipe,
@@ -1660,7 +1744,7 @@ def hc_write_wavesolution(params, recipe, llprops, infile, fiber, combine,
     wavefile.add_hkey('KW_INIT_WAVE', value=iwprops['WAVEFILE'])
     # ------------------------------------------------------------------
     # add the order num, fit degree and fit coefficients
-    wavefile = add_wave_keys(wavefile, wprops)
+    wavefile = add_wave_keys(params, wavefile, wprops)
     # ------------------------------------------------------------------
     # add constants used (for reproduction)
     wavefile.add_hkey('KW_WAVE_FITDEG', value=llprops['WAVE_FIT_DEGREE'])
@@ -1739,6 +1823,8 @@ def hc_write_wavesolution(params, recipe, llprops, infile, fiber, combine,
 
 # TODO: remove if we are using master/night recipes
 def hc_write_resmap(params, recipe, llprops, infile, wavefile, fiber):
+    # set function name
+    _ = display_func(params, 'hc_write_resmap', __NAME__)
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     resfile = recipe.outputs['WAVE_HCRES'].newcopy(recipe=recipe,
@@ -1768,10 +1854,12 @@ def hc_write_resmap(params, recipe, llprops, infile, wavefile, fiber):
 
 def hc_write_wavesol_master(params, recipe, llprops, infile, fiber, combine,
                             rawhcfiles, qc_params, iwprops, wprops):
+    # set function name
+    _ = display_func(params, 'hc_write_wavesol_master', __NAME__)
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     wavefile = recipe.outputs['WAVEM_HCMAP'].newcopy(recipe=recipe,
-                                                    fiber=fiber)
+                                                     fiber=fiber)
     # construct the filename from file instance
     wavefile.construct_filename(params, infile=infile)
     # ------------------------------------------------------------------
@@ -1793,7 +1881,7 @@ def hc_write_wavesol_master(params, recipe, llprops, infile, fiber, combine,
     wavefile.add_hkey('KW_INIT_WAVE', value=iwprops['WAVEFILE'])
     # ------------------------------------------------------------------
     # add the order num, fit degree and fit coefficients
-    wavefile = add_wave_keys(wavefile, wprops)
+    wavefile = add_wave_keys(params, wavefile, wprops)
     # ------------------------------------------------------------------
     # add constants used (for reproduction)
     wavefile.add_hkey('KW_WAVE_FITDEG', value=llprops['WAVE_FIT_DEGREE'])
@@ -1871,10 +1959,12 @@ def hc_write_wavesol_master(params, recipe, llprops, infile, fiber, combine,
 
 
 def hc_write_resmap_master(params, recipe, llprops, infile, wavefile, fiber):
+    # set function name
+    _ = display_func(params, 'hc_write_resmap_master', __NAME__)
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     resfile = recipe.outputs['WAVEM_HCRES'].newcopy(recipe=recipe,
-                                                   fiber=fiber)
+                                                    fiber=fiber)
     # construct the filename from file instance
     resfile.construct_filename(params, infile=infile)
     # ------------------------------------------------------------------
@@ -1902,7 +1992,8 @@ def hc_write_resmap_master(params, recipe, llprops, infile, wavefile, fiber):
 # Define hc worker functions
 # =============================================================================
 def generate_shifted_wave_map(params, props, **kwargs):
-    func_name = __NAME__ + '.generate_wave_map()'
+    # set function name
+    func_name = display_func(params, 'generate_shifted_wave_map', __NAME__)
     # get constants from p
     pixel_shift_inter = pcheck(params, 'WAVE_PIXEL_SHIFT_INTER', 'pixelshifti',
                                kwargs, func_name)
@@ -1936,12 +2027,14 @@ def find_hc_gauss_peaks(params, recipe, iprops, e2dsfile, fiber, **kwargs):
 
     :param params:
     :param recipe:
+    :param iprops:
     :param e2dsfile:
     :param fiber:
     :param kwargs:
     :return:
     """
-    func_name = __NAME__ + '.find_hc_gauss_peaks()'
+    # set function name
+    func_name = display_func(params, 'find_hc_gauss_peaks', __NAME__)
     # get constants from params/kwargs
     wsize = pcheck(params, 'WAVE_HC_FITBOX_SIZE', 'wsize', kwargs,
                    func_name)
@@ -2109,7 +2202,8 @@ def load_hc_init_linelist(params, recipe, e2dsfile, fiber, **kwargs):
     :param kwargs:
     :return:
     """
-    func_name = __NAME__ + '.load_hc_init_linelist()'
+    # set function name
+    func_name = display_func(params, 'load_hc_init_linelist', __NAME__)
     # get parameters from params/kwargs
     filefmt = pcheck(params, 'WAVE_HCLL_FILE_FMT', 'filefmt', kwargs, func_name)
 
@@ -2183,6 +2277,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
     not 100% elegant, but who cares, it takes 5µs ...
 
     :param params:
+    :param recipe:
     :param llprops:
     :param iprops:
     :param wavell:
@@ -2190,7 +2285,8 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
     :param kwargs:
     :return:
     """
-    func_name = __NAME__ + '.fit_gaussian_triplets()'
+    # set function name
+    func_name = display_func(params, 'fit_gaussian_triplets', __NAME__)
     # get constants from params/kwargs
     nmax_bright = pcheck(params, 'WAVE_HC_NMAX_BRIGHT', 'nmax_bright', kwargs,
                          func_name)
@@ -2310,7 +2406,6 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
                 wave_catalog[w_it] = wavell[id_match]
                 amp_catalog[w_it] = ampll[id_match]
                 dv[w_it] = distv
-
 
         # ------------------------------------------------------------------
         # loop through orders and reject bright lines not within
@@ -2441,10 +2536,6 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
             eargs = [mp.nansum(good), min_tot_num_lines, func_name]
             WLOG(params, 'error', TextEntry('00-017-00003', args=eargs))
 
-
-
-
-
         # ------------------------------------------------------------------
         # Linear model slice generation
         # ------------------------------------------------------------------
@@ -2478,7 +2569,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
         # set the initial value of sig to a large number (but not as large as
         #   sig_prev
         sig = np.inf
-
+        coeffs = None
 
         while sigma_it < sigma_clip_num:
             sig_prev = sig
@@ -2488,8 +2579,8 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
             # with warnings.catch_warnings(record=True) as _:
             #   amps, recon = mp.linear_minimization(*largs)
             #   recon  = np.zeros_like(largs[0])
-            coeffs, recon = wave_lmfit(orders, xgau, wave_catalog, recon0,
-                                             order_fit_cont, nbo)
+            coeffs, recon = wave_lmfit(params, orders, xgau, wave_catalog,
+                                       recon0, order_fit_cont, nbo)
 
             # # add the amps and recon to new storage
             # amps0 = amps0 + amps
@@ -2520,7 +2611,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
 
             # initialize lists for saving
             recon0_aux = []
-            #lin_mod_slice_aux = []
+            # lin_mod_slice_aux = []
             wave_catalog_aux = []
             amp_catalog_aux = []
             xgau_aux = []
@@ -2541,7 +2632,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
                     sig_mask = absdev_ord < mp.nanmax(absdev_ord)
                     # apply mask
                     recon0_aux.append(recon[omask][sig_mask])
-                    #lin_mod_slice_aux.append(lin_mod_slice[omask][sig_mask])
+                    # lin_mod_slice_aux.append(lin_mod_slice[omask][sig_mask])
                     wave_catalog_aux.append(wave_catalog[omask][sig_mask])
                     amp_catalog_aux.append(amp_catalog[omask][sig_mask])
                     xgau_aux.append(xgau[omask][sig_mask])
@@ -2553,7 +2644,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
                 # if all below threshold keep all
                 else:
                     recon0_aux.append(recon[omask])
-                    #lin_mod_slice_aux.append(lin_mod_slice[omask])
+                    # lin_mod_slice_aux.append(lin_mod_slice[omask])
                     wave_catalog_aux.append(wave_catalog[omask])
                     amp_catalog_aux.append(amp_catalog[omask])
                     xgau_aux.append(xgau[omask])
@@ -2565,7 +2656,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
             # save aux lists to initial arrays
             orders = np.concatenate(orders_aux)
             recon0 = np.concatenate(recon0_aux)
-            #lin_mod_slice = np.concatenate(lin_mod_slice_aux)
+            # lin_mod_slice = np.concatenate(lin_mod_slice_aux)
             wave_catalog = np.concatenate(wave_catalog_aux)
             amp_catalog = np.concatenate(amp_catalog_aux)
             xgau = np.concatenate(xgau_aux)
@@ -2578,7 +2669,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
             sig1 = sig * 1000 / np.sqrt(len(wave_catalog))
             wargs = [sigma_it, sig, sig1, len(wave_catalog)]
             WLOG(params, '', TextEntry('40-017-00009', args=wargs))
-            sigma_it +=1
+            sigma_it += 1
         # ------------------------------------------------------------------
         # Plot wave catalogue all lines and brightest lines
         # ------------------------------------------------------------------
@@ -2591,7 +2682,8 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
         # ------------------------------------------------------------------
         xpix = np.arange(nbpix)
         wave_map2 = np.zeros((nbo, nbpix))
-        poly_wave_sol = np.array(coeffs)[:,::-1] # np.zeros_like(iprops['COEFFS'])
+        poly_wave_sol = np.array(coeffs)[:,::-1]
+        # poly_wave_sol = np.zeros_like(iprops['COEFFS'])
 
         # loop around the orders
         for order_num in range(nbo):
@@ -2601,12 +2693,12 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
                 wargs = [order_num]
                 WLOG(params, 'warning', TextEntry('10-017-00005', args=wargs))
 
-            #poly_wave_map[order_num] =
+            # poly_wave_map[order_num] =
             # loop around order fit continuum to propagate new coefficients
-            #ii = 0
+            # ii = 0
 
-            #for iord in range(coeffs.shape[0]):
-            #for expo_xpix in range(len(order_fit_cont)):
+            # for iord in range(coeffs.shape[0]):
+            # for expo_xpix in range(len(order_fit_cont)):
             #    for expo_order in range(order_fit_cont[expo_xpix]):
             #         # calculate new coefficient
             #         new_coeff = (order_num ** expo_order) * amps0[ii]
@@ -2631,7 +2723,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
     llprops['DV_T'] = dv
     llprops['EW_T'] = ew
     llprops['PEAK_T'] = peak2
-    #llprops['LIN_MOD_SLICE'] = lin_mod_slice
+    # llprops['LIN_MOD_SLICE'] = lin_mod_slice
     llprops['RECON0'] = recon0
     # set sources
     keys = ['WAVE_CATALOG', 'AMP_CATALOG', 'SIG', 'SIG1', 'POLY_WAVE_SOL',
@@ -2663,7 +2755,9 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
     return llprops
 
 
-def wave_lmfit(orders, xgau, wave_catalog, recon0, order_fit_cont, nbo):
+def wave_lmfit(params, orders, xgau, wave_catalog, recon0, order_fit_cont, nbo):
+    # set function name
+    _ = display_func(params, 'wave_lmfit', __NAME__)
     # set up an empty set of coefficents
     coeffs = np.zeros([nbo, len(order_fit_cont)])
     # get degree from order fit continuum
@@ -2678,9 +2772,10 @@ def wave_lmfit(orders, xgau, wave_catalog, recon0, order_fit_cont, nbo):
         #  parameters
         if np.sum(good) > len(order_fit_cont):
             # calc residuals
-            #res = wave_catalog - recon0
+            # res = wave_catalog - recon0
             # calculate coefficients
-            coeffs[order_num] = np.polyfit(xgau[good], wave_catalog[good], fitdeg)
+            coeffs[order_num] = np.polyfit(xgau[good], wave_catalog[good],
+                                           fitdeg)
     # set up storage of the amps
     amps = []
     # loop around the coefficients in order fit continuum (backwards)
@@ -2689,7 +2784,7 @@ def wave_lmfit(orders, xgau, wave_catalog, recon0, order_fit_cont, nbo):
         good = coeffs[:, icoeff] != 0
         # calculate the fit in the order direction
         ordfit = np.polyfit(ordpix[good], coeffs[good, icoeff],
-                            order_fit_cont[::-1][icoeff]-1)
+                            order_fit_cont[::-1][icoeff] - 1)
         # add to storage
         amps += list(ordfit[::-1])
         # recalculate the coeff values
@@ -2700,14 +2795,14 @@ def wave_lmfit(orders, xgau, wave_catalog, recon0, order_fit_cont, nbo):
         # find all places where orders is in the order
         good = orders == order_num
         # calculate the recon for this order
-        recon[good] = np.polyval(coeffs[order_num,:], xgau[good])
+        recon[good] = np.polyval(coeffs[order_num, :], xgau[good])
     # return amps and recon
     return coeffs, recon
 
 
 def generate_resolution_map(params, recipe, llprops, e2dsfile, **kwargs):
-    func_name = __NAME__ + '.generate_resolution_map()'
-
+    # set function name
+    func_name = display_func(params, 'generate_resolution_map', __NAME__)
     # get constants from params / kwargs
     resmap_size = pcheck(params, 'WAVE_HC_RESMAP_SIZE', 'resmap_size',
                          kwargs, func_name, mapf='list', dtype=int)
@@ -3064,7 +3159,7 @@ def littrow(params, recipe, llprops, start, end, wavell, infile, iteration=1,
     # only plot summary plot for final iteration
     if iteration == 2:
         recipe.plot('SUM_WAVE_LITTROW_EXTRAP', params=params, llprops=llprops,
-                iteration=iteration, fiber=fiber, image=infile.data)
+                    iteration=iteration, fiber=fiber, image=infile.data)
     # ------------------------------------------------------------------
     # add parameters to llprops
     llprops['LITTROW_START_{0}'.format(iteration)] = start
@@ -3375,7 +3470,7 @@ def extrapolate_littrow_sol(params, llprops, wavell, infile, iteration=0,
     for order_num in range(ydim):
         # fit the littrow extrapolation
         param = mp.nanpolyfit(x_cut_points, littrow_extrap[order_num],
-                                fit_degree)[::-1]
+                              fit_degree)[::-1]
         # add to storage
         littrow_extrap_param[order_num] = param
         # evaluate the polynomial for all pixels in data
@@ -3407,8 +3502,8 @@ def extrapolate_littrow_sol(params, llprops, wavell, infile, iteration=0,
 # Define fp worker functions
 # =============================================================================
 def add_fpline_calc_cwid(params, llprops, fpe2dsfile, blaze, dopd0, fit_deg,
-                          fp_large_jump, n_ord_start_fp, n_ord_final_fp,
-                          cm_ind):
+                         fp_large_jump, n_ord_start_fp, n_ord_final_fp,
+                         cm_ind):
     """
     Derives the FP line wavelengths from the first solution
     Follows the Bauer et al 2015 procedure
@@ -3757,6 +3852,7 @@ def insert_fp_lines(params, newll, llpos_all, all_lines_2, order_rec_all,
     return all_lines_2
 
 
+# TODO: Not used any more?
 def fit_1d_solution(params, llprops, wavell, start, end, fiber, errx_min,
                     fit_degree, max_ll_fit_rms, t_order_start, weight_thres,
                     iteration=0):
@@ -3978,7 +4074,7 @@ def fit_1d_solution(params, llprops, wavell, start, end, fiber, errx_min,
     pixel_shift_slope = 0
     # get new line list
     ll_out = mp.get_ll_from_coefficients(pixel_shift_inter, pixel_shift_slope,
-                                           inv_params, xdim, num_orders)
+                                         inv_params, xdim, num_orders)
     # get the first derivative of the line list
     dll_out = mp.get_dll_from_coefficients(inv_params, xdim, num_orders)
     # find the central pixel value
@@ -4003,6 +4099,7 @@ def fit_1d_solution(params, llprops, wavell, start, end, fiber, errx_min,
     return llprops
 
 
+# TODO: Not used any more?
 def fit_1d_solution_sigclip(params, llprops, fiber, n_init, n_fin,
                             ll_fit_degree):
     """
@@ -4199,10 +4296,6 @@ def no_overlap_match_calc(params, ord_num, fp_ll_ord, fp_ll_ord_prev,
     :param ord_num: the order number
     :param fp_ll_ord: the FP peak wavelengths for the current order
     :param fp_ll_ord_prev: the FP peak wavelengths for the previous order
-    :param fp_ll_diff: wavelength difference between consecutive FP peaks
-                       (current order)
-    :param fp_ll_diff_prev: wavelength difference between consecutive FP peaks
-                       (previous order)
     :param m_ord_prev: absolute peak numbers of previous order
     :param dif_n: differential peak numbering for all orders
 
@@ -4460,7 +4553,8 @@ def assign_abs_fp_numbers(params, fp_ll, dif_n, m_vec, m_ord_prev, n_init,
 def get_d_for_each_hcline(params, recipe, llprops, fp_order, fp_xx, m_vec,
                           blaze, n_init, n_fin, wave_blaze_thres, dv_max,
                           ll_fit_degree):
-    func_name = __NAME__ + '.get_d_for_each_hcline()'
+    # set function name
+    _ = display_func(params, 'get_d_for_each_hcline', __NAME__)
     # set up storage
     # m(x) fit coefficients
     coeff_xm_all = []
@@ -4611,7 +4705,8 @@ def fit_1m_vs_d(params, recipe, one_m_d, d_arr, hc_ll_test, update_cavity,
 def update_fp_peak_wavelengths(params, recipe, llprops, fit_ll_d, m_vec,
                                fp_order, fp_xx, fp_amp, fp_cavfit_mode,
                                n_init, n_fin):
-    func_name = __NAME__ + '.update_fp_peak_wavelengths()'
+    # set function name
+    func_name = display_func(params, 'update_fp_peak_wavelengths', __NAME__)
     # define storage
     fp_ll_new = []
     # deal with different ways to calculate cavity fit
@@ -4764,7 +4859,6 @@ def join_orders(llprops, start, end):
 # Define fp aux functions
 # =============================================================================
 def fp_quality_control(params, fpprops, qc_params, **kwargs):
-
     func_name = __NAME__ + '.fp_quality_control()'
     # get parameters from params/kwargs
     rms_littrow_max = pcheck(params, 'WAVE_LITTROW_QC_RMS_MAX',
@@ -4803,84 +4897,85 @@ def fp_quality_control(params, fpprops, qc_params, **kwargs):
     qc_logic.append('X_MEAN_2 not finite')
     # ----------------------------------------------------------------------
     # iterate through Littrow test cut values
-    lit_it = 2
-    # checks every other value
-    for x_it in range(1, len(fpprops['X_CUT_POINTS_' + str(lit_it)]), 2):
-        # get x cut point
-        x_cut_point = fpprops['X_CUT_POINTS_' + str(lit_it)][x_it]
-        # get the sigma for this cut point
-        sig_littrow = fpprops['LITTROW_SIG_' + str(lit_it)][x_it]
-        # get the abs min and max dev littrow values
-        min_littrow = abs(fpprops['LITTROW_MINDEV_' + str(lit_it)][x_it])
-        max_littrow = abs(fpprops['LITTROW_MAXDEV_' + str(lit_it)][x_it])
-        # get the corresponding order
-        min_littrow_ord = fpprops['LITTROW_MINDEVORD_' + str(lit_it)][x_it]
-        max_littrow_ord = fpprops['LITTROW_MAXDEVORD_' + str(lit_it)][x_it]
-        # check if sig littrow is above maximum
-        if sig_littrow > rms_littrow_max:
-            fargs = [x_cut_point, sig_littrow, rms_littrow_max]
-            fail_msg.append(textdict['40-017-00032'].format(*fargs))
-            qc_pass.append(0)
-        else:
-            qc_pass.append(1)
-        # add to qc header lists
-        qc_values.append(sig_littrow)
-        qc_names.append('sig_littrow')
-        qc_logic.append('sig_littrow > {0:.2f}'.format(rms_littrow_max))
-        # ----------------------------------------------------------------------
-        # check if min/max littrow is out of bounds
-        if mp.nanmax([max_littrow, min_littrow]) > dev_littrow_max:
-            fargs = [x_cut_point, min_littrow, max_littrow, dev_littrow_max,
-                     min_littrow_ord, max_littrow_ord]
-            fail_msg.append(textdict['40-017-00033'].format(*fargs))
-            qc_pass.append(0)
-
-            # TODO: Should this be the QC header values?
-            # TODO:   it does not change the outcome of QC (i.e. passed=False)
-            # TODO:   So what is the point?
-            # TODO:  Melissa: taken out header stuff - why is this here at all
-            # TODO:           if it doesn't change outcome of QC?
-            # if sig was out of bounds, recalculate
-            if sig_littrow > rms_littrow_max:
-                # conditions
-                check1 = min_littrow > dev_littrow_max
-                check2 = max_littrow > dev_littrow_max
-                # get the residuals
-                respix = fpprops['LITTROW_YY_' + str(lit_it)][x_it]
-                # check if both are out of bounds
-                if check1 and check2:
-                    # remove respective orders
-                    worst_order = (min_littrow_ord, max_littrow_ord)
-                    respix_2 = np.delete(respix, worst_order)
-                    redo_sigma = True
-                # check if min is out of bounds
-                elif check1:
-                    # remove respective order
-                    worst_order = min_littrow_ord
-                    respix_2 = np.delete(respix, worst_order)
-                    redo_sigma = True
-                # check if max is out of bounds
-                elif check2:
-                    # remove respective order
-                    worst_order = max_littrow_ord
-                    respix_2 = np.delete(respix, max_littrow_ord)
-                    redo_sigma = True
-                # else do not recalculate sigma
-                else:
-                    redo_sigma, respix_2, worst_order = False, None, None
-
-                # if outlying order, recalculate stats
-                if redo_sigma:
-                    mean = mp.nansum(respix_2) / len(respix_2)
-                    mean2 = mp.nansum(respix_2 ** 2) / len(respix_2)
-                    rms = np.sqrt(mean2 - mean ** 2)
-        else:
-            qc_pass.append(1)
-        # add to qc header lists
-        qc_values.append(mp.nanmax([max_littrow, min_littrow]))
-        qc_names.append('max or min littrow')
-        qc_logic.append('max or min littrow > {0:.2f}'
-                        ''.format(dev_littrow_max))
+    # TODO: Figure out how to get littrow working
+    # lit_it = 2
+    # # checks every other value
+    # for x_it in range(1, len(fpprops['X_CUT_POINTS_' + str(lit_it)]), 2):
+    #     # get x cut point
+    #     x_cut_point = fpprops['X_CUT_POINTS_' + str(lit_it)][x_it]
+    #     # get the sigma for this cut point
+    #     sig_littrow = fpprops['LITTROW_SIG_' + str(lit_it)][x_it]
+    #     # get the abs min and max dev littrow values
+    #     min_littrow = abs(fpprops['LITTROW_MINDEV_' + str(lit_it)][x_it])
+    #     max_littrow = abs(fpprops['LITTROW_MAXDEV_' + str(lit_it)][x_it])
+    #     # get the corresponding order
+    #     min_littrow_ord = fpprops['LITTROW_MINDEVORD_' + str(lit_it)][x_it]
+    #     max_littrow_ord = fpprops['LITTROW_MAXDEVORD_' + str(lit_it)][x_it]
+    #     # check if sig littrow is above maximum
+    #     if sig_littrow > rms_littrow_max:
+    #         fargs = [x_cut_point, sig_littrow, rms_littrow_max]
+    #         fail_msg.append(textdict['40-017-00032'].format(*fargs))
+    #         qc_pass.append(0)
+    #     else:
+    #         qc_pass.append(1)
+    #     # add to qc header lists
+    #     qc_values.append(sig_littrow)
+    #     qc_names.append('sig_littrow')
+    #     qc_logic.append('sig_littrow > {0:.2f}'.format(rms_littrow_max))
+    #     # ----------------------------------------------------------------------
+    #     # check if min/max littrow is out of bounds
+    #     if mp.nanmax([max_littrow, min_littrow]) > dev_littrow_max:
+    #         fargs = [x_cut_point, min_littrow, max_littrow, dev_littrow_max,
+    #                  min_littrow_ord, max_littrow_ord]
+    #         fail_msg.append(textdict['40-017-00033'].format(*fargs))
+    #         qc_pass.append(0)
+    #
+    #         # TODO: Should this be the QC header values?
+    #         # TODO:   it does not change the outcome of QC (i.e. passed=False)
+    #         # TODO:   So what is the point?
+    #         # TODO:  Melissa: taken out header stuff - why is this here at all
+    #         # TODO:           if it doesn't change outcome of QC?
+    #         # if sig was out of bounds, recalculate
+    #         if sig_littrow > rms_littrow_max:
+    #             # conditions
+    #             check1 = min_littrow > dev_littrow_max
+    #             check2 = max_littrow > dev_littrow_max
+    #             # get the residuals
+    #             respix = fpprops['LITTROW_YY_' + str(lit_it)][x_it]
+    #             # check if both are out of bounds
+    #             if check1 and check2:
+    #                 # remove respective orders
+    #                 worst_order = (min_littrow_ord, max_littrow_ord)
+    #                 respix_2 = np.delete(respix, worst_order)
+    #                 redo_sigma = True
+    #             # check if min is out of bounds
+    #             elif check1:
+    #                 # remove respective order
+    #                 worst_order = min_littrow_ord
+    #                 respix_2 = np.delete(respix, worst_order)
+    #                 redo_sigma = True
+    #             # check if max is out of bounds
+    #             elif check2:
+    #                 # remove respective order
+    #                 worst_order = max_littrow_ord
+    #                 respix_2 = np.delete(respix, max_littrow_ord)
+    #                 redo_sigma = True
+    #             # else do not recalculate sigma
+    #             else:
+    #                 redo_sigma, respix_2, worst_order = False, None, None
+    #
+    #             # if outlying order, recalculate stats
+    #             if redo_sigma:
+    #                 mean = mp.nansum(respix_2) / len(respix_2)
+    #                 mean2 = mp.nansum(respix_2 ** 2) / len(respix_2)
+    #                 rms = np.sqrt(mean2 - mean ** 2)
+    #     else:
+    #         qc_pass.append(1)
+    #     # add to qc header lists
+    #     qc_values.append(mp.nanmax([max_littrow, min_littrow]))
+    #     qc_names.append('max or min littrow')
+    #     qc_logic.append('max or min littrow > {0:.2f}'
+    #                     ''.format(dev_littrow_max))
     # --------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
     #     quality control QC = 0 if we fail quality control
@@ -4927,7 +5022,7 @@ def fp_write_wavesolution(params, recipe, llprops, hcfile, fpfile,
 
     # ------------------------------------------------------------------
     # add the order num, fit degree and fit coefficients
-    wavefile = add_wave_keys(wavefile, wprops)
+    wavefile = add_wave_keys(params, wavefile, wprops)
     # ------------------------------------------------------------------
     # add constants used (for reproduction)
     wavefile.add_hkey('KW_WAVE_FITDEG', value=llprops['WAVE_FIT_DEGREE'])
@@ -5032,7 +5127,6 @@ def fp_write_results_table(params, recipe, llprops, hcfile, fiber):
 
 # TODO: remove if we are using master/night recipes
 def fp_write_linelist_table(params, recipe, llprops, hcfile, fiber):
-
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     wavefile = recipe.outputs['WAVE_FPLLTAB'].newcopy(recipe=recipe,
@@ -5153,14 +5247,13 @@ def wave_summary(recipe, params, llprops, fiber, qc_params):
                          fiber=fiber)
 
 
-
 def fp_write_wavesol_master(params, recipe, llprops, hcfile, fpfile, fiber,
                             combine, rawhcfiles, rawfpfiles, qc_params,
                             wprops, hcwavefile):
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     wavefile = recipe.outputs['WAVEM_FPMAP'].newcopy(recipe=recipe,
-                                                    fiber=fiber)
+                                                     fiber=fiber)
     # construct the filename from file instance
     wavefile.construct_filename(params, infile=hcfile)
     # ------------------------------------------------------------------
@@ -5185,7 +5278,7 @@ def fp_write_wavesol_master(params, recipe, llprops, hcfile, fpfile, fiber,
 
     # ------------------------------------------------------------------
     # add the order num, fit degree and fit coefficients
-    wavefile = add_wave_keys(wavefile, wprops)
+    wavefile = add_wave_keys(params, wavefile, wprops)
     # ------------------------------------------------------------------
     # add constants used (for reproduction)
     wavefile.add_hkey('KW_WAVE_FITDEG', value=llprops['WAVE_FIT_DEGREE'])
@@ -5260,7 +5353,7 @@ def fpm_write_results_table(params, recipe, llprops, hcfile, fiber):
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     wavefile = recipe.outputs['WAVEM_FPRESTAB'].newcopy(recipe=recipe,
-                                                       fiber=fiber)
+                                                        fiber=fiber)
     # construct the filename from file instance
     wavefile.construct_filename(params, infile=hcfile)
     # ------------------------------------------------------------------
@@ -5288,11 +5381,10 @@ def fpm_write_results_table(params, recipe, llprops, hcfile, fiber):
 
 
 def fpm_write_linelist_table(params, recipe, llprops, hcfile, fiber):
-
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     wavefile = recipe.outputs['WAVEM_FPLLTAB'].newcopy(recipe=recipe,
-                                                      fiber=fiber)
+                                                       fiber=fiber)
     # construct the filename from file instance
     wavefile.construct_filename(params, infile=hcfile)
     # ------------------------------------------------------------------
@@ -5330,7 +5422,7 @@ def fpm_write_linelist_table(params, recipe, llprops, hcfile, fiber):
 def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
                        **kwargs):
     # set function name
-    func_name = display_func(params, __NAME__, 'night_wavesolution')
+    func_name = display_func(params, 'night_wavesolution', __NAME__)
     # ----------------------------------------------------------------------
     # get parameters from params/kwargs
     highf_corr_deg = pcheck(params, 'WAVE_NIGHT_HIGHF_CORR_DEG',
@@ -5447,14 +5539,14 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
         # add high order dependency on wavelength
         nconst += np.polyval(highf_corr_arr, np.log(mwave))
         # create nightly wavelength
-        rwave  = np.array(mwave) + nconst
+        rwave = np.array(mwave) + nconst
         # ----------------------------------------------------------------------
         # Update the nightly tables
         wmsg = '\tUpdating measured wavelength (night)'
         WLOG(params, '', wmsg)
         # update wavelength measured in line list table
-        rhcl = update_wavelength_measured(params, rhcl, rwave)
-        rfpl = update_wavelength_measured(params, rfpl, rwave)
+        rhcl = update_wavelength_measured(params, rhcl, rwave, kind='HC')
+        rfpl = update_wavelength_measured(params, rfpl, rwave, kind='FP')
         # re-get fp and hc wave solutions
         rfpwave = rfpl['WAVE_MEAS']
         rhcwave = rhcl['WAVE_MEAS']
@@ -5622,9 +5714,8 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     return nprops
 
 
-
 def night_quality_control(params, nprops):
-    func_name = __NAME__ + '.night_quality_control()'
+    _ = display_func(params, 'night_quality_control', __NAME__)
     # set passed variable and fail message list
     fail_msg = []
     qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
@@ -5727,7 +5818,7 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
     wavefile.add_hkey('KW_WNT_NSIG_FIT', value=nprops['NSIG_FIT_CUT'])
     # ----------------------------------------------------------------------
     # add the order num, fit degree and fit coefficients
-    wavefile = add_wave_keys(wavefile, nprops)
+    wavefile = add_wave_keys(params, wavefile, nprops)
     # ----------------------------------------------------------------------
     # add qc parameters
     wavefile.add_qckeys(qc_params)
