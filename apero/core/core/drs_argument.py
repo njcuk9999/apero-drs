@@ -914,6 +914,34 @@ class _Breakpoints(argparse.Action):
         setattr(namespace, self.dest, value)
 
 
+class _Breakfunc(argparse.Action):
+    def __init__(self, *args, **kwargs):
+        self.recipe = None
+        # force super initialisation
+        argparse.Action.__init__(self, *args, **kwargs)
+
+    def _set_breakfunc(self, value):
+        # deal with unset value
+        if value is None:
+            return None
+        else:
+            return str(value)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # get drs parameters
+        self.recipe = parser.recipe
+        # display listing
+        if type(values) == list:
+            value = list(map(self._set_breakfunc, values))
+        else:
+            value = self._set_breakfunc(values)
+        # make sure value is not a list
+        if isinstance(value, list):
+            value = value[0]
+        # Add the attribute
+        setattr(namespace, self.dest, value)
+
+
 class _SetQuiet(argparse.Action):
     def __init__(self, *args, **kwargs):
         self.recipe = None
@@ -1686,6 +1714,22 @@ def breakpoints(p):
     props['action'] = _Breakpoints
     props['nargs'] = 0
     props['help'] = htext['BREAKPOINTS_HELP']
+    return props
+
+
+def make_breakfunc(p):
+    """
+    Make a custom special argument that switches on debug mode (as it needs to
+    be done as soon as possible)
+    :return:
+    """
+    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
+    props = OrderedDict()
+    props['name'] = '--breakfunc'
+    props['altnames'] = ['--bf']
+    props['action'] = _Breakfunc
+    props['nargs'] = 1
+    props['help'] = htext['BREAKFUNC_HELP']
     return props
 
 
