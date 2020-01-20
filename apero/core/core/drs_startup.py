@@ -339,6 +339,17 @@ def run(func, recipe, params):
             llmain = func(recipe, params)
             llmain['e'], llmain['tb'] = None, None
             success = True
+        except drs_exceptions.DebugExit as e:
+            WLOG(params, 'error', e.errormessage, raise_exception=False)
+            # on debug exit was not a success
+            success = False
+            # save params to llmain
+            llmain = dict(e=e, tb='', params=params, recipe=recipe)
+            # add error to log file
+            if params['DRS_RECIPE_KIND'] == 'recipe':
+                recipe.log.add_error(params, 'Debug Exit', '')
+            # reset the lock directory
+            drs_lock.reset_lock_dir(params)
         except KeyboardInterrupt as e:
             # get trace back
             string_trackback = traceback.format_exc()

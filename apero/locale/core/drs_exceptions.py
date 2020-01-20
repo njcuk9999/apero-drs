@@ -418,6 +418,18 @@ class Exit(SystemExit):
 
 
 class LogExit(Exit):
+    """
+    This should only be used when exiting from a log message
+    """
+    def __init__(self, errormessage, *args, **kwargs):
+        self.errormessage = errormessage
+        super().__init__(*args, **kwargs)
+
+
+class DebugExit(Exit):
+    """
+    This exception should only be used when exiting the debugger (ipdb/pdb)
+    """
     def __init__(self, errormessage, *args, **kwargs):
         self.errormessage = errormessage
         super().__init__(*args, **kwargs)

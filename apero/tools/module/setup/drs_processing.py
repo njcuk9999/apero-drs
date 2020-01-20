@@ -1490,7 +1490,18 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 # flag finished
                 finished = pp['SUCCESS']
             # --------------------------------------------------------------
-            # Manage unexpected errors
+            # Manage debug exit interrupt errors
+            except drs_exceptions.DebugExit as e:
+                # deal with returns
+                pp['ERROR'] = []
+                pp['WARNING'] = []
+                pp['OUTPUTS'] = dict()
+                pp['TRACEBACK'] = ''
+                # flag not finished
+                finished = False
+                event.set()
+            # --------------------------------------------------------------
+            # Manage Keyboard interrupt errors
             except KeyboardInterrupt:
                 # deal with returns
                 pp['ERROR'] = []
