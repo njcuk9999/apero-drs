@@ -1045,7 +1045,7 @@ def print_error(error):
     print('='*70, '\n')
 
 
-def breakpoint(params=None, allow=None):
+def breakpoint(params=None, allow=None, level=2):
     if params is None:
         params = load_config()
         # force to True
@@ -1057,25 +1057,19 @@ def breakpoint(params=None, allow=None):
     if not allow:
         return
     # copy pdbrc
-    _copy_pdb_rc(params)
+    _copy_pdb_rc(params, level=level)
     # catch bdb quit
     try:
         _execute_ipdb()
     except:
-        pass
-    # delete pdbrc
-    _remove_pdb_rc(params)
+        emsg = 'USER[00-000-00000]: Debugger breakpoint exit.'
+        raise drs_exceptions.DebugExit(emsg)
+    finally:
+        # delete pdbrc
+        _remove_pdb_rc(params)
 
 
 def catch_sigint(signal_received, frame):
-    # test cached settings
-    # TODO: See if you can get this working
-    # if 'ALLOW_BREAKPOINTS' in SETTINGS_CACHE:
-    #     if SETTINGS_CACHE['ALLOW_BREAKPOINTS']:
-    #         breakpoint()
-    # if 'DRS_DEBUG' in SETTINGS_CACHE:
-    #     if SETTINGS_CACHE['DRS_DEBUG'] > 0:
-    #         breakpoint()
     # raise Keyboard Interrupt
     raise KeyboardInterrupt('\nSIGINT or CTRL-C detected. Exiting\n')
 
@@ -1487,7 +1481,7 @@ def _map_dictparameter(value, dtype=None):
         BLOG(message=error.format(eargs), level='error')
 
 
-def _copy_pdb_rc(params):
+def _copy_pdb_rc(params, level=0):
     # set global CURRENT_PATH
     global CURRENT_PATH
     # get package
@@ -1500,10 +1494,31 @@ def _copy_pdb_rc(params):
     CURRENT_PATH = os.getcwd()
     # get absolute path
     oldsrc = get_relative_folder(package, path)
+    tmppath = oldsrc + '_tmp'
     # get newsrc
     newsrc = os.path.join(CURRENT_PATH, filename)
+
+    # modify oldsrc
+    pdbfile = open(oldsrc, 'r')
+    lines = pdbfile.readlines()
+    pdbfile.close()
+
+    # deal with levels
+    if level == 0:
+        upkey = ''
+    else:
+        upkey = 'up\n'*level
+    # loop around lines and replace
+    newlines = []
+    for line in lines:
+        newlines.append(line.format(up=upkey))
+    pdbfile = open(tmppath, 'w')
+    pdbfile.writelines(newlines)
+    pdbfile.close()
     # copy
-    shutil.copy(oldsrc, newsrc)
+    shutil.copy(tmppath, newsrc)
+    # remove tmp file
+    os.remove(tmppath)
 
 
 def _remove_pdb_rc(params):
