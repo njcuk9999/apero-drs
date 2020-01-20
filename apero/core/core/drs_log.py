@@ -1082,9 +1082,7 @@ def display_func(params=None, name=None, program=None, class_name=None):
     # deal with no file name
     if name is None:
         name = 'Unknown'
-    # add brackets to show function
-    if not name.endswith('()'):
-        name += '()'
+    # ----------------------------------------------------------------------
     # add the program
     if program is not None:
         strfunc = str(program)
@@ -1092,6 +1090,25 @@ def display_func(params=None, name=None, program=None, class_name=None):
         strfunc += '.{0}'.format(class_name)
     # add the name
     strfunc += '.{0}'.format(name)
+    # add brackets to show function
+    if not strfunc.endswith('()'):
+        strfunc += '()'
+    # ----------------------------------------------------------------------
+    # deal with adding a break point
+    if 'INPUTS' in params and 'BREAKFUNC' in params['INPUTS']:
+        # get break function
+        breakfunc = params['INPUTS']['BREAKFUNC']
+        # only deal with break function if it is set
+        if breakfunc not in [None, 'None', '']:
+            # get function name (without ending)
+            funcname = strfunc.replace('()', '')
+            # if function name endwith break function then we break here
+            if funcname.endswith(breakfunc):
+                # log we are breaking due to break function
+                wargs = [breakfunc]
+                wlog(params, 'warning', TextEntry('10-005-00004', args=wargs))
+                constants.breakpoint(params, allow=True, level=3)
+    # ----------------------------------------------------------------------
     # deal with no params (do not log)
     if params is None:
         return strfunc
