@@ -4,6 +4,7 @@
 "ALLLISTING_HELP","HELP","","None","Lists ALL the night name directories in the input directory if used without a 'directory' argument or lists the files in the given 'directory' (if defined)","Répertorie TOUS les répertoires de noms de nuit du répertoire d'entrée s'il est utilisé sans l'argument 'directory' ou répertorie les fichiers du 'répertoire' donné (si défini)",""
 "AND_TEXT","TEXT","","None","and","et",""
 "BREAKPOINTS_HELP","HELP","","None","If set then any breakpoints in the code are executed","",""
+"BREAKFUNC_HELP","HELP","","None","Given a function name will break when this function is found (only if function contains display_func)","",""
 "CHANGELOG_DESCRIPTION","HELP","","None","Produces a nicely formatted change log (using git). Requires gitchangelog to be installed via 'pip install gitchangelog'","",""
 "DEBUG_HELP","HELP","","None","Activates debug mode (Advanced mode [INTEGER] value must be an integer greater than 0, setting the debug level)","Active le mode débogage (la valeur en mode avancé [INTEGER] doit être un entier supérieur à 0, définissant le niveau de débogage)",""
 "DESCRIPTION_TEXT","TEXT","","None"," Description:"," La description: ",""
