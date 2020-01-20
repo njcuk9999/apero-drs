@@ -741,10 +741,13 @@ class DrsRecipe(object):
         # set ipython return functionality
         self._make_special(drs_argument.set_ipython_return, skip=False)
         # ---------------------------------------------------------------------
-        # set ipython return functionality
+        # set breakpoint functionality
         self._make_special(drs_argument.breakpoints, skip=False)
         # ---------------------------------------------------------------------
-        # set ipython return functionality
+        # set breakfunc functionality
+        self._make_special(drs_argument.make_breakfunc, skip=False)
+        # ---------------------------------------------------------------------
+        # set quiet functionality
         self._make_special(drs_argument.set_quiet, skip=False)
 
 
