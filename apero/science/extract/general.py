@@ -704,7 +704,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     locofile = lprops['LOCOOBJECT']
     e2dsfile.copy_original_keys(locofile, group='loc')
     # ----------------------------------------------------------------------
-    e2dsfile = wave.add_wave_keys(e2dsfile, wprops)
+    e2dsfile = wave.add_wave_keys(params, e2dsfile, wprops)
     # ----------------------------------------------------------------------
     # add berv properties to header
     e2dsfile = berv.add_berv_keys(params, e2dsfile, bprops)
