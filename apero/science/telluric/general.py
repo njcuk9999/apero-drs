@@ -902,9 +902,6 @@ def calculate_telluric_absorption(params, recipe, image, template,
                     order=order_num, has_template=(not template_flag),
                     template=template)
 
-    # TODO: Remove breakpoint
-    constants.breakpoint(params)
-
     # ---------------------------------------------------------------------
     # calculate transmission map
     transmission_map = image1 / sed
