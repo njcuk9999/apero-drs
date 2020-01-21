@@ -212,7 +212,7 @@ def __main__(recipe, params):
             # HC wavelength solution
             # --------------------------------------------------------------
             hcprops, wprops = wave.hc_wavesol(params, recipe, iwprops,
-                                              hc_e2ds_file, fiber)
+                                              hc_e2ds_file, blaze, fiber)
             # --------------------------------------------------------------
             # HC quality control
             # --------------------------------------------------------------

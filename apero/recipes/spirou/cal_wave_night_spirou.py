@@ -188,13 +188,15 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # get master hc lines and fp lines from calibDB
             wargs = []
-            wout = wave.get_wavelines(params, recipe, *wargs)
+            wout = wave.get_wavelines(params, recipe, infile=hc_e2ds_file)
             mhclines, mhclsource, mfplines, mfplsource = wout
+
             # --------------------------------------------------------------
             # load wavelength solution (start point) for this fiber
             #    this should only be a master wavelength solution
             wprops = wave.get_wavesolution(params, recipe, infile=hc_e2ds_file,
                                            fiber=fiber, master=True)
+
             # --------------------------------------------------------------
             # define the header as being from the hc e2ds file
             hcheader = hc_e2ds_file.header
@@ -268,16 +270,14 @@ def __main__(recipe, params):
     return core.return_locals(params, locals())
 
 
-
 # =============================================================================
 # Start of code
 # =============================================================================
-# Main code here
 if __name__ == "__main__":
-    # ----------------------------------------------------------------------
-    # print 'Hello World!'
-    print("Hello World!")
+    # run main with no arguments (get from command line - sys.argv)
+    ll = main()
 
 # =============================================================================
 # End of code
 # =============================================================================
+
