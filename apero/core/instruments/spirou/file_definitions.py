@@ -691,7 +691,7 @@ out_wavem_hc = drs_finput('WAVEM_HC', KW_OUTPUT='WAVE_HC',
                           outfunc=out.calib_file)
 
 # wave solution using hc + fp
-out_wavem_fp = drs_finput('WAVE_FP', KW_OUTPUT='WAVE_FP',
+out_wavem_fp = drs_finput('WAVEM_FP', KW_OUTPUT='WAVE_FP',
                           fibers=['AB', 'A', 'B', 'C'],
                           filetype='.fits',
                           intype=[out_ext_e2ds, out_ext_e2dsff],
