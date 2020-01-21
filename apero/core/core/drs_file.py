@@ -1842,7 +1842,7 @@ class DrsFitsFile(DrsInputFile):
         return drskey
 
     def copy_original_keys(self, drs_file=None, forbid_keys=True, root=None,
-                           allkeys=False, group=None):
+                           allkeys=False, group=None, exclude_groups=None):
         """
         Copies keys from hdr dictionary to DrsFile.hdict,
         if forbid_keys is True some keys will not be copied
@@ -1865,7 +1865,8 @@ class DrsFitsFile(DrsInputFile):
 
         :param group: string, if not None sets the group to use (will only
                       copy this groups header keys)
-
+        :param exclude_group: string or list or strings, if not None sets the
+                              group or groups not to include in copy
 
         :return None:
         """
@@ -1875,6 +1876,10 @@ class DrsFitsFile(DrsInputFile):
         keyworddict = params.get_keyword_instances()
         # get pconstant
         pconstant = self.recipe.drs_pconstant
+        # deal with exclude groups
+        if exclude_groups is not None:
+            if isinstance(exclude_groups, str):
+                exclude_groups = [exclude_groups]
         # get drs_file header/comments
         if drs_file is None:
             self.check_read(header_only=True, load=True)
@@ -1889,6 +1894,23 @@ class DrsFitsFile(DrsInputFile):
             if root is not None:
                 if not key.startswith(root):
                     return False
+            # deal with exclude groups
+            if exclude_groups is not None:
+                # loop around keys
+                for exgrp in exclude_groups:
+                    # check if key is in keyword dict and return the
+                    #    corresponding key (mkey) if found
+                    cond, mkey = _check_keyworddict(key, keyworddict)
+                    # if key is in keyword dict look if group matches
+                    if cond:
+                        keygroup = keyworddict[mkey].group
+                        # if key group is None skip check
+                        if keygroup is None:
+                            continue
+                        # if key group is equal to exclude group then return
+                        #    False  i.e. don't keep
+                        if keygroup.upper() == exgrp.upper():
+                            return False
             # deal with group (have to get keyword instance from keyworddict
             #    then check if it has a group then see if group = keygroup)
             if group is not None:
