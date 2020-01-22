@@ -255,7 +255,12 @@ def robust_polyfit(x, y, degree, nsigcut):
         # calculate the residuals of the polynomial fit
         res = y - np.polyval(fit, x)
         # work out the new sigma values
-        nsig = np.abs(res) / np.nanmedian(np.abs(res))
+        sig = np.nanmedian(np.abs(res))
+        if sig == 0:
+            nsig = np.zeros_like(res)
+            nsig[res != 0] = np.inf
+        else:
+            nsig = np.abs(res) / sig
         # work out the maximum sigma
         nsigmax = np.max(nsig[keep])
         # re-work out the keep criteria
