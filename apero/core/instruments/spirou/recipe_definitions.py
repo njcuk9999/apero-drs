@@ -749,7 +749,7 @@ cal_wave_night.kind = 'recipe'
 cal_wave_night.set_outputs(WAVE_E2DS=sf.out_ext_e2dsff,
                            WAVE_NIGHT_WAVE=sf.out_wave_night)
 cal_wave_night.set_debug_plots('WAVENIGHT_ITERPLOT',
-                               'WAVENIGHT_DIFFPLOT',
+                               'WAVENIGHT_DIFFPLOT', 'WAVENIGHT_HISTPLOT',
                                'WAVEREF_EXPECTED')
 cal_wave_night.set_summary_plots()
 cal_wave_night.set_arg(pos=0, **directory)
