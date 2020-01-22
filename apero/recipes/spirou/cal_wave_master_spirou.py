@@ -241,14 +241,18 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # Update calibDB with HC solution
             # --------------------------------------------------------------
-            if passed:
+            # only add to calibDB if we do not have fp files
+            if passed and (fp_e2ds_file is None):
                 # copy the hc wave solution file to the calibDB
                 drs_database.add_file(params, hcwavefile)
 
             # --------------------------------------------------------------
             # Update header of current file with HC solution
             # --------------------------------------------------------------
-            if passed and params['INPUTS']['DATABASE']:
+            # only update headers if we do not have fp files
+            cond1 = params['INPUTS']['DATABASE']
+            cond2 = fp_e2ds_file is None
+            if passed and cond1 and cond2:
                 # log that we are updating the HC file with wave params
                 wargs = [hc_e2ds_file.name, hc_e2ds_file.filename]
                 WLOG(params, '', TextEntry('40-017-00038', args=wargs))
