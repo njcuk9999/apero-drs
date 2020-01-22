@@ -2615,15 +2615,15 @@ def plot_wavenight_iterplot(plotter, graph, kwargs):
     x1, y1 = plotdata1['fp'], plotdata1['dl_fp']
     x2, y2 = plotdata1['hc'], plotdata1['dl_hc']
     # plot fp data
-    frames[0].plot(x1, y1, label='FP')
-    frames[0].plot(x2, y2, label='HC')
+    frames[0].plot(x1, y1, label='FP', linestyle='None', marker='.')
+    frames[0].plot(x2, y2, label='HC', linestyle='None', marker='.')
     # ------------------------------------------------------------------
     # get x and y data for second set
     x3, y3 = plotdata2['fp'], plotdata2['dl_fp']
     x4, y4 = plotdata2['hc'], plotdata2['dl_hc']
     # plot fp data
-    frames[1].plot(x3, y3, label='FP')
-    frames[1].plot(x4, y4, label='HC')
+    frames[1].plot(x3, y3, label='FP', linestyle='None', marker='.')
+    frames[1].plot(x4, y4, label='HC', linestyle='None', marker='.')
     # ------------------------------------------------------------------
     # add legends
     frames[0].legend(loc=0)
@@ -2729,10 +2729,10 @@ def plot_wavenight_histplot(plotter, graph, kwargs):
         # get valid pixels for this bin
         good = (xmod > pix) & (xmod < (pix + dvstep))
         # plot bin points
-        frames[0].plot(mp.nanmedian(xmod[good]), mp.nanmedian(y[good]),
+        frames[1].plot(mp.nanmedian(xmod[good]), mp.nanmedian(y[good]),
                        color='r', marker='o')
     # set labels and title
-    frames[0].set(xlabel='pixel % {0}'.format(ampsize),
+    frames[1].set(xlabel='pixel % {0}'.format(ampsize),
                   ylabel='dv [m/s]',
                   title='Pixel modulo {0} Historgram'.format(ampsize))
     # ------------------------------------------------------------------
@@ -2795,7 +2795,8 @@ wavenight_iterplot = Graph('WAVENIGHT_ITERPLOT', kind='debug',
                            func=plot_wavenight_iterplot)
 wavenight_diffplot = Graph('WAVENIGHT_DIFFPLOT', kind='debug',
                            func=plot_wavenight_diffplot)
-
+wavenight_histplot = Graph('WAVENIGHT_HISTPLOT', kind='debug',
+                           func=plot_wavenight_histplot)
 # add to definitions
 definitions += [wave_hc_guess, wave_hc_brightest_lines, wave_hc_tfit_grid,
                 wave_hc_resmap, wave_littrow_check1, wave_littrow_extrap1,
@@ -2805,7 +2806,7 @@ definitions += [wave_hc_guess, wave_hc_brightest_lines, wave_hc_tfit_grid,
                 wave_fp_multi_order, wave_fp_single_order,
                 sum_wave_littrow_check, sum_wave_littrow_extrap,
                 sum_wave_fp_ipt_cwid_1mhc, waveref_expected, wavenight_iterplot,
-                wavenight_diffplot]
+                wavenight_diffplot, wavenight_histplot]
 
 
 # =============================================================================
