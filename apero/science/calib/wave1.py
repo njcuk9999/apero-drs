@@ -4938,86 +4938,86 @@ def fp_quality_control(params, fpprops, qc_params, **kwargs):
     qc_names.append('X_MEAN_2')
     qc_logic.append('X_MEAN_2 not finite')
     # ----------------------------------------------------------------------
-    # iterate through Littrow test cut values
-    # TODO: Figure out how to get littrow working
-    lit_it = 2
-    # checks every other value
-    for x_it in range(1, len(fpprops['X_CUT_POINTS_' + str(lit_it)]), 2):
-        # get x cut point
-        x_cut_point = fpprops['X_CUT_POINTS_' + str(lit_it)][x_it]
-        # get the sigma for this cut point
-        sig_littrow = fpprops['LITTROW_SIG_' + str(lit_it)][x_it]
-        # get the abs min and max dev littrow values
-        min_littrow = abs(fpprops['LITTROW_MINDEV_' + str(lit_it)][x_it])
-        max_littrow = abs(fpprops['LITTROW_MAXDEV_' + str(lit_it)][x_it])
-        # get the corresponding order
-        min_littrow_ord = fpprops['LITTROW_MINDEVORD_' + str(lit_it)][x_it]
-        max_littrow_ord = fpprops['LITTROW_MAXDEVORD_' + str(lit_it)][x_it]
-        # check if sig littrow is above maximum
-        if sig_littrow > rms_littrow_max:
-            fargs = [x_cut_point, sig_littrow, rms_littrow_max]
-            fail_msg.append(textdict['40-017-00032'].format(*fargs))
-            qc_pass.append(0)
-        else:
-            qc_pass.append(1)
-        # add to qc header lists
-        qc_values.append(sig_littrow)
-        qc_names.append('sig_littrow')
-        qc_logic.append('sig_littrow > {0:.2f}'.format(rms_littrow_max))
-        # ----------------------------------------------------------------------
-        # check if min/max littrow is out of bounds
-        if mp.nanmax([max_littrow, min_littrow]) > dev_littrow_max:
-            fargs = [x_cut_point, min_littrow, max_littrow, dev_littrow_max,
-                     min_littrow_ord, max_littrow_ord]
-            fail_msg.append(textdict['40-017-00033'].format(*fargs))
-            qc_pass.append(0)
-
-            # TODO: Should this be the QC header values?
-            # TODO:   it does not change the outcome of QC (i.e. passed=False)
-            # TODO:   So what is the point?
-            # TODO:  Melissa: taken out header stuff - why is this here at all
-            # TODO:           if it doesn't change outcome of QC?
-            # if sig was out of bounds, recalculate
-            if sig_littrow > rms_littrow_max:
-                # conditions
-                check1 = min_littrow > dev_littrow_max
-                check2 = max_littrow > dev_littrow_max
-                # get the residuals
-                respix = fpprops['LITTROW_YY_' + str(lit_it)][x_it]
-                # check if both are out of bounds
-                if check1 and check2:
-                    # remove respective orders
-                    worst_order = (min_littrow_ord, max_littrow_ord)
-                    respix_2 = np.delete(respix, worst_order)
-                    redo_sigma = True
-                # check if min is out of bounds
-                elif check1:
-                    # remove respective order
-                    worst_order = min_littrow_ord
-                    respix_2 = np.delete(respix, worst_order)
-                    redo_sigma = True
-                # check if max is out of bounds
-                elif check2:
-                    # remove respective order
-                    worst_order = max_littrow_ord
-                    respix_2 = np.delete(respix, max_littrow_ord)
-                    redo_sigma = True
-                # else do not recalculate sigma
-                else:
-                    redo_sigma, respix_2, worst_order = False, None, None
-
-                # if outlying order, recalculate stats
-                if redo_sigma:
-                    mean = mp.nansum(respix_2) / len(respix_2)
-                    mean2 = mp.nansum(respix_2 ** 2) / len(respix_2)
-                    rms = np.sqrt(mean2 - mean ** 2)
-        else:
-            qc_pass.append(1)
-        # add to qc header lists
-        qc_values.append(mp.nanmax([max_littrow, min_littrow]))
-        qc_names.append('max or min littrow')
-        qc_logic.append('max or min littrow > {0:.2f}'
-                        ''.format(dev_littrow_max))
+    # # iterate through Littrow test cut values
+    # # TODO: Figure out how to get littrow working
+    # lit_it = 2
+    # # checks every other value
+    # for x_it in range(1, len(fpprops['X_CUT_POINTS_' + str(lit_it)]), 2):
+    #     # get x cut point
+    #     x_cut_point = fpprops['X_CUT_POINTS_' + str(lit_it)][x_it]
+    #     # get the sigma for this cut point
+    #     sig_littrow = fpprops['LITTROW_SIG_' + str(lit_it)][x_it]
+    #     # get the abs min and max dev littrow values
+    #     min_littrow = abs(fpprops['LITTROW_MINDEV_' + str(lit_it)][x_it])
+    #     max_littrow = abs(fpprops['LITTROW_MAXDEV_' + str(lit_it)][x_it])
+    #     # get the corresponding order
+    #     min_littrow_ord = fpprops['LITTROW_MINDEVORD_' + str(lit_it)][x_it]
+    #     max_littrow_ord = fpprops['LITTROW_MAXDEVORD_' + str(lit_it)][x_it]
+    #     # check if sig littrow is above maximum
+    #     if sig_littrow > rms_littrow_max:
+    #         fargs = [x_cut_point, sig_littrow, rms_littrow_max]
+    #         fail_msg.append(textdict['40-017-00032'].format(*fargs))
+    #         qc_pass.append(0)
+    #     else:
+    #         qc_pass.append(1)
+    #     # add to qc header lists
+    #     qc_values.append(sig_littrow)
+    #     qc_names.append('sig_littrow')
+    #     qc_logic.append('sig_littrow > {0:.2f}'.format(rms_littrow_max))
+    #     # ----------------------------------------------------------------------
+    #     # check if min/max littrow is out of bounds
+    #     if mp.nanmax([max_littrow, min_littrow]) > dev_littrow_max:
+    #         fargs = [x_cut_point, min_littrow, max_littrow, dev_littrow_max,
+    #                  min_littrow_ord, max_littrow_ord]
+    #         fail_msg.append(textdict['40-017-00033'].format(*fargs))
+    #         qc_pass.append(0)
+    #
+    #         # TODO: Should this be the QC header values?
+    #         # TODO:   it does not change the outcome of QC (i.e. passed=False)
+    #         # TODO:   So what is the point?
+    #         # TODO:  Melissa: taken out header stuff - why is this here at all
+    #         # TODO:           if it doesn't change outcome of QC?
+    #         # if sig was out of bounds, recalculate
+    #         if sig_littrow > rms_littrow_max:
+    #             # conditions
+    #             check1 = min_littrow > dev_littrow_max
+    #             check2 = max_littrow > dev_littrow_max
+    #             # get the residuals
+    #             respix = fpprops['LITTROW_YY_' + str(lit_it)][x_it]
+    #             # check if both are out of bounds
+    #             if check1 and check2:
+    #                 # remove respective orders
+    #                 worst_order = (min_littrow_ord, max_littrow_ord)
+    #                 respix_2 = np.delete(respix, worst_order)
+    #                 redo_sigma = True
+    #             # check if min is out of bounds
+    #             elif check1:
+    #                 # remove respective order
+    #                 worst_order = min_littrow_ord
+    #                 respix_2 = np.delete(respix, worst_order)
+    #                 redo_sigma = True
+    #             # check if max is out of bounds
+    #             elif check2:
+    #                 # remove respective order
+    #                 worst_order = max_littrow_ord
+    #                 respix_2 = np.delete(respix, max_littrow_ord)
+    #                 redo_sigma = True
+    #             # else do not recalculate sigma
+    #             else:
+    #                 redo_sigma, respix_2, worst_order = False, None, None
+    #
+    #             # if outlying order, recalculate stats
+    #             if redo_sigma:
+    #                 mean = mp.nansum(respix_2) / len(respix_2)
+    #                 mean2 = mp.nansum(respix_2 ** 2) / len(respix_2)
+    #                 rms = np.sqrt(mean2 - mean ** 2)
+    #     else:
+    #         qc_pass.append(1)
+    #     # add to qc header lists
+    #     qc_values.append(mp.nanmax([max_littrow, min_littrow]))
+    #     qc_names.append('max or min littrow')
+    #     qc_logic.append('max or min littrow > {0:.2f}'
+    #                     ''.format(dev_littrow_max))
     # --------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
     #     quality control QC = 0 if we fail quality control
