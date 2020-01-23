@@ -1214,11 +1214,11 @@ WAVE_LITTROW_EXT_ORDER_FIT_DEG.value = 4  # 5  # 4
 
 #   Maximum littrow RMS value
 WAVE_LITTROW_QC_RMS_MAX = WAVE_LITTROW_QC_RMS_MAX.copy(__NAME__)
-WAVE_LITTROW_QC_RMS_MAX.value = 0.15  # 0.3
+WAVE_LITTROW_QC_RMS_MAX.value = 0.3
 
 #   Maximum littrow Deviation from wave solution (at x cut points)
 WAVE_LITTROW_QC_DEV_MAX = WAVE_LITTROW_QC_DEV_MAX.copy(__NAME__)
-WAVE_LITTROW_QC_DEV_MAX.value = 0.4  # 0.9
+WAVE_LITTROW_QC_DEV_MAX.value = 0.9
 
 # =============================================================================
 # CALIBRATION: WAVE FP SETTINGS
