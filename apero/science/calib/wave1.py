@@ -1421,18 +1421,12 @@ def fp_wavesol_lovis(params, recipe, llprops, fpe2dsfile, hce2dsfile,
     xdetails2, lldetails2, scale2, totallines2 = llout[4:]
     # update llprops
     llprops['LL_OUT_2'] = ll_out_2
-    llprops['LL_PARAM_2'] = ll_params_2[::-1]
-    # TODO: Need to calculate
+    llprops['LL_PARAM_2'] = ll_params_2
     llprops['X_MEAN_2'] = xmean2
-    # TODO: Need to calculate
     llprops['X_VAR_2'] = xvar2
-    # TODO: Need to calculate
     llprops['X_DETAILS_2'] = xdetails2
-    # TODO: Need to calculate
     llprops['LL_DETAILS_2'] = lldetails2
-    # TODO: Need to calculate
     llprops['SCALE_2'] = scale2
-    # TODO: Need to calculate
     llprops['TOTAL_LINES_2'] = totallines2
     # set source
     keys = ['LL_OUT_2', 'LL_PARAM_2', 'X_MEAN_2', 'X_VAR_2', 'X_DETAILS_2',
@@ -4937,87 +4931,89 @@ def fp_quality_control(params, fpprops, qc_params, **kwargs):
     qc_values.append(fpprops['X_MEAN_2'])
     qc_names.append('X_MEAN_2')
     qc_logic.append('X_MEAN_2 not finite')
+
+
     # ----------------------------------------------------------------------
     # # iterate through Littrow test cut values
-    # # TODO: Figure out how to get littrow working
-    # lit_it = 2
-    # # checks every other value
-    # for x_it in range(1, len(fpprops['X_CUT_POINTS_' + str(lit_it)]), 2):
-    #     # get x cut point
-    #     x_cut_point = fpprops['X_CUT_POINTS_' + str(lit_it)][x_it]
-    #     # get the sigma for this cut point
-    #     sig_littrow = fpprops['LITTROW_SIG_' + str(lit_it)][x_it]
-    #     # get the abs min and max dev littrow values
-    #     min_littrow = abs(fpprops['LITTROW_MINDEV_' + str(lit_it)][x_it])
-    #     max_littrow = abs(fpprops['LITTROW_MAXDEV_' + str(lit_it)][x_it])
-    #     # get the corresponding order
-    #     min_littrow_ord = fpprops['LITTROW_MINDEVORD_' + str(lit_it)][x_it]
-    #     max_littrow_ord = fpprops['LITTROW_MAXDEVORD_' + str(lit_it)][x_it]
-    #     # check if sig littrow is above maximum
-    #     if sig_littrow > rms_littrow_max:
-    #         fargs = [x_cut_point, sig_littrow, rms_littrow_max]
-    #         fail_msg.append(textdict['40-017-00032'].format(*fargs))
-    #         qc_pass.append(0)
-    #     else:
-    #         qc_pass.append(1)
-    #     # add to qc header lists
-    #     qc_values.append(sig_littrow)
-    #     qc_names.append('sig_littrow')
-    #     qc_logic.append('sig_littrow > {0:.2f}'.format(rms_littrow_max))
-    #     # ----------------------------------------------------------------------
-    #     # check if min/max littrow is out of bounds
-    #     if mp.nanmax([max_littrow, min_littrow]) > dev_littrow_max:
-    #         fargs = [x_cut_point, min_littrow, max_littrow, dev_littrow_max,
-    #                  min_littrow_ord, max_littrow_ord]
-    #         fail_msg.append(textdict['40-017-00033'].format(*fargs))
-    #         qc_pass.append(0)
-    #
-    #         # TODO: Should this be the QC header values?
-    #         # TODO:   it does not change the outcome of QC (i.e. passed=False)
-    #         # TODO:   So what is the point?
-    #         # TODO:  Melissa: taken out header stuff - why is this here at all
-    #         # TODO:           if it doesn't change outcome of QC?
-    #         # if sig was out of bounds, recalculate
-    #         if sig_littrow > rms_littrow_max:
-    #             # conditions
-    #             check1 = min_littrow > dev_littrow_max
-    #             check2 = max_littrow > dev_littrow_max
-    #             # get the residuals
-    #             respix = fpprops['LITTROW_YY_' + str(lit_it)][x_it]
-    #             # check if both are out of bounds
-    #             if check1 and check2:
-    #                 # remove respective orders
-    #                 worst_order = (min_littrow_ord, max_littrow_ord)
-    #                 respix_2 = np.delete(respix, worst_order)
-    #                 redo_sigma = True
-    #             # check if min is out of bounds
-    #             elif check1:
-    #                 # remove respective order
-    #                 worst_order = min_littrow_ord
-    #                 respix_2 = np.delete(respix, worst_order)
-    #                 redo_sigma = True
-    #             # check if max is out of bounds
-    #             elif check2:
-    #                 # remove respective order
-    #                 worst_order = max_littrow_ord
-    #                 respix_2 = np.delete(respix, max_littrow_ord)
-    #                 redo_sigma = True
-    #             # else do not recalculate sigma
-    #             else:
-    #                 redo_sigma, respix_2, worst_order = False, None, None
-    #
-    #             # if outlying order, recalculate stats
-    #             if redo_sigma:
-    #                 mean = mp.nansum(respix_2) / len(respix_2)
-    #                 mean2 = mp.nansum(respix_2 ** 2) / len(respix_2)
-    #                 rms = np.sqrt(mean2 - mean ** 2)
-    #     else:
-    #         qc_pass.append(1)
-    #     # add to qc header lists
-    #     qc_values.append(mp.nanmax([max_littrow, min_littrow]))
-    #     qc_names.append('max or min littrow')
-    #     qc_logic.append('max or min littrow > {0:.2f}'
-    #                     ''.format(dev_littrow_max))
+    # TODO: Figure out how to get littrow working
+    lit_it = 2
+    # checks every other value
+    for x_it in range(1, len(fpprops['X_CUT_POINTS_' + str(lit_it)]), 2):
+        # get x cut point
+        x_cut_point = fpprops['X_CUT_POINTS_' + str(lit_it)][x_it]
+        # get the sigma for this cut point
+        sig_littrow = fpprops['LITTROW_SIG_' + str(lit_it)][x_it]
+        # get the abs min and max dev littrow values
+        min_littrow = abs(fpprops['LITTROW_MINDEV_' + str(lit_it)][x_it])
+        max_littrow = abs(fpprops['LITTROW_MAXDEV_' + str(lit_it)][x_it])
+        # get the corresponding order
+        min_littrow_ord = fpprops['LITTROW_MINDEVORD_' + str(lit_it)][x_it]
+        max_littrow_ord = fpprops['LITTROW_MAXDEVORD_' + str(lit_it)][x_it]
+        # check if sig littrow is above maximum
+        if sig_littrow > rms_littrow_max:
+            fargs = [x_cut_point, sig_littrow, rms_littrow_max]
+            fail_msg.append(textdict['40-017-00032'].format(*fargs))
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
+        # add to qc header lists
+        qc_values.append(sig_littrow)
+        qc_names.append('sig_littrow')
+        qc_logic.append('sig_littrow > {0:.2f}'.format(rms_littrow_max))
+        # ----------------------------------------------------------------------
+        # check if min/max littrow is out of bounds
+        if mp.nanmax([max_littrow, min_littrow]) > dev_littrow_max:
+            fargs = [x_cut_point, min_littrow, max_littrow, dev_littrow_max,
+                     min_littrow_ord, max_littrow_ord]
+            fail_msg.append(textdict['40-017-00033'].format(*fargs))
+            qc_pass.append(0)
+
+            # TODO: Should this be the QC header values?
+            # TODO:   it does not change the outcome of QC (i.e. passed=False)
+            # TODO:   So what is the point?
+            # TODO:  Melissa: taken out header stuff - why is this here at all
+            # TODO:           if it doesn't change outcome of QC?
+            # if sig was out of bounds, recalculate
+            if sig_littrow > rms_littrow_max:
+                # conditions
+                check1 = min_littrow > dev_littrow_max
+                check2 = max_littrow > dev_littrow_max
+                # get the residuals
+                respix = fpprops['LITTROW_YY_' + str(lit_it)][x_it]
+                # check if both are out of bounds
+                if check1 and check2:
+                    # remove respective orders
+                    worst_order = (min_littrow_ord, max_littrow_ord)
+                    respix_2 = np.delete(respix, worst_order)
+                    redo_sigma = True
+                # check if min is out of bounds
+                elif check1:
+                    # remove respective order
+                    worst_order = min_littrow_ord
+                    respix_2 = np.delete(respix, worst_order)
+                    redo_sigma = True
+                # check if max is out of bounds
+                elif check2:
+                    # remove respective order
+                    worst_order = max_littrow_ord
+                    respix_2 = np.delete(respix, max_littrow_ord)
+                    redo_sigma = True
+                # else do not recalculate sigma
+                else:
+                    redo_sigma, respix_2, worst_order = False, None, None
+
+                # if outlying order, recalculate stats
+                if redo_sigma:
+                    mean = mp.nansum(respix_2) / len(respix_2)
+                    mean2 = mp.nansum(respix_2 ** 2) / len(respix_2)
+                    rms = np.sqrt(mean2 - mean ** 2)
+        else:
+            qc_pass.append(1)
+        # add to qc header lists
+        qc_values.append(mp.nanmax([max_littrow, min_littrow]))
+        qc_names.append('max or min littrow')
+        qc_logic.append('max or min littrow > {0:.2f}'
+                        ''.format(dev_littrow_max))
     # --------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
     #     quality control QC = 0 if we fail quality control
@@ -5558,10 +5554,6 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     # set nightly wave solution to master wave solution
     rwave = np.array(mwave)
 
-
-    import matplotlib.pyplot as plt
-    fig, frames = plt.subplots(ncols=2, nrows=1)
-
     # ----------------------------------------------------------------------
     # Iterative loop to update wavelength
     # ----------------------------------------------------------------------
@@ -5607,9 +5599,6 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
         rhcwave = rhcl['WAVE_MEAS']
         # get calculate dwave
         dwave = (rfpwave - mfpwave) + d_cavity * mfpwave
-
-        frames[0].plot(dwave, '.', label=iteration)
-
         # keep points that are <5 MAD away from median
         with warnings.catch_warnings(record=True) as _:
             keep = np.abs(dwave) <= 5 * mp.nanmedian(np.abs(dwave))
@@ -5630,8 +5619,6 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
                 dvbin.append(mp.nanmedian(dwave[good]))
         # make wbin and dvbin arrays
         wbin, dvbin = np.array(wbin), np.array(dvbin)
-
-        frames[1].plot(wbin, dvbin, '.', label=iteration)
         # ----------------------------------------------------------------------
         # remove zero point from higher-order corrections
         fit1, _ = mp.robust_polyfit(np.log(wbin), dvbin, 1, nsig_fit_cut)
@@ -5665,7 +5652,6 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
             d_cavity_corr = mp.nanmedian((mhcwave - rhcwave) / mhcwave)
             # update cavity
             d_cavity = d_cavity - d_cavity_corr
-
             # log cavity values
             # TODO: add to language database
             wargs = [d_cavity, d_cavity_corr]
@@ -5679,11 +5665,6 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
             plotdata = dict(dl_fp=dl_fp, dl_hc=dl_hc, hc=rhcwave,
                             fp=rfpwave)
             plotstor.append(plotdata)
-
-
-    frames[0].legend(loc=0)
-    frames[1].legend(loc=0)
-    plt.show()
 
     # ----------------------------------------------------------------------
     # plot for start/end of iteration
