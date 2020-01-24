@@ -192,6 +192,9 @@ def __main__(recipe, params):
     # sum the cube to make fp data
     master_fp = np.sum(fpcube, axis=0)
 
+    # TODO: remove breakpoint
+    constants.breakpoint(params)
+
     # ----------------------------------------------------------------------
     # Calculate dx shape map
     # ----------------------------------------------------------------------
