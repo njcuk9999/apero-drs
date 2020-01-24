@@ -514,6 +514,7 @@ def ea_transform_coeff(image, coeffs, lin_transform_vect):
 
 def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
     func_name = __NAME__ + '.calculate_dxmap()'
+
     # get parameters from params/kwargs
     nbanana = pcheck(params, 'SHAPE_NUM_ITERATIONS', 'nbanana', kwargs,
                      func_name)
@@ -556,7 +557,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
     xsec_arr, ccor_arr = [], []
     ddx_arr, dx_arr = [], []
     dypix_arr, cckeep_arr = [], []
-    corr_dx_from_fp_arr, xpeak2_arr = [], []
+    shifts_arr, xpeak2_arr = [], []
     peakval2_arr, ewval2_arr = [], []
     err_pix_arr, good_mask_arr = [], []
     # define storage for output
@@ -605,6 +606,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
         dypix_arr_i, cckeep_arr_i = [], []
         xpeak2, peakval2, ewval2, err_pix, good_mask = [], [], [], [], []
         corr_dx_from_fp = np.zeros((nbo, dim2))
+        shifts_all = np.zeros((nbo, dim2))
         # get dx array (NaN)
         dx = np.zeros((nbo, width)) + np.nan
         # ------------------------------------------------------------------
@@ -658,7 +660,13 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
                 # for the fp data
                 ribbon_fp[iw, :] = ribbon_fp[iw, :] / norm_fp
             # range explored in slopes
-            # TODO: question Where does the /8.0 come from?
+            #
+            # Once we have searched through a range of slopes and found the
+            # best slope, we search a narrower range. We cut the slope range
+            # by a factor of 8. This is a big ad-hoc as a number, but its a
+            # reasonable compromise between code speed and being sure that we
+            # would not miss the best slope on the next iteration
+            #
             sfactor = (range_slopes[1] - range_slopes[0]) / 8.0
             slopes = (np.arange(9) * sfactor) + range_slopes[0]
             # log the range slope exploration
@@ -784,6 +792,8 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
                 # push spline values with shift into ribbon2
                 ribbon_hc2[iw, :] = spline_hc(xpix + ddx)
 
+
+
             # -------------------------------------------------------------
             # get the median values of the fp and hc
             sp_fp = mp.nanmedian(ribbon_fp2, axis=0)
@@ -791,6 +801,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
 
             pargs = [params, sp_fp, sp_hc, order_num, hcdata,
                      poly_wave_ref, une_lines, poly_cavity]
+
             out = _get_offset_sp(*pargs)
             # get and save offest outputs into lists
             corr_dx_from_fp[order_num] = out[0]
@@ -827,12 +838,22 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
                 xvec = ddx
                 yvec = ccor[iw, :]
                 with warnings.catch_warnings(record=True) as _:
+                    # we perform a gaussian fit on the correlation coefficient
+                    # between the median order profile and the Nth slice in
+                    # y perpendicular to dispersion along the order. The
+                    # gaussian fit has nn=4 as there may be a DC offset
+                    # nn=4 is gaussian+offset (5th is slope, just in case
+                    # you wondered)
                     gcoeffs, _ = mp.gauss_fit_nn(xvec, yvec, 4)
                 # check that max value is good
                 if mp.nanmax(ccor[iw, :]) > min_good_corr:
                     dx[order_num, iw] = gcoeffs[1]
             # -------------------------------------------------------------
             # remove any offset in dx, this would only shift the spectra
+
+
+
+            # TODO : bad bad bad, don't comment out yet!
             dypix = np.arange(len(dx[order_num]))
             with warnings.catch_warnings(record=True):
                 keep = np.abs(dx[order_num] - mp.nanmedian(dx[order_num])) < 1
@@ -958,7 +979,8 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
 
                     # get shifts combination of ddx and dx0 correction
                     ddx_f = ddx + dx0
-                    shifts = ddx_f[pos_y_mask] - corr_dx_from_fp[order_num][ix]
+                    shifts = ddx_f[pos_y_mask] #- corr_dx_from_fp[order_num][ix]
+                    shifts_all[order_num][ix] = np.nanmean(shifts)
                     # apply shifts to master dx map at correct positions
                     master_dxmap[positions, ix] += shifts
 
@@ -975,15 +997,15 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
                         dxmap = None
                         max_dxmap_std = dxmap_std
                         max_dxmap_info = [order_num, ix, std_qc]
-                        # return dxmap, max_dxmap_std, max_dxmap_info
+                        return dxmap, max_dxmap_std, max_dxmap_info
         # -----------------------------------------------------------------
         # plot all order angle_offset plot (in loop)
         pkwargs = dict(slope_deg=[slope_deg_arr_i], slope=[slope_arr_i],
                        skeep=[skeep_arr_i], xsection=[xsec_arr_i],
                        ccor=[ccor_arr_i], ddx=[ddx_arr_i], dx=[dx_arr_i],
                        dypix=[dypix_arr_i], ckeep=[cckeep_arr_i],
-                       corr_dx_fp=[corr_dx_from_fp],
-                       xpeak2=[xpeak2], err_pix=[err_pix], good=[good_mask])
+                       shifts=[shifts_all], xpeak2=[xpeak2], err_pix=[err_pix],
+                       good=[good_mask])
         recipe.plot('SHAPE_ANGLE_OFFSET_ALL', params=params, bnum=banana_num,
                     nbo=nbo, nbpix=dim2, **pkwargs)
         # ---------------------------------------------------------------------
@@ -993,7 +1015,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
         ccor_arr.append(ccor_arr_i), ddx_arr.append(ddx_arr_i)
         dx_arr.append(dx_arr_i), dypix_arr.append(dypix_arr_i)
         cckeep_arr.append(cckeep_arr_i)
-        corr_dx_from_fp_arr.append(corr_dx_from_fp), xpeak2_arr.append(xpeak2)
+        shifts_arr.append(shifts_all), xpeak2_arr.append(xpeak2)
         peakval2_arr.append(peakval2), ewval2_arr.append(ewval2)
         err_pix_arr.append(err_pix), good_mask_arr.append(good_mask)
     # ---------------------------------------------------------------------
@@ -1001,7 +1023,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
     pkwargs = dict(slope_deg=slope_deg_arr, slope=slope_arr,
                    skeep=skeep_arr, xsection=xsec_arr, ccor=ccor_arr,
                    ddx=ddx_arr, dx=dx_arr, dypix=dypix_arr, ckeep=cckeep_arr,
-                   corr_dx_fp=corr_dx_from_fp_arr, xpeak2=xpeak2_arr,
+                   shifts=shifts_arr, xpeak2=xpeak2_arr,
                    err_pix=err_pix_arr, good=good_mask_arr)
     # plot as debug plot
     recipe.plot('SHAPE_ANGLE_OFFSET', params=params, bnum=None, nbo=nbo,
@@ -1025,6 +1047,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
 
 def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
     func_name = __NAME__ + '.calculate_dymap()'
+
     # get properties from property dictionaries
     fibers = pcheck(params, 'SHAPE_UNIQUE_FIBERS', 'fibers', kwargs, func_name)
     # get the dimensions
