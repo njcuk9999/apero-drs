@@ -1125,7 +1125,7 @@ def plot_shape_angle_offset(plotter, graph, kwargs):
     dypix_arr = kwargs['dypix']
     ckeep_arr = kwargs['ckeep']
     # get data for plot 3
-    corr_dx_from_fp_arr = kwargs['corr_dx_fp']
+    shifts_arr = kwargs['shifts']
     xpeak2_arr = kwargs['xpeak2']
     err_pix_arr = kwargs['err_pix']
     goodmask_arr = kwargs['good']
@@ -1166,7 +1166,7 @@ def plot_shape_angle_offset(plotter, graph, kwargs):
             dx = dx_arr[banana_num][order_num]
             dypix = dypix_arr[banana_num][order_num]
             c_keep = ckeep_arr[banana_num][order_num]
-            corr_dx_from_fp = corr_dx_from_fp_arr[banana_num][order_num]
+            shifts = shifts_arr[banana_num][order_num]
             xpeak2 = xpeak2_arr[banana_num][order_num]
             err_pix = err_pix_arr[banana_num][order_num]
             good = goodmask_arr[banana_num][order_num]
@@ -1202,8 +1202,8 @@ def plot_shape_angle_offset(plotter, graph, kwargs):
             frame3.plot(xpeak2[good], err_pix[good], color='g',
                         linestyle='None', marker='.',
                         label='err pixel (for fit)')
-            frame3.plot(np.arange(nbpix), corr_dx_from_fp, color='k',
-                        label='fit to err pix')
+            frame3.plot(np.arange(nbpix), shifts, color='k',
+                        label='shift in x')
             frame3.set(xlabel='Pixel', ylabel='Err Pixel')
             frame3.legend(loc=0)
             # ------------------------------------------------------------------
