@@ -415,6 +415,9 @@ cal_shape_master.set_kwarg(**fluxunits)
 cal_shape_master.set_kwarg(**locofile)
 cal_shape_master.set_kwarg(**plot)
 cal_shape_master.set_kwarg(**resize)
+cal_shape_master.set_kwarg(name='--fpmaster', dtype='files',
+                           files=[sf.out_shape_fpmaster], default='None',
+                           helpstr=Help['SHAPE_FPMASTER_HELP'])
 
 # -----------------------------------------------------------------------------
 # cal_SHAPE_spirou
@@ -1145,6 +1148,13 @@ full_run.add(cal_badpix, name='BADM', master=True)
 full_run.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
 full_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
 full_run.add(cal_shape_master, master=True)
+full_run.add(cal_ff, name='FLATM', master=True)
+full_run.add(cal_thermal, name='THIM', files=[sf.pp_dark_dark_int],
+               master=True)
+full_run.add(cal_thermal, name='THTM', files=[sf.pp_dark_dark_tel],
+               master=True)
+full_run.add(cal_wave_master, hcfiles=[sf.pp_hc1_hc1], fpfiles=[sf.pp_fp_fp],
+               master=True)
 # night runs
 full_run.add(cal_badpix)
 full_run.add(cal_loc, files=[sf.pp_dark_flat])
@@ -1152,8 +1162,7 @@ full_run.add(cal_loc, files=[sf.pp_flat_dark])
 full_run.add(cal_shape)
 full_run.add(cal_ff, files=[sf.pp_flat_flat])
 full_run.add(cal_thermal)
-full_run.add(cal_wave, name='WAVEFP', hcfiles=[sf.pp_hc1_hc1],
-             fpfiles=[sf.pp_fp_fp])
+full_run.add(cal_wave_night)
 # extract all OBJ_DARK and OBJ_FP
 full_run.add(cal_extract, name='EXTALL', files=[sf.pp_obj_dark, sf.pp_obj_fp])
 # telluric recipes
@@ -1175,16 +1184,22 @@ limited_run.add(cal_badpix, name='BADM', master=True)
 limited_run.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
 limited_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
 limited_run.add(cal_shape_master, master=True)
+limited_run.add(cal_ff, name='FLATM', master=True)
+limited_run.add(cal_thermal, name='THIM', files=[sf.pp_dark_dark_int],
+               master=True)
+limited_run.add(cal_thermal, name='THTM', files=[sf.pp_dark_dark_tel],
+               master=True)
+limited_run.add(cal_wave_master, hcfiles=[sf.pp_hc1_hc1], fpfiles=[sf.pp_fp_fp],
+               master=True)
 # night runs
 limited_run.add(cal_badpix)
 limited_run.add(cal_loc, files=[sf.pp_dark_flat])
 limited_run.add(cal_loc, files=[sf.pp_flat_dark])
 limited_run.add(cal_shape)
 limited_run.add(cal_ff, files=[sf.pp_flat_flat])
-limited_run.add(cal_thermal)
-limited_run.add(cal_wave, name='WAVEHC', files=[sf.pp_hc1_hc1], fpfiles=None)
-limited_run.add(cal_wave, name='WAVEFP', hcfiles=[sf.pp_hc1_hc1],
-                fpfiles=[sf.pp_fp_fp])
+limited_run.add(cal_thermal, files=[sf.pp_dark_dark_int])
+limited_run.add(cal_thermal, files=[sf.pp_dark_dark_tel])
+limited_run.add(cal_wave_night)
 # extract tellurics
 limited_run.add(cal_extract, name='EXTTELL', KW_OBJNAME='TELLURIC_TARGETS',
                 files=[sf.pp_obj_dark, sf.pp_obj_fp])
@@ -1234,6 +1249,13 @@ master_run.add(cal_badpix, name='BADM', master=True)
 master_run.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
 master_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
 master_run.add(cal_shape_master, master=True)
+master_run.add(cal_ff, name='FLATM', master=True)
+master_run.add(cal_thermal, name='THIM', files=[sf.pp_dark_dark_int],
+               master=True)
+master_run.add(cal_thermal, name='THTM', files=[sf.pp_dark_dark_tel],
+               master=True)
+master_run.add(cal_wave_master, hcfiles=[sf.pp_hc1_hc1], fpfiles=[sf.pp_fp_fp],
+               master=True)
 
 # -----------------------------------------------------------------------------
 # calibration run (for trigger)
@@ -1245,10 +1267,9 @@ calib_run.add(cal_loc, files=[sf.pp_dark_flat])
 calib_run.add(cal_loc, files=[sf.pp_flat_dark])
 calib_run.add(cal_shape)
 calib_run.add(cal_ff, files=[sf.pp_flat_flat])
-calib_run.add(cal_thermal)
-calib_run.add(cal_wave, name='WAVEHC', files=[sf.pp_hc1_hc1], fpfiles=None)
-calib_run.add(cal_wave, name='WAVEFP', hcfiles=[sf.pp_hc1_hc1],
-              fpfiles=[sf.pp_fp_fp])
+calib_run.add(cal_thermal, files=[sf.pp_dark_dark_int])
+calib_run.add(cal_thermal, files=[sf.pp_dark_dark_tel])
+calib_run.add(cal_wave_night)
 
 # -----------------------------------------------------------------------------
 # telluric run (for trigger)
