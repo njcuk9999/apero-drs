@@ -5721,6 +5721,7 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
                 nbpix=nbpix, fpbinx=fpbinx, fpbiny=fpbiny,
                 fplinebin=fplinebin, ampsize=ampsize, maxdv=maxdv,
                 dvstep=dvstep)
+
     # ----------------------------------------------------------------------
     # calculate final coefficients and re-calculate wave map
     # ----------------------------------------------------------------------
@@ -5744,8 +5745,12 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     # add data
     nprops['COEFFS'] = night_coeffs
     nprops['WAVEMAP'] = night_wave
+    nprops['WAVEFILE'] = wprops['WAVEFILE']
+    nprops['WAVESOURCE'] = recipe.name
+    nprops['NBO'] = night_coeffs.shape[0]
+    nprops['DEG'] = night_coeffs.shape[1] - 1
     # set sources
-    keys = ['COEFFS', 'WAVEMAP']
+    keys = ['COEFFS', 'WAVEMAP', 'WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG']
     nprops.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # add constants
