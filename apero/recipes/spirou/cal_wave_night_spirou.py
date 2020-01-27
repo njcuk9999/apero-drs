@@ -219,7 +219,20 @@ def __main__(recipe, params):
             rvprops = velocity.compute_ccf_fp(params, recipe, *ccfargs)
             # merge rvprops into llprops (shallow copy)
             nprops.merge(rvprops)
-
+            # update ccf properties for wave solution
+            nprops['WFP_DRIFT'] = rvprops['MEAN_RV']
+            nprops['WFP_FWHM'] = rvprops['MEAN_FWHM']
+            nprops['WFP_CONTRAST'] = rvprops['MEAN_CONTRAST']
+            nprops['WFP_MASK'] = rvprops['CCF_MASK']
+            nprops['WFP_LINES'] = rvprops['TOT_LINE']
+            nprops['WFP_TARG_RV'] = rvprops['TARGET_RV']
+            nprops['WFP_WIDTH'] = rvprops['CCF_WIDTH']
+            nprops['WFP_STEP'] = rvprops['CCF_STEP']
+            # set sources
+            keys = ['WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
+                    'WFP_LINES',
+                    'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP']
+            nprops.set(keys, 'velocity.compute_ccf_fp()')
             # ----------------------------------------------------------
             # wave solution quality control
             # ----------------------------------------------------------
