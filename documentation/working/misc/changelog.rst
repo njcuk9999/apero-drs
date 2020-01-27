@@ -2,6 +2,228 @@ Changelog
 =========
 
 
+0.6.029 (2020-01-27)
+--------------------
+- `Data.spirou.reset.runs.limited_run.ini` - update default
+  `limited_run.ini`. [Neil Cook]
+- Update spirou flow map. [Neil Cook]
+- `Recipes.spirou.cal_wave_night_spirou.py` - remove breakpoint. [Neil
+  Cook]
+- `Locale.core.drs_exception.py` - add wlogbasic (basicalogger wrapper
+  with same args as WLOG) [Neil Cook]
+- DrsFitsFile.read --> `read_file`. [Neil Cook]
+- `Core.core.drs_log.py` - move `display_func` main to `param_functions` -
+  keep here the use of wlog and textentry (too low in `param_functions)`
+  [Neil Cook]
+- `Core.core.drs_file.py` - add `display_funcs` and change `read-->read_file`.
+  [Neil Cook]
+- `Core.core.drs_database.py` - add display funcs. [Neil Cook]
+- `Core.core.drs_argument.py` - update `func_name` comments - no access to
+  inputs cannot breakfunc here. [Neil Cook]
+- `Core.constants.constant_functions.py` - add messages to show `func_name`
+  breakfunc can't work here (too low) [Neil Cook]
+- `Recipes.spirou.cal_wave_night_spirou.py` - correct typo set -->
+  `set_sources`. [Neil Cook]
+- `Recipes.spirou.cal_wave_night_spirou.py` - add rv properties to nprops.
+  [Neil Cook]
+- `Science.calib.wave1.py` - add wavefile, wavesource, nbo, deg to nprops.
+  [Neil Cook]
+- `Core.core.drs_startup.py` - breakpoint --> `break_point`. [Neil Cook]
+- `Core.constants.__init__.py` - breakpoint --> `break_point`. [Neil Cook]
+- `Core.constants.param_functions.py` - rename breakpoint --> `break_point`.
+  [Neil Cook]
+- `Recipes.spirou.cal_wave_night_spirou.py` - add breakpoint to check
+  errors. [Neil Cook]
+- `Recipes.spirou.cal_wave_night_spirou.py` - replace hcfile and fpfile
+  for `hc_e2ds_file` and `fp_e2ds_file`. [Neil Cook]
+- `Core.instruments.spirou.recipe_definitions.py` - key `WAVE_NIGHT_WAVE`
+  --> `WAVEMAP_NIGHT`. [Neil Cook]
+- `Spirou_map` -- update flow chart. [Neil Cook]
+- `Core.instruments.spirou.recipe_definitions.py` - add shape to master
+  sequence. [Neil Cook]
+- `Spirou_map` -- update flow chart. [Neil Cook]
+- `Recipe.spirou.cal_shape_master_spirou.py` - add way to load fpmaster
+  from file/calibDB -- FOR DEBUG ONLY. [Neil Cook]
+
+
+0.6.028 (2020-01-24)
+--------------------
+- `Science.calib.shape.py` - EA changes to shape (remove `corr_dx_from_fp)`
+  [Neil Cook]
+- Add new spirou flow maps. [Neil Cook]
+- `Recipe.spirou.cal_shape_master_spirou.py` - add breakpoint for
+  debugging. [Neil Cook]
+- `Plotting.plot_functions.py` - change `corr_dx_from_fp_arr` to shifts.
+  [Neil Cook]
+- Language database. [Neil Cook]
+- `Core.instruments.spirou.recipe_definitions.py` - add changes for wave
+  master/night. [Neil Cook]
+- `Misc.tools.compare_e2ds.py` - add code to compare used calibrations
+  between two e2ds files. [Neil Cook]
+- Update spirou flow graph maps. [Neil Cook]
+
+
+0.6.027 (2020-01-23)
+--------------------
+- `Science.calib.wave1.py` - corrections after EA changes. [Neil Cook]
+- `Core.instruments.spirou.recipe_definitions.py` - add rv plots to
+  `cal_Wave_night` definition. [Neil Cook]
+- `Core.instruments.spirou.default_constants.py` - adjust `WAVE_LITTROW_QC`
+  values. [Neil Cook]
+
+
+0.6.026 (2020-01-22)
+--------------------
+- `Science.calib.wave1.py` - disable the littrow QC (still breaking) [Neil
+  Cook]
+- `Recipe.spirou.cal_wave_master_spirou.py` + `science.calib.wave1.py` -
+  continue work on EA fixes. [Neil Cook]
+- `Plotting.plot_functions.py` - remove line and add markers to wave night
+  plot. [Neil Cook]
+- `Core.math.general.py` - deal with median = 0 (over half the points are
+  zero) [Neil Cook]
+- `Core.instruments.*.default_constants.py` +
+  `core.instruments.spirou.recipe_defintions.py` - add
+  `PLOT_WAVENIGHT_HISTPLOT`. [Neil Cook]
+- `Documentation.working._static.yed` - add yed diagrams. [Neil Cook]
+
+
+0.6.025 (2020-01-21)
+--------------------
+- `Misc.tools.nirps_lsf.py` - EA tool to get the line spread function for
+  NIRPS. [Neil Cook]
+- `Recipes.spirou.cal_wave_master_spirou.py`, `cal_wave_night_spirou.py` and
+  `science.calib.wave1.py` - continue work on EA changes to wave solution
+  master/night combo. [Neil Cook]
+- Update language database. [Neil Cook]
+- `Core.instruments.spirou.recipe_definitions.py` - correct `cal_wave_night`
+  outputs and plots. [Neil Cook]
+- `Core.instruments.spirou.file_defintions.py` - correct typo in
+  `out_wavem_fp` `WAVE_FP` --> `WAVEM_FP`. [Neil Cook]
+- `Core.instruments.spirou.default_constants.py` - update
+  `WAVE_HC_TFIT_ORDER_FIT_CONT`. [Neil Cook]
+- `Core.core.drs_file.py` - added exclude groups to `copy_original_keys`.
+  [Neil Cook]
+
+
+0.6.024 (2020-01-20)
+--------------------
+- `Recipes/spirou.cal_wave_*.py` + `science.calib.wave*.py` - continue work
+  on implementing EA changes. [Neil Cook]
+- `Science.telluric.general.py` - remove breakpoint. [Neil Cook]
+- `Science.extract.general.py` - correct `add_wave_keys`. [Neil Cook]
+- `Plotting.plot_functions.py` - correct where we get nbo + add title.
+  [Neil Cook]
+- Update language database. [Neil Cook]
+- Data.core..pdbrc - add alias commands to pdbrc for ease of use. [Neil
+  Cook]
+- `Core.instruments.spirou.default_constants.py` - change wave fit degree
+  from 4 --> 5 (EA: 4th order does not catch structure) [Neil Cook]
+- `Core.core.drs_startup.py` - add DebugExit class to catch pdb/ipdb
+  exits. [Neil Cook]
+- `Core.core.drs_recipe.py` - add `make_breakfunc` (special argument) [Neil
+  Cook]
+- `Core.core.drs_log.py` - allow `display_func` to have break at function
+  name (if --breakfunc used) [Neil Cook]
+- `Core.core.drs_database.py` - fix display func. [Neil Cook]
+- `Core.constants.param_functions.py` - fix breakpoint to have levels (set
+  by .pdbrc) [Neil Cook]
+- `Core.core.drs_argument.py` - add break function special argument. [Neil
+  Cook]
+
+
+0.6.023 (2020-01-17)
+--------------------
+- `Io.drs_lock.py` - add some randomisation to the 240 reset. [Neil Cook]
+- `Io.drs_lock.py` - reset the lock file after 240 seconds (can help with
+  stuck lock files) [Neil Cook]
+- `Science.extract.berv.py` - must define iteration for using
+  `use_barycorrpy` (due to locking -- both iterations will use same lock
+  files) [Neil Cook]
+- `Recipes/spirou.cal_wave_master_spirou.py` + `science.calib.wave1.py` -
+  make changes for `cal_wave_master` (UNFINISHED) [Neil Cook]
+- `Science.calib.shape.py` - fix `poly_cavity` (should be un-inverted) [Neil
+  Cook]
+- `Io.drs_lock.py` - need to re-check that path exists when creating lock
+  file. [Neil Cook]
+- Misc nirps directory. [Neil Cook]
+
+
+0.6.022 (2020-01-16)
+--------------------
+- `Setup.install.py` and pythoninstallion.rst - update recommended way to
+  install python and modules. [Neil Cook]
+- `Setup/install.py` - add comments on how installed (after installing
+  conda) [Neil Cook]
+- `Reipces.spirou.cal_wave_master_spirou.py` - add `cavity_poly` for FP
+  master lines (always use the most up-to-date version) [Neil Cook]
+- `Science.calib.wave.py` - move master line const to const file, move
+  location of cavity file, add valid line print out to `get_master_lines`,
+  add `fp_fit` paramets to llprops. [Neil Cook]
+- `Science.calib.shape.py` - replace getting cavity file from old to new
+  location (made in wave solution) [Neil Cook]
+- `Recipe.spirou.cal_wave_master_spirou.py` - make note that we need to
+  decide when/how to update cavity file. [Neil Cook]
+- `Io.drs_data.py` - remove cavity file loading. [Neil Cook]
+- Data.spirou.calib - update cavity files. [Neil Cook]
+- `Core.instruments.*.deafult_constants.py` - remove cavity length
+  constants. [Neil Cook]
+- `Cal_wave_master_spirou.py` - fix inputs to `get_master_lines`. [Neil
+  Cook]
+- `Plotting.plot_functions.py` - fix waveref plot (for `get_master_lines)`
+  [Neil Cook]
+- `Core.instruments.spirou.file_definitions.py` - fix pep8 + change
+  `hclist_master` nad `fplist_master` to `drs_finput`. [Neil Cook]
+- `Core.instruments.*.default_constants.py` - add WAVEREF constants. [Neil
+  Cook]
+
+
+0.6.021 (2020-01-15)
+--------------------
+- `Science.calib.wave.py` - correct typos. [Neil Cook]
+- `Core.instruments.spirou.recipe_definitions.py` - change `WAVEM_HCLL` -->
+  `WAVE_HCLL`. [Neil Cook]
+- `Core.instruments.spirou.file_definitions.py` - remove WAVEHCLL master
+  (redundant) [Neil Cook]
+- `Scuebce.telluric.general.py` - add lower and upper bounds for hband
+  coming from constants. [Neil Cook]
+- `Plotting.plot_functions.py` - add better comments and fix pep8. [Neil
+  Cook]
+- `Core.instruments.*.default_constants.py` - add `MKTELLU_HBAND_LOWER` and
+  `MKTELLU_HBAND_UPPER` and change `MKTELLU_QC_AIRMASS_DIFF` from 0.1 -->
+  0.3. [Neil Cook]
+- `Plotting.plot_functions.py` - change style on plot point. [Neil Cook]
+- `Science.telluric.general.py` - only use `good_domain` for the absorption
+  fit. [Neil Cook]
+- `Science.telluric.general.py` - test of `good_domain` (1500 to 1750 nm)
+  [Neil Cook]
+- `Core.instruments.spirou.recipe_definitions.py` +
+  `science.telluric.general.py` - add `--use_template`. [Neil Cook]
+- `Plotting.plot_functions.py` - normalise for plotting. [Neil Cook]
+- `Plotting.plot_functions.py` - correct measured transmission for
+  plotting. [Neil Cook]
+- `Plotting.plot_function.py` + `science.telluric.general.py` - correct
+  plotting when having a template. [Neil Cook]
+- `Science.telluric.general.py` - add breakpoint. [Neil Cook]
+- `Core.core.drs_log.py` - fix typo lists should be appended for qc values
+  + add master log analysier (add to `apero_log_stats` later?) [Neil Cook]
+- `Recipes.spirou.obj_mk_template_spirou.py` - fix qc params when skipping
+  object (must be lists) [Neil Cook]
+
+
+0.6.020 (2020-01-14)
+--------------------
+- `Core.core.drs_log.py` - make log more readable + add qc  columns. [Neil
+  Cook]
+
+
+0.6.019 (2020-01-13)
+--------------------
+- Update `master_tellu_SPIROU.txt`. [Neil Cook]
+- Update documentation. [Neil Cook]
+- Update version/date/changelog/documentation. [Neil Cook]
+
+
 0.6.018 (2020-01-10)
 --------------------
 - `Recipes.spirou.obj_mk_template_spirou.py` - add logging for when file
