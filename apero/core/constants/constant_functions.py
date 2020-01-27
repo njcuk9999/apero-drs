@@ -282,6 +282,7 @@ class Keyword(Const):
 # Define functions
 # =============================================================================
 def generate_consts(modulepath):
+    # set function name (cannot break here --> no access to inputs)
     func_name = __NAME__ + '.generate_consts()'
     # import module
     mod = import_module(func_name, modulepath)
@@ -393,7 +394,7 @@ def get_constants_from_file(filename):
 
 
 def update_file(filename, dictionary):
-
+    # set function name (cannot break here --> no access to inputs)
     func_name = __NAME__ + '.update_file()'
     # open file
     try:
@@ -491,7 +492,7 @@ def _read_lines(filename, comments='#', delimiter=' '):
     :param delimiter:
     :return:
     """
-
+    # set function name (cannot break here --> no access to inputs)
     func_name = __NAME__ + '.read_lines()'
     # manually open file (slow)
     try:
@@ -586,7 +587,7 @@ def _test_dtype(name, invalue, dtype, source, quiet=False):
 
 def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
                     quiet=False, source=None):
-
+    # set function name (cannot break here --> no access to inputs)
     func_name = __NAME__ + '._validate_value()'
     # deal with no source
     if source is None:
@@ -688,6 +689,7 @@ def _validate_text_file(filename, comments='#'):
     :param comments: char (string), the character that defines a comment line
     :return None:
     """
+    # set function name (cannot break here --> no access to inputs)
     func_name = __NAME__ + '.validate_text_file()'
     # open text file
     f = open(filename, 'r')
@@ -715,7 +717,6 @@ def _validate_text_file(filename, comments='#'):
         # only raise an error if invalid is True (if we found bad characters)
         if invalid:
             raise ConfigError(emsg, level='error')
-
 
 
 
