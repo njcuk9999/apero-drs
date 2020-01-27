@@ -458,7 +458,7 @@ def get_params(recipe='None', instrument='None', **kwargs):
 
 def return_locals(params, ll):
     # deal with a ipython return
-    constants.breakpoint(params, allow=params['IPYTHON_RETURN'])
+    constants.break_point(params, allow=params['IPYTHON_RETURN'])
     # else return ll
     return ll
 
