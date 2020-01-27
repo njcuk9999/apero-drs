@@ -855,6 +855,7 @@ def load_config(instrument=None, from_file=True, cache=True):
 
 def load_pconfig(instrument=None):
     global PCONFIG_CACHE
+    # set function name (cannot break here --> no access to inputs)
     func_name = __NAME__ + '.load_pconfig()'
     # check cache
     if instrument in PCONFIG_CACHE:
@@ -898,8 +899,8 @@ def get_config_all():
 
 def get_file_names(instrument=None, file_list=None, instrument_path=None,
                      default_path=None):
+    # set function name (cannot break here --> no access to inputs)
     func_name = __NAME__ + '.get_file_names()'
-
     # get core path
     core_path = get_relative_folder(PACKAGE, default_path)
     # get constants package path
@@ -950,8 +951,8 @@ def get_file_names(instrument=None, file_list=None, instrument_path=None,
 
 def get_module_names(instrument=None, mod_list=None, instrument_path=None,
                      default_path=None, path=True):
+    # set function name (cannot break here --> no access to inputs)
     func_name = __NAME__ + '._get_module_names()'
-
     # deal with no module list
     if mod_list is None:
         mod_list = SCRIPTS
@@ -1045,7 +1046,7 @@ def print_error(error):
     print('='*70, '\n')
 
 
-def breakpoint(params=None, allow=None, level=2):
+def break_point(params=None, allow=None, level=2):
     if params is None:
         params = load_config()
         # force to True
@@ -1104,9 +1105,120 @@ def window_size(drows=80, dcols=80):
     return drows, dcols
 
 
+def display_func(params=None, name=None, program=None, class_name=None,
+                 wlog=None, textentry=None):
+    # deal with no wlog defined
+    if wlog is None:
+        wlog = drs_exceptions.wlogbasic
+    # deal with not text entry defined
+    if textentry is None:
+        textentry = _DisplayText()
+    # set function name (cannot break here --> no access to inputs)
+    func_name = __NAME__ + '.display_func()'
+    # start the string function
+    strfunc = ''
+    # deal with no file name
+    if name is None:
+        name = 'Unknown'
+    # ----------------------------------------------------------------------
+    # add the program
+    if program is not None:
+        strfunc = str(program)
+    if class_name is not None:
+        strfunc += '.{0}'.format(class_name)
+    # add the name
+    strfunc += '.{0}'.format(name)
+    # add brackets to show function
+    if not strfunc.endswith('()'):
+        strfunc += '()'
+    # ----------------------------------------------------------------------
+    # deal with adding a break point
+    if params is not None:
+        if 'INPUTS' in params and 'BREAKFUNC' in params['INPUTS']:
+            # get break function
+            breakfunc = params['INPUTS']['BREAKFUNC']
+            # only deal with break function if it is set
+            if breakfunc not in [None, 'None', '']:
+                # get function name (without ending)
+                funcname = strfunc.replace('()', '')
+                # if function name endwith break function then we break here
+                if funcname.endswith(breakfunc):
+                    # log we are breaking due to break function
+                    wargs = [breakfunc]
+                    msg = textentry('10-005-00004', args=wargs)
+                    wlog(params, 'warning', msg)
+                    break_point(params, allow=True, level=3)
+    # ----------------------------------------------------------------------
+    # deal with no params (do not log)
+    if params is None:
+        return strfunc
+    # deal with debug level too low (just return here)
+    if params['DRS_DEBUG'] < params['DEBUG_MODE_FUNC_PRINT']:
+        return strfunc
+    # ----------------------------------------------------------------------
+    # below here just for debug mode func print
+    # ----------------------------------------------------------------------
+    # add the string function to param dict
+    if 'DEBUG_FUNC_LIST' not in params:
+        params.set('DEBUG_FUNC_LIST', value=[None], source=func_name)
+    if 'DEBUG_FUNC_DICT' not in params:
+        params.set('DEBUG_FUNC_DICT', value=dict(), source=func_name)
+    # append to list
+    params['DEBUG_FUNC_LIST'].append(strfunc)
+    # update debug dictionary
+    if strfunc in params['DEBUG_FUNC_DICT']:
+        params['DEBUG_FUNC_DICT'][strfunc] += 1
+    else:
+        params['DEBUG_FUNC_DICT'][strfunc] = 1
+    # get count
+    count = params['DEBUG_FUNC_DICT'][strfunc]
+    # find previous entry
+    previous = params['DEBUG_FUNC_LIST'][-2]
+    # find out whether we have the same entry
+    same_entry = previous == strfunc
+    # add count
+    strfunc += ' (N={0})'.format(count)
+    # if we don't have a list then just print
+    if params['DEBUG_FUNC_LIST'][-2] is None:
+        # log in func
+        wlog(params, 'debug', textentry('90-000-00004', args=[strfunc]),
+             wrap=False)
+    elif not same_entry:
+        # get previous set of counts
+        previous_count = _get_prev_count(params, previous)
+        # only log if count is greater than 1
+        if previous_count > 1:
+            # log how many of previous there were
+            dargs = [previous_count]
+            wlog(params, 'debug', textentry('90-000-00005', args=dargs))
+        # log in func
+        wlog(params, 'debug', textentry('90-000-00004', args=[strfunc]),
+             wrap=False)
+    # return func_name
+    return strfunc
+
+
+
+
+
 # =============================================================================
 # Config loading private functions
 # =============================================================================
+class _DisplayText:
+    """
+    Manually enter wlog TextEntries here -- will be in english only
+    """
+
+    def __init__(self, ):
+        self.entries = dict()
+        self.entries['10-005-00004'] = 'Breakpoint reached (breakfunc={0})'
+        self.entries['90-000-00004'] = 'In Func: {0}'
+        self.entries['90-000-00005'] = '\t Entered {0} times'
+
+    def __call__(self, key, args=None):
+        return self.entries[key].format(*args)
+
+
 def _get_file_names(params, instrument=None):
 
     # deal with no instrument
@@ -1223,7 +1335,7 @@ def get_relative_folder(package, folder):
                   file
     """
     global REL_CACHE
-    # set function name
+    # set function name (cannot break here --> no access to inputs)
     func_name = __NAME__ + '.get_relative_folder()'
     # ----------------------------------------------------------------------
     # check relative folder cache
@@ -1263,6 +1375,7 @@ def get_relative_folder(package, folder):
 
 
 def _load_from_module(modules, quiet=False):
+    # set function name (cannot break here --> no access to inputs)
     func_name = __NAME__ + '._load_from_module()'
     # storage for returned values
     keys, values, sources, instances = [], [], [], []
@@ -1348,6 +1461,7 @@ def _load_from_file(files, modules):
 
 
 def _save_config_params(params,):
+    # set function name (cannot break here --> no access to inputs)
     func_name = __NAME__ + '._save_config_params()'
     # get sources from paramater dictionary
     sources = params.sources.values()
@@ -1423,7 +1537,7 @@ def _string_repr_list(key, values, source, fmt):
 
 
 def _map_listparameter(value, separator=',', dtype=None):
-
+    # set function name (cannot break here --> no access to inputs)
     func_name = __NAME__ + '._map_listparameter()'
     # return list if already a list
     if isinstance(value, (list, np.ndarray)):
@@ -1459,6 +1573,7 @@ def _map_listparameter(value, separator=',', dtype=None):
 
 
 def _map_dictparameter(value, dtype=None):
+    # set function name (cannot break here --> no access to inputs)
     func_name = __NAME__ + '._map_dictparameter()'
     # deal with an empty value i.e. ''
     if value == '':
@@ -1531,6 +1646,21 @@ def _remove_pdb_rc(params):
     # remove
     if os.path.exists(newsrc):
         os.remove(newsrc)
+
+
+def _get_prev_count(params, previous):
+    # get the debug list
+    debug_list = params['DEBUG_FUNC_LIST'][:-1]
+    # get the number of iterations
+    n_elements = 0
+    # loop around until we get to
+    for row in range(len(debug_list))[::-1]:
+        if debug_list[row] != previous:
+            break
+        else:
+            n_elements += 1
+    # return number of element founds
+    return n_elements
 
 
 # =============================================================================
