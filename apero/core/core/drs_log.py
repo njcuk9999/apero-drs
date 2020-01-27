@@ -1076,87 +1076,11 @@ def debug_start(logobj, params, raise_exception):
 
 
 def display_func(params=None, name=None, program=None, class_name=None):
-    func_name = __NAME__ + '.display_func()'
-    # start the string function
-    strfunc = ''
-    # deal with no file name
-    if name is None:
-        name = 'Unknown'
-    # ----------------------------------------------------------------------
-    # add the program
-    if program is not None:
-        strfunc = str(program)
-    if class_name is not None:
-        strfunc += '.{0}'.format(class_name)
-    # add the name
-    strfunc += '.{0}'.format(name)
-    # add brackets to show function
-    if not strfunc.endswith('()'):
-        strfunc += '()'
-    # ----------------------------------------------------------------------
-    # deal with adding a break point
-    if 'INPUTS' in params and 'BREAKFUNC' in params['INPUTS']:
-        # get break function
-        breakfunc = params['INPUTS']['BREAKFUNC']
-        # only deal with break function if it is set
-        if breakfunc not in [None, 'None', '']:
-            # get function name (without ending)
-            funcname = strfunc.replace('()', '')
-            # if function name endwith break function then we break here
-            if funcname.endswith(breakfunc):
-                # log we are breaking due to break function
-                wargs = [breakfunc]
-                wlog(params, 'warning', TextEntry('10-005-00004', args=wargs))
-                constants.breakpoint(params, allow=True, level=3)
-    # ----------------------------------------------------------------------
-    # deal with no params (do not log)
-    if params is None:
-        return strfunc
-    # deal with debug level too low (just return here)
-    if params['DRS_DEBUG'] < params['DEBUG_MODE_FUNC_PRINT']:
-        return strfunc
-    # ----------------------------------------------------------------------
-    # below here just for debug mode func print
-    # ----------------------------------------------------------------------
-    # add the string function to param dict
-    if 'DEBUG_FUNC_LIST' not in params:
-        params.set('DEBUG_FUNC_LIST', value=[None], source=func_name)
-    if 'DEBUG_FUNC_DICT' not in params:
-        params.set('DEBUG_FUNC_DICT', value=dict(), source=func_name)
-    # append to list
-    params['DEBUG_FUNC_LIST'].append(strfunc)
-    # update debug dictionary
-    if strfunc in params['DEBUG_FUNC_DICT']:
-        params['DEBUG_FUNC_DICT'][strfunc] += 1
-    else:
-        params['DEBUG_FUNC_DICT'][strfunc] = 1
-    # get count
-    count = params['DEBUG_FUNC_DICT'][strfunc]
-    # find previous entry
-    previous = params['DEBUG_FUNC_LIST'][-2]
-    # find out whether we have the same entry
-    same_entry = previous == strfunc
-    # add count
-    strfunc += ' (N={0})'.format(count)
-    # if we don't have a list then just print
-    if params['DEBUG_FUNC_LIST'][-2] is None:
-        # log in func
-        wlog(params, 'debug', TextEntry('90-000-00004', args=[strfunc]),
-             wrap=False)
-    elif not same_entry:
-        # get previous set of counts
-        previous_count = _get_prev_count(params, previous)
-        # only log if count is greater than 1
-        if previous_count > 1:
-            # log how many of previous there were
-            dargs = [previous_count]
-            wlog(params, 'debug', TextEntry('90-000-00005', args=dargs))
-        # log in func
-        wlog(params, 'debug', TextEntry('90-000-00004', args=[strfunc]),
-             wrap=False)
-
-    # return func_name
-    return strfunc
+    # run the display function
+    return constants.param_functions.display_func(params, name,
+                                                  program, class_name,
+                                                  wlog=wlog,
+                                                  textentry=TextEntry)
 
 
 def _get_prev_count(params, previous):
