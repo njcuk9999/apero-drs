@@ -66,6 +66,8 @@ class DrsInputFile:
 
         - Parent class for Drs Fits File object (DrsFitsFile)
         """
+        # set function name
+        _ = display_func(None, '__init__', __NAME__, 'DrsInputFile')
         # define a name
         self.name = name
         # define the extension
@@ -103,7 +105,8 @@ class DrsInputFile:
 
         :return None:
         """
-        # func_name = __NAME__ + '.DrsFitsFile.set_filename()'
+        # set function name
+        _ = display_func(None, 'set_filename', __NAME__, 'DrsInputFile')
         # skip if filename is None
         if filename is None:
             return True
@@ -113,6 +116,8 @@ class DrsInputFile:
         self.path = os.path.dirname(filename)
 
     def check_filename(self):
+        # set function name
+        _ = display_func(None, 'check_filename', __NAME__, 'DrsInputFile')
         # check that filename isn't None
         if self.filename is None:
             func = self.__repr__()
@@ -120,10 +125,17 @@ class DrsInputFile:
             self.__error__(TextEntry('00-001-00002', args=eargs))
 
     def file_exists(self):
+        # set function name
+        _ = display_func(None, 'set_filename', __NAME__, 'DrsInputFile')
+        # assume file does not exist
         found = False
+        # if filename is set check filename exists
         if self.filename is not None:
+            # if filename is string check filename exists
             if isinstance(self.filename, str):
+                # update found
                 found = os.path.exists(self.filename)
+        # return whether file was found
         return found
 
     def set_recipe(self, recipe):
@@ -135,9 +147,14 @@ class DrsInputFile:
                        this file
         :return:
         """
+        # set function name
+        _ = display_func(None, 'set_recipe', __NAME__, 'DrsInputFile')
+        # set the recipe
         self.recipe = recipe
 
     def newcopy(self, **kwargs):
+        # set function name
+        _ = display_func(None, 'newcopy', __NAME__, 'DrsInputFile')
         # copy this instances values (if not overwritten)
         name = kwargs.get('name', self.name)
         kwargs['filetype'] = kwargs.get('filetype', self.filetype)
@@ -165,6 +182,8 @@ class DrsInputFile:
         return DrsInputFile(name, **kwargs)
 
     def check_recipe(self):
+        # set function name
+        _ = display_func(None, 'check_recipe', __NAME__, 'DrsInputFile')
         # ---------------------------------------------------------------------
         # check that recipe isn't None
         if self.recipe is None:
@@ -178,6 +197,9 @@ class DrsInputFile:
         :return str: the string representation of DrsInputFile
                      i.e. DrsInputFile[name]
         """
+        # set function name
+        _ = display_func(None, '__str__', __NAME__, 'DrsInputFile')
+        # return the string representation of DrsInputFile
         return 'DrsInputFile[{0}]'.format(self.name)
 
     def __repr__(self):
@@ -186,15 +208,26 @@ class DrsInputFile:
         :return str: the string representation of DrsInputFile
                      i.e. DrsInputFile[name]
         """
+        # set function name
+        _ = display_func(None, '__repr__', __NAME__, 'DrsInputFile')
+        # return the string representation of DrsInputFile
         return 'DrsInputFile[{0}]'.format(self.name)
 
     def __error__(self, messages):
+        # set function name
+        _ = display_func(None, '__error__', __NAME__, 'DrsInputFile')
+        # run the log method: error mode
         self.__log__(messages, 'error')
 
     def __warning__(self, messages):
+        # set function name
+        _ = display_func(None, '__warning__', __NAME__, 'DrsInputFile')
+        # run the log method: warning mode
         self.__log__(messages, 'warning')
 
     def __message__(self, messages):
+        # set function name
+        _ = display_func(None, '__message__', __NAME__, 'DrsInputFile')
         # get log_opt
         if self.recipe is not None:
             params = self.recipe.drs_params
@@ -204,10 +237,11 @@ class DrsInputFile:
         WLOG(params, '', messages)
 
     def __log__(self, messages, kind):
+        # set function name
+        _ = display_func(None, '__log__', __NAME__, 'DrsInputFile')
         # format initial error message
         m0args = [kind.capitalize(), self.__repr__()]
         message0 = TextEntry('{0}: {1}'.format(*m0args))
-
         # append initial error message to messages
         messages = message0 + messages
         # get log_opt
@@ -226,10 +260,16 @@ class DrsInputFile:
         :param drsfile:
         :return:
         """
+        # set function name
+        _ = display_func(None, 'addset', __NAME__, 'DrsInputFile')
+        # append drs file to file set
         self.fileset.append(drsfile)
+        # apeend drs file name to file set name list
         self.filesetnames.append(drsfile.name)
 
     def copyother(self, drsfile, **kwargs):
+        # set function name
+        _ = display_func(None, 'copyother', __NAME__, 'DrsInputFile')
         # check recipe has been set
         if 'recipe' not in kwargs:
             self.check_recipe()
@@ -244,7 +284,7 @@ class DrsInputFile:
             if drsfile.data is None:
                 dargs = [drsfile.filename, func_name]
                 WLOG(params, 'debug', TextEntry('90-008-00010', args=dargs))
-                drsfile.read()
+                drsfile.read_file()
         # set empty file attributes
         nkwargs = dict()
         nkwargs['name'] = kwargs.get('name', self.name)
@@ -263,6 +303,8 @@ class DrsInputFile:
         return DrsInputFile(**nkwargs)
 
     def completecopy(self, drsfile):
+        # set function name
+        _ = display_func(None, 'completecopy', __NAME__, 'DrsInputFile')
         # set empty file attributes
         nkwargs = dict()
         nkwargs['name'] = copy.deepcopy(drsfile.name)
@@ -312,16 +354,18 @@ class DrsInputFile:
         :param input_file: DrsInputFile
         :returns: True or False and the reason why (if False)
         """
+        # set function name
+        _ = display_func(None, 'check_another_file', __NAME__, 'DrsInputFile')
         # 1. check extension
         cond1, msg1 = self.has_correct_extension(input_file.ext)
         if not cond1:
             return False, msg1
         # 2. check file header keys exist
-        cond2, msg2 = self.header_keys_exist(None)
+        cond2, msg2 = self.hkeys_exist(None)
         if not cond2:
             return False, msg2
         # 3. check file header keys are correct
-        cond3, msg3 = self.has_correct_header_keys(None)
+        cond3, msg3 = self.has_correct_hkeys(None)
         if not cond2:
             return False, msg3
         # if 1, 2 and 3 pass return True
@@ -333,6 +377,8 @@ class DrsInputFile:
 
         :returns: True or False and the reason why (if False)
         """
+        # set function name
+        _ = display_func(None, 'check_file', __NAME__, 'DrsInputFile')
         # 1. check extension
         cond1, msg1 = self.has_correct_extension()
         if not cond1:
@@ -349,12 +395,23 @@ class DrsInputFile:
         return True, None
 
     def has_correct_extension(self, filename=None, filetype=None, argname=None):
+        # set function name
+        _ = display_func(None, 'has_correct_extension', __NAME__,
+                         'DrsInputFile')
+        # always return True and None (abstract placeholder)
         return True, None
 
     def hkeys_exist(self, header=None, filename=None, argname=None):
+        # set function name
+        _ = display_func(None, 'hkeys_exist', __NAME__,
+                         'DrsInputFile')
+        # always return True and None (abstract placeholder)
         return True, None
 
     def has_correct_hkeys(self, header=None, argname=None, log=True):
+        # set function name
+        _ = display_func(None, 'has_correct_hkeys', __NAME__,  'DrsInputFile')
+        # always return True and None (abstract placeholder)
         return True, None
 
     # -------------------------------------------------------------------------
@@ -398,11 +455,13 @@ class DrsInputFile:
     # -------------------------------------------------------------------------
     # read/write methods
     # -------------------------------------------------------------------------
-    def read(self, ext=None, check=False):
-        pass
+    def read_file(self, ext=None, check=False):
+        # set function name
+        _ = display_func(None, 'read_file', __NAME__, 'DrsInputFile')
 
     def write_file(self):
-        pass
+        # set function name
+        _ = display_func(None, 'write_file', __NAME__, 'DrsInputFile')
 
     # -------------------------------------------------------------------------
     # user functions
@@ -421,7 +480,10 @@ class DrsInputFile:
 
         :return: Sets self.filename and self.basename to the correct values
         """
-        func_name = __NAME__ + '.construct_filename()'
+
+        # set function name
+        func_name = display_func(params, 'construct_filename', __NAME__,
+                                 'DrsInputFile')
         # set outfile from self
         kwargs['outfile'] = self
         kwargs['func'] = func_name
@@ -1281,7 +1343,7 @@ class DrsFitsFile(DrsInputFile):
     # -------------------------------------------------------------------------
     # fits file methods
     # -------------------------------------------------------------------------
-    def read(self, ext=None, check=False):
+    def read_file(self, ext=None, check=False):
         """
         Read this fits file data and header
 
@@ -1292,7 +1354,7 @@ class DrsFitsFile(DrsInputFile):
 
         :return None:
         """
-        func_name = __NAME__ + '.DrsFitsFile.read()'
+        func_name = __NAME__ + '.DrsFitsFile.read_file()'
         # check if we have data set
         if check:
             cond1 = self.data is not None
@@ -1359,7 +1421,7 @@ class DrsFitsFile(DrsInputFile):
         if header_only:
             if self.header is None:
                 if load:
-                    return self.read()
+                    return self.read_file()
                 func = self.__repr__()
                 eargs = [func, func + '.read()']
                 self.__error__(TextEntry('00-001-00004', args=eargs))
@@ -1368,7 +1430,7 @@ class DrsFitsFile(DrsInputFile):
         # check that data/header/comments is not None
         if self.data is None:
             if load:
-                return self.read()
+                return self.read_file()
             func = self.__repr__()
             eargs = [func, func + '.read()']
             self.__error__(TextEntry('00-001-00004', args=eargs))
@@ -2368,7 +2430,7 @@ class DrsNpyFile(DrsInputFile):
         self.data = kwargs.get('data', None)
         self.filename = kwargs.get('filename', None)
 
-    def read(self, params):
+    def read_file(self, params):
         func_name = __NAME__ + '.DrsNpyFile.read()'
         # if filename is set
         if self.filename is not None:
