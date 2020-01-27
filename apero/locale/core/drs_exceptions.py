@@ -452,6 +452,10 @@ def clear_warnings():
 # Define basic log function (for when we don't have full logger functionality)
 #   i.e. within apero.locale or apero.constants
 #   Note this can't be language specific=
+def wlogbasic(_, level, message, **kwargs):
+    return basiclogger(message=message, level=level, **kwargs)
+
+
 def basiclogger(message=None, level=None, name=None, force_exit=True,
                 wlog=None, **kwargs):
 
