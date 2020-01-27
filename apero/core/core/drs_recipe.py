@@ -981,7 +981,7 @@ class DrsRecipe(object):
                 inputdir = self.get_input_dir()
                 # create an instance of this drs_file with the filename set
                 file_in = drs_file.newcopy(filename=filename_it, recipe=self)
-                file_in.read()
+                file_in.read_file()
                 # set the directory
                 fdir = drs_argument.get_uncommon_path(directory, inputdir)
                 file_in.directory = fdir

@@ -404,7 +404,7 @@ def construct_master_dark(params, recipe, dark_table, **kwargs):
                                       kind='tmp')
     # construct new infile instance and read data
     infile = infile.newcopy(filename=filenames[lastpos], recipe=recipe)
-    infile.read()
+    infile.read_file()
     # -------------------------------------------------------------------------
     # return master dark and the reference file
     return master_dark, infile

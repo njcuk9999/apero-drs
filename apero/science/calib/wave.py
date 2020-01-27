@@ -196,7 +196,7 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
             wavefile = out_wave_hc.newcopy(filename=filename, recipe=recipe,
                                            fiber=usefiber)
         # read data/header
-        wavefile.read()
+        wavefile.read_file()
         # get wave map
         wavemap = np.array(wavefile.data)
         # set wave source of wave file
@@ -240,7 +240,7 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
             wavefile = out_wave_hc.newcopy(filename=wavefilepath, recipe=recipe,
                                            fiber=usefiber)
         # read data/header
-        wavefile.read()
+        wavefile.read_file()
         # get wave map
         wavemap = np.array(wavefile.data)
         # set source of wave file
@@ -445,7 +445,7 @@ def get_wavelines(params, recipe, header=None, infile=None, **kwargs):
         hclfile = out_wave_hc.newcopy(filename=hcfilepath, recipe=recipe,
                                       fiber=usefiber)
     # read data/header
-    hclfile.read()
+    hclfile.read_file()
     # get wave map
     hclines = np.array(hclfile.data)
     # set wave source of wave file
@@ -476,7 +476,7 @@ def get_wavelines(params, recipe, header=None, infile=None, **kwargs):
         fplfile = out_wave_hc.newcopy(filename=fpfilepath, recipe=recipe,
                                       fiber=usefiber)
     # read data/header
-    fplfile.read()
+    fplfile.read_file()
     # get wave map
     fplines = np.array(hclfile.data)
     # set wave source of wave file
