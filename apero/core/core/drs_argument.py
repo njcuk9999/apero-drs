@@ -36,6 +36,7 @@ __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = drs_log.wlog
+display_func = drs_log.display_func
 # get print colours
 COLOR = pseudo_const.Colors()
 # get param dict
@@ -450,6 +451,7 @@ class _CheckType(argparse.Action):
             WLOG(params, 'error', TextEntry('09-001-00018', args=eargs))
 
     def _check_limits(self, values):
+        # set function name (cannot break here)
         func_name = __NAME__ + '_CheckType._check_limits()'
         # ---------------------------------------------------------------------
         # deal with no check
@@ -826,6 +828,7 @@ class _SetProgram(argparse.Action):
         argparse.Action.__init__(self, *args, **kwargs)
 
     def _set_program(self, values):
+        # set function name (cannot break here --> no access to inputs)
         func_name = __NAME__ + '._SetProgram._set_program()'
 
         if isinstance(values, list):
@@ -863,6 +866,7 @@ class _SetIPythonReturn(argparse.Action):
         argparse.Action.__init__(self, *args, **kwargs)
 
     def _set_return(self, values):
+        # set function name (cannot break here --> no access to inputs)
         func_name = __NAME__ + '._SetProgram._set_program()'
         # debug message: setting program to: "strvalue"
         dmsg = TextEntry('90-001-00032')
@@ -892,6 +896,7 @@ class _Breakpoints(argparse.Action):
         argparse.Action.__init__(self, *args, **kwargs)
 
     def _set_return(self, values):
+        # set function name (cannot break here --> no access to inputs)
         func_name = __NAME__ + '._SetProgram._set_program()'
         # debug message: setting program to: "strvalue"
         dmsg = TextEntry('90-001-00033')
@@ -949,6 +954,7 @@ class _SetQuiet(argparse.Action):
         argparse.Action.__init__(self, *args, **kwargs)
 
     def _set_return(self, values):
+        # set function name (cannot break here --> no access to inputs)
         func_name = __NAME__ + '._SetProgram._set_program()'
         # debug message: setting program to: "strvalue"
         dmsg = TextEntry('90-001-00034')
