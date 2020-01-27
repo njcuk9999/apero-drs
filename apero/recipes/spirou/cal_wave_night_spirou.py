@@ -230,9 +230,8 @@ def __main__(recipe, params):
             nprops['WFP_STEP'] = rvprops['CCF_STEP']
             # set sources
             keys = ['WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
-                    'WFP_LINES',
-                    'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP']
-            nprops.set(keys, 'velocity.compute_ccf_fp()')
+                    'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP']
+            nprops.set_sources(keys, 'velocity.compute_ccf_fp()')
             # ----------------------------------------------------------
             # wave solution quality control
             # ----------------------------------------------------------
