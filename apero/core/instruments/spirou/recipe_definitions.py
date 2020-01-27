@@ -669,7 +669,7 @@ cal_wave.set_kwarg(name='--fpmode', dtype='options', helpstr=Help['FPMODE_HELP']
 # cal_wave_master
 # -----------------------------------------------------------------------------
 cal_wave_master.name = 'cal_wave_master_spirou.py'
-cal_wave_master.shortname = 'WAVE'
+cal_wave_master.shortname = 'WAVEM'
 cal_wave_master.instrument = __INSTRUMENT__
 cal_wave_master.outputdir = 'reduced'
 cal_wave_master.inputdir = 'tmp'
@@ -1148,6 +1148,7 @@ full_run.add(cal_badpix, name='BADM', master=True)
 full_run.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
 full_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
 full_run.add(cal_shape_master, master=True)
+full_run.add(cal_shape, name='SHAPELM', master=True)
 full_run.add(cal_ff, name='FLATM', master=True)
 full_run.add(cal_thermal, name='THIM', files=[sf.pp_dark_dark_int],
                master=True)
@@ -1184,6 +1185,7 @@ limited_run.add(cal_badpix, name='BADM', master=True)
 limited_run.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
 limited_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
 limited_run.add(cal_shape_master, master=True)
+limited_run.add(cal_shape, name='SHAPELM', master=True)
 limited_run.add(cal_ff, name='FLATM', master=True)
 limited_run.add(cal_thermal, name='THIM', files=[sf.pp_dark_dark_int],
                master=True)
@@ -1249,6 +1251,7 @@ master_run.add(cal_badpix, name='BADM', master=True)
 master_run.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
 master_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
 master_run.add(cal_shape_master, master=True)
+master_run.add(cal_shape, name='SHAPELM', master=True)
 master_run.add(cal_ff, name='FLATM', master=True)
 master_run.add(cal_thermal, name='THIM', files=[sf.pp_dark_dark_int],
                master=True)
