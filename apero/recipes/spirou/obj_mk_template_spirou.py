@@ -145,7 +145,7 @@ def __main__(recipe, params):
     # set reference filename
     infile.set_filename(object_filenames[-1])
     # read data
-    infile.read()
+    infile.read_file()
     # get night name
     nightname = drs_path.get_nightname(params, infile.filename)
     params.set(key='NIGHTNAME', value=nightname, source=mainname)

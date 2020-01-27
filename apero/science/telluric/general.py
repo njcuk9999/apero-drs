@@ -379,7 +379,7 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
         # Load the convolved TAPAS atmospheric transmission from file
         # ------------------------------------------------------------------
         # load npy file
-        out_tellu_conv.read(params)
+        out_tellu_conv.read_file(params)
         # push data into array
         tapas_all_species = np.array(out_tellu_conv.data)
     # else we need to load tapas and generate the convolution
@@ -467,7 +467,7 @@ def load_tapas_convolved(params, recipe, header, mprops, fiber, **kwargs):
         # Load the convolved TAPAS atmospheric transmission from file
         # ------------------------------------------------------------------
         # load npy file
-        out_tellu_conv.read(params)
+        out_tellu_conv.read_file(params)
         # push data into array
         tapas_all_species = np.array(out_tellu_conv.data)
         # ------------------------------------------------------------------
@@ -1685,7 +1685,7 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
         wargs = [infile.filename]
         WLOG(params, '', TextEntry('40-019-00033', args=wargs))
         # read data
-        infile.read()
+        infile.read_file()
         # get image and set up shifted image
         image = np.array(infile.data)
 
@@ -1838,7 +1838,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
 
     # read first file as reference
     reffile.set_filename(filenames[0])
-    reffile.read()
+    reffile.read_file()
     # get the reference wave map
     rwavemap = np.array(reffile.data['wavelength'])
 
@@ -1927,7 +1927,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
         wargs = [infile.filename]
         WLOG(params, '', TextEntry('40-019-00033', args=wargs))
         # read data
-        infile.read()
+        infile.read_file()
         # get image and set up shifted image
         image = np.array(infile.data['flux'])
         wavemap = np.array(infile.data['wavelength'])

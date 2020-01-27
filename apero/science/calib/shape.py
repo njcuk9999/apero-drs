@@ -152,7 +152,7 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
                 WLOG(params, 'info', TextEntry('40-014-00007', args=wargs))
                 # construct new infile instance
                 fpfile_it = file_inst.newcopy(filename=filename, recipe=recipe)
-                fpfile_it.read()
+                fpfile_it.read_file()
                 # append to cube
                 cube.append(np.array(fpfile_it.data))
                 vheaders.append(drs_fits.Header(fpfile_it.header))
