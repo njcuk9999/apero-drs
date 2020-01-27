@@ -240,9 +240,6 @@ def __main__(recipe, params):
             # ----------------------------------------------------------
             # write wave solution to file
             # ----------------------------------------------------------
-            # TODO: remove break point
-            constants.break_point(params)
-
             wargs = [nprops, hc_e2ds_file, fp_e2ds_file, fiber, combine,
                      rawhcfiles, rawfpfiles, qc_params, wprops['WAVEINST']]
             wavefile = wave.night_write_wavesolution(params, recipe, *wargs)
