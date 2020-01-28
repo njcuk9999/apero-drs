@@ -856,7 +856,7 @@ def load_config(instrument=None, from_file=True, cache=True):
 def load_pconfig(instrument=None):
     global PCONFIG_CACHE
     # set function name (cannot break here --> no access to inputs)
-    func_name = __NAME__ + '.load_pconfig()'
+    func_name = display_func(None, 'load_pconfig', __NAME__)
     # check cache
     if instrument in PCONFIG_CACHE:
         return PCONFIG_CACHE[instrument]
@@ -900,7 +900,7 @@ def get_config_all():
 def get_file_names(instrument=None, file_list=None, instrument_path=None,
                      default_path=None):
     # set function name (cannot break here --> no access to inputs)
-    func_name = __NAME__ + '.get_file_names()'
+    func_name = display_func(None, 'get_file_names', __NAME__)
     # get core path
     core_path = get_relative_folder(PACKAGE, default_path)
     # get constants package path
@@ -952,7 +952,7 @@ def get_file_names(instrument=None, file_list=None, instrument_path=None,
 def get_module_names(instrument=None, mod_list=None, instrument_path=None,
                      default_path=None, path=True):
     # set function name (cannot break here --> no access to inputs)
-    func_name = __NAME__ + '._get_module_names()'
+    func_name = display_func(None, '_get_module_names', __NAME__)
     # deal with no module list
     if mod_list is None:
         mod_list = SCRIPTS
@@ -1198,9 +1198,6 @@ def display_func(params=None, name=None, program=None, class_name=None,
     return strfunc
 
 
-
-
-
 # =============================================================================
 # Config loading private functions
 # =============================================================================
@@ -1336,7 +1333,7 @@ def get_relative_folder(package, folder):
     """
     global REL_CACHE
     # set function name (cannot break here --> no access to inputs)
-    func_name = __NAME__ + '.get_relative_folder()'
+    func_name = display_func(None, 'get_relative_folder', __NAME__)
     # ----------------------------------------------------------------------
     # check relative folder cache
     if package in REL_CACHE and folder in REL_CACHE[package]:
@@ -1376,7 +1373,7 @@ def get_relative_folder(package, folder):
 
 def _load_from_module(modules, quiet=False):
     # set function name (cannot break here --> no access to inputs)
-    func_name = __NAME__ + '._load_from_module()'
+    func_name = display_func(None, '_load_from_module', __NAME__)
     # storage for returned values
     keys, values, sources, instances = [], [], [], []
     # loop around modules
@@ -1460,9 +1457,9 @@ def _load_from_file(files, modules):
     return keys, values, sources, instances
 
 
-def _save_config_params(params,):
+def _save_config_params(params):
     # set function name (cannot break here --> no access to inputs)
-    func_name = __NAME__ + '._save_config_params()'
+    func_name = display_func(params, '_save_config_params', __NAME__)
     # get sources from paramater dictionary
     sources = params.sources.values()
     # get unique sources
@@ -1538,7 +1535,7 @@ def _string_repr_list(key, values, source, fmt):
 
 def _map_listparameter(value, separator=',', dtype=None):
     # set function name (cannot break here --> no access to inputs)
-    func_name = __NAME__ + '._map_listparameter()'
+    func_name = display_func(None, '_map_listparameter', __NAME__)
     # return list if already a list
     if isinstance(value, (list, np.ndarray)):
         return list(value)
@@ -1574,7 +1571,7 @@ def _map_listparameter(value, separator=',', dtype=None):
 
 def _map_dictparameter(value, dtype=None):
     # set function name (cannot break here --> no access to inputs)
-    func_name = __NAME__ + '._map_dictparameter()'
+    func_name = display_func(None, '_map_dictparameter', __NAME__)
     # deal with an empty value i.e. ''
     if value == '':
         return []

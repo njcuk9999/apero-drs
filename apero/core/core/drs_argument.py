@@ -452,7 +452,7 @@ class _CheckType(argparse.Action):
 
     def _check_limits(self, values):
         # set function name (cannot break here)
-        func_name = __NAME__ + '_CheckType._check_limits()'
+        func_name = display_func(None, 'load_pconfig', __NAME__, '_CheckType')
         # ---------------------------------------------------------------------
         # deal with no check
         if not self.recipe.input_validation:
@@ -829,8 +829,7 @@ class _SetProgram(argparse.Action):
 
     def _set_program(self, values):
         # set function name (cannot break here --> no access to inputs)
-        func_name = __NAME__ + '._SetProgram._set_program()'
-
+        func_name = display_func(None, '_set_program', __NAME__, '_SetProgram')
         if isinstance(values, list):
             strvalue =  values[0]
         elif isinstance(values, np.ndarray):
@@ -867,7 +866,7 @@ class _SetIPythonReturn(argparse.Action):
 
     def _set_return(self, values):
         # set function name (cannot break here --> no access to inputs)
-        func_name = __NAME__ + '._SetProgram._set_program()'
+        func_name = display_func(None, '_set_program', __NAME__, '_SetProgram')
         # debug message: setting program to: "strvalue"
         dmsg = TextEntry('90-001-00032')
         WLOG(self.recipe.drs_params, 'debug', dmsg)
@@ -897,7 +896,7 @@ class _Breakpoints(argparse.Action):
 
     def _set_return(self, values):
         # set function name (cannot break here --> no access to inputs)
-        func_name = __NAME__ + '._SetProgram._set_program()'
+        func_name = display_func(None, '_set_program', __NAME__, '_SetProgram')
         # debug message: setting program to: "strvalue"
         dmsg = TextEntry('90-001-00033')
         WLOG(self.recipe.drs_params, 'debug', dmsg)
