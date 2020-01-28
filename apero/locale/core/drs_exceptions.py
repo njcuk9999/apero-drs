@@ -453,7 +453,10 @@ def clear_warnings():
 #   i.e. within apero.locale or apero.constants
 #   Note this can't be language specific=
 def wlogbasic(_, level, message, **kwargs):
-    return basiclogger(message=message, level=level, **kwargs)
+    if level == 'debug':
+        return None
+    else:
+        return basiclogger(message=message, level=level, **kwargs)
 
 
 def basiclogger(message=None, level=None, name=None, force_exit=True,
