@@ -571,7 +571,7 @@ def check_wave_consistency(params, props, **kwargs):
 # Define wave ref functions
 # =============================================================================
 def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
-                     **kwargs):
+                     hclines=None, fplines=None, **kwargs):
     # set the function name
     func_name = display_func(params, 'get_master_lines', __NAME__)
     # get parameters from params and kwargs
@@ -607,9 +607,27 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
     xpix = np.arange(nbpix)
 
     # ----------------------------------------------------------------------
+    # get the lines for HC files from hclines input
+    # ----------------------------------------------------------------------
+    if hclines is not None:
+        list_waves = hclines['WAVE_REF']
+        list_orders = hclines['ORDER']
+        list_pixels = hclines['PIXEL_REF']
+        list_wfit = hclines['WFIT']
+
+    # ----------------------------------------------------------------------
+    # get the lines for HC files from fplines input
+    # ----------------------------------------------------------------------
+    elif fplines is not None:
+        list_waves = fplines['WAVE_REF']
+        list_orders = fplines['ORDER']
+        list_pixels = fplines['PIXEL_REF']
+        list_wfit = fplines['WFIT']
+
+    # ----------------------------------------------------------------------
     # get the lines for HC files
     # ----------------------------------------------------------------------
-    if fibtype in hcfibtypes:
+    elif fibtype in hcfibtypes:
         # print progress
         # TODO: Move to language DB
         wmsg = 'Running get ref lines for {0}'
@@ -5514,7 +5532,7 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     # log progress
     # TODO: Add to language DB
     wmsg = 'Updating measured wavelength (master)'
-    WLOG(params, '', wmsg)
+    WLOG(params, 'info', wmsg)
     # update wavelength measured in line list table
     mhcl = update_wavelength_measured(params, mhcl, mwave, kind='HC')
     mfpl = update_wavelength_measured(params, mfpl, mwave, kind='FP')
@@ -5524,12 +5542,12 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     # log progress
     # TODO: Add to language DB
     wmsg = 'Constructing night list list (night)'
-    WLOG(params, '', wmsg)
+    WLOG(params, 'info', wmsg)
     # generate the hc reference lines
-    hcargs = dict(e2dsfile=hce2ds, wavemap=mwave)
+    hcargs = dict(e2dsfile=hce2ds, wavemap=mwave, hclines=mhcl)
     rhcl = get_master_lines(params, recipe, **hcargs)
     # generate the fp reference lines
-    fpargs = dict(e2dsfile=fpe2ds, wavemap=mwave)
+    fpargs = dict(e2dsfile=fpe2ds, wavemap=mwave, fplines=mfpl)
     rfpl = get_master_lines(params, recipe, **fpargs)
     # ----------------------------------------------------------------------
     # set up storage
@@ -5557,6 +5575,10 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     # ----------------------------------------------------------------------
     # Iterative loop to update wavelength
     # ----------------------------------------------------------------------
+    # TODO: Add to language DB
+    wmsg = 'Updating measured wavelength (night)'
+    WLOG(params, 'info', wmsg)
+    # loop around iterations
     for iteration in range(niterations):
         # log progress
         # TODO: move to language DB
