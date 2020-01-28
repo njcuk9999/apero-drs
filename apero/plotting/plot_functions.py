@@ -2687,8 +2687,8 @@ def plot_wavenight_histplot(plotter, graph, kwargs):
         return
     # ------------------------------------------------------------------
     # get the arguments from kwargs
-    x = kwargs['x']
-    y = kwargs['y']
+    x = np.array(kwargs['x'])
+    y = np.array(kwargs['y'])
     nbpix = kwargs['nbpix']
     fpbinx = kwargs.get('fpbinx', 100)
     fpbiny = kwargs.get('fpbiny', 10)
@@ -2703,13 +2703,15 @@ def plot_wavenight_histplot(plotter, graph, kwargs):
     # plot 1 - full range
     # ------------------------------------------------------------------
     # get all dv values within dv range
-    keep = np.isfinite(y) & (y > -maxdv) & (y < maxdv)
+    with warnings.catch_warnings(record=True) as _:
+        keep = np.isfinite(y) & (y > -maxdv) & (y < maxdv)
     # plot the full range
     frames[0].hist2d(x[keep], y[keep], bins=[fpbinx, fpbiny])
     # loop and plot bins
     for pix in np.arange(0, nbpix, fplinebin):
         # get valid pixels for this bin
-        good = (x > pix) & (x < (pix + fplinebin))
+        with warnings.catch_warnings(record=True) as _:
+            good = (x > pix) & (x < (pix + fplinebin))
         # plot bin points
         frames[0].plot(mp.nanmedian(x[good]), mp.nanmedian(y[good]), color='r',
                        marker='o')
@@ -2719,15 +2721,18 @@ def plot_wavenight_histplot(plotter, graph, kwargs):
     # plot 2 - mod amp range
     # ------------------------------------------------------------------
     # get all dv values within dv range
-    keep = np.isfinite(y) & (y > -maxdv) & (y < maxdv)
+    with warnings.catch_warnings(record=True) as _:
+        keep = np.isfinite(y) & (y > -maxdv) & (y < maxdv)
     # work out x mod ampsize
-    xmod = x % ampsize
+    with warnings.catch_warnings(record=True) as _:
+        xmod = x % ampsize
     # plot mod ampsize
     frames[1].hist2d(xmod[keep], y[keep], bins=[fpbinx, fpbiny])
     # loop around bins of amp size
     for pix in np.arange(0, ampsize, dvstep):
         # get valid pixels for this bin
-        good = (xmod > pix) & (xmod < (pix + dvstep))
+        with warnings.catch_warnings(record=True) as _:
+            good = (xmod > pix) & (xmod < (pix + dvstep))
         # plot bin points
         frames[1].plot(mp.nanmedian(xmod[good]), mp.nanmedian(y[good]),
                        color='r', marker='o')
