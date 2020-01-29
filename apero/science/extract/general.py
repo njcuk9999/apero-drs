@@ -102,7 +102,7 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
                 wargs = [orderpsfile.filename]
                 WLOG(params, '', TextEntry('40-013-00023', args=wargs))
                 # read npy file
-                orderpsfile.read(params)
+                orderpsfile.read_file(params)
             else:
                 eargs = [orderpsfile.__str__(), func_name]
                 WLOG(params, 'error', TextEntry('00-016-00023', args=eargs))
