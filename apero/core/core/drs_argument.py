@@ -69,31 +69,54 @@ INDEX_FILE_NAME_COL = Constants['DRS_INDEX_FILENAME']
 # Adapted from: https://stackoverflow.com/a/16942165
 class DRSArgumentParser(argparse.ArgumentParser):
     def __init__(self, recipe, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, 'DRSArgumentParser')
+        # define the recipe
         self.recipe = recipe
+        # get the recipes parameter dictionary
         params = self.recipe.drs_params
+        # get the text dictionary
         self.textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+        # get the help dictionary
         self.helptext = HelpText(params['INSTRUMENT'], params['LANGUAGE'])
+        # set up the arguments
         self.args = None
+        # set up the sys.argv storage
         self.argv = None
+        # set up the source of the args (either main or sys.argv when set)
         self.source = None
+        # set up the name space
         self.namespace = None
+        # run the argument parser (super)
         argparse.ArgumentParser.__init__(self, **kwargs)
 
     def parse_args(self, args=None, namespace=None):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__init__', __NAME__,
+                         'DRSArgumentParser')
+        # deal with no args passed (get from sys.argv)
         if args is None:
+            # first arg is the recipe name
             self.args = sys.argv[1:]
+            # set the source to sys.argv
             self.source = 'sys.argv'
+        # if we have args passed store them
         else:
+            # shallow copy of args
             self.args = args
+            # set the source to recipe.main()
             self.source = self.recipe.name + '.main()'
         # overritten functionality
         args, argv = self.parse_known_args(self.args, namespace)
+        # deal with argv being set
         if argv:
-            msg = self.textdict['09-001-00002']
-            self.error(msg.format(' '.join(argv)))
+            self.error(self.textdict['09-001-00002'].format(' '.join(argv)))
         return args
 
     def error(self, message):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, 'error', __NAME__,
+                         'DRSArgumentParser')
         # self.print_help(sys.stderr)
         # self.exit(2, '%s: error: %s\n' % (self.prog, message))
         # get parameterse from drs_params
@@ -106,6 +129,9 @@ class DRSArgumentParser(argparse.ArgumentParser):
         WLOG(params, 'error', emsg_obj)
 
     def _print_message(self, message, file=None):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_print_message', __NAME__,
+                         'DRSArgumentParser')
         # get parameters from drs_params
         params = self.recipe.drs_params
         program = str(params['RECIPE'])
@@ -116,7 +142,7 @@ class DRSArgumentParser(argparse.ArgumentParser):
         else:
             green, end = COLOR.ENDC, COLOR.ENDC
             yellow, blue = COLOR.ENDC, COLOR.ENDC
-        # Manually print error message (with help)
+        # Manually print error message (with help text)
         print()
         print(green + params['DRS_HEADER'] + end)
         helptitletext = self.textdict['40-002-00001'].format(program)
@@ -129,6 +155,9 @@ class DRSArgumentParser(argparse.ArgumentParser):
         print(blue + self.format_help() + end)
 
     def format_usage(self):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, 'format_usage', __NAME__,
+                         'DRSArgumentParser')
         # noinspection PyProtectedMember
         return_string = (' ' + self.helptext['USAGE_TEXT'] + ' ' +
                          self.recipe._drs_usage())
@@ -136,38 +165,47 @@ class DRSArgumentParser(argparse.ArgumentParser):
         return return_string
 
     def format_help(self):
-
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, 'format_help', __NAME__,
+                         'DRSArgumentParser')
+        # empty help message at intialization
         hmsgs = []
-
         # noinspection PyProtectedMember
         hmsgs += [' ' + self.helptext['USAGE_TEXT'] + ' ' +
                   self.recipe._drs_usage()]
-
         # add description
         if self.recipe.description is not None:
+            # add header line
             hmsgs += ['', self.recipe.drs_params['DRS_HEADER']]
+            # add description title
             hmsgs += [' ' + self.helptext['DESCRIPTION_TEXT']]
+            # add header line
             hmsgs += [self.recipe.drs_params['DRS_HEADER'], '']
+            # add description text
             hmsgs += [' ' + self.recipe.description]
+            # add header line
             hmsgs += [self.recipe.drs_params['DRS_HEADER']]
-
-        # deal with required arguments
+        # deal with required (positional) arguments
         hmsgs += ['', self.textdict['40-002-00002'], '']
+        # loop around each required (positional) arguments
         for arg in self.recipe.required_args:
+            # add to help message list
             hmsgs.append(_help_format(arg.names, arg.helpstr, arg.options))
         # deal with optional arguments
         hmsgs += ['', '', self.textdict['40-002-00003'], '']
+        # loop around each optional argument
         for arg in self.recipe.optional_args:
+            # add to help message list
             hmsgs.append(_help_format(arg.names, arg.helpstr, arg.options))
         # deal with special arguments
         hmsgs += ['', '', self.textdict['40-002-00004'], '']
+        # loop around each special argument
         for arg in self.recipe.special_args:
+            # add to help mesasge list
             hmsgs.append(_help_format(arg.names, arg.helpstr, arg.options))
-
         # add help
         helpstr = self.textdict['40-002-00005']
         hmsgs.append(_help_format(['--help', '-h'], helpstr))
-
         # add epilog
         if self.recipe.epilog is not None:
             hmsgs += ['', self.recipe.drs_params['DRS_HEADER']]
@@ -184,7 +222,9 @@ class DRSArgumentParser(argparse.ArgumentParser):
         return return_string
 
     def _has_special(self):
-
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_has_special', __NAME__,
+                         'DRSArgumentParser')
         # deal with help
         if '-h' in sys.argv:
             self.print_help()
@@ -194,7 +234,6 @@ class DRSArgumentParser(argparse.ArgumentParser):
             self.print_help()
             # quit after call
             self.exit()
-
         # Generate list of special arguments that require us to skip other
         #   arguments
         skippable = []
@@ -204,25 +243,30 @@ class DRSArgumentParser(argparse.ArgumentParser):
             # append to skippable if attribute "skip" is true
             if sarg.skip:
                 skippable += sarg.names
-
         # deal with skippables
         for skip in skippable:
             if self.args is not None:
                 for parg in self.args:
                     if skip in parg:
                         return True
-        else:
-            return False
+        # if we have reached this point we do not have a special argument
+        return False
 
 
 class _CheckDirectory(argparse.Action):
     def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, '_CheckDirectory')
+        # set the recipe and parser to None
         self.recipe = None
         self.parser = None
         # force super initialisation
         argparse.Action.__init__(self, *args, **kwargs)
 
     def _check_directory(self, value):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__init__', __NAME__,
+                         '_CheckDirectory')
         # ---------------------------------------------------------------------
         # deal with no check
         if not self.recipe.input_validation:
@@ -263,6 +307,9 @@ class _CheckDirectory(argparse.Action):
         # get drs parameters
         self.recipe = parser.recipe
         self.parser = parser
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         '_CheckDirectory')
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
@@ -276,6 +323,10 @@ class _CheckDirectory(argparse.Action):
 
 class _CheckFiles(argparse.Action):
     def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__init__', __NAME__,
+                         '_CheckFiles')
+        # get the recipe, namespace and directory (if not added set to None)
         self.recipe = kwargs.get('recipe', None)
         self.namespace = kwargs.get('namespace', None)
         self.directory = kwargs.get('directory', None)
@@ -283,6 +334,9 @@ class _CheckFiles(argparse.Action):
         argparse.Action.__init__(self, *args, **kwargs)
 
     def _check_files(self, value, current_typelist=None, current_filelist=None):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_check_files', __NAME__,
+                         '_CheckFiles')
         # ---------------------------------------------------------------------
         # deal with no check
         if not self.recipe.input_validation:
@@ -323,6 +377,9 @@ class _CheckFiles(argparse.Action):
         # get drs parameters
         self.recipe = parser.recipe
         self.parser = parser
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         '_CheckFiles')
         # store the namespace
         self.namespace = namespace
         # check for help
@@ -348,11 +405,18 @@ class _CheckFiles(argparse.Action):
 
 class _CheckBool(argparse.Action):
     def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__init__', __NAME__,
+                         '_CheckBool')
+        # define recipe as unset
         self.recipe = None
         # force super initialisation
         argparse.Action.__init__(self, *args, **kwargs)
 
     def _check_bool(self, value):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_check_bool', __NAME__,
+                         '_CheckBool')
         # ---------------------------------------------------------------------
         # deal with no check
         if not self.recipe.input_validation:
@@ -385,6 +449,9 @@ class _CheckBool(argparse.Action):
             WLOG(params, 'error', TextEntry('09-001-00013', args=eargs))
 
     def __call__(self, parser, namespace, values, option_string=None):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         '_CheckBool')
         # get drs parameters
         self.recipe = parser.recipe
         # check for help
@@ -402,11 +469,18 @@ class _CheckBool(argparse.Action):
 
 class _CheckType(argparse.Action):
     def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__init__', __NAME__,
+                         '_CheckType')
+        # define recipe as None
         self.recipe = None
         # force super initialisation
         argparse.Action.__init__(self, *args, **kwargs)
 
     def _eval_type(self, value):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_eval_type', __NAME__,
+                         '_CheckType')
         # get parameters
         params = self.recipe.drs_params
         # get type error
@@ -419,6 +493,9 @@ class _CheckType(argparse.Action):
             WLOG(params, 'error', TextEntry('09-001-00015', args=eargs))
 
     def _check_type(self, value):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_check_type', __NAME__,
+                         '_CheckType')
         # ---------------------------------------------------------------------
         # deal with no check
         if not self.recipe.input_validation:
@@ -451,8 +528,9 @@ class _CheckType(argparse.Action):
             WLOG(params, 'error', TextEntry('09-001-00018', args=eargs))
 
     def _check_limits(self, values):
-        # set function name (cannot break here)
-        func_name = display_func(None, 'load_pconfig', __NAME__, '_CheckType')
+        # set function name (cannot break here --> no access to inputs)
+        func_name = display_func(self.recipe.drs_params, '_check_type',
+                                 __NAME__, '_CheckType')
         # ---------------------------------------------------------------------
         # deal with no check
         if not self.recipe.input_validation:
@@ -534,6 +612,9 @@ class _CheckType(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         # get drs parameters
         self.recipe = parser.recipe
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_check_type', __NAME__,
+                         '_CheckType')
         # check for help
         # noinspection PyProtectedMember
         skip = parser._has_special()
@@ -553,11 +634,18 @@ class _CheckType(argparse.Action):
 
 class _CheckOptions(argparse.Action):
     def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__init__', __NAME__,
+                         '_CheckOptions')
+        # define recipe as None
         self.recipe = None
         # force super initialisation
         argparse.Action.__init__(self, *args, **kwargs)
 
     def _check_options(self, value):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_check_options', __NAME__,
+                         '_CheckOptions')
         # ---------------------------------------------------------------------
         # deal with no check
         if not self.recipe.input_validation:
@@ -575,6 +663,9 @@ class _CheckOptions(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         # get drs parameters
         self.recipe = parser.recipe
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         '_CheckOptions')
         # check for help
         # noinspection PyProtectedMember
         skip = parser._has_special()
@@ -593,13 +684,22 @@ class _CheckOptions(argparse.Action):
 # =============================================================================
 class _MakeListing(argparse.Action):
     def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__init__', __NAME__,
+                         '_MakeListing')
+        # define recipe as None (overwritten in __call__)
         self.recipe = None
+        # define name space as None (overwritten in __call__)
         self.namespace = None
+        # define parser as None (overwritten in __call__)
         self.parser = None
         # force super initialisation
         argparse.Action.__init__(self, *args, **kwargs)
 
     def _display_listing(self, namespace):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_display_listing', __NAME__,
+                         '_MakeListing')
         # get input dir
         # noinspection PyProtectedMember
         input_dir = self.recipe.get_input_dir()
@@ -623,13 +723,16 @@ class _MakeListing(argparse.Action):
                         list_all=False)
 
     def __call__(self, parser, namespace, values, option_string=None):
+        # get drs parameters
+        self.recipe = parser.recipe
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         '_MakeListing')
+        # store parser
+        self.parser = parser
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
-        # store parser
-        self.parser = parser
-        # get drs parameters
-        self.recipe = parser.recipe
         # display listing
         self._display_listing(namespace)
         # quit after call
@@ -638,13 +741,22 @@ class _MakeListing(argparse.Action):
 
 class _MakeAllListing(argparse.Action):
     def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__init__', __NAME__,
+                         '_MakeAllListing')
+        # define recipe as None (overwritten in __call__)
         self.recipe = None
+        # define name space as None (overwritten in __call__)
         self.namespace = None
+        # define parse as None (overwritten in __call__)
         self.parser = None
         # force super initialisation
         argparse.Action.__init__(self, *args, **kwargs)
 
     def _display_listing(self, namespace):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_display_listing', __NAME__,
+                         '_MakeAllListing')
         # get input dir
         # noinspection PyProtectedMember
         input_dir = self.recipe.get_input_dir()
@@ -668,13 +780,16 @@ class _MakeAllListing(argparse.Action):
                         list_all=True)
 
     def __call__(self, parser, namespace, values, option_string=None):
+        # get drs parameters
+        self.recipe = parser.recipe
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         '_MakeAllListing')
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
         # store parser
         self.parser = parser
-        # get drs parameters
-        self.recipe = parser.recipe
         # display listing
         self._display_listing(namespace)
         # quit after call
@@ -683,11 +798,18 @@ class _MakeAllListing(argparse.Action):
 
 class _ActivateDebug(argparse.Action):
     def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__init__', __NAME__,
+                         '_ActivateDebug')
+        # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
         argparse.Action.__init__(self, *args, **kwargs)
 
     def _set_debug(self, values, recipe=None):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_set_debug', __NAME__,
+                         '_ActivateDebug')
         # get params
         params = self.recipe.drs_params
         # deal with using without call
@@ -715,6 +837,9 @@ class _ActivateDebug(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         # get drs parameters
         self.recipe = parser.recipe
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         '_ActivateDebug')
         # display listing
         if type(values) == list:
             value = list(map(self._set_debug, values))
@@ -726,11 +851,18 @@ class _ActivateDebug(argparse.Action):
 
 class _DisplayVersion(argparse.Action):
     def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__init__', __NAME__,
+                         '_DisplayVersion')
+        # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
         argparse.Action.__init__(self, *args, **kwargs)
 
     def _display_version(self):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_display_version', __NAME__,
+                         '_DisplayVersion')
         # get params
         params = self.recipe.drs_params
         # get colours
@@ -748,10 +880,15 @@ class _DisplayVersion(argparse.Action):
         print(green + params['DRS_HEADER'] + end)
 
     def __call__(self, parser, namespace, values, option_string=None):
+        # set recipe from parser
+        self.recipe = parser.recipe
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         '_DisplayVersion')
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
-        self.recipe = parser.recipe
+
         # display version
         self._display_version()
         # quit after call
@@ -920,11 +1057,17 @@ class _Breakpoints(argparse.Action):
 
 class _Breakfunc(argparse.Action):
     def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_Breakfunc', __NAME__)
+        # set recipe name
         self.recipe = None
         # force super initialisation
         argparse.Action.__init__(self, *args, **kwargs)
 
     def _set_breakfunc(self, value):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_set_breakfunc',
+                         __NAME__, '_Breakfunc')
         # deal with unset value
         if value is None:
             return None
@@ -954,7 +1097,8 @@ class _SetQuiet(argparse.Action):
 
     def _set_return(self, values):
         # set function name (cannot break here --> no access to inputs)
-        func_name = __NAME__ + '._SetProgram._set_program()'
+        func_name = display_func(self.recipe.drs_params, '_set_return',
+                                 __NAME__, '_SetQuiet')
         # debug message: setting program to: "strvalue"
         dmsg = TextEntry('90-001-00034')
         WLOG(self.recipe.drs_params, 'debug', dmsg)
