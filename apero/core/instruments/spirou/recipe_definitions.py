@@ -541,6 +541,9 @@ cal_thermal.set_kwarg(**shapexfile)
 cal_thermal.set_kwarg(**shapeyfile)
 cal_thermal.set_kwarg(**shapelfile)
 cal_thermal.set_kwarg(**wavefile)
+cal_thermal.set_kwarg(name='--forceext', dtype='bool',
+                      default_ref='THERMAL_ALWAYS_EXTRACT',
+                      helpstr='THERMAL_EXTRACT_HELP')
 
 # -----------------------------------------------------------------------------
 # cal_extract_spirou
@@ -660,6 +663,9 @@ cal_wave.set_kwarg(**shapexfile)
 cal_wave.set_kwarg(**shapeyfile)
 cal_wave.set_kwarg(**shapelfile)
 cal_wave.set_kwarg(**wavefile)
+cal_wave.set_kwarg(name='--forceext', dtype='bool',
+                   default_ref='WAVE_ALWAYS_EXTRACT',
+                   helpstr='WAVE_EXTRACT_HELP')
 cal_wave.set_kwarg(name='--hcmode', dtype='options', helpstr=Help['HCMODE_HELP'],
                    options=['0'], default_ref='WAVE_MODE_HC')
 cal_wave.set_kwarg(name='--fpmode', dtype='options', helpstr=Help['FPMODE_HELP'],
@@ -729,6 +735,9 @@ cal_wave_master.set_kwarg(**shapexfile)
 cal_wave_master.set_kwarg(**shapeyfile)
 cal_wave_master.set_kwarg(**shapelfile)
 cal_wave_master.set_kwarg(**wavefile)
+cal_wave_master.set_kwarg(name='--forceext', dtype='bool',
+                   default_ref='WAVE_ALWAYS_EXTRACT',
+                   helpstr='WAVE_EXTRACT_HELP')
 cal_wave_master.set_kwarg(name='--hcmode', dtype='options',
                           helpstr=Help['HCMODE_HELP'], options=['0'],
                           default_ref='WAVE_MODE_HC')
@@ -782,6 +791,9 @@ cal_wave_night.set_kwarg(**shapexfile)
 cal_wave_night.set_kwarg(**shapeyfile)
 cal_wave_night.set_kwarg(**shapelfile)
 cal_wave_night.set_kwarg(**wavefile)
+cal_wave_night.set_kwarg(name='--forceext', dtype='bool',
+                         default_ref='WAVE_ALWAYS_EXTRACT',
+                         helpstr='WAVE_EXTRACT_HELP')
 
 # -----------------------------------------------------------------------------
 # cal_DRIFT_E2DS_spirou
