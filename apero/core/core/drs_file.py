@@ -1263,7 +1263,7 @@ class DrsFitsFile(DrsInputFile):
         func_name = __NAME__ + 'DrsFitsFile.check_file_header()'
         # -----------------------------------------------------------------
         # check file has been read
-        self.read()
+        self.read_file()
         # check recipe has been set
         self.check_recipe()
         params = self.recipe.drs_params
@@ -1379,8 +1379,8 @@ class DrsFitsFile(DrsInputFile):
         else:
             fmt = None
 
-        out = drs_fits.read(params, self.filename, getdata=True, gethdr=True,
-                            fmt=fmt, ext=ext)
+        out = drs_fits.readfits(params, self.filename, getdata=True,
+                                gethdr=True, fmt=fmt, ext=ext)
 
         self.data = out[0]
         self.header = drs_fits.Header.from_fits_header(out[1])
@@ -1399,7 +1399,7 @@ class DrsFitsFile(DrsInputFile):
         # get params
         params = self.recipe.drs_params
         # get data
-        data = drs_fits.read(params, self.filename, ext=ext)
+        data = drs_fits.readfits(params, self.filename, ext=ext)
         # set number of data sets to 1
         self.numfiles = 1
         # assign to object
@@ -1423,7 +1423,7 @@ class DrsFitsFile(DrsInputFile):
                 if load:
                     return self.read_file()
                 func = self.__repr__()
-                eargs = [func, func + '.read()']
+                eargs = [func, func + '.read_file()']
                 self.__error__(TextEntry('00-001-00004', args=eargs))
             else:
                 return 1
@@ -1432,11 +1432,11 @@ class DrsFitsFile(DrsInputFile):
             if load:
                 return self.read_file()
             func = self.__repr__()
-            eargs = [func, func + '.read()']
+            eargs = [func, func + '.read_file()']
             self.__error__(TextEntry('00-001-00004', args=eargs))
 
     def read_multi(self, ext=None, check=True):
-        func_name = __NAME__ + '.DrsFitsFile.read()'
+        func_name = __NAME__ + '.DrsFitsFile.read_multi()'
         # check if we have data set
         if check:
             cond1 = self.data is not None
@@ -1448,8 +1448,8 @@ class DrsFitsFile(DrsInputFile):
         # check that filename is set
         self.check_filename()
         # get data format
-        out = drs_fits.read(params, self.filename, getdata=True, gethdr=True,
-                            fmt='fits-multi')
+        out = drs_fits.readfits(params, self.filename, getdata=True,
+                                gethdr=True, fmt='fits-multi')
 
         self.data = out[0][0]
         self.header = drs_fits.Header.from_fits_header(out[1][0])
@@ -2431,7 +2431,7 @@ class DrsNpyFile(DrsInputFile):
         self.filename = kwargs.get('filename', None)
 
     def read_file(self, params):
-        func_name = __NAME__ + '.DrsNpyFile.read()'
+        func_name = __NAME__ + '.DrsNpyFile.read_file()'
         # if filename is set
         if self.filename is not None:
             try:
@@ -2445,7 +2445,7 @@ class DrsNpyFile(DrsInputFile):
             WLOG(params, 'error', TextEntry('00-008-00013', args=[func_name]))
 
     def write_file(self, params):
-        func_name = __NAME__ + '.DrsNpyFile.read()'
+        func_name = __NAME__ + '.DrsNpyFile.write_file()'
 
         if self.filename is None:
             WLOG(params, 'error', TextEntry('00-008-00013', args=[func_name]))
