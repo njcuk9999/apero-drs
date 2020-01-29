@@ -119,7 +119,7 @@ class Database():
 
     def check_read(self):
         if self.rdata is None:
-            self.read()
+            self.read_database()
 
     def read_database(self):
         """
@@ -517,7 +517,7 @@ def get_db_file(params, abspath, ext=0, fmt='fits', kind='image',
     if (not get_image) or (not abspath.endswith('.fits')):
         image = None
     elif kind == 'image':
-        image = drs_fits.read(params, abspath, ext=ext)
+        image = drs_fits.readfits(params, abspath, ext=ext)
     elif kind == 'table':
         image = drs_table.read_table(params, abspath, fmt=fmt)
     else:
