@@ -1021,7 +1021,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, wprops,
         # load all the trans files
         for it, filename in enumerate(transfiles):
             # load trans image
-            transimage = drs_fits.read(params, filename)
+            transimage = drs_fits.readfits(params, filename)
             # test whether whole transimage is NaNs
             if np.sum(np.isnan(transimage)) == np.product(transimage):
                 # log that we are removing a trans file
