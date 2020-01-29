@@ -220,8 +220,8 @@ def id_drs_file(params, recipe, drs_file_sets, filename=None, nentries=None,
 # =============================================================================
 # Define read functions
 # =============================================================================
-def read(params, filename, getdata=True, gethdr=False, fmt='fits-image', ext=0,
-         func=None):
+def readfits(params, filename, getdata=True, gethdr=False, fmt='fits-image',
+             ext=0, func=None):
     """
     The drs fits file read function
 
@@ -248,9 +248,9 @@ def read(params, filename, getdata=True, gethdr=False, fmt='fits-image', ext=0,
               dictionary for header
     """
     if func is None:
-        func_name = __NAME__ + '.read()'
+        func_name = __NAME__ + '.readfits()'
     else:
-        func_name = '{0} and {1}'.format(func, __NAME__ + '.read()')
+        func_name = '{0} and {1}'.format(func, __NAME__ + '.readfits()')
     # define allowed values of 'fmt'
     allowed_formats = ['fits-image', 'fits-table', 'fits-multi']
     # -------------------------------------------------------------------------
