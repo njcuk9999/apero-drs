@@ -895,8 +895,8 @@ class DrsFitsFile(DrsInputFile):
             return False, emsg
 
     def hkeys_exist(self, header=None, filename=None, argname=None):
-        func_name = __NAME__ + 'DrsFitsFile.header_keys_exist()'
-
+        # set function name (cannot break here -- no access to params)
+        func_name = display_func(None, 'hkeys_exist', __NAME__, 'DrsFitsFile')
         # deal with no input header
         if header is None:
             # check file has been read
