@@ -58,7 +58,7 @@ INDEX_FILE = Constants['DRS_INDEX_FILE']
 INDEX_FILE_NAME_COL = Constants['DRS_INDEX_FILENAME']
 # -----------------------------------------------------------------------------
 # Get Classes from drs_argument
-DRSArgumentParser = drs_argument.DRSArgumentParser
+DRSArgumentParser = drs_argument.DrsArgumentParser
 DrsArgument = drs_argument.DrsArgument
 # alias pcheck
 pcheck = drs_log.find_param
