@@ -196,7 +196,6 @@ def __main__(recipe, params):
             #    this should only be a master wavelength solution
             wprops = wave.get_wavesolution(params, recipe, infile=hc_e2ds_file,
                                            fiber=fiber, master=True)
-
             # --------------------------------------------------------------
             # define the header as being from the hc e2ds file
             hcheader = hc_e2ds_file.header
@@ -206,7 +205,6 @@ def __main__(recipe, params):
             # calculate the night wavelength solution
             wargs = [hc_e2ds_file, fp_e2ds_file, mhclines, mfplines, wprops]
             nprops = wave.night_wavesolution(params, recipe, *wargs)
-
             # ----------------------------------------------------------
             # ccf computation
             # ----------------------------------------------------------
