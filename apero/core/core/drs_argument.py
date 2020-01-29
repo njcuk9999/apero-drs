@@ -1220,6 +1220,8 @@ class DrsArgument(object):
                          - if files = [A, B] and filelogic = 'exclusive'
                            the input files may be either A or B
         """
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, 'DrsArgument')
         # ------------------------------------------------------------------
         # define class constants
         # ------------------------------------------------------------------
@@ -1342,6 +1344,8 @@ class DrsArgument(object):
 
         :return None:
         """
+        # set function name (cannot break here --> no access to params)
+        _ = display_func(None, 'make_properties', __NAME__, 'DrsArgument')
         # deal with no dtype
         if self.dtype is None:
             self.dtype = str
@@ -1415,29 +1419,40 @@ class DrsArgument(object):
                       ['action', 'nargs', 'type', 'choices', 'default', 'help']
         :return None:
         """
+        # set function name (cannot break here --> no access to params)
+        _ = display_func(None, 'assign_properties', __NAME__, 'DrsArgument')
         # loop around properties
         for prop in self.propkeys:
             if prop in props:
                 self.props[prop] = props[prop]
 
     def exception(self, message=None, errorobj=None):
-
+        # set function name (cannot break here --> no access to params)
+        _ = display_func(None, 'exception', __NAME__, 'DrsArgument')
+        # deal with required (positional) argument
         if self.kind == 'arg':
             log_opt = 'A[{0}] '.format(self.name)
+        # deal with optional argument
         elif self.kind == 'kwarg':
             log_opt = 'K[{0}] '.format(self.name)
+        # deal with special optional argument
         elif self.kind == 'special':
             log_opt = 'S[{0}] '.format(self.name)
+        # deal with anything else (should not get here)
         else:
             log_opt = 'X[{0}] '.format(self.name)
-
+        # if we have an error object then raise an argument error with
+        #   the error object
         if errorobj is not None:
             errorobj[0] = log_opt + errorobj[0]
             raise ArgumentError(errorobj=errorobj)
+        # else raise the argument error with just the message
         else:
             raise ArgumentError(message)
 
     def copy(self, argument):
+        # set function name (cannot break here --> no access to params)
+        _ = display_func(None, 'copy', __NAME__, 'DrsArgument')
         # get argument name
         self.argname = str(argument.argname)
         # get full name
@@ -1504,7 +1519,10 @@ class DrsArgument(object):
         :return str: the string representation of DrSArgument
                      i.e. DrsArgument[name]
         """
-        return 'DrsArgument[{0}]'.format(self.name)
+        # set function name (cannot break here --> no access to params)
+        _ = display_func(None, '__str__', __NAME__, 'DrsArgument')
+        # return string representation
+        return self.__repr__()
 
     def __repr__(self):
         """
@@ -1512,6 +1530,9 @@ class DrsArgument(object):
         :return str: the string representation of DrSArgument
                      i.e. DrsArgument[name]
         """
+        # set function name (cannot break here --> no access to params)
+        _ = display_func(None, '__str__', __NAME__, 'DrsArgument')
+        # return string representation
         return 'DrsArgument[{0}]'.format(self.name)
 
 
@@ -1519,6 +1540,8 @@ class DrsArgument(object):
 # Worker functions
 # =============================================================================
 def _get_version_info(params, green='', end=''):
+    # set function name (cannot break here --> no access to params)
+    _ = display_func(params, '_get_version_info', __NAME__)
     # get name
     if 'DRS_NAME' in params:
         name = str(params['DRS_NAME'])
@@ -1548,14 +1571,17 @@ def _get_version_info(params, green='', end=''):
 
 
 def _help_format(keys, helpstr, options=None):
+    # set function name (cannot break here --> no access to params)
+    _ = display_func(None, '_help_format', __NAME__)
+    # set up empty format string
     fmtstring = ''
+    # set separation size
     sep = 19
+    # set maximum size
     maxsize = 60
-
     # construct key string and add to output
     keystr = ','.join(keys)
     fmtstring += keystr
-
     # construct options string
     if options is None:
         optionstr = ''
@@ -1564,7 +1590,6 @@ def _help_format(keys, helpstr, options=None):
         optionstr = '{{{0}}}'.format(','.join(options))
     # add option string
     helpstr = ' '.join([optionstr, helpstr])
-
     # add help
     # Assume help string is a string with escape characters
 
@@ -1591,30 +1616,10 @@ def _help_format(keys, helpstr, options=None):
 
 
 def _textwrap(input_string, length):
-    # Modified version of this: https://stackoverflow.com/a/16430754
-    new_string = []
-    for s in input_string.split("\n"):
-        if s == "":
-            new_string.append('')
-        wlen = 0
-        line = []
-        for dor in s.split():
-            if wlen + len(dor) + 1 <= length:
-                line.append(dor)
-                wlen += len(dor) + 1
-            else:
-                new_string.append(" ".join(line))
-                line = [dor]
-                wlen = len(dor)
-        if len(line):
-            new_string.append(" ".join(line))
-
-    # add a tab to all but first line
-    new_string2 = [new_string[0]]
-    for it in range(1, len(new_string)):
-        new_string2.append('\t' + new_string[it])
-
-    return new_string2
+    # set function name (cannot break here --> no access to params)
+    _ = display_func(None, '_textwrap', __NAME__)
+    # return text wrap
+    return constants.constant_functions.textwrap(input_string, length)
 
 
 def _print_list_msg(recipe, fulldir, dircond=False, return_string=False,
@@ -1631,8 +1636,10 @@ def _print_list_msg(recipe, fulldir, dircond=False, return_string=False,
     :param list_all: bool, if True overrides lmit (set by HARD_DISPLAY_LIMIT)
     :return:
     """
-
+    # get params from recipe
     params = recipe.drs_params
+    # set function name
+    _ = display_func(params, '_print_list_msg', __NAME__)
     # get text
     text = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     helptext = HelpText(params['INSTRUMENT'], params['LANGUAGE'])
@@ -1724,6 +1731,8 @@ def _get_file_list(limit, path, ext=None, recursive=False,
     :return file_list: list of strings, the files found with extension (if not
                        None, up to the number limit
     """
+    # set function name (cannot break here --> no access to params)
+    _ = display_func(None, '_get_file_list', __NAME__)
     # deal with no limit - set hard limit
     if list_all:
         limit = np.inf
@@ -1800,145 +1809,320 @@ def get_uncommon_path(path1, path2):
 
     :return uncommon_path: string, the uncommon path between path1 and path2
     """
+    # set function name (cannot break here --> no access to params)
+    _ = display_func(None, 'get_uncommon_path', __NAME__)
+    # get common path
     common = os.path.commonpath([path2, path1]) + os.sep
+    # return the non-common part of the path
     return path1.split(common)[-1]
 
 
 # =============================================================================
 # Make functions
 # =============================================================================
-def make_listing(p):
+def make_listing(params):
     """
-    Make a custom special argument that lists the files in the given
-    input directory
-    :return props: dictionary for argparser
+    Make a custom special argument: Sets whether to display listing files
+    up to DRS_MAX_IO_DISPLAY_LIMIT in number.
+
+    :param params: ParamDict, Parameter Dictionary of constants
+    :type params: ParamDict
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
     """
-    limit = p['DRS_MAX_IO_DISPLAY_LIMIT']
-    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
+    # set function name
+    _ = display_func(params, 'make_listing', __NAME__)
+    # define the listing limit (used in listing help
+    limit = params['DRS_MAX_IO_DISPLAY_LIMIT']
+    # get the help text dictionary
+    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # set up an output storage dictionary
     props = OrderedDict()
+    # set the argument name
     props['name'] = '--listing'
+    # set any argument alternative names
     props['altnames'] = ['--list']
+    # set the argument action function
     props['action'] = _MakeListing
+    # set the number of argument to expect
     props['nargs'] = 0
+    # set the help message
     props['help'] = htext['LISTING_HELP'].format(limit)
+    # return the argument dictionary
     return props
 
 
-def make_alllisting(p):
-    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
+def make_alllisting(params):
+    """
+    Make a custom special argument: Sets whether to display all listing files
+
+    :param params: ParamDict, Parameter Dictionary of constants
+    :type params: ParamDict
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
+    """
+    # set function name
+    _ = display_func(params, 'make_alllisting', __NAME__)
+    # get the help text dictionary
+    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # set up an output storage dictionary
     props = OrderedDict()
+    # set the argument name
     props['name'] = '--listingall'
+    # set any argument alternative names
     props['altnames'] = ['--listall']
+    # set the argument action function
     props['action'] = _MakeAllListing
+    # set the number of argument to expect
     props['nargs'] = 0
+    # set the help message
     props['help'] = htext['ALLLISTING_HELP']
+    # return the argument dictionary
     return props
 
 
-def make_debug(p):
+def make_debug(params):
     """
-    Make a custom special argument that switches on debug mode (as it needs to
-    be done as soon as possible)
-    :return:
+    Make a custom special argument: Sets which debug mode to be in
+
+    :param params: ParamDict, Parameter Dictionary of constants
+    :type params: ParamDict
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
     """
-    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
+    # set function name
+    _ = display_func(params, 'make_debug', __NAME__)
+    # get the help text dictionary
+    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # set up an output storage dictionary
     props = OrderedDict()
+    # set the argument name
     props['name'] = '--debug'
+    # set any argument alternative names
     props['altnames'] = ['--d', '--verbose']
+    # set the argument action function
     props['action'] = _ActivateDebug
+    # set the number of argument to expect
     props['nargs'] = '?'
+    # set the help message
     props['help'] = htext['DEBUG_HELP']
+    # return the argument dictionary
     return props
 
 
-def make_version(p):
+def make_version(params):
     """
-    Make a custom special argument that lists the version number
-    :return props: dictionary for argparser
+    Make a custom special argument: Whether to display drs version information
+
+    :param params: ParamDict, Parameter Dictionary of constants
+    :type params: ParamDict
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
     """
-    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
+    # set function name
+    _ = display_func(params, 'make_version', __NAME__)
+    # get the help text dictionary
+    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # set up an output storage dictionary
     props = OrderedDict()
+    # set the argument name
     props['name'] = '--version'
+    # set any argument alternative names
     props['altnames'] = []
+    # set the argument action function
     props['action'] = _DisplayVersion
+    # set the number of argument to expect
     props['nargs'] = 0
+    # set the help message
     props['help'] = htext['VERSION_HELP']
+    # return the argument dictionary
     return props
 
 
-def make_info(p):
+def make_info(params):
     """
-    Make a custom special argument that lists a short version of the help
-    :return props: dictionary for argparser
+    Make a custom special argument: Whether to display recipe information
+
+    :param params: ParamDict, Parameter Dictionary of constants
+    :type params: ParamDict
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
     """
-    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
+    # set function name
+    _ = display_func(params, 'make_info', __NAME__)
+    # get the help text dictionary
+    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # set up an output storage dictionary
     props = OrderedDict()
+    # set the argument name
     props['name'] = '--info'
+    # set any argument alternative names
     props['altnames'] = ['--usage']
+    # set the argument action function
     props['action'] = _DisplayInfo
+    # set the number of argument to expect
     props['nargs'] = 0
+    # set the help message
     props['help'] = htext['INFO_HELP']
+    # return the argument dictionary
     return props
 
 
-def set_program(p):
-    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
+def set_program(params):
+    """
+    Make a custom special argument: Set the program name
+
+    :param params: ParamDict, Parameter Dictionary of constants
+    :type params: ParamDict
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
+    """
+    # set function name
+    _ = display_func(params, 'set_program', __NAME__)
+    # get the help text dictionary
+    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # set up an output storage dictionary
     props = OrderedDict()
+    # set the argument name
     props['name'] = '--program'
+    # set any argument alternative names
     props['altnames'] = ['--prog']
+    # set the argument action function
     props['action'] = _SetProgram
+    # set the number of argument to expect
     props['nargs'] = 1
+    # set the help message
     props['help'] = htext['SET_PROGRAM_HELP']
+    # return the argument dictionary
     return props
 
 
-def set_ipython_return(p):
-    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
+def set_ipython_return(params):
+    """
+    Make a custom special argument: Set the use of ipython return after
+    script ends
+
+    :param params: ParamDict, Parameter Dictionary of constants
+    :type params: ParamDict
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
+    """
+    # set function name
+    _ = display_func(params, 'set_ipython_return', __NAME__)
+    # get the help text dictionary
+    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # set up an output storage dictionary
     props = OrderedDict()
+    # set the argument name
     props['name'] = '--idebug'
+    # set any argument alternative names
     props['altnames'] = ['--idb']
+    # set the argument action function
     props['action'] = _SetIPythonReturn
+    # set the number of argument to expect
     props['nargs'] = 0
+    # set the help message
     props['help'] = htext['SET_IPYTHON_RETURN_HELP']
+    # return the argument dictionary
     return props
 
 
-def breakpoints(p):
-    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
+def breakpoints(params):
+    """
+    Make a custom special argument: Set the use of break_point
+
+    :param params: ParamDict, Parameter Dictionary of constants
+    :type params: ParamDict
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
+    """
+    # set function name
+    _ = display_func(params, 'breakpoints', __NAME__)
+    # get the help text dictionary
+    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # set up an output storage dictionary
     props = OrderedDict()
+    # set the argument name
     props['name'] = '--breakpoints'
+    # set any argument alternative names
     props['altnames'] = ['--break']
+    # set the argument action function
     props['action'] = _Breakpoints
+    # set the number of argument to expect
     props['nargs'] = 0
+    # set the help message
     props['help'] = htext['BREAKPOINTS_HELP']
+    # return the argument dictionary
     return props
 
 
-def make_breakfunc(p):
+def make_breakfunc(params):
     """
-    Make a custom special argument that switches on debug mode (as it needs to
-    be done as soon as possible)
-    :return:
+    Make a custom special argument: Set a break function
+
+    :param params: ParamDict, Parameter Dictionary of constants
+    :type params: ParamDict
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
     """
-    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
+    # set function name
+    _ = display_func(params, 'make_breakfunc', __NAME__)
+    # get the help text dictionary
+    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # set up an output storage dictionary
     props = OrderedDict()
+    # set the argument name
     props['name'] = '--breakfunc'
+    # set any argument alternative names
     props['altnames'] = ['--bf']
+    # set the argument action function
     props['action'] = _Breakfunc
+    # set the number of argument to expect
     props['nargs'] = 1
+    # set the help message
     props['help'] = htext['BREAKFUNC_HELP']
+    # return the argument dictionary
     return props
 
 
-def set_quiet(p):
-    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
+def set_quiet(params):
+    """
+    Make a custom special argument: Set the quiet mode
+
+    :param params: ParamDict, Parameter Dictionary of constants
+    :type params: ParamDict
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
+    """
+    # set function name (cannot break here --> no access to params)
+    _ = display_func(params, 'set_quiet', __NAME__)
+    # get the help text dictionary
+    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # set up an output storage dictionary
     props = OrderedDict()
+    # set the argument name
     props['name'] = '--quiet'
+    # set any argument alternative names
     props['altnames'] = ['--q']
+    # set the argument action function
     props['action'] = _SetQuiet
+    # set the number of argument to expect
     props['nargs'] = 0
+    # set the help message
     props['help'] = htext['QUIET_HELP']
+    # return the argument dictionary
     return props
+
 
 # =============================================================================
 # End of code
