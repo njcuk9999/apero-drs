@@ -382,7 +382,7 @@ def load_fits_file(params, filename, directory, func_name):
         eargs = [absfilename, func_name]
         raise LoadException(textdict['01-001-00022'].format(*eargs))
     # read image
-    image = drs_fits.read(params, absfilename)
+    image = drs_fits.readfits(params, absfilename)
     # return image
     return image, absfilename
 
