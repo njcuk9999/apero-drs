@@ -53,29 +53,29 @@ class Lock:
     """
     Class to control locking of decorated functions
     """
+
     def __init__(self, params, lockname):
         """
         Construct the lock instance
 
         :param params:
         :param lockname:
-        :param lockpath:
         """
         func_name = __NAME__ + '.Lock.__init__()'
         # set the bad characters to clean
-        self.bad_chars = ['/', '\\' , '.', ',']
+        self.bad_chars = ['/', '\\', '.', ',']
         # replace all . and whitespace with _
         self.lockname = self.__clean_name(lockname)
         self.params = params
         # get the lock path
-        lockpath = os.path.join(params['DRS_DATA_MSG'], 'lock')
+        self.lockpath = os.path.join(params['DRS_DATA_MSG'], 'lock')
         # ------------------------------------------------------------------
         # making the lock dir could be accessed in parallel several times
         #   at once so try 10 times with a wait in between
         it, error = 0, None
-        while not os.path.exists(lockpath) and it < 10:
+        while not os.path.exists(self.lockpath) and it < 10:
             try:
-                os.mkdir(lockpath)
+                os.mkdir(self.lockpath)
             except Exception as e:
                 error = e
                 # add one to the number of tries
@@ -84,11 +84,11 @@ class Lock:
                 time.sleep(1 + 0.1 * random.random())
         # if we had an error and got to 10 tries then cause an error
         if error is not None and it == 10:
-            eargs = [type(error), error, lockpath, func_name]
+            eargs = [type(error), error, self.lockpath, func_name]
             WLOG(params, 'error', TextEntry('00-503-00016', args=eargs))
         # ------------------------------------------------------------------
         self.maxwait = params.get('DB_MAX_WAIT', 100)
-        self.path = os.path.join(lockpath, self.lockname)
+        self.path = os.path.join(self.lockpath, self.lockname)
         self.queue = []
         # make the lock directory
         self.__makelockdir()
@@ -221,7 +221,10 @@ class Lock:
         abspath = os.path.join(self.path, filename)
         # if the file exists remove it
         if os.path.exists(abspath):
-            os.remove(abspath)
+            # do not remove lock path
+            if abspath != self.lockpath:
+                # remove file
+                os.remove(abspath)
 
     def __clean_name(self, name):
         # loop around bad characters and replace them
@@ -307,10 +310,16 @@ class Lock:
             abspath = os.path.join(self.path, rawlist[it])
             # remove files
             if os.path.exists(abspath):
+                if abspath == self.lockpath:
+                    continue
+                # remove file
                 os.remove(abspath)
         # now remove directory
         if os.path.exists(self.path):
-            os.removedirs(self.path)
+            # do not remove lock path (used by other processes)
+            if self.path != self.lockpath:
+                # remove path
+                os.removedirs(self.path)
 
 
 def synchronized(lock, name):
@@ -323,6 +332,7 @@ def synchronized(lock, name):
     :param name:
     :return:
     """
+
     def wrap(func):
         def wrapperfunc(*args, **kw):
             # add to the queue
@@ -368,8 +378,10 @@ def synchronized(lock, name):
             finally:
                 # unlock file
                 lock.dequeue(name)
+
         # return the new function (wrapped)
         return wrapperfunc
+
     # return the wrapped function
     return wrap
 
@@ -377,11 +389,13 @@ def synchronized(lock, name):
 def locker(params, lockfile, my_func, *args, **kwargs):
     # define lock file
     lock = Lock(params, lockfile)
+
     # ------------------------------------------------------------------
     # define wrapper lock file function
     @synchronized(lock, params['PID'])
     def locked_function():
         return my_func(*args, **kwargs)
+
     # ------------------------------------------------------------------
     # try to run locked read function
     try:
@@ -401,7 +415,7 @@ def reset_lock_dir(params, log=False):
     if not os.path.exists(lockpath):
         return
     # remove empties
-    __remove_empty__(params, lockpath, remove_head=False, log=False)
+    __remove_empty__(params, lockpath, remove_head=False, log=log)
 
 
 def __remove_empty__(params, path, remove_head=True, log=False):
@@ -424,7 +438,6 @@ def __remove_empty__(params, path, remove_head=True, log=False):
         os.rmdir(path)
 
 
-
 # =============================================================================
 # Start of code
 # =============================================================================
@@ -436,6 +449,7 @@ if __name__ == "__main__":
     import string
 
     _params = constants.load()
+
 
     def printfunc(i, j):
         # set up the lock file (usually a file or function)
@@ -455,6 +469,7 @@ if __name__ == "__main__":
             mylock.reset()
             raise e
 
+
     for jjjt in range(2):
         jobs = []
         # loop around sub groups (to be run at same time)
@@ -466,7 +481,6 @@ if __name__ == "__main__":
         # do not continue until finished
         for proc in jobs:
             proc.join()
-
 
 # =============================================================================
 # End of code
