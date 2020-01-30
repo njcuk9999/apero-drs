@@ -1253,11 +1253,16 @@ limited_run.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
                 KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'], KW_OBJNAME='SCIENCE_TARGETS')
 
 # -----------------------------------------------------------------------------
+# pp run (for trigger)
+# -----------------------------------------------------------------------------
+pp_run = drs_recipe.DrsRunSequence('pp_run', __INSTRUMENT__)
+pp_run.add(cal_pp)
+
+# -----------------------------------------------------------------------------
 # master run (for trigger)
 # -----------------------------------------------------------------------------
 master_run = drs_recipe.DrsRunSequence('master_run', __INSTRUMENT__)
 # master run
-master_run.add(cal_pp)
 master_run.add(cal_dark_master, master=True)
 master_run.add(cal_badpix, name='BADM', master=True)
 master_run.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
@@ -1346,8 +1351,16 @@ hc_run.add(cal_thermal)
 # extract science
 hc_run.add(cal_extract, name='EXTHC', files=[sf.pp_hc1_hc1])
 
+
+# -----------------------------------------------------------------------------
+# dark_fp (extract all DARK_FP) --assume calibrations are already done
+# -----------------------------------------------------------------------------
+dark_fp_run = drs_recipe.DrsRunSequence('dark_fp_run', __INSTRUMENT__)
+# extract science
+dark_fp_run.add(cal_extract, name='EXTDFP', files=[sf.pp_dark_fp])
+
 # -----------------------------------------------------------------------------
 # sequences list
 # -----------------------------------------------------------------------------
-sequences = [full_run, limited_run, master_run, calib_run, tellu_run,
-             science_run, hc_run]
+sequences = [pp_run, full_run, limited_run, master_run, calib_run, tellu_run,
+             science_run, hc_run, dark_fp_run]
