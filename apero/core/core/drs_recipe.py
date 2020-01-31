@@ -58,7 +58,7 @@ INDEX_FILE = Constants['DRS_INDEX_FILE']
 INDEX_FILE_NAME_COL = Constants['DRS_INDEX_FILENAME']
 # -----------------------------------------------------------------------------
 # Get Classes from drs_argument
-DRSArgumentParser = drs_argument.DrsArgumentParser
+DrsArgumentParser = drs_argument.DrsArgumentParser
 DrsArgument = drs_argument.DrsArgument
 # alias pcheck
 pcheck = drs_log.find_param
@@ -186,9 +186,13 @@ class DrsRecipe(object):
         # set up storage for arguments
         fmt_class = argparse.RawDescriptionHelpFormatter
         desc, epilog = self.description, self.epilog
-        parser = DRSArgumentParser(recipe=self, description=desc, epilog=epilog,
+        parser = DrsArgumentParser(recipe=self, description=desc, epilog=epilog,
                                    formatter_class=fmt_class,
                                    usage=self._drs_usage())
+
+        # TODO: remove break point
+        constants.break_point(self.drs_params)
+
         # get the drs params from recipe
         drs_params = self.drs_params
         # ---------------------------------------------------------------------
