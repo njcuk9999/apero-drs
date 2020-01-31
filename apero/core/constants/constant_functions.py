@@ -63,10 +63,10 @@ class Const:
         Construct the constant instance
 
         :param name: str, name of the constant
-        :param value: str, value of the constant
-        :param dtype: str, data type of the constant
-        :param dtypei: str, data type of list/dictionary elements
-        :param options: list of strings, the allowed values for the constant
+        :param value: object, value of the constant
+        :param dtype: object, data type of the constant
+        :param dtypei: object, data type of list/dictionary elements
+        :param options: list of objects, the allowed values for the constant
         :param maximum: the maximum value allowed for the constant
         :param minimum: the minimum value allowed for the constant
         :param source: str, the source file of the constant
@@ -86,10 +86,10 @@ class Const:
                        related to or comes from another constant)
 
         :type name: str
-        :type value: str
-        :type dtype: str
-        :type dtypei: str
-        :type options: list[str]
+        :type value: object
+        :type dtype: object
+        :type dtypei: object
+        :type options: list[object]
         :type source: str
         :type unit: uu.Unit
         :type datatype: str
