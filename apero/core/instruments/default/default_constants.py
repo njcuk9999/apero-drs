@@ -256,6 +256,7 @@ __all__ = [
     'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
     'REPROCESS_RAWINDEXFILE', 'REPROCESS_SEQCOL', 'REPROCESS_TIMECOL',
+    'SUMMARY_LATEX_PDF',
 ]
 
 # set name
@@ -2879,6 +2880,16 @@ REPROCESS_TIMECOL = Const('REPROCESS_TIMECOL', value=None, dtype=str,
 # define the default database to remake
 REMAKE_DATABASE_DEFAULT = Const('REMAKE_DATABASE_DEFAULT', value='calibration',
                                 dtype=str, source=__NAME__, group=cgroup)
+
+
+# Define whether we try to create a latex summary pdf
+#   (turn this off if you have any problems with latex/pdflatex)
+SUMMARY_LATEX_PDF = Const('SUMMARY_LATEX_PDF', value=True, dtype=bool,
+                          source=__NAME__, group=cgroup, active=True,
+                          user=True,
+                          description='Define whether we try to create a latex '
+                                      'summary pdf (turn this off if you have '
+                                      'any problems with latex/pdflatex)')
 
 # =============================================================================
 #  End of configuration file

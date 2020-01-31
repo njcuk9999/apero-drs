@@ -2267,6 +2267,12 @@ REPROCESS_SEQCOL.value = 'KW_CMPLTEXP'
 REPROCESS_TIMECOL = REPROCESS_TIMECOL.copy(__NAME__)
 REPROCESS_TIMECOL.value = 'KW_ACQTIME'
 
+# Define whether we try to create a latex summary pdf
+#   (turn this off if you have any problems with latex/pdflatex)
+SUMMARY_LATEX_PDF = SUMMARY_LATEX_PDF.copy(__NAME__)
+SUMMARY_LATEX_PDF.value = True
+
+
 # =============================================================================
 #  End of configuration file
 # =============================================================================
