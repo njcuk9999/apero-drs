@@ -191,7 +191,7 @@ class DrsRecipe(object):
                                    usage=self._drs_usage())
 
         # TODO: remove break point
-        constants.break_point(self.drs_params)
+        constants.break_point(allow=True)
 
         # get the drs params from recipe
         drs_params = self.drs_params
