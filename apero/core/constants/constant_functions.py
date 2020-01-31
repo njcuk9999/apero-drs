@@ -16,6 +16,8 @@ import traceback
 import importlib
 import string
 import warnings
+from astropy import units as uu
+from typing import Union
 
 from apero.locale import drs_exceptions
 from apero.locale import drs_lang_db
@@ -52,12 +54,55 @@ class Const:
     e.g. stores information to read and check config/constant file constants
 
     """
-
     def __init__(self, name, value=None, dtype=None, dtypei=None,
                  options=None, maximum=None, minimum=None, source=None,
                  unit=None, default=None, datatype=None, dataformat=None,
                  group=None, user=False, active=False, description=None,
                  author=None, parent=None):
+        """
+        Construct the constant instance
+
+        :param name: str, name of the constant
+        :param value: str, value of the constant
+        :param dtype: str, data type of the constant
+        :param dtypei: str, data type of list/dictionary elements
+        :param options: list of strings, the allowed values for the constant
+        :param maximum: the maximum value allowed for the constant
+        :param minimum: the minimum value allowed for the constant
+        :param source: str, the source file of the constant
+        :param unit: astropy unit, the units of the constant
+        :param default: default value of the constant
+        :param datatype: str, an additional datatype i.e. used to pass to
+                         another function e.g. a time having data type "MJD"
+        :param dataformat: str, an additional data format i.e. used to pass to
+                           another function e.g. a time having data format float
+        :param group: str, the group this constant belongs to
+        :param user: bool, whether the constant is a user constant
+        :param active: bool, whether the constant is active in constant files
+                       (for user config file generation)
+        :param description: str, the description for this constant
+        :param author: str, the author of this constant (i.e. who to contact)
+        :param parent: Const, the parent of this constant (if a constant is
+                       related to or comes from another constant)
+
+        :type name: str
+        :type value: str
+        :type dtype: str
+        :type dtypei: str
+        :type options: list[str]
+        :type source: str
+        :type unit: uu.Unit
+        :type datatype: str
+        :type dataformat: str
+        :type group: str
+        :type user: bool
+        :type active: bool
+        :type description:
+        :type author:
+        :type parent: Const
+
+        :returns: None
+        """
         # set function name (cannot break function here)
         _ = str(__NAME__) + '.Const.validate()'
         # set the name of the constant
@@ -103,6 +148,18 @@ class Const:
         self.true_value = None
 
     def validate(self, test_value=None, quiet=False, source=None):
+        """
+
+        :param test_value:
+        :param quiet:
+        :param source:
+
+        :type test_value:
+        :type quiet: bool
+        :type source: Union[str, None]
+
+        :return:
+        """
         # set function name (cannot break function here)
         _ = str(__NAME__) + '.Const.validate()'
         # deal with no test value (use value set at module level)
