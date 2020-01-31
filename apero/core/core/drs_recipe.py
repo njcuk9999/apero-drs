@@ -189,10 +189,6 @@ class DrsRecipe(object):
         parser = DrsArgumentParser(recipe=self, description=desc, epilog=epilog,
                                    formatter_class=fmt_class,
                                    usage=self._drs_usage())
-
-        # TODO: remove break point
-        constants.break_point(allow=True)
-
         # get the drs params from recipe
         drs_params = self.drs_params
         # ---------------------------------------------------------------------
@@ -238,6 +234,9 @@ class DrsRecipe(object):
         try:
             params = vars(parser.parse_args(args=self.str_arg_list))
         except Exception as e:
+            # TODO: remove breakpoint
+            constants.break_point(allow=True)
+
             eargs = [sys.argv, self.str_arg_list, type(e), e, func_name]
             WLOG(drs_params, 'error', TextEntry('00-006-00014', args=eargs))
             params = None
