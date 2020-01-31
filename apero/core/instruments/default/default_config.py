@@ -446,7 +446,7 @@ DRS_SUMMARY_STYLE = Const('DRS_SUMMARY_STYLE', value='latex', dtype=str,
 # =============================================================================
 cgroup = 'DEBUG MODES'
 # The debug number to print debug log messages
-DEBUG_MODE_LOG_PRINT = Const('DEBUG_MODE_LOG_PRINT', value=1, dtype=int,
+DEBUG_MODE_LOG_PRINT = Const('DEBUG_MODE_LOG_PRINT', value=10, dtype=int,
                              source=__NAME__, group=cgroup)
 
 # The debug number to print text entry names on all messages
