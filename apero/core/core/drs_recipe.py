@@ -234,9 +234,6 @@ class DrsRecipe(object):
         try:
             params = vars(parser.parse_args(args=self.str_arg_list))
         except Exception as e:
-            # TODO: remove breakpoint
-            constants.break_point(allow=True)
-
             eargs = [sys.argv, self.str_arg_list, type(e), e, func_name]
             WLOG(drs_params, 'error', TextEntry('00-006-00014', args=eargs))
             params = None
