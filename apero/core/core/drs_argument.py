@@ -469,11 +469,11 @@ class _CheckBool(DrsAction):
             WLOG(params, 'error', TextEntry('09-001-00013', args=eargs))
 
     def __call__(self, parser, namespace, values, option_string=None):
+        # get drs parameters
+        self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
                          '_CheckBool')
-        # get drs parameters
-        self.recipe = parser.recipe
         # check for help
         # noinspection PyProtectedMember
         skip = parser._has_special()
