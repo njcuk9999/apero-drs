@@ -462,22 +462,28 @@ class Plotter:
             stats = self.stats
         # ------------------------------------------------------------------
         # summary plot in latex
-        try:
-            # log progress
-            WLOG(self.params, 'info', TextEntry('40-100-00004'))
-            # latex document
-            latexdoc = self.summary_latex(qc_params, stats, warnings)
-        except Exception as e:
-            # do not skip if in debug mode
-            if self.params['DRS_DEBUG']:
-                raise e
-            # log error as warning
-            wargs = [type(e), e, func_name]
-            WLOG(self.params, 'warning', TextEntry('10-100-01001', args=wargs))
-            # set latex doc to None
-            latexdoc = None
+        # ------------------------------------------------------------------
+        # set latex doc to None
+        latexdoc = None
+        # only do this is user requires it
+        if 'SUMMARY_LATEX_PDF' in self.params:
+            if self.params['SUMMARY_LATEX_PDF']:
+                try:
+                    # log progress
+                    WLOG(self.params, 'info', TextEntry('40-100-00004'))
+                    # latex document
+                    latexdoc = self.summary_latex(qc_params, stats, warnings)
+                except Exception as e:
+                    # do not skip if in debug mode
+                    if self.params['DRS_DEBUG']:
+                        raise e
+                    # log error as warning
+                    wargs = [type(e), e, func_name]
+                    WLOG(self.params, 'warning', TextEntry('10-100-01001',
+                                                           args=wargs))
         # ------------------------------------------------------------------
         # summary html
+        # ------------------------------------------------------------------
         try:
             # log progress
             WLOG(self.params, 'info', TextEntry('40-100-00005'))
