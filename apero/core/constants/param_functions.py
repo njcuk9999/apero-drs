@@ -17,6 +17,7 @@ import os
 import pkg_resources
 import copy
 import shutil
+from typing import Union
 
 from collections import OrderedDict
 
@@ -68,7 +69,16 @@ class CaseInsensitiveDict(dict):
     """
 
     def __init__(self, *arg, **kw):
+        """
+        Construct the case insensitive dictionary class
+        :param arg: arguments passed to dict
+        :param kw: keyword arguments passed to dict
+        """
+        # set function name
+        _ = display_func(None, '__init__', __NAME__, 'CaseInsensitiveDict')
+        # super from dict
         super(CaseInsensitiveDict, self).__init__(*arg, **kw)
+        # force keys to be capitals (internally)
         self.__capitalise_keys__()
 
     def __getitem__(self, key):
@@ -78,10 +88,15 @@ class CaseInsensitiveDict(dict):
         where key is case insensitive
 
         :param key: string, the key for the value returned (case insensitive)
+        :type key: str
 
         :return value: object, the value stored at position "key"
         """
+        # set function name
+        _ = display_func(None, '__getitem__', __NAME__, 'CaseInsensitiveDict')
+        # make key capitals
         key = _capitalise_key(key)
+        # return from supers dictionary storage
         return super(CaseInsensitiveDict, self).__getitem__(key)
 
     def __setitem__(self, key, value, source=None):
@@ -91,8 +106,12 @@ class CaseInsensitiveDict(dict):
         :param value: object, the object to set (as in dictionary) for the
                       parameter
         :param source: string, the source for the parameter
-        :return:
+        :type source: str
+
+        :return: None
         """
+        # set function name
+        _ = display_func(None, '__setitem__', __NAME__, 'CaseInsensitiveDict')
         # capitalise string keys
         key = _capitalise_key(key)
         # then do the normal dictionary setting
@@ -106,11 +125,17 @@ class CaseInsensitiveDict(dict):
         is returned
 
         :param key: string, "key" to look for in CaseInsensitiveDict instance
+        :type key: str
 
         :return bool: True if CaseInsensitiveDict instance has a key "key",
         else False
+        :rtype: bool
         """
+        # set function name
+        _ = display_func(None, '__contains__', __NAME__, 'CaseInsensitiveDict')
+        # capitalize key first
         key = _capitalise_key(key)
+        # return True if key in keys else return False
         return super(CaseInsensitiveDict, self).__contains__(key)
 
     def __delitem__(self, key):
@@ -119,10 +144,15 @@ class CaseInsensitiveDict(dict):
 
         :param key: string, the key to delete from ParamDict instance,
                     case insensitive
+        :type str:
 
         :return None:
         """
+        # set function name
+        _ = display_func(None, '__delitem__', __NAME__, 'CaseInsensitiveDict')
+        # capitalize key first
         key = _capitalise_key(key)
+        # delete key from keys
         super(CaseInsensitiveDict, self).__delitem__(key)
 
     def get(self, key, default=None):
@@ -137,9 +167,14 @@ class CaseInsensitiveDict(dict):
         :param default: object or None, if key not in ParamDict instance this
                         object is returned
 
+        :type key: str
+        :type default: Any
+
         :return value: if key in ParamDict instance this value is returned else
                        the default value is returned (None if undefined)
         """
+        # set function name
+        _ = display_func(None, 'get', __NAME__, 'CaseInsensitiveDict')
         # capitalise string keys
         key = _capitalise_key(key)
         # if we have the key return the value
@@ -156,7 +191,12 @@ class CaseInsensitiveDict(dict):
 
         :return None:
         """
+        # set function name
+        _ = display_func(None, '__capitalise_keys__', __NAME__,
+                         'CaseInsensitiveDict')
+        # make keys a list
         keys = list(self.keys())
+        # loop around key in keys
         for key in keys:
             # check if key is a string
             if type(key) == str:
@@ -180,15 +220,26 @@ class ParamDict(CaseInsensitiveDict):
         Constructor for parameter dictionary, calls dict.__init__
         i.e. the same as running dict(*arg, *kw)
 
-        :param arg: arguments passed to dict
-        :param kw: keyword arguments passed to dict
+        :param arg: arguments passed to CaseInsensitiveDict
+        :param kw: keyword arguments passed to CaseInsensitiveDict
         """
+        # set function name
+        _ = display_func(None, '__init__', __NAME__, 'ParamDict')
+        # storage for the sources
         self.sources = CaseInsensitiveDict()
+        # storage for the source history
         self.source_history = CaseInsensitiveDict()
+        # storage for the instances
         self.instances = CaseInsensitiveDict()
+        # the print format
         self.pfmt = '\t{0:30s}{1:45s} # {2}'
+        # the print format for list items
         self.pfmt_ns = '\t{1:45s}'
+        # whether the parameter dictionary is locked for editing
         self.locked = False
+        # get text entry from constants (manual database)
+        self.textentry = constant_functions._DisplayText()
+        # run the super class (CaseInsensitiveDict <-- dict)
         super(ParamDict, self).__init__(*arg, **kw)
 
     def __getitem__(self, key):
@@ -199,14 +250,19 @@ class ParamDict(CaseInsensitiveDict):
 
         :param key: string, the key for the value returned (case insensitive)
 
+        :type key: str
         :return value: object, the value stored at position "key"
+        :raises ConfigError: if key not found
         """
+        # set function name
+        _ = display_func(None, '__getitem__', __NAME__, 'ParamDict')
+        # try to get item from super
         try:
             return super(ParamDict, self).__getitem__(key)
         except KeyError:
-            emsg = ('Config Error: Parameter "{0}" not found in parameter '
-                    'dictionary')
-            raise ConfigError(emsg.format(key), level='error')
+            # log that parameter was not found in parameter dictionary
+            emsg = self.textentry('00-003-00024', args=[key])
+            raise ConfigError(emsg, level='error')
 
     def __setitem__(self, key, value, source=None, instance=None):
         """
@@ -215,14 +271,20 @@ class ParamDict(CaseInsensitiveDict):
         :param value: object, the object to set (as in dictionary) for the
                       parameter
         :param source: string, the source for the parameter
-        :return:
+
+        :type key: str
+        :type source: str
+
+        :return: None
+        :raises ConfigError: if parameter dictionary is locked
         """
         global SETTINGS_CACHE
-
+        # set function name
+        _ = display_func(None, '__setitem__', __NAME__, 'ParamDict')
+        # deal with parameter dictionary being locked
         if self.locked:
-            emsg = 'ParamDict locked. \n\t Cannot add \'{0}\'=\'{1}\''
-            raise ConfigError(emsg.format(key, value))
-
+            # log that parameter dictionary is locked so we cannot set key
+            raise ConfigError(self.textentry('00-003-00025', args=[key, value]))
         # if we dont have the key in sources set it regardless
         if key not in self.sources:
             self.sources[key] = source
@@ -231,11 +293,9 @@ class ParamDict(CaseInsensitiveDict):
         elif source is not None:
             self.sources[key] = source
             self.instances[key] = instance
-
         # if setting in cached settings add
         if key in SETTINGS_CACHE_KEYS:
             SETTINGS_CACHE[key] = copy.deepcopy(value)
-
         # then do the normal dictionary setting
         super(ParamDict, self).__setitem__(key, value)
 
@@ -249,6 +309,9 @@ class ParamDict(CaseInsensitiveDict):
 
         :return bool: True if ParamDict instance has a key "key", else False
         """
+        # set function name
+        _ = display_func(None, '__contains__', __NAME__, 'ParamDict')
+        # run contains command from super
         return super(ParamDict, self).__contains__(key)
 
     def __delitem__(self, key):
@@ -260,24 +323,52 @@ class ParamDict(CaseInsensitiveDict):
 
         :return None:
         """
+        # set function name
+        _ = display_func(None, '__delitem__', __NAME__, 'ParamDict')
+        # delete item using super
         super(ParamDict, self).__delitem__(key)
 
     def __repr__(self):
+        """
+        Get the offical string representation for this instance
+        :return: return the string representation
+
+        :rtype: str
+        """
+        # set function name
+        _ = display_func(None, '__repr__', __NAME__, 'ParamDict')
+        # get string from string print
         return self._string_print()
 
     def __str__(self):
+        """
+        Get the informal string representation for this instance
+        :return: return the string representation
+
+        :rtype: str
+        """
+        # set function name
+        _ = display_func(None, '__repr__', __NAME__, 'ParamDict')
+        # get string from string print
         return self._string_print()
 
     def set(self, key, value, source=None, instance=None):
         """
         Set an item even if params is locked
 
-        :param key:
-        :param value:
-        :param source:
-        :param instance:
-        :return:
+        :param key: str, the key to set
+        :param value: object, the value of the key to set
+        :param source: str, the source of the value/key to set
+        :param instance: object, the instance of the value/key to set
+
+        :type key: str
+        :type source: str
+        :type instance: object
+
+        :return: None
         """
+        # set function name
+        _ = display_func(None, 'set', __NAME__, 'ParamDict')
         # if we dont have the key in sources set it regardless
         if key not in self.sources:
             self.sources[key] = source
@@ -290,9 +381,25 @@ class ParamDict(CaseInsensitiveDict):
         super(ParamDict, self).__setitem__(key, value)
 
     def lock(self):
+        """
+        Locks the parameter dictionary
+
+        :return:
+        """
+        # set function name
+        _ = display_func(None, 'lock', __NAME__, 'ParamDict')
+        # set locked to True
         self.locked = True
 
     def unlock(self):
+        """
+        Unlocks the parameter dictionary
+
+        :return:
+        """
+        # set function name
+        _ = display_func(None, 'unlock', __NAME__, 'ParamDict')
+        # set locked to False
         self.locked = False
 
     def get(self, key, default=None):
@@ -307,9 +414,13 @@ class ParamDict(CaseInsensitiveDict):
         :param default: object or None, if key not in ParamDict instance this
                         object is returned
 
+        :type key: str
+
         :return value: if key in ParamDict instance this value is returned else
                        the default value is returned (None if undefined)
         """
+        # set function name
+        _ = display_func(None, 'get', __NAME__, 'ParamDict')
         # if we have the key return the value
         if key in self.keys():
             return self.__getitem__(key)
@@ -327,14 +438,18 @@ class ParamDict(CaseInsensitiveDict):
         :param key: string, the main dictionary string
         :param source: string, the source to set
 
+        :type key: str
+        :type source: str
+
         :return None:
+        :raises ConfigError: if key not found
         """
+        # set function name
+        _ = display_func(None, 'set_source', __NAME__, 'ParamDict')
         # capitalise
         key = _capitalise_key(key)
-
         # don't put full path for sources in package
         source = _check_mod_source(source)
-
         # only add if key is in main dictionary
         if key in self.keys():
             self.sources[key] = source
@@ -344,20 +459,34 @@ class ParamDict(CaseInsensitiveDict):
             else:
                 self.source_history[key] = [source]
         else:
-            emsg1 = 'Source cannot be added for key "{0}" '.format(key)
-            emsg2 = '     "{0}" is not in Parameter Dictionary'.format(key)
-            raise ConfigError([emsg1, emsg2], level='error')
+            # log error: source cannot be added for key
+            emsg = self.textentry('00-003-00026', args=[key])
+            raise ConfigError(emsg, level='error')
 
     def set_instance(self, key, instance):
+        """
+        Set a key to have instance[key] = instance
+
+        raise a Config Error if key not found
+        :param key: str, the key to add
+        :param instance: object, the instance to store (normally Const/Keyword)
+
+        :type key: str
+
+        :return None:
+        :raises ConfigError: if key not found
+        """
+        # set function name
+        _ = display_func(None, 'set_instance', __NAME__, 'ParamDict')
         # capitalise
         key = _capitalise_key(key)
         # only add if key is in main dictionary
         if key in self.keys():
             self.instances[key] = instance
         else:
-            emsg1 = 'Instance cannot be added for key "{0}" '.format(key)
-            emsg2 = '     "{0}" is not in Parameter Dictionary'.format(key)
-            raise ConfigError([emsg1, emsg2], level='error')
+            # log error: instance cannot be added for key
+            emsg = self.textentry('00-003-00027', args=[key])
+            raise ConfigError(emsg, level='error')
 
     def append_source(self, key, source):
         """
@@ -367,8 +496,13 @@ class ParamDict(CaseInsensitiveDict):
         :param key: string, the main dictionary string
         :param source: string, the source to set
 
+        :type key: str
+        :type source: str
+
         :return None:
         """
+        # set function name
+        _ = display_func(None, 'append_source', __NAME__, 'ParamDict')
         # capitalise
         key = _capitalise_key(key)
         # if key exists append source to it
@@ -390,8 +524,13 @@ class ParamDict(CaseInsensitiveDict):
                         if list source = sources[i]  for keys[i]
                         if string all sources with these keys will = source
 
+        :type keys: list
+        :type sources: Union[str, list, dict]
+
         :return None:
         """
+        # set function name
+        _ = display_func(None, 'set_sources', __NAME__, 'ParamDict')
         # loop around each key in keys
         for k_it in range(len(keys)):
             # assign the key from k_it
@@ -421,8 +560,13 @@ class ParamDict(CaseInsensitiveDict):
                         if list source = sources[i]  for keys[i]
                         if object all sources with these keys will = source
 
+        :type keys: list
+        :type instances: Union[object, list, dict]
+
         :return None:
         """
+        # set function name
+        _ = display_func(None, 'set_instances', __NAME__, 'ParamDict')
         # loop around each key in keys
         for k_it in range(len(keys)):
             # assign the key from k_it
@@ -452,8 +596,13 @@ class ParamDict(CaseInsensitiveDict):
                         if list source = sources[i]  for keys[i]
                         if string all sources with these keys will = source
 
+        :type keys: list
+        :type sources: Union[str, list, dict]
+
         :return None:
         """
+        # set function name
+        _ = display_func(None, 'append_sources', __NAME__, 'ParamDict')
         # loop around each key in keys
         for k_it in range(len(keys)):
             # assign the key from k_it
@@ -476,8 +625,12 @@ class ParamDict(CaseInsensitiveDict):
 
         :param source: string, all keys will be set to this source
 
+        :type source: str
+
         :return None:
         """
+        # set function name
+        _ = display_func(None, 'set_all_sources', __NAME__, 'ParamDict')
         # loop around each key in keys
         for key in self.keys():
             # capitalise
@@ -491,9 +644,12 @@ class ParamDict(CaseInsensitiveDict):
 
         :param source: string, the source to set
 
+        :type source: str
+
         :return None:
         """
-
+        # set function name
+        _ = display_func(None, 'append_all_sources', __NAME__, 'ParamDict')
         # loop around each key in keys
         for key in self.keys():
             # capitalise
@@ -511,6 +667,8 @@ class ParamDict(CaseInsensitiveDict):
 
         :return source: string, the source of the parameter
         """
+        # set function name
+        _ = display_func(None, 'get_source', __NAME__, 'ParamDict')
         # capitalise
         key = _capitalise_key(key)
         # if key in keys and sources then return source
@@ -518,8 +676,9 @@ class ParamDict(CaseInsensitiveDict):
             return self.sources[key]
         # else raise a Config Error
         else:
-            emsg = 'No source set for key={0} in ParamDict'
-            raise ConfigError(emsg.format(key), level='error')
+            # log error: no source set for key
+            emsg = self.textentry('00-003-00028', args=[key])
+            raise ConfigError(emsg, level='error')
 
     def get_instance(self, key):
         """
@@ -531,6 +690,8 @@ class ParamDict(CaseInsensitiveDict):
 
         :return source: string, the source of the parameter
         """
+        # set function name
+        _ = display_func(None, 'get_instance', __NAME__, 'ParamDict')
         # capitalise
         key = _capitalise_key(key)
         # if key in keys and sources then return source
@@ -538,8 +699,8 @@ class ParamDict(CaseInsensitiveDict):
             return self.instances[key]
         # else raise a Config Error
         else:
-            emsg = 'No instance set for key={0} in ParamDict'
-            raise ConfigError(emsg.format(key), level='error')
+            emsg = self.textentry('00-003-00029', args=[key])
+            raise ConfigError(emsg, level='error')
 
     def source_keys(self):
         """
@@ -548,6 +709,9 @@ class ParamDict(CaseInsensitiveDict):
 
         :return sources: values of sources dictionary
         """
+        # set function name
+        _ = display_func(None, 'source_keys', __NAME__, 'ParamDict')
+        # return all keys in source dictionary
         return self.sources.keys
 
     def source_values(self):
@@ -557,6 +721,9 @@ class ParamDict(CaseInsensitiveDict):
 
         :return sources: values of sources dictionary
         """
+        # set function name
+        _ = display_func(None, 'source_values', __NAME__, 'ParamDict')
+        # return all values in source dictionary
         return self.sources.values
 
     def startswith(self, substring):
@@ -565,8 +732,12 @@ class ParamDict(CaseInsensitiveDict):
 
         :param substring: string, the prefix that the keys start with
 
+        :type substring: str
+
         :return keys: list of strings, the keys with this substring at the start
         """
+        # set function name
+        _ = display_func(None, 'startswith', __NAME__, 'ParamDict')
         # define return list
         return_keys = []
         # loop around keys
@@ -586,9 +757,12 @@ class ParamDict(CaseInsensitiveDict):
 
         :param substring: string, the sub-string to look for in all keys
 
+        :type substring: str
+
         :return keys: list of strings, the keys which contain this substring
         """
-        # define return
+        # set function name
+        _ = display_func(None, 'contains', __NAME__, 'ParamDict')
         # define return list
         return_keys = []
         # loop around keys
@@ -608,8 +782,12 @@ class ParamDict(CaseInsensitiveDict):
 
         :param substring: string, the suffix that the keys ends with
 
+        :type substring: str
+
         :return keys: list of strings, the keys with this substring at the end
         """
+        # set function name
+        _ = display_func(None, 'endswith', __NAME__, 'ParamDict')
         # define return list
         return_keys = []
         # loop around keys
@@ -630,6 +808,8 @@ class ParamDict(CaseInsensitiveDict):
         :return: the copy of the parameter dictionary
         :rtype: ParamDict
         """
+        # set function name
+        _ = display_func(None, 'copy', __NAME__, 'ParamDict')
         # make new copy of param dict
         pp = ParamDict()
         keys = list(self.keys())
@@ -664,9 +844,27 @@ class ParamDict(CaseInsensitiveDict):
         # return new param dict filled
         return pp
 
-    def merge(self, paramdict):
+    def merge(self, paramdict, overwrite=True):
+        """
+        Merge another parameter dictionary with this one
+
+        :param paramdict: ParamDict, another parameter dictionary to merge
+                          with this one
+        :param overwrite: bool, if True (default) allows overwriting of
+                          parameters, else skips ones already present
+
+        :type paramdict: ParamDict
+        :type overwrite: bool
+
+        :return: None
+        """
+        # set function name
+        _ = display_func(None, 'merge', __NAME__, 'ParamDict')
         # add param dict to self
         for key in paramdict:
+            # deal with no overwriting
+            if not overwrite and key in self.keys:
+                continue
             # copy source
             if key in paramdict.sources:
                 ksource = paramdict.sources[key]
@@ -681,10 +879,17 @@ class ParamDict(CaseInsensitiveDict):
             self.set(key, paramdict[key], ksource, kinst)
 
     def _string_print(self):
+        """
+        Constructs a string representation of the instance
+
+        :return: a string representation of the instance
+        :rtype: str
+        """
+        # set function name
+        _ = display_func(None, '_string_print', __NAME__, 'ParamDict')
         # get keys and values
         keys = list(self.keys())
         values = list(self.values())
-
         # string storage
         return_string = 'ParamDict:\n'
         strvalues = []
@@ -714,23 +919,79 @@ class ParamDict(CaseInsensitiveDict):
         return return_string + '\n'
 
     def listp(self, key, separator=',', dtype=None):
+        """
+        Turn a string list parameter (separated with `separator`) into a list
+        of objects (of data type `dtype`)
+
+        i.e. ParamDict['MYPARAM'] = '1, 2, 3, 4'
+        x = ParamDict.listp('my_parameter', dtype=int)
+        gives:
+
+        x = list([1, 2, 3, 4])
+
+        :param key: str, the key that contains a string list
+        :param separator: str, the character that separates
+        :param dtype: type, the type to cast the list element to
+
+        :return: the list of values extracted from the string for `key`
+        :rtype: list
+        """
+        # set function name
+        _ = display_func(None, 'listp', __NAME__, 'ParamDict')
+        # if key is present attempt str-->list
         if key in self.keys():
             return _map_listparameter(self.__getitem__(key),
                                       separator=separator, dtype=dtype)
         else:
-            emsg = ('Config Error: Parameter "{0}" not found in parameter '
-                    'dictionary (via listp)')
-            raise ConfigError(emsg.format(key), level='error')
+            # log error: parameter not found in parameter dict (via listp)
+            emsg = self.textentry('00-003-00030', args=[key])
+            raise ConfigError(emsg, level='error')
 
     def dictp(self, key, dtype=None):
+        """
+        Turn a string dictionary parameter into a python dictionary
+        of objects (of data type `dtype`)
+
+        i.e. ParamDict['MYPARAM'] = '{"varA":1, "varB":2}'
+        x = ParamDict.listp('my_parameter', dtype=int)
+        gives:
+
+        x = dict(varA=1, varB=2)
+
+        Note string dictionary must be in the {"key":value} format
+
+        :param key: str, the key that contains a string list
+        :param separator: str, the character that separates
+        :param dtype: type, the type to cast the list element to
+
+        :return: the list of values extracted from the string for `key`
+        :rtype: dict
+        """
+        # set function name
+        _ = display_func(None, 'dictp', __NAME__, 'ParamDict')
+        # if key is present attempt str-->dict
         if key in self.keys():
             return _map_dictparameter(self.__getitem__(key), dtype=dtype)
         else:
-            emsg = ('Config Error: Parameter "{0}" not found in parameter '
-                    'dictionary (via dictp)')
+            # log error message: parameter not found in param dict (via dictp)
+            emsg = self.textentry('00-003-00031', args=[key])
             raise ConfigError(emsg.format(key), level='error')
 
-    def get_keyword_instances(self):
+    def get_instanceof(self, lookup):
+        """
+        Get all instances of object instance lookup
+
+        i.e. perform isinstance(object, lookup)
+
+        :param lookup: object, the instance to lookup
+
+        :return: a dictionary of keys/value pairs where each value is an
+                 instance that belongs to instance of `lookup`
+        :rtype: dict
+        """
+        # set function name
+        _ = display_func(None, 'get_instanceof', __NAME__, 'ParamDict')
+        # output storage
         keyworddict = dict()
         # loop around all keys
         for key in list(self.instances.keys()):
@@ -740,7 +1001,7 @@ class ParamDict(CaseInsensitiveDict):
             if instance is None:
                 continue
             # else check instance type
-            if isinstance(instance, constant_functions.Keyword):
+            if isinstance(instance, lookup):
                 keyworddict[instance.key] = instance
             else:
                 continue
@@ -748,49 +1009,74 @@ class ParamDict(CaseInsensitiveDict):
         return keyworddict
 
     def info(self, key):
+        """
+        Display the information related to a specific key
+
+        :param key: str, the key to display information about
+
+        :type key: str
+
+        :return: None
+        """
+        # set function name
+        _ = display_func(None, 'info', __NAME__, 'ParamDict')
         # deal with key not existing
         if key not in self.keys():
-            print('Key not found')
+            print(self.textentry('40-000-00001', args=[key]))
             return
-        # print key
-        print('Information for key={0}'.format(key))
+        # print key title
+        print(self.textentry('40-000-00002', args=[key]))
         # print value stats
         value = self.__getitem__(key)
         # print the data type
-        print('\tData Type: ', type(value).__name__)
+        print(self.textentry('40-000-00003', args=[type(value).__name__]))
         # deal with lists and numpy array
         if isinstance(value, (list, np.ndarray)):
-            print('\tMin Value: ', np.nanmin(value))
-            print('\tMax Value: ', np.nanmax(value))
-            print('\tHas NaNs: ', np.sum(np.isnan(value)) > 0)
             sargs = [key, list(value), None, self.pfmt_ns]
-            print('\tValues: ', _string_repr_list(*sargs))
+            wargs = [np.nanmin(value), np.nanmax(value),
+                     np.sum(np.isnan(value)) > 0, _string_repr_list(*sargs)]
+            print(self.textentry('40-000-00004', args=wargs))
         # deal with dictionaries
         elif isinstance(value, (dict, OrderedDict, ParamDict)):
-            print('\t No. Keys: ', len(list(value.keys())))
             strvalue = list(value.keys()).__repr__()[:40]
             sargs = [key + '[DICT]', strvalue, None]
-            print('\tValues: ', self.pfmt_ns.format(*sargs))
+            wargs = [len(list(value.keys())), self.pfmt_ns.format(*sargs)]
+            print(self.textentry('40-000-00005', args=wargs))
         # deal with everything else
         else:
             strvalue = str(value)[:40]
             sargs = [key + ':', strvalue, None]
-            print('\tValue: ', self.pfmt_ns.format(*sargs))
+            wargs = [self.pfmt_ns.format(*sargs)]
+            print(self.textentry('40-000-00006', args=wargs))
         # add source info
         if key in self.sources:
-            print('\tSource: {0}'.format(self.sources[key]))
+            print(self.textentry('40-000-00007', args=[self.sources[key]]))
         # add instances info
         if key in self.instances:
-            print('\tInstance: {0}'.format(self.instances[key]))
+            print(self.textentry('40-000-00008', args=self.instances[key]))
 
     def history(self, key):
-        if key in self.source_history:
-            print('History for key={0}'.format(key))
+        """
+        Display the history of where key was defined (using source)
 
+        :param key: str, the key to print history of
+
+        :type key: str
+
+        :return: None
+        """
+        # set function name
+        _ = display_func(None, 'history', __NAME__, 'ParamDict')
+        # if history found then print it
+        if key in self.source_history:
+            # print title: History for key
+            print(self.textentry('40-000-00009', args=[key]))
+            # loop around history and print row by row
             for it, entry in enumerate(self.source_history[key]):
                 print('{0}: {1}'.format(it + 1, entry))
+        # else display that there was not history found
         else:
-            print('No history found for key={0}'.format(key))
+            print(self.textentry('40-000-00010', args=[key]))
 
 
 # =============================================================================
