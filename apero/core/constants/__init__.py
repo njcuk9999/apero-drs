@@ -68,6 +68,7 @@ update_file = constant_functions.update_file
 # generate a drs breakpoint
 break_point = param_functions.break_point
 
+# catching Ctrl+C and other code interruptions
 catch_sigint = param_functions.catch_sigint
 
 
