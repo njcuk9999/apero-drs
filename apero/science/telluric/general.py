@@ -275,6 +275,10 @@ def load_templates(params, header, objname, fiber):
     # get file definition
     out_temp = core.get_file_definition('TELLU_TEMP', params['INSTRUMENT'],
                                         kind='red', fiber=fiber)
+    # deal with user not using template
+    if 'USE_TEMPLATE' in params['INPUTS']:
+        if not params['INPUTS']['USE_TEMPLATE']:
+            return None, None
     # get key
     temp_key = out_temp.get_dbkey(fiber=fiber)
     # load tellu file, header and abspaths
@@ -375,7 +379,7 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
         # Load the convolved TAPAS atmospheric transmission from file
         # ------------------------------------------------------------------
         # load npy file
-        out_tellu_conv.read(params)
+        out_tellu_conv.read_file(params)
         # push data into array
         tapas_all_species = np.array(out_tellu_conv.data)
     # else we need to load tapas and generate the convolution
@@ -463,7 +467,7 @@ def load_tapas_convolved(params, recipe, header, mprops, fiber, **kwargs):
         # Load the convolved TAPAS atmospheric transmission from file
         # ------------------------------------------------------------------
         # load npy file
-        out_tellu_conv.read(params)
+        out_tellu_conv.read_file(params)
         # push data into array
         tapas_all_species = np.array(out_tellu_conv.data)
         # ------------------------------------------------------------------
@@ -546,6 +550,10 @@ def calculate_telluric_absorption(params, recipe, image, template,
                               'tau_others_upper', kwargs, func_name)
     tapas_small_number = pcheck(params, 'MKTELLU_SMALL_LIMIT',
                                 'tapas_small_number', kwargs, func_name)
+    hbandlower = pcheck(params, 'MKTELLU_HBAND_LOWER', 'hbandlower', kwargs,
+                        func_name)
+    hbandupper = pcheck(params, 'MKTELLU_HBAND_UPPER', 'hbandupper', kwargs,
+                        func_name)
     # ------------------------------------------------------------------
     # copy image
     image1 = np.array(image)
@@ -697,6 +705,8 @@ def calculate_telluric_absorption(params, recipe, image, template,
         nanmask = ~np.isfinite(fit_image)
         fit_image[nanmask] = 0
         # ---------------------------------------------------------------------
+        # define where we should fit (in photometeric bands)
+        good_domain = (wavemap > hbandlower) & (wavemap < hbandupper)
         # vector used to mask invalid regions
         keep = fit_image != 0
         # only fit where the transmission is greater than a certain value
@@ -708,7 +718,8 @@ def calculate_telluric_absorption(params, recipe, image, template,
         # ---------------------------------------------------------------------
         # fit telluric absorption of the spectrum
         with warnings.catch_warnings(record=True) as _:
-            popt, pcov = curve_fit(tapas_fit, keep, fit_image.ravel(), p0=guess)
+            popt, pcov = curve_fit(tapas_fit, keep & good_domain,
+                                   fit_image.ravel(), p0=guess)
         # update our guess
         guess = np.array(popt)
         # ---------------------------------------------------------------------
@@ -868,7 +879,8 @@ def calculate_telluric_absorption(params, recipe, image, template,
         # ---------------------------------------------------------------------
         # debug wave flux plot
         recipe.plot('MKTELLU_WAVE_FLUX1', keep=keep, wavemap=wavemap, tau1=tau1,
-                    sp=image, oimage=oimage2_arr, sed=sed, order=None)
+                    sp=image, oimage=oimage2_arr, sed=sed, order=None,
+                    has_template=(not template_flag), template=template)
         # ---------------------------------------------------------------------
         # update the iteration number
         iteration += 1
@@ -882,11 +894,14 @@ def calculate_telluric_absorption(params, recipe, image, template,
     for order_num in plot_order_nums:
         # plot debug plot
         recipe.plot('MKTELLU_WAVE_FLUX2', keep=keep, wavemap=wavemap, tau1=tau1,
-                    sp=image, oimage=oimage2_arr, sed=sed, order=order_num)
+                    sp=image, oimage=oimage2_arr, sed=sed, order=order_num,
+                    has_template=(not template_flag), template=template)
         # plot summary plot
         recipe.plot('SUM_MKTELLU_WAVE_FLUX', keep=keep, wavemap=wavemap,
                     tau1=tau1, sp=image, oimage=oimage2_arr, sed=sed,
-                    order=order_num)
+                    order=order_num, has_template=(not template_flag),
+                    template=template)
+
     # ---------------------------------------------------------------------
     # calculate transmission map
     transmission_map = image1 / sed
@@ -1006,7 +1021,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, wprops,
         # load all the trans files
         for it, filename in enumerate(transfiles):
             # load trans image
-            transimage = drs_fits.read(params, filename)
+            transimage = drs_fits.readfits(params, filename)
             # test whether whole transimage is NaNs
             if np.sum(np.isnan(transimage)) == np.product(transimage):
                 # log that we are removing a trans file
@@ -1670,7 +1685,7 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
         wargs = [infile.filename]
         WLOG(params, '', TextEntry('40-019-00033', args=wargs))
         # read data
-        infile.read()
+        infile.read_file()
         # get image and set up shifted image
         image = np.array(infile.data)
 
@@ -1823,7 +1838,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
 
     # read first file as reference
     reffile.set_filename(filenames[0])
-    reffile.read()
+    reffile.read_file()
     # get the reference wave map
     rwavemap = np.array(reffile.data['wavelength'])
 
@@ -1912,7 +1927,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
         wargs = [infile.filename]
         WLOG(params, '', TextEntry('40-019-00033', args=wargs))
         # read data
-        infile.read()
+        infile.read_file()
         # get image and set up shifted image
         image = np.array(infile.data['flux'])
         wavemap = np.array(infile.data['wavelength'])
@@ -2506,6 +2521,12 @@ def mk_template_qc(params):
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names = [], [], [],
     qc_logic, qc_pass = [], []
+
+    # add to qc header lists
+    qc_values.append('None')
+    qc_names.append('None')
+    qc_logic.append('None')
+    qc_pass.append(1)
     # ----------------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
@@ -2516,11 +2537,6 @@ def mk_template_qc(params):
         for farg in fail_msg:
             WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
         passed = 0
-    # add to qc header lists
-    qc_values.append('None')
-    qc_names.append('None')
-    qc_logic.append('None')
-    qc_pass.append(1)
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
     # return qc params and passed

@@ -521,8 +521,8 @@ class RecipeLog:
         self.logfitspath = self._get_write_dir()
         # define lockfile (we need to lock the directory while this is
         #   being done)
-        self.lockfile = self.directory + '_log'
-        # set the log file name
+        self.lockfile = self.directory + self.logfitsfile.replace('.', '_')
+        # set the log file name (just used to save log directory)
         self.log_file = 'None'
         # set the inputs
         self.args = ''
@@ -541,7 +541,11 @@ class RecipeLog:
         # set qc
         self.passed_qc = False
         # set qc paarams
+        self.qc_string = ''
+        self.qc_name = ''
         self.qc_value = ''
+        self.qc_pass = ''
+        self.qc_logic = ''
         # set the errors
         self.errors = ''
         # set that recipe ended
@@ -629,9 +633,19 @@ class RecipeLog:
             # deal with no qc set
             if qc_names[it] in ['None', None, '']:
                 continue
+
+            # set up qc pass string
+            if qc_pass[it]:
+                pass_str = 'PASSED'
+            else:
+                pass_str = 'FAILED'
             # deal with qc set
-            qargs = [qc_names[it], qc_values[it], qc_logic[it]]
-            self.qc_value += '{0}={1} ({2})'.format(*qargs)
+            qargs = [qc_names[it], qc_values[it], qc_logic[it], pass_str]
+            self.qc_string += '{0}={1} [{2}] {3} ||'.format(*qargs)
+            self.qc_name += '{0}||'.format(qc_names[it])
+            self.qc_value += '{0}||'.format(qc_values[it])
+            self.qc_logic += '{0}||'.format(qc_logic[it])
+            self.qc_pass += '{0}||'.format(qc_pass[it])
 
         # whether to write (update) recipe log file
         if write:
@@ -699,7 +713,7 @@ class RecipeLog:
                 for f_it in range(len(strfiles)):
                     # add to list
                     fargs = [argname, f_it, strfiles[f_it], drsfiles[f_it].name]
-                    inputstr += '{0}[1]={2}[{3}] '.format(*fargs)
+                    inputstr += '{0}[1]={2} [{3}] || '.format(*fargs)
                     # add to run string
                     if strfiles[f_it] in ['None', None, '']:
                         continue
@@ -707,7 +721,7 @@ class RecipeLog:
                         basefile = os.path.basename(strfiles[f_it])
                         self.runstring += '{0} '.format(basefile)
             else:
-                inputstr += '{0}={1} '.format(argname, iarg)
+                inputstr += '{0}={1} || '.format(argname, iarg)
                 # skip Nones
                 if iarg in ['None', None, '']:
                     continue
@@ -720,7 +734,7 @@ class RecipeLog:
                     self.runstring += '{0} '.format(iarg)
 
         # return the input string
-        return inputstr.strip()
+        return inputstr.strip().strip('||').strip()
 
     # private methods
     def _get_write_dir(self):
@@ -763,14 +777,25 @@ class RecipeLog:
         row['DIRECTORY'] = self.directory
         row['LOGFILE'] = self.log_file
         row['RUNSTRING'] = self.runstring
+        # add inputs
         row['ARGS'] = self.args
         row['KWARGS'] = self.kwargs
         row['SKWARGS'] = self.skwargs
+        # add whether recipe started
         row['STARTED'] = self.started
-        row['PASSED_QC'] = self.passed_qc
-        row['QC_VALUES'] = self.qc_value
+        # add whether all qc passed
+        row['PASSED_ALL_QC'] = self.passed_qc
+        # qc columns
+        row['QC_STRING'] = self.qc_string.strip().strip('||').strip()
+        row['QC_NAMES'] = self.qc_name.strip().strip('||').strip()
+        row['QC_VALUES'] = self.qc_value.strip().strip('||').strip()
+        row['QC_LOGIC'] = self.qc_logic.strip().strip('||').strip()
+        row['QC_PASS'] = self.qc_pass.strip().strip('||').strip()
+        # add errors
         row['ERRORS'] = self.errors
+        # add whether recipe ended
         row['ENDED'] = self.ended
+        # return row
         return row
 
     def _get_rows(self):
@@ -1051,70 +1076,11 @@ def debug_start(logobj, params, raise_exception):
 
 
 def display_func(params=None, name=None, program=None, class_name=None):
-    func_name = __NAME__ + '.display_func()'
-    # start the string function
-    strfunc = ''
-    # deal with no file name
-    if name is None:
-        name = 'Unknown'
-    # add brackets to show function
-    if not name.endswith('()'):
-        name += '()'
-    # add the program
-    if program is not None:
-        strfunc = str(program)
-    if class_name is not None:
-        strfunc += '.{0}'.format(class_name)
-    # add the name
-    strfunc += '.{0}'.format(name)
-    # deal with no params (do not log)
-    if params is None:
-        return strfunc
-    # deal with debug level too low (just return here)
-    if params['DRS_DEBUG'] < params['DEBUG_MODE_FUNC_PRINT']:
-        return strfunc
-    # ----------------------------------------------------------------------
-    # below here just for debug mode func print
-    # ----------------------------------------------------------------------
-    # add the string function to param dict
-    if 'DEBUG_FUNC_LIST' not in params:
-        params.set('DEBUG_FUNC_LIST', value=[None], source=func_name)
-    if 'DEBUG_FUNC_DICT' not in params:
-        params.set('DEBUG_FUNC_DICT', value=dict(), source=func_name)
-    # append to list
-    params['DEBUG_FUNC_LIST'].append(strfunc)
-    # update debug dictionary
-    if strfunc in params['DEBUG_FUNC_DICT']:
-        params['DEBUG_FUNC_DICT'][strfunc] += 1
-    else:
-        params['DEBUG_FUNC_DICT'][strfunc] = 1
-    # get count
-    count = params['DEBUG_FUNC_DICT'][strfunc]
-    # find previous entry
-    previous = params['DEBUG_FUNC_LIST'][-2]
-    # find out whether we have the same entry
-    same_entry = previous == strfunc
-    # add count
-    strfunc += ' (N={0})'.format(count)
-    # if we don't have a list then just print
-    if params['DEBUG_FUNC_LIST'][-2] is None:
-        # log in func
-        wlog(params, 'debug', TextEntry('90-000-00004', args=[strfunc]),
-             wrap=False)
-    elif not same_entry:
-        # get previous set of counts
-        previous_count = _get_prev_count(params, previous)
-        # only log if count is greater than 1
-        if previous_count > 1:
-            # log how many of previous there were
-            dargs = [previous_count]
-            wlog(params, 'debug', TextEntry('90-000-00005', args=dargs))
-        # log in func
-        wlog(params, 'debug', TextEntry('90-000-00004', args=[strfunc]),
-             wrap=False)
-
-    # return func_name
-    return strfunc
+    # run the display function
+    return constants.param_functions.display_func(params, name,
+                                                  program, class_name,
+                                                  wlog=wlog,
+                                                  textentry=TextEntry)
 
 
 def _get_prev_count(params, previous):

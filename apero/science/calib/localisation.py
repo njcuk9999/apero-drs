@@ -560,7 +560,7 @@ def get_coefficients(params, recipe, header, fiber, **kwargs):
     # construct new infile instance and read data/header
     locofile = locofile.newcopy(filename=locofilepath, recipe=recipe,
                                 fiber=usefiber)
-    locofile.read()
+    locofile.read_file()
     # -------------------------------------------------------------------------
     # extract keys from header
     nbo = locofile.read_header_key('KW_LOC_NBO', dtype=int)

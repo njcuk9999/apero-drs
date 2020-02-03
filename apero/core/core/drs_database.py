@@ -54,7 +54,7 @@ pcheck = drs_log.find_param
 class Database():
     def __init__(self, params, dbname):
         # set function name
-        func_name = display_func(params, __NAME__, '__init__', 'Database')
+        func_name = display_func(params, '__init__', __NAME__, 'Database')
         # set value from construction
         self.params = params
         self.dbname = dbname
@@ -95,7 +95,9 @@ class Database():
         Get the column names using the database name (set in construction)
         :return:
         """
-        func_name = __NAME__ + '.Database.get_colnames()'
+        # set function name
+        func_name = display_func(self.params, 'get_colnames', __NAME__,
+                                 'Database')
         # get column names
         colnames = self.colnames
         # check required columns are present
@@ -117,14 +119,15 @@ class Database():
 
     def check_read(self):
         if self.rdata is None:
-            self.read()
+            self.read_database()
 
-    def read(self):
+    def read_database(self):
         """
         Read the database from file and store in astropy.table format
         :return:
         """
-        func_name = __NAME__ + '.Database.read()'
+        func_name = display_func(self.params, 'read_database', __NAME__,
+                                 'Database')
         # ------------------------------------------------------------------
         # define a synchoronized lock for indexing (so multiple instances do not
         #  run at the same time)
@@ -239,7 +242,8 @@ class Database():
         :param required:
         :return:
         """
-        func_name = __NAME__ + '.Database.get_entry()'
+        # set function name
+        func_name = display_func(self.params, 'get_entry', __NAME__, 'Database')
         # check that we have data
         self.check_read()
         # convert usetime to astropy.time
@@ -314,7 +318,8 @@ class Database():
 # Define functions
 # =============================================================================
 def add_file(params, outfile, night=None, copy_files=True, log=True):
-    func_name = __NAME__ + '.add_file()'
+    # set function name
+    func_name = display_func(params, 'add_file', __NAME__)
     # ------------------------------------------------------------------
     # get properties from outfile
     inpath = outfile.filename
@@ -360,7 +365,8 @@ def add_file(params, outfile, night=None, copy_files=True, log=True):
 
 
 def copy_calibrations(params, header, **kwargs):
-    func_name = __NAME__ + '.copy_calibrations()'
+    # set function name
+    func_name = display_func(params, 'copy_calibrations', __NAME__)
     # get parameters from params/kwargs
     mode = pcheck(params, 'CALIB_DB_MATCH', 'mode', kwargs, func_name)
     # set the dbname
@@ -426,7 +432,8 @@ def get_header_time(params, database, header):
 # =============================================================================
 def get_key_from_db(params, key, database, header, n_ent=1, required=True,
                     mode=None, **kwargs):
-    func_name = __NAME__ + '.get_key_from_db()'
+    # set function name
+    func_name = display_func(params, 'get_key_from_db', __NAME__)
     # ----------------------------------------------------------------------
     # deal with no mode set (assume from calibDB)
     if mode is None:
@@ -445,8 +452,9 @@ def get_key_from_db(params, key, database, header, n_ent=1, required=True,
 
 
 def get_full_database(params, dbname):
-    func_name = __NAME__ + '.get_full_database()'
-
+    # set function name
+    func_name = display_func(params, 'get_full_database', __NAME__)
+    # get databse short name
     dbshort = _get_dbshort(params, dbname)
     # check for calibDB in params
     if dbshort in params:
@@ -454,12 +462,13 @@ def get_full_database(params, dbname):
     # get all lines from calibration database
     else:
         database = Database(params, dbname)
-        database.read()
+        database.read_database()
         return database
 
 
 def get_db_abspath(params, filename=None, where='guess'):
-    func_name = __NAME__ + '.get_db_abspath()'
+    # set function name
+    func_name = display_func(params, 'get_db_abspath', __NAME__)
     # ------------------------------------------------------------------
     # get the calibration path and telluric path
     cal_path = os.path.join(params['DRS_CALIB_DB'], filename)
@@ -496,7 +505,8 @@ def get_db_abspath(params, filename=None, where='guess'):
 
 def get_db_file(params, abspath, ext=0, fmt='fits', kind='image',
                 get_image=True, get_header=False):
-    func_name = __NAME__ + '.get_db_file'
+    # set function name
+    func_name = display_func(params, 'get_db_file', __NAME__)
     # ------------------------------------------------------------------
     # deal with npy files
     if abspath.endswith('.npy'):
@@ -507,7 +517,7 @@ def get_db_file(params, abspath, ext=0, fmt='fits', kind='image',
     if (not get_image) or (not abspath.endswith('.fits')):
         image = None
     elif kind == 'image':
-        image = drs_fits.read(params, abspath, ext=ext)
+        image = drs_fits.readfits(params, abspath, ext=ext)
     elif kind == 'table':
         image = drs_table.read_table(params, abspath, fmt=fmt)
     else:
@@ -530,8 +540,8 @@ def get_db_file(params, abspath, ext=0, fmt='fits', kind='image',
 # =============================================================================
 # TODO: Redo to use Database class
 def update_calibdb(params, dbname, dbkey, outfile, night=None, log=True):
-    func_name = __NAME__ + '.update_calibdb()'
-    func_name = display_func
+    # set function name
+    func_name = display_func(params, 'update_calibdb', __NAME__)
     # deal with no night name
     if night is None:
         night = drs_log.find_param(params, 'NIGHTNAME', func=func_name)
@@ -565,7 +575,8 @@ def update_calibdb(params, dbname, dbkey, outfile, night=None, log=True):
 # =============================================================================
 def update_telludb(params, dbname, dbkey, outfile, night=None, objname=None,
                    log=True):
-    func_name = __NAME__ + '.update_calibdb()'
+    # set function name
+    func_name = display_func(params, 'update_telludb', __NAME__)
     # deal with no night name
     if night is None:
         night = drs_log.find_param(params, 'NIGHTNAME', func=func_name)
