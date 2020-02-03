@@ -10,9 +10,7 @@ Created on 2019-07-26 at 09:39
 @author: cook
 """
 from __future__ import division
-from astropy.table import Table
-
-from collections import OrderedDict
+import os
 
 from apero import core
 from apero import locale
@@ -96,6 +94,7 @@ def __main__(recipe, params):
     recipename = params['INPUTS']['recipe']
     since = params['INPUTS']['since']
     before = params['INPUTS']['before']
+    makemaster = params['INPUTS']['master']
     # load path from kind
     if kind == 'red':
         path = params['DRS_DATA_REDUC']
@@ -118,12 +117,18 @@ def __main__(recipe, params):
     # get log files
     logfiles, nightnames = logstats.get_log_files(params, recipe, path,
                                                   nightname)
-
     # ----------------------------------------------------------------------
     # Open log files
     # ----------------------------------------------------------------------
     mastertable = logstats.make_log_table(params, logfiles, nightnames,
                                           recipename, since, before)
+
+    # deal with saving master table
+    logstats.save_master(params, mastertable, path, recipename, makemaster)
+
+    # ----------------------------------------------------------------------
+    # print master stats
+    # ----------------------------------------------------------------------
     # Deal with printing stats
     if mastertable is None:
         if recipename is not None:

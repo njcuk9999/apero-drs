@@ -415,6 +415,9 @@ cal_shape_master.set_kwarg(**fluxunits)
 cal_shape_master.set_kwarg(**locofile)
 cal_shape_master.set_kwarg(**plot)
 cal_shape_master.set_kwarg(**resize)
+cal_shape_master.set_kwarg(name='--fpmaster', dtype='files',
+                           files=[sf.out_shape_fpmaster], default='None',
+                           helpstr=Help['SHAPE_FPMASTER_HELP'])
 
 # -----------------------------------------------------------------------------
 # cal_SHAPE_spirou
@@ -538,6 +541,9 @@ cal_thermal.set_kwarg(**shapexfile)
 cal_thermal.set_kwarg(**shapeyfile)
 cal_thermal.set_kwarg(**shapelfile)
 cal_thermal.set_kwarg(**wavefile)
+cal_thermal.set_kwarg(name='--forceext', dtype='bool',
+                      default_ref='THERMAL_ALWAYS_EXTRACT',
+                      helpstr='THERMAL_EXTRACT_HELP')
 
 # -----------------------------------------------------------------------------
 # cal_extract_spirou
@@ -657,6 +663,9 @@ cal_wave.set_kwarg(**shapexfile)
 cal_wave.set_kwarg(**shapeyfile)
 cal_wave.set_kwarg(**shapelfile)
 cal_wave.set_kwarg(**wavefile)
+cal_wave.set_kwarg(name='--forceext', dtype='bool',
+                   default_ref='WAVE_ALWAYS_EXTRACT',
+                   helpstr='WAVE_EXTRACT_HELP')
 cal_wave.set_kwarg(name='--hcmode', dtype='options', helpstr=Help['HCMODE_HELP'],
                    options=['0'], default_ref='WAVE_MODE_HC')
 cal_wave.set_kwarg(name='--fpmode', dtype='options', helpstr=Help['FPMODE_HELP'],
@@ -666,7 +675,7 @@ cal_wave.set_kwarg(name='--fpmode', dtype='options', helpstr=Help['FPMODE_HELP']
 # cal_wave_master
 # -----------------------------------------------------------------------------
 cal_wave_master.name = 'cal_wave_master_spirou.py'
-cal_wave_master.shortname = 'WAVE'
+cal_wave_master.shortname = 'WAVEM'
 cal_wave_master.instrument = __INSTRUMENT__
 cal_wave_master.outputdir = 'reduced'
 cal_wave_master.inputdir = 'tmp'
@@ -677,14 +686,13 @@ cal_wave_master.epilog = Help['WAVE_EXAMPLE']
 cal_wave_master.kind = 'recipe'
 cal_wave_master.set_outputs(WAVE_E2DS=sf.out_ext_e2dsff,
                             WAVE_HCLL=sf.out_wave_hcline,
-                            WAVE_HCRES=sf.out_wave_hcres,
-                            WAVE_HCMAP=sf.out_wave_hc,
-                            WAVE_FPMAP=sf.out_wave_fp,
-                            WAVE_MAP=sf.out_wave_master,
-                            WAVE_FPRESTAB=sf.out_wave_res_table,
-                            WAVE_FPLLTAB=sf.out_wave_ll_table,
-                            WAVE_HCLIST=sf.out_wave_hclist_master,
-                            WAVE_FPLIST=sf.out_wave_fplist_master)
+                            WAVEM_HCRES=sf.out_wavem_hcres,
+                            WAVEM_HCMAP=sf.out_wavem_hc,
+                            WAVEM_FPMAP=sf.out_wavem_fp,
+                            WAVEM_FPRESTAB=sf.out_wavem_res_table,
+                            WAVEM_FPLLTAB=sf.out_wavem_ll_table,
+                            WAVEM_HCLIST=sf.out_wave_hclist_master,
+                            WAVEM_FPLIST=sf.out_wave_fplist_master)
 cal_wave_master.set_debug_plots('WAVE_HC_GUESS', 'WAVE_HC_BRIGHTEST_LINES',
                                 'WAVE_HC_TFIT_GRID', 'WAVE_HC_RESMAP',
                                 'WAVE_LITTROW_CHECK1', 'WAVE_LITTROW_EXTRAP1',
@@ -727,6 +735,9 @@ cal_wave_master.set_kwarg(**shapexfile)
 cal_wave_master.set_kwarg(**shapeyfile)
 cal_wave_master.set_kwarg(**shapelfile)
 cal_wave_master.set_kwarg(**wavefile)
+cal_wave_master.set_kwarg(name='--forceext', dtype='bool',
+                   default_ref='WAVE_ALWAYS_EXTRACT',
+                   helpstr='WAVE_EXTRACT_HELP')
 cal_wave_master.set_kwarg(name='--hcmode', dtype='options',
                           helpstr=Help['HCMODE_HELP'], options=['0'],
                           default_ref='WAVE_MODE_HC')
@@ -747,9 +758,13 @@ cal_wave_night.extension = 'fits'
 cal_wave_night.description = Help['WAVE_DESC']
 cal_wave_night.epilog = Help['WAVE_EXAMPLE']
 cal_wave_night.kind = 'recipe'
-cal_wave_night.set_outputs(WAVE_E2DS=sf.out_ext_e2dsff)
-cal_wave_night.set_debug_plots('PLOT_WAVENIGHT_ITERPLOT', 'WAVENIGHT_DIFFPLOT')
-cal_wave_night.set_summary_plots()
+cal_wave_night.set_outputs(WAVE_E2DS=sf.out_ext_e2dsff,
+                           WAVEMAP_NIGHT=sf.out_wave_night)
+cal_wave_night.set_debug_plots('WAVENIGHT_ITERPLOT',
+                               'WAVENIGHT_DIFFPLOT', 'WAVENIGHT_HISTPLOT',
+                               'WAVEREF_EXPECTED', 'CCF_RV_FIT',
+                               'CCF_RV_FIT_LOOP')
+cal_wave_night.set_summary_plots('SUM_CCF_RV_FIT')
 cal_wave_night.set_arg(pos=0, **directory)
 cal_wave_night.set_kwarg(name='--hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
                          nargs='+', filelogic='exclusive', required=True,
@@ -776,6 +791,9 @@ cal_wave_night.set_kwarg(**shapexfile)
 cal_wave_night.set_kwarg(**shapeyfile)
 cal_wave_night.set_kwarg(**shapelfile)
 cal_wave_night.set_kwarg(**wavefile)
+cal_wave_night.set_kwarg(name='--forceext', dtype='bool',
+                         default_ref='WAVE_ALWAYS_EXTRACT',
+                         helpstr='WAVE_EXTRACT_HELP')
 
 # -----------------------------------------------------------------------------
 # cal_DRIFT_E2DS_spirou
@@ -849,6 +867,11 @@ obj_mk_tellu.set_kwarg(**add_db)
 obj_mk_tellu.set_kwarg(**blazefile)
 obj_mk_tellu.set_kwarg(**plot)
 obj_mk_tellu.set_kwarg(**wavefile)
+# TODO: Add to language DB
+obj_mk_tellu.set_kwarg(name='--use_template', dtype='bool', default=True,
+                       helpstr='Whether to use the template provided from '
+                               'the telluric database')
+
 
 # -----------------------------------------------------------------------------
 # obj_mk_tellu_db
@@ -911,6 +934,10 @@ obj_fit_tellu.set_arg(name='files', dtype='files', pos='1+',
                       files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
                       helpstr=Help['FILES_HELP'] + Help['FTELLU_FILES_HELP'],
                       limit=1)
+# TODO: Add to language DB
+obj_fit_tellu.set_kwarg(name='--use_template', dtype='bool', default=True,
+                        helpstr='Whether to use the template provided from '
+                                'the telluric database')
 obj_fit_tellu.set_kwarg(**add_db)
 obj_fit_tellu.set_kwarg(**blazefile)
 obj_fit_tellu.set_kwarg(**plot)
@@ -1133,6 +1160,14 @@ full_run.add(cal_badpix, name='BADM', master=True)
 full_run.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
 full_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
 full_run.add(cal_shape_master, master=True)
+full_run.add(cal_shape, name='SHAPELM', master=True)
+full_run.add(cal_ff, name='FLATM', master=True)
+full_run.add(cal_thermal, name='THIM', files=[sf.pp_dark_dark_int],
+               master=True)
+full_run.add(cal_thermal, name='THTM', files=[sf.pp_dark_dark_tel],
+               master=True)
+full_run.add(cal_wave_master, hcfiles=[sf.pp_hc1_hc1], fpfiles=[sf.pp_fp_fp],
+               master=True)
 # night runs
 full_run.add(cal_badpix)
 full_run.add(cal_loc, files=[sf.pp_dark_flat])
@@ -1140,8 +1175,7 @@ full_run.add(cal_loc, files=[sf.pp_flat_dark])
 full_run.add(cal_shape)
 full_run.add(cal_ff, files=[sf.pp_flat_flat])
 full_run.add(cal_thermal)
-full_run.add(cal_wave, name='WAVEFP', hcfiles=[sf.pp_hc1_hc1],
-             fpfiles=[sf.pp_fp_fp])
+full_run.add(cal_wave_night)
 # extract all OBJ_DARK and OBJ_FP
 full_run.add(cal_extract, name='EXTALL', files=[sf.pp_obj_dark, sf.pp_obj_fp])
 # telluric recipes
@@ -1163,16 +1197,23 @@ limited_run.add(cal_badpix, name='BADM', master=True)
 limited_run.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
 limited_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
 limited_run.add(cal_shape_master, master=True)
+limited_run.add(cal_shape, name='SHAPELM', master=True)
+limited_run.add(cal_ff, name='FLATM', master=True)
+limited_run.add(cal_thermal, name='THIM', files=[sf.pp_dark_dark_int],
+               master=True)
+limited_run.add(cal_thermal, name='THTM', files=[sf.pp_dark_dark_tel],
+               master=True)
+limited_run.add(cal_wave_master, hcfiles=[sf.pp_hc1_hc1], fpfiles=[sf.pp_fp_fp],
+               master=True)
 # night runs
 limited_run.add(cal_badpix)
 limited_run.add(cal_loc, files=[sf.pp_dark_flat])
 limited_run.add(cal_loc, files=[sf.pp_flat_dark])
 limited_run.add(cal_shape)
 limited_run.add(cal_ff, files=[sf.pp_flat_flat])
-limited_run.add(cal_thermal)
-limited_run.add(cal_wave, name='WAVEHC', files=[sf.pp_hc1_hc1], fpfiles=None)
-limited_run.add(cal_wave, name='WAVEFP', hcfiles=[sf.pp_hc1_hc1],
-                fpfiles=[sf.pp_fp_fp])
+limited_run.add(cal_thermal, files=[sf.pp_dark_dark_int])
+limited_run.add(cal_thermal, files=[sf.pp_dark_dark_tel])
+limited_run.add(cal_wave_night)
 # extract tellurics
 limited_run.add(cal_extract, name='EXTTELL', KW_OBJNAME='TELLURIC_TARGETS',
                 files=[sf.pp_obj_dark, sf.pp_obj_fp])
@@ -1212,16 +1253,29 @@ limited_run.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
                 KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'], KW_OBJNAME='SCIENCE_TARGETS')
 
 # -----------------------------------------------------------------------------
+# pp run (for trigger)
+# -----------------------------------------------------------------------------
+pp_run = drs_recipe.DrsRunSequence('pp_run', __INSTRUMENT__)
+pp_run.add(cal_pp)
+
+# -----------------------------------------------------------------------------
 # master run (for trigger)
 # -----------------------------------------------------------------------------
 master_run = drs_recipe.DrsRunSequence('master_run', __INSTRUMENT__)
 # master run
-master_run.add(cal_pp)
 master_run.add(cal_dark_master, master=True)
 master_run.add(cal_badpix, name='BADM', master=True)
 master_run.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
 master_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
 master_run.add(cal_shape_master, master=True)
+master_run.add(cal_shape, name='SHAPELM', master=True)
+master_run.add(cal_ff, name='FLATM', master=True)
+master_run.add(cal_thermal, name='THIM', files=[sf.pp_dark_dark_int],
+               master=True)
+master_run.add(cal_thermal, name='THTM', files=[sf.pp_dark_dark_tel],
+               master=True)
+master_run.add(cal_wave_master, hcfiles=[sf.pp_hc1_hc1], fpfiles=[sf.pp_fp_fp],
+               master=True)
 
 # -----------------------------------------------------------------------------
 # calibration run (for trigger)
@@ -1233,10 +1287,9 @@ calib_run.add(cal_loc, files=[sf.pp_dark_flat])
 calib_run.add(cal_loc, files=[sf.pp_flat_dark])
 calib_run.add(cal_shape)
 calib_run.add(cal_ff, files=[sf.pp_flat_flat])
-calib_run.add(cal_thermal)
-calib_run.add(cal_wave, name='WAVEHC', files=[sf.pp_hc1_hc1], fpfiles=None)
-calib_run.add(cal_wave, name='WAVEFP', hcfiles=[sf.pp_hc1_hc1],
-              fpfiles=[sf.pp_fp_fp])
+calib_run.add(cal_thermal, files=[sf.pp_dark_dark_int])
+calib_run.add(cal_thermal, files=[sf.pp_dark_dark_tel])
+calib_run.add(cal_wave_night)
 
 # -----------------------------------------------------------------------------
 # telluric run (for trigger)
@@ -1298,8 +1351,16 @@ hc_run.add(cal_thermal)
 # extract science
 hc_run.add(cal_extract, name='EXTHC', files=[sf.pp_hc1_hc1])
 
+
+# -----------------------------------------------------------------------------
+# dark_fp (extract all DARK_FP) --assume calibrations are already done
+# -----------------------------------------------------------------------------
+dark_fp_run = drs_recipe.DrsRunSequence('dark_fp_run', __INSTRUMENT__)
+# extract science
+dark_fp_run.add(cal_extract, name='EXTDFP', files=[sf.pp_dark_fp])
+
 # -----------------------------------------------------------------------------
 # sequences list
 # -----------------------------------------------------------------------------
-sequences = [full_run, limited_run, master_run, calib_run, tellu_run,
-             science_run, hc_run]
+sequences = [pp_run, full_run, limited_run, master_run, calib_run, tellu_run,
+             science_run, hc_run, dark_fp_run]
