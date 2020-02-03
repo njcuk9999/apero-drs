@@ -2,6 +2,90 @@ Changelog
 =========
 
 
+0.6.033 (2020-01-31)
+--------------------
+- Add flow diagram for locking wait times. [Neil Cook]
+- Plotting.latex.py - add switch to turn on/off latex pdf making + add
+  fix to latex command to make it non-interactive (Issue #586) [Neil
+  Cook]
+- Plotting.latex.py - add `-interaction=nonstopmode` to not allow latex
+  to pause running on error. [Neil Cook]
+- Core.core.drs_recipe.py - remove breakpoint. [Neil Cook]
+- Tools.module.setup.drs_processing.py - deal with unset event (non-
+  parallel process) [Neil Cook]
+- Core.core.drs_argument.py - make sure reicpe is updated before we run
+  display_func. [Neil Cook]
+- Core.instruments.default.default_config.py - update the value of debug
+  mode (only print at debug>=10) [Neil Cook]
+- Core.constants.constants_functions.py - update types in doc string.
+  [Neil Cook]
+- Core.core.drs_recipe.py - move break_point to exception. [Neil Cook]
+- Core.core.drs_recipe.py - add breakpoint to address error. [Neil Cook]
+- Core.core.drs_recipe.py - add breakpoint to address error. [Neil Cook]
+- Constants.constant_functions.py - add doc strings. [Neil Cook]
+- Core.core.drs_file.py - add display_funcs and pep8 changes. [Neil
+  Cook]
+
+
+0.6.032 (2020-01-30)
+--------------------
+- Dark_fp_run.ini - add dark fp run script. [Neil Cook]
+- Core.instruments.spirou.recipe_defintions.py - add pp_run and
+  dark_fp_run sequences. [Neil Cook]
+- Io.drs_lock.py - make sure we do not remove lock path
+  (`drs_msg_path/lock/`) [Neil Cook]
+
+
+0.6.031 (2020-01-29)
+--------------------
+- Core.core.drs_file.py - update display_func for hkeys_exist. [Neil
+  Cook]
+- Core.core.drs_argument.py - add comments to special arg make functions
+  + display func to DrsArgument. [Neil Cook]
+- Core.core.drs_argument.py - add display func + pep8 corrections. [Neil
+  Cook]
+- Core.core.drs_recipe.py - change DRSArgumentParser -->
+  DrsArgumentParser. [Neil Cook]
+- Core.core.drs_argument.py - add display_funcs and comments for Parser
+  functions. [Neil Cook]
+- Misc.updates_to_drs.mk_night_wave.py - add dymanic paths to EA code.
+  [Neil Cook]
+- Science.extract.telluric.general.py - change read --> readfits. [Neil
+  Cook]
+- Science.extract.general.py - change read --> read_file. [Neil Cook]
+- Science.calib.background.py + badpix.py + dark.py - change read -->
+  readfits. [Neil Cook]
+- Recipe.spirou.cal_wave_night_spirou.py - pep8 changes. [Neil Cook]
+- Locale.core.drs_exceptions.py - add __main__ section. [Neil Cook]
+- Io.drs_fits.py - change read --> readfits. [Neil Cook]
+- Drs_data.py - change read --> readfits. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - add force extract
+  options. [Neil Cook]
+- Locale.core.drs_lang_db.py - move constant/params text to dict (linked
+  to language database) [Neil Cook]
+- Core.core.drs_file.py - change read --> read file. [Neil Cook]
+- Core.core.drs_database.py - change read to readfits (and
+  read_database) [Neil Cook]
+- Core.constant.param_functions.py - add display_func and comments.
+  [Neil Cook]
+- Core.constants.constant_function.py - add comments and display func.
+  [Neil Cook]
+- Update language database. [Neil Cook]
+
+
+0.6.030 (2020-01-28)
+--------------------
+- Plotting.plot_functions.py - pep8 clean up. [Neil Cook]
+- Science.calib.wave1.py - add hclines and fplines arguments to
+  get_master_lines (to get lists from file) and for reference file use
+  these arguments to start with the master. [Neil Cook]
+- Plotting.plot_functions.py - copy x and y in wave night plot function
+  and catch nan in greater than less than with the "with warnings"
+  command. [Neil Cook]
+- Add display_func. [Neil Cook]
+- Update date/version/changelog/documentation. [Neil Cook]
+
+
 0.6.029 (2020-01-27)
 --------------------
 - Data.spirou.reset.runs.limited_run.ini - update default
