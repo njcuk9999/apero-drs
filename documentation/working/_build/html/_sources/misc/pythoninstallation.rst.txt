@@ -26,9 +26,9 @@ If you already use anaconda/conda skip to step 3
     conda config --set channel_priority strict
     ```
 
-4. Create a new conda environment with python3.7
+4. Create a new conda environment
     ```bash
-    conda create -n aperoenv python=3.7
+    conda create -n aperoenv --clone base
     ```
 
 5. Activate conda environment (you will have to do this each time to use apero)

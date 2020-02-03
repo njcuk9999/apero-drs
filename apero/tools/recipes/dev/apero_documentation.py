@@ -74,6 +74,11 @@ def __main__(recipe, params):
     # compile documentation
     drs_documentation.compile_docs(params)
 
+
+    # upload to server
+    if params['INPUTS']['UPLOAD']:
+        drs_documentation.upload(params)
+
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------

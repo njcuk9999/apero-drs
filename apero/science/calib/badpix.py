@@ -327,7 +327,7 @@ def correction(params, image=None, header=None, return_map=False, **kwargs):
         badpixfile = os.path.join(params['DRS_CALIB_DB'], badpixfilename)
     # -------------------------------------------------------------------------
     # get bad pixel file
-    badpiximage = drs_fits.read(params, badpixfile)
+    badpiximage = drs_fits.readfits(params, badpixfile)
     # create mask from badpixmask
     mask = np.array(badpiximage, dtype=bool)
     # -------------------------------------------------------------------------

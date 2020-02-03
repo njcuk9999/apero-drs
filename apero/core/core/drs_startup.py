@@ -294,14 +294,13 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     # add the recipe log
     if (instrument is not None) and (params['DRS_RECIPE_KIND'] == 'recipe'):
         recipe.log = drs_log.RecipeLog(recipe.name, params)
-        # add log file to log (without group - different groups may need to
-        #    lock same file)
-        logfile = drs_log.get_logfilepath(WLOG, params, use_group=False)
+        # add log file to log (only used to save where the log is)
+        logfile = drs_log.get_logfilepath(WLOG, params)
         recipe.log.set_log_file(logfile)
-        # add inputs to log
+        # add user input parameters to log
         recipe.log.set_inputs(params, recipe.args, recipe.kwargs,
                               recipe.specialargs)
-        # set lock function
+        # set lock function (lock file is NIGHTNAME + _log
         recipe.log.set_lock_func(drs_lock.locker)
         # write recipe log
         recipe.log.write_logfile(params)
@@ -340,6 +339,17 @@ def run(func, recipe, params):
             llmain = func(recipe, params)
             llmain['e'], llmain['tb'] = None, None
             success = True
+        except drs_exceptions.DebugExit as e:
+            WLOG(params, 'error', e.errormessage, raise_exception=False)
+            # on debug exit was not a success
+            success = False
+            # save params to llmain
+            llmain = dict(e=e, tb='', params=params, recipe=recipe)
+            # add error to log file
+            if params['DRS_RECIPE_KIND'] == 'recipe':
+                recipe.log.add_error(params, 'Debug Exit', '')
+            # reset the lock directory
+            drs_lock.reset_lock_dir(params)
         except KeyboardInterrupt as e:
             # get trace back
             string_trackback = traceback.format_exc()
@@ -448,7 +458,7 @@ def get_params(recipe='None', instrument='None', **kwargs):
 
 def return_locals(params, ll):
     # deal with a ipython return
-    constants.breakpoint(params, allow=params['IPYTHON_RETURN'])
+    constants.break_point(params, allow=params['IPYTHON_RETURN'])
     # else return ll
     return ll
 
@@ -611,7 +621,7 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
 
 
 def get_file_definition(name, instrument, kind='raw', return_all=False,
-                        fiber=None):
+                        fiber=None, required=True):
     """
     Finds a given recipe in the instruments definitions
 
@@ -622,6 +632,8 @@ def get_file_definition(name, instrument, kind='raw', return_all=False,
                        just the last entry (if False)
     :param fiber: string, some files require a fiber to choose the correct file
                   (i.e. to add a suffix)
+    :param required: bool, if False then does not throw error when no files
+                     found (only use if checking for return = None)
 
     :type name: str
     :type instrument: str
@@ -677,7 +689,10 @@ def get_file_definition(name, instrument, kind='raw', return_all=False,
     if instrument is None and len(found_files) == 0:
         empty = drs_file.DrsFitsFile('Empty')
         return empty
-    if len(found_files) == 0:
+
+    if (len(found_files) == 0) and (not required):
+        return None
+    elif len(found_files) == 0:
         eargs = [name, modules[0], func_name]
         WLOG(None, 'error', TextEntry('00-008-00011', args=eargs))
 

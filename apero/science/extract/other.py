@@ -259,7 +259,7 @@ def extract_files(params, recipe, infile, outfile, always_extract,
             wargs = [outfile.filename]
             WLOG(params, '', TextEntry('40-016-00021', args=wargs))
             # read file header and push into outputs
-            outfile.read()
+            outfile.read_file()
             # copy file to dictionary
             outputs[fiber] = outfile.completecopy(outfile)
     # return dictionary of outputs (one key for each fiber)

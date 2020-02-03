@@ -194,7 +194,7 @@ def correction(params, image, header, nfiles=1, return_dark=False, **kwargs):
         use_file, use_type = get_dark_master_file(params, header)
     # -------------------------------------------------------------------------
     # do dark using correct file
-    darkimage, dhdr = drs_fits.read(params, use_file, gethdr=True)
+    darkimage, dhdr = drs_fits.readfits(params, use_file, gethdr=True)
     # Read dark file
     wargs = [use_type, use_file]
     WLOG(params, '', TextEntry('40-011-00011', args=wargs))
@@ -288,7 +288,8 @@ def construct_master_dark(params, recipe, dark_table, **kwargs):
     # get the most recent position
     lastpos = np.argmax(dark_times)
     # load up the most recent dark
-    data_ref, hdr_ref = drs_fits.read(params, filenames[lastpos], gethdr=True)
+    data_ref, hdr_ref = drs_fits.readfits(params, filenames[lastpos],
+                                          gethdr=True)
     # ge the reference image shape
     dim1, dim2 = data_ref.shape
 
@@ -315,7 +316,7 @@ def construct_master_dark(params, recipe, dark_table, **kwargs):
         cube = []
         for filename in dark_ids:
             # read data
-            data_it = drs_fits.read(params, filename)
+            data_it = drs_fits.readfits(params, filename)
             # add to cube
             cube.append(np.array(data_it))
             # delete fits table
@@ -404,7 +405,7 @@ def construct_master_dark(params, recipe, dark_table, **kwargs):
                                       kind='tmp')
     # construct new infile instance and read data
     infile = infile.newcopy(filename=filenames[lastpos], recipe=recipe)
-    infile.read()
+    infile.read_file()
     # -------------------------------------------------------------------------
     # return master dark and the reference file
     return master_dark, infile
