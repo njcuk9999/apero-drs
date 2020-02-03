@@ -260,7 +260,7 @@ def correction(recipe, params, infile, image, header, return_map=False,
         WLOG(params, '', TextEntry('40-012-00009', args=[bkgrdfile]))
         # ------------------------------------------------------------------
         # get bad pixel file
-        bkgrdimage = drs_fits.read(params, bkgrdfile)
+        bkgrdimage = drs_fits.readfits(params, bkgrdfile)
         # create mask from badpixmask
         bmap = np.array(bkgrdimage, dtype=bool)
         # copy image

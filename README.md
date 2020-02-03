@@ -2,16 +2,16 @@
 
 ## Contents
 
-1) [Latest version](#Latest-version)
-2) [Pre-Installation](#Pre-Installation)
-3) [Installation](#Installation) 
-4) [To Do](#TODO) 
-5) [Known Issues](#Currently-known-issues)
-6) [Using APERO](#Using-APERO)
+1) [Latest version](#latest-version)
+2) [Pre-Installation](#pre-installation)
+3) [Installation](#installation) 
+4) [To Do](#todo) 
+5) [Known Issues](#currently-known-issues)
+6) [Using APERO](#using-apero)
     - [Using apero individually](#using-apero-individually)
-    - [Using processing.py](#using-processingpy)
+    - [Using APERO processing recipe](#using-apero-processing-recipe)
 7) [APERO run order](#apero-run-order)
-8) [APERO outputs](#APERO-outputs)
+8) [APERO outputs](#apero-outputs)
     - [preprocessing](#preprocessing-recipe)
     - [dark master](#dark-master-recipe)
     - [bad pixel](#bad-pixel-correction-recipe)
@@ -20,7 +20,8 @@
     - [shape (local)](#shape-per-night-recipe)
     - [flat/blaze](#flatblaze-correction-recipe)
     - [thermal](#thermal-correction-recipe)
-    - [wavelength](#wavelength-solution-recipe)
+    - [wavelength master](#master-wavelength-solution-recipe)
+    - [wavelength (local)](#nightly-wavelength-solution-recipe)
     - [extraction](#extraction-recipe)
     - [make telluric](#make-telluric-recipe)
     - [fit telluric](#fit-telluric-recipe)
@@ -37,7 +38,7 @@
     contain the most up-to-date features until long term support and stability can
     be verified.
     ```
-- developer (tested) V0.6.016
+- developer (tested) V0.6.033
     ```
     Note the developer version should have been tested and semi-stable but not
     ready for full sets of processing and defintely not for release for 
@@ -46,7 +47,7 @@
     - do not use cal_wave_master_spirou.py, cal_wave_night_spirou.py, 
       obj_pol_spirou.py, obj_spec_spirou.py
     ```
-- working (untested) V0.6.016
+- working (untested) V0.6.033
     ```
     Note the working version will be the most up-to-date version but has not been
     tested for stability - use at own risk.
@@ -302,7 +303,7 @@ __NOTE__: there is a --help option available for every recipe
 
 ---
 
-### Using `apero_processing.py`
+### Using APERO processing recipe
 
 `apero_processing.py` can be used in a few different ways but always requires the following
 
@@ -382,13 +383,20 @@ cal_badpix [master night]
 cal_loc [DARK_FLAT; master night]
 cal_loc [FLAT_DARK; master night]
 cal_shape_master
+cal_shape [master night]
+cal_ff [master night]
+cal_thermal [DARK_DARK_INT; master night]
+cal_thermal [DARK_DARK_TEL; master night]
+cal_wave_master
+
 cal_badpix [every night]
 cal_loc [DARK_FLAT; every night]
 cal_loc [FLAT_DARK; every night]
 cal_shape [every night]
 cal_ff [every night]
-cal_thermal [every night]
-cal_wave [HCONE_HCONE + FP_FP; every night]
+cal_thermal [DARK_DARK_INT; every night]
+cal_thermal [DARK_DARK_TEL; every night]
+cal_wave_night [every night]
 cal_extract [OBJ_DARK + OBJ_FP; every night; ALL OBJECTS]
 obj_mk_tellu_db
 obj_fit_tellu_db
@@ -407,14 +415,20 @@ cal_badpix [master night]
 cal_loc [DARK_FLAT; master night]
 cal_loc [FLAT_DARK; master night]
 cal_shape_master
+cal_shape [master night]
+cal_ff [master night]
+cal_thermal [DARK_DARK_INT; master night]
+cal_thermal [DARK_DARK_TEL; master night]
+cal_wave_master
+
 cal_badpix [every night]
 cal_loc [DARK_FLAT; every night]
 cal_loc [FLAT_DARK; every night]
 cal_shape [every night]
 cal_ff [every night]
-cal_thermal [every night]
-cal_wave [HCONE_HCONE; every night]
-cal_wave [HCONE_HCONE + FP_FP; every night]
+cal_thermal [DARK_DARK_INT; every night]
+cal_thermal [DARK_DARK_TEL; every night]
+cal_wave_night [every night]
 cal_extract [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
 cal_extract [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
 obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
@@ -427,20 +441,32 @@ obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
 cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night; SCIENCE_TARGETS]
 ```
 
-##### 3. `master_run`
+##### 3. `pp_run`
+
+Only run the preprocessing recipe
+
+```
+cal_preprocessing
+```
+
+##### 4. `master_run`
 
 Only run the master recipes
 
 ```
-cal_preprocessing
 cal_dark_master
 cal_badpix [master night]
 cal_loc [DARK_FLAT; master night]
 cal_loc [FLAT_DARK; master night]
 cal_shape_master
+cal_shape [master night]
+cal_ff [master night]
+cal_thermal [DARK_DARK_INT; master night]
+cal_thermal [DARK_DARK_TEL; master night]
+cal_wave_master
 ```
 
-##### 4. `calib_run`
+##### 5. `calib_run`
 
 Only run the nightly calibration sequences and make a complete calibration database.
 (assumes that the master run is done i.e. `master_run`)
@@ -451,9 +477,9 @@ cal_loc [DARK_FLAT; every night]
 cal_loc [FLAT_DARK; every night]
 cal_shape [every night]
 cal_ff [every night]
-cal_thermal [every night]
-cal_wave [HCONE_HCONE; every night]
-cal_wave [HCONE_HCONE + FP_FP; every night]
+cal_thermal [DARK_DARK_INT; every night]
+cal_thermal [DARK_DARK_TEL; every night]
+cal_wave_night [every night]
 ```
 
 ##### 5. `tellu_run`
@@ -505,17 +531,23 @@ in order to run the shape master recipe.
 
 Note one must preprocess ALL nights for the master to work) - it will only 
 combine darks(for the master dark) and fps (for the master shape) from 
-preprocessed data.
+preprocessed data (i.e. use sequence `pp_run`)
 
-3) Run the master sequence
+
+
+3) Run the master sequence (i.e. use sequence `master_run`)
 i.e. 
 ```
-cal_preprocessing
 cal_dark_master
 cal_badpix [master night]
 cal_loc [DARK_FLAT; master night]
 cal_loc [FLAT_DARK; master night]
 cal_shape_master
+cal_shape [master night]
+cal_ff [master night]
+cal_thermal [DARK_DARK_INT; master night]
+cal_thermal [DARK_DARK_TEL; master night]
+cal_wave_master
 ```
 
 
@@ -542,8 +574,9 @@ cal_loc [DARK_FLAT; every night]
 cal_loc [FLAT_DARK; every night]
 cal_shape [every night]
 cal_ff [every night]
-cal_thermal [every night]
-cal_wave [HCONE_HCONE + FP_FP; every night]
+cal_thermal [DARK_DARK_INT; every night]
+cal_thermal [DARK_DARK_TEL; every night]
+cal_wave_night [every night]
 ```
 
 The telluric star sequence is as follows:
@@ -554,6 +587,11 @@ obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
 obj_mk_template [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
 obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
 ```
+
+Note one must run all tellurics before running science. Not having
+sufficient tellurics processed will lead to poor telluric correction for the
+science.
+
 
 The science star sequence is as follows:
 ```
@@ -966,22 +1004,22 @@ None
 
 
 ---
-### Wavelength solution Recipe
+### Master wavelength solution Recipe
 
 Creates a wavelength solution and measures drifts (via CCF) of the FP relative 
 to the FP master
 
 #### *Run*: 
 ```
-cal_wave_spirou.py [DIRECTORY] -hcfiles [HCONE_HCONE]
-cal_wave_spirou.py [DIRECTORY] -hcfiles [HCONE_HCONE] -fpfiles [FP_FP]
+cal_wave_master_spirou.py [DIRECTORY] -hcfiles [HCONE_HCONE] -fpfiles [FP_FP]
 ```
 #### *Optional Arguments*: 
 ```
     --database, --badpixfile, --badcorr, --backsub, --blazefile, 
     --combine, --darkfile, --darkcorr,  --fiber, --flipimage, 
     --fluxunits,  --locofile, --orderpfile, --plot, --resize,
-    --shapex, --shapey, --shapel, --wavefile, -hcmode, -fpmode
+    --shapex, --shapey, --shapel, --wavefile, -hcmode, -fpmode,
+    --forceext,
     --debug, --listing, --listingall, --version, --info, 
     --program, --idebug, --breakpoints, --quiet, --help 
 ```
@@ -1017,6 +1055,50 @@ WAVE_LITTROW_EXTRAP2, WAVE_FP_FINAL_ORDER, WAVE_FP_LWID_OFFSET,
 WAVE_FP_WAVE_RES, WAVE_FP_M_X_RES, WAVE_FP_IPT_CWID_1MHC, 
 WAVE_FP_IPT_CWID_LLHC, WAVE_FP_LL_DIFF, WAVE_FP_MULTI_ORDER, 
 WAVE_FP_SINGLE_ORDER, CCF_RV_FIT, CCF_RV_FIT_LOOP
+```
+
+
+
+
+---
+### Nightly wavelength solution Recipe
+
+Calculates corrections to the master wavelength solution as a nightly wavelength
+solution and measures drifts (via CCF) of the FP relative to the FP master
+
+#### *Run*: 
+```
+cal_wave_night_spirou.py [DIRECTORY] -hcfiles [HCONE_HCONE] -fpfiles [FP_FP]
+```
+#### *Optional Arguments*: 
+```
+    --database, --badpixfile, --badcorr, --backsub, --blazefile, 
+    --combine, --darkfile, --darkcorr,  --fiber, --flipimage, 
+    --fluxunits,  --locofile, --orderpfile, --plot, --resize,
+    --shapex, --shapey, --shapel, --wavefile, -hcmode, -fpmode,
+    --forceext
+    --debug, --listing, --listingall, --version, --info, 
+    --program, --idebug, --breakpoints, --quiet, --help 
+```
+#### *Output Dir*: 
+```
+DRS_DATA_REDUC   \\ default: "reduced" directory
+```
+#### *Calibration database entry*:
+```
+WAVE_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
+```
+#### *Output files*: 
+```
+{ODOMETER_CODE}_pp_e2ds_{FIBER}.fits              \\ extracted + flat field file (49x4088)
+{ODOMETER_CODE}_pp_wave_night_{FIBER}.fits        \\ wave solution (49 x 4088)
+```
+
+#### *Plots*:
+
+```
+WAVENIGHT_ITERPLOT, WAVENIGHT_DIFFPLOT, WAVENIGHT_HISTPLOT, 
+WAVEREF_EXPECTED, CCF_RV_FIT, CCF_RV_FIT_LOOP, SUM_CCF_RV_FIT
 ```
 
 

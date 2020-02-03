@@ -33,16 +33,19 @@ REQ_MODULES['matplotlib'] = [2, 1, 2]
 REQ_MODULES['numpy'] = [1, 14, 0]
 REQ_MODULES['scipy'] = [1, 0, 0]
 REC_MODULES = dict()
-REC_MODULES['astroquery'] = [0, 3, 9]
-REC_MODULES['barycorrpy'] = [0, 2, 2, 1]
+REC_MODULES['astroquery'] = [0, 3, 9]               # conda
+REC_MODULES['barycorrpy'] = [0, 2, 2, 1]            # pip --ignore-installed
 REC_MODULES['bottleneck'] = [1, 2, 1]
-REC_MODULES['ipdb'] = None
 REC_MODULES['numba'] = [0, 41, 0]
 REC_MODULES['pandas'] = [0, 23, 4]
 REC_MODULES['PIL'] = [5, 3, 0]
 REC_MODULES['tqdm'] = [4, 28, 1]
-REC_MODULES['yagmail'] = [0, 11, 220]
-
+REC_MODULES['yagmail'] = [0, 11, 220]               # conda
+DEV_MODULES = dict()
+DEV_MODULES['gitchangelog'] = [3, 0, 4]             # pip
+DEV_MODULES['ipdb'] = None                          # conda
+DEV_MODULES['IPython'] = [7, 8, 0]
+DEV_MODULES['sphinx'] = [2, 2, 0]
 
 # =============================================================================
 # Define functions
@@ -166,8 +169,6 @@ def get_args():
 
 
 def validate():
-
-
     # python version check
     if sys.version_info.major < 3:
         print('\tFatal Error: Python 2 is not supported')
@@ -193,7 +194,7 @@ def validate():
         check_version(module, imod, rversionlist, required=True)
 
     # ------------------------------------------------------------------
-    # loop around required modules to check
+    # loop around recommended modules to check
     # ------------------------------------------------------------------
     for module in REC_MODULES:
         # get required minimum version
@@ -209,6 +210,25 @@ def validate():
         # --------------------------------------------------------------
         # check the version
         check_version(module, imod, rversionlist, required=False)
+
+    # ------------------------------------------------------------------
+    # loop around devloper modules to check
+    # ------------------------------------------------------------------
+    for module in DEV_MODULES:
+        # get required minimum version
+        rversionlist = DEV_MODULES[module]
+        # --------------------------------------------------------------
+        # test importing module
+        try:
+            imod = importlib.import_module(module)
+        except:
+            print('\t{0} recommends {1} to be installed (dev only)'
+                  ''.format(DRS_PATH, module))
+            continue
+        # --------------------------------------------------------------
+        # check the version
+        check_version(module, imod, rversionlist, required=False)
+
 
 
 def check_version(module, imod, rversionlist, required=True):

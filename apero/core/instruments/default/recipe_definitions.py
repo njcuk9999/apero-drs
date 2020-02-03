@@ -124,6 +124,11 @@ remake_doc.instrument = __INSTRUMENT__
 # TODO: Move to language DB
 remake_doc.description = 'Re-make the apero documentation'
 remake_doc.kind = 'tool'
+# TODO: Move Help to language DB
+remake_doc.set_kwarg(name='--upload', dtype='bool', default=False,
+                     helpstr='[Bool] If True upload documentation to '
+                             'defined server (for web access)')
+
 
 # -----------------------------------------------------------------------------
 # apero_explorer.py
@@ -185,6 +190,12 @@ logstats.set_kwarg(name='--before', dtype=str, default='None',
                            'Must be in the form yyyy-mm-dd HH:MM:SS or '
                            'yyyy-mm-dd (and the time will be assumed '
                            'midnight).')
+logstats.set_kwarg(name='--master', dtype='bool', default=False,
+                   helpstr='Whether to save a master log to the drs path '
+                           '(MASTER_LOG.fits). '
+                           'i.e. for --kind=red the DATA_DIR/reduced/ dir). '
+                           'Note if --recipe is set this will add a suffix'
+                           'to the output name. ')
 logstats.set_kwarg(**plot)
 
 # -----------------------------------------------------------------------------

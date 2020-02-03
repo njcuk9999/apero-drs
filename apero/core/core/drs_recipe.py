@@ -58,7 +58,7 @@ INDEX_FILE = Constants['DRS_INDEX_FILE']
 INDEX_FILE_NAME_COL = Constants['DRS_INDEX_FILENAME']
 # -----------------------------------------------------------------------------
 # Get Classes from drs_argument
-DRSArgumentParser = drs_argument.DRSArgumentParser
+DrsArgumentParser = drs_argument.DrsArgumentParser
 DrsArgument = drs_argument.DrsArgument
 # alias pcheck
 pcheck = drs_log.find_param
@@ -186,7 +186,7 @@ class DrsRecipe(object):
         # set up storage for arguments
         fmt_class = argparse.RawDescriptionHelpFormatter
         desc, epilog = self.description, self.epilog
-        parser = DRSArgumentParser(recipe=self, description=desc, epilog=epilog,
+        parser = DrsArgumentParser(recipe=self, description=desc, epilog=epilog,
                                    formatter_class=fmt_class,
                                    usage=self._drs_usage())
         # get the drs params from recipe
@@ -741,10 +741,13 @@ class DrsRecipe(object):
         # set ipython return functionality
         self._make_special(drs_argument.set_ipython_return, skip=False)
         # ---------------------------------------------------------------------
-        # set ipython return functionality
+        # set breakpoint functionality
         self._make_special(drs_argument.breakpoints, skip=False)
         # ---------------------------------------------------------------------
-        # set ipython return functionality
+        # set breakfunc functionality
+        self._make_special(drs_argument.make_breakfunc, skip=False)
+        # ---------------------------------------------------------------------
+        # set quiet functionality
         self._make_special(drs_argument.set_quiet, skip=False)
 
 
@@ -978,7 +981,7 @@ class DrsRecipe(object):
                 inputdir = self.get_input_dir()
                 # create an instance of this drs_file with the filename set
                 file_in = drs_file.newcopy(filename=filename_it, recipe=self)
-                file_in.read()
+                file_in.read_file()
                 # set the directory
                 fdir = drs_argument.get_uncommon_path(directory, inputdir)
                 file_in.directory = fdir

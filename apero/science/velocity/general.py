@@ -513,7 +513,7 @@ def remove_telluric_domain(params, recipe, infile, fiber, **kwargs):
         eargs = [infile.filename, reconfile.name, e2dsfile.filename]
         WLOG(params, 'error', TextEntry('09-020-00003', args=eargs))
     # read recon file
-    reconfile.read()
+    reconfile.read_file()
     # find all places below threshold
     with warnings.catch_warnings(record=True) as _:
         keep = reconfile.data > ccf_tellu_thres
@@ -595,7 +595,7 @@ def locate_reference_file(params, recipe, infile):
     # construct filename
     outfile.construct_filename(params, infile=ppfile)
     # read outfile
-    outfile.read()
+    outfile.read_file()
     # return outfile
     return outfile
 

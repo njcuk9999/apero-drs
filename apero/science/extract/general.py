@@ -102,7 +102,7 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
                 wargs = [orderpsfile.filename]
                 WLOG(params, '', TextEntry('40-013-00023', args=wargs))
                 # read npy file
-                orderpsfile.read(params)
+                orderpsfile.read_file(params)
             else:
                 eargs = [orderpsfile.__str__(), func_name]
                 WLOG(params, 'error', TextEntry('00-016-00023', args=eargs))
@@ -704,7 +704,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     locofile = lprops['LOCOOBJECT']
     e2dsfile.copy_original_keys(locofile, group='loc')
     # ----------------------------------------------------------------------
-    e2dsfile = wave.add_wave_keys(e2dsfile, wprops)
+    e2dsfile = wave.add_wave_keys(params, e2dsfile, wprops)
     # ----------------------------------------------------------------------
     # add berv properties to header
     e2dsfile = berv.add_berv_keys(params, e2dsfile, bprops)

@@ -23,9 +23,7 @@ __all__ = [
     'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_BLUE_LOW',
     'IMAGE_PIXEL_SIZE', 'FWHM_PIXEL_LSF',
     # general calib constants
-    'CAVITY_LENGTH_FILE', 'CAVITY_LENGTH_FILE_FMT', 'CAVITY_1M_FILE',
-    'CAVITY_LENGTH_FILE_COLS', 'CAVITY_LENGTH_FILE_START', 'CAVITY_LL_FILE',
-    'CAVITY_LENGTH_FILE_WAVECOL', 'OBJ_LIST_FILE', 'OBJ_LIST_FILE_FMT',
+    'CAVITY_1M_FILE', 'CAVITY_LL_FILE', 'OBJ_LIST_FILE', 'OBJ_LIST_FILE_FMT',
     'OBJ_LIST_CROSS_MATCH_RADIUS', 'OBJ_LIST_GAIA_URL', 'OBJ_LIST_SIMBAD_URL',
     'OBJ_LIST_GAIA_MAG_CUT', 'OBJ_LIST_GAIA_EPOCH', 'OBJ_LIST_GAIA_PLX_LIM',
     # qc constants
@@ -148,12 +146,23 @@ __all__ = [
     'WAVE_FP_DV_MAX', 'WAVE_FP_UPDATE_CAVITY', 'WAVE_FP_CAVFIT_MODE',
     'WAVE_FP_LLFIT_MODE', 'WAVE_FP_LLDIF_MIN', 'WAVE_FP_LLDIF_MAX',
     'WAVE_FP_SIGCLIP', 'WAVE_FP_PLOT_MULTI_INIT', 'WAVE_FP_PLOT_MULTI_NBO',
-    # wave ccf constantsCCF_N_ORD_MAX
+    # wave ccf constants
     'WAVE_CCF_NOISE_SIGDET', 'WAVE_CCF_NOISE_BOXSIZE', 'WAVE_CCF_NOISE_THRES',
     'WAVE_CCF_STEP', 'WAVE_CCF_WIDTH', 'WAVE_CCF_TARGET_RV',
     'WAVE_CCF_DETNOISE', 'WAVE_CCF_MASK', 'WAVE_CCF_MASK_UNITS',
     'WAVE_CCF_MASK_PATH', 'WAVE_CCF_MASK_FMT', 'WAVE_CCF_MASK_MIN_WEIGHT',
     'WAVE_CCF_MASK_WIDTH', 'WAVE_CCF_N_ORD_MAX',
+    # wave master reference constants
+    'WAVEREF_NSIG_MIN', 'WAVEREF_EDGE_WMAX', 'WAVEREF_HC_BOXSIZE',
+    'WAVEREF_HC_FIBTYPES', 'WAVEREF_FP_FIBTYPES', 'WAVEREF_FITDEG',
+    'WAVEREF_FP_NLOW', 'WAVEREF_FP_NHIGH', 'WAVEREF_FP_POLYINV',
+    # wave night constants
+    'WAVE_NIGHT_HIGHF_CORR_DEG', 'WAVE_NIGHT_NITERATIONS', 'WAVE_NIGHT_DCAVITY',
+    'WAVE_NIGHT_NSIG_MIN', 'WAVE_NIGHT_REDEND_CUTOFF', 'WAVE_NIGHT_DWAVE_BIN',
+    'WAVE_NIGHT_NMIN_LINES', 'WAVE_NIGHT_NSIG_FIT_CUT', 'WAVENIGHT_PLT_HCBINL',
+    'WAVENIGHT_PLT_HCBINU', 'WAVENIGHT_PLT_HCBINSZ', 'WAVENIGHT_PLT_FPBX',
+    'WAVENIGHT_PLT_FPBY', 'WAVENIGHT_PLT_FPLB', 'WAVENIGHT_PLT_AMPSIZE',
+    'WAVENIGHT_PLT_MAXDV', 'WAVENIGHT_PLT_DVSTEP',
     # telluric constants
     'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM',
     'TELLU_ALLOWED_DPRTYPES', 'TELLURIC_FILETYPE', 'TELLURIC_FIBER_TYPE',
@@ -169,7 +178,8 @@ __all__ = [
     'MKTELLU_SMALL_WEIGHTING_ERROR', 'MKTELLU_PLOT_ORDER_NUMS',
     'MKTELLU_TAU_WATER_ULIMIT', 'MKTELLU_TAU_OTHER_LLIMIT',
     'MKTELLU_TAU_OTHER_ULIMIT', 'MKTELLU_SMALL_LIMIT', 'MKTELLU_QC_SNR_ORDER',
-    'MKTELLU_QC_SNR_MIN', 'MKTELLU_QC_AIRMASS_DIFF',
+    'MKTELLU_QC_SNR_MIN', 'MKTELLU_QC_AIRMASS_DIFF', 'MKTELLU_HBAND_LOWER',
+    'MKTELLU_HBAND_UPPER',
     # fit telluric constants,
     'FTELLU_NUM_PRINCIPLE_COMP', 'FTELLU_ADD_DERIV_PC', 'FTELLU_FIT_DERIV_PC',
     'FTELLU_FIT_KEEP_NUM', 'FTELLU_FIT_MIN_TRANS', 'FTELLU_LAMBDA_MIN',
@@ -229,7 +239,7 @@ __all__ = [
     'PLOT_WAVE_FP_IPT_CWID_1MHC', 'PLOT_WAVE_FP_IPT_CWID_LLHC',
     'PLOT_WAVE_FP_MULTI_ORDER', 'PLOT_WAVE_FP_SINGLE_ORDER',
     'PLOT_WAVEREF_EXPECTED', 'PLOT_WAVENIGHT_ITERPLOT',
-    'PLOT_WAVENIGHT_DIFFPLOT',
+    'PLOT_WAVENIGHT_DIFFPLOT', 'PLOT_WAVENIGHT_HISTPLOT',
     # debug telluric plot settings
     'PLOT_MKTELLU_WAVE_FLUX1', 'PLOT_MKTELLU_WAVE_FLUX2',
     'PLOT_FTELLU_PCA_COMP1', 'PLOT_FTELLU_PCA_COMP2',
@@ -246,6 +256,7 @@ __all__ = [
     'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
     'REPROCESS_RAWINDEXFILE', 'REPROCESS_SEQCOL', 'REPROCESS_TIMECOL',
+    'SUMMARY_LATEX_PDF',
 ]
 
 # set name
@@ -325,26 +336,6 @@ FWHM_PIXEL_LSF = Const('FWHM_PIXEL_LSF', value=None, dtype=float,
 # CALIBRATION: GENERAL SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION: GENERAL SETTINGS'
-# Define the cavity length file (located in the DRS_CALIB_DATA directory)
-CAVITY_LENGTH_FILE = Const('CAVITY_LENGTH_FILE', value=None, dtype=str,
-                           source=__NAME__, group=cgroup)
-
-# Define the cavity length file format (must be astropy.table format)
-CAVITY_LENGTH_FILE_FMT = Const('CAVITY_LENGTH_FILE_FMT', value=None,
-                               dtype=str, source=__NAME__, group=cgroup)
-
-# Define the cavity length file column names (must be separated by commas
-# and must be equal to the number of columns in file)
-CAVITY_LENGTH_FILE_COLS = Const('CAVITY_LENGTH_FILE_COLS', value=None,
-                                dtype=str, source=__NAME__, group=cgroup)
-
-# Define the cavity length file row the data starts
-CAVITY_LENGTH_FILE_START = Const('CAVITY_LENGTH_FILE_START', value=None,
-                                 dtype=str, source=__NAME__, group=cgroup)
-
-# Define coefficent column (Must be in CAVITY_LENGTH_FILE_COLS)
-CAVITY_LENGTH_FILE_WAVECOL = Const('CAVITY_LENGTH_FILE_WAVECOL', value=None,
-                                   dtype=str, source=__NAME__, group=cgroup)
 
 # Define the coefficients of the fit of 1/m vs d
 CAVITY_1M_FILE = Const('CAVITY_1M_FILE', value=None, dtype=str, source=__NAME__,
@@ -1705,6 +1696,126 @@ WAVE_CCF_MASK_WIDTH = Const('WAVE_CCF_MASK_WIDTH', value=None, dtype=float,
 WAVE_CCF_N_ORD_MAX = Const('WAVE_CCF_N_ORD_MAX', value=None, dtype=int,
                            source=__NAME__, minimum=1, group=cgroup)
 
+
+# =============================================================================
+# CALIBRATION: WAVE MASTER REFERENCE SETTINGS
+# =============================================================================
+cgroup = 'CALIBRATION: WAVE MASTER REFERENCE SETTINGS'
+# min SNR to consider the line
+WAVEREF_NSIG_MIN = Const('WAVEREF_NSIG_MIN', value=None, dtype=int,
+                         source=__NAME__, minimum=0, group=cgroup)
+
+# minimum distance to the edge of the array to consider a line
+WAVEREF_EDGE_WMAX = Const('WAVEREF_EDGE_WMAX', value=None, dtype=int,
+                          source=__NAME__, minimum=0, group=cgroup)
+
+# value in pixel (+/-) for the box size around each HC line to perform fit
+WAVEREF_HC_BOXSIZE = Const('WAVEREF_HC_BOXSIZE', value=None, dtype=int,
+                           source=__NAME__, minimum=0, group=cgroup)
+
+# get valid hc dprtypes (string list separated by commas)
+WAVEREF_HC_FIBTYPES = Const('WAVEREF_HC_FIBTYPES', value=None, dtype=str,
+                            source=__NAME__, group=cgroup)
+
+# get valid fp dprtypes (string list separated by commas)
+WAVEREF_FP_FIBTYPES = Const('WAVEREF_HC_FIBTYPES', value=None, dtype=str,
+                            source=__NAME__, group=cgroup)
+
+# get the degree to fix master wavelength to in hc mode
+WAVEREF_FITDEG = Const('WAVEREF_FITDEG', value=None, dtype=int,
+                       source=__NAME__, minimum=1, group=cgroup)
+
+# define the lowest N for fp peaks
+WAVEREF_FP_NLOW = Const('WAVEREF_FP_NLOW', value=None, dtype=int,
+                        source=__NAME__, minimum=0, group=cgroup)
+
+# define the highest N for fp peaks
+WAVEREF_FP_NHIGH = Const('WAVEREF_FP_NHIGH', value=None, dtype=int,
+                         source=__NAME__, minimum=1, group=cgroup)
+
+# define the number of iterations required to do the Fp polynomial inversion
+WAVEREF_FP_POLYINV = Const('WAVEREF_FP_POLYINV', value=None, dtype=int,
+                       source=__NAME__, minimum=1, group=cgroup)
+
+
+# =============================================================================
+# CALIBRATION: WAVE NIGHT SETTINGS
+# =============================================================================
+cgroup = 'CALIBRATION: WAVE NIGHT SETTINGS'
+# high-order wavelength solution correction cannot be smaller than 2,
+#   we remove 0 and 1
+WAVE_NIGHT_HIGHF_CORR_DEG = Const('WAVE_NIGHT_HIGHF_CORR_DEG', value=None,
+                                  dtype=int, source=__NAME__, minimum=1,
+                                  group=cgroup)
+
+# number of iterations for convergence
+WAVE_NIGHT_NITERATIONS = Const('WAVE_NIGHT_NITERATIONS', value=None, dtype=int,
+                               source=__NAME__, minimum=1, group=cgroup)
+
+# starting point for the cavity corrections
+WAVE_NIGHT_DCAVITY = Const('WAVE_NIGHT_DCAVITY', value=None, dtype=float,
+                           source=__NAME__, minimum=0.0, group=cgroup)
+
+# min SNR for incluing in the model
+WAVE_NIGHT_NSIG_MIN = Const('WAVE_NIGHT_NSIG_MIN', value=None, dtype=int,
+                            source=__NAME__, minimum=1, group=cgroup)
+
+# red cut off for fit constaint [nm]
+WAVE_NIGHT_REDEND_CUTOFF = Const('WAVE_NIGHT_REDEND_CUTOFF', value=None,
+                                 dtype=float, source=__NAME__, minimum=0,
+                                 group=cgroup)
+
+# size in nm of the median bin of residuals for higher-order correction
+WAVE_NIGHT_DWAVE_BIN = Const('WAVE_NIGHT_DWAVE_BIN', value=None, dtype=int,
+                             source=__NAME__, minimum=0, group=cgroup)
+
+# min number of lines to be included in a median bin for high-order
+# correction
+WAVE_NIGHT_NMIN_LINES = Const('WAVE_NIGHT_NMIN_LINES', value=None, dtype=int,
+                              source=__NAME__, minimum=1, group=cgroup)
+
+# sigma clipping for the fit
+WAVE_NIGHT_NSIG_FIT_CUT = Const('WAVE_NIGHT_NSIG_FIT_CUT', value=None,
+                                dtype=float, source=__NAME__, minimum=1,
+                                group=cgroup)
+
+# wave night plot hc bin lower bound [nm]
+WAVENIGHT_PLT_HCBINL = Const('WAVENIGHT_PLT_HCBINL', value=None, dtype=float,
+                              source=__NAME__, minimum=0, group=cgroup)
+
+# wave night plot hc bin upper bound [nm]
+WAVENIGHT_PLT_HCBINU = Const('WAVENIGHT_PLT_HCBINU', value=None, dtype=float,
+                             source=__NAME__, minimum=0, group=cgroup)
+
+# wave night plot hc bin size [nm]
+WAVENIGHT_PLT_HCBINSZ = Const('WAVENIGHT_PLT_HCBINSZ', value=None, dtype=int,
+                              source=__NAME__, minimum=1, group=cgroup)
+
+# wave night plot fp histogram 2d number of x bins
+WAVENIGHT_PLT_FPBX = Const('WAVENIGHT_PLT_FPBX', value=None, dtype=int,
+                           source=__NAME__, minimum=1, group=cgroup)
+
+# wave night plot fp histogram 2d number of y bins
+WAVENIGHT_PLT_FPBY = Const('WAVENIGHT_PLT_FPBY', value=None, dtype=int,
+                           source=__NAME__, minimum=1, group=cgroup)
+
+# wave night plot fp line bin size
+WAVENIGHT_PLT_FPLB = Const('WAVENIGHT_PLT_FPLB', value=None, dtype=int,
+                           source=__NAME__, minimum=1, group=cgroup)
+
+# wave night plot amplifier size (for modulo amplifier  structures)
+WAVENIGHT_PLT_AMPSIZE = Const('WAVENIGHT_PLT_AMPSIZE', value=None, dtype=int,
+                              source=__NAME__, minimum=1, group=cgroup)
+
+# wave night plot max +/- dv to keep in the histogram plots
+WAVENIGHT_PLT_MAXDV = Const('WAVENIGHT_PLT_MAXDV', value=None, dtype=float,
+                            source=__NAME__, minimum=0, group=cgroup)
+
+# wave night plot modulo amplifier step (bin) size
+WAVENIGHT_PLT_DVSTEP = Const('WAVENIGHT_PLT_DVSTEP', value=None, dtype=int,
+                             source=__NAME__, minimum=1, group=cgroup)
+
+
 # =============================================================================
 # OBJECT: TELLURIC SETTINGS
 # =============================================================================
@@ -1871,6 +1982,16 @@ MKTELLU_QC_SNR_MIN = Const('MKTELLU_QC_SNR_MIN', value=None, dtype=float,
 # Define the allowed difference between recovered and input airmass
 MKTELLU_QC_AIRMASS_DIFF = Const('MKTELLU_QC_AIRMASS_DIFF', value=None,
                                 dtype=float, source=__NAME__, group=cgroup)
+
+# Define the MKO H-band limit limit [nm]
+#    from http://www.ifa.hawaii.edu/~tokunaga/MKO-NIR_filter_set.html
+MKTELLU_HBAND_LOWER = Const('MKTELLU_HBAND_LOWER', value=None,
+                            dtype=float, source=__NAME__, group=cgroup)
+
+# Define the MKO H-band upper limit [nm]
+#    from http://www.ifa.hawaii.edu/~tokunaga/MKO-NIR_filter_set.html
+MKTELLU_HBAND_UPPER = Const('MKTELLU_HBAND_UPPER', value=None,
+                            dtype=float, source=__NAME__, group=cgroup)
 
 # =============================================================================
 # OBJECT: FIT TELLURIC SETTINGS
@@ -2586,6 +2707,13 @@ PLOT_WAVENIGHT_DIFFPLOT = Const('PLOT_WAVENIGHT_DIFFPLOT', value=False,
                                 description='turn on the wave per night '
                                             'diff debug plot')
 
+# turn on the wave per night hist debug plot
+PLOT_WAVENIGHT_HISTPLOT = Const('PLOT_WAVENIGHT_HISTPLOT', value=False,
+                                dtype=bool, source=__NAME__, user=True,
+                                active=True, group=cgroup,
+                                description='turn on the wave per night '
+                                            'hist debug plot')
+
 # turn on the make tellu wave flux debug plot (in loop)
 PLOT_MKTELLU_WAVE_FLUX1 = Const('PLOT_MKTELLU_WAVE_FLUX1', value=False,
                                 dtype=bool, source=__NAME__, user=True,
@@ -2752,6 +2880,16 @@ REPROCESS_TIMECOL = Const('REPROCESS_TIMECOL', value=None, dtype=str,
 # define the default database to remake
 REMAKE_DATABASE_DEFAULT = Const('REMAKE_DATABASE_DEFAULT', value='calibration',
                                 dtype=str, source=__NAME__, group=cgroup)
+
+
+# Define whether we try to create a latex summary pdf
+#   (turn this off if you have any problems with latex/pdflatex)
+SUMMARY_LATEX_PDF = Const('SUMMARY_LATEX_PDF', value=True, dtype=bool,
+                          source=__NAME__, group=cgroup, active=True,
+                          user=True,
+                          description='Define whether we try to create a latex '
+                                      'summary pdf (turn this off if you have '
+                                      'any problems with latex/pdflatex)')
 
 # =============================================================================
 #  End of configuration file

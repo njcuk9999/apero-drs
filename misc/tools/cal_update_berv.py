@@ -151,7 +151,7 @@ def __main__(recipe, params):
                 # set filename
                 infile1.set_filename(ofiles[jt])
                 # read data
-                infile1.read()
+                infile1.read_file()
                 # get header from file instance
                 header1 = infile1.header
                 # append to list

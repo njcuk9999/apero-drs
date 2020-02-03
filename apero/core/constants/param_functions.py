@@ -415,11 +415,11 @@ class ParamDict(CaseInsensitiveDict):
         raises a ConfigError if key not found
 
         :param keys: list of strings, the list of keys to add sources for
-        :param sources: string or list of strings or dictionary of strings,
+        :param instances: object or list of objects or dictionary of objects,
                         the source or sources to add,
                         if a dictionary source = sources[key] for key = keys[i]
                         if list source = sources[i]  for keys[i]
-                        if string all sources with these keys will = source
+                        if object all sources with these keys will = source
 
         :return None:
         """
@@ -641,6 +641,7 @@ class ParamDict(CaseInsensitiveDict):
             if isinstance(value, ParamDict):
                 pp[key] = value.copy()
             else:
+                # noinspection PyBroadException
                 try:
                     pp[key] = copy.deepcopy(value)
                 except Exception as _:
@@ -697,7 +698,7 @@ class ParamDict(CaseInsensitiveDict):
             # print value
             if type(value) in [list, np.ndarray]:
                 sargs = [key, list(value), self.sources[key], self.pfmt]
-                strvalues  += _string_repr_list(*sargs)
+                strvalues += _string_repr_list(*sargs)
             elif type(value) in [dict, OrderedDict, ParamDict]:
                 strvalue = list(value.keys()).__repr__()[:40]
                 sargs = [key + '[DICT]', strvalue, self.sources[key]]
@@ -791,13 +792,20 @@ class ParamDict(CaseInsensitiveDict):
         else:
             print('No history found for key={0}'.format(key))
 
+
 # =============================================================================
 # Define functions
 # =============================================================================
 def update_paramdicts(*args, **kwargs):
+    # set function name (cannot break here --> no access to inputs)
+    _ = display_func(None, 'update_paramdicts', __NAME__)
+    # get key from kwargs
     key = kwargs.get('key', None)
+    # get value from kwargs
     value = kwargs.get('value', None)
+    # get source from kwargs
     source = kwargs.get('source', None)
+    # get instance from kwargs
     instance = kwargs.get('instance', None)
     # loop through param dicts
     for arg in args:
@@ -807,6 +815,8 @@ def update_paramdicts(*args, **kwargs):
 
 def load_config(instrument=None, from_file=True, cache=True):
     global CONFIG_CACHE
+    # set function name (cannot break here --> no access to inputs)
+    _ = display_func(None, 'load_config', __NAME__)
     # check config cache
     if instrument in CONFIG_CACHE and cache:
         return CONFIG_CACHE[instrument].copy()
@@ -834,7 +844,7 @@ def load_config(instrument=None, from_file=True, cache=True):
         # get instrument user config files
         files = _get_file_names(params, instrument)
         try:
-            keys, values, sources, instances  = _load_from_file(files, modules)
+            keys, values, sources, instances = _load_from_file(files, modules)
         except ConfigError:
             sys.exit(1)
         # add to params
@@ -855,7 +865,8 @@ def load_config(instrument=None, from_file=True, cache=True):
 
 def load_pconfig(instrument=None):
     global PCONFIG_CACHE
-    func_name = __NAME__ + '.load_pconfig()'
+    # set function name (cannot break here --> no access to inputs)
+    func_name = display_func(None, 'load_pconfig', __NAME__)
     # check cache
     if instrument in PCONFIG_CACHE:
         return PCONFIG_CACHE[instrument]
@@ -869,37 +880,41 @@ def load_pconfig(instrument=None):
     mod = constant_functions.import_module(func_name, modules[0])
     # check that we have class and import it
     if hasattr(mod, PSEUDO_CONST_CLASS):
-        PsConst = getattr(mod, PSEUDO_CONST_CLASS)
+        psconst = getattr(mod, PSEUDO_CONST_CLASS)
     # else raise error
     else:
         emsg = 'Module "{0}" is required to have class "{1}"'
         ConfigError(emsg.format(modules[0], PSEUDO_CONST_CLASS))
         sys.exit(1)
     # get instance of PseudoClass
-    pconfig = PsConst(instrument=instrument)
+    pconfig = psconst(instrument=instrument)
     # update cache
     PCONFIG_CACHE[instrument] = pconfig
     return pconfig
 
 
 def get_config_all():
+    # set function name (cannot break here --> no access to inputs)
+    _ = display_func(None, 'get_config_all', __NAME__)
+    # get module names
     modules = get_module_names(None)
-
+    # loop around modules and print our __all__ statement
     for module in modules:
+        # generate a list of all functions in a module
         rawlist = constant_functions.generate_consts(module)[0]
-
-        print('='*50)
+        # print to std-out
+        print('=' * 50)
         print('MODULE: {0}'.format(module))
-        print('='*50)
+        print('=' * 50)
         print('')
         print('__all__ = [\'{0}\']'.format('\', \''.join(rawlist)))
         print('')
 
 
 def get_file_names(instrument=None, file_list=None, instrument_path=None,
-                     default_path=None):
-    func_name = __NAME__ + '.get_file_names()'
-
+                   default_path=None):
+    # set function name (cannot break here --> no access to inputs)
+    func_name = display_func(None, 'get_file_names', __NAME__)
     # get core path
     core_path = get_relative_folder(PACKAGE, default_path)
     # get constants package path
@@ -950,8 +965,8 @@ def get_file_names(instrument=None, file_list=None, instrument_path=None,
 
 def get_module_names(instrument=None, mod_list=None, instrument_path=None,
                      default_path=None, path=True):
-    func_name = __NAME__ + '._get_module_names()'
-
+    # set function name (cannot break here --> no access to inputs)
+    func_name = display_func(None, '_get_module_names', __NAME__)
     # deal with no module list
     if mod_list is None:
         mod_list = SCRIPTS
@@ -1031,21 +1046,33 @@ def get_module_names(instrument=None, mod_list=None, instrument_path=None,
 
 
 def print_error(error):
+    # set function name (cannot break here --> no access to inputs)
+    _ = display_func(None, 'print_error', __NAME__)
+    # print the configuration file
     print('\n')
-    print('='*70)
+    print('=' * 70)
     print(' Configuration file {0}:'.format(error.level))
     print('=' * 70, '\n')
+    # get the error string
     estring = error.message
+    # if error string is not a list assume it is a string and push it into
+    #   a single element list
     if type(estring) is not list:
         estring = [estring]
+    # loop around error strings (now must be a list of strings)
     for emsg in estring:
+        # replace new line with new line + tab
         emsg = emsg.replace('\n', '\n\t')
+        # print to std-out
         print('\t' + emsg)
+    # print a gap between this and next lines
+    print('=' * 70, '\n')
 
-    print('='*70, '\n')
 
-
-def breakpoint(params=None, allow=None):
+def break_point(params=None, allow=None, level=2):
+    # set function name (cannot break inside break function)
+    _ = str(__NAME__) + '.break_point()'
+    # if we don't have parameters load them from config file
     if params is None:
         params = load_config()
         # force to True
@@ -1057,39 +1084,44 @@ def breakpoint(params=None, allow=None):
     if not allow:
         return
     # copy pdbrc
-    _copy_pdb_rc(params)
+    _copy_pdb_rc(params, level=level)
     # catch bdb quit
+    # noinspection PyPep8
     try:
         _execute_ipdb()
     except:
-        pass
-    # delete pdbrc
-    _remove_pdb_rc(params)
+        emsg = 'USER[00-000-00000]: Debugger breakpoint exit.'
+        raise drs_exceptions.DebugExit(emsg)
+    finally:
+        # delete pdbrc
+        _remove_pdb_rc(params)
 
 
+# noinspection PyUnusedLocal
 def catch_sigint(signal_received, frame):
-    # test cached settings
-    # TODO: See if you can get this working
-    # if 'ALLOW_BREAKPOINTS' in SETTINGS_CACHE:
-    #     if SETTINGS_CACHE['ALLOW_BREAKPOINTS']:
-    #         breakpoint()
-    # if 'DRS_DEBUG' in SETTINGS_CACHE:
-    #     if SETTINGS_CACHE['DRS_DEBUG'] > 0:
-    #         breakpoint()
+    # set function name (cannot break here --> no access to inputs)
+    _ = display_func(None, 'catch_sigint', __NAME__)
     # raise Keyboard Interrupt
     raise KeyboardInterrupt('\nSIGINT or CTRL-C detected. Exiting\n')
 
 
 def window_size(drows=80, dcols=80):
+    # set function name (cannot break here --> no access to inputs)
+    _ = display_func(None, 'window_size', __NAME__)
     # only works on unix operating systems
     if os.name == 'posix':
+        # try to open via open and split output back to rows and columns
+        # noinspection PyPep8,PyBroadException
         try:
             rows, columns = os.popen('stty size', 'r').read().split()
             return int(rows), int(columns)
+        # if not just pass over this
         except:
             pass
+    # if we are on windows we have to get window size differently
     elif os.name == 'nt':
         # taken from: https://gist.github.com/jtriley/1108174
+        # noinspection PyPep8,PyBroadException
         try:
             import struct
             from ctypes import windll, create_string_buffer
@@ -1105,20 +1137,116 @@ def window_size(drows=80, dcols=80):
                 sizex = right - left + 1
                 sizey = bottom - top + 1
                 return int(sizey), int(sizex)
+        # if not just pass over this
         except:
             pass
+    # if we have reached this point return the default number of rows
+    #   and columns
     return drows, dcols
+
+
+def display_func(params=None, name=None, program=None, class_name=None,
+                 wlog=None, textentry=None):
+    # set function name (cannot break here --> no access to inputs)
+    func_name = str(__NAME__) + '.display_func()'
+    # deal with no wlog defined
+    if wlog is None:
+        wlog = drs_exceptions.wlogbasic
+    # deal with not text entry defined
+    if textentry is None:
+        textentry = constant_functions._DisplayText()
+    # start the string function
+    strfunc = ''
+    # deal with no file name
+    if name is None:
+        name = 'Unknown'
+    # ----------------------------------------------------------------------
+    # add the program
+    if program is not None:
+        strfunc = str(program)
+    if class_name is not None:
+        strfunc += '.{0}'.format(class_name)
+    # add the name
+    strfunc += '.{0}'.format(name)
+    # add brackets to show function
+    if not strfunc.endswith('()'):
+        strfunc += '()'
+    # ----------------------------------------------------------------------
+    # deal with adding a break point
+    if params is not None:
+        if 'INPUTS' in params and 'BREAKFUNC' in params['INPUTS']:
+            # get break function
+            breakfunc = params['INPUTS']['BREAKFUNC']
+            # only deal with break function if it is set
+            if breakfunc not in [None, 'None', '']:
+                # get function name (without ending)
+                funcname = strfunc.replace('()', '')
+                # if function name endwith break function then we break here
+                if funcname.endswith(breakfunc):
+                    # log we are breaking due to break function
+                    wargs = [breakfunc]
+                    msg = textentry('10-005-00004', args=wargs)
+                    wlog(params, 'warning', msg)
+                    break_point(params, allow=True, level=3)
+    # ----------------------------------------------------------------------
+    # deal with no params (do not log)
+    if params is None:
+        return strfunc
+    # deal with debug level too low (just return here)
+    if params['DRS_DEBUG'] < params['DEBUG_MODE_FUNC_PRINT']:
+        return strfunc
+    # ----------------------------------------------------------------------
+    # below here just for debug mode func print
+    # ----------------------------------------------------------------------
+    # add the string function to param dict
+    if 'DEBUG_FUNC_LIST' not in params:
+        params.set('DEBUG_FUNC_LIST', value=[None], source=func_name)
+    if 'DEBUG_FUNC_DICT' not in params:
+        params.set('DEBUG_FUNC_DICT', value=dict(), source=func_name)
+    # append to list
+    params['DEBUG_FUNC_LIST'].append(strfunc)
+    # update debug dictionary
+    if strfunc in params['DEBUG_FUNC_DICT']:
+        params['DEBUG_FUNC_DICT'][strfunc] += 1
+    else:
+        params['DEBUG_FUNC_DICT'][strfunc] = 1
+    # get count
+    count = params['DEBUG_FUNC_DICT'][strfunc]
+    # find previous entry
+    previous = params['DEBUG_FUNC_LIST'][-2]
+    # find out whether we have the same entry
+    same_entry = previous == strfunc
+    # add count
+    strfunc += ' (N={0})'.format(count)
+    # if we don't have a list then just print
+    if params['DEBUG_FUNC_LIST'][-2] is None:
+        # log in func
+        wlog(params, 'debug', textentry('90-000-00004', args=[strfunc]),
+             wrap=False)
+    elif not same_entry:
+        # get previous set of counts
+        previous_count = _get_prev_count(params, previous)
+        # only log if count is greater than 1
+        if previous_count > 1:
+            # log how many of previous there were
+            dargs = [previous_count]
+            wlog(params, 'debug', textentry('90-000-00005', args=dargs))
+        # log in func
+        wlog(params, 'debug', textentry('90-000-00004', args=[strfunc]),
+             wrap=False)
+    # return func_name
+    return strfunc
 
 
 # =============================================================================
 # Config loading private functions
 # =============================================================================
 def _get_file_names(params, instrument=None):
-
+    # set function name (cannot break here --> no access to inputs)
+    _ = display_func(params, '_get_file_names', __NAME__)
     # deal with no instrument
     if instrument is None:
         return []
-
     # get user environmental path
     user_env = params['DRS_USERENV']
     # get user default path (if environmental path unset)
@@ -1200,19 +1328,26 @@ def _get_file_names(params, instrument=None):
 
 
 def _get_subdir(directory, instrument, source):
+    # set function name (cannot break here --> no access to inputs)
+    _ = display_func(None, 'catch_sigint', __NAME__)
+    # get display text
+    textentry = constant_functions._DisplayText()
+    # set the sub directory to None initially
     subdir = None
+    # loop around items in the directory
     for filename in os.listdir(directory):
+        # check that the absolute path is a directory
         cond1 = os.path.isdir(os.path.join(directory, filename))
+        # check that item (directory) is named the same as the instrument
         cond2 = filename.lower() == instrument.lower()
+        # if both conditions true set the sub directory as this item
         if cond1 and cond2:
             subdir = filename
     # deal with instrument sub-folder not found
     if subdir is None:
-        wmsg1 = ('User config defined in {0} but instrument '
-                '"{1}" directory not found')
-        wmsg2 = '\tDirectory = "{1}"'.format(source, os.path.join(directory))
-        wmsg3 = '\tUsing default configuration files.'
-        ConfigWarning([wmsg1.format(source, instrument.lower()), wmsg2, wmsg3])
+        # raise a config warning that directory not found
+        wargs = [source, instrument.lower(), directory]
+        ConfigWarning(textentry('10-002-00001', args=wargs))
     # return the subdir
     return subdir
 
@@ -1229,8 +1364,10 @@ def get_relative_folder(package, folder):
                   file
     """
     global REL_CACHE
-    # set function name
-    func_name = __NAME__ + '.get_relative_folder()'
+    # set function name (cannot break here --> no access to inputs)
+    func_name = display_func(None, 'get_relative_folder', __NAME__)
+    # get text entry
+    textentry = constant_functions._DisplayText()
     # ----------------------------------------------------------------------
     # check relative folder cache
     if package in REL_CACHE and folder in REL_CACHE[package]:
@@ -1240,8 +1377,8 @@ def get_relative_folder(package, folder):
     try:
         init = pkg_resources.resource_filename(package, '__init__.py')
     except ImportError:
-        emsg = 'Package name = "{0}" is invalid (function = {1})'
-        raise ConfigError(emsg.format(package, func_name), level='error')
+        eargs = [package, func_name]
+        raise ConfigError(textentry('00-008-00001', args=eargs), level='error')
     # Get the config_folder from relative path
     current = os.getcwd()
     # get directory name of folder
@@ -1254,9 +1391,10 @@ def get_relative_folder(package, folder):
     os.chdir(current)
     # test that folder exists
     if not os.path.exists(data_folder):
-        emsg = 'Folder "{0}" does not exist in {1}'
+        # raise exception
         eargs = [os.path.basename(data_folder), os.path.dirname(data_folder)]
-        raise ConfigError(emsg.format(*eargs), level='error')
+        raise ConfigError(textentry('00-003-00005', args=eargs), level='error')
+
     # ----------------------------------------------------------------------
     # update REL_CACHE
     if package not in REL_CACHE:
@@ -1269,7 +1407,10 @@ def get_relative_folder(package, folder):
 
 
 def _load_from_module(modules, quiet=False):
-    func_name = __NAME__ + '._load_from_module()'
+    # set function name (cannot break here --> no access to inputs)
+    func_name = display_func(None, '_load_from_module', __NAME__)
+    # get text entry
+    textentry = constant_functions._DisplayText()
     # storage for returned values
     keys, values, sources, instances = [], [], [], []
     # loop around modules
@@ -1284,11 +1425,10 @@ def _load_from_module(modules, quiet=False):
             key = mkeys[it]
             # deal with duplicate keys
             if key in keys:
-                emsgs = ['Duplicate Const parameter "{0}" for instrument "{1}"'
-                         ''.format(key, module),
-                         '\tModule list: {0}'.format(','.join(modules)),
-                         '\tfunction = {0}'.format(func_name)]
-                raise ConfigError(emsgs, level='error')
+                # raise exception
+                eargs = [key, module, ','.join(modules), func_name]
+                raise ConfigError(textentry('00-003-00006', args=eargs),
+                                  level='error')
             # valid parameter
             cond = mvalue.validate(quiet=quiet)
             # if validated append to keys/values/sources
@@ -1302,6 +1442,10 @@ def _load_from_module(modules, quiet=False):
 
 
 def _load_from_file(files, modules):
+    # set function name (cannot break here --> no access to inputs)
+    _ = display_func(None, '_load_from_file', __NAME__)
+    # get text entry
+    textentry = constant_functions._DisplayText()
     # -------------------------------------------------------------------------
     # load constants from file
     # -------------------------------------------------------------------------
@@ -1315,11 +1459,10 @@ def _load_from_file(files, modules):
             fkeyi, fvaluei = fkey[it], fvalue[it]
             # if this is not a new constant print warning
             if fkeyi in fkeys:
-                wmsg1 = 'Key {0} duplicated in "{1}"'
-                wargs1 = [fkeyi, filename]
-                wmsg2 = '\tOther configs: {0}'.format(','.join(set(fsources)))
-                wmsg3 = '\tConfig File = "{0}"'.format(filename)
-                ConfigWarning([wmsg1.format(*wargs1), wmsg2, wmsg3])
+                # log warning message
+                wargs = [fkeyi, filename, ','.join(set(fsources)), filename]
+                ConfigWarning(textentry('10-002-00002', args=wargs),
+                              level='warning')
             # append to list
             fkeys.append(fkeyi)
             fvalues.append(fvaluei)
@@ -1353,8 +1496,9 @@ def _load_from_file(files, modules):
     return keys, values, sources, instances
 
 
-def _save_config_params(params,):
-    func_name = __NAME__ + '._save_config_params()'
+def _save_config_params(params):
+    # set function name (cannot break here --> no access to inputs)
+    func_name = display_func(params, '_save_config_params', __NAME__)
     # get sources from paramater dictionary
     sources = params.sources.values()
     # get unique sources
@@ -1370,6 +1514,8 @@ def _save_config_params(params,):
 
 
 def _check_mod_source(source):
+    # set function name (cannot break here --> no access to inputs)
+    _ = display_func(None, '_check_mod_source', __NAME__)
     # deal with source being None
     if source is None:
         return None
@@ -1393,13 +1539,22 @@ def _check_mod_source(source):
 
 
 def _execute_ipdb():
+    # set function name (cannot break here --> within break function)
+    _ = str(__NAME__) + '._execute_ipdb()'
     # start ipdb
+    # noinspection PyBroadException
     try:
+        # import ipython debugger
+        # noinspection PyUnresolvedReferences
         import ipdb
+        # set the ipython trace
         ipdb.set_trace()
     except Exception as _:
+        # import python debugger (standard python module)
         import pdb
+        # set the python trace
         pdb.set_trace()
+
 
 # =============================================================================
 # Other private functions
@@ -1415,6 +1570,8 @@ def _capitalise_key(key):
 
     :return key: capitalized string (or unchanged object)
     """
+    # set function name (cannot break here --> no access to inputs)
+    _ = display_func(None, '_capitalise_key', __NAME__)
     # capitalise string keys
     if type(key) == str:
         key = key.upper()
@@ -1422,31 +1579,39 @@ def _capitalise_key(key):
 
 
 def _string_repr_list(key, values, source, fmt):
+    # set function name (cannot break here --> no access to inputs)
+    _ = display_func(None, '_load_from_file', __NAME__)
+    # get the list as a string
     str_value = list(values).__repr__()
+    # if the string is longer than 40 characters cut down and add ...
     if len(str_value) > 40:
         str_value = str_value[:40] + '...'
+    # return the string as a list entry
     return [fmt.format(key, str_value, source)]
 
 
 def _map_listparameter(value, separator=',', dtype=None):
-
-    func_name = __NAME__ + '._map_listparameter()'
+    # set function name (cannot break here --> no access to inputs)
+    func_name = display_func(None, '_map_listparameter', __NAME__)
+    # get text entry
+    textentry = constant_functions._DisplayText()
     # return list if already a list
     if isinstance(value, (list, np.ndarray)):
         return list(value)
-
-    # try evaulating as a list
+    # try evaluating is a list
+    # noinspection PyBroadException
     try:
+        # evulate value
         rawvalue = eval(value)
+        # if it is a list return as a list
         if isinstance(rawvalue, list):
             return list(rawvalue)
-    except Exception as e:
+    # if it is not pass
+    except Exception as _:
         pass
-
     # deal with an empty value i.e. ''
     if value == '':
         return []
-
     # try to return dtyped data
     try:
         # first split by separator
@@ -1459,13 +1624,14 @@ def _map_listparameter(value, separator=',', dtype=None):
             return list(map(lambda x: x.strip(), listparameter))
     except Exception as e:
         eargs = [value, type(e), e, func_name]
-        error = ('Parameter \'{0}\' can not be converted to a list.' 
-                 '\n\t Error {1}: {2}. \n\t function = {3}')
-        BLOG(message=error.format(eargs), level='error')
+        BLOG(message=textentry('00-003-00002', args=eargs), level='error')
 
 
 def _map_dictparameter(value, dtype=None):
-    func_name = __NAME__ + '._map_dictparameter()'
+    # set function name (cannot break here --> no access to inputs)
+    func_name = display_func(None, '_map_dictparameter', __NAME__)
+    # get text entry
+    textentry = constant_functions._DisplayText()
     # deal with an empty value i.e. ''
     if value == '':
         return []
@@ -1482,12 +1648,12 @@ def _map_dictparameter(value, dtype=None):
             return returndict
     except Exception as e:
         eargs = [value, type(e), e, func_name]
-        error = ('Parameter \'{0}\' can not be converted to a dictionary.' 
-                 '\n\t Error {1}: {2}. \n\t function = {3}')
-        BLOG(message=error.format(eargs), level='error')
+        BLOG(message=textentry('00-003-00003', args=eargs), level='error')
 
 
-def _copy_pdb_rc(params):
+def _copy_pdb_rc(params, level=0):
+    # set function name (cannot break here --> no access to inputs)
+    _ = str(__NAME__) + '_copy_pdb_rc()'
     # set global CURRENT_PATH
     global CURRENT_PATH
     # get package
@@ -1500,13 +1666,36 @@ def _copy_pdb_rc(params):
     CURRENT_PATH = os.getcwd()
     # get absolute path
     oldsrc = get_relative_folder(package, path)
+    tmppath = oldsrc + '_tmp'
     # get newsrc
     newsrc = os.path.join(CURRENT_PATH, filename)
+
+    # modify oldsrc
+    pdbfile = open(oldsrc, 'r')
+    lines = pdbfile.readlines()
+    pdbfile.close()
+
+    # deal with levels
+    if level == 0:
+        upkey = ''
+    else:
+        upkey = 'up\n' * level
+    # loop around lines and replace
+    newlines = []
+    for line in lines:
+        newlines.append(line.format(up=upkey))
+    pdbfile = open(tmppath, 'w')
+    pdbfile.writelines(newlines)
+    pdbfile.close()
     # copy
-    shutil.copy(oldsrc, newsrc)
+    shutil.copy(tmppath, newsrc)
+    # remove tmp file
+    os.remove(tmppath)
 
 
 def _remove_pdb_rc(params):
+    # set function name (cannot break here --> no access to inputs)
+    _ = str(__NAME__) + '_remove_pdb_rc()'
     # get path
     path = params['DRS_PDB_RC_FILE']
     # get file name
@@ -1516,6 +1705,23 @@ def _remove_pdb_rc(params):
     # remove
     if os.path.exists(newsrc):
         os.remove(newsrc)
+
+
+def _get_prev_count(params, previous):
+    # set function name (cannot break here --> no access to inputs)
+    _ = str(__NAME__) + '._get_prev_count()'
+    # get the debug list
+    debug_list = params['DEBUG_FUNC_LIST'][:-1]
+    # get the number of iterations
+    n_elements = 0
+    # loop around until we get to
+    for row in range(len(debug_list))[::-1]:
+        if debug_list[row] != previous:
+            break
+        else:
+            n_elements += 1
+    # return number of element founds
+    return n_elements
 
 
 # =============================================================================

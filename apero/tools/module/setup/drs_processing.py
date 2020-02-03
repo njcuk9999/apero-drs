@@ -1490,7 +1490,21 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 # flag finished
                 finished = pp['SUCCESS']
             # --------------------------------------------------------------
-            # Manage unexpected errors
+            # Manage debug exit interrupt errors
+            except drs_exceptions.DebugExit as _:
+                # deal with returns
+                pp['ERROR'] = []
+                pp['WARNING'] = []
+                pp['OUTPUTS'] = dict()
+                pp['TRACEBACK'] = ''
+                # flag not finished
+                finished = False
+                # deal with setting event (if it is defined -- only defined
+                #    for parallel sessions)
+                if event is not None:
+                    event.set()
+            # --------------------------------------------------------------
+            # Manage Keyboard interrupt errors
             except KeyboardInterrupt:
                 # deal with returns
                 pp['ERROR'] = []
@@ -1499,16 +1513,13 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 pp['TRACEBACK'] = ''
                 # flag not finished
                 finished = False
-                event.set()
+                # deal with setting event (if it is defined -- only defined
+                #    for parallel sessions)
+                if event is not None:
+                    event.set()
             # --------------------------------------------------------------
             # Manage expected errors
             except drs_exceptions.LogExit as e:
-                # noinspection PyBroadException
-                try:
-                    import traceback
-                    string_traceback = traceback.format_exc()
-                except Exception as _:
-                    string_traceback = ''
                 emsgs = [textdict['00-503-00005'].format(priority)]
                 for emsg in e.errormessage.split('\n'):
                     emsgs.append('\n' + emsg)

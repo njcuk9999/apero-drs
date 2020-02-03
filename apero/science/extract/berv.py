@@ -148,7 +148,8 @@ def get_berv(params, infile=None, header=None, props=None, log=True,
         try:
             # --------------------------------------------------------------
             # calculate berv/bjd
-            bervs, bjds = use_barycorrpy(params, bprops['OBS_TIMES'], **bprops)
+            bervs, bjds = use_barycorrpy(params, bprops['OBS_TIMES'],
+                                         iteration=0, **bprops)
             # --------------------------------------------------------------
             # calculate max berv
             bervmax = mp.nanmax(np.abs(bervs))
@@ -156,7 +157,7 @@ def get_berv(params, infile=None, header=None, props=None, log=True,
             # calculate berv derivative (add 1 second)
             deltat = (1*uu.s).to(uu.day).value
             berv1, bjd1 = use_barycorrpy(params, bprops['OBS_TIME'] + deltat,
-                                         **bprops)
+                                         iteration=1, **bprops)
             dberv = np.abs(berv1[0] - bervs[0])
             # --------------------------------------------------------------
             # push into output parameters
@@ -188,7 +189,7 @@ def get_berv(params, infile=None, header=None, props=None, log=True,
                              bervmaxest=bervmax, source='pyasl', props=bprops)
 
 
-def use_barycorrpy(params, times, **kwargs):
+def use_barycorrpy(params, times, iteration=0, **kwargs):
     func_name = __NAME__ + '.use_barycorrpy()'
     # get estimate accuracy
     estimate = pcheck(params, 'EXT_BERV_EST_ACC', 'berv_est', kwargs, func_name)
@@ -249,7 +250,7 @@ def use_barycorrpy(params, times, **kwargs):
     # ----------------------------------------------------------------------
     # define a synchoronized lock for indexing (so multiple instances do not
     #  run at the same time)
-    lockfile = os.path.basename(lfilename)
+    lockfile = os.path.basename('{0}_{1}'.format(lfilename, iteration))
     # start a lock
     lock = drs_lock.Lock(params, lockfile)
 

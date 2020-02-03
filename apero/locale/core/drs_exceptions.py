@@ -418,6 +418,18 @@ class Exit(SystemExit):
 
 
 class LogExit(Exit):
+    """
+    This should only be used when exiting from a log message
+    """
+    def __init__(self, errormessage, *args, **kwargs):
+        self.errormessage = errormessage
+        super().__init__(*args, **kwargs)
+
+
+class DebugExit(Exit):
+    """
+    This exception should only be used when exiting the debugger (ipdb/pdb)
+    """
     def __init__(self, errormessage, *args, **kwargs):
         self.errormessage = errormessage
         super().__init__(*args, **kwargs)
@@ -440,6 +452,13 @@ def clear_warnings():
 # Define basic log function (for when we don't have full logger functionality)
 #   i.e. within apero.locale or apero.constants
 #   Note this can't be language specific=
+def wlogbasic(_, level, message, **kwargs):
+    if level == 'debug':
+        return None
+    else:
+        return basiclogger(message=message, level=level, **kwargs)
+
+
 def basiclogger(message=None, level=None, name=None, force_exit=True,
                 wlog=None, **kwargs):
 
@@ -507,6 +526,15 @@ def _flatmessage(message):
         outstring += mess
     return outstring
 
+
+# =============================================================================
+# Start of code
+# =============================================================================
+# Main code here
+if __name__ == "__main__":
+    # ----------------------------------------------------------------------
+    # print 'Hello World!'
+    print("Hello World!")
 
 # =============================================================================
 # End of code

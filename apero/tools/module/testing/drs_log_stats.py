@@ -47,7 +47,7 @@ HelpText = drs_text.HelpDict
 # define columns from log files
 RECIPECOL = 'RECIPE'
 STARTCOL = 'STARTED'
-PASSEDCOL = 'PASSED_QC'
+PASSEDCOL = 'PASSED_ALL_QC'
 ENDCOL = 'ENDED'
 LOGCOL = 'LOGFILE'
 ERRORSTR = '-!|'
@@ -90,8 +90,7 @@ class LogObj:
         # get the log time (from string)
         time2 = line.split('-')[0]
         hour2, min2, sec2 = time2.split(':')
-        hour2 = eval(hour2)
-
+        hour2 = int(hour2)
         # figure out which day our log entry is on
         if hour2 > hour1:
             date2 = Time(self.mdate) - TimeDelta(1 * uu.day)
@@ -155,9 +154,13 @@ def get_log_files(params, recipe, path, nightname=None):
         WLOG(params, '', 'Found {0} night directories'.format(len(nights)))
     else:
         WLOG(params, 'error', 'No night directories found.')
+
+    # any recipes without a night name will be saved above the night directories
+    #    level so we must add the input path to the list of nights
+    nights += [path]
     # ----------------------------------------------------------------------
     # locate log files
-    logfitsfile = recipe.log.logfitsfile
+    logfitsfile = params['DRS_LOG_FITS_NAME']
     # log files
     logfiles, nightnames = [], []
     # loop around nights
@@ -245,8 +248,30 @@ def make_log_table(params, logfiles, nightnames, recipename, since=None,
     for col in masterdict:
         mastertable[col] = masterdict[col]
 
+    # for convienence sort by HTIME
+    sortmask = np.argsort(mastertable['HTIME'])
+    mastertable = mastertable[sortmask]
+
     # return master table
     return mastertable
+
+
+def save_master(params, mastertable, path, recipename, makemaster):
+    if mastertable is not None and makemaster:
+        # define master name
+        mastername = 'MASTER_LOG.fits'
+        # deal with having a recipename
+        if recipename is not None:
+            # construct recipe master name
+            rmname = recipename.replace('.py', '').replace('.', '_').strip()
+            # update master name
+            mastername = mastername.replace('.fits', '_' + rmname)
+        # construct absolute path
+        absmtable = os.path.join(path, mastername)
+        # log saving of table
+        WLOG(params, 'info', 'Saving master log to: {0}'.format(absmtable))
+        # save table
+        mastertable.write(absmtable, format='fits', overwrite=True)
 
 
 def search_recipes(params, recipe, recipename):
@@ -364,54 +389,116 @@ def calculate_recipe_stats(params, mastertable, recipename):
     # for each log file get all log errors and warnings
     errors, warns = [], []
     for logfile in logfiles:
+        # deal with log file not existing
+        if not os.path.exists(logfile):
+            # try to find it
+            found, logfile = _find_log_file(params, logfile)
+            # if not found report warning
+            if not found:
+                WLOG(params, 'warning', '\t - No log file: {0}'.format(logfile))
+                errors += 'No log file'
+                continue
         WLOG(params, '', '\t - Loading: {0}'.format(logfile))
-        error, warn = _create_log_objs(logfile)
+        error, warn = _create_log_objs(params, logfile)
         errors += error
         warns += warn
     # ----------------------------------------------------------------------
     # tabulate the number of errors and warnings found for this recipe
+    # ----------------------------------------------------------------------
     errorcount = OrderedDict()
     errormessages = OrderedDict()
     warncount = OrderedDict()
     warnmessages = OrderedDict()
+    # ----------------------------------------------------------------------
     # loop around errors
     for error in errors:
+        # store counts
         if error.code in errorcount:
             errorcount[error.code] += 1
         else:
             errorcount[error.code] = 1
-        errormessages[error.code] = error.msg
+        # store messages
+        if error.code in errormessages:
+            errormessages[error.code].append(error.msg)
+        else:
+            errormessages[error.code] = [error.msg]
+    # ----------------------------------------------------------------------
     # loop around warnings
     for warn in warns:
+        # store counts
         if warn.code in warncount:
             warncount[warn.code] += 1
         else:
             warncount[warn.code] = 1
-        warnmessages[warn.code] = warn.msg
+        # store messages
+        if warn.code in warnmessages:
+            warnmessages[warn.code].append(warn.msg)
+        else:
+            warnmessages[warn.code] = [warn.msg]
     # ----------------------------------------------------------------------
-    error_codes, error_msgs, error_counts = [], [], []
-    warn_codes, warn_msgs, warn_counts = [], [], []
+    # push these counts into lists
+    # ----------------------------------------------------------------------
+    error_codes, error_msgs, error_sample, error_counts = [], [], [], []
+    warn_codes, warn_msgs, warn_sample, warn_counts = [], [], [], []
     for error in errorcount:
         error_codes.append(error)
-        error_msgs.append(errormessages[error])
+        error_msgs += errormessages[error]
         error_counts.append(errorcount[error])
+        error_sample.append(errormessages[error][-1])
     for warn in warncount:
         warn_codes.append(warn)
-        warn_msgs.append(warnmessages[warn])
+        warn_msgs += warnmessages[warn]
         warn_counts.append(warncount[warn])
-
-
-
-
+        warn_sample.append(warnmessages[warn][-1])
+    # ----------------------------------------------------------------------
+    # Error Print out
+    # ----------------------------------------------------------------------
+    # print unique error messages
+    used_errors = dict()
+    WLOG(params, '', '')
+    WLOG(params, 'info', 'Unique error messages: ')
+    # count number of time unique message appear
+    for it, error_msg in enumerate(error_msgs):
+        if error_msg not in used_errors:
+            used_errors[error_msg] = 1
+        else:
+            used_errors[error_msg] += 1
+    # display unique messages
+    for it, error_msg in enumerate(used_errors):
+        num = used_errors[error_msg]
+        WLOG(params, '', '\t{0} N={1}: {2}'.format(it + 1, num, error_msg))
+        WLOG(params, '', '')
+    # ----------------------------------------------------------------------
+    # Warning Print out
+    # ----------------------------------------------------------------------
+    # print unique warning messages
+    used_warnings = dict()
+    WLOG(params, '', '')
+    WLOG(params, 'info', 'Unique warning messages: ')
+    # count number of time unique message appear
+    for it, warn_msg in enumerate(warn_msgs):
+        if warn_msg not in used_warnings:
+            used_warnings[warn_msg] = 1
+        else:
+            used_warnings[warn_msg] += 1
+    # display unique messages
+    for it, warn_msg in enumerate(used_warnings):
+        num = used_warnings[warn_msg]
+        WLOG(params, '', '\t{0} N={1}: {2}'.format(it + 1, num, warn_msg))
+        WLOG(params, '', '')
+    # ----------------------------------------------------------------------
+    # PLOT
+    # ----------------------------------------------------------------------
     import matplotlib
     matplotlib.use('Qt5Agg')
     import matplotlib.pyplot as plt
+    plt.ioff()
 
     fig, frames = plt.subplots(nrows=1, ncols=2)
     tooltip1 = hover_bars(fig, frames[0], error_codes, error_counts,
-                          error_msgs, align='right')
+                          error_sample, align='right')
     tooltip2 = hover_bars(fig, frames[1], warn_codes, warn_counts,
-                          warn_msgs, align='left')
+                          warn_sample, align='left')
 
     # set labels
     frames[0].set(xlabel='Error Codes', ylabel='Number of Errors found',
@@ -428,7 +515,7 @@ def calculate_recipe_stats(params, mastertable, recipename):
                        hspace=0, wspace=0.1)
 
     plt.suptitle('Recipe = {0}'.format(recipename))
-    plt.show()
+    plt.show(block=True)
     plt.close()
 
     # ----------------------------------------------------------------------
@@ -490,8 +577,6 @@ class ToolTip():
         centx = 0.5 * (xmax + xmin)
         centy = 0.5 * (ymax + ymin)
 
-        print(x, y, centx, centy, centx-x, centy-y)
-
         self.textbox.xy = (x, y)
 
         # get text for this bar
@@ -531,7 +616,7 @@ def _print_stats(params, started, passed, ended, urecipe):
     WLOG(params, '', msg.format(*uargs))
 
 
-def _create_log_objs(logfile):
+def _create_log_objs(params, logfile):
     # open log file
     lfile = open(logfile, 'r')
     lines = lfile.readlines()
@@ -548,12 +633,24 @@ def _create_log_objs(logfile):
 
     for line in lines:
         # find if we have an error string
-        errorlines, ecode = _id_logmessage(line, errorlines, ecode, ERRORSTR,
-                                           ERRORPREFIX, ERRORSUFFIX, mdate)
+        try:
+            errorlines, ecode = _id_logmessage(line, errorlines, ecode,
+                                               ERRORSTR, ERRORPREFIX,
+                                               ERRORSUFFIX, mdate)
+        except Exception as e:
+            emsg = 'Skipping Line(E): {0}\n{1}:{2}'
+            eargs = [line, type(e), str(e)]
+            WLOG(params, 'warning', emsg.format(*eargs))
+            continue
         # find if we have a warning string
-        warnlines, wcode = _id_logmessage(line, warnlines, wcode, WARNINGSTR,
-                                          WARNPREFIX, WARNSUFFIX, mdate)
-
+        try:
+            warnlines, wcode = _id_logmessage(line, warnlines, wcode,
+                                              WARNINGSTR, WARNPREFIX,
+                                              WARNSUFFIX, mdate)
+        except Exception as e:
+            emsg = 'Skipping Line(W): {0}\n{1}:{2}'
+            eargs = [line, type(e), str(e)]
+            WLOG(params, 'warning', emsg.format(*eargs))
     # return errors and warnings
     return errorlines, warnlines
 
@@ -577,6 +674,20 @@ def _id_logmessage(line, storage, code, logstr, logprefix, logsuffix,
             storage[-1].addline(line)
     # return the storage and the code (changed or not)
     return storage, code
+
+
+def _find_log_file(params, logfile):
+    # log dir
+    logdir = params['DRS_DATA_MSG']
+    # get basename of logfile
+    basename = os.path.basename(logfile)
+    # walk through dirs
+    for root, dirs, files in os.walk(logdir):
+        for filename in files:
+            if basename == filename:
+                return True, os.path.join(root, filename)
+    # if we have gotten to here we haven't found file
+    return False, None
 
 
 # =============================================================================
