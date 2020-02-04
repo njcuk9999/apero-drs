@@ -13,24 +13,10 @@ Import rules: Cannot import from drs
 """
 # Do not import from the drs
 
-# =============================================================================
-# Define variables
-# =============================================================================
-# Define package name
-PACKAGE = 'apero'
 
 # =============================================================================
-# Define functions
+# Define manual databases
 # =============================================================================
-def get_entries(language='ENG'):
-    # if language requested is english use english dict function
-    if language == 'ENG':
-        return get_entries_eng()
-    # else revert to english dict function
-    else:
-        return get_entries_eng()
-
-
 # noinspection PyPep8
 def get_entries_eng():
     # set the entries dictionary
@@ -164,6 +150,29 @@ def get_entries_eng():
 
 
     return vs
+
+
+# =============================================================================
+# Define variables
+# =============================================================================
+# Define package name
+PACKAGE = 'apero'
+# cache dictionaries
+ENTRIES_ENG = get_entries_eng()
+
+
+# =============================================================================
+# Define functions
+# =============================================================================
+def get_entries(language='ENG'):
+    # if language requested is english use english dict function
+    if language == 'ENG':
+        return ENTRIES_ENG
+    # else revert to english dict function
+    else:
+        return ENTRIES_ENG
+
+
 
 # =============================================================================
 # Start of code
