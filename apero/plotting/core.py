@@ -875,6 +875,33 @@ class Plotter:
         # set warnings
         self.warnings = odict['LOGGER_WARNING']
 
+    def set_interactive(self):
+        """
+        Set matplotlib in an iteractive session (excluding MacOSX backend)
+
+        Order attempted: Qt5Agg, Qt4Agg, GTKAgg, TKAgg, WXAgg, Agg
+
+        :return: None
+        """
+        global PLT_MOD
+        global MPL_MOD
+        # fix for MacOSX plots freezing
+        gui_env = ['Qt5Agg', 'Qt4Agg', 'GTKAgg', 'TKAgg', 'WXAgg', 'Agg']
+        for gui in gui_env:
+            # noinspection PyBroadException
+            try:
+                matplotlib.use(gui, warn=False, force=True)
+                import matplotlib.pyplot as plt
+                from mpl_toolkits import axes_grid1
+                self.plt = plt
+                self.matplotlib = matplotlib
+                self.axes_grid1 = axes_grid1
+                PLT_MOD = plt
+                MPL_MOD = axes_grid1
+                break
+            except Exception as _:
+                continue
+
     # ------------------------------------------------------------------
     # internal methods
     # ------------------------------------------------------------------
@@ -940,7 +967,6 @@ class Plotter:
             elif kind == 'show':
                 self.has_debugs = True
 
-
     def _get_matplotlib(self, force=False):
         """
         Deal with the difference plotting modes and get the correct backend
@@ -973,22 +999,7 @@ class Plotter:
         # else we may have to plot graphs to the screen so we need to use
         #    a more fancy backend (but not MacOSX)
         else:
-            # fix for MacOSX plots freezing
-            gui_env = ['Qt5Agg', 'Qt4Agg', 'GTKAgg', 'TKAgg', 'WXAgg', 'Agg']
-            for gui in gui_env:
-                # noinspection PyBroadException
-                try:
-                    matplotlib.use(gui, warn=False, force=True)
-                    import matplotlib.pyplot as plt
-                    from mpl_toolkits import axes_grid1
-                    self.plt = plt
-                    self.matplotlib = matplotlib
-                    self.axes_grid1 = axes_grid1
-                    PLT_MOD = plt
-                    MPL_MOD = axes_grid1
-                    break
-                except Exception as _:
-                    continue
+            self.set_interactive()
         # ------------------------------------------------------------------
         # get backend
         self.backend = matplotlib.get_backend()
