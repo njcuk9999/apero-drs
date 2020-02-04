@@ -150,7 +150,8 @@ def get_berv(params, infile=None, header=None, props=None, log=True,
                                          iteration=0, **bprops)
             # --------------------------------------------------------------
             # calculate max berv (using pyasl as it is faster)
-            bervs_, bjds_ = use_pyasl(params, bprops['OBS_TIMES'], **bprops)
+            bervs_, bjds_ = use_pyasl(params, bprops['OBS_TIMES'],
+                                      quiet=True, **bprops)
             bervmax = mp.nanmax(np.abs(bervs_))
             # --------------------------------------------------------------
             # calculate berv derivative (add 1 second)
