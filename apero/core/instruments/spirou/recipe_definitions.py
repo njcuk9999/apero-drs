@@ -1111,6 +1111,8 @@ cal_update_berv.kind = 'misc'
 cal_update_berv.set_outputs()
 cal_update_berv.set_debug_plots()
 cal_update_berv.set_kwarg(**plot)
+cal_update_berv.set_kwarg(name='--skip', dtype='bool', default=True,
+                          helpstr='Skip files already with BERV measurement')
 
 # =============================================================================
 # Run order
