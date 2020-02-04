@@ -203,7 +203,7 @@ def __main__(recipe, params):
                                           allkeys=True)
                 extract.add_berv_keys(params, infile1, bprops)
                 # write data to file
-                infile1.write()
+                infile1.write_file()
 
     # ----------------------------------------------------------------------
     # End of main code
