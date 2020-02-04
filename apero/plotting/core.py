@@ -9,14 +9,9 @@ Created on 2019-01-19 at 13:45
 
 @author: cook
 """
-from __future__ import division
-import numpy as np
 from astropy.table import Table
-import sys
 import os
-import glob
 import matplotlib
-import shutil
 from collections import OrderedDict
 
 from apero import locale

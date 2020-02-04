@@ -1095,24 +1095,7 @@ obj_spec_spirou.set_kwarg(name='--cores', dtype=int, default=1,
 # -----------------------------------------------------------------------------
 
 
-# -----------------------------------------------------------------------------
-# cal_update_berv
-# -----------------------------------------------------------------------------
-cal_update_berv.name = 'cal_update_berv.py'
-cal_update_berv.shortname = 'UBERV'
-cal_update_berv.instrument = __INSTRUMENT__
-cal_update_berv.outputdir = 'reduced'
-cal_update_berv.inputdir = 'reduced'
-cal_update_berv.inputtype = 'reduced'
-cal_update_berv.extension = 'fits'
-cal_update_berv.description = Help['FTELLU_DESC']
-cal_update_berv.epilog = Help['FTELLU_EXAMPLE']
-cal_update_berv.kind = 'misc'
-cal_update_berv.set_outputs()
-cal_update_berv.set_debug_plots()
-cal_update_berv.set_kwarg(**plot)
-cal_update_berv.set_kwarg(name='--skip', dtype='bool', default=True,
-                          helpstr='Skip files already with BERV measurement')
+
 
 # =============================================================================
 # Run order

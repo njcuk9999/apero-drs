@@ -9,7 +9,6 @@ Created on 2019-07-24 at 12:49
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 from astropy.coordinates import SkyCoord
 from astropy import units as uu
@@ -17,7 +16,6 @@ from astropy.table import vstack, Table
 from astropy.time import Time
 import time
 import os
-import sys
 import warnings
 
 from apero import core

@@ -34,7 +34,6 @@ plot = dict(name='--plot', dtype=int, helpstr=Help['PLOT_HELP'],
 drs_recipe = drs_recipe.DrsRecipe
 
 # Below one must define all recipes and put into the "recipes" list
-test = drs_recipe(__INSTRUMENT__)
 changelog = drs_recipe(__INSTRUMENT__)
 explorer = drs_recipe(__INSTRUMENT__)
 listing = drs_recipe(__INSTRUMENT__)
@@ -47,7 +46,7 @@ reset = drs_recipe(__INSTRUMENT__)
 validate = drs_recipe(__INSTRUMENT__)
 
 # push into a list
-recipes = [test, changelog, explorer, processing, listing, logstats,
+recipes = [changelog, explorer, processing, listing, logstats,
            remake_db, remake_doc, req_check, reset, validate]
 
 # =============================================================================
@@ -86,25 +85,6 @@ recipes = [test, changelog, explorer, processing, listing, logstats,
 raw_recipe = drs_recipe(__INSTRUMENT__)
 pp_recipe = drs_recipe(__INSTRUMENT__)
 out_recipe = drs_recipe(__INSTRUMENT__)
-
-# -----------------------------------------------------------------------------
-# test.py
-# -----------------------------------------------------------------------------
-test.name = 'test_recipe.py'
-test.instrument = __INSTRUMENT__
-test.outputdir = 'tmp'
-test.inputdir = 'tmp'
-test.inputtype = 'pp'
-test.extension = 'fits'
-test.description = Help['TEST_DESCRIPTION']
-test.epilog = Help['TEST_EXAMPLE']
-test.kind = 'test'
-test.set_arg(pos=0, **directory)
-test.set_kwarg(name='--filelist1', dtype='files', default=[], nargs='+',
-               files=[sf.pp_file], filelogic='inclusive',
-               helpstr='test 1', required=True)
-test.set_kwarg(name='--filelist2', dtype='files', default=[], nargs='+',
-               files=[sf.pp_file], helpstr='test 2', required=True)
 
 # -----------------------------------------------------------------------------
 # apero_changelog.py

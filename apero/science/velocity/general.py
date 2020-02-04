@@ -9,7 +9,6 @@ Created on 2019-08-21 at 12:28
 
 @author: cook
 """
-from __future__ import division
 from astropy.table import Table
 from astropy import constants as cc
 from astropy import units as uu

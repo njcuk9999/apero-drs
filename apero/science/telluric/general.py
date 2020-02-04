@@ -9,7 +9,6 @@ Created on 2019-08-12 at 17:16
 
 @author: cook
 """
-from __future__ import division
 from astropy.table import Table
 import numpy as np
 from astropy.time import Time

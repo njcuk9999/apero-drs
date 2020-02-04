@@ -9,7 +9,6 @@ Created on 2019-12-13 at 15:30
 
 @author: cook
 """
-from __future__ import division
 from astropy.table import Table
 from astropy.time import Time, TimeDelta
 from astropy import units as uu

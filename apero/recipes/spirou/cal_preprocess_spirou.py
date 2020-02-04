@@ -8,14 +8,12 @@ Created on 2019-03-05 16:38
 @author: ncook
 Version 0.0.1
 """
-from __future__ import division
 import numpy as np
 import os
 
 from apero import core
 from apero import locale
 from apero.core import constants
-from apero.core import math as mp
 from apero.science import preprocessing
 from apero.io import drs_image
 from apero.io import drs_fits
