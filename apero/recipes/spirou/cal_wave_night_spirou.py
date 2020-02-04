@@ -273,6 +273,8 @@ def __main__(recipe, params):
                 fp_update.write_file()
                 # add to output files (for indexing)
                 recipe.add_output_file(fp_update)
+                # TODO: update s1d here
+
 
     # ----------------------------------------------------------------------
     # End of main code
