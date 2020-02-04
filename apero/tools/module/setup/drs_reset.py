@@ -9,10 +9,8 @@ Created on 2019-05-07 at 15:22
 
 @author: cook
 """
-from __future__ import division
 import os
 import shutil
-import glob
 import sys
 
 from apero import core

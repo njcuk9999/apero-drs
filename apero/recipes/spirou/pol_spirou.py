@@ -5,9 +5,6 @@ Created on 2019-09-05 at 14:58
 
 @author: cook
 """
-from __future__ import division
-import numpy as np
-
 from apero import core
 from apero import locale
 from apero.core import constants

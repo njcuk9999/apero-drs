@@ -13,7 +13,6 @@ Import rules: Only from spirouConfig and spirouCore
 
 Version 0.0.1
 """
-from __future__ import division
 import numpy as np
 import os
 import sys

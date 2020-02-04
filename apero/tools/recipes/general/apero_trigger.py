@@ -8,8 +8,6 @@ Created on 2019-11-02 10:10
 @author: ncook
 Version 0.0.1
 """
-from __future__ import division
-
 from apero import core
 from apero import locale
 from apero.core import constants

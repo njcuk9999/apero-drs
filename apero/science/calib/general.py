@@ -7,7 +7,6 @@ Created on 2019-06-27 at 10:48
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 import os
 import warnings

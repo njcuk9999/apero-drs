@@ -9,7 +9,6 @@ Created on 2019-06-27 at 10:13
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 import os
 from scipy.ndimage import filters

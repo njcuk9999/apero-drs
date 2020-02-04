@@ -9,7 +9,6 @@ Created on 2019-08-16 at 09:23
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 
 from apero import core

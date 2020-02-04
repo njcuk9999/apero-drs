@@ -9,7 +9,6 @@ Created on 2019-05-13 at 12:40
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 import os
 import warnings
@@ -24,7 +23,6 @@ from apero.core import math as mp
 from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.core.core import drs_database
-from apero.core.instruments.default import file_definitions
 from apero.io import drs_fits
 
 
