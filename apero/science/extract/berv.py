@@ -148,11 +148,12 @@ def get_berv(params, infile=None, header=None, props=None, log=True,
         try:
             # --------------------------------------------------------------
             # calculate berv/bjd
-            bervs, bjds = use_barycorrpy(params, bprops['OBS_TIMES'],
+            bervs, bjds = use_barycorrpy(params, bprops['OBS_TIME'],
                                          iteration=0, **bprops)
             # --------------------------------------------------------------
-            # calculate max berv
-            bervmax = mp.nanmax(np.abs(bervs))
+            # calculate max berv (using pyasl as it is faster)
+            bervs_, bjds_ = use_pyasl(params, bprops['OBS_TIMES'], **bprops)
+            bervmax = mp.nanmax(np.abs(bervs_))
             # --------------------------------------------------------------
             # calculate berv derivative (add 1 second)
             deltat = (1*uu.s).to(uu.day).value
