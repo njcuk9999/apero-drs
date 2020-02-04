@@ -84,7 +84,7 @@ class Logger:
             self.language = paramdict['LANGUAGE']
         else:
             self.pin = constants.load()
-            self.language = ['ENG']
+            self.language = 'ENG'
             self.instrument = None
         # load additional resources based on instrument/language
         self.pconstant = constants.pload(self.instrument)
