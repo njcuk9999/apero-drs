@@ -19,7 +19,7 @@ from apero.tools.module.testing import drs_dev
 # Define variables
 # =============================================================================
 __NAME__ = 'blank.py'
-__INSTRUMENT__ = 'SPIROU'
+__INSTRUMENT__ = 'NIRPS'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author
