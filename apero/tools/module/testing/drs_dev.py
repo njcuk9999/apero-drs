@@ -9,8 +9,13 @@ Created on 2020-02-04 at 13:37
 
 @author: cook
 """
+import sys
 
+from apero import core
 from apero.core import constants
+from apero.locale import drs_text
+from apero.core.constants import constant_functions as cf
+from apero.core.constants import param_functions as pf
 from apero.core.core import drs_recipe
 
 
@@ -29,6 +34,15 @@ __version__ = Constants['DRS_VERSION']
 __author__ = Constants['AUTHORS']
 __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
+# get param dict
+ParamDict = constants.ParamDict
+# Get Logging function
+WLOG = core.wlog
+# Get the text types
+TextEntry = drs_text.TextEntry
+TextDict = drs_text.TextDict
+HelpEntry = drs_text.HelpEntry
+HelpText = drs_text.HelpDict
 # get DrsRecipe
 DrsRecipe = drs_recipe.DrsRecipe
 # recipe control path
@@ -80,6 +94,51 @@ class RecipeDefinition():
         for arg in args:
             if isinstance(arg, TmpRecipe):
                 self.recipes.append(arg)
+
+
+class Demo:
+    """
+    Holder of demonstration functions (to keep demo clean)
+    """
+    def __init__(self, params=None):
+        # get parameters
+        if params is None:
+            self.params = Constants
+        else:
+            self.params = params
+        # get package
+        self.package = params['DRS_PACKAGE']
+
+    def setup(self):
+        # deal with arguments
+        if isinstance(sys.argv, list):
+            args = list(sys.argv)
+        else:
+            args = sys.argv.split()
+        # if we don't have the required arguments add them
+        if len(args) < 2:
+            sys.argv = ['demo', '1']
+        return args
+
+    def get_lang_db_loc(self):
+        # get language database relative path
+        relpath = drs_text.DEFAULT_PATH
+        # return absolute language database path
+        return pf.get_relative_folder(self.package, relpath)
+
+    def change_lang(self, params, language):
+        # get instrument
+        instrument = self.params['INSTRUMENT']
+        # update the language
+        self.params.set('LANGUAGE', language)
+        params.set('LANGUAGE', language)
+
+    def test_data(self, params):
+        # TODO: get test data from data/spirou/demo
+        pass
+
+
+
 
 
 
