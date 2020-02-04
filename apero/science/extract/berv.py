@@ -9,13 +9,11 @@ Created on 2019-07-23 at 09:29
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 import os
-import sys
 import warnings
 from astropy import units as uu
-from astropy.time import Time, TimeDelta
+from astropy.time import Time
 from astropy.coordinates import SkyCoord
 
 from apero import core
@@ -284,12 +282,13 @@ def use_barycorrpy(params, times, iteration=0, **kwargs):
         raise e
 
 
-def use_pyasl(params, times, **kwargs):
+def use_pyasl(params, times, quiet=False, **kwargs):
     func_name = __NAME__ + '.use_pyasl()'
     # get estimate accuracy
     estimate = pcheck(params, 'EXT_BERV_EST_ACC', 'berv_est', kwargs, func_name)
     # print warning that we are using estimate
-    WLOG(params, 'warning', TextEntry('10-016-00005', args=[estimate]))
+    if not quiet:
+        WLOG(params, 'warning', TextEntry('10-016-00005', args=[estimate]))
     # convert kwargs to paramdict (just to be able to use capitals/non-capitals)
     kwargs = ParamDict(kwargs)
     # get args
