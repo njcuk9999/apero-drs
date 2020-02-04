@@ -142,7 +142,7 @@ def __main__(recipe, params):
             ointypes = infiletypes[odocode]
             # -------------------------------------------
             # skip if already using barycorppy
-            skip = True
+            skip = params['INPUTS']['SKIP']
             infiles = []
             # loop around ofiles
             for jt, filename in enumerate(ofiles):
