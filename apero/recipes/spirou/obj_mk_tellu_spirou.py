@@ -224,7 +224,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Calculate telluric absorption
         # ------------------------------------------------------------------
-        cargs = [recipe, image, template, template_file, header, wprops,
+        cargs = [recipe, image, template, template_file, header, mprops, wprops,
                  tapas_props, bprops]
         tellu_props = telluric.calculate_telluric_absorption(params, *cargs)
         # ------------------------------------------------------------------
@@ -238,7 +238,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Save transmission map to file
         # ------------------------------------------------------------------
-        targs = [infile, rawfiles, fiber, combine, tapas_props, wprops,
+        targs = [infile, rawfiles, fiber, combine, tapas_props, mprops,
                  nprops, tellu_props, qc_params]
         transfile = telluric.mk_tellu_write_trans_file(params, recipe, *targs)
         # ------------------------------------------------------------------
