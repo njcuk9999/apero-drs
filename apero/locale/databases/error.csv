@@ -531,6 +531,8 @@
 "09-017-00004","ERROR","Means that 'WAVE_FP_LLFIT_MODE' was incorrect","{0} =wave fp llfit mode; {1} = function name","WAVE_FP_LLFIT_MODE was incorrect. Must be 0 or 1. \n\t Current value = '{0}' \n\t Function = {1}","",""
 "09-017-00005","ERROR","Means that wave solution is not valid for this line","{0} = order number; {1} = line number; {2} = pixel value; {3} = pixel center value; {4} = width; {5} = function name","Calculated pixel index out of bound. Order = {0} Line = {1} \n\t pixel vals = {2} \n\t pixel cent = {3} width = {4} \n\t Function = {5}","",""
 "09-017-00006","ERROR","Means that there were not enough values xpixi +/i wfit to fit wave sol to lines","{0} = order number; {1} = line number; {2} = pixel value; {3} = y values; {4} = function name","Pixel fit not possible - not enough points to fit. Order = {0} Line = {1} \n\t pixel vals = {2} \n\t flux values = {3} \n\t Function = {4}","",""
+"09-017-00007","ERROR","Means that there were no master wave solutions in calibration database","{0} = wave keys looked for; {1} = function name","No master wave solutions found in calibration database. \n\t Keys checked: {0} \n\t Function = {1}","",""
+"09-017-00008","ERROR","","","","",""
 "","","","","","",""
 "09-018-00000","ERROR","User drift error","None","","",""
 "","","","","","",""
