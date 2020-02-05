@@ -202,12 +202,12 @@ def __main__(recipe, params):
     # Write cubes and median to file
     # ----------------------------------------------------------------------
     # write e2ds cubes + median
-    margs = [infile, cprops, filetype, fiber, qc_params]
+    margs = [infile, cprops, filetype, fiber, mprops, qc_params]
     template_file = telluric.mk_template_write(params, recipe, *margs)
     props1d = None
     # write s1d cubes + median
     for it, s1d_props in enumerate(s1d_cubes):
-        sargs = [infile, s1d_props, infile.s1d[it], fiber, qc_params]
+        sargs = [infile, s1d_props, infile.s1d[it], fiber, mprops, qc_params]
         props1d = telluric.mk_1d_template_write(params, recipe, *sargs)
 
     # ----------------------------------------------------------------------
