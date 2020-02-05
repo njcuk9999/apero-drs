@@ -2543,7 +2543,7 @@ def mk_template_qc(params):
 
 
 def mk_template_write(params, recipe, infile, cprops, filetype,
-                      fiber, qc_params):
+                      fiber, wprops, qc_params):
 
     # get objname
     objname = infile.get_key('KW_OBJNAME', dtype=str)
@@ -2569,7 +2569,9 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     template_file.construct_filename(params, infile=infile, suffix=suffix)
     # ------------------------------------------------------------------
     # copy keys from input file
-    template_file.copy_original_keys(infile)
+    template_file.copy_original_keys(infile, exclude_groups='wave')
+    # add wave keys
+    template_file = wave.add_wave_keys(params, template_file, wprops)
     # add version
     template_file.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
     # add dates
@@ -2638,7 +2640,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
 
 
 def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
-                         qc_params):
+                         wprops, qc_params):
     # get objname
     objname = infile.get_key('KW_OBJNAME', dtype=str)
     # construct suffix
@@ -2671,7 +2673,9 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     # construct the filename from file instance
     template_file.construct_filename(params, infile=infile, suffix=suffix)
     # copy keys from input file
-    template_file.copy_original_keys(infile)
+    template_file.copy_original_keys(infile, exclude_groups='wave')
+    # add wave keys
+    template_file = wave.add_wave_keys(params, template_file, wprops)
     # add version
     template_file.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
     # add dates
