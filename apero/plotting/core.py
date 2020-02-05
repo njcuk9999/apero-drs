@@ -10,6 +10,7 @@ Created on 2019-01-19 at 13:45
 @author: cook
 """
 from astropy.table import Table
+import numpy as np
 import os
 import matplotlib
 from collections import OrderedDict
@@ -1118,7 +1119,6 @@ if __name__ == "__main__":
     _params.set('PLOT_TEST2', value=True)
     _params.set('PLOT_TEST3', value=True)
     plotter = Plotter(_params, _recipe)
-    import numpy as np
     x = np.arange(-10, 10)
     y = x ** 2
     plotter('TEST1', x=x, y=y, colour='red')
