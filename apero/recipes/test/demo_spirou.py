@@ -9,6 +9,9 @@ Created on 2019-07-05 at 16:46
 
 @author: cook
 """
+import numpy as np
+import sys
+
 from apero import core
 from apero import locale
 from apero.core import constants
@@ -188,22 +191,68 @@ def __main__(recipe, params):
         print('\n\n\n')
 
     # ----------------------------------------------------------------------
-    # Demo 5: The parameter dictionary
+    # Demo 4: The parameter dictionary
     # ----------------------------------------------------------------------
     # The parameter dictionary is a more powerful dictionary:
     #   - it is case insensitive
     #   - it stores where parameter was defined (if set) and recalls history
     #   - can display additional information
     #   - many extra functions to aid use
+    if mode == 4:
+        # set up a new one
+        newparams = ParamDict()
 
-    # set up a new one
-    newparams = ParamDict()
+        # add parameters
+        newparams['CONST0'] = 'demo'
+        newparams['CONST1'] = 0
+        # set the source
+        newparams.set_source('CONST0', 'demo_spirou.py.first()')
+        newparams.set_source('CONST1', 'demo_spirou.py.first()')
 
-    # add parameters
-    newparams['MY_PARAM'] = 'My variable'
-    # set the source
-    newparams.set_source('MY_PARAM', 'demo_spirou.py')
+        # add some more parameters
+        newparams['CONST1'] = 1
+        newparams['CONST2'] = True
+        newparams['VAR1'] = np.arange(100)
+        newparams['VAR2'] = float
+        newparams['VAR3'] = dict(x=1, y=2, z=3)
+        newparams['LIST1'] = '1, 2, 3, 4'
+        newparams['DICT1'] = '{"x":"1", "y":"2", "z":"3"}'
+        # add the same source
+        keys = ['CONST1', 'CONST2', 'VAR1', 'VAR2', 'VAR3', 'LIST1', 'DICT1']
+        newparams.set_sources(keys, 'demo_spirou.py.more()')
 
+        # printing gives a summary of variables
+        WLOG(params, '', 'ParamDict: print newparams:')
+        print(newparams)
+
+        # ------------------------------------------------------------------
+        # there are also some very helpful functionality
+        # ------------------------------------------------------------------
+        # the info method
+        WLOG(params, '', 'ParamDict: info of newparams[\'CONST1\']')
+        newparams.info('CONST1')
+
+        # the history method
+        WLOG(params, '', 'ParamDict: history of newparams[\'CONST1\']')
+        newparams.history('CONST1')
+        # which is very useful in params where we read constants from multiple
+        #   different places
+        WLOG(params, '', 'params DRS_DATA_RAW history:')
+        params.history('DRS_DATA_RAW')
+
+        # the contains function
+        WLOG(params, '', 'ParamDict: newparams contains "VAR"')
+        print('VAR keys = ', newparams.contains('VAR'))
+        # which is very useful for params
+        print('params DRS_DATA keys = ', params.contains('DRS_DATA'))
+
+        # the string list method - get a list from a string
+        WLOG(params, '', 'ParamDict: listp method')
+        print('list1 = ', newparams.listp('LIST1', dtype=int))
+
+        # the string dict method - get a dictionary from a string
+        WLOG(params, '', 'ParamDict: dictp method')
+        print('dict1 = ', newparams.dictp('DICT1', dtype=float))
 
 
     # ----------------------------------------------------------------------
@@ -243,6 +292,8 @@ if __name__ == "__main__":
         ll = main()
     # else just print some stuff
     else:
+        # need to set up sys.argv if we want to use this
+        sys.argv = ['demo', '1']
         # note to access recipe and params from __main__ do the following
         recipe, params = main(DEBUG0000=True)
         # simple print statement
