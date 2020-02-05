@@ -46,9 +46,9 @@ PDF_FILE = 'apero-docs.pdf'
 RSYNC_CMD = 'rsync -avz -e "{SSH}" {INPATH} {USER}@{HOST}:{OUTPATH}'
 # -----------------------------------------------------------------------------
 SSH_OPTIONS = 'ssh -oport=5822'
-SSH_USER = 'cpapir'
-SSH_HOST = 'genesis.astro.umontreal.ca'
-SSH_PATH = '/home/cpapir/www/apero-drs/'
+SSH_USER = 'cook'
+SSH_HOST = 'venus.astro.umontreal.ca'
+SSH_PATH = '/home/cook/www/apero-drs/'
 
 
 # =============================================================================
