@@ -38,7 +38,7 @@
     contain the most up-to-date features until long term support and stability can
     be verified.
     ```
-- developer (tested) V0.6.033
+- developer (tested) V0.6.036 (2020-02-05)
     ```
     Note the developer version should have been tested and semi-stable but not
     ready for full sets of processing and defintely not for release for 
@@ -47,7 +47,7 @@
     - do not use cal_wave_master_spirou.py, cal_wave_night_spirou.py, 
       obj_pol_spirou.py, obj_spec_spirou.py
     ```
-- working (untested) V0.6.033
+- working (untested) V0.6.036 (2020-02-05)
     ```
     Note the working version will be the most up-to-date version but has not been
     tested for stability - use at own risk.

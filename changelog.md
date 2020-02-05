@@ -2,6 +2,82 @@ Changelog
 =========
 
 
+0.6.036 (2020-02-05)
+--------------------
+- Plotting.latex.py - must clean characters [ and ] - leads to error in
+  pdflatex. [Neil Cook]
+- Science.calib.wave.py + science.calib.wave1.py - update master wave to
+  look for all master wave types and generate new error if none found.
+  [Neil Cook]
+- Recipe.spirou.obj_mk_tellu_spirou.py + obj_fit_tellu_spirou.py -
+  update headers to use correct wave solutions for outputs. [Neil Cook]
+- Plotting.core.py - add numpy import. [Neil Cook]
+- Update language database. [Neil Cook]
+- Recipe.spirou.obj_mk_template_spirou.py and
+  science.telluric.general.py - update wave solution of template. [Neil
+  Cook]
+- Recipes.test.demo_spirou.py - add param dict section. [Neil Cook]
+- Spirou.recipe_definitions.py - add old_run (with no master/night wave)
+  [Neil Cook]
+
+
+0.6.035 (2020-02-04)
+--------------------
+- Update the language database. [Neil Cook]
+- Tools.module.testing.drs_dev.py - add a demo class to store demo
+  functions (keep out of demo as they would just confuse the point)
+  [Neil Cook]
+- Recipes.test.demo_spirou.py - add a recipe that demonstrates the
+  different features of APERO. [Neil Cook]
+- Locale.core.drs_text.py - add a language level in cache data so we are
+  name.instrument.language cache. [Neil Cook]
+- Locale.core.drs_lang_db.py - move dictionary to static call (once per
+  import) -- loads quicker. [Neil Cook]
+- Data.spirou.demo - add demo data. [Neil Cook]
+- Core.core.drs_log.py - correct the language must be a string not a
+  list. [Neil Cook]
+- Testing.drs_dev.py - add module to allow recipe definition to come
+  from recipe (used to add rmod to `core.setup`) [Neil Cook]
+- Science.extract.berv.py - use_pyasl in quiet mode in barycorrpy (just
+  for calculating bervmax) [Neil Cook]
+- Science.extract.berv.py - allow berv to be calculated quietly. [Neil
+  Cook]
+- Core.core.drs_startup.py - allow recipe definition to come from input
+  (i.e. define in recipe - for initial testing) [Neil Cook]
+- Add new blank codes with recipe definition inline. [Neil Cook]
+- Remove `from __future__ import division` imports (no longer supporting
+  python 2) [Neil Cook]
+- Misc.tools.cal_update_berv.py - add switch for skipping. [Neil Cook]
+- Apero.science.extract.berv.py - use pyasl to measure berv maximum.
+  [Neil Cook]
+- Misc.tools.cal_update_berv.py - update .write-->.write_file. [Neil
+  Cook]
+- Recipes.spirou.cal_wave_master_spirou + cal_wave_night_spirou - add
+  TODOs to update s1d files AFTER new wave solution generated. [Neil
+  Cook]
+- Apero.plotting.plot_functions.py - deal with all NaNs in flux[mask] -
+  only set ylim if values are finite. [Neil Cook]
+- Apero.plotting.core.py - add a set_interactive method to try to change
+  backend. [Neil Cook]
+
+
+0.6.034 (2020-02-03)
+--------------------
+- Documentation.working.dev.developer_guide.rst - add more sections to
+  dev section [UNFILLED] [Neil Cook]
+- Update language databases. [Neil Cook]
+- Core.core.drs_file.py - change get_keyword_instance --> get_instanceof
+  (more generic) [Neil Cook]
+- Core.constants.param_functions.py - write all doc strings [UNFINISHED]
+  up to end of ParamDict. [Neil Cook]
+- Core.constants.constant_functions.py - fill out all doc-strings. [Neil
+  Cook]
+- Core.cosntants.__init__.py - add comment to catch_sigint. [Neil Cook]
+- README.md - add changes to sequences (now doing cal_wave_master) [Neil
+  Cook]
+- Update date/version/changelog/documentation. [Neil Cook]
+
+
 0.6.033 (2020-01-31)
 --------------------
 - Add flow diagram for locking wait times. [Neil Cook]
