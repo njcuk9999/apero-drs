@@ -1,99 +1,62 @@
-# Update Note Summary - Version 0.5.000 (Since 0.4.102)
+# Update Note Summary - Version 0.3.037
 
-Summary of changes from V0.4.102 to 0.5.000 (beta)
-Note for the full change log see changelog.md
 
-## Not yet in DRS:
+## TODO
 
-- cal_WAVE_E2DS_NEW - not yet in main bin directory and not tested for NaN
-  compatibility [Melissa/Neil]
-- cal_CCF_E2DS_[all] - not added correction for weighting by telluric "recon"
-  spectra [Francois]
-- cal_SHAPE/cal_WAVE - not addressed problems with using shape per night vs
-  one per run
-- plotting - not addressed multiple issues - if you have problems just set
-  DRS_PLOT = 0
+### In progress
 
-## Changes
 
-- cal_BADPIX_spirou.py
-    - background map now created from flat flat
-    - correction functionality to allow NaN propagation
+- add all functions doc strings
+- add in `dark_fp` correction
+- fix headers for having bad wave and loc keys (remove?)
+- fix s1d for `FP_FP` and `HC_HC` they need updating after wave sol produced
+- finish `obj_spec_spirou` and `obj_pol_spirou` [Do not use them now]
+- output files like CFHT (e.fits, p.fits, v.fits etc)
+- go through all summary plots and decide which plots, write figure captions,
+  improve plots, write quality control description, decide which header keys to print
+- display func for all functions
+- add doc strings to all functions, descriptions to all constants, review all
+  constant min/max/dtypes
+- add more debug printouts
+- deal with all python warnings
+- write documentation
 
-- cal_loc
-    - correction functionality to allow NaN propagation
-    - improved background subtraction using background map and a 2D convolution
-      and deal with local and global background
 
-- cal_SLIT
-    - correction functionality to allow NaN propagation
-    - improved background subtraction using background map and a 2D convolution
-      and deal with local and global background
+###  As soon as possible
 
-- cal_SHAPE
-    - correction functionality to allow NaN propagation
+- add `plot== 3` (all debug plots shown) and `plot==4` (all debug plots saved) modes
+- move `object_query_list.fits` to `calibDB`
+- write  paper
+- setup instrument tool
+- add exposure meter recipes (`cal_exposuremeter_spirou.py`)
+- Windows compatibility
+- output in form required for CFHT/CADC (discussion required)
+- co-production of e2ds and e2dsff
+- uncertainty propagation
+- proper SNR calculation
+- add `cal_drift` recipe?
+- NIRPS integration
+- uncertainty propagation
+- data separate download from DRS
+- add EA mask generation from templates
+- add EA template matching
 
-- cal_FF_RAW_spirou
-    - fix bug with flat/blaze not being shape corrected (debananfication)
-    - debananafication of order profile / science done before fiber loop
-    - debananafication modified to correct hot pixels for science data
-    - debananafication modified to straighten image using loc (dy shift)
-    - extracion methods changed to not extract by loc but extract over
-      straighten image
-    - correction functionality to allow NaN propagation
-    - bad blaze (below threshold) now returns NaNs
-    - improved background subtraction using background map and a 2D convolution
-      and deal with local and global background
-    - s1d now saved as s1d_v and s1d_w
-      (v = constant velocity bins, w = constant wavelength bins)
 
-- cal_extract_RAW_spirou
-    - debananafication of order profile / science done before fiber loop
-    - debananafication modified to correct hot pixels for science data
-    - debananafication modified to straighten image using loc (dy shift)
-    - extracion methods changed to not extract by loc but extract over
-      straighten image
-    - correction functionality to allow NaN propagation
-    - improved background subtraction using background map and a 2D convolution
-      and deal with local and global background
-    - s1d now saved as s1d_v and s1d_w
-      (v = constant velocity bins, w = constant wavelength bins)
+## Known Issues
 
-- cal_WAVE_[all]
-    - updated FP CCF keys to make more sense
-    - correction functionality to allow NaN propagation
+### Recipes
 
-- obj_mk_tellu
-    - correction functionality to allow NaN propagation
+- s1d for FP_FP and HCONE_HCONE files does not have the updated wave solution
+  as files are extracted before wave solution produced
+- wave solution and loc solutions are never updated in headers once a new
+  solution is present - should they be? should they be removed from headers?
+- FP of fiber C is contaminating fiber A and B - Etienne has a solution, but
+  far from being implemented yet
+- CCF still showing problems --> due to not weighting the orders, but cannot
+  do this per file as must have the same weights
+- BERV file gets locked - WHY?
 
-- obj_fit_tellu
-    - s1d added to telluric corrected spectra
-    - s1d now saved as s1d_v and s1d_w
-      (v = constant velocity bins, w = constant wavelength bins)
-    - correction functionality to allow NaN propagation
 
-- obj_fit_tellu_db
-    - new receipe to automate reprocessing of tellurics for database (similar
-      to obj_mk_tellu_db)
-    - does fit_tellu on all observations of inputted targets
-    - does mk_template on all inputted targets
-    - does fit_tellu on all observations of inputted target
-      (using updated template)
+### External
 
-- Cal_CCF_E2DS_[all]
-    - update keys from cal_WAVE plus CCF keys to make more sense
-    - correction functionality to allow NaN propagation
-
-- cal_CCF_E2DS_FP_MH_spirou
-    - temporary addition for testing please ignore
-
-- other
-    - update to change log code (only dependency is gitchangelog installable
-      via pip
-    - note numpy has to be forced to use one core if running in parallel do
-      this by adding the following to the environment:
-            - export OPENBLAS_NUM_THREADS=3
-            - export MKL_NUM_THREADS=3
-    - fixes for calibDB/telluDB reading/writing in parallel
-    - added drs_local_background to spirouTools to determine one of the local
-      background constants
+- can't use barycorrpy --> update astropy (version 4.0) and barycorrpy (version 0.3))
