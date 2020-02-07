@@ -7,10 +7,7 @@ Created on 2019-03-21 at 14:28
 
 @author: cook
 """
-
-from __future__ import division
 import numpy as np
-from scipy import signal
 import warnings
 
 from apero import core

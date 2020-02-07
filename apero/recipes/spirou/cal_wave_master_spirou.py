@@ -9,7 +9,6 @@ Created on 2019-08-16 at 09:23
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 
 from apero import core
@@ -340,6 +339,7 @@ def __main__(recipe, params):
                     fp_update.write_file()
                     # add to output files (for indexing)
                     recipe.add_output_file(fp_update)
+                    # TODO: update s1d here
 
                 # ----------------------------------------------------------
                 # Construct master line reference files

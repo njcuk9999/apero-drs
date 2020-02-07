@@ -12,7 +12,6 @@ import rules:
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 import os
 import sys

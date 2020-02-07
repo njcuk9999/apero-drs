@@ -9,7 +9,6 @@ Created on 2019-10-25 at 13:25
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 import warnings
 

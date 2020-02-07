@@ -9,7 +9,6 @@ Created on 2019-09-16 at 13:48
 
 @author: cook
 """
-from __future__ import division
 import os
 
 from apero import core

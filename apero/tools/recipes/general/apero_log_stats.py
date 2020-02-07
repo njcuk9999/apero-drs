@@ -9,9 +9,6 @@ Created on 2019-07-26 at 09:39
 
 @author: cook
 """
-from __future__ import division
-import os
-
 from apero import core
 from apero import locale
 from apero.core import constants
