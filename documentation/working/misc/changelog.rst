@@ -4,6 +4,9 @@ Changelog
 
 0.6.037 (2020-02-07)
 --------------------
+- Update python versions, yed graphs and update notes. [Neil Cook]
+- Update `readme/known_issues/todo`. [Neil Cook]
+- Update date/version/changelog/documentation. [Neil Cook]
 - `Core.core.drs_recipe.py` - add a pre-filter of table (so we are not
   scanning all files every time) [Neil Cook]
 - `Core.instruments.spirou.recipe_definitions.py` - filelogic must be
