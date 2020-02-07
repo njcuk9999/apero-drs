@@ -9,7 +9,6 @@ Created on 2019-07-10 at 09:30
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 from scipy.optimize import curve_fit
 import warnings

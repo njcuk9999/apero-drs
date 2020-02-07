@@ -1677,8 +1677,11 @@ def plot_extract_s1d(plotter, graph, kwargs):
                 z=wave[mask], norm=norm, cmap='jet')
         frame.set_xlim(lowerbound, upperbound)
         # set the y limits to 5 and 95 percentiles (to avoid outliers)
-        frame.set_ylim(np.nanpercentile(flux[mask], 2),
-                       np.nanpercentile(flux[mask], 98))
+        with warnings.catch_warnings(record=True) as _:
+            ylow, yhigh = np.nanpercentile(flux[mask], [2, 98])
+        # only set ylimit if whole region is not NaN
+        if np.isfinite(ylow) and np.isfinite(yhigh):
+            frame.set_ylim(ylow, yhigh)
         # set the ylabel
         frame.set_ylabel('Flux')
         # if last row then plot x label

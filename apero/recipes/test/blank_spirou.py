@@ -1,19 +1,19 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+# CODE NAME HERE
 
 # CODE DESCRIPTION HERE
 
-Created on 2019-03-05 16:38
-@author: ncook
-Version 0.0.1
-"""
-from __future__ import division
-import traceback
+Created on 2019-07-05 at 16:46
 
-from apero.core import constants
+@author: cook
+"""
 from apero import core
 from apero import locale
+from apero.core import constants
+from apero.tools.module.testing import drs_dev
+
 
 # =============================================================================
 # Define variables
@@ -27,10 +27,32 @@ __version__ = Constants['DRS_VERSION']
 __author__ = Constants['AUTHORS']
 __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
+# get param dict
+ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-Entry = locale.drs_text.Entry
+TextEntry = locale.drs_text.TextEntry
+TextDict = locale.drs_text.TextDict
+# -----------------------------------------------------------------------------
+# TODO: move recipe definition to instrument set up when testing is finished
+# set up recipe definitions (overwrites default one)
+RMOD = drs_dev.RecipeDefinition(instrument=__INSTRUMENT__)
+# define a recipe for this tool
+blank = drs_dev.TmpRecipe()
+blank.name = __NAME__
+blank.shortname = 'DEVTEST'
+blank.instrument = __INSTRUMENT__
+blank.outputdir = 'reduced'
+blank.inputdir = 'reduced'
+blank.inputtype = 'reduced'
+blank.extension = 'fits'
+blank.description = 'Test for developer mode'
+blank.kind = 'misc'
+blank.set_kwarg(name='--text', dtype=str, default='None',
+                helpstr='Enter text here to print it')
+# add recipe to recipe definition
+RMOD.add(blank)
 
 
 # =============================================================================
@@ -42,16 +64,13 @@ Entry = locale.drs_text.Entry
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(directory=None, files=None, **kwargs):
+def main(**kwargs):
     """
-    Main function for {RECIPE NAME HERE}.py
+    Main function for cal_update_berv.py
 
-    :param directory: string, the night name sub-directory
-    :param files: list of strings or string, the list of files to process
-    :param kwargs: any additional keywords
+    :param kwargs: additional keyword arguments
 
-    :type directory: str
-    :type files: list[str]
+    :type instrument: str
 
     :keyword debug: int, debug level (0 for None)
 
@@ -59,10 +78,12 @@ def main(directory=None, files=None, **kwargs):
     :rtype: dict
     """
     # assign function calls (must add positional)
-    fkwargs = dict(directory=directory, files=files, **kwargs)
+    fkwargs = dict(**kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs)
+    # TODO: remove rmod when put into full recipe
+    recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs,
+                                rmod=RMOD)
     # solid debug mode option
     if kwargs.get('DEBUG0000', False):
         return recipe, params
@@ -72,21 +93,30 @@ def main(directory=None, files=None, **kwargs):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    params = core.end_main(params, llmain, recipe, success, outputs='None')
-    # return a copy of locally defined variables in the memory
-    return core.return_locals(params, locals())
+    return core.end_main(params, llmain, recipe, success)
 
 
 def __main__(recipe, params):
+    """
+    Main code: should only call recipe and params (defined from main)
+
+    :param recipe:
+    :param params:
+    :return:
+    """
     # ----------------------------------------------------------------------
     # Main Code
     # ----------------------------------------------------------------------
-
+    # This is just a test
+    if 'TEXT' in params['INPUTS']:
+        if params['INPUTS']['TEXT'] not in ['None', None, '']:
+            WLOG(params, '', params['INPUTS']['TEXT'])
 
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
     return core.return_locals(params, locals())
+
 
 # =============================================================================
 # Start of code

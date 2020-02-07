@@ -11,9 +11,6 @@ Created on 2019-12-18 at 16:57
 """
 # TODO: change to cal_wave_spirou after testing complete
 # TODO: Currently a placeholder for EA code
-from __future__ import division
-import numpy as np
-
 from apero import core
 from apero import locale
 from apero.core import constants
@@ -273,6 +270,8 @@ def __main__(recipe, params):
                 fp_update.write_file()
                 # add to output files (for indexing)
                 recipe.add_output_file(fp_update)
+                # TODO: update s1d here
+
 
     # ----------------------------------------------------------------------
     # End of main code

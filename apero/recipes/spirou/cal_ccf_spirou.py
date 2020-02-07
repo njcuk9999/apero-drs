@@ -9,13 +9,11 @@ Created on 2019-09-19 at 13:16
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 
 from apero import core
 from apero import locale
 from apero.core import constants
-from apero.core.core import drs_database
 from apero.io import drs_fits
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave

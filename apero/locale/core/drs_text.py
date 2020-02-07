@@ -89,9 +89,20 @@ class Text:
 
     def _load_dict(self, filelist):
         global CACHE_DATA
-        if self.name in CACHE_DATA and self.instrument in CACHE_DATA[self.name]:
+        # check for type in cached data
+        cond1 = self.name in CACHE_DATA
+        cond2 = False
+        cond3 = False
+        # check for instrument in cached data type
+        if cond1:
+            cond2 = self.instrument in CACHE_DATA[self.name]
+        # test for language dictionary in cached instrument type
+        if cond2:
+            cond3 = self.language in CACHE_DATA[self.name][self.instrument]
+        # if we have all three conditions True
+        if cond1 and cond2 and cond3:
             # get data from cached data
-            out = CACHE_DATA[self.name][self.instrument]
+            out = CACHE_DATA[self.name][self.instrument][self.language]
             values, sources, args, kinds, comments = out
         else:
             # get files to check
@@ -102,7 +113,9 @@ class Text:
             # save data to cached data
             if self.name not in CACHE_DATA:
                 CACHE_DATA[self.name] = dict()
-            CACHE_DATA[self.name][self.instrument] = out
+            if self.instrument not in CACHE_DATA[self.name]:
+                CACHE_DATA[self.name][self.instrument] = dict()
+            CACHE_DATA[self.name][self.instrument][self.language] = out
         # append to Parameter dictionary
         for key in list(values.keys()):
             # clean values (escape characters)
@@ -116,6 +129,11 @@ class Text:
             self.kind[key] = kinds[key]
             self.comment[key] = comments[key]
 
+    def __str__(self):
+        return 'Text[{0},{1}]'.format(self.instrument, self.language)
+
+    def __repr__(self):
+        return 'Text[{0},{1}]'.format(self.instrument, self.language)
 
 class TextDict(Text):
     def __init__(self, instrument, language):
@@ -128,6 +146,8 @@ class TextDict(Text):
         :type instrument: str
         :type language: str
         """
+        self.instrument = str(instrument)
+        self.language = str(language)
         Text.__init__(self, instrument, language)
         self.name = 'TextDict'
         self.load_func = '_load_dict_error()'
@@ -136,6 +156,11 @@ class TextDict(Text):
     def _load_dict_error(self):
         self._load_dict(ERROR_FILES)
 
+    def __str__(self):
+        return 'TextDict[{0},{1}]'.format(self.instrument, self.language)
+
+    def __repr__(self):
+        return 'TextDict[{0},{1}]'.format(self.instrument, self.language)
 
 class HelpDict(Text):
     def __init__(self, instrument, language):
@@ -147,6 +172,11 @@ class HelpDict(Text):
     def _load_dict_help(self):
         self._load_dict(HELP_FILES)
 
+    def __str__(self):
+        return 'HelpDict[{0},{1}]'.format(self.instrument, self.language)
+
+    def __repr__(self):
+        return 'HelpDict[{0},{1}]'.format(self.instrument, self.language)
 
 class Entry:
     def __init__(self, key, args=None, kwargs=None):

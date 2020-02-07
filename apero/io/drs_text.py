@@ -9,9 +9,7 @@ Created on 2019-08-12 at 17:23
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
-import os
 import warnings
 
 from apero import core

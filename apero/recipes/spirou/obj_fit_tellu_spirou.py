@@ -27,7 +27,6 @@ Created on 2019-09-05 at 14:58
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 
 from apero import core
@@ -225,11 +224,12 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         # Generate the absorption map + calculate PCA components
         # ----------------------------------------------------------------------
-        pargs = [image2, trans_files, fiber, wprops]
+        pargs = [image2, trans_files, fiber, mprops]
         pca_props = telluric.gen_abso_pca_calc(params, recipe, *pargs)
         # ------------------------------------------------------------------
         # Shift the template/pca components and tapas spectrum to correct
         #     frames
+        #   shift from master wave solution --> night wave solution
         # ------------------------------------------------------------------
         sargs = [image2, template, bprops, mprops, wprops, pca_props,
                  tapas_props]
