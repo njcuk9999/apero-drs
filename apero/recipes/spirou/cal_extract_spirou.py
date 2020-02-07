@@ -9,14 +9,9 @@ Created on 2019-07-05 at 16:46
 
 @author: cook
 """
-from __future__ import division
-import numpy as np
-import warnings
-
 from apero import core
 from apero import locale
 from apero.core import constants
-from apero.core import math as mp
 from apero.core.core import drs_database
 from apero.io import drs_fits
 from apero.io import drs_image

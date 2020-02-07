@@ -28,24 +28,24 @@ CONSTANTS_PATH = 'core.constants'
 INSTALL_PATH = 'tools.module.setup.drs_installation'
 # set modules required
 REQ_MODULES = dict()
-REQ_MODULES['astropy'] = [3, 2, 0]
-REQ_MODULES['matplotlib'] = [2, 1, 2]
-REQ_MODULES['numpy'] = [1, 14, 0]
-REQ_MODULES['scipy'] = [1, 0, 0]
+REQ_MODULES['astropy'] = [4, 0, 0]
+REQ_MODULES['matplotlib'] = [3, 1, 2]
+REQ_MODULES['numpy'] = [1, 18, 1]
+REQ_MODULES['scipy'] = [1, 4, 1]
 REC_MODULES = dict()
-REC_MODULES['astroquery'] = [0, 3, 9]               # conda
-REC_MODULES['barycorrpy'] = [0, 2, 2, 1]            # pip --ignore-installed
-REC_MODULES['bottleneck'] = [1, 2, 1]
-REC_MODULES['numba'] = [0, 41, 0]
-REC_MODULES['pandas'] = [0, 23, 4]
-REC_MODULES['PIL'] = [5, 3, 0]
-REC_MODULES['tqdm'] = [4, 28, 1]
+REC_MODULES['astroquery'] = [0, 3, 10]              # conda
+REC_MODULES['barycorrpy'] = [0, 3]                  # pip --ignore-installed
+REC_MODULES['bottleneck'] = [1, 3, 1]
+REC_MODULES['numba'] = [0, 47, 0]
+REC_MODULES['pandas'] = [0, 25, 3]
+REC_MODULES['PIL'] = [7, 0, 0]
+REC_MODULES['tqdm'] = [4, 41, 1]
 REC_MODULES['yagmail'] = [0, 11, 220]               # conda
 DEV_MODULES = dict()
 DEV_MODULES['gitchangelog'] = [3, 0, 4]             # pip
 DEV_MODULES['ipdb'] = None                          # conda
-DEV_MODULES['IPython'] = [7, 8, 0]
-DEV_MODULES['sphinx'] = [2, 2, 0]
+DEV_MODULES['IPython'] = [7, 11, 1]
+DEV_MODULES['sphinx'] = [2, 3, 1]
 
 # =============================================================================
 # Define functions

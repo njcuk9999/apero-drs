@@ -9,12 +9,10 @@ Created on 2019-11-14 at 10:52
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 import os
 import shutil
 import glob
-from collections import OrderedDict
 
 from apero import core
 from apero import locale

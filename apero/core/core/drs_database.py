@@ -9,7 +9,6 @@ Created on 2019-03-25 at 16:49
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 from astropy.time import Time
 from astropy.table import Table, vstack

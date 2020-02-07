@@ -9,7 +9,6 @@ Created on 2019-07-09 at 13:42
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 from astropy.table import Table
 from astropy import constants as cc
@@ -704,6 +703,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     locofile = lprops['LOCOOBJECT']
     e2dsfile.copy_original_keys(locofile, group='loc')
     # ----------------------------------------------------------------------
+    # add wave keys
     e2dsfile = wave.add_wave_keys(params, e2dsfile, wprops)
     # ----------------------------------------------------------------------
     # add berv properties to header

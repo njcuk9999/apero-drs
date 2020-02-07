@@ -23,24 +23,27 @@ Prerequisites
 
 APERO is tested with `python 3 <https://www.python.org/download/releases/3.0/>`_
 
-The following python modules are required::
+The following python modules are required
 
-  astropy
-  matplotlib
-  numpy
-  scipy
+    .. code-block:: bash
 
-The following python modules are recommended::
+        astropy
+        matplotlib
+        numpy
+        scipy
 
-  astroquery
-  barycorrpy
-  bottleneck
-  ipdb
-  numba
-  pandas
-  PIL
-  tqdm
-  
+The following python modules are recommended
+
+    .. code-block:: bash
+
+        astroquery
+        barycorrpy
+        bottleneck
+        ipdb
+        numba
+        pandas
+        PIL
+        tqdm
 
 See :ref: `here <python_install>` for guide to intalling python and modules with
 the recommended setup.
@@ -59,10 +62,13 @@ Download from GitHub
 Clone
 -------------------------------------------------------------------------------------------
 
-Clone from `github <https://github.com/njcuk9999/apero-drs>`_::
+Clone from `github <https://github.com/njcuk9999/apero-drs>`_
 
-  > git clone https://github.com/njcuk9999/apero-drs
-  
+    .. code-block:: bash
+
+        git clone https://github.com/njcuk9999/apero-drs
+
+
 This may take some time (in future most of the data required will be a separate download), 
 and we still have many (now redundant) files from the spirou_py3 repository.
 
@@ -80,10 +86,12 @@ Choose which branch:
       It may not contain the most up-to-date features until long term support 
       and stability can be verified.
 
-      Change to this branch with::
-      
-      > git checkout master
-      > git pull origin master
+      Change to this branch with
+
+      .. code-block:: bash
+
+        git checkout master
+        git pull origin master
 
 * developer version
       Note the developer version should have been tested and semi-stable but 
@@ -91,19 +99,23 @@ Choose which branch:
       non-developers or for data put on archives. Some changes may not be
       in this version that are in the working version.
 
-      Change to this branch with::
-      
-      > git checkout developer
-      > git pull origin developer
+      Change to this branch with
+
+      .. code-block:: bash
+
+        git checkout developer
+        git pull origin developer
     
 * working version
       Note the working version will be the most up-to-date version but has not been
       tested for stability - use at own risk.
 
-      Change to this branch with::
-      
-      > git checkout working
-      > git pull origin working
+      Change to this branch with
+
+      .. code-block:: bash
+
+        git checkout working
+        git pull origin working
 
 
 .. only:: html
@@ -121,9 +133,11 @@ Run the installation script
 
 Change to the `apero-drs` directory
 
-Run the installation script::
+Run the installation script
 
-  python setup/install.py
+    .. code-block:: bash
+
+        python setup/install.py
 
 
 Step-by-step guide
@@ -183,13 +197,17 @@ Updating from github
 
 1. Choose a branch (as in :ref:`installation-choose-branch`)
 
-2. Update the branch (pull from github)::
-    
-    > git pull origin {branch}
+2. Update the branch (pull from github)
 
-3. Update using the installation script::
+    .. code-block:: bash
 
-    > python setup/install.py --update
+        git pull origin {branch}
+
+3. Update using the installation script
+
+    .. code-block:: bash
+
+        python setup/install.py --update
 
 This will use all current settings and update the 
 

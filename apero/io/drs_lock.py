@@ -13,7 +13,6 @@ import rules:
 
 @author: cook
 """
-from __future__ import division
 import os
 import time
 import numpy as np

@@ -9,7 +9,6 @@ Created on 2019-08-12 at 17:16
 
 @author: cook
 """
-from __future__ import division
 from astropy.table import Table
 import numpy as np
 from astropy.time import Time
@@ -502,8 +501,8 @@ def load_tapas_convolved(params, recipe, header, mprops, fiber, **kwargs):
 # Make telluric functions
 # =============================================================================
 def calculate_telluric_absorption(params, recipe, image, template,
-                                  template_file, header, wprops, tapas_props,
-                                  bprops, **kwargs):
+                                  template_file, header, mprops, wprops,
+                                  tapas_props, bprops, **kwargs):
     func_name = __NAME__ + '.calculate_telluric_absoprtion()'
     # get constatns from params/kwargs
     default_conv_width = pcheck(params, 'MKTELLU_DEFAULT_CONV_WIDTH',
@@ -565,6 +564,8 @@ def calculate_telluric_absorption(params, recipe, image, template,
         WLOG(params, 'error', TextEntry('09-016-00004', args=eargs))
     # get airmass from header
     airmass = header[params['KW_AIRMASS'][0]]
+    # get master wave map
+    mwavemap = mprops['WAVEMAP']
     # get wave map
     wavemap = wprops['WAVEMAP']
     # get dimensions of data
@@ -572,6 +573,12 @@ def calculate_telluric_absorption(params, recipe, image, template,
     # get the tapas data
     tapas_water = tapas_props['TAPAS_WATER']
     tapas_others = tapas_props['TAPAS_OTHER']
+
+    # ------------------------------------------------------------------
+    # Shift the image to the master grid
+    # ------------------------------------------------------------------
+    image1 = _wave_to_wave(params, image1, wavemap, mwavemap)
+
     # ------------------------------------------------------------------
     # Apply template
     # ------------------------------------------------------------------
@@ -619,13 +626,13 @@ def calculate_telluric_absorption(params, recipe, image, template,
             #     orders
             if mp.nansum(keep) > nbpix // 2:
                 # get the wave and template masked arrays
-                keepwave = wavemap[order_num, keep]
+                keepwave = mwavemap[order_num, keep]
                 keeptmp = template[order_num, keep]
                 # spline the good values
                 spline = mp.iuv_spline(keepwave * dvshift, keeptmp, k=1,
-                                         ext=3)
+                                       ext=3)
                 # interpolate good values onto full array
-                template[order_num] = spline(wavemap[order_num])
+                template[order_num] = spline(mwavemap[order_num])
             else:
                 template[order_num] = np.repeat(1.0, nbpix)
 
@@ -656,11 +663,11 @@ def calculate_telluric_absorption(params, recipe, image, template,
     guess = [airmass, airmass]
 
     # first estimate of the absorption spectrum
-    tau1 = tapas_fit(np.isfinite(wavemap), guess[0], guess[1])
+    tau1 = tapas_fit(np.isfinite(mwavemap), guess[0], guess[1])
     tau1 = tau1.reshape(image1.shape)
     # first guess at the SED estimate for the hot start (we guess with a
     #   spectrum full of ones
-    sed = np.ones_like(wavemap)
+    sed = np.ones_like(mwavemap)
     # then we correct with out first estimate of the absorption
     for order_num in range(image1.shape[0]):
         # get an estimate at the sed
@@ -706,7 +713,7 @@ def calculate_telluric_absorption(params, recipe, image, template,
         fit_image[nanmask] = 0
         # ---------------------------------------------------------------------
         # define where we should fit (in photometeric bands)
-        good_domain = (wavemap > hbandlower) & (wavemap < hbandupper)
+        good_domain = (mwavemap > hbandlower) & (mwavemap < hbandupper)
         # vector used to mask invalid regions
         keep = fit_image != 0
         # only fit where the transmission is greater than a certain value
@@ -754,7 +761,7 @@ def calculate_telluric_absorption(params, recipe, image, template,
         WLOG(params, '', TextEntry('40-019-00032', args=wargs))
         # ---------------------------------------------------------------------
         # get current best-fit spectrum
-        tau1 = tapas_fit(np.isfinite(wavemap), guess[0], guess[1])
+        tau1 = tapas_fit(np.isfinite(mwavemap), guess[0], guess[1])
         tau1 = tau1.reshape(image1.shape)
         # ---------------------------------------------------------------------
         # for each order, we fit the SED after correcting for absorption
@@ -878,9 +885,10 @@ def calculate_telluric_absorption(params, recipe, image, template,
             oimage2_arr[order_num] = np.array(oimage2)
         # ---------------------------------------------------------------------
         # debug wave flux plot
-        recipe.plot('MKTELLU_WAVE_FLUX1', keep=keep, wavemap=wavemap, tau1=tau1,
-                    sp=image, oimage=oimage2_arr, sed=sed, order=None,
-                    has_template=(not template_flag), template=template)
+        recipe.plot('MKTELLU_WAVE_FLUX1', keep=keep, wavemap=mwavemap,
+                    tau1=tau1, sp=image, oimage=oimage2_arr, sed=sed,
+                    order=None, has_template=(not template_flag),
+                    template=template)
         # ---------------------------------------------------------------------
         # update the iteration number
         iteration += 1
@@ -893,11 +901,12 @@ def calculate_telluric_absorption(params, recipe, image, template,
     # plot mk tellu wave flux plot for specified orders
     for order_num in plot_order_nums:
         # plot debug plot
-        recipe.plot('MKTELLU_WAVE_FLUX2', keep=keep, wavemap=wavemap, tau1=tau1,
-                    sp=image, oimage=oimage2_arr, sed=sed, order=order_num,
-                    has_template=(not template_flag), template=template)
+        recipe.plot('MKTELLU_WAVE_FLUX2', keep=keep, wavemap=mwavemap,
+                    tau1=tau1, sp=image, oimage=oimage2_arr, sed=sed,
+                    order=order_num, has_template=(not template_flag),
+                    template=template)
         # plot summary plot
-        recipe.plot('SUM_MKTELLU_WAVE_FLUX', keep=keep, wavemap=wavemap,
+        recipe.plot('SUM_MKTELLU_WAVE_FLUX', keep=keep, wavemap=mwavemap,
                     tau1=tau1, sp=image, oimage=oimage2_arr, sed=sed,
                     order=order_num, has_template=(not template_flag),
                     template=template)
@@ -957,7 +966,7 @@ def calculate_telluric_absorption(params, recipe, image, template,
 # =============================================================================
 # Fit telluric functions
 # =============================================================================
-def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, wprops,
+def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
                       **kwargs):
     func_name = __NAME__ + '.gen_abso_pca_calc()'
     # ----------------------------------------------------------------------
@@ -1097,10 +1106,10 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, wprops,
         fit_pc = np.array(pc)
     # ----------------------------------------------------------------------
     # pca components plot (in loop)
-    recipe.plot('FTELLU_PCA_COMP1', image=image, wavemap=wprops['WAVEMAP'],
+    recipe.plot('FTELLU_PCA_COMP1', image=image, wavemap=mprops['WAVEMAP'],
                 pc=pc, add_deriv_pc=add_deriv_pc, npc=npc, order=None)
     # pca components plot (single order)
-    recipe.plot('FTELLU_PCA_COMP2', image=image, wavemap=wprops['WAVEMAP'],
+    recipe.plot('FTELLU_PCA_COMP2', image=image, wavemap=mprops['WAVEMAP'],
                 pc=pc, add_deriv_pc=add_deriv_pc, npc=npc,
                 order=params['FTELLU_SPLOT_ORDER'])
     # ----------------------------------------------------------------------
@@ -1188,13 +1197,6 @@ def shift_all_to_frame(params, recipe, image, template, bprops, mprops, wprops,
                 end = order_num * xdim + xdim
                 template2[start:end] = spline(waveshift)
 
-        # debug plot - reconstructed spline (in loop)
-        recipe.plot('FTELLU_RECON_SPLINE1', image=image, wavemap=wavemap,
-                    template=template2, order=None)
-        # debug plot - reconstructed spline (selected order)
-        recipe.plot('FTELLU_RECON_SPLINE2', image=image, wavemap=wavemap,
-                    template=template2, order=params['FTELLU_SPLOT_ORDER'])
-
         # ------------------------------------------------------------------
         # Shift the template to correct wave frame
         # ------------------------------------------------------------------
@@ -1205,6 +1207,14 @@ def shift_all_to_frame(params, recipe, image, template, bprops, mprops, wprops,
         shift_temp = _wave_to_wave(params, template2, masterwavemap, wavemap,
                                    reshape=True)
         template2 = shift_temp.reshape(template2.shape)
+
+        # debug plot - reconstructed spline (in loop)
+        recipe.plot('FTELLU_RECON_SPLINE1', image=image, wavemap=wavemap,
+                    template=template2, order=None)
+        # debug plot - reconstructed spline (selected order)
+        recipe.plot('FTELLU_RECON_SPLINE2', image=image, wavemap=wavemap,
+                    template=template2, order=params['FTELLU_SPLOT_ORDER'])
+
     else:
         template2 = None
     # ------------------------------------------------------------------
@@ -1451,7 +1461,7 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
         # TODO: abso, so a value of 1 is equivalent to a 2.7x difference
         # TODO: in residual.
 
-        sigma = 1.0 # mp.nanmedian(np.abs(fit_dd))
+        sigma = 1.0  # mp.nanmedian(np.abs(fit_dd))
         with warnings.catch_warnings(record=True) as _:
             keep &= (np.abs(fit_dd) < sigma)
 
@@ -1588,9 +1598,10 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
     qc_snr_order = pcheck(params, 'MKTEMPLATE_SNR_ORDER', 'qc_snr_order',
                           kwargs, func_name)
     e2ds_iterations = pcheck(params, 'MKTEMPLATE_E2DS_ITNUM', 's1d_iterations',
+                             kwargs, func_name)
+    e2ds_lowf_size = pcheck(params, 'MKTEMPLATE_E2DS_LOWF_SIZE',
+                            's1d_lowf_size',
                             kwargs, func_name)
-    e2ds_lowf_size = pcheck(params, 'MKTEMPLATE_E2DS_LOWF_SIZE', 's1d_lowf_size',
-                           kwargs, func_name)
     # get master wave map
     mwavemap = mprops['WAVEMAP']
     # get the objname
@@ -1783,7 +1794,7 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
         median = None
     else:
         # calculate the median of the big cube
-        median = mp.nanmedian(big_cube,axis=2)
+        median = mp.nanmedian(big_cube, axis=2)
         # iterate until low frequency gone
         for iteration in range(e2ds_iterations):
             wargs = [iteration + 1, e2ds_iterations]
@@ -2011,7 +2022,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
     # Iterate until low frequency noise is gone
     # ------------------------------------------------------------------
     # calculate the median of the big cube
-    median = mp.nanmedian(big_cube,axis=1)
+    median = mp.nanmedian(big_cube, axis=1)
     # iterate until low frequency gone
     for iteration in range(s1d_iterations):
         wargs = [iteration + 1, s1d_iterations]
@@ -2170,7 +2181,7 @@ def mk_tellu_quality_control(params, tprops, infile, **kwargs):
 
 
 def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
-                              tapas_props, wprops, nprops, tprops, qc_params):
+                              tapas_props, mprops, nprops, tprops, qc_params):
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     transfile = recipe.outputs['TELLU_TRANS'].newcopy(recipe=recipe,
@@ -2179,7 +2190,9 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     transfile.construct_filename(params, infile=infile)
     # ------------------------------------------------------------------
     # copy keys from input file
-    transfile.copy_original_keys(infile)
+    transfile.copy_original_keys(infile, exclude_groups='wave')
+    # add wave keys
+    transfile = wave.add_wave_keys(params, transfile, mprops)
     # add version
     transfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
     # add dates
@@ -2197,7 +2210,7 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     transfile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
     # add  calibration files used
     transfile.add_hkey('KW_CDBBLAZE', value=nprops['BLAZE_FILE'])
-    transfile.add_hkey('KW_CDBWAVE', value=wprops['WAVEFILE'])
+    transfile.add_hkey('KW_CDBWAVE', value=mprops['WAVEFILE'])
     # ----------------------------------------------------------------------
     # add qc parameters
     transfile.add_qckeys(qc_params)
@@ -2544,8 +2557,7 @@ def mk_template_qc(params):
 
 
 def mk_template_write(params, recipe, infile, cprops, filetype,
-                      fiber, qc_params):
-
+                      fiber, wprops, qc_params):
     # get objname
     objname = infile.get_key('KW_OBJNAME', dtype=str)
     # construct suffix
@@ -2570,7 +2582,9 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     template_file.construct_filename(params, infile=infile, suffix=suffix)
     # ------------------------------------------------------------------
     # copy keys from input file
-    template_file.copy_original_keys(infile)
+    template_file.copy_original_keys(infile, exclude_groups='wave')
+    # add wave keys
+    template_file = wave.add_wave_keys(params, template_file, wprops)
     # add version
     template_file.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
     # add dates
@@ -2639,7 +2653,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
 
 
 def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
-                         qc_params):
+                         wprops, qc_params):
     # get objname
     objname = infile.get_key('KW_OBJNAME', dtype=str)
     # construct suffix
@@ -2672,7 +2686,9 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     # construct the filename from file instance
     template_file.construct_filename(params, infile=infile, suffix=suffix)
     # copy keys from input file
-    template_file.copy_original_keys(infile)
+    template_file.copy_original_keys(infile, exclude_groups='wave')
+    # add wave keys
+    template_file = wave.add_wave_keys(params, template_file, wprops)
     # add version
     template_file.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
     # add dates
@@ -2992,7 +3008,7 @@ def _wave_to_wave(params, spectrum, wave1, wave2, reshape=False):
         if mp.nansum(g) != 0:
             # spline the spectrum
             spline = mp.iuv_spline(wave1[iord, g], spectrum[iord, g],
-                                     k=5, ext=1)
+                                   k=5, ext=1)
             # keep track of pixels affected by NaNs
             splinemask = mp.iuv_spline(wave1[iord, :], g, k=5, ext=1)
             # spline the input onto the output

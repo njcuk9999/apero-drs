@@ -18,6 +18,7 @@ from apero import locale
 from apero.core import constants
 from apero.io import drs_fits
 from apero.science import extract
+from apero.tools.module.testing import drs_dev
 
 # =============================================================================
 # Define variables
@@ -38,6 +39,24 @@ WLOG = core.wlog
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
 TextDict = locale.drs_text.TextDict
+# -----------------------------------------------------------------------------
+# set up recipe definitions (overwrites default one)
+RMOD = drs_dev.RecipeDefinition(instrument=__INSTRUMENT__)
+# define a recipe for this tool
+cal_update_berv = drs_dev.TmpRecipe()
+cal_update_berv.name = 'cal_update_berv.py'
+cal_update_berv.shortname = 'UBERV'
+cal_update_berv.instrument = __INSTRUMENT__
+cal_update_berv.outputdir = 'reduced'
+cal_update_berv.inputdir = 'reduced'
+cal_update_berv.inputtype = 'reduced'
+cal_update_berv.extension = 'fits'
+cal_update_berv.description = 'Updates all BERV parameters'
+cal_update_berv.kind = 'misc'
+cal_update_berv.set_kwarg(name='--skip', dtype='bool', default=True,
+                          helpstr='Skip files already with BERV measurement')
+# add recipe to recipe definition
+RMOD.add(cal_update_berv)
 
 
 # =============================================================================
@@ -66,7 +85,8 @@ def main(**kwargs):
     fkwargs = dict(**kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs)
+    recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs,
+                                rmod=RMOD)
     # solid debug mode option
     if kwargs.get('DEBUG0000', False):
         return recipe, params
@@ -142,7 +162,7 @@ def __main__(recipe, params):
             ointypes = infiletypes[odocode]
             # -------------------------------------------
             # skip if already using barycorppy
-            skip = True
+            skip = params['INPUTS']['SKIP']
             infiles = []
             # loop around ofiles
             for jt, filename in enumerate(ofiles):
@@ -203,7 +223,7 @@ def __main__(recipe, params):
                                           allkeys=True)
                 extract.add_berv_keys(params, infile1, bprops)
                 # write data to file
-                infile1.write()
+                infile1.write_file()
 
     # ----------------------------------------------------------------------
     # End of main code

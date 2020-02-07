@@ -8,8 +8,6 @@ Created on 2019-03-05 16:37
 @author: ncook
 Version 0.0.1
 """
-from __future__ import division
-
 from apero.core import constants
 from apero import core
 from apero.core.core import drs_file
