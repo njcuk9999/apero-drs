@@ -6,11 +6,16 @@ TODO
 ************************************************************************************
 
 This is the currently list of items that need to still be completed.
-Last updated: 2020-01-07 (NJC).
+Last updated: 2020-02-07 (NJC).
 
 =========================================
 In progress
 =========================================
+
+- add all functions doc strings
+- add in `dark_fp` correction
+- fix headers for having bad wave and loc keys (remove?)
+- fix s1d for `FP_FP` and `HC_HC` they need updating after wave sol produced
 - finish `obj_spec_spirou` and `obj_pol_spirou` [Do not use them now]
 - output files like CFHT (e.fits, p.fits, v.fits etc)
 - go through all summary plots and decide which plots, write figure captions,

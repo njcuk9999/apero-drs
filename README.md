@@ -253,6 +253,10 @@ constant min/max/dtypes
 ## Currently known issues
 [Back to top](#apero---a-pipeline-to-reduce-observations)
 
+- s1d for FP_FP and HCONE_HCONE files does not have the updated wave solution
+  as files are extracted before wave solution produced
+- wave solution and loc solutions are never updated in headers once a new
+  solution is present - should they be? should they be removed from headers?
 - FP of fiber C is contaminating fiber A and B - Etienne has a solution, but 
   far from being implemented yet
 - CCF still showing problems --> due to not weighting the orders, but cannot
