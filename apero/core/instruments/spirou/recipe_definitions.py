@@ -828,7 +828,7 @@ cal_ccf.set_summary_plots('SUM_CCF_PHOTON_UNCERT', 'SUM_CCF_RV_FIT')
 cal_ccf.set_arg(pos=0, **directory)
 cal_ccf.set_arg(name='files', dtype='files', pos='1+',
                 files=[sf.out_ext_e2ds, sf.out_ext_e2dsff,
-                       sf.out_tellu_obj],
+                       sf.out_tellu_obj], filelogic='exclusive',
                 helpstr=Help['FILES_HELP'] + Help['CCF_FILES_HELP'],
                 limit=1)
 cal_ccf.set_kwarg(name='--mask', dtype='file', default_ref='CCF_DEFAULT_MASK',
@@ -864,6 +864,7 @@ obj_mk_tellu.set_summary_plots('SUM_MKTELLU_WAVE_FLUX')
 obj_mk_tellu.set_arg(pos=0, **directory)
 obj_mk_tellu.set_arg(name='files', dtype='files', pos='1+',
                      files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
+                     filelogic='exclusive',
                      helpstr=Help['FILES_HELP'] + Help['MKTELL_FILES_HELP'],
                      limit=1)
 obj_mk_tellu.set_kwarg(**add_db)
@@ -934,6 +935,7 @@ obj_fit_tellu.set_summary_plots('SUM_EXTRACT_S1D', 'SUM_FTELLU_RECON_ABSO')
 obj_fit_tellu.set_arg(pos=0, **directory)
 obj_fit_tellu.set_arg(name='files', dtype='files', pos='1+',
                       files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
+                      filelogic='exclusive',
                       helpstr=Help['FILES_HELP'] + Help['FTELLU_FILES_HELP'],
                       limit=1)
 # TODO: Add to language DB
@@ -1046,6 +1048,7 @@ pol_spirou.set_summary_plots('SUM_EXTRACT_S1D')
 pol_spirou.set_arg(pos=0, **directory)
 pol_spirou.set_arg(name='files', dtype='files', pos='1+',
                    files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
+                   filelogic='exclusive',
                    helpstr=Help['FILES_HELP'] + Help['FTELLU_FILES_HELP'],
                    limit=1)
 pol_spirou.set_kwarg(**blazefile)
@@ -1222,7 +1225,8 @@ limited_run.add(obj_mk_template, name='MKTELLU3', KW_OBJNAME='TELLURIC_TARGETS',
                 fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
                 arguments=dict(objname='TELLURIC_TARGETS'))
 limited_run.add(obj_mk_tellu, name='MKTELLU4', KW_OBJNAME='TELLURIC_TARGETS',
-                fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
+                files=[sf.out_ext_e2dsff],  fiber='AB',
+                KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 
 limited_run.add(obj_fit_tellu, name='FTELLU1', KW_OBJNAME='SCIENCE_TARGETS',
                 files=[sf.out_ext_e2dsff], fiber='AB',
@@ -1231,7 +1235,8 @@ limited_run.add(obj_mk_template, name='FTELLU2', KW_OBJNAME='SCIENCE_TARGETS',
                 fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
                 arguments=dict(objname='SCIENCE_TARGETS'))
 limited_run.add(obj_fit_tellu, name='FTELLU3', KW_OBJNAME='SCIENCE_TARGETS',
-                fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
+                files=[sf.out_ext_e2dsff], fiber='AB',
+                KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 
 # ccf
 limited_run.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
@@ -1291,10 +1296,12 @@ tellu_run.add(obj_fit_tellu, name='MKTELLU2', KW_OBJNAME='TELLURIC_TARGETS',
               files=[sf.out_ext_e2dsff], fiber='AB',
               KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 tellu_run.add(obj_mk_template, name='MKTELLU3', KW_OBJNAME='TELLURIC_TARGETS',
-              fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
+              fiber='AB', files=[sf.out_ext_e2dsff],
+              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
               arguments=dict(objname='TELLURIC_TARGETS'))
 tellu_run.add(obj_mk_tellu, name='MKTELLU4', KW_OBJNAME='TELLURIC_TARGETS',
-              fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
+              fiber='AB', files=[sf.out_ext_e2dsff],
+              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 
 # -----------------------------------------------------------------------------
 # science run (for trigger)
@@ -1310,7 +1317,8 @@ science_run.add(obj_mk_template, name='FTELLU2', KW_OBJNAME='SCIENCE_TARGETS',
                 fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
                 arguments=dict(objname='SCIENCE_TARGETS'))
 science_run.add(obj_fit_tellu, name='FTELLU3', KW_OBJNAME='SCIENCE_TARGETS',
-                fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
+                files=[sf.out_ext_e2dsff], fiber='AB',
+                KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 # ccf
 science_run.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
                 KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'], KW_OBJNAME='SCIENCE_TARGETS')
@@ -1395,7 +1403,8 @@ old_run.add(obj_fit_tellu, name='FTELLU1', KW_OBJNAME='SCIENCE_TARGETS',
 old_run.add(obj_mk_template, name='FTELLU2', KW_OBJNAME='SCIENCE_TARGETS',
             fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
             arguments=dict(objname='SCIENCE_TARGETS'))
-old_run.add(obj_fit_tellu, name='FTELLU3', KW_OBJNAME='SCIENCE_TARGETS',
+old_run.add(obj_fit_tellu, files=[sf.out_ext_e2dsff],
+            name='FTELLU3', KW_OBJNAME='SCIENCE_TARGETS',
             fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 
 # ccf
