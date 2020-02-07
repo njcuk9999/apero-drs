@@ -1485,8 +1485,39 @@ def find_run_files(params, recipe, table, args, filters=None,
         # if files are None continue
         if drsfiles is None:
             continue
+        # ------------------------------------------------------------------
+        # mask table by filters (if filters in table)
+        filtermask = np.ones(len(table), dtype=bool)
+        for tfilter in filters:
+            if tfilter in table.colnames:
+                # deal with filter values being list/str
+                if isinstance(filters[tfilter], str):
+                    testvalues = [filters[tfilter]]
+                elif isinstance(filters[tfilter], list):
+                    testvalues = filters[tfilter]
+                else:
+                    continue
+                # create a test mask
+                testmask = np.zeros(len(table), dtype=bool)
+                # loop around test values with OR (could be any value)
+                for testvalue in testvalues:
+                    # check if value is string
+                    if isinstance(testvalue, str):
+                        values = np.char.array(table[tfilter])
+                        values = values.strip().upper()
+                        testvalue = testvalue.strip().upper()
+                    else:
+                        values = np.array(table[tfilter])
+                    # check mask
+                    testmask |= values == testvalue
+                # add filter to filter mask with AND (must have all filters)
+                filtermask &= testmask
+        # ------------------------------------------------------------------
         # loop around drs files
         for drsfile in drsfiles:
+            # copy table
+            ftable = Table(table[filtermask])
+            ffiles = np.array(files)[filtermask]
             # debug log: the file being tested
             dargs = [drsfile.name]
             WLOG(params, 'debug', TextEntry('90-503-00013', args=dargs))
@@ -1501,7 +1532,11 @@ def find_run_files(params, recipe, table, args, filters=None,
             valid_outfiles = []
             valid_num = 0
             # loop around files
-            for filename in files:
+            for f_it, filename in enumerate(ffiles):
+                # print statement
+                pargs = [drsfile.name, f_it + 1, len(ffiles)]
+                pmsg = '\t\tProcessing {0} file {1}/{2}'.format(*pargs)
+                drs_log.Printer(None, None, pmsg)
                 # get infile instance (i.e. raw or pp file) and assign the
                 #   correct outfile (from filename)
                 out = drsfile.get_infile_outfilename(params, recipe, filename,
@@ -1518,16 +1553,16 @@ def find_run_files(params, recipe, table, args, filters=None,
             # debug log the number of valid files
             WLOG(params, 'debug', TextEntry('90-503-00014', args=[valid_num]))
             # add outfiles to table
-            table['OUT'] = valid_outfiles
+            ftable['OUT'] = valid_outfiles
             # for the valid files we can now check infile headers
-            for it in range(len(table)):
+            for it in range(len(ftable)):
                 # get infile
                 infile = valid_infiles[it]
                 # skip those that were invalid
                 if infile is None:
                     continue
                 # get table dictionary
-                tabledict = dict(zip(table.colnames, table[it]))
+                tabledict = dict(zip(ftable.colnames, ftable[it]))
                 # check whether tabledict means that file is valid for this
                 #   infile
                 valid1 = infile.check_table_keys(params, tabledict)
@@ -1542,9 +1577,9 @@ def find_run_files(params, recipe, table, args, filters=None,
                     continue
                 # if valid then add to filedict for this argnameand drs file
                 if arg.filelogic == 'exclusive':
-                    filedict[argname][drsfile.name].append(table[it])
+                    filedict[argname][drsfile.name].append(ftable[it])
                 else:
-                    filedict[argname]['all'].append(table[it])
+                    filedict[argname]['all'].append(ftable[it])
     outfiledict = OrderedDict()
     # convert each appended table to a single table per file
     for argname in filedict:
