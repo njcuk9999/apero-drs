@@ -9,7 +9,6 @@ Created on 2019-03-21 at 11:36
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 from astropy.io import fits
 from astropy.table import Table

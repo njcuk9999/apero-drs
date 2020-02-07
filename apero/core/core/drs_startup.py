@@ -9,7 +9,6 @@ Created on 2019-01-19 at 13:37
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 from astropy.time import Time
 import traceback
@@ -83,7 +82,7 @@ CHARS = string.ascii_uppercase + string.digits
 # Define functions
 # =============================================================================
 def setup(name='None', instrument='None', fkwargs=None, quiet=False,
-          threaded=False, enable_plotter=True):
+          threaded=False, enable_plotter=True, rmod=None):
     """
     Recipe setup script for recipe "name" and "instrument"
 
@@ -96,6 +95,8 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     :param threaded: bool, if True we have a parallel process so do not
                      catch SIGINT as normal
     :param enable_plotter: bool, if True do not enable plotter
+    :param rmod: object, a custom recipe defintion to use (for testing
+                 purposes only)
 
     :type name: str
     :type instrument: str
@@ -132,7 +133,11 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     # get filemod and recipe mod
     pconst = constants.pload(instrument)
     filemod = pconst.FILEMOD()
-    recipemod = pconst.RECIPEMOD()
+    # deal with rmod coming from call
+    if rmod is None:
+        recipemod = pconst.RECIPEMOD()
+    else:
+        recipemod = rmod
     # find recipe
     recipe, recipemod = find_recipe(name, instrument, mod=recipemod)
     # set file module and recipe module

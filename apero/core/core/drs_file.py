@@ -2060,7 +2060,8 @@ class DrsFitsFile(DrsInputFile):
         # get params
         params = self.recipe.drs_params
         # generate instances from params
-        keyworddict = params.get_keyword_instances()
+        Keyword = constants.constant_functions.Keyword
+        keyworddict = params.get_instanceof(Keyword)
         # get pconstant
         pconstant = self.recipe.drs_pconstant
         # deal with exclude groups
