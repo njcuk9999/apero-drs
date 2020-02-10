@@ -97,7 +97,6 @@ def __main__(recipe, params):
         path = params['DRS_DATA_REDUC']
     else:
         path = params['DRS_DATA_WORKING']
-    path = '/scratch2/spirou/mini_data/reduced'
 
     # deal with recipe name
     recipename = logstats.search_recipes(params, recipe, recipename)
