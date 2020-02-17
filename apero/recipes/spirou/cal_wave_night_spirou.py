@@ -175,7 +175,7 @@ def __main__(recipe, params):
         for fiber in fiber_types:
             # ------------------------------------------------------------------
             # add level to recipe log
-            log_hc = log1.add_level(params, 'mode=hc fiber', fiber)
+            log2 = log1.add_level(params, 'fiber', fiber)
             # ------------------------------------------------------------------
             # log fiber process
             core.fiber_processing_update(params, fiber)
@@ -231,6 +231,8 @@ def __main__(recipe, params):
             # wave solution quality control
             # ----------------------------------------------------------
             qc_params, passed = wave.night_quality_control(params, nprops)
+            # update recipe log
+            log2.add_qc(params, qc_params, passed)
 
             # ----------------------------------------------------------
             # write wave solution to file
@@ -272,6 +274,10 @@ def __main__(recipe, params):
                 recipe.add_output_file(fp_update)
                 # TODO: update s1d here
 
+            # ----------------------------------------------------------
+            # update recipe log file for fp fiber
+            # ----------------------------------------------------------
+            log2.end(params)
 
     # ----------------------------------------------------------------------
     # End of main code
