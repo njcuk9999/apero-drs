@@ -147,8 +147,8 @@ obj_fit_tellu = DrsRecipe(__INSTRUMENT__)
 obj_fit_tellu_db = DrsRecipe(__INSTRUMENT__)
 obj_mk_template = DrsRecipe(__INSTRUMENT__)
 pol_spirou = DrsRecipe(__INSTRUMENT__)
-obj_pol_spirou = DrsRecipe(__INSTRUMENT__)
-obj_spec_spirou = DrsRecipe(__INSTRUMENT__)
+obj_pol = DrsRecipe(__INSTRUMENT__)
+obj_spec = DrsRecipe(__INSTRUMENT__)
 
 # TODO: remove later
 test = DrsRecipe(__INSTRUMENT__)
@@ -159,8 +159,8 @@ recipes = [cal_badpix, cal_ccf, cal_dark, cal_dark_master, cal_drift1,
            cal_shape, cal_shape_master, cal_thermal,
            cal_wave, cal_wave_master, cal_wave_night,
            obj_mk_tellu, obj_fit_tellu, obj_mk_template,
-           obj_mk_tellu_db, obj_fit_tellu_db, pol_spirou, obj_spec_spirou,
-           obj_pol_spirou, test, cal_update_berv]
+           obj_mk_tellu_db, obj_fit_tellu_db, pol_spirou, obj_spec,
+           obj_pol, test, cal_update_berv]
 
 # =============================================================================
 # Recipe definitions
@@ -1058,24 +1058,24 @@ pol_spirou.set_kwarg(**wavefile)
 # -----------------------------------------------------------------------------
 # obj_spec_spirou
 # -----------------------------------------------------------------------------
-obj_spec_spirou.name = 'obj_spec_spirou.py'
-obj_spec_spirou.shortname = 'OBJ_SPEC'
-obj_spec_spirou.instrument = __INSTRUMENT__
-obj_spec_spirou.outputdir = 'reduced'
-obj_spec_spirou.inputdir = 'tmp'
-obj_spec_spirou.inputtype = 'reduced'
-obj_spec_spirou.extension = 'fits'
-obj_spec_spirou.description = ''
-obj_spec_spirou.epilog = ''
-obj_spec_spirou.kind = 'recipe'
-obj_spec_spirou.set_arg(pos=0, **directory)
-obj_spec_spirou.set_arg(name='files', dtype='files', pos='1+',
-                        files=[sf.pp_file],
-                        helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
-                        limit=1)
-obj_spec_spirou.set_kwarg(**plot)
-obj_spec_spirou.set_kwarg(name='--cores', dtype=int, default=1,
-                          helpstr='')
+obj_spec.name = 'obj_spec_spirou.py'
+obj_spec.shortname = 'OBJ_SPEC'
+obj_spec.instrument = __INSTRUMENT__
+obj_spec.outputdir = 'reduced'
+obj_spec.inputdir = 'tmp'
+obj_spec.inputtype = 'reduced'
+obj_spec.extension = 'fits'
+obj_spec.description = ''
+obj_spec.epilog = ''
+obj_spec.kind = 'recipe'
+obj_spec.set_arg(pos=0, **directory)
+obj_spec.set_arg(name='files', dtype='files', pos='1+',
+                 files=[sf.pp_file],
+                 helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
+                 limit=1)
+obj_spec.set_kwarg(**plot)
+obj_spec.set_kwarg(name='--cores', dtype=int, default=1,
+                   helpstr='')
 
 # -----------------------------------------------------------------------------
 # obj_pol_spirou
