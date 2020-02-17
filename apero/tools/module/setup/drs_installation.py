@@ -967,8 +967,16 @@ def printheader():
 def print_options(params, all_params):
     # set up the text dictionary
     text = dict()
-    text['DRS_UCONFIG'] = all_params['USERCONFIG']
+
+    # deal with user config (should end with os.sep)
+    userconfig = all_params['USERCONFIG']
+    if not userconfig.endswith(os.sep):
+        userconfig += os.sep
+    # add to text dictionary
+    text['DRS_UCONFIG'] = userconfig
+    # add system to text dictionary
     text['SYSTEM'] = '{SYSTEM}'
+    # add profile name (package name)
     if all_params['PROFILENAME'] not in ['None', None, '']:
         text['NAME'] = all_params['PROFILENAME']
     else:
