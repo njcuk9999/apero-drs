@@ -2,7 +2,7 @@ from apero.core import constants
 from apero.core.core import drs_recipe
 from apero.locale import drs_text
 
-from apero.core.instruments.spirou import file_definitions as sf
+from apero.core.instruments.nirps_ha import file_definitions as sf
 
 # =============================================================================
 # Define variables
@@ -28,10 +28,6 @@ directory = dict(name='directory', dtype='directory',
 # =============================================================================
 # Option definitions
 # =============================================================================
-#
-# Note for these to work MUST add to spirouStartup.spirou_options_manager
-#
-# -----------------------------------------------------------------------------
 add_db = dict(name='--database', dtype='bool', default=True,
               helpstr=Help['ADD_CAL_HELP'])
 # -----------------------------------------------------------------------------
@@ -146,9 +142,7 @@ obj_mk_tellu_db = DrsRecipe(__INSTRUMENT__)
 obj_fit_tellu = DrsRecipe(__INSTRUMENT__)
 obj_fit_tellu_db = DrsRecipe(__INSTRUMENT__)
 obj_mk_template = DrsRecipe(__INSTRUMENT__)
-pol_spirou = DrsRecipe(__INSTRUMENT__)
-obj_pol_spirou = DrsRecipe(__INSTRUMENT__)
-obj_spec_spirou = DrsRecipe(__INSTRUMENT__)
+obj_spec = DrsRecipe(__INSTRUMENT__)
 
 # TODO: remove later
 test = DrsRecipe(__INSTRUMENT__)
@@ -159,8 +153,7 @@ recipes = [cal_badpix, cal_ccf, cal_dark, cal_dark_master, cal_drift1,
            cal_shape, cal_shape_master, cal_thermal,
            cal_wave, cal_wave_master, cal_wave_night,
            obj_mk_tellu, obj_fit_tellu, obj_mk_template,
-           obj_mk_tellu_db, obj_fit_tellu_db, pol_spirou, obj_spec_spirou,
-           obj_pol_spirou, test, cal_update_berv]
+           obj_mk_tellu_db, obj_fit_tellu_db, obj_spec]
 
 # =============================================================================
 # Recipe definitions
@@ -231,9 +224,9 @@ test.set_kwarg(**fluxunits)
 test.set_kwarg(**resize)
 
 # -----------------------------------------------------------------------------
-# cal_preprocess_spirou
+# cal_preprocess_nirps_ha
 # -----------------------------------------------------------------------------
-cal_pp.name = 'cal_preprocess_spirou.py'
+cal_pp.name = 'cal_preprocess_nirps_ha.py'
 cal_pp.shortname = 'PP'
 cal_pp.instrument = __INSTRUMENT__
 cal_pp.outputdir = 'tmp'
@@ -251,9 +244,9 @@ cal_pp.set_kwarg(name='--skip', dtype='bool', default=False,
                  helpstr=Help['PPSKIP_HELP'], default_ref='SKIP_DONE_PP')
 
 # -----------------------------------------------------------------------------
-# cal_badpix_spirou
+# cal_badpix_nirps_ha
 # -----------------------------------------------------------------------------
-cal_badpix.name = 'cal_badpix_spirou.py'
+cal_badpix.name = 'cal_badpix_nirps_ha.py'
 cal_badpix.shortname = 'BAD'
 cal_badpix.instrument = __INSTRUMENT__
 cal_badpix.outputdir = 'reduced'
@@ -282,9 +275,9 @@ cal_badpix.set_kwarg(**plot)
 cal_badpix.set_kwarg(**resize)
 
 # -----------------------------------------------------------------------------
-# cal_dark_spirou
+# cal_dark_nirps_ha
 # -----------------------------------------------------------------------------
-cal_dark.name = 'cal_dark_spirou.py'
+cal_dark.name = 'cal_dark_nirps_ha.py'
 cal_dark.shortname = 'DARK'
 cal_dark.instrument = __INSTRUMENT__
 cal_dark.outputdir = 'reduced'
@@ -310,9 +303,9 @@ cal_dark.set_kwarg(default=True, **combine)
 cal_dark.set_kwarg(**plot)
 
 # -----------------------------------------------------------------------------
-# cal_dark_master_spirou
+# cal_dark_master_nirps_ha
 # -----------------------------------------------------------------------------
-cal_dark_master.name = 'cal_dark_master_spirou.py'
+cal_dark_master.name = 'cal_dark_master_nirps_ha.py'
 cal_dark_master.shortname = 'DARKM'
 cal_dark_master.master = True
 cal_dark_master.instrument = __INSTRUMENT__
@@ -331,9 +324,9 @@ cal_dark_master.set_kwarg(**add_db)
 cal_dark_master.set_kwarg(**plot)
 
 # -----------------------------------------------------------------------------
-# cal_loc_RAW_spirou
+# cal_loc_RAW_nirps_ha
 # -----------------------------------------------------------------------------
-cal_loc.name = 'cal_loc_spirou.py'
+cal_loc.name = 'cal_loc_nirps_ha.py'
 cal_loc.shortname = 'LOC'
 cal_loc.instrument = __INSTRUMENT__
 cal_loc.outputdir = 'reduced'
@@ -370,9 +363,9 @@ cal_loc.set_kwarg(**plot)
 cal_loc.set_kwarg(**resize)
 
 # -----------------------------------------------------------------------------
-# cal_shape_master_spirou
+# cal_shape_master_nirps_ha
 # -----------------------------------------------------------------------------
-cal_shape_master.name = 'cal_shape_master_spirou.py'
+cal_shape_master.name = 'cal_shape_master_nirps_ha.py'
 cal_shape_master.shortname = 'SHAPEM'
 cal_shape_master.master = True
 cal_shape_master.instrument = __INSTRUMENT__
@@ -420,9 +413,9 @@ cal_shape_master.set_kwarg(name='--fpmaster', dtype='files',
                            helpstr=Help['SHAPE_FPMASTER_HELP'])
 
 # -----------------------------------------------------------------------------
-# cal_SHAPE_spirou
+# cal_SHAPE_nirps_ha
 # -----------------------------------------------------------------------------
-cal_shape.name = 'cal_shape_spirou.py'
+cal_shape.name = 'cal_shape_nirps_ha.py'
 cal_shape.shortname = 'SHAPE'
 cal_shape.instrument = __INSTRUMENT__
 cal_shape.outputdir = 'reduced'
@@ -457,9 +450,9 @@ cal_shape.set_kwarg(**shapexfile)
 cal_shape.set_kwarg(**shapeyfile)
 
 # -----------------------------------------------------------------------------
-# cal_FF_RAW_spirou
+# cal_FF_RAW_nirps_ha
 # -----------------------------------------------------------------------------
-cal_ff.name = 'cal_flat_spirou.py'
+cal_ff.name = 'cal_flat_nirps_ha.py'
 cal_ff.shortname = 'FF'
 cal_ff.instrument = __INSTRUMENT__
 cal_ff.outputdir = 'reduced'
@@ -500,9 +493,9 @@ cal_ff.set_kwarg(**shapeyfile)
 cal_ff.set_kwarg(**shapelfile)
 
 # -----------------------------------------------------------------------------
-# cal_thermal_spirou
+# cal_thermal_nirps_ha
 # -----------------------------------------------------------------------------
-cal_thermal.name = 'cal_thermal_spirou.py'
+cal_thermal.name = 'cal_thermal_nirps_ha.py'
 cal_thermal.shortname = 'THERM'
 cal_thermal.instrument = __INSTRUMENT__
 cal_thermal.outputdir = 'reduced'
@@ -546,9 +539,9 @@ cal_thermal.set_kwarg(name='--forceext', dtype='bool',
                       helpstr='THERMAL_EXTRACT_HELP')
 
 # -----------------------------------------------------------------------------
-# cal_extract_spirou
+# cal_extract_nirps_ha
 # -----------------------------------------------------------------------------
-cal_extract.name = 'cal_extract_spirou.py'
+cal_extract.name = 'cal_extract_nirps_ha.py'
 cal_extract.shortname = 'EXT'
 cal_extract.instrument = __INSTRUMENT__
 cal_extract.outputdir = 'reduced'
@@ -603,9 +596,9 @@ cal_extract.set_kwarg(**thermalfile)
 cal_extract.set_kwarg(**wavefile)
 
 # -----------------------------------------------------------------------------
-# cal_wave_spirou
+# cal_wave_nirps_ha
 # -----------------------------------------------------------------------------
-cal_wave.name = 'cal_wave_spirou.py'
+cal_wave.name = 'cal_wave_nirps_ha.py'
 cal_wave.shortname = 'WAVE'
 cal_wave.instrument = __INSTRUMENT__
 cal_wave.outputdir = 'reduced'
@@ -676,7 +669,7 @@ cal_wave.set_kwarg(name='--fpmode', dtype='options',
 # -----------------------------------------------------------------------------
 # cal_wave_master
 # -----------------------------------------------------------------------------
-cal_wave_master.name = 'cal_wave_master_spirou.py'
+cal_wave_master.name = 'cal_wave_master_nirps_ha.py'
 cal_wave_master.shortname = 'WAVEM'
 cal_wave_master.instrument = __INSTRUMENT__
 cal_wave_master.outputdir = 'reduced'
@@ -751,7 +744,7 @@ cal_wave_master.set_kwarg(name='--fpmode', dtype='options',
 # -----------------------------------------------------------------------------
 # cal_wave_night
 # -----------------------------------------------------------------------------
-cal_wave_night.name = 'cal_wave_night_spirou.py'
+cal_wave_night.name = 'cal_wave_night_nirps_ha.py'
 cal_wave_night.shortname = 'WAVE'
 cal_wave_night.instrument = __INSTRUMENT__
 cal_wave_night.outputdir = 'reduced'
@@ -799,19 +792,19 @@ cal_wave_night.set_kwarg(name='--forceext', dtype='bool',
                          helpstr='WAVE_EXTRACT_HELP')
 
 # -----------------------------------------------------------------------------
-# cal_DRIFT_E2DS_spirou
+# cal_DRIFT_E2DS_nirps_ha
 # -----------------------------------------------------------------------------
-cal_drift1.name = 'cal_DRIFT_E2DS_spirou.py'
+cal_drift1.name = 'cal_DRIFT_E2DS_nirps_ha.py'
 
 # -----------------------------------------------------------------------------
-# cal_DRIFTPEAK_E2DS_spirou
+# cal_DRIFTPEAK_E2DS_nirps_ha
 # -----------------------------------------------------------------------------
-cal_drift2.name = 'cal_DRIFTPEAK_E2DS_spirou.py'
+cal_drift2.name = 'cal_DRIFTPEAK_E2DS_nirps_ha.py'
 
 # -----------------------------------------------------------------------------
-# cal_CCF_E2DS_spirou
+# cal_CCF_E2DS_nirps_ha
 # -----------------------------------------------------------------------------
-cal_ccf.name = 'cal_ccf_spirou.py'
+cal_ccf.name = 'cal_ccf_nirps_ha.py'
 cal_ccf.shortname = 'CCF'
 cal_ccf.instrument = __INSTRUMENT__
 cal_ccf.outputdir = 'reduced'
@@ -847,7 +840,7 @@ cal_ccf.set_kwarg(**plot)
 # -----------------------------------------------------------------------------
 # obj_mk_tellu
 # -----------------------------------------------------------------------------
-obj_mk_tellu.name = 'obj_mk_tellu_spirou.py'
+obj_mk_tellu.name = 'obj_mk_tellu_nirps_ha.py'
 obj_mk_tellu.shortname = 'MKTELL'
 obj_mk_tellu.instrument = __INSTRUMENT__
 obj_mk_tellu.outputdir = 'reduced'
@@ -879,7 +872,7 @@ obj_mk_tellu.set_kwarg(name='--use_template', dtype='bool', default=True,
 # -----------------------------------------------------------------------------
 # obj_mk_tellu_db
 # -----------------------------------------------------------------------------
-obj_mk_tellu_db.name = 'obj_mk_tellu_db_spirou.py'
+obj_mk_tellu_db.name = 'obj_mk_tellu_db_nirps_ha.py'
 obj_mk_tellu_db.shortname = 'MKTELLDB'
 obj_mk_tellu_db.master = True
 obj_mk_tellu_db.instrument = __INSTRUMENT__
@@ -909,7 +902,7 @@ obj_mk_tellu_db.set_kwarg(**wavefile)
 # -----------------------------------------------------------------------------
 # obj_fit_tellu
 # -----------------------------------------------------------------------------
-obj_fit_tellu.name = 'obj_fit_tellu_spirou.py'
+obj_fit_tellu.name = 'obj_fit_tellu_nirps_ha.py'
 obj_fit_tellu.shortname = 'FTELLU'
 obj_fit_tellu.instrument = __INSTRUMENT__
 obj_fit_tellu.outputdir = 'reduced'
@@ -950,7 +943,7 @@ obj_fit_tellu.set_kwarg(**wavefile)
 # -----------------------------------------------------------------------------
 # obj_fit_tellu_db
 # -----------------------------------------------------------------------------
-obj_fit_tellu_db.name = 'obj_fit_tellu_db_spirou.py'
+obj_fit_tellu_db.name = 'obj_fit_tellu_db_nirps_ha.py'
 obj_fit_tellu_db.shortname = 'FTELLDB'
 obj_fit_tellu_db.master = True
 obj_fit_tellu_db.instrument = __INSTRUMENT__
@@ -983,7 +976,7 @@ obj_fit_tellu_db.set_kwarg(**wavefile)
 # -----------------------------------------------------------------------------
 # obj_mk_temp
 # -----------------------------------------------------------------------------
-obj_mk_template.name = 'obj_mk_template_spirou.py'
+obj_mk_template.name = 'obj_mk_template_nirps_ha.py'
 obj_mk_template.shortname = 'MKTEMP'
 obj_mk_template.instrument = __INSTRUMENT__
 obj_mk_template.outputdir = 'reduced'
@@ -1016,70 +1009,26 @@ obj_mk_template.set_kwarg(**plot)
 obj_mk_template.set_kwarg(**wavefile)
 
 # -----------------------------------------------------------------------------
-# pol_spirou
+# obj_spec_nirps_ha
 # -----------------------------------------------------------------------------
-pol_spirou.name = 'pol_spirou.py'
-pol_spirou.shortname = 'POLAR'
-pol_spirou.instrument = __INSTRUMENT__
-pol_spirou.outputdir = 'reduced'
-pol_spirou.inputdir = 'reduced'
-pol_spirou.inputtype = 'reduced'
-pol_spirou.extension = 'fits'
-pol_spirou.description = Help['FTELLU_DESC']
-pol_spirou.epilog = Help['FTELLU_EXAMPLE']
-pol_spirou.kind = 'recipe'
-pol_spirou.set_outputs(POL_DEG_FILE=sf.out_pol_deg,
-                       POL_NULL1=sf.out_pol_null1,
-                       POL_NULL2=sf.out_pol_null2,
-                       POL_STOKESI=sf.out_pol_stokesi,
-                       POL_LSD=sf.out_pol_lsd,
-                       S1DW_POL=sf.out_pol_s1dw,
-                       S1DV_POL=sf.out_pol_s1dv,
-                       S1DW_NULL1=sf.out_null1_s1dw,
-                       S1DV_NULL1=sf.out_null1_s1dv,
-                       S1DW_NULL2=sf.out_null2_s1dw,
-                       S1DV_NULL2=sf.out_null2_s1dv,
-                       S1DW_STOKESI=sf.out_stokesi_s1dw,
-                       S1DV_STOKESI=sf.out_stokesi_s1dv)
-pol_spirou.set_debug_plots('POLAR_CONTINUUM', 'POLAR_RESULTS',
-                           'POLAR_STOKES_I', 'POLAR_LSD',
-                           'EXTRACT_S1D', 'EXTRACT_S1D_WEIGHT')
-pol_spirou.set_summary_plots('SUM_EXTRACT_S1D')
-pol_spirou.set_arg(pos=0, **directory)
-pol_spirou.set_arg(name='files', dtype='files', pos='1+',
-                   files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
-                   filelogic='exclusive',
-                   helpstr=Help['FILES_HELP'] + Help['FTELLU_FILES_HELP'],
-                   limit=1)
-pol_spirou.set_kwarg(**blazefile)
-pol_spirou.set_kwarg(**plot)
-pol_spirou.set_kwarg(**wavefile)
-
-# -----------------------------------------------------------------------------
-# obj_spec_spirou
-# -----------------------------------------------------------------------------
-obj_spec_spirou.name = 'obj_spec_spirou.py'
-obj_spec_spirou.shortname = 'OBJ_SPEC'
-obj_spec_spirou.instrument = __INSTRUMENT__
-obj_spec_spirou.outputdir = 'reduced'
-obj_spec_spirou.inputdir = 'tmp'
-obj_spec_spirou.inputtype = 'reduced'
-obj_spec_spirou.extension = 'fits'
-obj_spec_spirou.description = ''
-obj_spec_spirou.epilog = ''
-obj_spec_spirou.kind = 'recipe'
-obj_spec_spirou.set_arg(pos=0, **directory)
-obj_spec_spirou.set_arg(name='files', dtype='files', pos='1+',
+obj_spec.name = 'obj_spec_nirps_ha.py'
+obj_spec.shortname = 'OBJ_SPEC'
+obj_spec.instrument = __INSTRUMENT__
+obj_spec.outputdir = 'reduced'
+obj_spec.inputdir = 'tmp'
+obj_spec.inputtype = 'reduced'
+obj_spec.extension = 'fits'
+obj_spec.description = ''
+obj_spec.epilog = ''
+obj_spec.kind = 'recipe'
+obj_spec.set_arg(pos=0, **directory)
+obj_spec.set_arg(name='files', dtype='files', pos='1+',
                         files=[sf.pp_file],
                         helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
                         limit=1)
-obj_spec_spirou.set_kwarg(**plot)
-obj_spec_spirou.set_kwarg(name='--cores', dtype=int, default=1,
+obj_spec.set_kwarg(**plot)
+obj_spec.set_kwarg(name='--cores', dtype=int, default=1,
                           helpstr='')
-
-# -----------------------------------------------------------------------------
-# obj_pol_spirou
-# -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
 # cal_exposure_meter
@@ -1091,12 +1040,12 @@ obj_spec_spirou.set_kwarg(name='--cores', dtype=int, default=1,
 
 
 # -----------------------------------------------------------------------------
-# visu_RAW_spirou
+# visu_RAW_nirps_ha
 # -----------------------------------------------------------------------------
 
 
 # -----------------------------------------------------------------------------
-# visu_E2DS_spirou
+# visu_E2DS_nirps_ha
 # -----------------------------------------------------------------------------
 
 
