@@ -35,7 +35,7 @@ Full tutorials
 - Database
 - Logger
 - Plotter
-
+- Git hub interface
 
 .. only:: html
 
