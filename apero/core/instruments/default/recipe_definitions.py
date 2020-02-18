@@ -120,7 +120,7 @@ explorer.description = Help['EXPLORER_DESCRIPTION']
 explorer.kind = 'tool'
 explorer.set_arg(pos=0, name='instrument', dtype='options',
                  helpstr=Help['EXPLORER_INST_HEPL'],
-                 options=['SPIROU', 'NIRPS'])
+                 options=Constants['DRS_INSTRUMENTS'])
 
 # -----------------------------------------------------------------------------
 # apero_listing.py
@@ -131,7 +131,7 @@ listing.description = Help['LISTING_DESC']
 listing.kind = 'tool'
 listing.set_arg(pos=0, name='instrument', dtype='options',
                 helpstr=Help['LISTING_HELP_INSTRUMENT'],
-                options=['SPIROU', 'NIRPS'])
+                options=Constants['DRS_INSTRUMENTS'])
 listing.set_kwarg(name='--nightname', dtype=str, default='',
                   helpstr=Help['LISTING_HELP_NIGHTNAME'])
 listing.set_kwarg(name='--kind', dtype=str, default='raw',
@@ -149,7 +149,7 @@ logstats.set_debug_plots('LOGSTATS_BAR')
 logstats.set_summary_plots()
 logstats.set_arg(pos=0, name='instrument', dtype='options',
                 helpstr=Help['LOGSTAT_HELP_INSTRUMENT'],
-                options=['SPIROU', 'NIRPS'])
+                options=Constants['DRS_INSTRUMENTS'])
 logstats.set_kwarg(name='--nightname', dtype=str, default='',
                   helpstr=Help['LOGSTAT_HELP_NIGHTNAME'])
 logstats.set_kwarg(name='--kind', dtype=str, default='red',
@@ -187,7 +187,7 @@ remake_db.description = Help['REMAKE_DESC']
 remake_db.kind = 'tool'
 remake_db.set_arg(pos=0, name='instrument', dtype='options',
                   helpstr=Help['REMAKE_HELP_INSTRUMENT'],
-                  options=['SPIROU', 'NIRPS'])
+                  options=Constants['DRS_INSTRUMENTS'])
 remake_db.set_kwarg(name='--kind', dtype='options',
                     options=['calibration', 'telluric'],
                     default_ref='REMAKE_DATABASE_DEFAULT',
@@ -203,7 +203,7 @@ processing.description = Help['PROCESS_DESCRIPTION']
 processing.kind = 'processing'
 processing.set_arg(pos=0, name='instrument', dtype='options',
                    helpstr=Help['PROCESS_INST_HELP'],
-                   options=['SPIROU', 'NIRPS'])
+                   options=Constants['DRS_INSTRUMENTS'])
 processing.set_arg(pos=1, name='runfile', dtype=str,
                    helpstr=Help['PROCESS_RUNFILE_HELP'])
 processing.set_kwarg(name='--nightname', dtype=str, default='None',
@@ -237,7 +237,8 @@ reset.instrument = __INSTRUMENT__
 reset.description = Help['RESET_DESCRIPTION']
 reset.kind = 'tool'
 reset.set_arg(pos=0, name='instrument', dtype='options',
-              helpstr=Help['RESET_INST_HELP'], options=['SPIROU', 'NIRPS'])
+              helpstr=Help['RESET_INST_HELP'],
+              options=Constants['DRS_INSTRUMENTS'])
 reset.set_kwarg(name='--log', dtype='bool', default=True,
                 helpstr=Help['RESET_LOG_HELP'])
 reset.set_kwarg(name='--warn', dtype='bool', default=True,
@@ -253,4 +254,4 @@ validate.description = Help['VALIDATE_DESCRIPTION']
 validate.kind = 'tool'
 validate.set_arg(pos=0, name='instrument', dtype='options',
                  helpstr=Help['VALIDATE_INST_HELP'],
-                 options=['SPIROU', 'NIRPS'])
+                 options=Constants['DRS_INSTRUMENTS'])
