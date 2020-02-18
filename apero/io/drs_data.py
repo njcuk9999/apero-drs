@@ -168,7 +168,7 @@ def load_full_flat_badpix(params, **kwargs):
         WLOG(params, '', TextEntry('40-012-00003', args=outf))
         return image
     except LoadException:
-        eargs = [filename, relfolder]
+        eargs = [filename, relfolder, func_name]
         WLOG(params, 'error', TextEntry('00-012-00001', args=eargs))
 
 
