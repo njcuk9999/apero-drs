@@ -35,6 +35,19 @@ CALIB_DB_FORCE_WAVESOL.value = False
 # =============================================================================
 # COMMON IMAGE SETTINGS
 # =============================================================================
+# Define the rotation of the pp files in relation to the raw files
+#     nrot = 0 -> same as input
+#     nrot = 1 -> 90deg counter-clock-wise
+#     nrot = 2 -> 180deg
+#     nrot = 3 -> 90deg clock-wise
+#     nrot = 4 -> flip top-bottom
+#     nrot = 5 -> flip top-bottom and rotate 90 deg counter-clock-wise
+#     nrot = 6 -> flip top-bottom and rotate 180 deg
+#     nrot = 7 -> flip top-bottom and rotate 90 deg clock-wise
+#     nrot >=8 -> performs a modulo 8 anyway
+RAW_TO_PP_ROTATION = RAW_TO_PP_ROTATION.copy(__NAME__)
+RAW_TO_PP_ROTATION.value = 3
+
 # Define the fibers
 FIBER_TYPES = FIBER_TYPES.copy(__NAME__)
 FIBER_TYPES.value = 'AB, A, B, C'
@@ -207,11 +220,6 @@ PP_CORRUPT_SNR_HOTPIX.value = 10
 # Defines the RMS threshold to also catch corrupt files
 PP_CORRUPT_RMS_THRES = PP_CORRUPT_RMS_THRES.copy(__NAME__)
 PP_CORRUPT_RMS_THRES.value = 0.15
-
-#   Define rotation angle (must be multiple of 90 degrees)
-#         (in degrees counter-clockwise direction)
-RAW_TO_PP_ROTATION = RAW_TO_PP_ROTATION.copy(__NAME__)
-RAW_TO_PP_ROTATION.value = -90
 
 # Define whether to skip preprocessed files that have already be processed
 SKIP_DONE_PP = SKIP_DONE_PP.copy(__NAME__)
