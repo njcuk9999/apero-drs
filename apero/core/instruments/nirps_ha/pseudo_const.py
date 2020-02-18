@@ -55,7 +55,6 @@ class PseudoConstants(DefaultConstants):
         module_name = 'apero.core.instruments.nirps_ha.recipe_definitions'
         return importlib.import_module(module_name)
 
-
     # =========================================================================
     # HEADER SETTINGS
     # =========================================================================
@@ -185,7 +184,7 @@ class PseudoConstants(DefaultConstants):
         :param fiber:
         :return:
         """
-        if fiber in [ 'A']:
+        if fiber in ['A']:
             return 'A'
         else:
             return 'B'
@@ -352,7 +351,6 @@ class PseudoConstants(DefaultConstants):
         return outputs
 
 
-
 # =============================================================================
 # Functions used by pseudo const (instrument specific)
 # =============================================================================
@@ -381,8 +379,8 @@ def get_mid_obs_time(params, header):
     func_name = __NAME__ + '.get_mid_obs_time()'
     kwmidobstime = params['KW_MID_OBS_TIME'][0]
     kwmidcomment = params['KW_MID_OBS_TIME'][2]
-    kwmidmethod = params['KW_BERV_OBSTIME_METHOD'][0]
-    methodcomment = params['KW_BERV_OBSTIME_METHOD'][2]
+    kwmidmethod = params['KW_MID_OBS_TIME_METHOD'][0]
+    methodcomment = params['KW_MID_OBS_TIME_METHOD'][2]
 
     timefmt = params.instances['KW_MID_OBS_TIME'].datatype
     timetype = params.instances['KW_MID_OBS_TIME'].dataformat
