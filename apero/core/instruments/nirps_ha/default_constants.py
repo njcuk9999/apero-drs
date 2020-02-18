@@ -35,6 +35,19 @@ CALIB_DB_FORCE_WAVESOL.value = False
 # =============================================================================
 # COMMON IMAGE SETTINGS
 # =============================================================================
+# Define the rotation of the pp files in relation to the raw files
+#     nrot = 0 -> same as input
+#     nrot = 1 -> 90deg counter-clock-wise
+#     nrot = 2 -> 180deg
+#     nrot = 3 -> 90deg clock-wise
+#     nrot = 4 -> flip top-bottom
+#     nrot = 5 -> flip top-bottom and rotate 90 deg counter-clock-wise
+#     nrot = 6 -> flip top-bottom and rotate 180 deg
+#     nrot = 7 -> flip top-bottom and rotate 90 deg clock-wise
+#     nrot >=8 -> performs a modulo 8 anyway
+RAW_TO_PP_ROTATION = RAW_TO_PP_ROTATION.copy(__NAME__)
+RAW_TO_PP_ROTATION.value = 5
+
 # Define the fibers
 FIBER_TYPES = FIBER_TYPES.copy(__NAME__)
 FIBER_TYPES.value = 'A, B'
@@ -123,37 +136,25 @@ OBJ_LIST_GAIA_PLX_LIM.value = 5
 #                    'FIBER_SET_NUM_FIBERS']
 
 #   Number of orders to skip at start of image
-FIBER_FIRST_ORDER_JUMP_AB = FIBER_FIRST_ORDER_JUMP_AB.copy(__NAME__)
 FIBER_FIRST_ORDER_JUMP_A = FIBER_FIRST_ORDER_JUMP_A.copy(__NAME__)
 FIBER_FIRST_ORDER_JUMP_B = FIBER_FIRST_ORDER_JUMP_B.copy(__NAME__)
-FIBER_FIRST_ORDER_JUMP_C = FIBER_FIRST_ORDER_JUMP_C.copy(__NAME__)
 # set values
-FIBER_FIRST_ORDER_JUMP_AB.value = 2
 FIBER_FIRST_ORDER_JUMP_A.value = 0
 FIBER_FIRST_ORDER_JUMP_B.value = 0
-FIBER_FIRST_ORDER_JUMP_C.value = 1
 
 #   Maximum number of order to use
-FIBER_MAX_NUM_ORDERS_AB = FIBER_MAX_NUM_ORDERS_AB.copy(__NAME__)
 FIBER_MAX_NUM_ORDERS_A = FIBER_MAX_NUM_ORDERS_A.copy(__NAME__)
 FIBER_MAX_NUM_ORDERS_B = FIBER_MAX_NUM_ORDERS_B.copy(__NAME__)
-FIBER_MAX_NUM_ORDERS_C = FIBER_MAX_NUM_ORDERS_C.copy(__NAME__)
 # set values
-FIBER_MAX_NUM_ORDERS_AB.value = 98
-FIBER_MAX_NUM_ORDERS_A.value = 49
-FIBER_MAX_NUM_ORDERS_B.value = 49
-FIBER_MAX_NUM_ORDERS_C.value = 49
+FIBER_MAX_NUM_ORDERS_A.value = 70
+FIBER_MAX_NUM_ORDERS_B.value = 70
 
 #   Number of fibers
-FIBER_SET_NUM_FIBERS_AB = FIBER_SET_NUM_FIBERS_AB.copy(__NAME__)
 FIBER_SET_NUM_FIBERS_A = FIBER_SET_NUM_FIBERS_A.copy(__NAME__)
 FIBER_SET_NUM_FIBERS_B = FIBER_SET_NUM_FIBERS_B.copy(__NAME__)
-FIBER_SET_NUM_FIBERS_C = FIBER_SET_NUM_FIBERS_C.copy(__NAME__)
 # set values
-FIBER_SET_NUM_FIBERS_AB.value = 2
 FIBER_SET_NUM_FIBERS_A.value = 1
 FIBER_SET_NUM_FIBERS_B.value = 1
-FIBER_SET_NUM_FIBERS_C.value = 1
 
 # =============================================================================
 # PRE-PROCESSSING SETTINGS
@@ -207,11 +208,6 @@ PP_CORRUPT_SNR_HOTPIX.value = 10
 # Defines the RMS threshold to also catch corrupt files
 PP_CORRUPT_RMS_THRES = PP_CORRUPT_RMS_THRES.copy(__NAME__)
 PP_CORRUPT_RMS_THRES.value = 0.15
-
-#   Define rotation angle (must be multiple of 90 degrees)
-#         (in degrees counter-clockwise direction)
-RAW_TO_PP_ROTATION = RAW_TO_PP_ROTATION.copy(__NAME__)
-RAW_TO_PP_ROTATION.value = -90
 
 # Define whether to skip preprocessed files that have already be processed
 SKIP_DONE_PP = SKIP_DONE_PP.copy(__NAME__)
@@ -295,12 +291,12 @@ DARK_MASTER_MED_SIZE.value = 4
 # =============================================================================
 #   Defines the full detector flat file (located in the data folder)
 BADPIX_FULL_FLAT = BADPIX_FULL_FLAT.copy(__NAME__)
-BADPIX_FULL_FLAT.value = 'detector_flat_full.fits'
+BADPIX_FULL_FLAT.value = 'QE_2000nm.fits'
 
 #   Percentile to normalise to when normalising and median filtering
 #      image [percentage]
 BADPIX_NORM_PERCENTILE = BADPIX_NORM_PERCENTILE.copy(__NAME__)
-BADPIX_NORM_PERCENTILE.value = 90.0
+BADPIX_NORM_PERCENTILE.value = 95.0
 
 #   Define the median image in the x dimension over a boxcar of this width
 BADPIX_FLAT_MED_WID = BADPIX_FLAT_MED_WID.copy(__NAME__)
@@ -381,7 +377,7 @@ LOC_CENTRAL_COLUMN.value = 2500
 
 #   Half spacing between orders
 LOC_HALF_ORDER_SPACING = LOC_HALF_ORDER_SPACING.copy(__NAME__)
-LOC_HALF_ORDER_SPACING.value = 45
+LOC_HALF_ORDER_SPACING.value = 300
 
 # Minimum amplitude to accept (in e-)
 LOC_MINPEAK_AMPLITUDE = LOC_MINPEAK_AMPLITUDE.copy(__NAME__)
@@ -397,11 +393,11 @@ LOC_CENT_POLY_DEG.value = 4
 
 #   Define the column separation for fitting orders
 LOC_COLUMN_SEP_FITTING = LOC_COLUMN_SEP_FITTING.copy(__NAME__)
-LOC_COLUMN_SEP_FITTING.value = 20
+LOC_COLUMN_SEP_FITTING.value = 7
 
 #   Definition of the extraction window size (half size)
 LOC_EXT_WINDOW_SIZE = LOC_EXT_WINDOW_SIZE.copy(__NAME__)
-LOC_EXT_WINDOW_SIZE.value = 15  # 20 # 40 # 12
+LOC_EXT_WINDOW_SIZE.value = 10
 
 #   Definition of the gap index in the selected area
 LOC_IMAGE_GAP = LOC_IMAGE_GAP.copy(__NAME__)
@@ -409,7 +405,7 @@ LOC_IMAGE_GAP.value = 0
 
 #   Define minimum width of order to be accepted
 LOC_ORDER_WIDTH_MIN = LOC_ORDER_WIDTH_MIN.copy(__NAME__)
-LOC_ORDER_WIDTH_MIN.value = 10  # 5
+LOC_ORDER_WIDTH_MIN.value = 2
 
 #   Define the noise multiplier threshold in order to accept an
 #       order center as usable i.e.
@@ -431,11 +427,11 @@ LOC_PTPORMS_CENT.value = 8.0
 
 #   Maximum rms for sigma-clip order fit (width)
 LOC_MAX_RMS_WID = LOC_MAX_RMS_WID.copy(__NAME__)
-LOC_MAX_RMS_WID.value = 1.0
+LOC_MAX_RMS_WID.value = 5.0
 
 #   Maximum fractional peak-to-peak for sigma-clip order fit (width)
 LOC_MAX_PTP_WID = LOC_MAX_PTP_WID.copy(__NAME__)
-LOC_MAX_PTP_WID.value = 10.0
+LOC_MAX_PTP_WID.value = 30.0
 
 #   Normalised amplitude threshold to accept pixels for background calculation
 LOC_BKGRD_THRESHOLD = LOC_BKGRD_THRESHOLD.copy(__NAME__)
