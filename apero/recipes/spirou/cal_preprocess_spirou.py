@@ -234,7 +234,7 @@ def __main__(recipe, params):
         outfile.add_hkey('KW_PPSHIFTY', value=shiftdy)
         # add mid observation time
         outfile.add_hkey('KW_MID_OBS_TIME', value=mid_obs_time.mjd)
-        outfile.add_hkey('KW_BERV_OBSTIME_METHOD', value=mid_obs_method)
+        outfile.add_hkey('KW_MID_OBSTIME_METHOD', value=mid_obs_method)
         # ------------------------------------------------------------------
         # copy data
         outfile.data = image
