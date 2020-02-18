@@ -6,7 +6,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>Known Issues &#8212; APERO 0.6.036 documentation</title>
+    <title>Known Issues &#8212; APERO 0.6.037 documentation</title>
     <link rel="stylesheet" href="../../_static/bizstyle.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../_static/apero.css" />
@@ -100,7 +100,7 @@
         <li class="right" >
           <a href="using_apero_default.html" title="Using APERO with SPIRou"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.6.036 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.6.037 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../general_guide.html" accesskey="U">General User documentation</a> &#187;</li> 
       </ul>
     </div>
@@ -149,20 +149,25 @@
   <div class="section" id="known-issues">
 <span id="id1"></span><h1>Known Issues<a class="headerlink" href="#known-issues" title="Permalink to this headline">¶</a></h1>
 <p>Currently known issues and problems with APERO.
-Last updated: 2020-01-07 (NJC).</p>
+Last updated: 2020-02-07 (NJC).</p>
 <div class="section" id="recipes">
 <h2>Recipes<a class="headerlink" href="#recipes" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>CCF still showing problems with noise - problem with wavelength solution?</p></li>
-<li><p>No exposure meter recipe (TODO)</p></li>
-<li><p>no uncertainties propagated in recipes</p></li>
+<li><p>s1d for FP_FP and HCONE_HCONE files does not have the updated wave solution
+as files are extracted before wave solution produced</p></li>
+<li><p>wave solution and loc solutions are never updated in headers once a new
+solution is present - should they be? should they be removed from headers?</p></li>
+<li><p>FP of fiber C is contaminating fiber A and B - Etienne has a solution, but
+far from being implemented yet</p></li>
+<li><p>CCF still showing problems –&gt; due to not weighting the orders, but cannot
+do this per file as must have the same weights</p></li>
+<li><p>BERV file gets locked - WHY?</p></li>
 </ul>
 </div>
 <div class="section" id="external">
 <h2>External<a class="headerlink" href="#external" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><p>barycorrpy requires astropy 2.0.16 and 3.2.3 to run (IERS table mirror links
-in older versions out of date - server offline)</p></li>
+<li><p>can’t use barycorrpy –&gt; update astropy (version 4.0) and barycorrpy (version 0.3))</p></li>
 </ul>
 <p><a class="reference internal" href="#known-issues"><span class="std std-ref">Back to top</span></a></p>
 </div>
@@ -186,7 +191,7 @@ in older versions out of date - server offline)</p></li>
         <li class="right" >
           <a href="using_apero_default.html" title="Using APERO with SPIRou"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.6.036 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.6.037 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../general_guide.html" >General User documentation</a> &#187;</li> 
       </ul>
     </div>

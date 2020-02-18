@@ -2,6 +2,24 @@ Changelog
 =========
 
 
+0.6.037 (2020-02-07)
+--------------------
+- Update python versions, yed graphs and update notes. [Neil Cook]
+- Update `readme/known_issues/todo`. [Neil Cook]
+- Update date/version/changelog/documentation. [Neil Cook]
+- `Core.core.drs_recipe.py` - add a pre-filter of table (so we are not
+  scanning all files every time) [Neil Cook]
+- `Core.instruments.spirou.recipe_definitions.py` - filelogic must be
+  exclusive for `mk_tellu`, `fit_tellu` and `pol_spirou` + update sequences
+  (only e2dsff not e2ds) [Neil Cook]
+- Documentation - add yed graphs. [Neil Cook]
+- Documentation.working - update python installation, code links. [Neil
+  Cook]
+- Documentation.output - update docs. [Neil Cook]
+- `Tools.module.drs_documentation.py` - update ssh host. [Neil Cook]
+- Update date/version/changelog/documentation. [Neil Cook]
+
+
 0.6.036 (2020-02-05)
 --------------------
 - `Plotting.latex.py` - must clean characters [ and ] - leads to error in
