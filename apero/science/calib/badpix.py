@@ -17,6 +17,7 @@ from scipy.ndimage import filters
 from apero import core
 from apero.core import constants
 from apero import locale
+from apero.core import math as mp
 from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.core.core import drs_database
@@ -253,6 +254,7 @@ def locate_bad_pixels_full(params, image, **kwargs):
     # get parameters from params/kwargs
     threshold = pcheck(params, 'BADPIX_FULL_THRESHOLD', 'threshold', kwargs,
                        func_name)
+    rotnum = pcheck(params, 'RAW_TO_PP_ROTATION', 'rotnum', kwargs, func_name)
     # get full flat
     mdata = drs_data.load_full_flat_badpix(params, **kwargs)
     # check if the shape of the image and the full flat match
@@ -260,8 +262,7 @@ def locate_bad_pixels_full(params, image, **kwargs):
         eargs = [mdata.shape, image.shape, func_name]
         WLOG(params, 'error', TextEntry('09-012-00001', args=eargs))
     # apply threshold
-    # mask = np.rot90(mdata, -1) < threshold
-    mask = np.abs(np.rot90(mdata, -1)-1) > threshold
+    mask = np.abs(mp.rot8(mdata, rotnum) - 1) > threshold
     # -------------------------------------------------------------------------
     # log results
     badpix_stats = (np.sum(mask) / np.array(mask).size) * 100
