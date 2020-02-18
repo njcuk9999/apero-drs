@@ -79,6 +79,8 @@ relativistic_waveshift = general.relativistic_waveshift
 
 robust_polyfit = general.robust_polyfit
 
+rot8 = general.rot8
+
 sinc = general.sinc
 
 sigfig = general.sigfig
