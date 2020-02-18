@@ -488,6 +488,35 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
     return continuum_val, xbin, ybin
 
 
+def rot8(image, nrotation):
+    """
+    Rotation of a 2d image with the 8 possible geometries. Rotation 0-3
+    do not flip the image, 4-7 perform a flip
+
+    nrot = 0 -> same as input
+    nrot = 1 -> 90deg counter-clock-wise
+    nrot = 2 -> 180deg
+    nrot = 3 -> 90deg clock-wise
+    nrot = 4 -> flip top-bottom
+    nrot = 5 -> flip top-bottom and rotate 90 deg counter-clock-wise
+    nrot = 6 -> flip top-bottom and rotate 180 deg
+    nrot = 7 -> flip top-bottom and rotate 90 deg clock-wise
+    nrot >=8 -> performs a modulo 8 anyway
+
+    :param image: input image
+    :param nrotation: integer between 0 and 7
+
+    :type image: np.ndarray
+    :type rotnum: int
+
+    :return: rotated and/or flipped image
+    """
+    # module 8 number
+    nrot = int(nrotation % 8)
+    # return the correctly rotated image
+    return np.rot90(image[::1-2*(nrot // 4)], nrot % 4)
+
+
 # =============================================================================
 # Define wave functions
 # =============================================================================
