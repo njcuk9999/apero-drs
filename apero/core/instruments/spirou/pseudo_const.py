@@ -55,7 +55,6 @@ class PseudoConstants(DefaultConstants):
         module_name = 'apero.core.instruments.spirou.recipe_definitions'
         return importlib.import_module(module_name)
 
-
     # =========================================================================
     # HEADER SETTINGS
     # =========================================================================
@@ -350,7 +349,6 @@ class PseudoConstants(DefaultConstants):
         return outputs
 
 
-
 # =============================================================================
 # Functions used by pseudo const (instrument specific)
 # =============================================================================
@@ -374,6 +372,7 @@ def get_trg_type(params, header):
     header[kwtrgtype] = (trg_type, kwtrgcomment)
     # return header
     return header
+
 
 def get_mid_obs_time(params, header):
     func_name = __NAME__ + '.get_mid_obs_time()'
