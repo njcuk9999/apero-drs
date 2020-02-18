@@ -292,6 +292,34 @@ CALIB_DB_FORCE_WAVESOL = Const('CALIB_DB_FORCE_WAVESOL', value=None,
 # COMMON IMAGE SETTINGS
 # =============================================================================
 cgroup = 'COMMON IMAGE SETTINGS'
+
+# Define the rotation of the pp files in relation to the raw files
+#     nrot = 0 -> same as input
+#     nrot = 1 -> 90deg counter-clock-wise
+#     nrot = 2 -> 180deg
+#     nrot = 3 -> 90deg clock-wise
+#     nrot = 4 -> flip top-bottom
+#     nrot = 5 -> flip top-bottom and rotate 90 deg counter-clock-wise
+#     nrot = 6 -> flip top-bottom and rotate 180 deg
+#     nrot = 7 -> flip top-bottom and rotate 90 deg clock-wise
+#     nrot >=8 -> performs a modulo 8 anyway
+RAW_TO_PP_ROTATION = Const('RAW_TO_PP_ROTATION', dtype=int, value=None,
+                           source=__NAME__, group=cgroup,
+                           options=[0, 1, 2, 3, 4, 5, 6, 7],
+                           description='Define the rotation of the pp files in '
+                                       'relation to the raw files, '
+                                       'nrot = 0 -> same as input, '
+                                       'nrot = 1 -> 90deg counter-clock-wise, '
+                                       'nrot = 2 -> 180deg, '
+                                       'nrot = 3 -> 90deg clock-wise,  '
+                                       'nrot = 4 -> flip top-bottom, '
+                                       'nrot = 5 -> flip top-bottom and rotate '
+                                       '90 deg counter-clock-wisenrot = 6 -> '
+                                       'flip top-bottom and rotate 180 deg, '
+                                       'nrot = 7 -> flip top-bottom and rotate '
+                                       '90 deg clock-wise, '
+                                       'nrot >=8 -> performs a modulo 8 anyway')
+
 # Define the fibers
 FIBER_TYPES = Const('FIBER_TYPES', dtype=str, value=None, source=__NAME__,
                     group=cgroup)
@@ -481,12 +509,6 @@ PP_CORRUPT_SNR_HOTPIX = Const('PP_CORRUPT_SNR_HOTPIX', value=None, dtype=float,
 # Defines the RMS threshold to also catch corrupt files
 PP_CORRUPT_RMS_THRES = Const('PP_CORRUPT_RMS_THRES', value=None, dtype=float,
                              minimum=0.0, source=__NAME__, group=cgroup)
-
-# Define rotation angle (must be multiple of 90 degrees)
-#       (in degrees counter-clockwise direction)
-RAW_TO_PP_ROTATION = Const('RAW_TO_PP_ROTATION', value=None, dtype=int,
-                           minimum=0.0, maximum=360.0, source=__NAME__,
-                           group=cgroup)
 
 # Define whether to skip preprocessed files that have already be processed
 SKIP_DONE_PP = Const('SKIP_DONE_PP', value=None, dtype=bool,
