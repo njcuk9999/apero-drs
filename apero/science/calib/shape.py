@@ -263,7 +263,7 @@ def get_linear_transform_params(params, recipe, image1, image2, **kwargs):
     # and that the image is not sheared or rotated
     lin_transform_vect = np.array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0])
     # find the fp peaks (via max neighbours) in image1
-    mask1 = _max_neighbour_mask(image1, maxn_percent, maxn_thres)
+    mask1 = max_neighbour_mask(image1, maxn_percent, maxn_thres)
     # copy image2
     image3 = np.array(image2)
     # print out initial conditions of linear transform vector
@@ -290,7 +290,7 @@ def get_linear_transform_params(params, recipe, image1, image2, **kwargs):
         if n_it > 0:
             image3 = ea_transform(params, image2, lin_transform_vect)
         # find the fp peaks (via max neighbours) in image2
-        mask2 = _max_neighbour_mask(image3, maxn_percent, maxn_thres)
+        mask2 = max_neighbour_mask(image3, maxn_percent, maxn_thres)
         # we search in +- wdd to find the maximum number of matching
         # bright peaks. We first explore a big +-11 pixel range, but
         # afterward we can scan a much smaller region
@@ -333,8 +333,8 @@ def get_linear_transform_params(params, recipe, image1, image2, **kwargs):
         xpeak2 = xpeak2[keep]
         ypeak2 = ypeak2[keep]
         # do a fit to these positions in both images to get the peak centers
-        x1, y1 = _xy_acc_peak(xpeak1, ypeak1, image1)
-        x2, y2 = _xy_acc_peak(xpeak2, ypeak2, image3)
+        x1, y1 = xy_acc_peak(xpeak1, ypeak1, image1)
+        x2, y2 = xy_acc_peak(xpeak2, ypeak2, image3)
         # we loop on the linear model converting x1 y1 to x2 y2
         nbad, ampsx, ampsy = 1, np.zeros(3), np.zeros(3)
 
@@ -801,7 +801,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
             pargs = [params, sp_fp, sp_hc, order_num, hcdata,
                      poly_wave_ref, une_lines, poly_cavity]
 
-            out = _get_offset_sp(*pargs)
+            out = get_offset_sp(*pargs)
             # get and save offest outputs into lists
             corr_dx_from_fp[order_num] = out[0]
             xpeak2.append(out[1])
@@ -1532,7 +1532,7 @@ def write_shape_local_summary(recipe, params, qc_params, it, transform):
 # =============================================================================
 # Define worker functions
 # =============================================================================
-def _max_neighbour_mask(image, percent, thres):
+def max_neighbour_mask(image, percent, thres):
     # construct a cube with 8 slices that contain the 8 neighbours
     #   of any pixel. This is used to find pixels brighter that their
     #   neighbours
@@ -1561,7 +1561,7 @@ def _max_neighbour_mask(image, percent, thres):
     return mask
 
 
-def _xy_acc_peak(xpeak, ypeak, im):
+def xy_acc_peak(xpeak, ypeak, im):
     # black magic arithmetic for replace a 2nd order polynomial by
     # some arithmetic directly on pixel values to find
     # the maxima in x and y for each peak
@@ -1601,10 +1601,10 @@ def _xy_acc_peak(xpeak, ypeak, im):
     return x1, y1
 
 
-def _get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata,
+def get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata,
                    poly_wave_ref, une_lines, poly_cavity,
                    **kwargs):
-    func_name = __NAME__ + '._get_offset_sp'
+    func_name = __NAME__ + '.get_offset_sp'
     # get constants from params/kwargs
     xoffset = pcheck(params, 'SHAPEOFFSET_XOFFSET', 'xoffset', kwargs,
                      func_name)
