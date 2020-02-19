@@ -109,8 +109,9 @@
   <h3><a href="../../index.html">Table of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">TODO</a><ul>
-<li><a class="reference internal" href="#in-progress">In progress</a></li>
-<li><a class="reference internal" href="#as-soon-as-possible">As soon as possible</a></li>
+<li><a class="reference internal" href="#apero">APERO</a></li>
+<li><a class="reference internal" href="#spirou-specific">SPIRou specific</a></li>
+<li><a class="reference internal" href="#nirps-specific">NIRPS specific</a></li>
 </ul>
 </li>
 </ul>
@@ -149,45 +150,100 @@
   <div class="section" id="todo">
 <span id="id1"></span><h1>TODO<a class="headerlink" href="#todo" title="Permalink to this headline">¶</a></h1>
 <p>This is the currently list of items that need to still be completed.
-Last updated: 2020-02-07 (NJC).</p>
-<div class="section" id="in-progress">
-<h2>In progress<a class="headerlink" href="#in-progress" title="Permalink to this headline">¶</a></h2>
+Last updated: 2020-02-19 (NJC).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>bullet points are not ordered</p>
+</div>
+<div class="section" id="apero">
+<h2>APERO<a class="headerlink" href="#apero" title="Permalink to this headline">¶</a></h2>
+<p>For all instruments / in general.</p>
+<p>High priority:</p>
 <ul class="simple">
-<li><p>add all functions doc strings</p></li>
 <li><p>add in <cite>dark_fp</cite> correction</p></li>
 <li><p>fix headers for having bad wave and loc keys (remove?)</p></li>
 <li><p>fix s1d for <cite>FP_FP</cite> and <cite>HC_HC</cite> they need updating after wave sol produced</p></li>
-<li><p>finish <cite>obj_spec_spirou</cite> and <cite>obj_pol_spirou</cite> [Do not use them now]</p></li>
-<li><p>output files like CFHT (e.fits, p.fits, v.fits etc)</p></li>
-<li><p>go through all summary plots and decide which plots, write figure captions,
-improve plots, write quality control description, decide which header keys to print</p></li>
-<li><p>display func for all functions</p></li>
-<li><p>add doc strings to all functions, descriptions to all constants, review all
-constant min/max/dtypes</p></li>
+<li><p>add rv from header for ccf</p></li>
+<li><p>add version for instruments (separate from apero version which will change with any update)</p></li>
+<li><p>code to get data sets from rsync</p></li>
+</ul>
+<p>Low priority:</p>
+<ul class="simple">
+<li><p>go through all summary plots and decide which plots, write figure captions, improve plots, write quality control description, decide which header keys to print</p></li>
+<li><p>add all functions doc strings</p></li>
+<li><p>write documentation</p>
+<ul>
+<li><p>code to write constants/keywords</p></li>
+<li><p>write doc strings</p></li>
+<li><p>autodoc with sphinx once doc strings are in</p></li>
+<li><p>assign people to write constant descriptions</p></li>
+<li><p>add authors to constants</p></li>
+</ul>
+</li>
 <li><p>add more debug printouts</p></li>
 <li><p>deal with all python warnings</p></li>
-<li><p>write documentation</p></li>
-</ul>
-</div>
-<div class="section" id="as-soon-as-possible">
-<h2>As soon as possible<a class="headerlink" href="#as-soon-as-possible" title="Permalink to this headline">¶</a></h2>
-<ul class="simple">
-<li><p>add <cite>plot== 3</cite> (all debug plots shown) and <cite>plot==4</cite> (all debug plots saved) modes</p></li>
-<li><p>move <cite>object_query_list.fits</cite> to <cite>calibDB</cite></p></li>
-<li><p>write  paper</p></li>
-<li><p>setup instrument tool</p></li>
-<li><p>add exposure meter recipes (<cite>cal_exposuremeter_spirou.py</cite>)</p></li>
-<li><p>Windows compatibility</p></li>
-<li><p>output in form required for CFHT/CADC (discussion required)</p></li>
-<li><p>co-production of e2ds and e2dsff</p></li>
-<li><p>uncertainty propagation</p></li>
+<li><p>display func for all functions</p></li>
+<li><p>add doc strings to all functions, descriptions to all constants, review all constant min/max/dtypes</p></li>
 <li><p>proper SNR calculation</p></li>
-<li><p>add <cite>cal_drift</cite> recipe?</p></li>
-<li><p>NIRPS integration</p></li>
-<li><p>uncertainty propagation</p></li>
-<li><p>data separate download from DRS</p></li>
+<li><p>defining night_name in run.ini scripts does not work</p></li>
+<li><p>add option to set template for mk_tellu and fit_tellu</p></li>
+<li><p>add flag for parellel / non parellel mode - can disable locking then?</p></li>
+<li><p>named break points</p></li>
+<li><p>add trigger option to drs where processing script stops when it cannot get any further with current set of files</p></li>
+</ul>
+<p>Later:</p>
+<ul class="simple">
+<li><p>CCF wrapper for weighting?</p></li>
+<li><p>persistence correction</p></li>
 <li><p>add EA mask generation from templates</p></li>
 <li><p>add EA template matching</p></li>
+<li><p>uncertainty propagation</p></li>
+<li><p>data separate download from DRS</p></li>
+<li><p>add <cite>plot== 3</cite> (all debug plots shown) and <cite>plot==4</cite> (all debug plots saved) modes</p></li>
+<li><p>move <cite>object_query_list.fits</cite> to <cite>calibDB</cite></p></li>
+<li><p>co-production of e2ds and e2dsff still needed?</p></li>
+<li><p>write  paper</p></li>
+<li><p>setup instrument tool</p></li>
+<li><p>Windows compatibility</p></li>
+<li><p>add <cite>cal_drift</cite> recipe?</p></li>
+</ul>
+</div>
+<div class="section" id="spirou-specific">
+<h2>SPIRou specific<a class="headerlink" href="#spirou-specific" title="Permalink to this headline">¶</a></h2>
+<p>High priority:</p>
+<ul class="simple">
+<li><p>trigger implementation / interface with drs</p></li>
+<li><p>add exposure meter recipes (<cite>cal_exposuremeter_spirou.py</cite>)</p></li>
+</ul>
+<p>Low priority:</p>
+<ul class="simple">
+<li><p>output files like CFHT (e.fits, p.fits, v.fits etc)</p></li>
+<li><p>finish <cite>obj_spec_spirou</cite> and <cite>obj_pol_spirou</cite> [Do not use them now]</p></li>
+<li><p>output in form required for CFHT/CADC (discussion required)</p></li>
+</ul>
+<p>Later:</p>
+<ul class="simple">
+<li><p>None</p></li>
+</ul>
+</div>
+<div class="section" id="nirps-specific">
+<h2>NIRPS specific<a class="headerlink" href="#nirps-specific" title="Permalink to this headline">¶</a></h2>
+<p>High priority:</p>
+<ul class="simple">
+<li><p>convert cal_shape_master</p></li>
+<li><p>convert cal_shape</p></li>
+<li><p>convert cal_flat</p></li>
+<li><p>convert cal_extract</p></li>
+</ul>
+<p>Low priority:</p>
+<ul class="simple">
+<li><p>convert obj_mk_tellu</p></li>
+<li><p>convert obj_fit_tellu</p></li>
+<li><p>convert obj_mk_template</p></li>
+</ul>
+<p>Later:</p>
+<ul class="simple">
+<li><p>T.B.D.</p></li>
 </ul>
 <p><a class="reference internal" href="#todo"><span class="std std-ref">Back to top</span></a></p>
 </div>

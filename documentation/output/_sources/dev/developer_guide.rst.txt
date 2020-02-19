@@ -36,6 +36,7 @@ Full tutorials
 - Logger
 - Plotter
 - Git hub interface
+- Writing documentation
 
 ------------------------------
 Other
