@@ -411,19 +411,19 @@ tellu_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
 
 out_dark_int = drs_finput('DARKI', KW_OUTPUT='DARKI',
                           filetype='.fits', intype=pp_dark_dark_int,
-                          suffix='darki',
+                          suffix='_darki',
                           outfunc=out.calib_file,
                           dbname='calibration', dbkey='DARKI')
 
 out_dark_tel = drs_finput('DARKT', KW_OUTPUT='DARKT',
                           filetype='.fits', intype=pp_dark_dark_tel,
-                          suffix='darkt',
+                          suffix='_darkt',
                           outfunc=out.calib_file,
                           dbname='calibration', dbkey='DARKT')
 
 out_dark_sky = drs_finput('DARKS', KW_OUTPUT='DARKS',
                           filetype='.fits', intype=pp_dark_dark_sky,
-                          suffix='darks',
+                          suffix='_darks',
                           outfunc=out.calib_file,
                           dbname='calibration', dbkey='DARKS')
 
