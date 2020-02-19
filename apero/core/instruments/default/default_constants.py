@@ -728,7 +728,8 @@ LOC_WIDTH_POLY_DEG = Const('LOC_WIDTH_POLY_DEG', value=None, dtype=int,
 LOC_CENT_POLY_DEG = Const('LOC_CENT_POLY_DEG', value=None, dtype=int,
                           source=__NAME__, minimum=1, group=cgroup)
 
-# Define the column separation for fitting orders
+#   Define the jump size when finding the order position
+#       (jumps in steps of this from the center outwards)
 LOC_COLUMN_SEP_FITTING = Const('LOC_COLUMN_SEP_FITTING', value=None, dtype=int,
                                source=__NAME__, minimum=1, group=cgroup)
 

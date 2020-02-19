@@ -146,8 +146,8 @@ FIBER_FIRST_ORDER_JUMP_B.value = 0
 FIBER_MAX_NUM_ORDERS_A = FIBER_MAX_NUM_ORDERS_A.copy(__NAME__)
 FIBER_MAX_NUM_ORDERS_B = FIBER_MAX_NUM_ORDERS_B.copy(__NAME__)
 # set values
-FIBER_MAX_NUM_ORDERS_A.value = 70
-FIBER_MAX_NUM_ORDERS_B.value = 70
+FIBER_MAX_NUM_ORDERS_A.value = 69
+FIBER_MAX_NUM_ORDERS_B.value = 69
 
 #   Number of fibers
 FIBER_SET_NUM_FIBERS_A = FIBER_SET_NUM_FIBERS_A.copy(__NAME__)
@@ -373,7 +373,7 @@ LOC_START_ROW_OFFSET.value = 0
 
 #   Definition of the central column for use in localisation
 LOC_CENTRAL_COLUMN = LOC_CENTRAL_COLUMN.copy(__NAME__)
-LOC_CENTRAL_COLUMN.value = 2500
+LOC_CENTRAL_COLUMN.value = 2400
 
 #   Half spacing between orders
 LOC_HALF_ORDER_SPACING = LOC_HALF_ORDER_SPACING.copy(__NAME__)
@@ -389,11 +389,12 @@ LOC_WIDTH_POLY_DEG.value = 4
 
 #   Order of polynomial to fit for positions
 LOC_CENT_POLY_DEG = LOC_CENT_POLY_DEG.copy(__NAME__)
-LOC_CENT_POLY_DEG.value = 4
+LOC_CENT_POLY_DEG.value = 6
 
-#   Define the column separation for fitting orders
+#   Define the jump size when finding the order position
+#       (jumps in steps of this from the center outwards)
 LOC_COLUMN_SEP_FITTING = LOC_COLUMN_SEP_FITTING.copy(__NAME__)
-LOC_COLUMN_SEP_FITTING.value = 7
+LOC_COLUMN_SEP_FITTING.value = 5
 
 #   Definition of the extraction window size (half size)
 LOC_EXT_WINDOW_SIZE = LOC_EXT_WINDOW_SIZE.copy(__NAME__)
@@ -507,16 +508,16 @@ FP_MASTER_MATCH_TIME.value = 2
 #   Define the percentile at which the FPs are normalised when getting the
 #      fp master in shape master
 FP_MASTER_PERCENT_THRES = FP_MASTER_PERCENT_THRES.copy(__NAME__)
-FP_MASTER_PERCENT_THRES.value = 90.0
+FP_MASTER_PERCENT_THRES.value = 95.0
 
 #  Define the largest standard deviation allowed for the shift in
 #     x or y when doing the shape master fp linear transform
 SHAPE_QC_LTRANS_RES_THRES = SHAPE_QC_LTRANS_RES_THRES.copy(__NAME__)
-SHAPE_QC_LTRANS_RES_THRES.value = 0.1
+SHAPE_QC_LTRANS_RES_THRES.value = 0.22
 
 #  Define the percentile which defines a true FP peak [0-100]
 SHAPE_MASTER_VALIDFP_PERCENTILE = SHAPE_MASTER_VALIDFP_PERCENTILE.copy(__NAME__)
-SHAPE_MASTER_VALIDFP_PERCENTILE.value = 80
+SHAPE_MASTER_VALIDFP_PERCENTILE.value = 95
 
 #  Define the fractional flux an FP much have compared to its neighbours
 SHAPE_MASTER_VALIDFP_THRESHOLD = SHAPE_MASTER_VALIDFP_THRESHOLD.copy(__NAME__)
@@ -541,7 +542,7 @@ SHAPE_FP_MASTER_MIN_IN_GROUP.value = 3
 #  Define which fiber should be used for fiber-dependent calibrations in
 #     shape master
 SHAPE_MASTER_FIBER = SHAPE_MASTER_FIBER.copy(__NAME__)
-SHAPE_MASTER_FIBER.value = 'AB'
+SHAPE_MASTER_FIBER.value = 'A'
 
 # The number of iterations to run the shape finding out to
 SHAPE_NUM_ITERATIONS = SHAPE_NUM_ITERATIONS.copy(__NAME__)

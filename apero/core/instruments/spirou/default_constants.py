@@ -403,7 +403,8 @@ LOC_WIDTH_POLY_DEG.value = 4
 LOC_CENT_POLY_DEG = LOC_CENT_POLY_DEG.copy(__NAME__)
 LOC_CENT_POLY_DEG.value = 4
 
-#   Define the column separation for fitting orders
+#   Define the jump size when finding the order position
+#       (jumps in steps of this from the center outwards)
 LOC_COLUMN_SEP_FITTING = LOC_COLUMN_SEP_FITTING.copy(__NAME__)
 LOC_COLUMN_SEP_FITTING.value = 20
 
