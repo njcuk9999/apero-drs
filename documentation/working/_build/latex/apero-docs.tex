@@ -130,7 +130,7 @@
     
 
 \title{APERO Documentation}
-\date{Feb 18, 2020}
+\date{Feb 19, 2020}
 \release{0.6.037}
 \author{Neil Cook}
 \newcommand{\sphinxlogo}{\sphinxincludegraphics{apero_logo.png}\par}
@@ -460,14 +460,19 @@ can’t use barycorrpy \textendash{}\textgreater{} update astropy (version 4.0) 
 \section{TODO}
 \label{\detokenize{user/general/todo:todo}}\label{\detokenize{user/general/todo:id1}}\label{\detokenize{user/general/todo::doc}}
 This is the currently list of items that need to still be completed.
-Last updated: 2020\sphinxhyphen{}02\sphinxhyphen{}07 (NJC).
+Last updated: 2020\sphinxhyphen{}02\sphinxhyphen{}19 (NJC).
+
+\begin{sphinxadmonition}{note}{Note:}
+bullet points are not ordered
+\end{sphinxadmonition}
 
 
-\subsection{In progress}
-\label{\detokenize{user/general/todo:in-progress}}\begin{itemize}
-\item {} 
-add all functions doc strings
+\subsection{APERO}
+\label{\detokenize{user/general/todo:apero}}
+For all instruments / in general.
 
+High priority:
+\begin{itemize}
 \item {} 
 add in \sphinxtitleref{dark\_fp} correction
 
@@ -478,21 +483,43 @@ fix headers for having bad wave and loc keys (remove?)
 fix s1d for \sphinxtitleref{FP\_FP} and \sphinxtitleref{HC\_HC} they need updating after wave sol produced
 
 \item {} 
-finish \sphinxtitleref{obj\_spec\_spirou} and \sphinxtitleref{obj\_pol\_spirou} {[}Do not use them now{]}
+add rv from header for ccf
 
 \item {} 
-output files like CFHT (e.fits, p.fits, v.fits etc)
+add version for instruments (separate from apero version which will change with any update)
 
 \item {} 
-go through all summary plots and decide which plots, write figure captions,
-improve plots, write quality control description, decide which header keys to print
+code to get data sets from rsync
+
+\end{itemize}
+
+Low priority:
+\begin{itemize}
+\item {} 
+go through all summary plots and decide which plots, write figure captions, improve plots, write quality control description, decide which header keys to print
 
 \item {} 
-display func for all functions
+add all functions doc strings
 
 \item {} 
-add doc strings to all functions, descriptions to all constants, review all
-constant min/max/dtypes
+write documentation
+\begin{itemize}
+\item {} 
+code to write constants/keywords
+
+\item {} 
+write doc strings
+
+\item {} 
+autodoc with sphinx once doc strings are in
+
+\item {} 
+assign people to write constant descriptions
+
+\item {} 
+add authors to constants
+
+\end{itemize}
 
 \item {} 
 add more debug printouts
@@ -501,48 +528,44 @@ add more debug printouts
 deal with all python warnings
 
 \item {} 
-write documentation
-
-\end{itemize}
-
-
-\subsection{As soon as possible}
-\label{\detokenize{user/general/todo:as-soon-as-possible}}\begin{itemize}
-\item {} 
-add \sphinxtitleref{plot== 3} (all debug plots shown) and \sphinxtitleref{plot==4} (all debug plots saved) modes
+display func for all functions
 
 \item {} 
-move \sphinxtitleref{object\_query\_list.fits} to \sphinxtitleref{calibDB}
-
-\item {} 
-write  paper
-
-\item {} 
-setup instrument tool
-
-\item {} 
-add exposure meter recipes (\sphinxtitleref{cal\_exposuremeter\_spirou.py})
-
-\item {} 
-Windows compatibility
-
-\item {} 
-output in form required for CFHT/CADC (discussion required)
-
-\item {} 
-co\sphinxhyphen{}production of e2ds and e2dsff
-
-\item {} 
-uncertainty propagation
+add doc strings to all functions, descriptions to all constants, review all constant min/max/dtypes
 
 \item {} 
 proper SNR calculation
 
 \item {} 
-add \sphinxtitleref{cal\_drift} recipe?
+defining night\_name in run.ini scripts does not work
 
 \item {} 
-NIRPS integration
+add option to set template for mk\_tellu and fit\_tellu
+
+\item {} 
+add flag for parellel / non parellel mode \sphinxhyphen{} can disable locking then?
+
+\item {} 
+named break points
+
+\item {} 
+add trigger option to drs where processing script stops when it cannot get any further with current set of files
+
+\end{itemize}
+
+Later:
+\begin{itemize}
+\item {} 
+CCF wrapper for weighting?
+
+\item {} 
+persistence correction
+
+\item {} 
+add EA mask generation from templates
+
+\item {} 
+add EA template matching
 
 \item {} 
 uncertainty propagation
@@ -551,10 +574,97 @@ uncertainty propagation
 data separate download from DRS
 
 \item {} 
-add EA mask generation from templates
+add \sphinxtitleref{plot== 3} (all debug plots shown) and \sphinxtitleref{plot==4} (all debug plots saved) modes
 
 \item {} 
-add EA template matching
+move \sphinxtitleref{object\_query\_list.fits} to \sphinxtitleref{calibDB}
+
+\item {} 
+co\sphinxhyphen{}production of e2ds and e2dsff still needed?
+
+\item {} 
+write  paper
+
+\item {} 
+setup instrument tool
+
+\item {} 
+Windows compatibility
+
+\item {} 
+add \sphinxtitleref{cal\_drift} recipe?
+
+\end{itemize}
+
+
+\subsection{SPIRou specific}
+\label{\detokenize{user/general/todo:spirou-specific}}
+High priority:
+\begin{itemize}
+\item {} 
+trigger implementation / interface with drs
+
+\item {} 
+add exposure meter recipes (\sphinxtitleref{cal\_exposuremeter\_spirou.py})
+
+\end{itemize}
+
+Low priority:
+\begin{itemize}
+\item {} 
+output files like CFHT (e.fits, p.fits, v.fits etc)
+
+\item {} 
+finish \sphinxtitleref{obj\_spec\_spirou} and \sphinxtitleref{obj\_pol\_spirou} {[}Do not use them now{]}
+
+\item {} 
+output in form required for CFHT/CADC (discussion required)
+
+\end{itemize}
+
+Later:
+\begin{itemize}
+\item {} 
+None
+
+\end{itemize}
+
+
+\subsection{NIRPS specific}
+\label{\detokenize{user/general/todo:nirps-specific}}
+High priority:
+\begin{itemize}
+\item {} 
+convert cal\_shape\_master
+
+\item {} 
+convert cal\_shape
+
+\item {} 
+convert cal\_flat
+
+\item {} 
+convert cal\_extract
+
+\end{itemize}
+
+Low priority:
+\begin{itemize}
+\item {} 
+convert obj\_mk\_tellu
+
+\item {} 
+convert obj\_fit\_tellu
+
+\item {} 
+convert obj\_mk\_template
+
+\end{itemize}
+
+Later:
+\begin{itemize}
+\item {} 
+T.B.D.
 
 \end{itemize}
 
@@ -640,6 +750,9 @@ Plotter
 
 \item {} 
 Git hub interface
+
+\item {} 
+Writing documentation
 
 \end{itemize}
 
