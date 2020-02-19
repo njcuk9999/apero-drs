@@ -13,6 +13,7 @@ import pkg_resources
 import numpy as np
 from astropy import units as uu
 import os
+import shutil
 
 from apero.core import constants
 from apero.core import math as mp
@@ -205,6 +206,25 @@ def makedirs(params, path):
         except Exception as e:
             eargs = [path, type(e), e, func_name]
             WLOG(params, 'error', TextEntry('01-010-00002', args=eargs))
+
+
+def copytree(src, dst):
+    for root, dirs, files in os.walk(src):
+        # out root
+        outroot = root.replace(src, dst)
+        # deal with directory not existing
+        for directory in dirs:
+            dirpath = os.path.join(outroot, directory)
+            if not os.path.exists(dirpath):
+                os.mkdir(dirpath)
+        # deal with files
+        for filename in files:
+            # get input file path
+            infile = os.path.join(root, filename)
+            outfile = os.path.join(outroot, filename)
+            # copy file
+            shutil.copy(infile, outfile)
+
 
 
 # =============================================================================
