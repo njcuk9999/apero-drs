@@ -11,12 +11,11 @@ Created on 2020-01-07 at 14:59
 """
 import os
 import shutil
-from distutils.dir_util import copy_tree
 
 from apero import core
 from apero.core import constants
 from apero import locale
-
+from apero.io import drs_path
 
 # =============================================================================
 # Define variables
@@ -123,7 +122,7 @@ def compile_docs(params):
         WLOG(params, '', 'Copying html files')
         os.system('rm -rf {0}/*'.format(out_dir))
         # copy
-        copy_tree(html_dir, out_dir)
+        drs_path.copytree(html_dir, out_dir)
         # ------------------------------------------------------------------
         # copy pdf (latex) file
         # TODO: Move to language DB
