@@ -661,10 +661,12 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     e2dsfile.add_hkey('KW_CDBSHAPEDY', value=shapeyfile)
     e2dsfile.add_hkey('KW_CDBFLAT', value=flat_file)
     e2dsfile.add_hkey('KW_CDBBLAZE', value=blaze_file)
-    e2dsfile.add_hkey('KW_CDBTHERMAL', value=eprops['THERMALFILE'])
+    if 'THERMALFILE' in eprops:
+        e2dsfile.add_hkey('KW_CDBTHERMAL', value=eprops['THERMALFILE'])
     e2dsfile.add_hkey('KW_CDBWAVE', value=wprops['WAVEFILE'])
     # additional calibration keys
-    e2dsfile.add_hkey('KW_C_FTYPE', value=eprops['FIBERTYPE'])
+    if 'FIBERTYPE' in eprops:
+        e2dsfile.add_hkey('KW_C_FTYPE', value=eprops['FIBERTYPE'])
     # ----------------------------------------------------------------------
     # add qc parameters
     e2dsfile.add_qckeys(qc_params)
