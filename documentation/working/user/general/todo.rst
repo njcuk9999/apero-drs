@@ -18,6 +18,7 @@ For all instruments / in general.
 
 High priority:
 
+* add a version for SPIRou and for NIRPS (but keep the rolling version for APERO)
 * add in `dark_fp` correction
 * fix headers for having bad wave and loc keys (remove?)
 * fix s1d for `FP_FP` and `HC_HC` they need updating after wave sol produced
