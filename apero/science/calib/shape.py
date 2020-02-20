@@ -1216,8 +1216,18 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     # add output tag
     outfile1.add_hkey('KW_OUTPUT', value=outfile1.name)
     # add input files (and deal with combining or not combining)
-    outfile1.add_hkey_1d('KW_INFILE1', values=rawhcfiles, dim1name='hcfiles')
-    outfile1.add_hkey_1d('KW_INFILE2', values=rawfpfiles, dim1name='fpfiles')
+    # deal with not having hc or fp files
+    if hcfile is None:
+        outfile1.add_hkey_1d('KW_INFILE1', values=rawfpfiles,
+                             dim1name='fpfiles')
+    elif fpfile is None:
+        outfile1.add_hkey_1d('KW_INFILE1', values=rawhcfiles,
+                             dim1name='hcfiles')
+    else:
+        outfile1.add_hkey_1d('KW_INFILE1', values=rawhcfiles,
+                             dim1name='hcfiles')
+        outfile1.add_hkey_1d('KW_INFILE2', values=rawfpfiles,
+                             dim1name='fpfiles')
     # add the calibration files use
     outfile1 = general.add_calibs_to_header(outfile1, fpprops)
     # add qc parameters
@@ -1310,42 +1320,46 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         # ------------------------------------------------------------------
         # for hc files copy over the fp parameters with the hc parameters
         # ------------------------------------------------------------------
-        # in file
-        debugfile3 = recipe.outputs['SHAPE_IN_HC_FILE'].newcopy(recipe=recipe)
-        debugfile3.construct_filename(params, infile=hcfile)
-        debugfile3.copy_original_keys(hcfile)
-        # add version
-        debugfile3.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-        # add dates
-        debugfile3.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-        debugfile3.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-        # add process id
-        debugfile3.add_hkey('KW_PID', value=params['PID'])
-        # add output tag
-        debugfile3.add_hkey('KW_OUTPUT', value=debugfile3.name)
-        # add input files (and deal with combining or not combining)
-        debugfile3.add_hkey_1d('KW_INFILE1', values=rawhcfiles,
-                               dim1name='hcfiles')
-        debugfile3.add_hkey_1d('KW_INFILE2', values=rawfpfiles,
-                               dim1name='fpfiles')
-        # add the calibration files use
-        debugfile3 = general.add_calibs_to_header(debugfile3, fpprops)
-        # add qc parameters
-        debugfile3.add_qckeys(qc_params)
-        # add data
-        debugfile3.data = hcimage
-        debugfile3.write_multi(data_list=[fp_table])
-        # add to output files (for indexing)
-        recipe.add_output_file(debugfile3)
-        # out file
-        debugfile4 = recipe.outputs['SHAPE_OUT_HC_FILE'].newcopy(recipe=recipe)
-        debugfile4.construct_filename(params, infile=hcfile)
-        debugfile4.copy_hdict(debugfile4)
-        debugfile4.add_hkey('KW_OUTPUT', value=debugfile4.name)
-        debugfile4.data = hcimage2
-        debugfile4.write_multi(data_list=[fp_table])
-        # add to output files (for indexing)
-        recipe.add_output_file(debugfile4)
+        if 'SHAPE_IN_HC_FILE' in recipe.outputs:
+            # in file
+            shape_in_hc_file = recipe.outputs['SHAPE_IN_HC_FILE']
+            debugfile3 = shape_in_hc_file.newcopy(recipe=recipe)
+            debugfile3.construct_filename(params, infile=hcfile)
+            debugfile3.copy_original_keys(hcfile)
+            # add version
+            debugfile3.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+            # add dates
+            debugfile3.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+            debugfile3.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+            # add process id
+            debugfile3.add_hkey('KW_PID', value=params['PID'])
+            # add output tag
+            debugfile3.add_hkey('KW_OUTPUT', value=debugfile3.name)
+            # add input files (and deal with combining or not combining)
+            debugfile3.add_hkey_1d('KW_INFILE1', values=rawhcfiles,
+                                   dim1name='hcfiles')
+            debugfile3.add_hkey_1d('KW_INFILE2', values=rawfpfiles,
+                                   dim1name='fpfiles')
+            # add the calibration files use
+            debugfile3 = general.add_calibs_to_header(debugfile3, fpprops)
+            # add qc parameters
+            debugfile3.add_qckeys(qc_params)
+            # add data
+            debugfile3.data = hcimage
+            debugfile3.write_multi(data_list=[fp_table])
+            # add to output files (for indexing)
+            recipe.add_output_file(debugfile3)
+            if 'SHAPE_OUT_HC_FILE' in recipe.outputs:
+                # out file
+                shape_out_hc_file = recipe.outputs['SHAPE_OUT_HC_FILE']
+                debugfile4 = shape_out_hc_file.newcopy(recipe=recipe)
+                debugfile4.construct_filename(params, infile=hcfile)
+                debugfile4.copy_hdict(debugfile3)
+                debugfile4.add_hkey('KW_OUTPUT', value=debugfile4.name)
+                debugfile4.data = hcimage2
+                debugfile4.write_multi(data_list=[fp_table])
+                # add to output files (for indexing)
+                recipe.add_output_file(debugfile4)
     # return output files (not debugs)
     return outfile1, outfile2, outfile3
 
