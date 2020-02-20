@@ -688,7 +688,7 @@ SHAPEOFFSET_ABSDEV_THRESHOLD.value = 0.2
 # define the names of the unique fibers (i.e. not AB) for use in
 #     getting the localisation coefficients for dymap
 SHAPE_UNIQUE_FIBERS = SHAPE_UNIQUE_FIBERS.copy(__NAME__)
-SHAPE_UNIQUE_FIBERS.value = 'A, B, C'
+SHAPE_UNIQUE_FIBERS.value = 'A, B'
 
 #  Define whether to output debug (sanity check) files
 SHAPE_DEBUG_OUTPUTS = SHAPE_DEBUG_OUTPUTS.copy(__NAME__)
@@ -743,7 +743,7 @@ FF_RMS_SKIP_ORDERS.value = '[0, 22, 23, 24, 25, 48]'
 
 #   Maximum allowed RMS of flat field
 QC_FF_MAX_RMS = QC_FF_MAX_RMS.copy(__NAME__)
-QC_FF_MAX_RMS.value = 0.05  # 0.14
+QC_FF_MAX_RMS.value = 0.10
 
 # Define the order to plot in summary plots
 FF_PLOT_ORDER = FF_PLOT_ORDER.copy(__NAME__)
@@ -762,11 +762,11 @@ EXT_END_ORDER.value = None
 
 #   Half-zone extraction width left side (formally plage1)
 EXT_RANGE1 = EXT_RANGE1.copy(__NAME__)
-EXT_RANGE1.value = '{"AB":16, "A":8, "B":8, "C": 7}'
+EXT_RANGE1.value = '{"A":5, "B":5}'
 
 #   Half-zone extraction width right side (formally plage2)
 EXT_RANGE2 = EXT_RANGE2.copy(__NAME__)
-EXT_RANGE2.value = '{"AB":16, "A":8, "B":8, "C": 7}'
+EXT_RANGE2.value = '{"A":5, "B":5}'
 
 #   Define the orders to skip extraction on (will set all order values
 #      to NaN. If empty list no orders are skipped. Should be a string
@@ -797,7 +797,7 @@ EXT_S1D_WAVESTART.value = 965
 
 # Define the end s1d wavelength (in nm)
 EXT_S1D_WAVEEND = EXT_S1D_WAVEEND.copy(__NAME__)
-EXT_S1D_WAVEEND.value = 2500
+EXT_S1D_WAVEEND.value = 1808
 
 #  Define the s1d spectral bin for S1D spectra (nm) when uniform in wavelength
 EXT_S1D_BIN_UWAVE = EXT_S1D_BIN_UWAVE.copy(__NAME__)
@@ -850,12 +850,12 @@ EXTRACT_PLOT_ORDER.value = 4
 # Define the wavelength lower bounds for s1d plots
 #     (must be a string list of floats) defines the lower wavelength in nm
 EXTRACT_S1D_PLOT_ZOOM1 = EXTRACT_S1D_PLOT_ZOOM1.copy(__NAME__)
-EXTRACT_S1D_PLOT_ZOOM1.value = '990, 1245, 1570, 2000, 2400'
+EXTRACT_S1D_PLOT_ZOOM1.value = '990, 1100, 1200, 1250, 1700'
 
 # Define the wavelength upper bounds for s1d plots
 #     (must be a string list of floats) defines the upper wavelength in nm
 EXTRACT_S1D_PLOT_ZOOM2 = EXTRACT_S1D_PLOT_ZOOM2.copy(__NAME__)
-EXTRACT_S1D_PLOT_ZOOM2.value = '1050, 1285, 1670, 2100, 2500'
+EXTRACT_S1D_PLOT_ZOOM2.value = '1050, 1200, 1210, 1300, 1800'
 
 
 # =============================================================================
