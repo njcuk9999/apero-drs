@@ -286,7 +286,7 @@ def robust_nanstd(x):
     low = np.nanpercentile(x, 100 - erfvalue)
     high = np.nanpercentile(x, erfvalue)
     # return the 1 sigma value
-    return (high-low)/2.0
+    return (high - low) / 2.0
 
 
 def sinc(x, amp, period, lin_center, quad_scale, cube_scale, slope,
