@@ -374,25 +374,19 @@ cal_shape_master.inputdir = 'tmp'
 cal_shape_master.inputtype = 'pp'
 cal_shape_master.extension = 'fits'
 cal_shape_master.description = Help['SHAPE_DESC']
-cal_shape_master.epilog = Help['SHAPE_EXAMPLE']
+cal_shape_master.epilog = Help['SHAPEMASTER_EXAMPLE']
 cal_shape_master.kind = 'recipe'
 cal_shape_master.set_outputs(FPMASTER_FILE=sf.out_shape_fpmaster,
                              DXMAP_FILE=sf.out_shape_dxmap,
                              DYMAP_FILE=sf.out_shape_dymap,
                              SHAPE_IN_FP_FILE=sf.out_shape_debug_ifp,
-                             SHAPE_IN_HC_FILE=sf.out_shape_debug_ihc,
                              SHAPE_OUT_FP_FILE=sf.out_shape_debug_ofp,
-                             SHAPE_OUT_HC_FILE=sf.out_shape_debug_ohc,
                              SHAPE_BDXMAP_FILE=sf.out_shape_debug_bdx,
                              DEBUG_BACK=sf.debug_back)
 cal_shape_master.set_debug_plots('SHAPE_DX', 'SHAPE_ANGLE_OFFSET_ALL',
                                  'SHAPE_ANGLE_OFFSET', 'SHAPE_LINEAR_TPARAMS')
 cal_shape_master.set_summary_plots('SUM_SHAPE_ANGLE_OFFSET')
 cal_shape_master.set_arg(pos=0, **directory)
-cal_shape_master.set_kwarg(name='--hcfiles', dtype='files',
-                           files=[sf.pp_hc1_hc1],
-                           nargs='+', filelogic='exclusive', required=True,
-                           helpstr=Help['SHAPE_HCFILES_HELP'], default=[])
 cal_shape_master.set_kwarg(name='--fpfiles', dtype='files', files=[sf.pp_fp_fp],
                            nargs='+', filelogic='exclusive', required=True,
                            helpstr=Help['SHAPE_FPFILES_HELP'], default=[])
