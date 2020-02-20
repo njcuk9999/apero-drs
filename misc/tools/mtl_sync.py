@@ -9,6 +9,7 @@ Created on 2020-02-19 at 09:30
 
 @author: cook
 """
+import numpy as np
 import os
 import sys
 import importlib
@@ -24,7 +25,7 @@ RSYNC_SERVER = '{0}@craq-astro.ca'
 # set rsync password
 RSYNC_PASSWORD = dict()
 RSYNC_PASSWORD['SPIROU'] = 'Zorglub007'
-RSYNC_PASSWORD['NIRPS_HA'] = 'Zorglub007'
+RSYNC_PASSWORD['NIRPS_HA'] = 'LaChaise001'
 # RSYNC dir
 RSYNC_DIR = '{0}'
 # allowed instruments
@@ -238,6 +239,18 @@ class FileDef():
                 self.suffices.append(output.suffix)
 
 
+def remove_arg(arg, args):
+    # convert args to character array
+    cargs = np.char.array(args)
+    # get mask of all positions starting with arg
+    mask = cargs.startswith(arg)
+    # remove from list
+    cargs = cargs[~mask]
+    # return as list
+    return list(cargs)
+
+
+
 def get_args():
     # get user arguments
     args = list(sys.argv)
@@ -277,12 +290,16 @@ def get_args():
         options['test'] = True
     else:
         options['test'] = False
+    # remove argument from consideration
+    args = remove_arg('--test', args)
     # deal with debug case
     if '--debug' in args:
         options['debug'] = True
         options['test'] = True
     else:
         options['debug'] = False
+    # remove argument from consideration
+    args = remove_arg('--debug', args)
     # --------------------------------------------------------------------------
     # deal with name
     found_name = None
@@ -293,6 +310,8 @@ def get_args():
         options['datadir'] = found_name
     else:
         options['datadir'] = DATA_DIR
+    # remove argument from consideration
+    args = remove_arg('--name', args)
     # --------------------------------------------------------------------------
     # deal with excluding directories
     found_ex_dir = None
@@ -305,7 +324,8 @@ def get_args():
         options['exclude'] = found_ex_dir
     else:
         options['exclude'] = []
-
+    # remove argument from consideration
+    args = remove_arg('--exclude', args)
     # --------------------------------------------------------------------------
     # deal with including directories
     found_in_dir = None
@@ -318,7 +338,8 @@ def get_args():
         options['include'] = found_in_dir
     else:
         options['include'] = []
-
+    # remove argument from consideration
+    args = remove_arg('--include', args)
     # --------------------------------------------------------------------------
     # deal with suffices
     suffices = []
@@ -326,12 +347,9 @@ def get_args():
         if '--suffix' in arg:
             suffix = arg.split('--suffix=')[-1]
             suffices.append(suffix)
+    # remove argument from consideration
+    args = remove_arg('--suffix', args)
 
-    # --------------------------------------------------------------------------
-    # get recipe definitions
-    # --------------------------------------------------------------------------
-    print('\n Loading APERO for instrument = {0}'.format(options['instrument']))
-    rd = importlib.import_module(RECIPE_DEFINITIONS[options['instrument']])
 
     # --------------------------------------------------------------------------
     # File types
@@ -341,20 +359,6 @@ def get_args():
 
     # deal with pre-defined suffices
 
-
-    # --------------------------------------------------------------------------
-    # KIND = RECIPE
-    # --------------------------------------------------------------------------
-    # loop around recipes
-    for recipe in rd.recipes:
-        if recipe.shortname in args:
-            filedef = FileDef(recipe=recipe, **options)
-            # deal with user suffix
-            if len(suffices) > 0:
-                for suffix in suffices:
-                    filedef.suffices.append(suffix)
-            # add file def to out put list
-            filetypes.append(filedef)
     # --------------------------------------------------------------------------
     # KIND = RAW
     # --------------------------------------------------------------------------
@@ -366,7 +370,8 @@ def get_args():
                 filetype.suffices.append(suffix)
         # add file type to out put list
         filetypes.append(filetype)
-
+        # remove argument from consideration
+        args = remove_arg('RAW', args)
     # --------------------------------------------------------------------------
     # KIND = TMP
     # --------------------------------------------------------------------------
@@ -378,7 +383,8 @@ def get_args():
                 filetype.suffices.append(suffix)
         # add file type to out put list
         filetypes.append(filetype)
-
+        # remove argument from consideration
+        args = remove_arg('TMP', args)
     # --------------------------------------------------------------------------
     # KIND = REDUCED
     # --------------------------------------------------------------------------
@@ -390,7 +396,8 @@ def get_args():
                 filetype.suffices.append(suffix)
         # add file type to out put list
         filetypes.append(filetype)
-
+        # remove argument from consideration
+        args = remove_arg('REDUCED', args)
     # --------------------------------------------------------------------------
     # KIND = CALIBDB
     # --------------------------------------------------------------------------
@@ -404,7 +411,8 @@ def get_args():
                 filetype.suffices.append(suffix)
         # add file type to out put list
         filetypes.append(filetype)
-
+        # remove argument from consideration
+        args = remove_arg('CALIBDB', args)
     # --------------------------------------------------------------------------
     # KIND = TELLUDB
     # --------------------------------------------------------------------------
@@ -418,6 +426,31 @@ def get_args():
                 filetype.suffices.append(suffix)
         # add file type to out put list
         filetypes.append(filetype)
+        # remove argument from consideration
+        args = remove_arg('TELLUDB', args)
+
+    # only load apero if we have arguments requiring it
+    if len(args) > 0:
+        # --------------------------------------------------------------------------
+        # get recipe definitions
+        # --------------------------------------------------------------------------
+        inst = options['instrument']
+        print('\n Loading APERO for instrument = {0}'.format(inst))
+        rd = importlib.import_module(RECIPE_DEFINITIONS[inst])
+        # --------------------------------------------------------------------------
+        # KIND = RECIPE
+        # --------------------------------------------------------------------------
+        # loop around recipes
+        for recipe in rd.recipes:
+            if recipe.shortname in args:
+                filedef = FileDef(recipe=recipe, **options)
+                # deal with user suffix
+                if len(suffices) > 0:
+                    for suffix in suffices:
+                        filedef.suffices.append(suffix)
+                # add file def to out put list
+                filetypes.append(filedef)
+
 
     # return file types
     return filetypes, options
