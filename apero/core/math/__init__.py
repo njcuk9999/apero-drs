@@ -77,6 +77,8 @@ linear_minimization = general.linear_minimization
 
 relativistic_waveshift = general.relativistic_waveshift
 
+robust_nanstd = general.robust_nanstd
+
 robust_polyfit = general.robust_polyfit
 
 rot8 = general.rot8
