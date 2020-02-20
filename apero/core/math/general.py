@@ -14,6 +14,7 @@ from astropy import constants as cc
 from astropy import units as uu
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.interpolate import UnivariateSpline
+from scipy.special import erf
 import warnings
 from scipy import stats
 
@@ -267,6 +268,25 @@ def robust_polyfit(x, y, degree, nsigcut):
         keep = nsig < nsigcut
     # return the fit and the mask of good values
     return fit, keep
+
+
+def robust_nanstd(x):
+    """
+    Calculates the standard deviation (assumes normal distribution where
+    1 sigma = the standard deviation)
+
+    Done in a robust way to avoid being affected by outliers and nans
+
+    :param x:
+    :return:
+    """
+    # get the 1 sigma error value
+    erfvalue = erf(1) * 100
+    # work out the high and low bounds
+    low = np.nanpercentile(x, 100 - erfvalue)
+    high = np.nanpercentile(x, erfvalue)
+    # return the 1 sigma value
+    return (high-low)/2.0
 
 
 def sinc(x, amp, period, lin_center, quad_scale, cube_scale, slope,
