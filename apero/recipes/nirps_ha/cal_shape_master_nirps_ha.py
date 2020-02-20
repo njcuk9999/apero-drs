@@ -53,17 +53,15 @@ pcheck = core.pcheck
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(directory=None, hcfiles=None, fpfiles=None, **kwargs):
+def main(directory=None, fpfiles=None, **kwargs):
     """
     Main function for cal_shape_master_spirou.py
 
     :param directory: string, the night name sub-directory
-    :param hcfiles: list of strings or string, the list of hc files
     :param fpfiles: list of strings or string, the list of fp files
     :param kwargs: any additional keywords
 
     :type directory: str
-    :type hcfiles: list[str]
     :type fpfiles: list[str]
 
     :keyword debug: int, debug level (0 for None)
@@ -72,7 +70,7 @@ def main(directory=None, hcfiles=None, fpfiles=None, **kwargs):
     :rtype: dict
     """
     # assign function calls (must add positional)
-    fkwargs = dict(directory=directory, hcfiles=hcfiles,
+    fkwargs = dict(directory=directory,
                    fpfiles=fpfiles, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
@@ -105,43 +103,28 @@ def __main__(recipe, params):
     # set up plotting (no plotting before this)
     recipe.plot.set_location()
     # get files
-    hcfiles = params['INPUTS']['HCFILES'][1]
     fpfiles = params['INPUTS']['FPFILES'][1]
     # get list of filenames (for output)
-    rawhcfiles, rawfpfiles = [], []
-    for infile in hcfiles:
-        rawhcfiles.append(infile.basename)
+    rawfpfiles = []
+    # for infile in hcfiles:
     for infile in fpfiles:
         rawfpfiles.append(infile.basename)
 
     # set fiber we should use
     fiber = pcheck(params, 'SHAPE_MASTER_FIBER', func=mainname)
 
-    # get combined hcfile
-    hcfile = drs_fits.combine(params, hcfiles, math='median')
     # get combined fpfile
     fpfile = drs_fits.combine(params, fpfiles, math='median')
 
     # get the headers (should be the header of the first file in each)
-    hcheader = hcfile.header
     fpheader = fpfile.header
     # get calibrations for this data
     drs_database.copy_calibrations(params, fpheader)
-    drs_database.copy_calibrations(params, hcheader)
 
     # ----------------------------------------------------------------------
     # Get localisation coefficients for fp file
     # ----------------------------------------------------------------------
     lprops = localisation.get_coefficients(params, recipe, fpheader, fiber)
-
-    # ----------------------------------------------------------------------
-    # Get wave coefficients from master wavefile
-    # ----------------------------------------------------------------------
-    # TODO: Need Master wave solution
-    # # get master wave filename
-    # mwavefile = wave.get_masterwave_filename(params, fiber)
-    # # get master wave map
-    # wprops = wave.get_wavesolution(params, recipe, filename=mwavefile)
 
     # ------------------------------------------------------------------
     # Correction of fp file
@@ -150,15 +133,6 @@ def __main__(recipe, params):
     WLOG(params, 'info', TextEntry('40-014-00001'))
     # calibrate file
     fpprops, fpimage = general.calibrate_ppfile(params, recipe, fpfile,
-                                                correctback=False)
-
-    # ------------------------------------------------------------------
-    # Correction of hc file
-    # ------------------------------------------------------------------
-    # log process
-    WLOG(params, 'info', TextEntry('40-014-00002'))
-    # calibrate file
-    hcprops, hcimage = general.calibrate_ppfile(params, recipe, hcfile,
                                                 correctback=False)
 
     # ----------------------------------------------------------------------
@@ -214,20 +188,8 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Calculate dx shape map
     # ----------------------------------------------------------------------
-    # TODO: Code doesn't work yet past this point
-    # TODO: remove breakpoint
-    constants.break_point(params)
-
-    cargs = [hcimage, master_fp, wprops, lprops]
-    dout = shape.calculate_dxmap(params, recipe, *cargs)
-    dxmap, max_dxmap_std, max_dxmap_info = dout
-    # if dxmap is None we shouldn't continue as quality control have failed
-    if dxmap is None:
-        fargs = [max_dxmap_info[0], max_dxmap_info[1], max_dxmap_std,
-                 max_dxmap_info[2]]
-        WLOG(params, 'warning', TextEntry('10-014-00003', args=fargs))
-        # return a copy of locally defined variables in the memory
-        return core.return_locals(params, locals())
+    # for nirps_ha we do not need dxmap (no shape)
+    dxmap = np.zeros_like(fpimage)
 
     # ----------------------------------------------------------------------
     # Calculate dy shape map
@@ -248,7 +210,6 @@ def __main__(recipe, params):
     # log progress (applying transforms)
     WLOG(params, '', TextEntry('40-014-00025'))
     # apply the dxmap and dymap
-    hcimage2 = shape.ea_transform(params, hcimage, dxmap=dxmap, dymap=dymap)
     fpimage2 = shape.ea_transform(params, fpimage, dxmap=dxmap, dymap=dymap)
 
     # ------------------------------------------------------------------
@@ -261,8 +222,8 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # write files
     # ------------------------------------------------------------------
-    fargs = [fpfile, hcfile, rawfpfiles, rawhcfiles, dxmap, dymap, master_fp,
-             fp_table, fpprops, dxmap0, fpimage, fpimage2, hcimage, hcimage2,
+    fargs = [fpfile, None, rawfpfiles, None, dxmap, dymap, master_fp,
+             fp_table, fpprops, dxmap0, fpimage, fpimage2, None, None,
              qc_params]
     outfiles = shape.write_shape_master_files(params, recipe, *fargs)
     outfile1, outfile2, outfile3 = outfiles
