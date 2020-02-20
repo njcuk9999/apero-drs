@@ -223,37 +223,18 @@ class PseudoConstants(DefaultConstants):
     def FIBER_LOC_COEFF_EXT(self, coeffs, fiber):
         """
         Extract the localisation coefficients based on how they are stored
-        for spirou we have either AB,A,B of size 98 orders or C of size 49
-        orders. For AB we merge the A and B, for A and B we take alternating
-        orders, for C we take all. Note only have AB and C files also affects
-        FIBER_LOC_TYPES
+        for nirps we have either A or B of size 49
+        orders.
 
         :param coeffs:
         :param fiber:
         :return:
         """
-
-        # for AB we need to merge the A and B components
-        if fiber == 'AB':
-            # get shape
-            nbo, ncoeff = coeffs.shape
-            # set up acc
-            acc = np.zeros([int(nbo / 2), ncoeff])
-            # get sum of 0 to step pixels
-            cosum = np.array(coeffs[0:nbo:2, :])
-            # add the sum of 1 to step
-            cosum = cosum + coeffs[1:nbo:2, :]
-            # overwrite values into coeffs array
-            acc[0:int(nbo / 2), :] = (1 / 2) * cosum
-        # for A we only need the A components
-        elif fiber == 'A':
-            acc = coeffs[1::2]
-            nbo = coeffs.shape[0] // 2
-        # for B we only need the B components
-        elif fiber == 'B':
-            acc = coeffs[:-1:2]
-            nbo = coeffs.shape[0] // 2
-        # for C we take all of them (as there are only the C components)
+        # for A we take all of them (as there are only the A components)
+        if fiber == 'A':
+            acc = coeffs
+            nbo = coeffs.shape[0]
+        # for B we take all of them (as there are only the B components)
         else:
             acc = coeffs
             nbo = coeffs.shape[0]
