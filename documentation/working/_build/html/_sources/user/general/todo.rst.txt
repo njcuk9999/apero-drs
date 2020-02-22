@@ -18,6 +18,7 @@ For all instruments / in general.
 
 High priority:
 
+* add a version for SPIRou and for NIRPS (but keep the rolling version for APERO)
 * add in `dark_fp` correction
 * fix headers for having bad wave and loc keys (remove?)
 * fix s1d for `FP_FP` and `HC_HC` they need updating after wave sol produced
@@ -81,7 +82,7 @@ Low priority:
 
 Later:
 
-* None
+* T.B.D.
 
 
 =========================================
@@ -89,16 +90,16 @@ NIRPS specific
 =========================================
 High priority:
 
-* convert cal_shape_master
-* convert cal_shape
-* convert cal_flat
-* convert cal_extract
+* convert/adapt cal_preprocessing
+* convert/adapt cal_wave / cal_wave_master
+* proposal for trigger using processing code
 
 Low priority:
 
 * convert obj_mk_tellu
 * convert obj_fit_tellu
 * convert obj_mk_template
+* convert cal_ccf
 
 Later:
 
