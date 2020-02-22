@@ -90,16 +90,16 @@ NIRPS specific
 =========================================
 High priority:
 
-* convert cal_shape_master
-* convert cal_shape
-* convert cal_flat
-* convert cal_extract
+* convert/adapt cal_preprocessing
+* convert/adapt cal_wave / cal_wave_master
+* proposal for trigger using processing code
 
 Low priority:
 
 * convert obj_mk_tellu
 * convert obj_fit_tellu
 * convert obj_mk_template
+* convert cal_ccf
 
 Later:
 
