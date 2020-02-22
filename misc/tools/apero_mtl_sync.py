@@ -18,6 +18,7 @@ import importlib
 # =============================================================================
 # Define variables
 # =============================================================================
+__NAME__ = 'apero_mtl_sync.py'
 # set rsync command
 RSYNC_COMMAND = 'rsync -avr {0} --port=8080 {1}::{2} {3}'
 # set rsync server
@@ -50,10 +51,10 @@ UNKNOWN_SHORTNAME = 'UnknownRecipe'
 
 # help message
 HELP_KWARGS = dict(INSTRUMENT=', '.join(INSTRUMENTS),
-                   DATA_DIR=DATA_DIR, NAME='{NAME}')
+                   DATA_DIR=DATA_DIR, NAME='{NAME}', CODE=__NAME__)
 HELP_MESSAGE = """
 
-Montreal APERO data sync
+Montreal APERO data sync ({CODE})
 
 ===============================================
 Options are:
@@ -101,7 +102,7 @@ REDUCED             Download all reduced data
 CALIBDB             Download all calibration data (from calibDB)
 TELLUDB             Download all telluric data (from telluDB)
 
-Individual recipes
+Individual recipes (Warning these require APERO to be installed to use)
 
 PP                  Download outputs for cal_preprocessing
 BAD                 Download outputs for cal_badpix
@@ -128,7 +129,7 @@ Examples:
 The following example would download all calibration and telluric files
     for {DATA_DIR}  (in debug mode) - prints only rsync command
     
->> mtl_sync.py --debug --name={DATA_DIR} CALIBDB TELLUDB
+>> {CODE} --debug --name={DATA_DIR} CALIBDB TELLUDB
 
 --------------------------------------------------------------------------------
 
@@ -136,7 +137,7 @@ The following example would download all extracted and ccf outputs
     for mini_data_0_6_037 in night directories 2019-04-20 and 2019-04-19
     in test mode (runs rsync but does not copy files)
     
->> mtl_sync.py --test --name={DATA_DIR} --include='2019-04-20,2019-04-19' EXT CCF 
+>> {CODE} --test --name={DATA_DIR} --include='2019-04-20,2019-04-19' EXT CCF 
 
 --------------------------------------------------------------------------------
 
@@ -144,13 +145,13 @@ The following example would download badpix outputs
     for {DATA_DIR} except for night directories 2019-02-20 and 2019-02-19
     in test mode (runs rsync but does not copy files)
     
->> mtl_sync.py --test --name={DATA_DIR} --exclude='2019-04-20,2019-04-19' BAD 
+>> {CODE} --test --name={DATA_DIR} --exclude='2019-04-20,2019-04-19' BAD 
 
 --------------------------------------------------------------------------------
 
 The following example would download all raw data for 2019-04-20
 
->> mtl_sync.py --test --name={DATA_DIR} --include=2019-04-20 RAW
+>> {CODE} --test --name={DATA_DIR} --include=2019-04-20 RAW
 
 --------------------------------------------------------------------------------
 
@@ -158,7 +159,7 @@ The following example would download all e2ds_AB files from the reduced director
     for {DATA_DIR} in the night directory 2019-04-20
     in test mode (runs rsync but does not copy files)
 
->> mtl_sync.py --test --name={DATA_DIR} --suffix=e2ds_AB --include=2019-04-20 REDUCED
+>> {CODE} --test --name={DATA_DIR} --suffix=e2ds_AB --include=2019-04-20 REDUCED
 
 --------------------------------------------------------------------------------
 
@@ -253,7 +254,7 @@ def remove_arg(arg, args):
 
 def get_args():
     # get user arguments
-    args = list(sys.argv)
+    args = list(sys.argv)[1:]
 
     # deal with to few args
     if len(args) < 2:
@@ -350,14 +351,11 @@ def get_args():
     # remove argument from consideration
     args = remove_arg('--suffix', args)
 
-
     # --------------------------------------------------------------------------
     # File types
     # --------------------------------------------------------------------------
     # set up file types
     filetypes = []
-
-    # deal with pre-defined suffices
 
     # --------------------------------------------------------------------------
     # KIND = RAW
@@ -435,8 +433,15 @@ def get_args():
         # get recipe definitions
         # --------------------------------------------------------------------------
         inst = options['instrument']
-        print('\n Loading APERO for instrument = {0}'.format(inst))
-        rd = importlib.import_module(RECIPE_DEFINITIONS[inst])
+        try:
+            print('\n Loading APERO for instrument = {0}'.format(inst))
+            rd = importlib.import_module(RECIPE_DEFINITIONS[inst])
+        except Exception as e:
+            print('Cannot load APERO')
+            argstr = ', '.join(args)
+            print('Cannot use following arguments: \n\t{0}'.format(argstr))
+            return None, None
+
         # --------------------------------------------------------------------------
         # KIND = RECIPE
         # --------------------------------------------------------------------------
@@ -450,7 +455,14 @@ def get_args():
                         filedef.suffices.append(suffix)
                 # add file def to out put list
                 filetypes.append(filedef)
+                # remove recipe.shortname from args
+                args = remove_arg(recipe.shortname, args)
 
+    # deal with any left over arguments (in valid)
+    if len(args) > 0:
+        argstr = ', '.join(args)
+        print('Cannot use following arguments: \n\t{0}'.format(argstr))
+        return None, None
 
     # return file types
     return filetypes, options
