@@ -537,6 +537,51 @@ def rot8(image, nrotation):
     return np.rot90(image[::1-2*(nrot // 4)], nrot % 4)
 
 
+def medbin(image, by, bx):
+    """
+    Median-bin an image to a given size through some funny reshapping.
+
+    No interpoluation is done so bx must be a factor of image.shape[0]
+    and by must be a factor of image.shape[1]
+
+    e.g.
+
+        image = np.arange(400).reshape(10, 40)
+        by must be either [1, 2, 5]
+        bx must be either [1, 2, 5, 8, 10, 20, 40]
+
+    :param image: numpy array (2D), the image to bin
+    :param by: int, the binning factor in y (must be a factor of image.shape[0])
+    :param bx: int, the binning factor in x (must be a factor of image.shape[1])
+
+    :type image: np.ndarray
+    :type by: int
+    :type bx: int
+
+    :return: the binned numpy array of dimensions (by, bx)
+    """
+    # TODO: Question: are "bx" and "by" the right way around?
+    # set function name
+    func_name = __NAME__ + '.medbin()'
+    # exception message
+    emsg = '{0}: {1} must be a factor of {2}'
+    # get the shape of the image
+    dim1, dim2 = image.shape
+    # must have valid bx and by
+    if dim1 % by != 0:
+        raise DrsMathException(emsg.format(func_name, 'by', dim1))
+    if dim2 % bx != 0:
+        raise DrsMathException(emsg.format(func_name, 'bx', dim2))
+    # reshape the image
+    array = image.reshape([by, dim1 // by, bx, dim2 // bx])
+    # median in axis 1
+    med1 = fast.nanmedian(array, axis=1)
+    # median in axis 2
+    med2 = fast.nanmedian(med1, axis=2)
+    # return median-binned array
+    return med2
+
+
 # =============================================================================
 # Define wave functions
 # =============================================================================
