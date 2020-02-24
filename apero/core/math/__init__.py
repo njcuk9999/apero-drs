@@ -49,6 +49,8 @@ killnan = nan.killnan
 
 measure_box_min_max = general.measure_box_min_max
 
+medbin = general.medbin
+
 medfilt_1d = fast.medfilt_1d
 
 nanargmax = fast.nanargmax
