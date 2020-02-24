@@ -19,6 +19,7 @@ import os
 import random
 from signal import signal, SIGINT
 from collections import OrderedDict
+from typing import Union
 
 from apero.locale import drs_text
 from apero.locale import drs_exceptions
@@ -489,7 +490,7 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
     :param quiet: bool, if we should not print out standard output
 
     :type params: ParamDict
-    :type llmain: dict
+    :type llmain: Union[dict, None]
     :type recipe: DrsRecipe
     :type success: bool
     :type outputs: str
