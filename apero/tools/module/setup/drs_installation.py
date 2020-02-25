@@ -840,9 +840,9 @@ def clean_install(params, all_params):
     # get package
     package = params['DRS_PACKAGE']
     # get tools save location
-    in_tool_path = constants.get_relative_folder(package, IN_TOOLPATH, 'bin')
+    in_tool_path = constants.get_relative_folder(package, IN_TOOLPATH)
     # append tool path
-    sys.path.append(in_tool_path)
+    sys.path.append(os.path.join(in_tool_path, 'bin'))
     toolmod = importlib.import_module(RESET_CODE)
     # loop around instruments
     for instrument in drs_instruments:
