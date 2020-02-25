@@ -731,6 +731,9 @@ def create_shell_scripts(params, all_params):
         pname = all_params['PROFILENAME'].replace(' ', '_')
     else:
         pname = package
+
+    # get tools save location
+    in_tool_path = constants.get_relative_folder(package, IN_TOOLPATH)
     # ----------------------------------------------------------------------
     # get paths and add in correct order
     paths = [os.path.dirname(all_params['DRS_ROOT'])]
@@ -762,7 +765,7 @@ def create_shell_scripts(params, all_params):
         sys.exit()
     # ----------------------------------------------------------------------
     # construct validation code absolute path
-    valid_path = os.path.join(all_params['DRS_TOOL_PATH'], VALIDATE_CODE)
+    valid_path = os.path.join(in_tool_path, VALIDATE_CODE)
     # ----------------------------------------------------------------------
     # setup text dictionary
     text = dict()
@@ -952,12 +955,13 @@ def _create_link(recipe_dir, suffix, new_path, log=True):
 
 
 def add_paths(all_params):
-    # get paths
-    bin_path = all_params['DRS_BIN_PATH']
-    tool_path = all_params['DRS_TOOL_PATH']
-
-    tool_paths = glob.glob(all_params[''])
-
+    # get paths and add in correct order
+    paths = [os.path.dirname(all_params['DRS_ROOT'])]
+    # add bin directory
+    paths.append(all_params['DRS_OUT_BIN_PATH'])
+    # add all the tool directories
+    for directory in all_params['DRS_OUT_TOOLS']:
+        paths.append(directory)
     # ----------------------------------------------------------------------
     # set USERCONFIG
     os.environ[ENV_CONFIG] = all_params['USERCONFIG']
@@ -969,20 +973,25 @@ def add_paths(all_params):
     # ----------------------------------------------------------------------
     # add to PATH
     if 'PATH' in os.environ:
+        # get old path
         oldpath = os.environ['PATH']
-        args = [sep, bin_path, tool_path, oldpath]
-        os.environ['PATH'] = '{1}{0}{2}{0}{3}'.format(*args)
+        # add to paths
+        paths += oldpath
+        # add to environment
+        os.environ['PATH'] = sep.join(paths)
     else:
-        args = [sep, bin_path, tool_path]
-        os.environ['PATH'] = '{1}{0}{2}'.format(*args)
+        # add to environment
+        os.environ['PATH'] = sep.join(paths)
     # add to PYTHON PATH
     if 'PYTHONPATH' in os.environ:
         oldpath = os.environ['PYTHONPATH']
-        args = [sep, bin_path, tool_path, oldpath]
-        os.environ['PYTHONPATH'] = '{1}{0}{2}{0}{3}'.format(*args)
+        # add to paths
+        paths += oldpath
+        # add to environment
+        os.environ['PYTHONPATH'] = sep.join(paths)
     else:
-        args = [sep, bin_path, tool_path]
-        os.environ['PYTHONPATH'] = '{1}{0}{2}'.format(*args)
+        # add to environment
+        os.environ['PYTHONPATH'] = sep.join(paths)
 
 
 def printheader():
