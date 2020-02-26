@@ -720,8 +720,6 @@ def update_configs(params, all_params):
 
 
 def create_shell_scripts(params, all_params):
-
-
     # get available instruments
     drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
     # ----------------------------------------------------------------------
@@ -731,7 +729,6 @@ def create_shell_scripts(params, all_params):
         pname = all_params['PROFILENAME'].replace(' ', '_')
     else:
         pname = package
-
     # get tools save location
     in_tool_path = constants.get_relative_folder(package, IN_TOOLPATH)
     # ----------------------------------------------------------------------
@@ -945,6 +942,9 @@ def _create_link(recipe_dir, suffix, new_path, log=True):
         # remove link already present
         if os.path.exists(newpath):
             os.remove(newpath)
+        # deal with directories not exists
+        if not os.path.exists(os.path.dirname(newpath)):
+            os.makedirs(os.path.dirname(newpath))
         # make symlink
         os.symlink(filename, newpath)
         # make executable
