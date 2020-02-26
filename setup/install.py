@@ -230,7 +230,6 @@ def validate():
         check_version(module, imod, rversionlist, required=False)
 
 
-
 def check_version(module, imod, rversionlist, required=True):
     # test version
     passed = False
@@ -353,12 +352,39 @@ def tab_input(message, root=None):
 
 
 def check_install(drs_path):
+    # get current working directory
+    cwd = os.getcwd()
+    # set import condition to True
+    cond = True
     # loop until we can import modules
     while cond:
-        # try to import the drs
-        try:
-            _ = importlib.import_module(drs_path)
-        except Exception as _:
+        # set search to False
+        found = False
+        # set top level to root
+        root = os.path.abspath(os.sep)
+        # path to try
+        try_path = str(drs_path)
+        # loop around until found or we break
+        while not found:
+            # get the absolute path of try path
+            abs_try_path = os.path.abspath(try_path)
+            sys.path.append(abs_try_path)
+            # try to import the drs
+            try:
+                print('\tTry: {0}'.format(abs_try_path))
+                _ = importlib.import_module(drs_path)
+                # if we have reached this import stage found is True
+                found = True
+            except Exception as _:
+                # if we have reached root then break
+                if abs_try_path == os.path.join(root, drs_path):
+                    break
+                # try up a level
+                try_path = '..' + os.sep
+                # remove this path as it failed to find drs
+                sys.path.remove(abs_try_path)
+        # deal with not being found
+        if not found:
             umsg = '\nCannot find {0}. Please enter {0} installation path:'
             # user input required
             uinput = tab_input(umsg.format(drs_path))
@@ -415,8 +441,6 @@ if __name__ == '__main__':
     # ----------------------------------------------------------------------
     # Importing DRS paths
     # ----------------------------------------------------------------------
-    # set import condition to True
-    cond = True
     # set guess path
     drs_path = str(DRS_PATH)
     # catch Ctrl+C
