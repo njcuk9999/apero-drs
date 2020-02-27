@@ -34,6 +34,7 @@ Full tutorials
 - DrsInputFile, DrsFitsFile, DrsNpyFile
 - Database
 - Logger
+- Debug Modes (linked to Logger)
 - Plotter
 - Git hub interface
 - Writing documentation
