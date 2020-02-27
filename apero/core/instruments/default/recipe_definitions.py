@@ -36,6 +36,7 @@ drs_recipe = drs_recipe.DrsRecipe
 # Below one must define all recipes and put into the "recipes" list
 changelog = drs_recipe(__INSTRUMENT__)
 explorer = drs_recipe(__INSTRUMENT__)
+go_recipe = drs_recipe(__INSTRUMENT__)
 listing = drs_recipe(__INSTRUMENT__)
 logstats = drs_recipe(__INSTRUMENT__)
 processing = drs_recipe(__INSTRUMENT__)
@@ -46,7 +47,7 @@ reset = drs_recipe(__INSTRUMENT__)
 validate = drs_recipe(__INSTRUMENT__)
 
 # push into a list
-recipes = [changelog, explorer, processing, listing, logstats,
+recipes = [changelog, explorer, go_recipe, processing, listing, logstats,
            remake_db, remake_doc, req_check, reset, validate]
 
 # =============================================================================
@@ -121,6 +122,29 @@ explorer.kind = 'tool'
 explorer.set_arg(pos=0, name='instrument', dtype='options',
                  helpstr=Help['EXPLORER_INST_HEPL'],
                  options=Constants['DRS_INSTRUMENTS'])
+
+
+# -----------------------------------------------------------------------------
+# apero_changelog.py
+# ----------------------------------------------------------------------------
+# TODO: Move strings to language db
+go_recipe.name = 'apero_go.py'
+go_recipe.instrument = __INSTRUMENT__
+go_recipe.description = 'Recipe to go to directories defined by APERO'
+go_recipe.kind = 'tool'
+go_recipe.set_arg(pos=0, name='instrument', dtype='options',
+                  helpstr='The instrument to use',
+                  options=Constants['DRS_INSTRUMENTS'])
+# TODO: Add help
+go_recipe.set_kwarg(name='--data', default=False, dtype='switch')
+go_recipe.set_kwarg(name='--raw', default=False, dtype='switch')
+go_recipe.set_kwarg(name='--tmp', default=False, dtype='switch')
+go_recipe.set_kwarg(name='--red', default=False, dtype='switch')
+go_recipe.set_kwarg(name='--calib', default=False, dtype='switch')
+go_recipe.set_kwarg(name='--tellu', default=False, dtype='switch')
+go_recipe.set_kwarg(name='--msg', default=False, dtype='switch')
+go_recipe.set_kwarg(name='--plot', default=False, dtype='switch')
+
 
 # -----------------------------------------------------------------------------
 # apero_listing.py
