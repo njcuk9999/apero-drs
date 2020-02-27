@@ -6,7 +6,7 @@ TODO
 ************************************************************************************
 
 This is the currently list of items that need to still be completed.
-Last updated: 2020-02-19 (NJC).
+Last updated: 2020-02-27 (NJC).
 
 .. note:: bullet points are not ordered
 
@@ -18,13 +18,10 @@ For all instruments / in general.
 
 High priority:
 
-* add a version for SPIRou and for NIRPS (but keep the rolling version for APERO)
+* reset breaks for symbolic links -- fix this
 * add in `dark_fp` correction
 * fix headers for having bad wave and loc keys (remove?)
-* fix s1d for `FP_FP` and `HC_HC` they need updating after wave sol produced
 * add rv from header for ccf
-* add version for instruments (separate from apero version which will change with any update)
-* code to get data sets from rsync
 
 Low priority:
 
@@ -48,6 +45,11 @@ Low priority:
 * add flag for parellel / non parellel mode - can disable locking then?
 * named break points
 * add trigger option to drs where processing script stops when it cannot get any further with current set of files
+* data separate download from DRS
+
+    * this includes copying this data to the user data directory for adding
+      things like custom masks etc - this could also be a solution to
+      where to put the `object_query_list.fits` file
 
 Later:
 
@@ -56,7 +58,7 @@ Later:
 * add EA mask generation from templates
 * add EA template matching
 * uncertainty propagation
-* data separate download from DRS
+
 * add `plot== 3` (all debug plots shown) and `plot==4` (all debug plots saved) modes
 * move `object_query_list.fits` to `calibDB`
 * co-production of e2ds and e2dsff still needed?
