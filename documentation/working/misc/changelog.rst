@@ -2,11 +2,209 @@ Changelog
 =========
 
 
-0.6.037 (2020-02-07)
+0.6.047 (2020-02-27)
 --------------------
+- `Documentation.working.dev.developer_guide.rst` [APERO] - add another
+  section todo. [Neil Cook]
+- `Science.extract.general.py` [APERO] - pep8 change. [Neil Cook]
+- Documentation.working.user.genearl.todo.rst - update todo list. [Neil
+  Cook]
+- `Tools.recipe.bin.apero_go.py` [APERO] - a program to aid finding where
+  data directories are (try cd <quote>python `apero_go.py` INSTRUMENT
+  --data<quote> to change to data dir. [Neil Cook]
+- `Recipes.spirou.cal_wave_*` - change how we update hc and fp files once
+  wave solution is updated (correct e2ds/e2dsff/e2dsll and remake
+  s1dw/s1dv) [Neil Cook]
+- `Io.drs_lock.py` - make all lock normal print outs debug print outs
+  (hide unless in debug mode) [Neil Cook]
+- `Data.spirou.reset.runs.hc_run.ini` - update run/skip section. [Neil
+  Cook]
+- `Data.spirou.reset.runs.*.ini` - update `RUN_INI_FILES` (more appropriate
+  names + updated values) [Neil Cook]
+- `Core.instruments.*.recipe_defintions.py` - add wave plot `(extract_s1d)`
+  [Neil Cook]
+- `Core.instruments.default.recipe_definitions.py` [APERO] - add
+  `apero_go.py` tools recipe. [Neil Cook]
+- README.md - add short name to sequence description. [Neil Cook]
+
+
+0.6.046 (2020-02-27)
+--------------------
+- `Tools.recipe.bin.apero_processing.py` - add a save stats call to save
+  to stats file. [Neil Cook]
+- `Tools.module.setup.drs_processing.py` [APERO] - save a stats fits and
+  stats txt to run folder (under stats) [Neil Cook]
+- `Tools.module.setup.drs_installation.py` - fix force resets without
+  warning. [Neil Cook]
+- Update language database. [Neil Cook]
+
+
+0.6.045 (2020-02-26)
+--------------------
+- `Tools.module.setup.drs_installation.py` - deal with tool sub-dirs not
+  existing (first time install) [Neil Cook]
+- `../setup/install.py` - search up levels for apero. [Neil Cook]
+- `Tools.module.setup.drs_installation.py` - correct `in_tool_path` (how we
+  add bin sub-dir) [Neil Cook]
+- `Tools.module.setup.drs_installation.py` - correct `valid_path` for
+  validation recipe. [Neil Cook]
+- `Tools.module.setup.drs_installation.py` - make tool links generic
+  (based on sub-dirs) + make paths os independent. [Neil Cook]
+- `Apero.tools.resources.setup.*` - update paths to add multiple sub-
+  paths. [Neil Cook]
+- Apero.tools.recipes - move general --> bin and add instrument tool
+  directories. [Neil Cook]
+
+
+0.6.044 (2020-02-24)
+--------------------
+- `Science.preprocessing.detector.py` [NIRPS] - add nirps preprocessing
+  functions from EA [UNFINISHED + QUESTIONS] [Neil Cook]
+- `Misc.nrips_tools.nirps_pp.py` - copy over EA preprocessing code. [Neil
+  Cook]
+- `Recipes.nirps_ha.cal_preprocess_nirps_ha.py` [NIRPS] - copy over SPIROU
+  code and implement EA changes [UNFINISHED] [Neil Cook]
+- `Core.math.general.py` [APERO] - add medbin function. [Neil Cook]
+- `Core.core.drs_startup.py` - allow llmain to be dict or None (via Union)
+  [Neil Cook]
+
+
+0.6.043 (2020-02-22)
+--------------------
+- Update documentation. [Neil Cook]
+- Working.user.genearl.todo.rst - update todo list. [Neil Cook]
+- `Misc.tools.apero_mtl_sync.py` - finish off code (formally `mtl_sync.py)`
+  [Neil Cook]
+
+
+0.6.042 (2020-02-20)
+--------------------
+- Working.user.general.todo.rst [APERO] - update todo list. [Neil Cook]
+- `Core.math.general.py` [APERO] - pep8 change to robust nan std function.
+  [Neil Cook]
+- `Data.nirps_ha.reset.calibdb.MASTER_WAVE_NIRPS_HA.fits` - add a first
+  attempt at wave solution for `NIRPS_HA` from optical model. [Neil Cook]
+- `Science.extract.general.py` [NIRPS] - NIRPS does not have thermal make
+  these keys added to header conditional on presence in eprops. [Neil
+  Cook]
+- `Science.calib.flat_blaze.py` [NIRPS/SPIROU] - change keep, rms and nan
+  some outliers in flat. [Neil Cook]
+- `Recipes.nirps_ha.cal_shape_nirps_ha.py` [NIRPS] - convert `cal_shape`
+  from spirou code. [Neil Cook]
+- `Recipes.nirps_ha.cal_shape_master_nirps_ha.py` [NIRPS] - remove hc and
+  dxmap stuff from spirou code. [Neil Cook]
+- `Recipes.nirps_ha.cal_flat_nirps.py` [NIRPS] - add flat/blaze code
+  (converted from spirou) [Neil Cook]
+- `Recipes.nirps_ha.cal_extract_nirps_ha.py` [NIRPS] - add extraction code
+  (converted from spirou) [Neil Cook]
+- Update database. [Neil Cook]
+- `Core.math.general.py` - add `robust_nanstd` function. [Neil Cook]
+- `Core.instruments.spirou.recipe_defintions.py` - update shape master
+  help example. [Neil Cook]
+- `Core.instruments.nirps_ha.recipe_defintions.py` - remove hc
+  inputs/outputs from shape master. [Neil Cook]
+- `Core.instruments.nirps_ha.pseudo_const.py` [NIRPS] - update
+  `FIBER_LOC_COEFF_EXT`. [Neil Cook]
+- `Core.instruments.nirps_ha.default_constants.py` [NIRPS] - change
+  `SHAPE_UNIQUE_FIBERS`, `QC_FF_MAX_RMS`, `EXT_RANGE1`, `EXT_RANGE2`,
+  `EXT_S1D_WAVEEND`, `EXTRACT_S1D_PLOT_ZOOM1`, `EXTRACT_S1D_PLOT_ZOOM2`. [Neil
+  Cook]
+- `Misc.tools.mtl_sync.py` - remove requirement of using apero. [Neil
+  Cook]
+
+
+0.6.041 (2020-02-20)
+--------------------
+- `Misc.tools.mtl_sync.py` - first commit (code for users to get data from
+  montreal) [Neil Cook]
+- Remove unused doc files. [Neil Cook]
+- Update documentation. [Neil Cook]
+- `Tools.module.documentation.drs_documentation.py` - replace `copy_tree`
+  --> copytree (from `drs_path)` [Neil Cook]
+- `Io.drs_path.py` [APERO] - add copytree function (copies all files from
+  src to dst) [Neil Cook]
+- `Apero.science.calib.shape.py` - remove private functions in shape.
+  [Neil Cook]
+- `Recipes.nirps_ha.cal_shape_master_nirps_ha.py` - copy over code from
+  spirou. [Neil Cook]
+- `Plotting.plot_functions.py` [APERO] - update loc plot and shape plot.
+  [Neil Cook]
+- `Data.*.reset` [APERO] - update master wave solutions (distinguish
+  spirou and `nirps_ha)` [Neil Cook]
+- `Core.instruments.*.file_defintions.py` [APERO] - correct `out_dark` files
+  (suffix needs underscore) [Neil Cook]
+- `Core.instruments.*.default_constants.py` [NIRPS] - update loc constants
+  + update comment for `LOC_COLUMN_SEP_FITTING`. [Neil Cook]
+
+
+0.6.040 (2020-02-18)
+--------------------
+- `Apero.science.calib.badpix.py` and `localisation.py` [APERO] -
+  `RAW_TO_PP_ROTATION` and pep8 changes. [Neil Cook]
+- `Recipes.spirou.cal_preprocess_spirou.py` [SPIROU] - update header key
+  `KW_BERV_OBSTIME_METHOD` --> `KW_MID_OBSTIME_METHOD`. [Neil Cook]
+- `Recipes.nirps_ha.*.py` [NIRPS] - add `cal_badpix`, `cal_dark_master`,
+  `cal_loc` for `nirps_ha`. [Neil Cook]
+- `Io.drs_image.py` [APERO] - link `rotate_image` function to
+  math.genearl.rot8. [Neil Cook]
+- `Io.drs_data.py` [APERO] - fix arguments to error 00-012-00001. [Neil
+  Cook]
+- Update documentation. [Neil Cook]
+- Update documentation. [Neil Cook]
+- `Data.nirps_ha` [NIRPS] - rename data folder from nirps --> `nirps_ha`.
+  [Neil Cook]
+- `Apero.core.math.general.py` [APERO] - add rot8 function to deal with
+  rotation modes of images. [Neil Cook]
+- `Core.instruments.spirou.default_constants.py` - add `RAW_TO_PP_ROTATION`
+  value. [Neil Cook]
+- `Core.instruments.nirps_ha.default_constants.py` - tweak NIRPS values
+  from SPIROU values. [Neil Cook]
+- `Core.instruments.default.recipe_definitions.py` [APERO] - get
+  instruments from Constants. [Neil Cook]
+- `Core.instruments.default.default_constants.py` [APERO] - add
+  `RAW_TO_PP_ROTATION` constant. [Neil Cook]
+
+
+0.6.039 (2020-02-17)
+--------------------
+- `Documentaqtion/working/dev/developer_guide.rst` [APERO] - add github
+  interface as section. [Neil Cook]
+- `Core.instruments.nirps_ha.recipe_definitions.py` - change spirou
+  references to `nirps_ha`. [Neil Cook]
+- `Core.instruments.spirou.recipe_definitions.py` [SPIROU] - rename
+  internal instance names `obj_pol_spirou` and `obj_spec_spirou` --> `obj_pol`
+  and `obj_spec`. [Neil Cook]
+- `Documentation.working._static.yed.spirou_map_2020-01-22_all.graph`
+  [SPIROU] - update yed graph. [Neil Cook]
+- `Recipes.nirps_ha.cal_dark_nirps_ha.py` - copy over spirou recipe. [Neil
+  Cook]
+- Update the language database [APERO] add nirps files as duplicates of
+  spirou for start. [Neil Cook]
+- `Core.instruments.nirps_ha.pseudo_const.py` [NIRPS] - update splash from
+  spirou --> nirps. [Neil Cook]
+- `Core.instruments.deafult.default_config.py` [NIRPS] - add `NIRPS_HA` to
+  list of instruments. [Neil Cook]
+- `Tools.module.setup.drs_installation.py` [APERO] - force userconfig to
+  have a os.sep as last character. [Neil Cook]
+- NIRPS: start config file copy. [Neil Cook]
+
+
+0.6.038 (2020-02-10)
+--------------------
+- `Tools.recipes.general.apero_log_stats.py` - remove hard coded path.
+  [Neil Cook]
+- Printout of the `limited_run.ini` on `mini_data` for `apero_processing.py`
+  2020-02-10 13:56:00. [Neil Cook]
+- Update yed graphs. [Neil Cook]
+- Update yed graphs. [Neil Cook]
+- Update changelog. [Neil Cook]
 - Update python versions, yed graphs and update notes. [Neil Cook]
 - Update `readme/known_issues/todo`. [Neil Cook]
 - Update date/version/changelog/documentation. [Neil Cook]
+
+
+0.6.037 (2020-02-07)
+--------------------
 - `Core.core.drs_recipe.py` - add a pre-filter of table (so we are not
   scanning all files every time) [Neil Cook]
 - `Core.instruments.spirou.recipe_definitions.py` - filelogic must be
@@ -502,15 +700,15 @@ Changelog
 - Reorganise documentation - move build into working dir and have an
   output dir. [Neil Cook]
 - Update date/version/changelog. [Neil Cook]
-
-
-0.6.016 (2020-01-07)
---------------------
 - Update docs - `known_issues` and todo. [Neil Cook]
 - `Tools.module.documentation.drs_changelog.py` - add function to update a
   file based on a prefix and add in a suffix. [Neil Cook]
 - `Tools.recipes.dev.apero_changelog.py` - add doc changes to changelog
   (including copying changelog) [Neil Cook]
+
+
+0.6.016 (2020-01-06)
+--------------------
 - `Misc.updates_to_drs.mk_night_wave.py` - question for EA. [Neil Cook]
 - `Science.calib.wave.py` - continue work adding wave night functions.
   [Neil Cook]
@@ -538,10 +736,6 @@ Changelog
 - `Setup/inall.py` - add --name to `install.py` to allow different profiles
   to be set up on the same system. [Neil Cook]
 - Update changelog/version/date. [Neil Cook]
-
-
-0.6.015 (2020-01-04)
---------------------
 - Add apero-data and gitignore contents. [Neil Cook]
 - `Core.instruments.default.deafult_config.py` - change default locations
   to a relative location. [Neil Cook]
@@ -549,6 +743,10 @@ Changelog
   (including lock) [Neil Cook]
 - `Tools.recipe.general.apero_validate.py` - remove recipe log from non-
   instrument recipe. [Neil Cook]
+
+
+0.6.015 (2020-01-04)
+--------------------
 - `Io.drs_lock.py` - remove unused imports. [Neil Cook]
 - `Io.drs_fits.py` - all writing to file must be locked (for
   parellisation) based on filename. [Neil Cook]
@@ -696,10 +894,6 @@ Changelog
 - `Science.calib.wave.py` - EA modifications to triplet fitting. [Neil
   Cook]
 - Update changelog.md to include `core.core.drs_recipe` fixes. [Neil Cook]
-
-
-0.6.008 (2019-12-17)
---------------------
 - `Core.core.drs_recipe.py` - add other list arguments -- attempt to
   correct bug. [Neil Cook]
 - `Core.core.drs_recipe.py` - add other list arguments (i.e. --fpfiles=X Y
@@ -707,6 +901,10 @@ Changelog
 - `Core.core.drs_recipe.py` - add other list arguments (i.e. --fpfiles=X Y
   Z) as separate elements of `str_arg_list`. [Neil Cook]
 - Update date/version/changelog/readme. [Neil Cook]
+
+
+0.6.008 (2019-12-17)
+--------------------
 - README.md - correct typo "processing" --> `"apero_processing`" [Neil
   Cook]
 - `Setup/install.py` - install.update does not require "args" as input.
@@ -2183,10 +2381,6 @@ Changelog
 - `Core.core.drs_database.py` - move locking/checking into copy db file
   function. [Neil Cook]
 - Update changelog.md. [Neil Cook]
-
-
-0.5.073 (2019-09-18)
---------------------
 - `Tools.module.setup.drs_reprocess.py` - add shortname to Run class,
   check that all recipes in run table are valid, print group name
   (recipe short name) on group print out. [Neil Cook]
@@ -2204,6 +2398,10 @@ Changelog
 - `Recipes.spirou.cal_loc_spirou.py` - need to import math as mp. [Neil
   Cook]
 - Update date/version/changelog. [Neil Cook]
+
+
+0.5.073 (2019-09-18)
+--------------------
 - Core.math - add a fast `medfilt_1d` function. [Neil Cook]
 - `Core.math.fast.py` - first commit numpy nan functions from bottleneck
   if available. [Neil Cook]
