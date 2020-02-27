@@ -847,7 +847,7 @@ def clean_install(params, all_params):
         if instrument not in all_params:
             continue
         # check if all directories are empty
-        cond1 = not reset_paths_empty(params, all_params)
+        cond1 = not reset_paths_empty(params, all_params, instrument)
         cond2 = not all_params[instrument]['CLEAN_INSTALL']
         # check if user wants a clean install
         if cond1 and cond2:
@@ -860,10 +860,7 @@ def clean_install(params, all_params):
         # add to environment
         add_paths(all_params)
         # construct reset command
-        if not cond1:
-            toolmod.main(instrument=instrument, quiet=True, warn=False)
-        else:
-            toolmod.main(instrument=instrument, quiet=True, warn=True)
+        toolmod.main(instrument=instrument, quiet=True, warn=True)
     # return all params
     return all_params
 
@@ -940,7 +937,7 @@ def _create_link(recipe_dir, suffix, new_path, log=True):
         if log:
             cprint('\t\tMoving {0}'.format(basename))
         # remove link already present
-        if os.path.exists(newpath):
+        if os.path.exists(newpath) or os.path.islink(newpath):
             os.remove(newpath)
         # deal with directories not exists
         if not os.path.exists(os.path.dirname(newpath)):
@@ -1024,9 +1021,14 @@ def print_options(params, all_params):
     cprint(message4.format(**text), 'g')
 
 
-def reset_paths_empty(params, all_params):
+def reset_paths_empty(params, all_params, instrument=None):
+
+    if instrument is None:
+        instruments = params['DRS_INSTRUMENTS']
+    else:
+        instruments = [instrument]
     # loop around instruments
-    for instrument in params['DRS_INSTRUMENTS']:
+    for instrument in instruments:
         # skip if we are not installing instrument
         if instrument not in all_params:
             continue
