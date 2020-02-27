@@ -252,17 +252,9 @@ def __main__(recipe, params):
             cond1 = params['INPUTS']['DATABASE']
             cond2 = fp_e2ds_file is None
             if passed and cond1 and cond2:
-                # log that we are updating the HC file with wave params
-                wargs = [hc_e2ds_file.name, hc_e2ds_file.filename]
-                WLOG(params, '', TextEntry('40-017-00038', args=wargs))
-                # create copy of infile
-                hc_update = hc_e2ds_file.completecopy(hc_e2ds_file)
-                # update wave solution
-                hc_update = wave.add_wave_keys(params, hc_update, wprops)
-                # write hc update
-                hc_update.write_file()
-                # add to output files (for indexing)
-                recipe.add_output_file(hc_update)
+                # update the e2ds and s1d files for hc
+                wave.update_extract_files(params, recipe, hc_e2ds_file,
+                                          wprops, EXTRACT_NAME, fiber)
 
             # --------------------------------------------------------------
             # update recipe log file for hc fiber
@@ -319,27 +311,12 @@ def __main__(recipe, params):
                 # Update header of current file with FP solution
                 # ----------------------------------------------------------
                 if passed and params['INPUTS']['DATABASE']:
-                    # log that we are updating the HC file with wave params
-                    wargs = [hc_e2ds_file.name, hc_e2ds_file.filename]
-                    WLOG(params, '', TextEntry('40-017-00038', args=wargs))
-                    # create copy of input e2ds hc file
-                    hc_update = hc_e2ds_file.completecopy(hc_e2ds_file)
-                    # update wave solution
-                    hc_update = wave.add_wave_keys(params, hc_update, wprops)
-                    # write hc update
-                    hc_update.write_file()
-                    # log that we are updating the HC file with wave params
-                    wargs = [fp_e2ds_file.name, fp_e2ds_file.filename]
-                    WLOG(params, '', TextEntry('40-017-00038', args=wargs))
-                    # create copy of input e2ds fp file
-                    fp_update = fp_e2ds_file.completecopy(fp_e2ds_file)
-                    # update wave solution
-                    fp_update = wave.add_wave_keys(params, fp_update, wprops)
-                    # write hc update
-                    fp_update.write_file()
-                    # add to output files (for indexing)
-                    recipe.add_output_file(fp_update)
-                    # TODO: update s1d here
+                    # update the e2ds and s1d files for hc
+                    wave.update_extract_files(params, recipe, hc_e2ds_file,
+                                              wprops, EXTRACT_NAME, fiber)
+                    # update the e2ds and s1d files for fp
+                    wave.update_extract_files(params, recipe, fp_e2ds_file,
+                                              wprops, EXTRACT_NAME, fiber)
 
                 # ----------------------------------------------------------
                 # Construct master line reference files
