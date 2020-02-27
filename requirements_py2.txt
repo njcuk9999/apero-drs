@@ -1,6 +1,0 @@
-astropy==2.0.3
-barycorrpy==0.2.2.1
-ipython==5.4.1
-matplotlib==2.1.2
-numpy==1.14.0
-scipy==1.0.0
