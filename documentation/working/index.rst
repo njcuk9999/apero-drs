@@ -8,8 +8,7 @@ APERO Documentation
 ******************************************
 
 ===========================================
-Latest version: 0.6.037
-
+Latest version: 0.6.047
 
 It is the official pipeline for:
 
