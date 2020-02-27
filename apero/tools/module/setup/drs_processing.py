@@ -21,6 +21,7 @@ from multiprocessing import Pool, Process, Manager, Event
 
 from apero import core
 from apero.core.core import drs_startup
+from apero.core.core import drs_log
 from apero import locale
 from apero.locale import drs_exceptions
 from apero.core import constants
@@ -806,6 +807,79 @@ def display_errors(params, outlist):
     WLOG(params, '', '')
 
 
+def save_stats(params, outlist):
+    # set function name
+    func_name = __NAME__ + '.save_stats()'
+    # get save directory
+    save_dir = os.path.join(params['DRS_DATA_RUN'], 'stats')
+    # deal with stats dir not existing
+    if not os.path.exists(save_dir):
+        try:
+            os.mkdir(save_dir)
+        except Exception as e:
+            eargs = [save_dir, type(e), e, func_name]
+            WLOG(params, 'warning', TextEntry('10-503-00011', args=eargs))
+            return
+    # get log file name
+    log_abs_file = drs_log.get_logfilepath(WLOG, params)
+    log_file = os.path.basename(log_abs_file)
+    # get fits file out path
+    out_fitsfile = log_file.replace('.log', '_stats.fits')
+    out_fits_path = os.path.join(save_dir, out_fitsfile)
+    # get txt file out path
+    out_txtfile = log_file.replace('.log', '_stats.txt')
+    out_txt_path = os.path.join(save_dir, out_txtfile)
+    # define storage
+    priorities = []
+    runlists = []
+    recipenames = []
+    nightnames = []
+    coresused = []
+    corestot = []
+    groups = []
+    # sort outlist ids
+    keys = np.sort(list(outlist.keys()))
+    # loop around each entry of outlist and print any errors
+    for key in keys:
+        # get rdict
+        rdict = outlist[key]
+        # append priorities
+        priorities.append(key)
+        # append runstring to run lists
+        runlists.append(rdict['RUNSTRING'])
+        # append recipes to list
+        recipenames.append(rdict['RECIPE'])
+        # append night name to list
+        nightnames.append(rdict['NIGHTNAME'])
+        # append cores used to list
+        coresused.append(rdict['COREUSED'])
+        # append cores total
+        corestot.append(rdict['CORETOT'])
+        # append group
+        groups.append(rdict['GROUP'])
+    # make into a table
+    columns = ['ID', 'RECIPE', 'NIGHT', 'CORE_NUM', 'CORE_TOT', 'RUNSTRING']
+    values = [priorities, recipenames, nightnames, coresused, corestot,
+              runlists]
+    out_fits_table = drs_table.make_table(params, columns, values)
+    # write table
+    try:
+        drs_table.write_table(params, out_fits_table, out_fits_path)
+    except Exception as e:
+        eargs = [out_fits_path, type(e), e, func_name]
+        WLOG(params, 'warning', TextEntry('10-503-00012', args=eargs))
+
+    # make txt table
+    try:
+        out_txt_table = open(out_txt_path, 'w')
+        for value in runlists:
+            out_txt_table.write(value + '\n')
+        out_txt_table.close()
+    except Exception as e:
+        eargs = [out_txt_path, type(e), e, func_name]
+        WLOG(params, 'warning', TextEntry('10-503-00012', args=eargs))
+
+
 def generate_run_table(params, recipe, *args, **kwargs):
     func_name = __NAME__ + '.generate_run_table()'
     # set length initially to None
@@ -1399,6 +1473,9 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
         pp['NIGHTNAME'] = str(run_item.nightname)
         pp['ARGS'] = kwargs
         pp['RUNSTRING'] = str(run_item.runstring)
+        pp['COREUSED'] = number
+        pp['CORETOT'] = cores
+        pp['GROUP'] = group
         # ------------------------------------------------------------------
         # add drs group to keyword arguments
         pp['ARGS']['DRS_GROUP'] = group
