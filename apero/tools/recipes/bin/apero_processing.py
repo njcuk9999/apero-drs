@@ -144,6 +144,11 @@ def __main__(recipe, params):
         drs_processing.display_errors(params, outlist)
 
     # ----------------------------------------------------------------------
+    # Compile some useful information as summary
+    # ----------------------------------------------------------------------
+    drs_processing.save_stats(params, outlist)
+
+    # ----------------------------------------------------------------------
     # Send email about finishing
     # ----------------------------------------------------------------------
     # send email if configured
