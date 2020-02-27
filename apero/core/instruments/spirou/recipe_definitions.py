@@ -631,7 +631,7 @@ cal_wave.set_debug_plots('WAVE_HC_GUESS', 'WAVE_HC_BRIGHTEST_LINES',
                          'WAVE_FP_IPT_CWID_1MHC', 'WAVE_FP_IPT_CWID_LLHC',
                          'WAVE_FP_LL_DIFF', 'WAVE_FP_MULTI_ORDER',
                          'WAVE_FP_SINGLE_ORDER',
-                         'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
+                         'CCF_RV_FIT', 'CCF_RV_FIT_LOOP', 'EXTRACT_S1D')
 cal_wave.set_summary_plots('SUM_WAVE_FP_IPT_CWID_LLHC',
                            'SUM_WAVE_LITTROW_CHECK', 'SUM_WAVE_LITTROW_EXTRAP',
                            'SUM_CCF_RV_FIT')
@@ -706,7 +706,7 @@ cal_wave_master.set_debug_plots('WAVE_HC_GUESS', 'WAVE_HC_BRIGHTEST_LINES',
                                 'WAVE_FP_LL_DIFF', 'WAVE_FP_MULTI_ORDER',
                                 'WAVE_FP_SINGLE_ORDER',
                                 'CCF_RV_FIT', 'CCF_RV_FIT_LOOP',
-                                'WAVEREF_EXPECTED')
+                                'WAVEREF_EXPECTED', 'EXTRACT_S1D')
 cal_wave_master.set_summary_plots('SUM_WAVE_FP_IPT_CWID_LLHC',
                                   'SUM_WAVE_LITTROW_CHECK',
                                   'SUM_WAVE_LITTROW_EXTRAP',
@@ -766,7 +766,7 @@ cal_wave_night.set_outputs(WAVE_E2DS=sf.out_ext_e2dsff,
 cal_wave_night.set_debug_plots('WAVENIGHT_ITERPLOT',
                                'WAVENIGHT_DIFFPLOT', 'WAVENIGHT_HISTPLOT',
                                'WAVEREF_EXPECTED', 'CCF_RV_FIT',
-                               'CCF_RV_FIT_LOOP')
+                               'CCF_RV_FIT_LOOP', 'EXTRACT_S1D')
 cal_wave_night.set_summary_plots('SUM_CCF_RV_FIT')
 cal_wave_night.set_arg(pos=0, **directory)
 cal_wave_night.set_kwarg(name='--hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
