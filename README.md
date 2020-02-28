@@ -454,9 +454,12 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 | cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night]                  | CCF        |
 
 
-##### 3. `pp_run`
+##### 3. preprocessing runs
 
 Only run the preprocessing recipe
+
+
+###### 3a: `pp_run`
 
 where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
 i.e. for RUN_XXXX and SKIP_XXXX.
@@ -464,6 +467,18 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 | recipe                                                              | SHORT_NAME |
 | ------------------------------------------------------------------- | ---------- | 
 | cal_preprocessing                                                   | PP         |
+
+
+###### 3b: `pp_runo`
+
+where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
+i.e. for RUN_XXXX and SKIP_XXXX.
+
+| recipe                                                                   | SHORT_NAME |
+| ------------------------------------------------------------------------ | ---------- | 
+| cal_preprocessing [OBJ_DARK + OBJ_FP; every night; OBJECT="Calibration"] | PP_CAL     |
+| cal_preprocessing [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]      | PP_SCI     |
+| cal_preprocessing [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]     | PP_TEL     |
 
 
 
