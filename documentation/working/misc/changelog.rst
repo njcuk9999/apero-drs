@@ -2,6 +2,68 @@ Changelog
 =========
 
 
+0.6.048 (2020-02-28)
+--------------------
+- Documentation.working.user.general.todo.rst - update todo list. [Neil
+  Cook]
+- `Tools.recipes.spirou.exposuremeter_spirou.py` - first commit of
+  exposure meter code [UNFINISHED] [Neil Cook]
+- Tools.recipes.spirou - move `cal_update_berv.py` to tools. [Neil Cook]
+- `Io.drs_fits.py` - add "night" to `find_files` (to filter just one night)
+  [Neil Cook]
+- Update language database. [Neil Cook]
+- `Tools.module.setup.drs_processing.py` - correct `NIGHT_NAME` -->
+  NIGHTNAME and cause exception when TRIGGER=True and NIGHTNAME unset.
+  [Neil Cook]
+- Update run.ini files `(NIGHT_NAME` --> NIGHTNAME) [Neil Cook]
+- `Tools.module.setup.drs_processing.py` - update how filters are obtained
+  and add error when incorrect. [Neil Cook]
+- Update language database. [Neil Cook]
+- `Data.spirou.reset.runs.trigger_night_calbi_run.ini` - correct run and
+  skip pp parameters. [Neil Cook]
+- Readme.md - update sequences. [Neil Cook]
+- `Core.instruments.spirou.recipe_definitions.py` - add `pp_run_opt`
+  (preprocessing with options -- must turn all off to only select one)
+  [Neil Cook]
+- `Data.spirou.reset.runs.trigger*.ini` - add pp seqeunce elements. [Neil
+  Cook]
+- `Tools.module.setup.drs_processing.py` - add trigger from file. [Neil
+  Cook]
+- `Core.instruments.spirou.recipe_defintions.py` - add `pp_run_sci` sequence
+  (preprocess `OBJ_DARK`, `OBJ_FP` only) [Neil Cook]
+- Update run.ini files. [Neil Cook]
+- `Core.core.drs_recipe.py` - deal with having no files in a recipe that
+  requires files. [Neil Cook]
+- Update language database. [Neil Cook]
+- `Tools.module.setup.drs_processing.py` - add section to stop processing
+  recipes when we are in trigger mode. [Neil Cook]
+- `Tools.module.setup.drs_processing.py` - `update_run_table` needs to take
+  value from rlist if already populated. [Neil Cook]
+- `Tools.module.setup.drs_processing.py` - deal with trigger run when
+  removing engineering nights (i.e. deal with when we have no objects in
+  a directory) [Neil Cook]
+- Update language database. [Neil Cook]
+- `Core.instruments.default.recipe_defintions.py` - update dtype for
+  --trigger argument. [Neil Cook]
+- Update language database. [Neil Cook]
+- Documentation.working.user.general.todo.rst - update todo list. [Neil
+  Cook]
+- `Core.instruments.default.recipe_defintions.py` - add --trigger option
+  to `apero_processing.py`. [Neil Cook]
+- `Drs_installation.py` -- check "clean" argument for update. [Neil Cook]
+- `Setup.install.py` - pass args to update. [Neil Cook]
+- `Setup.install.py` - print that we are locating install path. [Neil
+  Cook]
+- `Tools.module.setup.drs_reset.py` -- do not remove head when removing
+  paths in clean install. [Neil Cook]
+- `Io.drs_lock.py` - add checks in `__remove_empty__` for symbolic links.
+  [Neil Cook]
+- `Core.constants.param_functions.py` - add check for stty for posix os.
+  [Neil Cook]
+- Update requirements (in .txt and install.py) [Neil Cook]
+- Update version/date/changelog/documentation. [Neil Cook]
+
+
 0.6.047 (2020-02-27)
 --------------------
 - `Documentation.working.dev.developer_guide.rst` [APERO] - add another
