@@ -44,7 +44,7 @@ TextDict = locale.drs_text.TextDict
 RMOD = drs_dev.RecipeDefinition(instrument=__INSTRUMENT__)
 # define a recipe for this tool
 cal_update_berv = drs_dev.TmpRecipe()
-cal_update_berv.name = 'cal_update_berv.py'
+cal_update_berv.name = __NAME__
 cal_update_berv.shortname = 'UBERV'
 cal_update_berv.instrument = __INSTRUMENT__
 cal_update_berv.outputdir = 'reduced'
