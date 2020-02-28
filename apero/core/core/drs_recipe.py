@@ -1663,12 +1663,30 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
     # ----------------------------------------------------------------------
     # deal with no file found (only if we expect to have files)
     if has_file_args:
-        all_none = True
+        all_none = False
         for runarg in runorder:
-            if rundict[runarg] is not None:
-                for entry in rundict[runarg]:
-                    if rundict[runarg][entry] is not None:
-                        all_none = False
+            # need to check required criteria
+            if runarg in recipe.args:
+                required = recipe.args[runarg].required
+            else:
+                required = recipe.kwargs[runarg].required
+            # only check if file is required
+            if required:
+                # if whole dict is None then all_none is True
+                if rundict[runarg] is None:
+                    all_none = True
+                # if we have entries we have to check each of them
+                else:
+                    # test this run arg
+                    entry_none = False
+                    # loop around entries
+                    for entry in rundict[runarg]:
+                        # if entry is None --> entry None is True
+                        if rundict[runarg][entry] is None:
+                            entry_none |= True
+                    # if entry_none is True then all_none is True
+                    if entry_none:
+                        all_none = True
         # if all none is True then return no runs
         if all_none:
             return []
