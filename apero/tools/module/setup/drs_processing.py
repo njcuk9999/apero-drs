@@ -80,6 +80,8 @@ RUN_KEYS['RESET_RUN'] = False
 RUN_KEYS['RESET_LOGFITS'] = False
 RUN_KEYS['TELLURIC_TARGETS'] = None
 RUN_KEYS['SCIENCE_TARGETS'] = None
+# storage for reporting removed engineering directories
+REMOVE_ENG_NIGHTS = []
 
 
 # =============================================================================
@@ -1384,7 +1386,7 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
                 sys.exit()
         # filer out engineering
         if not params['ENGINEERING']:
-            ftable = _remove_engineering(ftable)
+            ftable = _remove_engineering(params, ftable)
         # deal with filters
         filters = _get_filters(params, srecipe)
         # get fiber filter
@@ -2157,13 +2159,19 @@ def _group_tasks2(runlist, cores):
     return groups, names
 
 
-def _remove_engineering(ftable):
+def _remove_engineering(params, ftable):
+    global REMOVE_ENG_NIGHTS
+    # if we are dealing with the trigger run do not do this -- user has
+    #   specified a night
+    if params['INPUTS']['TRIGGER']:
+        return ftable
     # get nightnames
     nightnames = ftable['__NIGHTNAME']
     obstypes = ftable['KW_OBSTYPE']
     # get unique nights
     u_nights = np.unique(nightnames)
-    # get the object mask
+    # get the object mask (i.e. we want to know that we have objects for this
+    #   night
     objmask = obstypes == 'OBJECT'
     # define empty keep mask
     keepmask = np.zeros(len(ftable), dtype=bool)
@@ -2173,10 +2181,16 @@ def _remove_engineering(ftable):
         nightmask = nightnames == night
         # joint mask
         nightobjmask = nightmask & objmask
-        # if we find objects then keep these files
+        # if we find objects then keep all files from this night
         if np.sum(nightobjmask) > 0:
             # add to keep mask
             keepmask[nightmask] = True
+        elif night not in REMOVE_ENG_NIGHTS:
+            # log message
+            WLOG(params, 'warning', TextEntry('10-503-00014', args=[night]))
+            # add to remove eng nights (so log message not produced again)
+            REMOVE_ENG_NIGHTS.append(night)
+
     # return masked ftable
     return ftable[keepmask]
 
