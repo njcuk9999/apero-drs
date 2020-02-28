@@ -687,7 +687,8 @@ def generate_run_list(params, table, runtable):
             # generate new runs for sequence
             newruns = _generate_run_from_sequence(params, sequence, table)
             # update runtable with sequence generation
-            runtable, rlist = _update_run_table(sequence, runtable, newruns)
+            runtable, rlist = update_run_table(sequence, runtable, newruns,
+                                               rlist)
     # all runtable elements should now be in recipe list
     _check_runtable(params, runtable, recipemod)
     # return Run instances for each runtable element
@@ -1401,7 +1402,7 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
     return newruns
 
 
-def _update_run_table(sequence, runtable, newruns):
+def update_run_table(sequence, runtable, newruns, rlist=None):
     # define output runtable
     outruntable = OrderedDict()
     recipe_list = OrderedDict()
@@ -1413,7 +1414,10 @@ def _update_run_table(sequence, runtable, newruns):
         if runtable[idkey].upper() != sequence[0]:
             # add run table row to out run table
             outruntable[idnumber] = runtable[idkey]
-            recipe_list[idnumber] = None
+            if rlist is None:
+                recipe_list[idnumber] = None
+            else:
+                recipe_list[idnumber] = rlist[idnumber]
             # update id number
             idnumber += 1
         # else we have found where we need to insert rows
