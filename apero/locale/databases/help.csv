@@ -34,6 +34,7 @@
 "PROCESS_NIGHTNAME_HELP","HELP","","None","[STRING] The 'night_name' or directory to reprocess (default is None for all directories)","",""
 "PROCESS_RUNFILE_HELP","HELP","","None","[STRING] The run file to use in reprocessing","",""
 "PROCESS_TEST_HELP","HELP","","None","[BOOLEAN] If True does not process any files just prints an output of what recipes would be run","",""
+"PROCESS_TRIGGER_HELP","HELP","","None","[BOOLEAN] If True activates trigger mode (i.e. will stop processing at the first point we do not find required files). Note one must define --night in trigger mode","",""
 "PROCESS_BNIGHTNAMES_HELP","HELP","","None","[STRING] List of 'night_name's or directories to black list (will not process these directories)","",""
 "PROCESS_WNIGHTNAMES_HELP","HELP","","None","[STRING] List of 'night_name's or directories to white list (will only process these directories)","",""
 "PROCESS_CORES_HELP","HELP","","None","[INTEGER] Number of cores to use in processing","",""
