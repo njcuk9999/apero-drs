@@ -62,7 +62,7 @@ RUN_KEYS = dict()
 RUN_KEYS['RUN_NAME'] = 'Run Unknown'
 RUN_KEYS['SEND_EMAIL'] = 'False'
 RUN_KEYS['EMAIL_ADDRESS'] = None
-RUN_KEYS['NIGHT_NAME'] = None
+RUN_KEYS['NIGHTNAME'] = None
 RUN_KEYS['BNIGHTNAMES'] = None
 RUN_KEYS['WNIGHTNAMES'] = None
 RUN_KEYS['MASTER_NIGHT'] = None
@@ -497,6 +497,12 @@ def read_runfile(params, runfile, **kwargs):
                 params['TRIGGER_RUN'] = True
             else:
                 params['TRIGGER_RUN'] = False
+
+        # if trigger if defined night name must be as well
+        if params['NIGHTNAME'] is None:
+            # cause an error if nightname not set
+            WLOG(params, 'error', TextEntry('09-503-00010'))
+
     # ----------------------------------------------------------------------
     # relock params
     params.lock()
