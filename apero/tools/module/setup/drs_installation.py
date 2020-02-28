@@ -1240,7 +1240,7 @@ def ufile_write(aparams, lines, upath, ufile, kind):
 # =============================================================================
 # update functions
 # =============================================================================
-def update(params):
+def update(params, args):
     # set function name
     func_name = __NAME__ + '.update()'
     # get available instruments
@@ -1287,8 +1287,12 @@ def update(params):
             istorage.set_source(datapath, iparams.sources[datapath])
         # ------------------------------------------------------------------
         # add clean install
-        istorage['CLEAN_INSTALL'] = False
-        istorage.set_source('CLEAN_INSTALL', func_name)
+        if args.clean in ['True', True, '1', 1]:
+            istorage['CLEAN_INSTALL'] = True
+            istorage.set_source('CLEAN_INSTALL', 'sys.argv')
+        else:
+            istorage['CLEAN_INSTALL'] = False
+            istorage.set_source('CLEAN_INSTALL', func_name)
         # add ds9
         istorage['DRS_DS9_PATH'] = iparams['DRS_DS9_PATH']
         istorage.set_source('DRS_DS9_PATH', iparams.sources['DRS_DS9_PATH'])
