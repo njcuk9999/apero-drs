@@ -47,7 +47,7 @@
     - do not use cal_wave_master_spirou.py, cal_wave_night_spirou.py, 
       obj_pol_spirou.py, obj_spec_spirou.py
     ```
-- working (untested) V0.6.037 (2020-02-07)
+- working (untested) V0.6.048 (2020-02-28)
     ```
     Note the working version will be the most up-to-date version but has not been
     tested for stability - use at own risk.
