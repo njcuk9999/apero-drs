@@ -8,8 +8,7 @@ APERO Documentation
 ******************************************
 
 ===========================================
-Latest version: 0.6.047
-
+Latest version: 0.6.048
 It is the official pipeline for:
 
 * `SPIROU <https://www.cfht.hawaii.edu/Instruments/SPIRou/>`_ (SPectropolarimeter InfraROUge) on the Canada-France-Hawaii Telescope `CFHT <https://www.cfht.hawaii.edu/>`_.
