@@ -1395,6 +1395,17 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
         # get runs for this recipe
         sruns = srecipe.generate_runs(params, ftable, filters=filters,
                                       allowedfibers=allowedfibers)
+        # ------------------------------------------------------------------
+        # if we are in trigger mode we need to stop when we have no
+        #   sruns for recipe
+        if params['INPUTS']['TRIGGER'] and len(sruns) == 0:
+            # display message that we stopped here as no files were found
+            wargs = [srecipe.name]
+            WLOG(params, 'info', TextEntry('40-503-00028', args=wargs))
+            # stop processing recipes
+            break
+
+        # ------------------------------------------------------------------
         # append runs to new runs list
         for srun in sruns:
             newruns.append([srun, srecipe])
