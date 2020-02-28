@@ -22,6 +22,7 @@ from multiprocessing import Pool, Process, Manager, Event
 from apero import core
 from apero.core.core import drs_startup
 from apero.core.core import drs_log
+from apero.core.core import drs_recipe
 from apero import locale
 from apero.locale import drs_exceptions
 from apero.core import constants
@@ -83,7 +84,8 @@ RUN_KEYS['TELLURIC_TARGETS'] = None
 RUN_KEYS['SCIENCE_TARGETS'] = None
 # storage for reporting removed engineering directories
 REMOVE_ENG_NIGHTS = []
-
+# get special list from recipes
+SPECIAL_LIST_KEYS = drs_recipe.SPECIAL_LIST_KEYS
 
 # =============================================================================
 # Define classes
@@ -1957,6 +1959,9 @@ def _get_files(params, recipe, path, rpath, **kwargs):
 
 
 def _get_filters(params, srecipe):
+    # set up function name
+    func_name = __NAME__ + '._get_filters()'
+    # set up filter storage
     filters = dict()
     # loop around recipe filters
     for key in srecipe.filters:
@@ -1966,7 +1971,7 @@ def _get_filters(params, srecipe):
         if isinstance(value, list):
             filters[key] = value
         # if this is in params set this value
-        elif value in params:
+        elif (value in params) and (value in SPECIAL_LIST_KEYS):
             # get values from
             user_filter = params[value]
             # deal with unset value
@@ -1976,10 +1981,21 @@ def _get_filters(params, srecipe):
                     filters[key] = list(wlist)
                 else:
                     continue
+            # else assume we have a special list that is a string list
+            #   (i.e. SCIENCE_TARGETS = "target1, target2, target3"
             elif isinstance(user_filter, str):
                 filters[key] = _split_string_list(user_filter)
             else:
                 continue
+        # else assume we have a straight string to look for (if it is a valid
+        #   string)
+        elif isinstance(value, str):
+            filters[key] = value
+        # if we don't have a valid string cause an error
+        else:
+            # log error
+            eargs = [key, value, srecipe.name, func_name]
+            WLOG(params, 'error', TextEntry('00-503-00017', args=eargs))
     # return filters
     return filters
 
