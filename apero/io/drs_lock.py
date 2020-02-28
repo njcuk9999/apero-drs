@@ -420,7 +420,10 @@ def reset_lock_dir(params, log=False):
 
 
 def __remove_empty__(params, path, remove_head=True, log=False):
-    if not os.path.isdir(path):
+    # define function name
+    func_name = __NAME__ + '.__remove_empty__()'
+    # check if path is not a directory or if path is link
+    if not os.path.isdir(path) or os.path.islink(path):
         return
 
     # remove empty subfolders
@@ -436,7 +439,14 @@ def __remove_empty__(params, path, remove_head=True, log=False):
     if len(files) == 0 and remove_head:
         if log:
             WLOG(params, 'debug', "Removing empty folder: {0}".format(path))
-        os.rmdir(path)
+        # try to remove or report warning
+        try:
+            os.rmdir(path)
+        except Exception as e:
+            eargs = [path, type(e), e, func_name]
+            emsg = ('Cannot remove dir {0}. \n\t Error {1}: {2} '
+                    '\n\t function = {3}')
+            WLOG(params, 'warning', emsg.format(*eargs))
 
 
 # =============================================================================
