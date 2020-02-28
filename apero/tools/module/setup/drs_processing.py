@@ -68,6 +68,7 @@ RUN_KEYS['MASTER_NIGHT'] = None
 RUN_KEYS['CORES'] = 1
 RUN_KEYS['STOP_AT_EXCEPTION'] = False
 RUN_KEYS['TEST_RUN'] = False
+RUN_KEYS['TRIGGER_RUN'] = False
 RUN_KEYS['ENGINEERING'] = False
 RUN_KEYS['RESET_ALLOWED'] = False
 RUN_KEYS['RESET_TMP'] = False
@@ -481,11 +482,19 @@ def read_runfile(params, runfile, **kwargs):
     if 'TEST' in params['INPUTS']:
         test = params['INPUTS']['TEST']
         if test not in ['', 'None', None]:
-            if test.upper() in ['TRUE', '1']:
+            if test.upper() in [True, 'True', '1', 1]:
                 params['TEST_RUN'] = True
             else:
                 params['TEST_RUN'] = False
-
+    # ----------------------------------------------------------------------
+    # deal with getting trigger run from user input
+    if 'TRIGGER' in params['INPUTS']:
+        trigger = params['INPUTS']['TRIGGER']
+        if trigger not in ['', 'None', None]:
+            if trigger in [True, 'True', '1', 1]:
+                params['TRIGGER_RUN'] = True
+            else:
+                params['TRIGGER_RUN'] = False
     # ----------------------------------------------------------------------
     # relock params
     params.lock()
