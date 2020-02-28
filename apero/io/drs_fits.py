@@ -552,7 +552,7 @@ def _write_fits(params, filename, data, header, datatype, dtype=None, func=None)
 # Define search functions
 # =============================================================================
 def find_files(params, kind=None, path=None, logic='and', fiber=None,
-               return_table=False, **kwargs):
+               return_table=False, night=None, **kwargs):
     """
     Find files using kwargs (using index files located in 'kind' or 'path')
 
@@ -617,7 +617,7 @@ def find_files(params, kind=None, path=None, logic='and', fiber=None,
                 WLOG(params, 'error', TextEntry('00-004-00001', args=eargs))
     # ----------------------------------------------------------------------
     # get index files
-    index_files = get_index_files(params, path)
+    index_files = get_index_files(params, path, night=night)
     # ----------------------------------------------------------------------
     # valid files storage
     valid_files = []
@@ -707,7 +707,7 @@ def find_files(params, kind=None, path=None, logic='and', fiber=None,
         return valid_files
 
 
-def get_index_files(params, path=None, required=True):
+def get_index_files(params, path=None, required=True, night=None):
     """
     Get index files in path (or sub-directory of path)
         if path is "None" params['INPATH'] is used
@@ -716,9 +716,13 @@ def get_index_files(params, path=None, required=True):
     :param path: str, the path to check for filetypes (must have index files
                  in this path or sub directories of this path)
                  if path is "None" params['INPATH'] is used
+    :param required: bool, if True generates an error when None found
+    :param night: str or None, if set filters index files by night
 
     :type params: ParamDict
     :type path: str
+    :type required: bool
+    :type night: str
 
     :return: the absolute paths to all index files under path
     :rtype: list[str]
@@ -731,6 +735,10 @@ def get_index_files(params, path=None, required=True):
     index_files = []
     # walk through path and find index files
     for root, dirs, files in os.walk(path):
+        # skip nights if required
+        if night is not None:
+            if not root.strip(os.sep).endswith(night):
+                continue
         for filename in files:
             if filename == params['DRS_INDEX_FILE']:
                 index_files.append(os.path.join(root, filename))
