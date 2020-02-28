@@ -352,6 +352,8 @@ def tab_input(message, root=None):
 
 
 def check_install(drs_path):
+    # print check
+    print('Locating {0} install...'.format(DRS_PATH))
     # get current working directory
     cwd = os.getcwd()
     # set import condition to True
