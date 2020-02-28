@@ -1396,6 +1396,9 @@ def window_size(drows=80, dcols=80):
     _ = display_func(None, 'window_size', __NAME__)
     # only works on unix operating systems
     if os.name == 'posix':
+        # see if we have stty commnad
+        if shutil.which('stty') is None:
+            return drows, dcols
         # try to open via open and split output back to rows and columns
         # noinspection PyPep8,PyBroadException
         try:
