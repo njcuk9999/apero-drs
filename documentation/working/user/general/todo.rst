@@ -18,10 +18,9 @@ For all instruments / in general.
 
 High priority:
 
-* reset breaks for symbolic links -- fix this
 * add in `dark_fp` correction
-* fix headers for having bad wave and loc keys (remove?)
-* add rv from header for ccf
+* fix headers for having bad wave and loc keys (remove?) [NEEDS DISCUSSION]
+* add rv from header for ccf [WHERE in processing code?]
 
 Low priority:
 
@@ -94,7 +93,6 @@ High priority:
 
 * convert/adapt cal_preprocessing
 * convert/adapt cal_wave / cal_wave_master
-* proposal for trigger using processing code
 
 Low priority:
 
