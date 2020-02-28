@@ -20,7 +20,7 @@ High priority:
 
 * add in `dark_fp` correction
 * fix headers for having bad wave and loc keys (remove?) [NEEDS DISCUSSION]
-* add rv from header for ccf [WHERE in processing code?]
+* add rv from header for ccf [WHERE in processing code? or in recipe?]
 
 Low priority:
 
@@ -39,7 +39,6 @@ Low priority:
 * display func for all functions
 * add doc strings to all functions, descriptions to all constants, review all constant min/max/dtypes
 * proper SNR calculation
-* defining night_name in run.ini scripts does not work
 * add option to set template for mk_tellu and fit_tellu
 * add flag for parellel / non parellel mode - can disable locking then?
 * named break points
@@ -72,7 +71,6 @@ SPIRou specific
 =========================================
 High priority:
 
-* trigger implementation / interface with drs
 * add exposure meter recipes (`cal_exposuremeter_spirou.py`)
 
 Low priority:
