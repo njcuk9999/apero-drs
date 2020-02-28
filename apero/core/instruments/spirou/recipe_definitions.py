@@ -1248,8 +1248,10 @@ limited_run.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
 pp_run = drs_recipe.DrsRunSequence('pp_run', __INSTRUMENT__)
 pp_run.add(cal_pp)
 
-pp_run_science = drs_recipe.DrsRunSequence('pp_run_sci', __INSTRUMENT__)
-pp_run_science.add(cal_pp, name='PP_SCI', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
+pp_run_opt = drs_recipe.DrsRunSequence('pp_runo', __INSTRUMENT__)
+pp_run_opt.add(cal_pp, name='PP_CAL', KW_OBJNAME='Calibration')
+pp_run_opt.add(cal_pp, name='PP_SCI', KW_OBJNAME='SCIENCE_TARGETS')
+pp_run_opt.add(cal_pp, name='PP_TEL', KW_OBJNAME='TELLURIC_TARGETS')
 
 # -----------------------------------------------------------------------------
 # master run (for trigger)
@@ -1417,5 +1419,6 @@ old_run.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
 # -----------------------------------------------------------------------------
 # sequences list
 # -----------------------------------------------------------------------------
-sequences = [pp_run, pp_run_science, full_run, limited_run, master_run,
-             calib_run, tellu_run, science_run, hc_run, dark_fp_run, old_run]
+sequences = [pp_run, pp_run_opt, full_run, limited_run,
+             master_run, calib_run, tellu_run, science_run,
+             hc_run, dark_fp_run, old_run]
