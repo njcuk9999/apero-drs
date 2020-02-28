@@ -350,7 +350,7 @@
 "00-503-00014","ERROR","to de-sim","{0} = cores value; {1} = error type; {2} = error message","User input error: '--cores' must be an integer \n\t Error {1}: {2}","",""
 "00-503-00015","ERROR","Means that an system exit error was caught","{0} = run id","System exit occurred in run '{0}'","",""
 "00-503-00016","ERROR","Means that creation of lock file failed","{0} = error type; {1} = Error message; {2} = filename; {3} = function name","Creating lock directory failed. \n\t Error {0}: {1} \n\t Directory = {2} \n\t Function = {3}","",""
-"00-503-00017","ERROR","","","","",""
+"00-503-00017","ERROR","Means sequence defined an invalid filter","{0} =  filter name; {1} = filter value; {2} = recipe name;  {3} = function name","Filter error: Filter {0} = '{1}' not valid for recipe {2} \n\t Function = {3}","",""
 "00-503-00018","ERROR","","","","",""
 "00-503-00019","ERROR","","","","",""
 "00-503-00020","ERROR","","","","",""
