@@ -1288,7 +1288,7 @@
 "40-503-00025","ALL","prints total time","{0} = total time","Total time taken = {0:.3f}","",""
 "40-503-00026","ALL","prints that we black listed some nights","{0} = nights black listed","\t\tBlack listing directories: {0}","",""
 "40-503-00027","ALL","prints that we white listed somenights","{0} = nights white listed","\t\tWhite listing directories: {0}","",""
-"40-503-00028","ALL","","","","",""
+"40-503-00028","ALL","prints that we are in trigger mode and have reached the point where we don't have enough files to continue","{0} = recipe name","Trigger mode: Not enough files to continue. Stopping at recipe = {0}","",""
 "40-503-00029","ALL","","","","",""
 "","","","","","",""
 "","","","","","",""
