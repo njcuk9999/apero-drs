@@ -777,7 +777,7 @@
 "10-503-00011","WARNING","Means that we could not write statistics file (could not make dir)","{0} = directory; {1} = error type; {2} = error message; {3} = function name","Processing stats: Could not create directory '{0}' \n\t Error {1}: {2} \n\t Function = {3}","",""
 "10-503-00012","WARNING","Means that we could not write stats fits file","{0} = fits file path; {1} = error type; {2} = error message; {3} = function name","Processing stats: Could not save fits file '{0}'  \n\t Error {1}: {2} \n\t Function = {3}","",""
 "10-503-00013","WARNING","Means that we could not write stats txt file","{0} = text file path; {1} = error type; {2} = error message; {3} = function name","Processing stats: Could not save text file '{0}'  \n\t Error {1}: {2} \n\t Function = {3}","",""
-"","","","","","",""
+"10-503-00014","WARNING","Means that directory was disregarded due to not object files (ENGINEERING = False)","{0} = directory","Remove Engineering Nights: Directory {0} was removed - no OBJECT type found. Set ""ENGINEERING=True"" to include this directory.","",""
 "","","","","","",""
 "","","","","","",""
 "","","","","","",""
