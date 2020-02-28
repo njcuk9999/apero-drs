@@ -243,7 +243,7 @@ processing.set_kwarg(name='--cores', dtype=str, default='None',
 processing.set_kwarg(name='--test', dtype=str, default='None',
                      options=['True', 'False', '1', '0', 'None'],
                      helpstr=Help['PROCESS_TEST_HELP'])
-processing.set_kwarg(name='--trigger', dtype=bool, default=False,
+processing.set_kwarg(name='--trigger', dtype='bool', default=False,
                      helpstr=Help['PROCESS_TRIGGER_HELP'])
 
 # -----------------------------------------------------------------------------
