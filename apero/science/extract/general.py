@@ -60,7 +60,7 @@ speed_of_light_kms = cc.c.to(uu.km / uu.s).value
 
 
 # =============================================================================
-# Define functions
+# Define general functions
 # =============================================================================
 def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
                    shapey, orderpfile, filenames=None):
@@ -131,6 +131,9 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
     return orderprofiles, orderprofilefiles
 
 
+# =============================================================================
+# Define thermal functions
+# =============================================================================
 def thermal_correction(params, recipe, header, props=None, eprops=None,
                        fiber=None, **kwargs):
     func_name = __NAME__ + '.thermal_correction()'
@@ -407,6 +410,15 @@ def tcorrect2(params, recipe, image, header, fiber, wavemap, thermal=None,
     return corrected_image
 
 
+# =============================================================================
+# Define leakage functions
+# =============================================================================
+def correct_dark_fp(params, recipe, extractdict):
+    pass
+
+# =============================================================================
+# Define s1d functions
+# =============================================================================
 def e2ds_to_s1d(params, recipe, wavemap, e2ds, blaze, fiber=None, wgrid='wave',
                 kind=None, **kwargs):
     func_name = __NAME__ + '.e2ds_to_s1d()'
