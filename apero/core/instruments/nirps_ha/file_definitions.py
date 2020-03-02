@@ -400,6 +400,18 @@ tellu_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
                         intype=pp_file)
 
 # -----------------------------------------------------------------------------
+# pp master files
+# -----------------------------------------------------------------------------
+out_pp_master = drs_finput('PPMSTR', KW_OUTPUT='PPMSTR', filetype='.fits',
+                           intype=[raw_flat_flat],
+                           suffix='_pmaster',
+                           outfunc=out.calib_file,
+                           dbname='calibration', dbkey='PPMSTR')
+# add dark outputs to output fileset
+out_file.addset(out_pp_master)
+calib_file.addset(out_pp_master)
+
+# -----------------------------------------------------------------------------
 # dark files
 # -----------------------------------------------------------------------------
 # dark out file
@@ -678,6 +690,16 @@ out_file.addset(out_thermal_e2ds_tel)
 calib_file.addset(out_thermal_e2ds_int)
 calib_file.addset(out_thermal_e2ds_tel)
 
+# -----------------------------------------------------------------------------
+# leakage files
+# -----------------------------------------------------------------------------
+# thermal from internal dark
+out_leak_master = drs_finput('LEAKM_E2DS', KW_OUTPUT='LEAKM_E2DS',
+                             fibers=['AB', 'A', 'B', 'C'],
+                             filetype='.fits', intype=pp_dark_dark_int,
+                             suffix='_leak_master',
+                             dbname='calibration', dbkey='LEAKM',
+                             outfunc=out.general_file)
 # -----------------------------------------------------------------------------
 # wave files (master)
 # -----------------------------------------------------------------------------
@@ -1010,91 +1032,6 @@ out_ccf_fits = drs_finput('CCF_RV', KW_OUTPUT='CCF_RV',
 
 out_file.addset(out_ccf_fits)
 
-# -----------------------------------------------------------------------------
-# polarisation
-# -----------------------------------------------------------------------------
-# pol deg file
-out_pol_deg = drs_finput('POL_DEG', KW_OUTPUT='POL_DEG',
-                         filetype='.fits',
-                         suffix='_pol',
-                         intype=[out_ext_e2dsff, out_tellu_obj],
-                         outfunc=out.general_file)
-
-# stokes i file
-out_pol_stokesi = drs_finput('STOKESI_POL', KW_OUTPUT='POL_STOKES_I',
-                             filetype='.fits',
-                             suffix='_StokesI',
-                             intype=[out_ext_e2dsff, out_tellu_obj],
-                             outfunc=out.general_file)
-
-# null 1 file
-out_pol_null1 = drs_finput('NULL_POL1', KW_OUTPUT='POL_NULL_POL1',
-                           filetype='.fits',
-                           suffix='_null1_pol',
-                           intype=[out_ext_e2dsff, out_tellu_obj],
-                           outfunc=out.general_file)
-
-# null 2 file
-out_pol_null2 = drs_finput('NULL_POL2', KW_OUTPUT='POL_NULL_POL2',
-                           filetype='.fits',
-                           suffix='_null2_pol',
-                           intype=[out_ext_e2dsff, out_tellu_obj],
-                           outfunc=out.general_file)
-
-# lsd file
-out_pol_lsd = drs_finput('LSD_POL', KW_OUTPUT='POL_LSD',
-                         filetype='.fits',
-                         suffix='_lsd_pol',
-                         intype=[out_ext_e2dsff, out_tellu_obj],
-                         outfunc=out.general_file)
-
-# pol s1d files
-out_pol_s1dw = drs_finput('S1DW_POL', KW_OUTPUT='S1DW_POL',
-                          filetype='.fits',
-                          suffix='_s1d_w_pol', remove_insuffix=True,
-                          intype=[out_ext_e2dsff, out_tellu_obj],
-                          outfunc=out.general_file)
-out_pol_s1dv = drs_finput('S1DV_POL', KW_OUTPUT='S1DV_POL',
-                          filetype='.fits',
-                          suffix='_s1d_v_pol', remove_insuffix=True,
-                          intype=[out_ext_e2dsff, out_tellu_obj],
-                          outfunc=out.general_file)
-
-# null1 s1d files
-out_null1_s1dw = drs_finput('S1DW_NULL1', KW_OUTPUT='S1DW_NULL1',
-                            filetype='.fits',
-                            suffix='_s1d_w_null1', remove_insuffix=True,
-                            intype=[out_ext_e2dsff, out_tellu_obj],
-                            outfunc=out.general_file)
-out_null1_s1dv = drs_finput('S1DV_NULL1', KW_OUTPUT='S1DV_NULL1',
-                            filetype='.fits',
-                            suffix='_s1d_v_null1', remove_insuffix=True,
-                            intype=[out_ext_e2dsff, out_tellu_obj],
-                            outfunc=out.general_file)
-
-# null2 s1d files
-out_null2_s1dw = drs_finput('S1DW_NULL2', KW_OUTPUT='S1DW_NULL1',
-                            filetype='.fits',
-                            suffix='_s1d_w_null2', remove_insuffix=True,
-                            intype=[out_ext_e2dsff, out_tellu_obj],
-                            outfunc=out.general_file)
-out_null2_s1dv = drs_finput('S1DV_NULL2', KW_OUTPUT='S1DV_NULL2',
-                            filetype='.fits',
-                            suffix='_s1d_v_null2', remove_insuffix=True,
-                            intype=[out_ext_e2dsff, out_tellu_obj],
-                            outfunc=out.general_file)
-
-# stokes I s1d files
-out_stokesi_s1dw = drs_finput('S1DW_STOKESI', KW_OUTPUT='S1DW_STOKESI',
-                              filetype='.fits',
-                              suffix='_s1d_w_stokesi', remove_insuffix=True,
-                              intype=[out_ext_e2dsff, out_tellu_obj],
-                              outfunc=out.general_file)
-out_stokesi_s1dv = drs_finput('S1DV_STOKESI', KW_OUTPUT='S1DV_STOKESI',
-                              filetype='.fits',
-                              suffix='_s1d_v_stokesi', remove_insuffix=True,
-                              intype=[out_ext_e2dsff, out_tellu_obj],
-                              outfunc=out.general_file)
 
 # -----------------------------------------------------------------------------
 # exposure map
