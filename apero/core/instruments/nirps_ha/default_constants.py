@@ -213,6 +213,21 @@ PP_CORRUPT_RMS_THRES.value = 0.15
 SKIP_DONE_PP = SKIP_DONE_PP.copy(__NAME__)
 SKIP_DONE_PP.value = False
 
+# Define allowed preprocessing master file types (PP DPRTYPE)
+ALLOWED_PPM_TYPES = ALLOWED_PPM_TYPES.copy(__NAME__)
+ALLOWED_PPM_TYPES.value = 'FLAT_FLAT'
+
+# Define the allowed number of sigma for preprocessing master mask
+PPM_MASK_NSIG = PPM_MASK_NSIG.copy(__NAME__)
+PPM_MASK_NSIG.value = 10
+
+# Define the bin to use to correct low level frequences. This value cannot
+#   be smaller than the order footprint on the array as it would lead to a set
+#   of NaNs in the downsized image
+PP_MEDAMP_BINSIZE = PP_MEDAMP_BINSIZE.copy(__NAME__)
+PP_MEDAMP_BINSIZE.value = 32
+
+
 # =============================================================================
 # CALIBRATION: DARK SETTINGS
 # =============================================================================
@@ -748,6 +763,13 @@ QC_FF_MAX_RMS.value = 0.10
 # Define the order to plot in summary plots
 FF_PLOT_ORDER = FF_PLOT_ORDER.copy(__NAME__)
 FF_PLOT_ORDER.value = 4
+
+# =============================================================================
+# CALIBRATION: LEAKAGE SETTINGS
+# =============================================================================
+# Define the types of input file allowed by the leakage master recipe
+ALLOWED_LEAKM_TYPES = ALLOWED_LEAKM_TYPES.copy(__NAME__)
+ALLOWED_LEAKM_TYPES.value = 'DARK_FP'
 
 # =============================================================================
 # CALIBRATION: EXTRACTION SETTINGS
