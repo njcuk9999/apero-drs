@@ -762,6 +762,13 @@ FF_PLOT_ORDER = FF_PLOT_ORDER.copy(__NAME__)
 FF_PLOT_ORDER.value = 4
 
 # =============================================================================
+# CALIBRATION: LEAKAGE SETTINGS
+# =============================================================================
+# Define the types of input file allowed by the leakage master recipe
+ALLOWED_LEAKM_TYPES = ALLOWED_LEAKM_TYPES.copy(__NAME__)
+ALLOWED_LEAKM_TYPES.value = 'DARK_FP'
+
+# =============================================================================
 # CALIBRATION: EXTRACTION SETTINGS
 # =============================================================================
 #    Start order of the extraction in cal_ff if None starts from 0
