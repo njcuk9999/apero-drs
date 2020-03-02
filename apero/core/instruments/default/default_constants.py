@@ -14,7 +14,7 @@ __all__ = [
     'PP_NUM_REF_TOP', 'PP_NUM_REF_BOTTOM', 'PP_RMS_PERCENTILE',
     'PP_LOWEST_RMS_PERCENTILE', 'PP_CORRUPT_SNR_HOTPIX',
     'PP_CORRUPT_RMS_THRES', 'RAW_TO_PP_ROTATION', 'PP_DARK_MED_BINNUM',
-    'SKIP_DONE_PP',
+    'SKIP_DONE_PP', 'ALLOWED_PPM_TYPES', 'PPM_MASK_NSIG', 'PP_MEDAMP_BINSIZE',
     # image constants
     'FIBER_TYPES',
     'INPUT_COMBINE_IMAGES', 'INPUT_FLIP_IMAGE', 'INPUT_RESIZE_IMAGE',
@@ -94,6 +94,8 @@ __all__ = [
     'FF_RMS_SKIP_ORDERS', 'QC_FF_MAX_RMS', 'FF_PLOT_ORDER',
     'FF_BLAZE_SCUT', 'FF_BLAZE_SIGFIT', 'FF_BLAZE_BPERCENTILE',
     'FF_BLAZE_NITER',
+    # leakage constants
+    'ALLOWED_LEAKM_TYPES',
     # extract constants
     'EXT_START_ORDER', 'EXT_END_ORDER', 'EXT_RANGE1', 'EXT_RANGE2',
     'EXT_SKIP_ORDERS', 'EXT_COSMIC_CORRETION', 'EXT_COSMIC_SIGCUT',
@@ -515,6 +517,29 @@ SKIP_DONE_PP = Const('SKIP_DONE_PP', value=None, dtype=bool,
                      source=__NAME__, user=True, active=False, group=cgroup,
                      description='Define whether to skip preprocessed files '
                                  'that have already be processed')
+
+# Define allowed preprocess master file types (PP DPRTYPE)
+ALLOWED_PPM_TYPES = Const('ALLOWED_PPM_TYPES', value=None, dtype=str,
+                          source=__NAME__, group=cgroup,
+                          description='Define allowed preprocess master '
+                                      'filetypes (PP DPRTYPE)')
+
+# Define the allowed number of sigma for preprocessing master mask
+PPM_MASK_NSIG = Const('PPM_MASK_NSIG', value=None, dtype=float,
+                      source=__NAME__, group=cgroup,
+                      description='Define allowed preprocess master mask '
+                                  'number of sigma')
+
+# Define the bin to use to correct low level frequences. This value cannot
+#   be smaller than the order footprint on the array as it would lead to a set
+#   of NaNs in the downsized image
+PP_MEDAMP_BINSIZE = Const('PP_MEDAMP_BINSIZE', value=None, dtype=int,
+                          source=__NAME__, group=cgroup,
+                          description='Define the bin to use to correct low '
+                                      'level frequences. This value cannot be '
+                                      'smaller than the order footprint on the '
+                                      'array as it would lead to a set of NaNs '
+                                      'in the downsized image')
 
 # =============================================================================
 # CALIBRATION: DARK SETTINGS
@@ -1088,6 +1113,15 @@ QC_FF_MAX_RMS = Const('QC_FF_MAX_RMS', value=None, dtype=float, source=__NAME__,
 # Define the order to plot in summary plots
 FF_PLOT_ORDER = Const('FF_PLOT_ORDER', value=None, dtype=int, source=__NAME__,
                       group=cgroup)
+
+# =============================================================================
+# CALIBRATION: LEAKAGE SETTINGS
+# =============================================================================
+# Define the types of input file allowed by the leakage master recipe
+ALLOWED_LEAKM_TYPES = Const('ALLOWED_LEAKM_TYPES', value=None, dtype=str,
+                            source=__NAME__, group=cgroup)
+
+
 
 # =============================================================================
 # CALIBRATION: EXTRACTION SETTINGS
