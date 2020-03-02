@@ -97,3 +97,6 @@
 "CCF_RV_HELP","HELP","","None","[FLOAT] The target RV to use as a center for the CCF fit (in km/s)","",""
 "CCF_WIDTH_HELP","HELP","","None","[FLOAT] The CCF width to use for the CCF fit (in km/s)","",""
 "CCF_STEP_HELP","HELP","","None","[FLOAT] The CCF step to use for the CCF fit (in km/s)","",""
+"LEAKM_DESC","HELP","","None","Creates the master dark_fp used for correcting the leakage from fiber C for extraction products","",""
+"LEAKM_EXAMPLE","HELP","","None","cal_leak_master_spirou.py [NIGHT_NAME]","",""
+"LEAKM_HELP_FILETYPE","HELP","","None","[STRING] Specify the DPRTYPE for DARK_FP files","",""
