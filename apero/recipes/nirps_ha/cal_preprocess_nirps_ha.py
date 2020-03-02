@@ -88,6 +88,7 @@ def __main__(recipe, params):
     # Main Code
     # ----------------------------------------------------------------------
     # Get hot pixels for corruption check
+    # TODO: Need hot pixel map from EA
     hotpixels = preprocessing.get_hot_pixels(params)
     # get skip parmaeter
     skip = params['SKIP_DONE_PP']
@@ -113,10 +114,10 @@ def __main__(recipe, params):
         # ge this iterations file
         file_instance = infiles[it]
         # ------------------------------------------------------------------
-        # Fix the spirou header
+        # Fix the nirps header
         # ------------------------------------------------------------------
         # certain keys may not be in some spirou files
-        file_instance = preprocessing.fix_header(params, recipe, file_instance)
+        file_instance = drs_fits.fix_header(params, recipe, file_instance)
         # ------------------------------------------------------------------
         # identification of file drs type
         # ------------------------------------------------------------------
@@ -177,10 +178,8 @@ def __main__(recipe, params):
         image = preprocessing.correct_top_bottom(params, image)
 
         # correct by a median filter from the dark amplifiers
-        # TODO: Fill in message 40-010-000XX
-        WLOG(params, '', TextEntry(''))
-        # TODO: Calculate mask
-        image = preprocessing.nirps_correction(params, image, mask)
+        WLOG(params, '', TextEntry('40-010-00016'))
+        image = preprocessing.nirps_correction(params, image)
 
         # ------------------------------------------------------------------
         # Quality control to check for corrupt files

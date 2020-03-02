@@ -116,7 +116,7 @@ def __main__(recipe, params):
         # Fix the spirou header
         # ------------------------------------------------------------------
         # certain keys may not be in some spirou files
-        file_instance = preprocessing.fix_header(params, recipe, file_instance)
+        file_instance = drs_fits.fix_header(params, recipe, file_instance)
         # ------------------------------------------------------------------
         # identification of file drs type
         # ------------------------------------------------------------------

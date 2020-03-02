@@ -16,7 +16,7 @@ from apero import core
 from apero import locale
 from apero.core import constants
 from apero.tools.module.setup import drs_processing
-
+from apero.io import drs_fits
 
 # =============================================================================
 # Define variables
@@ -119,7 +119,7 @@ def __main__(recipe, params):
     # find all raw files
     # ----------------------------------------------------------------------
     # get raw files
-    rawtable, rawpath = drs_processing.find_raw_files(params, recipe)
+    rawtable, rawpath = drs_fits.find_raw_files(params, recipe)
 
     # ----------------------------------------------------------------------
     # Generate run list

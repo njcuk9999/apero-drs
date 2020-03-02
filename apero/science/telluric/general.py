@@ -144,7 +144,7 @@ def normalise_by_pblaze(params, image, header, fiber, **kwargs):
     return image1, nprops
 
 
-def get_non_tellu_objs(params, fiber, filetype=None, dprtypes=None,
+def get_non_tellu_objs(params, recipe, fiber, filetype=None, dprtypes=None,
                        robjnames=None):
     """
     Get the objects of "filetype" and "
@@ -169,7 +169,7 @@ def get_non_tellu_objs(params, fiber, filetype=None, dprtypes=None,
     if dprtypes is not None:
         fkwargs['KW_DPRTYPE'] = dprtypes
     # # find files
-    out = drs_fits.find_files(params, kind='red', return_table=True,
+    out = drs_fits.find_files(params, recipe, kind='red', return_table=True,
                               fiber=fiber, **fkwargs)
     obj_filenames, obj_table = out
     # filter out telluric stars
