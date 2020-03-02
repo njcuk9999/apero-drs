@@ -14,6 +14,7 @@ import warnings
 from scipy import ndimage
 
 from apero.core import constants
+from apero.core.core import drs_database
 from apero.core import math as mp
 from apero import core
 from apero.io import drs_data
@@ -354,20 +355,14 @@ def test_for_corrupt_files(params, image, hotpix):
 # =============================================================================
 # Define nirps detector functions
 # =============================================================================
-def nirps_correction(params, image, mask):
-
-    # get properties from params
-
-    # TODO: Move to constants
-    # we find the low level frequencies
-    # we bin in regions of 32x32 pixels. This CANNOT be
-    # smaller than the order footprint on the array
-    # as it would lead to a set of NaNs in the downsized
-    # image and chaos afterward
-    binsize = 32  # pixels
-
+def nirps_correction(params, image, mask=None, header=None):
+    # define the bin size for low level frequencies
+    binsize = params['PP_MEDAMP_BINSIZE']
     # number of amplifiers in total
     namps = params['PP_TOTAL_AMP_NUM']
+    # deal with not having a mask
+    if mask is None:
+        get_pp_mask(params, header)
     # get image shape
     dim1, dim2 = image.shape
     # create masked version of data
@@ -391,6 +386,29 @@ def nirps_correction(params, image, mask):
     image = image - np.tile(med_image2, dim1).reshape(dim1, dim2)
     # return corrected image
     return image
+
+
+def get_pp_mask(params, header):
+    func_name = __NAME__ + '.get_pp_mask()'
+
+    # get file instance
+    ppmstr = core.get_file_definition('PPMSTR', params['INSTRUMENT'],
+                                      kind='red')
+    # get calibration key
+    ppkey = ppmstr.get_dbkey(func=func_name)
+    # get calibDB
+    cdb = drs_database.get_full_database(params, 'calibration')
+    # get filename col
+    filecol, timecol = cdb.file_col, cdb.time_col
+    # get the ppmstr entries
+    ppentries = drs_database.get_key_from_db(params, ppkey, cdb, header,
+                                             n_ent=1, require=True)
+    # -------------------------------------------------------------------------
+    # try to read PPMSTR from cdb
+    ppfilename = ppentries[filecol][0]
+    ppfile = os.path.join(params['DRS_CALIB_DB'], ppfilename)
+    # return use_file
+    return ppfile
 
 
 def med_amplifiers(image, namps):
@@ -422,7 +440,7 @@ def med_amplifiers(image, namps):
         if (amp % 2) == 0:
             i1 = amp * nbpix
             i2 = (amp * nbpix) + nbpix
-            sign = -1
+            sign = 1
         else:
             i1 = (amp * nbpix) + (nbpix - 1)
             i2 = (amp * nbpix) - 1
@@ -439,7 +457,7 @@ def med_amplifiers(image, namps):
         if (amp % 2) == 0:
             i1 = amp * nbpix
             i2 = (amp * nbpix) + nbpix
-            sign = -1
+            sign = 1
         else:
             i1 = (amp * nbpix) + (nbpix - 1)
             i2 = (amp * nbpix) - 1
@@ -459,10 +477,10 @@ def nirps_order_mask(params, mask_image):
     :param mask_image:
     :return:
     """
-
-    # TODO: Move to constants
-    nsig = 10
-
+    # set function name
+    func_name = __NAME__ + '.nirps_order_mask()'
+    # get nsig value
+    nsig = params['PPM_MASK_NSIG']
     # normalise by the median
     image = mask_image - mp.nanmedian(mask_image)
     # calculate the sigma array (distance away from median)
@@ -472,10 +490,14 @@ def nirps_order_mask(params, mask_image):
     mask = image > nsig * sig_image
     # correct the image (as in preprocessing)
     image = nirps_correction(params, image, mask)
-    # generate a better esimate of the mask (after correction)
+    # generate a better estimate of the mask (after correction)
     mask = image > nsig * sig_image
+    # set properties
+    props = ParamDict()
+    props['PPM_MASK_NSIG'] = nsig
+    props.set_source('PPM_MASK_NSIG', func_name)
     # return mask
-    return mask
+    return mask, props
 
 
 # =============================================================================
