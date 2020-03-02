@@ -121,6 +121,10 @@ class PseudoConstants(DefaultConstants):
         # ------------------------------------------------------------------
         return header
 
+    def VALID_RAW_FILES(self):
+        valid = ['.fits']
+        return valid
+
     # =========================================================================
     # DISPLAY/LOGGING SETTINGS
     # =========================================================================

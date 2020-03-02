@@ -121,6 +121,10 @@ class PseudoConstants(DefaultConstants):
         # ------------------------------------------------------------------
         return header
 
+    def VALID_RAW_FILES(self):
+        valid = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
+        return valid
+
     # =========================================================================
     # DISPLAY/LOGGING SETTINGS
     # =========================================================================
