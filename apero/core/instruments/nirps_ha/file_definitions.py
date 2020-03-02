@@ -486,25 +486,25 @@ calib_file.addset(out_backmap)
 # -----------------------------------------------------------------------------
 # localisation
 out_loc_orderp = drs_finput('LOC_ORDERP', KW_OUTPUT='LOC_ORDERP',
-                            fibers=['AB', 'A', 'B', 'C'],
+                            fibers=['A', 'B'],
                             filetype='.fits',
                             intype=[pp_flat_dark, pp_dark_flat],
                             suffix='_order_profile',
                             outfunc=out.calib_file,
                             dbname='calibration', dbkey='ORDER_PROFILE')
 out_loc_loco = drs_finput('LOC_LOCO', KW_OUTPUT='LOC_LOCO',
-                          fibers=['AB', 'A', 'B', 'C'],
+                          fibers=['A', 'B'],
                           filetype='.fits', intype=[pp_flat_dark, pp_dark_flat],
                           suffix='_loco',
                           outfunc=out.calib_file,
                           dbname='calibration', dbkey='LOC')
 out_loc_fwhm = drs_finput('LOC_FWHM', KW_OUTPUT='LOC_FWHM',
-                          fibers=['AB', 'A', 'B', 'C'],
+                          fibers=['A', 'B'],
                           filetype='.fits', intype=[pp_flat_dark, pp_dark_flat],
                           suffix='_fwhm-order',
                           outfunc=out.calib_file)
 out_loc_sup = drs_finput('LOC_SUP', KW_OUTPUT='LOC_SUP',
-                         fibers=['AB', 'A', 'B', 'C'],
+                         fibers=['A', 'B'],
                          filetype='.fits', intype=[pp_flat_dark, pp_dark_flat],
                          suffix='_with-order',
                          outfunc=out.calib_file)
@@ -598,20 +598,20 @@ calib_file.addset(out_shape_local)
 # -----------------------------------------------------------------------------
 # flat
 out_ff_blaze = drs_finput('FF_BLAZE', KW_OUTPUT='FF_BLAZE',
-                          fibers=['AB', 'A', 'B', 'C'],
+                          fibers=['A', 'B'],
                           filetype='.fits', intype=pp_flat_flat,
                           suffix='_blaze',
                           dbname='calibration', dbkey='BLAZE',
                           outfunc=out.calib_file)
 out_ff_flat = drs_finput('FF_FLAT', KW_OUTPUT='FF_FLAT',
-                         fibers=['AB', 'A', 'B', 'C'],
+                         fibers=['A', 'B'],
                          filetype='.fits', intype=pp_flat_flat,
                          suffix='_flat',
                          dbname='calibration', dbkey='FLAT',
                          outfunc=out.calib_file)
 
 out_orderp_straight = drs_ninput('ORDERP_STRAIGHT', KW_OUTPUT='ORDERP_STRAIGHT',
-                                 fibers=['AB', 'A', 'B', 'C'],
+                                 fibers=['A', 'B'],
                                  filetype='.npy', intype=pp_flat_flat,
                                  suffix='_orderp',
                                  outfunc=out.npy_file)
@@ -628,33 +628,33 @@ calib_file.addset(out_ff_flat)
 # -----------------------------------------------------------------------------
 # extract E2DS without flat fielding
 out_ext_e2ds = drs_finput('EXT_E2DS', KW_OUTPUT='EXT_E2DS',
-                          fibers=['AB', 'A', 'B', 'C'],
+                          fibers=['A', 'B'],
                           filetype='.fits', intype=pp_file,
                           suffix='_e2ds', outfunc=out.general_file)
 # extract E2DS with flat fielding
 out_ext_e2dsff = drs_finput('EXT_E2DS_FF', KW_OUTPUT='EXT_E2DS_FF',
-                            fibers=['AB', 'A', 'B', 'C'],
+                            fibers=['A', 'B'],
                             filetype='.fits', intype=pp_file,
                             suffix='_e2dsff', outfunc=out.general_file,
                             s1d=['EXT_S1D_W', 'EXT_S1D_V'])
 # pre-extract debug file
 out_ext_e2dsll = drs_finput('EXT_E2DS_LL', KW_OUTPUT='EXT_E2DS_LL',
-                            fibers=['AB', 'A', 'B', 'C'],
+                            fibers=['A', 'B'],
                             filetype='.fits', intype=[pp_file, pp_flat_flat],
                             suffix='_e2dsll', outfunc=out.debug_file)
 # extraction localisation file
 out_ext_loco = drs_finput('EXT_LOCO', KW_OUTPUT='EXT_LOCO',
-                          fibers=['AB', 'A', 'B', 'C'],
+                          fibers=['A', 'B'],
                           filetype='.fits', intype=pp_file,
                           suffix='_e2dsloco', outfunc=out.debug_file)
 # extract s1d without flat fielding (constant in wavelength)
 out_ext_s1d_w = drs_finput('EXT_S1D_W', KW_OUTPUT='EXT_S1D_W',
-                           fibers=['AB', 'A', 'B', 'C'],
+                           fibers=['A', 'B'],
                            filetype='.fits', intype=pp_file, datatype='table',
                            suffix='_s1d_w', outfunc=out.general_file)
 # extract s1d without flat fielding (constant in velocity)
 out_ext_s1d_v = drs_finput('EXT_S1D_V', KW_OUTPUT='EXT_S1D_V',
-                           fibers=['AB', 'A', 'B', 'C'],
+                           fibers=['A', 'B'],
                            filetype='.fits', intype=pp_file, datatype='table',
                            suffix='_s1d_v', outfunc=out.general_file)
 # add extract outputs to output fileset
@@ -670,7 +670,7 @@ out_file.addset(out_ext_s1d_v)
 # -----------------------------------------------------------------------------
 # thermal from internal dark
 out_thermal_e2ds_int = drs_finput('THERMALI_E2DS', KW_OUTPUT='THERMALI_E2DS',
-                                  fibers=['AB', 'A', 'B', 'C'],
+                                  fibers=['A', 'B'],
                                   filetype='.fits', intype=pp_dark_dark_int,
                                   suffix='_thermal_e2ds_int',
                                   dbname='calibration', dbkey='THERMALI',
@@ -678,7 +678,7 @@ out_thermal_e2ds_int = drs_finput('THERMALI_E2DS', KW_OUTPUT='THERMALI_E2DS',
 
 # thermal from telescope dark
 out_thermal_e2ds_tel = drs_finput('THERMALT_E2DS', KW_OUTPUT='THERMALT_E2DS',
-                                  fibers=['AB', 'A', 'B', 'C'],
+                                  fibers=['A', 'B'],
                                   filetype='.fits', intype=pp_dark_dark_tel,
                                   suffix='_thermal_e2ds_tel',
                                   dbname='calibration', dbkey='THERMALT',
@@ -695,7 +695,7 @@ calib_file.addset(out_thermal_e2ds_tel)
 # -----------------------------------------------------------------------------
 # thermal from internal dark
 out_leak_master = drs_finput('LEAKM_E2DS', KW_OUTPUT='LEAKM_E2DS',
-                             fibers=['AB', 'A', 'B', 'C'],
+                             fibers=['A', 'B'],
                              filetype='.fits', intype=pp_dark_dark_int,
                              suffix='_leak_master',
                              dbname='calibration', dbkey='LEAKM',
@@ -705,7 +705,7 @@ out_leak_master = drs_finput('LEAKM_E2DS', KW_OUTPUT='LEAKM_E2DS',
 # -----------------------------------------------------------------------------
 # wave solution using hc only
 out_wavem_hc = drs_finput('WAVEM_HC', KW_OUTPUT='WAVE_HC',
-                          fibers=['AB', 'A', 'B', 'C'],
+                          fibers=['A', 'B'],
                           filetype='.fits',
                           intype=[out_ext_e2ds, out_ext_e2dsff],
                           suffix='_wavem_hc',
@@ -714,7 +714,7 @@ out_wavem_hc = drs_finput('WAVEM_HC', KW_OUTPUT='WAVE_HC',
 
 # wave solution using hc + fp
 out_wavem_fp = drs_finput('WAVEM_FP', KW_OUTPUT='WAVE_FP',
-                          fibers=['AB', 'A', 'B', 'C'],
+                          fibers=['A', 'B'],
                           filetype='.fits',
                           intype=[out_ext_e2ds, out_ext_e2dsff],
                           suffix='_wavem_fp',
@@ -723,7 +723,7 @@ out_wavem_fp = drs_finput('WAVEM_FP', KW_OUTPUT='WAVE_FP',
 
 # hc resolution map
 out_wavem_hcres = drs_finput('WAVERES', KW_OUTPUT='WAVE_RES',
-                             fibers=['AB', 'A', 'B', 'C'],
+                             fibers=['A', 'B'],
                              filetype='.fits',
                              intype=[out_ext_e2ds, out_ext_e2dsff],
                              suffix='_wavemres',
@@ -731,7 +731,7 @@ out_wavem_hcres = drs_finput('WAVERES', KW_OUTPUT='WAVE_RES',
 
 # fp global results table
 out_wavem_res_table = drs_input('WAVE_FPRESTAB', KW_OUTPUT='WAVE_FPRESTAB',
-                                fibers=['AB', 'A', 'B', 'C'],
+                                fibers=['A', 'B'],
                                 filetype='.tbl',
                                 intype=[out_ext_e2ds, out_ext_e2dsff],
                                 outfunc=out.set_file,
@@ -739,7 +739,7 @@ out_wavem_res_table = drs_input('WAVE_FPRESTAB', KW_OUTPUT='WAVE_FPRESTAB',
 
 # fp line list table
 out_wavem_ll_table = drs_input('WAVE_FPLLTABL', KW_OUTPUT='WAVE_FPLLTAB',
-                               fibers=['AB', 'A', 'B', 'C'],
+                               fibers=['A', 'B'],
                                filetype='.tbl',
                                intype=[out_ext_e2ds, out_ext_e2dsff],
                                suffix='_mhc_lines',
@@ -748,7 +748,7 @@ out_wavem_ll_table = drs_input('WAVE_FPLLTABL', KW_OUTPUT='WAVE_FPLLTAB',
 # hc line file from master
 out_wave_hclist_master = drs_finput('WAVE_HCLIST_MASTER',
                                     KW_OUTPUT='WAVE_HCLIST_MASTER',
-                                    fibers=['AB', 'A', 'B', 'C'],
+                                    fibers=['A', 'B'],
                                     filetype='.fits',
                                     intype=[out_ext_e2ds, out_ext_e2dsff],
                                     suffix='_wavem_hclines',
@@ -759,7 +759,7 @@ out_wave_hclist_master = drs_finput('WAVE_HCLIST_MASTER',
 # fp line file from master
 out_wave_fplist_master = drs_finput('WAVE_FPLIST_MASTER',
                                     KW_OUTPUT='WAVE_FPLIST_MASTER',
-                                    fibers=['AB', 'A', 'B', 'C'],
+                                    fibers=['A', 'B'],
                                     filetype='.fits',
                                     intype=[out_ext_e2ds, out_ext_e2dsff],
                                     suffix='_wavem_fplines',
@@ -769,7 +769,7 @@ out_wave_fplist_master = drs_finput('WAVE_FPLIST_MASTER',
 
 # the default wave master
 out_wave_master = drs_finput('WAVEM_D', KW_OUTPUT='WAVEM_SOL',
-                             fibers=['AB', 'A', 'B', 'C'],
+                             fibers=['A', 'B'],
                              filetype='.fits',
                              intype=[out_ext_e2ds, out_ext_e2dsff],
                              suffix='_wavem',
@@ -796,7 +796,7 @@ calib_file.addset(out_wave_fplist_master)
 # -----------------------------------------------------------------------------
 # wave solution using hc only
 out_wave_hc = drs_finput('WAVE_HC', KW_OUTPUT='WAVE_HC',
-                         fibers=['AB', 'A', 'B', 'C'],
+                         fibers=['A', 'B'],
                          filetype='.fits',
                          intype=[out_ext_e2ds, out_ext_e2dsff],
                          suffix='_wave_hc',
@@ -805,7 +805,7 @@ out_wave_hc = drs_finput('WAVE_HC', KW_OUTPUT='WAVE_HC',
 
 # wave solution using hc + fp
 out_wave_fp = drs_finput('WAVE_FP', KW_OUTPUT='WAVE_FP',
-                         fibers=['AB', 'A', 'B', 'C'],
+                         fibers=['A', 'B'],
                          filetype='.fits',
                          intype=[out_ext_e2ds, out_ext_e2dsff],
                          suffix='_wave_fp',
@@ -814,7 +814,7 @@ out_wave_fp = drs_finput('WAVE_FP', KW_OUTPUT='WAVE_FP',
 
 # wave solution using night modifications
 out_wave_night = drs_finput('WAVE_NIGHT', KW_OUTPUT='WAVE_FP',
-                            fibers=['AB', 'A', 'B', 'C'],
+                            fibers=['A', 'B'],
                             filetype='.fits',
                             intype=[out_ext_e2ds, out_ext_e2dsff],
                             suffix='_wave_night',
@@ -823,7 +823,7 @@ out_wave_night = drs_finput('WAVE_NIGHT', KW_OUTPUT='WAVE_FP',
 
 # hc initial linelist
 out_wave_hcline = drs_input('WAVEHCLL', KW_OUTPUT='WAVEHCLL',
-                            fibers=['AB', 'A', 'B', 'C'],
+                            fibers=['A', 'B'],
                             filetype='.dat',
                             intype=[out_ext_e2ds, out_ext_e2dsff],
                             suffix='_linelist',
@@ -831,7 +831,7 @@ out_wave_hcline = drs_input('WAVEHCLL', KW_OUTPUT='WAVEHCLL',
 
 # hc resolution map
 out_wave_hcres = drs_finput('WAVERES', KW_OUTPUT='WAVE_RES',
-                            fibers=['AB', 'A', 'B', 'C'],
+                            fibers=['A', 'B'],
                             filetype='.fits',
                             intype=[out_ext_e2ds, out_ext_e2dsff],
                             suffix='_waveres',
@@ -839,7 +839,7 @@ out_wave_hcres = drs_finput('WAVERES', KW_OUTPUT='WAVE_RES',
 
 # fp global results table
 out_wave_res_table = drs_input('WAVE_FPRESTAB', KW_OUTPUT='WAVE_FPRESTAB',
-                               fibers=['AB', 'A', 'B', 'C'],
+                               fibers=['A', 'B'],
                                filetype='.tbl',
                                intype=[out_ext_e2ds, out_ext_e2dsff],
                                outfunc=out.set_file,
@@ -847,7 +847,7 @@ out_wave_res_table = drs_input('WAVE_FPRESTAB', KW_OUTPUT='WAVE_FPRESTAB',
 
 # fp line list table
 out_wave_ll_table = drs_input('WAVE_FPLLTABL', KW_OUTPUT='WAVE_FPLLTAB',
-                              fibers=['AB', 'A', 'B', 'C'],
+                              fibers=['A', 'B'],
                               filetype='.tbl',
                               intype=[out_ext_e2ds, out_ext_e2dsff],
                               suffix='_hc_lines',
@@ -882,7 +882,7 @@ calib_file.addset(out_wave_night)
 # -----------------------------------------------------------------------------
 # convolved tapas map (with wave solution)
 out_tellu_conv = drs_ninput('TELLU_CONV', KW_OUTPUT='TELLU_CONV',
-                            fibers=['AB', 'A', 'B', 'C'],
+                            fibers=['A', 'B'],
                             filetype='.npy', intype=out_ext_e2dsff,
                             suffix='_tellu_conv', remove_insuffix=True,
                             dbname='telluric', dbkey='TELLU_CONV',
@@ -890,7 +890,7 @@ out_tellu_conv = drs_ninput('TELLU_CONV', KW_OUTPUT='TELLU_CONV',
 
 # transmission map
 out_tellu_trans = drs_finput('TELLU_TRANS', KW_OUTPUT='TELLU_TRANS',
-                             fibers=['AB', 'A', 'B', 'C'],
+                             fibers=['A', 'B'],
                              filetype='.fits', intype=out_ext_e2dsff,
                              suffix='_tellu_trans', remove_insuffix=True,
                              dbname='telluric', dbkey='TELLU_TRANS',
@@ -913,7 +913,7 @@ out_tellu_abso_npy = drs_ninput('ABSO_NPY',
 
 # telluric corrected e2ds spectrum
 out_tellu_obj = drs_finput('TELLU_OBJ', KW_OUTPUT='TELLU_OBJ',
-                           fibers=['AB', 'A', 'B', 'C'],
+                           fibers=['A', 'B'],
                            filetype='.fits', intype=out_ext_e2dsff,
                            suffix='_e2dsff_tcorr', remove_insuffix=True,
                            dbname='telluric', dbkey='TELLU_OBJ',
@@ -922,19 +922,19 @@ out_tellu_obj = drs_finput('TELLU_OBJ', KW_OUTPUT='TELLU_OBJ',
 
 # telluric corrected s1d spectrum
 out_tellu_sc1d_w = drs_finput('SC1D_W_FILE', KW_OUTPUT='SC1D_W_FILE',
-                              fibers=['AB', 'A', 'B', 'C'],
+                              fibers=['A', 'B'],
                               filetype='.fits', intype=out_ext_e2dsff,
                               suffix='_s1d_w_tcorr', remove_insuffix=True,
                               outfunc=out.general_file, datatype='table')
 out_tellu_sc1d_v = drs_finput('SC1D_V_FILE', KW_OUTPUT='SC1D_V_FILE',
-                              fibers=['AB', 'A', 'B', 'C'],
+                              fibers=['A', 'B'],
                               filetype='.fits', intype=out_ext_e2dsff,
                               suffix='_s1d_v_tcorr', remove_insuffix=True,
                               outfunc=out.general_file, datatype='table')
 
 # reconstructed telluric absorption file
 out_tellu_recon = drs_finput('TELLU_RECON', KW_OUTPUT='TELLU_RECON',
-                             fibers=['AB', 'A', 'B', 'C'],
+                             fibers=['A', 'B'],
                              filetype='.fits', intype=out_ext_e2dsff,
                              suffix='_e2dsff_recon', remove_insuffix=True,
                              dbname='telluric', dbkey='TELLU_RECON',
@@ -943,12 +943,12 @@ out_tellu_recon = drs_finput('TELLU_RECON', KW_OUTPUT='TELLU_RECON',
 
 # reconstructed telluric 1d absorption
 out_tellu_rc1d_w = drs_finput('RC1D_W_FILE', KW_OUTPUT='RC1D_W_FILE',
-                              fibers=['AB', 'A', 'B', 'C'],
+                              fibers=['A', 'B'],
                               filetype='.fits', intype=out_ext_e2dsff,
                               suffix='_s1d_w_recon', remove_insuffix=True,
                               outfunc=out.general_file, datatype='table')
 out_tellu_rc1d_v = drs_finput('RC1D_V_FILE', KW_OUTPUT='RC1D_V_FILE',
-                              fibers=['AB', 'A', 'B', 'C'],
+                              fibers=['A', 'B'],
                               filetype='.fits', intype=out_ext_e2dsff,
                               suffix='_s1d_v_recon', remove_insuffix=True,
                               outfunc=out.general_file, datatype='table')
@@ -969,7 +969,7 @@ tellu_file.addset(out_tellu_recon)
 # -----------------------------------------------------------------------------
 # template file (median)
 out_tellu_template = drs_finput('TELLU_TEMP', KW_OUTPUT='TELLU_TEMP',
-                                fibers=['AB', 'A', 'B', 'C'],
+                                fibers=['A', 'B'],
                                 filetype='.fits',
                                 intype=[out_ext_e2dsff, out_tellu_obj],
                                 filename='Template',
@@ -978,7 +978,7 @@ out_tellu_template = drs_finput('TELLU_TEMP', KW_OUTPUT='TELLU_TEMP',
 
 # template cube file (after shift)
 out_tellu_bigcube = drs_finput('TELLU_BIGCUBE', KW_OUTPUT='TELLU_BIGCUBE',
-                               fibers=['AB', 'A', 'B', 'C'],
+                               fibers=['A', 'B'],
                                filetype='.fits',
                                intype=[out_ext_e2dsff, out_tellu_obj],
                                filename='BigCube',
@@ -986,7 +986,7 @@ out_tellu_bigcube = drs_finput('TELLU_BIGCUBE', KW_OUTPUT='TELLU_BIGCUBE',
 
 # template cube file (before shift)
 out_tellu_bigcube0 = drs_finput('TELLU_BIGCUBE0', KW_OUTPUT='TELLU_BIGCUBE0',
-                                fibers=['AB', 'A', 'B', 'C'],
+                                fibers=['A', 'B'],
                                 filetype='.fits',
                                 intype=[out_ext_e2dsff, out_tellu_obj],
                                 filename='BigCube0',
@@ -995,7 +995,7 @@ out_tellu_bigcube0 = drs_finput('TELLU_BIGCUBE0', KW_OUTPUT='TELLU_BIGCUBE0',
 # s1d template file (median)
 out_tellu_s1d_template = drs_finput('TELLU_TEMP_S1D',
                                     KW_OUTPUT='TELLU_TEMP_S1D',
-                                    fibers=['AB', 'A', 'B', 'C'],
+                                    fibers=['A', 'B'],
                                     filetype='.fits',
                                     intype=[out_ext_e2dsff, out_tellu_obj],
                                     filename='Template_s1d', datatype='table',
@@ -1004,7 +1004,7 @@ out_tellu_s1d_template = drs_finput('TELLU_TEMP_S1D',
 # s1d cibe file (after shift)
 out_tellu_s1d_bigcube = drs_finput('TELLU_BIGCUBE_S1D',
                                    KW_OUTPUT='TELLU_BIGCUBE_S1D',
-                                   fibers=['AB', 'A', 'B', 'C'],
+                                   fibers=['A', 'B'],
                                    filetype='.fits',
                                    intype=[out_ext_e2dsff, out_tellu_obj],
                                    filename='BigCube_s1d',
@@ -1023,7 +1023,7 @@ tellu_file.addset(out_tellu_template)
 # -----------------------------------------------------------------------------
 # ccf out file
 out_ccf_fits = drs_finput('CCF_RV', KW_OUTPUT='CCF_RV',
-                          fibers=['AB', 'A', 'B', 'C'],
+                          fibers=['A', 'B'],
                           filetype='.fits',
                           suffix='_ccf',
                           intype=[out_ext_e2dsff, out_tellu_obj],
