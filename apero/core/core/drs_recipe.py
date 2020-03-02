@@ -1474,7 +1474,15 @@ def find_run_files(params, recipe, table, args, filters=None,
             continue
         # make sure we are only dealing with dtype=files
         if arg.dtype not in ['file', 'files']:
-            filedict[argname] = arg.default
+            # deal with directory (special argument) - if we have a
+            #   master night use the master night as the directory name
+            if arg.dtype == 'directory' and recipe.master:
+                filedict[argname] = params['MASTER_NIGHT']
+            # else set the file dict value to the default value
+            # TODO: Need a better option for this!!
+            # TODO:   i.e. when we need values to be set from the header
+            else:
+                filedict[argname] = arg.default
             continue
         # add sub-dictionary for each drs file
         filedict[argname] = OrderedDict()
@@ -1696,7 +1704,8 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
     # if fout is None means we have no file arguments
     if fout is None:
         # get new run
-        new_runs = _gen_run(params, rundict=rundict, runorder=runorder)
+        new_runs = _gen_run(params, rundict=rundict, runorder=runorder,
+                            masternight=recipe.master)
         # finally add new_run to runs
         runs += new_runs
     else:
@@ -1737,7 +1746,8 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
                 #   try/except here to catch it
                 try:
                     new_runs = _gen_run(params, rundict, runorder, nightname,
-                                        meantime, arg0, gtable0, file_col)
+                                        meantime, arg0, gtable0, file_col,
+                                        masternight=recipe.master)
                 # catch exception
                 except DrsRecipeException:
                     continue
@@ -2044,7 +2054,7 @@ def _get_runorder(recipe, argdict, kwargdict):
 
 
 def _gen_run(params, rundict, runorder, nightname=None, meantime=None,
-             arg0=None, gtable0=None, file_col=None):
+             arg0=None, gtable0=None, file_col=None, masternight=False):
 
     # deal with unset values (not used)
     if arg0 is None:
@@ -2053,6 +2063,8 @@ def _gen_run(params, rundict, runorder, nightname=None, meantime=None,
         gtable0 = dict(filecol=None)
     if nightname is None:
         nightname = params['NIGHTNAME']
+    if masternight:
+        nightname = params['MASTER_NIGHT']
     if meantime is None:
         meantime = 0.0
 
