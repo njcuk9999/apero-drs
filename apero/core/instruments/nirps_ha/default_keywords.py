@@ -291,6 +291,10 @@ KW_PPSHIFTX.set(key='DETOFFDX', comment='Pixel offset in x from readout lag')
 KW_PPSHIFTY = KW_PPSHIFTY.copy(__NAME__)
 KW_PPSHIFTY.set(key='DETOFFDY', comment='Pixel offset in y from readout lag')
 
+# The number of sigma used to construct pp master mask
+KW_PPMSTR_NSIG = KW_PPMSTR_NSIG.copy(__NAME__)
+KW_PPMSTR_NSIG.set(key='PPMNSIG', comment='PP master mask nsig used')
+
 # -----------------------------------------------------------------------------
 # Define cal_dark variables
 # -----------------------------------------------------------------------------
