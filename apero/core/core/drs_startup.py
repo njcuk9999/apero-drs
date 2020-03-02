@@ -1428,6 +1428,8 @@ def find_recipe(name='None', instrument='None', mod=None):
     :rtype: DrsRecipe
     """
     func_name = __NAME__ + '.find_recipe()'
+    # get text entry
+    textentry = constants.constant_functions._DisplayText()
     # deal with no instrument
     if instrument == 'None' or instrument is None:
         ipath = CORE_PATH
@@ -1460,7 +1462,12 @@ def find_recipe(name='None', instrument='None', mod=None):
         empty = drs_recipe.DrsRecipe(name='Empty', instrument=None)
         return empty, None
     if found_recipe is None:
-        WLOG(None, 'error', TextEntry('00-007-00001', args=[name]))
+        # may not have access to this
+        try:
+            WLOG(None, 'error', TextEntry('00-007-00001', args=[name]))
+        except Exception as _:
+            emsg = textentry('00-007-00001', args=[name])
+            raise ConfigError(emsg, level='error')
 
     # make a copy of found recipe to return
     copy_recipe = DrsRecipe()
