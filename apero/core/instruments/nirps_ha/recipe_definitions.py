@@ -115,45 +115,11 @@ wavefile = dict(name='--wavefile', dtype='file', default='None',
                 helpstr=Help['WAVEFILE_HELP'])
 
 # =============================================================================
-# List of usable recipes
+# Setup for recipes
 # =============================================================================
 DrsRecipe = drs_recipe.DrsRecipe
-
-# Below one must define all recipes and put into the "recipes" list
-#     must have filemod = correct file definitions
-cal_badpix = DrsRecipe(__INSTRUMENT__)
-cal_ccf = DrsRecipe(__INSTRUMENT__)
-cal_dark = DrsRecipe(__INSTRUMENT__)
-cal_dark_master = DrsRecipe(__INSTRUMENT__)
-cal_drift1 = DrsRecipe(__INSTRUMENT__)
-cal_drift2 = DrsRecipe(__INSTRUMENT__)
-cal_extract = DrsRecipe(__INSTRUMENT__)
-cal_ff = DrsRecipe(__INSTRUMENT__)
-cal_loc = DrsRecipe(__INSTRUMENT__)
-cal_pp = DrsRecipe(__INSTRUMENT__)
-cal_shape = DrsRecipe(__INSTRUMENT__)
-cal_shape_master = DrsRecipe(__INSTRUMENT__)
-cal_thermal = DrsRecipe(__INSTRUMENT__)
-cal_wave = DrsRecipe(__INSTRUMENT__)
-cal_wave_master = DrsRecipe(__INSTRUMENT__)
-cal_wave_night = DrsRecipe(__INSTRUMENT__)
-obj_mk_tellu = DrsRecipe(__INSTRUMENT__)
-obj_mk_tellu_db = DrsRecipe(__INSTRUMENT__)
-obj_fit_tellu = DrsRecipe(__INSTRUMENT__)
-obj_fit_tellu_db = DrsRecipe(__INSTRUMENT__)
-obj_mk_template = DrsRecipe(__INSTRUMENT__)
-obj_spec = DrsRecipe(__INSTRUMENT__)
-
-# TODO: remove later
-test = DrsRecipe(__INSTRUMENT__)
-cal_update_berv = DrsRecipe(__INSTRUMENT__)
 # push into a list
-recipes = [cal_badpix, cal_ccf, cal_dark, cal_dark_master, cal_drift1,
-           cal_drift2, cal_extract, cal_ff, cal_loc, cal_pp,
-           cal_shape, cal_shape_master, cal_thermal,
-           cal_wave, cal_wave_master, cal_wave_night,
-           obj_mk_tellu, obj_fit_tellu, obj_mk_template,
-           obj_mk_tellu_db, obj_fit_tellu_db, obj_spec]
+recipes = []
 
 # =============================================================================
 # Recipe definitions
@@ -195,6 +161,7 @@ out_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 # -----------------------------------------------------------------------------
 # test.py
 # -----------------------------------------------------------------------------
+test = DrsRecipe(__INSTRUMENT__)
 test.name = 'test_recipe.py'
 test.instrument = __INSTRUMENT__
 test.outputdir = 'tmp'
@@ -222,10 +189,34 @@ test.set_kwarg(**darkfile)
 test.set_kwarg(**flipimage)
 test.set_kwarg(**fluxunits)
 test.set_kwarg(**resize)
+# add to recipe
+recipes.append(test)
+
+# -----------------------------------------------------------------------------
+# cal_pp_master_nirps_ha
+# -----------------------------------------------------------------------------
+cal_pp_master = DrsRecipe(__INSTRUMENT__)
+cal_pp_master.name = 'cal_pp_master_nirps_ha.py'
+cal_pp_master.shortname = 'PPM'
+cal_pp_master.instrument = __INSTRUMENT__
+cal_pp_master.outputdir = 'reduced'
+cal_pp_master.inputdir = 'raw'
+cal_pp_master.inputtype = 'raw'
+cal_pp_master.extension = 'fits'
+cal_pp_master.description = Help['PPMASTER_DESC']
+cal_pp_master.epilog = Help['PPMASTER_EXAMPLE']
+cal_pp_master.kind = 'recipe'
+cal_pp_master.set_outputs(PP_MASTER=sf.out_pp_master)
+cal_pp_master.set_arg(pos=0, **directory)
+cal_pp_master.set_kwarg(name='--filetype', dtype=str, default='FLAT_FLAT',
+                        helpstr=Help['PPMASTER_FILETYPE_HELP'])
+# add to recipe
+recipes.append(cal_pp_master)
 
 # -----------------------------------------------------------------------------
 # cal_preprocess_nirps_ha
 # -----------------------------------------------------------------------------
+cal_pp = DrsRecipe(__INSTRUMENT__)
 cal_pp.name = 'cal_preprocess_nirps_ha.py'
 cal_pp.shortname = 'PP'
 cal_pp.instrument = __INSTRUMENT__
@@ -242,10 +233,13 @@ cal_pp.set_arg(name='files', dtype='files', pos='1+', files=[sf.raw_file],
                helpstr=Help['PREPROCESS_UFILES_HELP'], limit=1)
 cal_pp.set_kwarg(name='--skip', dtype='bool', default=False,
                  helpstr=Help['PPSKIP_HELP'], default_ref='SKIP_DONE_PP')
+# add to recipe
+recipes.append(cal_pp)
 
 # -----------------------------------------------------------------------------
 # cal_badpix_nirps_ha
 # -----------------------------------------------------------------------------
+cal_badpix = DrsRecipe(__INSTRUMENT__)
 cal_badpix.name = 'cal_badpix_nirps_ha.py'
 cal_badpix.shortname = 'BAD'
 cal_badpix.instrument = __INSTRUMENT__
@@ -273,10 +267,13 @@ cal_badpix.set_kwarg(**flipimage)
 cal_badpix.set_kwarg(**fluxunits)
 cal_badpix.set_kwarg(**plot)
 cal_badpix.set_kwarg(**resize)
+# add to recipe
+recipes.append(cal_badpix)
 
 # -----------------------------------------------------------------------------
 # cal_dark_nirps_ha
 # -----------------------------------------------------------------------------
+cal_dark = DrsRecipe(__INSTRUMENT__)
 cal_dark.name = 'cal_dark_nirps_ha.py'
 cal_dark.shortname = 'DARK'
 cal_dark.instrument = __INSTRUMENT__
@@ -301,10 +298,13 @@ cal_dark.set_arg(name='files', dtype='files',
 cal_dark.set_kwarg(**add_db)
 cal_dark.set_kwarg(default=True, **combine)
 cal_dark.set_kwarg(**plot)
+# add to recipe
+recipes.append(cal_dark)
 
 # -----------------------------------------------------------------------------
 # cal_dark_master_nirps_ha
 # -----------------------------------------------------------------------------
+cal_dark_master = DrsRecipe(__INSTRUMENT__)
 cal_dark_master.name = 'cal_dark_master_nirps_ha.py'
 cal_dark_master.shortname = 'DARKM'
 cal_dark_master.master = True
@@ -322,10 +322,13 @@ cal_dark_master.set_kwarg(name='--filetype', dtype=str,
                           helpstr=Help['DARK_MASTER_FILETYPE'])
 cal_dark_master.set_kwarg(**add_db)
 cal_dark_master.set_kwarg(**plot)
+# add to recipe
+recipes.append(cal_dark_master)
 
 # -----------------------------------------------------------------------------
 # cal_loc_RAW_nirps_ha
 # -----------------------------------------------------------------------------
+cal_loc = DrsRecipe(__INSTRUMENT__)
 cal_loc.name = 'cal_loc_nirps_ha.py'
 cal_loc.shortname = 'LOC'
 cal_loc.instrument = __INSTRUMENT__
@@ -361,10 +364,13 @@ cal_loc.set_kwarg(**flipimage)
 cal_loc.set_kwarg(**fluxunits)
 cal_loc.set_kwarg(**plot)
 cal_loc.set_kwarg(**resize)
+# add to recipe
+recipes.append(cal_loc)
 
 # -----------------------------------------------------------------------------
 # cal_shape_master_nirps_ha
 # -----------------------------------------------------------------------------
+cal_shape_master = DrsRecipe(__INSTRUMENT__)
 cal_shape_master.name = 'cal_shape_master_nirps_ha.py'
 cal_shape_master.shortname = 'SHAPEM'
 cal_shape_master.master = True
@@ -405,10 +411,13 @@ cal_shape_master.set_kwarg(**resize)
 cal_shape_master.set_kwarg(name='--fpmaster', dtype='files',
                            files=[sf.out_shape_fpmaster], default='None',
                            helpstr=Help['SHAPE_FPMASTER_HELP'])
+# add to recipe
+recipes.append(cal_shape_master)
 
 # -----------------------------------------------------------------------------
 # cal_SHAPE_nirps_ha
 # -----------------------------------------------------------------------------
+cal_shape = DrsRecipe(__INSTRUMENT__)
 cal_shape.name = 'cal_shape_nirps_ha.py'
 cal_shape.shortname = 'SHAPE'
 cal_shape.instrument = __INSTRUMENT__
@@ -442,10 +451,13 @@ cal_shape.set_kwarg(**plot)
 cal_shape.set_kwarg(**resize)
 cal_shape.set_kwarg(**shapexfile)
 cal_shape.set_kwarg(**shapeyfile)
+# add to recipe
+recipes.append(cal_shape)
 
 # -----------------------------------------------------------------------------
 # cal_FF_RAW_nirps_ha
 # -----------------------------------------------------------------------------
+cal_ff = DrsRecipe(__INSTRUMENT__)
 cal_ff.name = 'cal_flat_nirps_ha.py'
 cal_ff.shortname = 'FF'
 cal_ff.instrument = __INSTRUMENT__
@@ -485,10 +497,13 @@ cal_ff.set_kwarg(**resize)
 cal_ff.set_kwarg(**shapexfile)
 cal_ff.set_kwarg(**shapeyfile)
 cal_ff.set_kwarg(**shapelfile)
+# add to recipe
+recipes.append(cal_ff)
 
 # -----------------------------------------------------------------------------
 # cal_thermal_nirps_ha
 # -----------------------------------------------------------------------------
+cal_thermal = DrsRecipe(__INSTRUMENT__)
 cal_thermal.name = 'cal_thermal_nirps_ha.py'
 cal_thermal.shortname = 'THERM'
 cal_thermal.instrument = __INSTRUMENT__
@@ -531,10 +546,38 @@ cal_thermal.set_kwarg(**wavefile)
 cal_thermal.set_kwarg(name='--forceext', dtype='bool',
                       default_ref='THERMAL_ALWAYS_EXTRACT',
                       helpstr='THERMAL_EXTRACT_HELP')
+# add to recipe
+recipes.append(cal_thermal)
+
+# -----------------------------------------------------------------------------
+# cal_leak_master_spirou
+# -----------------------------------------------------------------------------
+cal_leak_master = DrsRecipe(__INSTRUMENT__)
+cal_leak_master.name = 'cal_leak_master_spirou.py'
+cal_leak_master.shortname = 'LEAKM'
+cal_leak_master.master = True
+cal_leak_master.instrument = __INSTRUMENT__
+cal_leak_master.outputdir = 'reduced'
+cal_leak_master.inputdir = 'reduced'
+cal_leak_master.intputtype = 'e2ds'
+cal_leak_master.extension = 'fits'
+cal_leak_master.description = Help['LEAKM_DESC']
+cal_leak_master.epilog = Help['LEAKM_EXAMPLE']
+cal_leak_master.kind = 'recipe'
+cal_leak_master.set_outputs(EXT_DARK_FP=sf.out_leak_master)
+cal_leak_master.set_arg(pos=0, **directory)
+cal_leak_master.set_kwarg(name='--filetype', dtype=str, default='DARK_FP',
+                          helpstr=Help['LEAKM_HELP_FILETYPE'])
+cal_leak_master.set_kwarg(**add_db)
+cal_leak_master.set_kwarg(**plot)
+# add to recipe
+recipes.append(cal_leak_master)
+
 
 # -----------------------------------------------------------------------------
 # cal_extract_nirps_ha
 # -----------------------------------------------------------------------------
+cal_extract = DrsRecipe(__INSTRUMENT__)
 cal_extract.name = 'cal_extract_nirps_ha.py'
 cal_extract.shortname = 'EXT'
 cal_extract.instrument = __INSTRUMENT__
@@ -588,10 +631,13 @@ cal_extract.set_kwarg(name='--thermal', dtype='bool', default=True,
                       default_ref='THERMAL_CORRECT')
 cal_extract.set_kwarg(**thermalfile)
 cal_extract.set_kwarg(**wavefile)
+# add to recipe
+recipes.append(cal_extract)
 
 # -----------------------------------------------------------------------------
 # cal_wave_nirps_ha
 # -----------------------------------------------------------------------------
+cal_wave = DrsRecipe(__INSTRUMENT__)
 cal_wave.name = 'cal_wave_nirps_ha.py'
 cal_wave.shortname = 'WAVE'
 cal_wave.instrument = __INSTRUMENT__
@@ -659,10 +705,13 @@ cal_wave.set_kwarg(name='--hcmode', dtype='options',
 cal_wave.set_kwarg(name='--fpmode', dtype='options',
                    helpstr=Help['FPMODE_HELP'],
                    options=['0', '1'], default_ref='WAVE_MODE_FP')
+# add to recipe
+recipes.append(cal_wave)
 
 # -----------------------------------------------------------------------------
 # cal_wave_master
 # -----------------------------------------------------------------------------
+cal_wave_master = DrsRecipe(__INSTRUMENT__)
 cal_wave_master.name = 'cal_wave_master_nirps_ha.py'
 cal_wave_master.shortname = 'WAVEM'
 cal_wave_master.instrument = __INSTRUMENT__
@@ -734,10 +783,13 @@ cal_wave_master.set_kwarg(name='--hcmode', dtype='options',
 cal_wave_master.set_kwarg(name='--fpmode', dtype='options',
                           helpstr=Help['FPMODE_HELP'], options=['0', '1'],
                           default_ref='WAVE_MODE_FP')
+# add to recipe
+recipes.append(cal_wave_master)
 
 # -----------------------------------------------------------------------------
 # cal_wave_night
 # -----------------------------------------------------------------------------
+cal_wave_night = DrsRecipe(__INSTRUMENT__)
 cal_wave_night.name = 'cal_wave_night_nirps_ha.py'
 cal_wave_night.shortname = 'WAVE'
 cal_wave_night.instrument = __INSTRUMENT__
@@ -784,20 +836,29 @@ cal_wave_night.set_kwarg(**wavefile)
 cal_wave_night.set_kwarg(name='--forceext', dtype='bool',
                          default_ref='WAVE_ALWAYS_EXTRACT',
                          helpstr='WAVE_EXTRACT_HELP')
+# add to recipe
+recipes.append(cal_wave_night)
 
 # -----------------------------------------------------------------------------
 # cal_DRIFT_E2DS_nirps_ha
 # -----------------------------------------------------------------------------
+cal_drift1 = DrsRecipe(__INSTRUMENT__)
 cal_drift1.name = 'cal_DRIFT_E2DS_nirps_ha.py'
+# add to recipe
+recipes.append(cal_drift1)
 
 # -----------------------------------------------------------------------------
 # cal_DRIFTPEAK_E2DS_nirps_ha
 # -----------------------------------------------------------------------------
+cal_drift2 = DrsRecipe(__INSTRUMENT__)
 cal_drift2.name = 'cal_DRIFTPEAK_E2DS_nirps_ha.py'
+# add to recipe
+recipes.append(cal_drift2)
 
 # -----------------------------------------------------------------------------
 # cal_CCF_E2DS_nirps_ha
 # -----------------------------------------------------------------------------
+cal_ccf = DrsRecipe(__INSTRUMENT__)
 cal_ccf.name = 'cal_ccf_nirps_ha.py'
 cal_ccf.shortname = 'CCF'
 cal_ccf.instrument = __INSTRUMENT__
@@ -830,10 +891,13 @@ cal_ccf.set_kwarg(name='--step', dtype=float, default_ref='CCF_DEFAULT_STEP',
 cal_ccf.set_kwarg(**add_db)
 cal_ccf.set_kwarg(**blazefile)
 cal_ccf.set_kwarg(**plot)
+# add to recipe
+recipes.append(cal_ccf)
 
 # -----------------------------------------------------------------------------
 # obj_mk_tellu
 # -----------------------------------------------------------------------------
+obj_mk_tellu = DrsRecipe(__INSTRUMENT__)
 obj_mk_tellu.name = 'obj_mk_tellu_nirps_ha.py'
 obj_mk_tellu.shortname = 'MKTELL'
 obj_mk_tellu.instrument = __INSTRUMENT__
@@ -862,10 +926,13 @@ obj_mk_tellu.set_kwarg(**wavefile)
 obj_mk_tellu.set_kwarg(name='--use_template', dtype='bool', default=True,
                        helpstr='Whether to use the template provided from '
                                'the telluric database')
+# add to recipe
+recipes.append(obj_mk_tellu)
 
 # -----------------------------------------------------------------------------
 # obj_mk_tellu_db
 # -----------------------------------------------------------------------------
+obj_mk_tellu_db = DrsRecipe(__INSTRUMENT__)
 obj_mk_tellu_db.name = 'obj_mk_tellu_db_nirps_ha.py'
 obj_mk_tellu_db.shortname = 'MKTELLDB'
 obj_mk_tellu_db.master = True
@@ -892,10 +959,13 @@ obj_mk_tellu_db.set_kwarg(**add_db)
 obj_mk_tellu_db.set_kwarg(**blazefile)
 obj_mk_tellu_db.set_kwarg(**plot)
 obj_mk_tellu_db.set_kwarg(**wavefile)
+# add to recipe
+recipes.append(obj_mk_tellu_db)
 
 # -----------------------------------------------------------------------------
 # obj_fit_tellu
 # -----------------------------------------------------------------------------
+obj_fit_tellu = DrsRecipe(__INSTRUMENT__)
 obj_fit_tellu.name = 'obj_fit_tellu_nirps_ha.py'
 obj_fit_tellu.shortname = 'FTELLU'
 obj_fit_tellu.instrument = __INSTRUMENT__
@@ -933,10 +1003,13 @@ obj_fit_tellu.set_kwarg(**add_db)
 obj_fit_tellu.set_kwarg(**blazefile)
 obj_fit_tellu.set_kwarg(**plot)
 obj_fit_tellu.set_kwarg(**wavefile)
+# add to recipe
+recipes.append(obj_fit_tellu)
 
 # -----------------------------------------------------------------------------
 # obj_fit_tellu_db
 # -----------------------------------------------------------------------------
+obj_fit_tellu_db = DrsRecipe(__INSTRUMENT__)
 obj_fit_tellu_db.name = 'obj_fit_tellu_db_nirps_ha.py'
 obj_fit_tellu_db.shortname = 'FTELLDB'
 obj_fit_tellu_db.master = True
@@ -966,10 +1039,13 @@ obj_fit_tellu_db.set_kwarg(**add_db)
 obj_fit_tellu_db.set_kwarg(**add_db)
 obj_fit_tellu_db.set_kwarg(**plot)
 obj_fit_tellu_db.set_kwarg(**wavefile)
+# add to recipe
+recipes.append(obj_fit_tellu_db)
 
 # -----------------------------------------------------------------------------
 # obj_mk_temp
 # -----------------------------------------------------------------------------
+obj_mk_template = DrsRecipe(__INSTRUMENT__)
 obj_mk_template.name = 'obj_mk_template_nirps_ha.py'
 obj_mk_template.shortname = 'MKTEMP'
 obj_mk_template.instrument = __INSTRUMENT__
@@ -1001,10 +1077,13 @@ obj_mk_template.set_kwarg(**add_db)
 obj_mk_template.set_kwarg(**blazefile)
 obj_mk_template.set_kwarg(**plot)
 obj_mk_template.set_kwarg(**wavefile)
+# add to recipe
+recipes.append(obj_mk_template)
 
 # -----------------------------------------------------------------------------
 # obj_spec_nirps_ha
 # -----------------------------------------------------------------------------
+obj_spec = DrsRecipe(__INSTRUMENT__)
 obj_spec.name = 'obj_spec_nirps_ha.py'
 obj_spec.shortname = 'OBJ_SPEC'
 obj_spec.instrument = __INSTRUMENT__
@@ -1023,6 +1102,8 @@ obj_spec.set_arg(name='files', dtype='files', pos='1+',
 obj_spec.set_kwarg(**plot)
 obj_spec.set_kwarg(name='--cores', dtype=int, default=1,
                           helpstr='')
+# add to recipe
+recipes.append(obj_spec)
 
 # -----------------------------------------------------------------------------
 # cal_exposure_meter
