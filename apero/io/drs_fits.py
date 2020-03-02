@@ -24,6 +24,8 @@ from apero.core.core import drs_log
 from apero import locale
 from apero.io import drs_table
 from apero.io import drs_lock
+from apero.io import drs_path
+
 
 # =============================================================================
 # Define variables
@@ -551,7 +553,7 @@ def _write_fits(params, filename, data, header, datatype, dtype=None, func=None)
 # =============================================================================
 # Define search functions
 # =============================================================================
-def find_files(params, kind=None, path=None, logic='and', fiber=None,
+def find_files(params, recipe, kind=None, path=None, logic='and', fiber=None,
                return_table=False, night=None, **kwargs):
     """
     Find files using kwargs (using index files located in 'kind' or 'path')
@@ -589,23 +591,40 @@ def find_files(params, kind=None, path=None, logic='and', fiber=None,
     pconst = constants.pload(params['INSTRUMENT'])
     # get the index file col name
     filecol = params['DRS_INDEX_FILENAME']
+    nightcol = params['REPROCESS_NIGHTCOL']
     # ----------------------------------------------------------------------
     # deal with setting path
     if path is not None:
         path = str(path)
         columns = None
+        index_files = None
+        index_dir = None
     elif kind == 'raw':
-        path = params['DRS_DATA_RAW']
-        columns = None
+        # get index table (generate if needed)
+        indextable, index_dir = find_raw_files(params, recipe)
+        # construct index file path for raw
+        raw_index_file = pcheck(params, 'REPROCESS_RAWINDEXFILE',
+                                'raw_index_file', kwargs, func_name)
+        mpath = os.path.join(params['DRS_DATA_RUN'], raw_index_file)
+        # set the columns from table
+        columns = indextable.colnames
+        # set index files
+        index_files = [mpath]
     elif kind == 'tmp':
         path = params['DRS_DATA_WORKING']
         columns = pconst.RAW_OUTPUT_KEYS()
+        index_files = None
+        index_dir = None
     elif kind == 'red':
         path = params['DRS_DATA_REDUC']
         columns = pconst.REDUC_OUTPUT_KEYS()
+        index_files = None
+        index_dir = None
     else:
         path = params['INPATH']
         columns = None
+        index_files = None
+        index_dir = None
     # ----------------------------------------------------------------------
     # deal with making sure all kwargs are in columns (if columns defined)
     if columns is not None:
@@ -617,7 +636,8 @@ def find_files(params, kind=None, path=None, logic='and', fiber=None,
                 WLOG(params, 'error', TextEntry('00-004-00001', args=eargs))
     # ----------------------------------------------------------------------
     # get index files
-    index_files = get_index_files(params, path, night=night)
+    if index_files is None:
+        index_files = get_index_files(params, path, night=night)
     # ----------------------------------------------------------------------
     # valid files storage
     valid_files = []
@@ -630,7 +650,10 @@ def find_files(params, kind=None, path=None, logic='and', fiber=None,
         # read index file
         index = drs_table.read_fits_table(params, index_file)
         # get directory
-        dirname = os.path.dirname(index_file)
+        if index_dir is None:
+            dirname = os.path.dirname(index_file)
+        else:
+            dirname = index_dir
         # ------------------------------------------------------------------
         # overall masks
         mask = np.ones(len(index), dtype=bool)
@@ -667,6 +690,7 @@ def find_files(params, kind=None, path=None, logic='and', fiber=None,
         # ------------------------------------------------------------------
         # get files for those that remain
         masked_files = index[filecol][mask]
+        nightnames = index[nightcol][mask]
         # ------------------------------------------------------------------
         masked_index = index[mask]
         # new mask for index files
@@ -674,13 +698,18 @@ def find_files(params, kind=None, path=None, logic='and', fiber=None,
         # check that files exist
         # loop around masked files
         for row, filename in enumerate(masked_files):
+            # deal with requiring night name
+            if index_dir is None:
+                nightname = ''
+            else:
+                nightname = nightnames[row]
             # --------------------------------------------------------------
             # deal with fiber
             if fiber is not None:
                 if '_{0}'.format(fiber) not in filename:
                     continue
             # construct absolute path
-            absfilename = os.path.join(dirname, filename)
+            absfilename = os.path.join(dirname, nightname, filename)
             # check that file exists
             if not os.path.exists(absfilename):
                 continue
@@ -750,6 +779,83 @@ def get_index_files(params, path=None, required=True, night=None):
         WLOG(params, 'error', TextEntry('01-001-00021', args=eargs))
     # return the index files
     return index_files
+
+
+def find_raw_files(params, recipe, **kwargs):
+    func_name = __NAME__ + '.find_raw_files()'
+    # get properties from params
+    night_col = pcheck(params, 'REPROCESS_NIGHTCOL', 'night_col', kwargs,
+                       func_name)
+    absfile_col = pcheck(params, 'REPROCESS_ABSFILECOL', 'absfile_col',
+                         kwargs,
+                         func_name)
+    modified_col = pcheck(params, 'REPROCESS_MODIFIEDCOL', 'modified_col',
+                          kwargs, func_name)
+    sortcol = pcheck(params, 'REPROCESS_SORTCOL_HDRKEY', 'sortcol', kwargs,
+                     func_name)
+    raw_index_file = pcheck(params, 'REPROCESS_RAWINDEXFILE',
+                            'raw_index_file',
+                            kwargs, func_name)
+    itable_filecol = pcheck(params, 'DRS_INDEX_FILENAME', 'itable_filecol',
+                            kwargs, func_name)
+    # get path
+    path, rpath = _get_path_and_check(params, 'DRS_DATA_RAW')
+
+    # print progress
+    WLOG(params, 'info', TextEntry('40-503-00010'))
+
+    # get files
+    gfout = _get_files(params, recipe, path, rpath)
+    nightnames, filelist, basenames, mod_times, mkwargs = gfout
+
+    # construct a table
+    mastertable = Table()
+    mastertable[night_col] = nightnames
+    mastertable[itable_filecol] = basenames
+    mastertable[absfile_col] = filelist
+    mastertable[modified_col] = mod_times
+    for kwarg in mkwargs:
+        mastertable[kwarg] = mkwargs[kwarg]
+    # sort by sortcol
+    sortmask = np.argsort(mastertable[sortcol])
+    mastertable = mastertable[sortmask]
+    # save master table
+    mpath = os.path.join(params['DRS_DATA_RUN'], raw_index_file)
+    mastertable.write(mpath, overwrite=True)
+    # return the file list
+    return mastertable, rpath
+
+
+def fix_header(params, recipe, infile=None, header=None, **kwargs):
+    """
+    Instrument specific header fixes are define in pseudo_const.py for an
+    instrument and called here (function in pseudo_const.py is HEADER_FIXES)
+    :param params:
+    :param infile:
+    :return:
+    """
+    # deal with no header
+    if header is None:
+        header = infile.header
+        has_infile = True
+    else:
+        has_infile = False
+
+    # load pseudo constants
+    pconst = constants.pload(params['INSTRUMENT'])
+    # use pseudo constant to apply any header fixes required (specific to
+    #   a specific instrument) and update the header
+    header = pconst.HEADER_FIXES(params=params, recipe=recipe, header=header,
+                                 **kwargs)
+    # if the input was an infile return the infile back
+    if has_infile:
+        # return the updated infile
+        infile.header = header
+        return infile
+    # else return the header (assuming input was a header only)
+    else:
+        # else return the header
+        return header
 
 
 # =============================================================================
@@ -925,6 +1031,144 @@ def check_dtype_for_header(value):
         newvalue = str(value)
     # return new value
     return newvalue
+
+
+def _get_path_and_check(params, key):
+    # check key in params
+    if key not in params:
+        WLOG(params, 'error', '{0} not found in params'.format(key))
+    # get top level path to search
+    rpath = params[key]
+    # deal with not having nightname
+    if 'NIGHTNAME' not in params:
+        path = str(rpath)
+    elif params['NIGHTNAME'] not in ['', 'None', None]:
+        path = os.path.join(rpath, params['NIGHTNAME'])
+    else:
+        path = str(rpath)
+    # check if path exists
+    if not os.path.exists(path):
+        WLOG(params, 'error', 'Path {0} does not exist'.format(path))
+    else:
+        return path, rpath
+
+
+def _get_files(params, recipe, path, rpath, **kwargs):
+    func_name = __NAME__ + '.get_files()'
+    # get properties from params
+    absfile_col = pcheck(params, 'REPROCESS_ABSFILECOL', 'absfile_col', kwargs,
+                         func_name)
+    modified_col = pcheck(params, 'REPROCESS_MODIFIEDCOL', 'modified_col',
+                          kwargs, func_name)
+    raw_index_file = pcheck(params, 'REPROCESS_RAWINDEXFILE', 'raw_index_file',
+                            kwargs, func_name)
+    # get the file filter (should be None unless we want specific files)
+    filefilter = params.get('FILENAME', None)
+    if filefilter is not None:
+        filefilter = list(params['FILENAME'])
+    # ----------------------------------------------------------------------
+    # get the pseudo constant object
+    pconst = constants.pload(params['INSTRUMENT'])
+    # ----------------------------------------------------------------------
+    # get header keys
+    headerkeys = pconst.RAW_OUTPUT_KEYS()
+    # get raw valid files
+    raw_valid = pconst.VALID_RAW_FILES()
+    # ----------------------------------------------------------------------
+    # storage list
+    filelist, basenames, nightnames, mod_times = [], [], [], []
+    # load raw index
+    rawindexfile = os.path.join(params['DRS_DATA_RUN'], raw_index_file)
+    if os.path.exists(rawindexfile):
+        rawindex = drs_table.read_table(params, rawindexfile, fmt='fits')
+    else:
+        rawindex = None
+    # ----------------------------------------------------------------------
+    # populate the storage dictionary
+    kwargs = dict()
+    for key in headerkeys:
+        kwargs[key] = []
+    # ----------------------------------------------------------------------
+    # get files (walk through path)
+    for root, dirs, files in os.walk(path):
+        # loop around files in this root directory
+        for filename in files:
+            # --------------------------------------------------------------
+            if filefilter is not None:
+                if os.path.basename(filename) not in filefilter:
+                    continue
+            # --------------------------------------------------------------
+            # get night name
+            ucpath = drs_path.get_uncommon_path(rpath, root)
+            if ucpath is None:
+                eargs = [path, rpath, func_name]
+                WLOG(params, 'error', TextEntry('00-503-00003', args=eargs))
+            # --------------------------------------------------------------
+            # make sure file is valid
+            isvalid = False
+            for suffix in raw_valid:
+                if filename.endswith(suffix):
+                    isvalid = True
+            # --------------------------------------------------------------
+            # do not scan empty ucpath
+            if len(ucpath) == 0:
+                continue
+            # --------------------------------------------------------------
+            # log the night directory
+            if ucpath not in nightnames:
+                WLOG(params, '', TextEntry('40-503-00003', args=[ucpath]))
+            # --------------------------------------------------------------
+            # get absolute path
+            abspath = os.path.join(root, filename)
+            modified = os.path.getmtime(abspath)
+            # --------------------------------------------------------------
+            # if not valid skip
+            if not isvalid:
+                continue
+            # --------------------------------------------------------------
+            # else append to list
+            else:
+                nightnames.append(ucpath)
+                filelist.append(abspath)
+                basenames.append(filename)
+                mod_times.append(modified)
+            # --------------------------------------------------------------
+            # see if file in raw index and has correct modified date
+            if rawindex is not None:
+                # find file
+                rowmask = (rawindex[absfile_col] == abspath)
+                # find match date
+                rowmask &= modified == rawindex[modified_col]
+                # only continue if both conditions found
+                if np.sum(rowmask) > 0:
+                    # locate file
+                    row = np.where(rowmask)[0][0]
+                    # if both conditions met load from raw fits file
+                    for key in headerkeys:
+                        kwargs[key].append(rawindex[key][row])
+                    # file was found
+                    rfound = True
+                else:
+                    rfound = False
+            else:
+                rfound = False
+            # --------------------------------------------------------------
+            # deal with header
+            if filename.endswith('.fits') and not rfound:
+                # read the header
+                header = read_header(params, abspath)
+                # fix the headers
+                header = fix_header(params, recipe, header=header)
+                # loop around header keys
+                for key in headerkeys:
+                    rkey = params[key][0]
+                    if rkey in header:
+                        kwargs[key].append(header[rkey])
+                    else:
+                        kwargs[key].append('')
+    # ----------------------------------------------------------------------
+    # return filelist
+    return nightnames, filelist, basenames, mod_times, kwargs
 
 
 # =============================================================================
