@@ -135,7 +135,7 @@ def __main__(recipe, params):
             infiletype = core.get_file_definition(intype, params['INSTRUMENT'],
                                                   kind='red')
             # get the files for this filetype
-            filenames1 = drs_fits.find_files(params, kind='red',
+            filenames1 = drs_fits.find_files(params, recipe, kind='red',
                                              KW_OUTPUT=intype,
                                              KW_DPRTYPE=filetype)
             # group files

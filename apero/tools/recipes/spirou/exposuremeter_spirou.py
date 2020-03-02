@@ -120,7 +120,7 @@ def __main__(recipe, params):
     drsfile = core.get_file_definition(filetype, params['INSTRUMENT'],
                                        kind='tmp')
     # get all "filetype" filenames
-    files = drs_fits.find_files(params, kind='tmp', KW_DPRTYPE=filetype,
+    files = drs_fits.find_files(params, recipe, kind='tmp', KW_DPRTYPE=filetype,
                                 night=params['NIGHTNAME'])
     # make a new copy of infile
     infile = drsfile.newcopy(filename=files[-1], recipe=recipe)
