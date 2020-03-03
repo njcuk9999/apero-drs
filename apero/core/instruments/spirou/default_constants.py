@@ -768,6 +768,34 @@ FF_PLOT_ORDER.value = 4
 ALLOWED_LEAKM_TYPES = ALLOWED_LEAKM_TYPES.copy(__NAME__)
 ALLOWED_LEAKM_TYPES.value = 'DARK_FP'
 
+# define whether to always extract leak master files
+#      (i.e. overwrite existing files)
+LEAKM_ALWAYS_EXTRACT = LEAKM_ALWAYS_EXTRACT.copy(__NAME__)
+LEAKM_ALWAYS_EXTRACT.value = False
+
+# define the type of file to use for leak master solution (currently allowed are
+#    'E2DS' or 'E2DSFF'
+LEAKM_EXTRACT_TYPE = LEAKM_EXTRACT_TYPE.copy(__NAME__)
+LEAKM_EXTRACT_TYPE.value = 'E2DSFF'
+
+# Define the types of input extracted files to correct for leakage
+ALLOWED_LEAK_TYPES = ALLOWED_LEAK_TYPES.copy(__NAME__)
+ALLOWED_LEAK_TYPES.value = 'OBJ_FP'
+
+# define the type of file to use for the leak correction (currently allowed are
+#     'E2DS_FILE' or 'E2DSFF_FILE' (linked to recipe definition outputs)
+LEAK_EXTRACT_FILE = LEAK_EXTRACT_FILE.copy(__NAME__)
+LEAK_EXTRACT_FILE.value = 'E2DSFF_FILE'
+
+# define the extraction files which are 2D images (i.e. order num x nbpix)
+LEAK_2D_EXTRACT_FILES = LEAK_2D_EXTRACT_FILES.copy(__NAME__)
+LEAK_2D_EXTRACT_FILES.value = 'E2DS_FILE, E2DSFF_FILE, E2DSLL_FILE'
+
+# define the extraction files which are 1D spectra
+LEAK_1D_EXTRACT_FILES = LEAK_1D_EXTRACT_FILES.copy(__NAME__)
+LEAK_1D_EXTRACT_FILES.value = 'S1D_W_FILE, S1D_V_FILE'
+
+
 # =============================================================================
 # CALIBRATION: EXTRACTION SETTINGS
 # =============================================================================
