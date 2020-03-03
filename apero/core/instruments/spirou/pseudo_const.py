@@ -284,6 +284,14 @@ class PseudoConstants(DefaultConstants):
         reference = 'C'
         return science, reference
 
+    def FIBER_KINDS(self):
+        # can be multiple science channels
+        science = ['AB', 'A', 'B']
+        # can only be one reference
+        reference = 'C'
+        # return science and reference fiber(s)
+        return science, reference
+
     # =========================================================================
     # BERV_KEYS
     # =========================================================================
