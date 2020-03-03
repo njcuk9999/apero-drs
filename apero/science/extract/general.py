@@ -13,6 +13,7 @@ import numpy as np
 from astropy.table import Table
 from astropy import constants as cc
 from astropy import units as uu
+import os
 import warnings
 
 from apero import core
@@ -21,6 +22,7 @@ from apero.core import math as mp
 from apero import locale
 from apero.core.core import drs_log
 from apero.core.core import drs_file
+from apero.core.core import drs_startup
 from apero.io import drs_data
 from apero.science.calib import localisation
 from apero.science.calib import shape
@@ -413,8 +415,199 @@ def tcorrect2(params, recipe, image, header, fiber, wavemap, thermal=None,
 # =============================================================================
 # Define leakage functions
 # =============================================================================
-def correct_dark_fp(params, recipe, extractdict):
+def correct_master_dark_fp(params, extractdict, **kwargs):
+    # set function name
+    func_name = __NAME__ + '.correct_master_dark_fp'
+
+    # load parameters from params/kwargs
+    bckgrd_percentile = 5
+    norm_percentile = 90
+    w_smooth = 15
+    ker_size = 3
+
+    # define a gaussian kernel that goes from +/- ker_size * w_smooth
+    xkernel = np.arange(-ker_size * w_smooth, ker_size * w_smooth)
+    ykernel = np.exp(-0.5 * (xkernel / w_smooth) ** 2)
+
+    # get this instruments science fibers and reference fiber
+    pconst = constants.pload(params['INSTRUMENT'])
+    # science fibers should be list of strings, reference fiber should be string
+    sci_fibers, ref_fiber =  pconst.FIBER_KINDS()
+    # output storage (dictionary of corrected extracted files)
+    outputs = dict()
+    # ----------------------------------------------------------------------
+    # Deal with loading the reference fiber image props
+    # ----------------------------------------------------------------------
+    # check for reference fiber in extract dict
+    if ref_fiber not in extractdict:
+        eargs = [ref_fiber, ', '.join(extractdict.keys()), func_name]
+        WLOG(params, 'error', TextEntry('00-016-00024', args=eargs))
+    # get the reference file
+    reffile = extractdict[ref_fiber]
+    # get dprtype
+    dprtype = reffile.get_key('KW_DPRTYPE')
+    # get dpr type for ref image
+    refdpr = pconst.FIBER_DPR_POS(dprtype, ref_fiber)
+    # check that refdpr is FP (must be a FP)
+    if refdpr != 'FP':
+        # log and raise error
+        eargs = [ref_fiber, dprtype, func_name]
+        WLOG(params, 'error', TextEntry('00-016-00025', args=eargs))
+
+    # get the data for the reference image
+    refimage = np.array(reffile.data)
+    # get reference image size
+    nord, nbpix = refimage.shape
+    # ----------------------------------------------------------------------
+    # remove the pedestal from the reference image and work out the amplitude
+    #   of the leak from the reference fiber
+    # ----------------------------------------------------------------------
+    # storage
+    ref_amps = np.zeros_like(refimage)
+    # loop around the orders
+    for order_num in range(nord):
+        # remove the pedestal from the FP to avoid an offset from
+        #     thermal background
+        background = np.nanpercentile(refimage[order_num], bckgrd_percentile)
+        refimage[order_num] = refimage[order_num] - background
+        # get the amplitudes
+        amplitude = np.nanpercentile(refimage[order_num], norm_percentile)
+        ref_amps[order_num] = amplitude
+        # normalize the reference image by this amplitude
+        refimage[order_num] = refimage[order_num] / amplitude
+
+    # save corrected refimage into output storage
+    reffile.data = refimage
+    outputs[ref_fiber] = reffile
+    # ----------------------------------------------------------------------
+    # process the science fibers
+    # ----------------------------------------------------------------------
+    for sci_fiber in sci_fibers:
+        # check that science fiber is in extraction dictionary
+        if sci_fiber not in extractdict:
+            eargs = [sci_fiber, ', '.join(extractdict.keys()), func_name]
+            WLOG(params, 'error', TextEntry('00-016-00026', args=eargs))
+        # get the science image
+        scifile = extractdict[sci_fiber]
+        # get the data for the reference image
+        sciimage = np.array(scifile.data)
+        # get the science image size
+        nord, nbpix = sciimage.shape
+        # loop around orders
+        for order_num in range(nord):
+            # median filtering has to be an odd number
+            medfac = 2 * (w_smooth // 2) + 1
+            # calculate median filter
+            tmpimage = mp.medfilt_1d(sciimage[order_num], medfac)
+            # set NaN pixels to zero
+            tmpimage[np.isnan(tmpimage)] = 0
+            # find a proxy for the low-frequency in the science channel
+            mask = np.ones_like(tmpimage)
+            mask[tmpimage == 0] = 0
+            # calculate low-frequency
+            part1 = np.convolve(tmpimage, ykernel, mode='same')
+            part2 = np.convolve(mask, ykernel, mode='same')
+            with warnings.catch_warnings(record=True) as _:
+                low_f = part1 / part2
+            # remove the low-frequencies from science image
+            sciimage[order_num] = sciimage[order_num] - low_f
+            # normalize by the reference amplitudes
+            sciimage[order_num] = sciimage[order_num] / ref_amps[order_num]
+        # save corrected science image into output storage
+        scifile.data = sciimage
+        outputs[sci_fiber] = scifile
+    # ----------------------------------------------------------------------
+    # return output dictionary with corrected extracted files
+    return outputs
+
+
+def correct_dark_fp(params, extractdict, **kwargs):
     pass
+
+
+def master_dark_fp_cube(params, recipe, extractdict):
+    # median cube storage dictionary
+    medcubedict = dict()
+    # loop around fibers
+    for fiber in extractdict:
+        # get the file list for this fiber
+        extfiles = extractdict[fiber]
+        # get the first file as reference
+        extfile = extfiles[0]
+        # construct the leak master file instance
+        outfile = recipe.outputs['LEAK_MASTER'].newcopy(recipe=recipe,
+                                                        fiber=fiber)
+        # construct the filename from file instance
+        outfile.construct_filename(params, infile=extfile)
+        # copy keys from input file
+        outfile.copy_original_keys(extfile)
+        # storage for cube
+        cube = []
+        # loop around files and get data cube
+        for it in range(len(extfiles)):
+            # add to cube
+            cube.append(extfiles[it].data)
+        # make cube a numpy array
+        cube = np.array(cube)
+        # produce super dark using median
+        medcube = mp.nanmedian(cube, axis=0)
+        # delete cube
+        del cube
+        # add median cube to outfile instance
+        outfile.data = medcube
+        # add to median cube storage
+        medcubedict[fiber] = outfile
+    # return median cube storage dictionary
+    return medcubedict
+
+
+
+def get_extraction_files(params, recipe, infile, extname):
+
+    # get properties from parameters
+    leak2dext = params['LEAK_2D_EXTRACT_FILES']
+    # get this instruments science fibers and reference fiber
+    pconst = constants.pload(params['INSTRUMENT'])
+    # science fibers should be list of strings, reference fiber should be string
+    sci_fibers, ref_fiber =  pconst.FIBER_KINDS()
+    all_fibers = sci_fibers + [ref_fiber]
+    # get the input pp list
+    rawfiles = infile.read_header_key_1d_list('KW_INFILE1', dtype=str)
+    # get the preprocessed file
+    ppfile = infile.intype.newcopy(recipe=recipe)
+    # get the preprocessed file path
+    pppath = os.path.join(params['DRS_DATA_WORKING'], params['NIGHTNAME'])
+    # get the pp filename
+    ppfile.set_filename(os.path.join(pppath, rawfiles[0]))
+    # ------------------------------------------------------------------
+    # find the extraction recipe
+    extrecipe, _ = drs_startup.find_recipe(extname, params['INSTRUMENT'],
+                                           mod=recipe.recipemod)
+    extrecipe.drs_params = params
+    # ------------------------------------------------------------------
+    # storage for outputs
+    extouts = recipe.outputs.keys()
+    outputs = dict()
+    for extout in extouts:
+        outputs[extout] = dict()
+    # ------------------------------------------------------------------
+    # loop around fibers
+    for fiber in all_fibers:
+        # loop around extraction outputs
+        for extout in extouts:
+            # get extraction file instance
+            outfile = extrecipe.outputs[extout].newcopy(recipe=extrecipe,
+                                                        fiber=fiber)
+            # construct filename
+            outfile.construct_filename(params, infile=ppfile)
+            # read 2D image (not 1D images -- these will be re-generated)
+            if extout in leak2dext:
+                outfile.read_file()
+            # push to storage
+            outputs[extout] = outfile
+    # return outputs
+    return outputs
+
 
 # =============================================================================
 # Define s1d functions
@@ -873,6 +1066,116 @@ def extract_summary(recipe, params, qc_params, e2dsfile, shapelocal, eprops,
                          fiber=fiber)
     recipe.plot.add_stat('KW_COSMIC_THRES', fiber=fiber,
                          value=eprops['COSMIC_THRESHOLD'])
+
+
+
+def qc_leak_master(params, medcubes):
+    # output storage
+    qc_params = dict()
+    passed = True
+    # loop around fibers
+    for fiber in medcubes:
+        # log that we are doing qc for a specific fiber
+        WLOG(params, 'info', TextEntry('40-016-00026', args=[fiber]))
+        # set passed variable and fail message list
+        fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
+        textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+        # no quality control currently
+        qc_values.append('None')
+        qc_names.append('None')
+        qc_logic.append('None')
+        qc_pass.append(1)
+        # ------------------------------------------------------------------
+        # finally log the failed messages and set QC = 1 if we pass the
+        # quality control QC = 0 if we fail quality control
+        if np.sum(qc_pass) == len(qc_pass):
+            WLOG(params, 'info', TextEntry('40-005-10001'))
+            passed_fiber = 1
+        else:
+            for farg in fail_msg:
+                WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+            passed_fiber = 0
+        # store in qc_params
+        qc_params_fiber = [qc_names, qc_values, qc_logic, qc_pass]
+        # append to storage
+        qc_params[fiber] = qc_params_fiber
+        passed &= passed_fiber
+    # return qc_params and passed
+    return qc_params, passed
+
+
+def qc_leak(params, outputs):
+    # output storage
+    qc_params = dict()
+    passed = True
+    # loop around fibers
+    for fiber in outputs:
+        # log that we are doing qc for a specific fiber
+        WLOG(params, 'info', TextEntry('40-016-00026', args=[fiber]))
+        # set passed variable and fail message list
+        fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
+        textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+        # no quality control currently
+        qc_values.append('None')
+        qc_names.append('None')
+        qc_logic.append('None')
+        qc_pass.append(1)
+        # ------------------------------------------------------------------
+        # finally log the failed messages and set QC = 1 if we pass the
+        # quality control QC = 0 if we fail quality control
+        if np.sum(qc_pass) == len(qc_pass):
+            WLOG(params, 'info', TextEntry('40-005-10001'))
+            passed_fiber = 1
+        else:
+            for farg in fail_msg:
+                WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+            passed_fiber = 0
+        # store in qc_params
+        qc_params_fiber = [qc_names, qc_values, qc_logic, qc_pass]
+        # append to storage
+        qc_params[fiber] = qc_params_fiber
+        passed &= passed_fiber
+    # return qc_params and passed
+    return qc_params, passed
+
+
+def write_leak_master(params, recipe, rawfiles, medcubes, qc_params):
+    # loop around fibers
+    for fiber in medcubes:
+        # get outfile for this fiber
+        outfile = medcubes[fiber]
+        # get qc_params for this fiber
+        qc_params_fiber = qc_params[fiber]
+        # ------------------------------------------------------------------
+        # have already copied original keys in master_dark_fp_cube function
+        # data is already added as well
+        # so just need other keys
+        # ------------------------------------------------------------------
+        # add version
+        outfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+        # add dates
+        outfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+        outfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+        # add process id
+        outfile.add_hkey('KW_PID', value=params['PID'])
+        # add output tag
+        outfile.add_hkey('KW_OUTPUT', value=outfile.name)
+        # add input files
+        outfile.add_hkey_1d('KW_INFILE1', values=rawfiles, dim1name='file')
+        # add qc parameters
+        outfile.add_qckeys(qc_params_fiber)
+        # log that we are saving rotated image
+        wargs = [fiber, outfile.filename]
+        WLOG(params, '', TextEntry('40-016-00025', args=wargs))
+        # write image to file
+        outfile.write_file()
+        # add to output files (for indexing)
+        recipe.add_output_file(outfile)
+        # update med cubes (as it was shallow copied this is just for sanity
+        #    check)
+        medcubes[fiber] = outfile
+    # return medcubes
+    return medcubes
 
 
 # =============================================================================
