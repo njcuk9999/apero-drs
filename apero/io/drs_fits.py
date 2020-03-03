@@ -690,7 +690,10 @@ def find_files(params, recipe, kind=None, path=None, logic='and', fiber=None,
         # ------------------------------------------------------------------
         # get files for those that remain
         masked_files = index[filecol][mask]
-        nightnames = index[nightcol][mask]
+        if index_dir is None:
+            nightnames = np.array(mask).astype(int)
+        else:
+            nightnames = index[nightcol][mask]
         # ------------------------------------------------------------------
         masked_index = index[mask]
         # new mask for index files
