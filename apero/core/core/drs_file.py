@@ -1900,7 +1900,7 @@ class DrsFitsFile(DrsInputFile):
         # return values
         return values
 
-    def read_header_key_1d_list(self, key, dim1, dtype=float):
+    def read_header_key_1d_list(self, key, dim1=None, dtype=float):
         """
         Read a set of header keys that were created from a 1D list
 
@@ -1908,7 +1908,7 @@ class DrsFitsFile(DrsInputFile):
                      key[row number]
 
         :param dim1: int, the number of elements in dimension 1
-                     (number of rows)
+                     (number of rows) if unset tries to guess number of rows
 
         :param dtype: type, the type to force the data to be (i.e. float, int)
 
