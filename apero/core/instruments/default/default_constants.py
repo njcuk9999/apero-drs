@@ -95,7 +95,9 @@ __all__ = [
     'FF_BLAZE_SCUT', 'FF_BLAZE_SIGFIT', 'FF_BLAZE_BPERCENTILE',
     'FF_BLAZE_NITER',
     # leakage constants
-    'ALLOWED_LEAKM_TYPES',
+    'ALLOWED_LEAKM_TYPES', 'LEAKM_ALWAYS_EXTRACT', 'LEAKM_EXTRACT_TYPE',
+    'ALLOWED_LEAK_TYPES', 'LEAK_EXTRACT_FILE', 'LEAK_2D_EXTRACT_FILES',
+    'LEAK_1D_EXTRACT_FILES',
     # extract constants
     'EXT_START_ORDER', 'EXT_END_ORDER', 'EXT_RANGE1', 'EXT_RANGE2',
     'EXT_SKIP_ORDERS', 'EXT_COSMIC_CORRETION', 'EXT_COSMIC_SIGCUT',
@@ -1117,11 +1119,37 @@ FF_PLOT_ORDER = Const('FF_PLOT_ORDER', value=None, dtype=int, source=__NAME__,
 # =============================================================================
 # CALIBRATION: LEAKAGE SETTINGS
 # =============================================================================
+cgroup = 'CALIBRATION: LEAKAGE SETTINGS'
 # Define the types of input file allowed by the leakage master recipe
 ALLOWED_LEAKM_TYPES = Const('ALLOWED_LEAKM_TYPES', value=None, dtype=str,
                             source=__NAME__, group=cgroup)
 
+# define whether to always extract leak master files
+#      (i.e. overwrite existing files)
+LEAKM_ALWAYS_EXTRACT = Const('LEAKM_ALWAYS_EXTRACT', value=None, dtype=bool,
+                             source=__NAME__, group=cgroup)
 
+# define the type of file to use for leak master solution (currently allowed are
+#    'E2DS' or 'E2DSFF'
+LEAKM_EXTRACT_TYPE = Const('LEAKM_EXTRACT_TYPE', value=None, dtype=str,
+                           source=__NAME__, group=cgroup)
+
+# Define the types of input extracted files to correct for leakage
+ALLOWED_LEAK_TYPES = Const('ALLOWED_LEAK_TYPES', value=None, dtype=str,
+                           source=__NAME__, group=cgroup)
+
+# define the type of file to use for the leak correction (currently allowed are
+#     'E2DS_FILE' or 'E2DSFF_FILE' (linked to recipe definition outputs)
+LEAK_EXTRACT_FILE = Const('LEAK_EXTRACT_FILE', value=None, dtype=str,
+                          source=__NAME__, group=cgroup)
+
+# define the extraction files which are 2D images (i.e. order num x nbpix)
+LEAK_2D_EXTRACT_FILES = Const('LEAK_2D_EXTRACT_FILES', value=None, dtype=str,
+                              source=__NAME__, group=cgroup)
+
+# define the extraction files which are 1D spectra
+LEAK_1D_EXTRACT_FILES = Const('LEAK_1D_EXTRACT_FILES', value=None, dtype=str,
+                              source=__NAME__, group=cgroup)
 
 # =============================================================================
 # CALIBRATION: EXTRACTION SETTINGS
@@ -1753,7 +1781,6 @@ WAVE_CCF_MASK_WIDTH = Const('WAVE_CCF_MASK_WIDTH', value=None, dtype=float,
 WAVE_CCF_N_ORD_MAX = Const('WAVE_CCF_N_ORD_MAX', value=None, dtype=int,
                            source=__NAME__, minimum=1, group=cgroup)
 
-
 # =============================================================================
 # CALIBRATION: WAVE MASTER REFERENCE SETTINGS
 # =============================================================================
@@ -1792,8 +1819,7 @@ WAVEREF_FP_NHIGH = Const('WAVEREF_FP_NHIGH', value=None, dtype=int,
 
 # define the number of iterations required to do the Fp polynomial inversion
 WAVEREF_FP_POLYINV = Const('WAVEREF_FP_POLYINV', value=None, dtype=int,
-                       source=__NAME__, minimum=1, group=cgroup)
-
+                           source=__NAME__, minimum=1, group=cgroup)
 
 # =============================================================================
 # CALIBRATION: WAVE NIGHT SETTINGS
@@ -1838,7 +1864,7 @@ WAVE_NIGHT_NSIG_FIT_CUT = Const('WAVE_NIGHT_NSIG_FIT_CUT', value=None,
 
 # wave night plot hc bin lower bound [nm]
 WAVENIGHT_PLT_HCBINL = Const('WAVENIGHT_PLT_HCBINL', value=None, dtype=float,
-                              source=__NAME__, minimum=0, group=cgroup)
+                             source=__NAME__, minimum=0, group=cgroup)
 
 # wave night plot hc bin upper bound [nm]
 WAVENIGHT_PLT_HCBINU = Const('WAVENIGHT_PLT_HCBINU', value=None, dtype=float,
@@ -1871,7 +1897,6 @@ WAVENIGHT_PLT_MAXDV = Const('WAVENIGHT_PLT_MAXDV', value=None, dtype=float,
 # wave night plot modulo amplifier step (bin) size
 WAVENIGHT_PLT_DVSTEP = Const('WAVENIGHT_PLT_DVSTEP', value=None, dtype=int,
                              source=__NAME__, minimum=1, group=cgroup)
-
 
 # =============================================================================
 # OBJECT: TELLURIC SETTINGS
@@ -2937,7 +2962,6 @@ REPROCESS_TIMECOL = Const('REPROCESS_TIMECOL', value=None, dtype=str,
 # define the default database to remake
 REMAKE_DATABASE_DEFAULT = Const('REMAKE_DATABASE_DEFAULT', value='calibration',
                                 dtype=str, source=__NAME__, group=cgroup)
-
 
 # Define whether we try to create a latex summary pdf
 #   (turn this off if you have any problems with latex/pdflatex)
