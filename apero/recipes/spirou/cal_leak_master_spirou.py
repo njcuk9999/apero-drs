@@ -15,9 +15,9 @@ from apero import core
 from apero import locale
 from apero.core import constants
 from apero.core.core import drs_database
+from apero.io import drs_fits
 from apero.science.extract import other as extother
 from apero.science.extract import general as extgen
-from apero.io import drs_fits
 
 
 # =============================================================================
@@ -112,22 +112,21 @@ def __main__(recipe, params):
             WLOG(params, 'error', emsg)
         # ------------------------------------------------------------------
         # check whether filetype is allowed for instrument
-        rawfiletype = 'RAW_{0}'.format(filetype)
         # get definition
-        rawfile = core.get_file_definition(rawfiletype, params['INSTRUMENT'],
-                                           kind='raw', required=False)
+        darkfpfile = core.get_file_definition(filetype, params['INSTRUMENT'],
+                                              kind='tmp', required=False)
         # deal with defintion not found
-        if rawfile is None:
+        if darkfpfile is None:
             eargs = [filetype, recipe.name, mainname]
             WLOG(params, 'error', TextEntry('09-010-00001', args=eargs))
         # ------------------------------------------------------------------
         # get all "filetype" filenames
-        files = drs_fits.find_files(params, recipe, kind='raw',
+        files = drs_fits.find_files(params, recipe, kind='tmp',
                                     night=params['NIGHTNAME'],
                                     KW_DPRTYPE=filetype)
         # create infiles
         for filename in files:
-            infile = rawfile.newcopy(filename=filename, recipe=recipe)
+            infile = darkfpfile.newcopy(filename=filename, recipe=recipe)
             infile.read_file()
             infiles.append(infile)
             rawfiles.append(infile.basename)
@@ -137,7 +136,6 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # set up plotting (no plotting before this)
     recipe.plot.set_location()
-
     # set up storage cube
     dark_fp_storage = dict()
 
@@ -151,45 +149,59 @@ def __main__(recipe, params):
         infile = infiles[it]
         # get header from file instance
         header = infile.header
-
         # ------------------------------------------------------------------
         # Get the dark_fp output e2ds filename and extract/read file
         # ------------------------------------------------------------------
         eargs = [params, recipe, EXTRACT_NAME, infile]
-        darkfp_files = extother.extract_leak_files(*eargs)
-
+        darkfp_extfiles = extother.extract_leak_files(*eargs)
+        # get list of basename for dark fp extracted files
+        darkfp_extnames = []
+        for fiber in darkfp_extfiles:
+            darkfp_extnames.append(darkfp_extfiles[fiber].basename)
         # ------------------------------------------------------------------
         # Process the extracted dark fp files for this extract
         # ------------------------------------------------------------------
-        # TODO: Fill in this function
-        dark_fp_corr = extgen.correct_dark_fp(params, recipe, darkfp_files)
+        # print progress
+        wargs = [', '.join(darkfp_extnames)]
+        WLOG(params, '', TextEntry('40-016-00024', args=wargs))
+        # correct dark fp
+        dark_fp_extcorr = extgen.correct_master_dark_fp(params, darkfp_extfiles)
         # ------------------------------------------------------------------
         # add to storage
-        for fiber in dark_fp_corr:
+        for fiber in dark_fp_extcorr:
             if fiber in dark_fp_storage:
-                dark_fp_storage[fiber].append(dark_fp_corr[fiber])
+                dark_fp_storage[fiber].append(dark_fp_extcorr[fiber])
             else:
-                dark_fp_storage[fiber] = [dark_fp_corr[fiber]]
+                dark_fp_storage[fiber] = [dark_fp_extcorr[fiber]]
 
     # ------------------------------------------------------------------
     # Produce super dark fp from median of all extractions
     # ------------------------------------------------------------------
-    # TODO: Fill this in
+    medcubes = extgen.master_dark_fp_cube(params, recipe, dark_fp_storage)
 
     # ------------------------------------------------------------------
     # Quality control
     # ------------------------------------------------------------------
-    # TODO: Fill this in
+    # TODO: Need to add some QC
+    qc_params, passed = extgen.qc_leak_master(params, medcubes)
 
     # ------------------------------------------------------------------
     # Write super dark fp to file
     # ------------------------------------------------------------------
-    # TODO: Fill this in
+    # TODO: Need to add some parameters to header
+    medcubes = extgen.write_leak_master(params, recipe, rawfiles, medcubes,
+                                        qc_params)
 
     # ------------------------------------------------------------------
     # Move to calibDB and update calibDB
     # ------------------------------------------------------------------
-    # TODO: Fill this in
+    if passed:
+        # loop around fibers
+        for fiber in medcubes:
+            # get outfile
+            outfile = medcubes[fiber]
+            # copy the order profile to the calibDB
+            drs_database.add_file(params, outfile)
 
     # ------------------------------------------------------------------
     # update recipe log file
