@@ -28,6 +28,7 @@ from apero.science.calib import localisation
 from apero.science.calib import shape
 from apero.science.calib import wave
 from apero.science.calib import general
+from apero.science.calib import flat_blaze
 from apero.science.extract import berv
 
 # =============================================================================
@@ -266,7 +267,7 @@ def get_thermal(params, header, fiber, kind, filename=None):
     thermal, thermal_file = general.load_calib_file(params, key, header,
                                                     filename=filename)
     # log which fpmaster file we are using
-    WLOG(params, '', TextEntry('40-014-00040', args=[thermal_file]))
+    WLOG(params, '', TextEntry('40-016-00027', args=[thermal_file]))
     # return the master image
     return thermal_file, thermal
 
@@ -420,10 +421,12 @@ def correct_master_dark_fp(params, extractdict, **kwargs):
     func_name = __NAME__ + '.correct_master_dark_fp'
 
     # load parameters from params/kwargs
-    bckgrd_percentile = 5
-    norm_percentile = 90
-    w_smooth = 15
-    ker_size = 3
+    bckgrd_percentile = pcheck(params, 'LEAK_BCKGRD_PERCENTILE',
+                               'bckgrd_percentile', kwargs, func_name)
+    norm_percentile = pcheck(params, 'LEAK_NORM_PERCENTILE', 'norm_percentile',
+                             kwargs, func_name)
+    w_smooth = pcheck(params, 'LEAKM_WSMOOTH', 'w_smooth', kwargs, func_name)
+    ker_size = pcheck(params, 'LEAKM_KERSIZE', 'ker_size', kwargs, func_name)
 
     # define a gaussian kernel that goes from +/- ker_size * w_smooth
     xkernel = np.arange(-ker_size * w_smooth, ker_size * w_smooth)
@@ -522,7 +525,177 @@ def correct_master_dark_fp(params, extractdict, **kwargs):
 
 
 def correct_dark_fp(params, extractdict, **kwargs):
+    # set the function name
+    func_name = __NAME__ + '.correct_dark_fp()'
+    # get properties from parameters
+    leak2dext = pcheck(params, 'LEAK_2D_EXTRACT_FILES', 'leak2dext', kwargs,
+                       func_name)
+    extfiletype = pcheck(params, 'LEAK_EXTRACT_FILE', 'extfiletype', kwargs,
+                         func_name)
+    bckgrd_percentile = pcheck(params, 'LEAK_BCKGRD_PERCENTILE',
+                               'bckgrd_percentile', kwargs, func_name)
+    norm_percentile = pcheck(params, 'LEAK_NORM_PERCENTILE', 'norm_percentile',
+                             kwargs, func_name)
+    low_percentile = pcheck(params, 'LEAK_LOW_PERCENTILE', 'low_percentile',
+                            kwargs, func_name)
+    high_percentile = pcheck(params, 'LEAK_HIGH_PERCENTILE', 'high_percentile',
+                             kwargs, func_name)
+    bad_ratio = pcheck(params, 'LEAK_BAD_RATIO_OFFSET', 'bad_ratio')
+    # group bounding percentiles
+    bpercents = [low_percentile, high_percentile]
+    # ----------------------------------------------------------------------
+    # get this instruments science fibers and reference fiber
+    pconst = constants.pload(params['INSTRUMENT'])
+    # science fibers should be list of strings, reference fiber should be string
+    sci_fibers, ref_fiber =  pconst.FIBER_KINDS()
+    all_fibers = sci_fibers + [ref_fiber]
+    # ----------------------------------------------------------------------
+    # get reference file
+    ref_file = extractdict[extfiletype][ref_fiber]
+    refimage = np.array(ref_file.data)
+    ref_header = ref_file.header
+    # get size of reference image
+    nbo, nbpix = refimage.shape
+    # ----------------------------------------------------------------------
+    # storage for master files
+    master_leaks = dict()
+    # load master data
+    for fiber in all_fibers:
+        # get leak master for file
+        _, leakmaster = get_leak_master(params, ref_header, fiber,
+                                        'LEAKM_E2DS')
+        # append to storage
+        master_leaks[fiber] = leakmaster
+    # ----------------------------------------------------------------------
+    # store the ratio of observe to master reference
+    ref_ratio_arr = np.zeros(nbo)
+    dot_ratio_arr = np.zeros(nbo)
+    approx_ratio_arr = np.zeros(nbo)
+    # store the method used (either "dot" or "approx")
+    method = []
+    # loop around reference image orders and normalise by percentile
+    for order_num in range(nbo):
+        # get order values for master
+        master_ref_ord = master_leaks[ref_fiber][order_num]
+        # remove the pedestal from the FP to avoid an offset from
+        #     thermal background
+        background = np.nanpercentile(refimage[order_num], bckgrd_percentile)
+        refimage[order_num] = refimage[order_num] - background
+        # only perform the measurement of the amplitude of the leakage signal
+        #  on the lower and upper percentiles. This allows for a small number
+        #  of hot/dark pixels along the order. Without this, we end up with
+        #  some spurious amplitude values in the frames
+        with warnings.catch_warnings(record=True) as _:
+            # get percentiles
+            low, high = np.nanpercentile(refimage[order_num], bpercents)
+            lowm, highm = np.nanpercentile(master_ref_ord, bpercents)
+            # translate this into a mask
+            mask = refimage[order_num] > low
+            mask &= refimage[order_num] < high
+            mask &= master_ref_ord > lowm
+            mask &= master_ref_ord < highm
+        # approximate ratio, we know that frames were normalized with their
+        #  "norm_percentile" percentile prior to median combining
+        amplitude = np.nanpercentile(refimage[order_num], norm_percentile)
+        approx_ratio = 1 / amplitude
+        # save to storage
+        approx_ratio_arr[order_num] = float(approx_ratio)
+        # much more accurate ratio from a dot product
+        part1 = mp.nansum(master_ref_ord[mask] * refimage[order_num][mask])
+        part2 = mp.nansum(refimage[order_num][mask] ** 2)
+        ratio = part1 / part2
+        # save to storage
+        dot_ratio_arr[order_num] = float(ratio)
+        # deal with spurious ref FP ratio
+        cond1 = (ratio / approx_ratio) < (1 - bad_ratio)
+        cond2 = (ratio / approx_ratio) > (1 + bad_ratio)
+        # Ratio must be within (1-badratio) to (1+badratio) of the approximate
+        #   ratio -- otherwise ratio is bad
+        if cond1 or cond2:
+            # log warning that ref FP ratio is spurious
+            wargs = [order_num, ratio, approx_ratio, (1 - bad_ratio),
+                     (1 + bad_ratio)]
+            WLOG(params, 'warning', TextEntry('10-016-00024', args=wargs))
+            # set the ratio to the approx ratio
+            ratio = float(approx_ratio)
+            # set the ratio method
+            method.append('approx')
+        else:
+            # set method
+            method.append('dot')
+        # save ratios to storage
+        ref_ratio_arr[order_num] = float(ratio)
+
+    # ----------------------------------------------------------------------
+    # storage for extraction outputs
+    outputs = dict()
+    leakage = dict()
+    # ----------------------------------------------------------------------
+    # loop around science fibers
+    for fiber in sci_fibers:
+        # storage for fiber outputs
+        outputs[fiber] = dict()
+        leakage[fiber] = dict()
+        # get the master for this fiber
+        master_sci = master_leaks[fiber]
+        # loop around extraction types
+        for extfiletype in leak2dext:
+            # log progress
+            wargs = [fiber, extfiletype]
+            WLOG(params, 'info', TextEntry('40-016-00029', args=wargs))
+            # get extfile
+            extfile = extractdict[extfiletype][fiber]
+            # get the extraction image
+            extimage = np.array(extfile.data)
+            # --------------------------------------------------------------
+            # if we are dealing with the E2DS we need the flat
+            if extfiletype == 'E2DS_FILE':
+                # load the flat file for this fiber
+                flat_file, flat = flat_blaze.get_flat(params, extfile.header,
+                                                      fiber)
+            # else we set it to None
+            else:
+                flat = np.ones_like(extimage)
+            # --------------------------------------------------------------
+            # loop around orders
+            for order_num in range(nbo):
+                # scale the leakage for that order to the observed amplitude
+                scale = master_sci[order_num] / ref_ratio_arr[order_num]
+                # correct for the flat (in E2DS case) - master is E2DSFF
+                scale = scale * flat[order_num]
+                # apply leakage scaling
+                extimage = extimage - scale
+
+            # TODO: Continue here
+
+            # update ext file
+            extfile.data = extimage
+
+            # add to output
+            outputs[fiber][extfiletype] = extfile
+            leakage[fiber][extfiletype] = ratio_leak
+
     pass
+
+
+def get_leak_master(params, header, fiber, kind, filename=None):
+    # get file definition
+    out_leak = core.get_file_definition(kind, params['INSTRUMENT'],
+                                           kind='red')
+    # get key
+    key = out_leak.get_dbkey(fiber=fiber)
+    # ------------------------------------------------------------------------
+    # check for filename in inputs
+    filename = general.get_input_files(params, 'LEAKFILE', key, header,
+                                       filename)
+    # ------------------------------------------------------------------------
+    # load calib file
+    leak, leak_file = general.load_calib_file(params, key, header,
+                                                    filename=filename)
+    # log which fpmaster file we are using
+    WLOG(params, '', TextEntry('40-016-00028', args=[leak_file]))
+    # return the master image
+    return leak_file, leak
 
 
 def master_dark_fp_cube(params, recipe, extractdict):
@@ -561,9 +734,7 @@ def master_dark_fp_cube(params, recipe, extractdict):
     return medcubedict
 
 
-
 def get_extraction_files(params, recipe, infile, extname):
-
     # get properties from parameters
     leak2dext = params['LEAK_2D_EXTRACT_FILES']
     # get this instruments science fibers and reference fiber
@@ -915,6 +1086,8 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # ----------------------------------------------------------------------
     # add berv properties to header
     e2dsfile = berv.add_berv_keys(params, e2dsfile, bprops)
+    # add leakage switch to header (leakage currently not corrected)
+    e2dsfile.add_hkey('KW_LEAK_CORR', value=0)
     # ----------------------------------------------------------------------
     # copy data
     e2dsfile.data = eprops['E2DS']
