@@ -60,6 +60,8 @@ __all__ = [# input keys
            'KW_BERV_GAIA_GMAG', 'KW_BERV_GAIA_BPMAG', 'KW_BERV_GAIA_RPMAG',
            'KW_BERV_GAIA_MAGLIM', 'KW_BERV_GAIA_PLXLIM', 'KW_DBERV',
            'KW_DBERV_EST',
+           # leakage values
+           'KW_LEAK_CORR',
            # wave values
            'KW_WAVE_NBO', 'KW_WAVE_DEG', 'KW_WAVEFILE', 'KW_WAVESOURCE',
            'KW_WAVECOEFFS', 'KW_WAVE_FITDEG', 'KW_WAVE_MODE_HC',
@@ -629,6 +631,12 @@ KW_BERV_OBSTIME = Keyword('KW_BERV_OBSTIME', key='', dtype=float,
 # the method used to obtain the berv obs time
 KW_BERV_OBSTIME_METHOD = Keyword('KW_BERV_OBSTIME_METHOD', key='', dtype=str,
                                  source=__NAME__)
+
+# -----------------------------------------------------------------------------
+# Define leakage variables
+# -----------------------------------------------------------------------------
+# Define whether leak correction has been done
+KW_LEAK_CORR = Keyword('KW_LEAK_CORR', key='', dtype=int, source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define wave variables
