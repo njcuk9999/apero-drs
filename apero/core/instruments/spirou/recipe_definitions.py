@@ -577,8 +577,8 @@ cal_leak.outputdir = 'reduced'
 cal_leak.inputdir = 'reduced'
 cal_leak.intputtype = 'e2ds'
 cal_leak.extension = 'fits'
-cal_leak.description = Help['LEAKM_DESC']
-cal_leak.epilog = Help['LEAKM_EXAMPLE']
+cal_leak.description = Help['LEAK_DESC']
+cal_leak.epilog = Help['LEAK_EXAMPLE']
 cal_leak.kind = 'recipe'
 cal_leak.set_outputs(E2DS_FILE=sf.out_ext_e2ds,
                      E2DSFF_FILE=sf.out_ext_e2dsff,
@@ -587,12 +587,13 @@ cal_leak.set_outputs(E2DS_FILE=sf.out_ext_e2ds,
                      S1D_V_FILE=sf.out_ext_s1d_v)
 cal_leak.set_arg(pos=0, **directory)
 cal_leak.set_arg(name='files', dtype='files', pos='1+',
-                 files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
-                 helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
+                 files=[sf.out_ext_e2dsff],
+                 helpstr=Help['FILES_HELP'] + Help['LEAK_FILES_HELP'],
                  limit=1)
 cal_leak.set_kwarg(**plot)
 cal_leak.set_kwarg(name='--leakfile', dtype='file', default='None',
-                   files=[sf.out_leak_master], helpstr=Help['THERMAL_HELP'])
+                   files=[sf.out_leak_master],
+                   helpstr=Help['LEAK_LEAKFILE_HELP'])
 # add to recipe
 recipes.append(cal_leak)
 
