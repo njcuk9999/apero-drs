@@ -14,7 +14,6 @@ import os
 from apero import core
 from apero import locale
 from apero.core import constants
-from apero.core.core import drs_startup
 from apero.io import drs_fits
 from apero.science.extract import general as extgen
 
@@ -165,6 +164,25 @@ def __main__(recipe, params):
             log1.end(params)
             # continue to next file
             continue
+        # ------------------------------------------------------------------
+        # Check for previous correction
+        # ------------------------------------------------------------------
+        # TODO: Eventually this should be required
+        leakcorr = infile.get_key('KW_LEAK_CORR', required=False)
+        if leakcorr is not None:
+            if leakcorr in ['True', True, 1, '1']:
+                # print warning
+                wargs = [infile.filename]
+                WLOG(params, 'warning', TextEntry('10-016-00023', args=wargs))
+                # update recipe log file
+                log1.end(params)
+                # continue to next file
+                continue
+
+
+        # --------------------------------------------------------------
+        # load the blaze file for this fiber
+        blaze_file, blaze = flat_blaze.get_blaze(params, infile.header, fiber)
         # ------------------------------------------------------------------
         # Get all extracted file instances associated with infile
         # ------------------------------------------------------------------
