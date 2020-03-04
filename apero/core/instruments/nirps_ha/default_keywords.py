@@ -692,6 +692,15 @@ KW_BERV_OBSTIME_METHOD.set(key='BERVOBSM',
                            datatype=str)
 
 # -----------------------------------------------------------------------------
+# Define leakage variables
+# -----------------------------------------------------------------------------
+# Define whether leak correction has been done
+KW_LEAK_CORR = KW_LEAK_CORR.copy(__NAME__)
+KW_LEAK_CORR.set(key='LEAKCORR',
+                 comment='Whether DARK_FP leakage correction has been done',
+                 datatype=int)
+
+# -----------------------------------------------------------------------------
 # Define wave variables
 # -----------------------------------------------------------------------------
 # Number of orders in wave image
