@@ -103,3 +103,7 @@
 "LEAKM_DESC","HELP","","None","Creates the master dark_fp used for correcting the leakage from fiber C for extraction products","",""
 "LEAKM_EXAMPLE","HELP","","None","cal_leak_master_spirou.py [NIGHT_NAME]","",""
 "LEAKM_HELP_FILETYPE","HELP","","None","[STRING] Specify the DPRTYPE for DARK_FP files","",""
+"LEAK_DESC","HELP","","None","Correct the FP leakage on extraction files using the leak master files","",""
+"LEAK_EXAMPLE","HELP","","None","cal_leak_spirou.py [NIGHT_NAME] [OBJ_FP E2DSFF AB] \n cal_leak_spirou 2018-08-05 ","",""
+"LEAK_FILES_HELP","HELP","","None","Current accepts EXT_E2DSFF OBJ_FP files","",""
+"LEAK_LEAKFILE_HELP","HELP","","None","[STRING] optional, the leak master file to use","",""
