@@ -96,7 +96,6 @@ def __main__(recipe, params):
     allowedtypes = params.listp('ALLOWED_LEAKM_TYPES', dtype=str)
     # set up plotting (no plotting before this)
     recipe.plot.set_location()
-
     # ----------------------------------------------------------------------
     # Get all dark_fp files for directory
     # ----------------------------------------------------------------------
@@ -132,13 +131,21 @@ def __main__(recipe, params):
             rawfiles.append(infile.basename)
     # get the number of infiles
     num_files = len(infiles)
-
+    # ----------------------------------------------------------------------
+    # Deal with no files found (use master)
+    if num_files == 0:
+        # log that no dark fp were found for this night
+        wargs = [params['NIGHTNAME']]
+        WLOG(params, 'warning', TextEntry('10-016-00025', args=wargs))
+        # update recipe log file
+        recipe.log.end(params)
+        # End of main code
+        return core.return_locals(params, locals())
     # ----------------------------------------------------------------------
     # set up plotting (no plotting before this)
     recipe.plot.set_location()
     # set up storage cube
     dark_fp_storage = dict()
-
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
@@ -178,20 +185,17 @@ def __main__(recipe, params):
     # Produce super dark fp from median of all extractions
     # ------------------------------------------------------------------
     medcubes = extgen.master_dark_fp_cube(params, recipe, dark_fp_storage)
-
     # ------------------------------------------------------------------
     # Quality control
     # ------------------------------------------------------------------
     # TODO: Need to add some QC
     qc_params, passed = extgen.qc_leak_master(params, medcubes)
-
     # ------------------------------------------------------------------
     # Write super dark fp to file
     # ------------------------------------------------------------------
     # TODO: Need to add some parameters to header
     medcubes = extgen.write_leak_master(params, recipe, rawfiles, medcubes,
                                         qc_params)
-
     # ------------------------------------------------------------------
     # Move to calibDB and update calibDB
     # ------------------------------------------------------------------
@@ -202,12 +206,10 @@ def __main__(recipe, params):
             outfile = medcubes[fiber]
             # copy the order profile to the calibDB
             drs_database.add_file(params, outfile)
-
     # ------------------------------------------------------------------
     # update recipe log file
     # ------------------------------------------------------------------
     recipe.log.end(params)
-
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
