@@ -711,10 +711,6 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     # get the FWHM value
     ccf_fwhm = mean_ccf_coeffs[2] * mp.fwhm()
     # ----------------------------------------------------------------------
-
-    # TODO: Need Etienne's help this ccf_noise is not the same as
-    # TODO:   Francois one - his gives a sigdet per rv element
-
     #  CCF_NOISE uncertainty
     ccf_noise_tot = np.sqrt(mp.nanmean(props['CCF_NOISE'] ** 2, axis=0))
     # Calculate the slope of the CCF
@@ -959,6 +955,9 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
                     **kwargs):
     # set function name
     func_name = display_func(params, 'calculate_ccf', __NAME__)
+    # get properties from params
+    blaze_norm_percentile = pcheck(params, 'CCF_BLAZE_NORM_PERCENTILE',
+                                   'blaze_norm_percentile', kwargs, func_name)
     # get rvmin and rvmax
     rvmin = targetrv - ccfwidth
     rvmin = pcheck(params, 'RVMIN', 'rvmin', kwargs, func_name, default=rvmin)
@@ -986,6 +985,10 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         wa_ord = np.array(wavemap[order_num])
         sp_ord = np.array(image[order_num])
         bl_ord = np.array(blaze[order_num])
+
+        # normalize per-ord blaze to its peak value
+        # this gets rid of the calibration lamp SED
+        bl_ord /= np.nanpercentile(bl_ord, blaze_norm_percentile)
         # ------------------------------------------------------------------
         # find any places in spectrum or blaze where pixel is NaN
         nanmask = np.isnan(sp_ord) | np.isnan(bl_ord)
@@ -1010,6 +1013,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         bl_ord[nanmask] = 0
         # ------------------------------------------------------------------
         # spline the spectrum and the blaze
+        # TODO make it tidy with the blaze
         spline_sp = mp.iuv_spline(wa_ord, sp_ord, k=5, ext=1)
         spline_bl = mp.iuv_spline(wa_ord, bl_ord, k=5, ext=1)
         # ------------------------------------------------------------------
@@ -1022,14 +1026,16 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         # set number of valid lines used to zero
         numlines = 0
         # loop around the rvs and calculate the CCF at this point
+        part3 = spline_bl(mask_centers) * mask_weights
         for rv_element in range(len(rv_ccf)):
             wave_tmp = mask_centers * wave_shifts[rv_element]
-            part1 = np.sum(spline_sp(wave_tmp) * mask_weights)
-            part2 = np.sum(spline_bl(wave_tmp) * mask_weights)
+            part1 = spline_sp(wave_tmp) * mask_weights
+            part2 = spline_bl(wave_tmp) * mask_weights
+
             numlines = np.sum(spline_bl(wave_tmp) != 0)
             # CCF is the division of the sums
             with warnings.catch_warnings(record=True) as _:
-                ccf_ord[rv_element] = part1 / part2
+                ccf_ord[rv_element] = (part1 / part2) * part3
         # ------------------------------------------------------------------
         # deal with NaNs in ccf
         if np.sum(np.isnan(ccf_ord)) > 0:
@@ -1046,9 +1052,15 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
             ccf_norm_all.append(np.nan)
             continue
         # ------------------------------------------------------------------
+        # TODO -- check that its ok to remove the normalization
+        # TODO -- this should preserve the stellar flux weighting
         # normalise each orders CCF to median
+        # TODO -- keep track of the norm factor, write a look-up table
+        # TODO -- with reasonable mid-M values and use these values for
+        # TODO -- all stars. At some point, have a temperature-dependent
+        # TODO -- LUT of weights.
         ccf_norm = mp.nanmedian(ccf_ord)
-        ccf_ord = ccf_ord / ccf_norm
+        # ccf_ord = ccf_ord / ccf_norm
         # ------------------------------------------------------------------
         # fit the CCF with a gaussian
         fargs = [order_num, rv_ccf, ccf_ord, fit_type]
