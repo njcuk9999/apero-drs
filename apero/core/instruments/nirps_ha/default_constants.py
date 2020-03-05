@@ -1873,10 +1873,10 @@ CCF_DET_NOISE.value = 100.0
 CCF_FIT_TYPE = CCF_FIT_TYPE.copy(__NAME__)
 CCF_FIT_TYPE.value = 0
 
-#  Define the number of orders (from zero to ccf_num_orders_max) to use
-#     to calculate the CCF and RV
-CCF_N_ORD_MAX = CCF_N_ORD_MAX.copy(__NAME__)
-CCF_N_ORD_MAX.value = 48
+# Define the percentile the blaze is normalised by before using in CCF calc
+CCF_BLAZE_NORM_PERCENTILE = CCF_BLAZE_NORM_PERCENTILE.copy(__NAME__)
+CCF_BLAZE_NORM_PERCENTILE.value = 90
+
 
 # =============================================================================
 # OBJECT: POLARISATION SETTINGS

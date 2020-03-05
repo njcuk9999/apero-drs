@@ -198,9 +198,9 @@ __all__ = [
     'CCF_N_ORD_MAX', 'CCF_DEFAULT_MASK', 'CCF_MASK_UNITS', 'CCF_MASK_FMT',
     'CCF_DEFAULT_WIDTH', 'CCF_DEFAULT_STEP', 'CCF_ALLOWED_DPRTYPES',
     'CCF_CORRECT_TELLU_TYPES', 'CCF_TELLU_THRES', 'CCF_FILL_NAN_KERN_SIZE',
-    'CCF_FILL_NAN_KERN_RES', 'CCF_DET_NOISE', 'CCF_FIT_TYPE', 'CCF_N_ORD_MAX',
+    'CCF_FILL_NAN_KERN_RES', 'CCF_DET_NOISE', 'CCF_FIT_TYPE',
     'CCF_NOISE_SIGDET', 'CCF_NOISE_BOXSIZE', 'CCF_NOISE_THRES',
-    'CCF_MAX_CCF_WID_STEP_RATIO',
+    'CCF_MAX_CCF_WID_STEP_RATIO', 'CCF_BLAZE_NORM_PERCENTILE',
     # polar constants
     'POLAR_VALID_FIBERS', 'POLAR_VALID_STOKES', 'POLAR_METHOD',
     'POLAR_CONT_BINSIZE', 'POLAR_CONT_OVERLAP', 'POLAR_CONT_TELLMASK_LOWER',
@@ -2322,6 +2322,11 @@ CCF_DET_NOISE = Const('CCF_DET_NOISE', value=None, dtype=float, source=__NAME__,
 #     if 1 then we have an emission line
 CCF_FIT_TYPE = Const('CCF_FIT_TYPE', value=None, dtype=int, source=__NAME__,
                      options=[0, 1], group=cgroup)
+
+# Define the percentile the blaze is normalised by before using in CCF calc
+CCF_BLAZE_NORM_PERCENTILE = Const('CCF_BLAZE_NORM_PERCENTILE', value=None,
+                                  dtype=float, source=__NAME__, minimum=0,
+                                  maximum=100, group=cgroup)
 
 # =============================================================================
 # OBJECT: POLARISATION SETTINGS
