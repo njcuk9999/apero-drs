@@ -15,7 +15,9 @@ from apero import core
 from apero import locale
 from apero.core import constants
 from apero.io import drs_fits
+from apero.science.calib import flat_blaze
 from apero.science.extract import general as extgen
+
 
 # =============================================================================
 # Define variables
@@ -179,7 +181,6 @@ def __main__(recipe, params):
                 # continue to next file
                 continue
 
-
         # --------------------------------------------------------------
         # load the blaze file for this fiber
         blaze_file, blaze = flat_blaze.get_blaze(params, infile.header, fiber)
@@ -192,8 +193,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Correct with dark fp
         # ------------------------------------------------------------------
-        # TODO: fill out the meat of patch_dark_fp.py
-        corr_outputs = extgen.correct_dark_fp(params, ext_outputs)
+        cprops = extgen.correct_dark_fp(params, ext_outputs)
 
         # ------------------------------------------------------------------
         # Re-calculate s1d files
@@ -203,7 +203,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Quality control
         # ------------------------------------------------------------------
-        qc_params, passed = extgen.qc_leak(params, corr_outputs)
+        qc_params, passed = extgen.qc_leak(params, cprops)
 
         # ------------------------------------------------------------------
         # Write updated extracted files
