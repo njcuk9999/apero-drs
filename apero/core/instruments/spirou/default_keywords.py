@@ -167,7 +167,7 @@ KW_PLX.set(key='OBJPLX', unit=uu.mas)
 
 # define the rv HEADER key
 KW_INPUTRV = KW_INPUTRV.copy(__NAME__)
-KW_INPUTRV.set(key='OBSRV', unit=uu.km / uu.s)
+KW_INPUTRV.set(key='OBJRV', unit=uu.km / uu.s)
 
 # -----------------------------------------------------------------------------
 # Define general keywords
