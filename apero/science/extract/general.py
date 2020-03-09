@@ -657,6 +657,8 @@ def correct_dark_fp(params, extractdict, **kwargs):
             else:
                 flat = np.ones_like(extimage)
             # --------------------------------------------------------------
+            # storage for the ratio of leakage
+            ratio_leak = np.zeros(nbo)
             # loop around orders
             for order_num in range(nbo):
                 # scale the leakage for that order to the observed amplitude
@@ -665,17 +667,42 @@ def correct_dark_fp(params, extractdict, **kwargs):
                 scale = scale * flat[order_num]
                 # apply leakage scaling
                 extimage = extimage - scale
-
-            # TODO: Continue here
-
+                # calculate the ratio of the leakage
+                rpart1 = np.nanpercetile(refimage[order_num], norm_percentile)
+                rpart2 = mp.nanmedian(extimage[order_num])
+                ratio_leak[order_num] = rpart1 / rpart2
             # update ext file
             extfile.data = extimage
-
             # add to output
             outputs[fiber][extfiletype] = extfile
             leakage[fiber][extfiletype] = ratio_leak
-
-    pass
+    # ----------------------------------------------------------------------
+    # generate a properties dictionary
+    props = ParamDict()
+    # ----------------------------------------------------------------------
+    # add outputs
+    props['OUTPUTS'] = outputs
+    props['LEAKAGE'] = leakage
+    # set sources
+    props.set_sources(['OUTPUTS', 'LEAKAGE'], func_name)
+    # ----------------------------------------------------------------------
+    # add used parameters
+    props['LEAK_2D_EXTRACT_FILES_USED'] = leak2dext
+    props['LEAK_EXTRACT_FILE_USED'] = extfiletype
+    props['LEAK_BCKGRD_PERCENTILE_USED'] = bckgrd_percentile
+    props['LEAK_NORM_PERCENTILE_USED'] = norm_percentile
+    props['LEAK_LOW_PERCENTILE_USED'] = low_percentile
+    props['LEAK_HIGH_PERCENTILE_USED'] = high_percentile
+    props['LEAK_BAD_RATIO_OFFSET_USED'] = bad_ratio
+    # set sources
+    keys = ['LEAK_2D_EXTRACT_FILES_USED', 'LEAK_EXTRACT_FILE_USED',
+            'LEAK_BCKGRD_PERCENTILE_USED', 'LEAK_NORM_PERCENTILE_USED',
+            'LEAK_LOW_PERCENTILE_USED', 'LEAK_HIGH_PERCENTILE_USED',
+            'LEAK_BAD_RATIO_OFFSET_USED']
+    props.set_sources(keys, func_name)
+    # ----------------------------------------------------------------------
+    # return properties
+    return props
 
 
 def get_leak_master(params, header, fiber, kind, filename=None):
@@ -1277,7 +1304,9 @@ def qc_leak_master(params, medcubes):
     return qc_params, passed
 
 
-def qc_leak(params, outputs):
+def qc_leak(params, props):
+    # get outputs from props
+    outputs = props['OUTPUTS']
     # output storage
     qc_params = dict()
     passed = True
