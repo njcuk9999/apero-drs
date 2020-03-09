@@ -841,6 +841,10 @@ EXT_COSMIC_THRESHOLD.value = 5
 QC_EXT_FLUX_MAX = QC_EXT_FLUX_MAX.copy(__NAME__)
 QC_EXT_FLUX_MAX.value = 50000
 
+# Define which extraction file to use for s1d creation
+EXT_S1D_INTYPE = EXT_S1D_INTYPE.copy(__NAME__)
+EXT_S1D_INTYPE.value = 'E2DSFF'
+
 # Define the start s1d wavelength (in nm)
 EXT_S1D_WAVESTART = EXT_S1D_WAVESTART.copy(__NAME__)
 EXT_S1D_WAVESTART.value = 965
