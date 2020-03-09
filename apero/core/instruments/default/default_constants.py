@@ -101,7 +101,7 @@ __all__ = [
     # extract constants
     'EXT_START_ORDER', 'EXT_END_ORDER', 'EXT_RANGE1', 'EXT_RANGE2',
     'EXT_SKIP_ORDERS', 'EXT_COSMIC_CORRETION', 'EXT_COSMIC_SIGCUT',
-    'EXT_COSMIC_THRESHOLD', 'QC_EXT_FLUX_MAX', 'EXT_S1D_WAVESTART',
+    'EXT_COSMIC_THRESHOLD', 'QC_EXT_FLUX_MAX', 'EXT_S1D_INTYPE',
     'EXT_S1D_WAVESTART', 'EXT_S1D_WAVEEND', 'EXT_S1D_BIN_UWAVE',
     'EXT_S1D_BIN_UVELO', 'EXT_S1D_EDGE_SMOOTH_SIZE',
     'EXT_ALLOWED_BERV_DPRTYPES', 'EXT_BERV_EST_ACC', 'EXT_BERV_KIND',
@@ -1195,8 +1195,8 @@ QC_EXT_FLUX_MAX = Const('QC_EXT_FLUX_MAX', value=None, dtype=float,
                         source=__NAME__, group=cgroup)
 
 # Define which extraction file to use for s1d creation
-EXT_S1D_INTYPE = Const('EXT_S1D_WAVESTART', value=None, dtype=str,
-                          source=__NAME__, group=cgroup)
+EXT_S1D_INTYPE = Const('EXT_S1D_INTYPE', value=None, dtype=str,
+                       source=__NAME__, group=cgroup)
 
 # Define the start s1d wavelength (in nm)
 EXT_S1D_WAVESTART = Const('EXT_S1D_WAVESTART', value=None, dtype=float,
