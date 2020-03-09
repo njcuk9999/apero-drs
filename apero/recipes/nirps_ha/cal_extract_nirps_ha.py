@@ -235,16 +235,14 @@ def __main__(recipe, params):
             # eprops = extract.thermal_correction(params, recipe, header, props,
             #                                     eprops, fiber=fiber)
             # --------------------------------------------------------------
-            # TODO: remove breakpoint
-            constants.break_point(params)
-
+            s1dextfile = params['EXT_S1D_INTYPE']
             # create 1d spectra (s1d) of the e2ds file
-            sargs = [wprops['WAVEMAP'], eprops['E2DSFF'], eprops['BLAZE']]
+            sargs = [wprops['WAVEMAP'], eprops[s1dextfile], eprops['BLAZE']]
             swprops = extract.e2ds_to_s1d(params, recipe, *sargs, wgrid='wave',
-                                          fiber=fiber, kind='E2DSFF')
+                                          fiber=fiber, kind=s1dextfile)
             svprops = extract.e2ds_to_s1d(params, recipe, *sargs,
                                           wgrid='velocity', fiber=fiber,
-                                          kind='E2DSFF')
+                                          kind=s1dextfile)
 
             # --------------------------------------------------------------
             # Plots
