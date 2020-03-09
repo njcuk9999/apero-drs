@@ -705,6 +705,43 @@ def correct_dark_fp(params, extractdict, **kwargs):
     return props
 
 
+def dark_fp_regen_s1d(params, recipe, props, **kwargs):
+    # set function name
+    func_name = __NAME__ + '.dark_fp_regen_s1d()'
+    # get outputs from props
+    outputs = props['OUTPUTS']
+    # get the leak extract file type
+    s1dextfile = pcheck(params, 'EXT_S1D_INTYPE', 's1dextfile', kwargs,
+                        func_name)
+    # loop around fibers
+    for fiber in outputs:
+        # get the s1d in file type
+        extfile = outputs[fiber][s1dextfile]
+        # get the ext file header
+        header = extfile.header
+        # --------------------------------------------------------------
+        # load the blaze file for this fiber
+        blaze_file, blaze = flat_blaze.get_blaze(params, header, fiber)
+        # --------------------------------------------------------------
+        # load wavelength solution for this fiber
+        wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber)
+        # --------------------------------------------------------------
+        # create 1d spectra (s1d) of the e2ds file
+        sargs = [wprops['WAVEMAP'], extfile.data, blaze]
+        swprops = e2ds_to_s1d(params, recipe, *sargs, wgrid='wave',
+                              fiber=fiber, kind=s1dextfile)
+        svprops = e2ds_to_s1d(params, recipe, *sargs, wgrid='velocity',
+                              fiber=fiber, kind=s1dextfile)
+        # add to outputs
+        outputs[fiber]['SWPROPS'] = swprops
+        outputs[fiber]['SVPROPS'] = svprops
+    # push updated outputs into props
+    props['OUTPUTS'] = outputs
+    props.set_source('OUTPUTS', func_name)
+    # return outputs
+    return outputs
+
+
 def get_leak_master(params, header, fiber, kind, filename=None):
     # get file definition
     out_leak = core.get_file_definition(kind, params['INSTRUMENT'],

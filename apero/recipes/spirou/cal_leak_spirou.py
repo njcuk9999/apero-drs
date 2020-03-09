@@ -181,9 +181,6 @@ def __main__(recipe, params):
                 # continue to next file
                 continue
 
-        # --------------------------------------------------------------
-        # load the blaze file for this fiber
-        blaze_file, blaze = flat_blaze.get_blaze(params, infile.header, fiber)
         # ------------------------------------------------------------------
         # Get all extracted file instances associated with infile
         # ------------------------------------------------------------------
@@ -198,7 +195,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Re-calculate s1d files
         # ------------------------------------------------------------------
-        # TODO: complete
+        cprops = extgen.dark_fp_regen_s1d(params, recipe, cprops)
 
         # ------------------------------------------------------------------
         # Quality control
