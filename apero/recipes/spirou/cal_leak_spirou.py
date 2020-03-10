@@ -188,6 +188,11 @@ def __main__(recipe, params):
                                                   EXTRACT_NAME)
 
         # ------------------------------------------------------------------
+        # Add debugs for all uncorrected file
+        # ------------------------------------------------------------------
+        extgen.save_uncorrected_ext_fp(params, ext_outputs)
+
+        # ------------------------------------------------------------------
         # Correct with dark fp
         # ------------------------------------------------------------------
         cprops = extgen.correct_dark_fp(params, ext_outputs)
@@ -205,7 +210,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Write updated extracted files
         # ------------------------------------------------------------------
-        # TODO: complete
+        extgen.write_leak(params, recipe, ext_outputs, cprops, qc_params)
 
         # ------------------------------------------------------------------
         # update recipe log file
