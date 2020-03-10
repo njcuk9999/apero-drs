@@ -2,6 +2,152 @@ Changelog
 =========
 
 
+0.6.054 (2020-03-10)
+--------------------
+- Sciecne.extract.general.py - continue adding leak functionality. [Neil
+  Cook]
+- Apero.science.calib.flat_blaze.py - allow flat to be loaded quietly.
+  [Neil Cook]
+- Recipes.spirou.cal_leak_spirou.py - continue work on EA implementation
+  - add save_uncorrected_ext_fp and write_leak functions. [Neil Cook]
+- Recipes.spirou.cal_leak_master_spirou.py - add cprops (for header
+  keys) and pipe to write_leak_master. [Neil Cook]
+- Update language database. [Neil Cook]
+- Io.drs_strings.py - add module for generic string manipulation [TODO:
+  find other generic functions and move here] [Neil Cook]
+- Io.drs_path.py - add copyfile function (with logging) [Neil Cook]
+- Core.instruments.*.default_keywords.py - add LEAK header keywords.
+  [Neil Cook]
+- Core.instruments.*.file_definitions.py - add out_leak_master to
+  out_file set and calib_file set. [Neil Cook]
+- Core.instruments.*.defalut_constants.py - add LEAK and EXT_S1D
+  parameters. [Neil Cook]
+- Core.core.drs_file.py - add an include/exclude part to wild cards so
+  we can search header for specific header keys + add get_qckeys method.
+  [Neil Cook]
+
+
+0.6.053 (2020-03-09)
+--------------------
+- Recipes.spirou.cal_leak_spirou.py and science.extract.general.py - add
+  function `dark_fp_regen_s1d` [Neil Cook]
+- Recipes.*.cal_extract_*.py - get s1d infile from params
+  (EXT_S1D_INTYPE) formally hardcoded to E2DSFF. [Neil Cook]
+- Core.instruments.*.default_constants.py - add EXT_S1D_INTYPE to
+  constants. [Neil Cook]
+- Core.instruments.*.default_constants.py - add EXT_S1D_INTYPE to
+  constants. [Neil Cook]
+- Recipe.spirou.cal_leak_spirou.py and science.extract.general.py - add
+  outputs to extgen.correct_dark_fp function and make changes to
+  function return. [Neil Cook]
+- Documentation.working._static.yed.spirou_all.graphml - save flow
+  diagram for spirou. [Neil Cook]
+- Tools.module.setup.drs_processing.py - fix call to _linear_process
+  `group` should be a keyword argument (Issue #599) [Neil Cook]
+- Core.instruments.spirou.default_keywords.py - update rv keyword OBSRV
+  --> OBJRV. [Neil Cook]
+
+
+0.6.052 (2020-03-05)
+--------------------
+- Cal_leak_master_spirou.py - deal num_files = 0. [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.instruments.*.default_constants.py - add blaze_norm_percentile
+  (CCF_BLAZE_NORM_PERCENTILE) [Neil Cook]
+- Science.velocity.general.py - EA corrections to RV CCF (normalisation)
+  [Neil Cook]
+
+
+0.6.051 (2020-03-04)
+--------------------
+- Science.extract.general.py - add leak functions. [Neil Cook]
+- Apero.recipes.spirou.cal_leak_spirou.py - continue with EA adaptation.
+  [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.isntruments.spirou.recipe_definitons.py - update cal_leak. [Neil
+  Cook]
+- Core.instruments.spirou.default_constants.py - comment these out for
+  now. [Neil Cook]
+- Core.instruments.nirps_ha.default_keywords.py [APERO] - add
+  KW_LEAK_CORR. [Neil Cook]
+- Core.instruments.default.default_keywords.py - add KW_LEAK_CORR
+  keyword. [Neil Cook]
+
+
+0.6.050 (2020-03-03)
+--------------------
+- Science.extract.general.py [APERO] - add correct_master_dark_fp
+  correct_dark_fp master_dark_fp_cube get_extraction_files functions
+  [UNFINISHED] [Neil Cook]
+- Documentation.working._static.yed.spirou_map.graphml [APERO] - add
+  leak to spirou flow diagram. [Neil Cook]
+- Recipe.spirou.obj_mk_tellu_spirou.py [SPIROU] - correct typo. [Neil
+  Cook]
+- Recipes.spirou.cal_leak_spirou.py - first commit add start of cal_leak
+  code (from EA code) [Neil Cook]
+- Recipes.spirou.cal_leak_master_spirou.py - continue work on
+  implementing EA's code. [Neil Cook]
+- Update language database. [Neil Cook]
+- Io.drs_fits.py [APERO] - deal with not having nightname column for
+  tmp/reduced index files. [Neil Cook]
+- Core.instruments.*.recipe_definitions.py - update cal_leak_master and
+  add cal_leak. [Neil Cook]
+- Core.instruments.*.file_definitions.py [APERO] - set intype for
+  out_leak_master. [Neil Cook]
+- Core.instruments.*.pseudo_const.py - add FIBER_KINDS (science and
+  reference) [Neil Cook]
+- Core.instruments.*.default_constants.py [APERO] - add LEAKM and LEAK
+  constants. [Neil Cook]
+- Core.core.drs_file.py [APERO] - read_header_key_1d_list - update input
+  and param dict. [Neil Cook]
+
+
+0.6.049 (2020-03-02)
+--------------------
+- Tools.module.setup.drs_processing.py [APERO] - move find_raw_files,
+  _get_path_and_check, _get_files to io.drs_fits. [Neil Cook]
+- Recipes.spirou.cal_leak_master_spirou.py [APERO] - first commit
+  [UNFINISHED] of the master leakage creation recipe. [Neil Cook]
+- Nrips_ha.cal_pp_master_nirps_ha.py [NIRPS] - add nirps master pp code
+  to get flat_flat mask. [Neil Cook]
+- Recipes.* and tools.* - correct call to drs_fits.find_files (now
+  requires recipe for raw finding) [Neil Cook]
+- Io.drs_fits.py [APERO] - update find_files to correctly find raw
+  files, add find_raw_files function, move fix_header to here. [Neil
+  Cook]
+- Update language database. [Neil Cook]
+- Core.instruments.nirps_ha.file_definitions.py [NIRPS] - replace fiber
+  AB,A,B,C with A,B. [Neil Cook]
+- Core.instruments.spirou.file_definitions.py [SPIROU] - add
+  out_leak_master. [Neil Cook]
+- Core.instruments.spirou.default_constants.py - add
+  ALLOWED_LEAKM_TYPES. [Neil Cook]
+- Core.instruments.*.recipe_definitions.py [APERO] - move DrsRecipe
+  construction closer to each recipe + add to recipe list + add
+  cal_leak_master + add cal_pp_master. [Neil Cook]
+- Core.instruments.*.pseudo_const.py [APERO] - add VALID_RAW_FILES to
+  instruments seperately. [Neil Cook]
+- Core.instruments.nirps_ha.file_definitions.py [NIRPS] - add
+  out_pp_master file for the mask master flat pp file + add
+  out_leak_master for leak_master code + remove polar file definitions.
+  [Neil Cook]
+- Core.instruments.nirps_ha.default_keywords.py - add a PPMSTR_NSIG
+  keyword to keep track when it is used. [Neil Cook]
+- Core.instruments.nirps_ha.default_constants.py - add ALLOWED_PPM_TYPES
+  PPM_MASK_NSIG PP_MEDAMP_BINSIZE and ALLOWED_LEAKM_TYPES. [Neil Cook]
+- Default.default_keywords.py [NIRPS] - add PPMSTR_NSIG constants (for
+  nirps pp correction) [Neil Cook]
+- Core.instruments.default.default_constants.py - add PPM and LEAKM
+  keywords. [Neil Cook]
+- Core.core.drs_startup.py - deal with case in find_files where we do
+  not have full params set up yet (i.e. WLOG will crash) --> raise
+  ConfigError. [Neil Cook]
+- Core.core.drs_recipe.py - when we have a master recipe set directory
+  from params['MASTER_NIGHT'] [Neil Cook]
+- Update changelog/date/version/documentation. [Neil Cook]
+- Update changelog/date/version/documentation. [Neil Cook]
+
+
 0.6.048 (2020-02-28)
 --------------------
 - Documentation.working.user.general.todo.rst - update todo list. [Neil
