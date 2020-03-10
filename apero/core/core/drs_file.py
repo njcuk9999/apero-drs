@@ -22,6 +22,7 @@ from apero.core import constants
 from apero.core import math as mp
 from apero.locale import drs_text
 from apero.io import drs_fits
+from apero.io import drs_strings
 
 # =============================================================================
 # Define variables
@@ -1900,7 +1901,9 @@ class DrsFitsFile(DrsInputFile):
         # return values
         return values
 
-    def read_header_key_1d_list(self, key, dim1=None, dtype=float):
+    def read_header_key_1d_list(self, key, dim1=None, dtype=float,
+                                start=0, excludes=None, includes=None,
+                                elogic='AND', ilogic='AND'):
         """
         Read a set of header keys that were created from a 1D list
 
@@ -1911,6 +1914,13 @@ class DrsFitsFile(DrsInputFile):
                      (number of rows) if unset tries to guess number of rows
 
         :param dtype: type, the type to force the data to be (i.e. float, int)
+
+        :param start: int, the start index for the 1d list (normally 0)
+
+        :type key: str
+        :type dim1: Union[int, None]
+        :type dtype: type
+        :type start: int
 
         :return values: numpy array (1D), the values force to type = dtype
         """
@@ -1925,9 +1935,12 @@ class DrsFitsFile(DrsInputFile):
         # deal with no dim1 key
         if dim1 is None:
             # use wild card to try to find keys
-            wildkey = drskey.split('{')[0] + '*'
+            wildkey = drskey.split('{')[0] + '*' + drskey.split('}')[-1]
             # use wild card in header
-            wildvalues = self.header[wildkey]
+            rawwildvalues = list(self.header[wildkey].keys())
+            # deal with includes/excludes
+            ieargs = [rawwildvalues, includes, excludes, ilogic, elogic]
+            wildvalues = drs_strings.include_exclude(*ieargs)
             # deal with no wild card values found
             if wildvalues is None:
                 eargs = [wildkey, dim1, self.basename, func_name]
@@ -1939,7 +1952,7 @@ class DrsFitsFile(DrsInputFile):
         # create 1d list
         values = []
         # loop around the 2D array
-        for it in range(dim1):
+        for it in range(start, dim1 + start):
             # construct the key name
             keyname = test_for_formatting(drskey, it)
             # try to get the values
@@ -2454,6 +2467,29 @@ class DrsFitsFile(DrsInputFile):
         # add a final criteria that says whether everything passed or not
         qc_all = params['KW_DRS_QC'][0]
         self.hdict[qc_all] = np.all(qcparams[3])
+
+    def get_qckeys(self):
+        # set function name
+        func_name = display_func(None, 'get_qckeys', __NAME__, 'DrsFitsFile')
+        # check for kwstore in params
+        self.check_recipe()
+        params = self.recipe.drs_params
+        # get qc all value
+        qc_all = params['KW_DRS_QC'][0]
+        # get qc_values
+        qc_values = self.read_header_key_1d_list('KW_DRS_QC_VAL', dtype=str,
+                                                 start=1, excludes=qc_all)
+        qc_names = self.read_header_key_1d_list('KW_DRS_QC_NAME', dtype=str,
+                                                 start=1, excludes=qc_all)
+        qc_logic = self.read_header_key_1d_list('KW_DRS_QC_LOGIC', dtype=str,
+                                                 start=1, excludes=qc_all)
+        qc_pass = self.read_header_key_1d_list('KW_DRS_QC_PASS', dtype=int,
+                                                 start=1, excludes=qc_all)
+        # push into qc params
+        qc_params = [list(qc_names), list(qc_values), list(qc_logic),
+                     list(qc_pass)]
+        # return qc params
+        return qc_params
 
     def get_keywordstore(self, kwstore=None, func_name=None):
         """
