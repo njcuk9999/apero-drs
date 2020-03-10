@@ -226,6 +226,26 @@ def copytree(src, dst):
             shutil.copy(infile, outfile)
 
 
+def copyfile(params, src, dst, log=True):
+    # set function name
+    func_name = __NAME__ + '.copyfile()'
+    # only copy if we have the source file
+    if os.path.exists(src):
+        # if logging then log
+        if log:
+            wargs = [src, dst]
+            WLOG(params, '', TextEntry('40-000-00011', args=wargs))
+        # copy using shutil
+        try:
+            shutil.copy(src, dst)
+        except Exception as e:
+            eargs = [src, dst, type(e), e, func_name]
+            WLOG(params, '', TextEntry('00-004-00006', args=eargs))
+    # else raise exception
+    else:
+        eargs = [src, dst, func_name]
+        WLOG(params, 'error', TextEntry('00-004-00005', args=eargs))
+
 
 # =============================================================================
 # Start of code
