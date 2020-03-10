@@ -61,7 +61,8 @@ __all__ = [# input keys
            'KW_BERV_GAIA_MAGLIM', 'KW_BERV_GAIA_PLXLIM', 'KW_DBERV',
            'KW_DBERV_EST',
            # leakage values
-           'KW_LEAK_CORR',
+           'KW_LEAK_CORR', 'KW_LEAK_BP_U', 'KW_LEAK_NP_U', 'KW_LEAK_WSMOOTH',
+           'KW_LEAK_KERSIZE', 'KW_LEAK_LP_U', 'KW_LEAK_UP_U', 'KW_LEAK_BADR_U',
            # wave values
            'KW_WAVE_NBO', 'KW_WAVE_DEG', 'KW_WAVEFILE', 'KW_WAVESOURCE',
            'KW_WAVECOEFFS', 'KW_WAVE_FITDEG', 'KW_WAVE_MODE_HC',
@@ -637,6 +638,29 @@ KW_BERV_OBSTIME_METHOD = Keyword('KW_BERV_OBSTIME_METHOD', key='', dtype=str,
 # -----------------------------------------------------------------------------
 # Define whether leak correction has been done
 KW_LEAK_CORR = Keyword('KW_LEAK_CORR', key='', dtype=int, source=__NAME__)
+
+# Define the background percentile used for correcting leakage
+KW_LEAK_BP_U = Keyword('KW_LEAK_BP_U', key='', dtype=float, source=__NAME__)
+
+# Define the normalisation percentile used for correcting leakage
+KW_LEAK_NP_U = Keyword('KW_LEAK_NP_U', key='', dtype=float, source=__NAME__)
+
+# Define the e-width smoothing used for correcting leakage master
+KW_LEAK_WSMOOTH = Keyword('KW_LEAK_WSMOOTH', key='', dtype=float,
+                          source=__NAME__)
+
+# Define the kernel size used for correcting leakage master
+KW_LEAK_KERSIZE = Keyword('KW_LEAK_KERSIZE', key='', dtype=float,
+                          source=__NAME__)
+
+# Define the lower bound percentile used for correcting leakage
+KW_LEAK_LP_U = Keyword('KW_LEAK_LP_U', key='', dtype=float, source=__NAME__)
+
+# Define the upper bound percentile used for correcting leakage
+KW_LEAK_UP_U = Keyword('KW_LEAK_UP_U', key='', dtype=float, source=__NAME__)
+
+# Define the bad ratio offset limit used for correcting leakage
+KW_LEAK_BADR_U = Keyword('KW_LEAK_BADR_U', key='', dtype=float, source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define wave variables
