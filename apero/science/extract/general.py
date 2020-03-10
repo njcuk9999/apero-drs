@@ -24,6 +24,7 @@ from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.core.core import drs_startup
 from apero.io import drs_data
+from apero.io import drs_path
 from apero.science.calib import localisation
 from apero.science.calib import shape
 from apero.science.calib import wave
@@ -520,8 +521,19 @@ def correct_master_dark_fp(params, extractdict, **kwargs):
         scifile.data = sciimage
         outputs[sci_fiber] = scifile
     # ----------------------------------------------------------------------
+    # Make properties dictionary
+    props = ParamDict()
+    props['LEAK_BCKGRD_PERCENTILE'] = bckgrd_percentile
+    props['LEAK_NORM_PERCENTILE'] = norm_percentile
+    props['LEAKM_WSMOOTH'] = w_smooth
+    props['LEAKM_KERSIZE'] = ker_size
+    # set sources
+    keys = ['LEAK_BCKGRD_PERCENTILE', 'LEAK_NORM_PERCENTILE',
+            'LEAKM_WSMOOTH', 'LEAKM_KERSIZE']
+    props.set_sources(keys, func_name)
+    # ----------------------------------------------------------------------
     # return output dictionary with corrected extracted files
-    return outputs
+    return outputs, props
 
 
 def correct_dark_fp(params, extractdict, **kwargs):
@@ -529,7 +541,7 @@ def correct_dark_fp(params, extractdict, **kwargs):
     func_name = __NAME__ + '.correct_dark_fp()'
     # get properties from parameters
     leak2dext = pcheck(params, 'LEAK_2D_EXTRACT_FILES', 'leak2dext', kwargs,
-                       func_name)
+                       func_name, mapf='list')
     extfiletype = pcheck(params, 'LEAK_EXTRACT_FILE', 'extfiletype', kwargs,
                          func_name)
     bckgrd_percentile = pcheck(params, 'LEAK_BCKGRD_PERCENTILE',
@@ -551,7 +563,7 @@ def correct_dark_fp(params, extractdict, **kwargs):
     all_fibers = sci_fibers + [ref_fiber]
     # ----------------------------------------------------------------------
     # get reference file
-    ref_file = extractdict[extfiletype][ref_fiber]
+    ref_file = extractdict[ref_fiber][extfiletype]
     refimage = np.array(ref_file.data)
     ref_header = ref_file.header
     # get size of reference image
@@ -613,8 +625,8 @@ def correct_dark_fp(params, extractdict, **kwargs):
         #   ratio -- otherwise ratio is bad
         if cond1 or cond2:
             # log warning that ref FP ratio is spurious
-            wargs = [order_num, ratio, approx_ratio, (1 - bad_ratio),
-                     (1 + bad_ratio)]
+            wargs = [order_num, ratio, approx_ratio, ratio / approx_ratio,
+                     1 - bad_ratio, 1 + bad_ratio]
             WLOG(params, 'warning', TextEntry('10-016-00024', args=wargs))
             # set the ratio to the approx ratio
             ratio = float(approx_ratio)
@@ -644,7 +656,7 @@ def correct_dark_fp(params, extractdict, **kwargs):
             wargs = [fiber, extfiletype]
             WLOG(params, 'info', TextEntry('40-016-00029', args=wargs))
             # get extfile
-            extfile = extractdict[extfiletype][fiber]
+            extfile = extractdict[fiber][extfiletype]
             # get the extraction image
             extimage = np.array(extfile.data)
             # --------------------------------------------------------------
@@ -652,7 +664,7 @@ def correct_dark_fp(params, extractdict, **kwargs):
             if extfiletype == 'E2DS_FILE':
                 # load the flat file for this fiber
                 flat_file, flat = flat_blaze.get_flat(params, extfile.header,
-                                                      fiber)
+                                                      fiber, quiet=True)
             # else we set it to None
             else:
                 flat = np.ones_like(extimage)
@@ -668,7 +680,7 @@ def correct_dark_fp(params, extractdict, **kwargs):
                 # apply leakage scaling
                 extimage = extimage - scale
                 # calculate the ratio of the leakage
-                rpart1 = np.nanpercetile(refimage[order_num], norm_percentile)
+                rpart1 = np.nanpercentile(refimage[order_num], norm_percentile)
                 rpart2 = mp.nanmedian(extimage[order_num])
                 ratio_leak[order_num] = rpart1 / rpart2
             # update ext file
@@ -711,8 +723,11 @@ def dark_fp_regen_s1d(params, recipe, props, **kwargs):
     # get outputs from props
     outputs = props['OUTPUTS']
     # get the leak extract file type
-    s1dextfile = pcheck(params, 'EXT_S1D_INTYPE', 's1dextfile', kwargs,
+    s1dextfile = pcheck(params, 'EXT_S1D_INFILE', 's1dextfile', kwargs,
                         func_name)
+    # storage for s1d outputs
+    s1dv_outs = dict()
+    s1dw_outs = dict()
     # loop around fibers
     for fiber in outputs:
         # get the s1d in file type
@@ -733,13 +748,14 @@ def dark_fp_regen_s1d(params, recipe, props, **kwargs):
         svprops = e2ds_to_s1d(params, recipe, *sargs, wgrid='velocity',
                               fiber=fiber, kind=s1dextfile)
         # add to outputs
-        outputs[fiber]['SWPROPS'] = swprops
-        outputs[fiber]['SVPROPS'] = svprops
+        s1dw_outs[fiber] = swprops
+        s1dv_outs[fiber] = svprops
     # push updated outputs into props
-    props['OUTPUTS'] = outputs
-    props.set_source('OUTPUTS', func_name)
+    props['S1DW'] = s1dw_outs
+    props['S1DV'] = s1dv_outs
+    props.set_sources(['S1DW', 'S1DV'], func_name)
     # return outputs
-    return outputs
+    return props
 
 
 def get_leak_master(params, header, fiber, kind, filename=None):
@@ -800,7 +816,8 @@ def master_dark_fp_cube(params, recipe, extractdict):
 
 def get_extraction_files(params, recipe, infile, extname):
     # get properties from parameters
-    leak2dext = params['LEAK_2D_EXTRACT_FILES']
+    leak2dext = params.listp('LEAK_2D_EXTRACT_FILES', dtype=str)
+    leak1dext = params.listp('LEAK_1D_EXTRACT_FILES', dtype=str)
     # get this instruments science fibers and reference fiber
     pconst = constants.pload(params['INSTRUMENT'])
     # science fibers should be list of strings, reference fiber should be string
@@ -823,8 +840,8 @@ def get_extraction_files(params, recipe, infile, extname):
     # storage for outputs
     extouts = recipe.outputs.keys()
     outputs = dict()
-    for extout in extouts:
-        outputs[extout] = dict()
+    for fiber in all_fibers:
+        outputs[fiber] = dict()
     # ------------------------------------------------------------------
     # loop around fibers
     for fiber in all_fibers:
@@ -838,10 +855,43 @@ def get_extraction_files(params, recipe, infile, extname):
             # read 2D image (not 1D images -- these will be re-generated)
             if extout in leak2dext:
                 outfile.read_file()
-            # push to storage
-            outputs[extout] = outfile
+                # push to storage
+                outputs[fiber][extout] = outfile
+            # puash 1D images to storage
+            if extout in leak1dext:
+                # push to storage
+                outputs[fiber][extout] = outfile
     # return outputs
     return outputs
+
+
+def save_uncorrected_ext_fp(params, extractdict):
+    # loop around fibers
+    for fiber in extractdict:
+        # loop around file type
+        for extname in extractdict[fiber]:
+            # get ext file
+            extfile = extractdict[fiber][extname]
+            # --------------------------------------------------------------
+            # check that file exists - if it doesn't generate exception
+            if not os.path.exists(extfile.filename):
+                eargs = [fiber, extname, extfile.filename]
+                WLOG(params, 'error', TextEntry('00-016-00027', args=eargs))
+            # --------------------------------------------------------------
+            # check we want to save uncorrected
+            if not params['LEAK_SAVE_UNCORRECTED']:
+                continue
+            # --------------------------------------------------------------
+            # get basename
+            infile = extfile.basename
+            inpath = extfile.filename
+            indir = inpath.split(infile)[0]
+            # add prefix
+            outfile = 'DEBUG-uncorr-{0}'.format(infile)
+            # construct full path
+            outpath = os.path.join(indir, outfile)
+            # copy files
+            drs_path.copyfile(params, inpath, outpath)
 
 
 # =============================================================================
@@ -1341,9 +1391,14 @@ def qc_leak_master(params, medcubes):
     return qc_params, passed
 
 
-def qc_leak(params, props):
+def qc_leak(params, props, **kwargs):
+    # set function name
+    func_name = __NAME__ + '.qc_leak()'
     # get outputs from props
     outputs = props['OUTPUTS']
+    # get leak extract file
+    extname = pcheck(params, 'LEAK_EXTRACT_FILE', 'extname', kwargs,
+                     func_name)
     # output storage
     qc_params = dict()
     passed = True
@@ -1352,13 +1407,15 @@ def qc_leak(params, props):
         # log that we are doing qc for a specific fiber
         WLOG(params, 'info', TextEntry('40-016-00026', args=[fiber]))
         # set passed variable and fail message list
-        fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
+        fail_msg = []
         textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
-        # no quality control currently
-        qc_values.append('None')
-        qc_names.append('None')
-        qc_logic.append('None')
-        qc_pass.append(1)
+        # ------------------------------------------------------------------
+        # deal with old qc params
+        # ------------------------------------------------------------------
+        # get extfile
+        extfile = outputs[fiber][extname]
+        # copy the quality control from header
+        qc_names, qc_values, qc_logic, qc_pass = extfile.get_qckeys()
         # ------------------------------------------------------------------
         # finally log the failed messages and set QC = 1 if we pass the
         # quality control QC = 0 if we fail quality control
@@ -1378,7 +1435,7 @@ def qc_leak(params, props):
     return qc_params, passed
 
 
-def write_leak_master(params, recipe, rawfiles, medcubes, qc_params):
+def write_leak_master(params, recipe, rawfiles, medcubes, qc_params, props):
     # loop around fibers
     for fiber in medcubes:
         # get outfile for this fiber
@@ -1403,6 +1460,14 @@ def write_leak_master(params, recipe, rawfiles, medcubes, qc_params):
         outfile.add_hkey_1d('KW_INFILE1', values=rawfiles, dim1name='file')
         # add qc parameters
         outfile.add_qckeys(qc_params_fiber)
+        # add leak parameters from props (if set)
+        if props is not None:
+            outfile.add_hkey('KW_LEAK_BP_U',
+                             value=props['LEAK_BCKGRD_PERCENTILE'])
+            outfile.add_hkey('KW_LEAK_NP_U',
+                             value=props['LEAK_NORM_PERCENTILE'])
+            outfile.add_hkey('KW_LEAK_WSMOOTH', value=props['LEAKM_WSMOOTH'])
+            outfile.add_hkey('KW_LEAK_KERSIZE', value=props['LEAKM_KERSIZE'])
         # log that we are saving rotated image
         wargs = [fiber, outfile.filename]
         WLOG(params, '', TextEntry('40-016-00025', args=wargs))
@@ -1415,6 +1480,107 @@ def write_leak_master(params, recipe, rawfiles, medcubes, qc_params):
         medcubes[fiber] = outfile
     # return medcubes
     return medcubes
+
+
+def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
+    # set function name
+    func_name = __NAME__ + '.write_leak()'
+    # get outputs from props
+    outputs = props['OUTPUTS']
+    s1dw_outs = props['S1DW']
+    s1dv_outs = props['S1DV']
+    # set header keys to add
+    keys = ['KW_LEAK_BP_U', 'KW_LEAK_NP_U', 'KW_LEAK_LP_U', 'KW_LEAK_UP_U',
+            'KW_LEAK_BADR_U']
+    values = ['LEAK_BCKGRD_PERCENTILE_USED', 'LEAK_NORM_PERCENTILE_USED',
+              'LEAK_LOW_PERCENTILE_USED', 'LEAK_HIGH_PERCENTILE_USED',
+              'LEAK_BAD_RATIO_OFFSET_USED']
+    # ----------------------------------------------------------------------
+    # 2D files
+    # ----------------------------------------------------------------------
+    # loop around fibers
+    for fiber in outputs:
+        # loop around files
+        for extname in outputs[fiber]:
+            # get the s1d in file type
+            extfile = outputs[fiber][extname]
+            # add leak corr key
+            extfile.add_hkey('KW_LEAK_CORR', value=True)
+            # loop around leak keys to add
+            for it in range(len(keys)):
+                extfile.add_hkey(keys[it], value=props[values[it]])
+            # add qc parameters
+            extfile.add_qckeys(qc_params[fiber])
+            # log that we are saving file
+            wargs = [fiber, extname, extfile.filename]
+            WLOG(params, '', TextEntry('40-016-00030', args=wargs))
+            # write image to file
+            extfile.write_file()
+            # add back to outputs (used for s1d)
+            outputs[fiber][extname] = extfile
+            # add to output files (for indexing)
+            recipe.add_output_file(extfile)
+
+    # ----------------------------------------------------------------------
+    # S1D files
+    # ----------------------------------------------------------------------
+    # get the leak extract file type
+    s1dextfile = pcheck(params, 'EXT_S1D_INFILE', 's1dextfile', kwargs,
+                        func_name)
+    # loop around fibers
+    for fiber in outputs:
+        # get extfile
+        extfile = outputs[fiber][s1dextfile]
+        # get s1d props for this fiber
+        swprops = s1dw_outs[fiber]
+        svprops = s1dv_outs[fiber]
+        # get input extraction file (1D case)
+        s1dwfile = inputs[fiber]['S1D_W_FILE']
+        s1dvfile = inputs[fiber]['S1D_V_FILE']
+        # ------------------------------------------------------------------
+        # Store S1D_W in file
+        # ------------------------------------------------------------------
+        # copy header from e2dsll file
+        s1dwfile.copy_hdict(extfile)
+        # set output key
+        s1dwfile.add_hkey('KW_OUTPUT', value=s1dwfile.name)
+        # add new header keys
+        s1dwfile = add_s1d_keys(s1dwfile, swprops)
+        # copy data
+        s1dwfile.data = swprops['S1DTABLE']
+        # must change the datatype to 'table'
+        s1dwfile.datatype = 'table'
+        # ------------------------------------------------------------------
+        # log that we are saving rotated image
+        wargs = [fiber, 'wave', s1dwfile.filename]
+        WLOG(params, '', TextEntry('40-016-00031', args=wargs))
+        # write image to file
+        s1dwfile.write_file()
+        # add to output files (for indexing)
+        recipe.add_output_file(s1dwfile)
+        # ------------------------------------------------------------------
+        # Store S1D_V in file
+        # ------------------------------------------------------------------
+        # copy header from e2dsll file
+        s1dvfile.copy_hdict(extfile)
+        # add new header keys
+        s1dvfile = add_s1d_keys(s1dvfile, svprops)
+        # set output key
+        s1dvfile.add_hkey('KW_OUTPUT', value=s1dvfile.name)
+        # copy data
+        s1dvfile.data = svprops['S1DTABLE']
+        # must change the datatype to 'table'
+        s1dvfile.datatype = 'table'
+        # ------------------------------------------------------------------
+        # log that we are saving rotated image
+        wargs = [fiber, 'velocity', s1dvfile.filename]
+        WLOG(params, '', TextEntry('40-016-00031', args=wargs))
+        # write image to file
+        s1dvfile.write_file()
+        # add to output files (for indexing)
+        recipe.add_output_file(s1dvfile)
+        # ------------------------------------------------------------------
+
 
 
 # =============================================================================
