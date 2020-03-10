@@ -146,6 +146,8 @@ def __main__(recipe, params):
     recipe.plot.set_location()
     # set up storage cube
     dark_fp_storage = dict()
+    # set up storage of cprops (have to assume cprops constant for loop)
+    cprops = None
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
@@ -172,7 +174,8 @@ def __main__(recipe, params):
         wargs = [', '.join(darkfp_extnames)]
         WLOG(params, '', TextEntry('40-016-00024', args=wargs))
         # correct dark fp
-        dark_fp_extcorr = extgen.correct_master_dark_fp(params, darkfp_extfiles)
+        cout = extgen.correct_master_dark_fp(params, darkfp_extfiles)
+        dark_fp_extcorr, cprops = cout
         # ------------------------------------------------------------------
         # add to storage
         for fiber in dark_fp_extcorr:
@@ -195,7 +198,7 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # TODO: Need to add some parameters to header
     medcubes = extgen.write_leak_master(params, recipe, rawfiles, medcubes,
-                                        qc_params)
+                                        qc_params, cprops)
     # ------------------------------------------------------------------
     # Move to calibDB and update calibDB
     # ------------------------------------------------------------------
