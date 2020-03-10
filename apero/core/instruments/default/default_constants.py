@@ -97,13 +97,15 @@ __all__ = [
     # leakage constants
     'ALLOWED_LEAKM_TYPES', 'LEAKM_ALWAYS_EXTRACT', 'LEAKM_EXTRACT_TYPE',
     'ALLOWED_LEAK_TYPES', 'LEAK_EXTRACT_FILE', 'LEAK_2D_EXTRACT_FILES',
-    'LEAK_1D_EXTRACT_FILES',
+    'LEAK_1D_EXTRACT_FILES', 'LEAK_BCKGRD_PERCENTILE', 'LEAK_NORM_PERCENTILE',
+    'LEAKM_WSMOOTH', 'LEAKM_KERSIZE', 'LEAK_LOW_PERCENTILE',
+    'LEAK_HIGH_PERCENTILE', 'LEAK_BAD_RATIO_OFFSET', 'LEAK_SAVE_UNCORRECTED',
     # extract constants
     'EXT_START_ORDER', 'EXT_END_ORDER', 'EXT_RANGE1', 'EXT_RANGE2',
     'EXT_SKIP_ORDERS', 'EXT_COSMIC_CORRETION', 'EXT_COSMIC_SIGCUT',
     'EXT_COSMIC_THRESHOLD', 'QC_EXT_FLUX_MAX', 'EXT_S1D_INTYPE',
-    'EXT_S1D_WAVESTART', 'EXT_S1D_WAVEEND', 'EXT_S1D_BIN_UWAVE',
-    'EXT_S1D_BIN_UVELO', 'EXT_S1D_EDGE_SMOOTH_SIZE',
+    'EXT_S1D_INFILE', 'EXT_S1D_WAVESTART', 'EXT_S1D_WAVEEND',
+    'EXT_S1D_BIN_UWAVE', 'EXT_S1D_BIN_UVELO', 'EXT_S1D_EDGE_SMOOTH_SIZE',
     'EXT_ALLOWED_BERV_DPRTYPES', 'EXT_BERV_EST_ACC', 'EXT_BERV_KIND',
     'EXT_BERV_BARYCORRPY_DIR', 'EXT_BERV_IERSFILE', 'EXT_BERV_IERS_A_URL',
     'EXT_BERV_LEAPDIR', 'EXT_BERV_LEAPUPDATE', 'EXTRACT_PLOT_ORDER',
@@ -1127,28 +1129,63 @@ ALLOWED_LEAKM_TYPES = Const('ALLOWED_LEAKM_TYPES', value=None, dtype=str,
 # define whether to always extract leak master files
 #      (i.e. overwrite existing files)
 LEAKM_ALWAYS_EXTRACT = Const('LEAKM_ALWAYS_EXTRACT', value=None, dtype=bool,
-                             source=__NAME__, group=cgroup)
+                            source=__NAME__, group=cgroup)
 
-# define the type of file to use for leak master solution (currently allowed are
-#    'E2DS' or 'E2DSFF'
+# define the type of file to use for leak master solution
+#    (currently allowed are 'E2DSFF') - must match with LEAK_EXTRACT_FILE
 LEAKM_EXTRACT_TYPE = Const('LEAKM_EXTRACT_TYPE', value=None, dtype=str,
-                           source=__NAME__, group=cgroup)
+                            source=__NAME__, group=cgroup)
 
 # Define the types of input extracted files to correct for leakage
 ALLOWED_LEAK_TYPES = Const('ALLOWED_LEAK_TYPES', value=None, dtype=str,
-                           source=__NAME__, group=cgroup)
+                            source=__NAME__, group=cgroup)
 
 # define the type of file to use for the leak correction (currently allowed are
 #     'E2DS_FILE' or 'E2DSFF_FILE' (linked to recipe definition outputs)
+#     must match with LEAKM_EXTRACT_TYPE
 LEAK_EXTRACT_FILE = Const('LEAK_EXTRACT_FILE', value=None, dtype=str,
-                          source=__NAME__, group=cgroup)
+                            source=__NAME__, group=cgroup)
 
 # define the extraction files which are 2D images (i.e. order num x nbpix)
 LEAK_2D_EXTRACT_FILES = Const('LEAK_2D_EXTRACT_FILES', value=None, dtype=str,
-                              source=__NAME__, group=cgroup)
+                            source=__NAME__, group=cgroup)
 
 # define the extraction files which are 1D spectra
 LEAK_1D_EXTRACT_FILES = Const('LEAK_1D_EXTRACT_FILES', value=None, dtype=str,
+                            source=__NAME__, group=cgroup)
+
+# define the thermal background percentile for the leak and leak master
+LEAK_BCKGRD_PERCENTILE = Const('LEAK_BCKGRD_PERCENTILE', value=None, dtype=float,
+                            source=__NAME__, group=cgroup)
+
+# define the normalisation percentile for the leak and leak master
+LEAK_NORM_PERCENTILE = Const('LEAK_NORM_PERCENTILE', value=None, dtype=float,
+                            source=__NAME__, group=cgroup)
+
+# define the e-width of the smoothing kernel for leak master
+LEAKM_WSMOOTH = Const('LEAKM_WSMOOTH', value=None, dtype=float,
+                            source=__NAME__, minimum=0.0, group=cgroup)
+
+# define the kernel size for leak master
+LEAKM_KERSIZE = Const('LEAKM_KERSIZE', value=None, dtype=float,
+                            source=__NAME__, minimum=0.0, group=cgroup)
+
+# define the lower bound percentile for leak correction
+LEAK_LOW_PERCENTILE = Const('LEAK_LOW_PERCENTILE', value=None, dtype=float,
+                            source=__NAME__, minimum=0.0, maximum=100.0,
+                            group=cgroup)
+
+# define the upper bound percentile for leak correction
+LEAK_HIGH_PERCENTILE = Const('LEAK_LOW_PERCENTILE', value=None, dtype=float,
+                            source=__NAME__, minimum=0.0, maximum=100.0,
+                            group=cgroup)
+
+# define the limit on surpious FP ratio (1 +/- limit)
+LEAK_BAD_RATIO_OFFSET = Const('LEAK_BAD_RATIO_OFFSET', value=None, dtype=float,
+                              source=__NAME__, minimum=0.0, group=cgroup)
+
+# Define whether to save uncorrected files
+LEAK_SAVE_UNCORRECTED = Const('LEAK_SAVE_UNCORRECTED', value=None, dtype=bool,
                               source=__NAME__, group=cgroup)
 
 # =============================================================================
@@ -1196,6 +1233,9 @@ QC_EXT_FLUX_MAX = Const('QC_EXT_FLUX_MAX', value=None, dtype=float,
 
 # Define which extraction file to use for s1d creation
 EXT_S1D_INTYPE = Const('EXT_S1D_INTYPE', value=None, dtype=str,
+                       source=__NAME__, group=cgroup)
+# Define which extraction file (recipe definitons) linked to EXT_S1D_INTYPE
+EXT_S1D_INFILE = Const('EXT_S1D_INFILE', value=None, dtype=str,
                        source=__NAME__, group=cgroup)
 
 # Define the start s1d wavelength (in nm)

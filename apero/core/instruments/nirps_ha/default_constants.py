@@ -776,8 +776,8 @@ ALLOWED_LEAKM_TYPES.value = 'DARK_FP'
 LEAKM_ALWAYS_EXTRACT = LEAKM_ALWAYS_EXTRACT.copy(__NAME__)
 LEAKM_ALWAYS_EXTRACT.value = False
 
-# define the type of file to use for leak master solution (currently allowed are
-#    'E2DS' or 'E2DSFF'
+# define the type of file to use for leak master solution
+#    (currently allowed are 'E2DSFF') - must match with LEAK_EXTRACT_FILE
 LEAKM_EXTRACT_TYPE = LEAKM_EXTRACT_TYPE.copy(__NAME__)
 LEAKM_EXTRACT_TYPE.value = 'E2DSFF'
 
@@ -787,17 +787,49 @@ ALLOWED_LEAK_TYPES.value = 'OBJ_FP'
 
 # define the type of file to use for the leak correction (currently allowed are
 #     'E2DS_FILE' or 'E2DSFF_FILE' (linked to recipe definition outputs)
+#     must match with LEAKM_EXTRACT_TYPE
 LEAK_EXTRACT_FILE = LEAK_EXTRACT_FILE.copy(__NAME__)
 LEAK_EXTRACT_FILE.value = 'E2DSFF_FILE'
 
 # define the extraction files which are 2D images (i.e. order num x nbpix)
 LEAK_2D_EXTRACT_FILES = LEAK_2D_EXTRACT_FILES.copy(__NAME__)
-LEAK_2D_EXTRACT_FILES.value = 'E2DS_FILE, E2DSFF_FILE, E2DSLL_FILE'
+LEAK_2D_EXTRACT_FILES.value = 'E2DS_FILE, E2DSFF_FILE'
 
 # define the extraction files which are 1D spectra
 LEAK_1D_EXTRACT_FILES = LEAK_1D_EXTRACT_FILES.copy(__NAME__)
 LEAK_1D_EXTRACT_FILES.value = 'S1D_W_FILE, S1D_V_FILE'
 
+# define the thermal background percentile for the leak and leak master
+LEAK_BCKGRD_PERCENTILE = LEAK_BCKGRD_PERCENTILE.copy(__NAME__)
+LEAK_BCKGRD_PERCENTILE.value = 5
+
+# define the normalisation perentile for the leak and leak master
+LEAK_NORM_PERCENTILE = LEAK_NORM_PERCENTILE.copy(__NAME__)
+LEAK_NORM_PERCENTILE.value = 90
+
+# define the e-width of the smoothing kernel for leak master
+LEAKM_WSMOOTH = LEAKM_WSMOOTH.copy(__NAME__)
+LEAKM_WSMOOTH.value = 15
+
+# define the kernal size for leak master
+LEAKM_KERSIZE = LEAKM_KERSIZE.copy(__NAME__)
+LEAKM_KERSIZE.value = 3
+
+# define the lower bound percentile for leak correction
+LEAK_LOW_PERCENTILE = LEAK_LOW_PERCENTILE.copy(__NAME__)
+LEAK_LOW_PERCENTILE.value = 1
+
+# define the upper bound percentile for leak correction
+LEAK_HIGH_PERCENTILE = LEAK_HIGH_PERCENTILE.copy(__NAME__)
+LEAK_HIGH_PERCENTILE.value = 99
+
+# define the limit on surpious FP ratio (1 +/- limit)
+LEAK_BAD_RATIO_OFFSET = LEAK_BAD_RATIO_OFFSET.copy(__NAME__)
+LEAK_BAD_RATIO_OFFSET.value = 0.1
+
+# Define whether to save uncorrected files
+LEAK_SAVE_UNCORRECTED = LEAK_SAVE_UNCORRECTED.copy(__NAME__)
+LEAK_SAVE_UNCORRECTED.value = True
 
 # =============================================================================
 # CALIBRATION: EXTRACTION SETTINGS
@@ -844,6 +876,9 @@ QC_EXT_FLUX_MAX.value = 50000
 # Define which extraction file to use for s1d creation
 EXT_S1D_INTYPE = EXT_S1D_INTYPE.copy(__NAME__)
 EXT_S1D_INTYPE.value = 'E2DSFF'
+# Define which extraction file (recipe definitons) linked to EXT_S1D_INTYPE
+EXT_S1D_INFILE = EXT_S1D_INFILE.copy(__NAME__)
+EXT_S1D_INFILE.value = 'E2DSFF_FILE'
 
 # Define the start s1d wavelength (in nm)
 EXT_S1D_WAVESTART = EXT_S1D_WAVESTART.copy(__NAME__)
