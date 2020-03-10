@@ -696,6 +696,40 @@ KW_LEAK_CORR.set(key='LEAKCORR',
                  comment='Whether DARK_FP leakage correction has been done',
                  datatype=int)
 
+# Define the background percentile used for correcting leakage
+KW_LEAK_BP_U = KW_LEAK_BP_U.copy(__NAME__)
+KW_LEAK_BP_U.set(key='LEAK_BPU', datatype=float,
+                 comment='LEAK bckgrd percentile used for leakage corr')
+
+# Define the normalisation percentile used for correcting leakage
+KW_LEAK_NP_U = KW_LEAK_NP_U.copy(__NAME__)
+KW_LEAK_NP_U.set(key='LEAK_NPU', datatype=float,
+                 comment='LEAK norm percentile used for leakage corr')
+
+# Define the e-width smoothing used for correcting leakage master
+KW_LEAK_WSMOOTH = KW_LEAK_WSMOOTH.copy(__NAME__)
+KW_LEAK_WSMOOTH.set(key='LEAKMWSM', datatype=float,
+                    comment='LEAKM e-width smoothing used for leak master corr')
+
+# Define the kernel size used for correcting leakage master
+KW_LEAK_KERSIZE = KW_LEAK_KERSIZE.copy(__NAME__)
+KW_LEAK_KERSIZE.set(key='LEAKMKSZ', datatype=float,
+                    comment='LEAKM kernel size used for leak master corr')
+
+# Define the lower bound percentile used for correcting leakage
+KW_LEAK_LP_U = KW_LEAK_LP_U.copy(__NAME__)
+KW_LEAK_LP_U.set(key='LEAK_LPU', datatype=float,
+                 comment='LEAK lower bound percentile used for leakage corr')
+
+# Define the upper bound percentile used for correcting leakage
+KW_LEAK_UP_U = KW_LEAK_UP_U.copy(__NAME__)
+KW_LEAK_UP_U.set(key='LEAK_UPU', datatype=float,
+                 comment='LEAK upper bound percentile used for leakage corr')
+
+# Define the bad ratio offset limit used for correcting leakage
+KW_LEAK_BADR_U = KW_LEAK_BADR_U.copy(__NAME__)
+KW_LEAK_BADR_U.set(key='LEAKBADR', datatype=float,
+                   comment='LEAK bad ratio offset limit used for leakage corr')
 
 # -----------------------------------------------------------------------------
 # Define wave variables
