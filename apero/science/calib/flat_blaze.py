@@ -225,7 +225,7 @@ def calculate_blaze_flat_sinc(params, e2ds_ini, peak_cut, nsigfit, badpercentile
     return e2ds_ini, flat, blaze, rms
 
 
-def get_flat(params, header, fiber, filename=None):
+def get_flat(params, header, fiber, filename=None, quiet=False):
     # get file definition
     out_flat = core.get_file_definition('FF_FLAT', params['INSTRUMENT'],
                                         kind='red')
@@ -240,7 +240,8 @@ def get_flat(params, header, fiber, filename=None):
     flat, flat_file = general.load_calib_file(params, key, header,
                                               filename=filename)
     # log which fpmaster file we are using
-    WLOG(params, '', TextEntry('40-015-00006', args=[flat_file]))
+    if not quiet:
+        WLOG(params, '', TextEntry('40-015-00006', args=[flat_file]))
     # return the master image
     return flat_file, flat
 
