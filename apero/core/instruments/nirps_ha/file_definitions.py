@@ -695,12 +695,15 @@ calib_file.addset(out_thermal_e2ds_tel)
 # -----------------------------------------------------------------------------
 # thermal from internal dark
 out_leak_master = drs_finput('LEAKM_E2DS', KW_OUTPUT='LEAKM_E2DS',
-                             fibers=['A', 'B'],
+                             fibers=['AB', 'A', 'B', 'C'],
                              filetype='.fits',
                              intype=[out_ext_e2ds, out_ext_e2dsff],
                              suffix='_leak_master',
                              dbname='calibration', dbkey='LEAKM',
                              outfunc=out.general_file)
+out_file.addset(out_leak_master)
+calib_file.addset(out_leak_master)
+
 
 # -----------------------------------------------------------------------------
 # wave files (master)
