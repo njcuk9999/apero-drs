@@ -13,7 +13,7 @@ __all__ = [# input keys
            'KW_CMPLTEXP', 'KW_NEXP', 'KW_PI_NAME', 'KW_PLX', 'KW_CALIBWH',
            'KW_TARGET_TYPE', 'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP',
            'KW_HUMIDITY', 'KW_GAIA_ID', 'KW_INPUTRV', 'KW_OBJ_TEMP',
-           'KW_SATURATE', 'KW_FRMTIME',
+           'KW_SATURATE', 'KW_FRMTIME', 'KW_OBJECTNAME',
            # general output keys
            'KW_VERSION', 'KW_PPVERSION', 'KW_DPRTYPE', 'KW_PID',
            'KW_MID_OBS_TIME', 'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3',
@@ -235,6 +235,9 @@ KW_OBJDEC = Keyword('KW_OBJDE', key='', dtype=float, source=__NAME__)
 
 # define the observation name
 KW_OBJNAME = Keyword('KW_OBJNAME', key='', dtype=str, source=__NAME__)
+
+# define the raw observation name
+KW_OBJECTNAME = Keyword('KW_OBJECTNAME', key='', dtype=str, source=__NAME__)
 
 # define the gaia id
 KW_GAIA_ID = Keyword('KW_GAIAID', key='', dtype=str, source=__NAME__)

@@ -113,8 +113,8 @@ KW_OBJDEC = KW_OBJDEC.copy(__NAME__)
 KW_OBJDEC.set(key='OBJDEC', unit=uu.deg, comment='Target declination ')
 
 # define the observation name
-KW_OBJNAME = KW_OBJNAME.copy(__NAME__)
-KW_OBJNAME.set(key='OBJECT', comment='Target name')
+KW_OBJECTNAME = KW_OBJECTNAME.copy(__NAME__)
+KW_OBJECTNAME.set(key='OBJECT', comment='Target name')
 
 # define the observation equinox HEADER key
 KW_OBJEQUIN = KW_OBJEQUIN.copy(__NAME__)
@@ -196,6 +196,10 @@ KW_DRS_DATE.set(key='DRSVDATE', comment='DRS Release date')
 root_loc = 'LO'
 root_flat = 'FF'
 root_hc = 'HC'
+
+# define the observation name
+KW_OBJNAME = KW_OBJNAME.copy(__NAME__)
+KW_OBJNAME.set(key='DRSOBJN', comment='Target name')
 
 # Define the key to get the data fits file type
 KW_DPRTYPE = KW_DPRTYPE.copy(__NAME__)
