@@ -95,7 +95,7 @@ class PseudoConstants(DefaultConstants):
         recipe = kwargs.get('recipe')
         header = kwargs.get('header')
         # get keys from params
-        kwobjname = params['KW_OBJNAME']
+        kwobjname = params['KW_OBJNAME'][0]
         kwtrgtype = params['KW_TARGET_TYPE'][0]
         kwmidobstime = params['KW_MID_OBS_TIME'][0]
         kwdprtype = params['KW_DPRTYPE'][0]
