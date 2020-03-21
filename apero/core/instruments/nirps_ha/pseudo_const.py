@@ -95,9 +95,16 @@ class PseudoConstants(DefaultConstants):
         recipe = kwargs.get('recipe')
         header = kwargs.get('header')
         # get keys from params
+        kwobjname = params['KW_OBNAME']
         kwtrgtype = params['KW_TARGET_TYPE'][0]
         kwmidobstime = params['KW_MID_OBS_TIME'][0]
         kwdprtype = params['KW_DPRTYPE'][0]
+        # ------------------------------------------------------------------
+        # Deal with cleaning object name
+        # ------------------------------------------------------------------
+        if kwobjname not in header:
+            header = clean_obj_name(params, header)
+
         # ------------------------------------------------------------------
         # Deal with TRG_TYPE
         # ------------------------------------------------------------------
@@ -347,6 +354,21 @@ class PseudoConstants(DefaultConstants):
 # =============================================================================
 # Functions used by pseudo const (instrument specific)
 # =============================================================================
+def clean_obj_name(params, header):
+    # get keys from params
+    kwrawobjname = params['KW_OBJECTNAME'][0]
+    kwobjname = params['KW_OBJNAME'][0]
+    # get raw object name
+    rawobjname = header[kwrawobjname]
+    # let clean it
+    objname = rawobjname.strip()
+    objname = objname.replace(' ', '_')
+    # add it to the header with new keyword
+    header[kwobjname] = objname
+    # return header
+    return header
+
+
 def get_trg_type(params, header):
     # get keys from params
     kwobjname = params['KW_OBJNAME'][0]
