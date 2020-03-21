@@ -1324,7 +1324,11 @@ class DrsArgument(object):
         self.default_ref = kwargs.get('default_ref', None)
 
         # get required
-        self.required = kwargs.get('required', False)
+        if self.kind == 'arg':
+            self.required = kwargs.get('required', True)
+        else:
+            self.required = kwargs.get('required', False)
+        # get whether we need this arguement for processing scripts
         self.reprocess = kwargs.get('reprocess', False)
 
         # set empty
