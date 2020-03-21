@@ -1676,10 +1676,12 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
             # need to check required criteria
             if runarg in recipe.args:
                 required = recipe.args[runarg].required
+                dtype = recipe.args[runarg].dtype
             else:
                 required = recipe.kwargs[runarg].required
-            # only check if file is required
-            if required:
+                dtype = recipe.kwargs[runarg].dtype
+            # only check if file is required and argument is a file type
+            if required and dtype in ['file', 'files']:
                 # if whole dict is None then all_none is True
                 if rundict[runarg] is None:
                     all_none = True
