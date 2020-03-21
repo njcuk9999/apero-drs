@@ -633,6 +633,16 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     ccfstep = params['INPUTS']['STEP']
     ccfwidth = params['INPUTS']['WIDTH']
     targetrv = params['INPUTS']['RV']
+    # ----------------------------------------------------------------------
+    # TODO: eventually this should come from object database (so that each
+    # TODO: object has a constant target rv
+    # need to deal with no target rv step
+    if targetrv in ['None', None, '']:
+        targetrv = infile.get_key('KW_INPUTRV', required=False, dtype=float)
+        # set target rv to zero if we don't have a value
+        if targetrv is None:
+            targetrv = 0.0
+    # ----------------------------------------------------------------------
     # need to deal with mask coming from inputs
     if isinstance(params['INPUTS']['MASK'], list):
         ccfmask = params['INPUTS']['MASK'][0][0]
