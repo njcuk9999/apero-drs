@@ -1,5 +1,7 @@
 # APERO - A PipelinE to Reduce Observations
 
+Last updated: 2020-03-21
+
 ## Contents
 
 1) [Latest version](#latest-version)
@@ -394,6 +396,7 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 | cal_shape_master                                                | SHAPEM     |
 | cal_shape [master night]                                        | SHAPELM    |
 | cal_ff [master night]                                           | FLATM      |
+| cal_leak_master [master_night]                                  | LEAKM      |
 | cal_thermal [DARK_DARK_INT; master night]                       | THIM       |
 | cal_thermal [DARK_DARK_TEL; master night]                       | THTM       |
 | cal_wave_master                                                 | WAVEM      |
@@ -407,6 +410,7 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 | cal_thermal [DARK_DARK_TEL; every night]                        | THERMAL    |
 | cal_wave_night [every night]                                    | WAVE       |
 | cal_extract [OBJ_DARK + OBJ_FP; every night; ALL OBJECTS]       | EXTALL     |
+| cal_leak [OBJ_FP; every night; ALL OBJECTS]                     | LEAKALL    |
 | obj_mk_tellu_db                                                 | MKTELLDB   |
 | obj_fit_tellu_db                                                | FTELLDB    |
 | cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night]              | CCF        |
@@ -430,6 +434,7 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 | cal_shape_master                                                    | SHAPEM     |
 | cal_shape [master night]                                            | SHAPELM    |
 | cal_ff [master night]                                               | FLATM      |
+| cal_leak_master [master_night]                                      | LEAKM      |
 | cal_thermal [DARK_DARK_INT; master night]                           | THIM       |
 | cal_thermal [DARK_DARK_TEL; master night]                           | THTM       |
 | cal_wave_master                                                     | WAVEM      |
@@ -444,6 +449,8 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 | cal_wave_night [every night]                                        | WAVE       |
 | cal_extract [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]      | EXTTELL    |
 | cal_extract [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]       | EXTOBJ     |
+| cal_leak [OBJ_FP; every night; TELLURIC_TARGETS]                    | LEAKTELL   |
+| cal_leak [OBJ_FP; every night; SCIENCE_TARGETS]                     | LEAKOBJ    |
 | obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]     | MKTELLU1   |
 | obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]    | MKTELLU2   |
 | obj_mk_template [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]  | MKTELLU3   |
@@ -499,6 +506,7 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 | cal_shape_master                                                    | SHAPEM     |
 | cal_shape [master night]                                            | SHAPELM    |
 | cal_ff [master night]                                               | FLATM      |
+| cal_leak_master [master_night]                                      | LEAKM      |
 | cal_thermal [DARK_DARK_INT; master night]                           | THIM       |
 | cal_thermal [DARK_DARK_TEL; master night]                           | THTM       |
 | cal_wave_master                                                     | WAVEM      |
@@ -537,7 +545,7 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 | recipe                                                              | SHORT_NAME |
 | ------------------------------------------------------------------- | ---------- | 
 | cal_extract [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]      | EXTTELL    |
-| cal_extract [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]       | EXTOBJ     |
+| cal_leak [OBJ_FP; every night; TELLURIC_TARGETS]                    | LEAKTELL   |
 | obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]     | MKTELLU1   |
 | obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]    | MKTELLU2   |
 | obj_mk_template [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]  | MKTELLU3   |
@@ -556,6 +564,7 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 | recipe                                                              | SHORT_NAME |
 | ------------------------------------------------------------------- | ---------- | 
 | cal_extract [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]       | EXTOBJ     |
+| cal_leak [OBJ_FP; every night; SCIENCE_TARGETS]                     | LEAKOBJ    |
 | obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]     | FTELLU1    |
 | obj_mk_template [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]   | FTELLU2    |
 | obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]     | FTELLU3    |
@@ -599,6 +608,7 @@ cal_loc [FLAT_DARK; master night]
 cal_shape_master
 cal_shape [master night]
 cal_ff [master night]
+cal_leak_master
 cal_thermal [DARK_DARK_INT; master night]
 cal_thermal [DARK_DARK_TEL; master night]
 cal_wave_master
@@ -636,6 +646,7 @@ cal_wave_night [every night]
 The telluric star sequence is as follows:
 ```
 cal_extract [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
+cal_leak [OBJ_FP; every night; TELLURIC_TARGETS]
 obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
 obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
 obj_mk_template [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
@@ -650,6 +661,7 @@ science.
 The science star sequence is as follows:
 ```
 cal_extract [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
+cal_leak [OBJ_FP; every night; SCIENCE_TARGETS]
 obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
 obj_mk_template [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
 obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
