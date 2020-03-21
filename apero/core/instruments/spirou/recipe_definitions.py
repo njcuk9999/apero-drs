@@ -1245,6 +1245,7 @@ full_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
 full_run.add(cal_shape_master, master=True)
 full_run.add(cal_shape, name='SHAPELM', master=True)
 full_run.add(cal_ff, name='FLATM', master=True)
+full_run.add(cal_leak_master, master=True)
 full_run.add(cal_thermal, name='THIM', files=[sf.pp_dark_dark_int],
              master=True)
 full_run.add(cal_thermal, name='THTM', files=[sf.pp_dark_dark_tel],
@@ -1261,6 +1262,8 @@ full_run.add(cal_thermal)
 full_run.add(cal_wave_night)
 # extract all OBJ_DARK and OBJ_FP
 full_run.add(cal_extract, name='EXTALL', files=[sf.pp_obj_dark, sf.pp_obj_fp])
+# correct leakage
+full_run.add(cal_leak, name='LEAKALL', files=[sf.pp_obj_fp])
 # telluric recipes
 full_run.add(obj_mk_tellu_db, arguments=dict(cores='CORES'))
 full_run.add(obj_fit_tellu_db, arguments=dict(cores='CORES'))
@@ -1282,6 +1285,7 @@ limited_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
 limited_run.add(cal_shape_master, master=True)
 limited_run.add(cal_shape, name='SHAPELM', master=True)
 limited_run.add(cal_ff, name='FLATM', master=True)
+limited_run.add(cal_leak_master, master=True)
 limited_run.add(cal_thermal, name='THIM', files=[sf.pp_dark_dark_int],
                 master=True)
 limited_run.add(cal_thermal, name='THTM', files=[sf.pp_dark_dark_tel],
@@ -1304,6 +1308,14 @@ limited_run.add(cal_extract, name='EXTTELL', KW_OBJNAME='TELLURIC_TARGETS',
 # extract science
 limited_run.add(cal_extract, name='EXTOBJ', KW_OBJNAME='SCIENCE_TARGETS',
                 files=[sf.pp_obj_dark, sf.pp_obj_fp])
+
+# correct leakage for any telluric targets that are OBJ_FP
+limited_run.add(cal_leak, name='LEAKTELL', KW_OBJNAME='TELLURIC_TARGETS',
+                files=[sf.pp_obj_fp])
+
+# correct leakage for any science targets that are OBJ_FP
+limited_run.add(cal_leak, name='LEAKOBJ', KW_OBJNAME='SCIENCE_TARGETS',
+                files=[sf.pp_obj_fp])
 
 # telluric recipes
 limited_run.add(obj_mk_tellu_db, arguments=dict(cores='CORES'))
@@ -1360,6 +1372,7 @@ master_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
 master_run.add(cal_shape_master, master=True)
 master_run.add(cal_shape, name='SHAPELM', master=True)
 master_run.add(cal_ff, name='FLATM', master=True)
+master_run.add(cal_leak_master, master=True)
 master_run.add(cal_thermal, name='THIM', files=[sf.pp_dark_dark_int],
                master=True)
 master_run.add(cal_thermal, name='THTM', files=[sf.pp_dark_dark_tel],
@@ -1388,6 +1401,9 @@ tellu_run = drs_recipe.DrsRunSequence('telluric_run', __INSTRUMENT__)
 # extract science
 tellu_run.add(cal_extract, name='EXTOBJ', KW_OBJNAME='TELLURIC_TARGETS',
               files=[sf.pp_obj_dark, sf.pp_obj_fp])
+# correct leakage for any telluric targets that are OBJ_FP
+tellu_run.add(cal_leak, name='LEAKTELL', KW_OBJNAME='TELLURIC_TARGETS',
+              files=[sf.pp_obj_fp])
 # other telluric recipes
 tellu_run.add(obj_mk_tellu, name='MKTELLU1', KW_OBJNAME='TELLURIC_TARGETS',
               files=[sf.out_ext_e2dsff], fiber='AB',
@@ -1410,6 +1426,9 @@ science_run = drs_recipe.DrsRunSequence('science_run', __INSTRUMENT__)
 # extract science
 science_run.add(cal_extract, name='EXTOBJ', KW_OBJNAME='SCIENCE_TARGETS',
                 files=[sf.pp_obj_dark, sf.pp_obj_fp])
+# correct leakage for any science targets that are OBJ_FP
+science_run.add(cal_leak, name='LEAKOBJ', KW_OBJNAME='SCIENCE_TARGETS',
+                files=[sf.pp_obj_fp])
 science_run.add(obj_fit_tellu, name='FTELLU1', KW_OBJNAME='SCIENCE_TARGETS',
                 files=[sf.out_ext_e2dsff], fiber='AB',
                 KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
