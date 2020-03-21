@@ -499,7 +499,7 @@ def read_runfile(params, runfile, **kwargs):
                 params['TRIGGER_RUN'] = False
 
         # if trigger if defined night name must be as well
-        if params['NIGHTNAME'] is None:
+        if params['NIGHTNAME'] is None and params['TRIGGER_RUN']:
             # cause an error if nightname not set
             WLOG(params, 'error', TextEntry('09-503-00010'))
 
