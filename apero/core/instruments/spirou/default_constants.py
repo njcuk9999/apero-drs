@@ -1827,7 +1827,7 @@ CCF_MASK_PATH.value = './data/spirou/ccf/'
 
 # Define the default CCF MASK to use
 CCF_DEFAULT_MASK = CCF_DEFAULT_MASK.copy(__NAME__)
-CCF_DEFAULT_MASK.value = 'gl581_Sep18_cleaned.mas'
+CCF_DEFAULT_MASK.value = 'masque_sept18_andres_trans50.mas'
 
 # Define the wavelength units for the mask
 CCF_MASK_UNITS = CCF_MASK_UNITS.copy(__NAME__)
