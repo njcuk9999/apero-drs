@@ -448,18 +448,19 @@ calib_file.addset(out_dark_master)
 # -----------------------------------------------------------------------------
 # badpix out file
 out_badpix = drs_finput('BADPIX', KW_OUTPUT='BADPIX',
-                        filetype='.fits', intype=pp_flat_flat,
+                        filetype='.fits',
+                        intype=[pp_dark_dark_int, pp_dark_dark_tel],
                         suffix='_badpixel',
                         outfunc=out.calib_file,
                         dbname='calibration', dbkey='BADPIX')
 out_backmap = drs_finput('BKGRD_MAP', KW_OUTPUT='BKGRD_MAP',
-                         intype=pp_flat_flat,
+                         intype=[pp_dark_dark_int, pp_dark_dark_tel],
                          suffix='_bmap.fits', outfunc=out.calib_file,
                          dbname='calibration', dbkey='BKGRDMAP')
 
 # background debug file
 debug_back = drs_finput('DEBUG_BACK', KW_OUTPUT='DEBUG_BACK',
-                        filetype='.fits', intype=pp_flat_flat,
+                        filetype='.fits', intype=pp_file,
                         suffix='_background.fits', outfunc=out.debug_file)
 
 # add badpix outputs to output fileset
