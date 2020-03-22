@@ -245,6 +245,8 @@ class Database():
         func_name = display_func(self.params, 'get_entry', __NAME__, 'Database')
         # check that we have data
         self.check_read()
+        # read is master key
+        is_master = self.params.get('IS_MASTER', False)
         # convert usetime to astropy.time
         if isinstance(usetime, Time):
             pass
@@ -274,6 +276,8 @@ class Database():
                 return entries[timesort]
             elif isinstance(n_entries, int):
                 return entries[timesort][:n_entries]
+            else:
+                return entries
         # if mode is not None and time_used is None we have a problem
         elif (mode is not None) and (usetime is None):
             eargs = [mode, self.dbname, func_name]
@@ -286,7 +290,11 @@ class Database():
             # if we have no rows we must report it
             if (np.sum(mask2) == 0) and not required:
                 return Table()
-            if np.sum(mask2) == 0:
+            # if it is a master sequences and we have none older use closest
+            if np.sum(mask2) == 0 and is_master:
+                mask2 = np.ones_like(r_entries['rtime'], dtype=bool)
+            # return error if we found None
+            elif np.sum(mask2) == 0:
                 eargs = [self.dbname, entryname, usetime.iso, self.abspath,
                          func_name]
                 WLOG(self.params, 'error',
