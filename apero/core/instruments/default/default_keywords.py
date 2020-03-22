@@ -16,12 +16,12 @@ __all__ = [# input keys
            'KW_SATURATE', 'KW_FRMTIME', 'KW_OBJECTNAME',
            # general output keys
            'KW_VERSION', 'KW_PPVERSION', 'KW_DPRTYPE', 'KW_PID',
-           'KW_MID_OBS_TIME', 'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3',
+           'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3',
            'KW_DRS_QC', 'KW_DRS_QC_VAL', 'KW_DRS_QC_NAME', 'KW_DRS_QC_LOGIC',
            'KW_DRS_QC_PASS', 'KW_DATE_OBS', 'KW_OUTPUT',
            'KW_DRS_DATE', 'KW_C_FLIP', 'KW_C_CVRTE',
            'KW_C_RESIZE', 'KW_DRS_DATE_NOW', 'KW_C_FTYPE',
-           'KW_MID_OBS_TIME_METHOD',
+           'KW_MID_OBS_TIME', 'KW_MID_OBSTIME_METHOD',
            # calibration file header keys
            'KW_CDBDARK', 'KW_CDBBAD', 'KW_CDBBACK', 'KW_CDBORDP', 'KW_CDBLOCO',
            'KW_CDBSHAPEL', 'KW_CDBSHAPEDX', 'KW_CDBSHAPEDY', 'KW_CDBFLAT',
@@ -55,7 +55,7 @@ __all__ = [# input keys
            'KW_BERV_POS_SOURCE', 'KW_BERVLAT', 'KW_BERVLONG', 'KW_BERVALT',
            'KW_BERV', 'KW_BJD', 'KW_BERVMAX', 'KW_BERVSOURCE',
            'KW_BERV_EST', 'KW_BJD_EST', 'KW_BERVMAX_EST',
-           'KW_BERV_OBSTIME_METHOD', 'KW_BERV_OBSTIME',
+           'KW_BERV_OBSTIME', 'KW_BERV_OBSTIME_METHOD',
            'KW_BERVGAIA_ID', 'KW_FIBER', 'KW_BERVOBJNAME', 'KW_BERVRV',
            'KW_BERV_GAIA_GMAG', 'KW_BERV_GAIA_BPMAG', 'KW_BERV_GAIA_RPMAG',
            'KW_BERV_GAIA_MAGLIM', 'KW_BERV_GAIA_PLXLIM', 'KW_DBERV',
@@ -297,7 +297,7 @@ KW_DPRTYPE = Keyword('KW_DPRTYPE', key='', dtype=str, source=__NAME__)
 KW_MID_OBS_TIME = Keyword('KW_MID_OBS_TIME', key='', source=__NAME__)
 
 # Define the method by which the MJD was calculated
-KW_MID_OBS_TIME_METHOD = Keyword('KW_MID_OBS_TIME_METHOD', key='', dtype=str,
+KW_MID_OBSTIME_METHOD = Keyword('KW_MID_OBS_TIME_METHOD', key='', dtype=str,
                                  source=__NAME__)
 
 # -----------------------------------------------------------------------------
