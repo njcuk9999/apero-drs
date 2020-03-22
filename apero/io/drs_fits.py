@@ -955,7 +955,6 @@ def get_mid_obs_time(params, header, out_fmt=None, **kwargs):
         WLOG(params, 'error', TextEntry('00-001-00030', args=eargs))
 
 
-
 # =============================================================================
 # Worker functions
 # =============================================================================
