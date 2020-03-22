@@ -56,6 +56,7 @@ class Database():
         func_name = display_func(params, '__init__', __NAME__, 'Database')
         # set value from construction
         self.params = params
+        self.pconst = constants.pload(params['INSTRUMENT'])
         self.dbname = dbname
         # set column names
         if self.dbname == 'telluric':
@@ -75,6 +76,8 @@ class Database():
             self.key_col = None
             self.time_col = None
             self.file_col = None
+        # get master keys
+        self.master_keys = self.pconst.MASTER_DB_KEYS()
         # empty to fill later
         self.key_pos = None
         self.time_pos = None
@@ -245,8 +248,9 @@ class Database():
         func_name = display_func(self.params, 'get_entry', __NAME__, 'Database')
         # check that we have data
         self.check_read()
-        # read is master key
-        is_master = self.params.get('IS_MASTER', False)
+        # work out whether entry name is master key (in this case if there are
+        #   none older use closest)
+        is_master = entryname in self.master_keys
         # convert usetime to astropy.time
         if isinstance(usetime, Time):
             pass
