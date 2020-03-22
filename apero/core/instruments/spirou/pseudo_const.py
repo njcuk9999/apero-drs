@@ -361,7 +361,9 @@ class PseudoConstants(DefaultConstants):
         outputs['bervmaxest'] = ['BERV_MAX_EST', 'KW_BERVMAX_EST', 'header',
                                  float]
         outputs['dbervest'] = ['DBERV_EST', 'KW_DBERV_EST', 'header', float]
+        # add KW_MID_OBS_TIME as KW_BERV_OBSTIME
         outputs['obs_time'] = ['OBS_TIME', 'KW_BERV_OBSTIME', 'header', float]
+        # add KW_MID_OBSTIME_METHOD as KW_BERV_OBSTIME_METHOD
         outputs['obs_time_method'] = ['OBS_TIME_METHOD',
                                       'KW_BERV_OBSTIME_METHOD', 'header', str]
         # return outputs
@@ -412,8 +414,8 @@ def get_mid_obs_time(params, header):
     func_name = __NAME__ + '.get_mid_obs_time()'
     kwmidobstime = params['KW_MID_OBS_TIME'][0]
     kwmidcomment = params['KW_MID_OBS_TIME'][2]
-    kwmidmethod = params['KW_BERV_OBSTIME_METHOD'][0]
-    methodcomment = params['KW_BERV_OBSTIME_METHOD'][2]
+    kwmidmethod = params['KW_MID_OBSTIME_METHOD'][0]
+    methodcomment = params['KW_MID_OBSTIME_METHOD'][2]
 
     timefmt = params.instances['KW_MID_OBS_TIME'].datatype
     timetype = params.instances['KW_MID_OBS_TIME'].dataformat
