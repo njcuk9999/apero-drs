@@ -160,6 +160,8 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     # set DRS_GROUP
     recipe.drs_params.set('DRS_GROUP', drsgroup, source=func_name)
     recipe.drs_params.set('DRS_RECIPE_KIND', recipe.kind, source=func_name)
+    # set master
+    recipe.drs_params.set('IS_MASTER', recipe.master, source=func_name)
     # -------------------------------------------------------------------------
     # need to set debug mode now
     recipe = _set_debug_from_input(recipe, fkwargs)
