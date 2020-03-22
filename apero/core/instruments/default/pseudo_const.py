@@ -531,6 +531,13 @@ class PseudoConstants:
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
     # =========================================================================
+    # OTHER KEYS
+    # =========================================================================
+    def MASTER_DB_KEYS(self):
+        func_name = 'MASTER_DB_KEYS'
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+
+    # =========================================================================
     # PLOT SETTINGS
     # =========================================================================
     def FONT_DICT(self, params):

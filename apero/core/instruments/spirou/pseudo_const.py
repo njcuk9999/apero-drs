@@ -369,6 +369,15 @@ class PseudoConstants(DefaultConstants):
         # return outputs
         return outputs
 
+    # =========================================================================
+    # OTHER KEYS
+    # =========================================================================
+    def MASTER_DB_KEYS(self):
+        # define a list of database keys that are master files
+        keys = ['DARKM', 'FPMASTER', 'SHAPEX', 'SHAPEY', 'LEAKM',
+                'WAVEM', 'WAVEM_D']
+        # return keys
+        return keys
 
 # =============================================================================
 # Functions used by pseudo const (instrument specific)
