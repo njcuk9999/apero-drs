@@ -299,8 +299,8 @@ class Database():
                 mask2 = np.ones_like(r_entries['rtime'], dtype=bool)
             # return error if we found None
             elif np.sum(mask2) == 0:
-                eargs = [self.dbname, entryname, usetime.iso, self.abspath,
-                         func_name]
+                eargs = [self.dbname, entryname, ukeys, usetime.iso,
+                         self.abspath, func_name]
                 WLOG(self.params, 'error',
                      TextEntry('00-002-00006', args=eargs))
                 entries, r_entries = None, None
