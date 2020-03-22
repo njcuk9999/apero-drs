@@ -211,8 +211,8 @@ KW_MID_OBS_TIME.set(key='MJDMID', comment='Mid Observation time [mjd]',
                     datatype='mjd', dataformat=float)
 
 # Define the method by which the MJD was calculated
-KW_MID_OBS_TIME_METHOD = KW_MID_OBS_TIME_METHOD.copy(__NAME__)
-KW_MID_OBS_TIME_METHOD.set(key='MJDMIDMD',
+KW_MID_OBSTIME_METHOD = KW_MID_OBSTIME_METHOD.copy(__NAME__)
+KW_MID_OBSTIME_METHOD.set(key='MJDMIDMD',
                            comment='Mid Observation time calc method')
 
 # -----------------------------------------------------------------------------
