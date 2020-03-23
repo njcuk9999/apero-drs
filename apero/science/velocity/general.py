@@ -975,6 +975,9 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
     rvmax = pcheck(params, 'RVMAX', 'rvmax', kwargs, func_name, default=rvmax)
     # get the dimensions
     nbo, nbpix = image.shape
+    # get the min and max mask wavelengths
+    min_mask_wav = mp.nanmin(mask_centers)
+    max_mask_wav = mp.nanmax(mask_centers)
     # create a rv ccf range
     rv_ccf = np.arange(rvmin, rvmax, ccfstep)
     # storage of the ccf
@@ -1006,6 +1009,24 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         # ------------------------------------------------------------------
         # find any places in spectrum or blaze where pixel is NaN
         nanmask = np.isnan(sp_ord) | np.isnan(bl_ord)
+        # ------------------------------------------------------------------
+        # deal with there being no mask lines in order
+        mask_wave_mask = (wa_ord > min_mask_wav) & (wa_ord < max_mask_wav)
+        # deal with no valid lines
+        if np.sum(mask_wave_mask) == 0:
+            # log all NaN
+            wargs = [order_num, mp.nanmin(wa_ord), mp.nanmax(wa_ord),
+                     min_mask_wav, max_mask_wav]
+            WLOG(params, 'warning', TextEntry('10-020-00006', args=wargs))
+            # set all values to NaN
+            ccf_all.append(np.repeat(np.nan, len(rv_ccf)))
+            ccf_all_fit.append(np.repeat(np.nan, len(rv_ccf)))
+            ccf_all_results.append(np.repeat(np.nan, 4))
+            ccf_noise_all.append(np.repeat(np.nan, len(rv_ccf)))
+            ccf_lines.append(0)
+            ccf_all_snr.append(np.nan)
+            ccf_norm_all.append(np.nan)
+            continue
         # ------------------------------------------------------------------
         # deal with all nan
         if np.sum(nanmask) == nbpix:
