@@ -126,7 +126,7 @@ CALIB_DB_MATCH.value = 'older'
 
 # define the calibration database columns
 CALIB_DB_COLS = CALIB_DB_COLS.copy(__NAME__)
-CALIB_DB_COLS.value = 'key, nightname, filename, humantime, unixtime'
+CALIB_DB_COLS.value = 'key, master, nightname, filename, humantime, unixtime'
 # define the calibration database key column
 CALIB_DB_KEY_COL = CALIB_DB_KEY_COL.copy(__NAME__)
 CALIB_DB_KEY_COL.value = 'key'
