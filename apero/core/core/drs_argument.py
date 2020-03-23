@@ -1140,36 +1140,32 @@ class _IsMaster(DrsAction):
     def __init__(self, *args, **kwargs):
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(None, '__init__', __NAME__, '_IsMaster')
-        # define recipe as None (overwritten in __call__)
+        # set recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
         DrsAction.__init__(self, *args, **kwargs)
 
-    def _set_master(self, _):
+    def _set_master(self, value):
         # set function name (cannot break here --> no access to inputs)
-        func_name = display_func(self.recipe.drs_params, '_set_master',
-                                 __NAME__, '_IsMaster')
-        # debug message: setting program to: "strvalue"
-        dmsg = TextEntry('90-001-00033')
-        WLOG(self.recipe.drs_params, 'debug', dmsg)
-        # set DRS_DEBUG (must use the self version)
-        self.recipe.drs_params['IS_MASTER'] = True
-        self.recipe.drs_params.set_source('IS_MASTER', func_name)
-        self.recipe.drs_params.set_instance('IS_MASTER', None)
-        # return strvalue
-        return True
+        _ = display_func(self.recipe.drs_params, '_set_master',
+                         __NAME__, '_IsMaster')
+        # deal with unset value
+        if value is None:
+            return None
+        else:
+            return str(value)
 
     def __call__(self, parser, namespace, values, option_string=None):
-        # get recipe from parser
+        # get drs parameters
         self.recipe = parser.recipe
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
-                         '_IsMaster')
-        # check for help
-        # noinspection PyProtectedMember
-        parser._has_special()
-        # display version
-        value = self._set_master(values)
+        # display listing
+        if type(values) == list:
+            value = list(map(self._set_master, values))
+        else:
+            value = self._set_master(values)
+        # make sure value is not a list
+        if isinstance(value, list):
+            value = value[0]
         # Add the attribute
         setattr(namespace, self.dest, value)
 
@@ -2117,7 +2113,7 @@ def is_master(params):
     :rtype: OrderedDict
     """
     # set function name
-    _ = display_func(params, 'breakpoints', __NAME__)
+    _ = display_func(params, 'is_master', __NAME__)
     # get the help text dictionary
     htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set up an output storage dictionary
@@ -2129,7 +2125,7 @@ def is_master(params):
     # set the argument action function
     props['action'] = _IsMaster
     # set the number of argument to expect
-    props['nargs'] = 0
+    props['nargs'] = 1
     # set the help message
     props['help'] = htext['IS_MASTER_HELP']
     # return the argument dictionary
