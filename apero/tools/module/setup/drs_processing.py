@@ -960,7 +960,7 @@ def generate_ids(params, runtable, mod, rlist=None, **kwargs):
         # deal with passing master argument
         if input_recipe.master:
             dargs = [run_object.runstring, 'True']
-            run_object.runstring = '{0} --master=={1}'.format(*dargs)
+            run_object.runstring = '{0} --master={1}'.format(*dargs)
             run_object.update()
         # append to list
         if not skip:
