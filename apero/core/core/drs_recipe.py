@@ -322,6 +322,10 @@ class DrsRecipe(object):
                 psource = '{0} [{1}]'.format(func_name, kwarg.name)
                 input_parameters.set_source(kwarg.default_ref, psource)
         # ---------------------------------------------------------------------
+        if 'MASTER' in input_parameters:
+            if input_parameters['MASTER'] in ['True', 1, True]:
+                self.drs_params['IS_MASTER'] = True
+        # ---------------------------------------------------------------------
         # add to DRS parameters
         self.drs_params['INPUTS'] = input_parameters
         self.drs_params.set_source('INPUTS', func_name)
@@ -740,6 +744,9 @@ class DrsRecipe(object):
         # ---------------------------------------------------------------------
         # set ipython return functionality
         self._make_special(drs_argument.set_ipython_return, skip=False)
+        # ---------------------------------------------------------------------
+        # set is_master functionality
+        self._make_special(drs_argument.is_master, skip=False)
         # ---------------------------------------------------------------------
         # set breakpoint functionality
         self._make_special(drs_argument.breakpoints, skip=False)
