@@ -1035,9 +1035,6 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         # ------------------------------------------------------------------
         # set number of valid lines used to zero
         numlines = 0
-
-        # TODO: remove break point
-        constants.break_point(params)
         # loop around the rvs and calculate the CCF at this point
         part3 = spline_bl(mask_centers) * mask_weights
         for rv_element in range(len(rv_ccf)):
@@ -1048,7 +1045,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
             numlines = np.sum(spline_bl(wave_tmp) != 0)
             # CCF is the division of the sums
             with warnings.catch_warnings(record=True) as _:
-                ccf_ord[rv_element] = (part1 / part2) * part3
+                ccf_ord[rv_element] = mp.nansum((part1 / part2) * part3)
         # ------------------------------------------------------------------
         # deal with NaNs in ccf
         if np.sum(np.isnan(ccf_ord)) > 0:
