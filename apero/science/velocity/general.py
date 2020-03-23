@@ -1035,6 +1035,9 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         # ------------------------------------------------------------------
         # set number of valid lines used to zero
         numlines = 0
+
+        # TODO: remove break point
+        constants.break_point(params)
         # loop around the rvs and calculate the CCF at this point
         part3 = spline_bl(mask_centers) * mask_weights
         for rv_element in range(len(rv_ccf)):
