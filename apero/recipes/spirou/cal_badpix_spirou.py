@@ -131,6 +131,9 @@ def __main__(recipe, params):
         # get the number of files
         num_files = len(flatfiles)
 
+    # TODO: breakpoint
+    constants.break_point()
+
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
