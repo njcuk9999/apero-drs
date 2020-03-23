@@ -1136,6 +1136,40 @@ class _Breakfunc(DrsAction):
         setattr(namespace, self.dest, value)
 
 
+class _IsMaster(DrsAction):
+    def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, '_IsMaster')
+        # set recipe as None (overwritten in __call__)
+        self.recipe = None
+        # force super initialisation
+        DrsAction.__init__(self, *args, **kwargs)
+
+    def _set_master(self, value):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_set_master',
+                         __NAME__, '_IsMaster')
+        # deal with unset value
+        if value is None:
+            return None
+        else:
+            return str(value)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # get drs parameters
+        self.recipe = parser.recipe
+        # display listing
+        if type(values) == list:
+            value = list(map(self._set_master, values))
+        else:
+            value = self._set_master(values)
+        # make sure value is not a list
+        if isinstance(value, list):
+            value = value[0]
+        # Add the attribute
+        setattr(namespace, self.dest, value)
+
+
 class _SetQuiet(DrsAction):
     def __init__(self, *args, **kwargs):
         # set function name (cannot break here --> no access to inputs)
@@ -2064,6 +2098,36 @@ def breakpoints(params):
     props['nargs'] = 0
     # set the help message
     props['help'] = htext['BREAKPOINTS_HELP']
+    # return the argument dictionary
+    return props
+
+
+def is_master(params):
+    """
+    Make a custom special argument: Set the use of break_point
+
+    :param params: ParamDict, Parameter Dictionary of constants
+    :type params: ParamDict
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
+    """
+    # set function name
+    _ = display_func(params, 'breakpoints', __NAME__)
+    # get the help text dictionary
+    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # set up an output storage dictionary
+    props = OrderedDict()
+    # set the argument name
+    props['name'] = '--master'
+    # set any argument alternative names
+    props['altnames'] = []
+    # set the argument action function
+    props['action'] = _IsMaster
+    # set the number of argument to expect
+    props['nargs'] = 0
+    # set the help message
+    props['help'] = htext['IS_MASTER_HELP']
     # return the argument dictionary
     return props
 
