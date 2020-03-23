@@ -1652,7 +1652,7 @@ def _set_debug_from_input(recipe, fkwargs):
     """
     # set function name
     func_name = __NAME__ + '._set_debug_from_input()'
-
+    # set debug key
     debug_key = '--debug'
     # assume debug is not there
     debug_mode = None
