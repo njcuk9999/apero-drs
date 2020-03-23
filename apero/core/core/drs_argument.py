@@ -1079,7 +1079,7 @@ class _Breakpoints(DrsAction):
                                  __NAME__, '_Breakpoints')
         # debug message: setting program to: "strvalue"
         dmsg = TextEntry('90-001-00033')
-        WLOG(self.recipe.drs_params, 'debug', dmsg)
+        WLOG(self.recipe.drs_params, 'breakpoints', dmsg)
         # set DRS_DEBUG (must use the self version)
         self.recipe.drs_params['ALLOW_BREAKPOINTS'] = True
         self.recipe.drs_params.set_source('ALLOW_BREAKPOINTS', func_name)
@@ -1140,32 +1140,36 @@ class _IsMaster(DrsAction):
     def __init__(self, *args, **kwargs):
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(None, '__init__', __NAME__, '_IsMaster')
-        # set recipe as None (overwritten in __call__)
+        # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
         DrsAction.__init__(self, *args, **kwargs)
 
-    def _set_master(self, value):
+    def _set_master(self, _):
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '_set_master',
-                         __NAME__, '_IsMaster')
-        # deal with unset value
-        if value is None:
-            return None
-        else:
-            return str(value)
+        func_name = display_func(self.recipe.drs_params, '_set_master',
+                                 __NAME__, '_IsMaster')
+        # debug message: setting program to: "strvalue"
+        dmsg = TextEntry('90-001-00033')
+        WLOG(self.recipe.drs_params, 'is_master', dmsg)
+        # set DRS_DEBUG (must use the self version)
+        self.recipe.drs_params['IS_MASTER'] = True
+        self.recipe.drs_params.set_source('IS_MASTER', func_name)
+        self.recipe.drs_params.set_instance('IS_MASTER', None)
+        # return strvalue
+        return True
 
     def __call__(self, parser, namespace, values, option_string=None):
-        # get drs parameters
+        # get recipe from parser
         self.recipe = parser.recipe
-        # display listing
-        if type(values) == list:
-            value = list(map(self._set_master, values))
-        else:
-            value = self._set_master(values)
-        # make sure value is not a list
-        if isinstance(value, list):
-            value = value[0]
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         '_IsMaster')
+        # check for help
+        # noinspection PyProtectedMember
+        parser._has_special()
+        # display version
+        value = self._set_master(values)
         # Add the attribute
         setattr(namespace, self.dest, value)
 
