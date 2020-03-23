@@ -1041,7 +1041,6 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
             wave_tmp = mask_centers * wave_shifts[rv_element]
             part1 = spline_sp(wave_tmp) * mask_weights
             part2 = spline_bl(wave_tmp) * mask_weights
-
             numlines = np.sum(spline_bl(wave_tmp) != 0)
             # CCF is the division of the sums
             with warnings.catch_warnings(record=True) as _:
