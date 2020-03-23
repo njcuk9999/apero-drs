@@ -1079,7 +1079,7 @@ class _Breakpoints(DrsAction):
                                  __NAME__, '_Breakpoints')
         # debug message: setting program to: "strvalue"
         dmsg = TextEntry('90-001-00033')
-        WLOG(self.recipe.drs_params, 'breakpoints', dmsg)
+        WLOG(self.recipe.drs_params, 'debug', dmsg)
         # set DRS_DEBUG (must use the self version)
         self.recipe.drs_params['ALLOW_BREAKPOINTS'] = True
         self.recipe.drs_params.set_source('ALLOW_BREAKPOINTS', func_name)
@@ -1151,7 +1151,7 @@ class _IsMaster(DrsAction):
                                  __NAME__, '_IsMaster')
         # debug message: setting program to: "strvalue"
         dmsg = TextEntry('90-001-00033')
-        WLOG(self.recipe.drs_params, 'is_master', dmsg)
+        WLOG(self.recipe.drs_params, 'debug', dmsg)
         # set DRS_DEBUG (must use the self version)
         self.recipe.drs_params['IS_MASTER'] = True
         self.recipe.drs_params.set_source('IS_MASTER', func_name)
