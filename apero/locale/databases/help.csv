@@ -65,3 +65,4 @@
 "LOGSTAT_HELP_INSTRUMENT","HELP","","None","[STRING] The instrument to analyze","",""
 "LOGSTAT_HELP_KIND","HELP","","None","[STRING] The kind of logs to analyze","",""
 "LOGSTAT_HELP_NIGHTNAME","HELP","","None","[STRING] The directory/night name to rebuild for (default is to do all directories)","",""
+"IS_MASTER_HELP","HELP","","None","[BOOLEAN] If True recipe is a master recipe (e.g. master recipes write to calibration database as master calibrations)","",""
