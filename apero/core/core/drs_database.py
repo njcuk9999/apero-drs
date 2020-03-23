@@ -90,9 +90,9 @@ class Database():
         self.dbshort = _get_dbshort(self.params, self.dbname)
         self.outpath = _get_outpath(self.params, self.dbname)
         self.abspath = os.path.join(self.outpath, self.dbfile)
-        self.colnames = self.get_colnames()
+        self.get_colname_props()
 
-    def get_colnames(self):
+    def get_colname_props(self):
         """
         Get the column names using the database name (set in construction)
         :return:
@@ -116,8 +116,6 @@ class Database():
         self.key_pos = np.where(self.key_col == np.array(colnames))[0][0]
         self.time_pos = np.where(self.time_col == np.array(colnames))[0][0]
         self.file_pos = np.where(self.file_col == np.array(colnames))[0][0]
-        # set colnames
-        return colnames
 
     def check_read(self):
         if self.rdata is None:
@@ -266,7 +264,7 @@ class Database():
         elif np.sum(mask1) == 0:
             eargs = [self.dbname, entryname, ', '.join(ukeys), self.abspath,
                      func_name]
-            WLOG(self.params, 'error', TextEntry('00-002-00006', args=eargs))
+            WLOG(self.params, 'error', TextEntry('00-002-00015', args=eargs))
             entries, r_entries = None, None
         else:
             entries = self.data[mask1]
@@ -291,6 +289,8 @@ class Database():
         elif mode == 'older':
             # only keep those older than usetime
             mask2 = np.array(r_entries['rtime']) < usetime
+            # master entries are exempt from this time constraint
+            mask2 |= np.array(entries['master']).astype(bool)
             # if we have no rows we must report it
             if (np.sum(mask2) == 0) and not required:
                 return Table()
@@ -299,7 +299,7 @@ class Database():
                 mask2 = np.ones_like(r_entries['rtime'], dtype=bool)
             # return error if we found None
             elif np.sum(mask2) == 0:
-                eargs = [self.dbname, entryname, ukeys, usetime.iso,
+                eargs = [self.dbname, entryname, usetime.iso,
                          self.abspath, func_name]
                 WLOG(self.params, 'error',
                      TextEntry('00-002-00006', args=eargs))
@@ -558,6 +558,8 @@ def update_calibdb(params, dbname, dbkey, outfile, night=None, log=True):
         night = drs_log.find_param(params, 'NIGHTNAME', func=func_name)
     if night == '' or night is None:
         night = 'None'
+    # get whether recipe is master
+    is_master = params['IS_MASTER']
     # ----------------------------------------------------------------------
     # get the hdict
     hdict, header = _get_hdict(params, dbname, outfile)
@@ -571,11 +573,16 @@ def update_calibdb(params, dbname, dbkey, outfile, night=None, log=True):
     filename = str(outfile.basename).strip()
     human_time = str(header_time.iso).replace(' ', '_').strip()
     unix_time = str(header_time.unix).strip()
+    # get master key
+    if is_master:
+        master = '1'
+    else:
+        master = '0'
     # ----------------------------------------------------------------------
     # push into list
-    largs = [key, nightname, filename, human_time, unix_time]
+    largs = [key, master, nightname, filename, human_time, unix_time]
     # construct the line
-    line = '\n{0} {1} {2} {3} {4}'.format(*largs)
+    line = '\n{0} {1} {2} {3} {4} {5}'.format(*largs)
     # ----------------------------------------------------------------------
     # write to file
     _write_line_to_database(params, key, dbname, outfile, line, log)
@@ -584,6 +591,7 @@ def update_calibdb(params, dbname, dbkey, outfile, night=None, log=True):
 # =============================================================================
 # Define telluric database functions
 # =============================================================================
+# TODO: Redo to use Database class
 def update_telludb(params, dbname, dbkey, outfile, night=None, objname=None,
                    log=True):
     # set function name
