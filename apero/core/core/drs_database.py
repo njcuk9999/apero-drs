@@ -76,8 +76,6 @@ class Database():
             self.key_col = None
             self.time_col = None
             self.file_col = None
-        # get master keys
-        self.master_keys = self.pconst.MASTER_DB_KEYS()
         # empty to fill later
         self.key_pos = None
         self.time_pos = None
@@ -246,9 +244,6 @@ class Database():
         func_name = display_func(self.params, 'get_entry', __NAME__, 'Database')
         # check that we have data
         self.check_read()
-        # work out whether entry name is master key (in this case if there are
-        #   none older use closest)
-        is_master = entryname in self.master_keys
         # convert usetime to astropy.time
         if isinstance(usetime, Time):
             pass
@@ -294,9 +289,6 @@ class Database():
             # if we have no rows we must report it
             if (np.sum(mask2) == 0) and not required:
                 return Table()
-            # if it is a master sequences and we have none older use closest
-            if np.sum(mask2) == 0 and is_master:
-                mask2 = np.ones_like(r_entries['rtime'], dtype=bool)
             # return error if we found None
             elif np.sum(mask2) == 0:
                 eargs = [self.dbname, entryname, usetime.iso,
