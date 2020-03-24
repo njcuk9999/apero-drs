@@ -285,7 +285,9 @@ class Database():
             # only keep those older than usetime
             mask2 = np.array(r_entries['rtime']) < usetime
             # master entries are exempt from this time constraint
-            mask2 |= np.array(entries['master']).astype(bool)
+            #   don't do this for database that does not have a master column
+            if 'master' in entries:
+                mask2 |= np.array(entries['master']).astype(bool)
             # if we have no rows we must report it
             if (np.sum(mask2) == 0) and not required:
                 return Table()
