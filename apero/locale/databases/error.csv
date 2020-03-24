@@ -738,7 +738,7 @@
 "10-020-00003","WARNING","Means that the reference wave solution did not match the science wave solution in time","{0} = reference wave time; {1} = science wave time; {2} = reference wave file; {3} = science wave file","Reference wave solution time did not match science wave solution time. Using science wave solution for reference fiber. \n\t Reference wave time = {0}   science wave time = {1} \n\t Reference wave file: {2} \n\t Science wave file: {3}","",""
 "10-020-00004","WARNING","Means that whole order is full of NaNS so CCF will be NaN","{0} = order number","Order {0} has no finite values. CCF set to NaNs.","",""
 "10-020-00005","WARNING","Means that the CCF had NaNs in","{0} = order number","Order {0} CCF generated a non-finite value. CCF set to NaNs.","",""
-"10-020-00006","WARNING","Means that mask has no lines for this order","","Order {0} CCF mask for this order has no lines \n\t order wavelength: {1:.3f} to {2:.3f} \n\t mask wavelength: {3:.3f} to {4:.3f}","",""
+"10-020-00006","WARNING","Means that mask has no lines for this order","{0} = order number; {1} = minimum order wavelength; {1} = maximum order wavelength","Order {0} CCF mask for this order has no lines \n\t order wavelength: {1:.3f} to {2:.3f}","",""
 "","","","","","",""
 "10-021-00000","WARNING","User Polarimetry Warning","None","","",""
 "10-021-00001","ERROR","Means we could not extract exposure number out of CMMTSEQ","{0} = CMMTSEQ key; {1} =  value of cmmtseq key; {2} = filename","Could not extract exposure number from {0} \n\t {0} = {1} \n\t File = {2}","",""
