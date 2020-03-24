@@ -1248,7 +1248,7 @@ KW_WNT_REDCUT.set(key='WNTRDCUT', comment='wave night red cut off [nm] used',
 # size [nm] of the median bin of residuals for higher-order correction used
 #    in wave night
 KW_WNT_DWAVE_BIN = KW_WNT_DWAVE_BIN.copy(__NAME__)
-KW_WNT_DWAVE_BIN.set(key='WNTDWAVEB',
+KW_WNT_DWAVE_BIN.set(key='WNTDWAVB',
                      comment='wave night med bin of res for high ord corr used',
                      parent='WAVE_NIGHT_DWAVE_BIN', group='wave')
 
