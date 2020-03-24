@@ -975,9 +975,6 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
     rvmax = pcheck(params, 'RVMAX', 'rvmax', kwargs, func_name, default=rvmax)
     # get the dimensions
     nbo, nbpix = image.shape
-    # get the min and max mask wavelengths
-    min_mask_wav = mp.nanmin(mask_centers)
-    max_mask_wav = mp.nanmax(mask_centers)
     # create a rv ccf range
     rv_ccf = np.arange(rvmin, rvmax, ccfstep)
     # storage of the ccf
@@ -1002,7 +999,17 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         wa_ord = np.array(wavemap[order_num])
         sp_ord = np.array(image[order_num])
         bl_ord = np.array(blaze[order_num])
-
+        # get order mask centers and mask weights
+        min_ord_wav = mp.nanmin(wa_ord)
+        max_ord_wav = mp.nanmax(wa_ord)
+        # adjust for rv shifts
+        min_ord_wav = min_ord_wav * (1 + rvmin / speed_of_light)
+        max_ord_wav = max_ord_wav * (1 + rvmax / speed_of_light)
+        # mask the ccf mask by the order length
+        mask_wave_mask = (mask_centers > min_ord_wav)
+        mask_wave_mask &= (mask_centers < max_ord_wav)
+        omask_centers = mask_centers[mask_wave_mask]
+        omask_weights = mask_weights[mask_wave_mask]
         # normalize per-ord blaze to its peak value
         # this gets rid of the calibration lamp SED
         bl_ord /= np.nanpercentile(bl_ord, blaze_norm_percentile)
@@ -1010,13 +1017,10 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         # find any places in spectrum or blaze where pixel is NaN
         nanmask = np.isnan(sp_ord) | np.isnan(bl_ord)
         # ------------------------------------------------------------------
-        # deal with there being no mask lines in order
-        mask_wave_mask = (wa_ord > min_mask_wav) & (wa_ord < max_mask_wav)
         # deal with no valid lines
         if np.sum(mask_wave_mask) == 0:
             # log all NaN
-            wargs = [order_num, mp.nanmin(wa_ord), mp.nanmax(wa_ord),
-                     min_mask_wav, max_mask_wav]
+            wargs = [order_num, min_ord_wav, max_ord_wav]
             WLOG(params, 'warning', TextEntry('10-020-00006', args=wargs))
             # set all values to NaN
             ccf_all.append(np.repeat(np.nan, len(rv_ccf)))
@@ -1061,11 +1065,11 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         # set number of valid lines used to zero
         numlines = 0
         # loop around the rvs and calculate the CCF at this point
-        part3 = spline_bl(mask_centers) * mask_weights
+        part3 = spline_bl(omask_centers) * omask_weights
         for rv_element in range(len(rv_ccf)):
-            wave_tmp = mask_centers * wave_shifts[rv_element]
-            part1 = spline_sp(wave_tmp) * mask_weights
-            part2 = spline_bl(wave_tmp) * mask_weights
+            wave_tmp = omask_centers * wave_shifts[rv_element]
+            part1 = spline_sp(wave_tmp) * omask_weights
+            part2 = spline_bl(wave_tmp) * omask_weights
             numlines = np.sum(spline_bl(wave_tmp) != 0)
             # CCF is the division of the sums
             with warnings.catch_warnings(record=True) as _:
