@@ -297,9 +297,6 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None,
                 cprint('Response must be [Y]es or [N]o', 'y')
                 check = True
                 continue
-        # deal with everything else
-        else:
-            pass
         # deal with options
         if options is not None:
             # convert options to string
@@ -314,6 +311,8 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None,
                 optionstr = ' or '.join(np.array(options, dtype=str))
                 cprint('Response must be {0}'.format(optionstr), 'y')
                 check = True
+        else:
+            check = False
     # deal with path
     if dtype == 'path':
         if '.' not in uinput:
