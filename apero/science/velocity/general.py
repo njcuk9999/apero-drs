@@ -968,6 +968,8 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
     # get properties from params
     blaze_norm_percentile = pcheck(params, 'CCF_BLAZE_NORM_PERCENTILE',
                                    'blaze_norm_percentile', kwargs, func_name)
+    blaze_threshold = pcheck(params, 'WAVE_FP_BLAZE_THRES', 'blaze_threshold',
+                             kwargs, func_name)
     # get rvmin and rvmax
     rvmin = targetrv - ccfwidth
     rvmin = pcheck(params, 'RVMIN', 'rvmin', kwargs, func_name, default=rvmin)
@@ -999,9 +1001,11 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         wa_ord = np.array(wavemap[order_num])
         sp_ord = np.array(image[order_num])
         bl_ord = np.array(blaze[order_num])
+        # mask on the blaze
+        blazemask = bl_ord > blaze_threshold
         # get order mask centers and mask weights
-        min_ord_wav = mp.nanmin(wa_ord)
-        max_ord_wav = mp.nanmax(wa_ord)
+        min_ord_wav = mp.nanmin(wa_ord[blazemask])
+        max_ord_wav = mp.nanmax(wa_ord[blazemask])
         # adjust for rv shifts
         min_ord_wav = min_ord_wav * (1 + rvmin / speed_of_light)
         max_ord_wav = max_ord_wav * (1 + rvmax / speed_of_light)
