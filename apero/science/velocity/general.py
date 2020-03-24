@@ -1002,7 +1002,8 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         sp_ord = np.array(image[order_num])
         bl_ord = np.array(blaze[order_num])
         # mask on the blaze
-        blazemask = bl_ord > blaze_threshold
+        with warnings.catch_warnings(record=True) as _:
+            blazemask = bl_ord > blaze_threshold
         # get order mask centers and mask weights
         min_ord_wav = mp.nanmin(wa_ord[blazemask])
         max_ord_wav = mp.nanmax(wa_ord[blazemask])
