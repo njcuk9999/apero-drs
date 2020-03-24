@@ -1262,7 +1262,8 @@ full_run.add(cal_wave_night)
 # extract all OBJ_DARK and OBJ_FP
 full_run.add(cal_extract, name='EXTALL', files=[sf.pp_obj_dark, sf.pp_obj_fp])
 # correct leakage
-full_run.add(cal_leak, name='LEAKALL', files=[sf.pp_obj_fp])
+full_run.add(cal_leak, name='LEAKALL', files=[sf.out_ext_e2dsff],
+             fiber='AB', KW_DPRTYPE=['OBJ_FP'])
 # telluric recipes
 full_run.add(obj_mk_tellu_db, arguments=dict(cores='CORES'))
 full_run.add(obj_fit_tellu_db, arguments=dict(cores='CORES'))
@@ -1310,11 +1311,11 @@ limited_run.add(cal_extract, name='EXTOBJ', KW_OBJNAME='SCIENCE_TARGETS',
 
 # correct leakage for any telluric targets that are OBJ_FP
 limited_run.add(cal_leak, name='LEAKTELL', KW_OBJNAME='TELLURIC_TARGETS',
-                files=[sf.pp_obj_fp])
+                files=[sf.out_ext_e2dsff], fiber='AB', KW_DPRTYPE=['OBJ_FP'])
 
 # correct leakage for any science targets that are OBJ_FP
 limited_run.add(cal_leak, name='LEAKOBJ', KW_OBJNAME='SCIENCE_TARGETS',
-                files=[sf.pp_obj_fp])
+                files=[sf.out_ext_e2dsff], fiber='AB', KW_DPRTYPE=['OBJ_FP'])
 
 # telluric recipes
 # limited_run.add(obj_mk_tellu_db, arguments=dict(cores='CORES'))
@@ -1402,7 +1403,7 @@ tellu_run.add(cal_extract, name='EXTOBJ', KW_OBJNAME='TELLURIC_TARGETS',
               files=[sf.pp_obj_dark, sf.pp_obj_fp])
 # correct leakage for any telluric targets that are OBJ_FP
 tellu_run.add(cal_leak, name='LEAKTELL', KW_OBJNAME='TELLURIC_TARGETS',
-              files=[sf.pp_obj_fp])
+              files=[sf.out_ext_e2dsff], fiber='AB', KW_DPRTYPE=['OBJ_FP'])
 # other telluric recipes
 tellu_run.add(obj_mk_tellu, name='MKTELLU1', KW_OBJNAME='TELLURIC_TARGETS',
               files=[sf.out_ext_e2dsff], fiber='AB',
@@ -1427,7 +1428,7 @@ science_run.add(cal_extract, name='EXTOBJ', KW_OBJNAME='SCIENCE_TARGETS',
                 files=[sf.pp_obj_dark, sf.pp_obj_fp])
 # correct leakage for any science targets that are OBJ_FP
 science_run.add(cal_leak, name='LEAKOBJ', KW_OBJNAME='SCIENCE_TARGETS',
-                files=[sf.pp_obj_fp])
+                files=[sf.out_ext_e2dsff], fiber='AB', KW_DPRTYPE=['OBJ_FP'])
 science_run.add(obj_fit_tellu, name='FTELLU1', KW_OBJNAME='SCIENCE_TARGETS',
                 files=[sf.out_ext_e2dsff], fiber='AB',
                 KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
