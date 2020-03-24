@@ -1485,11 +1485,8 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             wmsg = 'ID{0:05d}| {1}'.format(priority, run_item.runstring)
         # deal with a test run
         if params['TEST_RUN']:
-            # log which core is being used (only if using multiple cores)
-            if cores > 1:
-                WLOG(params, 'info', wmsg, colour='magenta', wrap=False)
-            else:
-                WLOG(params, 'info', wmsg, colour='magenta', wrap=False)
+            # log which core is being used
+            WLOG(params, 'info', 'T' + wmsg, colour='magenta', wrap=False)
             # add default outputs
             pp['ERROR'] = []
             pp['WARNING'] = []
