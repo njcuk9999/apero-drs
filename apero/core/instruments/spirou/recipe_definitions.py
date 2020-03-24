@@ -574,7 +574,7 @@ cal_leak.shortname = 'LEAK'
 cal_leak.instrument = __INSTRUMENT__
 cal_leak.outputdir = 'reduced'
 cal_leak.inputdir = 'reduced'
-cal_leak.intputtype = 'e2ds'
+cal_leak.intputtype = 'reduced'
 cal_leak.extension = 'fits'
 cal_leak.description = Help['LEAK_DESC']
 cal_leak.epilog = Help['LEAK_EXAMPLE']
@@ -1317,8 +1317,8 @@ limited_run.add(cal_leak, name='LEAKOBJ', KW_OBJNAME='SCIENCE_TARGETS',
                 files=[sf.pp_obj_fp])
 
 # telluric recipes
-limited_run.add(obj_mk_tellu_db, arguments=dict(cores='CORES'))
-limited_run.add(obj_fit_tellu_db, arguments=dict(cores='CORES'))
+# limited_run.add(obj_mk_tellu_db, arguments=dict(cores='CORES'))
+# limited_run.add(obj_fit_tellu_db, arguments=dict(cores='CORES'))
 
 # other telluric recipes
 limited_run.add(obj_mk_tellu, name='MKTELLU1', KW_OBJNAME='TELLURIC_TARGETS',
