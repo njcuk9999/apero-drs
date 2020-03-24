@@ -484,7 +484,7 @@ def read_runfile(params, runfile, **kwargs):
     if 'TEST' in params['INPUTS']:
         test = params['INPUTS']['TEST']
         if test not in ['', 'None', None]:
-            if test.upper() in [True, 'True', '1', 1]:
+            if test in [True, 'True', 'TRUE', '1', 1]:
                 params['TEST_RUN'] = True
             else:
                 params['TEST_RUN'] = False
