@@ -571,7 +571,6 @@ recipes.append(cal_leak_master)
 cal_leak = DrsRecipe(__INSTRUMENT__)
 cal_leak.name = 'cal_leak_spirou.py'
 cal_leak.shortname = 'LEAK'
-cal_leak.master = True
 cal_leak.instrument = __INSTRUMENT__
 cal_leak.outputdir = 'reduced'
 cal_leak.inputdir = 'reduced'
