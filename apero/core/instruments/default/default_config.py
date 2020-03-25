@@ -28,10 +28,11 @@ __all__ = [  # global settings
     # DRS INDEXING SETTINGS
     'DRS_INDEX_FILE', 'DRS_INDEX_FILENAME',
     # DATABASE SETTINGS
-    'DB_MAX_WAIT', 'LOCKOPEN_MAX_WAIT', 'TELLU_DB_NAME', 'CALIB_DB_NAME',
-    'CALIB_DB_MATCH', 'CALIB_DB_COLS', 'CALIB_DB_KEY_COL',
-    'CALIB_DB_TIME_COL', 'CALIB_DB_FILE_COL', 'TELLU_DB_COLS',
-    'TELLU_DB_KEY_COL', 'TELLU_DB_TIME_COL', 'TELLU_DB_FILE_COL',
+    'DB_MAX_WAIT', 'DB_MATCH', 'LOCKOPEN_MAX_WAIT', 'TELLU_DB_NAME',
+    'CALIB_DB_NAME', 'CALIB_DB_MATCH', 'CALIB_DB_COLS', 'CALIB_DB_KEY_COL',
+    'CALIB_DB_TIME_COL', 'CALIB_DB_FILE_COL',
+    'TELLU_DB_MATCH', 'TELLU_DB_COLS', 'TELLU_DB_KEY_COL', 'TELLU_DB_TIME_COL',
+    'TELLU_DB_FILE_COL',
     # DISPLAY/LOGGING SETTINGS
     'DRS_PRINT_LEVEL', 'DRS_LOG_LEVEL', 'DRS_COLOURED_LOG', 'DRS_THEME',
     'DRS_MAX_IO_DISPLAY_LIMIT', 'DRS_HEADER', 'DRS_LOG_CAUGHT_WARNINGS',
@@ -299,6 +300,18 @@ cgroup = 'DATABASE SETTINGS'
 DB_MAX_WAIT = Const('DB_MAX_WAIT', dtype=int, value=600, minimum=1,
                     source=__NAME__, group=cgroup)
 
+#   Define the match type for database files
+#         match = 'older'  when more than one file for each key will
+#                          select the newest file that is OLDER than
+#                          time in fitsfilename
+#         match = 'closest'  when more than on efile for each key will
+#                            select the file that is closest to time in
+#                            fitsfilename
+#    if two files match with keys and time the key lower in the
+#         calibDB file will be used
+DB_MATCH = Const('DB_MATCH', dtype=str, source=__NAME__,
+                 value='closest', group=cgroup)
+
 # file max wait
 LOCKOPEN_MAX_WAIT = Const('LOCKOPEN_MAX_WAIT', dtype=int, value=600, minimum=1,
                           source=__NAME__, group=cgroup)
@@ -334,6 +347,18 @@ CALIB_DB_TIME_COL = Const('CALIB_DB_TIME_COL', dtype=str, source=__NAME__,
 # define the calibration database filename column
 CALIB_DB_FILE_COL = Const('CALIB_DB_FILE_COL', dtype=str, source=__NAME__,
                           group=cgroup)
+
+#   Define the match type for telluDB files
+#         match = 'older'  when more than one file for each key will
+#                          select the newest file that is OLDER than
+#                          time in fitsfilename
+#         match = 'closest'  when more than on efile for each key will
+#                            select the file that is closest to time in
+#                            fitsfilename
+#    if two files match with keys and time the key lower in the
+#         calibDB file will be used
+TELLU_DB_MATCH = Const('TELLU_DB_MATCH', dtype=str, source=__NAME__,
+                       value='closest', group=cgroup)
 
 # define the telluric database columns (must contain "key")
 TELLU_DB_COLS = Const('TELLU_DB_COLS', dtype=str, source=__NAME__,
