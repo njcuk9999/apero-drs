@@ -678,7 +678,7 @@ def correct_dark_fp(params, extractdict, **kwargs):
                 # correct for the flat (in E2DS case) - master is E2DSFF
                 scale = scale * flat[order_num]
                 # apply leakage scaling
-                extimage = extimage - scale
+                extimage[order_num] = extimage[order_num] - scale
                 # calculate the ratio of the leakage
                 rpart1 = np.nanpercentile(refimage[order_num], norm_percentile)
                 rpart2 = mp.nanmedian(extimage[order_num])
