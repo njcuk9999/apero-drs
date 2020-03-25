@@ -137,6 +137,18 @@ CALIB_DB_TIME_COL.value = 'unixtime'
 CALIB_DB_FILE_COL = CALIB_DB_FILE_COL.copy(__NAME__)
 CALIB_DB_FILE_COL.value = 'filename'
 
+#   Define the match type for calibDB files
+#         match = 'older'  when more than one file for each key will
+#                          select the newest file that is OLDER than
+#                          time in fitsfilename
+#         match = 'closest'  when more than on efile for each key will
+#                            select the file that is closest to time in
+#                            fitsfilename
+#    if two files match with keys and time the key lower in the
+#         calibDB file will be used
+TELLU_DB_MATCH = TELLU_DB_MATCH.copy(__NAME__)
+TELLU_DB_MATCH.value = 'closest'
+
 # define the telluric database columns (must contain "key")
 TELLU_DB_COLS = TELLU_DB_COLS.copy(__NAME__)
 TELLU_DB_COLS.value = 'key, nightname, filename, humantime, unixtime, objname'
