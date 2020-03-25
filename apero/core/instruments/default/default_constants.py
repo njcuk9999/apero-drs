@@ -1,5 +1,6 @@
 # This is the main config file
 from apero.core.constants import constant_functions
+import numpy as np
 
 # =============================================================================
 # Define variables
@@ -196,7 +197,7 @@ __all__ = [
     'MKTEMPLATE_E2DS_ITNUM', 'MKTEMPLATE_E2DS_LOWF_SIZE',
     'MKTEMPLATE_S1D_ITNUM', 'MKTEMPLATE_S1D_LOWF_SIZE',
     # ccf constants
-    'CCF_MASK_PATH', 'CCF_MASK_MIN_WEIGHT', 'CCF_MASK_WIDTH',
+    'CCF_MASK_PATH', 'CCF_NO_RV_VAL', 'CCF_MASK_MIN_WEIGHT', 'CCF_MASK_WIDTH',
     'CCF_N_ORD_MAX', 'CCF_DEFAULT_MASK', 'CCF_MASK_UNITS', 'CCF_MASK_FMT',
     'CCF_DEFAULT_WIDTH', 'CCF_DEFAULT_STEP', 'CCF_ALLOWED_DPRTYPES',
     'CCF_CORRECT_TELLU_TYPES', 'CCF_TELLU_THRES', 'CCF_FILL_NAN_KERN_SIZE',
@@ -2264,6 +2265,10 @@ cgroup = 'CALIBRATION: CCF SETTINGS'
 # Define the ccf mask path
 CCF_MASK_PATH = Const('CCF_MASK_PATH', value=None, dtype=str, source=__NAME__,
                       group=cgroup)
+
+# Define the null value for CCF (only change if changing code)
+CCF_NO_RV_VAL = Const('CCF_NO_RV_VAL', value=np.nan, dtype=float,
+                      source=__NAME__, group=cgroup)
 
 # Define the default CCF MASK to use
 CCF_DEFAULT_MASK = Const('CCF_DEFAULT_MASK', value=None, dtype=str,
