@@ -1012,7 +1012,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
     # noinspection PyBroadException
     try:
         # try loading from file
-        abso = np.load(abso_npy.filename)
+        abso = np.load(abso_npy.filename, allow_pickle=True)
         # log that we have loaded abso from file
         wargs = [abso_npy.filename]
         WLOG(params, '', TextEntry('40-019-00012', args=wargs))
@@ -2966,7 +2966,10 @@ def _remove_absonpy_files(params, path, prefix):
             # debug log removal of other abso files
             WLOG(params, 'debug', TextEntry('90-019-00002', args=[abspath]))
             # remove file
-            os.remove(abspath)
+            try:
+                os.remove(abspath)
+            except Exception as _:
+                pass
 
 
 def _wave_to_wave(params, spectrum, wave1, wave2, reshape=False):
