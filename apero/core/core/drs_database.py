@@ -442,7 +442,13 @@ def get_key_from_db(params, key, database, header, n_ent=1, required=True,
     # ----------------------------------------------------------------------
     # deal with no mode set (assume from calibDB)
     if mode is None:
-        mode = pcheck(params, 'CALIB_DB_MATCH', 'mode', kwargs, func_name)
+
+        if database.dbname == 'telluric':
+            mode = pcheck(params, 'TELLU_DB_MATCH', 'mode', kwargs, func_name)
+        elif database.dbname == 'calibration':
+            mode = pcheck(params, 'CALIB_DB_MATCH', 'mode', kwargs, func_name)
+        else:
+            mode = pcheck(params, 'DB_MATCH', 'mode', kwargs, func_name)
     # debug print mode using
     dargs = [mode, func_name]
     WLOG(params, 'debug', TextEntry('90-002-00002', args=dargs))
@@ -515,7 +521,7 @@ def get_db_file(params, abspath, ext=0, fmt='fits', kind='image',
     # ------------------------------------------------------------------
     # deal with npy files
     if abspath.endswith('.npy'):
-        image = np.load(abspath)
+        image = np.load(abspath, allow_pickle=True)
         return image, None
     # ------------------------------------------------------------------
     # get db fits file
