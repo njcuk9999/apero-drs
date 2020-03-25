@@ -290,7 +290,7 @@ class Database():
             mask2 = np.array(r_entries['rtime']) < usetime
             # master entries are exempt from this time constraint
             #   don't do this for database that does not have a master column
-            if 'master' in entries:
+            if 'master' in entries.colnames:
                 mask2 |= np.array(entries['master']).astype(bool)
             # if we have no rows we must report it
             if (np.sum(mask2) == 0) and not required:
