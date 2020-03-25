@@ -314,13 +314,25 @@ class Lock:
                 if abspath == self.lockpath:
                     continue
                 # remove file
-                os.remove(abspath)
-        # now remove directory
+                try:
+                    os.remove(abspath)
+                except Exception as e:
+                    # log warning for error
+                    eargs = [abspath, type(e), str(e)]
+                    emsg = TextEntry('10-101-00006', args=eargs)
+                    WLOG(self.params, 'warning', emsg)
+        # now remove directory (if possible)
         if os.path.exists(self.path):
             # do not remove lock path (used by other processes)
             if self.path != self.lockpath:
                 # remove path
-                os.removedirs(self.path)
+                try:
+                    os.removedirs(self.path)
+                except Exception as e:
+                    # log warning for error
+                    eargs = [self.path, type(e), str(e)]
+                    emsg = TextEntry('10-101-00005', args=eargs)
+                    WLOG(self.params, 'warning', emsg)
 
 
 def synchronized(lock, name):
