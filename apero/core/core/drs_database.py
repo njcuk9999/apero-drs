@@ -240,6 +240,10 @@ class Database():
         :param required:
         :return:
         """
+        # TODO: Remove break point
+        if entryname == 'SHAPEX':
+            constants.break_point(self.params)
+
         # set function name
         func_name = display_func(self.params, 'get_entry', __NAME__, 'Database')
         # check that we have data
