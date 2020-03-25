@@ -637,7 +637,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     # TODO: eventually this should come from object database (so that each
     # TODO: object has a constant target rv
     # need to deal with no target rv step
-    if targetrv in ['None', None, '']:
+    if np.isnan(targetrv):
         targetrv = infile.get_key('KW_INPUTRV', required=False, dtype=float)
         # set target rv to zero if we don't have a value
         if targetrv is None:
