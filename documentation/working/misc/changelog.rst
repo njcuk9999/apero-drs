@@ -2,6 +2,176 @@ Changelog
 =========
 
 
+0.6.059 (2020-03-25)
+--------------------
+- `Core.core.drs_database.py` - fix typo master in entries --> master in
+  entries.colnames. [Neil Cook]
+- `Core.core.drs_database.py` - add break point to test database error.
+  [njcuk9999]
+- `Science.extract.general.py` - correct leakage correction (extimage -->
+  `extimage[order_num])` [njcuk9999]
+- `Science.velocity.general.py` - add breakpoint to test error.
+  [njcuk9999]
+- `Science.velocity.general.py` - null value of targetrv is not NaN - if
+  so deal with it. [njcuk9999]
+- `Core.instruments.spirou.recipe_definitions.py` - change `default_ref` of
+  ccf to `CCF_NO_RV_VAL`. [njcuk9999]
+- `Core.instruments.default.default_constants.py` - add `CCF_NO_RV_VAL` (set
+  to np.nan) [njcuk9999]
+- Update language database. [njcuk9999]
+- `Io.drs_lock.py` - add exceptions and warnings for os.remove and
+  os.removedirs (should not crash in lock) [njcuk9999]
+- `Core.instruments.spirou.recipe_definitions.py` - change ccf --rv
+  default from None to 'None' [njcuk9999]
+- `Core.instruments.*.default_config.py` - add `TELLU_DB_MATCH` and
+  `DB_MATCH`. [njcuk9999]
+- `Core.core.drs_file.py` `locale.core.drs_text.py` and
+  `science.telluric.general.py` - allow np.load to have `allow_pickle`.
+  [njcuk9999]
+- `Core.core.drs_database.py` - add a different db match for telluric and
+  calibration database. [njcuk9999]
+
+
+0.6.058 (2020-03-24)
+--------------------
+- `Tools.module.setup.drs_processing.py` - correct test for `TEST_RUN`.
+  [njcuk9999]
+- `Tools.recipes.bin.apero_processing.py` - add breakpoint. [njcuk9999]
+- `Tools.recipes.bin.apero_processing.py` - remove breakpoint. [njcuk9999]
+- `Core.instruments.spirou.recipe_definitions.py` - update leak files in
+  sequences (should be e2dsff fiber AB) [njcuk9999]
+- `Tools.module.setup.drs_processing.py` - change message when just a
+  test. [njcuk9999]
+- `Recipes.bin.apero_processing.py` - add breakpoint to test leakage
+  error. [njcuk9999]
+- `Core.instruments.spirou.recipe_definitions.py` - change `cal_leak`
+  inputtype e2ds --> reduced. [njcuk9999]
+- `Core.core.drs_database.py` - 'master' should only be used for databases
+  with 'master' column. [njcuk9999]
+- Data.spirou.reset.runs - update run.ini files. [njcuk9999]
+- `Tools.module.setup.drs_processing.py` - do not check for master if
+  recipe is None. [njcuk9999]
+- `Science.velocity.general.py` - add warning to suppress warning about
+  NaNs in greater than mask. [njcuk9999]
+- `Science.velocity.general.py` - add threshold for the blaze. [Neil Cook]
+- Update language database. [njcuk9999]
+- `Science.velocity.general.py` - mask `mask_centers` and `mask_weights` to
+  just fall in the order in question. [njcuk9999]
+- `Core.instruments.*.default_keywords.py` - change WNTDWAVEB -->
+  WNTDWAVB. [njcuk9999]
+- `Cal_wave_night_spirou.py` - add breakpoint to investigate bug.
+  [njcuk9999]
+- `Core.instruemnts.spirou.recipe_defintions.py` - `cal_leak` should not be
+  a master recipe. [njcuk9999]
+
+
+0.6.057 (2020-03-24)
+--------------------
+- Apero.tools.module.setup and `setup/*.py` - add newprofile script to add
+  a new profile quickly (copy of currently in use) [njcuk9999]
+- `Science.velocity.general.py` - need to set ccf to NaN if mask has no
+  values for this order. [njcuk9999]
+- Update language database. [njcuk9999]
+- `Science.velocity.general.py` - add breakpoint to test error.
+  [njcuk9999]
+- `Science.velocity.general.py` - add a nansum to `ccf_ord`. [njcuk9999]
+- `Science.velocity.general.py` - add a nansum to `ccf_ord`. [njcuk9999]
+- `Science.velocity.general.py` - add break point. [njcuk9999]
+- `Recipes.spirou.cal_badpix_spirou.py` - remove breakpoint in `cal_badpix`.
+  [njcuk9999]
+- `Tools.module.setup.drs_processing.py` - correct --master   ==True -->
+  True. [njcuk9999]
+- `Tools.module.setup.drs_processing.py` - add --master=True. [njcuk9999]
+- `Core.core.drs_argument.py` -  --master now has to be True or False.
+  [njcuk9999]
+- `Core.core.drs_argument.py` - correct wlog type (should be debug)
+  [njcuk9999]
+- Update language database. [njcuk9999]
+- `Core.core.drs_argument.py` - update `_IsMaster` function (no arguments)
+  [njcuk9999]
+- `Tools.module.setup.drs_processing.py` - change master arg to have no
+  arguments. [njcuk9999]
+- `Tools.module.setup.drs_processing.py` - add push to add --master arg
+  for master recipes. [njcuk9999]
+- `Recipes.spirou.cal_badpix_spirou.py` - add break point (to test)
+  [njcuk9999]
+- Update language database. [njcuk9999]
+- `Core.core.drs_startup.py` - add comment for `debug_key`. [njcuk9999]
+- `Core.core.drs_recipe.py` - get master from `input_parameters` and update
+  `'IS_MASTER`' if True. [njcuk9999]
+- `Core.core.drs_database.py` - remove `is_master` from database `get_entry`,
+  now modify mask2 (always keep master calibrations) [njcuk9999]
+- `Core.core.drs_argument.py` - add `is_master` argument (make any recipe a
+  master) [njcuk9999]
+- Update language database. [njcuk9999]
+- `Data.*.reset.calibdb.master_calib_*.txt` - add master column to default
+  master db files. [njcuk9999]
+- `Core.instruments.*.default_config.py` - add column to `calib_db_cols`
+  (master) [njcuk9999]
+- `Core.core.drs_database.py` - add column to calibration database
+  (master) and if recipe is master except from "older" [njcuk9999]
+
+
+0.6.056 (2020-03-22)
+--------------------
+- `Core.instruments.spirou.file_defintions.py` - save badpix from dark not
+  flat. [njcuk9999]
+- Update language database. [njcuk9999]
+- `Core.core.drs_database.py` - correct error message 00-002-00006.
+  [njcuk9999]
+- `Core.instruments.*.pseudo_const.py` - add `MASTER_DB_KEYS` function.
+  [njcuk9999]
+- `Core.drs_database.py` - get master keys from pseudo consts. [njcuk9999]
+- `Core.core.drs_startup.py` - add a `IS_MASTER` key to params (True when
+  recipe is a master recipe) [njcuk9999]
+- `Core.core.drs_database.py` - if database case = 'older' and we have a
+  master but no older use closest. [njcuk9999]
+
+
+0.6.055 (2020-03-22)
+--------------------
+- `Io.drs_fits.py` - pep8 change. [njcuk9999]
+- `Core.instruemnts.*.pseduo_const.py` - BERV outputs should use BERV key
+  (make it clear) [njcuk9999]
+- `Core.instruments.*.default_keywords.py` - update `KW_MID_OBSTIME_METHOD`
+  (more consistent) [njcuk9999]
+- `Core.core.drs_recipe.py` - only check required for dtype = file/files.
+  [njcuk9999]
+- `Core.core.drs_argument.py` - DrsArgument required is True by default
+  for args and False by default for kwargs. [njcuk9999]
+- `Core.instruments.*.pseudo_const.py` - correct typo need first element
+  in list (not the list itself) [njcuk9999]
+- `Core.instruments.*.pseudo_const.py` - correct typo `KW_OBNAME` ->
+  `KW_OBJNAME`. [njcuk9999]
+- .gitignore - ignore all python files in tools. [njcuk9999]
+- `Tools.module.setup.drs_processing.py` - fix nightname needed for non-
+  trigger run. [njcuk9999]
+- Data.spirou.rset.runs - update run.ini files with leakage codes.
+  [njcuk9999]
+- `Core.instruments.spirou.recipe_defintions.py` - update the sequences
+  with leakage codes. [njcuk9999]
+- `Data.spirou.reset.calibdb.master_calib_SPIROU.txt` - add default leak
+  master files to calibDB (only to use when we don't have any files)
+  [njcuk9999]
+- Data.spirou.ccf - add new masks from Andres. [njcuk9999]
+- Data.reset.calibdb - add `MASTER_LEAK` files. [njcuk9999]
+- `Science.velocity.general.py` - deal with unset targetrv (input target
+  rv for ccf) - if unset try to get key from header - else set it to
+  zero. [njcuk9999]
+- `Core.instruments.spirou.recipe_definitions.py` - change the default
+  value of --rv (for ccf) to None (i.e. unset) [njcuk9999]
+- `Core.instruments.spirou.default_constants.py` - change default mask to
+  `masque_sept18_andres_trans50.mas`. [njcuk9999]
+- `Core.instruments.*.default_config.py` - change `CALIB_DB_MATCH` to
+  'older' - no matter where on a night we are it should always use
+  calibrations before. [njcuk9999]
+- `Core.instruments.*.pseduo_const.py` - add fix for object name having
+  spaces (#Issue 598) -- now have key DRSOBJN. [njcuk9999]
+- `Core.instruments.*.default_keywords.py` - add OBJECTNAME and change
+  OBJNAME to DRSOBJN (new keyword just for drs) [njcuk9999]
+- Update date/version/changelog/documentation. [Neil Cook]
+
+
 0.6.054 (2020-03-10)
 --------------------
 - `Sciecne.extract.general.py` - continue adding leak functionality. [Neil
