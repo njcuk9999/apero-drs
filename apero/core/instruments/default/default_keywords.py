@@ -123,6 +123,7 @@ __all__ = [# input keys
            'KW_FTELLU_IM_PX_SIZE', 'KW_FTELLU_FIT_ITERS', 'KW_FTELLU_RECON_LIM',
            'KW_FTELLU_AMP_PC', 'KW_FTELLU_DVTELL1', 'KW_FTELLU_DVTELL2',
            'KW_FTELLU_TAU_H2O', 'KW_FTELLU_TAU_REST', 'KW_FTELLU_ABSO_PREFIX',
+           'KW_FTELLU_TEMPLATE',
            # make template values
            'KW_MKTEMP_SNR_ORDER', 'KW_MKTEMP_SNR_THRES',
            # ccf values
@@ -1167,6 +1168,10 @@ KW_FTELLU_FIT_ITERS = Keyword('KW_FTELLU_FIT_ITERS', key='', dtype=int,
 # the log limit in minimum absorption used
 KW_FTELLU_RECON_LIM = Keyword('KW_FTELLU_RECON_LIM', key='', dtype=float,
                               source=__NAME__)
+
+# the template that was used (or None if not used)
+KW_FTELLU_TEMPLATE = Keyword('KW_FTELLU_TEMPLATE', key='', dtype=str,
+                             source=__NAME__)
 
 # Telluric principle component amplitudes (for use with 1D list)
 KW_FTELLU_AMP_PC = Keyword('KW_FTELLU_AMP_PC', key='', dtype=float,
