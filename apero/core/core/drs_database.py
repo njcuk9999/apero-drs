@@ -21,6 +21,7 @@ from apero.core import constants
 from apero import locale
 from apero.io import drs_lock
 from apero.io import drs_fits
+from apero.io import drs_path
 from apero.io import drs_table
 from apero.core.core import drs_log
 
@@ -525,7 +526,7 @@ def get_db_file(params, abspath, ext=0, fmt='fits', kind='image',
     # ------------------------------------------------------------------
     # deal with npy files
     if abspath.endswith('.npy'):
-        image = np.load(abspath, allow_pickle=True)
+        image = drs_path.numpy_load(abspath)
         return image, None
     # ------------------------------------------------------------------
     # get db fits file

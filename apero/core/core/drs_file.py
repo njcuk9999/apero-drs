@@ -22,6 +22,7 @@ from apero.core import constants
 from apero.core import math as mp
 from apero.locale import drs_text
 from apero.io import drs_fits
+from apero.io import drs_path
 from apero.io import drs_strings
 
 # =============================================================================
@@ -2618,7 +2619,7 @@ class DrsNpyFile(DrsInputFile):
         if self.filename is not None:
             try:
                 # read file
-                self.data = np.load(self.filename, allow_pickle=True)
+                self.data = drs_path(self.filename)
             except Exception as e:
                 eargs = [type(e), e, self.filename, func_name]
                 WLOG(params, 'error', TextEntry('00-008-00018', args=eargs))
