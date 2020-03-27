@@ -2619,7 +2619,7 @@ class DrsNpyFile(DrsInputFile):
         if self.filename is not None:
             try:
                 # read file
-                self.data = drs_path(self.filename)
+                self.data = drs_path.numpy_load(self.filename)
             except Exception as e:
                 eargs = [type(e), e, self.filename, func_name]
                 WLOG(params, 'error', TextEntry('00-008-00018', args=eargs))
