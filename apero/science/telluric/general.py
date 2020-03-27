@@ -2312,7 +2312,7 @@ def fit_tellu_quality_control(params, infile, **kwargs):
 
 def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
                               nprops, wprops, pca_props, sprops, cprops,
-                              qc_params, **kwargs):
+                              qc_params, tfile, **kwargs):
     func_name = __NAME__ + '.fit_tellu_write_corrected()'
     # get parameters from params
     abso_prefix_kws = pcheck(params, 'KW_FTELLU_ABSO_PREFIX', 'abso_prefix_kws',
@@ -2366,6 +2366,10 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     corrfile.add_hkey('KW_FTELLU_IM_PX_SIZE', value=cprops['IMAGE_PIXEL_SIZE'])
     corrfile.add_hkey('KW_FTELLU_FIT_ITERS', value=cprops['FIT_ITERATIONS'])
     corrfile.add_hkey('KW_FTELLU_RECON_LIM', value=cprops['RECON_LIMIT'])
+    if tfile is None:
+        corrfile.add_hkey('KW_FTELLU_TEMP', value='None')
+    else:
+        corrfile.add_hkey('KW_FTELLU_TEMP', value=os.path.basename(tfile))
     # ----------------------------------------------------------------------
     # add the amplitudes (and derivatives)
     if add_deriv_pc:
