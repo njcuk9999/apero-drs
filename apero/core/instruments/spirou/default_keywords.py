@@ -1449,8 +1449,7 @@ KW_FTELLU_RECON_LIM.set(key='FTTRCLIM',
 
 # the template that was used (or None if not used)
 KW_FTELLU_TEMPLATE = KW_FTELLU_TEMPLATE.copy(__NAME__)
-KW_FTELLU_TEMPLATEKW_FTELLU_TEMPLATE.set(key='FTTTEMPL',
-                   comment='ftellu template used for sed')
+KW_FTELLU_TEMPLATE.set(key='FTTTEMPL', comment='ftellu template used for sed')
 
 # Telluric principle component amplitudes (for use with 1D list)
 KW_FTELLU_AMP_PC = KW_FTELLU_AMP_PC.copy(__NAME__)
