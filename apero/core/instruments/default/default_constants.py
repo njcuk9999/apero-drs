@@ -204,6 +204,7 @@ __all__ = [
     'CCF_FILL_NAN_KERN_RES', 'CCF_DET_NOISE', 'CCF_FIT_TYPE',
     'CCF_NOISE_SIGDET', 'CCF_NOISE_BOXSIZE', 'CCF_NOISE_THRES',
     'CCF_MAX_CCF_WID_STEP_RATIO', 'CCF_BLAZE_NORM_PERCENTILE',
+    'CCF_OBJRV_NULL_VAL',
     # polar constants
     'POLAR_VALID_FIBERS', 'POLAR_VALID_STOKES', 'POLAR_METHOD',
     'POLAR_CONT_BINSIZE', 'POLAR_CONT_OVERLAP', 'POLAR_CONT_TELLMASK_LOWER',
@@ -2266,9 +2267,13 @@ cgroup = 'CALIBRATION: CCF SETTINGS'
 CCF_MASK_PATH = Const('CCF_MASK_PATH', value=None, dtype=str, source=__NAME__,
                       group=cgroup)
 
-# Define the null value for CCF (only change if changing code)
+# Define target rv the null value for CCF (only change if changing code)
 CCF_NO_RV_VAL = Const('CCF_NO_RV_VAL', value=np.nan, dtype=float,
                       source=__NAME__, group=cgroup)
+
+# Define target rv header null value
+CCF_OBJRV_NULL_VAL = Const('CCF_OBJRV_NULL_VAL', value=-9999.99, dtype=float,
+                           source=__NAME__, group=cgroup)
 
 # Define the default CCF MASK to use
 CCF_DEFAULT_MASK = Const('CCF_DEFAULT_MASK', value=None, dtype=str,

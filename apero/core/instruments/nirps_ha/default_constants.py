@@ -1847,6 +1847,10 @@ CCF_MASK_MIN_WEIGHT.value = 0.0
 CCF_MASK_WIDTH = CCF_MASK_WIDTH.copy(__NAME__)
 CCF_MASK_WIDTH.value = 1.7
 
+# Define target rv header null value
+CCF_OBJRV_NULL_VAL = CCF_OBJRV_NULL_VAL.copy(__NAME__)
+CCF_OBJRV_NULL_VAL.value = -9999.99
+
 #  Define the maximum allowed ratio between input CCF STEP and CCF WIDTH
 #     i.e. error will be generated if CCF_STEP > (CCF_WIDTH / RATIO)
 CCF_MAX_CCF_WID_STEP_RATIO = CCF_MAX_CCF_WID_STEP_RATIO.copy(__NAME__)
