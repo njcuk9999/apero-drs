@@ -624,7 +624,8 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
                      func_name)
     image_pixel_size = pcheck(params, 'IMAGE_PIXEL_SIZE', 'image_pixel_size',
                               kwargs, func_name)
-
+    null_targetrv = pcheck(params, 'CCF_OBJRV_NULL_VAL', 'null_targetrv',
+                           kwargs, func_name)
     maxwsr = pcheck(params, 'CCF_MAX_CCF_WID_STEP_RATIO', 'maxwsr', kwargs,
                     func_name)
     # get image size
@@ -641,6 +642,12 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
         targetrv = infile.get_key('KW_INPUTRV', required=False, dtype=float)
         # set target rv to zero if we don't have a value
         if targetrv is None:
+            wargs = [params['KW_INPUTRV'][0], infile.filename]
+            WLOG(params, 'warning', TextEntry('09-020-00006', args=wargs))
+            targetrv = 0.0
+        elif targetrv == null_targetrv:
+            wargs = [params['KW_INPUTRV'][0], null_targetrv, infile.filename]
+            WLOG(params, 'warning', TextEntry('09-020-00007', args=wargs))
             targetrv = 0.0
     # ----------------------------------------------------------------------
     # need to deal with mask coming from inputs
