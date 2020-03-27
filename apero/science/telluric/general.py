@@ -1012,7 +1012,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
     # noinspection PyBroadException
     try:
         # try loading from file
-        abso = np.load(abso_npy.filename, allow_pickle=True)
+        abso = drs_path.numpy_load(abso_npy.filename)
         # log that we have loaded abso from file
         wargs = [abso_npy.filename]
         WLOG(params, '', TextEntry('40-019-00012', args=wargs))

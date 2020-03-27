@@ -247,6 +247,30 @@ def copyfile(params, src, dst, log=True):
         WLOG(params, 'error', TextEntry('00-004-00005', args=eargs))
 
 
+def numpy_load(filename):
+    # set function name
+    func_name = __NAME__ + '.numpy_load()'
+    # try the original load function
+    try:
+        return np.load(filename)
+    except Exception as _:
+        pass
+    # try the load with pickle allowed
+    try:
+        return np.load(filename, allow_pickle=True)
+    except Exception as _:
+        pass
+    # try the load, loading as a string first
+    try:
+        return np.load(open(filename, 'rb'))
+    except Exception as _:
+        pass
+    # if we have got to here we cannot load filename
+    eargs = [filename, func_name]
+    emsg = 'NumpyLoad: Cannot load filename={0} \n\t Funcion = {1}'
+    raise ValueError(emsg.format(*eargs))
+
+
 # =============================================================================
 # Start of code
 # =============================================================================
