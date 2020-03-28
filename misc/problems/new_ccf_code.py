@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 # if all files copied to same directory set these to ''
 # WORKSPACE1 = ''
 # WORKSPACE2 = ''
+# these files are on cook@nb19
 WORKSPACE1 = '/scratch3/rali/spirou/mini_data/reduced/2019-04-20/'
 WORKSPACE2 = '/scratch3/rali/drs/apero-drs/apero/data/spirou/ccf/'
 # build file paths
