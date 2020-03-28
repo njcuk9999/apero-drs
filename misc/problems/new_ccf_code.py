@@ -303,7 +303,7 @@ if __name__ == '__main__':
     # get input telluric corrected file and header
     image, header = fits.getdata(IN_FILE, header=True)
     blaze = fits.getdata(BLAZE_FILE)
-    masktable = Table.read(MASK_FILE)
+    masktable = Table.read(MASK_FILE, format='ascii')
     wave = fits.getdata(WAVE_FILE)
     # --------------------------------------------------------------------------
     # get berv from header
