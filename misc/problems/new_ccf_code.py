@@ -28,6 +28,7 @@ WAVE_FILE = os.path.join(WORKSPACE1,
 # variables (from constants)
 MASK_WIDTH = 1.7
 MASK_MIN_WEIGHT = 0.0
+MASK_COLS = ['ll_mask_s', 'll_mask_e', 'w_mask']
 CCF_STEP = 0.5
 CCF_WIDTH = 300
 CCF_RV_NULL = -9999.99
@@ -43,6 +44,17 @@ SPEED_OF_LIGHT = 299792.458
 # =============================================================================
 # Define functions
 # =============================================================================
+def read_mask():
+    table = Table.read(MASK_FILE, format='ascii')
+    # get column names
+    oldcols = list(table.colnames)
+    # rename columns
+    for c_it, col in enumerate(MASK_COLS):
+        table[oldcols[c_it]].name = col
+    # return table
+    return table
+
+
 def get_mask(table, mask_width, mask_min, mask_units='nm'):
     ll_mask_e = np.array(table['ll_mask_e']).astype(float)
     ll_mask_s = np.array(table['ll_mask_s']).astype(float)
@@ -303,7 +315,7 @@ if __name__ == '__main__':
     # get input telluric corrected file and header
     image, header = fits.getdata(IN_FILE, header=True)
     blaze = fits.getdata(BLAZE_FILE)
-    masktable = Table.read(MASK_FILE, format='ascii')
+    masktable = read_mask()
     wave = fits.getdata(WAVE_FILE)
     # --------------------------------------------------------------------------
     # get berv from header
@@ -522,6 +534,7 @@ if __name__ == '__main__':
     # --------------------------------------------------------------------------
     # log the stats
     wargs = [ccf_contrast, float(mean_ccf_coeffs[1]), rv_noise, ccf_fwhm]
+    print('MEAN CCF:')
     print('\tCorrelation: C={0:1f}[%] RV={1:.5f}[km/s] RV_NOISE={2:.5f}[km/s] '
           'FWHM={3:.4f}[km/s]'.format(*wargs))
     # --------------------------------------------------------------------------
@@ -544,21 +557,26 @@ if __name__ == '__main__':
 
     # --------------------------------------------------------------------------
     # plot grid of ccfs
-    fig1, frames = plt.subplots(ncols=7, nrows=7)
+    plt.close()
+    fig1, frames = plt.subplots(ncols=7, nrows=7, figsize=(30, 30))
     for order_num in range(nbo):
         i, j = order_num // 7, order_num % 7
-        frames[i][j].plot(props['RV_CCF'], props['CCF'][order_num], color='b',
-                          marker='+', linestyle='None')
+        frames[i][j].plot(props['RV_CCF'], props['CCF'][order_num], color='b')
         frames[i][j].plot(props['RV_CCF'], props['CCF_FIT'][order_num],
                           color='r',)
-        frames[i][j].set_title('Order {0}'.format(order_num))
+        frames[i][j].text(0.5, 0.8, 'Order {0}'.format(order_num),
+                          horizontalalignment='center',
+                          transform=frames[i][j].transAxes)
+
+    fig1.subplots_adjust(wspace=0.2, hspace=0.2, top=0.95, bottom=0.05,
+                         left=0.05, right=0.95)
 
     # plot mean ccf and fit
     fig2, frame = plt.subplots(ncols=1, nrows=1)
     frame.plot(props['RV_CCF'], props['MEAN_CCF'], color='b', marker='+',
-               linestlye='None')
+               ls='None')
     frame.plot(props['RV_CCF'], props['MEAN_CCF_FIT'], color='r')
-    frame.set_title('Mean CCF')
+    frame.set_title('Mean CCF   RV = {0} km/s'.format(props['MEAN_RV']))
 
     # show plots
     plt.show()
