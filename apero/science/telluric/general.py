@@ -2367,9 +2367,9 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     corrfile.add_hkey('KW_FTELLU_FIT_ITERS', value=cprops['FIT_ITERATIONS'])
     corrfile.add_hkey('KW_FTELLU_RECON_LIM', value=cprops['RECON_LIMIT'])
     if tfile is None:
-        corrfile.add_hkey('KW_FTELLU_TEMP', value='None')
+        corrfile.add_hkey('KW_FTELLU_TEMPLATE', value='None')
     else:
-        corrfile.add_hkey('KW_FTELLU_TEMP', value=os.path.basename(tfile))
+        corrfile.add_hkey('KW_FTELLU_TEMPLATE', value=os.path.basename(tfile))
     # ----------------------------------------------------------------------
     # add the amplitudes (and derivatives)
     if add_deriv_pc:
