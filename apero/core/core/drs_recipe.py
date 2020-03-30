@@ -838,9 +838,9 @@ class DrsRecipe(object):
             dmsg += TextEntry('')
             WLOG(params, 'debug', dmsg, wrap=False)
             if return_error:
-                return True, directory, None
+                return True, os.path.abspath(directory), None
             else:
-                return False, directory
+                return False, os.path.abspath(directory)
         # ---------------------------------------------------------------------
         # step 2: check if directory is in input directory
         input_dir = self.get_input_dir()
@@ -850,9 +850,9 @@ class DrsRecipe(object):
             dmsg += TextEntry('')
             WLOG(params, 'debug', dmsg, wrap=False)
             if return_error:
-                return True, test_path, None
+                return True, os.path.abspath(test_path), None
             else:
-                return True, test_path
+                return True, os.path.abspath(test_path)
         # ---------------------------------------------------------------------
         # else deal with errors
         eargs = [argname, directory, test_path]
@@ -1815,7 +1815,7 @@ def _check_arg_path(params, arg, directory):
     func_name = display_func(params, '_check_arg_path', __NAME__)
     # set the path as directory if arg.path is None
     if arg.path is None:
-        return directory
+        return os.path.abspath(directory)
     # deal with arg.path being a link to a constant
     if arg.path in params:
         path = params[arg.path]
@@ -1828,6 +1828,8 @@ def _check_arg_path(params, arg, directory):
         package = params['DRS_PACKAGE']
         # get absolute path
         path = constants.get_relative_folder(package, path)
+    # make path absolute
+    path = os.path.abspath(path)
     # now check that path is valid
     if not os.path.exists(path):
         # log that arg path was wrong
