@@ -1009,6 +1009,12 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         wa_ord = np.array(wavemap[order_num])
         sp_ord = np.array(image[order_num])
         bl_ord = np.array(blaze[order_num])
+
+        # normalize per-ord blaze to its peak value
+        # this gets rid of the calibration lamp SED
+        bl_ord /= np.nanpercentile(bl_ord, blaze_norm_percentile)
+        # change NaNs in blaze to zeros
+        bl_ord[~np.isfinite(bl_ord)] = 0.0
         # mask on the blaze
         with warnings.catch_warnings(record=True) as _:
             blazemask = bl_ord > blaze_threshold
@@ -1016,16 +1022,14 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         min_ord_wav = mp.nanmin(wa_ord[blazemask])
         max_ord_wav = mp.nanmax(wa_ord[blazemask])
         # adjust for rv shifts
-        min_ord_wav = min_ord_wav * (1 + rvmin / speed_of_light)
-        max_ord_wav = max_ord_wav * (1 + rvmax / speed_of_light)
+        min_ord_wav = min_ord_wav * (1 - rvmin / speed_of_light)
+        max_ord_wav = max_ord_wav * (1 - rvmax / speed_of_light)
         # mask the ccf mask by the order length
         mask_wave_mask = (mask_centers > min_ord_wav)
         mask_wave_mask &= (mask_centers < max_ord_wav)
         omask_centers = mask_centers[mask_wave_mask]
         omask_weights = mask_weights[mask_wave_mask]
-        # normalize per-ord blaze to its peak value
-        # this gets rid of the calibration lamp SED
-        bl_ord /= np.nanpercentile(bl_ord, blaze_norm_percentile)
+
         # ------------------------------------------------------------------
         # find any places in spectrum or blaze where pixel is NaN
         nanmask = np.isnan(sp_ord) | np.isnan(bl_ord)
@@ -1063,11 +1067,12 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         # set the spectrum or blaze NaN pixels to zero (dealt with by divide)
         sp_ord[nanmask] = 0
         bl_ord[nanmask] = 0
+        # now every value that is zero is masked (we don't want to spline these)
+        good = (sp_ord != 0) & (bl_ord != 0)
         # ------------------------------------------------------------------
         # spline the spectrum and the blaze
-        # TODO make it tidy with the blaze
-        spline_sp = mp.iuv_spline(wa_ord, sp_ord, k=5, ext=1)
-        spline_bl = mp.iuv_spline(wa_ord, bl_ord, k=5, ext=1)
+        spline_sp = mp.iuv_spline(wa_ord[good], sp_ord[good], k=5, ext=1)
+        spline_bl = mp.iuv_spline(wa_ord[good], bl_ord[good], k=5, ext=1)
         # ------------------------------------------------------------------
         # set up the ccf for this order
         ccf_ord = np.zeros_like(rv_ccf)
@@ -1078,15 +1083,16 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         # set number of valid lines used to zero
         numlines = 0
         # loop around the rvs and calculate the CCF at this point
-        part3 = spline_bl(omask_centers) * omask_weights
+        part3 = spline_bl(omask_centers)
         for rv_element in range(len(rv_ccf)):
             wave_tmp = omask_centers * wave_shifts[rv_element]
-            part1 = spline_sp(wave_tmp) * omask_weights
-            part2 = spline_bl(wave_tmp) * omask_weights
+            part1 = spline_sp(wave_tmp)
+            part2 = spline_bl(wave_tmp)
             numlines = np.sum(spline_bl(wave_tmp) != 0)
             # CCF is the division of the sums
             with warnings.catch_warnings(record=True) as _:
-                ccf_ord[rv_element] = mp.nansum((part1 / part2) * part3)
+                ccf_element = ((part1 * part3) / part2) * omask_weights
+                ccf_ord[rv_element] = mp.nansum(ccf_element)
         # ------------------------------------------------------------------
         # deal with NaNs in ccf
         if np.sum(np.isnan(ccf_ord)) > 0:
