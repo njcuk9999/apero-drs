@@ -120,6 +120,10 @@ DRS_DATA_MSG = Const('DRS_DATA_MSG', dtype='path', source=__NAME__, user=True,
                      description='Define the directory that the log messages '
                                  'are stored in')
 
+#   Define the full data message path (set after group name known)
+DRS_DATA_MSG_FULL = Const('DRS_DATA_MSG_FULL', dtype='path', source=__NAME__,
+                          user=False, group=cgroup, value=None)
+
 #   Define the working directory
 DRS_DATA_WORKING = Const('DRS_DATA_WORKING', dtype='path', source=__NAME__,
                          user=True, active=True, group=cgroup,
@@ -202,6 +206,19 @@ ALLOW_BREAKPOINTS = Const('ALLOW_BREAKPOINTS', value=False, dtype=bool,
 DRS_INSTRUMENTS = Const('DRS_INSTRUMENTS',
                         value=['SPIROU', 'NIRPS_HA'],
                         dtype=list, source=__NAME__, group=cgroup)
+
+# The group this target is set as (set in drs_setup)
+DRS_GROUP = Const('DRS_GROUP', value=None, dtype=str, source=__NAME__,
+                  group=cgroup)
+
+# The recipe kind that this parameter dictionary is associated with
+DRS_RECIPE_KIND = Const('DRS_RECIPE_KIND', value=None, dtype=str,
+                        source=__NAME__, group=cgroup)
+
+# Flag for master recipe associated with this param set
+IS_MASTER = Const('IS_MASTER', value=False, dtype=bool, source=__NAME__,
+                  group=cgroup)
+
 
 # =============================================================================
 # Instrument/Observatory Constants
