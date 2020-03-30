@@ -70,7 +70,8 @@ SPECIAL_LIST_KEYS = ['SCIENCE_TARGETS', 'TELLURIC_TARGETS']
 # Define Recipe Classes
 # =============================================================================
 class DrsRecipe(object):
-    def __init__(self, instrument=None, name=None, filemod=None):
+    def __init__(self, instrument=None, name=None, filemod=None,
+                 params=None):
         """
         Create a DRS Recipe object
 
@@ -90,6 +91,15 @@ class DrsRecipe(object):
             self.name = str(name)
         # set drs file module related to this recipe
         self.filemod = filemod
+        # get drs parameters
+        if params is None:
+            self.drs_params = ParamDict()
+        # most the time params should not be set here
+        else:
+            self.drs_params = params
+            if self.instrument is None:
+                self.instrument = params['INSTRUMENT']
+
         # set filters
         self.filters = dict()
         self.master = False
@@ -121,8 +131,6 @@ class DrsRecipe(object):
         self.arg_list = []
         self.str_arg_list = None
         self.used_command = []
-        # get drs parameters
-        self.drs_params = ParamDict()
         self.drs_pconstant = None
         self.textdict = None
         self.helptext = None
@@ -1243,6 +1251,13 @@ class DrsRunSequence(object):
 
 class DrsRecipeException(Exception):
     pass
+
+
+# =============================================================================
+# Define file check functions
+# =============================================================================
+def make_default_recipe(params=None, name=None):
+    return DrsRecipe(params=params, name=name)
 
 
 # =============================================================================
