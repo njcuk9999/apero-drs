@@ -230,9 +230,6 @@ class DrsRecipe(object):
             eargs = [sys.argv, type(sys.argv), func_name]
             WLOG(drs_params, 'error', TextEntry('00-006-00013', args=eargs))
         # ---------------------------------------------------------------------
-        # TODO: remove break point
-        constants.break_point()
-        # ---------------------------------------------------------------------
         # get params
         try:
             params = vars(parser.parse_args(args=self.str_arg_list))

@@ -1849,6 +1849,13 @@ def get_uncommon_path(path1, path2):
     """
     # set function name (cannot break here --> no access to params)
     _ = display_func(None, 'get_uncommon_path', __NAME__)
+
+    print('path2: {0}'.format(path2))
+    print('path1: {0}'.format(path1))
+
+    # TODO: remove break point
+    constants.break_point()
+
     # get common path
     common = os.path.commonpath([path2, path1]) + os.sep
     # return the non-common part of the path
