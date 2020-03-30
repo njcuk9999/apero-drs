@@ -233,6 +233,8 @@ class DrsRecipe(object):
         # deal with a absolute path as a first argument
         if self.str_arg_list is not None and len(self.str_arg_list) > 0:
             self.str_arg_list[0] = os.path.basename(self.str_arg_list[0])
+        if sys.argv is not None and len(sys.argv) > 0:
+            sys.argv[0] = os.path.basename(sys.argv[0])
         # ---------------------------------------------------------------------
         # get params
         try:
