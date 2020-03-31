@@ -10,6 +10,7 @@ Created on 2020-02-28 at 16:47
 @author: cook
 """
 import numpy as np
+import warnings
 
 from apero import core
 from apero import locale
@@ -260,16 +261,28 @@ def __main__(recipe, params):
     pwave_map = inverse.simage_to_drs(params, swave_map, shapex2, shapey)
     # for tellu image
     WLOG(params, '', 'De-straightening tellu image')
-    ptellu_map = inverse.simage_to_drs(stellu_map, shapex2, shapey)
+    ptellu_map = inverse.simage_to_drs(params, stellu_map, shapex2, shapey)
 
+    # ----------------------------------------------------------------------
+    # Make the exposure time mask
+    # ----------------------------------------------------------------------
+    # get limits for the mask
+    # TODO: move to constants
+    min_lambda = params['EXPMETER_MIN_LAMBDA'] = 1478.7
+    max_lambda = params['EXPMETER_MAX_LAMBDA'] = 1823.1
+    tell_thres = params['EXPMETER_TELLU_THRES'] = 0.95
+    # save masks
+    with warnings.catch_warnings(record=True) as _:
+        mask1 = pwave_map > min_lambda
+        mask2 = pwave_map < max_lambda
+        mask3 = ptellu_map > tell_thres
 
+    # combined mask
+    mask = mask1 & mask2 & mask3
 
+    # TODO: rotate mask (pp --> raw)
 
-
-
-
-
-
+    # TODO: save output mask (pp and raw)
 
     # ----------------------------------------------------------------------
     # End of main code
