@@ -42,93 +42,6 @@ Help = locale.drs_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
 # =============================================================================
 # Define functions
 # =============================================================================
-def map_image(params, image, lprops):
-
-    # get pconst
-    pconst = constants.pload(params['INSTRUMENT'])
-    # get shape from image
-    nbxpix = 4096
-    nbypix = 4096
-    nbo = 49
-    fibers = ['A', 'B', 'C']
-    # define the shape of the image
-    ishape = (nbypix, nbxpix)
-    # get center and width coefficients
-    ccoeffs = lprops['CENTERS']
-    wcoeffs = lprops['WIDTHS']
-
-    # TODO: add tmp file loading (if we have one)
-
-    # construct a NaN filled image for output
-    orderimage = np.repeat([-1], np.product(ishape)).reshape(ishape)
-    suborderimage = np.repeat([-1], np.product(ishape)).reshape(ishape)
-    fiberimage = np.repeat(['00'], np.product(ishape)).reshape(ishape)
-    # get the indices locations
-    yimage, ximage = np.indices(ishape)
-    # loop around number of orders
-    for order_num in range(nbo):
-        # loop around orders
-        for fiber in fibers:
-            # get the fiber we should use for localisation
-            usefiber = pconst.FIBER_LOC_TYPES(fiber)
-            # get the coefficents and number of orders
-            acc, nbof = pconst.FIBER_LOC_COEFF_EXT(ccoeffs[usefiber], fiber)
-            ass = wcoeffs[usefiber]
-            # get central positions
-            cfit = np.polyval(acc[order_num], ximage)
-            wfit = np.polyval(ass[order_num], ximage)
-            # define the upper an dlower bounds of this order
-            upper = cfit + wfit / 2
-            lower = cfit + wfit / 2
-            # define the mask of the pixels in this order
-            mask = (yimage < upper) & (yimage > lower)
-            # create the order image
-            orderimage[mask] = order_num
-            fiberimage[mask] = fiber
-
-            # TODO: Question: do we need sub order image?
-
-    # TODO: add saving map images
-
-    # return the map images
-    return orderimage, suborderimage, fiberimage
-
-
-def construct_waveimage(params, image, wprops, lprops, fiberimage):
-
-    # get pconst
-    pconst = constants.pload(params['INSTRUMENT'])
-    # get shape from image
-    nbxpix = 4096
-    nbypix = 4096
-    nbo = 49
-    fibers = ['A', 'B', 'C']
-
-    # construct a NaN filled image for output
-    waveimage = np.repeat([np.nan], np.product(nbypix, nbxpix))
-    waveimage = waveimage.reshape((nbypix, nbxpix))
-    # get the indices locations
-    yimage, ximage = np.indices((nbypix, nbxpix))
-    # loop around number of orders
-    for order_num in range(nbo):
-
-        # loop around orders
-        for fiber in fibers:
-            # get the fiber we should use for localisation
-            usefiber = pconst.FIBER_LOC_TYPES(fiber)
-            # get the coefficents and number of orders
-            acc, nbof = pconst.FIBER_LOC_COEFF_EXT(lprops[usefiber], fiber)
-
-
-            # mask for this order
-            fibermask = fiberimage == fiber
-            # positions where fibermask
-            fiberypos, fiberxpos = np.where(fibermask)
-
-
-
-
-
 def calc_central_localisation(params, recipe, fiber):
 
     # get locofile (remove when we have a header)
@@ -178,6 +91,24 @@ def e2ds_to_simage(e2ds, xpixels, ypixels, centers, widths,
     return simage
 
 
+def simage_to_drs(simage, shapex2, shapey):
+    pimage = shape.ea_transform(params, simage, dymap=-shapey)
+    pimage = shape.ea_transform(params, pimage, dxmap=-shapex2)
+    return pimage
+
+
+def drs_to_pp(params, image):
+    outmap = np.zeros((4096, 4096))
+    ylow, yhigh = params['IMAGE_Y_LOW'], params['IMAGE_Y_HIGH']
+    xlow, xhigh = params['IMAGE_X_LOW'], params['IMAGE_X_HIGH']
+    # add map to pp out map
+    outmap[ylow:yhigh, xlow:xhigh] = image
+    # now flip it
+    outmap = outmap[::-1, ::-1]
+    # return outmap
+    return outmap
+
+
 # =============================================================================
 # Start of code
 # =============================================================================
@@ -188,8 +119,8 @@ if __name__ == "__main__":
     from apero.core import constants
     # TEST
     from astropy.io import fits
-    workspace = '/scratch3/rali/spirou/mini_data_closest_20200328/calibDB/'
-    workspace1 = '/scratch3/rali/spirou/mini_data_closest_20200328/reduced/2019-04-20/'
+    workspace = '/scratch3/rali/spirou/mini_data/calibDB/'
+    workspace1 = '/scratch3/rali/spirou/mini_data/reduced/2019-04-20/'
     locofileAB = workspace + '2019-04-20_2400399f_pp_loco_AB.fits'
     locofileC = workspace + '2019-04-20_2400550f_pp_loco_C.fits'
     shapex = fits.getdata(workspace + '2019-04-20_2400409a_pp_shapex.fits')
@@ -200,6 +131,8 @@ if __name__ == "__main__":
     fpA = fits.getdata(workspace1 + '2400565a_pp_e2dsff_A.fits')
     fpB = fits.getdata(workspace1 + '2400565a_pp_e2dsff_B.fits')
     fpC = fits.getdata(workspace1 + '2400565a_pp_e2dsff_C.fits')
+    orderpAB = fits.getdata(workspace + '2019-04-20_2400399f_pp_order_profile_AB.fits')
+    orderpC = fits.getdata(workspace + '2019-04-20_2400394f_pp_order_profile_C.fits')
 
     locofiles = dict(A=locofileAB, B=locofileAB, C=locofileC)
     fpfiles = dict(A=fpA, B=fpB, C=fpC)
@@ -212,6 +145,11 @@ if __name__ == "__main__":
     recipe = drs_recipe.make_default_recipe(params, name='test')
     ishape = (nbypix, nbxpix)
     eshape = (nbo, nbxpix)
+
+
+    # transform the shape maps
+    shapex2 = shape.ea_transform(params, shapex, dymap=-shapey)
+
     # get the x and y position images
     yimage, ximage = np.indices(ishape)
 
@@ -250,27 +188,44 @@ if __name__ == "__main__":
         # get straighted fp image
         print('\t Getting fp map')
         sfp_map = e2ds_to_simage(fpfiles[fiber], ximage, yimage, cents, wids,
-                                 fill=np.nan, simage=sfp_map)
+                                 fill=0.0, simage=sfp_map)
+
     # --------------------------------------------------------------------------
     # shift by shape
     # --------------------------------------------------------------------------
     print('MAP --> IMAGE')
     # get shifted order map
     print('\tshifting order map')
-    porder_map = shape.ea_transform(params, sorder_map, dxmap=-shapex,
-                                    dymap=-shapey)
+    porder_map = simage_to_drs(sorder_map, shapex2, shapey)
+
     # get shifted position map
     print('\tshifting x map')
-    px_map = shape.ea_transform(params, sx_map, dxmap=-shapex, dymap=-shapey)
+    px_map = simage_to_drs(sx_map, shapex2, shapey)
+
     # get shifted wave map
     print('\tshifting wave map')
-    pwave_map = shape.ea_transform(params, swave_map, dxmap=-shapex,
-                                   dymap=-shapey)
+    pwave_map = simage_to_drs(swave_map, shapex2, shapey)
+
     # get shifted wave map
     print('\tshifting fp map')
-    pfp_map = shape.ea_transform(params, sfp_map, dxmap=-shapex, dymap=-shapey)
+    pfp_map = simage_to_drs(sfp_map, shapex2, shapey)
+
+    # --------------------------------------------------------------------------
+    # apply order profile (after de-straightening)
+    # --------------------------------------------------------------------------
+    # calculate order profile for full image
+    orderp = orderpAB / np.nanmax(orderpAB)
+    orderp += orderpC / np.nanmax(orderpC)
+    # apply this to maps
+    pfp_map = pfp_map * orderp
 
 
+    # temporary save to pp format (for testing)
+    pfp_map[np.isnan(pfp_map)] = 0.0
+
+    outmap = drs_to_pp(params, pfp_map)
+    # save it to file
+    fits.writeto('outmap.fits', outmap, overwrite=True)
 
 
 
