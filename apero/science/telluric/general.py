@@ -363,7 +363,7 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
     else:
         out_tellu_conv = core.get_file_definition('TELLU_CONV',
                                                   params['INSTRUMENT'],
-                                                  kind='red')
+                                                  kind='red', fiber=fiber)
     # get key
     conv_key = out_tellu_conv.get_dbkey()
     # load tellu file
