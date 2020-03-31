@@ -709,7 +709,11 @@ def find_files(params, recipe, kind=None, path=None, logic='and', fiber=None,
             # --------------------------------------------------------------
             # deal with fiber
             if fiber is not None:
-                if '_{0}'.format(fiber) not in filename:
+                # two conditions for not having fiber in name
+                cond1 = '_{0}.'.format(fiber) not in filename
+                cond2 = '_{0}_'.format(fiber) not in filename
+                # if both conditions are True then skip
+                if cond1 and cond2:
                     continue
             # construct absolute path
             absfilename = os.path.join(dirname, nightname, filename)
