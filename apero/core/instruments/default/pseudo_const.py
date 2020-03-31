@@ -507,6 +507,10 @@ class PseudoConstants:
         func_name = 'FIBER_KINDS'
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
+    def INDIVIDUAL_FIBERS(self):
+        func_name = 'INDIVIDUAL_FIBERS'
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+
     # =========================================================================
     # BERV_KEYS
     # =========================================================================

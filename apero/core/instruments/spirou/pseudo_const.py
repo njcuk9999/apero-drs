@@ -299,6 +299,10 @@ class PseudoConstants(DefaultConstants):
         # return science and reference fiber(s)
         return science, reference
 
+    def INDIVIDUAL_FIBERS(self):
+        # list the individual fiber names
+        return ['A', 'B', 'C']
+
     # =========================================================================
     # BERV_KEYS
     # =========================================================================
