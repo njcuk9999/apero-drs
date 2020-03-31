@@ -14,10 +14,10 @@ import numpy as np
 from apero import core
 from apero import locale
 from apero.core import constants
-
 from apero.science.calib import localisation
 from apero.science.calib import shape
 from apero.core.core import drs_recipe
+
 
 # =============================================================================
 # Define variables
@@ -41,7 +41,6 @@ TextDict = locale.drs_text.TextDict
 Help = locale.drs_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
 
 
-
 # =============================================================================
 # Define functions
 # =============================================================================
@@ -50,7 +49,7 @@ def drs_image_shape(params):
     ylow, yhigh = params['IMAGE_Y_LOW'], params['IMAGE_Y_HIGH']
     xlow, xhigh = params['IMAGE_X_LOW'], params['IMAGE_X_HIGH']
     # return the y and x size --> shape
-    return (yhigh - ylow, xhigh - xlow)
+    return yhigh - ylow, xhigh - xlow
 
 
 def calc_central_localisation(params, recipe, fiber, header=None,
@@ -59,6 +58,9 @@ def calc_central_localisation(params, recipe, fiber, header=None,
     lprops = localisation.get_coefficients(params, recipe, header,
                                            filename=filename,
                                            fiber=fiber, merge=True)
+    # get the cut down image size
+    xlow, xhigh = params['IMAGE_X_LOW'], params['IMAGE_X_HIGH']
+    nbxpix = xhigh - xlow
     # store centers and widths
     centers, widths = [], []
     # loop around orders
@@ -99,7 +101,7 @@ def e2ds_to_simage(e2ds, xpixels, ypixels, centers, widths,
     return simage
 
 
-def simage_to_drs(simage, shapex2, shapey):
+def simage_to_drs(params, simage, shapex2, shapey):
     pimage = shape.ea_transform(params, simage, dymap=-shapey)
     pimage = shape.ea_transform(params, pimage, dxmap=-shapex2)
     return pimage
@@ -123,10 +125,7 @@ def drs_to_pp(params, image, fill=0.0):
     return outmap
 
 
-# =============================================================================
-# Start of code
-# =============================================================================
-if __name__ == "__main__":
+def main():
     # TEST
     from astropy.io import fits
     workspace = '/scratch3/rali/spirou/mini_data/calibDB/'
@@ -240,6 +239,12 @@ if __name__ == "__main__":
     # save it to file
     fits.writeto('outmap.fits', outmap, overwrite=True)
 
+
+# =============================================================================
+# Start of code
+# =============================================================================
+if __name__ == "__main__":
+    main()
 
 
 # =============================================================================
