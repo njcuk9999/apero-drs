@@ -175,6 +175,9 @@ def __main__(recipe, params):
     # need to re-format change log to conform to rst format
     drs_changelog.format_rst(doc_clogpath)
 
+    # push tags via git
+    os.system('git push --tags')
+
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------

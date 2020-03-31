@@ -8,9 +8,7 @@ APERO Documentation
 ******************************************
 
 ===========================================
-Latest version: 0.6.059
-* `SPIROU <https://www.cfht.hawaii.edu/Instruments/SPIRou/>`_ (SPectropolarimeter InfraROUge) on the Canada-France-Hawaii Telescope `CFHT <https://www.cfht.hawaii.edu/>`_.
-* NIRPS (Currently under construction)
+Latest version: 0.6.062* NIRPS (Currently under construction)
 
 .. toctree::
    :maxdepth: 2

@@ -2,8 +2,78 @@ Changelog
 =========
 
 
-0.6.059 (2020-03-25)
+0.6.062 (2020-03-31)
 --------------------
+- `Tools.module.utils.inverse.py` - test out making straight image and
+  shifting by x and y. [Neil Cook]
+- `Core.core.drs_log.py` - correct typo `('DRS_RECIPE_KIND`' is not None)
+  --> `(params['DRS_RECIPE_KIND']` is not None) [Neil Cook]
+- `Core.core.drs_log.py` - deal with `DRS_DATA_MSG_FULL` set to None. [Neil
+  Cook]
+- `Core.isntruments.default.default_config.py` - add to `__ALL__` [Neil
+  Cook]
+- `Core.isntruments.default.default_config.py` - add some constant that
+  are set in `drs_setup` (for when we are not using setup) [Neil Cook]
+- `Science.calib.general.py` - check that inputs is in params (may not be)
+  [Neil Cook]
+- `Core.core.drs_recipe.py` - add a quick way to make a recipe (using
+  params) [Neil Cook]
+- `Tools.recipes.spirou.exposuremeter_spirou.py` and
+  `module.utils.inverse.py` - start work on inversing drs (exspoure meter
+  etc) [njcuk9999]
+- `Core.core.drs_recipe.py` - directory must be an absolute path (if we
+  are in the reduced folder it wont be without these changes --> causes
+  an error later) [njcuk9999]
+- `Core.core.drs_argument.py` - paths for commonpath must be absolute -->
+  enforce this explicitly. [njcuk9999]
+- `Core.core.drs_argument.py` - add breakpoint to test error. [njcuk9999]
+- `Core.core.drs_recipe.py` - `break_point` to test error. [njcuk9999]
+- `Core.core.drs_recipe.py` - deal with sys.argv having a full path as
+  first argument (don't know why this is happening) [njcuk9999]
+- `Core.core.drs_recipe.py` - remove path from recipe name (for argparse)
+  [njcuk9999]
+- `Science.velocity.general.py` - add EA changes from `new_ccf_code` test.
+  [njcuk9999]
+- `Misc.problems.new_ccf_code.py` - add EA fixes. [njcuk9999]
+
+
+0.6.061 (2020-03-29)
+--------------------
+- `Science.telluric.general.py` - correc typo `KW_FTELLU_TEMP` -->
+  `KW_FTELLU_TEMPLATE`. [Neil Cook]
+
+
+0.6.060 (2020-03-28)
+--------------------
+- `Misc.problems.new_ccf_code.py` - add comments. [Neil Cook]
+- `Misc.problems.new_ccf_code.py` - add better plot for EA. [Neil Cook]
+- `Misc/problems/new_ccf_code.py` - correction to stand alone ccf code.
+  [njcuk9999]
+- `Misc/problems/new_ccf_code.py` - stand alone test of ccf code.
+  [njcuk9999]
+- `Science.velocity.general.py` - add in the condition that targetrv is
+  equal to the null value (-9999.99 for spirou) [njcuk9999]
+- Update language database. [njcuk9999]
+- `Core.instruments.*.default_constants.py` - add `CCF_OBJRV_NULL_VAL`.
+  [njcuk9999]
+- `Core.instruments.spirou.default_keywords.py` - correct typo
+  `KW_FTELLU_TEMPLATEKW_FTELLU_TEMPLATE` --> `KW_FTELLU_TEMPLATE`.
+  [njcuk9999]
+- `Recipes.spirou.obj_fit_tellu_spirou.py` and science.telluric.general.py
+  - add a keyword for which template was used (or if not set to None)
+  [njcuk9999]
+- `Core.instruments.*.default_keywords.py` - add `KW_FTELLU_TEMPLATE`.
+  [njcuk9999]
+- `Core.core.drs_file.py` - change `drs_path()` --> `drs_path.numpy_load()`
+  [njcuk9999]
+- `Core.core.drs_database.py` + `drs_file.py` `io.drs_path.py`
+  `science.telluric.general.py` - replace np.load with `drs_path` function
+  (mitigate certain errors?) [njcuk9999]
+
+
+0.6.059 (2020-03-26)
+--------------------
+- Update date/version/changelog/documentation. [njcuk9999]
 - `Core.core.drs_database.py` - fix typo master in entries --> master in
   entries.colnames. [Neil Cook]
 - `Core.core.drs_database.py` - add break point to test database error.
