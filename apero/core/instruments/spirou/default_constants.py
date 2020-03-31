@@ -48,6 +48,13 @@ CALIB_DB_FORCE_WAVESOL.value = False
 RAW_TO_PP_ROTATION = RAW_TO_PP_ROTATION.copy(__NAME__)
 RAW_TO_PP_ROTATION.value = 3
 
+# Define raw image size (mostly just used as a check and in places where we
+#   don't have access to this information)
+IMAGE_X_FULL = IMAGE_X_FULL.copy(__NAME__)
+IMAGE_X_FULL.value = 4096
+IMAGE_Y_FULL = IMAGE_Y_FULL.copy(__NAME__)
+IMAGE_Y_FULL.value = 4096
+
 # Define the fibers
 FIBER_TYPES = FIBER_TYPES.copy(__NAME__)
 FIBER_TYPES.value = 'AB, A, B, C'
