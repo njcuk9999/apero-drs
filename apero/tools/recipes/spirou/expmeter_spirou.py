@@ -136,11 +136,16 @@ def __main__(recipe, params):
         WLOG(params, '', '\tFiber {0}'.format(fiber))
         # find file instance in set (verify user input)
         drsfile = core.get_file_definition(filetype, params['INSTRUMENT'],
-                                           kind='tmp')
+                                           kind='red')
         # get all "filetype" filenames
-        files = drs_fits.find_files(params, recipe, kind='tmp',
-                                    KW_DPRTYPE=filetype,
+        files = drs_fits.find_files(params, recipe, kind='red',
+                                    KW_OUTPUT=filetype, fiber=fiber,
                                     night=params['NIGHTNAME'])
+        # deal with no files found
+        if len(files) == 0:
+            eargs = [filetype, fiber, mainname]
+            emsg = 'No files found for {0} (fiber = {1}) \n\t Function = {2}'
+            WLOG(params, 'error', emsg.format(*eargs))
         # make a new copy of infile
         infile = drsfile.newcopy(filename=files[-1], recipe=recipe)
         # read file
@@ -158,20 +163,21 @@ def __main__(recipe, params):
     for fiber in fibers:
         # wave infile
         header = wave_infiles[fiber].header
+        ishape = wave_images[fiber].shape
         # ------------------------------------------------------------------
         # load wavelength solution for this fiber
-        wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber)
-
+        wprops = wave.get_wavesolution(params, recipe,
+                                       filename=wave_infiles[fiber].filename)
         # ------------------------------------------------------------------
         # Load the TAPAS atmospheric transmission convolved with the
         #   master wave solution (1D spectrum)
         # ------------------------------------------------------------------
         largs = [header, wprops, fiber]
         tapas_props = telluric.load_conv_tapas(params, recipe, *largs)
-
-        # TODO: using wave map produce an e2ds for tapas
-
-        # TODO: add to storage
+        # get the combined tapas absorption
+        tapas_comb = tapas_props['TAPAS_ALL_SPECIES'][0].reshape(ishape)
+        # add to storage
+        tellu_images[fiber] = tapas_comb
 
     # ----------------------------------------------------------------------
     # Get and prepare shape and position images
