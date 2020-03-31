@@ -15,6 +15,9 @@ from apero import core
 from apero import locale
 from apero.core import constants
 
+from apero.science.calib import localisation
+from apero.science.calib import shape
+from apero.core.core import drs_recipe
 
 # =============================================================================
 # Define variables
@@ -124,10 +127,6 @@ def drs_to_pp(params, image, fill=0.0):
 # Start of code
 # =============================================================================
 if __name__ == "__main__":
-    from apero.science.calib import localisation
-    from apero.science.calib import shape
-    from apero.core.core import drs_recipe
-    from apero.core import constants
     # TEST
     from astropy.io import fits
     workspace = '/scratch3/rali/spirou/mini_data/calibDB/'
