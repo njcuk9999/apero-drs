@@ -17,7 +17,7 @@ __all__ = [
     'PP_CORRUPT_RMS_THRES', 'RAW_TO_PP_ROTATION', 'PP_DARK_MED_BINNUM',
     'SKIP_DONE_PP', 'ALLOWED_PPM_TYPES', 'PPM_MASK_NSIG', 'PP_MEDAMP_BINSIZE',
     # image constants
-    'FIBER_TYPES',
+    'FIBER_TYPES', 'IMAGE_X_FULL', 'IMAGE_Y_FULL',
     'INPUT_COMBINE_IMAGES', 'INPUT_FLIP_IMAGE', 'INPUT_RESIZE_IMAGE',
     'IMAGE_X_LOW', 'IMAGE_X_HIGH',
     'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_LOW', 'IMAGE_X_HIGH',
@@ -327,6 +327,13 @@ RAW_TO_PP_ROTATION = Const('RAW_TO_PP_ROTATION', dtype=int, value=None,
                                        'nrot = 7 -> flip top-bottom and rotate '
                                        '90 deg clock-wise, '
                                        'nrot >=8 -> performs a modulo 8 anyway')
+
+# Define raw image size (mostly just used as a check and in places where we
+#   don't have access to this information)
+IMAGE_X_FULL = Const('IMAGE_X_FULL', dtype=int, value=None, source=__NAME__,
+                     group=cgroup)
+IMAGE_Y_FULL = Const('IMAGE_Y_FULL', dtype=int, value=None, source=__NAME__,
+                     group=cgroup)
 
 # Define the fibers
 FIBER_TYPES = Const('FIBER_TYPES', dtype=str, value=None, source=__NAME__,
