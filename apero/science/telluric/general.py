@@ -357,8 +357,13 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
     # Load any convolved files from database
     # ----------------------------------------------------------------------
     # get file definition
-    out_tellu_conv = recipe.outputs['TELLU_CONV'].newcopy(recipe=recipe,
-                                                          fiber=fiber)
+    if 'TELLU_CONV' in recipe.outputs:
+        out_tellu_conv = recipe.outputs['TELLU_CONV'].newcopy(recipe=recipe,
+                                                              fiber=fiber)
+    else:
+        out_tellu_conv = core.get_file_definition('TELLU_CONV',
+                                                  params['INSTRUMENT'],
+                                                  kind='red')
     # get key
     conv_key = out_tellu_conv.get_dbkey()
     # load tellu file
