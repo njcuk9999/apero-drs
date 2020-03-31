@@ -358,14 +358,18 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
     # ----------------------------------------------------------------------
     # get file definition
     if 'TELLU_CONV' in recipe.outputs:
+        # get file definition
         out_tellu_conv = recipe.outputs['TELLU_CONV'].newcopy(recipe=recipe,
                                                               fiber=fiber)
+        # get key
+        conv_key = out_tellu_conv.get_dbkey()
     else:
+        # get file definition
         out_tellu_conv = core.get_file_definition('TELLU_CONV',
                                                   params['INSTRUMENT'],
                                                   kind='red', fiber=fiber)
-    # get key
-    conv_key = out_tellu_conv.get_dbkey()
+        # get key
+        conv_key = out_tellu_conv.get_dbkey(fiber=fiber)
     # load tellu file
     _, conv_paths = load_tellu_file(params, conv_key, header, n_entries='all',
                                     get_image=False, required=False)
