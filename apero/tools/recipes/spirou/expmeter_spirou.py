@@ -257,7 +257,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # for wave image
     WLOG(params, '', 'De-straightening wave image')
-    pwave_map = inverse.simage_to_drs(swave_map, shapex2, shapey)
+    pwave_map = inverse.simage_to_drs(params, swave_map, shapex2, shapey)
     # for tellu image
     WLOG(params, '', 'De-straightening tellu image')
     ptellu_map = inverse.simage_to_drs(stellu_map, shapex2, shapey)
