@@ -42,14 +42,19 @@ Help = locale.drs_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
 # =============================================================================
 # Define functions
 # =============================================================================
-def calc_central_localisation(params, recipe, fiber):
+def drs_image_shape(params):
+    # get image shape from params
+    ylow, yhigh = params['IMAGE_Y_LOW'], params['IMAGE_Y_HIGH']
+    xlow, xhigh = params['IMAGE_X_LOW'], params['IMAGE_X_HIGH']
+    # return the y and x size --> shape
+    return (yhigh - ylow, xhigh - xlow)
 
-    # get locofile (remove when we have a header)
-    locofile = locofiles[fiber]
+
+def calc_central_localisation(params, recipe, fiber, header=None,
+                              filename=None):
     # get the loco image and number of orders for this fiber
-    # TODO: change when we have header
-    lprops = localisation.get_coefficients(params, recipe, None,
-                                           filename=locofile,
+    lprops = localisation.get_coefficients(params, recipe, header,
+                                           filename=filename,
                                            fiber=fiber, merge=True)
     # store centers and widths
     centers, widths = [], []
@@ -97,10 +102,16 @@ def simage_to_drs(simage, shapex2, shapey):
     return pimage
 
 
-def drs_to_pp(params, image):
-    outmap = np.zeros((4096, 4096))
+def drs_to_pp(params, image, fill=0.0):
+    # get full image dimensions (from constants)
+    full_y, full_x = params['IMAGE_Y_FULL'], params['IMAGE_X_FULL']
+    # get the cut down image size
     ylow, yhigh = params['IMAGE_Y_LOW'], params['IMAGE_Y_HIGH']
     xlow, xhigh = params['IMAGE_X_LOW'], params['IMAGE_X_HIGH']
+    # construct shape of output image
+    oshape = (full_y, full_x)
+    # make zero filled map
+    outmap = np.repeat([fill], np.product(oshape)).reshape(oshape)
     # add map to pp out map
     outmap[ylow:yhigh, xlow:xhigh] = image
     # now flip it
@@ -170,9 +181,12 @@ if __name__ == "__main__":
     # loop around fibers
     for fiber in fibers:
         print('E2DS-->MAP: Fiber {0}'.format(fiber))
+        # get locofile (remove when we have a header)
+        locofile = locofiles[fiber]
         # calculate fiber centers
         print('\t Getting centers')
-        cents, wids = calc_central_localisation(params, recipe, fiber)
+        cents, wids = calc_central_localisation(params, recipe, fiber,
+                                                filename=locofile)
         # get straighted image for order map
         print('\t Getting order map')
         sorder_map = e2ds_to_simage(order_map, ximage, yimage, cents, wids,
