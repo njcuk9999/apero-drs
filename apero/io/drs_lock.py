@@ -108,7 +108,8 @@ class Lock:
                     os.mkdir(self.path)
                     # log that lock has been activated
                     wargs = [self.path]
-                    WLOG(self.params, '', TextEntry('40-101-00001', args=wargs))
+                    WLOG(self.params, 'debug',
+                         TextEntry('40-101-00001', args=wargs))
                     break
                 except:
                     # whatever the problem sleep for a second
@@ -243,7 +244,7 @@ class Lock:
         # log progress: lock file added to queue
         filename = name + '.lock'
         abspath = os.path.join(self.path, filename)
-        WLOG(self.params, '', TextEntry('40-101-00002', args=[abspath]))
+        WLOG(self.params, 'debug', TextEntry('40-101-00002', args=[abspath]))
         # add unique name to queue
         self.__makelockfile(name)
         # put in just to see if we are appending too quickly
@@ -270,7 +271,8 @@ class Lock:
         if filename == first:
             # log that lock file is unlocked
             abspath = os.path.join(self.path, filename)
-            WLOG(self.params, '', TextEntry('40-101-00003', args=[abspath]))
+            WLOG(self.params, 'debug',
+                 TextEntry('40-101-00003', args=[abspath]))
             return True, None
         # else we return False (and ask whether it is my turn later)
         else:
@@ -286,7 +288,7 @@ class Lock:
         # log that lock file has been removed from the queue
         filename = name + '.lock'
         abspath = os.path.join(self.path, filename)
-        WLOG(self.params, '', TextEntry('40-101-00004', args=[abspath]))
+        WLOG(self.params, 'debug', TextEntry('40-101-00004', args=[abspath]))
         # once we are finished with a lock we remove it from the queue
         self.__remove_file(name)
 
@@ -297,7 +299,7 @@ class Lock:
         :return:
         """
         # log that lock is deactivated
-        WLOG(self.params, '', TextEntry('40-101-00005', args=[self.path]))
+        WLOG(self.params, 'debug', TextEntry('40-101-00005', args=[self.path]))
         # get the raw list
         if os.path.exists(self.path):
             rawlist = os.listdir(self.path)
@@ -312,13 +314,25 @@ class Lock:
                 if abspath == self.lockpath:
                     continue
                 # remove file
-                os.remove(abspath)
-        # now remove directory
+                try:
+                    os.remove(abspath)
+                except Exception as e:
+                    # log warning for error
+                    eargs = [abspath, type(e), str(e)]
+                    emsg = TextEntry('10-101-00006', args=eargs)
+                    WLOG(self.params, 'warning', emsg)
+        # now remove directory (if possible)
         if os.path.exists(self.path):
             # do not remove lock path (used by other processes)
             if self.path != self.lockpath:
                 # remove path
-                os.removedirs(self.path)
+                try:
+                    os.removedirs(self.path)
+                except Exception as e:
+                    # log warning for error
+                    eargs = [self.path, type(e), str(e)]
+                    emsg = TextEntry('10-101-00005', args=eargs)
+                    WLOG(self.params, 'warning', emsg)
 
 
 def synchronized(lock, name):
@@ -418,7 +432,10 @@ def reset_lock_dir(params, log=False):
 
 
 def __remove_empty__(params, path, remove_head=True, log=False):
-    if not os.path.isdir(path):
+    # define function name
+    func_name = __NAME__ + '.__remove_empty__()'
+    # check if path is not a directory or if path is link
+    if not os.path.isdir(path) or os.path.islink(path):
         return
 
     # remove empty subfolders
@@ -433,8 +450,15 @@ def __remove_empty__(params, path, remove_head=True, log=False):
     files = os.listdir(path)
     if len(files) == 0 and remove_head:
         if log:
-            WLOG(params, '', "Removing empty folder: {0}".format(path))
-        os.rmdir(path)
+            WLOG(params, 'debug', "Removing empty folder: {0}".format(path))
+        # try to remove or report warning
+        try:
+            os.rmdir(path)
+        except Exception as e:
+            eargs = [path, type(e), e, func_name]
+            emsg = ('Cannot remove dir {0}. \n\t Error {1}: {2} '
+                    '\n\t function = {3}')
+            WLOG(params, 'warning', emsg.format(*eargs))
 
 
 # =============================================================================

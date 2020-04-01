@@ -25,10 +25,14 @@ from apero import locale
 from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.core import drs_file
+from apero.core.core import drs_startup
 from apero.io import drs_data
 from apero.io import drs_table
 from apero.science import velocity
 from apero.science.calib import general
+from apero.science import extract
+from apero.science.calib import flat_blaze
+
 
 # =============================================================================
 # Define variables
@@ -5916,6 +5920,134 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
     # ----------------------------------------------------------------------
     # return hc wavefile
     return wavefile
+
+
+# =============================================================================
+# Define wave update functions
+# =============================================================================
+def update_extract_files(params, recipe, extract_file, wprops, extname,
+                         fiber):
+    # ----------------------------------------------------------------------
+    # find the extraction recipe
+    extrecipe, _ = drs_startup.find_recipe(extname, params['INSTRUMENT'],
+                                           mod=recipe.recipemod)
+    extrecipe.drs_params = params
+    # ----------------------------------------------------------------------
+    # get input to extract file
+    input_filename = extract_file.get_key('INF1000')
+    input_file = extract_file.intype
+    # ----------------------------------------------------------------------
+    # make a new copy of infile
+    infile = input_file.newcopy(recipe=extrecipe)
+    infile.set_filename(input_filename)
+    # ----------------------------------------------------------------------
+    # get extraction files
+    e2ds_file = extrecipe.outputs['E2DS_FILE'].newcopy(recipe=extrecipe,
+                                                       fiber=fiber)
+    e2dsff_file = extrecipe.outputs['E2DSFF_FILE'].newcopy(recipe=extrecipe,
+                                                           fiber=fiber)
+    e2dsll_file = extrecipe.outputs['E2DSLL_FILE'].newcopy(recipe=extrecipe,
+                                                           fiber=fiber)
+    s1dw_file = extrecipe.outputs['S1D_W_FILE'].newcopy(recipe=extrecipe,
+                                                        fiber=fiber)
+    s1dv_file = extrecipe.outputs['S1D_V_FILE'].newcopy(recipe=extrecipe,
+                                                        fiber=fiber)
+    # ----------------------------------------------------------------------
+    # construct filename
+    e2ds_file.construct_filename(params, infile=infile)
+    e2dsff_file.construct_filename(params, infile=infile)
+    e2dsll_file.construct_filename(params, infile=infile)
+    s1dw_file.construct_filename(params, infile=infile)
+    s1dv_file.construct_filename(params, infile=infile)
+    # ----------------------------------------------------------------------
+    # log that we are updating the file with wave params
+    wargs = [e2ds_file.name, e2ds_file.filename]
+    WLOG(params, '', TextEntry('40-017-00038', args=wargs))
+    # update the e2ds file
+    e2ds_file.read_file()
+    e2ds_file = add_wave_keys(params, e2ds_file, wprops)
+    e2ds_file.write_file()
+    # add to output files (for indexing)
+    recipe.add_output_file(e2ds_file)
+    # ----------------------------------------------------------------------
+    # log that we are updating the file with wave params
+    wargs = [e2dsff_file.name, e2dsff_file.filename]
+    WLOG(params, '', TextEntry('40-017-00038', args=wargs))
+    # update the e2ds file
+    e2dsff_file.read_file()
+    e2dsff_file = add_wave_keys(params, e2dsff_file, wprops)
+    e2dsff_file.write_file()
+    # add to output files (for indexing)
+    recipe.add_output_file(e2dsff_file)
+    # ----------------------------------------------------------------------
+    # log that we are updating the file with wave params
+    wargs = [e2dsll_file.name, e2dsll_file.filename]
+    WLOG(params, '', TextEntry('40-017-00038', args=wargs))
+    # update the e2ds file
+    e2dsll_file.read_file()
+    e2dsll_file = add_wave_keys(params, e2dsll_file, wprops)
+    e2dsll_file.write_file()
+    # add to output files (for indexing)
+    recipe.add_output_file(e2dsll_file)
+    # ----------------------------------------------------------------------
+    # Need to re-calculate the s1d files
+    # ----------------------------------------------------------------------
+    # load the blaze file for this fiber
+    blaze_file, blaze = flat_blaze.get_blaze(params, e2dsff_file.header, fiber)
+    # calculate s1d file
+    sargs = [wprops['WAVEMAP'], e2dsff_file.data, blaze]
+    swprops = extract.e2ds_to_s1d(params, recipe, *sargs, wgrid='wave',
+                                  fiber=fiber, kind='E2DSFF')
+    svprops = extract.e2ds_to_s1d(params, recipe, *sargs,
+                                  wgrid='velocity', fiber=fiber,
+                                  kind='E2DSFF')
+    # ----------------------------------------------------------------------
+    # plot the s1d plot
+    recipe.plot('EXTRACT_S1D', params=params, props=svprops,
+                fiber=fiber, kind='E2DSFF')
+    # ----------------------------------------------------------------------
+    # Store S1D_W in file
+    # ----------------------------------------------------------------------
+    # copy header from e2dsll file
+    s1dw_file.copy_hdict(e2ds_file)
+    # set output key
+    s1dw_file.add_hkey('KW_OUTPUT', value=s1dw_file.name)
+    # add new header keys
+    s1dw_file = extract.add_s1d_keys(s1dw_file, swprops)
+    # copy data
+    s1dw_file.data = swprops['S1DTABLE']
+    # must change the datatype to 'table'
+    s1dw_file.datatype = 'table'
+    # ----------------------------------------------------------------------
+    # log that we are updating the file with wave params
+    wargs = [s1dw_file.name, s1dw_file.filename]
+    WLOG(params, '', TextEntry('40-017-00038', args=wargs))
+    # write image to file
+    s1dw_file.write_file()
+    # add to output files (for indexing)
+    recipe.add_output_file(s1dw_file)
+    # ----------------------------------------------------------------------
+    # Store S1D_W in file
+    # ----------------------------------------------------------------------
+    # copy header from e2dsll file
+    s1dv_file.copy_hdict(e2ds_file)
+    # add new header keys
+    s1dv_file = extract.add_s1d_keys(s1dv_file, svprops)
+    # set output key
+    s1dv_file.add_hkey('KW_OUTPUT', value=s1dv_file.name)
+    # copy data
+    s1dv_file.data = svprops['S1DTABLE']
+    # must change the datatype to 'table'
+    s1dv_file.datatype = 'table'
+    # ----------------------------------------------------------------------
+    # log that we are updating the file with wave params
+    wargs = [s1dv_file.name, s1dv_file.filename]
+    WLOG(params, '', TextEntry('40-017-00038', args=wargs))
+    # write image to file
+    s1dv_file.write_file()
+    # add to output files (for indexing)
+    recipe.add_output_file(s1dv_file)
+
 
 
 # =============================================================================

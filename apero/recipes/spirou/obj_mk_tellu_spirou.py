@@ -152,7 +152,7 @@ def __main__(recipe, params):
         recipe.plot.set_location(it)
         # print file iteration progress
         core.file_processing_update(params, it, num_files)
-        # ge this iterations file
+        # get this iterations file
         infile = infiles[it]
         # get header from file instance
         header = infile.header

@@ -35,6 +35,26 @@ CALIB_DB_FORCE_WAVESOL.value = False
 # =============================================================================
 # COMMON IMAGE SETTINGS
 # =============================================================================
+# Define the rotation of the pp files in relation to the raw files
+#     nrot = 0 -> same as input
+#     nrot = 1 -> 90deg counter-clock-wise
+#     nrot = 2 -> 180deg
+#     nrot = 3 -> 90deg clock-wise
+#     nrot = 4 -> flip top-bottom
+#     nrot = 5 -> flip top-bottom and rotate 90 deg counter-clock-wise
+#     nrot = 6 -> flip top-bottom and rotate 180 deg
+#     nrot = 7 -> flip top-bottom and rotate 90 deg clock-wise
+#     nrot >=8 -> performs a modulo 8 anyway
+RAW_TO_PP_ROTATION = RAW_TO_PP_ROTATION.copy(__NAME__)
+RAW_TO_PP_ROTATION.value = 3
+
+# Define raw image size (mostly just used as a check and in places where we
+#   don't have access to this information)
+IMAGE_X_FULL = IMAGE_X_FULL.copy(__NAME__)
+IMAGE_X_FULL.value = 4096
+IMAGE_Y_FULL = IMAGE_Y_FULL.copy(__NAME__)
+IMAGE_Y_FULL.value = 4096
+
 # Define the fibers
 FIBER_TYPES = FIBER_TYPES.copy(__NAME__)
 FIBER_TYPES.value = 'AB, A, B, C'
@@ -207,11 +227,6 @@ PP_CORRUPT_SNR_HOTPIX.value = 10
 # Defines the RMS threshold to also catch corrupt files
 PP_CORRUPT_RMS_THRES = PP_CORRUPT_RMS_THRES.copy(__NAME__)
 PP_CORRUPT_RMS_THRES.value = 0.15
-
-#   Define rotation angle (must be multiple of 90 degrees)
-#         (in degrees counter-clockwise direction)
-RAW_TO_PP_ROTATION = RAW_TO_PP_ROTATION.copy(__NAME__)
-RAW_TO_PP_ROTATION.value = -90
 
 # Define whether to skip preprocessed files that have already be processed
 SKIP_DONE_PP = SKIP_DONE_PP.copy(__NAME__)
@@ -395,7 +410,8 @@ LOC_WIDTH_POLY_DEG.value = 4
 LOC_CENT_POLY_DEG = LOC_CENT_POLY_DEG.copy(__NAME__)
 LOC_CENT_POLY_DEG.value = 4
 
-#   Define the column separation for fitting orders
+#   Define the jump size when finding the order position
+#       (jumps in steps of this from the center outwards)
 LOC_COLUMN_SEP_FITTING = LOC_COLUMN_SEP_FITTING.copy(__NAME__)
 LOC_COLUMN_SEP_FITTING.value = 20
 
@@ -753,6 +769,73 @@ FF_PLOT_ORDER = FF_PLOT_ORDER.copy(__NAME__)
 FF_PLOT_ORDER.value = 4
 
 # =============================================================================
+# CALIBRATION: LEAKAGE SETTINGS
+# =============================================================================
+# Define the types of input file allowed by the leakage master recipe
+ALLOWED_LEAKM_TYPES = ALLOWED_LEAKM_TYPES.copy(__NAME__)
+ALLOWED_LEAKM_TYPES.value = 'DARK_FP'
+
+# define whether to always extract leak master files
+#      (i.e. overwrite existing files)
+LEAKM_ALWAYS_EXTRACT = LEAKM_ALWAYS_EXTRACT.copy(__NAME__)
+LEAKM_ALWAYS_EXTRACT.value = False
+
+# define the type of file to use for leak master solution
+#    (currently allowed are 'E2DSFF') - must match with LEAK_EXTRACT_FILE
+LEAKM_EXTRACT_TYPE = LEAKM_EXTRACT_TYPE.copy(__NAME__)
+LEAKM_EXTRACT_TYPE.value = 'E2DSFF'
+
+# Define the types of input extracted files to correct for leakage
+ALLOWED_LEAK_TYPES = ALLOWED_LEAK_TYPES.copy(__NAME__)
+ALLOWED_LEAK_TYPES.value = 'OBJ_FP'
+
+# define the type of file to use for the leak correction (currently allowed are
+#     'E2DS_FILE' or 'E2DSFF_FILE' (linked to recipe definition outputs)
+#     must match with LEAKM_EXTRACT_TYPE
+LEAK_EXTRACT_FILE = LEAK_EXTRACT_FILE.copy(__NAME__)
+LEAK_EXTRACT_FILE.value = 'E2DSFF_FILE'
+
+# define the extraction files which are 2D images (i.e. order num x nbpix)
+LEAK_2D_EXTRACT_FILES = LEAK_2D_EXTRACT_FILES.copy(__NAME__)
+LEAK_2D_EXTRACT_FILES.value = 'E2DS_FILE, E2DSFF_FILE'
+
+# define the extraction files which are 1D spectra
+LEAK_1D_EXTRACT_FILES = LEAK_1D_EXTRACT_FILES.copy(__NAME__)
+LEAK_1D_EXTRACT_FILES.value = 'S1D_W_FILE, S1D_V_FILE'
+
+# define the thermal background percentile for the leak and leak master
+LEAK_BCKGRD_PERCENTILE = LEAK_BCKGRD_PERCENTILE.copy(__NAME__)
+LEAK_BCKGRD_PERCENTILE.value = 5
+
+# define the normalisation perentile for the leak and leak master
+LEAK_NORM_PERCENTILE = LEAK_NORM_PERCENTILE.copy(__NAME__)
+LEAK_NORM_PERCENTILE.value = 90
+
+# define the e-width of the smoothing kernel for leak master
+LEAKM_WSMOOTH = LEAKM_WSMOOTH.copy(__NAME__)
+LEAKM_WSMOOTH.value = 15
+
+# define the kernal size for leak master
+LEAKM_KERSIZE = LEAKM_KERSIZE.copy(__NAME__)
+LEAKM_KERSIZE.value = 3
+
+# define the lower bound percentile for leak correction
+LEAK_LOW_PERCENTILE = LEAK_LOW_PERCENTILE.copy(__NAME__)
+LEAK_LOW_PERCENTILE.value = 1
+
+# define the upper bound percentile for leak correction
+LEAK_HIGH_PERCENTILE = LEAK_HIGH_PERCENTILE.copy(__NAME__)
+LEAK_HIGH_PERCENTILE.value = 99
+
+# define the limit on surpious FP ratio (1 +/- limit)
+LEAK_BAD_RATIO_OFFSET = LEAK_BAD_RATIO_OFFSET.copy(__NAME__)
+LEAK_BAD_RATIO_OFFSET.value = 0.1
+
+# Define whether to save uncorrected files
+LEAK_SAVE_UNCORRECTED = LEAK_SAVE_UNCORRECTED.copy(__NAME__)
+LEAK_SAVE_UNCORRECTED.value = True
+
+# =============================================================================
 # CALIBRATION: EXTRACTION SETTINGS
 # =============================================================================
 #    Start order of the extraction in cal_ff if None starts from 0
@@ -793,6 +876,14 @@ EXT_COSMIC_THRESHOLD.value = 5
 #   Saturation level reached warning
 QC_EXT_FLUX_MAX = QC_EXT_FLUX_MAX.copy(__NAME__)
 QC_EXT_FLUX_MAX.value = 50000
+
+# Define which extraction file to use for s1d creation
+EXT_S1D_INTYPE = EXT_S1D_INTYPE.copy(__NAME__)
+EXT_S1D_INTYPE.value = 'E2DSFF'
+# Define which extraction file (recipe definitons) linked to EXT_S1D_INTYPE
+EXT_S1D_INFILE = EXT_S1D_INFILE.copy(__NAME__)
+EXT_S1D_INFILE.value = 'E2DSFF_FILE'
+
 
 # Define the start s1d wavelength (in nm)
 EXT_S1D_WAVESTART = EXT_S1D_WAVESTART.copy(__NAME__)
@@ -1743,7 +1834,7 @@ CCF_MASK_PATH.value = './data/spirou/ccf/'
 
 # Define the default CCF MASK to use
 CCF_DEFAULT_MASK = CCF_DEFAULT_MASK.copy(__NAME__)
-CCF_DEFAULT_MASK.value = 'gl581_Sep18_cleaned.mas'
+CCF_DEFAULT_MASK.value = 'masque_sept18_andres_trans50.mas'
 
 # Define the wavelength units for the mask
 CCF_MASK_UNITS = CCF_MASK_UNITS.copy(__NAME__)
@@ -1760,6 +1851,10 @@ CCF_MASK_MIN_WEIGHT.value = 0.0
 #  Define the width of the template line (if 0 use natural)
 CCF_MASK_WIDTH = CCF_MASK_WIDTH.copy(__NAME__)
 CCF_MASK_WIDTH.value = 1.7
+
+# Define target rv header null value
+CCF_OBJRV_NULL_VAL = CCF_OBJRV_NULL_VAL.copy(__NAME__)
+CCF_OBJRV_NULL_VAL.value = -9999.99
 
 #  Define the maximum allowed ratio between input CCF STEP and CCF WIDTH
 #     i.e. error will be generated if CCF_STEP > (CCF_WIDTH / RATIO)
@@ -1826,10 +1921,9 @@ CCF_DET_NOISE.value = 100.0
 CCF_FIT_TYPE = CCF_FIT_TYPE.copy(__NAME__)
 CCF_FIT_TYPE.value = 0
 
-#  Define the number of orders (from zero to ccf_num_orders_max) to use
-#     to calculate the CCF and RV
-CCF_N_ORD_MAX = CCF_N_ORD_MAX.copy(__NAME__)
-CCF_N_ORD_MAX.value = 48
+# Define the percentile the blaze is normalised by before using in CCF calc
+CCF_BLAZE_NORM_PERCENTILE = CCF_BLAZE_NORM_PERCENTILE.copy(__NAME__)
+CCF_BLAZE_NORM_PERCENTILE.value = 90
 
 # =============================================================================
 # OBJECT: POLARISATION SETTINGS

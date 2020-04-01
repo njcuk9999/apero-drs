@@ -21,6 +21,8 @@ from multiprocessing import Pool, Process, Manager, Event
 
 from apero import core
 from apero.core.core import drs_startup
+from apero.core.core import drs_log
+from apero.core.core import drs_recipe
 from apero import locale
 from apero.locale import drs_exceptions
 from apero.core import constants
@@ -60,13 +62,14 @@ RUN_KEYS = dict()
 RUN_KEYS['RUN_NAME'] = 'Run Unknown'
 RUN_KEYS['SEND_EMAIL'] = 'False'
 RUN_KEYS['EMAIL_ADDRESS'] = None
-RUN_KEYS['NIGHT_NAME'] = None
+RUN_KEYS['NIGHTNAME'] = None
 RUN_KEYS['BNIGHTNAMES'] = None
 RUN_KEYS['WNIGHTNAMES'] = None
 RUN_KEYS['MASTER_NIGHT'] = None
 RUN_KEYS['CORES'] = 1
 RUN_KEYS['STOP_AT_EXCEPTION'] = False
 RUN_KEYS['TEST_RUN'] = False
+RUN_KEYS['TRIGGER_RUN'] = False
 RUN_KEYS['ENGINEERING'] = False
 RUN_KEYS['RESET_ALLOWED'] = False
 RUN_KEYS['RESET_TMP'] = False
@@ -79,7 +82,10 @@ RUN_KEYS['RESET_RUN'] = False
 RUN_KEYS['RESET_LOGFITS'] = False
 RUN_KEYS['TELLURIC_TARGETS'] = None
 RUN_KEYS['SCIENCE_TARGETS'] = None
-
+# storage for reporting removed engineering directories
+REMOVE_ENG_NIGHTS = []
+# get special list from recipes
+SPECIAL_LIST_KEYS = drs_recipe.SPECIAL_LIST_KEYS
 
 # =============================================================================
 # Define classes
@@ -478,10 +484,24 @@ def read_runfile(params, runfile, **kwargs):
     if 'TEST' in params['INPUTS']:
         test = params['INPUTS']['TEST']
         if test not in ['', 'None', None]:
-            if test.upper() in ['TRUE', '1']:
+            if test in [True, 'True', 'TRUE', '1', 1]:
                 params['TEST_RUN'] = True
             else:
                 params['TEST_RUN'] = False
+    # ----------------------------------------------------------------------
+    # deal with getting trigger run from user input
+    if 'TRIGGER' in params['INPUTS']:
+        trigger = params['INPUTS']['TRIGGER']
+        if trigger not in ['', 'None', None]:
+            if trigger in [True, 'True', '1', 1]:
+                params['TRIGGER_RUN'] = True
+            else:
+                params['TRIGGER_RUN'] = False
+
+        # if trigger if defined night name must be as well
+        if params['NIGHTNAME'] is None and params['TRIGGER_RUN']:
+            # cause an error if nightname not set
+            WLOG(params, 'error', TextEntry('09-503-00010'))
 
     # ----------------------------------------------------------------------
     # relock params
@@ -621,49 +641,6 @@ def reset_files(params):
             drs_reset.reset_log_fits(params)
 
 
-def find_raw_files(params, recipe, **kwargs):
-    func_name = __NAME__ + '.find_raw_files()'
-    # get properties from params
-    night_col = pcheck(params, 'REPROCESS_NIGHTCOL', 'night_col', kwargs,
-                       func_name)
-    absfile_col = pcheck(params, 'REPROCESS_ABSFILECOL', 'absfile_col', kwargs,
-                         func_name)
-    modified_col = pcheck(params, 'REPROCESS_MODIFIEDCOL', 'modified_col',
-                          kwargs, func_name)
-    sortcol = pcheck(params, 'REPROCESS_SORTCOL_HDRKEY', 'sortcol', kwargs,
-                     func_name)
-    raw_index_file = pcheck(params, 'REPROCESS_RAWINDEXFILE', 'raw_index_file',
-                            kwargs, func_name)
-    itable_filecol = pcheck(params, 'DRS_INDEX_FILENAME', 'itable_filecol',
-                            kwargs, func_name)
-    # get path
-    path, rpath = _get_path_and_check(params, 'DRS_DATA_RAW')
-
-    # print progress
-    WLOG(params, 'info', TextEntry('40-503-00010'))
-
-    # get files
-    gfout = _get_files(params, recipe, path, rpath)
-    nightnames, filelist, basenames, mod_times, mkwargs = gfout
-
-    # construct a table
-    mastertable = Table()
-    mastertable[night_col] = nightnames
-    mastertable[itable_filecol] = basenames
-    mastertable[absfile_col] = filelist
-    mastertable[modified_col] = mod_times
-    for kwarg in mkwargs:
-        mastertable[kwarg] = mkwargs[kwarg]
-    # sort by sortcol
-    sortmask = np.argsort(mastertable[sortcol])
-    mastertable = mastertable[sortmask]
-    # save master table
-    mpath = os.path.join(params['DRS_DATA_RUN'], raw_index_file)
-    mastertable.write(mpath, overwrite=True)
-    # return the file list
-    return mastertable, rpath
-
-
 def generate_run_list(params, table, runtable):
     # print progress: generating run list
     WLOG(params, 'info', TextEntry('40-503-00011'))
@@ -684,7 +661,8 @@ def generate_run_list(params, table, runtable):
             # generate new runs for sequence
             newruns = _generate_run_from_sequence(params, sequence, table)
             # update runtable with sequence generation
-            runtable, rlist = _update_run_table(sequence, runtable, newruns)
+            runtable, rlist = update_run_table(sequence, runtable, newruns,
+                                               rlist)
     # all runtable elements should now be in recipe list
     _check_runtable(params, runtable, recipemod)
     # return Run instances for each runtable element
@@ -699,12 +677,13 @@ def process_run_list(params, recipe, runlist, group=None):
         # log process: Running with 1 core
         WLOG(params, 'info', TextEntry('40-503-00016'))
         # run as linear process
-        rdict = _linear_process(params, recipe, runlist, group)
+        rdict = _linear_process(params, recipe, runlist, group=group)
     else:
         # log process: Running with N cores
         WLOG(params, 'info', TextEntry('40-503-00017', args=[cores]))
         # run as multiple processes
-        rdict = _multi_process(params, recipe, runlist, cores, group)
+        rdict = _multi_process(params, recipe, runlist, cores=cores,
+                               groupname=group)
 
     # remove lock files
     drs_lock.reset_lock_dir(params)
@@ -806,6 +785,79 @@ def display_errors(params, outlist):
     WLOG(params, '', '')
 
 
+def save_stats(params, outlist):
+    # set function name
+    func_name = __NAME__ + '.save_stats()'
+    # get save directory
+    save_dir = os.path.join(params['DRS_DATA_RUN'], 'stats')
+    # deal with stats dir not existing
+    if not os.path.exists(save_dir):
+        try:
+            os.mkdir(save_dir)
+        except Exception as e:
+            eargs = [save_dir, type(e), e, func_name]
+            WLOG(params, 'warning', TextEntry('10-503-00011', args=eargs))
+            return
+    # get log file name
+    log_abs_file = drs_log.get_logfilepath(WLOG, params)
+    log_file = os.path.basename(log_abs_file)
+    # get fits file out path
+    out_fitsfile = log_file.replace('.log', '_stats.fits')
+    out_fits_path = os.path.join(save_dir, out_fitsfile)
+    # get txt file out path
+    out_txtfile = log_file.replace('.log', '_stats.txt')
+    out_txt_path = os.path.join(save_dir, out_txtfile)
+    # define storage
+    priorities = []
+    runlists = []
+    recipenames = []
+    nightnames = []
+    coresused = []
+    corestot = []
+    groups = []
+    # sort outlist ids
+    keys = np.sort(list(outlist.keys()))
+    # loop around each entry of outlist and print any errors
+    for key in keys:
+        # get rdict
+        rdict = outlist[key]
+        # append priorities
+        priorities.append(key)
+        # append runstring to run lists
+        runlists.append(rdict['RUNSTRING'])
+        # append recipes to list
+        recipenames.append(rdict['RECIPE'])
+        # append night name to list
+        nightnames.append(rdict['NIGHTNAME'])
+        # append cores used to list
+        coresused.append(rdict['COREUSED'])
+        # append cores total
+        corestot.append(rdict['CORETOT'])
+        # append group
+        groups.append(rdict['GROUP'])
+    # make into a table
+    columns = ['ID', 'RECIPE', 'NIGHT', 'CORE_NUM', 'CORE_TOT', 'RUNSTRING']
+    values = [priorities, recipenames, nightnames, coresused, corestot,
+              runlists]
+    out_fits_table = drs_table.make_table(params, columns, values)
+    # write table
+    try:
+        drs_table.write_table(params, out_fits_table, out_fits_path)
+    except Exception as e:
+        eargs = [out_fits_path, type(e), e, func_name]
+        WLOG(params, 'warning', TextEntry('10-503-00012', args=eargs))
+
+    # make txt table
+    try:
+        out_txt_table = open(out_txt_path, 'w')
+        for value in runlists:
+            out_txt_table.write(value + '\n')
+        out_txt_table.close()
+    except Exception as e:
+        eargs = [out_txt_path, type(e), e, func_name]
+        WLOG(params, 'warning', TextEntry('10-503-00012', args=eargs))
+
+
 def generate_run_table(params, recipe, *args, **kwargs):
     func_name = __NAME__ + '.generate_run_table()'
     # set length initially to None
@@ -905,7 +957,12 @@ def generate_ids(params, runtable, mod, rlist=None, **kwargs):
             dargs = [run_object.runstring, params['DRS_DEBUG']]
             run_object.runstring = '{0} --debug={1}'.format(*dargs)
             run_object.update()
-
+        # deal with passing master argument
+        if input_recipe is not None:
+            if input_recipe.master:
+                dargs = [run_object.runstring, 'True']
+                run_object.runstring = '{0} --master={1}'.format(*dargs)
+                run_object.update()
         # append to list
         if not skip:
             # log that we have validated run
@@ -1310,7 +1367,7 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
                 sys.exit()
         # filer out engineering
         if not params['ENGINEERING']:
-            ftable = _remove_engineering(ftable)
+            ftable = _remove_engineering(params, ftable)
         # deal with filters
         filters = _get_filters(params, srecipe)
         # get fiber filter
@@ -1318,6 +1375,17 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
         # get runs for this recipe
         sruns = srecipe.generate_runs(params, ftable, filters=filters,
                                       allowedfibers=allowedfibers)
+        # ------------------------------------------------------------------
+        # if we are in trigger mode we need to stop when we have no
+        #   sruns for recipe
+        if params['INPUTS']['TRIGGER'] and len(sruns) == 0:
+            # display message that we stopped here as no files were found
+            wargs = [srecipe.name]
+            WLOG(params, 'info', TextEntry('40-503-00028', args=wargs))
+            # stop processing recipes
+            break
+
+        # ------------------------------------------------------------------
         # append runs to new runs list
         for srun in sruns:
             newruns.append([srun, srecipe])
@@ -1325,7 +1393,7 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
     return newruns
 
 
-def _update_run_table(sequence, runtable, newruns):
+def update_run_table(sequence, runtable, newruns, rlist=None):
     # define output runtable
     outruntable = OrderedDict()
     recipe_list = OrderedDict()
@@ -1337,7 +1405,10 @@ def _update_run_table(sequence, runtable, newruns):
         if runtable[idkey].upper() != sequence[0]:
             # add run table row to out run table
             outruntable[idnumber] = runtable[idkey]
-            recipe_list[idnumber] = None
+            if rlist is None:
+                recipe_list[idnumber] = None
+            else:
+                recipe_list[idnumber] = rlist[idnumber]
             # update id number
             idnumber += 1
         # else we have found where we need to insert rows
@@ -1399,6 +1470,9 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
         pp['NIGHTNAME'] = str(run_item.nightname)
         pp['ARGS'] = kwargs
         pp['RUNSTRING'] = str(run_item.runstring)
+        pp['COREUSED'] = number
+        pp['CORETOT'] = cores
+        pp['GROUP'] = group
         # ------------------------------------------------------------------
         # add drs group to keyword arguments
         pp['ARGS']['DRS_GROUP'] = group
@@ -1411,11 +1485,8 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             wmsg = 'ID{0:05d}| {1}'.format(priority, run_item.runstring)
         # deal with a test run
         if params['TEST_RUN']:
-            # log which core is being used (only if using multiple cores)
-            if cores > 1:
-                WLOG(params, 'info', wmsg, colour='magenta', wrap=False)
-            else:
-                WLOG(params, 'info', wmsg, colour='magenta', wrap=False)
+            # log which core is being used
+            WLOG(params, 'info', 'T' + wmsg, colour='magenta', wrap=False)
             # add default outputs
             pp['ERROR'] = []
             pp['WARNING'] = []
@@ -1715,145 +1786,10 @@ def _check_runtable(params, runtable, recipemod):
             WLOG(params, 'error', TextEntry('00-503-00011', args=eargs))
 
 
-def _get_path_and_check(params, key):
-    # check key in params
-    if key not in params:
-        WLOG(params, 'error', '{0} not found in params'.format(key))
-    # get top level path to search
-    rpath = params[key]
-    # deal with not having nightname
-    if 'NIGHTNAME' not in params:
-        path = str(rpath)
-    elif params['NIGHTNAME'] not in ['', 'None', None]:
-        path = os.path.join(rpath, params['NIGHTNAME'])
-    else:
-        path = str(rpath)
-    # check if path exists
-    if not os.path.exists(path):
-        WLOG(params, 'error', 'Path {0} does not exist'.format(path))
-    else:
-        return path, rpath
-
-
-def _get_files(params, recipe, path, rpath, **kwargs):
-    func_name = __NAME__ + '.get_files()'
-    # get properties from params
-    absfile_col = pcheck(params, 'REPROCESS_ABSFILECOL', 'absfile_col', kwargs,
-                         func_name)
-    modified_col = pcheck(params, 'REPROCESS_MODIFIEDCOL', 'modified_col',
-                          kwargs, func_name)
-    raw_index_file = pcheck(params, 'REPROCESS_RAWINDEXFILE', 'raw_index_file',
-                            kwargs, func_name)
-    # get the file filter (should be None unless we want specific files)
-    filefilter = params.get('FILENAME', None)
-    if filefilter is not None:
-        filefilter = list(params['FILENAME'])
-    # ----------------------------------------------------------------------
-    # get the pseudo constant object
-    pconst = constants.pload(params['INSTRUMENT'])
-    # ----------------------------------------------------------------------
-    # get header keys
-    headerkeys = pconst.RAW_OUTPUT_KEYS()
-    # get raw valid files
-    raw_valid = pconst.VALID_RAW_FILES()
-    # ----------------------------------------------------------------------
-    # storage list
-    filelist, basenames, nightnames, mod_times = [], [], [], []
-    # load raw index
-    rawindexfile = os.path.join(params['DRS_DATA_RUN'], raw_index_file)
-    if os.path.exists(rawindexfile):
-        rawindex = drs_table.read_table(params, rawindexfile, fmt='fits')
-    else:
-        rawindex = None
-    # ----------------------------------------------------------------------
-    # populate the storage dictionary
-    kwargs = dict()
-    for key in headerkeys:
-        kwargs[key] = []
-    # ----------------------------------------------------------------------
-    # get files (walk through path)
-    for root, dirs, files in os.walk(path):
-        # loop around files in this root directory
-        for filename in files:
-            # --------------------------------------------------------------
-            if filefilter is not None:
-                if os.path.basename(filename) not in filefilter:
-                    continue
-            # --------------------------------------------------------------
-            # get night name
-            ucpath = drs_path.get_uncommon_path(rpath, root)
-            if ucpath is None:
-                eargs = [path, rpath, func_name]
-                WLOG(params, 'error', TextEntry('00-503-00003', args=eargs))
-            # --------------------------------------------------------------
-            # make sure file is valid
-            isvalid = False
-            for suffix in raw_valid:
-                if filename.endswith(suffix):
-                    isvalid = True
-            # --------------------------------------------------------------
-            # do not scan empty ucpath
-            if len(ucpath) == 0:
-                continue
-            # --------------------------------------------------------------
-            # log the night directory
-            if ucpath not in nightnames:
-                WLOG(params, '', TextEntry('40-503-00003', args=[ucpath]))
-            # --------------------------------------------------------------
-            # get absolute path
-            abspath = os.path.join(root, filename)
-            modified = os.path.getmtime(abspath)
-            # --------------------------------------------------------------
-            # if not valid skip
-            if not isvalid:
-                continue
-            # --------------------------------------------------------------
-            # else append to list
-            else:
-                nightnames.append(ucpath)
-                filelist.append(abspath)
-                basenames.append(filename)
-                mod_times.append(modified)
-            # --------------------------------------------------------------
-            # see if file in raw index and has correct modified date
-            if rawindex is not None:
-                # find file
-                rowmask = (rawindex[absfile_col] == abspath)
-                # find match date
-                rowmask &= modified == rawindex[modified_col]
-                # only continue if both conditions found
-                if np.sum(rowmask) > 0:
-                    # locate file
-                    row = np.where(rowmask)[0][0]
-                    # if both conditions met load from raw fits file
-                    for key in headerkeys:
-                        kwargs[key].append(rawindex[key][row])
-                    # file was found
-                    rfound = True
-                else:
-                    rfound = False
-            else:
-                rfound = False
-            # --------------------------------------------------------------
-            # deal with header
-            if filename.endswith('.fits') and not rfound:
-                # read the header
-                header = drs_fits.read_header(params, abspath)
-                # fix the headers
-                header = preprocessing.fix_header(params, recipe, header=header)
-                # loop around header keys
-                for key in headerkeys:
-                    rkey = params[key][0]
-                    if rkey in header:
-                        kwargs[key].append(header[rkey])
-                    else:
-                        kwargs[key].append('')
-    # ----------------------------------------------------------------------
-    # return filelist
-    return nightnames, filelist, basenames, mod_times, kwargs
-
-
 def _get_filters(params, srecipe):
+    # set up function name
+    func_name = __NAME__ + '._get_filters()'
+    # set up filter storage
     filters = dict()
     # loop around recipe filters
     for key in srecipe.filters:
@@ -1863,7 +1799,7 @@ def _get_filters(params, srecipe):
         if isinstance(value, list):
             filters[key] = value
         # if this is in params set this value
-        elif value in params:
+        elif (value in params) and (value in SPECIAL_LIST_KEYS):
             # get values from
             user_filter = params[value]
             # deal with unset value
@@ -1873,10 +1809,21 @@ def _get_filters(params, srecipe):
                     filters[key] = list(wlist)
                 else:
                     continue
+            # else assume we have a special list that is a string list
+            #   (i.e. SCIENCE_TARGETS = "target1, target2, target3"
             elif isinstance(user_filter, str):
                 filters[key] = _split_string_list(user_filter)
             else:
                 continue
+        # else assume we have a straight string to look for (if it is a valid
+        #   string)
+        elif isinstance(value, str):
+            filters[key] = value
+        # if we don't have a valid string cause an error
+        else:
+            # log error
+            eargs = [key, value, srecipe.name, func_name]
+            WLOG(params, 'error', TextEntry('00-503-00017', args=eargs))
     # return filters
     return filters
 
@@ -2080,13 +2027,19 @@ def _group_tasks2(runlist, cores):
     return groups, names
 
 
-def _remove_engineering(ftable):
+def _remove_engineering(params, ftable):
+    global REMOVE_ENG_NIGHTS
+    # if we are dealing with the trigger run do not do this -- user has
+    #   specified a night
+    if params['INPUTS']['TRIGGER']:
+        return ftable
     # get nightnames
     nightnames = ftable['__NIGHTNAME']
     obstypes = ftable['KW_OBSTYPE']
     # get unique nights
     u_nights = np.unique(nightnames)
-    # get the object mask
+    # get the object mask (i.e. we want to know that we have objects for this
+    #   night
     objmask = obstypes == 'OBJECT'
     # define empty keep mask
     keepmask = np.zeros(len(ftable), dtype=bool)
@@ -2096,10 +2049,16 @@ def _remove_engineering(ftable):
         nightmask = nightnames == night
         # joint mask
         nightobjmask = nightmask & objmask
-        # if we find objects then keep these files
+        # if we find objects then keep all files from this night
         if np.sum(nightobjmask) > 0:
             # add to keep mask
             keepmask[nightmask] = True
+        elif night not in REMOVE_ENG_NIGHTS:
+            # log message
+            WLOG(params, 'warning', TextEntry('10-503-00014', args=[night]))
+            # add to remove eng nights (so log message not produced again)
+            REMOVE_ENG_NIGHTS.append(night)
+
     # return masked ftable
     return ftable[keepmask]
 

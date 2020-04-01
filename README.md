@@ -1,5 +1,7 @@
 # APERO - A PipelinE to Reduce Observations
 
+Last updated: 2020-03-21
+
 ## Contents
 
 1) [Latest version](#latest-version)
@@ -47,7 +49,7 @@
     - do not use cal_wave_master_spirou.py, cal_wave_night_spirou.py, 
       obj_pol_spirou.py, obj_spec_spirou.py
     ```
-- working (untested) V0.6.037 (2020-02-07)
+- working (untested) V0.6.048 (2020-02-28)
     ```
     Note the working version will be the most up-to-date version but has not been
     tested for stability - use at own risk.
@@ -380,139 +382,196 @@ Currently defined sequences are:
 
 ##### 1. `full_run`
 
-```
-cal_preprocessing
-cal_dark_master
-cal_badpix [master night]
-cal_loc [DARK_FLAT; master night]
-cal_loc [FLAT_DARK; master night]
-cal_shape_master
-cal_shape [master night]
-cal_ff [master night]
-cal_thermal [DARK_DARK_INT; master night]
-cal_thermal [DARK_DARK_TEL; master night]
-cal_wave_master
+where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
+i.e. for RUN_XXXX and SKIP_XXXX.
 
-cal_badpix [every night]
-cal_loc [DARK_FLAT; every night]
-cal_loc [FLAT_DARK; every night]
-cal_shape [every night]
-cal_ff [every night]
-cal_thermal [DARK_DARK_INT; every night]
-cal_thermal [DARK_DARK_TEL; every night]
-cal_wave_night [every night]
-cal_extract [OBJ_DARK + OBJ_FP; every night; ALL OBJECTS]
-obj_mk_tellu_db
-obj_fit_tellu_db
-cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night]
-```
+
+| recipe                                                          | SHORT_NAME |
+| --------------------------------------------------------------- | ---------- | 
+| cal_preprocessing                                               | PP         |
+| cal_dark_master                                                 | DARKM      |
+| cal_badpix [master night]                                       | BADM       |
+| cal_loc [DARK_FLAT; master night]                               | LOCM       |
+| cal_loc [FLAT_DARK; master night]                               | LOCM       |
+| cal_shape_master                                                | SHAPEM     |
+| cal_shape [master night]                                        | SHAPELM    |
+| cal_ff [master night]                                           | FLATM      |
+| cal_leak_master [master_night]                                  | LEAKM      |
+| cal_thermal [DARK_DARK_INT; master night]                       | THIM       |
+| cal_thermal [DARK_DARK_TEL; master night]                       | THTM       |
+| cal_wave_master                                                 | WAVEM      |
+|                                                                 |            |
+| cal_badpix [every night]                                        | BAD        |
+| cal_loc [DARK_FLAT; every night]                                | LOC        |
+| cal_loc [FLAT_DARK; every night]                                | LOC        |
+| cal_shape [every night]                                         | SHAPE      |
+| cal_ff [every night]                                            | FF         |
+| cal_thermal [DARK_DARK_INT; every night]                        | THERMAL    |
+| cal_thermal [DARK_DARK_TEL; every night]                        | THERMAL    |
+| cal_wave_night [every night]                                    | WAVE       |
+| cal_extract [OBJ_DARK + OBJ_FP; every night; ALL OBJECTS]       | EXTALL     |
+| cal_leak [OBJ_FP; every night; ALL OBJECTS]                     | LEAKALL    |
+| obj_mk_tellu_db                                                 | MKTELLDB   |
+| obj_fit_tellu_db                                                | FTELLDB    |
+| cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night]              | CCF        |
+
 
 ##### 2. `limited_run`
 
 Similar to `full_run` but uses the `{TELLURIC_TARGETS}` and `{SCIENCE_TARGETS}` 
 to filter the objects processed
 
-```
-cal_preprocessing
-cal_dark_master
-cal_badpix [master night]
-cal_loc [DARK_FLAT; master night]
-cal_loc [FLAT_DARK; master night]
-cal_shape_master
-cal_shape [master night]
-cal_ff [master night]
-cal_thermal [DARK_DARK_INT; master night]
-cal_thermal [DARK_DARK_TEL; master night]
-cal_wave_master
+where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
+i.e. for RUN_XXXX and SKIP_XXXX.
 
-cal_badpix [every night]
-cal_loc [DARK_FLAT; every night]
-cal_loc [FLAT_DARK; every night]
-cal_shape [every night]
-cal_ff [every night]
-cal_thermal [DARK_DARK_INT; every night]
-cal_thermal [DARK_DARK_TEL; every night]
-cal_wave_night [every night]
-cal_extract [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
-cal_extract [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
-obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
-obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
-obj_mk_template [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
-obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
-obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
-obj_mk_template [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
-obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
-cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night; SCIENCE_TARGETS]
-```
+| recipe                                                              | SHORT_NAME |
+| ------------------------------------------------------------------- | ---------- | 
+| cal_preprocessing                                                   | PP         |
+| cal_dark_master                                                     | DARKM      |
+| cal_badpix [master night]                                           | BADM       |
+| cal_loc [DARK_FLAT; master night]                                   | LOCM       |
+| cal_loc [FLAT_DARK; master night]                                   | LOCM       |
+| cal_shape_master                                                    | SHAPEM     |
+| cal_shape [master night]                                            | SHAPELM    |
+| cal_ff [master night]                                               | FLATM      |
+| cal_leak_master [master_night]                                      | LEAKM      |
+| cal_thermal [DARK_DARK_INT; master night]                           | THIM       |
+| cal_thermal [DARK_DARK_TEL; master night]                           | THTM       |
+| cal_wave_master                                                     | WAVEM      |
+|                                                                     |            |
+| cal_badpix [every night]                                            | BAD        |
+| cal_loc [DARK_FLAT; every night]                                    | LOC        |
+| cal_loc [FLAT_DARK; every night]                                    | LOC        |
+| cal_shape [every night]                                             | SHAPE      |
+| cal_ff [every night]                                                | FF         |
+| cal_thermal [DARK_DARK_INT; every night]                            | THERMAL    |
+| cal_thermal [DARK_DARK_TEL; every night]                            | THERMAL    |
+| cal_wave_night [every night]                                        | WAVE       |
+| cal_extract [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]      | EXTTELL    |
+| cal_extract [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]       | EXTOBJ     |
+| cal_leak [OBJ_FP; every night; TELLURIC_TARGETS]                    | LEAKTELL   |
+| cal_leak [OBJ_FP; every night; SCIENCE_TARGETS]                     | LEAKOBJ    |
+| obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]     | MKTELLU1   |
+| obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]    | MKTELLU2   |
+| obj_mk_template [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]  | MKTELLU3   |
+| obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]     | MKTELLU4   | 
+| obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]     | FTELLU1    |
+| obj_mk_template [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]   | FTELLU2    |
+| obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]     | FTELLU3    |
+| cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night]                  | CCF        |
 
-##### 3. `pp_run`
+
+##### 3. preprocessing runs
 
 Only run the preprocessing recipe
 
-```
-cal_preprocessing
-```
+
+###### 3a: `pp_run`
+
+where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
+i.e. for RUN_XXXX and SKIP_XXXX.
+
+| recipe                                                              | SHORT_NAME |
+| ------------------------------------------------------------------- | ---------- | 
+| cal_preprocessing                                                   | PP         |
+
+
+###### 3b: `pp_runo`
+
+where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
+i.e. for RUN_XXXX and SKIP_XXXX.
+
+| recipe                                                                   | SHORT_NAME |
+| ------------------------------------------------------------------------ | ---------- | 
+| cal_preprocessing [OBJ_DARK + OBJ_FP; every night; OBJECT="Calibration"] | PP_CAL     |
+| cal_preprocessing [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]      | PP_SCI     |
+| cal_preprocessing [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]     | PP_TEL     |
+
+
+
 
 ##### 4. `master_run`
 
 Only run the master recipes
 
-```
-cal_dark_master
-cal_badpix [master night]
-cal_loc [DARK_FLAT; master night]
-cal_loc [FLAT_DARK; master night]
-cal_shape_master
-cal_shape [master night]
-cal_ff [master night]
-cal_thermal [DARK_DARK_INT; master night]
-cal_thermal [DARK_DARK_TEL; master night]
-cal_wave_master
-```
+where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
+i.e. for RUN_XXXX and SKIP_XXXX.
+
+| recipe                                                              | SHORT_NAME |
+| ------------------------------------------------------------------- | ---------- | 
+| cal_dark_master                                                     | DARKM      |
+| cal_badpix [master night]                                           | BADM       |
+| cal_loc [DARK_FLAT; master night]                                   | LOCM       |
+| cal_loc [FLAT_DARK; master night]                                   | LOCM       |
+| cal_shape_master                                                    | SHAPEM     |
+| cal_shape [master night]                                            | SHAPELM    |
+| cal_ff [master night]                                               | FLATM      |
+| cal_leak_master [master_night]                                      | LEAKM      |
+| cal_thermal [DARK_DARK_INT; master night]                           | THIM       |
+| cal_thermal [DARK_DARK_TEL; master night]                           | THTM       |
+| cal_wave_master                                                     | WAVEM      |
+
+
 
 ##### 5. `calib_run`
 
 Only run the nightly calibration sequences and make a complete calibration database.
 (assumes that the master run is done i.e. `master_run`)
 
-```
-cal_badpix [every night]
-cal_loc [DARK_FLAT; every night]
-cal_loc [FLAT_DARK; every night]
-cal_shape [every night]
-cal_ff [every night]
-cal_thermal [DARK_DARK_INT; every night]
-cal_thermal [DARK_DARK_TEL; every night]
-cal_wave_night [every night]
-```
+where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
+i.e. for RUN_XXXX and SKIP_XXXX.
+
+| recipe                                                              | SHORT_NAME |
+| ------------------------------------------------------------------- | ---------- | 
+| cal_badpix [every night]                                            | BAD        |
+| cal_loc [DARK_FLAT; every night]                                    | LOC        |
+| cal_loc [FLAT_DARK; every night]                                    | LOC        |
+| cal_shape [every night]                                             | SHAPE      |
+| cal_ff [every night]                                                | FF         |
+| cal_thermal [DARK_DARK_INT; every night]                            | THERMAL    |
+| cal_thermal [DARK_DARK_TEL; every night]                            | THERMAL    |
+| cal_wave_night [every night]                                        | WAVE       |
+
+
 
 ##### 5. `tellu_run`
 
 Only run the steps required to process `{TELLURIC_TARGETS}` and make the telluric database.
 (assumes that calibrations have been done i.e. `calib_run`)
 
-```
-cal_extract [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
-obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
-obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
-obj_mk_template [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
-obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
-```
+where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
+i.e. for RUN_XXXX and SKIP_XXXX.
+
+| recipe                                                              | SHORT_NAME |
+| ------------------------------------------------------------------- | ---------- | 
+| cal_extract [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]      | EXTTELL    |
+| cal_leak [OBJ_FP; every night; TELLURIC_TARGETS]                    | LEAKTELL   |
+| obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]     | MKTELLU1   |
+| obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]    | MKTELLU2   |
+| obj_mk_template [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]  | MKTELLU3   |
+| obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]     | MKTELLU4   | 
+
+
 
 ##### 6. `science_run`
 
 Only run the steps required to process `{SCIENCE_TARGETS}` 
 (assumes that calibrations and tellurics have been done i.e. `calib_run` and `tellu_run`)
 
-```
-cal_extract [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
-obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
-obj_mk_template [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
-obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
-cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night; SCIENCE_TARGETS]
-```
+where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
+i.e. for RUN_XXXX and SKIP_XXXX.
 
----
+| recipe                                                              | SHORT_NAME |
+| ------------------------------------------------------------------- | ---------- | 
+| cal_extract [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]       | EXTOBJ     |
+| cal_leak [OBJ_FP; every night; SCIENCE_TARGETS]                     | LEAKOBJ    |
+| obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]     | FTELLU1    |
+| obj_mk_template [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]   | FTELLU2    |
+| obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]     | FTELLU3    |
+| cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night]                  | CCF        |
+
+
+
 ---
 
 # APERO run order
@@ -549,6 +608,7 @@ cal_loc [FLAT_DARK; master night]
 cal_shape_master
 cal_shape [master night]
 cal_ff [master night]
+cal_leak_master
 cal_thermal [DARK_DARK_INT; master night]
 cal_thermal [DARK_DARK_TEL; master night]
 cal_wave_master
@@ -586,6 +646,7 @@ cal_wave_night [every night]
 The telluric star sequence is as follows:
 ```
 cal_extract [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
+cal_leak [OBJ_FP; every night; TELLURIC_TARGETS]
 obj_mk_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
 obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
 obj_mk_template [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]
@@ -600,6 +661,7 @@ science.
 The science star sequence is as follows:
 ```
 cal_extract [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
+cal_leak [OBJ_FP; every night; SCIENCE_TARGETS]
 obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
 obj_mk_template [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]
 obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]

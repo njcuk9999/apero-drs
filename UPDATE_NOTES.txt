@@ -1,62 +1,37 @@
-# Update Note Summary - Version 0.3.037
+# Update Note Summary - Version 0.6.063
 
+correction to CCF
+	- fixed problem with gaps in splinesfixed problem with normalisation (leading to bad average ccf)
+	- fixed: using RV from header if available (header key OBJRV)
+		- for the mini data set OBJRV is either unset or -9999.99?
+		- if unset or -9999.99 defaults to zero
+	- fixed: change default mask: masque_sept18_andres_trans50_AB.fits
+	- fixed: added other masks (see apero/data/spirou/ccf)
 
-## TODO
+added leak calibration
+	- create master using >> cal_leak_master_spirou.py {master_night_name}
+	- mini data has no dark_fp so master is provided by default
+	- correct spectra by using >> cal_leak_spirou.py {night_name} {e2dsff + OBJ_FP}
+	- original spectra are over written by correction
 
-### In progress
-
-
-- add all functions doc strings
-- add in `dark_fp` correction
-- fix headers for having bad wave and loc keys (remove?)
-- fix s1d for `FP_FP` and `HC_HC` they need updating after wave sol produced
-- finish `obj_spec_spirou` and `obj_pol_spirou` [Do not use them now]
-- output files like CFHT (e.fits, p.fits, v.fits etc)
-- go through all summary plots and decide which plots, write figure captions,
-  improve plots, write quality control description, decide which header keys to print
-- display func for all functions
-- add doc strings to all functions, descriptions to all constants, review all
-  constant min/max/dtypes
-- add more debug printouts
-- deal with all python warnings
-- write documentation
-
-
-###  As soon as possible
-
-- add `plot== 3` (all debug plots shown) and `plot==4` (all debug plots saved) modes
-- move `object_query_list.fits` to `calibDB`
-- write  paper
-- setup instrument tool
-- add exposure meter recipes (`cal_exposuremeter_spirou.py`)
-- Windows compatibility
-- output in form required for CFHT/CADC (discussion required)
-- co-production of e2ds and e2dsff
-- uncertainty propagation
-- proper SNR calculation
-- add `cal_drift` recipe?
-- NIRPS integration
-- uncertainty propagation
-- data separate download from DRS
-- add EA mask generation from templates
-- add EA template matching
-
-
-## Known Issues
-
-### Recipes
-
-- s1d for FP_FP and HCONE_HCONE files does not have the updated wave solution
-  as files are extracted before wave solution produced
-- wave solution and loc solutions are never updated in headers once a new
-  solution is present - should they be? should they be removed from headers?
-- FP of fiber C is contaminating fiber A and B - Etienne has a solution, but
-  far from being implemented yet
-- CCF still showing problems --> due to not weighting the orders, but cannot
-  do this per file as must have the same weights
-- BERV file gets locked - WHY?
-
-
-### External
-
-- can't use barycorrpy --> update astropy (version 4.0) and barycorrpy (version 0.3))
+default calibration database mode is now "older" (was "closest") - masters are exempt from this
+	- Note "older" didn't work in previous versions  with the master - now every key in the calibDB has a 1 or 0 to denote whether it is a master calibration or not and is exempt of the "older" rule - but will still be choosen in a "closest" fashion.
+	- master codes now require an additional argument --master=True to run correctly
+changes to apero_processing:
+	- apero_processing now produces a clean list of which files were run (see /runs/stats/APEROL-{PID}_apero_processing_stats.txt
+	- I've cleaned up the "run.ini" files (you'll note they no longer have the same name as sequences)
+	- "mini_run.ini" is the template run.ini you should use for apero_processing - but please copy it and rename it before using it
+	- i.e. >> apero_processing.py SPIROU mini_run.iniadded changes to allow trigger functionality (trigger mode) i.e. stop processing when correct files aren't found yet
+tools
+	- added the mtl_sync code (also on apero-drs/utils
+	- added a new profile code: setup/newprofile.py  - used to copy current profile
+		- easiest way to switch between user_config.ini / user_constants.ini
+		- >> setup/newprofile.py --name=mysetup
+		- Then you can switch between default and new setup by having multiple aliases
+		- i.e. i have "setup_test" and "setup_mini" and "setup_full"  - each going to separate "reduced"/"tmp"/"calibDB" directories
+		- note this also means one could have multiple versions of the drs running at once just by changing the paths in *.bash.setup or *.sh.setup etc
+		- must have installed via setup/install.py and be in an activate environment (i.e. have sourced the default apero.bash.setup)
+bug fixes:
+	- lock printouts only for warnings (unless in debug mode) -- cleans up display
+	- added drs key DRSOBJN (a drs clean version of OBJECT header key) -- should fix spaces in object names issue
+	- fixed cores = 1 bug
