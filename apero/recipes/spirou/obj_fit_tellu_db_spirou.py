@@ -9,7 +9,6 @@ Created on 2019-09-16 at 13:22
 
 @author: cook
 """
-from __future__ import division
 import os
 from collections import OrderedDict
 
@@ -119,7 +118,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # get objects that match this object name
     gargs = [fiber, filetype, dprtypes, robjnames]
-    obj_stars, obj_names = telluric.get_non_tellu_objs(params, *gargs)
+    obj_stars, obj_names = telluric.get_non_tellu_objs(params, recipe, *gargs)
     # ----------------------------------------------------------------------
     # get night names for each object
     night_names, obj_basenames = [], []

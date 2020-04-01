@@ -182,7 +182,7 @@ def update_file(filename, prefix, suffix):
             outline = line
         # add new line at end if not there
         if not line.endswith('\n'):
-            outline += r'\n'
+            outline += '\n'
         # append to output lines
         outlines.append(outline)
     # save file
@@ -190,6 +190,95 @@ def update_file(filename, prefix, suffix):
     for outline in outlines:
         ufile.write(outline)
     ufile.close()
+
+
+def format_rst(filename):
+    # ----------------------------------------------------------------------
+    # open file
+    infile = open(filename, 'r')
+    lines = infile.readlines()
+    infile.close()
+    # ----------------------------------------------------------------------
+    outlines = []
+    # loop around in lines
+    for line in lines:
+        # ------------------------------------------------------------------
+        # deal with special characters
+        line = _special_chars(line)
+        # ------------------------------------------------------------------
+        # deal with line endings
+        if not line.endswith('\n'):
+            line += '\n'
+        # append line to outlines
+        outlines.append(line)
+    # ----------------------------------------------------------------------
+    # open file
+    outfile = open(filename, 'w')
+    for outline in outlines:
+        outfile.write(outline)
+    outfile.close()
+
+
+
+def _special_chars(line):
+    # replace tabs with spaces
+    line = line.replace('\t', ' ' * 4)
+    # need to remove all accent quotes
+    line = line.replace('`', '')
+    # special chars
+    punctuation = ['\n', '.', ',', '!', '?', ':', ';', '"', '\'']
+    chars = ['_', '*', '.py']
+    prefix = [True, True, False]
+    suffix = [True, True, True]
+    contains = [True, True, False]
+    # get words
+    words = line.split(' ')
+    # loop around all words
+    for wit, word in enumerate(words):
+        # copy word
+        newword = str(word)
+        # define empty out suffix (to be filled by punctuation)
+        out_suffix = ''
+        # need to deal with punctuation
+        while (newword != '') and (newword[-1] in punctuation):
+            newword = newword[:-1]
+        if (len(newword) > 0) and (len(newword) != len(word)):
+            out_suffix = word.split(newword)[-1]
+        elif len(newword) == 0:
+            continue
+        # loop around special character sets
+        for cit, char in enumerate(chars):
+            # skip if we don't have characters
+            if char not in word:
+                continue
+            # deal with prefix
+            if prefix[cit]:
+                cond1 = word.startswith(char)
+            else:
+                cond1 = False
+            # deal with contains
+            if contains[cit]:
+                cond2 = char in word
+            else:
+                cond2 = False
+            # deal with suffix
+            if suffix[cit]:
+                cond3 = word.endswith(char)
+            else:
+                cond3 = False
+            # if any are true word is special
+            if cond1 or cond2 or cond3:
+                newword = '`{0}`'.format(newword)
+                # add back puncutation
+                newword += out_suffix
+                # replace word with newword
+                words[wit] = newword
+                # word is special do not continue loop
+                break
+    # make new line
+    newline = ' '.join(words)
+    # return line
+    return newline
 
 
 # =============================================================================

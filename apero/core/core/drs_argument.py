@@ -21,7 +21,6 @@ from apero.core import constants
 from apero.locale import drs_text
 from apero.core.core import drs_log
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -36,6 +35,7 @@ __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = drs_log.wlog
+display_func = drs_log.display_func
 # get print colours
 COLOR = pseudo_const.Colors()
 # get param dict
@@ -66,33 +66,56 @@ INDEX_FILE_NAME_COL = Constants['DRS_INDEX_FILENAME']
 # Define ArgParse Parser and Action classes
 # =============================================================================
 # Adapted from: https://stackoverflow.com/a/16942165
-class DRSArgumentParser(argparse.ArgumentParser):
+class DrsArgumentParser(argparse.ArgumentParser):
     def __init__(self, recipe, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, 'DRSArgumentParser')
+        # define the recipe
         self.recipe = recipe
+        # get the recipes parameter dictionary
         params = self.recipe.drs_params
+        # get the text dictionary
         self.textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+        # get the help dictionary
         self.helptext = HelpText(params['INSTRUMENT'], params['LANGUAGE'])
+        # set up the arguments
         self.args = None
+        # set up the sys.argv storage
         self.argv = None
+        # set up the source of the args (either main or sys.argv when set)
         self.source = None
+        # set up the name space
         self.namespace = None
+        # run the argument parser (super)
         argparse.ArgumentParser.__init__(self, **kwargs)
 
     def parse_args(self, args=None, namespace=None):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, 'parse_args', __NAME__,
+                         'DRSArgumentParser')
+        # deal with no args passed (get from sys.argv)
         if args is None:
+            # first arg is the recipe name
             self.args = sys.argv[1:]
+            # set the source to sys.argv
             self.source = 'sys.argv'
+        # if we have args passed store them
         else:
+            # shallow copy of args
             self.args = args
+            # set the source to recipe.main()
             self.source = self.recipe.name + '.main()'
         # overritten functionality
         args, argv = self.parse_known_args(self.args, namespace)
+        # deal with argv being set
         if argv:
-            msg = self.textdict['09-001-00002']
-            self.error(msg.format(' '.join(argv)))
+            self.error(self.textdict['09-001-00002'].format(' '.join(argv)))
         return args
 
     def error(self, message):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, 'error', __NAME__,
+                         'DRSArgumentParser')
         # self.print_help(sys.stderr)
         # self.exit(2, '%s: error: %s\n' % (self.prog, message))
         # get parameterse from drs_params
@@ -105,6 +128,9 @@ class DRSArgumentParser(argparse.ArgumentParser):
         WLOG(params, 'error', emsg_obj)
 
     def _print_message(self, message, file=None):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_print_message', __NAME__,
+                         'DRSArgumentParser')
         # get parameters from drs_params
         params = self.recipe.drs_params
         program = str(params['RECIPE'])
@@ -115,7 +141,7 @@ class DRSArgumentParser(argparse.ArgumentParser):
         else:
             green, end = COLOR.ENDC, COLOR.ENDC
             yellow, blue = COLOR.ENDC, COLOR.ENDC
-        # Manually print error message (with help)
+        # Manually print error message (with help text)
         print()
         print(green + params['DRS_HEADER'] + end)
         helptitletext = self.textdict['40-002-00001'].format(program)
@@ -128,6 +154,9 @@ class DRSArgumentParser(argparse.ArgumentParser):
         print(blue + self.format_help() + end)
 
     def format_usage(self):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, 'format_usage', __NAME__,
+                         'DRSArgumentParser')
         # noinspection PyProtectedMember
         return_string = (' ' + self.helptext['USAGE_TEXT'] + ' ' +
                          self.recipe._drs_usage())
@@ -135,38 +164,47 @@ class DRSArgumentParser(argparse.ArgumentParser):
         return return_string
 
     def format_help(self):
-
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, 'format_help', __NAME__,
+                         'DRSArgumentParser')
+        # empty help message at intialization
         hmsgs = []
-
         # noinspection PyProtectedMember
         hmsgs += [' ' + self.helptext['USAGE_TEXT'] + ' ' +
                   self.recipe._drs_usage()]
-
         # add description
         if self.recipe.description is not None:
+            # add header line
             hmsgs += ['', self.recipe.drs_params['DRS_HEADER']]
+            # add description title
             hmsgs += [' ' + self.helptext['DESCRIPTION_TEXT']]
+            # add header line
             hmsgs += [self.recipe.drs_params['DRS_HEADER'], '']
+            # add description text
             hmsgs += [' ' + self.recipe.description]
+            # add header line
             hmsgs += [self.recipe.drs_params['DRS_HEADER']]
-
-        # deal with required arguments
+        # deal with required (positional) arguments
         hmsgs += ['', self.textdict['40-002-00002'], '']
+        # loop around each required (positional) arguments
         for arg in self.recipe.required_args:
+            # add to help message list
             hmsgs.append(_help_format(arg.names, arg.helpstr, arg.options))
         # deal with optional arguments
         hmsgs += ['', '', self.textdict['40-002-00003'], '']
+        # loop around each optional argument
         for arg in self.recipe.optional_args:
+            # add to help message list
             hmsgs.append(_help_format(arg.names, arg.helpstr, arg.options))
         # deal with special arguments
         hmsgs += ['', '', self.textdict['40-002-00004'], '']
+        # loop around each special argument
         for arg in self.recipe.special_args:
+            # add to help mesasge list
             hmsgs.append(_help_format(arg.names, arg.helpstr, arg.options))
-
         # add help
         helpstr = self.textdict['40-002-00005']
         hmsgs.append(_help_format(['--help', '-h'], helpstr))
-
         # add epilog
         if self.recipe.epilog is not None:
             hmsgs += ['', self.recipe.drs_params['DRS_HEADER']]
@@ -183,7 +221,9 @@ class DRSArgumentParser(argparse.ArgumentParser):
         return return_string
 
     def _has_special(self):
-
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_has_special', __NAME__,
+                         'DRSArgumentParser')
         # deal with help
         if '-h' in sys.argv:
             self.print_help()
@@ -193,7 +233,6 @@ class DRSArgumentParser(argparse.ArgumentParser):
             self.print_help()
             # quit after call
             self.exit()
-
         # Generate list of special arguments that require us to skip other
         #   arguments
         skippable = []
@@ -203,25 +242,53 @@ class DRSArgumentParser(argparse.ArgumentParser):
             # append to skippable if attribute "skip" is true
             if sarg.skip:
                 skippable += sarg.names
-
         # deal with skippables
         for skip in skippable:
             if self.args is not None:
                 for parg in self.args:
                     if skip in parg:
                         return True
-        else:
-            return False
+        # if we have reached this point we do not have a special argument
+        return False
 
 
-class _CheckDirectory(argparse.Action):
+class DrsAction(argparse.Action):
     def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, 'DrsAction')
+        # run the argument parser (super)
+        argparse.Action.__init__(self, *args, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        """
+        :param parser: 
+        :param namespace: 
+        :param values: 
+        :param option_string: 
+        
+        :type parser: DrsArgumentParser
+        :return: 
+        """
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__call__', __NAME__, 'DrsAction')
+        # raise not implemented error
+        raise NotImplementedError(_('.__call__() not defined'))
+
+
+class _CheckDirectory(DrsAction):
+    def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, '_CheckDirectory')
+        # set the recipe and parser to None
         self.recipe = None
         self.parser = None
         # force super initialisation
-        argparse.Action.__init__(self, *args, **kwargs)
+        DrsAction.__init__(self, *args, **kwargs)
 
     def _check_directory(self, value):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_check_directory', __NAME__,
+                         '_CheckDirectory')
         # ---------------------------------------------------------------------
         # deal with no check
         if not self.recipe.input_validation:
@@ -247,8 +314,8 @@ class _CheckDirectory(argparse.Action):
             # noinspection PyProtectedMember
             input_dir = self.recipe.get_input_dir()
             # get listing message
-            lmsgs = _print_list_msg(self.parser, self.recipe, input_dir,
-                                    dircond=True, return_string=True)
+            lmsgs = _print_list_msg(self.recipe, input_dir, dircond=True,
+                                    return_string=True)
             # combine emsgs and lmsgs
             wmsgs = []
             for it in range(len(emsgs.keys)):
@@ -262,6 +329,9 @@ class _CheckDirectory(argparse.Action):
         # get drs parameters
         self.recipe = parser.recipe
         self.parser = parser
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         '_CheckDirectory')
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
@@ -273,15 +343,21 @@ class _CheckDirectory(argparse.Action):
         setattr(namespace, self.dest, value)
 
 
-class _CheckFiles(argparse.Action):
+class _CheckFiles(DrsAction):
     def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, '_CheckFiles')
+        # get the recipe, namespace and directory (if not added set to None)
         self.recipe = kwargs.get('recipe', None)
         self.namespace = kwargs.get('namespace', None)
         self.directory = kwargs.get('directory', None)
         # force super initialisation
-        argparse.Action.__init__(self, *args, **kwargs)
+        DrsAction.__init__(self, *args, **kwargs)
 
     def _check_files(self, value, current_typelist=None, current_filelist=None):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_check_files', __NAME__,
+                         '_CheckFiles')
         # ---------------------------------------------------------------------
         # deal with no check
         if not self.recipe.input_validation:
@@ -322,6 +398,9 @@ class _CheckFiles(argparse.Action):
         # get drs parameters
         self.recipe = parser.recipe
         self.parser = parser
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         '_CheckFiles')
         # store the namespace
         self.namespace = namespace
         # check for help
@@ -345,13 +424,19 @@ class _CheckFiles(argparse.Action):
         setattr(namespace, self.dest, [files, types])
 
 
-class _CheckBool(argparse.Action):
+class _CheckBool(DrsAction):
     def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, '_CheckBool')
+        # define recipe as unset
         self.recipe = None
         # force super initialisation
-        argparse.Action.__init__(self, *args, **kwargs)
+        DrsAction.__init__(self, *args, **kwargs)
 
     def _check_bool(self, value):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_check_bool', __NAME__,
+                         '_CheckBool')
         # ---------------------------------------------------------------------
         # deal with no check
         if not self.recipe.input_validation:
@@ -386,6 +471,9 @@ class _CheckBool(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         # get drs parameters
         self.recipe = parser.recipe
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         '_CheckBool')
         # check for help
         # noinspection PyProtectedMember
         skip = parser._has_special()
@@ -399,13 +487,19 @@ class _CheckBool(argparse.Action):
         setattr(namespace, self.dest, value)
 
 
-class _CheckType(argparse.Action):
+class _CheckType(DrsAction):
     def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, '_CheckType')
+        # define recipe as None
         self.recipe = None
         # force super initialisation
-        argparse.Action.__init__(self, *args, **kwargs)
+        DrsAction.__init__(self, *args, **kwargs)
 
     def _eval_type(self, value):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_eval_type', __NAME__,
+                         '_CheckType')
         # get parameters
         params = self.recipe.drs_params
         # get type error
@@ -418,6 +512,9 @@ class _CheckType(argparse.Action):
             WLOG(params, 'error', TextEntry('09-001-00015', args=eargs))
 
     def _check_type(self, value):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_check_type', __NAME__,
+                         '_CheckType')
         # ---------------------------------------------------------------------
         # deal with no check
         if not self.recipe.input_validation:
@@ -450,7 +547,9 @@ class _CheckType(argparse.Action):
             WLOG(params, 'error', TextEntry('09-001-00018', args=eargs))
 
     def _check_limits(self, values):
-        func_name = __NAME__ + '_CheckType._check_limits()'
+        # set function name (cannot break here --> no access to inputs)
+        func_name = display_func(self.recipe.drs_params, '_check_type',
+                                 __NAME__, '_CheckType')
         # ---------------------------------------------------------------------
         # deal with no check
         if not self.recipe.input_validation:
@@ -532,6 +631,9 @@ class _CheckType(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         # get drs parameters
         self.recipe = parser.recipe
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_check_type', __NAME__,
+                         '_CheckType')
         # check for help
         # noinspection PyProtectedMember
         skip = parser._has_special()
@@ -549,13 +651,19 @@ class _CheckType(argparse.Action):
         setattr(namespace, self.dest, value)
 
 
-class _CheckOptions(argparse.Action):
+class _CheckOptions(DrsAction):
     def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, '_CheckOptions')
+        # define recipe as None (overwritten by __call__)
         self.recipe = None
         # force super initialisation
-        argparse.Action.__init__(self, *args, **kwargs)
+        DrsAction.__init__(self, *args, **kwargs)
 
     def _check_options(self, value):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_check_options', __NAME__,
+                         '_CheckOptions')
         # ---------------------------------------------------------------------
         # deal with no check
         if not self.recipe.input_validation:
@@ -573,6 +681,9 @@ class _CheckOptions(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         # get drs parameters
         self.recipe = parser.recipe
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         '_CheckOptions')
         # check for help
         # noinspection PyProtectedMember
         skip = parser._has_special()
@@ -589,15 +700,23 @@ class _CheckOptions(argparse.Action):
 # =============================================================================
 # Define Special Actions
 # =============================================================================
-class _MakeListing(argparse.Action):
+class _MakeListing(DrsAction):
     def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, '_MakeListing')
+        # define recipe as None (overwritten in __call__)
         self.recipe = None
+        # define name space as None (overwritten in __call__)
         self.namespace = None
+        # define parser as None (overwritten in __call__)
         self.parser = None
         # force super initialisation
-        argparse.Action.__init__(self, *args, **kwargs)
+        DrsAction.__init__(self, *args, **kwargs)
 
     def _display_listing(self, namespace):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_display_listing', __NAME__,
+                         '_MakeListing')
         # get input dir
         # noinspection PyProtectedMember
         input_dir = self.recipe.get_input_dir()
@@ -617,32 +736,42 @@ class _MakeListing(argparse.Action):
         # ---------------------------------------------------------------------
         # construct listing message
         # ---------------------------------------------------------------------
-        _print_list_msg(self.parser, self.recipe, fulldir, dircond,
-                        list_all=False)
+        _print_list_msg(self.recipe, fulldir, dircond, list_all=False)
 
     def __call__(self, parser, namespace, values, option_string=None):
+        # get drs parameters
+        self.recipe = parser.recipe
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         '_MakeListing')
+        # store parser
+        self.parser = parser
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
-        # store parser
-        self.parser = parser
-        # get drs parameters
-        self.recipe = parser.recipe
         # display listing
         self._display_listing(namespace)
         # quit after call
         parser.exit()
 
 
-class _MakeAllListing(argparse.Action):
+class _MakeAllListing(DrsAction):
     def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, '_MakeAllListing')
+        # define recipe as None (overwritten in __call__)
         self.recipe = None
+        # define name space as None (overwritten in __call__)
         self.namespace = None
+        # define parse as None (overwritten in __call__)
         self.parser = None
         # force super initialisation
-        argparse.Action.__init__(self, *args, **kwargs)
+        DrsAction.__init__(self, *args, **kwargs)
 
     def _display_listing(self, namespace):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_display_listing', __NAME__,
+                         '_MakeAllListing')
         # get input dir
         # noinspection PyProtectedMember
         input_dir = self.recipe.get_input_dir()
@@ -662,30 +791,38 @@ class _MakeAllListing(argparse.Action):
         # ---------------------------------------------------------------------
         # construct listing message
         # ---------------------------------------------------------------------
-        _print_list_msg(self.parser, self.recipe, fulldir, dircond,
-                        list_all=True)
+        _print_list_msg(self.recipe, fulldir, dircond, list_all=True)
 
     def __call__(self, parser, namespace, values, option_string=None):
+        # get drs parameters
+        self.recipe = parser.recipe
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         '_MakeAllListing')
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
         # store parser
         self.parser = parser
-        # get drs parameters
-        self.recipe = parser.recipe
         # display listing
         self._display_listing(namespace)
         # quit after call
         parser.exit()
 
 
-class _ActivateDebug(argparse.Action):
+class _ActivateDebug(DrsAction):
     def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, '_ActivateDebug')
+        # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
-        argparse.Action.__init__(self, *args, **kwargs)
+        DrsAction.__init__(self, *args, **kwargs)
 
     def _set_debug(self, values, recipe=None):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_set_debug', __NAME__,
+                         '_ActivateDebug')
         # get params
         params = self.recipe.drs_params
         # deal with using without call
@@ -694,6 +831,7 @@ class _ActivateDebug(argparse.Action):
         if values is None:
             return 1
         # test value
+        # noinspection PyPep8,PyBroadException
         try:
             # only take first value (if a list)
             if type(values) != str and hasattr(values, '__len__'):
@@ -713,6 +851,9 @@ class _ActivateDebug(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         # get drs parameters
         self.recipe = parser.recipe
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         '_ActivateDebug')
         # display listing
         if type(values) == list:
             value = list(map(self._set_debug, values))
@@ -722,13 +863,19 @@ class _ActivateDebug(argparse.Action):
         setattr(namespace, self.dest, value)
 
 
-class _DisplayVersion(argparse.Action):
+class _DisplayVersion(DrsAction):
     def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, '_DisplayVersion')
+        # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
-        argparse.Action.__init__(self, *args, **kwargs)
+        DrsAction.__init__(self, *args, **kwargs)
 
     def _display_version(self):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_display_version', __NAME__,
+                         '_DisplayVersion')
         # get params
         params = self.recipe.drs_params
         # get colours
@@ -746,23 +893,34 @@ class _DisplayVersion(argparse.Action):
         print(green + params['DRS_HEADER'] + end)
 
     def __call__(self, parser, namespace, values, option_string=None):
+        # set recipe from parser
+        self.recipe = parser.recipe
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         '_DisplayVersion')
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
-        self.recipe = parser.recipe
+
         # display version
         self._display_version()
         # quit after call
         parser.exit()
 
 
-class _DisplayInfo(argparse.Action):
+class _DisplayInfo(DrsAction):
     def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, '_DisplayInfo')
+        # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
-        argparse.Action.__init__(self, *args, **kwargs)
+        DrsAction.__init__(self, *args, **kwargs)
 
     def _display_info(self):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_display_info', __NAME__,
+                         '_DisplayInfo')
         # get params
         recipe = self.recipe
         params = recipe.drs_params
@@ -784,8 +942,8 @@ class _DisplayInfo(argparse.Action):
         imsgs = _get_version_info(params, green, end)
         for imsg in imsgs:
             print(imsg)
-        # noinspection PyProtectedMember
         print()
+        # noinspection PyProtectedMember
         print(blue + ' ' + etext['40-002-00007'] + recipe._drs_usage() + end)
         # print description
         print()
@@ -809,35 +967,43 @@ class _DisplayInfo(argparse.Action):
         print(green + params['DRS_HEADER'] + end)
 
     def __call__(self, parser, namespace, values, option_string=None):
+        # set recipe from parser
+        self.recipe = parser.recipe
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         '_DisplayInfo')
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
-        self.recipe = parser.recipe
         # display version
         self._display_info()
         # quit after call
         parser.exit()
 
 
-class _SetProgram(argparse.Action):
+class _SetProgram(DrsAction):
     def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, '_SetProgram')
+        # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
-        argparse.Action.__init__(self, *args, **kwargs)
+        DrsAction.__init__(self, *args, **kwargs)
 
     def _set_program(self, values):
-        func_name = __NAME__ + '._SetProgram._set_program()'
-
+        # set function name (cannot break here --> no access to inputs)
+        func_name = display_func(self.recipe.drs_params, '_set_program',
+                                 __NAME__, '_SetProgram')
+        # deal with difference datatypes for values
         if isinstance(values, list):
-            strvalue =  values[0]
+            strvalue = values[0]
         elif isinstance(values, np.ndarray):
-            strvalue =  values[0]
+            strvalue = values[0]
         else:
             strvalue = str(values)
         # debug message: setting program to: "strvalue"
         dmsg = TextEntry('90-001-00031', args=[strvalue])
         WLOG(self.recipe.drs_params, 'debug', dmsg)
-
         # set DRS_DEBUG (must use the self version)
         self.recipe.drs_params['DRS_USER_PROGRAM'] = strvalue
         self.recipe.drs_params.set_source('DRS_USER_PROGRAM', func_name)
@@ -846,24 +1012,33 @@ class _SetProgram(argparse.Action):
         return strvalue
 
     def __call__(self, parser, namespace, values, option_string=None):
+        # get recipe from parser
+        self.recipe = parser.recipe
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         '_SetProgram')
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
-        self.recipe = parser.recipe
         # display version
         value = self._set_program(values)
         # Add the attribute
         setattr(namespace, self.dest, value)
 
 
-class _SetIPythonReturn(argparse.Action):
+class _SetIPythonReturn(DrsAction):
     def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, '_SetIPythonReturn')
+        # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
-        argparse.Action.__init__(self, *args, **kwargs)
+        DrsAction.__init__(self, *args, **kwargs)
 
-    def _set_return(self, values):
-        func_name = __NAME__ + '._SetProgram._set_program()'
+    def _set_return(self, _):
+        # set function name (cannot break here --> no access to inputs)
+        func_name = display_func(self.recipe.drs_params, '_set_return',
+                                 __NAME__, '_SetIPythonReturn')
         # debug message: setting program to: "strvalue"
         dmsg = TextEntry('90-001-00032')
         WLOG(self.recipe.drs_params, 'debug', dmsg)
@@ -875,24 +1050,33 @@ class _SetIPythonReturn(argparse.Action):
         return True
 
     def __call__(self, parser, namespace, values, option_string=None):
+        # get recipe from parser
+        self.recipe = parser.recipe
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         '_SetIPythonReturn')
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
-        self.recipe = parser.recipe
         # display version
         value = self._set_return(values)
         # Add the attribute
         setattr(namespace, self.dest, value)
 
 
-class _Breakpoints(argparse.Action):
+class _Breakpoints(DrsAction):
     def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, '_Breakpoints')
+        # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
-        argparse.Action.__init__(self, *args, **kwargs)
+        DrsAction.__init__(self, *args, **kwargs)
 
-    def _set_return(self, values):
-        func_name = __NAME__ + '._SetProgram._set_program()'
+    def _set_return(self, _):
+        # set function name (cannot break here --> no access to inputs)
+        func_name = display_func(self.recipe.drs_params, '_set_return',
+                                 __NAME__, '_Breakpoints')
         # debug message: setting program to: "strvalue"
         dmsg = TextEntry('90-001-00033')
         WLOG(self.recipe.drs_params, 'debug', dmsg)
@@ -904,24 +1088,101 @@ class _Breakpoints(argparse.Action):
         return True
 
     def __call__(self, parser, namespace, values, option_string=None):
+        # get recipe from parser
+        self.recipe = parser.recipe
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         '_Breakpoints')
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
-        self.recipe = parser.recipe
         # display version
         value = self._set_return(values)
         # Add the attribute
         setattr(namespace, self.dest, value)
 
 
-class _SetQuiet(argparse.Action):
+class _Breakfunc(DrsAction):
     def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, '_Breakfunc')
+        # set recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
-        argparse.Action.__init__(self, *args, **kwargs)
+        DrsAction.__init__(self, *args, **kwargs)
 
-    def _set_return(self, values):
-        func_name = __NAME__ + '._SetProgram._set_program()'
+    def _set_breakfunc(self, value):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_set_breakfunc',
+                         __NAME__, '_Breakfunc')
+        # deal with unset value
+        if value is None:
+            return None
+        else:
+            return str(value)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # get drs parameters
+        self.recipe = parser.recipe
+        # display listing
+        if type(values) == list:
+            value = list(map(self._set_breakfunc, values))
+        else:
+            value = self._set_breakfunc(values)
+        # make sure value is not a list
+        if isinstance(value, list):
+            value = value[0]
+        # Add the attribute
+        setattr(namespace, self.dest, value)
+
+
+class _IsMaster(DrsAction):
+    def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, '_IsMaster')
+        # set recipe as None (overwritten in __call__)
+        self.recipe = None
+        # force super initialisation
+        DrsAction.__init__(self, *args, **kwargs)
+
+    def _set_master(self, value):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_set_master',
+                         __NAME__, '_IsMaster')
+        # deal with unset value
+        if value is None:
+            return None
+        else:
+            return str(value)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # get drs parameters
+        self.recipe = parser.recipe
+        # display listing
+        if type(values) == list:
+            value = list(map(self._set_master, values))
+        else:
+            value = self._set_master(values)
+        # make sure value is not a list
+        if isinstance(value, list):
+            value = value[0]
+        # Add the attribute
+        setattr(namespace, self.dest, value)
+
+
+class _SetQuiet(DrsAction):
+    def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, '_SetQuiet')
+        # set recipe as None (overwritten in __call__)
+        self.recipe = None
+        # force super initialisation
+        DrsAction.__init__(self, *args, **kwargs)
+
+    def _set_return(self, _):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_set_return', __NAME__,
+                         '_SetQuiet')
         # debug message: setting program to: "strvalue"
         dmsg = TextEntry('90-001-00034')
         WLOG(self.recipe.drs_params, 'debug', dmsg)
@@ -929,17 +1190,18 @@ class _SetQuiet(argparse.Action):
         return True
 
     def __call__(self, parser, namespace, values, option_string=None):
+        # get recipe from parser
+        self.recipe = parser.recipe
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         '_SetQuiet')
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
-        self.recipe = parser.recipe
         # display version
         value = self._set_return(values)
         # Add the attribute
         setattr(namespace, self.dest, value)
-
-
-
 
 
 # =============================================================================
@@ -992,6 +1254,8 @@ class DrsArgument(object):
                          - if files = [A, B] and filelogic = 'exclusive'
                            the input files may be either A or B
         """
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, 'DrsArgument')
         # ------------------------------------------------------------------
         # define class constants
         # ------------------------------------------------------------------
@@ -1024,7 +1288,7 @@ class DrsArgument(object):
             # check argname
             if self.argname.startswith('-'):
                 # Get text for default language/instrument
-                text = TextDict(None, None)
+                text = TextDict('None', 'None')
                 # get entry to log error
                 ee = TextEntry('00-006-00015', args=[self.argname])
                 self.exception(None, errorobj=[ee, text])
@@ -1033,7 +1297,7 @@ class DrsArgument(object):
             # check argname
             if not self.argname.startswith('-'):
                 # Get text for default language/instrument
-                text = TextDict(None, None)
+                text = TextDict('None', 'None')
                 # get entry to log error
                 ee = TextEntry('00-006-00016', args=[self.argname])
                 self.exception(None, errorobj=[ee, text])
@@ -1042,7 +1306,7 @@ class DrsArgument(object):
             # check argname
             if not self.argname.startswith('-'):
                 # Get text for default language/instrument
-                text = TextDict(None, None)
+                text = TextDict('None', 'None')
                 # get entry to log error
                 ee = TextEntry('00-006-00017', args=[self.argname])
                 self.exception(None, errorobj=[ee, text])
@@ -1075,7 +1339,7 @@ class DrsArgument(object):
         self.filelogic = kwargs.get('filelogic', 'inclusive')
         if self.filelogic not in ['inclusive', 'exclusive']:
             # Get text for default language/instrument
-            text = TextDict(None, None)
+            text = TextDict('None', 'None')
             # get entry to log error
             ee = TextEntry('00-006-00008', args=[self.filelogic])
             self.exception(None, errorobj=[ee, text])
@@ -1084,7 +1348,7 @@ class DrsArgument(object):
             # get entry
             if ('default' not in kwargs) and ('default_ref' not in kwargs):
                 # Get text for default language/instrument
-                text = TextDict(None, None)
+                text = TextDict('None', 'None')
                 # get entry to log error
                 ee = TextEntry('00-006-00009', args=self.filelogic)
                 self.exception(None, errorobj=[ee, text])
@@ -1094,7 +1358,11 @@ class DrsArgument(object):
         self.default_ref = kwargs.get('default_ref', None)
 
         # get required
-        self.required = kwargs.get('required', False)
+        if self.kind == 'arg':
+            self.required = kwargs.get('required', True)
+        else:
+            self.required = kwargs.get('required', False)
+        # get whether we need this arguement for processing scripts
         self.reprocess = kwargs.get('reprocess', False)
 
         # set empty
@@ -1114,13 +1382,15 @@ class DrsArgument(object):
 
         :return None:
         """
+        # set function name (cannot break here --> no access to params)
+        _ = display_func(None, 'make_properties', __NAME__, 'DrsArgument')
         # deal with no dtype
         if self.dtype is None:
             self.dtype = str
         # make sure dtype is valid
         if self.dtype not in self.allowed_dtypes:
             # Get text for default language/instrument
-            text = TextDict(None, None)
+            text = TextDict('None', 'None')
             # make error
             a_dtypes_str = ['"{0}"'.format(i) for i in self.allowed_dtypes]
             eargs = [' or '.join(a_dtypes_str), self.dtype]
@@ -1187,29 +1457,40 @@ class DrsArgument(object):
                       ['action', 'nargs', 'type', 'choices', 'default', 'help']
         :return None:
         """
+        # set function name (cannot break here --> no access to params)
+        _ = display_func(None, 'assign_properties', __NAME__, 'DrsArgument')
         # loop around properties
         for prop in self.propkeys:
             if prop in props:
                 self.props[prop] = props[prop]
 
     def exception(self, message=None, errorobj=None):
-
+        # set function name (cannot break here --> no access to params)
+        _ = display_func(None, 'exception', __NAME__, 'DrsArgument')
+        # deal with required (positional) argument
         if self.kind == 'arg':
             log_opt = 'A[{0}] '.format(self.name)
+        # deal with optional argument
         elif self.kind == 'kwarg':
             log_opt = 'K[{0}] '.format(self.name)
+        # deal with special optional argument
         elif self.kind == 'special':
             log_opt = 'S[{0}] '.format(self.name)
+        # deal with anything else (should not get here)
         else:
             log_opt = 'X[{0}] '.format(self.name)
-
+        # if we have an error object then raise an argument error with
+        #   the error object
         if errorobj is not None:
             errorobj[0] = log_opt + errorobj[0]
             raise ArgumentError(errorobj=errorobj)
+        # else raise the argument error with just the message
         else:
             raise ArgumentError(message)
 
     def copy(self, argument):
+        # set function name (cannot break here --> no access to params)
+        _ = display_func(None, 'copy', __NAME__, 'DrsArgument')
         # get argument name
         self.argname = str(argument.argname)
         # get full name
@@ -1276,7 +1557,10 @@ class DrsArgument(object):
         :return str: the string representation of DrSArgument
                      i.e. DrsArgument[name]
         """
-        return 'DrsArgument[{0}]'.format(self.name)
+        # set function name (cannot break here --> no access to params)
+        _ = display_func(None, '__str__', __NAME__, 'DrsArgument')
+        # return string representation
+        return self.__repr__()
 
     def __repr__(self):
         """
@@ -1284,6 +1568,9 @@ class DrsArgument(object):
         :return str: the string representation of DrSArgument
                      i.e. DrsArgument[name]
         """
+        # set function name (cannot break here --> no access to params)
+        _ = display_func(None, '__str__', __NAME__, 'DrsArgument')
+        # return string representation
         return 'DrsArgument[{0}]'.format(self.name)
 
 
@@ -1291,7 +1578,8 @@ class DrsArgument(object):
 # Worker functions
 # =============================================================================
 def _get_version_info(params, green='', end=''):
-
+    # set function name (cannot break here --> no access to params)
+    _ = display_func(params, '_get_version_info', __NAME__)
     # get name
     if 'DRS_NAME' in params:
         name = str(params['DRS_NAME'])
@@ -1321,15 +1609,17 @@ def _get_version_info(params, green='', end=''):
 
 
 def _help_format(keys, helpstr, options=None):
-
+    # set function name (cannot break here --> no access to params)
+    _ = display_func(None, '_help_format', __NAME__)
+    # set up empty format string
     fmtstring = ''
+    # set separation size
     sep = 19
+    # set maximum size
     maxsize = 60
-
     # construct key string and add to output
     keystr = ','.join(keys)
     fmtstring += keystr
-
     # construct options string
     if options is None:
         optionstr = ''
@@ -1338,7 +1628,6 @@ def _help_format(keys, helpstr, options=None):
         optionstr = '{{{0}}}'.format(','.join(options))
     # add option string
     helpstr = ' '.join([optionstr, helpstr])
-
     # add help
     # Assume help string is a string with escape characters
 
@@ -1358,45 +1647,24 @@ def _help_format(keys, helpstr, options=None):
 
     # add start separation
     for hstr in helpstrs:
-        fmtstring += '\n' + ' '*sep + hstr
+        fmtstring += '\n' + ' ' * sep + hstr
 
     # return formatted string
     return fmtstring
 
 
 def _textwrap(input_string, length):
-    # Modified version of this: https://stackoverflow.com/a/16430754
-    new_string = []
-    for s in input_string.split("\n"):
-        if s == "":
-            new_string.append('')
-        wlen = 0
-        line = []
-        for dor in s.split():
-            if wlen + len(dor) + 1 <= length:
-                line.append(dor)
-                wlen += len(dor) + 1
-            else:
-                new_string.append(" ".join(line))
-                line = [dor]
-                wlen = len(dor)
-        if len(line):
-            new_string.append(" ".join(line))
-
-    # add a tab to all but first line
-    new_string2 = [new_string[0]]
-    for it in range(1, len(new_string)):
-        new_string2.append('\t' + new_string[it])
-
-    return new_string2
+    # set function name (cannot break here --> no access to params)
+    _ = display_func(None, '_textwrap', __NAME__)
+    # return text wrap
+    return constants.constant_functions.textwrap(input_string, length)
 
 
-def _print_list_msg(parser, recipe, fulldir, dircond=False,
-                    return_string=False, list_all=False):
+def _print_list_msg(recipe, fulldir, dircond=False, return_string=False,
+                    list_all=False):
     """
     Prints the listing message (using "get_file_list")
 
-    :param parser: DrsArgumentParser instance
     :param recipe: DrsRecipe instance
     :param fulldir: string, the full "root" (top level) directory
     :param dircond: bool, if True only prints directories (passed to
@@ -1406,8 +1674,10 @@ def _print_list_msg(parser, recipe, fulldir, dircond=False,
     :param list_all: bool, if True overrides lmit (set by HARD_DISPLAY_LIMIT)
     :return:
     """
-
+    # get params from recipe
     params = recipe.drs_params
+    # set function name
+    _ = display_func(params, '_print_list_msg', __NAME__)
     # get text
     text = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     helptext = HelpText(params['INSTRUMENT'], params['LANGUAGE'])
@@ -1421,13 +1691,13 @@ def _print_list_msg(parser, recipe, fulldir, dircond=False,
     # construct error message
     if return_string:
         green, end = '', ''
-        yellow, blue = '', ''
+        # yellow, blue = '', ''
     elif params['DRS_COLOURED_LOG']:
         green, end = COLOR.GREEN1, COLOR.ENDC
-        yellow, blue = COLOR.YELLOW1, COLOR.BLUE1
+        # yellow, blue = COLOR.YELLOW1, COLOR.BLUE1
     else:
         green, end = COLOR.ENDC, COLOR.ENDC
-        yellow, blue = COLOR.ENDC, COLOR.ENDC
+        # yellow, blue = COLOR.ENDC, COLOR.ENDC
     # get the file argument list (for use below)
     fileargs = []
     for argname in recipe.args:
@@ -1499,6 +1769,8 @@ def _get_file_list(limit, path, ext=None, recursive=False,
     :return file_list: list of strings, the files found with extension (if not
                        None, up to the number limit
     """
+    # set function name (cannot break here --> no access to params)
+    _ = display_func(None, '_get_file_list', __NAME__)
     # deal with no limit - set hard limit
     if list_all:
         limit = np.inf
@@ -1575,128 +1847,351 @@ def get_uncommon_path(path1, path2):
 
     :return uncommon_path: string, the uncommon path between path1 and path2
     """
+    # set function name (cannot break here --> no access to params)
+    _ = display_func(None, 'get_uncommon_path', __NAME__)
+    # paths must be absolute
+    path1 = os.path.abspath(path1)
+    path2 = os.path.abspath(path2)
+    # get common path
     common = os.path.commonpath([path2, path1]) + os.sep
+    # return the non-common part of the path
     return path1.split(common)[-1]
 
 
 # =============================================================================
 # Make functions
 # =============================================================================
-def make_listing(p):
+def make_listing(params):
     """
-    Make a custom special argument that lists the files in the given
-    input directory
-    :return props: dictionary for argparser
+    Make a custom special argument: Sets whether to display listing files
+    up to DRS_MAX_IO_DISPLAY_LIMIT in number.
+
+    :param params: ParamDict, Parameter Dictionary of constants
+    :type params: ParamDict
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
     """
-    limit = p['DRS_MAX_IO_DISPLAY_LIMIT']
-    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
+    # set function name
+    _ = display_func(params, 'make_listing', __NAME__)
+    # define the listing limit (used in listing help
+    limit = params['DRS_MAX_IO_DISPLAY_LIMIT']
+    # get the help text dictionary
+    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # set up an output storage dictionary
     props = OrderedDict()
+    # set the argument name
     props['name'] = '--listing'
+    # set any argument alternative names
     props['altnames'] = ['--list']
+    # set the argument action function
     props['action'] = _MakeListing
+    # set the number of argument to expect
     props['nargs'] = 0
+    # set the help message
     props['help'] = htext['LISTING_HELP'].format(limit)
+    # return the argument dictionary
     return props
 
 
-def make_alllisting(p):
-    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
+def make_alllisting(params):
+    """
+    Make a custom special argument: Sets whether to display all listing files
+
+    :param params: ParamDict, Parameter Dictionary of constants
+    :type params: ParamDict
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
+    """
+    # set function name
+    _ = display_func(params, 'make_alllisting', __NAME__)
+    # get the help text dictionary
+    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # set up an output storage dictionary
     props = OrderedDict()
+    # set the argument name
     props['name'] = '--listingall'
+    # set any argument alternative names
     props['altnames'] = ['--listall']
+    # set the argument action function
     props['action'] = _MakeAllListing
+    # set the number of argument to expect
     props['nargs'] = 0
+    # set the help message
     props['help'] = htext['ALLLISTING_HELP']
+    # return the argument dictionary
     return props
 
 
-def make_debug(p):
+def make_debug(params):
     """
-    Make a custom special argument that switches on debug mode (as it needs to
-    be done as soon as possible)
-    :return:
+    Make a custom special argument: Sets which debug mode to be in
+
+    :param params: ParamDict, Parameter Dictionary of constants
+    :type params: ParamDict
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
     """
-    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
+    # set function name
+    _ = display_func(params, 'make_debug', __NAME__)
+    # get the help text dictionary
+    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # set up an output storage dictionary
     props = OrderedDict()
+    # set the argument name
     props['name'] = '--debug'
+    # set any argument alternative names
     props['altnames'] = ['--d', '--verbose']
+    # set the argument action function
     props['action'] = _ActivateDebug
+    # set the number of argument to expect
     props['nargs'] = '?'
+    # set the help message
     props['help'] = htext['DEBUG_HELP']
+    # return the argument dictionary
     return props
 
 
-def make_version(p):
+def make_version(params):
     """
-    Make a custom special argument that lists the version number
-    :return props: dictionary for argparser
+    Make a custom special argument: Whether to display drs version information
+
+    :param params: ParamDict, Parameter Dictionary of constants
+    :type params: ParamDict
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
     """
-    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
+    # set function name
+    _ = display_func(params, 'make_version', __NAME__)
+    # get the help text dictionary
+    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # set up an output storage dictionary
     props = OrderedDict()
+    # set the argument name
     props['name'] = '--version'
+    # set any argument alternative names
     props['altnames'] = []
+    # set the argument action function
     props['action'] = _DisplayVersion
+    # set the number of argument to expect
     props['nargs'] = 0
+    # set the help message
     props['help'] = htext['VERSION_HELP']
+    # return the argument dictionary
     return props
 
 
-def make_info(p):
+def make_info(params):
     """
-    Make a custom special argument that lists a short version of the help
-    :return props: dictionary for argparser
+    Make a custom special argument: Whether to display recipe information
+
+    :param params: ParamDict, Parameter Dictionary of constants
+    :type params: ParamDict
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
     """
-    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
+    # set function name
+    _ = display_func(params, 'make_info', __NAME__)
+    # get the help text dictionary
+    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # set up an output storage dictionary
     props = OrderedDict()
+    # set the argument name
     props['name'] = '--info'
+    # set any argument alternative names
     props['altnames'] = ['--usage']
+    # set the argument action function
     props['action'] = _DisplayInfo
+    # set the number of argument to expect
     props['nargs'] = 0
+    # set the help message
     props['help'] = htext['INFO_HELP']
+    # return the argument dictionary
     return props
 
 
-def set_program(p):
-    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
+def set_program(params):
+    """
+    Make a custom special argument: Set the program name
+
+    :param params: ParamDict, Parameter Dictionary of constants
+    :type params: ParamDict
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
+    """
+    # set function name
+    _ = display_func(params, 'set_program', __NAME__)
+    # get the help text dictionary
+    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # set up an output storage dictionary
     props = OrderedDict()
+    # set the argument name
     props['name'] = '--program'
+    # set any argument alternative names
     props['altnames'] = ['--prog']
+    # set the argument action function
     props['action'] = _SetProgram
+    # set the number of argument to expect
     props['nargs'] = 1
+    # set the help message
     props['help'] = htext['SET_PROGRAM_HELP']
+    # return the argument dictionary
     return props
 
 
-def set_ipython_return(p):
-    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
+def set_ipython_return(params):
+    """
+    Make a custom special argument: Set the use of ipython return after
+    script ends
+
+    :param params: ParamDict, Parameter Dictionary of constants
+    :type params: ParamDict
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
+    """
+    # set function name
+    _ = display_func(params, 'set_ipython_return', __NAME__)
+    # get the help text dictionary
+    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # set up an output storage dictionary
     props = OrderedDict()
+    # set the argument name
     props['name'] = '--idebug'
+    # set any argument alternative names
     props['altnames'] = ['--idb']
+    # set the argument action function
     props['action'] = _SetIPythonReturn
+    # set the number of argument to expect
     props['nargs'] = 0
+    # set the help message
     props['help'] = htext['SET_IPYTHON_RETURN_HELP']
+    # return the argument dictionary
     return props
 
 
-def breakpoints(p):
-    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
+def breakpoints(params):
+    """
+    Make a custom special argument: Set the use of break_point
+
+    :param params: ParamDict, Parameter Dictionary of constants
+    :type params: ParamDict
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
+    """
+    # set function name
+    _ = display_func(params, 'breakpoints', __NAME__)
+    # get the help text dictionary
+    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # set up an output storage dictionary
     props = OrderedDict()
+    # set the argument name
     props['name'] = '--breakpoints'
+    # set any argument alternative names
     props['altnames'] = ['--break']
+    # set the argument action function
     props['action'] = _Breakpoints
+    # set the number of argument to expect
     props['nargs'] = 0
+    # set the help message
     props['help'] = htext['BREAKPOINTS_HELP']
+    # return the argument dictionary
     return props
 
 
-def set_quiet(p):
-    htext = drs_text.HelpDict(p['INSTRUMENT'], p['LANGUAGE'])
+def is_master(params):
+    """
+    Make a custom special argument: Set the use of break_point
+
+    :param params: ParamDict, Parameter Dictionary of constants
+    :type params: ParamDict
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
+    """
+    # set function name
+    _ = display_func(params, 'is_master', __NAME__)
+    # get the help text dictionary
+    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # set up an output storage dictionary
     props = OrderedDict()
+    # set the argument name
+    props['name'] = '--master'
+    # set any argument alternative names
+    props['altnames'] = []
+    # set the argument action function
+    props['action'] = _IsMaster
+    # set the number of argument to expect
+    props['nargs'] = 1
+    # set the help message
+    props['help'] = htext['IS_MASTER_HELP']
+    # return the argument dictionary
+    return props
+
+
+def make_breakfunc(params):
+    """
+    Make a custom special argument: Set a break function
+
+    :param params: ParamDict, Parameter Dictionary of constants
+    :type params: ParamDict
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
+    """
+    # set function name
+    _ = display_func(params, 'make_breakfunc', __NAME__)
+    # get the help text dictionary
+    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # set up an output storage dictionary
+    props = OrderedDict()
+    # set the argument name
+    props['name'] = '--breakfunc'
+    # set any argument alternative names
+    props['altnames'] = ['--bf']
+    # set the argument action function
+    props['action'] = _Breakfunc
+    # set the number of argument to expect
+    props['nargs'] = 1
+    # set the help message
+    props['help'] = htext['BREAKFUNC_HELP']
+    # return the argument dictionary
+    return props
+
+
+def set_quiet(params):
+    """
+    Make a custom special argument: Set the quiet mode
+
+    :param params: ParamDict, Parameter Dictionary of constants
+    :type params: ParamDict
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
+    """
+    # set function name (cannot break here --> no access to params)
+    _ = display_func(params, 'set_quiet', __NAME__)
+    # get the help text dictionary
+    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # set up an output storage dictionary
+    props = OrderedDict()
+    # set the argument name
     props['name'] = '--quiet'
+    # set any argument alternative names
     props['altnames'] = ['--q']
+    # set the argument action function
     props['action'] = _SetQuiet
+    # set the number of argument to expect
     props['nargs'] = 0
+    # set the help message
     props['help'] = htext['QUIET_HELP']
+    # return the argument dictionary
     return props
 
 

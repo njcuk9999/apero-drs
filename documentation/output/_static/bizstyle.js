@@ -36,6 +36,6 @@ $(window).resize(function(){
         $("li.nav-item-0 a").text("Top");
     }
     else {
-        $("li.nav-item-0 a").text("APERO 0.6.016 documentation");
+        $("li.nav-item-0 a").text("APERO 0.6.037 documentation");
     }
 });

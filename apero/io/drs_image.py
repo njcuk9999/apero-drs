@@ -7,10 +7,7 @@ Created on 2019-03-21 at 14:28
 
 @author: cook
 """
-
-from __future__ import division
 import numpy as np
-from scipy import signal
 import warnings
 
 from apero import core
@@ -45,19 +42,29 @@ pcheck = core.pcheck
 # =============================================================================
 # Define functions
 # =============================================================================
-def rotate_image(image, rotation):
+def rotate_image(image, rotnum):
     """
-    Rotates the image by rotation
+    Rotates the image by a given rotation (rotnum)
+
+    rotnum = 0 -> same as input
+    rotnum = 1 -> 90deg counter-clock-wise
+    rotnum = 2 -> 180deg
+    rotnum = 3 -> 90deg clock-wise
+    rotnum = 4 -> flip top-bottom
+    rotnum = 5 -> flip top-bottom and rotate 90 deg counter-clock-wise
+    rotnum = 6 -> flip top-bottom and rotate 180 deg
+    rotnum = 7 -> flip top-bottom and rotate 90 deg clock-wise
+    rotnum >=8 -> performs a modulo 8 anyway
 
     :param image: numpy array (2D), the image to rotate
-    :param rotation: float, the rotational angle in degrees (counter-clockwise)
-                     must be a multiple of +/- 90 degrees
+    :param rotnum: integer between 0 and 7
+
+    :type image: np.ndarray
+    :type rotnum: int
 
     :return newimage:  numpy array (2D), the rotated image
     """
-    rotation = int(rotation // 90)
-    newimage = np.rot90(image, rotation)
-    return newimage
+    return mp.rot8(image, rotnum)
 
 
 def resize(params, image, x=None, y=None, xlow=0, xhigh=None,

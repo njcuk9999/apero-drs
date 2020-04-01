@@ -12,6 +12,7 @@ Created on 2019-07-26 at 09:40
 import os
 import shutil
 
+import apero
 from apero import core
 from apero.core import constants
 from apero import locale
@@ -55,7 +56,7 @@ DOC_CONFPATH = '../documentation/working/conf.py'
 DOC_CONF_PREFIX = 'release = '
 DOC_INDEXPATH = '../documentation/working/index.rst'
 DOC_INDEX_PREFIX = 'Latest version: '
-DOC_CHANGELOGPATH = '../documentation/working/dev/changelog.rst'
+DOC_CHANGELOGPATH = '../documentation/working/misc/changelog.rst'
 
 
 # =============================================================================
@@ -93,6 +94,13 @@ def main(preview=1, **kwargs):
 
 def __main__(recipe, params):
     # Note: no instrument defined so do not use instrument only features
+
+    # get current working directory
+    current = os.getcwd()
+    # change to apero root
+    os.chdir(apero.__path__[0])
+    # make sure we have update tags
+    os.system('git fetch --tags')
 
     # get package
     package = params['DRS_PACKAGE']
@@ -169,8 +177,17 @@ def __main__(recipe, params):
     drs_changelog.update_file(doc_confpath, DOC_CONF_PREFIX, strversion)
     # update documentation (index.py)
     drs_changelog.update_file(doc_indxpath, DOC_INDEX_PREFIX, version)
+
     # copy change log to path
     shutil.copy(filename, doc_clogpath)
+    # need to re-format change log to conform to rst format
+    drs_changelog.format_rst(doc_clogpath)
+
+    # push tags via git
+    os.system('git push --tags')
+    # go back to current directory
+    os.chdir(current)
+
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------

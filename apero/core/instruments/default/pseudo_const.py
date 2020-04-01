@@ -51,7 +51,7 @@ class PseudoConstants:
     # HEADER SETTINGS
     # =========================================================================
     def VALID_RAW_FILES(self):
-        valid = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
+        valid = ['.fits']
         return valid
 
     # =========================================================================
@@ -503,6 +503,14 @@ class PseudoConstants:
         func_name = 'FIBER_CCF'
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
+    def FIBER_KINDS(self):
+        func_name = 'FIBER_KINDS'
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+
+    def INDIVIDUAL_FIBERS(self):
+        func_name = 'INDIVIDUAL_FIBERS'
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+
     # =========================================================================
     # BERV_KEYS
     # =========================================================================
@@ -524,6 +532,13 @@ class PseudoConstants:
         #    Where 'kind' is 'header' or 'const'
         #    Where default is the default value to assign
         func_name = 'BERV_OUTKEYS'
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+
+    # =========================================================================
+    # OTHER KEYS
+    # =========================================================================
+    def MASTER_DB_KEYS(self):
+        func_name = 'MASTER_DB_KEYS'
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
     # =========================================================================

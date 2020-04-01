@@ -39,6 +39,7 @@ speed_of_light_ms = cc.c.to(uu.m / uu.s).value
 # noinspection PyUnresolvedReferences
 speed_of_light = cc.c.to(uu.km / uu.s).value
 
+
 # -----------------------------------------------------------------------------
 
 
@@ -97,6 +98,7 @@ class Graph:
         Set the file name for this Graph instance
         :param params:
         :param location:
+        :param suffix:
         :return:
         """
         # get pid
@@ -156,7 +158,6 @@ class CrossCursor(object):
         # start off the text without values
         self.txt.set_text('x=NaN, y=NaN')
 
-
     def mouse_move(self, event):
         if not event.inaxes:
             return
@@ -177,6 +178,7 @@ class ClickCursor(object):
         self.frame = frame
 
     def mouse_click(self, event):
+        # noinspection PyProtectedMember
         if self.fig.canvas.manager.toolbar._active:
             return
         if not event.inaxes:
@@ -232,8 +234,8 @@ def mc_line(frame, plt, line, x, y, z, norm=None, cmap=None):
         norm = plt.Normalize(np.nanmin(z), np.nanmax(z))
     # Create a set of line segments so that we can color them individually
     # This creates the points as a N x 1 x 2 array so that we can stack points
-    # together easily to get the segments. The segments array for line collection
-    # needs to be (numlines) x (points per line) x 2 (for x and y)
+    # together easily to get the segments. The segments array for line
+    # collection needs to be (numlines) x (points per line) x 2 (for x and y)
     points = np.array([x, y]).T.reshape(-1, 1, 2)
     segments = np.concatenate([points[:-1], points[1:]], axis=1)
     # plot the segments
@@ -266,7 +268,8 @@ def add_grid(frame):
     frame.grid(which='major', linestyle='-', linewidth='0.5', color='black',
                alpha=0.75, zorder=1)
     frame.grid(which='minor', linestyle=':', linewidth='0.5', color='black',
-                alpha=0.5, zorder=0)
+               alpha=0.5, zorder=0)
+
 
 # =============================================================================
 # Define test plotting functions
@@ -298,13 +301,13 @@ def graph_test_plot_2(plotter, graph, kwargs):
         return
     # ------------------------------------------------------------------
     # get the arguments from kwargs
-    ord = kwargs['ord']
+    orders = kwargs['ord']
     x_arr = kwargs['x']
     y_arr = kwargs['y']
     colour = kwargs.get('colour', 'k')
     # ------------------------------------------------------------------
     # get the plot generator
-    generator = plotter.plotloop(ord)
+    generator = plotter.plotloop(orders)
     # prompt to start looper
     plotter.close_plots(loop=True)
     # loop aroun the orders
@@ -342,7 +345,7 @@ def plot_dark_image_regions(plotter, graph, kwargs):
     # get plt
     plt = plotter.plt
     # get matplotlib rectange
-    Rectangle = plotter.matplotlib.patches.Rectangle
+    rectangle = plotter.matplotlib.patches.Rectangle
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     params = kwargs['params']
@@ -375,11 +378,11 @@ def plot_dark_image_regions(plotter, graph, kwargs):
     clim = (0., 10 * med)
     im = frame.imshow(image, origin='lower', clim=clim, cmap='viridis')
     # plot blue rectangle
-    brec = Rectangle((bxlow, bylow), bxhigh - bxlow, byhigh - bylow,
+    brec = rectangle((bxlow, bylow), bxhigh - bxlow, byhigh - bylow,
                      edgecolor='b', facecolor='None')
     frame.add_patch(brec)
     # plot blue rectangle
-    rrec = Rectangle((rxlow, rylow), rxhigh - rxlow, ryhigh - rylow,
+    rrec = rectangle((rxlow, rylow), rxhigh - rxlow, ryhigh - rylow,
                      edgecolor='r', facecolor='None')
     frame.add_patch(rrec)
     # add colorbar
@@ -670,9 +673,6 @@ def plot_loc_fit_residuals(plotter, graph, kwargs):
     # start the plotting process
     if not plotter.plotstart(graph):
         return
-    # get plt
-    plt = plotter.plt
-    axes_grid1 = plotter.axes_grid1
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     x = kwargs['x']
@@ -844,7 +844,7 @@ def plot_loc_check_coeffs(plotter, graph, kwargs):
         # mask the image between y limits
         imagezoom = image[ymin:ymax]
         # normalise zoom image
-        imagezoom = imagezoom / np.nanpercentile(imagezoom, 95)
+        imagezoom = imagezoom / np.nanpercentile(imagezoom, 85)
         # ------------------------------------------------------------------
         # set up plot
         if kind == 'center':
@@ -858,7 +858,7 @@ def plot_loc_check_coeffs(plotter, graph, kwargs):
         # plot the image fits (if we are dealing with a center plot)
         if kind == 'center':
             frame1.imshow(imagezoom, aspect='auto', origin='lower', zorder=0,
-                          cmap='gist_gray',
+                          cmap='gist_gray', vmin=0, vmax=1,
                           extent=[0, image.shape[1], ymin, ymax])
             frame1.plot(xpix[good], ypix0go, color='b', ls='--', label='old',
                         zorder=2)
@@ -894,7 +894,7 @@ def plot_loc_check_coeffs(plotter, graph, kwargs):
         # ------------------------------------------------------------------
         # adjust plot
         plt.subplots_adjust(top=0.925, bottom=0.125, left=0.1, right=0.975,
-                            hspace=0)
+                            hspace=0.05)
         # ------------------------------------------------------------------
         # update filename (adding order_num to end)
         suffix = 'order{0}'.format(order_num)
@@ -914,18 +914,18 @@ loc_finding_orders = Graph('LOC_FINDING_ORDERS', kind='debug',
 loc_im_sat_thres = Graph('LOC_IM_SAT_THRES', kind='debug',
                          func=plot_loc_im_sat_thres)
 loc_fit_residuals = Graph('LOC_FIT_RESIDUALS', kind='debug',
-                         func=plot_loc_fit_residuals)
+                          func=plot_loc_fit_residuals)
 loc_ord_vs_rms = Graph('LOC_ORD_VS_RMS', kind='debug',
                        func=plot_loc_ord_vs_rms)
 loc_check_coeffs = Graph('LOC_CHECK_COEFFS', kind='debug',
                          func=plot_loc_check_coeffs)
 sum_desc = ('Polynomial fits for localisation (overplotted on '
-               'pre-processed image)')
+            'pre-processed image)')
 sum_loc_im_sat_thres = Graph('SUM_LOC_IM_THRES', kind='summary',
                              func=plot_loc_im_sat_thres, figsize=(12, 8),
                              dpi=300, description=sum_desc)
 sum_desc = ('Zoom in polynomial fits for localisation (overplotted on '
-               'pre-processed image)')
+            'pre-processed image)')
 sum_plot_loc_im_corner = Graph('SUM_LOC_IM_CORNER', kind='summary',
                                func=plot_loc_im_corner, figsize=(16, 10),
                                dpi=150, description=sum_desc)
@@ -1036,7 +1036,8 @@ def plot_shape_linear_tparams(plotter, graph, kwargs):
     diffy = y1 - y2
     xrange1 = [0, dim2]
     xrange2 = [0, dim1]
-    yrange = [-0.05, 0.05]
+    ylim = np.max([np.nanmedian(np.abs(diffx)),np.nanmedian(np.abs(diffy))])
+    yrange = [-10 * ylim, 10 * ylim]
     nbins = 50
     pstep = 100
     # ------------------------------------------------------------------
@@ -1125,7 +1126,7 @@ def plot_shape_angle_offset(plotter, graph, kwargs):
     dypix_arr = kwargs['dypix']
     ckeep_arr = kwargs['ckeep']
     # get data for plot 3
-    corr_dx_from_fp_arr = kwargs['corr_dx_fp']
+    shifts_arr = kwargs['shifts']
     xpeak2_arr = kwargs['xpeak2']
     err_pix_arr = kwargs['err_pix']
     goodmask_arr = kwargs['good']
@@ -1166,7 +1167,7 @@ def plot_shape_angle_offset(plotter, graph, kwargs):
             dx = dx_arr[banana_num][order_num]
             dypix = dypix_arr[banana_num][order_num]
             c_keep = ckeep_arr[banana_num][order_num]
-            corr_dx_from_fp = corr_dx_from_fp_arr[banana_num][order_num]
+            shifts = shifts_arr[banana_num][order_num]
             xpeak2 = xpeak2_arr[banana_num][order_num]
             err_pix = err_pix_arr[banana_num][order_num]
             good = goodmask_arr[banana_num][order_num]
@@ -1202,8 +1203,8 @@ def plot_shape_angle_offset(plotter, graph, kwargs):
             frame3.plot(xpeak2[good], err_pix[good], color='g',
                         linestyle='None', marker='.',
                         label='err pixel (for fit)')
-            frame3.plot(np.arange(nbpix), corr_dx_from_fp, color='k',
-                        label='fit to err pix')
+            frame3.plot(np.arange(nbpix), shifts, color='k',
+                        label='shift in x')
             frame3.set(xlabel='Pixel', ylabel='Err Pixel')
             frame3.legend(loc=0)
             # ------------------------------------------------------------------
@@ -1220,8 +1221,6 @@ def plot_shape_local_zoom_shift(plotter, graph, kwargs):
     # start the plotting process
     if not plotter.plotstart(graph):
         return
-    # get plt
-    plt = plotter.plt
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     params = kwargs['params']
@@ -1350,16 +1349,16 @@ def plot_flat_order_fit_edges(plotter, graph, kwargs):
         ocoeffs2 = coeffs2[order_num]
         # get fit and edge fits (for raw image)
         yfit1 = np.polyval(ocoeffs1[::-1], xfit1)
-        yfitlow1 = np.polyval((ocoeffs1)[::-1], xfit1) - range1
-        yfithigh1 = np.polyval((ocoeffs1)[::-1], xfit1) + range2
-        ylower1 = np.polyval((ocoeffs1)[::-1], xfit1) - 2 * range1
-        yupper1 = np.polyval((ocoeffs1)[::-1], xfit1) + 2 * range2
+        yfitlow1 = np.polyval(ocoeffs1[::-1], xfit1) - range1
+        yfithigh1 = np.polyval(ocoeffs1[::-1], xfit1) + range2
+        ylower1 = np.polyval(ocoeffs1[::-1], xfit1) - 2 * range1
+        yupper1 = np.polyval(ocoeffs1[::-1], xfit1) + 2 * range2
         # get fit and edge fits (for straight image)
         yfit2 = np.polyval(ocoeffs2[::-1], xfit2)
-        yfitlow2 = np.polyval((ocoeffs2)[::-1], xfit2) - range1
-        yfithigh2 = np.polyval((ocoeffs2)[::-1], xfit2) + range2
-        ylower2 = np.polyval((ocoeffs2)[::-1], xfit2) - 6 * range1
-        yupper2 = np.polyval((ocoeffs2)[::-1], xfit2) + 6 * range2
+        yfitlow2 = np.polyval(ocoeffs2[::-1], xfit2) - range1
+        yfithigh2 = np.polyval(ocoeffs2[::-1], xfit2) + range2
+        ylower2 = np.polyval(ocoeffs2[::-1], xfit2) - 6 * range1
+        yupper2 = np.polyval(ocoeffs2[::-1], xfit2) + 6 * range2
         # get image bounds
         ymin1 = np.max([np.min(ylower1), 0])
         ymax1 = np.min([np.max(yupper1), image1.shape[0]])
@@ -1640,7 +1639,7 @@ def plot_extract_s1d(plotter, graph, kwargs):
     if not plotter.plotstart(graph):
         return
     plt = plotter.plt
-    LineCollection = plotter.matplotlib.collections.LineCollection
+    linecollection = plotter.matplotlib.collections.LineCollection
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     params = kwargs['params']
@@ -1675,12 +1674,15 @@ def plot_extract_s1d(plotter, graph, kwargs):
                 title = 'Spectrum (1D) fiber {1}'
             frame.set_title(title.format(kind, fiber))
         # plot 1d spectrum
-        mc_line(frame, plt, LineCollection, wave[mask], flux[mask],
+        mc_line(frame, plt, linecollection, wave[mask], flux[mask],
                 z=wave[mask], norm=norm, cmap='jet')
         frame.set_xlim(lowerbound, upperbound)
         # set the y limits to 5 and 95 percentiles (to avoid outliers)
-        frame.set_ylim(np.nanpercentile(flux[mask], 2),
-                       np.nanpercentile(flux[mask], 98))
+        with warnings.catch_warnings(record=True) as _:
+            ylow, yhigh = np.nanpercentile(flux[mask], [2, 98])
+        # only set ylimit if whole region is not NaN
+        if np.isfinite(ylow) and np.isfinite(yhigh):
+            frame.set_ylim(ylow, yhigh)
         # set the ylabel
         frame.set_ylabel('Flux')
         # if last row then plot x label
@@ -1781,7 +1783,7 @@ extract_s1d = Graph('EXTRACT_S1D', kind='debug', func=plot_extract_s1d)
 extract_s1d_weights = Graph('EXTRACT_S1D_WEIGHT', kind='debug',
                             func=plot_extract_s1d_weights)
 sum_desc = ('Wavelength against spectrum top: non blaze-corrected, '
-               'bottom: blaze corrected')
+            'bottom: blaze corrected')
 sum_extract_sp_order = Graph('SUM_EXTRACT_SP_ORDER', kind='summary',
                              func=plot_extract_spectral_order,
                              figsize=(16, 10), dpi=150, description=sum_desc)
@@ -1906,7 +1908,7 @@ def plot_wave_hc_brightest_lines(plotter, graph, kwargs):
     # plot title and labels
     title = 'Delta-v error for matched lines (Iteration {0} of {1})'
     frame.set(title=title.format(iteration + 1, niters),
-              xlabel='Wavelength [nm]', ylabel='dv [km/s]')
+              xlabel='Wavelength [nm]', ylabel='dv [m/s]')
     # ------------------------------------------------------------------
     # adjust plot
     plt.subplots_adjust(top=0.9, bottom=0.1, left=0.05, right=0.95)
@@ -1984,7 +1986,7 @@ def plot_wave_hc_resmap(plotter, graph, kwargs):
         return
     plt = plotter.plt
     # get matplotlib rectange
-    Rectangle = plotter.matplotlib.patches.Rectangle
+    rectangle = plotter.matplotlib.patches.Rectangle
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     params = kwargs['params']
@@ -2039,7 +2041,7 @@ def plot_wave_hc_resmap(plotter, graph, kwargs):
             frame.set(xlim=xlim, ylim=ylim)
             # add label in legend (for sticky position)
             largs = [order_num, order_num + bin_order - 1, xpos, resolution]
-            handle = Rectangle((0, 0), 1, 1, fc="w", fill=False,
+            handle = rectangle((0, 0), 1, 1, fc="w", fill=False,
                                edgecolor='none', linewidth=0)
             label = 'Orders {0}-{1} region={2} R={3:.0f}'.format(*largs)
             frame.legend([handle], [label], loc=9, fontsize=10)
@@ -2436,8 +2438,10 @@ def plot_wave_fp_ll_diff(plotter, graph, kwargs):
         frame.plot(fp_x_ord, fp_ll_orig - fp_ll_new_ord + 0.001 * ind_ord,
                    marker='.', color=col[ind_ord],
                    label='order ' + str(ind_ord))
-    frame.set(xlabel='FP peak position [pix]',
-    ylabel='FP old-new wavelength difference [nm] (shifted +0.001 per order)')
+    # define labels
+    ylabel = ('FP old-new wavelength difference [nm] '
+              '(shifted +0.001 per order)')
+    frame.set(xlabel='FP peak position [pix]', ylabel=ylabel)
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
@@ -2510,7 +2514,7 @@ def plot_wave_fp_single_order(plotter, graph, kwargs):
     all_lines = llprops['ALL_LINES_1']
     wave = llprops['LL_OUT_2']
     # get number of orders
-    nbo = len(all_lines)
+    nbo = llprops['LL_OUT_2'].shape[0]
     # ------------------------------------------------------------------
     # get order generator
     if order is None:
@@ -2570,17 +2574,24 @@ def plot_waveref_expected(plotter, graph, kwargs):
     fiber = kwargs['fiber']
     fibtype = kwargs['fibtype']
     nbo = kwargs['nbo']
+    iteration = kwargs.get('iteration', None)
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
     # ------------------------------------------------------------------
-    for order_num in nbo:
+    for order_num in range(nbo):
         # get order mask
         omask = order_num == orders
         # plot points
-        frame.scatter(wavemap[omask], diff[omask])
+        frame.scatter(wavemap[omask], diff[omask], s=5)
+    # add title (with or without iteration)
+    if iteration is not None:
+        title = 'Pixel difference Fiber {0} Type {1} (Iteration = {2})'
+    else:
+        title = 'Pixel difference Fiber {0} Type {1}'
     # set labels
-    frame.set(xlabel='Wavelength [nm]', ylabel='Pixel difference')
+    frame.set(xlabel='Wavelength [nm]', ylabel='Pixel difference',
+              title=title.format(fiber, fibtype, iteration))
     # ------------------------------------------------------------------
     # update filename (adding order_num to end)
     suffix = 'mode{0}_fiber{1}'.format(fibtype, fiber)
@@ -2608,15 +2619,15 @@ def plot_wavenight_iterplot(plotter, graph, kwargs):
     x1, y1 = plotdata1['fp'], plotdata1['dl_fp']
     x2, y2 = plotdata1['hc'], plotdata1['dl_hc']
     # plot fp data
-    frames[0].plot(x1, y1, label='FP')
-    frames[0].plot(x2, y2, label='HC')
+    frames[0].plot(x1, y1, label='FP', linestyle='None', marker='.')
+    frames[0].plot(x2, y2, label='HC', linestyle='None', marker='.')
     # ------------------------------------------------------------------
     # get x and y data for second set
     x3, y3 = plotdata2['fp'], plotdata2['dl_fp']
     x4, y4 = plotdata2['hc'], plotdata2['dl_hc']
     # plot fp data
-    frames[1].plot(x3, y3, label='FP')
-    frames[1].plot(x4, y4, label='HC')
+    frames[1].plot(x3, y3, label='FP', linestyle='None', marker='.')
+    frames[1].plot(x4, y4, label='HC', linestyle='None', marker='.')
     # ------------------------------------------------------------------
     # add legends
     frames[0].legend(loc=0)
@@ -2680,8 +2691,8 @@ def plot_wavenight_histplot(plotter, graph, kwargs):
         return
     # ------------------------------------------------------------------
     # get the arguments from kwargs
-    x = kwargs['x']
-    y = kwargs['y']
+    x = np.array(kwargs['x'])
+    y = np.array(kwargs['y'])
     nbpix = kwargs['nbpix']
     fpbinx = kwargs.get('fpbinx', 100)
     fpbiny = kwargs.get('fpbiny', 10)
@@ -2696,13 +2707,15 @@ def plot_wavenight_histplot(plotter, graph, kwargs):
     # plot 1 - full range
     # ------------------------------------------------------------------
     # get all dv values within dv range
-    keep = np.isfinite(y) & (y > -maxdv) & (y < maxdv)
+    with warnings.catch_warnings(record=True) as _:
+        keep = np.isfinite(y) & (y > -maxdv) & (y < maxdv)
     # plot the full range
     frames[0].hist2d(x[keep], y[keep], bins=[fpbinx, fpbiny])
     # loop and plot bins
     for pix in np.arange(0, nbpix, fplinebin):
         # get valid pixels for this bin
-        good = (x > pix) & (x < (pix + fplinebin))
+        with warnings.catch_warnings(record=True) as _:
+            good = (x > pix) & (x < (pix + fplinebin))
         # plot bin points
         frames[0].plot(mp.nanmedian(x[good]), mp.nanmedian(y[good]), color='r',
                        marker='o')
@@ -2712,26 +2725,28 @@ def plot_wavenight_histplot(plotter, graph, kwargs):
     # plot 2 - mod amp range
     # ------------------------------------------------------------------
     # get all dv values within dv range
-    keep = np.isfinite(y) & (y > -maxdv) & (y < maxdv)
+    with warnings.catch_warnings(record=True) as _:
+        keep = np.isfinite(y) & (y > -maxdv) & (y < maxdv)
     # work out x mod ampsize
-    xmod = x % ampsize
+    with warnings.catch_warnings(record=True) as _:
+        xmod = x % ampsize
     # plot mod ampsize
     frames[1].hist2d(xmod[keep], y[keep], bins=[fpbinx, fpbiny])
     # loop around bins of amp size
     for pix in np.arange(0, ampsize, dvstep):
         # get valid pixels for this bin
-        good = (xmod > pix) & (xmod < (pix + dvstep))
+        with warnings.catch_warnings(record=True) as _:
+            good = (xmod > pix) & (xmod < (pix + dvstep))
         # plot bin points
-        frames[0].plot(mp.nanmedian(xmod[good]), mp.nanmedian(y[good]),
+        frames[1].plot(mp.nanmedian(xmod[good]), mp.nanmedian(y[good]),
                        color='r', marker='o')
     # set labels and title
-    frames[0].set(xlabel='pixel % {0}'.format(ampsize),
+    frames[1].set(xlabel='pixel % {0}'.format(ampsize),
                   ylabel='dv [m/s]',
                   title='Pixel modulo {0} Historgram'.format(ampsize))
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
-
 
 
 wave_hc_guess = Graph('WAVE_HC_GUESS', kind='debug',
@@ -2744,17 +2759,17 @@ wave_hc_resmap = Graph('WAVE_HC_RESMAP', kind='debug',
                        func=plot_wave_hc_resmap,
                        figsize=(20, 16))
 wave_littrow_check1 = Graph('WAVE_LITTROW_CHECK1', kind='debug',
-                           func=plot_wave_littrow_check)
+                            func=plot_wave_littrow_check)
 wave_littrow_extrap1 = Graph('WAVE_LITTROW_EXTRAP1', kind='debug',
-                            func=plot_wave_littrow_extrap)
+                             func=plot_wave_littrow_extrap)
 wave_littrow_check2 = Graph('WAVE_LITTROW_CHECK2', kind='debug',
-                           func=plot_wave_littrow_check)
+                            func=plot_wave_littrow_check)
 sum_desc = 'Littrow check for the final solution'
 sum_wave_littrow_check = Graph('SUM_WAVE_LITTROW_CHECK', kind='summary',
-                           func=plot_wave_littrow_check,
-                              figsize=(16, 10), dpi=150, description=sum_desc)
+                               func=plot_wave_littrow_check,
+                               figsize=(16, 10), dpi=150, description=sum_desc)
 wave_littrow_extrap2 = Graph('WAVE_LITTROW_EXTRAP2', kind='debug',
-                            func=plot_wave_littrow_extrap)
+                             func=plot_wave_littrow_extrap)
 sum_desc = 'Littrow extrapolation for the final solution'
 sum_wave_littrow_extrap = Graph('SUM_WAVE_LITTROW_EXTRAP', kind='summary',
                                 func=plot_wave_littrow_extrap,
@@ -2788,7 +2803,8 @@ wavenight_iterplot = Graph('WAVENIGHT_ITERPLOT', kind='debug',
                            func=plot_wavenight_iterplot)
 wavenight_diffplot = Graph('WAVENIGHT_DIFFPLOT', kind='debug',
                            func=plot_wavenight_diffplot)
-
+wavenight_histplot = Graph('WAVENIGHT_HISTPLOT', kind='debug',
+                           func=plot_wavenight_histplot)
 # add to definitions
 definitions += [wave_hc_guess, wave_hc_brightest_lines, wave_hc_tfit_grid,
                 wave_hc_resmap, wave_littrow_check1, wave_littrow_extrap1,
@@ -2798,7 +2814,7 @@ definitions += [wave_hc_guess, wave_hc_brightest_lines, wave_hc_tfit_grid,
                 wave_fp_multi_order, wave_fp_single_order,
                 sum_wave_littrow_check, sum_wave_littrow_extrap,
                 sum_wave_fp_ipt_cwid_1mhc, waveref_expected, wavenight_iterplot,
-                wavenight_diffplot]
+                wavenight_diffplot, wavenight_histplot]
 
 
 # =============================================================================
@@ -2818,6 +2834,8 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
     sed = kwargs['sed']
     oimage = kwargs['oimage']
     order = kwargs.get('order', None)
+    has_template = kwargs.get('has_template', False)
+    template = kwargs.get('template', None)
     # ------------------------------------------------------------------
     if order is None:
         order_gen = plotter.plotloop(np.arange(len(keep)))
@@ -2834,21 +2852,33 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
         x = wavemap[order_num]
         y1 = tau1[order_num]
         y2 = sp[order_num]
-        y3 = sp[order_num] / sed[order_num]
-        y4 = oimage[order_num]
-        y5 = sed[order_num]
+        y3 = (sp[order_num] / template[order_num]) / sed[order_num]
+        y4 = oimage[order_num] * template[order_num]
+        y5 = sed[order_num] * template[order_num]
+
+        # normalise to match for plotting
+        corr_norm = mp.nanmedian(y2 / y4)
+        y3 = y3 / corr_norm
+        y2 = y2 / corr_norm
+
         # ------------------------------------------------------------------
         # set up plot
         fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
         # ------------------------------------------------------------------
         # plot data
-        frame.plot(x, y1, color='c', label='tapas fit')
+        frame.plot(x, y1, color='c', marker='+', label='tapas fit')
         frame.plot(x, y2, color='k', label='input spectrum')
         frame.plot(x, y3, color='b', label='measured transmission')
 
+        # deal with labels with and without template
+        if has_template:
+            label4 = 'Update to SED (with Template)'
+        else:
+            label4 = 'SED calculation value (No template)'
+
         frame.plot(x[good], y4[good], color='r', marker='.', linestyle='None',
                    label='SED calculation value')
-        frame.plot(x, y5, color='g', linestyle='--', label='SED best guess')
+        frame.plot(x, y5, color='g', linestyle='--', label=label4)
 
         # get max / min y
         values = list(y1[good]) + list(y2[good]) + list(y3[good])
@@ -3135,21 +3165,21 @@ sum_mktellu_wave_flux = Graph('SUM_MKTELLU_WAVE_FLUX', kind='summary',
                               figsize=(16, 10), dpi=150, description=sum_desc)
 # fit tellu grpah instances
 ftellu_pca_comp1 = Graph('FTELLU_PCA_COMP1', kind='debug',
-                        func=plot_ftellu_pca_comp)
+                         func=plot_ftellu_pca_comp)
 ftellu_pca_comp2 = Graph('FTELLU_PCA_COMP2', kind='debug',
-                        func=plot_ftellu_pca_comp)
+                         func=plot_ftellu_pca_comp)
 ftellu_recon_spline1 = Graph('FTELLU_RECON_SPLINE1', kind='debug',
-                            func=plot_ftellu_recon_spline)
+                             func=plot_ftellu_recon_spline)
 ftellu_recon_spline2 = Graph('FTELLU_RECON_SPLINE2', kind='debug',
-                            func=plot_ftellu_recon_spline)
+                             func=plot_ftellu_recon_spline)
 ftellu_wave_shift1 = Graph('FTELLU_WAVE_SHIFT1', kind='debug',
-                          func=plot_ftellu_wave_shift)
+                           func=plot_ftellu_wave_shift)
 ftellu_wave_shift2 = Graph('FTELLU_WAVE_SHIFT2', kind='debug',
-                          func=plot_ftellu_wave_shift)
+                           func=plot_ftellu_wave_shift)
 ftellu_recon_abso1 = Graph('FTELLU_RECON_ABSO1', kind='debug',
-                          func=plot_ftellu_recon_abso)
+                           func=plot_ftellu_recon_abso)
 ftellu_recon_abso2 = Graph('FTELLU_RECON_ABSO2', kind='debug',
-                          func=plot_ftellu_recon_abso)
+                           func=plot_ftellu_recon_abso)
 sum_desc = 'Results from the telluric fit'
 sum_ftellu_recon_abso = Graph('SUM_FTELLU_RECON_ABSO', kind='summary',
                               func=plot_ftellu_recon_abso, figsize=(16, 10),
@@ -3325,7 +3355,7 @@ ccf_photon_uncert = Graph('CCF_PHOTON_UNCERT', kind='debug',
                           func=plot_ccf_photon_uncert)
 sum_ccf_rv_fit = Graph('SUM_CCF_RV_FIT', kind='summary', func=plot_ccf_rv_fit)
 sum_ccf_photon_uncert = Graph('SUM_CCF_PHOTON_UNCERT', kind='summary',
-                          func=plot_ccf_photon_uncert)
+                              func=plot_ccf_photon_uncert)
 
 # add to definitions
 definitions += [ccf_rv_fit, ccf_rv_fit_loop, ccf_swave_ref,
@@ -3449,7 +3479,7 @@ def plot_polar_stoke_i(plotter, graph, kwargs):
     # ---------------------------------------------------------------------
     # plot polarimetry data
     frame.errorbar(wl, stokes_i, yerr=stokes_ierr, fmt='-', label='Stokes I',
-                 alpha=0.5)
+                   alpha=0.5)
     # ---------------------------------------------------------------------
     # set title and labels
     xlabel = 'wavelength [nm]'
@@ -3555,10 +3585,10 @@ def plot_logstats_bar(plotter, graph, kwargs):
     add_grid(frames[0])
     # ------------------------------------------------------------------
     width = 0.4
-    frames[1].bar(x - width / 2, 100 * (started - passed)/started,
+    frames[1].bar(x - width / 2, 100 * (started - passed) / started,
                   color='r', label='failed QC', align='center',
                   width=width, zorder=5, alpha=0.875)
-    frames[1].bar(x + width / 2, 100 * (started - ended)/started,
+    frames[1].bar(x + width / 2, 100 * (started - ended) / started,
                   color='g', label='unfinished (error)', align='center',
                   width=width, zorder=5, alpha=0.875)
     frames[1].set_xticks(x)
@@ -3689,8 +3719,6 @@ general_plot = Graph('PLOT', kind='show', func=plot_plot)
 
 # add to definitions
 definitions += [general_image, general_plot]
-
-
 
 # =============================================================================
 # Start of code

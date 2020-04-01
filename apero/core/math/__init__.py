@@ -49,6 +49,8 @@ killnan = nan.killnan
 
 measure_box_min_max = general.measure_box_min_max
 
+medbin = general.medbin
+
 medfilt_1d = fast.medfilt_1d
 
 nanargmax = fast.nanargmax
@@ -77,7 +79,11 @@ linear_minimization = general.linear_minimization
 
 relativistic_waveshift = general.relativistic_waveshift
 
+robust_nanstd = general.robust_nanstd
+
 robust_polyfit = general.robust_polyfit
+
+rot8 = general.rot8
 
 sinc = general.sinc
 

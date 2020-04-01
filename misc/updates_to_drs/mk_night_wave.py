@@ -9,6 +9,20 @@ from apero.core.math import linear_minimization as lin_mini
 from apero.core import math as mp
 
 
+WORKSPACE = '/scratch2/sandbox/wavelength_ea'
+MASTER_WAVE = os.path.join(WORKSPACE, '2019-04-20_2400416c_pp_e2dsff_AB_wavem_fp_AB.fits')
+CATALOG = os.path.join(WORKSPACE, 'catalogue_UNe.dat')
+CAVITY_LENGTH = os.path.join(WORKSPACE, 'cavity_length.dat')
+# files corresponding to the master wavelength
+im_fp1 = os.path.join(WORKSPACE, '2400409a_pp_e2dsff_AB.fits')
+im_hc1 = os.path.join(WORKSPACE, '2400416c_pp_e2dsff_AB.fits')
+
+# files for which we want an updated wavelength grid
+im_fp2 = os.path.join(WORKSPACE, '2400383a_pp_e2dsff_AB.fits')
+im_hc2 = os.path.join(WORKSPACE, '2400388c_pp_e2dsff_AB.fits')
+
+
+
 def get_lines(file):
     # input : file name for an HC or FP e2ds
 
@@ -28,7 +42,7 @@ def get_lines(file):
         return Table.read(outname)
     else:
         # read master wavelength grid
-        master_wave_file = '/Users/eartigau/apero/data/calibDB/MASTER_WAVE.fits'
+        master_wave_file = MASTER_WAVE
         master_wavelength = fits.getdata(master_wave_file)
         sz = master_wavelength.shape
 
@@ -46,9 +60,7 @@ def get_lines(file):
         # predicted from catalog
         if DPRTYPE == 'HCONE':
             # catalog
-            tbl = Table.read(
-                '/Users/eartigau/apero-drs/apero/data/spirou/calib/catalogue_UNe.dat',
-                format='ascii')
+            tbl = Table.read(CATALOG, format='ascii')
 
             list_waves = []
             list_orders = []
@@ -87,9 +99,7 @@ def get_lines(file):
 
         if DPRTYPE == 'FP':
             # read the cavity length table
-            tbl = Table.read(
-                '/Users/eartigau/apero-drs/apero/data/spirou/calib/cavity_length.dat',
-                format='ascii')
+            tbl = Table.read(CAVITY_LENGTH, format='ascii')
 
             cavity_length_poly = np.array(tbl['WAVE2LENGTH_COEFF'])
 
@@ -278,16 +288,8 @@ def map_coefficients(wavelength_map, nth_order):
 
 
 # get the master wavelength
-waster_wave_file = '/Users/eartigau/apero/data/calibDB/MASTER_WAVE.fits'
+waster_wave_file = MASTER_WAVE
 master_wavelength = fits.getdata(waster_wave_file)
-
-# files corresponding to the master wavelength
-im_fp1 = '2399442a_pp_e2dsff_AB.fits'
-im_hc1 = '2399446c_pp_e2dsff_AB.fits'
-
-# files for which we want an updated wavelength grid
-im_fp2 = '2426562a_pp_e2dsff_AB.fits'
-im_hc2 = '2426564c_pp_e2dsff_AB.fits'
 
 # pixel and ordre indices
 order_map, x_map = np.indices(master_wavelength.shape, dtype=float)

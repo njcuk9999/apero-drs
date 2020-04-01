@@ -14,6 +14,7 @@ from astropy import constants as cc
 from astropy import units as uu
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.interpolate import UnivariateSpline
+from scipy.special import erf
 import warnings
 from scipy import stats
 
@@ -255,13 +256,37 @@ def robust_polyfit(x, y, degree, nsigcut):
         # calculate the residuals of the polynomial fit
         res = y - np.polyval(fit, x)
         # work out the new sigma values
-        nsig = np.abs(res) / np.nanmedian(np.abs(res))
+        sig = np.nanmedian(np.abs(res))
+        if sig == 0:
+            nsig = np.zeros_like(res)
+            nsig[res != 0] = np.inf
+        else:
+            nsig = np.abs(res) / sig
         # work out the maximum sigma
         nsigmax = np.max(nsig[keep])
         # re-work out the keep criteria
         keep = nsig < nsigcut
     # return the fit and the mask of good values
     return fit, keep
+
+
+def robust_nanstd(x):
+    """
+    Calculates the standard deviation (assumes normal distribution where
+    1 sigma = the standard deviation)
+
+    Done in a robust way to avoid being affected by outliers and nans
+
+    :param x:
+    :return:
+    """
+    # get the 1 sigma error value
+    erfvalue = erf(1) * 100
+    # work out the high and low bounds
+    low = np.nanpercentile(x, 100 - erfvalue)
+    high = np.nanpercentile(x, erfvalue)
+    # return the 1 sigma value
+    return (high - low) / 2.0
 
 
 def sinc(x, amp, period, lin_center, quad_scale, cube_scale, slope,
@@ -481,6 +506,80 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
     continuum_val = sfit(x)
     # return continuum and x and y bins
     return continuum_val, xbin, ybin
+
+
+def rot8(image, nrotation):
+    """
+    Rotation of a 2d image with the 8 possible geometries. Rotation 0-3
+    do not flip the image, 4-7 perform a flip
+
+    nrot = 0 -> same as input
+    nrot = 1 -> 90deg counter-clock-wise
+    nrot = 2 -> 180deg
+    nrot = 3 -> 90deg clock-wise
+    nrot = 4 -> flip top-bottom
+    nrot = 5 -> flip top-bottom and rotate 90 deg counter-clock-wise
+    nrot = 6 -> flip top-bottom and rotate 180 deg
+    nrot = 7 -> flip top-bottom and rotate 90 deg clock-wise
+    nrot >=8 -> performs a modulo 8 anyway
+
+    :param image: input image
+    :param nrotation: integer between 0 and 7
+
+    :type image: np.ndarray
+    :type rotnum: int
+
+    :return: rotated and/or flipped image
+    """
+    # module 8 number
+    nrot = int(nrotation % 8)
+    # return the correctly rotated image
+    return np.rot90(image[::1-2*(nrot // 4)], nrot % 4)
+
+
+def medbin(image, by, bx):
+    """
+    Median-bin an image to a given size through some funny reshapping.
+
+    No interpoluation is done so bx must be a factor of image.shape[0]
+    and by must be a factor of image.shape[1]
+
+    e.g.
+
+        image = np.arange(400).reshape(10, 40)
+        by must be either [1, 2, 5]
+        bx must be either [1, 2, 5, 8, 10, 20, 40]
+
+    :param image: numpy array (2D), the image to bin
+    :param by: int, the binning factor in y (must be a factor of image.shape[0])
+    :param bx: int, the binning factor in x (must be a factor of image.shape[1])
+
+    :type image: np.ndarray
+    :type by: int
+    :type bx: int
+
+    :return: the binned numpy array of dimensions (by, bx)
+    """
+    # TODO: Question: are "bx" and "by" the right way around?
+    # set function name
+    func_name = __NAME__ + '.medbin()'
+    # exception message
+    emsg = '{0}: {1} must be a factor of {2}'
+    # get the shape of the image
+    dim1, dim2 = image.shape
+    # must have valid bx and by
+    if dim1 % by != 0:
+        raise DrsMathException(emsg.format(func_name, 'by', dim1))
+    if dim2 % bx != 0:
+        raise DrsMathException(emsg.format(func_name, 'bx', dim2))
+    # reshape the image
+    array = image.reshape([by, dim1 // by, bx, dim2 // bx])
+    # median in axis 1
+    med1 = fast.nanmedian(array, axis=1)
+    # median in axis 2
+    med2 = fast.nanmedian(med1, axis=2)
+    # return median-binned array
+    return med2
 
 
 # =============================================================================

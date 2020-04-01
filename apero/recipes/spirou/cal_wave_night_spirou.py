@@ -11,9 +11,6 @@ Created on 2019-12-18 at 16:57
 """
 # TODO: change to cal_wave_spirou after testing complete
 # TODO: Currently a placeholder for EA code
-from __future__ import division
-import numpy as np
-
 from apero import core
 from apero import locale
 from apero.core import constants
@@ -21,7 +18,8 @@ from apero.core.core import drs_database
 from apero.io import drs_image
 from apero.io import drs_fits
 from apero.science.calib import flat_blaze
-from apero.science.calib import wave
+from apero.science.calib import wave1 as wave
+from apero.science import velocity
 from apero.science.extract import other as extractother
 
 
@@ -120,8 +118,8 @@ def __main__(recipe, params):
         for infile in fpfiles:
             rawfpfiles.append(infile.basename)
 
-    # deal with input data from function
-    if 'hcfiles' in params['DATA_DICT']:
+    # deal with input hc/fp data from function
+    if 'hcfiles' in params['DATA_DICT'] and 'fpfiles' in params['DATA_DICT']:
         hcfiles = params['DATA_DICT']['hcfiles']
         fpfiles = params['DATA_DICT']['fpfiles']
         rawhcfiles = params['DATA_DICT']['rawhcfiles']
@@ -131,20 +129,18 @@ def __main__(recipe, params):
     elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
         hcfiles = [drs_fits.combine(params, hcfiles, math='median')]
-        # get combined file
-        if fpfiles is not None:
-            fpfiles = [drs_fits.combine(params, fpfiles, math='median')]
+        fpfiles = [drs_fits.combine(params, fpfiles, math='median')]
         combine = True
     else:
         combine = False
+
     # get the number of infiles
     num_files = len(hcfiles)
 
     # warn user if lengths differ
-    if fpfiles is not None:
-        if len(hcfiles) != len(fpfiles):
-            wargs = [len(hcfiles), len(fpfiles)]
-            WLOG(params, 'error', TextEntry('10-017-00002', args=wargs))
+    if len(hcfiles) != len(fpfiles):
+        wargs = [len(hcfiles), len(fpfiles)]
+        WLOG(params, 'error', TextEntry('10-017-00002', args=wargs))
     # get the number of files
     num_files = len(hcfiles)
     # get the fiber types from a list parameter (or from inputs)
@@ -179,7 +175,7 @@ def __main__(recipe, params):
         for fiber in fiber_types:
             # ------------------------------------------------------------------
             # add level to recipe log
-            log_hc = log1.add_level(params, 'mode=hc fiber', fiber)
+            log2 = log1.add_level(params, 'fiber', fiber)
             # ------------------------------------------------------------------
             # log fiber process
             core.fiber_processing_update(params, fiber)
@@ -189,27 +185,64 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # get master hc lines and fp lines from calibDB
             wargs = []
-            wout = wave.get_wavelines(params, recipe, *wargs)
+            wout = wave.get_wavelines(params, recipe, infile=hc_e2ds_file)
             mhclines, mhclsource, mfplines, mfplsource = wout
+
             # --------------------------------------------------------------
             # load wavelength solution (start point) for this fiber
             #    this should only be a master wavelength solution
             wprops = wave.get_wavesolution(params, recipe, infile=hc_e2ds_file,
                                            fiber=fiber, master=True)
             # --------------------------------------------------------------
+            # define the header as being from the hc e2ds file
+            hcheader = hc_e2ds_file.header
+            # load the blaze file for this fiber
+            blaze_file, blaze = flat_blaze.get_blaze(params, hcheader, fiber)
+            # --------------------------------------------------------------
             # calculate the night wavelength solution
             wargs = [hc_e2ds_file, fp_e2ds_file, mhclines, mfplines, wprops]
             nprops = wave.night_wavesolution(params, recipe, *wargs)
+            # ----------------------------------------------------------
+            # ccf computation
+            # ----------------------------------------------------------
+            # TODO: remove break point
+            constants.break_point(params)
 
+            # get the FP (reference) fiber
+            pconst = constants.pload(params['INSTRUMENT'])
+            sfiber, rfiber = pconst.FIBER_CCF()
+            # compute the ccf
+            ccfargs = [fp_e2ds_file, fp_e2ds_file.data, blaze,
+                       nprops['WAVEMAP'], rfiber]
+            rvprops = velocity.compute_ccf_fp(params, recipe, *ccfargs)
+            # merge rvprops into llprops (shallow copy)
+            nprops.merge(rvprops)
+            # update ccf properties for wave solution
+            nprops['WFP_DRIFT'] = rvprops['MEAN_RV']
+            nprops['WFP_FWHM'] = rvprops['MEAN_FWHM']
+            nprops['WFP_CONTRAST'] = rvprops['MEAN_CONTRAST']
+            nprops['WFP_MASK'] = rvprops['CCF_MASK']
+            nprops['WFP_LINES'] = rvprops['TOT_LINE']
+            nprops['WFP_TARG_RV'] = rvprops['TARGET_RV']
+            nprops['WFP_WIDTH'] = rvprops['CCF_WIDTH']
+            nprops['WFP_STEP'] = rvprops['CCF_STEP']
+            # set sources
+            keys = ['WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
+                    'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP']
+            nprops.set_sources(keys, 'velocity.compute_ccf_fp()')
             # ----------------------------------------------------------
             # wave solution quality control
             # ----------------------------------------------------------
             qc_params, passed = wave.night_quality_control(params, nprops)
+            # update recipe log
+            log2.add_qc(params, qc_params, passed)
 
             # ----------------------------------------------------------
             # write wave solution to file
             # ----------------------------------------------------------
-            wavefile = wave.night_write_wavesolution(params, recipe, nprops)
+            wargs = [nprops, hc_e2ds_file, fp_e2ds_file, fiber, combine,
+                     rawhcfiles, rawfpfiles, qc_params, wprops['WAVEINST']]
+            wavefile = wave.night_write_wavesolution(params, recipe, *wargs)
 
             # ----------------------------------------------------------
             # Update calibDB with solution
@@ -222,26 +255,17 @@ def __main__(recipe, params):
             # Update header of current files with FP solution
             # ----------------------------------------------------------
             if passed and params['INPUTS']['DATABASE']:
-                # log that we are updating the HC file with wave params
-                wargs = [hc_e2ds_file.name, hc_e2ds_file.filename]
-                WLOG(params, '', TextEntry('40-017-00038', args=wargs))
-                # create copy of input e2ds hc file
-                hc_update = hc_e2ds_file.completecopy(hc_e2ds_file)
-                # update wave solution
-                hc_update = wave.add_wave_keys(hc_update, wprops)
-                # write hc update
-                hc_update.write_file()
-                # log that we are updating the HC file with wave params
-                wargs = [fp_e2ds_file.name, fp_e2ds_file.filename]
-                WLOG(params, '', TextEntry('40-017-00038', args=wargs))
-                # create copy of input e2ds fp file
-                fp_update = fp_e2ds_file.completecopy(fp_e2ds_file)
-                # update wave solution
-                fp_update = wave.add_wave_keys(fp_update, wprops)
-                # write hc update
-                fp_update.write_file()
-                # add to output files (for indexing)
-                recipe.add_output_file(fp_update)
+                # update the e2ds and s1d files for hc
+                wave.update_extract_files(params, recipe, hc_e2ds_file,
+                                          wprops, EXTRACT_NAME, fiber)
+                # update the e2ds and s1d files for fp
+                wave.update_extract_files(params, recipe, fp_e2ds_file,
+                                          wprops, EXTRACT_NAME, fiber)
+
+            # ----------------------------------------------------------
+            # update recipe log file for fp fiber
+            # ----------------------------------------------------------
+            log2.end(params)
 
     # ----------------------------------------------------------------------
     # End of main code
@@ -249,16 +273,14 @@ def __main__(recipe, params):
     return core.return_locals(params, locals())
 
 
-
 # =============================================================================
 # Start of code
 # =============================================================================
-# Main code here
 if __name__ == "__main__":
-    # ----------------------------------------------------------------------
-    # print 'Hello World!'
-    print("Hello World!")
+    # run main with no arguments (get from command line - sys.argv)
+    ll = main()
 
 # =============================================================================
 # End of code
 # =============================================================================
+

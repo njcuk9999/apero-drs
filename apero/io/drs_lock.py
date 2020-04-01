@@ -13,10 +13,10 @@ import rules:
 
 @author: cook
 """
-from __future__ import division
 import os
 import time
 import numpy as np
+import random
 
 from apero.core import constants
 from apero.locale import drs_text
@@ -52,42 +52,42 @@ class Lock:
     """
     Class to control locking of decorated functions
     """
+
     def __init__(self, params, lockname):
         """
         Construct the lock instance
 
         :param params:
         :param lockname:
-        :param lockpath:
         """
         func_name = __NAME__ + '.Lock.__init__()'
         # set the bad characters to clean
-        self.bad_chars = ['/', '\\' , '.', ',']
+        self.bad_chars = ['/', '\\', '.', ',']
         # replace all . and whitespace with _
         self.lockname = self.__clean_name(lockname)
         self.params = params
         # get the lock path
-        lockpath = os.path.join(params['DRS_DATA_MSG'], 'lock')
+        self.lockpath = os.path.join(params['DRS_DATA_MSG'], 'lock')
         # ------------------------------------------------------------------
         # making the lock dir could be accessed in parallel several times
         #   at once so try 10 times with a wait in between
         it, error = 0, None
-        while not os.path.exists(lockpath) and it < 10:
+        while not os.path.exists(self.lockpath) and it < 10:
             try:
-                os.mkdir(lockpath)
+                os.mkdir(self.lockpath)
             except Exception as e:
                 error = e
                 # add one to the number of tries
                 it += 1
                 # sleep for one second to allow another process to complete this
-                time.sleep(1)
+                time.sleep(1 + 0.1 * random.random())
         # if we had an error and got to 10 tries then cause an error
         if error is not None and it == 10:
-            eargs = [type(error), error, lockpath, func_name]
+            eargs = [type(error), error, self.lockpath, func_name]
             WLOG(params, 'error', TextEntry('00-503-00016', args=eargs))
         # ------------------------------------------------------------------
         self.maxwait = params.get('DB_MAX_WAIT', 100)
-        self.path = os.path.join(lockpath, self.lockname)
+        self.path = os.path.join(self.lockpath, self.lockname)
         self.queue = []
         # make the lock directory
         self.__makelockdir()
@@ -108,11 +108,12 @@ class Lock:
                     os.mkdir(self.path)
                     # log that lock has been activated
                     wargs = [self.path]
-                    WLOG(self.params, '', TextEntry('40-101-00001', args=wargs))
+                    WLOG(self.params, 'debug',
+                         TextEntry('40-101-00001', args=wargs))
                     break
                 except:
                     # whatever the problem sleep for a second
-                    time.sleep(0.1)
+                    time.sleep(0.1 * random.random())
                     # add to the timer
                     timer += 1
                     # update user every 10 seconds file is locked
@@ -131,6 +132,9 @@ class Lock:
         :param name:
         :return:
         """
+        # check that path exists
+        if not os.path.exists(self.path):
+            self.__makelockdir()
         # clean name
         name = self.__clean_name(name)
         filename = name + '.lock'
@@ -150,7 +154,7 @@ class Lock:
                     break
                 except:
                     # whatever the problem sleep for a second
-                    time.sleep(0.1)
+                    time.sleep(0.1 * random.random())
                     # add to the timer
                     timer += 1
                     # update user every 10 seconds file is locked
@@ -217,7 +221,10 @@ class Lock:
         abspath = os.path.join(self.path, filename)
         # if the file exists remove it
         if os.path.exists(abspath):
-            os.remove(abspath)
+            # do not remove lock path
+            if abspath != self.lockpath:
+                # remove file
+                os.remove(abspath)
 
     def __clean_name(self, name):
         # loop around bad characters and replace them
@@ -237,11 +244,11 @@ class Lock:
         # log progress: lock file added to queue
         filename = name + '.lock'
         abspath = os.path.join(self.path, filename)
-        WLOG(self.params, '', TextEntry('40-101-00002', args=[abspath]))
+        WLOG(self.params, 'debug', TextEntry('40-101-00002', args=[abspath]))
         # add unique name to queue
         self.__makelockfile(name)
         # put in just to see if we are appending too quickly
-        time.sleep(0.1)
+        time.sleep(0.1 * random.random())
 
     def myturn(self, name):
         """
@@ -264,7 +271,8 @@ class Lock:
         if filename == first:
             # log that lock file is unlocked
             abspath = os.path.join(self.path, filename)
-            WLOG(self.params, '', TextEntry('40-101-00003', args=[abspath]))
+            WLOG(self.params, 'debug',
+                 TextEntry('40-101-00003', args=[abspath]))
             return True, None
         # else we return False (and ask whether it is my turn later)
         else:
@@ -280,7 +288,7 @@ class Lock:
         # log that lock file has been removed from the queue
         filename = name + '.lock'
         abspath = os.path.join(self.path, filename)
-        WLOG(self.params, '', TextEntry('40-101-00004', args=[abspath]))
+        WLOG(self.params, 'debug', TextEntry('40-101-00004', args=[abspath]))
         # once we are finished with a lock we remove it from the queue
         self.__remove_file(name)
 
@@ -291,7 +299,7 @@ class Lock:
         :return:
         """
         # log that lock is deactivated
-        WLOG(self.params, '', TextEntry('40-101-00005', args=[self.path]))
+        WLOG(self.params, 'debug', TextEntry('40-101-00005', args=[self.path]))
         # get the raw list
         if os.path.exists(self.path):
             rawlist = os.listdir(self.path)
@@ -303,10 +311,28 @@ class Lock:
             abspath = os.path.join(self.path, rawlist[it])
             # remove files
             if os.path.exists(abspath):
-                os.remove(abspath)
-        # now remove directory
+                if abspath == self.lockpath:
+                    continue
+                # remove file
+                try:
+                    os.remove(abspath)
+                except Exception as e:
+                    # log warning for error
+                    eargs = [abspath, type(e), str(e)]
+                    emsg = TextEntry('10-101-00006', args=eargs)
+                    WLOG(self.params, 'warning', emsg)
+        # now remove directory (if possible)
         if os.path.exists(self.path):
-            os.removedirs(self.path)
+            # do not remove lock path (used by other processes)
+            if self.path != self.lockpath:
+                # remove path
+                try:
+                    os.removedirs(self.path)
+                except Exception as e:
+                    # log warning for error
+                    eargs = [self.path, type(e), str(e)]
+                    emsg = TextEntry('10-101-00005', args=eargs)
+                    WLOG(self.params, 'warning', emsg)
 
 
 def synchronized(lock, name):
@@ -319,6 +345,7 @@ def synchronized(lock, name):
     :param name:
     :return:
     """
+
     def wrap(func):
         def wrapperfunc(*args, **kw):
             # add to the queue
@@ -327,12 +354,23 @@ def synchronized(lock, name):
             timer = 0
             # find whether it is this name's turn
             cond, error = lock.myturn(name)
+            time.sleep(0.1 * random.random())
             # while the lock is active do not run function
             while not cond:
                 # sleep
                 time.sleep(1)
-                # update user every 10 seconds file is locked
-                if (timer % 10 == 0) and (timer != 0):
+                # if we reach 240 seconds reset the timer and reset the lock
+                #   directory (something has clashed)
+                if timer > 240:
+                    # reset the timer
+                    timer = 0
+                    # wait 1 second + a bit (so two or more don't hit this
+                    #   at the same time)
+                    time.sleep(1 + random.random())
+                    # reset all lock files
+                    lock.reset()
+                # update user every 60 seconds file is locked
+                if (timer % 60 == 0) and (timer != 0):
                     # log that we are waiting in a queue
                     wargs = [lock.path, name, timer]
                     wmsg = TextEntry('10-101-00003', args=wargs)
@@ -353,8 +391,10 @@ def synchronized(lock, name):
             finally:
                 # unlock file
                 lock.dequeue(name)
+
         # return the new function (wrapped)
         return wrapperfunc
+
     # return the wrapped function
     return wrap
 
@@ -362,11 +402,13 @@ def synchronized(lock, name):
 def locker(params, lockfile, my_func, *args, **kwargs):
     # define lock file
     lock = Lock(params, lockfile)
+
     # ------------------------------------------------------------------
     # define wrapper lock file function
     @synchronized(lock, params['PID'])
     def locked_function():
         return my_func(*args, **kwargs)
+
     # ------------------------------------------------------------------
     # try to run locked read function
     try:
@@ -386,11 +428,14 @@ def reset_lock_dir(params, log=False):
     if not os.path.exists(lockpath):
         return
     # remove empties
-    __remove_empty__(params, lockpath, remove_head=False, log=False)
+    __remove_empty__(params, lockpath, remove_head=False, log=log)
 
 
 def __remove_empty__(params, path, remove_head=True, log=False):
-    if not os.path.isdir(path):
+    # define function name
+    func_name = __NAME__ + '.__remove_empty__()'
+    # check if path is not a directory or if path is link
+    if not os.path.isdir(path) or os.path.islink(path):
         return
 
     # remove empty subfolders
@@ -405,9 +450,15 @@ def __remove_empty__(params, path, remove_head=True, log=False):
     files = os.listdir(path)
     if len(files) == 0 and remove_head:
         if log:
-            WLOG(params, '', "Removing empty folder: {0}".format(path))
-        os.rmdir(path)
-
+            WLOG(params, 'debug', "Removing empty folder: {0}".format(path))
+        # try to remove or report warning
+        try:
+            os.rmdir(path)
+        except Exception as e:
+            eargs = [path, type(e), e, func_name]
+            emsg = ('Cannot remove dir {0}. \n\t Error {1}: {2} '
+                    '\n\t function = {3}')
+            WLOG(params, 'warning', emsg.format(*eargs))
 
 
 # =============================================================================
@@ -421,6 +472,7 @@ if __name__ == "__main__":
     import string
 
     _params = constants.load()
+
 
     def printfunc(i, j):
         # set up the lock file (usually a file or function)
@@ -440,6 +492,7 @@ if __name__ == "__main__":
             mylock.reset()
             raise e
 
+
     for jjjt in range(2):
         jobs = []
         # loop around sub groups (to be run at same time)
@@ -451,7 +504,6 @@ if __name__ == "__main__":
         # do not continue until finished
         for proc in jobs:
             proc.join()
-
 
 # =============================================================================
 # End of code

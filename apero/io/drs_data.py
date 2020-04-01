@@ -10,7 +10,6 @@ Created on 2019-07-02 at 09:24
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 import os
 import glob
@@ -103,56 +102,6 @@ def load_linelist(params, **kwargs):
         WLOG(params, 'error', TextEntry('00-017-00002', args=eargs))
 
 
-def load_cavity_file(params, raw=False, **kwargs):
-    # get parameters from params/kwargs
-    func_name = kwargs.get('func', __NAME__ + '.load_full_flat_badpix()')
-    relfolder = pcheck(params, 'DRS_CALIB_DATA', 'directory', kwargs,
-                       func_name)
-    filename = pcheck(params, 'CAVITY_LENGTH_FILE', 'filename', kwargs,
-                      func_name)
-    tablefmt = pcheck(params, 'CAVITY_LENGTH_FILE_FMT', 'fmt', kwargs,
-                      func_name)
-    tablecols = pcheck(params, 'CAVITY_LENGTH_FILE_COLS', 'cols', kwargs,
-                       func_name)
-    tablestart = pcheck(params, 'CAVITY_LENGTH_FILE_START', 'start', kwargs,
-                        func_name)
-    wavecol = pcheck(params, 'CAVITY_LENGTH_FILE_WAVECOL', 'wavecol', kwargs,
-                     func_name)
-    return_filename = kwargs.get('return_filename', False)
-    # deal with return_filename
-    if return_filename:
-        return construct_path(params, filename, relfolder, func=func_name)
-    # split table columns
-    tablecols = list(map(lambda x: x.strip(), tablecols.split(',')))
-    # add back to kwargs
-    kwargs['fmt'] = tablefmt
-    kwargs['colnames'] = tablecols
-    kwargs['data_start'] = tablestart
-
-    # return image
-    try:
-        table, outf = load_table_file(params, filename, relfolder, kwargs,
-                                      func_name)
-        WLOG(params, '', TextEntry('40-999-00001', args=outf))
-        # deal with returning raw data
-        if raw:
-            return np.array(table[wavecol])
-        # push columns into numpy arrays and force to floats
-        coeff_values = np.array(table[wavecol], dtype=float)
-        ncoeff = len(coeff_values)
-        # reformat into well behaved array
-        poly_cavity = np.zeros(ncoeff)
-        for it in range(ncoeff):
-            poly_cavity[it] = coeff_values[it]
-        # flip to match
-        poly_cavity = poly_cavity[::-1]
-        # return line list and amps
-        return poly_cavity
-    except LoadException:
-        eargs = [filename, relfolder]
-        WLOG(params, 'error', TextEntry('00-008-00012', args=eargs))
-
-
 def load_cavity_files(params, required=True, **kwargs):
 
     func_name = __NAME__ + '.load_cavity_files()'
@@ -219,7 +168,7 @@ def load_full_flat_badpix(params, **kwargs):
         WLOG(params, '', TextEntry('40-012-00003', args=outf))
         return image
     except LoadException:
-        eargs = [filename, relfolder]
+        eargs = [filename, relfolder, func_name]
         WLOG(params, 'error', TextEntry('00-012-00001', args=eargs))
 
 
@@ -432,7 +381,7 @@ def load_fits_file(params, filename, directory, func_name):
         eargs = [absfilename, func_name]
         raise LoadException(textdict['01-001-00022'].format(*eargs))
     # read image
-    image = drs_fits.read(params, absfilename)
+    image = drs_fits.readfits(params, absfilename)
     # return image
     return image, absfilename
 

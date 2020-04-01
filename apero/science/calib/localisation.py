@@ -9,7 +9,6 @@ Created on 2019-05-15 at 13:48
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 import os
 import warnings
@@ -89,11 +88,11 @@ def calculate_order_profile(params, image, **kwargs):
             # get the subimage defined by the box for all rows
             part = image[:, 0:it + size + 1]
         # deal with main part (where box is of size="size"
-        elif size <= it <= image.shape[1]-size:
+        elif size <= it <= image.shape[1] - size:
             # get the subimage defined by the box for all rows
             part = image[:, it - size: it + size + 1]
         # deal with the trailing edge --> i.e. box shrinks from full size
-        elif it > image.shape[1]-size:
+        elif it > image.shape[1] - size:
             # get the subimage defined by the box for all rows
             part = image[:, it - size:]
         # else we have zeros (shouldn't happen)
@@ -560,7 +559,7 @@ def get_coefficients(params, recipe, header, fiber, **kwargs):
     # construct new infile instance and read data/header
     locofile = locofile.newcopy(filename=locofilepath, recipe=recipe,
                                 fiber=usefiber)
-    locofile.read()
+    locofile.read_file()
     # -------------------------------------------------------------------------
     # extract keys from header
     nbo = locofile.read_header_key('KW_LOC_NBO', dtype=int)

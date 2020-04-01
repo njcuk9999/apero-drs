@@ -2,14 +2,10 @@
 # tcsh setup file
 
 # setup paths
-setenv PATH "{TOOL_PATH}":$PATH
-setenv PATH "{BIN_PATH}":$PATH
-setenv PATH "{ROOT_PATH}":$PATH
+setenv PATH {PATH}:$PATH
 
 # setup up python path
-setenv PYTHONPATH "{TOOL_PATH}":$PYTHONPATH
-setenv PYTHONPATH "{BIN_PATH}":$PYTHONPATH
-setenv PYTHONPATH "{ROOT_PATH}":$PYTHONPATH
+setenv PYTHONPATH {PYTHONPATH}:$PYTHONPATH
 
 # setup aliases
 alias gointroot "cd {ROOT_PATH}"

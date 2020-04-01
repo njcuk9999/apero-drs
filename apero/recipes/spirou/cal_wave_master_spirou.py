@@ -9,7 +9,6 @@ Created on 2019-08-16 at 09:23
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 
 from apero import core
@@ -19,7 +18,8 @@ from apero.core.core import drs_database
 from apero.io import drs_image
 from apero.io import drs_fits
 from apero.science.calib import flat_blaze
-from apero.science.calib import wave
+# TODO: When decided between wave and wave_master/wave_night - remove
+from apero.science.calib import wave1 as wave
 from apero.science.extract import other as extractother
 
 
@@ -149,6 +149,12 @@ def __main__(recipe, params):
     fiber_types = drs_image.get_fiber_types(params)
 
     # ----------------------------------------------------------------------
+    # For wave master may need update cavity file
+    # TODO: Figure out when we should do this - if it is every time we
+    # TODO:    do a master may need to move cavity_length files to calibDB
+    # params.set('WAVE_FP_UPDATE_CAVITY', value=True, source=mainname)
+
+    # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
     for it in range(num_files):
@@ -205,7 +211,7 @@ def __main__(recipe, params):
             # HC wavelength solution
             # --------------------------------------------------------------
             hcprops, wprops = wave.hc_wavesol(params, recipe, iwprops,
-                                              hc_e2ds_file, fiber)
+                                              hc_e2ds_file, blaze, fiber)
             # --------------------------------------------------------------
             # HC quality control
             # --------------------------------------------------------------
@@ -224,35 +230,31 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             hcargs = [hcprops, hc_e2ds_file, fiber, combine, rawhcfiles,
                       qc_params, iwprops, wprops]
-            hcwavefile = wave.hc_write_wavesolution(params, recipe, *hcargs)
+            hcwavefile = wave.hc_write_wavesol_master(params, recipe, *hcargs)
             # --------------------------------------------------------------
             # write resolution and line profiles to file
             # --------------------------------------------------------------
             hcargs = [hcprops, hc_e2ds_file, hcwavefile, fiber]
-            wave.hc_write_resmap(params, recipe, *hcargs)
+            wave.hc_write_resmap_master(params, recipe, *hcargs)
 
             # --------------------------------------------------------------
             # Update calibDB with HC solution
             # --------------------------------------------------------------
-            if passed:
+            # only add to calibDB if we do not have fp files
+            if passed and (fp_e2ds_file is None):
                 # copy the hc wave solution file to the calibDB
                 drs_database.add_file(params, hcwavefile)
 
             # --------------------------------------------------------------
             # Update header of current file with HC solution
             # --------------------------------------------------------------
-            if passed and params['INPUTS']['DATABASE']:
-                # log that we are updating the HC file with wave params
-                wargs = [hc_e2ds_file.name, hc_e2ds_file.filename]
-                WLOG(params, '', TextEntry('40-017-00038', args=wargs))
-                # create copy of infile
-                hc_update = hc_e2ds_file.completecopy(hc_e2ds_file)
-                # update wave solution
-                hc_update = wave.add_wave_keys(hc_update, wprops)
-                # write hc update
-                hc_update.write_file()
-                # add to output files (for indexing)
-                recipe.add_output_file(hc_update)
+            # only update headers if we do not have fp files
+            cond1 = params['INPUTS']['DATABASE']
+            cond2 = fp_e2ds_file is None
+            if passed and cond1 and cond2:
+                # update the e2ds and s1d files for hc
+                wave.update_extract_files(params, recipe, hc_e2ds_file,
+                                          wprops, EXTRACT_NAME, fiber)
 
             # --------------------------------------------------------------
             # update recipe log file for hc fiber
@@ -285,20 +287,20 @@ def __main__(recipe, params):
                 # ----------------------------------------------------------
                 # write FP wavelength solution to file
                 # ----------------------------------------------------------
-                fpargs = [fpprops, hc_e2ds_file, fp_e2ds_file, fiber, combine,
-                          rawhcfiles, rawfpfiles,  qc_params, wprops,
+                fpargs = [recipe, fpprops, hc_e2ds_file, fp_e2ds_file, fiber,
+                          combine, rawhcfiles, rawfpfiles,  qc_params, wprops,
                           hcwavefile]
-                fpwavefile = wave.fp_write_wavesolution(params, recipe, *fpargs)
+                fpwavefile = wave.fp_write_wavesol_master(params, *fpargs)
                 # ----------------------------------------------------------
                 # write FP result table to file
                 # ----------------------------------------------------------
                 fpargs = [fpprops, hc_e2ds_file, fiber]
-                wave.fp_write_results_table(params, recipe, *fpargs)
+                wave.fpm_write_results_table(params, recipe, *fpargs)
                 # ----------------------------------------------------------
                 # Save line list table file
                 # ----------------------------------------------------------
                 fpargs = [fpprops, hc_e2ds_file, fiber]
-                wave.fp_write_linelist_table(params, recipe, *fpargs)
+                wave.fpm_write_linelist_table(params, recipe, *fpargs)
                 # ----------------------------------------------------------
                 # Update calibDB with FP solution
                 # ----------------------------------------------------------
@@ -309,26 +311,12 @@ def __main__(recipe, params):
                 # Update header of current file with FP solution
                 # ----------------------------------------------------------
                 if passed and params['INPUTS']['DATABASE']:
-                    # log that we are updating the HC file with wave params
-                    wargs = [hc_e2ds_file.name, hc_e2ds_file.filename]
-                    WLOG(params, '', TextEntry('40-017-00038', args=wargs))
-                    # create copy of input e2ds hc file
-                    hc_update = hc_e2ds_file.completecopy(hc_e2ds_file)
-                    # update wave solution
-                    hc_update = wave.add_wave_keys(hc_update, wprops)
-                    # write hc update
-                    hc_update.write_file()
-                    # log that we are updating the HC file with wave params
-                    wargs = [fp_e2ds_file.name, fp_e2ds_file.filename]
-                    WLOG(params, '', TextEntry('40-017-00038', args=wargs))
-                    # create copy of input e2ds fp file
-                    fp_update = fp_e2ds_file.completecopy(fp_e2ds_file)
-                    # update wave solution
-                    fp_update = wave.add_wave_keys(fp_update, wprops)
-                    # write hc update
-                    fp_update.write_file()
-                    # add to output files (for indexing)
-                    recipe.add_output_file(fp_update)
+                    # update the e2ds and s1d files for hc
+                    wave.update_extract_files(params, recipe, hc_e2ds_file,
+                                              wprops, EXTRACT_NAME, fiber)
+                    # update the e2ds and s1d files for fp
+                    wave.update_extract_files(params, recipe, fp_e2ds_file,
+                                              wprops, EXTRACT_NAME, fiber)
 
                 # ----------------------------------------------------------
                 # Construct master line reference files
@@ -336,10 +324,13 @@ def __main__(recipe, params):
                 wavemap = fpprops['LL_FINAL']
                 # generate the hc reference lines
                 hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=wavemap)
-                hclines = wave.get_master_lines(params, recipe, *hcargs)
+                hclines = wave.get_master_lines(params, recipe, **hcargs)
                 # generate the fp reference lines
-                fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=wavemap)
-                fplines = wave.get_master_lines(params, recipe, *fpargs)
+                # TODO: Should we always use the most up-to-date even when
+                # TODO:    not saving?
+                fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=wavemap,
+                              cavity_poly=fpprops['FP_FIT_LL_D'][::-1])
+                fplines = wave.get_master_lines(params, recipe, **fpargs)
 
                 # ----------------------------------------------------------
                 # Write master line references to file

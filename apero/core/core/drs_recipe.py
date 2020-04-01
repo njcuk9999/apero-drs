@@ -58,7 +58,7 @@ INDEX_FILE = Constants['DRS_INDEX_FILE']
 INDEX_FILE_NAME_COL = Constants['DRS_INDEX_FILENAME']
 # -----------------------------------------------------------------------------
 # Get Classes from drs_argument
-DRSArgumentParser = drs_argument.DRSArgumentParser
+DrsArgumentParser = drs_argument.DrsArgumentParser
 DrsArgument = drs_argument.DrsArgument
 # alias pcheck
 pcheck = drs_log.find_param
@@ -70,7 +70,8 @@ SPECIAL_LIST_KEYS = ['SCIENCE_TARGETS', 'TELLURIC_TARGETS']
 # Define Recipe Classes
 # =============================================================================
 class DrsRecipe(object):
-    def __init__(self, instrument=None, name=None, filemod=None):
+    def __init__(self, instrument=None, name=None, filemod=None,
+                 params=None):
         """
         Create a DRS Recipe object
 
@@ -90,6 +91,15 @@ class DrsRecipe(object):
             self.name = str(name)
         # set drs file module related to this recipe
         self.filemod = filemod
+        # get drs parameters
+        if params is None:
+            self.drs_params = ParamDict()
+        # most the time params should not be set here
+        else:
+            self.drs_params = params
+            if self.instrument is None:
+                self.instrument = params['INSTRUMENT']
+
         # set filters
         self.filters = dict()
         self.master = False
@@ -121,8 +131,6 @@ class DrsRecipe(object):
         self.arg_list = []
         self.str_arg_list = None
         self.used_command = []
-        # get drs parameters
-        self.drs_params = ParamDict()
         self.drs_pconstant = None
         self.textdict = None
         self.helptext = None
@@ -186,7 +194,7 @@ class DrsRecipe(object):
         # set up storage for arguments
         fmt_class = argparse.RawDescriptionHelpFormatter
         desc, epilog = self.description, self.epilog
-        parser = DRSArgumentParser(recipe=self, description=desc, epilog=epilog,
+        parser = DrsArgumentParser(recipe=self, description=desc, epilog=epilog,
                                    formatter_class=fmt_class,
                                    usage=self._drs_usage())
         # get the drs params from recipe
@@ -321,6 +329,10 @@ class DrsRecipe(object):
                 # set the source
                 psource = '{0} [{1}]'.format(func_name, kwarg.name)
                 input_parameters.set_source(kwarg.default_ref, psource)
+        # ---------------------------------------------------------------------
+        if 'MASTER' in input_parameters:
+            if input_parameters['MASTER'] in ['True', 1, True]:
+                self.drs_params['IS_MASTER'] = True
         # ---------------------------------------------------------------------
         # add to DRS parameters
         self.drs_params['INPUTS'] = input_parameters
@@ -741,10 +753,16 @@ class DrsRecipe(object):
         # set ipython return functionality
         self._make_special(drs_argument.set_ipython_return, skip=False)
         # ---------------------------------------------------------------------
-        # set ipython return functionality
+        # set is_master functionality
+        self._make_special(drs_argument.is_master, skip=False)
+        # ---------------------------------------------------------------------
+        # set breakpoint functionality
         self._make_special(drs_argument.breakpoints, skip=False)
         # ---------------------------------------------------------------------
-        # set ipython return functionality
+        # set breakfunc functionality
+        self._make_special(drs_argument.make_breakfunc, skip=False)
+        # ---------------------------------------------------------------------
+        # set quiet functionality
         self._make_special(drs_argument.set_quiet, skip=False)
 
 
@@ -828,9 +846,9 @@ class DrsRecipe(object):
             dmsg += TextEntry('')
             WLOG(params, 'debug', dmsg, wrap=False)
             if return_error:
-                return True, directory, None
+                return True, os.path.abspath(directory), None
             else:
-                return False, directory
+                return False, os.path.abspath(directory)
         # ---------------------------------------------------------------------
         # step 2: check if directory is in input directory
         input_dir = self.get_input_dir()
@@ -840,9 +858,9 @@ class DrsRecipe(object):
             dmsg += TextEntry('')
             WLOG(params, 'debug', dmsg, wrap=False)
             if return_error:
-                return True, test_path, None
+                return True, os.path.abspath(test_path), None
             else:
-                return True, test_path
+                return True, os.path.abspath(test_path)
         # ---------------------------------------------------------------------
         # else deal with errors
         eargs = [argname, directory, test_path]
@@ -978,7 +996,7 @@ class DrsRecipe(object):
                 inputdir = self.get_input_dir()
                 # create an instance of this drs_file with the filename set
                 file_in = drs_file.newcopy(filename=filename_it, recipe=self)
-                file_in.read()
+                file_in.read_file()
                 # set the directory
                 fdir = drs_argument.get_uncommon_path(directory, inputdir)
                 file_in.directory = fdir
@@ -1238,6 +1256,13 @@ class DrsRecipeException(Exception):
 # =============================================================================
 # Define file check functions
 # =============================================================================
+def make_default_recipe(params=None, name=None):
+    return DrsRecipe(params=params, name=name)
+
+
+# =============================================================================
+# Define file check functions
+# =============================================================================
 def _check_file_location(recipe, argname, directory, filename):
     """
     Checks file location is valid on:
@@ -1471,7 +1496,15 @@ def find_run_files(params, recipe, table, args, filters=None,
             continue
         # make sure we are only dealing with dtype=files
         if arg.dtype not in ['file', 'files']:
-            filedict[argname] = arg.default
+            # deal with directory (special argument) - if we have a
+            #   master night use the master night as the directory name
+            if arg.dtype == 'directory' and recipe.master:
+                filedict[argname] = params['MASTER_NIGHT']
+            # else set the file dict value to the default value
+            # TODO: Need a better option for this!!
+            # TODO:   i.e. when we need values to be set from the header
+            else:
+                filedict[argname] = arg.default
             continue
         # add sub-dictionary for each drs file
         filedict[argname] = OrderedDict()
@@ -1482,8 +1515,39 @@ def find_run_files(params, recipe, table, args, filters=None,
         # if files are None continue
         if drsfiles is None:
             continue
+        # ------------------------------------------------------------------
+        # mask table by filters (if filters in table)
+        filtermask = np.ones(len(table), dtype=bool)
+        for tfilter in filters:
+            if tfilter in table.colnames:
+                # deal with filter values being list/str
+                if isinstance(filters[tfilter], str):
+                    testvalues = [filters[tfilter]]
+                elif isinstance(filters[tfilter], list):
+                    testvalues = filters[tfilter]
+                else:
+                    continue
+                # create a test mask
+                testmask = np.zeros(len(table), dtype=bool)
+                # loop around test values with OR (could be any value)
+                for testvalue in testvalues:
+                    # check if value is string
+                    if isinstance(testvalue, str):
+                        values = np.char.array(table[tfilter])
+                        values = values.strip().upper()
+                        testvalue = testvalue.strip().upper()
+                    else:
+                        values = np.array(table[tfilter])
+                    # check mask
+                    testmask |= values == testvalue
+                # add filter to filter mask with AND (must have all filters)
+                filtermask &= testmask
+        # ------------------------------------------------------------------
         # loop around drs files
         for drsfile in drsfiles:
+            # copy table
+            ftable = Table(table[filtermask])
+            ffiles = np.array(files)[filtermask]
             # debug log: the file being tested
             dargs = [drsfile.name]
             WLOG(params, 'debug', TextEntry('90-503-00013', args=dargs))
@@ -1498,7 +1562,11 @@ def find_run_files(params, recipe, table, args, filters=None,
             valid_outfiles = []
             valid_num = 0
             # loop around files
-            for filename in files:
+            for f_it, filename in enumerate(ffiles):
+                # print statement
+                pargs = [drsfile.name, f_it + 1, len(ffiles)]
+                pmsg = '\t\tProcessing {0} file {1}/{2}'.format(*pargs)
+                drs_log.Printer(None, None, pmsg)
                 # get infile instance (i.e. raw or pp file) and assign the
                 #   correct outfile (from filename)
                 out = drsfile.get_infile_outfilename(params, recipe, filename,
@@ -1515,16 +1583,16 @@ def find_run_files(params, recipe, table, args, filters=None,
             # debug log the number of valid files
             WLOG(params, 'debug', TextEntry('90-503-00014', args=[valid_num]))
             # add outfiles to table
-            table['OUT'] = valid_outfiles
+            ftable['OUT'] = valid_outfiles
             # for the valid files we can now check infile headers
-            for it in range(len(table)):
+            for it in range(len(ftable)):
                 # get infile
                 infile = valid_infiles[it]
                 # skip those that were invalid
                 if infile is None:
                     continue
                 # get table dictionary
-                tabledict = dict(zip(table.colnames, table[it]))
+                tabledict = dict(zip(ftable.colnames, ftable[it]))
                 # check whether tabledict means that file is valid for this
                 #   infile
                 valid1 = infile.check_table_keys(params, tabledict)
@@ -1539,9 +1607,9 @@ def find_run_files(params, recipe, table, args, filters=None,
                     continue
                 # if valid then add to filedict for this argnameand drs file
                 if arg.filelogic == 'exclusive':
-                    filedict[argname][drsfile.name].append(table[it])
+                    filedict[argname][drsfile.name].append(ftable[it])
                 else:
-                    filedict[argname]['all'].append(table[it])
+                    filedict[argname]['all'].append(ftable[it])
     outfiledict = OrderedDict()
     # convert each appended table to a single table per file
     for argname in filedict:
@@ -1625,12 +1693,32 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
     # ----------------------------------------------------------------------
     # deal with no file found (only if we expect to have files)
     if has_file_args:
-        all_none = True
+        all_none = False
         for runarg in runorder:
-            if rundict[runarg] is not None:
-                for entry in rundict[runarg]:
-                    if rundict[runarg][entry] is not None:
-                        all_none = False
+            # need to check required criteria
+            if runarg in recipe.args:
+                required = recipe.args[runarg].required
+                dtype = recipe.args[runarg].dtype
+            else:
+                required = recipe.kwargs[runarg].required
+                dtype = recipe.kwargs[runarg].dtype
+            # only check if file is required and argument is a file type
+            if required and dtype in ['file', 'files']:
+                # if whole dict is None then all_none is True
+                if rundict[runarg] is None:
+                    all_none = True
+                # if we have entries we have to check each of them
+                else:
+                    # test this run arg
+                    entry_none = False
+                    # loop around entries
+                    for entry in rundict[runarg]:
+                        # if entry is None --> entry None is True
+                        if rundict[runarg][entry] is None:
+                            entry_none |= True
+                    # if entry_none is True then all_none is True
+                    if entry_none:
+                        all_none = True
         # if all none is True then return no runs
         if all_none:
             return []
@@ -1640,7 +1728,8 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
     # if fout is None means we have no file arguments
     if fout is None:
         # get new run
-        new_runs = _gen_run(params, rundict=rundict, runorder=runorder)
+        new_runs = _gen_run(params, rundict=rundict, runorder=runorder,
+                            masternight=recipe.master)
         # finally add new_run to runs
         runs += new_runs
     else:
@@ -1681,7 +1770,8 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
                 #   try/except here to catch it
                 try:
                     new_runs = _gen_run(params, rundict, runorder, nightname,
-                                        meantime, arg0, gtable0, file_col)
+                                        meantime, arg0, gtable0, file_col,
+                                        masternight=recipe.master)
                 # catch exception
                 except DrsRecipeException:
                     continue
@@ -1740,7 +1830,7 @@ def _check_arg_path(params, arg, directory):
     func_name = display_func(params, '_check_arg_path', __NAME__)
     # set the path as directory if arg.path is None
     if arg.path is None:
-        return directory
+        return os.path.abspath(directory)
     # deal with arg.path being a link to a constant
     if arg.path in params:
         path = params[arg.path]
@@ -1753,6 +1843,8 @@ def _check_arg_path(params, arg, directory):
         package = params['DRS_PACKAGE']
         # get absolute path
         path = constants.get_relative_folder(package, path)
+    # make path absolute
+    path = os.path.abspath(path)
     # now check that path is valid
     if not os.path.exists(path):
         # log that arg path was wrong
@@ -1988,7 +2080,7 @@ def _get_runorder(recipe, argdict, kwargdict):
 
 
 def _gen_run(params, rundict, runorder, nightname=None, meantime=None,
-             arg0=None, gtable0=None, file_col=None):
+             arg0=None, gtable0=None, file_col=None, masternight=False):
 
     # deal with unset values (not used)
     if arg0 is None:
@@ -1997,6 +2089,8 @@ def _gen_run(params, rundict, runorder, nightname=None, meantime=None,
         gtable0 = dict(filecol=None)
     if nightname is None:
         nightname = params['NIGHTNAME']
+    if masternight:
+        nightname = params['MASTER_NIGHT']
     if meantime is None:
         meantime = 0.0
 

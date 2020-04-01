@@ -36,7 +36,8 @@ SYMBOLS['_'] = r'\_'
 SYMBOLS['>'] = r'$>$'
 SYMBOLS['<'] = r'$<$'
 SYMBOLS['%'] = r'\%'
-
+SYMBOLS['['] = r'\['
+SYMBOLS[']'] = r'\]'
 
 # =============================================================================
 # Define classes
@@ -86,7 +87,7 @@ class LatexDocument:
         if latex_cmd in ['None', None, '']:
             raise ValueError('pdflatex not defined in DRS_PDFLATEX_PATH')
         # add arguments
-        latex_cmd += ' -halt-on-error'
+        latex_cmd += ' -interaction=nonstopmode -halt-on-error '
         # get current working directory
         cwd = os.getcwd()
         if os.path.dirname(self.latexfilename) != '':

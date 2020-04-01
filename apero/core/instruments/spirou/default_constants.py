@@ -35,6 +35,26 @@ CALIB_DB_FORCE_WAVESOL.value = False
 # =============================================================================
 # COMMON IMAGE SETTINGS
 # =============================================================================
+# Define the rotation of the pp files in relation to the raw files
+#     nrot = 0 -> same as input
+#     nrot = 1 -> 90deg counter-clock-wise
+#     nrot = 2 -> 180deg
+#     nrot = 3 -> 90deg clock-wise
+#     nrot = 4 -> flip top-bottom
+#     nrot = 5 -> flip top-bottom and rotate 90 deg counter-clock-wise
+#     nrot = 6 -> flip top-bottom and rotate 180 deg
+#     nrot = 7 -> flip top-bottom and rotate 90 deg clock-wise
+#     nrot >=8 -> performs a modulo 8 anyway
+RAW_TO_PP_ROTATION = RAW_TO_PP_ROTATION.copy(__NAME__)
+RAW_TO_PP_ROTATION.value = 3
+
+# Define raw image size (mostly just used as a check and in places where we
+#   don't have access to this information)
+IMAGE_X_FULL = IMAGE_X_FULL.copy(__NAME__)
+IMAGE_X_FULL.value = 4096
+IMAGE_Y_FULL = IMAGE_Y_FULL.copy(__NAME__)
+IMAGE_Y_FULL.value = 4096
+
 # Define the fibers
 FIBER_TYPES = FIBER_TYPES.copy(__NAME__)
 FIBER_TYPES.value = 'AB, A, B, C'
@@ -74,27 +94,6 @@ FWHM_PIXEL_LSF.value = 2.1
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
 # =============================================================================
-# Define the cavity length file (located in the DRS_CALIB_DATA directory)
-CAVITY_LENGTH_FILE = CAVITY_LENGTH_FILE.copy(__NAME__)
-CAVITY_LENGTH_FILE.value = 'cavity_length.dat'
-
-# Define the cavity length file format (must be astropy.table format)
-CAVITY_LENGTH_FILE_FMT = CAVITY_LENGTH_FILE_FMT.copy(__NAME__)
-CAVITY_LENGTH_FILE_FMT.value = 'ascii'
-
-# Define the cavity length file column names (must be separated by commas
-#   and must be equal to the number of columns in file)
-CAVITY_LENGTH_FILE_COLS = CAVITY_LENGTH_FILE_COLS.copy(__NAME__)
-CAVITY_LENGTH_FILE_COLS.value = 'NTH_ORDER, WAVELENGTH_COEFF'
-
-# Define the cavity length file row the data starts
-CAVITY_LENGTH_FILE_START = CAVITY_LENGTH_FILE_START.copy(__NAME__)
-CAVITY_LENGTH_FILE_START.value = 0
-
-# Define coefficent column (Must be in CAVITY_LENGTH_FILE_COLS)
-CAVITY_LENGTH_FILE_WAVECOL = CAVITY_LENGTH_FILE_WAVECOL.copy(__NAME__)
-CAVITY_LENGTH_FILE_WAVECOL.value = 'WAVELENGTH_COEFF'
-
 # Define the coefficients of the fit of 1/m vs d
 CAVITY_1M_FILE = CAVITY_1M_FILE.copy(__NAME__)
 CAVITY_1M_FILE.value = 'cavity_length_m_fit.dat'
@@ -228,11 +227,6 @@ PP_CORRUPT_SNR_HOTPIX.value = 10
 # Defines the RMS threshold to also catch corrupt files
 PP_CORRUPT_RMS_THRES = PP_CORRUPT_RMS_THRES.copy(__NAME__)
 PP_CORRUPT_RMS_THRES.value = 0.15
-
-#   Define rotation angle (must be multiple of 90 degrees)
-#         (in degrees counter-clockwise direction)
-RAW_TO_PP_ROTATION = RAW_TO_PP_ROTATION.copy(__NAME__)
-RAW_TO_PP_ROTATION.value = -90
 
 # Define whether to skip preprocessed files that have already be processed
 SKIP_DONE_PP = SKIP_DONE_PP.copy(__NAME__)
@@ -416,7 +410,8 @@ LOC_WIDTH_POLY_DEG.value = 4
 LOC_CENT_POLY_DEG = LOC_CENT_POLY_DEG.copy(__NAME__)
 LOC_CENT_POLY_DEG.value = 4
 
-#   Define the column separation for fitting orders
+#   Define the jump size when finding the order position
+#       (jumps in steps of this from the center outwards)
 LOC_COLUMN_SEP_FITTING = LOC_COLUMN_SEP_FITTING.copy(__NAME__)
 LOC_COLUMN_SEP_FITTING.value = 20
 
@@ -774,6 +769,73 @@ FF_PLOT_ORDER = FF_PLOT_ORDER.copy(__NAME__)
 FF_PLOT_ORDER.value = 4
 
 # =============================================================================
+# CALIBRATION: LEAKAGE SETTINGS
+# =============================================================================
+# Define the types of input file allowed by the leakage master recipe
+ALLOWED_LEAKM_TYPES = ALLOWED_LEAKM_TYPES.copy(__NAME__)
+ALLOWED_LEAKM_TYPES.value = 'DARK_FP'
+
+# define whether to always extract leak master files
+#      (i.e. overwrite existing files)
+LEAKM_ALWAYS_EXTRACT = LEAKM_ALWAYS_EXTRACT.copy(__NAME__)
+LEAKM_ALWAYS_EXTRACT.value = False
+
+# define the type of file to use for leak master solution
+#    (currently allowed are 'E2DSFF') - must match with LEAK_EXTRACT_FILE
+LEAKM_EXTRACT_TYPE = LEAKM_EXTRACT_TYPE.copy(__NAME__)
+LEAKM_EXTRACT_TYPE.value = 'E2DSFF'
+
+# Define the types of input extracted files to correct for leakage
+ALLOWED_LEAK_TYPES = ALLOWED_LEAK_TYPES.copy(__NAME__)
+ALLOWED_LEAK_TYPES.value = 'OBJ_FP'
+
+# define the type of file to use for the leak correction (currently allowed are
+#     'E2DS_FILE' or 'E2DSFF_FILE' (linked to recipe definition outputs)
+#     must match with LEAKM_EXTRACT_TYPE
+LEAK_EXTRACT_FILE = LEAK_EXTRACT_FILE.copy(__NAME__)
+LEAK_EXTRACT_FILE.value = 'E2DSFF_FILE'
+
+# define the extraction files which are 2D images (i.e. order num x nbpix)
+LEAK_2D_EXTRACT_FILES = LEAK_2D_EXTRACT_FILES.copy(__NAME__)
+LEAK_2D_EXTRACT_FILES.value = 'E2DS_FILE, E2DSFF_FILE'
+
+# define the extraction files which are 1D spectra
+LEAK_1D_EXTRACT_FILES = LEAK_1D_EXTRACT_FILES.copy(__NAME__)
+LEAK_1D_EXTRACT_FILES.value = 'S1D_W_FILE, S1D_V_FILE'
+
+# define the thermal background percentile for the leak and leak master
+LEAK_BCKGRD_PERCENTILE = LEAK_BCKGRD_PERCENTILE.copy(__NAME__)
+LEAK_BCKGRD_PERCENTILE.value = 5
+
+# define the normalisation perentile for the leak and leak master
+LEAK_NORM_PERCENTILE = LEAK_NORM_PERCENTILE.copy(__NAME__)
+LEAK_NORM_PERCENTILE.value = 90
+
+# define the e-width of the smoothing kernel for leak master
+LEAKM_WSMOOTH = LEAKM_WSMOOTH.copy(__NAME__)
+LEAKM_WSMOOTH.value = 15
+
+# define the kernal size for leak master
+LEAKM_KERSIZE = LEAKM_KERSIZE.copy(__NAME__)
+LEAKM_KERSIZE.value = 3
+
+# define the lower bound percentile for leak correction
+LEAK_LOW_PERCENTILE = LEAK_LOW_PERCENTILE.copy(__NAME__)
+LEAK_LOW_PERCENTILE.value = 1
+
+# define the upper bound percentile for leak correction
+LEAK_HIGH_PERCENTILE = LEAK_HIGH_PERCENTILE.copy(__NAME__)
+LEAK_HIGH_PERCENTILE.value = 99
+
+# define the limit on surpious FP ratio (1 +/- limit)
+LEAK_BAD_RATIO_OFFSET = LEAK_BAD_RATIO_OFFSET.copy(__NAME__)
+LEAK_BAD_RATIO_OFFSET.value = 0.1
+
+# Define whether to save uncorrected files
+LEAK_SAVE_UNCORRECTED = LEAK_SAVE_UNCORRECTED.copy(__NAME__)
+LEAK_SAVE_UNCORRECTED.value = True
+
+# =============================================================================
 # CALIBRATION: EXTRACTION SETTINGS
 # =============================================================================
 #    Start order of the extraction in cal_ff if None starts from 0
@@ -814,6 +876,14 @@ EXT_COSMIC_THRESHOLD.value = 5
 #   Saturation level reached warning
 QC_EXT_FLUX_MAX = QC_EXT_FLUX_MAX.copy(__NAME__)
 QC_EXT_FLUX_MAX.value = 50000
+
+# Define which extraction file to use for s1d creation
+EXT_S1D_INTYPE = EXT_S1D_INTYPE.copy(__NAME__)
+EXT_S1D_INTYPE.value = 'E2DSFF'
+# Define which extraction file (recipe definitons) linked to EXT_S1D_INTYPE
+EXT_S1D_INFILE = EXT_S1D_INFILE.copy(__NAME__)
+EXT_S1D_INFILE.value = 'E2DSFF_FILE'
+
 
 # Define the start s1d wavelength (in nm)
 EXT_S1D_WAVESTART = EXT_S1D_WAVESTART.copy(__NAME__)
@@ -972,7 +1042,7 @@ WAVE_EXTRACT_TYPE.value = 'E2DSFF'
 
 # define the fit degree for the wavelength solution
 WAVE_FIT_DEGREE = WAVE_FIT_DEGREE.copy(__NAME__)
-WAVE_FIT_DEGREE.value = 4
+WAVE_FIT_DEGREE.value = 5
 
 # Define intercept and slope for a pixel shift
 WAVE_PIXEL_SHIFT_INTER = WAVE_PIXEL_SHIFT_INTER.copy(__NAME__)
@@ -1074,7 +1144,7 @@ WAVE_HC_TFIT_MINTOT_LINES.value = 200
 # WAVE_HC_TFIT_ORDER_FIT_CONT.value = '12, 9, 6, 2, 2'
 
 WAVE_HC_TFIT_ORDER_FIT_CONT = WAVE_HC_TFIT_ORDER_FIT_CONT.copy(__NAME__)
-WAVE_HC_TFIT_ORDER_FIT_CONT.value = '12, 8, 4, 1, 1'
+WAVE_HC_TFIT_ORDER_FIT_CONT.value = '12, 8, 4, 1, 1, 1'
 
 
 # Number of times to loop through the sigma clip for triplet fit
@@ -1235,11 +1305,11 @@ WAVE_LITTROW_EXT_ORDER_FIT_DEG.value = 4  # 5  # 4
 
 #   Maximum littrow RMS value
 WAVE_LITTROW_QC_RMS_MAX = WAVE_LITTROW_QC_RMS_MAX.copy(__NAME__)
-WAVE_LITTROW_QC_RMS_MAX.value = 0.15  # 0.3
+WAVE_LITTROW_QC_RMS_MAX.value = 0.3
 
 #   Maximum littrow Deviation from wave solution (at x cut points)
 WAVE_LITTROW_QC_DEV_MAX = WAVE_LITTROW_QC_DEV_MAX.copy(__NAME__)
-WAVE_LITTROW_QC_DEV_MAX.value = 0.4  # 0.9
+WAVE_LITTROW_QC_DEV_MAX.value = 0.9
 
 # =============================================================================
 # CALIBRATION: WAVE FP SETTINGS
@@ -1363,6 +1433,119 @@ WAVE_CCF_MASK_WIDTH.value = 1.7
 #      to calculate the FP CCF
 WAVE_CCF_N_ORD_MAX = WAVE_CCF_N_ORD_MAX.copy(__NAME__)
 WAVE_CCF_N_ORD_MAX.value = 48
+
+
+# =============================================================================
+# CALIBRATION: WAVE MASTER REFERENCE SETTINGS
+# =============================================================================
+# min SNR to consider the line
+WAVEREF_NSIG_MIN = WAVEREF_NSIG_MIN.copy(__NAME__)
+WAVEREF_NSIG_MIN.value = 15
+
+# minimum distance to the edge of the array to consider a line
+WAVEREF_EDGE_WMAX = WAVEREF_EDGE_WMAX.copy(__NAME__)
+WAVEREF_EDGE_WMAX.value = 20
+
+# value in pixel (+/-) for the box size around each HC line to perform fit
+WAVEREF_HC_BOXSIZE = WAVEREF_HC_BOXSIZE.copy(__NAME__)
+WAVEREF_HC_BOXSIZE.value = 5
+
+# get valid hc dprtypes (string list separated by commas)
+WAVEREF_HC_FIBTYPES = WAVEREF_HC_FIBTYPES.copy(__NAME__)
+WAVEREF_HC_FIBTYPES.value = 'HCONE, HCTWO'
+
+# get valid fp dprtypes (string list separated by commas)
+WAVEREF_FP_FIBTYPES = WAVEREF_FP_FIBTYPES.copy(__NAME__)
+WAVEREF_FP_FIBTYPES.value = 'FP'
+
+# get the degree to fix master wavelength to in hc mode
+WAVEREF_FITDEG = WAVEREF_FITDEG.copy(__NAME__)
+WAVEREF_FITDEG.value = 5
+
+# define the lowest N for fp peaks
+WAVEREF_FP_NLOW = WAVEREF_FP_NLOW.copy(__NAME__)
+WAVEREF_FP_NLOW.value = 9000
+
+# define the highest N for fp peaks
+WAVEREF_FP_NHIGH = WAVEREF_FP_NHIGH.copy(__NAME__)
+WAVEREF_FP_NHIGH.value = 30000
+
+# define the number of iterations required to do the Fp polynomial inversion
+WAVEREF_FP_POLYINV = WAVEREF_FP_POLYINV.copy(__NAME__)
+WAVEREF_FP_POLYINV.value = 4
+
+# =============================================================================
+# CALIBRATION: WAVE NIGHT SETTINGS
+# =============================================================================
+# high-order wavelength solution correction cannot be smaller than 2,
+#   we remove 0 and 1
+WAVE_NIGHT_HIGHF_CORR_DEG = WAVE_NIGHT_HIGHF_CORR_DEG.copy(__NAME__)
+WAVE_NIGHT_HIGHF_CORR_DEG.value = 7
+
+# number of iterations for convergence
+WAVE_NIGHT_NITERATIONS = WAVE_NIGHT_NITERATIONS.copy(__NAME__)
+WAVE_NIGHT_NITERATIONS.value = 30
+
+# starting points for the cavity corrections
+WAVE_NIGHT_DCAVITY = WAVE_NIGHT_DCAVITY.copy(__NAME__)
+WAVE_NIGHT_DCAVITY.value = 0
+
+# min SNR for incluing in the model
+WAVE_NIGHT_NSIG_MIN = WAVE_NIGHT_NSIG_MIN.copy(__NAME__)
+WAVE_NIGHT_NSIG_MIN.value = 30
+
+# red cut off for fit constaint [nm]
+WAVE_NIGHT_REDEND_CUTOFF = WAVE_NIGHT_REDEND_CUTOFF.copy(__NAME__)
+WAVE_NIGHT_REDEND_CUTOFF.value = 2350
+
+# size in nm of the median bin of residuals for higher-order correction
+WAVE_NIGHT_DWAVE_BIN = WAVE_NIGHT_DWAVE_BIN.copy(__NAME__)
+WAVE_NIGHT_DWAVE_BIN.value = 50
+
+# min number of lines to be included in a median bin for high-order
+# correction
+WAVE_NIGHT_NMIN_LINES = WAVE_NIGHT_NMIN_LINES.copy(__NAME__)
+WAVE_NIGHT_NMIN_LINES.value = 100
+
+# sigma clipping for the fit
+WAVE_NIGHT_NSIG_FIT_CUT = WAVE_NIGHT_NSIG_FIT_CUT.copy(__NAME__)
+WAVE_NIGHT_NSIG_FIT_CUT.value = 5
+
+# wave night plot hc bin lower bound [nm]
+WAVENIGHT_PLT_HCBINL = WAVENIGHT_PLT_HCBINL.copy(__NAME__)
+WAVENIGHT_PLT_HCBINL.value = 900
+
+# wave night plot hc bin upper bound [nm]
+WAVENIGHT_PLT_HCBINU = WAVENIGHT_PLT_HCBINU.copy(__NAME__)
+WAVENIGHT_PLT_HCBINU.value = 2500
+
+# wave night plot hc bin size [nm]
+WAVENIGHT_PLT_HCBINSZ = WAVENIGHT_PLT_HCBINSZ.copy(__NAME__)
+WAVENIGHT_PLT_HCBINSZ.value = 50
+
+# wave night plot fp histogram 2d number of x bins
+WAVENIGHT_PLT_FPBX = WAVENIGHT_PLT_FPBX.copy(__NAME__)
+WAVENIGHT_PLT_FPBX.value = 100
+
+# wave night plot fp histogram 2d number of y bins
+WAVENIGHT_PLT_FPBY = WAVENIGHT_PLT_FPBY.copy(__NAME__)
+WAVENIGHT_PLT_FPBY.value = 10
+
+# wave night plot fp line bin size
+WAVENIGHT_PLT_FPLB = WAVENIGHT_PLT_FPLB.copy(__NAME__)
+WAVENIGHT_PLT_FPLB.value = 200
+
+# wave night plot amplifier size (for modulo amplifier  structures)
+WAVENIGHT_PLT_AMPSIZE = WAVENIGHT_PLT_AMPSIZE.copy(__NAME__)
+WAVENIGHT_PLT_AMPSIZE.value = 256
+
+# wave night plot max +/- dv to keep in the histogram plots
+WAVENIGHT_PLT_MAXDV = WAVENIGHT_PLT_MAXDV.copy(__NAME__)
+WAVENIGHT_PLT_MAXDV.value = 50
+
+# wave night plot modulo amplifier step (bin) size
+WAVENIGHT_PLT_DVSTEP = WAVENIGHT_PLT_DVSTEP.copy(__NAME__)
+WAVENIGHT_PLT_DVSTEP.value = 10
 
 # =============================================================================
 # OBJECT: TELLURIC SETTINGS
@@ -1534,7 +1717,17 @@ MKTELLU_QC_SNR_MIN.value = 100
 
 # Define the allowed difference between recovered and input airmass
 MKTELLU_QC_AIRMASS_DIFF = MKTELLU_QC_AIRMASS_DIFF.copy(__NAME__)
-MKTELLU_QC_AIRMASS_DIFF.value = 0.1
+MKTELLU_QC_AIRMASS_DIFF.value = 0.3
+
+# Define the MKO H-band limit limit [nm]
+#    from http://www.ifa.hawaii.edu/~tokunaga/MKO-NIR_filter_set.html
+MKTELLU_HBAND_LOWER = MKTELLU_HBAND_LOWER.copy(__NAME__)
+MKTELLU_HBAND_LOWER.value = 1490
+
+# Define the MKO H-band upper limit [nm]
+#    from http://www.ifa.hawaii.edu/~tokunaga/MKO-NIR_filter_set.html
+MKTELLU_HBAND_UPPER = MKTELLU_HBAND_UPPER.copy(__NAME__)
+MKTELLU_HBAND_UPPER.value = 1780
 
 # =============================================================================
 # OBJECT: FIT TELLURIC SETTINGS
@@ -1641,7 +1834,7 @@ CCF_MASK_PATH.value = './data/spirou/ccf/'
 
 # Define the default CCF MASK to use
 CCF_DEFAULT_MASK = CCF_DEFAULT_MASK.copy(__NAME__)
-CCF_DEFAULT_MASK.value = 'gl581_Sep18_cleaned.mas'
+CCF_DEFAULT_MASK.value = 'masque_sept18_andres_trans50.mas'
 
 # Define the wavelength units for the mask
 CCF_MASK_UNITS = CCF_MASK_UNITS.copy(__NAME__)
@@ -1658,6 +1851,10 @@ CCF_MASK_MIN_WEIGHT.value = 0.0
 #  Define the width of the template line (if 0 use natural)
 CCF_MASK_WIDTH = CCF_MASK_WIDTH.copy(__NAME__)
 CCF_MASK_WIDTH.value = 1.7
+
+# Define target rv header null value
+CCF_OBJRV_NULL_VAL = CCF_OBJRV_NULL_VAL.copy(__NAME__)
+CCF_OBJRV_NULL_VAL.value = -9999.99
 
 #  Define the maximum allowed ratio between input CCF STEP and CCF WIDTH
 #     i.e. error will be generated if CCF_STEP > (CCF_WIDTH / RATIO)
@@ -1724,10 +1921,9 @@ CCF_DET_NOISE.value = 100.0
 CCF_FIT_TYPE = CCF_FIT_TYPE.copy(__NAME__)
 CCF_FIT_TYPE.value = 0
 
-#  Define the number of orders (from zero to ccf_num_orders_max) to use
-#     to calculate the CCF and RV
-CCF_N_ORD_MAX = CCF_N_ORD_MAX.copy(__NAME__)
-CCF_N_ORD_MAX.value = 48
+# Define the percentile the blaze is normalised by before using in CCF calc
+CCF_BLAZE_NORM_PERCENTILE = CCF_BLAZE_NORM_PERCENTILE.copy(__NAME__)
+CCF_BLAZE_NORM_PERCENTILE.value = 90
 
 # =============================================================================
 # OBJECT: POLARISATION SETTINGS
@@ -2054,6 +2250,10 @@ PLOT_WAVENIGHT_ITERPLOT.value = True
 PLOT_WAVENIGHT_DIFFPLOT = PLOT_WAVENIGHT_DIFFPLOT.copy(__NAME__)
 PLOT_WAVENIGHT_DIFFPLOT.value = True
 
+# turn on the wave per night hist debug plot
+PLOT_WAVENIGHT_HISTPLOT = PLOT_WAVENIGHT_HISTPLOT.copy(__NAME__)
+PLOT_WAVENIGHT_HISTPLOT.value = True
+
 # turn on the make tellu wave flux debug plot (in loop)
 PLOT_MKTELLU_WAVE_FLUX1 = PLOT_MKTELLU_WAVE_FLUX1.copy(__NAME__)
 PLOT_MKTELLU_WAVE_FLUX1.value = False
@@ -2160,6 +2360,12 @@ REPROCESS_SEQCOL.value = 'KW_CMPLTEXP'
 # define the time col for raw file table
 REPROCESS_TIMECOL = REPROCESS_TIMECOL.copy(__NAME__)
 REPROCESS_TIMECOL.value = 'KW_ACQTIME'
+
+# Define whether we try to create a latex summary pdf
+#   (turn this off if you have any problems with latex/pdflatex)
+SUMMARY_LATEX_PDF = SUMMARY_LATEX_PDF.copy(__NAME__)
+SUMMARY_LATEX_PDF.value = True
+
 
 # =============================================================================
 #  End of configuration file

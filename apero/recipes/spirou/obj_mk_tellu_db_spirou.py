@@ -9,7 +9,6 @@ Created on 2019-09-16 at 13:22
 
 @author: cook
 """
-from __future__ import division
 import os
 from collections import OrderedDict
 
@@ -114,7 +113,7 @@ def __main__(recipe, params):
     objnames = list(objnames)
     # ----------------------------------------------------------------------
     # get objects that match this object name
-    tellu_stars = drs_fits.find_files(params, kind='red', fiber=fiber,
+    tellu_stars = drs_fits.find_files(params, recipe, kind='red', fiber=fiber,
                                       KW_OBJNAME=objnames, KW_OUTPUT=filetype)
     # ----------------------------------------------------------------------
     # get night names for each object

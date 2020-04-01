@@ -9,7 +9,6 @@ Created on 2019-03-23 at 13:01
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 
 from apero import core
@@ -110,7 +109,8 @@ def __main__(recipe, params):
                 emsg += '\n\t - "{0}"'.format(allowedtype)
             WLOG(params, 'error', emsg)
         # get all "filetype" filenames
-        files = drs_fits.find_files(params, kind='tmp', KW_DPRTYPE=filetype)
+        files = drs_fits.find_files(params, recipe, kind='tmp',
+                                    KW_DPRTYPE=filetype)
         # append to filenames
         filenames += list(files)
     # convert to numpy array

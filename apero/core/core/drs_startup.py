@@ -9,7 +9,6 @@ Created on 2019-01-19 at 13:37
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 from astropy.time import Time
 import traceback
@@ -20,6 +19,7 @@ import os
 import random
 from signal import signal, SIGINT
 from collections import OrderedDict
+from typing import Union
 
 from apero.locale import drs_text
 from apero.locale import drs_exceptions
@@ -83,7 +83,7 @@ CHARS = string.ascii_uppercase + string.digits
 # Define functions
 # =============================================================================
 def setup(name='None', instrument='None', fkwargs=None, quiet=False,
-          threaded=False, enable_plotter=True):
+          threaded=False, enable_plotter=True, rmod=None):
     """
     Recipe setup script for recipe "name" and "instrument"
 
@@ -96,6 +96,8 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     :param threaded: bool, if True we have a parallel process so do not
                      catch SIGINT as normal
     :param enable_plotter: bool, if True do not enable plotter
+    :param rmod: object, a custom recipe defintion to use (for testing
+                 purposes only)
 
     :type name: str
     :type instrument: str
@@ -132,7 +134,11 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     # get filemod and recipe mod
     pconst = constants.pload(instrument)
     filemod = pconst.FILEMOD()
-    recipemod = pconst.RECIPEMOD()
+    # deal with rmod coming from call
+    if rmod is None:
+        recipemod = pconst.RECIPEMOD()
+    else:
+        recipemod = rmod
     # find recipe
     recipe, recipemod = find_recipe(name, instrument, mod=recipemod)
     # set file module and recipe module
@@ -154,6 +160,8 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     # set DRS_GROUP
     recipe.drs_params.set('DRS_GROUP', drsgroup, source=func_name)
     recipe.drs_params.set('DRS_RECIPE_KIND', recipe.kind, source=func_name)
+    # set master
+    recipe.drs_params.set('IS_MASTER', recipe.master, source=func_name)
     # -------------------------------------------------------------------------
     # need to set debug mode now
     recipe = _set_debug_from_input(recipe, fkwargs)
@@ -294,14 +302,13 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     # add the recipe log
     if (instrument is not None) and (params['DRS_RECIPE_KIND'] == 'recipe'):
         recipe.log = drs_log.RecipeLog(recipe.name, params)
-        # add log file to log (without group - different groups may need to
-        #    lock same file)
-        logfile = drs_log.get_logfilepath(WLOG, params, use_group=False)
+        # add log file to log (only used to save where the log is)
+        logfile = drs_log.get_logfilepath(WLOG, params)
         recipe.log.set_log_file(logfile)
-        # add inputs to log
+        # add user input parameters to log
         recipe.log.set_inputs(params, recipe.args, recipe.kwargs,
                               recipe.specialargs)
-        # set lock function
+        # set lock function (lock file is NIGHTNAME + _log
         recipe.log.set_lock_func(drs_lock.locker)
         # write recipe log
         recipe.log.write_logfile(params)
@@ -340,6 +347,17 @@ def run(func, recipe, params):
             llmain = func(recipe, params)
             llmain['e'], llmain['tb'] = None, None
             success = True
+        except drs_exceptions.DebugExit as e:
+            WLOG(params, 'error', e.errormessage, raise_exception=False)
+            # on debug exit was not a success
+            success = False
+            # save params to llmain
+            llmain = dict(e=e, tb='', params=params, recipe=recipe)
+            # add error to log file
+            if params['DRS_RECIPE_KIND'] == 'recipe':
+                recipe.log.add_error(params, 'Debug Exit', '')
+            # reset the lock directory
+            drs_lock.reset_lock_dir(params)
         except KeyboardInterrupt as e:
             # get trace back
             string_trackback = traceback.format_exc()
@@ -448,7 +466,7 @@ def get_params(recipe='None', instrument='None', **kwargs):
 
 def return_locals(params, ll):
     # deal with a ipython return
-    constants.breakpoint(params, allow=params['IPYTHON_RETURN'])
+    constants.break_point(params, allow=params['IPYTHON_RETURN'])
     # else return ll
     return ll
 
@@ -474,7 +492,7 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
     :param quiet: bool, if we should not print out standard output
 
     :type params: ParamDict
-    :type llmain: dict
+    :type llmain: Union[dict, None]
     :type recipe: DrsRecipe
     :type success: bool
     :type outputs: str
@@ -611,7 +629,7 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
 
 
 def get_file_definition(name, instrument, kind='raw', return_all=False,
-                        fiber=None):
+                        fiber=None, required=True):
     """
     Finds a given recipe in the instruments definitions
 
@@ -622,6 +640,8 @@ def get_file_definition(name, instrument, kind='raw', return_all=False,
                        just the last entry (if False)
     :param fiber: string, some files require a fiber to choose the correct file
                   (i.e. to add a suffix)
+    :param required: bool, if False then does not throw error when no files
+                     found (only use if checking for return = None)
 
     :type name: str
     :type instrument: str
@@ -677,7 +697,10 @@ def get_file_definition(name, instrument, kind='raw', return_all=False,
     if instrument is None and len(found_files) == 0:
         empty = drs_file.DrsFitsFile('Empty')
         return empty
-    if len(found_files) == 0:
+
+    if (len(found_files) == 0) and (not required):
+        return None
+    elif len(found_files) == 0:
         eargs = [name, modules[0], func_name]
         WLOG(None, 'error', TextEntry('00-008-00011', args=eargs))
 
@@ -1407,6 +1430,8 @@ def find_recipe(name='None', instrument='None', mod=None):
     :rtype: DrsRecipe
     """
     func_name = __NAME__ + '.find_recipe()'
+    # get text entry
+    textentry = constants.constant_functions._DisplayText()
     # deal with no instrument
     if instrument == 'None' or instrument is None:
         ipath = CORE_PATH
@@ -1439,7 +1464,12 @@ def find_recipe(name='None', instrument='None', mod=None):
         empty = drs_recipe.DrsRecipe(name='Empty', instrument=None)
         return empty, None
     if found_recipe is None:
-        WLOG(None, 'error', TextEntry('00-007-00001', args=[name]))
+        # may not have access to this
+        try:
+            WLOG(None, 'error', TextEntry('00-007-00001', args=[name]))
+        except Exception as _:
+            emsg = textentry('00-007-00001', args=[name])
+            raise ConfigError(emsg, level='error')
 
     # make a copy of found recipe to return
     copy_recipe = DrsRecipe()
@@ -1622,7 +1652,7 @@ def _set_debug_from_input(recipe, fkwargs):
     """
     # set function name
     func_name = __NAME__ + '._set_debug_from_input()'
-
+    # set debug key
     debug_key = '--debug'
     # assume debug is not there
     debug_mode = None

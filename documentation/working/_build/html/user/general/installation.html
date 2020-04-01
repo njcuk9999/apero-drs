@@ -6,7 +6,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>Installation &#8212; APERO 0.6.016 documentation</title>
+    <title>Installation &#8212; APERO 0.6.037 documentation</title>
     <link rel="stylesheet" href="../../_static/bizstyle.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../_static/apero.css" />
@@ -100,7 +100,7 @@
         <li class="right" >
           <a href="../general_guide.html" title="General User documentation"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.6.016 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.6.037 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../general_guide.html" accesskey="U">General User documentation</a> &#187;</li> 
       </ul>
     </div>
@@ -169,24 +169,28 @@
 <div class="section" id="prerequisites">
 <span id="installation-prerequisites"></span><h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h2>
 <p>APERO is tested with <a class="reference external" href="https://www.python.org/download/releases/3.0/">python 3</a></p>
-<p>The following python modules are required:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">astropy</span>
-<span class="n">matplotlib</span>
-<span class="n">numpy</span>
-<span class="n">scipy</span>
+<p>The following python modules are required</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>astropy
+matplotlib
+numpy
+scipy
 </pre></div>
 </div>
-<p>The following python modules are recommended:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">astroquery</span>
-<span class="n">barycorrpy</span>
-<span class="n">bottleneck</span>
-<span class="n">ipdb</span>
-<span class="n">numba</span>
-<span class="n">pandas</span>
-<span class="n">PIL</span>
-<span class="n">tqdm</span>
+</div></blockquote>
+<p>The following python modules are recommended</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>astroquery
+barycorrpy
+bottleneck
+ipdb
+numba
+pandas
+PIL
+tqdm
 </pre></div>
 </div>
+</div></blockquote>
 <p>See :ref: <cite>here &lt;python_install&gt;</cite> for guide to intalling python and modules with
 the recommended setup.</p>
 <p><a class="reference internal" href="#installation"><span class="std std-ref">Back to top</span></a></p>
@@ -195,10 +199,12 @@ the recommended setup.</p>
 <span id="installation-download"></span><h2>Download from GitHub<a class="headerlink" href="#download-from-github" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="clone">
 <h3>Clone<a class="headerlink" href="#clone" title="Permalink to this headline">¶</a></h3>
-<p>Clone from <a class="reference external" href="https://github.com/njcuk9999/apero-drs">github</a>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">njcuk9999</span><span class="o">/</span><span class="n">apero</span><span class="o">-</span><span class="n">drs</span>
+<p>Clone from <a class="reference external" href="https://github.com/njcuk9999/apero-drs">github</a></p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/njcuk9999/apero-drs
 </pre></div>
 </div>
+</div></blockquote>
 <p>This may take some time (in future most of the data required will be a separate download),
 and we still have many (now redundant) files from the spirou_py3 repository.</p>
 </div>
@@ -211,9 +217,9 @@ and we still have many (now redundant) files from the spirou_py3 repository.</p>
 <dt>master version</dt><dd><p>This is the version currently recommended for all general use.
 It may not contain the most up-to-date features until long term support
 and stability can be verified.</p>
-<p>Change to this branch with:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">git</span> <span class="n">checkout</span> <span class="n">master</span>
-<span class="o">&gt;</span> <span class="n">git</span> <span class="n">pull</span> <span class="n">origin</span> <span class="n">master</span>
+<p>Change to this branch with</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git checkout master
+git pull origin master
 </pre></div>
 </div>
 </dd>
@@ -224,9 +230,9 @@ and stability can be verified.</p>
 not ready for full sets of processing and definitely not for release for
 non-developers or for data put on archives. Some changes may not be
 in this version that are in the working version.</p>
-<p>Change to this branch with:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">git</span> <span class="n">checkout</span> <span class="n">developer</span>
-<span class="o">&gt;</span> <span class="n">git</span> <span class="n">pull</span> <span class="n">origin</span> <span class="n">developer</span>
+<p>Change to this branch with</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git checkout developer
+git pull origin developer
 </pre></div>
 </div>
 </dd>
@@ -235,9 +241,9 @@ in this version that are in the working version.</p>
 <li><dl>
 <dt>working version</dt><dd><p>Note the working version will be the most up-to-date version but has not been
 tested for stability - use at own risk.</p>
-<p>Change to this branch with:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">git</span> <span class="n">checkout</span> <span class="n">working</span>
-<span class="o">&gt;</span> <span class="n">git</span> <span class="n">pull</span> <span class="n">origin</span> <span class="n">working</span>
+<p>Change to this branch with</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git checkout working
+git pull origin working
 </pre></div>
 </div>
 </dd>
@@ -252,10 +258,12 @@ tested for stability - use at own risk.</p>
 <div class="section" id="run-the-installation-script">
 <h3>Run the installation script<a class="headerlink" href="#run-the-installation-script" title="Permalink to this headline">¶</a></h3>
 <p>Change to the <cite>apero-drs</cite> directory</p>
-<p>Run the installation script:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">setup</span><span class="o">/</span><span class="n">install</span><span class="o">.</span><span class="n">py</span>
+<p>Run the installation script</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python setup/install.py
 </pre></div>
 </div>
+</div></blockquote>
 </div>
 <div class="section" id="step-by-step-guide">
 <h3>Step-by-step guide<a class="headerlink" href="#step-by-step-guide" title="Permalink to this headline">¶</a></h3>
@@ -313,15 +321,19 @@ command)</p>
 <span id="installation-update"></span><h2>Updating from github<a class="headerlink" href="#updating-from-github" title="Permalink to this headline">¶</a></h2>
 <ol class="arabic">
 <li><p>Choose a branch (as in <a class="reference internal" href="#installation-choose-branch"><span class="std std-ref">Choose branch</span></a>)</p></li>
-<li><p>Update the branch (pull from github):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">git</span> <span class="n">pull</span> <span class="n">origin</span> <span class="p">{</span><span class="n">branch</span><span class="p">}</span>
+<li><p>Update the branch (pull from github)</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git pull origin <span class="o">{</span>branch<span class="o">}</span>
 </pre></div>
 </div>
+</div></blockquote>
 </li>
-<li><p>Update using the installation script:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">python</span> <span class="n">setup</span><span class="o">/</span><span class="n">install</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">update</span>
+<li><p>Update using the installation script</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python setup/install.py --update
 </pre></div>
 </div>
+</div></blockquote>
 </li>
 </ol>
 <p>This will use all current settings and update the</p>
@@ -347,13 +359,13 @@ command)</p>
         <li class="right" >
           <a href="../general_guide.html" title="General User documentation"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.6.016 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.6.037 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../general_guide.html" >General User documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.3.1.
     </div>
   </body>
 </html>

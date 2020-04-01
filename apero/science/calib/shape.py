@@ -9,7 +9,6 @@ Created on 2019-06-27 at 10:13
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 import os
 from scipy.ndimage import filters
@@ -152,7 +151,7 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
                 WLOG(params, 'info', TextEntry('40-014-00007', args=wargs))
                 # construct new infile instance
                 fpfile_it = file_inst.newcopy(filename=filename, recipe=recipe)
-                fpfile_it.read()
+                fpfile_it.read_file()
                 # append to cube
                 cube.append(np.array(fpfile_it.data))
                 vheaders.append(drs_fits.Header(fpfile_it.header))
@@ -264,7 +263,7 @@ def get_linear_transform_params(params, recipe, image1, image2, **kwargs):
     # and that the image is not sheared or rotated
     lin_transform_vect = np.array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0])
     # find the fp peaks (via max neighbours) in image1
-    mask1 = _max_neighbour_mask(image1, maxn_percent, maxn_thres)
+    mask1 = max_neighbour_mask(image1, maxn_percent, maxn_thres)
     # copy image2
     image3 = np.array(image2)
     # print out initial conditions of linear transform vector
@@ -291,7 +290,7 @@ def get_linear_transform_params(params, recipe, image1, image2, **kwargs):
         if n_it > 0:
             image3 = ea_transform(params, image2, lin_transform_vect)
         # find the fp peaks (via max neighbours) in image2
-        mask2 = _max_neighbour_mask(image3, maxn_percent, maxn_thres)
+        mask2 = max_neighbour_mask(image3, maxn_percent, maxn_thres)
         # we search in +- wdd to find the maximum number of matching
         # bright peaks. We first explore a big +-11 pixel range, but
         # afterward we can scan a much smaller region
@@ -334,8 +333,8 @@ def get_linear_transform_params(params, recipe, image1, image2, **kwargs):
         xpeak2 = xpeak2[keep]
         ypeak2 = ypeak2[keep]
         # do a fit to these positions in both images to get the peak centers
-        x1, y1 = _xy_acc_peak(xpeak1, ypeak1, image1)
-        x2, y2 = _xy_acc_peak(xpeak2, ypeak2, image3)
+        x1, y1 = xy_acc_peak(xpeak1, ypeak1, image1)
+        x2, y2 = xy_acc_peak(xpeak2, ypeak2, image3)
         # we loop on the linear model converting x1 y1 to x2 y2
         nbad, ampsx, ampsy = 1, np.zeros(3), np.zeros(3)
 
@@ -514,6 +513,7 @@ def ea_transform_coeff(image, coeffs, lin_transform_vect):
 
 def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
     func_name = __NAME__ + '.calculate_dxmap()'
+
     # get parameters from params/kwargs
     nbanana = pcheck(params, 'SHAPE_NUM_ITERATIONS', 'nbanana', kwargs,
                      func_name)
@@ -547,7 +547,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
     acc = lprops['CENT_COEFFS']
     poly_wave_ref = wprops['COEFFS']
     une_lines, une_amps = drs_data.load_linelist(params)
-    poly_cavity = drs_data.load_cavity_file(params)
+    _, poly_cavity = drs_data.load_cavity_files(params)
     # get the dimensions
     dim1, dim2 = fpdata.shape
     # -------------------------------------------------------------------------
@@ -556,7 +556,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
     xsec_arr, ccor_arr = [], []
     ddx_arr, dx_arr = [], []
     dypix_arr, cckeep_arr = [], []
-    corr_dx_from_fp_arr, xpeak2_arr = [], []
+    shifts_arr, xpeak2_arr = [], []
     peakval2_arr, ewval2_arr = [], []
     err_pix_arr, good_mask_arr = [], []
     # define storage for output
@@ -605,6 +605,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
         dypix_arr_i, cckeep_arr_i = [], []
         xpeak2, peakval2, ewval2, err_pix, good_mask = [], [], [], [], []
         corr_dx_from_fp = np.zeros((nbo, dim2))
+        shifts_all = np.zeros((nbo, dim2))
         # get dx array (NaN)
         dx = np.zeros((nbo, width)) + np.nan
         # ------------------------------------------------------------------
@@ -658,7 +659,13 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
                 # for the fp data
                 ribbon_fp[iw, :] = ribbon_fp[iw, :] / norm_fp
             # range explored in slopes
-            # TODO: question Where does the /8.0 come from?
+            #
+            # Once we have searched through a range of slopes and found the
+            # best slope, we search a narrower range. We cut the slope range
+            # by a factor of 8. This is a big ad-hoc as a number, but its a
+            # reasonable compromise between code speed and being sure that we
+            # would not miss the best slope on the next iteration
+            #
             sfactor = (range_slopes[1] - range_slopes[0]) / 8.0
             slopes = (np.arange(9) * sfactor) + range_slopes[0]
             # log the range slope exploration
@@ -784,6 +791,8 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
                 # push spline values with shift into ribbon2
                 ribbon_hc2[iw, :] = spline_hc(xpix + ddx)
 
+
+
             # -------------------------------------------------------------
             # get the median values of the fp and hc
             sp_fp = mp.nanmedian(ribbon_fp2, axis=0)
@@ -791,7 +800,8 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
 
             pargs = [params, sp_fp, sp_hc, order_num, hcdata,
                      poly_wave_ref, une_lines, poly_cavity]
-            out = _get_offset_sp(*pargs)
+
+            out = get_offset_sp(*pargs)
             # get and save offest outputs into lists
             corr_dx_from_fp[order_num] = out[0]
             xpeak2.append(out[1])
@@ -827,12 +837,22 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
                 xvec = ddx
                 yvec = ccor[iw, :]
                 with warnings.catch_warnings(record=True) as _:
+                    # we perform a gaussian fit on the correlation coefficient
+                    # between the median order profile and the Nth slice in
+                    # y perpendicular to dispersion along the order. The
+                    # gaussian fit has nn=4 as there may be a DC offset
+                    # nn=4 is gaussian+offset (5th is slope, just in case
+                    # you wondered)
                     gcoeffs, _ = mp.gauss_fit_nn(xvec, yvec, 4)
                 # check that max value is good
                 if mp.nanmax(ccor[iw, :]) > min_good_corr:
                     dx[order_num, iw] = gcoeffs[1]
             # -------------------------------------------------------------
             # remove any offset in dx, this would only shift the spectra
+
+
+
+            # TODO : bad bad bad, don't comment out yet!
             dypix = np.arange(len(dx[order_num]))
             with warnings.catch_warnings(record=True):
                 keep = np.abs(dx[order_num] - mp.nanmedian(dx[order_num])) < 1
@@ -958,7 +978,8 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
 
                     # get shifts combination of ddx and dx0 correction
                     ddx_f = ddx + dx0
-                    shifts = ddx_f[pos_y_mask] - corr_dx_from_fp[order_num][ix]
+                    shifts = ddx_f[pos_y_mask] #- corr_dx_from_fp[order_num][ix]
+                    shifts_all[order_num][ix] = np.nanmean(shifts)
                     # apply shifts to master dx map at correct positions
                     master_dxmap[positions, ix] += shifts
 
@@ -975,15 +996,15 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
                         dxmap = None
                         max_dxmap_std = dxmap_std
                         max_dxmap_info = [order_num, ix, std_qc]
-                        # return dxmap, max_dxmap_std, max_dxmap_info
+                        return dxmap, max_dxmap_std, max_dxmap_info
         # -----------------------------------------------------------------
         # plot all order angle_offset plot (in loop)
         pkwargs = dict(slope_deg=[slope_deg_arr_i], slope=[slope_arr_i],
                        skeep=[skeep_arr_i], xsection=[xsec_arr_i],
                        ccor=[ccor_arr_i], ddx=[ddx_arr_i], dx=[dx_arr_i],
                        dypix=[dypix_arr_i], ckeep=[cckeep_arr_i],
-                       corr_dx_fp=[corr_dx_from_fp],
-                       xpeak2=[xpeak2], err_pix=[err_pix], good=[good_mask])
+                       shifts=[shifts_all], xpeak2=[xpeak2], err_pix=[err_pix],
+                       good=[good_mask])
         recipe.plot('SHAPE_ANGLE_OFFSET_ALL', params=params, bnum=banana_num,
                     nbo=nbo, nbpix=dim2, **pkwargs)
         # ---------------------------------------------------------------------
@@ -993,7 +1014,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
         ccor_arr.append(ccor_arr_i), ddx_arr.append(ddx_arr_i)
         dx_arr.append(dx_arr_i), dypix_arr.append(dypix_arr_i)
         cckeep_arr.append(cckeep_arr_i)
-        corr_dx_from_fp_arr.append(corr_dx_from_fp), xpeak2_arr.append(xpeak2)
+        shifts_arr.append(shifts_all), xpeak2_arr.append(xpeak2)
         peakval2_arr.append(peakval2), ewval2_arr.append(ewval2)
         err_pix_arr.append(err_pix), good_mask_arr.append(good_mask)
     # ---------------------------------------------------------------------
@@ -1001,7 +1022,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
     pkwargs = dict(slope_deg=slope_deg_arr, slope=slope_arr,
                    skeep=skeep_arr, xsection=xsec_arr, ccor=ccor_arr,
                    ddx=ddx_arr, dx=dx_arr, dypix=dypix_arr, ckeep=cckeep_arr,
-                   corr_dx_fp=corr_dx_from_fp_arr, xpeak2=xpeak2_arr,
+                   shifts=shifts_arr, xpeak2=xpeak2_arr,
                    err_pix=err_pix_arr, good=good_mask_arr)
     # plot as debug plot
     recipe.plot('SHAPE_ANGLE_OFFSET', params=params, bnum=None, nbo=nbo,
@@ -1025,6 +1046,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
 
 def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
     func_name = __NAME__ + '.calculate_dymap()'
+
     # get properties from property dictionaries
     fibers = pcheck(params, 'SHAPE_UNIQUE_FIBERS', 'fibers', kwargs, func_name)
     # get the dimensions
@@ -1194,8 +1216,18 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     # add output tag
     outfile1.add_hkey('KW_OUTPUT', value=outfile1.name)
     # add input files (and deal with combining or not combining)
-    outfile1.add_hkey_1d('KW_INFILE1', values=rawhcfiles, dim1name='hcfiles')
-    outfile1.add_hkey_1d('KW_INFILE2', values=rawfpfiles, dim1name='fpfiles')
+    # deal with not having hc or fp files
+    if hcfile is None:
+        outfile1.add_hkey_1d('KW_INFILE1', values=rawfpfiles,
+                             dim1name='fpfiles')
+    elif fpfile is None:
+        outfile1.add_hkey_1d('KW_INFILE1', values=rawhcfiles,
+                             dim1name='hcfiles')
+    else:
+        outfile1.add_hkey_1d('KW_INFILE1', values=rawhcfiles,
+                             dim1name='hcfiles')
+        outfile1.add_hkey_1d('KW_INFILE2', values=rawfpfiles,
+                             dim1name='fpfiles')
     # add the calibration files use
     outfile1 = general.add_calibs_to_header(outfile1, fpprops)
     # add qc parameters
@@ -1288,42 +1320,46 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         # ------------------------------------------------------------------
         # for hc files copy over the fp parameters with the hc parameters
         # ------------------------------------------------------------------
-        # in file
-        debugfile3 = recipe.outputs['SHAPE_IN_HC_FILE'].newcopy(recipe=recipe)
-        debugfile3.construct_filename(params, infile=hcfile)
-        debugfile3.copy_original_keys(hcfile)
-        # add version
-        debugfile3.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
-        # add dates
-        debugfile3.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
-        debugfile3.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
-        # add process id
-        debugfile3.add_hkey('KW_PID', value=params['PID'])
-        # add output tag
-        debugfile3.add_hkey('KW_OUTPUT', value=debugfile3.name)
-        # add input files (and deal with combining or not combining)
-        debugfile3.add_hkey_1d('KW_INFILE1', values=rawhcfiles,
-                               dim1name='hcfiles')
-        debugfile3.add_hkey_1d('KW_INFILE2', values=rawfpfiles,
-                               dim1name='fpfiles')
-        # add the calibration files use
-        debugfile3 = general.add_calibs_to_header(debugfile3, fpprops)
-        # add qc parameters
-        debugfile3.add_qckeys(qc_params)
-        # add data
-        debugfile3.data = hcimage
-        debugfile3.write_multi(data_list=[fp_table])
-        # add to output files (for indexing)
-        recipe.add_output_file(debugfile3)
-        # out file
-        debugfile4 = recipe.outputs['SHAPE_OUT_HC_FILE'].newcopy(recipe=recipe)
-        debugfile4.construct_filename(params, infile=hcfile)
-        debugfile4.copy_hdict(debugfile4)
-        debugfile4.add_hkey('KW_OUTPUT', value=debugfile4.name)
-        debugfile4.data = hcimage2
-        debugfile4.write_multi(data_list=[fp_table])
-        # add to output files (for indexing)
-        recipe.add_output_file(debugfile4)
+        if 'SHAPE_IN_HC_FILE' in recipe.outputs:
+            # in file
+            shape_in_hc_file = recipe.outputs['SHAPE_IN_HC_FILE']
+            debugfile3 = shape_in_hc_file.newcopy(recipe=recipe)
+            debugfile3.construct_filename(params, infile=hcfile)
+            debugfile3.copy_original_keys(hcfile)
+            # add version
+            debugfile3.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+            # add dates
+            debugfile3.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+            debugfile3.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+            # add process id
+            debugfile3.add_hkey('KW_PID', value=params['PID'])
+            # add output tag
+            debugfile3.add_hkey('KW_OUTPUT', value=debugfile3.name)
+            # add input files (and deal with combining or not combining)
+            debugfile3.add_hkey_1d('KW_INFILE1', values=rawhcfiles,
+                                   dim1name='hcfiles')
+            debugfile3.add_hkey_1d('KW_INFILE2', values=rawfpfiles,
+                                   dim1name='fpfiles')
+            # add the calibration files use
+            debugfile3 = general.add_calibs_to_header(debugfile3, fpprops)
+            # add qc parameters
+            debugfile3.add_qckeys(qc_params)
+            # add data
+            debugfile3.data = hcimage
+            debugfile3.write_multi(data_list=[fp_table])
+            # add to output files (for indexing)
+            recipe.add_output_file(debugfile3)
+            if 'SHAPE_OUT_HC_FILE' in recipe.outputs:
+                # out file
+                shape_out_hc_file = recipe.outputs['SHAPE_OUT_HC_FILE']
+                debugfile4 = shape_out_hc_file.newcopy(recipe=recipe)
+                debugfile4.construct_filename(params, infile=hcfile)
+                debugfile4.copy_hdict(debugfile3)
+                debugfile4.add_hkey('KW_OUTPUT', value=debugfile4.name)
+                debugfile4.data = hcimage2
+                debugfile4.write_multi(data_list=[fp_table])
+                # add to output files (for indexing)
+                recipe.add_output_file(debugfile4)
     # return output files (not debugs)
     return outfile1, outfile2, outfile3
 
@@ -1510,7 +1546,7 @@ def write_shape_local_summary(recipe, params, qc_params, it, transform):
 # =============================================================================
 # Define worker functions
 # =============================================================================
-def _max_neighbour_mask(image, percent, thres):
+def max_neighbour_mask(image, percent, thres):
     # construct a cube with 8 slices that contain the 8 neighbours
     #   of any pixel. This is used to find pixels brighter that their
     #   neighbours
@@ -1539,7 +1575,7 @@ def _max_neighbour_mask(image, percent, thres):
     return mask
 
 
-def _xy_acc_peak(xpeak, ypeak, im):
+def xy_acc_peak(xpeak, ypeak, im):
     # black magic arithmetic for replace a 2nd order polynomial by
     # some arithmetic directly on pixel values to find
     # the maxima in x and y for each peak
@@ -1579,10 +1615,10 @@ def _xy_acc_peak(xpeak, ypeak, im):
     return x1, y1
 
 
-def _get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata,
+def get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata,
                    poly_wave_ref, une_lines, poly_cavity,
                    **kwargs):
-    func_name = __NAME__ + '._get_offset_sp'
+    func_name = __NAME__ + '.get_offset_sp'
     # get constants from params/kwargs
     xoffset = pcheck(params, 'SHAPEOFFSET_XOFFSET', 'xoffset', kwargs,
                      func_name)

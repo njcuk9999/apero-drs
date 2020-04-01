@@ -34,9 +34,9 @@ plot = dict(name='--plot', dtype=int, helpstr=Help['PLOT_HELP'],
 drs_recipe = drs_recipe.DrsRecipe
 
 # Below one must define all recipes and put into the "recipes" list
-test = drs_recipe(__INSTRUMENT__)
 changelog = drs_recipe(__INSTRUMENT__)
 explorer = drs_recipe(__INSTRUMENT__)
+go_recipe = drs_recipe(__INSTRUMENT__)
 listing = drs_recipe(__INSTRUMENT__)
 logstats = drs_recipe(__INSTRUMENT__)
 processing = drs_recipe(__INSTRUMENT__)
@@ -47,7 +47,7 @@ reset = drs_recipe(__INSTRUMENT__)
 validate = drs_recipe(__INSTRUMENT__)
 
 # push into a list
-recipes = [test, changelog, explorer, processing, listing, logstats,
+recipes = [changelog, explorer, go_recipe, processing, listing, logstats,
            remake_db, remake_doc, req_check, reset, validate]
 
 # =============================================================================
@@ -88,25 +88,6 @@ pp_recipe = drs_recipe(__INSTRUMENT__)
 out_recipe = drs_recipe(__INSTRUMENT__)
 
 # -----------------------------------------------------------------------------
-# test.py
-# -----------------------------------------------------------------------------
-test.name = 'test_recipe.py'
-test.instrument = __INSTRUMENT__
-test.outputdir = 'tmp'
-test.inputdir = 'tmp'
-test.inputtype = 'pp'
-test.extension = 'fits'
-test.description = Help['TEST_DESCRIPTION']
-test.epilog = Help['TEST_EXAMPLE']
-test.kind = 'test'
-test.set_arg(pos=0, **directory)
-test.set_kwarg(name='--filelist1', dtype='files', default=[], nargs='+',
-               files=[sf.pp_file], filelogic='inclusive',
-               helpstr='test 1', required=True)
-test.set_kwarg(name='--filelist2', dtype='files', default=[], nargs='+',
-               files=[sf.pp_file], helpstr='test 2', required=True)
-
-# -----------------------------------------------------------------------------
 # apero_changelog.py
 # -----------------------------------------------------------------------------
 changelog.name = 'apero_changelog.py'
@@ -124,6 +105,11 @@ remake_doc.instrument = __INSTRUMENT__
 # TODO: Move to language DB
 remake_doc.description = 'Re-make the apero documentation'
 remake_doc.kind = 'tool'
+# TODO: Move Help to language DB
+remake_doc.set_kwarg(name='--upload', dtype='bool', default=False,
+                     helpstr='[Bool] If True upload documentation to '
+                             'defined server (for web access)')
+
 
 # -----------------------------------------------------------------------------
 # apero_explorer.py
@@ -135,7 +121,30 @@ explorer.description = Help['EXPLORER_DESCRIPTION']
 explorer.kind = 'tool'
 explorer.set_arg(pos=0, name='instrument', dtype='options',
                  helpstr=Help['EXPLORER_INST_HEPL'],
-                 options=['SPIROU', 'NIRPS'])
+                 options=Constants['DRS_INSTRUMENTS'])
+
+
+# -----------------------------------------------------------------------------
+# apero_changelog.py
+# ----------------------------------------------------------------------------
+# TODO: Move strings to language db
+go_recipe.name = 'apero_go.py'
+go_recipe.instrument = __INSTRUMENT__
+go_recipe.description = 'Recipe to go to directories defined by APERO'
+go_recipe.kind = 'tool'
+go_recipe.set_arg(pos=0, name='instrument', dtype='options',
+                  helpstr='The instrument to use',
+                  options=Constants['DRS_INSTRUMENTS'])
+# TODO: Add help
+go_recipe.set_kwarg(name='--data', default=False, dtype='switch')
+go_recipe.set_kwarg(name='--raw', default=False, dtype='switch')
+go_recipe.set_kwarg(name='--tmp', default=False, dtype='switch')
+go_recipe.set_kwarg(name='--red', default=False, dtype='switch')
+go_recipe.set_kwarg(name='--calib', default=False, dtype='switch')
+go_recipe.set_kwarg(name='--tellu', default=False, dtype='switch')
+go_recipe.set_kwarg(name='--msg', default=False, dtype='switch')
+go_recipe.set_kwarg(name='--plot', default=False, dtype='switch')
+
 
 # -----------------------------------------------------------------------------
 # apero_listing.py
@@ -146,7 +155,7 @@ listing.description = Help['LISTING_DESC']
 listing.kind = 'tool'
 listing.set_arg(pos=0, name='instrument', dtype='options',
                 helpstr=Help['LISTING_HELP_INSTRUMENT'],
-                options=['SPIROU', 'NIRPS'])
+                options=Constants['DRS_INSTRUMENTS'])
 listing.set_kwarg(name='--nightname', dtype=str, default='',
                   helpstr=Help['LISTING_HELP_NIGHTNAME'])
 listing.set_kwarg(name='--kind', dtype=str, default='raw',
@@ -164,7 +173,7 @@ logstats.set_debug_plots('LOGSTATS_BAR')
 logstats.set_summary_plots()
 logstats.set_arg(pos=0, name='instrument', dtype='options',
                 helpstr=Help['LOGSTAT_HELP_INSTRUMENT'],
-                options=['SPIROU', 'NIRPS'])
+                options=Constants['DRS_INSTRUMENTS'])
 logstats.set_kwarg(name='--nightname', dtype=str, default='',
                   helpstr=Help['LOGSTAT_HELP_NIGHTNAME'])
 logstats.set_kwarg(name='--kind', dtype=str, default='red',
@@ -185,6 +194,12 @@ logstats.set_kwarg(name='--before', dtype=str, default='None',
                            'Must be in the form yyyy-mm-dd HH:MM:SS or '
                            'yyyy-mm-dd (and the time will be assumed '
                            'midnight).')
+logstats.set_kwarg(name='--mlog', dtype='bool', default=False,
+                   helpstr='Whether to save a master log to the drs path '
+                           '(MASTER_LOG.fits). '
+                           'i.e. for --kind=red the DATA_DIR/reduced/ dir). '
+                           'Note if --recipe is set this will add a suffix'
+                           'to the output name. ')
 logstats.set_kwarg(**plot)
 
 # -----------------------------------------------------------------------------
@@ -196,7 +211,7 @@ remake_db.description = Help['REMAKE_DESC']
 remake_db.kind = 'tool'
 remake_db.set_arg(pos=0, name='instrument', dtype='options',
                   helpstr=Help['REMAKE_HELP_INSTRUMENT'],
-                  options=['SPIROU', 'NIRPS'])
+                  options=Constants['DRS_INSTRUMENTS'])
 remake_db.set_kwarg(name='--kind', dtype='options',
                     options=['calibration', 'telluric'],
                     default_ref='REMAKE_DATABASE_DEFAULT',
@@ -212,7 +227,7 @@ processing.description = Help['PROCESS_DESCRIPTION']
 processing.kind = 'processing'
 processing.set_arg(pos=0, name='instrument', dtype='options',
                    helpstr=Help['PROCESS_INST_HELP'],
-                   options=['SPIROU', 'NIRPS'])
+                   options=Constants['DRS_INSTRUMENTS'])
 processing.set_arg(pos=1, name='runfile', dtype=str,
                    helpstr=Help['PROCESS_RUNFILE_HELP'])
 processing.set_kwarg(name='--nightname', dtype=str, default='None',
@@ -228,7 +243,8 @@ processing.set_kwarg(name='--cores', dtype=str, default='None',
 processing.set_kwarg(name='--test', dtype=str, default='None',
                      options=['True', 'False', '1', '0', 'None'],
                      helpstr=Help['PROCESS_TEST_HELP'])
-
+processing.set_kwarg(name='--trigger', dtype='bool', default=False,
+                     helpstr=Help['PROCESS_TRIGGER_HELP'])
 
 # -----------------------------------------------------------------------------
 # apero_requirements-check.py
@@ -246,7 +262,8 @@ reset.instrument = __INSTRUMENT__
 reset.description = Help['RESET_DESCRIPTION']
 reset.kind = 'tool'
 reset.set_arg(pos=0, name='instrument', dtype='options',
-              helpstr=Help['RESET_INST_HELP'], options=['SPIROU', 'NIRPS'])
+              helpstr=Help['RESET_INST_HELP'],
+              options=Constants['DRS_INSTRUMENTS'])
 reset.set_kwarg(name='--log', dtype='bool', default=True,
                 helpstr=Help['RESET_LOG_HELP'])
 reset.set_kwarg(name='--warn', dtype='bool', default=True,
@@ -262,4 +279,4 @@ validate.description = Help['VALIDATE_DESCRIPTION']
 validate.kind = 'tool'
 validate.set_arg(pos=0, name='instrument', dtype='options',
                  helpstr=Help['VALIDATE_INST_HELP'],
-                 options=['SPIROU', 'NIRPS'])
+                 options=Constants['DRS_INSTRUMENTS'])

@@ -11,13 +11,11 @@ Created on 2020-01-07 at 14:59
 """
 import os
 import shutil
-import glob
-from distutils.dir_util import copy_tree
 
 from apero import core
 from apero.core import constants
 from apero import locale
-from apero.tools.module.documentation import drs_documentation
+from apero.io import drs_path
 
 # =============================================================================
 # Define variables
@@ -44,6 +42,12 @@ LATEX_DIR = '../documentation/working/_build/latex/'
 LATEX_FILE = 'apero-docs.tex'
 PDF_FILE = 'apero-docs.pdf'
 # -----------------------------------------------------------------------------
+RSYNC_CMD = 'rsync -avz -e "{SSH}" {INPATH} {USER}@{HOST}:{OUTPATH}'
+# -----------------------------------------------------------------------------
+SSH_OPTIONS = 'ssh -oport=5822'
+SSH_USER = 'cook'
+SSH_HOST = 'venus.astro.umontreal.ca'
+SSH_PATH = '/home/cook/www/apero-drs/'
 
 
 # =============================================================================
@@ -118,7 +122,7 @@ def compile_docs(params):
         WLOG(params, '', 'Copying html files')
         os.system('rm -rf {0}/*'.format(out_dir))
         # copy
-        copy_tree(html_dir, out_dir)
+        drs_path.copytree(html_dir, out_dir)
         # ------------------------------------------------------------------
         # copy pdf (latex) file
         # TODO: Move to language DB
@@ -148,6 +152,25 @@ def compile_docs(params):
         os.chdir(cwd)
         # raise exception
         raise e
+
+
+def upload(params):
+    # get package
+    package = params['DRS_PACKAGE']
+    # get paths
+    out_dir = constants.get_relative_folder(package, OUT_DIR)
+    # make sure we copy contents not directory
+    if not out_dir.endswith(os.sep):
+        out_dir += os.sep
+    # get rsync dict
+    rdict = dict()
+    rdict['SSH'] = SSH_OPTIONS
+    rdict['USER'] = SSH_USER
+    rdict['HOST'] = SSH_HOST
+    rdict['INPATH'] = out_dir
+    rdict['OUTPATH'] = SSH_PATH
+    # run command (will require password)
+    os.system(RSYNC_CMD.format(**rdict))
 
 
 # =============================================================================

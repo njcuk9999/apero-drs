@@ -8,14 +8,12 @@ Created on 2019-03-05 16:38
 @author: ncook
 Version 0.0.1
 """
-from __future__ import division
 import numpy as np
 import os
 
 from apero import core
 from apero import locale
 from apero.core import constants
-from apero.core import math as mp
 from apero.science import preprocessing
 from apero.io import drs_image
 from apero.io import drs_fits
@@ -118,7 +116,7 @@ def __main__(recipe, params):
         # Fix the spirou header
         # ------------------------------------------------------------------
         # certain keys may not be in some spirou files
-        file_instance = preprocessing.fix_header(params, recipe, file_instance)
+        file_instance = drs_fits.fix_header(params, recipe, file_instance)
         # ------------------------------------------------------------------
         # identification of file drs type
         # ------------------------------------------------------------------
@@ -236,7 +234,7 @@ def __main__(recipe, params):
         outfile.add_hkey('KW_PPSHIFTY', value=shiftdy)
         # add mid observation time
         outfile.add_hkey('KW_MID_OBS_TIME', value=mid_obs_time.mjd)
-        outfile.add_hkey('KW_BERV_OBSTIME_METHOD', value=mid_obs_method)
+        outfile.add_hkey('KW_MID_OBSTIME_METHOD', value=mid_obs_method)
         # ------------------------------------------------------------------
         # copy data
         outfile.data = image

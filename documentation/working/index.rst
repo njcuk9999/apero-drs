@@ -3,24 +3,12 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. only:: html
-
-
 ******************************************
 APERO Documentation
 ******************************************
 
 ===========================================
-Latest version: 0.6.016
-===========================================
-
-  APERO is a pipeline designed to reduce astrophysical observations (specifically from echelle spectrographs).
-  It is the official pipeline for:
-
-  * `SPIROU <https://www.cfht.hawaii.edu/Instruments/SPIRou/>`_ (SPectropolarimeter InfraROUge) on the Canada-France-Hawaii Telescope `CFHT <https://www.cfht.hawaii.edu/>`_.
-  * NIRPS (Currently under construction)
-
-.. toctree::
+Latest version: 0.6.063.. toctree::
    :maxdepth: 2
    :caption: Contents:
 
