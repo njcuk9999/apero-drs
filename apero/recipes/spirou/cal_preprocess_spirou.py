@@ -116,7 +116,7 @@ def __main__(recipe, params):
         # Fix the spirou header
         # ------------------------------------------------------------------
         # certain keys may not be in some spirou files
-        file_instance = preprocessing.fix_header(params, recipe, file_instance)
+        file_instance = drs_fits.fix_header(params, recipe, file_instance)
         # ------------------------------------------------------------------
         # identification of file drs type
         # ------------------------------------------------------------------
@@ -234,7 +234,7 @@ def __main__(recipe, params):
         outfile.add_hkey('KW_PPSHIFTY', value=shiftdy)
         # add mid observation time
         outfile.add_hkey('KW_MID_OBS_TIME', value=mid_obs_time.mjd)
-        outfile.add_hkey('KW_BERV_OBSTIME_METHOD', value=mid_obs_method)
+        outfile.add_hkey('KW_MID_OBSTIME_METHOD', value=mid_obs_method)
         # ------------------------------------------------------------------
         # copy data
         outfile.data = image

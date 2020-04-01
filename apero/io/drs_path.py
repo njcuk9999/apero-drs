@@ -13,6 +13,7 @@ import pkg_resources
 import numpy as np
 from astropy import units as uu
 import os
+import shutil
 
 from apero.core import constants
 from apero.core import math as mp
@@ -205,6 +206,69 @@ def makedirs(params, path):
         except Exception as e:
             eargs = [path, type(e), e, func_name]
             WLOG(params, 'error', TextEntry('01-010-00002', args=eargs))
+
+
+def copytree(src, dst):
+    for root, dirs, files in os.walk(src):
+        # out root
+        outroot = root.replace(src, dst)
+        # deal with directory not existing
+        for directory in dirs:
+            dirpath = os.path.join(outroot, directory)
+            if not os.path.exists(dirpath):
+                os.mkdir(dirpath)
+        # deal with files
+        for filename in files:
+            # get input file path
+            infile = os.path.join(root, filename)
+            outfile = os.path.join(outroot, filename)
+            # copy file
+            shutil.copy(infile, outfile)
+
+
+def copyfile(params, src, dst, log=True):
+    # set function name
+    func_name = __NAME__ + '.copyfile()'
+    # only copy if we have the source file
+    if os.path.exists(src):
+        # if logging then log
+        if log:
+            wargs = [src, dst]
+            WLOG(params, '', TextEntry('40-000-00011', args=wargs))
+        # copy using shutil
+        try:
+            shutil.copy(src, dst)
+        except Exception as e:
+            eargs = [src, dst, type(e), e, func_name]
+            WLOG(params, '', TextEntry('00-004-00006', args=eargs))
+    # else raise exception
+    else:
+        eargs = [src, dst, func_name]
+        WLOG(params, 'error', TextEntry('00-004-00005', args=eargs))
+
+
+def numpy_load(filename):
+    # set function name
+    func_name = __NAME__ + '.numpy_load()'
+    # try the original load function
+    try:
+        return np.load(filename)
+    except Exception as _:
+        pass
+    # try the load with pickle allowed
+    try:
+        return np.load(filename, allow_pickle=True)
+    except Exception as _:
+        pass
+    # try the load, loading as a string first
+    try:
+        return np.load(open(filename, 'rb'))
+    except Exception as _:
+        pass
+    # if we have got to here we cannot load filename
+    eargs = [filename, func_name]
+    emsg = 'NumpyLoad: Cannot load filename={0} \n\t Funcion = {1}'
+    raise ValueError(emsg.format(*eargs))
 
 
 # =============================================================================

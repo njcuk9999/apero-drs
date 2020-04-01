@@ -1460,14 +1460,16 @@ def get_drs_data_msg(params, group=None, reset=False):
     # if we have a full path in params we use this
     if 'DRS_DATA_MSG_FULL' in params and not reset:
         # check that path exists - if it does skip next steps
-        if os.path.exists(params['DRS_DATA_MSG_FULL']):
+        if params['DRS_DATA_MSG_FULL'] is None:
+            pass
+        elif os.path.exists(params['DRS_DATA_MSG_FULL']):
             return params['DRS_DATA_MSG_FULL']
     # ----------------------------------------------------------------------
     # get from params
     dir_data_msg = params.get('DRS_DATA_MSG', None)
     # ----------------------------------------------------------------------
     # only sort by recipe kind if group is None
-    if ('DRS_RECIPE_KIND' is not None) and (group is None):
+    if (params['DRS_RECIPE_KIND'] is not None) and (group is None):
         kind = params['DRS_RECIPE_KIND'].lower()
         dir_data_msg = os.path.join(dir_data_msg, kind)
     # if we have a group then put it in processing folder

@@ -10,13 +10,14 @@ __all__ = [  # global settings
     # path settings
     'DRS_ROOT', 'DRS_DATA_RAW', 'DRS_DATA_REDUC', 'DRS_CALIB_DB',
     'DRS_TELLU_DB', 'DRS_DATA_MSG', 'DRS_DATA_WORKING', 'DRS_DATA_RUN',
-    'DRS_DS9_PATH', 'DRS_PDFLATEX_PATH',
+    'DRS_DS9_PATH', 'DRS_PDFLATEX_PATH', 'DRS_DATA_MSG_FULL',
     # General properites
     'DRS_VERSION', 'AUTHORS', 'DRS_RELEASE', 'DRS_DATE', 'LANGUAGE',
     # Instrument/Observatory Constants
     'INSTRUMENT', 'OBS_LONG', 'OBS_LAT', 'OBS_ALT',
     # DRS SETTINGS
-    'DRS_PACKAGE', 'DRS_USERENV',
+    'DRS_PACKAGE', 'DRS_USERENV', 'DRS_GROUP', 'DRS_RECIPE_KIND',
+    'DRS_USER_DEFAULT', 'IS_MASTER',
     # DRS INTERNAL PATHS
     'DRS_USER_DEFAULT', 'DRS_MOD_DATA_PATH', 'DRS_MOD_INSTRUMENT_CONFIG',
     'DRS_MOD_CORE_CONFIG', 'DRS_WAVE_DATA',
@@ -28,10 +29,11 @@ __all__ = [  # global settings
     # DRS INDEXING SETTINGS
     'DRS_INDEX_FILE', 'DRS_INDEX_FILENAME',
     # DATABASE SETTINGS
-    'DB_MAX_WAIT', 'LOCKOPEN_MAX_WAIT', 'TELLU_DB_NAME', 'CALIB_DB_NAME',
-    'CALIB_DB_MATCH', 'CALIB_DB_COLS', 'CALIB_DB_KEY_COL',
-    'CALIB_DB_TIME_COL', 'CALIB_DB_FILE_COL', 'TELLU_DB_COLS',
-    'TELLU_DB_KEY_COL', 'TELLU_DB_TIME_COL', 'TELLU_DB_FILE_COL',
+    'DB_MAX_WAIT', 'DB_MATCH', 'LOCKOPEN_MAX_WAIT', 'TELLU_DB_NAME',
+    'CALIB_DB_NAME', 'CALIB_DB_MATCH', 'CALIB_DB_COLS', 'CALIB_DB_KEY_COL',
+    'CALIB_DB_TIME_COL', 'CALIB_DB_FILE_COL',
+    'TELLU_DB_MATCH', 'TELLU_DB_COLS', 'TELLU_DB_KEY_COL', 'TELLU_DB_TIME_COL',
+    'TELLU_DB_FILE_COL',
     # DISPLAY/LOGGING SETTINGS
     'DRS_PRINT_LEVEL', 'DRS_LOG_LEVEL', 'DRS_COLOURED_LOG', 'DRS_THEME',
     'DRS_MAX_IO_DISPLAY_LIMIT', 'DRS_HEADER', 'DRS_LOG_CAUGHT_WARNINGS',
@@ -119,6 +121,10 @@ DRS_DATA_MSG = Const('DRS_DATA_MSG', dtype='path', source=__NAME__, user=True,
                      description='Define the directory that the log messages '
                                  'are stored in')
 
+#   Define the full data message path (set after group name known)
+DRS_DATA_MSG_FULL = Const('DRS_DATA_MSG_FULL', dtype='path', source=__NAME__,
+                          user=False, group=cgroup, value=None)
+
 #   Define the working directory
 DRS_DATA_WORKING = Const('DRS_DATA_WORKING', dtype='path', source=__NAME__,
                          user=True, active=True, group=cgroup,
@@ -156,7 +162,7 @@ DRS_PDFLATEX_PATH = Const('DRS_PDFLATEX_PATH', dtype=str, source=__NAME__,
 # =============================================================================
 cgroup = 'INTERNAL: General properites'
 # Version
-DRS_VERSION = Const('DRS_VERSION', value='0.6.037', dtype=str,
+DRS_VERSION = Const('DRS_VERSION', value='0.6.063', dtype=str,
                     source=__NAME__, group=cgroup)
 
 # Authors
@@ -170,7 +176,7 @@ DRS_RELEASE = Const('RELEASE', value='alpha pre-release', dtype=str,
                     source=__NAME__, group=cgroup)
 
 # Date
-DRS_DATE = Const('DATE', value='2020-02-07', dtype=str, source=__NAME__,
+DRS_DATE = Const('DATE', value='2020-04-01', dtype=str, source=__NAME__,
                  group=cgroup)
 
 # =============================================================================
@@ -198,8 +204,22 @@ ALLOW_BREAKPOINTS = Const('ALLOW_BREAKPOINTS', value=False, dtype=bool,
 
 # Currently installed instruments
 # TODO: This needs to be updated with new instruments
-DRS_INSTRUMENTS = Const('DRS_INSTRUMENTS', value=['SPIROU'],
+DRS_INSTRUMENTS = Const('DRS_INSTRUMENTS',
+                        value=['SPIROU', 'NIRPS_HA'],
                         dtype=list, source=__NAME__, group=cgroup)
+
+# The group this target is set as (set in drs_setup)
+DRS_GROUP = Const('DRS_GROUP', value=None, dtype=str, source=__NAME__,
+                  group=cgroup)
+
+# The recipe kind that this parameter dictionary is associated with
+DRS_RECIPE_KIND = Const('DRS_RECIPE_KIND', value=None, dtype=str,
+                        source=__NAME__, group=cgroup)
+
+# Flag for master recipe associated with this param set
+IS_MASTER = Const('IS_MASTER', value=False, dtype=bool, source=__NAME__,
+                  group=cgroup)
+
 
 # =============================================================================
 # Instrument/Observatory Constants
@@ -298,6 +318,18 @@ cgroup = 'DATABASE SETTINGS'
 DB_MAX_WAIT = Const('DB_MAX_WAIT', dtype=int, value=600, minimum=1,
                     source=__NAME__, group=cgroup)
 
+#   Define the match type for database files
+#         match = 'older'  when more than one file for each key will
+#                          select the newest file that is OLDER than
+#                          time in fitsfilename
+#         match = 'closest'  when more than on efile for each key will
+#                            select the file that is closest to time in
+#                            fitsfilename
+#    if two files match with keys and time the key lower in the
+#         calibDB file will be used
+DB_MATCH = Const('DB_MATCH', dtype=str, source=__NAME__,
+                 value='closest', group=cgroup)
+
 # file max wait
 LOCKOPEN_MAX_WAIT = Const('LOCKOPEN_MAX_WAIT', dtype=int, value=600, minimum=1,
                           source=__NAME__, group=cgroup)
@@ -333,6 +365,18 @@ CALIB_DB_TIME_COL = Const('CALIB_DB_TIME_COL', dtype=str, source=__NAME__,
 # define the calibration database filename column
 CALIB_DB_FILE_COL = Const('CALIB_DB_FILE_COL', dtype=str, source=__NAME__,
                           group=cgroup)
+
+#   Define the match type for telluDB files
+#         match = 'older'  when more than one file for each key will
+#                          select the newest file that is OLDER than
+#                          time in fitsfilename
+#         match = 'closest'  when more than on efile for each key will
+#                            select the file that is closest to time in
+#                            fitsfilename
+#    if two files match with keys and time the key lower in the
+#         calibDB file will be used
+TELLU_DB_MATCH = Const('TELLU_DB_MATCH', dtype=str, source=__NAME__,
+                       value='closest', group=cgroup)
 
 # define the telluric database columns (must contain "key")
 TELLU_DB_COLS = Const('TELLU_DB_COLS', dtype=str, source=__NAME__,

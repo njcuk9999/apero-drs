@@ -114,7 +114,7 @@ def get_entries_eng():
 
     vs[''] = ""
 
-    vs[''] = ""
+    vs['00-007-00001'] = "No recipe named '{0}'"
 
     vs['00-008-00001'] = "Package name = '{0}' is invalid (function = {1})"
 

@@ -11,6 +11,7 @@ Created on 2019-01-19 at 13:45
 """
 from astropy.table import Table
 import numpy as np
+import sys
 import os
 import matplotlib
 from collections import OrderedDict
@@ -1102,7 +1103,6 @@ def main(params, graph_name, mode=2, **kwargs):
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
     __NAME__ = 'cal_dark_spirou.py'
-    import sys
     sys.argv = 'cal_dark_spirou.py 2018-09-24 2305769d_pp.fits'.split()
     from apero.recipes.spirou import cal_dark_spirou
     _recipe, _params = cal_dark_spirou.main(DEBUG0000=True)

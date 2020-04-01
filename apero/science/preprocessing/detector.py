@@ -14,6 +14,7 @@ import warnings
 from scipy import ndimage
 
 from apero.core import constants
+from apero.core.core import drs_database
 from apero.core import math as mp
 from apero import core
 from apero.io import drs_data
@@ -37,7 +38,7 @@ ParamDict = constants.ParamDict
 
 
 # =============================================================================
-# Define functions
+# Define spirou detector functions
 # =============================================================================
 def get_hot_pixels(params):
     """
@@ -349,6 +350,154 @@ def test_for_corrupt_files(params, image, hotpix):
     snr_hotpix = res[med_size, med_size] / rms
     # return test values
     return snr_hotpix, [rms0, rms1, rms2, rms3], dx, dy
+
+
+# =============================================================================
+# Define nirps detector functions
+# =============================================================================
+def nirps_correction(params, image, mask=None, header=None):
+    # define the bin size for low level frequencies
+    binsize = params['PP_MEDAMP_BINSIZE']
+    # number of amplifiers in total
+    namps = params['PP_TOTAL_AMP_NUM']
+    # deal with not having a mask
+    if mask is None:
+        get_pp_mask(params, header)
+    # get image shape
+    dim1, dim2 = image.shape
+    # create masked version of data
+    image2 = np.array(image)
+    image2[mask] = np.nan
+    # low frequency correction
+    # median-bin and expand back to original size
+    medbin_image = mp.medbin(image2, binsize, binsize)
+    lowf = ndimage.zoom(medbin_image, dim1 // binsize)
+    # subtract low-frequency from masked image
+    image2 = image2 - lowf
+    # find the amplifier cross-talk map
+    crosstalk = med_amplifiers(image, namps)
+    # subtract low-frequency from masked image
+    image2 = image2 - crosstalk
+    # subtract both low-frequency and cross-talk from input image
+    image = image - (lowf + crosstalk)
+    # calculate the median of the masked image (to calculate scattered light?
+    med_image2 = mp.nanmedian(image2, axis=0)
+    # subtract off the masked image (scattered light correction?)
+    image = image - np.tile(med_image2, dim1).reshape(dim1, dim2)
+    # return corrected image
+    return image
+
+
+def get_pp_mask(params, header):
+    func_name = __NAME__ + '.get_pp_mask()'
+
+    # get file instance
+    ppmstr = core.get_file_definition('PPMSTR', params['INSTRUMENT'],
+                                      kind='red')
+    # get calibration key
+    ppkey = ppmstr.get_dbkey(func=func_name)
+    # get calibDB
+    cdb = drs_database.get_full_database(params, 'calibration')
+    # get filename col
+    filecol, timecol = cdb.file_col, cdb.time_col
+    # get the ppmstr entries
+    ppentries = drs_database.get_key_from_db(params, ppkey, cdb, header,
+                                             n_ent=1, require=True)
+    # -------------------------------------------------------------------------
+    # try to read PPMSTR from cdb
+    ppfilename = ppentries[filecol][0]
+    ppfile = os.path.join(params['DRS_CALIB_DB'], ppfilename)
+    # return use_file
+    return ppfile
+
+
+def med_amplifiers(image, namps):
+    """
+    Perform a median image over NAMPS amplifiers with a mirror
+    odd/even symmetry.
+    dim1 = cross amplifier dimension
+    dim2 = along amplifier dimension
+
+    We fold the image into a namps x dim2 x (namps/dim1) cube
+
+    :param image:
+    :param namps:
+    :return:
+    """
+    # TODO: Question: which way round is the detector right now compared to
+    # TODO: Question:    compared to the amplifiers?
+
+    # get image dimensions
+    dim1, dim2 = image.shape
+    # get number of pixels per amplifier
+    nbpix = dim1 // namps
+    # cube to contain orders in an easily managed form
+    cube = np.zeros([namps, dim2, nbpix])
+    # loop around each amplifier and push into cube
+    for amp in range(namps):
+        # TODO: Question: can/should we make this an option?
+        # deal with left/right flipping (assumed to always happen)
+        if (amp % 2) == 0:
+            i1 = amp * nbpix
+            i2 = (amp * nbpix) + nbpix
+            sign = 1
+        else:
+            i1 = (amp * nbpix) + (nbpix - 1)
+            i2 = (amp * nbpix) - 1
+            sign = -1
+        # add to cube (slice image)
+        cube[amp] = image[:, i1:i2:sign]
+    # derive median amplifier structure
+    med = mp.nanmedian(cube, axis=0)
+    # pad back onto the output image
+    image2 = np.zeros_like(image)
+    # loop around each amplifier
+    for amp in range(namps):
+        # deal with left/right flipping (assumed to always happen)
+        if (amp % 2) == 0:
+            i1 = amp * nbpix
+            i2 = (amp * nbpix) + nbpix
+            sign = 1
+        else:
+            i1 = (amp * nbpix) + (nbpix - 1)
+            i2 = (amp * nbpix) - 1
+            sign = -1
+        # add to cube (slice image)
+        image2[:, i1:i2:sign] = med
+    # return the new image
+    return image2
+
+
+def nirps_order_mask(params, mask_image):
+    """
+    Calculate the mask used for removing the orders (preprocessing correction)
+    for NIRPS
+
+    :param params:
+    :param mask_image:
+    :return:
+    """
+    # set function name
+    func_name = __NAME__ + '.nirps_order_mask()'
+    # get nsig value
+    nsig = params['PPM_MASK_NSIG']
+    # normalise by the median
+    image = mask_image - mp.nanmedian(mask_image)
+    # calculate the sigma array (distance away from median)
+    sig_image = mp.nanmedian(np.abs(image))
+    # find pixels that are more than nsig absolute deviations from the image
+    # median
+    mask = image > nsig * sig_image
+    # correct the image (as in preprocessing)
+    image = nirps_correction(params, image, mask)
+    # generate a better estimate of the mask (after correction)
+    mask = image > nsig * sig_image
+    # set properties
+    props = ParamDict()
+    props['PPM_MASK_NSIG'] = nsig
+    props.set_source('PPM_MASK_NSIG', func_name)
+    # return mask
+    return mask, props
 
 
 # =============================================================================
