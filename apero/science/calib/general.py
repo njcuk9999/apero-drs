@@ -433,7 +433,7 @@ def clean_strings(strings):
 
 def get_input_files(params, inputkey, key, header, default=None):
     # check for input key in inputs
-    if inputkey in params['INPUTS']:
+    if ('INPUTS' in params) and (inputkey in params['INPUTS']):
         value = params['INPUTS'][inputkey]
         # if it is unset or 'None' then return the default
         if value is None or value == 'None':

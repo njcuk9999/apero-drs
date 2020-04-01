@@ -844,7 +844,7 @@ def plot_loc_check_coeffs(plotter, graph, kwargs):
         # mask the image between y limits
         imagezoom = image[ymin:ymax]
         # normalise zoom image
-        imagezoom = imagezoom / np.nanpercentile(imagezoom, 95)
+        imagezoom = imagezoom / np.nanpercentile(imagezoom, 85)
         # ------------------------------------------------------------------
         # set up plot
         if kind == 'center':
@@ -858,7 +858,7 @@ def plot_loc_check_coeffs(plotter, graph, kwargs):
         # plot the image fits (if we are dealing with a center plot)
         if kind == 'center':
             frame1.imshow(imagezoom, aspect='auto', origin='lower', zorder=0,
-                          cmap='gist_gray',
+                          cmap='gist_gray', vmin=0, vmax=1,
                           extent=[0, image.shape[1], ymin, ymax])
             frame1.plot(xpix[good], ypix0go, color='b', ls='--', label='old',
                         zorder=2)
@@ -894,7 +894,7 @@ def plot_loc_check_coeffs(plotter, graph, kwargs):
         # ------------------------------------------------------------------
         # adjust plot
         plt.subplots_adjust(top=0.925, bottom=0.125, left=0.1, right=0.975,
-                            hspace=0)
+                            hspace=0.05)
         # ------------------------------------------------------------------
         # update filename (adding order_num to end)
         suffix = 'order{0}'.format(order_num)
@@ -1036,7 +1036,8 @@ def plot_shape_linear_tparams(plotter, graph, kwargs):
     diffy = y1 - y2
     xrange1 = [0, dim2]
     xrange2 = [0, dim1]
-    yrange = [-0.05, 0.05]
+    ylim = np.max([np.nanmedian(np.abs(diffx)),np.nanmedian(np.abs(diffy))])
+    yrange = [-10 * ylim, 10 * ylim]
     nbins = 50
     pstep = 100
     # ------------------------------------------------------------------

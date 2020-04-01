@@ -282,7 +282,7 @@ def remove_all(params, path, log=True, skipfiles=None):
     for filename in allfiles:
         remove_files(params, filename, log, skipfiles)
     # remove dirs
-    drs_lock.__remove_empty__(params, path, log=True)
+    drs_lock.__remove_empty__(params, path, log=True, remove_head=False)
 
 
 def remove_files(params, path, log=True, skipfiles=None):

@@ -19,6 +19,7 @@ import os
 import random
 from signal import signal, SIGINT
 from collections import OrderedDict
+from typing import Union
 
 from apero.locale import drs_text
 from apero.locale import drs_exceptions
@@ -159,6 +160,8 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     # set DRS_GROUP
     recipe.drs_params.set('DRS_GROUP', drsgroup, source=func_name)
     recipe.drs_params.set('DRS_RECIPE_KIND', recipe.kind, source=func_name)
+    # set master
+    recipe.drs_params.set('IS_MASTER', recipe.master, source=func_name)
     # -------------------------------------------------------------------------
     # need to set debug mode now
     recipe = _set_debug_from_input(recipe, fkwargs)
@@ -489,7 +492,7 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
     :param quiet: bool, if we should not print out standard output
 
     :type params: ParamDict
-    :type llmain: dict
+    :type llmain: Union[dict, None]
     :type recipe: DrsRecipe
     :type success: bool
     :type outputs: str
@@ -1427,6 +1430,8 @@ def find_recipe(name='None', instrument='None', mod=None):
     :rtype: DrsRecipe
     """
     func_name = __NAME__ + '.find_recipe()'
+    # get text entry
+    textentry = constants.constant_functions._DisplayText()
     # deal with no instrument
     if instrument == 'None' or instrument is None:
         ipath = CORE_PATH
@@ -1459,7 +1464,12 @@ def find_recipe(name='None', instrument='None', mod=None):
         empty = drs_recipe.DrsRecipe(name='Empty', instrument=None)
         return empty, None
     if found_recipe is None:
-        WLOG(None, 'error', TextEntry('00-007-00001', args=[name]))
+        # may not have access to this
+        try:
+            WLOG(None, 'error', TextEntry('00-007-00001', args=[name]))
+        except Exception as _:
+            emsg = textentry('00-007-00001', args=[name])
+            raise ConfigError(emsg, level='error')
 
     # make a copy of found recipe to return
     copy_recipe = DrsRecipe()
@@ -1642,7 +1652,7 @@ def _set_debug_from_input(recipe, fkwargs):
     """
     # set function name
     func_name = __NAME__ + '._set_debug_from_input()'
-
+    # set debug key
     debug_key = '--debug'
     # assume debug is not there
     debug_mode = None

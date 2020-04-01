@@ -144,7 +144,7 @@ def normalise_by_pblaze(params, image, header, fiber, **kwargs):
     return image1, nprops
 
 
-def get_non_tellu_objs(params, fiber, filetype=None, dprtypes=None,
+def get_non_tellu_objs(params, recipe, fiber, filetype=None, dprtypes=None,
                        robjnames=None):
     """
     Get the objects of "filetype" and "
@@ -169,7 +169,7 @@ def get_non_tellu_objs(params, fiber, filetype=None, dprtypes=None,
     if dprtypes is not None:
         fkwargs['KW_DPRTYPE'] = dprtypes
     # # find files
-    out = drs_fits.find_files(params, kind='red', return_table=True,
+    out = drs_fits.find_files(params, recipe, kind='red', return_table=True,
                               fiber=fiber, **fkwargs)
     obj_filenames, obj_table = out
     # filter out telluric stars
@@ -357,10 +357,19 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
     # Load any convolved files from database
     # ----------------------------------------------------------------------
     # get file definition
-    out_tellu_conv = recipe.outputs['TELLU_CONV'].newcopy(recipe=recipe,
-                                                          fiber=fiber)
-    # get key
-    conv_key = out_tellu_conv.get_dbkey()
+    if 'TELLU_CONV' in recipe.outputs:
+        # get file definition
+        out_tellu_conv = recipe.outputs['TELLU_CONV'].newcopy(recipe=recipe,
+                                                              fiber=fiber)
+        # get key
+        conv_key = out_tellu_conv.get_dbkey()
+    else:
+        # get file definition
+        out_tellu_conv = core.get_file_definition('TELLU_CONV',
+                                                  params['INSTRUMENT'],
+                                                  kind='red', fiber=fiber)
+        # get key
+        conv_key = out_tellu_conv.get_dbkey(fiber=fiber)
     # load tellu file
     _, conv_paths = load_tellu_file(params, conv_key, header, n_entries='all',
                                     get_image=False, required=False)
@@ -1012,7 +1021,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
     # noinspection PyBroadException
     try:
         # try loading from file
-        abso = np.load(abso_npy.filename)
+        abso = drs_path.numpy_load(abso_npy.filename)
         # log that we have loaded abso from file
         wargs = [abso_npy.filename]
         WLOG(params, '', TextEntry('40-019-00012', args=wargs))
@@ -2312,7 +2321,7 @@ def fit_tellu_quality_control(params, infile, **kwargs):
 
 def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
                               nprops, wprops, pca_props, sprops, cprops,
-                              qc_params, **kwargs):
+                              qc_params, tfile, **kwargs):
     func_name = __NAME__ + '.fit_tellu_write_corrected()'
     # get parameters from params
     abso_prefix_kws = pcheck(params, 'KW_FTELLU_ABSO_PREFIX', 'abso_prefix_kws',
@@ -2366,6 +2375,10 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     corrfile.add_hkey('KW_FTELLU_IM_PX_SIZE', value=cprops['IMAGE_PIXEL_SIZE'])
     corrfile.add_hkey('KW_FTELLU_FIT_ITERS', value=cprops['FIT_ITERATIONS'])
     corrfile.add_hkey('KW_FTELLU_RECON_LIM', value=cprops['RECON_LIMIT'])
+    if tfile is None:
+        corrfile.add_hkey('KW_FTELLU_TEMPLATE', value='None')
+    else:
+        corrfile.add_hkey('KW_FTELLU_TEMPLATE', value=os.path.basename(tfile))
     # ----------------------------------------------------------------------
     # add the amplitudes (and derivatives)
     if add_deriv_pc:
@@ -2966,7 +2979,10 @@ def _remove_absonpy_files(params, path, prefix):
             # debug log removal of other abso files
             WLOG(params, 'debug', TextEntry('90-019-00002', args=[abspath]))
             # remove file
-            os.remove(abspath)
+            try:
+                os.remove(abspath)
+            except Exception as _:
+                pass
 
 
 def _wave_to_wave(params, spectrum, wave1, wave2, reshape=False):

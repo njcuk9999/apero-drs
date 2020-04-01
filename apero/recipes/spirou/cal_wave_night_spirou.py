@@ -175,7 +175,7 @@ def __main__(recipe, params):
         for fiber in fiber_types:
             # ------------------------------------------------------------------
             # add level to recipe log
-            log_hc = log1.add_level(params, 'mode=hc fiber', fiber)
+            log2 = log1.add_level(params, 'fiber', fiber)
             # ------------------------------------------------------------------
             # log fiber process
             core.fiber_processing_update(params, fiber)
@@ -205,6 +205,9 @@ def __main__(recipe, params):
             # ----------------------------------------------------------
             # ccf computation
             # ----------------------------------------------------------
+            # TODO: remove break point
+            constants.break_point(params)
+
             # get the FP (reference) fiber
             pconst = constants.pload(params['INSTRUMENT'])
             sfiber, rfiber = pconst.FIBER_CCF()
@@ -231,6 +234,8 @@ def __main__(recipe, params):
             # wave solution quality control
             # ----------------------------------------------------------
             qc_params, passed = wave.night_quality_control(params, nprops)
+            # update recipe log
+            log2.add_qc(params, qc_params, passed)
 
             # ----------------------------------------------------------
             # write wave solution to file
@@ -250,28 +255,17 @@ def __main__(recipe, params):
             # Update header of current files with FP solution
             # ----------------------------------------------------------
             if passed and params['INPUTS']['DATABASE']:
-                # log that we are updating the HC file with wave params
-                wargs = [hc_e2ds_file.name, hc_e2ds_file.filename]
-                WLOG(params, '', TextEntry('40-017-00038', args=wargs))
-                # create copy of input e2ds hc file
-                hc_update = hc_e2ds_file.completecopy(hc_e2ds_file)
-                # update wave solution
-                hc_update = wave.add_wave_keys(params, hc_update, wprops)
-                # write hc update
-                hc_update.write_file()
-                # log that we are updating the HC file with wave params
-                wargs = [fp_e2ds_file.name, fp_e2ds_file.filename]
-                WLOG(params, '', TextEntry('40-017-00038', args=wargs))
-                # create copy of input e2ds fp file
-                fp_update = fp_e2ds_file.completecopy(fp_e2ds_file)
-                # update wave solution
-                fp_update = wave.add_wave_keys(params, fp_update, wprops)
-                # write hc update
-                fp_update.write_file()
-                # add to output files (for indexing)
-                recipe.add_output_file(fp_update)
-                # TODO: update s1d here
+                # update the e2ds and s1d files for hc
+                wave.update_extract_files(params, recipe, hc_e2ds_file,
+                                          wprops, EXTRACT_NAME, fiber)
+                # update the e2ds and s1d files for fp
+                wave.update_extract_files(params, recipe, fp_e2ds_file,
+                                          wprops, EXTRACT_NAME, fiber)
 
+            # ----------------------------------------------------------
+            # update recipe log file for fp fiber
+            # ----------------------------------------------------------
+            log2.end(params)
 
     # ----------------------------------------------------------------------
     # End of main code

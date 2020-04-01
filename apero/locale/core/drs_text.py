@@ -596,7 +596,7 @@ def _read_dict_files(dict_files, language):
         cachedfile = filename.replace('.csv', newext)
         if os.path.exists(cachedfile):
             # get the data
-            data = np.load(cachedfile)
+            data = np.load(cachedfile, allow_pickle=True)
             columns = data.dtype.names
         else:
             # try to get the data

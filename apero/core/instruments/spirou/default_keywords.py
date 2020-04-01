@@ -113,8 +113,8 @@ KW_OBJDEC = KW_OBJDEC.copy(__NAME__)
 KW_OBJDEC.set(key='OBJDEC', unit=uu.deg, comment='Target declination ')
 
 # define the observation name
-KW_OBJNAME = KW_OBJNAME.copy(__NAME__)
-KW_OBJNAME.set(key='OBJECT', comment='Target name')
+KW_OBJECTNAME = KW_OBJECTNAME.copy(__NAME__)
+KW_OBJECTNAME.set(key='OBJECT', comment='Target name')
 
 # define the observation equinox HEADER key
 KW_OBJEQUIN = KW_OBJEQUIN.copy(__NAME__)
@@ -167,7 +167,7 @@ KW_PLX.set(key='OBJPLX', unit=uu.mas)
 
 # define the rv HEADER key
 KW_INPUTRV = KW_INPUTRV.copy(__NAME__)
-KW_INPUTRV.set(key='OBSRV', unit=uu.km / uu.s)
+KW_INPUTRV.set(key='OBJRV', unit=uu.km / uu.s)
 
 # -----------------------------------------------------------------------------
 # Define general keywords
@@ -197,6 +197,10 @@ root_loc = 'LO'
 root_flat = 'FF'
 root_hc = 'HC'
 
+# define the observation name
+KW_OBJNAME = KW_OBJNAME.copy(__NAME__)
+KW_OBJNAME.set(key='DRSOBJN', comment='Target name')
+
 # Define the key to get the data fits file type
 KW_DPRTYPE = KW_DPRTYPE.copy(__NAME__)
 KW_DPRTYPE.set(key='DPRTYPE', comment='The type of file (from pre-process)')
@@ -207,9 +211,9 @@ KW_MID_OBS_TIME.set(key='MJDMID', comment='Mid Observation time [mjd]',
                     datatype='mjd', dataformat=float)
 
 # Define the method by which the MJD was calculated
-KW_MID_OBS_TIME_METHOD = KW_MID_OBS_TIME_METHOD.copy(__NAME__)
-KW_MID_OBS_TIME_METHOD.set(key='MJDMIDMD',
-                           comment='Mid Observation time calc method')
+KW_MID_OBSTIME_METHOD = KW_MID_OBSTIME_METHOD.copy(__NAME__)
+KW_MID_OBSTIME_METHOD.set(key='MJDMIDMD',
+                          comment='Mid Observation time calc method')
 
 # -----------------------------------------------------------------------------
 # Define DRS input keywords
@@ -686,6 +690,50 @@ KW_BERV_OBSTIME_METHOD = KW_BERV_OBSTIME_METHOD.copy(__NAME__)
 KW_BERV_OBSTIME_METHOD.set(key='BERVOBSM',
                            comment='BERV method used to calc observation time',
                            datatype=str)
+
+# -----------------------------------------------------------------------------
+# Define leakage variables
+# -----------------------------------------------------------------------------
+# Define whether leak correction has been done
+KW_LEAK_CORR = KW_LEAK_CORR.copy(__NAME__)
+KW_LEAK_CORR.set(key='LEAKCORR',
+                 comment='Whether DARK_FP leakage correction has been done',
+                 datatype=int)
+
+# Define the background percentile used for correcting leakage
+KW_LEAK_BP_U = KW_LEAK_BP_U.copy(__NAME__)
+KW_LEAK_BP_U.set(key='LEAK_BPU', datatype=float,
+                 comment='LEAK bckgrd percentile used for leakage corr')
+
+# Define the normalisation percentile used for correcting leakage
+KW_LEAK_NP_U = KW_LEAK_NP_U.copy(__NAME__)
+KW_LEAK_NP_U.set(key='LEAK_NPU', datatype=float,
+                 comment='LEAK norm percentile used for leakage corr')
+
+# Define the e-width smoothing used for correcting leakage master
+KW_LEAK_WSMOOTH = KW_LEAK_WSMOOTH.copy(__NAME__)
+KW_LEAK_WSMOOTH.set(key='LEAKMWSM', datatype=float,
+                    comment='LEAKM e-width smoothing used for leak master corr')
+
+# Define the kernel size used for correcting leakage master
+KW_LEAK_KERSIZE = KW_LEAK_KERSIZE.copy(__NAME__)
+KW_LEAK_KERSIZE.set(key='LEAKMKSZ', datatype=float,
+                    comment='LEAKM kernel size used for leak master corr')
+
+# Define the lower bound percentile used for correcting leakage
+KW_LEAK_LP_U = KW_LEAK_LP_U.copy(__NAME__)
+KW_LEAK_LP_U.set(key='LEAK_LPU', datatype=float,
+                 comment='LEAK lower bound percentile used for leakage corr')
+
+# Define the upper bound percentile used for correcting leakage
+KW_LEAK_UP_U = KW_LEAK_UP_U.copy(__NAME__)
+KW_LEAK_UP_U.set(key='LEAK_UPU', datatype=float,
+                 comment='LEAK upper bound percentile used for leakage corr')
+
+# Define the bad ratio offset limit used for correcting leakage
+KW_LEAK_BADR_U = KW_LEAK_BADR_U.copy(__NAME__)
+KW_LEAK_BADR_U.set(key='LEAKBADR', datatype=float,
+                   comment='LEAK bad ratio offset limit used for leakage corr')
 
 # -----------------------------------------------------------------------------
 # Define wave variables
@@ -1200,7 +1248,7 @@ KW_WNT_REDCUT.set(key='WNTRDCUT', comment='wave night red cut off [nm] used',
 # size [nm] of the median bin of residuals for higher-order correction used
 #    in wave night
 KW_WNT_DWAVE_BIN = KW_WNT_DWAVE_BIN.copy(__NAME__)
-KW_WNT_DWAVE_BIN.set(key='WNTDWAVEB',
+KW_WNT_DWAVE_BIN.set(key='WNTDWAVB',
                      comment='wave night med bin of res for high ord corr used',
                      parent='WAVE_NIGHT_DWAVE_BIN', group='wave')
 
@@ -1398,6 +1446,10 @@ KW_FTELLU_FIT_ITERS.set(key='FTTFITRS',
 KW_FTELLU_RECON_LIM = KW_FTELLU_RECON_LIM.copy(__NAME__)
 KW_FTELLU_RECON_LIM.set(key='FTTRCLIM',
                         comment='ftellu log limit in min absorption used')
+
+# the template that was used (or None if not used)
+KW_FTELLU_TEMPLATE = KW_FTELLU_TEMPLATE.copy(__NAME__)
+KW_FTELLU_TEMPLATE.set(key='FTTTEMPL', comment='ftellu template used for sed')
 
 # Telluric principle component amplitudes (for use with 1D list)
 KW_FTELLU_AMP_PC = KW_FTELLU_AMP_PC.copy(__NAME__)

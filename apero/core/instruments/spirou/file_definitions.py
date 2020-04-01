@@ -411,19 +411,19 @@ tellu_file = drs_finput('DRS_OUTPUT', filetype='.fits', suffix='',
 
 out_dark_int = drs_finput('DARKI', KW_OUTPUT='DARKI',
                           filetype='.fits', intype=pp_dark_dark_int,
-                          suffix='darki',
+                          suffix='_darki',
                           outfunc=out.calib_file,
                           dbname='calibration', dbkey='DARKI')
 
 out_dark_tel = drs_finput('DARKT', KW_OUTPUT='DARKT',
                           filetype='.fits', intype=pp_dark_dark_tel,
-                          suffix='darkt',
+                          suffix='_darkt',
                           outfunc=out.calib_file,
                           dbname='calibration', dbkey='DARKT')
 
 out_dark_sky = drs_finput('DARKS', KW_OUTPUT='DARKS',
                           filetype='.fits', intype=pp_dark_dark_sky,
-                          suffix='darks',
+                          suffix='_darks',
                           outfunc=out.calib_file,
                           dbname='calibration', dbkey='DARKS')
 
@@ -448,18 +448,19 @@ calib_file.addset(out_dark_master)
 # -----------------------------------------------------------------------------
 # badpix out file
 out_badpix = drs_finput('BADPIX', KW_OUTPUT='BADPIX',
-                        filetype='.fits', intype=pp_flat_flat,
+                        filetype='.fits',
+                        intype=[pp_dark_dark_int, pp_dark_dark_tel],
                         suffix='_badpixel',
                         outfunc=out.calib_file,
                         dbname='calibration', dbkey='BADPIX')
 out_backmap = drs_finput('BKGRD_MAP', KW_OUTPUT='BKGRD_MAP',
-                         intype=pp_flat_flat,
+                         intype=[pp_dark_dark_int, pp_dark_dark_tel],
                          suffix='_bmap.fits', outfunc=out.calib_file,
                          dbname='calibration', dbkey='BKGRDMAP')
 
 # background debug file
 debug_back = drs_finput('DEBUG_BACK', KW_OUTPUT='DEBUG_BACK',
-                        filetype='.fits', intype=pp_flat_flat,
+                        filetype='.fits', intype=pp_file,
                         suffix='_background.fits', outfunc=out.debug_file)
 
 # add badpix outputs to output fileset
@@ -677,6 +678,20 @@ out_file.addset(out_thermal_e2ds_int)
 out_file.addset(out_thermal_e2ds_tel)
 calib_file.addset(out_thermal_e2ds_int)
 calib_file.addset(out_thermal_e2ds_tel)
+
+# -----------------------------------------------------------------------------
+# leakage files
+# -----------------------------------------------------------------------------
+# thermal from internal dark
+out_leak_master = drs_finput('LEAKM_E2DS', KW_OUTPUT='LEAKM_E2DS',
+                             fibers=['AB', 'A', 'B', 'C'],
+                             filetype='.fits',
+                             intype=[out_ext_e2ds, out_ext_e2dsff],
+                             suffix='_leak_master',
+                             dbname='calibration', dbkey='LEAKM',
+                             outfunc=out.general_file)
+out_file.addset(out_leak_master)
+calib_file.addset(out_leak_master)
 
 # -----------------------------------------------------------------------------
 # wave files (master)

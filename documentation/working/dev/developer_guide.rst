@@ -34,7 +34,20 @@ Full tutorials
 - DrsInputFile, DrsFitsFile, DrsNpyFile
 - Database
 - Logger
+- Debug Modes (linked to Logger)
 - Plotter
+- Git hub interface
+- Writing documentation
+
+------------------------------
+Other
+------------------------------
+
+.. toctree::
+    :maxdepth: 1
+
+    required_input_header_keys.rst
+
 
 
 .. only:: html

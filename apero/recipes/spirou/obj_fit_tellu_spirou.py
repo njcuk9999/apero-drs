@@ -280,7 +280,7 @@ def __main__(recipe, params):
         # Save corrected E2DS to file
         # ------------------------------------------------------------------
         fargs = [infile, rawfiles, fiber, combine, nprops, wprops, pca_props,
-                 sprops, cprops, qc_params]
+                 sprops, cprops, qc_params, template_file]
         corrfile = telluric.fit_tellu_write_corrected(params, recipe, *fargs)
 
         # ------------------------------------------------------------------
