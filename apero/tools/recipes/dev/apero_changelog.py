@@ -12,6 +12,7 @@ Created on 2019-07-26 at 09:40
 import os
 import shutil
 
+import apero
 from apero import core
 from apero.core import constants
 from apero import locale
@@ -93,6 +94,13 @@ def main(preview=1, **kwargs):
 
 def __main__(recipe, params):
     # Note: no instrument defined so do not use instrument only features
+
+    # get current working directory
+    current = os.getcwd()
+    # change to apero root
+    os.chdir(apero.__path__[0])
+    # make sure we have update tags
+    os.system('git fetch --tags')
 
     # get package
     package = params['DRS_PACKAGE']
@@ -177,6 +185,8 @@ def __main__(recipe, params):
 
     # push tags via git
     os.system('git push --tags')
+    # go back to current directory
+    os.chdir(current)
 
     # ----------------------------------------------------------------------
     # End of main code

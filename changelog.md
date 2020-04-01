@@ -2,6 +2,46 @@ Changelog
 =========
 
 
+0.6.063 (2020-04-01)
+--------------------
+- Apero.data.spirou.reset.runs.mini_run.ini - turn off MKTELLDB and
+  FTELLDB runs (use individuals) [njcuk9999]
+- Apero.recipes.spirou.cal_leak_spirou.py - qcparams is a dict --> user
+  ref fiber. [njcuk9999]
+- Apero.recipes.spirou.cal_leak_spirou.py - add qc to log.fits.
+  [njcuk9999]
+- Core.instruments.default.recipe_definitions.py - master is reserved
+  keyword --master --> --mlog. [njcuk9999]
+- Recipe.spirou.expmeter_spirou.py - continue work on exposuremeter.
+  [Neil Cook]
+- Science.telluric.general.py - fix core.get_file_definition. [Neil
+  Cook]
+- Tools.recipe.spirou.expmeter_spirou.py - add params to arguments of
+  simage_to_drs. [Neil Cook]
+- Tools.module.utils.inverse.py - add required keys. [Neil Cook]
+- Science.telluric.general.py - provide fiber fot TELLU_CONV. [Neil
+  Cook]
+- Tools.recipes.spirou.expmeter_spirou.py - add telluric map (from mask
+  making) - UNFINISHED. [Neil Cook]
+- Tools.module.utils.inverse.py - move imports to top. [Neil Cook]
+- Science.telluric.general.py - add second way to get TELLU_CONV if not
+  defined in outputs. [Neil Cook]
+- Io.drs_fits.py - add two conditions to find files with fibers _fiber_
+  or _fiber. [Neil Cook]
+- Tools.recipes.spirou.expmeter_spirou.py - add changes to use
+  inverse.py code. [njcuk9999]
+- Tools.module.utils.inverse.py - add drs_image_shape function and
+  reference full image size from params and make
+  calc_central_localisation take filename or header. [njcuk9999]
+- Core.instruments.*.default_constants.py - add in IMAGE_X_FULL and
+  IMAGE_Y_FULL (for reference) [njcuk9999]
+- Core.instruments.default.pseudo_const.py - add INDIVIDUAL_FIBERS
+  function. [njcuk9999]
+- Tools.module.utils.inverse.py - add changes with order profile. [Neil
+  Cook]
+- Update version/date/documentation/changelog. [Neil Cook]
+
+
 0.6.062 (2020-03-31)
 --------------------
 - Tools.module.utils.inverse.py - test out making straight image and

@@ -8,9 +8,7 @@ APERO Documentation
 ******************************************
 
 ===========================================
-Latest version: 0.6.062* NIRPS (Currently under construction)
-
-.. toctree::
+Latest version: 0.6.063.. toctree::
    :maxdepth: 2
    :caption: Contents:
 
