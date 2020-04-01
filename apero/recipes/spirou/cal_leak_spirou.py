@@ -206,7 +206,7 @@ def __main__(recipe, params):
         # Quality control
         # ------------------------------------------------------------------
         qc_params, passed = extgen.qc_leak(params, cprops)
-        log1.add_qc(params, qc_params, passed)
+        log1.add_qc(params, qc_params[fiber], passed)
 
         # ------------------------------------------------------------------
         # Write updated extracted files
