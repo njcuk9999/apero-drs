@@ -21,6 +21,7 @@ from apero.core import constants
 from apero import locale
 from apero.io import drs_lock
 from apero.io import drs_fits
+from apero.io import drs_path
 from apero.io import drs_table
 from apero.core.core import drs_log
 
@@ -56,6 +57,7 @@ class Database():
         func_name = display_func(params, '__init__', __NAME__, 'Database')
         # set value from construction
         self.params = params
+        self.pconst = constants.pload(params['INSTRUMENT'])
         self.dbname = dbname
         # set column names
         if self.dbname == 'telluric':
@@ -87,9 +89,9 @@ class Database():
         self.dbshort = _get_dbshort(self.params, self.dbname)
         self.outpath = _get_outpath(self.params, self.dbname)
         self.abspath = os.path.join(self.outpath, self.dbfile)
-        self.colnames = self.get_colnames()
+        self.get_colname_props()
 
-    def get_colnames(self):
+    def get_colname_props(self):
         """
         Get the column names using the database name (set in construction)
         :return:
@@ -113,8 +115,6 @@ class Database():
         self.key_pos = np.where(self.key_col == np.array(colnames))[0][0]
         self.time_pos = np.where(self.time_col == np.array(colnames))[0][0]
         self.file_pos = np.where(self.file_col == np.array(colnames))[0][0]
-        # set colnames
-        return colnames
 
     def check_read(self):
         if self.rdata is None:
@@ -241,6 +241,10 @@ class Database():
         :param required:
         :return:
         """
+        # TODO: Remove break point
+        if entryname == 'SHAPEX':
+            constants.break_point(self.params)
+
         # set function name
         func_name = display_func(self.params, 'get_entry', __NAME__, 'Database')
         # check that we have data
@@ -260,7 +264,7 @@ class Database():
         elif np.sum(mask1) == 0:
             eargs = [self.dbname, entryname, ', '.join(ukeys), self.abspath,
                      func_name]
-            WLOG(self.params, 'error', TextEntry('00-002-00006', args=eargs))
+            WLOG(self.params, 'error', TextEntry('00-002-00015', args=eargs))
             entries, r_entries = None, None
         else:
             entries = self.data[mask1]
@@ -274,6 +278,8 @@ class Database():
                 return entries[timesort]
             elif isinstance(n_entries, int):
                 return entries[timesort][:n_entries]
+            else:
+                return entries
         # if mode is not None and time_used is None we have a problem
         elif (mode is not None) and (usetime is None):
             eargs = [mode, self.dbname, func_name]
@@ -283,12 +289,17 @@ class Database():
         elif mode == 'older':
             # only keep those older than usetime
             mask2 = np.array(r_entries['rtime']) < usetime
+            # master entries are exempt from this time constraint
+            #   don't do this for database that does not have a master column
+            if 'master' in entries.colnames:
+                mask2 |= np.array(entries['master']).astype(bool)
             # if we have no rows we must report it
             if (np.sum(mask2) == 0) and not required:
                 return Table()
-            if np.sum(mask2) == 0:
-                eargs = [self.dbname, entryname, usetime.iso, self.abspath,
-                         func_name]
+            # return error if we found None
+            elif np.sum(mask2) == 0:
+                eargs = [self.dbname, entryname, usetime.iso,
+                         self.abspath, func_name]
                 WLOG(self.params, 'error',
                      TextEntry('00-002-00006', args=eargs))
                 entries, r_entries = None, None
@@ -436,7 +447,13 @@ def get_key_from_db(params, key, database, header, n_ent=1, required=True,
     # ----------------------------------------------------------------------
     # deal with no mode set (assume from calibDB)
     if mode is None:
-        mode = pcheck(params, 'CALIB_DB_MATCH', 'mode', kwargs, func_name)
+
+        if database.dbname == 'telluric':
+            mode = pcheck(params, 'TELLU_DB_MATCH', 'mode', kwargs, func_name)
+        elif database.dbname == 'calibration':
+            mode = pcheck(params, 'CALIB_DB_MATCH', 'mode', kwargs, func_name)
+        else:
+            mode = pcheck(params, 'DB_MATCH', 'mode', kwargs, func_name)
     # debug print mode using
     dargs = [mode, func_name]
     WLOG(params, 'debug', TextEntry('90-002-00002', args=dargs))
@@ -509,7 +526,7 @@ def get_db_file(params, abspath, ext=0, fmt='fits', kind='image',
     # ------------------------------------------------------------------
     # deal with npy files
     if abspath.endswith('.npy'):
-        image = np.load(abspath)
+        image = drs_path.numpy_load(abspath)
         return image, None
     # ------------------------------------------------------------------
     # get db fits file
@@ -546,6 +563,8 @@ def update_calibdb(params, dbname, dbkey, outfile, night=None, log=True):
         night = drs_log.find_param(params, 'NIGHTNAME', func=func_name)
     if night == '' or night is None:
         night = 'None'
+    # get whether recipe is master
+    is_master = params['IS_MASTER']
     # ----------------------------------------------------------------------
     # get the hdict
     hdict, header = _get_hdict(params, dbname, outfile)
@@ -559,11 +578,16 @@ def update_calibdb(params, dbname, dbkey, outfile, night=None, log=True):
     filename = str(outfile.basename).strip()
     human_time = str(header_time.iso).replace(' ', '_').strip()
     unix_time = str(header_time.unix).strip()
+    # get master key
+    if is_master:
+        master = '1'
+    else:
+        master = '0'
     # ----------------------------------------------------------------------
     # push into list
-    largs = [key, nightname, filename, human_time, unix_time]
+    largs = [key, master, nightname, filename, human_time, unix_time]
     # construct the line
-    line = '\n{0} {1} {2} {3} {4}'.format(*largs)
+    line = '\n{0} {1} {2} {3} {4} {5}'.format(*largs)
     # ----------------------------------------------------------------------
     # write to file
     _write_line_to_database(params, key, dbname, outfile, line, log)
@@ -572,6 +596,7 @@ def update_calibdb(params, dbname, dbkey, outfile, night=None, log=True):
 # =============================================================================
 # Define telluric database functions
 # =============================================================================
+# TODO: Redo to use Database class
 def update_telludb(params, dbname, dbkey, outfile, night=None, objname=None,
                    log=True):
     # set function name

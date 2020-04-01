@@ -55,7 +55,6 @@ class PseudoConstants(DefaultConstants):
         module_name = 'apero.core.instruments.spirou.recipe_definitions'
         return importlib.import_module(module_name)
 
-
     # =========================================================================
     # HEADER SETTINGS
     # =========================================================================
@@ -96,9 +95,16 @@ class PseudoConstants(DefaultConstants):
         recipe = kwargs.get('recipe')
         header = kwargs.get('header')
         # get keys from params
+        kwobjname = params['KW_OBJNAME'][0]
         kwtrgtype = params['KW_TARGET_TYPE'][0]
         kwmidobstime = params['KW_MID_OBS_TIME'][0]
         kwdprtype = params['KW_DPRTYPE'][0]
+        # ------------------------------------------------------------------
+        # Deal with cleaning object name
+        # ------------------------------------------------------------------
+        if kwobjname not in header:
+            header = clean_obj_name(params, header)
+
         # ------------------------------------------------------------------
         # Deal with TRG_TYPE
         # ------------------------------------------------------------------
@@ -121,6 +127,10 @@ class PseudoConstants(DefaultConstants):
         # Return header
         # ------------------------------------------------------------------
         return header
+
+    def VALID_RAW_FILES(self):
+        valid = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
+        return valid
 
     # =========================================================================
     # DISPLAY/LOGGING SETTINGS
@@ -281,6 +291,18 @@ class PseudoConstants(DefaultConstants):
         reference = 'C'
         return science, reference
 
+    def FIBER_KINDS(self):
+        # can be multiple science channels
+        science = ['AB', 'A', 'B']
+        # can only be one reference
+        reference = 'C'
+        # return science and reference fiber(s)
+        return science, reference
+
+    def INDIVIDUAL_FIBERS(self):
+        # list the individual fiber names
+        return ['A', 'B', 'C']
+
     # =========================================================================
     # BERV_KEYS
     # =========================================================================
@@ -343,17 +365,42 @@ class PseudoConstants(DefaultConstants):
         outputs['bervmaxest'] = ['BERV_MAX_EST', 'KW_BERVMAX_EST', 'header',
                                  float]
         outputs['dbervest'] = ['DBERV_EST', 'KW_DBERV_EST', 'header', float]
+        # add KW_MID_OBS_TIME as KW_BERV_OBSTIME
         outputs['obs_time'] = ['OBS_TIME', 'KW_BERV_OBSTIME', 'header', float]
+        # add KW_MID_OBSTIME_METHOD as KW_BERV_OBSTIME_METHOD
         outputs['obs_time_method'] = ['OBS_TIME_METHOD',
                                       'KW_BERV_OBSTIME_METHOD', 'header', str]
         # return outputs
         return outputs
 
-
+    # =========================================================================
+    # OTHER KEYS
+    # =========================================================================
+    def MASTER_DB_KEYS(self):
+        # define a list of database keys that are master files
+        keys = ['DARKM', 'FPMASTER', 'SHAPEX', 'SHAPEY', 'LEAKM',
+                'WAVEM', 'WAVEM_D']
+        # return keys
+        return keys
 
 # =============================================================================
 # Functions used by pseudo const (instrument specific)
 # =============================================================================
+def clean_obj_name(params, header):
+    # get keys from params
+    kwrawobjname = params['KW_OBJECTNAME'][0]
+    kwobjname = params['KW_OBJNAME'][0]
+    # get raw object name
+    rawobjname = header[kwrawobjname]
+    # let clean it
+    objname = rawobjname.strip()
+    objname = objname.replace(' ', '_')
+    # add it to the header with new keyword
+    header[kwobjname] = objname
+    # return header
+    return header
+
+
 def get_trg_type(params, header):
     # get keys from params
     kwobjname = params['KW_OBJNAME'][0]
@@ -375,12 +422,13 @@ def get_trg_type(params, header):
     # return header
     return header
 
+
 def get_mid_obs_time(params, header):
     func_name = __NAME__ + '.get_mid_obs_time()'
     kwmidobstime = params['KW_MID_OBS_TIME'][0]
     kwmidcomment = params['KW_MID_OBS_TIME'][2]
-    kwmidmethod = params['KW_BERV_OBSTIME_METHOD'][0]
-    methodcomment = params['KW_BERV_OBSTIME_METHOD'][2]
+    kwmidmethod = params['KW_MID_OBSTIME_METHOD'][0]
+    methodcomment = params['KW_MID_OBSTIME_METHOD'][2]
 
     timefmt = params.instances['KW_MID_OBS_TIME'].datatype
     timetype = params.instances['KW_MID_OBS_TIME'].dataformat

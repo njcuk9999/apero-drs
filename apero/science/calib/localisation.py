@@ -88,11 +88,11 @@ def calculate_order_profile(params, image, **kwargs):
             # get the subimage defined by the box for all rows
             part = image[:, 0:it + size + 1]
         # deal with main part (where box is of size="size"
-        elif size <= it <= image.shape[1]-size:
+        elif size <= it <= image.shape[1] - size:
             # get the subimage defined by the box for all rows
             part = image[:, it - size: it + size + 1]
         # deal with the trailing edge --> i.e. box shrinks from full size
-        elif it > image.shape[1]-size:
+        elif it > image.shape[1] - size:
             # get the subimage defined by the box for all rows
             part = image[:, it - size:]
         # else we have zeros (shouldn't happen)

@@ -120,7 +120,8 @@ def __main__(recipe, params):
     fiber = params['INPUTS']['FIBER']
     # ----------------------------------------------------------------------
     # get objects that match this object name
-    object_filenames = drs_fits.find_files(params, kind='red', fiber=fiber,
+    object_filenames = drs_fits.find_files(params, recipe, kind='red',
+                                           fiber=fiber,
                                            KW_OBJNAME=objname,
                                            KW_OUTPUT=filetype)
     # deal with no files being present
@@ -184,7 +185,7 @@ def __main__(recipe, params):
         # get s1d filenames
         fkwargs = dict(kind='red', fiber=fiber, KW_OBJNAME=objname,
                        KW_OUTPUT=s1d_filetype)
-        s1d_filenames = drs_fits.find_files(params, **fkwargs)
+        s1d_filenames = drs_fits.find_files(params, recipe, **fkwargs)
         # make s1d cube
         margs = [s1d_filenames, s1d_file, fiber]
         s1d_props = telluric.make_1d_template_cube(params, recipe, *margs)

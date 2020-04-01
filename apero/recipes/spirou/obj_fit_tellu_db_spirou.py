@@ -118,7 +118,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # get objects that match this object name
     gargs = [fiber, filetype, dprtypes, robjnames]
-    obj_stars, obj_names = telluric.get_non_tellu_objs(params, *gargs)
+    obj_stars, obj_names = telluric.get_non_tellu_objs(params, recipe, *gargs)
     # ----------------------------------------------------------------------
     # get night names for each object
     night_names, obj_basenames = [], []

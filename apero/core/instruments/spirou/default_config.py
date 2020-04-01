@@ -122,11 +122,11 @@ CALIB_DB_NAME.value = 'master_calib_SPIROU.txt'
 #    if two files match with keys and time the key lower in the
 #         calibDB file will be used
 CALIB_DB_MATCH = CALIB_DB_MATCH.copy(__NAME__)
-CALIB_DB_MATCH.value = 'closest'
+CALIB_DB_MATCH.value = 'older'
 
 # define the calibration database columns
 CALIB_DB_COLS = CALIB_DB_COLS.copy(__NAME__)
-CALIB_DB_COLS.value = 'key, nightname, filename, humantime, unixtime'
+CALIB_DB_COLS.value = 'key, master, nightname, filename, humantime, unixtime'
 # define the calibration database key column
 CALIB_DB_KEY_COL = CALIB_DB_KEY_COL.copy(__NAME__)
 CALIB_DB_KEY_COL.value = 'key'
@@ -136,6 +136,18 @@ CALIB_DB_TIME_COL.value = 'unixtime'
 # define the calibration database filename column
 CALIB_DB_FILE_COL = CALIB_DB_FILE_COL.copy(__NAME__)
 CALIB_DB_FILE_COL.value = 'filename'
+
+#   Define the match type for calibDB files
+#         match = 'older'  when more than one file for each key will
+#                          select the newest file that is OLDER than
+#                          time in fitsfilename
+#         match = 'closest'  when more than on efile for each key will
+#                            select the file that is closest to time in
+#                            fitsfilename
+#    if two files match with keys and time the key lower in the
+#         calibDB file will be used
+TELLU_DB_MATCH = TELLU_DB_MATCH.copy(__NAME__)
+TELLU_DB_MATCH.value = 'closest'
 
 # define the telluric database columns (must contain "key")
 TELLU_DB_COLS = TELLU_DB_COLS.copy(__NAME__)
