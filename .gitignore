@@ -177,8 +177,7 @@ fabric.properties
 *.~lock*
 *.lock
 /bin/*.py
-/tools/bin/*.py
-/tools/dev/*.py
+/tools/*/*.py
 
 # Ignore everythign in apero data except readme
 /apero-data/*

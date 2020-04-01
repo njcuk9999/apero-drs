@@ -16,9 +16,11 @@ import traceback
 import importlib
 import string
 import warnings
+from astropy import units as uu
+from typing import Union
 
 from apero.locale import drs_exceptions
-
+from apero.locale import drs_lang_db
 
 # =============================================================================
 # Define variables
@@ -46,28 +48,134 @@ BLOG = drs_exceptions.basiclogger
 # Define classes
 # =============================================================================
 class Const:
+    """
+    Constant class - drs constants are instances of this
+
+    e.g. stores information to read and check config/constant file constants
+
+    """
     def __init__(self, name, value=None, dtype=None, dtypei=None,
                  options=None, maximum=None, minimum=None, source=None,
                  unit=None, default=None, datatype=None, dataformat=None,
-                 group=None, user=False, active=False, description=None):
+                 group=None, user=False, active=False, description=None,
+                 author=None, parent=None):
+        """
+        Construct the constant instance
+
+        :param name: str, name of the constant
+        :param value: object, value of the constant
+        :param dtype: type, data type of the constant
+        :param dtypei: type, data type of list/dictionary elements
+        :param options: list of objects, the allowed values for the constant
+        :param maximum: the maximum value allowed for the constant
+        :param minimum: the minimum value allowed for the constant
+        :param source: str, the source file of the constant
+        :param unit: astropy unit, the units of the constant
+        :param default: default value of the constant
+        :param datatype: str, an additional datatype i.e. used to pass to
+                         another function e.g. a time having data type "MJD"
+        :param dataformat: str, an additional data format i.e. used to pass to
+                           another function e.g. a time having data format float
+        :param group: str, the group this constant belongs to
+        :param user: bool, whether the constant is a user constant
+        :param active: bool, whether the constant is active in constant files
+                       (for user config file generation)
+        :param description: str, the description for this constant
+        :param author: str, the author of this constant (i.e. who to contact)
+        :param parent: Const, the parent of this constant (if a constant is
+                       related to or comes from another constant)
+
+        :type name: str
+        :type value: object
+        :type dtype: Union[str, type]
+        :type dtypei: Union[str, type]
+        :type options: list[object]
+        :type maximum: object
+        :type minimum: object
+        :type source: str
+        :type unit: uu.Unit
+        :type default: object
+        :type datatype: str
+        :type dataformat: str
+        :type group: str
+        :type user: bool
+        :type active: bool
+        :type description: str
+        :type author: str
+        :type parent: Const
+
+        :returns: None (constructor)
+        """
+        # set function name (cannot break function here)
+        _ = str(__NAME__) + '.Const.validate()'
+        # set the name of the constant
         self.name = name
+        # set the value of the constant
         self.value = value
+        # set the data type of the constant
         self.dtype = dtype
+        # set the data type of list/dictionary elements
         self.dtypei = dtypei
+        # set the allowed values for the constant
         self.options = options
+        # set the minimum and maximum values of the constant
         self.maximum, self.minimum = maximum, minimum
+        # set the kind (Const or Keyword)
         self.kind = 'Const'
+        # set the source file of the constant
         self.source = source
+        # set the units of the constant (astropy units)
         self.unit = unit
+        # set the default value of the constant
         self.default = default
+        # set an additional datatype i.e. used to pass to another function
+        #    e.g. a time having data type "MJD"
         self.datatype = datatype
+        # set an additional data format i.e. used to pass to another function
+        #    e.g. a time having data format float
         self.dataformat = dataformat
+        # set the group this constant belongs to
         self.group = group
+        # set whether the constant is a user constant
         self.user = user
+        # set whether the constant is active in constant files (for users)
         self.active = active
+        # set the description for this constant
         self.description = description
+        # set the author of this constant (i.e. who to contact)
+        self.author = author
+        # set the parent of this constant (if a constant is related to or
+        #   comes from another constant)
+        self.parent = parent
+        # set true value
+        self.true_value = None
 
     def validate(self, test_value=None, quiet=False, source=None):
+        """
+        Validate a value either from definition (when `test_value` is None)
+        or test a new value for this constant instance (`test_value` set).
+        Updates `self.true_value`
+
+        :param test_value: object, if set test this value against the defined
+                           parameters of this constant instance.
+                           If not set uses the value (self.value) and tests
+                           this value
+        :param quiet: bool, if True logs statements when constant passes or
+                      fails, if False may only log in debug mode
+        :param source: string, the source code/recipe of the constant (only
+                       important if `test_value` is set
+
+        :type test_value: object
+        :type quiet: bool
+        :type source: Union[str, None]
+        :return: If `test_value` was set returns value in correct datatype
+                 else if unset returns True if value is valid. If not valid
+                 exception is raised.
+        :rtype: Union[bool, object]
+        :raises ConfigError: if value is not valid
+        """
+        # set function name (cannot break function here)
+        _ = str(__NAME__) + '.Const.validate()'
         # deal with no test value (use value set at module level)
         if test_value is None:
             value = self.value
@@ -82,7 +190,7 @@ class Const:
             return True
         # get true value (and test test_value)
         vargs = [self.name, self.dtype, value, self.dtypei, self.options,
-                 self.maximum, self.minimum,]
+                 self.maximum, self.minimum, ]
         vkwargs = dict(quiet=quiet, source=source)
 
         true_value, self.source = _validate_value(*vargs, **vkwargs)
@@ -94,21 +202,55 @@ class Const:
             return true_value
 
     def copy(self, source=None):
+        """
+        Shallow copy of constant instance
+
+        :param source: str, the code/recipe in which constant instance was
+                       copied (required for use)
+
+        :type source: str
+        :return: Const, a shallow copy of the constant
+        :rtype: Const
+        :raises ConfigError: if source is None
+        """
+        # set function name (cannot break function here)
+        func_name = str(__NAME__) + '.Const.copy()'
+        # get display text
+        textentry = _DisplayText()
         # check that source is valid
         if source is None:
-            emsg1 = 'Must define new source when copying a Constant'
-            emsg2 = ('\tSyntax: Constant.copy(source)\twhere "source" is a '
-                     'string')
-            raise ConfigError([emsg1, emsg2], level='error')
+            raise ConfigError(textentry('00-003-00007', args=[func_name]),
+                              level='error')
         # return new copy of Const
         return Const(self.name, self.value, self.dtype, self.dtypei,
                      self.options, self.maximum, self.minimum, source=source,
                      unit=self.unit, default=self.default,
                      datatype=self.datatype, dataformat=self.dataformat,
                      group=self.group, user=self.user, active=self.active,
-                     description=self.description)
+                     description=self.description, author=self.author,
+                     parent=self.parent)
 
     def write_line(self, value=None):
+        """
+        Creates the lines required for a config/constant file for this constant
+
+        i.e.
+        ```
+        # {DESCRIPTION}
+        # dtype={DTYPE} default={DEFAULT}
+        {NAME} = {VALUE}
+        ```
+
+        :param value: object, the value to add as the `value` in a
+                      config/constant file.
+
+        :return: A list of strings (lines) to add to config/constant file for
+                 this constant
+
+        :rtype: list[str]
+        """
+        # set function name (cannot break function here)
+        _ = str(__NAME__) + '.Const.write_line()'
         # set up line list
         lines = ['']
         # deal with value
@@ -118,7 +260,7 @@ class Const:
         # add description
         # -------------------------------------------------------------------
         # check if we have a description defined
-        if self.description is not None:
+        if self.description not in ['', 'None', None]:
             description = self.description.strip().capitalize()
             # wrap long descriptions by words
             wrapdesc = textwrap(description, 77)
@@ -181,48 +323,221 @@ class Const:
 
 
 class Keyword(Const):
+    """
+    Keyword class - drs keywords are instances of this
+
+    e.g. stores information for writing to the header:
+
+        key  value // comment
+
+    """
+
     def __init__(self, name, key=None, value=None, dtype=None, comment=None,
                  options=None, maximum=None, minimum=None, source=None,
                  unit=None, default=None, datatype=None, dataformat=None,
-                 group=None):
+                 group=None, author=None, parent=None):
+        """
+        Construct the keyword instance
+
+        :param name: str, name of the keyword
+        :param key: str, the FITS HEADER key for the keyword
+        :param value: str, the FITS HEADER value for the keyword
+        :param dtype: str, the data type for the keyword value
+        :param comment: str, the FITS HEADER comment for the keyword
+        :param options: list of objects, the allowed values for the keyword
+        :param maximum: the maximum value allowed for the keyword value
+        :param minimum: the minimum value allowed for the keyword value
+        :param source: str, the source file of the keyword
+        :param unit: astropy unit, the units of the keyword value
+        :param default: default value of the keyword value
+        :param datatype: str, an additional datatype i.e. used to pass to
+                         another function e.g. a time having data type "MJD"
+        :param dataformat: str, an additional data format i.e. used to pass to
+                           another function e.g. a time having data format float
+        :param group: str, the group this constant belongs to
+        :param author: str, the author of this constant (i.e. who to contact)
+        :param parent: Const, the parent of this constant (if a constant is
+                       related to or comes from another constant)
+
+        :type name: str
+        :type key: str
+        :type value: object
+        :type dtype: Union[str, type]
+        :type comment: str
+        :type options: list[object]
+        :type maximum: object
+        :type minimum: object
+        :type source: str
+        :type unit: uu.Unit
+        :type default: object
+        :type datatype: str
+        :type dataformat: str
+        :type group: str
+        :type author: str
+        :type parent: Union[Const,Keyword]
+
+        :returns: None (constructor)
+        """
+        # set function name (cannot break function here)
+        _ = str(__NAME__) + '.Keyword.__init__()'
+        # Initialize the constant parameters (super)
         Const.__init__(self, name, value, dtype, None, options, maximum,
                        minimum, source, unit, default, datatype, dataformat,
-                       group)
+                       group, user=False, active=False, description='',
+                       author=author, parent=parent)
+        # set the header key associated with this keyword (8 characters only)
         self.key = key
+        # set the header comment associated with this keyword
         self.comment = comment
+        # set the kind (Const or Keyword)
         self.kind = 'Keyword'
+        # set the source file of the Keyword
         self.source = source
+        # set the units of the Keyword (for use when reading and converting)
         self.unit = unit
+        # set the default value of this constant
         self.default = default
+        # set an additional datatype i.e. used to pass to another function
+        #    e.g. a time having data type "MJD"
         self.datatype = datatype
+        # set an additional data format i.e. used to pass to another function
+        #    e.g. a time having data format float
         self.dataformat = dataformat
+        # set the group this keyword belongs to
         self.group = group
+        # set the author of this keyword (i.e. who to contact)
+        self.author = author
+        # set the parent of this keyword (if a constant/keyword is related to
+        #   or comes from another constant/keyword)
+        self.parent = parent
 
     def set(self, key=None, value=None, dtype=None, comment=None,
-            options=None, unit=None, default=None, datatype=None,
-            dataformat=None, group=None):
+            options=None, unit=None, maximum=None, minimum=None,
+            source=None, default=None, datatype=None,
+            dataformat=None, group=None, author=None, parent=None):
+        """
+        Set attributes of the Keyword instance
+
+        :param key: str, the FITS HEADER key for the keyword
+        :param value: str, the FITS HEADER value for the keyword
+        :param dtype: str, the data type for the keyword value
+        :param comment: str, the FITS HEADER comment for the keyword
+        :param options: list of objects, the allowed values for the keyword
+        :param maximum: the maximum value allowed for the keyword value
+        :param minimum: the minimum value allowed for the keyword value
+        :param source: str, the source file of the keyword
+        :param unit: astropy unit, the units of the keyword value
+        :param default: default value of the keyword value
+        :param datatype: str, an additional datatype i.e. used to pass to
+                         another function e.g. a time having data type "MJD"
+        :param dataformat: str, an additional data format i.e. used to pass to
+                           another function e.g. a time having data format float
+        :param group: str, the group this constant belongs to
+        :param author: str, the author of this constant (i.e. who to contact)
+        :param parent: Const, the parent of this constant (if a constant is
+                       related to or comes from another constant)
+
+        :type key: str
+        :type value: object
+        :type dtype: object
+        :type comment: str
+        :type options: list[object]
+        :type maximum: object
+        :type minimum: object
+        :type source: str
+        :type unit: uu.Unit
+        :type default: object
+        :type datatype: str
+        :type dataformat: str
+        :type group: str
+        :type author: str
+        :type parent: Union[Const,Keyword]
+
+        :returns: None
+        """
+        # set function name (cannot break function here)
+        _ = str(__NAME__) + '.Keyword.set()'
+        # set the header key associated with this keyword
         if key is not None:
             self.key = key
+        # set the header value associated with this keyword
         if value is not None:
             self.value = value
+        # set the data type associated with this keyword
         if dtype is not None:
             self.dtype = dtype
+        # set the header comment associated with this keyword
         if comment is not None:
             self.comment = comment
+        # set the allowed values for tis keyword
         if options is not None:
             self.options = options
+        # set the units for this keyword
         if unit is not None:
             self.unit = unit
+        # set the maximum value for this keyword
+        if maximum is not None:
+            self.maximum = maximum
+        # set the minimum value for this keyword
+        if minimum is not None:
+            self.minimum = minimum
+        # set the default value for this keyword
         if default is not None:
             self.default = default
+        # set an additional datatype i.e. used to pass to another function
+        #    e.g. a time having data type "MJD"
         if datatype is not None:
             self.datatype = datatype
+        # set an additional data format i.e. used to pass to another function
+        #    e.g. a time having data format float
         if dataformat is not None:
             self.dataformat = dataformat
+        # set the source for this keyword
+        if source is not None:
+            self.source = source
+        # set the group this constant belongs to
         if group is not None:
             self.group = group
+        # set the author of this constant (i.e. who to contact)
+        if author is not None:
+            self.author = author
+        # set the parent of this constant (if a constant is related to or
+        #   comes from another constant)
+        if parent is not None:
+            self.parent = parent
 
     def validate(self, test_value=None, quiet=False, source=None):
+        """
+        Validate a value either from definition (when `test_value` is None)
+        or test a new value for this keyword instance (`test_value` set).
+        Updates `self.true_value`
+
+        `true_value` is a keyword store i.e.:
+
+        `[key, value, comment]`
+
+        for use in FITS HEADERS
+
+        :param test_value: object, if set test this value against the defined
+                           parameters of this keyword instance.
+                           If not set uses the value (self.value) and tests
+                           this value
+        :param quiet: bool, if True logs statements when keyword passes or
+                      fails, if False may only log in debug mode
+        :param source: string, the source code/recipe of the keyword (only
+                       important if `test_value` is set
+
+        :type test_value: object
+        :type quiet: bool
+        :type source: Union[str, None]
+        :return: If `test_value` was set returns keyword store
+                 else if unset returns True if value is valid. If not valid
+                 exception is raised.
+        :rtype: Union[bool, object]
+        :raises ConfigError: if value is not valid
+        """
+        # set function name (cannot break function here)
+        _ = str(__NAME__) + '.Keyword.validate()'
         # deal with no test value (use value set at module level)
         if test_value is None:
             value = self.value
@@ -233,7 +548,7 @@ class Keyword(Const):
             source = self.source
         # get true value (and test test_value)
         vargs = [self.name, self.dtype, value, self.dtypei, self.options,
-                 self.maximum, self.minimum,]
+                 self.maximum, self.minimum, ]
         vkwargs = dict(quiet=quiet, source=source)
         true_value, self.source = _validate_value(*vargs, **vkwargs)
         # deal with no comment
@@ -253,25 +568,96 @@ class Keyword(Const):
             return true_value
 
     def copy(self, source=None):
+        """
+        Shallow copy of keyword instance
+
+        :param source: str, the code/recipe in which keyword instance was
+                       copied (required for use)
+
+        :type source: str
+        :return: Keyword, a shallow copy of the keyword
+        :rtype: Keyword
+        :raises ConfigError: if source is None
+        """
+        # set function name (cannot break function here)
+        func_name = str(__NAME__) + '.Keyword.copy()'
+        # get display text
+        textentry = _DisplayText()
         # check that source is valid
         if source is None:
-            emsg1 = 'Must define new source when copying a Keyword'
-            emsg2 = ('\tSyntax: Constant.copy(source)\twhere "source" is a '
-                     'string')
-            raise ConfigError([emsg1, emsg2], level='error')
+            raise ConfigError(textentry('00-003-00008', args=[func_name]),
+                              level='error')
         # return new copy of Const
         return Keyword(self.name, self.key, self.value, self.dtype,
                        self.comment, self.options, self.maximum,
                        self.minimum, source=source, unit=self.unit,
                        default=self.default, datatype=self.datatype,
-                       dataformat=self.dataformat, group=self.group)
+                       dataformat=self.dataformat, group=self.group,
+                       author=self.author, parent=self.parent)
+
+
+class _DisplayText:
+    """
+    Manually enter wlog TextEntries here -- will be in english only
+
+    This is used for when we cannot have access to the language database
+    """
+
+    def __init__(self):
+        """
+        Constructs the manual language database (into `self.entries`)
+        """
+        # set function name (cannot break here --> no access to inputs)
+        _ = __NAME__ + '._DisplayText.__init__()'
+        # get the entries from module
+        self.entries = drs_lang_db.get_entries()
+
+    def __call__(self, key, args=None):
+        """
+        When constructed this call method acts like a TextEntry instance,
+        returning a string that can be used in WLOG and is formatted by
+        arguments `args`
+
+        :param key: str, the key code from the language database
+                    (i.e. 00-001-00001)
+        :param args: list of objects, if there is formating in entry this
+                     is how arguments are supplied i.e.
+                     `'LOG MESSAGE {0}: Message = {1}'.format(*args)`
+
+        :type key: str
+        :type args: list[objects]
+
+        :return: returns string
+        :rtype: str
+        """
+        # set function name (cannot break here --> no access to inputs)
+        _ = str(__NAME__) + '._DisplayText.__init__()'
+        # return the entry for key with the arguments used for formatting
+        if args is not None:
+            return self.entries[key].format(*args)
+        # else just return the entry
+        else:
+            return self.entries[key]
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
 def generate_consts(modulepath):
-    func_name = __NAME__ + '.generate_consts()'
+    """
+    Get all Const and Keyword instances from a module - basically load
+    constants from a python file
+
+    :param modulepath: str, the module name and location
+
+    :type modulepath: str
+
+    :return: the keys (Const/Keyword names) and their respective instances
+    :rtype: tuple[list[str], list[Const, Keyword]]
+    :raises ConfigError: if module name is not valid
+    """
+    # set function name (cannot break here --> no access to inputs)
+    func_name = str(__NAME__) + '.generate_consts()'
     # import module
     mod = import_module(func_name, modulepath)
     # get keys and values
@@ -296,6 +682,31 @@ def generate_consts(modulepath):
 
 
 def import_module(func, modulepath, full=False, quiet=False):
+    """
+    Import a module given a module path
+
+    :param func: str, the function where import_module was called
+    :param modulepath: str, the
+    :param full: bool, if True, assumes modulepath is the full path
+    :param quiet: bool, if True raises a ValueError instead of a ConfigError
+
+    :type func: str
+    :type modulepath: str
+    :type full: bool
+    :type quiet: bool
+
+    :raises: ConfigError - if module path is not valid (and quiet=False)
+    :raises: ValueError - if module path is not valid (and quiet=True)
+
+    :return: the imported module instance
+    """
+    # set function name (cannot break here --> no access to inputs)
+    if func is None:
+        func_name = str(__NAME__) + '.import_module()'
+    else:
+        func_name = str(func)
+    # get display text
+    textentry = _DisplayText()
     # deal with getting module
     if full:
         modfile = modulepath
@@ -318,31 +729,32 @@ def import_module(func, modulepath, full=False, quiet=False):
     except Exception as e:
         string_trackback = traceback.format_exc()
         # report error
-        eargs = [modfile, moddir]
-        emsg1 = 'Cannot import module \'{0}\' from \'{1}\''.format(*eargs)
-        emsg2 = '\tFunction called from = {0}'.format(func)
-        emsg3 = '\tError {0}: {1}'.format(type(e), e)
-        emsg4 = '\n\n Traceback:\n\n' + str(string_trackback)
+        eargs = [modfile, moddir, func_name, type(e), e, str(string_trackback)]
         # deal with quiet return vs normal return
         if quiet:
-            raise ValueError([emsg1, emsg2, emsg3, emsg4])
+            raise ValueError(textentry('00-000-00003', args=eargs))
         else:
-            raise ConfigError([emsg1, emsg2, emsg3, emsg4])
+            raise ConfigError(textentry('00-000-00003', args=eargs),
+                              level='error')
 
 
 def get_constants_from_file(filename):
     """
-    read config file and convert to key, value pairs
+    Read config file and convert to key, value pairs
         comments have a '#' at the start
         format of variables:   key = value
 
-    If file cannot be read will generate an IOError
-
     :param filename: string, the filename (+ absolute path) of file to open
+
+    :type: str
 
     :return keys: list of strings, upper case strings for each variable
     :return values: list of strings, value of each key
+
+    :raises ConfigError: if there is a profile read constants from file
     """
+    # set function name (cannot break here --> no access to inputs)
+    _ = str(__NAME__) + '.get_constants_from_file()'
     # first try to reformat text file to avoid weird characters
     #   (like mac smart quotes)
     _validate_text_file(filename)
@@ -382,8 +794,23 @@ def get_constants_from_file(filename):
 
 
 def update_file(filename, dictionary):
+    """
+    Updates a config/constants file with key/value pairs in the `dictionary`
+    If key not found in config/constants file does not add key/value to file
 
-    func_name = __NAME__ + '.update_file()'
+    :param filename: str, the config/constants file (absolute path)
+    :param dictionary: dict, the dictionary containing the key/value pairs
+                       to update in the config/constants file
+
+    :type filename: str
+    :type dictionary: dict
+    :return: None
+    :raises ConfigError: if we cannot read filename
+    """
+    # set function name (cannot break here --> no access to inputs)
+    func_name = str(__NAME__) + '.update_file()'
+    # get display text
+    textentry = _DisplayText()
     # open file
     try:
         # open the file
@@ -393,13 +820,11 @@ def update_file(filename, dictionary):
         # close the opened file
         f.close()
     except Exception as e:
-        emsg = ('\n\t\t {0}: File "{1}" cannot be read by {2}. '
-                '\n\t\t Error was: {3}')
-        raise ConfigError(emsg.format(type(e), filename, func_name, e))
-
+        eargs = [filename, func_name, type(e), e]
+        raise ConfigError(textentry('00-004-00003', args=eargs),
+                          level='error')
     # convert lines to char array
     clines = np.char.array(lines).strip()
-
     # loop through keys in dictionary
     for key in dictionary:
         # get value
@@ -415,7 +840,6 @@ def update_file(filename, dictionary):
             # loop around line numbers and replace
             for linenumber in linenumbers:
                 lines[linenumber] = rstring
-
     # open file
     try:
         # open the file
@@ -425,47 +849,96 @@ def update_file(filename, dictionary):
         # close the opened file
         f.close()
     except Exception as e:
-        emsg = ('\n\t\t {0}: File "{1}" cannot be written to by {2}. '
-                '\n\t\t Error was: {3}')
-        raise ConfigError(emsg.format(type(e), filename, func_name, e))
+        eargs = [filename, func_name, type(e), e]
+        raise ConfigError(textentry('00-004-00004', args=eargs),
+                          level='error')
 
 
 def textwrap(input_string, length):
-    # Modified version of this: https://stackoverflow.com/a/16430754
+    """
+    Wraps the text `input_string` to the length of `length` new lines are
+    indented with a tab
+
+    Modified version of this: https://stackoverflow.com/a/16430754
+
+    :param input_string: str, the input text to wrap
+    :param length: int, the length of the wrap
+    :type input_string: str
+    :type length: int
+    :return: list of strings, the new set of wrapped lines
+    :rtype: list[str]
+    """
+    # set function name (cannot break here --> no access to inputs)
+    _ = str(__NAME__) + '.textwrap()'
+    # set up a new empty list of strings
     new_string = []
+    # loop around the input string split by new lines
     for s in input_string.split("\n"):
+        # if line is empty add an empty line to new_string
         if s == "":
             new_string.append('')
+        # set the current line length to zero initially
         wlen = 0
+        # storage
         line = []
+        # loop around words in string and split at words if length is too long
+        #   words are definied by white spaces
         for dor in s.split():
+            # if the word + current length is shorter than the wrap length
+            #   then append to current line
             if wlen + len(dor) + 1 <= length:
                 line.append(dor)
+                # update the current line length
                 wlen += len(dor) + 1
+            # else we have to wrap
             else:
+                # add the current line to the output string
                 new_string.append(" ".join(line))
+                # start a new line with the word that broke the wrap
                 line = [dor]
+                # set the current line length to the length of the word
                 wlen = len(dor)
-        if len(line):
+        # if the length of the line is larger than zero append line
+        if len(line) > 0:
             new_string.append(" ".join(line))
-
     # add a tab to all but first line
     new_string2 = [new_string[0]]
+    # loop around lines in new strings (except the first line)
     for it in range(1, len(new_string)):
         new_string2.append('\t' + new_string[it])
-
+    # return the new string with tabs for subsequent lines
     return new_string2
 
 
 # =============================================================================
 # Define private functions
 # =============================================================================
-def _get_raw_txt(filename, comments, delimiter):
+def _get_raw_txt(filename,  comments,  delimiter):
+    """
+    Read raw text from a file `filename` where comments are prefixed by
+    `comments` and columns separated by `delimiter`. By default tries to use
+    np.genfromtxt but if this fails tries a slower method.
+
+    :param filename: str, the absolute file path to read
+    :param comments: str, the comment character to look for
+    :param delimiter: str, the delimiter value to look for
+    :type filename: str
+    :type comments: str
+    :type delimiter: str
+
+    :return: numpy array containing columns delimited by `delimiter`
+    :rtype: np.ndarray
+    """
+    # set function name (cannot break here --> no access to inputs)
+    _ = str(__NAME__) + '._get_raw_txt()'
+    # catch warnings from here
     with warnings.catch_warnings(record=True) as _:
         # noinspection PyBroadException
+        # try to read the text file using numpy's genfromtxt (faster)
         try:
             raw = np.genfromtxt(filename, comments=comments,
                                 delimiter=delimiter, dtype=str).astype(str)
+        # if this fails for any read use a slow method (defined below)
         except Exception:
             raw = _read_lines(filename, comments=comments, delimiter=delimiter)
     # return the raw lines
@@ -474,14 +947,23 @@ def _get_raw_txt(filename, comments, delimiter):
 
 def _read_lines(filename, comments='#', delimiter=' '):
     """
+    Basic way to open file containing tabular data
 
-    :param filename:
-    :param comments:
-    :param delimiter:
-    :return:
+    :param filename: str, the absolute file path to read
+    :param comments: str, the comment character to look for
+    :param delimiter: str, the delimiter value to look for
+    :type filename: str
+    :type comments: str
+    :type delimiter: str
+
+    :return: numpy array containing columns delimited by `delimiter`
+    :rtype: np.ndarray
+    :raises ConfigError: if filename cannot be read
     """
-
-    func_name = __NAME__ + '.read_lines()'
+    # set function name (cannot break here --> no access to inputs)
+    func_name = str(__NAME__) + '.read_lines()'
+    # get display text
+    textentry = _DisplayText()
     # manually open file (slow)
     try:
         # open the file
@@ -491,9 +973,9 @@ def _read_lines(filename, comments='#', delimiter=' '):
         # close the opened file
         f.close()
     except Exception as e:
-        emsg = ('\n\t\t {0}: File "{1}" cannot be read by {2}. '
-                '\n\t\t Error was: {3}')
-        raise ConfigError(emsg.format(type(e), filename, func_name, e))
+        eargs = [filename, func_name, type(e), e]
+        raise ConfigError(textentry('00-004-00003', args=eargs),
+                          level='error')
     # valid lines
     raw = []
     # loop around lines
@@ -511,62 +993,74 @@ def _read_lines(filename, comments='#', delimiter=' '):
             try:
                 key, value = line.split(delimiter)
             except ValueError as _:
-                emsg = ['Wrong format for line {0} in file {1}'
-                        ''.format(l + 1, filename, line),
-                        'Lines must be "key" = "value"',
-                        'Where "key" and "value" are a valid python ',
-                        'strings and contains no equal signs']
-                raise ConfigError(emsg)
-
+                eargs = [l + 1, filename, line, func_name]
+                raise ConfigError(textentry('00-003-00022', args=eargs),
+                                  level='error')
             raw.append([key, value])
     # check that raw has entries
     if len(raw) == 0:
-        raise ConfigError("No valid lines found in {0}".format(filename))
+        eargs = [filename, func_name]
+        raise ConfigError(textentry('00-003-00023', args=eargs),
+                          level='error')
     # return raw
     return np.array(raw)
 
 
 def _test_dtype(name, invalue, dtype, source, quiet=False):
+    """
+    Test the data type of a variable `invalue`
 
+    :param name: str, the name of the variable to test
+    :param invalue: str, the value of the variable to test
+    :param dtype: str, the data type to test of the
+    :param source: str, the source of the variable
+    :param quiet: bool, if True raises exceptions if there is an error
+
+    :type name: str
+    :type invalue: object
+    :type dtype: Union[str, type]
+    :type source: str
+    :type quiet: bool
+
+    :return: returns the value in the input dtype (if valid) if invalid
+             returns input value (unless quiet=True then exception raised)
+    :rtype: Any
+    :raises ConfigError: if quiet=True and type invalid
+    """
+    # set function name (cannot break here --> no access to inputs)
+    func_name = str(__NAME__) + '._test_dtype()'
+    # get display text
+    textentry = _DisplayText()
     # if we don't have a value (i.e. it is None) don't test
     if invalue is None:
         return None
-
     # check paths (must be strings and must exist)
     if dtype == 'path':
         if type(invalue) is not str:
-            eargs = [name, type(invalue), invalue]
-            emsg1 = 'Parameter "{0}" must be a string.'
-            emsg2 = '\tType: "{1}"\tValue: "{2}"'.format(*eargs)
-            emsg3 = '\tConfig File = "{0}"'.format(source)
             if not quiet:
-                raise ConfigError([emsg1.format(*eargs), emsg2, emsg3],
+                eargs = [name, type(invalue), invalue, source, func_name]
+                raise ConfigError(textentry('00-003-00009', args=eargs),
                                   level='error')
         if not os.path.exists(invalue):
-            emsg = 'Key {0}: Path does not exist "{1}"'
-            eargs = [name, invalue]
             if not quiet:
-                raise ConfigError(emsg.format(*eargs), level='error')
-
+                eargs = [name, invalue, func_name]
+                raise ConfigError(textentry('00-003-00010', args=eargs),
+                                  level='error')
         return str(invalue)
-
     # deal with casting a string into a list
     if (dtype is list) and (type(invalue) is str):
-        emsg1 = 'Parameter "{0}" should be a list not a string.'
-        emsg2 = '\tConfig File = "{0}"'.format(source)
         if not quiet:
-            raise ConfigError([emsg1.format(name), emsg2], level='error')
+            eargs = [name, invalue, source, func_name]
+            raise ConfigError(textentry('00-003-00011', args=eargs),
+                              level='error')
     # now try to cast value
     try:
         outvalue = dtype(invalue)
     except Exception as e:
-        eargs = [name, dtype, invalue]
-        emsg1 = ('Parameter "{0}" dtype is incorrect. '
-                 'Expected "{1}" value="{2}"')
-        emsg2 = '\tError was "{0}": "{1}"'.format(type(e), e)
-        emsg3 = '\tConfig File = "{0}"'.format(source)
         if not quiet:
-            raise ConfigError([emsg1.format(*eargs), emsg2, emsg3],
+            eargs = [name, dtype, invalue, type(invalue), type(e), e,
+                     source, func_name]
+            raise ConfigError(textentry('00-003-00012', args=eargs),
                               level='error')
         outvalue = invalue
     # return out value
@@ -575,33 +1069,58 @@ def _test_dtype(name, invalue, dtype, source, quiet=False):
 
 def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
                     quiet=False, source=None):
+    """
+    Checks whether a variable `value` is valid based on the specifications given
 
-    func_name = __NAME__ + '._validate_value()'
+    :param name: str, the name of the variable
+    :param dtype: str, the required data type of the variable
+    :param value: object, the value of the variable
+    :param dtypei: type, the required data type of
+    :param options: list of objects, the allowed values for the keyword
+    :param maximum: the maximum value allowed for the keyword value
+    :param minimum: the minimum value allowed for the keyword value
+    :param quiet: bool, if True raises exceptions if there is an error
+    :param source: str, the source file of the keyword
+
+    :type name: str
+    :type dtype: Union[str, type]
+    :type dtypei: Union[str, type]
+    :type value: object
+    :type options: list[object]
+    :type quiet: bool
+    :type source: str
+
+    :return: returns the value in the input dtype and the source of that
+             value
+    :rtype: tuple[object, str]
+    :raises ConfigError: if quiet=True and type invalid
+    """
+    # set function name (cannot break here --> no access to inputs)
+    func_name = str(__NAME__) + '._validate_value()'
+    # get display text
+    textentry = _DisplayText()
     # deal with no source
     if source is None:
         source = 'Unknown ({0})'.format(func_name)
     # ---------------------------------------------------------------------
     # check that we only have simple dtype
     if dtype is None:
-        emsg1 = 'Parameter "{0}" dtype not set'
-        emsg2 = '\tConfig File = "{0}"'.format(source)
         if not quiet:
-            raise ConfigError([emsg1.format(name), emsg2], level='error')
+            eargs = [name, source, func_name]
+            raise ConfigError(textentry('00-003-00013', args=eargs),
+                              level='error')
     if (dtype not in SIMPLE_TYPES) and (dtype != 'path'):
-        emsg1 = ('Parameter "{0}" dtype is incorrect. Must be'
-                 ' one of the following:'.format(name))
-        emsg2 = '\t' + ', '.join(SIMPLE_STYPES)
-        emsg3 = '\tConfig File = "{0}"'.format(source)
         if not quiet:
-            raise ConfigError([emsg1, emsg2, emsg3])
+            eargs = [name, ', '.join(SIMPLE_STYPES), source, func_name]
+            raise ConfigError(textentry('00-003-00014', args=eargs),
+                              level='error')
     # ---------------------------------------------------------------------
     # Check value is not None
     if value is None:
-        emsg1 = 'Parameter "{0}" value is not set.'.format(name)
-        emsg2 = '\tConfig File = "{0}"'.format(source)
         if not quiet:
-            raise ConfigError([emsg1, emsg2], level='error')
-
+            eargs = [name, source, func_name]
+            raise ConfigError(textentry('00-003-00015', args=eargs),
+                              level='error')
     # ---------------------------------------------------------------------
     # check bools
     if dtype is bool:
@@ -610,13 +1129,10 @@ def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
                 value = True
             elif value.lower() in ['0', 'false']:
                 value = False
-
         if value not in [True, 1, False, 0]:
-            emsg1 = 'Parameter "{0}" must be True or False [1 or 0]'
-            emsg2 = '\tCurrent value: "{0}"'.format(value)
-            emsg3 = '\tConfig File = "{0}"'.format(source)
             if not quiet:
-                raise ConfigError([emsg1.format(name), emsg2, emsg3],
+                eargs = [name, value, source, func_name]
+                raise ConfigError(textentry('00-003-00016', args=eargs),
                                   level='error')
     # ---------------------------------------------------------------------
     # Check if dtype is correct
@@ -633,33 +1149,27 @@ def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
     # check options if not a list
     if dtype in [str, int, float] and options is not None:
         if true_value not in options:
-            emsg1 = 'Parameter "{0}" value is incorrect.'
-            stroptions = ['"{0}"'.format(opt) for opt in options]
-            emsg2 = '\tOptions are: {0}'.format(', '.join(stroptions))
-            emsg3 = '\tCurrent value: "{0}"'.format(true_value)
-            emsg4 = '\tConfig File = "{0}"'.format(source)
             if not quiet:
-                raise ConfigError([emsg1.format(name), emsg2, emsg3, emsg4],
+                stroptions = ['"{0}"'.format(opt) for opt in options]
+                eargs = [name, ', '.join(stroptions), true_value, source,
+                         func_name]
+                raise ConfigError(textentry('00-003-00017', args=eargs),
                                   level='error')
     # ---------------------------------------------------------------------
     # check limits if not a list or str or bool
     if dtype in [int, float]:
         if maximum is not None:
             if true_value > maximum:
-                emsg1 = ('Parameter "{0}" too large'
-                         ''.format(name))
-                emsg2 = '\tValue must be less than {0}'.format(maximum)
-                emsg3 = '\tConfig File = "{0}"'.format(source)
                 if not quiet:
-                    raise ConfigError([emsg1.format(name), emsg2, emsg3],
+                    eargs = [name, maximum, true_value, source, func_name]
+                    raise ConfigError(textentry('00-003-00018', args=eargs),
                                       level='error')
         if minimum is not None:
             if true_value < minimum:
-                emsg1 = ('Parameter "{0}" too large'.format(name))
-                emsg2 = '\tValue must be less than {0}'.format(maximum)
-                emsg3 = '\tConfig File = "{0}"'.format(source)
                 if not quiet:
-                    raise ConfigError([emsg1, emsg2, emsg3], level='error')
+                    eargs = [name, minimum, true_value, source, func_name]
+                    raise ConfigError(textentry('00-003-00019', args=eargs),
+                                      level='error')
     # return true value
     return true_value, source
 
@@ -675,9 +1185,17 @@ def _validate_text_file(filename, comments='#'):
 
     :param filename: string, name and location of the text file to open
     :param comments: char (string), the character that defines a comment line
+
+    :type filename: str
+    :type comments: str
+
     :return None:
+    :raises ConfigError: If text file is invalid
     """
-    func_name = __NAME__ + '.validate_text_file()'
+    # set function name (cannot break here --> no access to inputs)
+    func_name = str(__NAME__) + '._validate_text_file()'
+    # get display text
+    textentry = _DisplayText()
     # open text file
     f = open(filename, 'r')
     # get lines
@@ -694,19 +1212,16 @@ def _validate_text_file(filename, comments='#'):
             continue
         # loop through each character in line and check if it is a valid
         # character
-        emsg = ' Invalid character(s) found in file={0}'.format(filename)
+        eargs = [filename, func_name]
+        emsg = textentry('00-003-00020', args=eargs)
         invalid = False
         for char in line:
             if char not in VALID_CHARS:
                 invalid = True
-                emsg += '\n\t\tLine {1} character={0}'.format(char, l + 1)
-        emsg += '\n\n\tfunction = {0}'.format(func_name)
+                emsg += textentry('00-003-00021', args=[char, l + 1])
         # only raise an error if invalid is True (if we found bad characters)
         if invalid:
             raise ConfigError(emsg, level='error')
-
-
-
 
 
 # =============================================================================

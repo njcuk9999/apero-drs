@@ -9,14 +9,12 @@ Created on 2019-03-23 at 13:01
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 
 from apero import core
 from apero import locale
 from apero.core import constants
 from apero.core.core import drs_database
-from apero.core.instruments.spirou import file_definitions
 from apero.io import drs_fits
 from apero.io import drs_image
 from apero.science.calib import dark

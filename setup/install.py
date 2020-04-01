@@ -28,20 +28,24 @@ CONSTANTS_PATH = 'core.constants'
 INSTALL_PATH = 'tools.module.setup.drs_installation'
 # set modules required
 REQ_MODULES = dict()
-REQ_MODULES['astropy'] = [3, 2, 0]
-REQ_MODULES['matplotlib'] = [2, 1, 2]
-REQ_MODULES['numpy'] = [1, 14, 0]
-REQ_MODULES['scipy'] = [1, 0, 0]
+REQ_MODULES['astropy'] = [4, 0, 0]
+REQ_MODULES['matplotlib'] = [3, 1, 2]
+REQ_MODULES['numpy'] = [1, 18, 1]
+REQ_MODULES['scipy'] = [1, 4, 1]
 REC_MODULES = dict()
-REC_MODULES['astroquery'] = [0, 3, 9]
-REC_MODULES['barycorrpy'] = [0, 2, 2, 1]
-REC_MODULES['bottleneck'] = [1, 2, 1]
-REC_MODULES['ipdb'] = None
-REC_MODULES['numba'] = [0, 41, 0]
-REC_MODULES['pandas'] = [0, 23, 4]
-REC_MODULES['PIL'] = [5, 3, 0]
-REC_MODULES['tqdm'] = [4, 28, 1]
-REC_MODULES['yagmail'] = [0, 11, 220]
+REC_MODULES['astroquery'] = [0, 3, 10]              # conda
+REC_MODULES['barycorrpy'] = [0, 3, 1]               # pip --ignore-installed
+REC_MODULES['bottleneck'] = [1, 3, 1]
+REC_MODULES['numba'] = [0, 47, 0]
+REC_MODULES['pandas'] = [0, 25, 3]
+REC_MODULES['PIL'] = [7, 0, 0]
+REC_MODULES['tqdm'] = [4, 42, 1]
+REC_MODULES['yagmail'] = [0, 11, 224]               # conda
+DEV_MODULES = dict()
+DEV_MODULES['gitchangelog'] = [3, 0, 4]             # pip
+DEV_MODULES['ipdb'] = None                          # conda
+DEV_MODULES['IPython'] = [7, 11, 1]
+DEV_MODULES['sphinx'] = [2, 3, 1]
 
 
 # =============================================================================
@@ -166,8 +170,6 @@ def get_args():
 
 
 def validate():
-
-
     # python version check
     if sys.version_info.major < 3:
         print('\tFatal Error: Python 2 is not supported')
@@ -193,7 +195,7 @@ def validate():
         check_version(module, imod, rversionlist, required=True)
 
     # ------------------------------------------------------------------
-    # loop around required modules to check
+    # loop around recommended modules to check
     # ------------------------------------------------------------------
     for module in REC_MODULES:
         # get required minimum version
@@ -204,6 +206,24 @@ def validate():
             imod = importlib.import_module(module)
         except:
             print('\t{0} recommends {1} to be installed'
+                  ''.format(DRS_PATH, module))
+            continue
+        # --------------------------------------------------------------
+        # check the version
+        check_version(module, imod, rversionlist, required=False)
+
+    # ------------------------------------------------------------------
+    # loop around devloper modules to check
+    # ------------------------------------------------------------------
+    for module in DEV_MODULES:
+        # get required minimum version
+        rversionlist = DEV_MODULES[module]
+        # --------------------------------------------------------------
+        # test importing module
+        try:
+            imod = importlib.import_module(module)
+        except:
+            print('\t{0} recommends {1} to be installed (dev only)'
                   ''.format(DRS_PATH, module))
             continue
         # --------------------------------------------------------------
@@ -333,12 +353,41 @@ def tab_input(message, root=None):
 
 
 def check_install(drs_path):
+    # print check
+    print('Locating {0} install...'.format(DRS_PATH))
+    # get current working directory
+    cwd = os.getcwd()
+    # set import condition to True
+    cond = True
     # loop until we can import modules
     while cond:
-        # try to import the drs
-        try:
-            _ = importlib.import_module(drs_path)
-        except Exception as _:
+        # set search to False
+        found = False
+        # set top level to root
+        root = os.path.abspath(os.sep)
+        # path to try
+        try_path = str(drs_path)
+        # loop around until found or we break
+        while not found:
+            # get the absolute path of try path
+            abs_try_path = os.path.abspath(try_path)
+            sys.path.append(abs_try_path)
+            # try to import the drs
+            try:
+                print('\tTry: {0}'.format(abs_try_path))
+                _ = importlib.import_module(drs_path)
+                # if we have reached this import stage found is True
+                found = True
+            except Exception as _:
+                # if we have reached root then break
+                if abs_try_path == os.path.join(root, drs_path):
+                    break
+                # try up a level
+                try_path = '..' + os.sep
+                # remove this path as it failed to find drs
+                sys.path.remove(abs_try_path)
+        # deal with not being found
+        if not found:
             umsg = '\nCannot find {0}. Please enter {0} installation path:'
             # user input required
             uinput = tab_input(umsg.format(drs_path))
@@ -395,8 +444,6 @@ if __name__ == '__main__':
     # ----------------------------------------------------------------------
     # Importing DRS paths
     # ----------------------------------------------------------------------
-    # set import condition to True
-    cond = True
     # set guess path
     drs_path = str(DRS_PATH)
     # catch Ctrl+C
@@ -421,7 +468,7 @@ if __name__ == '__main__':
     elif not args.update:
         allparams = install.user_interface(params, args)
     else:
-        allparams = install.update(params)
+        allparams = install.update(params, args)
     # add dev mode to allparams
     allparams['DEVMODE'] = args.devmode
     # add name

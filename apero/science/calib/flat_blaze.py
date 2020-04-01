@@ -9,7 +9,6 @@ Created on 2019-07-10 at 09:30
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 from scipy.optimize import curve_fit
 import warnings
@@ -120,8 +119,11 @@ def calculate_blaze_flat_sinc(params, e2ds_ini, peak_cut, nsigfit, badpercentile
 
     # region over which we will fit
     keep = np.isfinite(e2ds)
+    # keep only regions that make sense compared to the 95th percentile
+    #   max would be affected by outliers
     with warnings.catch_warnings(record=True) as _:
-        keep &= e2ds > 0.05 * np.nanmax(e2ds)
+        keep &= e2ds > 0.05 * np.nanpercentile(e2ds, 95)
+        keep &= e2ds < 2 * np.nanpercentile(e2ds, 95)
 
     # ------------------------------------------------------------------
     # guess of peak value, we do not take the max as there may be a
@@ -134,7 +136,7 @@ def calculate_blaze_flat_sinc(params, e2ds_ini, peak_cut, nsigfit, badpercentile
     nthres = mp.nansum(e2ds[keep] > thres / 2.0)
     # median position of points above threshold
     with warnings.catch_warnings(record=True) as _:
-        pospeak = mp.median(xpix[e2ds > thres])
+        pospeak = mp.nanmedian(xpix[e2ds > thres])
     # bounds
     with warnings.catch_warnings(record=True) as _:
         xlower = mp.nanmin(xpix[e2ds > thres])
@@ -214,13 +216,16 @@ def calculate_blaze_flat_sinc(params, e2ds_ini, peak_cut, nsigfit, badpercentile
     # ----------------------------------------------------------------------
     # calculate the rms
     # ----------------------------------------------------------------------
-    rms = mp.nanstd(flat[keep])
+    rms = mp.robust_nanstd(flat[keep])
+    # remove any very large outliers (set to NaN)
+    with warnings.catch_warnings(record=True) as _:
+        flat[np.abs(flat - 1) > 10 * rms] = np.nan
     # ----------------------------------------------------------------------
     # return values
     return e2ds_ini, flat, blaze, rms
 
 
-def get_flat(params, header, fiber, filename=None):
+def get_flat(params, header, fiber, filename=None, quiet=False):
     # get file definition
     out_flat = core.get_file_definition('FF_FLAT', params['INSTRUMENT'],
                                         kind='red')
@@ -235,7 +240,8 @@ def get_flat(params, header, fiber, filename=None):
     flat, flat_file = general.load_calib_file(params, key, header,
                                               filename=filename)
     # log which fpmaster file we are using
-    WLOG(params, '', TextEntry('40-015-00006', args=[flat_file]))
+    if not quiet:
+        WLOG(params, '', TextEntry('40-015-00006', args=[flat_file]))
     # return the master image
     return flat_file, flat
 

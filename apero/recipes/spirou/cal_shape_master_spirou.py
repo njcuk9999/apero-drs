@@ -9,19 +9,19 @@ Created on 2019-03-23 at 13:01
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 
 from apero import core
 from apero import locale
 from apero.core import constants
 from apero.core.core import drs_database
-from apero.core.instruments.spirou import file_definitions
 from apero.io import drs_fits
+from apero.io import drs_table
 from apero.science.calib import general
 from apero.science.calib import localisation
 from apero.science.calib import wave
 from apero.science.calib import shape
+
 
 # =============================================================================
 # Define variables
@@ -170,27 +170,45 @@ def __main__(recipe, params):
             emsg += '\n\t - "{0}"'.format(allowedtype)
         WLOG(params, 'error', emsg)
     # get all "filetype" filenames
-    filenames = drs_fits.find_files(params, kind='tmp', KW_DPRTYPE=filetype)
+    filenames = drs_fits.find_files(params, recipe, kind='tmp',
+                                    KW_DPRTYPE=filetype)
     # convert to numpy array
     filenames = np.array(filenames)
 
     # ----------------------------------------------------------------------
-    # Get all fp file properties
+    # Obtain FP master (from file or calculate)
     # ----------------------------------------------------------------------
-    fp_table = shape.construct_fp_table(params, filenames)
+    # deal with having a fp master assigned by user
+    cond1 = 'FPMASTER' in params['INPUTS']
+    # if we have fpmaster defined in inputs load from file - DEBUG ONLY
+    if cond1 and (params['INPUTS']['FPMASTER'] not in [None, 'None', '']):
+        # can use from calibDB by setting to 1 or True
+        if params['INPUTS']['FPMASTER'] in ['1', 'True']:
+            filename = None
+        else:
+            filename = params['INPUTS']['FPMASTER']
+        # do stuff
+        fpkwargs = dict(header=fpfile.header, filename=filename)
+        # read fpmaster file
+        masterfp_file, master_fp = shape.get_master_fp(params, **fpkwargs)
+        # read table
+        fp_table = drs_table.read_table(params, masterfp_file, fmt='fits')
+    else:
+        # ----------------------------------------------------------------------
+        # Get all fp file properties
+        # ----------------------------------------------------------------------
+        fp_table = shape.construct_fp_table(params, filenames)
+        # ----------------------------------------------------------------------
+        # match files by date and median to produce master fp
+        # ----------------------------------------------------------------------
+        cargs = [params, recipe, fpprops['DPRTYPE'], fp_table, fpimage]
+        fpcube, fp_table = shape.construct_master_fp(*cargs)
 
-    # ----------------------------------------------------------------------
-    # match files by date and median to produce master fp
-    # ----------------------------------------------------------------------
-
-    cargs = [params, recipe, fpprops['DPRTYPE'], fp_table, fpimage]
-    fpcube, fp_table = shape.construct_master_fp(*cargs)
-
-    # log process (master construction complete + number of groups added)
-    wargs = [len(fpcube)]
-    WLOG(params, 'info', TextEntry('40-014-00011', args=wargs))
-    # sum the cube to make fp data
-    master_fp = np.sum(fpcube, axis=0)
+        # log process (master construction complete + number of groups added)
+        wargs = [len(fpcube)]
+        WLOG(params, 'info', TextEntry('40-014-00011', args=wargs))
+        # sum the cube to make fp data
+        master_fp = np.sum(fpcube, axis=0)
 
     # ----------------------------------------------------------------------
     # Calculate dx shape map

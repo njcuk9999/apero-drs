@@ -8,8 +8,6 @@ Created on 2019-03-05 16:37
 @author: ncook
 Version 0.0.1
 """
-from __future__ import division
-
 from apero.core import constants
 from apero import core
 from apero.core.core import drs_file
@@ -124,38 +122,6 @@ def drs_outfile_id(params, recipe, infile, drsfileset, prefix=None):
         kind.recipe = recipe
     # return found and the drs_file instance
     return found, kind
-
-
-def fix_header(params, recipe, infile=None, header=None, **kwargs):
-    """
-    Instrument specific header fixes are define in pseudo_const.py for an
-    instrument and called here (function in pseudo_const.py is HEADER_FIXES)
-    :param params:
-    :param infile:
-    :return:
-    """
-    # deal with no header
-    if header is None:
-        header = infile.header
-        has_infile = True
-    else:
-        has_infile = False
-
-    # load pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
-    # use pseudo constant to apply any header fixes required (specific to
-    #   a specific instrument) and update the header
-    header = pconst.HEADER_FIXES(params=params, recipe=recipe, header=header,
-                                 **kwargs)
-    # if the input was an infile return the infile back
-    if has_infile:
-        # return the updated infile
-        infile.header = header
-        return infile
-    # else return the header (assuming input was a header only)
-    else:
-        # else return the header
-        return header
 
 
 # =============================================================================

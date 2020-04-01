@@ -9,14 +9,11 @@ Created on 2019-01-19 at 13:45
 
 @author: cook
 """
-from __future__ import division
-import numpy as np
 from astropy.table import Table
+import numpy as np
 import sys
 import os
-import glob
 import matplotlib
-import shutil
 from collections import OrderedDict
 
 from apero import locale
@@ -283,8 +280,9 @@ class Plotter:
                 self.plots_active = True
             # if plot = 2 we need to show the plot
             elif self.plotoption == 2:
-                self.plt.show()
-                self.plt.close()
+                self.plt.show(block=True)
+                if not self.plt.isinteractive():
+                    self.plt.close()
         # deal with summary plots
         elif graph.kind == 'summary':
             # 1. save to file
@@ -296,8 +294,9 @@ class Plotter:
             self.summary_graphs[graph.filename] = graph.copy()
         # deal with show plots
         elif graph.kind == 'show':
-            self.plt.show()
-            self.plt.close()
+            self.plt.show(block=True)
+            if not self.plt.isinteractive():
+                self.plt.close()
         else:
             pass
 
@@ -460,22 +459,28 @@ class Plotter:
             stats = self.stats
         # ------------------------------------------------------------------
         # summary plot in latex
-        try:
-            # log progress
-            WLOG(self.params, 'info', TextEntry('40-100-00004'))
-            # latex document
-            latexdoc = self.summary_latex(qc_params, stats, warnings)
-        except Exception as e:
-            # do not skip if in debug mode
-            if self.params['DRS_DEBUG']:
-                raise e
-            # log error as warning
-            wargs = [type(e), e, func_name]
-            WLOG(self.params, 'warning', TextEntry('10-100-01001', args=wargs))
-            # set latex doc to None
-            latexdoc = None
+        # ------------------------------------------------------------------
+        # set latex doc to None
+        latexdoc = None
+        # only do this is user requires it
+        if 'SUMMARY_LATEX_PDF' in self.params:
+            if self.params['SUMMARY_LATEX_PDF']:
+                try:
+                    # log progress
+                    WLOG(self.params, 'info', TextEntry('40-100-00004'))
+                    # latex document
+                    latexdoc = self.summary_latex(qc_params, stats, warnings)
+                except Exception as e:
+                    # do not skip if in debug mode
+                    if self.params['DRS_DEBUG']:
+                        raise e
+                    # log error as warning
+                    wargs = [type(e), e, func_name]
+                    WLOG(self.params, 'warning', TextEntry('10-100-01001',
+                                                           args=wargs))
         # ------------------------------------------------------------------
         # summary html
+        # ------------------------------------------------------------------
         try:
             # log progress
             WLOG(self.params, 'info', TextEntry('40-100-00005'))
@@ -867,6 +872,33 @@ class Plotter:
         # set warnings
         self.warnings = odict['LOGGER_WARNING']
 
+    def set_interactive(self):
+        """
+        Set matplotlib in an iteractive session (excluding MacOSX backend)
+
+        Order attempted: Qt5Agg, Qt4Agg, GTKAgg, TKAgg, WXAgg, Agg
+
+        :return: None
+        """
+        global PLT_MOD
+        global MPL_MOD
+        # fix for MacOSX plots freezing
+        gui_env = ['Qt5Agg', 'Qt4Agg', 'GTKAgg', 'TKAgg', 'WXAgg', 'Agg']
+        for gui in gui_env:
+            # noinspection PyBroadException
+            try:
+                matplotlib.use(gui, warn=False, force=True)
+                import matplotlib.pyplot as plt
+                from mpl_toolkits import axes_grid1
+                self.plt = plt
+                self.matplotlib = matplotlib
+                self.axes_grid1 = axes_grid1
+                PLT_MOD = plt
+                MPL_MOD = axes_grid1
+                break
+            except Exception as _:
+                continue
+
     # ------------------------------------------------------------------
     # internal methods
     # ------------------------------------------------------------------
@@ -932,7 +964,6 @@ class Plotter:
             elif kind == 'show':
                 self.has_debugs = True
 
-
     def _get_matplotlib(self, force=False):
         """
         Deal with the difference plotting modes and get the correct backend
@@ -965,22 +996,7 @@ class Plotter:
         # else we may have to plot graphs to the screen so we need to use
         #    a more fancy backend (but not MacOSX)
         else:
-            # fix for MacOSX plots freezing
-            gui_env = ['Qt5Agg', 'Qt4Agg', 'GTKAgg', 'TKAgg', 'WXAgg', 'Agg']
-            for gui in gui_env:
-                # noinspection PyBroadException
-                try:
-                    matplotlib.use(gui, warn=False, force=True)
-                    import matplotlib.pyplot as plt
-                    from mpl_toolkits import axes_grid1
-                    self.plt = plt
-                    self.matplotlib = matplotlib
-                    self.axes_grid1 = axes_grid1
-                    PLT_MOD = plt
-                    MPL_MOD = axes_grid1
-                    break
-                except Exception as _:
-                    continue
+            self.set_interactive()
         # ------------------------------------------------------------------
         # get backend
         self.backend = matplotlib.get_backend()
@@ -1087,7 +1103,6 @@ def main(params, graph_name, mode=2, **kwargs):
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
     __NAME__ = 'cal_dark_spirou.py'
-    import sys
     sys.argv = 'cal_dark_spirou.py 2018-09-24 2305769d_pp.fits'.split()
     from apero.recipes.spirou import cal_dark_spirou
     _recipe, _params = cal_dark_spirou.main(DEBUG0000=True)
@@ -1104,7 +1119,6 @@ if __name__ == "__main__":
     _params.set('PLOT_TEST2', value=True)
     _params.set('PLOT_TEST3', value=True)
     plotter = Plotter(_params, _recipe)
-    import numpy as np
     x = np.arange(-10, 10)
     y = x ** 2
     plotter('TEST1', x=x, y=y, colour='red')

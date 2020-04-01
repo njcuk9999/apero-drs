@@ -29,12 +29,13 @@ BACKUP_PATH = './locale/backup/'
 # define the database (xls file)
 DATABASE_FILE = 'language.xls'
 # define the database names (sheet names in the xls file)
-DATABASE_NAMES = ['HELP', 'ERROR', 'HELP_SPIROU', 'ERROR_SPIROU', 'HELP_NIRPS',
-                  'ERROR_NIRPS']
+# TODO: This needs manually adding for new instrument
+DATABASE_NAMES = ['HELP', 'ERROR', 'HELP_SPIROU', 'ERROR_SPIROU',
+                  'HELP_NIRPS_HA', 'ERROR_NIRPS_HA']
 # define the csv output filenames
+# TODO: This needs manually adding for new instrument
 OUTPUT_NAMES = ['help.csv', 'error.csv', 'help_spirou.csv', 'error_spirou.csv',
-                'help_nirps.csv', 'error_nirps.csv']
-# BADCODES
+                'help_nirps_ha.csv', 'error_nirps_ha.csv']
 
 # define the pandas module
 PANDAS_MODULE = 'pandas'

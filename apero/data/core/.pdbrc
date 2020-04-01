@@ -10,21 +10,25 @@ print("     - type 'list' to list code ")
 print("     - type 'up' to go up a level ")
 print("     - type 'interact' to go to an interactive shell ")
 print("     - type 'print(variable)' to print a variable ")
-print("     - type 'continue' to exit ")
+print("     - type 'c' or 'continue' to exit ")
+print("     - type 'ipython' to enter IPython console"
 print("     - type 'help' to see all commands ")
+print("     - type 'exit' to completely quit python/ipython"
 print("")
 print("   Note: Do not type exit in ipdb/pdb")
 print("")
 print(" =======================================================")
 print("")
 print("")
-
-# go twice up a level to return to breakpoint/__main__
-up
-up
-
-print("Entering IPython (exit to to to ipdb/pdb)")
+print("Entering IPython (exit to ipdb/pdb)")
 print("")
 
+# set up aliases
+alias ipython from IPython import embed; embed(colors="neutral")
+
+# go twice up a level to return to breakpoint/__main__
+{up}
+
+# go to ipython shell
 from IPython import embed
 embed(colors="neutral")

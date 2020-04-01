@@ -2,13 +2,1201 @@ Changelog
 =========
 
 
-0.6.016 (2020-01-07)
+0.6.063 (2020-04-01)
 --------------------
+- Apero.data.spirou.reset.runs.mini_run.ini - turn off MKTELLDB and
+  FTELLDB runs (use individuals) [njcuk9999]
+- Apero.recipes.spirou.cal_leak_spirou.py - qcparams is a dict --> user
+  ref fiber. [njcuk9999]
+- Apero.recipes.spirou.cal_leak_spirou.py - add qc to log.fits.
+  [njcuk9999]
+- Core.instruments.default.recipe_definitions.py - master is reserved
+  keyword --master --> --mlog. [njcuk9999]
+- Recipe.spirou.expmeter_spirou.py - continue work on exposuremeter.
+  [Neil Cook]
+- Science.telluric.general.py - fix core.get_file_definition. [Neil
+  Cook]
+- Tools.recipe.spirou.expmeter_spirou.py - add params to arguments of
+  simage_to_drs. [Neil Cook]
+- Tools.module.utils.inverse.py - add required keys. [Neil Cook]
+- Science.telluric.general.py - provide fiber fot TELLU_CONV. [Neil
+  Cook]
+- Tools.recipes.spirou.expmeter_spirou.py - add telluric map (from mask
+  making) - UNFINISHED. [Neil Cook]
+- Tools.module.utils.inverse.py - move imports to top. [Neil Cook]
+- Science.telluric.general.py - add second way to get TELLU_CONV if not
+  defined in outputs. [Neil Cook]
+- Io.drs_fits.py - add two conditions to find files with fibers _fiber_
+  or _fiber. [Neil Cook]
+- Tools.recipes.spirou.expmeter_spirou.py - add changes to use
+  inverse.py code. [njcuk9999]
+- Tools.module.utils.inverse.py - add drs_image_shape function and
+  reference full image size from params and make
+  calc_central_localisation take filename or header. [njcuk9999]
+- Core.instruments.*.default_constants.py - add in IMAGE_X_FULL and
+  IMAGE_Y_FULL (for reference) [njcuk9999]
+- Core.instruments.default.pseudo_const.py - add INDIVIDUAL_FIBERS
+  function. [njcuk9999]
+- Tools.module.utils.inverse.py - add changes with order profile. [Neil
+  Cook]
+- Update version/date/documentation/changelog. [Neil Cook]
+
+
+0.6.062 (2020-03-31)
+--------------------
+- Tools.module.utils.inverse.py - test out making straight image and
+  shifting by x and y. [Neil Cook]
+- Core.core.drs_log.py - correct typo ('DRS_RECIPE_KIND' is not None)
+  --> (params['DRS_RECIPE_KIND'] is not None) [Neil Cook]
+- Core.core.drs_log.py - deal with DRS_DATA_MSG_FULL set to None. [Neil
+  Cook]
+- Core.isntruments.default.default_config.py - add to __ALL__ [Neil
+  Cook]
+- Core.isntruments.default.default_config.py - add some constant that
+  are set in drs_setup (for when we are not using setup) [Neil Cook]
+- Science.calib.general.py - check that inputs is in params (may not be)
+  [Neil Cook]
+- Core.core.drs_recipe.py - add a quick way to make a recipe (using
+  params) [Neil Cook]
+- Tools.recipes.spirou.exposuremeter_spirou.py and
+  module.utils.inverse.py - start work on inversing drs (exspoure meter
+  etc) [njcuk9999]
+- Core.core.drs_recipe.py - directory must be an absolute path (if we
+  are in the reduced folder it wont be without these changes --> causes
+  an error later) [njcuk9999]
+- Core.core.drs_argument.py - paths for commonpath must be absolute -->
+  enforce this explicitly. [njcuk9999]
+- Core.core.drs_argument.py - add breakpoint to test error. [njcuk9999]
+- Core.core.drs_recipe.py - break_point to test error. [njcuk9999]
+- Core.core.drs_recipe.py - deal with sys.argv having a full path as
+  first argument (don't know why this is happening) [njcuk9999]
+- Core.core.drs_recipe.py - remove path from recipe name (for argparse)
+  [njcuk9999]
+- Science.velocity.general.py - add EA changes from new_ccf_code test.
+  [njcuk9999]
+- Misc.problems.new_ccf_code.py - add EA fixes. [njcuk9999]
+
+
+0.6.061 (2020-03-29)
+--------------------
+- Science.telluric.general.py - correc typo KW_FTELLU_TEMP -->
+  KW_FTELLU_TEMPLATE. [Neil Cook]
+
+
+0.6.060 (2020-03-28)
+--------------------
+- Misc.problems.new_ccf_code.py - add comments. [Neil Cook]
+- Misc.problems.new_ccf_code.py - add better plot for EA. [Neil Cook]
+- Misc/problems/new_ccf_code.py - correction to stand alone ccf code.
+  [njcuk9999]
+- Misc/problems/new_ccf_code.py - stand alone test of ccf code.
+  [njcuk9999]
+- Science.velocity.general.py - add in the condition that targetrv is
+  equal to the null value (-9999.99 for spirou) [njcuk9999]
+- Update language database. [njcuk9999]
+- Core.instruments.*.default_constants.py - add CCF_OBJRV_NULL_VAL.
+  [njcuk9999]
+- Core.instruments.spirou.default_keywords.py - correct typo
+  KW_FTELLU_TEMPLATEKW_FTELLU_TEMPLATE --> KW_FTELLU_TEMPLATE.
+  [njcuk9999]
+- Recipes.spirou.obj_fit_tellu_spirou.py and science.telluric.general.py
+  - add a keyword for which template was used (or if not set to None)
+  [njcuk9999]
+- Core.instruments.*.default_keywords.py - add KW_FTELLU_TEMPLATE.
+  [njcuk9999]
+- Core.core.drs_file.py - change drs_path() --> drs_path.numpy_load()
+  [njcuk9999]
+- Core.core.drs_database.py + drs_file.py io.drs_path.py
+  science.telluric.general.py - replace np.load with drs_path function
+  (mitigate certain errors?) [njcuk9999]
+
+
+0.6.059 (2020-03-26)
+--------------------
+- Update date/version/changelog/documentation. [njcuk9999]
+- Core.core.drs_database.py - fix typo master in entries --> master in
+  entries.colnames. [Neil Cook]
+- Core.core.drs_database.py - add break point to test database error.
+  [njcuk9999]
+- Science.extract.general.py - correct leakage correction (extimage -->
+  extimage[order_num]) [njcuk9999]
+- Science.velocity.general.py - add breakpoint to test error.
+  [njcuk9999]
+- Science.velocity.general.py - null value of targetrv is not NaN - if
+  so deal with it. [njcuk9999]
+- Core.instruments.spirou.recipe_definitions.py - change default_ref of
+  ccf to CCF_NO_RV_VAL. [njcuk9999]
+- Core.instruments.default.default_constants.py - add CCF_NO_RV_VAL (set
+  to np.nan) [njcuk9999]
+- Update language database. [njcuk9999]
+- Io.drs_lock.py - add exceptions and warnings for os.remove and
+  os.removedirs (should not crash in lock) [njcuk9999]
+- Core.instruments.spirou.recipe_definitions.py - change ccf --rv
+  default from None to 'None' [njcuk9999]
+- Core.instruments.*.default_config.py - add TELLU_DB_MATCH and
+  DB_MATCH. [njcuk9999]
+- Core.core.drs_file.py locale.core.drs_text.py and
+  science.telluric.general.py - allow np.load to have allow_pickle.
+  [njcuk9999]
+- Core.core.drs_database.py - add a different db match for telluric and
+  calibration database. [njcuk9999]
+
+
+0.6.058 (2020-03-24)
+--------------------
+- Tools.module.setup.drs_processing.py - correct test for TEST_RUN.
+  [njcuk9999]
+- Tools.recipes.bin.apero_processing.py - add breakpoint. [njcuk9999]
+- Tools.recipes.bin.apero_processing.py - remove breakpoint. [njcuk9999]
+- Core.instruments.spirou.recipe_definitions.py - update leak files in
+  sequences (should be e2dsff fiber AB) [njcuk9999]
+- Tools.module.setup.drs_processing.py - change message when just a
+  test. [njcuk9999]
+- Recipes.bin.apero_processing.py - add breakpoint to test leakage
+  error. [njcuk9999]
+- Core.instruments.spirou.recipe_definitions.py - change cal_leak
+  inputtype e2ds --> reduced. [njcuk9999]
+- Core.core.drs_database.py - 'master' should only be used for databases
+  with 'master' column. [njcuk9999]
+- Data.spirou.reset.runs - update run.ini files. [njcuk9999]
+- Tools.module.setup.drs_processing.py - do not check for master if
+  recipe is None. [njcuk9999]
+- Science.velocity.general.py - add warning to suppress warning about
+  NaNs in greater than mask. [njcuk9999]
+- Science.velocity.general.py - add threshold for the blaze. [Neil Cook]
+- Update language database. [njcuk9999]
+- Science.velocity.general.py - mask mask_centers and mask_weights to
+  just fall in the order in question. [njcuk9999]
+- Core.instruments.*.default_keywords.py - change WNTDWAVEB -->
+  WNTDWAVB. [njcuk9999]
+- Cal_wave_night_spirou.py - add breakpoint to investigate bug.
+  [njcuk9999]
+- Core.instruemnts.spirou.recipe_defintions.py - cal_leak should not be
+  a master recipe. [njcuk9999]
+
+
+0.6.057 (2020-03-24)
+--------------------
+- Apero.tools.module.setup and setup/*.py - add newprofile script to add
+  a new profile quickly (copy of currently in use) [njcuk9999]
+- Science.velocity.general.py - need to set ccf to NaN if mask has no
+  values for this order. [njcuk9999]
+- Update language database. [njcuk9999]
+- Science.velocity.general.py - add breakpoint to test error.
+  [njcuk9999]
+- Science.velocity.general.py - add a nansum to ccf_ord. [njcuk9999]
+- Science.velocity.general.py - add a nansum to ccf_ord. [njcuk9999]
+- Science.velocity.general.py - add break point. [njcuk9999]
+- Recipes.spirou.cal_badpix_spirou.py - remove breakpoint in cal_badpix.
+  [njcuk9999]
+- Tools.module.setup.drs_processing.py - correct --master   ==True -->
+  True. [njcuk9999]
+- Tools.module.setup.drs_processing.py - add --master=True. [njcuk9999]
+- Core.core.drs_argument.py -  --master now has to be True or False.
+  [njcuk9999]
+- Core.core.drs_argument.py - correct wlog type (should be debug)
+  [njcuk9999]
+- Update language database. [njcuk9999]
+- Core.core.drs_argument.py - update _IsMaster function (no arguments)
+  [njcuk9999]
+- Tools.module.setup.drs_processing.py - change master arg to have no
+  arguments. [njcuk9999]
+- Tools.module.setup.drs_processing.py - add push to add --master arg
+  for master recipes. [njcuk9999]
+- Recipes.spirou.cal_badpix_spirou.py - add break point (to test)
+  [njcuk9999]
+- Update language database. [njcuk9999]
+- Core.core.drs_startup.py - add comment for debug_key. [njcuk9999]
+- Core.core.drs_recipe.py - get master from input_parameters and update
+  'IS_MASTER' if True. [njcuk9999]
+- Core.core.drs_database.py - remove is_master from database get_entry,
+  now modify mask2 (always keep master calibrations) [njcuk9999]
+- Core.core.drs_argument.py - add is_master argument (make any recipe a
+  master) [njcuk9999]
+- Update language database. [njcuk9999]
+- Data.*.reset.calibdb.master_calib_*.txt - add master column to default
+  master db files. [njcuk9999]
+- Core.instruments.*.default_config.py - add column to calib_db_cols
+  (master) [njcuk9999]
+- Core.core.drs_database.py - add column to calibration database
+  (master) and if recipe is master except from "older" [njcuk9999]
+
+
+0.6.056 (2020-03-22)
+--------------------
+- Core.instruments.spirou.file_defintions.py - save badpix from dark not
+  flat. [njcuk9999]
+- Update language database. [njcuk9999]
+- Core.core.drs_database.py - correct error message 00-002-00006.
+  [njcuk9999]
+- Core.instruments.*.pseudo_const.py - add MASTER_DB_KEYS function.
+  [njcuk9999]
+- Core.drs_database.py - get master keys from pseudo consts. [njcuk9999]
+- Core.core.drs_startup.py - add a IS_MASTER key to params (True when
+  recipe is a master recipe) [njcuk9999]
+- Core.core.drs_database.py - if database case = 'older' and we have a
+  master but no older use closest. [njcuk9999]
+
+
+0.6.055 (2020-03-22)
+--------------------
+- Io.drs_fits.py - pep8 change. [njcuk9999]
+- Core.instruemnts.*.pseduo_const.py - BERV outputs should use BERV key
+  (make it clear) [njcuk9999]
+- Core.instruments.*.default_keywords.py - update KW_MID_OBSTIME_METHOD
+  (more consistent) [njcuk9999]
+- Core.core.drs_recipe.py - only check required for dtype = file/files.
+  [njcuk9999]
+- Core.core.drs_argument.py - DrsArgument required is True by default
+  for args and False by default for kwargs. [njcuk9999]
+- Core.instruments.*.pseudo_const.py - correct typo need first element
+  in list (not the list itself) [njcuk9999]
+- Core.instruments.*.pseudo_const.py - correct typo KW_OBNAME ->
+  KW_OBJNAME. [njcuk9999]
+- .gitignore - ignore all python files in tools. [njcuk9999]
+- Tools.module.setup.drs_processing.py - fix nightname needed for non-
+  trigger run. [njcuk9999]
+- Data.spirou.rset.runs - update run.ini files with leakage codes.
+  [njcuk9999]
+- Core.instruments.spirou.recipe_defintions.py - update the sequences
+  with leakage codes. [njcuk9999]
+- Data.spirou.reset.calibdb.master_calib_SPIROU.txt - add default leak
+  master files to calibDB (only to use when we don't have any files)
+  [njcuk9999]
+- Data.spirou.ccf - add new masks from Andres. [njcuk9999]
+- Data.reset.calibdb - add MASTER_LEAK files. [njcuk9999]
+- Science.velocity.general.py - deal with unset targetrv (input target
+  rv for ccf) - if unset try to get key from header - else set it to
+  zero. [njcuk9999]
+- Core.instruments.spirou.recipe_definitions.py - change the default
+  value of --rv (for ccf) to None (i.e. unset) [njcuk9999]
+- Core.instruments.spirou.default_constants.py - change default mask to
+  masque_sept18_andres_trans50.mas. [njcuk9999]
+- Core.instruments.*.default_config.py - change CALIB_DB_MATCH to
+  'older' - no matter where on a night we are it should always use
+  calibrations before. [njcuk9999]
+- Core.instruments.*.pseduo_const.py - add fix for object name having
+  spaces (#Issue 598) -- now have key DRSOBJN. [njcuk9999]
+- Core.instruments.*.default_keywords.py - add OBJECTNAME and change
+  OBJNAME to DRSOBJN (new keyword just for drs) [njcuk9999]
+- Update date/version/changelog/documentation. [Neil Cook]
+
+
+0.6.054 (2020-03-10)
+--------------------
+- Sciecne.extract.general.py - continue adding leak functionality. [Neil
+  Cook]
+- Apero.science.calib.flat_blaze.py - allow flat to be loaded quietly.
+  [Neil Cook]
+- Recipes.spirou.cal_leak_spirou.py - continue work on EA implementation
+  - add save_uncorrected_ext_fp and write_leak functions. [Neil Cook]
+- Recipes.spirou.cal_leak_master_spirou.py - add cprops (for header
+  keys) and pipe to write_leak_master. [Neil Cook]
+- Update language database. [Neil Cook]
+- Io.drs_strings.py - add module for generic string manipulation [TODO:
+  find other generic functions and move here] [Neil Cook]
+- Io.drs_path.py - add copyfile function (with logging) [Neil Cook]
+- Core.instruments.*.default_keywords.py - add LEAK header keywords.
+  [Neil Cook]
+- Core.instruments.*.file_definitions.py - add out_leak_master to
+  out_file set and calib_file set. [Neil Cook]
+- Core.instruments.*.defalut_constants.py - add LEAK and EXT_S1D
+  parameters. [Neil Cook]
+- Core.core.drs_file.py - add an include/exclude part to wild cards so
+  we can search header for specific header keys + add get_qckeys method.
+  [Neil Cook]
+
+
+0.6.053 (2020-03-09)
+--------------------
+- Recipes.spirou.cal_leak_spirou.py and science.extract.general.py - add
+  function `dark_fp_regen_s1d` [Neil Cook]
+- Recipes.*.cal_extract_*.py - get s1d infile from params
+  (EXT_S1D_INTYPE) formally hardcoded to E2DSFF. [Neil Cook]
+- Core.instruments.*.default_constants.py - add EXT_S1D_INTYPE to
+  constants. [Neil Cook]
+- Core.instruments.*.default_constants.py - add EXT_S1D_INTYPE to
+  constants. [Neil Cook]
+- Recipe.spirou.cal_leak_spirou.py and science.extract.general.py - add
+  outputs to extgen.correct_dark_fp function and make changes to
+  function return. [Neil Cook]
+- Documentation.working._static.yed.spirou_all.graphml - save flow
+  diagram for spirou. [Neil Cook]
+- Tools.module.setup.drs_processing.py - fix call to _linear_process
+  `group` should be a keyword argument (Issue #599) [Neil Cook]
+- Core.instruments.spirou.default_keywords.py - update rv keyword OBSRV
+  --> OBJRV. [Neil Cook]
+
+
+0.6.052 (2020-03-05)
+--------------------
+- Cal_leak_master_spirou.py - deal num_files = 0. [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.instruments.*.default_constants.py - add blaze_norm_percentile
+  (CCF_BLAZE_NORM_PERCENTILE) [Neil Cook]
+- Science.velocity.general.py - EA corrections to RV CCF (normalisation)
+  [Neil Cook]
+
+
+0.6.051 (2020-03-04)
+--------------------
+- Science.extract.general.py - add leak functions. [Neil Cook]
+- Apero.recipes.spirou.cal_leak_spirou.py - continue with EA adaptation.
+  [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.isntruments.spirou.recipe_definitons.py - update cal_leak. [Neil
+  Cook]
+- Core.instruments.spirou.default_constants.py - comment these out for
+  now. [Neil Cook]
+- Core.instruments.nirps_ha.default_keywords.py [APERO] - add
+  KW_LEAK_CORR. [Neil Cook]
+- Core.instruments.default.default_keywords.py - add KW_LEAK_CORR
+  keyword. [Neil Cook]
+
+
+0.6.050 (2020-03-03)
+--------------------
+- Science.extract.general.py [APERO] - add correct_master_dark_fp
+  correct_dark_fp master_dark_fp_cube get_extraction_files functions
+  [UNFINISHED] [Neil Cook]
+- Documentation.working._static.yed.spirou_map.graphml [APERO] - add
+  leak to spirou flow diagram. [Neil Cook]
+- Recipe.spirou.obj_mk_tellu_spirou.py [SPIROU] - correct typo. [Neil
+  Cook]
+- Recipes.spirou.cal_leak_spirou.py - first commit add start of cal_leak
+  code (from EA code) [Neil Cook]
+- Recipes.spirou.cal_leak_master_spirou.py - continue work on
+  implementing EA's code. [Neil Cook]
+- Update language database. [Neil Cook]
+- Io.drs_fits.py [APERO] - deal with not having nightname column for
+  tmp/reduced index files. [Neil Cook]
+- Core.instruments.*.recipe_definitions.py - update cal_leak_master and
+  add cal_leak. [Neil Cook]
+- Core.instruments.*.file_definitions.py [APERO] - set intype for
+  out_leak_master. [Neil Cook]
+- Core.instruments.*.pseudo_const.py - add FIBER_KINDS (science and
+  reference) [Neil Cook]
+- Core.instruments.*.default_constants.py [APERO] - add LEAKM and LEAK
+  constants. [Neil Cook]
+- Core.core.drs_file.py [APERO] - read_header_key_1d_list - update input
+  and param dict. [Neil Cook]
+
+
+0.6.049 (2020-03-02)
+--------------------
+- Tools.module.setup.drs_processing.py [APERO] - move find_raw_files,
+  _get_path_and_check, _get_files to io.drs_fits. [Neil Cook]
+- Recipes.spirou.cal_leak_master_spirou.py [APERO] - first commit
+  [UNFINISHED] of the master leakage creation recipe. [Neil Cook]
+- Nrips_ha.cal_pp_master_nirps_ha.py [NIRPS] - add nirps master pp code
+  to get flat_flat mask. [Neil Cook]
+- Recipes.* and tools.* - correct call to drs_fits.find_files (now
+  requires recipe for raw finding) [Neil Cook]
+- Io.drs_fits.py [APERO] - update find_files to correctly find raw
+  files, add find_raw_files function, move fix_header to here. [Neil
+  Cook]
+- Update language database. [Neil Cook]
+- Core.instruments.nirps_ha.file_definitions.py [NIRPS] - replace fiber
+  AB,A,B,C with A,B. [Neil Cook]
+- Core.instruments.spirou.file_definitions.py [SPIROU] - add
+  out_leak_master. [Neil Cook]
+- Core.instruments.spirou.default_constants.py - add
+  ALLOWED_LEAKM_TYPES. [Neil Cook]
+- Core.instruments.*.recipe_definitions.py [APERO] - move DrsRecipe
+  construction closer to each recipe + add to recipe list + add
+  cal_leak_master + add cal_pp_master. [Neil Cook]
+- Core.instruments.*.pseudo_const.py [APERO] - add VALID_RAW_FILES to
+  instruments seperately. [Neil Cook]
+- Core.instruments.nirps_ha.file_definitions.py [NIRPS] - add
+  out_pp_master file for the mask master flat pp file + add
+  out_leak_master for leak_master code + remove polar file definitions.
+  [Neil Cook]
+- Core.instruments.nirps_ha.default_keywords.py - add a PPMSTR_NSIG
+  keyword to keep track when it is used. [Neil Cook]
+- Core.instruments.nirps_ha.default_constants.py - add ALLOWED_PPM_TYPES
+  PPM_MASK_NSIG PP_MEDAMP_BINSIZE and ALLOWED_LEAKM_TYPES. [Neil Cook]
+- Default.default_keywords.py [NIRPS] - add PPMSTR_NSIG constants (for
+  nirps pp correction) [Neil Cook]
+- Core.instruments.default.default_constants.py - add PPM and LEAKM
+  keywords. [Neil Cook]
+- Core.core.drs_startup.py - deal with case in find_files where we do
+  not have full params set up yet (i.e. WLOG will crash) --> raise
+  ConfigError. [Neil Cook]
+- Core.core.drs_recipe.py - when we have a master recipe set directory
+  from params['MASTER_NIGHT'] [Neil Cook]
+- Update changelog/date/version/documentation. [Neil Cook]
+- Update changelog/date/version/documentation. [Neil Cook]
+
+
+0.6.048 (2020-02-28)
+--------------------
+- Documentation.working.user.general.todo.rst - update todo list. [Neil
+  Cook]
+- Tools.recipes.spirou.exposuremeter_spirou.py - first commit of
+  exposure meter code [UNFINISHED] [Neil Cook]
+- Tools.recipes.spirou - move cal_update_berv.py to tools. [Neil Cook]
+- Io.drs_fits.py - add "night" to find_files (to filter just one night)
+  [Neil Cook]
+- Update language database. [Neil Cook]
+- Tools.module.setup.drs_processing.py - correct NIGHT_NAME -->
+  NIGHTNAME and cause exception when TRIGGER=True and NIGHTNAME unset.
+  [Neil Cook]
+- Update run.ini files (NIGHT_NAME --> NIGHTNAME) [Neil Cook]
+- Tools.module.setup.drs_processing.py - update how filters are obtained
+  and add error when incorrect. [Neil Cook]
+- Update language database. [Neil Cook]
+- Data.spirou.reset.runs.trigger_night_calbi_run.ini - correct run and
+  skip pp parameters. [Neil Cook]
+- Readme.md - update sequences. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - add pp_run_opt
+  (preprocessing with options -- must turn all off to only select one)
+  [Neil Cook]
+- Data.spirou.reset.runs.trigger*.ini - add pp seqeunce elements. [Neil
+  Cook]
+- Tools.module.setup.drs_processing.py - add trigger from file. [Neil
+  Cook]
+- Core.instruments.spirou.recipe_defintions.py - add pp_run_sci sequence
+  (preprocess OBJ_DARK, OBJ_FP only) [Neil Cook]
+- Update run.ini files. [Neil Cook]
+- Core.core.drs_recipe.py - deal with having no files in a recipe that
+  requires files. [Neil Cook]
+- Update language database. [Neil Cook]
+- Tools.module.setup.drs_processing.py - add section to stop processing
+  recipes when we are in trigger mode. [Neil Cook]
+- Tools.module.setup.drs_processing.py - update_run_table needs to take
+  value from rlist if already populated. [Neil Cook]
+- Tools.module.setup.drs_processing.py - deal with trigger run when
+  removing engineering nights (i.e. deal with when we have no objects in
+  a directory) [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.instruments.default.recipe_defintions.py - update dtype for
+  --trigger argument. [Neil Cook]
+- Update language database. [Neil Cook]
+- Documentation.working.user.general.todo.rst - update todo list. [Neil
+  Cook]
+- Core.instruments.default.recipe_defintions.py - add --trigger option
+  to apero_processing.py. [Neil Cook]
+- Drs_installation.py -- check "clean" argument for update. [Neil Cook]
+- Setup.install.py - pass args to update. [Neil Cook]
+- Setup.install.py - print that we are locating install path. [Neil
+  Cook]
+- Tools.module.setup.drs_reset.py -- do not remove head when removing
+  paths in clean install. [Neil Cook]
+- Io.drs_lock.py - add checks in __remove_empty__ for symbolic links.
+  [Neil Cook]
+- Core.constants.param_functions.py - add check for stty for posix os.
+  [Neil Cook]
+- Update requirements (in .txt and install.py) [Neil Cook]
+- Update version/date/changelog/documentation. [Neil Cook]
+
+
+0.6.047 (2020-02-27)
+--------------------
+- Documentation.working.dev.developer_guide.rst [APERO] - add another
+  section todo. [Neil Cook]
+- Science.extract.general.py [APERO] - pep8 change. [Neil Cook]
+- Documentation.working.user.genearl.todo.rst - update todo list. [Neil
+  Cook]
+- Tools.recipe.bin.apero_go.py [APERO] - a program to aid finding where
+  data directories are (try `cd <quote>python apero_go.py INSTRUMENT
+  --data<quote>` to change to data dir. [Neil Cook]
+- Recipes.spirou.cal_wave_* - change how we update hc and fp files once
+  wave solution is updated (correct e2ds/e2dsff/e2dsll and remake
+  s1dw/s1dv) [Neil Cook]
+- Io.drs_lock.py - make all lock normal print outs debug print outs
+  (hide unless in debug mode) [Neil Cook]
+- Data.spirou.reset.runs.hc_run.ini - update run/skip section. [Neil
+  Cook]
+- Data.spirou.reset.runs.*.ini - update RUN_INI_FILES (more appropriate
+  names + updated values) [Neil Cook]
+- Core.instruments.*.recipe_defintions.py - add wave plot (extract_s1d)
+  [Neil Cook]
+- Core.instruments.default.recipe_definitions.py [APERO] - add
+  apero_go.py tools recipe. [Neil Cook]
+- README.md - add short name to sequence description. [Neil Cook]
+
+
+0.6.046 (2020-02-27)
+--------------------
+- Tools.recipe.bin.apero_processing.py - add a save stats call to save
+  to stats file. [Neil Cook]
+- Tools.module.setup.drs_processing.py [APERO] - save a stats fits and
+  stats txt to run folder (under stats) [Neil Cook]
+- Tools.module.setup.drs_installation.py - fix force resets without
+  warning. [Neil Cook]
+- Update language database. [Neil Cook]
+
+
+0.6.045 (2020-02-26)
+--------------------
+- Tools.module.setup.drs_installation.py - deal with tool sub-dirs not
+  existing (first time install) [Neil Cook]
+- ../setup/install.py - search up levels for apero. [Neil Cook]
+- Tools.module.setup.drs_installation.py - correct in_tool_path (how we
+  add bin sub-dir) [Neil Cook]
+- Tools.module.setup.drs_installation.py - correct valid_path for
+  validation recipe. [Neil Cook]
+- Tools.module.setup.drs_installation.py - make tool links generic
+  (based on sub-dirs) + make paths os independent. [Neil Cook]
+- Apero.tools.resources.setup.* - update paths to add multiple sub-
+  paths. [Neil Cook]
+- Apero.tools.recipes - move general --> bin and add instrument tool
+  directories. [Neil Cook]
+
+
+0.6.044 (2020-02-24)
+--------------------
+- Science.preprocessing.detector.py [NIRPS] - add nirps preprocessing
+  functions from EA [UNFINISHED + QUESTIONS] [Neil Cook]
+- Misc.nrips_tools.nirps_pp.py - copy over EA preprocessing code. [Neil
+  Cook]
+- Recipes.nirps_ha.cal_preprocess_nirps_ha.py [NIRPS] - copy over SPIROU
+  code and implement EA changes [UNFINISHED] [Neil Cook]
+- Core.math.general.py [APERO] - add medbin function. [Neil Cook]
+- Core.core.drs_startup.py - allow llmain to be dict or None (via Union)
+  [Neil Cook]
+
+
+0.6.043 (2020-02-22)
+--------------------
+- Update documentation. [Neil Cook]
+- Working.user.genearl.todo.rst - update todo list. [Neil Cook]
+- Misc.tools.apero_mtl_sync.py - finish off code (formally mtl_sync.py)
+  [Neil Cook]
+
+
+0.6.042 (2020-02-20)
+--------------------
+- Working.user.general.todo.rst [APERO] - update todo list. [Neil Cook]
+- Core.math.general.py [APERO] - pep8 change to robust nan std function.
+  [Neil Cook]
+- Data.nirps_ha.reset.calibdb.MASTER_WAVE_NIRPS_HA.fits - add a first
+  attempt at wave solution for NIRPS_HA from optical model. [Neil Cook]
+- Science.extract.general.py [NIRPS] - NIRPS does not have thermal make
+  these keys added to header conditional on presence in eprops. [Neil
+  Cook]
+- Science.calib.flat_blaze.py [NIRPS/SPIROU] - change keep, rms and nan
+  some outliers in flat. [Neil Cook]
+- Recipes.nirps_ha.cal_shape_nirps_ha.py [NIRPS] - convert cal_shape
+  from spirou code. [Neil Cook]
+- Recipes.nirps_ha.cal_shape_master_nirps_ha.py [NIRPS] - remove hc and
+  dxmap stuff from spirou code. [Neil Cook]
+- Recipes.nirps_ha.cal_flat_nirps.py [NIRPS] - add flat/blaze code
+  (converted from spirou) [Neil Cook]
+- Recipes.nirps_ha.cal_extract_nirps_ha.py [NIRPS] - add extraction code
+  (converted from spirou) [Neil Cook]
+- Update database. [Neil Cook]
+- Core.math.general.py - add robust_nanstd function. [Neil Cook]
+- Core.instruments.spirou.recipe_defintions.py - update shape master
+  help example. [Neil Cook]
+- Core.instruments.nirps_ha.recipe_defintions.py - remove hc
+  inputs/outputs from shape master. [Neil Cook]
+- Core.instruments.nirps_ha.pseudo_const.py [NIRPS] - update
+  FIBER_LOC_COEFF_EXT. [Neil Cook]
+- Core.instruments.nirps_ha.default_constants.py [NIRPS] - change
+  SHAPE_UNIQUE_FIBERS, QC_FF_MAX_RMS, EXT_RANGE1, EXT_RANGE2,
+  EXT_S1D_WAVEEND, EXTRACT_S1D_PLOT_ZOOM1, EXTRACT_S1D_PLOT_ZOOM2. [Neil
+  Cook]
+- Misc.tools.mtl_sync.py - remove requirement of using apero. [Neil
+  Cook]
+
+
+0.6.041 (2020-02-20)
+--------------------
+- Misc.tools.mtl_sync.py - first commit (code for users to get data from
+  montreal) [Neil Cook]
+- Remove unused doc files. [Neil Cook]
+- Update documentation. [Neil Cook]
+- Tools.module.documentation.drs_documentation.py - replace copy_tree
+  --> copytree (from drs_path) [Neil Cook]
+- Io.drs_path.py [APERO] - add copytree function (copies all files from
+  src to dst) [Neil Cook]
+- Apero.science.calib.shape.py - remove private functions in shape.
+  [Neil Cook]
+- Recipes.nirps_ha.cal_shape_master_nirps_ha.py - copy over code from
+  spirou. [Neil Cook]
+- Plotting.plot_functions.py [APERO] - update loc plot and shape plot.
+  [Neil Cook]
+- Data.*.reset [APERO] - update master wave solutions (distinguish
+  spirou and nirps_ha) [Neil Cook]
+- Core.instruments.*.file_defintions.py [APERO] - correct out_dark files
+  (suffix needs underscore) [Neil Cook]
+- Core.instruments.*.default_constants.py [NIRPS] - update loc constants
+  + update comment for LOC_COLUMN_SEP_FITTING. [Neil Cook]
+
+
+0.6.040 (2020-02-18)
+--------------------
+- Apero.science.calib.badpix.py and localisation.py [APERO] -
+  RAW_TO_PP_ROTATION and pep8 changes. [Neil Cook]
+- Recipes.spirou.cal_preprocess_spirou.py [SPIROU] - update header key
+  KW_BERV_OBSTIME_METHOD --> KW_MID_OBSTIME_METHOD. [Neil Cook]
+- Recipes.nirps_ha.*.py [NIRPS] - add cal_badpix, cal_dark_master,
+  cal_loc for nirps_ha. [Neil Cook]
+- Io.drs_image.py [APERO] - link rotate_image function to
+  math.genearl.rot8. [Neil Cook]
+- Io.drs_data.py [APERO] - fix arguments to error 00-012-00001. [Neil
+  Cook]
+- Update documentation. [Neil Cook]
+- Update documentation. [Neil Cook]
+- Data.nirps_ha [NIRPS] - rename data folder from nirps --> nirps_ha.
+  [Neil Cook]
+- Apero.core.math.general.py [APERO] - add rot8 function to deal with
+  rotation modes of images. [Neil Cook]
+- Core.instruments.spirou.default_constants.py - add RAW_TO_PP_ROTATION
+  value. [Neil Cook]
+- Core.instruments.nirps_ha.default_constants.py - tweak NIRPS values
+  from SPIROU values. [Neil Cook]
+- Core.instruments.default.recipe_definitions.py [APERO] - get
+  instruments from Constants. [Neil Cook]
+- Core.instruments.default.default_constants.py [APERO] - add
+  RAW_TO_PP_ROTATION constant. [Neil Cook]
+
+
+0.6.039 (2020-02-17)
+--------------------
+- Documentaqtion/working/dev/developer_guide.rst [APERO] - add github
+  interface as section. [Neil Cook]
+- Core.instruments.nirps_ha.recipe_definitions.py - change spirou
+  references to nirps_ha. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py [SPIROU] - rename
+  internal instance names obj_pol_spirou and obj_spec_spirou --> obj_pol
+  and obj_spec. [Neil Cook]
+- Documentation.working._static.yed.spirou_map_2020-01-22_all.graph
+  [SPIROU] - update yed graph. [Neil Cook]
+- Recipes.nirps_ha.cal_dark_nirps_ha.py - copy over spirou recipe. [Neil
+  Cook]
+- Update the language database [APERO] add nirps files as duplicates of
+  spirou for start. [Neil Cook]
+- Core.instruments.nirps_ha.pseudo_const.py [NIRPS] - update splash from
+  spirou --> nirps. [Neil Cook]
+- Core.instruments.deafult.default_config.py [NIRPS] - add NIRPS_HA to
+  list of instruments. [Neil Cook]
+- Tools.module.setup.drs_installation.py [APERO] - force userconfig to
+  have a os.sep as last character. [Neil Cook]
+- NIRPS: start config file copy. [Neil Cook]
+
+
+0.6.038 (2020-02-10)
+--------------------
+- Tools.recipes.general.apero_log_stats.py - remove hard coded path.
+  [Neil Cook]
+- Printout of the limited_run.ini on mini_data for apero_processing.py
+  2020-02-10 13:56:00. [Neil Cook]
+- Update yed graphs. [Neil Cook]
+- Update yed graphs. [Neil Cook]
+- Update changelog. [Neil Cook]
+- Update python versions, yed graphs and update notes. [Neil Cook]
+- Update readme/known_issues/todo. [Neil Cook]
+- Update date/version/changelog/documentation. [Neil Cook]
+
+
+0.6.037 (2020-02-07)
+--------------------
+- Core.core.drs_recipe.py - add a pre-filter of table (so we are not
+  scanning all files every time) [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - filelogic must be
+  exclusive for mk_tellu, fit_tellu and pol_spirou + update sequences
+  (only e2dsff not e2ds) [Neil Cook]
+- Documentation - add yed graphs. [Neil Cook]
+- Documentation.working - update python installation, code links. [Neil
+  Cook]
+- Documentation.output - update docs. [Neil Cook]
+- Tools.module.drs_documentation.py - update ssh host. [Neil Cook]
+- Update date/version/changelog/documentation. [Neil Cook]
+
+
+0.6.036 (2020-02-05)
+--------------------
+- Plotting.latex.py - must clean characters [ and ] - leads to error in
+  pdflatex. [Neil Cook]
+- Science.calib.wave.py + science.calib.wave1.py - update master wave to
+  look for all master wave types and generate new error if none found.
+  [Neil Cook]
+- Recipe.spirou.obj_mk_tellu_spirou.py + obj_fit_tellu_spirou.py -
+  update headers to use correct wave solutions for outputs. [Neil Cook]
+- Plotting.core.py - add numpy import. [Neil Cook]
+- Update language database. [Neil Cook]
+- Recipe.spirou.obj_mk_template_spirou.py and
+  science.telluric.general.py - update wave solution of template. [Neil
+  Cook]
+- Recipes.test.demo_spirou.py - add param dict section. [Neil Cook]
+- Spirou.recipe_definitions.py - add old_run (with no master/night wave)
+  [Neil Cook]
+
+
+0.6.035 (2020-02-04)
+--------------------
+- Update the language database. [Neil Cook]
+- Tools.module.testing.drs_dev.py - add a demo class to store demo
+  functions (keep out of demo as they would just confuse the point)
+  [Neil Cook]
+- Recipes.test.demo_spirou.py - add a recipe that demonstrates the
+  different features of APERO. [Neil Cook]
+- Locale.core.drs_text.py - add a language level in cache data so we are
+  name.instrument.language cache. [Neil Cook]
+- Locale.core.drs_lang_db.py - move dictionary to static call (once per
+  import) -- loads quicker. [Neil Cook]
+- Data.spirou.demo - add demo data. [Neil Cook]
+- Core.core.drs_log.py - correct the language must be a string not a
+  list. [Neil Cook]
+- Testing.drs_dev.py - add module to allow recipe definition to come
+  from recipe (used to add rmod to `core.setup`) [Neil Cook]
+- Science.extract.berv.py - use_pyasl in quiet mode in barycorrpy (just
+  for calculating bervmax) [Neil Cook]
+- Science.extract.berv.py - allow berv to be calculated quietly. [Neil
+  Cook]
+- Core.core.drs_startup.py - allow recipe definition to come from input
+  (i.e. define in recipe - for initial testing) [Neil Cook]
+- Add new blank codes with recipe definition inline. [Neil Cook]
+- Remove `from __future__ import division` imports (no longer supporting
+  python 2) [Neil Cook]
+- Misc.tools.cal_update_berv.py - add switch for skipping. [Neil Cook]
+- Apero.science.extract.berv.py - use pyasl to measure berv maximum.
+  [Neil Cook]
+- Misc.tools.cal_update_berv.py - update .write-->.write_file. [Neil
+  Cook]
+- Recipes.spirou.cal_wave_master_spirou + cal_wave_night_spirou - add
+  TODOs to update s1d files AFTER new wave solution generated. [Neil
+  Cook]
+- Apero.plotting.plot_functions.py - deal with all NaNs in flux[mask] -
+  only set ylim if values are finite. [Neil Cook]
+- Apero.plotting.core.py - add a set_interactive method to try to change
+  backend. [Neil Cook]
+
+
+0.6.034 (2020-02-03)
+--------------------
+- Documentation.working.dev.developer_guide.rst - add more sections to
+  dev section [UNFILLED] [Neil Cook]
+- Update language databases. [Neil Cook]
+- Core.core.drs_file.py - change get_keyword_instance --> get_instanceof
+  (more generic) [Neil Cook]
+- Core.constants.param_functions.py - write all doc strings [UNFINISHED]
+  up to end of ParamDict. [Neil Cook]
+- Core.constants.constant_functions.py - fill out all doc-strings. [Neil
+  Cook]
+- Core.cosntants.__init__.py - add comment to catch_sigint. [Neil Cook]
+- README.md - add changes to sequences (now doing cal_wave_master) [Neil
+  Cook]
+- Update date/version/changelog/documentation. [Neil Cook]
+
+
+0.6.033 (2020-01-31)
+--------------------
+- Add flow diagram for locking wait times. [Neil Cook]
+- Plotting.latex.py - add switch to turn on/off latex pdf making + add
+  fix to latex command to make it non-interactive (Issue #586) [Neil
+  Cook]
+- Plotting.latex.py - add `-interaction=nonstopmode` to not allow latex
+  to pause running on error. [Neil Cook]
+- Core.core.drs_recipe.py - remove breakpoint. [Neil Cook]
+- Tools.module.setup.drs_processing.py - deal with unset event (non-
+  parallel process) [Neil Cook]
+- Core.core.drs_argument.py - make sure reicpe is updated before we run
+  display_func. [Neil Cook]
+- Core.instruments.default.default_config.py - update the value of debug
+  mode (only print at debug>=10) [Neil Cook]
+- Core.constants.constants_functions.py - update types in doc string.
+  [Neil Cook]
+- Core.core.drs_recipe.py - move break_point to exception. [Neil Cook]
+- Core.core.drs_recipe.py - add breakpoint to address error. [Neil Cook]
+- Core.core.drs_recipe.py - add breakpoint to address error. [Neil Cook]
+- Constants.constant_functions.py - add doc strings. [Neil Cook]
+- Core.core.drs_file.py - add display_funcs and pep8 changes. [Neil
+  Cook]
+
+
+0.6.032 (2020-01-30)
+--------------------
+- Dark_fp_run.ini - add dark fp run script. [Neil Cook]
+- Core.instruments.spirou.recipe_defintions.py - add pp_run and
+  dark_fp_run sequences. [Neil Cook]
+- Io.drs_lock.py - make sure we do not remove lock path
+  (`drs_msg_path/lock/`) [Neil Cook]
+
+
+0.6.031 (2020-01-29)
+--------------------
+- Core.core.drs_file.py - update display_func for hkeys_exist. [Neil
+  Cook]
+- Core.core.drs_argument.py - add comments to special arg make functions
+  + display func to DrsArgument. [Neil Cook]
+- Core.core.drs_argument.py - add display func + pep8 corrections. [Neil
+  Cook]
+- Core.core.drs_recipe.py - change DRSArgumentParser -->
+  DrsArgumentParser. [Neil Cook]
+- Core.core.drs_argument.py - add display_funcs and comments for Parser
+  functions. [Neil Cook]
+- Misc.updates_to_drs.mk_night_wave.py - add dymanic paths to EA code.
+  [Neil Cook]
+- Science.extract.telluric.general.py - change read --> readfits. [Neil
+  Cook]
+- Science.extract.general.py - change read --> read_file. [Neil Cook]
+- Science.calib.background.py + badpix.py + dark.py - change read -->
+  readfits. [Neil Cook]
+- Recipe.spirou.cal_wave_night_spirou.py - pep8 changes. [Neil Cook]
+- Locale.core.drs_exceptions.py - add __main__ section. [Neil Cook]
+- Io.drs_fits.py - change read --> readfits. [Neil Cook]
+- Drs_data.py - change read --> readfits. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - add force extract
+  options. [Neil Cook]
+- Locale.core.drs_lang_db.py - move constant/params text to dict (linked
+  to language database) [Neil Cook]
+- Core.core.drs_file.py - change read --> read file. [Neil Cook]
+- Core.core.drs_database.py - change read to readfits (and
+  read_database) [Neil Cook]
+- Core.constant.param_functions.py - add display_func and comments.
+  [Neil Cook]
+- Core.constants.constant_function.py - add comments and display func.
+  [Neil Cook]
+- Update language database. [Neil Cook]
+
+
+0.6.030 (2020-01-28)
+--------------------
+- Plotting.plot_functions.py - pep8 clean up. [Neil Cook]
+- Science.calib.wave1.py - add hclines and fplines arguments to
+  get_master_lines (to get lists from file) and for reference file use
+  these arguments to start with the master. [Neil Cook]
+- Plotting.plot_functions.py - copy x and y in wave night plot function
+  and catch nan in greater than less than with the "with warnings"
+  command. [Neil Cook]
+- Add display_func. [Neil Cook]
+- Update date/version/changelog/documentation. [Neil Cook]
+
+
+0.6.029 (2020-01-27)
+--------------------
+- Data.spirou.reset.runs.limited_run.ini - update default
+  limited_run.ini. [Neil Cook]
+- Update spirou flow map. [Neil Cook]
+- Recipes.spirou.cal_wave_night_spirou.py - remove breakpoint. [Neil
+  Cook]
+- Locale.core.drs_exception.py - add wlogbasic (basicalogger wrapper
+  with same args as WLOG) [Neil Cook]
+- DrsFitsFile.read --> read_file. [Neil Cook]
+- Core.core.drs_log.py - move display_func main to param_functions -
+  keep here the use of wlog and textentry (too low in param_functions)
+  [Neil Cook]
+- Core.core.drs_file.py - add display_funcs and change read-->read_file.
+  [Neil Cook]
+- Core.core.drs_database.py - add display funcs. [Neil Cook]
+- Core.core.drs_argument.py - update func_name comments - no access to
+  inputs cannot breakfunc here. [Neil Cook]
+- Core.constants.constant_functions.py - add messages to show func_name
+  breakfunc can't work here (too low) [Neil Cook]
+- Recipes.spirou.cal_wave_night_spirou.py - correct typo set -->
+  set_sources. [Neil Cook]
+- Recipes.spirou.cal_wave_night_spirou.py - add rv properties to nprops.
+  [Neil Cook]
+- Science.calib.wave1.py - add wavefile, wavesource, nbo, deg to nprops.
+  [Neil Cook]
+- Core.core.drs_startup.py - breakpoint --> break_point. [Neil Cook]
+- Core.constants.__init__.py - breakpoint --> break_point. [Neil Cook]
+- Core.constants.param_functions.py - rename breakpoint --> break_point.
+  [Neil Cook]
+- Recipes.spirou.cal_wave_night_spirou.py - add breakpoint to check
+  errors. [Neil Cook]
+- Recipes.spirou.cal_wave_night_spirou.py - replace hcfile and fpfile
+  for hc_e2ds_file and fp_e2ds_file. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - key WAVE_NIGHT_WAVE
+  --> WAVEMAP_NIGHT. [Neil Cook]
+- Spirou_map -- update flow chart. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - add shape to master
+  sequence. [Neil Cook]
+- Spirou_map -- update flow chart. [Neil Cook]
+- Recipe.spirou.cal_shape_master_spirou.py - add way to load fpmaster
+  from file/calibDB -- FOR DEBUG ONLY. [Neil Cook]
+
+
+0.6.028 (2020-01-24)
+--------------------
+- Science.calib.shape.py - EA changes to shape (remove corr_dx_from_fp)
+  [Neil Cook]
+- Add new spirou flow maps. [Neil Cook]
+- Recipe.spirou.cal_shape_master_spirou.py - add breakpoint for
+  debugging. [Neil Cook]
+- Plotting.plot_functions.py - change corr_dx_from_fp_arr to shifts.
+  [Neil Cook]
+- Language database. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - add changes for wave
+  master/night. [Neil Cook]
+- Misc.tools.compare_e2ds.py - add code to compare used calibrations
+  between two e2ds files. [Neil Cook]
+- Update spirou flow graph maps. [Neil Cook]
+
+
+0.6.027 (2020-01-23)
+--------------------
+- Science.calib.wave1.py - corrections after EA changes. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - add rv plots to
+  cal_Wave_night definition. [Neil Cook]
+- Core.instruments.spirou.default_constants.py - adjust WAVE_LITTROW_QC
+  values. [Neil Cook]
+
+
+0.6.026 (2020-01-22)
+--------------------
+- Science.calib.wave1.py - disable the littrow QC (still breaking) [Neil
+  Cook]
+- Recipe.spirou.cal_wave_master_spirou.py + science.calib.wave1.py -
+  continue work on EA fixes. [Neil Cook]
+- Plotting.plot_functions.py - remove line and add markers to wave night
+  plot. [Neil Cook]
+- Core.math.general.py - deal with median = 0 (over half the points are
+  zero) [Neil Cook]
+- Core.instruments.*.default_constants.py +
+  core.instruments.spirou.recipe_defintions.py - add
+  PLOT_WAVENIGHT_HISTPLOT. [Neil Cook]
+- Documentation.working._static.yed - add yed diagrams. [Neil Cook]
+
+
+0.6.025 (2020-01-21)
+--------------------
+- Misc.tools.nirps_lsf.py - EA tool to get the line spread function for
+  NIRPS. [Neil Cook]
+- Recipes.spirou.cal_wave_master_spirou.py, cal_wave_night_spirou.py and
+  science.calib.wave1.py - continue work on EA changes to wave solution
+  master/night combo. [Neil Cook]
+- Update language database. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - correct cal_wave_night
+  outputs and plots. [Neil Cook]
+- Core.instruments.spirou.file_defintions.py - correct typo in
+  out_wavem_fp WAVE_FP --> WAVEM_FP. [Neil Cook]
+- Core.instruments.spirou.default_constants.py - update
+  WAVE_HC_TFIT_ORDER_FIT_CONT. [Neil Cook]
+- Core.core.drs_file.py - added exclude groups to copy_original_keys.
+  [Neil Cook]
+
+
+0.6.024 (2020-01-20)
+--------------------
+- Recipes/spirou.cal_wave_*.py + science.calib.wave*.py - continue work
+  on implementing EA changes. [Neil Cook]
+- Science.telluric.general.py - remove breakpoint. [Neil Cook]
+- Science.extract.general.py - correct add_wave_keys. [Neil Cook]
+- Plotting.plot_functions.py - correct where we get nbo + add title.
+  [Neil Cook]
+- Update language database. [Neil Cook]
+- Data.core..pdbrc - add alias commands to pdbrc for ease of use. [Neil
+  Cook]
+- Core.instruments.spirou.default_constants.py - change wave fit degree
+  from 4 --> 5 (EA: 4th order does not catch structure) [Neil Cook]
+- Core.core.drs_startup.py - add DebugExit class to catch pdb/ipdb
+  exits. [Neil Cook]
+- Core.core.drs_recipe.py - add make_breakfunc (special argument) [Neil
+  Cook]
+- Core.core.drs_log.py - allow display_func to have break at function
+  name (if --breakfunc used) [Neil Cook]
+- Core.core.drs_database.py - fix display func. [Neil Cook]
+- Core.constants.param_functions.py - fix breakpoint to have levels (set
+  by .pdbrc) [Neil Cook]
+- Core.core.drs_argument.py - add break function special argument. [Neil
+  Cook]
+
+
+0.6.023 (2020-01-17)
+--------------------
+- Io.drs_lock.py - add some randomisation to the 240 reset. [Neil Cook]
+- Io.drs_lock.py - reset the lock file after 240 seconds (can help with
+  stuck lock files) [Neil Cook]
+- Science.extract.berv.py - must define iteration for using
+  use_barycorrpy (due to locking -- both iterations will use same lock
+  files) [Neil Cook]
+- Recipes/spirou.cal_wave_master_spirou.py + science.calib.wave1.py -
+  make changes for cal_wave_master (UNFINISHED) [Neil Cook]
+- Science.calib.shape.py - fix poly_cavity (should be un-inverted) [Neil
+  Cook]
+- Io.drs_lock.py - need to re-check that path exists when creating lock
+  file. [Neil Cook]
+- Misc nirps directory. [Neil Cook]
+
+
+0.6.022 (2020-01-16)
+--------------------
+- Setup.install.py and pythoninstallion.rst - update recommended way to
+  install python and modules. [Neil Cook]
+- Setup/install.py - add comments on how installed (after installing
+  conda) [Neil Cook]
+- Reipces.spirou.cal_wave_master_spirou.py - add cavity_poly for FP
+  master lines (always use the most up-to-date version) [Neil Cook]
+- Science.calib.wave.py - move master line const to const file, move
+  location of cavity file, add valid line print out to get_master_lines,
+  add fp_fit paramets to llprops. [Neil Cook]
+- Science.calib.shape.py - replace getting cavity file from old to new
+  location (made in wave solution) [Neil Cook]
+- Recipe.spirou.cal_wave_master_spirou.py - make note that we need to
+  decide when/how to update cavity file. [Neil Cook]
+- Io.drs_data.py - remove cavity file loading. [Neil Cook]
+- Data.spirou.calib - update cavity files. [Neil Cook]
+- Core.instruments.*.deafult_constants.py - remove cavity length
+  constants. [Neil Cook]
+- Cal_wave_master_spirou.py - fix inputs to get_master_lines. [Neil
+  Cook]
+- Plotting.plot_functions.py - fix waveref plot (for get_master_lines)
+  [Neil Cook]
+- Core.instruments.spirou.file_definitions.py - fix pep8 + change
+  hclist_master nad fplist_master to drs_finput. [Neil Cook]
+- Core.instruments.*.default_constants.py - add WAVEREF constants. [Neil
+  Cook]
+
+
+0.6.021 (2020-01-15)
+--------------------
+- Science.calib.wave.py - correct typos. [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - change WAVEM_HCLL -->
+  WAVE_HCLL. [Neil Cook]
+- Core.instruments.spirou.file_definitions.py - remove WAVEHCLL master
+  (redundant) [Neil Cook]
+- Scuebce.telluric.general.py - add lower and upper bounds for hband
+  coming from constants. [Neil Cook]
+- Plotting.plot_functions.py - add better comments and fix pep8. [Neil
+  Cook]
+- Core.instruments.*.default_constants.py - add MKTELLU_HBAND_LOWER and
+  MKTELLU_HBAND_UPPER and change MKTELLU_QC_AIRMASS_DIFF from 0.1 -->
+  0.3. [Neil Cook]
+- Plotting.plot_functions.py - change style on plot point. [Neil Cook]
+- Science.telluric.general.py - only use good_domain for the absorption
+  fit. [Neil Cook]
+- Science.telluric.general.py - test of good_domain (1500 to 1750 nm)
+  [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py +
+  science.telluric.general.py - add --use_template. [Neil Cook]
+- Plotting.plot_functions.py - normalise for plotting. [Neil Cook]
+- Plotting.plot_functions.py - correct measured transmission for
+  plotting. [Neil Cook]
+- Plotting.plot_function.py + science.telluric.general.py - correct
+  plotting when having a template. [Neil Cook]
+- Science.telluric.general.py - add breakpoint. [Neil Cook]
+- Core.core.drs_log.py - fix typo lists should be appended for qc values
+  + add master log analysier (add to apero_log_stats later?) [Neil Cook]
+- Recipes.spirou.obj_mk_template_spirou.py - fix qc params when skipping
+  object (must be lists) [Neil Cook]
+
+
+0.6.020 (2020-01-14)
+--------------------
+- Core.core.drs_log.py - make log more readable + add qc  columns. [Neil
+  Cook]
+
+
+0.6.019 (2020-01-13)
+--------------------
+- Update master_tellu_SPIROU.txt. [Neil Cook]
+- Update documentation. [Neil Cook]
+- Update version/date/changelog/documentation. [Neil Cook]
+
+
+0.6.018 (2020-01-10)
+--------------------
+- Recipes.spirou.obj_mk_template_spirou.py - add logging for when file
+  is skipped (and qc passes) [Neil Cook]
+- Recipe.dev.apero_changelog.py and
+  module.documentation.drs_changelog.py - need to format changelog so it
+  works as .rst file (for documentation) [Neil Cook]
+- Update documentation. [Neil Cook]
+- Tools.module.documentation.drs_documentation.py - make sure we copy
+  the contents of output folder not the folder itself. [Neil Cook]
+- Tools.recipes.dev.apero_documentation.py - add update option to making
+  documentation (for updating doc website) [Neil Cook]
+- Tools.module.testing.drs_log_stats.py - make sure path is in nights
+  list + sort by htime. [Neil Cook]
+- Tools.resources.setup.apero.bash.setup* - correct typo -- missing
+  speech mark. [Neil Cook]
+- Science.calib.wave.py - seperate master and old wave writing functions
+  + add in night qc and write functions. [Neil Cook]
+- Cal_wave_night_spirou.py - add in ccf computation. [Neil Cook]
+- Cal_wave_master_spirou.py - change writing functions to master
+  functions (to separate from cal_wave -- old) - master now writes to
+  key WAVEM. [Neil Cook]
+- Update the master_*_SPIROU.txt files - default master files now
+  WAVEM_D_{fiber} [Neil Cook]
+- Core.instruments.spirou.recipe_definitions.py - need a set of files
+  for master (can remove non-master if we go with master/night recipes)
+  [Neil Cook]
+- Core.instruments.spirou.file_definitions.py - need a set of files for
+  master (can remove non-master if we go with master/night recipes)
+  [Neil Cook]
+- Core.instruments.spirou.default_keywords.py - group all wave header
+  keys. [Neil Cook]
+- Core.core.drs_startup.py - add argument 'required' to
+  get_file_definition to allow not finding a key and return None if this
+  is the case. [Neil Cook]
+- Core.core.drs_log.py - add pipes to the end of each qc to ease
+  splitting in log analysis. [Neil Cook]
+- Update language database. [Neil Cook]
+- Science.calib.wave.py - move logs to language database. [Neil Cook]
+- Setup.install.py - remove blank spaces. [Neil Cook]
+- Update date/version/changelog/documentation. [Neil Cook]
+
+
+0.6.017 (2020-01-08)
+--------------------
+- Setup.install.py - add dev section to modules (sphinx, ipdb,
+  gitchangelog) [Neil Cook]
+- Core.instruments.default.recipe_definitions.py - change dtype to
+  'bool' [Neil Cook]
+- Tools.recipe.general.apero_log_stats.py - allow saving of all the log
+  files to one file. [Neil Cook]
+- Tools.module.testing.drs_log_stats.py - update recipe print outs.
+  [Neil Cook]
+- Tools.module.testing.drs_log_stats.py - correct error/warn sample.
+  [Neil Cook]
+- Tools.module.testing.drs_log_stats.py - correct typo. [Neil Cook]
+- Tools.module.testing.drs_log_stats.py - keep all error/warning
+  messages and use error/warn samples to keep just one for each code.
+  [Neil Cook]
+- Update language database. [Neil Cook]
+- Tools.module.testing.drs_log.stats.py - add separations between
+  warnings/errors. [Neil Cook]
+- Tools.module.testing.drs_log_stats.py - add print out of unique
+  errors/warnings. [Neil Cook]
+- Tools.module.testing.drs_log_stats.py - change eval --> int. [Neil
+  Cook]
+- Drs_startup.py log file should use group (only used to save where log
+  files are correctly) [Neil Cook]
+- Tools.module.testing.drs_log_stats.py - try to locate log file if not
+  found immediately. [Neil Cook]
+- Tools.module.testing.drs_log_stats.py - add check if log file exists.
+  [Neil Cook]
+- Plotting.core.py - try fix to plt.show, plt.close. [Neil Cook]
+- Core.constants.constant_functions.py - add parent/author to set
+  method. [Neil Cook]
+- Correct README.md. [Neil Cook]
+- Sciecne.calib.wave.py - correct typo IC_LITTROW --> WAVE_LITTROW, move
+  wave night params to config. [Neil Cook]
+- Constants - start adding parents to keywords and add wave_night
+  constants. [Neil Cook]
+- Tools.module.testing.drs_log_stats.py - change where we get the log
+  fits file from. [Neil Cook]
+- Data/spirou/reset/runs/batch_run.ini - correct batch run as example of
+  EA mini_data. [Neil Cook]
+- Tools/resource/setup/* - update all environmental variables. [Neil
+  Cook]
+- Misc.tools.ccf_plot.py - basic plot to plot all ccfs for a given
+  object (minus the mean) [Neil Cook]
+- Setup.install.py - astropy must be v3.2 or greater. [Neil Cook]
+- Tools.recipes.dev.apero_changelog.py - update locations of docs. [Neil
+  Cook]
+- Tools.recipes.dev.apero_documentation - add codes to build
+  documentation [unfinished] [Neil Cook]
+- Re-build documentation. [Neil Cook]
+- Update documentation (add fontawesome icons) [Neil Cook]
+- Core.instruments.default.recipe_definitions.py - add remake_doc
+  (apero_documentation) to recipe definitions. [Neil Cook]
+- Reorganise documentation - move build into working dir and have an
+  output dir. [Neil Cook]
+- Update date/version/changelog. [Neil Cook]
 - Update docs - known_issues and todo. [Neil Cook]
 - Tools.module.documentation.drs_changelog.py - add function to update a
   file based on a prefix and add in a suffix. [Neil Cook]
 - Tools.recipes.dev.apero_changelog.py - add doc changes to changelog
   (including copying changelog) [Neil Cook]
+
+
+0.6.016 (2020-01-06)
+--------------------
 - Misc.updates_to_drs.mk_night_wave.py - question for EA. [Neil Cook]
 - Science.calib.wave.py - continue work adding wave night functions.
   [Neil Cook]
@@ -36,10 +1224,6 @@ Changelog
 - Setup/inall.py - add --name to install.py to allow different profiles
   to be set up on the same system. [Neil Cook]
 - Update changelog/version/date. [Neil Cook]
-
-
-0.6.015 (2020-01-04)
---------------------
 - Add apero-data and gitignore contents. [Neil Cook]
 - Core.instruments.default.deafult_config.py - change default locations
   to a relative location. [Neil Cook]
@@ -47,6 +1231,10 @@ Changelog
   (including lock) [Neil Cook]
 - Tools.recipe.general.apero_validate.py - remove recipe log from non-
   instrument recipe. [Neil Cook]
+
+
+0.6.015 (2020-01-04)
+--------------------
 - Io.drs_lock.py - remove unused imports. [Neil Cook]
 - Io.drs_fits.py - all writing to file must be locked (for
   parellisation) based on filename. [Neil Cook]
@@ -194,10 +1382,6 @@ Changelog
 - Science.calib.wave.py - EA modifications to triplet fitting. [Neil
   Cook]
 - Update changelog.md to include core.core.drs_recipe fixes. [Neil Cook]
-
-
-0.6.008 (2019-12-17)
---------------------
 - Core.core.drs_recipe.py - add other list arguments -- attempt to
   correct bug. [Neil Cook]
 - Core.core.drs_recipe.py - add other list arguments (i.e. --fpfiles=X Y
@@ -205,6 +1389,10 @@ Changelog
 - Core.core.drs_recipe.py - add other list arguments (i.e. --fpfiles=X Y
   Z) as separate elements of str_arg_list. [Neil Cook]
 - Update date/version/changelog/readme. [Neil Cook]
+
+
+0.6.008 (2019-12-17)
+--------------------
 - README.md - correct typo "processing" --> "apero_processing" [Neil
   Cook]
 - Setup/install.py - install.update does not require "args" as input.
@@ -1681,10 +2869,6 @@ Changelog
 - Core.core.drs_database.py - move locking/checking into copy db file
   function. [Neil Cook]
 - Update changelog.md. [Neil Cook]
-
-
-0.5.073 (2019-09-18)
---------------------
 - Tools.module.setup.drs_reprocess.py - add shortname to Run class,
   check that all recipes in run table are valid, print group name
   (recipe short name) on group print out. [Neil Cook]
@@ -1702,6 +2886,10 @@ Changelog
 - Recipes.spirou.cal_loc_spirou.py - need to import math as mp. [Neil
   Cook]
 - Update date/version/changelog. [Neil Cook]
+
+
+0.5.073 (2019-09-18)
+--------------------
 - Core.math - add a fast medfilt_1d function. [Neil Cook]
 - Core.math.fast.py - first commit numpy nan functions from bottleneck
   if available. [Neil Cook]
@@ -3501,7 +4689,7 @@ Changelog
 - Merge branch 'master' into input_redo. [Neil Cook]
 - File_explorer.py - move data loading / mask applying to different
   threads. [Neil Cook]
-- `*.__init__.py` - fix imports (should be empty) [Neil Cook]
+- *.__init__.py - fix imports (should be empty) [Neil Cook]
 - Locale.core.__init__.py - fix imports (should be empty) [Neil Cook]
 - File_explorer.py - update length and add new instrument box. [Neil
   Cook]
@@ -4791,7 +5979,7 @@ Changelog
 - Cal_preprocess_spirou.py - better message for corrupt file. [Neil
   Cook]
 - SpirouImage.py - catch warning "RuntimeWarning: All-NaN slice
-  encountered `r = func(a, **kwargs)`" [Neil Cook]
+  encountered r = func(a, **kwargs)" [Neil Cook]
 - Cal_preprocess_spirou.py - pep8 tidy up of QC. [Neil Cook]
 - SpirouImage.py - add get_full_flat, get_hot_pixels,
   test_for_corrupt_files functions (for checking corruption in
@@ -6157,7 +7345,7 @@ Changelog
 - SpirouPlot.py - modify tellu_fit_debug_shift_plot to only plot one
   order. [Neil Cook]
 - Recipe_control.txt - allow cal_CCF_E2DS_FP_spirou to use A, B files
-  and `TELLU_CORRECTED/POL_` files. [Neil Cook]
+  and TELLU_CORRECTED/POL_ files. [Neil Cook]
 - Update unit tests. [Neil Cook]
 - Obj_fit_telluy.py - todo question about possibly broken plot. [Neil
   Cook]
@@ -8243,7 +9431,7 @@ Changelog
 - Possible bug fix: tried to reduce repetition of displayed warnings.
   [njcuk9999]
 - Update tellu recipes: added AIRMASS header key. [njcuk9999]
-- Bug fix: fix file name ```'_s1d_{0}.fits'``` -->
+- Bug fix: fix file name ````'_s1d_{0}.fits'``` -->
   ```'_s1d_{0}.fits'.format(p['FIBER'])``` [njcuk9999]
 - Update tellu recipes: add required line in master telluDB. [njcuk9999]
 - Update tellu recipes: add obj_mk_tell_template to recipe control.
@@ -13001,7 +14189,7 @@ Other
   to uppercase (now ParamDict is case-insensitive), added source_keys,
   __capitalise_keys__, __capitalise__key__ functions, added list to set
   of evaluate allowed types. [Neil Cook]
-- Reloaded keywords USE_KEYS, added ParamDict call, added `kw_LOC_` keys,
+- Reloaded keywords USE_KEYS, added ParamDict call, added kw_LOC_ keys,
   added source to overwritten warning. [Neil Cook]
 - Renamed AddNewKey to AddKey. [Neil Cook]
 - Added wrapper function for add_new_key (add_new_keys), [Neil Cook]

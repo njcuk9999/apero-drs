@@ -1,5 +1,6 @@
 # This is the main config file
 from apero.core.constants import constant_functions
+import numpy as np
 
 # =============================================================================
 # Define variables
@@ -14,18 +15,16 @@ __all__ = [
     'PP_NUM_REF_TOP', 'PP_NUM_REF_BOTTOM', 'PP_RMS_PERCENTILE',
     'PP_LOWEST_RMS_PERCENTILE', 'PP_CORRUPT_SNR_HOTPIX',
     'PP_CORRUPT_RMS_THRES', 'RAW_TO_PP_ROTATION', 'PP_DARK_MED_BINNUM',
-    'SKIP_DONE_PP',
+    'SKIP_DONE_PP', 'ALLOWED_PPM_TYPES', 'PPM_MASK_NSIG', 'PP_MEDAMP_BINSIZE',
     # image constants
-    'FIBER_TYPES',
+    'FIBER_TYPES', 'IMAGE_X_FULL', 'IMAGE_Y_FULL',
     'INPUT_COMBINE_IMAGES', 'INPUT_FLIP_IMAGE', 'INPUT_RESIZE_IMAGE',
     'IMAGE_X_LOW', 'IMAGE_X_HIGH',
     'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_LOW', 'IMAGE_X_HIGH',
     'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_BLUE_LOW',
     'IMAGE_PIXEL_SIZE', 'FWHM_PIXEL_LSF',
     # general calib constants
-    'CAVITY_LENGTH_FILE', 'CAVITY_LENGTH_FILE_FMT', 'CAVITY_1M_FILE',
-    'CAVITY_LENGTH_FILE_COLS', 'CAVITY_LENGTH_FILE_START', 'CAVITY_LL_FILE',
-    'CAVITY_LENGTH_FILE_WAVECOL', 'OBJ_LIST_FILE', 'OBJ_LIST_FILE_FMT',
+    'CAVITY_1M_FILE', 'CAVITY_LL_FILE', 'OBJ_LIST_FILE', 'OBJ_LIST_FILE_FMT',
     'OBJ_LIST_CROSS_MATCH_RADIUS', 'OBJ_LIST_GAIA_URL', 'OBJ_LIST_SIMBAD_URL',
     'OBJ_LIST_GAIA_MAG_CUT', 'OBJ_LIST_GAIA_EPOCH', 'OBJ_LIST_GAIA_PLX_LIM',
     # qc constants
@@ -96,12 +95,18 @@ __all__ = [
     'FF_RMS_SKIP_ORDERS', 'QC_FF_MAX_RMS', 'FF_PLOT_ORDER',
     'FF_BLAZE_SCUT', 'FF_BLAZE_SIGFIT', 'FF_BLAZE_BPERCENTILE',
     'FF_BLAZE_NITER',
+    # leakage constants
+    'ALLOWED_LEAKM_TYPES', 'LEAKM_ALWAYS_EXTRACT', 'LEAKM_EXTRACT_TYPE',
+    'ALLOWED_LEAK_TYPES', 'LEAK_EXTRACT_FILE', 'LEAK_2D_EXTRACT_FILES',
+    'LEAK_1D_EXTRACT_FILES', 'LEAK_BCKGRD_PERCENTILE', 'LEAK_NORM_PERCENTILE',
+    'LEAKM_WSMOOTH', 'LEAKM_KERSIZE', 'LEAK_LOW_PERCENTILE',
+    'LEAK_HIGH_PERCENTILE', 'LEAK_BAD_RATIO_OFFSET', 'LEAK_SAVE_UNCORRECTED',
     # extract constants
     'EXT_START_ORDER', 'EXT_END_ORDER', 'EXT_RANGE1', 'EXT_RANGE2',
     'EXT_SKIP_ORDERS', 'EXT_COSMIC_CORRETION', 'EXT_COSMIC_SIGCUT',
-    'EXT_COSMIC_THRESHOLD', 'QC_EXT_FLUX_MAX',
-    'EXT_S1D_WAVESTART', 'EXT_S1D_WAVEEND', 'EXT_S1D_BIN_UWAVE',
-    'EXT_S1D_BIN_UVELO', 'EXT_S1D_EDGE_SMOOTH_SIZE',
+    'EXT_COSMIC_THRESHOLD', 'QC_EXT_FLUX_MAX', 'EXT_S1D_INTYPE',
+    'EXT_S1D_INFILE', 'EXT_S1D_WAVESTART', 'EXT_S1D_WAVEEND',
+    'EXT_S1D_BIN_UWAVE', 'EXT_S1D_BIN_UVELO', 'EXT_S1D_EDGE_SMOOTH_SIZE',
     'EXT_ALLOWED_BERV_DPRTYPES', 'EXT_BERV_EST_ACC', 'EXT_BERV_KIND',
     'EXT_BERV_BARYCORRPY_DIR', 'EXT_BERV_IERSFILE', 'EXT_BERV_IERS_A_URL',
     'EXT_BERV_LEAPDIR', 'EXT_BERV_LEAPUPDATE', 'EXTRACT_PLOT_ORDER',
@@ -148,12 +153,23 @@ __all__ = [
     'WAVE_FP_DV_MAX', 'WAVE_FP_UPDATE_CAVITY', 'WAVE_FP_CAVFIT_MODE',
     'WAVE_FP_LLFIT_MODE', 'WAVE_FP_LLDIF_MIN', 'WAVE_FP_LLDIF_MAX',
     'WAVE_FP_SIGCLIP', 'WAVE_FP_PLOT_MULTI_INIT', 'WAVE_FP_PLOT_MULTI_NBO',
-    # wave ccf constantsCCF_N_ORD_MAX
+    # wave ccf constants
     'WAVE_CCF_NOISE_SIGDET', 'WAVE_CCF_NOISE_BOXSIZE', 'WAVE_CCF_NOISE_THRES',
     'WAVE_CCF_STEP', 'WAVE_CCF_WIDTH', 'WAVE_CCF_TARGET_RV',
     'WAVE_CCF_DETNOISE', 'WAVE_CCF_MASK', 'WAVE_CCF_MASK_UNITS',
     'WAVE_CCF_MASK_PATH', 'WAVE_CCF_MASK_FMT', 'WAVE_CCF_MASK_MIN_WEIGHT',
     'WAVE_CCF_MASK_WIDTH', 'WAVE_CCF_N_ORD_MAX',
+    # wave master reference constants
+    'WAVEREF_NSIG_MIN', 'WAVEREF_EDGE_WMAX', 'WAVEREF_HC_BOXSIZE',
+    'WAVEREF_HC_FIBTYPES', 'WAVEREF_FP_FIBTYPES', 'WAVEREF_FITDEG',
+    'WAVEREF_FP_NLOW', 'WAVEREF_FP_NHIGH', 'WAVEREF_FP_POLYINV',
+    # wave night constants
+    'WAVE_NIGHT_HIGHF_CORR_DEG', 'WAVE_NIGHT_NITERATIONS', 'WAVE_NIGHT_DCAVITY',
+    'WAVE_NIGHT_NSIG_MIN', 'WAVE_NIGHT_REDEND_CUTOFF', 'WAVE_NIGHT_DWAVE_BIN',
+    'WAVE_NIGHT_NMIN_LINES', 'WAVE_NIGHT_NSIG_FIT_CUT', 'WAVENIGHT_PLT_HCBINL',
+    'WAVENIGHT_PLT_HCBINU', 'WAVENIGHT_PLT_HCBINSZ', 'WAVENIGHT_PLT_FPBX',
+    'WAVENIGHT_PLT_FPBY', 'WAVENIGHT_PLT_FPLB', 'WAVENIGHT_PLT_AMPSIZE',
+    'WAVENIGHT_PLT_MAXDV', 'WAVENIGHT_PLT_DVSTEP',
     # telluric constants
     'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM',
     'TELLU_ALLOWED_DPRTYPES', 'TELLURIC_FILETYPE', 'TELLURIC_FIBER_TYPE',
@@ -169,7 +185,8 @@ __all__ = [
     'MKTELLU_SMALL_WEIGHTING_ERROR', 'MKTELLU_PLOT_ORDER_NUMS',
     'MKTELLU_TAU_WATER_ULIMIT', 'MKTELLU_TAU_OTHER_LLIMIT',
     'MKTELLU_TAU_OTHER_ULIMIT', 'MKTELLU_SMALL_LIMIT', 'MKTELLU_QC_SNR_ORDER',
-    'MKTELLU_QC_SNR_MIN', 'MKTELLU_QC_AIRMASS_DIFF',
+    'MKTELLU_QC_SNR_MIN', 'MKTELLU_QC_AIRMASS_DIFF', 'MKTELLU_HBAND_LOWER',
+    'MKTELLU_HBAND_UPPER',
     # fit telluric constants,
     'FTELLU_NUM_PRINCIPLE_COMP', 'FTELLU_ADD_DERIV_PC', 'FTELLU_FIT_DERIV_PC',
     'FTELLU_FIT_KEEP_NUM', 'FTELLU_FIT_MIN_TRANS', 'FTELLU_LAMBDA_MIN',
@@ -180,13 +197,14 @@ __all__ = [
     'MKTEMPLATE_E2DS_ITNUM', 'MKTEMPLATE_E2DS_LOWF_SIZE',
     'MKTEMPLATE_S1D_ITNUM', 'MKTEMPLATE_S1D_LOWF_SIZE',
     # ccf constants
-    'CCF_MASK_PATH', 'CCF_MASK_MIN_WEIGHT', 'CCF_MASK_WIDTH',
+    'CCF_MASK_PATH', 'CCF_NO_RV_VAL', 'CCF_MASK_MIN_WEIGHT', 'CCF_MASK_WIDTH',
     'CCF_N_ORD_MAX', 'CCF_DEFAULT_MASK', 'CCF_MASK_UNITS', 'CCF_MASK_FMT',
     'CCF_DEFAULT_WIDTH', 'CCF_DEFAULT_STEP', 'CCF_ALLOWED_DPRTYPES',
     'CCF_CORRECT_TELLU_TYPES', 'CCF_TELLU_THRES', 'CCF_FILL_NAN_KERN_SIZE',
-    'CCF_FILL_NAN_KERN_RES', 'CCF_DET_NOISE', 'CCF_FIT_TYPE', 'CCF_N_ORD_MAX',
+    'CCF_FILL_NAN_KERN_RES', 'CCF_DET_NOISE', 'CCF_FIT_TYPE',
     'CCF_NOISE_SIGDET', 'CCF_NOISE_BOXSIZE', 'CCF_NOISE_THRES',
-    'CCF_MAX_CCF_WID_STEP_RATIO',
+    'CCF_MAX_CCF_WID_STEP_RATIO', 'CCF_BLAZE_NORM_PERCENTILE',
+    'CCF_OBJRV_NULL_VAL',
     # polar constants
     'POLAR_VALID_FIBERS', 'POLAR_VALID_STOKES', 'POLAR_METHOD',
     'POLAR_CONT_BINSIZE', 'POLAR_CONT_OVERLAP', 'POLAR_CONT_TELLMASK_LOWER',
@@ -229,7 +247,7 @@ __all__ = [
     'PLOT_WAVE_FP_IPT_CWID_1MHC', 'PLOT_WAVE_FP_IPT_CWID_LLHC',
     'PLOT_WAVE_FP_MULTI_ORDER', 'PLOT_WAVE_FP_SINGLE_ORDER',
     'PLOT_WAVEREF_EXPECTED', 'PLOT_WAVENIGHT_ITERPLOT',
-    'PLOT_WAVENIGHT_DIFFPLOT',
+    'PLOT_WAVENIGHT_DIFFPLOT', 'PLOT_WAVENIGHT_HISTPLOT',
     # debug telluric plot settings
     'PLOT_MKTELLU_WAVE_FLUX1', 'PLOT_MKTELLU_WAVE_FLUX2',
     'PLOT_FTELLU_PCA_COMP1', 'PLOT_FTELLU_PCA_COMP2',
@@ -246,6 +264,7 @@ __all__ = [
     'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
     'REPROCESS_RAWINDEXFILE', 'REPROCESS_SEQCOL', 'REPROCESS_TIMECOL',
+    'SUMMARY_LATEX_PDF',
 ]
 
 # set name
@@ -281,6 +300,41 @@ CALIB_DB_FORCE_WAVESOL = Const('CALIB_DB_FORCE_WAVESOL', value=None,
 # COMMON IMAGE SETTINGS
 # =============================================================================
 cgroup = 'COMMON IMAGE SETTINGS'
+
+# Define the rotation of the pp files in relation to the raw files
+#     nrot = 0 -> same as input
+#     nrot = 1 -> 90deg counter-clock-wise
+#     nrot = 2 -> 180deg
+#     nrot = 3 -> 90deg clock-wise
+#     nrot = 4 -> flip top-bottom
+#     nrot = 5 -> flip top-bottom and rotate 90 deg counter-clock-wise
+#     nrot = 6 -> flip top-bottom and rotate 180 deg
+#     nrot = 7 -> flip top-bottom and rotate 90 deg clock-wise
+#     nrot >=8 -> performs a modulo 8 anyway
+RAW_TO_PP_ROTATION = Const('RAW_TO_PP_ROTATION', dtype=int, value=None,
+                           source=__NAME__, group=cgroup,
+                           options=[0, 1, 2, 3, 4, 5, 6, 7],
+                           description='Define the rotation of the pp files in '
+                                       'relation to the raw files, '
+                                       'nrot = 0 -> same as input, '
+                                       'nrot = 1 -> 90deg counter-clock-wise, '
+                                       'nrot = 2 -> 180deg, '
+                                       'nrot = 3 -> 90deg clock-wise,  '
+                                       'nrot = 4 -> flip top-bottom, '
+                                       'nrot = 5 -> flip top-bottom and rotate '
+                                       '90 deg counter-clock-wisenrot = 6 -> '
+                                       'flip top-bottom and rotate 180 deg, '
+                                       'nrot = 7 -> flip top-bottom and rotate '
+                                       '90 deg clock-wise, '
+                                       'nrot >=8 -> performs a modulo 8 anyway')
+
+# Define raw image size (mostly just used as a check and in places where we
+#   don't have access to this information)
+IMAGE_X_FULL = Const('IMAGE_X_FULL', dtype=int, value=None, source=__NAME__,
+                     group=cgroup)
+IMAGE_Y_FULL = Const('IMAGE_Y_FULL', dtype=int, value=None, source=__NAME__,
+                     group=cgroup)
+
 # Define the fibers
 FIBER_TYPES = Const('FIBER_TYPES', dtype=str, value=None, source=__NAME__,
                     group=cgroup)
@@ -325,26 +379,6 @@ FWHM_PIXEL_LSF = Const('FWHM_PIXEL_LSF', value=None, dtype=float,
 # CALIBRATION: GENERAL SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION: GENERAL SETTINGS'
-# Define the cavity length file (located in the DRS_CALIB_DATA directory)
-CAVITY_LENGTH_FILE = Const('CAVITY_LENGTH_FILE', value=None, dtype=str,
-                           source=__NAME__, group=cgroup)
-
-# Define the cavity length file format (must be astropy.table format)
-CAVITY_LENGTH_FILE_FMT = Const('CAVITY_LENGTH_FILE_FMT', value=None,
-                               dtype=str, source=__NAME__, group=cgroup)
-
-# Define the cavity length file column names (must be separated by commas
-# and must be equal to the number of columns in file)
-CAVITY_LENGTH_FILE_COLS = Const('CAVITY_LENGTH_FILE_COLS', value=None,
-                                dtype=str, source=__NAME__, group=cgroup)
-
-# Define the cavity length file row the data starts
-CAVITY_LENGTH_FILE_START = Const('CAVITY_LENGTH_FILE_START', value=None,
-                                 dtype=str, source=__NAME__, group=cgroup)
-
-# Define coefficent column (Must be in CAVITY_LENGTH_FILE_COLS)
-CAVITY_LENGTH_FILE_WAVECOL = Const('CAVITY_LENGTH_FILE_WAVECOL', value=None,
-                                   dtype=str, source=__NAME__, group=cgroup)
 
 # Define the coefficients of the fit of 1/m vs d
 CAVITY_1M_FILE = Const('CAVITY_1M_FILE', value=None, dtype=str, source=__NAME__,
@@ -491,17 +525,34 @@ PP_CORRUPT_SNR_HOTPIX = Const('PP_CORRUPT_SNR_HOTPIX', value=None, dtype=float,
 PP_CORRUPT_RMS_THRES = Const('PP_CORRUPT_RMS_THRES', value=None, dtype=float,
                              minimum=0.0, source=__NAME__, group=cgroup)
 
-# Define rotation angle (must be multiple of 90 degrees)
-#       (in degrees counter-clockwise direction)
-RAW_TO_PP_ROTATION = Const('RAW_TO_PP_ROTATION', value=None, dtype=int,
-                           minimum=0.0, maximum=360.0, source=__NAME__,
-                           group=cgroup)
-
 # Define whether to skip preprocessed files that have already be processed
 SKIP_DONE_PP = Const('SKIP_DONE_PP', value=None, dtype=bool,
                      source=__NAME__, user=True, active=False, group=cgroup,
                      description='Define whether to skip preprocessed files '
                                  'that have already be processed')
+
+# Define allowed preprocess master file types (PP DPRTYPE)
+ALLOWED_PPM_TYPES = Const('ALLOWED_PPM_TYPES', value=None, dtype=str,
+                          source=__NAME__, group=cgroup,
+                          description='Define allowed preprocess master '
+                                      'filetypes (PP DPRTYPE)')
+
+# Define the allowed number of sigma for preprocessing master mask
+PPM_MASK_NSIG = Const('PPM_MASK_NSIG', value=None, dtype=float,
+                      source=__NAME__, group=cgroup,
+                      description='Define allowed preprocess master mask '
+                                  'number of sigma')
+
+# Define the bin to use to correct low level frequences. This value cannot
+#   be smaller than the order footprint on the array as it would lead to a set
+#   of NaNs in the downsized image
+PP_MEDAMP_BINSIZE = Const('PP_MEDAMP_BINSIZE', value=None, dtype=int,
+                          source=__NAME__, group=cgroup,
+                          description='Define the bin to use to correct low '
+                                      'level frequences. This value cannot be '
+                                      'smaller than the order footprint on the '
+                                      'array as it would lead to a set of NaNs '
+                                      'in the downsized image')
 
 # =============================================================================
 # CALIBRATION: DARK SETTINGS
@@ -715,7 +766,8 @@ LOC_WIDTH_POLY_DEG = Const('LOC_WIDTH_POLY_DEG', value=None, dtype=int,
 LOC_CENT_POLY_DEG = Const('LOC_CENT_POLY_DEG', value=None, dtype=int,
                           source=__NAME__, minimum=1, group=cgroup)
 
-# Define the column separation for fitting orders
+#   Define the jump size when finding the order position
+#       (jumps in steps of this from the center outwards)
 LOC_COLUMN_SEP_FITTING = Const('LOC_COLUMN_SEP_FITTING', value=None, dtype=int,
                                source=__NAME__, minimum=1, group=cgroup)
 
@@ -1076,6 +1128,76 @@ FF_PLOT_ORDER = Const('FF_PLOT_ORDER', value=None, dtype=int, source=__NAME__,
                       group=cgroup)
 
 # =============================================================================
+# CALIBRATION: LEAKAGE SETTINGS
+# =============================================================================
+cgroup = 'CALIBRATION: LEAKAGE SETTINGS'
+# Define the types of input file allowed by the leakage master recipe
+ALLOWED_LEAKM_TYPES = Const('ALLOWED_LEAKM_TYPES', value=None, dtype=str,
+                            source=__NAME__, group=cgroup)
+
+# define whether to always extract leak master files
+#      (i.e. overwrite existing files)
+LEAKM_ALWAYS_EXTRACT = Const('LEAKM_ALWAYS_EXTRACT', value=None, dtype=bool,
+                            source=__NAME__, group=cgroup)
+
+# define the type of file to use for leak master solution
+#    (currently allowed are 'E2DSFF') - must match with LEAK_EXTRACT_FILE
+LEAKM_EXTRACT_TYPE = Const('LEAKM_EXTRACT_TYPE', value=None, dtype=str,
+                            source=__NAME__, group=cgroup)
+
+# Define the types of input extracted files to correct for leakage
+ALLOWED_LEAK_TYPES = Const('ALLOWED_LEAK_TYPES', value=None, dtype=str,
+                            source=__NAME__, group=cgroup)
+
+# define the type of file to use for the leak correction (currently allowed are
+#     'E2DS_FILE' or 'E2DSFF_FILE' (linked to recipe definition outputs)
+#     must match with LEAKM_EXTRACT_TYPE
+LEAK_EXTRACT_FILE = Const('LEAK_EXTRACT_FILE', value=None, dtype=str,
+                            source=__NAME__, group=cgroup)
+
+# define the extraction files which are 2D images (i.e. order num x nbpix)
+LEAK_2D_EXTRACT_FILES = Const('LEAK_2D_EXTRACT_FILES', value=None, dtype=str,
+                            source=__NAME__, group=cgroup)
+
+# define the extraction files which are 1D spectra
+LEAK_1D_EXTRACT_FILES = Const('LEAK_1D_EXTRACT_FILES', value=None, dtype=str,
+                            source=__NAME__, group=cgroup)
+
+# define the thermal background percentile for the leak and leak master
+LEAK_BCKGRD_PERCENTILE = Const('LEAK_BCKGRD_PERCENTILE', value=None, dtype=float,
+                            source=__NAME__, group=cgroup)
+
+# define the normalisation percentile for the leak and leak master
+LEAK_NORM_PERCENTILE = Const('LEAK_NORM_PERCENTILE', value=None, dtype=float,
+                            source=__NAME__, group=cgroup)
+
+# define the e-width of the smoothing kernel for leak master
+LEAKM_WSMOOTH = Const('LEAKM_WSMOOTH', value=None, dtype=float,
+                            source=__NAME__, minimum=0.0, group=cgroup)
+
+# define the kernel size for leak master
+LEAKM_KERSIZE = Const('LEAKM_KERSIZE', value=None, dtype=float,
+                            source=__NAME__, minimum=0.0, group=cgroup)
+
+# define the lower bound percentile for leak correction
+LEAK_LOW_PERCENTILE = Const('LEAK_LOW_PERCENTILE', value=None, dtype=float,
+                            source=__NAME__, minimum=0.0, maximum=100.0,
+                            group=cgroup)
+
+# define the upper bound percentile for leak correction
+LEAK_HIGH_PERCENTILE = Const('LEAK_LOW_PERCENTILE', value=None, dtype=float,
+                            source=__NAME__, minimum=0.0, maximum=100.0,
+                            group=cgroup)
+
+# define the limit on surpious FP ratio (1 +/- limit)
+LEAK_BAD_RATIO_OFFSET = Const('LEAK_BAD_RATIO_OFFSET', value=None, dtype=float,
+                              source=__NAME__, minimum=0.0, group=cgroup)
+
+# Define whether to save uncorrected files
+LEAK_SAVE_UNCORRECTED = Const('LEAK_SAVE_UNCORRECTED', value=None, dtype=bool,
+                              source=__NAME__, group=cgroup)
+
+# =============================================================================
 # CALIBRATION: EXTRACTION SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION: EXTRACTION SETTINGS'
@@ -1117,6 +1239,13 @@ EXT_COSMIC_THRESHOLD = Const('EXT_COSMIC_THRESHOLD', value=None, dtype=int,
 # Saturation level reached warning
 QC_EXT_FLUX_MAX = Const('QC_EXT_FLUX_MAX', value=None, dtype=float,
                         source=__NAME__, group=cgroup)
+
+# Define which extraction file to use for s1d creation
+EXT_S1D_INTYPE = Const('EXT_S1D_INTYPE', value=None, dtype=str,
+                       source=__NAME__, group=cgroup)
+# Define which extraction file (recipe definitons) linked to EXT_S1D_INTYPE
+EXT_S1D_INFILE = Const('EXT_S1D_INFILE', value=None, dtype=str,
+                       source=__NAME__, group=cgroup)
 
 # Define the start s1d wavelength (in nm)
 EXT_S1D_WAVESTART = Const('EXT_S1D_WAVESTART', value=None, dtype=float,
@@ -1706,6 +1835,123 @@ WAVE_CCF_N_ORD_MAX = Const('WAVE_CCF_N_ORD_MAX', value=None, dtype=int,
                            source=__NAME__, minimum=1, group=cgroup)
 
 # =============================================================================
+# CALIBRATION: WAVE MASTER REFERENCE SETTINGS
+# =============================================================================
+cgroup = 'CALIBRATION: WAVE MASTER REFERENCE SETTINGS'
+# min SNR to consider the line
+WAVEREF_NSIG_MIN = Const('WAVEREF_NSIG_MIN', value=None, dtype=int,
+                         source=__NAME__, minimum=0, group=cgroup)
+
+# minimum distance to the edge of the array to consider a line
+WAVEREF_EDGE_WMAX = Const('WAVEREF_EDGE_WMAX', value=None, dtype=int,
+                          source=__NAME__, minimum=0, group=cgroup)
+
+# value in pixel (+/-) for the box size around each HC line to perform fit
+WAVEREF_HC_BOXSIZE = Const('WAVEREF_HC_BOXSIZE', value=None, dtype=int,
+                           source=__NAME__, minimum=0, group=cgroup)
+
+# get valid hc dprtypes (string list separated by commas)
+WAVEREF_HC_FIBTYPES = Const('WAVEREF_HC_FIBTYPES', value=None, dtype=str,
+                            source=__NAME__, group=cgroup)
+
+# get valid fp dprtypes (string list separated by commas)
+WAVEREF_FP_FIBTYPES = Const('WAVEREF_HC_FIBTYPES', value=None, dtype=str,
+                            source=__NAME__, group=cgroup)
+
+# get the degree to fix master wavelength to in hc mode
+WAVEREF_FITDEG = Const('WAVEREF_FITDEG', value=None, dtype=int,
+                       source=__NAME__, minimum=1, group=cgroup)
+
+# define the lowest N for fp peaks
+WAVEREF_FP_NLOW = Const('WAVEREF_FP_NLOW', value=None, dtype=int,
+                        source=__NAME__, minimum=0, group=cgroup)
+
+# define the highest N for fp peaks
+WAVEREF_FP_NHIGH = Const('WAVEREF_FP_NHIGH', value=None, dtype=int,
+                         source=__NAME__, minimum=1, group=cgroup)
+
+# define the number of iterations required to do the Fp polynomial inversion
+WAVEREF_FP_POLYINV = Const('WAVEREF_FP_POLYINV', value=None, dtype=int,
+                           source=__NAME__, minimum=1, group=cgroup)
+
+# =============================================================================
+# CALIBRATION: WAVE NIGHT SETTINGS
+# =============================================================================
+cgroup = 'CALIBRATION: WAVE NIGHT SETTINGS'
+# high-order wavelength solution correction cannot be smaller than 2,
+#   we remove 0 and 1
+WAVE_NIGHT_HIGHF_CORR_DEG = Const('WAVE_NIGHT_HIGHF_CORR_DEG', value=None,
+                                  dtype=int, source=__NAME__, minimum=1,
+                                  group=cgroup)
+
+# number of iterations for convergence
+WAVE_NIGHT_NITERATIONS = Const('WAVE_NIGHT_NITERATIONS', value=None, dtype=int,
+                               source=__NAME__, minimum=1, group=cgroup)
+
+# starting point for the cavity corrections
+WAVE_NIGHT_DCAVITY = Const('WAVE_NIGHT_DCAVITY', value=None, dtype=float,
+                           source=__NAME__, minimum=0.0, group=cgroup)
+
+# min SNR for incluing in the model
+WAVE_NIGHT_NSIG_MIN = Const('WAVE_NIGHT_NSIG_MIN', value=None, dtype=int,
+                            source=__NAME__, minimum=1, group=cgroup)
+
+# red cut off for fit constaint [nm]
+WAVE_NIGHT_REDEND_CUTOFF = Const('WAVE_NIGHT_REDEND_CUTOFF', value=None,
+                                 dtype=float, source=__NAME__, minimum=0,
+                                 group=cgroup)
+
+# size in nm of the median bin of residuals for higher-order correction
+WAVE_NIGHT_DWAVE_BIN = Const('WAVE_NIGHT_DWAVE_BIN', value=None, dtype=int,
+                             source=__NAME__, minimum=0, group=cgroup)
+
+# min number of lines to be included in a median bin for high-order
+# correction
+WAVE_NIGHT_NMIN_LINES = Const('WAVE_NIGHT_NMIN_LINES', value=None, dtype=int,
+                              source=__NAME__, minimum=1, group=cgroup)
+
+# sigma clipping for the fit
+WAVE_NIGHT_NSIG_FIT_CUT = Const('WAVE_NIGHT_NSIG_FIT_CUT', value=None,
+                                dtype=float, source=__NAME__, minimum=1,
+                                group=cgroup)
+
+# wave night plot hc bin lower bound [nm]
+WAVENIGHT_PLT_HCBINL = Const('WAVENIGHT_PLT_HCBINL', value=None, dtype=float,
+                             source=__NAME__, minimum=0, group=cgroup)
+
+# wave night plot hc bin upper bound [nm]
+WAVENIGHT_PLT_HCBINU = Const('WAVENIGHT_PLT_HCBINU', value=None, dtype=float,
+                             source=__NAME__, minimum=0, group=cgroup)
+
+# wave night plot hc bin size [nm]
+WAVENIGHT_PLT_HCBINSZ = Const('WAVENIGHT_PLT_HCBINSZ', value=None, dtype=int,
+                              source=__NAME__, minimum=1, group=cgroup)
+
+# wave night plot fp histogram 2d number of x bins
+WAVENIGHT_PLT_FPBX = Const('WAVENIGHT_PLT_FPBX', value=None, dtype=int,
+                           source=__NAME__, minimum=1, group=cgroup)
+
+# wave night plot fp histogram 2d number of y bins
+WAVENIGHT_PLT_FPBY = Const('WAVENIGHT_PLT_FPBY', value=None, dtype=int,
+                           source=__NAME__, minimum=1, group=cgroup)
+
+# wave night plot fp line bin size
+WAVENIGHT_PLT_FPLB = Const('WAVENIGHT_PLT_FPLB', value=None, dtype=int,
+                           source=__NAME__, minimum=1, group=cgroup)
+
+# wave night plot amplifier size (for modulo amplifier  structures)
+WAVENIGHT_PLT_AMPSIZE = Const('WAVENIGHT_PLT_AMPSIZE', value=None, dtype=int,
+                              source=__NAME__, minimum=1, group=cgroup)
+
+# wave night plot max +/- dv to keep in the histogram plots
+WAVENIGHT_PLT_MAXDV = Const('WAVENIGHT_PLT_MAXDV', value=None, dtype=float,
+                            source=__NAME__, minimum=0, group=cgroup)
+
+# wave night plot modulo amplifier step (bin) size
+WAVENIGHT_PLT_DVSTEP = Const('WAVENIGHT_PLT_DVSTEP', value=None, dtype=int,
+                             source=__NAME__, minimum=1, group=cgroup)
+
+# =============================================================================
 # OBJECT: TELLURIC SETTINGS
 # =============================================================================
 cgroup = 'OBJECT: TELLURIC SETTINGS'
@@ -1872,6 +2118,16 @@ MKTELLU_QC_SNR_MIN = Const('MKTELLU_QC_SNR_MIN', value=None, dtype=float,
 MKTELLU_QC_AIRMASS_DIFF = Const('MKTELLU_QC_AIRMASS_DIFF', value=None,
                                 dtype=float, source=__NAME__, group=cgroup)
 
+# Define the MKO H-band limit limit [nm]
+#    from http://www.ifa.hawaii.edu/~tokunaga/MKO-NIR_filter_set.html
+MKTELLU_HBAND_LOWER = Const('MKTELLU_HBAND_LOWER', value=None,
+                            dtype=float, source=__NAME__, group=cgroup)
+
+# Define the MKO H-band upper limit [nm]
+#    from http://www.ifa.hawaii.edu/~tokunaga/MKO-NIR_filter_set.html
+MKTELLU_HBAND_UPPER = Const('MKTELLU_HBAND_UPPER', value=None,
+                            dtype=float, source=__NAME__, group=cgroup)
+
 # =============================================================================
 # OBJECT: FIT TELLURIC SETTINGS
 # =============================================================================
@@ -2018,6 +2274,14 @@ cgroup = 'CALIBRATION: CCF SETTINGS'
 CCF_MASK_PATH = Const('CCF_MASK_PATH', value=None, dtype=str, source=__NAME__,
                       group=cgroup)
 
+# Define target rv the null value for CCF (only change if changing code)
+CCF_NO_RV_VAL = Const('CCF_NO_RV_VAL', value=np.nan, dtype=float,
+                      source=__NAME__, group=cgroup)
+
+# Define target rv header null value
+CCF_OBJRV_NULL_VAL = Const('CCF_OBJRV_NULL_VAL', value=-9999.99, dtype=float,
+                           source=__NAME__, group=cgroup)
+
 # Define the default CCF MASK to use
 CCF_DEFAULT_MASK = Const('CCF_DEFAULT_MASK', value=None, dtype=str,
                          source=__NAME__, user=True, active=False,
@@ -2119,6 +2383,11 @@ CCF_DET_NOISE = Const('CCF_DET_NOISE', value=None, dtype=float, source=__NAME__,
 #     if 1 then we have an emission line
 CCF_FIT_TYPE = Const('CCF_FIT_TYPE', value=None, dtype=int, source=__NAME__,
                      options=[0, 1], group=cgroup)
+
+# Define the percentile the blaze is normalised by before using in CCF calc
+CCF_BLAZE_NORM_PERCENTILE = Const('CCF_BLAZE_NORM_PERCENTILE', value=None,
+                                  dtype=float, source=__NAME__, minimum=0,
+                                  maximum=100, group=cgroup)
 
 # =============================================================================
 # OBJECT: POLARISATION SETTINGS
@@ -2586,6 +2855,13 @@ PLOT_WAVENIGHT_DIFFPLOT = Const('PLOT_WAVENIGHT_DIFFPLOT', value=False,
                                 description='turn on the wave per night '
                                             'diff debug plot')
 
+# turn on the wave per night hist debug plot
+PLOT_WAVENIGHT_HISTPLOT = Const('PLOT_WAVENIGHT_HISTPLOT', value=False,
+                                dtype=bool, source=__NAME__, user=True,
+                                active=True, group=cgroup,
+                                description='turn on the wave per night '
+                                            'hist debug plot')
+
 # turn on the make tellu wave flux debug plot (in loop)
 PLOT_MKTELLU_WAVE_FLUX1 = Const('PLOT_MKTELLU_WAVE_FLUX1', value=False,
                                 dtype=bool, source=__NAME__, user=True,
@@ -2752,6 +3028,15 @@ REPROCESS_TIMECOL = Const('REPROCESS_TIMECOL', value=None, dtype=str,
 # define the default database to remake
 REMAKE_DATABASE_DEFAULT = Const('REMAKE_DATABASE_DEFAULT', value='calibration',
                                 dtype=str, source=__NAME__, group=cgroup)
+
+# Define whether we try to create a latex summary pdf
+#   (turn this off if you have any problems with latex/pdflatex)
+SUMMARY_LATEX_PDF = Const('SUMMARY_LATEX_PDF', value=True, dtype=bool,
+                          source=__NAME__, group=cgroup, active=True,
+                          user=True,
+                          description='Define whether we try to create a latex '
+                                      'summary pdf (turn this off if you have '
+                                      'any problems with latex/pdflatex)')
 
 # =============================================================================
 #  End of configuration file

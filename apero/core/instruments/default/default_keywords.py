@@ -13,21 +13,21 @@ __all__ = [# input keys
            'KW_CMPLTEXP', 'KW_NEXP', 'KW_PI_NAME', 'KW_PLX', 'KW_CALIBWH',
            'KW_TARGET_TYPE', 'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP',
            'KW_HUMIDITY', 'KW_GAIA_ID', 'KW_INPUTRV', 'KW_OBJ_TEMP',
-           'KW_SATURATE', 'KW_FRMTIME',
+           'KW_SATURATE', 'KW_FRMTIME', 'KW_OBJECTNAME',
            # general output keys
            'KW_VERSION', 'KW_PPVERSION', 'KW_DPRTYPE', 'KW_PID',
-           'KW_MID_OBS_TIME', 'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3',
+           'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3',
            'KW_DRS_QC', 'KW_DRS_QC_VAL', 'KW_DRS_QC_NAME', 'KW_DRS_QC_LOGIC',
            'KW_DRS_QC_PASS', 'KW_DATE_OBS', 'KW_OUTPUT',
            'KW_DRS_DATE', 'KW_C_FLIP', 'KW_C_CVRTE',
            'KW_C_RESIZE', 'KW_DRS_DATE_NOW', 'KW_C_FTYPE',
-           'KW_MID_OBS_TIME_METHOD',
+           'KW_MID_OBS_TIME', 'KW_MID_OBSTIME_METHOD',
            # calibration file header keys
            'KW_CDBDARK', 'KW_CDBBAD', 'KW_CDBBACK', 'KW_CDBORDP', 'KW_CDBLOCO',
            'KW_CDBSHAPEL', 'KW_CDBSHAPEDX', 'KW_CDBSHAPEDY', 'KW_CDBFLAT',
            'KW_CDBBLAZE',  'KW_CDBWAVE', 'KW_CDBTHERMAL',
            # preprocess keys
-           'KW_PPSHIFTX', 'KW_PPSHIFTY',
+           'KW_PPSHIFTX', 'KW_PPSHIFTY', 'KW_PPMSTR_NSIG',
            # dark keys
            'KW_DARK_DEAD', 'KW_DARK_MED', 'KW_DARK_B_DEAD',
            'KW_DARK_B_MED', 'KW_DARK_R_DEAD', 'KW_DARK_R_MED', 'KW_DARK_CUT',
@@ -55,11 +55,14 @@ __all__ = [# input keys
            'KW_BERV_POS_SOURCE', 'KW_BERVLAT', 'KW_BERVLONG', 'KW_BERVALT',
            'KW_BERV', 'KW_BJD', 'KW_BERVMAX', 'KW_BERVSOURCE',
            'KW_BERV_EST', 'KW_BJD_EST', 'KW_BERVMAX_EST',
-           'KW_BERV_OBSTIME_METHOD', 'KW_BERV_OBSTIME',
+           'KW_BERV_OBSTIME', 'KW_BERV_OBSTIME_METHOD',
            'KW_BERVGAIA_ID', 'KW_FIBER', 'KW_BERVOBJNAME', 'KW_BERVRV',
            'KW_BERV_GAIA_GMAG', 'KW_BERV_GAIA_BPMAG', 'KW_BERV_GAIA_RPMAG',
            'KW_BERV_GAIA_MAGLIM', 'KW_BERV_GAIA_PLXLIM', 'KW_DBERV',
            'KW_DBERV_EST',
+           # leakage values
+           'KW_LEAK_CORR', 'KW_LEAK_BP_U', 'KW_LEAK_NP_U', 'KW_LEAK_WSMOOTH',
+           'KW_LEAK_KERSIZE', 'KW_LEAK_LP_U', 'KW_LEAK_UP_U', 'KW_LEAK_BADR_U',
            # wave values
            'KW_WAVE_NBO', 'KW_WAVE_DEG', 'KW_WAVEFILE', 'KW_WAVESOURCE',
            'KW_WAVECOEFFS', 'KW_WAVE_FITDEG', 'KW_WAVE_MODE_HC',
@@ -95,6 +98,10 @@ __all__ = [# input keys
            'KW_WFP_STEP', 'KW_WFP_SIGDET', 'KW_WFP_BOXSIZE', 'KW_WFP_MAXFLUX',
            'KW_WFP_DETNOISE', 'KW_WFP_NMAX', 'KW_WFP_MASKMIN', 'KW_WFP_MASKWID',
            'KW_WFP_MASKUNITS',
+           # wave night values
+           'KW_WNT_HIGHF_CD', 'KW_WNT_NITER', 'KW_WNT_DCAVITY', 'KW_WNT_MINSNR',
+           'KW_WNT_REDCUT', 'KW_WNT_DWAVE_BIN', 'KW_WNT_NMIN_LINES',
+           'KW_WNT_NSIG_FIT',
            # mktellu values
            'KW_MKTELL_TEMP_FILE', 'KW_MKTELL_BLAZE_PRCT', 'KW_MKTELL_BLAZE_CUT',
            'KW_MKTELL_TAPASFILE', 'KW_MKTELL_FWHMPLSF',
@@ -116,6 +123,7 @@ __all__ = [# input keys
            'KW_FTELLU_IM_PX_SIZE', 'KW_FTELLU_FIT_ITERS', 'KW_FTELLU_RECON_LIM',
            'KW_FTELLU_AMP_PC', 'KW_FTELLU_DVTELL1', 'KW_FTELLU_DVTELL2',
            'KW_FTELLU_TAU_H2O', 'KW_FTELLU_TAU_REST', 'KW_FTELLU_ABSO_PREFIX',
+           'KW_FTELLU_TEMPLATE',
            # make template values
            'KW_MKTEMP_SNR_ORDER', 'KW_MKTEMP_SNR_THRES',
            # ccf values
@@ -229,6 +237,9 @@ KW_OBJDEC = Keyword('KW_OBJDE', key='', dtype=float, source=__NAME__)
 # define the observation name
 KW_OBJNAME = Keyword('KW_OBJNAME', key='', dtype=str, source=__NAME__)
 
+# define the raw observation name
+KW_OBJECTNAME = Keyword('KW_OBJECTNAME', key='', dtype=str, source=__NAME__)
+
 # define the gaia id
 KW_GAIA_ID = Keyword('KW_GAIAID', key='', dtype=str, source=__NAME__)
 
@@ -287,7 +298,7 @@ KW_DPRTYPE = Keyword('KW_DPRTYPE', key='', dtype=str, source=__NAME__)
 KW_MID_OBS_TIME = Keyword('KW_MID_OBS_TIME', key='', source=__NAME__)
 
 # Define the method by which the MJD was calculated
-KW_MID_OBS_TIME_METHOD = Keyword('KW_MID_OBS_TIME_METHOD', key='', dtype=str,
+KW_MID_OBSTIME_METHOD = Keyword('KW_MID_OBS_TIME_METHOD', key='', dtype=str,
                                  source=__NAME__)
 
 # -----------------------------------------------------------------------------
@@ -343,6 +354,9 @@ KW_DRS_QC_PASS = Keyword('KW_DRS_QC_PASS', key='', dtype=str, source=__NAME__)
 # The shift in pixels so that image is at same location as engineering flat
 KW_PPSHIFTX = Keyword('KW_PPSHIFTX', key='', dtype=float, source=__NAME__)
 KW_PPSHIFTY = Keyword('KW_PPSHIFTY', key='', dtype=float, source=__NAME__)
+
+# The number of sigma used to construct pp master mask
+KW_PPMSTR_NSIG = Keyword('KW_PPMSTR_NSIG', key='', dtype=float, source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define cal_dark variables
@@ -622,6 +636,35 @@ KW_BERV_OBSTIME = Keyword('KW_BERV_OBSTIME', key='', dtype=float,
 # the method used to obtain the berv obs time
 KW_BERV_OBSTIME_METHOD = Keyword('KW_BERV_OBSTIME_METHOD', key='', dtype=str,
                                  source=__NAME__)
+
+# -----------------------------------------------------------------------------
+# Define leakage variables
+# -----------------------------------------------------------------------------
+# Define whether leak correction has been done
+KW_LEAK_CORR = Keyword('KW_LEAK_CORR', key='', dtype=int, source=__NAME__)
+
+# Define the background percentile used for correcting leakage
+KW_LEAK_BP_U = Keyword('KW_LEAK_BP_U', key='', dtype=float, source=__NAME__)
+
+# Define the normalisation percentile used for correcting leakage
+KW_LEAK_NP_U = Keyword('KW_LEAK_NP_U', key='', dtype=float, source=__NAME__)
+
+# Define the e-width smoothing used for correcting leakage master
+KW_LEAK_WSMOOTH = Keyword('KW_LEAK_WSMOOTH', key='', dtype=float,
+                          source=__NAME__)
+
+# Define the kernel size used for correcting leakage master
+KW_LEAK_KERSIZE = Keyword('KW_LEAK_KERSIZE', key='', dtype=float,
+                          source=__NAME__)
+
+# Define the lower bound percentile used for correcting leakage
+KW_LEAK_LP_U = Keyword('KW_LEAK_LP_U', key='', dtype=float, source=__NAME__)
+
+# Define the upper bound percentile used for correcting leakage
+KW_LEAK_UP_U = Keyword('KW_LEAK_UP_U', key='', dtype=float, source=__NAME__)
+
+# Define the bad ratio offset limit used for correcting leakage
+KW_LEAK_BADR_U = Keyword('KW_LEAK_BADR_U', key='', dtype=float, source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define wave variables
@@ -940,6 +983,35 @@ KW_WFP_MASKWID = Keyword('KW_WFP_MASKWID', key='', dtype=float, source=__NAME__)
 KW_WFP_MASKUNITS = Keyword('KW_WFP_MASKUNITS', key='', dtype=str,
                            source=__NAME__)
 
+# high-order wavelength solution correction used in wave night
+KW_WNT_HIGHF_CD = Keyword('KW_WNT_HIGHF_CD', key='', dtype=int,
+                          source=__NAME__)
+
+# number of iterations for convergence used in wave night
+KW_WNT_NITER = Keyword('KW_WNT_NITER', key='', dtype=int, source=__NAME__)
+
+# starting point for the cavity corrections used in wave night
+KW_WNT_DCAVITY = Keyword('KW_WNT_DCAVITY', key='', dtype=int, source=__NAME__)
+
+# min SNR for incluing in the model used in wave night
+KW_WNT_MINSNR = Keyword('KW_WNT_MINSNR', key='', dtype=int, source=__NAME__)
+
+# red cut off for fit constaint [nm] used in wave night
+KW_WNT_REDCUT = Keyword('KW_WNT_REDCUT', key='', dtype=int, source=__NAME__)
+
+# size [nm] of the median bin of residuals for higher-order correction used
+#    in wave night
+KW_WNT_DWAVE_BIN = Keyword('KW_WNT_DWAVE_BIN', key='', dtype=int,
+                           source=__NAME__)
+
+# min number of lines to be included in a median bin for high-order
+# correction used in wave night
+KW_WNT_NMIN_LINES = Keyword('KW_WNT_NMIN_LINES', key='', dtype=int,
+                            source=__NAME__)
+
+# sigma clipping for the fit used in wave night
+KW_WNT_NSIG_FIT = Keyword('KW_WNT_NSIG_FIT', key='', dtype=int, source=__NAME__)
+
 # -----------------------------------------------------------------------------
 # Define make telluric variables
 # -----------------------------------------------------------------------------
@@ -1096,6 +1168,10 @@ KW_FTELLU_FIT_ITERS = Keyword('KW_FTELLU_FIT_ITERS', key='', dtype=int,
 # the log limit in minimum absorption used
 KW_FTELLU_RECON_LIM = Keyword('KW_FTELLU_RECON_LIM', key='', dtype=float,
                               source=__NAME__)
+
+# the template that was used (or None if not used)
+KW_FTELLU_TEMPLATE = Keyword('KW_FTELLU_TEMPLATE', key='', dtype=str,
+                             source=__NAME__)
 
 # Telluric principle component amplitudes (for use with 1D list)
 KW_FTELLU_AMP_PC = Keyword('KW_FTELLU_AMP_PC', key='', dtype=float,

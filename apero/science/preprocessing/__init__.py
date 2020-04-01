@@ -23,13 +23,15 @@ drs_outfile_id = identification.drs_outfile_id
 
 get_hot_pixels = detector.get_hot_pixels
 
-fix_header = identification.fix_header
-
 correct_top_bottom = detector.ref_top_bottom
+
+nirps_order_mask = detector.nirps_order_mask
 
 median_filter_dark_amps = detector.median_filter_dark_amp
 
 median_one_over_f_noise = detector.median_one_over_f_noise
+
+nirps_correction = detector.nirps_correction
 
 test_for_corrupt_files = detector.test_for_corrupt_files
 

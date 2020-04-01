@@ -9,7 +9,6 @@ Created on 2019-08-21 at 12:28
 
 @author: cook
 """
-from __future__ import division
 from astropy.table import Table
 from astropy import constants as cc
 from astropy import units as uu
@@ -513,7 +512,7 @@ def remove_telluric_domain(params, recipe, infile, fiber, **kwargs):
         eargs = [infile.filename, reconfile.name, e2dsfile.filename]
         WLOG(params, 'error', TextEntry('09-020-00003', args=eargs))
     # read recon file
-    reconfile.read()
+    reconfile.read_file()
     # find all places below threshold
     with warnings.catch_warnings(record=True) as _:
         keep = reconfile.data > ccf_tellu_thres
@@ -595,7 +594,7 @@ def locate_reference_file(params, recipe, infile):
     # construct filename
     outfile.construct_filename(params, infile=ppfile)
     # read outfile
-    outfile.read()
+    outfile.read_file()
     # return outfile
     return outfile
 
@@ -625,7 +624,8 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
                      func_name)
     image_pixel_size = pcheck(params, 'IMAGE_PIXEL_SIZE', 'image_pixel_size',
                               kwargs, func_name)
-
+    null_targetrv = pcheck(params, 'CCF_OBJRV_NULL_VAL', 'null_targetrv',
+                           kwargs, func_name)
     maxwsr = pcheck(params, 'CCF_MAX_CCF_WID_STEP_RATIO', 'maxwsr', kwargs,
                     func_name)
     # get image size
@@ -634,6 +634,22 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     ccfstep = params['INPUTS']['STEP']
     ccfwidth = params['INPUTS']['WIDTH']
     targetrv = params['INPUTS']['RV']
+    # ----------------------------------------------------------------------
+    # TODO: eventually this should come from object database (so that each
+    # TODO: object has a constant target rv
+    # need to deal with no target rv step
+    if np.isnan(targetrv):
+        targetrv = infile.get_key('KW_INPUTRV', required=False, dtype=float)
+        # set target rv to zero if we don't have a value
+        if targetrv is None:
+            wargs = [params['KW_INPUTRV'][0], infile.filename]
+            WLOG(params, 'warning', TextEntry('09-020-00006', args=wargs))
+            targetrv = 0.0
+        elif targetrv == null_targetrv:
+            wargs = [params['KW_INPUTRV'][0], null_targetrv, infile.filename]
+            WLOG(params, 'warning', TextEntry('09-020-00007', args=wargs))
+            targetrv = 0.0
+    # ----------------------------------------------------------------------
     # need to deal with mask coming from inputs
     if isinstance(params['INPUTS']['MASK'], list):
         ccfmask = params['INPUTS']['MASK'][0][0]
@@ -688,6 +704,10 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     mkwargs = dict(filename=ccfmask, mask_min=mask_min, mask_width=mask_width,
                    mask_units=mask_units)
     ll_mask_d, ll_mask_ctr, w_mask = get_ccf_mask(params, **mkwargs)
+
+    # TODO: remove break point
+    constants.break_point(params)
+
     # calculate the CCF
     props = ccf_calculation(params, image, blaze, wavemap, berv, targetrv,
                             ccfwidth, ccfstep, ll_mask_ctr, w_mask,
@@ -712,10 +732,6 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     # get the FWHM value
     ccf_fwhm = mean_ccf_coeffs[2] * mp.fwhm()
     # ----------------------------------------------------------------------
-
-    # TODO: Need Etienne's help this ccf_noise is not the same as
-    # TODO:   Francois one - his gives a sigdet per rv element
-
     #  CCF_NOISE uncertainty
     ccf_noise_tot = np.sqrt(mp.nanmean(props['CCF_NOISE'] ** 2, axis=0))
     # Calculate the slope of the CCF
@@ -960,6 +976,11 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
                     **kwargs):
     # set function name
     func_name = display_func(params, 'calculate_ccf', __NAME__)
+    # get properties from params
+    blaze_norm_percentile = pcheck(params, 'CCF_BLAZE_NORM_PERCENTILE',
+                                   'blaze_norm_percentile', kwargs, func_name)
+    blaze_threshold = pcheck(params, 'WAVE_FP_BLAZE_THRES', 'blaze_threshold',
+                             kwargs, func_name)
     # get rvmin and rvmax
     rvmin = targetrv - ccfwidth
     rvmin = pcheck(params, 'RVMIN', 'rvmin', kwargs, func_name, default=rvmin)
@@ -977,6 +998,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
     ccf_lines = []
     ccf_all_snr = []
     ccf_norm_all = []
+
     # ----------------------------------------------------------------------
     # loop around the orders
     for order_num in range(nbo):
@@ -987,9 +1009,45 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         wa_ord = np.array(wavemap[order_num])
         sp_ord = np.array(image[order_num])
         bl_ord = np.array(blaze[order_num])
+
+        # normalize per-ord blaze to its peak value
+        # this gets rid of the calibration lamp SED
+        bl_ord /= np.nanpercentile(bl_ord, blaze_norm_percentile)
+        # change NaNs in blaze to zeros
+        bl_ord[~np.isfinite(bl_ord)] = 0.0
+        # mask on the blaze
+        with warnings.catch_warnings(record=True) as _:
+            blazemask = bl_ord > blaze_threshold
+        # get order mask centers and mask weights
+        min_ord_wav = mp.nanmin(wa_ord[blazemask])
+        max_ord_wav = mp.nanmax(wa_ord[blazemask])
+        # adjust for rv shifts
+        min_ord_wav = min_ord_wav * (1 - rvmin / speed_of_light)
+        max_ord_wav = max_ord_wav * (1 - rvmax / speed_of_light)
+        # mask the ccf mask by the order length
+        mask_wave_mask = (mask_centers > min_ord_wav)
+        mask_wave_mask &= (mask_centers < max_ord_wav)
+        omask_centers = mask_centers[mask_wave_mask]
+        omask_weights = mask_weights[mask_wave_mask]
+
         # ------------------------------------------------------------------
         # find any places in spectrum or blaze where pixel is NaN
         nanmask = np.isnan(sp_ord) | np.isnan(bl_ord)
+        # ------------------------------------------------------------------
+        # deal with no valid lines
+        if np.sum(mask_wave_mask) == 0:
+            # log all NaN
+            wargs = [order_num, min_ord_wav, max_ord_wav]
+            WLOG(params, 'warning', TextEntry('10-020-00006', args=wargs))
+            # set all values to NaN
+            ccf_all.append(np.repeat(np.nan, len(rv_ccf)))
+            ccf_all_fit.append(np.repeat(np.nan, len(rv_ccf)))
+            ccf_all_results.append(np.repeat(np.nan, 4))
+            ccf_noise_all.append(np.repeat(np.nan, len(rv_ccf)))
+            ccf_lines.append(0)
+            ccf_all_snr.append(np.nan)
+            ccf_norm_all.append(np.nan)
+            continue
         # ------------------------------------------------------------------
         # deal with all nan
         if np.sum(nanmask) == nbpix:
@@ -1009,10 +1067,12 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         # set the spectrum or blaze NaN pixels to zero (dealt with by divide)
         sp_ord[nanmask] = 0
         bl_ord[nanmask] = 0
+        # now every value that is zero is masked (we don't want to spline these)
+        good = (sp_ord != 0) & (bl_ord != 0)
         # ------------------------------------------------------------------
         # spline the spectrum and the blaze
-        spline_sp = mp.iuv_spline(wa_ord, sp_ord, k=5, ext=1)
-        spline_bl = mp.iuv_spline(wa_ord, bl_ord, k=5, ext=1)
+        spline_sp = mp.iuv_spline(wa_ord[good], sp_ord[good], k=5, ext=1)
+        spline_bl = mp.iuv_spline(wa_ord[good], bl_ord[good], k=5, ext=1)
         # ------------------------------------------------------------------
         # set up the ccf for this order
         ccf_ord = np.zeros_like(rv_ccf)
@@ -1023,14 +1083,16 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         # set number of valid lines used to zero
         numlines = 0
         # loop around the rvs and calculate the CCF at this point
+        part3 = spline_bl(omask_centers)
         for rv_element in range(len(rv_ccf)):
-            wave_tmp = mask_centers * wave_shifts[rv_element]
-            part1 = np.sum(spline_sp(wave_tmp) * mask_weights)
-            part2 = np.sum(spline_bl(wave_tmp) * mask_weights)
+            wave_tmp = omask_centers * wave_shifts[rv_element]
+            part1 = spline_sp(wave_tmp)
+            part2 = spline_bl(wave_tmp)
             numlines = np.sum(spline_bl(wave_tmp) != 0)
             # CCF is the division of the sums
             with warnings.catch_warnings(record=True) as _:
-                ccf_ord[rv_element] = part1 / part2
+                ccf_element = ((part1 * part3) / part2) * omask_weights
+                ccf_ord[rv_element] = mp.nansum(ccf_element)
         # ------------------------------------------------------------------
         # deal with NaNs in ccf
         if np.sum(np.isnan(ccf_ord)) > 0:
@@ -1047,9 +1109,15 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
             ccf_norm_all.append(np.nan)
             continue
         # ------------------------------------------------------------------
+        # TODO -- check that its ok to remove the normalization
+        # TODO -- this should preserve the stellar flux weighting
         # normalise each orders CCF to median
+        # TODO -- keep track of the norm factor, write a look-up table
+        # TODO -- with reasonable mid-M values and use these values for
+        # TODO -- all stars. At some point, have a temperature-dependent
+        # TODO -- LUT of weights.
         ccf_norm = mp.nanmedian(ccf_ord)
-        ccf_ord = ccf_ord / ccf_norm
+        # ccf_ord = ccf_ord / ccf_norm
         # ------------------------------------------------------------------
         # fit the CCF with a gaussian
         fargs = [order_num, rv_ccf, ccf_ord, fit_type]

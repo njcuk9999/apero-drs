@@ -27,7 +27,6 @@ Created on 2019-09-05 at 14:58
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 
 from apero import core
@@ -121,13 +120,21 @@ def __main__(recipe, params):
     fiber = params['INPUTS']['FIBER']
     # ----------------------------------------------------------------------
     # get objects that match this object name
-    object_filenames = drs_fits.find_files(params, kind='red', fiber=fiber,
+    object_filenames = drs_fits.find_files(params, recipe, kind='red',
+                                           fiber=fiber,
                                            KW_OBJNAME=objname,
                                            KW_OUTPUT=filetype)
     # deal with no files being present
     if len(object_filenames) == 0:
         wargs = [objname, filetype]
         WLOG(params, 'warning', TextEntry('10-019-00005', args=wargs))
+        # dummy pass of qc --> pass
+        qc_params = [['None'], ['None'], ['None'], [1]]
+        # update recipe log
+        recipe.log.add_qc(params, qc_params, True)
+        # update recipe log file
+        recipe.log.end(params)
+        # end this run
         return core.return_locals(params, locals())
     # ----------------------------------------------------------------------
     # Get filetype definition
@@ -138,7 +145,7 @@ def __main__(recipe, params):
     # set reference filename
     infile.set_filename(object_filenames[-1])
     # read data
-    infile.read()
+    infile.read_file()
     # get night name
     nightname = drs_path.get_nightname(params, infile.filename)
     params.set(key='NIGHTNAME', value=nightname, source=mainname)
@@ -178,7 +185,7 @@ def __main__(recipe, params):
         # get s1d filenames
         fkwargs = dict(kind='red', fiber=fiber, KW_OBJNAME=objname,
                        KW_OUTPUT=s1d_filetype)
-        s1d_filenames = drs_fits.find_files(params, **fkwargs)
+        s1d_filenames = drs_fits.find_files(params, recipe, **fkwargs)
         # make s1d cube
         margs = [s1d_filenames, s1d_file, fiber]
         s1d_props = telluric.make_1d_template_cube(params, recipe, *margs)
@@ -196,12 +203,12 @@ def __main__(recipe, params):
     # Write cubes and median to file
     # ----------------------------------------------------------------------
     # write e2ds cubes + median
-    margs = [infile, cprops, filetype, fiber, qc_params]
+    margs = [infile, cprops, filetype, fiber, mprops, qc_params]
     template_file = telluric.mk_template_write(params, recipe, *margs)
     props1d = None
     # write s1d cubes + median
     for it, s1d_props in enumerate(s1d_cubes):
-        sargs = [infile, s1d_props, infile.s1d[it], fiber, qc_params]
+        sargs = [infile, s1d_props, infile.s1d[it], fiber, mprops, qc_params]
         props1d = telluric.mk_1d_template_write(params, recipe, *sargs)
 
     # ----------------------------------------------------------------------

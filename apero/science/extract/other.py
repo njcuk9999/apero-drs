@@ -9,7 +9,6 @@ Created on 2019-08-16 at 11:18
 
 @author: cook
 """
-from __future__ import division
 import os
 
 from apero import core
@@ -108,6 +107,36 @@ def extract_thermal_files(params, recipe, extname, thermalfile, **kwargs):
     # ----------------------------------------------------------------------
     # return thermal outputs
     return thermal_files
+
+
+def extract_leak_files(params, recipe, extname, darkfpfile, **kwargs):
+    func_name = __NAME__ + '.extract_leak_files()'
+    # get parameters from params/kwargs
+    therm_always_extract = pcheck(params, 'LEAKM_ALWAYS_EXTRACT',
+                                  'always_extract', kwargs, func_name)
+    therm_extract_type = pcheck(params, 'LEAKM_EXTRACT_TYPE', 'extract_type',
+                                kwargs, func_name)
+    # get nightname
+    nightname = params['INPUTS']['DIRECTORY']
+    # find the extraction recipe
+    extrecipe, _ = drs_startup.find_recipe(extname, params['INSTRUMENT'],
+                                           mod=recipe.recipemod)
+    # ----------------------------------------------------------------------
+    # extract thermal files
+    # ----------------------------------------------------------------------
+    # get output e2ds filetype
+    fileinst = recipe.outputs['LEAK_E2DS_FILE']
+    # get outputs
+    darkfp_outputs = extract_files(params, recipe, darkfpfile, fileinst,
+                                    therm_always_extract, extrecipe, nightname,
+                                    therm_extract_type, kind='leakage',
+                                    func_name=func_name)
+    
+    # ----------------------------------------------------------------------
+    # return extraction outputs
+    # ----------------------------------------------------------------------
+    # return dark fp outputs
+    return darkfp_outputs
 
 
 def extract_wave_files(params, recipe, extname, hcfile,
@@ -259,7 +288,7 @@ def extract_files(params, recipe, infile, outfile, always_extract,
             wargs = [outfile.filename]
             WLOG(params, '', TextEntry('40-016-00021', args=wargs))
             # read file header and push into outputs
-            outfile.read()
+            outfile.read_file()
             # copy file to dictionary
             outputs[fiber] = outfile.completecopy(outfile)
     # return dictionary of outputs (one key for each fiber)

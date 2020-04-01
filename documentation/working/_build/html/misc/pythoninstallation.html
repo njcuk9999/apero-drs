@@ -6,7 +6,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>Recommended python installation &#8212; APERO 0.6.016 documentation</title>
+    <title>Recommended python installation &#8212; APERO 0.6.037 documentation</title>
     <link rel="stylesheet" href="../_static/bizstyle.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../_static/apero.css" />
@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Constants" href="glossary.html" />
-    <link rel="prev" title="Adding a new plot" href="../dev/adding_new_plot.html" />
+    <link rel="prev" title="Required Input Header Keys" href="../dev/required_input_header_keys.html" />
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
           rel='stylesheet' type='text/css' />
     <link rel="stylesheet" href="_static/images/fonta/css/font-awesome.min.css">
@@ -98,16 +98,16 @@
           <a href="glossary.html" title="Constants"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="../dev/adding_new_plot.html" title="Adding a new plot"
+          <a href="../dev/required_input_header_keys.html" title="Required Input Header Keys"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">APERO 0.6.016 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">APERO 0.6.037 documentation</a> &#187;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="../dev/adding_new_plot.html"
-                        title="previous chapter">Adding a new plot</a></p>
+  <p class="topless"><a href="../dev/required_input_header_keys.html"
+                        title="previous chapter">Required Input Header Keys</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="glossary.html"
                         title="next chapter">Constants</a></p>
@@ -141,52 +141,72 @@
 <p>If you already use anaconda/conda skip to step 3</p>
 <ol class="arabic">
 <li><p>Download anaconda, i.e. in bash and wget (or go to the
-<cite>anaconda website &lt;https://www.anaconda.com/distribution/#download-section&gt;</cite>)</p>
+anaconda website &lt;<a class="reference external" href="https://www.anaconda.com/distribution/#download-section">https://www.anaconda.com/distribution/#download-section</a>&gt;)</p>
 <blockquote>
-<div><p><code class="docutils literal notranslate"><span class="pre">`bash</span>
-<span class="pre">wget</span> <span class="pre">https://repo.anaconda.com/archive/Anaconda3-2019.10-Linux-x86_64.sh</span>
-<span class="pre">`</span></code></p>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget https://repo.anaconda.com/archive/Anaconda3-2019.10-Linux-x86_64.sh
+</pre></div>
+</div>
 </div></blockquote>
 </li>
 <li><p>Install anaconda, i.e. with bash</p>
 <blockquote>
-<div><p><code class="docutils literal notranslate"><span class="pre">`bash</span>
-<span class="pre">bash</span> <span class="pre">Anaconda3-2019.10-Linux-x86_64.sh</span>
-<span class="pre">`</span></code></p>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>Anaconda3-2019.10-Linux-x86_64.sh
+</pre></div>
+</div>
 </div></blockquote>
 </li>
-<li><dl class="simple">
-<dt>Add <cite>conda-forge</cite> to list of anaconda repositories:</dt><dd><p><code class="docutils literal notranslate"><span class="pre">`bash</span>
-<span class="pre">conda</span> <span class="pre">config</span> <span class="pre">--add</span> <span class="pre">channels</span> <span class="pre">conda-forge</span>
-<span class="pre">conda</span> <span class="pre">config</span> <span class="pre">--set</span> <span class="pre">channel_priority</span> <span class="pre">strict</span>
-<span class="pre">`</span></code></p>
-</dd>
-</dl>
+<li><p>Add <cite>conda-forge</cite> to list of anaconda repositories:</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda config --add channels conda-forge
+conda config --set channel_priority strict
+</pre></div>
+</div>
+</div></blockquote>
 </li>
-<li><dl class="simple">
-<dt>Create a new conda environment with python3.7</dt><dd><p><code class="docutils literal notranslate"><span class="pre">`bash</span>
-<span class="pre">conda</span> <span class="pre">create</span> <span class="pre">-n</span> <span class="pre">aperoenv</span> <span class="pre">python=3.7</span>
-<span class="pre">`</span></code></p>
-</dd>
-</dl>
+<li><p>Create a new conda environment</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda create -n aperoenv --python<span class="o">=</span><span class="m">3</span>.7
+</pre></div>
+</div>
+</div></blockquote>
 </li>
 <li><p>Activate conda environment (you will have to do this each time to use apero)
 so putting it in the generated setup script (for convinence) or in
 <cite>~/.bashrc</cite> <cite>~/.tcshrc</cite> to always use, is recommended.
-i. e. to activate in bash:
-<code class="docutils literal notranslate"><span class="pre">`bash</span>
-<span class="pre">conda</span> <span class="pre">activate</span> <span class="pre">aperoenv</span>
-<span class="pre">`</span></code></p></li>
-<li><dl class="simple">
-<dt>Install python packages not in anaconda:</dt><dd><p><code class="docutils literal notranslate"><span class="pre">`</span>
-<span class="pre">conda</span> <span class="pre">install</span> <span class="pre">astroquery</span>
-<span class="pre">conda</span> <span class="pre">install</span> <span class="pre">numba</span>
-<span class="pre">conda</span> <span class="pre">install</span> <span class="pre">yagmail</span>
-<span class="pre">`</span></code></p>
-</dd>
-</dl>
+i. e. to activate in bash:</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda activate aperoenv
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Install anaconda on environment:</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda install anaconda
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Install python packages not in anaconda:</p>
+<blockquote>
+<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">install</span> <span class="n">astroquery</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="n">barycorrpy</span>
+<span class="n">conda</span> <span class="n">install</span> <span class="n">yagmail</span>
+<span class="n">conda</span> <span class="n">install</span> <span class="n">ipdb</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="n">gitchangelog</span>
+</pre></div>
+</div>
+</div></blockquote>
 </li>
 </ol>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If experiencing trouble with barycorrpy with the error:
+<cite>Cannot remove entries from nonexistent</cite> run the following:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install barycorrpy --ignore-installed
+</pre></div>
+</div>
+</div>
 </div>
 
 
@@ -205,14 +225,14 @@ i. e. to activate in bash:
           <a href="glossary.html" title="Constants"
              >next</a> |</li>
         <li class="right" >
-          <a href="../dev/adding_new_plot.html" title="Adding a new plot"
+          <a href="../dev/required_input_header_keys.html" title="Required Input Header Keys"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">APERO 0.6.016 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">APERO 0.6.037 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2019, Neil Cook.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.3.1.
     </div>
   </body>
 </html>

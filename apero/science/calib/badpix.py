@@ -9,7 +9,6 @@ Created on 2019-05-13 at 11:28
 
 @author: cook
 """
-from __future__ import division
 import numpy as np
 import warnings
 import os
@@ -18,6 +17,7 @@ from scipy.ndimage import filters
 from apero import core
 from apero.core import constants
 from apero import locale
+from apero.core import math as mp
 from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.core.core import drs_database
@@ -254,6 +254,7 @@ def locate_bad_pixels_full(params, image, **kwargs):
     # get parameters from params/kwargs
     threshold = pcheck(params, 'BADPIX_FULL_THRESHOLD', 'threshold', kwargs,
                        func_name)
+    rotnum = pcheck(params, 'RAW_TO_PP_ROTATION', 'rotnum', kwargs, func_name)
     # get full flat
     mdata = drs_data.load_full_flat_badpix(params, **kwargs)
     # check if the shape of the image and the full flat match
@@ -261,8 +262,7 @@ def locate_bad_pixels_full(params, image, **kwargs):
         eargs = [mdata.shape, image.shape, func_name]
         WLOG(params, 'error', TextEntry('09-012-00001', args=eargs))
     # apply threshold
-    # mask = np.rot90(mdata, -1) < threshold
-    mask = np.abs(np.rot90(mdata, -1)-1) > threshold
+    mask = np.abs(mp.rot8(mdata, rotnum) - 1) > threshold
     # -------------------------------------------------------------------------
     # log results
     badpix_stats = (np.sum(mask) / np.array(mask).size) * 100
@@ -327,7 +327,7 @@ def correction(params, image=None, header=None, return_map=False, **kwargs):
         badpixfile = os.path.join(params['DRS_CALIB_DB'], badpixfilename)
     # -------------------------------------------------------------------------
     # get bad pixel file
-    badpiximage = drs_fits.read(params, badpixfile)
+    badpiximage = drs_fits.readfits(params, badpixfile)
     # create mask from badpixmask
     mask = np.array(badpiximage, dtype=bool)
     # -------------------------------------------------------------------------
@@ -380,11 +380,11 @@ def write_files(params, recipe, flatfile, darkfile, backmap, combine,
                        bad_pixel_map1, qc_params):
     badpixfile = recipe.outputs['BADPIX'].newcopy(recipe=recipe)
     # construct the filename from file instance
-    badpixfile.construct_filename(params, infile=flatfile)
+    badpixfile.construct_filename(params, infile=darkfile)
     # ------------------------------------------------------------------
     # define header keys for output file
     # copy keys from input file
-    badpixfile.copy_original_keys(flatfile)
+    badpixfile.copy_original_keys(darkfile)
     # add version
     badpixfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
     # add dates
@@ -429,7 +429,7 @@ def write_files(params, recipe, flatfile, darkfile, backmap, combine,
     # ----------------------------------------------------------------------
     backmapfile = recipe.outputs['BACKMAP'].newcopy(recipe=recipe)
     # construct the filename from file instance
-    backmapfile.construct_filename(params, infile=flatfile)
+    backmapfile.construct_filename(params, infile=darkfile)
     # ------------------------------------------------------------------
     # define header keys for output file (copy of badpixfile)
     backmapfile.copy_hdict(badpixfile)

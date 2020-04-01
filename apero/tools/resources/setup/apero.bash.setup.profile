@@ -2,14 +2,10 @@
 # bash setup file
 
 # setup paths
-export PATH="{TOOL_PATH}":$PATH
-export PATH="{BIN_PATH}":$PATH
-export PATH="{ROOT_PATH}":$PATH
+export PATH={PATH}:$PATH
 
 # setup up python path
-export PYTHONPATH="{TOOL_PATH}":$PYTHONPATH
-export PYTHONPATH="{BIN_PATH}":$PYTHONPATH
-export PYTHONPATH="{ROOT_PATH}":$PYTHONPATH
+export PYTHONPATH={PYTHONPATH}:$PYTHONPATH
 
 # setup aliases
 alias gointroot="cd {ROOT_PATH}"

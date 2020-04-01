@@ -46,25 +46,23 @@ TextWarning = drs_exceptions.TextWarning
 ConfigError = drs_exceptions.ConfigError
 ConfigWarning = drs_exceptions.ConfigWarning
 # -----------------------------------------------------------------------------
-INSTRUMENTS = ['SPIROU', 'NIRPS']
-DEFAULT_USER_PATH = '~/apero/default/'
-DEFAULT_DATA_PATH = '~/apero/data/default/'
+HOME = os.path.expanduser('~')
+DEFAULT_USER_PATH = os.path.join(HOME, 'apero', 'default')
+DEFAULT_DATA_PATH = os.path.join(HOME, 'apero', 'data', 'default')
 
 UCONFIG = 'user_config.ini'
 UCONST = 'user_constants.ini'
 
-BINPATH = '../bin/'
-TOOLPATH = '../tools/bin/'
-DEVPATH = '../tools/dev/'
+OUT_BINPATH = os.path.join('..', 'bin')
+OUT_TOOLPATH = os.path.join('..', 'tools')
 
-RECIPEPATH = './recipes/{0}/'
-TOOL_RECIPEPATH = '../apero/tools/recipes/general/'
-DEV_RECIPEPATH = '../apero/tools/recipes/dev/'
+IN_BINPATH = os.path.join('.', 'recipes', '{0}', '')
+IN_TOOLPATH = os.path.join('..', 'apero', 'tools', 'recipes')
 
 ENV_CONFIG = 'DRS_UCONFIG'
-SETUP_PATH = './tools/resources/setup/'
+SETUP_PATH = os.path.join('.', 'tools', 'resources', 'setup')
 
-VALIDATE_CODE = 'apero_validate.py'
+VALIDATE_CODE = os.path.join('bin', 'apero_validate.py')
 RESET_CODE = 'apero_reset'
 # set descriptions for data paths
 # TODO: these should be in the constants file?
@@ -299,9 +297,6 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None,
                 cprint('Response must be [Y]es or [N]o', 'y')
                 check = True
                 continue
-        # deal with everything else
-        else:
-            pass
         # deal with options
         if options is not None:
             # convert options to string
@@ -316,6 +311,8 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None,
                 optionstr = ' or '.join(np.array(options, dtype=str))
                 cprint('Response must be {0}'.format(optionstr), 'y')
                 check = True
+        else:
+            check = False
     # deal with path
     if dtype == 'path':
         if '.' not in uinput:
@@ -626,19 +623,27 @@ def bin_paths(params, all_params):
     package = params['DRS_PACKAGE']
     # get available instruments
     drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
-    # add root path
+    # get root path
     root = constants.get_relative_folder(package, '')
-    # add bin path
-    bin_path = constants.get_relative_folder(package, BINPATH)
-    # add tools bin path
-    tool_path = constants.get_relative_folder(package, TOOLPATH)
-    # add tools dev path
-    dev_path = constants.get_relative_folder(package, DEVPATH)
-    # add to all_params
-    all_params['DRS_BIN_PATH'] = bin_path
-    all_params['DRS_TOOL_PATH'] = tool_path
-    all_params['DRS_DEV_PATH'] = dev_path
+    # get out bin path
+    out_bin_path = constants.get_relative_folder(package, OUT_BINPATH)
+    # get out tools bin path
+    out_tool_path = constants.get_relative_folder(package, OUT_TOOLPATH)
+    # get tools save location
+    in_tool_path = constants.get_relative_folder(package, IN_TOOLPATH)
+    # add recipe bin directory to all params
+    all_params['DRS_OUT_BIN_PATH'] = out_bin_path
+    # add toool directory to all params
+    all_params['DRS_OUT_TOOL_PATH'] = out_tool_path
+    # add the drs root directory to all params
     all_params['DRS_ROOT'] = root
+    # add the individual tool directories to all params
+    all_params['DRS_OUT_TOOLS'] = []
+    for directory in os.listdir(in_tool_path):
+        # make out tool paths
+        out_tools = os.path.join(out_tool_path, directory)
+        # append out tool paths to drs out tools
+        all_params['DRS_OUT_TOOLS'].append(out_tools)
     # loop through instruments
     for instrument in drs_instruments:
         # only deal with instrument user wants to set up
@@ -714,23 +719,36 @@ def update_configs(params, all_params):
 
 
 def create_shell_scripts(params, all_params):
+    # get available instruments
+    drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
+    # ----------------------------------------------------------------------
     # get package
     package = params['DRS_PACKAGE']
-
     if all_params['PROFILENAME'] not in [None, 'None', '']:
         pname = all_params['PROFILENAME'].replace(' ', '_')
     else:
         pname = package
-
+    # get tools save location
+    in_tool_path = constants.get_relative_folder(package, IN_TOOLPATH)
+    # ----------------------------------------------------------------------
+    # get paths and add in correct order
+    paths = [os.path.dirname(all_params['DRS_ROOT'])]
+    # add bin directory
+    paths.append(all_params['DRS_OUT_BIN_PATH'])
+    # add all the tool directories
+    for directory in all_params['DRS_OUT_TOOLS']:
+        paths.append(directory)
+    # ----------------------------------------------------------------------
     # find setup files
     setup_path = constants.get_relative_folder(package, SETUP_PATH)
-
     # deal with windows
     if os.name == 'nt':
+        sep = '";"'
         setup_infiles = ['{0}.win.setup'.format(package.lower())]
         setup_outfiles = ['{0}.win.setup'.format(pname.lower())]
     # deal with unix
     elif os.name == 'posix':
+        sep = '":"'
         setup_infiles = ['{0}.bash.setup'.format(package.lower())]
         setup_infiles += ['{0}.sh.setup'.format(package.lower())]
         setup_outfiles = ['{0}.bash.setup'.format(pname.lower())]
@@ -743,19 +761,18 @@ def create_shell_scripts(params, all_params):
         sys.exit()
     # ----------------------------------------------------------------------
     # construct validation code absolute path
-    valid_path = os.path.join(all_params['DRS_TOOL_PATH'], VALIDATE_CODE)
+    valid_path = os.path.join(in_tool_path, VALIDATE_CODE)
     # ----------------------------------------------------------------------
     # setup text dictionary
     text = dict()
-    text['BIN_PATH'] = all_params['DRS_BIN_PATH']
-    text['TOOL_PATH'] = all_params['DRS_TOOL_PATH']
-    text['USER_CONFIG'] = all_params['USERCONFIG']
     text['ROOT_PATH'] = os.path.dirname(all_params['DRS_ROOT'])
+    text['USER_CONFIG'] = all_params['USERCONFIG']
     text['NAME'] = all_params['PROFILENAME']
+    text['PATH'] = '"' + sep.join(paths) + '"'
+    text['PYTHONPATH'] = '"' + sep.join(paths) + '"'
     # ----------------------------------------------------------------------
     # loop around setup files
     for it, setup_file in enumerate(setup_infiles):
-
         # deal with having profile name
         if all_params['PROFILENAME'] not in [None, 'None', '']:
             # get absolute path
@@ -792,7 +809,7 @@ def create_shell_scripts(params, all_params):
             out_lines.append(out_line)
         # ------------------------------------------------------------------
         # add instrument tests
-        for instrument in INSTRUMENTS:
+        for instrument in drs_instruments:
             out_lines.append('\n')
             if instrument in all_params:
                 # run the validation script (just to print splash)
@@ -814,22 +831,22 @@ def create_shell_scripts(params, all_params):
 
 
 def clean_install(params, all_params):
+    # get available instruments
+    drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
     # get package
     package = params['DRS_PACKAGE']
-    # get root directory
-    tool_path = constants.get_relative_folder(package, TOOL_RECIPEPATH)
-
+    # get tools save location
+    in_tool_path = constants.get_relative_folder(package, IN_TOOLPATH)
     # append tool path
-    sys.path.append(tool_path)
+    sys.path.append(os.path.join(in_tool_path, 'bin'))
     toolmod = importlib.import_module(RESET_CODE)
-
     # loop around instruments
-    for instrument in INSTRUMENTS:
+    for instrument in drs_instruments:
         # skip is we are not installing instrument
         if instrument not in all_params:
             continue
         # check if all directories are empty
-        cond1 = not reset_paths_empty(params, all_params)
+        cond1 = not reset_paths_empty(params, all_params, instrument)
         cond2 = not all_params[instrument]['CLEAN_INSTALL']
         # check if user wants a clean install
         if cond1 and cond2:
@@ -842,63 +859,65 @@ def clean_install(params, all_params):
         # add to environment
         add_paths(all_params)
         # construct reset command
-        if not cond1:
-            toolmod.main(instrument=instrument, quiet=True, warn=False)
-        else:
-            toolmod.main(instrument=instrument, quiet=True, warn=True)
+        toolmod.main(instrument=instrument, quiet=True, warn=True)
     # return all params
     return all_params
 
 
 def create_symlinks(params, all_params):
-    # get root directory
-    binpath = all_params['DRS_BIN_PATH']
-    toolpath = all_params['DRS_TOOL_PATH']
-    devpath = all_params['DRS_DEV_PATH']
+    # get available instruments
+    drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
     # get package
     package = params['DRS_PACKAGE']
+    # get out paths
+    out_bin_path = all_params['DRS_OUT_BIN_PATH']
+    out_tool_path = all_params['DRS_OUT_TOOL_PATH']
+    # get tools save location
+    in_tool_path = constants.get_relative_folder(package, IN_TOOLPATH)
 
     # ------------------------------------------------------------------
     # Copy bin files (for each instrument)
     # ------------------------------------------------------------------
     # log which directory we are populating
-    cprint('\n\t Populating {0} directory\n'.format(binpath), 'm')
+    cprint('\n\t Populating {0} directory\n'.format(out_bin_path), 'm')
 
     # loop around instruments
-    for instrument in INSTRUMENTS:
+    for instrument in drs_instruments:
         # skip is we are not installing instrument
         if instrument not in all_params:
             continue
 
         # find recipe folder for this instrument
-        recipe_raw = RECIPEPATH.format(instrument.lower())
+        recipe_raw = IN_BINPATH.format(instrument.lower())
         recipe_dir = constants.get_relative_folder(package, recipe_raw)
         # define suffix
         suffix = '*_{0}.py'.format(instrument.lower())
         # create sym links
-        _create_link(recipe_dir, suffix, binpath)
+        _create_link(recipe_dir, suffix, out_bin_path)
 
     # ------------------------------------------------------------------
-    # Copy general tools
+    # Copy tools (do not copy tools directories for instruments not being
+    #    installed)
     # ------------------------------------------------------------------
-    # log which directory we are populating
-    cprint('\n\t Populating {0} directory\n'.format(binpath), 'm')
-    # get default directory
-    tools_dir = constants.get_relative_folder(package, TOOL_RECIPEPATH)
-    # define suffix
-    suffix = '*.py'
-    # create sym links
-    _create_link(tools_dir, suffix, toolpath)
+    # get list of tool directories
+    dirs = os.listdir(in_tool_path)
 
-    # ------------------------------------------------------------------
-    # Copy dev tools files
-    # ------------------------------------------------------------------
-    # get default directory
-    dev_dir = constants.get_relative_folder(package, DEV_RECIPEPATH)
-    # define suffix
-    suffix = '*.py'
-    # create sym links
-    _create_link(dev_dir, suffix, devpath, log=False)
+    for directory in dirs:
+        # do not copy tools for instruments we are not installing
+        if directory.upper() in drs_instruments:
+            if directory .upper() not in all_params:
+                continue
+
+        # construct this directories absolute path
+        in_tools = os.path.join(in_tool_path, directory)
+        out_tools = os.path.join(out_tool_path, directory)
+
+        # log which directory we are populating
+        cprint('\n\t Populating {0} directory\n'.format(out_tools), 'm')
+        # define suffix
+        suffix = '*.py'
+        # create sym links
+        _create_link(in_tools, suffix, out_tools)
 
     # ------------------------------------------------------------------
     # return all_params
@@ -917,8 +936,11 @@ def _create_link(recipe_dir, suffix, new_path, log=True):
         if log:
             cprint('\t\tMoving {0}'.format(basename))
         # remove link already present
-        if os.path.exists(newpath):
+        if os.path.exists(newpath) or os.path.islink(newpath):
             os.remove(newpath)
+        # deal with directories not exists
+        if not os.path.exists(os.path.dirname(newpath)):
+            os.makedirs(os.path.dirname(newpath))
         # make symlink
         os.symlink(filename, newpath)
         # make executable
@@ -929,9 +951,13 @@ def _create_link(recipe_dir, suffix, new_path, log=True):
 
 
 def add_paths(all_params):
-    # get paths
-    bin_path = all_params['DRS_BIN_PATH']
-    tool_path = all_params['DRS_TOOL_PATH']
+    # get paths and add in correct order
+    paths = [os.path.dirname(all_params['DRS_ROOT'])]
+    # add bin directory
+    paths.append(all_params['DRS_OUT_BIN_PATH'])
+    # add all the tool directories
+    for directory in all_params['DRS_OUT_TOOLS']:
+        paths.append(directory)
     # ----------------------------------------------------------------------
     # set USERCONFIG
     os.environ[ENV_CONFIG] = all_params['USERCONFIG']
@@ -943,20 +969,25 @@ def add_paths(all_params):
     # ----------------------------------------------------------------------
     # add to PATH
     if 'PATH' in os.environ:
+        # get old path
         oldpath = os.environ['PATH']
-        args = [sep, bin_path, tool_path, oldpath]
-        os.environ['PATH'] = '{1}{0}{2}{0}{3}'.format(*args)
+        # add to paths
+        paths += oldpath
+        # add to environment
+        os.environ['PATH'] = sep.join(paths)
     else:
-        args = [sep, bin_path, tool_path]
-        os.environ['PATH'] = '{1}{0}{2}'.format(*args)
+        # add to environment
+        os.environ['PATH'] = sep.join(paths)
     # add to PYTHON PATH
     if 'PYTHONPATH' in os.environ:
         oldpath = os.environ['PYTHONPATH']
-        args = [sep, bin_path, tool_path, oldpath]
-        os.environ['PYTHONPATH'] = '{1}{0}{2}{0}{3}'.format(*args)
+        # add to paths
+        paths += oldpath
+        # add to environment
+        os.environ['PYTHONPATH'] = sep.join(paths)
     else:
-        args = [sep, bin_path, tool_path]
-        os.environ['PYTHONPATH'] = '{1}{0}{2}'.format(*args)
+        # add to environment
+        os.environ['PYTHONPATH'] = sep.join(paths)
 
 
 def printheader():
@@ -967,8 +998,16 @@ def printheader():
 def print_options(params, all_params):
     # set up the text dictionary
     text = dict()
-    text['DRS_UCONFIG'] = all_params['USERCONFIG']
+
+    # deal with user config (should end with os.sep)
+    userconfig = all_params['USERCONFIG']
+    if not userconfig.endswith(os.sep):
+        userconfig += os.sep
+    # add to text dictionary
+    text['DRS_UCONFIG'] = userconfig
+    # add system to text dictionary
     text['SYSTEM'] = '{SYSTEM}'
+    # add profile name (package name)
     if all_params['PROFILENAME'] not in ['None', None, '']:
         text['NAME'] = all_params['PROFILENAME']
     else:
@@ -981,9 +1020,14 @@ def print_options(params, all_params):
     cprint(message4.format(**text), 'g')
 
 
-def reset_paths_empty(params, all_params):
+def reset_paths_empty(params, all_params, instrument=None):
+
+    if instrument is None:
+        instruments = params['DRS_INSTRUMENTS']
+    else:
+        instruments = [instrument]
     # loop around instruments
-    for instrument in params['DRS_INSTRUMENTS']:
+    for instrument in instruments:
         # skip if we are not installing instrument
         if instrument not in all_params:
             continue
@@ -1195,7 +1239,7 @@ def ufile_write(aparams, lines, upath, ufile, kind):
 # =============================================================================
 # update functions
 # =============================================================================
-def update(params):
+def update(params, args):
     # set function name
     func_name = __NAME__ + '.update()'
     # get available instruments
@@ -1242,8 +1286,12 @@ def update(params):
             istorage.set_source(datapath, iparams.sources[datapath])
         # ------------------------------------------------------------------
         # add clean install
-        istorage['CLEAN_INSTALL'] = False
-        istorage.set_source('CLEAN_INSTALL', func_name)
+        if args.clean in ['True', True, '1', 1]:
+            istorage['CLEAN_INSTALL'] = True
+            istorage.set_source('CLEAN_INSTALL', 'sys.argv')
+        else:
+            istorage['CLEAN_INSTALL'] = False
+            istorage.set_source('CLEAN_INSTALL', func_name)
         # add ds9
         istorage['DRS_DS9_PATH'] = iparams['DRS_DS9_PATH']
         istorage.set_source('DRS_DS9_PATH', iparams.sources['DRS_DS9_PATH'])
