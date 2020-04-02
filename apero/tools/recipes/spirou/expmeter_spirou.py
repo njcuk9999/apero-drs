@@ -10,12 +10,14 @@ Created on 2020-02-28 at 16:47
 @author: cook
 """
 import numpy as np
+import os
 import warnings
 
 from apero import core
 from apero import locale
 from apero.core import constants
 from apero.io import drs_fits
+from apero.core import math as mp
 from apero.science.calib import shape
 from apero.science.calib import wave
 from apero.science import telluric
@@ -61,6 +63,10 @@ exposuremeter.set_arg(pos=0, name='directory', dtype='directory',
 
 # add recipe to recipe definition
 RMOD.add(exposuremeter)
+# header keys
+EM_MIN_WAVE = ('EM_MNWAV', 0.0, 'Exposure meter min wave for mask')
+EM_MAX_WAVE = ('EM_MXWAV', 0.0, 'Exposure meter max wave for mask')
+EM_TELL_THRES = ('EM_TLIM', 0.0, 'Exposure meter telluric threshold for mask')
 
 
 # =============================================================================
@@ -183,15 +189,17 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Get and prepare shape and position images
     # ----------------------------------------------------------------------
+    # get ref image
+    ref_infile = wave_infiles[fibers[0]]
+    ref_header = ref_infile.header
     # get image shape
     ishape = inverse.drs_image_shape(params)
 
     # get the x and y position images
     yimage, ximage = np.indices(ishape)
     # get shape files
-    ref_infile = wave_infiles[fibers[0]]
-    shapexfile, shapex = shape.get_shapex(params, ref_infile.header)
-    shapeyfile, shapey = shape.get_shapey(params, ref_infile.header)
+    shapexfile, shapex = shape.get_shapex(params, ref_header)
+    shapeyfile, shapey = shape.get_shapey(params, ref_header)
     # transform the shapex map
     WLOG(params, '', 'Transforming shapex map')
     shapex2 = shape.ea_transform(params, shapex, dymap=-shapey)
@@ -271,7 +279,7 @@ def __main__(recipe, params):
     min_lambda = params['EXPMETER_MIN_LAMBDA'] = 1478.7
     max_lambda = params['EXPMETER_MAX_LAMBDA'] = 1823.1
     tell_thres = params['EXPMETER_TELLU_THRES'] = 0.95
-    # save masks
+    # create masks
     with warnings.catch_warnings(record=True) as _:
         mask1 = pwave_map > min_lambda
         mask2 = pwave_map < max_lambda
@@ -280,9 +288,27 @@ def __main__(recipe, params):
     # combined mask
     mask = mask1 & mask2 & mask3
 
-    # TODO: rotate mask (pp --> raw)
+    # get raw image
+    maskraw = mp.rot8(mask, params['RAW_TO_PP_ROTATION'], invert=True)
 
-    # TODO: save output mask (pp and raw)
+    # ----------------------------------------------------------------------
+    # write output files
+    # ----------------------------------------------------------------------
+    # add keys to header
+    ref_header = drs_fits.add_header_key(ref_header, EM_MIN_WAVE, min_lambda)
+    ref_header = drs_fits.add_header_key(ref_header, EM_MAX_WAVE, max_lambda)
+    ref_header = drs_fits.add_header_key(ref_header, EM_TELL_THRES, tell_thres)
+    # construct output filenames
+    infile = ref_infile.filename
+    out_pp_file = infile.replace('.fits', 'PPTYPE.fits')
+    out_raw_file = infile.replace('.fits', 'RAWTYPE.fits')
+    # save pp file
+    WLOG(params, '', 'Saving pp file: {0}'.format(out_pp_file))
+    drs_fits.writefits(params, out_pp_file, mask, ref_header)
+
+    # save raw to file
+    WLOG(params, '', 'Saving raw file: {0}'.format(out_raw_file))
+    drs_fits.writefits(params, out_raw_file, maskraw, ref_header)
 
     # ----------------------------------------------------------------------
     # End of main code
