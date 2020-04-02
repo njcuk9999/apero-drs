@@ -508,7 +508,7 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
     return continuum_val, xbin, ybin
 
 
-def rot8(image, nrotation):
+def rot8(image, nrotation, invert=False):
     """
     Rotation of a 2d image with the 8 possible geometries. Rotation 0-3
     do not flip the image, 4-7 perform a flip
@@ -525,14 +525,22 @@ def rot8(image, nrotation):
 
     :param image: input image
     :param nrotation: integer between 0 and 7
+    :param invert: bool, if True does the opposite rotation to False
+                   i.e. image --> rot8(invert=False) --> rot image -->
+                        rot8(invert=True) --> image
 
     :type image: np.ndarray
     :type rotnum: int
 
     :return: rotated and/or flipped image
     """
+    # how to invert them (if invert is True
+    inversion = {1:3, 2:2, 3:1, 4:4, 5:7, 6:6, 7:5, 0:0}
     # module 8 number
     nrot = int(nrotation % 8)
+    # deal with possible inverting
+    if invert:
+        nrot = inversion[nrot]
     # return the correctly rotated image
     return np.rot90(image[::1-2*(nrot // 4)], nrot % 4)
 
