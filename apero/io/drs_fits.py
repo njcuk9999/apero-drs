@@ -421,7 +421,8 @@ def _read_fitstable(params, filename, getdata, gethdr, ext=0):
 # =============================================================================
 # Define write functions
 # =============================================================================
-def writefits(params, filename, data, header, datatype, dtype=None, func=None):
+def writefits(params, filename, data, header, datatype='image', dtype=None,
+              func=None):
     # ------------------------------------------------------------------
     # define a synchoronized lock for indexing (so multiple instances do not
     #  run at the same time)
@@ -447,7 +448,8 @@ def writefits(params, filename, data, header, datatype, dtype=None, func=None):
         raise e
 
 
-def _write_fits(params, filename, data, header, datatype, dtype=None, func=None):
+def _write_fits(params, filename, data, header, datatype='image', dtype=None,
+                func=None):
     # deal with function name coming from somewhere else
     if func is None:
         func_name = __NAME__ + '.writefits()'
@@ -548,6 +550,18 @@ def _write_fits(params, filename, data, header, datatype, dtype=None, func=None)
             w1.append(warning)
     # add warnings to the warning logger and log if we have them
     drs_log.warninglogger(params, w1)
+
+
+def add_header_key(header, keystore, value=None):
+    # only used if one cannot use DrsFitsFile
+    hkey, hvalue, hcomment = keystore
+    # deal with value set
+    if value is not None:
+        hvalue = value
+    # add to header
+    header[hkey] = (hvalue, hcomment)
+    # return header
+    return header
 
 
 # =============================================================================
