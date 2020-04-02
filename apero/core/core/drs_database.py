@@ -358,7 +358,7 @@ def add_file(params, outfile, night=None, copy_files=True, log=True):
     # ------------------------------------------------------------------
     # first copy file to database folder
     if copy_files:
-        _copy_db_file(params, dbname, inpath, abs_outpath)
+        _copy_db_file(params, dbname, inpath, abs_outpath, log=True)
     # ------------------------------------------------------------------
     # update database with key
     if dbname.lower() == 'telluric':
@@ -427,7 +427,7 @@ def copy_calibrations(params, header, **kwargs):
             wargs = [dbshort, infilename, outpath]
             WLOG(params, '', TextEntry('40-006-00003', args=wargs))
             # copy the database file
-            _copy_db_file(params, dbname, inabspath, outabspath)
+            _copy_db_file(params, dbname, inabspath, outabspath, log=False)
 
 
 def get_header_time(params, database, header):
@@ -738,7 +738,7 @@ def _get_database_file(params, dbname, outfile=None):
     return outpath
 
 
-def _copy_db_file(params, dbname, inpath, outpath):
+def _copy_db_file(params, dbname, inpath, outpath, log=True):
     # set function name
     func_name = display_func(params, '_copy_file', __NAME__)
     # remove file if already present
@@ -775,6 +775,15 @@ def _copy_db_file(params, dbname, inpath, outpath):
         # reset lock
         lock.reset()
         raise e
+    # -------------------------------------------------------------------------
+    # check that file is copied
+    if os.path.exists(outpath):
+        if log:
+            wargs = [dbname, outpath]
+            WLOG(params, '', TextEntry('40-006-00004', args=wargs))
+    else:
+        eargs = [dbname, outpath, func_name]
+        WLOG(params, 'error', TextEntry('00-008-00021', args=eargs))
 
 
 def _get_time(params, dbname, header=None, hdict=None, kind=None):
