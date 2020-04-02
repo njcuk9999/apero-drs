@@ -187,6 +187,12 @@ class Lock:
         # if we don't have this file add it to the end of the list
         if name + '.lock' not in rawlist:
             self.enqueue(name)
+            rawlist = os.listdir(path)
+
+        # deal with no raw files
+        if len(rawlist) == 0:
+            self.enqueue(name)
+            rawlist = os.listdir(path)
 
         # get times
         pos, mintime = np.nan, np.inf
@@ -201,8 +207,10 @@ class Lock:
                 pos = it
 
         if np.isnan(pos):
-            eargs = [name + '.lock', path]
-            raise ValueError('Impossible Error: {0} not in {1}'.format(*eargs))
+            eargs = [name + '.lock', path, ','.join(rawlist[it])]
+            emsg = 'Impossible Error: {0} not in {1} '
+            emsg += '\n\t Raw files: {2}'
+            raise ValueError(emsg.format(*eargs))
 
         # return list
         return rawlist[pos]
@@ -219,12 +227,31 @@ class Lock:
         # get the absolute path
         filename = name + '.lock'
         abspath = os.path.join(self.path, filename)
-        # if the file exists remove it
-        if os.path.exists(abspath):
-            # do not remove lock path
-            if abspath != self.lockpath:
-                # remove file
-                os.remove(abspath)
+
+        # loop until we have desired result (or have tried 10 times)
+        attempt = 0
+        while 1:
+            # if the file exists remove it
+            if os.path.exists(abspath):
+                # do not remove lock path
+                if abspath != self.lockpath:
+                    # remove file
+                    try:
+                        attempt += 1
+                        os.remove(abspath)
+                    except Exception as e:
+                        if attempt >= 10:
+                            # log warning for error
+                            eargs = [abspath, type(e), str(e)]
+                            emsg = TextEntry('10-101-00007', args=eargs)
+                            WLOG(self.params, 'warning', emsg)
+                            break
+                        else:
+                            continue
+                else:
+                    break
+            else:
+                break
 
     def __clean_name(self, name):
         # loop around bad characters and replace them
