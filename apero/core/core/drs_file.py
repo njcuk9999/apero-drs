@@ -2193,7 +2193,7 @@ class DrsFitsFile(DrsInputFile):
         if key is not None:
             if isinstance(key, str) and (key in params):
                 kwstore = params[key]
-            elif isinstance(key, list):
+            elif isinstance(key, list) or isinstance(key, tuple):
                 kwstore = list(key)
             else:
                 eargs = [key, func_name]
