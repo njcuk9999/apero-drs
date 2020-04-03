@@ -319,7 +319,7 @@ def __main__(recipe, params):
     # construct filename
     out_pp_file.construct_filename(params, infile=ref_infile)
     # copy header from ref file
-    out_pp_file.copy_hdict(ref_infile)
+    out_pp_file.copy_original_keys(ref_infile)
     # add header keys
     out_pp_file.add_hkey(EM_MIN_WAVE, value=min_lambda)
     out_pp_file.add_hkey(EM_MAX_WAVE, value=max_lambda)
@@ -339,7 +339,7 @@ def __main__(recipe, params):
     # construct filename
     out_raw_file.construct_filename(params, infile=ref_infile)
     # copy header from ref file
-    out_raw_file.copy_hdict(ref_infile)
+    out_raw_file.copy_original_keys(ref_infile)
     # add header keys
     out_raw_file.add_hkey(EM_MIN_WAVE, value=min_lambda)
     out_raw_file.add_hkey(EM_MAX_WAVE, value=max_lambda)
