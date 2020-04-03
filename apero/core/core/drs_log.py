@@ -1404,10 +1404,9 @@ def writelog(logobj, params, message, key, logfilepath):
     if os.path.exists(logfilepath):
         # try to open the logfile
         try:
-            # open/write and close the logfile
-            f = open(logfilepath, 'a')
-            f.write(message + '\n')
-            f.close()
+            # write the logfile
+            with open(logfilepath, 'w') as f:
+                f.write(message + '\n')
         except Exception as e:
             eargs = [logfilepath, type(e), e, func_name]
             emsg = TextEntry('01-001-00011', args=eargs)
@@ -1415,11 +1414,9 @@ def writelog(logobj, params, message, key, logfilepath):
     else:
         # try to open the logfile
         try:
-            # open/write and close the logfile
-            f = open(logfilepath, 'a')
-            # write the first message line
-            f.write(message + '\n')
-            f.close()
+            # write the logfile
+            with open(logfilepath, 'w') as f:
+                f.write(message + '\n')
             try:
                 # change mode to rw-rw-rw-
                 os.chmod(logfilepath, 0o666)

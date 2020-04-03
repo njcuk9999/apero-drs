@@ -514,25 +514,21 @@ def read_runfile(params, runfile, **kwargs):
 def fix_run_file(runfile):
     # only do this if we have a runfile
     if os.path.exists(runfile):
-        # open run file
-        runf = open(runfile, 'r')
-        # read all lines
-        lines = runf.readlines()
-        # close file
-        runf.close()
+        # read the lines
+        with open(runfile, 'r') as f:
+            lines = f.readlines()
+
         # convert to character array
         lines = np.char.array(lines)
         # replace all equal signs
         lines = lines.replace('=', '@' * 50, 1)
         lines = lines.replace('=', ' ')
         lines = lines.replace('@' * 50, '=')
-        # open run file
-        runf = open(runfile, 'w')
         # write to file
-        for line in lines:
-            runf.write(line + '\n')
-        # close file
-        runf.close()
+        with open(runfile, 'w') as f:
+            # write lines to file
+            for line in lines:
+                f.write(line + '\n')
 
 
 def send_email(params, kind):
@@ -849,10 +845,9 @@ def save_stats(params, outlist):
 
     # make txt table
     try:
-        out_txt_table = open(out_txt_path, 'w')
-        for value in runlists:
-            out_txt_table.write(value + '\n')
-        out_txt_table.close()
+        with open(out_txt_path, 'w') as f:
+            for value in runlists:
+                f.write(value + '\n')
     except Exception as e:
         eargs = [out_txt_path, type(e), e, func_name]
         WLOG(params, 'warning', TextEntry('10-503-00012', args=eargs))

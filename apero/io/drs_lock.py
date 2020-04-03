@@ -147,10 +147,9 @@ class Lock:
             # if path does not exist try to create it
             if not os.path.exists(abspath):
                 try:
-
-                    f = open(abspath, 'w')
-                    f.write(filename)
-                    f.close()
+                    # write filename
+                    with open(abspath, 'w') as f:
+                        f.write(filename)
                     break
                 except:
                     # whatever the problem sleep for a second

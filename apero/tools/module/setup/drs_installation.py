@@ -793,12 +793,9 @@ def create_shell_scripts(params, all_params):
         if os.path.exists(outpath):
             os.remove(outpath)
         # ------------------------------------------------------------------
-        # read setup file
-        in_setup = open(inpath, 'r')
-        # read setup lines
-        in_lines = in_setup.readlines()
-        # close setup file
-        in_setup.close()
+        # read the setup file lines
+        with open(inpath, 'r') as f:
+            in_lines = f.readlines()
         # ------------------------------------------------------------------
         # loop around lines and update parameters
         out_lines = []
@@ -820,12 +817,9 @@ def create_shell_scripts(params, all_params):
                 out_lines.append(comment + '\n')
                 out_lines.append(command + '\n')
         # ------------------------------------------------------------------
-        # open output setup file
-        out_setup = open(outpath, 'w')
-        # write lines to out setup file
-        out_setup.writelines(out_lines)
-        # close out setup file
-        out_setup.close()
+        # write the lines
+        with open(outpath, 'w') as f:
+            f.writelines(out_lines)
     # return all params
     return all_params
 
@@ -1177,10 +1171,9 @@ def ufile_write(aparams, lines, upath, ufile, kind):
     # ----------------------------------------------------------------------
     # deal with config file existing
     if os.path.exists(ufilepath):
-        # need to open current
-        u_file = open(ufilepath, 'r')
-        current_lines = u_file.readlines()
-        u_file.close()
+        # read the lines
+        with open(ufilepath, 'r') as f:
+            current_lines = f.readlines()
         # now need to check these lines against lines
         for l_it, line in enumerate(lines):
             # we shouldn't worry about old comment lines
@@ -1225,13 +1218,12 @@ def ufile_write(aparams, lines, upath, ufile, kind):
                     lines[l_it] = cline
     # ----------------------------------------------------------------------
     # write files
-    u_file = open(ufilepath, 'w')
-    for line in lines:
-        if not line.endswith('\n'):
-            u_file.write(line + '\n')
-        else:
-            u_file.write(line)
-    u_file.close()
+    with open(ufilepath, 'w') as u_file:
+        for line in lines:
+            if not line.endswith('\n'):
+                u_file.write(line + '\n')
+            else:
+                u_file.write(line)
     # return user file path
     return ufilepath
 

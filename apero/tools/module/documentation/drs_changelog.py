@@ -105,29 +105,26 @@ def git_change_log(filename):
 
 
 def update_version_file(filename, version):
-    # read file and delete
-    f = open(filename, 'r')
-    lines = f.readlines()
-    f.close()
+    # read the lines
+    with open(filename, 'r') as f:
+        lines = f.readlines()
     # make backup
     shutil.copy(filename, filename + '.backup')
 
     os.remove(filename)
     # edit first line
     lines[0] = 'DRS_VERSION = {0}\n'.format(version)
-    # write file and save
-    f = open(filename, 'w')
-    f.writelines(lines)
-    f.close()
+    # write the lines
+    with open(filename, 'w') as f:
+        f.writelines(lines)
     # remove backup
     os.remove(filename + '.backup')
 
 
 def update_py_version(filename, version):
-    # read const file
-    f = open(filename, 'r')
-    lines = f.readlines()
-    f.close()
+    # read the lines
+    with open(filename, 'r') as f:
+        lines = f.readlines()
     # make backup
     shutil.copy(filename, filename + '.backup')
     # find version and date to change
@@ -154,10 +151,9 @@ def update_py_version(filename, version):
             new_lines += date_string + '\n'
         else:
             new_lines.append(line)
-    # write lines
-    f = open(filename, 'w')
-    f.writelines(new_lines)
-    f.close()
+    # write the lines
+    with open(filename, 'w') as f:
+        f.writelines(new_lines)
     # remove backup
     os.remove(filename + '.backup')
 
@@ -167,10 +163,9 @@ def preview_log(filename):
 
 
 def update_file(filename, prefix, suffix):
-    # open file
-    ufile = open(filename, 'r')
-    lines = ufile.readlines()
-    ufile.close()
+    # read the lines
+    with open(filename, 'r') as f:
+        lines = f.readlines()
     # storage of output lines
     outlines = []
     # find line
@@ -185,19 +180,17 @@ def update_file(filename, prefix, suffix):
             outline += '\n'
         # append to output lines
         outlines.append(outline)
-    # save file
-    ufile = open(filename, 'w')
-    for outline in outlines:
-        ufile.write(outline)
-    ufile.close()
+    # write to file
+    with open(filename, 'w') as f:
+        for outline in outlines:
+            f.write(outline)
 
 
 def format_rst(filename):
     # ----------------------------------------------------------------------
-    # open file
-    infile = open(filename, 'r')
-    lines = infile.readlines()
-    infile.close()
+    # read the lines
+    with open(filename, 'r') as f:
+        lines = f.readlines()
     # ----------------------------------------------------------------------
     outlines = []
     # loop around in lines
@@ -212,12 +205,10 @@ def format_rst(filename):
         # append line to outlines
         outlines.append(line)
     # ----------------------------------------------------------------------
-    # open file
-    outfile = open(filename, 'w')
-    for outline in outlines:
-        outfile.write(outline)
-    outfile.close()
-
+    # write outlines
+    with open(filename, 'w') as f:
+        for outline in outlines:
+            f.write(outline)
 
 
 def _special_chars(line):

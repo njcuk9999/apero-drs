@@ -70,12 +70,9 @@ def read_lines(params, filename, comments='#', delimiter=' '):
     func_name = __NAME__ + '.read_lines()'
     # manually open file (slow)
     try:
-        # open the file
-        f = open(filename, 'r')
         # read the lines
-        lines = f.readlines()
-        # close the opened file
-        f.close()
+        with open(filename, 'r') as f:
+            lines = f.readlines()
     except Exception as e:
         eargs = [filename, type(e), e, func_name]
         WLOG(params, 'error', TextEntry('01-001-00024', args=eargs))
