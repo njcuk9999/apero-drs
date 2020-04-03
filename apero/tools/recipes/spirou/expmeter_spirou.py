@@ -63,11 +63,24 @@ exposuremeter.set_arg(pos=0, name='directory', dtype='directory',
 
 # add recipe to recipe definition
 RMOD.add(exposuremeter)
+
+# get file definitions for this instrument
+FMOD = drs_dev.FileDefinition(instrument=__INSTRUMENT__)
+# make files for this tool
+exp_pp_file = drs_dev.TmpFitsFile('EXP_PP_FILE', KW_OUTPUT='EXP_PP_FILE',
+                                  filetype='.fits', suffix='PPTYPE',
+                                  intype=[FMOD.files.out_wave_night],
+                                  outfunc=FMOD.out.general_file)
+exp_raw_file = drs_dev.TmpFitsFile('EXP_RAW_FILE', KW_OUTPUT='EXP_PP_FILE',
+                                   filetype='.fits', suffix='RAWTYPE',
+                                   intype=[FMOD.files.out_wave_night],
+                                   outfunc=FMOD.out.general_file)
+
 # header keys
 EM_MIN_WAVE = ('EM_MNWAV', 0.0, 'Exposure meter min wave for mask')
 EM_MAX_WAVE = ('EM_MXWAV', 0.0, 'Exposure meter max wave for mask')
 EM_TELL_THRES = ('EM_TLIM', 0.0, 'Exposure meter telluric threshold for mask')
-
+EM_KIND = ('EM_KIND', '', 'Exposure meter image kind (PP or RAW)')
 
 # =============================================================================
 # Define functions
@@ -285,29 +298,50 @@ def __main__(recipe, params):
         mask3 = ptellu_map > tell_thres
 
     # combined mask
-    mask = mask1 & mask2 & mask3
+    mask = np.array(mask1 & mask2 & mask3)
 
     # get raw image
     maskraw = mp.rot8(mask, params['RAW_TO_PP_ROTATION'], invert=True)
 
     # ----------------------------------------------------------------------
-    # write output files
+    # write pp out file
     # ----------------------------------------------------------------------
-    # add keys to header
-    ref_header = drs_fits.add_header_key(ref_header, EM_MIN_WAVE, min_lambda)
-    ref_header = drs_fits.add_header_key(ref_header, EM_MAX_WAVE, max_lambda)
-    ref_header = drs_fits.add_header_key(ref_header, EM_TELL_THRES, tell_thres)
-    # construct output filenames
-    infile = ref_infile.filename
-    out_pp_file = infile.replace('.fits', 'PPTYPE.fits')
-    out_raw_file = infile.replace('.fits', 'RAWTYPE.fits')
-    # save pp file
-    WLOG(params, '', 'Saving pp file: {0}'.format(out_pp_file))
-    drs_fits.writefits(params, out_pp_file, mask, ref_header)
+    # get a new copy of the out file
+    out_pp_file = exp_pp_file.newcopy(recipe=recipe)
+    # construct filename
+    out_pp_file.construct_filename(params, infile=ref_infile)
+    # copy header from ref file
+    out_pp_file.copy_hdict(ref_infile)
+    # add header keys
+    out_pp_file.add_hkey(EM_MIN_WAVE, value=min_lambda)
+    out_pp_file.add_hkey(EM_MAX_WAVE, value=max_lambda)
+    out_pp_file.add_hkey(EM_TELL_THRES, value=tell_thres)
+    out_pp_file.add_hkey(EM_KIND, value='PP')
+    # add data
+    out_pp_file.data = mask
+    # save to file
+    WLOG(params, '', 'Saving pp file: {0}'.format(out_pp_file.filename))
+    out_pp_file.write()
 
-    # save raw to file
-    WLOG(params, '', 'Saving raw file: {0}'.format(out_raw_file))
-    drs_fits.writefits(params, out_raw_file, maskraw, ref_header)
+    # ----------------------------------------------------------------------
+    # write raw out file
+    # ----------------------------------------------------------------------
+    # get a new copy of the out file
+    out_raw_file = exp_raw_file.newcopy(recipe=recipe)
+    # construct filename
+    out_raw_file.construct_filename(params, infile=ref_infile)
+    # copy header from ref file
+    out_raw_file.copy_hdict(ref_infile)
+    # add header keys
+    out_raw_file.add_hkey(EM_MIN_WAVE, value=min_lambda)
+    out_raw_file.add_hkey(EM_MAX_WAVE, value=max_lambda)
+    out_raw_file.add_hkey(EM_TELL_THRES, value=tell_thres)
+    out_raw_file.add_hkey(EM_KIND, value='PP')
+    # add data
+    out_raw_file.data = maskraw
+    # save to file
+    WLOG(params, '', 'Saving raw file: {0}'.format(out_raw_file.filename))
+    out_raw_file.write()
 
     # ----------------------------------------------------------------------
     # End of main code
