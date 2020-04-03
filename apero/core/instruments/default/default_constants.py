@@ -264,7 +264,8 @@ __all__ = [
     'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
     'REPROCESS_RAWINDEXFILE', 'REPROCESS_SEQCOL', 'REPROCESS_TIMECOL',
-    'SUMMARY_LATEX_PDF',
+    'SUMMARY_LATEX_PDF', 'EXPMETER_MIN_LAMBDA', 'EXPMETER_MAX_LAMBDA',
+    'EXPMETER_TELLU_THRES',
 ]
 
 # set name
@@ -3037,6 +3038,18 @@ SUMMARY_LATEX_PDF = Const('SUMMARY_LATEX_PDF', value=True, dtype=bool,
                           description='Define whether we try to create a latex '
                                       'summary pdf (turn this off if you have '
                                       'any problems with latex/pdflatex)')
+
+# Define exposure meter minimum wavelength for mask
+EXPMETER_MIN_LAMBDA = Const('EXPMETER_MIN_LAMBDA', value=None, dtype=float,
+                            source=__NAME__, group=cgroup)
+
+# Define exposure meter maximum wavelength for mask
+EXPMETER_MAX_LAMBDA = Const('EXPMETER_MAX_LAMBDA', value=None, dtype=float,
+                            source=__NAME__, group=cgroup)
+
+# Define exposure meter telluric threshold (minimum tapas transmission)
+EXPMETER_TELLU_THRES = Const('EXPMETER_TELLU_THRES', value=None, dtype=float,
+                            source=__NAME__, group=cgroup)
 
 # =============================================================================
 #  End of configuration file

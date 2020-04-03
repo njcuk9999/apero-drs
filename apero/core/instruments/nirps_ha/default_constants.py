@@ -2371,6 +2371,17 @@ REPROCESS_TIMECOL.value = 'KW_ACQTIME'
 SUMMARY_LATEX_PDF = SUMMARY_LATEX_PDF.copy(__NAME__)
 SUMMARY_LATEX_PDF.value = True
 
+# Define exposure meter minimum wavelength for mask
+EXPMETER_MIN_LAMBDA = EXPMETER_MIN_LAMBDA.copy(__NAME__)
+EXPMETER_MIN_LAMBDA.value = 1478.7
+
+# Define exposure meter maximum wavelength for mask
+EXPMETER_MAX_LAMBDA = EXPMETER_MAX_LAMBDA.copy(__NAME__)
+EXPMETER_MAX_LAMBDA.value = 1823.1
+
+# Define exposure meter telluric threshold (minimum tapas transmission)
+EXPMETER_TELLU_THRES = EXPMETER_TELLU_THRES.copy(__NAME__)
+EXPMETER_TELLU_THRES.value = 0.95
 
 # =============================================================================
 #  End of configuration file
