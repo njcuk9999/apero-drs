@@ -208,7 +208,6 @@ class HtmlDocument:
         # count tables
         self.tablenum += 1
 
-
     def figure(self, filename, height=None, width=None, caption=None,
                label=None):
         # set image options
@@ -223,6 +222,7 @@ class HtmlDocument:
         if caption is not None:
             self.add_text(caption)
             self.newline()
+
 
 def cmd(tag, inputs=None, options=None):
     # define tag start/end
@@ -245,17 +245,19 @@ def cmd(tag, inputs=None, options=None):
     command += end
     return command
 
+
 def open_file(filename):
-    # open file
-    readfile = open(filename, 'r')
-    lines = readfile.readlines()
-    readfile.close()
+    # read the lines
+    with open(filename, 'r') as f:
+        lines = f.readlines()
+    # return lines
     return lines
 
+
 def write_file(filename, text):
-    writefile = open(filename, 'w')
-    writefile.writelines(text)
-    writefile.close()
+    # write the lines
+    with open(filename, 'w') as f:
+        f.writelines(text)
 
 
 def apply_colormask(lines, colormask, table):

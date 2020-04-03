@@ -616,11 +616,9 @@ def _print_stats(params, started, passed, ended, urecipe):
 
 
 def _create_log_objs(params, logfile):
-    # open log file
-    lfile = open(logfile, 'r')
-    lines = lfile.readlines()
-    lfile.close()
-
+    # read the lines
+    with open(logfile, 'r') as f:
+        lines = f.readlines()
     # get file creation date
     mdate = Time(os.path.getmtime(logfile), format='unix')
 

@@ -157,11 +157,11 @@ def get_import_statements(params, files):
     infodict['filename'] = []
     # loop around the files
     for filename in files:
-        # open this iterations file
-        f = open(filename)
-        # read all lines from this iteration
-        lines = f.readlines()
 
+        # read the lines
+        with open(filename, 'r') as f:
+            lines = f.readlines()
+        # get the stats
         statsdict['total lines'] += len(lines)
         statsdict2[filename] = OrderedDict()
         statsdict2[filename]['total lines'] = len(lines)

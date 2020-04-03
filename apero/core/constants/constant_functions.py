@@ -813,12 +813,9 @@ def update_file(filename, dictionary):
     textentry = _DisplayText()
     # open file
     try:
-        # open the file
-        f = open(filename, 'r')
         # read the lines
-        lines = f.readlines()
-        # close the opened file
-        f.close()
+        with open(filename, 'r') as f:
+            lines = f.readlines()
     except Exception as e:
         eargs = [filename, func_name, type(e), e]
         raise ConfigError(textentry('00-004-00003', args=eargs),
@@ -842,12 +839,9 @@ def update_file(filename, dictionary):
                 lines[linenumber] = rstring
     # open file
     try:
-        # open the file
-        f = open(filename, 'w')
         # write the lines
-        f.writelines(lines)
-        # close the opened file
-        f.close()
+        with open(filename, 'w') as f:
+            f.writelines(lines)
     except Exception as e:
         eargs = [filename, func_name, type(e), e]
         raise ConfigError(textentry('00-004-00004', args=eargs),
@@ -966,12 +960,9 @@ def _read_lines(filename, comments='#', delimiter=' '):
     textentry = _DisplayText()
     # manually open file (slow)
     try:
-        # open the file
-        f = open(filename, 'r')
         # read the lines
-        lines = f.readlines()
-        # close the opened file
-        f.close()
+        with open(filename, 'r') as f:
+            lines = f.readlines()
     except Exception as e:
         eargs = [filename, func_name, type(e), e]
         raise ConfigError(textentry('00-004-00003', args=eargs),
@@ -1196,12 +1187,9 @@ def _validate_text_file(filename, comments='#'):
     func_name = str(__NAME__) + '._validate_text_file()'
     # get display text
     textentry = _DisplayText()
-    # open text file
-    f = open(filename, 'r')
-    # get lines
-    lines = f.readlines()
-    # close text file
-    f.close()
+    # read the lines
+    with open(filename, 'r') as f:
+        lines = f.readlines()
     # loop around each line in text file
     for l, line in enumerate(lines):
         # ignore blank lines

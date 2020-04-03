@@ -139,9 +139,9 @@ class Database():
             # --------------------------------------------------------------
             # try to open the master file
             try:
-                f = open(self.abspath, 'r')
-                lines = list(f.readlines())
-                f.close()
+                # read the lines
+                with open(self.abspath, 'r') as f:
+                    lines = list(f.readlines())
             except KeyboardInterrupt as e:
                 lock.reset()
                 raise e
@@ -823,9 +823,9 @@ def _read_lines_from_database(params, dbname):
         # ------------------------------------------------------------------
         # try to open the master file
         try:
-            f = open(abspath, 'a')
-            lines = list(f.readlines())
-            f.close()
+            # read the lines
+            with open(abspath, 'r') as f:
+                lines = list(f.readlines())
         except Exception as e:
             # error message
             eargs = [dbname, type(e), e, abspath, func_name]
@@ -906,9 +906,9 @@ def _write_line_to_database(params, key, dbname, outfile, line, log=True):
         # ------------------------------------------------------------------
         # try to open the master file
         try:
-            f = open(abspath, 'a')
-            f.writelines([line])
-            f.close()
+            # write the lines
+            with open(abspath, 'w') as f:
+                f.writelines([line])
             # print progress
             wargs = [dbname, key]
             if log:

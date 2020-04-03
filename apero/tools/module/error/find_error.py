@@ -892,9 +892,9 @@ def open_all_py_files(files):
     all_filenames = []
     # loop around files
     for filename in files:
-        f = open(filename, 'r')
-        flines = f.readlines()
-        f.close()
+        # read the lines
+        with open(filename, 'r') as f:
+            flines = f.readlines()
         # add entries
         all_entries += flines
         # add line numbers
