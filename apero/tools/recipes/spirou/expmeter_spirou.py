@@ -10,7 +10,6 @@ Created on 2020-02-28 at 16:47
 @author: cook
 """
 import numpy as np
-import os
 import warnings
 
 from apero import core
@@ -68,19 +67,21 @@ RMOD.add(exposuremeter)
 FMOD = drs_dev.FileDefinition(instrument=__INSTRUMENT__)
 # make files for this tool
 exp_pp_file = drs_dev.TmpFitsFile('EXP_PP_FILE', KW_OUTPUT='EXP_PP_FILE',
-                                  filetype='.fits', suffix='PPTYPE',
+                                  filetype='.fits', prefix='EXPMETER_',
+                                  suffix='_PPTYPE', remove_insuffix=True,
                                   intype=[FMOD.files.out_wave_night],
                                   outfunc=FMOD.out.general_file)
 exp_raw_file = drs_dev.TmpFitsFile('EXP_RAW_FILE', KW_OUTPUT='EXP_PP_FILE',
-                                   filetype='.fits', suffix='RAWTYPE',
+                                   filetype='.fits', prefix='EXPMETER_',
+                                   suffix='_RAWTYPE', remove_insuffix=True,
                                    intype=[FMOD.files.out_wave_night],
                                    outfunc=FMOD.out.general_file)
 
 # header keys
-EM_MIN_WAVE = ('EM_MNWAV', 0.0, 'Exposure meter min wave for mask')
-EM_MAX_WAVE = ('EM_MXWAV', 0.0, 'Exposure meter max wave for mask')
-EM_TELL_THRES = ('EM_TLIM', 0.0, 'Exposure meter telluric threshold for mask')
-EM_KIND = ('EM_KIND', '', 'Exposure meter image kind (PP or RAW)')
+EM_MIN_WAVE = ['EM_MNWAV', 0.0, 'Exposure meter min wave for mask']
+EM_MAX_WAVE = ['EM_MXWAV', 0.0, 'Exposure meter max wave for mask']
+EM_TELL_THRES = ['EM_TLIM', 0.0, 'Exposure meter telluric threshold for mask']
+EM_KIND = ['EM_KIND', '', 'Exposure meter image kind (PP or RAW)']
 
 # =============================================================================
 # Define functions
@@ -299,9 +300,16 @@ def __main__(recipe, params):
 
     # combined mask
     mask = np.array(mask1 & mask2 & mask3)
+    # make mask a integer mask
+    mask = mask.astype(int)
+
+    # ----------------------------------------------------------------------
+    # Convert drs --> pp and pp --> raw
+    # ----------------------------------------------------------------------
+    maskpp = inverse.drs_to_pp(params, mask, fill=0)
 
     # get raw image
-    maskraw = mp.rot8(mask, params['RAW_TO_PP_ROTATION'], invert=True)
+    maskraw = mp.rot8(maskpp, params['RAW_TO_PP_ROTATION'], invert=True)
 
     # ----------------------------------------------------------------------
     # write pp out file
@@ -318,10 +326,10 @@ def __main__(recipe, params):
     out_pp_file.add_hkey(EM_TELL_THRES, value=tell_thres)
     out_pp_file.add_hkey(EM_KIND, value='PP')
     # add data
-    out_pp_file.data = mask
+    out_pp_file.data = maskpp
     # save to file
     WLOG(params, '', 'Saving pp file: {0}'.format(out_pp_file.filename))
-    out_pp_file.write()
+    out_pp_file.write_file()
 
     # ----------------------------------------------------------------------
     # write raw out file
@@ -338,10 +346,10 @@ def __main__(recipe, params):
     out_raw_file.add_hkey(EM_TELL_THRES, value=tell_thres)
     out_raw_file.add_hkey(EM_KIND, value='PP')
     # add data
-    out_raw_file.data = maskraw
+    out_raw_file.data = np.array(maskraw).astype(int)
     # save to file
     WLOG(params, '', 'Saving raw file: {0}'.format(out_raw_file.filename))
-    out_raw_file.write()
+    out_raw_file.write_file()
 
     # ----------------------------------------------------------------------
     # End of main code
