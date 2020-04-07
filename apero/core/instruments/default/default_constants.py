@@ -10,8 +10,8 @@ __all__ = [
     # general
     'DATA_ENGINEERING', 'CALIB_DB_FORCE_WAVESOL', 'DATA_CORE',
     # preprocessing constants
-    'PP_CORRUPT_MED_SIZE', 'PP_CORRUPT_HOT_THRES', 'PP_NUM_DARK_AMP',
-    'PP_FULL_FLAT', 'PP_TOTAL_AMP_NUM',
+    'PP_HOTPIX_BOXSIZE', 'PP_CORRUPT_HOT_THRES', 'PP_NUM_DARK_AMP',
+    'PP_HOTPIX_FILE', 'PP_TOTAL_AMP_NUM',
     'PP_NUM_REF_TOP', 'PP_NUM_REF_BOTTOM', 'PP_RMS_PERCENTILE',
     'PP_LOWEST_RMS_PERCENTILE', 'PP_CORRUPT_SNR_HOTPIX',
     'PP_CORRUPT_RMS_THRES', 'RAW_TO_PP_ROTATION', 'PP_DARK_MED_BINNUM',
@@ -475,12 +475,11 @@ FIBER_SET_NUM_FIBERS_C = Const('FIBER_SET_NUM_FIBERS_C', value=None,
 # PRE-PROCESSSING SETTINGS
 # =============================================================================
 cgroup = 'PRE-PROCESSING SETTINGS'
-# Defines the size around badpixels that is considered part of the bad pixel
-PP_CORRUPT_MED_SIZE = Const('PP_CORRUPT_MED_SIZE', value=None, dtype=int,
-                            minimum=0, source=__NAME__, group=cgroup)
+# Defines the box size surrounding hot pixels to use
+PP_HOTPIX_BOXSIZE = Const('PP_HOTPIX_BOXSIZE', value=None, dtype=int,
+                          minimum=1, source=__NAME__, group=cgroup)
 
-# Defines the threshold (above the full engineering flat) that selects bad
-#   (hot) pixels
+# Defines the threshold in sigma that selects hot pixels
 PP_CORRUPT_HOT_THRES = Const('PP_CORRUPT_HOT_THRES', value=None, dtype=int,
                              minimum=0, source=__NAME__, group=cgroup)
 
@@ -496,8 +495,8 @@ PP_NUM_DARK_AMP = Const('PP_NUM_DARK_AMP', value=None, dtype=int,
 PP_DARK_MED_BINNUM = Const('PP_DARK_MED_BINNUM', value=None, dtype=int,
                            minimum=0, source=__NAME__, group=cgroup)
 
-# Defines the full detector flat file (located in the data folder)
-PP_FULL_FLAT = Const('PP_FULL_FLAT', value=None, dtype=str, source=__NAME__,
+#   Defines the pp hot pixel file (located in the data folder)
+PP_HOTPIX_FILE = Const('PP_HOTPIX_FILE', value=None, dtype=str, source=__NAME__,
                      group=cgroup)
 
 # Define the number of un-illuminated reference pixels at top of image
