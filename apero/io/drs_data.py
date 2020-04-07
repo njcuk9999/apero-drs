@@ -172,22 +172,23 @@ def load_full_flat_badpix(params, **kwargs):
         WLOG(params, 'error', TextEntry('00-012-00001', args=eargs))
 
 
-def load_full_flat_pp(params, **kwargs):
+def load_hotpix(params, **kwargs):
     # get parameters from params/kwargs
     func_name = kwargs.get('func', __NAME__ + '.load_full_flat_pp()')
     relfolder = pcheck(params, 'DATA_ENGINEERING', 'directory', kwargs,
                        func_name)
-    filename = pcheck(params, 'PP_FULL_FLAT', 'filename', kwargs,
+    filename = pcheck(params, 'PP_HOTPIX_FILE', 'filename', kwargs,
                       func_name)
     return_filename = kwargs.get('return_filename', False)
     # deal with return_filename
     if return_filename:
         return construct_path(params, filename, relfolder, func=func_name)
-    # return image
+    # return table
     try:
-        image, outf = load_fits_file(params, filename, relfolder, func_name)
+        table, outf = load_table_file(params, filename, relfolder, kwargs,
+                                      func_name)
         WLOG(params, '', TextEntry('40-010-00011', args=outf))
-        return image
+        return table
     except LoadException:
         eargs = [filename, relfolder]
         WLOG(params, 'error', TextEntry('00-010-00002', args=eargs))
