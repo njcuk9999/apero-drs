@@ -23,7 +23,7 @@ from apero.tools.module.testing import drs_dev
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'cal_update_berv.py'
+__NAME__ = 'update_berv.py'
 __INSTRUMENT__ = 'SPIROU'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
