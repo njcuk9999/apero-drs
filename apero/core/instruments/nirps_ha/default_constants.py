@@ -168,14 +168,13 @@ FIBER_SET_NUM_FIBERS_B.value = 1
 # =============================================================================
 # PRE-PROCESSSING SETTINGS
 # =============================================================================
-# Defines the size around badpixels that is considered part of the bad pixel
-PP_CORRUPT_MED_SIZE = PP_CORRUPT_MED_SIZE.copy(__NAME__)
-PP_CORRUPT_MED_SIZE.value = 2
+# Defines the box size surrounding hot pixels to use
+PP_HOTPIX_BOXSIZE = PP_HOTPIX_BOXSIZE.copy(__NAME__)
+PP_HOTPIX_BOXSIZE.value = 5
 
-# Defines the threshold (above the full engineering flat) that selects bad 
-#     (hot) pixels
+# Defines the threshold in sigma that selects hot pixels
 PP_CORRUPT_HOT_THRES = PP_CORRUPT_HOT_THRES.copy(__NAME__)
-PP_CORRUPT_HOT_THRES.value = 2
+PP_CORRUPT_HOT_THRES.value = 10
 
 #   Define the total number of amplifiers
 PP_TOTAL_AMP_NUM = PP_TOTAL_AMP_NUM.copy(__NAME__)
@@ -189,9 +188,9 @@ PP_NUM_DARK_AMP.value = 5
 PP_DARK_MED_BINNUM = PP_DARK_MED_BINNUM.copy(__NAME__)
 PP_DARK_MED_BINNUM.value = 32
 
-#   Defines the full detector flat file (located in the data folder)
-PP_FULL_FLAT = PP_FULL_FLAT.copy(__NAME__)
-PP_FULL_FLAT.value = 'QE_2000nm.fits'
+#   Defines the pp hot pixel file (located in the data folder)
+PP_HOTPIX_FILE = PP_HOTPIX_FILE.copy(__NAME__)
+PP_HOTPIX_FILE.value = 'hotpix_pp.csv'
 
 #   Define the number of un-illuminated reference pixels at top of image
 PP_NUM_REF_TOP = PP_NUM_REF_TOP.copy(__NAME__)
