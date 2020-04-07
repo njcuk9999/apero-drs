@@ -73,6 +73,8 @@ nanstd = fast.nanstd
 
 nansum = fast.nansum
 
+normal_fraction = general.normal_fraction
+
 median = fast.median
 
 linear_minimization = general.linear_minimization

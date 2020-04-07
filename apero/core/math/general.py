@@ -120,6 +120,17 @@ def fit2dpoly(x, y, z):
     return coeff
 
 
+def normal_fraction(sigma=1.0):
+    """
+    Return the expected fraction of population inside a range
+    (Assuming data is normally distributed)
+
+    :param sigma:
+    :return:
+    """
+    return erf(sigma / np.sqrt(2.0))
+
+
 def fwhm(sigma=1.0):
     """
     Get the Full-width-half-maximum value from the sigma value (~2.3548)
