@@ -1316,6 +1316,10 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     ccf_file.add_hkey('KW_CCF_RV_DRIFT', value=props['RV_DRIFT'])
     ccf_file.add_hkey('KW_CCF_RV_OBJ', value=props['RV_OBJ'])
     ccf_file.add_hkey('KW_CCF_RV_CORR', value=props['RV_CORR'])
+    ccf_file.add_hkey('KW_CCF_RV_WAVEFILE', value=props['RV_WAVEFILE'])
+    ccf_file.add_hkey('KW_CCF_RV_WAVETIME', value=props['RV_WAVETIME'])
+    ccf_file.add_hkey('KW_CCF_RV_TIMEDIFF', value=props['RV_TIMEDIFF'])
+
     # ----------------------------------------------------------------------
     # add qc parameters
     ccf_file.add_qckeys(qc_params)
