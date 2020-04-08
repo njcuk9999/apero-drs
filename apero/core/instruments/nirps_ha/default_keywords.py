@@ -1597,6 +1597,21 @@ KW_CCF_RV_CORR = KW_CCF_RV_CORR.copy(__NAME__)
 KW_CCF_RV_CORR.set(key='RV_CORR',
                    comment='RV corrected for FP CCF drift [km/s]')
 
+# the wave file used for the rv reference fiber drift
+KW_CCF_RV_WAVEFILE = KW_CCF_RV_WAVEFILE.copy(__NAME__)
+KW_CCF_RV_WAVEFILE.set(key='RV_WAVFN',
+                       comment='RV wave file used for FP drift')
+
+# the wave file time used for the rv reference fiber drift [mjd]
+KW_CCF_RV_WAVETIME = KW_CCF_RV_WAVETIME.copy(__NAME__)
+KW_CCF_RV_WAVETIME.set(key='RV_WAVTM',
+                       comment='RV wave file time used for FP drift [mjd]')
+
+# the time diff (in days) between wave file and rv reference fiber file
+KW_CCF_RV_TIMEDIFF = KW_CCF_RV_TIMEDIFF.copy(__NAME__)
+KW_CCF_RV_TIMEDIFF.set(key='RV_WAVTD',
+                       comment='RV timediff [days] btwn ref file and wave sol.')
+
 # -----------------------------------------------------------------------------
 # Define polar variables
 # -----------------------------------------------------------------------------
