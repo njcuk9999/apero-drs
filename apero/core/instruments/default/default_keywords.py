@@ -133,7 +133,8 @@ __all__ = [# input keys
            'KW_CCF_BOXSIZE', 'KW_CCF_MAXFLUX', 'KW_CCF_NMAX', 'KW_CCF_MASK_MIN',
            'KW_CCF_MASK_WID', 'KW_CCF_MASK_UNITS', 'KW_CCF_RV_WAVE_FP',
            'KW_CCF_RV_SIMU_FP', 'KW_CCF_RV_DRIFT', 'KW_CCF_RV_OBJ',
-           'KW_CCF_RV_CORR',
+           'KW_CCF_RV_CORR', 'KW_CCF_RV_WAVEFILE', 'KW_CCF_RV_WAVETIME',
+           'KW_CCF_RV_TIMEDIFF',
            # polar values
            'KW_POL_STOKES', 'KW_POL_NEXP', 'KW_POL_METHOD', 'KW_POL_FILES',
            'KW_POL_EXPS', 'KW_POL_MJDS', 'KW_POL_MJDENDS', 'KW_POL_BJDS',
@@ -1284,6 +1285,18 @@ KW_CCF_RV_OBJ = Keyword('KW_CCF_RV_OBJ', key='', dtype=float, source=__NAME__)
 
 # the corrected radial velocity of the object (taking into account the FP RVs)
 KW_CCF_RV_CORR = Keyword('KW_CCF_RV_CORR', key='', dtype=float, source=__NAME__)
+
+# the wave file used for the rv reference fiber drift
+KW_CCF_RV_WAVEFILE = Keyword('KW_CCF_RV_WAVEFILE', key='', dtype=str,
+                             source=__NAME__)
+
+# the wave file time used for the rv reference fiber drift [mjd]
+KW_CCF_RV_WAVETIME = Keyword('KW_CCF_RV_WAVETIME', key='', dtype=str,
+                             source=__NAME__)
+
+# the time diff (in days) between wave file and rv reference fiber file
+KW_CCF_RV_TIMEDIFF = Keyword('KW_CCF_RV_TIMEDIFF', key='', dtype=str,
+                             source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define polar variables
