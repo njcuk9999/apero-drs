@@ -753,6 +753,11 @@ KW_WAVEFILE = KW_WAVEFILE.copy(__NAME__)
 KW_WAVEFILE.set(key='WAVEFILE', comment='Wavelength solution file used',
                   parent=None, group='wave')
 
+# the wave file mid exptime [mjd]
+KW_WAVETIME = KW_WAVETIME.copy(__NAME__)
+KW_WAVETIME.set(key='WAVETIME', comment='Wavelength solution mid exptime',
+                parent=None, group='wave')
+
 # the wave source of the wave file used
 KW_WAVESOURCE = KW_WAVESOURCE.copy(__NAME__)
 KW_WAVESOURCE.set(key='WAVESOUR', comment='Source of the wave solution used.',
@@ -1592,21 +1597,25 @@ KW_CCF_RV_CORR = KW_CCF_RV_CORR.copy(__NAME__)
 KW_CCF_RV_CORR.set(key='RV_CORR',
                    comment='RV corrected for FP CCF drift [km/s]')
 
-# the wave file used for the rv reference fiber drift
+# the wave file used for the rv (fiber specific)
 KW_CCF_RV_WAVEFILE = KW_CCF_RV_WAVEFILE.copy(__NAME__)
 KW_CCF_RV_WAVEFILE.set(key='RV_WAVFN',
-                       comment='RV wave file used for FP drift')
+                       comment='RV wave file used')
 
-# the wave file time used for the rv reference fiber drift [mjd]
+# the wave file time used for the rv [mjd] (fiber specific)
 KW_CCF_RV_WAVETIME = KW_CCF_RV_WAVETIME.copy(__NAME__)
 KW_CCF_RV_WAVETIME.set(key='RV_WAVTM',
-                       comment='RV wave file time used for FP drift [mjd]')
+                       comment='RV wave file time used')
 
-# the time diff (in days) between wave file and rv reference fiber file
+# the time diff (in days) between wave file and file (fiber specific)
 KW_CCF_RV_TIMEDIFF = KW_CCF_RV_TIMEDIFF.copy(__NAME__)
 KW_CCF_RV_TIMEDIFF.set(key='RV_WAVTD',
-                       comment='RV timediff [days] btwn ref file and wave sol.')
+                       comment='RV timediff [days] btwn file and wave sol.')
 
+# the wave file source used for the rv reference fiber
+KW_CCF_RV_WAVESRCE = KW_CCF_RV_WAVESRCE.copy(__NAME__)
+KW_CCF_RV_WAVESRCE.set(key='RV_WAVSR',
+                       comment='RV wave file source used')
 
 # -----------------------------------------------------------------------------
 # Define polar variables
