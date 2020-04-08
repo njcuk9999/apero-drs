@@ -76,7 +76,7 @@ __all__ = [# input keys
            'KW_WAVE_TRP_SCLIPNUM', 'KW_WAVE_TRP_SCLIPTHRES',
            'KW_WAVE_TRP_DVCUTORD', 'KW_WAVE_TRP_DVCUTALL',
            'KW_WAVE_RES_MAPSIZE', 'KW_WAVE_RES_WSIZE',
-           'KW_WAVE_RES_MAXDEVTHRES', 'KW_INIT_WAVE',
+           'KW_WAVE_RES_MAXDEVTHRES', 'KW_INIT_WAVE', 'KW_WAVETIME',
            # wave littrow values
            'KW_WAVE_LIT_START_1', 'KW_WAVE_LIT_END_1', 'KW_WAVE_LIT_RORDERS',
            'KW_WAVE_LIT_ORDER_INIT_1', 'KW_WAVE_LIT_ORDER_START_1',
@@ -134,7 +134,7 @@ __all__ = [# input keys
            'KW_CCF_MASK_WID', 'KW_CCF_MASK_UNITS', 'KW_CCF_RV_WAVE_FP',
            'KW_CCF_RV_SIMU_FP', 'KW_CCF_RV_DRIFT', 'KW_CCF_RV_OBJ',
            'KW_CCF_RV_CORR', 'KW_CCF_RV_WAVEFILE', 'KW_CCF_RV_WAVETIME',
-           'KW_CCF_RV_TIMEDIFF',
+           'KW_CCF_RV_TIMEDIFF', 'KW_CCF_RV_WAVESRCE',
            # polar values
            'KW_POL_STOKES', 'KW_POL_NEXP', 'KW_POL_METHOD', 'KW_POL_FILES',
            'KW_POL_EXPS', 'KW_POL_MJDS', 'KW_POL_MJDENDS', 'KW_POL_BJDS',
@@ -678,6 +678,9 @@ KW_WAVE_DEG = Keyword('KW_WAVE_DEG', key='', dtype=int, source=__NAME__)
 
 # the wave file used
 KW_WAVEFILE = Keyword('KW_WAVEFILE', key='', dtype=str, source=__NAME__)
+
+# the wave file mid exptime [mjd]
+KW_WAVETIME = Keyword('KW_WAVETIME', key='', dtype=float, source=__NAME__)
 
 # the wave source of the wave file used
 KW_WAVESOURCE = Keyword('KW_WAVESOURCE', key='', dtype=str, source=__NAME__)
@@ -1286,16 +1289,20 @@ KW_CCF_RV_OBJ = Keyword('KW_CCF_RV_OBJ', key='', dtype=float, source=__NAME__)
 # the corrected radial velocity of the object (taking into account the FP RVs)
 KW_CCF_RV_CORR = Keyword('KW_CCF_RV_CORR', key='', dtype=float, source=__NAME__)
 
-# the wave file used for the rv reference fiber drift
+# the wave file used for the rv (fiber specific)
 KW_CCF_RV_WAVEFILE = Keyword('KW_CCF_RV_WAVEFILE', key='', dtype=str,
                              source=__NAME__)
 
-# the wave file time used for the rv reference fiber drift [mjd]
+# the wave file time used for the rv [mjd] (fiber specific)
 KW_CCF_RV_WAVETIME = Keyword('KW_CCF_RV_WAVETIME', key='', dtype=str,
                              source=__NAME__)
 
-# the time diff (in days) between wave file and rv reference fiber file
+# the time diff (in days) between wave file and file (fiber specific)
 KW_CCF_RV_TIMEDIFF = Keyword('KW_CCF_RV_TIMEDIFF', key='', dtype=str,
+                             source=__NAME__)
+
+# the wave file source used for the rv reference fiber
+KW_CCF_RV_WAVESRCE = Keyword('KW_CCF_RV_WAVESRCE', key='', dtype=str,
                              source=__NAME__)
 
 # -----------------------------------------------------------------------------
