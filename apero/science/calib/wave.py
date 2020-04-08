@@ -216,6 +216,9 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
         wavemap = np.array(wavefile.data)
         # set wave source of wave file
         wavesource = 'filename'
+        # get wave time
+        wavetime = wavefile.read_header_key('KW_MID_OBS_TIME', dtype=float,
+                                        has_default=True, default=0.0)
     # ------------------------------------------------------------------------
     # Mode 2: force from calibDB
     # ------------------------------------------------------------------------
@@ -260,6 +263,9 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
         wavemap = np.array(wavefile.data)
         # set source of wave file
         wavesource = 'calibDB'
+        # get wave time
+        wavetime = wavefile.read_header_key('KW_MID_OBS_TIME', dtype=float,
+                                        has_default=True, default=0.0)
     # ------------------------------------------------------------------------
     # Mode 3: using header only
     # ------------------------------------------------------------------------
@@ -289,7 +295,14 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
         wavefile.recipe = recipe
         wavefile.header = header
         wavefile.filename = header[params['KW_WAVEFILE'][0]]
+        # if we have a wave time use it
+        if params['KW_WAVETIME'][0] in header:
+            wavetime = header[params['KW_WAVETIME'][0]]
+        else:
+            wavetime = header[params['KW_MID_OBS_TIME'][0]]
+        # set the wave file data
         wavefile.data = np.zeros((header['NAXIS2'], header['NAXIS1']))
+        # set the source as header
         wavesource = 'header'
         # get wave map
         wavemap = None
@@ -298,8 +311,17 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     # ------------------------------------------------------------------------
     # else we are using the infile
     else:
-        wavefile = infile
-        wavesource = 'header'
+        wavefile = infile.completecopy(infile)
+        # set the file name to the wave file
+        wavefile.filename = wavefile.get_key('KW_WAVEFILE')
+        # if we have a wave time use it
+        if params['KW_WAVETIME'][0] in header:
+            wavetime = wavefile.get_key('KW_WAVETIME')
+        else:
+            wavetime = wavefile.read_header_key('KW_MID_OBS_TIME', dtype=float,
+                                        has_default=True, default=0.0)
+        # wave source is the infile
+        wavesource = 'infile'
         # get wave map
         wavemap = None
     # ------------------------------------------------------------------------
@@ -314,8 +336,6 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     # extract keys from header
     nbo = wavefile.read_header_key('KW_WAVE_NBO', dtype=int)
     deg = wavefile.read_header_key('KW_WAVE_DEG', dtype=int)
-    wavetime = wavefile.read_header_key('KW_MID_OBS_TIME', dtype=float,
-                                        has_default=True, default=0.0)
     # get the wfp keys
     wfp_drift = wavefile.read_header_key('KW_WFP_DRIFT', dtype=float,
                                          required=False)
@@ -506,6 +526,7 @@ def add_wave_keys(params, infile, props):
     _ = display_func(params, 'add_wave_keys', __NAME__)
     # add wave parameters
     infile.add_hkey('KW_WAVEFILE', value=props['WAVEFILE'])
+    infile.add_hkey('KW_WAVETIME', value=props['WAVETIME'])
     infile.add_hkey('KW_WAVESOURCE', value=props['WAVESOURCE'])
     infile.add_hkey('KW_WAVE_NBO', value=props['NBO'])
     infile.add_hkey('KW_WAVE_DEG', value=props['DEG'])
@@ -981,7 +1002,7 @@ def update_wavelength_measured(params, reftable, wavemap, kind):
 # =============================================================================
 # Define wave solution functions
 # =============================================================================
-def hc_wavesol(params, recipe, iprops, e2dsfile, fiber, **kwargs):
+def hc_wavesol(params, recipe, iprops, e2dsfile, blaze, fiber, **kwargs):
     # set function name
     func_name = display_func(params, 'hc_wavesol', __NAME__)
     # get parameters from params / kwargs
@@ -1027,7 +1048,7 @@ def hc_wavesol(params, recipe, iprops, e2dsfile, fiber, **kwargs):
     wavell = llprops['LL_OUT_1']
     # run littrow test
     llprops = littrow(params, recipe, llprops, start, end, wavell, e2dsfile,
-                      iteration=1, fiber=fiber)
+                      blaze, iteration=1, fiber=fiber)
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     # TODO: remove if once we only use cal_wave or cal_wave_master/night
@@ -1168,24 +1189,31 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
     # LITTROW SECTION - common to all methods
     # ----------------------------------------------------------------------
     # set up hc specific terms
-    start = pcheck(params, 'WAVE_LITTROW_ORDER_INIT_2', 'littrow_start',
-                   kwargs, func_name)
-    end = pcheck(params, 'WAVE_LITTROW_ORDER_FINAL_2', 'littrow_end', kwargs,
-                 func_name)
+    # TODO: Remove? Now using all orders?
+    # start = pcheck(params, 'WAVE_LITTROW_ORDER_INIT_2', 'littrow_start',
+    #                kwargs, func_name)
+    # end = pcheck(params, 'WAVE_LITTROW_ORDER_FINAL_2', 'littrow_end', kwargs,
+    #              func_name)
+    start, end = 0, len(llprops['LL_OUT_2']) - 1
     # Copy LL_OUT_1 and LL_PARAM_1 into new constants (for FP integration)
     llprops['LTTROW_EXTRAP_SOL_1'] = np.array(llprops['LL_OUT_1'])
     llprops['LITTORW_EXTRAP_PARAM_1'] = np.array(llprops['LL_PARAM_1'])
-    # set wavell
-    wavell = llprops['LL_OUT_2']
     # run littrow test
-    llprops = littrow(params, recipe, llprops, start, end, wavell, fpe2dsfile,
-                      iteration=2, fiber=fiber)
+    llprops = littrow(params, recipe, llprops, start, end, llprops['LL_OUT_2'],
+                      fpe2dsfile, blaze, iteration=2, fiber=fiber)
+
     # ------------------------------------------------------------------
     # Join 0-47 and 47-49 solutions
     # ------------------------------------------------------------------
-    start = pcheck(params, 'WAVE_N_ORD_START', 'n_ord_start', kwargs, func_name)
-    end = pcheck(params, 'WAVE_N_ORD_FINAL', 'n_ord_fin', kwargs, func_name)
-    llprops = join_orders(llprops, start, end)
+    # TODO: Remove section? Don't need to extrapolate --> just use for QC
+    # start = pcheck(params, 'WAVE_N_ORD_START', 'n_ord_start', kwargs, func_name)
+    # end = pcheck(params, 'WAVE_N_ORD_FINAL', 'n_ord_fin', kwargs, func_name)
+    # llprops = join_orders(llprops, start, end)
+
+    llprops['LL_FINAL'] = llprops['LL_OUT_2']
+    llprops['LL_PARAM_FINAL'] = llprops['LL_PARAM_2']
+    llprops.set_sources(['LL_FINAL', 'LL_PARAM_FINAL'], func_name)
+
     # ------------------------------------------------------------------
     # Plot single order, wavelength-calibrated, with found lines
     # ------------------------------------------------------------------
@@ -1427,19 +1455,43 @@ def fp_wavesol_lovis(params, recipe, llprops, fpe2dsfile, hce2dsfile,
     fit_1m_d, fit_ll_d, one_m_d, d_arr = fout
 
     # ----------------------------------------------------------------------
-    # Update FP peak wavelengths
+    # Get lines from the fp now that we have a proper cavity length
+    #   including orders that we didn't fit before
     # ----------------------------------------------------------------------
-    llprops = update_fp_peak_wavelengths(params, recipe, llprops, fit_ll_d,
-                                         m_vec, fp_order, fp_xx, fp_amp,
-                                         fp_cavfit_mode, n_init, n_fin)
+    llout = fit_wavemap_cav_iteratively(params, recipe,
+                                        inwavemap=llprops['WAVE'],
+                                        e2dsfile=fpe2dsfile,
+                                        cavity_poly=fit_ll_d[::-1])
+    ll_out_2, ll_params_2, xmean2, xvar2 = llout[:4]
+    xdetails2, lldetails2, scale2, totallines2 = llout[4:]
+    # update llprops
+    llprops['LL_OUT_2'] = ll_out_2
+    llprops['LL_PARAM_2'] = ll_params_2
+    llprops['X_MEAN_2'] = xmean2
+    llprops['X_VAR_2'] = xvar2
+    llprops['X_DETAILS_2'] = xdetails2
+    llprops['LL_DETAILS_2'] = lldetails2
+    llprops['SCALE_2'] = scale2
+    llprops['TOTAL_LINES_2'] = totallines2
+    # set source
+    keys = ['LL_OUT_2', 'LL_PARAM_2', 'X_MEAN_2', 'X_VAR_2', 'X_DETAILS_2',
+            'LL_DETAILS_2', 'LL_DETAILS_2', 'SCALE_2']
+    llprops.set_sources(keys, func_name)
 
-    # ----------------------------------------------------------------------
-    # Fit wavelength solution from FP peaks
-    # ----------------------------------------------------------------------
-    llprops = fit_wavesol_from_fppeaks(params, llprops, fp_ll, fiber, n_init,
-                                       n_fin, fp_llfit_mode, ll_fit_degree,
-                                       errx_min, max_ll_fit_rms, t_order_start,
-                                       weight_thres)
+    # # ----------------------------------------------------------------------
+    # # Update FP peak wavelengths
+    # # ----------------------------------------------------------------------
+    # llprops = update_fp_peak_wavelengths(params, recipe, llprops, fit_ll_d,
+    #                                      m_vec, fp_order, fp_xx, fp_amp,
+    #                                      fp_cavfit_mode, n_init, n_fin)
+    #
+    # # ----------------------------------------------------------------------
+    # # Fit wavelength solution from FP peaks
+    # # ----------------------------------------------------------------------
+    # llprops = fit_wavesol_from_fppeaks(params, llprops, fp_ll, fiber, n_init,
+    #                                    n_fin, fp_llfit_mode, ll_fit_degree,
+    #                                    errx_min, max_ll_fit_rms, t_order_start,
+    #                                    weight_thres)
 
     # ----------------------------------------------------------------------
     # Multi-order HC lines plot
@@ -3138,9 +3190,9 @@ def generate_res_files(params, llprops, outfile, **kwargs):
 # =============================================================================
 # Define littrow worker functions
 # =============================================================================
-def littrow(params, recipe, llprops, start, end, wavell, infile, iteration=1,
-            fiber=None, **kwargs):
-    func_name = __NAME__ + '.littrow_test()'
+def littrow(params, recipe, llprops, start, end, wavell, infile, blaze,
+            iteration=1, fiber=None, **kwargs):
+    func_name = display_func(params, 'littrow', __NAME__)
     # get parameters from params/kwargs
     t_order_start = pcheck(params, 'WAVE_T_ORDER_START', 't_order_start',
                            kwargs, func_name)
@@ -3154,7 +3206,7 @@ def littrow(params, recipe, llprops, start, end, wavell, infile, iteration=1,
 
     # Do Littrow check
     ckwargs = dict(infile=infile, wavell=wavell[start:end, :],
-                   iteration=iteration, log=True)
+                   iteration=iteration, log=True, blaze=blaze[start:end, :])
     llprops = calculate_littrow_sol(params, llprops, echelle_order, **ckwargs)
     # ------------------------------------------------------------------
     # Littrow test plot
@@ -3199,7 +3251,7 @@ def littrow(params, recipe, llprops, start, end, wavell, infile, iteration=1,
 
 
 def calculate_littrow_sol(params, llprops, echelle_order, wavell, infile,
-                          iteration=1, log=False, **kwargs):
+                          blaze, iteration=1, log=False, **kwargs):
     """
     Calculate the Littrow solution for this iteration for a set of cut points
 
@@ -3324,7 +3376,7 @@ def calculate_littrow_sol(params, llprops, echelle_order, wavell, infile,
     keys = ['LITTROW_MEAN', 'LITTROW_SIG', 'LITTROW_MINDEV',
             'LITTROW_MAXDEV', 'LITTROW_PARAM', 'LITTROW_XX', 'LITTROW_YY',
             'LITTROW_INVORD', 'LITTROW_FRACLL', 'LITTROW_PARAM0',
-            'LITTROW_MINDEVORD', 'LITTROW_MAXDEVORD']
+            'LITTROW_MINDEVORD', 'LITTROW_MAXDEVORD', 'LITTROW_INIT']
     for key in keys:
         nkey = key + '_{0}'.format(iteration)
         llprops[nkey] = []
@@ -3334,15 +3386,15 @@ def calculate_littrow_sol(params, llprops, echelle_order, wavell, infile,
     # save to storage
     llprops['X_CUT_POINTS_{0}'.format(iteration)] = x_cut_points
     llprops.set_source('X_CUT_POINTS_{0}'.format(iteration), func_name)
-    # get the echelle order values
-    # TODO check if mask needs resizing
-    orderpos = torder[rmask]
-    # get the inverse order number
-    inv_orderpos = 1.0 / orderpos
+
     # loop around cut points and get littrow parameters and stats
     for it in range(len(x_cut_points)):
         # this iterations x cut point
         x_cut_point = x_cut_points[it]
+        # get the echelle order values
+        orderpos = torder[rmask]
+        # get the inverse order number
+        inv_orderpos = 1.0 / orderpos
         # get the fractional wavelength contrib. at each x cut point
         ll_point = ll_out[:, x_cut_point][rmask]
         ll_start_point = ll_out[n_order_init, x_cut_point]
@@ -3367,11 +3419,15 @@ def calculate_littrow_sol(params, llprops, echelle_order, wavell, infile,
         coeffs = coeffs[::-1]
         # calculate the fit values (for all values - including sigma clipped)
         cfit = np.polyval(coeffs[::-1], inv_orderpos)
+        # calculate the blaze mask
+        blazemask = np.isfinite(blaze[:, x_cut_points[it]])
         # calculate residuals (in km/s) between fit and original values
         respix = speed_of_light * (cfit - frac_ll_point) / frac_ll_point
+        # set values in respix to NaN where blaze is not finite (too low)
+        respix[~blazemask] = np.nan
         # calculate stats
-        mean = mp.nansum(respix) / len(respix)
-        mean2 = mp.nansum(respix ** 2) / len(respix)
+        mean = mp.nanmean(respix)
+        mean2 = mp.nanmean(respix ** 2)
         rms = np.sqrt(mean2 - mean ** 2)
         mindev = mp.nanmin(respix)
         maxdev = mp.nanmax(respix)
@@ -3390,6 +3446,7 @@ def calculate_littrow_sol(params, llprops, echelle_order, wavell, infile,
         llprops['LITTROW_PARAM0_{0}'.format(iteration)].append(coeffs0)
         llprops['LITTROW_XX_{0}'.format(iteration)].append(orderpos)
         llprops['LITTROW_YY_{0}'.format(iteration)].append(respix)
+        llprops['LITTROW_INIT_{0}'.format(iteration)].append(n_order_init)
         # if log then log output
         if log:
             # log: littrow check at X={0} mean/rms/min/max/frac
