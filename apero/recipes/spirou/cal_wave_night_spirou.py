@@ -18,7 +18,7 @@ from apero.core.core import drs_database
 from apero.io import drs_image
 from apero.io import drs_fits
 from apero.science.calib import flat_blaze
-from apero.science.calib import wave1 as wave
+from apero.science.calib import wave
 from apero.science import velocity
 from apero.science.extract import other as extractother
 

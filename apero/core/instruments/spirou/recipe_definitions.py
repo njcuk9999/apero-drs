@@ -657,80 +657,6 @@ cal_extract.set_kwarg(**wavefile)
 recipes.append(cal_extract)
 
 # -----------------------------------------------------------------------------
-# cal_wave_spirou
-# -----------------------------------------------------------------------------
-cal_wave = DrsRecipe(__INSTRUMENT__)
-cal_wave.name = 'cal_wave_spirou.py'
-cal_wave.shortname = 'WAVE'
-cal_wave.instrument = __INSTRUMENT__
-cal_wave.outputdir = 'reduced'
-cal_wave.inputdir = 'tmp'
-cal_wave.inputtype = 'e2ds'
-cal_wave.extension = 'fits'
-cal_wave.description = Help['WAVE_DESC']
-cal_wave.epilog = Help['WAVE_EXAMPLE']
-cal_wave.kind = 'recipe'
-cal_wave.set_outputs(WAVE_E2DS=sf.out_ext_e2dsff,
-                     WAVE_HCLL=sf.out_wave_hcline,
-                     WAVE_HCRES=sf.out_wave_hcres,
-                     WAVE_HCMAP=sf.out_wave_hc,
-                     WAVE_FPMAP=sf.out_wave_fp,
-                     WAVE_FPRESTAB=sf.out_wave_res_table,
-                     WAVE_FPLLTAB=sf.out_wave_ll_table)
-cal_wave.set_debug_plots('WAVE_HC_GUESS', 'WAVE_HC_BRIGHTEST_LINES',
-                         'WAVE_HC_TFIT_GRID', 'WAVE_HC_RESMAP',
-                         'WAVE_LITTROW_CHECK1', 'WAVE_LITTROW_EXTRAP1',
-                         'WAVE_LITTROW_CHECK2', 'WAVE_LITTROW_EXTRAP2',
-                         'WAVE_FP_FINAL_ORDER', 'WAVE_FP_LWID_OFFSET',
-                         'WAVE_FP_WAVE_RES', 'WAVE_FP_M_X_RES',
-                         'WAVE_FP_IPT_CWID_1MHC', 'WAVE_FP_IPT_CWID_LLHC',
-                         'WAVE_FP_LL_DIFF', 'WAVE_FP_MULTI_ORDER',
-                         'WAVE_FP_SINGLE_ORDER',
-                         'CCF_RV_FIT', 'CCF_RV_FIT_LOOP', 'EXTRACT_S1D')
-cal_wave.set_summary_plots('SUM_WAVE_FP_IPT_CWID_LLHC',
-                           'SUM_WAVE_LITTROW_CHECK', 'SUM_WAVE_LITTROW_EXTRAP',
-                           'SUM_CCF_RV_FIT')
-cal_wave.set_arg(pos=0, **directory)
-cal_wave.set_kwarg(name='--hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
-                   nargs='+', filelogic='exclusive', required=True,
-                   helpstr=Help['WAVE_HCFILES_HELP'], default=[])
-# note required is False (so we don't need fpfiles but reprocess is True
-#    so reprocessing script will fill both hc and fp files
-cal_wave.set_kwarg(name='--fpfiles', dtype='files', files=[sf.pp_fp_fp],
-                   nargs='+', filelogic='exclusive', reprocess=True,
-                   helpstr=Help['WAVE_FPFILES_HELP'], default=[])
-cal_wave.set_kwarg(**add_db)
-cal_wave.set_kwarg(**badfile)
-cal_wave.set_kwarg(**dobad)
-cal_wave.set_kwarg(**backsub)
-cal_wave.set_kwarg(**blazefile)
-cal_wave.set_kwarg(default=True, **combine)
-cal_wave.set_kwarg(**darkfile)
-cal_wave.set_kwarg(**dodark)
-cal_wave.set_kwarg(**fiber)
-cal_wave.set_kwarg(**flipimage)
-cal_wave.set_kwarg(**fluxunits)
-cal_wave.set_kwarg(**locofile)
-cal_wave.set_kwarg(**orderpfile)
-cal_wave.set_kwarg(**plot)
-cal_wave.set_kwarg(**resize)
-cal_wave.set_kwarg(**shapexfile)
-cal_wave.set_kwarg(**shapeyfile)
-cal_wave.set_kwarg(**shapelfile)
-cal_wave.set_kwarg(**wavefile)
-cal_wave.set_kwarg(name='--forceext', dtype='bool',
-                   default_ref='WAVE_ALWAYS_EXTRACT',
-                   helpstr='WAVE_EXTRACT_HELP')
-cal_wave.set_kwarg(name='--hcmode', dtype='options',
-                   helpstr=Help['HCMODE_HELP'],
-                   options=['0'], default_ref='WAVE_MODE_HC')
-cal_wave.set_kwarg(name='--fpmode', dtype='options',
-                   helpstr=Help['FPMODE_HELP'],
-                   options=['0', '1'], default_ref='WAVE_MODE_FP')
-# add to recipe
-recipes.append(cal_wave)
-
-# -----------------------------------------------------------------------------
 # cal_wave_master
 # -----------------------------------------------------------------------------
 cal_wave_master = DrsRecipe(__INSTRUMENT__)
@@ -1470,69 +1396,10 @@ dark_fp_run = drs_recipe.DrsRunSequence('dark_fp_run', __INSTRUMENT__)
 # extract science
 dark_fp_run.add(cal_extract, name='EXTDFP', files=[sf.pp_dark_fp])
 
-# -----------------------------------------------------------------------------
-# old limited run
-# -----------------------------------------------------------------------------
-old_run = drs_recipe.DrsRunSequence('old_run', __INSTRUMENT__)
-# master run
-old_run.add(cal_pp)
-old_run.add(cal_dark_master, master=True)
-old_run.add(cal_badpix, name='BADM', master=True)
-old_run.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
-old_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
-old_run.add(cal_shape_master, master=True)
-# night runs
-old_run.add(cal_badpix)
-old_run.add(cal_loc, files=[sf.pp_dark_flat])
-old_run.add(cal_loc, files=[sf.pp_flat_dark])
-old_run.add(cal_shape)
-old_run.add(cal_ff, files=[sf.pp_flat_flat])
-old_run.add(cal_thermal, files=[sf.pp_dark_dark_int])
-old_run.add(cal_thermal, files=[sf.pp_dark_dark_tel])
-old_run.add(cal_wave, name='WAVEFP', hcfiles=[sf.pp_hc1_hc1],
-            fpfiles=[sf.pp_fp_fp])
-# extract tellurics
-old_run.add(cal_extract, name='EXTTELL', KW_OBJNAME='TELLURIC_TARGETS',
-            files=[sf.pp_obj_dark, sf.pp_obj_fp])
-
-# extract science
-old_run.add(cal_extract, name='EXTOBJ', KW_OBJNAME='SCIENCE_TARGETS',
-            files=[sf.pp_obj_dark, sf.pp_obj_fp])
-
-# telluric recipes
-old_run.add(obj_mk_tellu_db, arguments=dict(cores='CORES'))
-old_run.add(obj_fit_tellu_db, arguments=dict(cores='CORES'))
-
-# other telluric recipes
-old_run.add(obj_mk_tellu, name='MKTELLU1', KW_OBJNAME='TELLURIC_TARGETS',
-            files=[sf.out_ext_e2dsff], fiber='AB',
-            KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-old_run.add(obj_fit_tellu, name='MKTELLU2', KW_OBJNAME='TELLURIC_TARGETS',
-            files=[sf.out_ext_e2dsff], fiber='AB',
-            KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-old_run.add(obj_mk_template, name='MKTELLU3', KW_OBJNAME='TELLURIC_TARGETS',
-            fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
-            arguments=dict(objname='TELLURIC_TARGETS'))
-old_run.add(obj_mk_tellu, name='MKTELLU4', KW_OBJNAME='TELLURIC_TARGETS',
-            fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-
-old_run.add(obj_fit_tellu, name='FTELLU1', KW_OBJNAME='SCIENCE_TARGETS',
-            files=[sf.out_ext_e2dsff], fiber='AB',
-            KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-old_run.add(obj_mk_template, name='FTELLU2', KW_OBJNAME='SCIENCE_TARGETS',
-            fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
-            arguments=dict(objname='SCIENCE_TARGETS'))
-old_run.add(obj_fit_tellu, files=[sf.out_ext_e2dsff],
-            name='FTELLU3', KW_OBJNAME='SCIENCE_TARGETS',
-            fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-
-# ccf
-old_run.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
-            KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'], KW_OBJNAME='SCIENCE_TARGETS')
 
 # -----------------------------------------------------------------------------
 # sequences list
 # -----------------------------------------------------------------------------
 sequences = [pp_run, pp_run_opt, full_run, limited_run,
              master_run, calib_run, tellu_run, science_run,
-             hc_run, dark_fp_run, old_run]
+             hc_run, dark_fp_run]
