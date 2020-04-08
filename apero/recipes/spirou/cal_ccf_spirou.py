@@ -204,6 +204,9 @@ def __main__(recipe, params):
             # get the wave solution associated with this file
             wprops_r = wave.get_wavesolution(params, recipe, fiber='C',
                                              infile=infile_r)
+            # get c fiber file time
+            filetime_r = infile_r.get_key('KW_MID_OBS_TIME')
+
             # --------------------------------------------------------------
             # deal with differing wavelength solutions (between science and
             #    reference)
@@ -221,6 +224,8 @@ def __main__(recipe, params):
             cargs = [infile_r, infile_r.data, blaze, wprops_r['WAVEMAP'],
                      rfiber]
             rv_props2 = velocity.compute_ccf_fp(params, recipe, *cargs)
+            # get the time difference (between file and wave)
+            timediff = filetime_r - wprops_r['WAVETIME']
             # --------------------------------------------------------------
             # compute the rv output stats
             # --------------------------------------------------------------
@@ -248,32 +253,46 @@ def __main__(recipe, params):
             rv_drift = 0.0
             rv_obj = rv_props1['MEAN_RV']
             rv_corrected = rv_obj - rv_drift
-        # need to deal no simultaneous FP
+            infile_r = None
+            wprops_r = None
+            timediff = np.nan
+        # need way to deal no simultaneous FP
         else:
             # set rv_props2
             rv_props2 = ParamDict()
             # compute the stats
-            rv_wave_fp = wprops['WFP_DRIFT']
-            rv_simu_fp = np.nan
-            rv_drift = rv_wave_fp
+            rv_wave_fp = 0.0
+            rv_simu_fp = 0.0
+            rv_drift = 0.0
             rv_obj = rv_props1['MEAN_RV']
             rv_corrected = rv_obj - rv_drift
+            infile_r = None
+            wprops_r = None
+            timediff = np.nan
         # ------------------------------------------------------------------
         # add rv stats to properties
+        rv_props1['RV_WAVEFILE'] = wprops['WAVEFILE']
+        rv_props1['RV_WAVETIME'] = wprops['WAVETIME']
+        rv_props1['RV_TIMEDIFF'] = timediff
         rv_props1['RV_WAVE_FP'] = rv_wave_fp
         rv_props1['RV_SIMU_FP'] = rv_simu_fp
         rv_props1['RV_DRIFT'] = rv_drift
         rv_props1['RV_OBJ'] = rv_obj
         rv_props1['RV_CORR'] = rv_corrected
-        rv_props2['RV_WAVE_FP'] = rv_wave_fp
-        rv_props2['RV_SIMU_FP'] = rv_simu_fp
-        rv_props2['RV_DRIFT'] = rv_drift
-        rv_props2['RV_OBJ'] = rv_obj
-        rv_props2['RV_CORR'] = rv_corrected
         # set sources
         keys = ['RV_WAVE_FP', 'RV_SIMU_FP', 'RV_DRIFT', 'RV_OBJ', 'RV_CORR']
         rv_props1.set_sources(keys, mainname)
-        rv_props2.set_sources(keys, mainname)
+        # add the fp fiber properties
+        if has_fp:
+            rv_props2['RV_WAVEFILE'] = wprops_r['WAVEFILE']
+            rv_props2['RV_WAVETIME'] = wprops_r['WAVETIME']
+            rv_props2['RV_TIMEDIFF'] = timediff
+            rv_props2['RV_WAVE_FP'] = rv_wave_fp
+            rv_props2['RV_SIMU_FP'] = rv_simu_fp
+            rv_props2['RV_DRIFT'] = rv_drift
+            rv_props2['RV_OBJ'] = rv_obj
+            rv_props2['RV_CORR'] = rv_corrected
+            rv_props2.set_sources(keys, mainname)
 
         # ------------------------------------------------------------------
         # Quality control
@@ -311,7 +330,7 @@ def __main__(recipe, params):
         # archive ccf from reference fiber
         # ------------------------------------------------------------------
         if has_fp:
-            velocity.write_ccf(params, recipe, infile, rv_props2, rawfiles,
+            velocity.write_ccf(params, recipe, infile_r, rv_props2, rawfiles,
                                combine, qc_params, rfiber)
         # ------------------------------------------------------------------
         # update recipe log file

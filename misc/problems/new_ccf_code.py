@@ -543,6 +543,7 @@ def ccf_calculation(wave, image, blaze, targetrv, mask_centers, mask_weights,
     props['CCF_FIT'] = np.array(ccf_all_fit)
     props['CCF_FIT_COEFFS'] = np.array(ccf_all_results)
     props['CCF_NORM'] = np.array(ccf_norm_all)
+
     # Return properties
     return props
 
@@ -702,7 +703,7 @@ def plotloop(looplist):
                 break
 
 
-def write_file(props, infile, maskname, header):
+def write_file(props, infile, maskname, header, wheader):
 
     # ----------------------------------------------------------------------
     # construct out file name
@@ -767,6 +768,12 @@ def write_file(props, infile, maskname, header):
                           'Width of lines used in the CCF mask')
     header['CCFMUNIT'] = (props['MASK_UNITS'], 'Units used in CCF Mask')
     # ----------------------------------------------------------------------
+    header['RV_WAVFN'] = (os.path.basename(WAVE_FILE),
+                          'RV wave file used')
+    header['RV_WAVTM'] = (wheader['MJDMID'],
+                          'RV wave file time [mjd]')
+    header['RV_WAVTD'] = (header['MJDMID'] - wheader['MJDMID'],
+                          'RV timediff [days] btwn file and wave solution')
     header['RV_WAVFP'] = ('None', 'RV measured from wave sol FP CCF [km/s]')
     header['RV_SIMFP'] = ('None', 'RV measured from simultaneous FP CCF [km/s]')
     header['RV_DRIFT'] = ('None',
@@ -795,7 +802,7 @@ if __name__ == '__main__':
     image, header = fits.getdata(IN_FILE, header=True)
     blaze = fits.getdata(BLAZE_FILE)
     masktable = read_mask()
-    wave = fits.getdata(WAVE_FILE)
+    wave, wheader = fits.getdata(WAVE_FILE, header=True)
     # get the dimensions
     nbo, nbpix = image.shape
     # --------------------------------------------------------------------------
@@ -818,7 +825,7 @@ if __name__ == '__main__':
         raise ValueError('HEADER ERROR: DPRTPYE must be OBJ or FP')
     # --------------------------------------------------------------------------
     # get berv from header
-    if fiber == 'AB':
+    if fiber == 'AB' and dprtype == 'OBJ':
         berv = header['BERV']
         # absorption features
         fit_type = 0
@@ -828,7 +835,7 @@ if __name__ == '__main__':
         fit_type = 1
     # --------------------------------------------------------------------------
     # get rv from header (or set to zero)
-    if ('OBJRV' in header) and fiber == 'AB':
+    if ('OBJRV' in header) and dprtype == 'OBJ':
         targetrv = header['OBJRV']
         if np.isnan(targetrv) or targetrv == CCF_RV_NULL:
             targetrv = 0.0
@@ -875,7 +882,7 @@ if __name__ == '__main__':
     # Save file
     # --------------------------------------------------------------------------
     # write the two tables to file CCFTABLE_{filename}_{mask}.fits
-    write_file(props, IN_FILE, MASK_FILE, header)
+    write_file(props, IN_FILE, MASK_FILE, header, wheader)
 
 
 # ==============================================================================
