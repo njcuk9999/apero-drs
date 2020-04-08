@@ -273,6 +273,7 @@ def __main__(recipe, params):
         # add rv stats to properties
         rv_props1['RV_WAVEFILE'] = wprops['WAVEFILE']
         rv_props1['RV_WAVETIME'] = wprops['WAVETIME']
+        rv_props1['RV_WAVESRCE'] = wprops['WAVESOURCE']
         rv_props1['RV_TIMEDIFF'] = timediff
         rv_props1['RV_WAVE_FP'] = rv_wave_fp
         rv_props1['RV_SIMU_FP'] = rv_simu_fp
@@ -286,6 +287,7 @@ def __main__(recipe, params):
         if has_fp:
             rv_props2['RV_WAVEFILE'] = wprops_r['WAVEFILE']
             rv_props2['RV_WAVETIME'] = wprops_r['WAVETIME']
+            rv_props1['RV_WAVESRCE'] = wprops_r['WAVESOURCE']
             rv_props2['RV_TIMEDIFF'] = timediff
             rv_props2['RV_WAVE_FP'] = rv_wave_fp
             rv_props2['RV_SIMU_FP'] = rv_simu_fp
