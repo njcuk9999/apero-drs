@@ -14,32 +14,65 @@ import matplotlib.pyplot as plt
 # =============================================================================
 # Define variables
 # =============================================================================
-# if all files copied to same directory set these to ''
-# WORKSPACE1 = ''
-# WORKSPACE2 = ''
-# these files are on cook@nb19
-WORKSPACE1 = '/scratch3/rali/spirou/mini_data/reduced/2019-04-20/'
-WORKSPACE2 = '/scratch3/rali/drs/apero-drs/apero/data/spirou/ccf/'
-# build file paths
-IN_FILE = os.path.join(WORKSPACE1, '2400515o_pp_e2dsff_tcorr_AB.fits')
-BLAZE_FILE = os.path.join(WORKSPACE1, '2019-04-20_2400404f_pp_blaze_AB.fits')
-MASK_FILE = os.path.join(WORKSPACE2, 'masque_sept18_andres_trans50.mas')
-WAVE_FILE = os.path.join(WORKSPACE1,
-                         '2019-04-19_2400388c_pp_e2dsff_AB_wave_night_AB.fits')
-# variables (from constants)
-MASK_WIDTH = 1.7
-MASK_MIN_WEIGHT = 0.0
-MASK_COLS = ['ll_mask_s', 'll_mask_e', 'w_mask']
-CCF_STEP = 0.5
-CCF_WIDTH = 300
-CCF_RV_NULL = -9999.99
-CCF_N_ORD_MAX = 48
-BLAZE_NORM_PERCENTILE = 90
-BLAZE_THRESHOLD = 0.3
-FIT_TYPE = 0
-IMAGE_PIXEL_SIZE = 2.28
 # constants
-SPEED_OF_LIGHT = 299792.458
+SPEED_OF_LIGHT = 299792.458    # [km/s]
+# if all files copied to same directory set these to ''
+# W1 = ''
+# W2 = ''
+# these files are on cook@nb19
+W1 = '/scratch3/rali/spirou/mini_data/reduced/2019-04-20/'
+W2 = '/scratch3/rali/drs/apero-drs/apero/data/spirou/ccf/'
+# whether to plot (True or False)
+PLOT = True
+# which case 1: science (OBJ) 2: reference (FP)
+CASE = 2
+# deal with cases (quick switch between fiber=AB (OBJ) and fiber=C (FP)
+if CASE == 1:
+    # build file paths
+    IN_FILE = os.path.join(W1, '2400515o_pp_e2dsff_tcorr_AB.fits')
+    BLAZE_FILE = os.path.join(W1, '2019-04-20_2400404f_pp_blaze_AB.fits')
+    WAVE_FILE = os.path.join(W1, '2019-04-20_2400570c_pp_e2dsff_AB_wave_night_AB.fits')
+    MASK_FILE = os.path.join(W2, 'masque_sept18_andres_trans50.mas')
+    MASK_COLS = ['ll_mask_s', 'll_mask_e', 'w_mask']
+    # variables
+    # These values are taken from the constants file
+    MASK_WIDTH = 1.7                   # CCF_MASK_WIDTH
+    MASK_MIN_WEIGHT = 0.0              # CCF_MASK_MIN_WEIGHT
+    CCF_STEP = 0.5                     # CCF_DEFAULT_STEP (or user input)
+    CCF_WIDTH = 300                    # CCF_DEFAULT_WIDTH (or user input)
+    CCF_RV_NULL = -9999.99             # CCF_OBJRV_NULL_VAL
+    CCF_N_ORD_MAX = 48                 # CCF_N_ORD_MAX
+    BLAZE_NORM_PERCENTILE = 90         # CCF_BLAZE_NORM_PERCENTILE
+    BLAZE_THRESHOLD = 0.3              # WAVE_FP_BLAZE_THRES
+    IMAGE_PIXEL_SIZE = 2.28            # IMAGE_PIXEL_SIZE
+    NOISE_SIGDET = 8.0                 # CCF_NOISE_SIGDET
+    NOISE_SIZE = 12                    # CCF_NOISE_BOXSIZE
+    NOISE_THRES = 1.0e9                # CCF_NOISE_THRES
+
+elif CASE == 2:
+    # build file paths
+    IN_FILE = os.path.join(W1, '2400515o_pp_e2dsff_C.fits')
+    BLAZE_FILE = os.path.join(W1, '2019-04-20_2400404f_pp_blaze_C.fits')
+    WAVE_FILE = os.path.join(W1, '2019-04-20_2400570c_pp_e2dsff_C_wave_night_C.fits')
+    MASK_FILE = os.path.join(W2, 'fp.mas')
+    MASK_COLS = ['ll_mask_s', 'll_mask_e', 'w_mask']
+    # variables
+    # These values are taken from the constants file
+    MASK_WIDTH = 1.7                   # CCF_MASK_WIDTH
+    MASK_MIN_WEIGHT = 0.0              # CCF_MASK_MIN_WEIGHT
+    CCF_STEP = 0.5                     # WAVE_CCF_STEP
+    CCF_WIDTH = 7.5                    # WAVE_CCF_WIDTH
+    CCF_RV_NULL = -9999.99             # CCF_OBJRV_NULL_VAL
+    CCF_N_ORD_MAX = 48                 # WAVE_CCF_N_ORD_MAX
+    BLAZE_NORM_PERCENTILE = 90         # CCF_BLAZE_NORM_PERCENTILE
+    BLAZE_THRESHOLD = 0.3              # WAVE_FP_BLAZE_THRES
+    IMAGE_PIXEL_SIZE = 2.28            # IMAGE_PIXEL_SIZE
+    NOISE_SIGDET = 8.0                 # WAVE_CCF_NOISE_SIGDET
+    NOISE_SIZE = 12                    # WAVE_CCF_NOISE_BOXSIZE
+    NOISE_THRES = 1.0e9                # WAVE_CCF_NOISE_THRES
+
+else:
+    raise ValueError('INPUT ERROR: Case must be 1 or 2')
 
 
 # =============================================================================
@@ -299,6 +332,48 @@ def fitgaussian(x, y, weights=None, guess=None, return_fit=True,
         return pfit
 
 
+def delta_v_rms_2d(spe, wave, sigdet, threshold, size):
+    """
+    Compute the photon noise uncertainty for all orders (for the 2D image)
+
+    :param spe: numpy array (2D), the extracted spectrum
+                size = (number of orders by number of columns (x-axis))
+    :param wave: numpy array (2D), the wave solution for each pixel
+    :param sigdet: float, the read noise (sigdet) for calculating the
+                   noise array
+    :param threshold: float, upper limit for pixel values, above this limit
+                      pixels are regarded as saturated
+    :param size: int, size (in pixels) around saturated pixels to also regard
+                 as bad pixels
+
+    :return dvrms2: numpy array (1D), the photon noise for each pixel (squared)
+    :return weightedmean: float, weighted mean photon noise across all orders
+    """
+    # flag (saturated) fluxes above threshold as "bad pixels"
+    with warnings.catch_warnings(record=True) as _:
+        flag = spe < threshold
+    # flag all fluxes around "bad pixels" (inside +/- size of the bad pixel)
+    for i_it in range(1, 2 * size, 1):
+        flag[:, size:-size] *= flag[:, i_it: i_it - 2 * size]
+    # get the wavelength normalised to the wavelength spacing
+    nwave = wave[:, 1:-1] / (wave[:, 2:] - wave[:, :-2])
+    # get the flux + noise array
+    sxn = (spe[:, 1:-1] + sigdet ** 2)
+    # get the flux difference normalised to the flux + noise
+    nspe = (spe[:, 2:] - spe[:, :-2]) / sxn
+    # get the mask value
+    maskv = flag[:, 2:] * flag[:, 1:-1] * flag[:, :-2]
+    # get the total
+    tot = np.nansum(sxn * ((nwave * nspe) ** 2) * maskv, axis=1)
+    # convert to dvrms2
+    with warnings.catch_warnings(record=True) as _:
+        dvrms2 = ((SPEED_OF_LIGHT * 1000) ** 2) / abs(tot)
+    # weighted mean of dvrms2 values
+    weightedmean = 1. / np.sqrt(np.nansum(1.0 / dvrms2))
+    # return dv rms and weighted mean
+    return dvrms2, weightedmean
+
+
 def fwhm(sigma=1.0):
     """
     Get the Full-width-half-maximum value from the sigma value (~2.3548)
@@ -309,35 +384,8 @@ def fwhm(sigma=1.0):
     return 2 * np.sqrt(2 * np.log(2)) * sigma
 
 
-# =============================================================================
-# Start of code
-# =============================================================================
-if __name__ == '__main__':
-    # get input telluric corrected file and header
-    image, header = fits.getdata(IN_FILE, header=True)
-    blaze = fits.getdata(BLAZE_FILE)
-    masktable = read_mask()
-    wave = fits.getdata(WAVE_FILE)
-    # --------------------------------------------------------------------------
-    # get berv from header
-    berv = header['BERV']
-    # --------------------------------------------------------------------------
-    # get rv from header (or set to zero)
-    if 'OBJRV' in header:
-        targetrv = header['OBJRV']
-        if np.isnan(targetrv) or targetrv == CCF_RV_NULL:
-            targetrv = 0.0
-    else:
-        targetrv = 0.0
-    # --------------------------------------------------------------------------
-    # get mask centers, and weights
-    _, mask_centers, mask_weights = get_mask(masktable, MASK_WIDTH,
-                                             MASK_MIN_WEIGHT)
-    # --------------------------------------------------------------------------
-    # --------------------------------------------------------------------------
-    # START contents of velocity.general.ccf_calculation
-    # --------------------------------------------------------------------------
-    # --------------------------------------------------------------------------
+def ccf_calculation(wave, image, blaze, targetrv, mask_centers, mask_weights,
+                    berv, fit_type):
     # get rvmin and rvmax
     rvmin = targetrv - CCF_WIDTH
     rvmax = targetrv + CCF_WIDTH + CCF_STEP
@@ -372,17 +420,12 @@ if __name__ == '__main__':
         bl_ord /= np.nanpercentile(bl_ord, BLAZE_NORM_PERCENTILE)
         # COMMENT EA, changing NaNs to 0 in the blaze
         bl_ord[np.isfinite(bl_ord) == 0] = 0
-
-
-
         # mask on the blaze
         with warnings.catch_warnings(record=True) as _:
             blazemask = bl_ord > BLAZE_THRESHOLD
         # get order mask centers and mask weights
         min_ord_wav = np.nanmin(wa_ord[blazemask])
         max_ord_wav = np.nanmax(wa_ord[blazemask])
-        # adjust for rv shifts
-
         # COMMENT EA there's a problem with the sign in the min/max
         min_ord_wav = min_ord_wav * (1 - rvmin / SPEED_OF_LIGHT)
         max_ord_wav = max_ord_wav * (1 - rvmax / SPEED_OF_LIGHT)
@@ -425,14 +468,12 @@ if __name__ == '__main__':
         # set the spectrum or blaze NaN pixels to zero (dealt with by divide)
         sp_ord[nanmask] = 0
         bl_ord[nanmask] = 0
+        # now every value that is zero is masked (we don't want to spline these)
+        good = (sp_ord != 0) & (bl_ord != 0)
         # ------------------------------------------------------------------
         # spline the spectrum and the blaze
-        # TODO make it tidy with the blaze
-
-        # COMMENT EA -> masking the input to the spline
-        g = (sp_ord !=0) & (bl_ord != 0)
-        spline_sp = iuv_spline(wa_ord[g], sp_ord[g], k=5, ext=1)
-        spline_bl = iuv_spline(wa_ord[g], bl_ord[g], k=5, ext=1)
+        spline_sp = iuv_spline(wa_ord[good], sp_ord[good], k=5, ext=1)
+        spline_bl = iuv_spline(wa_ord[good], bl_ord[good], k=5, ext=1)
         # ------------------------------------------------------------------
         # set up the ccf for this order
         ccf_ord = np.zeros_like(rv_ccf)
@@ -443,18 +484,16 @@ if __name__ == '__main__':
         # set number of valid lines used to zero
         numlines = 0
         # loop around the rvs and calculate the CCF at this point
-        part3 = spline_bl(omask_centers)# * omask_weights
+        part3 = spline_bl(omask_centers)
         for rv_element in range(len(rv_ccf)):
             wave_tmp = omask_centers * wave_shifts[rv_element]
-            part1 = spline_sp(wave_tmp)# * omask_weights
-            part2 = spline_bl(wave_tmp)#
+            part1 = spline_sp(wave_tmp)
+            part2 = spline_bl(wave_tmp)
             numlines = np.sum(spline_bl(wave_tmp) != 0)
             # CCF is the division of the sums
             with warnings.catch_warnings(record=True) as _:
-
-                ccf_ord[rv_element] = np.nansum((part1* part3) / part2  * omask_weights)
-
-
+                ccf_element = ((part1 * part3) / part2) * omask_weights
+                ccf_ord[rv_element] = np.nansum(ccf_element)
         # ------------------------------------------------------------------
         # deal with NaNs in ccf
         if np.sum(np.isnan(ccf_ord)) > 0:
@@ -470,18 +509,12 @@ if __name__ == '__main__':
             ccf_norm_all.append(np.nan)
             continue
         # ------------------------------------------------------------------
-        # TODO -- check that its ok to remove the normalization
-        # TODO -- this should preserve the stellar flux weighting
         # normalise each orders CCF to median
-        # TODO -- keep track of the norm factor, write a look-up table
-        # TODO -- with reasonable mid-M values and use these values for
-        # TODO -- all stars. At some point, have a temperature-dependent
-        # TODO -- LUT of weights.
         ccf_norm = np.nanmedian(ccf_ord)
         # ccf_ord = ccf_ord / ccf_norm
         # ------------------------------------------------------------------
         # fit the CCF with a gaussian
-        fargs = [rv_ccf, ccf_ord, FIT_TYPE]
+        fargs = [rv_ccf, ccf_ord, fit_type]
         ccf_coeffs_ord, ccf_fit_ord = fit_ccf(*fargs)
         # ------------------------------------------------------------------
         # calculate the residuals of the ccf fit
@@ -510,20 +543,16 @@ if __name__ == '__main__':
     props['CCF_FIT'] = np.array(ccf_all_fit)
     props['CCF_FIT_COEFFS'] = np.array(ccf_all_results)
     props['CCF_NORM'] = np.array(ccf_norm_all)
-    # --------------------------------------------------------------------------
-    # --------------------------------------------------------------------------
-    # END contents of velocity.general.ccf_calculation
-    # --------------------------------------------------------------------------
-    # --------------------------------------------------------------------------
+    # Return properties
+    return props
 
-    # --------------------------------------------------------------------------
-    # Calculate the mean CCF
-    # --------------------------------------------------------------------------
+
+def mean_ccf(props, targetrv, fit_type):
     # get the average ccf
     mean_ccf = np.nanmean(props['CCF'][: CCF_N_ORD_MAX], axis=0)
     # get the fit for the normalized average ccf
     mean_ccf_coeffs, mean_ccf_fit = fit_ccf(props['RV_CCF'],
-                                            mean_ccf, fit_type=FIT_TYPE)
+                                            mean_ccf, fit_type=fit_type)
     # get the RV value from the normalised average ccf fit center location
     ccf_rv = float(mean_ccf_coeffs[1])
     # get the contrast (ccf fit amplitude)
@@ -570,35 +599,283 @@ if __name__ == '__main__':
     props['CCF_STEP'] = CCF_STEP
     props['CCF_WIDTH'] = CCF_WIDTH
     props['TARGET_RV'] = targetrv
+    props['CCF_SIGDET'] = NOISE_SIGDET
+    props['CCF_BOXSIZE'] = NOISE_SIZE
+    props['CCF_MAXFLUX'] = NOISE_THRES
+    props['CCF_NMAX'] = CCF_N_ORD_MAX
     props['MASK_MIN'] = MASK_MIN_WEIGHT
     props['MASK_WIDTH'] = MASK_WIDTH
-
+    props['MASK_UNITS'] = 'nm'
     # --------------------------------------------------------------------------
-    # plot grid of ccfs
+    return props
+
+
+def plot_individual_ccf(props, nbo):
+    # get the plot loop generator
+    generator = plotloop(range(nbo))
+    # loop around orders
+    for order_num in generator:
+        plt.close()
+        fig, frame = plt.subplots(ncols=1, nrows=1)
+        frame.plot(props['RV_CCF'], props['CCF'][order_num], color='b',
+                   marker='+', ls='None', label='data')
+        frame.plot(props['RV_CCF'], props['CCF_FIT'][order_num], color='r',)
+        rvorder = props['CCF_FIT_COEFFS'][order_num][1]
+        frame.set(title='Order {0}  RV = {1} km/s'.format(order_num, rvorder),
+                  xlabel='RV [km/s]', ylabel='CCF')
+        plt.show()
+        plt.close()
+
+
+def plot_mean_ccf(props):
     plt.close()
-    fig1, frames = plt.subplots(ncols=7, nrows=7, figsize=(30, 30))
-    for order_num in range(nbo):
-        i, j = order_num // 7, order_num % 7
-        frames[i][j].plot(props['RV_CCF'], props['CCF'][order_num], color='b')
-        frames[i][j].plot(props['RV_CCF'], props['CCF_FIT'][order_num],
-                          color='r',)
-        frames[i][j].text(0.5, 0.8, 'Order {0}'.format(order_num),
-                          horizontalalignment='center',
-                          transform=frames[i][j].transAxes)
-
-    fig1.subplots_adjust(wspace=0.2, hspace=0.2, top=0.95, bottom=0.05,
-                         left=0.05, right=0.95)
-
-    # plot mean ccf and fit
-    fig2, frame = plt.subplots(ncols=1, nrows=1)
+    fig, frame = plt.subplots(ncols=1, nrows=1)
     frame.plot(props['RV_CCF'], props['MEAN_CCF'], color='b', marker='+',
                ls='None')
     frame.plot(props['RV_CCF'], props['MEAN_CCF_FIT'], color='r')
-    frame.set_title('Mean CCF   RV = {0} km/s'.format(props['MEAN_RV']))
-
-    # show plots
+    frame.set(title='Mean CCF   RV = {0} km/s'.format(props['MEAN_RV']),
+              xlabel='RV [km/s]', ylabel='CCF')
     plt.show()
     plt.close()
+
+
+def plotloop(looplist):
+    # check that looplist is a valid list
+    if not isinstance(looplist, list):
+        # noinspection PyBroadException
+        try:
+            looplist = list(looplist)
+        except Exception as _:
+            print('PLOT ERROR: looplist must be a list')
+    # define message to give to user
+    message = ('Plot loop navigation: Go to \n\t [P]revious plot '
+               '\n\t [N]ext plot \n\t [E]nd plotting '
+               '\n\t Number from [0 to {0}]: \t')
+    message = message.format(len(looplist) - 1)
+    # start the iterator at zero
+    it = 0
+    first = True
+    # loop around until we hit the length of the loop list
+    while it < len(looplist):
+        # deal with end of looplist
+        if it == len(looplist):
+            # break out of while
+            break
+        # if this is the first iteration do not print message
+        if first:
+            # yield the first iteration value
+            yield looplist[it]
+            # increase the iterator value
+            it += 1
+            first = False
+        # else we need to ask to go to previous, next or end
+        else:
+            # get user input
+            userinput = input(message)
+            # try to cast into a integer
+            # noinspection PyBroadException
+            try:
+                userinput = int(userinput)
+            except Exception as _:
+                userinput = str(userinput)
+            # if 'p' in user input we assume they want to go to previous
+            if 'P' in str(userinput).upper():
+                yield looplist[it - 1]
+                it -= 1
+            # if 'n' in user input we assume they want to go to next
+            elif 'N' in str(userinput).upper():
+                yield looplist[it + 1]
+                it += 1
+            elif isinstance(userinput, int):
+                it = userinput
+                # deal with it too low
+                if it < 0:
+                    it = 0
+                # deal with it too large
+                elif it >= len(looplist):
+                    it = len(looplist) - 1
+                # yield the value of it
+                yield looplist[it]
+            # else we assume the loop is over and we want to exit
+            else:
+                # break out of while
+                break
+
+
+def write_file(props, infile, maskname, header):
+
+    # ----------------------------------------------------------------------
+    # construct out file name
+    inbasename = os.path.basename(infile).split('.')[0]
+    maskbasename = os.path.basename(maskname).split('.')[0]
+    inpath = os.path.dirname(infile)
+    outfile = 'CCFTABLE_{0}_{1}.fits'.format(inbasename, maskbasename)
+    outpath = os.path.join(inpath, outfile)
+    # ----------------------------------------------------------------------
+    # produce CCF table
+    table1 = Table()
+    table1['RV'] = props['RV_CCF']
+    for order_num in range(len(props['CCF'])):
+        table1['ORDER{0:02d}'.format(order_num)] = props['CCF'][order_num]
+    table1['COMBINED'] = props['MEAN_CCF']
+    # ----------------------------------------------------------------------
+    # produce stats table
+    table2 = Table()
+    table2['ORDERS'] = np.arange(len(props['CCF'])).astype(int)
+    table2['NLINES'] = props['CCF_LINES']
+    # get the coefficients
+    coeffs = props['CCF_FIT_COEFFS']
+    table2['CONTRAST'] = np.abs(100 * coeffs[:, 0])
+    table2['RV'] = coeffs[:, 1]
+    table2['FWHM'] = coeffs[:, 2]
+    table2['DC'] = coeffs[:, 3]
+    table2['SNR'] = props['CCF_SNR']
+    table2['NORM'] = props['CCF_NORM']
+
+    # ----------------------------------------------------------------------
+    # add to the header
+    # ----------------------------------------------------------------------
+    # add results from the CCF
+    header['CCFMNRV'] = (props['MEAN_RV'],
+                         'Mean RV calc. from the mean CCF [km/s]')
+    header['CCFMCONT'] = (props['MEAN_CONTRAST'],
+                          'Mean contrast (depth of fit) from mean CCF')
+    header['CCFMFWHM'] = (props['MEAN_FWHM'],
+                          'Mean FWHM from mean CCF')
+    header['CCFMRVNS'] = (props['MEAN_RV_NOISE'],
+                          'Mean RV Noise from mean CCF')
+    header['CCFTLINE'] = (props['TOT_LINE'],
+                          'Total no. of mask lines used in CCF')
+    # ----------------------------------------------------------------------
+    # add constants used to process
+    header['CCFMASK'] = (props['CCF_MASK'], 'CCF mask file used')
+    header['CCFSTEP'] = (props['CCF_STEP'], 'CCF step used [km/s]')
+    header['CCFWIDTH'] = (props['CCF_WIDTH'], 'CCF width used [km/s]')
+    header['CCFTRGRV'] = (props['TARGET_RV'],
+                          'CCF central RV used in CCF [km/s]')
+    header['CCFSIGDT'] = (props['CCF_SIGDET'],
+                          'Read noise used in photon noise calc. in CCF')
+    header['CCFBOXSZ'] = (props['CCF_BOXSIZE'],
+                          'Size of bad px used in photon noise calc. in CCF')
+    header['CCFMAXFX'] = (props['CCF_MAXFLUX'],
+                          'Flux thres for bad px in photon noise calc. in CCF')
+    header['CCFORDMX'] = (props['CCF_NMAX'],
+                          'Last order used in mean for mean CCF')
+    header['CCFMSKMN'] = (props['MASK_MIN'],
+                          'Minimum weight of lines used in the CCF mask')
+    header['CCFMSKWD'] = (props['MASK_WIDTH'],
+                          'Width of lines used in the CCF mask')
+    header['CCFMUNIT'] = (props['MASK_UNITS'], 'Units used in CCF Mask')
+    # ----------------------------------------------------------------------
+    header['RV_WAVFP'] = ('None', 'RV measured from wave sol FP CCF [km/s]')
+    header['RV_SIMFP'] = ('None', 'RV measured from simultaneous FP CCF [km/s]')
+    header['RV_DRIFT'] = ('None',
+                          'RV drift between wave sol and sim. FP CCF [km/s]')
+    header['RV_OBJ'] = (props['MEAN_RV'],
+                        'RV calc in the object CCF (non corr.) [km/s]')
+    header['RV_CORR'] = ('None', 'RV corrected for FP CCF drift [km/s]')
+    # ----------------------------------------------------------------------
+    # log where we are writing the file to
+    print('Writing file to {0}'.format(outpath))
+    # construct hdus
+    hdu = fits.PrimaryHDU()
+    t1 = fits.BinTableHDU(table1, header=header)
+    t2 = fits.BinTableHDU(table2, header=header)
+    # construct hdu list
+    hdulist = fits.HDUList([hdu, t1, t2])
+    # write hdulist
+    hdulist.writeto(outpath, overwrite=True)
+
+
+# =============================================================================
+# Start of code
+# =============================================================================
+if __name__ == '__main__':
+    # get input telluric corrected file and header
+    image, header = fits.getdata(IN_FILE, header=True)
+    blaze = fits.getdata(BLAZE_FILE)
+    masktable = read_mask()
+    wave = fits.getdata(WAVE_FILE)
+    # get the dimensions
+    nbo, nbpix = image.shape
+    # --------------------------------------------------------------------------
+    # get fiber typoe
+    if 'FIBER' in header:
+        fiber = header['FIBER']
+    else:
+        raise ValueError('HEADER ERROR: FIBER MISSING')
+    # --------------------------------------------------------------------------
+    # get dprtype
+    if 'DPRTYPE' in header:
+        if fiber == 'AB':
+            dprtype = header['DPRTYPE'].split('_')[0]
+        else:
+            dprtype = header['DPRTYPE'].split('_')[1]
+    else:
+        raise ValueError('HEADER ERROR: DPRTYPE MISSING')
+    # make sure dprtype is correct for fiber
+    if dprtype not in ['OBJ', 'FP']:
+        raise ValueError('HEADER ERROR: DPRTPYE must be OBJ or FP')
+    # --------------------------------------------------------------------------
+    # get berv from header
+    if fiber == 'AB':
+        berv = header['BERV']
+        # absorption features
+        fit_type = 0
+    else:
+        berv = 0.0
+        # emission features
+        fit_type = 1
+    # --------------------------------------------------------------------------
+    # get rv from header (or set to zero)
+    if ('OBJRV' in header) and fiber == 'AB':
+        targetrv = header['OBJRV']
+        if np.isnan(targetrv) or targetrv == CCF_RV_NULL:
+            targetrv = 0.0
+    else:
+        targetrv = 0.0
+    # --------------------------------------------------------------------------
+    # get mask centers, and weights
+    _, mask_centers, mask_weights = get_mask(masktable, MASK_WIDTH,
+                                             MASK_MIN_WEIGHT)
+    # --------------------------------------------------------------------------
+    # Photon noise uncertainty
+    # --------------------------------------------------------------------------
+    dkwargs = dict(spe=image, wave=wave, sigdet=NOISE_SIGDET,
+                   size=NOISE_SIZE, threshold=NOISE_THRES)
+    # run DeltaVrms2D
+    dvrmsref, wmeanref = delta_v_rms_2d(**dkwargs)
+    wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {1:.3f}'
+    print(wmsg.format(fiber, wmeanref))
+
+    # --------------------------------------------------------------------------
+    # Calculate the CCF
+    # --------------------------------------------------------------------------
+    print('\nRunning CCF calculation')
+    props = ccf_calculation(wave, image, blaze, targetrv, mask_centers,
+                            mask_weights, berv, fit_type)
+    # --------------------------------------------------------------------------
+    # Calculate the mean CCF
+    # --------------------------------------------------------------------------
+    print('\nRunning Mean CCF')
+    props = mean_ccf(props, targetrv, fit_type)
+
+    # --------------------------------------------------------------------------
+    # Plots
+    # --------------------------------------------------------------------------
+    if PLOT:
+        # plot individual CCFs
+        print('\n Plotting individual CCFs')
+        plot_individual_ccf(props, nbo)
+        # plot mean ccf and fit
+        print('\n Plotting Mean CCF')
+        plot_mean_ccf(props)
+
+    # --------------------------------------------------------------------------
+    # Save file
+    # --------------------------------------------------------------------------
+    # write the two tables to file CCFTABLE_{filename}_{mask}.fits
+    write_file(props, IN_FILE, MASK_FILE, header)
 
 
 # ==============================================================================
