@@ -1404,8 +1404,8 @@ def writelog(logobj, params, message, key, logfilepath):
     if os.path.exists(logfilepath):
         # try to open the logfile
         try:
-            # write the logfile
-            with open(logfilepath, 'w') as f:
+            # write the logfile (in access mode to append to the end)
+            with open(logfilepath, 'a') as f:
                 f.write(message + '\n')
         except Exception as e:
             eargs = [logfilepath, type(e), e, func_name]
@@ -1414,8 +1414,8 @@ def writelog(logobj, params, message, key, logfilepath):
     else:
         # try to open the logfile
         try:
-            # write the logfile
-            with open(logfilepath, 'w') as f:
+            # write the logfile (in access mode to append to the end)
+            with open(logfilepath, 'a') as f:
                 f.write(message + '\n')
             try:
                 # change mode to rw-rw-rw-
