@@ -1029,6 +1029,40 @@ obj_mk_template.set_kwarg(**wavefile)
 # add to recipe
 recipes.append(obj_mk_template)
 
+
+# -----------------------------------------------------------------------------
+# polar recipe
+# -----------------------------------------------------------------------------
+# polar = DrsRecipe(__INSTRUMENT__)
+# polar.name = 'polar_spirou.py'
+# polar.shortname = 'POLAR'
+# polar.instrument = __INSTRUMENT__
+# polar.outputdir = 'reduced'
+# polar.inputdir = 'reduced'
+# polar.inputtype = 'reduced'
+# polar.extension = 'fits'
+# polar.description = ''
+# polar.epilog = ''
+# polar.kind = 'recipe'
+# polar.set_outputs()
+# polar.set_debug_plots()
+# polar.set_summary_plots()
+# polar.set_arg(pos=0, **directory)
+# polar.set_debug_plots()
+# polar.set_summary_plots()
+# polar.set_arg(pos=0, **directory)
+# polar.set_arg(name='files', dtype='files', pos='1+',
+#                    files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
+#                    filelogic='exclusive',
+#                    helpstr=Help['FILES_HELP'] + Help['FTELLU_FILES_HELP'],
+#                    limit=1)
+# polar.set_kwarg(**blazefile)
+# polar.set_kwarg(**plot)
+# polar.set_kwarg(**wavefile)
+# # add to recipe
+# recipes.append(polar)
+
+
 # -----------------------------------------------------------------------------
 # pol_spirou
 # -----------------------------------------------------------------------------
