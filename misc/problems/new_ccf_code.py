@@ -1,3 +1,14 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+# CODE NAME HERE
+
+# CODE DESCRIPTION HERE
+
+Created on 2020-03-27 at 13:42
+
+@author: cook
+"""
 from astropy.io import fits
 from astropy.table import Table
 from astropy import units as uu
@@ -9,6 +20,53 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.optimize import curve_fit
 from scipy.stats import chisquare
 import matplotlib.pyplot as plt
+
+
+helpstr = """
+----------------------------------------------------------------------------
+new_ccf_code.py 
+----------------------------------------------------------------------------
+
+This code takes no arguments - you must edit the "variables section"  of the
+code
+
+
+1. Finding the correct calibrations
+
+    a) For your observation find the date
+    b) Go to your /calibDB/ directory
+    c) find the correct file (closest in time?):
+        BLAZE:  *blaze_{fiber}.fits
+        WAVE:   *wave_night_{fiber}.fits
+
+2. Finding masks
+    
+    a) go to your apero-drs installation directory
+    b) go to data/spirou/ccf sub-directory
+    c) use one of these masks
+
+3. Two options for where you put files
+
+    a) copy all data to a directory of your choice ({path})
+        i) copy this code there and set W1='' and W2=''
+        ii) or set W1={path} and W2={path}
+        
+    b) set the paths for your data (W1) and your mask directory (W2)
+    
+    Then update the filenames:
+        IN_FILE: the e2dsff_C or e2dsff_tcorr _AB file
+        BLAZE_FILE: the blaze file from calibDB - get the fiber correct!
+        WAVE_FILE: the wave file from calibDB - get the fiber correct!
+        MASK_FILE: the mask file
+        
+    Note there are two cases (set CASE=1 or CASE=2)
+    
+    For case=1 we assume your IN_FILE is a OBJ
+    For case=2 we assume your IN_FILe is a FP
+
+
+----------------------------------------------------------------------------
+"""
 
 
 # =============================================================================
@@ -798,6 +856,12 @@ def write_file(props, infile, maskname, header, wheader):
 # Start of code
 # =============================================================================
 if __name__ == '__main__':
+
+    # deal with help
+    if '--help' in sys.argv or '-h' in sys.argv:
+        print(helpstr)
+        os._exit(1)
+
     # get input telluric corrected file and header
     image, header = fits.getdata(IN_FILE, header=True)
     blaze = fits.getdata(BLAZE_FILE)
