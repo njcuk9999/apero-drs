@@ -907,8 +907,8 @@ def _write_line_to_database(params, key, dbname, outfile, line, log=True):
         # try to open the master file
         try:
             # write the lines
-            with open(abspath, 'w') as f:
-                f.writelines([line])
+            with open(abspath, 'a') as f:
+                f.write(line)
             # print progress
             wargs = [dbname, key]
             if log:
