@@ -858,9 +858,7 @@ class DrsFitsFile(DrsInputFile):
             drsfile.recipe = self.recipe
         # set function name
         _ = display_func(None, 'copyother', __NAME__, 'DrsFitsFile')
-        # check file has been read (if 'read' not equal to False)
-        if kwargs.get('read', True):
-            drsfile.check_read(header_only=True, load=True)
+
         # set empty file attributes
         nkwargs = dict()
         nkwargs['name'] = kwargs.get('name', self.name)
@@ -894,8 +892,14 @@ class DrsFitsFile(DrsInputFile):
         nkwargs['shape'] = kwargs.get('shape', drsfile.shape)
         nkwargs['numfiles'] = kwargs.get('numfiles', drsfile.numfiles)
         nkwargs['s1d'] = kwargs.get('s1d', drsfile.s1d)
+
+        # create new instance of the DrsFitsFile
+        newfile = DrsFitsFile(**nkwargs)
+        # check file has been read (if 'read' not equal to False)
+        if kwargs.get('read', True):
+            newfile.check_read(header_only=True, load=True)
         # return new instance of DrsFitsFile
-        return DrsFitsFile(**nkwargs)
+        return newfile
 
     # -------------------------------------------------------------------------
     # file checking
