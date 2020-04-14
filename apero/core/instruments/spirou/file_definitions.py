@@ -823,7 +823,7 @@ out_wave_fp = drs_finput('WAVE_FP', KW_OUTPUT='WAVE_FP',
                          outfunc=out.calib_file)
 
 # wave solution using night modifications
-out_wave_night = drs_finput('WAVE_NIGHT', KW_OUTPUT='WAVE_FP',
+out_wave_night = drs_finput('WAVE_NIGHT', KW_OUTPUT='WAVE_NIGHT',
                             fibers=['AB', 'A', 'B', 'C'],
                             filetype='.fits',
                             intype=[out_ext_e2ds, out_ext_e2dsff],
