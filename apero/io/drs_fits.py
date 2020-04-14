@@ -126,7 +126,7 @@ class Header(fits.Header):
 # Define read functions
 # =============================================================================
 def id_drs_file(params, recipe, drs_file_sets, filename=None, nentries=None,
-                required=True):
+                required=True, get_data=True):
 
     func_name = __NAME__ + '.id_drs_file()'
     # ----------------------------------------------------------------------
@@ -173,7 +173,8 @@ def id_drs_file(params, recipe, drs_file_sets, filename=None, nentries=None,
             WLOG(params, 'debug', TextEntry('90-010-00001', args=dargs))
             # --------------------------------------------------------------
             # copy info from given_drs_file into drs_file
-            file_in = drs_file.copyother(file_set, recipe=recipe)
+            file_in = drs_file.copyother(file_set, recipe=recipe,
+                                         get_data=get_data)
             # --------------------------------------------------------------
             # check this file is valid
             cond, _ = file_in.check_file()
