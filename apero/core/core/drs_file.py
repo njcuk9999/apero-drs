@@ -1470,7 +1470,7 @@ class DrsFitsFile(DrsInputFile):
         elif self.data is not None:
             self.shape = [len(self.data)]
 
-    def read_data(self, ext=0):
+    def read_data(self, ext=0, log=True):
         # set function name
         _ = display_func(None, 'read_data', __NAME__, 'DrsFitsFile')
         # check that filename is set
@@ -1478,13 +1478,13 @@ class DrsFitsFile(DrsInputFile):
         # get params
         params = self.recipe.drs_params
         # get data
-        data = drs_fits.readfits(params, self.filename, ext=ext)
+        data = drs_fits.readfits(params, self.filename, ext=ext, log=log)
         # set number of data sets to 1
         self.numfiles = 1
         # assign to object
         self.data = data
 
-    def read_header(self, ext=None):
+    def read_header(self, ext=None, log=True):
         # set function name
         _ = display_func(None, 'read_header', __NAME__, 'DrsFitsFile')
         # check that filename is set
@@ -1497,7 +1497,7 @@ class DrsFitsFile(DrsInputFile):
         # get params
         params = self.recipe.drs_params
         # get header
-        header = drs_fits.read_header(params, self.filename, ext=ext)
+        header = drs_fits.read_header(params, self.filename, ext=ext, log=log)
         # assign to object
         self.header = header
 

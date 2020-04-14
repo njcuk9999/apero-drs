@@ -177,7 +177,7 @@ def id_drs_file(params, recipe, drs_file_sets, filename=None, nentries=None,
             # --------------------------------------------------------------
             # load the header for this kind
             try:
-                file_in.read_header()
+                file_in.read_header(log=False)
             # if exception occurs continue to next file
             #    (this is not the correct file)
             except Exception as _:
@@ -234,7 +234,7 @@ def id_drs_file(params, recipe, drs_file_sets, filename=None, nentries=None,
 # Define read functions
 # =============================================================================
 def readfits(params, filename, getdata=True, gethdr=False, fmt='fits-image',
-             ext=0, func=None):
+             ext=0, func=None, log=True):
     """
     The drs fits file read function
 
@@ -280,11 +280,14 @@ def readfits(params, filename, getdata=True, gethdr=False, fmt='fits-image',
     # -------------------------------------------------------------------------
     # deal with obtaining data
     if fmt == 'fits-image':
-        data, header = _read_fitsimage(params, filename, getdata, gethdr, ext)
+        data, header = _read_fitsimage(params, filename, getdata, gethdr, ext,
+                                       log=log)
     elif fmt == 'fits-table':
-        data, header = _read_fitstable(params, filename, getdata, gethdr, ext)
+        data, header = _read_fitstable(params, filename, getdata, gethdr, ext,
+                                       log=log)
     elif fmt == 'fits-multi':
-        data, header = _read_fitsmulti(params, filename, getdata, gethdr)
+        data, header = _read_fitsmulti(params, filename, getdata, gethdr,
+                                       log=log)
     else:
         cfmts = ', '.join(allowed_formats)
         eargs = [filename, fmt, cfmts, func_name]
@@ -302,15 +305,18 @@ def readfits(params, filename, getdata=True, gethdr=False, fmt='fits-image',
         return None
 
 
-def read_header(params, filename, ext=0):
+def read_header(params, filename, ext=0, log=True):
     func_name = __NAME__ + '.read_header()'
     # try to open header
     try:
         header = fits.getheader(filename, ext=ext)
     except Exception as e:
-        eargs = [os.path.basename(filename), ext, type(e), e, func_name]
-        WLOG(params, 'error', TextEntry('01-001-00010', args=eargs))
-        header = None
+        if log:
+            eargs = [os.path.basename(filename), ext, type(e), e, func_name]
+            WLOG(params, 'error', TextEntry('01-001-00010', args=eargs))
+            header = None
+        else:
+            raise e
     # return header
     return header
 
@@ -366,18 +372,21 @@ def _read_fitsmulti(params, filename, getdata, gethdr):
         return header
 
 
-def _read_fitsimage(params, filename, getdata, gethdr, ext=0):
+def _read_fitsimage(params, filename, getdata, gethdr, ext=0, log=True):
     # -------------------------------------------------------------------------
     # deal with getting data
     if getdata:
         try:
             data = fits.getdata(filename, ext=ext)
         except Exception as e:
-            string_trackback = traceback.format_exc()
-            emsg = TextEntry('01-001-00014', args=[filename, ext, type(e)])
-            emsg += '\n\n' + TextEntry(string_trackback)
-            WLOG(params, 'error', emsg)
-            data = None
+            if log:
+                string_trackback = traceback.format_exc()
+                emsg = TextEntry('01-001-00014', args=[filename, ext, type(e)])
+                emsg += '\n\n' + TextEntry(string_trackback)
+                WLOG(params, 'error', emsg)
+                data = None
+            else:
+                raise e
     else:
         data = None
     # -------------------------------------------------------------------------
@@ -386,11 +395,14 @@ def _read_fitsimage(params, filename, getdata, gethdr, ext=0):
         try:
             header = fits.getheader(filename, ext=ext)
         except Exception as e:
-            string_trackback = traceback.format_exc()
-            emsg = TextEntry('01-001-00015', args=[filename, ext, type(e)])
-            emsg += '\n\n' + TextEntry(string_trackback)
-            WLOG(params, 'error', emsg)
-            header = None
+            if log:
+                string_trackback = traceback.format_exc()
+                emsg = TextEntry('01-001-00015', args=[filename, ext, type(e)])
+                emsg += '\n\n' + TextEntry(string_trackback)
+                WLOG(params, 'error', emsg)
+                header = None
+            else:
+                raise e
     else:
         header = None
     # -------------------------------------------------------------------------
@@ -398,18 +410,21 @@ def _read_fitsimage(params, filename, getdata, gethdr, ext=0):
     return data, header
 
 
-def _read_fitstable(params, filename, getdata, gethdr, ext=0):
+def _read_fitstable(params, filename, getdata, gethdr, ext=0, log=True):
     # -------------------------------------------------------------------------
     # deal with getting data
     if getdata:
         try:
             data = Table.read(filename, format='fits')
         except Exception as e:
-            string_trackback = traceback.format_exc()
-            emsg = TextEntry('01-001-00016', args=[filename, ext, type(e)])
-            emsg += '\n\n' + TextEntry(string_trackback)
-            WLOG(params, 'error', emsg)
-            data = None
+            if log:
+                string_trackback = traceback.format_exc()
+                emsg = TextEntry('01-001-00016', args=[filename, ext, type(e)])
+                emsg += '\n\n' + TextEntry(string_trackback)
+                WLOG(params, 'error', emsg)
+                data = None
+            else:
+                raise e
     else:
         data = None
     # -------------------------------------------------------------------------
@@ -418,11 +433,14 @@ def _read_fitstable(params, filename, getdata, gethdr, ext=0):
         try:
             header = fits.getheader(filename, ext=ext)
         except Exception as e:
-            string_trackback = traceback.format_exc()
-            emsg = TextEntry('01-001-00017', args=[filename, ext, type(e)])
-            emsg += '\n\n' + TextEntry(string_trackback)
-            WLOG(params, 'error', emsg)
-            header = None
+            if log:
+                string_trackback = traceback.format_exc()
+                emsg = TextEntry('01-001-00017', args=[filename, ext, type(e)])
+                emsg += '\n\n' + TextEntry(string_trackback)
+                WLOG(params, 'error', emsg)
+                header = None
+            else:
+                raise e
     else:
         header = None
     # -------------------------------------------------------------------------
