@@ -190,6 +190,10 @@ def __main__(recipe, params):
         # delete file
         del kind, db_out_file
 
+    # print note about masters
+    WLOG(params, 'info', TextEntry('40-505-00004'))
+    _ = input('\t')
+
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
