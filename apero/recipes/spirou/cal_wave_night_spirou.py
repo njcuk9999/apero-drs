@@ -169,6 +169,9 @@ def __main__(recipe, params):
         # run extraction
         hc_outputs, fp_outputs = extractother.extract_wave_files(*eargs)
 
+        # set up a stored cavity width
+        indcavity = None
+        indsource = None
         # ------------------------------------------------------------------
         # Loop around fibers
         # ------------------------------------------------------------------
@@ -200,8 +203,16 @@ def __main__(recipe, params):
             blaze_file, blaze = flat_blaze.get_blaze(params, hcheader, fiber)
             # --------------------------------------------------------------
             # calculate the night wavelength solution
-            wargs = [hc_e2ds_file, fp_e2ds_file, mhclines, mfplines, wprops]
+            wargs = [hc_e2ds_file, fp_e2ds_file, mhclines, mfplines, wprops,
+                     indcavity]
             nprops = wave.night_wavesolution(params, recipe, *wargs)
+            # update in dcavity
+            if indcavity is None:
+                indcavity = nprops['DCAVITY']
+                indsource = fiber
+            # add dcavity source (which fiber it came from)
+            nprops['DCAVITYSRCE'] = indsource
+            nprops.set_source('DCAVITYSRCE', mainname)
             # ----------------------------------------------------------
             # ccf computation
             # ----------------------------------------------------------

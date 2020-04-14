@@ -5503,7 +5503,7 @@ def fpm_write_linelist_table(params, recipe, llprops, hcfile, fiber):
 # Define night functions
 # =============================================================================
 def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
-                       **kwargs):
+                       indcavity=None, **kwargs):
     # set function name
     func_name = display_func(params, 'night_wavesolution', __NAME__)
     # ----------------------------------------------------------------------
@@ -5541,6 +5541,11 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     dvstep = pcheck(params, 'WAVENIGHT_PLT_DVSTEP', 'dvstep', kwargs, func_name)
     wave_fit_deg = pcheck(params, 'WAVE_FIT_DEGREE', 'wave_fit_deg', kwargs,
                           func_name)
+
+    # deal with havint a input dcavity width
+    if indcavity is not None:
+        d_cavity = float(indcavity)
+
     # ----------------------------------------------------------------------
     # get the master wavelength solution
     mwave = wprops['WAVEMAP']
@@ -5679,7 +5684,7 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
         highf_corr_arr = highf_corr_arr - fit2
         # ----------------------------------------------------------------------
         # on even iterations we adjust the wavelength model
-        if (iteration % 2) == 0:
+        if ((iteration % 2) == 0) or (indcavity is not None):
             # sample vectors for the linear model
             sample = np.zeros([len(dwave), 4])
             # zero point
@@ -5917,6 +5922,7 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
     wavefile.add_hkey('KW_WNT_HIGHF_CD', value=nprops['HIGHF_CORR_DEG'])
     wavefile.add_hkey('KW_WNT_NITER', value=nprops['NITERATIONS'])
     wavefile.add_hkey('KW_WNT_DCAVITY', value=nprops['DCAVITY'])
+    wavefile.add_hkey('KW_WNT_DCAVSRCE', value=nprops['DCAVITYSRCE'])
     wavefile.add_hkey('KW_WNT_MINSNR', value=nprops['NSIGMIN'])
     wavefile.add_hkey('KW_WNT_REDCUT', value=nprops['REDEND_CUTOFF'])
     wavefile.add_hkey('KW_WNT_DWAVE_BIN', value=nprops['DWAVE_BIN'])
