@@ -101,7 +101,7 @@ __all__ = [# input keys
            # wave night values
            'KW_WNT_HIGHF_CD', 'KW_WNT_NITER', 'KW_WNT_DCAVITY', 'KW_WNT_MINSNR',
            'KW_WNT_REDCUT', 'KW_WNT_DWAVE_BIN', 'KW_WNT_NMIN_LINES',
-           'KW_WNT_NSIG_FIT',
+           'KW_WNT_NSIG_FIT', 'KW_WNT_DCAVSRCE',
            # mktellu values
            'KW_MKTELL_TEMP_FILE', 'KW_MKTELL_BLAZE_PRCT', 'KW_MKTELL_BLAZE_CUT',
            'KW_MKTELL_TAPASFILE', 'KW_MKTELL_FWHMPLSF',
@@ -996,6 +996,9 @@ KW_WNT_NITER = Keyword('KW_WNT_NITER', key='', dtype=int, source=__NAME__)
 
 # starting point for the cavity corrections used in wave night
 KW_WNT_DCAVITY = Keyword('KW_WNT_DCAVITY', key='', dtype=int, source=__NAME__)
+
+# source fiber for the cavity correction
+KW_WNT_DCAVSRCE = Keyword('KW_WNT_DCAVSRCE', key='', dtype=str, source=__NAME__)
 
 # min SNR for incluing in the model used in wave night
 KW_WNT_MINSNR = Keyword('KW_WNT_MINSNR', key='', dtype=int, source=__NAME__)
