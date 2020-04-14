@@ -889,7 +889,7 @@ class DrsFitsFile(DrsInputFile):
         nkwargs['outfunc'] = kwargs.get('outfunc', self.outfunc)
         nkwargs['dbname'] = kwargs.get('dbname', self.dbname)
         nkwargs['dbkey'] = kwargs.get('dbkey', self.dbkey)
-        nkwargs['datatype'] = kwargs.get('datatype', drsfile.datatype)
+        nkwargs['datatype'] = kwargs.get('datatype', self.datatype)
         nkwargs['dtype'] = kwargs.get('dtype', drsfile.dtype)
         nkwargs['shape'] = kwargs.get('shape', drsfile.shape)
         nkwargs['numfiles'] = kwargs.get('numfiles', drsfile.numfiles)
