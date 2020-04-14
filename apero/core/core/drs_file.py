@@ -1518,6 +1518,8 @@ class DrsFitsFile(DrsInputFile):
         # assign to object
         self.header = header
 
+
+    # TODO: sort out header_only and load_data -- ambiguous
     def check_read(self, header_only=False, load=False, load_data=True):
         # set function name
         _ = display_func(None, 'check_read', __NAME__, 'DrsFitsFile')
