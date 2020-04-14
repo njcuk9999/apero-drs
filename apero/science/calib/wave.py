@@ -5800,6 +5800,7 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     nprops['COEFFS'] = night_coeffs
     nprops['WAVEMAP'] = night_wave
     nprops['WAVEFILE'] = wprops['WAVEFILE']
+    nprops['WAVETIME'] = wprops['WAVETIME']
     nprops['WAVESOURCE'] = recipe.name
     nprops['NBO'] = night_coeffs.shape[0]
     nprops['DEG'] = night_coeffs.shape[1] - 1
