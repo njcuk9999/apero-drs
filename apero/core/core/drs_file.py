@@ -279,14 +279,6 @@ class DrsInputFile:
             self.recipe = kwargs['recipe']
         # get parameters
         params = self.recipe.drs_params
-        # set function name
-        func_name = display_func(params, 'copyother', __NAME__, 'DrsInputFile')
-        # check file has been read (if 'read' not equal to False)
-        if kwargs.get('read', True):
-            if drsfile.data is None:
-                dargs = [drsfile.filename, func_name]
-                WLOG(params, 'debug', TextEntry('90-008-00010', args=dargs))
-                drsfile.read_file()
         # set empty file attributes
         nkwargs = dict()
         nkwargs['name'] = kwargs.get('name', self.name)
@@ -858,7 +850,6 @@ class DrsFitsFile(DrsInputFile):
             drsfile.recipe = self.recipe
         # set function name
         _ = display_func(None, 'copyother', __NAME__, 'DrsFitsFile')
-
         # set empty file attributes
         nkwargs = dict()
         nkwargs['name'] = kwargs.get('name', self.name)
@@ -892,16 +883,8 @@ class DrsFitsFile(DrsInputFile):
         nkwargs['shape'] = kwargs.get('shape', drsfile.shape)
         nkwargs['numfiles'] = kwargs.get('numfiles', drsfile.numfiles)
         nkwargs['s1d'] = kwargs.get('s1d', drsfile.s1d)
-
-        # create new instance of the DrsFitsFile
-        newfile = DrsFitsFile(**nkwargs)
-        # check if we want to load data
-        loaddata = kwargs.get('get_data', True)
-        # check file has been read (if 'read' not equal to False)
-        if kwargs.get('read', True):
-            newfile.check_read(header_only=True, load=True, load_data=loaddata)
         # return new instance of DrsFitsFile
-        return newfile
+        return DrsFitsFile(**nkwargs)
 
     # -------------------------------------------------------------------------
     # file checking

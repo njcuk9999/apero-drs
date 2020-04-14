@@ -173,8 +173,17 @@ def id_drs_file(params, recipe, drs_file_sets, filename=None, nentries=None,
             WLOG(params, 'debug', TextEntry('90-010-00001', args=dargs))
             # --------------------------------------------------------------
             # copy info from given_drs_file into drs_file
-            file_in = drs_file.copyother(file_set, recipe=recipe,
-                                         get_data=get_data)
+            file_in = drs_file.copyother(file_set, recipe=recipe)
+            # --------------------------------------------------------------
+            # load the header for this kind
+            try:
+                file_in.read_header()
+            # if exception occurs continue to next file
+            #    (this is not the correct file)
+            except Exception as _:
+                continue
+            except SystemExit as _:
+                continue
             # --------------------------------------------------------------
             # check this file is valid
             cond, _ = file_in.check_file()
@@ -183,10 +192,12 @@ def id_drs_file(params, recipe, drs_file_sets, filename=None, nentries=None,
             if cond:
                 # ----------------------------------------------------------
                 found = True
-                kind = file_in
+                # ----------------------------------------------------------
+                # load the data for this kind
+                file_in.read_data()
                 # ----------------------------------------------------------
                 # append to list
-                kinds.append(kind)
+                kinds.append(file_in)
                 # ----------------------------------------------------------
                 # if we only want one entry break here
                 if nentries == 1:
