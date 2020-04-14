@@ -169,7 +169,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # try to find cdb_file
         found, kind = drs_fits.id_drs_file(params, recipe, db_out_file,
-                                           filename=db_file,
+                                           filename=db_file, get_data=False,
                                            nentries=1, required=False)
         # ------------------------------------------------------------------
         # append to cdb_data
