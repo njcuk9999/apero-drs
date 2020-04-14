@@ -895,9 +895,11 @@ class DrsFitsFile(DrsInputFile):
 
         # create new instance of the DrsFitsFile
         newfile = DrsFitsFile(**nkwargs)
+        # check if we want to load data
+        loaddata = kwargs.get('get_data', True)
         # check file has been read (if 'read' not equal to False)
         if kwargs.get('read', True):
-            newfile.check_read(header_only=True, load=True)
+            newfile.check_read(header_only=True, load=True, load_data=loaddata)
         # return new instance of DrsFitsFile
         return newfile
 
@@ -1499,11 +1501,16 @@ class DrsFitsFile(DrsInputFile):
         # assign to object
         self.data = data
 
-    def read_header(self, ext=0):
+    def read_header(self, ext=None):
         # set function name
         _ = display_func(None, 'read_header', __NAME__, 'DrsFitsFile')
         # check that filename is set
         self.check_filename()
+        # deal with no extension
+        if (ext is None) and (self.datatype == 'image'):
+            ext = 0
+        elif ext is None:
+            ext = 1
         # get params
         params = self.recipe.drs_params
         # get header
@@ -1511,12 +1518,14 @@ class DrsFitsFile(DrsInputFile):
         # assign to object
         self.header = header
 
-    def check_read(self, header_only=False, load=False):
+    def check_read(self, header_only=False, load=False, load_data=True):
         # set function name
         _ = display_func(None, 'check_read', __NAME__, 'DrsFitsFile')
         # deal with only wanting to check if header is read
         if header_only:
             if self.header is None:
+                if not load_data:
+                    return self.read_header()
                 if load:
                     return self.read_file()
                 func = self.__repr__()
@@ -1525,6 +1534,8 @@ class DrsFitsFile(DrsInputFile):
             else:
                 return 1
         # check that data/header/comments is not None
+        if self.header is None and not load_data:
+            return self.read_header()
         if self.data is None:
             if load:
                 return self.read_file()
