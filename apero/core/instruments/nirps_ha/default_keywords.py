@@ -1243,6 +1243,12 @@ KW_WNT_DCAVITY.set(key='WNTDCVTY',
                    comment='wave night starting point for cavity corr used',
                    parent='WAVE_NIGHT_DCAVITY', group='wave')
 
+# source fiber for the cavity correction
+KW_WNT_DCAVSRCE = KW_WNT_DCAVSRCE.copy(__NAME__)
+KW_WNT_DCAVSRCE.set(key='WNTDCVSR',
+                    comment='wave night source fiber used for cavity corr',
+                    group='wave')
+
 # min SNR for incluing in the model used in wave night
 KW_WNT_MINSNR = KW_WNT_MINSNR.copy(__NAME__)
 KW_WNT_MINSNR.set(key='WNTMNSNR',
