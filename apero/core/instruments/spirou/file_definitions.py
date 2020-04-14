@@ -658,7 +658,7 @@ out_file.addset(out_ext_s1d_v)
 # thermal files
 # -----------------------------------------------------------------------------
 # thermal from internal dark
-out_thermal_e2ds_int = drs_finput('THERMALI_E2DS', KW_OUTPUT='THERMALI_E2DS',
+out_thermal_e2ds_int = drs_finput('THERMALI_E2DS', KW_OUTPUT='EXT_E2DS_FF',
                                   fibers=['AB', 'A', 'B', 'C'],
                                   filetype='.fits', intype=pp_dark_dark_int,
                                   suffix='_thermal_e2ds_int',
@@ -666,12 +666,29 @@ out_thermal_e2ds_int = drs_finput('THERMALI_E2DS', KW_OUTPUT='THERMALI_E2DS',
                                   outfunc=out.general_file)
 
 # thermal from telescope dark
-out_thermal_e2ds_tel = drs_finput('THERMALT_E2DS', KW_OUTPUT='THERMALT_E2DS',
+out_thermal_e2ds_tel = drs_finput('THERMALT_E2DS', KW_OUTPUT='EXT_E2DS_FF',
                                   fibers=['AB', 'A', 'B', 'C'],
                                   filetype='.fits', intype=pp_dark_dark_tel,
                                   suffix='_thermal_e2ds_tel',
                                   dbname='calibration', dbkey='THERMALT',
                                   outfunc=out.general_file)
+
+# TODO: PUT BACK IN
+# # thermal from internal dark
+# out_thermal_e2ds_int = drs_finput('THERMALI_E2DS', KW_OUTPUT='THERMALI_E2DS',
+#                                   fibers=['AB', 'A', 'B', 'C'],
+#                                   filetype='.fits', intype=pp_dark_dark_int,
+#                                   suffix='_thermal_e2ds_int',
+#                                   dbname='calibration', dbkey='THERMALI',
+#                                   outfunc=out.general_file)
+#
+# # thermal from telescope dark
+# out_thermal_e2ds_tel = drs_finput('THERMALT_E2DS', KW_OUTPUT='THERMALT_E2DS',
+#                                   fibers=['AB', 'A', 'B', 'C'],
+#                                   filetype='.fits', intype=pp_dark_dark_tel,
+#                                   suffix='_thermal_e2ds_tel',
+#                                   dbname='calibration', dbkey='THERMALT',
+#                                   outfunc=out.general_file)
 
 # add thermal outputs to output fileset
 out_file.addset(out_thermal_e2ds_int)
