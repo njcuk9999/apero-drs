@@ -37,7 +37,8 @@ __release__ = Constants['DRS_RELEASE']
 WLOG = core.wlog
 # Get the text types
 TextEntry = locale.drs_text.TextEntry
-
+# Define master prefix
+MASTER_PREFIX = 'MASTER_'
 
 
 # =============================================================================
@@ -163,6 +164,12 @@ def __main__(recipe, params):
             file_set = None
         else:
             file_set = getattr(filemod, file_set_name)
+        # ------------------------------------------------------------------
+        # skip default master files
+        if os.path.basename(db_file).startswith(MASTER_PREFIX):
+            # log skipping
+            wargs = [MASTER_PREFIX]
+            WLOG(params, 'info', TextEntry('40-505-00003', args=wargs))
         # ------------------------------------------------------------------
         # make a new copy of out_file
         db_out_file = file_set.newcopy(recipe=recipe)
