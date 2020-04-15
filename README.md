@@ -685,15 +685,23 @@ cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night; SCIENCE_TARGETS]
 | DARK_DARK_TEL	| pos_pk	| pos_pk	| P5	   | DARK	    | CALIBRATION	| d.fits  |
 | OBJ_DARK	    | pos_pk	| pos_pk	| ?	       | OBJECT	    | TARGET		| o.fits  |
 | DARK_DARK_SKY	| pos_pk	| pos_pk	| ?	       | OBJECT	    | SKY			| o.fits  |
+| DARK_FP_SKY   | pos_pk    | pos_fp    | ?        | OBJECT     | SKY           | o.fits  |
 | OBJ_FP	    | pos_pk	| pos_fp	| ?	       | OBJECT	    | TARGET		| o.fits  |
 | FP_FP	        | pos_fp	| pos_fp	| ?	       | ALIGN	    | CALIBRATION	| a.fits  |
+| LFC_LFC       | pos_rs    | pos_rs    | ?        | ALIGN      | CALIBRATION   | a.fits  |
 | FLAT_DARK	    | pos_wl	| pos_pk	| ?	       | FLAT	    | CALIBRATION	| f.fits  |
 | DARK_FLAT	    | pos_pk	| pos_wl	| ?	       | FLAT	    | CALIBRATION	| f.fits  |
 | FLAT_FLAT	    | pos_wl	| pos_wl	| ?	       | FLAT	    | CALIBRATION	| f.fits  |
 | HCONE_DARK	| pos_hc1	| pos_pk	| ?	       | COMPARISON	| CALIBRATION	| c.fits  |
+| HCTWO_DARK	| pos_hc2	| pos_pk	| ?	       | COMPARISON	| CALIBRATION	| c.fits  |
+| FP_HCONE      | pos_fp	| pos_hc1   | ?	       | COMPARISON | CALIBRATION	| c.fits  |
+| FP_HCTWO      | pos_fp	| pos_hc2   | ?	       | COMPARISON | CALIBRATION	| c.fits  |
+| HCONE_FP      | pos_hc1   | pos_fp    | ?        | COMPARISON | CALIBRATION   | c.fits  |
+| HCTWO_FP      | pos_hc2   | pos_fp    | ?        | COMPARISON | CALIBRATION   | c.fits  |
 | DARK_HCONE    | pos_pk	| pos_hc1	| ?	       | COMPARISON	| CALIBRATION	| c.fits  |
+| DARK_HCTWO    | pos_pk	| pos_hc2	| ?	       | COMPARISON	| CALIBRATION	| c.fits  |
 | HCONE_HCONE	| pos_hc1	| pos_hc1	| ?	       | COMPARISON	| CALIBRATION	| c.fits  |
-
+| HCTWO_HCTWO	| pos_hc2	| pos_hc2	| ?	       | COMPARISON	| CALIBRATION	| c.fits  |
 
 ---
 
