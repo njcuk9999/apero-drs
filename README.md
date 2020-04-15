@@ -315,7 +315,7 @@ __NOTE__: there is a --help option available for every recipe
 
 i.e.
 ```
-tools/bin/apero_processing.py SPIROU limited_run.ini
+tools/bin/apero_processing.py SPIROU mini_run.ini
 ```
 
 #### The processing run files ( `{RUN_FILE}`)
@@ -368,15 +368,15 @@ Note these can be combined in any order the user wants but some assume others ha
 i.e. 
 
 ```
-id00001 = master_run
-id00002 = calib_run
-id00003 = tellu_run
-id00004 = science_run
+id00001 = master_seq
+id00002 = calib_seq
+id00003 = tellu_seq
+id00004 = science_seq
 ```
 
 Currently defined sequences are:
 
-##### 1. `full_run`
+##### 1. `full_seq`
 
 where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
 i.e. for RUN_XXXX and SKIP_XXXX.
@@ -412,9 +412,9 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 | cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night]              | CCF        |
 
 
-##### 2. `limited_run`
+##### 2. `limited_seq`
 
-Similar to `full_run` but uses the `{TELLURIC_TARGETS}` and `{SCIENCE_TARGETS}` 
+Similar to `full_seq` but uses the `{TELLURIC_TARGETS}` and `{SCIENCE_TARGETS}` 
 to filter the objects processed
 
 where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
@@ -462,7 +462,7 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 Only run the preprocessing recipe
 
 
-###### 3a: `pp_run`
+###### 3a: `pp_seq`
 
 where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
 i.e. for RUN_XXXX and SKIP_XXXX.
@@ -472,7 +472,7 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 | cal_preprocessing                                                   | PP         |
 
 
-###### 3b: `pp_runo`
+###### 3b: `pp_seq_opt`
 
 where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
 i.e. for RUN_XXXX and SKIP_XXXX.
@@ -486,7 +486,7 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 
 
 
-##### 4. `master_run`
+##### 4. `master_seq`
 
 Only run the master recipes
 
@@ -509,10 +509,10 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 
 
 
-##### 5. `calib_run`
+##### 5. `calib_seq`
 
 Only run the nightly calibration sequences and make a complete calibration database.
-(assumes that the master run is done i.e. `master_run`)
+(assumes that the master run is done i.e. `master_seq`)
 
 where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
 i.e. for RUN_XXXX and SKIP_XXXX.
@@ -530,10 +530,10 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 
 
 
-##### 5. `tellu_run`
+##### 5. `tellu_seq`
 
 Only run the steps required to process `{TELLURIC_TARGETS}` and make the telluric database.
-(assumes that calibrations have been done i.e. `calib_run`)
+(assumes that calibrations have been done i.e. `calib_seq`)
 
 where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
 i.e. for RUN_XXXX and SKIP_XXXX.
@@ -549,10 +549,10 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 
 
 
-##### 6. `science_run`
+##### 6. `science_seq`
 
 Only run the steps required to process `{SCIENCE_TARGETS}` 
-(assumes that calibrations and tellurics have been done i.e. `calib_run` and `tellu_run`)
+(assumes that calibrations and tellurics have been done i.e. `calib_seq` and `tellu_seq`)
 
 where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
 i.e. for RUN_XXXX and SKIP_XXXX.
@@ -590,11 +590,11 @@ in order to run the shape master recipe.
 
 Note one must preprocess ALL nights for the master to work) - it will only 
 combine darks(for the master dark) and fps (for the master shape) from 
-preprocessed data (i.e. use sequence `pp_run`)
+preprocessed data (i.e. use sequence `pp_seq`)
 
 
 
-3) Run the master sequence (i.e. use sequence `master_run`)
+3) Run the master sequence (i.e. use sequence `master_seq`)
 i.e. 
 ```
 cal_dark_master
