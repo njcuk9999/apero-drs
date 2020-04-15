@@ -180,6 +180,8 @@ def load_hotpix(params, **kwargs):
     filename = pcheck(params, 'PP_HOTPIX_FILE', 'filename', kwargs,
                       func_name)
     return_filename = kwargs.get('return_filename', False)
+    # add table fmt
+    kwargs['fmt'] = kwargs.get('fmt', 'csv')
     # deal with return_filename
     if return_filename:
         return construct_path(params, filename, relfolder, func=func_name)
@@ -394,7 +396,7 @@ def load_table_file(params, filename, directory, kwargs, func_name):
     absfilename = construct_path(params, filename, directory,
                                  func=func_name)
     # extra parameters
-    fmt = kwargs.get('fmt', None)
+    fmt = kwargs.get('fmt', 'fits')
     colnames = kwargs.get('colnames', None)
     datastart = kwargs.get('datastart', 0)
     # check that filepath exists and log an error if it was not found
