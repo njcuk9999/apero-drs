@@ -817,7 +817,7 @@ class RecipeLog:
         if os.path.exists(writepath):
             try:
                 print('RecipeLog: Reading file: {0}'.format(writepath))
-                table = Table.read(writepath)
+                table = Table.read(writepath, fmt='fits')
             except Exception as e:
                 # TODO: move to language database
                 emsg = 'RecipeLogError: Cannot read file {0} \n\t {1}: {2}'
