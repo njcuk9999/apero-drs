@@ -170,6 +170,8 @@ def __main__(recipe, params):
             # log skipping
             wargs = [MASTER_PREFIX]
             WLOG(params, 'info', TextEntry('40-505-00003', args=wargs))
+            # skip
+            continue
         # ------------------------------------------------------------------
         # make a new copy of out_file
         db_out_file = file_set.newcopy(recipe=recipe)
