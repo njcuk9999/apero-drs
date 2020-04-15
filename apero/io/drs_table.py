@@ -304,6 +304,10 @@ def read_table(p, filename, fmt, colnames=None, **kwargs):
     # get format table
     ftable = list_of_formats()
 
+    # don't let format be None
+    if fmt is None:
+        fmt = 'fits'
+
     # check that format in format_table
     if fmt not in ftable['Format']:
         eargs = [fmt, func_name]
