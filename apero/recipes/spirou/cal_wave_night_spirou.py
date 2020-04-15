@@ -216,9 +216,6 @@ def __main__(recipe, params):
             # ----------------------------------------------------------
             # ccf computation
             # ----------------------------------------------------------
-            # TODO: remove break point
-            constants.break_point(params)
-
             # get the FP (reference) fiber
             pconst = constants.pload(params['INSTRUMENT'])
             sfiber, rfiber = pconst.FIBER_CCF()
