@@ -93,6 +93,7 @@ SPECIAL_LIST_KEYS = drs_recipe.SPECIAL_LIST_KEYS
 class Run:
     def __init__(self, params, runstring, mod=None, priority=0, inrecipe=None):
         self.params = params
+        self.pconst = constants.pload(params['INSTRUMENT'])
         self.runstring = runstring
         self.priority = priority
         self.args = []
@@ -219,6 +220,8 @@ class Run:
         # find the recipe
         if self.recipe is None:
             self.recipe, self.module = self.find_recipe(self.module)
+            # get filemod and recipe mod
+            self.recipe.filemod = self.pconst.FILEMOD()
         # import the recipe module
         self.recipemod = self.recipe.main
         # turn off the input validation
@@ -945,6 +948,9 @@ def generate_ids(params, runtable, mod, rlist=None, **kwargs):
         # create run object
         run_object = Run(params, run_item, mod=mod, priority=keylist[it],
                          inrecipe=input_recipe)
+        # deal with input recipe
+        if input_recipe is None:
+            input_recipe = run_object.recipe
         # deal with skip
         skip, reason = skip_run_object(params, run_object)
         # deal with passing debug
@@ -953,11 +959,10 @@ def generate_ids(params, runtable, mod, rlist=None, **kwargs):
             run_object.runstring = '{0} --debug={1}'.format(*dargs)
             run_object.update()
         # deal with passing master argument
-        if input_recipe is not None:
-            if input_recipe.master:
-                dargs = [run_object.runstring, 'True']
-                run_object.runstring = '{0} --master={1}'.format(*dargs)
-                run_object.update()
+        if input_recipe.master:
+            dargs = [run_object.runstring, 'True']
+            run_object.runstring = '{0} --master={1}'.format(*dargs)
+            run_object.update()
         # append to list
         if not skip:
             # log that we have validated run
@@ -1403,7 +1408,7 @@ def update_run_table(sequence, runtable, newruns, rlist=None):
             if rlist is None:
                 recipe_list[idnumber] = None
             else:
-                recipe_list[idnumber] = rlist[idnumber]
+                recipe_list[idnumber] = rlist[idkey]
             # update id number
             idnumber += 1
         # else we have found where we need to insert rows
