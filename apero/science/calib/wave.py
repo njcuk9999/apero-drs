@@ -28,6 +28,7 @@ from apero.core.core import drs_file
 from apero.core.core import drs_startup
 from apero.io import drs_data
 from apero.io import drs_table
+from apero.io import drs_image
 from apero.science import velocity
 from apero.science.calib import general
 from apero.science import extract
@@ -364,15 +365,7 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
             nby, nbx = infile.data.shape
         else:
             nby, nbx = header['NAXIS2'], header['NAXIS1']
-        # set up storage
-        wavemap = np.zeros((nbo, nbx))
-        xpixels = np.arange(nbx)
-        # loop aroun each order
-        for order_num in range(nbo):
-            # get this order coefficients
-            ocoeffs = wave_coeffs[order_num][::-1]
-            # calculate polynomial values and push into wavemap
-            wavemap[order_num] = np.polyval(ocoeffs, xpixels)
+        wavemap = get_wavemap_from_coeffs(wave_coeffs, nbo, nbx)
     # -------------------------------------------------------------------------
     # store wave properties in parameter dictionary
     wprops = ParamDict()
@@ -407,6 +400,19 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     # -------------------------------------------------------------------------
     # return the map and properties
     return wprops
+
+
+def get_wavemap_from_coeffs(wave_coeffs, nbo, nbx):
+    # set up storage
+    wavemap = np.zeros((nbo, nbx))
+    xpixels = np.arange(nbx)
+    # loop aroun each order
+    for order_num in range(nbo):
+        # get this order coefficients
+        ocoeffs = wave_coeffs[order_num][::-1]
+        # calculate polynomial values and push into wavemap
+        wavemap[order_num] = np.polyval(ocoeffs, xpixels)
+    return wavemap
 
 
 def get_wavelines(params, recipe, header=None, infile=None, **kwargs):
@@ -641,6 +647,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
         list_orders = hclines['ORDER']
         list_pixels = hclines['PIXEL_REF']
         list_wfit = hclines['WFIT']
+        peak_number = hclines['PEAK_NUMBER']
 
     # ----------------------------------------------------------------------
     # get the lines for HC files from fplines input
@@ -650,6 +657,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
         list_orders = fplines['ORDER']
         list_pixels = fplines['PIXEL_REF']
         list_wfit = fplines['WFIT']
+        peak_number = fplines['PEAK_NUMBER']
 
     # ----------------------------------------------------------------------
     # get the lines for HC files
@@ -695,6 +703,11 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
         list_pixels = list_pixels[keep]
         # set wfit to a constant for HC
         list_wfit = np.repeat(hcboxsize, len(list_pixels))
+
+        # just for the sake of consistency, we need to attribute a fractional
+        # FP cavity number to HC peaks. This ensures that the table saved at
+        # then end of this code has the same format as for FPs.
+        peak_number = np.repeat(np.nan, len(list_pixels))
 
     # ----------------------------------------------------------------------
     # get the lines for FP files
@@ -772,6 +785,15 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
         list_orders = list_orders[keep]
         list_pixels = list_pixels[keep]
         list_wfit = list_wfit[keep]
+
+        # Once we have a cavity length, we find the integer FP peak number.
+        # This will be compiled in the table later and used for nightly
+        # wavelength solutions by changing the achromatic part of the cavity
+        # length relative to the master night. By construction, this is
+        # always an integer. The factor 2 comes from the FP equation.
+        # It arrises from the back-and-forth within the FP cavity
+        cavfit = np.polyval(cavity_length_poly[::-1], list_waves)
+        peak_number = np.array(cavfit * 2 / list_waves, dtype=int)
 
     # ----------------------------------------------------------------------
     # else we break
@@ -889,9 +911,10 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
     # Create table to store them in
     # ----------------------------------------------------------------------
     columnnames = ['WAVE_REF', 'WAVE_MEAS', 'PIXEL_REF', 'PIXEL_MEAS',
-                   'ORDER', 'WFIT', 'EWIDTH_MEAS', 'AMP_MEAS', 'NSIG', 'DIFF']
+                   'ORDER', 'WFIT', 'EWIDTH_MEAS', 'AMP_MEAS', 'NSIG',
+                   'DIFF', 'PEAK_NUMBER']
     columnvalues = [list_waves, wave_m, list_pixels, pixel_m, list_orders,
-                    list_wfit, ewidth, amp, nsig, diffpix]
+                    list_wfit, ewidth, amp, nsig, diffpix, peak_number]
     # make table
     table = drs_table.make_table(params, columnnames, columnvalues)
     # return table
@@ -1082,7 +1105,7 @@ def hc_wavesol(params, recipe, iprops, e2dsfile, blaze, fiber, **kwargs):
     wprops['WFP_STEP'] = None
     # set the source
     keys = ['WAVEMAP', 'WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG', 'NBPIX',
-            'COEFFS',
+            'COEFFS', 'WAVETIME',
             'WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
             'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP']
     wprops.set_sources(keys, func_name)
@@ -1220,17 +1243,7 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
     # ------------------------------------------------------------------
     recipe.plot('WAVE_FP_SINGLE_ORDER', order=None, llprops=llprops,
                 hcdata=hce2dsfile.data)
-    # ----------------------------------------------------------------------
-    # FP CCF COMPUTATION - common to all methods
-    # ----------------------------------------------------------------------
-    # get the FP (reference) fiber
-    pconst = constants.pload(params['INSTRUMENT'])
-    sfiber, rfiber = pconst.FIBER_CCF()
-    # compute the ccf
-    ccfargs = [fpe2dsfile, fpe2dsfile.data, blaze, llprops['LL_FINAL'], rfiber]
-    rvprops = velocity.compute_ccf_fp(params, recipe, *ccfargs)
-    # merge rvprops into llprops (shallow copy)
-    llprops.merge(rvprops)
+
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     # TODO: remove if once we only use cal_wave or cal_wave_master/night
@@ -1252,21 +1265,10 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
     wprops['WAVEMAP'] = llprops['LL_FINAL']
     wprops['NBO'] = llprops['LL_PARAM_FINAL'].shape[0]
     wprops['DEG'] = llprops['LL_PARAM_FINAL'].shape[1] - 1
+    wprops['NBPIX'] = llprops['NBPIX']
     # set source
-    keys = ['WAVEMAP', 'WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG', 'COEFFS']
-    wprops.set_sources(keys, func_name)
-    # update ccf properties
-    wprops['WFP_DRIFT'] = rvprops['MEAN_RV']
-    wprops['WFP_FWHM'] = rvprops['MEAN_FWHM']
-    wprops['WFP_CONTRAST'] = rvprops['MEAN_CONTRAST']
-    wprops['WFP_MASK'] = rvprops['CCF_MASK']
-    wprops['WFP_LINES'] = rvprops['TOT_LINE']
-    wprops['WFP_TARG_RV'] = rvprops['TARGET_RV']
-    wprops['WFP_WIDTH'] = rvprops['CCF_WIDTH']
-    wprops['WFP_STEP'] = rvprops['CCF_STEP']
-    # set sources
-    keys = ['WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK', 'WFP_LINES',
-            'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP']
+    keys = ['WAVEMAP', 'WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG', 'COEFFS',
+            'NBPIX', 'WAVETIME']
     wprops.set_sources(keys, func_name)
 
     # ------------------------------------------------------------------
@@ -4768,8 +4770,12 @@ def fit_1m_vs_d(params, recipe, one_m_d, d_arr, hc_ll_test, update_cavity,
     else:
         # get achromatic cavity change - ie shift
         residual = d_arr - np.polyval(fit_ll_d, hc_ll_test)
+        # achromatic cavity length change.
+        achromatic_cc =  mp.nanmedian(residual)
+        # log achromatic cavity length change
+        WLOG(params, '', TextEntry('40-017-00042', args=[achromatic_cc]))
         # update the coeffs with mean shift
-        fit_ll_d[-1] += mp.nanmedian(residual)
+        fit_ll_d[-1] += achromatic_cc
 
     # calculate the fit value
     fitval = np.polyval(fit_ll_d, hc_ll_test)
@@ -5499,6 +5505,102 @@ def fpm_write_linelist_table(params, recipe, llprops, hcfile, fiber):
     WLOG(params, '', TextEntry('40-017-00035', args=[wavefile.filename]))
     # merge table
     drs_table.write_table(params, table, wavefile.filename, fmt='ascii.rst')
+
+
+# =============================================================================
+# Define non-master fiber functions
+# =============================================================================
+def process_other_fibers(params, recipe, mprops, mfpl, fp_outputs):
+    # set function name
+    func_name = display_func(params, 'process_other_fibers', __NAME__)
+    # get the fiber types from a list parameter (or from inputs)
+    fiber_types = drs_image.get_fiber_types(params)
+    # get wave master file (controller fiber)
+    master_fiber = params['WAVE_MASTER_FIBER']
+    plot_order = params['WAVE_FIBER_COMP_PLOT_ORD']
+    # get the master wavemap
+    mwavemap = mprops['WAVEMAP']
+    nbpix = mwavemap.shape[1]
+    nbo = mprops['NBO']
+    mdeg = mprops['DEG']
+    # storage for coeffients
+    solutions = dict()
+    # loop around fibers
+    for fiber in fiber_types:
+        # log that we are processing fiber
+        wargs = [fiber, master_fiber]
+        WLOG(params, 'info', TextEntry('40-017-00043', args=wargs))
+        # skip the master file
+        if fiber == master_fiber:
+            continue
+        # get the fp_e2ds_file for this fiber
+        fpe2dsfile = fp_outputs[fiber]
+        # get the master lines for this fiber
+        fpargs = dict(e2dsfile=fpe2dsfile, wavemap=mwavemap, fplines=mfpl)
+        rfpl = get_master_lines(params, recipe, **fpargs)
+        # ----------------------------------------------------------------------
+        # get the order, pixel measured and wave ref from rfpl
+        roders = rfpl['ORDER']
+        rpixels = rfpl['PIXEL_MEAS']
+        rwaveref = rfpl['WAVE_REF']
+        # storage of the wave coefficients
+        rwavecoeffs = np.zeros((nbo, mdeg + 1))
+        # loop around orders
+        for order_num in range(nbo):
+            # define an order mask
+            good = (roders == order_num) & np.isfinite(rpixels)
+            # fit the fibers fplines to fit the measured pixel positions
+            #  to the wavelength
+            # TODO --> use a robust fit here
+            cfit = np.polyfit(rpixels[good], rwaveref[good], mdeg)[::-1]
+            # append cfit to wave coefficients
+            rwavecoeffs[order_num] = cfit
+        # ----------------------------------------------------------------------
+        # create wave map
+        rwavemap = get_wavemap_from_coeffs(rwavecoeffs, nbo, nbpix)
+        # ----------------------------------------------------------------------
+        # get copy of instance of wave file (WAVE_HCMAP)
+        # TODO: remove if once we only use cal_wave or cal_wave_master/night
+        if 'WAVEM_FPMAP' in recipe.outputs:
+            wavefile = recipe.outputs['WAVEM_FPMAP'].newcopy(recipe=recipe,
+                                                             fiber=fiber)
+        else:
+            wavefile = recipe.outputs['WAVE_FPMAP'].newcopy(recipe=recipe,
+                                                            fiber=fiber)
+        # construct the filename from file instance
+        wavefile.construct_filename(params, infile=fp_outputs[master_fiber])
+        # ----------------------------------------------------------------------
+        # create wprops
+        # ----------------------------------------------------------------------
+        rwprops = ParamDict()
+        rwprops['WAVEFILE'] = wavefile.filename
+        rwprops['WAVESOURCE'] = recipe.name
+        rwprops['WAVETIME'] = fpe2dsfile.get_key('KW_MID_OBS_TIME', dtype=float)
+        rwprops['COEFFS'] = rwavecoeffs
+        rwprops['WAVEMAP'] = rwavemap
+        rwprops['NBO'] = nbo
+        rwprops['DEG'] = mdeg
+        rwprops['NBPIX'] = nbpix
+        rwprops['FPLINES'] = rfpl
+        # set source
+        keys = ['WAVEMAP', 'WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG', 'COEFFS',
+                'NBPIX', 'WAVETIME', 'FPLINES']
+        rwprops.set_sources(keys, func_name)
+        # add rwprops to solutions
+        solutions[fiber] = rwprops
+
+    # ----------------------------------------------------------------------
+    # plot comparison between master fiber and fibers
+    # ----------------------------------------------------------------------
+    recipe.plot('WAVE_OTHERFIBER', solutions=solutions, master=mprops,
+                order=None, masterfiber=master_fiber)
+    recipe.plot('WAVE_FIBER_COMP', solutions=solutions, master=mprops,
+                order=plot_order, masterfiber=master_fiber)
+    recipe.plot('SUM_WAVE_FIBER_COMP', solutions=solutions, master=mprops,
+                order=plot_order, masterfiber=master_fiber)
+    # ----------------------------------------------------------------------
+    # return all the solutions for all fibers
+    return solutions
 
 
 # =============================================================================
