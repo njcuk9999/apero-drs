@@ -645,7 +645,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
             wargs = [params['KW_INPUTRV'][0], infile.filename]
             WLOG(params, 'warning', TextEntry('09-020-00006', args=wargs))
             targetrv = 0.0
-        elif targetrv == null_targetrv:
+        elif np.abs(targetrv) > null_targetrv:
             wargs = [params['KW_INPUTRV'][0], null_targetrv, infile.filename]
             WLOG(params, 'warning', TextEntry('09-020-00007', args=wargs))
             targetrv = 0.0
