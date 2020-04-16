@@ -21,7 +21,6 @@ from scipy.optimize import curve_fit
 from scipy.stats import chisquare
 import matplotlib.pyplot as plt
 
-
 helpstr = """
 ----------------------------------------------------------------------------
 new_ccf_code.py 
@@ -40,7 +39,7 @@ code
         WAVE:   *wave_night_{fiber}.fits
 
 2. Finding masks
-    
+
     a) go to your apero-drs installation directory
     b) go to data/spirou/ccf sub-directory
     c) use one of these masks
@@ -50,17 +49,17 @@ code
     a) copy all data to a directory of your choice ({path})
         i) copy this code there and set W1='' and W2=''
         ii) or set W1={path} and W2={path}
-        
+
     b) set the paths for your data (W1) and your mask directory (W2)
-    
+
     Then update the filenames:
         IN_FILE: the e2dsff_C or e2dsff_tcorr _AB file
         BLAZE_FILE: the blaze file from calibDB - get the fiber correct!
         WAVE_FILE: the wave file from calibDB - get the fiber correct!
         MASK_FILE: the mask file
-        
+
     Note there are two cases (set CASE=1 or CASE=2)
-    
+
     For case=1 we assume your IN_FILE is a OBJ
     For case=2 we assume your IN_FILe is a FP
 
@@ -68,12 +67,11 @@ code
 ----------------------------------------------------------------------------
 """
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
 # constants
-SPEED_OF_LIGHT = 299792.458    # [km/s]
+SPEED_OF_LIGHT = 299792.458  # [km/s]
 # if all files copied to same directory set these to ''
 # W1 = ''
 # W2 = ''
@@ -94,18 +92,19 @@ if CASE == 1:
     MASK_COLS = ['ll_mask_s', 'll_mask_e', 'w_mask']
     # variables
     # These values are taken from the constants file
-    MASK_WIDTH = 1.7                   # CCF_MASK_WIDTH
-    MASK_MIN_WEIGHT = 0.0              # CCF_MASK_MIN_WEIGHT
-    CCF_STEP = 0.5                     # CCF_DEFAULT_STEP (or user input)
-    CCF_WIDTH = 300                    # CCF_DEFAULT_WIDTH (or user input)
-    CCF_RV_NULL = -9999.99             # CCF_OBJRV_NULL_VAL
-    CCF_N_ORD_MAX = 48                 # CCF_N_ORD_MAX
-    BLAZE_NORM_PERCENTILE = 90         # CCF_BLAZE_NORM_PERCENTILE
-    BLAZE_THRESHOLD = 0.3              # WAVE_FP_BLAZE_THRES
-    IMAGE_PIXEL_SIZE = 2.28            # IMAGE_PIXEL_SIZE
-    NOISE_SIGDET = 8.0                 # CCF_NOISE_SIGDET
-    NOISE_SIZE = 12                    # CCF_NOISE_BOXSIZE
-    NOISE_THRES = 1.0e9                # CCF_NOISE_THRES
+    MASK_WIDTH = 1.7  # CCF_MASK_WIDTH
+    MASK_MIN_WEIGHT = 0.0  # CCF_MASK_MIN_WEIGHT
+    CCF_STEP = 0.5  # CCF_DEFAULT_STEP (or user input)
+    CCF_WIDTH = 300  # CCF_DEFAULT_WIDTH (or user input)
+    CCF_RV_NULL = 1000  # CCF_OBJRV_NULL_VAL (max allowed)
+    IN_RV = None  # user input [km/s]
+    CCF_N_ORD_MAX = 48  # CCF_N_ORD_MAX
+    BLAZE_NORM_PERCENTILE = 90  # CCF_BLAZE_NORM_PERCENTILE
+    BLAZE_THRESHOLD = 0.3  # WAVE_FP_BLAZE_THRES
+    IMAGE_PIXEL_SIZE = 2.28  # IMAGE_PIXEL_SIZE
+    NOISE_SIGDET = 8.0  # CCF_NOISE_SIGDET
+    NOISE_SIZE = 12  # CCF_NOISE_BOXSIZE
+    NOISE_THRES = 1.0e9  # CCF_NOISE_THRES
 
 elif CASE == 2:
     # build file paths
@@ -116,18 +115,19 @@ elif CASE == 2:
     MASK_COLS = ['ll_mask_s', 'll_mask_e', 'w_mask']
     # variables
     # These values are taken from the constants file
-    MASK_WIDTH = 1.7                   # CCF_MASK_WIDTH
-    MASK_MIN_WEIGHT = 0.0              # CCF_MASK_MIN_WEIGHT
-    CCF_STEP = 0.5                     # WAVE_CCF_STEP
-    CCF_WIDTH = 7.5                    # WAVE_CCF_WIDTH
-    CCF_RV_NULL = -9999.99             # CCF_OBJRV_NULL_VAL
-    CCF_N_ORD_MAX = 48                 # WAVE_CCF_N_ORD_MAX
-    BLAZE_NORM_PERCENTILE = 90         # CCF_BLAZE_NORM_PERCENTILE
-    BLAZE_THRESHOLD = 0.3              # WAVE_FP_BLAZE_THRES
-    IMAGE_PIXEL_SIZE = 2.28            # IMAGE_PIXEL_SIZE
-    NOISE_SIGDET = 8.0                 # WAVE_CCF_NOISE_SIGDET
-    NOISE_SIZE = 12                    # WAVE_CCF_NOISE_BOXSIZE
-    NOISE_THRES = 1.0e9                # WAVE_CCF_NOISE_THRES
+    MASK_WIDTH = 1.7  # CCF_MASK_WIDTH
+    MASK_MIN_WEIGHT = 0.0  # CCF_MASK_MIN_WEIGHT
+    CCF_STEP = 0.5  # WAVE_CCF_STEP
+    CCF_WIDTH = 7.5  # WAVE_CCF_WIDTH
+    CCF_RV_NULL = 1000  # CCF_OBJRV_NULL_VAL (max allowed)
+    IN_RV = None  # user input [km/s]
+    CCF_N_ORD_MAX = 48  # WAVE_CCF_N_ORD_MAX
+    BLAZE_NORM_PERCENTILE = 90  # CCF_BLAZE_NORM_PERCENTILE
+    BLAZE_THRESHOLD = 0.3  # WAVE_FP_BLAZE_THRES
+    IMAGE_PIXEL_SIZE = 2.28  # IMAGE_PIXEL_SIZE
+    NOISE_SIGDET = 8.0  # WAVE_CCF_NOISE_SIGDET
+    NOISE_SIZE = 12  # WAVE_CCF_NOISE_BOXSIZE
+    NOISE_THRES = 1.0e9  # WAVE_CCF_NOISE_THRES
 
 else:
     raise ValueError('INPUT ERROR: Case must be 1 or 2')
@@ -196,10 +196,10 @@ def relativistic_waveshift(dv, units='km/s'):
     """
     # get c in correct units
     # noinspection PyUnresolvedReferences
-    if units == 'km/s' or units == uu.km/uu.s:
+    if units == 'km/s' or units == uu.km / uu.s:
         c = SPEED_OF_LIGHT
     # noinspection PyUnresolvedReferences
-    elif units == 'm/s' or units == uu.m/uu.s:
+    elif units == 'm/s' or units == uu.m / uu.s:
         c = SPEED_OF_LIGHT * 1000
     else:
         raise ValueError("Wrong units for dv ({0})".format(units))
@@ -678,7 +678,7 @@ def plot_individual_ccf(props, nbo):
         fig, frame = plt.subplots(ncols=1, nrows=1)
         frame.plot(props['RV_CCF'], props['CCF'][order_num], color='b',
                    marker='+', ls='None', label='data')
-        frame.plot(props['RV_CCF'], props['CCF_FIT'][order_num], color='r',)
+        frame.plot(props['RV_CCF'], props['CCF_FIT'][order_num], color='r', )
         rvorder = props['CCF_FIT_COEFFS'][order_num][1]
         frame.set(title='Order {0}  RV = {1} km/s'.format(order_num, rvorder),
                   xlabel='RV [km/s]', ylabel='CCF')
@@ -762,7 +762,6 @@ def plotloop(looplist):
 
 
 def write_file(props, infile, maskname, header, wheader):
-
     # ----------------------------------------------------------------------
     # construct out file name
     inbasename = os.path.basename(infile).split('.')[0]
@@ -901,10 +900,12 @@ if __name__ == '__main__':
     # get rv from header (or set to zero)
     if ('OBJRV' in header) and dprtype == 'OBJ':
         targetrv = header['OBJRV']
-        if np.isnan(targetrv) or targetrv == CCF_RV_NULL:
+        if np.isnan(targetrv) or np.abs(targetrv) > CCF_RV_NULL:
             targetrv = 0.0
     else:
         targetrv = 0.0
+    if IN_RV is not None:
+        targetrv = float(IN_RV)
     # --------------------------------------------------------------------------
     # get mask centers, and weights
     _, mask_centers, mask_weights = get_mask(masktable, MASK_WIDTH,
@@ -947,7 +948,6 @@ if __name__ == '__main__':
     # --------------------------------------------------------------------------
     # write the two tables to file CCFTABLE_{filename}_{mask}.fits
     write_file(props, IN_FILE, MASK_FILE, header, wheader)
-
 
 # ==============================================================================
 # End of code
