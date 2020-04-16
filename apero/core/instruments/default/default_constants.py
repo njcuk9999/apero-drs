@@ -2279,7 +2279,8 @@ CCF_NO_RV_VAL = Const('CCF_NO_RV_VAL', value=np.nan, dtype=float,
                       source=__NAME__, group=cgroup)
 
 # Define target rv header null value
-CCF_OBJRV_NULL_VAL = Const('CCF_OBJRV_NULL_VAL', value=-9999.99, dtype=float,
+#     (values greater than absolute value are set to zero)
+CCF_OBJRV_NULL_VAL = Const('CCF_OBJRV_NULL_VAL', value=1000, dtype=float,
                            source=__NAME__, group=cgroup)
 
 # Define the default CCF MASK to use
