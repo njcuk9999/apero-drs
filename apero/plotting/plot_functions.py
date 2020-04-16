@@ -2601,6 +2601,72 @@ def plot_waveref_expected(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
+def plot_wave_fiber_comparison(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    master_fiber = kwargs['masterfiber']
+    solutions = kwargs['solutions']
+    master = kwargs['master']
+    order = kwargs.get('order', None)
+    # get number of orders and fibers
+    nbo = master['NBO']
+    fibers = list(solutions.keys())
+    # get master values
+    m_coeffs = master['COEFFS']
+    # ------------------------------------------------------------------
+    # get order generator
+    if order is None:
+        order_gen = plotter.plotloop(np.arange(nbo).astype(int))
+        # prompt to start looper
+        plotter.close_plots(loop=True)
+    else:
+        order_gen = [order]
+    # ------------------------------------------------------------------
+    # loop around orders
+    for order_num in order_gen:
+        # ------------------------------------------------------------------
+        # set up plot
+        fig, frames = graph.set_figure(plotter, nrows=1, ncols=len(fibers))
+        # ------------------------------------------------------------------
+        for it, fiber in enumerate(fibers):
+            # get this fibers lines
+            rfpl = solutions[fiber]['FPLINES']
+            r_waveref = rfpl['WAVE_REF']
+            r_pixel = rfpl['PIXEL_MEAS']
+            r_order = rfpl['ORDER']
+            r_coeffs = solutions[fiber]['COEFFS']
+            # get the order mask
+            good = (r_order == order_num) & np.isfinite(r_pixel)
+            # get the x values for the graph
+            xvals = r_waveref[good]
+            # get the line fit values
+            fit1 = np.polyval(m_coeffs[order_num][::-1], r_pixel[good])
+            fit2 = np.polyval(r_coeffs[order_num][::-1], r_pixel[good])
+            # get the y values
+            y1vals = speed_of_light * (1 - r_waveref[good] / fit1)
+            y2vals = speed_of_light * (1 - r_waveref[good] / fit2)
+            # plot
+            frames[it].scatter(xvals, y1vals, color='r',
+                               label='Fiber {0}'.format(master_fiber))
+            frames[it].scatter(xvals, y2vals, color='g',
+                               label='Fiber {0}'.format(fiber))
+            frames[it].set(title='Order {0} Fiber {1}'.format(order_num, fiber),
+                           xlabel='wavelength [nm]',
+                           ylabel='dv [km/s]')
+            frames[it].legend(loc=0)
+        # ------------------------------------------------------------------
+        # update filename (adding order_num to end)
+        suffix = 'order{0}'.format(order_num)
+        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+        # ------------------------------------------------------------------
+        # wrap up using plotter
+        plotter.plotend(graph)
+
+
 def plot_wavenight_iterplot(plotter, graph, kwargs):
     # ------------------------------------------------------------------
     # start the plotting process
@@ -2799,6 +2865,16 @@ wave_fp_single_order = Graph('WAVE_FP_SINGLE_ORDER', kind='debug',
                              func=plot_wave_fp_single_order)
 waveref_expected = Graph('WAVEREF_EXPECTED', kind='debug',
                          func=plot_waveref_expected)
+
+wave_fiber_comparison = Graph('WAVE_FIBER_COMPARISON', kind='debug',
+                              func=plot_wave_fiber_comparison)
+wave_fiber_comp = Graph('WAVE_FIBER_COMP', kind='debug',
+                        func=plot_wave_fiber_comparison)
+sum_desc = 'Fiber comparison plot'
+sum_wave_fiber_comp = Graph('SUM_WAVE_FIBER_COMP', kind='summary',
+                            func=plot_wave_fiber_comparison,
+                            figsize=(16, 10), dpi=150,
+                            description=sum_desc)
 wavenight_iterplot = Graph('WAVENIGHT_ITERPLOT', kind='debug',
                            func=plot_wavenight_iterplot)
 wavenight_diffplot = Graph('WAVENIGHT_DIFFPLOT', kind='debug',
@@ -2814,7 +2890,8 @@ definitions += [wave_hc_guess, wave_hc_brightest_lines, wave_hc_tfit_grid,
                 wave_fp_multi_order, wave_fp_single_order,
                 sum_wave_littrow_check, sum_wave_littrow_extrap,
                 sum_wave_fp_ipt_cwid_1mhc, waveref_expected, wavenight_iterplot,
-                wavenight_diffplot, wavenight_histplot]
+                wavenight_diffplot, wavenight_histplot, wave_fiber_comparison,
+                wave_fiber_comp, sum_wave_fiber_comp]
 
 
 # =============================================================================
