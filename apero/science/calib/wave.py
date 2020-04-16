@@ -1064,6 +1064,7 @@ def hc_wavesol(params, recipe, iprops, e2dsfile, blaze, fiber, **kwargs):
     # set wprops values (expected for output)
     wprops = ParamDict()
     wprops['WAVEFILE'] = wavefile.filename
+    wprops['WAVETIME'] = e2dsfile.get_key('KW_MID_OBS_TIME', dtype=float)
     wprops['WAVESOURCE'] = recipe.name + 'HC'
     wprops['COEFFS'] = llprops['POLY_WAVE_SOL']
     wprops['WAVEMAP'] = llprops['WAVE_MAP2']
@@ -1246,6 +1247,7 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
     # ----------------------------------------------------------------------
     wprops['WAVEFILE'] = wavefile.filename
     wprops['WAVESOURCE'] = recipe.name
+    wprops['WAVETIME'] = fpe2dsfile.get_key('KW_MID_OBS_TIME', dtype=float)
     wprops['COEFFS'] = llprops['LL_PARAM_FINAL']
     wprops['WAVEMAP'] = llprops['LL_FINAL']
     wprops['NBO'] = llprops['LL_PARAM_FINAL'].shape[0]
