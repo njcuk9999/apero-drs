@@ -838,15 +838,6 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     berv = 0
     # the fit type must be set to 1 (for emission lines)
     fit_type = 1
-    # ----------------------------------------------------------------------
-    # Check we are using correct fiber
-    # ----------------------------------------------------------------------
-    pconst = constants.pload(params['INSTRUMENT'])
-    sfiber, rfiber = pconst.FIBER_CCF()
-    if fiber != rfiber:
-        # log that the science fiber was not correct
-        eargs = [fiber, rfiber, infile.name, infile.filename]
-        WLOG(params, 'error', TextEntry('09-020-00004', args=eargs))
     # ------------------------------------------------------------------
     # Compute photon noise uncertainty for FP
     # ------------------------------------------------------------------
