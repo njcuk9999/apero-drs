@@ -1005,6 +1005,10 @@ THERMAL_PLOT_START_ORDER.value = 40
 # =============================================================================
 # CALIBRATION: WAVE GENERAL SETTINGS
 # =============================================================================
+# Define wave master fiber (controller fiber)
+WAVE_MASTER_FIBER = WAVE_MASTER_FIBER.copy(__NAME__)
+WAVE_MASTER_FIBER.value = 'AB'
+
 # Define the line list file (located in the DRS_WAVE_DATA directory)
 WAVE_LINELIST_FILE = WAVE_LINELIST_FILE.copy(__NAME__)
 WAVE_LINELIST_FILE.value = 'catalogue_UNe.dat'  # 'catalogue_ThAr.dat'
@@ -1472,6 +1476,10 @@ WAVEREF_FP_NHIGH.value = 30000
 # define the number of iterations required to do the Fp polynomial inversion
 WAVEREF_FP_POLYINV = WAVEREF_FP_POLYINV.copy(__NAME__)
 WAVEREF_FP_POLYINV.value = 4
+
+# define the wave fiber comparison plot order number
+WAVE_FIBER_COMP_PLOT_ORD = WAVE_FIBER_COMP_PLOT_ORD.copy(__NAME__)
+WAVE_FIBER_COMP_PLOT_ORD.value = 35
 
 # =============================================================================
 # CALIBRATION: WAVE NIGHT SETTINGS
@@ -2241,6 +2249,10 @@ PLOT_WAVE_FP_SINGLE_ORDER.value = True
 #  (will plot once for hc once for fp)
 PLOT_WAVEREF_EXPECTED = PLOT_WAVEREF_EXPECTED.copy(__NAME__)
 PLOT_WAVEREF_EXPECTED.value = True
+
+# turn on the wave line fiber comparison plot
+PLOT_WAVE_FIBER_COMPARISON = PLOT_WAVE_FIBER_COMPARISON.copy(__NAME__)
+PLOT_WAVE_FIBER_COMPARISON.value = True
 
 # turn on the wave per night iteration debug plot
 PLOT_WAVENIGHT_ITERPLOT = PLOT_WAVENIGHT_ITERPLOT.copy(__NAME__)

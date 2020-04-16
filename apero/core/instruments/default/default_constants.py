@@ -118,10 +118,10 @@ __all__ = [
     'THERMAL_THRES_TAPAS', 'THERMAL_ENVELOPE_PERCENTILE',
     'THERMAL_PLOT_START_ORDER',
     # wave general constants
-    'WAVE_LINELIST_FILE', 'WAVE_LINELIST_FMT', 'WAVE_LINELIST_AMPCOL',
-    'WAVE_LINELIST_COLS', 'WAVE_LINELIST_START', 'WAVE_LINELIST_WAVECOL',
-    'WAVE_ALWAYS_EXTRACT', 'WAVE_EXTRACT_TYPE', 'WAVE_FIT_DEGREE',
-    'WAVE_PIXEL_SHIFT_INTER', 'WAVE_PIXEL_SHIFT_SLOPE',
+    'WAVE_MASTER_FIBER', 'WAVE_LINELIST_FILE', 'WAVE_LINELIST_FMT',
+    'WAVE_LINELIST_AMPCOL', 'WAVE_LINELIST_COLS', 'WAVE_LINELIST_START',
+    'WAVE_LINELIST_WAVECOL', 'WAVE_ALWAYS_EXTRACT', 'WAVE_EXTRACT_TYPE',
+    'WAVE_FIT_DEGREE', 'WAVE_PIXEL_SHIFT_INTER', 'WAVE_PIXEL_SHIFT_SLOPE',
     'WAVE_T_ORDER_START', 'WAVE_N_ORD_START', 'WAVE_N_ORD_FINAL',
     # wave hc constants
     'WAVE_MODE_HC', 'WAVE_HC_FITBOX_SIZE', 'WAVE_HC_FITBOX_SIGMA',
@@ -163,6 +163,7 @@ __all__ = [
     'WAVEREF_NSIG_MIN', 'WAVEREF_EDGE_WMAX', 'WAVEREF_HC_BOXSIZE',
     'WAVEREF_HC_FIBTYPES', 'WAVEREF_FP_FIBTYPES', 'WAVEREF_FITDEG',
     'WAVEREF_FP_NLOW', 'WAVEREF_FP_NHIGH', 'WAVEREF_FP_POLYINV',
+    'WAVE_FIBER_COMP_PLOT_ORD',
     # wave night constants
     'WAVE_NIGHT_HIGHF_CORR_DEG', 'WAVE_NIGHT_NITERATIONS', 'WAVE_NIGHT_DCAVITY',
     'WAVE_NIGHT_NSIG_MIN', 'WAVE_NIGHT_REDEND_CUTOFF', 'WAVE_NIGHT_DWAVE_BIN',
@@ -248,6 +249,7 @@ __all__ = [
     'PLOT_WAVE_FP_MULTI_ORDER', 'PLOT_WAVE_FP_SINGLE_ORDER',
     'PLOT_WAVEREF_EXPECTED', 'PLOT_WAVENIGHT_ITERPLOT',
     'PLOT_WAVENIGHT_DIFFPLOT', 'PLOT_WAVENIGHT_HISTPLOT',
+    'PLOT_WAVE_FIBER_COMPARISON',
     # debug telluric plot settings
     'PLOT_MKTELLU_WAVE_FLUX1', 'PLOT_MKTELLU_WAVE_FLUX2',
     'PLOT_FTELLU_PCA_COMP1', 'PLOT_FTELLU_PCA_COMP2',
@@ -1385,6 +1387,11 @@ THERMAL_PLOT_START_ORDER = Const('THERMAL_PLOT_START_ORDER', value=None,
 # CALIBRATION: WAVE GENERAL SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION: WAVE GENERAL SETTING'
+
+# Define wave master fiber (controller fiber)
+WAVE_MASTER_FIBER = Const('WAVE_MASTER_FIBER', value=None, dtype=str,
+                           source=__NAME__, group=cgroup)
+
 # Define the line list file (located in the DRS_WAVE_DATA directory)
 WAVE_LINELIST_FILE = Const('WAVE_LINELIST_FILE', value=None, dtype=str,
                            source=__NAME__, group=cgroup)
@@ -1873,6 +1880,11 @@ WAVEREF_FP_NHIGH = Const('WAVEREF_FP_NHIGH', value=None, dtype=int,
 # define the number of iterations required to do the Fp polynomial inversion
 WAVEREF_FP_POLYINV = Const('WAVEREF_FP_POLYINV', value=None, dtype=int,
                            source=__NAME__, minimum=1, group=cgroup)
+
+# define the wave fiber comparison plot order number
+WAVE_FIBER_COMP_PLOT_ORD = Const('WAVE_FIBER_COMP_PLOT_ORD', value=None,
+                                 dtype=int, source=__NAME__, minimum=0,
+                                 group=cgroup)
 
 # =============================================================================
 # CALIBRATION: WAVE NIGHT SETTINGS
@@ -2841,6 +2853,13 @@ PLOT_WAVEREF_EXPECTED = Const('PLOT_WAVEREF_EXPECTED', value=False,
                               description='turn on the wave lines hc/fp '
                                           'expected vs measured debug plot'
                                           '(will plot once for hc once for fp)')
+
+# turn on the wave line fiber comparison plot
+PLOT_WAVE_FIBER_COMPARISON = Const('PLOT_WAVE_FIBER_COMPARISON', value=False,
+                              dtype=bool, source=__NAME__, user=True,
+                              active=True, group=cgroup,
+                              description='turn on the wave line fiber '
+                                          'comparison plot')
 
 # turn on the wave per night iteration debug plot
 PLOT_WAVENIGHT_ITERPLOT = Const('PLOT_WAVENIGHT_ITERPLOT', value=False,
