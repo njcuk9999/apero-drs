@@ -5592,7 +5592,7 @@ def process_other_fibers(params, recipe, mprops, mfpl, fp_outputs):
     # ----------------------------------------------------------------------
     # plot comparison between master fiber and fibers
     # ----------------------------------------------------------------------
-    recipe.plot('WAVE_OTHERFIBER', solutions=solutions, master=mprops,
+    recipe.plot('WAVE_FIBER_COMPARISON', solutions=solutions, master=mprops,
                 order=None, masterfiber=master_fiber)
     recipe.plot('WAVE_FIBER_COMP', solutions=solutions, master=mprops,
                 order=plot_order, masterfiber=master_fiber)
