@@ -69,7 +69,6 @@ SPIRou specific
 =========================================
 High priority:
 
-* add exposure meter recipes (`cal_exposuremeter_spirou.py`)
 * add polarimetry code updates
 
 Low priority:
