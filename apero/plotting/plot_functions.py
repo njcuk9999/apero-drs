@@ -2650,9 +2650,9 @@ def plot_wave_fiber_comparison(plotter, graph, kwargs):
             y1vals = speed_of_light * (1 - r_waveref[good] / fit1)
             y2vals = speed_of_light * (1 - r_waveref[good] / fit2)
             # plot
-            frames[it].scatter(xvals, y1vals, color='r',
+            frames[it].scatter(xvals, y1vals, color='r', size=2,
                                label='Fiber {0}'.format(master_fiber))
-            frames[it].scatter(xvals, y2vals, color='g',
+            frames[it].scatter(xvals, y2vals, color='g', size=2,
                                label='Fiber {0}'.format(fiber))
             frames[it].set(title='Order {0} Fiber {1}'.format(order_num, fiber),
                            xlabel='wavelength [nm]',
