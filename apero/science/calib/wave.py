@@ -34,7 +34,6 @@ from apero.science.calib import general
 from apero.science import extract
 from apero.science.calib import flat_blaze
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -219,7 +218,7 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
         wavesource = 'filename'
         # get wave time
         wavetime = wavefile.read_header_key('KW_MID_OBS_TIME', dtype=float,
-                                        has_default=True, default=0.0)
+                                            has_default=True, default=0.0)
     # ------------------------------------------------------------------------
     # Mode 2: force from calibDB
     # ------------------------------------------------------------------------
@@ -266,7 +265,7 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
         wavesource = 'calibDB'
         # get wave time
         wavetime = wavefile.read_header_key('KW_MID_OBS_TIME', dtype=float,
-                                        has_default=True, default=0.0)
+                                            has_default=True, default=0.0)
     # ------------------------------------------------------------------------
     # Mode 3: using header only
     # ------------------------------------------------------------------------
@@ -320,7 +319,7 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
             wavetime = wavefile.get_key('KW_WAVETIME')
         else:
             wavetime = wavefile.read_header_key('KW_MID_OBS_TIME', dtype=float,
-                                        has_default=True, default=0.0)
+                                                has_default=True, default=0.0)
         # wave source is the infile
         wavesource = 'infile'
         # get wave map
@@ -751,7 +750,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
             # value by fitting wavelength to pixel
             owave = wavemap[order_num]
             with warnings.catch_warnings(record=True) as _:
-                #fit_reverse = np.polyfit(owave, xpix, fitdeg)
+                # fit_reverse = np.polyfit(owave, xpix, fitdeg)
 
                 ord_owave = np.argsort(owave)
                 spline_fit_reverse = mp.iuv_spline(owave[ord_owave],
@@ -762,7 +761,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
             # we check that there is at least 1 line and append our line list
             if np.sum(good) != 0:
                 # get the pixels positions based on out owave fit
-                #pixfit = np.polyval(fit_reverse, wave0[good])
+                # pixfit = np.polyval(fit_reverse, wave0[good])
                 pixfit = spline_fit_reverse(wave0[good])
                 # get the dpix coeffs
                 dpixc = np.polyfit(pixfit[1:], pixfit[1:] - pixfit[:-1], 2)
@@ -809,6 +808,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
         list_orders = []
         list_pixels = []
         list_wfit = []
+        peak_number = []
 
     # ----------------------------------------------------------------------
     # Fit the peaks
@@ -1569,7 +1569,6 @@ def fit_wavemap_cav_iteratively(params, recipe, inwavemap, e2dsfile,
     # get parameters from params and/or kwargs
     n_iterations = 5
     fit_deg = params['WAVE_FIT_DEGREE']
-    fit_deg = 5
     nsig = params['WAVE_NIGHT_NSIG_FIT_CUT']
     # copy wave map
     wavemap = np.array(inwavemap)
@@ -1663,8 +1662,8 @@ def fit_wavemap_cav_iteratively(params, recipe, inwavemap, e2dsfile,
         nres = speed_of_light * (res / lines)
         lldetails.append([nres, weight])
     # get mean, variance and total number of lines
-    xmean = mp.nanmean(fplines['PIXEL_REF']-fplines['PIXEL_MEAS'])
-    xvar = mp.nanstd(fplines['PIXEL_REF']-fplines['PIXEL_MEAS'])
+    xmean = mp.nanmean(fplines['PIXEL_REF'] - fplines['PIXEL_MEAS'])
+    xvar = mp.nanstd(fplines['PIXEL_REF'] - fplines['PIXEL_MEAS'])
     tlines = np.sum(np.isfinite(fplines['WAVE_MEAS']))
     # need to flip coefficients
     wave_params = wcoeffs_arr[:, ::-1]
@@ -2390,7 +2389,6 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
     ew = np.array(llprops['EW_INI'])
     peak2 = np.array(llprops['PEAK_INI'])
     dv = np.array([])
-    lin_mod_slice = []
     recon0 = []
 
     # deal with order_fit_cont being a different degree from poly_wave_sol
@@ -2552,7 +2550,9 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
                 # work out the error in velocity
                 ev = ((wave_catalog[good_all] / fit_all) - 1) * speed_of_light
                 # work out the number of lines to keep
-                nkeep = mp.nansum(np.abs(ev) < cut_fit_threshold)
+                # noinspection PyTypeChecker
+                nmask = np.array(np.abs(ev) < cut_fit_threshold, dtype=float)
+                nkeep = mp.nansum(nmask)
                 # if number of lines to keep largest seen --> store
                 if nkeep > bestn:
                     bestn = nkeep
@@ -2635,7 +2635,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
         # ------------------------------------------------------------------
         # storage for arrays
         recon0 = np.zeros_like(wave_catalog)
-        amps0 = np.zeros(mp.nansum(order_fit_cont))
+        # amps0 = np.zeros(mp.nansum(order_fit_cont))
 
         # Loop sigma_clip_num times for sigma clipping and numerical
         #    convergence. In most cases ~10 iterations would be fine but this
@@ -2657,7 +2657,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
             #   amps, recon = mp.linear_minimization(*largs)
             #   recon  = np.zeros_like(largs[0])
             coeffs, recon = wave_lmfit(params, orders, xgau, wave_catalog,
-                                       recon0, order_fit_cont, nbo)
+                                       order_fit_cont, nbo)
 
             # # add the amps and recon to new storage
             # amps0 = amps0 + amps
@@ -2759,7 +2759,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
         # ------------------------------------------------------------------
         xpix = np.arange(nbpix)
         wave_map2 = np.zeros((nbo, nbpix))
-        poly_wave_sol = np.array(coeffs)[:,::-1]
+        poly_wave_sol = np.array(coeffs)[:, ::-1]
         # poly_wave_sol = np.zeros_like(iprops['COEFFS'])
 
         # loop around the orders
@@ -2832,7 +2832,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
     return llprops
 
 
-def wave_lmfit(params, orders, xgau, wave_catalog, recon0, order_fit_cont, nbo):
+def wave_lmfit(params, orders, xgau, wave_catalog, order_fit_cont, nbo):
     # set function name
     _ = display_func(params, 'wave_lmfit', __NAME__)
     # set up an empty set of coefficents
@@ -3284,6 +3284,8 @@ def calculate_littrow_sol(params, llprops, echelle_order, wavell, infile,
                    for the hc or file file (i.e. must have infile.data) -
                    used only to work out the number of orders and number of
                    pixels
+
+    :param blaze: numpy array (2D), the blaze file
 
     :param iteration: int, the iteration number (used so we can store multiple
                       calculations in loc, defines "i" in input and outputs
@@ -4007,7 +4009,7 @@ def fit_1d_solution(params, llprops, wavell, start, end, fiber, errx_min,
                             np.array(cfit), np.array(weight)])
             # check improve condition (RMS > MAX_RMS)
             ll_fit_rms = abs(res) * np.sqrt(weight)
-            badrms = ll_fit_rms > max_ll_fit_rms
+            badrms = np.array(ll_fit_rms > max_ll_fit_rms, dtype=float)
             improve = mp.nansum(badrms)
             # set largest weighted residual to zero
             largest = mp.nanmax(ll_fit_rms)
@@ -4576,7 +4578,7 @@ def assign_abs_fp_numbers(params, fp_ll, dif_n, m_vec, m_ord_prev, n_init,
     :return:
     """
     # set up m_ord
-    m_ord = np.nan
+    # m_ord = np.nan
     # loop over orders from reddest-1 to bluest
     for ord_num in range(n_fin - n_init - 2, -1, -1):
         # define auxiliary arrays with ll for order and previous order
@@ -4606,8 +4608,8 @@ def assign_abs_fp_numbers(params, fp_ll, dif_n, m_vec, m_ord_prev, n_init,
                 mindiff_peak.append(mp.nanmin(diff))
                 mindiff_peak_ind.append(np.argmin(diff))
             # get the smallest difference and its index
-            mindiff_all = mp.nanmin(mindiff_peak)
-            mindiff_all_ind = int(np.argmin(mindiff_peak))
+            mindiff_all = mp.nanmin(np.array(mindiff_peak))
+            mindiff_all_ind = int(np.argmin(np.array(mindiff_peak)))
 
             # check that smallest difference is in fact a true line match
             if mindiff_all < (ll_offset * fp_ll_diff_med):
@@ -4771,7 +4773,7 @@ def fit_1m_vs_d(params, recipe, one_m_d, d_arr, hc_ll_test, update_cavity,
         # get achromatic cavity change - ie shift
         residual = d_arr - np.polyval(fit_ll_d, hc_ll_test)
         # achromatic cavity length change.
-        achromatic_cc =  mp.nanmedian(residual)
+        achromatic_cc = mp.nanmedian(residual)
         # log achromatic cavity length change
         WLOG(params, '', TextEntry('40-017-00042', args=[achromatic_cc]))
         # update the coeffs with mean shift
@@ -4985,7 +4987,6 @@ def fp_quality_control(params, fpprops, qc_params, **kwargs):
     qc_names.append('X_MEAN_2')
     qc_logic.append('X_MEAN_2 not finite')
 
-
     # ----------------------------------------------------------------------
     # # iterate through Littrow test cut values
     # TODO: Figure out how to get littrow working
@@ -5015,55 +5016,17 @@ def fp_quality_control(params, fpprops, qc_params, **kwargs):
         qc_logic.append('sig_littrow > {0:.2f}'.format(rms_littrow_max))
         # ----------------------------------------------------------------------
         # check if min/max littrow is out of bounds
-        if mp.nanmax([max_littrow, min_littrow]) > dev_littrow_max:
+        bounds_littrow = np.array([max_littrow, min_littrow])
+        max_bounds = mp.nanmax(bounds_littrow)
+        if max_bounds > dev_littrow_max:
             fargs = [x_cut_point, min_littrow, max_littrow, dev_littrow_max,
                      min_littrow_ord, max_littrow_ord]
             fail_msg.append(textdict['40-017-00033'].format(*fargs))
             qc_pass.append(0)
-
-            # TODO: Should this be the QC header values?
-            # TODO:   it does not change the outcome of QC (i.e. passed=False)
-            # TODO:   So what is the point?
-            # TODO:  Melissa: taken out header stuff - why is this here at all
-            # TODO:           if it doesn't change outcome of QC?
-            # if sig was out of bounds, recalculate
-            if sig_littrow > rms_littrow_max:
-                # conditions
-                check1 = min_littrow > dev_littrow_max
-                check2 = max_littrow > dev_littrow_max
-                # get the residuals
-                respix = fpprops['LITTROW_YY_' + str(lit_it)][x_it]
-                # check if both are out of bounds
-                if check1 and check2:
-                    # remove respective orders
-                    worst_order = (min_littrow_ord, max_littrow_ord)
-                    respix_2 = np.delete(respix, worst_order)
-                    redo_sigma = True
-                # check if min is out of bounds
-                elif check1:
-                    # remove respective order
-                    worst_order = min_littrow_ord
-                    respix_2 = np.delete(respix, worst_order)
-                    redo_sigma = True
-                # check if max is out of bounds
-                elif check2:
-                    # remove respective order
-                    worst_order = max_littrow_ord
-                    respix_2 = np.delete(respix, max_littrow_ord)
-                    redo_sigma = True
-                # else do not recalculate sigma
-                else:
-                    redo_sigma, respix_2, worst_order = False, None, None
-
-                # if outlying order, recalculate stats
-                if redo_sigma:
-                    mean = mp.nansum(respix_2) / len(respix_2)
-                    mean2 = mp.nansum(respix_2 ** 2) / len(respix_2)
-                    rms = np.sqrt(mean2 - mean ** 2)
         else:
             qc_pass.append(1)
         # add to qc header lists
-        qc_values.append(mp.nanmax([max_littrow, min_littrow]))
+        qc_values.append(max_bounds)
         qc_names.append('max or min littrow')
         qc_logic.append('max or min littrow > {0:.2f}'
                         ''.format(dev_littrow_max))
@@ -5805,7 +5768,7 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
         # on odd iterations, we update the cavity length change
         else:
             # no update of linear model
-            amps_corr = np.zeros(4)
+            # amps_corr = np.zeros(4)
             # correct cavity length with the median HC line difference
             d_cavity_corr = mp.nanmedian((mhcwave - rhcwave) / mhcwave)
             # update cavity
@@ -6179,7 +6142,6 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     s1dv_file.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(s1dv_file)
-
 
 
 # =============================================================================
