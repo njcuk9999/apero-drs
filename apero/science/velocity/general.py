@@ -942,17 +942,20 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     # ----------------------------------------------------------------------
     # loop around every order
     recipe.plot('CCF_RV_FIT_LOOP', params=params, x=props['RV_CCF'],
-                y=props['CCF'], yfit=props['CCF_FIT'], kind='FP',
+                y=props['CCF'], yfit=props['CCF_FIT'],
+                kind='FP fiber={0}'.format(fiber),
                 rv=props['CCF_FIT_COEFFS'][:, 1], ccfmask=ccfmask,
                 orders=np.arange(len(props['CCF'])), order=None)
     # the mean ccf
     recipe.plot('CCF_RV_FIT', params=params, x=props['RV_CCF'],
-                y=mean_ccf, yfit=mean_ccf_fit, kind='MEAN FP',
+                y=mean_ccf, yfit=mean_ccf_fit,
+                kind='MEAN FP fiber={0}'.format(fiber),
                 rv=props['MEAN_CCF_COEFFS'][1], ccfmask=ccfmask,
                 orders=None, order=None)
     # the mean ccf for summary
     recipe.plot('SUM_CCF_RV_FIT', params=params, x=props['RV_CCF'],
-                y=mean_ccf, yfit=mean_ccf_fit, kind='MEAN SCIENCE',
+                y=mean_ccf, yfit=mean_ccf_fit,
+                kind='MEAN FP fiber={0}'.format(fiber),
                 rv=ccf_rv, ccfmask=ccfmask,
                 orders=None, order=None)
 
