@@ -5478,6 +5478,8 @@ def process_other_fibers(params, recipe, mprops, mfpl, fp_outputs):
     func_name = display_func(params, 'process_other_fibers', __NAME__)
     # get the fiber types from a list parameter (or from inputs)
     fiber_types = drs_image.get_fiber_types(params)
+    # get psuedo constants
+    pconst = constants.pload(params['INSTRUMENT'])
     # get wave master file (controller fiber)
     master_fiber = params['WAVE_MASTER_FIBER']
     plot_order = params['WAVE_FIBER_COMP_PLOT_ORD']
@@ -5501,9 +5503,11 @@ def process_other_fibers(params, recipe, mprops, mfpl, fp_outputs):
         # get the master lines for this fiber
         fpargs = dict(e2dsfile=fpe2dsfile, wavemap=mwavemap, fplines=mfpl)
         rfpl = get_master_lines(params, recipe, **fpargs)
+
+
         # ----------------------------------------------------------------------
         # get the order, pixel measured and wave ref from rfpl
-        roders = rfpl['ORDER']
+        rorders = rfpl['ORDER']
         rpixels = rfpl['PIXEL_MEAS']
         rwaveref = rfpl['WAVE_REF']
         # storage of the wave coefficients
@@ -5511,16 +5515,34 @@ def process_other_fibers(params, recipe, mprops, mfpl, fp_outputs):
         # loop around orders
         for order_num in range(nbo):
             # define an order mask
-            good = (roders == order_num) & np.isfinite(rpixels)
+            good = (rorders == order_num) & np.isfinite(rpixels)
             # fit the fibers fplines to fit the measured pixel positions
             #  to the wavelength
             # TODO --> use a robust fit here
             cfit = np.polyfit(rpixels[good], rwaveref[good], mdeg)[::-1]
+            # inverse fit
+            icfit = np.polyfit(rwaveref[good], rpixels[good], mdeg)
             # append cfit to wave coefficients
             rwavecoeffs[order_num] = cfit
+            # update pixel reference
+            rfpl['PIXEL_REF'][good] = np.polyval(icfit, rpixels[good])
+
         # ----------------------------------------------------------------------
         # create wave map
         rwavemap = get_wavemap_from_coeffs(rwavecoeffs, nbo, nbpix)
+        # ----------------------------------------------------------------------
+        # get dprtype
+        dprtype = fpe2dsfile.get_key('KW_DPRTYPE', dtype=str)
+        # get fiber type
+        fibtype = pconst.FIBER_DPR_POS(dprtype, fiber)
+        # debug plot expected lines vs measured positions
+        # TODO: fill in proper keys for this function (from rfpl)
+        # TODO: need key to give to title
+        diffpix = rpixels - rfpl['PIXEL_REF']
+
+        recipe.plot('WAVEREF_EXPECTED', orders=rorders, wavemap=rwaveref,
+                    diff=diffpix, fiber=fiber, nbo=nbo, fibtype=fibtype,
+                    iteration=None)
         # ----------------------------------------------------------------------
         # get copy of instance of wave file (WAVE_HCMAP)
         # TODO: remove if once we only use cal_wave or cal_wave_master/night
