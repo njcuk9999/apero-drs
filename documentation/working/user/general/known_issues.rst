@@ -15,6 +15,7 @@ Recipes
 - BERV file gets locked occasionally - WHY?
 - apero_processing obj_mk_template can not have SCIENCE_TARGETS = None
 - wavelength solution: no consistency between fibers
+- dark master misbehaving - check read order of files? same for shape?
 
 =======================================
 External
