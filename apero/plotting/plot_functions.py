@@ -2586,7 +2586,10 @@ def plot_waveref_expected(plotter, graph, kwargs):
         frame.scatter(wavemap[omask], diff[omask], s=5)
     # add title (with or without iteration)
     if iteration is not None:
-        title = 'Pixel difference Fiber {0} Type {1} (Iteration = {2})'
+        if isinstance(iteration, int) or isinstance(iteration, float):
+            title = 'Pixel difference Fiber {0} Type {1} (Iteration = {2})'
+        else:
+            title = 'Pixel difference Fiber {0} Type {1} ({2})'
     else:
         title = 'Pixel difference Fiber {0} Type {1}'
     # set labels
