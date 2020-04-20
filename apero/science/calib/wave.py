@@ -5524,7 +5524,7 @@ def process_other_fibers(params, recipe, mprops, mfpl, fp_outputs):
             # append cfit to wave coefficients
             rwavecoeffs[order_num] = cfit
             # update pixel reference
-            rfpl['PIXEL_REF'][good] = np.polyval(icfit, rpixels[good])
+            rfpl['PIXEL_REF'][good] = np.polyval(icfit, rwaveref[good])
         # ----------------------------------------------------------------------
         # create wave map
         rwavemap = get_wavemap_from_coeffs(rwavecoeffs, nbo, nbpix)
