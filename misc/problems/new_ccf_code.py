@@ -21,6 +21,7 @@ from scipy.optimize import curve_fit
 from scipy.stats import chisquare
 import matplotlib.pyplot as plt
 
+
 helpstr = """
 ----------------------------------------------------------------------------
 new_ccf_code.py 
@@ -64,6 +65,24 @@ code
     For case=2 we assume your IN_FILe is a FP
 
 
+Adding a convolution kernel. You can pass a kernel argument that 
+describes the convolution of the LSF. 'None' produces a Dirac comb
+while 3 others are described below.
+
+    --> boxcar convolution
+    ['boxcar', width]
+    kernel = [1, 1, ...., 1, 1]
+
+    --> gaussian convolution
+    ['gaussian', e-width]
+    kernel = exp( -0.5*(x/ew)**2 )
+
+    --> super gaussian
+    ['supergaussian', e-width, beta]
+    kernel = exp( -0.5*(x/ew)**beta )
+
+    Other functions could be added 
+
 ----------------------------------------------------------------------------
 """
 
@@ -81,7 +100,22 @@ W2 = '/scratch3/rali/drs/apero-drs/apero/data/spirou/ccf/'
 # whether to plot (True or False)
 PLOT = True
 # which case 1: science (OBJ) 2: reference (FP)
-CASE = 2
+CASE = 1
+
+
+# Pick you CCF convolution kernel. See explanantions below in the
+# CCF function. Uncomment the kernel type you want and change the
+# parameter.
+
+# CCF is a set of Dirac functions
+KERNEL = None
+# boxcar length expressed in km/s
+# KERNEL = ['boxcar', 5]
+# gaussian with e-width in km/s
+# KERNEL = ['gaussian', 3.5]
+# supergaussian e-width + exponent
+KERNEL = ['supergaussian', 3.5, 4]
+
 # deal with cases (quick switch between fiber=AB (OBJ) and fiber=C (FP)
 if CASE == 1:
     # build file paths
@@ -443,7 +477,7 @@ def fwhm(sigma=1.0):
 
 
 def ccf_calculation(wave, image, blaze, targetrv, mask_centers, mask_weights,
-                    berv, fit_type):
+                    berv, fit_type, kernel=None):
     # get rvmin and rvmax
     rvmin = targetrv - CCF_WIDTH
     rvmax = targetrv + CCF_WIDTH + CCF_STEP
@@ -459,6 +493,71 @@ def ccf_calculation(wave, image, blaze, targetrv, mask_centers, mask_weights,
     ccf_lines = []
     ccf_all_snr = []
     ccf_norm_all = []
+
+    # if we have defined 'kernel', it must be a list
+    # with the first element being the type of convolution
+    # and subsequent arguments being parameters. For now,
+    # we have :
+    #
+    #  --> boxcar convolution
+    # ['boxcar', width]
+    #
+    # kernel = [1, 1, ...., 1, 1]
+    #
+    # --> gaussian convolution
+    #
+    # ['gaussian', e-width]
+    # kernel = exp( -0.5*(x/ew)**2 )
+    #
+    # --> super gaussian
+    #
+    # ['supergaussian', e-width, beta]
+    #
+    # kernel = exp( -0.5*(x/ew)**beta )
+    #
+    # Other functions could be added below
+    #
+    if isinstance(kernel, list):
+        if kernel[0] == 'boxcar':
+            # ones with a length of kernel[1]
+            ker = np.ones(int(np.round(kernel[1] / CCF_STEP)))
+        elif kernel[0] == 'gaussian':
+            # width of the gaussian expressed in
+            # steps of CCF
+            ew = kernel[1] / CCF_STEP
+            index = np.arange(-4 * np.ceil(ew), 4 * np.ceil(ew) + 1)
+            ker = np.exp(-0.5 * (index / ew) ** 2)
+        elif kernel[0] == 'supergaussian':
+            # width of the gaussian expressed in
+            # steps of CCF. Exponents should be
+            # between 0.1 and 10.. Values above
+            # 10 are (nearly) the same as a boxcar.
+            if (kernel[1] < 0.1) or (kernel[1] > 10):
+                raise ValueError('CCF ERROR: kernel[1] is out of range.')
+
+            ew = kernel[1] / CCF_STEP
+
+            index = np.arange(-4 * np.ceil(ew), 4 * np.ceil(ew) + 1)
+            ker = np.exp(-0.5 * np.abs(index / ew) ** kernel[2])
+
+        else:
+                # kernel name is not known - generate error
+            raise ValueError('CCF ERROR: name of kernel not accepted!')
+
+        ker = ker / np.sum(ker)
+
+        if len(ker) > (len(rv_ccf)-1):
+            # TODO : give a proper error
+            err_msg = """
+            The size of your convolution kernel is too big for your
+            CCF size. Please either increase the CCF_WIDTH value or
+            decrease the width of your convolution kernel. In boxcar, 
+            this implies a length bigger than CCF_WIDTH/CCF_STEP, in 
+            gaussian and supergaussian, this means that 
+            CCF_WIDTH/CCF_STEP is >8*ew. The kernel has to run from
+            -4 sigma to +4 sigma.
+            """
+            raise ValueError('CCF ERROR: {0}'.format(err_msg))
 
     # ----------------------------------------------------------------------
     # loop around the orders
@@ -566,6 +665,11 @@ def ccf_calculation(wave, image, blaze, targetrv, mask_centers, mask_weights,
             ccf_all_snr.append(np.nan)
             ccf_norm_all.append(np.nan)
             continue
+        # ------------------------------------------------------------------
+        # Convolve by the appropriate CCF kernel, if any
+        if type(kernel) == list:
+            weight = np.convolve(np.ones(len(ccf_ord)), ker, mode='same')
+            ccf_ord = np.convolve(ccf_ord, ker, mode='same') / weight
         # ------------------------------------------------------------------
         # normalise each orders CCF to median
         ccf_norm = np.nanmedian(ccf_ord)
@@ -925,7 +1029,7 @@ if __name__ == '__main__':
     # --------------------------------------------------------------------------
     print('\nRunning CCF calculation')
     props = ccf_calculation(wave, image, blaze, targetrv, mask_centers,
-                            mask_weights, berv, fit_type)
+                            mask_weights, berv, fit_type, kernel=KERNEL)
     # --------------------------------------------------------------------------
     # Calculate the mean CCF
     # --------------------------------------------------------------------------
