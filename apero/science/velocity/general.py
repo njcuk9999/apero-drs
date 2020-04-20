@@ -108,7 +108,7 @@ def measure_fp_peaks(params, props, **kwargs):
     """
     func_name = __NAME__ + '.create_drift_file()'
     # get gauss function
-    gfunc = mp.gauss_function
+    gbfunc = mp.gauss_beta_function
     # get constants from params/kwargs
     border = pcheck(params, 'DRIFT_PEAK_BORDER_SIZE', 'border', kwargs,
                     func_name)
@@ -130,6 +130,8 @@ def measure_fp_peaks(params, props, **kwargs):
     allvrpeak = []
     allllpeak = []
     allamppeak = []
+    alldcpeak = []
+    allbetapeak = []
     # loop through the orders
     for order_num in range(speref.shape[0]):
         # storage for order of peaks
@@ -139,6 +141,8 @@ def measure_fp_peaks(params, props, **kwargs):
         vrpeak = []
         llpeak = []
         amppeak = []
+        dcpeak = []
+        betapeak = []
         # get the pixels for this order
         tmp = np.array(speref[order_num, :])
         # For numerical sanity all values less than zero set to zero
@@ -172,20 +176,20 @@ def measure_fp_peaks(params, props, **kwargs):
             # try to fit a gaussian to that peak
             try:
                 # set initial guess
-                p0 = [tmp[maxpos], maxpos, 1.0, mp.nanmin(tmp[index])]
+                p0 = [tmp[maxpos], maxpos, 1.0, mp.nanmin(tmp[index]), 2.0]
                 # do gauss fit
                 #    gg = [mean, amplitude, sigma, dc]
                 with warnings.catch_warnings(record=True) as w:
                     # noinspection PyTypeChecker
-                    gg, pcov = curve_fit(gfunc, index, tmp[index], p0=p0)
+                    gg, pcov = curve_fit(gbfunc, index, tmp[index], p0=p0)
                     w_all += list(w)
             except ValueError:
                 # log that ydata or xdata contains NaNs
                 WLOG(params, 'warning', TextEntry('00-018-00001'))
-                gg = [np.nan, np.nan, np.nan, np.nan]
+                gg = [np.nan, np.nan, np.nan, np.nan, np.nan]
             except RuntimeError:
                 # WLOG(p, 'warning', 'Least-squares fails')
-                gg = [np.nan, np.nan, np.nan, np.nan]
+                gg = [np.nan, np.nan, np.nan, np.nan, np.nan]
             # little sanity check to be sure that the peak is not the same as
             #    we got before and that there is something fishy with the
             #    detection - dx is the distance from last peak
@@ -194,7 +198,7 @@ def measure_fp_peaks(params, props, **kwargs):
             if dx > ipeakspace:
                 # subtract off the gaussian without the dc level
                 # (leave dc for other peaks
-                tmp[index] -= gfunc(index, gg[0], gg[1], gg[2], 0)
+                tmp[index] -= gbfunc(index, gg[0], gg[1], gg[2], 0, gg[4])
             # else just set this region to zero, this is a bogus peak that
             #    cannot be fitted
             else:
@@ -219,6 +223,8 @@ def measure_fp_peaks(params, props, **kwargs):
                 vrpeak.append(radvel)
                 llpeak.append(deltalam)
                 amppeak.append(maxtmp)
+                dcpeak.append(gg[3])
+                betapeak.append(gg[4])
             else:
                 # add to rejected
                 nreject += 1
@@ -241,6 +247,8 @@ def measure_fp_peaks(params, props, **kwargs):
         allvrpeak.append(np.array(vrpeak)[indsort])
         allllpeak.append(np.array(llpeak)[indsort])
         allamppeak.append(np.array(amppeak)[indsort])
+        alldcpeak.append(np.array(dcpeak)[indsort])
+        allbetapeak.append(np.array(betapeak)[indsort])
     # store values in loc
     props['ORDPEAK'] = np.concatenate(allordpeak).astype(int)
     props['XPEAK'] = np.concatenate(allxpeak)
@@ -248,8 +256,11 @@ def measure_fp_peaks(params, props, **kwargs):
     props['VRPEAK'] = np.concatenate(allvrpeak)
     props['LLPEAK'] = np.concatenate(allllpeak)
     props['AMPPEAK'] = np.concatenate(allamppeak)
+    props['DCPEAK'] = np.concatenate(alldcpeak)
+    props['BETAPEAK'] = np.concatenate(allbetapeak)
     # set source
-    keys = ['ordpeak', 'xpeak', 'ewpeak', 'vrpeak', 'llpeak', 'amppeak']
+    keys = ['ORDPEAK', 'XPEAK', 'EWPEAK', 'VRPEAK', 'LLPEAK', 'AMPPEAK',
+            'DCPEAK', 'BETAPEAK']
     props.set_sources(keys, func_name)
 
     # Log the total number of FP lines found
