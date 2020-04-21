@@ -153,32 +153,44 @@ def measure_fp_peaks(params, props, **kwargs):
         ipeak = 0
         # get the pixels for this order
         tmp = np.array(speref[order_num, :])
+        # define indices
+        index = np.arange(len(tmp))
+        # ------------------------------------------------------------------
+        # normalize the spectrum
+        tmp = tmp / np.nanpercentile(tmp, normpercentile)
+        # ------------------------------------------------------------------
+        # find the peaks
+        peakmask = (tmp[1:-1] > tmp[2:]) & (tmp[1:-1] > tmp[:-2])
+        peakpos = np.where(peakmask)[0]
+        # work out the FP width for this order
+        size = np.nanmedian(peakpos[1:] - peakpos[:-1])
+        # ------------------------------------------------------------------
         # mask for finding maximum peak
         mask = np.ones_like(tmp)
         # mask out the edges
         mask[:size + 1] = 0
         mask[-(size + 1):] = 0
-        # define indices
-        index = np.arange(len(tmp))
-        # normalize the spectrum
-        tmp = tmp / np.nanpercentile(tmp, normpercentile)
+        # ------------------------------------------------------------------
         # loop for peaks that are above a value of limit
         while mp.nanmax(mask * tmp) > limit:
+            # --------------------------------------------------------------
             # find peak along the order
             maxpos = np.nanargmax(mask * tmp)
             maxtmp = tmp[maxpos]
+            # --------------------------------------------------------------
             # get the values around the max position
             index_peak = index[maxpos - size: maxpos + size]
             tmp_peak = tmp[maxpos - size: maxpos + size]
+            # --------------------------------------------------------------
             # mask out this peak for next iteration of while loop
             mask[maxpos - (size // 2):maxpos + (size // 2) + 1] = 0
-
+            # --------------------------------------------------------------
             # try to fit etiennes airy function
             try:
                 # set up initial guess
                 # [amp, position, period, exponent, zero point]
                 p0 = [np.max(tmp_peak) - np.min(tmp_peak),
-                      np.median(tmp_peak), size, 1.0, np.min(tmp_peak)]
+                      np.median(index_peak), size, 1.0, np.min(tmp_peak)]
 
                 with warnings.catch_warnings(record=True) as w:
                     gg, pcov = curve_fit(ea_airy, index_peak, tmp_peak,
@@ -190,11 +202,10 @@ def measure_fp_peaks(params, props, **kwargs):
             except RuntimeError:
                 # WLOG(p, 'warning', 'Least-squares fails')
                 gg = [np.nan, np.nan, np.nan, np.nan, np.nan]
-
+            # --------------------------------------------------------------
             # only keep peaks within +/- 1 pixel of original peak
             #  (gaussian fit is to find sub-pixel value)
             cond = np.abs(maxpos - gg[1]) < 1
-
             if cond:
                 # work out the radial velocity of the peak
                 lambefore = wave[order_num, maxpos - 1]
@@ -217,6 +228,7 @@ def measure_fp_peaks(params, props, **kwargs):
                 nreject += 1
             # iterator
             ipeak += 1
+            # --------------------------------------------------------------
         # log how many FPs were found and how many rejected
         wargs = [order_num, ipeak, nreject]
         WLOG(params, '', TextEntry('40-018-00001', args=wargs))
