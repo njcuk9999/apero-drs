@@ -174,7 +174,7 @@ def measure_fp_peaks(params, props, limit, normpercent):
             mask[maxpos - (size // 2):maxpos + (size // 2) + 1] = 0
             # --------------------------------------------------------------
             # return the initial guess and the best fit
-            p0, gg, warns, _ = fit_fp_peaks(params, index_peak, tmp_peak, size)
+            p0, gg, _, warns = fit_fp_peaks(params, index_peak, tmp_peak, size)
             # --------------------------------------------------------------
             # only keep peaks within +/- 1 pixel of original peak
             #  (gaussian fit is to find sub-pixel value)
