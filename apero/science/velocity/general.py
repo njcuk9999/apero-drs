@@ -228,7 +228,7 @@ def measure_fp_peaks(params, props, **kwargs):
     # store values in loc
     props['ORDPEAK'] = np.concatenate(allordpeak).astype(int)
     props['XPEAK'] = np.concatenate(allxpeak)
-    props['EWPEAK'] = np.concatenate(allewpeak)
+    props['PEAK2PEAK'] = np.concatenate(allewpeak)
     props['VRPEAK'] = np.concatenate(allvrpeak)
     props['LLPEAK'] = np.concatenate(allllpeak)
     props['AMPPEAK'] = np.concatenate(allamppeak)
@@ -236,7 +236,7 @@ def measure_fp_peaks(params, props, **kwargs):
     props['SHAPEPEAK'] = np.concatenate(allshapepeak)
     props['PEAKSIZE'] = np.array(allpeaksize)
     # set source
-    keys = ['ORDPEAK', 'XPEAK', 'EWPEAK', 'VRPEAK', 'LLPEAK', 'AMPPEAK',
+    keys = ['ORDPEAK', 'XPEAK', 'PEAK2PEAK', 'VRPEAK', 'LLPEAK', 'AMPPEAK',
             'DCPEAK', 'SHAPEPEAK', 'PEAKSIZE']
     props.set_sources(keys, func_name)
 
@@ -329,12 +329,12 @@ def remove_wide_peaks(params, props, **kwargs):
                           kwargs, func_name)
 
     # define a mask to cut out wide peaks
-    mask = np.abs(np.array(props['EWPEAK']) - expwidth) < cutwidth
+    mask = np.array(props['PEAK2PEAK']) < cutwidth
 
     # apply mask
     props['ORDPEAK'] = props['ORDPEAK'][mask]
     props['XPEAK'] = props['XPEAK'][mask]
-    props['EWPEAK'] = props['EWPEAK'][mask]
+    props['PEAK2PEAK'] = props['PEAK2PEAK'][mask]
     props['VRPEAK'] = props['VRPEAK'][mask]
     props['LLPEAK'] = props['LLPEAK'][mask]
     props['AMPPEAK'] = props['AMPPEAK'][mask]
@@ -371,7 +371,7 @@ def remove_wide_peaks(params, props, **kwargs):
         # save good lines
         ordpeak_k += list(props['ORDPEAK'][gg][xmask])
         xpeak_k += list(props['XPEAK'][gg][xmask])
-        ewpeak_k += list(props['EWPEAK'][gg][xmask])
+        ewpeak_k += list(props['PEAK2PEAK'][gg][xmask])
         vrpeak_k += list(props['VRPEAK'][gg][xmask])
         llpeak_k += list(props['LLPEAK'][gg][xmask])
         amppeak_k += list(props['AMPPEAK'][gg][xmask])
@@ -379,13 +379,13 @@ def remove_wide_peaks(params, props, **kwargs):
     # replace FP peak arrays in loc
     props['ORDPEAK'] = np.array(ordpeak_k)
     props['XPEAK'] = np.array(xpeak_k)
-    props['EWPEAK'] = np.array(ewpeak_k)
+    props['PEAK2PEAK'] = np.array(ewpeak_k)
     props['VRPEAK'] = np.array(vrpeak_k)
     props['LLPEAK'] = np.array(llpeak_k)
     props['AMPPEAK'] = np.array(amppeak_k)
 
     # append this function to sources
-    keys = ['ordpeak', 'xpeak', 'ewpeak', 'vrpeak', 'llpeak', 'amppeak']
+    keys = ['ordpeak', 'xpeak', 'PEAK2PEAK', 'vrpeak', 'llpeak', 'amppeak']
     props.append_sources(keys, func_name)
 
     # log number of lines removed for suspicious width
