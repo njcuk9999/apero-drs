@@ -820,9 +820,6 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
     amp = np.zeros_like(list_pixels)
     nsig = np.repeat(np.nan, len(list_pixels))
 
-    # TODO: remove break point
-    constants.break_point(params)
-
     # ----------------------------------------------------------------------
     # loop around orders
     for order_num in range(nbo):
@@ -871,17 +868,20 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
                         out = mp.fit_gauss_with_slope(index, ypix, guess, True)
                         # get parameters from fit
                         popt, pcov, model = out
+                        # get width condition
+                        cond2 = (popt[2] < 2) and (popt[2] > 0.5)
                     # else fit ea airy function to FP
                     else:
                         out = velocity.fit_fp_peaks(params, index, ypix, wfit,
                                                     return_model=True)
                         # get parameters from fit
                         p0, popt, pcov, model = out
+                        # get width condition
+                        cond2 = np.abs(popt[2] / wfit - 1) < 0.5
                     # calculate the RMS of the fit
                     rms = mp.nanstd(ypix - model)
                     # if we find 'good' values add to storage
                     cond1 = np.abs(popt[1] - xpixi) < wfit
-                    cond2 = (popt[2] < 2) and (popt[2] > 0.5)
                     if cond1 and cond2:
                         amp[good[it]] = popt[0]
                         pixel_m[good[it]] = popt[1]
