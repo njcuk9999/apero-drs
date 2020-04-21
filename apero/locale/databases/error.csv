@@ -298,7 +298,7 @@
 "","","","","","",""
 "","","","","","",""
 "00-018-00000","ERROR","Dev Error: drift","None","","",""
-"00-018-00001","ERROR","Means that there were NaN values in curve_fit","None","Curve Fit Warning: ydata or xdata contains NaNs","",""
+"00-018-00001","ERROR","Means that curve_fit caused an error that was skipped","{0} = number of occurances; {1} =  curve fit message","\tCurve Fit Warning (N={0}): {1}","",""
 "","","","","","",""
 "","","","","","",""
 "","","","","","",""
