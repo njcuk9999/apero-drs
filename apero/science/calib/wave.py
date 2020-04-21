@@ -860,21 +860,23 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
             # --------------------------------------------------------------
             # only continue if we have some finite values
             if np.all(np.isfinite(ypix)):
-                # get ypix max and min
-                ymax, ymin = mp.nanmax(ypix), mp.nanmin(ypix)
-                # get up a gauss fit guess
-                guess = [ymax - ymin, xpixi, 1, ymin, 0]
                 # try fitting a gaussian with a slope
                 try:
+                    # get ypix max and min
+                    ymax, ymin = mp.nanmax(ypix), mp.nanmin(ypix)
+                    # get up a gauss fit guess
+                    guess = [ymax - ymin, xpixi, 1, ymin, 0]
                     # if HC fit a gaussian with a slope
                     if fibtype in hcfibtypes:
                         out = mp.fit_gauss_with_slope(index, ypix, guess, True)
+                        # get parameters from fit
+                        popt, pcov, model = out
                     # else fit ea airy function to FP
                     else:
                         out = velocity.fit_fp_peaks(params, index, ypix, wfit,
                                                     return_model=True)
-                    # get parameters from fit
-                    popt, pcov, model = out
+                        # get parameters from fit
+                        p0, popt, pcov, model = out
                     # calculate the RMS of the fit
                     rms = mp.nanstd(ypix - model)
                     # if we find 'good' values add to storage
