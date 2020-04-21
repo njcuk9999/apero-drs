@@ -145,9 +145,8 @@ __all__ = [
     'WAVE_LITTROW_QC_RMS_MAX', 'WAVE_LITTROW_QC_DEV_MAX',
     # wave fp constants
     'WAVE_MODE_FP', 'WAVE_FP_DOPD0', 'WAVE_FP_CAVFIT_DEG', 'WAVE_FP_CM_IND',
-    'WAVE_FP_LARGE_JUMP', 'WAVE_FP_BORDER_SIZE', 'WAVE_FP_FPBOX_SIZE',
-    'WAVE_FP_PEAK_SIG_LIM', 'WAVE_FP_IPEAK_SPACING', 'WAVE_FP_EXP_WIDTH',
-    'WAVE_FP_NORM_WIDTH_CUT', 'WAVE_FP_ERRX_MIN', 'WAVE_FP_LL_DEGR_FIT',
+    'WAVE_FP_LARGE_JUMP', 'WAVE_FP_NORM_PERCENTILE', 'WAVE_FP_PEAK_LIM',
+    'WAVE_FP_P2P_WIDTH_CUT', 'WAVE_FP_ERRX_MIN', 'WAVE_FP_LL_DEGR_FIT',
     'WAVE_FP_MAX_LLFIT_RMS', 'WAVE_FP_WEIGHT_THRES', 'WAVE_FP_BLAZE_THRES',
     'WAVE_FP_XDIF_MIN', 'WAVE_FP_XDIF_MAX', 'WAVE_FP_LL_OFFSET',
     'WAVE_FP_DV_MAX', 'WAVE_FP_UPDATE_CAVITY', 'WAVE_FP_CAVFIT_MODE',
@@ -1664,37 +1663,23 @@ WAVE_FP_LARGE_JUMP = Const('WAVE_FP_LARGE_JUMP', value=None, dtype=float,
                            source=__NAME__, minimum=0, group=cgroup)
 
 # index of FP line to start order cross-matching from
-WAVE_FP_CM_IND = Const('WAVE_FP_CM_IND', value=None, dtype=int, source=__NAME__,
-                       group=cgroup)
+WAVE_FP_CM_IND = Const('WAVE_FP_P2P_WIDTH_CUT', value=None, dtype=int,
+                       source=__NAME__, group=cgroup)
 
-#    Define the border size (edges in x-direction) for the FP fitting algorithm
-WAVE_FP_BORDER_SIZE = Const('WAVE_FP_BORDER_SIZE', value=None, dtype=int,
-                            source=__NAME__, minimum=0, group=cgroup)
+# define the percentile to normalize the spectrum to (per order)
+#  used to determine FP peaks (peaks must be above a normalised limit
+#   defined in WAVE_FP_PEAK_LIM
+WAVE_FP_NORM_PERCENTILE = Const('WAVE_FP_NORM_PERCENTILE', value=None,
+                               dtype=float, source=__NAME__, minimum=0.0,
+                               group=cgroup)
 
-#    Define the box half-size (in pixels) to fit an individual FP peak to
-#        - a gaussian will be fit to +/- this size from the center of
-#          the FP peak
-WAVE_FP_FPBOX_SIZE = Const('WAVE_FP_FPBOX_SIZE', value=None, dtype=int,
-                           source=__NAME__, minimum=0, group=cgroup)
-
-#    Define the sigma above the median that a peak must have  - [cal_drift-peak]
-#        to be recognised as a valid peak (before fitting a gaussian)
-#        must be a string dictionary and must have an fp key
-WAVE_FP_PEAK_SIG_LIM = Const('WAVE_FP_PEAK_SIG_LIM', value=None, dtype=str,
-                             source=__NAME__, group=cgroup)
-
-#    Define the minimum spacing between peaks in order to be recognised
-#        as a valid peak (before fitting a gaussian)
-WAVE_FP_IPEAK_SPACING = Const('WAVE_FP_IPEAK_SPACING', value=None, dtype=float,
-                              source=__NAME__, minimum=0.0, group=cgroup)
-
-#    Define the expected width of FP peaks - used to "normalise" peaks
-#        (which are then subsequently removed if > WAVE_FP_NORM_WIDTH_CUT
-WAVE_FP_EXP_WIDTH = Const('WAVE_FP_EXP_WIDTH', value=None, dtype=float,
-                          source=__NAME__, minimum=0.0, group=cgroup)
+# define the normalised limit below which FP peaks are not used
+WAVE_FP_PEAK_LIM = Const('WAVE_FP_PEAK_LIM', value=None,
+                               dtype=float, source=__NAME__, minimum=0.0,
+                               group=cgroup)
 
 #    Define peak to peak width that is too large (removed from FP peaks)
-WAVE_FP_NORM_WIDTH_CUT = Const('WAVE_FP_NORM_WIDTH_CUT', value=None,
+WAVE_FP_P2P_WIDTH_CUT = Const('WAVE_FP_P2P_WIDTH_CUT', value=None,
                                dtype=float, source=__NAME__, minimum=0.0,
                                group=cgroup)
 

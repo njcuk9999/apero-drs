@@ -1346,35 +1346,19 @@ WAVE_FP_LARGE_JUMP.value = 250
 WAVE_FP_CM_IND = WAVE_FP_CM_IND.copy(__NAME__)
 WAVE_FP_CM_IND.value = -2
 
-#    Define the border size (edges in x-direction) for the FP fitting algorithm
-WAVE_FP_BORDER_SIZE = WAVE_FP_BORDER_SIZE.copy(__NAME__)
-WAVE_FP_BORDER_SIZE.value = 3
+# define the percentile to normalize the spectrum to (per order)
+#  used to determine FP peaks (peaks must be above a normalised limit
+#   defined in WAVE_FP_PEAK_LIM
+WAVE_FP_NORM_PERCENTILE = WAVE_FP_NORM_PERCENTILE.copy(__NAME__)
+WAVE_FP_NORM_PERCENTILE.value = 95
 
-#    Define the box half-size (in pixels) to fit an individual FP peak to
-#        - a gaussian will be fit to +/- this size from the center of
-#          the FP peak
-WAVE_FP_FPBOX_SIZE = WAVE_FP_FPBOX_SIZE.copy(__NAME__)
-WAVE_FP_FPBOX_SIZE.value = 3
-
-#    Define the sigma above the median that a peak must have  - [cal_drift-peak]
-#        to be recognised as a valid peak (before fitting a gaussian)
-#        must be a string dictionary and must have an fp key
-WAVE_FP_PEAK_SIG_LIM = WAVE_FP_PEAK_SIG_LIM.copy(__NAME__)
-WAVE_FP_PEAK_SIG_LIM.value = '{"fp": 1.0, "hc": 7.0}'
-
-#    Define the minimum spacing between peaks in order to be recognised
-#        as a valid peak (before fitting a gaussian)
-WAVE_FP_IPEAK_SPACING = WAVE_FP_IPEAK_SPACING.copy(__NAME__)
-WAVE_FP_IPEAK_SPACING.value = 5
-
-#    Define the expected width of FP peaks - used to "normalise" peaks
-#        (which are then subsequently removed if > drift_peak_norm_width_cut
-WAVE_FP_EXP_WIDTH = WAVE_FP_EXP_WIDTH.copy(__NAME__)
-WAVE_FP_EXP_WIDTH.value = 1.0  # 0.9  # 0.8
+# define the normalised limit below which FP peaks are not used
+WAVE_FP_PEAK_LIM = WAVE_FP_PEAK_LIM.copy(__NAME__)
+WAVE_FP_PEAK_LIM.value = 0.1
 
 #    Define peak to peak width that is too large (removed from FP peaks)
-WAVE_FP_NORM_WIDTH_CUT = WAVE_FP_NOWAVE_FP_UPDATE_CAVITYRM_WIDTH_CUT.copy(__NAME__)
-WAVE_FP_NORM_WIDTH_CUT.value = 0.25  # 0.2
+WAVE_FP_P2P_WIDTH_CUT = WAVE_FP_P2P_WIDTH_CUT.copy(__NAME__)
+WAVE_FP_P2P_WIDTH_CUT.value = 15
 
 # =============================================================================
 # CALIBRATION: WAVE CCF SETTINGS
