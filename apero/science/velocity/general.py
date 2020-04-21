@@ -116,7 +116,7 @@ def measure_fp_peaks(params, props, **kwargs):
 
     # TODO: Move to constants
     normpercentile = 95
-    limit = 0.3
+    limit = 0.1
 
     # get the reference data and the wave data
     speref = np.array(props['SPEREF'])
