@@ -875,7 +875,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
                         out = velocity.fit_fp_peaks(params, index, ypix, wfit,
                                                     return_model=True)
                         # get parameters from fit
-                        p0, popt, pcov, model = out
+                        p0, popt, pcov, warns, model = out
                         # get width condition
                         cond2 = np.abs(popt[2] / wfit - 1) < 0.5
                     # calculate the RMS of the fit
