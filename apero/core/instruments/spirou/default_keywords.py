@@ -1098,44 +1098,23 @@ KW_WFP_CM_INDX.set(key='WFPCMIND',
                    comment='The index to start crossmatch at',
                    parent='WAVE_FP_CM_IND', group='wave')
 
-# border size allowed to fit fps used
-KW_WFP_BORDER = KW_WFP_BORDER.copy(__NAME__)
-KW_WFP_BORDER.set(key='WFPBORDR',
-                  comment='Allowed border size for fittin FPs',
-                  parent='WAVE_FP_BORDER_SIZE', group='wave')
+# the percentile to normalise the FP flux per order used
+KW_WFP_NPERCENT = KW_WFP_NPERCENT.copy(__NAME__)
+KW_WFP_NPERCENT.set(key='WFPNPRCT',
+                    comment='WAVE FP percentile thres to norm FP flux used',
+                    parent='WAVE_FP_NORM_PERCENTILE', group='wave')
 
-# the box size used to fit fps (half-size)
-KW_WFP_BSIZE = KW_WFP_BSIZE.copy(__NAME__)
-KW_WFP_BSIZE.set(key='WFPBSIZE', comment='half box size used to fit FPs',
-                 parent='WAVE_FP_FPBOX_SIZE', group='wave')
-
-# the sigma above median a peak must have to be a valid fp peak used
-KW_WFP_SIGLIM = KW_WFP_SIGLIM.copy(__NAME__)
-KW_WFP_SIGLIM.set(key='WFPSIGLM',
-                  comment='sigma above median for FP peak to be valid',
-                  parent='WAVE_FP_PEAK_SIG_LIM', group='wave')
-
-# the lamp value that was used
-KW_WFP_LAMP = KW_WFP_LAMP.copy(__NAME__)
-KW_WFP_LAMP.set(key='WFPLAMP', comment='Lamp value used for FP wave sol.',
-                parent=None, group='wave')
-
-# the minimum spacing between peaks used
-KW_WFP_IPEAK_SPACE = KW_WFP_IPEAK_SPACE.copy(__NAME__)
-KW_WFP_IPEAK_SPACE.set(key='WFPIPKSP',
-                       comment='Min spacing between FP peaks used.',
-                       parent='WAVE_FP_IPEAK_SPACING', group='wave')
-
-# the expected width of the FP peaks used
-KW_WFP_EXPWIDTH = KW_WFP_EXPWIDTH.copy(__NAME__)
-KW_WFP_EXPWIDTH.set(key='WFPEXPWD', comment='expected width of FP peaks',
-                    parent='WAVE_FP_EXP_WIDTH', group='wave')
+# the normalised limited used to detect FP peaks
+KW_WFP_LIMIT = KW_WFP_LIMIT.copy(__NAME__)
+KW_WFP_LIMIT.set(key='WFPNLIMT',
+                 comment='WAVE FP norm limit to detect FP peaks used',
+                 parent='WAVE_FP_PEAK_LIM', group='wave')
 
 # the normalised cut width for large peaks used
 KW_WFP_CUTWIDTH = KW_WFP_CUTWIDTH.copy(__NAME__)
 KW_WFP_CUTWIDTH.set(key='WFPCUTWD',
                     comment='Normalised cut width used for large FP peaks',
-                    parent='WAVE_FP_NORM_WIDTH_CUT', group='wave')
+                    parent='WAVE_FP_P2P_WIDTH_CUT', group='wave')
 
 # Wavelength solution for fiber C that is is source of the WFP keys
 KW_WFP_FILE = KW_WFP_FILE.copy(__NAME__)

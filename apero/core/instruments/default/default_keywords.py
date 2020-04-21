@@ -90,9 +90,8 @@ __all__ = [# input keys
            'KW_WFP_UPDATECAV', 'KW_WFP_FPCAV_MODE', 'KW_WFP_LLFIT_MODE',
            'KW_WFP_ERRX_MIN', 'KW_WFP_MAXLL_FIT_RMS', 'KW_WFP_T_ORD_START',
            'KW_WFP_WEI_THRES', 'KW_WFP_CAVFIT_DEG', 'KW_WFP_LARGE_JUMP',
-           'KW_WFP_CM_INDX', 'KW_WFP_BORDER', 'KW_WFP_BSIZE',
-           'KW_WFP_SIGLIM', 'KW_WFP_LAMP', 'KW_WFP_IPEAK_SPACE',
-           'KW_WFP_EXPWIDTH', 'KW_WFP_CUTWIDTH', 'KW_WFP_FILE', 'KW_WFP_DRIFT',
+           'KW_WFP_CM_INDX', 'KW_WFP_NPERCENT', 'KW_WFP_LIMIT',
+           'KW_WFP_CUTWIDTH', 'KW_WFP_FILE', 'KW_WFP_DRIFT',
            'KW_WFP_FWHM', 'KW_WFP_CONTRAST', 'KW_WFP_MASK',
            'KW_WFP_LINES', 'KW_WFP_TARG_RV', 'KW_WFP_WIDTH',
            'KW_WFP_STEP', 'KW_WFP_SIGDET', 'KW_WFP_BOXSIZE', 'KW_WFP_MAXFLUX',
@@ -906,25 +905,12 @@ KW_WFP_LARGE_JUMP = Keyword('KW_WFP_LARGE_JUMP', key='', dtype=float,
 # the index to start crossmatching fps at
 KW_WFP_CM_INDX = Keyword('KW_WFP_CM_INDX', key='', dtype=float, source=__NAME__)
 
-# border size allowed to fit fps used
-KW_WFP_BORDER = Keyword('KW_WFP_BORDER', key='', dtype=float, source=__NAME__)
-
-# the box size used to fit fps (half-size)
-KW_WFP_BSIZE = Keyword('KW_WFP_BSIZE', key='', dtype=int, source=__NAME__)
-
-# the sigma above median a peak must have to be a valid fp peak used
-KW_WFP_SIGLIM = Keyword('KW_WFP_SIGLIM', key='', dtype=float, source=__NAME__)
-
-# the lamp value that was used
-KW_WFP_LAMP = Keyword('KW_WFP_LAMP', key='', dtype=str, source=__NAME__)
-
-# the minimum spacing between peaks used
-KW_WFP_IPEAK_SPACE = Keyword('KW_WFP_IPEAK_SPACE', key='', dtype=float,
-                             source=__NAME__)
-
-# the expected width of the FP peaks used
-KW_WFP_EXPWIDTH = Keyword('KW_WFP_EXPWIDTH', key='', dtype=float,
+# the percentile to normalise the FP flux per order used
+KW_WFP_NPERCENT = Keyword('KW_WFP_NPERCENT', key='', dtype=float,
                           source=__NAME__)
+
+# the normalised limited used to detect FP peaks
+KW_WFP_LIMIT = Keyword('KW_WFP_LIMIT', key='', dtype=float, source=__NAME__)
 
 # the normalised cut width for large peaks used
 KW_WFP_CUTWIDTH = Keyword('KW_WFP_CUTWIDTH', key='', dtype=float,
