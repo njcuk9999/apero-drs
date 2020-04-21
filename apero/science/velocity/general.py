@@ -356,7 +356,7 @@ def remove_wide_peaks(params, props, cutwidth):
         # get the amplitudes
         amppeak = props['AMPPEAK'][gg]
         # get peak spacing
-        peak_spacing = props['PEAKSIZE'][order_num]
+        peak_spacing = props['PEAKSIZE'][order_num] // 2
         # get the points where two peaks are spaced by < peak_spacing
         ind = np.argwhere(xpeak[1:] - xpeak[:-1] < peak_spacing)
         # get the indices of the second peak of each pair
