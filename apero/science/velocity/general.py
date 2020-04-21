@@ -195,7 +195,7 @@ def measure_fp_peaks(params, props, limit, normpercent):
                 llpeak.append(deltalam)
                 amppeak.append(maxtmp)
                 shapepeak.append(gg[3])
-                dcpenormpercentak.append(gg[4])
+                dcpeak.append(gg[4])
             else:
                 # add to rejected
                 nreject += 1
