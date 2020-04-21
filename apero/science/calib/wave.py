@@ -766,7 +766,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
                 # get the dpix coeffs
                 dpixc = np.polyfit(pixfit[1:], pixfit[1:] - pixfit[:-1], 2)
                 # use this to get the rounded width?
-                wfit = np.ceil(np.polyval(dpixc, pixfit) / 2)
+                wfit = np.ceil(np.polyval(dpixc, pixfit))
                 # append to the lists
                 list_waves += list(wave0[good])
                 list_orders += list(np.repeat(order_num, np.sum(good)))
@@ -819,6 +819,10 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
     ewidth = np.zeros_like(list_pixels)
     amp = np.zeros_like(list_pixels)
     nsig = np.repeat(np.nan, len(list_pixels))
+
+    # TODO: remove break point
+    constants.break_point(params)
+
     # ----------------------------------------------------------------------
     # loop around orders
     for order_num in range(nbo):
@@ -862,7 +866,14 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
                 guess = [ymax - ymin, xpixi, 1, ymin, 0]
                 # try fitting a gaussian with a slope
                 try:
-                    out = mp.fit_gauss_with_slope(index, ypix, guess, True)
+                    # if HC fit a gaussian with a slope
+                    if fibtype in hcfibtypes:
+                        out = mp.fit_gauss_with_slope(index, ypix, guess, True)
+                    # else fit ea airy function to FP
+                    else:
+                        out = velocity.fit_fp_peaks(params, index, ypix, wfit,
+                                                    return_model=True)
+                    # get parameters from fit
                     popt, pcov, model = out
                     # calculate the RMS of the fit
                     rms = mp.nanstd(ypix - model)
