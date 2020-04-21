@@ -111,7 +111,6 @@ def measure_fp_peaks(params, props, limit, normpercentile):
     # get the reference data and the wave data
     speref = np.array(props['SPEREF'])
     wave = props['WAVE']
-
     # storage for order of peaks
     allpeaksize = []
     allordpeak = []
@@ -133,6 +132,8 @@ def measure_fp_peaks(params, props, limit, normpercentile):
         amppeak = []
         dcpeak = []
         shapepeak = []
+        # storage of warnings
+        warn_dict = dict()
         # set number of peaks rejected to zero
         nreject = 0
         # set a counter for total number of peaks
@@ -173,7 +174,7 @@ def measure_fp_peaks(params, props, limit, normpercentile):
             mask[maxpos - (size // 2):maxpos + (size // 2) + 1] = 0
             # --------------------------------------------------------------
             # return the initial guess and the best fit
-            p0, gg, _ = fit_fp_peaks(params, index_peak, tmp_peak, size)
+            p0, gg, warns, _ = fit_fp_peaks(params, index_peak, tmp_peak, size)
             # --------------------------------------------------------------
             # only keep peaks within +/- 1 pixel of original peak
             #  (gaussian fit is to find sub-pixel value)
@@ -201,9 +202,22 @@ def measure_fp_peaks(params, props, limit, normpercentile):
             # iterator
             ipeak += 1
             # --------------------------------------------------------------
+            # deal with warnings
+            if warns is not None:
+                if warns in warn_dict:
+                    warn_dict[warns] += 1
+                else:
+                    warn_dict[warns] = 1
+            # --------------------------------------------------------------
         # log how many FPs were found and how many rejected
         wargs = [order_num, ipeak, nreject]
         WLOG(params, '', TextEntry('40-018-00001', args=wargs))
+        # ------------------------------------------------------------------
+        # print warnings
+        for key in list(warn_dict.keys()):
+            wargs = [warn_dict[key], key]
+            WLOG(params, 'warning', TextEntry('00-018-00001', args=wargs))
+        # ------------------------------------------------------------------
         # add values to all storage (and sort by xpeak)
         indsort = np.argsort(xpeak)
         allordpeak.append(np.array(ordpeak)[indsort])
@@ -239,6 +253,8 @@ def measure_fp_peaks(params, props, limit, normpercentile):
 
 
 def fit_fp_peaks(params, x, y, size, return_model=False):
+    # storage of warnings
+    warns = None
     # get gauss function
     ea_airy = mp.ea_airy_function
     # set up initial guess
@@ -248,21 +264,21 @@ def fit_fp_peaks(params, x, y, size, return_model=False):
     try:
         with warnings.catch_warnings(record=True) as _:
             popt, pcov = curve_fit(ea_airy, x, y, p0=p0)
-    except ValueError:
+    except ValueError as e:
         # log that ydata or xdata contains NaNs
-        WLOG(params, 'warning', TextEntry('00-018-00001'))
         popt = [np.nan, np.nan, np.nan, np.nan, np.nan]
         pcov = None
-    except RuntimeError:
-        # WLOG(p, 'warning', 'Least-squares fails')
+        warns = '{0}: {1}'.format(type(e), e)
+    except RuntimeError as e:
         popt = [np.nan, np.nan, np.nan, np.nan, np.nan]
         pcov = None
+        warns = '{0}: {1}'.format(type(e), e)
     # deal with returning model
     if return_model:
-        return p0, popt, pcov, ea_airy(x, *popt)
+        return p0, popt, pcov, warns, ea_airy(x, *popt)
     else:
         # return the guess and the best fit
-        return p0, popt, pcov
+        return p0, popt, pcov, warns
 
 
 def remove_wide_peaks(params, props, cutwidth):
