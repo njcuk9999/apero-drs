@@ -108,20 +108,21 @@ def measure_fp_peaks(params, props, **kwargs):
     """
     func_name = __NAME__ + '.create_drift_file()'
     # get gauss function
-    gbfunc = mp.gauss_beta_function
+    ea_airy = mp.ea_airy_function
     # get constants from params/kwargs
-    border = pcheck(params, 'DRIFT_PEAK_BORDER_SIZE', 'border', kwargs,
-                    func_name)
     size = pcheck(params, 'DRIFT_PEAK_FPBOX_SIZE', 'size', kwargs, func_name)
     siglimdict = pcheck(params, 'DRIFT_PEAK_PEAK_SIG_LIM', 'siglimdict',
                         kwargs, func_name, mapf='dict', dtype=float)
     ipeakspace = pcheck(params, 'DRIFT_PEAK_IPEAK_SPACING', 'ipeakspace',
                         kwargs, func_name)
 
+    # TODO: Move to constants
+    normpercentile = 95
+    limit = 0.3
+
     # get the reference data and the wave data
     speref = np.array(props['SPEREF'])
     wave = props['WAVE']
-    lamp = props['LAMP']
 
     # TODO: remove breakpoint
     constants.break_point(params)
@@ -134,7 +135,7 @@ def measure_fp_peaks(params, props, **kwargs):
     allllpeak = []
     allamppeak = []
     alldcpeak = []
-    allbetapeak = []
+    allshapepeak = []
     # loop through the orders
     for order_num in range(speref.shape[0]):
         # storage for order of peaks
@@ -145,47 +146,43 @@ def measure_fp_peaks(params, props, **kwargs):
         llpeak = []
         amppeak = []
         dcpeak = []
-        betapeak = []
+        shapepeak = []
+        # set number of peaks rejected to zero
+        nreject = 0
+        # set a counter for total number of peaks
+        ipeak = 0
         # get the pixels for this order
         tmp = np.array(speref[order_num, :])
-        # For numerical sanity all values less than zero set to zero
-        tmp[~np.isfinite(tmp)] = 0
-        tmp[tmp < 0] = 0
-        # set border pixels to zero to avoid fit starting off the edge of image
-        tmp[0: border + 1] = 0
-        tmp[-(border + 1):] = 0
-
-        # normalize by the 98th percentile - avoids super-spurois pixels but
-        #   keeps the top of the blaze around 1
-        # norm = np.nanpercentile(tmp, 98)
-        # tmp /= norm
-
-        # peak value depends on type of lamp
-        limit = mp.nanmedian(tmp) * siglimdict[lamp]
-
-        # define the maximum pixel value of the normalized array
-        maxtmp = mp.nanmax(tmp)
-        # set up loop constants
-        xprev, ipeak = -99, 0
-        nreject = 0
+        # mask for finding maximum peak
+        mask = np.ones_like(tmp)
+        # mask out the edges
+        mask[:size + 1] = 0
+        mask[-(size + 1):] = 0
+        # define indices
+        index = np.arange(len(tmp))
+        # normalize the spectrum
+        tmp = tmp / np.nanpercentile(tmp, normpercentile)
         # loop for peaks that are above a value of limit
-        w_all = []
-        while maxtmp > limit:
-            # find the position of the maximum
-            maxpos = np.argmax(tmp)
-            # define an area around the maximum peak
-            index = np.arange(-size, 1 + size, 1) + maxpos
-            index = np.array(index).astype(int)
-            # try to fit a gaussian to that peak
+        while mp.nanmax(mask * tmp) > limit:
+            # find peak along the order
+            maxpos = np.nanargmax(mask * tmp)
+            maxtmp = tmp[maxpos]
+            # get the values around the max position
+            index_peak = index[maxpos - size: maxpos + size]
+            tmp_peak = tmp[maxpos - size: maxpos + size]
+            # mask out this peak for next iteration of while loop
+            mask[maxpos - (size // 2):maxpos + (size // 2) + 1] = 0
+
+            # try to fit etiennes airy function
             try:
-                # set initial guess
-                p0 = [tmp[maxpos], maxpos, 1.0, mp.nanmin(tmp[index]), 2.0]
-                # do gauss fit
-                #    gg = [mean, amplitude, sigma, dc]
+                # set up initial guess
+                # [amp, position, period, exponent, zero point]
+                p0 = [np.max(tmp_peak) - np.min(tmp_peak),
+                      np.median(tmp_peak), size, 1.0, np.min(tmp_peak)]
+
                 with warnings.catch_warnings(record=True) as w:
-                    # noinspection PyTypeChecker
-                    gg, pcov = curve_fit(gbfunc, index, tmp[index], p0=p0)
-                    w_all += list(w)
+                    gg, pcov = curve_fit(ea_airy, index_peak, tmp_peak,
+                                         p0=p0)
             except ValueError:
                 # log that ydata or xdata contains NaNs
                 WLOG(params, 'warning', TextEntry('00-018-00001'))
@@ -193,19 +190,7 @@ def measure_fp_peaks(params, props, **kwargs):
             except RuntimeError:
                 # WLOG(p, 'warning', 'Least-squares fails')
                 gg = [np.nan, np.nan, np.nan, np.nan, np.nan]
-            # little sanity check to be sure that the peak is not the same as
-            #    we got before and that there is something fishy with the
-            #    detection - dx is the distance from last peak
-            dx = np.abs(xprev - gg[1])
-            # if the distance from last position > 2 - we have a new fit
-            if dx > ipeakspace:
-                # subtract off the gaussian without the dc level
-                # (leave dc for other peaks
-                tmp[index] -= gbfunc(index, gg[0], gg[1], gg[2], 0, gg[4])
-            # else just set this region to zero, this is a bogus peak that
-            #    cannot be fitted
-            else:
-                tmp[index] = 0
+
             # only keep peaks within +/- 1 pixel of original peak
             #  (gaussian fit is to find sub-pixel value)
             cond = np.abs(maxpos - gg[1]) < 1
@@ -218,7 +203,6 @@ def measure_fp_peaks(params, props, **kwargs):
                 # get the radial velocity
                 waveomax = wave[order_num, maxpos]
                 radvel = speed_of_light_ms * deltalam / (2.0 * waveomax)
-
                 # add to storage
                 ordpeak.append(order_num)
                 xpeak.append(gg[1])
@@ -226,19 +210,13 @@ def measure_fp_peaks(params, props, **kwargs):
                 vrpeak.append(radvel)
                 llpeak.append(deltalam)
                 amppeak.append(maxtmp)
-                dcpeak.append(gg[3])
-                betapeak.append(gg[4])
+                shapepeak.append(gg[3])
+                dcpeak.append(gg[4])
             else:
                 # add to rejected
                 nreject += 1
-            # recalculate the max peak
-            maxtmp = mp.nanmax(tmp)
-            # set previous peak to this one
-            xprev = gg[1]
             # iterator
             ipeak += 1
-        # display warning messages
-        drs_log.warninglogger(params, w_all)
         # log how many FPs were found and how many rejected
         wargs = [order_num, ipeak, nreject]
         WLOG(params, '', TextEntry('40-018-00001', args=wargs))
@@ -250,8 +228,8 @@ def measure_fp_peaks(params, props, **kwargs):
         allvrpeak.append(np.array(vrpeak)[indsort])
         allllpeak.append(np.array(llpeak)[indsort])
         allamppeak.append(np.array(amppeak)[indsort])
+        allshapepeak.append(np.array(shapepeak)[indsort])
         alldcpeak.append(np.array(dcpeak)[indsort])
-        allbetapeak.append(np.array(betapeak)[indsort])
     # store values in loc
     props['ORDPEAK'] = np.concatenate(allordpeak).astype(int)
     props['XPEAK'] = np.concatenate(allxpeak)
@@ -260,10 +238,10 @@ def measure_fp_peaks(params, props, **kwargs):
     props['LLPEAK'] = np.concatenate(allllpeak)
     props['AMPPEAK'] = np.concatenate(allamppeak)
     props['DCPEAK'] = np.concatenate(alldcpeak)
-    props['BETAPEAK'] = np.concatenate(allbetapeak)
+    props['SHAPEPEAK'] = np.concatenate(allshapepeak)
     # set source
     keys = ['ORDPEAK', 'XPEAK', 'EWPEAK', 'VRPEAK', 'LLPEAK', 'AMPPEAK',
-            'DCPEAK', 'BETAPEAK']
+            'DCPEAK', 'SHAPEPEAK']
     props.set_sources(keys, func_name)
 
     # Log the total number of FP lines found
