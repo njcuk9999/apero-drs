@@ -60,7 +60,7 @@ speed_of_light = cc.c.to(uu.km / uu.s).value
 # =============================================================================
 # Define functions
 # =============================================================================
-def measure_fp_peaks(params, props, limit, normpercentile):
+def measure_fp_peaks(params, props, limit, normpercent):
     """
     Measure the positions of the FP peaks
     Returns the pixels positions and Nth order of each FP peak
@@ -144,7 +144,7 @@ def measure_fp_peaks(params, props, limit, normpercentile):
         index = np.arange(len(tmp))
         # ------------------------------------------------------------------
         # normalize the spectrum
-        tmp = tmp / np.nanpercentile(tmp, normpercentile)
+        tmp = tmp / np.nanpercentile(tmp, normpercent)
         # ------------------------------------------------------------------
         # find the peaks
         with warnings.catch_warnings(record=True) as w:
@@ -195,7 +195,7 @@ def measure_fp_peaks(params, props, limit, normpercentile):
                 llpeak.append(deltalam)
                 amppeak.append(maxtmp)
                 shapepeak.append(gg[3])
-                dcpeak.append(gg[4])
+                dcpenormpercentak.append(gg[4])
             else:
                 # add to rejected
                 nreject += 1
