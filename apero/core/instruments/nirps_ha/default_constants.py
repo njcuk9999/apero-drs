@@ -1236,7 +1236,7 @@ WAVE_FP_DV_MAX.value = 0.25
 # Decide whether to refit the cavity width (will update if files do not
 #   exist)
 WAVE_FP_UPDATE_CAVITY = WAVE_FP_UPDATE_CAVITY.copy(__NAME__)
-WAVE_FP_UPDATE_CAVITY.value = False
+WAVE_FP_UPDATE_CAVITY.value = True
 
 # Select the FP cavity fitting (WAVE_MODE_FP = 1 only)
 #   Should be one of the following:
@@ -1373,7 +1373,7 @@ WAVE_FP_EXP_WIDTH = WAVE_FP_EXP_WIDTH.copy(__NAME__)
 WAVE_FP_EXP_WIDTH.value = 1.0  # 0.9  # 0.8
 
 #    Define peak to peak width that is too large (removed from FP peaks)
-WAVE_FP_NORM_WIDTH_CUT = WAVE_FP_NORM_WIDTH_CUT.copy(__NAME__)
+WAVE_FP_NORM_WIDTH_CUT = WAVE_FP_NOWAVE_FP_UPDATE_CAVITYRM_WIDTH_CUT.copy(__NAME__)
 WAVE_FP_NORM_WIDTH_CUT.value = 0.25  # 0.2
 
 # =============================================================================
