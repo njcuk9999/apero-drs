@@ -1098,6 +1098,12 @@ KW_WFP_CM_INDX.set(key='WFPCMIND',
                    comment='The index to start crossmatch at',
                    parent='WAVE_FP_CM_IND', group='wave')
 
+# the FP widths used for each order (1D list)
+KW_WFP_WIDUSED = KW_WFP_WIDUSED.copy(__NAME__)
+KW_WFP_WIDUSED.set(key='WFPWD{0:03d}',
+                   comment='The FP width (peak to peak) used for each order',
+                   group='wave')
+
 # the percentile to normalise the FP flux per order used
 KW_WFP_NPERCENT = KW_WFP_NPERCENT.copy(__NAME__)
 KW_WFP_NPERCENT.set(key='WFPNPRCT',

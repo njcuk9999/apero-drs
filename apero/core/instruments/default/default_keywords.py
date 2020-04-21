@@ -91,7 +91,7 @@ __all__ = [# input keys
            'KW_WFP_ERRX_MIN', 'KW_WFP_MAXLL_FIT_RMS', 'KW_WFP_T_ORD_START',
            'KW_WFP_WEI_THRES', 'KW_WFP_CAVFIT_DEG', 'KW_WFP_LARGE_JUMP',
            'KW_WFP_CM_INDX', 'KW_WFP_NPERCENT', 'KW_WFP_LIMIT',
-           'KW_WFP_CUTWIDTH', 'KW_WFP_FILE', 'KW_WFP_DRIFT',
+           'KW_WFP_CUTWIDTH', 'KW_WFP_FILE', 'KW_WFP_DRIFT', 'KW_WFP_WIDUSED',
            'KW_WFP_FWHM', 'KW_WFP_CONTRAST', 'KW_WFP_MASK',
            'KW_WFP_LINES', 'KW_WFP_TARG_RV', 'KW_WFP_WIDTH',
            'KW_WFP_STEP', 'KW_WFP_SIGDET', 'KW_WFP_BOXSIZE', 'KW_WFP_MAXFLUX',
@@ -904,6 +904,9 @@ KW_WFP_LARGE_JUMP = Keyword('KW_WFP_LARGE_JUMP', key='', dtype=float,
 
 # the index to start crossmatching fps at
 KW_WFP_CM_INDX = Keyword('KW_WFP_CM_INDX', key='', dtype=float, source=__NAME__)
+
+# the FP widths used for each order (1D list)
+KW_WFP_WIDUSED = Keyword('KW_WFP_WIDUSED', key='', dtype=float, source=__NAME__)
 
 # the percentile to normalise the FP flux per order used
 KW_WFP_NPERCENT = Keyword('KW_WFP_NPERCENT', key='', dtype=float,
