@@ -1372,10 +1372,7 @@ WAVE_FP_IPEAK_SPACING.value = 5
 WAVE_FP_EXP_WIDTH = WAVE_FP_EXP_WIDTH.copy(__NAME__)
 WAVE_FP_EXP_WIDTH.value = 1.0  # 0.9  # 0.8
 
-#    Define the "normalised" width of FP peaks that is too large normalised
-#        width = FP FWHM - WAVE_FP_EXP_WIDTH
-#        cut is essentially:
-#           FP FWHM < (WAVE_FP_EXP_WIDTH + WAVE_FP_NORM_WIDTH_CUT)
+#    Define peak to peak width that is too large (removed from FP peaks)
 WAVE_FP_NORM_WIDTH_CUT = WAVE_FP_NORM_WIDTH_CUT.copy(__NAME__)
 WAVE_FP_NORM_WIDTH_CUT.value = 0.25  # 0.2
 
@@ -1476,7 +1473,7 @@ WAVEREF_FP_NLOW.value = 9000
 # define the highest N for fp peaks
 WAVEREF_FP_NHIGH = WAVEREF_FP_NHIGH.copy(__NAME__)
 WAVEREF_FP_NHIGH.value = 30000
-
+WAVE_FP_NORM_WIDTH_CUT
 # define the number of iterations required to do the Fp polynomial inversion
 WAVEREF_FP_POLYINV = WAVEREF_FP_POLYINV.copy(__NAME__)
 WAVEREF_FP_POLYINV.value = 4

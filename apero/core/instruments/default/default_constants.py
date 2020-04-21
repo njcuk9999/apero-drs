@@ -1693,10 +1693,7 @@ WAVE_FP_IPEAK_SPACING = Const('WAVE_FP_IPEAK_SPACING', value=None, dtype=float,
 WAVE_FP_EXP_WIDTH = Const('WAVE_FP_EXP_WIDTH', value=None, dtype=float,
                           source=__NAME__, minimum=0.0, group=cgroup)
 
-#    Define the "normalised" width of FP peaks that is too large normalised
-#        width = FP FWHM - WAVE_FP_EXP_WIDTH
-#        cut is essentially:
-#           FP FWHM < (WAVE_FP_EXP_WIDTH + WAVE_FP_NORM_WIDTH_CUT)
+#    Define peak to peak width that is too large (removed from FP peaks)
 WAVE_FP_NORM_WIDTH_CUT = Const('WAVE_FP_NORM_WIDTH_CUT', value=None,
                                dtype=float, source=__NAME__, minimum=0.0,
                                group=cgroup)
