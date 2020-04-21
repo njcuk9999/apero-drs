@@ -1232,7 +1232,7 @@ WAVE_FP_DV_MAX.value = 0.25
 # Decide whether to refit the cavity width (will update if files do not
 #   exist)
 WAVE_FP_UPDATE_CAVITY = WAVE_FP_UPDATE_CAVITY.copy(__NAME__)
-WAVE_FP_UPDATE_CAVITY.value = False
+WAVE_FP_UPDATE_CAVITY.value = True
 
 # Select the FP cavity fitting (WAVE_MODE_FP = 1 only)
 #   Should be one of the following:
