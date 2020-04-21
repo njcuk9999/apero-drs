@@ -123,6 +123,9 @@ def measure_fp_peaks(params, props, **kwargs):
     wave = props['WAVE']
     lamp = props['LAMP']
 
+    # TODO: remove breakpoint
+    constants.break_point(params)
+
     # storage for order of peaks
     allordpeak = []
     allxpeak = []
