@@ -109,6 +109,23 @@ def calculate_polyvals(coeffs, dim):
     return yfits
 
 
+def ea_airy_function(x, amp, x0, w, beta, zp):
+    """
+    Calculate dampened cosine with sharper positive peaks for high beta values
+    Used to approximate a FP peak
+
+    :param x: numpy array: the positions in x
+    :param amp: the peak flux amplitude over the dc level (zp)
+    :param x0: the central position of FP peak
+    :param w: the period of the FP in pixel space
+    :param beta: the exponent (shape factor)
+    :param zp: the dc level
+    :return:
+    """
+    y = zp + amp*((1+np.cos(2*np.pi*(x-x0)/w) )/2.0)**beta
+    return y
+
+
 def fit2dpoly(x, y, z):
     # fit a 2nd order polynomial in 2d over x/y/z pixel points
     ones = np.ones_like(x)
