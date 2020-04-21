@@ -3853,48 +3853,31 @@ def add_fpline_calc_cwid(params, llprops, fpe2dsfile, blaze, dopd0, fit_deg,
 def find_fp_lines_new(params, llprops, fpe2dsfile, **kwargs):
     func_name = __NAME__ + '.find_fp_lines_new()'
     # get constants from params/kwargs
-    border = pcheck(params, 'WAVE_FP_BORDER_SIZE', 'border', kwargs,
-                    func_name)
-    size = pcheck(params, 'WAVE_FP_FPBOX_SIZE', 'size', kwargs, func_name)
-    siglimdict = pcheck(params, 'WAVE_FP_PEAK_SIG_LIM', 'siglimdict',
-                        kwargs, func_name, mapf='dict', dtype=float)
-    ipeakspace = pcheck(params, 'WAVE_FP_IPEAK_SPACING', 'ipeakspace',
-                        kwargs, func_name)
-    expwidth = pcheck(params, 'WAVE_FP_EXP_WIDTH', 'expwidth', kwargs,
-                      func_name)
-    cutwidth = pcheck(params, 'WAVE_FP_NORM_WIDTH_CUT', 'cutwidth',
+    normpercent = pcheck(params, 'WAVE_FP_NORM_PERCENTILE', 'normpercent',
+                         kwargs, func_name)
+    limit = pcheck(params, 'WAVE_FP_PEAK_LIM', 'limit', kwargs, func_name)
+    cutwidth = pcheck(params, 'WAVE_FP_P2P_WIDTH_CUT', 'cutwidth',
                       kwargs, func_name)
     # get redefined variables (pipe inputs to llprops with correct names)
     # set fpfile as ref file
     llprops['SPEREF'] = fpe2dsfile.data
     # set wavelength solution as the one from the HC lines
     llprops['WAVE'] = llprops['LITTROW_EXTRAP_SOL_1']
-    # set lamp as FP
-    llprops['LAMP'] = 'fp'
     # use rv module to get the position of FP peaks from reference file
     #   first need to set all input parameters (via ckwargs)
-    ckwargs = dict(border=border, size=size, siglimdict=siglimdict,
-                   ipeakspace=ipeakspace)
-    # measure the positions of the FP peaks
+    ckwargs = dict(limit=limit, normpercent=normpercent)
+    # measure the positions of the FP peaksKW_WFP_BSIZE
     llprops = velocity.measure_fp_peaks(params, llprops, **ckwargs)
-    # use rv module to remove wide/spurious/doule-fitted peaks
-    #   first need to set all input parameters (via ckwargs)
-    ckwargs = dict(expwidth=expwidth, cutwidth=cutwidth,
-                   peak_spacing=ipeakspace)
+    # use rv module to remove wide/spurious/double-fitted peaks
     # remove wide / double-fitted peaks
-    llprops = velocity.remove_wide_peaks(params, llprops, **ckwargs)
+    llprops = velocity.remove_wide_peaks(params, llprops, cutwidth=cutwidth)
 
     # add constants to llprops
-    llprops['USED_BORDER'] = border
-    llprops['USED_BOX_SIZE'] = size
-    llprops['USED_SIGLIM'] = siglimdict[llprops['LAMP']]
-    llprops['USED_LAMP'] = llprops['LAMP']
-    llprops['USED_IPEAK_SPACE'] = ipeakspace
-    llprops['USED_EXPWIDTH'] = expwidth
+    llprops['USED_NORMPERCENT'] = normpercent
+    llprops['USED_LIMIT'] = limit
     llprops['USED_CUTWIDTH'] = cutwidth
     # set sources
-    keys = ['USED_BORDER', 'USED_BOX_SIZE', 'USED_SIGLIM', 'USED_LAMP',
-            'USED_IPEAK_SPACE', 'USED_EXPWIDTH', 'USED_CUTWIDTH']
+    keys = ['USED_NORMPERCENT', 'USED_BOX_SIZE', 'USED_CUTWIDTH']
     llprops.set_sources(keys, func_name)
 
     # return loc
@@ -5117,12 +5100,10 @@ def fp_write_wavesolution(params, recipe, llprops, hcfile, fpfile,
     wavefile.add_hkey('KW_WFP_LARGE_JUMP', value=llprops['USED_LARGE_JUMP'])
     wavefile.add_hkey('KW_WFP_CM_INDX', value=llprops['USED_CM_INDEX'])
     # from find_fp_lines_new
-    wavefile.add_hkey('KW_WFP_BORDER', value=llprops['USED_BORDER'])
-    wavefile.add_hkey('KW_WFP_BSIZE', value=llprops['USED_BOX_SIZE'])
-    wavefile.add_hkey('KW_WFP_SIGLIM', value=llprops['USED_SIGLIM'])
-    wavefile.add_hkey('KW_WFP_LAMP', value=llprops['USED_LAMP'])
-    wavefile.add_hkey('KW_WFP_IPEAK_SPACE', value=llprops['USED_IPEAK_SPACE'])
-    wavefile.add_hkey('KW_WFP_EXPWIDTH', value=llprops['USED_EXPWIDTH'])
+    wavefile.add_hkey_1d('KW_WFP_WIDUSED', values=llprops['PEAKSIZE'],
+                         dim1name='order')
+    wavefile.add_hkey('KW_WFP_NPERCENT', value=llprops['USED_NORMPERCENT'])
+    wavefile.add_hkey('KW_WFP_LIMIT', value=llprops['USED_LIMIT'])
     wavefile.add_hkey('KW_WFP_CUTWIDTH', value=llprops['USED_CUTWIDTH'])
     # from fp ccf calculation (compute_fp_ccf)
     wavefile.add_hkey('KW_WFP_SIGDET', value=llprops['CCF_SIGDET'])
