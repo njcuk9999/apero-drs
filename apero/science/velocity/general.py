@@ -60,7 +60,7 @@ speed_of_light = cc.c.to(uu.km / uu.s).value
 # =============================================================================
 # Define functions
 # =============================================================================
-def measure_fp_peaks(params, props, **kwargs):
+def measure_fp_peaks(params, props, limit, normpercentile):
     """
     Measure the positions of the FP peaks
     Returns the pixels positions and Nth order of each FP peak
@@ -107,16 +107,6 @@ def measure_fp_peaks(params, props, **kwargs):
 
     """
     func_name = __NAME__ + '.create_drift_file()'
-    # get constants from params/kwargs
-    size = pcheck(params, 'DRIFT_PEAK_FPBOX_SIZE', 'size', kwargs, func_name)
-    siglimdict = pcheck(params, 'DRIFT_PEAK_PEAK_SIG_LIM', 'siglimdict',
-                        kwargs, func_name, mapf='dict', dtype=float)
-    ipeakspace = pcheck(params, 'DRIFT_PEAK_IPEAK_SPACING', 'ipeakspace',
-                        kwargs, func_name)
-
-    # TODO: Move to constants
-    normpercentile = 95
-    limit = 0.1
 
     # get the reference data and the wave data
     speref = np.array(props['SPEREF'])
@@ -275,7 +265,7 @@ def fit_fp_peaks(params, x, y, size, return_model=False):
         return p0, popt, pcov
 
 
-def remove_wide_peaks(params, props, **kwargs):
+def remove_wide_peaks(params, props, cutwidth):
     """
     Remove peaks that are too wide
 
@@ -320,13 +310,6 @@ def remove_wide_peaks(params, props, **kwargs):
                          (masked to remove wide peaks)
     """
     func_name = __NAME__ + '.remove_wide_peaks()'
-    # get constants
-    expwidth = pcheck(params, 'DRIFT_PEAK_EXP_WIDTH', 'expwidth', kwargs,
-                      func_name)
-    cutwidth = pcheck(params, 'DRIFT_PEAK_NORM_WIDTH_CUT', 'cutwidth',
-                      kwargs, func_name)
-    peak_spacing = pcheck(params, 'DRIFT_PEAK_IPEAK_SPACING', 'peak_spacing',
-                          kwargs, func_name)
 
     # define a mask to cut out wide peaks
     mask = np.array(props['PEAK2PEAK']) < cutwidth
@@ -356,6 +339,8 @@ def remove_wide_peaks(params, props, **kwargs):
         xpeak = props['XPEAK'][gg]
         # get the amplitudes
         amppeak = props['AMPPEAK'][gg]
+        # get peak spacing
+        peak_spacing = props['PEAKSIZE'][order_num]
         # get the points where two peaks are spaced by < peak_spacing
         ind = np.argwhere(xpeak[1:] - xpeak[:-1] < peak_spacing)
         # get the indices of the second peak of each pair
