@@ -1368,12 +1368,9 @@ WAVE_FP_IPEAK_SPACING.value = 5
 WAVE_FP_EXP_WIDTH = WAVE_FP_EXP_WIDTH.copy(__NAME__)
 WAVE_FP_EXP_WIDTH.value = 1.0  # 0.9  # 0.8
 
-#    Define the "normalised" width of FP peaks that is too large normalised
-#        width = FP FWHM - WAVE_FP_EXP_WIDTH
-#        cut is essentially:
-#           FP FWHM < (WAVE_FP_EXP_WIDTH + WAVE_FP_NORM_WIDTH_CUT)
+#    Define peak to peak width that is too large (removed from FP peaks)
 WAVE_FP_NORM_WIDTH_CUT = WAVE_FP_NORM_WIDTH_CUT.copy(__NAME__)
-WAVE_FP_NORM_WIDTH_CUT.value = 0.25  # 0.2
+WAVE_FP_NORM_WIDTH_CUT.value = 15  # 0.2
 
 # =============================================================================
 # CALIBRATION: WAVE CCF SETTINGS
