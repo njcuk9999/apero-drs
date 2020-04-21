@@ -107,8 +107,6 @@ def measure_fp_peaks(params, props, **kwargs):
 
     """
     func_name = __NAME__ + '.create_drift_file()'
-    # get gauss function
-    ea_airy = mp.ea_airy_function
     # get constants from params/kwargs
     size = pcheck(params, 'DRIFT_PEAK_FPBOX_SIZE', 'size', kwargs, func_name)
     siglimdict = pcheck(params, 'DRIFT_PEAK_PEAK_SIG_LIM', 'siglimdict',
@@ -124,10 +122,8 @@ def measure_fp_peaks(params, props, **kwargs):
     speref = np.array(props['SPEREF'])
     wave = props['WAVE']
 
-    # TODO: remove breakpoint
-    constants.break_point(params)
-
     # storage for order of peaks
+    allpeaksize = []
     allordpeak = []
     allxpeak = []
     allewpeak = []
@@ -160,10 +156,11 @@ def measure_fp_peaks(params, props, **kwargs):
         tmp = tmp / np.nanpercentile(tmp, normpercentile)
         # ------------------------------------------------------------------
         # find the peaks
-        peakmask = (tmp[1:-1] > tmp[2:]) & (tmp[1:-1] > tmp[:-2])
+        with warnings.catch_warnings(record=True) as w:
+            peakmask = (tmp[1:-1] > tmp[2:]) & (tmp[1:-1] > tmp[:-2])
         peakpos = np.where(peakmask)[0]
         # work out the FP width for this order
-        size = np.nanmedian(peakpos[1:] - peakpos[:-1])
+        size = int(np.nanmedian(peakpos[1:] - peakpos[:-1]))
         # ------------------------------------------------------------------
         # mask for finding maximum peak
         mask = np.ones_like(tmp)
@@ -185,23 +182,8 @@ def measure_fp_peaks(params, props, **kwargs):
             # mask out this peak for next iteration of while loop
             mask[maxpos - (size // 2):maxpos + (size // 2) + 1] = 0
             # --------------------------------------------------------------
-            # try to fit etiennes airy function
-            try:
-                # set up initial guess
-                # [amp, position, period, exponent, zero point]
-                p0 = [np.max(tmp_peak) - np.min(tmp_peak),
-                      np.median(index_peak), size, 1.0, np.min(tmp_peak)]
-
-                with warnings.catch_warnings(record=True) as w:
-                    gg, pcov = curve_fit(ea_airy, index_peak, tmp_peak,
-                                         p0=p0)
-            except ValueError:
-                # log that ydata or xdata contains NaNs
-                WLOG(params, 'warning', TextEntry('00-018-00001'))
-                gg = [np.nan, np.nan, np.nan, np.nan, np.nan]
-            except RuntimeError:
-                # WLOG(p, 'warning', 'Least-squares fails')
-                gg = [np.nan, np.nan, np.nan, np.nan, np.nan]
+            # return the initial guess and the best fit
+            p0, gg, _ = fit_fp_peaks(params, index_peak, tmp_peak, size)
             # --------------------------------------------------------------
             # only keep peaks within +/- 1 pixel of original peak
             #  (gaussian fit is to find sub-pixel value)
@@ -242,6 +224,7 @@ def measure_fp_peaks(params, props, **kwargs):
         allamppeak.append(np.array(amppeak)[indsort])
         allshapepeak.append(np.array(shapepeak)[indsort])
         alldcpeak.append(np.array(dcpeak)[indsort])
+        allpeaksize.append(size)
     # store values in loc
     props['ORDPEAK'] = np.concatenate(allordpeak).astype(int)
     props['XPEAK'] = np.concatenate(allxpeak)
@@ -251,9 +234,10 @@ def measure_fp_peaks(params, props, **kwargs):
     props['AMPPEAK'] = np.concatenate(allamppeak)
     props['DCPEAK'] = np.concatenate(alldcpeak)
     props['SHAPEPEAK'] = np.concatenate(allshapepeak)
+    props['PEAKSIZE'] = np.array(allpeaksize)
     # set source
     keys = ['ORDPEAK', 'XPEAK', 'EWPEAK', 'VRPEAK', 'LLPEAK', 'AMPPEAK',
-            'DCPEAK', 'SHAPEPEAK']
+            'DCPEAK', 'SHAPEPEAK', 'PEAKSIZE']
     props.set_sources(keys, func_name)
 
     # Log the total number of FP lines found
@@ -262,6 +246,33 @@ def measure_fp_peaks(params, props, **kwargs):
 
     # return the property parameter dictionary
     return props
+
+
+def fit_fp_peaks(params, x, y, size, return_model=False):
+    # get gauss function
+    ea_airy = mp.ea_airy_function
+    # set up initial guess
+    # [amp, position, period, exponent, zero point]
+    p0 = [np.max(y) - np.min(y), np.median(x), size, 1.0, np.min(y)]
+    # try to fit etiennes airy function
+    try:
+        with warnings.catch_warnings(record=True) as _:
+            popt, pcov = curve_fit(ea_airy, x, y, p0=p0)
+    except ValueError:
+        # log that ydata or xdata contains NaNs
+        WLOG(params, 'warning', TextEntry('00-018-00001'))
+        popt = [np.nan, np.nan, np.nan, np.nan, np.nan]
+        pcov = None
+    except RuntimeError:
+        # WLOG(p, 'warning', 'Least-squares fails')
+        popt = [np.nan, np.nan, np.nan, np.nan, np.nan]
+        pcov = None
+    # deal with returning model
+    if return_model:
+        return p0, popt, pcov, ea_airy(x, *popt)
+    else:
+        # return the guess and the best fit
+        return p0, popt, pcov
 
 
 def remove_wide_peaks(params, props, **kwargs):
