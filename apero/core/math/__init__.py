@@ -21,6 +21,8 @@ continuum = general.continuum
 
 calculate_polyvals = general.calculate_polyvals
 
+ea_airy_function = general.ea_airy_function
+
 fit_gauss_with_slope = gauss.fit_gauss_with_slope
 
 fit2dpoly = general.fit2dpoly
