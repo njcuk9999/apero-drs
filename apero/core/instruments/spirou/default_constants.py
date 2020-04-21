@@ -1344,13 +1344,13 @@ WAVE_FP_CM_IND.value = -2
 
 #    Define the border size (edges in x-direction) for the FP fitting algorithm
 WAVE_FP_BORDER_SIZE = WAVE_FP_BORDER_SIZE.copy(__NAME__)
-WAVE_FP_BORDER_SIZE.value = 3
+WAVE_FP_BORDER_SIZE.value = 6
 
 #    Define the box half-size (in pixels) to fit an individual FP peak to
 #        - a gaussian will be fit to +/- this size from the center of
 #          the FP peak
 WAVE_FP_FPBOX_SIZE = WAVE_FP_FPBOX_SIZE.copy(__NAME__)
-WAVE_FP_FPBOX_SIZE.value = 3
+WAVE_FP_FPBOX_SIZE.value = 5
 
 #    Define the sigma above the median that a peak must have  - [cal_drift-peak]
 #        to be recognised as a valid peak (before fitting a gaussian)
