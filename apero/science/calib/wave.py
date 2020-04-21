@@ -820,6 +820,9 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
     amp = np.zeros_like(list_pixels)
     nsig = np.repeat(np.nan, len(list_pixels))
 
+    # TODO: remove break point
+    constants.break_point(params)
+
     # ----------------------------------------------------------------------
     # loop around orders
     for order_num in range(nbo):
