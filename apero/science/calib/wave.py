@@ -662,12 +662,8 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
     # get the lines for HC files
     # ----------------------------------------------------------------------
     elif fibtype in hcfibtypes:
-        # print progress
-        # TODO: Move to language DB
-        wmsg = 'Running get ref lines for {0}'
-        wargs = ['HC']
-        WLOG(params, 'info', wmsg.format(*wargs))
-
+        # print progress Running get ref lines for HC
+        WLOG(params, 'info', TextEntry('40-017-00049'))
         # load the line list
         wavell, ampll = drs_data.load_linelist(params, **kwargs)
         # storage for outputs
@@ -712,11 +708,8 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
     # get the lines for FP files
     # ----------------------------------------------------------------------
     elif fibtype in fpfibtypes:
-        # print progress
-        # TODO: Move to language DB
-        wmsg = 'Running get ref lines for {0}'
-        wargs = ['FP']
-        WLOG(params, 'info', wmsg.format(*wargs))
+        # print progress Running get ref lines for FP
+        WLOG(params, 'info', TextEntry('40-017-00050'))
         # ------------------------------------------------------------------
         # deal with getting cavity poly
         if cavity_poly is not None:
@@ -798,12 +791,10 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
     # else we break
     # ----------------------------------------------------------------------
     else:
+        # log error and break
         eargs = [e2dsfile.name, dprtype, fiber, func_name, hcfibtypes,
                  fpfibtypes]
-        # TODO: Move to language DB
-        emsg = ('Error e2ds file = "{0}" (dprtype={1} fiber={2}) not valid '
-                'for {3}\n\t Valid HC types: {4} \n\t Valid FP types = {5}')
-        WLOG(params, '', emsg.format(*eargs))
+        WLOG(params, 'error', TextEntry('00-017-00012', args=eargs))
         list_waves = []
         list_orders = []
         list_pixels = []
@@ -892,12 +883,10 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
                 # ignore any bad lines
                 except RuntimeError:
                     pass
-        # log progress
-        # TODO: Move to language DB
+        # log progress: Order {0}/{1} Fiber {2} Valid lines: {3}/{4} (type={5})
         eargs = [order_num, nbo - 1, fiber, valid_lines, len(order_waves),
                  fibtype]
-        emsg = 'Order {0}/{1} Fiber {2} Valid lines: {3}/{4} (type={5})'
-        WLOG(params, '', emsg.format(*eargs))
+        WLOG(params, '', TextEntry('40-017-00051', args=eargs))
 
     # lines that are not at a high enough SNR are flagged as NaN
     # we do NOT remove these lines as we want all tables to have
@@ -5640,20 +5629,16 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     # ----------------------------------------------------------------------
     # Update the wavelength of lines with the master solution
     # ----------------------------------------------------------------------
-    # log progress
-    # TODO: Add to language DB
-    wmsg = 'Updating measured wavelength (master)'
-    WLOG(params, 'info', wmsg)
+    # log progress: Updating measured wavelength (master)
+    WLOG(params, 'info', TextEntry('40-017-00044'))
     # update wavelength measured in line list table
     mhcl = update_wavelength_measured(params, mhcl, mwave, kind='HC')
     mfpl = update_wavelength_measured(params, mfpl, mwave, kind='FP')
     # ----------------------------------------------------------------------
     # Construct night line list
     # ----------------------------------------------------------------------
-    # log progress
-    # TODO: Add to language DB
-    wmsg = 'Constructing night list list (night)'
-    WLOG(params, 'info', wmsg)
+    # log progress Constructing night list list (night)'
+    WLOG(params, 'info', TextEntry('40-017-00045'))
     # generate the hc reference lines
     hcargs = dict(e2dsfile=hce2ds, wavemap=mwave, hclines=mhcl)
     rhcl = get_master_lines(params, recipe, **hcargs)
@@ -5686,23 +5671,17 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     # ----------------------------------------------------------------------
     # Iterative loop to update wavelength
     # ----------------------------------------------------------------------
-    # TODO: Add to language DB
-    wmsg = 'Updating measured wavelength (night)'
-    WLOG(params, 'info', wmsg)
+    # log progress Updating measured wavelength (night)
+    WLOG(params, '', TextEntry('40-017-00046'))
     # loop around iterations
     for iteration in range(niterations):
-        # log progress
-        # TODO: move to language DB
+        # log progress Night wave fit iteration i of j
         wargs = [iteration + 1, niterations]
-        wmsg = 'Night wave fit iteration {0} of {1}'
-        WLOG(params, '', wmsg.format(*wargs))
+        WLOG(params, '', TextEntry('40-017-00047', args=wargs))
         # ------------------------------------------------------------------
         # log model additions
-        # TODO: add to language database
         wargs = [amps_cumu[0], amps_cumu[1], amps_cumu[2], amps_cumu[3]]
-        wmsg = ('\tconstant={0:.3e} scaled-x={1:.3e} scaled-ord={2:.3e} '
-                'crossterm={3:.3e}')
-        WLOG(params, '', wmsg.format(*wargs))
+        WLOG(params, '', TextEntry('40-017-00048', args=wargs))
         # ------------------------------------------------------------------
         # model wavelength for the night with linear + HC model
         # add a constant offset in pixels
@@ -5721,9 +5700,8 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
         rwave = np.array(mwave) + nconst
         # ----------------------------------------------------------------------
         # Update the nightly tables
-        # TODO: add to language database
-        wmsg = '\tupdating measured wavelength (night)'
-        WLOG(params, '', wmsg)
+        # log progress: updating measured wavelength (night)'
+        WLOG(params, '', TextEntry('40-017-00046'))
         # update wavelength measured in line list table
         rhcl = update_wavelength_measured(params, rhcl, rwave, kind='HC')
         rfpl = update_wavelength_measured(params, rfpl, rwave, kind='FP')
