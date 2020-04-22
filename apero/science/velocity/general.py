@@ -330,6 +330,9 @@ def remove_wide_peaks(params, props, cutwidth):
     # TODO: ipeak spacing
     peak_spacing = 5
 
+    # TODO: remove break point
+    constants.break_point(params)
+
     # define a mask to cut out wide peaks
     mask = np.array(props['PEAK2PEAK']) < cutwidth
 
