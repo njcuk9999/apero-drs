@@ -1391,7 +1391,8 @@ WAVE_CCF_DETNOISE.value = 100.0
 
 #  The filename of the CCF Mask to use for the FP CCF
 WAVE_CCF_MASK = WAVE_CCF_MASK.copy(__NAME__)
-WAVE_CCF_MASK.value = 'fp.mas'
+# WAVE_CCF_MASK.value = 'fp.mas'
+WAVE_CCF_MASK.value = 'smart_fp_mask.mas'
 
 # Define the wavelength units for the mask for the FP CCF
 WAVE_CCF_MASK_UNITS = WAVE_CCF_MASK_UNITS.copy(__NAME__)
