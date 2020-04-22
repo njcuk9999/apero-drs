@@ -275,6 +275,14 @@ def fit_fp_peaks(x, y, size, return_model=False):
                       'upper={2})')
             warns += warns.format(pnames[p_it], lowerbounds[p_it],
                                   upperbounds[p_it])
+        if p0[p_it] < lowerbounds[p_it] or p0[p_it] > upperbounds[p_it]:
+            if warns is None:
+                warns = ''
+            warns += ('\nBoundError: Inital guess for {0} out of bounds '
+                      '(guess={1} lower={2} upper={3})')
+            warns += warns.format(pnames[p_it], p0[p_it],
+                                  lowerbounds[p_it], upperbounds[p_it])
+
     # deal with bad bounds
     if warns is not None:
         popt = [np.nan, np.nan, np.nan, np.nan, np.nan]
@@ -352,7 +360,7 @@ def remove_wide_peaks(params, props, cutwidth):
     func_name = __NAME__ + '.remove_wide_peaks()'
 
     # TODO: ipeak spacing
-    peak_spacing = 5
+    # peak_spacing = 5
 
     # TODO: remove break point
     constants.break_point(params)
@@ -386,7 +394,7 @@ def remove_wide_peaks(params, props, cutwidth):
         # get the amplitudes
         amppeak = props['AMPPEAK'][gg]
         # get peak spacing
-        # peak_spacing = props['PEAKSIZE'][order_num] // 2
+        peak_spacing = props['PEAKSIZE'][order_num] / 2
         # get the points where two peaks are spaced by < peak_spacing
         ind = np.argwhere(xpeak[1:] - xpeak[:-1] < peak_spacing)
         # get the indices of the second peak of each pair
