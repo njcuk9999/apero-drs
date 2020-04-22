@@ -292,13 +292,11 @@ def fit_fp_peaks(x, y, size, return_model=False):
             pcov = None
             warns = '{0}: {1}'.format(type(e), e)
             model = np.repeat([np.nan], len(x))
-            constants.break_point()
         except RuntimeError as e:
             popt = [np.nan, np.nan, np.nan, np.nan, np.nan]
             pcov = None
             warns = '{0}: {1}'.format(type(e), e)
             model = np.repeat([np.nan], len(x))
-            constants.break_point()
     # deal with returning model
     if return_model:
         return p0, popt, pcov, warns, model
