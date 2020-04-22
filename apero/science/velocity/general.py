@@ -260,7 +260,8 @@ def fit_fp_peaks(x, y, size, return_model=False):
     # set up initial guess
     pnames = ['amp', 'pos', 'period', 'shape', 'dc']
     # [amp, position, period, exponent, zero point]
-    p0 = [np.max(y) - np.min(y), np.median(x), size, 1.0, np.min(y)]
+    p0 = [np.max(y) - np.min(y), np.median(x), size, 1.5,
+          np.max([0, np.min(y)])]
     # set up the bounds
     lowerbounds = [0.5 * p0[0], p0[1] - 2, 0.7 * p0[2], 1.0, 0.0]
     upperbounds = [2.0 * p0[0], p0[1] + 2, 1.3 * p0[2], 10.0, 0.5 * p0[0]]
