@@ -432,9 +432,8 @@ def remove_wide_peaks(params, props, cutwidth):
     WLOG(params, 'info', TextEntry('40-018-00003', args=wargs))
 
     # log number of lines removed as double-fitted
-    if len(props['XPEAK_OLD']) > len(props['XPEAK']):
-        wargs = [len(props['XPEAK_OLD']) - len(props['XPEAK'])]
-        WLOG(params, 'info', TextEntry('40-018-00004', args=wargs))
+    wargs = [len(props['XPEAK_OLD']) - len(props['XPEAK'])]
+    WLOG(params, 'info', TextEntry('40-018-00004', args=wargs))
 
     # return props
     return props
