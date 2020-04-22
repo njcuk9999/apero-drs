@@ -267,8 +267,7 @@ def fit_fp_peaks(x, y, size, return_model=False):
     # try to fit etiennes airy function
     try:
         with warnings.catch_warnings(record=True) as _:
-            popt = curve_fit(ea_airy, x, y, p0=p0, bounds=bounds)
-            pcov = None
+            popt, pcov = curve_fit(ea_airy, x, y, p0=p0, bounds=bounds)
     except ValueError as e:
         # log that ydata or xdata contains NaNs
         popt = [np.nan, np.nan, np.nan, np.nan, np.nan]
