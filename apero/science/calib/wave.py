@@ -863,7 +863,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
                         cond2 = (popt[2] < 2) and (popt[2] > 0.5)
                     # else fit ea airy function to FP
                     else:
-                        out = velocity.fit_fp_peaks(params, index, ypix, wfit,
+                        out = velocity.fit_fp_peaks(index, ypix, wfit,
                                                     return_model=True)
                         # get parameters from fit
                         p0, popt, pcov, warns, model = out
