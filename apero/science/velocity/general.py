@@ -260,10 +260,16 @@ def fit_fp_peaks(x, y, size, return_model=False):
     # set up initial guess
     # [amp, position, period, exponent, zero point]
     p0 = [np.max(y) - np.min(y), np.median(x), size, 1.0, np.min(y)]
+    # set up the bounds
+    bounds = [[0.5 * p0[0], 2.0 * p0[0]],
+              [p0[1] - 2, p0[1] + 2],
+              [0.7 * p0[2], 1.3 * p0[2]],
+              [1.0, 10.0],
+              [0.0, 2 * p0[4]]]
     # try to fit etiennes airy function
     try:
         with warnings.catch_warnings(record=True) as _:
-            popt, pcov = curve_fit(ea_airy, x, y, p0=p0)
+            popt, pcov = curve_fit(ea_airy, x, y, p0=p0, bounds=bounds)
     except ValueError as e:
         # log that ydata or xdata contains NaNs
         popt = [np.nan, np.nan, np.nan, np.nan, np.nan]
