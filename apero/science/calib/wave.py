@@ -5254,17 +5254,9 @@ def wave_summary(recipe, params, llprops, fiber, qc_params):
     recipe.plot.add_stat('KW_WFP_CM_INDX', value=llprops['USED_CM_INDEX'],
                          fiber=fiber)
     # from find_fp_lines_new
-    recipe.plot.add_stat('KW_WFP_BORDER', value=llprops['USED_BORDER'],
+    recipe.plot.add_stat('KW_WFP_NPERCENT', value=llprops['USED_NORMPERCENT'],
                          fiber=fiber)
-    recipe.plot.add_stat('KW_WFP_BSIZE', value=llprops['USED_BOX_SIZE'],
-                         fiber=fiber)
-    recipe.plot.add_stat('KW_WFP_SIGLIM', value=llprops['USED_SIGLIM'],
-                         fiber=fiber)
-    recipe.plot.add_stat('KW_WFP_LAMP', value=llprops['USED_LAMP'],
-                         fiber=fiber)
-    recipe.plot.add_stat('KW_WFP_IPEAK_SPACE', fiber=fiber,
-                         value=llprops['USED_IPEAK_SPACE'])
-    recipe.plot.add_stat('KW_WFP_EXPWIDTH', value=llprops['USED_EXPWIDTH'],
+    recipe.plot.add_stat('KW_WFP_LIMIT', value=llprops['USED_LIMIT'],
                          fiber=fiber)
     recipe.plot.add_stat('KW_WFP_CUTWIDTH', value=llprops['USED_CUTWIDTH'],
                          fiber=fiber)
@@ -5343,12 +5335,10 @@ def fp_write_wavesol_master(params, recipe, llprops, hcfile, fpfile, fiber,
     wavefile.add_hkey('KW_WFP_LARGE_JUMP', value=llprops['USED_LARGE_JUMP'])
     wavefile.add_hkey('KW_WFP_CM_INDX', value=llprops['USED_CM_INDEX'])
     # from find_fp_lines_new
-    wavefile.add_hkey('KW_WFP_BORDER', value=llprops['USED_BORDER'])
-    wavefile.add_hkey('KW_WFP_BSIZE', value=llprops['USED_BOX_SIZE'])
-    wavefile.add_hkey('KW_WFP_SIGLIM', value=llprops['USED_SIGLIM'])
-    wavefile.add_hkey('KW_WFP_LAMP', value=llprops['USED_LAMP'])
-    wavefile.add_hkey('KW_WFP_IPEAK_SPACE', value=llprops['USED_IPEAK_SPACE'])
-    wavefile.add_hkey('KW_WFP_EXPWIDTH', value=llprops['USED_EXPWIDTH'])
+    wavefile.add_hkey_1d('KW_WFP_WIDUSED', values=llprops['PEAKSIZE'],
+                         dim1name='order')
+    wavefile.add_hkey('KW_WFP_NPERCENT', value=llprops['USED_NORMPERCENT'])
+    wavefile.add_hkey('KW_WFP_LIMIT', value=llprops['USED_LIMIT'])
     wavefile.add_hkey('KW_WFP_CUTWIDTH', value=llprops['USED_CUTWIDTH'])
     # from fp ccf calculation (compute_fp_ccf)
     wavefile.add_hkey('KW_WFP_SIGDET', value=llprops['CCF_SIGDET'])
