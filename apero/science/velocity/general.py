@@ -258,28 +258,47 @@ def fit_fp_peaks(x, y, size, return_model=False):
     # get gauss function
     ea_airy = mp.ea_airy_function
     # set up initial guess
+    pnames = ['amp', 'pos', 'period', 'shape', 'dc']
     # [amp, position, period, exponent, zero point]
     p0 = [np.max(y) - np.min(y), np.median(x), size, 1.0, np.min(y)]
     # set up the bounds
     lowerbounds = [0.5 * p0[0], p0[1] - 2, 0.7 * p0[2], 1.0, 0.0]
-    upperbounds = [2.0 * p0[0], p0[1] + 2, 1.3 * p0[2], 10.0, 2 * p0[4]]
+    upperbounds = [2.0 * p0[0], p0[1] + 2, 1.3 * p0[2], 10.0, 0.5 * p0[0]]
     bounds = [lowerbounds, upperbounds]
-    # try to fit etiennes airy function
-    try:
-        with warnings.catch_warnings(record=True) as _:
-            popt, pcov = curve_fit(ea_airy, x, y, p0=p0, bounds=bounds)
-    except ValueError as e:
-        # log that ydata or xdata contains NaNs
+    # test bounds make sense
+    for p_it in range(len(lowerbounds)):
+        if lowerbounds[p_it] >= upperbounds[p_it]:
+            if warns is None:
+                warns = ''
+            warns += ('\nBoundError: Lower bound {0} incorrect (lower={1} '
+                      'upper={2})')
+            warns += warns.format(pnames[p_it], lowerbounds[p_it],
+                                  upperbounds[p_it])
+    # deal with bad bounds
+    if warns is not None:
         popt = [np.nan, np.nan, np.nan, np.nan, np.nan]
         pcov = None
-        warns = '{0}: {1}'.format(type(e), e)
-    except RuntimeError as e:
-        popt = [np.nan, np.nan, np.nan, np.nan, np.nan]
-        pcov = None
-        warns = '{0}: {1}'.format(type(e), e)
+        model = np.repeat([np.nan], len(x))
+    else:
+        # try to fit etiennes airy function
+        try:
+            with warnings.catch_warnings(record=True) as _:
+                popt, pcov = curve_fit(ea_airy, x, y, p0=p0, bounds=bounds)
+            model = ea_airy(x, *popt)
+        except ValueError as e:
+            # log that ydata or xdata contains NaNs
+            popt = [np.nan, np.nan, np.nan, np.nan, np.nan]
+            pcov = None
+            warns = '{0}: {1}'.format(type(e), e)
+            model = np.repeat([np.nan], len(x))
+        except RuntimeError as e:
+            popt = [np.nan, np.nan, np.nan, np.nan, np.nan]
+            pcov = None
+            warns = '{0}: {1}'.format(type(e), e)
+            model = np.repeat([np.nan], len(x))
     # deal with returning model
     if return_model:
-        return p0, popt, pcov, warns, ea_airy(x, *popt)
+        return p0, popt, pcov, warns, model
     else:
         # return the guess and the best fit
         return p0, popt, pcov, warns
