@@ -606,13 +606,6 @@ def fill_e2ds_nans(params, image, **kwargs):
         # set the NaN values to the smooth value
         image2[order_num][nanmask] = smooth[nanmask]
 
-        if params['DRS_PLOT'] > 0 and params['DRS_DEBUG'] > 1:
-            # TODO: add plot
-            pass
-            # plt.plot(smooth)
-            # plt.plot(image2[order_num])
-            # plt.show()
-
     # return the filled e2ds
     return image2
 
@@ -649,23 +642,6 @@ def locate_reference_file(params, recipe, infile):
 # =============================================================================
 # Define CCF calculation functions
 # =============================================================================
-# TODO: REMOVE TEST FUNCTION
-def wavetest(name, wavemap):
-    print('\n')
-    print('='*50)
-    print(name)
-    print('='*50)
-    print('\tmax: {0}'.format(np.nanmax(wavemap)))
-    print('\tmin: {0}'.format(np.nanmin(wavemap)))
-    print('\tmean:{0}'.format(np.nanmean(wavemap)))
-    print('\tmed: {0}'.format(np.nanmedian(wavemap)))
-    print('\t[10, 2044]: {0}'.format(wavemap[10, 2044]))
-    print('\t[20, 2044]: {0}'.format(wavemap[20, 2044]))
-    print('\t[30, 2044]: {0}'.format(wavemap[30, 2044]))
-    print('\t[40, 2044]: {0}'.format(wavemap[40, 2044]))
-    print('\n\n')
-
-
 def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
                         fiber, **kwargs):
 
@@ -1053,10 +1029,6 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
     ccf_lines = []
     ccf_all_snr = []
     ccf_norm_all = []
-
-    # TODO: remove test
-    wavetest('RV CCF CALC fiber={0}'.format(fiber), wavemap)
-
     # ----------------------------------------------------------------------
     # loop around the orders
     for order_num in range(nbo):

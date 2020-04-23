@@ -280,10 +280,6 @@ def __main__(recipe, params):
         rvs_all = dict()
         # loop around fibers
         for fiber in fiber_types:
-
-            # TODO: remove test
-            velocity.general.wavetest('RV START fiber={0}'.format(fiber),
-                                      wprops_others[fiber]['WAVEMAP'])
             # choose which wprops to use
             wprops = ParamDict(wprops_others[fiber])
             # get fp e2ds file
@@ -310,10 +306,6 @@ def __main__(recipe, params):
             # update correct wprops
             wprops_others[fiber] = ParamDict(wprops)
 
-            # TODO: remove test
-            velocity.general.wavetest('RV END fiber={0}'.format(fiber),
-                                      wprops_others[fiber]['WAVEMAP'])
-
         # ==================================================================
         # QUALITY CONTROL (AFTER FP MASTER FIBER + OTHER FIBERS)
         # ==================================================================
@@ -334,12 +326,6 @@ def __main__(recipe, params):
             # get hc and fp outputs
             hc_e2ds_file = hc_outputs[fiber]
             fp_e2ds_file = fp_outputs[fiber]
-
-
-            # TODO: remove test
-            velocity.general.wavetest('WRITE FILE fiber={0}'.format(fiber),
-                                      wprops['WAVEMAP'])
-
             # ----------------------------------------------------------
             # write FP wavelength solution to file
             # ----------------------------------------------------------
