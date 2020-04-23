@@ -359,12 +359,6 @@ def remove_wide_peaks(params, props, cutwidth):
     """
     func_name = __NAME__ + '.remove_wide_peaks()'
 
-    # TODO: ipeak spacing
-    # peak_spacing = 5
-
-    # TODO: remove break point
-    constants.break_point(params)
-
     # define a mask to cut out wide peaks
     mask = np.array(props['PEAK2PEAK']) < cutwidth
 
@@ -757,10 +751,6 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     mkwargs = dict(filename=ccfmask, mask_min=mask_min, mask_width=mask_width,
                    mask_units=mask_units)
     ll_mask_d, ll_mask_ctr, w_mask = get_ccf_mask(params, **mkwargs)
-
-    # TODO: remove break point
-    constants.break_point(params)
-
     # calculate the CCF
     props = ccf_calculation(params, image, blaze, wavemap, berv, targetrv,
                             ccfwidth, ccfstep, ll_mask_ctr, w_mask,

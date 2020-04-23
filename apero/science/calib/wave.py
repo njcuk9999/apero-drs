@@ -5463,6 +5463,14 @@ def process_other_fibers(params, recipe, mprops, mfpl, fp_outputs):
     mdeg = mprops['DEG']
     # storage for coeffients
     solutions = dict()
+
+    # ----------------------------------------------------------------------
+    # add master to solutions
+    # ----------------------------------------------------------------------
+    # add rwprops to solutions
+    solutions[master_fiber] = ParamDict(mprops)
+    # ----------------------------------------------------------------------
+
     # loop around fibers
     for fiber in fiber_types:
         # log that we are processing fiber
