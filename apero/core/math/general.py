@@ -122,17 +122,17 @@ def ea_airy_function(x, amp, x0, w, beta, zp):
     :param zp: the dc level
     :return:
     """
-    y = zp + amp*((1+np.cos(2*np.pi*(x-x0)/w) )/2.0)**beta
+    y = zp + amp * ((1 + np.cos(2 * np.pi * (x - x0) / w)) / 2.0) ** beta
     return y
 
 
 def fit2dpoly(x, y, z):
     # fit a 2nd order polynomial in 2d over x/y/z pixel points
     ones = np.ones_like(x)
-    a = np.array([ones, x, y, x**2, y**2, x*y]).T
+    a = np.array([ones, x, y, x ** 2, y ** 2, x * y]).T
     b = z.flatten()
     # perform a least squares fit on a and b
-    coeff, r, rank, s = np.linalg.lstsq(a, b,rcond=None)
+    coeff, r, rank, s = np.linalg.lstsq(a, b, rcond=None)
     # return the coefficients
     return coeff
 
@@ -563,14 +563,14 @@ def rot8(image, nrotation, invert=False):
     :return: rotated and/or flipped image
     """
     # how to invert them (if invert is True
-    inversion = {1:3, 2:2, 3:1, 4:4, 5:7, 6:6, 7:5, 0:0}
+    inversion = {1: 3, 2: 2, 3: 1, 4: 4, 5: 7, 6: 6, 7: 5, 0: 0}
     # module 8 number
     nrot = int(nrotation % 8)
     # deal with possible inverting
     if invert:
         nrot = inversion[nrot]
     # return the correctly rotated image
-    return np.rot90(image[::1-2*(nrot // 4)], nrot % 4)
+    return np.rot90(image[::1 - 2 * (nrot // 4)], nrot % 4)
 
 
 def medbin(image, by, bx):
@@ -771,10 +771,10 @@ def relativistic_waveshift(dv, units='km/s'):
     """
     # get c in correct units
     # noinspection PyUnresolvedReferences
-    if units == 'km/s' or units == uu.km/uu.s:
+    if units == 'km/s' or units == uu.km / uu.s:
         c = speed_of_light
     # noinspection PyUnresolvedReferences
-    elif units == 'm/s' or units == uu.m/uu.s:
+    elif units == 'm/s' or units == uu.m / uu.s:
         c = speed_of_light_ms
     else:
         raise ValueError("Wrong units for dv ({0})".format(units))

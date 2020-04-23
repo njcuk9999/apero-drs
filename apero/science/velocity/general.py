@@ -1067,7 +1067,6 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         wa_ord = np.array(wavemap[order_num])
         sp_ord = np.array(image[order_num])
         bl_ord = np.array(blaze[order_num])
-
         # normalize per-ord blaze to its peak value
         # this gets rid of the calibration lamp SED
         bl_ord /= np.nanpercentile(bl_ord, blaze_norm_percentile)
