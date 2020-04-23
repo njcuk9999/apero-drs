@@ -5352,7 +5352,7 @@ def fp_write_wavesol_master(params, recipe, llprops, hcfile, fpfile, fiber,
     # add qc parameters
     wavefile.add_qckeys(qc_params)
     # copy data
-    wavefile.data = llprops['LL_FINAL']
+    wavefile.data = wprops['WAVEMAP']
     # ------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [fiber, wavefile.filename]
