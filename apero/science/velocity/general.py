@@ -649,6 +649,23 @@ def locate_reference_file(params, recipe, infile):
 # =============================================================================
 # Define CCF calculation functions
 # =============================================================================
+# TODO: REMOVE TEST FUNCTION
+def wavetest(name, wavemap):
+    print('\n')
+    print('='*50)
+    print(name)
+    print('='*50)
+    print('\tmax: {0}'.format(np.nanmax(wavemap)))
+    print('\tmin: {0}'.format(np.nanmin(wavemap)))
+    print('\tmean:{0}'.format(np.nanmean(wavemap)))
+    print('\tmed: {0}'.format(np.nanmedian(wavemap)))
+    print('\t[10, 2044]: {0}'.format(wavemap[10, 2044]))
+    print('\t[20, 2044]: {0}'.format(wavemap[20, 2044]))
+    print('\t[30, 2044]: {0}'.format(wavemap[30, 2044]))
+    print('\t[40, 2044]: {0}'.format(wavemap[40, 2044]))
+    print('\n\n')
+
+
 def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
                         fiber, **kwargs):
 
@@ -751,6 +768,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     mkwargs = dict(filename=ccfmask, mask_min=mask_min, mask_width=mask_width,
                    mask_units=mask_units)
     ll_mask_d, ll_mask_ctr, w_mask = get_ccf_mask(params, **mkwargs)
+
     # calculate the CCF
     props = ccf_calculation(params, image, blaze, wavemap, berv, targetrv,
                             ccfwidth, ccfstep, ll_mask_ctr, w_mask,
@@ -1035,6 +1053,9 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
     ccf_lines = []
     ccf_all_snr = []
     ccf_norm_all = []
+
+    # TODO: remove test
+    wavetest('RV CCF CALC fiber={0}'.format(fiber), wavemap)
 
     # ----------------------------------------------------------------------
     # loop around the orders

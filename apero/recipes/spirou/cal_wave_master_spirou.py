@@ -280,11 +280,12 @@ def __main__(recipe, params):
         rvs_all = dict()
         # loop around fibers
         for fiber in fiber_types:
+
+            # TODO: remove test
+            velocity.general.wavetest('RV START fiber={0}'.format(fiber),
+                                      wprops_others[fiber]['WAVEMAP'])
             # choose which wprops to use
-            if fiber == master_fiber:
-                wprops = mwprops
-            else:
-                wprops = wprops_others[fiber]
+            wprops = ParamDict(wprops_others[fiber])
             # get fp e2ds file
             fpe2dsfile = fp_outputs[fiber]
             # compute the ccf
@@ -307,11 +308,11 @@ def __main__(recipe, params):
             # add to rv storage
             rvs_all[fiber] = rvprops
             # update correct wprops
-            if fiber == master_fiber:
-                mwprops = wprops
-            else:
-                wprops_others[fiber] = wprops
+            wprops_others[fiber] = ParamDict(wprops)
 
+            # TODO: remove test
+            velocity.general.wavetest('RV END fiber={0}'.format(fiber),
+                                      wprops_others[fiber]['WAVEMAP'])
 
         # ==================================================================
         # QUALITY CONTROL (AFTER FP MASTER FIBER + OTHER FIBERS)
@@ -328,11 +329,7 @@ def __main__(recipe, params):
         # ==================================================================
         # loop around all fibers
         for fiber in fiber_types:
-            # choose which wprops to use
-            if fiber == master_fiber:
-                wprops = mwprops
-            else:
-                wprops = wprops_others[fiber]
+            wprops = wprops_others[fiber]
             # ----------------------------------------------------------
             # get hc and fp outputs
             hc_e2ds_file = hc_outputs[fiber]
