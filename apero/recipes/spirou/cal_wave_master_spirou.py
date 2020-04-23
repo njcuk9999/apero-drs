@@ -269,6 +269,10 @@ def __main__(recipe, params):
         wprops_others = wave.process_other_fibers(params, recipe, mwprops,
                                                   fplines, fp_outputs)
 
+
+        # TODO: remove breakpoint
+        constants.break_point()
+
         # ==================================================================
         # FP CCF COMPUTATION - need all fibers done one-by-one
         # ==================================================================
@@ -308,8 +312,6 @@ def __main__(recipe, params):
             else:
                 wprops_others[fiber] = wprops
 
-        # TODO: remove breakpoint
-        constants.break_point()
 
         # ==================================================================
         # QUALITY CONTROL (AFTER FP MASTER FIBER + OTHER FIBERS)
