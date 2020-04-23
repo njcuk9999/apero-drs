@@ -334,6 +334,12 @@ def __main__(recipe, params):
             # get hc and fp outputs
             hc_e2ds_file = hc_outputs[fiber]
             fp_e2ds_file = fp_outputs[fiber]
+
+
+            # TODO: remove test
+            velocity.general.wavetest('WRITE FILE fiber={0}'.format(fiber),
+                                      wprops['WAVEMAP'])
+
             # ----------------------------------------------------------
             # write FP wavelength solution to file
             # ----------------------------------------------------------
