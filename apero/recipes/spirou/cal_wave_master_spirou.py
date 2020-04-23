@@ -287,7 +287,7 @@ def __main__(recipe, params):
             # choose which wprops to use
             wprops = ParamDict(wprops_others[fiber])
             # get fp e2ds file
-            fpe2dsfile = fp_outputs[fiber]
+            fp_e2ds_file = fp_outputs[fiber]
             # compute the ccf
             ccfargs = [fp_e2ds_file, fp_e2ds_file.data, blaze,
                        wprops['WAVEMAP'], fiber]
