@@ -172,6 +172,10 @@ FIBER_SET_NUM_FIBERS_B.value = 1
 PP_HOTPIX_BOXSIZE = PP_HOTPIX_BOXSIZE.copy(__NAME__)
 PP_HOTPIX_BOXSIZE.value = 5
 
+# Defines the size around badpixels that is considered part of the bad pixel
+PP_CORRUPT_MED_SIZE = PP_CORRUPT_MED_SIZE.copy(__NAME__)
+PP_CORRUPT_MED_SIZE.value = 2
+
 # Defines the threshold in sigma that selects hot pixels
 PP_CORRUPT_HOT_THRES = PP_CORRUPT_HOT_THRES.copy(__NAME__)
 PP_CORRUPT_HOT_THRES.value = 10
