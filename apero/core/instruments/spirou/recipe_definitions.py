@@ -751,7 +751,9 @@ cal_wave_night.description = Help['WAVE_DESC']
 cal_wave_night.epilog = Help['WAVE_EXAMPLE']
 cal_wave_night.kind = 'recipe'
 cal_wave_night.set_outputs(WAVE_E2DS=sf.out_ext_e2dsff,
-                           WAVEMAP_NIGHT=sf.out_wave_night)
+                           WAVEMAP_NIGHT=sf.out_wave_night,
+                           WAVE_HCLIST=sf.out_wave_hclist,
+                           WAVE_FPLIST=sf.out_wave_fplist)
 cal_wave_night.set_debug_plots('WAVENIGHT_ITERPLOT',
                                'WAVENIGHT_DIFFPLOT', 'WAVENIGHT_HISTPLOT',
                                'WAVEREF_EXPECTED', 'CCF_RV_FIT',
