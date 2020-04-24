@@ -23,9 +23,9 @@ from apero.lang import drs_exceptions
 # define the package name
 PACKAGE = 'apero'
 # define the database path relative to package
-DATABASE_PATH = './locale/databases/'
+DATABASE_PATH = './lang/databases/'
 # define the backup path relative to package
-BACKUP_PATH = './locale/backup/'
+BACKUP_PATH = './lang/backup/'
 # define the database (xls file)
 DATABASE_FILE = 'language.xls'
 # define the database names (sheet names in the xls file)
