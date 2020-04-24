@@ -26,8 +26,8 @@ __INSTRUMENT__ = 'None'
 # Define package name
 PACKAGE = 'apero'
 # file locations
-DEFAULT_PATH = './locale/databases/'
-INSTRUMENT_PATH = './locale/databases/'
+DEFAULT_PATH = './lang/databases/'
+INSTRUMENT_PATH = './lang/databases/'
 # must be csv files
 HELP_FILES = ['help.csv']
 ERROR_FILES = ['error.csv']
