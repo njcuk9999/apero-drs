@@ -17,7 +17,7 @@ from astropy.io import fits
 import argparse
 
 from apero import core
-from apero import locale
+from apero import lang
 from apero.core import constants
 from apero.core import math as mp
 from apero.io import drs_data
@@ -40,9 +40,9 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
-Help = locale.drs_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
+Help = lang.drs_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
 
 # whether this is a debug run (produces mask image)
 DEBUG = False

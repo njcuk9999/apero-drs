@@ -15,7 +15,7 @@ from astropy.table import Table
 from collections import OrderedDict
 import pkg_resources
 
-from apero.locale.core import drs_exceptions
+from apero.lang.core import drs_exceptions
 
 # =============================================================================
 # Define variables

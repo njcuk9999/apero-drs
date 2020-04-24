@@ -15,7 +15,7 @@ import pkg_resources
 from collections import OrderedDict
 
 from apero import core
-from apero import locale
+from apero import lang
 from apero.core import constants
 
 # =============================================================================
@@ -33,7 +33,7 @@ __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
+TextEntry = lang.drs_text.TextEntry
 # --------------------------------------------------------------------------
 # path strings to exclude
 EXCLUDE_PATH_STR = []

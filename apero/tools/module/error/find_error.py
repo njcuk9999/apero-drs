@@ -18,7 +18,7 @@ import re
 
 from apero.core import constants
 from apero import core
-from apero.locale import drs_text
+from apero.lang import drs_text
 
 # =============================================================================
 # Define variables

@@ -12,7 +12,7 @@ Created on 2019-08-16 at 09:23
 import numpy as np
 
 from apero import core
-from apero import locale
+from apero import lang
 from apero.core import constants
 from apero.core.core import drs_database
 from apero.io import drs_image
@@ -38,8 +38,8 @@ __release__ = Constants['DRS_RELEASE']
 WLOG = core.wlog
 ParamDict = constants.ParamDict
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
 # define extraction code to use
 EXTRACT_NAME = 'cal_extract_spirou.py'
 
@@ -269,10 +269,6 @@ def __main__(recipe, params):
         wprops_others = wave.process_other_fibers(params, recipe, mwprops,
                                                   fplines, fp_outputs)
 
-
-        # TODO: remove breakpoint
-        constants.break_point()
-
         # ==================================================================
         # FP CCF COMPUTATION - need all fibers done one-by-one
         # ==================================================================
@@ -283,7 +279,7 @@ def __main__(recipe, params):
             # choose which wprops to use
             wprops = ParamDict(wprops_others[fiber])
             # get fp e2ds file
-            fp_e2ds_file = fp_outputs[fiber]
+            fpe2dsfile = fp_outputs[fiber]
             # compute the ccf
             ccfargs = [fp_e2ds_file, fp_e2ds_file.data, blaze,
                        wprops['WAVEMAP'], fiber]

@@ -20,7 +20,7 @@ import warnings
 from apero.core.core import drs_log
 from apero.core import constants
 from apero.core import math as mp
-from apero.locale import drs_text
+from apero.lang import drs_text
 from apero.io import drs_fits
 from apero.io import drs_path
 from apero.io import drs_strings

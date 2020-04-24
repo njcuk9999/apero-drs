@@ -14,7 +14,7 @@ import numpy as np
 from apero.core import constants
 from apero.core import math as mp
 from apero import core
-from apero import locale
+from apero import lang
 
 
 # =============================================================================
@@ -32,7 +32,7 @@ __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
+TextEntry = lang.drs_text.TextEntry
 # get param dict
 ParamDict = constants.ParamDict
 

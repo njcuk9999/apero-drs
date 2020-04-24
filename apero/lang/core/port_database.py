@@ -13,8 +13,8 @@ from astropy.table import Table
 import importlib
 import os
 import shutil
-from apero.locale import drs_text
-from apero.locale import drs_exceptions
+from apero.lang import drs_text
+from apero.lang import drs_exceptions
 
 
 # =============================================================================

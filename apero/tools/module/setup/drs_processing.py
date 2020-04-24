@@ -23,8 +23,8 @@ from apero import core
 from apero.core.core import drs_startup
 from apero.core.core import drs_log
 from apero.core.core import drs_recipe
-from apero import locale
-from apero.locale import drs_exceptions
+from apero import lang
+from apero.lang import drs_exceptions
 from apero.core import constants
 from apero import plotting
 from apero.io import drs_table
@@ -52,8 +52,8 @@ WLOG = core.wlog
 # get the parameter dictionary
 ParamDict = constants.ParamDict
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
 # alias pcheck
 pcheck = core.pcheck
 
