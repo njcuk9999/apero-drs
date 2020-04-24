@@ -11,7 +11,7 @@ __all__ = [
     'DATA_ENGINEERING', 'CALIB_DB_FORCE_WAVESOL', 'DATA_CORE',
     # preprocessing constants
     'PP_HOTPIX_BOXSIZE', 'PP_CORRUPT_HOT_THRES', 'PP_NUM_DARK_AMP',
-    'PP_HOTPIX_FILE', 'PP_TOTAL_AMP_NUM',
+    'PP_HOTPIX_FILE', 'PP_TOTAL_AMP_NUM', 'PP_CORRUPT_MED_SIZE',
     'PP_NUM_REF_TOP', 'PP_NUM_REF_BOTTOM', 'PP_RMS_PERCENTILE',
     'PP_LOWEST_RMS_PERCENTILE', 'PP_CORRUPT_SNR_HOTPIX',
     'PP_CORRUPT_RMS_THRES', 'RAW_TO_PP_ROTATION', 'PP_DARK_MED_BINNUM',
@@ -479,6 +479,10 @@ cgroup = 'PRE-PROCESSING SETTINGS'
 # Defines the box size surrounding hot pixels to use
 PP_HOTPIX_BOXSIZE = Const('PP_HOTPIX_BOXSIZE', value=None, dtype=int,
                           minimum=1, source=__NAME__, group=cgroup)
+
+# Defines the size around badpixels that is considered part of the bad pixel
+PP_CORRUPT_MED_SIZE = Const('PP_CORRUPT_MED_SIZE', value=None, dtype=int,
+                            minimum=1, source=__NAME__, group=cgroup)
 
 # Defines the threshold in sigma that selects hot pixels
 PP_CORRUPT_HOT_THRES = Const('PP_CORRUPT_HOT_THRES', value=None, dtype=int,
