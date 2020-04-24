@@ -54,8 +54,8 @@ def get_hot_pixels(params):
     # get full badpixel file
     hotpix_table = drs_data.load_hotpix(params)
     # load pixel values
-    yhot = hotpix_table['ypix']
-    xhot  =hotpix_table['xpix']
+    yhot = np.array(hotpix_table['ypix']).astype(int)
+    xhot = np.array(hotpix_table['xpix']).astype(int)
     # return the hot pixel indices
     return [yhot, xhot]
 
