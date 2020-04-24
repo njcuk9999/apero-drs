@@ -182,6 +182,7 @@ def load_hotpix(params, **kwargs):
     return_filename = kwargs.get('return_filename', False)
     # add table fmt
     kwargs['fmt'] = kwargs.get('fmt', 'csv')
+    kwargs['datastart'] = 1
     # deal with return_filename
     if return_filename:
         return construct_path(params, filename, relfolder, func=func_name)
