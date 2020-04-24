@@ -5846,6 +5846,11 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
         # re-calculate wave map
         night_wave[order_num] = np.polyval(ocoeffs, indices)
     # ----------------------------------------------------------------------
+    # update wavelength measured in line list table
+    # TODO: this needs confirming with EA: what do we need to update in hclines/fplines
+    rhcl = update_wavelength_measured(params, rhcl, night_wave, kind='HC')
+    rfpl = update_wavelength_measured(params, rfpl, night_wave, kind='FP')
+    # ----------------------------------------------------------------------
     # add to storage
     # ----------------------------------------------------------------------
     nprops = ParamDict()
@@ -5857,8 +5862,11 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     nprops['WAVESOURCE'] = recipe.name
     nprops['NBO'] = night_coeffs.shape[0]
     nprops['DEG'] = night_coeffs.shape[1] - 1
+    nprops['HCLINES'] = rhcl
+    nprops['FPLINES'] = rfpl
     # set sources
-    keys = ['COEFFS', 'WAVEMAP', 'WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG']
+    keys = ['COEFFS', 'WAVEMAP', 'WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG',
+            'HCLINES', 'FPLINES']
     nprops.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # add constants
@@ -5998,6 +6006,52 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
     wavefile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(wavefile)
+    # ------------------------------------------------------------------
+    # write hc lines
+    # ------------------------------------------------------------------
+    # get copy of instance of wave file (WAVE_HCMAP)
+    hclfile = recipe.outputs['WAVE_HCLIST'].newcopy(recipe=recipe, fiber=fiber)
+    # construct the filename from file instance
+    hclfile.construct_filename(params, infile=hcfile)
+    # ------------------------------------------------------------------
+    # copy keys from hcwavefile
+    hclfile.copy_hdict(wavefile)
+    # set output key
+    hclfile.add_hkey('KW_OUTPUT', value=hclfile.name)
+    # set data
+    hclfile.data = nprops['HCLINES']
+    hclfile.datatype = 'table'
+    # ------------------------------------------------------------------
+    # log that we are saving rotated image
+    wargs = [fiber, hclfile.filename]
+    WLOG(params, '', TextEntry('40-017-00039', args=wargs))
+    # write image to file
+    hclfile.write_file()
+    # add to output files (for indexing)
+    recipe.add_output_file(hclfile)
+    # ------------------------------------------------------------------
+    # write fp lines
+    # ------------------------------------------------------------------
+    # get copy of instance of wave file (WAVE_HCMAP)
+    fplfile = recipe.outputs['WAVE_FPLIST'].newcopy(recipe=recipe, fiber=fiber)
+    # construct the filename from file instance
+    fplfile.construct_filename(params, infile=fpfile)
+    # ------------------------------------------------------------------
+    # copy keys from hcwavefile
+    fplfile.copy_hdict(wavefile)
+    # set output key
+    fplfile.add_hkey('KW_OUTPUT', value=fplfile.name)
+    # set data
+    fplfile.data = nprops['FPLINES']
+    fplfile.datatype = 'table'
+    # ------------------------------------------------------------------
+    # log that we are saving rotated image
+    wargs = [fiber, fplfile.filename]
+    WLOG(params, '', TextEntry('40-017-00039', args=wargs))
+    # write image to file
+    fplfile.write_file()
+    # add to output files (for indexing)
+    recipe.add_output_file(fplfile)
     # ----------------------------------------------------------------------
     # return hc wavefile
     return wavefile
