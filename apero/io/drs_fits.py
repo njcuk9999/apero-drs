@@ -126,7 +126,7 @@ class Header(fits.Header):
 # Define read functions
 # =============================================================================
 def id_drs_file(params, recipe, drs_file_sets, filename=None, nentries=None,
-                required=True, get_data=True):
+                required=True, use_input_file=False):
 
     func_name = __NAME__ + '.id_drs_file()'
     # ----------------------------------------------------------------------
@@ -194,7 +194,16 @@ def id_drs_file(params, recipe, drs_file_sets, filename=None, nentries=None,
                 found = True
                 # ----------------------------------------------------------
                 # load the data for this kind
-                file_in.read_data()
+                cond1 = file_set.data is not None
+                cond2 = file_set.header is not None
+                # use the data if flagged and if possible (cond1 & cond2)
+                if use_input_file and cond1 and cond2:
+                    # shallow copy data
+                    file_in.data = file_set.data
+                    # copy over header
+                    file_in.header = file_set.header
+                else:
+                    file_in.read_data()
                 # ----------------------------------------------------------
                 # append to list
                 kinds.append(file_in)
