@@ -13,7 +13,7 @@ import sys
 
 from apero import core
 from apero.core import constants
-from apero.locale import drs_text
+from apero.lang import drs_text
 from apero.core.constants import constant_functions as cf
 from apero.core.constants import param_functions as pf
 from apero.core.core import drs_recipe

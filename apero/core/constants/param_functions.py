@@ -5,7 +5,7 @@ Constants parameter functions
 
 DRS Import Rules:
 
-- only from apero.locale
+- only from apero.lang
 
 Created on 2019-01-17 at 15:24
 
@@ -21,7 +21,7 @@ from typing import Union
 
 from collections import OrderedDict
 
-from apero.locale import drs_exceptions
+from apero.lang import drs_exceptions
 from apero.core.constants import constant_functions
 
 # =============================================================================

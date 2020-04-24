@@ -15,7 +15,7 @@ import shutil
 import glob
 
 from apero import core
-from apero import locale
+from apero import lang
 from apero.core import constants
 from apero.core.core import drs_database
 from apero.io import drs_fits
@@ -36,7 +36,7 @@ __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
+TextEntry = lang.drs_text.TextEntry
 # Define master prefix
 MASTER_PREFIX = 'MASTER_'
 

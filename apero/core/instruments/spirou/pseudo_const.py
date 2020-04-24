@@ -15,7 +15,7 @@ from astropy.time import Time, TimeDelta
 
 from apero.core import constants
 from apero.core.instruments.default import pseudo_const
-from apero.locale import drs_exceptions
+from apero.lang import drs_exceptions
 
 # =============================================================================
 # Define variables

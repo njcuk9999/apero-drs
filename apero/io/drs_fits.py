@@ -21,7 +21,7 @@ import traceback
 
 from apero.core import constants
 from apero.core.core import drs_log
-from apero import locale
+from apero import lang
 from apero.io import drs_table
 from apero.io import drs_lock
 from apero.io import drs_path
@@ -46,7 +46,7 @@ WLOG = drs_log.wlog
 # alias pcheck
 pcheck = drs_log.find_param
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
+TextEntry = lang.drs_text.TextEntry
 # TODO: This should be changed for astropy -> 2.0.1
 # bug that hdu.scale has bug before version 2.0.1
 if av.major < 2 or (av.major == 2 and av.minor < 1):

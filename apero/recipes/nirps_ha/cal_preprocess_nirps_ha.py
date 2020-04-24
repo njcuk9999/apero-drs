@@ -12,7 +12,7 @@ import numpy as np
 import os
 
 from apero import core
-from apero import locale
+from apero import lang
 from apero.core import constants
 from apero.science import preprocessing
 from apero.io import drs_image
@@ -35,7 +35,7 @@ __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
+TextEntry = lang.drs_text.TextEntry
 # Raw prefix
 RAW_PREFIX = file_definitions.raw_prefix
 

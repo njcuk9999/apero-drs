@@ -16,7 +16,7 @@ import glob
 
 from apero import core
 from apero.core import constants
-from apero import locale
+from apero import lang
 from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.io import drs_path
@@ -43,8 +43,8 @@ DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
 # alias pcheck
 pcheck = core.pcheck
 

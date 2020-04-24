@@ -14,7 +14,7 @@ import itertools
 import os
 
 from apero import core
-from apero import locale
+from apero import lang
 from apero.core import constants
 from apero.io import drs_fits
 from apero.science import extract
@@ -37,8 +37,8 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
 # -----------------------------------------------------------------------------
 # set up recipe definitions (overwrites default one)
 RMOD = drs_dev.RecipeDefinition(instrument=__INSTRUMENT__)

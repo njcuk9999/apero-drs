@@ -3,7 +3,7 @@ Package containing all constants Classes and functionality
 
 DRS Import Rules:
 
-- only from apero.locale
+- only from apero.lang
 
 Created on 2019-01-17 at 14:09
 
@@ -19,8 +19,8 @@ import warnings
 from astropy import units as uu
 from typing import Union
 
-from apero.locale import drs_exceptions
-from apero.locale import drs_lang_db
+from apero.lang import drs_exceptions
+from apero.lang import drs_lang_db
 
 # =============================================================================
 # Define variables

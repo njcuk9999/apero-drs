@@ -18,7 +18,7 @@ import shutil
 from collections import OrderedDict
 
 from apero.core import constants
-from apero import locale
+from apero import lang
 from apero.io import drs_lock
 from apero.io import drs_fits
 from apero.io import drs_path
@@ -43,7 +43,7 @@ WLOG = drs_log.wlog
 # Get function string
 display_func = drs_log.display_func
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
+TextEntry = lang.drs_text.TextEntry
 # alias pcheck
 pcheck = drs_log.find_param
 

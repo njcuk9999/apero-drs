@@ -12,7 +12,7 @@ Created on 2019-12-18 at 16:57
 # TODO: change to cal_wave_spirou after testing complete
 # TODO: Currently a placeholder for EA code
 from apero import core
-from apero import locale
+from apero import lang
 from apero.core import constants
 from apero.core.core import drs_database
 from apero.io import drs_image
@@ -38,8 +38,8 @@ __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
 # define extraction code to use
 EXTRACT_NAME = 'cal_extract_spirou.py'
 

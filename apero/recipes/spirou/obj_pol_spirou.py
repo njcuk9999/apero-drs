@@ -10,7 +10,7 @@ Created on 2019-11-25 at 16:44
 @author: cook
 """
 from apero import core
-from apero import locale
+from apero import lang
 from apero.core import constants
 
 
@@ -31,8 +31,8 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
 
 
 # =============================================================================
