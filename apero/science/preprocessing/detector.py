@@ -276,6 +276,15 @@ def test_for_corrupt_files(params, image, hotpix):
     dark_size = params['PP_NUM_DARK_AMP'] * pixels_per_amp
     # get the x and y hot pixel values
     yhot, xhot = hotpix
+    # mask pixels around the edges
+    bmask = np.ones_like(yhot).astype(bool)
+    bmask &= yhot > med_size
+    bmask &= yhot < (dim1 - med_size)
+    bmask &= xhot > med_size
+    bmask &= xhot < (dim2 - med_size)
+    # apply boundary mask to xhot and yhot
+    xhot = xhot[bmask]
+    yhot = yhot[bmask]
     # get median hot pixel box
     med_hotpix = np.zeros([2 * med_size + 1, 2 * med_size + 1])
     # loop around x
