@@ -14,7 +14,7 @@ import os
 from apero import core
 from apero import lang
 from apero.core import constants
-from apero.science import preprocessing
+from apero.science import preprocessing as pp
 from apero.io import drs_image
 from apero.io import drs_fits
 from apero.core.instruments.spirou import file_definitions
@@ -88,8 +88,7 @@ def __main__(recipe, params):
     # Main Code
     # ----------------------------------------------------------------------
     # Get hot pixels for corruption check
-    # TODO: Need hot pixel map from EA
-    hotpixels = preprocessing.get_hot_pixels(params)
+    hotpixels = pp.get_hot_pixels(params)
     # get skip parmaeter
     skip = params['SKIP_DONE_PP']
 
@@ -122,8 +121,7 @@ def __main__(recipe, params):
         # identification of file drs type
         # ------------------------------------------------------------------
         # identify this iterations file type
-        cond, infile = preprocessing.drs_infile_id(params, recipe,
-                                                   file_instance)
+        cond, infile = pp.drs_infile_id(params, recipe, file_instance)
         # ------------------------------------------------------------------
         # if it wasn't found skip this file, if it was print a message
         if cond:
@@ -141,7 +139,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # get the output drs file
         oargs = [params, recipe, infile, recipe.outputs['PP_FILE'], RAW_PREFIX]
-        found, outfile = preprocessing.drs_outfile_id(*oargs)
+        found, outfile = pp.drs_outfile_id(*oargs)
         # construct out filename
         outfile.construct_filename(params, infile=infile)
         # if we didn't find the output file we should log this error
@@ -157,35 +155,36 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         # Check for pixel shift and/or corrupted files
         # ----------------------------------------------------------------------
-        # get pass condition
-        cout = preprocessing.test_for_corrupt_files(params, image, hotpixels)
-        snr_hotpix, rms_list = cout[0], cout[1]
-        shiftdx, shiftdy = cout[2], cout[3]
-        # use dx/dy to shift the image back to where the engineering flat
-        #    is located
-        if shiftdx != 0 or shiftdy != 0:
-            # log process
-            WLOG(params, '', TextEntry('40-010-00013', args=[shiftdx, shiftdy]))
-            # shift image
-            image = np.roll(image, [shiftdy], axis=0)
-            image = np.roll(image, [shiftdx], axis=1)
-
-        # ------------------------------------------------------------------
-        # correct image
-        # ------------------------------------------------------------------
-        # correct for the top and bottom reference pixels
-        WLOG(params, '', TextEntry('40-010-00003'))
-        image = preprocessing.correct_top_bottom(params, image)
-
-        # correct by a median filter from the dark amplifiers
-        WLOG(params, '', TextEntry('40-010-00016'))
-        image = preprocessing.nirps_correction(params, image)
+        # storage
+        snr_hotpix, rms_list = [], []
+        # do this iteratively as if there is a shift need to re-workout QC
+        for iteration in range(2):
+            # get pass condition
+            cout = pp.test_for_corrupt_files(params, image, hotpixels)
+            snr_hotpix, rms_list = cout[0], cout[1]
+            shiftdx, shiftdy = cout[2], cout[3]
+            # use dx/dy to shift the image back to where the engineering flat
+            #    is located
+            if shiftdx != 0 or shiftdy != 0:
+                # log process
+                wmsg = TextEntry('40-010-00013', args=[shiftdx, shiftdy])
+                WLOG(params, '', wmsg)
+                # shift image
+                image = np.roll(image, [shiftdy], axis=0)
+                image = np.roll(image, [shiftdx], axis=1)
+            # work out QC here
+            qargs = [snr_hotpix, infile, rms_list]
+            qc_params, passed = pp.quality_control(params, *qargs, log=False)
+            # if passed break
+            if passed:
+                break
 
         # ------------------------------------------------------------------
         # Quality control to check for corrupt files
         # ------------------------------------------------------------------
+        # re-calculate qc
         qargs = [snr_hotpix, infile, rms_list]
-        qc_params, passed = preprocessing.quality_control(params ,*qargs)
+        qc_params, passed = pp.quality_control(params, *qargs, log=True)
         # update recipe log
         log1.add_qc(params, qc_params, passed)
         if not passed:
@@ -193,6 +192,17 @@ def __main__(recipe, params):
             log1.end(params)
             # go to next iteration
             continue
+
+        # ------------------------------------------------------------------
+        # correct image
+        # ------------------------------------------------------------------
+        # correct for the top and bottom reference pixels
+        WLOG(params, '', TextEntry('40-010-00003'))
+        image = pp.correct_top_bottom(params, image)
+
+        # correct by a median filter from the dark amplifiers
+        WLOG(params, '', TextEntry('40-010-00016'))
+        image = pp.nirps_correction(params, image)
 
         # ------------------------------------------------------------------
         # calculate mid observation time
