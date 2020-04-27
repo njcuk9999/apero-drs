@@ -155,8 +155,8 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         # Check for pixel shift and/or corrupted files
         # ----------------------------------------------------------------------
-        # assume file fails at first
-        qc_params, passed = [], False
+        # storage
+        snr_hotpix, rms_list = [], []
         # do this iteratively as if there is a shift need to re-workout QC
         for iteration in range(2):
             # get pass condition
@@ -174,7 +174,7 @@ def __main__(recipe, params):
                 image = np.roll(image, [shiftdx], axis=1)
             # work out QC here
             qargs = [snr_hotpix, infile, rms_list]
-            qc_params, passed = pp.quality_control(params, *qargs)
+            qc_params, passed = pp.quality_control(params, *qargs, log=False)
             # if passed break
             if passed:
                 break
@@ -182,6 +182,9 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Quality control to check for corrupt files
         # ------------------------------------------------------------------
+        # re-calculate qc
+        qargs = [snr_hotpix, infile, rms_list]
+        qc_params, passed = pp.quality_control(params, *qargs, log=True)
         # update recipe log
         log1.add_qc(params, qc_params, passed)
         if not passed:
