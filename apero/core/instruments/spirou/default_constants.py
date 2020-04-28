@@ -1015,11 +1015,11 @@ WAVE_MASTER_FIBER.value = 'AB'
 
 # Define the line list file (located in the DRS_WAVE_DATA directory)
 WAVE_LINELIST_FILE = WAVE_LINELIST_FILE.copy(__NAME__)
-WAVE_LINELIST_FILE.value = 'catalogue_UNe.dat'  # 'catalogue_ThAr.dat'
+WAVE_LINELIST_FILE.value = 'catalogue_UNe.csv'
 
 # Define the line list file format (must be astropy.table format)
 WAVE_LINELIST_FMT = WAVE_LINELIST_FMT.copy(__NAME__)
-WAVE_LINELIST_FMT.value = 'ascii.tab'
+WAVE_LINELIST_FMT.value = 'ascii.csv'
 
 # Define the line list file column names (must be separated by commas
 #   and must be equal to the number of columns in file)
