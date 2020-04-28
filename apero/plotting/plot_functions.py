@@ -2677,7 +2677,7 @@ def plot_wavenight_iterplot(plotter, graph, kwargs):
         return
     # ------------------------------------------------------------------
     # get the arguments from kwargs
-    waverefs = kwargs['waveref']
+    waverefs = kwargs['waverefs']
     pixdiffs = kwargs['pixdiffs']
     fiber = kwargs['fiber']
     # ------------------------------------------------------------------
