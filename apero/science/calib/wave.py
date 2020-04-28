@@ -5625,10 +5625,6 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     # set nightly wave solution to master wave solution
     rwave = np.array(mwave)
 
-
-    # TODO: remove breakpoint
-    constants.break_point(params)
-
     # ----------------------------------------------------------------------
     # Iterative loop to update wavelength
     # ----------------------------------------------------------------------
@@ -5678,7 +5674,7 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     # get xpix array
     xpix = np.arange(nbpix)
     # iterate around niterations1
-    for iteration in niterations2:
+    for iteration in range(niterations2):
         # log progress Night wave fit iteration i of j
         wargs = [iteration + 1, 1, 'FP']
         WLOG(params, '', TextEntry('40-017-00047', args=wargs))
