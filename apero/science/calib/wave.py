@@ -5609,6 +5609,7 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     # update wavelength measured in line list table
     mhcl = update_wavelength_measured(params, mhcl, mwave, kind='HC')
     mfpl = update_wavelength_measured(params, mfpl, mwave, kind='FP')
+
     # ----------------------------------------------------------------------
     # Construct night line list
     # ----------------------------------------------------------------------
@@ -5623,6 +5624,11 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     # ----------------------------------------------------------------------
     # set nightly wave solution to master wave solution
     rwave = np.array(mwave)
+
+
+    # TODO: remove breakpoint
+    constants.break_point(params)
+
     # ----------------------------------------------------------------------
     # Iterative loop to update wavelength
     # ----------------------------------------------------------------------
