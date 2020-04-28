@@ -1208,15 +1208,15 @@ KW_WFP_MASKUNITS = KW_WFP_MASKUNITS.copy(__NAME__)
 KW_WFP_MASKUNITS.set(key='WFPCMUNT', comment='wave sol FP CCF mask units used',
                      parent='WAVE_CCF_MASK_UNITS', group='wave')
 
-# high-order wavelength solution correction used in wave night
-KW_WNT_HIGHF_CD = KW_WNT_HIGHF_CD.copy(__NAME__)
-KW_WNT_HIGHF_CD.set(key='WNTCRDEG', comment='wave night high-order corr used',
-                    parent='WAVE_NIGHT_HIGHF_CORR_DEG', group='wave')
+# number of iterations for convergence used in wave night (hc)
+KW_WNT_NITER1 = KW_WNT_NITER1.copy(__NAME__)
+KW_WNT_NITER1.set(key='WNTNITER', comment='wave night hc n iterations used',
+                 parent='WAVE_NIGHT_NITERATIONS1', group='wave')
 
-# number of iterations for convergence used in wave night
-KW_WNT_NITER = KW_WNT_NITER.copy(__NAME__)
-KW_WNT_NITER.set(key='WNTNITER', comment='wave night n iterations used',
-                 parent='WAVE_NIGHT_NITERATIONS', group='wave')
+# number of iterations for convergence used in wave night (fp)
+KW_WNT_NITER21 = KW_WNT_NITER2.copy(__NAME__)
+KW_WNT_NITER2.set(key='WNTNITER', comment='wave night fp n iterations used',
+                 parent='WAVE_NIGHT_NITERATIONS2', group='wave')
 
 # starting point for the cavity corrections used in wave night
 KW_WNT_DCAVITY = KW_WNT_DCAVITY.copy(__NAME__)
@@ -1230,30 +1230,16 @@ KW_WNT_DCAVSRCE.set(key='WNTDCVSR',
                     comment='wave night source fiber used for cavity corr',
                     group='wave')
 
-# min SNR for incluing in the model used in wave night
-KW_WNT_MINSNR = KW_WNT_MINSNR.copy(__NAME__)
-KW_WNT_MINSNR.set(key='WNTMNSNR',
-                  comment='wave night min SNR for including in model used',
-                  parent='WAVE_NIGHT_NSIG_MIN', group='wave')
+# define the sigma clip value to remove bad hc lines used
+KW_WNT_HCSIGCLIP = KW_WNT_HCSIGCLIP.copy(__NAME__)
+KW_WNT_HCSIGCLIP.set(key='WNTHCSIG', comment='wave night hc sig clip used',
+                     groupu='wave', parent='WAVE_NIGHT_HC_SIGCLIP')
 
-# red cut off for fit constaint [nm] used in wave night
-KW_WNT_REDCUT = KW_WNT_REDCUT.copy(__NAME__)
-KW_WNT_REDCUT.set(key='WNTRDCUT', comment='wave night red cut off [nm] used',
-                  parent='WAVE_NIGHT_REDEND_CUTOFF', group='wave')
-
-# size [nm] of the median bin of residuals for higher-order correction used
-#    in wave night
-KW_WNT_DWAVE_BIN = KW_WNT_DWAVE_BIN.copy(__NAME__)
-KW_WNT_DWAVE_BIN.set(key='WNTDWAVB',
-                     comment='wave night med bin of res for high ord corr used',
-                     parent='WAVE_NIGHT_DWAVE_BIN', group='wave')
-
-# min number of lines to be included in a median bin for high-order
-# correction used in wave night
-KW_WNT_NMIN_LINES = KW_WNT_NMIN_LINES.copy(__NAME__)
-KW_WNT_NMIN_LINES.set(key='WNTNMINL',
-                      comment='wave night min nlines for medbin highord used',
-                      parent='WAVE_NIGHT_NMIN_LINES', group='wave')
+# median absolute deviation cut off used
+KW_WNT_MADLIMIT = KW_WNT_MADLIMIT.copy(__NAME__)
+KW_WNT_MADLIMIT.set(key='WNT_MADL',
+                    comment='wave night med abs dev cut off used',
+                    group='wave', parent='WAVE_NIGHT_MED_ABS_DEV')
 
 # sigma clipping for the fit used in wave night
 KW_WNT_NSIG_FIT = KW_WNT_NSIG_FIT.copy(__NAME__)
