@@ -5567,61 +5567,40 @@ def process_other_fibers(params, recipe, mprops, mfpl, fp_outputs):
 # Define night functions
 # =============================================================================
 def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
-                       indcavity=None, **kwargs):
+                       fiber, indcavity=None, **kwargs):
     # set function name
     func_name = display_func(params, 'night_wavesolution', __NAME__)
     # ----------------------------------------------------------------------
     # get parameters from params/kwargs
-    highf_corr_deg = pcheck(params, 'WAVE_NIGHT_HIGHF_CORR_DEG',
-                            'highf_corr_deg', kwargs, func_name)
-    niterations = pcheck(params, 'WAVE_NIGHT_NITERATIONS', 'niterations',
+    niterations1 = pcheck(params, 'WAVE_NIGHT_NITERATIONS1', 'niterations1',
+                         kwargs, func_name)
+    niterations2 = pcheck(params, 'WAVE_NIGHT_NITERATIONS2', 'niterations2',
                          kwargs, func_name)
     d_cavity = pcheck(params, 'WAVE_NIGHT_DCAVITY', 'd_cavity', kwargs,
                       func_name)
-    nsig_min = pcheck(params, 'WAVE_NIGHT_NSIG_MIN', 'nsig_min', kwargs,
-                      func_name)
-    redend_cutoff = pcheck(params, 'WAVE_NIGHT_REDEND_CUTOFF', 'redend_cuttoff',
-                           kwargs, func_name)
-    dwave_bin = pcheck(params, 'WAVE_NIGHT_DWAVE_BIN', 'dwave_bin',
-                       kwargs, func_name)
-    nmin_lines = pcheck(params, 'WAVE_NIGHT_NMIN_LINES', 'nmin_lines',
-                        kwargs, func_name)
+    hcsigclip = pcheck(params, 'WAVE_NIGHT_HC_SIGCLIP', 'hcsigclip', kwargs,
+                       func_name)
     nsig_fit_cut = pcheck(params, 'WAVE_NIGHT_NSIG_FIT_CUT', 'nsig_fit_cut',
                           kwargs, func_name)
-
-    hc_bin_lower = pcheck(params, 'WAVENIGHT_PLT_HCBINL', 'hc_bin_lower',
-                          kwargs, func_name)
-    hc_bin_high = pcheck(params, 'WAVENIGHT_PLT_HCBINU', 'hc_bin_high',
-                         kwargs, func_name)
-    hc_bin_size = pcheck(params, 'WAVENIGHT_PLT_HCBINSZ', 'hc_bin_size',
-                         kwargs, func_name)
-    fpbinx = pcheck(params, 'WAVENIGHT_PLT_FPBX', 'fpbinx', kwargs, func_name)
-    fpbiny = pcheck(params, 'WAVENIGHT_PLT_FPBY', 'fpbiny', kwargs, func_name)
-    fplinebin = pcheck(params, 'WAVENIGHT_PLT_FPLB', 'fplinebin', kwargs,
-                       func_name)
-    ampsize = pcheck(params, 'WAVENIGHT_PLT_AMPSIZE', 'ampsize', kwargs,
-                     func_name)
-    maxdv = pcheck(params, 'WAVENIGHT_PLT_MAXDV', 'maxdv', kwargs, func_name)
-    dvstep = pcheck(params, 'WAVENIGHT_PLT_DVSTEP', 'dvstep', kwargs, func_name)
     wave_fit_deg = pcheck(params, 'WAVE_FIT_DEGREE', 'wave_fit_deg', kwargs,
                           func_name)
+    madvalue = pcheck(params, 'WAVE_NIGHT_MED_ABS_DEV', 'madvalue', kwargs,
+                      func_name)
+    pltnbins = pcheck(params, 'WAVENIGHT_PLT_NBINS', 'pltnbins', kwargs,
+                      func_name)
+    pltbinl = pcheck(params, 'WAVENIGHT_PLT_BINL', 'pltbinl', kwargs, func_name)
+    pltbinu = pcheck(params, 'WAVENIGHT_PLT_BINU', 'pltbinl', kwargs, func_name)
 
     # deal with havint a input dcavity width
     if indcavity is not None:
         d_cavity = float(indcavity)
-
+        # no need to iterate on d_cavity
+        niterations2 = 1
     # ----------------------------------------------------------------------
     # get the master wavelength solution
     mwave = wprops['WAVEMAP']
     # get image shape
     nbo, nbpix = mwave.shape
-    # ----------------------------------------------------------------------
-    # pixel and order indices
-    order_map, x_map = np.indices(mwave.shape, dtype=float)
-    # gradients to be used in the linear model
-    gradient_mwave = np.gradient(mwave, axis=1)
-    # normalized as this is a simple scaling factor later on
-    gradient_mwave = gradient_mwave / np.mean(gradient_mwave)
     # ----------------------------------------------------------------------
     # Update the wavelength of lines with the master solution
     # ----------------------------------------------------------------------
@@ -5642,193 +5621,100 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     fpargs = dict(e2dsfile=fpe2ds, wavemap=mwave, fplines=mfpl)
     rfpl = get_master_lines(params, recipe, **fpargs)
     # ----------------------------------------------------------------------
-    # set up storage
-    # linear model
-    amps_cumu = np.zeros(4)
-    # high order correction terms
-    highf_corr_arr = np.zeros(highf_corr_deg + 1)
-    # plot storage
-    plotstor = []
-    # ----------------------------------------------------------------------
-    # calculate wave difference for the FP after accounting for the
-    #    cavity length difference
-    # get wave sol for each line
-    mfpwave = np.array(mfpl['WAVE_MEAS'])
-    mhcwave = np.array(mhcl['WAVE_MEAS'])
-    # get sig
-    rnsig = rfpl['NSIG']
-    # set up unset vectors
-    dwave = None
-    rfpwave = None
-    rhcwave = None
     # set nightly wave solution to master wave solution
     rwave = np.array(mwave)
-
     # ----------------------------------------------------------------------
     # Iterative loop to update wavelength
     # ----------------------------------------------------------------------
     # log progress Updating measured wavelength (night)
     WLOG(params, '', TextEntry('40-017-00046'))
-    # loop around iterations
-    for iteration in range(niterations):
+    # update wavelength measured in line list table
+    rhcl = update_wavelength_measured(params, rhcl, rwave, kind='HC')
+    rfpl = update_wavelength_measured(params, rfpl, rwave, kind='FP')
+    # storage for iteration plot
+    pixdiffs, waverefs = [], []
+    # we iteratively remove lines that are >10 median absolute differences
+    for iteration in range(niterations1):
         # log progress Night wave fit iteration i of j
-        wargs = [iteration + 1, niterations]
+        wargs = [iteration + 1, 1, 'HC']
         WLOG(params, '', TextEntry('40-017-00047', args=wargs))
         # ------------------------------------------------------------------
-        # log model additions
-        wargs = [amps_cumu[0], amps_cumu[1], amps_cumu[2], amps_cumu[3]]
+        # get the pixel difference between ref and measured
+        pixdiff = rhcl['PIXEL_REF'] - rhcl['PIXEL_MEAS']
+        # append for plot
+        pixdiffs.append(np.array(pixdiff))
+        waverefs.append(np.array(rhcl['WAVE_REF']))
+        # subtract of the median absolute difference
+        pixdiff = pixdiff - np.nanmedian(pixdiff)
+        # normalize by the pixel difference
+        pixdiff = pixdiff / np.nanmedian(np.abs(pixdiff))
+        # create a mask to remove values
+        madmask = np.abs(pixdiff) < madvalue
+        # apply mask to rhcl
+        rhcl = rhcl[madmask]
+        # log how many lines we kept
+        wargs = [np.sum(madmask), len(madmask)]
         WLOG(params, '', TextEntry('40-017-00048', args=wargs))
-        # ------------------------------------------------------------------
-        # model wavelength for the night with linear + HC model
-        # add a constant offset in pixels
-        nconst = amps_cumu[0]
-        # add an offset scaled with x
-        nconst += (x_map * amps_cumu[1])
-        # add a scale with order
-        nconst += (order_map * amps_cumu[2])
-        # add a cross term
-        nconst += (x_map * order_map * amps_cumu[3])
-        # express as a wavelength
-        nconst *= gradient_mwave
-        # add high order dependency on wavelength
-        nconst += np.polyval(highf_corr_arr, np.log(mwave))
-        # create nightly wavelength
-        rwave = np.array(mwave) + nconst
-        # ----------------------------------------------------------------------
-        # Update the nightly tables
-        # log progress: updating measured wavelength (night)'
+    # ----------------------------------------------------------------------
+    # plot mad plot
+    recipe.plot('WAVENIGHT_ITERPLOT', waverefs=waverefs, pixdiffs=pixdiffs,
+                fiber=fiber)
+    # plot mad plot
+    recipe.plot('SUM_WAVENIGHT_ITERPLOT', waverefs=waverefs, pixdiffs=pixdiffs,
+                fiber=fiber)
+    # ----------------------------------------------------------------------
+    # we need some sort of sigma clipping. Fainter lines have a dispersion
+    # that is way too high.
+    sigclipmask = rhcl['NSIG'] > hcsigclip
+    rhcl = rhcl[sigclipmask]
+    # copy the rhcl table (before modification)
+    rhcl_prev = Table(rhcl)
+    # get xpix array
+    xpix = np.arange(nbpix)
+    # iterate around niterations1
+    for iteration in niterations2:
+        # log progress Night wave fit iteration i of j
+        wargs = [iteration + 1, 1, 'FP']
+        WLOG(params, '', TextEntry('40-017-00047', args=wargs))
+        # loop around order num
+        for order_num in range(nbo):
+            # get this orders mask
+            good = (rfpl['ORDER'] == order_num)
+            good &= np.isfinite(rfpl['PIXEL_MEAS'])
+            # do a robust polyfit
+            xx = rfpl['PIXEL_MEAS'][good]
+            yy = rfpl['WAVE_REF'][good] * (1 + d_cavity)
+            fit, mask = mp.robust_polyfit(xx, yy, wave_fit_deg, nsig_fit_cut)
+            # update the wave solution with these values
+            rwave[order_num] = np.polyval(fit, xpix)
+        # log progress Updating measured wavelength (night)
         WLOG(params, '', TextEntry('40-017-00046'))
         # update wavelength measured in line list table
         rhcl = update_wavelength_measured(params, rhcl, rwave, kind='HC')
         rfpl = update_wavelength_measured(params, rfpl, rwave, kind='FP')
-        # re-get fp and hc wave solutions
-        rfpwave = rfpl['WAVE_MEAS']
-        rhcwave = rhcl['WAVE_MEAS']
-        # get calculate dwave
-        dwave = (rfpwave - mfpwave) + d_cavity * mfpwave
-        # keep points that are <5 MAD away from median
-        with warnings.catch_warnings(record=True) as _:
-            keep = np.abs(dwave) <= 5 * mp.nanmedian(np.abs(dwave))
-            keep &= rnsig > nsig_min
-        # ----------------------------------------------------------------------
-        # median-binned delta wave for all lines
-        wbin, dvbin = [], []
-        # loop around wave bins
-        for waveit in np.arange(np.min(mwave), redend_cutoff, dwave_bin):
-            # find valid wavelengths
-            with warnings.catch_warnings(record=True) as _:
-                good = mfpwave > waveit
-                good &= mfpwave < (waveit + dwave_bin)
-            good &= keep
-            # if we have enough lines add to the binned spectrum
-            if np.sum(good) > nmin_lines:
-                wbin.append(mp.nanmedian(rfpwave[good]))
-                dvbin.append(mp.nanmedian(dwave[good]))
-        # make wbin and dvbin arrays
-        wbin, dvbin = np.array(wbin), np.array(dvbin)
-        # ----------------------------------------------------------------------
-        # remove zero point from higher-order corrections
-        fit1, _ = mp.robust_polyfit(np.log(wbin), dvbin, 1, nsig_fit_cut)
-        dvbin = dvbin - np.polyval(fit1, np.log(wbin))
-        # remove slope from higher-order corrections
-        fit2, _ = mp.robust_polyfit(np.log(wbin), dvbin, highf_corr_deg,
-                                    nsig_fit_cut)
-        # remove fit from higher order arr
-        highf_corr_arr = highf_corr_arr - fit2
-        # ----------------------------------------------------------------------
-        # on even iterations we adjust the wavelength model
-        if ((iteration % 2) == 0) or (indcavity is not None):
-            # sample vectors for the linear model
-            sample = np.zeros([len(dwave), 4])
-            # zero point
-            sample[:, 0] = 1
-            # x dependency
-            sample[:, 1] = mfpl['PIXEL_MEAS']
-            # order dependency
-            sample[:, 2] = mfpl['ORDER']
-            # cross-term
-            sample[:, 3] = mfpl['PIXEL_MEAS'] * mfpl['ORDER']
-            # update on linear model
-            amps_corr, recon = mp.linear_minimization(dwave[keep], sample[keep])
-            amps_cumu = amps_cumu - amps_corr
-        # on odd iterations, we update the cavity length change
-        else:
-            # no update of linear model
-            # amps_corr = np.zeros(4)
-            # correct cavity length with the median HC line difference
-            d_cavity_corr = mp.nanmedian((mhcwave - rhcwave) / mhcwave)
-            # update cavity
-            d_cavity = d_cavity - d_cavity_corr
-            # log cavity values
-            # TODO: add to language database
-            wargs = [d_cavity, d_cavity_corr]
-            wmsg = '\tcavity params: {0:.3e} correction: {1:.3e}'
-            WLOG(params, '', wmsg.format(*wargs))
-        # ----------------------------------------------------------------------
-        # calculate the fp and hc wavelength difference
-        if iteration in [0, niterations - 1]:
-            dl_fp = rfpwave - mfpwave
-            dl_hc = rhcwave - mhcwave
-            plotdata = dict(dl_fp=dl_fp, dl_hc=dl_hc, hc=rhcwave,
-                            fp=rfpwave)
-            plotstor.append(plotdata)
+        # calculate the change in d_cavity
+        dd_cavity = (1 - np.nanmedian(rhcl['WAVE_MEAS'] / rhcl['WAVE_REF']))
+        # update d_cavity with the change in d_cavity
+        d_cavity = d_cavity + dd_cavity
+        # log the change in d_cavity
+        wargs = [d_cavity * speed_of_light_ms, dd_cavity * speed_of_light_ms]
+        WLOG(params, '', TextEntry('40-017-00052', args=wargs))
 
     # ----------------------------------------------------------------------
-    # plot for start/end of iteration
+    # plot for wave night hist plot
     # ----------------------------------------------------------------------
-    recipe.plot('WAVENIGHT_ITERPLOT', plotdata=plotstor)
-    # ----------------------------------------------------------------------
-    # plot for hc fp diff plot
-    # ----------------------------------------------------------------------
-    # calculate hc bins (for plotting)
-    dvhc = (rhcwave / mhcwave - 1) * speed_of_light_ms
-    # calculate bins for hc data
-    wbinhc, dvbinhc = [], []
-    # loop around bins for hc data
-    for waveit in np.arange(hc_bin_lower, hc_bin_high, hc_bin_size):
-        # get pixels within this bin
-        with warnings.catch_warnings(record=True) as _:
-            good = mhcwave > waveit
-            good &= mhcwave < (waveit + hc_bin_size)
-        # HC has fewer lines than for FPs
-        if np.sum(good) > 10:
-            wbinhc.append(mp.nanmedian(mhcwave[good]))
-            dvbinhc.append(mp.nanmedian(dvhc[good]))
-    wbinhc, dvbinhc = np.array(wbinhc), np.array(dvbinhc)
-    # ----------------------------------------------------------------------
-    # calculate fp bins (for plotting)
-    dvfp = dwave / rfpwave * speed_of_light_ms
-    # calculate bins for fp data
-    wbinfp, dvbinfp = [], []
-    # loop around bins for fp data
-    for waveit in np.arange(np.min(mwave), redend_cutoff, dwave_bin):
-        # get pixels within this bin
-        with warnings.catch_warnings(record=True) as _:
-            good = mfpwave > waveit
-            good &= mfpwave < (waveit + dwave_bin)
-        # only keep if enough lines
-        if np.sum(good) > nmin_lines:
-            wbinfp.append(mp.nanmedian(mfpwave[good]))
-            dvbinfp.append(mp.nanmedian(dvfp[good]))
-    wbinfp, dvbinfp = np.array(wbinfp), np.array(dvbinfp)
-    # ----------------------------------------------------------------------
-    # calculate model
-    modelfit, _ = mp.robust_polyfit(np.log(wbinfp), dvbinfp, highf_corr_deg,
-                                    nsig_fit_cut)
-    modely = np.polyval(modelfit, np.log(wbinfp))
-    # ----------------------------------------------------------------------
-    # plot hc fp diff plot
-    recipe.plot('WAVENIGHT_DIFFPLOT', xhc=wbinhc, yhc=dvbinhc, xfp=wbinfp,
-                yfp=dvbinfp, model=modely)
-    # ----------------------------------------------------------------------
-    # plot for fp hist plot
-    # ----------------------------------------------------------------------
-    # plot fp hist plot
-    recipe.plot('WAVENIGHT_HISTPLOT', x=rfpl['PIXEL_MEAS'], y=dvfp,
-                nbpix=nbpix, fpbinx=fpbinx, fpbiny=fpbiny,
-                fplinebin=fplinebin, ampsize=ampsize, maxdv=maxdv,
-                dvstep=dvstep)
-
+    # calculate rms
+    pwave1 = rfpl['WAVE_REF'] * (1 + d_cavity)
+    pwave2 = rfpl['WAVE_MEAS']
+    rms = np.nanmedian(np.abs(1 - (pwave1 / pwave2)) * speed_of_light_ms)
+    # plot wave night hist plot
+    recipe.plot('WAVENIGHT_HISTPLOT', rhcl=rhcl, rhcl_prev=rhcl_prev,
+                rfpl=rfpl, dcavity=d_cavity, rms=rms, binl=pltbinl,
+                binu=pltbinu, nbins=pltnbins)
+    # plot wave night hist plot
+    recipe.plot('SUM_WAVENIGHT_HISTPLOT', rhcl=rhcl, rhcl_prev=rhcl_prev,
+                rfpl=rfpl, dcavity=d_cavity, rms=rms, binl=pltbinl,
+                binu=pltbinu, nbins=pltnbins, fiber=fiber)
     # ----------------------------------------------------------------------
     # calculate final coefficients and re-calculate wave map
     # ----------------------------------------------------------------------
@@ -5847,7 +5733,6 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
         night_wave[order_num] = np.polyval(ocoeffs, indices)
     # ----------------------------------------------------------------------
     # update wavelength measured in line list table
-    # TODO: this needs confirming with EA: what do we need to update in hclines/fplines
     rhcl = update_wavelength_measured(params, rhcl, night_wave, kind='HC')
     rfpl = update_wavelength_measured(params, rfpl, night_wave, kind='FP')
     # ----------------------------------------------------------------------
@@ -5870,17 +5755,15 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     nprops.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # add constants
-    nprops['HIGHF_CORR_DEG'] = highf_corr_deg
-    nprops['NITERATIONS'] = niterations
+    nprops['NITERATIONS1'] = niterations1
+    nprops['NITERATIONS2'] = niterations2
+    nprops['HCSIGCLIP'] = hcsigclip
+    nprops['MADLIMIT'] = madvalue
     nprops['DCAVITY'] = d_cavity
-    nprops['NSIGMIN'] = nsig_min
-    nprops['REDEND_CUTOFF'] = redend_cutoff
-    nprops['DWAVE_BIN'] = dwave_bin
-    nprops['NMIN_LINES'] = nmin_lines
     nprops['NSIG_FIT_CUT'] = nsig_fit_cut
     # set sources
-    keys = ['HIGHF_CORR_DEG', 'NITERATIONS', 'DCAVITY', 'NSIGMIN',
-            'REDEND_CUTOFF', 'DWAVE_BIN', 'NMIN_LINES', 'NSIG_FIT_CUT']
+    keys = ['NITERATIONS1', 'NITERATIONS2', 'HCSIGCLIP', 'MADLIMIT',
+            'DCAVITY', 'NSIG_FIT_CUT']
     nprops.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # return props storage
@@ -5981,14 +5864,12 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
         hfiles = [fpfile.basename]
     wavefile.add_hkey_1d('KW_INFILE2', values=hfiles, dim1name='file')
     # add constants used (for reproduction)
-    wavefile.add_hkey('KW_WNT_HIGHF_CD', value=nprops['HIGHF_CORR_DEG'])
-    wavefile.add_hkey('KW_WNT_NITER', value=nprops['NITERATIONS'])
+    wavefile.add_hkey('KW_WNT_NITER1', value=nprops['NITERATIONS1'])
+    wavefile.add_hkey('KW_WNT_NITER2', value=nprops['NITERATIONS2'])
+    wavefile.add_hkey('KW_WNT_HCSIGCLIP', value=nprops['HCSIGCLIP'])
+    wavefile.add_hkey('KW_WNT_MADLIMIT', value=nprops['MADLIMIT'])
     wavefile.add_hkey('KW_WNT_DCAVITY', value=nprops['DCAVITY'])
     wavefile.add_hkey('KW_WNT_DCAVSRCE', value=nprops['DCAVITYSRCE'])
-    wavefile.add_hkey('KW_WNT_MINSNR', value=nprops['NSIGMIN'])
-    wavefile.add_hkey('KW_WNT_REDCUT', value=nprops['REDEND_CUTOFF'])
-    wavefile.add_hkey('KW_WNT_DWAVE_BIN', value=nprops['DWAVE_BIN'])
-    wavefile.add_hkey('KW_WNT_NMIN_LINES', value=nprops['NMIN_LINES'])
     wavefile.add_hkey('KW_WNT_NSIG_FIT', value=nprops['NSIG_FIT_CUT'])
     # ----------------------------------------------------------------------
     # add the order num, fit degree and fit coefficients
