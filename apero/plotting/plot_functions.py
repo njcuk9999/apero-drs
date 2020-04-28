@@ -2816,12 +2816,18 @@ sum_wave_fiber_comp = Graph('SUM_WAVE_FIBER_COMP', kind='summary',
                             description=sum_desc)
 wavenight_iterplot = Graph('WAVENIGHT_ITERPLOT', kind='debug',
                            func=plot_wavenight_iterplot)
+sum_desc = 'Wave night iteration plot'
 sum_wavenight_iterplot = Graph('SUM_WAVENIGHT_ITERPLOT', kind='summary',
-                           func=plot_wavenight_iterplot)
+                           func=plot_wavenight_iterplot,
+                            figsize=(16, 10), dpi=150,
+                            description=sum_desc)
 wavenight_histplot = Graph('WAVENIGHT_HISTPLOT', kind='debug',
                            func=plot_wavenight_histplot)
+sum_desc = 'Wave night histogram plot'
 sum_wavenight_histplot = Graph('SUM_WAVENIGHT_HISTPLOT', kind='summary',
-                           func=plot_wavenight_histplot)
+                           func=plot_wavenight_histplot,
+                            figsize=(16, 10), dpi=150,
+                            description=sum_desc)
 # add to definitions
 definitions += [wave_hc_guess, wave_hc_brightest_lines, wave_hc_tfit_grid,
                 wave_hc_resmap, wave_littrow_check1, wave_littrow_extrap1,
