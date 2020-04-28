@@ -8,8 +8,7 @@ APERO Documentation
 ******************************************
 
 ===========================================
-Latest version: 0.6.077   :maxdepth: 2
-   :caption: Contents:
+Latest version: 0.6.079   :caption: Contents:
 
    user/general_guide.rst
    user/spirou.rst
