@@ -5651,7 +5651,8 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
         # normalize by the pixel difference
         pixdiff = pixdiff / np.nanmedian(np.abs(pixdiff))
         # create a mask to remove values
-        madmask = np.abs(pixdiff) < madvalue
+        with warnings.catch_warnings(record=True) as _:
+            madmask = np.abs(pixdiff) < madvalue
         # apply mask to rhcl
         rhcl = rhcl[madmask]
         # log how many lines we kept
