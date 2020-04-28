@@ -5590,7 +5590,8 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
                       func_name)
     pltbinl = pcheck(params, 'WAVENIGHT_PLT_BINL', 'pltbinl', kwargs, func_name)
     pltbinu = pcheck(params, 'WAVENIGHT_PLT_BINU', 'pltbinl', kwargs, func_name)
-
+    # get pconst
+    pconst = constants.pload(params['INSTRUMENT'])
     # deal with havint a input dcavity width
     if indcavity is not None:
         d_cavity = float(indcavity)
@@ -5738,6 +5739,38 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     # update wavelength measured in line list table
     rhcl = update_wavelength_measured(params, rhcl, night_wave, kind='HC')
     rfpl = update_wavelength_measured(params, rfpl, night_wave, kind='FP')
+    # ----------------------------------------------------------------------
+    # after results for fp
+    # ----------------------------------------------------------------------
+    rorders = rfpl['ORDER']
+    rpixels = rfpl['PIXEL_MEAS']
+    rwaveref = rfpl['WAVE_REF']
+    # get dprtype
+    dprtype = fpe2ds.get_key('KW_DPRTYPE', dtype=str)
+    # get fiber type
+    fibtype = pconst.FIBER_DPR_POS(dprtype, fiber)
+    # get the difference between measured and reference pixels
+    diffpix = rpixels - rfpl['PIXEL_REF']
+    # debug plot expected lines vs measured positions
+    recipe.plot('WAVEREF_EXPECTED', orders=rorders, wavemap=rwaveref,
+                diff=diffpix, fiber=fiber, nbo=nbo, fibtype=fibtype,
+                iteration='after')
+    # ----------------------------------------------------------------------
+    # after results for fp
+    # ----------------------------------------------------------------------
+    rorders = rhcl['ORDER']
+    rpixels = rhcl['PIXEL_MEAS']
+    rwaveref = rhcl['WAVE_REF']
+    # get dprtype
+    dprtype = hce2ds.get_key('KW_DPRTYPE', dtype=str)
+    # get fiber type
+    fibtype = pconst.FIBER_DPR_POS(dprtype, fiber)
+    # get the difference between measured and reference pixels
+    diffpix = rpixels - rhcl['PIXEL_REF']
+    # debug plot expected lines vs measured positions
+    recipe.plot('WAVEREF_EXPECTED', orders=rorders, wavemap=rwaveref,
+                diff=diffpix, fiber=fiber, nbo=nbo, fibtype=fibtype,
+                iteration='after')
     # ----------------------------------------------------------------------
     # add to storage
     # ----------------------------------------------------------------------
