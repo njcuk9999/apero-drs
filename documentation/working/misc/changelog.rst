@@ -2,6 +2,65 @@ Changelog
 =========
 
 
+0.6.079 (2020-04-28)
+--------------------
+- Update language database. [njcuk9999]
+- `Misc/tools/mk_master_hc_cat.py` + `data.spirou.calib.catalogue_UNe.csv` -
+  code to update the hc linelist. [njcuk9999]
+- `Apero.core.instruemnts.spirou.defalut_constants.py` - update catalogue
+  file and fmt. [njcuk9999]
+- `Apero.core.instruments.spirou.default_constants.py` - pep8 adjustment.
+  [njcuk9999]
+- `Apero.plotting.plot_functions.py` - add summary descriptions for two
+  wave night summary plots. [njcuk9999]
+- `Apero.science.calib.wave.py` - add `wave_expected` (after) plot for hc
+  and fp. [njcuk9999]
+- `Apero.scioence.calib.wave.py` - and catch warning statement around
+  madmask. [njcuk9999]
+- Update language database. [njcuk9999]
+- `Science.calib.wave.py` - remove breakpoint + and range for second
+  iteration. [njcuk9999]
+- `Apero.plotting.plot_functions.py` - correct wave night figures.
+  [njcuk9999]
+- `Apero.science.calib.wave.py` - add break point to test EA new code.
+  [njcuk9999]
+- `Plotting.plot_functions.py` - correct typo kwargs['waveref'] -->
+  kwargs['waverefs'] [njcuk9999]
+- `Core.instruments.*.default_keywords.py` - correct typo groupu-->group.
+  [njcuk9999]
+- `Apero.core.instruments.default.default_constants.py` - remove
+  `PLOT_WAVENIGHT_DIFFPLOT` from `__ALL__` [njcuk9999]
+- `Apero.science.calib.wave.py` - add EA updates to `night_wavesolution`.
+  [njcuk9999]
+- `Recipes.spirou.cal_wave_night_spirou.py` - add fiber to inputs of
+  `night_wavesolution` (for plot saving) [njcuk9999]
+- `Plotting.plot_functions.py` - modify wave night plotting
+  `(wavenight_iterplot` + `wavenight_histplot)` and remove
+  `wavenight_diffplot` after ea changes. [njcuk9999]
+- `Core.instruments.spirou.recipe_definitions.py` - modify debug/summary
+  plots after EA changes. [njcuk9999]
+- Update language database. [njcuk9999]
+- `Core.instruments.spirou.recipe_definitions.py` - remove
+  `WAVENIGHT_DIFFPLOT` from debug plot list. [njcuk9999]
+- `Core.instruments.default_constants.py` and `default_keywords.py` -
+  add/remove/modify wave night constants/keywords with new update from
+  EA. [njcuk9999]
+- `Misc.tools.ccf_plot.py` - update graph. [Neil Cook]
+
+
+0.6.078 (2020-04-27)
+--------------------
+- `Recipes.nirps_ha.cal_preprocessing_niprs_ha.py` - update pp for nirps
+  (from spirou updates) [njcuk9999]
+- `Recipes.spirou.cal_preprocessing_spirou.py` and
+  `science.preprocessing.general.py` - fix qc to print only when log=True
+  + redo QC after iteration loop. [njcuk9999]
+- `Misc.tools.wave_drift_comp.py` - test drift in fibers. [njcuk9999]
+- `Apero.recipe.spirou.cal_preprocess_spirou.py` - deal with a QC after a
+  shift in pixels. [njcuk9999]
+- Update date, version, changelog, documentation. [njcuk9999]
+
+
 0.6.077 (2020-04-24)
 --------------------
 - /locale/ --> /lang/ [njcuk9999]
