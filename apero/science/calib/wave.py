@@ -5573,9 +5573,9 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     # ----------------------------------------------------------------------
     # get parameters from params/kwargs
     niterations1 = pcheck(params, 'WAVE_NIGHT_NITERATIONS1', 'niterations1',
-                         kwargs, func_name)
+                          kwargs, func_name)
     niterations2 = pcheck(params, 'WAVE_NIGHT_NITERATIONS2', 'niterations2',
-                         kwargs, func_name)
+                          kwargs, func_name)
     d_cavity = pcheck(params, 'WAVE_NIGHT_DCAVITY', 'd_cavity', kwargs,
                       func_name)
     hcsigclip = pcheck(params, 'WAVE_NIGHT_HC_SIGCLIP', 'hcsigclip', kwargs,

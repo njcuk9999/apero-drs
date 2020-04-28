@@ -751,7 +751,7 @@ KW_WAVE_DEG.set(key='WAVEDEGN', comment='degree of wave polyn fit',
 # the wave file used
 KW_WAVEFILE = KW_WAVEFILE.copy(__NAME__)
 KW_WAVEFILE.set(key='WAVEFILE', comment='Wavelength solution file used',
-                  parent=None, group='wave')
+                parent=None, group='wave')
 
 # the wave file mid exptime [mjd]
 KW_WAVETIME = KW_WAVETIME.copy(__NAME__)
@@ -1211,12 +1211,12 @@ KW_WFP_MASKUNITS.set(key='WFPCMUNT', comment='wave sol FP CCF mask units used',
 # number of iterations for convergence used in wave night (hc)
 KW_WNT_NITER1 = KW_WNT_NITER1.copy(__NAME__)
 KW_WNT_NITER1.set(key='WNTNITER', comment='wave night hc n iterations used',
-                 parent='WAVE_NIGHT_NITERATIONS1', group='wave')
+                  parent='WAVE_NIGHT_NITERATIONS1', group='wave')
 
 # number of iterations for convergence used in wave night (fp)
 KW_WNT_NITER21 = KW_WNT_NITER2.copy(__NAME__)
 KW_WNT_NITER2.set(key='WNTNITER', comment='wave night fp n iterations used',
-                 parent='WAVE_NIGHT_NITERATIONS2', group='wave')
+                  parent='WAVE_NIGHT_NITERATIONS2', group='wave')
 
 # starting point for the cavity corrections used in wave night
 KW_WNT_DCAVITY = KW_WNT_DCAVITY.copy(__NAME__)
@@ -1233,7 +1233,7 @@ KW_WNT_DCAVSRCE.set(key='WNTDCVSR',
 # define the sigma clip value to remove bad hc lines used
 KW_WNT_HCSIGCLIP = KW_WNT_HCSIGCLIP.copy(__NAME__)
 KW_WNT_HCSIGCLIP.set(key='WNTHCSIG', comment='wave night hc sig clip used',
-                     groupu='wave', parent='WAVE_NIGHT_HC_SIGCLIP')
+                     group='wave', parent='WAVE_NIGHT_HC_SIGCLIP')
 
 # median absolute deviation cut off used
 KW_WNT_MADLIMIT = KW_WNT_MADLIMIT.copy(__NAME__)
