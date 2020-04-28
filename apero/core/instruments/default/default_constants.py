@@ -164,12 +164,10 @@ __all__ = [
     'WAVEREF_FP_NLOW', 'WAVEREF_FP_NHIGH', 'WAVEREF_FP_POLYINV',
     'WAVE_FIBER_COMP_PLOT_ORD',
     # wave night constants
-    'WAVE_NIGHT_HIGHF_CORR_DEG', 'WAVE_NIGHT_NITERATIONS', 'WAVE_NIGHT_DCAVITY',
-    'WAVE_NIGHT_NSIG_MIN', 'WAVE_NIGHT_REDEND_CUTOFF', 'WAVE_NIGHT_DWAVE_BIN',
-    'WAVE_NIGHT_NMIN_LINES', 'WAVE_NIGHT_NSIG_FIT_CUT', 'WAVENIGHT_PLT_HCBINL',
-    'WAVENIGHT_PLT_HCBINU', 'WAVENIGHT_PLT_HCBINSZ', 'WAVENIGHT_PLT_FPBX',
-    'WAVENIGHT_PLT_FPBY', 'WAVENIGHT_PLT_FPLB', 'WAVENIGHT_PLT_AMPSIZE',
-    'WAVENIGHT_PLT_MAXDV', 'WAVENIGHT_PLT_DVSTEP',
+    'WAVE_NIGHT_NITERATIONS1', 'WAVE_NIGHT_NITERATIONS2', 'WAVE_NIGHT_DCAVITY',
+    'WAVE_NIGHT_HC_SIGCLIP', 'WAVE_NIGHT_MED_ABS_DEV',
+    'WAVE_NIGHT_NSIG_FIT_CUT', 'WAVENIGHT_PLT_BINL', 'WAVENIGHT_PLT_BINU',
+    'WAVENIGHT_PLT_NBINS',
     # telluric constants
     'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM',
     'TELLU_ALLOWED_DPRTYPES', 'TELLURIC_FILETYPE', 'TELLURIC_FIBER_TYPE',
@@ -1876,78 +1874,46 @@ WAVE_FIBER_COMP_PLOT_ORD = Const('WAVE_FIBER_COMP_PLOT_ORD', value=None,
 # CALIBRATION: WAVE NIGHT SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION: WAVE NIGHT SETTINGS'
-# high-order wavelength solution correction cannot be smaller than 2,
-#   we remove 0 and 1
-WAVE_NIGHT_HIGHF_CORR_DEG = Const('WAVE_NIGHT_HIGHF_CORR_DEG', value=None,
-                                  dtype=int, source=__NAME__, minimum=1,
-                                  group=cgroup)
 
-# number of iterations for convergence
-WAVE_NIGHT_NITERATIONS = Const('WAVE_NIGHT_NITERATIONS', value=None, dtype=int,
-                               source=__NAME__, minimum=1, group=cgroup)
+# number of iterations for hc convergence
+WAVE_NIGHT_NITERATIONS1 = Const('WAVE_NIGHT_NITERATIONS1', value=None,
+                                dtype=int, source=__NAME__, minimum=1,
+                                group=cgroup)
+
+# number of iterations for fp convergence
+WAVE_NIGHT_NITERATIONS2 = Const('WAVE_NIGHT_NITERATIONS2', value=None,
+                                dtype=int, source=__NAME__, minimum=1,
+                                group=cgroup)
 
 # starting point for the cavity corrections
 WAVE_NIGHT_DCAVITY = Const('WAVE_NIGHT_DCAVITY', value=None, dtype=float,
                            source=__NAME__, minimum=0.0, group=cgroup)
 
-# min SNR for incluing in the model
-WAVE_NIGHT_NSIG_MIN = Const('WAVE_NIGHT_NSIG_MIN', value=None, dtype=int,
-                            source=__NAME__, minimum=1, group=cgroup)
+# define the sigma clip value to remove bad hc lines
+WAVE_NIGHT_HC_SIGCLIP = Const('WAVE_NIGHT_HC_SIGCLIP', value=None, dtype=float,
+                              source=__NAME__, minimum=0.0, group=cgroup)
 
-# red cut off for fit constaint [nm]
-WAVE_NIGHT_REDEND_CUTOFF = Const('WAVE_NIGHT_REDEND_CUTOFF', value=None,
-                                 dtype=float, source=__NAME__, minimum=0,
-                                 group=cgroup)
-
-# size in nm of the median bin of residuals for higher-order correction
-WAVE_NIGHT_DWAVE_BIN = Const('WAVE_NIGHT_DWAVE_BIN', value=None, dtype=int,
-                             source=__NAME__, minimum=0, group=cgroup)
-
-# min number of lines to be included in a median bin for high-order
-# correction
-WAVE_NIGHT_NMIN_LINES = Const('WAVE_NIGHT_NMIN_LINES', value=None, dtype=int,
-                              source=__NAME__, minimum=1, group=cgroup)
+# median absolute deviation cut off
+WAVE_NIGHT_MED_ABS_DEV = Const('WAVE_NIGHT_MED_ABS_DEV', value=None,
+                               dtype=float, source=__NAME__, minimum=0.0,
+                               group=cgroup)
 
 # sigma clipping for the fit
 WAVE_NIGHT_NSIG_FIT_CUT = Const('WAVE_NIGHT_NSIG_FIT_CUT', value=None,
                                 dtype=float, source=__NAME__, minimum=1,
                                 group=cgroup)
 
-# wave night plot hc bin lower bound [nm]
-WAVENIGHT_PLT_HCBINL = Const('WAVENIGHT_PLT_HCBINL', value=None, dtype=float,
+# wave night plot hist number of bins
+WAVENIGHT_PLT_NBINS = Const('WAVENIGHT_PLT_NBINS', value=None, dtype=int,
                              source=__NAME__, minimum=0, group=cgroup)
 
-# wave night plot hc bin upper bound [nm]
-WAVENIGHT_PLT_HCBINU = Const('WAVENIGHT_PLT_HCBINU', value=None, dtype=float,
+# wave night plot hc bin lower bound in multiples of rms
+WAVENIGHT_PLT_BINL = Const('WAVENIGHT_PLT_BINL', value=None, dtype=float,
                              source=__NAME__, minimum=0, group=cgroup)
 
-# wave night plot hc bin size [nm]
-WAVENIGHT_PLT_HCBINSZ = Const('WAVENIGHT_PLT_HCBINSZ', value=None, dtype=int,
-                              source=__NAME__, minimum=1, group=cgroup)
-
-# wave night plot fp histogram 2d number of x bins
-WAVENIGHT_PLT_FPBX = Const('WAVENIGHT_PLT_FPBX', value=None, dtype=int,
-                           source=__NAME__, minimum=1, group=cgroup)
-
-# wave night plot fp histogram 2d number of y bins
-WAVENIGHT_PLT_FPBY = Const('WAVENIGHT_PLT_FPBY', value=None, dtype=int,
-                           source=__NAME__, minimum=1, group=cgroup)
-
-# wave night plot fp line bin size
-WAVENIGHT_PLT_FPLB = Const('WAVENIGHT_PLT_FPLB', value=None, dtype=int,
-                           source=__NAME__, minimum=1, group=cgroup)
-
-# wave night plot amplifier size (for modulo amplifier  structures)
-WAVENIGHT_PLT_AMPSIZE = Const('WAVENIGHT_PLT_AMPSIZE', value=None, dtype=int,
-                              source=__NAME__, minimum=1, group=cgroup)
-
-# wave night plot max +/- dv to keep in the histogram plots
-WAVENIGHT_PLT_MAXDV = Const('WAVENIGHT_PLT_MAXDV', value=None, dtype=float,
-                            source=__NAME__, minimum=0, group=cgroup)
-
-# wave night plot modulo amplifier step (bin) size
-WAVENIGHT_PLT_DVSTEP = Const('WAVENIGHT_PLT_DVSTEP', value=None, dtype=int,
-                             source=__NAME__, minimum=1, group=cgroup)
+# wave night plot hc bin upper bound in multiples of rms
+WAVENIGHT_PLT_BINU = Const('WAVENIGHT_PLT_BINU', value=None, dtype=float,
+                           source=__NAME__, minimum=0, group=cgroup)
 
 # =============================================================================
 # OBJECT: TELLURIC SETTINGS
@@ -2853,13 +2819,6 @@ PLOT_WAVENIGHT_ITERPLOT = Const('PLOT_WAVENIGHT_ITERPLOT', value=False,
                                 active=True, group=cgroup,
                                 description='turn on the wave per night '
                                             'iteration debug plot')
-
-# turn on the wave per night diff debug plot
-PLOT_WAVENIGHT_DIFFPLOT = Const('PLOT_WAVENIGHT_DIFFPLOT', value=False,
-                                dtype=bool, source=__NAME__, user=True,
-                                active=True, group=cgroup,
-                                description='turn on the wave per night '
-                                            'diff debug plot')
 
 # turn on the wave per night hist debug plot
 PLOT_WAVENIGHT_HISTPLOT = Const('PLOT_WAVENIGHT_HISTPLOT', value=False,
