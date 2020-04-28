@@ -2715,7 +2715,7 @@ def plot_wavenight_histplot(plotter, graph, kwargs):
     fiber = kwargs['fiber']
     # ------------------------------------------------------------------
     # set up plot
-    fig, frames = graph.set_figure(plotter, nrows=2, ncols=1, sharey=True)
+    fig, frames = graph.set_figure(plotter, nrows=2, ncols=1)
     # hist setup
     hkwargs = dict(bins=nbins, range=[binl * rms, binu * rms], alpha=0.5)
     # ------------------------------------------------------------------
@@ -2816,9 +2816,9 @@ sum_wave_fiber_comp = Graph('SUM_WAVE_FIBER_COMP', kind='summary',
                             description=sum_desc)
 wavenight_iterplot = Graph('WAVENIGHT_ITERPLOT', kind='debug',
                            func=plot_wavenight_iterplot)
-sum_wavenight_iterplot = Graph('WAVENIGHT_ITERPLOT', kind='summary',
+sum_wavenight_iterplot = Graph('SUM_WAVENIGHT_ITERPLOT', kind='summary',
                            func=plot_wavenight_iterplot)
-wavenight_histplot = Graph('SUM_WAVENIGHT_HISTPLOT', kind='debug',
+wavenight_histplot = Graph('WAVENIGHT_HISTPLOT', kind='debug',
                            func=plot_wavenight_histplot)
 sum_wavenight_histplot = Graph('SUM_WAVENIGHT_HISTPLOT', kind='summary',
                            func=plot_wavenight_histplot)
