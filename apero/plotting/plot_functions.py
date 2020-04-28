@@ -1036,7 +1036,7 @@ def plot_shape_linear_tparams(plotter, graph, kwargs):
     diffy = y1 - y2
     xrange1 = [0, dim2]
     xrange2 = [0, dim1]
-    ylim = np.max([np.nanmedian(np.abs(diffx)),np.nanmedian(np.abs(diffy))])
+    ylim = np.max([np.nanmedian(np.abs(diffx)), np.nanmedian(np.abs(diffy))])
     yrange = [-10 * ylim, 10 * ylim]
     nbins = 50
     pstep = 100
@@ -2818,16 +2818,16 @@ wavenight_iterplot = Graph('WAVENIGHT_ITERPLOT', kind='debug',
                            func=plot_wavenight_iterplot)
 sum_desc = 'Wave night iteration plot'
 sum_wavenight_iterplot = Graph('SUM_WAVENIGHT_ITERPLOT', kind='summary',
-                           func=plot_wavenight_iterplot,
-                            figsize=(16, 10), dpi=150,
-                            description=sum_desc)
+                               func=plot_wavenight_iterplot,
+                               figsize=(16, 10), dpi=150,
+                               description=sum_desc)
 wavenight_histplot = Graph('WAVENIGHT_HISTPLOT', kind='debug',
                            func=plot_wavenight_histplot)
 sum_desc = 'Wave night histogram plot'
 sum_wavenight_histplot = Graph('SUM_WAVENIGHT_HISTPLOT', kind='summary',
-                           func=plot_wavenight_histplot,
-                            figsize=(16, 10), dpi=150,
-                            description=sum_desc)
+                               func=plot_wavenight_histplot,
+                               figsize=(16, 10), dpi=150,
+                               description=sum_desc)
 # add to definitions
 definitions += [wave_hc_guess, wave_hc_brightest_lines, wave_hc_tfit_grid,
                 wave_hc_resmap, wave_littrow_check1, wave_littrow_extrap1,
