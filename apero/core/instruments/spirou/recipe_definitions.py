@@ -758,7 +758,9 @@ cal_wave_night.set_debug_plots('WAVENIGHT_ITERPLOT', 'WAVENIGHT_HISTPLOT',
                                'WAVEREF_EXPECTED', 'CCF_RV_FIT',
                                'CCF_RV_FIT_LOOP', 'EXTRACT_S1D',
                                'EXTRACT_S1D_WEIGHT')
-cal_wave_night.set_summary_plots('SUM_CCF_RV_FIT')
+cal_wave_night.set_summary_plots('SUM_WAVENIGHT_ITERPLOT',
+                                 'SUM_WAVENIGHT_HISTPLOT',
+                                 'SUM_CCF_RV_FIT')
 cal_wave_night.set_arg(pos=0, **directory)
 cal_wave_night.set_kwarg(name='--hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
                          nargs='+', filelogic='exclusive', required=True,
