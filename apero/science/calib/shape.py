@@ -606,7 +606,6 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
         slope_deg_arr_i, slope_arr_i, skeep_arr_i = [], [], []
         xsec_arr_i, ccor_arr_i, ddx_arr_i, dx_arr_i = [], [], [], []
         dypix_arr_i, cckeep_arr_i = [], []
-        xpeak2, peakval2, ewval2, err_pix, good_mask = [], [], [], [], []
         corr_dx_from_fp = np.zeros((nbo, dim2))
         shifts_all = np.zeros((nbo, dim2))
         # get dx array (NaN)
@@ -801,16 +800,14 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
 
             pargs = [params, sp_fp, sp_hc, order_num, hcdata,
                      poly_wave_ref, une_lines, poly_cavity]
-
-            out = get_offset_sp(*pargs)
-            # get and save offest outputs into lists
-            corr_dx_from_fp[order_num] = out[0]
-            xpeak2.append(out[1])
-            peakval2.append(out[2])
-            ewval2.append(out[3])
-            err_pix.append(out[4])
-            good_mask.append(out[5])
-
+            # out = get_offset_sp(*pargs)
+            # # get and save offest outputs into lists
+            # corr_dx_from_fp[order_num] = out[0]
+            # xpeak2.append(out[1])
+            # peakval2.append(out[2])
+            # ewval2.append(out[3])
+            # err_pix.append(out[4])
+            # good_mask.append(out[5])
             # -------------------------------------------------------------
             # median FP peak profile. We will cross-correlate each
             # row of the ribbon with this
@@ -1001,9 +998,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
         pkwargs = dict(slope_deg=[slope_deg_arr_i], slope=[slope_arr_i],
                        skeep=[skeep_arr_i], xsection=[xsec_arr_i],
                        ccor=[ccor_arr_i], ddx=[ddx_arr_i], dx=[dx_arr_i],
-                       dypix=[dypix_arr_i], ckeep=[cckeep_arr_i],
-                       shifts=[shifts_all], xpeak2=[xpeak2], err_pix=[err_pix],
-                       good=[good_mask])
+                       dypix=[dypix_arr_i], ckeep=[cckeep_arr_i])
         recipe.plot('SHAPE_ANGLE_OFFSET_ALL', params=params, bnum=banana_num,
                     nbo=nbo, nbpix=dim2, **pkwargs)
         # ---------------------------------------------------------------------
@@ -1013,16 +1008,11 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
         ccor_arr.append(ccor_arr_i), ddx_arr.append(ddx_arr_i)
         dx_arr.append(dx_arr_i), dypix_arr.append(dypix_arr_i)
         cckeep_arr.append(cckeep_arr_i)
-        shifts_arr.append(shifts_all), xpeak2_arr.append(xpeak2)
-        peakval2_arr.append(peakval2), ewval2_arr.append(ewval2)
-        err_pix_arr.append(err_pix), good_mask_arr.append(good_mask)
     # ---------------------------------------------------------------------
     # plot selected order angle_offset plot
     pkwargs = dict(slope_deg=slope_deg_arr, slope=slope_arr,
                    skeep=skeep_arr, xsection=xsec_arr, ccor=ccor_arr,
-                   ddx=ddx_arr, dx=dx_arr, dypix=dypix_arr, ckeep=cckeep_arr,
-                   shifts=shifts_arr, xpeak2=xpeak2_arr,
-                   err_pix=err_pix_arr, good=good_mask_arr)
+                   ddx=ddx_arr, dx=dx_arr, dypix=dypix_arr, ckeep=cckeep_arr)
     # plot as debug plot
     recipe.plot('SHAPE_ANGLE_OFFSET', params=params, bnum=None, nbo=nbo,
                 nbpix=dim2, **pkwargs)
@@ -1615,6 +1605,7 @@ def xy_acc_peak(xpeak, ypeak, im):
     return x1, y1
 
 
+# TODO: function no longer used (was used in calculate_dxmap)
 def get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata,
                   poly_wave_ref, une_lines, poly_cavity,
                   **kwargs):
