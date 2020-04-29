@@ -1015,11 +1015,11 @@ WAVE_MASTER_FIBER.value = 'AB'
 
 # Define the line list file (located in the DRS_WAVE_DATA directory)
 WAVE_LINELIST_FILE = WAVE_LINELIST_FILE.copy(__NAME__)
-WAVE_LINELIST_FILE.value = 'catalogue_UNe.dat'  # 'catalogue_UNe.csv'
+WAVE_LINELIST_FILE.value = 'catalogue_UNe.csv'  # 'catalogue_UNe.dat'
 
 # Define the line list file format (must be astropy.table format)
 WAVE_LINELIST_FMT = WAVE_LINELIST_FMT.copy(__NAME__)
-WAVE_LINELIST_FMT.value = 'ascii.tab'   # 'ascii.csv'
+WAVE_LINELIST_FMT.value = 'ascii.csv'   # 'ascii.tab'
 
 # Define the line list file column names (must be separated by commas
 #   and must be equal to the number of columns in file)
@@ -1028,7 +1028,7 @@ WAVE_LINELIST_COLS.value = 'll, amp, kind'
 
 # Define the line list file row the data starts
 WAVE_LINELIST_START = WAVE_LINELIST_START.copy(__NAME__)
-WAVE_LINELIST_START.value = 0   # 1
+WAVE_LINELIST_START.value = 1     # 0
 
 # Define the line list file wavelength column and amplitude column
 #    Must be in WAVE_LINELIST_COLS
