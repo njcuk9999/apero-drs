@@ -352,9 +352,15 @@ def load_calib_file(params, key=None, inheader=None, filename=None,
                                                  get_image, get_header)
         # return here
         if get_header:
-            return [image], [header], [abspath]
+            if n_entries == 1:
+                return image, header, abspath
+            else:
+                return [image], [header], [abspath]
         else:
-            return [image], [abspath]
+            if n_entries == 1:
+                return image, abspath
+            else:
+                return [image], [abspath]
     # ----------------------------------------------------------------------
     # get calibDB
     cdb = drs_database.get_full_database(params, 'calibration')
