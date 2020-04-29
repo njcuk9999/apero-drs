@@ -1863,7 +1863,7 @@ def get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata,
         good = (xpos_predict > 0) & (xpos_predict < dim2)
         # doing this for order where there are no UNe lines
         if np.sum(good) == 0:
-            WLOG(params, '', TextEntry('40-014-00040', arg=[order_num]))
+            WLOG(params, 'warning', TextEntry('40-014-00040', args=[order_num]))
             best_zp = fp_peak0_est - fpindex[0]
             break
         # mask
