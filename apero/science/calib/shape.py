@@ -537,9 +537,9 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
     min_good_corr = pcheck(params, 'SHAPE_MIN_GOOD_CORRELATION',
                            'min_good_corr', kwargs, func_name)
     short_medfilt_wid = pcheck(params, 'SHAPE_SHORT_DX_MEDFILT_WID',
-                                 'short_medfilt_width', kwargs, func_name)
+                               'short_medfilt_width', kwargs, func_name)
     long_medfilt_wid = pcheck(params, 'SHAPE_LONG_DX_MEDFILT_WID',
-                                'long_medfilt_width', kwargs, func_name)
+                              'long_medfilt_width', kwargs, func_name)
     std_qc = pcheck(params, 'SHAPE_QC_DXMAP_STD', 'std_qc', kwargs, func_name)
 
     # get properties from property dictionaries
@@ -791,8 +791,6 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
                 # push spline values with shift into ribbon2
                 ribbon_hc2[iw, :] = spline_hc(xpix + ddx)
 
-
-
             # -------------------------------------------------------------
             # get the median values of the fp and hc
             sp_fp = mp.nanmedian(ribbon_fp2, axis=0)
@@ -849,8 +847,6 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
                     dx[order_num, iw] = gcoeffs[1]
             # -------------------------------------------------------------
             # remove any offset in dx, this would only shift the spectra
-
-
 
             # TODO : bad bad bad, don't comment out yet!
             dypix = np.arange(len(dx[order_num]))
@@ -978,7 +974,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
 
                     # get shifts combination of ddx and dx0 correction
                     ddx_f = ddx + dx0
-                    shifts = ddx_f[pos_y_mask] #- corr_dx_from_fp[order_num][ix]
+                    shifts = ddx_f[pos_y_mask]  # - corr_dx_from_fp[order_num][ix]
                     shifts_all[order_num][ix] = np.nanmean(shifts)
                     # apply shifts to master dx map at correct positions
                     master_dxmap[positions, ix] += shifts
@@ -1616,8 +1612,8 @@ def xy_acc_peak(xpeak, ypeak, im):
 
 
 def get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata,
-                   poly_wave_ref, une_lines, poly_cavity,
-                   **kwargs):
+                  poly_wave_ref, une_lines, poly_cavity,
+                  **kwargs):
     func_name = __NAME__ + '.get_offset_sp'
     # get constants from params/kwargs
     xoffset = pcheck(params, 'SHAPEOFFSET_XOFFSET', 'xoffset', kwargs,
