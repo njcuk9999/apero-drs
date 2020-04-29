@@ -5667,10 +5667,9 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     recipe.plot('SUM_WAVENIGHT_ITERPLOT', waverefs=waverefs, pixdiffs=pixdiffs,
                 fiber=fiber)
     # ----------------------------------------------------------------------
-    # we need some sort of sigma clipping. Fainter lines have a dispersion
-    # that is way too high.
-    sigclipmask = rhcl['NSIG'] > hcsigclip
-    rhcl = rhcl[sigclipmask]
+    # TODO: remove breakpoint
+    constants.break_point(params)
+    # rhcl = rhcl[sigclipmask]
     # copy the rhcl table (before modification)
     rhcl_prev = Table(rhcl)
     # get xpix array
@@ -5696,8 +5695,12 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
         # update wavelength measured in line list table
         rhcl = update_wavelength_measured(params, rhcl, rwave, kind='HC')
         rfpl = update_wavelength_measured(params, rfpl, rwave, kind='FP')
+        # we need some sort of sigma clipping. Fainter lines have a dispersion
+        # that is way too high.
+        sigclipmask = rhcl['NSIG'] > hcsigclip
         # calculate the change in d_cavity
-        dd_cavity = (1 - np.nanmedian(rhcl['WAVE_MEAS'] / rhcl['WAVE_REF']))
+        hc_wave_ratio = rhcl['WAVE_MEAS'] / rhcl['WAVE_REF']
+        dd_cavity = (1 - np.nanmedian(hc_wave_ratio[sigclipmask]))
         # update d_cavity with the change in d_cavity
         d_cavity = d_cavity + dd_cavity
         # log the change in d_cavity
