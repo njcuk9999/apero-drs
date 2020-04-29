@@ -85,7 +85,7 @@ def load_linelist(params, **kwargs):
     # add back to kwargs
     kwargs['fmt'] = tablefmt
     kwargs['colnames'] = tablecols
-    kwargs['data_start'] = tablestart
+    kwargs['datastart'] = int(tablestart)
 
     # return image
     try:
