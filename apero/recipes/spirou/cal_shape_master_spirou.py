@@ -186,7 +186,7 @@ def __main__(recipe, params):
         if params['INPUTS']['FPMASTER'] in ['1', 'True']:
             filename = None
         else:
-            filename = params['INPUTS']['FPMASTER'][0]
+            filename = params['INPUTS']['FPMASTER'][0][0]
         # do stuff
         fpkwargs = dict(header=fpfile.header, filename=filename)
         # read fpmaster file
