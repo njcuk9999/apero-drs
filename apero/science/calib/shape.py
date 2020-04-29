@@ -1606,9 +1606,8 @@ def xy_acc_peak(xpeak, ypeak, im):
 
 
 # TODO: function no longer used (was used in calculate_dxmap)
-def get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata,
-                  poly_wave_ref, une_lines, poly_cavity,
-                  **kwargs):
+def get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata, poly_wave_ref,
+                  une_lines, poly_cavity, **kwargs):
     func_name = __NAME__ + '.get_offset_sp'
     # get constants from params/kwargs
     xoffset = pcheck(params, 'SHAPEOFFSET_XOFFSET', 'xoffset', kwargs,
