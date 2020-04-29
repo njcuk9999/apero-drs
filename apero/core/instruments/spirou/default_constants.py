@@ -1028,7 +1028,7 @@ WAVE_LINELIST_COLS.value = 'll, amp, kind'
 
 # Define the line list file row the data starts
 WAVE_LINELIST_START = WAVE_LINELIST_START.copy(__NAME__)
-WAVE_LINELIST_START.value = 0
+WAVE_LINELIST_START.value = 1
 
 # Define the line list file wavelength column and amplitude column
 #    Must be in WAVE_LINELIST_COLS
