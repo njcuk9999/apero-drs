@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 # fine HC lines to be used. We only want A, B and C, *not* AB as it is
 # a linear combination of AB and does not provide an independent measure
-files = np.array(glob.glob('*_wave_hclines*.fits'))
+files = np.array(glob.glob('*/*_wave_hclines*.fits'))
 
 for i in range(len(files)):
     if 'AB' in files[i]:
