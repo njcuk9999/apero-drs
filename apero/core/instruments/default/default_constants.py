@@ -1406,7 +1406,7 @@ WAVE_LINELIST_COLS = Const('WAVE_LINELIST_COLS', value=None, dtype=str,
                            source=__NAME__, group=cgroup)
 
 # Define the line list file row the data starts
-WAVE_LINELIST_START = Const('WAVE_LINELIST_START', value=None, dtype=str,
+WAVE_LINELIST_START = Const('WAVE_LINELIST_START', value=None, dtype=int,
                             source=__NAME__, group=cgroup)
 
 # Define the line list file wavelength column and amplitude column
