@@ -2530,7 +2530,13 @@ class DrsFitsFile(DrsInputFile):
         # set function name
         _ = display_func(None, 'copy_hdict', __NAME__, 'DrsFitsFile')
         # set this instance to the hdict instance of another drs fits file
-        self.hdict = drsfile.hdict
+        self.hdict = drsfile.hdict.copy()
+
+    def copy_header(self, drsfile):
+        # set function name
+        _ = display_func(None, 'copy_header', __NAME__, 'DrsFitsFile')
+        # set this instance to the header instance of another drs fits file
+        self.header = drsfile.header.copy()
 
     # -------------------------------------------------------------------------
     # database methods
