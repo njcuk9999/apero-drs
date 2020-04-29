@@ -5697,10 +5697,10 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
         rfpl = update_wavelength_measured(params, rfpl, rwave, kind='FP')
         # we need some sort of sigma clipping. Fainter lines have a dispersion
         # that is way too high.
-        sigclipmask = rhcl['NSIG'] > hcsigclip
+        # sigclipmask = rhcl['NSIG'] > hcsigclip
         # calculate the change in d_cavity
         hc_wave_ratio = rhcl['WAVE_MEAS'] / rhcl['WAVE_REF']
-        dd_cavity = (1 - np.nanmedian(hc_wave_ratio[sigclipmask]))
+        dd_cavity = (1 - np.nanmedian(hc_wave_ratio))
         # update d_cavity with the change in d_cavity
         d_cavity = d_cavity + dd_cavity
         # log the change in d_cavity
