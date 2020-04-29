@@ -1164,8 +1164,8 @@ def plot_shape_angle_offset(plotter, graph, kwargs):
             c_keep = ckeep_arr[banana_num][order_num]
             # --------------------------------------------------------------
             # set up plot
-            fig, frames = graph.set_figure(plotter, ncols=3, nrows=1)
-            frame1, frame2, frame3 = frames
+            fig, frames = graph.set_figure(plotter, ncols=2, nrows=1)
+            frame1, frame2 = frames
             # title
             title = 'Iteration {0}/{1} - Order {2}'
             plt.suptitle(title.format(bnum_it + 1, nbanana, order_num))
