@@ -1496,9 +1496,6 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
               'LEAK_LOW_PERCENTILE_USED', 'LEAK_HIGH_PERCENTILE_USED',
               'LEAK_BAD_RATIO_OFFSET_USED']
 
-    # TODO: remove break point
-    constants.break_point(params)
-
     # ----------------------------------------------------------------------
     # 2D files
     # ----------------------------------------------------------------------
@@ -1544,8 +1541,8 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
         # ------------------------------------------------------------------
         # Store S1D_W in file
         # ------------------------------------------------------------------
-        # copy header from e2dsll file
-        s1dwfile.copy_hdict(extfile)
+        # copy header from e2dsff file
+        s1dwfile.copy_header(extfile)
         # set output key
         s1dwfile.add_hkey('KW_OUTPUT', value=s1dwfile.name)
         # add new header keys
@@ -1565,8 +1562,8 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
         # ------------------------------------------------------------------
         # Store S1D_V in file
         # ------------------------------------------------------------------
-        # copy header from e2dsll file
-        s1dvfile.copy_hdict(extfile)
+        # copy header from e2dsff file
+        s1dvfile.copy_header(extfile)
         # add new header keys
         s1dvfile = add_s1d_keys(s1dvfile, svprops)
         # set output key
