@@ -1125,11 +1125,6 @@ def plot_shape_angle_offset(plotter, graph, kwargs):
     dx_arr = kwargs['dx']
     dypix_arr = kwargs['dypix']
     ckeep_arr = kwargs['ckeep']
-    # get data for plot 3
-    shifts_arr = kwargs['shifts']
-    xpeak2_arr = kwargs['xpeak2']
-    err_pix_arr = kwargs['err_pix']
-    goodmask_arr = kwargs['good']
     # get parameters from params
     sorder = params['SHAPE_PLOT_SELECTED_ORDER']
     nbanana = params['SHAPE_NUM_ITERATIONS']
@@ -1167,10 +1162,6 @@ def plot_shape_angle_offset(plotter, graph, kwargs):
             dx = dx_arr[banana_num][order_num]
             dypix = dypix_arr[banana_num][order_num]
             c_keep = ckeep_arr[banana_num][order_num]
-            shifts = shifts_arr[banana_num][order_num]
-            xpeak2 = xpeak2_arr[banana_num][order_num]
-            err_pix = err_pix_arr[banana_num][order_num]
-            good = goodmask_arr[banana_num][order_num]
             # --------------------------------------------------------------
             # set up plot
             fig, frames = graph.set_figure(plotter, ncols=3, nrows=1)
@@ -1194,19 +1185,6 @@ def plot_shape_angle_offset(plotter, graph, kwargs):
             frame2.plot(dx[c_keep] - np.min(ddx), dypix[c_keep], color='g',
                         marker='o', ls='None')
             frame2.set(ylim=[0.0, width - 1], xlim=[0, len(ddx) - 1])
-            # --------------------------------------------------------------
-            # plot 3
-            # --------------------------------------------------------------
-            # add plot
-            frame3.plot(xpeak2, err_pix, color='r', linestyle='None',
-                        marker='.', label='err pixel')
-            frame3.plot(xpeak2[good], err_pix[good], color='g',
-                        linestyle='None', marker='.',
-                        label='err pixel (for fit)')
-            frame3.plot(np.arange(nbpix), shifts, color='k',
-                        label='shift in x')
-            frame3.set(xlabel='Pixel', ylabel='Err Pixel')
-            frame3.legend(loc=0)
             # ------------------------------------------------------------------
             # update filename (adding order_num to end)
             suffix = 'bnum{0}_order{1}'.format(bnum_it, order_num)
