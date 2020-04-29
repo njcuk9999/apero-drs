@@ -1123,7 +1123,8 @@ def get_master_fp(params, header, filename=None):
     # ------------------------------------------------------------------------
     # load calib file
     fpmaster, fpmaster_file = general.load_calib_file(params, key, header,
-                                                      filename=filename)
+                                                      filename=filename,
+                                                      n_entries=1)
     # log which fpmaster file we are using
     WLOG(params, '', TextEntry('40-014-00030', args=[fpmaster_file]))
     # return the master image
