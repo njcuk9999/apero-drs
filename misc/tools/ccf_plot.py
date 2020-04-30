@@ -23,7 +23,7 @@ import glob
 # =============================================================================
 # Define variables
 # =============================================================================
-WORK_DIRECTORY = '/scratch3/rali/spirou/mini_data_closest_20200423/reduced'
+WORK_DIRECTORY = ''
 
 MASK = 'masque_sept18_andres_trans50_AB'
 OBJNAME = 'Gl699'
@@ -45,7 +45,7 @@ RV_CORR = 'RV_CORR'
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # get files
-    files = glob.glob(WORK_DIRECTORY + '/*/*ccf*{0}*'.format(MASK))
+    files = glob.glob(WORK_DIRECTORY + '*/*ccf*{0}*'.format(MASK))
 
     good_files = []
     good_headers = []
@@ -97,6 +97,7 @@ if __name__ == "__main__":
 
     frame.legend(loc=0)
     frame.set(xlabel='Time', ylabel='RV [m/s]')
+    frame.xaxis.set_tick_params(rotation=30, labelsize=10)
     fig.autofmt_xdate()
     frame.ticklabel_format(axis='y', useOffset=False)
 
