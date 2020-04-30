@@ -222,9 +222,9 @@ KW_MID_OBSTIME_METHOD.set(key='MJDMIDMD',
 KW_INFILE1 = KW_INFILE1.copy(__NAME__)
 KW_INFILE1.set(key='INF1{0:03d}', comment='Input file used to create output')
 KW_INFILE2 = KW_INFILE2.copy(__NAME__)
-KW_INFILE2.set(key='INF1{0:03d}', comment='Input file used to create output')
+KW_INFILE2.set(key='INF2{0:03d}', comment='Input file used to create output')
 KW_INFILE3 = KW_INFILE3.copy(__NAME__)
-KW_INFILE3.set(key='INF1{0:03d}', comment='Input file used to create output')
+KW_INFILE3.set(key='INF3{0:03d}', comment='Input file used to create output')
 
 # -----------------------------------------------------------------------------
 # Define database input keywords
