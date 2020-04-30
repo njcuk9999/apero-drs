@@ -2,6 +2,70 @@ Changelog
 =========
 
 
+0.6.081 (2020-04-30)
+--------------------
+- `Misc.tools.ccf_plot.py` - update plot. [njcuk9999]
+- `Aspero.science.calib.wave.py` - remove `break_point`. [njcuk9999]
+- `Aspero.science.calib.wave.py` - do not update the `d_cavity` when a input
+  dcavity (indcavity) is provided. [njcuk9999]
+- `Apero.plotting.plot_functions.py` - add a ylabel for wave night hist
+  graph. [njcuk9999]
+
+
+0.6.080 (2020-04-30)
+--------------------
+- `Apero.core.core.drs_file.py` - correct header card copy bug (Issue
+  #611) [njcuk9999]
+- `Apero.core.instruemnts.*.default_keywords.py` - correct `KW_INFILE2` and
+  `KW_INFILE3`. [njcuk9999]
+- `Apero.plotting.plot_functions.py` - remove frame 3. [njcuk9999]
+- `Plotting.plot_functions.py` and `science.calib.shape.py` - remove frame
+  3, function `get_offset_sp` and xpeak2 etc. [njcuk9999]
+- `Plotting.plot_functions.py` and `science.calib.shape.py` - remove frame
+  3, function `get_offset_sp` and xpeak2 etc. [njcuk9999]
+- `Apero.science.calib.general.py` - deal with `n_entries` == 1 for filename
+  not equal to None. [njcuk9999]
+- `Apero.science.calib.general.py` - `n_entries` must = 1 (only need one
+  fpmaster) [njcuk9999]
+- `Apero.science.calib.general.py` - fix value if it is a
+  filename/DrsFitsFile instance. [njcuk9999]
+- `Cal_shape_master_spirou.py` - params['INPUTS']['FPMASTER'][0][0]
+  [njcuk9999]
+- `Cal_shape_master_spirou.py` - filename for FPMASTER should be [0]
+  [njcuk9999]
+- Update language database. [njcuk9999]
+- `Apero.science.calib.shape.py` - typo arg --> args. [njcuk9999]
+- `Apero.science.calib.shape.py` - if we have no HC lines do not try to
+  find Nth line fppeak using HC (assume that it is correct from fp)
+  [njcuk9999]
+- Update language database. [njcuk9999]
+- `Apero.science.calib.shape.py` - add `break_point` to test error.
+  [njcuk9999]
+- `Apero.core.instruments.spirou.default_constants.py` - go back to new
+  line list. [njcuk9999]
+- `Misc.tools.mk_master_hc_cat.py` - change path of `wave_hclines`.
+  [njcuk9999]
+- Update wave calib files. [njcuk9999]
+- `Apero.core.instruments.spirou.default_constants.py` - change wave
+  catalogue back to original. [njcuk9999]
+- `Apero.science.calib.wave.py` - remove sigclip mask. [njcuk9999]
+- `Apero.science.calib.shape.py` - pep8 update. [njcuk9999]
+- `Apero.science.calib.wave.py` - add break point from EA. [njcuk9999]
+- `Apero.core.instruments.default.default_constants.py` -
+  `WAVE_LINELIST_START` should be an integer. [njcuk9999]
+- `Apero.io.drs_data.py` - correct typo `data_start` --> datastart.
+  [njcuk9999]
+- `Apero.core.instruments.spirou.default_constants.py` - change linelist
+  start to line 1. [njcuk9999]
+- `Apero.core.core.drs_file.py` and `science.extract.general.py` - add
+  `copy_header` function (in addition to `copy_hdict)` and for s1d files
+  copy the header from the e2ds file not the hdict (which only has new
+  keys in) - Issue #610) [njcuk9999]
+- `Apero.science.extract.general.py` - add break point to investigate no
+  header in s1d. [njcuk9999]
+- Update date/version/changelog/documentation. [njcuk9999]
+
+
 0.6.079 (2020-04-28)
 --------------------
 - Update language database. [njcuk9999]
