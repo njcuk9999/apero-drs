@@ -5667,8 +5667,6 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     recipe.plot('SUM_WAVENIGHT_ITERPLOT', waverefs=waverefs, pixdiffs=pixdiffs,
                 fiber=fiber)
     # ----------------------------------------------------------------------
-    # TODO: remove breakpoint
-    constants.break_point(params)
     # rhcl = rhcl[sigclipmask]
     # copy the rhcl table (before modification)
     rhcl_prev = Table(rhcl)
