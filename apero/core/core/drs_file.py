@@ -1501,7 +1501,6 @@ class DrsFitsFile(DrsInputFile):
         # assign to object
         self.header = header
 
-
     # TODO: sort out header_only and load_data -- ambiguous
     def check_read(self, header_only=False, load=False, load_data=True):
         # set function name
@@ -1568,6 +1567,9 @@ class DrsFitsFile(DrsInputFile):
                          'DrsFitsFile')
         # deal with unset header
         if self.header is None:
+            if isinstance(self.hdict, drs_fits.fits.Header):
+                self.header = self.hdict.copy()
+                return
             self.header = drs_fits.Header()
         # add keys from hdict
         for key in self.hdict:
@@ -2071,13 +2073,6 @@ class DrsFitsFile(DrsInputFile):
         """
         # set function name
         _ = display_func(None, 'copy_original_keys', __NAME__, 'DrsFitsFile')
-        # get params
-        params = self.recipe.drs_params
-        # generate instances from params
-        Keyword = constants.constant_functions.Keyword
-        keyworddict = params.get_instanceof(Keyword)
-        # get pconstant
-        pconstant = self.recipe.drs_pconstant
         # deal with exclude groups
         if exclude_groups is not None:
             if isinstance(exclude_groups, str):
@@ -2090,7 +2085,27 @@ class DrsFitsFile(DrsInputFile):
             # check that data/header is read
             drs_file.check_read(header_only=True, load=True)
             fileheader = drs_file.header
+        # get cards to copy
+        _cards = self.copy_cards(self.recipe.drs_params, fileheader.cards,
+                                 root, exclude_groups, group, forbid_keys,
+                                 allkeys)
+        # deal with appending to a hidct that isn't empty
+        if self.hdict is None:
+            self.hdict = drs_fits.Header(_cards)
+        else:
+            for _card in _cards:
+                self.hdict.append(_card)
+        # return True to show completed successfully
+        return True
 
+    def copy_cards(self, params, cards, root=None, exclude_groups=None,
+                   group=None, forbid_keys=True, allkeys=False):
+        # generate instances from params
+        Keyword = constants.constant_functions.Keyword
+        keyworddict = params.get_instanceof(Keyword)
+        # get pconstant
+        pconstant = self.recipe.drs_pconstant
+        # filter function
         def __keep_card(card):
             key = card[0]
             if root is not None:
@@ -2142,19 +2157,11 @@ class DrsFitsFile(DrsInputFile):
                 return False
             else:
                 return True
-
         # filter and create new header
-        copy_cards = filter(__keep_card, fileheader.cards)
+        copy_cards = filter(__keep_card, cards)
+        # return cards for copy
+        return copy_cards
 
-        # deal with appending to a hidct that isn't empty
-        if self.hdict is None:
-            self.hdict = drs_fits.Header(copy_cards)
-        else:
-            for _card in copy_cards:
-                self.hdict.append(_card)
-
-        # return True to show completed successfully
-        return True
 
     def add_hkey(self, key=None, keyword=None, value=None, comment=None,
                  fullpath=False):
