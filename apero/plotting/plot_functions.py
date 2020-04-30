@@ -2709,7 +2709,7 @@ def plot_wavenight_histplot(plotter, graph, kwargs):
     frames[0].hist(y2, label='FP after', **hkwargs)
     frames[0].axvline(0)
     frames[0].legend(loc=0)
-    frames[0].set(xlabel='dv [m/s]')
+    frames[0].set(xlabel='dv [m/s]', ylabel='Number of lines')
     # ------------------------------------------------------------------
     # plot 2
     # ------------------------------------------------------------------
@@ -2723,7 +2723,7 @@ def plot_wavenight_histplot(plotter, graph, kwargs):
     frames[1].hist(y4, label='HC after', **hkwargs)
     frames[1].axvline(0)
     frames[1].legend(loc=0)
-    frames[1].set(xlabel='dv [m/s]')
+    frames[1].set(xlabel='dv [m/s]', ylabel='Number of lines')
     # ------------------------------------------------------------------
     # update filename (adding fiber to the end)
     graph.set_filename(plotter.params, plotter.location, suffix=fiber)
