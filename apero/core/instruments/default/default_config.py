@@ -176,7 +176,7 @@ DRS_RELEASE = Const('RELEASE', value='alpha pre-release', dtype=str,
                     source=__NAME__, group=cgroup)
 
 # Date
-DRS_DATE = Const('DATE', value='2020-04-30', dtype=str, source=__NAME__,
+DRS_DATE = Const('DATE', value='2020-05-01', dtype=str, source=__NAME__,
                  group=cgroup)
 
 # =============================================================================
