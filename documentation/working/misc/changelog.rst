@@ -2,8 +2,12 @@ Changelog
 =========
 
 
-0.6.081 (2020-04-30)
+0.6.081 (2020-05-01)
 --------------------
+- `Science.calib.wave.py` - only update `dd_cavity` when indcavity is None
+  (not the opposite) [njcuk9999]
+- `Apero-drs.requirements_current.txt` - change PIL--> Pillow. [njcuk9999]
+- Update the date/version/changelog/documentation. [njcuk9999]
 - `Misc.tools.ccf_plot.py` - update plot. [njcuk9999]
 - `Aspero.science.calib.wave.py` - remove `break_point`. [njcuk9999]
 - `Aspero.science.calib.wave.py` - do not update the `d_cavity` when a input
