@@ -2143,6 +2143,10 @@ class DrsFitsFile(DrsInputFile):
                     # if key group does not match group skip it
                     if keygroup.upper() != group.upper():
                         return False
+                # if we have a group but key is not in keyword dict we
+                # return False --> we don't want this key
+                else:
+                    return False
             # skip if key is forbidden key
             if forbid_keys and (key in pconstant.FORBIDDEN_COPY_KEYS()):
                 return False
@@ -2158,9 +2162,9 @@ class DrsFitsFile(DrsInputFile):
             else:
                 return True
         # filter and create new header
-        copy_cards = filter(__keep_card, cards)
+        _copy_cards = filter(__keep_card, cards)
         # return cards for copy
-        return copy_cards
+        return _copy_cards
 
 
     def add_hkey(self, key=None, keyword=None, value=None, comment=None,
