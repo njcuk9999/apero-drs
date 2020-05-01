@@ -5694,7 +5694,7 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
         rhcl = update_wavelength_measured(params, rhcl, rwave, kind='HC')
         rfpl = update_wavelength_measured(params, rfpl, rwave, kind='FP')
         # only update the d_cavity if we are measuring it for the first time
-        if indcavity is not None:
+        if indcavity is None:
             # calculate the change in d_cavity
             hc_wave_ratio = rhcl['WAVE_MEAS'] / rhcl['WAVE_REF']
             dd_cavity = (1 - np.nanmedian(hc_wave_ratio))
