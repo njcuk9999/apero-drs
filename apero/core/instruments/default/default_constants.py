@@ -72,7 +72,7 @@ __all__ = [
     'SHAPE_MASTER_LINTRANS_NITER', 'SHAPE_MASTER_FP_INI_BOXSIZE',
     'SHAPE_MASTER_FP_SMALL_BOXSIZE', 'SHAPE_FP_MASTER_MIN_IN_GROUP',
     'SHAPE_MASTER_FIBER', 'SHAPE_NUM_ITERATIONS', 'SHAPE_ORDER_WIDTH',
-    'SHAPE_NSECTIONS', 'SHAPE_SIGMACLIP_MAX',
+    'SHAPE_NSECTIONS', 'SHAPE_SIGMACLIP_MAX', 'SHAPE_MASTER_DX_RMS_QC',
     'SHAPE_LARGE_ANGLE_MIN', 'SHAPE_LARGE_ANGLE_MAX',
     'SHAPE_SMALL_ANGLE_MIN', 'SHAPE_SMALL_ANGLE_MAX',
     'SHAPE_MEDIAN_FILTER_SIZE', 'SHAPE_MIN_GOOD_CORRELATION',
@@ -914,6 +914,10 @@ SHAPE_FP_MASTER_MIN_IN_GROUP = Const('SHAPE_FP_MASTER_MIN_IN_GROUP', value=None,
 #   shape master
 SHAPE_MASTER_FIBER = Const('SHAPE_MASTER_FIBER', value=None, dtype=str,
                            source=__NAME__, group=cgroup)
+
+#  Define the shape master dx rms quality control criteria (per order)
+SHAPE_MASTER_DX_RMS_QC = Const('SHAPE_MASTER_FIBER', value=None, dtype=float,
+                               source=__NAME__, group=cgroup)
 
 # The number of iterations to run the shape finding out to
 SHAPE_NUM_ITERATIONS = Const('SHAPE_NUM_ITERATIONS', value=None, dtype=int,
