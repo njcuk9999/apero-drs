@@ -559,9 +559,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
     xsec_arr, ccor_arr = [], []
     ddx_arr, dx_arr = [], []
     dypix_arr, cckeep_arr = [], []
-    shifts_arr, xpeak2_arr = [], []
-    peakval2_arr, ewval2_arr = [], []
-    err_pix_arr, good_mask_arr = [], []
+    dxrms_arr = []
     # define storage for output
     master_dxmap = np.zeros_like(fpdata)
     map_orders = np.zeros_like(fpdata) - 1
@@ -605,7 +603,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
         # set up iteration storage
         slope_deg_arr_i, slope_arr_i, skeep_arr_i = [], [], []
         xsec_arr_i, ccor_arr_i, ddx_arr_i, dx_arr_i = [], [], [], []
-        dypix_arr_i, cckeep_arr_i = [], []
+        dypix_arr_i, cckeep_arr_i, dxrms_arr_i = [], []
         corr_dx_from_fp = np.zeros((nbo, dim2))
         shifts_all = np.zeros((nbo, dim2))
         # get dx array (NaN)
@@ -860,6 +858,8 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
             dx_arr_i.append(np.array(dx[order_num]))
             dypix_arr_i.append(np.array(dypix))
             cckeep_arr_i.append(np.array(keep))
+            # get rms values
+            dxrms_arr_i.append(np.array(dx[order_num] - np.nanmin(ddx)))
             # -----------------------------------------------------------------
             # set those values that should not be kept to NaN
             dx[order_num][~keep] = np.nan
@@ -992,7 +992,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
                         dxmap = None
                         max_dxmap_std = dxmap_std
                         max_dxmap_info = [order_num, ix, std_qc]
-                        return dxmap, max_dxmap_std, max_dxmap_info
+                        return dxmap, max_dxmap_std, max_dxmap_info, None
         # -----------------------------------------------------------------
         # plot all order angle_offset plot (in loop)
         pkwargs = dict(slope_deg=[slope_deg_arr_i], slope=[slope_arr_i],
@@ -1007,7 +1007,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
         skeep_arr.append(skeep_arr_i), xsec_arr.append(xsec_arr_i)
         ccor_arr.append(ccor_arr_i), ddx_arr.append(ddx_arr_i)
         dx_arr.append(dx_arr_i), dypix_arr.append(dypix_arr_i)
-        cckeep_arr.append(cckeep_arr_i)
+        dxrms_arr.append(dxrms_arr_i), cckeep_arr.append(cckeep_arr_i)
     # ---------------------------------------------------------------------
     # plot selected order angle_offset plot
     pkwargs = dict(slope_deg=slope_deg_arr, slope=slope_arr,
@@ -1029,8 +1029,14 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
     # save qc
     max_dxmap_std = mp.nanmax(dxmap_stds)
     max_dxmap_info = [None, None]
+    # ---------------------------------------------------------------------
+    # calculate rms for dx-ddx (last iteration)
+    dxrms = []
+    for order_num in range(nbo):
+        dxrms.append(np.nanstd(dxrms_arr[-1][order_num]))
+    # ---------------------------------------------------------------------
     # return parameters
-    return master_dxmap, max_dxmap_std, max_dxmap_info
+    return master_dxmap, max_dxmap_std, max_dxmap_info, dxrms
 
 
 def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
