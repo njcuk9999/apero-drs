@@ -8,8 +8,7 @@ APERO Documentation
 ******************************************
 
 ===========================================
-Latest version: 0.6.081   user/spirou.rst
-   dev/developer_guide.rst
+Latest version: 0.6.082   dev/developer_guide.rst
 
 ===========================================
 Other
