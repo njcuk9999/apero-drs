@@ -2,6 +2,503 @@ Changelog
 =========
 
 
+0.6.082 (2020-05-04)
+--------------------
+- `Apero.tools.resources.setup.apero.*.*` - update the MKL environment
+  exports. [njcuk9999]
+- Update language database. [njcuk9999]
+- `Apero.io.drs_fits.py` - add the getting of a time variable from the
+  index files and sort by it before returning - all files should be in
+  date order at point of return. [njcuk9999]
+- `Apero.tools.recipes.spirou.update_berv.py` - remove from `__future__`
+  import. [njcuk9999]
+- `Apero.recipe.spirou.cal_shape_master_spirou.py` +
+  `apero.science.calib.shape.py` - get dxrms and pass to qc (Issue #602)
+  [njcuk9999]
+- `Core.instruments.*.default_constants.py` - add `SHAPE_MASTER_DX_RMS_QC`
+  value (Issue #602) [njcuk9999]
+- `Core.core.drs_database.py` - remove break point. [njcuk9999]
+- `Apero..science.calib.shape.py` - get rms value for dx-min(ddx) (Issue
+  #602) [njcuk9999]
+- `Apero.science.extract.crossmatch.py` - add back warnings for issues
+  with crossmatching - were only debug messages (Issue #612) [njcuk9999]
+- `Apero.core.instruments.*.default_constants.py` - update gaia url for
+  tap query (Issue #612) [njcuk9999]
+- `Apero.core.core.drs_file.py` - need to return False if `copy_cards` has a
+  group argument but header key not found in defined keywords.
+  [njcuk9999]
+- Update date/version/changelog/documentation. [njcuk9999]
+
+
+0.6.081 (2020-05-01)
+--------------------
+- `Science.calib.wave.py` - only update `dd_cavity` when indcavity is None
+  (not the opposite) [njcuk9999]
+- `Apero-drs.requirements_current.txt` - change PIL--> Pillow. [njcuk9999]
+- Update the date/version/changelog/documentation. [njcuk9999]
+- `Misc.tools.ccf_plot.py` - update plot. [njcuk9999]
+- `Aspero.science.calib.wave.py` - remove `break_point`. [njcuk9999]
+- `Aspero.science.calib.wave.py` - do not update the `d_cavity` when a input
+  dcavity (indcavity) is provided. [njcuk9999]
+- `Apero.plotting.plot_functions.py` - add a ylabel for wave night hist
+  graph. [njcuk9999]
+
+
+0.6.080 (2020-04-30)
+--------------------
+- `Apero.core.core.drs_file.py` - correct header card copy bug (Issue
+  #611) [njcuk9999]
+- `Apero.core.instruemnts.*.default_keywords.py` - correct `KW_INFILE2` and
+  `KW_INFILE3`. [njcuk9999]
+- `Apero.plotting.plot_functions.py` - remove frame 3. [njcuk9999]
+- `Plotting.plot_functions.py` and `science.calib.shape.py` - remove frame
+  3, function `get_offset_sp` and xpeak2 etc. [njcuk9999]
+- `Plotting.plot_functions.py` and `science.calib.shape.py` - remove frame
+  3, function `get_offset_sp` and xpeak2 etc. [njcuk9999]
+- `Apero.science.calib.general.py` - deal with `n_entries` == 1 for filename
+  not equal to None. [njcuk9999]
+- `Apero.science.calib.general.py` - `n_entries` must = 1 (only need one
+  fpmaster) [njcuk9999]
+- `Apero.science.calib.general.py` - fix value if it is a
+  filename/DrsFitsFile instance. [njcuk9999]
+- `Cal_shape_master_spirou.py` - params['INPUTS']['FPMASTER'][0][0]
+  [njcuk9999]
+- `Cal_shape_master_spirou.py` - filename for FPMASTER should be [0]
+  [njcuk9999]
+- Update language database. [njcuk9999]
+- `Apero.science.calib.shape.py` - typo arg --> args. [njcuk9999]
+- `Apero.science.calib.shape.py` - if we have no HC lines do not try to
+  find Nth line fppeak using HC (assume that it is correct from fp)
+  [njcuk9999]
+- Update language database. [njcuk9999]
+- `Apero.science.calib.shape.py` - add `break_point` to test error.
+  [njcuk9999]
+- `Apero.core.instruments.spirou.default_constants.py` - go back to new
+  line list. [njcuk9999]
+- `Misc.tools.mk_master_hc_cat.py` - change path of `wave_hclines`.
+  [njcuk9999]
+- Update wave calib files. [njcuk9999]
+- `Apero.core.instruments.spirou.default_constants.py` - change wave
+  catalogue back to original. [njcuk9999]
+- `Apero.science.calib.wave.py` - remove sigclip mask. [njcuk9999]
+- `Apero.science.calib.shape.py` - pep8 update. [njcuk9999]
+- `Apero.science.calib.wave.py` - add break point from EA. [njcuk9999]
+- `Apero.core.instruments.default.default_constants.py` -
+  `WAVE_LINELIST_START` should be an integer. [njcuk9999]
+- `Apero.io.drs_data.py` - correct typo `data_start` --> datastart.
+  [njcuk9999]
+- `Apero.core.instruments.spirou.default_constants.py` - change linelist
+  start to line 1. [njcuk9999]
+- `Apero.core.core.drs_file.py` and `science.extract.general.py` - add
+  `copy_header` function (in addition to `copy_hdict)` and for s1d files
+  copy the header from the e2ds file not the hdict (which only has new
+  keys in) - Issue #610) [njcuk9999]
+- `Apero.science.extract.general.py` - add break point to investigate no
+  header in s1d. [njcuk9999]
+- Update date/version/changelog/documentation. [njcuk9999]
+
+
+0.6.079 (2020-04-28)
+--------------------
+- Update language database. [njcuk9999]
+- `Misc/tools/mk_master_hc_cat.py` + `data.spirou.calib.catalogue_UNe.csv` -
+  code to update the hc linelist. [njcuk9999]
+- `Apero.core.instruemnts.spirou.defalut_constants.py` - update catalogue
+  file and fmt. [njcuk9999]
+- `Apero.core.instruments.spirou.default_constants.py` - pep8 adjustment.
+  [njcuk9999]
+- `Apero.plotting.plot_functions.py` - add summary descriptions for two
+  wave night summary plots. [njcuk9999]
+- `Apero.science.calib.wave.py` - add `wave_expected` (after) plot for hc
+  and fp. [njcuk9999]
+- `Apero.scioence.calib.wave.py` - and catch warning statement around
+  madmask. [njcuk9999]
+- Update language database. [njcuk9999]
+- `Science.calib.wave.py` - remove breakpoint + and range for second
+  iteration. [njcuk9999]
+- `Apero.plotting.plot_functions.py` - correct wave night figures.
+  [njcuk9999]
+- `Apero.science.calib.wave.py` - add break point to test EA new code.
+  [njcuk9999]
+- `Plotting.plot_functions.py` - correct typo kwargs['waveref'] -->
+  kwargs['waverefs'] [njcuk9999]
+- `Core.instruments.*.default_keywords.py` - correct typo groupu-->group.
+  [njcuk9999]
+- `Apero.core.instruments.default.default_constants.py` - remove
+  `PLOT_WAVENIGHT_DIFFPLOT` from `__ALL__` [njcuk9999]
+- `Apero.science.calib.wave.py` - add EA updates to `night_wavesolution`.
+  [njcuk9999]
+- `Recipes.spirou.cal_wave_night_spirou.py` - add fiber to inputs of
+  `night_wavesolution` (for plot saving) [njcuk9999]
+- `Plotting.plot_functions.py` - modify wave night plotting
+  `(wavenight_iterplot` + `wavenight_histplot)` and remove
+  `wavenight_diffplot` after ea changes. [njcuk9999]
+- `Core.instruments.spirou.recipe_definitions.py` - modify debug/summary
+  plots after EA changes. [njcuk9999]
+- Update language database. [njcuk9999]
+- `Core.instruments.spirou.recipe_definitions.py` - remove
+  `WAVENIGHT_DIFFPLOT` from debug plot list. [njcuk9999]
+- `Core.instruments.default_constants.py` and `default_keywords.py` -
+  add/remove/modify wave night constants/keywords with new update from
+  EA. [njcuk9999]
+- `Misc.tools.ccf_plot.py` - update graph. [Neil Cook]
+
+
+0.6.078 (2020-04-27)
+--------------------
+- `Recipes.nirps_ha.cal_preprocessing_niprs_ha.py` - update pp for nirps
+  (from spirou updates) [njcuk9999]
+- `Recipes.spirou.cal_preprocessing_spirou.py` and
+  `science.preprocessing.general.py` - fix qc to print only when log=True
+  + redo QC after iteration loop. [njcuk9999]
+- `Misc.tools.wave_drift_comp.py` - test drift in fibers. [njcuk9999]
+- `Apero.recipe.spirou.cal_preprocess_spirou.py` - deal with a QC after a
+  shift in pixels. [njcuk9999]
+- Update date, version, changelog, documentation. [njcuk9999]
+
+
+0.6.077 (2020-04-24)
+--------------------
+- /locale/ --> /lang/ [njcuk9999]
+- Apero.locale --> apero.lang. [njcuk9999]
+- `Io.drs_fits.py` + `science.preprocessing.identification.py` - fix for
+  preprocessing to use input file (was changed due to copyother change)
+  [njcuk9999]
+- `Apero.science.preprocessing.detector.py` - add a border mask to remove
+  hotpix that lie near the edge (we need to scan around them so these
+  are not useful) [njcuk9999]
+- `Apero.io.drs_data.py` + `apero.science.preprocessing.detector.py` -
+  format hotpix table correctly. [njcuk9999]
+- `Apero.core.instruments.*.default_constants.py` - add back in
+  `PP_CORRUPT_MED_SIZE`. [njcuk9999]
+- `Apero.science.calib.wave.py` - add rhcl and rfpl to output (for saving
+  to file) [njcuk9999]
+- `Core.instruments.spirou.file_definitions.py` + `recipe_definitions.py` -
+  add `WAVE_HCLIST` and `WAVE_FPLIST`. [njcuk9999]
+- `Recipes.spirou.cal_wave_master_spirou.py` + science.velocity.general.py
+  - remove the wave test code. [njcuk9999]
+- `Recipe.spirou.cal_wave_master_spirou.py` + science.velocity.general.py
+  - push correct e2ds fiber into ccf code. [njcuk9999]
+- `Science.calib.wave.py` - data `llprops['LL_FINAL']` --> wprops['WAVEMAP']
+  [njcuk9999]
+- `Recipes.spirou.cal_wave_master_spirou.py` + science.velocity.general.py
+  - add wavetest to test wavemap values. [njcuk9999]
+- `Science.calib.wave.py` - add master wave sol to solutions (after
+  plotting) [njcuk9999]
+- `Recipes.spirou.cal_wave_master_spirou.py` science.calib.wave.py
+  `science.velocity.general.py` - move break points. [njcuk9999]
+
+
+0.6.076 (2020-04-22)
+--------------------
+- `Apero.science.calib.wave.py` - correct wave fp header keys. [njcuk9999]
+- `Apero.core.instruemnts.spirou.default_constants.py` - add smart FP mask
+  as default from EA. [njcuk9999]
+- Add updated cavit length equation files. [njcuk9999]
+- Add EA smark fp mask from cavity file. [njcuk9999]
+- `Science.velocity.general.py` - deal with bounds and change remove wide
+  peaks criteria. [njcuk9999]
+- `Science.velocity.general.py` - deal with bounds and change remove wide
+  peaks criteria. [njcuk9999]
+- `Science.velocity.general.py` - remove exception breakpoints.
+  [njcuk9999]
+- `Science.velocity.general.py` - adjust dc and shape p0 values.
+  [njcuk9999]
+- `Apero.science.velocity.general.py` - add breakpoints to fit fp
+  exceptions (For test) [njcuk9999]
+- `Science.velocity.general.py` - deal with bounds being out-of-bounds.
+  [njcuk9999]
+- `Apero.science.velocity.general.py` - add back in pcov. [njcuk9999]
+- `Apero.science.velocity.general.py` - correct bounds. [njcuk9999]
+- `Apero.science.velocity.general.py` - add bounds to fp fit. [njcuk9999]
+- `Science.velocity.general.py` - add break point to test. [njcuk9999]
+- `Apero.science.velocity.general.py` - set `peak_spacing` = 5 (old drs
+  value) [njcuk9999]
+- `Apero.science.calib.wave.py` and `apero.science.velocity.general.py` -
+  remove params from `fit_fp_peaks`. [njcuk9999]
+
+
+0.6.075 (2020-04-21)
+--------------------
+- `Apero.science.velocity.general.py` - reduce the peak criteria to half
+  the order peak size. [njcuk9999]
+- `Apero.science.velocity.general.py` - change outputs for `fit_fp_peaks`.
+  [njcuk9999]
+- `Apero.science.velocity.general.py` - dcpenormpercentak --> dcpeak.
+  [njcuk9999]
+- `Apero.science.velocity.general.py` - fix typo normpercentile -->
+  normpercent. [njcuk9999]
+- `Science.calib.wave.py` - move print outs to language database.
+  [njcuk9999]
+- Update language database. [njcuk9999]
+- `Apero.science.velocity.general.py` - deal with `curve_fit` warnings.
+  [njcuk9999]
+- `Apero.science.calib.wave.py` - add warnings back to code. [njcuk9999]
+- Update language database. [njcuk9999]
+- `Apero.core.instruments.default_keywords.py` - add `KW_WFP_WIDUSED` for
+  storing width per order. [njcuk9999]
+- `Apero.science.calib.wave.py` - move constants to wave file and update
+  header. [njcuk9999]
+- `Apero.science.velocity.general.py` - move constants to constants files.
+  [njcuk9999]
+- `Core.instruments.*.default_constants.py` + `default_keywords.py` - adjust
+  wave fp constants after fp finding update. [njcuk9999]
+- `Science.calib.wave.py` - need new cond2 for FP. [njcuk9999]
+- `Science.calib.wave.py` - add breakpoint to test `get_master_lines`.
+  [njcuk9999]
+- `Science.velocity.general.py` - change limit 0.3 --> 0.1. [njcuk9999]
+- `Science.calib.wave.py` - remove breakpoint. [njcuk9999]
+- `Science.calib.wave.py` - update output from line fit. [njcuk9999]
+- `Core.instruments.*.default_contants.py` - update cavity file.
+  [njcuk9999]
+- `Science.velocity.general.py` - change EWPEAK to PEAK2PEAK and modify
+  `remove_wide_peaks` (width is peak to peak not normalized width)
+  [njcuk9999]
+- `Core.instruemnts.spirou.default_constants.py` - change
+  `WAVE_FP_NORM_WIDTH_CUT` from 0.25 to 15. [njcuk9999]
+- `Science.velocity.general.py` - add `fit_fp_peaks` function. [njcuk9999]
+- `Science.calib.wave.py` - FP should use `ea_airy` function. [njcuk9999]
+- `Science.velocity.general.py` - determine fp peak size from the data
+  (median of all peak widths) [njcuk9999]
+- `Science.velocity.general.py` - modify the FP peak finding (now use the
+  `ea_airy` function) [njcuk9999]
+- `Core.math.general.py` - add `ea_airy_function` (for FP peak finding)
+  [njcuk9999]
+- `Core.insturments.spirou.default_constants.py` - change the border and
+  box size for FP peak finding (now using `ea_airy)` [njcuk9999]
+- `Science.velocity.general.py` - add breakpoint to test gaussian.
+  [njcuk9999]
+
+
+0.6.074 (2020-04-20)
+--------------------
+- `Apero.core.math.__init__.py` - add `gauss_beta_function`. [njcuk9999]
+- `Misc.problems.new_ccf_code.py` - add EA changes to give option to play
+  with convolution kernel. [njcuk9999]
+- `Misc.nirps_tools.correct_sims.py` - write code to correct the headres
+  of simulations. [njcuk9999]
+- `Apero.science.velocity.general.py` - swap gaussian fit fot
+  `gaussian_beta` fit in `function=measure_fp_peaks`. [njcuk9999]
+- `Apero.science.calib.wave.py` - change inverse coefficient fit for
+  updating `pixel_ref` (rpixels --> rwaveref) [njcuk9999]
+- `Apero.core.math.gauss.py` - add `gauss_beta_function` for
+  ((x-x0)/sigma)^beta. [njcuk9999]
+
+
+0.6.073 (2020-04-18)
+--------------------
+- `Apero.science.calib.wave.py` - add iteration for WAVEREF plot.
+  [njcuk9999]
+- `Apero.plotting.plot_functions.py` - update the title depending on where
+  used. [njcuk9999]
+- `Documentation.working.user.general.known_issues.rst` - update known
+  issues. [njcuk9999]
+- `Science.calib.wave.py` - update plot (give before and after)
+  [UNFINISHED] [njcuk9999]
+
+
+0.6.072 (2020-04-17)
+--------------------
+- `Apero.plotting.plot_functions.py` and `science.velocity.general.py` -
+  update wave fiber plot size + add fiber name to ccf fp plot.
+  [njcuk9999]
+- `Apero.plotting.plot_functions.py` - make markers smaller. [njcuk9999]
+- Wave codes - pep8 corrections. [njcuk9999]
+- `Science.calib.wave.py` - correct typo `WAVE_OTHERFIBER` -->
+  `WAVE_FIBER_COMPARISON`. [njcuk9999]
+- Update todo list. [njcuk9999]
+- `Science.velocity.general.py` - do not limit fp ccf to fiber c (AB,A,B
+  valid too) [njcuk9999]
+- `Apero.recipes.spirou.cal_wave_master_spirou.py` - only do main code for
+  `master_fiber` and then add functionality to process other fibers (fit
+  from FPLINES) + CCF and write loops. [njcuk9999]
+- `Apero.plotting.plot_functions.py` - add `plot_wave_fiber_comparison`.
+  [njcuk9999]
+- `Core.instruments.spirou.recipe_definitions.py` - add `wave_fiber_comp`
+  plots. [njcuk9999]
+- Update language database. [njcuk9999]
+- `Core.instruments.default.default_constants.py` - add wave fiber
+  constants. [njcuk9999]
+- `Documentation.working.user.general.known_issues.rst` - update known
+  issues. [njcuk9999]
+- `Misc.problems.new_ccf_code.py` - update `CCF_RV_NULL` and add `IN_RV` (copy
+  from apero-utils) [njcuk9999]
+- `Core.instruments.spirou.recipe_definitions.py` - add `EXTRACT_S1D_WEIGHT`
+  to debug plots. [njcuk9999]
+- `Core.core.drs_log.py` - change typo fmt-->format. [njcuk9999]
+- `Science.calib.wave.py` - add wave time to hc and fp solutions.
+  [njcuk9999]
+- `Science.velocity.general.py` - make `null_targetrv`. [njcuk9999]
+- `Core.instrument.*.default_constant.py` - NULLVAL for RV is now a abs
+  limit. [njcuk9999]
+
+
+0.6.071 (2020-04-16)
+--------------------
+- `Apero.recipes.nirps_ha.cal_preprocess_nirps_ha.py` - change instrument
+  SPIROU --> `NIRPS_HA`. [njcuk9999]
+- `Apero.io.drs_data.py` - `load_hotpix` fmt is 'csv' not 'None' [njcuk9999]
+- `Apero.io.drs_data.py` - `read_table` default table is fits. [njcuk9999]
+- `Core.core.drs_log.py` - Table.read log --> fmt='fits' [njcuk9999]
+- `Tools.recipe.bin.apero_processing.py` - remove old break point.
+  [njcuk9999]
+- `Tools.module.setup.drs_processing.py` - if we have to find the recipe
+  set the file mod after finding it. [njcuk9999]
+- `Core.instruments.spirou.recipe_definitions.py` - replace `_run` with `_seq`
+  and add engineering sequence `(hc1_hc1` extract, `fp_fp` extract, `dark_fp`
+  extract) [njcuk9999]
+- `Data.spirou.reset.runs.*` - update sequences `_run` --> `_seq`. [njcuk9999]
+- `Recipes.spirou.cal_wave_night_spirou.py` - remove one of the
+  breakpoints. [njcuk9999]
+- `Core.instruments.spirou.file_definitions.py` - add back in thermal e2ds
+  with correct `kw_output`. [njcuk9999]
+- `Recipes.spirou.cal_wave_night_spirou.py` - add breakpoint for testing.
+  [njcuk9999]
+
+
+0.6.070 (2020-04-15)
+--------------------
+- `Core.instruments.spirou.recipe_defintions.py` - add `EXTRACT_S1D_WEIGHT`.
+  [njcuk9999]
+- README.md - update raw file table. [njcuk9999]
+- `Apero.tools.recipes.bin.apero_mkdb.py` - skip master files. [njcuk9999]
+- Update language database. [njcuk9999]
+- `Tools.recipes.bin.apero_mkdb.py` - skip master default files.
+  [njcuk9999]
+- `Core.core.drs_file.py` + `io.drs_fits.py` - do not report error from read
+  header in id. [njcuk9999]
+- `Core.instruments.spirou.file_definitions.py` - `out_wave_night` - `WAVE_FP`
+  --> `WAVE_NIGHT`. [njcuk9999]
+- `Science.extract.other.py` - correct `KW_OUTPUT` for thermal files.
+  [njcuk9999]
+- `Core.core.drs_file.py` + `io.drs_fits.py` - deal with copyother and
+  trying to open files with wrong extensions. [njcuk9999]
+- `Data.spirou.reset.runs.mini_run.ini` - set `reset_run` to False by
+  default. [njcuk9999]
+- `Core.core.drs_file.py`  in `check_read` get `load_data` option from call
+  args. [njcuk9999]
+- `Core.core.drs_file.py`  in `check_read` get `load_data` option from call
+  args. [njcuk9999]
+- `Tools.recipes.bin.apero_mkdb.py` - do not get data when identifying
+  file. [njcuk9999]
+- `Core.core.drs_file.py` - read file after copying parameters (so
+  datatype is correct) [njcuk9999]
+- `Core.core.drs_file.py` - do not copy over drsfile.datatype from infile
+  (in copyother) [njcuk9999]
+- `Instruments.spirou.file_definitions.py` - update `KW_OUTPUT` (should be
+  WAVEM) [njcuk9999]
+- `Core.core.drs_database.py` - fix error in writing to database.
+  [njcuk9999]
+- `Science.calib.wave.py` - add WAVETIME to nprops (for header)
+  [njcuk9999]
+- `Recipe.spirou.cal_wave_night_spirou.py` + `science.calib.wave.py` - add
+  input dcavity for fibers A,B,C (use cavity width from AB) [njcuk9999]
+- `Core.instrument.*.default_keywords.py` - add dcavity source.
+  [njcuk9999]
+
+
+0.6.069 (2020-04-09)
+--------------------
+- `Recipe.spirou.cal_ccf_spirou.py` - correct typo `rv_props1` --> `rv_props2`
+  for WAVESOURCE. [njcuk9999]
+- `Core.instruments.spirou.recipe_defintions.py` - add tmp (commented)
+  polar recipe. [njcuk9999]
+- `New_ccf_code.py` - add help. [njcuk9999]
+- `Core.core.drs_log.py` and `io.drs_lock.py` - correct write statement
+  (log--> mode=a) [njcuk9999]
+
+
+0.6.068 (2020-04-08)
+--------------------
+- `Science.velocity.general.py` - add rv wave source to ccf header.
+  [njcuk9999]
+- Misc.old - move `cal_wave_spirou.py` [old code] to misc. [njcuk9999]
+- `Science.calib.wave.py` - add wave time to wprops + add it to header
+  when present (i.e. in `add_wave_keys)` [njcuk9999]
+- `Recipes.spirou.cal_ccf_spirou.py` - add wave source for rv fiber to
+  header. [njcuk9999]
+- `Core.instruments.spirou.recipe_definitions.py` - remove old `cal_wave`.
+  [njcuk9999]
+- `Cpre.instruments.*.default_keywords.py` - modify ccf rv wave keys.
+  [njcuk9999]
+- `Cal_ccf_spirou.py` - save rv wavefile, rv wave time and rv time diff
+  (file->wave) to header. [njcuk9999]
+- `Core.instruments.*.defaults_keywords.py` - add `KW_CCF_RV_WAVEFILE`,
+  `KW_CCF_RV_WAVETIME` and `KW_CCF_RV_TIMEDIFF` (for ccf) [njcuk9999]
+- `Misc.problems.new_ccf_code.py` - update code, make it completely
+  independent of the drs + add writing file + add switch for OBJ and FP
+  + add plots (and plot switch) [njcuk9999]
+
+
+0.6.067 (2020-04-07)
+--------------------
+- Split `create_pp_hotpix.py` into two bits - one for each instrument +
+  update for drs integration (via `drs_dev` tmp functions) [njcuk9999]
+- `Science.preprocessing.detector.py` - update get hot pixel function to
+  load ypix and xpix from file. [njcuk9999]
+- `Apero.io.drs_data.py` - change `load_full_flat_pp` to `load_hotpix`.
+  [njcuk9999]
+- `Data.spiroiu.engineering.hotpix_pp.csv` - update hotpix file for
+  spirou. [njcuk9999]
+- `Core.instruments.*.default_constants.py` - modify pp constants for new
+  hotpix function/file. [njcuk9999]
+
+
+0.6.066 (2020-04-07)
+--------------------
+- Add a hotpix mask for spirou. [njcuk9999]
+- Tools.recipes.utils.README.md - add a directory for utilities.
+  [njcuk9999]
+- `Tools.recipe.utils.create_pp_hotpix.py` - add EA hotpix generator.
+  [njcuk9999]
+- `Tools.recipes.spirou.update_berv.py` - rename from `cal_update_berv.py`.
+  [njcuk9999]
+- `Core.math.general.py` - add in the `normal_fraction` math function.
+  [njcuk9999]
+
+
+0.6.065 (2020-04-03)
+--------------------
+- Replace open+read/write+close --> with open+read/write. [njcuk9999]
+- `Tools.recipes.spirou.expmeter_spirou.py` - change `copy_hdict` -->
+  `copy_original_keys`. [Neil Cook]
+- `Tools.recipes.spirou.expmeter_spirou.py` - corerct code after testing.
+  [Neil Cook]
+- `Core.core.drs_file.py` - make `add_hkey` accept list or tuple for
+  keywordstore. [Neil Cook]
+- `Tools.recipes.spirou.expmeter_spirou` - add saving to file (using
+  `drs_dev` FileDefinitions and Tmp files) [Neil Cook]
+- `Tools.module.testing.drs_dev.py` - add TmpInputFile,  TmpFitsFile and
+  TmpNpyFile and FileDefinition to allow external file defintions (for
+  tools and testing) [Neil Cook]
+- Merge remote-tracking branch 'origin/neil' into neil. [Neil Cook]
+- `Tools.recipes.spirou.expmeter_spirou.py` - move exposuremeter constants
+  to constants file (use params) [njcuk9999]
+- `Core.instruments.*.default_constants.py` - add exposure meter
+  constants. [njcuk9999]
+- `Misc/tools/apero_mtl_sync_master.py` - add master sync code. [Neil
+  Cook]
+
+
+0.6.064 (2020-04-02)
+--------------------
+- Update language database. [njcuk9999]
+- `Io.drs_lock.py` - deal with locking and removing files bug (Impossible
+  error should now be impossible) [njcuk9999]
+- `Core.core.drs_database.py` - check calibration is copied after copying
+  (so we don't update database if there was an uncaught error)
+  [njcuk9999]
+- Documentation.working.user.general.todo.rst - update todo list.
+  [njcuk9999]
+- `Tools.recipes.spirou.expmeter_spirou.py` - continue work on
+  functionality. [njcuk9999]
+- `Io.drs_fits.py` - add function `add_header_key` (for when we don't have a
+  drs fits file) [njcuk9999]
+- `Core.math.general.py` - add inverse functionality to rot8. [njcuk9999]
+- Update readme. [njcuk9999]
+- Update date/version/changelog/update notes. [njcuk9999]
+
+
 0.6.063 (2020-04-01)
 --------------------
 - `Apero.data.spirou.reset.runs.mini_run.ini` - turn off MKTELLDB and
@@ -9410,10 +9907,6 @@ Changelog
 
   Neil
 - Update date/version/changelog. [njcuk9999]
-
-
-0.2.68 (2018-07-17)
--------------------
 - Copy (same) [njcuk9999]
 - Update tellu recipes: fix bug with file name. [njcuk9999]
 - Update tellu recipes: drs telluDB reset now resets telluDB not calibDB
@@ -9445,10 +9938,6 @@ Changelog
 - Merge pull request #375 from njcuk9999/neil. [Neil Cook]
 
   Neil
-
-
-0.2.67 (2018-07-16)
--------------------
 - Telluric integration: bug fixes (after move of functions) [njcuk9999]
 - Updated call to plot. [njcuk9999]
 - Moved debug plot back to main code. [njcuk9999]
@@ -9982,6 +10471,8 @@ Changelog
   type `spirouTHORCA.decide_on_lamp_type`: - changed to identify lamp from
   fiber position (for use w/odometer names) - previous version moved to
   `decide_on_lamp_type_old`. [melissa-hobson]
+- Update date and version. [Neil Cook]
+- Fix for loggers being out of range. [Neil Cook]
 
 
 0.2.073 (2018-06-26)
@@ -9999,12 +10490,6 @@ Changelog
 - Merge pull request #347 from njcuk9999/master. [melissa-hobson]
 
   Melissa
-
-
-0.254 (2018-06-24)
-------------------
-- Update date and version. [Neil Cook]
-- Fix for loggers being out of range. [Neil Cook]
 - Merge pull request #345 from njcuk9999/neil. [Neil Cook]
 
   Neil - confirmed tested on H4RG files
@@ -10037,10 +10522,6 @@ Changelog
 - Updated recipes main end script (to allow piping of logging into p -
   thus accessible outside via `ll['p']['LOGGING_ERROR']` for example.
   [Neil Cook]
-
-
-0.253 (2018-06-22)
-------------------
 - `Cal_WAVE_NEW_E2DS_spirou.py`: first version (untested) [melissa-hobson]
 - Merge pull request #344 from njcuk9999/master. [melissa-hobson]
 

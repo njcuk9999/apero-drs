@@ -14,7 +14,7 @@ import warnings
 
 from apero import core
 from apero.core import constants
-from apero import locale
+from apero import lang
 from apero.core.core import drs_log
 from apero.core.core import drs_file
 
@@ -37,8 +37,8 @@ DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
 # alias pcheck
 pcheck = core.pcheck
 
@@ -70,12 +70,9 @@ def read_lines(params, filename, comments='#', delimiter=' '):
     func_name = __NAME__ + '.read_lines()'
     # manually open file (slow)
     try:
-        # open the file
-        f = open(filename, 'r')
         # read the lines
-        lines = f.readlines()
-        # close the opened file
-        f.close()
+        with open(filename, 'r') as f:
+            lines = f.readlines()
     except Exception as e:
         eargs = [filename, type(e), e, func_name]
         WLOG(params, 'error', TextEntry('01-001-00024', args=eargs))

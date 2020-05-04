@@ -119,10 +119,7 @@ OBJ_LIST_CROSS_MATCH_RADIUS.value = 60.0
 # Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
 OBJ_LIST_GAIA_URL = OBJ_LIST_GAIA_URL.copy(__NAME__)
 OBJ_LIST_GAIA_URL.value = 'http://gea.esac.esa.int/tap-server/tap'
-
-# Define the TAP SIMBAD URL (for use in crossmatching OBJNAME via astroquery)
-OBJ_LIST_SIMBAD_URL = OBJ_LIST_SIMBAD_URL.copy(__NAME__)
-OBJ_LIST_SIMBAD_URL.value = 'http://gea.esac.esa.int/tap-server/tap'
+OBJ_LIST_GAIA_URL.value = 'https://gea.esac.esa.int/tap-server/tap'
 
 # Define the gaia magnitude cut (rp mag) to use in the gaia query
 OBJ_LIST_GAIA_MAG_CUT = OBJ_LIST_GAIA_MAG_CUT.copy(__NAME__)
@@ -168,14 +165,17 @@ FIBER_SET_NUM_FIBERS_B.value = 1
 # =============================================================================
 # PRE-PROCESSSING SETTINGS
 # =============================================================================
+# Defines the box size surrounding hot pixels to use
+PP_HOTPIX_BOXSIZE = PP_HOTPIX_BOXSIZE.copy(__NAME__)
+PP_HOTPIX_BOXSIZE.value = 5
+
 # Defines the size around badpixels that is considered part of the bad pixel
 PP_CORRUPT_MED_SIZE = PP_CORRUPT_MED_SIZE.copy(__NAME__)
 PP_CORRUPT_MED_SIZE.value = 2
 
-# Defines the threshold (above the full engineering flat) that selects bad 
-#     (hot) pixels
+# Defines the threshold in sigma that selects hot pixels
 PP_CORRUPT_HOT_THRES = PP_CORRUPT_HOT_THRES.copy(__NAME__)
-PP_CORRUPT_HOT_THRES.value = 2
+PP_CORRUPT_HOT_THRES.value = 10
 
 #   Define the total number of amplifiers
 PP_TOTAL_AMP_NUM = PP_TOTAL_AMP_NUM.copy(__NAME__)
@@ -189,9 +189,9 @@ PP_NUM_DARK_AMP.value = 5
 PP_DARK_MED_BINNUM = PP_DARK_MED_BINNUM.copy(__NAME__)
 PP_DARK_MED_BINNUM.value = 32
 
-#   Defines the full detector flat file (located in the data folder)
-PP_FULL_FLAT = PP_FULL_FLAT.copy(__NAME__)
-PP_FULL_FLAT.value = 'QE_2000nm.fits'
+#   Defines the pp hot pixel file (located in the data folder)
+PP_HOTPIX_FILE = PP_HOTPIX_FILE.copy(__NAME__)
+PP_HOTPIX_FILE.value = 'hotpix_pp.csv'
 
 #   Define the number of un-illuminated reference pixels at top of image
 PP_NUM_REF_TOP = PP_NUM_REF_TOP.copy(__NAME__)
@@ -567,6 +567,10 @@ SHAPE_FP_MASTER_MIN_IN_GROUP.value = 3
 #     shape master
 SHAPE_MASTER_FIBER = SHAPE_MASTER_FIBER.copy(__NAME__)
 SHAPE_MASTER_FIBER.value = 'A'
+
+#  Define the shape master dx rms quality control criteria (per order)
+SHAPE_MASTER_DX_RMS_QC = SHAPE_MASTER_DX_RMS_QC.copy(__NAME__)
+SHAPE_MASTER_DX_RMS_QC.value = 0.3
 
 # The number of iterations to run the shape finding out to
 SHAPE_NUM_ITERATIONS = SHAPE_NUM_ITERATIONS.copy(__NAME__)
@@ -1010,6 +1014,10 @@ THERMAL_PLOT_START_ORDER.value = 40
 # =============================================================================
 # CALIBRATION: WAVE GENERAL SETTINGS
 # =============================================================================
+# Define the wave master fiber
+WAVE_MASTER_FIBER = WAVE_MASTER_FIBER.copy(__NAME__)
+WAVE_MASTER_FIBER.value = 'A'
+
 # Define the line list file (located in the DRS_WAVE_DATA directory)
 WAVE_LINELIST_FILE = WAVE_LINELIST_FILE.copy(__NAME__)
 WAVE_LINELIST_FILE.value = 'catalogue_UNe.dat'  # 'catalogue_ThAr.dat'
@@ -1233,7 +1241,7 @@ WAVE_FP_DV_MAX.value = 0.25
 # Decide whether to refit the cavity width (will update if files do not
 #   exist)
 WAVE_FP_UPDATE_CAVITY = WAVE_FP_UPDATE_CAVITY.copy(__NAME__)
-WAVE_FP_UPDATE_CAVITY.value = False
+WAVE_FP_UPDATE_CAVITY.value = True
 
 # Select the FP cavity fitting (WAVE_MODE_FP = 1 only)
 #   Should be one of the following:
@@ -1343,38 +1351,19 @@ WAVE_FP_LARGE_JUMP.value = 250
 WAVE_FP_CM_IND = WAVE_FP_CM_IND.copy(__NAME__)
 WAVE_FP_CM_IND.value = -2
 
-#    Define the border size (edges in x-direction) for the FP fitting algorithm
-WAVE_FP_BORDER_SIZE = WAVE_FP_BORDER_SIZE.copy(__NAME__)
-WAVE_FP_BORDER_SIZE.value = 3
+# define the percentile to normalize the spectrum to (per order)
+#  used to determine FP peaks (peaks must be above a normalised limit
+#   defined in WAVE_FP_PEAK_LIM
+WAVE_FP_NORM_PERCENTILE = WAVE_FP_NORM_PERCENTILE.copy(__NAME__)
+WAVE_FP_NORM_PERCENTILE.value = 95
 
-#    Define the box half-size (in pixels) to fit an individual FP peak to
-#        - a gaussian will be fit to +/- this size from the center of
-#          the FP peak
-WAVE_FP_FPBOX_SIZE = WAVE_FP_FPBOX_SIZE.copy(__NAME__)
-WAVE_FP_FPBOX_SIZE.value = 3
+# define the normalised limit below which FP peaks are not used
+WAVE_FP_PEAK_LIM = WAVE_FP_PEAK_LIM.copy(__NAME__)
+WAVE_FP_PEAK_LIM.value = 0.1
 
-#    Define the sigma above the median that a peak must have  - [cal_drift-peak]
-#        to be recognised as a valid peak (before fitting a gaussian)
-#        must be a string dictionary and must have an fp key
-WAVE_FP_PEAK_SIG_LIM = WAVE_FP_PEAK_SIG_LIM.copy(__NAME__)
-WAVE_FP_PEAK_SIG_LIM.value = '{"fp": 1.0, "hc": 7.0}'
-
-#    Define the minimum spacing between peaks in order to be recognised
-#        as a valid peak (before fitting a gaussian)
-WAVE_FP_IPEAK_SPACING = WAVE_FP_IPEAK_SPACING.copy(__NAME__)
-WAVE_FP_IPEAK_SPACING.value = 5
-
-#    Define the expected width of FP peaks - used to "normalise" peaks
-#        (which are then subsequently removed if > drift_peak_norm_width_cut
-WAVE_FP_EXP_WIDTH = WAVE_FP_EXP_WIDTH.copy(__NAME__)
-WAVE_FP_EXP_WIDTH.value = 1.0  # 0.9  # 0.8
-
-#    Define the "normalised" width of FP peaks that is too large normalised
-#        width = FP FWHM - WAVE_FP_EXP_WIDTH
-#        cut is essentially:
-#           FP FWHM < (WAVE_FP_EXP_WIDTH + WAVE_FP_NORM_WIDTH_CUT)
-WAVE_FP_NORM_WIDTH_CUT = WAVE_FP_NORM_WIDTH_CUT.copy(__NAME__)
-WAVE_FP_NORM_WIDTH_CUT.value = 0.25  # 0.2
+#    Define peak to peak width that is too large (removed from FP peaks)
+WAVE_FP_P2P_WIDTH_CUT = WAVE_FP_P2P_WIDTH_CUT.copy(__NAME__)
+WAVE_FP_P2P_WIDTH_CUT.value = 15
 
 # =============================================================================
 # CALIBRATION: WAVE CCF SETTINGS
@@ -1478,78 +1467,48 @@ WAVEREF_FP_NHIGH.value = 30000
 WAVEREF_FP_POLYINV = WAVEREF_FP_POLYINV.copy(__NAME__)
 WAVEREF_FP_POLYINV.value = 4
 
+# define the wave fiber comparison plot order number
+WAVE_FIBER_COMP_PLOT_ORD = WAVE_FIBER_COMP_PLOT_ORD.copy(__NAME__)
+WAVE_FIBER_COMP_PLOT_ORD.value = 35
+
 # =============================================================================
 # CALIBRATION: WAVE NIGHT SETTINGS
 # =============================================================================
-# high-order wavelength solution correction cannot be smaller than 2,
-#   we remove 0 and 1
-WAVE_NIGHT_HIGHF_CORR_DEG = WAVE_NIGHT_HIGHF_CORR_DEG.copy(__NAME__)
-WAVE_NIGHT_HIGHF_CORR_DEG.value = 7
+# number of iterations for hc convergence
+WAVE_NIGHT_NITERATIONS1 = WAVE_NIGHT_NITERATIONS1.copy(__NAME__)
+WAVE_NIGHT_NITERATIONS1.value = 4
 
-# number of iterations for convergence
-WAVE_NIGHT_NITERATIONS = WAVE_NIGHT_NITERATIONS.copy(__NAME__)
-WAVE_NIGHT_NITERATIONS.value = 30
+# number of iterations for fp convergence
+WAVE_NIGHT_NITERATIONS2 = WAVE_NIGHT_NITERATIONS2.copy(__NAME__)
+WAVE_NIGHT_NITERATIONS2.value = 3
 
 # starting points for the cavity corrections
 WAVE_NIGHT_DCAVITY = WAVE_NIGHT_DCAVITY.copy(__NAME__)
 WAVE_NIGHT_DCAVITY.value = 0
 
-# min SNR for incluing in the model
-WAVE_NIGHT_NSIG_MIN = WAVE_NIGHT_NSIG_MIN.copy(__NAME__)
-WAVE_NIGHT_NSIG_MIN.value = 30
+# define the sigma clip value to remove bad hc lines
+WAVE_NIGHT_HC_SIGCLIP = WAVE_NIGHT_HC_SIGCLIP.copy(__NAME__)
+WAVE_NIGHT_HC_SIGCLIP.value = 50
 
-# red cut off for fit constaint [nm]
-WAVE_NIGHT_REDEND_CUTOFF = WAVE_NIGHT_REDEND_CUTOFF.copy(__NAME__)
-WAVE_NIGHT_REDEND_CUTOFF.value = 2350
-
-# size in nm of the median bin of residuals for higher-order correction
-WAVE_NIGHT_DWAVE_BIN = WAVE_NIGHT_DWAVE_BIN.copy(__NAME__)
-WAVE_NIGHT_DWAVE_BIN.value = 50
-
-# min number of lines to be included in a median bin for high-order
-# correction
-WAVE_NIGHT_NMIN_LINES = WAVE_NIGHT_NMIN_LINES.copy(__NAME__)
-WAVE_NIGHT_NMIN_LINES.value = 100
+# median absolute deviation cut off
+WAVE_NIGHT_MED_ABS_DEV = WAVE_NIGHT_MED_ABS_DEV.copy(__NAME__)
+WAVE_NIGHT_MED_ABS_DEV.value = 5
 
 # sigma clipping for the fit
 WAVE_NIGHT_NSIG_FIT_CUT = WAVE_NIGHT_NSIG_FIT_CUT.copy(__NAME__)
-WAVE_NIGHT_NSIG_FIT_CUT.value = 5
+WAVE_NIGHT_NSIG_FIT_CUT.value = 7
 
-# wave night plot hc bin lower bound [nm]
-WAVENIGHT_PLT_HCBINL = WAVENIGHT_PLT_HCBINL.copy(__NAME__)
-WAVENIGHT_PLT_HCBINL.value = 900
+# wave night plot hist number of bins
+WAVENIGHT_PLT_NBINS = WAVENIGHT_PLT_NBINS.copy(__NAME__)
+WAVENIGHT_PLT_NBINS.value = 51
 
-# wave night plot hc bin upper bound [nm]
-WAVENIGHT_PLT_HCBINU = WAVENIGHT_PLT_HCBINU.copy(__NAME__)
-WAVENIGHT_PLT_HCBINU.value = 2500
+# wave night plot hc bin lower bound in multiples of rms
+WAVENIGHT_PLT_BINL = WAVENIGHT_PLT_BINL.copy(__NAME__)
+WAVENIGHT_PLT_BINL.value = -20
 
-# wave night plot hc bin size [nm]
-WAVENIGHT_PLT_HCBINSZ = WAVENIGHT_PLT_HCBINSZ.copy(__NAME__)
-WAVENIGHT_PLT_HCBINSZ.value = 50
-
-# wave night plot fp histogram 2d number of x bins
-WAVENIGHT_PLT_FPBX = WAVENIGHT_PLT_FPBX.copy(__NAME__)
-WAVENIGHT_PLT_FPBX.value = 100
-
-# wave night plot fp histogram 2d number of y bins
-WAVENIGHT_PLT_FPBY = WAVENIGHT_PLT_FPBY.copy(__NAME__)
-WAVENIGHT_PLT_FPBY.value = 10
-
-# wave night plot fp line bin size
-WAVENIGHT_PLT_FPLB = WAVENIGHT_PLT_FPLB.copy(__NAME__)
-WAVENIGHT_PLT_FPLB.value = 200
-
-# wave night plot amplifier size (for modulo amplifier  structures)
-WAVENIGHT_PLT_AMPSIZE = WAVENIGHT_PLT_AMPSIZE.copy(__NAME__)
-WAVENIGHT_PLT_AMPSIZE.value = 256
-
-# wave night plot max +/- dv to keep in the histogram plots
-WAVENIGHT_PLT_MAXDV = WAVENIGHT_PLT_MAXDV.copy(__NAME__)
-WAVENIGHT_PLT_MAXDV.value = 50
-
-# wave night plot modulo amplifier step (bin) size
-WAVENIGHT_PLT_DVSTEP = WAVENIGHT_PLT_DVSTEP.copy(__NAME__)
-WAVENIGHT_PLT_DVSTEP.value = 10
+# wave night plot hc bin upper bound in multiples of rms
+WAVENIGHT_PLT_BINU = WAVENIGHT_PLT_BINU.copy(__NAME__)
+WAVENIGHT_PLT_BINU.value = 20
 
 # =============================================================================
 # OBJECT: TELLURIC SETTINGS
@@ -1858,7 +1817,7 @@ CCF_MASK_WIDTH.value = 1.7
 
 # Define target rv header null value
 CCF_OBJRV_NULL_VAL = CCF_OBJRV_NULL_VAL.copy(__NAME__)
-CCF_OBJRV_NULL_VAL.value = -9999.99
+CCF_OBJRV_NULL_VAL.value = 1000
 
 #  Define the maximum allowed ratio between input CCF STEP and CCF WIDTH
 #     i.e. error will be generated if CCF_STEP > (CCF_WIDTH / RATIO)
@@ -2247,13 +2206,13 @@ PLOT_WAVE_FP_SINGLE_ORDER.value = True
 PLOT_WAVEREF_EXPECTED = PLOT_WAVEREF_EXPECTED.copy(__NAME__)
 PLOT_WAVEREF_EXPECTED.value = True
 
+# turn on the wave line fiber comparison plot
+PLOT_WAVE_FIBER_COMPARISON = PLOT_WAVE_FIBER_COMPARISON.copy(__NAME__)
+PLOT_WAVE_FIBER_COMPARISON.value = True
+
 # turn on the wave per night iteration debug plot
 PLOT_WAVENIGHT_ITERPLOT = PLOT_WAVENIGHT_ITERPLOT.copy(__NAME__)
 PLOT_WAVENIGHT_ITERPLOT.value = True
-
-# turn on the wave per night diff debug plot
-PLOT_WAVENIGHT_DIFFPLOT = PLOT_WAVENIGHT_DIFFPLOT.copy(__NAME__)
-PLOT_WAVENIGHT_DIFFPLOT.value = True
 
 # turn on the wave per night hist debug plot
 PLOT_WAVENIGHT_HISTPLOT = PLOT_WAVENIGHT_HISTPLOT.copy(__NAME__)
@@ -2371,6 +2330,17 @@ REPROCESS_TIMECOL.value = 'KW_ACQTIME'
 SUMMARY_LATEX_PDF = SUMMARY_LATEX_PDF.copy(__NAME__)
 SUMMARY_LATEX_PDF.value = True
 
+# Define exposure meter minimum wavelength for mask
+EXPMETER_MIN_LAMBDA = EXPMETER_MIN_LAMBDA.copy(__NAME__)
+EXPMETER_MIN_LAMBDA.value = 1478.7
+
+# Define exposure meter maximum wavelength for mask
+EXPMETER_MAX_LAMBDA = EXPMETER_MAX_LAMBDA.copy(__NAME__)
+EXPMETER_MAX_LAMBDA.value = 1823.1
+
+# Define exposure meter telluric threshold (minimum tapas transmission)
+EXPMETER_TELLU_THRES = EXPMETER_TELLU_THRES.copy(__NAME__)
+EXPMETER_TELLU_THRES.value = 0.95
 
 # =============================================================================
 #  End of configuration file

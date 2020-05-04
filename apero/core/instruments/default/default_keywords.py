@@ -76,7 +76,7 @@ __all__ = [# input keys
            'KW_WAVE_TRP_SCLIPNUM', 'KW_WAVE_TRP_SCLIPTHRES',
            'KW_WAVE_TRP_DVCUTORD', 'KW_WAVE_TRP_DVCUTALL',
            'KW_WAVE_RES_MAPSIZE', 'KW_WAVE_RES_WSIZE',
-           'KW_WAVE_RES_MAXDEVTHRES', 'KW_INIT_WAVE',
+           'KW_WAVE_RES_MAXDEVTHRES', 'KW_INIT_WAVE', 'KW_WAVETIME',
            # wave littrow values
            'KW_WAVE_LIT_START_1', 'KW_WAVE_LIT_END_1', 'KW_WAVE_LIT_RORDERS',
            'KW_WAVE_LIT_ORDER_INIT_1', 'KW_WAVE_LIT_ORDER_START_1',
@@ -90,18 +90,17 @@ __all__ = [# input keys
            'KW_WFP_UPDATECAV', 'KW_WFP_FPCAV_MODE', 'KW_WFP_LLFIT_MODE',
            'KW_WFP_ERRX_MIN', 'KW_WFP_MAXLL_FIT_RMS', 'KW_WFP_T_ORD_START',
            'KW_WFP_WEI_THRES', 'KW_WFP_CAVFIT_DEG', 'KW_WFP_LARGE_JUMP',
-           'KW_WFP_CM_INDX', 'KW_WFP_BORDER', 'KW_WFP_BSIZE',
-           'KW_WFP_SIGLIM', 'KW_WFP_LAMP', 'KW_WFP_IPEAK_SPACE',
-           'KW_WFP_EXPWIDTH', 'KW_WFP_CUTWIDTH', 'KW_WFP_FILE', 'KW_WFP_DRIFT',
+           'KW_WFP_CM_INDX', 'KW_WFP_NPERCENT', 'KW_WFP_LIMIT',
+           'KW_WFP_CUTWIDTH', 'KW_WFP_FILE', 'KW_WFP_DRIFT', 'KW_WFP_WIDUSED',
            'KW_WFP_FWHM', 'KW_WFP_CONTRAST', 'KW_WFP_MASK',
            'KW_WFP_LINES', 'KW_WFP_TARG_RV', 'KW_WFP_WIDTH',
            'KW_WFP_STEP', 'KW_WFP_SIGDET', 'KW_WFP_BOXSIZE', 'KW_WFP_MAXFLUX',
            'KW_WFP_DETNOISE', 'KW_WFP_NMAX', 'KW_WFP_MASKMIN', 'KW_WFP_MASKWID',
            'KW_WFP_MASKUNITS',
            # wave night values
-           'KW_WNT_HIGHF_CD', 'KW_WNT_NITER', 'KW_WNT_DCAVITY', 'KW_WNT_MINSNR',
-           'KW_WNT_REDCUT', 'KW_WNT_DWAVE_BIN', 'KW_WNT_NMIN_LINES',
-           'KW_WNT_NSIG_FIT',
+           'KW_WNT_DCAVITY', 'KW_WNT_DCAVSRCE',
+           'KW_WNT_NITER1', 'KW_WNT_NITER2', 'KW_WNT_HCSIGCLIP',
+           'KW_WNT_MADLIMIT', 'KW_WNT_NSIG_FIT',
            # mktellu values
            'KW_MKTELL_TEMP_FILE', 'KW_MKTELL_BLAZE_PRCT', 'KW_MKTELL_BLAZE_CUT',
            'KW_MKTELL_TAPASFILE', 'KW_MKTELL_FWHMPLSF',
@@ -133,7 +132,8 @@ __all__ = [# input keys
            'KW_CCF_BOXSIZE', 'KW_CCF_MAXFLUX', 'KW_CCF_NMAX', 'KW_CCF_MASK_MIN',
            'KW_CCF_MASK_WID', 'KW_CCF_MASK_UNITS', 'KW_CCF_RV_WAVE_FP',
            'KW_CCF_RV_SIMU_FP', 'KW_CCF_RV_DRIFT', 'KW_CCF_RV_OBJ',
-           'KW_CCF_RV_CORR',
+           'KW_CCF_RV_CORR', 'KW_CCF_RV_WAVEFILE', 'KW_CCF_RV_WAVETIME',
+           'KW_CCF_RV_TIMEDIFF', 'KW_CCF_RV_WAVESRCE',
            # polar values
            'KW_POL_STOKES', 'KW_POL_NEXP', 'KW_POL_METHOD', 'KW_POL_FILES',
            'KW_POL_EXPS', 'KW_POL_MJDS', 'KW_POL_MJDENDS', 'KW_POL_BJDS',
@@ -678,6 +678,9 @@ KW_WAVE_DEG = Keyword('KW_WAVE_DEG', key='', dtype=int, source=__NAME__)
 # the wave file used
 KW_WAVEFILE = Keyword('KW_WAVEFILE', key='', dtype=str, source=__NAME__)
 
+# the wave file mid exptime [mjd]
+KW_WAVETIME = Keyword('KW_WAVETIME', key='', dtype=float, source=__NAME__)
+
 # the wave source of the wave file used
 KW_WAVESOURCE = Keyword('KW_WAVESOURCE', key='', dtype=str, source=__NAME__)
 
@@ -902,25 +905,15 @@ KW_WFP_LARGE_JUMP = Keyword('KW_WFP_LARGE_JUMP', key='', dtype=float,
 # the index to start crossmatching fps at
 KW_WFP_CM_INDX = Keyword('KW_WFP_CM_INDX', key='', dtype=float, source=__NAME__)
 
-# border size allowed to fit fps used
-KW_WFP_BORDER = Keyword('KW_WFP_BORDER', key='', dtype=float, source=__NAME__)
+# the FP widths used for each order (1D list)
+KW_WFP_WIDUSED = Keyword('KW_WFP_WIDUSED', key='', dtype=float, source=__NAME__)
 
-# the box size used to fit fps (half-size)
-KW_WFP_BSIZE = Keyword('KW_WFP_BSIZE', key='', dtype=int, source=__NAME__)
-
-# the sigma above median a peak must have to be a valid fp peak used
-KW_WFP_SIGLIM = Keyword('KW_WFP_SIGLIM', key='', dtype=float, source=__NAME__)
-
-# the lamp value that was used
-KW_WFP_LAMP = Keyword('KW_WFP_LAMP', key='', dtype=str, source=__NAME__)
-
-# the minimum spacing between peaks used
-KW_WFP_IPEAK_SPACE = Keyword('KW_WFP_IPEAK_SPACE', key='', dtype=float,
-                             source=__NAME__)
-
-# the expected width of the FP peaks used
-KW_WFP_EXPWIDTH = Keyword('KW_WFP_EXPWIDTH', key='', dtype=float,
+# the percentile to normalise the FP flux per order used
+KW_WFP_NPERCENT = Keyword('KW_WFP_NPERCENT', key='', dtype=float,
                           source=__NAME__)
+
+# the normalised limited used to detect FP peaks
+KW_WFP_LIMIT = Keyword('KW_WFP_LIMIT', key='', dtype=float, source=__NAME__)
 
 # the normalised cut width for large peaks used
 KW_WFP_CUTWIDTH = Keyword('KW_WFP_CUTWIDTH', key='', dtype=float,
@@ -938,9 +931,6 @@ KW_WFP_FWHM = Keyword('KW_WFP_FWHM', key='', dtype=float, source=__NAME__)
 # Contrast of the wave FP file CCF
 KW_WFP_CONTRAST = Keyword('KW_WFP_CONTRAST', key='', dtype=float,
                           source=__NAME__)
-
-# Max count/pixel of the wave FP file CCF
-KW_WFP_MAXCPP = Keyword('KW_WFP_MAXCPP', key='', dtype=float, source=__NAME__)
 
 # Mask for the wave FP file CCF
 KW_WFP_MASK = Keyword('KW_WFP_MASK', key='', dtype=float, source=__NAME__)
@@ -983,31 +973,25 @@ KW_WFP_MASKWID = Keyword('KW_WFP_MASKWID', key='', dtype=float, source=__NAME__)
 KW_WFP_MASKUNITS = Keyword('KW_WFP_MASKUNITS', key='', dtype=str,
                            source=__NAME__)
 
-# high-order wavelength solution correction used in wave night
-KW_WNT_HIGHF_CD = Keyword('KW_WNT_HIGHF_CD', key='', dtype=int,
-                          source=__NAME__)
+# number of iterations for convergence used in wave night (hc)
+KW_WNT_NITER1 = Keyword('KW_WNT_NITER1', key='', dtype=int, source=__NAME__)
 
-# number of iterations for convergence used in wave night
-KW_WNT_NITER = Keyword('KW_WNT_NITER', key='', dtype=int, source=__NAME__)
+# number of iterations for convergence used in wave night (fp)
+KW_WNT_NITER2 = Keyword('KW_WNT_NITER2', key='', dtype=int, source=__NAME__)
 
 # starting point for the cavity corrections used in wave night
 KW_WNT_DCAVITY = Keyword('KW_WNT_DCAVITY', key='', dtype=int, source=__NAME__)
 
-# min SNR for incluing in the model used in wave night
-KW_WNT_MINSNR = Keyword('KW_WNT_MINSNR', key='', dtype=int, source=__NAME__)
+# source fiber for the cavity correction
+KW_WNT_DCAVSRCE = Keyword('KW_WNT_DCAVSRCE', key='', dtype=str, source=__NAME__)
 
-# red cut off for fit constaint [nm] used in wave night
-KW_WNT_REDCUT = Keyword('KW_WNT_REDCUT', key='', dtype=int, source=__NAME__)
-
-# size [nm] of the median bin of residuals for higher-order correction used
-#    in wave night
-KW_WNT_DWAVE_BIN = Keyword('KW_WNT_DWAVE_BIN', key='', dtype=int,
+# define the sigma clip value to remove bad hc lines used
+KW_WNT_HCSIGCLIP = Keyword('KW_WNT_HCSIGCLIP', key='', dtype=float,
                            source=__NAME__)
 
-# min number of lines to be included in a median bin for high-order
-# correction used in wave night
-KW_WNT_NMIN_LINES = Keyword('KW_WNT_NMIN_LINES', key='', dtype=int,
-                            source=__NAME__)
+# median absolute deviation cut off used
+KW_WNT_MADLIMIT = Keyword('KW_WNT_MADLIMIT', key='', dtype=float,
+                           source=__NAME__)
 
 # sigma clipping for the fit used in wave night
 KW_WNT_NSIG_FIT = Keyword('KW_WNT_NSIG_FIT', key='', dtype=int, source=__NAME__)
@@ -1284,6 +1268,22 @@ KW_CCF_RV_OBJ = Keyword('KW_CCF_RV_OBJ', key='', dtype=float, source=__NAME__)
 
 # the corrected radial velocity of the object (taking into account the FP RVs)
 KW_CCF_RV_CORR = Keyword('KW_CCF_RV_CORR', key='', dtype=float, source=__NAME__)
+
+# the wave file used for the rv (fiber specific)
+KW_CCF_RV_WAVEFILE = Keyword('KW_CCF_RV_WAVEFILE', key='', dtype=str,
+                             source=__NAME__)
+
+# the wave file time used for the rv [mjd] (fiber specific)
+KW_CCF_RV_WAVETIME = Keyword('KW_CCF_RV_WAVETIME', key='', dtype=str,
+                             source=__NAME__)
+
+# the time diff (in days) between wave file and file (fiber specific)
+KW_CCF_RV_TIMEDIFF = Keyword('KW_CCF_RV_TIMEDIFF', key='', dtype=str,
+                             source=__NAME__)
+
+# the wave file source used for the rv reference fiber
+KW_CCF_RV_WAVESRCE = Keyword('KW_CCF_RV_WAVESRCE', key='', dtype=str,
+                             source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define polar variables

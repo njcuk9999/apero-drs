@@ -22,8 +22,8 @@ from collections import OrderedDict
 
 from apero.core.instruments.default import pseudo_const
 from apero.core import constants
-from apero.locale import drs_text
-from apero.locale import drs_exceptions
+from apero.lang import drs_text
+from apero.lang import drs_exceptions
 from apero.core.math import time
 
 
@@ -817,7 +817,7 @@ class RecipeLog:
         if os.path.exists(writepath):
             try:
                 print('RecipeLog: Reading file: {0}'.format(writepath))
-                table = Table.read(writepath)
+                table = Table.read(writepath, format='fits')
             except Exception as e:
                 # TODO: move to language database
                 emsg = 'RecipeLogError: Cannot read file {0} \n\t {1}: {2}'
@@ -1404,10 +1404,9 @@ def writelog(logobj, params, message, key, logfilepath):
     if os.path.exists(logfilepath):
         # try to open the logfile
         try:
-            # open/write and close the logfile
-            f = open(logfilepath, 'a')
-            f.write(message + '\n')
-            f.close()
+            # write the logfile (in access mode to append to the end)
+            with open(logfilepath, 'a') as f:
+                f.write(message + '\n')
         except Exception as e:
             eargs = [logfilepath, type(e), e, func_name]
             emsg = TextEntry('01-001-00011', args=eargs)
@@ -1415,11 +1414,9 @@ def writelog(logobj, params, message, key, logfilepath):
     else:
         # try to open the logfile
         try:
-            # open/write and close the logfile
-            f = open(logfilepath, 'a')
-            # write the first message line
-            f.write(message + '\n')
-            f.close()
+            # write the logfile (in access mode to append to the end)
+            with open(logfilepath, 'a') as f:
+                f.write(message + '\n')
             try:
                 # change mode to rw-rw-rw-
                 os.chmod(logfilepath, 0o666)

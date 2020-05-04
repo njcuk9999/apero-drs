@@ -12,13 +12,13 @@ Created on 2019-12-18 at 16:57
 # TODO: change to cal_wave_spirou after testing complete
 # TODO: Currently a placeholder for EA code
 from apero import core
-from apero import locale
+from apero import lang
 from apero.core import constants
 from apero.core.core import drs_database
 from apero.io import drs_image
 from apero.io import drs_fits
 from apero.science.calib import flat_blaze
-from apero.science.calib import wave1 as wave
+from apero.science.calib import wave
 from apero.science import velocity
 from apero.science.extract import other as extractother
 
@@ -38,8 +38,8 @@ __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
 # define extraction code to use
 EXTRACT_NAME = 'cal_extract_spirou.py'
 
@@ -169,6 +169,9 @@ def __main__(recipe, params):
         # run extraction
         hc_outputs, fp_outputs = extractother.extract_wave_files(*eargs)
 
+        # set up a stored cavity width
+        indcavity = None
+        indsource = None
         # ------------------------------------------------------------------
         # Loop around fibers
         # ------------------------------------------------------------------
@@ -200,14 +203,19 @@ def __main__(recipe, params):
             blaze_file, blaze = flat_blaze.get_blaze(params, hcheader, fiber)
             # --------------------------------------------------------------
             # calculate the night wavelength solution
-            wargs = [hc_e2ds_file, fp_e2ds_file, mhclines, mfplines, wprops]
+            wargs = [hc_e2ds_file, fp_e2ds_file, mhclines, mfplines, wprops,
+                     fiber, indcavity]
             nprops = wave.night_wavesolution(params, recipe, *wargs)
+            # update in dcavity
+            if indcavity is None:
+                indcavity = nprops['DCAVITY']
+                indsource = fiber
+            # add dcavity source (which fiber it came from)
+            nprops['DCAVITYSRCE'] = indsource
+            nprops.set_source('DCAVITYSRCE', mainname)
             # ----------------------------------------------------------
             # ccf computation
             # ----------------------------------------------------------
-            # TODO: remove break point
-            constants.break_point(params)
-
             # get the FP (reference) fiber
             pconst = constants.pload(params['INSTRUMENT'])
             sfiber, rfiber = pconst.FIBER_CCF()
@@ -267,6 +275,9 @@ def __main__(recipe, params):
             # ----------------------------------------------------------
             log2.end(params)
 
+            # TODO: remove break point
+            constants.break_point(params)
+
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
@@ -283,4 +294,3 @@ if __name__ == "__main__":
 # =============================================================================
 # End of code
 # =============================================================================
-
