@@ -2,6 +2,34 @@ Changelog
 =========
 
 
+0.6.082 (2020-05-04)
+--------------------
+- `Apero.tools.resources.setup.apero.*.*` - update the MKL environment
+  exports. [njcuk9999]
+- Update language database. [njcuk9999]
+- `Apero.io.drs_fits.py` - add the getting of a time variable from the
+  index files and sort by it before returning - all files should be in
+  date order at point of return. [njcuk9999]
+- `Apero.tools.recipes.spirou.update_berv.py` - remove from `__future__`
+  import. [njcuk9999]
+- `Apero.recipe.spirou.cal_shape_master_spirou.py` +
+  `apero.science.calib.shape.py` - get dxrms and pass to qc (Issue #602)
+  [njcuk9999]
+- `Core.instruments.*.default_constants.py` - add `SHAPE_MASTER_DX_RMS_QC`
+  value (Issue #602) [njcuk9999]
+- `Core.core.drs_database.py` - remove break point. [njcuk9999]
+- `Apero..science.calib.shape.py` - get rms value for dx-min(ddx) (Issue
+  #602) [njcuk9999]
+- `Apero.science.extract.crossmatch.py` - add back warnings for issues
+  with crossmatching - were only debug messages (Issue #612) [njcuk9999]
+- `Apero.core.instruments.*.default_constants.py` - update gaia url for
+  tap query (Issue #612) [njcuk9999]
+- `Apero.core.core.drs_file.py` - need to return False if `copy_cards` has a
+  group argument but header key not found in defined keywords.
+  [njcuk9999]
+- Update date/version/changelog/documentation. [njcuk9999]
+
+
 0.6.081 (2020-05-01)
 --------------------
 - `Science.calib.wave.py` - only update `dd_cavity` when indcavity is None
@@ -9879,10 +9907,6 @@ Changelog
 
   Neil
 - Update date/version/changelog. [njcuk9999]
-
-
-0.2.68 (2018-07-17)
--------------------
 - Copy (same) [njcuk9999]
 - Update tellu recipes: fix bug with file name. [njcuk9999]
 - Update tellu recipes: drs telluDB reset now resets telluDB not calibDB
@@ -9914,10 +9938,6 @@ Changelog
 - Merge pull request #375 from njcuk9999/neil. [Neil Cook]
 
   Neil
-
-
-0.2.67 (2018-07-16)
--------------------
 - Telluric integration: bug fixes (after move of functions) [njcuk9999]
 - Updated call to plot. [njcuk9999]
 - Moved debug plot back to main code. [njcuk9999]
@@ -10451,6 +10471,8 @@ Changelog
   type `spirouTHORCA.decide_on_lamp_type`: - changed to identify lamp from
   fiber position (for use w/odometer names) - previous version moved to
   `decide_on_lamp_type_old`. [melissa-hobson]
+- Update date and version. [Neil Cook]
+- Fix for loggers being out of range. [Neil Cook]
 
 
 0.2.073 (2018-06-26)
@@ -10468,12 +10490,6 @@ Changelog
 - Merge pull request #347 from njcuk9999/master. [melissa-hobson]
 
   Melissa
-
-
-0.254 (2018-06-24)
-------------------
-- Update date and version. [Neil Cook]
-- Fix for loggers being out of range. [Neil Cook]
 - Merge pull request #345 from njcuk9999/neil. [Neil Cook]
 
   Neil - confirmed tested on H4RG files
@@ -10506,10 +10522,6 @@ Changelog
 - Updated recipes main end script (to allow piping of logging into p -
   thus accessible outside via `ll['p']['LOGGING_ERROR']` for example.
   [Neil Cook]
-
-
-0.253 (2018-06-22)
-------------------
 - `Cal_WAVE_NEW_E2DS_spirou.py`: first version (untested) [melissa-hobson]
 - Merge pull request #344 from njcuk9999/master. [melissa-hobson]
 
