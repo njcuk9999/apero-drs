@@ -119,10 +119,7 @@ OBJ_LIST_CROSS_MATCH_RADIUS.value = 60.0
 # Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
 OBJ_LIST_GAIA_URL = OBJ_LIST_GAIA_URL.copy(__NAME__)
 OBJ_LIST_GAIA_URL.value = 'http://gea.esac.esa.int/tap-server/tap'
-
-# Define the TAP SIMBAD URL (for use in crossmatching OBJNAME via astroquery)
-OBJ_LIST_SIMBAD_URL = OBJ_LIST_SIMBAD_URL.copy(__NAME__)
-OBJ_LIST_SIMBAD_URL.value = 'http://gea.esac.esa.int/tap-server/tap'
+OBJ_LIST_GAIA_URL.value = 'https://gea.esac.esa.int/tap-server/tap'
 
 # Define the gaia magnitude cut (rp mag) to use in the gaia query
 OBJ_LIST_GAIA_MAG_CUT = OBJ_LIST_GAIA_MAG_CUT.copy(__NAME__)
