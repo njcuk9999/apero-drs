@@ -1017,7 +1017,7 @@
 "40-014-00039","ALL","prints which shape local file we are using","{0} = filename","Reading night shape file: {0}","",""
 "40-014-00040","ALL","prints that no Une lines were found for this order","{0} = order number","\t No UNe lines found for order {0}","",""
 "40-014-00041","ALL","prints how we are transforming image","{0} = dx set/unset; {1} = dy set/unset; {2} = trans set/unset","\tTransforming (dxmap={0}, dymap={1}, trans={2})","",""
-"","","","","","",""
+"40-014-00042","ALL","prints that QC failed for order for dx rms","{0} = order number; {1} = dx rms for this order","dx-ddx rms (Order {0}) too high: {1} > {2})","",""
 "","","","","","",""
 "40-015-00000","ALL","Flat/Blaze messages","None","","",""
 "40-015-00001","ALL","prints the extracted orders S/N and flat field rms","{0} = fiber name; {1} = order number; {2} = signal to noise ratio; {3} = flat field rms","On fiber {0} order {1}: S/N= {2:.1f}  - FF rms={3:.2f} %","",""
