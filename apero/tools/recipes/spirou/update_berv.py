@@ -9,7 +9,6 @@ Created on 2019-07-05 at 16:46
 
 @author: cook
 """
-from __future__ import division
 import itertools
 import os
 
