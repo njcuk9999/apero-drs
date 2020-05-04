@@ -542,9 +542,6 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
                               'long_medfilt_width', kwargs, func_name)
     std_qc = pcheck(params, 'SHAPE_QC_DXMAP_STD', 'std_qc', kwargs, func_name)
 
-    # TODO: remove break point
-    constants.break_point(params)
-
     # get properties from property dictionaries
     nbo = lprops['NBO']
     acc = lprops['CENT_COEFFS']
@@ -603,7 +600,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
         # set up iteration storage
         slope_deg_arr_i, slope_arr_i, skeep_arr_i = [], [], []
         xsec_arr_i, ccor_arr_i, ddx_arr_i, dx_arr_i = [], [], [], []
-        dypix_arr_i, cckeep_arr_i, dxrms_arr_i = [], []
+        dypix_arr_i, cckeep_arr_i, dxrms_arr_i = [], [], []
         corr_dx_from_fp = np.zeros((nbo, dim2))
         shifts_all = np.zeros((nbo, dim2))
         # get dx array (NaN)
@@ -992,7 +989,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
                         dxmap = None
                         max_dxmap_std = dxmap_std
                         max_dxmap_info = [order_num, ix, std_qc]
-                        return dxmap, max_dxmap_std, max_dxmap_info, None
+                        # return dxmap, max_dxmap_std, max_dxmap_info, None
         # -----------------------------------------------------------------
         # plot all order angle_offset plot (in loop)
         pkwargs = dict(slope_deg=[slope_deg_arr_i], slope=[slope_arr_i],
@@ -1033,7 +1030,10 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
     # calculate rms for dx-ddx (last iteration)
     dxrms = []
     for order_num in range(nbo):
-        dxrms.append(np.nanstd(dxrms_arr[-1][order_num]))
+        # get the keep mask
+        keep = cckeep_arr[-1][order_num]
+
+        dxrms.append(np.nanstd(dxrms_arr[-1][order_num][keep]))
     # ---------------------------------------------------------------------
     # return parameters
     return master_dxmap, max_dxmap_std, max_dxmap_info, dxrms
@@ -1360,16 +1360,37 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     return outfile1, outfile2, outfile3
 
 
-def shape_master_qc(params):
-    # TODO: Decide on some extra quality control?
+def shape_master_qc(params, dxrms=None, **kwargs):
+    func_name = __NAME__ + '.shape_master_qc()'
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
     textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
-    # no quality control currently
-    qc_values.append('None')
-    qc_names.append('None')
-    qc_logic.append('None')
-    qc_pass.append(1)
+    # get dxrms criteria
+    dxrmscut = pcheck(params, 'SHAPE_MASTER_DX_RMS_QC', 'dxrmscut', kwargs,
+                      func_name)
+    # ------------------------------------------------------------------
+    # dxmap and dxrms can be None
+    if dxrms is None:
+        # no quality control currently
+        qc_values.append('None')
+        qc_names.append('None')
+        qc_logic.append('None')
+        qc_pass.append(1)
+    else:
+        # loop around orders and check dx rms
+        for order_num in range(len(dxrms)):
+            # get qcargs
+            qcargs = [order_num, dxrms[order_num], dxrmscut]
+            # check that rms is below required level
+            if dxrms[order_num] > dxrmscut:
+                fail_msg.append(textdict['40-014-00042'].format(*qcargs))
+                qc_pass.append(0)
+            else:
+                qc_pass.append(1)
+            # add to qc header lists
+            qc_values.append(dxrms[order_num])
+            qc_names.append('dxrms')
+            qc_logic.append('dxrms{0} > {2:.2f}'.format(*qcargs))
     # ------------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
