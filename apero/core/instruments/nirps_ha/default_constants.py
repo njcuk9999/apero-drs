@@ -568,6 +568,10 @@ SHAPE_FP_MASTER_MIN_IN_GROUP.value = 3
 SHAPE_MASTER_FIBER = SHAPE_MASTER_FIBER.copy(__NAME__)
 SHAPE_MASTER_FIBER.value = 'A'
 
+#  Define the shape master dx rms quality control criteria (per order)
+SHAPE_MASTER_DX_RMS_QC = SHAPE_MASTER_DX_RMS_QC.copy(__NAME__)
+SHAPE_MASTER_DX_RMS_QC.value = 0.3
+
 # The number of iterations to run the shape finding out to
 SHAPE_NUM_ITERATIONS = SHAPE_NUM_ITERATIONS.copy(__NAME__)
 SHAPE_NUM_ITERATIONS.value = 4
