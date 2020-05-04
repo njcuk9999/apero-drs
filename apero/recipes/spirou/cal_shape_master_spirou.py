@@ -215,7 +215,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     cargs = [hcimage, master_fp, wprops, lprops]
     dout = shape.calculate_dxmap(params, recipe, *cargs)
-    dxmap, max_dxmap_std, max_dxmap_info = dout
+    dxmap, max_dxmap_std, max_dxmap_info, dxrms = dout
     # if dxmap is None we shouldn't continue as quality control have failed
     if dxmap is None:
         fargs = [max_dxmap_info[0], max_dxmap_info[1], max_dxmap_std,
@@ -249,7 +249,7 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # Quality control
     # ------------------------------------------------------------------
-    qc_params, passed = shape.shape_master_qc(params)
+    qc_params, passed = shape.shape_master_qc(params, dxrms)
     # update recipe log
     recipe.log.add_qc(params, qc_params, passed)
 
