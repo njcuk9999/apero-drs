@@ -645,6 +645,7 @@ def find_files(params, recipe, kind=None, path=None, logic='and', fiber=None,
     # get the index file col name
     filecol = params['DRS_INDEX_FILENAME']
     nightcol = params['REPROCESS_NIGHTCOL']
+    timecol = 'KW_MID_OBS_TIME'
     # ----------------------------------------------------------------------
     # deal with setting path
     if path is not None:
@@ -695,6 +696,7 @@ def find_files(params, recipe, kind=None, path=None, logic='and', fiber=None,
     # valid files storage
     valid_files = []
     table_list = []
+    time_list = []
     # filters added string
     fstring = ''
     # ----------------------------------------------------------------------
@@ -768,6 +770,8 @@ def find_files(params, recipe, kind=None, path=None, logic='and', fiber=None,
                 # if both conditions are True then skip
                 if cond1 and cond2:
                     continue
+            # get time value
+            timeval = float(masked_index[timecol][row])
             # construct absolute path
             absfilename = os.path.join(dirname, nightname, filename)
             # check that file exists
@@ -778,6 +782,7 @@ def find_files(params, recipe, kind=None, path=None, logic='and', fiber=None,
             # append to storage
             if absfilename not in valid_files:
                 valid_files.append(absfilename)
+                time_list.append(timeval)
         # ------------------------------------------------------------------
         # append to table list
         if return_table:
@@ -787,13 +792,17 @@ def find_files(params, recipe, kind=None, path=None, logic='and', fiber=None,
     wargs = [len(valid_files), fstring]
     WLOG(params, '', TextEntry('40-004-00004', args=wargs))
     # ----------------------------------------------------------------------
+    # define sort mask (sort by time column)
+    sortmask = np.argsort(time_list)
+    # make sure valid_files is a numpy array
+    valid_files = np.array(valid_files)
     # deal with table list
     if return_table:
         indextable = drs_table.vstack_cols(params, table_list)
-        return valid_files, indextable
+        return valid_files[sortmask], indextable[sortmask]
     else:
         # return full list
-        return valid_files
+        return valid_files[sortmask]
 
 
 def get_index_files(params, path=None, required=True, night=None):
