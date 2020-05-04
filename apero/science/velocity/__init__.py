@@ -22,6 +22,8 @@ compute_ccf_fp = general.compute_ccf_fp
 
 compute_ccf_science = general.compute_ccf_science
 
+fit_fp_peaks = general.fit_fp_peaks
+
 locate_reference_file = general.locate_reference_file
 
 measure_fp_peaks = general.measure_fp_peaks

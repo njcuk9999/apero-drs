@@ -12,7 +12,7 @@ Created on 2019-03-23 at 13:01
 import numpy as np
 
 from apero import core
-from apero import locale
+from apero import lang
 from apero.core import constants
 from apero.core.core import drs_database
 from apero.io import drs_fits
@@ -38,8 +38,8 @@ __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
 # alias pcheck
 pcheck = core.pcheck
 
@@ -186,7 +186,7 @@ def __main__(recipe, params):
         if params['INPUTS']['FPMASTER'] in ['1', 'True']:
             filename = None
         else:
-            filename = params['INPUTS']['FPMASTER']
+            filename = params['INPUTS']['FPMASTER'][0][0]
         # do stuff
         fpkwargs = dict(header=fpfile.header, filename=filename)
         # read fpmaster file
@@ -215,7 +215,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     cargs = [hcimage, master_fp, wprops, lprops]
     dout = shape.calculate_dxmap(params, recipe, *cargs)
-    dxmap, max_dxmap_std, max_dxmap_info = dout
+    dxmap, max_dxmap_std, max_dxmap_info, dxrms = dout
     # if dxmap is None we shouldn't continue as quality control have failed
     if dxmap is None:
         fargs = [max_dxmap_info[0], max_dxmap_info[1], max_dxmap_std,
@@ -249,7 +249,7 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # Quality control
     # ------------------------------------------------------------------
-    qc_params, passed = shape.shape_master_qc(params)
+    qc_params, passed = shape.shape_master_qc(params, dxrms)
     # update recipe log
     recipe.log.add_qc(params, qc_params, passed)
 

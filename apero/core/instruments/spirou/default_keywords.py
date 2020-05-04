@@ -222,9 +222,9 @@ KW_MID_OBSTIME_METHOD.set(key='MJDMIDMD',
 KW_INFILE1 = KW_INFILE1.copy(__NAME__)
 KW_INFILE1.set(key='INF1{0:03d}', comment='Input file used to create output')
 KW_INFILE2 = KW_INFILE2.copy(__NAME__)
-KW_INFILE2.set(key='INF1{0:03d}', comment='Input file used to create output')
+KW_INFILE2.set(key='INF2{0:03d}', comment='Input file used to create output')
 KW_INFILE3 = KW_INFILE3.copy(__NAME__)
-KW_INFILE3.set(key='INF1{0:03d}', comment='Input file used to create output')
+KW_INFILE3.set(key='INF3{0:03d}', comment='Input file used to create output')
 
 # -----------------------------------------------------------------------------
 # Define database input keywords
@@ -751,7 +751,12 @@ KW_WAVE_DEG.set(key='WAVEDEGN', comment='degree of wave polyn fit',
 # the wave file used
 KW_WAVEFILE = KW_WAVEFILE.copy(__NAME__)
 KW_WAVEFILE.set(key='WAVEFILE', comment='Wavelength solution file used',
-                  parent=None, group='wave')
+                parent=None, group='wave')
+
+# the wave file mid exptime [mjd]
+KW_WAVETIME = KW_WAVETIME.copy(__NAME__)
+KW_WAVETIME.set(key='WAVETIME', comment='Wavelength solution mid exptime',
+                parent=None, group='wave')
 
 # the wave source of the wave file used
 KW_WAVESOURCE = KW_WAVESOURCE.copy(__NAME__)
@@ -1093,44 +1098,29 @@ KW_WFP_CM_INDX.set(key='WFPCMIND',
                    comment='The index to start crossmatch at',
                    parent='WAVE_FP_CM_IND', group='wave')
 
-# border size allowed to fit fps used
-KW_WFP_BORDER = KW_WFP_BORDER.copy(__NAME__)
-KW_WFP_BORDER.set(key='WFPBORDR',
-                  comment='Allowed border size for fittin FPs',
-                  parent='WAVE_FP_BORDER_SIZE', group='wave')
+# the FP widths used for each order (1D list)
+KW_WFP_WIDUSED = KW_WFP_WIDUSED.copy(__NAME__)
+KW_WFP_WIDUSED.set(key='WFPWD{0:03d}',
+                   comment='The FP width (peak to peak) used for each order',
+                   group='wave')
 
-# the box size used to fit fps (half-size)
-KW_WFP_BSIZE = KW_WFP_BSIZE.copy(__NAME__)
-KW_WFP_BSIZE.set(key='WFPBSIZE', comment='half box size used to fit FPs',
-                 parent='WAVE_FP_FPBOX_SIZE', group='wave')
+# the percentile to normalise the FP flux per order used
+KW_WFP_NPERCENT = KW_WFP_NPERCENT.copy(__NAME__)
+KW_WFP_NPERCENT.set(key='WFPNPRCT',
+                    comment='WAVE FP percentile thres to norm FP flux used',
+                    parent='WAVE_FP_NORM_PERCENTILE', group='wave')
 
-# the sigma above median a peak must have to be a valid fp peak used
-KW_WFP_SIGLIM = KW_WFP_SIGLIM.copy(__NAME__)
-KW_WFP_SIGLIM.set(key='WFPSIGLM',
-                  comment='sigma above median for FP peak to be valid',
-                  parent='WAVE_FP_PEAK_SIG_LIM', group='wave')
-
-# the lamp value that was used
-KW_WFP_LAMP = KW_WFP_LAMP.copy(__NAME__)
-KW_WFP_LAMP.set(key='WFPLAMP', comment='Lamp value used for FP wave sol.',
-                parent=None, group='wave')
-
-# the minimum spacing between peaks used
-KW_WFP_IPEAK_SPACE = KW_WFP_IPEAK_SPACE.copy(__NAME__)
-KW_WFP_IPEAK_SPACE.set(key='WFPIPKSP',
-                       comment='Min spacing between FP peaks used.',
-                       parent='WAVE_FP_IPEAK_SPACING', group='wave')
-
-# the expected width of the FP peaks used
-KW_WFP_EXPWIDTH = KW_WFP_EXPWIDTH.copy(__NAME__)
-KW_WFP_EXPWIDTH.set(key='WFPEXPWD', comment='expected width of FP peaks',
-                    parent='WAVE_FP_EXP_WIDTH', group='wave')
+# the normalised limited used to detect FP peaks
+KW_WFP_LIMIT = KW_WFP_LIMIT.copy(__NAME__)
+KW_WFP_LIMIT.set(key='WFPNLIMT',
+                 comment='WAVE FP norm limit to detect FP peaks used',
+                 parent='WAVE_FP_PEAK_LIM', group='wave')
 
 # the normalised cut width for large peaks used
 KW_WFP_CUTWIDTH = KW_WFP_CUTWIDTH.copy(__NAME__)
 KW_WFP_CUTWIDTH.set(key='WFPCUTWD',
                     comment='Normalised cut width used for large FP peaks',
-                    parent='WAVE_FP_NORM_WIDTH_CUT', group='wave')
+                    parent='WAVE_FP_P2P_WIDTH_CUT', group='wave')
 
 # Wavelength solution for fiber C that is is source of the WFP keys
 KW_WFP_FILE = KW_WFP_FILE.copy(__NAME__)
@@ -1218,15 +1208,15 @@ KW_WFP_MASKUNITS = KW_WFP_MASKUNITS.copy(__NAME__)
 KW_WFP_MASKUNITS.set(key='WFPCMUNT', comment='wave sol FP CCF mask units used',
                      parent='WAVE_CCF_MASK_UNITS', group='wave')
 
-# high-order wavelength solution correction used in wave night
-KW_WNT_HIGHF_CD = KW_WNT_HIGHF_CD.copy(__NAME__)
-KW_WNT_HIGHF_CD.set(key='WNTCRDEG', comment='wave night high-order corr used',
-                    parent='WAVE_NIGHT_HIGHF_CORR_DEG', group='wave')
+# number of iterations for convergence used in wave night (hc)
+KW_WNT_NITER1 = KW_WNT_NITER1.copy(__NAME__)
+KW_WNT_NITER1.set(key='WNTNITER', comment='wave night hc n iterations used',
+                  parent='WAVE_NIGHT_NITERATIONS1', group='wave')
 
-# number of iterations for convergence used in wave night
-KW_WNT_NITER = KW_WNT_NITER.copy(__NAME__)
-KW_WNT_NITER.set(key='WNTNITER', comment='wave night n iterations used',
-                 parent='WAVE_NIGHT_NITERATIONS', group='wave')
+# number of iterations for convergence used in wave night (fp)
+KW_WNT_NITER21 = KW_WNT_NITER2.copy(__NAME__)
+KW_WNT_NITER2.set(key='WNTNITER', comment='wave night fp n iterations used',
+                  parent='WAVE_NIGHT_NITERATIONS2', group='wave')
 
 # starting point for the cavity corrections used in wave night
 KW_WNT_DCAVITY = KW_WNT_DCAVITY.copy(__NAME__)
@@ -1234,30 +1224,22 @@ KW_WNT_DCAVITY.set(key='WNTDCVTY',
                    comment='wave night starting point for cavity corr used',
                    parent='WAVE_NIGHT_DCAVITY', group='wave')
 
-# min SNR for incluing in the model used in wave night
-KW_WNT_MINSNR = KW_WNT_MINSNR.copy(__NAME__)
-KW_WNT_MINSNR.set(key='WNTMNSNR',
-                  comment='wave night min SNR for including in model used',
-                  parent='WAVE_NIGHT_NSIG_MIN', group='wave')
+# source fiber for the cavity correction
+KW_WNT_DCAVSRCE = KW_WNT_DCAVSRCE.copy(__NAME__)
+KW_WNT_DCAVSRCE.set(key='WNTDCVSR',
+                    comment='wave night source fiber used for cavity corr',
+                    group='wave')
 
-# red cut off for fit constaint [nm] used in wave night
-KW_WNT_REDCUT = KW_WNT_REDCUT.copy(__NAME__)
-KW_WNT_REDCUT.set(key='WNTRDCUT', comment='wave night red cut off [nm] used',
-                  parent='WAVE_NIGHT_REDEND_CUTOFF', group='wave')
+# define the sigma clip value to remove bad hc lines used
+KW_WNT_HCSIGCLIP = KW_WNT_HCSIGCLIP.copy(__NAME__)
+KW_WNT_HCSIGCLIP.set(key='WNTHCSIG', comment='wave night hc sig clip used',
+                     group='wave', parent='WAVE_NIGHT_HC_SIGCLIP')
 
-# size [nm] of the median bin of residuals for higher-order correction used
-#    in wave night
-KW_WNT_DWAVE_BIN = KW_WNT_DWAVE_BIN.copy(__NAME__)
-KW_WNT_DWAVE_BIN.set(key='WNTDWAVB',
-                     comment='wave night med bin of res for high ord corr used',
-                     parent='WAVE_NIGHT_DWAVE_BIN', group='wave')
-
-# min number of lines to be included in a median bin for high-order
-# correction used in wave night
-KW_WNT_NMIN_LINES = KW_WNT_NMIN_LINES.copy(__NAME__)
-KW_WNT_NMIN_LINES.set(key='WNTNMINL',
-                      comment='wave night min nlines for medbin highord used',
-                      parent='WAVE_NIGHT_NMIN_LINES', group='wave')
+# median absolute deviation cut off used
+KW_WNT_MADLIMIT = KW_WNT_MADLIMIT.copy(__NAME__)
+KW_WNT_MADLIMIT.set(key='WNT_MADL',
+                    comment='wave night med abs dev cut off used',
+                    group='wave', parent='WAVE_NIGHT_MED_ABS_DEV')
 
 # sigma clipping for the fit used in wave night
 KW_WNT_NSIG_FIT = KW_WNT_NSIG_FIT.copy(__NAME__)
@@ -1591,6 +1573,26 @@ KW_CCF_RV_OBJ.set(key='RV_OBJ',
 KW_CCF_RV_CORR = KW_CCF_RV_CORR.copy(__NAME__)
 KW_CCF_RV_CORR.set(key='RV_CORR',
                    comment='RV corrected for FP CCF drift [km/s]')
+
+# the wave file used for the rv (fiber specific)
+KW_CCF_RV_WAVEFILE = KW_CCF_RV_WAVEFILE.copy(__NAME__)
+KW_CCF_RV_WAVEFILE.set(key='RV_WAVFN',
+                       comment='RV wave file used')
+
+# the wave file time used for the rv [mjd] (fiber specific)
+KW_CCF_RV_WAVETIME = KW_CCF_RV_WAVETIME.copy(__NAME__)
+KW_CCF_RV_WAVETIME.set(key='RV_WAVTM',
+                       comment='RV wave file time used')
+
+# the time diff (in days) between wave file and file (fiber specific)
+KW_CCF_RV_TIMEDIFF = KW_CCF_RV_TIMEDIFF.copy(__NAME__)
+KW_CCF_RV_TIMEDIFF.set(key='RV_WAVTD',
+                       comment='RV timediff [days] btwn file and wave sol.')
+
+# the wave file source used for the rv reference fiber
+KW_CCF_RV_WAVESRCE = KW_CCF_RV_WAVESRCE.copy(__NAME__)
+KW_CCF_RV_WAVESRCE.set(key='RV_WAVSR',
+                       comment='RV wave file source used')
 
 # -----------------------------------------------------------------------------
 # Define polar variables

@@ -5,7 +5,7 @@ Constants parameter functions
 
 DRS Import Rules:
 
-- only from apero.locale
+- only from apero.lang
 
 Created on 2019-01-17 at 15:24
 
@@ -21,7 +21,7 @@ from typing import Union
 
 from collections import OrderedDict
 
-from apero.locale import drs_exceptions
+from apero.lang import drs_exceptions
 from apero.core.constants import constant_functions
 
 # =============================================================================
@@ -1958,12 +1958,9 @@ def _copy_pdb_rc(params, level=0):
     tmppath = oldsrc + '_tmp'
     # get newsrc
     newsrc = os.path.join(CURRENT_PATH, filename)
-
-    # modify oldsrc
-    pdbfile = open(oldsrc, 'r')
-    lines = pdbfile.readlines()
-    pdbfile.close()
-
+    # read the lines
+    with open(oldsrc, 'r') as f:
+        lines = f.readlines()
     # deal with levels
     if level == 0:
         upkey = ''
@@ -1973,9 +1970,9 @@ def _copy_pdb_rc(params, level=0):
     newlines = []
     for line in lines:
         newlines.append(line.format(up=upkey))
-    pdbfile = open(tmppath, 'w')
-    pdbfile.writelines(newlines)
-    pdbfile.close()
+    # write the lines
+    with open(tmppath, 'w') as f:
+        f.writelines(newlines)
     # copy
     shutil.copy(tmppath, newsrc)
     # remove tmp file

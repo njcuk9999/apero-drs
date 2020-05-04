@@ -18,7 +18,7 @@ from collections import OrderedDict
 
 from apero.core.instruments.default import pseudo_const
 from apero.core import constants
-from apero.locale import drs_text
+from apero.lang import drs_text
 from apero.core.core import drs_log
 
 # =============================================================================

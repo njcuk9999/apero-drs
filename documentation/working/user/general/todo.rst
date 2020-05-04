@@ -18,9 +18,7 @@ For all instruments / in general.
 
 High priority:
 
-* add in `dark_fp` correction
 * fix headers for having bad wave and loc keys (remove?) [NEEDS DISCUSSION]
-* add rv from header for ccf [WHERE in processing code? or in recipe?]
 
 Low priority:
 
@@ -71,7 +69,7 @@ SPIRou specific
 =========================================
 High priority:
 
-* add exposure meter recipes (`cal_exposuremeter_spirou.py`)
+* add polarimetry code updates
 
 Low priority:
 

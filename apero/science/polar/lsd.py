@@ -18,7 +18,7 @@ import os
 
 from apero import core
 from apero.core import math as mp
-from apero import locale
+from apero import lang
 from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.core import drs_file
@@ -44,8 +44,8 @@ WLOG = core.wlog
 # Get function string
 display_func = drs_log.display_func
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
 # alias pcheck
 pcheck = core.pcheck
 # Speed of light

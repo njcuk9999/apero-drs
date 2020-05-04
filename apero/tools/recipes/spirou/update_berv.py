@@ -9,12 +9,11 @@ Created on 2019-07-05 at 16:46
 
 @author: cook
 """
-from __future__ import division
 import itertools
 import os
 
 from apero import core
-from apero import locale
+from apero import lang
 from apero.core import constants
 from apero.io import drs_fits
 from apero.science import extract
@@ -23,7 +22,7 @@ from apero.tools.module.testing import drs_dev
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'cal_update_berv.py'
+__NAME__ = 'update_berv.py'
 __INSTRUMENT__ = 'SPIROU'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
@@ -37,8 +36,8 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
 # -----------------------------------------------------------------------------
 # set up recipe definitions (overwrites default one)
 RMOD = drs_dev.RecipeDefinition(instrument=__INSTRUMENT__)
