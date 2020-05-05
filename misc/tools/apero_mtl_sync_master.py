@@ -32,8 +32,8 @@ else:
     RSYNC_COMMAND = 'rsync -avr --port=8080 {0} {1}::SPIROU_MASTER/{2}'
     RSYNC_PASSWORD = 'Secotine763'
 
-name = 'mini_data_0_6_063_older'
-localpath = 'mini_data_older_20200328'
+name = 'mini_data_0_6_082'
+localpath = 'mini_data_closest_20200504'
 directories = ['calibDB', 'telluDB', 'reduced']
 # -----------------------------------------------------------------------------
 
@@ -45,6 +45,10 @@ directories = ['calibDB', 'telluDB', 'reduced']
 # rsync -avr --port=8080 mini_data_older_20200328/calibDB spirou_master@craq-astro.ca::SPIROU_MASTER/mini_data_0_6_063_older/calibDB
 
 
+def add_final_sep(path):
+    if path[-1] != os.sep:
+        path += os.sep
+    return path
 
 
 # =============================================================================
@@ -80,7 +84,9 @@ if __name__ == "__main__":
     # copy data paths
     for directory in directories:
         inpath = os.path.join(localpath, directory)
+        inpath = add_final_sep(inpath)
         outpath = os.path.join(name, directory)
+        outpath = add_final_sep(outpath)
         command = RSYNC_COMMAND.format(inpath, RSYNC_SERVER, outpath)
         if DEBUG:
             print(command)

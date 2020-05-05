@@ -472,6 +472,12 @@ def print_help():
     print(HELP_MESSAGE)
 
 
+def add_final_sep(path):
+    if path[-1] != os.sep:
+        path += os.sep
+    return path
+
+
 def construct_command(filetypes, options):
 
     # get rsync folder
@@ -482,7 +488,8 @@ def construct_command(filetypes, options):
 
     for filetype in filetypes:
         # construct args
-        args = ['', rsync_server, filetype.inpath, filetype.outpath]
+        args = ['', rsync_server, add_final_sep(filetype.inpath),
+                add_final_sep(filetype.outpath)]
         # ----------------------------------------------------------------------
         # deal with excluding nights
         if len(options['exclude']) > 0:
