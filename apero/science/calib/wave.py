@@ -414,14 +414,17 @@ def get_wavemap_from_coeffs(wave_coeffs, nbo, nbx):
     return wavemap
 
 
-def get_wavelines(params, recipe, header=None, infile=None, **kwargs):
+def get_wavelines(params, recipe, fiber, header=None, infile=None, **kwargs):
     # set up function name
     func_name = display_func(params, 'get_wavelines', __NAME__)
+    # get psuedo constants
+    pconst = constants.pload(params['INSTRUMENT'])
     # get parameters from params/kwargs
     hclinefile = kwargs.get('hclinefile', None)
     fplinefile = kwargs.get('fplinefile', None)
+    required = kwargs.get('required', True)
     # deal with fibers that we don't have
-    usefiber = 'AB'
+    usefiber = pconst.FIBER_WAVE_TYPES(fiber)
     # ------------------------------------------------------------------------
     # log progress
     WLOG(params, '', TextEntry('40-017-00040'))
@@ -472,7 +475,9 @@ def get_wavelines(params, recipe, header=None, infile=None, **kwargs):
         hcentries = drs_database.get_key_from_db(params, key_hc, cdb, header,
                                                  n_ent=1, required=False)
         # if there are still no wave entries use master wave file
-        if len(hcentries) == 0:
+        if len(hcentries) == 0 and not required:
+            return None, None, None, None
+        elif len(hcentries) == 0:
             # Raise error - no master hc lines found
             eargs = ['HC', 'cal_wave_master', func_name]
             WLOG(params, 'error', TextEntry('00-017-00010', args=eargs))
@@ -503,7 +508,9 @@ def get_wavelines(params, recipe, header=None, infile=None, **kwargs):
         fpentries = drs_database.get_key_from_db(params, key_fp, cdb, header,
                                                  n_ent=1, required=False)
         # if there are still no wave entries use master wave file
-        if len(fpentries) == 0:
+        if len(fpentries) == 0 and not required:
+            return None, None, None, None
+        elif len(fpentries) == 0:
             # Raise error - no master fp lines found
             eargs = ['FP', 'cal_wave_master', func_name]
             WLOG(params, 'error', TextEntry('00-017-00010', args=eargs))
@@ -5950,17 +5957,27 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
     # ------------------------------------------------------------------
     # write fp lines
     # ------------------------------------------------------------------
+    write_fplines(params, recipe, nprops['FPLINES'], fpfile, wavefile, fiber)
+    # ----------------------------------------------------------------------
+    # return hc wavefile
+    return wavefile
+
+
+def write_fplines(params, recipe, rfpl, infile, hfile, fiber, kind=None):
+    # deal with no kind set
+    if kind is None:
+        kind = 'WAVE_FPLIST'
     # get copy of instance of wave file (WAVE_HCMAP)
-    fplfile = recipe.outputs['WAVE_FPLIST'].newcopy(recipe=recipe, fiber=fiber)
+    fplfile = recipe.outputs[kind].newcopy(recipe=recipe, fiber=fiber)
     # construct the filename from file instance
-    fplfile.construct_filename(params, infile=fpfile)
+    fplfile.construct_filename(params, infile=infile)
     # ------------------------------------------------------------------
-    # copy keys from hcwavefile
-    fplfile.copy_hdict(wavefile)
+    # copy keys from hfile
+    fplfile.copy_hdict(hfile)
     # set output key
-    fplfile.add_hkey('KW_OUTPUT', value=fplfile.name)
+    fplfile.add_hkey('KW_OUTPUT', value=infile.name)
     # set data
-    fplfile.data = nprops['FPLINES']
+    fplfile.data = rfpl
     fplfile.datatype = 'table'
     # ------------------------------------------------------------------
     # log that we are saving rotated image
@@ -5970,9 +5987,6 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
     fplfile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(fplfile)
-    # ----------------------------------------------------------------------
-    # return hc wavefile
-    return wavefile
 
 
 # =============================================================================
