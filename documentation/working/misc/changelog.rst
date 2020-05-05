@@ -2,6 +2,101 @@ Changelog
 =========
 
 
+0.6.083 (2020-05-05)
+--------------------
+- `Recipes.spirou.cal_extract_spirou.py` +
+  `toools.recipes.spirou.get_ext_fplines.py` - change `EXT_FPLIST` -->
+  `EXT_FPLINES`. [njcuk9999]
+- `Apero.tools.recipes.spirou.get_ext_fplines.py` - have to set plot
+  location. [njcuk9999]
+- `Science.extract.general.py` - add debug print outputs when fiber and
+  dprtype are incorrect. [njcuk9999]
+- `Apero.io.drs_fits.py` - `HEADER_FIXES` requireds hdict input and output.
+  [njcuk9999]
+- `Core.instruments.*.pseudo_const.py` - require hdict to be populated.
+  [njcuk9999]
+- `Misc.tools.apero_mtl_sync_master.py` - add tmp files to uploads.
+  [njcuk9999]
+- `Apero.tools.recipes.spirou.get_ext_fplines.py` - first commit of
+  extract fplines (separate from extract code) [njcuk9999]
+- `Apero.tools.module.testing.drs_dev.py` - add mod to temp
+  RecipeDefinition. [njcuk9999]
+- `Apero.science.extract.general.py` - add `ref_fplines` function.
+  [njcuk9999]
+- `Apero.science.calib.wave.py` - add a required condition to
+  `get_wavelines`. [njcuk9999]
+- `Apero.recipes.spirou.cal_wave_night_spirou.py` - add fiber to
+  `get_wavelines`. [njcuk9999]
+- `Apero.recipes.*.cal_extract_spirou.py` - add fplines creation.
+  [njcuk9999]
+- `Core.instruments.*.recipe_defintions.py` - add `EXT_FPLINES`. [njcuk9999]
+- `Core.instruments.*.file_definitions.py` - add `ext_fplines`. [njcuk9999]
+- `Core.instruments.default_constant.py` - add `WAVE_FP_DPRLIST` to
+  constants. [njcuk9999]
+- `Core.core.drs_log.py` - add doc string for `find_param`. [njcuk9999]
+- `Core.instruments.spirou.default_config.py` - change calibDB mode to
+  closest. [njcuk9999]
+- Merge branch 'developer' of https://github.com/njcuk9999/apero-drs
+  into developer. [njcuk9999]
+- Update README.md. [Neil Cook]
+
+  update versions
+- Merge pull request #617 from njcuk9999/developer. [Neil Cook]
+
+  Developer
+- Merge pull request #608 from njcuk9999/developer. [Neil Cook]
+
+  Developer
+- Merge pull request #605 from njcuk9999/developer. [Neil Cook]
+
+  Developer --> master
+- Merge pull request #585 from njcuk9999/working. [Neil Cook]
+
+  Working --> Master
+- `Setup.install.py` - kill infinite loop to find apero. [njcuk9999]
+- Merge pull request #616 from njcuk9999/working. [Neil Cook]
+
+  Working
+- Merge pull request #615 from njcuk9999/neil. [Neil Cook]
+
+  update update notes/todo/known issues
+- Update update notes/todo/known issues. [njcuk9999]
+- Merge pull request #614 from njcuk9999/neil. [Neil Cook]
+
+  neil --> working
+- Update date/version/changelog/documentation. [njcuk9999]
+- Merge pull request #607 from njcuk9999/working. [Neil Cook]
+
+  Working
+- Merge pull request #606 from njcuk9999/neil. [Neil Cook]
+
+  update readme
+- Merge pull request #604 from njcuk9999/working. [Neil Cook]
+
+  Working --> Developer
+- Merge pull request #603 from njcuk9999/neil. [Neil Cook]
+
+  Neil
+- Merge pull request #591 from njcuk9999/working. [Neil Cook]
+
+  Working --> Developer
+- Merge pull request #590 from njcuk9999/neil. [Neil Cook]
+
+  neil --> working
+- Merge pull request #589 from njcuk9999/working. [Neil Cook]
+
+  Working --> Developer
+- Merge pull request #587 from njcuk9999/neil. [Neil Cook]
+
+  Neil override: neil --> working
+- Merge pull request #582 from njcuk9999/neil. [Neil Cook]
+
+  Neil
+- Merge pull request #581 from njcuk9999/neil. [Neil Cook]
+
+  Merge allowed
+
+
 0.6.082 (2020-05-04)
 --------------------
 - `Apero.tools.resources.setup.apero.*.*` - update the MKL environment
