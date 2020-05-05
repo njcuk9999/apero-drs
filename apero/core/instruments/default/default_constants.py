@@ -152,6 +152,7 @@ __all__ = [
     'WAVE_FP_DV_MAX', 'WAVE_FP_UPDATE_CAVITY', 'WAVE_FP_CAVFIT_MODE',
     'WAVE_FP_LLFIT_MODE', 'WAVE_FP_LLDIF_MIN', 'WAVE_FP_LLDIF_MAX',
     'WAVE_FP_SIGCLIP', 'WAVE_FP_PLOT_MULTI_INIT', 'WAVE_FP_PLOT_MULTI_NBO',
+    'WAVE_FP_DPRLIST',
     # wave ccf constants
     'WAVE_CCF_NOISE_SIGDET', 'WAVE_CCF_NOISE_BOXSIZE', 'WAVE_CCF_NOISE_THRES',
     'WAVE_CCF_STEP', 'WAVE_CCF_WIDTH', 'WAVE_CCF_TARGET_RV',
@@ -1764,6 +1765,10 @@ WAVE_FP_PLOT_MULTI_INIT = Const('WAVE_FP_PLOT_MULTI_INIT', value=None,
 # Number of orders in multi-order wave fp plot
 WAVE_FP_PLOT_MULTI_NBO = Const('WAVE_FP_PLOT_MULTI_NBO', value=None, dtype=int,
                                source=__NAME__, minimum=1, group=cgroup)
+
+# define the dprtype for generating FPLINES (string list)
+WAVE_FP_DPRLIST = Const('WAVE_FP_DPRLIST', value=None, dtype=str,
+                        source=__NAME__, group=cgroup)
 
 # =============================================================================
 # CALIBRATION: WAVE CCF SETTINGS
