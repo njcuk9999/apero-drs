@@ -188,9 +188,9 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # get master hc lines and fp lines from calibDB
             wargs = []
-            wout = wave.get_wavelines(params, recipe, infile=hc_e2ds_file)
+            wout = wave.get_wavelines(params, recipe, fiber,
+                                      infile=hc_e2ds_file)
             mhclines, mhclsource, mfplines, mfplsource = wout
-
             # --------------------------------------------------------------
             # load wavelength solution (start point) for this fiber
             #    this should only be a master wavelength solution
