@@ -367,6 +367,7 @@ def check_install(drs_path):
         root = os.path.abspath(os.sep)
         # path to try
         try_path = str(drs_path)
+        tries = 0
         # loop around until found or we break
         while not found:
             # get the absolute path of try path
@@ -379,13 +380,18 @@ def check_install(drs_path):
                 # if we have reached this import stage found is True
                 found = True
             except Exception as _:
+                cond1 = abs_try_path == os.path.join(root, drs_path)
+                cond2 = abs_try_path == try_path
+                cond3 = tries > 10
                 # if we have reached root then break
-                if abs_try_path == os.path.join(root, drs_path):
+                if cond1 or cond2 or cond3:
                     break
                 # try up a level
                 try_path = '..' + os.sep
                 # remove this path as it failed to find drs
                 sys.path.remove(abs_try_path)
+            # iterate tries
+            tries += 1
         # deal with not being found
         if not found:
             umsg = '\nCannot find {0}. Please enter {0} installation path:'
