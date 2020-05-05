@@ -177,7 +177,15 @@ def id_drs_file(params, recipe, drs_file_sets, filename=None, nentries=None,
             # --------------------------------------------------------------
             # load the header for this kind
             try:
+                # need to read the file header for this specific drs file
                 file_in.read_header(log=False)
+                # copy in hdict from file_set
+                # - this is the only way to get keys added from file that is
+                #   read above
+                if file_set.hdict is not None:
+                    for key in file_set.hdict:
+                        file_in.header[key] = file_set.hdict[key]
+
             # if exception occurs continue to next file
             #    (this is not the correct file)
             except Exception as _:
@@ -906,25 +914,28 @@ def fix_header(params, recipe, infile=None, header=None, **kwargs):
     # deal with no header
     if header is None:
         header = infile.header
+        hdict = infile.hdict
         has_infile = True
     else:
         has_infile = False
+        hdict = Header()
 
     # load pseudo constants
     pconst = constants.pload(params['INSTRUMENT'])
     # use pseudo constant to apply any header fixes required (specific to
     #   a specific instrument) and update the header
-    header = pconst.HEADER_FIXES(params=params, recipe=recipe, header=header,
-                                 **kwargs)
+    header, hdict = pconst.HEADER_FIXES(params=params, recipe=recipe,
+                                        header=header, hdict=hdict, **kwargs)
     # if the input was an infile return the infile back
     if has_infile:
         # return the updated infile
         infile.header = header
+        infile.hdict = hdict
         return infile
     # else return the header (assuming input was a header only)
     else:
         # else return the header
-        return header
+        return header, hdict
 
 
 # =============================================================================
@@ -1226,7 +1237,7 @@ def _get_files(params, recipe, path, rpath, **kwargs):
                 # read the header
                 header = read_header(params, abspath)
                 # fix the headers
-                header = fix_header(params, recipe, header=header)
+                header, _ = fix_header(params, recipe, header=header)
                 # loop around header keys
                 for key in headerkeys:
                     rkey = params[key][0]
