@@ -18,7 +18,7 @@ import shutil
 from collections import OrderedDict
 
 from apero.core import constants
-from apero import locale
+from apero import lang
 from apero.io import drs_lock
 from apero.io import drs_fits
 from apero.io import drs_path
@@ -43,7 +43,7 @@ WLOG = drs_log.wlog
 # Get function string
 display_func = drs_log.display_func
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
+TextEntry = lang.drs_text.TextEntry
 # alias pcheck
 pcheck = drs_log.find_param
 
@@ -139,9 +139,9 @@ class Database():
             # --------------------------------------------------------------
             # try to open the master file
             try:
-                f = open(self.abspath, 'r')
-                lines = list(f.readlines())
-                f.close()
+                # read the lines
+                with open(self.abspath, 'r') as f:
+                    lines = list(f.readlines())
             except KeyboardInterrupt as e:
                 lock.reset()
                 raise e
@@ -241,10 +241,6 @@ class Database():
         :param required:
         :return:
         """
-        # TODO: Remove break point
-        if entryname == 'SHAPEX':
-            constants.break_point(self.params)
-
         # set function name
         func_name = display_func(self.params, 'get_entry', __NAME__, 'Database')
         # check that we have data
@@ -358,7 +354,7 @@ def add_file(params, outfile, night=None, copy_files=True, log=True):
     # ------------------------------------------------------------------
     # first copy file to database folder
     if copy_files:
-        _copy_db_file(params, dbname, inpath, abs_outpath)
+        _copy_db_file(params, dbname, inpath, abs_outpath, log=True)
     # ------------------------------------------------------------------
     # update database with key
     if dbname.lower() == 'telluric':
@@ -427,7 +423,7 @@ def copy_calibrations(params, header, **kwargs):
             wargs = [dbshort, infilename, outpath]
             WLOG(params, '', TextEntry('40-006-00003', args=wargs))
             # copy the database file
-            _copy_db_file(params, dbname, inabspath, outabspath)
+            _copy_db_file(params, dbname, inabspath, outabspath, log=False)
 
 
 def get_header_time(params, database, header):
@@ -738,7 +734,7 @@ def _get_database_file(params, dbname, outfile=None):
     return outpath
 
 
-def _copy_db_file(params, dbname, inpath, outpath):
+def _copy_db_file(params, dbname, inpath, outpath, log=True):
     # set function name
     func_name = display_func(params, '_copy_file', __NAME__)
     # remove file if already present
@@ -775,6 +771,15 @@ def _copy_db_file(params, dbname, inpath, outpath):
         # reset lock
         lock.reset()
         raise e
+    # -------------------------------------------------------------------------
+    # check that file is copied
+    if os.path.exists(outpath):
+        if log:
+            wargs = [dbname, outpath]
+            WLOG(params, '', TextEntry('40-006-00004', args=wargs))
+    else:
+        eargs = [dbname, outpath, func_name]
+        WLOG(params, 'error', TextEntry('00-008-00021', args=eargs))
 
 
 def _get_time(params, dbname, header=None, hdict=None, kind=None):
@@ -814,9 +819,9 @@ def _read_lines_from_database(params, dbname):
         # ------------------------------------------------------------------
         # try to open the master file
         try:
-            f = open(abspath, 'a')
-            lines = list(f.readlines())
-            f.close()
+            # read the lines
+            with open(abspath, 'r') as f:
+                lines = list(f.readlines())
         except Exception as e:
             # error message
             eargs = [dbname, type(e), e, abspath, func_name]
@@ -897,9 +902,9 @@ def _write_line_to_database(params, key, dbname, outfile, line, log=True):
         # ------------------------------------------------------------------
         # try to open the master file
         try:
-            f = open(abspath, 'a')
-            f.writelines([line])
-            f.close()
+            # write the lines
+            with open(abspath, 'a') as f:
+                f.write(line)
             # print progress
             wargs = [dbname, key]
             if log:

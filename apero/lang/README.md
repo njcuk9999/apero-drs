@@ -1,4 +1,4 @@
-# Readme for drsmodule.locale
+# Readme for apero.lang
 
 ## import rules
 

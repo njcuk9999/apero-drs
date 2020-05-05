@@ -109,15 +109,43 @@ def calculate_polyvals(coeffs, dim):
     return yfits
 
 
+def ea_airy_function(x, amp, x0, w, beta, zp):
+    """
+    Calculate dampened cosine with sharper positive peaks for high beta values
+    Used to approximate a FP peak
+
+    :param x: numpy array: the positions in x
+    :param amp: the peak flux amplitude over the dc level (zp)
+    :param x0: the central position of FP peak
+    :param w: the period of the FP in pixel space
+    :param beta: the exponent (shape factor)
+    :param zp: the dc level
+    :return:
+    """
+    y = zp + amp * ((1 + np.cos(2 * np.pi * (x - x0) / w)) / 2.0) ** beta
+    return y
+
+
 def fit2dpoly(x, y, z):
     # fit a 2nd order polynomial in 2d over x/y/z pixel points
     ones = np.ones_like(x)
-    a = np.array([ones, x, y, x**2, y**2, x*y]).T
+    a = np.array([ones, x, y, x ** 2, y ** 2, x * y]).T
     b = z.flatten()
     # perform a least squares fit on a and b
-    coeff, r, rank, s = np.linalg.lstsq(a, b,rcond=None)
+    coeff, r, rank, s = np.linalg.lstsq(a, b, rcond=None)
     # return the coefficients
     return coeff
+
+
+def normal_fraction(sigma=1.0):
+    """
+    Return the expected fraction of population inside a range
+    (Assuming data is normally distributed)
+
+    :param sigma:
+    :return:
+    """
+    return erf(sigma / np.sqrt(2.0))
 
 
 def fwhm(sigma=1.0):
@@ -508,7 +536,7 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
     return continuum_val, xbin, ybin
 
 
-def rot8(image, nrotation):
+def rot8(image, nrotation, invert=False):
     """
     Rotation of a 2d image with the 8 possible geometries. Rotation 0-3
     do not flip the image, 4-7 perform a flip
@@ -525,16 +553,24 @@ def rot8(image, nrotation):
 
     :param image: input image
     :param nrotation: integer between 0 and 7
+    :param invert: bool, if True does the opposite rotation to False
+                   i.e. image --> rot8(invert=False) --> rot image -->
+                        rot8(invert=True) --> image
 
     :type image: np.ndarray
     :type rotnum: int
 
     :return: rotated and/or flipped image
     """
+    # how to invert them (if invert is True
+    inversion = {1: 3, 2: 2, 3: 1, 4: 4, 5: 7, 6: 6, 7: 5, 0: 0}
     # module 8 number
     nrot = int(nrotation % 8)
+    # deal with possible inverting
+    if invert:
+        nrot = inversion[nrot]
     # return the correctly rotated image
-    return np.rot90(image[::1-2*(nrot // 4)], nrot % 4)
+    return np.rot90(image[::1 - 2 * (nrot // 4)], nrot % 4)
 
 
 def medbin(image, by, bx):
@@ -735,10 +771,10 @@ def relativistic_waveshift(dv, units='km/s'):
     """
     # get c in correct units
     # noinspection PyUnresolvedReferences
-    if units == 'km/s' or units == uu.km/uu.s:
+    if units == 'km/s' or units == uu.km / uu.s:
         c = speed_of_light
     # noinspection PyUnresolvedReferences
-    elif units == 'm/s' or units == uu.m/uu.s:
+    elif units == 'm/s' or units == uu.m / uu.s:
         c = speed_of_light_ms
     else:
         raise ValueError("Wrong units for dv ({0})".format(units))

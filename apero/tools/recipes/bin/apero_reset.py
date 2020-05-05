@@ -10,7 +10,7 @@ Created on 2019-07-26 at 09:39
 @author: cook
 """
 from apero import core
-from apero import locale
+from apero import lang
 from apero.core import constants
 from apero.tools.module.setup import drs_reset
 
@@ -30,8 +30,8 @@ __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
 
 
 # =============================================================================

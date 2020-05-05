@@ -16,7 +16,7 @@ import os
 import matplotlib
 from collections import OrderedDict
 
-from apero import locale
+from apero import lang
 from apero.core import constants
 from apero.core import drs_log
 from apero.core import math as mp
@@ -45,8 +45,8 @@ WLOG = drs_log.wlog
 # get the parameter dictionary
 ParamDict = constants.ParamDict
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
 # alias pcheck
 pcheck = drs_log.find_param
 # get plotting definitions

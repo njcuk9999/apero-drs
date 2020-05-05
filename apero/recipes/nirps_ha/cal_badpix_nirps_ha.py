@@ -12,7 +12,7 @@ Created on 2019-05-13 at 11:04
 import numpy as np
 
 from apero import core
-from apero import locale
+from apero import lang
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_database
@@ -36,8 +36,8 @@ __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
 
 
 # =============================================================================

@@ -18,7 +18,7 @@ import shutil
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_log
-from apero import locale
+from apero import lang
 
 
 # =============================================================================
@@ -38,7 +38,7 @@ display_func = drs_log.display_func
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
+TextEntry = lang.drs_text.TextEntry
 # -----------------------------------------------------------------------------
 
 

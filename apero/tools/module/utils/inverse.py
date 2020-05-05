@@ -12,7 +12,7 @@ Created on 2020-03-30 at 14:47
 import numpy as np
 
 from apero import core
-from apero import locale
+from apero import lang
 from apero.core import constants
 from apero.science.calib import localisation
 from apero.science.calib import shape
@@ -36,9 +36,9 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
-Help = locale.drs_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
+Help = lang.drs_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
 
 
 # =============================================================================

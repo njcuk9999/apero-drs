@@ -21,8 +21,8 @@ from signal import signal, SIGINT
 from collections import OrderedDict
 from typing import Union
 
-from apero.locale import drs_text
-from apero.locale import drs_exceptions
+from apero.lang import drs_text
+from apero.lang import drs_exceptions
 from apero.core import constants
 from apero.core.instruments.default import pseudo_const
 from apero.io import drs_table

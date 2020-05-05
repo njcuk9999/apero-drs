@@ -10,8 +10,8 @@ __all__ = [
     # general
     'DATA_ENGINEERING', 'CALIB_DB_FORCE_WAVESOL', 'DATA_CORE',
     # preprocessing constants
-    'PP_CORRUPT_MED_SIZE', 'PP_CORRUPT_HOT_THRES', 'PP_NUM_DARK_AMP',
-    'PP_FULL_FLAT', 'PP_TOTAL_AMP_NUM',
+    'PP_HOTPIX_BOXSIZE', 'PP_CORRUPT_HOT_THRES', 'PP_NUM_DARK_AMP',
+    'PP_HOTPIX_FILE', 'PP_TOTAL_AMP_NUM', 'PP_CORRUPT_MED_SIZE',
     'PP_NUM_REF_TOP', 'PP_NUM_REF_BOTTOM', 'PP_RMS_PERCENTILE',
     'PP_LOWEST_RMS_PERCENTILE', 'PP_CORRUPT_SNR_HOTPIX',
     'PP_CORRUPT_RMS_THRES', 'RAW_TO_PP_ROTATION', 'PP_DARK_MED_BINNUM',
@@ -72,7 +72,7 @@ __all__ = [
     'SHAPE_MASTER_LINTRANS_NITER', 'SHAPE_MASTER_FP_INI_BOXSIZE',
     'SHAPE_MASTER_FP_SMALL_BOXSIZE', 'SHAPE_FP_MASTER_MIN_IN_GROUP',
     'SHAPE_MASTER_FIBER', 'SHAPE_NUM_ITERATIONS', 'SHAPE_ORDER_WIDTH',
-    'SHAPE_NSECTIONS', 'SHAPE_SIGMACLIP_MAX',
+    'SHAPE_NSECTIONS', 'SHAPE_SIGMACLIP_MAX', 'SHAPE_MASTER_DX_RMS_QC',
     'SHAPE_LARGE_ANGLE_MIN', 'SHAPE_LARGE_ANGLE_MAX',
     'SHAPE_SMALL_ANGLE_MIN', 'SHAPE_SMALL_ANGLE_MAX',
     'SHAPE_MEDIAN_FILTER_SIZE', 'SHAPE_MIN_GOOD_CORRELATION',
@@ -118,10 +118,10 @@ __all__ = [
     'THERMAL_THRES_TAPAS', 'THERMAL_ENVELOPE_PERCENTILE',
     'THERMAL_PLOT_START_ORDER',
     # wave general constants
-    'WAVE_LINELIST_FILE', 'WAVE_LINELIST_FMT', 'WAVE_LINELIST_AMPCOL',
-    'WAVE_LINELIST_COLS', 'WAVE_LINELIST_START', 'WAVE_LINELIST_WAVECOL',
-    'WAVE_ALWAYS_EXTRACT', 'WAVE_EXTRACT_TYPE', 'WAVE_FIT_DEGREE',
-    'WAVE_PIXEL_SHIFT_INTER', 'WAVE_PIXEL_SHIFT_SLOPE',
+    'WAVE_MASTER_FIBER', 'WAVE_LINELIST_FILE', 'WAVE_LINELIST_FMT',
+    'WAVE_LINELIST_AMPCOL', 'WAVE_LINELIST_COLS', 'WAVE_LINELIST_START',
+    'WAVE_LINELIST_WAVECOL', 'WAVE_ALWAYS_EXTRACT', 'WAVE_EXTRACT_TYPE',
+    'WAVE_FIT_DEGREE', 'WAVE_PIXEL_SHIFT_INTER', 'WAVE_PIXEL_SHIFT_SLOPE',
     'WAVE_T_ORDER_START', 'WAVE_N_ORD_START', 'WAVE_N_ORD_FINAL',
     # wave hc constants
     'WAVE_MODE_HC', 'WAVE_HC_FITBOX_SIZE', 'WAVE_HC_FITBOX_SIGMA',
@@ -145,9 +145,8 @@ __all__ = [
     'WAVE_LITTROW_QC_RMS_MAX', 'WAVE_LITTROW_QC_DEV_MAX',
     # wave fp constants
     'WAVE_MODE_FP', 'WAVE_FP_DOPD0', 'WAVE_FP_CAVFIT_DEG', 'WAVE_FP_CM_IND',
-    'WAVE_FP_LARGE_JUMP', 'WAVE_FP_BORDER_SIZE', 'WAVE_FP_FPBOX_SIZE',
-    'WAVE_FP_PEAK_SIG_LIM', 'WAVE_FP_IPEAK_SPACING', 'WAVE_FP_EXP_WIDTH',
-    'WAVE_FP_NORM_WIDTH_CUT', 'WAVE_FP_ERRX_MIN', 'WAVE_FP_LL_DEGR_FIT',
+    'WAVE_FP_LARGE_JUMP', 'WAVE_FP_NORM_PERCENTILE', 'WAVE_FP_PEAK_LIM',
+    'WAVE_FP_P2P_WIDTH_CUT', 'WAVE_FP_ERRX_MIN', 'WAVE_FP_LL_DEGR_FIT',
     'WAVE_FP_MAX_LLFIT_RMS', 'WAVE_FP_WEIGHT_THRES', 'WAVE_FP_BLAZE_THRES',
     'WAVE_FP_XDIF_MIN', 'WAVE_FP_XDIF_MAX', 'WAVE_FP_LL_OFFSET',
     'WAVE_FP_DV_MAX', 'WAVE_FP_UPDATE_CAVITY', 'WAVE_FP_CAVFIT_MODE',
@@ -163,13 +162,12 @@ __all__ = [
     'WAVEREF_NSIG_MIN', 'WAVEREF_EDGE_WMAX', 'WAVEREF_HC_BOXSIZE',
     'WAVEREF_HC_FIBTYPES', 'WAVEREF_FP_FIBTYPES', 'WAVEREF_FITDEG',
     'WAVEREF_FP_NLOW', 'WAVEREF_FP_NHIGH', 'WAVEREF_FP_POLYINV',
+    'WAVE_FIBER_COMP_PLOT_ORD',
     # wave night constants
-    'WAVE_NIGHT_HIGHF_CORR_DEG', 'WAVE_NIGHT_NITERATIONS', 'WAVE_NIGHT_DCAVITY',
-    'WAVE_NIGHT_NSIG_MIN', 'WAVE_NIGHT_REDEND_CUTOFF', 'WAVE_NIGHT_DWAVE_BIN',
-    'WAVE_NIGHT_NMIN_LINES', 'WAVE_NIGHT_NSIG_FIT_CUT', 'WAVENIGHT_PLT_HCBINL',
-    'WAVENIGHT_PLT_HCBINU', 'WAVENIGHT_PLT_HCBINSZ', 'WAVENIGHT_PLT_FPBX',
-    'WAVENIGHT_PLT_FPBY', 'WAVENIGHT_PLT_FPLB', 'WAVENIGHT_PLT_AMPSIZE',
-    'WAVENIGHT_PLT_MAXDV', 'WAVENIGHT_PLT_DVSTEP',
+    'WAVE_NIGHT_NITERATIONS1', 'WAVE_NIGHT_NITERATIONS2', 'WAVE_NIGHT_DCAVITY',
+    'WAVE_NIGHT_HC_SIGCLIP', 'WAVE_NIGHT_MED_ABS_DEV',
+    'WAVE_NIGHT_NSIG_FIT_CUT', 'WAVENIGHT_PLT_BINL', 'WAVENIGHT_PLT_BINU',
+    'WAVENIGHT_PLT_NBINS',
     # telluric constants
     'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM',
     'TELLU_ALLOWED_DPRTYPES', 'TELLURIC_FILETYPE', 'TELLURIC_FIBER_TYPE',
@@ -247,7 +245,7 @@ __all__ = [
     'PLOT_WAVE_FP_IPT_CWID_1MHC', 'PLOT_WAVE_FP_IPT_CWID_LLHC',
     'PLOT_WAVE_FP_MULTI_ORDER', 'PLOT_WAVE_FP_SINGLE_ORDER',
     'PLOT_WAVEREF_EXPECTED', 'PLOT_WAVENIGHT_ITERPLOT',
-    'PLOT_WAVENIGHT_DIFFPLOT', 'PLOT_WAVENIGHT_HISTPLOT',
+    'PLOT_WAVENIGHT_HISTPLOT', 'PLOT_WAVE_FIBER_COMPARISON',
     # debug telluric plot settings
     'PLOT_MKTELLU_WAVE_FLUX1', 'PLOT_MKTELLU_WAVE_FLUX2',
     'PLOT_FTELLU_PCA_COMP1', 'PLOT_FTELLU_PCA_COMP2',
@@ -264,7 +262,8 @@ __all__ = [
     'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
     'REPROCESS_RAWINDEXFILE', 'REPROCESS_SEQCOL', 'REPROCESS_TIMECOL',
-    'SUMMARY_LATEX_PDF',
+    'SUMMARY_LATEX_PDF', 'EXPMETER_MIN_LAMBDA', 'EXPMETER_MAX_LAMBDA',
+    'EXPMETER_TELLU_THRES',
 ]
 
 # set name
@@ -474,12 +473,15 @@ FIBER_SET_NUM_FIBERS_C = Const('FIBER_SET_NUM_FIBERS_C', value=None,
 # PRE-PROCESSSING SETTINGS
 # =============================================================================
 cgroup = 'PRE-PROCESSING SETTINGS'
+# Defines the box size surrounding hot pixels to use
+PP_HOTPIX_BOXSIZE = Const('PP_HOTPIX_BOXSIZE', value=None, dtype=int,
+                          minimum=1, source=__NAME__, group=cgroup)
+
 # Defines the size around badpixels that is considered part of the bad pixel
 PP_CORRUPT_MED_SIZE = Const('PP_CORRUPT_MED_SIZE', value=None, dtype=int,
-                            minimum=0, source=__NAME__, group=cgroup)
+                            minimum=1, source=__NAME__, group=cgroup)
 
-# Defines the threshold (above the full engineering flat) that selects bad
-#   (hot) pixels
+# Defines the threshold in sigma that selects hot pixels
 PP_CORRUPT_HOT_THRES = Const('PP_CORRUPT_HOT_THRES', value=None, dtype=int,
                              minimum=0, source=__NAME__, group=cgroup)
 
@@ -495,8 +497,8 @@ PP_NUM_DARK_AMP = Const('PP_NUM_DARK_AMP', value=None, dtype=int,
 PP_DARK_MED_BINNUM = Const('PP_DARK_MED_BINNUM', value=None, dtype=int,
                            minimum=0, source=__NAME__, group=cgroup)
 
-# Defines the full detector flat file (located in the data folder)
-PP_FULL_FLAT = Const('PP_FULL_FLAT', value=None, dtype=str, source=__NAME__,
+#   Defines the pp hot pixel file (located in the data folder)
+PP_HOTPIX_FILE = Const('PP_HOTPIX_FILE', value=None, dtype=str, source=__NAME__,
                      group=cgroup)
 
 # Define the number of un-illuminated reference pixels at top of image
@@ -912,6 +914,10 @@ SHAPE_FP_MASTER_MIN_IN_GROUP = Const('SHAPE_FP_MASTER_MIN_IN_GROUP', value=None,
 #   shape master
 SHAPE_MASTER_FIBER = Const('SHAPE_MASTER_FIBER', value=None, dtype=str,
                            source=__NAME__, group=cgroup)
+
+#  Define the shape master dx rms quality control criteria (per order)
+SHAPE_MASTER_DX_RMS_QC = Const('SHAPE_MASTER_FIBER', value=None, dtype=float,
+                               source=__NAME__, group=cgroup)
 
 # The number of iterations to run the shape finding out to
 SHAPE_NUM_ITERATIONS = Const('SHAPE_NUM_ITERATIONS', value=None, dtype=int,
@@ -1385,6 +1391,11 @@ THERMAL_PLOT_START_ORDER = Const('THERMAL_PLOT_START_ORDER', value=None,
 # CALIBRATION: WAVE GENERAL SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION: WAVE GENERAL SETTING'
+
+# Define wave master fiber (controller fiber)
+WAVE_MASTER_FIBER = Const('WAVE_MASTER_FIBER', value=None, dtype=str,
+                           source=__NAME__, group=cgroup)
+
 # Define the line list file (located in the DRS_WAVE_DATA directory)
 WAVE_LINELIST_FILE = Const('WAVE_LINELIST_FILE', value=None, dtype=str,
                            source=__NAME__, group=cgroup)
@@ -1399,7 +1410,7 @@ WAVE_LINELIST_COLS = Const('WAVE_LINELIST_COLS', value=None, dtype=str,
                            source=__NAME__, group=cgroup)
 
 # Define the line list file row the data starts
-WAVE_LINELIST_START = Const('WAVE_LINELIST_START', value=None, dtype=str,
+WAVE_LINELIST_START = Const('WAVE_LINELIST_START', value=None, dtype=int,
                             source=__NAME__, group=cgroup)
 
 # Define the line list file wavelength column and amplitude column
@@ -1657,40 +1668,23 @@ WAVE_FP_LARGE_JUMP = Const('WAVE_FP_LARGE_JUMP', value=None, dtype=float,
                            source=__NAME__, minimum=0, group=cgroup)
 
 # index of FP line to start order cross-matching from
-WAVE_FP_CM_IND = Const('WAVE_FP_CM_IND', value=None, dtype=int, source=__NAME__,
-                       group=cgroup)
+WAVE_FP_CM_IND = Const('WAVE_FP_P2P_WIDTH_CUT', value=None, dtype=int,
+                       source=__NAME__, group=cgroup)
 
-#    Define the border size (edges in x-direction) for the FP fitting algorithm
-WAVE_FP_BORDER_SIZE = Const('WAVE_FP_BORDER_SIZE', value=None, dtype=int,
-                            source=__NAME__, minimum=0, group=cgroup)
+# define the percentile to normalize the spectrum to (per order)
+#  used to determine FP peaks (peaks must be above a normalised limit
+#   defined in WAVE_FP_PEAK_LIM
+WAVE_FP_NORM_PERCENTILE = Const('WAVE_FP_NORM_PERCENTILE', value=None,
+                               dtype=float, source=__NAME__, minimum=0.0,
+                               group=cgroup)
 
-#    Define the box half-size (in pixels) to fit an individual FP peak to
-#        - a gaussian will be fit to +/- this size from the center of
-#          the FP peak
-WAVE_FP_FPBOX_SIZE = Const('WAVE_FP_FPBOX_SIZE', value=None, dtype=int,
-                           source=__NAME__, minimum=0, group=cgroup)
+# define the normalised limit below which FP peaks are not used
+WAVE_FP_PEAK_LIM = Const('WAVE_FP_PEAK_LIM', value=None,
+                               dtype=float, source=__NAME__, minimum=0.0,
+                               group=cgroup)
 
-#    Define the sigma above the median that a peak must have  - [cal_drift-peak]
-#        to be recognised as a valid peak (before fitting a gaussian)
-#        must be a string dictionary and must have an fp key
-WAVE_FP_PEAK_SIG_LIM = Const('WAVE_FP_PEAK_SIG_LIM', value=None, dtype=str,
-                             source=__NAME__, group=cgroup)
-
-#    Define the minimum spacing between peaks in order to be recognised
-#        as a valid peak (before fitting a gaussian)
-WAVE_FP_IPEAK_SPACING = Const('WAVE_FP_IPEAK_SPACING', value=None, dtype=float,
-                              source=__NAME__, minimum=0.0, group=cgroup)
-
-#    Define the expected width of FP peaks - used to "normalise" peaks
-#        (which are then subsequently removed if > WAVE_FP_NORM_WIDTH_CUT
-WAVE_FP_EXP_WIDTH = Const('WAVE_FP_EXP_WIDTH', value=None, dtype=float,
-                          source=__NAME__, minimum=0.0, group=cgroup)
-
-#    Define the "normalised" width of FP peaks that is too large normalised
-#        width = FP FWHM - WAVE_FP_EXP_WIDTH
-#        cut is essentially:
-#           FP FWHM < (WAVE_FP_EXP_WIDTH + WAVE_FP_NORM_WIDTH_CUT)
-WAVE_FP_NORM_WIDTH_CUT = Const('WAVE_FP_NORM_WIDTH_CUT', value=None,
+#    Define peak to peak width that is too large (removed from FP peaks)
+WAVE_FP_P2P_WIDTH_CUT = Const('WAVE_FP_P2P_WIDTH_CUT', value=None,
                                dtype=float, source=__NAME__, minimum=0.0,
                                group=cgroup)
 
@@ -1874,82 +1868,55 @@ WAVEREF_FP_NHIGH = Const('WAVEREF_FP_NHIGH', value=None, dtype=int,
 WAVEREF_FP_POLYINV = Const('WAVEREF_FP_POLYINV', value=None, dtype=int,
                            source=__NAME__, minimum=1, group=cgroup)
 
+# define the wave fiber comparison plot order number
+WAVE_FIBER_COMP_PLOT_ORD = Const('WAVE_FIBER_COMP_PLOT_ORD', value=None,
+                                 dtype=int, source=__NAME__, minimum=0,
+                                 group=cgroup)
+
 # =============================================================================
 # CALIBRATION: WAVE NIGHT SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION: WAVE NIGHT SETTINGS'
-# high-order wavelength solution correction cannot be smaller than 2,
-#   we remove 0 and 1
-WAVE_NIGHT_HIGHF_CORR_DEG = Const('WAVE_NIGHT_HIGHF_CORR_DEG', value=None,
-                                  dtype=int, source=__NAME__, minimum=1,
-                                  group=cgroup)
 
-# number of iterations for convergence
-WAVE_NIGHT_NITERATIONS = Const('WAVE_NIGHT_NITERATIONS', value=None, dtype=int,
-                               source=__NAME__, minimum=1, group=cgroup)
+# number of iterations for hc convergence
+WAVE_NIGHT_NITERATIONS1 = Const('WAVE_NIGHT_NITERATIONS1', value=None,
+                                dtype=int, source=__NAME__, minimum=1,
+                                group=cgroup)
+
+# number of iterations for fp convergence
+WAVE_NIGHT_NITERATIONS2 = Const('WAVE_NIGHT_NITERATIONS2', value=None,
+                                dtype=int, source=__NAME__, minimum=1,
+                                group=cgroup)
 
 # starting point for the cavity corrections
 WAVE_NIGHT_DCAVITY = Const('WAVE_NIGHT_DCAVITY', value=None, dtype=float,
                            source=__NAME__, minimum=0.0, group=cgroup)
 
-# min SNR for incluing in the model
-WAVE_NIGHT_NSIG_MIN = Const('WAVE_NIGHT_NSIG_MIN', value=None, dtype=int,
-                            source=__NAME__, minimum=1, group=cgroup)
+# define the sigma clip value to remove bad hc lines
+WAVE_NIGHT_HC_SIGCLIP = Const('WAVE_NIGHT_HC_SIGCLIP', value=None, dtype=float,
+                              source=__NAME__, minimum=0.0, group=cgroup)
 
-# red cut off for fit constaint [nm]
-WAVE_NIGHT_REDEND_CUTOFF = Const('WAVE_NIGHT_REDEND_CUTOFF', value=None,
-                                 dtype=float, source=__NAME__, minimum=0,
-                                 group=cgroup)
-
-# size in nm of the median bin of residuals for higher-order correction
-WAVE_NIGHT_DWAVE_BIN = Const('WAVE_NIGHT_DWAVE_BIN', value=None, dtype=int,
-                             source=__NAME__, minimum=0, group=cgroup)
-
-# min number of lines to be included in a median bin for high-order
-# correction
-WAVE_NIGHT_NMIN_LINES = Const('WAVE_NIGHT_NMIN_LINES', value=None, dtype=int,
-                              source=__NAME__, minimum=1, group=cgroup)
+# median absolute deviation cut off
+WAVE_NIGHT_MED_ABS_DEV = Const('WAVE_NIGHT_MED_ABS_DEV', value=None,
+                               dtype=float, source=__NAME__, minimum=0.0,
+                               group=cgroup)
 
 # sigma clipping for the fit
 WAVE_NIGHT_NSIG_FIT_CUT = Const('WAVE_NIGHT_NSIG_FIT_CUT', value=None,
                                 dtype=float, source=__NAME__, minimum=1,
                                 group=cgroup)
 
-# wave night plot hc bin lower bound [nm]
-WAVENIGHT_PLT_HCBINL = Const('WAVENIGHT_PLT_HCBINL', value=None, dtype=float,
+# wave night plot hist number of bins
+WAVENIGHT_PLT_NBINS = Const('WAVENIGHT_PLT_NBINS', value=None, dtype=int,
                              source=__NAME__, minimum=0, group=cgroup)
 
-# wave night plot hc bin upper bound [nm]
-WAVENIGHT_PLT_HCBINU = Const('WAVENIGHT_PLT_HCBINU', value=None, dtype=float,
+# wave night plot hc bin lower bound in multiples of rms
+WAVENIGHT_PLT_BINL = Const('WAVENIGHT_PLT_BINL', value=None, dtype=float,
                              source=__NAME__, minimum=0, group=cgroup)
 
-# wave night plot hc bin size [nm]
-WAVENIGHT_PLT_HCBINSZ = Const('WAVENIGHT_PLT_HCBINSZ', value=None, dtype=int,
-                              source=__NAME__, minimum=1, group=cgroup)
-
-# wave night plot fp histogram 2d number of x bins
-WAVENIGHT_PLT_FPBX = Const('WAVENIGHT_PLT_FPBX', value=None, dtype=int,
-                           source=__NAME__, minimum=1, group=cgroup)
-
-# wave night plot fp histogram 2d number of y bins
-WAVENIGHT_PLT_FPBY = Const('WAVENIGHT_PLT_FPBY', value=None, dtype=int,
-                           source=__NAME__, minimum=1, group=cgroup)
-
-# wave night plot fp line bin size
-WAVENIGHT_PLT_FPLB = Const('WAVENIGHT_PLT_FPLB', value=None, dtype=int,
-                           source=__NAME__, minimum=1, group=cgroup)
-
-# wave night plot amplifier size (for modulo amplifier  structures)
-WAVENIGHT_PLT_AMPSIZE = Const('WAVENIGHT_PLT_AMPSIZE', value=None, dtype=int,
-                              source=__NAME__, minimum=1, group=cgroup)
-
-# wave night plot max +/- dv to keep in the histogram plots
-WAVENIGHT_PLT_MAXDV = Const('WAVENIGHT_PLT_MAXDV', value=None, dtype=float,
-                            source=__NAME__, minimum=0, group=cgroup)
-
-# wave night plot modulo amplifier step (bin) size
-WAVENIGHT_PLT_DVSTEP = Const('WAVENIGHT_PLT_DVSTEP', value=None, dtype=int,
-                             source=__NAME__, minimum=1, group=cgroup)
+# wave night plot hc bin upper bound in multiples of rms
+WAVENIGHT_PLT_BINU = Const('WAVENIGHT_PLT_BINU', value=None, dtype=float,
+                           source=__NAME__, minimum=0, group=cgroup)
 
 # =============================================================================
 # OBJECT: TELLURIC SETTINGS
@@ -2279,7 +2246,8 @@ CCF_NO_RV_VAL = Const('CCF_NO_RV_VAL', value=np.nan, dtype=float,
                       source=__NAME__, group=cgroup)
 
 # Define target rv header null value
-CCF_OBJRV_NULL_VAL = Const('CCF_OBJRV_NULL_VAL', value=-9999.99, dtype=float,
+#     (values greater than absolute value are set to zero)
+CCF_OBJRV_NULL_VAL = Const('CCF_OBJRV_NULL_VAL', value=1000, dtype=float,
                            source=__NAME__, group=cgroup)
 
 # Define the default CCF MASK to use
@@ -2841,19 +2809,19 @@ PLOT_WAVEREF_EXPECTED = Const('PLOT_WAVEREF_EXPECTED', value=False,
                                           'expected vs measured debug plot'
                                           '(will plot once for hc once for fp)')
 
+# turn on the wave line fiber comparison plot
+PLOT_WAVE_FIBER_COMPARISON = Const('PLOT_WAVE_FIBER_COMPARISON', value=False,
+                              dtype=bool, source=__NAME__, user=True,
+                              active=True, group=cgroup,
+                              description='turn on the wave line fiber '
+                                          'comparison plot')
+
 # turn on the wave per night iteration debug plot
 PLOT_WAVENIGHT_ITERPLOT = Const('PLOT_WAVENIGHT_ITERPLOT', value=False,
                                 dtype=bool, source=__NAME__, user=True,
                                 active=True, group=cgroup,
                                 description='turn on the wave per night '
                                             'iteration debug plot')
-
-# turn on the wave per night diff debug plot
-PLOT_WAVENIGHT_DIFFPLOT = Const('PLOT_WAVENIGHT_DIFFPLOT', value=False,
-                                dtype=bool, source=__NAME__, user=True,
-                                active=True, group=cgroup,
-                                description='turn on the wave per night '
-                                            'diff debug plot')
 
 # turn on the wave per night hist debug plot
 PLOT_WAVENIGHT_HISTPLOT = Const('PLOT_WAVENIGHT_HISTPLOT', value=False,
@@ -3037,6 +3005,18 @@ SUMMARY_LATEX_PDF = Const('SUMMARY_LATEX_PDF', value=True, dtype=bool,
                           description='Define whether we try to create a latex '
                                       'summary pdf (turn this off if you have '
                                       'any problems with latex/pdflatex)')
+
+# Define exposure meter minimum wavelength for mask
+EXPMETER_MIN_LAMBDA = Const('EXPMETER_MIN_LAMBDA', value=None, dtype=float,
+                            source=__NAME__, group=cgroup)
+
+# Define exposure meter maximum wavelength for mask
+EXPMETER_MAX_LAMBDA = Const('EXPMETER_MAX_LAMBDA', value=None, dtype=float,
+                            source=__NAME__, group=cgroup)
+
+# Define exposure meter telluric threshold (minimum tapas transmission)
+EXPMETER_TELLU_THRES = Const('EXPMETER_TELLU_THRES', value=None, dtype=float,
+                            source=__NAME__, group=cgroup)
 
 # =============================================================================
 #  End of configuration file

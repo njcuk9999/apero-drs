@@ -1,6 +1,6 @@
 from apero.core import constants
 from apero.core.core import drs_recipe
-from apero.locale import drs_text
+from apero.lang import drs_text
 
 from apero.core.instruments.spirou import file_definitions as sf
 
@@ -657,80 +657,6 @@ cal_extract.set_kwarg(**wavefile)
 recipes.append(cal_extract)
 
 # -----------------------------------------------------------------------------
-# cal_wave_spirou
-# -----------------------------------------------------------------------------
-cal_wave = DrsRecipe(__INSTRUMENT__)
-cal_wave.name = 'cal_wave_spirou.py'
-cal_wave.shortname = 'WAVE'
-cal_wave.instrument = __INSTRUMENT__
-cal_wave.outputdir = 'reduced'
-cal_wave.inputdir = 'tmp'
-cal_wave.inputtype = 'e2ds'
-cal_wave.extension = 'fits'
-cal_wave.description = Help['WAVE_DESC']
-cal_wave.epilog = Help['WAVE_EXAMPLE']
-cal_wave.kind = 'recipe'
-cal_wave.set_outputs(WAVE_E2DS=sf.out_ext_e2dsff,
-                     WAVE_HCLL=sf.out_wave_hcline,
-                     WAVE_HCRES=sf.out_wave_hcres,
-                     WAVE_HCMAP=sf.out_wave_hc,
-                     WAVE_FPMAP=sf.out_wave_fp,
-                     WAVE_FPRESTAB=sf.out_wave_res_table,
-                     WAVE_FPLLTAB=sf.out_wave_ll_table)
-cal_wave.set_debug_plots('WAVE_HC_GUESS', 'WAVE_HC_BRIGHTEST_LINES',
-                         'WAVE_HC_TFIT_GRID', 'WAVE_HC_RESMAP',
-                         'WAVE_LITTROW_CHECK1', 'WAVE_LITTROW_EXTRAP1',
-                         'WAVE_LITTROW_CHECK2', 'WAVE_LITTROW_EXTRAP2',
-                         'WAVE_FP_FINAL_ORDER', 'WAVE_FP_LWID_OFFSET',
-                         'WAVE_FP_WAVE_RES', 'WAVE_FP_M_X_RES',
-                         'WAVE_FP_IPT_CWID_1MHC', 'WAVE_FP_IPT_CWID_LLHC',
-                         'WAVE_FP_LL_DIFF', 'WAVE_FP_MULTI_ORDER',
-                         'WAVE_FP_SINGLE_ORDER',
-                         'CCF_RV_FIT', 'CCF_RV_FIT_LOOP', 'EXTRACT_S1D')
-cal_wave.set_summary_plots('SUM_WAVE_FP_IPT_CWID_LLHC',
-                           'SUM_WAVE_LITTROW_CHECK', 'SUM_WAVE_LITTROW_EXTRAP',
-                           'SUM_CCF_RV_FIT')
-cal_wave.set_arg(pos=0, **directory)
-cal_wave.set_kwarg(name='--hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
-                   nargs='+', filelogic='exclusive', required=True,
-                   helpstr=Help['WAVE_HCFILES_HELP'], default=[])
-# note required is False (so we don't need fpfiles but reprocess is True
-#    so reprocessing script will fill both hc and fp files
-cal_wave.set_kwarg(name='--fpfiles', dtype='files', files=[sf.pp_fp_fp],
-                   nargs='+', filelogic='exclusive', reprocess=True,
-                   helpstr=Help['WAVE_FPFILES_HELP'], default=[])
-cal_wave.set_kwarg(**add_db)
-cal_wave.set_kwarg(**badfile)
-cal_wave.set_kwarg(**dobad)
-cal_wave.set_kwarg(**backsub)
-cal_wave.set_kwarg(**blazefile)
-cal_wave.set_kwarg(default=True, **combine)
-cal_wave.set_kwarg(**darkfile)
-cal_wave.set_kwarg(**dodark)
-cal_wave.set_kwarg(**fiber)
-cal_wave.set_kwarg(**flipimage)
-cal_wave.set_kwarg(**fluxunits)
-cal_wave.set_kwarg(**locofile)
-cal_wave.set_kwarg(**orderpfile)
-cal_wave.set_kwarg(**plot)
-cal_wave.set_kwarg(**resize)
-cal_wave.set_kwarg(**shapexfile)
-cal_wave.set_kwarg(**shapeyfile)
-cal_wave.set_kwarg(**shapelfile)
-cal_wave.set_kwarg(**wavefile)
-cal_wave.set_kwarg(name='--forceext', dtype='bool',
-                   default_ref='WAVE_ALWAYS_EXTRACT',
-                   helpstr='WAVE_EXTRACT_HELP')
-cal_wave.set_kwarg(name='--hcmode', dtype='options',
-                   helpstr=Help['HCMODE_HELP'],
-                   options=['0'], default_ref='WAVE_MODE_HC')
-cal_wave.set_kwarg(name='--fpmode', dtype='options',
-                   helpstr=Help['FPMODE_HELP'],
-                   options=['0', '1'], default_ref='WAVE_MODE_FP')
-# add to recipe
-recipes.append(cal_wave)
-
-# -----------------------------------------------------------------------------
 # cal_wave_master
 # -----------------------------------------------------------------------------
 cal_wave_master = DrsRecipe(__INSTRUMENT__)
@@ -764,11 +690,13 @@ cal_wave_master.set_debug_plots('WAVE_HC_GUESS', 'WAVE_HC_BRIGHTEST_LINES',
                                 'WAVE_FP_LL_DIFF', 'WAVE_FP_MULTI_ORDER',
                                 'WAVE_FP_SINGLE_ORDER',
                                 'CCF_RV_FIT', 'CCF_RV_FIT_LOOP',
-                                'WAVEREF_EXPECTED', 'EXTRACT_S1D')
+                                'WAVEREF_EXPECTED', 'EXTRACT_S1D',
+                                'EXTRACT_S1D_WEIGHT', 'WAVE_FIBER_COMPARISON',
+                                'WAVE_FIBER_COMP')
 cal_wave_master.set_summary_plots('SUM_WAVE_FP_IPT_CWID_LLHC',
                                   'SUM_WAVE_LITTROW_CHECK',
                                   'SUM_WAVE_LITTROW_EXTRAP',
-                                  'SUM_CCF_RV_FIT')
+                                  'SUM_CCF_RV_FIT', 'SUM_WAVE_FIBER_COMP')
 cal_wave_master.set_arg(pos=0, **directory)
 cal_wave_master.set_kwarg(name='--hcfiles', dtype='files',
                           files=[sf.pp_hc1_hc1],
@@ -823,12 +751,16 @@ cal_wave_night.description = Help['WAVE_DESC']
 cal_wave_night.epilog = Help['WAVE_EXAMPLE']
 cal_wave_night.kind = 'recipe'
 cal_wave_night.set_outputs(WAVE_E2DS=sf.out_ext_e2dsff,
-                           WAVEMAP_NIGHT=sf.out_wave_night)
-cal_wave_night.set_debug_plots('WAVENIGHT_ITERPLOT',
-                               'WAVENIGHT_DIFFPLOT', 'WAVENIGHT_HISTPLOT',
+                           WAVEMAP_NIGHT=sf.out_wave_night,
+                           WAVE_HCLIST=sf.out_wave_hclist,
+                           WAVE_FPLIST=sf.out_wave_fplist)
+cal_wave_night.set_debug_plots('WAVENIGHT_ITERPLOT', 'WAVENIGHT_HISTPLOT',
                                'WAVEREF_EXPECTED', 'CCF_RV_FIT',
-                               'CCF_RV_FIT_LOOP', 'EXTRACT_S1D')
-cal_wave_night.set_summary_plots('SUM_CCF_RV_FIT')
+                               'CCF_RV_FIT_LOOP', 'EXTRACT_S1D',
+                               'EXTRACT_S1D_WEIGHT')
+cal_wave_night.set_summary_plots('SUM_WAVENIGHT_ITERPLOT',
+                                 'SUM_WAVENIGHT_HISTPLOT',
+                                 'SUM_CCF_RV_FIT')
 cal_wave_night.set_arg(pos=0, **directory)
 cal_wave_night.set_kwarg(name='--hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
                          nargs='+', filelogic='exclusive', required=True,
@@ -1103,6 +1035,40 @@ obj_mk_template.set_kwarg(**wavefile)
 # add to recipe
 recipes.append(obj_mk_template)
 
+
+# -----------------------------------------------------------------------------
+# polar recipe
+# -----------------------------------------------------------------------------
+# polar = DrsRecipe(__INSTRUMENT__)
+# polar.name = 'polar_spirou.py'
+# polar.shortname = 'POLAR'
+# polar.instrument = __INSTRUMENT__
+# polar.outputdir = 'reduced'
+# polar.inputdir = 'reduced'
+# polar.inputtype = 'reduced'
+# polar.extension = 'fits'
+# polar.description = ''
+# polar.epilog = ''
+# polar.kind = 'recipe'
+# polar.set_outputs()
+# polar.set_debug_plots()
+# polar.set_summary_plots()
+# polar.set_arg(pos=0, **directory)
+# polar.set_debug_plots()
+# polar.set_summary_plots()
+# polar.set_arg(pos=0, **directory)
+# polar.set_arg(name='files', dtype='files', pos='1+',
+#                    files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
+#                    filelogic='exclusive',
+#                    helpstr=Help['FILES_HELP'] + Help['FTELLU_FILES_HELP'],
+#                    limit=1)
+# polar.set_kwarg(**blazefile)
+# polar.set_kwarg(**plot)
+# polar.set_kwarg(**wavefile)
+# # add to recipe
+# recipes.append(polar)
+
+
 # -----------------------------------------------------------------------------
 # pol_spirou
 # -----------------------------------------------------------------------------
@@ -1232,89 +1198,89 @@ recipes.append(obj_spec)
 #  Note: must add sequences to sequences list to be able to use!
 #
 # -----------------------------------------------------------------------------
-# full run (master + nights)
+# full seqeunce (master + nights)
 # -----------------------------------------------------------------------------
-full_run = drs_recipe.DrsRunSequence('full_run', __INSTRUMENT__)
+full_seq = drs_recipe.DrsRunSequence('full_seq', __INSTRUMENT__)
 # master run
-full_run.add(cal_pp)
-full_run.add(cal_dark_master, master=True)
-full_run.add(cal_badpix, name='BADM', master=True)
-full_run.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
-full_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
-full_run.add(cal_shape_master, master=True)
-full_run.add(cal_shape, name='SHAPELM', master=True)
-full_run.add(cal_ff, name='FLATM', master=True)
-full_run.add(cal_leak_master, master=True)
-full_run.add(cal_thermal, name='THIM', files=[sf.pp_dark_dark_int],
+full_seq.add(cal_pp)
+full_seq.add(cal_dark_master, master=True)
+full_seq.add(cal_badpix, name='BADM', master=True)
+full_seq.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
+full_seq.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
+full_seq.add(cal_shape_master, master=True)
+full_seq.add(cal_shape, name='SHAPELM', master=True)
+full_seq.add(cal_ff, name='FLATM', master=True)
+full_seq.add(cal_leak_master, master=True)
+full_seq.add(cal_thermal, name='THIM', files=[sf.pp_dark_dark_int],
              master=True)
-full_run.add(cal_thermal, name='THTM', files=[sf.pp_dark_dark_tel],
+full_seq.add(cal_thermal, name='THTM', files=[sf.pp_dark_dark_tel],
              master=True)
-full_run.add(cal_wave_master, hcfiles=[sf.pp_hc1_hc1], fpfiles=[sf.pp_fp_fp],
+full_seq.add(cal_wave_master, hcfiles=[sf.pp_hc1_hc1], fpfiles=[sf.pp_fp_fp],
              master=True)
 # night runs
-full_run.add(cal_badpix)
-full_run.add(cal_loc, files=[sf.pp_dark_flat])
-full_run.add(cal_loc, files=[sf.pp_flat_dark])
-full_run.add(cal_shape)
-full_run.add(cal_ff, files=[sf.pp_flat_flat])
-full_run.add(cal_thermal)
-full_run.add(cal_wave_night)
+full_seq.add(cal_badpix)
+full_seq.add(cal_loc, files=[sf.pp_dark_flat])
+full_seq.add(cal_loc, files=[sf.pp_flat_dark])
+full_seq.add(cal_shape)
+full_seq.add(cal_ff, files=[sf.pp_flat_flat])
+full_seq.add(cal_thermal)
+full_seq.add(cal_wave_night)
 # extract all OBJ_DARK and OBJ_FP
-full_run.add(cal_extract, name='EXTALL', files=[sf.pp_obj_dark, sf.pp_obj_fp])
+full_seq.add(cal_extract, name='EXTALL', files=[sf.pp_obj_dark, sf.pp_obj_fp])
 # correct leakage
-full_run.add(cal_leak, name='LEAKALL', files=[sf.out_ext_e2dsff],
+full_seq.add(cal_leak, name='LEAKALL', files=[sf.out_ext_e2dsff],
              fiber='AB', KW_DPRTYPE=['OBJ_FP'])
 # telluric recipes
-full_run.add(obj_mk_tellu_db, arguments=dict(cores='CORES'))
-full_run.add(obj_fit_tellu_db, arguments=dict(cores='CORES'))
+full_seq.add(obj_mk_tellu_db, arguments=dict(cores='CORES'))
+full_seq.add(obj_fit_tellu_db, arguments=dict(cores='CORES'))
 
 # ccf on all OBJ_DARK / OBJ_FP
-full_run.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
+full_seq.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 
 # -----------------------------------------------------------------------------
-# limited run (master + nights)
+# limited sequence (master + nights)
 # -----------------------------------------------------------------------------
-limited_run = drs_recipe.DrsRunSequence('limited_run', __INSTRUMENT__)
+limited_seq = drs_recipe.DrsRunSequence('limited_seq', __INSTRUMENT__)
 # master run
-limited_run.add(cal_pp)
-limited_run.add(cal_dark_master, master=True)
-limited_run.add(cal_badpix, name='BADM', master=True)
-limited_run.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
-limited_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
-limited_run.add(cal_shape_master, master=True)
-limited_run.add(cal_shape, name='SHAPELM', master=True)
-limited_run.add(cal_ff, name='FLATM', master=True)
-limited_run.add(cal_leak_master, master=True)
-limited_run.add(cal_thermal, name='THIM', files=[sf.pp_dark_dark_int],
+limited_seq.add(cal_pp)
+limited_seq.add(cal_dark_master, master=True)
+limited_seq.add(cal_badpix, name='BADM', master=True)
+limited_seq.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
+limited_seq.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
+limited_seq.add(cal_shape_master, master=True)
+limited_seq.add(cal_shape, name='SHAPELM', master=True)
+limited_seq.add(cal_ff, name='FLATM', master=True)
+limited_seq.add(cal_leak_master, master=True)
+limited_seq.add(cal_thermal, name='THIM', files=[sf.pp_dark_dark_int],
                 master=True)
-limited_run.add(cal_thermal, name='THTM', files=[sf.pp_dark_dark_tel],
+limited_seq.add(cal_thermal, name='THTM', files=[sf.pp_dark_dark_tel],
                 master=True)
-limited_run.add(cal_wave_master, hcfiles=[sf.pp_hc1_hc1], fpfiles=[sf.pp_fp_fp],
+limited_seq.add(cal_wave_master, hcfiles=[sf.pp_hc1_hc1], fpfiles=[sf.pp_fp_fp],
                 master=True)
 # night runs
-limited_run.add(cal_badpix)
-limited_run.add(cal_loc, files=[sf.pp_dark_flat])
-limited_run.add(cal_loc, files=[sf.pp_flat_dark])
-limited_run.add(cal_shape)
-limited_run.add(cal_ff, files=[sf.pp_flat_flat])
-limited_run.add(cal_thermal, files=[sf.pp_dark_dark_int])
-limited_run.add(cal_thermal, files=[sf.pp_dark_dark_tel])
-limited_run.add(cal_wave_night)
+limited_seq.add(cal_badpix)
+limited_seq.add(cal_loc, files=[sf.pp_dark_flat])
+limited_seq.add(cal_loc, files=[sf.pp_flat_dark])
+limited_seq.add(cal_shape)
+limited_seq.add(cal_ff, files=[sf.pp_flat_flat])
+limited_seq.add(cal_thermal, files=[sf.pp_dark_dark_int])
+limited_seq.add(cal_thermal, files=[sf.pp_dark_dark_tel])
+limited_seq.add(cal_wave_night)
 # extract tellurics
-limited_run.add(cal_extract, name='EXTTELL', KW_OBJNAME='TELLURIC_TARGETS',
+limited_seq.add(cal_extract, name='EXTTELL', KW_OBJNAME='TELLURIC_TARGETS',
                 files=[sf.pp_obj_dark, sf.pp_obj_fp])
 
 # extract science
-limited_run.add(cal_extract, name='EXTOBJ', KW_OBJNAME='SCIENCE_TARGETS',
+limited_seq.add(cal_extract, name='EXTOBJ', KW_OBJNAME='SCIENCE_TARGETS',
                 files=[sf.pp_obj_dark, sf.pp_obj_fp])
 
 # correct leakage for any telluric targets that are OBJ_FP
-limited_run.add(cal_leak, name='LEAKTELL', KW_OBJNAME='TELLURIC_TARGETS',
+limited_seq.add(cal_leak, name='LEAKTELL', KW_OBJNAME='TELLURIC_TARGETS',
                 files=[sf.out_ext_e2dsff], fiber='AB', KW_DPRTYPE=['OBJ_FP'])
 
 # correct leakage for any science targets that are OBJ_FP
-limited_run.add(cal_leak, name='LEAKOBJ', KW_OBJNAME='SCIENCE_TARGETS',
+limited_seq.add(cal_leak, name='LEAKOBJ', KW_OBJNAME='SCIENCE_TARGETS',
                 files=[sf.out_ext_e2dsff], fiber='AB', KW_DPRTYPE=['OBJ_FP'])
 
 # telluric recipes
@@ -1322,217 +1288,137 @@ limited_run.add(cal_leak, name='LEAKOBJ', KW_OBJNAME='SCIENCE_TARGETS',
 # limited_run.add(obj_fit_tellu_db, arguments=dict(cores='CORES'))
 
 # other telluric recipes
-limited_run.add(obj_mk_tellu, name='MKTELLU1', KW_OBJNAME='TELLURIC_TARGETS',
+limited_seq.add(obj_mk_tellu, name='MKTELLU1', KW_OBJNAME='TELLURIC_TARGETS',
                 files=[sf.out_ext_e2dsff], fiber='AB',
                 KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-limited_run.add(obj_fit_tellu, name='MKTELLU2', KW_OBJNAME='TELLURIC_TARGETS',
+limited_seq.add(obj_fit_tellu, name='MKTELLU2', KW_OBJNAME='TELLURIC_TARGETS',
                 files=[sf.out_ext_e2dsff], fiber='AB',
                 KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-limited_run.add(obj_mk_template, name='MKTELLU3', KW_OBJNAME='TELLURIC_TARGETS',
+limited_seq.add(obj_mk_template, name='MKTELLU3', KW_OBJNAME='TELLURIC_TARGETS',
                 fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
                 arguments=dict(objname='TELLURIC_TARGETS'))
-limited_run.add(obj_mk_tellu, name='MKTELLU4', KW_OBJNAME='TELLURIC_TARGETS',
-                files=[sf.out_ext_e2dsff],  fiber='AB',
-                KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-
-limited_run.add(obj_fit_tellu, name='FTELLU1', KW_OBJNAME='SCIENCE_TARGETS',
+limited_seq.add(obj_mk_tellu, name='MKTELLU4', KW_OBJNAME='TELLURIC_TARGETS',
                 files=[sf.out_ext_e2dsff], fiber='AB',
                 KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-limited_run.add(obj_mk_template, name='FTELLU2', KW_OBJNAME='SCIENCE_TARGETS',
+
+limited_seq.add(obj_fit_tellu, name='FTELLU1', KW_OBJNAME='SCIENCE_TARGETS',
+                files=[sf.out_ext_e2dsff], fiber='AB',
+                KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
+limited_seq.add(obj_mk_template, name='FTELLU2', KW_OBJNAME='SCIENCE_TARGETS',
                 fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
                 arguments=dict(objname='SCIENCE_TARGETS'))
-limited_run.add(obj_fit_tellu, name='FTELLU3', KW_OBJNAME='SCIENCE_TARGETS',
+limited_seq.add(obj_fit_tellu, name='FTELLU3', KW_OBJNAME='SCIENCE_TARGETS',
                 files=[sf.out_ext_e2dsff], fiber='AB',
                 KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 
 # ccf
-limited_run.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
+limited_seq.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
                 KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'], KW_OBJNAME='SCIENCE_TARGETS')
 
 # -----------------------------------------------------------------------------
-# pp run (for trigger)
+# pp sequence (for trigger)
 # -----------------------------------------------------------------------------
-pp_run = drs_recipe.DrsRunSequence('pp_run', __INSTRUMENT__)
-pp_run.add(cal_pp)
+pp_seq = drs_recipe.DrsRunSequence('pp_seq', __INSTRUMENT__)
+pp_seq.add(cal_pp)
 
-pp_run_opt = drs_recipe.DrsRunSequence('pp_runo', __INSTRUMENT__)
-pp_run_opt.add(cal_pp, name='PP_CAL', KW_OBJNAME='Calibration')
-pp_run_opt.add(cal_pp, name='PP_SCI', KW_OBJNAME='SCIENCE_TARGETS')
-pp_run_opt.add(cal_pp, name='PP_TEL', KW_OBJNAME='TELLURIC_TARGETS')
+pp_seq_opt = drs_recipe.DrsRunSequence('pp_seq_opt', __INSTRUMENT__)
+pp_seq_opt.add(cal_pp, name='PP_CAL', KW_OBJNAME='Calibration')
+pp_seq_opt.add(cal_pp, name='PP_SCI', KW_OBJNAME='SCIENCE_TARGETS')
+pp_seq_opt.add(cal_pp, name='PP_TEL', KW_OBJNAME='TELLURIC_TARGETS')
 
 # -----------------------------------------------------------------------------
-# master run (for trigger)
+# master sequence (for trigger)
 # -----------------------------------------------------------------------------
-master_run = drs_recipe.DrsRunSequence('master_run', __INSTRUMENT__)
-# master run
-master_run.add(cal_dark_master, master=True)
-master_run.add(cal_badpix, name='BADM', master=True)
-master_run.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
-master_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
-master_run.add(cal_shape_master, master=True)
-master_run.add(cal_shape, name='SHAPELM', master=True)
-master_run.add(cal_ff, name='FLATM', master=True)
-master_run.add(cal_leak_master, master=True)
-master_run.add(cal_thermal, name='THIM', files=[sf.pp_dark_dark_int],
+master_seq = drs_recipe.DrsRunSequence('master_seq', __INSTRUMENT__)
+master_seq.add(cal_dark_master, master=True)
+master_seq.add(cal_badpix, name='BADM', master=True)
+master_seq.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
+master_seq.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
+master_seq.add(cal_shape_master, master=True)
+master_seq.add(cal_shape, name='SHAPELM', master=True)
+master_seq.add(cal_ff, name='FLATM', master=True)
+master_seq.add(cal_leak_master, master=True)
+master_seq.add(cal_thermal, name='THIM', files=[sf.pp_dark_dark_int],
                master=True)
-master_run.add(cal_thermal, name='THTM', files=[sf.pp_dark_dark_tel],
+master_seq.add(cal_thermal, name='THTM', files=[sf.pp_dark_dark_tel],
                master=True)
-master_run.add(cal_wave_master, hcfiles=[sf.pp_hc1_hc1], fpfiles=[sf.pp_fp_fp],
+master_seq.add(cal_wave_master, hcfiles=[sf.pp_hc1_hc1], fpfiles=[sf.pp_fp_fp],
                master=True)
 
 # -----------------------------------------------------------------------------
 # calibration run (for trigger)
 # -----------------------------------------------------------------------------
-calib_run = drs_recipe.DrsRunSequence('calib_run', __INSTRUMENT__)
+calib_seq = drs_recipe.DrsRunSequence('calib_seq', __INSTRUMENT__)
 # night runs
-calib_run.add(cal_badpix)
-calib_run.add(cal_loc, files=[sf.pp_dark_flat])
-calib_run.add(cal_loc, files=[sf.pp_flat_dark])
-calib_run.add(cal_shape)
-calib_run.add(cal_ff, files=[sf.pp_flat_flat])
-calib_run.add(cal_thermal, files=[sf.pp_dark_dark_int])
-calib_run.add(cal_thermal, files=[sf.pp_dark_dark_tel])
-calib_run.add(cal_wave_night)
+calib_seq.add(cal_badpix)
+calib_seq.add(cal_loc, files=[sf.pp_dark_flat])
+calib_seq.add(cal_loc, files=[sf.pp_flat_dark])
+calib_seq.add(cal_shape)
+calib_seq.add(cal_ff, files=[sf.pp_flat_flat])
+calib_seq.add(cal_thermal, files=[sf.pp_dark_dark_int])
+calib_seq.add(cal_thermal, files=[sf.pp_dark_dark_tel])
+calib_seq.add(cal_wave_night)
 
 # -----------------------------------------------------------------------------
-# telluric run (for trigger)
+# telluric sequence (for trigger)
 # -----------------------------------------------------------------------------
-tellu_run = drs_recipe.DrsRunSequence('telluric_run', __INSTRUMENT__)
+tellu_seq = drs_recipe.DrsRunSequence('tellu_seq', __INSTRUMENT__)
 # extract science
-tellu_run.add(cal_extract, name='EXTOBJ', KW_OBJNAME='TELLURIC_TARGETS',
+tellu_seq.add(cal_extract, name='EXTOBJ', KW_OBJNAME='TELLURIC_TARGETS',
               files=[sf.pp_obj_dark, sf.pp_obj_fp])
 # correct leakage for any telluric targets that are OBJ_FP
-tellu_run.add(cal_leak, name='LEAKTELL', KW_OBJNAME='TELLURIC_TARGETS',
+tellu_seq.add(cal_leak, name='LEAKTELL', KW_OBJNAME='TELLURIC_TARGETS',
               files=[sf.out_ext_e2dsff], fiber='AB', KW_DPRTYPE=['OBJ_FP'])
 # other telluric recipes
-tellu_run.add(obj_mk_tellu, name='MKTELLU1', KW_OBJNAME='TELLURIC_TARGETS',
+tellu_seq.add(obj_mk_tellu, name='MKTELLU1', KW_OBJNAME='TELLURIC_TARGETS',
               files=[sf.out_ext_e2dsff], fiber='AB',
               KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-tellu_run.add(obj_fit_tellu, name='MKTELLU2', KW_OBJNAME='TELLURIC_TARGETS',
+tellu_seq.add(obj_fit_tellu, name='MKTELLU2', KW_OBJNAME='TELLURIC_TARGETS',
               files=[sf.out_ext_e2dsff], fiber='AB',
               KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-tellu_run.add(obj_mk_template, name='MKTELLU3', KW_OBJNAME='TELLURIC_TARGETS',
+tellu_seq.add(obj_mk_template, name='MKTELLU3', KW_OBJNAME='TELLURIC_TARGETS',
               fiber='AB', files=[sf.out_ext_e2dsff],
               KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
               arguments=dict(objname='TELLURIC_TARGETS'))
-tellu_run.add(obj_mk_tellu, name='MKTELLU4', KW_OBJNAME='TELLURIC_TARGETS',
+tellu_seq.add(obj_mk_tellu, name='MKTELLU4', KW_OBJNAME='TELLURIC_TARGETS',
               fiber='AB', files=[sf.out_ext_e2dsff],
               KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 
 # -----------------------------------------------------------------------------
-# science run (for trigger)
+# science sequence (for trigger)
 # -----------------------------------------------------------------------------
-science_run = drs_recipe.DrsRunSequence('science_run', __INSTRUMENT__)
+science_seq = drs_recipe.DrsRunSequence('science_seq', __INSTRUMENT__)
 # extract science
-science_run.add(cal_extract, name='EXTOBJ', KW_OBJNAME='SCIENCE_TARGETS',
+science_seq.add(cal_extract, name='EXTOBJ', KW_OBJNAME='SCIENCE_TARGETS',
                 files=[sf.pp_obj_dark, sf.pp_obj_fp])
 # correct leakage for any science targets that are OBJ_FP
-science_run.add(cal_leak, name='LEAKOBJ', KW_OBJNAME='SCIENCE_TARGETS',
+science_seq.add(cal_leak, name='LEAKOBJ', KW_OBJNAME='SCIENCE_TARGETS',
                 files=[sf.out_ext_e2dsff], fiber='AB', KW_DPRTYPE=['OBJ_FP'])
-science_run.add(obj_fit_tellu, name='FTELLU1', KW_OBJNAME='SCIENCE_TARGETS',
+science_seq.add(obj_fit_tellu, name='FTELLU1', KW_OBJNAME='SCIENCE_TARGETS',
                 files=[sf.out_ext_e2dsff], fiber='AB',
                 KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-science_run.add(obj_mk_template, name='FTELLU2', KW_OBJNAME='SCIENCE_TARGETS',
+science_seq.add(obj_mk_template, name='FTELLU2', KW_OBJNAME='SCIENCE_TARGETS',
                 fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
                 arguments=dict(objname='SCIENCE_TARGETS'))
-science_run.add(obj_fit_tellu, name='FTELLU3', KW_OBJNAME='SCIENCE_TARGETS',
+science_seq.add(obj_fit_tellu, name='FTELLU3', KW_OBJNAME='SCIENCE_TARGETS',
                 files=[sf.out_ext_e2dsff], fiber='AB',
                 KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 # ccf
-science_run.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
+science_seq.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
                 KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'], KW_OBJNAME='SCIENCE_TARGETS')
 
 # -----------------------------------------------------------------------------
-# hc run (extract all HC_HC)
+# engineering sequences
 # -----------------------------------------------------------------------------
-hc_run = drs_recipe.DrsRunSequence('hc_run', __INSTRUMENT__)
-# master run
-hc_run.add(cal_pp)
-hc_run.add(cal_dark_master, master=True)
-hc_run.add(cal_badpix, name='BADM', master=True)
-hc_run.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
-hc_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
-hc_run.add(cal_shape_master, master=True)
-# night runs
-hc_run.add(cal_badpix)
-hc_run.add(cal_loc, files=[sf.pp_dark_flat])
-hc_run.add(cal_loc, files=[sf.pp_flat_dark])
-hc_run.add(cal_shape)
-hc_run.add(cal_ff, files=[sf.pp_flat_flat])
-hc_run.add(cal_thermal)
-# extract science
-hc_run.add(cal_extract, name='EXTHC', files=[sf.pp_hc1_hc1])
+eng_seq = drs_recipe.DrsRunSequence('eng_seq', __INSTRUMENT__)
 
-# -----------------------------------------------------------------------------
-# dark_fp (extract all DARK_FP) --assume calibrations are already done
-# -----------------------------------------------------------------------------
-dark_fp_run = drs_recipe.DrsRunSequence('dark_fp_run', __INSTRUMENT__)
-# extract science
-dark_fp_run.add(cal_extract, name='EXTDFP', files=[sf.pp_dark_fp])
-
-# -----------------------------------------------------------------------------
-# old limited run
-# -----------------------------------------------------------------------------
-old_run = drs_recipe.DrsRunSequence('old_run', __INSTRUMENT__)
-# master run
-old_run.add(cal_pp)
-old_run.add(cal_dark_master, master=True)
-old_run.add(cal_badpix, name='BADM', master=True)
-old_run.add(cal_loc, name='LOCM', files=[sf.pp_dark_flat], master=True)
-old_run.add(cal_loc, name='LOCM', files=[sf.pp_flat_dark], master=True)
-old_run.add(cal_shape_master, master=True)
-# night runs
-old_run.add(cal_badpix)
-old_run.add(cal_loc, files=[sf.pp_dark_flat])
-old_run.add(cal_loc, files=[sf.pp_flat_dark])
-old_run.add(cal_shape)
-old_run.add(cal_ff, files=[sf.pp_flat_flat])
-old_run.add(cal_thermal, files=[sf.pp_dark_dark_int])
-old_run.add(cal_thermal, files=[sf.pp_dark_dark_tel])
-old_run.add(cal_wave, name='WAVEFP', hcfiles=[sf.pp_hc1_hc1],
-            fpfiles=[sf.pp_fp_fp])
-# extract tellurics
-old_run.add(cal_extract, name='EXTTELL', KW_OBJNAME='TELLURIC_TARGETS',
-            files=[sf.pp_obj_dark, sf.pp_obj_fp])
-
-# extract science
-old_run.add(cal_extract, name='EXTOBJ', KW_OBJNAME='SCIENCE_TARGETS',
-            files=[sf.pp_obj_dark, sf.pp_obj_fp])
-
-# telluric recipes
-old_run.add(obj_mk_tellu_db, arguments=dict(cores='CORES'))
-old_run.add(obj_fit_tellu_db, arguments=dict(cores='CORES'))
-
-# other telluric recipes
-old_run.add(obj_mk_tellu, name='MKTELLU1', KW_OBJNAME='TELLURIC_TARGETS',
-            files=[sf.out_ext_e2dsff], fiber='AB',
-            KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-old_run.add(obj_fit_tellu, name='MKTELLU2', KW_OBJNAME='TELLURIC_TARGETS',
-            files=[sf.out_ext_e2dsff], fiber='AB',
-            KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-old_run.add(obj_mk_template, name='MKTELLU3', KW_OBJNAME='TELLURIC_TARGETS',
-            fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
-            arguments=dict(objname='TELLURIC_TARGETS'))
-old_run.add(obj_mk_tellu, name='MKTELLU4', KW_OBJNAME='TELLURIC_TARGETS',
-            fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-
-old_run.add(obj_fit_tellu, name='FTELLU1', KW_OBJNAME='SCIENCE_TARGETS',
-            files=[sf.out_ext_e2dsff], fiber='AB',
-            KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-old_run.add(obj_mk_template, name='FTELLU2', KW_OBJNAME='SCIENCE_TARGETS',
-            fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
-            arguments=dict(objname='SCIENCE_TARGETS'))
-old_run.add(obj_fit_tellu, files=[sf.out_ext_e2dsff],
-            name='FTELLU3', KW_OBJNAME='SCIENCE_TARGETS',
-            fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-
-# ccf
-old_run.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
-            KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'], KW_OBJNAME='SCIENCE_TARGETS')
+# extract sequences
+eng_seq.add(cal_extract, name='EXTHC1', files=[sf.pp_hc1_hc1])
+eng_seq.add(cal_extract, name='EXTFPFP', files=[sf.pp_fp_fp])
+eng_seq.add(cal_extract, name='EXTDFP', files=[sf.pp_dark_fp])
 
 # -----------------------------------------------------------------------------
 # sequences list
 # -----------------------------------------------------------------------------
-sequences = [pp_run, pp_run_opt, full_run, limited_run,
-             master_run, calib_run, tellu_run, science_run,
-             hc_run, dark_fp_run, old_run]
+sequences = [pp_seq, pp_seq_opt, full_seq, limited_seq, master_seq, calib_seq,
+             tellu_seq, science_seq, eng_seq]

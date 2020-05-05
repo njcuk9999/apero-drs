@@ -1,6 +1,6 @@
 from apero.core.constants import param_functions
 from apero.core.core import drs_recipe
-from apero.locale import drs_text
+from apero.lang import drs_text
 
 from apero.core.instruments.default import file_definitions as sf
 

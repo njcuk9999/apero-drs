@@ -15,7 +15,7 @@ import shutil
 import glob
 
 from apero import core
-from apero import locale
+from apero import lang
 from apero.core import constants
 from apero.core.core import drs_database
 from apero.io import drs_fits
@@ -36,8 +36,9 @@ __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-
+TextEntry = lang.drs_text.TextEntry
+# Define master prefix
+MASTER_PREFIX = 'MASTER_'
 
 
 # =============================================================================
@@ -164,12 +165,20 @@ def __main__(recipe, params):
         else:
             file_set = getattr(filemod, file_set_name)
         # ------------------------------------------------------------------
+        # skip default master files
+        if os.path.basename(db_file).startswith(MASTER_PREFIX):
+            # log skipping
+            wargs = [MASTER_PREFIX]
+            WLOG(params, 'info', TextEntry('40-505-00003', args=wargs))
+            # skip
+            continue
+        # ------------------------------------------------------------------
         # make a new copy of out_file
         db_out_file = file_set.newcopy(recipe=recipe)
         # ------------------------------------------------------------------
         # try to find cdb_file
         found, kind = drs_fits.id_drs_file(params, recipe, db_out_file,
-                                           filename=db_file,
+                                           filename=db_file, get_data=False,
                                            nentries=1, required=False)
         # ------------------------------------------------------------------
         # append to cdb_data
@@ -182,6 +191,10 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # delete file
         del kind, db_out_file
+
+    # print note about masters
+    WLOG(params, 'info', TextEntry('40-505-00004'))
+    _ = input('\t')
 
     # ----------------------------------------------------------------------
     # End of main code

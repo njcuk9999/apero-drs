@@ -20,7 +20,7 @@ import warnings
 from apero.core.core import drs_log
 from apero.core import constants
 from apero.core import math as mp
-from apero.locale import drs_text
+from apero.lang import drs_text
 from apero.io import drs_fits
 from apero.io import drs_path
 from apero.io import drs_strings
@@ -279,14 +279,6 @@ class DrsInputFile:
             self.recipe = kwargs['recipe']
         # get parameters
         params = self.recipe.drs_params
-        # set function name
-        func_name = display_func(params, 'copyother', __NAME__, 'DrsInputFile')
-        # check file has been read (if 'read' not equal to False)
-        if kwargs.get('read', True):
-            if drsfile.data is None:
-                dargs = [drsfile.filename, func_name]
-                WLOG(params, 'debug', TextEntry('90-008-00010', args=dargs))
-                drsfile.read_file()
         # set empty file attributes
         nkwargs = dict()
         nkwargs['name'] = kwargs.get('name', self.name)
@@ -858,9 +850,6 @@ class DrsFitsFile(DrsInputFile):
             drsfile.recipe = self.recipe
         # set function name
         _ = display_func(None, 'copyother', __NAME__, 'DrsFitsFile')
-        # check file has been read (if 'read' not equal to False)
-        if kwargs.get('read', True):
-            drsfile.check_read(header_only=True, load=True)
         # set empty file attributes
         nkwargs = dict()
         nkwargs['name'] = kwargs.get('name', self.name)
@@ -889,7 +878,7 @@ class DrsFitsFile(DrsInputFile):
         nkwargs['outfunc'] = kwargs.get('outfunc', self.outfunc)
         nkwargs['dbname'] = kwargs.get('dbname', self.dbname)
         nkwargs['dbkey'] = kwargs.get('dbkey', self.dbkey)
-        nkwargs['datatype'] = kwargs.get('datatype', drsfile.datatype)
+        nkwargs['datatype'] = kwargs.get('datatype', self.datatype)
         nkwargs['dtype'] = kwargs.get('dtype', drsfile.dtype)
         nkwargs['shape'] = kwargs.get('shape', drsfile.shape)
         nkwargs['numfiles'] = kwargs.get('numfiles', drsfile.numfiles)
@@ -1481,7 +1470,7 @@ class DrsFitsFile(DrsInputFile):
         elif self.data is not None:
             self.shape = [len(self.data)]
 
-    def read_data(self, ext=0):
+    def read_data(self, ext=0, log=True):
         # set function name
         _ = display_func(None, 'read_data', __NAME__, 'DrsFitsFile')
         # check that filename is set
@@ -1489,30 +1478,38 @@ class DrsFitsFile(DrsInputFile):
         # get params
         params = self.recipe.drs_params
         # get data
-        data = drs_fits.readfits(params, self.filename, ext=ext)
+        data = drs_fits.readfits(params, self.filename, ext=ext, log=log)
         # set number of data sets to 1
         self.numfiles = 1
         # assign to object
         self.data = data
 
-    def read_header(self, ext=0):
+    def read_header(self, ext=None, log=True):
         # set function name
         _ = display_func(None, 'read_header', __NAME__, 'DrsFitsFile')
         # check that filename is set
         self.check_filename()
+        # deal with no extension
+        if (ext is None) and (self.datatype == 'image'):
+            ext = 0
+        elif ext is None:
+            ext = 1
         # get params
         params = self.recipe.drs_params
         # get header
-        header = drs_fits.read_header(params, self.filename, ext=ext)
+        header = drs_fits.read_header(params, self.filename, ext=ext, log=log)
         # assign to object
         self.header = header
 
-    def check_read(self, header_only=False, load=False):
+    # TODO: sort out header_only and load_data -- ambiguous
+    def check_read(self, header_only=False, load=False, load_data=True):
         # set function name
         _ = display_func(None, 'check_read', __NAME__, 'DrsFitsFile')
         # deal with only wanting to check if header is read
         if header_only:
             if self.header is None:
+                if not load_data:
+                    return self.read_header()
                 if load:
                     return self.read_file()
                 func = self.__repr__()
@@ -1521,6 +1518,8 @@ class DrsFitsFile(DrsInputFile):
             else:
                 return 1
         # check that data/header/comments is not None
+        if self.header is None and not load_data:
+            return self.read_header()
         if self.data is None:
             if load:
                 return self.read_file()
@@ -1568,6 +1567,9 @@ class DrsFitsFile(DrsInputFile):
                          'DrsFitsFile')
         # deal with unset header
         if self.header is None:
+            if isinstance(self.hdict, drs_fits.fits.Header):
+                self.header = self.hdict.copy()
+                return
             self.header = drs_fits.Header()
         # add keys from hdict
         for key in self.hdict:
@@ -2071,13 +2073,6 @@ class DrsFitsFile(DrsInputFile):
         """
         # set function name
         _ = display_func(None, 'copy_original_keys', __NAME__, 'DrsFitsFile')
-        # get params
-        params = self.recipe.drs_params
-        # generate instances from params
-        Keyword = constants.constant_functions.Keyword
-        keyworddict = params.get_instanceof(Keyword)
-        # get pconstant
-        pconstant = self.recipe.drs_pconstant
         # deal with exclude groups
         if exclude_groups is not None:
             if isinstance(exclude_groups, str):
@@ -2090,7 +2085,27 @@ class DrsFitsFile(DrsInputFile):
             # check that data/header is read
             drs_file.check_read(header_only=True, load=True)
             fileheader = drs_file.header
+        # get cards to copy
+        _cards = self.copy_cards(self.recipe.drs_params, fileheader.cards,
+                                 root, exclude_groups, group, forbid_keys,
+                                 allkeys)
+        # deal with appending to a hidct that isn't empty
+        if self.hdict is None:
+            self.hdict = drs_fits.Header(_cards)
+        else:
+            for _card in _cards:
+                self.hdict.append(_card)
+        # return True to show completed successfully
+        return True
 
+    def copy_cards(self, params, cards, root=None, exclude_groups=None,
+                   group=None, forbid_keys=True, allkeys=False):
+        # generate instances from params
+        Keyword = constants.constant_functions.Keyword
+        keyworddict = params.get_instanceof(Keyword)
+        # get pconstant
+        pconstant = self.recipe.drs_pconstant
+        # filter function
         def __keep_card(card):
             key = card[0]
             if root is not None:
@@ -2128,6 +2143,10 @@ class DrsFitsFile(DrsInputFile):
                     # if key group does not match group skip it
                     if keygroup.upper() != group.upper():
                         return False
+                # if we have a group but key is not in keyword dict we
+                # return False --> we don't want this key
+                else:
+                    return False
             # skip if key is forbidden key
             if forbid_keys and (key in pconstant.FORBIDDEN_COPY_KEYS()):
                 return False
@@ -2142,19 +2161,11 @@ class DrsFitsFile(DrsInputFile):
                 return False
             else:
                 return True
-
         # filter and create new header
-        copy_cards = filter(__keep_card, fileheader.cards)
+        _copy_cards = filter(__keep_card, cards)
+        # return cards for copy
+        return _copy_cards
 
-        # deal with appending to a hidct that isn't empty
-        if self.hdict is None:
-            self.hdict = drs_fits.Header(copy_cards)
-        else:
-            for _card in copy_cards:
-                self.hdict.append(_card)
-
-        # return True to show completed successfully
-        return True
 
     def add_hkey(self, key=None, keyword=None, value=None, comment=None,
                  fullpath=False):
@@ -2193,7 +2204,7 @@ class DrsFitsFile(DrsInputFile):
         if key is not None:
             if isinstance(key, str) and (key in params):
                 kwstore = params[key]
-            elif isinstance(key, list):
+            elif isinstance(key, list) or isinstance(key, tuple):
                 kwstore = list(key)
             else:
                 eargs = [key, func_name]
@@ -2530,7 +2541,13 @@ class DrsFitsFile(DrsInputFile):
         # set function name
         _ = display_func(None, 'copy_hdict', __NAME__, 'DrsFitsFile')
         # set this instance to the hdict instance of another drs fits file
-        self.hdict = drsfile.hdict
+        self.hdict = drsfile.hdict.copy()
+
+    def copy_header(self, drsfile):
+        # set function name
+        _ = display_func(None, 'copy_header', __NAME__, 'DrsFitsFile')
+        # set this instance to the header instance of another drs fits file
+        self.header = drsfile.header.copy()
 
     # -------------------------------------------------------------------------
     # database methods

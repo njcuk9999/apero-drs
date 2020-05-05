@@ -11,7 +11,7 @@ Version 0.0.1
 import numpy as np
 
 from apero import core
-from apero import locale
+from apero import lang
 from apero.core import constants
 from apero.core.core import drs_database
 from apero.core.instruments.spirou import file_definitions
@@ -34,7 +34,7 @@ __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
+TextEntry = lang.drs_text.TextEntry
 # Raw prefix
 RAW_PREFIX = file_definitions.raw_prefix
 
