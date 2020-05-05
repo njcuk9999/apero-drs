@@ -23,7 +23,7 @@ from astropy.io import fits
 from collections import OrderedDict
 
 from apero.core import constants
-from apero.locale import drs_text
+from apero.lang import drs_text
 from apero.core.core import drs_log
 
 from apero.io import drs_lock
@@ -303,6 +303,10 @@ def read_table(p, filename, fmt, colnames=None, **kwargs):
     func_name = __NAME__ + '.read_table()'
     # get format table
     ftable = list_of_formats()
+
+    # don't let format be None
+    if fmt is None:
+        fmt = 'fits'
 
     # check that format in format_table
     if fmt not in ftable['Format']:

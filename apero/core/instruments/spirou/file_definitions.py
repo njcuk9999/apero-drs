@@ -697,7 +697,7 @@ calib_file.addset(out_leak_master)
 # wave files (master)
 # -----------------------------------------------------------------------------
 # wave solution using hc only
-out_wavem_hc = drs_finput('WAVEM_HC', KW_OUTPUT='WAVE_HC',
+out_wavem_hc = drs_finput('WAVEM_HC', KW_OUTPUT='WAVEM_HC',
                           fibers=['AB', 'A', 'B', 'C'],
                           filetype='.fits',
                           intype=[out_ext_e2ds, out_ext_e2dsff],
@@ -706,7 +706,7 @@ out_wavem_hc = drs_finput('WAVEM_HC', KW_OUTPUT='WAVE_HC',
                           outfunc=out.calib_file)
 
 # wave solution using hc + fp
-out_wavem_fp = drs_finput('WAVEM_FP', KW_OUTPUT='WAVE_FP',
+out_wavem_fp = drs_finput('WAVEM_FP', KW_OUTPUT='WAVEM_FP',
                           fibers=['AB', 'A', 'B', 'C'],
                           filetype='.fits',
                           intype=[out_ext_e2ds, out_ext_e2dsff],
@@ -806,7 +806,7 @@ out_wave_fp = drs_finput('WAVE_FP', KW_OUTPUT='WAVE_FP',
                          outfunc=out.calib_file)
 
 # wave solution using night modifications
-out_wave_night = drs_finput('WAVE_NIGHT', KW_OUTPUT='WAVE_FP',
+out_wave_night = drs_finput('WAVE_NIGHT', KW_OUTPUT='WAVE_NIGHT',
                             fibers=['AB', 'A', 'B', 'C'],
                             filetype='.fits',
                             intype=[out_ext_e2ds, out_ext_e2dsff],
@@ -845,6 +845,22 @@ out_wave_ll_table = drs_input('WAVE_FPLLTABL', KW_OUTPUT='WAVE_FPLLTAB',
                               intype=[out_ext_e2ds, out_ext_e2dsff],
                               suffix='_hc_lines',
                               outfunc=out.calib_file)
+
+# hc line file from night
+out_wave_hclist = drs_finput('WAVE_HCLIST', KW_OUTPUT='WAVE_HCLIST',
+                                    fibers=['AB', 'A', 'B', 'C'],
+                                    filetype='.fits',
+                                    intype=[out_ext_e2ds, out_ext_e2dsff],
+                                    suffix='_wave_hclines',
+                                    outfunc=out.calib_file)
+
+# fp line file from night
+out_wave_fplist = drs_finput('WAVE_FPLIST', KW_OUTPUT='WAVE_FPLIST',
+                                    fibers=['AB', 'A', 'B', 'C'],
+                                    filetype='.fits',
+                                    intype=[out_ext_e2ds, out_ext_e2dsff],
+                                    suffix='_wave_fplines',
+                                    outfunc=out.calib_file)
 
 # add wave outputs to output fileset
 out_file.addset(out_wave_hc)

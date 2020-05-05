@@ -1,6 +1,6 @@
 from apero.core import constants
 from apero.core.core import drs_recipe
-from apero.locale import drs_text
+from apero.lang import drs_text
 
 from apero.core.instruments.nirps_ha import file_definitions as sf
 

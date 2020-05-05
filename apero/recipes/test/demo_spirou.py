@@ -13,7 +13,7 @@ import numpy as np
 import sys
 
 from apero import core
-from apero import locale
+from apero import lang
 from apero.core import constants
 from apero.tools.module.testing import drs_dev
 
@@ -34,8 +34,8 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
 # -----------------------------------------------------------------------------
 # TODO: move recipe definition to instrument set up when testing is finished
 # set up recipe definitions (overwrites default one)

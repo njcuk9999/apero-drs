@@ -21,6 +21,8 @@ continuum = general.continuum
 
 calculate_polyvals = general.calculate_polyvals
 
+ea_airy_function = general.ea_airy_function
+
 fit_gauss_with_slope = gauss.fit_gauss_with_slope
 
 fit2dpoly = general.fit2dpoly
@@ -34,6 +36,8 @@ gauss_fit_nn = gauss.gauss_fit_nn
 gaussian_function_nn =  gauss.gaussian_function_nn
 
 gauss_function = gauss.gauss_function
+
+gauss_beta_function = gauss.gauss_beta_function
 
 gauss_fit_s = gauss.gauss_fit_s
 
@@ -72,6 +76,8 @@ nanpolyfit = nan.nanpolyfit
 nanstd = fast.nanstd
 
 nansum = fast.nansum
+
+normal_fraction = general.normal_fraction
 
 median = fast.median
 

@@ -13,9 +13,10 @@ import numpy as np
 import warnings
 
 from apero import core
-from apero import locale
+from apero import lang
 from apero.core import constants
 from apero.io import drs_fits
+from apero.core import math as mp
 from apero.science.calib import shape
 from apero.science.calib import wave
 from apero.science import telluric
@@ -39,9 +40,9 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
-Help = locale.drs_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
+Help = lang.drs_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
 # -----------------------------------------------------------------------------
 # set up recipe definitions (overwrites default one)
 RMOD = drs_dev.RecipeDefinition(instrument=__INSTRUMENT__)
@@ -62,6 +63,25 @@ exposuremeter.set_arg(pos=0, name='directory', dtype='directory',
 # add recipe to recipe definition
 RMOD.add(exposuremeter)
 
+# get file definitions for this instrument
+FMOD = drs_dev.FileDefinition(instrument=__INSTRUMENT__)
+# make files for this tool
+exp_pp_file = drs_dev.TmpFitsFile('EXP_PP_FILE', KW_OUTPUT='EXP_PP_FILE',
+                                  filetype='.fits', prefix='EXPMETER_',
+                                  suffix='_PPTYPE', remove_insuffix=True,
+                                  intype=[FMOD.files.out_wave_night],
+                                  outfunc=FMOD.out.general_file)
+exp_raw_file = drs_dev.TmpFitsFile('EXP_RAW_FILE', KW_OUTPUT='EXP_PP_FILE',
+                                   filetype='.fits', prefix='EXPMETER_',
+                                   suffix='_RAWTYPE', remove_insuffix=True,
+                                   intype=[FMOD.files.out_wave_night],
+                                   outfunc=FMOD.out.general_file)
+
+# header keys
+EM_MIN_WAVE = ['EM_MNWAV', 0.0, 'Exposure meter min wave for mask']
+EM_MAX_WAVE = ['EM_MXWAV', 0.0, 'Exposure meter max wave for mask']
+EM_TELL_THRES = ['EM_TLIM', 0.0, 'Exposure meter telluric threshold for mask']
+EM_KIND = ['EM_KIND', '', 'Exposure meter image kind (PP or RAW)']
 
 # =============================================================================
 # Define functions
@@ -183,15 +203,17 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Get and prepare shape and position images
     # ----------------------------------------------------------------------
+    # get ref image
+    ref_infile = wave_infiles[fibers[0]]
+    ref_header = ref_infile.header
     # get image shape
     ishape = inverse.drs_image_shape(params)
 
     # get the x and y position images
     yimage, ximage = np.indices(ishape)
     # get shape files
-    ref_infile = wave_infiles[fibers[0]]
-    shapexfile, shapex = shape.get_shapex(params, ref_infile.header)
-    shapeyfile, shapey = shape.get_shapey(params, ref_infile.header)
+    shapexfile, shapex = shape.get_shapex(params, ref_header)
+    shapeyfile, shapey = shape.get_shapey(params, ref_header)
     # transform the shapex map
     WLOG(params, '', 'Transforming shapex map')
     shapex2 = shape.ea_transform(params, shapex, dymap=-shapey)
@@ -267,22 +289,67 @@ def __main__(recipe, params):
     # Make the exposure time mask
     # ----------------------------------------------------------------------
     # get limits for the mask
-    # TODO: move to constants
-    min_lambda = params['EXPMETER_MIN_LAMBDA'] = 1478.7
-    max_lambda = params['EXPMETER_MAX_LAMBDA'] = 1823.1
-    tell_thres = params['EXPMETER_TELLU_THRES'] = 0.95
-    # save masks
+    min_lambda = params['EXPMETER_MIN_LAMBDA']
+    max_lambda = params['EXPMETER_MAX_LAMBDA']
+    tell_thres = params['EXPMETER_TELLU_THRES']
+    # create masks
     with warnings.catch_warnings(record=True) as _:
         mask1 = pwave_map > min_lambda
         mask2 = pwave_map < max_lambda
         mask3 = ptellu_map > tell_thres
 
     # combined mask
-    mask = mask1 & mask2 & mask3
+    mask = np.array(mask1 & mask2 & mask3)
+    # make mask a integer mask
+    mask = mask.astype(int)
 
-    # TODO: rotate mask (pp --> raw)
+    # ----------------------------------------------------------------------
+    # Convert drs --> pp and pp --> raw
+    # ----------------------------------------------------------------------
+    maskpp = inverse.drs_to_pp(params, mask, fill=0)
 
-    # TODO: save output mask (pp and raw)
+    # get raw image
+    maskraw = mp.rot8(maskpp, params['RAW_TO_PP_ROTATION'], invert=True)
+
+    # ----------------------------------------------------------------------
+    # write pp out file
+    # ----------------------------------------------------------------------
+    # get a new copy of the out file
+    out_pp_file = exp_pp_file.newcopy(recipe=recipe)
+    # construct filename
+    out_pp_file.construct_filename(params, infile=ref_infile)
+    # copy header from ref file
+    out_pp_file.copy_original_keys(ref_infile)
+    # add header keys
+    out_pp_file.add_hkey(EM_MIN_WAVE, value=min_lambda)
+    out_pp_file.add_hkey(EM_MAX_WAVE, value=max_lambda)
+    out_pp_file.add_hkey(EM_TELL_THRES, value=tell_thres)
+    out_pp_file.add_hkey(EM_KIND, value='PP')
+    # add data
+    out_pp_file.data = maskpp
+    # save to file
+    WLOG(params, '', 'Saving pp file: {0}'.format(out_pp_file.filename))
+    out_pp_file.write_file()
+
+    # ----------------------------------------------------------------------
+    # write raw out file
+    # ----------------------------------------------------------------------
+    # get a new copy of the out file
+    out_raw_file = exp_raw_file.newcopy(recipe=recipe)
+    # construct filename
+    out_raw_file.construct_filename(params, infile=ref_infile)
+    # copy header from ref file
+    out_raw_file.copy_original_keys(ref_infile)
+    # add header keys
+    out_raw_file.add_hkey(EM_MIN_WAVE, value=min_lambda)
+    out_raw_file.add_hkey(EM_MAX_WAVE, value=max_lambda)
+    out_raw_file.add_hkey(EM_TELL_THRES, value=tell_thres)
+    out_raw_file.add_hkey(EM_KIND, value='PP')
+    # add data
+    out_raw_file.data = np.array(maskraw).astype(int)
+    # save to file
+    WLOG(params, '', 'Saving raw file: {0}'.format(out_raw_file.filename))
+    out_raw_file.write_file()
 
     # ----------------------------------------------------------------------
     # End of main code

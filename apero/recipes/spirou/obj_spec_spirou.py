@@ -13,7 +13,7 @@ import os
 from collections import OrderedDict
 
 from apero import core
-from apero import locale
+from apero import lang
 from apero.core import constants
 from apero.io import drs_path
 from apero.io import drs_image
@@ -37,8 +37,8 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
 # get recipes
 CAL_EXTRACT = rd.cal_extract
 MK_TELLU = rd.obj_mk_tellu

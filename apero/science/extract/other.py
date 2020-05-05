@@ -13,7 +13,7 @@ import os
 
 from apero import core
 from apero.core import constants
-from apero import locale
+from apero import lang
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.core import drs_startup
@@ -37,8 +37,8 @@ DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
 # alias pcheck
 pcheck = core.pcheck
 
@@ -99,6 +99,9 @@ def extract_thermal_files(params, recipe, extname, thermalfile, **kwargs):
         # add data from thermal_outputs
         thermal_file.datatype = thermal_outputs[fiber].datatype
         thermal_file.data = thermal_outputs[fiber].data
+        # update drs out id
+        thermal_file.hdict[params['KW_OUTPUT'][0]] = thermal_file.name
+        thermal_file.header[params['KW_OUTPUT'][0]] = thermal_file.name
         # append to list
         thermal_files[fiber] = thermal_file
 

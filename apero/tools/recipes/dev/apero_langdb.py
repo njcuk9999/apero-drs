@@ -11,7 +11,7 @@ Created on 2019-07-26 at 09:40
 """
 import sys
 
-from apero.locale.core import port_database
+from apero.lang.core import port_database
 
 
 # =============================================================================
@@ -60,7 +60,7 @@ Arguments:
 # Define functions
 # =============================================================================
 def main():
-    # Note: cannot use any package other than apero.locale - as we are
+    # Note: cannot use any package other than apero.lang - as we are
     #       updating the language in this package
 
     # get arguments

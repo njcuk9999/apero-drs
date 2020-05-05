@@ -12,7 +12,7 @@ import os
 import warnings
 
 from apero import core
-from apero import locale
+from apero import lang
 from apero.core import constants
 from apero.core.core import drs_database
 from apero.io import drs_fits
@@ -40,8 +40,8 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
 # alias pcheck
 pcheck = core.pcheck
 
@@ -352,9 +352,15 @@ def load_calib_file(params, key=None, inheader=None, filename=None,
                                                  get_image, get_header)
         # return here
         if get_header:
-            return [image], [header], [abspath]
+            if n_entries == 1:
+                return image, header, abspath
+            else:
+                return [image], [header], [abspath]
         else:
-            return [image], [abspath]
+            if n_entries == 1:
+                return image, abspath
+            else:
+                return [image], [abspath]
     # ----------------------------------------------------------------------
     # get calibDB
     cdb = drs_database.get_full_database(params, 'calibration')
@@ -435,6 +441,9 @@ def get_input_files(params, inputkey, key, header, default=None):
     # check for input key in inputs
     if ('INPUTS' in params) and (inputkey in params['INPUTS']):
         value = params['INPUTS'][inputkey]
+        # deal with value being a list (ie.. [[filename, DrsFitsFile]])
+        if isinstance(value, list):
+            value = value[0][0]
         # if it is unset or 'None' then return the default
         if value is None or value == 'None':
             return default

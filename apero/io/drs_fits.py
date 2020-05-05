@@ -21,7 +21,7 @@ import traceback
 
 from apero.core import constants
 from apero.core.core import drs_log
-from apero import locale
+from apero import lang
 from apero.io import drs_table
 from apero.io import drs_lock
 from apero.io import drs_path
@@ -46,7 +46,7 @@ WLOG = drs_log.wlog
 # alias pcheck
 pcheck = drs_log.find_param
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
+TextEntry = lang.drs_text.TextEntry
 # TODO: This should be changed for astropy -> 2.0.1
 # bug that hdu.scale has bug before version 2.0.1
 if av.major < 2 or (av.major == 2 and av.minor < 1):
@@ -126,7 +126,7 @@ class Header(fits.Header):
 # Define read functions
 # =============================================================================
 def id_drs_file(params, recipe, drs_file_sets, filename=None, nentries=None,
-                required=True):
+                required=True, use_input_file=False):
 
     func_name = __NAME__ + '.id_drs_file()'
     # ----------------------------------------------------------------------
@@ -175,6 +175,16 @@ def id_drs_file(params, recipe, drs_file_sets, filename=None, nentries=None,
             # copy info from given_drs_file into drs_file
             file_in = drs_file.copyother(file_set, recipe=recipe)
             # --------------------------------------------------------------
+            # load the header for this kind
+            try:
+                file_in.read_header(log=False)
+            # if exception occurs continue to next file
+            #    (this is not the correct file)
+            except Exception as _:
+                continue
+            except SystemExit as _:
+                continue
+            # --------------------------------------------------------------
             # check this file is valid
             cond, _ = file_in.check_file()
             # --------------------------------------------------------------
@@ -182,10 +192,21 @@ def id_drs_file(params, recipe, drs_file_sets, filename=None, nentries=None,
             if cond:
                 # ----------------------------------------------------------
                 found = True
-                kind = file_in
+                # ----------------------------------------------------------
+                # load the data for this kind
+                cond1 = file_set.data is not None
+                cond2 = file_set.header is not None
+                # use the data if flagged and if possible (cond1 & cond2)
+                if use_input_file and cond1 and cond2:
+                    # shallow copy data
+                    file_in.data = file_set.data
+                    # copy over header
+                    file_in.header = file_set.header
+                else:
+                    file_in.read_data()
                 # ----------------------------------------------------------
                 # append to list
-                kinds.append(kind)
+                kinds.append(file_in)
                 # ----------------------------------------------------------
                 # if we only want one entry break here
                 if nentries == 1:
@@ -222,7 +243,7 @@ def id_drs_file(params, recipe, drs_file_sets, filename=None, nentries=None,
 # Define read functions
 # =============================================================================
 def readfits(params, filename, getdata=True, gethdr=False, fmt='fits-image',
-             ext=0, func=None):
+             ext=0, func=None, log=True):
     """
     The drs fits file read function
 
@@ -268,11 +289,14 @@ def readfits(params, filename, getdata=True, gethdr=False, fmt='fits-image',
     # -------------------------------------------------------------------------
     # deal with obtaining data
     if fmt == 'fits-image':
-        data, header = _read_fitsimage(params, filename, getdata, gethdr, ext)
+        data, header = _read_fitsimage(params, filename, getdata, gethdr, ext,
+                                       log=log)
     elif fmt == 'fits-table':
-        data, header = _read_fitstable(params, filename, getdata, gethdr, ext)
+        data, header = _read_fitstable(params, filename, getdata, gethdr, ext,
+                                       log=log)
     elif fmt == 'fits-multi':
-        data, header = _read_fitsmulti(params, filename, getdata, gethdr)
+        data, header = _read_fitsmulti(params, filename, getdata, gethdr,
+                                       log=log)
     else:
         cfmts = ', '.join(allowed_formats)
         eargs = [filename, fmt, cfmts, func_name]
@@ -290,15 +314,18 @@ def readfits(params, filename, getdata=True, gethdr=False, fmt='fits-image',
         return None
 
 
-def read_header(params, filename, ext=0):
+def read_header(params, filename, ext=0, log=True):
     func_name = __NAME__ + '.read_header()'
     # try to open header
     try:
         header = fits.getheader(filename, ext=ext)
     except Exception as e:
-        eargs = [os.path.basename(filename), ext, type(e), e, func_name]
-        WLOG(params, 'error', TextEntry('01-001-00010', args=eargs))
-        header = None
+        if log:
+            eargs = [os.path.basename(filename), ext, type(e), e, func_name]
+            WLOG(params, 'error', TextEntry('01-001-00010', args=eargs))
+            header = None
+        else:
+            raise e
     # return header
     return header
 
@@ -354,18 +381,21 @@ def _read_fitsmulti(params, filename, getdata, gethdr):
         return header
 
 
-def _read_fitsimage(params, filename, getdata, gethdr, ext=0):
+def _read_fitsimage(params, filename, getdata, gethdr, ext=0, log=True):
     # -------------------------------------------------------------------------
     # deal with getting data
     if getdata:
         try:
             data = fits.getdata(filename, ext=ext)
         except Exception as e:
-            string_trackback = traceback.format_exc()
-            emsg = TextEntry('01-001-00014', args=[filename, ext, type(e)])
-            emsg += '\n\n' + TextEntry(string_trackback)
-            WLOG(params, 'error', emsg)
-            data = None
+            if log:
+                string_trackback = traceback.format_exc()
+                emsg = TextEntry('01-001-00014', args=[filename, ext, type(e)])
+                emsg += '\n\n' + TextEntry(string_trackback)
+                WLOG(params, 'error', emsg)
+                data = None
+            else:
+                raise e
     else:
         data = None
     # -------------------------------------------------------------------------
@@ -374,11 +404,14 @@ def _read_fitsimage(params, filename, getdata, gethdr, ext=0):
         try:
             header = fits.getheader(filename, ext=ext)
         except Exception as e:
-            string_trackback = traceback.format_exc()
-            emsg = TextEntry('01-001-00015', args=[filename, ext, type(e)])
-            emsg += '\n\n' + TextEntry(string_trackback)
-            WLOG(params, 'error', emsg)
-            header = None
+            if log:
+                string_trackback = traceback.format_exc()
+                emsg = TextEntry('01-001-00015', args=[filename, ext, type(e)])
+                emsg += '\n\n' + TextEntry(string_trackback)
+                WLOG(params, 'error', emsg)
+                header = None
+            else:
+                raise e
     else:
         header = None
     # -------------------------------------------------------------------------
@@ -386,18 +419,21 @@ def _read_fitsimage(params, filename, getdata, gethdr, ext=0):
     return data, header
 
 
-def _read_fitstable(params, filename, getdata, gethdr, ext=0):
+def _read_fitstable(params, filename, getdata, gethdr, ext=0, log=True):
     # -------------------------------------------------------------------------
     # deal with getting data
     if getdata:
         try:
             data = Table.read(filename, format='fits')
         except Exception as e:
-            string_trackback = traceback.format_exc()
-            emsg = TextEntry('01-001-00016', args=[filename, ext, type(e)])
-            emsg += '\n\n' + TextEntry(string_trackback)
-            WLOG(params, 'error', emsg)
-            data = None
+            if log:
+                string_trackback = traceback.format_exc()
+                emsg = TextEntry('01-001-00016', args=[filename, ext, type(e)])
+                emsg += '\n\n' + TextEntry(string_trackback)
+                WLOG(params, 'error', emsg)
+                data = None
+            else:
+                raise e
     else:
         data = None
     # -------------------------------------------------------------------------
@@ -406,11 +442,14 @@ def _read_fitstable(params, filename, getdata, gethdr, ext=0):
         try:
             header = fits.getheader(filename, ext=ext)
         except Exception as e:
-            string_trackback = traceback.format_exc()
-            emsg = TextEntry('01-001-00017', args=[filename, ext, type(e)])
-            emsg += '\n\n' + TextEntry(string_trackback)
-            WLOG(params, 'error', emsg)
-            header = None
+            if log:
+                string_trackback = traceback.format_exc()
+                emsg = TextEntry('01-001-00017', args=[filename, ext, type(e)])
+                emsg += '\n\n' + TextEntry(string_trackback)
+                WLOG(params, 'error', emsg)
+                header = None
+            else:
+                raise e
     else:
         header = None
     # -------------------------------------------------------------------------
@@ -421,7 +460,8 @@ def _read_fitstable(params, filename, getdata, gethdr, ext=0):
 # =============================================================================
 # Define write functions
 # =============================================================================
-def writefits(params, filename, data, header, datatype, dtype=None, func=None):
+def writefits(params, filename, data, header, datatype='image', dtype=None,
+              func=None):
     # ------------------------------------------------------------------
     # define a synchoronized lock for indexing (so multiple instances do not
     #  run at the same time)
@@ -447,7 +487,8 @@ def writefits(params, filename, data, header, datatype, dtype=None, func=None):
         raise e
 
 
-def _write_fits(params, filename, data, header, datatype, dtype=None, func=None):
+def _write_fits(params, filename, data, header, datatype='image', dtype=None,
+                func=None):
     # deal with function name coming from somewhere else
     if func is None:
         func_name = __NAME__ + '.writefits()'
@@ -550,6 +591,18 @@ def _write_fits(params, filename, data, header, datatype, dtype=None, func=None)
     drs_log.warninglogger(params, w1)
 
 
+def add_header_key(header, keystore, value=None):
+    # only used if one cannot use DrsFitsFile
+    hkey, hvalue, hcomment = keystore
+    # deal with value set
+    if value is not None:
+        hvalue = value
+    # add to header
+    header[hkey] = (hvalue, hcomment)
+    # return header
+    return header
+
+
 # =============================================================================
 # Define search functions
 # =============================================================================
@@ -592,6 +645,7 @@ def find_files(params, recipe, kind=None, path=None, logic='and', fiber=None,
     # get the index file col name
     filecol = params['DRS_INDEX_FILENAME']
     nightcol = params['REPROCESS_NIGHTCOL']
+    timecol = 'KW_MID_OBS_TIME'
     # ----------------------------------------------------------------------
     # deal with setting path
     if path is not None:
@@ -642,6 +696,7 @@ def find_files(params, recipe, kind=None, path=None, logic='and', fiber=None,
     # valid files storage
     valid_files = []
     table_list = []
+    time_list = []
     # filters added string
     fstring = ''
     # ----------------------------------------------------------------------
@@ -715,6 +770,8 @@ def find_files(params, recipe, kind=None, path=None, logic='and', fiber=None,
                 # if both conditions are True then skip
                 if cond1 and cond2:
                     continue
+            # get time value
+            timeval = float(masked_index[timecol][row])
             # construct absolute path
             absfilename = os.path.join(dirname, nightname, filename)
             # check that file exists
@@ -725,6 +782,7 @@ def find_files(params, recipe, kind=None, path=None, logic='and', fiber=None,
             # append to storage
             if absfilename not in valid_files:
                 valid_files.append(absfilename)
+                time_list.append(timeval)
         # ------------------------------------------------------------------
         # append to table list
         if return_table:
@@ -734,13 +792,17 @@ def find_files(params, recipe, kind=None, path=None, logic='and', fiber=None,
     wargs = [len(valid_files), fstring]
     WLOG(params, '', TextEntry('40-004-00004', args=wargs))
     # ----------------------------------------------------------------------
+    # define sort mask (sort by time column)
+    sortmask = np.argsort(time_list)
+    # make sure valid_files is a numpy array
+    valid_files = np.array(valid_files)
     # deal with table list
     if return_table:
         indextable = drs_table.vstack_cols(params, table_list)
-        return valid_files, indextable
+        return valid_files[sortmask], indextable[sortmask]
     else:
         # return full list
-        return valid_files
+        return valid_files[sortmask]
 
 
 def get_index_files(params, path=None, required=True, night=None):

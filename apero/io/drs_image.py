@@ -14,7 +14,7 @@ from apero import core
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_log
-from apero import locale
+from apero import lang
 
 
 # =============================================================================
@@ -34,7 +34,7 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
+TextEntry = lang.drs_text.TextEntry
 # alias pcheck
 pcheck = core.pcheck
 

@@ -18,7 +18,7 @@ from scipy.optimize import curve_fit
 import warnings
 
 from apero import core
-from apero import locale
+from apero import lang
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_log
@@ -46,8 +46,8 @@ display_func = drs_log.display_func
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
 # alias pcheck
 pcheck = core.pcheck
 # Speed of light
@@ -60,7 +60,7 @@ speed_of_light = cc.c.to(uu.km / uu.s).value
 # =============================================================================
 # Define functions
 # =============================================================================
-def measure_fp_peaks(params, props, **kwargs):
+def measure_fp_peaks(params, props, limit, normpercent):
     """
     Measure the positions of the FP peaks
     Returns the pixels positions and Nth order of each FP peak
@@ -107,29 +107,20 @@ def measure_fp_peaks(params, props, **kwargs):
 
     """
     func_name = __NAME__ + '.create_drift_file()'
-    # get gauss function
-    gfunc = mp.gauss_function
-    # get constants from params/kwargs
-    border = pcheck(params, 'DRIFT_PEAK_BORDER_SIZE', 'border', kwargs,
-                    func_name)
-    size = pcheck(params, 'DRIFT_PEAK_FPBOX_SIZE', 'size', kwargs, func_name)
-    siglimdict = pcheck(params, 'DRIFT_PEAK_PEAK_SIG_LIM', 'siglimdict',
-                        kwargs, func_name, mapf='dict', dtype=float)
-    ipeakspace = pcheck(params, 'DRIFT_PEAK_IPEAK_SPACING', 'ipeakspace',
-                        kwargs, func_name)
 
     # get the reference data and the wave data
     speref = np.array(props['SPEREF'])
     wave = props['WAVE']
-    lamp = props['LAMP']
-
     # storage for order of peaks
+    allpeaksize = []
     allordpeak = []
     allxpeak = []
     allewpeak = []
     allvrpeak = []
     allllpeak = []
     allamppeak = []
+    alldcpeak = []
+    allshapepeak = []
     # loop through the orders
     for order_num in range(speref.shape[0]):
         # storage for order of peaks
@@ -139,70 +130,55 @@ def measure_fp_peaks(params, props, **kwargs):
         vrpeak = []
         llpeak = []
         amppeak = []
+        dcpeak = []
+        shapepeak = []
+        # storage of warnings
+        warn_dict = dict()
+        # set number of peaks rejected to zero
+        nreject = 0
+        # set a counter for total number of peaks
+        ipeak = 0
         # get the pixels for this order
         tmp = np.array(speref[order_num, :])
-        # For numerical sanity all values less than zero set to zero
-        tmp[~np.isfinite(tmp)] = 0
-        tmp[tmp < 0] = 0
-        # set border pixels to zero to avoid fit starting off the edge of image
-        tmp[0: border + 1] = 0
-        tmp[-(border + 1):] = 0
-
-        # normalize by the 98th percentile - avoids super-spurois pixels but
-        #   keeps the top of the blaze around 1
-        # norm = np.nanpercentile(tmp, 98)
-        # tmp /= norm
-
-        # peak value depends on type of lamp
-        limit = mp.nanmedian(tmp) * siglimdict[lamp]
-
-        # define the maximum pixel value of the normalized array
-        maxtmp = mp.nanmax(tmp)
-        # set up loop constants
-        xprev, ipeak = -99, 0
-        nreject = 0
+        # define indices
+        index = np.arange(len(tmp))
+        # ------------------------------------------------------------------
+        # normalize the spectrum
+        tmp = tmp / np.nanpercentile(tmp, normpercent)
+        # ------------------------------------------------------------------
+        # find the peaks
+        with warnings.catch_warnings(record=True) as w:
+            peakmask = (tmp[1:-1] > tmp[2:]) & (tmp[1:-1] > tmp[:-2])
+        peakpos = np.where(peakmask)[0]
+        # work out the FP width for this order
+        size = int(np.nanmedian(peakpos[1:] - peakpos[:-1]))
+        # ------------------------------------------------------------------
+        # mask for finding maximum peak
+        mask = np.ones_like(tmp)
+        # mask out the edges
+        mask[:size + 1] = 0
+        mask[-(size + 1):] = 0
+        # ------------------------------------------------------------------
         # loop for peaks that are above a value of limit
-        w_all = []
-        while maxtmp > limit:
-            # find the position of the maximum
-            maxpos = np.argmax(tmp)
-            # define an area around the maximum peak
-            index = np.arange(-size, 1 + size, 1) + maxpos
-            index = np.array(index).astype(int)
-            # try to fit a gaussian to that peak
-            try:
-                # set initial guess
-                p0 = [tmp[maxpos], maxpos, 1.0, mp.nanmin(tmp[index])]
-                # do gauss fit
-                #    gg = [mean, amplitude, sigma, dc]
-                with warnings.catch_warnings(record=True) as w:
-                    # noinspection PyTypeChecker
-                    gg, pcov = curve_fit(gfunc, index, tmp[index], p0=p0)
-                    w_all += list(w)
-            except ValueError:
-                # log that ydata or xdata contains NaNs
-                WLOG(params, 'warning', TextEntry('00-018-00001'))
-                gg = [np.nan, np.nan, np.nan, np.nan]
-            except RuntimeError:
-                # WLOG(p, 'warning', 'Least-squares fails')
-                gg = [np.nan, np.nan, np.nan, np.nan]
-            # little sanity check to be sure that the peak is not the same as
-            #    we got before and that there is something fishy with the
-            #    detection - dx is the distance from last peak
-            dx = np.abs(xprev - gg[1])
-            # if the distance from last position > 2 - we have a new fit
-            if dx > ipeakspace:
-                # subtract off the gaussian without the dc level
-                # (leave dc for other peaks
-                tmp[index] -= gfunc(index, gg[0], gg[1], gg[2], 0)
-            # else just set this region to zero, this is a bogus peak that
-            #    cannot be fitted
-            else:
-                tmp[index] = 0
+        while mp.nanmax(mask * tmp) > limit:
+            # --------------------------------------------------------------
+            # find peak along the order
+            maxpos = np.nanargmax(mask * tmp)
+            maxtmp = tmp[maxpos]
+            # --------------------------------------------------------------
+            # get the values around the max position
+            index_peak = index[maxpos - size: maxpos + size]
+            tmp_peak = tmp[maxpos - size: maxpos + size]
+            # --------------------------------------------------------------
+            # mask out this peak for next iteration of while loop
+            mask[maxpos - (size // 2):maxpos + (size // 2) + 1] = 0
+            # --------------------------------------------------------------
+            # return the initial guess and the best fit
+            p0, gg, _, warns = fit_fp_peaks(index_peak, tmp_peak, size)
+            # --------------------------------------------------------------
             # only keep peaks within +/- 1 pixel of original peak
             #  (gaussian fit is to find sub-pixel value)
             cond = np.abs(maxpos - gg[1]) < 1
-
             if cond:
                 # work out the radial velocity of the peak
                 lambefore = wave[order_num, maxpos - 1]
@@ -211,7 +187,6 @@ def measure_fp_peaks(params, props, **kwargs):
                 # get the radial velocity
                 waveomax = wave[order_num, maxpos]
                 radvel = speed_of_light_ms * deltalam / (2.0 * waveomax)
-
                 # add to storage
                 ordpeak.append(order_num)
                 xpeak.append(gg[1])
@@ -219,20 +194,30 @@ def measure_fp_peaks(params, props, **kwargs):
                 vrpeak.append(radvel)
                 llpeak.append(deltalam)
                 amppeak.append(maxtmp)
+                shapepeak.append(gg[3])
+                dcpeak.append(gg[4])
             else:
                 # add to rejected
                 nreject += 1
-            # recalculate the max peak
-            maxtmp = mp.nanmax(tmp)
-            # set previous peak to this one
-            xprev = gg[1]
             # iterator
             ipeak += 1
-        # display warning messages
-        drs_log.warninglogger(params, w_all)
+            # --------------------------------------------------------------
+            # deal with warnings
+            if warns is not None:
+                if warns in warn_dict:
+                    warn_dict[warns] += 1
+                else:
+                    warn_dict[warns] = 1
+            # --------------------------------------------------------------
         # log how many FPs were found and how many rejected
         wargs = [order_num, ipeak, nreject]
         WLOG(params, '', TextEntry('40-018-00001', args=wargs))
+        # ------------------------------------------------------------------
+        # print warnings
+        for key in list(warn_dict.keys()):
+            wargs = [warn_dict[key], key]
+            WLOG(params, 'warning', TextEntry('00-018-00001', args=wargs))
+        # ------------------------------------------------------------------
         # add values to all storage (and sort by xpeak)
         indsort = np.argsort(xpeak)
         allordpeak.append(np.array(ordpeak)[indsort])
@@ -241,15 +226,22 @@ def measure_fp_peaks(params, props, **kwargs):
         allvrpeak.append(np.array(vrpeak)[indsort])
         allllpeak.append(np.array(llpeak)[indsort])
         allamppeak.append(np.array(amppeak)[indsort])
+        allshapepeak.append(np.array(shapepeak)[indsort])
+        alldcpeak.append(np.array(dcpeak)[indsort])
+        allpeaksize.append(size)
     # store values in loc
     props['ORDPEAK'] = np.concatenate(allordpeak).astype(int)
     props['XPEAK'] = np.concatenate(allxpeak)
-    props['EWPEAK'] = np.concatenate(allewpeak)
+    props['PEAK2PEAK'] = np.concatenate(allewpeak)
     props['VRPEAK'] = np.concatenate(allvrpeak)
     props['LLPEAK'] = np.concatenate(allllpeak)
     props['AMPPEAK'] = np.concatenate(allamppeak)
+    props['DCPEAK'] = np.concatenate(alldcpeak)
+    props['SHAPEPEAK'] = np.concatenate(allshapepeak)
+    props['PEAKSIZE'] = np.array(allpeaksize)
     # set source
-    keys = ['ordpeak', 'xpeak', 'ewpeak', 'vrpeak', 'llpeak', 'amppeak']
+    keys = ['ORDPEAK', 'XPEAK', 'PEAK2PEAK', 'VRPEAK', 'LLPEAK', 'AMPPEAK',
+            'DCPEAK', 'SHAPEPEAK', 'PEAKSIZE']
     props.set_sources(keys, func_name)
 
     # Log the total number of FP lines found
@@ -260,7 +252,68 @@ def measure_fp_peaks(params, props, **kwargs):
     return props
 
 
-def remove_wide_peaks(params, props, **kwargs):
+def fit_fp_peaks(x, y, size, return_model=False):
+    # storage of warnings
+    warns = None
+    # get gauss function
+    ea_airy = mp.ea_airy_function
+    # set up initial guess
+    pnames = ['amp', 'pos', 'period', 'shape', 'dc']
+    # [amp, position, period, exponent, zero point]
+    p0 = [np.max(y) - np.min(y), np.median(x), size, 1.5,
+          np.max([0, np.min(y)])]
+    # set up the bounds
+    lowerbounds = [0.5 * p0[0], p0[1] - 2, 0.7 * p0[2], 1.0, 0.0]
+    upperbounds = [2.0 * p0[0], p0[1] + 2, 1.3 * p0[2], 10.0, 0.5 * p0[0]]
+    bounds = [lowerbounds, upperbounds]
+    # test bounds make sense
+    for p_it in range(len(lowerbounds)):
+        if lowerbounds[p_it] >= upperbounds[p_it]:
+            if warns is None:
+                warns = ''
+            warns += ('\nBoundError: Lower bound {0} incorrect (lower={1} '
+                      'upper={2})')
+            warns += warns.format(pnames[p_it], lowerbounds[p_it],
+                                  upperbounds[p_it])
+        if p0[p_it] < lowerbounds[p_it] or p0[p_it] > upperbounds[p_it]:
+            if warns is None:
+                warns = ''
+            warns += ('\nBoundError: Inital guess for {0} out of bounds '
+                      '(guess={1} lower={2} upper={3})')
+            warns += warns.format(pnames[p_it], p0[p_it],
+                                  lowerbounds[p_it], upperbounds[p_it])
+
+    # deal with bad bounds
+    if warns is not None:
+        popt = [np.nan, np.nan, np.nan, np.nan, np.nan]
+        pcov = None
+        model = np.repeat([np.nan], len(x))
+    else:
+        # try to fit etiennes airy function
+        try:
+            with warnings.catch_warnings(record=True) as _:
+                popt, pcov = curve_fit(ea_airy, x, y, p0=p0, bounds=bounds)
+            model = ea_airy(x, *popt)
+        except ValueError as e:
+            # log that ydata or xdata contains NaNs
+            popt = [np.nan, np.nan, np.nan, np.nan, np.nan]
+            pcov = None
+            warns = '{0}: {1}'.format(type(e), e)
+            model = np.repeat([np.nan], len(x))
+        except RuntimeError as e:
+            popt = [np.nan, np.nan, np.nan, np.nan, np.nan]
+            pcov = None
+            warns = '{0}: {1}'.format(type(e), e)
+            model = np.repeat([np.nan], len(x))
+    # deal with returning model
+    if return_model:
+        return p0, popt, pcov, warns, model
+    else:
+        # return the guess and the best fit
+        return p0, popt, pcov, warns
+
+
+def remove_wide_peaks(params, props, cutwidth):
     """
     Remove peaks that are too wide
 
@@ -305,21 +358,14 @@ def remove_wide_peaks(params, props, **kwargs):
                          (masked to remove wide peaks)
     """
     func_name = __NAME__ + '.remove_wide_peaks()'
-    # get constants
-    expwidth = pcheck(params, 'DRIFT_PEAK_EXP_WIDTH', 'expwidth', kwargs,
-                      func_name)
-    cutwidth = pcheck(params, 'DRIFT_PEAK_NORM_WIDTH_CUT', 'cutwidth',
-                      kwargs, func_name)
-    peak_spacing = pcheck(params, 'DRIFT_PEAK_IPEAK_SPACING', 'peak_spacing',
-                          kwargs, func_name)
 
     # define a mask to cut out wide peaks
-    mask = np.abs(np.array(props['EWPEAK']) - expwidth) < cutwidth
+    mask = np.array(props['PEAK2PEAK']) < cutwidth
 
     # apply mask
     props['ORDPEAK'] = props['ORDPEAK'][mask]
     props['XPEAK'] = props['XPEAK'][mask]
-    props['EWPEAK'] = props['EWPEAK'][mask]
+    props['PEAK2PEAK'] = props['PEAK2PEAK'][mask]
     props['VRPEAK'] = props['VRPEAK'][mask]
     props['LLPEAK'] = props['LLPEAK'][mask]
     props['AMPPEAK'] = props['AMPPEAK'][mask]
@@ -341,6 +387,8 @@ def remove_wide_peaks(params, props, **kwargs):
         xpeak = props['XPEAK'][gg]
         # get the amplitudes
         amppeak = props['AMPPEAK'][gg]
+        # get peak spacing
+        peak_spacing = props['PEAKSIZE'][order_num] / 2
         # get the points where two peaks are spaced by < peak_spacing
         ind = np.argwhere(xpeak[1:] - xpeak[:-1] < peak_spacing)
         # get the indices of the second peak of each pair
@@ -356,7 +404,7 @@ def remove_wide_peaks(params, props, **kwargs):
         # save good lines
         ordpeak_k += list(props['ORDPEAK'][gg][xmask])
         xpeak_k += list(props['XPEAK'][gg][xmask])
-        ewpeak_k += list(props['EWPEAK'][gg][xmask])
+        ewpeak_k += list(props['PEAK2PEAK'][gg][xmask])
         vrpeak_k += list(props['VRPEAK'][gg][xmask])
         llpeak_k += list(props['LLPEAK'][gg][xmask])
         amppeak_k += list(props['AMPPEAK'][gg][xmask])
@@ -364,13 +412,13 @@ def remove_wide_peaks(params, props, **kwargs):
     # replace FP peak arrays in loc
     props['ORDPEAK'] = np.array(ordpeak_k)
     props['XPEAK'] = np.array(xpeak_k)
-    props['EWPEAK'] = np.array(ewpeak_k)
+    props['PEAK2PEAK'] = np.array(ewpeak_k)
     props['VRPEAK'] = np.array(vrpeak_k)
     props['LLPEAK'] = np.array(llpeak_k)
     props['AMPPEAK'] = np.array(amppeak_k)
 
     # append this function to sources
-    keys = ['ordpeak', 'xpeak', 'ewpeak', 'vrpeak', 'llpeak', 'amppeak']
+    keys = ['ordpeak', 'xpeak', 'PEAK2PEAK', 'vrpeak', 'llpeak', 'amppeak']
     props.append_sources(keys, func_name)
 
     # log number of lines removed for suspicious width
@@ -378,9 +426,8 @@ def remove_wide_peaks(params, props, **kwargs):
     WLOG(params, 'info', TextEntry('40-018-00003', args=wargs))
 
     # log number of lines removed as double-fitted
-    if len(props['XPEAK_OLD']) > len(props['XPEAK']):
-        wargs = [len(props['XPEAK_OLD']) - len(props['XPEAK'])]
-        WLOG(params, 'info', TextEntry('40-018-00004', args=wargs))
+    wargs = [len(props['XPEAK_OLD']) - len(props['XPEAK'])]
+    WLOG(params, 'info', TextEntry('40-018-00004', args=wargs))
 
     # return props
     return props
@@ -559,13 +606,6 @@ def fill_e2ds_nans(params, image, **kwargs):
         # set the NaN values to the smooth value
         image2[order_num][nanmask] = smooth[nanmask]
 
-        if params['DRS_PLOT'] > 0 and params['DRS_DEBUG'] > 1:
-            # TODO: add plot
-            pass
-            # plt.plot(smooth)
-            # plt.plot(image2[order_num])
-            # plt.show()
-
     # return the filled e2ds
     return image2
 
@@ -645,7 +685,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
             wargs = [params['KW_INPUTRV'][0], infile.filename]
             WLOG(params, 'warning', TextEntry('09-020-00006', args=wargs))
             targetrv = 0.0
-        elif targetrv == null_targetrv:
+        elif np.abs(targetrv) > null_targetrv:
             wargs = [params['KW_INPUTRV'][0], null_targetrv, infile.filename]
             WLOG(params, 'warning', TextEntry('09-020-00007', args=wargs))
             targetrv = 0.0
@@ -704,9 +744,6 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     mkwargs = dict(filename=ccfmask, mask_min=mask_min, mask_width=mask_width,
                    mask_units=mask_units)
     ll_mask_d, ll_mask_ctr, w_mask = get_ccf_mask(params, **mkwargs)
-
-    # TODO: remove break point
-    constants.break_point(params)
 
     # calculate the CCF
     props = ccf_calculation(params, image, blaze, wavemap, berv, targetrv,
@@ -838,15 +875,6 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     berv = 0
     # the fit type must be set to 1 (for emission lines)
     fit_type = 1
-    # ----------------------------------------------------------------------
-    # Check we are using correct fiber
-    # ----------------------------------------------------------------------
-    pconst = constants.pload(params['INSTRUMENT'])
-    sfiber, rfiber = pconst.FIBER_CCF()
-    if fiber != rfiber:
-        # log that the science fiber was not correct
-        eargs = [fiber, rfiber, infile.name, infile.filename]
-        WLOG(params, 'error', TextEntry('09-020-00004', args=eargs))
     # ------------------------------------------------------------------
     # Compute photon noise uncertainty for FP
     # ------------------------------------------------------------------
@@ -951,17 +979,20 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     # ----------------------------------------------------------------------
     # loop around every order
     recipe.plot('CCF_RV_FIT_LOOP', params=params, x=props['RV_CCF'],
-                y=props['CCF'], yfit=props['CCF_FIT'], kind='FP',
+                y=props['CCF'], yfit=props['CCF_FIT'],
+                kind='FP fiber={0}'.format(fiber),
                 rv=props['CCF_FIT_COEFFS'][:, 1], ccfmask=ccfmask,
                 orders=np.arange(len(props['CCF'])), order=None)
     # the mean ccf
     recipe.plot('CCF_RV_FIT', params=params, x=props['RV_CCF'],
-                y=mean_ccf, yfit=mean_ccf_fit, kind='MEAN FP',
+                y=mean_ccf, yfit=mean_ccf_fit,
+                kind='MEAN FP fiber={0}'.format(fiber),
                 rv=props['MEAN_CCF_COEFFS'][1], ccfmask=ccfmask,
                 orders=None, order=None)
     # the mean ccf for summary
     recipe.plot('SUM_CCF_RV_FIT', params=params, x=props['RV_CCF'],
-                y=mean_ccf, yfit=mean_ccf_fit, kind='MEAN SCIENCE',
+                y=mean_ccf, yfit=mean_ccf_fit,
+                kind='MEAN FP fiber={0}'.format(fiber),
                 rv=ccf_rv, ccfmask=ccfmask,
                 orders=None, order=None)
 
@@ -998,7 +1029,6 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
     ccf_lines = []
     ccf_all_snr = []
     ccf_norm_all = []
-
     # ----------------------------------------------------------------------
     # loop around the orders
     for order_num in range(nbo):
@@ -1009,7 +1039,6 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         wa_ord = np.array(wavemap[order_num])
         sp_ord = np.array(image[order_num])
         bl_ord = np.array(blaze[order_num])
-
         # normalize per-ord blaze to its peak value
         # this gets rid of the calibration lamp SED
         bl_ord /= np.nanpercentile(bl_ord, blaze_norm_percentile)
@@ -1316,6 +1345,11 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     ccf_file.add_hkey('KW_CCF_RV_DRIFT', value=props['RV_DRIFT'])
     ccf_file.add_hkey('KW_CCF_RV_OBJ', value=props['RV_OBJ'])
     ccf_file.add_hkey('KW_CCF_RV_CORR', value=props['RV_CORR'])
+    ccf_file.add_hkey('KW_CCF_RV_WAVEFILE', value=props['RV_WAVEFILE'])
+    ccf_file.add_hkey('KW_CCF_RV_WAVETIME', value=props['RV_WAVETIME'])
+    ccf_file.add_hkey('KW_CCF_RV_TIMEDIFF', value=props['RV_TIMEDIFF'])
+    ccf_file.add_hkey('KW_CCF_RV_WAVESRCE', value=props['RV_WAVESRCE'])
+
     # ----------------------------------------------------------------------
     # add qc parameters
     ccf_file.add_qckeys(qc_params)

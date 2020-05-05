@@ -13,7 +13,7 @@ import importlib
 import sys
 import os
 
-from apero.locale import drs_exceptions
+from apero.lang import drs_exceptions
 
 # =============================================================================
 # Define variables

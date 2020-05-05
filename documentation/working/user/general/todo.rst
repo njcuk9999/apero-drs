@@ -6,7 +6,7 @@ TODO
 ************************************************************************************
 
 This is the currently list of items that need to still be completed.
-Last updated: 2020-02-27 (NJC).
+Last updated: 2020-05-04 (NJC).
 
 .. note:: bullet points are not ordered
 
@@ -18,9 +18,7 @@ For all instruments / in general.
 
 High priority:
 
-* add in `dark_fp` correction
 * fix headers for having bad wave and loc keys (remove?) [NEEDS DISCUSSION]
-* add rv from header for ccf [WHERE in processing code? or in recipe?]
 
 Low priority:
 
@@ -71,18 +69,19 @@ SPIRou specific
 =========================================
 High priority:
 
-* add exposure meter recipes (`cal_exposuremeter_spirou.py`)
+* add CCF to QC of wave night
+* put A and B wavesolutions in e2ds_A and e2ds_B files (currently still AB)
+* add CCF output for wave solutions (CCF per order like in CCF recipe)
+* add fplines for all extracted FPs (C fiber in cal_extract)
+* bisector for CCF (new extension in CCF outputs?)
+* object database (in preprocessing?)
+* polar code update
+* EA masks from templates
 
 Low priority:
 
 * output files like CFHT (e.fits, p.fits, v.fits etc)
 * finish `obj_spec_spirou` and `obj_pol_spirou` [Do not use them now]
-* output in form required for CFHT/CADC (discussion required)
-
-Later:
-
-* T.B.D.
-
 
 =========================================
 NIRPS specific
@@ -102,7 +101,6 @@ Low priority:
 Later:
 
 * T.B.D.
-
 
 
 .. only:: html

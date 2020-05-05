@@ -17,7 +17,7 @@ from astropy.time import Time
 from astropy.coordinates import SkyCoord
 
 from apero import core
-from apero import locale
+from apero import lang
 from apero.core import constants
 from apero.core import math as mp
 from apero.io import drs_fits
@@ -43,8 +43,8 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
 # alias pcheck
 pcheck = core.pcheck
 

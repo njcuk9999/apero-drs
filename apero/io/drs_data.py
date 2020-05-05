@@ -16,7 +16,7 @@ import glob
 
 from apero import core
 from apero.core import constants
-from apero import locale
+from apero import lang
 from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.io import drs_path
@@ -43,8 +43,8 @@ DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
 # alias pcheck
 pcheck = core.pcheck
 
@@ -85,7 +85,7 @@ def load_linelist(params, **kwargs):
     # add back to kwargs
     kwargs['fmt'] = tablefmt
     kwargs['colnames'] = tablecols
-    kwargs['data_start'] = tablestart
+    kwargs['datastart'] = int(tablestart)
 
     # return image
     try:
@@ -172,22 +172,26 @@ def load_full_flat_badpix(params, **kwargs):
         WLOG(params, 'error', TextEntry('00-012-00001', args=eargs))
 
 
-def load_full_flat_pp(params, **kwargs):
+def load_hotpix(params, **kwargs):
     # get parameters from params/kwargs
     func_name = kwargs.get('func', __NAME__ + '.load_full_flat_pp()')
     relfolder = pcheck(params, 'DATA_ENGINEERING', 'directory', kwargs,
                        func_name)
-    filename = pcheck(params, 'PP_FULL_FLAT', 'filename', kwargs,
+    filename = pcheck(params, 'PP_HOTPIX_FILE', 'filename', kwargs,
                       func_name)
     return_filename = kwargs.get('return_filename', False)
+    # add table fmt
+    kwargs['fmt'] = kwargs.get('fmt', 'csv')
+    kwargs['datastart'] = 1
     # deal with return_filename
     if return_filename:
         return construct_path(params, filename, relfolder, func=func_name)
-    # return image
+    # return table
     try:
-        image, outf = load_fits_file(params, filename, relfolder, func_name)
+        table, outf = load_table_file(params, filename, relfolder, kwargs,
+                                      func_name)
         WLOG(params, '', TextEntry('40-010-00011', args=outf))
-        return image
+        return table
     except LoadException:
         eargs = [filename, relfolder]
         WLOG(params, 'error', TextEntry('00-010-00002', args=eargs))
@@ -393,7 +397,7 @@ def load_table_file(params, filename, directory, kwargs, func_name):
     absfilename = construct_path(params, filename, directory,
                                  func=func_name)
     # extra parameters
-    fmt = kwargs.get('fmt', None)
+    fmt = kwargs.get('fmt', 'fits')
     colnames = kwargs.get('colnames', None)
     datastart = kwargs.get('datastart', 0)
     # check that filepath exists and log an error if it was not found
