@@ -61,6 +61,8 @@ pcheck = core.pcheck
 speed_of_light_ms = cc.c.to(uu.m / uu.s).value
 # noinspection PyUnresolvedReferences
 speed_of_light_kms = cc.c.to(uu.km / uu.s).value
+# Get function string
+display_func = drs_log.display_func
 
 
 # =============================================================================
@@ -892,6 +894,41 @@ def save_uncorrected_ext_fp(params, extractdict):
             outpath = os.path.join(indir, outfile)
             # copy files
             drs_path.copyfile(params, inpath, outpath)
+
+
+def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, **kwargs):
+    # set up function name
+    func_name = display_func(params, 'ref_fplines', __NAME__)
+    # get constant from params
+    allowtypes = pcheck(params, 'WAVE_FP_DPRLIST', 'fptypes', kwargs, func_name,
+                        mapf='list')
+    # get dprtype
+    dprtype = e2dsfile.get_key('KW_DPRTYPE', dtype=str)
+    # get psuedo constants
+    pconst = constants.pload(params['INSTRUMENT'])
+    sfibers, rfiber = pconst.FIBER_KINDS()
+    # ----------------------------------------------------------------------
+    # deal with fiber
+    if fiber != rfiber:
+        return None
+    # ----------------------------------------------------------------------
+    # deal with allowed dprtypes
+    if dprtype not in allowtypes:
+        return None
+    # ----------------------------------------------------------------------
+    # get master hc lines and fp lines from calibDB
+    wout = wave.get_wavelines(params, recipe, fiber, infile=e2dsfile)
+    mhclines, mhclsource, mfplines, mfplsource = wout
+    # deal with no fplines found
+    if mfplines is None:
+        return None
+    # ----------------------------------------------------------------------
+    # generate the fp reference lines
+    fpargs = dict(e2dsfile=e2dsfile, wavemap=wavemap, fplines=mfplines)
+    rfpl = wave.get_master_lines(params, recipe, **fpargs)
+    # ----------------------------------------------------------------------
+    # return fp lines for e2ds file
+    return rfpl
 
 
 # =============================================================================
