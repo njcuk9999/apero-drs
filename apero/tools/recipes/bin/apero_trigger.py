@@ -9,7 +9,7 @@ Created on 2019-11-02 10:10
 Version 0.0.1
 """
 from apero import core
-from apero import locale
+from apero import lang
 from apero.core import constants
 
 # TODO: Alll functionality should be in tools/module/setup/drs_trigger.py
@@ -30,8 +30,8 @@ __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
 
 
 # =============================================================================

@@ -19,7 +19,7 @@ import warnings
 from apero import core
 from apero.core import constants
 from apero.core import math as mp
-from apero import locale
+from apero import lang
 from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.core.core import drs_startup
@@ -51,8 +51,8 @@ DrsNpyFile = drs_file.DrsNpyFile
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
 # alias pcheck
 pcheck = core.pcheck
 # -----------------------------------------------------------------------------
@@ -1495,6 +1495,7 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
     values = ['LEAK_BCKGRD_PERCENTILE_USED', 'LEAK_NORM_PERCENTILE_USED',
               'LEAK_LOW_PERCENTILE_USED', 'LEAK_HIGH_PERCENTILE_USED',
               'LEAK_BAD_RATIO_OFFSET_USED']
+
     # ----------------------------------------------------------------------
     # 2D files
     # ----------------------------------------------------------------------
@@ -1540,8 +1541,8 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
         # ------------------------------------------------------------------
         # Store S1D_W in file
         # ------------------------------------------------------------------
-        # copy header from e2dsll file
-        s1dwfile.copy_hdict(extfile)
+        # copy header from e2dsff file
+        s1dwfile.copy_header(extfile)
         # set output key
         s1dwfile.add_hkey('KW_OUTPUT', value=s1dwfile.name)
         # add new header keys
@@ -1561,8 +1562,8 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
         # ------------------------------------------------------------------
         # Store S1D_V in file
         # ------------------------------------------------------------------
-        # copy header from e2dsll file
-        s1dvfile.copy_hdict(extfile)
+        # copy header from e2dsff file
+        s1dvfile.copy_header(extfile)
         # add new header keys
         s1dvfile = add_s1d_keys(s1dvfile, svprops)
         # set output key

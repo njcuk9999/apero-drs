@@ -164,10 +164,9 @@ def copy_update(all_params):
         drs_path.copytree(old_directories[it], new_directories[it])
     # copy filesnew_directories
     for it in range(len(old_files)):
-        # update text
-        f = open(old_files[it], 'r')
-        lines = f.readlines()
-        f.close()
+        # read the lines
+        with open(old_files[it], 'r') as f:
+            lines = f.readlines()
         # storage new line text
         newlines = []
         # loop around lines
@@ -181,10 +180,9 @@ def copy_update(all_params):
                     line = line.replace(oldtext, newtext)
             # add line to newlines
             newlines.append(line)
-        # write new file
-        f = open(new_files[it], 'w')
-        f.writelines(newlines)
-        f.close()
+        # write the lines
+        with open(new_files[it], 'w') as f:
+            f.writelines(newlines)
 
 
 # =============================================================================

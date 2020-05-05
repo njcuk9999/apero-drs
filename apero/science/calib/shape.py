@@ -19,7 +19,7 @@ import warnings
 
 from apero import core
 from apero.core import constants
-from apero import locale
+from apero import lang
 from apero.core import math as mp
 from apero.core.core import drs_log
 from apero.core.core import drs_file
@@ -48,8 +48,8 @@ DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
 # alias pcheck
 pcheck = core.pcheck
 
@@ -537,9 +537,9 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
     min_good_corr = pcheck(params, 'SHAPE_MIN_GOOD_CORRELATION',
                            'min_good_corr', kwargs, func_name)
     short_medfilt_wid = pcheck(params, 'SHAPE_SHORT_DX_MEDFILT_WID',
-                                 'short_medfilt_width', kwargs, func_name)
+                               'short_medfilt_width', kwargs, func_name)
     long_medfilt_wid = pcheck(params, 'SHAPE_LONG_DX_MEDFILT_WID',
-                                'long_medfilt_width', kwargs, func_name)
+                              'long_medfilt_width', kwargs, func_name)
     std_qc = pcheck(params, 'SHAPE_QC_DXMAP_STD', 'std_qc', kwargs, func_name)
 
     # get properties from property dictionaries
@@ -556,9 +556,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
     xsec_arr, ccor_arr = [], []
     ddx_arr, dx_arr = [], []
     dypix_arr, cckeep_arr = [], []
-    shifts_arr, xpeak2_arr = [], []
-    peakval2_arr, ewval2_arr = [], []
-    err_pix_arr, good_mask_arr = [], []
+    dxrms_arr = []
     # define storage for output
     master_dxmap = np.zeros_like(fpdata)
     map_orders = np.zeros_like(fpdata) - 1
@@ -602,8 +600,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
         # set up iteration storage
         slope_deg_arr_i, slope_arr_i, skeep_arr_i = [], [], []
         xsec_arr_i, ccor_arr_i, ddx_arr_i, dx_arr_i = [], [], [], []
-        dypix_arr_i, cckeep_arr_i = [], []
-        xpeak2, peakval2, ewval2, err_pix, good_mask = [], [], [], [], []
+        dypix_arr_i, cckeep_arr_i, dxrms_arr_i = [], [], []
         corr_dx_from_fp = np.zeros((nbo, dim2))
         shifts_all = np.zeros((nbo, dim2))
         # get dx array (NaN)
@@ -791,8 +788,6 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
                 # push spline values with shift into ribbon2
                 ribbon_hc2[iw, :] = spline_hc(xpix + ddx)
 
-
-
             # -------------------------------------------------------------
             # get the median values of the fp and hc
             sp_fp = mp.nanmedian(ribbon_fp2, axis=0)
@@ -800,16 +795,14 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
 
             pargs = [params, sp_fp, sp_hc, order_num, hcdata,
                      poly_wave_ref, une_lines, poly_cavity]
-
-            out = get_offset_sp(*pargs)
-            # get and save offest outputs into lists
-            corr_dx_from_fp[order_num] = out[0]
-            xpeak2.append(out[1])
-            peakval2.append(out[2])
-            ewval2.append(out[3])
-            err_pix.append(out[4])
-            good_mask.append(out[5])
-
+            # out = get_offset_sp(*pargs)
+            # # get and save offest outputs into lists
+            # corr_dx_from_fp[order_num] = out[0]
+            # xpeak2.append(out[1])
+            # peakval2.append(out[2])
+            # ewval2.append(out[3])
+            # err_pix.append(out[4])
+            # good_mask.append(out[5])
             # -------------------------------------------------------------
             # median FP peak profile. We will cross-correlate each
             # row of the ribbon with this
@@ -850,8 +843,6 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
             # -------------------------------------------------------------
             # remove any offset in dx, this would only shift the spectra
 
-
-
             # TODO : bad bad bad, don't comment out yet!
             dypix = np.arange(len(dx[order_num]))
             with warnings.catch_warnings(record=True):
@@ -864,6 +855,8 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
             dx_arr_i.append(np.array(dx[order_num]))
             dypix_arr_i.append(np.array(dypix))
             cckeep_arr_i.append(np.array(keep))
+            # get rms values
+            dxrms_arr_i.append(np.array(dx[order_num] - np.nanmin(ddx)))
             # -----------------------------------------------------------------
             # set those values that should not be kept to NaN
             dx[order_num][~keep] = np.nan
@@ -978,7 +971,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
 
                     # get shifts combination of ddx and dx0 correction
                     ddx_f = ddx + dx0
-                    shifts = ddx_f[pos_y_mask] #- corr_dx_from_fp[order_num][ix]
+                    shifts = ddx_f[pos_y_mask]  # - corr_dx_from_fp[order_num][ix]
                     shifts_all[order_num][ix] = np.nanmean(shifts)
                     # apply shifts to master dx map at correct positions
                     master_dxmap[positions, ix] += shifts
@@ -996,15 +989,13 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
                         dxmap = None
                         max_dxmap_std = dxmap_std
                         max_dxmap_info = [order_num, ix, std_qc]
-                        return dxmap, max_dxmap_std, max_dxmap_info
+                        # return dxmap, max_dxmap_std, max_dxmap_info, None
         # -----------------------------------------------------------------
         # plot all order angle_offset plot (in loop)
         pkwargs = dict(slope_deg=[slope_deg_arr_i], slope=[slope_arr_i],
                        skeep=[skeep_arr_i], xsection=[xsec_arr_i],
                        ccor=[ccor_arr_i], ddx=[ddx_arr_i], dx=[dx_arr_i],
-                       dypix=[dypix_arr_i], ckeep=[cckeep_arr_i],
-                       shifts=[shifts_all], xpeak2=[xpeak2], err_pix=[err_pix],
-                       good=[good_mask])
+                       dypix=[dypix_arr_i], ckeep=[cckeep_arr_i])
         recipe.plot('SHAPE_ANGLE_OFFSET_ALL', params=params, bnum=banana_num,
                     nbo=nbo, nbpix=dim2, **pkwargs)
         # ---------------------------------------------------------------------
@@ -1013,17 +1004,12 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
         skeep_arr.append(skeep_arr_i), xsec_arr.append(xsec_arr_i)
         ccor_arr.append(ccor_arr_i), ddx_arr.append(ddx_arr_i)
         dx_arr.append(dx_arr_i), dypix_arr.append(dypix_arr_i)
-        cckeep_arr.append(cckeep_arr_i)
-        shifts_arr.append(shifts_all), xpeak2_arr.append(xpeak2)
-        peakval2_arr.append(peakval2), ewval2_arr.append(ewval2)
-        err_pix_arr.append(err_pix), good_mask_arr.append(good_mask)
+        dxrms_arr.append(dxrms_arr_i), cckeep_arr.append(cckeep_arr_i)
     # ---------------------------------------------------------------------
     # plot selected order angle_offset plot
     pkwargs = dict(slope_deg=slope_deg_arr, slope=slope_arr,
                    skeep=skeep_arr, xsection=xsec_arr, ccor=ccor_arr,
-                   ddx=ddx_arr, dx=dx_arr, dypix=dypix_arr, ckeep=cckeep_arr,
-                   shifts=shifts_arr, xpeak2=xpeak2_arr,
-                   err_pix=err_pix_arr, good=good_mask_arr)
+                   ddx=ddx_arr, dx=dx_arr, dypix=dypix_arr, ckeep=cckeep_arr)
     # plot as debug plot
     recipe.plot('SHAPE_ANGLE_OFFSET', params=params, bnum=None, nbo=nbo,
                 nbpix=dim2, **pkwargs)
@@ -1040,8 +1026,17 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
     # save qc
     max_dxmap_std = mp.nanmax(dxmap_stds)
     max_dxmap_info = [None, None]
+    # ---------------------------------------------------------------------
+    # calculate rms for dx-ddx (last iteration)
+    dxrms = []
+    for order_num in range(nbo):
+        # get the keep mask
+        keep = cckeep_arr[-1][order_num]
+
+        dxrms.append(np.nanstd(dxrms_arr[-1][order_num][keep]))
+    # ---------------------------------------------------------------------
     # return parameters
-    return master_dxmap, max_dxmap_std, max_dxmap_info
+    return master_dxmap, max_dxmap_std, max_dxmap_info, dxrms
 
 
 def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
@@ -1124,7 +1119,8 @@ def get_master_fp(params, header, filename=None):
     # ------------------------------------------------------------------------
     # load calib file
     fpmaster, fpmaster_file = general.load_calib_file(params, key, header,
-                                                      filename=filename)
+                                                      filename=filename,
+                                                      n_entries=1)
     # log which fpmaster file we are using
     WLOG(params, '', TextEntry('40-014-00030', args=[fpmaster_file]))
     # return the master image
@@ -1364,16 +1360,37 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     return outfile1, outfile2, outfile3
 
 
-def shape_master_qc(params):
-    # TODO: Decide on some extra quality control?
+def shape_master_qc(params, dxrms=None, **kwargs):
+    func_name = __NAME__ + '.shape_master_qc()'
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
     textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
-    # no quality control currently
-    qc_values.append('None')
-    qc_names.append('None')
-    qc_logic.append('None')
-    qc_pass.append(1)
+    # get dxrms criteria
+    dxrmscut = pcheck(params, 'SHAPE_MASTER_DX_RMS_QC', 'dxrmscut', kwargs,
+                      func_name)
+    # ------------------------------------------------------------------
+    # dxmap and dxrms can be None
+    if dxrms is None:
+        # no quality control currently
+        qc_values.append('None')
+        qc_names.append('None')
+        qc_logic.append('None')
+        qc_pass.append(1)
+    else:
+        # loop around orders and check dx rms
+        for order_num in range(len(dxrms)):
+            # get qcargs
+            qcargs = [order_num, dxrms[order_num], dxrmscut]
+            # check that rms is below required level
+            if dxrms[order_num] > dxrmscut:
+                fail_msg.append(textdict['40-014-00042'].format(*qcargs))
+                qc_pass.append(0)
+            else:
+                qc_pass.append(1)
+            # add to qc header lists
+            qc_values.append(dxrms[order_num])
+            qc_names.append('dxrms')
+            qc_logic.append('dxrms{0} > {2:.2f}'.format(*qcargs))
     # ------------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
@@ -1615,9 +1632,9 @@ def xy_acc_peak(xpeak, ypeak, im):
     return x1, y1
 
 
-def get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata,
-                   poly_wave_ref, une_lines, poly_cavity,
-                   **kwargs):
+# TODO: function no longer used (was used in calculate_dxmap)
+def get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata, poly_wave_ref,
+                  une_lines, poly_cavity, **kwargs):
     func_name = __NAME__ + '.get_offset_sp'
     # get constants from params/kwargs
     xoffset = pcheck(params, 'SHAPEOFFSET_XOFFSET', 'xoffset', kwargs,
@@ -1862,6 +1879,12 @@ def get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata,
         xpos_predict = np.polyval(fitzp, une_lines)
         # deal with borders
         good = (xpos_predict > 0) & (xpos_predict < dim2)
+        # doing this for order where there are no UNe lines
+        if np.sum(good) == 0:
+            WLOG(params, 'warning', TextEntry('40-014-00040', args=[order_num]))
+            best_zp = fp_peak0_est - fpindex[0]
+            break
+        # mask
         xpos_predict = xpos_predict[good]
         # we check how many of these lines indeed fall on > "fit_hc_sigma"
         #    sigma excursion of the HC spectrum

@@ -8,13 +8,7 @@ APERO Documentation
 ******************************************
 
 ===========================================
-Latest version: 0.6.063.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
-   user/general_guide.rst
-   user/spirou.rst
-   dev/developer_guide.rst
+Latest version: 0.6.082   dev/developer_guide.rst
 
 ===========================================
 Other

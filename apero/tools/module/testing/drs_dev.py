@@ -13,11 +13,11 @@ import sys
 
 from apero import core
 from apero.core import constants
-from apero.locale import drs_text
+from apero.lang import drs_text
 from apero.core.constants import constant_functions as cf
 from apero.core.constants import param_functions as pf
 from apero.core.core import drs_recipe
-
+from apero.core.core import drs_file
 
 # =============================================================================
 # Define variables
@@ -45,6 +45,9 @@ HelpEntry = drs_text.HelpEntry
 HelpText = drs_text.HelpDict
 # get DrsRecipe
 DrsRecipe = drs_recipe.DrsRecipe
+DrsFitsFile = drs_file.DrsFitsFile
+DrsInputFile = drs_file.DrsInputFile
+DrsNpyFile = drs_file.DrsNpyFile
 # recipe control path
 INSTRUMENT_PATH = Constants['DRS_MOD_INSTRUMENT_CONFIG']
 CORE_PATH = Constants['DRS_MOD_CORE_CONFIG']
@@ -95,6 +98,49 @@ class RecipeDefinition():
             if isinstance(arg, TmpRecipe):
                 self.recipes.append(arg)
 
+
+class TmpInputFile(DrsFitsFile):
+    def __init__(self, name, **kwargs):
+        # load super class
+        super().__init__(name, **kwargs)
+
+
+class TmpFitsFile(DrsFitsFile):
+    def __init__(self, name, **kwargs):
+        # load super class
+        super().__init__(name, **kwargs)
+
+
+class TmpNpyFile(DrsFitsFile):
+    def __init__(self, name, **kwargs):
+        # load super class
+        super().__init__(name, **kwargs)
+
+
+class FileDefinition():
+    def __init__(self, instrument=None):
+        self.instrument = instrument
+        self.files = None
+        self.out = None
+        # populate files using instrument
+        self.populate_files()
+
+    def populate_files(self):
+        func_name = __NAME__ + '.FileDefinition.populate_files()'
+        # deal with no instrument
+        if self.instrument == 'None' or self.instrument is None:
+            ipath = CORE_PATH
+            self.instrument = None
+        else:
+            ipath = INSTRUMENT_PATH
+        # get recipe definitions module
+        margs = [self.instrument, ['file_definitions.py'], ipath, CORE_PATH]
+        modules = constants.getmodnames(*margs, path=False)
+        # load module
+        mod = constants.import_module(func_name, modules[0], full=True)
+        # add to recipes
+        self.files = mod
+        self.out = mod.out
 
 class Demo:
     """

@@ -23,8 +23,8 @@ from apero import core
 from apero.core.core import drs_startup
 from apero.core.core import drs_log
 from apero.core.core import drs_recipe
-from apero import locale
-from apero.locale import drs_exceptions
+from apero import lang
+from apero.lang import drs_exceptions
 from apero.core import constants
 from apero import plotting
 from apero.io import drs_table
@@ -52,8 +52,8 @@ WLOG = core.wlog
 # get the parameter dictionary
 ParamDict = constants.ParamDict
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
 # alias pcheck
 pcheck = core.pcheck
 
@@ -93,6 +93,7 @@ SPECIAL_LIST_KEYS = drs_recipe.SPECIAL_LIST_KEYS
 class Run:
     def __init__(self, params, runstring, mod=None, priority=0, inrecipe=None):
         self.params = params
+        self.pconst = constants.pload(params['INSTRUMENT'])
         self.runstring = runstring
         self.priority = priority
         self.args = []
@@ -219,6 +220,8 @@ class Run:
         # find the recipe
         if self.recipe is None:
             self.recipe, self.module = self.find_recipe(self.module)
+            # get filemod and recipe mod
+            self.recipe.filemod = self.pconst.FILEMOD()
         # import the recipe module
         self.recipemod = self.recipe.main
         # turn off the input validation
@@ -514,25 +517,21 @@ def read_runfile(params, runfile, **kwargs):
 def fix_run_file(runfile):
     # only do this if we have a runfile
     if os.path.exists(runfile):
-        # open run file
-        runf = open(runfile, 'r')
-        # read all lines
-        lines = runf.readlines()
-        # close file
-        runf.close()
+        # read the lines
+        with open(runfile, 'r') as f:
+            lines = f.readlines()
+
         # convert to character array
         lines = np.char.array(lines)
         # replace all equal signs
         lines = lines.replace('=', '@' * 50, 1)
         lines = lines.replace('=', ' ')
         lines = lines.replace('@' * 50, '=')
-        # open run file
-        runf = open(runfile, 'w')
         # write to file
-        for line in lines:
-            runf.write(line + '\n')
-        # close file
-        runf.close()
+        with open(runfile, 'w') as f:
+            # write lines to file
+            for line in lines:
+                f.write(line + '\n')
 
 
 def send_email(params, kind):
@@ -849,10 +848,9 @@ def save_stats(params, outlist):
 
     # make txt table
     try:
-        out_txt_table = open(out_txt_path, 'w')
-        for value in runlists:
-            out_txt_table.write(value + '\n')
-        out_txt_table.close()
+        with open(out_txt_path, 'w') as f:
+            for value in runlists:
+                f.write(value + '\n')
     except Exception as e:
         eargs = [out_txt_path, type(e), e, func_name]
         WLOG(params, 'warning', TextEntry('10-503-00012', args=eargs))
@@ -950,6 +948,9 @@ def generate_ids(params, runtable, mod, rlist=None, **kwargs):
         # create run object
         run_object = Run(params, run_item, mod=mod, priority=keylist[it],
                          inrecipe=input_recipe)
+        # deal with input recipe
+        if input_recipe is None:
+            input_recipe = run_object.recipe
         # deal with skip
         skip, reason = skip_run_object(params, run_object)
         # deal with passing debug
@@ -958,11 +959,10 @@ def generate_ids(params, runtable, mod, rlist=None, **kwargs):
             run_object.runstring = '{0} --debug={1}'.format(*dargs)
             run_object.update()
         # deal with passing master argument
-        if input_recipe is not None:
-            if input_recipe.master:
-                dargs = [run_object.runstring, 'True']
-                run_object.runstring = '{0} --master={1}'.format(*dargs)
-                run_object.update()
+        if input_recipe.master:
+            dargs = [run_object.runstring, 'True']
+            run_object.runstring = '{0} --master={1}'.format(*dargs)
+            run_object.update()
         # append to list
         if not skip:
             # log that we have validated run
@@ -1408,7 +1408,7 @@ def update_run_table(sequence, runtable, newruns, rlist=None):
             if rlist is None:
                 recipe_list[idnumber] = None
             else:
-                recipe_list[idnumber] = rlist[idnumber]
+                recipe_list[idnumber] = rlist[idkey]
             # update id number
             idnumber += 1
         # else we have found where we need to insert rows

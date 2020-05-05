@@ -14,5 +14,10 @@ alias gointroot "cd {ROOT_PATH}"
 setenv DRS_UCONFIG "{USER_CONFIG}"
 
 # force numpy  to only use 1 core max
-setenv OPENBLAS_NUM_THREADS 1
-setenv MKL_NUM_THREADS 1
+setenv MKL_DYNAMIC=FALSE
+setenv MKL_CBWR=COMPATIBLE
+setenv OMP_NUM_THREADS=1
+setenv OPENBLAS_NUM_THREADS=1
+setenv MKL_NUM_THREADS=1
+setenv VECLIB_MAXIMUM_THREADS=1
+setenv NUMEXPR_NUM_THREADS=1

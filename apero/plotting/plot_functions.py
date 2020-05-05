@@ -1036,7 +1036,7 @@ def plot_shape_linear_tparams(plotter, graph, kwargs):
     diffy = y1 - y2
     xrange1 = [0, dim2]
     xrange2 = [0, dim1]
-    ylim = np.max([np.nanmedian(np.abs(diffx)),np.nanmedian(np.abs(diffy))])
+    ylim = np.max([np.nanmedian(np.abs(diffx)), np.nanmedian(np.abs(diffy))])
     yrange = [-10 * ylim, 10 * ylim]
     nbins = 50
     pstep = 100
@@ -1125,11 +1125,6 @@ def plot_shape_angle_offset(plotter, graph, kwargs):
     dx_arr = kwargs['dx']
     dypix_arr = kwargs['dypix']
     ckeep_arr = kwargs['ckeep']
-    # get data for plot 3
-    shifts_arr = kwargs['shifts']
-    xpeak2_arr = kwargs['xpeak2']
-    err_pix_arr = kwargs['err_pix']
-    goodmask_arr = kwargs['good']
     # get parameters from params
     sorder = params['SHAPE_PLOT_SELECTED_ORDER']
     nbanana = params['SHAPE_NUM_ITERATIONS']
@@ -1167,14 +1162,10 @@ def plot_shape_angle_offset(plotter, graph, kwargs):
             dx = dx_arr[banana_num][order_num]
             dypix = dypix_arr[banana_num][order_num]
             c_keep = ckeep_arr[banana_num][order_num]
-            shifts = shifts_arr[banana_num][order_num]
-            xpeak2 = xpeak2_arr[banana_num][order_num]
-            err_pix = err_pix_arr[banana_num][order_num]
-            good = goodmask_arr[banana_num][order_num]
             # --------------------------------------------------------------
             # set up plot
-            fig, frames = graph.set_figure(plotter, ncols=3, nrows=1)
-            frame1, frame2, frame3 = frames
+            fig, frames = graph.set_figure(plotter, ncols=2, nrows=1)
+            frame1, frame2 = frames
             # title
             title = 'Iteration {0}/{1} - Order {2}'
             plt.suptitle(title.format(bnum_it + 1, nbanana, order_num))
@@ -1194,19 +1185,6 @@ def plot_shape_angle_offset(plotter, graph, kwargs):
             frame2.plot(dx[c_keep] - np.min(ddx), dypix[c_keep], color='g',
                         marker='o', ls='None')
             frame2.set(ylim=[0.0, width - 1], xlim=[0, len(ddx) - 1])
-            # --------------------------------------------------------------
-            # plot 3
-            # --------------------------------------------------------------
-            # add plot
-            frame3.plot(xpeak2, err_pix, color='r', linestyle='None',
-                        marker='.', label='err pixel')
-            frame3.plot(xpeak2[good], err_pix[good], color='g',
-                        linestyle='None', marker='.',
-                        label='err pixel (for fit)')
-            frame3.plot(np.arange(nbpix), shifts, color='k',
-                        label='shift in x')
-            frame3.set(xlabel='Pixel', ylabel='Err Pixel')
-            frame3.legend(loc=0)
             # ------------------------------------------------------------------
             # update filename (adding order_num to end)
             suffix = 'bnum{0}_order{1}'.format(bnum_it, order_num)
@@ -2586,7 +2564,10 @@ def plot_waveref_expected(plotter, graph, kwargs):
         frame.scatter(wavemap[omask], diff[omask], s=5)
     # add title (with or without iteration)
     if iteration is not None:
-        title = 'Pixel difference Fiber {0} Type {1} (Iteration = {2})'
+        if isinstance(iteration, int) or isinstance(iteration, float):
+            title = 'Pixel difference Fiber {0} Type {1} (Iteration = {2})'
+        else:
+            title = 'Pixel difference Fiber {0} Type {1} ({2})'
     else:
         title = 'Pixel difference Fiber {0} Type {1}'
     # set labels
@@ -2601,6 +2582,72 @@ def plot_waveref_expected(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
+def plot_wave_fiber_comparison(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    master_fiber = kwargs['masterfiber']
+    solutions = kwargs['solutions']
+    master = kwargs['master']
+    order = kwargs.get('order', None)
+    # get number of orders and fibers
+    nbo = master['NBO']
+    fibers = list(solutions.keys())
+    # get master values
+    m_coeffs = master['COEFFS']
+    # ------------------------------------------------------------------
+    # get order generator
+    if order is None:
+        order_gen = plotter.plotloop(np.arange(nbo).astype(int))
+        # prompt to start looper
+        plotter.close_plots(loop=True)
+    else:
+        order_gen = [order]
+    # ------------------------------------------------------------------
+    # loop around orders
+    for order_num in order_gen:
+        # ------------------------------------------------------------------
+        # set up plot
+        fig, frames = graph.set_figure(plotter, nrows=1, ncols=len(fibers))
+        # ------------------------------------------------------------------
+        for it, fiber in enumerate(fibers):
+            # get this fibers lines
+            rfpl = solutions[fiber]['FPLINES']
+            r_waveref = rfpl['WAVE_REF']
+            r_pixel = rfpl['PIXEL_MEAS']
+            r_order = rfpl['ORDER']
+            r_coeffs = solutions[fiber]['COEFFS']
+            # get the order mask
+            good = (r_order == order_num) & np.isfinite(r_pixel)
+            # get the x values for the graph
+            xvals = r_waveref[good]
+            # get the line fit values
+            fit1 = np.polyval(m_coeffs[order_num][::-1], r_pixel[good])
+            fit2 = np.polyval(r_coeffs[order_num][::-1], r_pixel[good])
+            # get the y values
+            y1vals = speed_of_light * (1 - r_waveref[good] / fit1)
+            y2vals = speed_of_light * (1 - r_waveref[good] / fit2)
+            # plot
+            frames[it].scatter(xvals, y1vals, color='r', s=5,
+                               label='Fiber {0}'.format(master_fiber))
+            frames[it].scatter(xvals, y2vals, color='g', s=5,
+                               label='Fiber {0}'.format(fiber))
+            frames[it].set(title='Order {0} Fiber {1}'.format(order_num, fiber),
+                           xlabel='wavelength [nm]',
+                           ylabel='dv [km/s]')
+            frames[it].legend(loc=0)
+        # ------------------------------------------------------------------
+        # update filename (adding order_num to end)
+        suffix = 'order{0}'.format(order_num)
+        graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+        # ------------------------------------------------------------------
+        # wrap up using plotter
+        plotter.plotend(graph)
+
+
 def plot_wavenight_iterplot(plotter, graph, kwargs):
     # ------------------------------------------------------------------
     # start the plotting process
@@ -2608,77 +2655,21 @@ def plot_wavenight_iterplot(plotter, graph, kwargs):
         return
     # ------------------------------------------------------------------
     # get the arguments from kwargs
-    plotdata1 = kwargs['plotdata'][0]
-    plotdata2 = kwargs['plotdata'][1]
-    # ------------------------------------------------------------------
-    # set up plot
-    fig, frames = graph.set_figure(plotter, nrows=1, ncols=2, sharex=True,
-                                   sharey=True)
-    # ------------------------------------------------------------------
-    # get x and y data for first set
-    x1, y1 = plotdata1['fp'], plotdata1['dl_fp']
-    x2, y2 = plotdata1['hc'], plotdata1['dl_hc']
-    # plot fp data
-    frames[0].plot(x1, y1, label='FP', linestyle='None', marker='.')
-    frames[0].plot(x2, y2, label='HC', linestyle='None', marker='.')
-    # ------------------------------------------------------------------
-    # get x and y data for second set
-    x3, y3 = plotdata2['fp'], plotdata2['dl_fp']
-    x4, y4 = plotdata2['hc'], plotdata2['dl_hc']
-    # plot fp data
-    frames[1].plot(x3, y3, label='FP', linestyle='None', marker='.')
-    frames[1].plot(x4, y4, label='HC', linestyle='None', marker='.')
-    # ------------------------------------------------------------------
-    # add legends
-    frames[0].legend(loc=0)
-    frames[1].legend(loc=0)
-    # ------------------------------------------------------------------
-    # set labels
-    frames[0].set(xlabel='Wavelength [nm]', ylabel='$\Delta$ Wavelength (nm)',
-                  title='First iteration')
-    frames[1].set(xlabel='Wavelength [nm]', ylabel='$\Delta$ Wavelength (nm)',
-                  title='Last iteration')
-    # ------------------------------------------------------------------
-    # sort out y limits
-    ylim1 = np.nanpercentile(y1, [1, 99])
-    ylim2 = np.nanpercentile(y2, [1, 99])
-    ylim3 = np.nanpercentile(y3, [1, 99])
-    ylim4 = np.nanpercentile(y4, [1, 99])
-    # first calculate the lower and upper limits for all sets
-    ylower = np.min(list(ylim1) + list(ylim2) + list(ylim3) + list(ylim4))
-    yupper = np.max(list(ylim1) + list(ylim2) + list(ylim3) + list(ylim4))
-    # add some margin
-    ydiff = yupper - ylower
-    ylim = [ylower - 0.2 * ydiff, yupper + 0.2 * ydiff]
-    # set ylim
-    frames[0].set_ylim(*ylim)
-    frames[1].set_ylim(*ylim)
-    # ------------------------------------------------------------------
-    # wrap up using plotter
-    plotter.plotend(graph)
-
-
-def plot_wavenight_diffplot(plotter, graph, kwargs):
-    # ------------------------------------------------------------------
-    # start the plotting process
-    if not plotter.plotstart(graph):
-        return
-    # ------------------------------------------------------------------
-    # get the arguments from kwargs
-    xhc, yhc = kwargs['xhc'], kwargs['yhc']
-    xfp, yfp = kwargs['xfp'], kwargs['yfp']
-    model = kwargs['model']
+    waverefs = kwargs['waverefs']
+    pixdiffs = kwargs['pixdiffs']
+    fiber = kwargs['fiber']
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
     # ------------------------------------------------------------------
-    # add data to plot
-    frame.scatter(xhc, yhc, color='g', marker='o', label='Binned HC')
-    frame.scatter(xfp, yfp, color='r', marker='o', label='Binned FP')
-    frame.plot(xfp, model, color='k', label='Model')
-    # add legend and labels
+    for it in range(len(pixdiffs)):
+        frame.plot(waverefs[it], pixdiffs[it], label='Iteration {0}'.format(it),
+                   marker='.', linestyle='None')
     frame.legend(loc=0)
-    frame.set(xlabel='Wavelength [nm]', ylabel='dv [m/s]', ylim=[-25, 25])
+    frame.set(xlabel='Reference wavelength', ylabel='Pixel difference')
+    # ------------------------------------------------------------------
+    # update filename (adding fiber to the end)
+    graph.set_filename(plotter.params, plotter.location, suffix=fiber)
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
@@ -2691,59 +2682,51 @@ def plot_wavenight_histplot(plotter, graph, kwargs):
         return
     # ------------------------------------------------------------------
     # get the arguments from kwargs
-    x = np.array(kwargs['x'])
-    y = np.array(kwargs['y'])
-    nbpix = kwargs['nbpix']
-    fpbinx = kwargs.get('fpbinx', 100)
-    fpbiny = kwargs.get('fpbiny', 10)
-    fplinebin = kwargs.get('fplinebin', 200)
-    ampsize = kwargs.get('ampsize', 256)
-    maxdv = kwargs.get('maxdv', 50)
-    dvstep = kwargs.get('dvstep', 10)
+    rhcl = kwargs['rhcl']
+    rhcl_prev = kwargs['rhcl_prev']
+    rfpl = kwargs['rfpl']
+    dcavity = kwargs['dcavity']
+    rms = kwargs['rms']
+    binl = kwargs['binl']
+    binu = kwargs['binu']
+    nbins = kwargs['nbins']
+    fiber = kwargs['fiber']
     # ------------------------------------------------------------------
     # set up plot
-    fig, frames = graph.set_figure(plotter, nrows=2, ncols=1, sharey=True)
+    fig, frames = graph.set_figure(plotter, nrows=2, ncols=1)
+    # hist setup
+    hkwargs = dict(bins=nbins, range=[binl * rms, binu * rms], alpha=0.5)
     # ------------------------------------------------------------------
-    # plot 1 - full range
+    # plot 1
     # ------------------------------------------------------------------
-    # get all dv values within dv range
-    with warnings.catch_warnings(record=True) as _:
-        keep = np.isfinite(y) & (y > -maxdv) & (y < maxdv)
-    # plot the full range
-    frames[0].hist2d(x[keep], y[keep], bins=[fpbinx, fpbiny])
-    # loop and plot bins
-    for pix in np.arange(0, nbpix, fplinebin):
-        # get valid pixels for this bin
-        with warnings.catch_warnings(record=True) as _:
-            good = (x > pix) & (x < (pix + fplinebin))
-        # plot bin points
-        frames[0].plot(mp.nanmedian(x[good]), mp.nanmedian(y[good]), color='r',
-                       marker='o')
-    # set labels and title
-    frames[0].set(xlabel='pixel', ylabel='dv [m/s]', title='Pixel Historgram')
+    # calculate data for binning
+    y1 = (1 - (rfpl['WAVE_REF'] / rfpl['WAVE_MEAS']))
+    y2 = (1 - (rfpl['WAVE_REF'] * (1 + dcavity) / rfpl['WAVE_MEAS']))
+    y1 = y1 * speed_of_light_ms
+    y2 = y2 * speed_of_light_ms
+    # plot hist
+    frames[0].hist(y1, label='FP before', **hkwargs)
+    frames[0].hist(y2, label='FP after', **hkwargs)
+    frames[0].axvline(0)
+    frames[0].legend(loc=0)
+    frames[0].set(xlabel='dv [m/s]', ylabel='Number of lines')
     # ------------------------------------------------------------------
-    # plot 2 - mod amp range
+    # plot 2
     # ------------------------------------------------------------------
-    # get all dv values within dv range
-    with warnings.catch_warnings(record=True) as _:
-        keep = np.isfinite(y) & (y > -maxdv) & (y < maxdv)
-    # work out x mod ampsize
-    with warnings.catch_warnings(record=True) as _:
-        xmod = x % ampsize
-    # plot mod ampsize
-    frames[1].hist2d(xmod[keep], y[keep], bins=[fpbinx, fpbiny])
-    # loop around bins of amp size
-    for pix in np.arange(0, ampsize, dvstep):
-        # get valid pixels for this bin
-        with warnings.catch_warnings(record=True) as _:
-            good = (xmod > pix) & (xmod < (pix + dvstep))
-        # plot bin points
-        frames[1].plot(mp.nanmedian(xmod[good]), mp.nanmedian(y[good]),
-                       color='r', marker='o')
-    # set labels and title
-    frames[1].set(xlabel='pixel % {0}'.format(ampsize),
-                  ylabel='dv [m/s]',
-                  title='Pixel modulo {0} Historgram'.format(ampsize))
+    # calculate data for binning
+    y3 = (1 - (rhcl_prev['WAVE_REF'] / rhcl_prev['WAVE_MEAS']))
+    y4 = (1 - (rhcl['WAVE_REF'] / rhcl['WAVE_MEAS']))
+    y3 = y3 * speed_of_light_ms
+    y4 = y4 * speed_of_light_ms
+    # plot hist
+    frames[1].hist(y3, label='HC before', **hkwargs)
+    frames[1].hist(y4, label='HC after', **hkwargs)
+    frames[1].axvline(0)
+    frames[1].legend(loc=0)
+    frames[1].set(xlabel='dv [m/s]', ylabel='Number of lines')
+    # ------------------------------------------------------------------
+    # update filename (adding fiber to the end)
+    graph.set_filename(plotter.params, plotter.location, suffix=fiber)
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
@@ -2799,12 +2782,30 @@ wave_fp_single_order = Graph('WAVE_FP_SINGLE_ORDER', kind='debug',
                              func=plot_wave_fp_single_order)
 waveref_expected = Graph('WAVEREF_EXPECTED', kind='debug',
                          func=plot_waveref_expected)
+
+wave_fiber_comparison = Graph('WAVE_FIBER_COMPARISON', kind='debug',
+                              func=plot_wave_fiber_comparison)
+wave_fiber_comp = Graph('WAVE_FIBER_COMP', kind='debug',
+                        func=plot_wave_fiber_comparison)
+sum_desc = 'Fiber comparison plot'
+sum_wave_fiber_comp = Graph('SUM_WAVE_FIBER_COMP', kind='summary',
+                            func=plot_wave_fiber_comparison,
+                            figsize=(16, 10), dpi=150,
+                            description=sum_desc)
 wavenight_iterplot = Graph('WAVENIGHT_ITERPLOT', kind='debug',
                            func=plot_wavenight_iterplot)
-wavenight_diffplot = Graph('WAVENIGHT_DIFFPLOT', kind='debug',
-                           func=plot_wavenight_diffplot)
+sum_desc = 'Wave night iteration plot'
+sum_wavenight_iterplot = Graph('SUM_WAVENIGHT_ITERPLOT', kind='summary',
+                               func=plot_wavenight_iterplot,
+                               figsize=(16, 10), dpi=150,
+                               description=sum_desc)
 wavenight_histplot = Graph('WAVENIGHT_HISTPLOT', kind='debug',
                            func=plot_wavenight_histplot)
+sum_desc = 'Wave night histogram plot'
+sum_wavenight_histplot = Graph('SUM_WAVENIGHT_HISTPLOT', kind='summary',
+                               func=plot_wavenight_histplot,
+                               figsize=(16, 10), dpi=150,
+                               description=sum_desc)
 # add to definitions
 definitions += [wave_hc_guess, wave_hc_brightest_lines, wave_hc_tfit_grid,
                 wave_hc_resmap, wave_littrow_check1, wave_littrow_extrap1,
@@ -2814,7 +2815,9 @@ definitions += [wave_hc_guess, wave_hc_brightest_lines, wave_hc_tfit_grid,
                 wave_fp_multi_order, wave_fp_single_order,
                 sum_wave_littrow_check, sum_wave_littrow_extrap,
                 sum_wave_fp_ipt_cwid_1mhc, waveref_expected, wavenight_iterplot,
-                wavenight_diffplot, wavenight_histplot]
+                sum_wavenight_iterplot, wavenight_histplot,
+                sum_wavenight_histplot, wave_fiber_comparison,
+                wave_fiber_comp, sum_wave_fiber_comp]
 
 
 # =============================================================================
