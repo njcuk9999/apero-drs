@@ -59,6 +59,7 @@ get_ext_fplines.set_arg(name='files', dtype='files', pos='1+',
                                FMOD.files.out_ext_e2dsff],
                         helpstr=(Help['FILES_HELP'] +
                                  'Currently allowed types: E2DS, E2DSFF'))
+get_ext_fplines.set_outputs(EXT_FPLINES=FMOD.files.out_ext_fplines)
 # add recipe to recipe definition
 RMOD.add(get_ext_fplines)
 
@@ -143,7 +144,7 @@ def __main__(recipe, params):
         rfpl = extract.ref_fplines(params, recipe, *rargs)
         # write rfpl file
         if rfpl is not None:
-            rargs = [rfpl, e2dsfile, e2dsfile, fiber, 'EXT_FPLIST']
+            rargs = [rfpl, e2dsfile, e2dsfile, fiber, 'EXT_FPLINES']
             wave.write_fplines(params, recipe, *rargs)
     # ----------------------------------------------------------------------
     # End of main code

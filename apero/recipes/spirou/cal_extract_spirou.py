@@ -291,7 +291,7 @@ def __main__(recipe, params):
             rfpl = extract.ref_fplines(params, recipe, *rargs)
             # write rfpl file
             if rfpl is not None:
-                rargs = [rfpl, e2dsfile, e2dsfile, fiber, 'EXT_FPLIST']
+                rargs = [rfpl, e2dsfile, e2dsfile, fiber, 'EXT_FPLINES']
                 wave.write_fplines(params, recipe, *rargs)
 
             # --------------------------------------------------------------
