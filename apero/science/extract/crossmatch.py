@@ -19,7 +19,7 @@ import os
 import warnings
 
 from apero import core
-from apero import locale
+from apero import lang
 from apero.core import constants
 from apero.io import drs_lock
 from apero.io import drs_data
@@ -41,8 +41,8 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
-TextDict = locale.drs_text.TextDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
 # alias pcheck
 pcheck = core.pcheck
 # master crossmatch query
@@ -283,7 +283,7 @@ def query_gaia(params, gaiaid=None, objname=None, ra=None, dec=None, **kwargs):
 
     except Exception as e:
         eargs = [type(e), str(e), func_name]
-        WLOG(params, 'debug', TextEntry('10-016-00009', args=eargs))
+        WLOG(params, 'warning', TextEntry('10-016-00009', args=eargs))
         return None, True
     # ------------------------------------------------------------------
     # create TAP query based on gaia id
@@ -319,7 +319,7 @@ def query_gaia(params, gaiaid=None, objname=None, ra=None, dec=None, **kwargs):
     # ------------------------------------------------------------------
     # deal with no query
     if query is None:
-        WLOG(params, 'debug', TextEntry('10-016-00007', args=[func_name]))
+        WLOG(params, 'warning', TextEntry('10-016-00007', args=[func_name]))
         return None, True
     # ------------------------------------------------------------------
     # try running gaia query
@@ -333,14 +333,14 @@ def query_gaia(params, gaiaid=None, objname=None, ra=None, dec=None, **kwargs):
             table = job.get_results()
     except Exception as e:
         wargs = [url, query, type(e), e, func_name]
-        WLOG(params, 'debug', TextEntry('10-016-00008', args=wargs))
+        WLOG(params, 'warning', TextEntry('10-016-00008', args=wargs))
         # return No row and True to fail
         return None, True
     # ------------------------------------------------------------------
     # if we have no entries we did not find object
     if len(table) == 0:
         # warn that no rows were found
-        WLOG(params, 'debug', TextEntry('10-016-00011', args=[func_name]))
+        WLOG(params, 'warning', TextEntry('10-016-00011', args=[func_name]))
         # return No row and True to fail
         return None, True
     # ------------------------------------------------------------------
@@ -378,7 +378,7 @@ def query_gaia(params, gaiaid=None, objname=None, ra=None, dec=None, **kwargs):
                 return None, True
         except Exception as e:
             wargs = [ra, dec, radius, type(e), e, func_name]
-            WLOG(params, 'debug', TextEntry('10-016-00010', args=wargs))
+            WLOG(params, 'warning', TextEntry('10-016-00010', args=wargs))
             # return no row and True to Fail
             return None, True
 

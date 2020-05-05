@@ -68,10 +68,10 @@ class Log:
             self.core = None
 
     def __read__(self):
-        # open file
-        logfile = open(self.filename, 'r')
-        lines = logfile.readlines()
-        logfile.close()
+        # read the lines
+        with open(filename, 'r') as f:
+            lines = f.readlines()
+        # return lines
         return lines
 
     def __search__(self, findstr):

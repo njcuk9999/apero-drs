@@ -15,7 +15,7 @@ import pkg_resources
 from collections import OrderedDict
 
 from apero import core
-from apero import locale
+from apero import lang
 from apero.core import constants
 
 # =============================================================================
@@ -33,7 +33,7 @@ __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
+TextEntry = lang.drs_text.TextEntry
 # --------------------------------------------------------------------------
 # path strings to exclude
 EXCLUDE_PATH_STR = []
@@ -157,11 +157,11 @@ def get_import_statements(params, files):
     infodict['filename'] = []
     # loop around the files
     for filename in files:
-        # open this iterations file
-        f = open(filename)
-        # read all lines from this iteration
-        lines = f.readlines()
 
+        # read the lines
+        with open(filename, 'r') as f:
+            lines = f.readlines()
+        # get the stats
         statsdict['total lines'] += len(lines)
         statsdict2[filename] = OrderedDict()
         statsdict2[filename]['total lines'] = len(lines)

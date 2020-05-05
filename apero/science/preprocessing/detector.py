@@ -52,38 +52,10 @@ def get_hot_pixels(params):
     :rtype: tuple[np.ndarray, np.ndarray]
     """
     # get full badpixel file
-    full_badpix = drs_data.load_full_flat_pp(params)
-    # get shape of full badpixel file
-    dim1, dim2 = full_badpix.shape
-
-    # get the med_size
-    med_size = params['PP_CORRUPT_MED_SIZE']
-    # get the hot pix threshold
-    hot_thres = params['PP_CORRUPT_HOT_THRES']
-
-    # get size of dark region
-    pixels_per_amp = dim2 // params['PP_TOTAL_AMP_NUM']
-    dark_size = params['PP_NUM_DARK_AMP'] * pixels_per_amp
-
-    # mask the full_badpix (do not include dark area or edges)
-    full_badpix[:, dark_size:] = np.nan
-    full_badpix[:med_size, :] = np.nan
-    full_badpix[:, :med_size] = np.nan
-    full_badpix[-med_size:, :] = np.nan
-    full_badpix[:, -med_size:] = np.nan
-
-    # median out full band structures
-    with warnings.catch_warnings(record=True) as _:
-        for ix in range(med_size, dark_size):
-            full_badpix[:, ix] -= mp.nanmedian(full_badpix[:, ix])
-        for iy in range(dim1):
-            full_badpix[iy, :] -= mp.nanmedian(full_badpix[iy, :])
-
-    full_badpix[~np.isfinite(full_badpix)] = 0.0
-
-    # locate hot pixels in the full bad pix
-    yhot, xhot = np.where(full_badpix > hot_thres)
-
+    hotpix_table = drs_data.load_hotpix(params)
+    # load pixel values
+    yhot = np.array(hotpix_table['ypix']).astype(int)
+    xhot = np.array(hotpix_table['xpix']).astype(int)
     # return the hot pixel indices
     return [yhot, xhot]
 
@@ -304,6 +276,15 @@ def test_for_corrupt_files(params, image, hotpix):
     dark_size = params['PP_NUM_DARK_AMP'] * pixels_per_amp
     # get the x and y hot pixel values
     yhot, xhot = hotpix
+    # mask pixels around the edges
+    bmask = np.ones_like(yhot).astype(bool)
+    bmask &= yhot > med_size
+    bmask &= yhot < (dim1 - med_size)
+    bmask &= xhot > med_size
+    bmask &= xhot < (dim2 - med_size)
+    # apply boundary mask to xhot and yhot
+    xhot = xhot[bmask]
+    yhot = yhot[bmask]
     # get median hot pixel box
     med_hotpix = np.zeros([2 * med_size + 1, 2 * med_size + 1])
     # loop around x

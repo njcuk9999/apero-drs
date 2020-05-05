@@ -14,7 +14,7 @@ import numpy as np
 from apero.core import constants
 from apero.core import math as mp
 from apero import core
-from apero import locale
+from apero import lang
 
 
 # =============================================================================
@@ -32,7 +32,7 @@ __release__ = Constants['DRS_RELEASE']
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = locale.drs_text.TextEntry
+TextEntry = lang.drs_text.TextEntry
 # get param dict
 ParamDict = constants.ParamDict
 
@@ -40,7 +40,7 @@ ParamDict = constants.ParamDict
 # =============================================================================
 # Define functions
 # =============================================================================
-def quality_control(params, snr_hotpix, infile, rms_list):
+def quality_control(params, snr_hotpix, infile, rms_list, log=True):
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
     # ----------------------------------------------------------------------
@@ -79,11 +79,13 @@ def quality_control(params, snr_hotpix, infile, rms_list):
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
-        WLOG(params, 'info', TextEntry('40-005-10001'))
+        if log:
+            WLOG(params, 'info', TextEntry('40-005-10001'))
         passed = 1
     else:
-        for farg in fail_msg:
-            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+        if log:
+            for farg in fail_msg:
+                WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
         passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
