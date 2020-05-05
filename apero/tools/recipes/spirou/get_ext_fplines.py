@@ -122,6 +122,8 @@ def __main__(recipe, params):
     num_files = len(infiles)
     # loop around files
     for it in range(num_files):
+        # set up plotting (no plotting before this)
+        recipe.plot.set_location(it)
         # print file iteration progress
         core.file_processing_update(params, it, num_files)
         # get this iterations e2ds file
