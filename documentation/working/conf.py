@@ -22,7 +22,7 @@ copyright = '2019, Neil Cook'
 author = 'Neil Cook'
 
 # The full version, including alpha/beta/rc tags
-release = '0.6.082'
+release = '0.6.083'
 
 # -- General configuration ---------------------------------------------------
 
