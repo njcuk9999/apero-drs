@@ -94,6 +94,7 @@ class PseudoConstants(DefaultConstants):
         params = kwargs.get('params')
         recipe = kwargs.get('recipe')
         header = kwargs.get('header')
+        hdict = kwargs.get('hdict')
         # get keys from params
         kwobjname = params['KW_OBJNAME'][0]
         kwtrgtype = params['KW_TARGET_TYPE'][0]
@@ -103,30 +104,30 @@ class PseudoConstants(DefaultConstants):
         # Deal with cleaning object name
         # ------------------------------------------------------------------
         if kwobjname not in header:
-            header = clean_obj_name(params, header)
+            header, hdict = clean_obj_name(params, header, hdict)
 
         # ------------------------------------------------------------------
         # Deal with TRG_TYPE
         # ------------------------------------------------------------------
         if kwtrgtype not in header:
-            header = get_trg_type(params, header)
+            header, hdict = get_trg_type(params, header, hdict)
 
         # ------------------------------------------------------------------
         # Deal with MIDMJD
         # ------------------------------------------------------------------
         if kwmidobstime not in header:
-            header = get_mid_obs_time(params, header)
+            header, hdict = get_mid_obs_time(params, header, hdict)
 
         # ------------------------------------------------------------------
         # Deal with dprtype
         # ------------------------------------------------------------------
         if kwdprtype not in header:
-            header = get_dprtype(params, recipe, header)
+            header, hdict = get_dprtype(params, recipe, header, hdict)
 
         # ------------------------------------------------------------------
         # Return header
         # ------------------------------------------------------------------
-        return header
+        return header, hdict
 
     def VALID_RAW_FILES(self):
         valid = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
@@ -386,7 +387,7 @@ class PseudoConstants(DefaultConstants):
 # =============================================================================
 # Functions used by pseudo const (instrument specific)
 # =============================================================================
-def clean_obj_name(params, header):
+def clean_obj_name(params, header, hdict):
     # get keys from params
     kwrawobjname = params['KW_OBJECTNAME'][0]
     kwobjname = params['KW_OBJNAME'][0]
@@ -397,11 +398,12 @@ def clean_obj_name(params, header):
     objname = objname.replace(' ', '_')
     # add it to the header with new keyword
     header[kwobjname] = objname
+    hdict[kwobjname] = objname
     # return header
-    return header
+    return header, hdict
 
 
-def get_trg_type(params, header):
+def get_trg_type(params, header, hdict):
     # get keys from params
     kwobjname = params['KW_OBJNAME'][0]
     kwobstype = params['KW_OBSTYPE'][0]
@@ -419,11 +421,12 @@ def get_trg_type(params, header):
         trg_type = 'TARGET'
     # update header
     header[kwtrgtype] = (trg_type, kwtrgcomment)
+    hdict[kwtrgtype] = (trg_type, kwtrgcomment)
     # return header
-    return header
+    return header, hdict
 
 
-def get_mid_obs_time(params, header):
+def get_mid_obs_time(params, header, hdict):
     func_name = __NAME__ + '.get_mid_obs_time()'
     kwmidobstime = params['KW_MID_OBS_TIME'][0]
     kwmidcomment = params['KW_MID_OBS_TIME'][2]
@@ -448,21 +451,28 @@ def get_mid_obs_time(params, header):
     # return time in requested format
     if timefmt is None:
         header[kwmidobstime] = (obstime.iso, kwmidcomment)
+        hdict[kwmidobstime] = (obstime.iso, kwmidcomment)
     elif timefmt == 'mjd':
         header[kwmidobstime] = (float(obstime.mjd), kwmidcomment)
+        hdict[kwmidobstime] = (float(obstime.mjd), kwmidcomment)
     elif timefmt == 'jd':
         header[kwmidobstime] = (float(obstime.jd), kwmidcomment)
+        hdict[kwmidobstime] = (float(obstime.jd), kwmidcomment)
     elif timefmt == 'iso' or timefmt == 'human':
         header[kwmidobstime] = (obstime.iso, kwmidcomment)
+        hdict[kwmidobstime] = (obstime.iso, kwmidcomment)
     elif timefmt == 'unix':
         header[kwmidobstime] = (float(obstime.unix), kwmidcomment)
+        hdict[kwmidobstime] = (float(obstime.unix), kwmidcomment)
     elif timefmt == 'decimalyear':
         header[kwmidobstime] = (float(obstime.decimalyear), kwmidcomment)
+        hdict[kwmidobstime] = (float(obstime.decimalyear), kwmidcomment)
     # -------------------------------------------------------------------
     # add method
     header[kwmidmethod] = (method, methodcomment)
+    hdict[kwmidmethod] = (method, methodcomment)
     # return the header
-    return header
+    return header, hdict
 
 
 def get_header_end_time(params, header):
@@ -492,14 +502,11 @@ def get_header_end_time(params, header):
     return Time(timetype(rawtime), format=timefmt)
 
 
-def get_dprtype(params, recipe, header):
+def get_dprtype(params, recipe, header, hdict):
     # set key
     kwdprtype = params['KW_DPRTYPE'][0]
     kwdprcomment = params['KW_DPRTYPE'][1]
     # get the drs files and raw_prefix
-
-
-
     drsfiles = recipe.filemod.raw_file.fileset
     raw_prefix = recipe.filemod.raw_prefix
     # set up inname
@@ -521,8 +528,9 @@ def get_dprtype(params, recipe, header):
             break
     # update header
     header[kwdprtype] = (dprtype, kwdprcomment)
+    hdict[kwdprtype] = (dprtype, kwdprcomment)
     # return header
-    return header
+    return header, hdict
 
 
 # =============================================================================
