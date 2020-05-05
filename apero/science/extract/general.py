@@ -910,10 +910,16 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, **kwargs):
     # ----------------------------------------------------------------------
     # deal with fiber
     if fiber != rfiber:
+        # TODO: add to language database
+        emsg = 'Skipping FPLINES (Fiber = {0})'
+        WLOG(params, 'debug', emsg.format(fiber))
         return None
     # ----------------------------------------------------------------------
     # deal with allowed dprtypes
     if dprtype not in allowtypes:
+        # TODO: add to language database
+        dmsg = 'Skipping FPLINES (DPRTYPE = {0})'
+        WLOG(params, 'debug', dmsg.format(dprtype))
         return None
     # ----------------------------------------------------------------------
     # get master hc lines and fp lines from calibDB
