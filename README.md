@@ -1,6 +1,6 @@
 # APERO - A PipelinE to Reduce Observations
 
-Last updated: 2020-03-21
+Last updated: 2020-05-05
 
 ## Contents
 
@@ -34,20 +34,20 @@ Last updated: 2020-03-21
 ##  Latest version
 [Back to top](#apero---a-pipeline-to-reduce-observations)
 
-- master (long term stable) V0.5.000
+- master (long term stable) V0.6.082 (2020-05-04)
     ```
     This is the version currently recommended for all general use. It may not
     contain the most up-to-date features until long term support and stability can
     be verified.
     ```
-- developer (tested) V0.6.063 (2020-04-01)
+- developer (tested) V0.6.082 (2020-05-04)
     ```
     Note the developer version should have been tested and semi-stable but not
     ready for full sets of processing and defintely not for release for 
     non-developers or for data put on archives. Some changes may not be
     in this version that are in the working version.
     ```
-- working (untested) V0.6.063 (2020-04-01)
+- working (untested) V0.6.082 (2020-05-04)
     ```
     Note the working version will be the most up-to-date version but has not been
     tested for stability - use at own risk.
