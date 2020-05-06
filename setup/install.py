@@ -384,6 +384,9 @@ def check_install(drs_path, args):
             # get the absolute path of try path
             abs_try_path = os.path.abspath(try_path)
             sys.path.append(abs_try_path)
+            # print debug statement
+            if debug:
+                print('\tAdding {0} to sys.path'.format(abs_try_path))
             # try to import the drs
             try:
                 if debug:
@@ -393,6 +396,8 @@ def check_install(drs_path, args):
                 _ = importlib.import_module(drs_path)
                 # if we have reached this import stage found is True
                 found = True
+                # print that we have found module
+                print('Found "{0}" in {1}'.format(drs_path, abs_try_path))
             except Exception as e:
                 # debug print error
                 if debug:
@@ -458,13 +463,13 @@ def check_install(drs_path, args):
             os.environ['PYTHONPATH'] = drs_path + os.pathsep + oldpath
             # debug print out
             if debug:
-                print('Adding {0} to PYTHONPATH'.format(drs_path))
+                print('Adding "{0}" to PYTHONPATH'.format(drs_path))
 
         else:
             os.environ['PYTHONPATH'] = drs_path
             # debug print out
             if debug:
-                print('Setting PYTHONPATH = {0}'.format(drs_path))
+                print('Setting PYTHONPATH = "{0}"'.format(drs_path))
         # add to active path
         os.sys.path = [drs_path] + os.sys.path
 
