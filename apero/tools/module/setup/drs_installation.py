@@ -832,7 +832,7 @@ def clean_install(params, all_params):
     # get clean warning
     if all_params['CLEANWARN'] is None:
         cleanwarn = True
-    elif all_params['CLEANWARN']:
+    elif all_params['CLEANWARN'] in [True, 'True', '1', 1]:
         cleanwarn = False
     else:
         cleanwarn = True
@@ -1241,6 +1241,13 @@ def ufile_write(aparams, lines, upath, ufile, kind):
 def update(params, args):
     # set function name
     func_name = __NAME__ + '.update()'
+    # get debug mode
+    if args.debug is None:
+        debug = False
+    elif args.debug in [True, 'True', 1, '1']:
+        debug = True
+    else:
+        debug = False
     # get available instruments
     drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
     # get config path
