@@ -376,6 +376,21 @@ def check_install(drs_path, args):
         found = False
         # set top level to root
         root = os.path.abspath(os.sep)
+        # debug print out
+        if debug:
+            print('='*50)
+            print('DEBUG MODE ACTIVATED')
+            print('='*50)
+            print('ROOT: "{0}"'.format(root))
+            print('CWD: "{0}"'.format(os.getcwd()))
+            if 'PYTHONPATH' in os.environ:
+                print('PYTHONPATH: \n\t"{0}"'.format(os.environ['PYTHONPATH']))
+            else:
+                print('PYTHON PATH UNSET')
+            print('SYS.PATH:')
+            for path in sys.path:
+                print('\t{0}'.format(path))
+            print('=' * 50)
         # path to try
         try_path = str(drs_path)
         tries = 0
