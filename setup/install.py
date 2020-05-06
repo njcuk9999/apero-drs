@@ -156,6 +156,10 @@ def get_args():
                              'RECOMMENDED - clears out old files and copies'
                              'over all required default data files. '
                              'If unset user is prompted for  choice.')
+    parser.add_argument('--clean_no_warning', action='store', dest='cleanwarn',
+                        help='Whether to warn about cleaning populated '
+                             'directories - WARNING if set to True will delete '
+                             'all tmp/reduced/calibDB etc. data without prompt')
     parser.add_argument('--ds9path', action='store', dest='ds9path',
                         help='Optionally set the ds9 path (used in some tools)')
     parser.add_argument('--pdflatexpath', action='store', dest='pdfpath',
@@ -479,6 +483,8 @@ if __name__ == '__main__':
     allparams['DEVMODE'] = args.devmode
     # add name
     allparams['PROFILENAME'] = args.name
+    # add clean warn
+    allparams['CLEANWARN'] = args.cleanwarn
 
     # ----------------------------------------------------------------------
     # End of user setup

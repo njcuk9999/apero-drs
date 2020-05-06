@@ -829,6 +829,13 @@ def clean_install(params, all_params):
     drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
     # get package
     package = params['DRS_PACKAGE']
+    # get clean warning
+    if all_params['CLEANWARN'] is None:
+        cleanwarn = True
+    elif all_params['CLEANWARN']:
+        cleanwarn = False
+    else:
+        cleanwarn = True
     # get tools save location
     in_tool_path = constants.get_relative_folder(package, IN_TOOLPATH)
     # append tool path
@@ -853,7 +860,7 @@ def clean_install(params, all_params):
         # add to environment
         add_paths(all_params)
         # construct reset command
-        toolmod.main(instrument=instrument, quiet=True, warn=True)
+        toolmod.main(instrument=instrument, quiet=True, warn=cleanwarn)
     # return all params
     return all_params
 
