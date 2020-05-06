@@ -76,6 +76,8 @@ def get_args():
                         help='The name for this specific installation'
                              '(Allows the creation of multiple profiles with'
                              ' different settings)')
+    parser.add_argument('--debug', action='store', dest='debug',
+                        help='Run installer in debug mode')
 
     # add setup args
     parser.add_argument('--root', action='store', dest='root',
@@ -356,11 +358,16 @@ def tab_input(message, root=None):
     return uinput
 
 
-def check_install(drs_path):
+def check_install(drs_path, args):
     # print check
     print('Locating {0} install...'.format(DRS_PATH))
-    # get current working directory
-    cwd = os.getcwd()
+    # get debug mode
+    if args.debug is None:
+        debug = False
+    elif args.debug in [True, 'True', 1, '1']:
+        debug = True
+    else:
+        debug = False
     # set import condition to True
     cond = True
     # loop until we can import modules
@@ -379,11 +386,18 @@ def check_install(drs_path):
             sys.path.append(abs_try_path)
             # try to import the drs
             try:
-                print('\tTry: {0}'.format(abs_try_path))
+                if debug:
+                    print('\tTry {0}: {1}'.format(tries + 1, abs_try_path))
+                else:
+                    print('\tTry: {0}'.format(abs_try_path))
                 _ = importlib.import_module(drs_path)
                 # if we have reached this import stage found is True
                 found = True
-            except Exception as _:
+            except Exception as e:
+                # debug print error
+                if debug:
+                    print('\tError {0}: {1}'.format(type(e), str(e)))
+
                 cond1 = abs_try_path == os.path.join(root, drs_path)
                 cond2 = abs_try_path == try_path
                 cond3 = tries > 10
@@ -407,6 +421,10 @@ def check_install(drs_path):
                         '\nPlease enter a valid path. (Ctrl+C) to quit')
                 print(umsg.format(uinput))
             else:
+                # add debug output
+                if debug:
+                    print('Adding "{0}" to sys.path'.format(uinput))
+
                 sys.path.append(uinput)
             continue
         # construct module names
@@ -416,13 +434,21 @@ def check_install(drs_path):
         try:
             print('Loading {0}'.format(constants_mod))
             constants = importlib.import_module(constants_mod)
-        except Exception as _:
+        except Exception as e:
+            # debug print error
+            if debug:
+                print('\tError {0}: {1}'.format(type(e), str(e)))
+            # print user error
             print('Cannot import {0}. Exiting'.format(constants_mod))
             sys.exit()
         try:
             print('Loading {0}'.format(install_mod))
             install = importlib.import_module(install_mod)
-        except Exception as _:
+        except Exception as e:
+            # debug print error
+            if debug:
+                print('\tError {0}: {1}'.format(type(e), str(e)))
+            # print user error
             print('Cannot import {0}. Exiting'.format(install_mod))
             sys.exit()
 
@@ -430,8 +456,15 @@ def check_install(drs_path):
         if 'PYTHONPATH' in os.environ:
             oldpath = os.environ['PYTHONPATH']
             os.environ['PYTHONPATH'] = drs_path + os.pathsep + oldpath
+            # debug print out
+            if debug:
+                print('Adding {0} to PYTHONPATH'.format(drs_path))
+
         else:
             os.environ['PYTHONPATH'] = drs_path
+            # debug print out
+            if debug:
+                print('Setting PYTHONPATH = {0}'.format(drs_path))
         # add to active path
         os.sys.path = [drs_path] + os.sys.path
 
@@ -459,7 +492,7 @@ if __name__ == '__main__':
     # catch Ctrl+C
     signal.signal(signal.SIGINT, catch_sigint)
     # get install paths
-    constants, install = check_install(drs_path)
+    constants, install = check_install(drs_path, args)
 
     # ----------------------------------------------------------------------
     # start up
