@@ -129,6 +129,12 @@ def __main__(recipe, params):
         core.file_processing_update(params, it, num_files)
         # get this iterations e2ds file
         e2dsfile = infiles[it]
+        # print file stats
+        args = [e2dsfile.basename, e2dsfile.get_key('KW_DPRTYPE'),
+                e2dsfile.get_key('KW_OBJNAME')]
+        WLOG(params, '', '\t For file {0}'.format(*args))
+        WLOG(params, '', '\t DPRTYPE = {1}'.format(*args))
+        WLOG(params, '', '\t OBJECT = {2}'.format(*args))
         # ------------------------------------------------------------------
         # get header from file instance
         header = e2dsfile.header
