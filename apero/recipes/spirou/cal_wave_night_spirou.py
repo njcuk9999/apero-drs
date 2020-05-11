@@ -253,6 +253,12 @@ def __main__(recipe, params):
             wavefile = wave.night_write_wavesolution(params, recipe, *wargs)
 
             # ----------------------------------------------------------
+            # write CCF from rv props
+            # ----------------------------------------------------------
+            velocity.write_ccf(params, recipe, fp_e2ds_file, rvprops, fpfiles,
+                               combine, qc_params, fiber)
+
+            # ----------------------------------------------------------
             # Update calibDB with solution
             # ----------------------------------------------------------
             if passed:
