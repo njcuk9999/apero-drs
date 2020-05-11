@@ -301,6 +301,11 @@ def __main__(recipe, params):
             rvs_all[fiber] = rvprops
             # update correct wprops
             wprops_others[fiber] = ParamDict(wprops)
+            # ------------------------------------------------------------------
+            # archive ccf from fiber
+            # ------------------------------------------------------------------
+            velocity.write_ccf(params, recipe, fpe2dsfile, rvprops, fpfiles,
+                               combine, qc_params, fiber)
 
         # ==================================================================
         # QUALITY CONTROL (AFTER FP MASTER FIBER + OTHER FIBERS)
