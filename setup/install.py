@@ -430,22 +430,11 @@ def check_install(drs_path, args):
                 sys.path.remove(abs_try_path)
             # iterate tries
             tries += 1
+
         # deal with not being found
         if not found:
-            umsg = '\nCannot find {0}. Please enter {0} installation path:'
-            # user input required
-            uinput = tab_input(umsg.format(drs_path))
-            # make sure user input exists
-            if not os.path.exists(uinput):
-                umsg = ('\nPath "{0}" does not exist.'
-                        '\nPlease enter a valid path. (Ctrl+C) to quit')
-                print(umsg.format(uinput))
-            else:
-                # add debug output
-                if debug:
-                    print('Adding "{0}" to sys.path'.format(uinput))
-
-                sys.path.append(uinput)
+            ask_for_install_path(drs_path, debug)
+            # restart while loop
             continue
         # construct module names
         constants_mod = '{0}.{1}'.format(drs_path, CONSTANTS_PATH)
@@ -458,9 +447,10 @@ def check_install(drs_path, args):
             # debug print error
             if debug:
                 print('\tError {0}: {1}'.format(type(e), str(e)))
-            # print user error
-            print('Cannot import {0}. Exiting'.format(constants_mod))
-            sys.exit()
+            # ask for install path again
+            ask_for_install_path(drs_path, debug)
+            # restart while loop
+            continue
         try:
             print('Loading {0}'.format(install_mod))
             install = importlib.import_module(install_mod)
@@ -468,9 +458,10 @@ def check_install(drs_path, args):
             # debug print error
             if debug:
                 print('\tError {0}: {1}'.format(type(e), str(e)))
-            # print user error
-            print('Cannot import {0}. Exiting'.format(install_mod))
-            sys.exit()
+            # ask for install path again
+            ask_for_install_path(drs_path, debug)
+            # restart while loop
+            continue
 
         # add apero to the PYTHONPATH
         if 'PYTHONPATH' in os.environ:
@@ -490,6 +481,24 @@ def check_install(drs_path, args):
 
         # if we have reached this point we can break out of the while loop
         return constants, install
+
+
+def ask_for_install_path(drs_path, debug):
+    umsg = '\nCannot find {0}. Please enter {0} installation path:'
+    # user input required
+    uinput = tab_input(umsg.format(drs_path))
+    # make sure user input exists
+    if not os.path.exists(uinput):
+        umsg = ('\nPath "{0}" does not exist.'
+                '\nPlease enter a valid path. (Ctrl+C) to quit')
+        print(umsg.format(uinput))
+    # if it does exist add it as a path to test
+    else:
+        # add debug output
+        if debug:
+            print('Adding "{0}" to sys.path'.format(uinput))
+        # update
+        sys.path.append(uinput)
 
 
 # =============================================================================
