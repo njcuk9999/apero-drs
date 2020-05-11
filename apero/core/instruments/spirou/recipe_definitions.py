@@ -679,7 +679,8 @@ cal_wave_master.set_outputs(WAVE_E2DS=sf.out_ext_e2dsff,
                             WAVEM_FPRESTAB=sf.out_wavem_res_table,
                             WAVEM_FPLLTAB=sf.out_wavem_ll_table,
                             WAVEM_HCLIST=sf.out_wave_hclist_master,
-                            WAVEM_FPLIST=sf.out_wave_fplist_master)
+                            WAVEM_FPLIST=sf.out_wave_fplist_master,
+                            CCF_RV=sf.out_ccf_fits)
 cal_wave_master.set_debug_plots('WAVE_HC_GUESS', 'WAVE_HC_BRIGHTEST_LINES',
                                 'WAVE_HC_TFIT_GRID', 'WAVE_HC_RESMAP',
                                 'WAVE_LITTROW_CHECK1', 'WAVE_LITTROW_EXTRAP1',
@@ -754,7 +755,8 @@ cal_wave_night.kind = 'recipe'
 cal_wave_night.set_outputs(WAVE_E2DS=sf.out_ext_e2dsff,
                            WAVEMAP_NIGHT=sf.out_wave_night,
                            WAVE_HCLIST=sf.out_wave_hclist,
-                           WAVE_FPLIST=sf.out_wave_fplist)
+                           WAVE_FPLIST=sf.out_wave_fplist,
+                           CCF_RV=sf.out_ccf_fits)
 cal_wave_night.set_debug_plots('WAVENIGHT_ITERPLOT', 'WAVENIGHT_HISTPLOT',
                                'WAVEREF_EXPECTED', 'CCF_RV_FIT',
                                'CCF_RV_FIT_LOOP', 'EXTRACT_S1D',
