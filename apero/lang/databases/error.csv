@@ -1388,7 +1388,7 @@
 "90-001-00032","DEBUG","Prints that we are setting ipython return mode","{0} = return value","Setting ipython_return to True","",""
 "90-001-00033","DEBUG","Prints that we are setting break points mode","None","Setting allow_breakpoints to True","",""
 "90-001-00034","DEBUG","Prints that we are setting quiet mode","None","Setting mode to quiet","",""
-"90-001-00035","DEBUG","","","","",""
+"90-001-00035","DEBUG","Prints that directory was found but that it does not conform to input path set in recipe definitions","{0} = input directory (from recipe definitions)","Directory found is not consistent with input path in recipe defintions: {0}","",""
 "90-001-00036","DEBUG","","","","",""
 "","","","","","",""
 "","","","","","",""
