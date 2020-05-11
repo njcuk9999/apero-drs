@@ -289,9 +289,6 @@ class _CheckDirectory(DrsAction):
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '_check_directory', __NAME__,
                          '_CheckDirectory')
-
-        # TODO: remove break point
-        constants.break_point()
         # ---------------------------------------------------------------------
         # deal with no check
         if not self.recipe.input_validation:
