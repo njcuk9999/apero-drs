@@ -1279,15 +1279,21 @@ WAVE_FP_DPRLIST.value = 'OBJ_FP'
 # =============================================================================
 # CALIBRATION: WAVE LITTROW SETTINGS
 # =============================================================================
-#  Define the order to start the Littrow fit from
+#  Define the order to start the Littrow fit from for the HC wave solution
 WAVE_LITTROW_ORDER_INIT_1 = WAVE_LITTROW_ORDER_INIT_1.copy(__NAME__)
 WAVE_LITTROW_ORDER_INIT_1.value = 0
+
+#  Define the order to start the Littrow fit from for the FP wave solution
+# TODO: Note currently used
 WAVE_LITTROW_ORDER_INIT_2 = WAVE_LITTROW_ORDER_INIT_2.copy(__NAME__)
 WAVE_LITTROW_ORDER_INIT_2.value = 1
 
-#  Define the order to end the Littrow fit at
+#  Define the order to end the Littrow fit at for the HC wave solution
 WAVE_LITTROW_ORDER_FINAL_1 = WAVE_LITTROW_ORDER_FINAL_1.copy(__NAME__)
 WAVE_LITTROW_ORDER_FINAL_1.value = 47
+
+#  Define the order to end the Littrow fit at for the FP wave solution
+# TODO: Note currently used
 WAVE_LITTROW_ORDER_FINAL_2 = WAVE_LITTROW_ORDER_FINAL_2.copy(__NAME__)
 WAVE_LITTROW_ORDER_FINAL_2.value = 47
 
@@ -1296,15 +1302,21 @@ WAVE_LITTROW_ORDER_FINAL_2.value = 47
 WAVE_LITTROW_REMOVE_ORDERS = WAVE_LITTROW_REMOVE_ORDERS.copy(__NAME__)
 WAVE_LITTROW_REMOVE_ORDERS.value = ''
 
-#  Define the littrow cut steps
+#  Define the littrow cut steps for the HC wave solution
 WAVE_LITTROW_CUT_STEP_1 = WAVE_LITTROW_CUT_STEP_1.copy(__NAME__)
 WAVE_LITTROW_CUT_STEP_1.value = 250
+
+#  Define the littrow cut steps for the FP wave solution
 WAVE_LITTROW_CUT_STEP_2 = WAVE_LITTROW_CUT_STEP_2.copy(__NAME__)
 WAVE_LITTROW_CUT_STEP_2.value = 500
 
 #  Define the fit polynomial order for the Littrow fit (fit across the orders)
+#    for the HC wave solution
 WAVE_LITTROW_FIG_DEG_1 = WAVE_LITTROW_FIG_DEG_1.copy(__NAME__)
 WAVE_LITTROW_FIG_DEG_1.value = 8  # 5  # 4
+
+#  Define the fit polynomial order for the Littrow fit (fit across the orders)
+#    for the FP wave solution
 WAVE_LITTROW_FIG_DEG_2 = WAVE_LITTROW_FIG_DEG_2.copy(__NAME__)
 WAVE_LITTROW_FIG_DEG_2.value = 8  # 4
 
