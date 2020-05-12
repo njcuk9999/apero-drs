@@ -28,10 +28,6 @@ directory = dict(name='directory', dtype='directory',
 # =============================================================================
 # Option definitions
 # =============================================================================
-#
-# Note for these to work MUST add to spirouStartup.spirou_options_manager
-#
-# -----------------------------------------------------------------------------
 add_db = dict(name='--database', dtype='bool', default=True,
               helpstr=Help['ADD_CAL_HELP'])
 # -----------------------------------------------------------------------------
@@ -122,7 +118,6 @@ wavefile = dict(name='--wavefile', dtype='file', default='None',
 # Setup for recipes
 # =============================================================================
 DrsRecipe = drs_recipe.DrsRecipe
-
 # push into a list
 recipes = []
 
@@ -539,7 +534,6 @@ cal_thermal.set_kwarg(name='--forceext', dtype='bool',
 # add to recipe
 recipes.append(cal_thermal)
 
-
 # -----------------------------------------------------------------------------
 # cal_leak_master_spirou
 # -----------------------------------------------------------------------------
@@ -566,7 +560,7 @@ cal_leak_master.set_kwarg(**plot)
 recipes.append(cal_leak_master)
 
 # -----------------------------------------------------------------------------
-# cal_leak_master_spirou
+# cal_leak_spirou
 # -----------------------------------------------------------------------------
 cal_leak = DrsRecipe(__INSTRUMENT__)
 cal_leak.name = 'cal_leak_spirou.py'
@@ -739,7 +733,7 @@ cal_wave_master.set_kwarg(name='--fpmode', dtype='options',
 recipes.append(cal_wave_master)
 
 # -----------------------------------------------------------------------------
-# cal_wave_night
+# cal_wave_night_spirou
 # -----------------------------------------------------------------------------
 cal_wave_night = DrsRecipe(__INSTRUMENT__)
 cal_wave_night.name = 'cal_wave_night_spirou.py'
@@ -848,12 +842,11 @@ cal_ccf.set_kwarg(name='--step', dtype=float, default_ref='CCF_DEFAULT_STEP',
 cal_ccf.set_kwarg(**add_db)
 cal_ccf.set_kwarg(**blazefile)
 cal_ccf.set_kwarg(**plot)
-cal_ccf.set_kwarg(**plot)
 # add to recipe
 recipes.append(cal_ccf)
 
 # -----------------------------------------------------------------------------
-# obj_mk_tellu
+# obj_mk_tellu_spirou
 # -----------------------------------------------------------------------------
 obj_mk_tellu = DrsRecipe(__INSTRUMENT__)
 obj_mk_tellu.name = 'obj_mk_tellu_spirou.py'
@@ -888,7 +881,7 @@ obj_mk_tellu.set_kwarg(name='--use_template', dtype='bool', default=True,
 recipes.append(obj_mk_tellu)
 
 # -----------------------------------------------------------------------------
-# obj_mk_tellu_db
+# obj_mk_tellu_db_spirou
 # -----------------------------------------------------------------------------
 obj_mk_tellu_db = DrsRecipe(__INSTRUMENT__)
 obj_mk_tellu_db.name = 'obj_mk_tellu_db_spirou.py'
@@ -921,7 +914,7 @@ obj_mk_tellu_db.set_kwarg(**wavefile)
 recipes.append(obj_mk_tellu_db)
 
 # -----------------------------------------------------------------------------
-# obj_fit_tellu
+# obj_fit_tellu_spirou
 # -----------------------------------------------------------------------------
 obj_fit_tellu = DrsRecipe(__INSTRUMENT__)
 obj_fit_tellu.name = 'obj_fit_tellu_spirou.py'
@@ -965,7 +958,7 @@ obj_fit_tellu.set_kwarg(**wavefile)
 recipes.append(obj_fit_tellu)
 
 # -----------------------------------------------------------------------------
-# obj_fit_tellu_db
+# obj_fit_tellu_db_spirou
 # -----------------------------------------------------------------------------
 obj_fit_tellu_db = DrsRecipe(__INSTRUMENT__)
 obj_fit_tellu_db.name = 'obj_fit_tellu_db_spirou.py'
@@ -1001,7 +994,7 @@ obj_fit_tellu_db.set_kwarg(**wavefile)
 recipes.append(obj_fit_tellu_db)
 
 # -----------------------------------------------------------------------------
-# obj_mk_temp
+# obj_mk_template_spirou
 # -----------------------------------------------------------------------------
 obj_mk_template = DrsRecipe(__INSTRUMENT__)
 obj_mk_template.name = 'obj_mk_template_spirou.py'

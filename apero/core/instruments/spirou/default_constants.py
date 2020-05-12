@@ -887,7 +887,6 @@ EXT_S1D_INTYPE.value = 'E2DSFF'
 EXT_S1D_INFILE = EXT_S1D_INFILE.copy(__NAME__)
 EXT_S1D_INFILE.value = 'E2DSFF_FILE'
 
-
 # Define the start s1d wavelength (in nm)
 EXT_S1D_WAVESTART = EXT_S1D_WAVESTART.copy(__NAME__)
 EXT_S1D_WAVESTART.value = 965
@@ -2352,7 +2351,6 @@ EXPMETER_MAX_LAMBDA.value = 1823.1
 # Define exposure meter telluric threshold (minimum tapas transmission)
 EXPMETER_TELLU_THRES = EXPMETER_TELLU_THRES.copy(__NAME__)
 EXPMETER_TELLU_THRES.value = 0.95
-
 
 # =============================================================================
 #  End of configuration file

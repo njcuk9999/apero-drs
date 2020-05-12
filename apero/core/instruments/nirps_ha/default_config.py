@@ -122,7 +122,7 @@ CALIB_DB_NAME.value = 'master_calib_NIRPS_HA.txt'
 #    if two files match with keys and time the key lower in the
 #         calibDB file will be used
 CALIB_DB_MATCH = CALIB_DB_MATCH.copy(__NAME__)
-CALIB_DB_MATCH.value = 'older'
+CALIB_DB_MATCH.value = 'closest'
 
 # define the calibration database columns
 CALIB_DB_COLS = CALIB_DB_COLS.copy(__NAME__)
