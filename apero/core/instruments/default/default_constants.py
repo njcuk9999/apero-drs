@@ -1602,15 +1602,21 @@ WAVE_HC_RESMAP_YLIM = Const('WAVE_HC_RESMAP_YLIM', value=None, dtype=str,
 # CALIBRATION: WAVE LITTROW SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION: WAVE LITTROW SETTINGS'
-#  Define the order to start the Littrow fit from
+#  Define the order to start the Littrow fit from for the HC wave solution
 WAVE_LITTROW_ORDER_INIT_1 = Const('WAVE_LITTROW_ORDER_INIT_1', value=None,
                                   dtype=int, source=__NAME__, group=cgroup)
+
+#  Define the order to start the Littrow fit from for the FP wave solution
+# TODO: Note currently used
 WAVE_LITTROW_ORDER_INIT_2 = Const('WAVE_LITTROW_ORDER_INIT_2', value=None,
                                   dtype=int, source=__NAME__, group=cgroup)
 
-#  Define the order to end the Littrow fit at
+#  Define the order to end the Littrow fit at for the HC wave solution
 WAVE_LITTROW_ORDER_FINAL_1 = Const('WAVE_LITTROW_ORDER_FINAL_1', value=None,
                                    dtype=int, source=__NAME__, group=cgroup)
+
+#  Define the order to end the Littrow fit at for the FP wave solution
+# TODO: Note currently used
 WAVE_LITTROW_ORDER_FINAL_2 = Const('WAVE_LITTROW_ORDER_FINAL_2', value=None,
                                    dtype=int, source=__NAME__, group=cgroup)
 
@@ -1619,15 +1625,21 @@ WAVE_LITTROW_ORDER_FINAL_2 = Const('WAVE_LITTROW_ORDER_FINAL_2', value=None,
 WAVE_LITTROW_REMOVE_ORDERS = Const('WAVE_LITTROW_REMOVE_ORDERS', value=None,
                                    dtype=str, source=__NAME__, group=cgroup)
 
-#  Define the littrow cut steps
+#  Define the littrow cut steps for the HC wave solution
 WAVE_LITTROW_CUT_STEP_1 = Const('WAVE_LITTROW_CUT_STEP_1', value=None,
                                 dtype=int, source=__NAME__, group=cgroup)
+
+#  Define the littrow cut steps for the FP wave solution
 WAVE_LITTROW_CUT_STEP_2 = Const('WAVE_LITTROW_CUT_STEP_2', value=None,
                                 dtype=int, source=__NAME__, group=cgroup)
 
 #  Define the fit polynomial order for the Littrow fit (fit across the orders)
+#    for the HC wave solution
 WAVE_LITTROW_FIG_DEG_1 = Const('WAVE_LITTROW_FIG_DEG_1', value=None,
                                dtype=int, source=__NAME__, group=cgroup)
+
+#  Define the fit polynomial order for the Littrow fit (fit across the orders)
+#    for the FP wave solution
 WAVE_LITTROW_FIG_DEG_2 = Const('WAVE_LITTROW_FIG_DEG_2', value=None,
                                dtype=int, source=__NAME__, group=cgroup)
 
