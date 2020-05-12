@@ -151,8 +151,11 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     # get pseudo constants
     pconst = constants.pload(params['INSTRUMENT'])
 
-    # deal with fibers that we don't have
-    usefiber = pconst.FIBER_WAVE_TYPES(fiber)
+    # deal with which fiber to use
+    if master:
+        usefiber = pconst.FIBER_WAVE_TYPES(fiber)
+    else:
+        usefiber = str(fiber)
     # ------------------------------------------------------------------------
     # get file definitions (wave solution FP and wave solution HC)
     out_wave_fp = core.get_file_definition('WAVE_FP', params['INSTRUMENT'],
