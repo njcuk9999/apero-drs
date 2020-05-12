@@ -118,7 +118,6 @@ OBJ_LIST_CROSS_MATCH_RADIUS.value = 60.0
 
 # Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
 OBJ_LIST_GAIA_URL = OBJ_LIST_GAIA_URL.copy(__NAME__)
-OBJ_LIST_GAIA_URL.value = 'http://gea.esac.esa.int/tap-server/tap'
 OBJ_LIST_GAIA_URL.value = 'https://gea.esac.esa.int/tap-server/tap'
 
 # Define the gaia magnitude cut (rp mag) to use in the gaia query
@@ -1014,17 +1013,17 @@ THERMAL_PLOT_START_ORDER.value = 40
 # =============================================================================
 # CALIBRATION: WAVE GENERAL SETTINGS
 # =============================================================================
-# Define the wave master fiber
+# Define wave master fiber (controller fiber)
 WAVE_MASTER_FIBER = WAVE_MASTER_FIBER.copy(__NAME__)
 WAVE_MASTER_FIBER.value = 'A'
 
 # Define the line list file (located in the DRS_WAVE_DATA directory)
 WAVE_LINELIST_FILE = WAVE_LINELIST_FILE.copy(__NAME__)
-WAVE_LINELIST_FILE.value = 'catalogue_UNe.dat'  # 'catalogue_ThAr.dat'
+WAVE_LINELIST_FILE.value = 'catalogue_UNe.csv'  # 'catalogue_UNe.dat'
 
 # Define the line list file format (must be astropy.table format)
 WAVE_LINELIST_FMT = WAVE_LINELIST_FMT.copy(__NAME__)
-WAVE_LINELIST_FMT.value = 'ascii.tab'
+WAVE_LINELIST_FMT.value = 'ascii.csv'   # 'ascii.tab'
 
 # Define the line list file column names (must be separated by commas
 #   and must be equal to the number of columns in file)
@@ -1033,7 +1032,7 @@ WAVE_LINELIST_COLS.value = 'll, amp, kind'
 
 # Define the line list file row the data starts
 WAVE_LINELIST_START = WAVE_LINELIST_START.copy(__NAME__)
-WAVE_LINELIST_START.value = 0
+WAVE_LINELIST_START.value = 1     # 0
 
 # Define the line list file wavelength column and amplitude column
 #    Must be in WAVE_LINELIST_COLS
@@ -1284,15 +1283,21 @@ WAVE_FP_DPRLIST.value = 'OBJ_FP'
 # =============================================================================
 # CALIBRATION: WAVE LITTROW SETTINGS
 # =============================================================================
-#  Define the order to start the Littrow fit from
+#  Define the order to start the Littrow fit from for the HC wave solution
 WAVE_LITTROW_ORDER_INIT_1 = WAVE_LITTROW_ORDER_INIT_1.copy(__NAME__)
 WAVE_LITTROW_ORDER_INIT_1.value = 0
+
+#  Define the order to start the Littrow fit from for the FP wave solution
+# TODO: Note currently used
 WAVE_LITTROW_ORDER_INIT_2 = WAVE_LITTROW_ORDER_INIT_2.copy(__NAME__)
 WAVE_LITTROW_ORDER_INIT_2.value = 1
 
-#  Define the order to end the Littrow fit at
+#  Define the order to end the Littrow fit at for the HC wave solution
 WAVE_LITTROW_ORDER_FINAL_1 = WAVE_LITTROW_ORDER_FINAL_1.copy(__NAME__)
 WAVE_LITTROW_ORDER_FINAL_1.value = 47
+
+#  Define the order to end the Littrow fit at for the FP wave solution
+# TODO: Note currently used
 WAVE_LITTROW_ORDER_FINAL_2 = WAVE_LITTROW_ORDER_FINAL_2.copy(__NAME__)
 WAVE_LITTROW_ORDER_FINAL_2.value = 47
 
@@ -1301,15 +1306,21 @@ WAVE_LITTROW_ORDER_FINAL_2.value = 47
 WAVE_LITTROW_REMOVE_ORDERS = WAVE_LITTROW_REMOVE_ORDERS.copy(__NAME__)
 WAVE_LITTROW_REMOVE_ORDERS.value = ''
 
-#  Define the littrow cut steps
+#  Define the littrow cut steps for the HC wave solution
 WAVE_LITTROW_CUT_STEP_1 = WAVE_LITTROW_CUT_STEP_1.copy(__NAME__)
 WAVE_LITTROW_CUT_STEP_1.value = 250
+
+#  Define the littrow cut steps for the FP wave solution
 WAVE_LITTROW_CUT_STEP_2 = WAVE_LITTROW_CUT_STEP_2.copy(__NAME__)
 WAVE_LITTROW_CUT_STEP_2.value = 500
 
 #  Define the fit polynomial order for the Littrow fit (fit across the orders)
+#    for the HC wave solution
 WAVE_LITTROW_FIG_DEG_1 = WAVE_LITTROW_FIG_DEG_1.copy(__NAME__)
 WAVE_LITTROW_FIG_DEG_1.value = 8  # 5  # 4
+
+#  Define the fit polynomial order for the Littrow fit (fit across the orders)
+#    for the FP wave solution
 WAVE_LITTROW_FIG_DEG_2 = WAVE_LITTROW_FIG_DEG_2.copy(__NAME__)
 WAVE_LITTROW_FIG_DEG_2.value = 8  # 4
 
@@ -1403,7 +1414,8 @@ WAVE_CCF_DETNOISE.value = 100.0
 
 #  The filename of the CCF Mask to use for the FP CCF
 WAVE_CCF_MASK = WAVE_CCF_MASK.copy(__NAME__)
-WAVE_CCF_MASK.value = 'fp.mas'
+# WAVE_CCF_MASK.value = 'fp.mas'
+WAVE_CCF_MASK.value = 'smart_fp_mask.mas'
 
 # Define the wavelength units for the mask for the FP CCF
 WAVE_CCF_MASK_UNITS = WAVE_CCF_MASK_UNITS.copy(__NAME__)
@@ -1411,7 +1423,7 @@ WAVE_CCF_MASK_UNITS.value = 'nm'
 
 # Define the ccf mask path the FP CCF
 WAVE_CCF_MASK_PATH = WAVE_CCF_MASK_PATH.copy(__NAME__)
-WAVE_CCF_MASK_PATH.value = './data/spirou/ccf/'
+WAVE_CCF_MASK_PATH.value = './data/nirps_ha/ccf/'
 
 # Define the CCF mask format (must be an astropy.table format)
 WAVE_CCF_MASK_FMT = WAVE_CCF_MASK_FMT.copy(__NAME__)
@@ -1800,7 +1812,7 @@ CCF_MASK_PATH.value = './data/spirou/ccf/'
 
 # Define the default CCF MASK to use
 CCF_DEFAULT_MASK = CCF_DEFAULT_MASK.copy(__NAME__)
-CCF_DEFAULT_MASK.value = 'gl581_Sep18_cleaned.mas'
+CCF_DEFAULT_MASK.value = 'masque_sept18_andres_trans50.mas'
 
 # Define the wavelength units for the mask
 CCF_MASK_UNITS = CCF_MASK_UNITS.copy(__NAME__)
@@ -1819,6 +1831,7 @@ CCF_MASK_WIDTH = CCF_MASK_WIDTH.copy(__NAME__)
 CCF_MASK_WIDTH.value = 1.7
 
 # Define target rv header null value
+#     (values greater than absolute value are set to zero)
 CCF_OBJRV_NULL_VAL = CCF_OBJRV_NULL_VAL.copy(__NAME__)
 CCF_OBJRV_NULL_VAL.value = 1000
 
@@ -1890,152 +1903,6 @@ CCF_FIT_TYPE.value = 0
 # Define the percentile the blaze is normalised by before using in CCF calc
 CCF_BLAZE_NORM_PERCENTILE = CCF_BLAZE_NORM_PERCENTILE.copy(__NAME__)
 CCF_BLAZE_NORM_PERCENTILE.value = 90
-
-
-# =============================================================================
-# OBJECT: POLARISATION SETTINGS
-# =============================================================================
-#  Define all possible fibers used for polarimetry
-#     (define as a string list)
-POLAR_VALID_FIBERS = POLAR_VALID_FIBERS.copy(__NAME__)
-POLAR_VALID_FIBERS.value = 'A, B'
-
-#  Define all possible stokes parameters  used for polarimetry
-#      (define as a string list)
-POLAR_VALID_STOKES = POLAR_VALID_STOKES.copy(__NAME__)
-POLAR_VALID_STOKES.value = 'V, Q, U'
-
-#  Define the polarimetry calculation method
-#    currently must be either:
-#         - Ratio
-#         - Difference
-POLAR_METHOD = POLAR_METHOD.copy(__NAME__)
-POLAR_METHOD.value = 'Ratio'
-
-#  Define the polarimetry continuum bin size (for plotting)
-POLAR_CONT_BINSIZE = POLAR_CONT_BINSIZE.copy(__NAME__)
-POLAR_CONT_BINSIZE.value = 1000
-
-#  Define the polarimetry continuum overlap size (for plotting)
-POLAR_CONT_OVERLAP = POLAR_CONT_OVERLAP.copy(__NAME__)
-POLAR_CONT_OVERLAP.value = 0
-
-#  Define the telluric mask for calculation of continnum lower limits
-#    (string list)
-POLAR_CONT_TELLMASK_LOWER = POLAR_CONT_TELLMASK_LOWER.copy(__NAME__)
-POLAR_CONT_TELLMASK_LOWER.value = '930, 1109, 1326, 1782, 1997, 2047'
-
-#  Define the telluric mask for calculation of continnum upper limits
-#    (string list)
-POLAR_CONT_TELLMASK_UPPER = POLAR_CONT_TELLMASK_UPPER.copy(__NAME__)
-POLAR_CONT_TELLMASK_UPPER.value = '967, 1167, 1491, 1979, 2027, 2076'
-
-#  Perform LSD analysis
-POLAR_LSD_ANALYSIS = POLAR_LSD_ANALYSIS.copy(__NAME__)
-POLAR_LSD_ANALYSIS.value = True
-
-#  Define the spectral lsd mask directory for lsd polar calculations
-POLAR_LSD_PATH = POLAR_LSD_PATH.copy(__NAME__)
-POLAR_LSD_PATH.value = './data/spirou/lsd/'
-
-#  Define the file regular expression key to lsd mask files
-POLAR_LSD_FILE_KEY = POLAR_LSD_FILE_KEY.copy(__NAME__)
-POLAR_LSD_FILE_KEY.value = 'marcs_t*g50_all'
-
-#  Define mask for selecting lines to be used in the LSD analysis
-#      lower bounds (string list)
-POLAR_LSD_WL_LOWER = POLAR_LSD_WL_LOWER.copy(__NAME__)
-POLAR_LSD_WL_LOWER.value = '983, 1163, 1280, 1490, 1975, 2030'
-
-#  Define mask for selecting lines to be used in the LSD analysis
-#      upper bounds (string list)
-POLAR_LSD_WL_UPPER = POLAR_LSD_WL_UPPER.copy(__NAME__)
-POLAR_LSD_WL_UPPER.value = '1116, 1260, 1331, 1790, 1995, 2047.5'
-
-# Define minimum line depth to be used in the LSD analyis
-POLAR_LSD_MIN_LINEDEPTH = POLAR_LSD_MIN_LINEDEPTH.copy(__NAME__)
-POLAR_LSD_MIN_LINEDEPTH.value = 0.175
-
-#  Define initial velocity (km/s) for output LSD profile
-POLAR_LSD_VINIT = POLAR_LSD_VINIT.copy(__NAME__)
-POLAR_LSD_VINIT.value = -150.0
-
-#  Define final velocity (km/s) for output LSD profile
-POLAR_LSD_VFINAL = POLAR_LSD_VFINAL.copy(__NAME__)
-POLAR_LSD_VFINAL.value = 150.0
-
-#  Define the order wavelength mask filename
-POLAR_LSD_ORDER_MASK = POLAR_LSD_ORDER_MASK.copy(__NAME__)
-POLAR_LSD_ORDER_MASK.value = 'lsd_order_mask.dat'
-
-#  Define whether to normalise by stokei by the continuum in lsd process
-POLAR_LSD_NORM = POLAR_LSD_NORM.copy(__NAME__)
-POLAR_LSD_NORM.value = True
-
-#  Define the normalise by continuum lsd binsize
-#     used in the normalization with POLAR_LSD_NORM = True
-POLAR_LSD_NBIN1 = POLAR_LSD_NBIN1.copy(__NAME__)
-POLAR_LSD_NBIN1.value = 30
-
-#  Define the normalise by continuum lsd overlap with adjacent bins
-#     used in the normalization with POLAR_LSD_NORM = True
-POLAR_LSD_NOVERLAP1 = POLAR_LSD_NOVERLAP1.copy(__NAME__)
-POLAR_LSD_NOVERLAP1.value = 15
-
-#  Define the normalise by continuum lsd sigma clip value
-#     used in the normalization with POLAR_LSD_NORM = True
-POLAR_LSD_NSIGCLIP1 = POLAR_LSD_NSIGCLIP1.copy(__NAME__)
-POLAR_LSD_NSIGCLIP1.value = 3
-
-#  Define the normalise by continuum lsd window size (local fit size)
-#     used in the normalization with POLAR_LSD_NORM = True
-POLAR_LSD_NWINDOW1 = POLAR_LSD_NWINDOW1.copy(__NAME__)
-POLAR_LSD_NWINDOW1.value = 2
-
-#  Define the normalise by continuum lsd mode (mean/median/max)
-#     used in the normalization with POLAR_LSD_NORM = True
-POLAR_LSD_NMODE1 = POLAR_LSD_NMODE1.copy(__NAME__)
-POLAR_LSD_NMODE1.value = 'median'
-
-#  Define whether to use a linear fit in the normalise by continuum lsd calc
-#     used in the normalization with POLAR_LSD_NORM = True
-POLAR_LSD_NLFIT1 = POLAR_LSD_NLFIT1.copy(__NAME__)
-POLAR_LSD_NLFIT1.value = True
-
-#  Define number of points for output LSD profile
-POLAR_LSD_NPOINTS = POLAR_LSD_NPOINTS.copy(__NAME__)
-POLAR_LSD_NPOINTS.value = 201
-
-#  Define the normalise by continuum lsd binsize
-#    used in the profile calculation
-POLAR_LSD_NBIN2 = POLAR_LSD_NBIN2.copy(__NAME__)
-POLAR_LSD_NBIN2.value = 20
-
-#  Define the normalise by continuum lsd overlap with adjacent bins
-#    used in the profile calculation
-POLAR_LSD_NOVERLAP2 = POLAR_LSD_NOVERLAP2.copy(__NAME__)
-POLAR_LSD_NOVERLAP2.value = 5
-
-#  Define the normalise by continuum lsd sigma clip value
-#    used in the profile calculation
-POLAR_LSD_NSIGCLIP2 = POLAR_LSD_NSIGCLIP2.copy(__NAME__)
-POLAR_LSD_NSIGCLIP2.value = 3
-
-#  Define the normalise by continuum lsd window size (local fit size)
-#    used in the profile calculation
-POLAR_LSD_NWINDOW2 = POLAR_LSD_NWINDOW2.copy(__NAME__)
-POLAR_LSD_NWINDOW2.value = 2
-
-#  Define the normalise by continuum lsd mode (mean/median/max)
-#    used in the profile calculation
-POLAR_LSD_NMODE2 = POLAR_LSD_NMODE2.copy(__NAME__)
-POLAR_LSD_NMODE2.value = 'median'
-
-#  Define whether to use a linear fit in the normalise by continuum lsd calc
-#    used in the profile calculation
-POLAR_LSD_NLFIT2 = POLAR_LSD_NLFIT2.copy(__NAME__)
-POLAR_LSD_NLFIT2.value = False
-
 
 # =============================================================================
 # DEBUG PLOT SETTINGS

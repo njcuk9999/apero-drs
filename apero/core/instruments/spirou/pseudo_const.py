@@ -384,6 +384,7 @@ class PseudoConstants(DefaultConstants):
         # return keys
         return keys
 
+
 # =============================================================================
 # Functions used by pseudo const (instrument specific)
 # =============================================================================
