@@ -1142,30 +1142,30 @@ pol_spirou_new.set_debug_plots('POLAR_CONTINUUM', 'POLAR_RESULTS',
 pol_spirou_new.set_summary_plots('SUM_EXTRACT_S1D')
 pol_spirou_new.set_arg(pos=0, **directory)
 
-pol_spirou_new.set_kwarg(name='--exp1', altnames='-1', dtype='file',
+pol_spirou_new.set_kwarg(name='--exp1', altnames=['-1'], dtype='file',
                      files=[sf.out_ext_e2dsff, sf.out_tellu_obj],
                      nargs=1, filelogic='exclusive', required=True,
                      default=[], helpstr='Input exposure 1')
-pol_spirou_new.set_kwarg(name='--exp2', altnames='-2', dtype='file',
+pol_spirou_new.set_kwarg(name='--exp2', altnames=['-2'], dtype='file',
                      files=[sf.out_ext_e2dsff, sf.out_tellu_obj],
                      nargs=1, filelogic='exclusive', required=True,
                      default=[], helpstr='Input exposure 2')
-pol_spirou_new.set_kwarg(name='--exp3', altnames='-3', dtype='file',
+pol_spirou_new.set_kwarg(name='--exp3', altnames=['-3'], dtype='file',
                      files=[sf.out_ext_e2dsff, sf.out_tellu_obj],
                      nargs=1, filelogic='exclusive', required=True,
                      default=[], helpstr='Input exposure 3')
-pol_spirou_new.set_kwarg(name='--exp4', altnames='-4', dtype='file',
+pol_spirou_new.set_kwarg(name='--exp4', altnames=['-4'], dtype='file',
                      files=[sf.out_ext_e2dsff, sf.out_tellu_obj],
                      nargs=1, filelogic='exclusive', required=True,
                      default=[], helpstr='Input exposure 4')
 
-pol_spirou_new.set_kwarg(name='--lsdmask', altnames='-m', dtype='str',
-                         nargs=1, helpstr='LSD mask')
-pol_spirou_new.set_kwarg(name='--output', altnames='-o', dtype='str',
-                         nargs=1, helpstr='Output file')
-pol_spirou_new.set_kwarg(name='--output_lsd', altnames='l', dtype='str',
-                         nargs=1, helpstr='Output LSD file')
-pol_spirou_new.set_kwarg(name='--lsd', altnames='-L', dtype='bool',
+pol_spirou_new.set_kwarg(name='--lsdmask', altnames=['-m'], dtype=str,
+                         nargs=1, helpstr='LSD mask', default='None')
+pol_spirou_new.set_kwarg(name='--output', altnames=['-o'], dtype=str,
+                         nargs=1, helpstr='Output file', default='None')
+pol_spirou_new.set_kwarg(name='--output_lsd', altnames=['-l'], dtype=str,
+                         nargs=1, helpstr='Output LSD file', default='None')
+pol_spirou_new.set_kwarg(name='--lsd', altnames=['-L'], dtype='bool',
                          nargs=1, default=False, helpstr='Run LSD analysis')
 
 pol_spirou_new.set_kwarg(**blazefile)
