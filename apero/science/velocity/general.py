@@ -433,7 +433,7 @@ def remove_wide_peaks(params, props, cutwidth):
     return props
 
 
-def get_ccf_mask(params, filename, mask_min, mask_width, mask_units='nm'):
+def get_ccf_mask(params, filename, mask_width, mask_units='nm'):
     func_name = __NAME__ + '.get_ccf_mask()'
     # load table
     table, absfilename = drs_data.load_ccf_mask(params, filename=filename)
@@ -448,15 +448,6 @@ def get_ccf_mask(params, filename, mask_min, mask_width, mask_units='nm'):
         ll_mask_d = mask_width * ll_mask_s / speed_of_light
     # make w_mask an array
     w_mask = np.array(table['w_mask']).astype(float)
-    # use w_min to select on w_mask or keep all if w_mask_min >= 1
-    if mask_min < 1.0:
-        mask = w_mask > mask_min
-        ll_mask_d = ll_mask_d[mask]
-        ll_mask_ctr = ll_mask_ctr[mask]
-        w_mask = w_mask[mask]
-    # else set all w_mask to one (and use all lines in file)
-    else:
-        w_mask = np.ones(len(ll_mask_d))
     # ----------------------------------------------------------------------
     # deal with the units of ll_mask_d and ll_mask_ctr
     # must be returned in nanometers
@@ -653,6 +644,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
                         func_name)
     noise_thres = pcheck(params, 'CCF_NOISE_THRES', 'noise_thres', kwargs,
                          func_name)
+    # TODO: Remove this (not used any more)
     mask_min = pcheck(params, 'CCF_MASK_MIN_WEIGHT', 'mask_min', kwargs,
                       func_name)
     mask_width = pcheck(params, 'CCF_MASK_WIDTH', 'mask_width', kwargs,
@@ -741,7 +733,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     # Do the CCF calculations
     # ----------------------------------------------------------------------
     # get the mask parameters
-    mkwargs = dict(filename=ccfmask, mask_min=mask_min, mask_width=mask_width,
+    mkwargs = dict(filename=ccfmask, mask_width=mask_width,
                    mask_units=mask_units)
     ll_mask_d, ll_mask_ctr, w_mask = get_ccf_mask(params, **mkwargs)
 
@@ -891,7 +883,7 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     # Do the CCF calculations
     # ----------------------------------------------------------------------
     # get the mask parameters
-    mkwargs = dict(filename=ccfmask, mask_min=mask_min, mask_width=mask_width,
+    mkwargs = dict(filename=ccfmask, mask_width=mask_width,
                    mask_units=mask_units)
     ll_mask_d, ll_mask_ctr, w_mask = get_ccf_mask(params, **mkwargs)
     # calculate the CCF
@@ -1051,8 +1043,8 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         min_ord_wav = mp.nanmin(wa_ord[blazemask])
         max_ord_wav = mp.nanmax(wa_ord[blazemask])
         # adjust for rv shifts
-        min_ord_wav = min_ord_wav * (1 - rvmin / speed_of_light)
-        max_ord_wav = max_ord_wav * (1 - rvmax / speed_of_light)
+        # min_ord_wav = min_ord_wav * (1 - rvmin / speed_of_light)
+        # max_ord_wav = max_ord_wav * (1 - rvmax / speed_of_light)
         # mask the ccf mask by the order length
         mask_wave_mask = (mask_centers > min_ord_wav)
         mask_wave_mask &= (mask_centers < max_ord_wav)
@@ -1109,6 +1101,25 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         # get the wavelength shift (dv) in relativistic way
         wave_shifts = mp.relativistic_waveshift(rv_ccf - berv)
         # ------------------------------------------------------------------
+        # propagating the extreme wave shifts to see if any lines fall off
+        #  the domain that is considered valid for the spline
+
+        # find the wave grid for the first shift
+        wave_tmp_start = omask_centers * wave_shifts[0]
+        # find the wave grid for the last shift
+        wave_tmp_end = omask_centers * wave_shifts[-1]
+        # find the valid lines within these limits
+        # (ext=1 puts 0 when point is beyond domain)
+        valid_lines_start = spline_bl(wave_tmp_start) != 0
+        valid_lines_end = spline_bl(wave_tmp_end) != 0
+        # combine the valid masks for start and end
+        keep = valid_lines_start & valid_lines_end
+        # apply masks to centers and weights
+        omask_centers = omask_centers[keep]
+        omask_weights = omask_weights[keep]
+        # normalise omask weights by
+        omask_weights = omask_weights / np.nanmean(omask_weights)
+        # ------------------------------------------------------------------
         # set number of valid lines used to zero
         numlines = 0
         # loop around the rvs and calculate the CCF at this point
@@ -1155,6 +1166,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         # calculate the residuals of the ccf fit
         res = ccf_ord - ccf_fit_ord
         # calculate the CCF noise per order
+        # TODO: Figure out how to work out the CCF_NOISE
         ccf_noise = np.array(res)
         # calculate the snr for this order
         ccf_snr = np.abs(ccf_coeffs_ord[0] / mp.nanmedian(np.abs(ccf_noise)))
