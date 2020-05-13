@@ -1108,6 +1108,72 @@ pol_spirou.set_kwarg(**wavefile)
 # add to recipe
 recipes.append(pol_spirou)
 
+
+# -----------------------------------------------------------------------------
+# pol_spirou_new
+# -----------------------------------------------------------------------------
+pol_spirou_new = DrsRecipe(__INSTRUMENT__)
+pol_spirou_new.name = 'pol_spirou_new.py'
+pol_spirou_new.shortname = 'POLAR'
+pol_spirou_new.instrument = __INSTRUMENT__
+pol_spirou_new.outputdir = 'reduced'
+pol_spirou_new.inputdir = 'reduced'
+pol_spirou_new.inputtype = 'reduced'
+pol_spirou_new.extension = 'fits'
+pol_spirou_new.description = Help['FTELLU_DESC']
+pol_spirou_new.epilog = Help['FTELLU_EXAMPLE']
+pol_spirou_new.kind = 'recipe'
+pol_spirou_new.set_outputs(POL_DEG_FILE=sf.out_pol_deg,
+                       POL_NULL1=sf.out_pol_null1,
+                       POL_NULL2=sf.out_pol_null2,
+                       POL_STOKESI=sf.out_pol_stokesi,
+                       POL_LSD=sf.out_pol_lsd,
+                       S1DW_POL=sf.out_pol_s1dw,
+                       S1DV_POL=sf.out_pol_s1dv,
+                       S1DW_NULL1=sf.out_null1_s1dw,
+                       S1DV_NULL1=sf.out_null1_s1dv,
+                       S1DW_NULL2=sf.out_null2_s1dw,
+                       S1DV_NULL2=sf.out_null2_s1dv,
+                       S1DW_STOKESI=sf.out_stokesi_s1dw,
+                       S1DV_STOKESI=sf.out_stokesi_s1dv)
+pol_spirou_new.set_debug_plots('POLAR_CONTINUUM', 'POLAR_RESULTS',
+                           'POLAR_STOKES_I', 'POLAR_LSD',
+                           'EXTRACT_S1D', 'EXTRACT_S1D_WEIGHT')
+pol_spirou_new.set_summary_plots('SUM_EXTRACT_S1D')
+pol_spirou_new.set_arg(pos=0, **directory)
+
+pol_spirou_new.set_kwarg(name='--exp1', altnames='-1', dtype='file',
+                     files=[sf.out_ext_e2dsff, sf.out_tellu_obj],
+                     nargs=1, filelogic='exclusive', required=True,
+                     default=[], helpstr='Input exposure 1')
+pol_spirou_new.set_kwarg(name='--exp2', altnames='-2', dtype='file',
+                     files=[sf.out_ext_e2dsff, sf.out_tellu_obj],
+                     nargs=1, filelogic='exclusive', required=True,
+                     default=[], helpstr='Input exposure 2')
+pol_spirou_new.set_kwarg(name='--exp3', altnames='-3', dtype='file',
+                     files=[sf.out_ext_e2dsff, sf.out_tellu_obj],
+                     nargs=1, filelogic='exclusive', required=True,
+                     default=[], helpstr='Input exposure 3')
+pol_spirou_new.set_kwarg(name='--exp4', altnames='-4', dtype='file',
+                     files=[sf.out_ext_e2dsff, sf.out_tellu_obj],
+                     nargs=1, filelogic='exclusive', required=True,
+                     default=[], helpstr='Input exposure 4')
+
+pol_spirou_new.set_kwarg(name='--lsdmask', altnames='-m', dtype='str',
+                         nargs=1, helpstr='LSD mask')
+pol_spirou_new.set_kwarg(name='--output', altnames='-o', dtype='str',
+                         nargs=1, helpstr='Output file')
+pol_spirou_new.set_kwarg(name='--output_lsd', altnames='l', dtype='str',
+                         nargs=1, helpstr='Output LSD file')
+pol_spirou_new.set_kwarg(name='--lsd', altnames='-L', dtype='bool',
+                         nargs=1, default=False, helpstr='Run LSD analysis')
+
+pol_spirou_new.set_kwarg(**blazefile)
+pol_spirou_new.set_kwarg(**plot)
+pol_spirou_new.set_kwarg(**wavefile)
+# add to recipe
+recipes.append(pol_spirou_new)
+
 # -----------------------------------------------------------------------------
 # obj_spec_spirou
 # -----------------------------------------------------------------------------
