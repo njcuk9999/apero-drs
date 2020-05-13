@@ -25,6 +25,7 @@ from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.io import drs_path
 from apero.io import drs_fits
+from apero.io import drs_image
 from apero.io import drs_table
 from apero.io import drs_data
 from apero.science.calib import general
@@ -235,6 +236,169 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
     # ----------------------------------------------------------------------
     # return fp_cube
     return fp_cube, valid_fp_table
+
+
+
+def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
+    func_name = __NAME__ + '.construct_master_dark'
+    # get constants from params/kwargs
+    time_thres = pcheck(params, 'FP_MASTER_MATCH_TIME', 'time_thres', kwargs,
+                        func_name)
+    percent_thres = pcheck(params, 'FP_MASTER_PERCENT_THRES', 'percent_thres',
+                           kwargs, func_name)
+    qc_res = pcheck(params, 'SHAPE_QC_LTRANS_RES_THRES', 'qc_res', kwargs,
+                    func_name)
+    min_num = pcheck(params, 'SHAPE_FP_MASTER_MIN_IN_GROUP', 'min_num', kwargs,
+                     func_name)
+
+    # get temporary output dir
+    outdir = params['INPUTS']['DIRECTORY']
+
+    # get col data from dark_table
+    filenames = fp_table['FILENAME']
+    fp_times = fp_table['MJDATE']
+
+    # ----------------------------------------------------------------------
+    # match files by date
+    # ----------------------------------------------------------------------
+    # log progress
+    WLOG(params, '', TextEntry('40-014-00004', args=[time_thres]))
+    # match files by time
+    matched_id = drs_path.group_files_by_time(params, fp_times, time_thres)
+
+    # ----------------------------------------------------------------------
+    # Read individual files and sum groups
+    # ----------------------------------------------------------------------
+    # log process
+    WLOG(params, '', TextEntry('40-014-00005'))
+    # Find all unique groups
+    u_groups = np.unique(matched_id)
+    # storage of dark cube
+    valid_dark_files, valid_badpfiles, valid_backfiles = [], [], []
+    fp_cube, transforms_list, valid_matched_id = [], [], []
+    table_mask = np.zeros(len(fp_table), dtype=bool)
+    fp_cube_files, fpsubdir = None, None
+    # row counter
+    row = 0
+    # loop through groups
+    for g_it, group_num in enumerate(u_groups):
+        # log progress
+        wargs = [g_it + 1, len(u_groups)]
+        WLOG(params, 'info', TextEntry('40-014-00006', args=wargs))
+        # find all files for this group
+        fp_ids = filenames[matched_id == group_num]
+        indices = np.arange(len(filenames))[matched_id == group_num]
+        # only combine if 3 or more images were taken
+        if len(fp_ids) >= min_num:
+            # load this groups files into a cube
+            cube = []
+            # get infile from filetype
+            file_inst = core.get_file_definition(dprtype, params['INSTRUMENT'],
+                                                 kind='tmp')
+            # get this groups storage
+            vheaders = []
+            # loop around fp ids
+            for f_it, filename in enumerate(fp_ids):
+                # log reading of data
+                wargs = [os.path.basename(filename), f_it + 1, len(fp_ids)]
+                WLOG(params, 'info', TextEntry('40-014-00007', args=wargs))
+                # construct new infile instance
+                fpfile_it = file_inst.newcopy(filename=filename, recipe=recipe)
+                fpfile_it.read_file()
+                # append to cube
+                cube.append(np.array(fpfile_it.data))
+                vheaders.append(drs_fits.Header(fpfile_it.header))
+                # delete fits data
+                del fpfile_it
+            # convert to numpy array
+            cube = np.array(cube)
+            # log process
+            WLOG(params, '', TextEntry('40-014-00008', args=[len(fp_ids)]))
+            # median fp cube
+            with warnings.catch_warnings(record=True) as _:
+                groupfp = mp.nanmedian(cube, axis=0)
+
+            # --------------------------------------------------------------
+            # calibrate group fp
+            # --------------------------------------------------------------
+            # construct new infile instance
+            groupfile = file_inst.newcopy(recipe=recipe)
+            groupfile.data = groupfp
+            groupfile.header = vheaders[0]
+            groupfile.filename = fp_ids[0]
+            groupfile.basename = os.path.basename(fp_ids[0])
+
+            # get and correct file
+            cargs = [params, recipe, groupfile]
+            ckwargs = dict(n_percentile=percent_thres,
+                           correctback=False)
+            props, groupfp = general.calibrate_ppfile(*cargs, **ckwargs)
+            # --------------------------------------------------------------
+            # shift group to master
+            targs = [image_ref, groupfp]
+            gout = get_linear_transform_params(params, recipe, *targs)
+            transforms, xres, yres = gout
+            # quality control on group
+            if transforms is None:
+                # log that image quality too poor
+                wargs = [g_it + 1]
+                WLOG(params, 'warning', TextEntry('10-014-00001', args=wargs))
+                # skip adding to group
+                continue
+            if (xres > qc_res) or (yres > qc_res):
+                # log that xres and yres too larger
+                wargs = [xres, yres, qc_res]
+                WLOG(params, 'warning', TextEntry('10-014-00002', args=wargs))
+                # skip adding to group
+                continue
+            # perform a final transform on the group
+            groupfp = ea_transform(params, groupfp,
+                                   lin_transform_vect=transforms)
+            # append to cube
+            nargs = ['fp_master_cube', row, groupfp, fp_cube_files, fpsubdir,
+                     outdir]
+            fp_cube_files, fpdir = drs_image.npy_filelist(params, *nargs)
+            # delete groupfp
+            del groupfp
+            # append transforms to list
+            for _ in fp_ids:
+                transforms_list.append(transforms)
+                # now add extract properties to main group
+                valid_matched_id.append(group_num)
+                valid_dark_files.append(props['DARKFILE'])
+                valid_badpfiles.append(props['BADPFILE'])
+                valid_backfiles.append(props['BACKFILE'])
+            # validate table mask
+            table_mask[indices] = True
+        else:
+            eargs = [g_it + 1, min_num]
+            WLOG(params, '', TextEntry('40-014-00015', args=eargs))
+    # ----------------------------------------------------------------------
+    # produce the large median (write ribbons to disk to save space)
+    with warnings.catch_warnings(record=True) as _:
+        fp_cube = drs_image.large_image_median(params, fp_cube_files,
+                                               outdir=outdir)
+    # clean up npy dir
+    drs_image.npy_fileclean(params, fp_cube_files, fpsubdir, outdir)
+    # ----------------------------------------------------------------------
+    # convert transform_list to array
+    tarrary = np.array(transforms_list)
+    # cut down fp_table to valid
+    valid_fp_table = fp_table[table_mask]
+    # ----------------------------------------------------------------------
+    # add columns to fp_table
+    colnames = ['GROUPID', 'DARKFILE', 'BADPFILE', 'BACKFILE', 'DXREF',
+                'DYREF', 'A', 'B', 'C', 'D']
+    values = [valid_matched_id, valid_dark_files, valid_badpfiles,
+              valid_backfiles, tarrary[:, 0], tarrary[:, 1],
+              tarrary[:, 2], tarrary[:, 3], tarrary[:, 4], tarrary[:, 5]]
+    for c_it, col in enumerate(colnames):
+        valid_fp_table[col] = values[c_it]
+    # ----------------------------------------------------------------------
+    # return fp_cube
+    return fp_cube, valid_fp_table
+
+
 
 
 def get_linear_transform_params(params, recipe, image1, image2, **kwargs):
