@@ -22,6 +22,7 @@ from apero.core.core import drs_file
 from apero.core.core import drs_database
 from apero.io import drs_fits
 from apero.io import drs_path
+from apero.io import drs_image
 from apero.io import drs_table
 
 # =============================================================================
@@ -396,6 +397,38 @@ def construct_master_dark(params, recipe, dark_table, **kwargs):
         master_dark = mp.nanmedian(dark_cube1, axis=0)
     # clean out
     del dark_cube1
+    # -------------------------------------------------------------------------
+    # get file type of last file
+    filetype = filetypes[lastpos]
+    # get infile from filetype
+    infile = core.get_file_definition(filetype, params['INSTRUMENT'],
+                                      kind='tmp')
+    # construct new infile instance and read data
+    infile = infile.newcopy(filename=filenames[lastpos], recipe=recipe)
+    infile.read_file()
+    # -------------------------------------------------------------------------
+    # return master dark and the reference file
+    return master_dark, infile
+
+
+# TODO: Check this is correct with Etienne
+def construct_master_dark1(params, recipe, dark_table, **kwargs):
+    func_name = __NAME__ + '.construct_master_dark'
+    # get col data from dark_table
+    filenames = dark_table['FILENAME']
+    dark_times = dark_table['MJDATE']
+    filetypes = dark_table['DPRTYPE']
+    # get the most recent position
+    lastpos = np.argmax(dark_times)
+    # -------------------------------------------------------------------------
+    # Median all images
+    # -------------------------------------------------------------------------
+    # TODO: Move to language database
+    WLOG(params, 'info', 'Producing large median of {0} frames'
+                         ''.format(len(filenames)))
+    # produce the large median (write ribbons to disk to save space)
+    with warnings.catch_warnings(record=True) as _:
+        master_dark = drs_image.large_image_medians(params, filenames)
     # -------------------------------------------------------------------------
     # get file type of last file
     filetype = filetypes[lastpos]
