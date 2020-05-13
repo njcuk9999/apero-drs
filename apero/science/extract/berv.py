@@ -482,8 +482,8 @@ def get_outputs(params, infile, header, props, kwargs):
                 found = True
         # get the value of the key from header
         elif (kind == 'header') and (header is not None) and (value is None):
-            if hkey in infile.header:
-                value = infile.header[hkey]
+            if hkey in header:
+                value = header[hkey]
                 datatype = params.instances[outkey].datatype
                 found = True
         # get the value from props
