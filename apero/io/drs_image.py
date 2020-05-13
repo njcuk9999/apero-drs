@@ -9,13 +9,16 @@ Created on 2019-03-21 at 14:28
 """
 import numpy as np
 import warnings
+import os
+from typing import List, Union
 
 from apero import core
 from apero.core import constants
+from apero.core import drs_startup
 from apero.core import math as mp
 from apero.core.core import drs_log
 from apero import lang
-
+from apero.io import drs_fits
 
 # =============================================================================
 # Define variables
@@ -306,8 +309,8 @@ def clean_hotpix(image, badpix):
             # fill in the values for box and keep
             # box3d[:, ix + 1, iy + 1] = image[x + ix, y + iy]
             # keep3d[:, ix + 1, iy + 1] = ~badpix[x + ix, y + iy]
-            box3d[:,ix+1,iy+1] = image[(x+ix) % sz[0], (y+iy) % sz[1]]
-            keep3d[:,ix+1,iy+1] = ~badpix[(x+ix)% sz[0], (y+iy) % sz[1]]
+            box3d[:, ix + 1, iy + 1] = image[(x + ix) % sz[0], (y + iy) % sz[1]]
+            keep3d[:, ix + 1, iy + 1] = ~badpix[(x + ix) % sz[0], (y + iy) % sz[1]]
 
     # find valid neighbours
     nvalid = np.sum(np.sum(keep3d, axis=1), axis=1)
@@ -354,7 +357,8 @@ def clean_hotpix(image, badpix):
     # return the cleaned image
     return image1
 
-def get_fiber_types(params, **kwargs):
+
+def get_fiber_types(params: ParamDict, **kwargs):
     func_name = __NAME__ + '.get_fiber_type()'
     # get parameter list from params/kwargs
     validfibertypes = params.listp('FIBER_TYPES', dtype=str)
@@ -387,6 +391,192 @@ def get_fiber_types(params, **kwargs):
     else:
         eargs = [fiber, ', '.join(validfibertypes), func_name]
         WLOG(params, 'error', TextEntry('09-001-00030', args=eargs))
+
+
+def npy_filelist(params: ParamDict, name: str, index: int,
+                 array: np.ndarray, filenames: Union[List[str], None],
+                 subdir: Union[str, None] = None,
+                 outdir: Union[str, None] = None) -> List[str]:
+    # deal with no filenames
+    if filenames is None:
+        filenames = []
+    # deal with not outdir
+    if outdir is None:
+        outdir = ''
+    # deal with having no subdir
+    if subdir is None:
+        # get unix char code
+        unixtime, humantime, rval = drs_startup.unix_char_code()
+        # create subdir
+        subdir = 'LIM-{0:020d}-{1}'.format(int(unixtime), rval)
+    # create subdir
+    if not os.path.exists(subdir):
+        os.mkdir(subdir)
+    # construct file name
+    filename = '{0}_{1}.npy'.format(name, index)
+    filepath = os.path.join(outdir, subdir, filename)
+    # save to disk
+    np.save(filepath, array)
+    # add to list
+    filenames.append(filepath)
+    # return appended filenames list
+    return filenames, subdir
+
+
+def npy_fileclean(params: ParamDict, filenames: Union[List[str], None],
+                  subdir: Union[str, None],
+                  outdir: Union[str, None] = None) -> List[str]:
+    # deal with not outdir
+    if outdir is None:
+        outdir = ''
+    # remove files
+    for filename in filenames:
+        os.remove(filename)
+    # construct file dir
+    filepath = os.path.join(outdir, subdir)
+    # ----------------------------------------------------------------------
+    # delete the sub directory
+    if os.path.exists(filepath):
+        os.removedirs(filepath)
+
+
+
+def large_image_median(params: ParamDict,
+                       files: List[str],
+                       nmax: int = 2e7,
+                       subdir: Union[str, None] = None,
+                       outdir: Union[str, None] = None) -> np.ndarray:
+    """
+    Pass a large list of images and get the median in a memory efficient
+    way.
+
+    Set the nmax parameter to the maximum number of pixels to load into memory
+    Memory requirements = 64 bits * nmax
+
+    i.e. nmax = 2e7 ~ 1.28 Gb
+
+    :param params: the constant parameter dictionary
+    :param files: list of strings, the files to open
+    :param nmax: int, the maximum number of pixels to open at any given time
+                 note assuming 64 bits per pixel this gives a direct memory
+                 constraint - 2e7 pixels ~ 1.28 Gb
+    :param subdir: None or string, the sub-directory to store temporary
+                   products in - should be unique
+
+    :type params: ParamDict
+    :type files: List[str]
+    :type nmax: int
+    :type subdir: Union[str, None]
+
+    :return: numpy 2D array: the nan-median image of all files
+    :rtype: np.ndarray
+    """
+    # deal with not outdir
+    if outdir is None:
+        outdir = ''
+    # deal with having no subdir
+    if subdir is None:
+        # get unix char code
+        unixtime, humantime, rval = drs_startup.unix_char_code()
+        # create subdir
+        subdir = 'LIM-{0:020d}-{1}'.format(int(unixtime), rval)
+    # construct file dir
+    subfilepath = os.path.join(outdir, subdir)
+    # create subdir
+    if not os.path.exists(subfilepath):
+        os.mkdir(subfilepath)
+    # get the number of files
+    numfiles = len(files)
+    # ----------------------------------------------------------------------
+    # load first image
+    image0 = drs_fits.readfits(params, files[0])
+    # get the shape of the image
+    mdim1, mdim2 = np.array(image0.shape).astype(int)
+    del image0
+    # number of ribbons considering dimensions
+    nribbons = int(np.ceil((mdim1 * mdim2 * numfiles / nmax)))
+    # find pixels in each ribbon
+    bins = np.array(np.arange(0, nribbons) / (nribbons - 1)).astype(int)
+    # ----------------------------------------------------------------------
+    # loop arouynd files and save ribbons as numpy arrays
+    for f_it, filename in enumerate(files):
+        # log message so we know how far through we are
+        # TODO: move this to language database
+        wmsg = 'Processing file {0} / {1}'
+        wargs = [f_it + 1, numfiles]
+        WLOG(params, '', wmsg.format(wargs))
+        # ------------------------------------------------------------------
+        # load file
+        image = drs_fits.readfits(params, filename)
+        # get the shape of the image
+        dim1, dim2 = np.array(image.shape).astype(int)
+        # construct clean version of filename
+        clean_filename = filename.replace('.', '_')
+        # ------------------------------------------------------------------
+        # check that dimensions are the same as first file
+        if dim1 != mdim1 or dim2 != mdim2:
+            # log error
+            # TODO: move to language database
+            emsg = ('Files are not the same shape'
+                    '\n\tFile[0] = ({0}x{1}) \n\tFile[{2}] = ({3}x{4})'
+                    '\n\tFile[0]: {5}\n\tFile[{2}]: {6}')
+            eargs = [mdim1, mdim2, f_it, dim1, dim2, files[0], files[1]]
+            WLOG(params, 'error', emsg.format(*eargs))
+        # ------------------------------------------------------------------
+        # extract and save ribbons
+        for b_it in range(len(bins) - 1):
+            # get ribbon from file
+            ribbon = np.array(image[bins[b_it]: bins[b_it + 1]])
+            # construct ribbon nmae
+            ribbon_name = '{0}_ribbon{1}.npy'.format(clean_filename, b_it)
+            ribbon_path = os.path.join(subfilepath, ribbon_name)
+            # save ribbon to file
+            np.save(ribbon_path, ribbon)
+            # delete ribbon
+            del ribbon
+        # delete image from memory
+        del image
+    # ----------------------------------------------------------------------
+    # storage for output image
+    out_image = np.zeros((mdim1, mdim2))
+    # loop through the files of the same ribbon
+    for b_it in range(len(bins) - 1):
+        # log message so we know how far through we are
+        # TODO: move this to language database
+        wmsg = 'Combining file {0} / {1}'
+        wargs = [b_it + 1, len(bins)]
+        WLOG(params, '', wmsg.format(wargs))
+        # store box
+        box = []
+        # ------------------------------------------------------------------
+        # loop around each ribbon and add to the box
+        for f_it, filename in enumerate(files):
+            # construct ribbon nmae
+            clean_filename = filename.replace('.', '_')
+            ribbon_name = '{0}_ribbon{1}.npy'.format(clean_filename, b_it)
+            ribbon_path = os.path.join(subfilepath, ribbon_name)
+            # load ribbon
+            ribbon = np.load(ribbon_path)
+            # delete this ribbon from disk
+            os.remove(ribbon_path)
+            # append to box
+            box.append(np.array(ribbon))
+            # delete ribbon
+            del ribbon
+        # ------------------------------------------------------------------
+        # convert box to a numpy array
+        box = np.array(box)
+        # fill the full image
+        out_image[bins[b_it]: bins[b_it + 1]] = mp.nanmedian(box, axis=0)
+        # delete the box
+        del box
+    # ----------------------------------------------------------------------
+    # delete the sub directory
+    if os.path.exists(subfilepath):
+        os.removedirs(subfilepath)
+    # ----------------------------------------------------------------------
+    # return the out image
+    return out_image
 
 
 # =============================================================================
