@@ -1165,8 +1165,8 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # construct the filename from file instance
     e2dsfile.construct_filename(params, infile=infile)
     # define header keys for output file
-    # copy keys from input file
-    e2dsfile.copy_original_keys(infile)
+    # copy keys from input file (excluding loc)
+    e2dsfile.copy_original_keys(infile, exclude_groups=['loc'])
     # add version
     e2dsfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
     # add dates
