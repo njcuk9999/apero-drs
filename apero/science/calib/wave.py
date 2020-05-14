@@ -340,6 +340,8 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     nbo = wavefile.read_header_key('KW_WAVE_NBO', dtype=int)
     deg = wavefile.read_header_key('KW_WAVE_DEG', dtype=int)
     # get the wfp keys
+    wfp_file = wavefile.read_header_keys('KW_WFP_FILE', dtype=str,
+                                         required=False)
     wfp_drift = wavefile.read_header_key('KW_WFP_DRIFT', dtype=float,
                                          required=False)
     wfp_fwhm = wavefile.read_header_key('KW_WFP_FWHM', dtype=float,
@@ -372,6 +374,7 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     # store wave properties in parameter dictionary
     wprops = ParamDict()
     wprops['WAVEFILE'] = wavefile.filename
+    wprops['WAVEINIT'] = wavefile.filename
     wprops['WAVESOURCE'] = wavesource
     wprops['NBO'] = nbo
     if wavemap is not None:
@@ -384,9 +387,9 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     wprops['WAVEINST'] = wavefile.completecopy(wavefile)
     wprops['WAVETIME'] = wavetime
     # add the wfp keys
-    wfp_keys = ['WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
+    wfp_keys = ['WFP_FILE', 'WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
                 'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP']
-    wfp_values = [wfp_drift, wfp_fwhm, wfp_contrast, wfp_mask,
+    wfp_values = [wfp_file, wfp_drift, wfp_fwhm, wfp_contrast, wfp_mask,
                   wfp_lines, wfp_target_rv, wfp_width, wfp_step]
     # add keys accounting for 'None' and blanks
     for wfpi in range(len(wfp_keys)):
@@ -395,8 +398,8 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
         else:
             wprops[wfp_keys[wfpi]] = wfp_values[wfpi]
     # set the source
-    keys = ['WAVEMAP', 'WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG', 'COEFFS',
-            'WAVETIME', 'WAVEINST', 'NBPIX'] + wfp_keys
+    keys = ['WAVEMAP', 'WAVEFILE', 'WAVEINIT', 'WAVESOURCE', 'NBO', 'DEG',
+            'COEFFS', 'WAVETIME', 'WAVEINST', 'NBPIX'] + wfp_keys
     wprops.set_sources(keys, func_name)
 
     # -------------------------------------------------------------------------
@@ -548,7 +551,7 @@ def add_wave_keys(params, infile, props):
     infile.add_hkeys_2d('KW_WAVECOEFFS', values=props['COEFFS'],
                         dim1name='order', dim2name='coeffs')
     # add wave fp parameters
-    infile.add_hkey('KW_WFP_FILE', value=props['WAVEFILE'])
+    infile.add_hkey('KW_WFP_FILE', value=props['WFP_FILE'])
     infile.add_hkey('KW_WFP_DRIFT', value=props['WFP_DRIFT'])
     infile.add_hkey('KW_WFP_FWHM', value=props['WFP_FWHM'])
     infile.add_hkey('KW_WFP_CONTRAST', value=props['WFP_CONTRAST'])
@@ -5295,6 +5298,12 @@ def fp_write_wavesol_master(params, recipe, llprops, hcfile, fpfile, fiber,
                                                      fiber=fiber)
     # construct the filename from file instance
     wavefile.construct_filename(params, infile=hcfile)
+    # set some wave keys as "SELF" (i.e. from this wave solution)
+    wprops['WAVEFILE'] = wavefile.basename
+    wprops['WAVETIME'] = hcfile.get_key('KW_MID_OBS_TIME', dtype=float)
+    sargs = [recipe.name, params['DRS_VERSION']]
+    wprops['WAVESOURCE'] = '{0} [{1}]'.format(*sargs)
+    wprops['WFP_FILE'] = wavefile.basename
     # ------------------------------------------------------------------
     # copy keys from hcwavefile
     wavefile.copy_hdict(hcwavefile)
@@ -5885,10 +5894,16 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
                                                        fiber=fiber)
     # construct the filename from file instance
     wavefile.construct_filename(params, infile=hcfile)
+    # set some wave keys as "SELF" (i.e. from this wave solution)
+    nprops['WAVEFILE'] = wavefile.basename
+    nprops['WAVETIME'] = hcfile.get_key('KW_MID_OBS_TIME', dtype=float)
+    sargs = [recipe.name, params['DRS_VERSION']]
+    nprops['WAVESOURCE'] = '{0} [{1}]'.format(*sargs)
+    nprops['WFP_FILE'] = wavefile.basename
     # ----------------------------------------------------------------------
     # define header keys for output file
     # copy keys from input file
-    wavefile.copy_original_keys(hcfile)
+    wavefile.copy_original_keys(hcfile, exclude_groups='wave')
     # ----------------------------------------------------------------------
     # copy in wave file keys
     wavefile.copy_original_keys(inwavefile, group='wave')
@@ -5921,6 +5936,8 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
     # ----------------------------------------------------------------------
     # add the order num, fit degree and fit coefficients
     wavefile = add_wave_keys(params, wavefile, nprops)
+    # add wave init
+    wavefile.add_hkey('KW_INIT_WAVE', value=nprops['WAVEINIT'])
     # ----------------------------------------------------------------------
     # add qc parameters
     wavefile.add_qckeys(qc_params)
@@ -5963,7 +5980,7 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
     write_fplines(params, recipe, nprops['FPLINES'], fpfile, wavefile, fiber)
     # ----------------------------------------------------------------------
     # return hc wavefile
-    return wavefile
+    return wavefile, nprops
 
 
 def write_fplines(params, recipe, rfpl, infile, hfile, fiber, kind=None):
@@ -6117,6 +6134,9 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     s1dv_file.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(s1dv_file)
+
+    # return e2dsff file
+    return e2dsff_file
 
 
 # =============================================================================
