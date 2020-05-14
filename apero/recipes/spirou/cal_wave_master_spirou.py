@@ -300,12 +300,7 @@ def __main__(recipe, params):
             # add to rv storage
             rvs_all[fiber] = rvprops
             # update correct wprops
-            wprops_others[fiber] = ParamDict(wprops)
-            # ------------------------------------------------------------------
-            # archive ccf from fiber
-            # ------------------------------------------------------------------
-            velocity.write_ccf(params, recipe, fpe2dsfile, rvprops, fpfiles,
-                               combine, qc_params, fiber)
+            wprops_others[fiber] = wprops
 
         # ==================================================================
         # QUALITY CONTROL (AFTER FP MASTER FIBER + OTHER FIBERS)
@@ -352,11 +347,24 @@ def __main__(recipe, params):
             # ----------------------------------------------------------
             if passed and params['INPUTS']['DATABASE']:
                 # update the e2ds and s1d files for hc
-                wave.update_extract_files(params, recipe, hc_e2ds_file,
-                                          wprops, EXTRACT_NAME, fiber)
+                newhce2ds = wave.update_extract_files(params, recipe,
+                                                      hc_e2ds_file, wprops,
+                                                      EXTRACT_NAME, fiber)
                 # update the e2ds and s1d files for fp
-                wave.update_extract_files(params, recipe, fp_e2ds_file,
-                                          wprops, EXTRACT_NAME, fiber)
+                #  we returrn the fp e2ds file as it has an updated header
+                newfpe2ds = wave.update_extract_files(params, recipe,
+                                                      fp_e2ds_file, wprops,
+                                                      EXTRACT_NAME, fiber)
+            # else just get the e2ds file from the current fp file
+            else:
+                newfpe2ds = fp_e2ds_file
+
+            # ------------------------------------------------------------------
+            # archive ccf from fiber
+            # ------------------------------------------------------------------
+            # need to use the updated header in newfpe2ds
+            velocity.write_ccf(params, recipe, newfpe2ds, rvs_all[fiber],
+                               fpfiles, combine, qc_params, fiber)
 
             # ----------------------------------------------------------
             # Write master line references to file
