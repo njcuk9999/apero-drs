@@ -730,7 +730,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
         else:
             # load the cavity polynomial from file
             _, fit_ll = drs_data.load_cavity_files(params)
-            cavity_length_poly = fit_ll[::-1]
+            cavity_length_poly = fit_ll
         # ------------------------------------------------------------------
         # range of the N FP peaks
         nth_peak = np.arange(fp_nlow, fp_nhigh)
@@ -740,7 +740,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
         wave0 = wave0 * np.nanmean(wavemap)
         # need a few iterations to invert polynomial relations
         for _ in range(fp_inv_itr):
-            wave0 = np.polyval(cavity_length_poly[::-1], wave0)
+            wave0 = np.polyval(cavity_length_poly, wave0)
             wave0 = wave0 * 2 / nth_peak
         # keep lines within the master_wavelength domain
         keep = (wave0 > np.min(wavemap)) & (wave0 < np.max(wavemap))
@@ -797,7 +797,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
         # length relative to the master night. By construction, this is
         # always an integer. The factor 2 comes from the FP equation.
         # It arrises from the back-and-forth within the FP cavity
-        cavfit = np.polyval(cavity_length_poly[::-1], list_waves)
+        cavfit = np.polyval(cavity_length_poly, list_waves)
         peak_number = np.array(cavfit * 2 / list_waves, dtype=int)
 
     # ----------------------------------------------------------------------
@@ -5580,6 +5580,99 @@ def process_other_fibers(params, recipe, mprops, mfpl, fp_outputs):
     # ----------------------------------------------------------------------
     # return all the solutions for all fibers
     return solutions
+
+
+
+def update_smart_fp_mask(params, **kwargs):
+    # set function name
+    func_name = display_func(params, 'update_smart_fp_mask', __NAME__)
+    # get constants from params
+    update_mask = pcheck(params, 'WAVE_CCF_UPDATE_MASK', 'update_mask', kwargs,
+                         func_name)
+    ccfpath = pcheck(params, 'WAVE_CCF_MASK_PATH', 'ccfpath', kwargs, func_name)
+    ccfmask = pcheck(params, 'WAVE_CCF_MASK', 'ccfmask', kwargs, func_name)
+    dvwidth = pcheck(params, 'WAVE_CCF_SMART_MASK_WIDTH', 'dvwidth',
+                        kwargs, func_name)
+    mask_units = pcheck(params, 'WAVE_CCF_MASK_UNITS', 'mask_units', kwargs,
+                        func_name)
+    minlambda = pcheck(params, 'WAVE_CCF_SMART_MASK_MINLAM', 'minlambda',
+                       kwargs, func_name)
+    maxlambda = pcheck(params, 'WAVE_CCF_SMART_MASK_MAXLAM', 'maxlambda',
+                       kwargs, func_name)
+    nmin = pcheck(params, 'WAVE_CCF_SMART_MASK_TRIAL_NMIN', 'nmin', kwargs,
+                  func_name)
+    nmax = pcheck(params, 'WAVE_CCF_SMART_MASK_TRIAL_NMAX', 'nmax', kwargs,
+                  func_name)
+    threshold = pcheck(params, 'WAVE_CCF_SMART_MASK_DWAVE_THRES', 'threshold',
+                       kwargs, func_name)
+    # if we don't want to update the mask then don't
+    if not update_mask:
+        return
+    # ----------------------------------------------------------------------
+    # construct output filename
+    outfile = os.path.join(ccfpath, ccfmask)
+    # load current cavity files
+    fit_1m_d, fit_ll_d = drs_data.load_cavity_files(params, required=False)
+    # ----------------------------------------------------------------------
+    # start with a broader range of FP N values and clip later on
+    n_fp_fpeak = np.arange(nmin, nmax)
+
+    # placeholder for wavelength, needs to be iterated-on with
+    #    the cavity length polynomial
+    # the starting wavelength is the midpoint between the extremities of
+    #    the domain
+    wave_fp_peak = np.ones(len(n_fp_fpeak))*np.mean([minlambda, maxlambda])
+    # ----------------------------------------------------------------------
+    # we perform the following loop
+    #
+    # Take the wavelength and derive a cavity length
+    # Take the Nth peak and derive a line wavelength from the
+    # cavity length
+    # Take the new wavelength and dereive a new cavity length
+    # Find an update wavelength for the Nth peak
+    #  .... converge down to a 'threshold' error in wavelength
+
+    dwave = np.inf
+    while abs(dwave) > threshold:
+        # keep track of the central line to check convergence
+        prev = wave_fp_peak[len(wave_fp_peak) // 2]
+        # derive a new wavelength for each fp peak
+        wave_fp_peak = np.polyval(fit_ll_d, wave_fp_peak) * 2 / n_fp_fpeak
+        # check convergnce
+        dwave = prev - wave_fp_peak[len(wave_fp_peak) // 2]
+    # ----------------------------------------------------------------------
+    # keep lines within the domain
+    keep = (wave_fp_peak > minlambda) & (wave_fp_peak < maxlambda)
+    # ----------------------------------------------------------------------
+    # apply keep mask to wavelength solution and n peak
+    wave_fp_peak = wave_fp_peak[keep]
+    # ----------------------------------------------------------------------
+    # get unit object from mask units string
+    try:
+        unit = getattr(uu, mask_units)
+    except Exception as e:
+        # log error
+        eargs = [mask_units, type(e), e, func_name]
+        WLOG(params, 'error', TextEntry('09-020-00002', args=eargs))
+        return
+    # add units
+    wave_fp_peak = wave_fp_peak * unit
+    # convert to nanometers
+    wave_fp_peak = wave_fp_peak.to(u.nm).value
+    # ----------------------------------------------------------------------
+    # calculate wavelength bounds of line
+    wavelower = wave_fp_peak * (1 - 0.5 * dvwidth)
+    waveupper = wave_fp_peak * (1 + 0.5 * dvwidth)
+    weights = np.repeat(1.0, len(wavelower))
+    # ----------------------------------------------------------------------
+    # Create table to store them in
+    # ----------------------------------------------------------------------
+    columnnames = ['WLOW', 'WHIGH', 'WEIGHT']
+    columnvalues = [wavelower, waveupper, weights]
+    # make table
+    table = drs_table.make_table(params, columnnames, columnvalues)
+    # write smart mask table to file
+    drs_table.write_table(params, table, outfile, fmt='ascii.fast_no_header')
 
 
 # =============================================================================
