@@ -1110,6 +1110,7 @@ def hc_wavesol(params, recipe, iprops, e2dsfile, blaze, fiber, **kwargs):
     wprops['DEG'] = llprops['WAVE_FIT_DEGREE']
     wprops['NBPIX'] = llprops['NBPIX']
     # FP values (set to None for HC)
+    wprops['WFP_FILE'] = None
     wprops['WFP_DRIFT'] = None
     wprops['WFP_FWHM'] = None
     wprops['WFP_CONTRAST'] = None
