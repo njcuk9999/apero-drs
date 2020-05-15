@@ -277,9 +277,8 @@ def construct_dark_table(params, filenames, **kwargs):
 
 def construct_master_dark(params, recipe, dark_table, **kwargs):
     func_name = __NAME__ + '.construct_master_dark'
-    # get constants from p
-    med_size = pcheck(params, 'DARK_MASTER_MED_SIZE', 'med_size', kwargs,
-                      func_name)
+    # get temporary output dir
+    outdir = params['INPUTS']['DIRECTORY']
     # get col data from dark_table
     filenames = dark_table['FILENAME']
     dark_times = dark_table['MJDATE']
@@ -290,9 +289,6 @@ def construct_master_dark(params, recipe, dark_table, **kwargs):
     # load up the most recent dark
     data_ref, hdr_ref = drs_fits.readfits(params, filenames[lastpos],
                                           gethdr=True)
-    # ge the reference image shape
-    dim1, dim2 = data_ref.shape
-
     # -------------------------------------------------------------------------
     # Read individual files and sum groups
     # -------------------------------------------------------------------------
@@ -300,11 +296,9 @@ def construct_master_dark(params, recipe, dark_table, **kwargs):
     WLOG(params, 'info', TextEntry('40-011-10003'))
     # Find all unique groups
     u_groups = np.unique(matched_id)
-    # currently number of bins == number of groups
-    num_bins = len(u_groups)
-    # storage of dark cube
-    dark_cube = np.zeros([num_bins, dim1, dim2])
-    bin_cube = np.zeros(num_bins)
+    # storage of group dark files (for large image median)
+    group_dark_files = []
+    darkm_subdir = None
     # loop through groups
     for g_it, group_num in enumerate(u_groups):
         # log progress group g_it + 1 of len(u_groups)
@@ -313,122 +307,19 @@ def construct_master_dark(params, recipe, dark_table, **kwargs):
         # find all files for this group
         dark_ids = filenames[matched_id == group_num]
         # load this groups files into a cube
-        cube = []
-        for filename in dark_ids:
-            # read data
-            data_it = drs_fits.readfits(params, filename)
-            # add to cube
-            cube.append(np.array(data_it))
-            # delete fits table
-            del data_it
-        # median dark cube
-        with warnings.catch_warnings(record=True) as _:
-            groupdark = mp.nanmedian(cube, axis=0)
-        # sum within each bin
-        dark_cube[g_it % num_bins] += groupdark
-        # record the number of cubes that are going into this bin
-        bin_cube[g_it % num_bins] += 1
-    # need to normalize if we have more than 1 cube per bin
-    # log process
-    WLOG(params, 'info', TextEntry('40-011-10007'))
-    # loop through groups
-    for bin_it in range(num_bins):
-        # log progress group g_it + 1 of len(u_groups)
-        wargs = [bin_it + 1, len(u_groups)]
-        WLOG(params, '', TextEntry('40-011-10004', args=wargs))
-        # normalise
-        dark_cube[bin_it] /= np.array(bin_cube[bin_it])
-    # clean up data
-    del bin_cube
-
-    # -------------------------------------------------------------------------
-    # we perform a median filter over a +/- "med_size" pixel box
-    # -------------------------------------------------------------------------
-    # log process
-    WLOG(params, 'info', TextEntry('40-011-10005', args=[num_bins]))
-    # storage of output dark cube. we construct a cube that is
-    # smaller than num_bins but can still be median-ed. Within each
-    # slice, we will take a mean
-    n_smart_median = 11
-    dark_cube1 = np.zeros([n_smart_median, dim1, dim2])
-    n_dark_cube1 = np.zeros(n_smart_median)
-    # loop around the bins
-    for bin_it in range(num_bins):
-        # log progress group g_it + 1 of len(u_groups)
-        wargs = [bin_it + 1, num_bins]
-        WLOG(params, '', TextEntry('40-011-10004', args=wargs))
-        # performing a median filter of the image with [-med_size, med_size]
-        #     box in x and 1 pixel wide in y. Skips the pixel considered,
-        #     so this is equivalent of a 2*med_size boxcar
-        # high frequency image
-        dark_cube1[bin_it % n_smart_median] +=  np.array(dark_cube[bin_it])
-        n_dark_cube1[bin_it % n_smart_median] += 1
-
-    # clean out
-    del dark_cube
-
-    # loop around the start median
-    for it in range(n_smart_median):
-        # TODO: Update text entry
-        # log progress group g_it + 1 of len(u_groups)
-        wargs = [it + 1, n_smart_median]
-        WLOG(params, '', TextEntry('40-011-10004', args=wargs))
-
-        dark_cube1[it] /= n_dark_cube1[it]
-        bindark = np.array(dark_cube1[it])
-
-        tmp = []
-        for jt in range(-med_size, med_size + 1):
-            if jt != 0:
-                tmp.append(np.roll(bindark, [0, jt]))
-        # low frequency image
-        with warnings.catch_warnings(record=True) as _:
-            lf_dark = mp.nanmedian(tmp, axis=0)
-        dark_cube1[it] -= lf_dark
-        # clean out
-        del bindark
-        del tmp
-        del lf_dark
-    # -------------------------------------------------------------------------
-    # log process
-    WLOG(params, 'info', TextEntry('40-011-10008'))
-    # median the dark cube to create the master dark
-    with warnings.catch_warnings(record=True) as _:
-        master_dark = mp.nanmedian(dark_cube1, axis=0)
-    # clean out
-    del dark_cube1
-    # -------------------------------------------------------------------------
-    # get file type of last file
-    filetype = filetypes[lastpos]
-    # get infile from filetype
-    infile = core.get_file_definition(filetype, params['INSTRUMENT'],
-                                      kind='tmp')
-    # construct new infile instance and read data
-    infile = infile.newcopy(filename=filenames[lastpos], recipe=recipe)
-    infile.read_file()
-    # -------------------------------------------------------------------------
-    # return master dark and the reference file
-    return master_dark, infile
-
-
-# TODO: Check this is correct with Etienne
-def construct_master_dark1(params, recipe, dark_table, **kwargs):
-    func_name = __NAME__ + '.construct_master_dark'
-    # get col data from dark_table
-    filenames = dark_table['FILENAME']
-    dark_times = dark_table['MJDATE']
-    filetypes = dark_table['DPRTYPE']
-    # get the most recent position
-    lastpos = np.argmax(dark_times)
-    # -------------------------------------------------------------------------
-    # Median all images
-    # -------------------------------------------------------------------------
-    # TODO: Move to language database
-    WLOG(params, 'info', 'Producing large median of {0} frames'
-                         ''.format(len(filenames)))
+        groupdark = drs_image.large_image_median(params, dark_ids,
+                                                 outdir=outdir)
+        # save files for medianing later
+        nargs = ['group_darkm_cube', g_it, groupdark, group_dark_files,
+                 darkm_subdir, outdir]
+        group_dark_files, darkm_subdir = drs_image.npy_filelist(params, *nargs)
+    # ----------------------------------------------------------------------
     # produce the large median (write ribbons to disk to save space)
     with warnings.catch_warnings(record=True) as _:
-        master_dark = drs_image.large_image_medians(params, filenames)
+        master_dark = drs_image.large_image_median(params, group_dark_files,
+                                                   outdir=outdir)
+    # clean up npy dir
+    drs_image.npy_fileclean(params, group_dark_files, darkm_subdir, outdir)
     # -------------------------------------------------------------------------
     # get file type of last file
     filetype = filetypes[lastpos]
