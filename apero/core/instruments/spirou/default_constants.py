@@ -1408,6 +1408,7 @@ WAVE_CCF_DETNOISE = WAVE_CCF_DETNOISE.copy(__NAME__)
 WAVE_CCF_DETNOISE.value = 100.0
 
 #  The filename of the CCF Mask to use for the FP CCF
+#     Note this file is copied over if WAVE_CCF_UPDATE_MASK = True
 WAVE_CCF_MASK = WAVE_CCF_MASK.copy(__NAME__)
 # WAVE_CCF_MASK.value = 'fp.mas'
 WAVE_CCF_MASK.value = 'smart_fp_mask.mas'
@@ -1436,6 +1437,37 @@ WAVE_CCF_MASK_WIDTH.value = 1.7
 #      to calculate the FP CCF
 WAVE_CCF_N_ORD_MAX = WAVE_CCF_N_ORD_MAX.copy(__NAME__)
 WAVE_CCF_N_ORD_MAX.value = 48
+
+#  Define whether to regenerate the fp mask (WAVE_CCF_MASK) when we
+#      update the cavity width in the master wave solution recipe
+WAVE_CCF_UPDATE_MASK = WAVE_CCF_UPDATE_MASK.copy(__NAME__)
+WAVE_CCF_UPDATE_MASK.value = True
+
+# define the width of the lines in the smart mask [km/s]
+WAVE_CCF_SMART_MASK_WIDTH = WAVE_CCF_SMART_MASK_WIDTH.copy(__NAME__)
+WAVE_CCF_SMART_MASK_WIDTH.value = 1.0
+
+# define the minimum wavelength for the smart mask [nm]
+WAVE_CCF_SMART_MASK_MINLAM = WAVE_CCF_SMART_MASK_MINLAM.copy(__NAME__)
+WAVE_CCF_SMART_MASK_MINLAM.value = 950
+
+# define the maximum wavelength for the smart mask [nm]
+WAVE_CCF_SMART_MASK_MAXLAM = WAVE_CCF_SMART_MASK_MAXLAM.copy(__NAME__)
+WAVE_CCF_SMART_MASK_MAXLAM.value = 2500
+
+# define a trial minimum FP N value (should be lower than true
+#     minimum FP N value)
+WAVE_CCF_SMART_MASK_TRIAL_NMIN = WAVE_CCF_SMART_MASK_TRIAL_NMIN.copy(__NAME__)
+WAVE_CCF_SMART_MASK_TRIAL_NMIN.value = 9000
+
+# define a trial maximum FP N value (should be higher than true
+#     maximum FP N value)
+WAVE_CCF_SMART_MASK_TRIAL_NMAX = WAVE_CCF_SMART_MASK_TRIAL_NMAX.copy(__NAME__)
+WAVE_CCF_SMART_MASK_TRIAL_NMAX.value = 27000
+
+# define the converges parameter for dwave in smart mask generation
+WAVE_CCF_SMART_MASK_DWAVE_THRES = WAVE_CCF_SMART_MASK_DWAVE_THRES.copy(__NAME__)
+WAVE_CCF_SMART_MASK_DWAVE_THRES.value = 1.0e-9
 
 
 # =============================================================================
