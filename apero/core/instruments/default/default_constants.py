@@ -158,7 +158,10 @@ __all__ = [
     'WAVE_CCF_STEP', 'WAVE_CCF_WIDTH', 'WAVE_CCF_TARGET_RV',
     'WAVE_CCF_DETNOISE', 'WAVE_CCF_MASK', 'WAVE_CCF_MASK_UNITS',
     'WAVE_CCF_MASK_PATH', 'WAVE_CCF_MASK_FMT', 'WAVE_CCF_MASK_MIN_WEIGHT',
-    'WAVE_CCF_MASK_WIDTH', 'WAVE_CCF_N_ORD_MAX',
+    'WAVE_CCF_MASK_WIDTH', 'WAVE_CCF_N_ORD_MAX', 'WAVE_CCF_UPDATE_MASK',
+    'WAVE_CCF_SMART_MASK_WIDTH', 'WAVE_CCF_SMART_MASK_MINLAM',
+    'WAVE_CCF_SMART_MASK_MAXLAM', 'WAVE_CCF_SMART_MASK_TRIAL_NMIN',
+    'WAVE_CCF_SMART_MASK_TRIAL_NMAX', 'WAVE_CCF_SMART_MASK_DWAVE_THRES',
     # wave master reference constants
     'WAVEREF_NSIG_MIN', 'WAVEREF_EDGE_WMAX', 'WAVEREF_HC_BOXSIZE',
     'WAVEREF_HC_FIBTYPES', 'WAVEREF_FP_FIBTYPES', 'WAVEREF_FITDEG',
@@ -1844,6 +1847,43 @@ WAVE_CCF_MASK_WIDTH = Const('WAVE_CCF_MASK_WIDTH', value=None, dtype=float,
 #      to calculate the FP CCF
 WAVE_CCF_N_ORD_MAX = Const('WAVE_CCF_N_ORD_MAX', value=None, dtype=int,
                            source=__NAME__, minimum=1, group=cgroup)
+
+#  Define whether to regenerate the fp mask (WAVE_CCF_MASK) when we
+#      update the cavity width in the master wave solution recipe
+WAVE_CCF_UPDATE_MASK = Const('WAVE_CCF_UPDATE_MASK', value=None, dtype=bool,
+                           source=__NAME__, group=cgroup)
+
+# define the width of the lines in the smart mask [km/s]
+WAVE_CCF_SMART_MASK_WIDTH = Const('WAVE_CCF_SMART_MASK_WIDTH', value=None,
+                                  dtype=float, source=__NAME__,
+                                  minimum=0, group=cgroup)
+
+# define the minimum wavelength for the smart mask [nm]
+WAVE_CCF_SMART_MASK_MINLAM = Const('WAVE_CCF_SMART_MASK_MINLAM', value=None,
+                                   dtype=float, source=__NAME__,
+                                   minimum=0, group=cgroup)
+
+# define the maximum wavelength for the smart mask [nm]
+WAVE_CCF_SMART_MASK_MAXLAM = Const('WAVE_CCF_SMART_MASK_MAXLAM', value=None,
+                                   dtype=float, source=__NAME__,
+                                   minimum=0, group=cgroup)
+
+# define a trial minimum FP N value (should be lower than true
+#     minimum FP N value)
+WAVE_CCF_SMART_MASK_TRIAL_NMIN = Const('WAVE_CCF_SMART_MASK_TRIAL_NMIN',
+                                       value=None, dtype=int, source=__NAME__,
+                                       minimum=0, group=cgroup)
+
+# define a trial maximum FP N value (should be higher than true
+#     maximum FP N value)
+WAVE_CCF_SMART_MASK_TRIAL_NMAX = Const('WAVE_CCF_SMART_MASK_TRIAL_NMAX',
+                                       value=None, dtype=int, source=__NAME__,
+                                       minimum=0, group=cgroup)
+
+# define the converges parameter for dwave in smart mask generation
+WAVE_CCF_SMART_MASK_DWAVE_THRES = Const('WAVE_CCF_SMART_MASK_TRIAL_NMAX',
+                                       value=None, dtype=float, source=__NAME__,
+                                       minimum=0, group=cgroup)
 
 # =============================================================================
 # CALIBRATION: WAVE MASTER REFERENCE SETTINGS
