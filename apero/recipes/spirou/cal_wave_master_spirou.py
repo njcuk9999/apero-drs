@@ -260,8 +260,21 @@ def __main__(recipe, params):
         hclines = wave.get_master_lines(params, recipe, **hcargs)
         # generate the fp reference lines
         fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=mwprops['WAVEMAP'],
-                      cavity_poly=fpprops['FP_FIT_LL_D'][::-1])
+                      cavity_poly=fpprops['FP_FIT_LL_D'])
         fplines = wave.get_master_lines(params, recipe, **fpargs)
+
+        # ==================================================================
+        # RUN THE NIGHTLY WAVE SOLUTION ON MASTER FIBER
+        # ==================================================================
+        # Note we do this to force consistency between night wave solutions
+        #   the wave solution is basically regenerated based on the hc and fp
+        #   lines (and dcavity is recomputed using both HC and FP
+        wargs = [hc_e2ds_file, fp_e2ds_file, hclines, fplines, mwprops,
+                 master_fiber]
+        mwprops = wave.night_wavesolution(params, recipe, *wargs)
+        # get the hc and fp lines
+        hclines, fplines = mwprops['HCLINES'], mwprops['FPLINES']
+
 
         # ==================================================================
         # WAVE SOLUTIONS (OTHER FIBERS)
@@ -272,6 +285,10 @@ def __main__(recipe, params):
         # ==================================================================
         # FP CCF COMPUTATION - need all fibers done one-by-one
         # ==================================================================
+        # must update the smart mask now cavity poynomial has been update
+        #   (if it has been update else this just recomputes the mask)
+        wave.update_smart_fp_mask(params)
+
         # store rvs from ccfs
         rvs_all = dict()
         # loop around fibers
@@ -305,6 +322,9 @@ def __main__(recipe, params):
         # ==================================================================
         # QUALITY CONTROL (AFTER FP MASTER FIBER + OTHER FIBERS)
         # ==================================================================
+        # TODO: remove break point
+        constants.break_point(params)
+
         # TODO: Add CCF QC
         qc_params = wave.fp_quality_control(params, fpprops, qc_params)
         # passed if all qc passed

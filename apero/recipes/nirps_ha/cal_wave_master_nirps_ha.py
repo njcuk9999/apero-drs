@@ -260,7 +260,7 @@ def __main__(recipe, params):
         hclines = wave.get_master_lines(params, recipe, **hcargs)
         # generate the fp reference lines
         fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=mwprops['WAVEMAP'],
-                      cavity_poly=fpprops['FP_FIT_LL_D'][::-1])
+                      cavity_poly=fpprops['FP_FIT_LL_D'])
         fplines = wave.get_master_lines(params, recipe, **fpargs)
 
         # ==================================================================
