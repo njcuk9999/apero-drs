@@ -340,7 +340,7 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     nbo = wavefile.read_header_key('KW_WAVE_NBO', dtype=int)
     deg = wavefile.read_header_key('KW_WAVE_DEG', dtype=int)
     # get the wfp keys
-    wfp_file = wavefile.read_header_keys('KW_WFP_FILE', dtype=str,
+    wfp_file = wavefile.read_header_key('KW_WFP_FILE', dtype=str,
                                          required=False)
     wfp_drift = wavefile.read_header_key('KW_WFP_DRIFT', dtype=float,
                                          required=False)
