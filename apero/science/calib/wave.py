@@ -5622,7 +5622,7 @@ def update_smart_fp_mask(params, **kwargs):
     #    the cavity length polynomial
     # the starting wavelength is the midpoint between the extremities of
     #    the domain
-    wave_fp_peak = np.ones(len(n_fp_fpeak))*np.mean([minlambda, maxlambda])
+    wave_fp_peak = np.repeat(np.mean([minlambda, maxlambda]), len(n_fp_fpeak))
     # ----------------------------------------------------------------------
     # we perform the following loop
     #
@@ -5662,8 +5662,8 @@ def update_smart_fp_mask(params, **kwargs):
     wave_fp_peak = wave_fp_peak.to(uu.nm).value
     # ----------------------------------------------------------------------
     # calculate wavelength bounds of line
-    wavelower = wave_fp_peak * (1 - 0.5 * dvwidth)
-    waveupper = wave_fp_peak * (1 + 0.5 * dvwidth)
+    wavelower = wave_fp_peak * (1 - 0.5 * dvwidth / speed_of_light)
+    waveupper = wave_fp_peak * (1 + 0.5 * dvwidth / speed_of_light)
     weights = np.repeat(1.0, len(wavelower))
     # ----------------------------------------------------------------------
     # Create table to store them in
@@ -5672,6 +5672,8 @@ def update_smart_fp_mask(params, **kwargs):
     columnvalues = [wavelower, waveupper, weights]
     # make table
     table = drs_table.make_table(params, columnnames, columnvalues)
+    # print that we are saving smart fp header
+    WLOG(params, '', TextEntry('40-017-00053', args=outfile))
     # write smart mask table to file
     drs_table.write_table(params, table, outfile, fmt='ascii.fast_no_header')
 
