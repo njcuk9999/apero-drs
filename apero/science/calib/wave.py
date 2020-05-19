@@ -5611,7 +5611,7 @@ def update_smart_fp_mask(params, **kwargs):
         return
     # ----------------------------------------------------------------------
     # construct output filename
-    outfile = os.path.join(ccfpath, ccfmask)
+    outfile = drs_data.construct_path(params, ccfmask, ccfpath, func=func_name)
     # load current cavity files
     fit_1m_d, fit_ll_d = drs_data.load_cavity_files(params, required=False)
     # ----------------------------------------------------------------------

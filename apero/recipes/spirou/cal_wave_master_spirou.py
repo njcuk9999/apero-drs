@@ -285,6 +285,10 @@ def __main__(recipe, params):
         # ==================================================================
         # FP CCF COMPUTATION - need all fibers done one-by-one
         # ==================================================================
+
+        # TODO: remove break point
+        constants.break_point(params)
+
         # must update the smart mask now cavity poynomial has been update
         #   (if it has been update else this just recomputes the mask)
         wave.update_smart_fp_mask(params)
@@ -322,9 +326,6 @@ def __main__(recipe, params):
         # ==================================================================
         # QUALITY CONTROL (AFTER FP MASTER FIBER + OTHER FIBERS)
         # ==================================================================
-        # TODO: remove break point
-        constants.break_point(params)
-
         # TODO: Add CCF QC
         qc_params = wave.fp_quality_control(params, fpprops, qc_params)
         # passed if all qc passed
