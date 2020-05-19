@@ -5659,7 +5659,7 @@ def update_smart_fp_mask(params, **kwargs):
     # add units
     wave_fp_peak = wave_fp_peak * unit
     # convert to nanometers
-    wave_fp_peak = wave_fp_peak.to(u.nm).value
+    wave_fp_peak = wave_fp_peak.to(uu.nm).value
     # ----------------------------------------------------------------------
     # calculate wavelength bounds of line
     wavelower = wave_fp_peak * (1 - 0.5 * dvwidth)
