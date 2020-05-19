@@ -63,10 +63,14 @@ if __name__ == "__main__":
 
     # read the header keys
     for good_header in good_headers:
-        time_arr.append(Time(good_header[TIMECOL], format='mjd'))
-        rv_obj_arr.append(good_header[RV_OBJ])
-        rv_drift_arr.append(good_header[RV_DRIFT])
-        rv_corr_arr.append(good_header[RV_CORR])
+        rv_time = Time(good_header[TIMECOL], format='mjd')
+        rv_obj = float(good_header[RV_OBJ])
+        rv_drift = float(good_header[RV_DRIFT])
+        rv_corr = float(good_header[RV_CORR])
+        time_arr.append(rv_time)
+        rv_obj_arr.append(rv_obj)
+        rv_drift_arr.append(rv_drift)
+        rv_corr_arr.append(rv_corr)
 
     # convert times to time array
     times = Time(time_arr)
