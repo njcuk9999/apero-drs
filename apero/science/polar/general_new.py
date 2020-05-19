@@ -12,6 +12,7 @@ Created on 2020-05-13
 import numpy as np
 import warnings
 from astropy.io import fits
+import os
 
 from apero import core
 from apero.core import math as mp
@@ -92,6 +93,10 @@ class PolarObj:
         # deal with blaze solution
         self.blazeprops = None
         self._get_blaze()
+        # deal with getting telluric files
+        self.is_telluric_corrected = False
+        self.telluprops = None
+        self._get_tell()
         # deal with getting CCF file
         self.ccfprops = None
         self._get_ccf()
@@ -151,15 +156,149 @@ class PolarObj:
         bkeys = ['BLAZEFILE', 'BLAZE']
         self.blazeprops.set_sources(bkeys, func_name)
 
-    def _get_ccf(self):
+    def _get_tell(self, **kwargs):
         # set function name
         func_name = display_func(self.params, '_get_ccf', __NAME__, 'PolarObj')
-        pass
+        # get parameters from params
+        tcorr_key = pcheck(self.params, 'POLAR_TCORR_FILE', 'tcorr_key', kwargs,
+                         func_name)
+        recon_key = pcheck(self.params, 'POLAR_RECON_FILE', 'recon_key', kwargs,
+                           func_name)
+        tfiber = pcheck(self.params, 'POLAR_TELLU_FIBER', 'tfiber', kwargs,
+                        func_name)
+        tcorrect = pcheck(self.params, 'POLAR_TELLU_CORRECT', 'tcorrect',
+                          kwargs, func_name)
+        # ----------------------------------------------------------------------
+        # get file definition
+        tfile = core.get_file_definition(tcorr_key, self.params['INSTRUMENT'],
+                                         kind='red')
+        rfile = core.get_file_definition(recon_key, self.params['INSTRUMENT'],
+                                         kind='red')
+        # get copies of the file definitions (for filling out)
+        tcorr_file = tfile.newcopy(recipe=self.recipe, fiber=tfiber)
+        recon_file = rfile.newcopy(recipe=self.recipe, fiber=tfiber)
+        # ----------------------------------------------------------------------
+        # need to deal with input file being the telluric corrected file
+        if self.infile.name == tcorr_file.name:
+            self.is_telluric_corrected = True
+            tcorr_file = self.infile.newcopy(recipe=self.recipe)
+            # in this case set recon file to None - we do not need it
+            recon_file = None
+        else:
+            # ----------------------------------------------------------------------
+            # if current fiber doesn't match polar fiber get a copy of the infile
+            # for this fiber
+            if self.fiber != tfiber:
+                # copy file (for update)
+                t_infile = self.infile.newcopy(recipe=self.recipe)
+                # reconstruct file name forcing new fiber
+                t_infile.reconstruct_filename(self.params,
+                                              outext=self.infile.filetype,
+                                              fiber=tfiber)
+            else:
+                t_infile = self.infile
+            # construct the filenames from file instances
+            tcorr_file.construct_filename(self.params, infile=t_infile,
+                                          fiber=tfiber)
+            recon_file.construct_filename(self.params, infile=t_infile,
+                                          fiber=tfiber)
+        # ----------------------------------------------------------------------
+        # check whether files exist
+        if not os.path.exists(tcorr_file.filename):
+            return
+        if not os.path.exists(recon_file.filename):
+            return
+        # ----------------------------------------------------------------------
+        # create tellu props
+        self.telluprops = ParamDict()
+        self.telluprops['TCORR_INST'] = tcorr_file
+        self.telluprops['TCORR_FILE'] = tcorr_file.filename
+        self.telluprops['RECON_INST'] = recon_file
+        # add recon file
+        if recon_file is not None:
+            self.telluprops['RECON_FILE'] = recon_file.filename
+        else:
+            self.telluprops['RECON_FILE'] = None
+        # add sources
+        keys = ['TCORR_INST', 'TCORR_FILE', 'RECON_INST', 'RECON_FILE']
+        self.telluprops.set_sources(keys, func_name)
+        # ----------------------------------------------------------------------
+        # load recon only if telluric correction required
+        if tcorrect and recon_file is not None:
+            recon_file.read_file()
+            self.telluprops['RECON_DATA'] = recon_file.data
+        else:
+            self.telluprops['RECON_DATA'] = None
+        # add recon data source
+        self.telluprops.set_source('RECON_DATA', func_name)
 
-    def _get_tell(self):
+    def _get_ccf(self, **kwargs):
         # set function name
         func_name = display_func(self.params, '_get_ccf', __NAME__, 'PolarObj')
-        pass
+
+        # get parameters from params
+        ccf_key = pcheck(self.params, 'POLAR_CCF_FILE', 'ccf_key', kwargs,
+                         func_name)
+        mask_file = pcheck(self.params, 'POLAR_CCF_MASK', 'mask_file', kwargs,
+                           func_name)
+        pfiber = pcheck(self.params, 'POLAR_CCF_FIBER', 'pfiber', kwargs,
+                        func_name)
+        ccf_correct = pcheck(self.params, 'POLAR_SOURCERV_CORRECT',
+                             'ccf_correct', kwargs, func_name)
+        # ----------------------------------------------------------------------
+        # get file definition
+        cfile = core.get_file_definition(ccf_key, self.params['INSTRUMENT'],
+                                             kind='red', fiber=pfiber)
+        # get copies of the file definitions (for filling out)
+        ccf_file = cfile.newcopy(recipe=self.recipe)
+        # push mask to suffix
+        suffix = ccf_file.suffix
+        mask_file = os.path.basename(mask_file).replace('.mas', '')
+        if suffix is not None:
+            suffix += '_{0}'.format(mask_file).lower()
+        else:
+            suffix = '_ccf_{0}'.format(mask_file).lower()
+        # ----------------------------------------------------------------------
+        # if current fiber doesn't match polar fiber get a copy of the infile
+        # for this fiber
+        if self.fiber != pfiber:
+            # should use telluric file if present
+            if self.telluprops is not None:
+                # get telluric tcorr file
+                tfile = self.telluprops['TCORR_INST']
+                # copy file (for update)
+                p_infile = tfile.newcopy(recipe=self.recipe)
+            else:
+                # copy file (for update)
+                p_infile = self.infile.newcopy(recipe=self.recipe)
+                # reconstruct file name forcing new fiber
+                p_infile.reconstruct_filename(self.params,
+                                              outext=self.infile.filetype,
+                                              fiber=pfiber)
+                p_infile.fiber = pfiber
+        else:
+            p_infile = self.infile
+        # ----------------------------------------------------------------------
+        # construct the filename from file instance
+        ccf_file.construct_filename(self.params, infile=p_infile,
+                                    suffix=suffix, fiber=pfiber)
+        # ----------------------------------------------------------------------
+        # create ccf props
+        self.ccfprops = ParamDict()
+        self.ccfprops['CCF_INST'] = ccf_file
+        self.ccfprops['CCF_FILE'] = ccf_file.filename
+        # set sources
+        keys = ['CCF_INST', 'CCF_FILE']
+        self.ccfprops.set_sources(keys, func_name)
+        # ----------------------------------------------------------------------
+        # load source rv
+        if ccf_correct:
+            ccf_file.read_header()
+            self.ccfprops['SOURCE_RV'] = ccf_file.get_key('KW_CCF_RV_CORR')
+        else:
+            self.ccfprops['SOURCE_RV'] = 0.0
+        # set source
+        self.ccfprops.set_source('SOURCE_RV', func_name)
 
     def _get_wave(self):
         """
@@ -178,7 +317,10 @@ class PolarObj:
         # ------------------------------------------------------------------
         if self.params['POLAR_BERV_CORRECT']:
             # get the RV from the CCF properties
-            rv_ccf = self.ccfprops['SOURCE_RV']
+            if self.ccfprops is not None:
+                rv_ccf = self.ccfprops['SOURCE_RV']
+            else:
+                rv_ccf = 0.0
             # get the berv
             berv = self.berv
             # calculate the shifts
@@ -252,11 +394,15 @@ class PolarObjOut(PolarObj):
     def _get_ccf(self):
         # set function name
         func_name = display_func(self.params, '_get_ccf', __NAME__, 'PolarObj')
+
+        # TODO: fill in
         pass
 
     def _get_tell(self):
         # set function name
         func_name = display_func(self.params, '_get_ccf', __NAME__, 'PolarObj')
+
+        # TODO: fill in
         pass
 
     def _get_wave(self):
@@ -364,7 +510,7 @@ def validate_polar_files(params, recipe, infiles, **kwargs):
     props['VALID_FIBERS'] = valid_fibers
     props['VALID_STOKES'] = valid_stokes
     # set sources
-    keys = ['STOKES', 'NEXPOSURES', 'MIN_FILES', 'VALID_FIBERS', 'VALID_STOKES']
+    keys = ['STOKES', 'NEXPOSURES', 'VALID_FIBERS', 'VALID_STOKES']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # return polar object and properties
