@@ -95,9 +95,7 @@ if __name__ == "__main__":
     # plot
     print('Plotting graph...')
     plt.close()
-    fig, frames = plt.subplots(ncols=1, nrows=2)
-
-    frame = frames[0]
+    fig1, frame = plt.subplots(ncols=1, nrows=1)
     frame.plot_date(times[fiberab_m].plot_date, drifts[fiberab_m],
                     markeredgecolor='r', markerfacecolor='None', marker='x',
                     ls='None', markersize=10, label='AB MASTER')
@@ -126,10 +124,14 @@ if __name__ == "__main__":
 
     frame.legend(loc=0)
     frame.set(xlabel='Date', ylabel='RV (CCF FP) [m/s]')
-    fig.autofmt_xdate()
+    fig1.autofmt_xdate()
     frame.ticklabel_format(axis='y', useOffset=False)
 
-    frame = frames[1]
+
+    # plot
+    print('Plotting graph...')
+    plt.close()
+    fig2, frame = plt.subplots(ncols=1, nrows=1)
 
     frame.plot_date(times[fibera_m].plot_date, drifts[fibera_m]-drifts[fiberab_m],
                     markeredgecolor='b', markerfacecolor='None', marker='x',
@@ -153,7 +155,7 @@ if __name__ == "__main__":
 
     frame.legend(loc=0)
     frame.set(xlabel='Date', ylabel='RV (CCF FP) [m/s]')
-    fig.autofmt_xdate()
+    fig2.autofmt_xdate()
     frame.ticklabel_format(axis='y', useOffset=False)
 
     plt.show()
