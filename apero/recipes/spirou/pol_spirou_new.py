@@ -92,10 +92,10 @@ def __main__(recipe, params):
     mainname = __NAME__ + '._main()'
     # get files
     infiles = []
-    infiles.append(params['INPUTS']['EXP1'][1])
-    infiles.append(params['INPUTS']['EXP2'][1])
-    infiles.append(params['INPUTS']['EXP3'][1])
-    infiles.append(params['INPUTS']['EXP4'][1])
+    infiles += params['INPUTS']['EXP1'][1]
+    infiles += params['INPUTS']['EXP2'][1]
+    infiles += params['INPUTS']['EXP3'][1]
+    infiles += params['INPUTS']['EXP4'][1]
     # get list of filenames (for output)
     rawfiles = []
     for infile in infiles:
@@ -104,6 +104,17 @@ def __main__(recipe, params):
     # TODO: ------------------------------------------------------------------
     # TODO: Add these to constants file
     params.set('POLAR_BERV_CORRECT', value=True, source=mainname)
+    params.set('POLAR_TELLU_CORRECT', value=True, source=mainname)
+    params.set('POLAR_SOURCERV_CORRECT', value=True, source=mainname)
+
+    params.set('POLAR_CCF_FILE', value='CCF_RV', source=mainname)
+    params.set('POLAR_CCF_FIBER', value='AB', source=mainname)
+    params.set('POLAR_CCF_MASK', value='masque_sept18_andres_trans50.mas',
+               source=mainname)
+
+    params.set('POLAR_TCORR_FILE', value='TELLU_OBJ', source=mainname)
+    params.set('POLAR_RECON_FILE', value='TELLU_RECON', source=mainname)
+    params.set('POLAR_TELLU_FIBER', value='AB', source=mainname)
 
 
     # TODO: ------------------------------------------------------------------
@@ -115,6 +126,8 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     pobjects, props = polar.validate_polar_files(params, infiles)
     # get first file
+
+    # TODO: This is unfinished
 
     # ----------------------------------------------------------------------
     # End of main code
