@@ -130,7 +130,6 @@ if __name__ == "__main__":
 
     # plot
     print('Plotting graph...')
-    plt.close()
     fig2, frame = plt.subplots(ncols=1, nrows=1)
 
     frame.plot_date(times[fibera_m].plot_date, drifts[fibera_m]-drifts[fiberab_m],
