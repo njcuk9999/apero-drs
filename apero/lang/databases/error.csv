@@ -1122,7 +1122,7 @@
 "40-017-00050","ALL","prints that we are running get ref lines for type FP","None","running get reference lines for FP","",""
 "40-017-00051","ALL","prints the number of valid lines found","{0} = order number; {1} = total number of orders; {2} = fiber name; {3} = number of valid lines found; {4} = total number of lines; {5} = fiber type","Order {0}/{1} Fiber {2} Valid lines: {3}/{4} (type={5})","",""
 "40-017-00052","ALL","prints the d_cavity and dd_cavity after iteration","{0} = d_cavity; {1} = dd_cavity","\td_cavity = {0:.5f} m/s\tdd_cavity = {1:.5e} m/s","",""
-"40-017-00053","ALL","","","","",""
+"40-017-00053","ALL","prints that we have updated the smart fp mask","{0} = smart fp file name","Updating smart FP mask file: {0}","",""
 "40-017-00054","ALL","","","","",""
 "40-017-00055","ALL","","","","",""
 "40-017-00056","ALL","","","","",""
