@@ -263,6 +263,9 @@ def __main__(recipe, params):
                       cavity_poly=fpprops['FP_FIT_LL_D'])
         fplines = wave.get_master_lines(params, recipe, **fpargs)
 
+        # TODO: remove break point
+        constants.break_point(params)
+
         # ==================================================================
         # RUN THE NIGHTLY WAVE SOLUTION ON MASTER FIBER
         # ==================================================================
@@ -285,9 +288,6 @@ def __main__(recipe, params):
         # ==================================================================
         # FP CCF COMPUTATION - need all fibers done one-by-one
         # ==================================================================
-
-        # TODO: remove break point
-        constants.break_point(params)
 
         # must update the smart mask now cavity poynomial has been update
         #   (if it has been update else this just recomputes the mask)
