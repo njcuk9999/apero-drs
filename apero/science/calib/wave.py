@@ -1481,7 +1481,7 @@ def fp_wavesol_lovis(params, recipe, llprops, fpe2dsfile, hce2dsfile,
     llout = fit_wavemap_cav_iteratively(params, recipe,
                                         inwavemap=llprops['WAVE'],
                                         e2dsfile=fpe2dsfile,
-                                        cavity_poly=fit_ll_d[::-1])
+                                        cavity_poly=fit_ll_d)
     ll_out_2, ll_params_2, xmean2, xvar2 = llout[:4]
     xdetails2, lldetails2, scale2, totallines2 = llout[4:]
     # update llprops
