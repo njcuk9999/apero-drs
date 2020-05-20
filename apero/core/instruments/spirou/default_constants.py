@@ -957,6 +957,10 @@ EXTRACT_S1D_PLOT_ZOOM2.value = '1050, 1285, 1670, 2100, 2500'
 # =============================================================================
 # CALIBRATION: THERMAL SETTINGS
 # =============================================================================
+# whether to apply the thermal correction to extractions
+THERMAL_CORRECT = THERMAL_CORRECT.copy(__NAME__)
+THERMAL_CORRECT.value = True
+
 # define whether to always extract thermals (i.e. overwrite existing files)
 THERMAL_ALWAYS_EXTRACT = THERMAL_ALWAYS_EXTRACT.copy(__NAME__)
 THERMAL_ALWAYS_EXTRACT.value = False
