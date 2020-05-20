@@ -106,15 +106,14 @@ def __main__(recipe, params):
     params.set('POLAR_BERV_CORRECT', value=True, source=mainname)
     params.set('POLAR_TELLU_CORRECT', value=True, source=mainname)
     params.set('POLAR_SOURCERV_CORRECT', value=True, source=mainname)
+    params.set('POLAR_MASTER_FIBER', value='AV', source=mainname)
 
     params.set('POLAR_CCF_FILE', value='CCF_RV', source=mainname)
-    params.set('POLAR_CCF_FIBER', value='AB', source=mainname)
     params.set('POLAR_CCF_MASK', value='masque_sept18_andres_trans50.mas',
                source=mainname)
 
     params.set('POLAR_TCORR_FILE', value='TELLU_OBJ', source=mainname)
     params.set('POLAR_RECON_FILE', value='TELLU_RECON', source=mainname)
-    params.set('POLAR_TELLU_FIBER', value='AB', source=mainname)
 
 
     # TODO: ------------------------------------------------------------------

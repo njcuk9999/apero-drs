@@ -13,6 +13,7 @@ import numpy as np
 import warnings
 from astropy.io import fits
 import os
+from scipy.interpolate import splrep, splev
 
 from apero import core
 from apero.core import math as mp
@@ -78,17 +79,23 @@ class PolarObj:
         self.name = self.__gen_key__()
         # deal with getting properties
         self.hdu = None   # not used in PolarObj but used in PolarObjOut
-        self.data = None
+        self.rawflux = None
+        self.raweflux = None
+        self.flux = None
+        self.eflux = None
         self.filename = None
         self.basename = None
         self.header = None
         self.header0 = None
         self.header1 = None
+        self.nbo = None
+        self.nbpix = None
         self.mjd = None
         self.dprtype = None
         self.berv = None
         self.bjd = None
         self.bervmax = None
+        # get observation properties (flux, berv, etc)
         self._get_properties()
         # deal with blaze solution
         self.blazeprops = None
@@ -102,9 +109,15 @@ class PolarObj:
         self._get_ccf()
         # deal with getting wavelength solution
         self.waveprops = None
+        self.mwaveprops = None
         self._get_wave()
-
-        # TODO: Need to clean with "clean loop" (Line 281 onwards)
+        # clean, spline on to master wave solution
+        self._clean()
+        # get times
+        self._get_times()
+        # close hdu if possible
+        if self.hdu is not None:
+            self.hdu.close()
 
     def __gen_key__(self):
         return '{0}_{1}'.format(self.fiber, self.exposure)
@@ -120,12 +133,19 @@ class PolarObj:
         Get properties assuming we have a DRS output file as input (infile)
         :return:
         """
-        self.data = self.infile.data
+        # set the flux data
+        self.rawflux = self.infile.data
+        self.eflux = np.sqrt(self.flux)
+        # set file names and header
         self.filename = self.infile.filename
         self.basename = self.infile.basename
         self.header = self.infile.header
+        # get sizes
+        self.nbo = self.rawflux.shape[0]
+        self.nbpix = self.rawflux.shape[1]
         # get keys from header
         self.mjd = self.infile.get_key('KW_MID_OBS_TIME', dtype=float)
+        self.exptime = self.infile.get_key('KW_EXPTIME', dtype=float)
         self.dprtype = self.infile.get_key('KW_DPRTYPE', dtype=str)
         # get berv properties
         bprops = extract.get_berv(self.params, self.infile,
@@ -148,14 +168,14 @@ class PolarObj:
                                                  header=self.header)
         # normalise
         # TODO: Question: Are you sure you want to normalise by the whole array
-        # TODO: Qusestion:    and not by order?
+        # TODO: Question:    and not by order?
         blaze = blaze / np.nanmax(blaze)
         # props
         self.blazeprops = ParamDict()
         self.blazeprops['BLAZEFILE'] = blaze_file
-        self.blazeprops['BLAZE'] = blaze
+        self.blazeprops['RAW_BLAZE'] = blaze
         # set source of blaze properties
-        bkeys = ['BLAZEFILE', 'BLAZE']
+        bkeys = ['BLAZEFILE', 'RAW_BLAZE']
         self.blazeprops.set_sources(bkeys, func_name)
 
     def _get_tell(self, **kwargs):
@@ -166,7 +186,7 @@ class PolarObj:
                          func_name)
         recon_key = pcheck(self.params, 'POLAR_RECON_FILE', 'recon_key', kwargs,
                            func_name)
-        tfiber = pcheck(self.params, 'POLAR_TELLU_FIBER', 'tfiber', kwargs,
+        tfiber = pcheck(self.params, 'POLAR_MASTER_FIBER', 'tfiber', kwargs,
                         func_name)
         tcorrect = pcheck(self.params, 'POLAR_TELLU_CORRECT', 'tcorrect',
                           kwargs, func_name)
@@ -215,6 +235,14 @@ class PolarObj:
         if not os.path.exists(recon_file.filename):
             return
         # ----------------------------------------------------------------------
+        # log which telluric files we are using
+        wmsg = 'Using Telluric Object File: {0}'
+        wargs = [tcorr_file.filename]
+        WLOG(self.params, '', wmsg.format(*wargs))
+        wmsg = 'Using Telluric Recon File: {0}'
+        wargs = [recon_file.filename]
+        WLOG(self.params, '', wmsg.format(*wargs))
+        # ----------------------------------------------------------------------
         # create tellu props
         self.telluprops = ParamDict()
         self.telluprops['TCORR_INST'] = tcorr_file
@@ -232,11 +260,11 @@ class PolarObj:
         # load recon only if telluric correction required
         if tcorrect and recon_file is not None:
             recon_file.read_file()
-            self.telluprops['RECON_DATA'] = recon_file.data
+            self.telluprops['RAW_RECON_DATA'] = recon_file.data
         else:
-            self.telluprops['RECON_DATA'] = None
+            self.telluprops['RAW_RECON_DATA'] = None
         # add recon data source
-        self.telluprops.set_source('RECON_DATA', func_name)
+        self.telluprops.set_source('RAW_RECON_DATA', func_name)
 
     def _get_ccf(self, **kwargs):
         # set function name
@@ -246,7 +274,7 @@ class PolarObj:
                          func_name)
         mask_file = pcheck(self.params, 'POLAR_CCF_MASK', 'mask_file', kwargs,
                            func_name)
-        pfiber = pcheck(self.params, 'POLAR_CCF_FIBER', 'pfiber', kwargs,
+        pfiber = pcheck(self.params, 'POLAR_MASTER_FIBER', 'pfiber', kwargs,
                         func_name)
         ccf_correct = pcheck(self.params, 'POLAR_SOURCERV_CORRECT',
                              'ccf_correct', kwargs, func_name)
@@ -291,6 +319,11 @@ class PolarObj:
         if not os.path.exists(ccf_file):
             return
         # ----------------------------------------------------------------------
+        # log which telluric files we are using
+        wmsg = 'Using CCF File: {0}'
+        wargs = [ccf_file.filename]
+        WLOG(self.params, '', wmsg.format(*wargs))
+        # ----------------------------------------------------------------------
         # create ccf props
         self.ccfprops = ParamDict()
         self.ccfprops['CCF_INST'] = ccf_file
@@ -308,13 +341,16 @@ class PolarObj:
         # set source
         self.ccfprops.set_source('SOURCE_RV', func_name)
 
-    def _get_wave(self):
+    def _get_wave(self, **kwargs):
         """
         Get wave solution assuming we have a DRS output file as input (infile)
         :return:
         """
         # set function name
         func_name = display_func(self.params, '_get_wave', __NAME__, 'PolarObj')
+        # get parameters from params
+        mfiber = pcheck(self.params, 'POLAR_MASTER_FIBER', 'pfiber', kwargs,
+                        func_name)
         # ----------------------------------------------------------------------
         # load wavelength solution for this fiber
         # ----------------------------------------------------------------------
@@ -344,12 +380,118 @@ class PolarObj:
         # ------------------------------------------------------------------
         # push wprops into self
         self.waveprops = wprops
+        # ------------------------------------------------------------------
+        # get master fiber
+        self.mwaveprops = wave.get_wavesolution(self.params, self.recipe,
+                                       fiber=mfiber, infile=self.infile)
 
+    def _clean(self, **kwargs):
+        # set function name
+        func_name = display_func(self.params, '_clean', __NAME__, 'PolarObj')
+        # get parameters from params
+        tcorrect = pcheck(self.params, 'POLAR_TELLU_CORRECT', 'tcorrect',
+                          kwargs, func_name)
+        # ------------------------------------------------------------------
+        # get master wavemap
+        mwavemap = self.mwaveprops['WAVEMAP']
+        wavemap = self.waveprops['WAVEMAP']
+        # ------------------------------------------------------------------
+        # set up arrays as all NaN
+        self.flux = np.zeros_like(self.rawflux) * np.nan
+        self.eflux = np.zeros_like(self.rawflux) * np.nan
+        blazearr = np.zeros_like(self.rawflux) * np.nan
+        # get blaze array
+        rblazearr = self.blazeprops['RAW_BLAZE']
+        # get telluric recon array
+        if tcorrect and not self.is_telluric_corrected:
+            rreconarr = self.telluprops['RAW_RECON_DATA']
+            reconarr = np.zeros_like(rreconarr) * np.nan
+        else:
+            rreconarr, reconarr = None, None
+        # ------------------------------------------------------------------
+        # loop around orders
+        for order_num in range(self.nbo):
+            # ------------------------------------------------------------------
+            # identify NaN values
+            clean = np.isfinite(self.rawflux[order_num])
+            # if we don't have any finite values skip this order
+            if np.sum(clean) == 0:
+                continue
+            # ------------------------------------------------------------------
+            # get clean vectors for this order
+            # ------------------------------------------------------------------
+            # get this orders wave solution
+            owave = wavemap[order_num][clean]
+            # get this orders raw flux
+            orflux = self.rawflux[order_num][clean]
+            # get this orders raw blaze
+            orblaze = rblazearr[order_num][clean]
+            # get the master fiber wave solution for this order
+            omwave = mwavemap[order_num][clean]
+            # get the recon spectra
+            if tcorrect and not self.is_telluric_corrected:
+                orrecon = [order_num]
+                tclean = np.isfinite(orrecon)
+            else:
+                orrecon, tclean = None, None
+            # ------------------------------------------------------------------
+            # get splines
+            # ------------------------------------------------------------------
+            # interpolate flux data to match wavelength grid of first exposure
+            tck = splrep(owave, orflux, s=0)
+            # interpolate blaze data to match wavelength grid of first exposure
+            btck = splrep(owave, orblaze, s=0)
+            # interpolate recon data to match wavelength grid of first exposure
+            #   note that telluric has own clean mask (tclean)
+            if tcorrect and not self.is_telluric_corrected:
+                ttck = splrep(wavemap[order_num][tclean], orrecon[tclean], s=0)
+            else:
+                ttck = None
+            # ------------------------------------------------------------------
+            # only keep wavelengths within master fiber limits
+            wlmask = (omwave > np.min(owave)) & (omwave < np.max(owave))
+            # ------------------------------------------------------------------
+            # get vectors splined on the master fiber wave solution
+            # ------------------------------------------------------------------
+            # update blaze
+            oblaze = splev(omwave[wlmask], btck, der=0)
+            # update flux data
+            oflux = splev(omwave[wlmask], tck, der=0)
+            # normalize by blaze
+            oflux = oflux / oblaze
+            # update flux error data
+            # TODO: Question: Why sqrt(flux/blaze/blaze) ?
+            oeflux = np.sqrt(oflux / oblaze)
+            # update telluric (if required)
+            if reconarr is not None:
+                # TODO: Question: wlmask not used for recon why?
+                orecon = splev(mwavemap[order_num][tclean], ttck, der=0)
+            else:
+                orecon = None
+            # ------------------------------------------------------------------
+            # get vectors splined on the master fiber wave solution
+            # ------------------------------------------------------------------
+            # update vectors
+            self.flux[order_num][clean] = oflux
+            self.eflux[order_num][clean] = oeflux
+            blazearr[order_num][clean] = oblaze
+            if reconarr is not None:
+                reconarr[order_num][tclean] = orecon
+                # telluric correct flux/eflux
+                tcorr = self.flux[order_num] / reconarr[order_num]
+                self.flux[order_num] = tcorr
 
+        # push blaze back into props
+        self.blazeprops['BLAZE'] = blazearr
+        # push recon back into props if telluric correction required
+        if tcorrect and not self.is_telluric_corrected:
+            self.telluprops['RECON_DATA'] = reconarr
+
+    def _get_times(self):
+        # TODO: Fill in this function (Line 346 in spirouPolar.py)
+        pass
 
 class PolarObjOut(PolarObj):
-
-
     def _get_properties(self):
         """
         Get properties assuming we have a CADC output file as input (infile)
@@ -359,11 +501,17 @@ class PolarObjOut(PolarObj):
         # get the headres
         self.header0 = self.hdu[0].header
         self.header1 = self.hdu[1].header
-        self.data = self.hdu.data
+        flux_key = FLUX_HDU_KEY.format(fiber=self.fiber)
+        self.rawflux = np.array(self.hdu[flux_key].data)
+        self.raweflux = np.sqrt(self.rawflux)
         self.filename = self.infile.filename
         self.basename = self.infile.basename
+        # get sizes
+        self.nbo = self.rawflux.shape[0]
+        self.nbpix = self.raweflux.shape[1]
         # get keys from header
         self.mjd = self.header1[self.params['KW_MID_OBS_TIME'][0]]
+        self.exptime = self.header1[self.params['KW_EXPTIME'][0]]
         self.dprtype = self.header1[self.params['KW_DPRTYPE'][0]]
         # get berv properties
         bprops = extract.get_berv(self.params, header=self.header1,
@@ -372,7 +520,6 @@ class PolarObjOut(PolarObj):
         self.berv = bprops['USE_BERV']
         self.bjd = bprops['USE_BJD']
         self.bervmax = bprops['USE_BERV_MAX']
-
 
     def _get_blaze(self):
         """
@@ -384,8 +531,12 @@ class PolarObjOut(PolarObj):
                                  'PolarObjOut')
         # get blaze key
         blaze_key = BLAZE_HDU_KEY.format(fiber=self.fiber)
+        # log which telluric files we are using
+        wmsg = 'Using blaze from HDU: {0}'
+        wargs = [blaze_key]
+        WLOG(self.params, '', wmsg.format(*wargs))
         # load blaze
-        blaze = self.hdu[blaze_key].data
+        blaze = np.array(self.hdu[blaze_key].data)
         blaze_file = 'HDU[{0}]'.format(blaze_key)
         # normalise
         # TODO: Question: Are you sure you want to normalise by the whole array
@@ -394,9 +545,9 @@ class PolarObjOut(PolarObj):
         # props
         self.blazeprops = ParamDict()
         self.blazeprops['BLAZEFILE'] = blaze_file
-        self.blazeprops['BLAZE'] = blaze
+        self.blazeprops['RAW_BLAZE'] = blaze
         # set source of blaze properties
-        bkeys = ['BLAZEFILE', 'BLAZE']
+        bkeys = ['BLAZEFILE', 'RAW_BLAZE']
         self.blazeprops.set_sources(bkeys, func_name)
 
     def _get_tell(self, **kwargs):
@@ -421,7 +572,14 @@ class PolarObjOut(PolarObj):
             eargs = [self.filename]
             WLOG(self.params, 'error', emsg.format(*eargs))
             return
-
+        # ----------------------------------------------------------------------
+        # log which telluric files we are using
+        wmsg = 'Using Telluric Object File: {0}'
+        wargs = [tcorr_filename]
+        WLOG(self.params, '', wmsg.format(*wargs))
+        wmsg = 'Using Telluric Recon File: {0}'
+        wargs = [recon_filename]
+        WLOG(self.params, '', wmsg.format(*wargs))
         # ----------------------------------------------------------------------
         # create tellu props
         self.telluprops = ParamDict()
@@ -442,12 +600,12 @@ class PolarObjOut(PolarObj):
         # load recon only if telluric correction required
         if tcorrect and recon_filename is not None:
             thdu = fits.open(tcorr_filename)
-            self.telluprops['RECON_DATA'] = np.array(thdu[4].data)
+            self.telluprops['RAW_RECON_DATA'] = np.array(thdu[4].data)
             thdu.close()
         else:
-            self.telluprops['RECON_DATA'] = None
+            self.telluprops['RAW_RECON_DATA'] = None
         # add recon data source
-        self.telluprops.set_source('RECON_DATA', func_name)
+        self.telluprops.set_source('RAW_RECON_DATA', func_name)
 
     def _get_ccf(self, **kwargs):
         # set function name
@@ -471,6 +629,11 @@ class PolarObjOut(PolarObj):
         if not os.path.exists(ccf_filename):
             return
         # ----------------------------------------------------------------------
+        # log which telluric files we are using
+        wmsg = 'Using CCF File: {0}'
+        wargs = [ccf_filename]
+        WLOG(self.params, '', wmsg.format(*wargs))
+        # ----------------------------------------------------------------------
         # create ccf props
         self.ccfprops = ParamDict()
         # TODO: Need to get file instance of v.fits (not currently supported)
@@ -490,18 +653,25 @@ class PolarObjOut(PolarObj):
         # set source
         self.ccfprops.set_source('SOURCE_RV', func_name)
 
-    def _get_wave(self):
+    def _get_wave(self, **kwargs):
         """
         Get wave solution assuming we have a CADC output file as input (infile)
         :return:
         """
         # set function name
         func_name = display_func(self.params, '_get_wave', __NAME__, 'PolarObj')
+        # get parameters from params
+        mfiber = pcheck(self.params, 'POLAR_MASTER_FIBER', 'pfiber', kwargs,
+                        func_name)
         # ----------------------------------------------------------------------
         # load wavelength solution for this fiber
         # ----------------------------------------------------------------------
         wavekey = WAVE_HDU_KEY.format(fiber=self.fiber)
-        wavemap = self.hdu[wavekey].data
+        wavemap = np.array(self.hdu[wavekey].data)
+        # log which telluric files we are using
+        wmsg = 'Using wave from HDU: {0}'
+        wargs = [wavekey]
+        WLOG(self.params, '', wmsg.format(*wargs))
         # ------------------------------------------------------------------
         # load into wave props
         wprops = ParamDict()
@@ -530,7 +700,22 @@ class PolarObjOut(PolarObj):
         # ------------------------------------------------------------------
         # push wprops into self
         self.waveprops = wprops
+        # ------------------------------------------------------------------
+        # get master fiber
+        mwavekey = WAVE_HDU_KEY.format(fiber=mfiber)
+        mwavemap = np.array(self.hdu[mwavekey].data)
+        # ------------------------------------------------------------------
+        # load into wave props
+        self.mwaveprops = ParamDict()
+        self.mwaveprops['WAVEMAP'] = mwavemap
+        self.mwaveprops['WAVEFILE'] = 'HDU[{0}]'.format(mwavekey)
+        # add sources
+        mwkeys = ['WAVEMAP', 'WAVEFILE']
+        self.mwaveprops.set_sources(mwkeys, func_name)
 
+    def _get_times(self):
+        # TODO: Fill in this function (Line 346 in spirouPolar.py)
+        pass
 
 # =============================================================================
 # Define functions
