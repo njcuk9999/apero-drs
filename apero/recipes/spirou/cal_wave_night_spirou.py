@@ -202,6 +202,9 @@ def __main__(recipe, params):
             # load the blaze file for this fiber
             blaze_file, blaze = flat_blaze.get_blaze(params, hcheader, fiber)
             # --------------------------------------------------------------
+            # TODO: remove break point
+            constants.break_point(params)
+
             # calculate the night wavelength solution
             wargs = [hc_e2ds_file, fp_e2ds_file, mhclines, mfplines, wprops,
                      fiber, indcavity]
