@@ -104,6 +104,8 @@ class PolarObj:
         self.waveprops = None
         self._get_wave()
 
+        # TODO: Need to clean with "clean loop" (Line 281 onwards)
+
     def __gen_key__(self):
         return '{0}_{1}'.format(self.fiber, self.exposure)
 
@@ -158,7 +160,7 @@ class PolarObj:
 
     def _get_tell(self, **kwargs):
         # set function name
-        func_name = display_func(self.params, '_get_ccf', __NAME__, 'PolarObj')
+        func_name = display_func(self.params, '_get_tell', __NAME__, 'PolarObj')
         # get parameters from params
         tcorr_key = pcheck(self.params, 'POLAR_TCORR_FILE', 'tcorr_key', kwargs,
                          func_name)
@@ -180,11 +182,15 @@ class PolarObj:
         # ----------------------------------------------------------------------
         # need to deal with input file being the telluric corrected file
         if self.infile.name == tcorr_file.name:
+            # File is already telluric corrected
             self.is_telluric_corrected = True
+            # copy telluric file instance
             tcorr_file = self.infile.newcopy(recipe=self.recipe)
             # in this case set recon file to None - we do not need it
             recon_file = None
         else:
+            # file is not already telluric corrected
+            self.is_telluric_corrected = False
             # ----------------------------------------------------------------------
             # if current fiber doesn't match polar fiber get a copy of the infile
             # for this fiber
@@ -235,7 +241,6 @@ class PolarObj:
     def _get_ccf(self, **kwargs):
         # set function name
         func_name = display_func(self.params, '_get_ccf', __NAME__, 'PolarObj')
-
         # get parameters from params
         ccf_key = pcheck(self.params, 'POLAR_CCF_FILE', 'ccf_key', kwargs,
                          func_name)
@@ -282,6 +287,9 @@ class PolarObj:
         # construct the filename from file instance
         ccf_file.construct_filename(self.params, infile=p_infile,
                                     suffix=suffix, fiber=pfiber)
+        # deal with no ccf file
+        if not os.path.exists(ccf_file):
+            return
         # ----------------------------------------------------------------------
         # create ccf props
         self.ccfprops = ParamDict()
@@ -391,19 +399,96 @@ class PolarObjOut(PolarObj):
         bkeys = ['BLAZEFILE', 'BLAZE']
         self.blazeprops.set_sources(bkeys, func_name)
 
-    def _get_ccf(self):
+    def _get_tell(self, **kwargs):
         # set function name
         func_name = display_func(self.params, '_get_ccf', __NAME__, 'PolarObj')
+        # get parameters from params
+        tcorrect = pcheck(self.params, 'POLAR_TELLU_CORRECT', 'tcorrect',
+                          kwargs, func_name)
 
-        # TODO: fill in
-        pass
+        if self.filename.endswith('e.fits'):
+            tcorr_filename = self.filename.replace('e.fits', 't.fits')
+            recon_filename = self.filename.replace('e.fits', 't.fits')
+        elif self.filename.endswith('t.fits'):
+            # set the telluric file to the input filename
+            tcorr_filename = self.filename
+            # in this case set recon file to None - we do not need it
+            recon_filename = None
+            # File is already telluric corrected
+            self.is_telluric_corrected = True
+        else:
+            emsg = 'Input file {0} incorrect, cannot get telluric data'
+            eargs = [self.filename]
+            WLOG(self.params, 'error', emsg.format(*eargs))
+            return
 
-    def _get_tell(self):
+        # ----------------------------------------------------------------------
+        # create tellu props
+        self.telluprops = ParamDict()
+        # TODO: Need to get file instance of t.fits (not currently supported)
+        self.telluprops['TCORR_INST'] = None
+        self.telluprops['TCORR_FILE'] = tcorr_filename
+        # TODO: Need to get file instance of t.fits (not currently supported)
+        self.telluprops['RECON_INST'] = None
+        # add recon file
+        if recon_filename is not None:
+            self.telluprops['RECON_FILE'] = recon_filename
+        else:
+            self.telluprops['RECON_FILE'] = None
+        # add sources
+        keys = ['TCORR_INST', 'TCORR_FILE', 'RECON_INST', 'RECON_FILE']
+        self.telluprops.set_sources(keys, func_name)
+        # ----------------------------------------------------------------------
+        # load recon only if telluric correction required
+        if tcorrect and recon_filename is not None:
+            thdu = fits.open(tcorr_filename)
+            self.telluprops['RECON_DATA'] = np.array(thdu[4].data)
+            thdu.close()
+        else:
+            self.telluprops['RECON_DATA'] = None
+        # add recon data source
+        self.telluprops.set_source('RECON_DATA', func_name)
+
+    def _get_ccf(self, **kwargs):
         # set function name
         func_name = display_func(self.params, '_get_ccf', __NAME__, 'PolarObj')
-
-        # TODO: fill in
-        pass
+        # get parameters from params
+        ccf_correct = pcheck(self.params, 'POLAR_SOURCERV_CORRECT',
+                             'ccf_correct', kwargs, func_name)
+        # ----------------------------------------------------------------------
+        # get ccf filename
+        if self.filename.endswith('e.fits'):
+            ccf_filename = self.filename.replace('e.fits', 'v.fits')
+        elif self.filename.endswith('t.fits'):
+            ccf_filename = self.filename.replace('t.fits', 'v.fits')
+        else:
+            emsg = 'Input file {0} incorrect, cannot get CCF'
+            eargs = [self.filename]
+            WLOG(self.params, 'error', emsg.format(*eargs))
+            return
+        # ----------------------------------------------------------------------
+        # deal with no ccf file
+        if not os.path.exists(ccf_filename):
+            return
+        # ----------------------------------------------------------------------
+        # create ccf props
+        self.ccfprops = ParamDict()
+        # TODO: Need to get file instance of v.fits (not currently supported)
+        self.ccfprops['CCF_INST'] = None
+        self.ccfprops['CCF_FILE'] = ccf_filename
+        # set sources
+        keys = ['CCF_INST', 'CCF_FILE']
+        self.ccfprops.set_sources(keys, func_name)
+        # ----------------------------------------------------------------------
+        # load source rv
+        if ccf_correct:
+            ccf_header = fits.getheader(ccf_filename)
+            ccf_key = self.params['KW_CCF_RV_CORR'][0]
+            self.ccfprops['SOURCE_RV'] = ccf_header[ccf_key]
+        else:
+            self.ccfprops['SOURCE_RV'] = 0.0
+        # set source
+        self.ccfprops.set_source('SOURCE_RV', func_name)
 
     def _get_wave(self):
         """
@@ -445,8 +530,6 @@ class PolarObjOut(PolarObj):
         # ------------------------------------------------------------------
         # push wprops into self
         self.waveprops = wprops
-
-
 
 
 # =============================================================================
