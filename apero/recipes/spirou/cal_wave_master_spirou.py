@@ -263,9 +263,6 @@ def __main__(recipe, params):
                       cavity_poly=fpprops['FP_FIT_LL_D'])
         fplines = wave.get_master_lines(params, recipe, **fpargs)
 
-        # TODO: remove break point
-        constants.break_point(params)
-
         # ==================================================================
         # RUN THE NIGHTLY WAVE SOLUTION ON MASTER FIBER
         # ==================================================================
@@ -278,7 +275,6 @@ def __main__(recipe, params):
         # get the hc and fp lines
         hclines, fplines = mwprops['HCLINES'], mwprops['FPLINES']
 
-
         # ==================================================================
         # WAVE SOLUTIONS (OTHER FIBERS)
         # ==================================================================
@@ -288,7 +284,6 @@ def __main__(recipe, params):
         # ==================================================================
         # FP CCF COMPUTATION - need all fibers done one-by-one
         # ==================================================================
-
         # must update the smart mask now cavity poynomial has been update
         #   (if it has been update else this just recomputes the mask)
         wave.update_smart_fp_mask(params)
@@ -304,6 +299,10 @@ def __main__(recipe, params):
             # compute the ccf
             ccfargs = [fp_e2ds_file, fp_e2ds_file.data, blaze,
                        wprops['WAVEMAP'], fiber]
+
+            # TODO: remove break point
+            constants.break_point(params)
+
             rvprops = velocity.compute_ccf_fp(params, recipe, *ccfargs)
             # update ccf properties
             wprops['WFP_DRIFT'] = rvprops['MEAN_RV']
@@ -314,10 +313,25 @@ def __main__(recipe, params):
             wprops['WFP_TARG_RV'] = rvprops['TARGET_RV']
             wprops['WFP_WIDTH'] = rvprops['CCF_WIDTH']
             wprops['WFP_STEP'] = rvprops['CCF_STEP']
+            # add the rv stats
+            rvprops['RV_WAVEFILE'] = wprops['WAVEFILE']
+            rvprops['RV_WAVETIME'] = wprops['WAVETIME']
+            rvprops['RV_WAVESRCE'] = wprops['WAVESOURCE']
+            rvprops['RV_TIMEDIFF'] = 'None'
+            rvprops['RV_WAVE_FP'] = rvprops['MEAN_RV']
+            rvprops['RV_SIMU_FP'] = 'None'
+            rvprops['RV_DRIFT'] = 'None'
+            rvprops['RV_OBJ'] = 'None'
+            rvprops['RV_CORR'] = 'None'
+
             # set sources
-            keys = ['WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
+            rkeys = ['RV_WAVEFILE', 'RV_WAVETIME', 'RV_WAVESRCE', 'RV_TIMEDIFF',
+                     'RV_WAVE_FP', 'RV_SIMU_FP', 'RV_DRIFT', 'RV_OBJ',
+                     'RV_CORR']
+            wkeys = ['WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
                     'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP']
-            wprops.set_sources(keys, mainname)
+            wprops.set_sources(wkeys, mainname)
+            rvprops.set_sources(rkeys, mainname)
             # add to rv storage
             rvs_all[fiber] = rvprops
             # update correct wprops
@@ -385,7 +399,7 @@ def __main__(recipe, params):
             # ------------------------------------------------------------------
             # need to use the updated header in newfpe2ds
             velocity.write_ccf(params, recipe, newfpe2ds, rvs_all[fiber],
-                               fpfiles, combine, qc_params, fiber)
+                               rawfpfiles, combine, qc_params, fiber)
 
             # ----------------------------------------------------------
             # Write master line references to file
