@@ -206,6 +206,10 @@ def __main__(recipe, params):
             # calculate the night wavelength solution
             wargs = [hc_e2ds_file, fp_e2ds_file, mhclines, mfplines,
                      wprops['WAVEMAP'], wprops['WAVEFILE'], fiber, indcavity]
+
+            # TODO: remove break point
+            constants.break_point(params)
+
             nprops = wave.night_wavesolution(params, recipe, *wargs)
             # update in dcavity
             if indcavity is None:
