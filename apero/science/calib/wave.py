@@ -152,7 +152,9 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     pconst = constants.pload(params['INSTRUMENT'])
 
     # deal with which fiber to use
-    if master:
+    if kwargs.get('forcefiber', False):
+        usefiber = str(fiber)
+    elif master:
         usefiber = pconst.FIBER_WAVE_TYPES(fiber)
     else:
         usefiber = str(fiber)
@@ -5480,12 +5482,25 @@ def process_fibers(params, recipe, mprops, mfpl, mhcl, fp_outputs, hc_outputs):
     solutions = dict()
     # loop around fibers
     for fiber in fiber_types:
+        # deal with number of iterations
+        if fiber == master_fiber:
+            niterations = 1
+        else:
+            niterations = 2
         # Need to iterations so fibers are using their own best guess solution
-        for iteration in range(2):
+        for iteration in range(niterations):
+            # print progress
+            # TODO: add to language db
+            emsg = 'Night iteration {0} of {1}'
+            eargs = [iteration + 1, niterations]
+            WLOG(params, 'info', emsg.format(*eargs))
+            # deal with differences between iterations
             if iteration == 1:
-                wprops = solutions[fiber]
+                wavemap = solutions[fiber]['WAVEMAP']
+                wavefile = solutions[fiber]['WAVEFILE']
             else:
-                wprops = mprops
+                wavemap = mprops['WAVEMAP']
+                wavefile = mprops['WAVEFILE']
             # get the e2ds_files for this fiber
             hc_e2ds_file = hc_outputs[fiber]
             fp_e2ds_file = fp_outputs[fiber]
@@ -5493,9 +5508,9 @@ def process_fibers(params, recipe, mprops, mfpl, mhcl, fp_outputs, hc_outputs):
             # RUN THE NIGHTLY WAVE SOLUTION ON FIBER
             # ==================================================================
             # Note we do this to force consistency between night wave solutions
-            #   the wave solution is basically regenerated based on the hc and fp
-            #   lines (and dcavity is recomputed using both HC and FP
-            wargs = [hc_e2ds_file, fp_e2ds_file, mhcl, mfpl, wprops,
+            #   the wave solution is basically regenerated based on the hc
+            #   and fp lines (and dcavity is recomputed using both HC and FP)
+            wargs = [hc_e2ds_file, fp_e2ds_file, mhcl, mfpl, wavemap, wavefile,
                      master_fiber, dcavity]
             nprops = night_wavesolution(params, recipe, *wargs)
             # if this is the master fiber - update hclines, fplines and dcavity
@@ -5517,11 +5532,6 @@ def process_fibers(params, recipe, mprops, mfpl, mhcl, fp_outputs, hc_outputs):
                 order=plot_order, masterfiber=master_fiber)
     recipe.plot('SUM_WAVE_FIBER_COMP', solutions=solutions, master=mprops,
                 order=plot_order, masterfiber=master_fiber)
-    # ----------------------------------------------------------------------
-    # add master to solutions
-    # ----------------------------------------------------------------------
-    # add rwprops to solutions
-    solutions[master_fiber] = ParamDict(mprops)
     # ----------------------------------------------------------------------
     # return all the solutions for all fibers
     return solutions
@@ -5741,8 +5751,8 @@ def update_smart_fp_mask(params, **kwargs):
 # =============================================================================
 # Define night functions
 # =============================================================================
-def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
-                       fiber, indcavity=None, **kwargs):
+def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, mwave,
+                       wavefile, fiber, indcavity=None, **kwargs):
     # set function name
     func_name = display_func(params, 'night_wavesolution', __NAME__)
     # ----------------------------------------------------------------------
@@ -5773,8 +5783,6 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
         # no need to iterate on d_cavity
         niterations2 = 1
     # ----------------------------------------------------------------------
-    # get the master wavelength solution
-    mwave = wprops['WAVEMAP']
     # get image shape
     nbo, nbpix = mwave.shape
     # ----------------------------------------------------------------------
@@ -5954,10 +5962,10 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     # add data
     nprops['COEFFS'] = night_coeffs
     nprops['WAVEMAP'] = night_wave
-    nprops['WAVEFILE'] = wprops['WAVEFILE']
+    nprops['WAVEFILE'] = wavefile
     nprops['WAVETIME'] = hce2ds.get_key('KW_MID_OBS_TIME', dtype=float)
     nprops['WAVESOURCE'] = recipe.name
-    nprops['WAVEINIT'] = wprops['WAVEFILE']
+    nprops['WAVEINIT'] = wavefile
     nprops['NBO'] = night_coeffs.shape[0]
     nprops['DEG'] = night_coeffs.shape[1] - 1
     nprops['NBPIX'] = night_wave.shape[1]
@@ -6183,7 +6191,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     input_filename = extract_file.get_key('INF1000')
     input_file = extract_file.intype
     # ----------------------------------------------------------------------
-    # make a new copy of infile
+    # make a new copy of infileexclude_group
     infile = input_file.newcopy(recipe=extrecipe)
     infile.set_filename(input_filename)
     # ----------------------------------------------------------------------
