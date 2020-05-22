@@ -5514,9 +5514,35 @@ def process_fibers(params, recipe, mprops, mfpl, mhcl, fp_outputs, hc_outputs):
                      master_fiber, dcavity]
 
             # TODO: remove break point
+            print('HC E2DS MED', np.nanmedian(hc_e2ds_file.data))
+            print('FP E2DS MED', np.nanmedian(fp_e2ds_file.data))
+            print('HCLINES WAVE_REF[0]', mhcl['WAVE_REF'][0])
+            print('HCLINES PIXEL_REF[0]', mhcl['PIXEL_REF'][0])
+            print('HCLINES DIFF[0]', mhcl['DIFF'][0])
+            print('HCLINES WAVE_REF[-1]', mhcl['WAVE_REF'][-1])
+            print('HCLINES PIXEL_REF[-1]', mhcl['PIXEL_REF'][-1])
+            print('HCLINES DIFF[-1]', mhcl['DIFF'][-1])
+            print('FPLINES WAVE_REF[0]', mfpl['WAVE_REF'][0])
+            print('FPLINES PIXEL_REF[0]', mfpl['PIXEL_REF'][0])
+            print('FPLINES DIFF[0]', mfpl['DIFF'][0])
+            print('FPLINES WAVE_REF[-1]', mfpl['WAVE_REF'][-1])
+            print('FPLINES PIXEL_REF[-1]', mfpl['PIXEL_REF'][-1])
+            print('FPLINES DIFF[-1]', mfpl['DIFF'][-1])
+            print('IN WAVEMAP MED', np.nanmedian(wavemap))
+            print('WAVEFILE', wavefile)
+            print('IN DCAVITY', dcavity)
+            print('IN FIBER', fiber)
+            print('ITERATION', iteration)
             constants.break_point(params)
 
             nprops = night_wavesolution(params, recipe, *wargs)
+
+            # TODO: remove break point
+            print('OUT WAVEMAP', np.nanmedian(nprops['WAVEMAP']))
+            print('OUT COEFFS', np.nanmedian(nprops['COEFFS']))
+            print('OUT DCAVITY', np.nanmedian(nprops['DCAVITY']))
+            constants.break_point(params)
+
             # if this is the master fiber - update hclines, fplines and dcavity
             if fiber == master_fiber:
                 # get the hc and fp lines
