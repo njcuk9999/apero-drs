@@ -2167,7 +2167,7 @@ class DrsFitsFile(DrsInputFile):
                    group=None, forbid_keys=True, allkeys=False):
         # generate instances from params
         Keyword = constants.constant_functions.Keyword
-        keyworddict = params.get_instanceof(Keyword)
+        keyworddict = params.get_instanceof(Keyword, nameattr='key')
         # get pconstant
         pconstant = self.recipe.drs_pconstant
         # filter function
