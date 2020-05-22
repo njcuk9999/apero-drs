@@ -1438,7 +1438,7 @@ def find_recipe(name='None', instrument='None', mod=None):
     """
     func_name = __NAME__ + '.find_recipe()'
     # get text entry
-    textentry = constants.constant_functions._DisplayText()
+    textentry = constants.constant_functions.DisplayText()
     # deal with no instrument
     if instrument == 'None' or instrument is None:
         ipath = CORE_PATH
