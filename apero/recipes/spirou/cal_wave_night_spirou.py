@@ -195,7 +195,8 @@ def __main__(recipe, params):
             # load wavelength solution (start point) for this fiber
             #    this should only be a master wavelength solution
             wprops = wave.get_wavesolution(params, recipe, infile=hc_e2ds_file,
-                                           fiber=fiber, master=True)
+                                           fiber=fiber, master=True,
+                                           forcefiber=True)
             # --------------------------------------------------------------
             # define the header as being from the hc e2ds file
             hcheader = hc_e2ds_file.header
@@ -203,8 +204,8 @@ def __main__(recipe, params):
             blaze_file, blaze = flat_blaze.get_blaze(params, hcheader, fiber)
             # --------------------------------------------------------------
             # calculate the night wavelength solution
-            wargs = [hc_e2ds_file, fp_e2ds_file, mhclines, mfplines, wprops,
-                     fiber, indcavity]
+            wargs = [hc_e2ds_file, fp_e2ds_file, mhclines, mfplines,
+                     wprops['WAVEMAP'], wprops['WAVEFILE'], fiber, indcavity]
             nprops = wave.night_wavesolution(params, recipe, *wargs)
             # update in dcavity
             if indcavity is None:

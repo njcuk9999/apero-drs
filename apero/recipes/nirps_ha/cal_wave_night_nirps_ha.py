@@ -203,8 +203,8 @@ def __main__(recipe, params):
             blaze_file, blaze = flat_blaze.get_blaze(params, hcheader, fiber)
             # --------------------------------------------------------------
             # calculate the night wavelength solution
-            wargs = [hc_e2ds_file, fp_e2ds_file, mhclines, mfplines, wprops,
-                     fiber, indcavity]
+            wargs = [hc_e2ds_file, fp_e2ds_file, mhclines, mfplines,
+                     wprops['WAVEMAP'], wprops['WAVEFILE'], fiber, indcavity]
             nprops = wave.night_wavesolution(params, recipe, *wargs)
             # update in dcavity
             if indcavity is None:
