@@ -5466,7 +5466,63 @@ def fpm_write_linelist_table(params, recipe, llprops, hcfile, fiber):
 # =============================================================================
 # Define non-master fiber functions
 # =============================================================================
-def process_other_fibers(params, recipe, mprops, mfpl, fp_outputs):
+def process_fibers(params, recipe, mprops, mfpl, mhcl,
+                         fp_outputs, hc_outputs):
+    # set function name
+    _ = display_func(params, 'process_fibers', __NAME__)
+    # get wave master file (controller fiber)
+    master_fiber = params['WAVE_MASTER_FIBER']
+    plot_order = params['WAVE_FIBER_COMP_PLOT_ORD']
+    # get the fiber types from a list parameter (or from inputs)
+    fiber_types = drs_image.get_fiber_types(params)
+    # set dcavity to None initially
+    dcavity = None
+    # storage for coeffients
+    solutions = dict()
+    # loop around fibers
+    for fiber in fiber_types:
+        # get the e2ds_files for this fiber
+        hc_e2ds_file = hc_outputs[fiber]
+        fp_e2ds_file = fp_outputs[fiber]
+        # ==================================================================
+        # RUN THE NIGHTLY WAVE SOLUTION ON FIBER
+        # ==================================================================
+        # Note we do this to force consistency between night wave solutions
+        #   the wave solution is basically regenerated based on the hc and fp
+        #   lines (and dcavity is recomputed using both HC and FP
+        wargs = [hc_e2ds_file, fp_e2ds_file, mhcl, mfpl, mprops,
+                 master_fiber, dcavity]
+        wprops = night_wavesolution(params, recipe, *wargs)
+        # if this is the master fiber - update hclines, fplines and dcavity
+        if fiber == master_fiber:
+            # get the hc and fp lines
+            mhcl, mfpl = wprops['HCLINES'], wprops['FPLINES']
+            # update dcavity
+            dcavity = wprops['DCAVITY']
+            # update mprops
+            mprops = wprops
+        # storage
+        solutions[fiber] = wprops
+    # ----------------------------------------------------------------------
+    # plot comparison between master fiber and fibers
+    # ----------------------------------------------------------------------
+    recipe.plot('WAVE_FIBER_COMPARISON', solutions=solutions, master=mprops,
+                order=None, masterfiber=master_fiber)
+    recipe.plot('WAVE_FIBER_COMP', solutions=solutions, master=mprops,
+                order=plot_order, masterfiber=master_fiber)
+    recipe.plot('SUM_WAVE_FIBER_COMP', solutions=solutions, master=mprops,
+                order=plot_order, masterfiber=master_fiber)
+    # ----------------------------------------------------------------------
+    # add master to solutions
+    # ----------------------------------------------------------------------
+    # add rwprops to solutions
+    solutions[master_fiber] = ParamDict(mprops)
+    # ----------------------------------------------------------------------
+    # return all the solutions for all fibers
+    return solutions
+
+
+def process_other_fibers_old(params, recipe, mprops, mfpl, fp_outputs):
     # set function name
     func_name = display_func(params, 'process_other_fibers', __NAME__)
     # get the fiber types from a list parameter (or from inputs)
@@ -5581,7 +5637,6 @@ def process_other_fibers(params, recipe, mprops, mfpl, fp_outputs):
     # ----------------------------------------------------------------------
     # return all the solutions for all fibers
     return solutions
-
 
 
 def update_smart_fp_mask(params, **kwargs):
@@ -5895,7 +5950,7 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     nprops['COEFFS'] = night_coeffs
     nprops['WAVEMAP'] = night_wave
     nprops['WAVEFILE'] = wprops['WAVEFILE']
-    nprops['WAVETIME'] = wprops['WAVETIME']
+    nprops['WAVETIME'] = hce2ds.get_key('KW_MID_OBS_TIME', dtype=float)
     nprops['WAVESOURCE'] = recipe.name
     nprops['WAVEINIT'] = wprops['WAVEFILE']
     nprops['NBO'] = night_coeffs.shape[0]
