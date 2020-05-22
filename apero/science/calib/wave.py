@@ -5481,28 +5481,34 @@ def process_fibers(params, recipe, mprops, mfpl, mhcl,
     solutions = dict()
     # loop around fibers
     for fiber in fiber_types:
-        # get the e2ds_files for this fiber
-        hc_e2ds_file = hc_outputs[fiber]
-        fp_e2ds_file = fp_outputs[fiber]
-        # ==================================================================
-        # RUN THE NIGHTLY WAVE SOLUTION ON FIBER
-        # ==================================================================
-        # Note we do this to force consistency between night wave solutions
-        #   the wave solution is basically regenerated based on the hc and fp
-        #   lines (and dcavity is recomputed using both HC and FP
-        wargs = [hc_e2ds_file, fp_e2ds_file, mhcl, mfpl, mprops,
-                 master_fiber, dcavity]
-        wprops = night_wavesolution(params, recipe, *wargs)
-        # if this is the master fiber - update hclines, fplines and dcavity
-        if fiber == master_fiber:
-            # get the hc and fp lines
-            mhcl, mfpl = wprops['HCLINES'], wprops['FPLINES']
-            # update dcavity
-            dcavity = wprops['DCAVITY']
-            # update mprops
-            mprops = wprops
-        # storage
-        solutions[fiber] = wprops
+        # Need to iterations so fibers are using their own best guess solution
+        for iteration in range(2):
+            if iteration == 1:
+                wprops = solutions[fiber]
+            else:
+                wprops = mprops
+            # get the e2ds_files for this fiber
+            hc_e2ds_file = hc_outputs[fiber]
+            fp_e2ds_file = fp_outputs[fiber]
+            # ==================================================================
+            # RUN THE NIGHTLY WAVE SOLUTION ON FIBER
+            # ==================================================================
+            # Note we do this to force consistency between night wave solutions
+            #   the wave solution is basically regenerated based on the hc and fp
+            #   lines (and dcavity is recomputed using both HC and FP
+            wargs = [hc_e2ds_file, fp_e2ds_file, mhcl, mfpl, wprops,
+                     master_fiber, dcavity]
+            nprops = night_wavesolution(params, recipe, *wargs)
+            # if this is the master fiber - update hclines, fplines and dcavity
+            if fiber == master_fiber:
+                # get the hc and fp lines
+                mhcl, mfpl = nprops['HCLINES'], nprops['FPLINES']
+                # update dcavity
+                dcavity = nprops['DCAVITY']
+                # update mprops
+                mprops = nprops
+            # storage
+            solutions[fiber] = nprops
     # ----------------------------------------------------------------------
     # plot comparison between master fiber and fibers
     # ----------------------------------------------------------------------
@@ -5522,7 +5528,7 @@ def process_fibers(params, recipe, mprops, mfpl, mhcl,
     return solutions
 
 
-def process_other_fibers_old(params, recipe, mprops, mfpl, fp_outputs):
+def process_other_fibers(params, recipe, mprops, mfpl, fp_outputs):
     # set function name
     func_name = display_func(params, 'process_other_fibers', __NAME__)
     # get the fiber types from a list parameter (or from inputs)
