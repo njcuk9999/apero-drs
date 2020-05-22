@@ -1880,6 +1880,9 @@ def _save_config_params(params):
 def _check_mod_source(source: str) -> str:
     # set function name (cannot break here --> no access to inputs)
     _ = display_func(None, '_check_mod_source', __NAME__)
+    # deal with source is None
+    if source is None:
+        return source
     # if source doesn't exist also skip
     if not os.path.exists(source):
         return source
