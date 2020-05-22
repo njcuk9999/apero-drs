@@ -1939,7 +1939,7 @@ def _capitalise_key(key: str) -> str:
     return key
 
 
-def _string_repr_list(key: str, values: Union[list, np.ndarr], source: str,
+def _string_repr_list(key: str, values: Union[list, np.ndarray], source: str,
                       fmt: str) -> List[str]:
     """
     Represent a list (or array) as a string list but only the first
