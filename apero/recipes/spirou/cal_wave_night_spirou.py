@@ -202,9 +202,6 @@ def __main__(recipe, params):
             # load the blaze file for this fiber
             blaze_file, blaze = flat_blaze.get_blaze(params, hcheader, fiber)
             # --------------------------------------------------------------
-            # TODO: remove break point
-            constants.break_point(params)
-
             # calculate the night wavelength solution
             wargs = [hc_e2ds_file, fp_e2ds_file, mhclines, mfplines, wprops,
                      fiber, indcavity]
@@ -225,6 +222,10 @@ def __main__(recipe, params):
             # compute the ccf
             ccfargs = [fp_e2ds_file, fp_e2ds_file.data, blaze,
                        nprops['WAVEMAP'], fiber]
+
+            # TODO: remove break point
+            constants.break_point(params)
+
             rvprops = velocity.compute_ccf_fp(params, recipe, *ccfargs)
             # merge rvprops into llprops (shallow copy)
             nprops.merge(rvprops)
@@ -237,11 +238,25 @@ def __main__(recipe, params):
             nprops['WFP_TARG_RV'] = rvprops['TARGET_RV']
             nprops['WFP_WIDTH'] = rvprops['CCF_WIDTH']
             nprops['WFP_STEP'] = rvprops['CCF_STEP']
+            # add the rv stats
+            rvprops['RV_WAVEFILE'] = wprops['WAVEFILE']
+            rvprops['RV_WAVETIME'] = wprops['WAVETIME']
+            rvprops['RV_WAVESRCE'] = wprops['WAVESOURCE']
+            rvprops['RV_TIMEDIFF'] = 'None'
+            rvprops['RV_WAVE_FP'] = rvprops['MEAN_RV']
+            rvprops['RV_SIMU_FP'] = 'None'
+            rvprops['RV_DRIFT'] = 'None'
+            rvprops['RV_OBJ'] = 'None'
+            rvprops['RV_CORR'] = 'None'
             # set sources
-            keys = ['WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
+            rkeys = ['RV_WAVEFILE', 'RV_WAVETIME', 'RV_WAVESRCE', 'RV_TIMEDIFF',
+                     'RV_WAVE_FP', 'RV_SIMU_FP', 'RV_DRIFT', 'RV_OBJ',
+                     'RV_CORR']
+            wkeys = ['WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
                     'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP',
                     'WFP_FILE']
-            nprops.set_sources(keys, 'velocity.compute_ccf_fp()')
+            nprops.set_sources(wkeys, 'velocity.compute_ccf_fp()')
+            rvprops.set_sources(rkeys, mainname)
             # ----------------------------------------------------------
             # wave solution quality control
             # ----------------------------------------------------------
