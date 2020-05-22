@@ -238,6 +238,7 @@ def __main__(recipe, params):
             nprops['WFP_TARG_RV'] = rvprops['TARGET_RV']
             nprops['WFP_WIDTH'] = rvprops['CCF_WIDTH']
             nprops['WFP_STEP'] = rvprops['CCF_STEP']
+            nprops['WFP_FILE'] = wprops['WAVEFILE']
             # add the rv stats
             rvprops['RV_WAVEFILE'] = wprops['WAVEFILE']
             rvprops['RV_WAVETIME'] = wprops['WAVETIME']

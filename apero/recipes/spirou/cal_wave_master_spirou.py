@@ -313,6 +313,7 @@ def __main__(recipe, params):
             wprops['WFP_TARG_RV'] = rvprops['TARGET_RV']
             wprops['WFP_WIDTH'] = rvprops['CCF_WIDTH']
             wprops['WFP_STEP'] = rvprops['CCF_STEP']
+            wprops['WFP_FILE'] = wprops['WAVEFILE']
             # add the rv stats
             rvprops['RV_WAVEFILE'] = wprops['WAVEFILE']
             rvprops['RV_WAVETIME'] = wprops['WAVETIME']
@@ -327,9 +328,9 @@ def __main__(recipe, params):
             # set sources
             rkeys = ['RV_WAVEFILE', 'RV_WAVETIME', 'RV_WAVESRCE', 'RV_TIMEDIFF',
                      'RV_WAVE_FP', 'RV_SIMU_FP', 'RV_DRIFT', 'RV_OBJ',
-                     'RV_CORR']
+                     'RV_CORR', 'WFP_FILE']
             wkeys = ['WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
-                    'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP']
+                     'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP']
             wprops.set_sources(wkeys, mainname)
             rvprops.set_sources(rkeys, mainname)
             # add to rv storage
