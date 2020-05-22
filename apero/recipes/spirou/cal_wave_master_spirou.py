@@ -264,22 +264,16 @@ def __main__(recipe, params):
         fplines = wave.get_master_lines(params, recipe, **fpargs)
 
         # ==================================================================
-        # RUN THE NIGHTLY WAVE SOLUTION ON MASTER FIBER
+        # Process wave solutions (using nightly wave solution code)
+        #   - this keeps master fiber solution consistence with wave night
+        #   - and uses same methodology to calculate other fibers
         # ==================================================================
-        # Note we do this to force consistency between night wave solutions
-        #   the wave solution is basically regenerated based on the hc and fp
-        #   lines (and dcavity is recomputed using both HC and FP
-        wargs = [hc_e2ds_file, fp_e2ds_file, hclines, fplines, mwprops,
-                 master_fiber]
-        mwprops = wave.night_wavesolution(params, recipe, *wargs)
+        wprops_others = wave.process_fibers(params, recipe, mwprops,
+                                            fplines, hclines, fp_outputs,
+                                            hc_outputs)
         # get the hc and fp lines
+        mwprops = wprops_others[master_fiber]
         hclines, fplines = mwprops['HCLINES'], mwprops['FPLINES']
-
-        # ==================================================================
-        # WAVE SOLUTIONS (OTHER FIBERS)
-        # ==================================================================
-        wprops_others = wave.process_other_fibers(params, recipe, mwprops,
-                                                  fplines, fp_outputs)
 
         # ==================================================================
         # FP CCF COMPUTATION - need all fibers done one-by-one
@@ -299,10 +293,6 @@ def __main__(recipe, params):
             # compute the ccf
             ccfargs = [fp_e2ds_file, fp_e2ds_file.data, blaze,
                        wprops['WAVEMAP'], fiber]
-
-            # TODO: remove break point
-            constants.break_point(params)
-
             rvprops = velocity.compute_ccf_fp(params, recipe, *ccfargs)
             # update ccf properties
             wprops['WFP_DRIFT'] = rvprops['MEAN_RV']
@@ -337,6 +327,9 @@ def __main__(recipe, params):
             rvs_all[fiber] = rvprops
             # update correct wprops
             wprops_others[fiber] = wprops
+
+        # TODO: remove break point
+        constants.break_point(params)
 
         # ==================================================================
         # QUALITY CONTROL (AFTER FP MASTER FIBER + OTHER FIBERS)
