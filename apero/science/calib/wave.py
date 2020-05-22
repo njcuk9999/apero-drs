@@ -5897,13 +5897,16 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     nprops['WAVEFILE'] = wprops['WAVEFILE']
     nprops['WAVETIME'] = wprops['WAVETIME']
     nprops['WAVESOURCE'] = recipe.name
+    nprops['WAVEINIT'] = wprops['WAVEFILE']
     nprops['NBO'] = night_coeffs.shape[0]
     nprops['DEG'] = night_coeffs.shape[1] - 1
+    nprops['NBPIX'] = night_wave.shape[1]
     nprops['HCLINES'] = rhcl
     nprops['FPLINES'] = rfpl
+
     # set sources
     keys = ['COEFFS', 'WAVEMAP', 'WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG',
-            'HCLINES', 'FPLINES']
+            'HCLINES', 'FPLINES', 'WAVETIME', 'WAVEINIT', 'NBPIX']
     nprops.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # add constants
