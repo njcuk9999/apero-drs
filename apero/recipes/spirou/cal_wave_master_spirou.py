@@ -289,7 +289,7 @@ def __main__(recipe, params):
             # choose which wprops to use
             wprops = ParamDict(wprops_others[fiber])
             # get fp e2ds file
-            fpe2dsfile = fp_outputs[fiber]
+            fp_e2ds_file = fp_outputs[fiber]
             # compute the ccf
             ccfargs = [fp_e2ds_file, fp_e2ds_file.data, blaze,
                        wprops['WAVEMAP'], fiber]
@@ -300,8 +300,7 @@ def __main__(recipe, params):
             print('BLAZE MED', np.nanmedian(blaze))
             print('IN WAVEMAP MED', np.nanmedian(wprops['WAVEMAP']))
             print('IN FIBER', fiber)
-            constants.break_point(params)
-
+            # constants.break_point(params)
 
             rvprops = velocity.compute_ccf_fp(params, recipe, *ccfargs)
 
@@ -311,7 +310,7 @@ def __main__(recipe, params):
             print('MEAN_CONTRAST', rvprops['MEAN_CONTRAST'])
             print('TOT_LINE', rvprops['TOT_LINE'])
             print('IN FIBER', fiber)
-            constants.break_point(params)
+            # constants.break_point(params)
 
 
             # update ccf properties
@@ -349,6 +348,8 @@ def __main__(recipe, params):
             # update correct wprops
             wprops_others[fiber] = wprops
 
+        # TODO: remove break point
+        constants.break_point(params)
 
         # ==================================================================
         # QUALITY CONTROL (AFTER FP MASTER FIBER + OTHER FIBERS)
