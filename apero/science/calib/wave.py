@@ -5466,8 +5466,7 @@ def fpm_write_linelist_table(params, recipe, llprops, hcfile, fiber):
 # =============================================================================
 # Define non-master fiber functions
 # =============================================================================
-def process_fibers(params, recipe, mprops, mfpl, mhcl,
-                         fp_outputs, hc_outputs):
+def process_fibers(params, recipe, mprops, mfpl, mhcl, fp_outputs, hc_outputs):
     # set function name
     _ = display_func(params, 'process_fibers', __NAME__)
     # get wave master file (controller fiber)
