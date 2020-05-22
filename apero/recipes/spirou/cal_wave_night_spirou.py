@@ -301,7 +301,7 @@ def __main__(recipe, params):
             # write CCF from rv props
             # ----------------------------------------------------------
             # need to use the updated header in newfpe2ds
-            velocity.write_ccf(params, recipe, newfpe2ds, rvprops, fpfiles,
+            velocity.write_ccf(params, recipe, newfpe2ds, rvprops, rawfpfiles,
                                combine, qc_params, fiber)
 
             # ----------------------------------------------------------
