@@ -2,6 +2,231 @@ Changelog
 =========
 
 
+0.6.093 (2020-05-22)
+--------------------
+- Apero.science.calib.wave.py - add force fiber to get wavesolution - do
+  not use wprops in night_wavesolution (use only wavemap and wavefile)
+  [njcuk9999]
+- Apero.recipes.*.cal_wave_night_*.py - night_wavesolution now does not
+  take wprops as input - only take wavemap and wavefile, and force fiber
+  to be fiber=fiber (not use fiber) [njcuk9999]
+- Apero.science.calib.wave.py - force two iterations of each wave
+  solution, first time with AB, second time with own solution.
+  [njcuk9999]
+- Apero.science.calib.wave.py - force two iterations of each wave
+  solution, first time with AB, second time with own solution.
+  [njcuk9999]
+- Apero.recipe.spirou.cal_wave_master_spirou.py - correct rkeys/wkeys.
+  [njcuk9999]
+- Apero.science.calib.wave.py - create process_fibers function - loop
+  around fibers and run night_wavesolution (update dcavity and
+  hclines/fplines when master is run) [njcuk9999]
+- Apero.recipes.spirou.cal_wave_master_spirou.py - change way we
+  calculate A, B and C (after AB, both AB, A, B and C are calculated in
+  same way as night solution) [njcuk9999]
+- Apero.recipe.spirou.cal_wave_night_spirou.py - change fpfiles -->
+  rawfplines. [njcuk9999]
+- Apero.science.calib.wave.py - add waveinit and nbpix to nprops.
+  [njcuk9999]
+- Apero.recipes.spirou.cal_wave_master_spirou.py and
+  cal_wave_night_spirou.py - add WFP_FILE. [njcuk9999]
+- Apeor.core.constants.param_functions.py - make sure source is not
+  None. [njcuk9999]
+- Apeor.core.constants.param_functions.py - correct typo np.ndarr -->
+  np.ndarray. [njcuk9999]
+- Apero.recipes.spirou.cal_wave_master_spirou.py and
+  cal_wave_night_spirou.py - move the break point. [njcuk9999]
+- Apero.recipes.spirou.cal_ccf_spirou.py - add other key sources.
+  [njcuk9999]
+- Core.lang.core.drs_lang_db.py - add new terms. [njcuk9999]
+- Core.constants.param_functions.py - add typing to param dict.
+  [njcuk9999]
+- Apero.core.core.drs_file.py - add nameattr (get_instanceof is now more
+  generic) [njcuk9999]
+- Core.constants.constant_functions.py - change _DisplayText -->
+  DisplayText. [njcuk9999]
+
+
+0.6.092 (2020-05-20)
+--------------------
+- Apero.recipes.spirou.pol_spirou_new.py +
+  apero.science.polar.general_new.py - continue adding eders new polar
+  recipe. [njcuk9999]
+- Apero.recipes.spirou.cal_wave_night_spirou.py - add break point to
+  wave night. [njcuk9999]
+- Apero.core.instruments.*.default_constants.py - add back
+  THERMAL_CORRECT (why did it get removed?) [njcuk9999]
+
+
+0.6.091 (2020-05-20)
+--------------------
+- Apero.science.polar.general_new.py - add PolarObjOut getting of tellu
+  and ccf files. [njcuk9999]
+- Apero.recipes.spirou.pol_spirou_new.py +
+  apero.science.polar.general_new.py - continue work on loading polar
+  files (finding ccf + tellu files) [njcuk9999]
+- Apero.core.instruments.default.output_filenames.py - change wlog
+  import. [njcuk9999]
+- Apero.core.core.drs_file.py - add reconstruct_filename to get another
+  filename close to input one (i.e. change of fiber) [njcuk9999]
+- Misc.tools.wave_drift_comp.py - remove second plt.close() [njcuk9999]
+- Apero.science.calib.wave.py - move break point to test rvs.
+  [njcuk9999]
+- Apero.science.calib.wave.py - add print out about saving fp mask.
+  [njcuk9999]
+- Misc.tools.ccf_plot.py - update how we get values. [njcuk9999]
+- Update language database. [njcuk9999]
+- Apero.science.calib.wave.py - change how we construct outfile for
+  update_smart mask. [njcuk9999]
+- Misc.tools.wave_drift_compy.py - separate the frames into individual
+  figures. [njcuk9999]
+- Apero.science.calib.wave.py - correct typo in update_smart_mask u.nm
+  --> uu.nm. [njcuk9999]
+- Apero.core.instruments.spirou.recipe_definitions.py - add WAVENIGHT
+  plots to wave master. [njcuk9999]
+- Update flow diagram for cal_wave_master. [njcuk9999]
+- Apero.science.calib.wave.py - remove inverse of fit_ll_d polynomial
+  (not required any more) [njcuk9999]
+
+
+0.6.090 (2020-05-15)
+--------------------
+- Apero.science.calib.shape.py - update construct_master_fp to use large
+  image median (better memory handlings to avoid memory errors)
+  [njcuk9999]
+- Apero.science.calib.dark.py - update construct_master_dark to use
+  large image median (better memory handlings to avoid memory errors)
+  [njcuk9999]
+- Apero.science.calib.wave.py - add WFP_FILE for HC solution (set to
+  None) [njcuk9999]
+- Apero.science.calib.wave.py - correct typo read_header_keys -->
+  read_header_key. [njcuk9999]
+- Apero.science.calib.wave.py - add update_smart_fp_mask function to re-
+  generate smart-fp-mask. [njcuk9999]
+- Apero.recipes.spirou.cal_wave_master_spirou.py - after wave solution
+  calculated add a night wave solution for master fiber + add option to
+  update smart FP mask after cavity poly updated. [njcuk9999]
+- Apero.core.instruments.*.default_constants.py - add
+  WAVE_CCF_SMART_MASK constants (for re-generating smart mask)
+  [njcuk9999]
+- Misc.problems.test_crossmatch.py - add pascals most recent query/gaia
+  link. [njcuk9999]
+
+
+0.6.089 (2020-05-14)
+--------------------
+- Misc.tools.wave_drift_comp.py - update wave drift code plot to add
+  diff plot. [njcuk9999]
+- Documentation.working._static.yed - update cal_wave_master flow
+  diagrams. [njcuk9999]
+- Apero.science.extract.general.py - in write_extraction_files
+  exclude_groups=loc for e2dsfile (get them just from loc file later)
+  [njcuk9999]
+- Apero.science.calib.wave.py - read WFP_FILE from header, add WAVEINIT
+  (WAVE INIT key at this point is same as WAVEFILE) - could differ after
+  this, change value of WFP_FILE to wprops['WFPFILE'], when writing wave
+  solutions update WAVEFILE, WAVETIME, WAVESOURCE and WFP_FILE to the
+  new file itself, for copy_original_keys new to avoid copying wave keys
+  from hcfile. [njcuk9999]
+- Cal_wave_night_spirou.py - get back nprops from night write wavesol -
+  pass these to update e2ds HC and FP files, return updated hc and fp
+  e2ds files, use these to populate ccf output. [njcuk9999]
+- Apero.recipes.spirou.cal_wave_master_spirou.py - move write_ccf
+  function and use updated e2ds files to populate it. [njcuk9999]
+
+
+0.6.088 (2020-05-13)
+--------------------
+- Apero.tools.recipes.utils.get_grid_models.py - get the goettingen and
+  convert to single table. [njcuk9999]
+- Apero.science.velocity.general.py - modify get_ccf_mask and
+  ccf_calculation with EA changes. [njcuk9999]
+- Apero.science.calib.dark.py and shape.py - add large image median
+  funtionality (as untested + unused versions) [njcuk9999]
+- Apero.io.drs_image.py - add npy_filelist, npy_fileclean and
+  large_image_median (untested) [njcuk9999]
+- Apero.core.instruments.spirou.recipe_definitions.py - add
+  modifications to pol_spirou_new. [njcuk9999]
+- Core.core.drs_startup.py - add unix_char_code function (to spawn from
+  PID) [njcuk9999]
+- Misc.updates_to_drs.new_ccf_ea_2020-05-13.py - another iteration by
+  EA. [njcuk9999]
+- Apero.science.polar.general_new.py - use as staging ground for eders
+  changes (compared to 0.6+ version in general.py) [njcuk9999]
+- Apero.science.berv.py - if infile is not defined should use header
+  only to get berv keys. [njcuk9999]
+- Apeor.recipes.spirou.pol_spirou_new.py - start filling out code
+  (compared to Eders version and 0.6+ version and 0.5 version)
+  [njcuk9999]
+- Apero.core.instruments.spirou.recipe_definitions.py - add
+  pol_spirou_new (for eders updates) [njcuk9999]
+
+
+0.6.087 (2020-05-12)
+--------------------
+- Apero.recipes.nirps_ha.cal_preprocess_nrips_ha.py - add header as arg
+  to pp.nirps_correction. [njcuk9999]
+- Apero.core.instruments.*.* - update nirps_ha with changes to spirou.
+  [njcuk9999]
+- Misc.updates_to_drs.mf_ccf_mask_may2020.py - add EA code for injestion
+  into the drs. [njcuk9999]
+- Apero.science.calib.wave.py - do not use FIBER_WAVE_TYPEs for non
+  master wave solution (i.e. use AB, A, B and C  not just AB, C)
+  [njcuk9999]
+- Apero.core.instruments.*.default_constants.py - be more descriptive
+  about littrow HC and FP constants. [njcuk9999]
+- Apero.recipe.nirps_ha.py - update changes in nirps_ha recipes (from
+  spirou) [njcuk9999]
+
+
+0.6.086 (2020-05-11)
+--------------------
+- Update language database. [njcuk9999]
+- Setup.install.py - allow the user (on crash) to enter a path
+  themselves and try again (for Claires issue that I cannot reproduce)
+  [njcuk9999]
+- Apero.core.core.drs_recipe.py - check against input_dir (from recipe
+  definitions) [njcuk9999]
+- Apero.core.core.drs_argument.py - remove break point - error fixed.
+  [njcuk9999]
+- Apero.core.core.drs_argument.py - add break point to fix error.
+  [njcuk9999]
+- Apero.recipes.spirou.cal_wave_master_spirou.py and
+  cal_wave_night_spirou.py - add velocity.write_ccf to these codes (to
+  save CCF for FPs) [njcuk9999]
+- Apero.core.instruments.spirou.recipe_defintions.py - add CCF_RV to
+  cal_wave_master and cal_wave_night. [njcuk9999]
+- Documentation.working._static.yed.* - update spirou_map_all
+  graphs/pdfs. [njcuk9999]
+
+
+0.6.085 (2020-05-09)
+--------------------
+- Misc.problems.shell_vs_call.py - first commit of shell vs call test
+  code for Andres/LAM. [njcuk9999]
+- Documentation.working._static.yed.apero_cal_wave_master.* - update
+  cal_wave_master flow diagram. [njcuk9999]
+- Documentation.working._static.yed.apero_cal_wave_master.* - add
+  cal_wave_master flow diagram. [njcuk9999]
+- Apero_rv - add code, wrapper and utility functions for new ccf code
+  (thanks to EA and his requirements) [njcuk9999]
+- Apero.tools.recipe.spirou.get_ext_fplines.py - add file/dprtype/object
+  printout. [njcuk9999]
+
+
+0.6.084 (2020-05-06)
+--------------------
+- Apero-drs.setup.install.py - add detailed debug of root/cwd/pythonpath
+  and sys.path. [njcuk9999]
+- Apero-drs.setup.install.py - add another debug printout. [njcuk9999]
+- Apero.tools.module.setup and setup.install.py - add debug mode.
+  [njcuk9999]
+- Apero.tools.module.setup.drs_installation.py + setup.install.py - add
+  --clean_no_warning for those who like deleting data without prompts
+  (Issue #579) [njcuk9999]
+- Update date/version/changelog/documentation. [njcuk9999]
+
+
 0.6.083 (2020-05-05)
 --------------------
 - Recipes.spirou.cal_extract_spirou.py +
