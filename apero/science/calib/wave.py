@@ -5512,6 +5512,10 @@ def process_fibers(params, recipe, mprops, mfpl, mhcl, fp_outputs, hc_outputs):
             #   and fp lines (and dcavity is recomputed using both HC and FP)
             wargs = [hc_e2ds_file, fp_e2ds_file, mhcl, mfpl, wavemap, wavefile,
                      master_fiber, dcavity]
+
+            # TODO: remove break point
+            constants.break_point(params)
+
             nprops = night_wavesolution(params, recipe, *wargs)
             # if this is the master fiber - update hclines, fplines and dcavity
             if fiber == master_fiber:
