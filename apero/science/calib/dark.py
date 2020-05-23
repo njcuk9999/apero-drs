@@ -277,8 +277,7 @@ def construct_dark_table(params, filenames, **kwargs):
 
 def construct_master_dark(params, recipe, dark_table, **kwargs):
     func_name = __NAME__ + '.construct_master_dark'
-    # get temporary output dir
-    outdir = params['INPUTS']['DIRECTORY']
+
     # get col data from dark_table
     filenames = dark_table['FILENAME']
     dark_times = dark_table['MJDATE']
@@ -286,9 +285,8 @@ def construct_master_dark(params, recipe, dark_table, **kwargs):
     matched_id = dark_table['GROUP']
     # get the most recent position
     lastpos = np.argmax(dark_times)
-    # load up the most recent dark
-    data_ref, hdr_ref = drs_fits.readfits(params, filenames[lastpos],
-                                          gethdr=True)
+    # get temporary output dir
+    outdir = os.path.dirname(filenames[lastpos])
     # -------------------------------------------------------------------------
     # Read individual files and sum groups
     # -------------------------------------------------------------------------
