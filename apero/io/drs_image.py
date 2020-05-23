@@ -10,7 +10,7 @@ Created on 2019-03-21 at 14:28
 import numpy as np
 import warnings
 import os
-from typing import List, Union
+from typing import List, Union, Tuple
 
 from apero import core
 from apero.core import constants
@@ -86,8 +86,8 @@ def resize(params, image, x=None, y=None, xlow=0, xhigh=None,
     :param ylow: int, y pixel value (x, y) in the bottom left corner,
                  default = 0
     :param yhigh: int, y pixel value (x, y) in the top right corner,
-                 if None default is image.shape(0)
-    :param getshape: bool, if True returns shape of newimage with newimage
+                 if None default is image.shape[0]
+
 
     if getshape = True
     :return newimage: numpy array (2D), the new resized image
@@ -146,7 +146,7 @@ def flip_image(params, image, fliprows=True, flipcols=True):
     """
     Flips the image in the x and/or the y direction
 
-    :param p: ParamDict, the constants parameter dictionary
+    :param params: ParamDict, the constants parameter dictionary
     :param image: numpy array (2D), the image
     :param fliprows: bool, if True reverses row order (axis = 0)
     :param flipcols: bool, if True reverses column order (axis = 1)
@@ -176,11 +176,11 @@ def convert_to_e(params, image, **kwargs):
     """
     Converts image from ADU/s into e-
 
-    :param image: numpy array (2D), the image
-    :param p: parameter dictionary, ParamDict containing constants
+    :param params: parameter dictionary, ParamDict containing constants
             Must contain at least: (if exptime is None)
                 exptime: float, the exposure time of the image
                 gain: float, the gain of the image
+    :param image: numpy array (2D), the image
 
     :keyword gain: float, if p is None, used as the gain to multiple the
                    image by
@@ -203,11 +203,10 @@ def convert_to_adu(params, image, **kwargs):
     """
     Converts image from ADU/s into ADU
 
-    :param image:
-
-    :param p: parameter dictionary, ParamDict containing constants
+    :param params: parameter dictionary, ParamDict containing constants
         Must contain at least: (if exptime is None)
             exptime: float, the exposure time of the image
+    :param image:
 
     :keyword exptime: float, if p is None, used as the exposure time the image
                     is multiplied by
@@ -396,7 +395,7 @@ def get_fiber_types(params: ParamDict, **kwargs):
 def npy_filelist(params: ParamDict, name: str, index: int,
                  array: np.ndarray, filenames: Union[List[str], None],
                  subdir: Union[str, None] = None,
-                 outdir: Union[str, None] = None) -> List[str]:
+                 outdir: Union[str, None] = None) -> Tuple[List[str], str]:
     # deal with no filenames
     if filenames is None:
         filenames = []
@@ -425,7 +424,7 @@ def npy_filelist(params: ParamDict, name: str, index: int,
 
 def npy_fileclean(params: ParamDict, filenames: Union[List[str], None],
                   subdir: Union[str, None],
-                  outdir: Union[str, None] = None) -> List[str]:
+                  outdir: Union[str, None] = None):
     # deal with not outdir
     if outdir is None:
         outdir = ''
@@ -438,7 +437,6 @@ def npy_fileclean(params: ParamDict, filenames: Union[List[str], None],
     # delete the sub directory
     if os.path.exists(filepath):
         os.removedirs(filepath)
-
 
 
 def large_image_median(params: ParamDict,
@@ -462,11 +460,14 @@ def large_image_median(params: ParamDict,
                  constraint - 2e7 pixels ~ 1.28 Gb
     :param subdir: None or string, the sub-directory to store temporary
                    products in - should be unique
+    :param outdir: the output directory for intermediate products (if unset
+                   uses the current directory)
 
     :type params: ParamDict
     :type files: List[str]
     :type nmax: int
     :type subdir: Union[str, None]
+    :type outdir: Union[str, None]
 
     :return: numpy 2D array: the nan-median image of all files
     :rtype: np.ndarray
@@ -545,7 +546,7 @@ def large_image_median(params: ParamDict,
         # TODO: move this to language database
         wmsg = 'Combining file {0} / {1}'
         wargs = [b_it + 1, len(bins)]
-        WLOG(params, '', wmsg.format(wargs))
+        WLOG(params, '', wmsg.format(*wargs))
         # store box
         box = []
         # ------------------------------------------------------------------
