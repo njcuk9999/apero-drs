@@ -504,7 +504,7 @@ def large_image_median(params: ParamDict,
         # TODO: move this to language database
         wmsg = 'Processing file {0} / {1}'
         wargs = [f_it + 1, numfiles]
-        WLOG(params, '', wmsg.format(wargs))
+        WLOG(params, '', wmsg.format(*wargs))
         # ------------------------------------------------------------------
         # load file
         image = drs_fits.readfits(params, filename)
