@@ -2,8 +2,25 @@ Changelog
 =========
 
 
-0.6.093 (2020-05-22)
+0.6.093 (2020-05-23)
 --------------------
+- Apero.recipes.spirou.cal_wave_master_spirou.py and
+  apero.science.calib.wave.py - add rv difference bettwen fibers QC.
+  [njcuk9999]
+- Apero.core.instruments.*.default_connstants.py - add
+  WAVE_CCF_RV_THRES_QC. [njcuk9999]
+- Apero.recipes.spirou.cal_wave_night_spirou.py +
+  cal_wave_master_spirou.py + apero.science.calib.wave.py - remove break
+  points and printouts --> fixed? [njcuk9999]
+- Apero.recipes.spirou.cal_wave_night_spirou.py +
+  cal_wave_master_spirou.py + apero.science.calib.wave.py - remove break
+  points and test fix. [njcuk9999]
+- Apero.recipes.spirou.cal_wave_night_spirou.py +
+  cal_wave_master_spirou.py + apero.science.calib.wave.py - add
+  printouts to test differences (with breakpoints) [njcuk9999]
+- Apero.recipes.spirou.cal_wave_night_spirou.py +
+  apero.science.calib.wave.py - add more breakpoints. [njcuk9999]
+- Updaet date/version/changelog/documentation. [njcuk9999]
 - Apero.science.calib.wave.py - add force fiber to get wavesolution - do
   not use wprops in night_wavesolution (use only wavemap and wavefile)
   [njcuk9999]
