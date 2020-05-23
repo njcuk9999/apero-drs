@@ -4950,13 +4950,17 @@ def join_orders(llprops, start, end):
 # =============================================================================
 # Define fp aux functions
 # =============================================================================
-def fp_quality_control(params, fpprops, qc_params, **kwargs):
+def fp_quality_control(params, fpprops, qc_params, rvprops, **kwargs):
     func_name = __NAME__ + '.fp_quality_control()'
     # get parameters from params/kwargs
     rms_littrow_max = pcheck(params, 'WAVE_LITTROW_QC_RMS_MAX',
                              'rms_littrow_max', kwargs, func_name)
     dev_littrow_max = pcheck(params, 'WAVE_LITTROW_QC_DEV_MAX',
                              'dev_littrow_max', kwargs, func_name)
+    master_fiber = pcheck(params, 'WAVE_MASTER_FIBER', 'master_fiber', kwargs,
+                          func_name)
+    rv_thres = pcheck(params, 'WAVE_CCF_RV_THRES_QC', 'rv_thres', kwargs,
+                      func_name)
     # --------------------------------------------------------------
     # set passed variable and fail message list
     fail_msg = []
@@ -5031,6 +5035,31 @@ def fp_quality_control(params, fpprops, qc_params, **kwargs):
         qc_names.append('max or min littrow')
         qc_logic.append('max or min littrow > {0:.2f}'
                         ''.format(dev_littrow_max))
+    # --------------------------------------------------------------
+    # rv quality controls between fibers
+    # --------------------------------------------------------------
+    # get master RV [km/s] --> [m/s]
+    master_rv = rvprops[master_fiber]['MEAN_RV'] * 1000
+    # get the fiber types from a list parameter (or from inputs)
+    fiber_types = drs_image.get_fiber_types(params)
+    # loop around fibers
+    for fiber in fiber_types:
+        # do not compare master to master
+        if fiber == master_fiber:
+            continue
+        # get rv for this fiber [km/s] --> [m/s]
+        rvfiber = rvprops[fiber]['MEAN_RV'] * 1000
+        # deal with rv threshold
+        if np.abs(master_rv - rvfiber) > rv_thres:
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
+        # add to qc header lists
+        qc_values.append(master_rv - rvfiber)
+        qc_names.append('RV[{0} - {1}]'.format(master_fiber, fiber))
+        qargs = [master_fiber, fiber, rv_thres]
+        qc_logic.append('abs(RV[{0} - {1}]) > {2} m/s'.format(*qargs))
+
     # --------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
     #     quality control QC = 0 if we fail quality control
