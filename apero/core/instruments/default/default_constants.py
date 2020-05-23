@@ -162,6 +162,7 @@ __all__ = [
     'WAVE_CCF_SMART_MASK_WIDTH', 'WAVE_CCF_SMART_MASK_MINLAM',
     'WAVE_CCF_SMART_MASK_MAXLAM', 'WAVE_CCF_SMART_MASK_TRIAL_NMIN',
     'WAVE_CCF_SMART_MASK_TRIAL_NMAX', 'WAVE_CCF_SMART_MASK_DWAVE_THRES',
+    'WAVE_CCF_RV_THRES_QC',
     # wave master reference constants
     'WAVEREF_NSIG_MIN', 'WAVEREF_EDGE_WMAX', 'WAVEREF_HC_BOXSIZE',
     'WAVEREF_HC_FIBTYPES', 'WAVEREF_FP_FIBTYPES', 'WAVEREF_FITDEG',
@@ -1884,6 +1885,12 @@ WAVE_CCF_SMART_MASK_TRIAL_NMAX = Const('WAVE_CCF_SMART_MASK_TRIAL_NMAX',
 WAVE_CCF_SMART_MASK_DWAVE_THRES = Const('WAVE_CCF_SMART_MASK_TRIAL_NMAX',
                                        value=None, dtype=float, source=__NAME__,
                                        minimum=0, group=cgroup)
+
+# define the quality control threshold from RV of CCF FP between master
+#    fiber and other fibers, above this limit fails QC [m/s]
+WAVE_CCF_RV_THRES_QC = Const('WAVE_CCF_RV_THRES_QC',  value=None, dtype=float,
+                             source=__NAME__, minimum=0, group=cgroup)
+
 
 # =============================================================================
 # CALIBRATION: WAVE MASTER REFERENCE SETTINGS

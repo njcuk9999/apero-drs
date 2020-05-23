@@ -1477,6 +1477,10 @@ WAVE_CCF_SMART_MASK_TRIAL_NMAX.value = 27000
 WAVE_CCF_SMART_MASK_DWAVE_THRES = WAVE_CCF_SMART_MASK_DWAVE_THRES.copy(__NAME__)
 WAVE_CCF_SMART_MASK_DWAVE_THRES.value = 1.0e-9
 
+# define the quality control threshold from RV of CCF FP between master
+#    fiber and other fibers, above this limit fails QC [m/s]
+WAVE_CCF_RV_THRES_QC = WAVE_CCF_RV_THRES_QC.copy(__NAME__)
+WAVE_CCF_RV_THRES_QC.value = 0.5
 
 # =============================================================================
 # CALIBRATION: WAVE MASTER REFERENCE SETTINGS
