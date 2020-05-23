@@ -5482,77 +5482,32 @@ def process_fibers(params, recipe, mprops, mfpl, mhcl, fp_outputs, hc_outputs):
     solutions = dict()
     # loop around fibers
     for fiber in fiber_types:
-        # deal with number of iterations
+        wavemap = mprops['WAVEMAP']
+        wavefile = mprops['WAVEFILE']
+        # get the e2ds_files for this fiber
+        hc_e2ds_file = hc_outputs[fiber]
+        fp_e2ds_file = fp_outputs[fiber]
+        # ==================================================================
+        # RUN THE NIGHTLY WAVE SOLUTION ON FIBER
+        # ==================================================================
+        # Note we do this to force consistency between night wave solutions
+        #   the wave solution is basically regenerated based on the hc
+        #   and fp lines (and dcavity is recomputed using both HC and FP)
+        wargs = [hc_e2ds_file, fp_e2ds_file, mhcl, mfpl, wavemap, wavefile,
+                 master_fiber, dcavity]
+
+        nprops = night_wavesolution(params, recipe, *wargs)
+
+        # if this is the master fiber - update hclines, fplines and dcavity
         if fiber == master_fiber:
-            niterations = 1
-        else:
-            niterations = 2
-        # Need to iterations so fibers are using their own best guess solution
-        for iteration in range(niterations):
-            # print progress
-            # TODO: add to language db
-            emsg = 'Night iteration {0} of {1}'
-            eargs = [iteration + 1, niterations]
-            WLOG(params, 'info', emsg.format(*eargs))
-            # deal with differences between iterations
-            if iteration == 1:
-                wavemap = solutions[fiber]['WAVEMAP']
-                wavefile = solutions[fiber]['WAVEFILE']
-            else:
-                wavemap = mprops['WAVEMAP']
-                wavefile = mprops['WAVEFILE']
-            # get the e2ds_files for this fiber
-            hc_e2ds_file = hc_outputs[fiber]
-            fp_e2ds_file = fp_outputs[fiber]
-            # ==================================================================
-            # RUN THE NIGHTLY WAVE SOLUTION ON FIBER
-            # ==================================================================
-            # Note we do this to force consistency between night wave solutions
-            #   the wave solution is basically regenerated based on the hc
-            #   and fp lines (and dcavity is recomputed using both HC and FP)
-            wargs = [hc_e2ds_file, fp_e2ds_file, mhcl, mfpl, wavemap, wavefile,
-                     master_fiber, dcavity]
-
-            # # TODO: remove break point
-            # print('HC E2DS MED', np.nanmedian(hc_e2ds_file.data))
-            # print('FP E2DS MED', np.nanmedian(fp_e2ds_file.data))
-            # print('HCLINES WAVE_REF[0]', mhcl['WAVE_REF'][0])
-            # print('HCLINES PIXEL_REF[0]', mhcl['PIXEL_REF'][0])
-            # print('HCLINES DIFF[0]', mhcl['DIFF'][0])
-            # print('HCLINES WAVE_REF[-1]', mhcl['WAVE_REF'][-1])
-            # print('HCLINES PIXEL_REF[-1]', mhcl['PIXEL_REF'][-1])
-            # print('HCLINES DIFF[-1]', mhcl['DIFF'][-1])
-            # print('FPLINES WAVE_REF[0]', mfpl['WAVE_REF'][0])
-            # print('FPLINES PIXEL_REF[0]', mfpl['PIXEL_REF'][0])
-            # print('FPLINES DIFF[0]', mfpl['DIFF'][0])
-            # print('FPLINES WAVE_REF[-1]', mfpl['WAVE_REF'][-1])
-            # print('FPLINES PIXEL_REF[-1]', mfpl['PIXEL_REF'][-1])
-            # print('FPLINES DIFF[-1]', mfpl['DIFF'][-1])
-            # print('IN WAVEMAP MED', np.nanmedian(wavemap))
-            # print('WAVEFILE', wavefile)
-            # print('IN DCAVITY', dcavity)
-            # print('IN FIBER', fiber)
-            # print('ITERATION', iteration)
-            # constants.break_point(params)
-
-            nprops = night_wavesolution(params, recipe, *wargs)
-
-            # # TODO: remove break point
-            # print('OUT WAVEMAP', np.nanmedian(nprops['WAVEMAP']))
-            # print('OUT COEFFS', np.nanmedian(nprops['COEFFS']))
-            # print('OUT DCAVITY', np.nanmedian(nprops['DCAVITY']))
-            # constants.break_point(params)
-
-            # if this is the master fiber - update hclines, fplines and dcavity
-            if fiber == master_fiber:
-                # get the hc and fp lines
-                mhcl, mfpl = nprops['HCLINES'], nprops['FPLINES']
-                # update dcavity
-                dcavity = nprops['DCAVITY']
-                # update mprops
-                mprops = nprops
-            # storage
-            solutions[fiber] = nprops
+            # get the hc and fp lines
+            mhcl, mfpl = nprops['HCLINES'], nprops['FPLINES']
+            # update dcavity
+            dcavity = nprops['DCAVITY']
+            # update mprops
+            mprops = nprops
+        # storage
+        solutions[fiber] = nprops
     # ----------------------------------------------------------------------
     # plot comparison between master fiber and fibers
     # ----------------------------------------------------------------------

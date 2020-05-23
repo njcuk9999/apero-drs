@@ -293,25 +293,7 @@ def __main__(recipe, params):
             # compute the ccf
             ccfargs = [fp_e2ds_file, fp_e2ds_file.data, blaze,
                        wprops['WAVEMAP'], fiber]
-
-
-            # TODO: remove break point
-            print('FP E2DS MED', np.nanmedian(fp_e2ds_file.data))
-            print('BLAZE MED', np.nanmedian(blaze))
-            print('IN WAVEMAP MED', np.nanmedian(wprops['WAVEMAP']))
-            print('IN FIBER', fiber)
-            # constants.break_point(params)
-
             rvprops = velocity.compute_ccf_fp(params, recipe, *ccfargs)
-
-            # TODO: remove break point
-            print('MEAN_RV', rvprops['MEAN_RV'])
-            print('MEAN_FWHM', rvprops['MEAN_FWHM'])
-            print('MEAN_CONTRAST', rvprops['MEAN_CONTRAST'])
-            print('TOT_LINE', rvprops['TOT_LINE'])
-            print('IN FIBER', fiber)
-            # constants.break_point(params)
-
 
             # update ccf properties
             wprops['WFP_DRIFT'] = rvprops['MEAN_RV']

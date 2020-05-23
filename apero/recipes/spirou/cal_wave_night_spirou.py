@@ -206,37 +206,7 @@ def __main__(recipe, params):
             # calculate the night wavelength solution
             wargs = [hc_e2ds_file, fp_e2ds_file, mhclines, mfplines,
                      wprops['WAVEMAP'], wprops['WAVEFILE'], fiber, indcavity]
-
-            # TODO: remove break point
-            import numpy as np
-            print('HC E2DS MED', np.nanmedian(hc_e2ds_file.data))
-            print('FP E2DS MED', np.nanmedian(fp_e2ds_file.data))
-            print('HCLINES WAVE_REF[0]', mhclines['WAVE_REF'][0])
-            print('HCLINES PIXEL_REF[0]', mhclines['PIXEL_REF'][0])
-            print('HCLINES DIFF[0]', mhclines['DIFF'][0])
-            print('HCLINES WAVE_REF[-1]', mhclines['WAVE_REF'][-1])
-            print('HCLINES PIXEL_REF[-1]', mhclines['PIXEL_REF'][-1])
-            print('HCLINES DIFF[-1]', mhclines['DIFF'][-1])
-            print('FPLINES WAVE_REF[0]', mfplines['WAVE_REF'][0])
-            print('FPLINES PIXEL_REF[0]', mfplines['PIXEL_REF'][0])
-            print('FPLINES DIFF[0]', mfplines['DIFF'][0])
-            print('FPLINES WAVE_REF[-1]', mfplines['WAVE_REF'][-1])
-            print('FPLINES PIXEL_REF[-1]', mfplines['PIXEL_REF'][-1])
-            print('FPLINES DIFF[-1]', mfplines['DIFF'][-1])
-            print('IN WAVEMAP MED', np.nanmedian(wprops['WAVEMAP']))
-            print('WAVEFILE', wprops['WAVEFILE'])
-            print('IN DCAVITY', indcavity)
-            print('IN FIBER', fiber)
-            constants.break_point(params)
-
             nprops = wave.night_wavesolution(params, recipe, *wargs)
-
-            # TODO: remove break point
-            print('OUT WAVEMAP', np.nanmedian(nprops['WAVEMAP']))
-            print('OUT COEFFS', np.nanmedian(nprops['COEFFS']))
-            print('OUT DCAVITY', np.nanmedian(nprops['DCAVITY']))
-            constants.break_point(params)
-
             # update in dcavity
             if indcavity is None:
                 indcavity = nprops['DCAVITY']
@@ -253,23 +223,7 @@ def __main__(recipe, params):
             # compute the ccf
             ccfargs = [fp_e2ds_file, fp_e2ds_file.data, blaze,
                        nprops['WAVEMAP'], fiber]
-
-            # TODO: remove break point
-            print('FP E2DS MED', np.nanmedian(fp_e2ds_file.data))
-            print('BLAZE MED', np.nanmedian(blaze))
-            print('IN WAVEMAP MED', np.nanmedian(nprops['WAVEMAP']))
-            print('IN FIBER', fiber)
-            constants.break_point(params)
-
             rvprops = velocity.compute_ccf_fp(params, recipe, *ccfargs)
-
-            # TODO: remove break point
-            print('MEAN_RV', rvprops['MEAN_RV'])
-            print('MEAN_FWHM', rvprops['MEAN_FWHM'])
-            print('MEAN_CONTRAST', rvprops['MEAN_CONTRAST'])
-            print('TOT_LINE', rvprops['TOT_LINE'])
-            print('IN FIBER', fiber)
-            constants.break_point(params)
 
             # merge rvprops into llprops (shallow copy)
             nprops.merge(rvprops)
