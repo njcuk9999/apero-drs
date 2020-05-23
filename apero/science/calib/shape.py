@@ -291,7 +291,7 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
                                                  kind='tmp')
             # perform a large image median on FP files in this group
             groupfp = drs_image.large_image_median(params, fp_ids,
-                                                   outdir=outdir)
+                                                   outdir=outdir, fmt='fits')
             # -------------------------------------------------------------
             # get first file header
             # construct new infile instance
@@ -354,7 +354,7 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
     # produce the large median (write ribbons to disk to save space)
     with warnings.catch_warnings(record=True) as _:
         fp_cube = drs_image.large_image_median(params, fp_cube_files,
-                                               outdir=outdir)
+                                               outdir=outdir, fmt='npy')
     # clean up npy dir
     drs_image.npy_fileclean(params, fp_cube_files, fpsubdir, outdir)
     # ----------------------------------------------------------------------
