@@ -306,7 +306,7 @@ def construct_master_dark(params, recipe, dark_table, **kwargs):
         dark_ids = filenames[matched_id == group_num]
         # load this groups files into a cube
         groupdark = drs_image.large_image_median(params, dark_ids,
-                                                 outdir=outdir)
+                                                 outdir=outdir, fmt='fits')
         # save files for medianing later
         nargs = ['group_darkm_cube', g_it, groupdark, group_dark_files,
                  darkm_subdir, outdir]
@@ -315,7 +315,7 @@ def construct_master_dark(params, recipe, dark_table, **kwargs):
     # produce the large median (write ribbons to disk to save space)
     with warnings.catch_warnings(record=True) as _:
         master_dark = drs_image.large_image_median(params, group_dark_files,
-                                                   outdir=outdir)
+                                                   outdir=outdir, fmt='npy')
     # clean up npy dir
     drs_image.npy_fileclean(params, group_dark_files, darkm_subdir, outdir)
     # -------------------------------------------------------------------------

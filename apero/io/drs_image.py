@@ -19,6 +19,7 @@ from apero.core import math as mp
 from apero.core.core import drs_log
 from apero import lang
 from apero.io import drs_fits
+from apero.io import drs_path
 
 # =============================================================================
 # Define variables
@@ -442,7 +443,7 @@ def npy_fileclean(params: ParamDict, filenames: Union[List[str], None],
 
 
 def large_image_median(params: ParamDict,
-                       files: List[str],
+                       files: List[str], fmt='fits',
                        nmax: int = 2e7,
                        subdir: Union[str, None] = None,
                        outdir: Union[str, None] = None) -> np.ndarray:
@@ -492,7 +493,14 @@ def large_image_median(params: ParamDict,
     numfiles = len(files)
     # ----------------------------------------------------------------------
     # load first image
-    image0 = drs_fits.readfits(params, files[0])
+    if fmt == 'fits':
+        image0 = drs_fits.readfits(params, files[0])
+    elif fmt == 'npy':
+        image0 = drs_path.numpy_load(files[0])
+    else:
+        # TODO: move this to language database
+        WLOG(params, 'error', 'fmt="{0}" is incorrect'.format(fmt))
+        image0 = None
     # get the shape of the image
     mdim1, mdim2 = np.array(image0.shape).astype(int)
     del image0
@@ -510,7 +518,14 @@ def large_image_median(params: ParamDict,
         WLOG(params, '', wmsg.format(*wargs))
         # ------------------------------------------------------------------
         # load file
-        image = drs_fits.readfits(params, filename)
+        if fmt == 'fits':
+            image = drs_fits.readfits(params, filename)
+        elif fmt == 'npy':
+            image = drs_path.numpy_load(filename)
+        else:
+            # TODO: move this to language database
+            WLOG(params, 'error', 'fmt="{0}" is incorrect'.format(fmt))
+            image = None
         # get the shape of the image
         dim1, dim2 = np.array(image.shape).astype(int)
         # construct clean version of filename
