@@ -330,14 +330,11 @@ def __main__(recipe, params):
             # update correct wprops
             wprops_others[fiber] = wprops
 
-        # TODO: remove break point
-        constants.break_point(params)
-
         # ==================================================================
         # QUALITY CONTROL (AFTER FP MASTER FIBER + OTHER FIBERS)
         # ==================================================================
-        # TODO: Add CCF QC
-        qc_params = wave.fp_quality_control(params, fpprops, qc_params)
+        qc_params = wave.fp_quality_control(params, fpprops, qc_params,
+                                            rvs_all)
         # passed if all qc passed
         passed = np.all(qc_params[-1])
         # update recipe log
