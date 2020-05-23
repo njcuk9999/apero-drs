@@ -410,7 +410,7 @@ def npy_filelist(params: ParamDict, name: str, index: int,
         # create subdir
         subdir = 'LIM-{0:020d}-{1}'.format(int(unixtime), rval)
     # construct file name
-    filename = '{0}_{1}.npy'.format(name, index)
+    filename = '{0}_{1:06d}.npy'.format(name, index)
     filepath = os.path.join(outdir, subdir)
     # create subdir
     if not os.path.exists(filepath):
@@ -546,7 +546,7 @@ def large_image_median(params: ParamDict,
             # get ribbon from file
             ribbon = np.array(image[bins[b_it]: bins[b_it + 1]])
             # construct ribbon nmae
-            ribbon_name = '{0}_ribbon{1}.npy'.format(clean_filename, b_it)
+            ribbon_name = '{0}_ribbon{1:06d}.npy'.format(clean_filename, b_it)
             ribbon_path = os.path.join(subfilepath, ribbon_name)
             # save ribbon to file
             np.save(ribbon_path, ribbon)
@@ -571,7 +571,7 @@ def large_image_median(params: ParamDict,
         for f_it, filename in enumerate(files):
             # construct ribbon nmae
             clean_filename = filename.replace('.', '_')
-            ribbon_name = '{0}_ribbon{1}.npy'.format(clean_filename, b_it)
+            ribbon_name = '{0}_ribbon{1:06d}.npy'.format(clean_filename, b_it)
             ribbon_path = os.path.join(subfilepath, ribbon_name)
             # load ribbon
             ribbon = np.load(ribbon_path)
