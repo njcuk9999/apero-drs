@@ -408,16 +408,18 @@ def npy_filelist(params: ParamDict, name: str, index: int,
         unixtime, humantime, rval = drs_startup.unix_char_code()
         # create subdir
         subdir = 'LIM-{0:020d}-{1}'.format(int(unixtime), rval)
-    # create subdir
-    if not os.path.exists(subdir):
-        os.mkdir(subdir)
     # construct file name
     filename = '{0}_{1}.npy'.format(name, index)
-    filepath = os.path.join(outdir, subdir, filename)
+    filepath = os.path.join(outdir, subdir)
+    # create subdir
+    if not os.path.exists(filepath):
+        os.mkdir(filepath)
+    # construct absolute path to file
+    abspath = os.path.join(filepath, filename)
     # save to disk
-    np.save(filepath, array)
+    np.save(abspath, array)
     # add to list
-    filenames.append(filepath)
+    filenames.append(abspath)
     # return appended filenames list
     return filenames, subdir
 
