@@ -438,7 +438,7 @@ def npy_fileclean(params: ParamDict, filenames: Union[List[str], None],
     filepath = os.path.join(outdir, subdir)
     # ----------------------------------------------------------------------
     # delete the sub directory
-    if os.path.exists(filepath):
+    while os.path.exists(filepath):
         os.removedirs(filepath)
 
 
