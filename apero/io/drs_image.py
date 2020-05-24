@@ -478,9 +478,6 @@ def large_image_median(params: ParamDict,
     :return: numpy 2D array: the nan-median image of all files
     :rtype: np.ndarray
     """
-    # TODO: remove break point
-    constants.break_point(params)
-
     # deal with not outdir
     if outdir is None:
         outdir = ''
