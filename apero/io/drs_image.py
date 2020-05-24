@@ -414,6 +414,7 @@ def npy_filelist(params: ParamDict, name: str, index: int,
     filepath = os.path.join(outdir, subdir)
     # create subdir
     if not os.path.exists(filepath):
+        WLOG(params, '', 'Creating directory: {0}'.format(filepath))
         os.mkdir(filepath)
     # construct absolute path to file
     abspath = os.path.join(filepath, filename)
@@ -433,12 +434,14 @@ def npy_fileclean(params: ParamDict, filenames: Union[List[str], None],
         outdir = ''
     # remove files
     for filename in filenames:
+        WLOG(params, '', 'Removing file: {0}'.format(filename))
         os.remove(filename)
     # construct file dir
     filepath = os.path.join(outdir, subdir)
     # ----------------------------------------------------------------------
     # delete the sub directory
     while os.path.exists(filepath):
+        WLOG(params, '', 'Removing directory: {0}'.format(filepath))
         os.removedirs(filepath)
 
 
@@ -550,6 +553,7 @@ def large_image_median(params: ParamDict,
             ribbon_name = '{0}_ribbon{1:06d}.npy'.format(clean_filename, b_it)
             ribbon_path = os.path.join(subfilepath, ribbon_name)
             # save ribbon to file
+            WLOG(params, '', '\tSaving file: {0}'.format(ribbon_path))
             np.save(ribbon_path, ribbon)
             # delete ribbon
             del ribbon
@@ -575,6 +579,7 @@ def large_image_median(params: ParamDict,
             ribbon_name = '{0}_ribbon{1:06d}.npy'.format(clean_filename, b_it)
             ribbon_path = os.path.join(subfilepath, ribbon_name)
             # load ribbon
+            WLOG(params, '', '\tLoading file: {0}'.format(ribbon_path))
             ribbon = np.load(ribbon_path)
             # delete this ribbon from disk
             os.remove(ribbon_path)
