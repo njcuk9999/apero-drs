@@ -576,12 +576,13 @@ def large_image_median(params: ParamDict,
         for f_it, filename in enumerate(files):
             # construct ribbon nmae
             clean_filename = filename.replace('.', '_')
-            ribbon_name = '{0}_ribbon{1:06d}.npy'.format(clean_filename, b_it)
+            ribbon_name = '{0}_ribbon{1:06d}.npy'.format(clean_filename, f_it)
             ribbon_path = os.path.join(subfilepath, ribbon_name)
             # load ribbon
             WLOG(params, '', '\tLoading file: {0}'.format(ribbon_path))
             ribbon = np.load(ribbon_path)
             # delete this ribbon from disk
+            WLOG(params, '', '\tRemoving file: {0}'.format(ribbon_path))
             os.remove(ribbon_path)
             # append to box
             box.append(np.array(ribbon))
