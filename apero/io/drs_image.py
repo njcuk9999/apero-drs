@@ -508,6 +508,7 @@ def large_image_median(params: ParamDict,
     nribbons = int(np.ceil((mdim1 * mdim2 * numfiles / nmax)))
     # find pixels in each ribbon
     bins = np.array(np.arange(0, nribbons) / (nribbons - 1)).astype(int)
+    bins = bins * mdim1
     # ----------------------------------------------------------------------
     # loop arouynd files and save ribbons as numpy arrays
     for f_it, filename in enumerate(files):
