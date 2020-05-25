@@ -10,7 +10,7 @@ Created on 2019-03-21 at 14:28
 import numpy as np
 import warnings
 import os
-from typing import List, Union, Tuple
+from typing import List, Union, Tuple, Callable
 
 from apero import core
 from apero.core import constants
@@ -445,14 +445,13 @@ def npy_fileclean(params: ParamDict, filenames: Union[List[str], None],
         os.removedirs(filepath)
 
 
-def large_image_median(params: ParamDict,
-                       files: List[str], fmt='fits',
-                       nmax: int = 2e7,
-                       subdir: Union[str, None] = None,
-                       outdir: Union[str, None] = None) -> np.ndarray:
+def large_image_combine(params: ParamDict, files: List[str],
+                        math: str = 'median', fmt='fits', nmax: int = 2e7,
+                        subdir: Union[str, None] = None,
+                        outdir: Union[str, None] = None) -> np.ndarray:
     """
-    Pass a large list of images and get the median in a memory efficient
-    way.
+    Pass a large list of images and combine in a memory efficient
+    way. (math = 'median', 'mean', 'sum')
 
     Set the nmax parameter to the maximum number of pixels to load into memory
     Memory requirements = 64 bits * nmax
@@ -461,6 +460,7 @@ def large_image_median(params: ParamDict,
 
     :param params: the constant parameter dictionary
     :param files: list of strings, the files to open
+    :param math: the mathematical operation to combine (median, mean, sum)
     :param nmax: int, the maximum number of pixels to open at any given time
                  note assuming 64 bits per pixel this gives a direct memory
                  constraint - 2e7 pixels ~ 1.28 Gb
@@ -478,6 +478,18 @@ def large_image_median(params: ParamDict,
     :return: numpy 2D array: the nan-median image of all files
     :rtype: np.ndarray
     """
+    # deal with math mode
+    if math == 'median':
+        cfunc = mp.nanmedian
+    elif math == 'mean':
+        cfunc = mp.nanmean
+    elif math == 'sum':
+        cfunc = mp.nansum
+    else:
+        emsg = 'Math error: {0} is invalid must be: {1}'
+        eargs = [math, '"median" or "mean" or "sum"']
+        WLOG(params, 'error', emsg.format(*eargs))
+        cfunc = None
     # deal with not outdir
     if outdir is None:
         outdir = ''
@@ -592,7 +604,7 @@ def large_image_median(params: ParamDict,
         # convert box to a numpy array
         box = np.array(box)
         # fill the full image
-        out_image[bins[b_it]: bins[b_it + 1]] = mp.nanmedian(box, axis=0)
+        out_image[bins[b_it]: bins[b_it + 1]] = cfunc(box, axis=0)
         # delete the box
         del box
     # ----------------------------------------------------------------------

@@ -238,7 +238,6 @@ def construct_fp_table(params, filenames):
 #     return fp_cube, valid_fp_table
 
 
-
 def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
     func_name = __NAME__ + '.construct_master_dark'
     # get constants from params/kwargs
@@ -277,7 +276,6 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
     # row counter
     row = 0
 
-
     # TODO: remove break point
     constants.break_point(params)
     # loop through groups
@@ -294,8 +292,9 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
             file_inst = core.get_file_definition(dprtype, params['INSTRUMENT'],
                                                  kind='tmp')
             # perform a large image median on FP files in this group
-            groupfp = drs_image.large_image_median(params, fp_ids,
-                                                   outdir=outdir, fmt='fits')
+            groupfp = drs_image.large_image_combine(params, fp_ids,
+                                                    math='median',
+                                                    outdir=outdir, fmt='fits')
             # -------------------------------------------------------------
             # get first file header
             # construct new infile instance
@@ -359,8 +358,9 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
     # ----------------------------------------------------------------------
     # produce the large median (write ribbons to disk to save space)
     with warnings.catch_warnings(record=True) as _:
-        fp_cube = drs_image.large_image_median(params, fp_cube_files,
-                                               outdir=outdir, fmt='npy')
+        fp_master = drs_image.large_image_combine(params, fp_cube_files,
+                                                  math='mean',
+                                                  outdir=outdir, fmt='npy')
     # clean up npy dir
     drs_image.npy_fileclean(params, fp_cube_files, fpsubdir, outdir)
     # ----------------------------------------------------------------------
@@ -378,10 +378,8 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
     for c_it, col in enumerate(colnames):
         valid_fp_table[col] = values[c_it]
     # ----------------------------------------------------------------------
-    # return fp_cube
-    return fp_cube, valid_fp_table
-
-
+    # return fp_master
+    return fp_master, valid_fp_table
 
 
 def get_linear_transform_params(params, recipe, image1, image2, **kwargs):
