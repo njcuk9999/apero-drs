@@ -32,7 +32,8 @@ TIMECOL = 'MJDMID'
 RV_OBJ = 'RV_OBJ'
 RV_DRIFT = 'RV_DRIFT'
 RV_CORR = 'RV_CORR'
-
+RV_WAVEFP = 'RV_WAVFP'
+RV_SIMFP = 'RV_SIMFP'
 # =============================================================================
 # Define functions
 # =============================================================================
@@ -60,17 +61,21 @@ if __name__ == "__main__":
 
     # store rvs
     rv_obj_arr, rv_drift_arr, rv_corr_arr, time_arr = [], [], [], []
-
+    rv_wavefp_arr, rv_simfp_arr = [], []
     # read the header keys
     for good_header in good_headers:
         rv_time = Time(good_header[TIMECOL], format='mjd')
         rv_obj = float(good_header[RV_OBJ])
         rv_drift = float(good_header[RV_DRIFT])
         rv_corr = float(good_header[RV_CORR])
+        rv_wavefp = float(good_header[RV_WAVEFP])
+        rv_simfp = float(good_header[RV_SIMFP])
         time_arr.append(rv_time)
         rv_obj_arr.append(rv_obj)
         rv_drift_arr.append(rv_drift)
         rv_corr_arr.append(rv_corr)
+        rv_wavefp_arr.append(rv_wavefp)
+        rv_simfp_arr.append(rv_simfp)
 
     # convert times to time array
     times = Time(time_arr)
@@ -80,6 +85,8 @@ if __name__ == "__main__":
     rv_obj_arr = np.array(rv_obj_arr)
     rv_drift_arr = np.array(rv_drift_arr)
     rv_corr_arr = np.array(rv_corr_arr)
+    rv_wavefp_arr = np.array(rv_wavefp_arr)
+    rv_simfp_arr = np.array(rv_simfp_arr)
 
     OBJRV = np.nanmedian(rv_corr_arr)
     # OBJRV = 0.0
@@ -87,18 +94,31 @@ if __name__ == "__main__":
     # plot
     plt.ioff()
     plt.close()
-    fig, frame = plt.subplots(ncols=1, nrows=1)
+    fig, frames = plt.subplots(ncols=1, nrows=2, sharex=True)
 
+    frame = frames[0]
     frame.plot_date(times.plot_date, 1000 * (rv_obj_arr - OBJRV),
-                    marker='o', linestyle='None',
+                    marker='o', linestyle='None', mfc='None', mec='r',
                     label='OBJ Non Corr - {0:.3f} km/s'.format(OBJRV))
-    frame.plot_date(times.plot_date, 1000 * (rv_drift_arr),
-                    marker='o', linestyle='None',
-                    label='FP Drift')
     frame.plot_date(times.plot_date, 1000 * (rv_corr_arr - OBJRV),
-                    marker='o', linestyle='None',
+                    marker='x', linestyle='None', color='b',
                     label='OBJ Corr - {0:.3f} km/s'.format(OBJRV))
+    frame.legend(loc=0)
+    frame.set(xlabel='Time', ylabel='RV [m/s]')
+    frame.xaxis.set_tick_params(rotation=30, labelsize=10)
+    fig.autofmt_xdate()
+    frame.ticklabel_format(axis='y', useOffset=False)
 
+    frame = frames[1]
+    frame.plot_date(times.plot_date, 1000 * (rv_drift_arr),
+                    marker='o', linestyle='None', mfc='None', mec='g',
+                    label='FP Drift')
+    frame.plot_date(times.plot_date, 1000 * (rv_wavefp_arr),
+                    marker='x', linestyle='None', color='orange',
+                    label='RV from wave sol. FP')
+    frame.plot_date(times.plot_date, 1000 * (rv_simfp_arr),
+                    marker='s', linestyle='None', color='purple',
+                    label='RV from sim FP')
     frame.legend(loc=0)
     frame.set(xlabel='Time', ylabel='RV [m/s]')
     frame.xaxis.set_tick_params(rotation=30, labelsize=10)
