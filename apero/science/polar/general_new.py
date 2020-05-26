@@ -12,8 +12,10 @@ Created on 2020-05-13
 import numpy as np
 import warnings
 from astropy.io import fits
+from astropy import units as uu
 import os
-from scipy.interpolate import splrep, splev
+from scipy.interpolate import splrep, splev, UnivariateSpline
+from scipy import stats, signal
 
 from apero import core
 from apero.core import math as mp
@@ -25,7 +27,6 @@ from apero.io import drs_table
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave
 from apero.science import extract
-
 
 # =============================================================================
 # Define variables
@@ -52,7 +53,6 @@ TextDict = lang.drs_text.TextDict
 # alias pcheck
 pcheck = core.pcheck
 
-
 # define output keys
 BLAZE_HDU_KEY = 'Blaze{fiber}'
 FLUX_HDU_KEY = 'Flux{fiber}'
@@ -78,7 +78,7 @@ class PolarObj:
         # get name
         self.name = self.__gen_key__()
         # deal with getting properties
-        self.hdu = None   # not used in PolarObj but used in PolarObjOut
+        self.hdu = None  # not used in PolarObj but used in PolarObjOut
         self.rawflux = None
         self.raweflux = None
         self.flux = None
@@ -113,8 +113,6 @@ class PolarObj:
         self._get_wave()
         # clean, spline on to master wave solution
         self._clean()
-        # get times
-        self._get_times()
         # close hdu if possible
         if self.hdu is not None:
             self.hdu.close()
@@ -135,7 +133,7 @@ class PolarObj:
         """
         # set the flux data
         self.rawflux = self.infile.data
-        self.eflux = np.sqrt(self.flux)
+        self.eflux = np.sqrt(self.rawflux)
         # set file names and header
         self.filename = self.infile.filename
         self.basename = self.infile.basename
@@ -146,6 +144,9 @@ class PolarObj:
         # get keys from header
         self.mjd = self.infile.get_key('KW_MID_OBS_TIME', dtype=float)
         self.exptime = self.infile.get_key('KW_EXPTIME', dtype=float)
+        self.exptime_hrs = (self.exptime * uu.s).to(uu.hr).value
+        self.mjdstart = self.mjd - (self.exptime / 2)
+        self.mjdend = self.mjd + (self.exptime / 2)
         self.dprtype = self.infile.get_key('KW_DPRTYPE', dtype=str)
         # get berv properties
         bprops = extract.get_berv(self.params, self.infile,
@@ -154,6 +155,8 @@ class PolarObj:
         self.berv = bprops['USE_BERV']
         self.bjd = bprops['USE_BJD']
         self.bervmax = bprops['USE_BERV_MAX']
+        self.bervstart = self.berv - (self.exptime / 2)
+        self.bervend = self.berv + (self.exptime / 2)
 
     def _get_blaze(self):
         """
@@ -183,7 +186,7 @@ class PolarObj:
         func_name = display_func(self.params, '_get_tell', __NAME__, 'PolarObj')
         # get parameters from params
         tcorr_key = pcheck(self.params, 'POLAR_TCORR_FILE', 'tcorr_key', kwargs,
-                         func_name)
+                           func_name)
         recon_key = pcheck(self.params, 'POLAR_RECON_FILE', 'recon_key', kwargs,
                            func_name)
         tfiber = pcheck(self.params, 'POLAR_MASTER_FIBER', 'tfiber', kwargs,
@@ -281,7 +284,7 @@ class PolarObj:
         # ----------------------------------------------------------------------
         # get file definition
         cfile = core.get_file_definition(ccf_key, self.params['INSTRUMENT'],
-                                             kind='red', fiber=pfiber)
+                                         kind='red', fiber=pfiber)
         # get copies of the file definitions (for filling out)
         ccf_file = cfile.newcopy(recipe=self.recipe)
         # push mask to suffix
@@ -316,7 +319,7 @@ class PolarObj:
         ccf_file.construct_filename(self.params, infile=p_infile,
                                     suffix=suffix, fiber=pfiber)
         # deal with no ccf file
-        if not os.path.exists(ccf_file):
+        if not os.path.exists(ccf_file.filename):
             return
         # ----------------------------------------------------------------------
         # log which telluric files we are using
@@ -383,7 +386,7 @@ class PolarObj:
         # ------------------------------------------------------------------
         # get master fiber
         self.mwaveprops = wave.get_wavesolution(self.params, self.recipe,
-                                       fiber=mfiber, infile=self.infile)
+                                                fiber=mfiber, infile=self.infile)
 
     def _clean(self, **kwargs):
         # set function name
@@ -395,6 +398,9 @@ class PolarObj:
         # get master wavemap
         mwavemap = self.mwaveprops['WAVEMAP']
         wavemap = self.waveprops['WAVEMAP']
+
+        # TODO: remove breakpoint
+        constants.break_point()
         # ------------------------------------------------------------------
         # set up arrays as all NaN
         self.flux = np.zeros_like(self.rawflux) * np.nan
@@ -430,10 +436,11 @@ class PolarObj:
             omwave = mwavemap[order_num][clean]
             # get the recon spectra
             if tcorrect and not self.is_telluric_corrected:
-                orrecon = [order_num]
+                orrecon = rreconarr[order_num]
                 tclean = np.isfinite(orrecon)
             else:
                 orrecon, tclean = None, None
+
             # ------------------------------------------------------------------
             # get splines
             # ------------------------------------------------------------------
@@ -443,10 +450,11 @@ class PolarObj:
             btck = splrep(owave, orblaze, s=0)
             # interpolate recon data to match wavelength grid of first exposure
             #   note that telluric has own clean mask (tclean)
+            ttck = None
             if tcorrect and not self.is_telluric_corrected:
-                ttck = splrep(wavemap[order_num][tclean], orrecon[tclean], s=0)
-            else:
-                ttck = None
+                if np.sum(tclean) > 0:
+                    ttck = splrep(wavemap[order_num][tclean], orrecon[tclean],
+                                  s=0)
             # ------------------------------------------------------------------
             # only keep wavelengths within master fiber limits
             wlmask = (omwave > np.min(owave)) & (omwave < np.max(owave))
@@ -461,9 +469,10 @@ class PolarObj:
             oflux = oflux / oblaze
             # update flux error data
             # TODO: Question: Why sqrt(flux/blaze/blaze) ?
-            oeflux = np.sqrt(oflux / oblaze)
+            with warnings.catch_warnings(record=True) as _:
+                oeflux = np.sqrt(oflux / oblaze)
             # update telluric (if required)
-            if reconarr is not None:
+            if reconarr is not None and ttck is not None:
                 # TODO: Question: wlmask not used for recon why?
                 orecon = splev(mwavemap[order_num][tclean], ttck, der=0)
             else:
@@ -472,10 +481,10 @@ class PolarObj:
             # get vectors splined on the master fiber wave solution
             # ------------------------------------------------------------------
             # update vectors
-            self.flux[order_num][clean] = oflux
-            self.eflux[order_num][clean] = oeflux
-            blazearr[order_num][clean] = oblaze
-            if reconarr is not None:
+            self.flux[order_num][clean][wlmask] = oflux
+            self.eflux[order_num][clean][wlmask] = oeflux
+            blazearr[order_num][clean][wlmask] = oblaze
+            if reconarr is not None and orecon is not None:
                 reconarr[order_num][tclean] = orecon
                 # telluric correct flux/eflux
                 tcorr = self.flux[order_num] / reconarr[order_num]
@@ -487,9 +496,6 @@ class PolarObj:
         if tcorrect and not self.is_telluric_corrected:
             self.telluprops['RECON_DATA'] = reconarr
 
-    def _get_times(self):
-        # TODO: Fill in this function (Line 346 in spirouPolar.py)
-        pass
 
 class PolarObjOut(PolarObj):
     def _get_properties(self):
@@ -512,6 +518,9 @@ class PolarObjOut(PolarObj):
         # get keys from header
         self.mjd = self.header1[self.params['KW_MID_OBS_TIME'][0]]
         self.exptime = self.header1[self.params['KW_EXPTIME'][0]]
+        self.exptime_hrs = (self.exptime * uu.s).to(uu.hr).value
+        self.mjdstart = self.mjd - (self.exptime / 2)
+        self.mjdend = self.mjd + (self.exptime / 2)
         self.dprtype = self.header1[self.params['KW_DPRTYPE'][0]]
         # get berv properties
         bprops = extract.get_berv(self.params, header=self.header1,
@@ -520,6 +529,8 @@ class PolarObjOut(PolarObj):
         self.berv = bprops['USE_BERV']
         self.bjd = bprops['USE_BJD']
         self.bervmax = bprops['USE_BERV_MAX']
+        self.bervstart = self.berv - (self.exptime / 2)
+        self.bervend = self.berv + (self.exptime / 2)
 
     def _get_blaze(self):
         """
@@ -713,9 +724,6 @@ class PolarObjOut(PolarObj):
         mwkeys = ['WAVEMAP', 'WAVEFILE']
         self.mwaveprops.set_sources(mwkeys, func_name)
 
-    def _get_times(self):
-        # TODO: Fill in this function (Line 346 in spirouPolar.py)
-        pass
 
 # =============================================================================
 # Define functions
@@ -734,7 +742,7 @@ def validate_polar_files(params, recipe, infiles, **kwargs):
     # ----------------------------------------------------------------------
     # storage dictionary
     pobjects = ParamDict()
-    stokes, fibers, basenames = [], [] ,[]
+    stokes, fibers, basenames = [], [], []
     # loop around files
     for it in range(num_files):
         # print file iteration progress
@@ -771,20 +779,275 @@ def validate_polar_files(params, recipe, infiles, **kwargs):
         fibers.append(fiber)
         basenames.append(infile.basename)
     # ----------------------------------------------------------------------
+    # get time related information
+    ptimes = polar_time(params, pobjects)
+    # ----------------------------------------------------------------------
     # set the output parameters
     props = ParamDict()
     props['NEXPOSURES'] = len(infiles)
     props['STOKES'] = np.unique(stokes)[0]
     props['VALID_FIBERS'] = valid_fibers
     props['VALID_STOKES'] = valid_stokes
+    props['PTIMES'] = ptimes
     # set sources
-    keys = ['STOKES', 'NEXPOSURES', 'VALID_FIBERS', 'VALID_STOKES']
+    keys = ['STOKES', 'NEXPOSURES', 'VALID_FIBERS', 'VALID_STOKES', 'PTIMES']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # return polar object and properties
     return pobjects, props
 
 
+def calculate_polarimetry(params, pobjs, props, **kwargs):
+    """
+    Function to call functions to calculate polarimetry either using
+    the Ratio or Difference methods.
+
+    :param params: parameter dictionary, ParamDict containing constants
+        Must contain at least:
+            POLAR_METHOD: string, to define polar method "Ratio" or
+                             "Difference"
+    :param pobjs: list of polar objects
+    :param props: ParamDict, the polar properties dictionary
+
+    :return polarfunc: function, either polarimetry_diff_method(p, loc)
+                       or polarimetry_ratio_method(p, loc)
+    """
+    # set function name
+    func_name = display_func(params, 'calculate_polarimetry', __NAME__)
+    # get parameters from params/kwargs
+    method = pcheck(params, 'POLAR_METHOD', 'method', kwargs, func_name)
+    # if method is not a string then break here
+    if not isinstance(method, str):
+        eargs = [method]
+        WLOG(params, 'error', TextEntry('09-021-00006', args=eargs))
+    # decide which method to use
+    if method.lower() == 'difference':
+        return polar_diff_method(params, pobjs, props)
+    elif method.lower() == 'ratio':
+        return polar_ratio_method(params, pobjs, props)
+    else:
+        eargs = [method]
+        WLOG(params, 'error', TextEntry('09-021-00007', args=eargs))
+        return 0
+
+
+def calculate_stokes_i(params, pobjs, pprops, **kwargs):
+    """
+    Function to calculate the Stokes I polarization
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param pobjs: dict, dictionary of polar object instance
+    :param pprops: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            NEXPOSURES: int, number of exposures in polar sequence
+
+    :return pprops: parameter dictionary, the updated parameter dictionary
+        Adds/updates the following:
+            STOKESI: numpy array (2D), the Stokes I parameters, same shape as
+                     DATA
+            STOKESIERR: numpy array (2D), the Stokes I error parameters, same
+                        shape as DATA
+    """
+    # set the function
+    func_name = display_func(params, 'calculate_stokes_i', __NAME__)
+    # log start of polarimetry calculations
+    WLOG(params, '', TextEntry('40-021-00003'))
+    # get parameters from params
+    interpolate_flux = pcheck(params, 'POLAR_INTERPOLATE_FLUX',
+                              'interpolate_flux', kwargs, func_name)
+    # get parameters from props
+    nexp = pprops['NEXPOSURES']
+    # get the first file for reference
+    pobj = pobjs['A_1']
+    # storage of stokes parameters
+    stokes_i = np.zeros(pobj.infile.shape)
+    stokes_i_err = np.zeros(pobj.infile.shape)
+    # storage of flux and variance
+    flux, var = [], []
+    # loop around exposures
+    for it in range(1, int(nexp) + 1):
+        # get a and b data for this exposure
+        if interpolate_flux:
+            data_a = pobjs['A_{0}'.format(it)].flux
+            data_b = pobjs['B_{0}'.format(it)].flux
+            edata_a = pobjs['A_{0}'.format(it)].eflux
+            edata_b = pobjs['B_{0}'.format(it)].eflux
+        else:
+            data_a = pobjs['A_{0}'.format(it)].rawflux
+            data_b = pobjs['B_{0}'.format(it)].rawflux
+            edata_a = pobjs['A_{0}'.format(it)].raweflux
+            edata_b = pobjs['B_{0}'.format(it)].raweflux
+        # Calculate sum of fluxes from fibers A and B
+        flux_ab = data_a + data_b
+        # Save A+B flux for each exposure
+        flux.append(flux_ab)
+        # Calculate the variances for fiber A+B, assuming Poisson noise
+        # only. In fact the errors should be obtained from extraction, i.e.
+        # from the error extension in the e2ds files.
+        var_ab = edata_a ** 2 + edata_b ** 2
+        # Save varAB = sigA^2 + sigB^2, ignoring cross-correlated terms
+        var.append(var_ab)
+
+    # Sum fluxes and variances from different exposures
+    for it in range(len(flux)):
+        stokes_i += flux[it]
+        stokes_i_err += var[it]
+    # Calcualte errors -> sigma = sqrt(variance)
+    with warnings.catch_warnings(record=True) as _:
+        stokes_i_err = np.sqrt(stokes_i_err)
+
+    # update the polar properties with stokes parameters
+    pprops['STOKESI'] = stokes_i
+    pprops['STOKESIERR'] = stokes_i_err
+    # set sources
+    keys = ['STOKESI', 'STOKESIERR']
+    pprops.set_sources(keys, func_name)
+    # return properties
+    return pprops
+
+
+def calculate_continuum(params, pobjs, pprops, **kwargs):
+    """
+    Function to calculate the continuum polarization
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param pobjs: dict, dictionary of polar object instance
+    :param pprops: parameter dictionary, ParamDict containing data
+        Must contain at least:
+            POL: numpy array (2D), e2ds degree of polarization data
+            POLERR: numpy array (2D), e2ds errors of degree of polarization
+            NULL1: numpy array (2D), e2ds 1st null polarization
+            NULL2: numpy array (2D), e2ds 2nd null polarization
+            STOKESI: numpy array (2D), e2ds Stokes I data
+            STOKESIERR: numpy array (2D), e2ds errors of Stokes I
+    :params wprops: parameter dictionary, ParamDict containing wave data
+
+    :return pprop: parameter dictionary, the updated parameter dictionary
+        Adds/updates the following:
+            FLAT_X: numpy array (1D), flatten polarimetric x data
+            FLAT_POL: numpy array (1D), flatten polarimetric pol data
+            FLAT_POLERR: numpy array (1D), flatten polarimetric pol error data
+            FLAT_STOKESI: numpy array (1D), flatten polarimetric stokes I data
+            FLAT_STOKESIERR: numpy array (1D), flatten polarimetric stokes I
+                             error data
+            FLAT_NULL1: numpy array (1D), flatten polarimetric null1 data
+            FLAT_NULL2: numpy array (1D), flatten polarimetric null2 data
+            CONT_POL: numpy array (1D), e2ds continuum polarization data
+                      interpolated from xbin, ybin points, same shape as
+                      FLAT_POL
+            CONT_XBIN: numpy array (1D), continuum in x polarization samples
+            CONT_YBIN: numpy array (1D), continuum in y polarization samples
+    """
+    # set the function
+    func_name = display_func(params, 'calculate_continuum', __NAME__)
+    # get constants from params/kwargs
+    pol_binsize = pcheck(params, 'POLAR_CONT_BINSIZE', 'pol_binsize', kwargs,
+                         func_name)
+    pol_overlap = pcheck(params, 'POLAR_CONT_OVERLAP', 'pol_overlap', kwargs,
+                         func_name)
+    pol_excl_bands_l = pcheck(params, 'POLAR_CONT_TELLMASK_LOWER',
+                              'pol_excl_bands_l', kwargs, func_name,
+                              mapf='list', dtype=float)
+    pol_excl_bands_u = pcheck(params, 'POLAR_CONT_TELLMASK_UPPER',
+                              'pol_excl_bands_u', kwargs, func_name,
+                              mapf='list', dtype=float)
+    cont_det_mode = pcheck(params, 'POLAR_STOKESI_CONT_MODE', 'cont_det_mode',
+                           kwargs, func_name)
+    iraf_fit_func = pcheck(params, 'POLAR_IRAF_FIT_FUNC', 'iraf_fit_func',
+                           kwargs, func_name)
+    iraf_cont_order = pcheck(params, 'POLAR_IRAF_CONT_ORD', 'iraf_cont_order',
+                             kwargs, func_name)
+    iraf_nit = pcheck(params, 'POLAR_IRAF_NIT', 'iraf_nit', kwargs, func_name)
+    iraf_rej_low = pcheck(params, 'POLAR_IRAF_REJ_LOW', 'iraf_rej_low',
+                          kwargs, func_name)
+    iraf_rej_high = pcheck(params, 'POLAR_IRAF_REJ_HIGH', 'iraf_rej_high',
+                           kwargs, func_name)
+    iraf_grow = pcheck(params, 'POLAR_IRAF_GROW', 'iraf_grow',
+                       kwargs, func_name)
+    iraf_med_filt = pcheck(params, 'POLAR_IRAF_MED_FILT', 'iraf_med_filt',
+                           kwargs, func_name)
+    iraf_percentile_low = pcheck(params, 'POLAR_IRAF_PER_LOW', kwargs, func_name)
+    iraf_percentile_high = pcheck(params, 'POLAR_IRAF_PER_HIGH',
+                                  'iraf_percentile_high', kwargs, func_name)
+    iraf_min_points = pcheck(params, 'POLAR_IRAF_MIN_PTS', 'iraf_min_points',
+                             kwargs, func_name)
+
+    # get master fiber wave map from A_1
+    wavemap = pobjs['A_1'].mwaveprops['WAVEMAP']
+    # combine pol_excl_bands
+    pol_excl_bands = list(zip(pol_excl_bands_l, pol_excl_bands_u))
+    # ---------------------------------------------------------------------
+    # flatten data (across orders)
+    wl = wavemap.ravel()
+    pol = pprops['POL'].ravel()
+    polerr = pprops['POLERR'].ravel()
+    stokes_i = pprops['STOKESI'].ravel()
+    stokes_i_err = pprops['STOKESIERR'].ravel()
+    null1 = pprops['NULL1'].ravel()
+    null2 = pprops['NULL2'].ravel()
+    # ---------------------------------------------------------------------
+    # sort by wavelength (or pixel number)
+    sortmask = np.argsort(wl)
+    flat_x = wl[sortmask]
+    flat_pol = pol[sortmask]
+    flat_polerr = polerr[sortmask]
+    flat_stokes_i = stokes_i[sortmask]
+    flat_stokes_i_err = stokes_i_err[sortmask]
+    flat_null1 = null1[sortmask]
+    flat_null2 = null2[sortmask]
+    # ---------------------------------------------------------------------
+    # calculate continuum polarization
+    if cont_det_mode == 'MOVING_MEDIAN':
+        contpol, xbin, ybin = continuum(flat_x, flat_pol,
+                                        binsize=pol_binsize,
+                                        overlap=pol_overlap,
+                                        window=6, mode='max',
+                                        use_linear_fit=True,
+                                        excl_bands=pol_excl_bands)
+    elif cont_det_mode == 'IRAF':
+        contpol = fit_continuum(flat_x, flat_stokes_i,
+                                func=iraf_fit_func, order=iraf_cont_order,
+                                nit=iraf_nit, rej_low=iraf_rej_low,
+                                rej_high=iraf_rej_high, grow=iraf_grow,
+                                med_filt=iraf_med_filt,
+                                percentile_low=iraf_percentile_low,
+                                percentile_high=iraf_percentile_high,
+                                min_points=iraf_min_points, verbose=False)
+        xbin, ybin = None, None
+    else:
+        emsg = 'Continuum detection mode = {0} invalid'
+        WLOG(params, '', emsg.format(cont_det_mode))
+        return ParamDict()
+    # ---------------------------------------------------------------------
+    # update pprops
+    pprops['FLAT_X'] = flat_x
+    pprops['FLAT_POL'] = flat_pol
+    pprops['FLAT_POLERR'] = flat_polerr
+    pprops['FLAT_STOKES_I'] = flat_stokes_i
+    pprops['FLAT_STOKES_I_ERR'] = flat_stokes_i_err
+    pprops['FLAT_NULL1'] = flat_null1
+    pprops['FLAT_NULL2'] = flat_null2
+    pprops['CONT_POL'] = contpol
+    pprops['CONT_XBIN'] = xbin
+    pprops['CONT_YBIN'] = ybin
+    # set sources
+    keys = ['FLAT_X', 'FLAT_POL', 'FLAT_POLERR', 'FLAT_STOKES_I',
+            'FLAT_STOKES_I_ERR', 'FLAT_NULL1', 'FLAT_NULL2', 'CONT_POL',
+            'CONT_XBIN', 'CONT_YBIN']
+    pprops.set_sources(keys, func_name)
+    # add constants
+    pprops['CONT_BINSIZE'] = pol_binsize
+    pprops['CONT_OVERLAP'] = pol_overlap
+    # set constants sources
+    keys = ['CONT_BINSIZE', 'CONT_OVERLAP']
+    pprops.set_sources(keys, func_name)
+    # return pprops
+    return pprops
+
+
+# =============================================================================
+# Define internal functions
+# =============================================================================
 def valid_polar_file(params, infile, **kwargs):
     """
     Read and extract parameters from cmmtseq string from header key at
@@ -876,6 +1139,705 @@ def valid_polar_file(params, infile, **kwargs):
         return None, None, None, None, fiber, False
     else:
         return stoke_parameter, exposure, sequence, total, fiber, valid
+
+
+def polar_time(params, pobjs):
+    # set function name
+    func_name = display_func(params, 'polar_time', __NAME__)
+    # polar sequence start time
+    starttime = np.inf
+    obj_s = None
+    # polar sequence end time
+    endtime = -np.inf
+    obj_l = None
+
+    # storage of times and fluxes
+    mean_fluxes = []
+    midmjds = []
+    midbjds = []
+    bervmaxs = []
+
+    # loop over files in polar sequence
+    for name in pobjs:
+        # get the polar object instance
+        pobj = pobjs[name]
+        # get expnum
+        expnum = pobj.exposure
+        # find the first file time/name
+        if pobj.mjdstart < starttime:
+            starttime = pobj.mjdstart
+            obj_s = pobj
+        # find the last file time/name
+        if pobj.mjdend > endtime:
+            endtime = pobj.mjdend
+            obj_l = pobj
+        # get mean flux
+        aflux = pobjs['A_{0}'.format(expnum)].rawflux
+        bflux = pobjs['B_{0}'.format(expnum)].rawflux
+        # calcaulte mean A+B flux
+        meanflux = np.nanmean(aflux + bflux)
+        # append to mean_fluxes
+        mean_fluxes.append(meanflux)
+        # get mid mjd time
+        midmjds.append(pobj.mjd)
+        midbjds.append(pobj.bjd)
+        bervmaxs.append(pobj.bervmax)
+
+    # convert to numpy arrays
+    mean_fluxes = np.array(mean_fluxes)
+    midmjds = np.array(midmjds)
+    midbjds = np.array(midbjds)
+    bervmaxs = np.array(bervmaxs)
+
+    # calculate total elapsed time
+    elapsed_time = obj_l.mjdend - obj_s.mjdstart
+
+    # calculate flux-weighted mjd of polarimetric sequence
+    mjdfwcen = np.sum(mean_fluxes * midmjds) / np.sum(mean_fluxes)
+
+    # calculate flux-weight bjd of polarimetric sequence
+    bjdfwcen = np.sum(mean_fluxes * midbjds) / np.sum(mean_fluxes)
+
+    # calculate MJD at center of polarimetric sequence
+    mjdcen = np.mean([obj_l.mjdstart, obj_s.mjdend])
+
+    # calculate BJD at center of polarimetric sequence
+    bjdcen = np.mean([obj_l.bjdstart, obj_s.bjdend])
+
+    # calculate BERV at center by linear interpolation
+    berv_slope = (obj_l.berv - obj_s.berv) / (obj_l.bjd - obj_s.bjd)
+    berv_intercept = obj_s.berv - (berv_slope * obj_s.bjd)
+    bervcen = berv_intercept + (berv_slope * bjdcen)
+
+    # calculate the berv max
+    bervmax = np.max(bervmaxs)
+    # add mean bjd
+    meanbjd = np.mean(midbjds)
+
+    # add all to ptimes
+    ptimes = ParamDict()
+    ptimes['ELAPSED_TIME'] = elapsed_time
+    ptimes['MJDFWCEN'] = mjdfwcen
+    ptimes['BJDFWCEN'] = bjdfwcen
+    ptimes['MJDCEN'] = mjdcen
+    ptimes['BERVCEN'] = bervcen
+    ptimes['BERVMAX'] = bervmax
+    ptimes['MEANBJD'] = meanbjd
+    # add sources
+    keys = ['ELAPSED_TIME', 'MJDFWCEN', 'BJDFWCEN', 'MJDCEN', 'BERVCEN',
+            'BERVMAX', 'MEANBJD']
+    ptimes.set_sources(keys, func_name)
+    # return ptimes
+    return ptimes
+
+
+def polar_diff_method(params, pobjs, props, **kwargs):
+    """
+    Function to calculate polarimetry using the difference method as described
+    in the paper:
+        Bagnulo et al., PASP, Volume 121, Issue 883, pp. 993 (2009)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param pobjs: dict, dictionary of polar object instance
+    :param props: parameter dictionary, parameter dictionary from polar
+                  validation
+
+    :type params: ParamDict
+    :type pobjs: dict
+    :type props: ParamDict
+
+    :return: ParamDict of polar outputs (pol, pol_err, null1, null2, method)
+    """
+    # set function name
+    func_name = display_func(params, 'polar_diff_method', __NAME__)
+    # log start of polarimetry calculations
+    WLOG(params, '', TextEntry('40-021-00002', args=['difference']))
+    # get parameters from params
+    interpolate_flux = pcheck(params, 'POLAR_INTERPOLATE_FLUX',
+                              'interpolate_flux', kwargs, func_name)
+    # get parameters from props
+    nexp = int(props['NEXPOSURES'])
+    # get the first file for reference
+    pobj = pobjs['A_1']
+    # ---------------------------------------------------------------------
+    # set up storage
+    # ---------------------------------------------------------------------
+    pol = np.zeros(pobj.infile.shape)
+    pol_err = np.zeros(pobj.infile.shape)
+    null1 = np.zeros(pobj.infile.shape)
+    null2 = np.zeros(pobj.infile.shape)
+    # ---------------------------------------------------------------------
+    # loop around exposures and combine A and B
+    gg, gvar = [], []
+    for it in range(1, int(nexp) + 1):
+        # get a and b data for this exposure
+        if interpolate_flux:
+            data_a = pobjs['A_{0}'.format(it)].flux
+            data_b = pobjs['B_{0}'.format(it)].flux
+            edata_a = pobjs['A_{0}'.format(it)].eflux
+            edata_b = pobjs['B_{0}'.format(it)].eflux
+        else:
+            data_a = pobjs['A_{0}'.format(it)].rawflux
+            data_b = pobjs['B_{0}'.format(it)].rawflux
+            edata_a = pobjs['A_{0}'.format(it)].raweflux
+            edata_b = pobjs['B_{0}'.format(it)].raweflux
+        # ---------------------------------------------------------------------
+        # STEP 1 - calculate the quantity Gn (Eq #12-14 on page 997 of
+        #          Bagnulo et al. 2009), n being the pair of exposures
+        # ---------------------------------------------------------------------
+        part1 = data_a - data_b
+        part2 = data_a + data_b
+        gg.append(part1 / part2)
+        # Calculate the variances for fiber A and B, assuming Poisson noise
+        # only. In fact the errors should be obtained from extraction, i.e.
+        # from the error extension of e2ds files.
+        a_var = edata_a ** 2
+        b_var = edata_b ** 2
+        # ---------------------------------------------------------------------
+        # STEP 2 - calculate the quantity g_n^2 (Eq #A4 on page 1013 of
+        #          Bagnulo et al. 2009), n being the pair of exposures
+        # ---------------------------------------------------------------------
+        nomin = 2.0 * data_a * data_b
+        denom = (data_a + data_b) ** 2.0
+        factor1 = (nomin / denom) ** 2.0
+        a_var_part = a_var / (data_a ** 2.0)
+        b_var_part = b_var / (data_b ** 2.0)
+        gvar.append(factor1 * (a_var_part + b_var_part))
+    # ---------------------------------------------------------------------
+    # if we have 4 exposures
+    if nexp == 4:
+        # -----------------------------------------------------------------
+        # STEP 3 - calculate the quantity Dm (Eq #18 on page 997 of
+        #          Bagnulo et al. 2009 paper) and the quantity Dms with
+        #          exposures 2 and 4 swapped, m being the pair of exposures
+        #          Ps. Notice that SPIRou design is such that the angles of
+        #          the exposures that correspond to different angles of the
+        #          retarder are obtained in the order (1)->(2)->(4)->(3),
+        #          which explains the swap between G[3] and G[2].
+        # -----------------------------------------------------------------
+        d1, d2 = gg[0] - gg[1], gg[3] - gg[2]
+        d1s, d2s = gg[0] - gg[2], gg[3] - gg[1]
+        # -----------------------------------------------------------------
+        # STEP 4 - calculate the degree of polarization for Stokes
+        #          parameter (Eq #19 on page 997 of Bagnulo et al. 2009)
+        # -----------------------------------------------------------------
+        pol = (d1 + d2) / nexp
+        # -----------------------------------------------------------------
+        # STEP 5 - calculate the first NULL spectrum
+        #          (Eq #20 on page 997 of Bagnulo et al. 2009)
+        # -----------------------------------------------------------------
+        null1 = (d1 - d2) / nexp
+        # -----------------------------------------------------------------
+        # STEP 6 - calculate the second NULL spectrum
+        #          (Eq #20 on page 997 of Bagnulo et al. 2009)
+        #          with exposure 2 and 4 swapped
+        # -----------------------------------------------------------------
+        null2 = (d1s - d2s) / nexp
+        # -----------------------------------------------------------------
+        # STEP 7 - calculate the polarimetry error
+        #          (Eq #A3 on page 1013 of Bagnulo et al. 2009)
+        # -----------------------------------------------------------------
+        sum_of_gvar = gvar[0] + gvar[1] + gvar[2] + gvar[3]
+        pol_err = np.sqrt(sum_of_gvar / (nexp ** 2.0))
+    # ---------------------------------------------------------------------
+    # else if we have 2 exposures
+    elif nexp == 2:
+        # -----------------------------------------------------------------
+        # STEP 3 - calculate the quantity Dm
+        #          (Eq #18 on page 997 of Bagnulo et al. 2009) and
+        #          the quantity Dms with exposure 2 and 4 swapped,
+        #          m being the pair of exposures
+        # -----------------------------------------------------------------
+        d1 = gg[0] - gg[1]
+        # -----------------------------------------------------------------
+        # STEP 4 - calculate the degree of polarization
+        #          (Eq #19 on page 997 of Bagnulo et al. 2009)
+        # -----------------------------------------------------------------
+        pol = d1 / nexp
+        # -----------------------------------------------------------------
+        # STEP 5 - calculate the polarimetry error
+        #          (Eq #A3 on page 1013 of Bagnulo et al. 2009)
+        # -----------------------------------------------------------------
+        sum_of_gvar = gvar[0] + gvar[1]
+        pol_err = np.sqrt(sum_of_gvar / (nexp ** 2.0))
+    # ---------------------------------------------------------------------
+    # else we have insufficient data (should not get here)
+    else:
+        # Log that the number of exposures is not sufficient
+        eargs = [nexp, func_name]
+        WLOG(params, 'error', TextEntry('09-021-00008', args=eargs))
+    # ---------------------------------------------------------------------
+    # populate the polar properties
+    pprops = props.copy()
+    pprops['POL'] = pol
+    pprops['NULL1'] = null1
+    pprops['NULL2'] = null2
+    pprops['POLERR'] = pol_err
+    pprops['METHOD'] = 'Difference'
+    # set sources
+    keys = ['POL', 'NULL1', 'NULL2', 'POLERR', 'METHOD']
+    pprops.set_sources(keys, func_name)
+    # return the properties
+    return pprops
+
+
+def polar_ratio_method(params, pobjs, props, **kwargs):
+    """
+    Function to calculate polarimetry using the ratio method as described
+    in the paper:
+        Bagnulo et al., PASP, Volume 121, Issue 883, pp. 993 (2009)
+
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param pobjs: dict, dictionary of polar object instance
+    :param props: parameter dictionary, parameter dictionary from polar
+                  validation
+
+    :type params: ParamDict
+    :type pobjs: dict
+    :type props: ParamDict
+
+    :return: ParamDict of polar outputs (pol, pol_err, null1, null2, method)
+    """
+    # set function name
+    func_name = display_func(params, 'polar_ratio_method', __NAME__)
+    # log start of polarimetry calculations
+    WLOG(params, '', TextEntry('40-021-00002', args=['difference']))
+    # get parameters from params
+    interpolate_flux = pcheck(params, 'POLAR_INTERPOLATE_FLUX',
+                              'interpolate_flux', kwargs, func_name)
+    # get parameters from props
+    nexp = int(props['NEXPOSURES'])
+    # get the first file for reference
+    pobj = pobjs['A_1']
+    # ---------------------------------------------------------------------
+    # set up storage
+    # ---------------------------------------------------------------------
+    pol = np.zeros(pobj.infile.shape)
+    pol_err = np.zeros(pobj.infile.shape)
+    null1 = np.zeros(pobj.infile.shape)
+    null2 = np.zeros(pobj.infile.shape)
+    # storage
+    flux_ratio, var_term = [], []
+    # loop around exposures
+    for it in range(1, int(nexp) + 1):
+        # get a and b data for this exposure
+        if interpolate_flux:
+            data_a = pobjs['A_{0}'.format(it)].flux
+            data_b = pobjs['B_{0}'.format(it)].flux
+            edata_a = pobjs['A_{0}'.format(it)].eflux
+            edata_b = pobjs['B_{0}'.format(it)].eflux
+        else:
+            data_a = pobjs['A_{0}'.format(it)].rawflux
+            data_b = pobjs['B_{0}'.format(it)].rawflux
+            edata_a = pobjs['A_{0}'.format(it)].raweflux
+            edata_b = pobjs['B_{0}'.format(it)].raweflux
+        # ---------------------------------------------------------------------
+        # STEP 1 - calculate ratio of beams for each exposure
+        #          (Eq #12 on page 997 of Bagnulo et al. 2009 )
+        # ---------------------------------------------------------------------
+        with warnings.catch_warnings(record=True) as _:
+            flux_ratio.append(data_a / data_b)
+        # Calculate the variances for fiber A and B, assuming Poisson noise
+        # only. In fact the errors should be obtained from extraction, i.e.
+        # from the error extension of e2ds files.
+        a_var = edata_a ** 2
+        b_var = edata_b ** 2
+        # ---------------------------------------------------------------------
+        # STEP 2 - calculate the error quantities for Eq #A10 on page 1014 of
+        #          Bagnulo et al. 2009
+        # ---------------------------------------------------------------------
+        with warnings.catch_warnings(record=True) as _:
+            var_term_part1 = a_var / (data_a ** 2.0)
+            var_term_part2 = b_var / (data_b ** 2.0)
+        var_term.append(var_term_part1 + var_term_part2)
+    # ---------------------------------------------------------------------
+    # if we have 4 exposures
+    if nexp == 4:
+        # -----------------------------------------------------------------
+        # STEP 3 - calculate the quantity Rm
+        #          (Eq #23 on page 998 of Bagnulo et al. 2009) and
+        #          the quantity Rms with exposure 2 and 4 swapped,
+        #          m being the pair of exposures
+        #          Ps. Notice that SPIRou design is such that the angles of
+        #          the exposures that correspond to different angles of the
+        #          retarder are obtained in the order (1)->(2)->(4)->(3),which
+        #          explains the swap between flux_ratio[3] and flux_ratio[2].
+        # -----------------------------------------------------------------
+        with warnings.catch_warnings(record=True) as _:
+            r1 = flux_ratio[0] / flux_ratio[1]
+            r2 = flux_ratio[3] / flux_ratio[2]
+            r1s = flux_ratio[0] / flux_ratio[2]
+            r2s = flux_ratio[3] / flux_ratio[1]
+        # -----------------------------------------------------------------
+        # STEP 4 - calculate the quantity R
+        #          (Part of Eq #24 on page 998 of Bagnulo et al. 2009)
+        # -----------------------------------------------------------------
+        with warnings.catch_warnings(record=True) as _:
+            rr = (r1 * r2) ** (1.0 / nexp)
+        # -----------------------------------------------------------------
+        # STEP 5 - calculate the degree of polarization
+        #          (Eq #24 on page 998 of Bagnulo et al. 2009)
+        # -----------------------------------------------------------------
+        with warnings.catch_warnings(record=True) as _:
+            pol = (rr - 1.0) / (rr + 1.0)
+        # -----------------------------------------------------------------
+        # STEP 6 - calculate the quantity RN1
+        #          (Part of Eq #25-26 on page 998 of Bagnulo et al. 2009)
+        # -----------------------------------------------------------------
+        with warnings.catch_warnings(record=True) as _:
+            rn1 = (r1 / r2) ** (1.0 / nexp)
+        # -----------------------------------------------------------------
+        # STEP 7 - calculate the first NULL spectrum
+        #          (Eq #25-26 on page 998 of Bagnulo et al. 2009)
+        # -----------------------------------------------------------------
+        with warnings.catch_warnings(record=True) as _:
+            null1 = (rn1 - 1.0) / (rn1 + 1.0)
+        # -----------------------------------------------------------------
+        # STEP 8 - calculate the quantity RN2
+        #          (Part of Eq #25-26 on page 998 of Bagnulo et al. 2009),
+        #          with exposure 2 and 4 swapped
+        # -----------------------------------------------------------------
+        with warnings.catch_warnings(record=True) as _:
+            rn2 = (r1s / r2s) ** (1.0 / nexp)
+        # -----------------------------------------------------------------
+        # STEP 9 - calculate the second NULL spectrum
+        #          (Eq #25-26 on page 998 of Bagnulo et al. 2009),
+        #          with exposure 2 and 4 swapped
+        # -----------------------------------------------------------------
+        with warnings.catch_warnings(record=True) as _:
+            null2 = (rn2 - 1.0) / (rn2 + 1.0)
+        # -----------------------------------------------------------------
+        # STEP 10 - calculate the polarimetry error (Eq #A10 on page 1014
+        #           of Bagnulo et al. 2009)
+        # -----------------------------------------------------------------
+        with warnings.catch_warnings(record=True) as _:
+            numer_part1 = (r1 * r2) ** (1.0 / 2.0)
+            denom_part1 = ((r1 * r2) ** (1.0 / 4.0) + 1.0) ** 4.0
+            part1 = numer_part1 / (denom_part1 * 4.0)
+        sumvar = var_term[0] + var_term[1] + var_term[2] + var_term[3]
+        with warnings.catch_warnings(record=True) as _:
+            pol_err = np.sqrt(part1 * sumvar)
+    # ---------------------------------------------------------------------
+    # else if we have 2 exposures
+    elif nexp == 2:
+        # -----------------------------------------------------------------
+        # STEP 3 - calculate the quantity Rm
+        #          (Eq #23 on page 998 of Bagnulo et al. 2009) and
+        #          the quantity Rms with exposure 2 and 4 swapped,
+        #          m being the pair of exposures
+        # -----------------------------------------------------------------
+        with warnings.catch_warnings(record=True) as _:
+            r1 = flux_ratio[0] / flux_ratio[1]
+        # -----------------------------------------------------------------
+        # STEP 4 - calculate the quantity R
+        #          (Part of Eq #24 on page 998 of Bagnulo et al. 2009)
+        # -----------------------------------------------------------------
+        with warnings.catch_warnings(record=True) as _:
+            rr = r1 ** (1.0 / nexp)
+        # -----------------------------------------------------------------
+        # STEP 5 - calculate the degree of polarization
+        #          (Eq #24 on page 998 of Bagnulo et al. 2009)
+        # -----------------------------------------------------------------
+        with warnings.catch_warnings(record=True) as _:
+            pol = (rr - 1.0) / (rr + 1.0)
+        # -----------------------------------------------------------------
+        # STEP 6 - calculate the polarimetry error (Eq #A10 on page 1014
+        #           of Bagnulo et al. 2009)
+        # -----------------------------------------------------------------
+        # numer_part1 = R1
+        with warnings.catch_warnings(record=True) as _:
+            denom_part1 = ((r1 ** 0.5) + 1.0) ** 4.0
+            part1 = r1 / denom_part1
+        sumvar = var_term[0] + var_term[1]
+        pol_err = np.sqrt(part1 * sumvar)
+    # ---------------------------------------------------------------------
+    # else we have insufficient data (should not get here)
+    else:
+        # Log that the number of exposures is not sufficient
+        eargs = [nexp, func_name]
+        WLOG(params, 'error', TextEntry('09-021-00008', args=eargs))
+    # ---------------------------------------------------------------------
+    # populate the polar properties
+    pprops = props.copy()
+    pprops['POL'] = pol
+    pprops['NULL1'] = null1
+    pprops['NULL2'] = null2
+    pprops['POLERR'] = pol_err
+    pprops['METHOD'] = 'Difference'
+    # set sources
+    keys = ['POL', 'NULL1', 'NULL2', 'POLERR', 'METHOD']
+    pprops.set_sources(keys, func_name)
+    # return the properties
+    return pprops
+
+
+def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
+              mode='median', use_linear_fit=False, excl_bands=None,
+              outx=None):
+    """
+    Function to detect and calculate continuum spectrum
+    :param x: numpy array (1D), input x data
+    :param y: numpy array (1D), input y data (x and y must be of the same size)
+    :param binsize: int, number of points in each bin
+    :param overlap: int, number of points to overlap with adjacent bins
+    :param sigmaclip: int, number of times sigma to cut-off points
+    :param window: int, number of bins to use in local fit
+    :param mode: string, set combine mode, where mode accepts "median", "mean",
+                 "max"
+    :param use_linear_fit: bool, whether to use the linar fit
+    :param excl_bands: list of pairs of float, list of wavelength ranges
+                        ([wl0,wlf]) to exclude data for continuum detection
+
+    :return continuum, xbin, ybin
+        continuum: numpy array (1D) of the same size as input arrays containing
+                   the continuum data already interpolated to the same points
+                   as input data.
+        xbin,ybin: numpy arrays (1D) containing the bins used to interpolate
+                   data for obtaining the continuum
+    """
+    # deal with no outx
+    if outx is None:
+        outx = x
+    # deal with no excl_bands
+    if excl_bands is None:
+        excl_bands = []
+    # ----------------------------------------------------------------------
+    # set number of bins given the input array length and the bin size
+    nbins = int(np.floor(len(x) / binsize))
+    # ----------------------------------------------------------------------
+    # initialize arrays to store binned data
+    xbin, ybin = [], []
+    # ----------------------------------------------------------------------
+    # loop around bins
+    for i in range(nbins):
+        # get first and last index within the bin
+        idx0 = i * binsize - overlap
+        idxf = (i + 1) * binsize + overlap
+        # if it reaches the edges then it reset the indexes
+        if idx0 < 0:
+            idx0 = 0
+        if idxf >= len(x):
+            idxf = len(x) - 1
+        # ------------------------------------------------------------------
+        # get data within the bin
+        xbin_tmp = np.array(x[idx0:idxf])
+        ybin_tmp = np.array(y[idx0:idxf])
+        # create mask of exclusion bands
+        excl_mask = np.full(np.shape(xbin_tmp), False, dtype=bool)
+        for band in excl_bands:
+            excl_mask += (xbin_tmp > band[0]) & (xbin_tmp < band[1])
+        # -----------------------------------------------------------------
+        # mask data within exclusion bands
+        xtmp = xbin_tmp[~excl_mask]
+        ytmp = ybin_tmp[~excl_mask]
+        # create mask to get rid of NaNs
+        nanmask = ~np.isnan(ytmp)
+        # deal with first bin (if not using linear fit)
+        if i == 0 and not use_linear_fit:
+            xbin.append(x[0] - np.abs(x[1] - x[0]))
+            # create mask to get rid of NaNs
+            localnanmask = ~np.isnan(y)
+            ybin.append(np.median(y[localnanmask][:binsize]))
+
+        if len(xtmp[nanmask]) > 2:
+            # calculate mean x within the bin
+            xmean = np.nanmean(xtmp[nanmask])
+            # calculate median y within the bin
+            medy = np.nanmedian(ytmp[nanmask])
+
+            # calculate median deviation
+            medydev = np.nanmedian(np.abs(ytmp[nanmask] - medy))
+            # create mask to filter data outside n*sigma range
+            filtermask = (ytmp[nanmask] > medy)
+            filtermask &= (ytmp[nanmask] < medy + sigmaclip * medydev)
+            # --------------------------------------------------------------
+            if len(ytmp[nanmask][filtermask]) > 2:
+                # save mean x wihthin bin
+                xbin.append(xmean)
+                if mode == 'max':
+                    # save maximum y of filtered data
+                    ybin.append(np.max(ytmp[nanmask][filtermask]))
+                elif mode == 'median':
+                    # save median y of filtered data
+                    ybin.append(np.median(ytmp[nanmask][filtermask]))
+                elif mode == 'mean':
+                    # save mean y of filtered data
+                    ybin.append(np.mean(ytmp[nanmask][filtermask]))
+                else:
+                    emsg = 'Mode "{0}" is not recognised for continuum fit'
+                    raise mp.general.DrsMathException(emsg.format(mode))
+
+    # ----------------------------------------------------------------------
+    # Option to use a linearfit within a given window
+    if use_linear_fit:
+        # initialize arrays to store new bin data
+        newxbin, newybin = [], []
+        # -----------------------------------------------------------------
+        # loop around bins to obtain a linear fit within a given window size
+        for i in range(len(xbin)):
+            # set first and last index to select bins within window
+            idx0 = i - window
+            idxf = i + 1 + window
+            # make sure it doesnt go over the edges
+            if idx0 < 0:
+                idx0 = 0
+            if idxf > nbins:
+                idxf = nbins - 1
+            # --------------------------------------------------------------
+            # perform linear fit to these data
+            sout = stats.linregress(xbin[idx0:idxf], ybin[idx0:idxf])
+            slope, intercept, r_value, p_value, std_err = sout
+            # --------------------------------------------------------------
+            # save data obtained from the fit
+            newxbin.append(xbin[i])
+            newybin.append(intercept + slope * xbin[i])
+        # ------------------------------------------------------------------
+        xbin, ybin = newxbin, newybin
+    # ----------------------------------------------------------------------
+    # interpolate points applying an Spline to the bin data
+    sfit = UnivariateSpline(xbin, ybin)
+    # sfit.set_smoothing_factor(0.5)
+    # Resample interpolation to the original grid
+    continuum_val = sfit(outx)
+    # return continuum and x and y bins
+    return continuum_val, xbin, ybin
+
+
+def fit_continuum(wav, spec, func='polynomial', order=3, nit=5,
+                  rej_low=2.0, rej_high=2.5, grow=1, med_filt=0,
+                  percentile_low=0.0, percentile_high=100.0,
+                  min_points=10, verbose=False):
+    """
+    Continuum fitting re-implemented from IRAF's 'continuum' function
+    in non-interactive mode only but with additional options.
+    :Parameters:
+
+    wav: array(float)
+        abscissa values (wavelengths, velocities, ...)
+    spec: array(float)
+        spectrum values
+    function: str
+        function to fit to the continuum among 'polynomial', 'spline3'
+    order: int
+        fit function order:
+        'polynomial': degree (not number of parameters as in IRAF)
+        'spline3': number of knots
+    nit: int
+        number of iteractions of non-continuum points
+        see also 'min_points' parameter
+    rej_low: float
+        rejection threshold in unit of residul standard deviation for point
+        below the continuum
+    rej_high: float
+        same as rej_low for point above the continuum
+    grow: int
+        number of neighboring points to reject
+    med_filt: int
+        median filter the spectrum on 'med_filt' pixels prior to fit
+        improvement over IRAF function
+        'med_filt' must be an odd integer
+    percentile_low: float
+        reject point below below 'percentile_low' percentile prior to fit
+        improvement over IRAF function
+        "percentile_low' must be a float between 0. and 100.
+    percentile_high: float
+        same as percentile_low but reject points in percentile above
+        'percentile_high'
+
+    min_points: int
+        stop rejection iterations when the number of points to fit is less than
+        'min_points'
+    plot_fit: bool
+        if true display two plots:
+            1. spectrum, fit function, rejected points
+            2. residual, rejected points
+    verbose: bool
+        if true fit information is printed on STDOUT:
+            * number of fit points
+            * RMS residual
+    """
+    mspec = np.ma.masked_array(spec, mask=np.zeros_like(spec))
+    # mask 1st and last point: avoid error when no point is masked
+    # [not in IRAF]
+    mspec.mask[0] = True
+    mspec.mask[-1] = True
+
+    mspec = np.ma.masked_where(np.isnan(spec), mspec)
+    # apply median filtering prior to fit
+    # [opt] [not in IRAF]
+    if int(med_filt):
+        fspec = signal.medfilt(spec, kernel_size=med_filt)
+    else:
+        fspec = spec
+    # consider only a fraction of the points within percentile range
+    # [opt] [not in IRAF]
+    mspec = np.ma.masked_where(fspec < np.percentile(fspec, percentile_low),
+                               mspec)
+    mspec = np.ma.masked_where(fspec > np.percentile(fspec, percentile_high),
+                               mspec)
+    # perform 1st fit
+    if func == 'polynomial':
+        coeff = np.polyfit(wav[~mspec.mask], spec[~mspec.mask], order)
+        cont = np.poly1d(coeff)(wav)
+    elif func == 'spline3':
+        mterm = ((wav[-1] - wav[0]) / (order + 1))
+        knots = wav[0] + np.arange(order + 1)[1:] * mterm
+        spl = splrep(wav[~mspec.mask], spec[~mspec.mask], k=3, t=knots)
+        cont = splev(wav, spl)
+    else:
+        raise mp.general.DrsMathException('func="{0}" is invalid'.format(func))
+    # iteration loop: reject outliers and fit again
+    if nit > 0:
+        for it in range(nit):
+            res = fspec - cont
+            sigm = np.std(res[~mspec.mask])
+            # mask outliers
+            mspec1 = np.ma.masked_where(res < -rej_low * sigm, mspec)
+            mspec1 = np.ma.masked_where(res > rej_high * sigm, mspec1)
+            # exlude neighbors cf IRAF's continuum parameter 'grow'
+            if grow > 0:
+                for sl in np.ma.clump_masked(mspec1):
+                    for ii in range(sl.start - grow, sl.start):
+                        if ii >= 0:
+                            mspec1.mask[ii] = True
+                    for ii in range(sl.stop + 1, sl.stop + grow + 1):
+                        if ii < len(mspec1):
+                            mspec1.mask[ii] = True
+            # stop rejection process when min_points is reached
+            # [opt] [not in IRAF]
+            if np.ma.count(mspec1) < min_points:
+                if verbose:
+                    print("  min_points %d reached" % min_points)
+                break
+            mspec = mspec1
+            if func == 'polynomial':
+                coeff = np.polyfit(wav[~mspec.mask], spec[~mspec.mask], order)
+                cont = np.poly1d(coeff)(wav)
+            elif func == 'spline3':
+                mterm = ((wav[-1] - wav[0]) / (order + 1))
+                knots = wav[0] + np.arange(order + 1)[1:] * mterm
+                spl = splrep(wav[~mspec.mask], spec[~mspec.mask], k=3, t=knots)
+                cont = splev(wav, spl)
+            else:
+                emsg = 'func="{0}" is invalid'
+                raise mp.general.DrsMathException(emsg.format(func))
+    # compute residual and rms
+    res = fspec - cont
+    sigm = np.std(res[~mspec.mask])
+    # print nfit and fit rms
+    if verbose:
+        print("  nfit=%d/%d" % (np.ma.count(mspec), len(mspec)))
+        print("  fit rms=%.3e" % sigm)
+    # compute residual and rms between original spectrum and model
+    # different from above when median filtering is applied
+    ores = spec - cont
+    osigm = np.std(ores[~mspec.mask])
+    # print message
+    if int(med_filt) and verbose:
+        print("  unfiltered rms=%.3e" % osigm)
+    # return continuum
+    return cont
 
 
 # =============================================================================
