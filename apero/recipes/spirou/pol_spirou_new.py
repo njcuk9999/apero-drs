@@ -12,7 +12,7 @@ from apero.science.calib import flat_blaze
 from apero.science.calib import wave
 from apero.science import extract
 from apero.science import polar
-
+from apero.science.polar import general_new
 
 # =============================================================================
 # Define variables
@@ -106,7 +106,7 @@ def __main__(recipe, params):
     params.set('POLAR_BERV_CORRECT', value=True, source=mainname)
     params.set('POLAR_TELLU_CORRECT', value=True, source=mainname)
     params.set('POLAR_SOURCERV_CORRECT', value=True, source=mainname)
-    params.set('POLAR_MASTER_FIBER', value='AV', source=mainname)
+    params.set('POLAR_MASTER_FIBER', value='AB', source=mainname)
 
     params.set('POLAR_CCF_FILE', value='CCF_RV', source=mainname)
     params.set('POLAR_CCF_MASK', value='masque_sept18_andres_trans50.mas',
@@ -115,7 +115,21 @@ def __main__(recipe, params):
     params.set('POLAR_TCORR_FILE', value='TELLU_OBJ', source=mainname)
     params.set('POLAR_RECON_FILE', value='TELLU_RECON', source=mainname)
 
-
+    params.set('POLAR_INTERPOLATE_FLUX', value=True, source=mainname)
+    params.set('POLAR_STOKESI_CONT_MODE', value='MOVING_MEDIAN',
+               source=mainname)
+    # function to fit to the polar continuum: must be 'polynomial' or 'spline3'
+    params.set('POLAR_IRAF_FIT_FUNC', value='polynomial', source=mainname)
+    # polar continuum fit function order: 'polynomial': degree or 'spline3': number of knots
+    params.set('POLAR_IRAF_CONT_ORD', value=3, source=mainname)
+    params.set('POLAR_IRAF_NIT', value=5, source=mainname)
+    params.set('POLAR_IRAF_REJ_LOW', value=3.0, source=mainname)
+    params.set('POLAR_IRAF_REJ_HIGH', value=3.0, source=mainname)
+    params.set('POLAR_IRAF_GROW', value=1, source=mainname)
+    params.set('POLAR_IRAF_MED_FILT', value=0, source=mainname)
+    params.set('POLAR_IRAF_PER_LOW', value=0.0, source=mainname)
+    params.set('POLAR_IRAF_PER_HIGH', value=100.0, source=mainname)
+    params.set('POLAR_IRAF_MIN_PTS', value=10, source=mainname)
     # TODO: ------------------------------------------------------------------
 
     # set the location (must do before any plotting starts)
@@ -123,8 +137,56 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Validate polar files
     # ----------------------------------------------------------------------
-    pobjects, props = polar.validate_polar_files(params, infiles)
-    # get first file
+    pobjects, props = general_new.validate_polar_files(params, recipe, infiles)
+
+    # ----------------------------------------------------------------------
+    # Polarimetry computation
+    # ----------------------------------------------------------------------
+    pprops = general_new.calculate_polarimetry(params, pobjects, props)
+
+    # ----------------------------------------------------------------------
+    # Stokes I computation
+    # ----------------------------------------------------------------------
+    pprops = general_new.calculate_stokes_i(params, pobjects, pprops)
+
+    # ----------------------------------------------------------------------
+    # Calculate continuum (for plotting)
+    # ----------------------------------------------------------------------
+    pprops = polar.calculate_continuum(params, pobjects, pprops)
+
+    # ----------------------------------------------------------------------
+    # Remove continuum polarization
+    # ----------------------------------------------------------------------
+
+    # TODO: This is unfinished
+
+    # ----------------------------------------------------------------------
+    # Normalize Stokes I
+    # ----------------------------------------------------------------------
+
+    # TODO: This is unfinished
+
+    # ----------------------------------------------------------------------
+    # Apply sigma-clipping
+    # ----------------------------------------------------------------------
+
+    # TODO: This is unfinished
+
+    # ----------------------------------------------------------------------
+    # Plots
+    # ----------------------------------------------------------------------
+    # TODO: This is unfinished
+    # TODO: rememebr plot from fit_continuum (Line 2139 of eder spirouPoalr)
+
+    # ----------------------------------------------------------------------
+    # LSD Analysis
+    # ----------------------------------------------------------------------
+
+    # TODO: This is unfinished
+
+    # ----------------------------------------------------------------------
+    # Write files
+    # ----------------------------------------------------------------------
 
     # TODO: This is unfinished
 
