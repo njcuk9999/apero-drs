@@ -56,6 +56,13 @@ def get_args():
     parser.add_argument('--path', action='store', dest='path',
                         help='The path to install new APERO profile to '
                              '(If unset uses old profile path)')
+    parser.add_argument('--debug', action='store', dest='debug',
+                        help='Run installer in debug mode')
+    parser.add_argument('--clean', action='store', dest='clean',
+                        help='Whether to run from clean directories - '
+                             'RECOMMENDED - clears out old files and copies'
+                             'over all required default data files. '
+                             'If unset user is prompted for  choice.')
     # parse arguments
     args = parser.parse_args()
     # need fake clean argument
