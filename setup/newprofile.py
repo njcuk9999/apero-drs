@@ -207,6 +207,7 @@ if __name__ == '__main__':
     # get global parameters
     params = constants.load(from_file=False)
     # get all params
+    # TODO: outpaths for setup files are not correct (missing directory)
     allparams = install.update(params, args)
     # ----------------------------------------------------------------------
     # get old and new parameters
