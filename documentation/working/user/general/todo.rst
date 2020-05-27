@@ -32,6 +32,7 @@ Low priority:
   * assign people to write constant descriptions
   * add authors to constants
 
+* newprofile.py outpaths for setup files are not correct (missing directory)
 * add more debug printouts
 * deal with all python warnings
 * display func for all functions
