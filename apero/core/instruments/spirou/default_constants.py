@@ -1959,14 +1959,6 @@ POLAR_VALID_STOKES.value = 'V, Q, U'
 POLAR_METHOD = POLAR_METHOD.copy(__NAME__)
 POLAR_METHOD.value = 'Ratio'
 
-#  Define the polarimetry continuum bin size (for plotting)
-POLAR_CONT_BINSIZE = POLAR_CONT_BINSIZE.copy(__NAME__)
-POLAR_CONT_BINSIZE.value = 1000
-
-#  Define the polarimetry continuum overlap size (for plotting)
-POLAR_CONT_OVERLAP = POLAR_CONT_OVERLAP.copy(__NAME__)
-POLAR_CONT_OVERLAP.value = 0
-
 #  Define the telluric mask for calculation of continnum lower limits
 #    (string list)
 POLAR_CONT_TELLMASK_LOWER = POLAR_CONT_TELLMASK_LOWER.copy(__NAME__)

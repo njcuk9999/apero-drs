@@ -210,7 +210,7 @@ __all__ = [
     'CCF_OBJRV_NULL_VAL',
     # polar constants
     'POLAR_VALID_FIBERS', 'POLAR_VALID_STOKES', 'POLAR_METHOD',
-    'POLAR_CONT_BINSIZE', 'POLAR_CONT_OVERLAP', 'POLAR_CONT_TELLMASK_LOWER',
+    'POLAR_CONT_TELLMASK_LOWER',
     'POLAR_CONT_TELLMASK_UPPER',
     # polar lsd constants
     'POLAR_LSD_ANALYSIS', 'POLAR_LSD_PATH', 'POLAR_LSD_FILE_KEY',
@@ -2442,14 +2442,6 @@ POLAR_VALID_STOKES = Const('POLAR_VALID_STOKES', value=None, dtype=str,
 POLAR_METHOD = Const('POLAR_METHOD', value=None, dtype=str, source=__NAME__,
                      user=True, active=False, group=cgroup,
                      description='Define the polarimetry calculation method')
-
-#  Define the polarimetry continuum bin size (for plotting)
-POLAR_CONT_BINSIZE = Const('POLAR_CONT_BINSIZE', value=None, dtype=int,
-                           source=__NAME__, group=cgroup)
-
-#  Define the polarimetry continuum overlap size (for plotting)
-POLAR_CONT_OVERLAP = Const('POLAR_CONT_OVERLAP', value=None, dtype=int,
-                           source=__NAME__, group=cgroup)
 
 #  Define the telluric mask for calculation of continnum lower limits
 #    (string list)
