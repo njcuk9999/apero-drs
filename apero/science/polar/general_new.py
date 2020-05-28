@@ -14,7 +14,7 @@ import warnings
 from astropy.io import fits
 from astropy import units as uu
 import os
-from scipy.interpolate import splrep, splev, UnivariateSpline
+from scipy.interpolate import splrep, splev, UnivariateSpline, interp1d
 from scipy import stats, signal
 
 from apero import core
@@ -906,12 +906,11 @@ def calculate_stokes_i(params, pobjs, pprops, **kwargs):
     return pprops
 
 
-def calculate_continuum(params, pobjs, pprops, **kwargs):
+def calculate_continuum(params, pprops, **kwargs):
     """
     Function to calculate the continuum polarization
 
     :param params: ParamDict, parameter dictionary of constants
-    :param pobjs: dict, dictionary of polar object instance
     :param pprops: parameter dictionary, ParamDict containing data
         Must contain at least:
             POL: numpy array (2D), e2ds degree of polarization data
@@ -941,44 +940,87 @@ def calculate_continuum(params, pobjs, pprops, **kwargs):
     # set the function
     func_name = display_func(params, 'calculate_continuum', __NAME__)
     # get constants from params/kwargs
-    pol_binsize = pcheck(params, 'POLAR_CONT_BINSIZE', 'pol_binsize', kwargs,
+    stokes_binsize = pcheck(params, 'POLAR_SCONT_BINSIZE', 'pol_binsize',
+                            kwargs, func_name)
+    stokes_overlap = pcheck(params, 'POLAR_SCONT_OVERLAP', 'pol_overlap',
+                            kwargs, func_name)
+    pol_binsize = pcheck(params, 'POLAR_PCONT_BINSIZE', 'pol_binsize', kwargs,
                          func_name)
-    pol_overlap = pcheck(params, 'POLAR_CONT_OVERLAP', 'pol_overlap', kwargs,
+    pol_overlap = pcheck(params, 'POLAR_PCONT_OVERLAP', 'pol_overlap', kwargs,
                          func_name)
+
     pol_excl_bands_l = pcheck(params, 'POLAR_CONT_TELLMASK_LOWER',
                               'pol_excl_bands_l', kwargs, func_name,
                               mapf='list', dtype=float)
     pol_excl_bands_u = pcheck(params, 'POLAR_CONT_TELLMASK_UPPER',
                               'pol_excl_bands_u', kwargs, func_name,
                               mapf='list', dtype=float)
-    cont_det_mode = pcheck(params, 'POLAR_STOKESI_CONT_MODE', 'cont_det_mode',
+    s_det_mode = pcheck(params, 'POLAR_STOKESI_CONT_MODE', 's_det_mode',
+                        kwargs, func_name)
+    p_det_mode = pcheck(params, 'POLAR_POLAR_CONT_MODE', 'p_det_mode',
+                        kwargs, func_name)
+    # continuum for stokes i
+    scont_window = pcheck(params, 'POLAR_SCONT_WINDOW', 'scont_window', kwargs,
+                          func_name)
+    scont_mode = pcheck(params, 'POLAR_SCONT_MODE', 'scont_mode', kwargs,
+                        func_name)
+    scont_linfit = pcheck(params, 'POLAR_SCONT_LINFIT', 'scont_linfit', kwargs,
+                          func_name)
+    # iraf constants for stokes i
+    siraf_fit_func = pcheck(params, 'POLAR_SIRAF_FIT_FUNC', 'siraf_fit_func',
                            kwargs, func_name)
-    iraf_fit_func = pcheck(params, 'POLAR_IRAF_FIT_FUNC', 'iraf_fit_func',
-                           kwargs, func_name)
-    iraf_cont_order = pcheck(params, 'POLAR_IRAF_CONT_ORD', 'iraf_cont_order',
+    siraf_cont_order = pcheck(params, 'POLAR_SIRAF_CONT_ORD', 'siraf_cont_order',
                              kwargs, func_name)
-    iraf_nit = pcheck(params, 'POLAR_IRAF_NIT', 'iraf_nit', kwargs, func_name)
-    iraf_rej_low = pcheck(params, 'POLAR_IRAF_REJ_LOW', 'iraf_rej_low',
+    siraf_nit = pcheck(params, 'POLAR_SIRAF_NIT', 'siraf_nit', kwargs, func_name)
+    siraf_rej_low = pcheck(params, 'POLAR_SIRAF_REJ_LOW', 'siraf_rej_low',
                           kwargs, func_name)
-    iraf_rej_high = pcheck(params, 'POLAR_IRAF_REJ_HIGH', 'iraf_rej_high',
+    siraf_rej_high = pcheck(params, 'POLAR_SIRAF_REJ_HIGH', 'siraf_rej_high',
                            kwargs, func_name)
-    iraf_grow = pcheck(params, 'POLAR_IRAF_GROW', 'iraf_grow',
+    siraf_grow = pcheck(params, 'POLAR_SIRAF_GROW', 'siraf_grow',
                        kwargs, func_name)
-    iraf_med_filt = pcheck(params, 'POLAR_IRAF_MED_FILT', 'iraf_med_filt',
+    siraf_med_filt = pcheck(params, 'POLAR_SIRAF_MED_FILT', 'siraf_med_filt',
                            kwargs, func_name)
-    iraf_percentile_low = pcheck(params, 'POLAR_IRAF_PER_LOW', kwargs, func_name)
-    iraf_percentile_high = pcheck(params, 'POLAR_IRAF_PER_HIGH',
-                                  'iraf_percentile_high', kwargs, func_name)
-    iraf_min_points = pcheck(params, 'POLAR_IRAF_MIN_PTS', 'iraf_min_points',
+    siraf_plow = pcheck(params, 'POLAR_SIRAF_PER_LOW', 'siraf_plow', kwargs,
+                        func_name)
+    siraf_phigh = pcheck(params, 'POLAR_SIRAF_PER_HIGH', 'siraf_phigh', kwargs,
+                         func_name)
+    siraf_min_pts = pcheck(params, 'POLAR_SIRAF_MIN_PTS', 'siraf_min_pts',
+                           kwargs, func_name)
+    # continuum for polar
+    pcont_mode = pcheck(params, 'POLAR_PCONT_MODE', 'pcont_mode', kwargs,
+                        func_name)
+    pcont_use_polyfit = pcheck(params, 'POLAR_PCONT_USE_POLYFIT',
+                               'pcont_use_polyfit', kwargs, func_name)
+    pcont_poly_deg = pcheck(params, '', 'pcont_poly_deg', kwargs, func_name)
+    # iraf constants for polarization
+    piraf_fit_func = pcheck(params, 'POLAR_PIRAF_FIT_FUNC', 'piraf_fit_func',
+                           kwargs, func_name)
+    piraf_cont_order = pcheck(params, 'POLAR_PIRAF_CONT_ORD', 'piraf_cont_order',
                              kwargs, func_name)
+    piraf_nit = pcheck(params, 'POLAR_PIRAF_NIT', 'piraf_nit', kwargs, func_name)
+    piraf_rej_low = pcheck(params, 'POLAR_PIRAF_REJ_LOW', 'piraf_rej_low',
+                          kwargs, func_name)
+    piraf_rej_high = pcheck(params, 'POLAR_PIRAF_REJ_HIGH', 'piraf_rej_high',
+                           kwargs, func_name)
+    piraf_grow = pcheck(params, 'POLAR_PIRAF_GROW', 'piraf_grow',
+                       kwargs, func_name)
+    piraf_med_filt = pcheck(params, 'POLAR_PIRAF_MED_FILT', 'piraf_med_filt',
+                           kwargs, func_name)
+    piraf_plow = pcheck(params, 'POLAR_PIRAF_PER_LOW', 'piraf_plow', kwargs,
+                        func_name)
+    piraf_phigh = pcheck(params, 'POLAR_PIRAF_PER_HIGH', 'piraf_phigh', kwargs,
+                         func_name)
+    piraf_min_pts = pcheck(params, 'POLAR_PIRAF_MIN_PTS', 'piraf_min_pts',
+                           kwargs, func_name)
 
-    # get master fiber wave map from A_1
-    wavemap = pobjs['A_1'].mwaveprops['WAVEMAP']
+    s_normalize = pcheck(params, 'POLAR_NORMALIZE_STOKES_I', 's_normalize',
+                         kwargs, func_name)
+
     # combine pol_excl_bands
     pol_excl_bands = list(zip(pol_excl_bands_l, pol_excl_bands_u))
     # ---------------------------------------------------------------------
     # flatten data (across orders)
-    wl = wavemap.ravel()
+    wl = pprops['WAVEMAP'].ravel()
     pol = pprops['POL'].ravel()
     polerr = pprops['POLERR'].ravel()
     stokes_i = pprops['STOKESI'].ravel()
@@ -996,27 +1038,57 @@ def calculate_continuum(params, pobjs, pprops, **kwargs):
     flat_null1 = null1[sortmask]
     flat_null2 = null2[sortmask]
     # ---------------------------------------------------------------------
-    # calculate continuum polarization
-    if cont_det_mode == 'MOVING_MEDIAN':
-        contpol, xbin, ybin = continuum(flat_x, flat_pol,
-                                        binsize=pol_binsize,
-                                        overlap=pol_overlap,
-                                        window=6, mode='max',
-                                        use_linear_fit=True,
+    # calculate continuum stokes i
+    # ---------------------------------------------------------------------
+    if s_det_mode == 'MOVING_MEDIAN':
+        contflux, xbin, ybin = continuum(flat_x, flat_stokes_i,
+                                        binsize=stokes_binsize,
+                                        overlap=stokes_overlap,
+                                        window=scont_window, mode=scont_mode,
+                                        use_linear_fit=scont_linfit,
                                         excl_bands=pol_excl_bands)
-    elif cont_det_mode == 'IRAF':
-        contpol = fit_continuum(flat_x, flat_stokes_i,
-                                func=iraf_fit_func, order=iraf_cont_order,
-                                nit=iraf_nit, rej_low=iraf_rej_low,
-                                rej_high=iraf_rej_high, grow=iraf_grow,
-                                med_filt=iraf_med_filt,
-                                percentile_low=iraf_percentile_low,
-                                percentile_high=iraf_percentile_high,
-                                min_points=iraf_min_points, verbose=False)
+    elif s_det_mode == 'IRAF':
+        contflux = fit_continuum(flat_x, flat_stokes_i,
+                                 func=siraf_fit_func, order=siraf_cont_order,
+                                 nit=siraf_nit, rej_low=siraf_rej_low,
+                                 rej_high=siraf_rej_high, grow=siraf_grow,
+                                 med_filt=siraf_med_filt,
+                                 percentile_low=siraf_plow,
+                                 percentile_high=siraf_phigh,
+                                 min_points=siraf_min_pts, verbose=False)
         xbin, ybin = None, None
     else:
-        emsg = 'Continuum detection mode = {0} invalid'
-        WLOG(params, '', emsg.format(cont_det_mode))
+        emsg = 'Continuum detection (Stokes I) mode = {0} invalid'
+        WLOG(params, '', emsg.format(s_det_mode))
+        return ParamDict()
+    # normalize by continuum if required
+    if s_normalize:
+        flat_stokes_i = flat_stokes_i / contflux
+        flat_stokes_i_err = flat_stokes_i_err / contflux
+
+    # ---------------------------------------------------------------------
+    # calculate continuum polarization
+    # ---------------------------------------------------------------------
+    if p_det_mode == 'MOVING_MEDIAN':
+        cpout = continuum_polarization(flat_x, flat_pol, binsize=pol_binsize,
+                                       overlap=pol_overlap, mode=pcont_mode,
+                                       use_polyfit=pcont_use_polyfit,
+                                       deg_polyfit=pcont_poly_deg,
+                                       excl_bands=pol_excl_bands)
+        contpol, xbinpol, ybinpol = cpout
+    elif p_det_mode == 'IRAF':
+        contpol = fit_continuum(flat_x, flat_pol,
+                                 func=piraf_fit_func, order=piraf_cont_order,
+                                 nit=piraf_nit, rej_low=piraf_rej_low,
+                                 rej_high=piraf_rej_high, grow=piraf_grow,
+                                 med_filt=piraf_med_filt,
+                                 percentile_low=piraf_plow,
+                                 percentile_high=piraf_phigh,
+                                 min_points=piraf_min_pts, verbose=False)
+        xbinpol, ybinpol = None, None
+    else:
+        emsg = 'Continuum detection (POL) mode = {0} invalid'
+        WLOG(params, '', emsg.format(s_det_mode))
         return ParamDict()
     # ---------------------------------------------------------------------
     # update pprops
@@ -1027,9 +1099,12 @@ def calculate_continuum(params, pobjs, pprops, **kwargs):
     pprops['FLAT_STOKES_I_ERR'] = flat_stokes_i_err
     pprops['FLAT_NULL1'] = flat_null1
     pprops['FLAT_NULL2'] = flat_null2
+    pprops['CONT_FLUX'] = contflux
     pprops['CONT_POL'] = contpol
-    pprops['CONT_XBIN'] = xbin
-    pprops['CONT_YBIN'] = ybin
+    pprops['CONT_FLUX_XBIN'] = xbin
+    pprops['CONT_FLUX_YBIN'] = ybin
+    pprops['CONT_POL_XBIN'] = xbinpol
+    pprops['CONT_POL_YBIN'] = ybinpol
     # set sources
     keys = ['FLAT_X', 'FLAT_POL', 'FLAT_POLERR', 'FLAT_STOKES_I',
             'FLAT_STOKES_I_ERR', 'FLAT_NULL1', 'FLAT_NULL2', 'CONT_POL',
@@ -1043,6 +1118,270 @@ def calculate_continuum(params, pobjs, pprops, **kwargs):
     pprops.set_sources(keys, func_name)
     # return pprops
     return pprops
+
+
+def remove_continuum_polarization(params, pprops, **kwargs):
+    """
+        Function to remove the continuum polarization
+
+        :param params: ParamDict of constants
+        :param pprops: parameter dictionary, ParamDict containing data
+
+        Must contain at least:
+        - POL: numpy array (2D), e2ds degree of polarization data
+        - FLAT_X: numpy array (1D), flatten polarimetric x data
+       -  CONT_POL: numpy array (1D), e2ds continuum polarization data
+
+        :return: pprops parameter dictionary, the updated parameter dictionary
+
+        Adds/updates the following:
+         - POL: numpy array (2D), e2ds degree of polarization data
+         - ORDER_CONT_POL: numpy array (2D), e2ds degree of continuum
+                           polarization data
+    """
+    # set the function
+    func_name = display_func(params, 'remove_continuum_polarization', __NAME__)
+    # get parameters from param dict
+    remove_continuum = pcheck(params, 'POLAR_REMOVE_CONTINUUM',
+                              'remove_continuum', kwargs, func_name)
+    # get polar array
+    pol = pprops['POL']
+    # get master wave solution
+    wavemap = pprops['WAVEMAP']
+    # get the flat_x array
+    flat_x = pprops['FLAT_X']
+    cont_pol = pprops['CONT_POL']
+    # get the shape of the polar array
+    ydim, xdim = pol.shape
+    # initialize continuum as a NaN filled array
+    order_cont_pol = np.zeros(pol.shape) * np.nan
+    # ---------------------------------------------------------------------
+    # deal with removing continuum
+    if remove_continuum:
+        # interpolate and remove continuum (across orders)
+        for order_num in range(ydim):
+            # get wavelengths for current order
+            owave = wavemap[order_num]
+            # get the minimum and maximum wavelengths
+            wl_start, wl_final = np.nanmin(owave), np.nanmax(owave)
+            # get the polarimetry for this order
+            opolar = pol[order_num]
+            # create mask to get only continuum data within wavelength range
+            wlmask = (flat_x >= wl_start) * (flat_x <= wl_final)
+            # get continnum data within order range
+            wl_cont = flat_x[wlmask]
+            pol_cont = cont_pol[wlmask]
+            # interpolate points applying a cubic spline to the continuum data
+            pol_int = interp1d(wl_cont, pol_cont, kind='cubic')
+            # create continuum vector at same wavelength sampling as polar data
+            continuum_vec = pol_int(owave)
+            # save continuum with the same shape as input pol
+            order_cont_pol[order_num] = continuum_vec
+            # remove continuum from data
+            pol[order_num] = opolar - continuum_vec
+        # push values back into pprops
+        pprops['POL'] = pol
+        pprops.append_source('POL', func_name)
+    # ---------------------------------------------------------------------
+    # add order continuum polarisation to pprops
+    pprops['ORDER_CONT_POL'] = order_cont_pol
+    # set sources
+    pprops.set_source('ORDER_CONT_POL', func_name)
+    # return pprops
+    return pprops
+
+
+def normalize_stokes_i(params, pprops, **kwargs):
+    """
+        Function to normalize Stokes I by the continuum flux
+
+        :param params: ParamDict of constants
+
+        :param pprops: parameter dictionary, ParamDict containing data
+
+        Must contain at least:
+        - WAVE: numpy array (2D), e2ds wavelength data
+        - STOKESI: numpy array (2D), e2ds degree of polarization data
+        - POLERR: numpy array (2D), e2ds errors of degree of polarization
+        - FLAT_X: numpy array (1D), flatten polarimetric x data
+        - CONT_POL: numpy array (1D), e2ds continuum polarization data
+
+        :return loc: parameter dictionary, the updated parameter dictionary
+        Adds/updates the following:
+        - STOKESI: numpy array (2D), e2ds Stokes I data
+        - STOKESIERR: numpy array (2D), e2ds Stokes I error data
+        - ORDER_CONT_FLUX: numpy array (2D), e2ds flux continuum data
+    """
+    # set the function
+    func_name = display_func(params, 'normalize_stokes_i', __NAME__)
+    # get parameters from param dict
+    normalize = pcheck(params, 'POLAR_NORMALIZE_STOKES_I', 'normalize', kwargs,
+                       func_name)
+    # get polar array
+    stokesi = pprops['STOKESI']
+    stokesierr = pprops['STOKESIERR']
+    # get master wave solution
+    wavemap = pprops['WAVEMAP']
+    # get the flat_x array
+    flat_x = pprops['FLAT_X']
+    cont_pol = pprops['CONT_POL']
+    # get the shape of the polar array
+    ydim, xdim = stokesi.shape
+    # initialize continuum as a NaN filled array
+    order_cont_flux = np.zeros(stokesi.shape) * np.nan
+    # ---------------------------------------------------------------------
+    # deal with removing continuum
+    if normalize:
+        # ---------------------------------------------------------------------
+        # interpolate and remove continuum (across orders)
+        # loop around order data
+        for order_num in range(ydim):
+            # get wavelengths for current order
+            owave = wavemap[order_num]
+            # get the minimum and maximum wavelengths
+            wl_start, wl_final = np.nanmin(owave), np.nanmax(owave)
+            # get the polarimetry for this order
+            oflux = stokesi[order_num]
+            ofluxerr = stokesierr[order_num]
+            # create mask to get only continuum data within wavelength range
+            wlmask = (flat_x >= wl_start) * (flat_x <= wl_final)
+            # get continnum data within order range
+            wl_cont = flat_x[wlmask]
+            pol_cont = cont_pol[wlmask]
+            # interpolate points applying a cubic spline to the continuum data
+            pol_int = interp1d(wl_cont, pol_cont, kind='cubic')
+            # create continuum vector at same wavelength sampling as polar data
+            continuum_vec = pol_int(owave)
+            # save continuum with the same shape as input pol
+            order_cont_flux[order_num] = continuum_vec
+            # remove continuum from data
+            stokesi[order_num] = oflux / continuum_vec
+            stokesierr[order_num] = ofluxerr / continuum_vec
+            # push values back into pprops
+            pprops['STOKESI'] = stokesi
+            pprops['STOKESIERR'] = stokesierr
+            pprops.append_source('POL', func_name)
+    # ---------------------------------------------------------------------
+    # add order continuum polarisation to pprops
+    pprops['ORDER_CONT_FLUX'] = order_cont_flux
+    # set sources
+    pprops.set_source('ORDER_CONT_FLUX', func_name)
+    # return pprops
+    return pprops
+
+
+def clean_polar_data(params, pprops, sigclip=False, nsig=3, overwrite=False):
+    """
+    Function to clean polarimetry data.
+
+    :param loc: parameter dictionary, ParamDict to store data
+        Must contain at least:
+            WAVE: numpy array (2D), wavelength data
+            STOKESI: numpy array (2D), Stokes I data
+            STOKESIERR: numpy array (2D), errors of Stokes I
+            POL: numpy array (2D), degree of polarization data
+            POLERR: numpy array (2D), errors of degree of polarization
+            NULL2: numpy array (2D), 2nd null polarization
+    :return loc: parameter dictionaries,
+        The updated parameter dictionary adds/updates the following:
+            WAVE: numpy array (1D), wavelength data
+            STOKESI: numpy array (1D), Stokes I data
+            STOKESIERR: numpy array (1D), errors of Stokes I
+            POL: numpy array (1D), degree of polarization data
+            POLERR: numpy array (1D), errors of polarization
+            NULL2: numpy array (1D), 2nd null polarization
+
+    """
+    # set the function
+    func_name = display_func(params, 'clean_polar_data', __NAME__)
+    # storage for clean outputs
+    clean_wave, clean_stokesi, clean_stokesierr = [], [], []
+    clean_pol, clean_polerr, clean_null1, clean_null2 = [], [], [], []
+    clean_cont_pol, clean_cont_flux, clean_order = [], [], []
+    # get shape of the polar data
+    ydim, xdim = pprops['POL'].shape
+    # loop over each order
+    # loop over each order
+    for order_num in range(ydim):
+        # mask NaN values
+        mask = ~np.isnan(pprops['POL'][order_num])
+        mask &= ~np.isnan(pprops['STOKESI'][order_num])
+        mask &= ~np.isnan(pprops['NULL1'][order_num])
+        mask &= ~np.isnan(pprops['NULL2'][order_num])
+        mask &= ~np.isnan(pprops['STOKESIERR'][order_num])
+        mask &= ~np.isnan(pprops['POLERR'][order_num])
+        mask &= pprops['STOKESI'][order_num] > 0
+        mask &= ~np.isinf(pprops['POL'][order_num])
+        mask &= ~np.isinf(pprops['STOKESI'][order_num])
+        mask &= ~np.isinf(pprops['NULL1'][order_num])
+        mask &= ~np.isinf(pprops['NULL2'][order_num])
+        mask &= ~np.isinf(pprops['STOKESIERR'][order_num])
+        mask &= ~np.isinf(pprops['POLERR'][order_num])
+        # sigma clip
+        if sigclip:
+            opolm = pprops['POL'][order_num][mask]
+            median_pol = np.median(opolm)
+            medsig_pol = np.median(np.abs(opolm - median_pol)) / 0.67499
+            mask &= pprops['POL'][order_num] > median_pol - nsig * medsig_pol
+            mask &= pprops['POL'][order_num] < median_pol + nsig * medsig_pol
+        # get masked values
+        wl = pprops['WAVEMAP'][order_num][mask]
+        pol = pprops['POL'][order_num][mask]
+        polerr = pprops['POLERR'][order_num][mask]
+        flux = pprops['STOKESI'][order_num][mask]
+        fluxerr = pprops['STOKESIERR'][order_num][mask]
+        null1 = pprops['NULL1'][order_num][mask]
+        null2 = pprops['NULL2'][order_num][mask]
+        cont_pol = pprops['ORDER_CONT_POL'][order_num][mask]
+        cont_flux = pprops['ORDER_CONT_FLUX'][order_num][mask]
+        # test if order is not empty
+        if np.sum(mask) > 0:
+            clean_wave.append(wl)
+            clean_stokesi.append(flux)
+            clean_stokesierr.append(fluxerr)
+            clean_pol.append(pol)
+            clean_polerr.append(polerr)
+            clean_null1.append(null1)
+            clean_null2.append(null2)
+            clean_cont_pol.append(cont_pol)
+            clean_cont_flux.append(cont_flux)
+            clean_order.append([order_num] * np.sum(mask))
+        # deal with overwriting arrays
+        if overwrite:
+            pprops['WAVEMAP'][order_num][~mask] = np.nan
+            pprops['POL'][order_num][~mask] = np.nan
+            pprops['POLERR'][order_num][~mask] = np.nan
+            pprops['STOKESI'][order_num][~mask] = np.nan
+            pprops['STOKESIERR'][order_num][~mask] = np.nan
+            pprops['NULL1'][order_num][~mask] = np.nan
+            pprops['NULL2'][order_num][~mask] = np.nan
+            pprops['ORDER_CONT_POL'][order_num][~mask] = np.nan
+            pprops['ORDER_CONT_FLUX'][order_num][~mask] = np.nan
+            # set sources
+            keys = ['WAVEMAP', 'POL', 'POLERR', 'STOKESI', 'STOKESIERR',
+                    'NULL1', 'NULL2', 'ORDER_CONT_POL', 'ORDER_CONT_FLUX']
+            pprops.append_sources(keys, func_name)
+        # sort by wavelength (or pixel number)
+        sortmask = np.argsort(clean_wave)
+        # save back to properties
+        pprops['FLAT_X'] = np.array(clean_wave)[sortmask]
+        pprops['FLAT_POL'] = np.array(clean_pol)[sortmask]
+        pprops['FLAT_POLERR'] = np.array(clean_polerr)[sortmask]
+        pprops['FLAT_STOKESI'] = np.array(clean_stokesi)[sortmask]
+        pprops['FLAT_STOKESIERR'] = np.array(clean_stokesierr)[sortmask]
+        pprops['FLAT_NULL1'] = np.array(clean_null1)[sortmask]
+        pprops['FLAT_NULL2'] = np.array(clean_null2)[sortmask]
+        pprops['CONT_POL'] = np.array(clean_cont_pol)[sortmask]
+        pprops['CONT_FLUX'] = np.array(clean_cont_flux)[sortmask]
+        pprops['FLAT_ORDER'] = np.array(clean_order)[sortmask]
+        # set sources
+        keys = ['FLAT_X', 'FLAT_POL', 'FLAT_POLERR', 'FLAT_STOKESI',
+                'FLAT_STOKESIERR', 'FLAT_NULL1', 'FLAT_NULL2', 'CONT_POL',
+                'CONT_FLUX']
+        pprops.append_sources(keys, func_name)
+        pprops.set_source('FLAT_ORDER', func_name)
+        # return pprops
+        return pprops
 
 
 # =============================================================================
@@ -1373,9 +1712,10 @@ def polar_diff_method(params, pobjs, props, **kwargs):
     pprops['NULL1'] = null1
     pprops['NULL2'] = null2
     pprops['POLERR'] = pol_err
+    pprops['WAVEMAP'] = pobj.mwaveprops['WAVEMAP']
     pprops['METHOD'] = 'Difference'
     # set sources
-    keys = ['POL', 'NULL1', 'NULL2', 'POLERR', 'METHOD']
+    keys = ['POL', 'NULL1', 'NULL2', 'POLERR', 'WAVEMAP', 'METHOD']
     pprops.set_sources(keys, func_name)
     # return the properties
     return pprops
@@ -1564,7 +1904,8 @@ def polar_ratio_method(params, pobjs, props, **kwargs):
     pprops['NULL1'] = null1
     pprops['NULL2'] = null2
     pprops['POLERR'] = pol_err
-    pprops['METHOD'] = 'Difference'
+    pprops['WAVEMAP'] = pobj.mwaveprops['WAVEMAP']
+    pprops['METHOD'] = 'Ratio'
     # set sources
     keys = ['POL', 'NULL1', 'NULL2', 'POLERR', 'METHOD']
     pprops.set_sources(keys, func_name)
@@ -1838,6 +2179,112 @@ def fit_continuum(wav, spec, func='polynomial', order=3, nit=5,
         print("  unfiltered rms=%.3e" % osigm)
     # return continuum
     return cont
+
+
+def continuum_polarization(x, y, binsize=200, overlap=100,
+                           mode="median", use_polyfit=True,
+                           deg_polyfit=3, excl_bands=None):
+    """
+    Function to calculate continuum polarization
+    :param x,y: numpy array (1D), input data (x and y must be of the same size)
+    :param binsize: int, number of points in each bin
+    :param overlap: int, number of points to overlap with adjacent bins
+    :param sigmaclip: int, number of times sigma to cut-off points
+    :param mode: string, set combine mode, where mode accepts "median", "mean",
+                 "max"
+    :param use_linear_fit: bool, whether to use the linar fit
+    :param excl_bands: list of pairs of float, list of wavelength ranges
+                        ([wl0,wlf]) to exclude data for continuum detection
+
+    :return continuum, xbin, ybin
+        continuum: numpy array (1D) of the same size as input arrays containing
+                   the continuum data already interpolated to the same points
+                   as input data.
+        xbin,ybin: numpy arrays (1D) containing the bins used to interpolate
+                   data for obtaining the continuum
+    """
+
+    # set number of bins given the input array length and the bin size
+    nbins = int(np.floor(len(x) / binsize)) + 1
+
+    # initialize arrays to store binned data
+    xbin, ybin = [], []
+
+    for i in range(nbins):
+        # get first and last index within the bin
+        idx0 = i * binsize - overlap
+        idxf = (i + 1) * binsize + overlap
+        # if it reaches the edges then reset indexes
+        if idx0 < 0:
+            idx0 = 0
+        if idxf >= len(x):
+            idxf = len(x) - 1
+        # get data within the bin
+        xbin_tmp = np.array(x[idx0:idxf])
+        ybin_tmp = np.array(y[idx0:idxf])
+
+        # create mask of exclusion bands
+        excl_mask = np.full(np.shape(xbin_tmp), False, dtype=bool)
+        for band in excl_bands:
+            excl_mask += (xbin_tmp > band[0]) & (xbin_tmp < band[1])
+
+        # mask data within telluric bands
+        xtmp = xbin_tmp[~excl_mask]
+        ytmp = ybin_tmp[~excl_mask]
+
+        # create mask to get rid of NaNs
+        nanmask = ~np.isnan(ytmp)
+
+        if i == 0:
+            xbin.append(x[0] - np.abs(x[1] - x[0]))
+            # create mask to get rid of NaNs
+            localnanmask = np.logical_not(np.isnan(y))
+            ybin.append(np.median(y[localnanmask][:binsize]))
+
+        if len(xtmp[nanmask]) > 2:
+            # calculate mean x within the bin
+            xmean = np.mean(xtmp[nanmask])
+
+            # save mean x wihthin bin
+            xbin.append(xmean)
+
+            if mode == 'median':
+                # save median y of filtered data
+                ybin.append(np.median(ytmp[nanmask]))
+            elif mode == 'mean':
+                # save mean y of filtered data
+                ybin.append(np.mean(ytmp[nanmask]))
+            else:
+                emsg = 'Mode "{0}" is not recognised for continuum fit'
+                raise mp.general.DrsMathException(emsg.format(mode))
+
+        if i == nbins - 1:
+            xbin.append(x[-1] + np.abs(x[-1] - x[-2]))
+            # create mask to get rid of NaNs
+            localnanmask = np.logical_not(np.isnan(y))
+            ybin.append(np.median(y[localnanmask][-binsize:]))
+
+    # the continuum may be obtained either by polynomial fit or by
+    #  cubic interpolation
+    if use_polyfit:
+        # Option to use a polynomial fit
+        # Fit polynomial function to sample points
+        pfit = np.polyfit(xbin, ybin, deg_polyfit)
+        # Set numpy poly1d objects
+        p = np.poly1d(pfit)
+        # Evaluate polynomial in the original grid
+        cont = p(x)
+    else:
+        # option to interpolate points applying a cubic spline to the
+        #     continuum data
+        sfit = interp1d(xbin, ybin, kind='cubic')
+        # Resample interpolation to the original grid
+        cont = sfit(x)
+
+    # return continuum polarization and x and y bins
+    return cont, xbin, ybin
+
+
 
 
 # =============================================================================
