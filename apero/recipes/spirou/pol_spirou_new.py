@@ -103,33 +103,87 @@ def __main__(recipe, params):
 
     # TODO: ------------------------------------------------------------------
     # TODO: Add these to constants file
+    # Wheter or not to correct for BERV shift before calculate polarimetry
     params.set('POLAR_BERV_CORRECT', value=True, source=mainname)
+    # Whether or not to use telluric subctracted flux
     params.set('POLAR_TELLU_CORRECT', value=True, source=mainname)
+    # Wheter or not to correct for SOURCE RV shift before calculate polarimetry
     params.set('POLAR_SOURCERV_CORRECT', value=True, source=mainname)
+    # Define the fiber used as the main fiber
     params.set('POLAR_MASTER_FIBER', value='AB', source=mainname)
-
+    # Define the file definition describing the CCF FILE used to get the RV
     params.set('POLAR_CCF_FILE', value='CCF_RV', source=mainname)
+    # Define the ccf mask used for the RV
     params.set('POLAR_CCF_MASK', value='masque_sept18_andres_trans50.mas',
                source=mainname)
-
+    # Define the file definition describing the telluric object file
     params.set('POLAR_TCORR_FILE', value='TELLU_OBJ', source=mainname)
+    # Define the file definition describing the telluric recon file
     params.set('POLAR_RECON_FILE', value='TELLU_RECON', source=mainname)
-
+    #  Define the polarimetry continuum bin size for the stokes
+    #      continuum correction
+    params.set('POLAR_SCONT_BINSIZE', value=900, source=mainname)
+    #  Define the polarimetry continuum overlap size for the stokes
+    #      continuum correction
+    params.set('POLAR_SCONT_OVERLAP', value=200, source=mainname)
+    #  Define the polarimetry continuum bin size for the polar correction
+    params.set('POLAR_PCONT_BINSIZE', value=900, source=mainname)
+    #  Define the polarimetry continuum overlap size for the polar correction
+    params.set('POLAR_PCONT_OVERLAP', value=200, source=mainname)
+    # Whether or not to inerpolate flux values to correct for wavelength
+    #     shifts between exposures
     params.set('POLAR_INTERPOLATE_FLUX', value=True, source=mainname)
+    # Select stokes I continuum detection algorithm:
+    #      'IRAF' or 'MOVING_MEDIAN'
     params.set('POLAR_STOKESI_CONT_MODE', value='MOVING_MEDIAN',
                source=mainname)
+    # Select polarization continuum detection algorithm:
+    #      'IRAF' or 'MOVING_MEDIAN'
+    params.set('POLAR_POLAR_CONT_MODE', value='MOVING_MEDIAN',
+               source=mainname)
+    # moving median mode for polar correction
+    # define the continuum window size for the stokes i continuum correction
+    params.set('POLAR_SCONT_WINDOW', value=6, source=mainname)
+    # define the continuum mode for the stokes i continuum correction
+    params.set('POLAR_SCONT_MODE', value='max', source=mainname)
+    # define whether to use a linear fit for the stokes i continuum correction
+    params.set('POLAR_SCONT_LINFIT', value=True, source=mainname)
+
     # function to fit to the polar continuum: must be 'polynomial' or 'spline3'
-    params.set('POLAR_IRAF_FIT_FUNC', value='polynomial', source=mainname)
+    params.set('POLAR_SIRAF_FIT_FUNC', value='polynomial', source=mainname)
+    # polar continuum fit function order: 'polynomial': degree or
+    #     'spline3': number of knots
+    params.set('POLAR_SIRAF_CONT_ORD', value=5, source=mainname)
+    params.set('POLAR_SIRAF_NIT', value=5, source=mainname)
+    params.set('POLAR_SIRAF_REJ_LOW', value=3.0, source=mainname)
+    params.set('POLAR_SIRAF_REJ_HIGH', value=3.0, source=mainname)
+    params.set('POLAR_SIRAF_GROW', value=1, source=mainname)
+    params.set('POLAR_SIRAF_MED_FILT', value=0, source=mainname)
+    params.set('POLAR_SIRAF_PER_LOW', value=0.0, source=mainname)
+    params.set('POLAR_SIRAF_PER_HIGH', value=100.0, source=mainname)
+    params.set('POLAR_SIRAF_MIN_PTS', value=10, source=mainname)
+    # define the continuum mode for the polar continuum correction
+    params.set('POLAR_PCONT_MODE', value='median', source=mainname)
+    # define whether to use a polynomial fit for the polar continuum correction
+    params.set('POLAR_PCONT_USE_POLYFIT', value=True, source=mainname)
+    # define the polynomial fit degree for the polar continuum correction
+    params.set('POLAR_PCONT_POLY_DEG', value=2, source=mainname)
+    # function to fit to the polar continuum: must be 'polynomial' or 'spline3'
+    params.set('POLAR_PIRAF_FIT_FUNC', value='polynomial', source=mainname)
     # polar continuum fit function order: 'polynomial': degree or 'spline3': number of knots
-    params.set('POLAR_IRAF_CONT_ORD', value=3, source=mainname)
-    params.set('POLAR_IRAF_NIT', value=5, source=mainname)
-    params.set('POLAR_IRAF_REJ_LOW', value=3.0, source=mainname)
-    params.set('POLAR_IRAF_REJ_HIGH', value=3.0, source=mainname)
-    params.set('POLAR_IRAF_GROW', value=1, source=mainname)
-    params.set('POLAR_IRAF_MED_FILT', value=0, source=mainname)
-    params.set('POLAR_IRAF_PER_LOW', value=0.0, source=mainname)
-    params.set('POLAR_IRAF_PER_HIGH', value=100.0, source=mainname)
-    params.set('POLAR_IRAF_MIN_PTS', value=10, source=mainname)
+    params.set('POLAR_PIRAF_CONT_ORD', value=3, source=mainname)
+    params.set('POLAR_PIRAF_NIT', value=5, source=mainname)
+    params.set('POLAR_PIRAF_REJ_LOW', value=3.0, source=mainname)
+    params.set('POLAR_PIRAF_REJ_HIGH', value=3.0, source=mainname)
+    params.set('POLAR_PIRAF_GROW', value=1, source=mainname)
+    params.set('POLAR_PIRAF_MED_FILT', value=0, source=mainname)
+    params.set('POLAR_PIRAF_PER_LOW', value=0.0, source=mainname)
+    params.set('POLAR_PIRAF_PER_HIGH', value=100.0, source=mainname)
+    params.set('POLAR_PIRAF_MIN_PTS', value=10, source=mainname)
+    # define whether to remove continuum polarization
+    params.set('POLAR_REMOVE_CONTINUUM', value=True, source=mainname)
+    # define whether to normalize Stokes I
+    params.set('POLAR_NORMALIZE_STOKES_I', value=True, source=mainname)
     # TODO: ------------------------------------------------------------------
 
     # set the location (must do before any plotting starts)
@@ -152,25 +206,22 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Calculate continuum (for plotting)
     # ----------------------------------------------------------------------
-    pprops = polar.calculate_continuum(params, pobjects, pprops)
+    pprops = general_new.calculate_continuum(params, pprops)
 
     # ----------------------------------------------------------------------
     # Remove continuum polarization
     # ----------------------------------------------------------------------
-
-    # TODO: This is unfinished
+    pprops = general_new.remove_continuum_polarization(params, pprops)
 
     # ----------------------------------------------------------------------
     # Normalize Stokes I
     # ----------------------------------------------------------------------
-
-    # TODO: This is unfinished
+    pprops = general_new.normalize_stokes_i(params, pprops)
 
     # ----------------------------------------------------------------------
     # Apply sigma-clipping
     # ----------------------------------------------------------------------
-
-    # TODO: This is unfinished
+    pprops = general_new.clean_polar_data(params, pprops)
 
     # ----------------------------------------------------------------------
     # Plots
