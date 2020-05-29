@@ -503,15 +503,18 @@ def delta_v_rms_2d(spe, wave, sigdet, threshold, size):
     nspe = (spe[:, 2:] - spe[:, :-2]) / sxn
     # get the mask value
     maskv = flag[:, 2:] * flag[:, 1:-1] * flag[:, :-2]
-    # get the total
+    # get the total per order
     tot = mp.nansum(sxn * ((nwave * nspe) ** 2) * maskv, axis=1)
     # convert to dvrms2
     with warnings.catch_warnings(record=True) as _:
         dvrms2 = (speed_of_light_ms ** 2) / abs(tot)
     # weighted mean of dvrms2 values
     weightedmean = 1. / np.sqrt(mp.nansum(1.0 / dvrms2))
+    # per order value
+    # TODO: is this correct?
+    weightedmeanorder = 1./ np.sqrt(1.0 / dvrms2)
     # return dv rms and weighted mean
-    return dvrms2, weightedmean
+    return dvrms2, weightedmean, weightedmeanorder
 
 
 def remove_telluric_domain(params, recipe, infile, fiber, **kwargs):
@@ -715,7 +718,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     dkwargs = dict(spe=image, wave=wavemap, sigdet=noise_sigdet,
                    size=noise_size, threshold=noise_thres)
     # run DeltaVrms2D
-    dvrmsref, wmeanref = delta_v_rms_2d(**dkwargs)
+    dvrmsref, wmeanref, wmeanrefo = delta_v_rms_2d(**dkwargs)
     # log the estimated RV uncertainty
     wargs = [fiber, wmeanref]
     WLOG(params, 'info', TextEntry('40-020-00003', args=wargs))
@@ -785,6 +788,8 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     WLOG(params, 'info', TextEntry('40-020-00004', args=wargs))
     # ----------------------------------------------------------------------
     # add to output array
+    props['TOT_SPEC_RMS'] = wmeanref
+    props['ORD_SPEC_RMS'] = wmeanrefo
     props['MEAN_CCF'] = mean_ccf
     props['MEAN_RV'] = ccf_rv
     props['MEAN_CONTRAST'] = ccf_contrast
@@ -793,8 +798,9 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     props['MEAN_CCF_FIT'] = mean_ccf_fit
     props['MEAN_RV_NOISE'] = rv_noise
     # set the source
-    keys = ['MEAN_CCF', 'MEAN_RV', 'MEAN_CONTRAST', 'MEAN_FWHM', 'MEAN_CCF_RES',
-            'MEAN_CCF_FIT', 'MEAN_RV_NOISE']
+    keys = ['TOT_SPEC_RMS', 'ORD_SPEC_RMS', 'MEAN_CCF', 'MEAN_RV',
+            'MEAN_CONTRAST', 'MEAN_FWHM', 'MEAN_CCF_RES', 'MEAN_CCF_FIT',
+            'MEAN_RV_NOISE']
     props.set_sources(keys, func_name)
     # add constants to props
     props['CCF_MASK'] = ccfmask
@@ -874,7 +880,7 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     dkwargs = dict(spe=image, wave=wavemap, sigdet=noise_sigdet,
                    size=noise_size, threshold=noise_thres)
     # run DeltaVrms2D
-    dvrmsref, wmeanref = delta_v_rms_2d(**dkwargs)
+    dvrmsref, wmeanref, wmeanrefo = delta_v_rms_2d(**dkwargs)
 
     # log the estimated RV uncertainty
     wargs = [fiber, wmeanref]
@@ -937,6 +943,8 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     WLOG(params, 'info', TextEntry('40-020-00004', args=wargs))
     # ----------------------------------------------------------------------
     # add to output array
+    props['TOT_SPEC_RMS'] = wmeanref
+    props['ORD_SPEC_RMS'] = wmeanrefo
     props['MEAN_CCF'] = mean_ccf
     props['MEAN_RV'] = ccf_rv
     props['MEAN_CONTRAST'] = ccf_contrast
@@ -945,8 +953,9 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     props['MEAN_CCF_FIT'] = mean_ccf_fit
     props['MEAN_RV_NOISE'] = rv_noise
     # set the source
-    keys = ['MEAN_CCF', 'MEAN_RV', 'MEAN_CONTRAST', 'MEAN_FWHM',
-            'MEAN_CCF_COEFFS', 'MEAN_CCF_FIT', 'MEAN_RV_NOISE']
+    keys = ['TOT_SPEC_RMS', 'ORD_SPEC_RMS', 'MEAN_CCF', 'MEAN_RV',
+            'MEAN_CONTRAST', 'MEAN_FWHM', 'MEAN_CCF_COEFFS', 'MEAN_CCF_FIT',
+            'MEAN_RV_NOISE']
     props.set_sources(keys, func_name)
     # add constants to props
     props['CCF_MASK'] = ccfmask
@@ -1297,6 +1306,9 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     table2['DC'] = coeffs[:, 3]
     table2['SNR'] = props['CCF_SNR']
     table2['NORM'] = props['CCF_NORM']
+    table2['DVRMS_SP'] = props['ORD_SPEC_RMS']
+    # TODO: fill out KW_DVRMS_CC value
+    table2['DVRMS_CC'] = np.repeat([np.nan], len(props['ORD_SPEC_RMS']))
     # ----------------------------------------------------------------------
     # archive ccf to fits file
     # ----------------------------------------------------------------------
@@ -1333,6 +1345,9 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     ccf_file.add_hkey('KW_FIBER', value=fiber)
     # ----------------------------------------------------------------------
     # add results from the CCF
+    ccf_file.add_hkey('KW_CCF_DVRMS_SP', value=props['TOT_SPEC_RMS'])
+    # TODO: fill out KW_DVRMS_CC value
+    ccf_file.add_hkey('KW_CCF_DVRMS_CC', value='None')
     ccf_file.add_hkey('KW_CCF_MEAN_RV', value=props['MEAN_RV'])
     ccf_file.add_hkey('KW_CCF_MEAN_CONSTRAST', value=props['MEAN_CONTRAST'])
     ccf_file.add_hkey('KW_CCF_MEAN_FWHM', value=props['MEAN_FWHM'])
