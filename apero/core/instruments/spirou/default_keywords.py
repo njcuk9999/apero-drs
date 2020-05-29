@@ -1547,6 +1547,18 @@ KW_CCF_MASK_WID.set(key='CCFMSKWD',
 KW_CCF_MASK_UNITS = KW_CCF_MASK_UNITS.copy(__NAME__)
 KW_CCF_MASK_UNITS.set(key='CCFMUNIT', comment='Units used in CCF Mask')
 
+# the dv rms calculated for spectrum
+KW_CCF_DVRMS_SP = KW_CCF_DVRMS_SP.copy(__NAME__)
+KW_CCF_DVRMS_SP.set(key='DVRMS_SP',
+                    comment='RV photon-noise uncertainty calc on E2DS '
+                            'spectrum [km/s] ')
+
+# the dev rms calculated during the CCF
+KW_CCF_DVRMS_CC = KW_CCF_DVRMS_CC.copy(__NAME__)
+KW_CCF_DVRMS_CC.set(key='DVRMS_CC',
+                    comment='final photon-noise RV uncertainty calc on mean '
+                            'CCF [km/s]')
+
 # The radial velocity measured from the wave solution FP CCF
 KW_CCF_RV_WAVE_FP = KW_CCF_RV_WAVE_FP.copy(__NAME__)
 KW_CCF_RV_WAVE_FP.set(key='RV_WAVFP',
