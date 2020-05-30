@@ -244,7 +244,7 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None,
             uinput = uinput.strip()
         else:
             uinput = input(' >>\t')
-        # deal with ints, floats, logic
+        # deal with string ints, floats, logic
         if dtype in ['int', 'float', 'bool']:
             try:
                 basetype = eval(dtype)
@@ -257,6 +257,15 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None,
                     cprint('Response must be valid {0}'.format(dtype), 'y')
                     check = True
                     continue
+        # deal with int/float/logic
+        if dtype in [int, float, bool]:
+            try:
+                uinput = dtype(uinput)
+                check = False
+            except Exception as _:
+                cprint('Response must be valid {0}'.format(dtype.__name__), 'y')
+                check = True
+                continue
         # deal with paths
         elif dtype == 'path':
             # --------------------------------------------------------------
