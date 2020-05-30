@@ -2,8 +2,85 @@ Changelog
 =========
 
 
-0.6.093 (2020-05-23)
+0.6.097 (2020-05-30)
 --------------------
+- `Setup.install.py` and `setup.newprofile.py` - change os.path to
+  pathlib.Path. [njcuk9999]
+- `Apero.tools.module.setup.drs_installation.py` - replace os.path with
+  pathlib.Path. [njcuk9999]
+- `Apero.io.drs_path.py` - change copy tree to use pathlib.Path.
+  [njcuk9999]
+- `Apero.core.constants.param_functions.py` - allow `get_relative_folder` to
+  accept pathlib.Path. [njcuk9999]
+- `Apero.core.instruments.*.default_keywords.py` - add `KW_CCF_DVRMS_SP` and
+  `KW_CCF_DVRMS_CC` keyword arguments. [njcuk9999]
+- `Apero.science.velocity.general.py` - add a photon noise per order
+  calculation and save to ccf table/header. [njcuk9999]
+- Documnetation.working.user.general.todo.rst - update todo list.
+  [njcuk9999]
+- `Apero.recipes.spirou.pol_spirou_new.py` and
+  `science.polar.general_new.py` - continue work on new polar code from
+  @eder. [njcuk9999]
+- `Apero.data.spirou.reset.runs.mini_run.ini` - add extra science targets
+  (rv standards) [njcuk9999]
+- `Apero.core.instruments.*.default_constants.py` - remove polar consts
+  (for now) [njcuk9999]
+
+
+0.6.096 (2020-05-27)
+--------------------
+- `Setup.newprofile.py` - add TODO as setup file is at the wrong path and
+  needs fixing. [njcuk9999]
+- `Apero.core.math.general.py` - add back in continuum function for now
+  (until new polar code ready) [njcuk9999]
+- `Td_data/apero-drs/setup/newprofile.py` - add debug and clean options.
+  [njcuk9999]
+- `Misc.tools.ccf_plot.py` - separate out science and reference fiber
+  results into frames for plot. [njcuk9999]
+- `Apero.recipes.spirou.pol_spirou_new.py` and
+  `science.polar.general_new.py` - continue polar update from @eder.
+  [njcuk9999]
+
+
+0.6.095 (2020-05-25)
+--------------------
+- Test for git version adding for EA. [njcuk9999]
+- `Apero.science.calib.dark.py` - make `large_image_median` -->
+  `large_image_combine` and specify the median math mode (same as before
+  but changed input) [njcuk9999]
+- `Apero.recipes.spirou.cal_shape_master_spirou.py` +
+  `apero.science.calib.shape.py` + `apero.io.drsimage.py` - make
+  `large_image_median` --> `large_image_combine` and use a mean to combine
+  fpcube and return fpmaster instead. [njcuk9999]
+- `Apero.science.calib.shape.py` - add back break point to investiage
+  fpdata shape error. [njcuk9999]
+
+
+0.6.094 (2020-05-24)
+--------------------
+- `Apero.science.calib.shape.py` - need to increase row every iteration
+  row+=1. [njcuk9999]
+- `Apero.io.drs_image.py` + `apero.science.calib.shape.py` - move break
+  point. [njcuk9999]
+- `Apero.io.drs_image.py` - add breakpoint to figure out problem.
+  [njcuk9999]
+- `Apero.io.drs_image.py` - correct typo `b_it` --> `f_it`. [njcuk9999]
+- `Apero.io.drs_image.py` - add more printouts. [njcuk9999]
+- `Apero.io.drs_image.py` - make sure bins are scaled by number of pixels
+  in image0. [njcuk9999]
+- `Apero.io.drs_image.py` - make sure npy files have leading zeros.
+  [njcuk9999]
+- `Apero.io.drs_image.py` - remove dirs until filepath does not exist.
+  [njcuk9999]
+- `Apero.io.drs_image.py` + `science.calib.dark.py` and
+  `science.calib.shape.py` - allow reading of fits and npy files in
+  `large_image_median`. [njcuk9999]
+- `Apero.io.drs_image.py` - fix npyfilelist. [njcuk9999]
+- `Apero.io.drs_image.py` - clean up and fix typo. [njcuk9999]
+- `Apero.io.drs_image.py` - correct typo wargs -> `*wargs`. [njcuk9999]
+- `Apero.science.calib.dark.py` - correct outdir (no directory defined)
+  [njcuk9999]
+- Update date/version/changelog/documentation. [njcuk9999]
 - `Apero.recipes.spirou.cal_wave_master_spirou.py` and
   `apero.science.calib.wave.py` - add rv difference bettwen fibers QC.
   [njcuk9999]
@@ -21,6 +98,10 @@ Changelog
 - `Apero.recipes.spirou.cal_wave_night_spirou.py` +
   `apero.science.calib.wave.py` - add more breakpoints. [njcuk9999]
 - Updaet date/version/changelog/documentation. [njcuk9999]
+
+
+0.6.093 (2020-05-22)
+--------------------
 - `Apero.science.calib.wave.py` - add force fiber to get wavesolution - do
   not use wprops in `night_wavesolution` (use only wavemap and wavefile)
   [njcuk9999]
