@@ -20,6 +20,7 @@ import pkg_resources
 import shutil
 import sys
 from typing import Union, List, Type
+from pathlib import Path
 
 from apero.core.constants import constant_functions
 from apero.lang import drs_exceptions
@@ -1716,7 +1717,7 @@ def _get_subdir(directory, instrument, source):
     return subdir
 
 
-def get_relative_folder(package, folder):
+def get_relative_folder(package, folder: Union[str, Path]):
     """
     Get the absolute path of folder defined at relative path
     folder from package
@@ -1728,6 +1729,10 @@ def get_relative_folder(package, folder):
                   file
     """
     global REL_CACHE
+
+    # TODO: update to pathlib.Path
+    if isinstance(folder, Path):
+        folder = str(folder)
     # set function name (cannot break here --> no access to inputs)
     func_name = display_func(None, 'get_relative_folder', __NAME__)
     # get text entry
