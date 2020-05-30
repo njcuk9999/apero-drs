@@ -258,7 +258,7 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None,
                     check = True
                     continue
         # deal with int/float/logic
-        if dtype in [int, float, bool]:
+        if dtype in [int, float, bool, str]:
             try:
                 uinput = dtype(uinput)
                 check = False
