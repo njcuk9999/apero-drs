@@ -2,6 +2,30 @@ Changelog
 =========
 
 
+0.6.098 (2020-06-01)
+--------------------
+- `Apero.plotting.plot_functions.py` - adjust ccf plot. [njcuk9999]
+- `Apero.plotting.plot_functions.py` - update scale and add legend to
+  `plot_ccf_photon_uncert`. [njcuk9999]
+- `Apero.science.velocity.general.py` - correct `rv_noise` for
+  `compute_ccf_fp`. [njcuk9999]
+- `Apero.science.velocity.general.py` - correct `rv_noise`. [njcuk9999]
+- `Apero.science.velocity.general.py` - add breakpoint to test bug.
+  [njcuk9999]
+- `Apero.science.velocity.general.py` - add EA calculation of DVRMS CC
+  (from CCF) [njcuk9999]
+- `Apero.science.velocity.general.py` - remove redundant 1/1/x --> x.
+  [njcuk9999]
+- `Apero.plotting.plot_functions.py` - Update `plot_ccf_photon_uncert` for
+  ccf + sp noise. [njcuk9999]
+- `Core.instruments.*.default_keywords.py` - remove `KW_CCF_MEAN_RV_NOISE`
+  (now use `KW_CCF_DVRMS_SP` and `KW_CCF_DVRMS_CC)` [njcuk9999]
+- `Apero.tools.module.setup.drs_installation.py` - add str. [njcuk9999]
+- `Apero.tools.module.setup.drs_installation.py` - add int/float/bool.
+  [njcuk9999]
+- Update date/version/changelog/documentation. [njcuk9999]
+
+
 0.6.097 (2020-05-30)
 --------------------
 - `Setup.install.py` and `setup.newprofile.py` - change os.path to
