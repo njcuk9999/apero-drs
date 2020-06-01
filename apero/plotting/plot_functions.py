@@ -3342,12 +3342,12 @@ def plot_ccf_photon_uncert(plotter, graph, kwargs):
     fig, frame = graph.set_figure(plotter)
     # ------------------------------------------------------------------
     # plot fits
-    frame.plot(x, y_sp, label='DVRMS Spectrum')
-    frame.plot(x, y_ccf, label='DVRMS CCF')
+    frame.plot(x, y_sp, label='DVRMS Spectrum', marker='x', linestyle='None')
+    frame.plot(x, y_ccf, label='DVRMS CCF', marker='o', linestyle='None')
     # set title labels limits
     title = 'Photon noise uncertainty versus spectral order'
     frame.set(xlabel='Order number', ylabel='Photon noise uncertainty [m/s]',
-              title=title, ylim=(0, 200))
+              title=title, ylim=(mp.nanmin(y_ccf), mp.nanmax(y_ccf)))
     frame.legend(loc=0)
     # ------------------------------------------------------------------
     # wrap up using plotter
