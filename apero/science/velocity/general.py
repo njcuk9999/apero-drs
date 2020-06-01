@@ -905,28 +905,8 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     # get the FWHM value
     ccf_fwhm = mean_ccf_coeffs[2] * mp.fwhm()
     # ----------------------------------------------------------------------
-
-    # TODO: Need Etienne's help this ccf_noise is not the same as
-    # TODO:   Francois one - his gives a sigdet per rv element
-
-    #  CCF_NOISE uncertainty
-    ccf_noise_tot = np.sqrt(mp.nanmean(props['CCF_NOISE'] ** 2, axis=0))
-    # Calculate the slope of the CCF
-    average_ccf_diff = (mean_ccf[2:] - mean_ccf[:-2])
-    rv_ccf_diff = (props['RV_CCF'][2:] - props['RV_CCF'][:-2])
-    ccf_slope = average_ccf_diff / rv_ccf_diff
-    # Calculate the CCF oversampling
-    ccf_oversamp = image_pixel_size / ccfstep
-    # create a list of indices based on the oversample grid size
-    flist = np.arange(np.round(len(ccf_slope) / ccf_oversamp))
-    indexlist = np.array(flist * ccf_oversamp, dtype=int)
-    # we only want the unique pixels (not oversampled)
-    indexlist = np.unique(indexlist)
-    # get the rv noise from the sum of pixels for those points that are
-    #     not oversampled
-    keep_ccf_slope = ccf_slope[indexlist]
-    keep_ccf_noise = ccf_noise_tot[1:-1][indexlist]
-    rv_noise = mp.nansum(keep_ccf_slope ** 2 / keep_ccf_noise ** 2) ** (-0.5)
+    #  combined CCF_NOISE uncertainty
+    rv_noise = 1.0 / np.sqrt(mp.nansum(1.0 / props['CCF_NOISE'] ** 2))
     # ----------------------------------------------------------------------
     # log the stats
     wargs = [ccf_contrast, float(mean_ccf_coeffs[1]), rv_noise, ccf_fwhm]
