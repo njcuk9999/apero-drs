@@ -3347,7 +3347,8 @@ def plot_ccf_photon_uncert(plotter, graph, kwargs):
     # set title labels limits
     title = 'Photon noise uncertainty versus spectral order'
     frame.set(xlabel='Order number', ylabel='Photon noise uncertainty [m/s]',
-              title=title)
+              title=title, ylim=(0, 200))
+    frame.legend(loc=0)
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)
