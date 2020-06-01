@@ -3335,16 +3335,18 @@ def plot_ccf_photon_uncert(plotter, graph, kwargs):
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     x = kwargs.get('x')
-    y = kwargs.get('y')
+    y_sp = kwargs.get('y_sp')
+    y_ccf = kwargs.get('y_cc')
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter)
     # ------------------------------------------------------------------
     # plot fits
-    frame.plot(x, y)
+    frame.plot(x, y_sp, label='DVRMS Spectrum')
+    frame.plot(x, y_ccf, label='DVRMS CCF')
     # set title labels limits
     title = 'Photon noise uncertainty versus spectral order'
-    frame.set(xlabel='Order number', ylabel='Photon noise uncertainty',
+    frame.set(xlabel='Order number', ylabel='Photon noise uncertainty [m/s]',
               title=title)
     # ------------------------------------------------------------------
     # wrap up using plotter
