@@ -741,10 +741,10 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
                 nbo=nbo)
     # the photon noise uncertainty plot
     recipe.plot('CCF_PHOTON_UNCERT', x=np.arange(nbo), y_sp=wmeanrefo,
-                y_ccf=props['CCF_NOISE'])
+                y_cc=props['CCF_NOISE'])
     # as a summary plot
     recipe.plot('SUM_CCF_PHOTON_UNCERT', x=np.arange(nbo), y_sp=wmeanrefo,
-                y_ccf=props['CCF_NOISE'])
+                y_cc=props['CCF_NOISE'])
     # ----------------------------------------------------------------------
     # Calculate the mean CCF
     # ----------------------------------------------------------------------
