@@ -767,7 +767,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     ccf_fwhm = mean_ccf_coeffs[2] * mp.fwhm()
     # ----------------------------------------------------------------------
     #  combined CCF_NOISE uncertainty
-    rv_noise = 1.0 / np.sqrt(mp.nansum(props['CCF_NOISE'] ** 2))
+    rv_noise = 1.0 / np.sqrt(mp.nansum(1.0 / props['CCF_NOISE'] ** 2))
     # ----------------------------------------------------------------------
     # log the stats
     wargs = [ccf_contrast, float(mean_ccf_coeffs[1]), rv_noise, ccf_fwhm]
@@ -1068,7 +1068,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
             ccf_all.append(np.repeat(np.nan, len(rv_ccf)))
             ccf_all_fit.append(np.repeat(np.nan, len(rv_ccf)))
             ccf_all_results.append(np.repeat(np.nan, 4))
-            ccf_noise_all.append(np.repeat(np.nan, len(rv_ccf)))
+            ccf_noise_all.append(np.nan)
             ccf_lines.append(0)
             ccf_all_snr.append(np.nan)
             ccf_norm_all.append(np.nan)
@@ -1083,7 +1083,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
             ccf_all.append(np.repeat(np.nan, len(rv_ccf)))
             ccf_all_fit.append(np.repeat(np.nan, len(rv_ccf)))
             ccf_all_results.append(np.repeat(np.nan, 4))
-            ccf_noise_all.append(np.repeat(np.nan, len(rv_ccf)))
+            ccf_noise_all.append(np.nan)
             ccf_lines.append(0)
             ccf_all_snr.append(np.nan)
             ccf_norm_all.append(np.nan)
@@ -1155,7 +1155,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
             ccf_all.append(np.repeat(np.nan, len(rv_ccf)))
             ccf_all_fit.append(np.repeat(np.nan, len(rv_ccf)))
             ccf_all_results.append(np.repeat(np.nan, 4))
-            ccf_noise_all.append(np.repeat(np.nan, len(rv_ccf)))
+            ccf_noise_all.append(np.nan)
             ccf_lines.append(0)
             ccf_all_snr.append(np.nan)
             ccf_norm_all.append(np.nan)
@@ -1196,7 +1196,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
     props['CCF'] = np.array(ccf_all)
     props['CCF_LINES'] = np.array(ccf_lines)
     props['TOT_LINE'] = np.sum(ccf_lines)
-    props['CCF_NOISE'] = np.array(ccf_noise_all)
+    props['CCF_NOISE'] = np.array(ccf_noise_all) * 1000   # [m/s]
     props['CCF_SNR'] = np.array(ccf_all_snr)
     props['CCF_FIT'] = np.array(ccf_all_fit)
     props['CCF_FIT_COEFFS'] = np.array(ccf_all_results)
