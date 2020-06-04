@@ -413,6 +413,7 @@ def sigfig(x, n):
         return xr[0]
 
 
+# TODO: remove now in polar code?
 def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
               mode='median', use_linear_fit=False, excl_bands=None):
     """
