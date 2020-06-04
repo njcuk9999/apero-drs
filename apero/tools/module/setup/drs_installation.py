@@ -484,7 +484,7 @@ def user_interface(params, args):
                 if promptuser:
                     # get question and default
                     question, default = DATA_PATHS[path]
-                    defaultpath = default_dpath.join(default)
+                    defaultpath = default_dpath.joinpath(default)
                     # ask question and assign path
                     iparams[path] = ask(question, 'path', default=defaultpath)
                     iparams.set_source(path, __NAME__)
