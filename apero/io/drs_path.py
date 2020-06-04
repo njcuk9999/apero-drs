@@ -14,6 +14,8 @@ import numpy as np
 from astropy import units as uu
 import os
 import shutil
+from pathlib import Path
+from typing import Union
 
 from apero.core import constants
 from apero.core import math as mp
@@ -208,22 +210,22 @@ def makedirs(params, path):
             WLOG(params, 'error', TextEntry('01-010-00002', args=eargs))
 
 
-def copytree(src, dst):
+def copytree(src: Union[str, Path], dst: Union[str, Path]):
     for root, dirs, files in os.walk(src):
         # out root
-        outroot = root.replace(src, dst)
+        outroot = root.replace(str(src), str(dst))
         # deal with directory not existing
         for directory in dirs:
-            dirpath = os.path.join(outroot, directory)
-            if not os.path.exists(dirpath):
+            dirpath = Path(outroot).joinpath(directory)
+            if not dirpath.exists():
                 os.mkdir(dirpath)
         # deal with files
         for filename in files:
             # get input file path
-            infile = os.path.join(root, filename)
-            outfile = os.path.join(outroot, filename)
+            infile = Path(root).joinpath(filename)
+            outfile = Path(outroot).joinpath(filename)
             # copy file
-            shutil.copy(infile, outfile)
+            shutil.copy(str(infile), str(outfile))
 
 
 def copyfile(params, src, dst, log=True):

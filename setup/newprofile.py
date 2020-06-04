@@ -15,6 +15,7 @@ import glob
 import sys
 import signal
 import shutil
+from pathlib import Path
 
 from apero.core import constants
 from apero.tools.module.setup import drs_installation as install
@@ -56,6 +57,13 @@ def get_args():
     parser.add_argument('--path', action='store', dest='path',
                         help='The path to install new APERO profile to '
                              '(If unset uses old profile path)')
+    parser.add_argument('--debug', action='store', dest='debug',
+                        help='Run installer in debug mode')
+    parser.add_argument('--clean', action='store', dest='clean',
+                        help='Whether to run from clean directories - '
+                             'RECOMMENDED - clears out old files and copies'
+                             'over all required default data files. '
+                             'If unset user is prompted for  choice.')
     # parse arguments
     args = parser.parse_args()
     # need fake clean argument
@@ -75,35 +83,36 @@ def old_new(args, all_params):
     # ----------------------------------------------------------------------
     # previous user config
     # ----------------------------------------------------------------------
-    old_user_config = str(all_params['USERCONFIG'])
+    old_user_config = Path(all_params['USERCONFIG'])
     all_params['OLD_USERCONFIG'] = old_user_config
     # ----------------------------------------------------------------------
     # get the path
     # ----------------------------------------------------------------------
     # assume directory is changed to name
     if args.path is None:
-        if os.path.isdir(old_user_config):
-            old_user_config =  os.path.dirname(old_user_config)
-
-        user_path = os.path.dirname(old_user_config)
+        # just in case user gave us a file
+        if old_user_config.is_file():
+            user_path = old_user_config.parent.parent
+        else:
+            user_path = old_user_config.parent
     else:
-        user_path = args.path
+        user_path = Path(args.path)
     # check path exists
-    if not os.path.exists(user_path):
+    if not user_path.exists():
         install.cprint('Error: Path invalid. \n\t Path = {0}'.format(user_path))
         sys.exit()
 
     # create new path
-    new_path = os.path.join(user_path, name)
+    new_path = user_path.joinpath(name)
     all_params['USERCONFIG'] = new_path
     # ----------------------------------------------------------------------
     # create new path
     # ----------------------------------------------------------------------
-    if os.path.exists(new_path):
+    if new_path.exists():
         install.cprint('Error: Path exists. \n\t Path = {0}'.format(new_path))
         sys.exit()
     else:
-        os.mkdir(new_path)
+        new_path.mkdir()
 
     # return all params
     return all_params
@@ -117,7 +126,7 @@ def copy_update(all_params):
     # ----------------------------------------------------------------------
     # find special files
     # ----------------------------------------------------------------------
-    all_old_files = glob.glob(os.path.join(old_uconfig, '*'))
+    all_old_files = old_uconfig.glob('*')
     old_directories = []
     new_directories = []
     old_profile_name = ''
@@ -126,27 +135,26 @@ def copy_update(all_params):
     # loop around these files
     for old_file in all_old_files:
         # test for directory
-        if os.path.isdir(old_file):
+        if old_file.is_dir():
             # append old directories
             old_directories.append(old_file)
             # get new directory name
-            new_directory = os.path.basename(old_file)
+            new_directory = old_file.name
             # append new directory
-            new_directories.append(os.path.join(new_path, new_directory))
+            new_directories.append(new_path.joinpath(new_directory))
         # loop around suffices
         for suffix in SUFFICES:
             # check for suffix
-            if old_file.endswith(suffix):
+            if str(old_file).endswith(suffix):
                 # append old file
                 old_files.append(old_file)
                 # get old file suffix
-                old_path = old_file.split(suffix)[0]
-                old_profile_name = os.path.basename(old_path)
+                old_path = Path(str(old_file).split(suffix)[0])
+                old_profile_name = old_path.name
                 # construct new file
                 new_file = '{0}{1}'.format(profilename, suffix)
                 # append aboslute path
-                new_files.append(os.path.join(new_path, new_file))
-                continue
+                new_files.append(new_path.joinpath(new_file))
     # ----------------------------------------------------------------------
     # set old and new text dicts
     # ----------------------------------------------------------------------
@@ -164,8 +172,11 @@ def copy_update(all_params):
         drs_path.copytree(old_directories[it], new_directories[it])
     # copy filesnew_directories
     for it in range(len(old_files)):
+
+        install.cprint('Copying file: {0}'.format(old_files[it]), 'g')
+        install.cprint('To: {0}'.format(new_files[it]), 'g')
         # read the lines
-        with open(old_files[it], 'r') as f:
+        with old_files[it].open('r') as f:
             lines = f.readlines()
         # storage new line text
         newlines = []
@@ -176,12 +187,13 @@ def copy_update(all_params):
                 oldtext = text.format(**OLDDICT)
                 newtext = text.format(**NEWDICT)
                 if oldtext in line:
-                    print('{0} --> {1}'.format(oldtext, newtext))
+                    msg = '\tReplacing text: {0} --> {1}'
+                    install.cprint(msg.format(oldtext, newtext), 'g')
                     line = line.replace(oldtext, newtext)
             # add line to newlines
             newlines.append(line)
         # write the lines
-        with open(new_files[it], 'w') as f:
+        with new_files[it].open('w') as f:
             f.writelines(newlines)
 
 
@@ -200,6 +212,7 @@ if __name__ == '__main__':
     # get global parameters
     params = constants.load(from_file=False)
     # get all params
+    # TODO: outpaths for setup files are not correct (missing directory)
     allparams = install.update(params, args)
     # ----------------------------------------------------------------------
     # get old and new parameters

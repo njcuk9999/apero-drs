@@ -8,12 +8,7 @@ APERO Documentation
 ******************************************
 
 ===========================================
-Latest version: 0.6.082   dev/developer_guide.rst
-
-===========================================
-Other
-===========================================
-
+Latest version: 0.6.098
 *  :ref:`genindex`
 *  :ref:`modindex`
 *  :ref:`search`

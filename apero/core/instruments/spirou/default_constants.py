@@ -887,7 +887,6 @@ EXT_S1D_INTYPE.value = 'E2DSFF'
 EXT_S1D_INFILE = EXT_S1D_INFILE.copy(__NAME__)
 EXT_S1D_INFILE.value = 'E2DSFF_FILE'
 
-
 # Define the start s1d wavelength (in nm)
 EXT_S1D_WAVESTART = EXT_S1D_WAVESTART.copy(__NAME__)
 EXT_S1D_WAVESTART.value = 965
@@ -958,6 +957,10 @@ EXTRACT_S1D_PLOT_ZOOM2.value = '1050, 1285, 1670, 2100, 2500'
 # =============================================================================
 # CALIBRATION: THERMAL SETTINGS
 # =============================================================================
+# whether to apply the thermal correction to extractions
+THERMAL_CORRECT = THERMAL_CORRECT.copy(__NAME__)
+THERMAL_CORRECT.value = True
+
 # define whether to always extract thermals (i.e. overwrite existing files)
 THERMAL_ALWAYS_EXTRACT = THERMAL_ALWAYS_EXTRACT.copy(__NAME__)
 THERMAL_ALWAYS_EXTRACT.value = False
@@ -1272,19 +1275,28 @@ WAVE_FP_PLOT_MULTI_INIT.value = 20
 WAVE_FP_PLOT_MULTI_NBO = WAVE_FP_PLOT_MULTI_NBO.copy(__NAME__)
 WAVE_FP_PLOT_MULTI_NBO.value = 5
 
+# define the dprtype for generating FPLINES (string list)
+WAVE_FP_DPRLIST = WAVE_FP_DPRLIST.copy(__NAME__)
+WAVE_FP_DPRLIST.value = 'OBJ_FP'
 
 # =============================================================================
 # CALIBRATION: WAVE LITTROW SETTINGS
 # =============================================================================
-#  Define the order to start the Littrow fit from
+#  Define the order to start the Littrow fit from for the HC wave solution
 WAVE_LITTROW_ORDER_INIT_1 = WAVE_LITTROW_ORDER_INIT_1.copy(__NAME__)
 WAVE_LITTROW_ORDER_INIT_1.value = 0
+
+#  Define the order to start the Littrow fit from for the FP wave solution
+# TODO: Note currently used
 WAVE_LITTROW_ORDER_INIT_2 = WAVE_LITTROW_ORDER_INIT_2.copy(__NAME__)
 WAVE_LITTROW_ORDER_INIT_2.value = 1
 
-#  Define the order to end the Littrow fit at
+#  Define the order to end the Littrow fit at for the HC wave solution
 WAVE_LITTROW_ORDER_FINAL_1 = WAVE_LITTROW_ORDER_FINAL_1.copy(__NAME__)
 WAVE_LITTROW_ORDER_FINAL_1.value = 47
+
+#  Define the order to end the Littrow fit at for the FP wave solution
+# TODO: Note currently used
 WAVE_LITTROW_ORDER_FINAL_2 = WAVE_LITTROW_ORDER_FINAL_2.copy(__NAME__)
 WAVE_LITTROW_ORDER_FINAL_2.value = 47
 
@@ -1293,15 +1305,21 @@ WAVE_LITTROW_ORDER_FINAL_2.value = 47
 WAVE_LITTROW_REMOVE_ORDERS = WAVE_LITTROW_REMOVE_ORDERS.copy(__NAME__)
 WAVE_LITTROW_REMOVE_ORDERS.value = ''
 
-#  Define the littrow cut steps
+#  Define the littrow cut steps for the HC wave solution
 WAVE_LITTROW_CUT_STEP_1 = WAVE_LITTROW_CUT_STEP_1.copy(__NAME__)
 WAVE_LITTROW_CUT_STEP_1.value = 250
+
+#  Define the littrow cut steps for the FP wave solution
 WAVE_LITTROW_CUT_STEP_2 = WAVE_LITTROW_CUT_STEP_2.copy(__NAME__)
 WAVE_LITTROW_CUT_STEP_2.value = 500
 
 #  Define the fit polynomial order for the Littrow fit (fit across the orders)
+#    for the HC wave solution
 WAVE_LITTROW_FIG_DEG_1 = WAVE_LITTROW_FIG_DEG_1.copy(__NAME__)
 WAVE_LITTROW_FIG_DEG_1.value = 8  # 5  # 4
+
+#  Define the fit polynomial order for the Littrow fit (fit across the orders)
+#    for the FP wave solution
 WAVE_LITTROW_FIG_DEG_2 = WAVE_LITTROW_FIG_DEG_2.copy(__NAME__)
 WAVE_LITTROW_FIG_DEG_2.value = 8  # 4
 
@@ -1394,6 +1412,7 @@ WAVE_CCF_DETNOISE = WAVE_CCF_DETNOISE.copy(__NAME__)
 WAVE_CCF_DETNOISE.value = 100.0
 
 #  The filename of the CCF Mask to use for the FP CCF
+#     Note this file is copied over if WAVE_CCF_UPDATE_MASK = True
 WAVE_CCF_MASK = WAVE_CCF_MASK.copy(__NAME__)
 # WAVE_CCF_MASK.value = 'fp.mas'
 WAVE_CCF_MASK.value = 'smart_fp_mask.mas'
@@ -1423,6 +1442,41 @@ WAVE_CCF_MASK_WIDTH.value = 1.7
 WAVE_CCF_N_ORD_MAX = WAVE_CCF_N_ORD_MAX.copy(__NAME__)
 WAVE_CCF_N_ORD_MAX.value = 48
 
+#  Define whether to regenerate the fp mask (WAVE_CCF_MASK) when we
+#      update the cavity width in the master wave solution recipe
+WAVE_CCF_UPDATE_MASK = WAVE_CCF_UPDATE_MASK.copy(__NAME__)
+WAVE_CCF_UPDATE_MASK.value = True
+
+# define the width of the lines in the smart mask [km/s]
+WAVE_CCF_SMART_MASK_WIDTH = WAVE_CCF_SMART_MASK_WIDTH.copy(__NAME__)
+WAVE_CCF_SMART_MASK_WIDTH.value = 1.0
+
+# define the minimum wavelength for the smart mask [nm]
+WAVE_CCF_SMART_MASK_MINLAM = WAVE_CCF_SMART_MASK_MINLAM.copy(__NAME__)
+WAVE_CCF_SMART_MASK_MINLAM.value = 950
+
+# define the maximum wavelength for the smart mask [nm]
+WAVE_CCF_SMART_MASK_MAXLAM = WAVE_CCF_SMART_MASK_MAXLAM.copy(__NAME__)
+WAVE_CCF_SMART_MASK_MAXLAM.value = 2500
+
+# define a trial minimum FP N value (should be lower than true
+#     minimum FP N value)
+WAVE_CCF_SMART_MASK_TRIAL_NMIN = WAVE_CCF_SMART_MASK_TRIAL_NMIN.copy(__NAME__)
+WAVE_CCF_SMART_MASK_TRIAL_NMIN.value = 9000
+
+# define a trial maximum FP N value (should be higher than true
+#     maximum FP N value)
+WAVE_CCF_SMART_MASK_TRIAL_NMAX = WAVE_CCF_SMART_MASK_TRIAL_NMAX.copy(__NAME__)
+WAVE_CCF_SMART_MASK_TRIAL_NMAX.value = 27000
+
+# define the converges parameter for dwave in smart mask generation
+WAVE_CCF_SMART_MASK_DWAVE_THRES = WAVE_CCF_SMART_MASK_DWAVE_THRES.copy(__NAME__)
+WAVE_CCF_SMART_MASK_DWAVE_THRES.value = 1.0e-9
+
+# define the quality control threshold from RV of CCF FP between master
+#    fiber and other fibers, above this limit fails QC [m/s]
+WAVE_CCF_RV_THRES_QC = WAVE_CCF_RV_THRES_QC.copy(__NAME__)
+WAVE_CCF_RV_THRES_QC.value = 0.5
 
 # =============================================================================
 # CALIBRATION: WAVE MASTER REFERENCE SETTINGS
@@ -1905,14 +1959,6 @@ POLAR_VALID_STOKES.value = 'V, Q, U'
 POLAR_METHOD = POLAR_METHOD.copy(__NAME__)
 POLAR_METHOD.value = 'Ratio'
 
-#  Define the polarimetry continuum bin size (for plotting)
-POLAR_CONT_BINSIZE = POLAR_CONT_BINSIZE.copy(__NAME__)
-POLAR_CONT_BINSIZE.value = 1000
-
-#  Define the polarimetry continuum overlap size (for plotting)
-POLAR_CONT_OVERLAP = POLAR_CONT_OVERLAP.copy(__NAME__)
-POLAR_CONT_OVERLAP.value = 0
-
 #  Define the telluric mask for calculation of continnum lower limits
 #    (string list)
 POLAR_CONT_TELLMASK_LOWER = POLAR_CONT_TELLMASK_LOWER.copy(__NAME__)
@@ -2337,7 +2383,6 @@ EXPMETER_MAX_LAMBDA.value = 1823.1
 # Define exposure meter telluric threshold (minimum tapas transmission)
 EXPMETER_TELLU_THRES = EXPMETER_TELLU_THRES.copy(__NAME__)
 EXPMETER_TELLU_THRES.value = 0.95
-
 
 # =============================================================================
 #  End of configuration file

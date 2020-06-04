@@ -646,6 +646,15 @@ out_ext_s1d_v = drs_finput('EXT_S1D_V', KW_OUTPUT='EXT_S1D_V',
                            fibers=['AB', 'A', 'B', 'C'],
                            filetype='.fits', intype=pp_file, datatype='table',
                            suffix='_s1d_v', outfunc=out.general_file)
+
+# fp line file from night
+out_ext_fplines = drs_finput('EXT_FPLIST', KW_OUTPUT='EXT_FPLIST',
+                                    fibers=['AB', 'A', 'B', 'C'],
+                                    filetype='.fits', remove_insuffix=True,
+                                    intype=[out_ext_e2ds, out_ext_e2dsff],
+                                    suffix='_ext_fplines',
+                                    outfunc=out.general_file)
+
 # add extract outputs to output fileset
 out_file.addset(out_ext_e2ds)
 out_file.addset(out_ext_e2dsff)
@@ -653,6 +662,7 @@ out_file.addset(out_ext_e2dsll)
 out_file.addset(out_ext_loco)
 out_file.addset(out_ext_s1d_w)
 out_file.addset(out_ext_s1d_v)
+out_file.addset(out_ext_fplines)
 
 # -----------------------------------------------------------------------------
 # thermal files
@@ -870,6 +880,8 @@ out_file.addset(out_wave_hcline)
 out_file.addset(out_wave_hcres)
 out_file.addset(out_wave_res_table)
 out_file.addset(out_wave_ll_table)
+out_file.addset(out_wave_hclist)
+out_file.addset(out_wave_fplist)
 calib_file.addset(out_wave_hc)
 calib_file.addset(out_wave_fp)
 calib_file.addset(out_wave_night)

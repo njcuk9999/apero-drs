@@ -896,6 +896,45 @@ wlog = Logger()
 def find_param(params=None, key=None, name=None, kwargs=None, func=None,
                mapf=None, dtype=None, paramdict=None, required=True,
                default=None):
+    """
+    Find a parameter "key" first in params or paramdict (if defined)
+    or in kwargs (with "name") - note if "name" in kwargs overrides
+    params/paramdict
+
+    :param params: ParamDict, the constants Parameter dictionary
+    :param key: string, the key to search for in "params"
+                (or paramdict if defined)
+    :param name: string, the name in kwargs of the constant - overrides use
+                 of param
+    :param kwargs: dict, the keyword arg dictionary (or any dictionary
+                   containing "key"
+    :param func: string, the function name "find_param" was used
+                 in (for logging)
+    :param mapf: string, 'list' or 'dict' - the way to map a string parameter
+                 i.e. 'a,b,c' mapf='list' -->  ['a', 'b', 'c']
+                 i.e. '{a:1, b:2}  mapf='dict' --> dict(a=1, b=2)
+    :param dtype: type, the data type for output of mapf (list or dict) for
+                  key
+    :param paramdict: ParamDict, if defined overrides the use of params for
+                      searching for "key"
+    :param required: bool, if True and "key" not found
+                     (and "constant" not found)
+    :param default: object, the default value of key if not found (if None
+                    does not set and raises error if required=True)
+
+    :type params: ParamDict
+    :type key: str
+    :type name: str
+    :type kwargs: dict
+    :type func: str
+    :type mapf: str
+    :type dtype: type
+    :type paramdict: ParamDict
+    :type required: bool
+    :type default: object
+
+    :return: returns the object or list/dict (if mapf='list'/'dict')
+    """
     # deal with params being None
     if params is None:
         params = ParamDict()

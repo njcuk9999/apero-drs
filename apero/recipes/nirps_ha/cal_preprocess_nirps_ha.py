@@ -202,7 +202,7 @@ def __main__(recipe, params):
 
         # correct by a median filter from the dark amplifiers
         WLOG(params, '', TextEntry('40-010-00016'))
-        image = pp.nirps_correction(params, image)
+        image = pp.nirps_correction(params, image, header=infile.header)
 
         # ------------------------------------------------------------------
         # calculate mid observation time

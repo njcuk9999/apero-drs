@@ -32,6 +32,7 @@ Low priority:
   * assign people to write constant descriptions
   * add authors to constants
 
+* newprofile.py outpaths for setup files are not correct (missing directory)
 * add more debug printouts
 * deal with all python warnings
 * display func for all functions
@@ -69,10 +70,6 @@ SPIRou specific
 =========================================
 High priority:
 
-* add CCF to QC of wave night
-* put A and B wavesolutions in e2ds_A and e2ds_B files (currently still AB)
-* add CCF output for wave solutions (CCF per order like in CCF recipe)
-* add fplines for all extracted FPs (C fiber in cal_extract)
 * bisector for CCF (new extension in CCF outputs?)
 * object database (in preprocessing?)
 * polar code update
