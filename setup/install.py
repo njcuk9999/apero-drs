@@ -474,7 +474,7 @@ def check_install(drs_path: Path, args):
                 print('Adding "{0}" to PYTHONPATH'.format(drs_path))
 
         else:
-            os.environ['PYTHONPATH'] = drs_path
+            os.environ['PYTHONPATH'] = str(drs_path)
             # debug print out
             if debug:
                 print('Setting PYTHONPATH = "{0}"'.format(drs_path))
