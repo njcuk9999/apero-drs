@@ -2,6 +2,24 @@ Changelog
 =========
 
 
+0.6.099 (2020-06-04)
+--------------------
+- Misc.tools.ccf_drift_plot.py - add another ccf header key plot.
+  [njcuk9999]
+- Update update-notes for version 0.6.098. [njcuk9999]
+- Apero.tools.module.setup.drs_installation.py - correct typo join( -->
+  joinpath( [njcuk9999]
+- Apero-drs.setup.envs.README.md - add a read me to detail how to
+  use/mask conda env files. [njcuk9999]
+- Setup.env.apero-env-2020-06-03.txt - add env pip install copy.
+  [njcuk9999]
+- Setup.env.apero-env-2020-06-03.txt - add yml conda env copy.
+  [njcuk9999]
+- Setup.env.apero-env-2020-06-03.txt - add explicit environment copy.
+  [njcuk9999]
+- Update date/version/changelog/documentation. [njcuk9999]
+
+
 0.6.098 (2020-06-01)
 --------------------
 - Apero.plotting.plot_functions.py - adjust ccf plot. [njcuk9999]
