@@ -8,8 +8,7 @@ APERO Documentation
 ******************************************
 
 ===========================================
-Latest version: 0.6.098
-*  :ref:`genindex`
+Latest version: 0.6.099*  :ref:`genindex`
 *  :ref:`modindex`
 *  :ref:`search`
 
