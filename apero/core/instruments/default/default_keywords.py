@@ -127,13 +127,14 @@ __all__ = [# input keys
            'KW_MKTEMP_SNR_ORDER', 'KW_MKTEMP_SNR_THRES',
            # ccf values
            'KW_CCF_MEAN_RV', 'KW_CCF_MEAN_CONSTRAST', 'KW_CCF_MEAN_FWHM',
-           'KW_CCF_MEAN_RV_NOISE', 'KW_CCF_TOT_LINES', 'KW_CCF_MASK',
+           'KW_CCF_TOT_LINES', 'KW_CCF_MASK',
            'KW_CCF_STEP', 'KW_CCF_WIDTH', 'KW_CCF_TARGET_RV', 'KW_CCF_SIGDET',
            'KW_CCF_BOXSIZE', 'KW_CCF_MAXFLUX', 'KW_CCF_NMAX', 'KW_CCF_MASK_MIN',
            'KW_CCF_MASK_WID', 'KW_CCF_MASK_UNITS', 'KW_CCF_RV_WAVE_FP',
            'KW_CCF_RV_SIMU_FP', 'KW_CCF_RV_DRIFT', 'KW_CCF_RV_OBJ',
            'KW_CCF_RV_CORR', 'KW_CCF_RV_WAVEFILE', 'KW_CCF_RV_WAVETIME',
-           'KW_CCF_RV_TIMEDIFF', 'KW_CCF_RV_WAVESRCE',
+           'KW_CCF_RV_TIMEDIFF', 'KW_CCF_RV_WAVESRCE', 'KW_CCF_DVRMS_SP',
+           'KW_CCF_DVRMS_CC',
            # polar values
            'KW_POL_STOKES', 'KW_POL_NEXP', 'KW_POL_METHOD', 'KW_POL_FILES',
            'KW_POL_EXPS', 'KW_POL_MJDS', 'KW_POL_MJDENDS', 'KW_POL_BJDS',
@@ -1202,10 +1203,6 @@ KW_CCF_MEAN_CONSTRAST = Keyword('KW_CCF_MEAN_CONSTRAST', key='', dtype=float,
 KW_CCF_MEAN_FWHM = Keyword('KW_CCF_MEAN_FWHM', key='', dtype=float,
                            source=__NAME__)
 
-# the mean rv noise from the mean ccf
-KW_CCF_MEAN_RV_NOISE = Keyword('KW_CCF_MEAN_RV_NOISE', key='', dtype=float,
-                               source=__NAME__)
-
 # the total number of mask lines used in all ccfs
 KW_CCF_TOT_LINES = Keyword('KW_CCF_TOT_LINES', key='', dtype=int,
                            source=__NAME__)
@@ -1247,6 +1244,14 @@ KW_CCF_MASK_WID = Keyword('KW_CCF_MASK_WID', key='', dtype=float,
 
 # the wavelength units used in the CCF Mask for line centers
 KW_CCF_MASK_UNITS = Keyword('KW_CCF_MASK_UNITS', key='', dtype=str,
+                            source=__NAME__)
+
+# the dv rms calculated for spectrum [m/s]
+KW_CCF_DVRMS_SP = Keyword('KW_CCF_DVRMS_SP', key='', dtype=float,
+                            source=__NAME__)
+
+# the dev rms calculated during the CCF [m/s]
+KW_CCF_DVRMS_CC = Keyword('KW_CCF_DVRMS_CC', key='', dtype=float,
                             source=__NAME__)
 
 # The radial velocity measured from the wave solution FP CCF

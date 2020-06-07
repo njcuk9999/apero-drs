@@ -61,6 +61,8 @@ pcheck = core.pcheck
 speed_of_light_ms = cc.c.to(uu.m / uu.s).value
 # noinspection PyUnresolvedReferences
 speed_of_light_kms = cc.c.to(uu.km / uu.s).value
+# Get function string
+display_func = drs_log.display_func
 
 
 # =============================================================================
@@ -894,6 +896,47 @@ def save_uncorrected_ext_fp(params, extractdict):
             drs_path.copyfile(params, inpath, outpath)
 
 
+def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, **kwargs):
+    # set up function name
+    func_name = display_func(params, 'ref_fplines', __NAME__)
+    # get constant from params
+    allowtypes = pcheck(params, 'WAVE_FP_DPRLIST', 'fptypes', kwargs, func_name,
+                        mapf='list')
+    # get dprtype
+    dprtype = e2dsfile.get_key('KW_DPRTYPE', dtype=str)
+    # get psuedo constants
+    pconst = constants.pload(params['INSTRUMENT'])
+    sfibers, rfiber = pconst.FIBER_KINDS()
+    # ----------------------------------------------------------------------
+    # deal with fiber
+    if fiber != rfiber:
+        # TODO: add to language database
+        emsg = 'Skipping FPLINES (Fiber = {0})'
+        WLOG(params, 'debug', emsg.format(fiber))
+        return None
+    # ----------------------------------------------------------------------
+    # deal with allowed dprtypes
+    if dprtype not in allowtypes:
+        # TODO: add to language database
+        dmsg = 'Skipping FPLINES (DPRTYPE = {0})'
+        WLOG(params, 'debug', dmsg.format(dprtype))
+        return None
+    # ----------------------------------------------------------------------
+    # get master hc lines and fp lines from calibDB
+    wout = wave.get_wavelines(params, recipe, fiber, infile=e2dsfile)
+    mhclines, mhclsource, mfplines, mfplsource = wout
+    # deal with no fplines found
+    if mfplines is None:
+        return None
+    # ----------------------------------------------------------------------
+    # generate the fp reference lines
+    fpargs = dict(e2dsfile=e2dsfile, wavemap=wavemap, fplines=mfplines)
+    rfpl = wave.get_master_lines(params, recipe, **fpargs)
+    # ----------------------------------------------------------------------
+    # return fp lines for e2ds file
+    return rfpl
+
+
 # =============================================================================
 # Define s1d functions
 # =============================================================================
@@ -1122,8 +1165,8 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # construct the filename from file instance
     e2dsfile.construct_filename(params, infile=infile)
     # define header keys for output file
-    # copy keys from input file
-    e2dsfile.copy_original_keys(infile)
+    # copy keys from input file (excluding loc)
+    e2dsfile.copy_original_keys(infile, exclude_groups=['loc'])
     # add version
     e2dsfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
     # add dates

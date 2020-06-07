@@ -15,6 +15,7 @@ import os
 import sys
 import signal
 import argparse
+from pathlib import Path
 
 
 # =============================================================================
@@ -76,6 +77,8 @@ def get_args():
                         help='The name for this specific installation'
                              '(Allows the creation of multiple profiles with'
                              ' different settings)')
+    parser.add_argument('--debug', action='store', dest='debug',
+                        help='Run installer in debug mode')
 
     # add setup args
     parser.add_argument('--root', action='store', dest='root',
@@ -156,6 +159,10 @@ def get_args():
                              'RECOMMENDED - clears out old files and copies'
                              'over all required default data files. '
                              'If unset user is prompted for  choice.')
+    parser.add_argument('--clean_no_warning', action='store', dest='cleanwarn',
+                        help='Whether to warn about cleaning populated '
+                             'directories - WARNING if set to True will delete '
+                             'all tmp/reduced/calibDB etc. data without prompt')
     parser.add_argument('--ds9path', action='store', dest='ds9path',
                         help='Optionally set the ds9 path (used in some tools)')
     parser.add_argument('--pdflatexpath', action='store', dest='pdfpath',
@@ -352,58 +359,84 @@ def tab_input(message, root=None):
     return uinput
 
 
-def check_install(drs_path):
+def check_install(drs_path: Path, args):
     # print check
     print('Locating {0} install...'.format(DRS_PATH))
-    # get current working directory
-    cwd = os.getcwd()
+    # get debug mode
+    if args.debug is None:
+        debug = False
+    elif args.debug in [True, 'True', 1, '1']:
+        debug = True
+    else:
+        debug = False
     # set import condition to True
     cond = True
+    # set top level to root
+    root = Path(Path().absolute().root)
     # loop until we can import modules
     while cond:
         # set search to False
         found = False
-        # set top level to root
-        root = os.path.abspath(os.sep)
+        # debug print out
+        if debug:
+            print('='*50)
+            print('DEBUG MODE ACTIVATED')
+            print('='*50)
+            print('ROOT: "{0}"'.format(root))
+            print('CWD: "{0}"'.format(Path.cwd()))
+            if 'PYTHONPATH' in os.environ:
+                print('PYTHONPATH: \n\t"{0}"'.format(os.environ['PYTHONPATH']))
+            else:
+                print('PYTHON PATH UNSET')
+            print('SYS.PATH:')
+            for path in sys.path:
+                print('\t{0}'.format(path))
+            print('=' * 50)
         # path to try
-        try_path = str(drs_path)
+        try_path = Path(drs_path)
         tries = 0
         # loop around until found or we break
         while not found:
             # get the absolute path of try path
-            abs_try_path = os.path.abspath(try_path)
-            sys.path.append(abs_try_path)
+            abs_try_path = try_path.absolute()
+            sys.path.append(str(abs_try_path))
+            # print debug statement
+            if debug:
+                print('\tAdding {0} to sys.path'.format(abs_try_path))
             # try to import the drs
             try:
-                print('\tTry: {0}'.format(abs_try_path))
-                _ = importlib.import_module(drs_path)
+                if debug:
+                    print('\tTry {0}: {1}'.format(tries + 1, abs_try_path))
+                else:
+                    print('\tTry: {0}'.format(abs_try_path))
+                _ = importlib.import_module(str(drs_path))
                 # if we have reached this import stage found is True
                 found = True
-            except Exception as _:
-                cond1 = abs_try_path == os.path.join(root, drs_path)
+                # print that we have found module
+                print('Found "{0}" in {1}'.format(drs_path, abs_try_path))
+            except Exception as e:
+                # debug print error
+                if debug:
+                    print('\tError {0}: {1}'.format(type(e), str(e)))
+
+                cond1 = abs_try_path == root.joinpath(drs_path)
                 cond2 = abs_try_path == try_path
                 cond3 = tries > 10
+                cond4 = abs_try_path == root
                 # if we have reached root then break
-                if cond1 or cond2 or cond3:
+                if cond1 or cond2 or cond3 or cond4:
                     break
                 # try up a level
-                try_path = '..' + os.sep
+                try_path = try_path.parent
                 # remove this path as it failed to find drs
-                sys.path.remove(abs_try_path)
+                sys.path.remove(str(abs_try_path))
             # iterate tries
             tries += 1
+
         # deal with not being found
         if not found:
-            umsg = '\nCannot find {0}. Please enter {0} installation path:'
-            # user input required
-            uinput = tab_input(umsg.format(drs_path))
-            # make sure user input exists
-            if not os.path.exists(uinput):
-                umsg = ('\nPath "{0}" does not exist.'
-                        '\nPlease enter a valid path. (Ctrl+C) to quit')
-                print(umsg.format(uinput))
-            else:
-                sys.path.append(uinput)
+            ask_for_install_path(drs_path, debug)
+            # restart while loop
             continue
         # construct module names
         constants_mod = '{0}.{1}'.format(drs_path, CONSTANTS_PATH)
@@ -412,27 +445,69 @@ def check_install(drs_path):
         try:
             print('Loading {0}'.format(constants_mod))
             constants = importlib.import_module(constants_mod)
-        except Exception as _:
-            print('Cannot import {0}. Exiting'.format(constants_mod))
-            sys.exit()
+        except Exception as e:
+            # debug print error
+            if debug:
+                print('\tError {0}: {1}'.format(type(e), str(e)))
+            # ask for install path again
+            ask_for_install_path(drs_path, debug)
+            # restart while loop
+            continue
         try:
             print('Loading {0}'.format(install_mod))
             install = importlib.import_module(install_mod)
-        except Exception as _:
-            print('Cannot import {0}. Exiting'.format(install_mod))
-            sys.exit()
+        except Exception as e:
+            # debug print error
+            if debug:
+                print('\tError {0}: {1}'.format(type(e), str(e)))
+            # ask for install path again
+            ask_for_install_path(drs_path, debug)
+            # restart while loop
+            continue
 
         # add apero to the PYTHONPATH
         if 'PYTHONPATH' in os.environ:
             oldpath = os.environ['PYTHONPATH']
-            os.environ['PYTHONPATH'] = drs_path + os.pathsep + oldpath
+            os.environ['PYTHONPATH'] = str(drs_path) + os.pathsep + oldpath
+            # debug print out
+            if debug:
+                print('Adding "{0}" to PYTHONPATH'.format(drs_path))
+
         else:
-            os.environ['PYTHONPATH'] = drs_path
+            os.environ['PYTHONPATH'] = str(drs_path)
+            # debug print out
+            if debug:
+                print('Setting PYTHONPATH = "{0}"'.format(drs_path))
         # add to active path
-        os.sys.path = [drs_path] + os.sys.path
+        os.sys.path = [str(drs_path)] + os.sys.path
 
         # if we have reached this point we can break out of the while loop
         return constants, install
+
+
+def ask_for_install_path(drs_path: Path, debug):
+    umsg = '\nCannot find {0}. Please enter {0} installation path:'
+    # user input required
+    uinput = tab_input(umsg.format(drs_path))
+    # try to create path from user input
+    try:
+        upath = Path(uinput)
+        # make sure user input exists
+        if not upath.exists():
+            umsg = ('\nPath "{0}" does not exist.'
+                    '\nPlease enter a valid path. (Ctrl+C) to quit')
+            print(umsg.format(upath))
+        # if it does exist add it as a path to test
+        else:
+            # add debug output
+            if debug:
+                print('Adding "{0}" to sys.path'.format(upath))
+            # update
+            sys.path.append(upath)
+    except:
+        umsg = ('\nPath "{0}" is not a valid path.'
+                '\nPlease enter a valid path. (Ctrl+C) to quit')
+        print(umsg.format(uinput))
 
 
 # =============================================================================
@@ -451,11 +526,11 @@ if __name__ == '__main__':
     # Importing DRS paths
     # ----------------------------------------------------------------------
     # set guess path
-    drs_path = str(DRS_PATH)
+    drs_path = Path(DRS_PATH)
     # catch Ctrl+C
     signal.signal(signal.SIGINT, catch_sigint)
     # get install paths
-    constants, install = check_install(drs_path)
+    constants, install = check_install(drs_path, args)
 
     # ----------------------------------------------------------------------
     # start up
@@ -479,6 +554,8 @@ if __name__ == '__main__':
     allparams['DEVMODE'] = args.devmode
     # add name
     allparams['PROFILENAME'] = args.name
+    # add clean warn
+    allparams['CLEANWARN'] = args.cleanwarn
 
     # ----------------------------------------------------------------------
     # End of user setup

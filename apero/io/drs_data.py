@@ -461,7 +461,6 @@ def construct_path(params, filename=None, directory=None, **kwargs):
     return absfilename
 
 
-
 # =============================================================================
 # Start of code
 # =============================================================================

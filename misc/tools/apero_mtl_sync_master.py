@@ -34,7 +34,8 @@ else:
 
 name = 'mini_data_0_6_082'
 localpath = 'mini_data_closest_20200504'
-directories = ['calibDB', 'telluDB', 'reduced']
+directories = ['calibDB', 'telluDB', 'reduced', 'tmp']
+
 # -----------------------------------------------------------------------------
 
 # =============================================================================

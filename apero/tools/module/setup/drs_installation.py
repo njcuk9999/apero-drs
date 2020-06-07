@@ -16,6 +16,8 @@ import shutil
 import readline
 import glob
 from collections import OrderedDict
+from pathlib import Path
+from typing import Union
 
 from apero.core import constants
 from apero.core.instruments.default import pseudo_const
@@ -46,23 +48,23 @@ TextWarning = drs_exceptions.TextWarning
 ConfigError = drs_exceptions.ConfigError
 ConfigWarning = drs_exceptions.ConfigWarning
 # -----------------------------------------------------------------------------
-HOME = os.path.expanduser('~')
-DEFAULT_USER_PATH = os.path.join(HOME, 'apero', 'default')
-DEFAULT_DATA_PATH = os.path.join(HOME, 'apero', 'data', 'default')
+HOME = Path('~').expanduser()
+DEFAULT_USER_PATH = HOME.joinpath('apero', 'default')
+DEFAULT_DATA_PATH = HOME.joinpath('apero', 'data', 'default')
 
 UCONFIG = 'user_config.ini'
 UCONST = 'user_constants.ini'
 
-OUT_BINPATH = os.path.join('..', 'bin')
-OUT_TOOLPATH = os.path.join('..', 'tools')
+OUT_BINPATH = Path('..').joinpath('bin')
+OUT_TOOLPATH = Path('..').joinpath('tools')
 
-IN_BINPATH = os.path.join('.', 'recipes', '{0}', '')
-IN_TOOLPATH = os.path.join('..', 'apero', 'tools', 'recipes')
+IN_BINPATH = Path('.').joinpath('recipes', '{0}', '')
+IN_TOOLPATH = Path('..').joinpath('apero', 'tools', 'recipes')
 
 ENV_CONFIG = 'DRS_UCONFIG'
-SETUP_PATH = os.path.join('.', 'tools', 'resources', 'setup')
+SETUP_PATH = Path('.').joinpath('tools', 'resources', 'setup')
 
-VALIDATE_CODE = os.path.join('bin', 'apero_validate.py')
+VALIDATE_CODE = Path('bin').joinpath('apero_validate.py')
 RESET_CODE = 'apero_reset'
 # set descriptions for data paths
 # TODO: these should be in the constants file?
@@ -220,8 +222,11 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None,
         options = ['Y', 'N']
         optiondesc = ['[Y]es or [N]o']
     # deal with paths (expand)
-    if isinstance(dtype, str) and dtype.upper() == 'PATH':
-        default = os.path.expanduser(default)
+    dcond = isinstance(dtype, str) or isinstance(dtype, Path)
+    if dcond and dtype.upper() == 'PATH':
+        if default not in ['None', '']:
+            default = Path(default)
+            default.expanduser()
     # loop around until check is passed
     while check:
         # ask question
@@ -239,7 +244,7 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None,
             uinput = uinput.strip()
         else:
             uinput = input(' >>\t')
-        # deal with ints, floats, logic
+        # deal with string ints, floats, logic
         if dtype in ['int', 'float', 'bool']:
             try:
                 basetype = eval(dtype)
@@ -252,37 +257,66 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None,
                     cprint('Response must be valid {0}'.format(dtype), 'y')
                     check = True
                     continue
+        # deal with int/float/logic
+        if dtype in [int, float, bool, str]:
+            try:
+                uinput = dtype(uinput)
+                check = False
+            except Exception as _:
+                cprint('Response must be valid {0}'.format(dtype.__name__), 'y')
+                check = True
+                continue
         # deal with paths
         elif dtype == 'path':
-            # check whether default wanted
-            if uinput == '' and default is not None:
+            # --------------------------------------------------------------
+            # check whether default wanted and user types 'None' or blank ('')
+            if uinput in ['None', ''] and default is not None:
                 uinput = default
-            elif uinput == '':
+                # deal with a null default
+                if default in ['None', '']:
+                    return default
+            # deal with case where path is 'None' or blank and path is not
+            # required (even if not required must be set to None or blank)
+            elif not required and uinput in ['None', '']:
+                return None
+            # otherwise 'None and '' are not valid
+            elif uinput in ['None', '']:
                 cprint('Response invalid', 'y')
                 check = True
                 continue
-            # get rid of expansions
-            uinput = os.path.expanduser(uinput)
-            # check whether path exists
-            if os.path.exists(uinput):
-                check = False
-            elif not required:
-                if uinput in ['None', '', None]:
-                    check = False
-                else:
+            # --------------------------------------------------------------
+            # try to create path
+            try:
+                upath = Path(uinput)
+            except:
+                if not required:
                     cprint('Response must be a valid path or "None"', 'y')
                     check = True
                     continue
+                else:
+                    cprint('Response must be a valid path', 'y')
+                    check = True
+                    continue
+            # get rid of expansions
+            upath.expanduser()
+            # --------------------------------------------------------------
+            # check whether path exists
+            if upath.exists():
+                return upath
             # if path does not exist ask to make it (if create)
             else:
                 # check whether to create path
                 pathquestion = 'Path "{0}" does not exist. Create?'
                 create = ask(pathquestion.format(uinput), dtype='YN')
                 if create:
-                    if not os.path.exists(uinput):
-                        os.makedirs(uinput)
-                    check = False
-                    continue
+                    if not upath.exists():
+                        try:
+                            os.makedirs(upath)
+                        except Exception as _:
+                            cprint('Response must be a valid path', 'y')
+                            check = True
+                            continue
+                    return upath
                 else:
                     cprint('Response must be a valid path', 'y')
                     check = True
@@ -311,13 +345,6 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None,
                 optionstr = ' or '.join(np.array(options, dtype=str))
                 cprint('Response must be {0}'.format(optionstr), 'y')
                 check = True
-        else:
-            check = False
-    # deal with path
-    if dtype == 'path':
-        if '.' not in uinput:
-            if not uinput.endswith(os.sep):
-                uinput += os.sep
 
     # deal with returning default
     if uinput == '' and default is not None:
@@ -327,12 +354,15 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None,
         return uinput
 
 
-def check_path_arg(name, value):
+def check_path_arg(name, value: Union[str, Path]):
     promptuser = True
     # check if user config is None (i.e. set from cmd line)
     if value is not None:
         cprint('\t - {0} set from cmd ({1})'.format(name, value))
-        if not os.path.exists(value):
+        # create path
+        value = Path(value)
+        # check if value exists
+        if value.exists():
             # check whether to create path
             pathquestion = 'Path "{0}" does not exist. Create?'
             promptuser = not ask(pathquestion.format(value), dtype='YN')
@@ -374,11 +404,13 @@ def user_interface(params, args):
     # set default user path
     if profilename not in ['None', None, '']:
         profilename = profilename.strip().replace(' ', '_').lower()
-        default_upath = DEFAULT_USER_PATH.replace('default', profilename)
-        default_dpath = DEFAULT_DATA_PATH.replace('default', profilename)
+        default_upath = str(DEFAULT_USER_PATH).replace('default', profilename)
+        default_dpath = str(DEFAULT_DATA_PATH).replace('default', profilename)
+        default_upath = Path(default_upath)
+        default_dpath = Path(default_dpath)
     else:
-        default_upath = DEFAULT_USER_PATH
-        default_dpath = DEFAULT_DATA_PATH
+        default_upath = Path(DEFAULT_USER_PATH)
+        default_dpath = Path(DEFAULT_DATA_PATH)
     # ------------------------------------------------------------------
     # Step 1: Ask for user config path
     # ------------------------------------------------------------------
@@ -408,13 +440,14 @@ def user_interface(params, args):
             cprint(printheader(), 'g')
         # ------------------------------------------------------------------
         # set user config
-        iparams['USERCONFIG'] = os.path.join(userconfig, instrument.lower())
+        uconfig = Path(userconfig).joinpath(instrument.lower())
+        iparams['USERCONFIG'] = uconfig
         iparams.set_source('USERCONFIG', func_name)
         # make instrument user config directory
-        if not os.path.exists(iparams['USERCONFIG']):
-            os.mkdir(iparams['USERCONFIG'])
+        if not uconfig.exists():
+            uconfig.mkdir()
         # ------------------------------------------------------------------
-
+        # check data path
         promptuser, datadir = check_path_arg('datadir', args.datadir)
 
         # check for data paths in args
@@ -451,7 +484,7 @@ def user_interface(params, args):
                 if promptuser:
                     # get question and default
                     question, default = DATA_PATHS[path]
-                    defaultpath = os.path.join(default_dpath, default)
+                    defaultpath = default_dpath.joinpath(default)
                     # ask question and assign path
                     iparams[path] = ask(question, 'path', default=defaultpath)
                     iparams.set_source(path, __NAME__)
@@ -462,7 +495,7 @@ def user_interface(params, args):
         # ------------------------------------------------------------------
         elif data_promptuser:
             create = False
-            directory = default_dpath
+            directory = Path(default_dpath)
             # loop until we have an answer
             while not create:
                 directory = ask('Data directory', 'path',
@@ -470,9 +503,8 @@ def user_interface(params, args):
                 # ask to create directory
                 pathquestion = 'Path "{0}" does not exist. Create?'
 
-                if not os.path.exists(directory):
-                    create = ask(pathquestion.format(directory),
-                                 dtype='YN')
+                if not directory.exists():
+                    create = ask(pathquestion.format(directory), dtype='YN')
                     if create:
                         os.makedirs(directory)
                         mkdir = '\n\t - Making directory "{0}"'
@@ -484,11 +516,12 @@ def user_interface(params, args):
                 # get questions and default
                 question, default = DATA_PATHS[path]
                 # assign path
-                iparams[path] = os.path.join(directory, default)
+                dpath = directory.joinpath(default)
+                iparams[path] = dpath
                 iparams.set_source(path, __NAME__)
                 # check whether path exists
-                if not os.path.exists(iparams[path]):
-                    os.makedirs(iparams[path])
+                if not dpath.exists():
+                    os.makedirs(dpath)
                     mkdir = '\n\t - Making directory "{0}"'
                     cprint(mkdir.format(iparams[path]), 'g')
             cprint(printheader(), 'g')
@@ -499,7 +532,7 @@ def user_interface(params, args):
                 question, default = DATA_PATHS[path]
                 value = data_values[path]
                 if value is None and datadir is not None:
-                    iparams[path] = os.path.join(datadir, default)
+                    iparams[path] = datadir.joinpath(default)
                     iparams.set_source(path, 'command line + default')
                     pargs = [path, iparams[path]]
                     cprint('\t - {0} set from datadir ({1})'.format(*pargs))
@@ -624,13 +657,13 @@ def bin_paths(params, all_params):
     # get available instruments
     drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
     # get root path
-    root = constants.get_relative_folder(package, '')
+    root = Path(constants.get_relative_folder(package, ''))
     # get out bin path
-    out_bin_path = constants.get_relative_folder(package, OUT_BINPATH)
+    out_bin_path = Path(constants.get_relative_folder(package, OUT_BINPATH))
     # get out tools bin path
-    out_tool_path = constants.get_relative_folder(package, OUT_TOOLPATH)
+    out_tool_path = Path(constants.get_relative_folder(package, OUT_TOOLPATH))
     # get tools save location
-    in_tool_path = constants.get_relative_folder(package, IN_TOOLPATH)
+    in_tool_path = Path(constants.get_relative_folder(package, IN_TOOLPATH))
     # add recipe bin directory to all params
     all_params['DRS_OUT_BIN_PATH'] = out_bin_path
     # add toool directory to all params
@@ -639,9 +672,9 @@ def bin_paths(params, all_params):
     all_params['DRS_ROOT'] = root
     # add the individual tool directories to all params
     all_params['DRS_OUT_TOOLS'] = []
-    for directory in os.listdir(in_tool_path):
+    for directory in in_tool_path.glob('*'):
         # make out tool paths
-        out_tools = os.path.join(out_tool_path, directory)
+        out_tools = out_tool_path.joinpath(directory.name)
         # append out tool paths to drs out tools
         all_params['DRS_OUT_TOOLS'].append(out_tools)
     # loop through instruments
@@ -675,7 +708,7 @@ def create_configs(params, all_params):
             uargs = [iparams, instrument, devmode]
             config_lines, const_lines = create_ufiles(*uargs)
             # get user path
-            upath = os.path.join(userconfig, instrument.lower())
+            upath = userconfig.joinpath(instrument.lower())
             # write / update config and const
             uconfig = ufile_write(aparams, config_lines, upath, UCONFIG,
                                   'config')
@@ -729,18 +762,17 @@ def create_shell_scripts(params, all_params):
     else:
         pname = package
     # get tools save location
-    in_tool_path = constants.get_relative_folder(package, IN_TOOLPATH)
+    in_tool_path = Path(constants.get_relative_folder(package, IN_TOOLPATH))
     # ----------------------------------------------------------------------
-    # get paths and add in correct order
-    paths = [os.path.dirname(all_params['DRS_ROOT'])]
-    # add bin directory
-    paths.append(all_params['DRS_OUT_BIN_PATH'])
+    # get paths and add in correct order and add bin directory
+    paths = [str(all_params['DRS_ROOT'].parent),
+             str(all_params['DRS_OUT_BIN_PATH'])]
     # add all the tool directories
     for directory in all_params['DRS_OUT_TOOLS']:
-        paths.append(directory)
+        paths.append(str(directory))
     # ----------------------------------------------------------------------
     # find setup files
-    setup_path = constants.get_relative_folder(package, SETUP_PATH)
+    setup_path = Path(constants.get_relative_folder(package, SETUP_PATH))
     # deal with windows
     if os.name == 'nt':
         sep = '";"'
@@ -761,11 +793,11 @@ def create_shell_scripts(params, all_params):
         sys.exit()
     # ----------------------------------------------------------------------
     # construct validation code absolute path
-    valid_path = os.path.join(in_tool_path, VALIDATE_CODE)
+    valid_path = in_tool_path.joinpath(VALIDATE_CODE)
     # ----------------------------------------------------------------------
     # setup text dictionary
     text = dict()
-    text['ROOT_PATH'] = os.path.dirname(all_params['DRS_ROOT'])
+    text['ROOT_PATH'] = all_params['DRS_ROOT'].parent
     text['USER_CONFIG'] = all_params['USERCONFIG']
     text['NAME'] = all_params['PROFILENAME']
     text['PATH'] = '"' + sep.join(paths) + '"'
@@ -776,21 +808,21 @@ def create_shell_scripts(params, all_params):
         # deal with having profile name
         if all_params['PROFILENAME'] not in [None, 'None', '']:
             # get absolute path
-            inpath = os.path.join(setup_path, setup_file + '.profile')
+            inpath = setup_path.joinpath(setup_file + '.profile')
         else:
             # get absolute path
-            inpath = os.path.join(setup_path, setup_file)
+            inpath = setup_path.joinpath(setup_file)
         # get output path
-        outpath = os.path.join(all_params['USERCONFIG'], setup_outfiles[it])
+        outpath = all_params['USERCONFIG'].joinpath(setup_outfiles[it])
         # ------------------------------------------------------------------
         # make sure in path exists
-        if not os.path.exists(inpath):
+        if not inpath.exists():
             emsg = 'Error setup file "{0}" does not exist'
             cprint(emsg.format(inpath), 'red')
             sys.exit()
         # ------------------------------------------------------------------
         # make sure out path does not exist
-        if os.path.exists(outpath):
+        if outpath.exists():
             os.remove(outpath)
         # ------------------------------------------------------------------
         # read the setup file lines
@@ -829,10 +861,17 @@ def clean_install(params, all_params):
     drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
     # get package
     package = params['DRS_PACKAGE']
+    # get clean warning
+    if all_params['CLEANWARN'] is None:
+        cleanwarn = True
+    elif all_params['CLEANWARN'] in [True, 'True', '1', 1]:
+        cleanwarn = False
+    else:
+        cleanwarn = True
     # get tools save location
-    in_tool_path = constants.get_relative_folder(package, IN_TOOLPATH)
+    in_tool_path = Path(constants.get_relative_folder(package, IN_TOOLPATH))
     # append tool path
-    sys.path.append(os.path.join(in_tool_path, 'bin'))
+    sys.path.append(str(in_tool_path.joinpath('bin')))
     toolmod = importlib.import_module(RESET_CODE)
     # loop around instruments
     for instrument in drs_instruments:
@@ -853,7 +892,7 @@ def clean_install(params, all_params):
         # add to environment
         add_paths(all_params)
         # construct reset command
-        toolmod.main(instrument=instrument, quiet=True, warn=True)
+        toolmod.main(instrument=instrument, quiet=True, warn=cleanwarn)
     # return all params
     return all_params
 
@@ -867,7 +906,7 @@ def create_symlinks(params, all_params):
     out_bin_path = all_params['DRS_OUT_BIN_PATH']
     out_tool_path = all_params['DRS_OUT_TOOL_PATH']
     # get tools save location
-    in_tool_path = constants.get_relative_folder(package, IN_TOOLPATH)
+    in_tool_path = Path(constants.get_relative_folder(package, IN_TOOLPATH))
 
     # ------------------------------------------------------------------
     # Copy bin files (for each instrument)
@@ -882,8 +921,8 @@ def create_symlinks(params, all_params):
             continue
 
         # find recipe folder for this instrument
-        recipe_raw = IN_BINPATH.format(instrument.lower())
-        recipe_dir = constants.get_relative_folder(package, recipe_raw)
+        recipe_raw = Path(str(IN_BINPATH).format(instrument.lower()))
+        recipe_dir = Path(constants.get_relative_folder(package, recipe_raw))
         # define suffix
         suffix = '*_{0}.py'.format(instrument.lower())
         # create sym links
@@ -894,17 +933,17 @@ def create_symlinks(params, all_params):
     #    installed)
     # ------------------------------------------------------------------
     # get list of tool directories
-    dirs = os.listdir(in_tool_path)
+    dirs = in_tool_path.glob('*')
 
     for directory in dirs:
         # do not copy tools for instruments we are not installing
-        if directory.upper() in drs_instruments:
-            if directory .upper() not in all_params:
+        if directory.name.upper() in drs_instruments:
+            if directory.name.upper() not in all_params:
                 continue
 
         # construct this directories absolute path
-        in_tools = os.path.join(in_tool_path, directory)
-        out_tools = os.path.join(out_tool_path, directory)
+        in_tools = in_tool_path.joinpath(directory.name)
+        out_tools = out_tool_path.joinpath(directory.name)
 
         # log which directory we are populating
         cprint('\n\t Populating {0} directory\n'.format(out_tools), 'm')
@@ -918,43 +957,43 @@ def create_symlinks(params, all_params):
     return all_params
 
 
-def _create_link(recipe_dir, suffix, new_path, log=True):
+def _create_link(recipe_dir: Path, suffix: Union[str, Path], new_path: Path,
+                 log=True):
     # get all python files in recipe folder
-    files = glob.glob(os.path.join(recipe_dir, suffix))
+    files = recipe_dir.joinpath(suffix).glob('*')
     # loop around files and create symbolic links in bin path
     for filename in files:
         # get file base name
-        basename = os.path.basename(filename)
+        basename = filename.name
         # construct new path
-        newpath = os.path.join(new_path, basename)
+        newpath = new_path.joinpath(basename)
         if log:
             cprint('\t\tMoving {0}'.format(basename))
         # remove link already present
-        if os.path.exists(newpath) or os.path.islink(newpath):
-            os.remove(newpath)
+        if newpath.exists() or newpath.is_symlink():
+            os.remove(str(newpath))
         # deal with directories not exists
-        if not os.path.exists(os.path.dirname(newpath)):
-            os.makedirs(os.path.dirname(newpath))
+        if not newpath.parent.exsits():
+            os.makedirs(newpath.parent)
         # make symlink
-        os.symlink(filename, newpath)
+        new_path.symlink_to(filename)
         # make executable
         try:
-            os.chmod(newpath, 0o777)
+            new_path.chmod(0o777)
         except:
             cprint('Error: Cannot chmod 777', 'r')
 
 
 def add_paths(all_params):
     # get paths and add in correct order
-    paths = [os.path.dirname(all_params['DRS_ROOT'])]
-    # add bin directory
-    paths.append(all_params['DRS_OUT_BIN_PATH'])
+    paths = [str(all_params['DRS_ROOT'].parent),
+             str(all_params['DRS_OUT_BIN_PATH'])]
     # add all the tool directories
     for directory in all_params['DRS_OUT_TOOLS']:
-        paths.append(directory)
+        paths.append(str(directory))
     # ----------------------------------------------------------------------
     # set USERCONFIG
-    os.environ[ENV_CONFIG] = all_params['USERCONFIG']
+    os.environ[ENV_CONFIG] = str(all_params['USERCONFIG'])
     # ----------------------------------------------------------------------
     if os.name == 'posix':
         sep = ':'
@@ -994,7 +1033,7 @@ def print_options(params, all_params):
     text = dict()
 
     # deal with user config (should end with os.sep)
-    userconfig = all_params['USERCONFIG']
+    userconfig = str(all_params['USERCONFIG'])
     if not userconfig.endswith(os.sep):
         userconfig += os.sep
     # add to text dictionary
@@ -1161,19 +1200,19 @@ def user_header(title):
     return lines
 
 
-def ufile_write(aparams, lines, upath, ufile, kind):
+def ufile_write(aparams, lines, upath: Path, ufile, kind):
     # make directory if it doesn't exist
-    if not os.path.exists(upath):
+    if not upath.exists():
         os.makedirs(upath)
     # ----------------------------------------------------------------------
     # define config file path
-    ufilepath = os.path.join(upath, ufile)
+    ufilepath = upath.joinpath(ufile)
     # ----------------------------------------------------------------------
     # deal with config file existing
-    if os.path.exists(ufilepath):
+    if ufilepath.exists():
         # read the lines
-        with open(ufilepath, 'r') as f:
-            current_lines = f.readlines()
+        with ufilepath.open('r') as u_file:
+            current_lines = u_file.readlines()
         # now need to check these lines against lines
         for l_it, line in enumerate(lines):
             # we shouldn't worry about old comment lines
@@ -1218,7 +1257,7 @@ def ufile_write(aparams, lines, upath, ufile, kind):
                     lines[l_it] = cline
     # ----------------------------------------------------------------------
     # write files
-    with open(ufilepath, 'w') as u_file:
+    with ufilepath.open('w') as u_file:
         for line in lines:
             if not line.endswith('\n'):
                 u_file.write(line + '\n')
@@ -1234,6 +1273,13 @@ def ufile_write(aparams, lines, upath, ufile, kind):
 def update(params, args):
     # set function name
     func_name = __NAME__ + '.update()'
+    # get debug mode
+    if args.debug is None:
+        debug = False
+    elif args.debug in [True, 'True', 1, '1']:
+        debug = True
+    else:
+        debug = False
     # get available instruments
     drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
     # get config path
@@ -1245,6 +1291,8 @@ def update(params, args):
         cprint('Error: Cannot run update. Must be in apero environment '
                '(i.e. source apero.{SYSTEM}.setup).', 'r')
         sys.exit()
+    else:
+        config_path = Path(config_path)
     # ----------------------------------------------------------------------
     # find all installed instruments
     instruments = []
@@ -1252,9 +1300,9 @@ def update(params, args):
     # loop through filenames
     for filename in files:
         # get abspath
-        abspath = os.path.join(config_path, filename)
+        abspath = config_path.joinpath(filename)
         # check if valid instrument
-        if os.path.isdir(abspath) and filename.upper() in drs_instruments:
+        if abspath.is_dir() and filename.upper() in drs_instruments:
             instruments.append(filename.upper())
     # ----------------------------------------------------------------------
     # set up dictionary
@@ -1274,7 +1322,7 @@ def update(params, args):
         # loop around data paths
         for datapath in DATA_PATHS.keys():
             # get data paths
-            istorage[datapath] = str(iparams[datapath])
+            istorage[datapath] = Path(iparams[datapath])
             istorage.set_source(datapath, iparams.sources[datapath])
         # ------------------------------------------------------------------
         # add clean install
@@ -1285,10 +1333,10 @@ def update(params, args):
             istorage['CLEAN_INSTALL'] = False
             istorage.set_source('CLEAN_INSTALL', func_name)
         # add ds9
-        istorage['DRS_DS9_PATH'] = iparams['DRS_DS9_PATH']
+        istorage['DRS_DS9_PATH'] = Path(iparams['DRS_DS9_PATH'])
         istorage.set_source('DRS_DS9_PATH', iparams.sources['DRS_DS9_PATH'])
         # add pdflatex
-        istorage['DRS_PDFLATEX_PATH'] = iparams['DRS_PDFLATEX_PATH']
+        istorage['DRS_PDFLATEX_PATH'] = Path(iparams['DRS_PDFLATEX_PATH'])
         istorage.set_source('DRS_PDFLATEX_PATH',
                             iparams.sources['DRS_PDFLATEX_PATH'])
         # ------------------------------------------------------------------

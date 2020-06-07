@@ -1485,10 +1485,6 @@ KW_CCF_MEAN_CONSTRAST.set(key='CCFMCONT',
 KW_CCF_MEAN_FWHM = KW_CCF_MEAN_FWHM.copy(__NAME__)
 KW_CCF_MEAN_FWHM.set(key='CCFMFWHM', comment='Mean FWHM from mean CCF')
 
-# the mean rv noise from the mean ccf
-KW_CCF_MEAN_RV_NOISE = KW_CCF_MEAN_RV_NOISE.copy(__NAME__)
-KW_CCF_MEAN_RV_NOISE.set(key='CCFMRVNS', comment='Mean RV Noise from mean CCF')
-
 # the total number of mask lines used in all ccfs
 KW_CCF_TOT_LINES = KW_CCF_TOT_LINES.copy(__NAME__)
 KW_CCF_TOT_LINES.set(key='CCFTLINE',
@@ -1546,6 +1542,18 @@ KW_CCF_MASK_WID.set(key='CCFMSKWD',
 # the wavelength units used in the CCF Mask for line centers
 KW_CCF_MASK_UNITS = KW_CCF_MASK_UNITS.copy(__NAME__)
 KW_CCF_MASK_UNITS.set(key='CCFMUNIT', comment='Units used in CCF Mask')
+
+# the dv rms calculated for spectrum
+KW_CCF_DVRMS_SP = KW_CCF_DVRMS_SP.copy(__NAME__)
+KW_CCF_DVRMS_SP.set(key='DVRMS_SP',
+                    comment='RV photon-noise uncertainty calc on E2DS '
+                            'spectrum [m/s] ')
+
+# the dev rms calculated during the CCF [m/s]
+KW_CCF_DVRMS_CC = KW_CCF_DVRMS_CC.copy(__NAME__)
+KW_CCF_DVRMS_CC.set(key='DVRMS_CC',
+                    comment='final photon-noise RV uncertainty calc on mean '
+                            'CCF [m/s]')
 
 # The radial velocity measured from the wave solution FP CCF
 KW_CCF_RV_WAVE_FP = KW_CCF_RV_WAVE_FP.copy(__NAME__)

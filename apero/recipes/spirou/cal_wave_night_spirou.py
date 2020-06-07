@@ -188,14 +188,15 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # get master hc lines and fp lines from calibDB
             wargs = []
-            wout = wave.get_wavelines(params, recipe, infile=hc_e2ds_file)
+            wout = wave.get_wavelines(params, recipe, fiber,
+                                      infile=hc_e2ds_file)
             mhclines, mhclsource, mfplines, mfplsource = wout
-
             # --------------------------------------------------------------
             # load wavelength solution (start point) for this fiber
             #    this should only be a master wavelength solution
             wprops = wave.get_wavesolution(params, recipe, infile=hc_e2ds_file,
-                                           fiber=fiber, master=True)
+                                           fiber=fiber, master=True,
+                                           forcefiber=True)
             # --------------------------------------------------------------
             # define the header as being from the hc e2ds file
             hcheader = hc_e2ds_file.header
@@ -203,8 +204,8 @@ def __main__(recipe, params):
             blaze_file, blaze = flat_blaze.get_blaze(params, hcheader, fiber)
             # --------------------------------------------------------------
             # calculate the night wavelength solution
-            wargs = [hc_e2ds_file, fp_e2ds_file, mhclines, mfplines, wprops,
-                     fiber, indcavity]
+            wargs = [hc_e2ds_file, fp_e2ds_file, mhclines, mfplines,
+                     wprops['WAVEMAP'], wprops['WAVEFILE'], fiber, indcavity]
             nprops = wave.night_wavesolution(params, recipe, *wargs)
             # update in dcavity
             if indcavity is None:
@@ -216,13 +217,14 @@ def __main__(recipe, params):
             # ----------------------------------------------------------
             # ccf computation
             # ----------------------------------------------------------
-            # get the FP (reference) fiber
-            pconst = constants.pload(params['INSTRUMENT'])
-            sfiber, rfiber = pconst.FIBER_CCF()
+            # # get the FP (reference) fiber
+            # pconst = constants.pload(params['INSTRUMENT'])
+            # sfiber, rfiber = pconst.FIBER_CCF()
             # compute the ccf
             ccfargs = [fp_e2ds_file, fp_e2ds_file.data, blaze,
-                       nprops['WAVEMAP'], rfiber]
+                       nprops['WAVEMAP'], fiber]
             rvprops = velocity.compute_ccf_fp(params, recipe, *ccfargs)
+
             # merge rvprops into llprops (shallow copy)
             nprops.merge(rvprops)
             # update ccf properties for wave solution
@@ -234,10 +236,26 @@ def __main__(recipe, params):
             nprops['WFP_TARG_RV'] = rvprops['TARGET_RV']
             nprops['WFP_WIDTH'] = rvprops['CCF_WIDTH']
             nprops['WFP_STEP'] = rvprops['CCF_STEP']
+            nprops['WFP_FILE'] = wprops['WAVEFILE']
+            # add the rv stats
+            rvprops['RV_WAVEFILE'] = wprops['WAVEFILE']
+            rvprops['RV_WAVETIME'] = wprops['WAVETIME']
+            rvprops['RV_WAVESRCE'] = wprops['WAVESOURCE']
+            rvprops['RV_TIMEDIFF'] = 'None'
+            rvprops['RV_WAVE_FP'] = rvprops['MEAN_RV']
+            rvprops['RV_SIMU_FP'] = 'None'
+            rvprops['RV_DRIFT'] = 'None'
+            rvprops['RV_OBJ'] = 'None'
+            rvprops['RV_CORR'] = 'None'
             # set sources
-            keys = ['WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
-                    'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP']
-            nprops.set_sources(keys, 'velocity.compute_ccf_fp()')
+            rkeys = ['RV_WAVEFILE', 'RV_WAVETIME', 'RV_WAVESRCE', 'RV_TIMEDIFF',
+                     'RV_WAVE_FP', 'RV_SIMU_FP', 'RV_DRIFT', 'RV_OBJ',
+                     'RV_CORR']
+            wkeys = ['WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
+                    'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP',
+                    'WFP_FILE']
+            nprops.set_sources(wkeys, 'velocity.compute_ccf_fp()')
+            rvprops.set_sources(rkeys, mainname)
             # ----------------------------------------------------------
             # wave solution quality control
             # ----------------------------------------------------------
@@ -250,7 +268,8 @@ def __main__(recipe, params):
             # ----------------------------------------------------------
             wargs = [nprops, hc_e2ds_file, fp_e2ds_file, fiber, combine,
                      rawhcfiles, rawfpfiles, qc_params, wprops['WAVEINST']]
-            wavefile = wave.night_write_wavesolution(params, recipe, *wargs)
+            wavefile, nprops = wave.night_write_wavesolution(params, recipe,
+                                                             *wargs)
 
             # ----------------------------------------------------------
             # Update calibDB with solution
@@ -264,19 +283,29 @@ def __main__(recipe, params):
             # ----------------------------------------------------------
             if passed and params['INPUTS']['DATABASE']:
                 # update the e2ds and s1d files for hc
-                wave.update_extract_files(params, recipe, hc_e2ds_file,
-                                          wprops, EXTRACT_NAME, fiber)
+                newhce2ds = wave.update_extract_files(params, recipe,
+                                                      hc_e2ds_file, nprops,
+                                                      EXTRACT_NAME, fiber)
                 # update the e2ds and s1d files for fp
-                wave.update_extract_files(params, recipe, fp_e2ds_file,
-                                          wprops, EXTRACT_NAME, fiber)
+                #  we returrn the fp e2ds file as it has an updated header
+                newfpe2ds = wave.update_extract_files(params, recipe,
+                                                      fp_e2ds_file, nprops,
+                                                      EXTRACT_NAME, fiber)
+            # else just get the e2ds file from the current fp file
+            else:
+                newfpe2ds = fp_e2ds_file
+
+            # ----------------------------------------------------------
+            # write CCF from rv props
+            # ----------------------------------------------------------
+            # need to use the updated header in newfpe2ds
+            velocity.write_ccf(params, recipe, newfpe2ds, rvprops, rawfpfiles,
+                               combine, qc_params, fiber)
 
             # ----------------------------------------------------------
             # update recipe log file for fp fiber
             # ----------------------------------------------------------
             log2.end(params)
-
-            # TODO: remove break point
-            constants.break_point(params)
 
     # ----------------------------------------------------------------------
     # End of main code
