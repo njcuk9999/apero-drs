@@ -12,7 +12,7 @@ Created on 2019-03-21 at 18:35
 import os
 
 from apero.core import constants
-from apero import core
+from apero.core import drs_log
 from apero import lang
 
 
@@ -29,7 +29,7 @@ __author__ = Constants['AUTHORS']
 __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get the text types
 TextEntry = lang.drs_text.TextEntry
 
@@ -213,7 +213,6 @@ def set_file(params, **kwargs):
         abspath = os.path.join(path, outfilename)
     # return absolute path
     return abspath
-
 
 # =============================================================================
 # Define user functions

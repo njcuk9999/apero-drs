@@ -830,6 +830,8 @@ class DrsRecipe(object):
     def valid_directory(self, argname, directory, return_error=False):
         # get drs parameters
         params = self.drs_params
+        # get input directory
+        input_dir = os.path.realpath(self.get_input_dir())
         # ---------------------------------------------------------------------
         # Make sure directory is a string
         if type(directory) not in [str, np.str_]:
@@ -842,10 +844,20 @@ class DrsRecipe(object):
         # ---------------------------------------------------------------------
         # step 1: check if directory is full absolute path
         if os.path.exists(directory):
+            # log that we found the path (debug mode)
             dmsg = TextEntry('90-001-00001', args=[argname, directory])
             dmsg += TextEntry('')
             WLOG(params, 'debug', dmsg, wrap=False)
-            if return_error:
+            # get the absolute path
+            abspath = os.path.abspath(directory)
+            # check whether abspath is consistent with input dir from recipe
+            #    definitions (this can happen e.g. if in reduced instead of tmp)
+            if not abspath.startswith(input_dir):
+                # log that directory found not consistent with input path
+                dargs = [input_dir]
+                WLOG(params, 'debug', TextEntry('90-001-00035', args=dargs))
+                pass
+            elif return_error:
                 return True, os.path.abspath(directory), None
             else:
                 return False, os.path.abspath(directory)

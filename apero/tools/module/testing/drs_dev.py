@@ -68,6 +68,7 @@ class RecipeDefinition():
     def __init__(self, instrument=None):
         self.instrument = instrument
         self.recipes = []
+        self.mod = None
         # populate recipes using instrument
         self.populate_recipes()
 
@@ -86,6 +87,7 @@ class RecipeDefinition():
         mod = constants.import_module(func_name, modules[0], full=True)
         # add to recipes
         self.recipes = mod.recipes
+        self.mod = mod
 
     def add(self, *args):
         """

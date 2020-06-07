@@ -285,6 +285,16 @@ def __main__(recipe, params):
             e2dsfile, e2dsfffile = outfiles
 
             # --------------------------------------------------------------
+            # create fplines file for required fibers
+            # --------------------------------------------------------------
+            rargs = [e2dsfile, wprops['WAVEMAP'], fiber]
+            rfpl = extract.ref_fplines(params, recipe, *rargs)
+            # write rfpl file
+            if rfpl is not None:
+                rargs = [rfpl, e2dsfile, e2dsfile, fiber, 'EXT_FPLINES']
+                wave.write_fplines(params, recipe, *rargs)
+
+            # --------------------------------------------------------------
             # add files to outputs
             # --------------------------------------------------------------
             ekeys = ['E2DS', 'E2DSFF']

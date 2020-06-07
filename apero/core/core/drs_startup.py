@@ -1393,6 +1393,15 @@ def _assign_pid():
     :return: the process id and the human time at creation
     :rtype: tuple[str, str]
     """
+    # get unix char code
+    unixtime, humantime, rval = unix_char_code()
+    # write pid
+    pid = 'PID-{0:020d}-{1}'.format(int(unixtime), rval)
+    # return pid and human time
+    return pid, humantime
+
+
+def unix_char_code():
     # we need a random seed
     np.random.seed(random.randint(1, 2**30))
     # generate a random number (in case time is too similar)
@@ -1407,10 +1416,8 @@ def _assign_pid():
     humantime = timenow.iso
     # generate random four characters to make sure pid is unique
     rval = ''.join(np.random.choice(list(CHARS), size=4))
-    # write pid
-    pid = 'PID-{0:020d}-{1}'.format(int(unixtime), rval)
-    # return pid and human time
-    return pid, humantime
+    return unixtime, humantime, rval
+
 
 
 def find_recipe(name='None', instrument='None', mod=None):
@@ -1431,7 +1438,7 @@ def find_recipe(name='None', instrument='None', mod=None):
     """
     func_name = __NAME__ + '.find_recipe()'
     # get text entry
-    textentry = constants.constant_functions._DisplayText()
+    textentry = constants.constant_functions.DisplayText()
     # deal with no instrument
     if instrument == 'None' or instrument is None:
         ipath = CORE_PATH

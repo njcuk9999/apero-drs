@@ -1087,19 +1087,19 @@ KW_WFP_WEI_THRES.set(key='WFPWTHRE',
 # the polynomial degree fit order used for fitting the fp cavity
 KW_WFP_CAVFIT_DEG = KW_WFP_CAVFIT_DEG.copy(__NAME__)
 KW_WFP_CAVFIT_DEG.set(key='WFPCVFIT',
-                      comment='WAKW_WNT_HIGHF_CDVE FP The fit degree used fit fp cavity',
+                      comment='The fit degree used for fitting the fp cavity',
                       parent='WAVE_FP_CAVFIT_DEG', group='wave')
 
 # the largest jump in fp that was allowed
 KW_WFP_LARGE_JUMP = KW_WFP_LARGE_JUMP.copy(__NAME__)
 KW_WFP_LARGE_JUMP.set(key='WFPLJUMP',
-                      comment='WAVE FP The largest jump in fp that is allowed',
+                      comment='The largest jump in fp that is allowed',
                       parent='WAVE_FP_LARGE_JUMP', group='wave')
 
 # the index to start crossmatching fps at
 KW_WFP_CM_INDX = KW_WFP_CM_INDX.copy(__NAME__)
 KW_WFP_CM_INDX.set(key='WFPCMIND',
-                   comment='WAVE FP The index to start crossmatch at',
+                   comment='The index to start crossmatch at',
                    parent='WAVE_FP_CM_IND', group='wave')
 
 # the FP widths used for each order (1D list)
@@ -1435,8 +1435,7 @@ KW_FTELLU_RECON_LIM.set(key='FTTRCLIM',
 
 # the template that was used (or None if not used)
 KW_FTELLU_TEMPLATE = KW_FTELLU_TEMPLATE.copy(__NAME__)
-KW_FTELLU_TEMPLATE.set(key='FTTTEMPL',
-                       comment='ftellu template used for sed')
+KW_FTELLU_TEMPLATE.set(key='FTTTEMPL', comment='ftellu template used for sed')
 
 # Telluric principle component amplitudes (for use with 1D list)
 KW_FTELLU_AMP_PC = KW_FTELLU_AMP_PC.copy(__NAME__)
@@ -1489,10 +1488,6 @@ KW_CCF_MEAN_CONSTRAST.set(key='CCFMCONT',
 # the mean fwhm from the mean ccf
 KW_CCF_MEAN_FWHM = KW_CCF_MEAN_FWHM.copy(__NAME__)
 KW_CCF_MEAN_FWHM.set(key='CCFMFWHM', comment='Mean FWHM from mean CCF')
-
-# the mean rv noise from the mean ccf
-KW_CCF_MEAN_RV_NOISE = KW_CCF_MEAN_RV_NOISE.copy(__NAME__)
-KW_CCF_MEAN_RV_NOISE.set(key='CCFMRVNS', comment='Mean RV Noise from mean CCF')
 
 # the total number of mask lines used in all ccfs
 KW_CCF_TOT_LINES = KW_CCF_TOT_LINES.copy(__NAME__)
@@ -1552,6 +1547,18 @@ KW_CCF_MASK_WID.set(key='CCFMSKWD',
 KW_CCF_MASK_UNITS = KW_CCF_MASK_UNITS.copy(__NAME__)
 KW_CCF_MASK_UNITS.set(key='CCFMUNIT', comment='Units used in CCF Mask')
 
+# the dv rms calculated for spectrum
+KW_CCF_DVRMS_SP = KW_CCF_DVRMS_SP.copy(__NAME__)
+KW_CCF_DVRMS_SP.set(key='DVRMS_SP',
+                    comment='RV photon-noise uncertainty calc on E2DS '
+                            'spectrum [m/s] ')
+
+# the dev rms calculated during the CCF
+KW_CCF_DVRMS_CC = KW_CCF_DVRMS_CC.copy(__NAME__)
+KW_CCF_DVRMS_CC.set(key='DVRMS_CC',
+                    comment='final photon-noise RV uncertainty calc on mean '
+                            'CCF [m/s]')
+
 # The radial velocity measured from the wave solution FP CCF
 KW_CCF_RV_WAVE_FP = KW_CCF_RV_WAVE_FP.copy(__NAME__)
 KW_CCF_RV_WAVE_FP.set(key='RV_WAVFP',
@@ -1584,7 +1591,7 @@ KW_CCF_RV_WAVEFILE = KW_CCF_RV_WAVEFILE.copy(__NAME__)
 KW_CCF_RV_WAVEFILE.set(key='RV_WAVFN',
                        comment='RV wave file used')
 
-# the wave file time used for the rv (fiber specific)
+# the wave file time used for the rv [mjd] (fiber specific)
 KW_CCF_RV_WAVETIME = KW_CCF_RV_WAVETIME.copy(__NAME__)
 KW_CCF_RV_WAVETIME.set(key='RV_WAVTM',
                        comment='RV wave file time used')

@@ -202,13 +202,13 @@ def __main__(recipe, params):
         # match files by date and median to produce master fp
         # ----------------------------------------------------------------------
         cargs = [params, recipe, fpprops['DPRTYPE'], fp_table, fpimage]
-        fpcube, fp_table = shape.construct_master_fp(*cargs)
-
+        # fpcube, fp_table = shape.construct_master_fp(*cargs)
+        master_fp, fp_table = shape.construct_master_fp(*cargs)
         # log process (master construction complete + number of groups added)
-        wargs = [len(fpcube)]
-        WLOG(params, 'info', TextEntry('40-014-00011', args=wargs))
+        # wargs = [len(fpcube)]
+        # WLOG(params, 'info', TextEntry('40-014-00011', args=wargs))
         # sum the cube to make fp data
-        master_fp = np.sum(fpcube, axis=0)
+        # master_fp = np.sum(fpcube, axis=0)
 
     # ----------------------------------------------------------------------
     # Calculate dx shape map

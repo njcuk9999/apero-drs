@@ -152,12 +152,17 @@ __all__ = [
     'WAVE_FP_DV_MAX', 'WAVE_FP_UPDATE_CAVITY', 'WAVE_FP_CAVFIT_MODE',
     'WAVE_FP_LLFIT_MODE', 'WAVE_FP_LLDIF_MIN', 'WAVE_FP_LLDIF_MAX',
     'WAVE_FP_SIGCLIP', 'WAVE_FP_PLOT_MULTI_INIT', 'WAVE_FP_PLOT_MULTI_NBO',
+    'WAVE_FP_DPRLIST',
     # wave ccf constants
     'WAVE_CCF_NOISE_SIGDET', 'WAVE_CCF_NOISE_BOXSIZE', 'WAVE_CCF_NOISE_THRES',
     'WAVE_CCF_STEP', 'WAVE_CCF_WIDTH', 'WAVE_CCF_TARGET_RV',
     'WAVE_CCF_DETNOISE', 'WAVE_CCF_MASK', 'WAVE_CCF_MASK_UNITS',
     'WAVE_CCF_MASK_PATH', 'WAVE_CCF_MASK_FMT', 'WAVE_CCF_MASK_MIN_WEIGHT',
-    'WAVE_CCF_MASK_WIDTH', 'WAVE_CCF_N_ORD_MAX',
+    'WAVE_CCF_MASK_WIDTH', 'WAVE_CCF_N_ORD_MAX', 'WAVE_CCF_UPDATE_MASK',
+    'WAVE_CCF_SMART_MASK_WIDTH', 'WAVE_CCF_SMART_MASK_MINLAM',
+    'WAVE_CCF_SMART_MASK_MAXLAM', 'WAVE_CCF_SMART_MASK_TRIAL_NMIN',
+    'WAVE_CCF_SMART_MASK_TRIAL_NMAX', 'WAVE_CCF_SMART_MASK_DWAVE_THRES',
+    'WAVE_CCF_RV_THRES_QC',
     # wave master reference constants
     'WAVEREF_NSIG_MIN', 'WAVEREF_EDGE_WMAX', 'WAVEREF_HC_BOXSIZE',
     'WAVEREF_HC_FIBTYPES', 'WAVEREF_FP_FIBTYPES', 'WAVEREF_FITDEG',
@@ -205,7 +210,7 @@ __all__ = [
     'CCF_OBJRV_NULL_VAL',
     # polar constants
     'POLAR_VALID_FIBERS', 'POLAR_VALID_STOKES', 'POLAR_METHOD',
-    'POLAR_CONT_BINSIZE', 'POLAR_CONT_OVERLAP', 'POLAR_CONT_TELLMASK_LOWER',
+    'POLAR_CONT_TELLMASK_LOWER',
     'POLAR_CONT_TELLMASK_UPPER',
     # polar lsd constants
     'POLAR_LSD_ANALYSIS', 'POLAR_LSD_PATH', 'POLAR_LSD_FILE_KEY',
@@ -1601,15 +1606,21 @@ WAVE_HC_RESMAP_YLIM = Const('WAVE_HC_RESMAP_YLIM', value=None, dtype=str,
 # CALIBRATION: WAVE LITTROW SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION: WAVE LITTROW SETTINGS'
-#  Define the order to start the Littrow fit from
+#  Define the order to start the Littrow fit from for the HC wave solution
 WAVE_LITTROW_ORDER_INIT_1 = Const('WAVE_LITTROW_ORDER_INIT_1', value=None,
                                   dtype=int, source=__NAME__, group=cgroup)
+
+#  Define the order to start the Littrow fit from for the FP wave solution
+# TODO: Note currently used
 WAVE_LITTROW_ORDER_INIT_2 = Const('WAVE_LITTROW_ORDER_INIT_2', value=None,
                                   dtype=int, source=__NAME__, group=cgroup)
 
-#  Define the order to end the Littrow fit at
+#  Define the order to end the Littrow fit at for the HC wave solution
 WAVE_LITTROW_ORDER_FINAL_1 = Const('WAVE_LITTROW_ORDER_FINAL_1', value=None,
                                    dtype=int, source=__NAME__, group=cgroup)
+
+#  Define the order to end the Littrow fit at for the FP wave solution
+# TODO: Note currently used
 WAVE_LITTROW_ORDER_FINAL_2 = Const('WAVE_LITTROW_ORDER_FINAL_2', value=None,
                                    dtype=int, source=__NAME__, group=cgroup)
 
@@ -1618,15 +1629,21 @@ WAVE_LITTROW_ORDER_FINAL_2 = Const('WAVE_LITTROW_ORDER_FINAL_2', value=None,
 WAVE_LITTROW_REMOVE_ORDERS = Const('WAVE_LITTROW_REMOVE_ORDERS', value=None,
                                    dtype=str, source=__NAME__, group=cgroup)
 
-#  Define the littrow cut steps
+#  Define the littrow cut steps for the HC wave solution
 WAVE_LITTROW_CUT_STEP_1 = Const('WAVE_LITTROW_CUT_STEP_1', value=None,
                                 dtype=int, source=__NAME__, group=cgroup)
+
+#  Define the littrow cut steps for the FP wave solution
 WAVE_LITTROW_CUT_STEP_2 = Const('WAVE_LITTROW_CUT_STEP_2', value=None,
                                 dtype=int, source=__NAME__, group=cgroup)
 
 #  Define the fit polynomial order for the Littrow fit (fit across the orders)
+#    for the HC wave solution
 WAVE_LITTROW_FIG_DEG_1 = Const('WAVE_LITTROW_FIG_DEG_1', value=None,
                                dtype=int, source=__NAME__, group=cgroup)
+
+#  Define the fit polynomial order for the Littrow fit (fit across the orders)
+#    for the FP wave solution
 WAVE_LITTROW_FIG_DEG_2 = Const('WAVE_LITTROW_FIG_DEG_2', value=None,
                                dtype=int, source=__NAME__, group=cgroup)
 
@@ -1765,6 +1782,10 @@ WAVE_FP_PLOT_MULTI_INIT = Const('WAVE_FP_PLOT_MULTI_INIT', value=None,
 WAVE_FP_PLOT_MULTI_NBO = Const('WAVE_FP_PLOT_MULTI_NBO', value=None, dtype=int,
                                source=__NAME__, minimum=1, group=cgroup)
 
+# define the dprtype for generating FPLINES (string list)
+WAVE_FP_DPRLIST = Const('WAVE_FP_DPRLIST', value=None, dtype=str,
+                        source=__NAME__, group=cgroup)
+
 # =============================================================================
 # CALIBRATION: WAVE CCF SETTINGS
 # =============================================================================
@@ -1827,6 +1848,49 @@ WAVE_CCF_MASK_WIDTH = Const('WAVE_CCF_MASK_WIDTH', value=None, dtype=float,
 #      to calculate the FP CCF
 WAVE_CCF_N_ORD_MAX = Const('WAVE_CCF_N_ORD_MAX', value=None, dtype=int,
                            source=__NAME__, minimum=1, group=cgroup)
+
+#  Define whether to regenerate the fp mask (WAVE_CCF_MASK) when we
+#      update the cavity width in the master wave solution recipe
+WAVE_CCF_UPDATE_MASK = Const('WAVE_CCF_UPDATE_MASK', value=None, dtype=bool,
+                           source=__NAME__, group=cgroup)
+
+# define the width of the lines in the smart mask [km/s]
+WAVE_CCF_SMART_MASK_WIDTH = Const('WAVE_CCF_SMART_MASK_WIDTH', value=None,
+                                  dtype=float, source=__NAME__,
+                                  minimum=0, group=cgroup)
+
+# define the minimum wavelength for the smart mask [nm]
+WAVE_CCF_SMART_MASK_MINLAM = Const('WAVE_CCF_SMART_MASK_MINLAM', value=None,
+                                   dtype=float, source=__NAME__,
+                                   minimum=0, group=cgroup)
+
+# define the maximum wavelength for the smart mask [nm]
+WAVE_CCF_SMART_MASK_MAXLAM = Const('WAVE_CCF_SMART_MASK_MAXLAM', value=None,
+                                   dtype=float, source=__NAME__,
+                                   minimum=0, group=cgroup)
+
+# define a trial minimum FP N value (should be lower than true
+#     minimum FP N value)
+WAVE_CCF_SMART_MASK_TRIAL_NMIN = Const('WAVE_CCF_SMART_MASK_TRIAL_NMIN',
+                                       value=None, dtype=int, source=__NAME__,
+                                       minimum=0, group=cgroup)
+
+# define a trial maximum FP N value (should be higher than true
+#     maximum FP N value)
+WAVE_CCF_SMART_MASK_TRIAL_NMAX = Const('WAVE_CCF_SMART_MASK_TRIAL_NMAX',
+                                       value=None, dtype=int, source=__NAME__,
+                                       minimum=0, group=cgroup)
+
+# define the converges parameter for dwave in smart mask generation
+WAVE_CCF_SMART_MASK_DWAVE_THRES = Const('WAVE_CCF_SMART_MASK_TRIAL_NMAX',
+                                       value=None, dtype=float, source=__NAME__,
+                                       minimum=0, group=cgroup)
+
+# define the quality control threshold from RV of CCF FP between master
+#    fiber and other fibers, above this limit fails QC [m/s]
+WAVE_CCF_RV_THRES_QC = Const('WAVE_CCF_RV_THRES_QC',  value=None, dtype=float,
+                             source=__NAME__, minimum=0, group=cgroup)
+
 
 # =============================================================================
 # CALIBRATION: WAVE MASTER REFERENCE SETTINGS
@@ -2378,14 +2442,6 @@ POLAR_VALID_STOKES = Const('POLAR_VALID_STOKES', value=None, dtype=str,
 POLAR_METHOD = Const('POLAR_METHOD', value=None, dtype=str, source=__NAME__,
                      user=True, active=False, group=cgroup,
                      description='Define the polarimetry calculation method')
-
-#  Define the polarimetry continuum bin size (for plotting)
-POLAR_CONT_BINSIZE = Const('POLAR_CONT_BINSIZE', value=None, dtype=int,
-                           source=__NAME__, group=cgroup)
-
-#  Define the polarimetry continuum overlap size (for plotting)
-POLAR_CONT_OVERLAP = Const('POLAR_CONT_OVERLAP', value=None, dtype=int,
-                           source=__NAME__, group=cgroup)
 
 #  Define the telluric mask for calculation of continnum lower limits
 #    (string list)

@@ -1,59 +1,52 @@
-# Update Note Summary - Version 0.6.082
+# Update Note Summary - Version 0.6.099
 
 
-master wavelength solution upgrade
+dark_master
+    - more memory efficient cube median (darkcube + dark_master)
 
-    - AB wave solution worked out as before
-    - A, B and C wave solutions worked out using cavity width from AB and fp lines
-    - add EXTRACT_S1D_WEIGHT plot to allowed plots
-    - add CCF of fibers AB, A, B and C
-    - fit FPs with a periodic function instead of gaussian
-    - update the cavity polynomial file
-    - use smart FP mask (from cavity width)
-    - update figures
-    - update the UNe line list (calculated from drs wave sol.)
+shape_master
+    - more memory efficient cube median (fpcube + fp_master)
 
-wave night solution upgrade
-    - change way wave night is calculated
-    - A, B and C wave solutions no longer recalculate dcavity
-    - add EXTRACT_S1D_WEIGHT plot to allowed plots
-    - add hc lines and fp line outputs (like master wave)
-    - update figures
+wave master solution
+    - save CCF of FP used in wave solution to a CCF file (for AB, A, B, C)
+    - update smart fp mask after getting master solution (before CCF of FP)
+    - calculated 'night solution' after master solution (before CCF of FP)
+    - add QC for difference between RV (from CCF of FP) betwen AB, A, B and C
+
+wave night solution
+    - save CCF of FP used in wave solution to a CCF file (for AB, A, B, C)
+
+general
+    - fix copying problem in headers (hdict vs header) which was duplicating some header keys
+    - extract now pushes waveA and waveB to A and B fibers respectively (used to be AB)
+    - fplines now generated for all e2ds files with FP in reference fiber
+    - fixed setup/install.py and setup/newprofile.py
+    - worked on implementing polar code changes (unfinished)
 
 CCF
-    - save wave file used for RV, wave time and time difference between wave solution and observation
-    - correct parameters going into CCF_fp file
-    - use smart FP mask (from cavity width)
-
-Other
-    - change preprocessing hotpix mask (now made from dark_dark mask)
-    - added exposure meter code
-    - replace _run _seq for recipe sequences (avoid confusion with run.ini files)
-    - locale module now lang module (conflict with native python module)
-    - added QC to shape master
-    - now allowed to define an fpmaster argument for shape master (if we already have one)
-    - changed the way header is copied (avoid weird python rounding)
-    - update TAP+ link for GAIA crossmatch (now https)
-    - pep8 adjustments
-    - change PIL --> Pillow in requirements.txt
-    - sort files in dark_master and shape_master by time before reading
-    - add MKL environmental variables to setup files
+    - added CCF noise (DVRMS_SP) calculated from e2dsff file (following Bouchy 2001)
+        - header key: DVRMS_SP   and per order in table 2
+    - added CCF noise (DVRMS_CC) calculated from CCF (EA + Bouchy)
+        - header key: DVRMS_CC   and per order in table 2
+    - added CCF noise to PLOT_CCF_UNCERT plot (previous showed DVRMS_SP only)
 
 
 Still to do:
-
-    - add CCF to QC of wave night
-    - put A and B wavesolutions in e2ds_A and e2ds_B files (currently still AB)
-    - add CCF output for wave solutions (CCF per order like in CCF recipe)
-    - add fplines for all extracted FPs (C fiber in cal_extract)
-    - bisector for CCF (new extension in CCF outputs?)
     - object database (in preprocessing?)
     - polar code update
-    - EA masks from templates
+    - cal drift code (use fplines or wave analysis? Need to discuss what is needed here)
     - outputs like cfht
+    - trigger/drs interface
     - summary plot review
     - commenting doc strings/constants and documentation
+    - move fp_smart_mask, cavity poly to calibDB (and provide defaults?)
+    - move all data to user data dir (and get from other place than github)
+
+Later:
+    - bisector for CCF (new extension in CCF outputs?)
+    - EA masks from templates
+    - Improving the RV futher (maybe outside scope of DRS)
 
 Known Issues:
 
-    - cannot run code inside reduced or tmp directory (overwrites paths and cannot find files)
+    - compatibility issues between MTL and LAM

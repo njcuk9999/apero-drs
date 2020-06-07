@@ -8,27 +8,9 @@
 Created on 2020-03-27 at 13:42
 
 @author: cook
-"""
-from astropy.io import fits
-from astropy.table import Table
-from astropy import units as uu
-import numpy as np
-import warnings
-import sys
-import os
-from scipy.interpolate import InterpolatedUnivariateSpline
-from scipy.optimize import curve_fit
-from scipy.stats import chisquare
-import matplotlib.pyplot as plt
-
-
-helpstr = """
 ----------------------------------------------------------------------------
-new_ccf_code.py 
+new_ccf_code.py
 ----------------------------------------------------------------------------
-
-This code takes no arguments - you must edit the "variables section"  of the
-code
 
 
 1. Finding the correct calibrations
@@ -65,7 +47,7 @@ code
     For case=2 we assume your IN_FILe is a FP
 
 
-Adding a convolution kernel. You can pass a kernel argument that 
+Adding a convolution kernel. You can pass a kernel argument that
 describes the convolution of the LSF. 'None' produces a Dirac comb
 while 3 others are described below.
 
@@ -81,16 +63,30 @@ while 3 others are described below.
     ['supergaussian', e-width, beta]
     kernel = exp( -0.5*(x/ew)**beta )
 
-    Other functions could be added 
+    Other functions could be added
 
 ----------------------------------------------------------------------------
 """
+from astropy.io import fits
+import numpy as np
+import warnings
+import sys
+import os
+from scipy.optimize import curve_fit
+from scipy.stats import chisquare
+
+import arv_util as arv
 
 # =============================================================================
 # Define variables
 # =============================================================================
 # constants
 SPEED_OF_LIGHT = 299792.458  # [km/s]
+IMAGE_PIXEL_SIZE = 2.28  # IMAGE_PIXEL_SIZE
+MASK_COLS = ['ll_mask_s', 'll_mask_e', 'w_mask']
+# get arguments
+args = arv.Arguments(sys.argv)
+
 # if all files copied to same directory set these to ''
 # W1 = ''
 # W2 = ''
@@ -98,71 +94,80 @@ SPEED_OF_LIGHT = 299792.458  # [km/s]
 W1 = '/scratch3/rali/spirou/mini_data/reduced/2019-04-20/'
 W2 = '/scratch3/rali/drs/apero-drs/apero/data/spirou/ccf/'
 # whether to plot (True or False)
-PLOT = True
-# which case 1: science (OBJ) 2: reference (FP)
-CASE = 1
-
-
+args.PLOT = True
+#---------------------------------------------------------------------------
 # Pick you CCF convolution kernel. See explanantions below in the
 # CCF function. Uncomment the kernel type you want and change the
 # parameter.
-
 # CCF is a set of Dirac functions
-KERNEL = None
+args.KERNEL = 'None'
+# args.KERNEL_WIDTH = None
+# args.KERNEL_EWIDTH = None
+# args.KERNEL_BETA = None
+
 # boxcar length expressed in km/s
-# KERNEL = ['boxcar', 5]
+# args.KERNEL = 'boxcar'
+# args.KERNEL_WIDTH = 5
+
 # gaussian with e-width in km/s
-# KERNEL = ['gaussian', 3.5]
+# args.KERNEL = 'gaussian'
+# args.KERNEL_EWIDTH = 3.5
+
 # supergaussian e-width + exponent
-KERNEL = ['supergaussian', 3.5, 4]
+# args.KERNEL = 'supergaussian'
+# args.KERNEL_EWIDTH = 3.5
+# args.KERNEL_BETA = 4
+#---------------------------------------------------------------------------
 
 # deal with cases (quick switch between fiber=AB (OBJ) and fiber=C (FP)
-if CASE == 1:
+#   quickly switch between:
+#     case == 1:  standard AB OBJ fiber (edited in this file)
+#     case == 2:  standard C FP fiber (edited in this file)
+# set the case in the arguments
+if args.CASE == 1:
     # build file paths
-    IN_FILE = os.path.join(W1, '2400515o_pp_e2dsff_tcorr_AB.fits')
-    BLAZE_FILE = os.path.join(W1, '2019-04-20_2400404f_pp_blaze_AB.fits')
-    WAVE_FILE = os.path.join(W1, '2019-04-20_2400570c_pp_e2dsff_AB_wave_night_AB.fits')
-    MASK_FILE = os.path.join(W2, 'masque_sept18_andres_trans50.mas')
-    MASK_COLS = ['ll_mask_s', 'll_mask_e', 'w_mask']
+    args.IN_FILE = os.path.join(W1, '2400515o_pp_e2dsff_tcorr_AB.fits')
+    args.BLAZE_FILE = os.path.join(W1, '2019-04-20_2400404f_pp_blaze_AB.fits')
+    # if set to None uses IN_FILE header (where possible)
+    # args.WAVE_FILE = None
+    args.WAVE_FILE = os.path.join(W1, '2019-04-20_2400570c_pp_e2dsff_AB_wave_night_AB.fits')
+    args.MASK_FILE = os.path.join(W2, 'masque_sept18_andres_trans50.mas')
     # variables
     # These values are taken from the constants file
-    MASK_WIDTH = 1.7  # CCF_MASK_WIDTH
-    MASK_MIN_WEIGHT = 0.0  # CCF_MASK_MIN_WEIGHT
-    CCF_STEP = 0.5  # CCF_DEFAULT_STEP (or user input)
-    CCF_WIDTH = 300  # CCF_DEFAULT_WIDTH (or user input)
-    CCF_RV_NULL = 1000  # CCF_OBJRV_NULL_VAL (max allowed)
-    IN_RV = None  # user input [km/s]
-    CCF_N_ORD_MAX = 48  # CCF_N_ORD_MAX
-    BLAZE_NORM_PERCENTILE = 90  # CCF_BLAZE_NORM_PERCENTILE
-    BLAZE_THRESHOLD = 0.3  # WAVE_FP_BLAZE_THRES
-    IMAGE_PIXEL_SIZE = 2.28  # IMAGE_PIXEL_SIZE
-    NOISE_SIGDET = 8.0  # CCF_NOISE_SIGDET
-    NOISE_SIZE = 12  # CCF_NOISE_BOXSIZE
-    NOISE_THRES = 1.0e9  # CCF_NOISE_THRES
-
-elif CASE == 2:
+    args.MASK_WIDTH = 1.7  # CCF_MASK_WIDTH
+    args.MASK_MIN_WEIGHT = 0.0  # CCF_MASK_MIN_WEIGHT
+    args.CCF_STEP = 0.5  # CCF_DEFAULT_STEP (or user input)
+    args.CCF_WIDTH = 300  # CCF_DEFAULT_WIDTH (or user input)
+    args.CCF_RV_NULL = 1000  # CCF_OBJRV_NULL_VAL (max allowed)
+    args.IN_RV = None  # user input [km/s]
+    args.CCF_N_ORD_MAX = 48  # CCF_N_ORD_MAX
+    args.BLAZE_NORM_PERCENTILE = 90  # CCF_BLAZE_NORM_PERCENTILE
+    args.BLAZE_THRESHOLD = 0.3  # WAVE_FP_BLAZE_THRES
+    args.NOISE_SIGDET = 8.0  # CCF_NOISE_SIGDET
+    args.NOISE_SIZE = 12  # CCF_NOISE_BOXSIZE
+    args.NOISE_THRES = 1.0e9  # CCF_NOISE_THRES
+elif args.CASE == 2:
     # build file paths
-    IN_FILE = os.path.join(W1, '2400515o_pp_e2dsff_C.fits')
-    BLAZE_FILE = os.path.join(W1, '2019-04-20_2400404f_pp_blaze_C.fits')
-    WAVE_FILE = os.path.join(W1, '2019-04-20_2400570c_pp_e2dsff_C_wave_night_C.fits')
-    MASK_FILE = os.path.join(W2, 'fp.mas')
-    MASK_COLS = ['ll_mask_s', 'll_mask_e', 'w_mask']
+    args.IN_FILE = os.path.join(W1, '2400515o_pp_e2dsff_C.fits')
+    args.BLAZE_FILE = os.path.join(W1, '2019-04-20_2400404f_pp_blaze_C.fits')
+    # if set to None uses IN_FILE header (where possible)
+    # WAVE_FILE = None
+    args.WAVE_FILE = os.path.join(W1, '2019-04-20_2400570c_pp_e2dsff_C_wave_night_C.fits')
+    args.MASK_FILE = os.path.join(W2, 'fp.mas')
     # variables
     # These values are taken from the constants file
-    MASK_WIDTH = 1.7  # CCF_MASK_WIDTH
-    MASK_MIN_WEIGHT = 0.0  # CCF_MASK_MIN_WEIGHT
-    CCF_STEP = 0.5  # WAVE_CCF_STEP
-    CCF_WIDTH = 7.5  # WAVE_CCF_WIDTH
-    CCF_RV_NULL = 1000  # CCF_OBJRV_NULL_VAL (max allowed)
-    IN_RV = None  # user input [km/s]
-    CCF_N_ORD_MAX = 48  # WAVE_CCF_N_ORD_MAX
-    BLAZE_NORM_PERCENTILE = 90  # CCF_BLAZE_NORM_PERCENTILE
-    BLAZE_THRESHOLD = 0.3  # WAVE_FP_BLAZE_THRES
-    IMAGE_PIXEL_SIZE = 2.28  # IMAGE_PIXEL_SIZE
-    NOISE_SIGDET = 8.0  # WAVE_CCF_NOISE_SIGDET
-    NOISE_SIZE = 12  # WAVE_CCF_NOISE_BOXSIZE
-    NOISE_THRES = 1.0e9  # WAVE_CCF_NOISE_THRES
-
+    args.MASK_WIDTH = 1.7  # CCF_MASK_WIDTH
+    args.MASK_MIN_WEIGHT = 0.0  # CCF_MASK_MIN_WEIGHT
+    args.CCF_STEP = 0.5  # WAVE_CCF_STEP
+    args.CCF_WIDTH = 7.5  # WAVE_CCF_WIDTH
+    args.CCF_RV_NULL = 1000  # CCF_OBJRV_NULL_VAL (max allowed)
+    args.IN_RV = None  # user input [km/s]
+    args.CCF_N_ORD_MAX = 48  # WAVE_CCF_N_ORD_MAX
+    args.BLAZE_NORM_PERCENTILE = 90  # CCF_BLAZE_NORM_PERCENTILE
+    args.BLAZE_THRESHOLD = 0.3  # WAVE_FP_BLAZE_THRES
+    args.NOISE_SIGDET = 8.0  # WAVE_CCF_NOISE_SIGDET
+    args.NOISE_SIZE = 12  # WAVE_CCF_NOISE_BOXSIZE
+    args.NOISE_THRES = 1.0e9  # WAVE_CCF_NOISE_THRES
 else:
     raise ValueError('INPUT ERROR: Case must be 1 or 2')
 
@@ -170,100 +175,6 @@ else:
 # =============================================================================
 # Define functions
 # =============================================================================
-def read_mask():
-    table = Table.read(MASK_FILE, format='ascii')
-    # get column names
-    oldcols = list(table.colnames)
-    # rename columns
-    for c_it, col in enumerate(MASK_COLS):
-        table[oldcols[c_it]].name = col
-    # return table
-    return table
-
-
-def get_mask(table, mask_width, mask_min, mask_units='nm'):
-    ll_mask_e = np.array(table['ll_mask_e']).astype(float)
-    ll_mask_s = np.array(table['ll_mask_s']).astype(float)
-    ll_mask_d = ll_mask_e - ll_mask_s
-    ll_mask_ctr = ll_mask_s + ll_mask_d * 0.5
-    # if mask_width > 0 ll_mask_d is multiplied by mask_width/c
-    if mask_width > 0:
-        ll_mask_d = mask_width * ll_mask_s / SPEED_OF_LIGHT
-    # make w_mask an array
-    w_mask = np.array(table['w_mask']).astype(float)
-    # use w_min to select on w_mask or keep all if w_mask_min >= 1
-    if mask_min < 1.0:
-        mask = w_mask > mask_min
-        ll_mask_d = ll_mask_d[mask]
-        ll_mask_ctr = ll_mask_ctr[mask]
-        w_mask = w_mask[mask]
-    # else set all w_mask to one (and use all lines in file)
-    else:
-        w_mask = np.ones(len(ll_mask_d))
-    # ----------------------------------------------------------------------
-    # deal with the units of ll_mask_d and ll_mask_ctr
-    # must be returned in nanometers
-    # ----------------------------------------------------------------------
-    # get unit object from mask units string
-    unit = getattr(uu, mask_units)
-    # add units
-    ll_mask_d = ll_mask_d * unit
-    ll_mask_ctr = ll_mask_ctr * unit
-    # convert to nanometers
-    ll_mask_d = ll_mask_d.to(uu.nm).value
-    ll_mask_ctr = ll_mask_ctr.to(uu.nm).value
-    # ----------------------------------------------------------------------
-    # return the size of each pixel, the central point of each pixel
-    #    and the weight mask
-    return ll_mask_d, ll_mask_ctr, w_mask
-
-
-def relativistic_waveshift(dv, units='km/s'):
-    """
-    Relativistic offset in wavelength
-
-    default is dv in km/s
-
-    :param dv: float or numpy array, the dv values
-    :param units: string or astropy units, the units of dv
-    :return:
-    """
-    # get c in correct units
-    # noinspection PyUnresolvedReferences
-    if units == 'km/s' or units == uu.km / uu.s:
-        c = SPEED_OF_LIGHT
-    # noinspection PyUnresolvedReferences
-    elif units == 'm/s' or units == uu.m / uu.s:
-        c = SPEED_OF_LIGHT * 1000
-    else:
-        raise ValueError("Wrong units for dv ({0})".format(units))
-    # work out correction
-    corrv = np.sqrt((1 + dv / c) / (1 - dv / c))
-    # return correction
-    return corrv
-
-
-def iuv_spline(x, y, **kwargs):
-    # check whether weights are set
-    w = kwargs.get('w', None)
-    # copy x and y
-    x, y = np.array(x), np.array(y)
-    # find all NaN values
-    nanmask = ~np.isfinite(y)
-
-    if np.sum(~nanmask) < 2:
-        y = np.zeros_like(x)
-    elif np.sum(nanmask) == 0:
-        pass
-    else:
-        # replace all NaN's with linear interpolation
-        badspline = InterpolatedUnivariateSpline(x[~nanmask], y[~nanmask],
-                                                 k=1, ext=1)
-        y[nanmask] = badspline(x[nanmask])
-    # return spline
-    return InterpolatedUnivariateSpline(x, y, **kwargs)
-
-
 def fit_ccf(rv, ccf, fit_type):
     """
     Fit the CCF to a guassian function
@@ -334,21 +245,6 @@ def fit_ccf(rv, ccf, fit_type):
     return result, ccf_fit
 
 
-def gauss_function(x, a, x0, sigma, dc):
-    """
-    A standard 1D gaussian function (for fitting against)]=
-
-    :param x: numpy array (1D), the x data points
-    :param a: float, the amplitude
-    :param x0: float, the mean of the gaussian
-    :param sigma: float, the standard deviation (FWHM) of the gaussian
-    :param dc: float, the constant level below the gaussian
-
-    :return gauss: numpy array (1D), size = len(x), the output gaussian
-    """
-    return a * np.exp(-0.5 * ((x - x0) / sigma) ** 2) + dc
-
-
 def fitgaussian(x, y, weights=None, guess=None, return_fit=True,
                 return_uncertainties=False):
     """
@@ -389,11 +285,11 @@ def fitgaussian(x, y, weights=None, guess=None, return_fit=True,
         guess = [np.nanmax(y), np.nanmean(y), np.nanstd(y), 0]
     # calculate the fit using curve_fit to the function "gauss_function"
     with warnings.catch_warnings(record=True) as _:
-        pfit, pcov = curve_fit(gauss_function, x, y, p0=guess, sigma=weights,
+        pfit, pcov = curve_fit(arv.gauss_function, x, y, p0=guess, sigma=weights,
                                absolute_sigma=True)
     if return_fit and return_uncertainties:
         # calculate the fit parameters
-        yfit = gauss_function(x, *pfit)
+        yfit = arv.gauss_function(x, *pfit)
         # work out the normalisation constant
         chis, _ = chisquare(y, f_exp=yfit)
         norm = chis / (len(y) - len(guess))
@@ -404,13 +300,13 @@ def fitgaussian(x, y, weights=None, guess=None, return_fit=True,
     # if just return fit
     elif return_fit:
         # calculate the fit parameters
-        yfit = gauss_function(x, *pfit)
+        yfit = arv.gauss_function(x, *pfit)
         # return pfit and yfit
         return pfit, yfit
     # if return uncertainties
     elif return_uncertainties:
         # calculate the fit parameters
-        yfit = gauss_function(x, *pfit)
+        yfit = arv.gauss_function(x, *pfit)
         # work out the normalisation constant
         chis, _ = chisquare(y, f_exp=yfit)
         norm = chis / (len(y) - len(guess))
@@ -466,25 +362,16 @@ def delta_v_rms_2d(spe, wave, sigdet, threshold, size):
     return dvrms2, weightedmean
 
 
-def fwhm(sigma=1.0):
-    """
-    Get the Full-width-half-maximum value from the sigma value (~2.3548)
-
-    :param sigma: float, the sigma, default value is 1.0 (normalised gaussian)
-    :return: 2 * sqrt(2 * log(2)) * sigma = 2.3548200450309493 * sigma
-    """
-    return 2 * np.sqrt(2 * np.log(2)) * sigma
-
-
 def ccf_calculation(wave, image, blaze, targetrv, mask_centers, mask_weights,
-                    berv, fit_type, kernel=None):
+                    berv, fit_type, ccf_width, ccf_step, blaze_norm_percentile,
+                    blaze_threshold, kernel=None):
     # get rvmin and rvmax
-    rvmin = targetrv - CCF_WIDTH
-    rvmax = targetrv + CCF_WIDTH + CCF_STEP
+    rvmin = targetrv - ccf_width
+    rvmax = targetrv + ccf_width + ccf_step
     # get the dimensions
     nbo, nbpix = image.shape
     # create a rv ccf range
-    rv_ccf = np.arange(rvmin, rvmax, CCF_STEP)
+    rv_ccf = np.arange(rvmin, rvmax, ccf_step)
     # storage of the ccf
     ccf_all = []
     ccf_noise_all = []
@@ -520,11 +407,11 @@ def ccf_calculation(wave, image, blaze, targetrv, mask_centers, mask_weights,
     if isinstance(kernel, list):
         if kernel[0] == 'boxcar':
             # ones with a length of kernel[1]
-            ker = np.ones(int(np.round(kernel[1] / CCF_STEP)))
+            ker = np.ones(int(np.round(kernel[1] / ccf_step)))
         elif kernel[0] == 'gaussian':
             # width of the gaussian expressed in
             # steps of CCF
-            ew = kernel[1] / CCF_STEP
+            ew = kernel[1] / ccf_step
             index = np.arange(-4 * np.ceil(ew), 4 * np.ceil(ew) + 1)
             ker = np.exp(-0.5 * (index / ew) ** 2)
         elif kernel[0] == 'supergaussian':
@@ -535,18 +422,18 @@ def ccf_calculation(wave, image, blaze, targetrv, mask_centers, mask_weights,
             if (kernel[1] < 0.1) or (kernel[1] > 10):
                 raise ValueError('CCF ERROR: kernel[1] is out of range.')
 
-            ew = kernel[1] / CCF_STEP
+            ew = kernel[1] / ccf_step
 
             index = np.arange(-4 * np.ceil(ew), 4 * np.ceil(ew) + 1)
             ker = np.exp(-0.5 * np.abs(index / ew) ** kernel[2])
 
         else:
-                # kernel name is not known - generate error
+            # kernel name is not known - generate error
             raise ValueError('CCF ERROR: name of kernel not accepted!')
 
         ker = ker / np.sum(ker)
 
-        if len(ker) > (len(rv_ccf)-1):
+        if len(ker) > (len(rv_ccf) - 1):
             # TODO : give a proper error
             err_msg = """
             The size of your convolution kernel is too big for your
@@ -574,12 +461,12 @@ def ccf_calculation(wave, image, blaze, targetrv, mask_centers, mask_weights,
         #
         # normalize per-ord blaze to its peak value
         # this gets rid of the calibration lamp SED
-        bl_ord /= np.nanpercentile(bl_ord, BLAZE_NORM_PERCENTILE)
+        bl_ord /= np.nanpercentile(bl_ord, blaze_norm_percentile)
         # COMMENT EA, changing NaNs to 0 in the blaze
         bl_ord[np.isfinite(bl_ord) == 0] = 0
         # mask on the blaze
         with warnings.catch_warnings(record=True) as _:
-            blazemask = bl_ord > BLAZE_THRESHOLD
+            blazemask = bl_ord > blaze_threshold
         # get order mask centers and mask weights
         min_ord_wav = np.nanmin(wa_ord[blazemask])
         max_ord_wav = np.nanmax(wa_ord[blazemask])
@@ -629,14 +516,14 @@ def ccf_calculation(wave, image, blaze, targetrv, mask_centers, mask_weights,
         good = (sp_ord != 0) & (bl_ord != 0)
         # ------------------------------------------------------------------
         # spline the spectrum and the blaze
-        spline_sp = iuv_spline(wa_ord[good], sp_ord[good], k=5, ext=1)
-        spline_bl = iuv_spline(wa_ord[good], bl_ord[good], k=5, ext=1)
+        spline_sp = arv.iuv_spline(wa_ord[good], sp_ord[good], k=5, ext=1)
+        spline_bl = arv.iuv_spline(wa_ord[good], bl_ord[good], k=5, ext=1)
         # ------------------------------------------------------------------
         # set up the ccf for this order
         ccf_ord = np.zeros_like(rv_ccf)
         # ------------------------------------------------------------------
         # get the wavelength shift (dv) in relativistic way
-        wave_shifts = relativistic_waveshift(rv_ccf - berv)
+        wave_shifts = arv.relativistic_waveshift(rv_ccf - berv)
         # ------------------------------------------------------------------
         # set number of valid lines used to zero
         numlines = 0
@@ -710,9 +597,11 @@ def ccf_calculation(wave, image, blaze, targetrv, mask_centers, mask_weights,
     return props
 
 
-def mean_ccf(props, targetrv, fit_type):
+def mean_ccf(props, targetrv, fit_type, ccf_n_ord_max, ccf_step, ccf_width,
+             mask_file, noise_sigdet, noise_size, noise_thres, mask_min_weight,
+             mask_width):
     # get the average ccf
-    mean_ccf = np.nanmean(props['CCF'][: CCF_N_ORD_MAX], axis=0)
+    mean_ccf = np.nanmean(props['CCF'][: ccf_n_ord_max], axis=0)
     # get the fit for the normalized average ccf
     mean_ccf_coeffs, mean_ccf_fit = fit_ccf(props['RV_CCF'],
                                             mean_ccf, fit_type=fit_type)
@@ -721,7 +610,7 @@ def mean_ccf(props, targetrv, fit_type):
     # get the contrast (ccf fit amplitude)
     ccf_contrast = np.abs(100 * mean_ccf_coeffs[0])
     # get the FWHM value
-    ccf_fwhm = mean_ccf_coeffs[2] * fwhm()
+    ccf_fwhm = mean_ccf_coeffs[2] * arv.fwhm()
     # --------------------------------------------------------------------------
     #  CCF_NOISE uncertainty
     ccf_noise_tot = np.sqrt(np.nanmean(props['CCF_NOISE'] ** 2, axis=0))
@@ -730,7 +619,7 @@ def mean_ccf(props, targetrv, fit_type):
     rv_ccf_diff = (props['RV_CCF'][2:] - props['RV_CCF'][:-2])
     ccf_slope = average_ccf_diff / rv_ccf_diff
     # Calculate the CCF oversampling
-    ccf_oversamp = IMAGE_PIXEL_SIZE / CCF_STEP
+    ccf_oversamp = IMAGE_PIXEL_SIZE / ccf_step
     # create a list of indices based on the oversample grid size
     flist = np.arange(np.round(len(ccf_slope) / ccf_oversamp))
     indexlist = np.array(flist * ccf_oversamp, dtype=int)
@@ -758,218 +647,33 @@ def mean_ccf(props, targetrv, fit_type):
     props['MEAN_RV_NOISE'] = rv_noise
     # --------------------------------------------------------------------------
     # add constants to props
-    props['CCF_MASK'] = os.path.basename(MASK_FILE)
-    props['CCF_STEP'] = CCF_STEP
-    props['CCF_WIDTH'] = CCF_WIDTH
+    props['CCF_MASK'] = os.path.basename(mask_file)
+    props['CCF_STEP'] = ccf_step
+    props['CCF_WIDTH'] = ccf_width
     props['TARGET_RV'] = targetrv
-    props['CCF_SIGDET'] = NOISE_SIGDET
-    props['CCF_BOXSIZE'] = NOISE_SIZE
-    props['CCF_MAXFLUX'] = NOISE_THRES
-    props['CCF_NMAX'] = CCF_N_ORD_MAX
-    props['MASK_MIN'] = MASK_MIN_WEIGHT
-    props['MASK_WIDTH'] = MASK_WIDTH
+    props['CCF_SIGDET'] = noise_sigdet
+    props['CCF_BOXSIZE'] = noise_size
+    props['CCF_MAXFLUX'] = noise_thres
+    props['CCF_NMAX'] = ccf_n_ord_max
+    props['MASK_MIN'] = mask_min_weight
+    props['MASK_WIDTH'] = mask_width
     props['MASK_UNITS'] = 'nm'
     # --------------------------------------------------------------------------
     return props
-
-
-def plot_individual_ccf(props, nbo):
-    # get the plot loop generator
-    generator = plotloop(range(nbo))
-    # loop around orders
-    for order_num in generator:
-        plt.close()
-        fig, frame = plt.subplots(ncols=1, nrows=1)
-        frame.plot(props['RV_CCF'], props['CCF'][order_num], color='b',
-                   marker='+', ls='None', label='data')
-        frame.plot(props['RV_CCF'], props['CCF_FIT'][order_num], color='r', )
-        rvorder = props['CCF_FIT_COEFFS'][order_num][1]
-        frame.set(title='Order {0}  RV = {1} km/s'.format(order_num, rvorder),
-                  xlabel='RV [km/s]', ylabel='CCF')
-        plt.show()
-        plt.close()
-
-
-def plot_mean_ccf(props):
-    plt.close()
-    fig, frame = plt.subplots(ncols=1, nrows=1)
-    frame.plot(props['RV_CCF'], props['MEAN_CCF'], color='b', marker='+',
-               ls='None')
-    frame.plot(props['RV_CCF'], props['MEAN_CCF_FIT'], color='r')
-    frame.set(title='Mean CCF   RV = {0} km/s'.format(props['MEAN_RV']),
-              xlabel='RV [km/s]', ylabel='CCF')
-    plt.show()
-    plt.close()
-
-
-def plotloop(looplist):
-    # check that looplist is a valid list
-    if not isinstance(looplist, list):
-        # noinspection PyBroadException
-        try:
-            looplist = list(looplist)
-        except Exception as _:
-            print('PLOT ERROR: looplist must be a list')
-    # define message to give to user
-    message = ('Plot loop navigation: Go to \n\t [P]revious plot '
-               '\n\t [N]ext plot \n\t [E]nd plotting '
-               '\n\t Number from [0 to {0}]: \t')
-    message = message.format(len(looplist) - 1)
-    # start the iterator at zero
-    it = 0
-    first = True
-    # loop around until we hit the length of the loop list
-    while it < len(looplist):
-        # deal with end of looplist
-        if it == len(looplist):
-            # break out of while
-            break
-        # if this is the first iteration do not print message
-        if first:
-            # yield the first iteration value
-            yield looplist[it]
-            # increase the iterator value
-            it += 1
-            first = False
-        # else we need to ask to go to previous, next or end
-        else:
-            # get user input
-            userinput = input(message)
-            # try to cast into a integer
-            # noinspection PyBroadException
-            try:
-                userinput = int(userinput)
-            except Exception as _:
-                userinput = str(userinput)
-            # if 'p' in user input we assume they want to go to previous
-            if 'P' in str(userinput).upper():
-                yield looplist[it - 1]
-                it -= 1
-            # if 'n' in user input we assume they want to go to next
-            elif 'N' in str(userinput).upper():
-                yield looplist[it + 1]
-                it += 1
-            elif isinstance(userinput, int):
-                it = userinput
-                # deal with it too low
-                if it < 0:
-                    it = 0
-                # deal with it too large
-                elif it >= len(looplist):
-                    it = len(looplist) - 1
-                # yield the value of it
-                yield looplist[it]
-            # else we assume the loop is over and we want to exit
-            else:
-                # break out of while
-                break
-
-
-def write_file(props, infile, maskname, header, wheader):
-    # ----------------------------------------------------------------------
-    # construct out file name
-    inbasename = os.path.basename(infile).split('.')[0]
-    maskbasename = os.path.basename(maskname).split('.')[0]
-    inpath = os.path.dirname(infile)
-    outfile = 'CCFTABLE_{0}_{1}.fits'.format(inbasename, maskbasename)
-    outpath = os.path.join(inpath, outfile)
-    # ----------------------------------------------------------------------
-    # produce CCF table
-    table1 = Table()
-    table1['RV'] = props['RV_CCF']
-    for order_num in range(len(props['CCF'])):
-        table1['ORDER{0:02d}'.format(order_num)] = props['CCF'][order_num]
-    table1['COMBINED'] = props['MEAN_CCF']
-    # ----------------------------------------------------------------------
-    # produce stats table
-    table2 = Table()
-    table2['ORDERS'] = np.arange(len(props['CCF'])).astype(int)
-    table2['NLINES'] = props['CCF_LINES']
-    # get the coefficients
-    coeffs = props['CCF_FIT_COEFFS']
-    table2['CONTRAST'] = np.abs(100 * coeffs[:, 0])
-    table2['RV'] = coeffs[:, 1]
-    table2['FWHM'] = coeffs[:, 2]
-    table2['DC'] = coeffs[:, 3]
-    table2['SNR'] = props['CCF_SNR']
-    table2['NORM'] = props['CCF_NORM']
-
-    # ----------------------------------------------------------------------
-    # add to the header
-    # ----------------------------------------------------------------------
-    # add results from the CCF
-    header['CCFMNRV'] = (props['MEAN_RV'],
-                         'Mean RV calc. from the mean CCF [km/s]')
-    header['CCFMCONT'] = (props['MEAN_CONTRAST'],
-                          'Mean contrast (depth of fit) from mean CCF')
-    header['CCFMFWHM'] = (props['MEAN_FWHM'],
-                          'Mean FWHM from mean CCF')
-    header['CCFMRVNS'] = (props['MEAN_RV_NOISE'],
-                          'Mean RV Noise from mean CCF')
-    header['CCFTLINE'] = (props['TOT_LINE'],
-                          'Total no. of mask lines used in CCF')
-    # ----------------------------------------------------------------------
-    # add constants used to process
-    header['CCFMASK'] = (props['CCF_MASK'], 'CCF mask file used')
-    header['CCFSTEP'] = (props['CCF_STEP'], 'CCF step used [km/s]')
-    header['CCFWIDTH'] = (props['CCF_WIDTH'], 'CCF width used [km/s]')
-    header['CCFTRGRV'] = (props['TARGET_RV'],
-                          'CCF central RV used in CCF [km/s]')
-    header['CCFSIGDT'] = (props['CCF_SIGDET'],
-                          'Read noise used in photon noise calc. in CCF')
-    header['CCFBOXSZ'] = (props['CCF_BOXSIZE'],
-                          'Size of bad px used in photon noise calc. in CCF')
-    header['CCFMAXFX'] = (props['CCF_MAXFLUX'],
-                          'Flux thres for bad px in photon noise calc. in CCF')
-    header['CCFORDMX'] = (props['CCF_NMAX'],
-                          'Last order used in mean for mean CCF')
-    header['CCFMSKMN'] = (props['MASK_MIN'],
-                          'Minimum weight of lines used in the CCF mask')
-    header['CCFMSKWD'] = (props['MASK_WIDTH'],
-                          'Width of lines used in the CCF mask')
-    header['CCFMUNIT'] = (props['MASK_UNITS'], 'Units used in CCF Mask')
-    # ----------------------------------------------------------------------
-    header['RV_WAVFN'] = (os.path.basename(WAVE_FILE),
-                          'RV wave file used')
-    header['RV_WAVTM'] = (wheader['MJDMID'],
-                          'RV wave file time [mjd]')
-    header['RV_WAVTD'] = (header['MJDMID'] - wheader['MJDMID'],
-                          'RV timediff [days] btwn file and wave solution')
-    header['RV_WAVFP'] = ('None', 'RV measured from wave sol FP CCF [km/s]')
-    header['RV_SIMFP'] = ('None', 'RV measured from simultaneous FP CCF [km/s]')
-    header['RV_DRIFT'] = ('None',
-                          'RV drift between wave sol and sim. FP CCF [km/s]')
-    header['RV_OBJ'] = (props['MEAN_RV'],
-                        'RV calc in the object CCF (non corr.) [km/s]')
-    header['RV_CORR'] = ('None', 'RV corrected for FP CCF drift [km/s]')
-    # ----------------------------------------------------------------------
-    # log where we are writing the file to
-    print('Writing file to {0}'.format(outpath))
-    # construct hdus
-    hdu = fits.PrimaryHDU()
-    t1 = fits.BinTableHDU(table1, header=header)
-    t2 = fits.BinTableHDU(table2, header=header)
-    # construct hdu list
-    hdulist = fits.HDUList([hdu, t1, t2])
-    # write hdulist
-    hdulist.writeto(outpath, overwrite=True)
 
 
 # =============================================================================
 # Start of code
 # =============================================================================
 if __name__ == '__main__':
-
-    # deal with help
-    if '--help' in sys.argv or '-h' in sys.argv:
-        print(helpstr)
-        os._exit(1)
-
+    # need to get arguments from command line
+    args.args_from_cmd()
+    args.kernel_args()
     # get input telluric corrected file and header
-    image, header = fits.getdata(IN_FILE, header=True)
-    blaze = fits.getdata(BLAZE_FILE)
-    masktable = read_mask()
-    wave, wheader = fits.getdata(WAVE_FILE, header=True)
+    image, header = fits.getdata(args.IN_FILE, header=True)
+    blaze = fits.getdata(args.BLAZE_FILE)
+    masktable = arv.read_mask(args.MASK_FILE, MASK_COLS)
+    wave, wheader, wavefile = arv.read_wave(image, header, args.WAVE_FILE)
     # get the dimensions
     nbo, nbpix = image.shape
     # --------------------------------------------------------------------------
@@ -1004,21 +708,21 @@ if __name__ == '__main__':
     # get rv from header (or set to zero)
     if ('OBJRV' in header) and dprtype == 'OBJ':
         targetrv = header['OBJRV']
-        if np.isnan(targetrv) or np.abs(targetrv) > CCF_RV_NULL:
+        if np.isnan(targetrv) or np.abs(targetrv) > args.CCF_RV_NULL:
             targetrv = 0.0
     else:
         targetrv = 0.0
-    if IN_RV is not None:
-        targetrv = float(IN_RV)
+    if args.IN_RV is not None:
+        targetrv = float(args.IN_RV)
     # --------------------------------------------------------------------------
     # get mask centers, and weights
-    _, mask_centers, mask_weights = get_mask(masktable, MASK_WIDTH,
-                                             MASK_MIN_WEIGHT)
+    _, mask_centers, mask_weights = arv.get_mask(masktable, args.MASK_WIDTH,
+                                                 args.MASK_MIN_WEIGHT)
     # --------------------------------------------------------------------------
     # Photon noise uncertainty
     # --------------------------------------------------------------------------
-    dkwargs = dict(spe=image, wave=wave, sigdet=NOISE_SIGDET,
-                   size=NOISE_SIZE, threshold=NOISE_THRES)
+    dkwargs = dict(spe=image, wave=wave, sigdet=args.NOISE_SIGDET,
+                   size=args.NOISE_SIZE, threshold=args.NOISE_THRES)
     # run DeltaVrms2D
     dvrmsref, wmeanref = delta_v_rms_2d(**dkwargs)
     wmsg = 'On fiber {0} estimated RV uncertainty on spectrum is {1:.3f}'
@@ -1029,29 +733,35 @@ if __name__ == '__main__':
     # --------------------------------------------------------------------------
     print('\nRunning CCF calculation')
     props = ccf_calculation(wave, image, blaze, targetrv, mask_centers,
-                            mask_weights, berv, fit_type, kernel=KERNEL)
+                            mask_weights, berv, fit_type, args.CCF_WIDTH,
+                            args.CCF_STEP, args.BLAZE_NORM_PERCENTILE,
+                            args.BLAZE_THRESHOLD, kernel=args.kernelparams)
     # --------------------------------------------------------------------------
     # Calculate the mean CCF
     # --------------------------------------------------------------------------
     print('\nRunning Mean CCF')
-    props = mean_ccf(props, targetrv, fit_type)
+    props = mean_ccf(props, targetrv, fit_type, args.CCF_N_ORD_MAX,
+                     args.CCF_STEP, args.CCF_WIDTH, args.MASK_FILE,
+                     args.NOISE_SIGDET, args.NOISE_SIZE, args.NOISE_THRES,
+                     args.MASK_MIN_WEIGHT, args.MASK_WIDTH)
 
     # --------------------------------------------------------------------------
     # Plots
     # --------------------------------------------------------------------------
-    if PLOT:
+    if args.PLOT:
         # plot individual CCFs
         print('\n Plotting individual CCFs')
-        plot_individual_ccf(props, nbo)
+        arv.plot_individual_ccf(props, nbo)
         # plot mean ccf and fit
         print('\n Plotting Mean CCF')
-        plot_mean_ccf(props)
+        arv.plot_mean_ccf(props)
 
     # --------------------------------------------------------------------------
     # Save file
     # --------------------------------------------------------------------------
     # write the two tables to file CCFTABLE_{filename}_{mask}.fits
-    write_file(props, IN_FILE, MASK_FILE, header, wheader)
+    arv.write_file(props, args.IN_FILE, args.MASK_FILE, header, wheader,
+                   wavefile, args.OUTDIR)
 
 # ==============================================================================
 # End of code

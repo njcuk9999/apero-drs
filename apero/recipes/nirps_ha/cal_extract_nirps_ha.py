@@ -231,7 +231,7 @@ def __main__(recipe, params):
                                        props, inflat=flat, inblaze=blaze,
                                        fiber=fiber)
             # --------------------------------------------------------------
-            # thermal correction of spectrum
+            # thermal correction of spectrum (Thermal correction not required)
             # eprops = extract.thermal_correction(params, recipe, header, props,
             #                                     eprops, fiber=fiber)
             # --------------------------------------------------------------
@@ -283,6 +283,16 @@ def __main__(recipe, params):
                      flat_file, blaze_file, qc_params]
             outfiles = extract.write_extraction_files(params, recipe, *fargs)
             e2dsfile, e2dsfffile = outfiles
+
+            # --------------------------------------------------------------
+            # create fplines file for required fibers
+            # --------------------------------------------------------------
+            rargs = [e2dsfile, wprops['WAVEMAP'], fiber]
+            rfpl = extract.ref_fplines(params, recipe, *rargs)
+            # write rfpl file
+            if rfpl is not None:
+                rargs = [rfpl, e2dsfile, e2dsfile, fiber, 'EXT_FPLINES']
+                wave.write_fplines(params, recipe, *rargs)
 
             # --------------------------------------------------------------
             # add files to outputs

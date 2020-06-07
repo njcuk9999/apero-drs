@@ -16,10 +16,12 @@ import os
 from collections import OrderedDict
 import copy
 import warnings
+from typing import Type
 
 from apero.core.core import drs_log
 from apero.core import constants
 from apero.core import math as mp
+from apero.core.instruments.default import output_filenames as outf
 from apero.lang import drs_text
 from apero.io import drs_fits
 from apero.io import drs_path
@@ -566,6 +568,56 @@ class DrsInputFile:
         return required_names
 
 
+
+    def reconstruct_filename(self, params, outext, prefix=None, suffix=None,
+                             inext=None, fiber=None):
+
+        currentpath = os.path.dirname(self.filename)
+        currentfile = self.basename
+        # ----------------------------------------------------------------------
+        # deal with non set value
+        if prefix is None:
+            prefix = self.prefix
+        if suffix is None:
+            suffix = self.suffix
+        if inext is None:
+            inext = self.filetype
+        if fiber is None:
+            fiber = self.fiber
+        # ----------------------------------------------------------------------
+        # create infilename
+        # ----------------------------------------------------------------------
+        # remove inext
+        if self.inext is not None and currentfile.endswith(self.inext):
+            currentfile = currentfile[:-len(self.inext)]
+        # remove fiber
+        if self.fiber is not None and currentfile.endswith('_' + self.fiber):
+            currentfile = currentfile[:-len('_' + self.fiber)]
+        # remove prefix
+        if self.prefix is not None and currentfile.startswith(self.prefix):
+            currentfile = currentfile[len(self.prefix):]
+        # remove suffix
+        if self.suffix is not None and currentfile.endswith(self.suffix):
+            currentfile = currentfile[:-len(self.suffix)]
+        # add back the inext
+        if inext is not None and not currentfile.endswith(inext):
+            currentfile = currentfile + inext
+        # ----------------------------------------------------------------------
+        # get re-constructed out file name
+        outfilename = outf.get_outfilename(params, currentfile, prefix, suffix,
+                                           inext, outext, fiber)
+        # ----------------------------------------------------------------------
+        # update self
+        self.prefix = prefix
+        self.suffix = suffix
+        self.inext = inext
+        self.fiber = fiber
+        self.filename = os.path.join(currentpath, outfilename)
+        self.basename = outfilename
+
+
+
+
 class DrsFitsFile(DrsInputFile):
     def __init__(self, name, **kwargs):
         """
@@ -630,6 +682,9 @@ class DrsFitsFile(DrsInputFile):
         self.data = kwargs.get('data', None)
         # get the fits header (or set it to None)
         self.header = kwargs.get('header', None)
+        # update fiber parameter from header
+        if self.header is not None:
+            self.fiber = self.get_key('KW_FIBER', dtype=str, required=False)
         # get the index table related to this file # TODO: Is this used still?
         self.indextable = kwargs.get('index', None)
         # get the number of files associated with this drs fits file
@@ -1462,6 +1517,9 @@ class DrsFitsFile(DrsInputFile):
 
         self.data = out[0]
         self.header = drs_fits.Header.from_fits_header(out[1])
+        # update fiber parameter from header
+        if self.header is not None:
+            self.fiber = self.get_key('KW_FIBER', dtype=str, required=False)
         # set number of data sets to 1
         self.numfiles = 1
         # set the shape
@@ -1500,6 +1558,9 @@ class DrsFitsFile(DrsInputFile):
         header = drs_fits.read_header(params, self.filename, ext=ext, log=log)
         # assign to object
         self.header = header
+        # update fiber parameter from header
+        if self.header is not None:
+            self.fiber = self.get_key('KW_FIBER', dtype=str, required=False)
 
     # TODO: sort out header_only and load_data -- ambiguous
     def check_read(self, header_only=False, load=False, load_data=True):
@@ -1550,6 +1611,10 @@ class DrsFitsFile(DrsInputFile):
                                     gethdr=True, fmt='fits-multi')
         self.data = out[0][0]
         self.header = drs_fits.Header.from_fits_header(out[1][0])
+        # update fiber parameter from header
+        if self.header is not None:
+            self.fiber = self.get_key('KW_FIBER', dtype=str, required=False)
+
         self.data_array = out[0]
         # set number of data sets to 1
         self.numfiles = 1
@@ -1788,7 +1853,7 @@ class DrsFitsFile(DrsInputFile):
     # fits file header methods
     # -------------------------------------------------------------------------
     def get_key(self, key, has_default=False, default=None, required=True,
-                dtype=float):
+                dtype: Type = float):
         # set function name
         _ = display_func(None, 'get_key', __NAME__, 'DrsFitsFile')
         # run read_header_key method
@@ -2102,7 +2167,7 @@ class DrsFitsFile(DrsInputFile):
                    group=None, forbid_keys=True, allkeys=False):
         # generate instances from params
         Keyword = constants.constant_functions.Keyword
-        keyworddict = params.get_instanceof(Keyword)
+        keyworddict = params.get_instanceof(Keyword, nameattr='key')
         # get pconstant
         pconstant = self.recipe.drs_pconstant
         # filter function
