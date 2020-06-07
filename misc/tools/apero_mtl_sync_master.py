@@ -32,8 +32,8 @@ else:
     RSYNC_COMMAND = 'rsync -avr --port=8080 {0} {1}::SPIROU_MASTER/{2}'
     RSYNC_PASSWORD = 'Secotine763'
 
-name = 'mini_data_0_6_082'
-localpath = 'mini_data_closest_20200504'
+name = 'mini_data_0_6_099'
+localpath = 'md_20200603'
 directories = ['calibDB', 'telluDB', 'reduced', 'tmp']
 
 # -----------------------------------------------------------------------------
