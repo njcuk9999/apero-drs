@@ -121,6 +121,11 @@ def measure_fp_peaks(params, props, limit, normpercent):
     allamppeak = []
     alldcpeak = []
     allshapepeak = []
+
+
+    # TODO: remove breakpoint
+    constants.break_point(params)
+
     # loop through the orders
     for order_num in range(speref.shape[0]):
         # storage for order of peaks
@@ -253,10 +258,6 @@ def measure_fp_peaks(params, props, limit, normpercent):
 
 
 def fit_fp_peaks(x, y, size, return_model=False):
-
-    # TODO: remove breakpoint
-    constants.break_point()
-
     # storage of warnings
     warns = None
     # get gauss function
