@@ -978,7 +978,7 @@ THERMAL_CORRETION_TYPE1.value = 'OBJ'
 # define DPRTYPEs we need to correct thermal background using
 #     method 2 (must be a string list separated by a comma)
 THERMAL_CORRETION_TYPE2 = THERMAL_CORRETION_TYPE2.copy(__NAME__)
-THERMAL_CORRETION_TYPE2.value = 'FP, HC, FLAT'
+THERMAL_CORRETION_TYPE2.value = 'FP, HC, HCONE, HCTWO, FLAT'
 
 # define the order to perform the thermal background scaling on
 THERMAL_ORDER = THERMAL_ORDER.copy(__NAME__)
