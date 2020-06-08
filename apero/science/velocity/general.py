@@ -122,10 +122,6 @@ def measure_fp_peaks(params, props, limit, normpercent):
     alldcpeak = []
     allshapepeak = []
 
-
-    # TODO: remove breakpoint
-    constants.break_point(params)
-
     # loop through the orders
     for order_num in range(speref.shape[0]):
         # storage for order of peaks
@@ -734,8 +730,6 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     ll_mask_d, ll_mask_ctr, w_mask = get_ccf_mask(params, **mkwargs)
 
     # calculate the CCF
-    # TODO: remove break point
-    constants.break_point(params)
     props = ccf_calculation(params, image, blaze, wavemap, berv, targetrv,
                             ccfwidth, ccfstep, ll_mask_ctr, w_mask,
                             fit_type, fiber)

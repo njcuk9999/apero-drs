@@ -230,6 +230,9 @@ def __main__(recipe, params):
             eprops = extract.extract2d(params, image2, orderp, lcoeffs2, nframes,
                                        props, inflat=flat, inblaze=blaze,
                                        fiber=fiber)
+
+            # TODO: remove break point
+            constants.break_point(params)
             # --------------------------------------------------------------
             # thermal correction of spectrum
             eprops = extract.thermal_correction(params, recipe, header, props,
