@@ -232,7 +232,7 @@ def __main__(recipe, params):
                                        fiber=fiber)
 
             # TODO: remove break point
-            constants.break_point(params)
+            constants.break_point(allow=True)
             # --------------------------------------------------------------
             # thermal correction of spectrum
             eprops = extract.thermal_correction(params, recipe, header, props,
