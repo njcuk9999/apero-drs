@@ -253,6 +253,10 @@ def measure_fp_peaks(params, props, limit, normpercent):
 
 
 def fit_fp_peaks(x, y, size, return_model=False):
+
+    # TODO: remove breakpoint
+    constants.break_point()
+
     # storage of warnings
     warns = None
     # get gauss function
@@ -272,16 +276,15 @@ def fit_fp_peaks(x, y, size, return_model=False):
             if warns is None:
                 warns = ''
             warns += ('\nBoundError: Lower bound {0} incorrect (lower={1} '
-                      'upper={2})')
-            warns += warns.format(pnames[p_it], lowerbounds[p_it],
-                                  upperbounds[p_it])
+                      'upper={2})'.format(pnames[p_it], lowerbounds[p_it],
+                                  upperbounds[p_it]))
         if p0[p_it] < lowerbounds[p_it] or p0[p_it] > upperbounds[p_it]:
             if warns is None:
                 warns = ''
             warns += ('\nBoundError: Inital guess for {0} out of bounds '
-                      '(guess={1} lower={2} upper={3})')
-            warns += warns.format(pnames[p_it], p0[p_it],
-                                  lowerbounds[p_it], upperbounds[p_it])
+                      '(guess={1} lower={2} upper={3})'
+                      ''.format(pnames[p_it], p0[p_it],
+                                lowerbounds[p_it], upperbounds[p_it]))
 
     # deal with bad bounds
     if warns is not None:
