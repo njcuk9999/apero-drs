@@ -2,6 +2,42 @@ Changelog
 =========
 
 
+0.6.101 (2020-06-09)
+--------------------
+- `Apero.science.velocity.general.py` - remove breakpoint (problem solved)
+  - Issue #623. [njcuk9999]
+- `Apero.core.core.drs_file.py` - make filename absolute path in all cases
+  (Issue #623) [njcuk9999]
+- Add break point to test Issue 623. [njcuk9999]
+- `Apero.tools.module.setup.drs_installation.py` - value.exists() --> not
+  value.exits() (Issue #624) [njcuk9999]
+
+
+0.6.100 (2020-06-08)
+--------------------
+- `Misc/tools/apero_diff.py` - code to find differences between two
+  reductions. [njcuk9999]
+- `Apero.science.calib.dark.py` - add back in the dark removal of the low
+  frequency dark. [njcuk9999]
+- `Apero.recipe.spirou.cal_extract_spirou.py` - remove breakpoints.
+  [njcuk9999]
+- `Apero.core.instruments.spirou.default_constants.py` - add HCONE and
+  HCTWO to `THERMAL_CORRECTION_TYPE2`. [njcuk9999]
+- Move the break point. [njcuk9999]
+- Move the break point. [njcuk9999]
+- `Apero.science.velocity.general.py` - move breakpoint. [njcuk9999]
+- `Apero.science.velocity.general.py` - add break point fto `fit_fp_peaks`.
+  [njcuk9999]
+- Update the `apero_mtl_sync` codes. [njcuk9999]
+- `Requirements_current.txt` - add pyyaml requirement. [njcuk9999]
+- Update env with yaml/pyyaml. [njcuk9999]
+- `Tools.module.setup.drs_installation.py` - `Path(in_tool_path)` -->
+  `str(in_tool_path)` [njcuk9999]
+- `Apero-drs.setup.install.py` - correct typo `Path(drs_path)` -->
+  `str(drs_path)` [njcuk9999]
+- Update date/version/changelog/update notes/documentation. [njcuk9999]
+
+
 0.6.099 (2020-06-04)
 --------------------
 - `Misc.tools.ccf_drift_plot.py` - add another ccf header key plot.
