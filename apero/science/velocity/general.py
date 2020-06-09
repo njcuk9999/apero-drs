@@ -529,10 +529,6 @@ def remove_telluric_domain(params, recipe, infile, fiber, **kwargs):
     e2dsfiles = infile.read_header_key_1d_list('KW_INFILE1', dim1=None,
                                                dtype=str)
     e2dsfilename = e2dsfiles[0]
-
-    # TODO: remove breakpoint
-    constants.break_point(params)
-
     # construct absolute path for the e2ds file
     e2dsabsfilename = os.path.join(infile.path, e2dsfilename)
     # check that e2ds file exists
