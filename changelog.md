@@ -2,8 +2,17 @@ Changelog
 =========
 
 
-0.6.101 (2020-06-09)
+0.6.101 (2020-06-11)
 --------------------
+- Misc.tools.apero_diff.py - add time/version/id key to file - and order
+  columns better for output. [njcuk9999]
+- Apero.core.core.drs_database.py - need to lock db files while they are
+  being read (to avoid two or more cores opening at once) [njcuk9999]
+- Apero-drs.misc.tools.apero_diff.py - add code to compare two DRS
+  reductions. [njcuk9999]
+- Apero.core.core.drs_file.py - correct typo - os.abspath -->
+  os.path.abspath. [njcuk9999]
+- Update date/version/changelog. [njcuk9999]
 - Apero.science.velocity.general.py - remove breakpoint (problem solved)
   - Issue #623. [njcuk9999]
 - Apero.core.core.drs_file.py - make filename absolute path in all cases
