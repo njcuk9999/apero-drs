@@ -179,9 +179,11 @@ def set_file(params, **kwargs):
     # get filename from outfile if None
     if filename is None:
         filename = outfile.filename
-    # deal with no file name set
+    # deal with no file name set and filename must be a basename (no path)
     if filename is None:
         WLOG(params, 'error', TextEntry('00-001-00041', args=[func_name]))
+    else:
+        filename = os.path.basename(filename)
     # get suffix
     suffix = kwargs.get('suffix', None)
     # get path
@@ -220,6 +222,8 @@ def set_file(params, **kwargs):
 def get_outfilename(params, infilename, prefix=None, suffix=None,
                     inext=None, outext=None, fiber=None):
     func_name = __NAME__ + '.get_outfilename()'
+    # make surte infilename is a basename not a path
+    infilename = os.path.basename(infilename)
     # deal with fiber
     if fiber is not None:
         suffix = '{0}_{1}'.format(suffix, fiber.upper())
