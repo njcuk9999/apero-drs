@@ -2591,9 +2591,6 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # get copy of instance of file
     template_file = recipe.outputs['TELLU_TEMP'].newcopy(recipe=recipe,
                                                          fiber=fiber)
-
-    # TODO: remove break point
-    constants.break_point(params)
     # construct the filename from file instance
     template_file.construct_filename(params, infile=infile, suffix=suffix)
     # ------------------------------------------------------------------
