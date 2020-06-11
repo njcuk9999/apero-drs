@@ -178,7 +178,7 @@ def set_file(params, **kwargs):
         WLOG(params, 'error', TextEntry('00-001-00018', args=[func_name]))
     # get filename from outfile if None
     if filename is None:
-        filename = outfile.filename
+        filename = outfile.basename
     # deal with no file name set and filename must be a basename (no path)
     if filename is None:
         WLOG(params, 'error', TextEntry('00-001-00041', args=[func_name]))
