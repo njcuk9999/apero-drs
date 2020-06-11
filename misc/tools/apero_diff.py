@@ -11,6 +11,8 @@ from pathlib import Path
 import numpy as np
 from astropy.io import fits
 from astropy.table import Table
+from astropy.time import Time
+
 
 # =============================================================================
 # Define variables
@@ -26,9 +28,20 @@ FITS_SUFFIXES = ['.fits']
 PERCENTILES = [2.5, 16, 50, 84, 97.5]
 # define output file
 OUTFILE = 'diff-master.fits'
-# threshold
+# threshold for rms_dev / max_dev
 THRESHOLD1 = 1.0e-5
 THRESHOLD2 = 1.0e-6
+# threshold for similar number of pixels (fraction of same)
+THRESHOLD3 = 0.9
+# Define header keys not to check
+NONCHECK_HDR_KEYS = ['DRSPDATE', 'DRSPID']
+# Define time stamp header key
+TIME_STAMP = 'DRSPDATE'
+TIME_STAMP_FMT = 'iso'
+# Define version key
+VERSION_KEY = 'VERSION'
+# Define id key
+ID_KEY = 'DRSPID'
 
 
 # =============================================================================
@@ -83,18 +96,18 @@ class Comparison:
         self.stats['DIR'] = str(self.directory)
         # deal with file 1
         if self.file1 is not None:
-            self.stats['FILE1'] = str(self.file1.name)
-            self.stats['PATH1'] = str(self.file1.parent)
+            self.stats['PATH_1'] = str(self.file1.parent)
+            self.stats['FILE_1'] = str(self.file1.name)
         else:
-            self.stats['FILE1'] = 'None'
-            self.stats['PATH1'] = 'None'
+            self.stats['PATH_1'] = 'None'
+            self.stats['FILE_1'] = 'None'
         # deal with file 2
         if self.file2 is not None:
-            self.stats['FILE2'] = str(self.file2.name)
-            self.stats['PATH2'] = str(self.file2.parent)
+            self.stats['PATH_2'] = str(self.file2.parent)
+            self.stats['FILE_2'] = str(self.file2.name)
         else:
-            self.stats['FILE2'] = 'None'
-            self.stats['PATH2'] = 'None'
+            self.stats['PATH_2'] = 'None'
+            self.stats['FILE_2'] = 'None'
         # ------------------------------------------------------------------
         # get data
         data1, data2, hdr1, hdr2, kind = self.read_files()
@@ -114,7 +127,7 @@ class Comparison:
 
     def get_shape(self, data, kind, it=1):
         # set up key
-        key = 'SHAPE{0}'.format(it)
+        key = 'SHAPE_{0}'.format(it)
         # deal with different kinds
         if kind is None:
             self.stats[key] = 'None'
@@ -203,6 +216,10 @@ class Comparison:
         rt2 = 'RMS_THRES_2'
         mt1 = 'MAX_THRES_1'
         mt2 = 'MAX_THRES_2'
+        unsimilar = 'UNSIMILAR'
+        similar = 'SIMILAR'
+        exact = 'EXACT'
+        different = 'DIFFERENT'
         # ------------------------------------------------------------------
         # access data - for fits image we take the whole image
         if kind == 'fits-image':
@@ -220,20 +237,39 @@ class Comparison:
         # populate values
         if (values1 is not None) and (values2 is not None):
             # calculate norm95 and diff image
-            norm95 = np.nanpercentile((values1 + values2)/2, 95)
-            diff_image = values1 - values2
-            # calculate stats
-            rmsd = np.nanstd(diff_image) / norm95
-            maxd = np.nanmax(np.abs(diff_image)) / norm95
-            # populate states
-            self.stats[n95key] = norm95
-            self.stats[rmsdkey] = rmsd
-            self.stats[maxdkey] = maxd
-            self.stats[frackey] = np.mean(values1 == values2)
-            self.stats[rt1] = float(rmsd < THRESHOLD1)
-            self.stats[rt2] = float(rmsd < THRESHOLD2)
-            self.stats[mt1] = float(maxd < THRESHOLD1)
-            self.stats[mt2] = float(maxd < THRESHOLD2)
+            try:
+                norm95 = np.nanpercentile((values1 + values2)/2, 95)
+                diff_image = values1 - values2
+                # calculate stats
+                rmsd = np.nanstd(diff_image) / norm95
+                maxd = np.nanmax(np.abs(diff_image)) / norm95
+                fraction = np.mean(values1 == values2)
+                # populate states
+                self.stats[n95key] = norm95
+                self.stats[rmsdkey] = rmsd
+                self.stats[maxdkey] = maxd
+                self.stats[frackey] = fraction
+                self.stats[rt1] = float(rmsd < THRESHOLD1)
+                self.stats[rt2] = float(rmsd < THRESHOLD2)
+                self.stats[mt1] = float(maxd < THRESHOLD1)
+                self.stats[mt2] = float(maxd < THRESHOLD2)
+                self.stats[unsimilar] = float(fraction < THRESHOLD3)
+                self.stats[similar] = float(fraction >= THRESHOLD3)
+                self.stats[exact] = float(fraction == 1.0)
+                self.stats[different] = float(fraction != 1.0)
+            except Exception as _:
+                self.stats[n95key] = np.nan
+                self.stats[rmsdkey] = np.nan
+                self.stats[maxdkey] = np.nan
+                self.stats[frackey] = np.nan
+                self.stats[rt1] = np.nan
+                self.stats[rt2] = np.nan
+                self.stats[mt1] = np.nan
+                self.stats[mt2] = np.nan
+                self.stats[unsimilar] = np.nan
+                self.stats[similar] = np.nan
+                self.stats[exact] = np.nan
+                self.stats[different] = np.nan
         # ------------------------------------------------------------------
         # else fill in the None values
         else:
@@ -245,6 +281,10 @@ class Comparison:
             self.stats[rt2] = np.nan
             self.stats[mt1] = np.nan
             self.stats[mt2] = np.nan
+            self.stats[unsimilar] = np.nan
+            self.stats[similar] = np.nan
+            self.stats[exact] = np.nan
+            self.stats[different] = np.nan
 
     def get_diff_headers(self, header1, header2):
 
@@ -288,11 +328,58 @@ class Comparison:
             self.stats[hdrckey] = count
             self.stats[hdrmkey] = ', '.join(missing)
             self.stats[hdrdkey] = ', '.join(different)
+            # get times
+            if TIME_STAMP in header1:
+                # get time object
+                time1 = Time(header1[TIME_STAMP], format=TIME_STAMP_FMT)
+                # push to stats
+                self.stats['TIME_1'] = time1.iso
+                self.stats['MJD_1'] = time1.mjd
+            else:
+                self.stats['TIME_1'] = np.nan
+                self.stats['MJD_1'] = np.nan
+            if TIME_STAMP in header2:
+                # get time object
+                time2 = Time(header2[TIME_STAMP], format=TIME_STAMP_FMT)
+                # push to stats
+                self.stats['TIME_2'] = time2.iso
+                self.stats['MJD_2'] = time2.mjd
+            else:
+                self.stats['TIME_2'] = np.nan
+                self.stats['MJD_2'] = np.nan
+            # get version
+            if VERSION_KEY in header1:
+                self.stats['VERSION_1'] = header1[VERSION_KEY]
+            else:
+                self.stats['VERSION_1'] = 'None'
+            # get version
+            if VERSION_KEY in header2:
+                self.stats['VERSION_2'] = header2[VERSION_KEY]
+            else:
+                self.stats['VERSION_2'] = 'None'
+            # get id
+            if ID_KEY in header1:
+                self.stats['ID_1'] = header1[ID_KEY]
+            else:
+                self.stats['ID_1'] = 'None'
+            if ID_KEY in header2:
+                self.stats['ID_2'] = header2[ID_KEY]
+            else:
+                self.stats['ID_2'] = 'None'
+
         # else set them to None
         else:
             self.stats[hdrckey] = np.nan
             self.stats[hdrmkey] = ''
             self.stats[hdrdkey] = ''
+            self.stats['TIME_1'] = np.nan
+            self.stats['MJD_1'] = np.nan
+            self.stats['TIME_2'] = np.nan
+            self.stats['MJD_2'] = np.nan
+            self.stats['VERSION_1'] = 'None'
+            self.stats['VERSION_2'] = 'None'
+            self.stats['ID_1'] = 'None'
+            self.stats['ID_2'] = 'None'
 
 
 def read_fits(filename):
@@ -321,7 +408,7 @@ def read_fits(filename):
                         data = Table.read(filename)
                         header = hdulist[1].header
                         return data, header, 'fits-table'
-                    except Exception as e:
+                    except Exception as _:
                         print('WARNING: Fits table broken: {0}'
                               ''.format(filename))
                         return None, None, None
@@ -347,7 +434,7 @@ def read_other(filename):
         with open(filename, 'r') as file1:
             data = file1.readlines()
         return data, None, 'other'
-    except Exception as e:
+    except Exception as _:
         print('WARNING: cannot read other file: {0}'.format(filename))
         return None, None, None
 
@@ -364,6 +451,30 @@ def find_numerical_col(table):
     return None, None
 
 
+def sort_table(keys):
+    """
+    We want to sort the table so that keys _1 and _2 are in the same place
+    :param keys:
+    :return:
+    """
+    newlist = []
+
+    for key in keys:
+        # do no add keys already in new list
+        if key in newlist:
+            continue
+        # add key to newlist
+        newlist.append(key)
+        # if key ends with _1 look for _2
+        if key.endswith('_1'):
+            key1 = key.split('_1')[0]
+            key2 = key1 + '_2'
+            if key2 in keys:
+                newlist.append(key2)
+    # return new list
+    return newlist
+
+
 # =============================================================================
 # Start of code
 # =============================================================================
@@ -372,14 +483,14 @@ if __name__ == "__main__":
     path1 = Path(WORKSPACE1)
     path2 = Path(WORKSPACE2)
     # loop around directories
-    for directory in directories:
+    for dirname in directories:
         # ------------------------------------------------------------------
         # storage dictionary
         comparisons = []
         # ------------------------------------------------------------------
         # get the full directory path
-        directory1 = path1.joinpath(directory)
-        directory2 = path2.joinpath(directory)
+        directory1 = path1.joinpath(dirname)
+        directory2 = path2.joinpath(dirname)
         # get the list of all files
         all_files1 = np.sort(list(directory1.glob('*')))
         all_files2 = np.sort(list(directory2.glob('*')))
@@ -395,14 +506,14 @@ if __name__ == "__main__":
             # deal with not finding the same file
             if basename1 not in names2:
                 # construct with empty path2
-                comp = Comparison(all_files1[f_it], None, directory=directory)
+                comp = Comparison(all_files1[f_it], None, directory=dirname)
                 # append to list
                 comparisons.append(comp)
             # else add both files
             else:
                 # construct with both paths
                 comp = Comparison(all_files1[f_it], all_files2[f_it],
-                                  directory=directory)
+                                  directory=dirname)
                 # append to list
                 comparisons.append(comp)
         # ------------------------------------------------------------------
@@ -416,19 +527,21 @@ if __name__ == "__main__":
             # compile the statistics
             comp.statistics()
             # propagate stats to output dictionary
-            for key in list(comp.stats.keys()):
-                if key not in table_dict:
+            for ckey in list(comp.stats.keys()):
+                if ckey not in table_dict:
                     # add to table dict
-                    table_dict[key] = [comp.stats[key]]
+                    table_dict[ckey] = [comp.stats[ckey]]
                 else:
-                    table_dict[key].append(comp.stats[key])
+                    table_dict[ckey].append(comp.stats[ckey])
         # ------------------------------------------------------------------
+        # sort the column order
+        table_keys = sort_table(list(table_dict.keys()))
         # now push table dict into a table
-        table = Table()
-        for key in list(table_dict.keys()):
-            table[key] = np.array(table_dict[key])
+        outtable = Table()
+        for tkey in table_keys:
+            outtable[tkey] = np.array(table_dict[tkey])
         # save table
-        table.write(OUTFILE, overwrite=True)
+        outtable.write(OUTFILE, overwrite=True)
 
 
 # =============================================================================
