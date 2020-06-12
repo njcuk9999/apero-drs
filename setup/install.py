@@ -29,24 +29,27 @@ CONSTANTS_PATH = 'core.constants'
 INSTALL_PATH = 'tools.module.setup.drs_installation'
 # set modules required
 REQ_MODULES = dict()
-REQ_MODULES['astropy'] = [4, 0, 0]
-REQ_MODULES['matplotlib'] = [3, 1, 2]
-REQ_MODULES['numpy'] = [1, 18, 1]
-REQ_MODULES['scipy'] = [1, 4, 1]
+REQ_MODULES['astropy'] = [4, 0, 0], 'conda install astropy==4.0'
+REQ_MODULES['matplotlib'] = [3, 1, 2], 'conda install matplotlib==3.1.2'
+REQ_MODULES['numpy'] = [1, 18, 1], 'conda install numpy==1.18.1'
+REQ_MODULES['scipy'] = [1, 4, 1], 'conda install scipy==1.4.1'
+REQ_MODULES['yaml']  = [5, 3, 1], 'conda install pyyaml==5.3.1'
+
 REC_MODULES = dict()
-REC_MODULES['astroquery'] = [0, 3, 10]              # conda
-REC_MODULES['barycorrpy'] = [0, 3, 1]               # pip --ignore-installed
-REC_MODULES['bottleneck'] = [1, 3, 1]
-REC_MODULES['numba'] = [0, 47, 0]
-REC_MODULES['pandas'] = [0, 25, 3]
-REC_MODULES['PIL'] = [7, 0, 0]
-REC_MODULES['tqdm'] = [4, 42, 1]
-REC_MODULES['yagmail'] = [0, 11, 224]               # conda
+REC_MODULES['astroquery'] = [0, 3, 10], 'pip install astroquery==0.3.10'
+REC_MODULES['barycorrpy'] = [0, 3, 1], 'pip install barycorrp=y=0.3.1'
+REC_MODULES['bottleneck'] = [1, 3, 1], 'conda install bottleneck==1.3.1'
+REC_MODULES['numba'] = [0, 47, 0], 'conda install numba==0.47.0'
+REC_MODULES['pandas'] = [0, 25, 3], 'conda install pandas==0.25.3'
+REC_MODULES['PIL'] = [7, 0, 0], 'conda install Pillow==7.0.0'
+
+REC_MODULES['tqdm'] = [4, 42, 1], 'conda install tdqm==4.42.1'
+REC_MODULES['yagmail'] = [0, 11, 224], 'pip install yagmail==0.11.224'
 DEV_MODULES = dict()
-DEV_MODULES['gitchangelog'] = [3, 0, 4]             # pip
-DEV_MODULES['ipdb'] = None                          # conda
-DEV_MODULES['IPython'] = [7, 11, 1]
-DEV_MODULES['sphinx'] = [2, 3, 1]
+DEV_MODULES['gitchangelog'] = [3, 0, 4], 'pip install gitchangelog==3.0.4'
+DEV_MODULES['ipdb'] = None, 'conda install ipdb'
+DEV_MODULES['IPython'] = [7, 13, 0], 'conda install ipython==7.13.0'
+DEV_MODULES['sphinx'] = [2, 3, 1], 'conda install sphinx==2.3.1'
 
 
 # =============================================================================
@@ -188,57 +191,60 @@ def validate():
     # ------------------------------------------------------------------
     for module in REQ_MODULES:
         # get required minimum version
-        rversionlist = REQ_MODULES[module]
+        rversionlist = REQ_MODULES[module][0]
+        suggested = REQ_MODULES[module][1]
         # ------------------------------------------------------------------
         # test importing module
         try:
             imod = importlib.import_module(module)
         except:
             print('\tFatal Error: {0} requires module {1} to be installed'
-                  ''.format(DRS_PATH, module))
+                  '\n\t i.e {2}'.format(DRS_PATH, module, suggested))
             sys.exit()
         # --------------------------------------------------------------
         # check the version
-        check_version(module, imod, rversionlist, required=True)
+        check_version(module, imod, rversionlist, suggested, required=True)
 
     # ------------------------------------------------------------------
     # loop around recommended modules to check
     # ------------------------------------------------------------------
     for module in REC_MODULES:
         # get required minimum version
-        rversionlist = REC_MODULES[module]
+        rversionlist = REC_MODULES[module][0]
+        suggested = REC_MODULES[module][1]
         # --------------------------------------------------------------
         # test importing module
         try:
             imod = importlib.import_module(module)
         except:
             print('\t{0} recommends {1} to be installed'
-                  ''.format(DRS_PATH, module))
+                  '\n\t i.e {2}'.format(DRS_PATH, module, suggested))
             continue
         # --------------------------------------------------------------
         # check the version
-        check_version(module, imod, rversionlist, required=False)
+        check_version(module, imod, rversionlist, suggested, required=False)
 
     # ------------------------------------------------------------------
     # loop around devloper modules to check
     # ------------------------------------------------------------------
     for module in DEV_MODULES:
         # get required minimum version
-        rversionlist = DEV_MODULES[module]
+        rversionlist = DEV_MODULES[module][0]
+        suggested = DEV_MODULES[module][1]
         # --------------------------------------------------------------
         # test importing module
         try:
             imod = importlib.import_module(module)
         except:
             print('\t{0} recommends {1} to be installed (dev only)'
-                  ''.format(DRS_PATH, module))
+                  '\n\t i.e {2}'.format(DRS_PATH, module, suggested))
             continue
         # --------------------------------------------------------------
         # check the version
-        check_version(module, imod, rversionlist, required=False)
+        check_version(module, imod, rversionlist, suggested, required=False)
 
 
-def check_version(module, imod, rversionlist, required=True):
+def check_version(module, imod, rversionlist, suggested, required=True):
     # test version
     passed = False
     # ------------------------------------------------------------------
@@ -278,14 +284,15 @@ def check_version(module, imod, rversionlist, required=True):
         strlist = list(map(lambda x: str(x), version))
         # --------------------------------------------------------------
         # get args
-        args = [DRS_PATH, module, '.'.join(rstrlist), '.'.join(strlist)]
+        args = [DRS_PATH, module, '.'.join(rstrlist), '.'.join(strlist),
+                suggested]
         # if we have not passed print fail message
         if not passed and not required:
             print('\t{0} recommends {1} to be updated ({3} < {2})'
-                  ''.format(*args))
+                  '\n\t i.e {4}'.format(*args))
         elif not passed:
             print('\tFatal Error: {0} requires module {1} ({3} < {2})'
-                  ''.format(*args))
+                  '\n\t i.e {4}'.format(*args))
             sys.exit()
         else:
             print('\tPassed: {1} ({3} >= {2})'.format(*args))
