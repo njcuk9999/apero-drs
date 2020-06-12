@@ -58,7 +58,7 @@ fluxunits = dict(name='--fluxunits', dtype='options', default='e-',
                  helpstr=Help['FLUXUNITS_HELP'], options=['ADU/s', 'e-'])
 # -----------------------------------------------------------------------------
 plot = dict(name='--plot', dtype=int, helpstr=Help['PLOT_HELP'],
-            default_ref='DRS_PLOT', minimum=0, maximum=2)
+            default_ref='DRS_PLOT', minimum=-1, maximum=2)
 # -----------------------------------------------------------------------------
 resize = dict(name='--resize', dtype='bool', default=True,
               helpstr=Help['RESIZE_HELP'], default_ref='INPUT_RESIZE_IMAGE')
