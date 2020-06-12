@@ -277,7 +277,9 @@ def construct_dark_table(params, filenames, **kwargs):
 
 def construct_master_dark(params, recipe, dark_table, **kwargs):
     func_name = __NAME__ + '.construct_master_dark'
-
+    # get constants from p
+    med_size = pcheck(params, 'DARK_MASTER_MED_SIZE', 'med_size', kwargs,
+                      func_name)
     # get col data from dark_table
     filenames = dark_table['FILENAME']
     dark_times = dark_table['MJDATE']
@@ -308,6 +310,19 @@ def construct_master_dark(params, recipe, dark_table, **kwargs):
         groupdark = drs_image.large_image_combine(params, dark_ids,
                                                   math='median',
                                                   outdir=outdir, fmt='fits')
+        # -------------------------------------------------------------------
+        # Must must must subtract the low frequencies
+        #     --> left with a high f dark
+        tmp = []
+        for jt in range(-med_size, med_size + 1):
+            if jt != 0:
+                tmp.append(np.roll(groupdark, [0, jt]))
+        # low frequency image
+        with warnings.catch_warnings(record=True) as _:
+            lf_dark = mp.nanmedian(tmp, axis=0)
+        groupdark -= lf_dark
+        # -------------------------------------------------------------------
+
         # save files for medianing later
         nargs = ['group_darkm_cube', g_it, groupdark, group_dark_files,
                  darkm_subdir, outdir]

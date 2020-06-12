@@ -8,10 +8,7 @@ APERO Documentation
 ******************************************
 
 ===========================================
-Latest version: 0.6.099*  :ref:`genindex`
-*  :ref:`modindex`
-*  :ref:`search`
-
+Latest version: 0.6.101
 .. toctree::
    :maxdepth: 1
 
