@@ -14,7 +14,6 @@ import os
 import sys
 import importlib
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -35,7 +34,7 @@ RECIPE_DEFINITIONS = dict()
 RECIPE_DEFINITIONS['SPIROU'] = 'apero.core.instruments.spirou.recipe_definitions'
 RECIPE_DEFINITIONS['NIRPS_HA'] = 'apero.core.instruments.nirps_ha.recipe_definitions'
 # default data dir
-DATA_DIR = 'mini_data_0_6_037'
+DATA_DIR = 'mini_data_0_6_099'
 # set raw sub dir
 RAW_DIR = 'raw'
 # set tmp sub dir
@@ -81,7 +80,7 @@ Options are:
 --test              Perform a test (dry-run) without any actual copying
                     Recommended the first time this is run
                     Note wild cards may be used
-                    
+
 --debug             Performs a debug just printing the rsync command that will
                     be run when not in debug mode
 
@@ -128,7 +127,7 @@ Examples:
 
 The following example would download all calibration and telluric files
     for {DATA_DIR}  (in debug mode) - prints only rsync command
-    
+
 >> {CODE} --debug --name={DATA_DIR} CALIBDB TELLUDB
 
 --------------------------------------------------------------------------------
@@ -136,7 +135,7 @@ The following example would download all calibration and telluric files
 The following example would download all extracted and ccf outputs
     for mini_data_0_6_037 in night directories 2019-04-20 and 2019-04-19
     in test mode (runs rsync but does not copy files)
-    
+
 >> {CODE} --test --name={DATA_DIR} --include='2019-04-20,2019-04-19' EXT CCF 
 
 --------------------------------------------------------------------------------
@@ -144,7 +143,7 @@ The following example would download all extracted and ccf outputs
 The following example would download badpix outputs
     for {DATA_DIR} except for night directories 2019-02-20 and 2019-02-19
     in test mode (runs rsync but does not copy files)
-    
+
 >> {CODE} --test --name={DATA_DIR} --exclude='2019-04-20,2019-04-19' BAD 
 
 --------------------------------------------------------------------------------
@@ -166,7 +165,6 @@ The following example would download all e2ds_AB files from the reduced director
 End of help file
 
 """.format(**HELP_KWARGS)
-
 
 
 # =============================================================================
@@ -249,7 +247,6 @@ def remove_arg(arg, args):
     cargs = cargs[~mask]
     # return as list
     return list(cargs)
-
 
 
 def get_args():
@@ -479,10 +476,8 @@ def add_final_sep(path):
 
 
 def construct_command(filetypes, options):
-
     # get rsync folder
     rsync_server = RSYNC_SERVER.format(options['instrument'].lower())
-
 
     cmds = []
 
@@ -552,7 +547,7 @@ def run_commands(filetypes, cmds, options):
         if not os.path.exists(filetype.outpath) and not options['test']:
             os.makedirs(filetype.outpath)
         # print statements
-        print('\n\n' + '='*50)
+        print('\n\n' + '=' * 50)
         print('\nRunning rsync for "{0}"'.format(filetype.shortname))
         print('\t Instrument = {0}'.format(options['instrument']))
         print('\t Data directory = {0}'.format(options['datadir']))
@@ -591,8 +586,6 @@ def main():
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
     main()
-
-
 
 # =============================================================================
 # End of code

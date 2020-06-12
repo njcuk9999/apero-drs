@@ -121,6 +121,7 @@ def measure_fp_peaks(params, props, limit, normpercent):
     allamppeak = []
     alldcpeak = []
     allshapepeak = []
+
     # loop through the orders
     for order_num in range(speref.shape[0]):
         # storage for order of peaks
@@ -272,16 +273,15 @@ def fit_fp_peaks(x, y, size, return_model=False):
             if warns is None:
                 warns = ''
             warns += ('\nBoundError: Lower bound {0} incorrect (lower={1} '
-                      'upper={2})')
-            warns += warns.format(pnames[p_it], lowerbounds[p_it],
-                                  upperbounds[p_it])
+                      'upper={2})'.format(pnames[p_it], lowerbounds[p_it],
+                                  upperbounds[p_it]))
         if p0[p_it] < lowerbounds[p_it] or p0[p_it] > upperbounds[p_it]:
             if warns is None:
                 warns = ''
             warns += ('\nBoundError: Inital guess for {0} out of bounds '
-                      '(guess={1} lower={2} upper={3})')
-            warns += warns.format(pnames[p_it], p0[p_it],
-                                  lowerbounds[p_it], upperbounds[p_it])
+                      '(guess={1} lower={2} upper={3})'
+                      ''.format(pnames[p_it], p0[p_it],
+                                lowerbounds[p_it], upperbounds[p_it]))
 
     # deal with bad bounds
     if warns is not None:
@@ -730,8 +730,6 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     ll_mask_d, ll_mask_ctr, w_mask = get_ccf_mask(params, **mkwargs)
 
     # calculate the CCF
-    # TODO: remove break point
-    constants.break_point(params)
     props = ccf_calculation(params, image, blaze, wavemap, berv, targetrv,
                             ccfwidth, ccfstep, ll_mask_ctr, w_mask,
                             fit_type, fiber)

@@ -738,7 +738,7 @@ out_wavem_res_table = drs_input('WAVE_FPRESTAB', KW_OUTPUT='WAVE_FPRESTAB',
                                 filetype='.tbl',
                                 intype=[out_ext_e2ds, out_ext_e2dsff],
                                 outfunc=out.set_file,
-                                filename='cal_wave_results')
+                                basename='cal_wave_results')
 
 # fp line list table
 out_wavem_ll_table = drs_input('WAVE_FPLLTABL', KW_OUTPUT='WAVE_FPLLTAB',
@@ -846,7 +846,7 @@ out_wave_res_table = drs_input('WAVE_FPRESTAB', KW_OUTPUT='WAVE_FPRESTAB',
                                filetype='.tbl',
                                intype=[out_ext_e2ds, out_ext_e2dsff],
                                outfunc=out.set_file,
-                               filename='cal_wave_results')
+                               basename='cal_wave_results')
 
 # fp line list table
 out_wave_ll_table = drs_input('WAVE_FPLLTABL', KW_OUTPUT='WAVE_FPLLTAB',
@@ -929,7 +929,7 @@ tellu_file.addset(out_tellu_trans)
 # absorption files (npy file)
 out_tellu_abso_npy = drs_ninput('ABSO_NPY',
                                 filetype='.npy',
-                                filename='tellu_save.npy',
+                                basename='tellu_save.npy',
                                 outfunc=out.set_file)
 
 # telluric corrected e2ds spectrum
@@ -993,7 +993,7 @@ out_tellu_template = drs_finput('TELLU_TEMP', KW_OUTPUT='TELLU_TEMP',
                                 fibers=['AB', 'A', 'B', 'C'],
                                 filetype='.fits',
                                 intype=[out_ext_e2dsff, out_tellu_obj],
-                                filename='Template',
+                                basename='Template',
                                 dbname='telluric', dbkey='TELLU_TEMP',
                                 outfunc=out.set_file)
 
@@ -1002,7 +1002,7 @@ out_tellu_bigcube = drs_finput('TELLU_BIGCUBE', KW_OUTPUT='TELLU_BIGCUBE',
                                fibers=['AB', 'A', 'B', 'C'],
                                filetype='.fits',
                                intype=[out_ext_e2dsff, out_tellu_obj],
-                               filename='BigCube',
+                               basename='BigCube',
                                outfunc=out.set_file)
 
 # template cube file (before shift)
@@ -1010,7 +1010,7 @@ out_tellu_bigcube0 = drs_finput('TELLU_BIGCUBE0', KW_OUTPUT='TELLU_BIGCUBE0',
                                 fibers=['AB', 'A', 'B', 'C'],
                                 filetype='.fits',
                                 intype=[out_ext_e2dsff, out_tellu_obj],
-                                filename='BigCube0',
+                                basename='BigCube0',
                                 outfunc=out.set_file)
 
 # s1d template file (median)
@@ -1019,7 +1019,7 @@ out_tellu_s1d_template = drs_finput('TELLU_TEMP_S1D',
                                     fibers=['AB', 'A', 'B', 'C'],
                                     filetype='.fits',
                                     intype=[out_ext_e2dsff, out_tellu_obj],
-                                    filename='Template_s1d', datatype='table',
+                                    basename='Template_s1d', datatype='table',
                                     outfunc=out.set_file)
 
 # s1d cibe file (after shift)
@@ -1028,7 +1028,7 @@ out_tellu_s1d_bigcube = drs_finput('TELLU_BIGCUBE_S1D',
                                    fibers=['AB', 'A', 'B', 'C'],
                                    filetype='.fits',
                                    intype=[out_ext_e2dsff, out_tellu_obj],
-                                   filename='BigCube_s1d',
+                                   basename='BigCube_s1d',
                                    outfunc=out.set_file)
 
 # add make template outputs to output fileset
