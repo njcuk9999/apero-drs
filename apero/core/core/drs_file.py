@@ -115,7 +115,7 @@ class DrsInputFile:
         if filename is None:
             return True
         # set filename, basename and directory name
-        self.filename = str(filename)
+        self.filename = str(os.path.abspath(filename))
         self.basename = os.path.basename(filename)
         self.path = os.path.dirname(filename)
 
