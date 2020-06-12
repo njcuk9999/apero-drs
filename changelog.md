@@ -4,6 +4,16 @@ Changelog
 
 0.6.101 (2020-06-11)
 --------------------
+- Apero.science.telluric.general.py - remove break point. [njcuk9999]
+- Apero.core.instruments.*.file_defintiions.py +
+  apero.core.instruments.default.output_filenames.py - use basename
+  instead of filename (avoids confusion in file defintions with
+  set_file) [njcuk9999]
+- Apero.core.instruments.default.output_filenames.py - be more careful
+  with filename when setting a file (should not be a path) [njcuk9999]
+- Apero.science.telluric.general.py - add break point to test tellu bug.
+  [njcuk9999]
+- Update date/version/changelog/documentation. [njcuk9999]
 - Misc.tools.apero_diff.py - add time/version/id key to file - and order
   columns better for output. [njcuk9999]
 - Apero.core.core.drs_database.py - need to lock db files while they are
