@@ -519,32 +519,54 @@ def get_db_file(params, abspath, ext=0, fmt='fits', kind='image',
                 get_image=True, get_header=False):
     # set function name
     func_name = display_func(params, 'get_db_file', __NAME__)
+
     # ------------------------------------------------------------------
-    # deal with npy files
-    if abspath.endswith('.npy'):
-        image = drs_path.numpy_load(abspath)
-        return image, None
+    # define a synchoronized lock for indexing (so multiple instances do not
+    #  run at the same time)
+    lockfile = os.path.basename(abspath)
+    # start a lock
+    lock = drs_lock.Lock(params, lockfile)
     # ------------------------------------------------------------------
-    # get db fits file
-    if (not get_image) or (not abspath.endswith('.fits')):
-        image = None
-    elif kind == 'image':
-        image = drs_fits.readfits(params, abspath, ext=ext)
-    elif kind == 'table':
-        image = drs_table.read_table(params, abspath, fmt=fmt)
-    else:
-        # raise error is kind is incorrect
-        eargs = [' or '.join(['image', 'table']), func_name]
-        WLOG(params, 'error', TextEntry('00-001-00038', args=eargs))
-        image = None
+    # make locked read function
+    @drs_lock.synchronized(lock, params['PID'])
+    def locked_db():
+        # ------------------------------------------------------------------
+        # deal with npy files
+        if abspath.endswith('.npy'):
+            image = drs_path.numpy_load(abspath)
+            return image, None
+        # ------------------------------------------------------------------
+        # get db fits file
+        if (not get_image) or (not abspath.endswith('.fits')):
+            image = None
+        elif kind == 'image':
+            image = drs_fits.readfits(params, abspath, ext=ext)
+        elif kind == 'table':
+            image = drs_table.read_table(params, abspath, fmt=fmt)
+        else:
+            # raise error is kind is incorrect
+            eargs = [' or '.join(['image', 'table']), func_name]
+            WLOG(params, 'error', TextEntry('00-001-00038', args=eargs))
+            image = None
+        # ------------------------------------------------------------------
+        # get header if required (and a fits file)
+        if get_header and abspath.endswith('.fits'):
+            header = drs_fits.read_header(params, abspath, ext=ext)
+        else:
+            header = None
+        # return the image and header
+        return image, header
     # ------------------------------------------------------------------
-    # get header if required (and a fits file)
-    if get_header and abspath.endswith('.fits'):
-        header = drs_fits.read_header(params, abspath, ext=ext)
-    else:
-        header = None
-    # return the image and header
-    return image, header
+    # try to run locked read function
+    try:
+        return locked_db()
+    except KeyboardInterrupt as e:
+        lock.reset()
+        raise e
+    except Exception as e:
+        # reset lock
+        lock.reset()
+        raise e
 
 
 # =============================================================================

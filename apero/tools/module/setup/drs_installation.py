@@ -362,7 +362,7 @@ def check_path_arg(name, value: Union[str, Path]):
         # create path
         value = Path(value)
         # check if value exists
-        if value.exists():
+        if not value.exists():
             # check whether to create path
             pathquestion = 'Path "{0}" does not exist. Create?'
             promptuser = not ask(pathquestion.format(value), dtype='YN')
