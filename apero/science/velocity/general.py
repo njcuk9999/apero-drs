@@ -998,10 +998,6 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
     ccf_lines = []
     ccf_all_snr = []
     ccf_norm_all = []
-
-    # TODO: remove break point
-    constants.break_point(params)
-
     # ----------------------------------------------------------------------
     # loop around the orders
     for order_num in range(nbo):
@@ -1100,6 +1096,22 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         valid_lines_end = spline_bl(wave_tmp_end) != 0
         # combine the valid masks for start and end
         keep = valid_lines_start & valid_lines_end
+        # ------------------------------------------------------------------
+        # deal with no valid lines
+        if np.sum(keep) == 0:
+            # log all NaN
+            wargs = [order_num]
+            WLOG(params, 'warning', TextEntry('10-020-00007', args=wargs))
+            # set all values to NaN
+            ccf_all.append(np.repeat(np.nan, len(rv_ccf)))
+            ccf_all_fit.append(np.repeat(np.nan, len(rv_ccf)))
+            ccf_all_results.append(np.repeat(np.nan, 4))
+            ccf_noise_all.append(np.nan)
+            ccf_lines.append(0)
+            ccf_all_snr.append(np.nan)
+            ccf_norm_all.append(np.nan)
+            continue
+        # ------------------------------------------------------------------
         # apply masks to centers and weights
         omask_centers = omask_centers[keep]
         omask_weights = omask_weights[keep]
