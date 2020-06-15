@@ -53,7 +53,7 @@ EXTRACT_NAME = 'cal_extract_spirou.py'
 # Everything else is controlled from recipe_definition
 def main(directory=None, files=None, **kwargs):
     """
-    Main function for cal_extract_spirou.py
+    Main function for cal_leak_spirou.py
 
     :param directory: string, the night name sub-directory
     :param files: list of strings or string, the list of files to process
