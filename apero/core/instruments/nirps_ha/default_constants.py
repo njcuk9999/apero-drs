@@ -983,7 +983,7 @@ THERMAL_CORRETION_TYPE1.value = 'OBJ'
 # define DPRTYPEs we need to correct thermal background using
 #     method 2 (must be a string list separated by a comma)
 THERMAL_CORRETION_TYPE2 = THERMAL_CORRETION_TYPE2.copy(__NAME__)
-THERMAL_CORRETION_TYPE2.value = 'FP, HC, FLAT'
+THERMAL_CORRETION_TYPE2.value = 'FP, HC, HCONE, HCTWO, FLAT'
 
 # define the order to perform the thermal background scaling on
 THERMAL_ORDER = THERMAL_ORDER.copy(__NAME__)
@@ -1417,6 +1417,7 @@ WAVE_CCF_DETNOISE = WAVE_CCF_DETNOISE.copy(__NAME__)
 WAVE_CCF_DETNOISE.value = 100.0
 
 #  The filename of the CCF Mask to use for the FP CCF
+#     Note this file is copied over if WAVE_CCF_UPDATE_MASK = True
 WAVE_CCF_MASK = WAVE_CCF_MASK.copy(__NAME__)
 # WAVE_CCF_MASK.value = 'fp.mas'
 WAVE_CCF_MASK.value = 'smart_fp_mask.mas'

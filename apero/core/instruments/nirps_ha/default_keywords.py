@@ -1553,7 +1553,7 @@ KW_CCF_DVRMS_SP.set(key='DVRMS_SP',
                     comment='RV photon-noise uncertainty calc on E2DS '
                             'spectrum [m/s] ')
 
-# the dev rms calculated during the CCF
+# the dev rms calculated during the CCF [m/s]
 KW_CCF_DVRMS_CC = KW_CCF_DVRMS_CC.copy(__NAME__)
 KW_CCF_DVRMS_CC.set(key='DVRMS_CC',
                     comment='final photon-noise RV uncertainty calc on mean '

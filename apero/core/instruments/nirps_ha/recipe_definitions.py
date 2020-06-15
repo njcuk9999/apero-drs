@@ -58,7 +58,7 @@ fluxunits = dict(name='--fluxunits', dtype='options', default='e-',
                  helpstr=Help['FLUXUNITS_HELP'], options=['ADU/s', 'e-'])
 # -----------------------------------------------------------------------------
 plot = dict(name='--plot', dtype=int, helpstr=Help['PLOT_HELP'],
-            default_ref='DRS_PLOT', minimum=0, maximum=2)
+            default_ref='DRS_PLOT', minimum=-1, maximum=2)
 # -----------------------------------------------------------------------------
 resize = dict(name='--resize', dtype='bool', default=True,
               helpstr=Help['RESIZE_HELP'], default_ref='INPUT_RESIZE_IMAGE')
@@ -703,11 +703,14 @@ cal_wave_master.set_debug_plots('WAVE_HC_GUESS', 'WAVE_HC_BRIGHTEST_LINES',
                                 'CCF_RV_FIT', 'CCF_RV_FIT_LOOP',
                                 'WAVEREF_EXPECTED', 'EXTRACT_S1D',
                                 'EXTRACT_S1D_WEIGHT', 'WAVE_FIBER_COMPARISON',
-                                'WAVE_FIBER_COMP')
+                                'WAVE_FIBER_COMP', 'WAVENIGHT_ITERPLOT',
+                                'WAVENIGHT_HISTPLOT')
 cal_wave_master.set_summary_plots('SUM_WAVE_FP_IPT_CWID_LLHC',
                                   'SUM_WAVE_LITTROW_CHECK',
                                   'SUM_WAVE_LITTROW_EXTRAP',
-                                  'SUM_CCF_RV_FIT', 'SUM_WAVE_FIBER_COMP')
+                                  'SUM_CCF_RV_FIT', 'SUM_WAVE_FIBER_COMP',
+                                  'SUM_WAVENIGHT_ITERPLOT',
+                                  'SUM_WAVENIGHT_HISTPLOT',)
 cal_wave_master.set_arg(pos=0, **directory)
 cal_wave_master.set_kwarg(name='--hcfiles', dtype='files',
                           files=[sf.pp_hc1_hc1],
