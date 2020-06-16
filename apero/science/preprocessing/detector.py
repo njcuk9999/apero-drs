@@ -475,11 +475,13 @@ def nirps_order_mask(params, mask_image):
     sig_image = mp.nanmedian(np.abs(image))
     # find pixels that are more than nsig absolute deviations from the image
     # median
-    mask = image > nsig * sig_image
+    with warnings.catch_warnings(record=True):
+        mask = image > nsig * sig_image
     # correct the image (as in preprocessing)
-    image = nirps_correction(params, image, mask)
+    image, _ = nirps_correction(params, image, mask)
     # generate a better estimate of the mask (after correction)
-    mask = image > nsig * sig_image
+    with warnings.catch_warnings(record=True):
+        mask = image > nsig * sig_image
     # set properties
     props = ParamDict()
     props['PPM_MASK_NSIG'] = nsig
