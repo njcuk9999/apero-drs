@@ -1135,6 +1135,7 @@ recipes.append(obj_spec)
 # -----------------------------------------------------------------------------
 full_seq = drs_recipe.DrsRunSequence('full_seq', __INSTRUMENT__)
 # master run
+full_seq.add(cal_pp_master, master=True)
 full_seq.add(cal_pp)
 full_seq.add(cal_dark_master, master=True)
 full_seq.add(cal_badpix, name='BADM', master=True)
@@ -1171,6 +1172,7 @@ full_seq.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
 # -----------------------------------------------------------------------------
 limited_seq = drs_recipe.DrsRunSequence('limited_seq', __INSTRUMENT__)
 # master run
+limited_seq.add(cal_pp_master, master=True)
 limited_seq.add(cal_pp)
 limited_seq.add(cal_dark_master, master=True)
 limited_seq.add(cal_badpix, name='BADM', master=True)
@@ -1210,32 +1212,32 @@ limited_seq.add(cal_leak, name='LEAKOBJ', KW_OBJNAME='SCIENCE_TARGETS',
 # limited_run.add(obj_fit_tellu_db, arguments=dict(cores='CORES'))
 
 # other telluric recipes
-limited_seq.add(obj_mk_tellu, name='MKTELLU1', KW_OBJNAME='TELLURIC_TARGETS',
-                files=[sf.out_ext_e2dsff], fiber='AB',
-                KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-limited_seq.add(obj_fit_tellu, name='MKTELLU2', KW_OBJNAME='TELLURIC_TARGETS',
-                files=[sf.out_ext_e2dsff], fiber='AB',
-                KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-limited_seq.add(obj_mk_template, name='MKTELLU3', KW_OBJNAME='TELLURIC_TARGETS',
-                fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
-                arguments=dict(objname='TELLURIC_TARGETS'))
-limited_seq.add(obj_mk_tellu, name='MKTELLU4', KW_OBJNAME='TELLURIC_TARGETS',
-                files=[sf.out_ext_e2dsff], fiber='AB',
-                KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-
-limited_seq.add(obj_fit_tellu, name='FTELLU1', KW_OBJNAME='SCIENCE_TARGETS',
-                files=[sf.out_ext_e2dsff], fiber='AB',
-                KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-limited_seq.add(obj_mk_template, name='FTELLU2', KW_OBJNAME='SCIENCE_TARGETS',
-                fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
-                arguments=dict(objname='SCIENCE_TARGETS'))
-limited_seq.add(obj_fit_tellu, name='FTELLU3', KW_OBJNAME='SCIENCE_TARGETS',
-                files=[sf.out_ext_e2dsff], fiber='AB',
-                KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
-
-# ccf
-limited_seq.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
-                KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'], KW_OBJNAME='SCIENCE_TARGETS')
+# limited_seq.add(obj_mk_tellu, name='MKTELLU1', KW_OBJNAME='TELLURIC_TARGETS',
+#                 files=[sf.out_ext_e2dsff], fiber='AB',
+#                 KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
+# limited_seq.add(obj_fit_tellu, name='MKTELLU2', KW_OBJNAME='TELLURIC_TARGETS',
+#                 files=[sf.out_ext_e2dsff], fiber='AB',
+#                 KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
+# limited_seq.add(obj_mk_template, name='MKTELLU3', KW_OBJNAME='TELLURIC_TARGETS',
+#                 fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
+#                 arguments=dict(objname='TELLURIC_TARGETS'))
+# limited_seq.add(obj_mk_tellu, name='MKTELLU4', KW_OBJNAME='TELLURIC_TARGETS',
+#                 files=[sf.out_ext_e2dsff], fiber='AB',
+#                 KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
+#
+# limited_seq.add(obj_fit_tellu, name='FTELLU1', KW_OBJNAME='SCIENCE_TARGETS',
+#                 files=[sf.out_ext_e2dsff], fiber='AB',
+#                 KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
+# limited_seq.add(obj_mk_template, name='FTELLU2', KW_OBJNAME='SCIENCE_TARGETS',
+#                 fiber='AB', KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
+#                 arguments=dict(objname='SCIENCE_TARGETS'))
+# limited_seq.add(obj_fit_tellu, name='FTELLU3', KW_OBJNAME='SCIENCE_TARGETS',
+#                 files=[sf.out_ext_e2dsff], fiber='AB',
+#                 KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
+#
+# # ccf
+# limited_seq.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
+#                 KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'], KW_OBJNAME='SCIENCE_TARGETS')
 
 # -----------------------------------------------------------------------------
 # pp sequence (for trigger)
