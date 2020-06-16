@@ -18,6 +18,8 @@ from apero.core.core import drs_database
 from apero.core import math as mp
 from apero import core
 from apero.io import drs_data
+from apero.io import drs_fits
+
 
 # =============================================================================
 # Define variables
@@ -343,7 +345,10 @@ def nirps_correction(params, image, mask=None, header=None):
     namps = params['PP_TOTAL_AMP_NUM']
     # deal with not having a mask
     if mask is None:
-        get_pp_mask(params, header)
+        # get pp mask file
+        mask, pfile = get_pp_mask(params, header)
+    else:
+        pfile = 'user'
     # get image shape
     dim1, dim2 = image.shape
     # create masked version of data
@@ -366,7 +371,7 @@ def nirps_correction(params, image, mask=None, header=None):
     # subtract off the masked image (scattered light correction?)
     image = image - np.tile(med_image2, dim1).reshape(dim1, dim2)
     # return corrected image
-    return image
+    return image, pfile
 
 
 def get_pp_mask(params, header):
@@ -388,8 +393,10 @@ def get_pp_mask(params, header):
     # try to read PPMSTR from cdb
     ppfilename = ppentries[filecol][0]
     ppfile = os.path.join(params['DRS_CALIB_DB'], ppfilename)
+    # read file
+    mask = drs_fits.readfits(params, ppfile)
     # return use_file
-    return ppfile
+    return mask, ppfile
 
 
 def med_amplifiers(image, namps):
