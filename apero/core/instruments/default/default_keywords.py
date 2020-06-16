@@ -27,7 +27,7 @@ __all__ = [# input keys
            'KW_CDBSHAPEL', 'KW_CDBSHAPEDX', 'KW_CDBSHAPEDY', 'KW_CDBFLAT',
            'KW_CDBBLAZE',  'KW_CDBWAVE', 'KW_CDBTHERMAL',
            # preprocess keys
-           'KW_PPSHIFTX', 'KW_PPSHIFTY', 'KW_PPMSTR_NSIG',
+           'KW_PPSHIFTX', 'KW_PPSHIFTY', 'KW_PPMSTR_NSIG', 'KW_PPMSTR_FILE',
            # dark keys
            'KW_DARK_DEAD', 'KW_DARK_MED', 'KW_DARK_B_DEAD',
            'KW_DARK_B_MED', 'KW_DARK_R_DEAD', 'KW_DARK_R_MED', 'KW_DARK_CUT',
@@ -358,6 +358,9 @@ KW_PPSHIFTY = Keyword('KW_PPSHIFTY', key='', dtype=float, source=__NAME__)
 
 # The number of sigma used to construct pp master mask
 KW_PPMSTR_NSIG = Keyword('KW_PPMSTR_NSIG', key='', dtype=float, source=__NAME__)
+
+# Define the key to store the name of the pp master file used in pp (if used)
+KW_PPMSTR_FILE = Keyword('KW_PPMSTER_FILE', key='', dtype=str, source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define cal_dark variables
