@@ -243,7 +243,9 @@ class Comparison:
                 # calculate stats
                 rmsd = np.nanstd(diff_image) / norm95
                 maxd = np.nanmax(np.abs(diff_image)) / norm95
+
                 fraction = np.mean(values1 == values2)
+                fraction = fraction / np.mean(np.isfinite(values1 + values2))
                 # populate states
                 self.stats[n95key] = norm95
                 self.stats[rmsdkey] = rmsd
