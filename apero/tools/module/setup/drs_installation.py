@@ -957,29 +957,28 @@ def create_symlinks(params, all_params):
     return all_params
 
 
-def _create_link(recipe_dir: Path, suffix: Union[str, Path], new_path: Path,
+def _create_link(recipe_dir: Path, suffix: Union[str, Path], new_dir: Path,
                  log=True):
+    # deal with directories not exists
+    new_dir.mkdir(parents=True, exist_ok=True)
     # get all python files in recipe folder
-    files = recipe_dir.joinpath(suffix).glob('*')
+    files = recipe_dir.glob(suffix)
     # loop around files and create symbolic links in bin path
     for filename in files:
         # get file base name
         basename = filename.name
         # construct new path
-        newpath = new_path.joinpath(basename)
+        newpath = new_dir.joinpath(basename)
         if log:
             cprint('\t\tMoving {0}'.format(basename))
         # remove link already present
         if newpath.exists() or newpath.is_symlink():
-            os.remove(str(newpath))
-        # deal with directories not exists
-        if not newpath.parent.exsits():
-            os.makedirs(newpath.parent)
+            newpath.unlink()
         # make symlink
-        new_path.symlink_to(filename)
+        newpath.symlink_to(filename)
         # make executable
         try:
-            new_path.chmod(0o777)
+            newpath.chmod(0o777)
         except:
             cprint('Error: Cannot chmod 777', 'r')
 
