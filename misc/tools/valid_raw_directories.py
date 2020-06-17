@@ -19,6 +19,7 @@ from typing import Tuple, Dict
 # =============================================================================
 # define workspace
 WORKSPACE = '/spirou/cfht_nights/common/raw/'
+WORKSPACE = '/spirou/cfht_nights/common/rawsym/'
 
 # use header
 USE_HDR = True
@@ -28,21 +29,21 @@ SKIP_ENGINEERING = True
 # define required file types
 REQ_FILES = dict()
 REQ_FILES['DARK_DARK'] = 'd.fits', 1
-REQ_FILES['DARK_FLAT'] = 'f.fits', 5
-REQ_FILES['FLAT_DARK'] = 'f.fits', 5
-REQ_FILES['FLAT_FLAT'] = 'f.fits', 5
-REQ_FILES['FP_FP'] = 'a.fits', 5
-REQ_FILES['HC_HC'] = 'c.fits', 2
+REQ_FILES['DARK_FLAT'] = 'f.fits', 3
+REQ_FILES['FLAT_DARK'] = 'f.fits', 3
+REQ_FILES['FLAT_FLAT'] = 'f.fits', 3
+REQ_FILES['FP_FP'] = 'a.fits', 3
+REQ_FILES['HC_HC'] = 'c.fits', 1
 
 # a more in depth requirement
 # SBCCAS_P, SBCREF_P, EXT, MIN NUMBER
 REQ_HDR = dict()
 REQ_HDR['DARK_DARK'] = 'pos_pk', 'pos_pk', 'd.fits', 1
-REQ_HDR['DARK_FLAT'] = 'pos_pk', 'pos_wl', 'f.fits', 5
-REQ_HDR['FLAT_DARK'] = 'pos_wl', 'pos_pk', 'f.fits', 5
-REQ_HDR['FLAT_FLAT'] = 'pos_wl', 'pos_wl', 'f.fits', 5
-REQ_HDR['FP_FP'] = 'pos_fp', 'pos_fp', 'a.fits', 5
-REQ_HDR['HC_HC'] = 'pos_hc1', 'pos_hc1', 'c.fits', 2
+REQ_HDR['DARK_FLAT'] = 'pos_pk', 'pos_wl', 'f.fits', 3
+REQ_HDR['FLAT_DARK'] = 'pos_wl', 'pos_pk', 'f.fits', 3
+REQ_HDR['FLAT_FLAT'] = 'pos_wl', 'pos_wl', 'f.fits', 3
+REQ_HDR['FP_FP'] = 'pos_fp', 'pos_fp', 'a.fits', 3
+REQ_HDR['HC_HC'] = 'pos_hc1', 'pos_hc1', 'c.fits', 1
 # define the header keys to look at (related to values in REQ_HDR)
 KEY1 = 'SBCCAS_P'
 KEY2 = 'SBCREF_P'
@@ -127,8 +128,6 @@ def filter_by_header(files, key):
         filtered_files.append(filename)
     # return filtered files
     return filtered_files
-
-
 
 
 # =============================================================================
