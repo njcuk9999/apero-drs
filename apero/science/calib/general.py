@@ -157,9 +157,6 @@ def calibrate_ppfile(params, recipe, infile, **kwargs):
     # log that we are calibrating a file
     WLOG(params, 'info', TextEntry('40-014-00038', args=[infile.filename]))
 
-    # TODO: remove break point
-    constants.break_point(params)
-
     # ----------------------------------------------------------------------
     # image 0 remove pixels that are out of bounds
     # ----------------------------------------------------------------------
