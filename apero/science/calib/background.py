@@ -134,9 +134,6 @@ def correct_local_background(params, image, **kwargs):
     smaller, so there is a N^2 gain.
     - Upscale the convolved image to the input dimensions
     """
-    # TODO: remove break point
-    constants.break_point(params)
-
     func_name = __NAME__ + '.correct_local_background()'
     # get constants from parameter dictionary
     wx_ker = pcheck(params, 'BKGR_KER_WX', 'wx_ker', kwargs, func_name)
