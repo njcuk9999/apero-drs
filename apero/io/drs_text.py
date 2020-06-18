@@ -12,11 +12,9 @@ Created on 2019-08-12 at 17:23
 import numpy as np
 import warnings
 
-from apero import core
 from apero.core import constants
 from apero import lang
 from apero.core.core import drs_log
-from apero.core.core import drs_file
 
 
 # =============================================================================
@@ -33,14 +31,13 @@ __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
 # get param dict
 ParamDict = constants.ParamDict
-DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
 TextEntry = lang.drs_text.TextEntry
 TextDict = lang.drs_text.TextDict
 # alias pcheck
-pcheck = core.pcheck
+pcheck = drs_log.find_param
 
 
 # =============================================================================
