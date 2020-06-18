@@ -843,7 +843,7 @@
 "40-001-00022","ALL","Prints that we are iterating on a fiber","{0} = current fiber","Processing fiber {0}","",""
 "40-001-00023","ALL","Prints that we are making directory","{0} = path","Making dir(s): {0}","",""
 "40-001-00024","ALL","Print that we are not adding file to database (due to user input)","{0} = database key; {1} =  filename","Not adding key {0} to database (User input --database = False) \n\t File = {1}","",""
-"40-001-00025","ALL","","","","",""
+"40-001-00025","ALL","Prints that we are writing combined file to disk","{0} = filename","Writing combined file: {0}","",""
 "","","","","","",""
 "","","","","","",""
 "40-002-00000","ALL","Help Messages","None","\t","",""
