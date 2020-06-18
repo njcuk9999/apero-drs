@@ -374,13 +374,13 @@ cal_shape_master.set_debug_plots('SHAPE_DX', 'SHAPE_ANGLE_OFFSET_ALL',
                                  'SHAPE_ANGLE_OFFSET', 'SHAPE_LINEAR_TPARAMS')
 cal_shape_master.set_summary_plots('SUM_SHAPE_ANGLE_OFFSET')
 cal_shape_master.set_arg(pos=0, **directory)
+cal_shape_master.set_kwarg(name='--fpfiles', dtype='files', files=[sf.pp_fp_fp],
+                           nargs='+', filelogic='exclusive', required=True,
+                           helpstr=Help['SHAPE_FPFILES_HELP'], default=[])
 cal_shape_master.set_kwarg(name='--hcfiles', dtype='files',
                            files=[sf.pp_hc1_hc1],
                            nargs='+', filelogic='exclusive', required=True,
                            helpstr=Help['SHAPE_HCFILES_HELP'], default=[])
-cal_shape_master.set_kwarg(name='--fpfiles', dtype='files', files=[sf.pp_fp_fp],
-                           nargs='+', filelogic='exclusive', required=True,
-                           helpstr=Help['SHAPE_FPFILES_HELP'], default=[])
 cal_shape_master.set_kwarg(**add_db)
 cal_shape_master.set_kwarg(**badfile)
 cal_shape_master.set_kwarg(**dobad)
