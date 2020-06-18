@@ -264,9 +264,13 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     cond3 = params['OUTPATH'] is not None
     cond4 = params['NIGHTNAME'] is not None
     if cond1 and cond2 and cond4:
-        _make_dirs(params, os.path.join(params['INPATH'], params['NIGHTNAME']))
+        inpath = str(params['INPATH'])
+        nightname = str(params['NIGHTNAME'])
+        _make_dirs(params, os.path.join(inpath, nightname))
     if cond1 and cond3 and cond4:
-        _make_dirs(params, os.path.join(params['OUTPATH'], params['NIGHTNAME']))
+        outpath = str(params['OUTPATH'])
+        nightname = str(params['NIGHTNAME'])
+        _make_dirs(params, os.path.join(outpath, nightname))
     # -------------------------------------------------------------------------
     # deal with data passed from call to main function
     if 'DATA_DICT' in fkwargs:
