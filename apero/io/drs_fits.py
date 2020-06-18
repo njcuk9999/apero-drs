@@ -990,10 +990,27 @@ def combine(params, infiles, math='average', same_type=True):
             if infile.name != infiles[0].name:
                 eargs = [infiles[0].name, it, infile.name, func_name]
                 WLOG(params, 'error', TextEntry('00-001-00021', args=eargs))
+
+    # get output path from params
+    outpath = str(params['OUTPATH'])
+    # check if outpath is set
+    if outpath is None:
+        WLOG(params, 'error', TextEntry('01-001-00023', args=[func_name]))
+        return None
+    # get the absolute path (for combined output)
+    if params['NIGHTNAME'] is None:
+        outdirectory = ''
+    else:
+        outdirectory = params['NIGHTNAME']
+    # combine outpath and out directory
+    abspath = os.path.join(outpath, outdirectory)
     # make new infile using math
-    outfile = infiles[0].combine(infiles[1:], math, same_type)
+    outfile = infiles[0].combine(infiles[1:], math, same_type, path=abspath)
     # update the number of files
     outfile.numfiles = len(infiles)
+    # write to disk
+    WLOG(params, '', TextEntry('40-001-00025', args=[outfile.filename]))
+    outfile.write_file()
     # return combined infile
     return outfile
 
