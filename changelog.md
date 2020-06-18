@@ -2,8 +2,105 @@ Changelog
 =========
 
 
-0.6.101 (2020-06-11)
+0.6.106 (2020-06-18)
 --------------------
+- Apero.core.core.drs_file.py - add is_combined and combined list to
+  keys, in combine function change the basename (i.e. 123, 124, 125 -->
+  12F3T5) and save combined to reduced. [njcuk9999]
+- Apero.core.core.drs_startup.py - make sure inpath, nightname and
+  output are strings. [njcuk9999]
+- Apero.io.drs_fits.py - write combined file to the reduced folder (with
+  the new file name) [njcuk9999]
+- Apero.io.drs_text.py - add common_text and combine_uncommon_text
+  functions to handle list of files --> single filename. [njcuk9999]
+- Update language database. [njcuk9999]
+- Apero.science.calib.badpix.py - change writing badpix file to use flat
+  file (only important for processing with output names) [njcuk9999]
+- Core.instruments.spirou.recipe_defintions.py - change order of
+  arguments (cal_shape_master) - just important for processing with
+  output names. [njcuk9999]
+- Core.instruemnts.spirou.file_definitions.py - change badpix out files
+  to use flat_flat. [njcuk9999]
+- Core.instruments.*.file_definitions.py - change badpix dark_dark -->
+  flat_flat. [njcuk9999]
+
+
+0.6.105 (2020-06-17)
+--------------------
+- Misc.tools.valid_raw_directories.py - add a WORKSPACE for rawsym as
+  well as raw. [njcuk9999]
+- Misc.tools.apero_diff.py - only work out the fraction of finite
+  pixels. [njcuk9999]
+- Misc.ea_alder32_code.py - possible solution to file naming issue.
+  [njcuk9999]
+- Apero.tools.module.setup.drs_installation.py - correct _create_link
+  (Issue #630) [njcuk9999]
+- Science.calib.general.py - remove breakpoint. [njcuk9999]
+- Apero.science.calib.background.py - add break point in cal_loc.
+  [njcuk9999]
+- Apero.science.calib.background.py - add break point in cal_loc.
+  [njcuk9999]
+
+
+0.6.104 (2020-06-16)
+--------------------
+- Misc.database_test.database.* - first test and commit of database
+  overhaul. [njcuk9999]
+- Apero.science.preprocessing.detector.py - correct return to
+  nirps_correction. [njcuk9999]
+- Apero.science.preprocessing.detector.py - make sure we read the mask
+  in get pp master and record to header (nirps_ha) [njcuk9999]
+- Apero.data.nirps_ha.engineering.hotpix_pp.csv - add file to default
+  files. [njcuk9999]
+- Apero.core.instruments.nrips_ha.recipe_definitons.py +
+  data.nrips_ha.reset.runs - update run.inis and sequences for nirps.
+  [njcuk9999]
+
+
+0.6.103 (2020-06-15)
+--------------------
+- Apero.core.instruments.nirps_ha - update nirps recipes after spirou
+  changes. [njcuk9999]
+- Apero.recipes.nirps_ha - update nirps recipes after spirou changes.
+  [njcuk9999]
+- Misc.tools.update_header_keys.py - add hack tool to update certain
+  header keys on mass (no warning - careful of use!) [njcuk9999]
+- Apero.data.spirou.reset.calibdb - update master wave solution +
+  master_calib_SPIROU.txt (use more recent wave solutions + different
+  for each fiber) [njcuk9999]
+- Apero.science.velocity.general.py - add additional check for no valid
+  pixels after blaze cut (keep) --> should avoid NaNs when no lines in
+  order (Issue #622) [njcuk9999]
+- Update the language database. [njcuk9999]
+- Merge remote-tracking branch 'origin/neil' into neil. [njcuk9999]
+- Apero.science.velocity.general.py - add break point to investigate
+  Issue #622. [njcuk9999]
+
+
+0.6.102 (2020-06-12)
+--------------------
+- Merge pull request #629 from njcuk9999/working. [Neil Cook]
+
+  Working --> Developer (tested with mini-run successfully)
+- Update README.md. [Neil Cook]
+- Merge pull request #627 from njcuk9999/neil. [Neil Cook]
+
+  Neil --> working
+- Apero.core.instruments.spirou.recipe_defintions.py - allow --plot to
+  go to -1 (dev mode plot NOTHING) - not recommended for general use.
+  [njcuk9999]
+- Misc.tools.valid_raw_directories.py - add code to test the validity of
+  an APERO raw directory. [njcuk9999]
+- Misc.tools.apero_mtl_sync_master.py - update version and local path.
+  [njcuk9999]
+- Merge pull request #626 from njcuk9999/working. [Neil Cook]
+
+  Working
+- Merge pull request #625 from njcuk9999/neil. [Neil Cook]
+
+  Neil
+- Update install.py and requirements_current.txt. [njcuk9999]
+- Update date/version/changelog/documentation. [njcuk9999]
 - Apero.science.telluric.general.py - remove break point. [njcuk9999]
 - Apero.core.instruments.*.file_defintiions.py +
   apero.core.instruments.default.output_filenames.py - use basename
@@ -23,6 +120,22 @@ Changelog
 - Apero.core.core.drs_file.py - correct typo - os.abspath -->
   os.path.abspath. [njcuk9999]
 - Update date/version/changelog. [njcuk9999]
+- Merge pull request #621 from njcuk9999/working. [Neil Cook]
+
+  Working --> Developer
+- Merge pull request #620 from njcuk9999/neil. [Neil Cook]
+
+  tools.module.setup.drs_installation.py - Path(in_tool_path) --> str(i…
+- Merge pull request #619 from njcuk9999/neil. [Neil Cook]
+
+  Neil
+- Merge pull request #618 from njcuk9999/neil. [Neil Cook]
+
+  Neil --> working
+
+
+0.6.101 (2020-06-09)
+--------------------
 - Apero.science.velocity.general.py - remove breakpoint (problem solved)
   - Issue #623. [njcuk9999]
 - Apero.core.core.drs_file.py - make filename absolute path in all cases

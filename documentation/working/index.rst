@@ -8,8 +8,7 @@ APERO Documentation
 ******************************************
 
 ===========================================
-Latest version: 0.6.101
-.. toctree::
+Latest version: 0.6.106.. toctree::
    :maxdepth: 1
 
    misc/pythoninstallation.rst
