@@ -448,10 +448,12 @@ class DrsRecipe(object):
         # run main
         return self.module.main(**kwargs)
 
-    def get_input_dir(self):
+    def get_input_dir(self, directory=None):
         """
         Get the input directory for this recipe based on what was set in
         initialisation (construction)
+
+        :param directory: None or string - force the input dir (if it exists)
 
         if RAW uses DRS_DATA_RAW from drs_params
         if TMP uses DRS_DATA_WORKING from drs_params
@@ -459,15 +461,20 @@ class DrsRecipe(object):
 
         :return input_dir: string, the input directory
         """
+        # deal with manual override of input dir
+        if directory is not None and os.path.exists(directory):
+            return directory
         # check if "input_dir" is in namespace
         input_dir_pick = self.inputdir.upper()
         # return input_dir
         return self.get_dir(input_dir_pick, kind='input')
 
-    def get_output_dir(self):
+    def get_output_dir(self, directory=None):
         """
         Get the input directory for this recipe based on what was set in
         initialisation (construction)
+
+        :param directory: None or string - force the output dir (if it exists)
 
         if RAW uses DRS_DATA_RAW from drs_params
         if TMP uses DRS_DATA_WORKING from drs_params
@@ -475,6 +482,9 @@ class DrsRecipe(object):
 
         :return input_dir: string, the input directory
         """
+        # deal with manual override of input dir
+        if directory is not None and os.path.exists(directory):
+            return directory
         # check if "input_dir" is in namespace
         output_dir_pick = self.outputdir.upper()
         # return input_dir
@@ -764,6 +774,10 @@ class DrsRecipe(object):
         # ---------------------------------------------------------------------
         # set quiet functionality
         self._make_special(drs_argument.set_quiet, skip=False)
+        # ---------------------------------------------------------------------
+        # force input and output directories
+        self._make_special(drs_argument.set_inputdir, skip=False)
+        self._make_special(drs_argument.set_outputdir, skip=False)
 
 
     def _make_special(self, function, skip=False):
