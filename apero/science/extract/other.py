@@ -53,8 +53,6 @@ def extract_thermal_files(params, recipe, extname, thermalfile, **kwargs):
                                   'always_extract', kwargs, func_name)
     therm_extract_type = pcheck(params, 'THERMAL_EXTRACT_TYPE', 'extract_type',
                                 kwargs, func_name)
-    # get nightname
-    nightname = params['INPUTS']['DIRECTORY']
     # find the extraction recipe
     extrecipe, _ = drs_startup.find_recipe(extname, params['INSTRUMENT'],
                                            mod=recipe.recipemod)
@@ -65,7 +63,7 @@ def extract_thermal_files(params, recipe, extname, thermalfile, **kwargs):
     thfileinst = recipe.outputs['THERMAL_E2DS_FILE']
     # get outputs
     thermal_outputs = extract_files(params, recipe, thermalfile, thfileinst,
-                                    therm_always_extract, extrecipe, nightname,
+                                    therm_always_extract, extrecipe,
                                     therm_extract_type, kind='thermal',
                                     func_name=func_name)
 
@@ -119,8 +117,6 @@ def extract_leak_files(params, recipe, extname, darkfpfile, **kwargs):
                                   'always_extract', kwargs, func_name)
     therm_extract_type = pcheck(params, 'LEAKM_EXTRACT_TYPE', 'extract_type',
                                 kwargs, func_name)
-    # get nightname
-    nightname = params['INPUTS']['DIRECTORY']
     # find the extraction recipe
     extrecipe, _ = drs_startup.find_recipe(extname, params['INSTRUMENT'],
                                            mod=recipe.recipemod)
@@ -131,7 +127,7 @@ def extract_leak_files(params, recipe, extname, darkfpfile, **kwargs):
     fileinst = recipe.outputs['LEAK_E2DS_FILE']
     # get outputs
     darkfp_outputs = extract_files(params, recipe, darkfpfile, fileinst,
-                                    therm_always_extract, extrecipe, nightname,
+                                    therm_always_extract, extrecipe,
                                     therm_extract_type, kind='leakage',
                                     func_name=func_name)
     
@@ -150,8 +146,6 @@ def extract_wave_files(params, recipe, extname, hcfile,
                                  'always_extract', kwargs, func_name)
     wave_extract_type = pcheck(params, 'WAVE_EXTRACT_TYPE', 'extract_type',
                                kwargs, func_name)
-    # get nightname
-    nightname = params['INPUTS']['DIRECTORY']
     # find the extraction recipe
     extrecipe, _ = drs_startup.find_recipe(extname, params['INSTRUMENT'],
                                            mod=recipe.recipemod)
@@ -164,7 +158,7 @@ def extract_wave_files(params, recipe, extname, hcfile,
     hcfileinst = recipe.outputs['WAVE_E2DS']
     # get outputs
     hc_outputs = extract_files(params, recipe, hcfile, hcfileinst,
-                               wave_always_extract, extrecipe, nightname,
+                               wave_always_extract, extrecipe,
                                wave_extract_type, kind='hc',
                                func_name=func_name)
     # ----------------------------------------------------------------------
@@ -175,7 +169,7 @@ def extract_wave_files(params, recipe, extname, hcfile,
         fpfileinst = recipe.outputs['WAVE_E2DS']
         # get outputs
         fp_outputs = extract_files(params, recipe, fpfile, fpfileinst,
-                                   wave_always_extract, extrecipe, nightname,
+                                   wave_always_extract, extrecipe,
                                    wave_extract_type, kind='fp',
                                    func_name=func_name)
     else:
@@ -195,8 +189,7 @@ def extract_wave_files(params, recipe, extname, hcfile,
 # Define worker functions
 # =============================================================================
 def extract_files(params, recipe, infile, outfile, always_extract,
-                  extrecipe, nightname, extract_type, kind='gen',
-                  func_name=None):
+                  extrecipe, extract_type, kind='gen', func_name=None):
     if func_name is None:
         func_name = __NAME__ + '.extract_files()'
     # get the fiber types from a list parameter
@@ -235,14 +228,16 @@ def extract_files(params, recipe, infile, outfile, always_extract,
     outputs = dict()
     # only extract if required
     if always_extract or (not exists):
-
+        # need to get nightname and dir name (above night name)
+        nightname = os.path.dirname(infile.filename)
+        dirname = os.path.dirname(nightname)
         # need to handle passing keywords from main
         kwargs = core.copy_kwargs(params, extrecipe, directory=nightname,
                                   files=[infile.basename])
         # set the program name (shouldn't be cal_extract)
         kwargs['program'] = '{0}_extract'.format(kind)
         # force the input directory (combined files go to reduced dir)
-        kwargs['force_indir'] = os.path.dirname(infile.filename)
+        kwargs['force_indir'] = dirname
         # push data to extractiong code
         data_dict = ParamDict()
         data_dict['files'] = [infile]
