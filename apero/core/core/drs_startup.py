@@ -1750,11 +1750,10 @@ def _set_force_dirs(recipe, fkwargs):
     for kwarg in fkwargs:
         if 'force_indir' in kwarg:
             indir = fkwargs[kwarg]
-    # make sure indir exists
-    if os.path.exists(os.path.abspath(indir)):
-        indir = os.path.abspath(indir)
-    # set DRS_DEBUG
+    # set recipe.inputdir
     if indir is not None:
+        if os.path.exists(os.path.abspath(indir)):
+            indir = os.path.abspath(indir)
         # set the input dir
         recipe.inputdir = indir
         force_dirs[0] = True
@@ -1785,11 +1784,10 @@ def _set_force_dirs(recipe, fkwargs):
     for kwarg in fkwargs:
         if 'force_outdir' in kwarg:
             outdir = fkwargs[kwarg]
-    # make sure indir exists
-    if os.path.exists(os.path.abspath(outdir)):
-        outdir = os.path.abspath(outdir)
-    # set DRS_DEBUG
+    # set recipe.outputdir
     if outdir is not None:
+        if os.path.exists(os.path.abspath(outdir)):
+            outdir = os.path.abspath(outdir)
         # set the input dir
         recipe.outputdir = outdir
         force_dirs[1] = True
