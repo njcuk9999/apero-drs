@@ -167,7 +167,7 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     recipe = _set_debug_from_input(recipe, fkwargs)
     # -------------------------------------------------------------------------
     # need to see if we are forcing directories
-    recipe, forcedirs = _set_force_dirs(recipe, fkwargs)
+    recipe = _set_force_dirs(recipe, fkwargs)
     # -------------------------------------------------------------------------
     # do not need to display if we have special keywords
     quiet = _quiet_keys_present(recipe, quiet, fkwargs)
@@ -209,7 +209,7 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
         # need to set debug mode now
         recipe = _set_debug_from_input(recipe, fkwargs)
         # need to see if we are forcing directories
-        recipe, forcedirs = _set_force_dirs(recipe, fkwargs)
+        recipe = _set_force_dirs(recipe, fkwargs)
         # do not need to display if we have special keywords
         quiet = _quiet_keys_present(recipe, quiet, fkwargs)
         # -------------------------------------------------------------------------
@@ -252,8 +252,8 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     params = recipe.drs_params.copy()
     # -------------------------------------------------------------------------
     # deal with setting night name, inputdir and outputdir
-    params['INPATH'] = recipe.get_input_dir(force=forcedirs[0])
-    params['OUTPATH'] = recipe.get_output_dir(force=forcedirs[1])
+    params['INPATH'] = recipe.get_input_dir(force=recipe.force_dirs[0])
+    params['OUTPATH'] = recipe.get_output_dir(force=recipe.force_dirs[0])
     if 'DIRECTORY' in params['INPUTS']:
         gargs = [params['INPATH'], params['INPUTS']['DIRECTORY']]
         params['NIGHTNAME'] = drs_path.get_uncommon_path(*gargs)
@@ -1723,8 +1723,6 @@ def _set_force_dirs(recipe, fkwargs):
     """
     # set function name
     func_name = __NAME__ + '._set_force_dirs()'
-    # set condintions for forcing input and output dir
-    force_dirs = [False, False]
     # ----------------------------------------------------------------------
     # set debug key
     dirkey = '--force_indir'
@@ -1756,7 +1754,7 @@ def _set_force_dirs(recipe, fkwargs):
             indir = os.path.abspath(indir)
         # set the input dir
         recipe.inputdir = indir
-        force_dirs[0] = True
+        recipe.force_dirs[0] = True
     # ----------------------------------------------------------------------
     # set debug key
     dirkey = '--force_outdir'
@@ -1790,10 +1788,10 @@ def _set_force_dirs(recipe, fkwargs):
             outdir = os.path.abspath(outdir)
         # set the input dir
         recipe.outputdir = outdir
-        force_dirs[1] = True
+        recipe.force_dirs[1] = True
     # ----------------------------------------------------------------------
     # return recipe
-    return recipe, force_dirs
+    return recipe
 
 
 def _sort_version(messages=None):

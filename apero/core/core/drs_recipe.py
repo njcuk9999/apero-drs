@@ -462,6 +462,8 @@ class DrsRecipe(object):
 
         :return input_dir: string, the input directory
         """
+        # make sure if force is True we use it
+        force = self.force_dirs[0] or force
         # deal with manual override of input dir
         if force and (directory is not None) and (os.path.exists(directory)):
             return directory
@@ -489,6 +491,8 @@ class DrsRecipe(object):
 
         :return input_dir: string, the input directory
         """
+        # make sure if force is True we use it
+        force = self.force_dirs[1] or force
         # deal with manual override of input dir
         if force and (directory is not None) and (os.path.exists(directory)):
             return directory
@@ -522,6 +526,8 @@ class DrsRecipe(object):
         self.outputdir = str(recipe.outputdir)
         # input directory
         self.inputdir = str(recipe.inputdir)
+        # whether to force input/outputdir
+        self.force_dirs = [False, False]
         # input type (RAW/REDUCED)
         self.inputtype = str(recipe.inputtype)
         # recipe description/epilog
@@ -856,7 +862,8 @@ class DrsRecipe(object):
         # get drs parameters
         params = self.drs_params
         # get input directory
-        input_dir = os.path.realpath(self.get_input_dir())
+        force = self.force_dirs[0]
+        input_dir = os.path.realpath(self.get_input_dir(force=force))
         # ---------------------------------------------------------------------
         # Make sure directory is a string
         if type(directory) not in [str, np.str_]:
