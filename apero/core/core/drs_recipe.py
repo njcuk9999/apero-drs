@@ -448,12 +448,13 @@ class DrsRecipe(object):
         # run main
         return self.module.main(**kwargs)
 
-    def get_input_dir(self, directory=None):
+    def get_input_dir(self, directory=None, force=False):
         """
         Get the input directory for this recipe based on what was set in
         initialisation (construction)
 
         :param directory: None or string - force the input dir (if it exists)
+        :param force: bool if True allows force setting
 
         if RAW uses DRS_DATA_RAW from drs_params
         if TMP uses DRS_DATA_WORKING from drs_params
@@ -462,19 +463,25 @@ class DrsRecipe(object):
         :return input_dir: string, the input directory
         """
         # deal with manual override of input dir
-        if directory is not None and os.path.exists(directory):
+        if force and (directory is not None) and (os.path.exists(directory)):
             return directory
+
+        # deal with absolute path existing
+        if force and os.path.exists(os.path.abspath(self.inputdir)):
+            return os.path.abspath(self.inputdir)
+
         # check if "input_dir" is in namespace
         input_dir_pick = self.inputdir.upper()
         # return input_dir
         return self.get_dir(input_dir_pick, kind='input')
 
-    def get_output_dir(self, directory=None):
+    def get_output_dir(self, directory=None, force=False):
         """
         Get the input directory for this recipe based on what was set in
         initialisation (construction)
 
         :param directory: None or string - force the output dir (if it exists)
+        :param force: bool if True allows force setting
 
         if RAW uses DRS_DATA_RAW from drs_params
         if TMP uses DRS_DATA_WORKING from drs_params
@@ -483,8 +490,12 @@ class DrsRecipe(object):
         :return input_dir: string, the input directory
         """
         # deal with manual override of input dir
-        if directory is not None and os.path.exists(directory):
+        if force and (directory is not None) and (os.path.exists(directory)):
             return directory
+        # deal with absolute path existing
+        if force and os.path.exists(os.path.abspath(self.outputdir)):
+            return os.path.abspath(self.outputdir)
+
         # check if "input_dir" is in namespace
         output_dir_pick = self.outputdir.upper()
         # return input_dir
@@ -1123,6 +1134,9 @@ class DrsRecipe(object):
     def get_dir(self, dir_string, kind='input'):
         # get parameters from recipe call
         params = self.drs_params
+        # check if path has been set to an absolute path (that exists)
+        if os.path.exists(os.path.abspath(dir_string)):
+            return os.path.abspath(dir_string)
         # get the input directory from recipe.inputdir keyword
         if dir_string == 'RAW':
             dirpath = self.drs_params['DRS_DATA_RAW']
