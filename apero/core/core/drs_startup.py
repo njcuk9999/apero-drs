@@ -247,8 +247,10 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     params = recipe.drs_params.copy()
     # -------------------------------------------------------------------------
     # deal with setting night name, inputdir and outputdir
-    params['INPATH'] = recipe.get_input_dir()
-    params['OUTPATH'] = recipe.get_output_dir()
+    force_indir = params['INPUTS'].get('FORCE_INDIR', None)
+    force_outdir = params['INPUTS'].get('FORCE_OUTDIR', None)
+    params['INPATH'] = recipe.get_input_dir(force_indir)
+    params['OUTPATH'] = recipe.get_output_dir(force_outdir)
     if 'DIRECTORY' in params['INPUTS']:
         gargs = [params['INPATH'], params['INPUTS']['DIRECTORY']]
         params['NIGHTNAME'] = drs_path.get_uncommon_path(*gargs)
