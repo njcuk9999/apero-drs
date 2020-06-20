@@ -241,6 +241,8 @@ def extract_files(params, recipe, infile, outfile, always_extract,
                                   files=[infile.basename])
         # set the program name (shouldn't be cal_extract)
         kwargs['program'] = '{0}_extract'.format(kind)
+        # force the input directory (combined files go to reduced dir)
+        kwargs['force_indir'] = os.path.dirname(infile.filename)
         # push data to extractiong code
         data_dict = ParamDict()
         data_dict['files'] = [infile]
