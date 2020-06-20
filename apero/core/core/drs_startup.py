@@ -166,8 +166,11 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     # need to set debug mode now
     recipe = _set_debug_from_input(recipe, fkwargs)
     # -------------------------------------------------------------------------
+    # need to see if we are forcing directories
+    recipe, forcedirs = _set_force_dirs(recipe, fkwargs)
+    # -------------------------------------------------------------------------
     # do not need to display if we have special keywords
-    quiet = _special_keys_present(recipe, quiet, fkwargs)
+    quiet = _quiet_keys_present(recipe, quiet, fkwargs)
     # -------------------------------------------------------------------------
     # display (print only no log)
     if (not quiet) and ('instrument' not in recipe.args):
@@ -205,8 +208,10 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
         recipe.drs_params.set('DRS_RECIPE_KIND', recipe.kind, source=func_name)
         # need to set debug mode now
         recipe = _set_debug_from_input(recipe, fkwargs)
+        # need to see if we are forcing directories
+        recipe, forcedirs = _set_force_dirs(recipe, fkwargs)
         # do not need to display if we have special keywords
-        quiet = _special_keys_present(recipe, quiet, fkwargs)
+        quiet = _quiet_keys_present(recipe, quiet, fkwargs)
         # -------------------------------------------------------------------------
         # display
         if not quiet:
@@ -247,10 +252,8 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     params = recipe.drs_params.copy()
     # -------------------------------------------------------------------------
     # deal with setting night name, inputdir and outputdir
-    force_indir = params['INPUTS'].get('FORCE_INDIR', None)
-    force_outdir = params['INPUTS'].get('FORCE_OUTDIR', None)
-    params['INPATH'] = recipe.get_input_dir(force_indir)
-    params['OUTPATH'] = recipe.get_output_dir(force_outdir)
+    params['INPATH'] = recipe.get_input_dir(force=forcedirs[0])
+    params['OUTPATH'] = recipe.get_output_dir(force=forcedirs[1])
     if 'DIRECTORY' in params['INPUTS']:
         gargs = [params['INPATH'], params['INPUTS']['DIRECTORY']]
         params['NIGHTNAME'] = drs_path.get_uncommon_path(*gargs)
@@ -840,7 +843,7 @@ def group_name(params, suffix='group'):
 # =============================================================================
 # Define display functions
 # =============================================================================
-def _special_keys_present(recipe, quiet, fkwargs):
+def _quiet_keys_present(recipe, quiet, fkwargs):
     """
     Decides whether displaying is necessary based on whether we have special
     keys in fkwargs or sys.argv (input from command line)
@@ -870,6 +873,7 @@ def _special_keys_present(recipe, quiet, fkwargs):
             quiet = False
         else:
             quiet = True
+
     # return the updated quiet flag
     return quiet
 
@@ -1706,6 +1710,92 @@ def _set_debug_from_input(recipe, fkwargs):
         recipe.drs_params.set_source('DRS_DEBUG', func_name)
     # return recipe
     return recipe
+
+
+def _set_force_dirs(recipe, fkwargs):
+    """
+    Decides whether we need to force the input and outdir based on user inputs
+
+
+    :param recipe:
+    :param fkwargs:
+    :return:
+    """
+    # set function name
+    func_name = __NAME__ + '._set_force_dirs()'
+    # set condintions for forcing input and output dir
+    force_dirs = [False, False]
+    # ----------------------------------------------------------------------
+    # set debug key
+    dirkey = '--force_indir'
+    # assume debug is not there
+    indir = None
+    pos = None
+    # check sys.argv
+    for it, arg in enumerate(sys.argv):
+        if dirkey in arg:
+            if '=' in arg:
+                pos = None
+                indir = arg.split('=')[-1]
+            else:
+                pos = it
+                indir = None
+    # deal with position
+    if pos is None:
+        pass
+    elif pos is not None:
+        indir = sys.argv[pos + 1]
+
+    # check fkwargs
+    for kwarg in fkwargs:
+        if 'force_indir' in kwarg:
+            indir = fkwargs[kwarg]
+    # make sure indir exists
+    if os.path.exists(os.path.abspath(indir)):
+        indir = os.path.abspath(indir)
+    # set DRS_DEBUG
+    if indir is not None:
+        # set the input dir
+        recipe.inputdir = indir
+        force_dirs[0] = True
+    # ----------------------------------------------------------------------
+    # set debug key
+    dirkey = '--force_outdir'
+    # assume debug is not there
+    outdir = None
+    pos = None
+    # check sys.argv
+    for it, arg in enumerate(sys.argv):
+        if dirkey in arg:
+            if '=' in arg:
+                pos = None
+                outdir = arg.split('=')[-1]
+            else:
+                pos = it
+                outdir = None
+    # deal with position
+    if pos is None:
+        pass
+    elif (pos + 1) == len(sys.argv):
+        outdir = None
+    elif pos is not None:
+        outdir = sys.argv[pos + 1]
+
+    # check fkwargs
+    for kwarg in fkwargs:
+        if 'force_outdir' in kwarg:
+            outdir = fkwargs[kwarg]
+    # make sure indir exists
+    if os.path.exists(os.path.abspath(outdir)):
+        outdir = os.path.abspath(outdir)
+    # set DRS_DEBUG
+    if outdir is not None:
+        # set the input dir
+        recipe.outputdir = outdir
+        force_dirs[1] = True
+    # ----------------------------------------------------------------------
+    # return recipe
+    return recipe, force_dirs
 
 
 def _sort_version(messages=None):
