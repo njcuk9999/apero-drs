@@ -140,11 +140,9 @@ def common_text(stringlist, kind='prefix'):
     elif kind == 'suffix':
         # loop around strings in list (except first)
         for _str in stringlist[1:]:
-            print('list: ', _str)
             # while substring is not equal in first and Nth shorten
             while _str[-len(substring):] != substring and len(substring) != 0:
                 substring = substring[1:]
-                print(substring)
             # test for blank string
             if len(substring) == 0:
                 break
@@ -170,6 +168,11 @@ def combine_uncommon_text(stringlist, prefix=None, suffix=None, fmt=None):
     """
     if fmt is None:
         fmt = '{0}F{1}T{2}{3}'
+    # deal with prefix/suffix being ''
+    if len(prefix) == 0:
+        prefix = None
+    if len(suffix) == 0:
+        suffix = None
     # remove prefix and suffix
     entries = []
     # loop around string list
