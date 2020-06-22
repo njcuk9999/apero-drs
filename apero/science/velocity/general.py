@@ -1075,10 +1075,12 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         bl_ord[nanmask] = 0
         # now every value that is zero is masked (we don't want to spline these)
         good = (sp_ord != 0) & (bl_ord != 0)
+        weight_ord = np.array(good, dtype=float)
         # ------------------------------------------------------------------
         # spline the spectrum and the blaze
         spline_sp = mp.iuv_spline(wa_ord[good], sp_ord[good], k=5, ext=1)
         spline_bl = mp.iuv_spline(wa_ord[good], bl_ord[good], k=5, ext=1)
+        spline_weight = mp.iuv_spline(wa_ord, weight_ord, k=1, ext=1)
         # ------------------------------------------------------------------
         # set up the ccf for this order
         ccf_ord = np.zeros_like(rv_ccf)
@@ -1122,7 +1124,8 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         omask_weights = omask_weights / np.nanmean(omask_weights)
 
         # Number of photons at line centers for 1 CCF step
-        nphot = spline_sp(omask_centers) / ccfstep
+        omask_weights = spline_weight(omask_centers)
+        nphot = spline_sp(omask_centers) * omask_weights / ccfstep
 
         # Poisson noise is a bit bigger because of weights
         wsum = np.sum(nphot*omask_weights)
@@ -1137,10 +1140,11 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
             wave_tmp = omask_centers * wave_shifts[rv_element]
             part1 = spline_sp(wave_tmp)
             part2 = spline_bl(wave_tmp)
+            part4 = spline_weight(wave_tmp)
             numlines = np.sum(spline_bl(wave_tmp) != 0)
             # CCF is the division of the sums
             with warnings.catch_warnings(record=True) as _:
-                ccf_element = ((part1 * part3) / part2) * omask_weights
+                ccf_element = ((part1 * part3) / part2) * omask_weights * part4
                 ccf_ord[rv_element] = mp.nansum(ccf_element)
         # ------------------------------------------------------------------
         # deal with NaNs in ccf
