@@ -1124,8 +1124,8 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         omask_weights = omask_weights / np.nanmean(omask_weights)
 
         # Number of photons at line centers for 1 CCF step
-        omask_weights = spline_weight(omask_centers)
-        nphot = spline_sp(omask_centers) * omask_weights / ccfstep
+        sweights = spline_weight(omask_centers)
+        nphot = spline_sp(omask_centers) * sweights / ccfstep
 
         # Poisson noise is a bit bigger because of weights
         wsum = np.sum(nphot*omask_weights)
