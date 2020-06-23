@@ -1129,13 +1129,14 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
 
         # Poisson noise is a bit bigger because of weights
         wsum = np.sum(nphot*omask_weights)
+        wsum2 = np.sum(nphot*omask_weights**2)
         # we can't calculate wnoise for negative values --> set to inf
         if wsum < 0:
             wargs = [order_num]
             WLOG(params, 'warning', TextEntry('10-020-00008', args=wargs))
             wsum, wnoise = 0.0, np.inf
         else:
-            wnoise = np.sqrt(np.sum(nphot*omask_weights**2))
+            wnoise = np.sqrt(wsum2)
         # ------------------------------------------------------------------
         # set number of valid lines used to zero
         numlines = 0
