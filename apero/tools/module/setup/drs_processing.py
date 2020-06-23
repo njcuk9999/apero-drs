@@ -86,6 +86,9 @@ RUN_KEYS['SCIENCE_TARGETS'] = None
 REMOVE_ENG_NIGHTS = []
 # get special list from recipes
 SPECIAL_LIST_KEYS = drs_recipe.SPECIAL_LIST_KEYS
+# get list of obj name cols
+OBJNAMECOLS = ['KW_OBJNAME']
+
 
 # =============================================================================
 # Define classes
@@ -643,6 +646,8 @@ def reset_files(params):
 def generate_run_list(params, table, runtable):
     # print progress: generating run list
     WLOG(params, 'info', TextEntry('40-503-00011'))
+    # need to update table object names to match preprocessing
+    table = _update_table_objnames(params, table)
     # get recipe defintions module (for this instrument)
     recipemod = _get_recipe_module(params)
     # get all values (upper case) using map function
@@ -1274,6 +1279,10 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
         # copy table
         # ------------------------------------------------------------------
         ftable = Table(table)
+        # ------------------------------------------------------------------
+        # deal with black and white lists
+        # ------------------------------------------------------------------
+
 
         # ------------------------------------------------------------------
         # deal with black and white lists
@@ -1738,6 +1747,25 @@ def _multi_process1(params, recipe, runlist, cores, groupname=None):
 # =============================================================================
 # Define working functions
 # =============================================================================
+def _update_table_objnames(params, table):
+    """
+    Takes a table and forces updates to object name columns
+
+    :param params:
+    :param table:
+    :return:
+    """
+    # get pseudo constants
+    pconst = constants.pload(instrument=params['INSTRUMENT'])
+    # loop around columns
+    for col in table.colnames:
+        if col in OBJNAMECOLS:
+            # need to map values by new drs obj name
+            table[col] = list(map(pconst.DRS_OBJ_NAME, list(table[col])))
+    # return table
+    return table
+
+
 def _get_recipe_module(params, **kwargs):
     func_name = __NAME__ + '.get_recipe_module()'
     # log progress: loading recipe module files
@@ -1789,6 +1817,8 @@ def _check_runtable(params, runtable, recipemod):
 def _get_filters(params, srecipe):
     # set up function name
     func_name = __NAME__ + '._get_filters()'
+    # get pseudo constatns
+    pconst = constants.pload(instrument=params['INSTRUMENT'])
     # set up filter storage
     filters = dict()
     # loop around recipe filters
@@ -1798,7 +1828,8 @@ def _get_filters(params, srecipe):
         # deal with list
         if isinstance(value, list):
             filters[key] = value
-        # if this is in params set this value
+        # if this is in params set this value - these are dealing with
+        #  object names
         elif (value in params) and (value in SPECIAL_LIST_KEYS):
             # get values from
             user_filter = params[value]
@@ -1806,13 +1837,22 @@ def _get_filters(params, srecipe):
             if (user_filter is None) or (user_filter.upper() == 'NONE'):
                 if value == 'TELLURIC_TARGETS':
                     wlist, wfilename = telluric.get_whitelist(params)
-                    filters[key] = list(wlist)
+                    # note we need to update this list to match
+                    # the cleaning that is done in preprocessing
+                    cwlist = list(map(pconst.DRS_OBJ_NAME, wlist))
+                    # add cleaned obj list to filters
+                    filters[key] = list(cwlist)
                 else:
                     continue
             # else assume we have a special list that is a string list
             #   (i.e. SCIENCE_TARGETS = "target1, target2, target3"
             elif isinstance(user_filter, str):
-                filters[key] = _split_string_list(user_filter)
+                wlist =  _split_string_list(user_filter)
+                # note we need to update this list to match
+                # the cleaning that is done in preprocessing
+                cwlist = list(map(pconst.DRS_OBJ_NAME, wlist))
+                # add cleaned obj list to filters
+                filters[key] = list(cwlist)
             else:
                 continue
         # else assume we have a straight string to look for (if it is a valid

@@ -133,6 +133,7 @@ def __main__(recipe, params):
         core.file_processing_update(params, it, num_files)
         # ge this iterations file
         infile = infiles[it]
+
         # ------------------------------------------------------------------
         # deal with skipping files defined by inputs OBJNAME and DPRTYPE
         skip, skip_conditions = general.check_files(params, infile)

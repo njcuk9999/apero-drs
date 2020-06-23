@@ -114,6 +114,10 @@ def __main__(recipe, params):
     mainname = __NAME__ + '._main()'
     # get the object name
     objname = params['INPUTS']['OBJNAME']
+    # need to convert object to drs object name
+    pconst = constants.pload(instrument=params['INSTRUMENT'])
+    objname = pconst.DRS_OBJ_NAME(objname)
+
     # get the filetype (this is overwritten from user inputs if defined)
     filetype = params['INPUTS']['FILETYPE']
     # get the fiber type required
