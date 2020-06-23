@@ -1129,8 +1129,13 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
 
         # Poisson noise is a bit bigger because of weights
         wsum = np.sum(nphot*omask_weights)
-        wnoise = np.sqrt(np.sum(nphot*omask_weights**2))
-
+        # we can't calculate wnoise for negative values --> set to inf
+        if wsum < 0:
+            wargs = [order_num]
+            WLOG(params, 'warning', TextEntry('10-020-00008', args=wargs))
+            wsum, wnoise = 0.0, np.inf
+        else:
+            wnoise = np.sqrt(np.sum(nphot*omask_weights**2))
         # ------------------------------------------------------------------
         # set number of valid lines used to zero
         numlines = 0
@@ -1178,9 +1183,14 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         # ------------------------------------------------------------------
         # get the RV accuracy from Bouchy 2001 equation
         dv_pix = (np.gradient(ccf_ord)/np.gradient(rv_ccf))/wnoise
-        ccf_noise = 1 / np.sqrt(np.nansum(dv_pix ** 2))
-        # ge the snr
-        ccf_snr = wsum / wnoise
+        # set the bad values for ccf noise and ccf snr --> NaN value is bad
+        if wsum == 0:
+                ccf_noise = np.nan
+                ccf_snr = np.nan
+        else:
+            ccf_noise = 1 / np.sqrt(np.nansum(dv_pix ** 2))
+            # ge the snr
+            ccf_snr = wsum / wnoise
         # ------------------------------------------------------------------
         # append ccf to storage
         ccf_all.append(ccf_ord)
