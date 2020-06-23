@@ -30,6 +30,10 @@ KEYS['VERSION'] = '0.6.100'
 NUMBER_OF_CORES = 20
 # debug mode
 DEBUG = False
+# toggle file location
+#     SUBDUR=0 means search here i.e. *.fits
+#     SUBDIR=1 means search in subdirs i.e. */*.fits
+SUBDIR = 0
 
 # =============================================================================
 # Define functions
@@ -59,6 +63,14 @@ class Engine:
                 if hasattr(hdulist[h_it], 'header'):
                     # check and change the keys
                     for key in KEYS:
+                        if key not in hdulist[h_it].header:
+                            wmsg = '\tWARNING: key {0} not in header'
+                            print(wmsg.format(key))
+                            return
+                        # if one of the keys matches assume all keys do
+                        if hdulist[h_it].header[key] == KEYS[key]:
+                            self.lines.append(str(filename))
+                            return
                         # update header key
                         hdulist[h_it].header[key] = KEYS[key]
                 # save hdu to file
@@ -72,7 +84,10 @@ class Engine:
 # =============================================================================
 if __name__ == "__main__":
     # get all files related to pre-processed files
-    files = Path(WORKSHAPE).glob('*/*pp*.fits')
+    if SUBDIR == 1:
+        files = Path(WORKSHAPE).glob('*/*pp*.fits')
+    else:
+        files = Path(WORKSHAPE).glob('*pp*.fits')
     # load the update file
     if os.path.exists(UPDATE_FILE):
         with open(UPDATE_FILE, 'r') as ufile:
