@@ -1131,7 +1131,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         wsum = np.sum(nphot*omask_weights)
         wsum2 = np.sum(nphot*omask_weights**2)
         # we can't calculate wnoise for negative values --> set to inf
-        if wsum < 0:
+        if (wsum <= 0) or (wsum2 <= 0):
             wargs = [order_num]
             WLOG(params, 'warning', TextEntry('10-020-00008', args=wargs))
             wsum, wnoise = 0.0, np.inf
