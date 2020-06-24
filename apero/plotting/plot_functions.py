@@ -3337,17 +3337,35 @@ def plot_ccf_photon_uncert(plotter, graph, kwargs):
     x = kwargs.get('x')
     y_sp = kwargs.get('y_sp')
     y_ccf = kwargs.get('y_cc')
+    # get max/min points
+    with warnings.catch_warnings(record=True) as _:
+        ymin = mp.nanmin(y_ccf)
+        ymax = mp.nanmax(y_ccf)
+        if not np.isfinite(ymin):
+            ymin = mp.nanmin(y_sp)
+        if not np.isfinite(ymax):
+            ymax = mp.nanmax(y_sp)
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter)
     # ------------------------------------------------------------------
     # plot fits
     frame.plot(x, y_sp, label='DVRMS Spectrum', marker='x', linestyle='None')
-    frame.plot(x, y_ccf, label='DVRMS CCF', marker='o', linestyle='None')
+    # plot ccf noise (unless all NaNs)
+    if np.sum(np.isnan(y_ccf)) != len(y_ccf):
+        frame.plot(x, y_ccf, label='DVRMS CCF', marker='o', linestyle='None')
     # set title labels limits
     title = 'Photon noise uncertainty versus spectral order'
     frame.set(xlabel='Order number', ylabel='Photon noise uncertainty [m/s]',
-              title=title, ylim=(mp.nanmin(y_ccf), mp.nanmax(y_ccf)))
+              title=title)
+    # deal with limits (may be NaN)
+    if np.isfinite(ymin) and np.isfinite(ymax):
+        frame.set_ylim(bottom=ymin, top=ymax)
+    elif np.isfinite(ymin):
+        frame.set_ylim(bottom=ymin)
+    else:
+        frame.set_ylim(top=ymax)
+
     frame.legend(loc=0)
     # ------------------------------------------------------------------
     # wrap up using plotter
