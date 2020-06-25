@@ -1855,7 +1855,7 @@ def _get_filters(params, srecipe):
                 filters[key] = list(cwlist)
                 if value == 'SCIENCE_TARGETS':
                     # update science targets
-                    params['SCIENCE_TARGETS'] = ', '.join(cwlist)
+                    params.set('SCIENCE_TARGETS', value=', '.join(cwlist))
             else:
                 continue
         # else assume we have a straight string to look for (if it is a valid
