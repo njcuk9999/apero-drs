@@ -1379,6 +1379,10 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
             ftable = _remove_engineering(params, ftable)
         # deal with filters
         filters = _get_filters(params, srecipe)
+
+        # TODO: remove break point
+        constants.break_point(params)
+
         # get fiber filter
         allowedfibers = srecipe.allowedfibers
         # get runs for this recipe
