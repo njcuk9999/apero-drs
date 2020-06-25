@@ -12356,7 +12356,7 @@ Changelog
 
   use
 
-  ```python
+  ```
   from SpirouDRS.spirouCore import sPlt
   plt = sPlt.plt
   ```
