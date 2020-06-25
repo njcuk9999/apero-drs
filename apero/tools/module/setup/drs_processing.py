@@ -1842,8 +1842,6 @@ def _get_filters(params, srecipe):
                     cwlist = list(map(pconst.DRS_OBJ_NAME, wlist))
                     # add cleaned obj list to filters
                     filters[key] = list(cwlist)
-                    # update science targets
-                    params['SCIENCE_TARGETS'] = ', '.join(cwlist)
                 else:
                     continue
             # else assume we have a special list that is a string list
@@ -1855,7 +1853,9 @@ def _get_filters(params, srecipe):
                 cwlist = list(map(pconst.DRS_OBJ_NAME, wlist))
                 # add cleaned obj list to filters
                 filters[key] = list(cwlist)
-
+                if value == 'SCIENCE_TARGETS':
+                    # update science targets
+                    params['SCIENCE_TARGETS'] = ', '.join(cwlist)
             else:
                 continue
         # else assume we have a straight string to look for (if it is a valid
