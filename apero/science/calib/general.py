@@ -79,11 +79,13 @@ def check_files(params, infile):
     skip = False
     skip_conditions = [[], [], []]
     # ----------------------------------------------------------------------
+    # convert objname_inputs to char array
+    objarray = np.char.array(objname_inputs).upper()
     # deal with objname filter
-    if 'NONE' in objname_inputs:
+    if 'NONE' in objarray:
         skip = skip or False
     # else check for objname in
-    elif objname in objname_inputs:
+    elif objname.upper() in objarray:
         skip = skip or False
     # else we skip
     else:
