@@ -144,7 +144,7 @@ def __main__(recipe, params):
                 wargs = skip_conditions[2]
                 WLOG(params, 'warning', TextEntry('10-016-00013', args=wargs))
             # write log here
-            log1.writelog()
+            log1.write_logfile(params)
             # skip this file
             continue
         # ------------------------------------------------------------------
