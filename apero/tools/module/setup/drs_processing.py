@@ -1379,10 +1379,6 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
             ftable = _remove_engineering(params, ftable)
         # deal with filters
         filters = _get_filters(params, srecipe)
-
-        # TODO: remove break point
-        constants.break_point(params)
-
         # get fiber filter
         allowedfibers = srecipe.allowedfibers
         # get runs for this recipe
@@ -1846,6 +1842,8 @@ def _get_filters(params, srecipe):
                     cwlist = list(map(pconst.DRS_OBJ_NAME, wlist))
                     # add cleaned obj list to filters
                     filters[key] = list(cwlist)
+                    # update science targets
+                    params['SCIENCE_TARGETS'] = ', '.join(cwlist)
                 else:
                     continue
             # else assume we have a special list that is a string list
@@ -1857,6 +1855,7 @@ def _get_filters(params, srecipe):
                 cwlist = list(map(pconst.DRS_OBJ_NAME, wlist))
                 # add cleaned obj list to filters
                 filters[key] = list(cwlist)
+
             else:
                 continue
         # else assume we have a straight string to look for (if it is a valid
