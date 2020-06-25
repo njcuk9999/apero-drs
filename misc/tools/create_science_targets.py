@@ -19,8 +19,11 @@ from astropy.io import fits
 # =============================================================================
 # Define variables
 # =============================================================================
-TARGETS = ('TOI-442, Gl699, Gl876, Gl436, Gl514, Gl382, Gl846, Trappist-1, '
-           'Gl15A, HD189733, Gl1002, GJ1214').split(',')
+# TARGETS = ('TOI-442, Gl699, Gl876, Gl436, Gl514, Gl382, Gl846, Trappist-1, '
+#            'Gl15A, HD189733, GJ1002, GJ1214').split(',')
+TARGETS = ('AUMic, Gl388, TOI-1278, TOI-1759, TOI-1452').split(',')
+# TARGETS = ('TOI-233, K2-147, TOI-736, K2-33, TOI-876, TOI-732',
+#            'TYC 4384-1735-1').split()
 
 IN_WORKSPACE = '/spirou/cfht_nights/cfht_june1/reduced/'
 OUT_WORKSPACE = '/spirou/cfht_nights/science_targets/'
@@ -31,11 +34,16 @@ EXTENSIONS = ['o_pp_e2dsff_AB.fits',
               'o_pp_s1d_v_tcorr_AB.fits',
               'o_pp_s1d_v_recon_AB.fits',
               'o_pp_s1d_v_AB.fits',
-              'o_pp_e2dsff_tcorr_AB_ccf_masque_sept18_andres_trans50_AB.fits']
+              'o_pp_e2dsff_tcorr_AB_ccf_masque_sept18_andres_trans50_AB.fits',
+              'o_pp_e2dsff_C_ccf_smart_fp_mask_C.fits'
+              ]
 # define extension header (EXTENSION[0] is reference file)
 EXTHDR = 0
 # odocode suffix
 ODOCODE_SUFFIX = 'o_pp'
+# extra files
+EXTRA_FILES = ['Template_s1d_{OBJ}_sc1d_v_file_AB.fits']
+
 
 # =============================================================================
 # Define functions
@@ -83,6 +91,20 @@ if __name__ == "__main__":
             # check if it exists
             if os.path.exists(abspath):
                 objects[objname].append(abspath)
+        # add extra files
+        kwargs = dict(OBJ=objname)
+        for extrafile in EXTRA_FILES:
+            # construct file name
+            extrafile = extrafile.format(**kwargs)
+            # locate extra files
+            efilelist = glob.glob(os.path.join(IN_WORKSPACE, '*', extrafile))
+            if len(efilelist) == 0:
+                continue
+            # just keep the first file
+            for efile in efilelist:
+                if os.path.exists(efile):
+                    objects[objname].append(efile)
+
     # make tar dir
     tar_dir = TAR_WORKSPACE
     if not os.path.exists(tar_dir):
@@ -98,6 +120,8 @@ if __name__ == "__main__":
         print('OBJECT = {0}'.format(objname))
         print('=' * 80)
         print()
+        # get unique objects
+        uobjects = np.unique(objects[objname])
         # make clean object name
         cobjname = objname.replace(' ', '_')
         # make output dir
@@ -109,7 +133,7 @@ if __name__ == "__main__":
         os.mkdir(outputdir)
         # make a sim link in this dir
         print('Making symlinks (OBJECT={0})'.format(objname))
-        for filename in tqdm(objects[objname]):
+        for filename in tqdm(uobjects):
             # make target file path
             dst = os.path.join(outputdir, os.path.basename(filename))
             # make sim link
