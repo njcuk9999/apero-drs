@@ -613,6 +613,8 @@ class DrsRecipe(object):
     def add_extra(self, params, arguments, tstars=None):
         # set function name
         func_name = display_func(params, 'add_extra', __NAME__, 'DrsRecipe')
+        # load pseudo constants
+        pconst = constants.pload(instrument=params['INSTRUMENT'])
         # loop around arguments
         for argname in arguments:
             # get value
@@ -630,12 +632,14 @@ class DrsRecipe(object):
                         value = value.split(',')
                         # make sure there are no white spaces
                         value = np.char.strip(value)
+                    # deal with object name cleaning
+                    value = list(map(pconst.DRS_OBJ_NAME, value))
+
                 # deal with telluric targets being None
                 if arguments[argname] == 'TELLURIC_TARGETS':
                     if isinstance(value, (type(None), str)):
                         if value in ['None', None, '']:
                             value = tstars
-
             # check for argument in args
             if argname in self.args:
                 self.extras[argname] = value

@@ -64,6 +64,8 @@ pcheck = core.pcheck
 # =============================================================================
 def get_whitelist(params, **kwargs):
     func_name = __NAME__ + '.get_whitelist()'
+    # get pseudo constants
+    pconst = constants.pload(instrument=params['INSTRUMENT'])
     # get parameters from params/kwargs
     relfolder = pcheck(params, 'TELLU_LIST_DIRECOTRY', 'directory', kwargs,
                        func_name)
@@ -73,12 +75,16 @@ def get_whitelist(params, **kwargs):
     wout = drs_data.load_text_file(params, filename, relfolder, kwargs,
                                    func_name, dtype=str)
     whitelist, whitelistfile = wout
+    # must clean names
+    whitelist = list(map(pconst.DRS_OBJ_NAME, whitelist))
     # return the whitelist
     return whitelist, whitelistfile
 
 
 def get_blacklist(params, **kwargs):
     func_name = __NAME__ + '.get_blacklist()'
+    # get pseudo constants
+    pconst = constants.pload(instrument=params['INSTRUMENT'])
     # get parameters from params/kwargs
     relfolder = pcheck(params, 'TELLU_LIST_DIRECOTRY', 'directory', kwargs,
                        func_name)
@@ -88,6 +94,8 @@ def get_blacklist(params, **kwargs):
     bout = drs_data.load_text_file(params, filename, relfolder, kwargs,
                                    func_name, dtype=str)
     blacklist, blacklistfile = bout
+    # must clean names
+    blacklist = list(map(pconst.DRS_OBJ_NAME, blacklist))
     # return the whitelist
     return blacklist, blacklistfile
 
