@@ -1384,6 +1384,10 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
         # get runs for this recipe
         sruns = srecipe.generate_runs(params, ftable, filters=filters,
                                       allowedfibers=allowedfibers)
+
+        # TODO: remove break point
+        constants.break_point(params)
+
         # ------------------------------------------------------------------
         # if we are in trigger mode we need to stop when we have no
         #   sruns for recipe

@@ -126,6 +126,9 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     rlist = drs_processing.generate_run_list(params, rawtable, runtable)
 
+    # TODO: remove break point
+    constants.break_point(params)
+
     # ----------------------------------------------------------------------
     # Process run list
     # ----------------------------------------------------------------------
