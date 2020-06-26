@@ -186,6 +186,11 @@ def __main__(recipe, params):
         # Calculate Barycentric correction
         # ------------------------------------------------------------------
         bprops = extract.get_berv(params, infile, header, props)
+
+        # TODO: remove breakpoint
+        constants.break_point(params)
+
+
         # storage for return
         e2dsoutputs = dict()
         # ------------------------------------------------------------------
