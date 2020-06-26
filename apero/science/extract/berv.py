@@ -723,30 +723,30 @@ def get_input_props_gaia(params, gprops, **kwargs):
     # case 1: we have gaia id
     # -----------------------------------------------------------------------
     if gaia_id is not None and gaia_id != 'None':
-        props, fail = crossmatch.get_params(params, gprops, gaiaid=gaia_id,
+        pprops, fail = crossmatch.get_params(params, gprops, gaiaid=gaia_id,
                                             objname=objname, ra=ra, dec=dec)
         # deal with failure
         if not fail:
             WLOG(params, '', TextEntry('40-016-00016', args=['gaiaid']))
-            return props
+            return pprops
     # -----------------------------------------------------------------------
     # case 2: we have objname
     # -----------------------------------------------------------------------
     if gprops['objname'] is not None and gprops['objname'] != 'None':
-        props, fail = crossmatch.get_params(params, gprops, objname=objname,
+        pprops, fail = crossmatch.get_params(params, gprops, objname=objname,
                                             ra=ra, dec=dec)
         # deal with failure
         if not fail:
             WLOG(params, '', TextEntry('40-016-00016', args=['objname']))
-            return props
+            return pprops
     # -----------------------------------------------------------------------
     # case 3: use ra and dec
     # -----------------------------------------------------------------------
-    props, fail = crossmatch.get_params(params, gprops, ra=ra, dec=dec)
+    pprops, fail = crossmatch.get_params(params, gprops, ra=ra, dec=dec)
     # deal with failure
     if not fail:
         WLOG(params, '', TextEntry('40-016-00016', args=['ra/dec']))
-        return props
+        return pprops
     else:
         WLOG(params, '', TextEntry('40-016-00016', args=['header']))
         # return gprops
