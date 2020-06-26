@@ -1539,6 +1539,9 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
               'LEAK_LOW_PERCENTILE_USED', 'LEAK_HIGH_PERCENTILE_USED',
               'LEAK_BAD_RATIO_OFFSET_USED']
 
+    # TODO: remove break point
+    constants.break_point(params)
+
     # ----------------------------------------------------------------------
     # 2D files
     # ----------------------------------------------------------------------
