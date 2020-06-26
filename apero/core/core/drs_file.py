@@ -1762,6 +1762,8 @@ class DrsFitsFile(DrsInputFile):
 
             if dkey in self.hdict:
                 self.output_dict[key] = str(self.hdict[dkey])
+            elif dkey in self.header:
+                self.output_dict[key] = str(self.header[dkey])
             else:
                 self.output_dict[key] = '--'
 
