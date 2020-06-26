@@ -66,7 +66,8 @@ QWHERE5 = ('(parallax > {0})')
 # =============================================================================
 # Define user functions
 # =============================================================================
-def get_params(params, _props, gaiaid=None, objname=None, ra=None, dec=None):
+def get_params(params, _props, gaiaid=None, objname=None, ra=None, dec=None,
+               hdr_objname=None):
     func_name = __NAME__ + '.get_props()'
     # get paramters from params
     mag_cut = pcheck(params, 'OBJ_LIST_GAIA_MAG_CUT', func_name)
@@ -104,7 +105,8 @@ def get_params(params, _props, gaiaid=None, objname=None, ra=None, dec=None):
         # if not then try to query gaia
         if not intable:
             # get row via query to gaia
-            row, fail = query_gaia(params, gaiaid, objname, ra, dec)
+            row, fail = query_gaia(params, gaiaid, objname, ra, dec,
+                                   hdr_objname=hdr_objname)
             # push row into lookup table for future use
             if not fail:
                 updatelookuptable(params, lookuptable, lookuptablename, row)
@@ -294,7 +296,8 @@ def crossmatch(ra, dec, ras, decs, radius):
     return mask, separation
 
 
-def query_gaia(params, gaiaid=None, objname=None, ra=None, dec=None, **kwargs):
+def query_gaia(params, gaiaid=None, objname=None, ra=None, dec=None,
+               hdr_objname=None, **kwargs):
     func_name = __NAME__ + '.inlookuptable()'
     # get parameters from params/kwargs
     radius = pcheck(params, 'OBJ_LIST_CROSS_MATCH_RADIUS', 'radius', kwargs,
@@ -388,7 +391,7 @@ def query_gaia(params, gaiaid=None, objname=None, ra=None, dec=None, **kwargs):
     if objname is not None:
         table['objname'] = [objname] * len(table)
     else:
-        table['objanme'] = [''] * len(table)
+        table['objname'] = [hdr_objname] * len(table)
     # add epoch (in JD)
     table['epoch'] = [epoch.jd] * len(table)
     # ------------------------------------------------------------------
