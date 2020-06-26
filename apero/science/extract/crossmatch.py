@@ -23,6 +23,7 @@ from apero import lang
 from apero.core import constants
 from apero.io import drs_lock
 from apero.io import drs_data
+from apero.io import drs_table
 
 # =============================================================================
 # Define variables
@@ -60,10 +61,12 @@ QWHERE3 = ('(parallax is not NULL) AND (pmdec is not NULL) AND '
 QWHERE4 = ('(phot_rp_mean_mag < {0})')
 QWHERE5 = ('(parallax > {0})')
 
+
+
 # =============================================================================
 # Define user functions
 # =============================================================================
-def get_params(params, props, gaiaid=None, objname=None, ra=None, dec=None):
+def get_params(params, _props, gaiaid=None, objname=None, ra=None, dec=None):
     func_name = __NAME__ + '.get_props()'
     # get paramters from params
     mag_cut = pcheck(params, 'OBJ_LIST_GAIA_MAG_CUT', func_name)
@@ -115,33 +118,33 @@ def get_params(params, props, gaiaid=None, objname=None, ra=None, dec=None):
             # loop around properties
             for prop in row.colnames:
                 # update each properties
-                props[prop] = row[prop]
+                _props[prop] = row[prop]
                 # set source
                 sourcename = '{0} [{1}]'.format(func_name, source)
-                props.set_source(prop, sourcename)
+                _props.set_source(prop, sourcename)
         # ----------------------------------------------------------------------
         # set the input source
         if source is not None:
-            props['INPUTSOURCE'] = source
-            props.set_source('INPUTSOURCE', func_name)
+            _props['INPUTSOURCE'] = source
+            _props.set_source('INPUTSOURCE', func_name)
         # ----------------------------------------------------------------------
         # set the limits used
-        props['GAIA_MAG_LIM'] = mag_cut
-        props['GAIA_PLX_LIM'] = parallax_cut
-        props.set_sources(['GAIA_MAG_LIM', 'GAIA_PLX_LIM'], func_name)
+        _props['GAIA_MAG_LIM'] = mag_cut
+        _props['GAIA_PLX_LIM'] = parallax_cut
+        _props.set_sources(['GAIA_MAG_LIM', 'GAIA_PLX_LIM'], func_name)
         # ----------------------------------------------------------------------
         # deal with NaN values
         unsetvalues = ['PMRA', 'PMDE', 'PLX', 'RV']
         for unsetvalue in unsetvalues:
-            if np.isnan(props[unsetvalue]):
+            if np.isnan(_props[unsetvalue]):
                 # debug log message
                 dargs = [unsetvalue, func_name]
                 WLOG(params, 'debug', TextEntry('90-016-00001', args=dargs))
                 # set to zero
-                props[unsetvalue] = 0.0
+                _props[unsetvalue] = 0.0
         # ----------------------------------------------------------------------
         # return props and fail criteria
-        return props, fail
+        return _props, fail
     # -------------------------------------------------------------------------
     # try to run locked makedirs
     try:
@@ -189,11 +192,25 @@ def inlookuptable(params, table, gaiaid=None, objname=None, ra=None, dec=None,
                     func_name)
     # set in table to False
     intable, row = False, None
+    # deal with no rows
+    if len(intable) == 0:
+        return False, None
     # ----------------------------------------------------------------------
     # deal with having a gaia id
-    if gaiaid is not None:
+    if gaiaid not in [None, 'None', 'NONE']:
+        # check format of table gaia id
+        gaia_ids, dtype = drs_table.force_dtype_col(table['gaiaid'],
+                                                    upper=True, strip=True)
         # find rows in table with valid gaia id
-        mask = gaiaid == table['gaiaid']
+        try:
+            # if something went wrong with the gaia col set mask to empty
+            if gaia_ids is None:
+                mask = []
+            # else try to cast the gaia id to dtype
+            else:
+                mask = dtype(gaiaid) == gaia_ids
+        except Exception as _:
+            mask = []
         # if we have entires use the first one
         if np.sum(mask) > 0:
             # set intable to True
@@ -205,8 +222,19 @@ def inlookuptable(params, table, gaiaid=None, objname=None, ra=None, dec=None,
     # ----------------------------------------------------------------------
     # deal with having objname
     if (objname is not None) and (not intable):
+        # check format of table obj names
+        objnames, dtype = drs_table.force_dtype_col(table['objname'], dtype=str,
+                                                    upper=True, strip=True)
         # find rows in table with valid objname
-        mask = objname == table['objname']
+        try:
+            # if something went wrong with the gaia col set mask to empty
+            if objnames is None:
+                mask = []
+            # else try to cast the gaia id to dtype
+            else:
+                mask = str(objname).upper().strip() == objnames
+        except Exception as _:
+            mask = []
         # if we have entires use the first one
         if np.sum(mask) > 0:
             # set intable to True
@@ -222,9 +250,16 @@ def inlookuptable(params, table, gaiaid=None, objname=None, ra=None, dec=None,
         radius_degrees = (radius*uu.arcsec).to(uu.deg)
         # crossmatch table
         try:
-            # crossmatch
-            mask, separation = crossmatch(ra, dec, table['ra'], table['dec'],
-                                          radius=radius_degrees)
+            # force ra and dec columsn to floats
+            ras, _ = drs_table.force_dtype_col(table['ra'], dtype=float)
+            decs, _ = drs_table.force_dtype_col(table['dec'], dtype=float)
+            # deal with no ra/decs
+            if ras is None or decs is None:
+                mask, separation = [], []
+            # else crossmatch
+            else:
+                mask, separation = crossmatch(ra, dec, ras, decs,
+                                              radius=radius_degrees)
             # if we have entires use the first one
             if np.sum(mask) > 0:
                 # set intable to True
