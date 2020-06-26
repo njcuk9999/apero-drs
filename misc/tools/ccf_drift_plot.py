@@ -25,8 +25,8 @@ from tqdm import tqdm
 OBJNAME = 'Gl699'
 # -----------------------------------------------------------------------------
 # files
-objfiles_AB = glob.glob('*/*o_pp*ccf*AB.fits')
-objfiles_C = glob.glob('*/*o_pp*ccf*C.fits')
+objfiles_AB = np.sort(glob.glob('*/*o_pp*ccf*AB.fits'))
+objfiles_C = np.sort(glob.glob('*/*o_pp*ccf*C.fits'))
 # keywords
 KW_OBJECT = 'OBJECT'
 KW_TIME = 'MJDMID'

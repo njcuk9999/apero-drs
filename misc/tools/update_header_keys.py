@@ -85,9 +85,9 @@ class Engine:
 if __name__ == "__main__":
     # get all files related to pre-processed files
     if SUBDIR == 1:
-        files = Path(WORKSHAPE).glob('*/*pp*.fits')
+        files = np.sort(list(Path(WORKSHAPE).glob('*/*pp*.fits')))
     else:
-        files = Path(WORKSHAPE).glob('*pp*.fits')
+        files = np.sort(list(Path(WORKSHAPE).glob('*pp*.fits')))
     # load the update file
     if os.path.exists(UPDATE_FILE):
         with open(UPDATE_FILE, 'r') as ufile:

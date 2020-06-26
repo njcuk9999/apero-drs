@@ -1344,7 +1344,7 @@ def _check_file_location(recipe, argname, directory, filename):
     # Step 1: check "filename" as full link to file (including wildcards)
     # -------------------------------------------------------------------------
     # get glob list of files using glob
-    raw_files = glob.glob(filename)
+    raw_files = np.sort(glob.glob(filename))
     # debug output
     if len(raw_files) == 0:
         dargs = [argname, filename]
@@ -1363,7 +1363,7 @@ def _check_file_location(recipe, argname, directory, filename):
     # Step 2: recipe.inputdir.upper() (including wildcards)
     # -------------------------------------------------------------------------
     # get glob list of files using glob
-    raw_files = glob.glob(os.path.join(input_dir, filename))
+    raw_files = np.sort(glob.glob(os.path.join(input_dir, filename)))
     # debug output
     if len(raw_files) == 0:
         dargs = [argname, filename]
@@ -1383,7 +1383,7 @@ def _check_file_location(recipe, argname, directory, filename):
     #         + .fits
     # -------------------------------------------------------------------------
     # get glob list of files using glob
-    raw_files = glob.glob(filename + '.fits')
+    raw_files = np.sort(glob.glob(filename + '.fits'))
     # debug output
     if len(raw_files) == 0 and not filename.endswith('.fits'):
         dargs = [argname, filename + '.fits']
@@ -1403,7 +1403,7 @@ def _check_file_location(recipe, argname, directory, filename):
     #         + .fits
     # -------------------------------------------------------------------------
     # get glob list of files using glob
-    raw_files = glob.glob(os.path.join(input_dir, filename + '.fits'))
+    raw_files = np.sort(glob.glob(os.path.join(input_dir, filename + '.fits')))
     # debug output
     if len(raw_files) == 0 and not filename.endswith('.fits'):
         dargs = [argname, os.path.join(input_dir, filename + '.fits')]

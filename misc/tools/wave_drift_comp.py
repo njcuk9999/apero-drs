@@ -28,9 +28,9 @@ KW_DRIFT = 'WFPDRIFT'
 # =============================================================================
 if __name__ == "__main__":
     # get wave night files
-    files = glob.glob('*wave_night*')
+    files = np.sort(glob.glob('*wave_night*'))
     # get wave master fp files
-    files += glob.glob('*wavem_fp_*')
+    files += np.sort(glob.glob('*wavem_fp_*'))
 
     # storage
     fibers = []

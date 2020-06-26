@@ -9,6 +9,7 @@ Created on 2019-05-07 at 15:22
 
 @author: cook
 """
+import numpy as np
 import os
 import shutil
 import sys
@@ -168,7 +169,7 @@ def copy_default_db(params, name, db_dir, reset_path, log=True):
         WLOG(params, 'error', TextEntry('00-502-00001', args=eargs))
     # -------------------------------------------------------------------------
     # define needed files:
-    files = os.listdir(absfolder)
+    files = np.sort(os.listdir(absfolder))
     # -------------------------------------------------------------------------
     # copy required calibDB files to DRS_CALIB_DB path
     for filename in files:

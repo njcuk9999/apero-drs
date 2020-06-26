@@ -1049,4 +1049,4 @@ def wrap_ccf():
 
     for file_string in file_strings:
         for mask_name in mask_names:
-            get_ccf(glob.glob(file_string), MASK_FILE=mask_name)
+            get_ccf(np.sort(glob.glob(file_string)), MASK_FILE=mask_name)
