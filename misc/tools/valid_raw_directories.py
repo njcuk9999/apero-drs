@@ -75,7 +75,7 @@ def valid_night(night_path: Path) -> Tuple[bool, bool, bool, Dict]:
         # get extension and number
         ext, num = REQ_FILES[req_file]
         # get files
-        files = list(night_path.glob('*' + ext))
+        files = np.sort(list(night_path.glob('*' + ext)))
         # if use header filter these files by header values
         if USE_HDR:
             files = filter_by_header(files, req_file)
@@ -135,7 +135,7 @@ def filter_by_header(files, key):
 # =============================================================================
 if __name__ == "__main__":
     # get a list of night names
-    files = list(Path(WORKSPACE).glob('*'))
+    files = np.sort(list(Path(WORKSPACE).glob('*')))
     # only keep directories
     directories = []
     for filename in files:

@@ -132,7 +132,7 @@ def __main__(recipe, params):
     drs_reset.copy_default_db(params, name, db_path, db_reset, log=False)
     # ----------------------------------------------------------------------
     # get all fits files in the cdb path
-    db_files = glob.glob(db_path + os.sep + '*.fits')
+    db_files = np.sort(glob.glob(db_path + os.sep + '*.fits'))
     # ----------------------------------------------------------------------
     # get the file mod for this instrument
     pconst = constants.pload(params['INSTRUMENT'])

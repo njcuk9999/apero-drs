@@ -2974,7 +2974,7 @@ def _calc_tapas_abso(keep, tau_water, tau_others, sp_water, sp_others,
 
 def _remove_absonpy_files(params, path, prefix):
     # list files in path
-    filelist = os.listdir(path)
+    filelist = np.sort(os.listdir(path))
     # loop around files and decide whether to delete them or not
     for filename in filelist:
         # must be a .npy file

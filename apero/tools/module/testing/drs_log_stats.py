@@ -132,7 +132,7 @@ class LogObj:
 def get_log_files(params, recipe, path, nightname=None):
     # ----------------------------------------------------------------------
     # load night names
-    files = glob.glob(os.path.join(path, '*'))
+    files = np.sort(glob.glob(os.path.join(path, '*')))
     # ----------------------------------------------------------------------
     # log progress
     WLOG(params, 'info', 'Finding night directories for {0}'.format(path))

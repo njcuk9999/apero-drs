@@ -9,6 +9,7 @@ Created on 2019-11-08 at 15:54
 
 @author: cook
 """
+import numpy as np
 from astropy.table import Table
 from astropy.time import Time
 import sys
@@ -102,7 +103,7 @@ def analysis(path, odocodes):
     # storage of types
     types = dict()
     # find all files in path
-    files = glob.glob(path + '/*.fits')
+    files = np.sort(glob.glob(path + '/*.fits'))
     # loop around all files
     for filename in tqdm(files):
         # get base name

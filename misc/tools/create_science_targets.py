@@ -58,7 +58,8 @@ if __name__ == "__main__":
     # clean target list
     targets = np.char.array(TARGETS).strip()
     # get all input files
-    reffiles = glob.glob(os.path.join(IN_WORKSPACE, '*', '2*' + EXTENSIONS[0]))
+    refpath = os.path.join(IN_WORKSPACE, '*', '2*' + EXTENSIONS[0])
+    reffiles = np.sort(glob.glob(refpath))
     # storage
     objects = dict()
     # loop around reference files
@@ -97,7 +98,8 @@ if __name__ == "__main__":
             # construct file name
             extrafile = extrafile.format(**kwargs)
             # locate extra files
-            efilelist = glob.glob(os.path.join(IN_WORKSPACE, '*', extrafile))
+            elistpath = os.path.join(IN_WORKSPACE, '*', extrafile)
+            efilelist = np.sort(glob.glob(elistpath))
             if len(efilelist) == 0:
                 continue
             # just keep the first file
