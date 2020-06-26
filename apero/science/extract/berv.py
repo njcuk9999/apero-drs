@@ -141,6 +141,12 @@ def get_berv(params, infile=None, header=None, props=None, log=True,
     # ----------------------------------------------------------------------
     bprops = get_times(params, bprops, infile, header)
     # ----------------------------------------------------------------------
+    # debug final parameters to use
+    # TODO: add to language database
+    WLOG(params, 'debug', 'Final berv input parameters:')
+    for key in bprops:
+        WLOG(params, 'debug', '\t{0:20s}{1}'.format(key, bprops[key]))
+    # ----------------------------------------------------------------------
     # try to run barcorrpy
     if kind == 'barycorrpy':
         try:
