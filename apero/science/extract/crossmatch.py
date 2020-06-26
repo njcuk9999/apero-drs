@@ -193,7 +193,7 @@ def inlookuptable(params, table, gaiaid=None, objname=None, ra=None, dec=None,
     # set in table to False
     intable, row = False, None
     # deal with no rows
-    if len(intable) == 0:
+    if len(table) == 0:
         return False, None
     # ----------------------------------------------------------------------
     # deal with having a gaia id
