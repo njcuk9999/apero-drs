@@ -851,6 +851,8 @@ class LoadData:
                         if os.path.exists(abspath):
                             # append to storage
                             self.index_files.append(abspath)
+            # sort index files
+            self.index_files = np.sort(self.index_files)
 
     def combine_files(self):
         # define storage

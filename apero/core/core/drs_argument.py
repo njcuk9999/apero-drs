@@ -1931,7 +1931,7 @@ def _get_file_list(limit, path, ext=None, recursive=False,
     if len(file_list) == 0:
         file_list = ['No valid files found.']
     # return file_list
-    return file_list, limit_reached
+    return np.sort(file_list), limit_reached
 
 
 def get_uncommon_path(path1, path2):

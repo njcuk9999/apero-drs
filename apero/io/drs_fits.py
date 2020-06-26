@@ -855,7 +855,7 @@ def get_index_files(params, path=None, required=True, night=None):
         eargs = [path, func_name]
         WLOG(params, 'error', TextEntry('01-001-00021', args=eargs))
     # return the index files
-    return index_files
+    return np.sort(index_files)
 
 
 def find_raw_files(params, recipe, **kwargs):
@@ -1262,6 +1262,13 @@ def _get_files(params, recipe, path, rpath, **kwargs):
                         kwargs[key].append(header[rkey])
                     else:
                         kwargs[key].append('')
+    # ----------------------------------------------------------------------
+    # sort by filename
+    sortmask = np.argsort(filelist)
+    filelist = np.array(filelist)[sortmask]
+    nightnames = np.array(nightnames)[sortmask]
+    basenames = np.array(basenames)[sortmask]
+    mod_times = np.array(mod_times)[sortmask]
     # ----------------------------------------------------------------------
     # return filelist
     return nightnames, filelist, basenames, mod_times, kwargs
