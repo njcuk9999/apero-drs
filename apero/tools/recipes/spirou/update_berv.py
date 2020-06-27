@@ -116,9 +116,14 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # find all OBJ_DARK and OBJ_FP files
     filetypes = ['OBJ_FP', 'OBJ_DARK']
+    # set the KW_OUTPUT (DRSOUTID) to get
     intypes = ['EXT_E2DS', 'EXT_E2DS_FF', 'EXT_S1D_W', 'EXT_S1D_V',
                'EXT_FPLIST']
+    # set the fibers
     fibers = ['AB', 'A', 'B', 'C']
+    # add prefixes to remove
+    prefixes = ['DEBUG-uncorr-']
+
     # get list of skip objects
     if params['INPUTS']['OBJECTS'] in [None, 'None', 'None', '']:
         skip_objects = None
@@ -152,10 +157,15 @@ def __main__(recipe, params):
         fkwargs['KW_DPRTYPE'] = filetype
         if skip_objects is not None:
             fkwargs['KW_OBJNAME'] = skip_objects
+        WLOG(params, '', 'Finding files...')
         filenames1 = drs_fits.find_files(params, recipe, **fkwargs)
         # group files
         for filename in filenames1:
             odocode = os.path.basename(filename).split('_pp')[0]
+            # make sure we get rid of prefix as well
+            for prefix in prefixes:
+                if odocode.startswith(prefix):
+                    odocode = odocode.split(prefix)[-1]
 
             if odocode in filename:
                 if odocode in filenames:
@@ -186,14 +196,16 @@ def __main__(recipe, params):
             infile1 = ointypes[jt].newcopy(recipe=recipe)
             # set filename
             infile1.set_filename(ofiles[jt])
+            # skip missing files (they shouldn't be missing unless
+            #     process interupted)
+            if not os.path.exists(infile1.filename):
+                continue
             # read data
             infile1.read_file()
             # get header from file instance
             header1 = infile1.header
             # append to list
             infiles.append(infile1)
-            # get object name
-            objname = header1['DRSOBJN']
             # ----------------------------------------------------------
             # skip if already using barycorppy
             if header1['BERVSRCE'] != 'barycorrpy':
@@ -225,10 +237,17 @@ def __main__(recipe, params):
         else:
             wargs = ['Barycorrpy', bprops['USE_BERV']]
         WLOG(params, '', '{0} BERV: {1}'.format(*wargs))
+
+        # log the change to berv parameters (input vs output)
+        WLOG(params, '', 'Final berv input parameters:')
+        for key in bprops:
+            if key in infile.header:
+                wargs = [key, infile.header[key], bprops[key]]
+                WLOG(params, '', '\t{0:20s}{1} --> {2}'.format(*wargs))
         # --------------------------------------------------------------
         # overwrite file(s)
         # --------------------------------------------------------------
-        for jt, filename in enumerate(ofiles):
+        for jt in range(len(infiles)):
             # get infile from storage
             infile1 = infiles[jt]
             # get header from file instance
