@@ -1430,6 +1430,7 @@ calib_seq.add(cal_wave_night)
 tellu_seq = drs_recipe.DrsRunSequence('tellu_seq', __INSTRUMENT__)
 # extract science
 tellu_seq.add(cal_extract, name='EXTOBJ', KW_OBJNAME='TELLURIC_TARGETS',
+              KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK'],
               files=[sf.pp_obj_dark, sf.pp_obj_fp])
 # correct leakage for any telluric targets that are OBJ_FP
 tellu_seq.add(cal_leak, name='LEAKTELL', KW_OBJNAME='TELLURIC_TARGETS',
@@ -1455,6 +1456,7 @@ tellu_seq.add(obj_mk_tellu, name='MKTELLU4', KW_OBJNAME='TELLURIC_TARGETS',
 science_seq = drs_recipe.DrsRunSequence('science_seq', __INSTRUMENT__)
 # extract science
 science_seq.add(cal_extract, name='EXTOBJ', KW_OBJNAME='SCIENCE_TARGETS',
+                KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK'],
                 files=[sf.pp_obj_dark, sf.pp_obj_fp])
 # correct leakage for any science targets that are OBJ_FP
 science_seq.add(cal_leak, name='LEAKOBJ', KW_OBJNAME='SCIENCE_TARGETS',
