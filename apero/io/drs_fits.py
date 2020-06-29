@@ -1269,6 +1269,9 @@ def _get_files(params, recipe, path, rpath, **kwargs):
     nightnames = np.array(nightnames)[sortmask]
     basenames = np.array(basenames)[sortmask]
     mod_times = np.array(mod_times)[sortmask]
+    # need to sort kwargs
+    for key in kwargs:
+        kwargs[key] = np.array(kwargs[key])[sortmask]
     # ----------------------------------------------------------------------
     # return filelist
     return nightnames, filelist, basenames, mod_times, kwargs
