@@ -632,8 +632,8 @@ class DrsRecipe(object):
                         value = value.split(',')
                         # make sure there are no white spaces
                         value = np.char.strip(value)
-                    # deal with object name cleaning
-                    value = list(map(pconst.DRS_OBJ_NAME, value))
+                        # deal with object name cleaning
+                        value = list(map(pconst.DRS_OBJ_NAME, value))
 
                 # deal with telluric targets being None
                 if arguments[argname] == 'TELLURIC_TARGETS':
