@@ -1254,6 +1254,21 @@ class DrsRunSequence(object):
         for kwarg in kwargs:
             if 'KW_' in kwarg:
                 filters[kwarg] = kwargs[kwarg]
+
+        # add keyword args from file arguments
+        if 'files' in kwargs:
+            files = kwargs['files']
+            if isinstance(files, str):
+                files = [files]
+            # loop around files
+            for fileinst in files:
+                # get rkeys
+                rkeys = fileinst.required_header_keys
+                # loop around rkeys and add only those not present in filters
+                for key in rkeys:
+                    if 'KW_' in key and key not in filters:
+                        filters[key] = rkeys[key]
+
         # add to new recipe
         frecipe.filters = filters
         # return frecipe
