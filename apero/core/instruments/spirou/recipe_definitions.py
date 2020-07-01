@@ -1390,6 +1390,11 @@ pp_seq_opt = drs_recipe.DrsRunSequence('pp_seq_opt', __INSTRUMENT__)
 pp_seq_opt.add(cal_pp, name='PP_CAL', KW_OBJNAME='Calibration')
 pp_seq_opt.add(cal_pp, name='PP_SCI', KW_OBJNAME='SCIENCE_TARGETS')
 pp_seq_opt.add(cal_pp, name='PP_TEL', KW_OBJNAME='TELLURIC_TARGETS')
+pp_seq_opt.add(cal_pp, name='PP_HC1HC1', files=[sf.raw_hc1_hc1])
+pp_seq_opt.add(cal_pp, name='PP_FPFP', files=[sf.raw_fp_fp])
+pp_seq_opt.add(cal_pp, name='PP_DFP', files=[sf.raw_dark_fp])
+pp_seq_opt.add(cal_pp, name='PP_SKY', files=[sf.raw_dark_dark_sky])
+pp_seq_opt.add(cal_pp, name='PP_LFC', files=[sf.raw_lfc_lfc])
 
 # -----------------------------------------------------------------------------
 # master sequence (for trigger)
@@ -1480,9 +1485,11 @@ science_seq.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
 eng_seq = drs_recipe.DrsRunSequence('eng_seq', __INSTRUMENT__)
 
 # extract sequences
-eng_seq.add(cal_extract, name='EXTHC1', files=[sf.pp_hc1_hc1])
-eng_seq.add(cal_extract, name='EXTFPFP', files=[sf.pp_fp_fp])
-eng_seq.add(cal_extract, name='EXTDFP', files=[sf.pp_dark_fp])
+eng_seq.add(cal_extract, name='EXT_HC1HC1', files=[sf.pp_hc1_hc1])
+eng_seq.add(cal_extract, name='EXT_FPFP', files=[sf.pp_fp_fp])
+eng_seq.add(cal_extract, name='EXT_DFP', files=[sf.pp_dark_fp])
+eng_seq.add(cal_extract, name='EXT_SKY', files=[sf.pp_dark_dark_sky])
+eng_seq.add(cal_extract, name='EXT_LFC', files=[sf.pp_lfc_lfc])
 
 # -----------------------------------------------------------------------------
 # sequences list
