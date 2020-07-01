@@ -137,7 +137,8 @@ raw_file.addset(raw_fp_fp)
 # -----------------------------------------------------------------------------
 # raw LFC files
 raw_lfc_lfc = drs_finput('RAW_LFC_LFC', KW_CCAS='pos_rs', KW_CREF='pos_rs',
-                         filetype='.fits', suffix='', KW_OBSTYPE='ALIGN')
+                         filetype='.fits', suffix='', KW_OBSTYPE='ALIGN',
+                         outfunc=out.blank)
 raw_file.addset(raw_lfc_lfc)
 
 # -----------------------------------------------------------------------------
