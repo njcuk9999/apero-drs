@@ -277,13 +277,13 @@ KW_OUTPUT.set(key='DRSOUTID', comment='DRS output identification code')
 KW_DRS_QC = KW_DRS_QC.copy(__NAME__)
 KW_DRS_QC.set(key='QCC_ALL', comment='All quality control passed')
 KW_DRS_QC_VAL = KW_DRS_QC_VAL.copy(__NAME__)
-KW_DRS_QC_VAL.set(key='QCC{0:03d}V', comment='All quality control passed')
+KW_DRS_QC_VAL.set(key='QCC{0:03d}V', comment='Quality control measured value')
 KW_DRS_QC_NAME = KW_DRS_QC_NAME.copy(__NAME__)
-KW_DRS_QC_NAME.set(key='QCC{0:03d}N', comment='All quality control passed')
+KW_DRS_QC_NAME.set(key='QCC{0:03d}N', comment='Quality control parameter name')
 KW_DRS_QC_LOGIC = KW_DRS_QC_LOGIC.copy(__NAME__)
-KW_DRS_QC_LOGIC.set(key='QCC{0:03d}L', comment='All quality control passed')
+KW_DRS_QC_LOGIC.set(key='QCC{0:03d}L', comment='Quality control logic used')
 KW_DRS_QC_PASS = KW_DRS_QC_PASS.copy(__NAME__)
-KW_DRS_QC_PASS.set(key='QCC{0:03d}P', comment='All quality control passed')
+KW_DRS_QC_PASS.set(key='QCC{0:03d}P', comment='Quality control param passed QC')
 
 # -----------------------------------------------------------------------------
 # Define preprocessing variables
