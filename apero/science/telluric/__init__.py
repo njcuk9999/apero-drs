@@ -48,6 +48,8 @@ load_tapas_convolved = general.load_tapas_convolved
 
 load_templates = general.load_templates
 
+load_tellu_file = general.load_tellu_file
+
 make_1d_template_cube = general.make_1d_template_cube
 
 make_template_cubes = general.make_template_cubes
