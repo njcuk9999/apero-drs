@@ -201,6 +201,64 @@ def get_non_tellu_objs(params, recipe, fiber, filetype=None, dprtypes=None,
     return obj_stars, obj_names
 
 
+def get_tellu_objs(params, key, objnames=None, **kwargs):
+    """
+    Get objects defined be "key" from telluric database (in list objname)
+
+    :param params:
+    :param key:
+    :param objnames:
+    :param kwargs:
+    :return:
+    """
+    # deal with column to select from entries
+    column = kwargs.get('column', 'filename')
+    objcol = kwargs.get('objcol', 'objname')
+    # ----------------------------------------------------------------------
+    # deal with objnames
+    if isinstance(objnames, str):
+        objnames = [objnames]
+    # ----------------------------------------------------------------------
+    # load telluric obj entries (based on key)
+    obj_entries = load_tellu_file(params, key=key, inheader=None, mode='ALL',
+                                  return_entries=True, n_entries='all',
+                                  required=False)
+
+    # add to type
+    typestr = str(key)
+    # ----------------------------------------------------------------------
+    # keep only objects with objnames
+    mask = np.zeros(len(obj_entries)).astype(bool)
+    # deal with no object found
+    if len(obj_entries) == 0:
+        return []
+    elif objnames is not None:
+        # storage for found objects
+        found_objs = []
+        # loop around objnames
+        for objname in objnames:
+            # update the mask
+            mask |= obj_entries[objcol] == objname
+            # only add to the mask if objname found
+            if objname in obj_entries[objcol]:
+                # update the found objs
+                found_objs.append(objname)
+        # update type string
+        typestr += ' OBJNAME={0}'.format(', '.join(found_objs))
+    # ----------------------------------------------------------------------
+    # deal with all entries / one column return
+    if column in [None, 'None', '', 'ALL']:
+        outputs =  obj_entries[mask]
+    else:
+        outputs = np.unique(obj_entries[column][mask])
+    # ----------------------------------------------------------------------
+    # display how many files found
+    # TODO: add to language database
+    msg = 'Found {0} files of type {1}'
+    WLOG(params, '', msg.format(len(outputs), typestr))
+    return outputs
+
+
 # =============================================================================
 # Database functions
 # =============================================================================
