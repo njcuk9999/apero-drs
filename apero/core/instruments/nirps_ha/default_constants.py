@@ -1750,6 +1750,16 @@ MKTELLU_HBAND_UPPER.value = 1780
 # =============================================================================
 # OBJECT: FIT TELLURIC SETTINGS
 # =============================================================================
+#   Define the order to use for SNR check when accepting tellu files
+#      to the telluDB
+FTELLU_QC_SNR_ORDER = MKTELLU_QC_SNR_ORDER.copy(__NAME__)
+FTELLU_QC_SNR_ORDER.value = 33
+
+#  Define the minimum SNR for order "QC_TELLU_SNR_ORDER" that will be
+#      accepted to the telluDB
+FTELLU_QC_SNR_MIN = MKTELLU_QC_SNR_MIN.copy(__NAME__)
+FTELLU_QC_SNR_MIN.value = 15
+
 # The number of principle components to use in PCA fit
 FTELLU_NUM_PRINCIPLE_COMP = FTELLU_NUM_PRINCIPLE_COMP.copy(__NAME__)
 FTELLU_NUM_PRINCIPLE_COMP.value = 5
@@ -1818,6 +1828,10 @@ MKTEMPLATE_FILETYPE.value = 'TELLU_OBJ'
 # the fiber required for input template files
 MKTEMPLATE_FIBER_TYPE = MKTEMPLATE_FIBER_TYPE.copy(__NAME__)
 MKTEMPLATE_FIBER_TYPE.value = 'AB'
+
+# the source of the input files (either "disk" or "telludb")
+MKTEMPLATE_FILESOURCE = MKTEMPLATE_FILESOURCE.copy(__NAME__)
+MKTEMPLATE_FILESOURCE.value = 'telludb'
 
 # the order to use for signal to noise cut requirement
 MKTEMPLATE_SNR_ORDER = MKTEMPLATE_SNR_ORDER.copy(__NAME__)
