@@ -266,7 +266,7 @@ class Database():
             entries = self.data[mask1]
             r_entries = self.rdata[mask1]
         # if mode is None then we just want all data from this entry
-        if mode is None:
+        if mode in [None, 'None', '', 'ALL']:
             # sort by time
             timesort = np.argsort(r_entries['rtime'])
             # return the first n_entries (after timesorting)
@@ -438,12 +438,24 @@ def get_header_time(params, database, header):
 # =============================================================================
 def get_key_from_db(params, key, database, header, n_ent=1, required=True,
                     mode=None, **kwargs):
+    """
+
+    :param params:
+    :param key:
+    :param database:
+    :param header:
+    :param n_ent:
+    :param required:
+    :param mode: should be None, 'TELLU_DB_MATCH', 'CALIB_DB_MATCH', 'DB_MATCH'
+                 or 'ALL'
+    :param kwargs:
+    :return:
+    """
     # set function name
     func_name = display_func(params, 'get_key_from_db', __NAME__)
     # ----------------------------------------------------------------------
     # deal with no mode set (assume from calibDB)
     if mode is None:
-
         if database.dbname == 'telluric':
             mode = pcheck(params, 'TELLU_DB_MATCH', 'mode', kwargs, func_name)
         elif database.dbname == 'calibration':
@@ -455,7 +467,10 @@ def get_key_from_db(params, key, database, header, n_ent=1, required=True,
     WLOG(params, 'debug', TextEntry('90-002-00002', args=dargs))
     # ----------------------------------------------------------------------
     # get time from header
-    header_time = _get_time(params, database.dbname, header=header)
+    if mode != 'ALL':
+        header_time = _get_time(params, database.dbname, header=header)
+    else:
+        header_time = None
     # get the correct entry from database
     gkwargs = dict(mode=mode, usetime=header_time, n_entries=n_ent,
                    required=required)
