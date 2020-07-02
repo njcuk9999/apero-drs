@@ -205,11 +205,12 @@ def get_non_tellu_objs(params, recipe, fiber, filetype=None, dprtypes=None,
 # Database functions
 # =============================================================================
 def load_tellu_file(params, key=None, inheader=None, filename=None,
-                    get_image=True, get_header=False, **kwargs):
+                    get_image=True, get_header=False, return_entries=False,
+                    **kwargs):
     # get keys from params/kwargs
     n_entries = kwargs.get('n_entries', 1)
     required = kwargs.get('required', True)
-    mode = None
+    mode = kwargs.get('mode', None)
     # valid extension (zero by default)
     ext = kwargs.get('ext', 0)
     # fmt = valid astropy table format
@@ -235,6 +236,11 @@ def load_tellu_file(params, key=None, inheader=None, filename=None,
     entries = drs_database.get_key_from_db(params, key, tdb, inheader,
                                            n_ent=n_entries, mode=mode,
                                            required=required)
+    # ----------------------------------------------------------------------
+    # deal with return entries
+    if return_entries:
+        return entries
+    # ----------------------------------------------------------------------
     # get filename col
     filecol = tdb.file_col
     # ----------------------------------------------------------------------
@@ -2285,9 +2291,9 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
 def fit_tellu_quality_control(params, infile, **kwargs):
     func_name = __NAME__ + '.fit_tellu_quality_control()'
     # get parameters from params/kwargs
-    snr_order = pcheck(params, 'MKTELLU_QC_SNR_ORDER', 'snr_order', kwargs,
+    snr_order = pcheck(params, 'FTELLU_QC_SNR_ORDER', 'snr_order', kwargs,
                        func_name)
-    qc_snr_min = pcheck(params, 'MKTELLU_QC_SNR_MIN', 'qc_snr_min', kwargs,
+    qc_snr_min = pcheck(params, 'FTELLU_QC_SNR_MIN', 'qc_snr_min', kwargs,
                         func_name)
     # get the text dictionary
     textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
