@@ -1190,7 +1190,7 @@
 "40-019-00036","ALL","prints that we are saving the s1d template file","{0} = filename","Saving median s1d template file: {0}","",""
 "40-019-00037","ALL","prints that we are saving the s1dbig cube file","{0} = filename","Saving s1d big cube file: {0}","",""
 "40-019-00038","ALL","prints which s1d format we are processing","{0} = s1d format","Building {0} template.","",""
-"","","","","","",""
+"40-019-00039","ALL","prints how many files were found from the tellu db for key/objnames","{0} = number of files found; {1} = type of telluric files searched for","Found {0} files of type {1}","",""
 "","","","","","",""
 "","","","","","",""
 "","","","","","",""
