@@ -223,7 +223,6 @@ def get_tellu_objs(params, key, objnames=None, **kwargs):
     obj_entries = load_tellu_file(params, key=key, inheader=None, mode='ALL',
                                   return_entries=True, n_entries='all',
                                   required=False)
-
     # add to type
     typestr = str(key)
     # ----------------------------------------------------------------------
@@ -253,9 +252,8 @@ def get_tellu_objs(params, key, objnames=None, **kwargs):
         outputs = np.unique(obj_entries[column][mask])
     # ----------------------------------------------------------------------
     # display how many files found
-    # TODO: add to language database
-    msg = 'Found {0} files of type {1}'
-    WLOG(params, '', msg.format(len(outputs), typestr))
+    margs = [len(outputs),  typestr]
+    WLOG(params, '', TextEntry('40-019-00039', args=margs))
     return outputs
 
 
