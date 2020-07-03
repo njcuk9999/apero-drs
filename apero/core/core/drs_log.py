@@ -577,11 +577,19 @@ class RecipeLog:
     def set_log_file(self, logfile):
         self.log_file = logfile
 
-    def set_plot_dir(self, location):
+    def set_plot_dir(self, params, location, write=True):
         if location is not None:
             self.plot_dir =location
+            # update children
+            if len(self.set) != 0:
+                for child in self.set:
+                    child.set_plot_dir(location)
         else:
             self.plot_dir = 'None'
+        # whether to write (update) recipe log file
+        if write:
+            self.write_logfile(params)
+
 
     def set_inputs(self, params, rargs, rkwargs, rskwargs):
         # deal with not having inputs
