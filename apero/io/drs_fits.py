@@ -941,7 +941,7 @@ def fix_header(params, recipe, infile=None, header=None, **kwargs):
 # =============================================================================
 # Define other functions
 # =============================================================================
-def combine(params, infiles, math='average', same_type=True):
+def combine(params, recipe, infiles, math='average', same_type=True):
     """
     Takes a list of infiles and combines them (infiles must be DrsFitsFiles)
     combines using the math given.
@@ -1011,6 +1011,8 @@ def combine(params, infiles, math='average', same_type=True):
     # write to disk
     WLOG(params, '', TextEntry('40-001-00025', args=[outfile.filename]))
     outfile.write_file()
+    # add to output files (for indexing)
+    recipe.add_output_file(outfile)
     # return combined infile
     return outfile
 
