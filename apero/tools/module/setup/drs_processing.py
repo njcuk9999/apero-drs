@@ -690,11 +690,11 @@ def process_run_list(params, recipe, runlist, group=None):
     # remove lock files
     drs_lock.reset_lock_dir(params)
 
-    # convert to ParamDict and set all sources
+    # convert to dict
     odict = OrderedDict()
     keys = np.sort(np.array(list(rdict.keys())))
     for key in keys:
-        odict[key] = ParamDict(rdict[key])
+        odict[key] = dict(rdict[key])
 
     # see if we have any errors
     errors = False
@@ -1480,6 +1480,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
         pp['COREUSED'] = number
         pp['CORETOT'] = cores
         pp['GROUP'] = group
+        pp['STATE'] = 'None'
         # ------------------------------------------------------------------
         # add drs group to keyword arguments
         pp['ARGS']['DRS_GROUP'] = group
@@ -1500,6 +1501,10 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             pp['WARNING'] = []
             pp['OUTPUTS'] = dict()
             pp['TIMING'] = None
+            pp['TRACEBACK'] = ''
+            pp['SUCCESS'] = False
+            pp['PASSED'] = False
+            pp['STATE'] = 'TEST'
             # flag finished
             finished = True
         # --------------------------------------------------------------
@@ -1516,6 +1521,8 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             pp['OUTPUTS'] = dict()
             pp['TRACEBACK'] = ''
             pp['SUCCESS'] = False
+            pp['PASSED'] = False
+            pp['STATE'] = 'SKIPPED:EVENT'
             finished = False
         # --------------------------------------------------------------
         # deal with an event set -- skip
@@ -1540,6 +1547,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 pp['SUCCESS'] = False
                 pp['PID'] = None
                 pp['PASSED'] = False
+                pp['STATE'] = 'SKIPPED:PRERUN'
                 return_dict[priority] = pp
                 # deal with a master not passing
                 #   we cannot idely skip master files
@@ -1568,6 +1576,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 pp['TRACEBACK'] = []
                 pp['SUCCESS'] = bool(ll_item.get('success', False))
                 pp['PASSED'] = bool(ll_item.get('passed', False))
+                pp['STATE'] = 'RETURN'
                 # delete ll_item
                 del llparams
                 del ll_item
@@ -1584,6 +1593,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 pp['TRACEBACK'] = ''
                 pp['SUCCESS'] = False
                 pp['PASSED'] = False
+                pp['STATE'] = 'EXCEPTION:DEBUG'
                 # flag not finished
                 finished = False
                 # deal with setting event (if it is defined -- only defined
@@ -1601,6 +1611,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 pp['TRACEBACK'] = ''
                 pp['SUCCESS'] = False
                 pp['PASSED'] = False
+                pp['STATE'] = 'EXCEPTION:KeyboardInterrupt'
                 # flag not finished
                 finished = False
                 # deal with setting event (if it is defined -- only defined
@@ -1620,6 +1631,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 pp['OUTPUTS'] = dict()
                 pp['SUCCESS'] = False
                 pp['PASSED'] = False
+                pp['STATE'] = 'EXCEPTION:LogExit'
                 # expected error does not need traceback
                 pp['TRACEBACK'] = []
                 # flag not finished
@@ -1644,6 +1656,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 pp['SUCCESS'] = False
                 pp['TRACEBACK'] = str(string_traceback)
                 pp['PASSED'] = False
+                pp['STATE'] = 'EXCEPTION:UNEXPECTED'
                 # flag not finished
                 finished = False
             # --------------------------------------------------------------
@@ -1666,6 +1679,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 pp['TRACEBACK'] = str(string_traceback)
                 pp['SUCCESS'] = False
                 pp['PASSED'] = False
+                pp['STATE'] = 'EXCEPTION:SystemExit'
                 # flag not finished
                 finished = False
             # --------------------------------------------------------------
