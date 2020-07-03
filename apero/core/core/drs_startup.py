@@ -19,7 +19,7 @@ import os
 import random
 from signal import signal, SIGINT
 from collections import OrderedDict
-from typing import Union
+from typing import Union, List
 
 from apero.lang import drs_text
 from apero.lang import drs_exceptions
@@ -494,11 +494,14 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
     :param success: bool, if True program has successfully completed else
                     it has not
     :param outputs: string, the type of outputs i.e:
+        - 'None'  (for no outputs)
         - 'raw'
         - 'tmp'
         - 'reduced'
     :param end: bool, if we should run full end routines
     :param quiet: bool, if we should not print out standard output
+    :param keys: list of string, any variable in main function can be named here
+                 and will be returned on completion
 
     :type params: ParamDict
     :type llmain: Union[dict, None]
@@ -507,6 +510,7 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
     :type outputs: str
     :type end: bool
     :type quiet: bool
+    :type keys: Union[None, List[str]]
 
     :exception SystemExit: on caught errors
 
