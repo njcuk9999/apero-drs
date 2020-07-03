@@ -481,7 +481,7 @@ def return_locals(params, ll):
 
 
 def main_end_script(params, llmain, recipe, success, outputs='reduced',
-                    end=True, quiet=False):
+                    end=True, quiet=False, keys=None):
     """
     Function to deal with the end of a recipe.main script
         1. indexes outputs
@@ -633,6 +633,11 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
         # special (shallow) copy from cal_extract
         if 'e2dsoutputs' in llmain:
             outdict['e2dsoutputs'] = llmain['e2dsoutputs']
+        # deal with special keys
+        if keys is not None:
+            for key in keys:
+                if key in llmain:
+                    outdict[key] = llmain[key]
         # return outdict
         return outdict
 
