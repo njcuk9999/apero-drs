@@ -1260,15 +1260,25 @@ class DrsRunSequence(object):
             files = kwargs['files']
             if isinstance(files, str):
                 files = [files]
-            # loop around files
+            # loop around files and find file filters
+            file_filters = dict()
+            # loop around  files and get filters from files
             for fileinst in files:
                 # get rkeys
                 rkeys = fileinst.required_header_keys
                 # loop around rkeys and add only those not present in filters
                 for key in rkeys:
-                    if 'KW_' in key and key not in filters:
-                        filters[key] = rkeys[key]
-
+                    if 'KW_' in key:
+                        # need to deal with having multiple files defined
+                        if key in file_filters:
+                            file_filters[key].append(rkeys[key])
+                        else:
+                            file_filters[key] = [rkeys[key]]
+            # if file filter not in filters use the file filter
+            #   i.e. filters that already exist take precedence
+            for key in file_filters:
+                if key not in filters:
+                    filters[key] = rkeys[key]
         # add to new recipe
         frecipe.filters = filters
         # return frecipe
