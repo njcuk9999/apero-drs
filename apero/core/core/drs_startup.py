@@ -1260,6 +1260,11 @@ def indexing(params, outputs, icolumns, abspath):
     istore = OrderedDict()
     # get output path
     opath = os.path.dirname(abspath)
+    # get directory from params
+    if 'NIGHTNAME' in params:
+        nightname = str(params['NIGHTNAME'])
+    else:
+        nightname = '--'
     # looop around outputs
     for output in outputs:
         # get absfilename
@@ -1273,9 +1278,11 @@ def indexing(params, outputs, icolumns, abspath):
         # get filename
         if 'FILENAME' not in istore:
             istore['FILENAME'] = [output]
+            istore['NIGHTNAME'] = [nightname]
             istore['LAST_MODIFIED'] = [mtime]
         else:
             istore['FILENAME'].append(output)
+            istore['NIGHTNAME'].append(nightname)
             istore['LAST_MODIFIED'].append(mtime)
 
         # loop around index columns and add outputs to istore
@@ -1308,6 +1315,7 @@ def indexing(params, outputs, icolumns, abspath):
                 continue
             # else add filename
             istore['FILENAME'].append(idict['FILENAME'][row])
+            istore['NIGHTNAME'].append(idict['NIGHTNAME'][row])
             istore['LAST_MODIFIED'].append(idict['LAST_MODIFIED'][row])
             # loop around columns
             for icol in icolumns:
@@ -1339,7 +1347,7 @@ def save_index_file(p, istore, abspath):
     """
     # ------------------------------------------------------------------------
     # sort the istore by column name and add to table
-    sortmask = np.argsort(istore['FILENAME'])
+    sortmask = np.argsort(istore['LAST_MODIFIED'])
     # loop around columns and apply sort
     for icol in istore:
         istore[icol] = np.array(istore[icol])[sortmask]
