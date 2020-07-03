@@ -145,6 +145,9 @@ class Plotter:
         # update these values
         self.location = path
         self.summary_filename = os.path.join(path, filename)
+        # update location for logging
+        if self.recipe.log is not None:
+            self.recipe.log.set_plot_dir(self.location)
 
     def __call__(self, name, func=None, fiber=None, **kwargs):
         """
