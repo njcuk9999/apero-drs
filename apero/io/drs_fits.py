@@ -674,12 +674,12 @@ def find_files(params, recipe, kind=None, path=None, logic='and', fiber=None,
         index_files = [mpath]
     elif kind == 'tmp':
         path = params['DRS_DATA_WORKING']
-        columns = pconst.RAW_OUTPUT_KEYS()
+        columns = pconst.OUTPUT_FILE_HEADER_KEYS()
         index_files = None
         index_dir = None
     elif kind == 'red':
         path = params['DRS_DATA_REDUC']
-        columns = pconst.REDUC_OUTPUT_KEYS()
+        columns = pconst.OUTPUT_FILE_HEADER_KEYS()
         index_files = None
         index_dir = None
     else:
@@ -1167,7 +1167,7 @@ def _get_files(params, recipe, path, rpath, **kwargs):
     pconst = constants.pload(params['INSTRUMENT'])
     # ----------------------------------------------------------------------
     # get header keys
-    headerkeys = pconst.RAW_OUTPUT_KEYS()
+    headerkeys = pconst.OUTPUT_FILE_HEADER_KEYS()
     # get raw valid files
     raw_valid = pconst.VALID_RAW_FILES()
     # ----------------------------------------------------------------------
