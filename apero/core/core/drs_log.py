@@ -583,7 +583,7 @@ class RecipeLog:
             # update children
             if len(self.set) != 0:
                 for child in self.set:
-                    child.set_plot_dir(location)
+                    child.set_plot_dir(params, location, write=False)
         else:
             self.plot_dir = 'None'
         # whether to write (update) recipe log file
