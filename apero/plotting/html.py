@@ -210,8 +210,10 @@ class HtmlDocument:
 
     def figure(self, filename, height=None, width=None, caption=None,
                label=None):
+        # make sure filename is just the basename
+        basename = os.path.basename(filename)
         # set image options
-        img_options = dict(src=filename)
+        img_options = dict(src=basename)
         if height is not None:
             img_options['height'] = str(width)
         if width is not None:
