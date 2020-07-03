@@ -1497,6 +1497,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             # log which core is being used
             WLOG(params, 'info', 'T' + wmsg, colour='magenta', wrap=False)
             # add default outputs
+            pp['PID'] = None
             pp['ERROR'] = []
             pp['WARNING'] = []
             pp['OUTPUTS'] = dict()
@@ -1511,6 +1512,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             WLOG(params, 'debug', emsg.format(priority))
             # deal with returns
             pp = dict()
+            pp['PID'] = None
             pp['ERROR'] = []
             pp['WARNING'] = []
             pp['OUTPUTS'] = dict()
@@ -1537,6 +1539,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 pp['TRACEBACK'] = ''
                 pp['TIMING'] = 0
                 pp['FINISHED'] = True
+                pp['PID'] = None
                 return_dict[priority] = pp
                 # deal with a master not passing
                 #   we cannot idely skip master files
@@ -1558,6 +1561,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 # keep only some parameters
                 llparams = ll_item['params']
                 llrecipe = ll_item['recipe']
+                pp['PID'] = copy.deepcopy(llparams['PID'])
                 pp['ERROR'] = copy.deepcopy(llparams['LOGGER_ERROR'])
                 pp['WARNING'] = copy.deepcopy(llparams['LOGGER_WARNING'])
                 pp['OUTPUTS'] = copy.deepcopy(llrecipe.output_files)
@@ -1572,6 +1576,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             # Manage debug exit interrupt errors
             except drs_exceptions.DebugExit as _:
                 # deal with returns
+                pp['PID'] = None
                 pp['ERROR'] = []
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
@@ -1586,6 +1591,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             # Manage Keyboard interrupt errors
             except KeyboardInterrupt:
                 # deal with returns
+                pp['PID'] = None
                 pp['ERROR'] = []
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
@@ -1603,6 +1609,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 for emsg in e.errormessage.split('\n'):
                     emsgs.append('\n' + emsg)
                 WLOG(params, 'warning', emsgs)
+                pp['PID'] = None
                 pp['ERROR'] = emsgs
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
@@ -1623,6 +1630,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 for emsg in str(e).split('\n'):
                     emsgs.append('\n' + emsg)
                 WLOG(params, 'warning', emsgs)
+                pp['PID'] = None
                 pp['ERROR'] = emsgs
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
@@ -1642,6 +1650,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 for emsg in str(e).split('\n'):
                     emsgs.append('\n' + emsg)
                 WLOG(params, 'warning', emsgs)
+                pp['PID'] = None
                 pp['ERROR'] = emsgs
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
