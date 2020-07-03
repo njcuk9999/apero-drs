@@ -76,7 +76,8 @@ def main(instrument=None, runfile=None, **kwargs):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    return core.end_main(params, llmain, recipe, success, outputs='None')
+    return core.end_main(params, llmain, recipe, success, outputs='None',
+                         keys=['outlist'])
 
 
 def __main__(recipe, params):
