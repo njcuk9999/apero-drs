@@ -12,7 +12,7 @@ Created on 2019-08-06 at 11:57
 import numpy as np
 import os
 import sys
-import copy
+from copy import deepcopy
 import time
 from astropy.table import Table
 from collections import OrderedDict
@@ -28,12 +28,10 @@ from apero.lang import drs_exceptions
 from apero.core import constants
 from apero import plotting
 from apero.io import drs_table
-from apero.io import drs_path
-from apero.io import drs_fits
 from apero.io import drs_lock
 from apero.tools.module.setup import drs_reset
 from apero.science import telluric
-from apero.science import preprocessing
+
 
 # =============================================================================
 # Define variables
@@ -1539,7 +1537,9 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 pp['TRACEBACK'] = ''
                 pp['TIMING'] = 0
                 pp['FINISHED'] = True
+                pp['SUCCESS'] = False
                 pp['PID'] = None
+                pp['PASSED'] = False
                 return_dict[priority] = pp
                 # deal with a master not passing
                 #   we cannot idely skip master files
@@ -1561,12 +1561,13 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 # keep only some parameters
                 llparams = ll_item['params']
                 llrecipe = ll_item['recipe']
-                pp['PID'] = copy.deepcopy(llparams['PID'])
-                pp['ERROR'] = copy.deepcopy(llparams['LOGGER_ERROR'])
-                pp['WARNING'] = copy.deepcopy(llparams['LOGGER_WARNING'])
-                pp['OUTPUTS'] = copy.deepcopy(llrecipe.output_files)
+                pp['PID'] = deepcopy(llparams.get('PID', 'None'))
+                pp['ERROR'] = deepcopy(llparams.get('LOGGER_ERROR', []))
+                pp['WARNING'] = deepcopy(llparams.get('LOGGER_WARNING', []))
+                pp['OUTPUTS'] = deepcopy(llrecipe.output_files)
                 pp['TRACEBACK'] = []
-                pp['SUCCESS'] = bool(ll_item['success'])
+                pp['SUCCESS'] = bool(ll_item.get('success', False))
+                pp['PASSED'] = bool(ll_item.get('passed', False))
                 # delete ll_item
                 del llparams
                 del ll_item
@@ -1581,6 +1582,8 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
                 pp['TRACEBACK'] = ''
+                pp['SUCCESS'] = False
+                pp['PASSED'] = False
                 # flag not finished
                 finished = False
                 # deal with setting event (if it is defined -- only defined
@@ -1596,6 +1599,8 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
                 pp['TRACEBACK'] = ''
+                pp['SUCCESS'] = False
+                pp['PASSED'] = False
                 # flag not finished
                 finished = False
                 # deal with setting event (if it is defined -- only defined
@@ -1613,6 +1618,8 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 pp['ERROR'] = emsgs
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
+                pp['SUCCESS'] = False
+                pp['PASSED'] = False
                 # expected error does not need traceback
                 pp['TRACEBACK'] = []
                 # flag not finished
@@ -1634,7 +1641,9 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 pp['ERROR'] = emsgs
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
+                pp['SUCCESS'] = False
                 pp['TRACEBACK'] = str(string_traceback)
+                pp['PASSED'] = False
                 # flag not finished
                 finished = False
             # --------------------------------------------------------------
@@ -1655,6 +1664,8 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
                 pp['TRACEBACK'] = str(string_traceback)
+                pp['SUCCESS'] = False
+                pp['PASSED'] = False
                 # flag not finished
                 finished = False
             # --------------------------------------------------------------
