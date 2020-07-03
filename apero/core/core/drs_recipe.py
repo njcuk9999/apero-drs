@@ -1278,7 +1278,7 @@ class DrsRunSequence(object):
             #   i.e. filters that already exist take precedence
             for key in file_filters:
                 if key not in filters:
-                    filters[key] = rkeys[key]
+                    filters[key] = file_filters[key]
         # add to new recipe
         frecipe.filters = filters
         # return frecipe
