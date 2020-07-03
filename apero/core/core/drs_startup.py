@@ -1180,7 +1180,7 @@ def _index_pp(params, recipe):
         WLOG(params, '', TextEntry('40-004-00001'))
         return
     # get the index columns
-    icolumns = pconstant.RAW_OUTPUT_KEYS()
+    icolumns = pconstant.OUTPUT_FILE_HEADER_KEYS()
     # ------------------------------------------------------------------------
     # index files
     istore = indexing(params, outputs, icolumns, abspath)
@@ -1221,7 +1221,7 @@ def _index_outputs(params, recipe):
         WLOG(params, '', TextEntry('40-004-00001'))
         return
     # get the index columns
-    icolumns = pconstant.REDUC_OUTPUT_KEYS()
+    icolumns = pconstant.OUTPUT_FILE_HEADER_KEYS()
     # ------------------------------------------------------------------------
     # index files
     istore = indexing(params, outputs, icolumns, abspath)
