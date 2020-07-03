@@ -524,6 +524,7 @@ class RecipeLog:
         self.lockfile = self.directory + self.logfitsfile.replace('.', '_')
         # set the log file name (just used to save log directory)
         self.log_file = 'None'
+        self.plot_dir = 'None'
         # set the inputs
         self.args = ''
         self.kwargs = ''
@@ -575,6 +576,12 @@ class RecipeLog:
 
     def set_log_file(self, logfile):
         self.log_file = logfile
+
+    def set_plot_dir(self, location):
+        if location is not None:
+            self.plot_dir =location
+        else:
+            self.plot_dir = 'None'
 
     def set_inputs(self, params, rargs, rkwargs, rskwargs):
         # deal with not having inputs
@@ -776,6 +783,7 @@ class RecipeLog:
         row['OUTPATH'] = self.outputdir
         row['DIRECTORY'] = self.directory
         row['LOGFILE'] = self.log_file
+        row['PLOTDIR'] = self.plot_dir
         row['RUNSTRING'] = self.runstring
         # add inputs
         row['ARGS'] = self.args
