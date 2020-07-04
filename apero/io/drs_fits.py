@@ -1228,9 +1228,9 @@ def _get_files(params, recipe, path, rpath, **kwargs):
                 if ucpath in bnightnames:
                     # only print path if not already in blist
                     if ucpath not in blist:
-                        # TODO: add to language db
-                        wmsg = '\t\tBlacklisted: {0}'.format(ucpath)
-                        WLOG(params, '', wmsg)
+                        # log blacklisted
+                        margs = [ucpath]
+                        WLOG(params, '', TextEntry('40-503-00030', args=margs))
                         # add to blist for printouts
                         blist.append(ucpath)
                     # skip this night
@@ -1241,13 +1241,15 @@ def _get_files(params, recipe, path, rpath, **kwargs):
                     continue
                 # elif we haven't seen this night before log statement
                 elif ucpath not in nightnames:
-                    # TODO: add to language db
-                    wmsg = '\t\tWhitelisted: {0}'.format(ucpath)
-                    WLOG(params, '', wmsg)
+                    # log: whitelisted
+                    margs = [ucpath]
+                    WLOG(params, '', TextEntry('40-503-00030', args=margs))
             # --------------------------------------------------------------
             # log the night directory
-            if ucpath not in nightnames:
-                WLOG(params, '', TextEntry('40-503-00003', args=[ucpath]))
+            if (ucpath not in nightnames) and (ucpath != rpath):
+                # log: scnannming directory
+                margs = [ucpath]
+                WLOG(params, '', TextEntry('40-503-00003', args=margs))
             # --------------------------------------------------------------
             # get absolute path
             abspath = os.path.join(root, filename)
