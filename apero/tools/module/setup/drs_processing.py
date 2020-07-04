@@ -1379,7 +1379,7 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
         filters = _get_filters(params, srecipe)
 
         # TODO: break point
-        if 'extract' in srecipe.name:
+        if 'ccf' in srecipe.name:
             constants.break_point(params)
 
         # get fiber filter
