@@ -1614,8 +1614,13 @@ def find_run_files(params, recipe, table, args, filters=None,
                         testvalue = testvalue.strip().upper()
                     else:
                         values = np.array(table[tfilter])
+
+                    # criteria 1: value == testvalue
+                    vcond1 = values == testvalue
+                    # criteria 2: value in [None, 'None', '']
+                    vcond2 = np.in1d(values, [None, 'None', ''])
                     # check mask
-                    testmask |= values == testvalue
+                    testmask |= (vcond1 | vcond2)
                 # add filter to filter mask with AND (must have all filters)
                 filtermask &= testmask
         # ------------------------------------------------------------------
