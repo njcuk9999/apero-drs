@@ -1187,6 +1187,16 @@ def _get_files(params, recipe, path, rpath, **kwargs):
     for key in headerkeys:
         kwargs[key] = []
     # ----------------------------------------------------------------------
+    # deal with white/black list for nights
+    if 'WNIGHTNAMES' in params:
+        wnightnames = params.listp('WNIGHTNAMES', dtype=str)
+    else:
+        wnightnames = None
+    if 'BNIGHTNAMES' in params:
+        bnightnames = params.listp('BNIGHTNAMES', dtype=str)
+    else:
+        bnightnames = None
+    # ----------------------------------------------------------------------
     # get files (walk through path)
     for root, dirs, files in os.walk(path):
         # loop around files in this root directory
@@ -1211,6 +1221,21 @@ def _get_files(params, recipe, path, rpath, **kwargs):
             # do not scan empty ucpath
             if len(ucpath) == 0:
                 continue
+            # --------------------------------------------------------------
+            # deal with blacklist/whitelist
+            if bnightnames not in [None, 'None', '']:
+                if ucpath in bnightnames:
+                    # TODO: add to language db
+                    wmsg = '\t\tBlacklisted: {0}'.format(ucpath)
+                    WLOG(params, '', wmsg)
+                    continue
+            if wnightnames not in [None, 'None', '']:
+                if ucpath not in wnightnames:
+                    continue
+                else:
+                    # TODO: add to language db
+                    wmsg = '\t\tWhitelisted: {0}'.format(ucpath)
+                    WLOG(params, '', wmsg)
             # --------------------------------------------------------------
             # log the night directory
             if ucpath not in nightnames:
