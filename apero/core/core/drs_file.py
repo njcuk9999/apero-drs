@@ -1364,8 +1364,17 @@ class DrsFitsFile(DrsInputFile):
                 valid1 = False
                 # loop around
                 for rvalue in rvalues:
+                    # get this value
+                    filedictvalue = filedict[key]
+                    # deal with null values
+                    if filedictvalue in [None, 'None', '']:
+                        valid1 |= True
+                        continue
                     # make sure there are no white spaces and all upper case
-                    filedictvalue = filedict[key].strip().upper()
+                    if isinstance(filedictvalue, str):
+                        filedictvalue = filedictvalue.strip().upper()
+                    # else make sure there are no end white spaces and all
+                    #   upper case for the required value
                     rvalueclean = rvalue.strip().upper()
                     # if key is in file dictionary then we should check it
                     if filedictvalue == rvalueclean:
