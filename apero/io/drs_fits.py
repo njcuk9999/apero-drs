@@ -1175,6 +1175,7 @@ def _get_files(params, recipe, path, rpath, **kwargs):
     # ----------------------------------------------------------------------
     # storage list
     filelist, basenames, nightnames, mod_times = [], [], [], []
+    blist = []
     # load raw index
     rawindexfile = os.path.join(params['DRS_DATA_RUN'], raw_index_file)
     if os.path.exists(rawindexfile):
@@ -1225,14 +1226,21 @@ def _get_files(params, recipe, path, rpath, **kwargs):
             # deal with blacklist/whitelist
             if bnightnames not in [None, 'None', '']:
                 if ucpath in bnightnames:
-                    # TODO: add to language db
-                    wmsg = '\t\tBlacklisted: {0}'.format(ucpath)
-                    WLOG(params, '', wmsg)
+                    # only print path if not already in blist
+                    if ucpath not in blist:
+                        # TODO: add to language db
+                        wmsg = '\t\tBlacklisted: {0}'.format(ucpath)
+                        WLOG(params, '', wmsg)
+                        # add to blist for printouts
+                        blist.append(ucpath)
+                    # skip this night
                     continue
             if wnightnames not in [None, 'None', '']:
                 if ucpath not in wnightnames:
+                    # skip this night
                     continue
-                else:
+                # elif we haven't seen this night before log statement
+                elif ucpath not in nightnames:
                     # TODO: add to language db
                     wmsg = '\t\tWhitelisted: {0}'.format(ucpath)
                     WLOG(params, '', wmsg)
