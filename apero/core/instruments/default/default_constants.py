@@ -269,7 +269,7 @@ __all__ = [
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
     'REPROCESS_RAWINDEXFILE', 'REPROCESS_SEQCOL', 'REPROCESS_TIMECOL',
     'SUMMARY_LATEX_PDF', 'EXPMETER_MIN_LAMBDA', 'EXPMETER_MAX_LAMBDA',
-    'EXPMETER_TELLU_THRES',
+    'EXPMETER_TELLU_THRES', 'REPROCESS_PINAMECOL',
 ]
 
 # set name
@@ -3041,6 +3041,10 @@ REPROCESS_RUN_KEY = Const('REPROCESS_RUN_KEY', value=None, dtype=str,
 # Define the night name column name for raw file table
 REPROCESS_NIGHTCOL = Const('REPROCESS_NIGHTCOL', value=None, dtype=str,
                            source=__NAME__, group=cgroup)
+
+# Define the pi name column name for raw file table
+REPROCESS_PINAMECOL = Const('REPROCESS_PINAMECOL', value=None, dtype=str,
+                            source=__NAME__, group=cgroup)
 
 # Define the absolute file column name for raw file table
 REPROCESS_ABSFILECOL = Const('REPROCESS_ABSFILECOL', value=None, dtype=str,
