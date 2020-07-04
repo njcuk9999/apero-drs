@@ -63,6 +63,7 @@ RUN_KEYS['EMAIL_ADDRESS'] = None
 RUN_KEYS['NIGHTNAME'] = None
 RUN_KEYS['BNIGHTNAMES'] = None
 RUN_KEYS['WNIGHTNAMES'] = None
+RUN_KEYS['PI_NAMES'] = None
 RUN_KEYS['MASTER_NIGHT'] = None
 RUN_KEYS['CORES'] = 1
 RUN_KEYS['STOP_AT_EXCEPTION'] = False
@@ -474,6 +475,11 @@ def read_runfile(params, runfile, **kwargs):
     if 'WNIGHTNAMES' in params['INPUTS']:
         if params['INPUTS']['WNIGHTNAMES'] not in ['None', '', None]:
             params['WNIGHTNAMES'] = params['INPUTS'].listp('WNIGHTNAMES')
+    # ----------------------------------------------------------------------
+    # add pi name list
+    if 'PI_NAMES' in params['INPUTS']:
+        if params['INPUTS']['PI_NAMES'] not in ['None', '', None]:
+            params['PI_NAMES'] = params['INPUTS'].listp('PI_NAMES')
     # ----------------------------------------------------------------------
     # deal with having a file specified
     params['FILENAME'] = None
@@ -1242,6 +1248,8 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
     # get parameters from params/kwargs
     night_col = pcheck(params, 'REPROCESS_NIGHTCOL', 'night_col', kwargs,
                        func_name)
+    piname_col = pcheck(params, 'REPROCESS_PINAMECOL', 'piname_col', kwargs,
+                        func_name)
     # get all telluric stars
     tstars, wfilename = telluric.get_whitelist(params)
     # get filemod and recipe mod
@@ -1314,9 +1322,9 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
         if params['WNIGHTNAMES'] not in ['', 'None', None]:
             # start by assuming we want to keep nothing
             mask = np.zeros(len(ftable), dtype=bool)
-            # get black list from params
+            # get white list from params
             whitelist_nights = params.listp('WNIGHTNAMES', dtype=str)
-            # loop around black listed nights and set them to False
+            # loop around white listed nights and set them to False
             for whitelist_night in whitelist_nights:
                 mask |= (ftable[night_col] == whitelist_night)
             # apply mask to table
@@ -1327,6 +1335,30 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
             # deal with empty ftable
             if len(ftable) == 0:
                 WLOG(params, 'warning', TextEntry('10-503-00007'))
+                # get response for how to continue (skip or exit)
+                response = prompt(params)
+                if response:
+                    continue
+                else:
+                    sys.exit()
+        # ------------------------------------------------------------------
+        # pi name list
+        if params['PI_NAMES'] not in ['', 'None', None]:
+            # start by assuming we want to keep nothing
+            mask = np.zeros(len(ftable), dtype=bool)
+            # get pi name list from params
+            pi_names = params.listp('PI_NAMES', dtype=str)
+            # loop around pi names and set them to False
+            for pi_name in pi_names:
+                mask |= (ftable[piname_col] == pi_name)
+            # apply mask to table
+            ftable = ftable[mask]
+            # log blacklist
+            wargs = [' ,'.join(pi_names)]
+            WLOG(params, '', TextEntry('40-503-00029', args=wargs))
+            # deal with empty ftable
+            if len(ftable) == 0:
+                WLOG(params, 'warning', TextEntry('10-503-00015'))
                 # get response for how to continue (skip or exit)
                 response = prompt(params)
                 if response:
