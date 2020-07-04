@@ -1188,11 +1188,11 @@ def _get_files(params, recipe, path, rpath, **kwargs):
         kwargs[key] = []
     # ----------------------------------------------------------------------
     # deal with white/black list for nights
-    if 'WNIGHTNAMES' in params:
+    if 'WNIGHTNAMES' in params and params['WNIGHTNAMES'] is not None:
         wnightnames = params.listp('WNIGHTNAMES', dtype=str)
     else:
         wnightnames = None
-    if 'BNIGHTNAMES' in params:
+    if 'BNIGHTNAMES' in params and params['BNIGHTNAMES'] is not None:
         bnightnames = params.listp('BNIGHTNAMES', dtype=str)
     else:
         bnightnames = None
