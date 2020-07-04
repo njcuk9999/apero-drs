@@ -1230,7 +1230,7 @@ def _get_files(params, recipe, path, rpath, **kwargs):
                     if ucpath not in blist:
                         # log blacklisted
                         margs = [ucpath]
-                        WLOG(params, '', TextEntry('40-503-00030', args=margs))
+                        WLOG(params, '', TextEntry('40-503-00031', args=margs))
                         # add to blist for printouts
                         blist.append(ucpath)
                     # skip this night
