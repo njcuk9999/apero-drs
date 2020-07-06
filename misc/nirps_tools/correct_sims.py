@@ -75,7 +75,7 @@ def id_file(filename, dprtypes):
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # load files
-    files = glob.glob(WORKSPACE  +'/*.fits')
+    files = np.sort(glob.glob(WORKSPACE  +'/*.fits'))
     # loop around files
     for filename in files:
         # get file basename

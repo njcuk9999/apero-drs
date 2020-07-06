@@ -9,6 +9,7 @@ Created on 2019-11-26 at 15:54
 
 @author: cook
 '''
+import numpy as np
 import importlib
 import glob
 import os
@@ -329,7 +330,7 @@ class PathCompleter(object):
         if self.root is not None:
             text = os.path.join(self.root, text)
         # return list
-        return [x for x in glob.glob(text + '*')][state]
+        return [x for x in np.sort(glob.glob(text + '*'))][state]
 
 
 def tab_input(message, root=None):

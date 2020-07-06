@@ -95,7 +95,6 @@ def __main__(recipe, params):
     :param params:
     :return:
     """
-
     # ----------------------------------------------------------------------
     # Main Code
     # ----------------------------------------------------------------------
@@ -114,7 +113,7 @@ def __main__(recipe, params):
     fiber = pcheck(params, 'SHAPE_MASTER_FIBER', func=mainname)
 
     # get combined fpfile
-    fpfile = drs_fits.combine(params, fpfiles, math='median')
+    fpfile = drs_fits.combine(params, recipe, fpfiles, math='median')
 
     # get the headers (should be the header of the first file in each)
     fpheader = fpfile.header
@@ -178,13 +177,13 @@ def __main__(recipe, params):
         # match files by date and median to produce master fp
         # ----------------------------------------------------------------------
         cargs = [params, recipe, fpprops['DPRTYPE'], fp_table, fpimage]
-        fpcube, fp_table = shape.construct_master_fp(*cargs)
-
+        # fpcube, fp_table = shape.construct_master_fp(*cargs)
+        master_fp, fp_table = shape.construct_master_fp(*cargs)
         # log process (master construction complete + number of groups added)
-        wargs = [len(fpcube)]
-        WLOG(params, 'info', TextEntry('40-014-00011', args=wargs))
+        # wargs = [len(fpcube)]
+        # WLOG(params, 'info', TextEntry('40-014-00011', args=wargs))
         # sum the cube to make fp data
-        master_fp = np.sum(fpcube, axis=0)
+        # master_fp = np.sum(fpcube, axis=0)
 
     # ----------------------------------------------------------------------
     # Calculate dx shape map

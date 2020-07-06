@@ -112,7 +112,7 @@ def __main__(recipe, params):
     # combine input images if required
     elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        infiles = [drs_fits.combine(params, infiles, math='median')]
+        infiles = [drs_fits.combine(params, recipe, infiles, math='median')]
         combine = True
     else:
         combine = False
@@ -133,6 +133,7 @@ def __main__(recipe, params):
         core.file_processing_update(params, it, num_files)
         # ge this iterations file
         infile = infiles[it]
+
         # ------------------------------------------------------------------
         # deal with skipping files defined by inputs OBJNAME and DPRTYPE
         skip, skip_conditions = general.check_files(params, infile)
@@ -144,7 +145,7 @@ def __main__(recipe, params):
                 wargs = skip_conditions[2]
                 WLOG(params, 'warning', TextEntry('10-016-00013', args=wargs))
             # write log here
-            log1.writelog()
+            log1.write_logfile(params)
             # skip this file
             continue
         # ------------------------------------------------------------------
@@ -185,6 +186,11 @@ def __main__(recipe, params):
         # Calculate Barycentric correction
         # ------------------------------------------------------------------
         bprops = extract.get_berv(params, infile, header, props)
+
+        # TODO: remove breakpoint
+        constants.break_point(params)
+
+
         # storage for return
         e2dsoutputs = dict()
         # ------------------------------------------------------------------

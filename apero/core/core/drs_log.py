@@ -16,6 +16,7 @@ Version 0.0.1
 import numpy as np
 import os
 import sys
+import copy
 from time import sleep
 from astropy.table import Table
 from collections import OrderedDict
@@ -523,6 +524,7 @@ class RecipeLog:
         self.lockfile = self.directory + self.logfitsfile.replace('.', '_')
         # set the log file name (just used to save log directory)
         self.log_file = 'None'
+        self.plot_dir = 'None'
         # set the inputs
         self.args = ''
         self.kwargs = ''
@@ -574,6 +576,20 @@ class RecipeLog:
 
     def set_log_file(self, logfile):
         self.log_file = logfile
+
+    def set_plot_dir(self, params, location, write=True):
+        if location is not None:
+            self.plot_dir =location
+            # update children
+            if len(self.set) != 0:
+                for child in self.set:
+                    child.set_plot_dir(params, location, write=False)
+        else:
+            self.plot_dir = 'None'
+        # whether to write (update) recipe log file
+        if write:
+            self.write_logfile(params)
+
 
     def set_inputs(self, params, rargs, rkwargs, rskwargs):
         # deal with not having inputs
@@ -775,6 +791,7 @@ class RecipeLog:
         row['OUTPATH'] = self.outputdir
         row['DIRECTORY'] = self.directory
         row['LOGFILE'] = self.log_file
+        row['PLOTDIR'] = self.plot_dir
         row['RUNSTRING'] = self.runstring
         # add inputs
         row['ARGS'] = self.args
@@ -973,21 +990,24 @@ def find_param(params=None, key=None, name=None, kwargs=None, func=None,
     not_in_paramdict = name not in rkwargs
     not_in_rkwargs = key not in paramdict
     return_default = (not required) or (default is not None)
+
+    # now return a deep copied version of the value
+
     # if we don't require value
     if return_default and not_in_paramdict and not_in_rkwargs:
-        return default
+        return copy.deepcopy(default)
     elif not_in_paramdict and not_in_rkwargs:
         eargs = [key, func]
         wlog(params, 'error', TextEntry('00-003-00001', args=eargs))
-        return default
+        return copy.deepcopy(default)
     elif name in rkwargs:
-        return rkwargs[name]
+        return copy.deepcopy(rkwargs[name])
     elif mapf == 'list':
-        return paramdict.listp(key, dtype=dtype)
+        return copy.deepcopy(paramdict.listp(key, dtype=dtype))
     elif mapf == 'dict':
-        return paramdict.dictp(key, dtype=dtype)
+        return copy.deepcopy(paramdict.dictp(key, dtype=dtype))
     else:
-        return paramdict[key]
+        return copy.deepcopy(paramdict[key])
 
 
 def printlogandcmd(logobj, params, message, key, human_time, option, wrap,

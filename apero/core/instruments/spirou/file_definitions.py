@@ -137,7 +137,8 @@ raw_file.addset(raw_fp_fp)
 # -----------------------------------------------------------------------------
 # raw LFC files
 raw_lfc_lfc = drs_finput('RAW_LFC_LFC', KW_CCAS='pos_rs', KW_CREF='pos_rs',
-                         filetype='.fits', suffix='', KW_OBSTYPE='ALIGN')
+                         filetype='.fits', suffix='', KW_OBSTYPE='ALIGN',
+                         outfunc=out.blank)
 raw_file.addset(raw_lfc_lfc)
 
 # -----------------------------------------------------------------------------
@@ -449,12 +450,12 @@ calib_file.addset(out_dark_master)
 # badpix out file
 out_badpix = drs_finput('BADPIX', KW_OUTPUT='BADPIX',
                         filetype='.fits',
-                        intype=[pp_dark_dark_int, pp_dark_dark_tel],
+                        intype=[pp_flat_flat],
                         suffix='_badpixel',
                         outfunc=out.calib_file,
                         dbname='calibration', dbkey='BADPIX')
 out_backmap = drs_finput('BKGRD_MAP', KW_OUTPUT='BKGRD_MAP',
-                         intype=[pp_dark_dark_int, pp_dark_dark_tel],
+                         intype=[pp_flat_flat],
                          suffix='_bmap.fits', outfunc=out.calib_file,
                          dbname='calibration', dbkey='BKGRDMAP')
 

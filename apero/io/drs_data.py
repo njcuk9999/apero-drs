@@ -291,7 +291,7 @@ def load_sp_mask_lsd(params, temperature, **kwargs):
         # get path to directory
         fulldir = construct_path(params, directory=relfolder, func=func_name)
         # get all files
-        allfiles = glob.glob('{0}/{1}'.format(fulldir, filekey))
+        allfiles = np.sort(glob.glob('{0}/{1}'.format(fulldir, filekey)))
         # loop around files and get their temperatures
         file_temperatures, basenames = [], []
         for filename in allfiles:

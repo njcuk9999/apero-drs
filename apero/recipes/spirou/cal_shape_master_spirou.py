@@ -117,9 +117,9 @@ def __main__(recipe, params):
     fiber = pcheck(params, 'SHAPE_MASTER_FIBER', func=mainname)
 
     # get combined hcfile
-    hcfile = drs_fits.combine(params, hcfiles, math='median')
+    hcfile = drs_fits.combine(params, recipe, hcfiles, math='median')
     # get combined fpfile
-    fpfile = drs_fits.combine(params, fpfiles, math='median')
+    fpfile = drs_fits.combine(params, recipe, fpfiles, math='median')
 
     # get the headers (should be the header of the first file in each)
     hcheader = hcfile.header

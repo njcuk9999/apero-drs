@@ -51,7 +51,7 @@ def get_index_files(path):
                 # append to storage
                 index_files.append(os.path.join(root, filename))
     # return index files
-    return index_files
+    return np.sort(index_files)
 
 
 def combine_files(files):

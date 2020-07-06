@@ -674,12 +674,12 @@ def find_files(params, recipe, kind=None, path=None, logic='and', fiber=None,
         index_files = [mpath]
     elif kind == 'tmp':
         path = params['DRS_DATA_WORKING']
-        columns = pconst.RAW_OUTPUT_KEYS()
+        columns = pconst.OUTPUT_FILE_HEADER_KEYS()
         index_files = None
         index_dir = None
     elif kind == 'red':
         path = params['DRS_DATA_REDUC']
-        columns = pconst.REDUC_OUTPUT_KEYS()
+        columns = pconst.OUTPUT_FILE_HEADER_KEYS()
         index_files = None
         index_dir = None
     else:
@@ -855,7 +855,7 @@ def get_index_files(params, path=None, required=True, night=None):
         eargs = [path, func_name]
         WLOG(params, 'error', TextEntry('01-001-00021', args=eargs))
     # return the index files
-    return index_files
+    return np.sort(index_files)
 
 
 def find_raw_files(params, recipe, **kwargs):
@@ -941,7 +941,7 @@ def fix_header(params, recipe, infile=None, header=None, **kwargs):
 # =============================================================================
 # Define other functions
 # =============================================================================
-def combine(params, infiles, math='average', same_type=True):
+def combine(params, recipe, infiles, math='average', same_type=True):
     """
     Takes a list of infiles and combines them (infiles must be DrsFitsFiles)
     combines using the math given.
@@ -990,10 +990,29 @@ def combine(params, infiles, math='average', same_type=True):
             if infile.name != infiles[0].name:
                 eargs = [infiles[0].name, it, infile.name, func_name]
                 WLOG(params, 'error', TextEntry('00-001-00021', args=eargs))
+
+    # get output path from params
+    outpath = str(params['OUTPATH'])
+    # check if outpath is set
+    if outpath is None:
+        WLOG(params, 'error', TextEntry('01-001-00023', args=[func_name]))
+        return None
+    # get the absolute path (for combined output)
+    if params['NIGHTNAME'] is None:
+        outdirectory = ''
+    else:
+        outdirectory = params['NIGHTNAME']
+    # combine outpath and out directory
+    abspath = os.path.join(outpath, outdirectory)
     # make new infile using math
-    outfile = infiles[0].combine(infiles[1:], math, same_type)
+    outfile = infiles[0].combine(infiles[1:], math, same_type, path=abspath)
     # update the number of files
     outfile.numfiles = len(infiles)
+    # write to disk
+    WLOG(params, '', TextEntry('40-001-00025', args=[outfile.filename]))
+    outfile.write_file()
+    # add to output files (for indexing)
+    recipe.add_output_file(outfile)
     # return combined infile
     return outfile
 
@@ -1150,12 +1169,13 @@ def _get_files(params, recipe, path, rpath, **kwargs):
     pconst = constants.pload(params['INSTRUMENT'])
     # ----------------------------------------------------------------------
     # get header keys
-    headerkeys = pconst.RAW_OUTPUT_KEYS()
+    headerkeys = pconst.OUTPUT_FILE_HEADER_KEYS()
     # get raw valid files
     raw_valid = pconst.VALID_RAW_FILES()
     # ----------------------------------------------------------------------
     # storage list
     filelist, basenames, nightnames, mod_times = [], [], [], []
+    blist = []
     # load raw index
     rawindexfile = os.path.join(params['DRS_DATA_RUN'], raw_index_file)
     if os.path.exists(rawindexfile):
@@ -1167,6 +1187,16 @@ def _get_files(params, recipe, path, rpath, **kwargs):
     kwargs = dict()
     for key in headerkeys:
         kwargs[key] = []
+    # ----------------------------------------------------------------------
+    # deal with white/black list for nights
+    if 'WNIGHTNAMES' in params and params['WNIGHTNAMES'] is not None:
+        wnightnames = params.listp('WNIGHTNAMES', dtype=str)
+    else:
+        wnightnames = None
+    if 'BNIGHTNAMES' in params and params['BNIGHTNAMES'] is not None:
+        bnightnames = params.listp('BNIGHTNAMES', dtype=str)
+    else:
+        bnightnames = None
     # ----------------------------------------------------------------------
     # get files (walk through path)
     for root, dirs, files in os.walk(path):
@@ -1193,9 +1223,33 @@ def _get_files(params, recipe, path, rpath, **kwargs):
             if len(ucpath) == 0:
                 continue
             # --------------------------------------------------------------
+            # deal with blacklist/whitelist
+            if bnightnames not in [None, 'None', '']:
+                if ucpath in bnightnames:
+                    # only print path if not already in blist
+                    if ucpath not in blist:
+                        # log blacklisted
+                        margs = [ucpath]
+                        WLOG(params, '', TextEntry('40-503-00031', args=margs))
+                        # add to blist for printouts
+                        blist.append(ucpath)
+                    # skip this night
+                    continue
+            if wnightnames not in [None, 'None', '']:
+                if ucpath not in wnightnames:
+                    # skip this night
+                    continue
+                # elif we haven't seen this night before log statement
+                elif ucpath not in nightnames:
+                    # log: whitelisted
+                    margs = [ucpath]
+                    WLOG(params, '', TextEntry('40-503-00030', args=margs))
+            # --------------------------------------------------------------
             # log the night directory
-            if ucpath not in nightnames:
-                WLOG(params, '', TextEntry('40-503-00003', args=[ucpath]))
+            if (ucpath not in nightnames) and (ucpath != rpath):
+                # log: scnannming directory
+                margs = [ucpath]
+                WLOG(params, '', TextEntry('40-503-00003', args=margs))
             # --------------------------------------------------------------
             # get absolute path
             abspath = os.path.join(root, filename)
@@ -1245,6 +1299,16 @@ def _get_files(params, recipe, path, rpath, **kwargs):
                         kwargs[key].append(header[rkey])
                     else:
                         kwargs[key].append('')
+    # ----------------------------------------------------------------------
+    # sort by filename
+    sortmask = np.argsort(filelist)
+    filelist = np.array(filelist)[sortmask]
+    nightnames = np.array(nightnames)[sortmask]
+    basenames = np.array(basenames)[sortmask]
+    mod_times = np.array(mod_times)[sortmask]
+    # need to sort kwargs
+    for key in kwargs:
+        kwargs[key] = np.array(kwargs[key])[sortmask]
     # ----------------------------------------------------------------------
     # return filelist
     return nightnames, filelist, basenames, mod_times, kwargs

@@ -11,7 +11,6 @@ Created on 2019-01-17 at 15:24
 
 @author: cook
 """
-
 from collections import OrderedDict
 import copy
 import numpy as np
@@ -1283,7 +1282,7 @@ def get_file_names(instrument=None, file_list=None, instrument_path=None,
     if instrument is not None:
         const_path = get_relative_folder(PACKAGE, instrument_path)
         # get the directories within const_path
-        filelist = os.listdir(const_path)
+        filelist = np.sort(os.listdir(const_path))
         directories = []
         for filename in filelist:
             if os.path.isdir(filename):
@@ -1291,7 +1290,7 @@ def get_file_names(instrument=None, file_list=None, instrument_path=None,
     else:
         const_path = None
         # get the directories within const_path
-        filelist = os.listdir(core_path)
+        filelist = np.sort(os.listdir(core_path))
         directories = []
         for filename in filelist:
             if os.path.isdir(filename):
@@ -1342,7 +1341,7 @@ def get_module_names(instrument=None, mod_list=None, instrument_path=None,
     const_path = get_relative_folder(PACKAGE, instrument_path)
     core_path = get_relative_folder(PACKAGE, default_path)
     # get the directories within const_path
-    filelist = os.listdir(const_path)
+    filelist = np.sort(os.listdir(const_path))
     directories = []
     for filename in filelist:
         if os.path.isdir(filename):
@@ -1700,7 +1699,7 @@ def _get_subdir(directory, instrument, source):
     # set the sub directory to None initially
     subdir = None
     # loop around items in the directory
-    for filename in os.listdir(directory):
+    for filename in np.sort(os.listdir(directory)):
         # check that the absolute path is a directory
         cond1 = os.path.isdir(os.path.join(directory, filename))
         # check that item (directory) is named the same as the instrument

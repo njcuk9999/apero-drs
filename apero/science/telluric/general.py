@@ -64,6 +64,8 @@ pcheck = core.pcheck
 # =============================================================================
 def get_whitelist(params, **kwargs):
     func_name = __NAME__ + '.get_whitelist()'
+    # get pseudo constants
+    pconst = constants.pload(instrument=params['INSTRUMENT'])
     # get parameters from params/kwargs
     relfolder = pcheck(params, 'TELLU_LIST_DIRECOTRY', 'directory', kwargs,
                        func_name)
@@ -73,12 +75,16 @@ def get_whitelist(params, **kwargs):
     wout = drs_data.load_text_file(params, filename, relfolder, kwargs,
                                    func_name, dtype=str)
     whitelist, whitelistfile = wout
+    # must clean names
+    whitelist = list(map(pconst.DRS_OBJ_NAME, whitelist))
     # return the whitelist
     return whitelist, whitelistfile
 
 
 def get_blacklist(params, **kwargs):
     func_name = __NAME__ + '.get_blacklist()'
+    # get pseudo constants
+    pconst = constants.pload(instrument=params['INSTRUMENT'])
     # get parameters from params/kwargs
     relfolder = pcheck(params, 'TELLU_LIST_DIRECOTRY', 'directory', kwargs,
                        func_name)
@@ -88,6 +94,8 @@ def get_blacklist(params, **kwargs):
     bout = drs_data.load_text_file(params, filename, relfolder, kwargs,
                                    func_name, dtype=str)
     blacklist, blacklistfile = bout
+    # must clean names
+    blacklist = list(map(pconst.DRS_OBJ_NAME, blacklist))
     # return the whitelist
     return blacklist, blacklistfile
 
@@ -193,15 +201,72 @@ def get_non_tellu_objs(params, recipe, fiber, filetype=None, dprtypes=None,
     return obj_stars, obj_names
 
 
+def get_tellu_objs(params, key, objnames=None, **kwargs):
+    """
+    Get objects defined be "key" from telluric database (in list objname)
+
+    :param params:
+    :param key:
+    :param objnames:
+    :param kwargs:
+    :return:
+    """
+    # deal with column to select from entries
+    column = kwargs.get('column', 'filename')
+    objcol = kwargs.get('objcol', 'objname')
+    # ----------------------------------------------------------------------
+    # deal with objnames
+    if isinstance(objnames, str):
+        objnames = [objnames]
+    # ----------------------------------------------------------------------
+    # load telluric obj entries (based on key)
+    obj_entries = load_tellu_file(params, key=key, inheader=None, mode='ALL',
+                                  return_entries=True, n_entries='all',
+                                  required=False)
+    # add to type
+    typestr = str(key)
+    # ----------------------------------------------------------------------
+    # keep only objects with objnames
+    mask = np.zeros(len(obj_entries)).astype(bool)
+    # deal with no object found
+    if len(obj_entries) == 0:
+        return []
+    elif objnames is not None:
+        # storage for found objects
+        found_objs = []
+        # loop around objnames
+        for objname in objnames:
+            # update the mask
+            mask |= obj_entries[objcol] == objname
+            # only add to the mask if objname found
+            if objname in obj_entries[objcol]:
+                # update the found objs
+                found_objs.append(objname)
+        # update type string
+        typestr += ' OBJNAME={0}'.format(', '.join(found_objs))
+    # ----------------------------------------------------------------------
+    # deal with all entries / one column return
+    if column in [None, 'None', '', 'ALL']:
+        outputs =  obj_entries[mask]
+    else:
+        outputs = np.unique(obj_entries[column][mask])
+    # ----------------------------------------------------------------------
+    # display how many files found
+    margs = [len(outputs),  typestr]
+    WLOG(params, '', TextEntry('40-019-00039', args=margs))
+    return outputs
+
+
 # =============================================================================
 # Database functions
 # =============================================================================
 def load_tellu_file(params, key=None, inheader=None, filename=None,
-                    get_image=True, get_header=False, **kwargs):
+                    get_image=True, get_header=False, return_entries=False,
+                    **kwargs):
     # get keys from params/kwargs
     n_entries = kwargs.get('n_entries', 1)
     required = kwargs.get('required', True)
-    mode = None
+    mode = kwargs.get('mode', None)
     # valid extension (zero by default)
     ext = kwargs.get('ext', 0)
     # fmt = valid astropy table format
@@ -227,6 +292,11 @@ def load_tellu_file(params, key=None, inheader=None, filename=None,
     entries = drs_database.get_key_from_db(params, key, tdb, inheader,
                                            n_ent=n_entries, mode=mode,
                                            required=required)
+    # ----------------------------------------------------------------------
+    # deal with return entries
+    if return_entries:
+        return entries
+    # ----------------------------------------------------------------------
     # get filename col
     filecol = tdb.file_col
     # ----------------------------------------------------------------------
@@ -2277,9 +2347,9 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
 def fit_tellu_quality_control(params, infile, **kwargs):
     func_name = __NAME__ + '.fit_tellu_quality_control()'
     # get parameters from params/kwargs
-    snr_order = pcheck(params, 'MKTELLU_QC_SNR_ORDER', 'snr_order', kwargs,
+    snr_order = pcheck(params, 'FTELLU_QC_SNR_ORDER', 'snr_order', kwargs,
                        func_name)
-    qc_snr_min = pcheck(params, 'MKTELLU_QC_SNR_MIN', 'qc_snr_min', kwargs,
+    qc_snr_min = pcheck(params, 'FTELLU_QC_SNR_MIN', 'qc_snr_min', kwargs,
                         func_name)
     # get the text dictionary
     textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
@@ -2966,7 +3036,7 @@ def _calc_tapas_abso(keep, tau_water, tau_others, sp_water, sp_others,
 
 def _remove_absonpy_files(params, path, prefix):
     # list files in path
-    filelist = os.listdir(path)
+    filelist = np.sort(os.listdir(path))
     # loop around files and decide whether to delete them or not
     for filename in filelist:
         # must be a .npy file

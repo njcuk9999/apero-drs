@@ -461,12 +461,12 @@ calib_file.addset(out_dark_master)
 # badpix out file
 out_badpix = drs_finput('BADPIX', KW_OUTPUT='BADPIX',
                         filetype='.fits',
-                        intype=[pp_dark_dark_int, pp_dark_dark_tel],
+                        intype=[pp_flat_flat],
                         suffix='_badpixel',
                         outfunc=out.calib_file,
                         dbname='calibration', dbkey='BADPIX')
 out_backmap = drs_finput('BKGRD_MAP', KW_OUTPUT='BKGRD_MAP',
-                         intype=[pp_dark_dark_int, pp_dark_dark_tel],
+                         intype=[pp_flat_flat],
                          suffix='_bmap.fits', outfunc=out.calib_file,
                          dbname='calibration', dbkey='BKGRDMAP')
 
@@ -714,7 +714,6 @@ out_leak_master = drs_finput('LEAKM_E2DS', KW_OUTPUT='LEAKM_E2DS',
                              outfunc=out.general_file)
 out_file.addset(out_leak_master)
 calib_file.addset(out_leak_master)
-
 
 # -----------------------------------------------------------------------------
 # wave files (master)

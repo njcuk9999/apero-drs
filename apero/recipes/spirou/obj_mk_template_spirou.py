@@ -114,16 +114,28 @@ def __main__(recipe, params):
     mainname = __NAME__ + '._main()'
     # get the object name
     objname = params['INPUTS']['OBJNAME']
+    # need to convert object to drs object name
+    pconst = constants.pload(instrument=params['INSTRUMENT'])
+    objname = pconst.DRS_OBJ_NAME(objname)
+
     # get the filetype (this is overwritten from user inputs if defined)
     filetype = params['INPUTS']['FILETYPE']
     # get the fiber type required
     fiber = params['INPUTS']['FIBER']
     # ----------------------------------------------------------------------
     # get objects that match this object name
-    object_filenames = drs_fits.find_files(params, recipe, kind='red',
-                                           fiber=fiber,
-                                           KW_OBJNAME=objname,
-                                           KW_OUTPUT=filetype)
+    if params['MKTEMPLATE_FILESOURCE'].upper() == 'DISK':
+        object_filenames = drs_fits.find_files(params, recipe, kind='red',
+                                               fiber=fiber,
+                                               KW_OBJNAME=objname,
+                                               KW_OUTPUT=filetype)
+    else:
+        # define the type of files we want to locate in the telluric database
+        tkey = '{0}_{1}'.format(filetype, fiber)
+        object_filenames = telluric.get_tellu_objs(params, tkey,
+                                                   objnames=[objname])
+
+
     # deal with no files being present
     if len(object_filenames) == 0:
         wargs = [objname, filetype]

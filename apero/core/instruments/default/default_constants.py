@@ -195,10 +195,11 @@ __all__ = [
     'FTELLU_FIT_KEEP_NUM', 'FTELLU_FIT_MIN_TRANS', 'FTELLU_LAMBDA_MIN',
     'FTELLU_LAMBDA_MAX', 'FTELLU_KERNEL_VSINI', 'FTELLU_FIT_ITERS',
     'FTELLU_FIT_RECON_LIMIT', 'FTELLU_PLOT_ORDER_NUMS', 'FTELLU_SPLOT_ORDER',
+    'FTELLU_QC_SNR_ORDER', 'FTELLU_QC_SNR_MIN',
     # make template constants
     'MKTEMPLATE_SNR_ORDER', 'MKTEMPLATE_FILETYPE', 'MKTEMPLATE_FIBER_TYPE',
     'MKTEMPLATE_E2DS_ITNUM', 'MKTEMPLATE_E2DS_LOWF_SIZE',
-    'MKTEMPLATE_S1D_ITNUM', 'MKTEMPLATE_S1D_LOWF_SIZE',
+    'MKTEMPLATE_S1D_ITNUM', 'MKTEMPLATE_S1D_LOWF_SIZE', 'MKTEMPLATE_FILESOURCE',
     # ccf constants
     'CCF_MASK_PATH', 'CCF_NO_RV_VAL', 'CCF_MASK_MIN_WEIGHT', 'CCF_MASK_WIDTH',
     'CCF_N_ORD_MAX', 'CCF_DEFAULT_MASK', 'CCF_MASK_UNITS', 'CCF_MASK_FMT',
@@ -268,7 +269,7 @@ __all__ = [
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
     'REPROCESS_RAWINDEXFILE', 'REPROCESS_SEQCOL', 'REPROCESS_TIMECOL',
     'SUMMARY_LATEX_PDF', 'EXPMETER_MIN_LAMBDA', 'EXPMETER_MAX_LAMBDA',
-    'EXPMETER_TELLU_THRES',
+    'EXPMETER_TELLU_THRES', 'REPROCESS_PINAMECOL',
 ]
 
 # set name
@@ -2163,6 +2164,17 @@ MKTELLU_HBAND_UPPER = Const('MKTELLU_HBAND_UPPER', value=None,
 # OBJECT: FIT TELLURIC SETTINGS
 # =============================================================================
 cgroup = 'OBJECT: FIT TELLURIC SETTINGS'
+
+#   Define the order to use for SNR check when accepting tellu files
+#      to the telluDB
+FTELLU_QC_SNR_ORDER = Const('FTELLU_QC_SNR_ORDER', value=None, dtype=int,
+                             source=__NAME__, minimum=0, group=cgroup)
+
+#  Define the minimum SNR for order "QC_TELLU_SNR_ORDER" that will be
+#      accepted to the telluDB
+FTELLU_QC_SNR_MIN = Const('FTELLU_QC_SNR_MIN', value=None, dtype=float,
+                           source=__NAME__, minimum=0.0, group=cgroup)
+
 # The number of principle components to use in PCA fit
 FTELLU_NUM_PRINCIPLE_COMP = Const('FTELLU_NUM_PRINCIPLE_COMP', value=None,
                                   dtype=int, source=__NAME__, minimum=1,
@@ -2270,6 +2282,11 @@ MKTEMPLATE_FIBER_TYPE = Const('MKTEMPLATE_FIBER_TYPE', value=None, dtype=str,
                               group=cgroup,
                               description='the fiber required for input '
                                           'template files')
+
+# the order to use for signal to noise cut requirement
+MKTEMPLATE_FILESOURCE = Const('MKTEMPLATE_FILESOURCE', value=None, dtype=str,
+                              source=__NAME__, group=cgroup,
+                              options=['telludb', 'disk'])
 
 # the order to use for signal to noise cut requirement
 MKTEMPLATE_SNR_ORDER = Const('MKTEMPLATE_SNR_ORDER', value=None, dtype=int,
@@ -3024,6 +3041,10 @@ REPROCESS_RUN_KEY = Const('REPROCESS_RUN_KEY', value=None, dtype=str,
 # Define the night name column name for raw file table
 REPROCESS_NIGHTCOL = Const('REPROCESS_NIGHTCOL', value=None, dtype=str,
                            source=__NAME__, group=cgroup)
+
+# Define the pi name column name for raw file table
+REPROCESS_PINAMECOL = Const('REPROCESS_PINAMECOL', value=None, dtype=str,
+                            source=__NAME__, group=cgroup)
 
 # Define the absolute file column name for raw file table
 REPROCESS_ABSFILECOL = Const('REPROCESS_ABSFILECOL', value=None, dtype=str,

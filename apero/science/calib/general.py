@@ -50,6 +50,8 @@ pcheck = core.pcheck
 # Define user functions
 # =============================================================================
 def check_files(params, infile):
+    # get pseudo constants
+    pconst = constants.pload(instrument=params['INSTRUMENT'])
     # get infile DPRTYPE and OBJNAME
     dprtype = infile.get_key('KW_DPRTYPE', dtype=str, required=False)
     objname = infile.get_key('KW_OBJNAME', dtype=str, required=False)
@@ -61,23 +63,29 @@ def check_files(params, infile):
         objname = 'None'
     # clean (capitalize and remove white spaces)
     dprtype = clean_strings(dprtype)
-    objname = clean_strings(objname)
+    objname = pconst.DRS_OBJ_NAME(objname)
     # get inputs
-    objname_inputs = params['INPUTS']['OBJNAME'].split(',')
     dprtype_inputs = params['INPUTS']['DPRTYPE'].split(',')
+    objname_inputs = params['INPUTS']['OBJNAME'].split(',')
     # clean (capitalize and remove white spaces)
-    objname_inputs = clean_strings(objname_inputs)
     dprtype_inputs = clean_strings(dprtype_inputs)
+    objname_inputs = list(map(pconst.DRS_OBJ_NAME, objname_inputs))
+    # ----------------------------------------------------------------------
+    # log checking file info
+    wargs = [dprtype, objname]
+    WLOG(params, 'info', TextEntry('40-016-00032', args=wargs))
     # ----------------------------------------------------------------------
     # storage of outputs
     skip = False
     skip_conditions = [[], [], []]
     # ----------------------------------------------------------------------
+    # convert objname_inputs to char array
+    objarray = np.char.array(objname_inputs).upper()
     # deal with objname filter
-    if 'NONE' in objname_inputs:
+    if 'NONE' in objarray:
         skip = skip or False
     # else check for objname in
-    elif objname in objname_inputs:
+    elif objname.upper() in objarray:
         skip = skip or False
     # else we skip
     else:

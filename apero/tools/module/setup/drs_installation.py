@@ -672,7 +672,7 @@ def bin_paths(params, all_params):
     all_params['DRS_ROOT'] = root
     # add the individual tool directories to all params
     all_params['DRS_OUT_TOOLS'] = []
-    for directory in in_tool_path.glob('*'):
+    for directory in np.sort(list(in_tool_path.glob('*'))):
         # make out tool paths
         out_tools = out_tool_path.joinpath(directory.name)
         # append out tool paths to drs out tools
@@ -933,7 +933,7 @@ def create_symlinks(params, all_params):
     #    installed)
     # ------------------------------------------------------------------
     # get list of tool directories
-    dirs = in_tool_path.glob('*')
+    dirs = np.sort(list(in_tool_path.glob('*')))
 
     for directory in dirs:
         # do not copy tools for instruments we are not installing
@@ -957,29 +957,28 @@ def create_symlinks(params, all_params):
     return all_params
 
 
-def _create_link(recipe_dir: Path, suffix: Union[str, Path], new_path: Path,
+def _create_link(recipe_dir: Path, suffix: Union[str, Path], new_dir: Path,
                  log=True):
+    # deal with directories not exists
+    new_dir.mkdir(parents=True, exist_ok=True)
     # get all python files in recipe folder
-    files = recipe_dir.joinpath(suffix).glob('*')
+    files = np.sort(list(recipe_dir.glob(suffix)))
     # loop around files and create symbolic links in bin path
     for filename in files:
         # get file base name
         basename = filename.name
         # construct new path
-        newpath = new_path.joinpath(basename)
+        newpath = new_dir.joinpath(basename)
         if log:
             cprint('\t\tMoving {0}'.format(basename))
         # remove link already present
         if newpath.exists() or newpath.is_symlink():
-            os.remove(str(newpath))
-        # deal with directories not exists
-        if not newpath.parent.exsits():
-            os.makedirs(newpath.parent)
+            newpath.unlink()
         # make symlink
-        new_path.symlink_to(filename)
+        newpath.symlink_to(filename)
         # make executable
         try:
-            new_path.chmod(0o777)
+            newpath.chmod(0o777)
         except:
             cprint('Error: Cannot chmod 777', 'r')
 
@@ -1296,7 +1295,7 @@ def update(params, args):
     # ----------------------------------------------------------------------
     # find all installed instruments
     instruments = []
-    files = os.listdir(config_path)
+    files = np.sort(os.listdir(config_path))
     # loop through filenames
     for filename in files:
         # get abspath
@@ -1372,7 +1371,7 @@ class PathCompleter(object):
         if self.root is not None:
             text = os.path.join(self.root, text)
 
-        return [x for x in glob.glob(text + '*')][state]
+        return [x for x in np.sort(glob.glob(text + '*'))][state]
 
 
 def tab_input(message, root=None):

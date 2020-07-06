@@ -135,7 +135,7 @@ def get_python_files(path):
             # make sure they are python files
             if '.py' in filename and '.pyc' not in filename:
                 pyfiles.append(abspath)
-    return pyfiles
+    return np.sort(pyfiles)
 
 
 def get_import_statements(params, files):

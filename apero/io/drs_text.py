@@ -12,11 +12,9 @@ Created on 2019-08-12 at 17:23
 import numpy as np
 import warnings
 
-from apero import core
 from apero.core import constants
 from apero import lang
 from apero.core.core import drs_log
-from apero.core.core import drs_file
 
 
 # =============================================================================
@@ -33,14 +31,13 @@ __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
 # get param dict
 ParamDict = constants.ParamDict
-DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
 TextEntry = lang.drs_text.TextEntry
 TextDict = lang.drs_text.TextDict
 # alias pcheck
-pcheck = core.pcheck
+pcheck = drs_log.find_param
 
 
 # =============================================================================
@@ -116,6 +113,87 @@ def save_text_file(params, filename, array, func_name=None):
         except Exception as e:
             eargs = [filename, type(e), e, func_name]
             WLOG(params, 'error', TextEntry('00-008-00020', args=eargs))
+
+
+def common_text(stringlist, kind='prefix'):
+    """
+    For a list of strings find common prefix or suffix, returns None
+    if no common substring of kind is not 'prefix' or 'suffix'
+
+    :param stringlist: a list of strings to test
+    :param kind: string, either 'prefix' or 'suffix'
+    :return:
+    """
+
+    substring = stringlist[0]
+
+    if kind == 'prefix':
+        # loop around strings in list (except first)
+        for _str in stringlist[1:]:
+            # while substring is not equal in first and Nth shorten
+            while _str[:len(substring)] != substring and len(substring) != 0:
+                substring = substring[:len(substring)-1]
+            # test for blank string
+            if len(substring) == 0:
+                break
+
+    elif kind == 'suffix':
+        # loop around strings in list (except first)
+        for _str in stringlist[1:]:
+            # while substring is not equal in first and Nth shorten
+            while _str[-len(substring):] != substring and len(substring) != 0:
+                substring = substring[1:]
+            # test for blank string
+            if len(substring) == 0:
+                break
+    # if prefix or suffix is the same as all in list return None - there
+    # is no prefix
+    if substring == stringlist[0]:
+        return None
+    # else return the substring
+    else:
+        return substring
+
+
+def combine_uncommon_text(stringlist, prefix=None, suffix=None, fmt=None):
+    """
+    Combien a set of strings with a common prefix and/or suffix
+    :param stringlist:
+    :param prefix:
+    :param suffix: must be "{0} {1} {2} {3}" where {0} is the prefix {1} is
+                   the first entry {2} is the last entry and {3} is the suffix.
+                   One can add any formatting inbetween  i.e. the default is
+                   {0}F{1}T{2}{3}
+    :return:
+    """
+    if fmt is None:
+        fmt = '{0}F{1}T{2}{3}'
+    # deal with prefix/suffix being ''
+    if len(prefix) == 0:
+        prefix = None
+    if len(suffix) == 0:
+        suffix = None
+    # remove prefix and suffix
+    entries = []
+    # loop around string list
+    for entry in stringlist:
+
+        if prefix is not None:
+            entry = entry.split(prefix)[-1]
+        if suffix is not None:
+            entry = entry.split(suffix)[0]
+        entries.append(entry)
+    # sort entries
+    entries = np.sort(entries)
+    # deal with no prefix
+    if prefix is None:
+        prefix = ''
+    if suffix is None:
+        suffix = ''
+    # construct first-last analysis
+    text = fmt.format(prefix, entries[0], entries[-1], suffix)
+    # return text
+    return text
 
 
 # =============================================================================

@@ -12,7 +12,7 @@ Created on 2019-08-06 at 11:57
 import numpy as np
 import os
 import sys
-import copy
+from copy import deepcopy
 import time
 from astropy.table import Table
 from collections import OrderedDict
@@ -28,12 +28,10 @@ from apero.lang import drs_exceptions
 from apero.core import constants
 from apero import plotting
 from apero.io import drs_table
-from apero.io import drs_path
-from apero.io import drs_fits
 from apero.io import drs_lock
 from apero.tools.module.setup import drs_reset
 from apero.science import telluric
-from apero.science import preprocessing
+
 
 # =============================================================================
 # Define variables
@@ -65,6 +63,7 @@ RUN_KEYS['EMAIL_ADDRESS'] = None
 RUN_KEYS['NIGHTNAME'] = None
 RUN_KEYS['BNIGHTNAMES'] = None
 RUN_KEYS['WNIGHTNAMES'] = None
+RUN_KEYS['PI_NAMES'] = None
 RUN_KEYS['MASTER_NIGHT'] = None
 RUN_KEYS['CORES'] = 1
 RUN_KEYS['STOP_AT_EXCEPTION'] = False
@@ -86,6 +85,9 @@ RUN_KEYS['SCIENCE_TARGETS'] = None
 REMOVE_ENG_NIGHTS = []
 # get special list from recipes
 SPECIAL_LIST_KEYS = drs_recipe.SPECIAL_LIST_KEYS
+# get list of obj name cols
+OBJNAMECOLS = ['KW_OBJNAME']
+
 
 # =============================================================================
 # Define classes
@@ -474,6 +476,11 @@ def read_runfile(params, runfile, **kwargs):
         if params['INPUTS']['WNIGHTNAMES'] not in ['None', '', None]:
             params['WNIGHTNAMES'] = params['INPUTS'].listp('WNIGHTNAMES')
     # ----------------------------------------------------------------------
+    # add pi name list
+    if 'PI_NAMES' in params['INPUTS']:
+        if params['INPUTS']['PI_NAMES'] not in ['None', '', None]:
+            params['PI_NAMES'] = params['INPUTS'].listp('PI_NAMES')
+    # ----------------------------------------------------------------------
     # deal with having a file specified
     params['FILENAME'] = None
     if 'FILENAME' in params['INPUTS']:
@@ -643,6 +650,8 @@ def reset_files(params):
 def generate_run_list(params, table, runtable):
     # print progress: generating run list
     WLOG(params, 'info', TextEntry('40-503-00011'))
+    # need to update table object names to match preprocessing
+    table = _update_table_objnames(params, table)
     # get recipe defintions module (for this instrument)
     recipemod = _get_recipe_module(params)
     # get all values (upper case) using map function
@@ -687,11 +696,11 @@ def process_run_list(params, recipe, runlist, group=None):
     # remove lock files
     drs_lock.reset_lock_dir(params)
 
-    # convert to ParamDict and set all sources
+    # convert to dict
     odict = OrderedDict()
     keys = np.sort(np.array(list(rdict.keys())))
     for key in keys:
-        odict[key] = ParamDict(rdict[key])
+        odict[key] = dict(rdict[key])
 
     # see if we have any errors
     errors = False
@@ -1239,6 +1248,8 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
     # get parameters from params/kwargs
     night_col = pcheck(params, 'REPROCESS_NIGHTCOL', 'night_col', kwargs,
                        func_name)
+    piname_col = pcheck(params, 'REPROCESS_PINAMECOL', 'piname_col', kwargs,
+                        func_name)
     # get all telluric stars
     tstars, wfilename = telluric.get_whitelist(params)
     # get filemod and recipe mod
@@ -1274,6 +1285,10 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
         # copy table
         # ------------------------------------------------------------------
         ftable = Table(table)
+        # ------------------------------------------------------------------
+        # deal with black and white lists
+        # ------------------------------------------------------------------
+
 
         # ------------------------------------------------------------------
         # deal with black and white lists
@@ -1307,9 +1322,9 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
         if params['WNIGHTNAMES'] not in ['', 'None', None]:
             # start by assuming we want to keep nothing
             mask = np.zeros(len(ftable), dtype=bool)
-            # get black list from params
+            # get white list from params
             whitelist_nights = params.listp('WNIGHTNAMES', dtype=str)
-            # loop around black listed nights and set them to False
+            # loop around white listed nights and set them to False
             for whitelist_night in whitelist_nights:
                 mask |= (ftable[night_col] == whitelist_night)
             # apply mask to table
@@ -1320,6 +1335,30 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
             # deal with empty ftable
             if len(ftable) == 0:
                 WLOG(params, 'warning', TextEntry('10-503-00007'))
+                # get response for how to continue (skip or exit)
+                response = prompt(params)
+                if response:
+                    continue
+                else:
+                    sys.exit()
+        # ------------------------------------------------------------------
+        # pi name list
+        if params['PI_NAMES'] not in ['', 'None', None]:
+            # start by assuming we want to keep nothing
+            mask = np.zeros(len(ftable), dtype=bool)
+            # get pi name list from params
+            pi_names = params.listp('PI_NAMES', dtype=str)
+            # loop around pi names and set them to False
+            for pi_name in pi_names:
+                mask |= (ftable[piname_col] == pi_name)
+            # apply mask to table
+            ftable = ftable[mask]
+            # log blacklist
+            wargs = [' ,'.join(pi_names)]
+            WLOG(params, '', TextEntry('40-503-00029', args=wargs))
+            # deal with empty ftable
+            if len(ftable) == 0:
+                WLOG(params, 'warning', TextEntry('10-503-00015'))
                 # get response for how to continue (skip or exit)
                 response = prompt(params)
                 if response:
@@ -1370,6 +1409,11 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
             ftable = _remove_engineering(params, ftable)
         # deal with filters
         filters = _get_filters(params, srecipe)
+
+        # TODO: break point
+        if 'ccf' in srecipe.name or 'tellu' in srecipe.name:
+            constants.break_point(params)
+
         # get fiber filter
         allowedfibers = srecipe.allowedfibers
         # get runs for this recipe
@@ -1473,6 +1517,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
         pp['COREUSED'] = number
         pp['CORETOT'] = cores
         pp['GROUP'] = group
+        pp['STATE'] = 'None'
         # ------------------------------------------------------------------
         # add drs group to keyword arguments
         pp['ARGS']['DRS_GROUP'] = group
@@ -1488,10 +1533,15 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             # log which core is being used
             WLOG(params, 'info', 'T' + wmsg, colour='magenta', wrap=False)
             # add default outputs
+            pp['PID'] = None
             pp['ERROR'] = []
             pp['WARNING'] = []
             pp['OUTPUTS'] = dict()
             pp['TIMING'] = None
+            pp['TRACEBACK'] = ''
+            pp['SUCCESS'] = False
+            pp['PASSED'] = False
+            pp['STATE'] = 'TEST'
             # flag finished
             finished = True
         # --------------------------------------------------------------
@@ -1502,11 +1552,14 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             WLOG(params, 'debug', emsg.format(priority))
             # deal with returns
             pp = dict()
+            pp['PID'] = None
             pp['ERROR'] = []
             pp['WARNING'] = []
             pp['OUTPUTS'] = dict()
             pp['TRACEBACK'] = ''
             pp['SUCCESS'] = False
+            pp['PASSED'] = False
+            pp['STATE'] = 'SKIPPED:EVENT'
             finished = False
         # --------------------------------------------------------------
         # deal with an event set -- skip
@@ -1528,6 +1581,10 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 pp['TRACEBACK'] = ''
                 pp['TIMING'] = 0
                 pp['FINISHED'] = True
+                pp['SUCCESS'] = False
+                pp['PID'] = None
+                pp['PASSED'] = False
+                pp['STATE'] = 'SKIPPED:PRERUN'
                 return_dict[priority] = pp
                 # deal with a master not passing
                 #   we cannot idely skip master files
@@ -1549,11 +1606,14 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 # keep only some parameters
                 llparams = ll_item['params']
                 llrecipe = ll_item['recipe']
-                pp['ERROR'] = copy.deepcopy(llparams['LOGGER_ERROR'])
-                pp['WARNING'] = copy.deepcopy(llparams['LOGGER_WARNING'])
-                pp['OUTPUTS'] = copy.deepcopy(llrecipe.output_files)
+                pp['PID'] = deepcopy(llparams.get('PID', 'None'))
+                pp['ERROR'] = deepcopy(llparams.get('LOGGER_ERROR', []))
+                pp['WARNING'] = deepcopy(llparams.get('LOGGER_WARNING', []))
+                pp['OUTPUTS'] = deepcopy(llrecipe.output_files)
                 pp['TRACEBACK'] = []
-                pp['SUCCESS'] = bool(ll_item['success'])
+                pp['SUCCESS'] = bool(ll_item.get('success', False))
+                pp['PASSED'] = bool(ll_item.get('passed', False))
+                pp['STATE'] = 'RETURN'
                 # delete ll_item
                 del llparams
                 del ll_item
@@ -1563,10 +1623,14 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             # Manage debug exit interrupt errors
             except drs_exceptions.DebugExit as _:
                 # deal with returns
+                pp['PID'] = None
                 pp['ERROR'] = []
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
                 pp['TRACEBACK'] = ''
+                pp['SUCCESS'] = False
+                pp['PASSED'] = False
+                pp['STATE'] = 'EXCEPTION:DEBUG'
                 # flag not finished
                 finished = False
                 # deal with setting event (if it is defined -- only defined
@@ -1577,10 +1641,14 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             # Manage Keyboard interrupt errors
             except KeyboardInterrupt:
                 # deal with returns
+                pp['PID'] = None
                 pp['ERROR'] = []
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
                 pp['TRACEBACK'] = ''
+                pp['SUCCESS'] = False
+                pp['PASSED'] = False
+                pp['STATE'] = 'EXCEPTION:KeyboardInterrupt'
                 # flag not finished
                 finished = False
                 # deal with setting event (if it is defined -- only defined
@@ -1594,9 +1662,13 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 for emsg in e.errormessage.split('\n'):
                     emsgs.append('\n' + emsg)
                 WLOG(params, 'warning', emsgs)
+                pp['PID'] = None
                 pp['ERROR'] = emsgs
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
+                pp['SUCCESS'] = False
+                pp['PASSED'] = False
+                pp['STATE'] = 'EXCEPTION:LogExit'
                 # expected error does not need traceback
                 pp['TRACEBACK'] = []
                 # flag not finished
@@ -1614,10 +1686,14 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 for emsg in str(e).split('\n'):
                     emsgs.append('\n' + emsg)
                 WLOG(params, 'warning', emsgs)
+                pp['PID'] = None
                 pp['ERROR'] = emsgs
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
+                pp['SUCCESS'] = False
                 pp['TRACEBACK'] = str(string_traceback)
+                pp['PASSED'] = False
+                pp['STATE'] = 'EXCEPTION:UNEXPECTED'
                 # flag not finished
                 finished = False
             # --------------------------------------------------------------
@@ -1633,10 +1709,14 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 for emsg in str(e).split('\n'):
                     emsgs.append('\n' + emsg)
                 WLOG(params, 'warning', emsgs)
+                pp['PID'] = None
                 pp['ERROR'] = emsgs
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
                 pp['TRACEBACK'] = str(string_traceback)
+                pp['SUCCESS'] = False
+                pp['PASSED'] = False
+                pp['STATE'] = 'EXCEPTION:SystemExit'
                 # flag not finished
                 finished = False
             # --------------------------------------------------------------
@@ -1738,6 +1818,25 @@ def _multi_process1(params, recipe, runlist, cores, groupname=None):
 # =============================================================================
 # Define working functions
 # =============================================================================
+def _update_table_objnames(params, table):
+    """
+    Takes a table and forces updates to object name columns
+
+    :param params:
+    :param table:
+    :return:
+    """
+    # get pseudo constants
+    pconst = constants.pload(instrument=params['INSTRUMENT'])
+    # loop around columns
+    for col in table.colnames:
+        if col in OBJNAMECOLS:
+            # need to map values by new drs obj name
+            table[col] = list(map(pconst.DRS_OBJ_NAME, list(table[col])))
+    # return table
+    return table
+
+
 def _get_recipe_module(params, **kwargs):
     func_name = __NAME__ + '.get_recipe_module()'
     # log progress: loading recipe module files
@@ -1789,6 +1888,8 @@ def _check_runtable(params, runtable, recipemod):
 def _get_filters(params, srecipe):
     # set up function name
     func_name = __NAME__ + '._get_filters()'
+    # get pseudo constatns
+    pconst = constants.pload(instrument=params['INSTRUMENT'])
     # set up filter storage
     filters = dict()
     # loop around recipe filters
@@ -1798,7 +1899,8 @@ def _get_filters(params, srecipe):
         # deal with list
         if isinstance(value, list):
             filters[key] = value
-        # if this is in params set this value
+        # if this is in params set this value - these are dealing with
+        #  object names
         elif (value in params) and (value in SPECIAL_LIST_KEYS):
             # get values from
             user_filter = params[value]
@@ -1806,13 +1908,25 @@ def _get_filters(params, srecipe):
             if (user_filter is None) or (user_filter.upper() == 'NONE'):
                 if value == 'TELLURIC_TARGETS':
                     wlist, wfilename = telluric.get_whitelist(params)
-                    filters[key] = list(wlist)
+                    # note we need to update this list to match
+                    # the cleaning that is done in preprocessing
+                    cwlist = list(map(pconst.DRS_OBJ_NAME, wlist))
+                    # add cleaned obj list to filters
+                    filters[key] = list(cwlist)
                 else:
                     continue
             # else assume we have a special list that is a string list
             #   (i.e. SCIENCE_TARGETS = "target1, target2, target3"
             elif isinstance(user_filter, str):
-                filters[key] = _split_string_list(user_filter)
+                wlist =  _split_string_list(user_filter)
+                # note we need to update this list to match
+                # the cleaning that is done in preprocessing
+                cwlist = list(map(pconst.DRS_OBJ_NAME, wlist))
+                # add cleaned obj list to filters
+                filters[key] = list(cwlist)
+                if value == 'SCIENCE_TARGETS':
+                    # update science targets
+                    params.set('SCIENCE_TARGETS', value=', '.join(cwlist))
             else:
                 continue
         # else assume we have a straight string to look for (if it is a valid

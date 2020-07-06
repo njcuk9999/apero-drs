@@ -277,13 +277,13 @@ KW_OUTPUT.set(key='DRSOUTID', comment='DRS output identification code')
 KW_DRS_QC = KW_DRS_QC.copy(__NAME__)
 KW_DRS_QC.set(key='QCC_ALL', comment='All quality control passed')
 KW_DRS_QC_VAL = KW_DRS_QC_VAL.copy(__NAME__)
-KW_DRS_QC_VAL.set(key='QCC{0:03d}V', comment='All quality control passed')
+KW_DRS_QC_VAL.set(key='QCC{0:03d}V', comment='Quality control measured value')
 KW_DRS_QC_NAME = KW_DRS_QC_NAME.copy(__NAME__)
-KW_DRS_QC_NAME.set(key='QCC{0:03d}N', comment='All quality control passed')
+KW_DRS_QC_NAME.set(key='QCC{0:03d}N', comment='Quality control parameter name')
 KW_DRS_QC_LOGIC = KW_DRS_QC_LOGIC.copy(__NAME__)
-KW_DRS_QC_LOGIC.set(key='QCC{0:03d}L', comment='All quality control passed')
+KW_DRS_QC_LOGIC.set(key='QCC{0:03d}L', comment='Quality control logic used')
 KW_DRS_QC_PASS = KW_DRS_QC_PASS.copy(__NAME__)
-KW_DRS_QC_PASS.set(key='QCC{0:03d}P', comment='All quality control passed')
+KW_DRS_QC_PASS.set(key='QCC{0:03d}P', comment='Quality control param passed QC')
 
 # -----------------------------------------------------------------------------
 # Define preprocessing variables
@@ -298,6 +298,10 @@ KW_PPSHIFTY.set(key='DETOFFDY', comment='Pixel offset in y from readout lag')
 # The number of sigma used to construct pp master mask
 KW_PPMSTR_NSIG = KW_PPMSTR_NSIG.copy(__NAME__)
 KW_PPMSTR_NSIG.set(key='PPMNSIG', comment='PP master mask nsig used')
+
+# Define the key to store the name of the pp master file used in pp (if used)
+KW_PPMSTR_FILE = KW_PPMSTR_FILE.copy(__NAME__)
+KW_PPMSTR_FILE.set(key='PPMFILE', comment='PP master mask file used')
 
 # -----------------------------------------------------------------------------
 # Define cal_dark variables
@@ -1553,7 +1557,7 @@ KW_CCF_DVRMS_SP.set(key='DVRMS_SP',
                     comment='RV photon-noise uncertainty calc on E2DS '
                             'spectrum [m/s] ')
 
-# the dev rms calculated during the CCF
+# the dev rms calculated during the CCF [m/s]
 KW_CCF_DVRMS_CC = KW_CCF_DVRMS_CC.copy(__NAME__)
 KW_CCF_DVRMS_CC.set(key='DVRMS_CC',
                     comment='final photon-noise RV uncertainty calc on mean '

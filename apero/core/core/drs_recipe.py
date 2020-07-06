@@ -448,10 +448,13 @@ class DrsRecipe(object):
         # run main
         return self.module.main(**kwargs)
 
-    def get_input_dir(self):
+    def get_input_dir(self, directory=None, force=False):
         """
         Get the input directory for this recipe based on what was set in
         initialisation (construction)
+
+        :param directory: None or string - force the input dir (if it exists)
+        :param force: bool if True allows force setting
 
         if RAW uses DRS_DATA_RAW from drs_params
         if TMP uses DRS_DATA_WORKING from drs_params
@@ -459,15 +462,28 @@ class DrsRecipe(object):
 
         :return input_dir: string, the input directory
         """
+        # make sure if force is True we use it
+        force = self.force_dirs[0] or force
+        # deal with manual override of input dir
+        if force and (directory is not None) and (os.path.exists(directory)):
+            return directory
+
+        # deal with absolute path existing
+        if force and os.path.exists(os.path.abspath(self.inputdir)):
+            return os.path.abspath(self.inputdir)
+
         # check if "input_dir" is in namespace
         input_dir_pick = self.inputdir.upper()
         # return input_dir
         return self.get_dir(input_dir_pick, kind='input')
 
-    def get_output_dir(self):
+    def get_output_dir(self, directory=None, force=False):
         """
         Get the input directory for this recipe based on what was set in
         initialisation (construction)
+
+        :param directory: None or string - force the output dir (if it exists)
+        :param force: bool if True allows force setting
 
         if RAW uses DRS_DATA_RAW from drs_params
         if TMP uses DRS_DATA_WORKING from drs_params
@@ -475,6 +491,15 @@ class DrsRecipe(object):
 
         :return input_dir: string, the input directory
         """
+        # make sure if force is True we use it
+        force = self.force_dirs[1] or force
+        # deal with manual override of input dir
+        if force and (directory is not None) and (os.path.exists(directory)):
+            return directory
+        # deal with absolute path existing
+        if force and os.path.exists(os.path.abspath(self.outputdir)):
+            return os.path.abspath(self.outputdir)
+
         # check if "input_dir" is in namespace
         output_dir_pick = self.outputdir.upper()
         # return input_dir
@@ -501,6 +526,8 @@ class DrsRecipe(object):
         self.outputdir = str(recipe.outputdir)
         # input directory
         self.inputdir = str(recipe.inputdir)
+        # whether to force input/outputdir
+        self.force_dirs = [False, False]
         # input type (RAW/REDUCED)
         self.inputtype = str(recipe.inputtype)
         # recipe description/epilog
@@ -586,6 +613,8 @@ class DrsRecipe(object):
     def add_extra(self, params, arguments, tstars=None):
         # set function name
         func_name = display_func(params, 'add_extra', __NAME__, 'DrsRecipe')
+        # load pseudo constants
+        pconst = constants.pload(instrument=params['INSTRUMENT'])
         # loop around arguments
         for argname in arguments:
             # get value
@@ -603,12 +632,14 @@ class DrsRecipe(object):
                         value = value.split(',')
                         # make sure there are no white spaces
                         value = np.char.strip(value)
+                        # deal with object name cleaning
+                        value = list(map(pconst.DRS_OBJ_NAME, value))
+
                 # deal with telluric targets being None
                 if arguments[argname] == 'TELLURIC_TARGETS':
                     if isinstance(value, (type(None), str)):
                         if value in ['None', None, '']:
                             value = tstars
-
             # check for argument in args
             if argname in self.args:
                 self.extras[argname] = value
@@ -764,6 +795,10 @@ class DrsRecipe(object):
         # ---------------------------------------------------------------------
         # set quiet functionality
         self._make_special(drs_argument.set_quiet, skip=False)
+        # ---------------------------------------------------------------------
+        # force input and output directories
+        self._make_special(drs_argument.set_inputdir, skip=False)
+        self._make_special(drs_argument.set_outputdir, skip=False)
 
 
     def _make_special(self, function, skip=False):
@@ -831,7 +866,8 @@ class DrsRecipe(object):
         # get drs parameters
         params = self.drs_params
         # get input directory
-        input_dir = os.path.realpath(self.get_input_dir())
+        force = self.force_dirs[0]
+        input_dir = os.path.realpath(self.get_input_dir(force=force))
         # ---------------------------------------------------------------------
         # Make sure directory is a string
         if type(directory) not in [str, np.str_]:
@@ -1109,6 +1145,9 @@ class DrsRecipe(object):
     def get_dir(self, dir_string, kind='input'):
         # get parameters from recipe call
         params = self.drs_params
+        # check if path has been set to an absolute path (that exists)
+        if os.path.exists(os.path.abspath(dir_string)):
+            return os.path.abspath(dir_string)
         # get the input directory from recipe.inputdir keyword
         if dir_string == 'RAW':
             dirpath = self.drs_params['DRS_DATA_RAW']
@@ -1215,6 +1254,31 @@ class DrsRunSequence(object):
         for kwarg in kwargs:
             if 'KW_' in kwarg:
                 filters[kwarg] = kwargs[kwarg]
+
+        # add keyword args from file arguments
+        if 'files' in kwargs:
+            files = kwargs['files']
+            if isinstance(files, str):
+                files = [files]
+            # loop around files and find file filters
+            file_filters = dict()
+            # loop around  files and get filters from files
+            for fileinst in files:
+                # get rkeys
+                rkeys = fileinst.required_header_keys
+                # loop around rkeys and add only those not present in filters
+                for key in rkeys:
+                    if 'KW_' in key:
+                        # need to deal with having multiple files defined
+                        if key in file_filters:
+                            file_filters[key].append(rkeys[key])
+                        else:
+                            file_filters[key] = [rkeys[key]]
+            # if file filter not in filters use the file filter
+            #   i.e. filters that already exist take precedence
+            for key in file_filters:
+                if key not in filters:
+                    filters[key] = file_filters[key]
         # add to new recipe
         frecipe.filters = filters
         # return frecipe
@@ -1305,7 +1369,7 @@ def _check_file_location(recipe, argname, directory, filename):
     # Step 1: check "filename" as full link to file (including wildcards)
     # -------------------------------------------------------------------------
     # get glob list of files using glob
-    raw_files = glob.glob(filename)
+    raw_files = np.sort(glob.glob(filename))
     # debug output
     if len(raw_files) == 0:
         dargs = [argname, filename]
@@ -1324,7 +1388,7 @@ def _check_file_location(recipe, argname, directory, filename):
     # Step 2: recipe.inputdir.upper() (including wildcards)
     # -------------------------------------------------------------------------
     # get glob list of files using glob
-    raw_files = glob.glob(os.path.join(input_dir, filename))
+    raw_files = np.sort(glob.glob(os.path.join(input_dir, filename)))
     # debug output
     if len(raw_files) == 0:
         dargs = [argname, filename]
@@ -1344,7 +1408,7 @@ def _check_file_location(recipe, argname, directory, filename):
     #         + .fits
     # -------------------------------------------------------------------------
     # get glob list of files using glob
-    raw_files = glob.glob(filename + '.fits')
+    raw_files = np.sort(glob.glob(filename + '.fits'))
     # debug output
     if len(raw_files) == 0 and not filename.endswith('.fits'):
         dargs = [argname, filename + '.fits']
@@ -1364,7 +1428,7 @@ def _check_file_location(recipe, argname, directory, filename):
     #         + .fits
     # -------------------------------------------------------------------------
     # get glob list of files using glob
-    raw_files = glob.glob(os.path.join(input_dir, filename + '.fits'))
+    raw_files = np.sort(glob.glob(os.path.join(input_dir, filename + '.fits')))
     # debug output
     if len(raw_files) == 0 and not filename.endswith('.fits'):
         dargs = [argname, os.path.join(input_dir, filename + '.fits')]
@@ -1550,8 +1614,13 @@ def find_run_files(params, recipe, table, args, filters=None,
                         testvalue = testvalue.strip().upper()
                     else:
                         values = np.array(table[tfilter])
+
+                    # criteria 1: value == testvalue
+                    vcond1 = values == testvalue
+                    # criteria 2: value in [None, 'None', '']
+                    vcond2 = np.in1d(values, [None, 'None', ''])
                     # check mask
-                    testmask |= values == testvalue
+                    testmask |= (vcond1 | vcond2)
                 # add filter to filter mask with AND (must have all filters)
                 filtermask &= testmask
         # ------------------------------------------------------------------
