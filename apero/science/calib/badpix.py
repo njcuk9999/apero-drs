@@ -380,11 +380,11 @@ def write_files(params, recipe, flatfile, darkfile, backmap, combine,
                        bad_pixel_map1, qc_params):
     badpixfile = recipe.outputs['BADPIX'].newcopy(recipe=recipe)
     # construct the filename from file instance
-    badpixfile.construct_filename(params, infile=darkfile)
+    badpixfile.construct_filename(params, infile=flatfile)
     # ------------------------------------------------------------------
     # define header keys for output file
     # copy keys from input file
-    badpixfile.copy_original_keys(darkfile)
+    badpixfile.copy_original_keys(flatfile)
     # add version
     badpixfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
     # add dates
@@ -429,7 +429,7 @@ def write_files(params, recipe, flatfile, darkfile, backmap, combine,
     # ----------------------------------------------------------------------
     backmapfile = recipe.outputs['BACKMAP'].newcopy(recipe=recipe)
     # construct the filename from file instance
-    backmapfile.construct_filename(params, infile=darkfile)
+    backmapfile.construct_filename(params, infile=flatfile)
     # ------------------------------------------------------------------
     # define header keys for output file (copy of badpixfile)
     backmapfile.copy_hdict(badpixfile)

@@ -65,7 +65,7 @@ def fast_med(vect,w):
 obj = 'Gl699'
 # all s1d files MUST be located in a directory with the name of the
 # target and _AB as a suffix
-all_AB = np.array(glob.glob(obj+'_AB/2[2-9]*AB*_tellu_corrected.fits'))
+all_AB = np.sort(glob.glob(obj+'_AB/2[2-9]*AB*_tellu_corrected.fits'))
 
 rms_threshold = 0.015
 # widh=th of high-pass filtering to match 

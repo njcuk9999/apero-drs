@@ -46,7 +46,7 @@ RV_SIMFP = 'RV_SIMFP'
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # get files
-    files = glob.glob(WORK_DIRECTORY + '*/*ccf*{0}*'.format(MASK))
+    files = np.sort(glob.glob(WORK_DIRECTORY + '*/*ccf*{0}*'.format(MASK)))
 
     good_files = []
     good_headers = []

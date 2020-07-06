@@ -9,6 +9,8 @@ Created on 2020-05-21
 """
 from pathlib import Path
 import numpy as np
+import os
+
 from astropy.io import fits
 from astropy.table import Table
 from astropy.time import Time
@@ -18,10 +20,10 @@ from astropy.time import Time
 # Define variables
 # =============================================================================
 # workspace for comparison (above reduced/calibDB/telluDB etc)
-WORKSPACE1 = '/scratch3/rali/spirou/md_20200603/'
-WORKSPACE2 = '/scratch3/LAM/lam_june1/'
+WORKSPACE1 = '/scratch3/rali/spirou/md_20200618/'
+WORKSPACE2 = '/scratch3/LAMsync/md_v0_6_106/'
 # define directories to compare
-directories = ['calibDB']
+directories = ['calibDB', 'tmp', 'reduced', 'telluDB']
 # define fit file suffixes
 FITS_SUFFIXES = ['.fits']
 # define the percentiles to check
@@ -60,7 +62,7 @@ class Comparison:
         # check that paths exist (formality)
         if filename2 is None:
             self.file2 = None
-        if not filename2.exists():
+        elif not filename2.exists():
             print('File2: {0} not found'.format(filename2))
             self.file2 = None
         else:
@@ -243,7 +245,9 @@ class Comparison:
                 # calculate stats
                 rmsd = np.nanstd(diff_image) / norm95
                 maxd = np.nanmax(np.abs(diff_image)) / norm95
+
                 fraction = np.mean(values1 == values2)
+                fraction = fraction / np.mean(np.isfinite(values1 + values2))
                 # populate states
                 self.stats[n95key] = norm95
                 self.stats[rmsdkey] = rmsd
@@ -482,11 +486,26 @@ if __name__ == "__main__":
     # get workspaces
     path1 = Path(WORKSPACE1)
     path2 = Path(WORKSPACE2)
-    # loop around directories
+
+    # deal with sub dirs
+    filtered_dirs = []
     for dirname in directories:
+        if dirname in ['reduced', 'raw', 'tmp']:
+            dirs = path1.joinpath(dirname).glob('*')
+            for dirname1 in dirs:
+                if dirname1.is_dir():
+                    filtered_dirs.append(os.path.join(dirname, dirname1.name))
+        else:
+            filtered_dirs.append(dirname)
+
+    # storage dictionary (for outputs)
+    table_dict = dict()
+    # loop around directories
+    for dirname in filtered_dirs:
         # ------------------------------------------------------------------
         # storage dictionary
         comparisons = []
+
         # ------------------------------------------------------------------
         # get the full directory path
         directory1 = path1.joinpath(dirname)
@@ -496,7 +515,7 @@ if __name__ == "__main__":
         all_files2 = np.sort(list(directory2.glob('*')))
         # index file base names
         names1 = list(map(lambda x: x.name, all_files1))
-        names2 = list(map(lambda x: x.name, all_files2))
+        names2 = np.array(list(map(lambda x: x.name, all_files2)))
         # ------------------------------------------------------------------
         # loop around files and match files
         for f_it, basename1 in enumerate(names1):
@@ -511,14 +530,13 @@ if __name__ == "__main__":
                 comparisons.append(comp)
             # else add both files
             else:
+                pos = np.where(basename1 == names2)[0][0]
                 # construct with both paths
-                comp = Comparison(all_files1[f_it], all_files2[f_it],
+                comp = Comparison(all_files1[f_it], all_files2[pos],
                                   directory=dirname)
                 # append to list
                 comparisons.append(comp)
         # ------------------------------------------------------------------
-        # storage dictionary (for outputs)
-        table_dict = dict()
         # loop around and get stats
         for c_it, comp in enumerate(comparisons):
             # print progress
@@ -533,15 +551,15 @@ if __name__ == "__main__":
                     table_dict[ckey] = [comp.stats[ckey]]
                 else:
                     table_dict[ckey].append(comp.stats[ckey])
-        # ------------------------------------------------------------------
-        # sort the column order
-        table_keys = sort_table(list(table_dict.keys()))
-        # now push table dict into a table
-        outtable = Table()
-        for tkey in table_keys:
-            outtable[tkey] = np.array(table_dict[tkey])
-        # save table
-        outtable.write(OUTFILE, overwrite=True)
+    # ------------------------------------------------------------------
+    # sort the column order
+    table_keys = sort_table(list(table_dict.keys()))
+    # now push table dict into a table
+    outtable = Table()
+    for tkey in table_keys:
+        outtable[tkey] = np.array(table_dict[tkey])
+    # save table
+    outtable.write(OUTFILE, overwrite=True)
 
 
 # =============================================================================

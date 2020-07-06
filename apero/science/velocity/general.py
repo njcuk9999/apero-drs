@@ -998,6 +998,9 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
     ccf_lines = []
     ccf_all_snr = []
     ccf_norm_all = []
+
+    # TODO: remove break point
+    constants.break_point(params)
     # ----------------------------------------------------------------------
     # loop around the orders
     for order_num in range(nbo):
@@ -1072,10 +1075,12 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         bl_ord[nanmask] = 0
         # now every value that is zero is masked (we don't want to spline these)
         good = (sp_ord != 0) & (bl_ord != 0)
+        weight_ord = np.array(good, dtype=float)
         # ------------------------------------------------------------------
         # spline the spectrum and the blaze
         spline_sp = mp.iuv_spline(wa_ord[good], sp_ord[good], k=5, ext=1)
         spline_bl = mp.iuv_spline(wa_ord[good], bl_ord[good], k=5, ext=1)
+        spline_weight = mp.iuv_spline(wa_ord, weight_ord, k=1, ext=1)
         # ------------------------------------------------------------------
         # set up the ccf for this order
         ccf_ord = np.zeros_like(rv_ccf)
@@ -1096,6 +1101,22 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         valid_lines_end = spline_bl(wave_tmp_end) != 0
         # combine the valid masks for start and end
         keep = valid_lines_start & valid_lines_end
+        # ------------------------------------------------------------------
+        # deal with no valid lines
+        if np.sum(keep) == 0:
+            # log all NaN
+            wargs = [order_num]
+            WLOG(params, 'warning', TextEntry('10-020-00007', args=wargs))
+            # set all values to NaN
+            ccf_all.append(np.repeat(np.nan, len(rv_ccf)))
+            ccf_all_fit.append(np.repeat(np.nan, len(rv_ccf)))
+            ccf_all_results.append(np.repeat(np.nan, 4))
+            ccf_noise_all.append(np.nan)
+            ccf_lines.append(0)
+            ccf_all_snr.append(np.nan)
+            ccf_norm_all.append(np.nan)
+            continue
+        # ------------------------------------------------------------------
         # apply masks to centers and weights
         omask_centers = omask_centers[keep]
         omask_weights = omask_weights[keep]
@@ -1103,12 +1124,19 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         omask_weights = omask_weights / np.nanmean(omask_weights)
 
         # Number of photons at line centers for 1 CCF step
-        nphot = spline_sp(omask_centers) / ccfstep
+        sweights = spline_weight(omask_centers)
+        nphot = spline_sp(omask_centers) * sweights / ccfstep
 
         # Poisson noise is a bit bigger because of weights
         wsum = np.sum(nphot*omask_weights)
-        wnoise = np.sqrt(np.sum(nphot*omask_weights**2))
-
+        wsum2 = np.sum(nphot*omask_weights**2)
+        # we can't calculate wnoise for negative values --> set to inf
+        if (wsum <= 0) or (wsum2 <= 0):
+            wargs = [order_num]
+            WLOG(params, 'warning', TextEntry('10-020-00008', args=wargs))
+            wsum, wnoise = 0.0, np.inf
+        else:
+            wnoise = np.sqrt(wsum2)
         # ------------------------------------------------------------------
         # set number of valid lines used to zero
         numlines = 0
@@ -1118,10 +1146,11 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
             wave_tmp = omask_centers * wave_shifts[rv_element]
             part1 = spline_sp(wave_tmp)
             part2 = spline_bl(wave_tmp)
+            part4 = spline_weight(wave_tmp)
             numlines = np.sum(spline_bl(wave_tmp) != 0)
             # CCF is the division of the sums
             with warnings.catch_warnings(record=True) as _:
-                ccf_element = ((part1 * part3) / part2) * omask_weights
+                ccf_element = ((part1 * part3) / part2) * omask_weights * part4
                 ccf_ord[rv_element] = mp.nansum(ccf_element)
         # ------------------------------------------------------------------
         # deal with NaNs in ccf
@@ -1155,9 +1184,14 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         # ------------------------------------------------------------------
         # get the RV accuracy from Bouchy 2001 equation
         dv_pix = (np.gradient(ccf_ord)/np.gradient(rv_ccf))/wnoise
-        ccf_noise = 1 / np.sqrt(np.nansum(dv_pix ** 2))
-        # ge the snr
-        ccf_snr = wsum / wnoise
+        # set the bad values for ccf noise and ccf snr --> NaN value is bad
+        if wsum == 0:
+                ccf_noise = np.nan
+                ccf_snr = np.nan
+        else:
+            ccf_noise = 1 / np.sqrt(np.nansum(dv_pix ** 2))
+            # ge the snr
+            ccf_snr = wsum / wnoise
         # ------------------------------------------------------------------
         # append ccf to storage
         ccf_all.append(ccf_ord)

@@ -40,6 +40,8 @@ get_non_tellu_objs = general.get_non_tellu_objs
 
 get_trans_files = general.get_transmission_files
 
+get_tellu_objs = general.get_tellu_objs
+
 get_whitelist = general.get_whitelist
 
 load_conv_tapas = general.load_conv_tapas
@@ -47,6 +49,8 @@ load_conv_tapas = general.load_conv_tapas
 load_tapas_convolved = general.load_tapas_convolved
 
 load_templates = general.load_templates
+
+load_tellu_file = general.load_tellu_file
 
 make_1d_template_cube = general.make_1d_template_cube
 

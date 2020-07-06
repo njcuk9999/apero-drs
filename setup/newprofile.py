@@ -9,6 +9,7 @@ Created on 2019-11-26 at 15:54
 
 @author: cook
 '''
+import numpy as np
 import argparse
 import os
 import glob
@@ -126,7 +127,7 @@ def copy_update(all_params):
     # ----------------------------------------------------------------------
     # find special files
     # ----------------------------------------------------------------------
-    all_old_files = old_uconfig.glob('*')
+    all_old_files = np.sort(list(old_uconfig.glob('*')))
     old_directories = []
     new_directories = []
     old_profile_name = ''

@@ -110,13 +110,13 @@ def __main__(recipe, params):
         return core.return_locals(params, locals())
     elif kind.lower() == 'tmp':
         path = params['DRS_DATA_WORKING']
-        columns = pconst.RAW_OUTPUT_KEYS()
+        columns = pconst.OUTPUT_FILE_HEADER_KEYS()
     elif kind.lower() == 'red':
         path = params['DRS_DATA_REDUC']
-        columns = pconst.REDUC_OUTPUT_KEYS()
+        columns = pconst.OUTPUT_FILE_HEADER_KEYS()
     else:
         path = params['DRS_DATA_WORKING']
-        columns = pconst.RAW_OUTPUT_KEYS()
+        columns = pconst.OUTPUT_FILE_HEADER_KEYS()
     # ----------------------------------------------------------------------
     # Deal with night name
     # ----------------------------------------------------------------------

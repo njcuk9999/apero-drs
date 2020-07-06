@@ -863,6 +863,108 @@ class _ActivateDebug(DrsAction):
         setattr(namespace, self.dest, value)
 
 
+class _ForceInputDir(DrsAction):
+    def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, '_ForceInputDir')
+        # define recipe as None (overwritten in __call__)
+        self.recipe = None
+        # force super initialisation
+        DrsAction.__init__(self, *args, **kwargs)
+
+    def _force_input_dir(self, values, recipe=None):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_force_input_dir', __NAME__,
+                         '_ForceInputDir')
+        # get params
+        params = self.recipe.drs_params
+        # deal with using without call
+        if self.recipe is None:
+            self.recipe = recipe
+        if values is None:
+            return None
+        # test value
+        # noinspection PyPep8,PyBroadException
+        try:
+            # only take first value (if a list)
+            if type(values) != str and hasattr(values, '__len__'):
+                values = values[0]
+            # try to make an string
+            value = str(values)
+            # now update constants file
+            # spirouConfig.Constants.UPDATE_PP(self.recipe.drs_params)
+            # return value
+            return value
+        except:
+            eargs = [self.dest, values]
+            WLOG(params, 'error', TextEntry('09-001-00020', args=eargs))
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # get drs parameters
+        self.recipe = parser.recipe
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         '_ForceInputDir')
+        # display listing
+        if type(values) == list:
+            value = list(map(self._force_input_dir, values))[0]
+        else:
+            value = self._force_input_dir(values)
+        # Add the attribute
+        setattr(namespace, self.dest, value)
+
+
+class _ForceOutputDir(DrsAction):
+    def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, '_ForceOutputDir')
+        # define recipe as None (overwritten in __call__)
+        self.recipe = None
+        # force super initialisation
+        DrsAction.__init__(self, *args, **kwargs)
+
+    def _force_output_dir(self, values, recipe=None):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_force_output_dir', __NAME__,
+                         '_ForceOutputDir')
+        # get params
+        params = self.recipe.drs_params
+        # deal with using without call
+        if self.recipe is None:
+            self.recipe = recipe
+        if values is None:
+            return None
+        # test value
+        # noinspection PyPep8,PyBroadException
+        try:
+            # only take first value (if a list)
+            if type(values) != str and hasattr(values, '__len__'):
+                values = values[0]
+            # try to make an string
+            value = str(values)
+            # now update constants file
+            # spirouConfig.Constants.UPDATE_PP(self.recipe.drs_params)
+            # return value
+            return value
+        except:
+            eargs = [self.dest, values]
+            WLOG(params, 'error', TextEntry('09-001-00020', args=eargs))
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # get drs parameters
+        self.recipe = parser.recipe
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         '_ForceOutputDir')
+        # display listing
+        if type(values) == list:
+            value = list(map(self._force_output_dir, values))[0]
+        else:
+            value = self._force_output_dir(values)
+        # Add the attribute
+        setattr(namespace, self.dest, value)
+
+
 class _DisplayVersion(DrsAction):
     def __init__(self, *args, **kwargs):
         # set function name (cannot break here --> no access to inputs)
@@ -1829,7 +1931,7 @@ def _get_file_list(limit, path, ext=None, recursive=False,
     if len(file_list) == 0:
         file_list = ['No valid files found.']
     # return file_list
-    return file_list, limit_reached
+    return np.sort(file_list), limit_reached
 
 
 def get_uncommon_path(path1, path2):
@@ -1950,6 +2052,50 @@ def make_debug(params):
     props['nargs'] = '?'
     # set the help message
     props['help'] = htext['DEBUG_HELP']
+    # return the argument dictionary
+    return props
+
+
+def set_inputdir(params):
+    # set function name
+    _ = display_func(params, 'set_inputdir', __NAME__)
+    # get the help text dictionary
+    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # set up an output storage dictionary
+    props = OrderedDict()
+    # set the argument name
+    props['name'] = '--force_indir'
+    # set any argument alternative names
+    props['altnames'] = []
+    # set the argument action function
+    props['action'] = _ForceInputDir
+    # set the number of argument to expect
+    props['nargs'] = 1
+    # set the help message
+    # TODO: move the language db
+    props['help'] = 'Force the default input directory (Normally set by recipe)'
+    # return the argument dictionary
+    return props
+
+
+def set_outputdir(params):
+    # set function name
+    _ = display_func(params, 'set_outputdir', __NAME__)
+    # get the help text dictionary
+    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
+    # set up an output storage dictionary
+    props = OrderedDict()
+    # set the argument name
+    props['name'] = '--force_outdir'
+    # set any argument alternative names
+    props['altnames'] = []
+    # set the argument action function
+    props['action'] = _ForceOutputDir
+    # set the number of argument to expect
+    props['nargs'] = 1
+    # set the help message
+    # TODO: move the language db
+    props['help'] = 'Force the default output directory (Normally set by recipe)'
     # return the argument dictionary
     return props
 

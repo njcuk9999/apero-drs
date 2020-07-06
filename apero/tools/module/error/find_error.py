@@ -865,7 +865,7 @@ def find_all_py_files(path):
             if filename.endswith('.py'):
                 pyfiles.append(os.path.join(root, filename))
     # return python files
-    return pyfiles
+    return np.sort(pyfiles)
 
 
 def open_all_py_files(files):

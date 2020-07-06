@@ -91,7 +91,7 @@ elif args.CASE == 2:
     # ----------------------------------------------------------------------
     # variables to vary
     # ----------------------------------------------------------------------
-    IN_FILES = glob.glob(os.path.join(W1, '24005*o_pp_e2dsff_C.fits'))
+    IN_FILES = np.sort(glob.glob(os.path.join(W1, '24005*o_pp_e2dsff_C.fits')))
     MASK_FILES = os.path.join(W2, 'fp.mas')
     # ----------------------------------------------------------------------
     # static variables

@@ -13,9 +13,9 @@ import rules:
 
 @author: cook
 """
+import numpy as np
 import os
 import time
-import numpy as np
 import random
 
 from apero.core import constants
@@ -182,17 +182,17 @@ class Lock:
             self.enqueue(name)
 
         # get the raw list
-        rawlist = os.listdir(path)
+        rawlist = np.sort(os.listdir(path))
 
         # if we don't have this file add it to the end of the list
         if name + '.lock' not in rawlist:
             self.enqueue(name)
-            rawlist = os.listdir(path)
+            rawlist = np.sort(os.listdir(path))
 
         # deal with no raw files
         if len(rawlist) == 0:
             self.enqueue(name)
-            rawlist = os.listdir(path)
+            rawlist = np.sort(os.listdir(path))
 
         # get times
         pos, mintime = np.nan, np.inf
@@ -329,7 +329,7 @@ class Lock:
         WLOG(self.params, 'debug', TextEntry('40-101-00005', args=[self.path]))
         # get the raw list
         if os.path.exists(self.path):
-            rawlist = os.listdir(self.path)
+            rawlist = np.sort(os.listdir(self.path))
         else:
             return
         # loop around files
@@ -466,7 +466,7 @@ def __remove_empty__(params, path, remove_head=True, log=False):
         return
 
     # remove empty subfolders
-    files = os.listdir(path)
+    files = np.sort(os.listdir(path))
     if len(files):
         for f in files:
             fullpath = os.path.join(path, f)
@@ -474,7 +474,7 @@ def __remove_empty__(params, path, remove_head=True, log=False):
                 __remove_empty__(params, fullpath, log=log)
 
     # if folder empty, delete it
-    files = os.listdir(path)
+    files = np.sort(os.listdir(path))
     if len(files) == 0 and remove_head:
         if log:
             WLOG(params, 'debug', "Removing empty folder: {0}".format(path))

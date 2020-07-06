@@ -129,6 +129,9 @@ class PseudoConstants(DefaultConstants):
         # ------------------------------------------------------------------
         return header, hdict
 
+    def DRS_OBJ_NAME(self, objname):
+        return clean_obj_name(objname=objname)
+
     def VALID_RAW_FILES(self):
         valid = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
         return valid
@@ -388,20 +391,32 @@ class PseudoConstants(DefaultConstants):
 # =============================================================================
 # Functions used by pseudo const (instrument specific)
 # =============================================================================
-def clean_obj_name(params, header, hdict):
-    # get keys from params
-    kwrawobjname = params['KW_OBJECTNAME'][0]
-    kwobjname = params['KW_OBJNAME'][0]
-    # get raw object name
-    rawobjname = header[kwrawobjname]
-    # let clean it
-    objname = rawobjname.strip()
-    objname = objname.replace(' ', '_')
-    # add it to the header with new keyword
-    header[kwobjname] = objname
-    hdict[kwobjname] = objname
-    # return header
-    return header, hdict
+def clean_obj_name(params=None, header=None, hdict=None, objname=None):
+    # deal with no objname --> header mode
+    if objname is None:
+        return_header = True
+        # get keys from params
+        kwrawobjname = params['KW_OBJECTNAME'][0]
+        kwobjname = params['KW_OBJNAME'][0]
+        # get raw object name
+        rawobjname = header[kwrawobjname]
+    # else just set up blank parameters
+    else:
+        kwrawobjname, kwobjname = '', ''
+        return_header = False
+        rawobjname = str(objname)
+    # clean object name
+    objectname = rawobjname.strip()
+    objectname = objectname.replace(' ', '_')
+    # deal with returning header
+    if return_header:
+        # add it to the header with new keyword
+        header[kwobjname] = objectname
+        hdict[kwobjname] = objectname
+        # return header
+        return header, hdict
+    else:
+        return objectname
 
 
 def get_trg_type(params, header, hdict):

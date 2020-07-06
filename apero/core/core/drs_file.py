@@ -22,7 +22,8 @@ from apero.core.core import drs_log
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.instruments.default import output_filenames as outf
-from apero.lang import drs_text
+from apero import lang
+from apero.io import drs_text
 from apero.io import drs_fits
 from apero.io import drs_path
 from apero.io import drs_strings
@@ -44,9 +45,9 @@ display_func = drs_log.display_func
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = drs_text.TextEntry
-TextDict = drs_text.TextDict
-HelpText = drs_text.HelpDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
+HelpText = lang.drs_text.HelpDict
 # TODO: This should be changed for astropy -> 2.0.1
 # bug that hdu.scale has bug before version 2.0.1
 if av.major < 2 or (av.major == 2 and av.minor < 1):
@@ -706,6 +707,10 @@ class DrsFitsFile(DrsInputFile):
         self.data_array = None
         # get the header array (fro multi-extnesion fits)
         self.header_array = None
+        # flag whether file is a combined file
+        self.is_combined = kwargs.get('is_combined', False)
+        self.combined_list = kwargs.get('combined_list', [])
+
         # TODO: IS this used?? What is it used for?
         self.s1d = kwargs.get('s1d', [])
         # update database key based on whether we have the fiber
@@ -724,7 +729,7 @@ class DrsFitsFile(DrsInputFile):
     def newcopy(self, **kwargs):
         """
         Make a new copy of this class (using all default parameters
-        set when constructed
+        set when constructed) - does not copy data/header related information
 
         :param kwargs:
             - name: string, the name of the DRS input file
@@ -862,6 +867,8 @@ class DrsFitsFile(DrsInputFile):
         nkwargs['shape'] = copy.deepcopy(drsfile.shape)
         nkwargs['hdict'] = copy.deepcopy(drsfile.hdict)
         nkwargs['output_dict'] = copy.deepcopy(drsfile.output_dict)
+        nkwargs['is_combined'] = bool(drsfile.is_combined)
+        nkwargs['combined_list'] = copy.deepcopy(drsfile.combined_list)
         # ------------------------------------------------------------------
         if drsfile.fileset is None:
             nkwargs['fileset'] = None
@@ -1357,22 +1364,31 @@ class DrsFitsFile(DrsInputFile):
                 valid1 = False
                 # loop around
                 for rvalue in rvalues:
+                    # get this value
+                    filedictvalue = filedict[key]
+                    # deal with null values
+                    if filedictvalue in [None, 'None', '']:
+                        valid1 |= True
+                        continue
                     # make sure there are no white spaces and all upper case
-                    filedictvalue = filedict[key].strip().upper()
+                    if isinstance(filedictvalue, str):
+                        filedictvalue = filedictvalue.strip().upper()
+                    # else make sure there are no end white spaces and all
+                    #   upper case for the required value
                     rvalueclean = rvalue.strip().upper()
                     # if key is in file dictionary then we should check it
                     if filedictvalue == rvalueclean:
                         valid1 |= True
                 # modify valid value
                 valid &= valid1
-                dargs = [key, valid, rvalues]
+                dargs = [key, valid, filedict['OUT'], rvalues]
                 WLOG(params, 'debug', TextEntry('90-008-00003', args=dargs))
                 # if we haven't found a key the we can stop here
                 if not valid:
                     return False
             else:
                 # Log that key was not found
-                dargs = [key, ', '.join(list(filedict.keys()))]
+                dargs = [key, filedict['OUT'], ', '.join(list(filedict.keys()))]
                 WLOG(params, 'debug', TextEntry('90-008-00002', args=dargs))
 
         # return valid
@@ -1755,10 +1771,12 @@ class DrsFitsFile(DrsInputFile):
 
             if dkey in self.hdict:
                 self.output_dict[key] = str(self.hdict[dkey])
+            elif dkey in self.header:
+                self.output_dict[key] = str(self.header[dkey])
             else:
                 self.output_dict[key] = '--'
 
-    def combine(self, infiles, math='sum', same_type=True):
+    def combine(self, infiles, math='sum', same_type=True, path=None):
         # set function name
         func_name = display_func(None, 'combine', __NAME__, 'DrsFitsFile')
         # define usable math
@@ -1775,6 +1793,7 @@ class DrsFitsFile(DrsInputFile):
         # --------------------------------------------------------------------
         # cube
         datacube = [data]
+        basenames = [self.basename]
         # combine data into cube
         for infile in infiles:
             # check data is read for infile
@@ -1785,6 +1804,7 @@ class DrsFitsFile(DrsInputFile):
                 WLOG(params, 'error', TextEntry('00-001-00021', args=eargs))
             # add to cube
             datacube.append(infile.data)
+            basenames.append(infile.basename)
         # make datacube an numpy array
         datacube = np.array(datacube)
         # --------------------------------------------------------------------
@@ -1820,6 +1840,18 @@ class DrsFitsFile(DrsInputFile):
         else:
             eargs = [math, ', '.join(available_math), func_name]
             WLOG(params, 'error', TextEntry('00-001-00042', args=eargs))
+
+        # --------------------------------------------------------------------
+        # Need to setup a new filename
+
+        # get common prefix
+        prefix = drs_text.common_text(basenames, 'prefix')
+        suffix = drs_text.common_text(basenames, 'suffix')
+        basename = drs_text.combine_uncommon_text(basenames, prefix, suffix)
+        # update path and filename
+        if path is None:
+            path = self.path
+        filename = os.path.join(path, basename)
         # --------------------------------------------------------------------
         # construct keys for new DrsFitsFile
         # set empty file attributes
@@ -1833,9 +1865,9 @@ class DrsFitsFile(DrsInputFile):
         nkwargs['fiber'] = self.fiber
         nkwargs['fibers'] = self.fibers
         nkwargs['rkeys'] = self.required_header_keys
-        nkwargs['filename'] = self.filename
-        nkwargs['path'] = self.path
-        nkwargs['basename'] = self.basename
+        nkwargs['filename'] = filename
+        nkwargs['path'] = path
+        nkwargs['basename'] = basename
         nkwargs['inputdir'] = self.inputdir
         nkwargs['directory'] = self.directory
         nkwargs['data'] = data
@@ -1846,6 +1878,8 @@ class DrsFitsFile(DrsInputFile):
         nkwargs['fileset'] = self.fileset
         nkwargs['filesetnames'] = self.filesetnames
         nkwargs['outfunc'] = self.outfunc
+        nkwargs['is_combined'] = True
+        nkwargs['combined_list'] = list(basenames)
         # return new instance of DrsFitsFile
         return DrsFitsFile(**nkwargs)
 
