@@ -251,6 +251,19 @@ def get_tellu_objs(params, key, objnames=None, **kwargs):
     else:
         outputs = np.unique(obj_entries[column][mask])
     # ----------------------------------------------------------------------
+    # deal with getting absolute paths
+    if column == 'filename':
+        abspaths = []
+        # loop around filenames
+        for filename in outputs:
+            # get absolute path
+            abspath = drs_database.get_db_abspath(params, filename,
+                                                  where='telluric')
+            # append to list
+            abspaths.append(abspath)
+        # push back into outputs
+        outputs = list(abspaths)
+    # ----------------------------------------------------------------------
     # display how many files found
     margs = [len(outputs),  typestr]
     WLOG(params, '', TextEntry('40-019-00039', args=margs))
