@@ -21,9 +21,13 @@ from astropy.io import fits
 # =============================================================================
 # TARGETS = ('TOI-442, Gl699, Gl876, Gl436, Gl514, Gl382, Gl846, Trappist-1, '
 #            'Gl15A, HD189733, GJ1002, GJ1214').split(',')
-TARGETS = ('AUMic, Gl388, TOI-1278, TOI-1759, TOI-1452').split(',')
+# TARGETS = ('AUMic, Gl388, TOI-1278, TOI-1759, TOI-1452').split(',')
 # TARGETS = ('TOI-233, K2-147, TOI-736, K2-33, TOI-876, TOI-732',
 #            'TYC 4384-1735-1').split()
+TARGETS = ('TOI-442, Gl699, Gl876, Gl436, Gl514, Gl382, Gl846, Trappist-1, '
+           'Gl15A, HD189733, GJ1002, GJ1214, AUMic, Gl388, TOI-1278, '
+           'TOI-1759, TOI-1452, TOI-233, K2-147, TOI-736, K2-33, TOI-876, '
+           'TOI-732, TYC 4384-1735-1').split(',')
 
 IN_WORKSPACE = '/spirou/cfht_nights/cfht_june1/reduced/'
 OUT_WORKSPACE = '/spirou/cfht_nights/science_targets/'
