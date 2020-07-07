@@ -673,7 +673,7 @@ class RecipeLog:
             self.write_logfile(params)
 
     def add_error(self, params, errortype, errormsg, write=True):
-        self.errors += '"{0}":"{1}" '.format(errortype, errormsg)
+        self.errors += '"{0}":"{1}"||'.format(errortype, errormsg)
         # whether to write (update) recipe log file
         if write:
             self.write_logfile(params)
