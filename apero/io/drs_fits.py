@@ -116,6 +116,10 @@ class Header(fits.Header):
     def __nan_check(value):
         if isinstance(value, float) and np.isnan(value):
             return 'NaN'
+        elif isinstance(value, float) and np.isposinf(value):
+            return 'INF'
+        elif isinstance(value, float) and np.isneginf(value):
+            return '-INF'
         elif type(value) == tuple:
             return (Header.__nan_check(value[0]),) + value[1:]
         else:
