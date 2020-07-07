@@ -251,8 +251,16 @@ def linear_minimization(vector, sample, no_recon=False):
 
 
 def iuv_spline(x, y, **kwargs):
-    # check whether weights are set
-    w = kwargs.get('w', None)
+    # deal with dimensions error (on k)
+    #   otherwise get   dfitpack.error: (m>k) failed for hidden m
+    if kwargs.get('k', None) is not None:
+        if len(x) < (kwargs['k'] + 1):
+            # raise exception if len(x) is bad
+            emsg = ('IUV Spline len(x) < k+1 '
+                    '\n\tk={0}\n\tlen(x) = {1}'
+                    '\n\tx={2}\n\ty={3}')
+            eargs = [kwargs['k'], len(x), str(x)[:70], str(y)[:70]]
+            raise DrsMathException(emsg.format(*eargs))
     # copy x and y
     x, y = np.array(x), np.array(y)
     # find all NaN values
