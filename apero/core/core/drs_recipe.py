@@ -18,6 +18,7 @@ import glob
 from collections import OrderedDict
 import copy
 import itertools
+import importlib
 
 from apero.core.instruments.default import pseudo_const
 from apero.core import constants
@@ -99,7 +100,28 @@ class DrsRecipe(object):
             self.drs_params = params
             if self.instrument is None:
                 self.instrument = params['INSTRUMENT']
+        # run rest of initialization
+        self.__initialize()
 
+    def __getstate__(self):
+        # exclude = ('filemod', 'recipemod')
+        # state = {k: v for k, v in self.__dict__.items() if k not in exclude}
+        # state['filemodstr'] = self.filemod.__name__
+        # print(state)
+        # return state
+        return {
+            'instrument': self.instrument,
+            'name': self.name,
+            'drs_params': self.drs_params,
+            'filemodstr': self.filemod.__name__,
+        }
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.filemod = importlib.import_module(state['filemodstr'])
+        self.__initialize()
+
+    def __initialize(self):
         # set filters
         self.filters = dict()
         self.master = False

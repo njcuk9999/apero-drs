@@ -17,7 +17,8 @@ import time
 from astropy.table import Table
 from collections import OrderedDict
 import multiprocessing
-from multiprocessing import Pool, Process, Manager, Event
+from multiprocessing import Pool, Process, Manager
+import importlib
 
 from apero import core
 from apero.core.core import drs_startup
@@ -117,6 +118,16 @@ class Run:
         self.nightname = None
         # update parameters given runstring
         self.update()
+
+    def __getstate__(self):
+        exclude = ('module', 'recipemod')
+        state = {k: v for k, v in self.__dict__.items() if k not in exclude}
+        state['modulestr'] = self.module.__name__
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.recipemod = self.recipe.main
 
     def filename_args(self):
         """
@@ -225,6 +236,9 @@ class Run:
         self.recipename = self.args[0]
         # find the recipe
         if self.recipe is None:
+            module_str = self.__dict__.get('modulestr')
+            if self.module is None and module_str:
+                self.module = importlib.import_module(module_str)
             self.recipe, self.module = self.find_recipe(self.module)
             # get filemod and recipe mod
             self.recipe.filemod = self.pconst.FILEMOD()
@@ -849,8 +863,8 @@ def process_run_list(params, recipe, runlist, group=None):
         # log process: Running with N cores
         WLOG(params, 'info', TextEntry('40-503-00017', args=[cores]))
         # run as multiple processes
-        rdict = _multi_process(params, recipe, runlist, cores=cores,
-                               groupname=group)
+        rdict = _multi_process1(params, recipe, runlist, cores=cores,
+                                groupname=group)
 
     # remove lock files
     drs_lock.reset_lock_dir(params)
@@ -1962,7 +1976,7 @@ def _multi_process(params, recipe, runlist, cores, groupname=None):
     grouplist, groupnames = _group_tasks1(runlist, cores)
     # start process manager
     manager = Manager()
-    event = Event()
+    event = manager.Event()
     return_dict = manager.dict()
     # loop around groups
     #   - each group is a unique recipe
@@ -2007,11 +2021,9 @@ def _multi_process1(params, recipe, runlist, cores, groupname=None):
     return_dict = manager.dict()
     # loop around groups
     #   - each group is a unique recipe
-    for g_it, groupnum in enumerate(grouplist):
-        # get this groups values
-        group = grouplist[groupnum]
+    for g_it, group in grouplist.items():
         # log progress
-        _group_progress(params, g_it, grouplist, groupnames[groupnum])
+        _group_progress(params, g_it, grouplist, groupnames[g_it])
         # skip groups if event is set
         if event.is_set():
             # TODO: Add to language db
@@ -2020,8 +2032,8 @@ def _multi_process1(params, recipe, runlist, cores, groupname=None):
         # list of params for each entry
         params_per_process = []
         # populate params for each sub group
-        for r_it, runlist_group in enumerate(group):
-            args = [params, recipe, runlist_group, return_dict, r_it + 1,
+        for r_it, run in enumerate(group):
+            args = [params, recipe, (run,), return_dict, r_it + 1,
                     cores, event, groupname]
             params_per_process.append(args)
         # start parellel jobs

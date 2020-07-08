@@ -288,6 +288,11 @@ class ParamDict(CaseInsensitiveDict):
         # run the super class (CaseInsensitiveDict <-- dict)
         super(ParamDict, self).__init__(*arg, **kw)
 
+    # This allows it to run, but is certainly wrong, only keeps the dict items.
+    # Instead we will want to override __getstate__ and __setstate__.
+    def __reduce__(self):
+        return super().__reduce__()
+
     def __getitem__(self, key: str) -> object:
         """
         Method used to get the value of an item using "key"
