@@ -85,6 +85,9 @@ def get_params(params, _props, gaiaid=None, objname=None, ra=None, dec=None,
     # make locked lookuptable function
     @drs_lock.synchronized(lock, params['PID'])
     def locked_lookuptable():
+
+        ## TODO: remove break point
+        constants.break_point(params)
         # ----------------------------------------------------------------------
         if os.path.exists(lookuptablename):
             # load lookup table from file
