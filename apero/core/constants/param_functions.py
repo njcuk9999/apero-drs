@@ -1347,10 +1347,10 @@ def get_module_names(instrument=None, mod_list=None, instrument_path=None,
         if os.path.isdir(filename):
             directories.append(filename)
     # construct sub-module name
-    relpath = instrument_path.replace('.', '').replace(os.sep, '.')
-    relpath = relpath.strip('.')
-    corepath = default_path.replace('.', '').replace(os.sep, '.')
-    corepath = corepath.strip('.')
+    relpath = os.path.normpath(instrument_path).replace('.', '')
+    relpath = relpath.replace(os.sep, '.').strip('.')
+    corepath = os.path.normpath(default_path).replace('.', '')
+    corepath = corepath.replace(os.sep, '.').strip('.')
 
     # construct module import name
     if instrument is None:
