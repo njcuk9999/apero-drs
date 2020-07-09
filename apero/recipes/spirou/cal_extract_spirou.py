@@ -170,9 +170,10 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Load and straighten order profiles
         # ------------------------------------------------------------------
-        sargs = [infile, fibertypes, shapelocal, shapex, shapey,
-                 recipe.outputs['ORDERP_SFILE']]
-        orderps, orderpfiles = extract.order_profiles(params, recipe, *sargs)
+        # TODO: UNCOMMENT
+        # sargs = [infile, fibertypes, shapelocal, shapex, shapey,
+        #          recipe.outputs['ORDERP_SFILE']]
+        # orderps, orderpfiles = extract.order_profiles(params, recipe, *sargs)
 
         # ------------------------------------------------------------------
         # Apply shape transformations
@@ -187,7 +188,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         bprops = extract.get_berv(params, infile, header, props)
 
-        # TODO: remove breakpoint
+        ## TODO: remove break point
         constants.break_point(params)
 
 
