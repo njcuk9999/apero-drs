@@ -196,6 +196,9 @@ def __main__(recipe, params):
         # load wavelength solution for this fiber
         wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
                                        infile=infile)
+
+        # TODO: add in EA pre cleaning
+
         # ------------------------------------------------------------------
         # Normalize image by peak blaze
         # ------------------------------------------------------------------

@@ -860,7 +860,7 @@ def find_all_py_files(path):
     # empty storage
     pyfiles = []
     # walk through path to file python files
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(path, followlinks=True):
         for filename in files:
             if filename.endswith('.py'):
                 pyfiles.append(os.path.join(root, filename))

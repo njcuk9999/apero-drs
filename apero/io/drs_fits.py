@@ -844,7 +844,7 @@ def get_index_files(params, path=None, required=True, night=None):
     # storage of index files
     index_files = []
     # walk through path and find index files
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(path, followlinks=True):
         # skip nights if required
         if night is not None:
             if not root.strip(os.sep).endswith(night):
@@ -1203,7 +1203,7 @@ def _get_files(params, recipe, path, rpath, **kwargs):
         bnightnames = None
     # ----------------------------------------------------------------------
     # get files (walk through path)
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(path, followlinks=True):
         # loop around files in this root directory
         for filename in files:
             # --------------------------------------------------------------

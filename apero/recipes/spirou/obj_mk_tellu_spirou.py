@@ -201,6 +201,9 @@ def __main__(recipe, params):
         # load wavelength solution for this fiber
         wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
                                        infile=infile)
+
+        # TODO: add in EA pre cleaning
+
         # ------------------------------------------------------------------
         # Load the TAPAS atmospheric transmission convolved with the
         #   master wave solution
