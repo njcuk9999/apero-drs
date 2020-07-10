@@ -59,7 +59,7 @@ def get_all_files(params, path):
     # storage of files
     fits_files = []
     # walk through directories
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(path, followlinks=True):
         # get night name
         ucpath = drs_path.get_uncommon_path(path, root)
         # do not search directories with no files
@@ -82,7 +82,7 @@ def get_all_files(params, path):
 def get_nightnames(params, path):
     night_names = []
     # walk through directories
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(path, followlinks=True):
         # do not search directories with no files
         if len(files) == 0:
             continue

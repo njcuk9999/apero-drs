@@ -43,7 +43,7 @@ def get_index_files(path):
     # storage for index files
     index_files = []
     # walk through all sub-directories
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(path, followlinks=True):
         # loop around files in current sub-directory
         for filename in files:
             # only save index files
