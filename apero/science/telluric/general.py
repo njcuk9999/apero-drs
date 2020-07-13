@@ -837,21 +837,21 @@ def calculate_telluric_absorption(params, recipe, image, template,
     tprops['TEMP_MED_FILT'] = med_filt1
 
     # TODO: remove unused
-    # tprops['DPARAM_THRES'] = dparam_threshold
-    # tprops['MAX_ITERATIONS'] = max_iteration
-    # tprops['THRES_TRANSFIT'] = threshold_transmission_fit
-    # tprops['MIN_WATERCOL'] = min_watercol
-    # tprops['MAX_WATERCOL'] = max_watercol
-    # tprops['MIN_NUM_GOOD'] = min_number_good_points
-    # tprops['BTRANS_PERCENT'] = btrans_percentile
-    # tprops['NSIGCLIP'] = nsigclip
-    # tprops['TRANS_TMEDFILT'] = med_filt2
-    # tprops['SMALL_W_ERR'] = small_weight
-    # tprops['IMAGE_PIXEL_SIZE'] = tellu_med_sampling
-    # tprops['TAU_WATER_UPPER'] = tau_water_upper
-    # tprops['TAU_OTHER_LOWER'] = tau_others_lower
-    # tprops['TAU_OTHER_UPPER'] = tau_others_upper
-    # tprops['TAPAS_SMALL_NUM'] = tapas_small_number
+    tprops['DPARAM_THRES'] = np.nan
+    tprops['MAX_ITERATIONS'] = np.nan
+    tprops['THRES_TRANSFIT'] = np.nan
+    tprops['MIN_WATERCOL'] = np.nan
+    tprops['MAX_WATERCOL'] = np.nan
+    tprops['MIN_NUM_GOOD'] = np.nan
+    tprops['BTRANS_PERCENT'] = np.nan
+    tprops['NSIGCLIP'] = np.nan
+    tprops['TRANS_TMEDFILT'] = np.nan
+    tprops['SMALL_W_ERR'] = np.nan
+    tprops['IMAGE_PIXEL_SIZE'] = np.nan
+    tprops['TAU_WATER_UPPER'] = np.nan
+    tprops['TAU_OTHER_LOWER'] = np.nan
+    tprops['TAU_OTHER_UPPER'] = np.nan
+    tprops['TAPAS_SMALL_NUM'] = np.nan
     # set sources
     keys = ['DEFAULT_CWIDTH', 'FINER_CWIDTH', 'TEMP_MED_FILT',
             'DPARAM_THRES', 'MAX_ITERATIONS', 'THRES_TRANSFIT', 'MIN_WATERCOL',
