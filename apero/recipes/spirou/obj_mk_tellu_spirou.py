@@ -207,6 +207,17 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         largs = [header, mprops, fiber]
         tapas_props = telluric.load_conv_tapas(params, recipe, *largs)
+
+
+        # TODO: add EA cleaning function
+        #   ------------------------------------------------------------------
+        #   must return airmass/watercol for quality control
+        #   tprops['PASSED'] = True
+        #   tprops['RECOV_AIRMASS'] = np.nan
+        #   tprops['RECOV_WATER'] = np.nan
+        #   tprops['AIRMASS'] = airmass
+        #   ------------------------------------------------------------------
+
         # ------------------------------------------------------------------
         # Normalize image by peak blaze
         # ------------------------------------------------------------------
@@ -226,6 +237,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         cargs = [recipe, image, template, template_file, header, mprops, wprops,
                  tapas_props, bprops]
+        # TODO: rename to calculate telluric residual absorption
         tellu_props = telluric.calculate_telluric_absorption(params, *cargs)
         # ------------------------------------------------------------------
         # Quality control

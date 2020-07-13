@@ -592,6 +592,46 @@ def load_tapas_convolved(params, recipe, header, mprops, fiber, **kwargs):
 # =============================================================================
 # Make telluric functions
 # =============================================================================
+# TODO: move to math
+from scipy.interpolate import InterpolatedUnivariateSpline
+# TODO: move to math
+def lowpassfilter(v, w=101):
+    # provide a low-pass filter of the spectrum by performing a running median.
+    # To speed things up and
+    # avoid discontinuies, we take the median in steps of 1/4th of the filter
+    # size and spline afterward
+    # indices along input vector
+    index = np.arange(len(v))
+    # placeholders for x and y position along vector
+    xmed = []
+    ymed = []
+    for i in np.arange(0,len(v),w//4):
+        pixval = index[i:i+w]
+        # if no finite value, continue
+        if np.max(np.isfinite(v[pixval])) == 0:
+            continue
+        pixval = pixval[np.isfinite(v[pixval])]
+        if np.max(np.isfinite(v[pixval])) == 0:
+            continue
+        xmed.append(np.nanmean(pixval))
+        ymed.append(np.nanmedian(v[pixval]))
+    xmed = np.array(xmed,dtype = float)
+    ymed = np.array(ymed,dtype = float)
+    #print(xmed)
+    if len(xmed) < 3:
+        return np.zeros_like(v)+np.nan
+    if len(xmed) != len(np.unique(xmed)):
+        xmed2 = np.unique(xmed)
+        ymed2 = np.zeros_like(xmed2)
+        for i in range(len(xmed2)):
+            ymed2[i] = np.mean(ymed[xmed == xmed2[i]])
+        xmed = xmed2
+        ymed = ymed2
+    spline = InterpolatedUnivariateSpline(xmed,ymed, k=1, ext=3)
+    return spline(np.arange(len(v)))
+
+
+
 def calculate_telluric_absorption(params, recipe, image, template,
                                   template_file, header, mprops, wprops,
                                   tapas_props, bprops, **kwargs):
@@ -605,6 +645,8 @@ def calculate_telluric_absorption(params, recipe, image, template,
                           kwargs, func_name, mapf='list', dtype=int)
     med_filt1 = pcheck(params, 'MKTELLU_TEMP_MED_FILT', 'med_filt', kwargs,
                        func_name)
+
+    # TODO: remove unused parameters
     dparam_threshold = pcheck(params, 'MKTELLU_DPARAMS_THRES',
                               'dparam_threshold', kwargs, func_name)
     max_iteration = pcheck(params, 'MKTELLU_MAX_ITER', 'max_iteration',
@@ -707,7 +749,8 @@ def calculate_telluric_absorption(params, recipe, image, template,
             keep = np.isfinite(template[order_num])
             # apply median filter
             mfargs = [template[order_num, keep], med_filt1]
-            template[order_num, keep] = filters.median_filter(*mfargs)
+            # TODO: move lowpassfilter to math
+            template[order_num, keep] = lowpassfilter(*mfargs)
 
         # loop around each order again
         for order_num in range(nbo):
@@ -735,289 +778,53 @@ def calculate_telluric_absorption(params, recipe, image, template,
         image1 = image1 / template
 
     # ------------------------------------------------------------------
-    # Calculation of telluric absorption
+    # Low pass filtering of hot star (create SED)
     # ------------------------------------------------------------------
-    # define tapas fit constants parameters
-    tapas_fit_kwargs = dict(sp_water=tapas_water, sp_others=tapas_others,
-                            tau_water_upper=tau_water_upper,
-                            tau_others_lower=tau_others_lower,
-                            tau_others_upper=tau_others_upper,
-                            tapas_small_number=tapas_small_number)
 
-    # define function for curve_fit
-    def tapas_fit(kp, tau_water, tau_others):
-        # curve fit forces floats
-        kp = np.array(kp, dtype=bool)
-        # return calc tapas abso
-        return _calc_tapas_abso(kp, tau_water, tau_others, **tapas_fit_kwargs)
-
-    # starting point for the optical depth of water and other gasses
-    guess = [airmass, airmass]
-
-    # first estimate of the absorption spectrum
-    tau1 = tapas_fit(np.isfinite(mwavemap), guess[0], guess[1])
-    tau1 = tau1.reshape(image1.shape)
     # first guess at the SED estimate for the hot start (we guess with a
     #   spectrum full of ones
     sed = np.ones_like(mwavemap)
     # then we correct with out first estimate of the absorption
     for order_num in range(image1.shape[0]):
-        # get an estimate at the sed
-        tmp_corr = image1[order_num] / tau1[order_num]
         # get the smoothing size from wconv
         smooth = int(wconv[order_num])
         # median filter
-        sed[order_num] = filters.median_filter(tmp_corr, smooth)
-
-    # flag to see if we converged (starts off very large)
-    # this is the quadratic sum of the change in airmass and water column
-    # when the change in the sum of these two values is very small between
-    # two steps, we assume that the code has converges
-    dparam = np.inf
-
-    # count the number of iterations
-    iteration = 0
-
-    # if the code goes out-of-bound, then we'll get out of the loop with this
-    #    keyword
-    fail = False
-    skip = False
-
-    # conditions to carry on looping
-    cond1 = dparam > dparam_threshold
-    cond2 = iteration < max_iteration
-    cond3 = not fail
-
-    # set up empty arrays
-    oimage2_arr = np.zeros((nbo, nbpix), dtype=float)
-    keep = np.zeros(nbpix, dtype=bool)
-    # loop around until one condition not met
-    while cond1 and cond2 and cond3:
-        # ---------------------------------------------------------------------
-        # previous guess
-        prev_guess = np.array(guess)
-        # ---------------------------------------------------------------------
-        # we have an estimate of the absorption spectrum
-        fit_image = image1 / sed
-        # ---------------------------------------------------------------------
-        # some masking of NaN regions
-        nanmask = ~np.isfinite(fit_image)
-        fit_image[nanmask] = 0
-        # ---------------------------------------------------------------------
-        # define where we should fit (in photometeric bands)
-        good_domain = (mwavemap > hbandlower) & (mwavemap < hbandupper)
-        # vector used to mask invalid regions
-        keep = fit_image != 0
-        # only fit where the transmission is greater than a certain value
-        keep &= tau1 > threshold_transmission_fit
-        # considered bad if the spectrum is larger than '. This is
-        #     likely an OH line or a cosmic ray
-        keep &= fit_image < transfit_upper_bad
-        keep &= fit_image > threshold_transmission_fit
-        # ---------------------------------------------------------------------
-        # fit telluric absorption of the spectrum
-        with warnings.catch_warnings(record=True) as _:
-            popt, pcov = curve_fit(tapas_fit, keep & good_domain,
-                                   fit_image.ravel(), p0=guess)
-        # update our guess
-        guess = np.array(popt)
-        # ---------------------------------------------------------------------
-        # if our tau_water guess is bad fail
-        if (guess[0] < min_watercol) or (guess[0] > max_watercol):
-            # log warning that recovered water vapor optical depth not between
-            #     limits
-            wargs = [guess[0], min_watercol, max_watercol]
-            WLOG(params, 'warning', TextEntry('10-019-00003', args=wargs))
-            # set fail to True
-            fail = True
-            # break out of the while loop
-            break
-        # ---------------------------------------------------------------------
-        # we will use a stricter condition later, but for all steps
-        #    we expect an agreement within an airmass difference of 1
-        if np.abs(guess[1] - airmass) > 1:
-            # log that recovered optical depth of others is too different
-            #     from airmass
-            wargs = [guess[1], airmass]
-            WLOG(params, 'warning', TextEntry('10-019-00004', args=wargs))
-            # set fail to True
-            fail = True
-            # break out of the while loop
-            break
-        # ---------------------------------------------------------------------
-        # calculate how much the optical depth params change
-        dparam = np.sqrt(mp.nansum((guess - prev_guess) ** 2))
-        # ---------------------------------------------------------------------
-        # print progress
-        wargs = [iteration, max_iteration, guess[0], guess[1], airmass]
-        WLOG(params, '', TextEntry('40-019-00032', args=wargs))
-        # ---------------------------------------------------------------------
-        # get current best-fit spectrum
-        tau1 = tapas_fit(np.isfinite(mwavemap), guess[0], guess[1])
-        tau1 = tau1.reshape(image1.shape)
-        # ---------------------------------------------------------------------
-        # for each order, we fit the SED after correcting for absorption
-        for order_num in range(nbo):
-            # -----------------------------------------------------------------
-            # get the per-order spectrum divided by best guess
-            oimage = image1[order_num] / tau1[order_num]
-            # -----------------------------------------------------------------
-            # find this orders good pixels
-            good = keep[order_num]
-            # -----------------------------------------------------------------
-            # if we have enough valid points, we normalize the domain by its
-            #    median
-            if mp.nansum(good) > min_number_good_points:
-                limit = np.nanpercentile(tau1[order_num][good],
-                                         btrans_percentile)
-                best_trans = tau1[order_num] > limit
-                norm = mp.nanmedian(oimage[best_trans])
-            else:
-                norm = np.ones_like(oimage)
-            # -----------------------------------------------------------------
-            # normalise this orders spectrum
-            image1[order_num] = image1[order_num] / norm
-            # normalise sp2 and the sed
-            oimage = oimage / norm
-            sed[order_num] = sed[order_num] / norm
-            # -----------------------------------------------------------------
-            # find far outliers to the SED for sigma-clipping
-            with warnings.catch_warnings(record=True) as _:
-                res = oimage - sed[order_num]
-                res -= mp.nanmedian(res)
-                res /= mp.nanmedian(np.abs(res))
-            # set all NaN pixels to large value
-            nanmask = ~np.isfinite(res)
-            res[nanmask] = 99
-            # -----------------------------------------------------------------
-            # apply sigma clip
-            good &= np.abs(res) < nsigclip
-            # apply median to sed
-            with warnings.catch_warnings(record=True) as _:
-                good &= sed[order_num] > 0.5 * mp.nanmedian(sed[order_num])
-            # only fit where the transmission is greater than a certain value
-            good &= tau1[order_num] > threshold_transmission_fit
-            # -----------------------------------------------------------------
-            # set non-good (bad) pixels to NaN
-            oimage[~good] = np.nan
-            # sp3 is a median-filtered version of sp2 where pixels that have
-            #     a transmission that is too low are clipped.
-            oimage2 = filters.median_filter(oimage - sed[order_num], med_filt2)
-            oimage2 = oimage2 + sed[order_num]
-            # find all the NaNs and set to zero
-            nanmask = ~np.isfinite(oimage2)
-            oimage2[nanmask] = 0.0
-            # also set zero pixels in sp3 to be non-good pixels in "good"
-            good[oimage2 == 0.0] = False
-            # -----------------------------------------------------------------
-            # we smooth sp3 with a kernel. This kernel has to be small
-            #    enough to preserve stellar features and large enough to
-            #    subtract noise this is why we have an order-dependent width.
-            #    the stellar lines are expected to be larger than 200km/s,
-            #    so a kernel much smaller than this value does not make sense
-            ew = wconv[order_num] / tellu_med_sampling / mp.fwhm()
-            # get the kernal x values
-            wconv_ord = int(wconv[order_num])
-            kernal_x = np.arange(-2 * wconv_ord, 2 * wconv_ord)
-            # get the gaussian kernal
-            kernal_y = np.exp(-0.5 * (kernal_x / ew) ** 2)
-            # normalise kernal so it is max at unity
-            kernal_y = kernal_y / mp.nansum(kernal_y)
-            # -----------------------------------------------------------------
-            # construct a weighting matrix for the sed
-            ww1 = np.convolve(good, kernal_y, mode='same')
-            # need to weight the spectrum accordingly
-            spconv = np.convolve(oimage2 * good, kernal_y, mode='same')
-            # update the sed
-            with warnings.catch_warnings(record=True) as _:
-                sed_update = spconv / ww1
-            # set all small values to 1% to avoid small weighting errors
-            sed_update[ww1 < small_weight] = np.nan
-            if wconv[order_num] == finer_conv_width:
-                rms_limit = 0.1
-            else:
-                rms_limit = 0.3
-            # iterate around and sigma clip
-            for iteration_sig_clip_good in range(1, 6):
-                # get residuals
-                with warnings.catch_warnings(record=True) as _:
-                    residual_sed = oimage2 - sed_update
-                    residual_sed[~good] = np.nan
-                # turn all residual values to positive
-                rms = np.abs(residual_sed)
-                # identify the good values and set them to zero
-                with warnings.catch_warnings(record=True) as _:
-                    good[rms > (rms_limit / iteration_sig_clip_good)] = 0
-                # ---------------------------------------------------------
-                # construct a weighting matrix for the sed
-                ww1 = np.convolve(good, kernal_y, mode='same')
-                # need to weight the spectrum accordingly
-                spconv = np.convolve(oimage2 * good, kernal_y, mode='same')
-                # update the sed
-                with warnings.catch_warnings(record=True) as _:
-                    sed_update = spconv / ww1
-                # set all small values to 1% to avoid small weighting errors
-                sed_update[ww1 < 0.01] = np.nan
-            # -----------------------------------------------------------------
-            # if we have lots of very strong absorption, we subtract the
-            #    median value of pixels where the transmission is expected to
-            #    be smaller than 1%. This improves things in the stronger
-            #    absorptions
-            pedestal = tau1[order_num] < 0.01
-            # check if we have enough strong absorption
-            if mp.nansum(pedestal) > 100:
-                zero_point = mp.nanmedian(image1[order_num, pedestal])
-                # if zero_point is finite subtract it off the spectrum
-                if np.isfinite(zero_point):
-                    image1[order_num] -= zero_point
-            # -----------------------------------------------------------------
-            # update the sed
-            sed[order_num] = sed_update
-            # append sp3
-            oimage2_arr[order_num] = np.array(oimage2)
-        # ---------------------------------------------------------------------
-        # debug wave flux plot
-        recipe.plot('MKTELLU_WAVE_FLUX1', keep=keep, wavemap=mwavemap,
-                    tau1=tau1, sp=image, oimage=oimage2_arr, sed=sed,
-                    order=None, has_template=(not template_flag),
-                    template=template)
-        # ---------------------------------------------------------------------
-        # update the iteration number
-        iteration += 1
-        # ---------------------------------------------------------------------
-        # update while parameters
-        cond1 = dparam > dparam_threshold
-        cond2 = iteration < max_iteration
-        cond3 = not fail
+        # TODO: move lowpassfilter to math
+        sed[order_num] = lowpassfilter(image1[order_num], smooth)
     # ---------------------------------------------------------------------
     # plot mk tellu wave flux plot for specified orders
     for order_num in plot_order_nums:
+        # TODO: remove tau1 from plots
+        tau1 = np.ones_like(image1)
+        keep = np.ones_like(image1).astype(bool)
         # plot debug plot
         recipe.plot('MKTELLU_WAVE_FLUX2', keep=keep, wavemap=mwavemap,
-                    tau1=tau1, sp=image, oimage=oimage2_arr, sed=sed,
+                    tau1=tau1, sp=image, oimage=image1, sed=sed,
                     order=order_num, has_template=(not template_flag),
                     template=template)
         # plot summary plot
         recipe.plot('SUM_MKTELLU_WAVE_FLUX', keep=keep, wavemap=mwavemap,
-                    tau1=tau1, sp=image, oimage=oimage2_arr, sed=sed,
+                    tau1=tau1, sp=image, oimage=image1, sed=sed,
                     order=order_num, has_template=(not template_flag),
                     template=template)
-
     # ---------------------------------------------------------------------
     # calculate transmission map
     transmission_map = image1 / sed
     # ---------------------------------------------------------------------
     # add output dictionary
     tprops = ParamDict()
-    tprops['PASSED'] = not fail
-    tprops['RECOV_AIRMASS'] = guess[1]
-    tprops['RECOV_WATER'] = guess[0]
+    # TODO: passed is not used recov airmass + recov water from EA clean function
+    tprops['PASSED'] = True
+    tprops['RECOV_AIRMASS'] = airmass
+    tprops['RECOV_WATER'] = 1.5
+    tprops['AIRMASS'] = airmass
+
+
     tprops['IMAGE_OUT'] = image1
     tprops['SED_OUT'] = sed
     tprops['TEMPLATE'] = template
     tprops['TEMPLATE_FLAG'] = template_flag
     tprops['TRANMISSION_MAP'] = transmission_map
-    tprops['AIRMASS'] = airmass
     tprops['TEMPLATE_FILE'] = template_file
     # set sources
     keys = ['PASSED', 'RECOV_AIRMASS', 'RECOV_WATER', 'IMAGE_OUT', 'SED_OUT',
@@ -1028,21 +835,23 @@ def calculate_telluric_absorption(params, recipe, image, template,
     tprops['DEFAULT_CWIDTH'] = default_conv_width
     tprops['FINER_CWIDTH'] = finer_conv_width
     tprops['TEMP_MED_FILT'] = med_filt1
-    tprops['DPARAM_THRES'] = dparam_threshold
-    tprops['MAX_ITERATIONS'] = max_iteration
-    tprops['THRES_TRANSFIT'] = threshold_transmission_fit
-    tprops['MIN_WATERCOL'] = min_watercol
-    tprops['MAX_WATERCOL'] = max_watercol
-    tprops['MIN_NUM_GOOD'] = min_number_good_points
-    tprops['BTRANS_PERCENT'] = btrans_percentile
-    tprops['NSIGCLIP'] = nsigclip
-    tprops['TRANS_TMEDFILT'] = med_filt2
-    tprops['SMALL_W_ERR'] = small_weight
-    tprops['IMAGE_PIXEL_SIZE'] = tellu_med_sampling
-    tprops['TAU_WATER_UPPER'] = tau_water_upper
-    tprops['TAU_OTHER_LOWER'] = tau_others_lower
-    tprops['TAU_OTHER_UPPER'] = tau_others_upper
-    tprops['TAPAS_SMALL_NUM'] = tapas_small_number
+
+    # TODO: remove unused
+    # tprops['DPARAM_THRES'] = dparam_threshold
+    # tprops['MAX_ITERATIONS'] = max_iteration
+    # tprops['THRES_TRANSFIT'] = threshold_transmission_fit
+    # tprops['MIN_WATERCOL'] = min_watercol
+    # tprops['MAX_WATERCOL'] = max_watercol
+    # tprops['MIN_NUM_GOOD'] = min_number_good_points
+    # tprops['BTRANS_PERCENT'] = btrans_percentile
+    # tprops['NSIGCLIP'] = nsigclip
+    # tprops['TRANS_TMEDFILT'] = med_filt2
+    # tprops['SMALL_W_ERR'] = small_weight
+    # tprops['IMAGE_PIXEL_SIZE'] = tellu_med_sampling
+    # tprops['TAU_WATER_UPPER'] = tau_water_upper
+    # tprops['TAU_OTHER_LOWER'] = tau_others_lower
+    # tprops['TAU_OTHER_UPPER'] = tau_others_upper
+    # tprops['TAPAS_SMALL_NUM'] = tapas_small_number
     # set sources
     keys = ['DEFAULT_CWIDTH', 'FINER_CWIDTH', 'TEMP_MED_FILT',
             'DPARAM_THRES', 'MAX_ITERATIONS', 'THRES_TRANSFIT', 'MIN_WATERCOL',
@@ -1050,6 +859,9 @@ def calculate_telluric_absorption(params, recipe, image, template,
             'TRANS_TMEDFILT', 'SMALL_W_ERR', 'IMAGE_PIXEL_SIZE',
             'TAU_WATER_UPPER', 'TAU_OTHER_LOWER', 'TAU_OTHER_UPPER',
             'TAPAS_SMALL_NUM']
+
+    keys = ['DEFAULT_CWIDTH', 'FINER_CWIDTH', 'TEMP_MED_FILT']
+
     tprops.set_sources(keys, func_name)
     # return tprops
     return tprops
