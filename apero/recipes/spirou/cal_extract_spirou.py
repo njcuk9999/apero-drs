@@ -170,10 +170,9 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Load and straighten order profiles
         # ------------------------------------------------------------------
-        # TODO: UNCOMMENT
-        # sargs = [infile, fibertypes, shapelocal, shapex, shapey,
-        #          recipe.outputs['ORDERP_SFILE']]
-        # orderps, orderpfiles = extract.order_profiles(params, recipe, *sargs)
+        sargs = [infile, fibertypes, shapelocal, shapex, shapey,
+                 recipe.outputs['ORDERP_SFILE']]
+        orderps, orderpfiles = extract.order_profiles(params, recipe, *sargs)
 
         # ------------------------------------------------------------------
         # Apply shape transformations
@@ -187,10 +186,6 @@ def __main__(recipe, params):
         # Calculate Barycentric correction
         # ------------------------------------------------------------------
         bprops = extract.get_berv(params, infile, header, props)
-
-        ## TODO: remove break point
-        constants.break_point(params)
-
 
         # storage for return
         e2dsoutputs = dict()
