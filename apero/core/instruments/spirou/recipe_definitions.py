@@ -889,7 +889,7 @@ recipes.append(obj_mk_tellu)
 obj_mk_tellu_db = DrsRecipe(__INSTRUMENT__)
 obj_mk_tellu_db.name = 'obj_mk_tellu_db_spirou.py'
 obj_mk_tellu_db.shortname = 'MKTELLDB'
-obj_mk_tellu_db.master = True
+obj_mk_tellu_db.master = False
 obj_mk_tellu_db.instrument = __INSTRUMENT__
 obj_mk_tellu_db.outputdir = 'reduced'
 obj_mk_tellu_db.inputdir = 'reduced'
@@ -966,7 +966,7 @@ recipes.append(obj_fit_tellu)
 obj_fit_tellu_db = DrsRecipe(__INSTRUMENT__)
 obj_fit_tellu_db.name = 'obj_fit_tellu_db_spirou.py'
 obj_fit_tellu_db.shortname = 'FTELLDB'
-obj_fit_tellu_db.master = True
+obj_fit_tellu_db.master = False
 obj_fit_tellu_db.instrument = __INSTRUMENT__
 obj_fit_tellu_db.outputdir = 'reduced'
 obj_fit_tellu_db.inputdir = 'reduced'
