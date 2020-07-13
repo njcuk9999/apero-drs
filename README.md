@@ -295,7 +295,7 @@ run apero/recipes/spirou/cal_badpix_spirou.py --flatfiles file1.fits --darkfiles
 ```
 
 i.e. in a python script
-```python
+```
 import cal_badpix_spirou
 
 ll = cal_badpix_spirou.main('night_name', flatfiles='file1.fits', darkfiles='file2.fits')
