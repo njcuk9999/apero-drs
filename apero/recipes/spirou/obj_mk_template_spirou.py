@@ -158,9 +158,15 @@ def __main__(recipe, params):
     infile.set_filename(object_filenames[-1])
     # read data
     infile.read_file()
-    # get night name
-    nightname = drs_path.get_nightname(params, infile.filename)
-    params.set(key='NIGHTNAME', value=nightname, source=mainname)
+    # Need to deal with how we set the night name (depending on location)
+    if params['MKTEMPLATE_FILESOURCE'].upper() == 'DISK':
+        # get night name
+        nightname = drs_path.get_nightname(params, infile.filename)
+        params.set(key='NIGHTNAME', value=nightname, source=mainname)
+    else:
+        # set night name (we have no info about filename)
+        params.set(key='NIGHTNAME', value='', source=mainname)
+
     # set up plotting (no plotting before this) -- must be after setting
     #   night name
     recipe.plot.set_location(0)
