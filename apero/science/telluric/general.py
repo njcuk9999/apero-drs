@@ -882,8 +882,11 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
                           kwargs, func_name)
     thres_transfit_low = pcheck(params, 'MKTELLU_THRES_TRANSFIT',
                                 'thres_transfit_low', kwargs, func_name)
+
+    # TODO: change to 1.5 in constants
     thres_transfit_upper = pcheck(params, 'MKTELLU_TRANS_FIT_UPPER_BAD',
                                   'thres_transfit_upper', kwargs, func_name)
+    thres_transfit_upper = 1.5
 
     # ------------------------------------------------------------------
     # get the transmission map key
@@ -975,6 +978,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
     with warnings.catch_warnings(record=True) as _:
         keep &= mp.nanmin(log_abso, axis=0) > -1
     fraction = mp.nansum(keep) / len(keep)
+    # TODO: change transmission --> residual transmission (remove 1-1/e)
     WLOG(params, '', TextEntry('40-019-00016', args=[fraction]))
     # ----------------------------------------------------------------------
     # Perform PCA analysis on the log of the telluric absorption map
@@ -1243,9 +1247,8 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
     # ----------------------------------------------------------------------
     # construct keep mask
     # ----------------------------------------------------------------------
-    # define the good pixels as those above minimum transmission
-    with warnings.catch_warnings(record=True) as _:
-        keep = tapas_all_species2[0, :] > fit_min_trans
+    # find pc where all components are finite
+    keep = np.sum(np.isnan(pc2), axis=1) == 0
     # also require wavelength constraints
     keep &= (fwavemap > lambda_min)
     keep &= (fwavemap < lambda_max)
@@ -1277,21 +1280,14 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
                 # get start and end points
                 start = order_num * nbpix
                 end = order_num * nbpix + nbpix
-                # produce a mask of good transmission
-                order_tapas = tapas_all_species2[0, start:end]
-                with warnings.catch_warnings(record=True) as _:
-                    mask = order_tapas > fit_min_trans
                 # get good transmission spectrum
-                spgood = image[order_num, :] * np.array(mask, dtype=float)
+                spgood = image[order_num, :]
                 recongood = recon_abso[start:end]
                 # convolve spectrum
                 ckwargs = dict(v=kernel, mode='same')
                 sp2b = np.convolve(spgood / recongood, **ckwargs)
-                # convolve mask for weights
-                ww = np.convolve(np.array(mask, dtype=float), **ckwargs)
-                # wave weighted convolved spectrum into template2
-                with warnings.catch_warnings(record=True) as _:
-                    template2[start:end] = sp2b / ww
+                # convolved spectrum into template2
+                template2[start:end] = sp2b
         # ------------------------------------------------------------------
         # get residual spectrum
         # ------------------------------------------------------------------
@@ -1307,24 +1303,15 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
                 # get start and end points
                 start = order_num * nbpix
                 end = order_num * nbpix + nbpix
-                # catch NaN warnings and ignore
-                with warnings.catch_warnings(record=True) as _:
-                    # produce a mask of good transmission
-                    order_tapas = tapas_all_species2[0, start:end]
-                    mask = order_tapas > fit_min_trans
-                    fmask = np.array(mask, dtype=float)
-                    # get good transmission spectrum
-                    resspecgood = resspec[start:end] * fmask
-                    recongood = recon_abso[start:end]
+                # get good transmission spectrum
+                resspecgood = resspec[start:end]
+                recongood = recon_abso[start:end]
                 # convolve spectrum
                 ckwargs = dict(v=kernel, mode='same')
                 with warnings.catch_warnings(record=True) as _:
                     sp2b = np.convolve(resspecgood / recongood, **ckwargs)
-                # convolve mask for weights
-                ww = np.convolve(np.array(mask, dtype=float), **ckwargs)
-                # wave weighted convolved spectrum into dd
-                with warnings.catch_warnings(record=True) as _:
-                    resspec[start:end] = resspec[start:end] / (sp2b / ww)
+                # convolved spectrum into dd
+                resspec[start:end] = resspec[start:end] / sp2b
         # ------------------------------------------------------------------
         # get the logarithm of the residual spectrum
         # ------------------------------------------------------------------
@@ -1398,6 +1385,12 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
     recipe.plot('SUM_FTELLU_RECON_ABSO', params=params, image=image,
                 wavemap=wavemap, sp2=sp2, template=template2, recon=recon_abso,
                 orders=params.listp('FTELLU_PLOT_ORDER_NUMS', dtype=int))
+
+
+    # TODO: convert recon from residual to transmission
+    some_factor = np.ones_like(recon_abso)
+    recon_abso = recon_abso * some_factor
+
     # ------------------------------------------------------------------
     # calculate molecular absorption
     # ------------------------------------------------------------------
