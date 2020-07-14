@@ -399,8 +399,6 @@ class PolarObj:
         mwavemap = self.mwaveprops['WAVEMAP']
         wavemap = self.waveprops['WAVEMAP']
 
-        # TODO: remove breakpoint
-        constants.break_point()
         # ------------------------------------------------------------------
         # set up arrays as all NaN
         self.flux = np.zeros_like(self.rawflux) * np.nan
