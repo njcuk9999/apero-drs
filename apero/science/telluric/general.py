@@ -2480,8 +2480,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     template_file = recipe.outputs['TELLU_TEMP'].newcopy(recipe=recipe,
                                                          fiber=fiber)
     # construct the filename from file instance
-    template_file.construct_filename(params, infile=infile, suffix=suffix,
-                                     path=infile.path)
+    template_file.construct_filename(params, infile=infile, suffix=suffix)
     # ------------------------------------------------------------------
     # copy keys from input file
     template_file.copy_original_keys(infile, exclude_groups='wave')
