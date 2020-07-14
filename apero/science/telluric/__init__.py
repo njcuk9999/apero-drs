@@ -22,6 +22,8 @@ calc_recon_and_correct = general.calc_recon_and_correct
 
 calculate_telluric_absorption = general.calculate_telluric_absorption
 
+correct_other_science = general.correct_other_science
+
 fit_tellu_write_corrected = general.fit_tellu_write_corrected
 
 fit_tellu_write_corrected_s1d = general.fit_tellu_write_corrected_s1d

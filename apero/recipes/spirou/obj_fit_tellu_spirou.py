@@ -296,6 +296,26 @@ def __main__(recipe, params):
         reconfile = telluric.fit_tellu_write_recon(params, recipe, *frargs)
 
         # ------------------------------------------------------------------
+        # Correct other science fibers (using recon)
+        # ------------------------------------------------------------------
+        # get fibers
+        pconst = constants.pload(params['INSTRUMENT'])
+        sfibers, rfiber = pconst.FIBER_KINDS()
+        # loop around fibers and correct/create s1d/save
+        for sfiber in sfibers:
+            # print that we are correcting other fibers
+            # TODO: Move to language database
+            WLOG(params, 'info', 'Correcting fiber {0}'.format(sfiber))
+            # skip master fiber
+            if sfiber == fiber:
+                continue
+            # else correct/create s1d/ and save
+            coargs = [sfiber, infile, corrfile, cprops, wprops, nprops,
+                      rawfiles, combine, pca_props, sprops, qc_params,
+                      template_file]
+            telluric.correct_other_science(params, recipe, *coargs)
+
+        # ------------------------------------------------------------------
         # Add TELLU_OBJ and TELLU_RECON to database
         # ------------------------------------------------------------------
         if np.all(qc_params[3]):

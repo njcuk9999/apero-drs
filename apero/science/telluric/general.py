@@ -1484,6 +1484,46 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
     return props
 
 
+def correct_other_science(params, recipe, fiber, infile, cprops, wprops, nprops,
+                          rawfiles, combine, pca_props, sprops, qc_params,
+                          template_file):
+    # ------------------------------------------------------------------
+    # Construct fiber file name and read data
+    # ------------------------------------------------------------------
+    # locate fiber spectrum
+    fiber_infile = infile.newcopy(recipe=recipe)
+    fiber_infile.reconstruct_filename(params, outext=fiber_infile.filetype,
+                                      fiber=fiber)
+    # read fiber file
+    fiber_infile.read_file()
+    # ------------------------------------------------------------------
+    # Correct spectrum with simple division
+    # ------------------------------------------------------------------
+    # corrected data is just input data / recon
+    scorr = fiber_infile.data / cprops['RECON_ABSO_SP']
+    # ------------------------------------------------------------------
+    # Create 1d spectra (s1d) of the corrected E2DS file
+    # ------------------------------------------------------------------
+    scargs = [wprops['WAVEMAP'], scorr, nprops['BLAZE']]
+    scwprops = extract.e2ds_to_s1d(params, recipe, *scargs, wgrid='wave',
+                                   fiber=fiber, kind='corrected sp')
+    scvprops = extract.e2ds_to_s1d(params, recipe, *scargs,
+                                   wgrid='velocity', fiber=fiber,
+                                   kind='corrected sp')
+    # ------------------------------------------------------------------
+    # Save corrected E2DS to file
+    # ------------------------------------------------------------------
+    fargs = [fiber_infile, rawfiles, fiber, combine, nprops, wprops,
+             pca_props, sprops, cprops, qc_params, template_file]
+    fkwargs = dict(CORRECTED_SP=scorr)
+    corrfile = fit_tellu_write_corrected(params, recipe, *fargs, **fkwargs)
+    # ------------------------------------------------------------------
+    # Save 1d corrected spectra to file
+    # ------------------------------------------------------------------
+    fsargs = [infile, corrfile, fiber, scwprops, scvprops]
+    fit_tellu_write_corrected_s1d(params, recipe, *fsargs)
+
+
 # =============================================================================
 # template functions
 # =============================================================================
@@ -2217,7 +2257,7 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     npc = pca_props['NPC']
     add_deriv_pc = pca_props['ADD_DERIV_PC']
     # get parameters from cprops
-    sp_out = cprops['CORRECTED_SP']
+    sp_out = kwargs.get('CORRECTED_SP', cprops['CORRECTED_SP'])
     amps_abso_t = cprops['AMPS_ABSO_TOTAL']
     tau_molecules = cprops['TAU_MOLECULES']
     # ------------------------------------------------------------------
