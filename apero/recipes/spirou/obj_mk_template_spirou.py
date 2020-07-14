@@ -28,6 +28,7 @@ Created on 2019-09-05 at 14:58
 @author: cook
 """
 import numpy as np
+import os
 
 from apero import core
 from apero import lang
@@ -165,8 +166,12 @@ def __main__(recipe, params):
         params.set(key='NIGHTNAME', value=nightname, source=mainname)
     else:
         # set night name (we have no info about filename)
-        nightname = 'None'
-        params.set(key='NIGHTNAME', value='', source=mainname)
+        nightname = 'other'
+        params.set(key='NIGHTNAME', value='other', source=mainname)
+        # make night directory (if it doesn't exist)
+        absnightpath = os.path.join(params['OUTPATH'], nightname)
+        if not os.path.exists(absnightpath):
+            os.makedirs(absnightpath)
 
     # set up plotting (no plotting before this) -- must be after setting
     #   night name
