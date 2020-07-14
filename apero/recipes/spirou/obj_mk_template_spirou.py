@@ -165,6 +165,7 @@ def __main__(recipe, params):
         params.set(key='NIGHTNAME', value=nightname, source=mainname)
     else:
         # set night name (we have no info about filename)
+        nightname = 'None'
         params.set(key='NIGHTNAME', value='', source=mainname)
 
     # set up plotting (no plotting before this) -- must be after setting
