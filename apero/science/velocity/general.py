@@ -607,6 +607,7 @@ def locate_reference_file(params, recipe, infile):
     # set function name
     func_name = display_func(params, 'locate_reference_file', __NAME__)
     # get pp file name
+    # TODO: fix how we get pp file
     pp_filename = infile.filename.split('_pp')[0] + '_pp.fits'
     # get pseudo const
     pconst = constants.pload(params['INSTRUMENT'])
