@@ -515,9 +515,14 @@ class RecipeLog:
         self.pid = str(params['PID'])
         self.htime = str(params['DATE_NOW'])
         self.group = str(params['DRS_GROUP'])
-        # set the night name directory
-        self.directory = str(params['NIGHTNAME'])
-        # get lof fits path
+        # set the night name directory (and deal with no value)
+        if 'NIGHTNAME' not in params:
+            self.directory = 'other'
+        elif params['NIGHTNAME'] in [None, 'None', '']:
+            self.directory = 'other'
+        else:
+            self.directory = str(params['NIGHTNAME'])
+        # get log fits path
         self.logfitspath = self._get_write_dir()
         # define lockfile (we need to lock the directory while this is
         #   being done)
@@ -589,7 +594,6 @@ class RecipeLog:
         # whether to write (update) recipe log file
         if write:
             self.write_logfile(params)
-
 
     def set_inputs(self, params, rargs, rkwargs, rskwargs):
         # deal with not having inputs
@@ -756,10 +760,7 @@ class RecipeLog:
         # ------------------------------------------------------------------
         # get log path
         if self.outputdir not in ['None', '', None]:
-            path = self.outputdir
-            # if we have a night name add it
-            if self.directory not in ['None', '', None]:
-                path = os.path.join(path, self.directory)
+            path = os.path.join(self.outputdir, self.directory)
         # else use the default path
         else:
             path = self.defaultpath
