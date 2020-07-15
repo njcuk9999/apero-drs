@@ -196,13 +196,25 @@ def __main__(recipe, params):
         # load wavelength solution for this fiber
         wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
                                        infile=infile)
+
+        # TODO: Add to constants file
+        # params.set('')
+
+        # ------------------------------------------------------------------
+        # telluric pre-cleaning
+        # ------------------------------------------------------------------
+        tpreprops = telluric.tellu_preclean(params, recipe, image, wprops,
+                                            mprops)
+        # get variables out of tpreprops
+        image1 = tpreprops['E2DSTC']
+
         # ------------------------------------------------------------------
         # Normalize image by peak blaze
         # ------------------------------------------------------------------
-        nargs = [image, header, fiber]
+        nargs = [image1, header, fiber]
         _, nprops = telluric.normalise_by_pblaze(params, *nargs)
         # normalise by the blaze
-        image2 = image / nprops['NBLAZE']
+        image2 = image1 / nprops['NBLAZE']
         # ------------------------------------------------------------------
         # Get barycentric corrections (BERV)
         # ------------------------------------------------------------------
