@@ -237,6 +237,10 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Calculate reconstructed absorption + correct E2DS file
         # ------------------------------------------------------------------
+
+        # TODO: remove break point
+        constants.break_point(params)
+
         cargs = [image2, wprops, pca_props, sprops, nprops]
         cprops = telluric.calc_recon_and_correct(params, recipe, *cargs)
 
