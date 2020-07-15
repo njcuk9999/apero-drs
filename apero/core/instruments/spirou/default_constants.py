@@ -2308,7 +2308,7 @@ PLOT_FTELLU_WAVE_SHIFT2.value = True
 
 # turn on the fit tellu reconstructed absorption debug plot (in loop)
 PLOT_FTELLU_RECON_ABSO1 = PLOT_FTELLU_RECON_ABSO1.copy(__NAME__)
-PLOT_FTELLU_RECON_ABSO1.value = False
+PLOT_FTELLU_RECON_ABSO1.value = True
 
 # turn on the fit tellu reconstructed absorption debug plot (single order)
 PLOT_FTELLU_RECON_ABSO2 = PLOT_FTELLU_RECON_ABSO2.copy(__NAME__)

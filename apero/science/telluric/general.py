@@ -411,7 +411,7 @@ def get_transmission_files(params, recipe, header, fiber):
 
     # log status
     # TODO: move to language database
-    WLOG(params, 'Loading {0} files'.format(trans_key))
+    WLOG(params, '', 'Loading {0} files'.format(trans_key))
     # load tellu file, header and abspaths
     _, trans_filenames = load_tellu_file(params, trans_key, header,
                                          n_entries='all', get_image=False)
