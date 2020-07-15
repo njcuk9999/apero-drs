@@ -3006,7 +3006,8 @@ def plot_ftellu_recon_spline(plotter, graph, kwargs):
         # plot spectra for selected order
         frame.plot(swave, simage / np.nanmedian(simage), label='Observed SP')
         frame.plot(swave, stemp / np.nanmedian(stemp), label='Template SP')
-        frame.plot(swave, srecov / np.nanmedian(srecov), label='Recov abso SP')
+        frame.plot(swave, srecov / np.nanmedian(srecov),
+                   label='Recov abso SP (Observed/Template)')
         # add legend
         frame.legend(loc=0)
         # add labels
