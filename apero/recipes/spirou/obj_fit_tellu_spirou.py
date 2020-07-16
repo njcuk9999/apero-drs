@@ -198,12 +198,59 @@ def __main__(recipe, params):
                                        infile=infile)
 
         # TODO: Add to constants file
-        # params.set('')
+
+
+        # width in km/s for the ccf scan to determine the abso in pre-cleaning
+        params.set('TELLUP_CCF_SCAN_RANGE', value=20, source=mainname)
+        # define whether to clean OH lines
+        params.set('TELLUP_CLEAN_OH_LINES', value=True, source=mainname)
+        # define the ohline pca file
+        params.set('TELLUP_OHLINE_PCA_FILE', value='sky_PCs.fits',
+                   source=mainname)
+        # define the orders not to use in pre-cleaning fit (due to theraml
+        # background)
+        params.set('TELLUP_REMOVE_ORDS', value='47, 48', source=mainname)
+        # define the minimum snr to accept orders for pre-cleaning fit
+        params.set('TELLUP_SNR_MIN_THRES', value=10.0, source=mainname)
+        # define the telluric trans other abso CCF file
+        params.set('TELLUP_OTHERS_CCF_FILE', value='trans_others_abso_ccf.mas',
+                   source=mainname)
+        # define the telluric trans water abso CCF file
+        params.set('TELLUP_H2O_CCF_FILE', value='trans_h2o_abso_ccf.mas',
+                   source=mainname)
+        # define dexpo convergence threshold
+        params.set('TELLUP_DEXPO_CONV_THRES', value=1e-4, source=mainname)
+        # define the maximum number of iterations to try to get dexpo
+        # convergence
+        params.set('TELLUP_DEXPO_MAX_ITR', value=20, source=mainname)
+        # define the kernel threshold in abso_expo
+        params.set('TELLUP_ABSO_EXPO_KTHRES', value=1e-6, source=mainname)
+        # define the gaussian width of the kernel used in abso_expo
+        params.set('TELLUP_ABBO_EXPO_KWID', value=4.95, source=mainname)
+        # define the gaussian exponent of the kernel used in abso_expo
+        #   a value of 2 is gaussian, a value >2 is boxy
+        params.set('TELLUP_ABSO_EXP_KEXP', value=2.20, source=mainname)
+        # define the transmission threshold (in exponential force) for keeping
+        #   valid transmission
+        params.set('TELLUP_TRANS_THRES', value=-1, source=mainname)
+        # define the threshold for discrepant transmission (in sigma)
+        params.set('TELLUP_TRANS_SIGLIM', value=10, source=mainname)
+        # define whether to force airmass fit to header airmass value
+        params.set('TELLUP_FORCE_AIRMASS', value=False, source=mainname)
+        # set the tpical water abso exponent. Compare to values in header for
+        #    high-snr targets later
+        params.set('TELLUP_D_WATER_ABSO', value=4.0, source=mainname)
+        # set the lower and upper bounds (String list) for the exponent of
+        #  the other species of absorbers
+        params.set('TELLUP_OTHER_BOUNDS', value='0.8, 3.0', source=mainname)
+        # set the lower and upper bounds (string list) for the exponent of
+        #  water absorber
+        params.set('TELLUP_WATER_BOUNDS', value='0.1, 15', source=mainname)
 
         # ------------------------------------------------------------------
         # telluric pre-cleaning
         # ------------------------------------------------------------------
-        tpreprops = telluric.tellu_preclean(params, recipe, image, wprops,
+        tpreprops = telluric.tellu_preclean(params, recipe, infile, wprops,
                                             mprops)
         # get variables out of tpreprops
         image1 = tpreprops['E2DSTC']
