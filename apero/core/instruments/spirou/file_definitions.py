@@ -910,6 +910,12 @@ out_tellu_conv = drs_ninput('TELLU_CONV', KW_OUTPUT='TELLU_CONV',
                             dbname='telluric', dbkey='TELLU_CONV',
                             outfunc=out.general_file)
 
+# tapas file in format for pre-cleaning
+out_tellu_abso_npy = drs_ninput('TELLU_TAPAS',
+                                filetype='.npy',
+                                basename='tapas_spl.npy',
+                                outfunc=out.set_file)
+
 # transmission map
 out_tellu_trans = drs_finput('TELLU_TRANS', KW_OUTPUT='TELLU_TRANS',
                              fibers=['AB', 'A', 'B', 'C'],
