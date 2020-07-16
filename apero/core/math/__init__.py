@@ -37,6 +37,8 @@ gaussian_function_nn =  gauss.gaussian_function_nn
 
 gauss_function = gauss.gauss_function
 
+gauss_function_nodc = gauss.gauss_function_nodc
+
 gauss_beta_function = gauss.gauss_beta_function
 
 gauss_fit_s = gauss.gauss_fit_s
