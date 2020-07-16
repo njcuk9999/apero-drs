@@ -22,15 +22,8 @@ from apero.core import math as mp
 from apero import lang
 from apero.core.core import drs_log
 from apero.core.core import drs_file
-from apero.core.core import drs_database
-from apero.io import drs_data
-from apero.io import drs_fits
-from apero.io import drs_path
-from apero.io import drs_table
-from apero.science.calib import flat_blaze
 from apero.science.calib import wave
-from apero.science import extract
-from apero.science.telluric import general
+from apero.science.telluric import gen_tellu
 
 
 # =============================================================================
@@ -180,7 +173,7 @@ def calculate_telluric_absorption(params, recipe, image, template,
     # ------------------------------------------------------------------
     # Shift the image to the master grid
     # ------------------------------------------------------------------
-    image1 = general.wave_to_wave(params, image1, wavemap, mwavemap)
+    image1 = gen_tellu.wave_to_wave(params, image1, wavemap, mwavemap)
 
     # ------------------------------------------------------------------
     # Apply template

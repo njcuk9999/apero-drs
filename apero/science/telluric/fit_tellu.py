@@ -20,7 +20,7 @@ from apero.core.core import drs_file
 from apero.io import drs_fits
 from apero.io import drs_path
 from apero.science import extract
-from apero.science.telluric import general
+from apero.science.telluric import gen_tellu
 
 
 # =============================================================================
@@ -294,8 +294,8 @@ def shift_all_to_frame(params, recipe, image, template, bprops, mprops, wprops,
         wargs = [masterwavefile, wavefile]
         WLOG(params, '', TextEntry('40-019-00021', args=wargs))
         # shift template
-        shift_temp = general.wave_to_wave(params, template2, masterwavemap,
-                                          wavemap, reshape=True)
+        shift_temp = gen_tellu.wave_to_wave(params, template2, masterwavemap,
+                                            wavemap, reshape=True)
         template2 = shift_temp.reshape(template2.shape)
 
         # debug plot - reconstructed spline (in loop)
@@ -315,12 +315,12 @@ def shift_all_to_frame(params, recipe, image, template, bprops, mprops, wprops,
     WLOG(params, '', TextEntry('40-019-00018', args=wargs))
     # shift pca components (one by one)
     for comp in range(npc):
-        shift_pc = general.wave_to_wave(params, pc2[:, comp], masterwavemap,
-                                        wavemap, reshape=True)
+        shift_pc = gen_tellu.wave_to_wave(params, pc2[:, comp], masterwavemap,
+                                          wavemap, reshape=True)
         pc2[:, comp] = shift_pc.reshape(pc2[:, comp].shape)
 
-        shift_fpc = general.wave_to_wave(params, fit_pc2[:, comp], masterwavemap,
-                                         wavemap, reshape=True)
+        shift_fpc = gen_tellu.wave_to_wave(params, fit_pc2[:, comp],
+                                           masterwavemap, wavemap, reshape=True)
         fit_pc2[:, comp] = shift_fpc.reshape(fit_pc2[:, comp].shape)
     # ------------------------------------------------------------------
     # Shift the pca components to correct wave frame
@@ -330,8 +330,8 @@ def shift_all_to_frame(params, recipe, image, template, bprops, mprops, wprops,
     WLOG(params, '', TextEntry('40-019-00019', args=wargs))
     # shift tapas species
     for row in range(len(tapas_all_species2)):
-        stapas = general.wave_to_wave(params, tapas_all_species[row],
-                                      masterwavemap, wavemap, reshape=True)
+        stapas = gen_tellu.wave_to_wave(params, tapas_all_species[row],
+                                        masterwavemap, wavemap, reshape=True)
         tapas_all_species2[row] = stapas.reshape(tapas_all_species[row].shape)
 
     # water is the second column
