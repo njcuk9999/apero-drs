@@ -22,7 +22,7 @@ from apero.core.core import drs_file
 from apero.io import drs_table
 from apero.science.calib import wave
 from apero.science import extract
-from apero.science.telluric import general
+from apero.science.telluric import gen_tellu
 
 
 # =============================================================================
@@ -231,7 +231,7 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
         # get velocity shift due to berv
         dvshift = mp.relativistic_waveshift(berv, units='km/s')
         # shift the image
-        simage = general.wave_to_wave(params, image2, wavemap * dvshift, mwavemap)
+        simage = gen_tellu.wave_to_wave(params, image2, wavemap * dvshift, mwavemap)
         # ------------------------------------------------------------------
         # normalise by the median of each order
         # ------------------------------------------------------------------
@@ -469,7 +469,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
         image3 = np.array([image2])
         wave3a = np.array([wavemap * dvshift])
         wave3b = np.array([rwavemap])
-        simage = general.wave_to_wave(params, image3, wave3a, wave3b)
+        simage = gen_tellu.wave_to_wave(params, image3, wave3a, wave3b)
         # ------------------------------------------------------------------
         # normalise by the median of each order
         # ------------------------------------------------------------------
