@@ -169,19 +169,34 @@ def __main__(recipe, params):
             # log that we are skipping
             wargs = [dprtype, recipe.name, allowed_dprtypes, infile.basename]
             WLOG(params, 'warning', TextEntry('10-019-00001', args=wargs))
+            # end log correctly
+            log1.end(params)
             # continue
             continue
         # ------------------------------------------------------------------
-        # check that file objname is not in blacklist
+        # check that file objname is not in blacklist / is in whitelist
         # ------------------------------------------------------------------
         objname = infile.get_key('KW_OBJNAME', dtype=str)
         # get black list
         blacklist, _ = telluric.get_blacklist(params)
+        whitelist, _ = telluric.get_whitelist(params)
         # if objname in blacklist then skip
         if objname in blacklist:
             # log that we are skipping
             wargs = [infile.basename, params['KW_OBJNAME'][0], objname]
             WLOG(params, 'warning', TextEntry('10-019-00002', args=wargs))
+            # end log correctly
+            log1.end(params)
+            # continue
+            continue
+        elif objname not in whitelist:
+            # log that we are skipping
+            # TODO: move to language database
+            msg = 'Object="{0}" is not a valid telluric star (hot star)'
+            args = [objname]
+            WLOG(params, 'info', msg.format(*args))
+            # end log correctly
+            log1.end(params)
             # continue
             continue
         else:
