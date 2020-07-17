@@ -104,6 +104,7 @@ __all__ = [  # input keys
     # telluric preclean variables
     'KW_TELLUP_EXPO_WATER', 'KW_TELLUP_EXPO_OTHERS',
     'KW_TELLUP_DV_WATER', 'KW_TELLUP_DV_OTHERS', 'KW_TELLUP_DO_PRECLEAN',
+    'KW_TELLUP_CCFP_WATER', 'KW_TELLUP_CCFP_OTHERS',
     'KW_TELLUP_DFLT_WATER', 'KW_TELLUP_CCF_SRANGE',
     'KW_TELLUP_CLEAN_OHLINES', 'KW_TELLUP_REMOVE_ORDS',
     'KW_TELLUP_SNR_MIN_THRES', 'KW_TELLUP_DEXPO_CONV_THRES',
@@ -1022,6 +1023,14 @@ KW_TELLUP_DV_WATER = Keyword('KW_TELLUP_DV_WATER', key='', dtype=float,
 #     preclean process
 KW_TELLUP_DV_OTHERS = Keyword('KW_TELLUP_DV_OTHERS', key='', dtype=float,
                               source=__NAME__)
+
+# Define the ccf power of the water
+KW_TELLUP_CCFP_WATER = Keyword('KW_TELLUP_CCFP_WATER', key='', dtype=float,
+                               source=__NAME__)
+
+# Define the ccf power of the others
+KW_TELLUP_CCFP_OTHERS = Keyword('KW_TELLUP_CCFP_OTHERS', key='', dtype=float,
+                                source=__NAME__)
 
 # Define whether precleaning was done (tellu pre-cleaning)
 KW_TELLUP_DO_PRECLEAN = Keyword('KW_TELLUP_DO_PRECLEAN', key='', dtype=bool,

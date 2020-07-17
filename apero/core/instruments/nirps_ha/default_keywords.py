@@ -1255,6 +1255,151 @@ KW_WNT_NSIG_FIT.set(key='WNTNSIGF', comment='wave night sig clip fit cut used',
                     parent='WAVE_NIGHT_NSIG_FIT_CUT', group='wave')
 
 # -----------------------------------------------------------------------------
+# Define telluric preclean variables
+# -----------------------------------------------------------------------------
+# Define the exponent of water key from telluric preclean process
+KW_TELLUP_EXPO_WATER = KW_TELLUP_EXPO_WATER.copy(__NAME__)
+KW_TELLUP_EXPO_WATER.set(key='TLPEH2O',
+                         comment='tellu preclean expo water calculated')
+
+# Define the exponent of other species from telluric preclean process
+KW_TELLUP_EXPO_OTHERS = KW_TELLUP_EXPO_OTHERS.copy(__NAME__)
+KW_TELLUP_EXPO_OTHERS.set(key='TLPEOTR',
+                          comment='tellu preclean expo others calculated')
+
+# Define the velocity of water absorbers calculated in telluric preclean process
+KW_TELLUP_DV_WATER = KW_TELLUP_DV_WATER.copy(__NAME__)
+KW_TELLUP_DV_WATER.set(key='TLPDVH2O',
+                       comment='tellu preclean velocity water absorbers')
+
+# Define the velocity of other species absorbers calculated in telluric
+#     preclean process
+KW_TELLUP_DV_OTHERS = KW_TELLUP_DV_OTHERS.copy(__NAME__)
+KW_TELLUP_DV_OTHERS.set(key='TLPDVOTR',
+                        comment='tellu preclean velocity others absorbers')
+
+# Define the ccf power of the water
+KW_TELLUP_CCFP_WATER = KW_TELLUP_CCFP_WATER.copy(__NAME__)
+KW_TELLUP_CCFP_WATER.set(key='TLPCPH2O', comment='CCF power of H20')
+
+# Define the ccf power of the others
+KW_TELLUP_CCFP_OTHERS = KW_TELLUP_CCFP_OTHERS.copy(__NAME__)
+KW_TELLUP_CCFP_OTHERS.set(key='TLPCPOTR', comment='CCF power of other species')
+
+# Define whether precleaning was done (tellu pre-cleaning)
+KW_TELLUP_DO_PRECLEAN = KW_TELLUP_DO_PRECLEAN.copy(__NAME__)
+KW_TELLUP_DO_PRECLEAN.set(key='TLPDOCLN', comment='tellu preclean done',
+                          parent='TELLUP_DO_PRECLEANING')
+
+# Define default water absorption used (tellu pre-cleaning)
+KW_TELLUP_DFLT_WATER = KW_TELLUP_DFLT_WATER.copy(__NAME__)
+KW_TELLUP_DFLT_WATER.set(key='TLPDFH2O',
+                         comment='tellu preclean default h20 abso used',
+                         parent='TELLUP_D_WATER_ABSO')
+
+# Define ccf scan range that was used (tellu pre-cleaning)
+KW_TELLUP_CCF_SRANGE = KW_TELLUP_CCF_SRANGE.copy(__NAME__)
+KW_TELLUP_CCF_SRANGE.set(key='TLPSCRNG',
+                         comment='tellu preclean ccf scan range km/s',
+                         parent='TELLUP_CCF_SCAN_RANGE')
+
+# Define whether we cleaned OH lines
+KW_TELLUP_CLEAN_OHLINES = KW_TELLUP_CLEAN_OHLINES.copy(__NAME__)
+KW_TELLUP_CLEAN_OHLINES.set(key='TLPCLORD',
+                            comment='tellu preclean were OH lines were cleaned',
+                            parent='TELLUP_CLEAN_OH_LINES')
+
+# Define which orders were removed from tellu pre-cleaning
+KW_TELLUP_REMOVE_ORDS = KW_TELLUP_REMOVE_ORDS.copy(__NAME__)
+KW_TELLUP_REMOVE_ORDS.set(key='TLPRORDS',
+                          comment='tellu preclean which orders were removed',
+                          parent='TELLUP_REMOVE_ORDS')
+
+# Define which min snr threshold was used for tellu pre-cleaning
+KW_TELLUP_SNR_MIN_THRES = KW_TELLUP_SNR_MIN_THRES.copy(__NAME__)
+KW_TELLUP_SNR_MIN_THRES.set(key='TLPSNRMT',
+                            comment='tellu preclean snr min threshold',
+                            parent='TELLUP_SNR_MIN_THRES')
+
+# Define dexpo convergence threshold used
+KW_TELLUP_DEXPO_CONV_THRES = KW_TELLUP_DEXPO_CONV_THRES.copy(__NAME__)
+KW_TELLUP_DEXPO_CONV_THRES.set(key='TLPDEXCT',
+                               comment='tellu preclean dexpo conv thres used',
+                               parent='TELLUP_DEXPO_CONV_THRES')
+
+# Define the maximum number of oterations used to get dexpo convergence
+KW_TELLUP_DEXPO_MAX_ITR = KW_TELLUP_DEXPO_MAX_ITR.copy(__NAME__)
+KW_TELLUP_DEXPO_MAX_ITR.set(key='TLPMXITR',
+                            comment='tellu preclean max iterations used',
+                            parent='TELLUP_DEXPO_MAX_ITR')
+
+# Define the kernel threshold in abso_expo used in tellu pre-cleaning
+KW_TELLUP_ABSOEXPO_KTHRES = KW_TELLUP_ABSOEXPO_KTHRES.copy(__NAME__)
+KW_TELLUP_ABSOEXPO_KTHRES.set(key='TLPAEKTH',
+                              comment='tellu preclean abso expo kernel thres',
+                              parent='TELLUP_ABSO_EXPO_KTHRES')
+
+# Define the wave start (same as s1d) in nm used
+KW_TELLUP_WAVE_START = KW_TELLUP_WAVE_START.copy(__NAME__)
+KW_TELLUP_WAVE_START.set(key='TLPWAVES',
+                         comment='tellu preclean wave start used [nm]',
+                         parent='EXT_S1D_WAVESTART')
+
+# Define the wave end (same as s1d) in nm used
+KW_TELLUP_WAVE_END = KW_TELLUP_WAVE_END.copy(__NAME__)
+KW_TELLUP_WAVE_END.set(key='TLPWAVEF',
+                       comment='tellu preclean wave end used [nm]',
+                       parent='EXT_S1D_WAVEEND')
+
+# Define the dv wave grid (same as s1d) in km/s used
+KW_TELLUP_DVGRID = KW_TELLUP_DVGRID.copy(__NAME__)
+KW_TELLUP_DVGRID.set(key='TLPDVGRD',
+                     comment='tellu preclean dv wave grid used [km/s]',
+                     parent='EXT_S1D_BIN_UVELO')
+
+# Define the gauss width of the kernel used in abso_expo for tellu pre-cleaning
+KW_TELLUP_ABSOEXPO_KWID = KW_TELLUP_ABSOEXPO_KWID.copy(__NAME__)
+KW_TELLUP_ABSOEXPO_KWID.set(key='TLPAEKWD',
+                            comment='tellu preclean gauss width kernel used',
+                            parent='TELLUP_ABSO_EXPO_KWID')
+
+# Define the gauss shape of the kernel used in abso_expo for tellu pre-cleaning
+KW_TELLUP_ABSOEXPO_KEXP = KW_TELLUP_ABSOEXPO_KEXP.copy(__NAME__)
+KW_TELLUP_ABSOEXPO_KEXP.set(key='TLPAEKEX',
+                            comment='tellu preclean gauss shape kernel used',
+                            parent='TELLUP_ABSO_EXPO_KEXP')
+
+# Define the exponent of the transmission threshold used for tellu pre-cleaning
+KW_TELLUP_TRANS_THRES = KW_TELLUP_TRANS_THRES.copy(__NAME__)
+KW_TELLUP_TRANS_THRES.set(key='TLPTRSTH',
+                          comment='tellu preclean transmission thres used',
+                          parent='TELLUP_TRANS_THRES')
+
+# Define the threshold for discrepant tramission used for tellu pre-cleaning
+KW_TELLUP_TRANS_SIGL = KW_TELLUP_TRANS_SIGL.copy(__NAME__)
+KW_TELLUP_TRANS_SIGL.set(key='TLPTRSLM',
+                         comment='tellu preclean transmission sig limit used',
+                         parent='TELLUP_TRANS_SIGLIM')
+
+# Define the whether to force fit to header airmass used for tellu pre-cleaning
+KW_TELLUP_FORCE_AIRMASS = KW_TELLUP_FORCE_AIRMASS.copy(__NAME__)
+KW_TELLUP_FORCE_AIRMASS.set(key='TLPFCARM',
+                            comment='tellu preclean force airmass from hdr',
+                            parent='TELLUP_FORCE_AIRMASS')
+
+# Define the bounds of the exponent of other species used for tellu pre-cleaning
+KW_TELLUP_OTHER_BOUNDS = KW_TELLUP_OTHER_BOUNDS.copy(__NAME__)
+KW_TELLUP_OTHER_BOUNDS.set(key='TLP_OTHB',
+                           comment='tellu preclean lower/upper bounds others',
+                           parent='TELLUP_OTHER_BOUNDS')
+
+# Define the bounds of the exponent of water used for tellu pre-cleaning
+KW_TELLUP_WATER_BOUNDS = KW_TELLUP_WATER_BOUNDS.copy(__NAME__)
+KW_TELLUP_WATER_BOUNDS.set(key='TLP_H2OB',
+                           comment='tellu preclean lower/upper bounds water',
+                           parent='TELLUP_WATER_BOUNDS')
+
+# -----------------------------------------------------------------------------
 # Define make telluric variables
 # -----------------------------------------------------------------------------
 # The template file used for mktellu calculation

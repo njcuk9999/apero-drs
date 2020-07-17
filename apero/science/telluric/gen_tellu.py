@@ -1257,28 +1257,25 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
     # ----------------------------------------------------------------------
     # set images
     dimages = [props['CORRECTED_E2DS'], props['TRANS_MASK'].astype(float),
-               props['ABSO_E2DS'], props['SKY_MODEL'], props['CCFPOWER_WATER'],
-               props['CCFPOWER_OTHERS']]
+               props['ABSO_E2DS'], props['SKY_MODEL']]
     # add extention info
     kws1 = ['EXTDESC1', 'Corrected', 'Extension 1 description']
     kws2 = ['EXTDESC2', 'Trans Mask', 'Extension 2 description']
     kws3 = ['EXTDESC3', 'ABSO E2DS', 'Extension 3 description']
     kws4 = ['EXTDESC4', 'Sky model', 'Extension 4 description']
-    kws5 = ['EXTDESC5', 'CCF power water', 'Extension 5 description']
-    kws6 = ['EXTDESC6', 'CCF power others', 'Extension 6 description']
     # add to hdict
     tpclfile.add_hkey(key=kws1)
     tpclfile.add_hkey(key=kws2)
     tpclfile.add_hkey(key=kws3)
     tpclfile.add_hkey(key=kws4)
-    tpclfile.add_hkey(key=kws5)
-    tpclfile.add_hkey(key=kws6)
     # ----------------------------------------------------------------------
     # need to write these as header keys
     tpclfile.add_hkey('KW_TELLUP_EXPO_WATER', value=props['EXPO_WATER'])
     tpclfile.add_hkey('KW_TELLUP_EXPO_OTHERS', value=props['EXPO_OTHERS'])
     tpclfile.add_hkey('KW_TELLUP_DV_WATER', value=props['DV_WATER'])
     tpclfile.add_hkey('KW_TELLUP_DV_OTHERS', value=props['DV_OTHERS'])
+    tpclfile.add_hkey('KW_TELLUP_CCFP_WATER', value=props['CCFPOWER_WATER'])
+    tpclfile.add_hkey('KW_TELLUP_CCFP_OTHERS', value=props['CCFPOWER_OTHERS'])
     # ----------------------------------------------------------------------
     # get qc names/values/logic/pass from qc params
     qc_names, qc_values, qc_logic, qc_pass = props['QC_PARAMS']
@@ -1426,20 +1423,17 @@ def read_tellu_preclean(params, recipe, infile, fiber):
     props['TRANS_MASK'] = tpclfile.data_array[1].astype(bool)
     props['ABSO_E2DS'] = tpclfile.data_array[2]
     props['SKY_MODEL'] = tpclfile.data_array[3]
-    props['CCFPOWER_WATER'] = tpclfile.data_array[4]
-    props['CCFPOWER_OTHERS'] =tpclfile.data_array[5]
     # ----------------------------------------------------------------------
-    # get header keys
-    tpclfile.add_hkey('KW_TELLUP_EXPO_WATER', value=props['EXPO_WATER'])
-    tpclfile.add_hkey('KW_TELLUP_EXPO_OTHERS', value=props['EXPO_OTHERS'])
-    tpclfile.add_hkey('KW_TELLUP_DV_WATER', value=props['DV_WATER'])
-    tpclfile.add_hkey('KW_TELLUP_DV_OTHERS', value=props['DV_OTHERS'])
     # push into props
     props['EXPO_WATER'] = tpclfile.get_key('KW_TELLUP_EXPO_WATER', dtype=float)
     props['EXPO_OTHERS'] = tpclfile.get_key('KW_TELLUP_EXPO_OTHERS',
                                             dtype=float)
     props['DV_WATER'] = tpclfile.get_key('KW_TELLUP_DV_WATER', dtype=float)
     props['DV_OTHERS'] = tpclfile.get_key('KW_TELLUP_DV_OTHERS', dtype=float)
+    props['CCFPOWER_WATER'] = tpclfile.get_key('KW_TELLUP_CCFP_WATER',
+                                               dtype=float)
+    props['CCFPOWER_OTHERS'] = tpclfile.get_key('KW_TELLUP_CCFP_OTHERS',
+                                                dtype=float)
     # set sources
     keys = ['CORRECTED_E2DS', 'TRANS_MASK', 'ABSO_E2DS', 'EXPO_WATER',
             'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'CCFPOWER_WATER',

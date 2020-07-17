@@ -1270,6 +1270,14 @@ KW_TELLUP_DV_OTHERS = KW_TELLUP_DV_OTHERS.copy(__NAME__)
 KW_TELLUP_DV_OTHERS.set(key='TLPDVOTR',
                         comment='tellu preclean velocity others absorbers')
 
+# Define the ccf power of the water
+KW_TELLUP_CCFP_WATER = KW_TELLUP_CCFP_WATER.copy(__NAME__)
+KW_TELLUP_CCFP_WATER.set(key='TLPCPH2O', comment='CCF power of H20')
+
+# Define the ccf power of the others
+KW_TELLUP_CCFP_OTHERS = KW_TELLUP_CCFP_OTHERS.copy(__NAME__)
+KW_TELLUP_CCFP_OTHERS.set(key='TLPCPOTR', comment='CCF power of other species')
+
 # Define whether precleaning was done (tellu pre-cleaning)
 KW_TELLUP_DO_PRECLEAN = KW_TELLUP_DO_PRECLEAN.copy(__NAME__)
 KW_TELLUP_DO_PRECLEAN.set(key='TLPDOCLN', comment='tellu preclean done',
