@@ -291,7 +291,8 @@ def get_sp_linelists(params, **kwargs):
 # =============================================================================
 # pre-cleaning functions
 # =============================================================================
-def tellu_preclean(params, recipe, infile, wprops, **kwargs):
+def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
+                   **kwargs):
     """
     Main telluric pre-cleaning functionality.
 
@@ -323,7 +324,15 @@ def tellu_preclean(params, recipe, infile, wprops, **kwargs):
     # set the function name
     func_name = __NAME__ + '.tellu_preclean()'
     # ----------------------------------------------------------------------
+    # look for precleaned file
+    loadprops = read_tellu_preclean(params, recipe, infile, fiber)
+    # if precleaned load and return
+    if loadprops is not None:
+        return loadprops
+    # ----------------------------------------------------------------------
     # get parameters from parameter dictionary
+    do_precleaning = pcheck(params, 'TELLUP_DO_PRECLEANING', 'do_precleaning',
+                            kwargs, func_name)
     default_water_abso = pcheck(params, 'TELLUP_D_WATER_ABSO',
                                 'default_water_abso', kwargs, func_name)
     ccf_scan_range = pcheck(params, 'TELLUP_CCF_SCAN_RANGE', 'ccf_scan_range',
@@ -339,9 +348,9 @@ def tellu_preclean(params, recipe, infile, wprops, **kwargs):
                          kwargs, func_name)
     max_iterations = pcheck(params, 'TELLUP_DEXPO_MAX_ITR', 'max_iterations',
                             kwargs, func_name)
-    ker_width = pcheck(params, 'TELLUP_ABBO_EXPO_KWID', 'ker_width', kwargs,
+    ker_width = pcheck(params, 'TELLUP_ABSO_EXPO_KWID', 'ker_width', kwargs,
                        func_name)
-    ker_shape = pcheck(params, 'TELLUP_ABSO_EXP_KEXP', 'ker_shape', kwargs,
+    ker_shape = pcheck(params, 'TELLUP_ABSO_EXPO_KEXP', 'ker_shape', kwargs,
                        func_name)
     trans_thres = pcheck(params, 'TELLUP_TRANS_THRES', 'trans_thres', kwargs,
                          func_name)
@@ -353,7 +362,12 @@ def tellu_preclean(params, recipe, infile, wprops, **kwargs):
                            kwargs, func_name, mapf='list', dtype=float)
     water_bounds = pcheck(params, 'TELLUP_WATER_BOUNDS', 'water_bounds', kwargs,
                           func_name, mapf='list', dtype=float)
-
+    ker_thres = pcheck(params, 'TELLUP_ABSO_EXPO_KTHRES', 'ker_thres', kwargs,
+                       func_name)
+    wavestart = pcheck(params, 'EXT_S1D_WAVESTART', 'wavestart', kwargs,
+                       func_name)
+    waveend = pcheck(params, 'EXT_S1D_WAVEEND', 'waveend', kwargs, func_name)
+    dvgrid = pcheck(params, 'EXT_S1D_BIN_UVELO', 'dvgrid', kwargs, func_name)
     # ----------------------------------------------------------------------
     # get image and header from infile
     image = infile.image
@@ -367,6 +381,40 @@ def tellu_preclean(params, recipe, infile, wprops, **kwargs):
     # get wave map for the input e2ds
     wave_e2ds = wprops['WAVEMAP']
     # ----------------------------------------------------------------------
+    # define storage of quality control
+    qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
+    # need to add dummy values for these qc
+
+    # 1. snr < snr_min_thres (pos = 0)
+    qc_values.append(np.nan)
+    qc_names.append('EXTSNR')
+    qc_logic.append('EXTSNR < {0}'.format(snr_min_thres))
+    qc_pass.append(1)
+    # 2. ccf is NaN (pos = 1)
+    qc_values.append(np.nan)
+    qc_names.append('NUM_NAN_CCF')
+    qc_logic.append('NUM_NAN_CCF > 0')
+    qc_pass.append(1)
+    # 3. exponent for others out of bounds (pos = 2 and 3)
+    qc_values += [np.nan, np.nan]
+    qc_names += ['EXPO_OTHERS', 'EXPO_OTHERS']
+    qc_logic += ['EXPO_OTHERS < {0}'.format(others_bounds[0]),
+                 'EXPO_OTHERS > {0}'.format(others_bounds[1])]
+    qc_pass += [1, 1]
+    # 4. exponent for water  out of bounds (pos 4 and 5)
+    qc_values += [np.nan, np.nan]
+    qc_names += ['EXPO_WATER', 'EXPO_WATER']
+    qc_logic += ['EXPO_WATER < {0}'.format(water_bounds[0]),
+                 'EXPO_WATER > {0}'.format(water_bounds[1])]
+    qc_pass += [1, 1]
+    # 5. max iterations exceeded (pos = 6)
+    qc_values.append(np.nan)
+    qc_names.append('ITERATIONS')
+    qc_logic.append('ITERATIONS = {0}'.format(max_iterations - 1))
+    qc_pass.append(1)
+    # dev note: if adding a new one must add tfailmsgs for all uses in qc
+    #  (mk_tellu and fit_tellu)
+    # ----------------------------------------------------------------------
     # remove OH lines if required
     if clean_ohlines:
         image_e2ds, sky_model = clean_ohline_pca(params, image_e2ds_ini,
@@ -375,12 +423,71 @@ def tellu_preclean(params, recipe, infile, wprops, **kwargs):
     else:
         image_e2ds, sky_model = np.array(image), np.zeros_like(image)
     # ----------------------------------------------------------------------
+    if not do_precleaning:
+        # populate qc params
+        qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+        # populate parameter dictionary
+        props = ParamDict()
+        props['CORRECTED_E2DS'] = image_e2ds
+        props['TRANS_MASK'] = np.ones_like(image).astype(bool)
+        props['ABSO_E2DS'] = np.ones_like(image)
+        props['SKY_MODEL'] = sky_model
+        props['EXPO_WATER'] = np.nan
+        props['EXPO_OTHERS'] = np.nan
+        props['DV_WATER'] = np.nan
+        props['DV_OTHERS'] = np.nan
+        props['CCFPOWER_WATER'] = np.nan
+        props['CCFPOWER_OTHERS'] = np.nan
+        props['QC_PARAMS'] = qc_params
+        # set sources
+        keys = ['CORRECTED_E2DS', 'TRANS_MASK', 'ABSO_E2DS', 'EXPO_WATER',
+                'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'CCFPOWER_WATER',
+                'CCFPOWER_OTHERS', 'QC_PARAMS', 'SKY_MODEL']
+        props.set_sources(keys, func_name)
+        # ------------------------------------------------------------------
+        # add constants used (can come from kwargs)
+        props['TELLUP_DO_PRECLEANING'] = do_precleaning
+        props['TELLUP_D_WATER_ABSO'] = default_water_abso
+        props['TELLUP_CCF_SCAN_RANGE'] = ccf_scan_range
+        props['TELLUP_CLEAN_OH_LINES'] = clean_ohlines
+        props['TELLUP_REMOVE_ORDS'] = remove_orders
+        props['TELLUP_SNR_MIN_THRES'] = snr_min_thres
+        props['TELLUP_DEXPO_CONV_THRES'] = dexpo_thres
+        props['TELLUP_DEXPO_MAX_ITR'] = max_iterations
+        props['TELLUP_ABSO_EXPO_KWID'] = ker_width
+        props['TELLUP_ABSO_EXPO_KEXP'] = ker_shape
+        props['TELLUP_TRANS_THRES'] = trans_thres
+        props['TELLUP_TRANS_SIGLIM'] = trans_siglim
+        props['TELLUP_FORCE_AIRMASS'] = force_airmass
+        props['TELLUP_OTHER_BOUNDS'] = others_bounds
+        props['TELLUP_WATER_BOUNDS'] = water_bounds
+        props['TELLUP_ABSO_EXPO_KTHRES'] = ker_thres
+        props['TELLUP_WAVE_START'] = wavestart
+        props['TELLUP_WAVE_END'] = waveend
+        props['TELLUP_DVGRID'] = dvgrid
+        # set sources
+        keys = ['TELLUP_D_WATER_ABSO', 'TELLUP_CCF_SCAN_RANGE',
+                'TELLUP_CLEAN_OH_LINES', 'TELLUP_REMOVE_ORDS',
+                'TELLUP_SNR_MIN_THRES', 'TELLUP_DEXPO_CONV_THRES',
+                'TELLUP_DEXPO_MAX_ITR', 'TELLUP_ABSO_EXPO_KWID',
+                'TELLUP_ABSO_EXPO_KEXP', 'TELLUP_TRANS_THRES',
+                'TELLUP_TRANS_SIGLIM', 'TELLUP_FORCE_AIRMASS',
+                'TELLUP_OTHER_BOUNDS', 'TELLUP_WATER_BOUNDS',
+                'TELLUP_ABSO_EXPO_KTHRES', 'TELLUP_WAVE_START',
+                'TELLUP_WAVE_END', 'TELLUP_DVGRID', 'TELLUP_DO_PRECLEANING']
+        props.set_sources(keys, func_name)
+        # ------------------------------------------------------------------
+        # return props
+        return props
+    # ----------------------------------------------------------------------
     # we ravel the wavelength grid to make it a 1d array of increasing
     #     wavelength. We will trim the overlapping domain between orders
     keep = np.ones_like(wave_e2ds).astype(bool)
+    # keep track of where orders are
+    orders, _ = np.indices(wave_e2ds.shape)
     # loop around 2nd to last-1 order and compare -1th and +1th order
     for order_num in range(1, nbo - 1):
-        # get wavelengths not in order before
+        # get wavelengths not in order beforetellu_preclean
         before = wave_e2ds[order_num] > wave_e2ds[order_num - 1][::-1]
         # get wavelengths not in order after
         after = wave_e2ds[order_num] < wave_e2ds[order_num + 1][::-1]
@@ -396,6 +503,7 @@ def tellu_preclean(params, recipe, infile, wprops, **kwargs):
     wavemap = wave_e2ds.ravel()[flatkeep]
     spectrum = image_e2ds.ravel()[flatkeep]
     spectrum_ini = image_e2ds_ini.ravel()[flatkeep]
+    orders = orders.ravel()[flatkeep]
     # ----------------------------------------------------------------------
     # load tapas in correct format
     spl_others, spl_water = load_tapas_spl(params, recipe, header)
@@ -409,25 +517,28 @@ def tellu_preclean(params, recipe, infile, wprops, **kwargs):
         snr[order_num] = 0.0
     # make sure we have at least one order above the min snr requiredment
     if np.nanmax(snr) < snr_min_thres:
-        # TODO: fill in
-        return
-    # mask all orders below min snr and push into all orders via wave grid
-    mask_low_snr = np.zeros_like(wavemap).astype(bool)
-    # loop around orders
+        # update qc params
+        qc_values[0] = np.nanmax(snr)
+        qc_pass[0] = 0
+        qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+        # return qc_exit_tellu_preclean
+        return qc_exit_tellu_preclean(params, recipe, image_e2ds, infile,
+                                      wave_e2ds, qc_params, sky_model)
+    else:
+        qc_values[0] = np.nanmax(snr)
+        qc_pass[0] = 1
+    # mask all orders below min snr
     for order_num in range(nbo):
         # only mask if snr below threshold
         if snr[order_num] < snr_min_thres:
-            # find wave limits for this order
-            wlower = mp.nanmin(wave_e2ds[order_num])
-            wupper = mp.nanmax(wave_e2ds[order_num])
-            # push into full wave grid mask
-            mask_low_snr &= (wavemap > wlower) & (wavemap < wupper)
-    # apply low snr mask to spectrum
-    spectrum[mask_low_snr] = np.nan
+            # find order mask (we only want to remove values in this order
+            order_mask = orders == order_num
+            # apply low snr mask to spectrum
+            spectrum[order_mask] = np.nan
     # for numerical stabiility, remove NaNs. Setting to zero biases a bit
     # the CCF, but this should be OK after we converge
     spectrum[~np.isfinite(spectrum)] = 0.0
-    spectrum[spectrum < 0.0] = np.nan
+    spectrum[spectrum < 0.0] = 0.0
     # ----------------------------------------------------------------------
     # scanning range for the ccf computations
     drange = np.arange(-ccf_scan_range, ccf_scan_range + 1.0, 1.0)
@@ -460,12 +571,17 @@ def tellu_preclean(params, recipe, infile, wprops, **kwargs):
     dv_abso = 0.0
     # set the iteration number
     iteration = 0
+    # just so we have outputs
+    dv_water, dv_others = np.nan, np.nan
+    trans = np.ones_like(wavemap)
     # loop around until convergence or 20th iteration
     while (dexpo > dexpo_thres) and (iteration < max_iterations):
         # get the absorption spectrum
         trans = get_abso_expo(params, wavemap, expo_others, expo_water,
                               spl_others, spl_water, ww=ker_width,
-                              ex_gau=ker_shape, dv_abso=dv_abso)
+                              ex_gau=ker_shape, dv_abso=dv_abso,
+                              ker_thres=ker_thres, wavestart=wavestart,
+                              waveend=waveend, dvgrid=dvgrid)
         # divide spectrum by transmission
         spectrum_tmp = spectrum / trans
         # ------------------------------------------------------------------
@@ -522,10 +638,21 @@ def tellu_preclean(params, recipe, infile, wprops, **kwargs):
         else:
             amp_others = 0.0
         # ------------------------------------------------------------------
+        # count the number of NaNs in the CCF
+        num_nan_ccf = np.sum(~np.isfinite(ccf_water))
         # if CCF is NaN do not continue
-        if np.sum(~np.isfinite(ccf_water)) > 0:
-            # TODO: fill out
-            return
+        if num_nan_ccf > 0:
+            # update qc params
+            qc_values[1] = num_nan_ccf
+            qc_pass[1] = 0
+            qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+            # return qc_exit_tellu_preclean
+            return qc_exit_tellu_preclean(params, recipe, image_e2ds,
+                                          infile, wave_e2ds, qc_params,
+                                          sky_model)
+        else:
+            qc_values[1] = num_nan_ccf
+            qc_pass[1] = 1
         # ------------------------------------------------------------------
         # we measure absorption velocity by fitting a gaussian to the
         #     absorption profile. This updates the dv_abso value for the
@@ -581,46 +708,85 @@ def tellu_preclean(params, recipe, infile, wprops, **kwargs):
             amp_water_arr = amp_water_arr[sortmask]
             expo_water_arr = expo_water_arr[sortmask]
             # --------------------------------------------------------------
+            # set value for fit_others
+            fit_others = [np.nan, hdr_airmass, np.nan]
+
             # if we have over 5 iterations we fit a 2nd order polynomial
             # to the lowest 5 amplitudes
             if iteration > 5:
                 if not force_airmass:
                     fit_others = np.polyfit(amp_others_arr[0: 4],
                                             expo_others_arr[0:4], 1)
-                else:
-                    fit_others = [np.nan, hdr_airmass, np.nan]
-
                 fit_water = np.polyfit(amp_water_arr[0:4],
                                        expo_water_arr[0:4], 1)
             # else just fit a line
             else:
-                fit_others = np.polyfit(amp_others_arr, expo_others_arr, 1)
+                if not force_airmass:
+                    fit_others = np.polyfit(amp_others_arr, expo_others_arr, 1)
                 fit_water = np.polyfit(amp_water_arr, expo_water_arr, 1)
             # --------------------------------------------------------------
             # find best guess for other species exponent
-            if force_airmass:
-                expo_others = hdr_airmass
+            expo_others = fit_others[1]
+            # deal with lower bounds for other species
+            if expo_others < others_bounds[0]:
+                # set expo_others to others bounds
+                expo_others = others_bounds[0]
+                # update qc params
+                qc_values[2] = expo_others
+                qc_pass[2] = 0
+                qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+                # return qc_exit_tellu_preclean
+                return qc_exit_tellu_preclean(params, recipe, image_e2ds,
+                                              infile, wave_e2ds, qc_params,
+                                              sky_model)
             else:
-                expo_others = fit_others[1]
-                # deal with lower bounds for other species
-                if expo_others < others_bounds[0]:
-                    expo_others = others_bounds[0]
-                    # TODO: Add QC?
-                # deal with upper bounds for other species
-                if expo_others > others_bounds[1]:
-                    expo_others = others_bounds[1]
-                    # TODO: Add QC?
+                qc_values[2] = expo_others
+                qc_pass[2] = 1
+            # deal with upper bounds for other species
+            if expo_others > others_bounds[1]:
+                expo_others = others_bounds[1]
+                # update qc params
+                qc_values[3] = expo_others
+                qc_pass[3] = 0
+                qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+                # return qc_exit_tellu_preclean
+                return qc_exit_tellu_preclean(params, recipe, image_e2ds,
+                                              infile, wave_e2ds, qc_params,
+                                              sky_model)
+            else:
+                qc_values[3] = expo_others
+                qc_pass[3] = 1
             # --------------------------------------------------------------
             # find best guess for water exponent
             expo_water = fit_water[1]
             # deal with lower bounds for water
             if expo_water < water_bounds[0]:
                 expo_water = water_bounds[0]
-                # TODO: Add QC?
+                # update qc params
+                qc_values[4] = expo_water
+                qc_pass[4] = 0
+                qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+                # return qc_exit_tellu_preclean
+                return qc_exit_tellu_preclean(params, recipe, image_e2ds,
+                                              infile, wave_e2ds, qc_params,
+                                              sky_model)
+            else:
+                qc_values[4] = expo_others
+                qc_pass[4] = 1
             # deal with upper bounds for water
             if expo_water > water_bounds[1]:
                 expo_water = water_bounds[1]
-                # TODO: Add QC?
+                # update qc params
+                qc_values[5] = expo_water
+                qc_pass[5] = 0
+                qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+                # return qc_exit_tellu_preclean
+                return qc_exit_tellu_preclean(params, recipe, image_e2ds,
+                                              infile, wave_e2ds, qc_params,
+                                              sky_model)
+            else:
+                qc_values[5] = expo_water
+                qc_pass[5] = 1
             # --------------------------------------------------------------
             # check whether we have converged yet (by updating dexpo)
             if force_airmass:
@@ -644,20 +810,44 @@ def tellu_preclean(params, recipe, infile, wprops, **kwargs):
     # ----------------------------------------------------------------------
     # deal with iterations hitting the max (no convergence)
     if iteration == max_iterations - 1:
-        # TODO: Add QC?
-        pass
+        # update qc params
+        qc_values[6] = iteration
+        qc_pass[6] = 0
+        qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+        # return qc_exit_tellu_preclean
+        return qc_exit_tellu_preclean(params, recipe, image_e2ds, infile,
+                                      wave_e2ds, qc_params, sky_model)
+    else:
+        qc_values[6] = iteration
+        qc_pass[6] = 1
     # ----------------------------------------------------------------------
-
-
-    # TODO: Add plotting
-
-
+    # show CCF plot to see if correlation peaks have been killed
+    recipe.plot('TELLUP_WAVE_TRANS', dd_arr=dd_iterations,
+                ccf_water_arr=ccf_water_iterations,
+                ccf_others_arr=ccf_water_iterations)
+    recipe.plot('SUM_TELLUP_WAVE_TRANS', dd_arr=dd_iterations,
+                ccf_water_arr=ccf_water_iterations,
+                ccf_others_arr=ccf_water_iterations)
+    # plot to show absorption spectrum
+    recipe.plot('TELLUP_ABSO_SPEC', trans=trans, wave=wavemap,
+                thres=trans_thres, spectrum=spectrum, spectrum_ini=spectrum_ini,
+                objname=infile.get_key('KW_OBJNAME', dtype=str),
+                clean_ohlines=clean_ohlines)
+    recipe.plot('SUM_TELLUP_ABSO_SPEC', trans=trans, wave=wavemap,
+                thres=trans_thres, spectrum=spectrum, spectrum_ini=spectrum_ini,
+                objname=infile.get_key('KW_OBJNAME', dtype=str),
+                clean_ohlines=clean_ohlines)
+    # ----------------------------------------------------------------------
+    # create qc_params (all passed now but we have updated values)
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
     # ----------------------------------------------------------------------
     # get the final absorption spectrum to be used on the science data.
     #     No trimming done on the wave grid
     abso_e2ds = get_abso_expo(params, wave_e2ds, expo_others, expo_water,
                               spl_others, spl_water, ww=ker_width,
-                              ex_gau=ker_shape)
+                              ex_gau=ker_shape, dv_abso=0.0,
+                              ker_thres=ker_thres, wavestart=wavestart,
+                              waveend=waveend, dvgrid=dvgrid)
     # all absorption deeper than exp(trans_thres) is considered too deep to
     #    be corrected. We set values there to NaN
     mask = abso_e2ds < np.exp(trans_thres)
@@ -668,7 +858,7 @@ def tellu_preclean(params, recipe, infile, wprops, **kwargs):
     corrected_e2ds = (image_e2ds_ini - sky_model) / abso_e2ds
     # ----------------------------------------------------------------------
     # calculate CCF power
-    keep = np.abs(drange) < (ccf_scan_range / 2)
+    keep = np.abs(drange) < (ccf_scan_range / 4)
     water_ccfpower = np.nansum(np.gradient(ccf_water[keep] ** 2))
     others_ccfpower = np.nansum(np.gradient(ccf_others)[keep] ** 2)
     # ----------------------------------------------------------------------
@@ -677,21 +867,55 @@ def tellu_preclean(params, recipe, infile, wprops, **kwargs):
     props['CORRECTED_E2DS'] = corrected_e2ds
     props['TRANS_MASK'] = mask
     props['ABSO_E2DS'] = abso_e2ds
+    props['SKY_MODEL'] = sky_model
     props['EXPO_WATER'] = expo_water
     props['EXPO_OTHERS'] = expo_others
     props['DV_WATER'] = dv_water
     props['DV_OTHERS'] = dv_others
     props['CCFPOWER_WATER'] = water_ccfpower
     props['CCFPOWER_OTHERS'] = others_ccfpower
-
-    # set source
+    props['QC_PARAMS'] = qc_params
+    # set sources
     keys = ['CORRECTED_E2DS', 'TRANS_MASK', 'ABSO_E2DS', 'EXPO_WATER',
             'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'CCFPOWER_WATER',
-            'CCFPOWER_OTHERS']
+            'CCFPOWER_OTHERS', 'QC_PARAMS', 'SKY_MODEL']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
-    # add constants used
-    # TODO: add constants used
+    # add constants used (can come from kwargs)
+    props['TELLUP_DO_PRECLEANING'] = do_precleaning
+    props['TELLUP_D_WATER_ABSO'] = default_water_abso
+    props['TELLUP_CCF_SCAN_RANGE'] = ccf_scan_range
+    props['TELLUP_CLEAN_OH_LINES'] = clean_ohlines
+    props['TELLUP_REMOVE_ORDS'] = remove_orders
+    props['TELLUP_SNR_MIN_THRES'] = snr_min_thres
+    props['TELLUP_DEXPO_CONV_THRES'] = dexpo_thres
+    props['TELLUP_DEXPO_MAX_ITR'] = max_iterations
+    props['TELLUP_ABSO_EXPO_KWID'] = ker_width
+    props['TELLUP_ABSO_EXPO_KEXP'] = ker_shape
+    props['TELLUP_TRANS_THRES'] = trans_thres
+    props['TELLUP_TRANS_SIGLIM'] = trans_siglim
+    props['TELLUP_FORCE_AIRMASS'] = force_airmass
+    props['TELLUP_OTHER_BOUNDS'] = others_bounds
+    props['TELLUP_WATER_BOUNDS'] = water_bounds
+    props['TELLUP_ABSO_EXPO_KTHRES'] = ker_thres
+    props['TELLUP_WAVE_START'] = wavestart
+    props['TELLUP_WAVE_END'] = waveend
+    props['TELLUP_DVGRID'] = dvgrid
+    # set sources
+    keys = ['TELLUP_D_WATER_ABSO', 'TELLUP_CCF_SCAN_RANGE',
+            'TELLUP_CLEAN_OH_LINES', 'TELLUP_REMOVE_ORDS',
+            'TELLUP_SNR_MIN_THRES', 'TELLUP_DEXPO_CONV_THRES',
+            'TELLUP_DEXPO_MAX_ITR', 'TELLUP_ABSO_EXPO_KWID',
+            'TELLUP_ABSO_EXPO_KEXP', 'TELLUP_TRANS_THRES',
+            'TELLUP_TRANS_SIGLIM', 'TELLUP_FORCE_AIRMASS',
+            'TELLUP_OTHER_BOUNDS', 'TELLUP_WATER_BOUNDS',
+            'TELLUP_ABSO_EXPO_KTHRES', 'TELLUP_WAVE_START',
+            'TELLUP_WAVE_END', 'TELLUP_DVGRID', 'TELLUP_DO_PRECLEANING']
+    props.set_sources(keys, func_name)
+    # ----------------------------------------------------------------------
+    # save pre-cleaned file
+    tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
+                         props, wprops)
     # ----------------------------------------------------------------------
     # return props
     return props
@@ -759,7 +983,8 @@ def clean_ohline_pca(params, image, wavemap, **kwargs):
 
 
 def get_abso_expo(params, wavemap, expo_others, expo_water, spl_others,
-                  spl_water, ww, ex_gau, dv_abso, **kwargs):
+                  spl_water, ww, ex_gau, dv_abso, ker_thres, wavestart,
+                  waveend, dvgrid):
     """
     Returns an absorption spectrum from exponents describing water and 'others'
     in absorption
@@ -774,18 +999,11 @@ def get_abso_expo(params, wavemap, expo_others, expo_water, spl_others,
     :param ww: gaussian width of the kernel
     :param ex_gau: exponent of the gaussian (ex_gau = 2 is a gaussian, >2
                    is boxy)
-    :param dv_abso:
+    :param dv_abso: velocity of the absorption
     :return:
     """
     # set the function name
     func_name = __NAME__ + '.get_abso_expo()'
-    # get params from param dict
-    ker_thres = pcheck(params, 'TELLUP_ABSO_EXPO_KTHRES', 'ker_thres', kwargs,
-                       func_name)
-    wavestart = pcheck(params, 'EXT_S1D_WAVESTART', 'wavestart', kwargs,
-                       func_name)
-    waveend = pcheck(params, 'EXT_S1D_WAVEEND', 'waveend', kwargs, func_name)
-    dvgrid = pcheck(params, 'EXT_S1D_BIN_UVELO', 'dvgrid', kwargs, func_name)
     # ----------------------------------------------------------------------
     # for some test one may give 0 as exponents and for this we just return
     #    a flat vector
@@ -846,8 +1064,409 @@ def get_abso_expo(params, wavemap, expo_others, expo_water, spl_others,
     return out_vector
 
 
+def qc_exit_tellu_preclean(params, recipe, image, infile, wavemap,
+                           qc_params, sky_model, **kwargs):
+    """
+    Provides an exit point for tellu_preclean via a quality control failure
+
+    :param params:
+    :param image:
+    :param wavemap:
+    :param qc_value:
+    :param qc_name:
+    :param qc_logic:
+    :return:
+    """
+    # set the function name
+    func_name = __NAME__ + '.qc_exit_tellu_preclean()'
+    # ----------------------------------------------------------------------
+    # get parameters from parameter dictionary
+    do_precleaning = pcheck(params, 'TELLUP_DO_PRECLEANING', 'do_precleaning',
+                            kwargs, func_name)
+    default_water_abso = pcheck(params, 'TELLUP_D_WATER_ABSO',
+                                'default_water_abso', kwargs, func_name)
+    ccf_scan_range = pcheck(params, 'TELLUP_CCF_SCAN_RANGE', 'ccf_scan_range',
+                            kwargs, func_name)
+    clean_ohlines = pcheck(params, 'TELLUP_CLEAN_OH_LINES', 'clean_ohlines',
+                           kwargs, func_name)
+
+    remove_orders = pcheck(params, 'TELLUP_REMOVE_ORDS', 'remove_orders',
+                           kwargs, func_name, mapf='list', dtype=int)
+    snr_min_thres = pcheck(params, 'TELLUP_SNR_MIN_THRES', 'snr_min_thres',
+                           kwargs, func_name)
+    dexpo_thres = pcheck(params, 'TELLUP_DEXPO_CONV_THRES', 'dexpo_thres',
+                         kwargs, func_name)
+    max_iterations = pcheck(params, 'TELLUP_DEXPO_MAX_ITR', 'max_iterations',
+                            kwargs, func_name)
+    ker_width = pcheck(params, 'TELLUP_ABSO_EXPO_KWID', 'ker_width', kwargs,
+                       func_name)
+    ker_shape = pcheck(params, 'TELLUP_ABSO_EXPO_KEXP', 'ker_shape', kwargs,
+                       func_name)
+    qc_ker_width = pcheck(params, 'TELLUP_ABSO_EXPO_KWID', 'qc_ker_width',
+                          kwargs, func_name)
+    qc_ker_shape = pcheck(params, 'TELLUP_ABSO_EXPO_KEXP', 'qc_ker_shape',
+                          kwargs, func_name)
+    trans_thres = pcheck(params, 'TELLUP_TRANS_THRES', 'trans_thres', kwargs,
+                         func_name)
+    trans_siglim = pcheck(params, 'TELLUP_TRANS_SIGLIM', 'trans_siglim', kwargs,
+                          func_name)
+    force_airmass = pcheck(params, 'TELLUP_FORCE_AIRMASS', 'force_airmass',
+                           kwargs, func_name)
+    others_bounds = pcheck(params, 'TELLUP_OTHER_BOUNDS', 'others_bounds',
+                           kwargs, func_name, mapf='list', dtype=float)
+    water_bounds = pcheck(params, 'TELLUP_WATER_BOUNDS', 'water_bounds', kwargs,
+                          func_name, mapf='list', dtype=float)
+    ker_thres = pcheck(params, 'TELLUP_ABSO_EXPO_KTHRES', 'ker_thres', kwargs,
+                       func_name)
+    wavestart = pcheck(params, 'EXT_S1D_WAVESTART', 'wavestart', kwargs,
+                       func_name)
+    waveend = pcheck(params, 'EXT_S1D_WAVEEND', 'waveend', kwargs, func_name)
+    dvgrid = pcheck(params, 'EXT_S1D_BIN_UVELO', 'dvgrid', kwargs, func_name)
+    # ----------------------------------------------------------------------
+    # get image and header from infile
+    image_e2ds = np.array(image)
+    header = infile.header
+    # get airmass from header
+    hdr_airmass = infile.get_key('KW_AIRMASS', dtype=float)
+    # ----------------------------------------------------------------------
+    # load tapas in correct format
+    spl_others, spl_water = load_tapas_spl(params, recipe, header)
+    # ----------------------------------------------------------------------
+    # force expo values
+    expo_others = float(hdr_airmass)
+    expo_water = float(default_water_abso)
+    # get the absorption
+    abso_e2ds = get_abso_expo(wavemap, expo_others, expo_water, spl_others,
+                              spl_water, ww=qc_ker_width, ex_gau=qc_ker_shape,
+                              dv_abso=0.0, ker_thres=ker_thres,
+                              wavestart=wavestart, waveend=waveend,
+                              dvgrid=dvgrid)
+    # mask transmission below certain threshold
+    mask = abso_e2ds < np.exp(trans_thres)
+    # correct e2ds
+    corrected_e2ds = image_e2ds / abso_e2ds
+    # mask poor tranmission regions
+    corrected_e2ds[mask] = np.nan
+    # ----------------------------------------------------------------------
+    # populate parameter dictionary
+    props = ParamDict()
+    props['CORRECTED_E2DS'] = corrected_e2ds
+    props['TRANS_MASK'] = mask
+    props['ABSO_E2DS'] = abso_e2ds
+    props['SKY_MODEL'] = sky_model
+    props['EXPO_WATER'] = expo_water
+    props['EXPO_OTHERS'] = expo_others
+    props['DV_WATER'] = np.nan
+    props['DV_OTHERS'] = np.nan
+    props['CCFPOWER_WATER'] = np.nan
+    props['CCFPOWER_OTHERS'] = np.nan
+    props['QC_PARAMS'] = qc_params
+    # set sources
+    keys = ['CORRECTED_E2DS', 'TRANS_MASK', 'ABSO_E2DS', 'EXPO_WATER',
+            'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'CCFPOWER_WATER',
+            'CCFPOWER_OTHERS', 'QC_PARAMS', 'SKY_MODEL']
+    props.set_sources(keys, func_name)
+    # ----------------------------------------------------------------------
+    # add constants used (can come from kwargs)
+    props['TELLUP_DO_PRECLEANING'] = do_precleaning
+    props['TELLUP_D_WATER_ABSO'] = default_water_abso
+    props['TELLUP_CCF_SCAN_RANGE'] = ccf_scan_range
+    props['TELLUP_CLEAN_OH_LINES'] = clean_ohlines
+    props['TELLUP_REMOVE_ORDS'] = remove_orders
+    props['TELLUP_SNR_MIN_THRES'] = snr_min_thres
+    props['TELLUP_DEXPO_CONV_THRES'] = dexpo_thres
+    props['TELLUP_DEXPO_MAX_ITR'] = max_iterations
+    props['TELLUP_ABSO_EXPO_KWID'] = ker_width
+    props['TELLUP_ABSO_EXPO_KEXP'] = ker_shape
+    props['TELLUP_TRANS_THRES'] = trans_thres
+    props['TELLUP_TRANS_SIGLIM'] = trans_siglim
+    props['TELLUP_FORCE_AIRMASS'] = force_airmass
+    props['TELLUP_OTHER_BOUNDS'] = others_bounds
+    props['TELLUP_WATER_BOUNDS'] = water_bounds
+    props['TELLUP_ABSO_EXPO_KTHRES'] = ker_thres
+    props['TELLUP_WAVE_START'] = wavestart
+    props['TELLUP_WAVE_END'] = waveend
+    props['TELLUP_DVGRID'] = dvgrid
+    # set sources
+    keys = ['TELLUP_D_WATER_ABSO', 'TELLUP_CCF_SCAN_RANGE',
+            'TELLUP_CLEAN_OH_LINES', 'TELLUP_REMOVE_ORDS',
+            'TELLUP_SNR_MIN_THRES', 'TELLUP_DEXPO_CONV_THRES',
+            'TELLUP_DEXPO_MAX_ITR', 'TELLUP_ABSO_EXPO_KWID',
+            'TELLUP_ABSO_EXPO_KEXP', 'TELLUP_TRANS_THRES',
+            'TELLUP_TRANS_SIGLIM', 'TELLUP_FORCE_AIRMASS',
+            'TELLUP_OTHER_BOUNDS', 'TELLUP_WATER_BOUNDS',
+            'TELLUP_ABSO_EXPO_KTHRES', 'TELLUP_WAVE_START',
+            'TELLUP_WAVE_END', 'TELLUP_DVGRID', 'TELLUP_DO_PRECLEANING']
+    props.set_sources(keys, func_name)
+    # ----------------------------------------------------------------------
+    # return props
+    return props
 
 
+def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
+                         props, wprops):
+    # ------------------------------------------------------------------
+    # get copy of instance of wave file (WAVE_HCMAP)
+    tpclfile = recipe.outputs['TELLU_PCLEAN'].newcopy(recipe=recipe,
+                                                      fiber=fiber)
+    # construct the filename from file instance
+    tpclfile.construct_filename(params, infile=infile)
+    # ------------------------------------------------------------------
+    # copy keys from input file
+    tpclfile.copy_original_keys(infile)
+    # add version
+    tpclfile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add dates
+    tpclfile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    tpclfile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    tpclfile.add_hkey('KW_PID', value=params['PID'])
+    # add output tag
+    tpclfile.add_hkey('KW_OUTPUT', value=tpclfile.name)
+    # add input files (and deal with combining or not combining)
+    if combine:
+        infiles = rawfiles
+    else:
+        infiles = [infile.basename]
+    tpclfile.add_hkey_1d('KW_INFILE1', values=infiles, dim1name='file')
+    # add  calibration files used
+    tpclfile.add_hkey('KW_CDBWAVE', value=wprops['WAVEFILE'])
+    # ----------------------------------------------------------------------
+    # set images
+    dimages = [props['CORRECTED_E2DS'], props['TRANS_MASK'],
+               props['ABSO_E2DS'], props['SKY_MODEL'], props['CCFPOWER_WATER'],
+               props['CCFPOWER_OTHERS']]
+    # add extention info
+    kws1 = ['EXTDESC1', 'Corrected', 'Extension 1 description']
+    kws2 = ['EXTDESC2', 'Trans Mask', 'Extension 2 description']
+    kws3 = ['EXTDESC3', 'ABSO E2DS', 'Extension 3 description']
+    kws4 = ['EXTDESC4', 'Sky model', 'Extension 4 description']
+    kws5 = ['EXTDESC5', 'CCF power water', 'Extension 5 description']
+    kws6 = ['EXTDESC6', 'CCF power others', 'Extension 6 description']
+    # add to hdict
+    tpclfile.add_hkey(key=kws1)
+    tpclfile.add_hkey(key=kws2)
+    tpclfile.add_hkey(key=kws3)
+    tpclfile.add_hkey(key=kws4)
+    tpclfile.add_hkey(key=kws5)
+    tpclfile.add_hkey(key=kws6)
+    # ----------------------------------------------------------------------
+    # need to write these as header keys
+    tpclfile.add_hkey('KW_TELLUP_EXPO_WATER', value=props['EXPO_WATER'])
+    tpclfile.add_hkey('KW_TELLUP_EXPO_OTHERS', value=props['EXPO_OTHERS'])
+    tpclfile.add_hkey('KW_TELLUP_DV_WATER', value=props['DV_WATER'])
+    tpclfile.add_hkey('KW_TELLUP_DV_OTHERS', value=props['DV_OTHERS'])
+    # ----------------------------------------------------------------------
+    # get qc names/values/logic/pass from qc params
+    qc_names, qc_values, qc_logic, qc_pass = props['QC_PARAMS']
+    # first add number of QCs
+    qkw = ['TQCCNUM', len(qc_names), 'Number of tellu pre-clean qcs']
+    tpclfile.add_hkey(key=qkw)
+    # now add the keys
+    for qc_it in range(len(qc_names)):
+        # add name
+        qkwn = ['TQCCN{0}'.format(qc_it), qc_names[qc_it],
+               'Name {0}'.format(qc_it)]
+        tpclfile.add_hkey(key=qkwn)
+        # add value
+        qkwv = ['TQCCV{0}'.format(qc_it), qc_values[qc_it],
+               'Value {0}'.format(qc_it)]
+        tpclfile.add_hkey(key=qkwv)
+        # add logic
+        qkwl = ['TQCCL{0}'.format(qc_it), qc_values[qc_it],
+               'Logic {0}'.format(qc_it)]
+        tpclfile.add_hkey(key=qkwl)
+        # add pass
+        qkwp = ['TQCCP{0}'.format(qc_it), qc_values[qc_it],
+               'Pass {0}'.format(qc_it)]
+        tpclfile.add_hkey(key=qkwp)
+    # ----------------------------------------------------------------------
+    # add constants used (can come from kwargs)
+    tpclfile.add_hkey('KW_TELLUP_DO_PRECLEAN',
+                      value=props['TELLUP_DO_PRECLEANING'])
+    tpclfile.add_hkey('KW_TELLUP_DFLT_WATER',
+                      value=props['TELLUP_D_WATER_ABSO'])
+    tpclfile.add_hkey('KW_TELLUP_CCF_SRANGE',
+                      value=props['TELLUP_CCF_SCAN_RANGE'])
+    tpclfile.add_hkey('KW_TELLUP_CLEAN_OHLINES',
+                      value=props['TELLUP_CLEAN_OH_LINES'])
+    tpclfile.add_hkey('KW_TELLUP_REMOVE_ORDS',
+                      value=props['TELLUP_REMOVE_ORDS'], mapf='list')
+    tpclfile.add_hkey('KW_TELLUP_SNR_MIN_THRES',
+                      value=props['TELLUP_SNR_MIN_THRES'])
+    tpclfile.add_hkey('KW_TELLUP_DEXPO_CONV_THRES',
+                      value=props['TELLUP_DEXPO_CONV_THRES'])
+    tpclfile.add_hkey('KW_TELLUP_DEXPO_MAX_ITR',
+                      value=props['TELLUP_DEXPO_MAX_ITR'])
+    tpclfile.add_hkey('KW_TELLUP_ABSOEXPO_KTHRES',
+                      value=props['TELLUP_ABSO_EXPO_KTHRES'])
+    tpclfile.add_hkey('KW_TELLUP_WAVE_START', value=props['TELLUP_WAVE_START'])
+    tpclfile.add_hkey('KW_TELLUP_WAVE_END', value=props['TELLUP_WAVE_END'])
+    tpclfile.add_hkey('KW_TELLUP_DVGRID', value=props['TELLUP_DVGRID'])
+    tpclfile.add_hkey('KW_TELLUP_ABSOEXPO_KWID',
+                      value=props['TELLUP_ABSO_EXPO_KWID'])
+    tpclfile.add_hkey('KW_TELLUP_ABSOEXPO_KEXP',
+                      value=props['TELLUP_ABSO_EXPO_KEXP'])
+    tpclfile.add_hkey('KW_TELLUP_TRANS_THRES',
+                      value=props['TELLUP_TRANS_THRES'])
+    tpclfile.add_hkey('KW_TELLUP_TRANS_SIGL',
+                      value=props['TELLUP_TRANS_SIGLIM'])
+    tpclfile.add_hkey('KW_TELLUP_FORCE_AIRMASS',
+                      value=props['TELLUP_FORCE_AIRMASS'])
+    tpclfile.add_hkey('KW_TELLUP_OTHER_BOUNDS',
+                      value=props['TELLUP_OTHER_BOUNDS'], mapf='list')
+    tpclfile.add_hkey('KW_TELLUP_WATER_BOUNDS',
+                      value=props['TELLUP_WATER_BOUNDS'], mapf='list')
+    # ----------------------------------------------------------------------
+    # print progress
+    # TODO: move to language database
+    WLOG(params, '', 'Writing file: {0}'.format(tpclfile.filename))
+    # write to file
+    tpclfile.data = dimages[0]
+    tpclfile.write_multi(data_list=dimages[1:])
+    # ----------------------------------------------------------------------
+    # copy the pre-cleaned file to telluDB
+    drs_database.add_file(params, tpclfile)
+
+
+def read_tellu_preclean(params, recipe, infile, fiber):
+    """
+    Read all TELLU_PCLEAN files and if infile is one of them load the images
+    and properties, else return None
+
+    :param params:
+    :param recipe:
+    :param infile:
+    :param fiber:
+    :return:
+    """
+
+    # ------------------------------------------------------------------
+    # get the tellu preclean map key
+    # ----------------------------------------------------------------------
+    out_pclean = core.get_file_definition('TELLU_PCLEAN', params['INSTRUMENT'],
+                                          kind='red', fiber=fiber)
+    # get key
+    pclean_key = out_pclean.get_dbkey(fiber=fiber)
+
+    # load tellu file, header and abspaths
+    _, pclean_filenames = load_tellu_file(params, pclean_key, infile.header,
+                                          n_entries='all', get_image=False)
+    # ------------------------------------------------------------------
+    # get copy of instance of wave file (WAVE_HCMAP)
+    tpclfile = recipe.outputs['TELLU_PCLEAN'].newcopy(recipe=recipe,
+                                                      fiber=fiber)
+    # construct the filename from file instance
+    tpclfile.construct_filename(params, infile=infile)
+
+    # if we don't have the file return None
+    if not tpclfile.basename in pclean_filenames:
+        return None
+    # ----------------------------------------------------------------------
+    # start a parameter dictionary
+    props = ParamDict()
+    # else we read the multi-fits file
+    tpclfile.read_multi()
+    # ----------------------------------------------------------------------
+    # read qc parameters
+    qc_names, qc_values, qc_logic, qc_pass = [], [], [], []
+    # first add number of QCs
+    num_qcs = tpclfile.get_key('TQCCNUM', dtype=int)
+    # now add the keys
+    for qc_it in range(num_qcs):
+        # add name
+        qc_names.append(tpclfile.get_key('TQCCN{0}'.format(qc_it), dtype=str))
+        # add value
+        value = tpclfile.get_key('TQCCV{0}'.format(qc_it), dtype=str)
+        # evaluate vaule
+        try:
+            qc_values.append(eval(value))
+        except:
+            qc_values.append(value)
+        # add logic
+        qc_logic.append(tpclfile.get_key('TQCCL{0}'.format(qc_it), dtype=str))
+        # add pass
+        qc_pass.append(tpclfile.get_key('TQCCP{0}'.format(qc_it), dtype=int))
+    # push into props
+    props['QC_PARAMS'] = [qc_names, qc_values, qc_logic, qc_pass]
+    # ----------------------------------------------------------------------
+    # push arrays into parameter dictionary
+    props['CORRECTED_E2DS'] = tpclfile.data_array[0]
+    props['TRANS_MASK'] = tpclfile.data_array[1]
+    props['ABSO_E2DS'] = tpclfile.data_array[2]
+    props['SKY_MODEL'] = tpclfile.data_array[3]
+    props['CCFPOWER_WATER'] = tpclfile.data_array[4]
+    props['CCFPOWER_OTHERS'] =tpclfile.data_array[5]
+    # ----------------------------------------------------------------------
+    # get header keys
+    tpclfile.add_hkey('KW_TELLUP_EXPO_WATER', value=props['EXPO_WATER'])
+    tpclfile.add_hkey('KW_TELLUP_EXPO_OTHERS', value=props['EXPO_OTHERS'])
+    tpclfile.add_hkey('KW_TELLUP_DV_WATER', value=props['DV_WATER'])
+    tpclfile.add_hkey('KW_TELLUP_DV_OTHERS', value=props['DV_OTHERS'])
+    # push into props
+    props['EXPO_WATER'] = tpclfile.get_key('KW_TELLUP_EXPO_WATER', dtype=float)
+    props['EXPO_OTHERS'] = tpclfile.get_key('KW_TELLUP_EXPO_OTHERS',
+                                            dtype=float)
+    props['DV_WATER'] = tpclfile.get_key('KW_TELLUP_DV_WATER', dtype=float)
+    props['DV_OTHERS'] = tpclfile.get_key('KW_TELLUP_DV_OTHERS', dtype=float)
+    # set sources
+    keys = ['CORRECTED_E2DS', 'TRANS_MASK', 'ABSO_E2DS', 'EXPO_WATER',
+            'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'CCFPOWER_WATER',
+            'CCFPOWER_OTHERS', 'QC_PARAMS', 'SKY_MODEL']
+    props.set_sources(keys, 'header')
+    # ----------------------------------------------------------------------
+    # add constants used (can come from kwargs)
+    props['TELLUP_DO_PRECLEANING'] = tpclfile.get_key('KW_TELLUP_DO_PRECLEAN',
+                                                      dtype=bool)
+    props['TELLUP_D_WATER_ABSO'] = tpclfile.get_key('KW_TELLUP_DFLT_WATER',
+                                                    dtype=float)
+    props['TELLUP_CCF_SCAN_RANGE'] = tpclfile.get_key('KW_TELLUP_CCF_SRANGE',
+                                                      dtype=float)
+    props['TELLUP_CLEAN_OH_LINES'] = tpclfile.get_key('KW_TELLUP_CLEAN_OHLINES',
+                                                      dtype=bool)
+    props['TELLUP_REMOVE_ORDS'] = tpclfile.get_key('KW_TELLUP_REMOVE_ORDS',
+                                                   dtype=list, listtype=int)
+    props['TELLUP_SNR_MIN_THRES'] = tpclfile.get_key('KW_TELLUP_SNR_MIN_THRES',
+                                                     dtype=float)
+    kw_dexpo = 'KW_TELLUP_DEXPO_CONV_THRES'
+    props['TELLUP_DEXPO_CONV_THRES'] = tpclfile.get_key(kw_dexpo, dtype=float)
+    props['TELLUP_DEXPO_MAX_ITR'] = tpclfile.get_key('KW_TELLUP_DEXPO_MAX_ITR',
+                                                     dtype=int)
+    kw_kthres = 'KW_TELLUP_ABSOEXPO_KTHRES'
+    props['TELLUP_ABSO_EXPO_KTHRES'] = tpclfile.get_key(kw_kthres, dtype=float)
+    props['TELLUP_WAVE_START'] = tpclfile.get_key('KW_TELLUP_WAVE_START',
+                                                  dtype=float)
+    props['TELLUP_WAVE_END'] = tpclfile.get_key('KW_TELLUP_WAVE_END',
+                                                dtype=float)
+    props['TELLUP_DVGRID'] = tpclfile.get_key('KW_TELLUP_DVGRID', dtype=float)
+    props['TELLUP_ABSO_EXPO_KWID'] = tpclfile.get_key('KW_TELLUP_ABSOEXPO_KWID',
+                                                      dtype=float)
+    props['TELLUP_ABSO_EXPO_KEXP'] = tpclfile.get_key('KW_TELLUP_ABSOEXPO_KEXP',
+                                                      dtype=float)
+    props['TELLUP_TRANS_THRES'] = tpclfile.get_key('KW_TELLUP_TRANS_THRES',
+                                                   dtype=float)
+    props['TELLUP_TRANS_SIGLIM'] = tpclfile.get_key('TELLUP_TRANS_SIGLIM',
+                                                    dtype=float)
+    props['TELLUP_FORCE_AIRMASS'] = tpclfile.get_key('KW_TELLUP_FORCE_AIRMASS',
+                                                     dtype=bool)
+    props['TELLUP_OTHER_BOUNDS'] = tpclfile.get_key('KW_TELLUP_OTHER_BOUNDS',
+                                                    dtype=list, listtype=float)
+    props['TELLUP_WATER_BOUNDS']  = tpclfile.get_key('KW_TELLUP_WATER_BOUNDS',
+                                                     dtype=list, listtype=float)
+    # set the source from header
+    keys = ['TELLUP_D_WATER_ABSO', 'TELLUP_CCF_SCAN_RANGE',
+            'TELLUP_CLEAN_OH_LINES', 'TELLUP_REMOVE_ORDS',
+            'TELLUP_SNR_MIN_THRES', 'TELLUP_DEXPO_CONV_THRES',
+            'TELLUP_DEXPO_MAX_ITR', 'TELLUP_ABSO_EXPO_KWID',
+            'TELLUP_ABSO_EXPO_KEXP', 'TELLUP_TRANS_THRES',
+            'TELLUP_TRANS_SIGLIM', 'TELLUP_FORCE_AIRMASS',
+            'TELLUP_OTHER_BOUNDS', 'TELLUP_WATER_BOUNDS',
+            'TELLUP_ABSO_EXPO_KTHRES', 'TELLUP_WAVE_START',
+            'TELLUP_WAVE_END', 'TELLUP_DVGRID', 'TELLUP_DO_PRECLEANING']
+    props.set_sources(keys, 'header')
+    # ----------------------------------------------------------------------
+    # return props
+    return props
 
 
 # =============================================================================

@@ -332,7 +332,7 @@ def calculate_telluric_absorption(params, recipe, image, template,
 # =============================================================================
 # QC and summary functions
 # =============================================================================
-def mk_tellu_quality_control(params, tprops, infile, **kwargs):
+def mk_tellu_quality_control(params, tprops, infile, tpreprops, **kwargs):
     func_name = __NAME__ + '.mk_tellu_quality_control()'
     # get parameters from params/kwargs
     snr_order = pcheck(params, 'MKTELLU_QC_SNR_ORDER', 'snr_order', kwargs,
@@ -357,6 +357,21 @@ def mk_tellu_quality_control(params, tprops, infile, **kwargs):
     # set passed variable and fail message list
     fail_msg = []
     qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
+    # ----------------------------------------------------------------------
+    # deal with tellu precleaning qc params - just add them correctly
+    tqc_names, tqc_values, tqc_logic, tqc_pass = tpreprops['QC_PARAMS']
+    # loop around all tqc
+    for qc_it in range(len(tqc_names)):
+        # if tqc_pass failed (zero) make fail message
+        if tqc_pass == 0:
+            fail_msg.append(tqc_logic[qc_it].lower())
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
+        # add to qc header lists
+        qc_values.append(tqc_values[qc_it])
+        qc_names.append(tqc_names[qc_it])
+        qc_logic.append(tqc_logic[qc_it])
     # ----------------------------------------------------------------------
     # if array is completely NaNs it shouldn't pass
     if np.sum(np.isfinite(transmission_map)) == 0:
@@ -497,7 +512,8 @@ def mk_tellu_summary(recipe, it, params, qc_params, tellu_props, fiber):
 # Write functions
 # =============================================================================
 def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
-                              tapas_props, mprops, nprops, tprops, qc_params):
+                              tapas_props, mprops, nprops, tprops, tpreprops,
+                              qc_params):
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     transfile = recipe.outputs['TELLU_TRANS'].newcopy(recipe=recipe,
@@ -562,6 +578,50 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     transfile.add_hkey('KW_MKTELL_TAU_OTHER_L', value=tprops['TAU_OTHER_LOWER'])
     transfile.add_hkey('KW_MKTELL_TAU_OTHER_U', value=tprops['TAU_OTHER_UPPER'])
     transfile.add_hkey('KW_MKTELL_TAPAS_SNUM', value=tprops['TAPAS_SMALL_NUM'])
+    # ----------------------------------------------------------------------
+    # add tellu pre-clean keys
+    transfile.add_hkey('KW_TELLUP_EXPO_WATER', value=tpreprops['EXPO_WATER'])
+    transfile.add_hkey('KW_TELLUP_EXPO_OTHERS', value=tpreprops['EXPO_OTHERS'])
+    transfile.add_hkey('KW_TELLUP_DV_WATER', value=tpreprops['DV_WATER'])
+    transfile.add_hkey('KW_TELLUP_DV_OTHERS', value=tpreprops['DV_OTHERS'])
+    transfile.add_hkey('KW_TELLUP_DO_PRECLEAN',
+                      value=tpreprops['TELLUP_DO_PRECLEANING'])
+    transfile.add_hkey('KW_TELLUP_DFLT_WATER',
+                      value=tpreprops['TELLUP_D_WATER_ABSO'])
+    transfile.add_hkey('KW_TELLUP_CCF_SRANGE',
+                      value=tpreprops['TELLUP_CCF_SCAN_RANGE'])
+    transfile.add_hkey('KW_TELLUP_CLEAN_OHLINES',
+                      value=tpreprops['TELLUP_CLEAN_OH_LINES'])
+    transfile.add_hkey('KW_TELLUP_REMOVE_ORDS',
+                      value=tpreprops['TELLUP_REMOVE_ORDS'], mapf='list')
+    transfile.add_hkey('KW_TELLUP_SNR_MIN_THRES',
+                      value=tpreprops['TELLUP_SNR_MIN_THRES'])
+    transfile.add_hkey('KW_TELLUP_DEXPO_CONV_THRES',
+                      value=tpreprops['TELLUP_DEXPO_CONV_THRES'])
+    transfile.add_hkey('KW_TELLUP_DEXPO_MAX_ITR',
+                      value=tpreprops['TELLUP_DEXPO_MAX_ITR'])
+    transfile.add_hkey('KW_TELLUP_ABSOEXPO_KTHRES',
+                      value=tpreprops['TELLUP_ABSO_EXPO_KTHRES'])
+    transfile.add_hkey('KW_TELLUP_WAVE_START',
+                      value=tpreprops['TELLUP_WAVE_START'])
+    transfile.add_hkey('KW_TELLUP_WAVE_END',
+                      value=tpreprops['TELLUP_WAVE_END'])
+    transfile.add_hkey('KW_TELLUP_DVGRID',
+                      value=tpreprops['TELLUP_DVGRID'])
+    transfile.add_hkey('KW_TELLUP_ABSOEXPO_KWID',
+                      value=tpreprops['TELLUP_ABSO_EXPO_KWID'])
+    transfile.add_hkey('KW_TELLUP_ABSOEXPO_KEXP',
+                      value=tpreprops['TELLUP_ABSO_EXPO_KEXP'])
+    transfile.add_hkey('KW_TELLUP_TRANS_THRES',
+                      value=tpreprops['TELLUP_TRANS_THRES'])
+    transfile.add_hkey('KW_TELLUP_TRANS_SIGL',
+                      value=tpreprops['TELLUP_TRANS_SIGLIM'])
+    transfile.add_hkey('KW_TELLUP_FORCE_AIRMASS',
+                      value=tpreprops['TELLUP_FORCE_AIRMASS'])
+    transfile.add_hkey('KW_TELLUP_OTHER_BOUNDS',
+                      value=tpreprops['TELLUP_OTHER_BOUNDS'], mapf='list')
+    transfile.add_hkey('KW_TELLUP_WATER_BOUNDS',
+                      value=tpreprops['TELLUP_WATER_BOUNDS'], mapf='list')
     # ----------------------------------------------------------------------
     # save recovered airmass and water vapor
     transfile.add_hkey('KW_MKTELL_AIRMASS', value=tprops['RECOV_AIRMASS'])
