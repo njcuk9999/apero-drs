@@ -164,6 +164,8 @@ def __main__(recipe, params):
             # log that we are skipping
             wargs = [dprtype, recipe.name, allowed_dprtypes, infile.basename]
             WLOG(params, 'warning', TextEntry('10-019-00001', args=wargs))
+            # end log correctly
+            log1.end(params)
             # continue
             continue
         # ------------------------------------------------------------------
@@ -177,6 +179,8 @@ def __main__(recipe, params):
             # log that we are skipping
             wargs = [infile.basename, params['KW_OBJNAME'][0], objname]
             WLOG(params, 'warning', TextEntry('10-019-00002', args=wargs))
+            # end log correctly
+            log1.end(params)
             # continue
             continue
         else:
