@@ -1470,7 +1470,7 @@ def read_tellu_preclean(params, recipe, infile, fiber):
                                                       dtype=float)
     props['TELLUP_TRANS_THRES'] = tpclfile.get_key('KW_TELLUP_TRANS_THRES',
                                                    dtype=float)
-    props['TELLUP_TRANS_SIGLIM'] = tpclfile.get_key('TELLUP_TRANS_SIGLIM',
+    props['TELLUP_TRANS_SIGLIM'] = tpclfile.get_key('KW_TELLUP_TRANS_SIGL',
                                                     dtype=float)
     props['TELLUP_FORCE_AIRMASS'] = tpclfile.get_key('KW_TELLUP_FORCE_AIRMASS',
                                                      dtype=bool)
