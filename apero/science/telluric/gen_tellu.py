@@ -1352,7 +1352,8 @@ def read_tellu_preclean(params, recipe, infile, fiber):
 
     # load tellu file, header and abspaths
     _, pclean_filenames = load_tellu_file(params, pclean_key, infile.header,
-                                          n_entries='all', get_image=False)
+                                          n_entries='all', get_image=False,
+                                          required=False)
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     tpclfile = recipe.outputs['TELLU_PCLEAN'].newcopy(recipe=recipe,
