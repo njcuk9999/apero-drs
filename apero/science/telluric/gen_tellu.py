@@ -1344,6 +1344,8 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
     # write to file
     tpclfile.data = dimages[0]
     tpclfile.write_multi(data_list=dimages[1:])
+    # add to output files (for indexing)
+    recipe.add_output_file(tpclfile)
     # ----------------------------------------------------------------------
     # copy the pre-cleaned file to telluDB
     drs_database.add_file(params, tpclfile)
@@ -1733,7 +1735,6 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
         WLOG(params, '', TextEntry('40-019-00002', args=wargs))
         # save
         out_tellu_conv.write_file(params)
-
         # ------------------------------------------------------------------
         # Move to telluDB and update telluDB
         # ------------------------------------------------------------------
