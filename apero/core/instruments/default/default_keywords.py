@@ -101,6 +101,18 @@ __all__ = [# input keys
            'KW_WNT_DCAVITY', 'KW_WNT_DCAVSRCE',
            'KW_WNT_NITER1', 'KW_WNT_NITER2', 'KW_WNT_HCSIGCLIP',
            'KW_WNT_MADLIMIT', 'KW_WNT_NSIG_FIT',
+           # telluric preclean variables
+           'KW_TELLUP_EXPO_WATER', 'KW_TELLUP_EXPO_OTHERS',
+           'KW_TELLUP_DV_WATER', 'KW_TELLUP_DV_OTHERS', 'KW_TELLUP_DO_PRECLEAN',
+           'KW_TELLUP_DFLT_WATER', 'KW_TELLUP_CCF_SRANGE',
+           'KW_TELLUP_CLEAN_OHLINES', 'KW_TELLUP_REMOVE_ORDS',
+           'KW_TELLUP_SNR_MIN_THRES', 'KW_TELLUP_DEXPO_CONV_THRES',
+           'KW_TELLUP_DEXPO_MAX_ITR', 'KW_TELLUP_ABSOEXPO_KTHRES',
+           'KW_TELLUP_WAVE_START', 'KW_TELLUP_WAVE_END',
+           'KW_TELLUP_DVGRID', 'KW_TELLUP_ABSOEXPO_KWID',
+           'KW_TELLUP_ABSOEXPO_KEXP', 'KW_TELLUP_TRANS_THRES',
+           'KW_TELLUP_TRANS_SIGL', 'KW_TELLUP_FORCE_AIRMASS',
+           'KW_TELLUP_OTHER_BOUNDS', 'KW_TELLUP_WATER_BOUNDS',
            # mktellu values
            'KW_MKTELL_TEMP_FILE', 'KW_MKTELL_BLAZE_PRCT', 'KW_MKTELL_BLAZE_CUT',
            'KW_MKTELL_TAPASFILE', 'KW_MKTELL_FWHMPLSF',
@@ -999,6 +1011,103 @@ KW_WNT_MADLIMIT = Keyword('KW_WNT_MADLIMIT', key='', dtype=float,
 
 # sigma clipping for the fit used in wave night
 KW_WNT_NSIG_FIT = Keyword('KW_WNT_NSIG_FIT', key='', dtype=int, source=__NAME__)
+
+# -----------------------------------------------------------------------------
+# Define telluric preclean variables
+# -----------------------------------------------------------------------------
+# Define the exponent of water key from telluric preclean process
+KW_TELLUP_EXPO_WATER = Keyword('KW_TELLUP_EXPO_WATER', key='', dtype=float,
+                               source=__NAME__)
+
+# Define the exponent of other species from telluric preclean process
+KW_TELLUP_EXPO_OTHERS = Keyword('KW_TELLUP_EXPO_OTHERS', key='', dtype=float,
+                                source=__NAME__)
+
+# Define the velocity of water absorbers calculated in telluric preclean process
+KW_TELLUP_DV_WATER = Keyword('KW_TELLUP_DV_WATER', key='', dtype=float,
+                             source=__NAME__)
+
+# Define the velocity of other species absorbers calculated in telluric
+#     preclean process
+KW_TELLUP_DV_OTHERS = Keyword('KW_TELLUP_DV_OTHERS', key='', dtype=float,
+                              source=__NAME__)
+
+
+# Define whether precleaning was done (tellu pre-cleaning)
+KW_TELLUP_DO_PRECLEAN = Keyword('KW_TELLUP_DO_PRECLEAN', key='', dtype=bool,
+                                source=__NAME__)
+
+# Define default water absorption used (tellu pre-cleaning)
+KW_TELLUP_DFLT_WATER = Keyword('KW_TELLUP_DFLT_WATER', key='', dtype=float,
+                                source=__NAME__)
+
+# Define ccf scan range that was used (tellu pre-cleaning)
+KW_TELLUP_CCF_SRANGE = Keyword('KW_TELLUP_CCF_SRANGE', key='', dtype=float,
+                                source=__NAME__)
+
+# Define whether we cleaned OH lines
+KW_TELLUP_CLEAN_OHLINES = Keyword('KW_TELLUP_CCF_SRANGE', key='', dtype=float,
+                                source=__NAME__)
+
+# Define which orders were removed from tellu pre-cleaning
+KW_TELLUP_REMOVE_ORDS = Keyword('KW_TELLUP_REMOVE_ORDSv', key='', dtype=str,
+                                source=__NAME__)
+
+# Define which min snr threshold was used for tellu pre-cleaning
+KW_TELLUP_SNR_MIN_THRES = Keyword('KW_TELLUP_SNR_MIN_THRES', key='',
+                                  dtype=float, source=__NAME__)
+
+# Define dexpo convergence threshold used
+KW_TELLUP_DEXPO_CONV_THRES = Keyword('KW_TELLUP_DEXPO_CONV_THRES', key='',
+                                     dtype=float, source=__NAME__)
+
+# Define the maximum number of oterations used to get dexpo convergence
+KW_TELLUP_DEXPO_MAX_ITR = Keyword('KW_TELLUP_DEXPO_MAX_ITR', key='',
+                                  dtype=int, source=__NAME__)
+
+# Define the kernel threshold in abso_expo used in tellu pre-cleaning
+KW_TELLUP_ABSOEXPO_KTHRES = Keyword('KW_TELLUP_ABSOEXPO_KTHRES', key='',
+                                    dtype=int, source=__NAME__)
+
+# Define the wave start (same as s1d) in nm used
+KW_TELLUP_WAVE_START = Keyword('KW_TELLUP_WAVE_START', key='', dtype=float,
+                               source=__NAME__)
+
+# Define the wave end (same as s1d) in nm used
+KW_TELLUP_WAVE_END = Keyword('KW_TELLUP_WAVE_END', key='', dtype=float,
+                             source=__NAME__)
+
+# Define the dv wave grid (same as s1d) in km/s used
+KW_TELLUP_DVGRID = Keyword('KW_TELLUP_DVGRID', key='', dtype=float,
+                           source=__NAME__)
+
+# Define the gauss width of the kernel used in abso_expo for tellu pre-cleaning
+KW_TELLUP_ABSOEXPO_KWID = Keyword('KW_TELLUP_ABSOEXPO_KWID', key='',
+                                  dtype=float, source=__NAME__)
+
+# Define the gauss shape of the kernel used in abso_expo for tellu pre-cleaning
+KW_TELLUP_ABSOEXPO_KEXP = Keyword('KW_TELLUP_ABSOEXPO_KEXP', key='',
+                                  dtype=float, source=__NAME__)
+
+# Define the exponent of the transmission threshold used for tellu pre-cleaning
+KW_TELLUP_TRANS_THRES = Keyword('KW_TELLUP_TRANS_THRES', key='',
+                                dtype=float, source=__NAME__)
+
+# Define the threshold for discrepant tramission used for tellu pre-cleaning
+KW_TELLUP_TRANS_SIGL = Keyword('KW_TELLUP_TRANS_SIGL', key='',
+                                dtype=float, source=__NAME__)
+
+# Define the whether to force fit to header airmass used for tellu pre-cleaning
+KW_TELLUP_FORCE_AIRMASS = Keyword('KW_TELLUP_FORCE_AIRMASS', key='',
+                                  dtype=bool, source=__NAME__)
+
+# Define the bounds of the exponent of other species used for tellu pre-cleaning
+KW_TELLUP_OTHER_BOUNDS = Keyword('KW_TELLUP_OTHER_BOUNDS', key='',
+                                  dtype=str, source=__NAME__)
+
+# Define the bounds of the exponent of water used for tellu pre-cleaning
+KW_TELLUP_WATER_BOUNDS = Keyword('KW_TELLUP_WATER_BOUNDS', key='',
+                                  dtype=str, source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define make telluric variables
