@@ -483,9 +483,6 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # ------------------------------------------------------------------
         # return props
         return props
-    # log progress
-    # TODO: move to language database
-    WLOG(params, '', 'Pre-cleaning data')
     # ----------------------------------------------------------------------
     # we ravel the wavelength grid to make it a 1d array of increasing
     #     wavelength. We will trim the overlapping domain between orders
@@ -583,17 +580,19 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     trans = np.ones_like(wavemap)
     # set up a qc flag
     flag_qc = False
+    # log progress
+    # TODO: move to language database
+    WLOG(params, '', 'Pre-cleaning data')
     # loop around until convergence or 20th iteration
     while (dexpo > dexpo_thres) and (iteration < max_iterations):
         # set up a qc flag
         flag_qc = False
         # log progress
         # TODO: move to language db
-        msg = ('dexpo loop iteration={0} \n\tdexpo={1} expo_water={2} '
-               'expo_others={3} dv_abso={4} [km/s]')
-        args = [iteration, dexpo, expo_water, expo_others, dv_abso]
+        msg = ('\titeration={0} dexpo={1:.3e} dv_abso={4:.3f} [m/s]'
+               '\n\t\texpo_water={2:.3f} expo_others={3:.3f}')
+        args = [iteration, dexpo, expo_water, expo_others, dv_abso * 1000]
         WLOG(params, '', msg.format(*args))
-
         # get the absorption spectrum
         trans = get_abso_expo(params, wavemap, expo_others, expo_water,
                               spl_others, spl_water, ww=ker_width,
@@ -1760,70 +1759,6 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
     tapas_props.set_sources(keys, func_name)
     # return tapas props
     return tapas_props
-
-
-def load_tapas_convolved(params, recipe, header, mprops, fiber, **kwargs):
-    func_name = __NAME__ + '.load_conv_tapas()'
-    # get parameters from params/kwargs
-    tellu_absorbers = pcheck(params, 'TELLU_ABSORBERS', 'absorbers', kwargs,
-                             func_name)
-    fwhm_pixel_lsf = pcheck(params, 'FWHM_PIXEL_LSF', 'fwhm_lsf', kwargs,
-                            func_name)
-    # ----------------------------------------------------------------------
-    # Load any convolved files from database
-    # ----------------------------------------------------------------------
-    # get file definition
-    tellu_conv = core.get_file_definition('TELLU_CONV',
-                                              params['INSTRUMENT'],
-                                              kind='red', fiber=fiber)
-    # make new copy of the file definition
-    out_tellu_conv = tellu_conv.newcopy(recipe=recipe)
-    # get key
-    conv_key = out_tellu_conv.get_dbkey(fiber=fiber)
-    # load tellu file
-    _, conv_paths = load_tellu_file(params, conv_key, header, n_entries='all',
-                                    get_image=False, required=False)
-    # construct the filename from file instance
-    out_tellu_conv.construct_filename(params, infile=mprops['WAVEINST'],
-                                      path=params['DRS_TELLU_DB'])
-    # if our npy file already exists then we just need to read it
-    if out_tellu_conv.filename in conv_paths:
-        # log that we are loading tapas convolved file
-        wargs = [out_tellu_conv.filename]
-        WLOG(params, '', TextEntry('40-019-00001', args=wargs))
-        # ------------------------------------------------------------------
-        # Load the convolved TAPAS atmospheric transmission from file
-        # ------------------------------------------------------------------
-        # load npy file
-        out_tellu_conv.read_file(params)
-        # push data into array
-        tapas_all_species = np.array(out_tellu_conv.data)
-        # ------------------------------------------------------------------
-        # get the tapas_water and tapas_others data
-        # ------------------------------------------------------------------
-        # water is the second column
-        tapas_water = tapas_all_species[1, :]
-        # other is defined as the product of the other columns
-        tapas_other = np.prod(tapas_all_species[2:, :], axis=0)
-        # return the tapas info in a ParamDict
-        tapas_props = ParamDict()
-        tapas_props['TAPAS_ALL_SPECIES'] = tapas_all_species
-        tapas_props['TAPAS_WATER'] = tapas_water
-        tapas_props['TAPAS_OTHER'] = tapas_other
-        tapas_props['TAPAS_FILE'] = out_tellu_conv.filename
-        tapas_props['TELLU_ABSORBERS'] = tellu_absorbers
-        tapas_props['FWHM_PIXEL_LSF'] = fwhm_pixel_lsf
-        # set source
-        keys = ['TAPAS_ALL_SPECIES', 'TAPAS_WATER', 'TAPAS_OTHER',
-                'TAPAS_FILE', 'TELLU_ABSORBERS', 'FWHM_PIXEL_LSF']
-        tapas_props.set_sources(keys, func_name)
-        # return tapas props
-        return tapas_props
-    # else we generate an error
-    else:
-        # log that no matching tapas convolved file exists
-        wargs = [conv_key, out_tellu_conv.filename, func_name]
-        WLOG(params, 'error', TextEntry('09-019-00002', args=wargs))
 
 
 def load_tapas_spl(params, recipe, header):

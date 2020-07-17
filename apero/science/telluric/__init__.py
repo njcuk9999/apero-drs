@@ -14,7 +14,7 @@ from apero.science.telluric import mk_tellu
 from apero.science.telluric import fit_tellu
 from apero.science.telluric import template_tellu
 
-__all__ = ['calculate_telluric_absorption', 'get_blacklist', 'get_whitelist',
+__all__ = ['calculate_tellu_res_absorption', 'get_blacklist', 'get_whitelist',
            'load_conv_tapas', 'load_templates', 'mk_tellu_quality_control',
            'normalise_by_pblaze']
 
@@ -23,7 +23,7 @@ __all__ = ['calculate_telluric_absorption', 'get_blacklist', 'get_whitelist',
 # =============================================================================
 calc_recon_and_correct = fit_tellu.calc_recon_and_correct
 
-calculate_telluric_absorption = mk_tellu.calculate_telluric_absorption
+calculate_tellu_res_absorption = mk_tellu.calculate_tellu_res_absorption
 
 correct_other_science = fit_tellu.correct_other_science
 
