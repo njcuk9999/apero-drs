@@ -878,9 +878,12 @@ obj_mk_tellu.description = Help['MKTELL_DESC']
 obj_mk_tellu.epilog = Help['MKTELL_EXAMPLE']
 obj_mk_tellu.kind = 'recipe'
 obj_mk_tellu.set_outputs(TELLU_CONV=sf.out_tellu_conv,
-                         TELLU_TRANS=sf.out_tellu_trans)
-obj_mk_tellu.set_debug_plots('MKTELLU_WAVE_FLUX1', 'MKTELLU_WAVE_FLUX2')
-obj_mk_tellu.set_summary_plots('SUM_MKTELLU_WAVE_FLUX')
+                         TELLU_TRANS=sf.out_tellu_trans,
+                         TELLU_PCLEAN=sf.out_tellu_pclean)
+obj_mk_tellu.set_debug_plots('MKTELLU_WAVE_FLUX1', 'MKTELLU_WAVE_FLUX2',
+                             'TELLUP_WAVE_TRANS', 'TELLUP_ABSO_SPEC')
+obj_mk_tellu.set_summary_plots('SUM_MKTELLU_WAVE_FLUX',
+                               'SUM_TELLUP_WAVE_TRANS', 'SUM_TELLUP_ABSO_SPEC')
 obj_mk_tellu.set_arg(pos=0, **directory)
 obj_mk_tellu.set_arg(name='files', dtype='files', pos='1+',
                      files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
@@ -951,13 +954,16 @@ obj_fit_tellu.set_outputs(ABSO_NPY=sf.out_tellu_abso_npy,
                           SC1D_V_FILE=sf.out_tellu_sc1d_v,
                           TELLU_RECON=sf.out_tellu_recon,
                           RC1D_W_FILE=sf.out_tellu_rc1d_w,
-                          RC1D_V_FILE=sf.out_tellu_rc1d_v)
+                          RC1D_V_FILE=sf.out_tellu_rc1d_v,
+                          TELLU_PCLEAN=sf.out_tellu_pclean)
 obj_fit_tellu.set_debug_plots('EXTRACT_S1D', 'EXTRACT_S1D_WEIGHT',
                               'FTELLU_PCA_COMP1', 'FTELLU_PCA_COMP2',
                               'FTELLU_RECON_SPLINE1', 'FTELLU_RECON_SPLINE2',
                               'FTELLU_WAVE_SHIFT1', 'FTELLU_WAVE_SHIFT2',
-                              'FTELLU_RECON_ABSO1', 'FTELLU_RECON_ABSO2')
-obj_fit_tellu.set_summary_plots('SUM_EXTRACT_S1D', 'SUM_FTELLU_RECON_ABSO')
+                              'FTELLU_RECON_ABSO1', 'FTELLU_RECON_ABSO2',
+                              'TELLUP_WAVE_TRANS', 'TELLUP_ABSO_SPEC')
+obj_fit_tellu.set_summary_plots('SUM_EXTRACT_S1D', 'SUM_FTELLU_RECON_ABSO',
+                                'SUM_TELLUP_WAVE_TRANS', 'SUM_TELLUP_ABSO_SPEC')
 obj_fit_tellu.set_arg(pos=0, **directory)
 obj_fit_tellu.set_arg(name='files', dtype='files', pos='1+',
                       files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
