@@ -1362,6 +1362,8 @@ def read_tellu_preclean(params, recipe, infile, fiber):
     tpclfile.construct_filename(params, infile=infile)
 
     # if we don't have the file return None
+    if pclean_filenames is None:
+        return None
     if not tpclfile.basename in pclean_filenames:
         return None
     # ----------------------------------------------------------------------
