@@ -14,6 +14,7 @@ from astropy import constants as cc
 from astropy import units as uu
 from scipy.optimize import curve_fit
 import warnings
+import os
 
 from apero import core
 from apero.core import constants
@@ -1375,17 +1376,22 @@ def read_tellu_preclean(params, recipe, infile, fiber):
     _, pclean_filenames = load_tellu_file(params, pclean_key, infile.header,
                                           n_entries='all', get_image=False,
                                           required=False)
+    # if we don't have the file return None
+    if pclean_filenames is None:
+        return None
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     tpclfile = recipe.outputs['TELLU_PCLEAN'].newcopy(recipe=recipe,
                                                       fiber=fiber)
     # construct the filename from file instance
     tpclfile.construct_filename(params, infile=infile)
-
-    # if we don't have the file return None
-    if pclean_filenames is None:
-        return None
-    if not tpclfile.basename in pclean_filenames:
+    # ------------------------------------------------------------------
+    # only keep basenames
+    pclean_basenames = []
+    for pclean_filename in pclean_filenames:
+        pclean_basenames.append(os.path.basename(pclean_filename))
+    # see if file is in database
+    if not tpclfile.basename in pclean_basenames:
         return None
     # ----------------------------------------------------------------------
     # start a parameter dictionary
