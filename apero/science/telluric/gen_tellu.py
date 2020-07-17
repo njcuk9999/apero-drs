@@ -1822,7 +1822,7 @@ def load_tapas_spl(params, recipe, header):
                                        path=params['DRS_TELLU_DB'])
     # ----------------------------------------------------------------------
     # if our npy file already exists then we just need to read it
-    if out_tellu_tapas.filename in conv_paths:
+    if (conv_paths is not None) and (out_tellu_tapas.filename in conv_paths):
         out_tellu_tapas.read_file(params)
         # push into arrays
         tmp_tapas = np.array(out_tellu_tapas.data)
@@ -1861,7 +1861,7 @@ def load_tapas_spl(params, recipe, header):
         # npy file must set header/hdict (to update)
         out_tellu_tapas.header = header
         out_tellu_tapas.hdict = header
-        # copy the order profile to the calibDB
+        # copy the order profile to the telluDB
         drs_database.add_file(params, out_tellu_tapas)
     # ----------------------------------------------------------------------
     # need to spline others and water
