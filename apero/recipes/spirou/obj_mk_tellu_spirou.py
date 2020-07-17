@@ -208,20 +208,17 @@ def __main__(recipe, params):
         largs = [header, mprops, fiber]
         tapas_props = telluric.load_conv_tapas(params, recipe, *largs)
 
-
-        # TODO: add EA cleaning function
-        #   ------------------------------------------------------------------
-        #   must return airmass/watercol for quality control
-        #   tprops['PASSED'] = True
-        #   tprops['RECOV_AIRMASS'] = np.nan
-        #   tprops['RECOV_WATER'] = np.nan
-        #   tprops['AIRMASS'] = airmass
-        #   ------------------------------------------------------------------
-
+        # ------------------------------------------------------------------
+        # telluric pre-cleaning
+        # ------------------------------------------------------------------
+        tpreprops = telluric.tellu_preclean(params, recipe, infile, wprops,
+                                            fiber, rawfiles, combine)
+        # get variables out of tpreprops
+        image1 = tpreprops['CORRECTED_E2DS']
         # ------------------------------------------------------------------
         # Normalize image by peak blaze
         # ------------------------------------------------------------------
-        nargs = [image, header, fiber]
+        nargs = [image1, header, fiber]
         image, nprops = telluric.normalise_by_pblaze(params, *nargs)
         # ------------------------------------------------------------------
         # Get barycentric corrections (BERV)
@@ -235,14 +232,14 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Calculate telluric absorption
         # ------------------------------------------------------------------
-        cargs = [recipe, image, template, template_file, header, mprops, wprops,
-                 tapas_props, bprops]
+        cargs = [recipe, image1, template, template_file, header, mprops,
+                 wprops, tapas_props, bprops]
         # TODO: rename to calculate telluric residual absorption
         tellu_props = telluric.calculate_telluric_absorption(params, *cargs)
         # ------------------------------------------------------------------
         # Quality control
         # ------------------------------------------------------------------
-        pargs = [tellu_props, infile]
+        pargs = [tellu_props, infile, tpreprops]
         qc_params, passed = telluric.mk_tellu_quality_control(params, *pargs)
         # update recipe log
         log1.add_qc(params, qc_params, passed)
@@ -251,7 +248,7 @@ def __main__(recipe, params):
         # Save transmission map to file
         # ------------------------------------------------------------------
         targs = [infile, rawfiles, fiber, combine, tapas_props, mprops,
-                 nprops, tellu_props, qc_params]
+                 nprops, tellu_props, tpreprops, qc_params]
         transfile = telluric.mk_tellu_write_trans_file(params, recipe, *targs)
         # ------------------------------------------------------------------
         # Add transmission map to telluDB

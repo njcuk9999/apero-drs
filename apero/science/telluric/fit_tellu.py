@@ -64,11 +64,8 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
                           kwargs, func_name)
     thres_transfit_low = pcheck(params, 'MKTELLU_THRES_TRANSFIT',
                                 'thres_transfit_low', kwargs, func_name)
-
-    # TODO: change to 1.5 in constants
-    # thres_transfit_upper = pcheck(params, 'MKTELLU_TRANS_FIT_UPPER_BAD',
-    #                               'thres_transfit_upper', kwargs, func_name)
-    thres_transfit_upper = 1.5
+    thres_transfit_upper = pcheck(params, 'MKTELLU_TRANS_FIT_UPPER_BAD',
+                                  'thres_transfit_upper', kwargs, func_name)
 
     # ------------------------------------------------------------------
     # get the transmission map key
@@ -367,7 +364,7 @@ def shift_all_to_frame(params, recipe, image, template, bprops, mprops, wprops,
 
 
 def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
-                           nprops, **kwargs):
+                           nprops, tpreprops, **kwargs):
     func_name = __NAME__ + '.calc_recon_and_correct()'
     # ------------------------------------------------------------------
     # get constants from params/kwargs
@@ -567,9 +564,10 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
                 wavemap=wavemap, sp2=sp2, template=template2, recon=recon_abso,
                 orders=params.listp('FTELLU_PLOT_ORDER_NUMS', dtype=int))
 
-    # TODO: convert recon from residual to transmission
-    some_factor = np.ones_like(recon_abso)
-    recon_abso = recon_abso * some_factor
+
+    # ------------------------------------------------------------------
+    # convert the recon back into a true transmission
+    recon_abso = recon_abso * tpreprops['ABSO_E2DS']
 
     # ------------------------------------------------------------------
     # calculate molecular absorption
@@ -707,7 +705,7 @@ def correct_other_science(params, recipe, fiber, infile, cprops, wprops, nprops,
 # =============================================================================
 # QC and summary functions
 # =============================================================================
-def fit_tellu_quality_control(params, infile, **kwargs):
+def fit_tellu_quality_control(params, infile, tpreprops, **kwargs):
     func_name = __NAME__ + '.fit_tellu_quality_control()'
     # get parameters from params/kwargs
     snr_order = pcheck(params, 'FTELLU_QC_SNR_ORDER', 'snr_order', kwargs,
@@ -719,6 +717,21 @@ def fit_tellu_quality_control(params, infile, **kwargs):
     # set passed variable and fail message list
     fail_msg = []
     qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
+    # ----------------------------------------------------------------------
+    # deal with tellu precleaning qc params - just add them correctly
+    tqc_names, tqc_values, tqc_logic, tqc_pass = tpreprops['QC_PARAMS']
+    # loop around all tqc
+    for qc_it in range(len(tqc_names)):
+        # if tqc_pass failed (zero) make fail message
+        if tqc_pass == 0:
+            fail_msg.append(tqc_logic[qc_it].lower())
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
+        # add to qc header lists
+        qc_values.append(tqc_values[qc_it])
+        qc_names.append(tqc_names[qc_it])
+        qc_logic.append(tqc_logic[qc_it])
     # ----------------------------------------------------------------------
     # get SNR for each order from header
     nbo, nbpix = infile.shape
@@ -791,7 +804,7 @@ def fit_tellu_summary(recipe, it, params, qc_params, pca_props, sprops,
 # =============================================================================
 def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
                               nprops, wprops, pca_props, sprops, cprops,
-                              qc_params, tfile, **kwargs):
+                              qc_params, tfile, tpreprops, **kwargs):
     func_name = __NAME__ + '.fit_tellu_write_corrected()'
     # get parameters from params
     abso_prefix_kws = pcheck(params, 'KW_FTELLU_ABSO_PREFIX', 'abso_prefix_kws',
@@ -845,6 +858,52 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     corrfile.add_hkey('KW_FTELLU_IM_PX_SIZE', value=cprops['IMAGE_PIXEL_SIZE'])
     corrfile.add_hkey('KW_FTELLU_FIT_ITERS', value=cprops['FIT_ITERATIONS'])
     corrfile.add_hkey('KW_FTELLU_RECON_LIM', value=cprops['RECON_LIMIT'])
+    # ----------------------------------------------------------------------
+    # add tellu pre-clean keys
+    corrfile.add_hkey('KW_TELLUP_EXPO_WATER', value=tpreprops['EXPO_WATER'])
+    corrfile.add_hkey('KW_TELLUP_EXPO_OTHERS', value=tpreprops['EXPO_OTHERS'])
+    corrfile.add_hkey('KW_TELLUP_DV_WATER', value=tpreprops['DV_WATER'])
+    corrfile.add_hkey('KW_TELLUP_DV_OTHERS', value=tpreprops['DV_OTHERS'])
+    corrfile.add_hkey('KW_TELLUP_DO_PRECLEAN',
+                      value=tpreprops['TELLUP_DO_PRECLEANING'])
+    corrfile.add_hkey('KW_TELLUP_DFLT_WATER',
+                      value=tpreprops['TELLUP_D_WATER_ABSO'])
+    corrfile.add_hkey('KW_TELLUP_CCF_SRANGE',
+                      value=tpreprops['TELLUP_CCF_SCAN_RANGE'])
+    corrfile.add_hkey('KW_TELLUP_CLEAN_OHLINES',
+                      value=tpreprops['TELLUP_CLEAN_OH_LINES'])
+    corrfile.add_hkey('KW_TELLUP_REMOVE_ORDS',
+                      value=tpreprops['TELLUP_REMOVE_ORDS'], mapf='list')
+    corrfile.add_hkey('KW_TELLUP_SNR_MIN_THRES',
+                      value=tpreprops['TELLUP_SNR_MIN_THRES'])
+    corrfile.add_hkey('KW_TELLUP_DEXPO_CONV_THRES',
+                      value=tpreprops['TELLUP_DEXPO_CONV_THRES'])
+    corrfile.add_hkey('KW_TELLUP_DEXPO_MAX_ITR',
+                      value=tpreprops['TELLUP_DEXPO_MAX_ITR'])
+    corrfile.add_hkey('KW_TELLUP_ABSOEXPO_KTHRES',
+                      value=tpreprops['TELLUP_ABSO_EXPO_KTHRES'])
+    corrfile.add_hkey('KW_TELLUP_WAVE_START',
+                      value=tpreprops['TELLUP_WAVE_START'])
+    corrfile.add_hkey('KW_TELLUP_WAVE_END',
+                      value=tpreprops['TELLUP_WAVE_END'])
+    corrfile.add_hkey('KW_TELLUP_DVGRID',
+                      value=tpreprops['TELLUP_DVGRID'])
+    corrfile.add_hkey('KW_TELLUP_ABSOEXPO_KWID',
+                      value=tpreprops['TELLUP_ABSO_EXPO_KWID'])
+    corrfile.add_hkey('KW_TELLUP_ABSOEXPO_KEXP',
+                      value=tpreprops['TELLUP_ABSO_EXPO_KEXP'])
+    corrfile.add_hkey('KW_TELLUP_TRANS_THRES',
+                      value=tpreprops['TELLUP_TRANS_THRES'])
+    corrfile.add_hkey('KW_TELLUP_TRANS_SIGL',
+                      value=tpreprops['TELLUP_TRANS_SIGLIM'])
+    corrfile.add_hkey('KW_TELLUP_FORCE_AIRMASS',
+                      value=tpreprops['TELLUP_FORCE_AIRMASS'])
+    corrfile.add_hkey('KW_TELLUP_OTHER_BOUNDS',
+                      value=tpreprops['TELLUP_OTHER_BOUNDS'], mapf='list')
+    corrfile.add_hkey('KW_TELLUP_WATER_BOUNDS',
+                      value=tpreprops['TELLUP_WATER_BOUNDS'], mapf='list')
+    # ----------------------------------------------------------------------
+    # add template key (if we have template)
     if tfile is None:
         corrfile.add_hkey('KW_FTELLU_TEMPLATE', value='None')
     else:
