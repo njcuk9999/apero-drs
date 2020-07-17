@@ -3293,7 +3293,9 @@ sum_ftellu_recon_abso = Graph('SUM_FTELLU_RECON_ABSO', kind='summary',
 definitions += [mktellu_wave_flux1, mktellu_wave_flux2, sum_mktellu_wave_flux,
                 ftellu_pca_comp1, ftellu_pca_comp2, ftellu_recon_spline1,
                 ftellu_recon_spline2, ftellu_wave_shift1, ftellu_wave_shift2,
-                ftellu_recon_abso1, ftellu_recon_abso2, sum_ftellu_recon_abso]
+                ftellu_recon_abso1, ftellu_recon_abso2, sum_ftellu_recon_abso,
+                tellup_wave_trans, sum_tellup_wave_trans,
+                tellup_abso_spec, sum_tellup_abso_spec]
 
 
 # =============================================================================

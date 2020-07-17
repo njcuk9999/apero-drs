@@ -371,14 +371,13 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     dvgrid = pcheck(params, 'EXT_S1D_BIN_UVELO', 'dvgrid', kwargs, func_name)
     # ----------------------------------------------------------------------
     # get image and header from infile
-    image = infile.data
     header = infile.header
     # get airmass from header
     hdr_airmass = infile.get_key('KW_AIRMASS', dtype=float)
     # copy e2ds input image
-    image_e2ds_ini = np.array(image)
+    image_e2ds_ini = np.array(infile.data)
     # get shape of the e2ds
-    nbo, nbpix = image.shape
+    nbo, nbpix = image_e2ds_ini.shape
     # get wave map for the input e2ds
     wave_e2ds = wprops['WAVEMAP']
     # ----------------------------------------------------------------------
@@ -422,7 +421,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                                                  wave_e2ds)
     # else just copy the image and set the sky model to zeros
     else:
-        image_e2ds, sky_model = np.array(image), np.zeros_like(image)
+        image_e2ds = np.array(image_e2ds_ini)
+        sky_model = np.zeros_like(image_e2ds_ini)
     # ----------------------------------------------------------------------
     if not do_precleaning:
         # log progress
@@ -433,8 +433,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # populate parameter dictionary
         props = ParamDict()
         props['CORRECTED_E2DS'] = image_e2ds
-        props['TRANS_MASK'] = np.ones_like(image).astype(bool)
-        props['ABSO_E2DS'] = np.ones_like(image)
+        props['TRANS_MASK'] = np.ones_like(image_e2ds_ini).astype(bool)
+        props['ABSO_E2DS'] = np.ones_like(image_e2ds_ini)
         props['SKY_MODEL'] = sky_model
         props['EXPO_WATER'] = np.nan
         props['EXPO_OTHERS'] = np.nan
@@ -581,8 +581,19 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # just so we have outputs
     dv_water, dv_others = np.nan, np.nan
     trans = np.ones_like(wavemap)
+    # set up a qc flag
+    flag_qc = False
     # loop around until convergence or 20th iteration
     while (dexpo > dexpo_thres) and (iteration < max_iterations):
+        # set up a qc flag
+        flag_qc = False
+        # log progress
+        # TODO: move to language db
+        msg = ('dexpo loop iteration={0}'
+               '\n\tdexo={1} expo_water={2} expo_others={3}')
+        args = [iteration, dexpo, expo_water, expo_others]
+        WLOG(params, '', msg.format(*args))
+
         # get the absorption spectrum
         trans = get_abso_expo(params, wavemap, expo_others, expo_water,
                               spl_others, spl_water, ww=ker_width,
@@ -617,23 +628,24 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
             # we compute the ccf_others all the time, even when forcing the
             # airmass, just to look at its structure and potential residuals
             # compute for others
-            lothers = mask_others['ll_mask_s'] * scaling * mask_others['w_mask']
-            tmp_others = spline(lothers)
+            lothers = np.array(mask_others['ll_mask_s']) * scaling
+            tmp_others = spline(lothers) * np.array(mask_others['w_mask'])
             ccf_others[d_it] = np.nanmean(tmp_others[tmp_others != 0.0])
             # computer for water
-            lwater = mask_water['ll_mask_s'] * scaling * mask_water['w_mask']
-            tmp_water = spline(lwater)
+            lwater = np.array(mask_water['ll_mask_s']) * scaling
+            tmp_water = spline(lwater)* mask_water['w_mask']
             ccf_water[d_it] = np.nanmean(tmp_water[tmp_water != 0.0])
         # ------------------------------------------------------------------
         # subtract the median of the ccf outside the core of the gaussian.
         #     We take this to be the 'external' part of of the scan range
         # work out the external part mask
-        external_mask = np.abs(drange) > ccf_scan_range / 2
+        with warnings.catch_warnings(record=True) as _:
+            external_mask = np.abs(drange) > ccf_scan_range / 2
         # calculate and subtract external part
         external_water = np.nanmedian(ccf_water[external_mask])
         ccf_water = ccf_water - external_water
         if not force_airmass:
-            external_others = np.nanmedian(ccf_others[external_others])
+            external_others = np.nanmedian(ccf_others[external_mask])
             ccf_others = ccf_others - external_others
         # ------------------------------------------------------------------
         # get the amplitude of the middle of the CCF
@@ -652,11 +664,9 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
             # update qc params
             qc_values[1] = num_nan_ccf
             qc_pass[1] = 0
-            qc_params = [qc_names, qc_values, qc_logic, qc_pass]
-            # return qc_exit_tellu_preclean
-            return qc_exit_tellu_preclean(params, recipe, image_e2ds,
-                                          infile, wave_e2ds, qc_params,
-                                          sky_model)
+            # flag qc as failed and break
+            flag_qc = True
+            break
         else:
             qc_values[1] = num_nan_ccf
             qc_pass[1] = 1
@@ -667,25 +677,25 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # if this is the first iteration then fit the  absorption velocity
         if iteration == 0:
             # make a guess for the water fit parameters (for curve fit)
-            water_guess = [0, 4, np.nanmin(ccf_water)]
+            water_guess = [np.nanmin(ccf_water), 0, 4]
             # fit the ccf_water with a guassian
             popt, pcov = curve_fit(mp.gauss_function_nodc, drange, ccf_water,
                                    p0=water_guess)
             # store the velocity of the water
-            dv_water = popt[0]
+            dv_water = popt[1]
             # make a guess of the others fit parameters (for curve fit)
-            others_guess = [0, 4, np.nanmin(ccf_others)]
+            others_guess = [np.nanmin(ccf_water), 0, 4]
             # fit the ccf_others with a gaussian
             popt, pconv = curve_fit(mp.gauss_function_nodc, drange, ccf_others,
                                     p0=others_guess)
             # store the velocity of the other species
-            dv_others = popt[0]
+            dv_others = popt[1]
             # store the mean velocity of water and others
             dv_abso = np.mean([dv_water, dv_others])
         # ------------------------------------------------------------------
         # store the amplitudes of current exponent values
         # for other species
-        if force_airmass:
+        if not force_airmass:
             amp_others_list.append(amp_others)
             expo_others_list.append(expo_others)
         # for water
@@ -702,28 +712,31 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # ------------------------------------------------------------------
         # else we fit the amplitudes with polynomial fits
         else:
-            # get others lists as array and sort them
-            amp_others_arr = np.array(amp_others_list)
-            expo_others_arr = np.array(expo_others_list)
-            sortmask = np.argsort(np.abs(amp_others_arr))
-            amp_others_arr = amp_others_arr[sortmask]
-            expo_others_arr = expo_others_arr[sortmask]
-            # get water lists as arrays and sort them
-            amp_water_arr = np.array(amp_water_list)
-            expo_water_arr = np.array(expo_water_list)
-            sortmask = np.argsort(np.abs(amp_water_arr))
-            amp_water_arr = amp_water_arr[sortmask]
-            expo_water_arr = expo_water_arr[sortmask]
             # --------------------------------------------------------------
             # set value for fit_others
             fit_others = [np.nan, hdr_airmass, np.nan]
+            # convert lists to arrays
+            amp_others_arr = np.array(amp_others_list)
+            expo_others_arr = np.array(expo_others_list)
+            amp_water_arr = np.array(amp_water_list)
+            expo_water_arr = np.array(expo_water_list)
 
             # if we have over 5 iterations we fit a 2nd order polynomial
             # to the lowest 5 amplitudes
             if iteration > 5:
                 if not force_airmass:
+                    # get others lists as array and sort them
+                    sortmask = np.argsort(np.abs(amp_others_arr))
+                    amp_others_arr = amp_others_arr[sortmask]
+                    expo_others_arr = expo_others_arr[sortmask]
+                    # polyfit lowest 5 others terms
                     fit_others = np.polyfit(amp_others_arr[0: 4],
                                             expo_others_arr[0:4], 1)
+                # get water lists as arrays and sort them
+                sortmask = np.argsort(np.abs(amp_water_arr))
+                amp_water_arr = amp_water_arr[sortmask]
+                expo_water_arr = expo_water_arr[sortmask]
+                # polyfit lowest 5 water terms
                 fit_water = np.polyfit(amp_water_arr[0:4],
                                        expo_water_arr[0:4], 1)
             # else just fit a line
@@ -736,30 +749,27 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
             expo_others = fit_others[1]
             # deal with lower bounds for other species
             if expo_others < others_bounds[0]:
-                # set expo_others to others bounds
-                expo_others = others_bounds[0]
                 # update qc params
-                qc_values[2] = expo_others
+                qc_values[2] = float(expo_others)
                 qc_pass[2] = 0
-                qc_params = [qc_names, qc_values, qc_logic, qc_pass]
-                # return qc_exit_tellu_preclean
-                return qc_exit_tellu_preclean(params, recipe, image_e2ds,
-                                              infile, wave_e2ds, qc_params,
-                                              sky_model)
+                # set expo_others to lower others bound
+                expo_others = others_bounds[0]
+                # flag qc as failed and break
+                flag_qc = True
+                break
             else:
                 qc_values[2] = expo_others
                 qc_pass[2] = 1
             # deal with upper bounds for other species
             if expo_others > others_bounds[1]:
-                expo_others = others_bounds[1]
                 # update qc params
-                qc_values[3] = expo_others
+                qc_values[3] = float(expo_others)
                 qc_pass[3] = 0
-                qc_params = [qc_names, qc_values, qc_logic, qc_pass]
-                # return qc_exit_tellu_preclean
-                return qc_exit_tellu_preclean(params, recipe, image_e2ds,
-                                              infile, wave_e2ds, qc_params,
-                                              sky_model)
+                # set the expo_others to the upper others bound
+                expo_others = others_bounds[1]
+                # flag qc as failed and break
+                flag_qc = True
+                break
             else:
                 qc_values[3] = expo_others
                 qc_pass[3] = 1
@@ -768,29 +778,27 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
             expo_water = fit_water[1]
             # deal with lower bounds for water
             if expo_water < water_bounds[0]:
-                expo_water = water_bounds[0]
                 # update qc params
                 qc_values[4] = expo_water
                 qc_pass[4] = 0
-                qc_params = [qc_names, qc_values, qc_logic, qc_pass]
-                # return qc_exit_tellu_preclean
-                return qc_exit_tellu_preclean(params, recipe, image_e2ds,
-                                              infile, wave_e2ds, qc_params,
-                                              sky_model)
+                # set the expo_water to the lower water bound
+                expo_water = water_bounds[0]
+                # flag qc as failed and break
+                flag_qc = True
+                break
             else:
                 qc_values[4] = expo_others
                 qc_pass[4] = 1
             # deal with upper bounds for water
             if expo_water > water_bounds[1]:
-                expo_water = water_bounds[1]
                 # update qc params
                 qc_values[5] = expo_water
                 qc_pass[5] = 0
-                qc_params = [qc_names, qc_values, qc_logic, qc_pass]
-                # return qc_exit_tellu_preclean
-                return qc_exit_tellu_preclean(params, recipe, image_e2ds,
-                                              infile, wave_e2ds, qc_params,
-                                              sky_model)
+                # set the expo_water to the upper water bound
+                expo_water = water_bounds[1]
+                # flag qc as failed and break
+                flag_qc = True
+                break
             else:
                 qc_values[5] = expo_water
                 qc_pass[5] = 1
@@ -801,7 +809,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
             else:
                 part1 = expo_water_prev - expo_water
                 part2 = expo_others_prev - expo_others
-                dexpo = np.sqrt(part1**2 + part2**2)
+                dexpo = np.sqrt(part1 ** 2 + part2 ** 2)
         # --------------------------------------------------------------
         # keep track of the convergence params
         expo_water_prev = float(expo_water)
@@ -820,13 +828,17 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # update qc params
         qc_values[6] = iteration
         qc_pass[6] = 0
+        flag_qc = True
+    else:
+        qc_values[6] = iteration
+        qc_pass[6] = 1
+    # ----------------------------------------------------------------------
+    # deal with the qc flags
+    if flag_qc:
         qc_params = [qc_names, qc_values, qc_logic, qc_pass]
         # return qc_exit_tellu_preclean
         return qc_exit_tellu_preclean(params, recipe, image_e2ds, infile,
                                       wave_e2ds, qc_params, sky_model)
-    else:
-        qc_values[6] = iteration
-        qc_pass[6] = 1
     # ----------------------------------------------------------------------
     # show CCF plot to see if correlation peaks have been killed
     recipe.plot('TELLUP_WAVE_TRANS', dd_arr=dd_iterations,
