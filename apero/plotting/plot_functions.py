@@ -2916,9 +2916,7 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
         return
     # ------------------------------------------------------------------
     # get the arguments from kwargs
-    keep = kwargs['keep']
     wavemap = kwargs['wavemap']
-    tau1 = kwargs['tau1']
     sp = kwargs['sp']
     sed = kwargs['sed']
     oimage = kwargs['oimage']
@@ -2927,7 +2925,7 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
     template = kwargs.get('template', None)
     # ------------------------------------------------------------------
     if order is None:
-        order_gen = plotter.plotloop(np.arange(len(keep)))
+        order_gen = plotter.plotloop(np.arange(len(wavemap)))
         # prompt to start looper
         plotter.close_plots(loop=True)
     # else we just deal with the order specified
@@ -2937,9 +2935,7 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
     # loop around orders
     for order_num in order_gen:
         # get this orders values
-        good = keep[order_num]
         x = wavemap[order_num]
-        y1 = tau1[order_num]
         y2 = sp[order_num]
         y3 = (sp[order_num] / template[order_num]) / sed[order_num]
         y4 = oimage[order_num] * template[order_num]
@@ -2955,7 +2951,6 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
         fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
         # ------------------------------------------------------------------
         # plot data
-        frame.plot(x, y1, color='c', marker='+', label='tapas fit')
         frame.plot(x, y2, color='k', label='input spectrum')
         frame.plot(x, y3, color='b', label='measured transmission')
 
@@ -2965,20 +2960,18 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
         else:
             label4 = 'SED calculation value (No template)'
 
-        frame.plot(x[good], y4[good], color='r', marker='.', linestyle='None',
+        frame.plot(x, y4, color='r', marker='.', linestyle='None',
                    label='SED calculation value')
         frame.plot(x, y5, color='g', linestyle='--', label=label4)
 
         # get max / min y
-        values = list(y1[good]) + list(y2[good]) + list(y3[good])
-        values += list(y4[good]) + list(y5[good])
+        values = list(y2) + list(y3) + list(y4) + list(y5)
         mins = 0.95 * np.nanmin([0, np.nanmin(values)])
         maxs = 1.05 * np.nanmax(values)
 
         # plot legend and set up labels / limits / title
         frame.legend(loc=0)
-        frame.set(xlim=(np.min(x[good]), np.max(x[good])),
-                  ylim=(mins, maxs),
+        frame.set(xlim=(np.min(x), np.max(x)), ylim=(mins, maxs),
                   xlabel='Wavelength [nm]', ylabel='Normalised flux',
                   title='Order: {0}'.format(order_num))
         # update filename (adding order_num to end)
@@ -3262,7 +3255,7 @@ mktellu_wave_flux1 = Graph('MKTELLU_WAVE_FLUX1', kind='debug',
                            func=plot_mktellu_wave_flux)
 mktellu_wave_flux2 = Graph('MKTELLU_WAVE_FLUX2', kind='debug',
                            func=plot_mktellu_wave_flux)
-sum_desc = ('Plot to show the measured transmission (and calcaulted SED for'
+sum_desc = ('Plot to show the measured transmission (and calcaulted SED) for'
             ' input rapidly rotating hot star')
 sum_mktellu_wave_flux = Graph('SUM_MKTELLU_WAVE_FLUX', kind='summary',
                               func=plot_mktellu_wave_flux,
