@@ -47,139 +47,18 @@ pcheck = core.pcheck
 # =============================================================================
 # General functions
 # =============================================================================
-# TODO: move to math
-from scipy.interpolate import InterpolatedUnivariateSpline
-
-def lowpassfilter(input_vect,width = 101):
-    # Computes a low-pass filter of an input vector. This is done while properly handling
-    # NaN values, but at the same time being reasonably fast.
-    # Algorithm:
-    #
-    # provide an input vector of an arbtrary length and compute a running NaN median over a
-    # box of a given length (width value). The running median is NOT computed at every pixel
-    # but at steps of 1/4th of the width value. This provides a vector of points where
-    # the nan-median has been computed (ymed) and mean position along the input vector (xmed)
-    # of valid (non-NaN) pixels. This xmed/ymed combination is then used in a spline to
-    # recover a vector for all pixel positions within the input vector.
-    #
-    # When there are no valid pixel in a 'width' domain, the value is skipped in the creation
-    # of xmed and ymed, and the domain is splined over.
-
-    # indices along input vector
-    index = np.arange(len(input_vect))
-
-    # placeholders for x and y position along vector
-    xmed = []
-    ymed = []
-
-    # loop through the lenght of the input vector
-    for i in np.arange(-width//2,len(input_vect)+width//2,width//4):
-
-        # if we are at the start or end of vector, we go 'off the edge' and
-        # define a box that goes beyond it. It will lead to an effectively
-        # smaller 'width' value, but will provide a consistent result at edges.
-        low_bound = i
-        high_bound = i+int(width)
-
-        if low_bound<0:
-            low_bound = 0
-        if high_bound>(len(input_vect)-1):
-            high_bound = (len(input_vect)-1)
-
-        pixval = index[low_bound:high_bound]
-
-        if len(pixval)<3:
-            continue
-
-
-        # if no finite value, skip
-        if np.max(np.isfinite(input_vect[pixval])) == 0:
-            continue
-
-        # mean position along vector and NaN median value of
-        # points at those positions
-        xmed.append(np.nanmean(pixval))
-        ymed.append(np.nanmedian(input_vect[pixval]))
-
-    xmed = np.array(xmed,dtype = float)
-    ymed = np.array(ymed,dtype = float)
-
-    # we need at least 3 valid points to return a
-    # low-passed vector.
-    if len(xmed) < 3:
-        return np.zeros_like(input_vect)+np.nan
-
-    if len(xmed) != len(np.unique(xmed)):
-        xmed2 = np.unique(xmed)
-        ymed2 = np.zeros_like(xmed2)
-        for i in range(len(xmed2)):
-            ymed2[i] = np.mean(ymed[xmed == xmed2[i]])
-        xmed = xmed2
-        ymed = ymed2
-
-    # splining the vector
-    spline = InterpolatedUnivariateSpline(xmed,ymed, k=1, ext=3)
-    lowpass = spline(np.arange(len(input_vect)))
-
-    return lowpass
-
-
-
-def calculate_telluric_absorption(params, recipe, image, template,
-                                  template_file, header, mprops, wprops,
-                                  tapas_props, bprops, **kwargs):
+def calculate_tellu_res_absorption(params, recipe, image, template,
+                                   template_file, header, mprops, wprops,
+                                   bprops, tpreprops, **kwargs):
     func_name = __NAME__ + '.calculate_telluric_absoprtion()'
     # get constatns from params/kwargs
     default_conv_width = pcheck(params, 'MKTELLU_DEFAULT_CONV_WIDTH',
                                 'default_conv_width', kwargs, func_name)
-    finer_conv_width = pcheck(params, 'MKTELLU_FINER_CONV_WIDTH',
-                              'finer_conv_width', kwargs, func_name)
-    clean_orders = pcheck(params, 'MKTELLU_CLEAN_ORDERS', 'clean_orders',
-                          kwargs, func_name, mapf='list', dtype=int)
     med_filt1 = pcheck(params, 'MKTELLU_TEMP_MED_FILT', 'med_filt', kwargs,
                        func_name)
-
-    # TODO: remove unused parameters
-    dparam_threshold = pcheck(params, 'MKTELLU_DPARAMS_THRES',
-                              'dparam_threshold', kwargs, func_name)
-    max_iteration = pcheck(params, 'MKTELLU_MAX_ITER', 'max_iteration',
-                           kwargs, func_name)
-    threshold_transmission_fit = pcheck(params, 'MKTELLU_THRES_TRANSFIT',
-                                        'treshold_transmission_fit', kwargs,
-                                        func_name)
-    transfit_upper_bad = pcheck(params, 'MKTELLU_TRANS_FIT_UPPER_BAD',
-                                'transfit_upper_bad', kwargs, func_name)
-    min_watercol = pcheck(params, 'MKTELLU_TRANS_MIN_WATERCOL', 'min_watercol',
-                          kwargs, func_name)
-    max_watercol = pcheck(params, 'MKTELLU_TRANS_MAX_WATERCOL', 'max_watercol',
-                          kwargs, func_name)
-    min_number_good_points = pcheck(params, 'MKTELLU_TRANS_MIN_NUM_GOOD',
-                                    'min_number_good_points', kwargs, func_name)
-    btrans_percentile = pcheck(params, 'MKTELLU_TRANS_TAU_PERCENTILE',
-                               'btrans_percentile', kwargs, func_name)
-    nsigclip = pcheck(params, 'MKTELLU_TRANS_SIGMA_CLIP', 'nsigclip',
-                      kwargs, func_name)
-    med_filt2 = pcheck(params, 'MKTELLU_TRANS_TEMPLATE_MEDFILT',
-                       'med_filt', kwargs, func_name)
-    small_weight = pcheck(params, 'MKTELLU_SMALL_WEIGHTING_ERROR',
-                          'small_weight', kwargs, func_name)
-    tellu_med_sampling = pcheck(params, 'IMAGE_PIXEL_SIZE', 'med_sampling',
-                                kwargs, func_name)
     plot_order_nums = pcheck(params, 'MKTELLU_PLOT_ORDER_NUMS',
                              'plot_order_nums', kwargs, func_name,
                              mapf='list', dtype=int)
-    tau_water_upper = pcheck(params, 'MKTELLU_TAU_WATER_ULIMIT',
-                             'tau_water_upper', kwargs, func_name)
-    tau_others_lower = pcheck(params, 'MKTELLU_TAU_OTHER_LLIMIT',
-                              'tau_water_lower', kwargs, func_name)
-    tau_others_upper = pcheck(params, 'MKTELLU_TAU_OTHER_ULIMIT',
-                              'tau_others_upper', kwargs, func_name)
-    tapas_small_number = pcheck(params, 'MKTELLU_SMALL_LIMIT',
-                                'tapas_small_number', kwargs, func_name)
-    hbandlower = pcheck(params, 'MKTELLU_HBAND_LOWER', 'hbandlower', kwargs,
-                        func_name)
-    hbandupper = pcheck(params, 'MKTELLU_HBAND_UPPER', 'hbandupper', kwargs,
-                        func_name)
     # ------------------------------------------------------------------
     # copy image
     image1 = np.array(image)
@@ -197,9 +76,6 @@ def calculate_telluric_absorption(params, recipe, image, template,
     wavemap = wprops['WAVEMAP']
     # get dimensions of data
     nbo, nbpix = image1.shape
-    # get the tapas data
-    tapas_water = tapas_props['TAPAS_WATER']
-    tapas_others = tapas_props['TAPAS_OTHER']
 
     # ------------------------------------------------------------------
     # Shift the image to the master grid
@@ -217,17 +93,6 @@ def calculate_telluric_absorption(params, recipe, image, template,
         template_flag = True
         # assume template is ones everywhere
         template = np.ones_like(image1).astype(float)
-        # check that clean orders are valid
-        for clean_order in clean_orders:
-            if (clean_order < 0) or (clean_order >= nbo):
-                # log error: one of the orders is out of bounds
-                wargs = ['MKTELLU_CLEAN_ORDERS', clean_order, func_name]
-                WLOG(params, 'error', TextEntry('09-019-00001', args=wargs))
-        # make clean_orders a numpy array
-        clean_orders = np.array(clean_orders).astype(int)
-        # if we don't have a template then we use a small kernel on only
-        #    relatively clean orders
-        wconv[clean_orders] = finer_conv_width
     # else we need to divide by template (after shifting)
     else:
         # set a flag to tell us that we didn't start with a template
@@ -242,9 +107,7 @@ def calculate_telluric_absorption(params, recipe, image, template,
             keep = np.isfinite(template[order_num])
             # apply median filter
             mfargs = [template[order_num, keep], med_filt1]
-            # TODO: move lowpassfilter to math
-            template[order_num, keep] = lowpassfilter(*mfargs)
-
+            template[order_num, keep] = mp.lowpassfilter(*mfargs)
         # loop around each order again
         for order_num in range(nbo):
             # only keep non NaNs
@@ -257,23 +120,19 @@ def calculate_telluric_absorption(params, recipe, image, template,
                 keepwave = mwavemap[order_num, keep]
                 keeptmp = template[order_num, keep]
                 # spline the good values
-                spline = mp.iuv_spline(keepwave * dvshift, keeptmp, k=1,
-                                       ext=3)
+                spline = mp.iuv_spline(keepwave * dvshift, keeptmp, k=1, ext=3)
                 # interpolate good values onto full array
                 template[order_num] = spline(mwavemap[order_num])
             else:
                 template[order_num] = np.repeat(1.0, nbpix)
-
         # divide observed spectrum by template. This gets us close to the
         #    actual sky transmission. We will iterate on the exact shape of the
         #    SED by finding offsets of sp relative to 1 (after correcting form
         #    the TAPAS).
         image1 = image1 / template
-
     # ------------------------------------------------------------------
     # Low pass filtering of hot star (create SED)
     # ------------------------------------------------------------------
-
     # first guess at the SED estimate for the hot start (we guess with a
     #   spectrum full of ones
     sed = np.ones_like(mwavemap)
@@ -282,8 +141,7 @@ def calculate_telluric_absorption(params, recipe, image, template,
         # get the smoothing size from wconv
         smooth = int(wconv[order_num])
         # median filter
-        # TODO: move lowpassfilter to math
-        sed[order_num] = lowpassfilter(image1[order_num], smooth)
+        sed[order_num] = mp.lowpassfilter(image1[order_num], smooth)
     # ---------------------------------------------------------------------
     # plot mk tellu wave flux plot for specified orders
     for order_num in plot_order_nums:
@@ -306,13 +164,10 @@ def calculate_telluric_absorption(params, recipe, image, template,
     # ---------------------------------------------------------------------
     # add output dictionary
     tprops = ParamDict()
-    # TODO: passed is not used recov airmass + recov water from EA clean function
     tprops['PASSED'] = True
-    tprops['RECOV_AIRMASS'] = airmass
-    tprops['RECOV_WATER'] = 1.5
+    tprops['RECOV_AIRMASS'] = tpreprops['EXPO_WATER']
+    tprops['RECOV_WATER'] = tpreprops['EXPO_OTHERS']
     tprops['AIRMASS'] = airmass
-
-
     tprops['IMAGE_OUT'] = image1
     tprops['SED_OUT'] = sed
     tprops['TEMPLATE'] = template
@@ -326,35 +181,9 @@ def calculate_telluric_absorption(params, recipe, image, template,
     tprops.set_sources(keys, func_name)
     # add constants
     tprops['DEFAULT_CWIDTH'] = default_conv_width
-    tprops['FINER_CWIDTH'] = finer_conv_width
     tprops['TEMP_MED_FILT'] = med_filt1
-
-    # TODO: remove unused
-    tprops['DPARAM_THRES'] = np.nan
-    tprops['MAX_ITERATIONS'] = np.nan
-    tprops['THRES_TRANSFIT'] = np.nan
-    tprops['MIN_WATERCOL'] = np.nan
-    tprops['MAX_WA   TERCOL'] = np.nan
-    tprops['MIN_NUM_GOOD'] = np.nan
-    tprops['BTRANS_PERCENT'] = np.nan
-    tprops['NSIGCLIP'] = np.nan
-    tprops['TRANS_TMEDFILT'] = np.nan
-    tprops['SMALL_W_ERR'] = np.nan
-    tprops['IMAGE_PIXEL_SIZE'] = np.nan
-    tprops['TAU_WATER_UPPER'] = np.nan
-    tprops['TAU_OTHER_LOWER'] = np.nan
-    tprops['TAU_OTHER_UPPER'] = np.nan
-    tprops['TAPAS_SMALL_NUM'] = np.nan
     # set sources
-    keys = ['DEFAULT_CWIDTH', 'FINER_CWIDTH', 'TEMP_MED_FILT',
-            'DPARAM_THRES', 'MAX_ITERATIONS', 'THRES_TRANSFIT', 'MIN_WATERCOL',
-            'MAX_WATERCOL', 'MIN_NUM_GOOD', 'BTRANS_PERCENT', 'NSIGCLIP',
-            'TRANS_TMEDFILT', 'SMALL_W_ERR', 'IMAGE_PIXEL_SIZE',
-            'TAU_WATER_UPPER', 'TAU_OTHER_LOWER', 'TAU_OTHER_UPPER',
-            'TAPAS_SMALL_NUM']
-
     keys = ['DEFAULT_CWIDTH', 'FINER_CWIDTH', 'TEMP_MED_FILT']
-
     tprops.set_sources(keys, func_name)
     # return tprops
     return tprops
@@ -501,36 +330,6 @@ def mk_tellu_summary(recipe, it, params, qc_params, tellu_props, fiber):
                          value=tellu_props['FINER_CWIDTH'])
     recipe.plot.add_stat('KW_MKTELL_TEMP_MEDFILT',
                          value=tellu_props['TEMP_MED_FILT'])
-    recipe.plot.add_stat('KW_MKTELL_DPARAM_THRES',
-                         value=tellu_props['DPARAM_THRES'])
-    recipe.plot.add_stat('KW_MKTELL_MAX_ITER',
-                         value=tellu_props['MAX_ITERATIONS'])
-    recipe.plot.add_stat('KW_MKTELL_THRES_TFIT',
-                         value=tellu_props['THRES_TRANSFIT'])
-    recipe.plot.add_stat('KW_MKTELL_MIN_WATERCOL',
-                         value=tellu_props['MIN_WATERCOL'])
-    recipe.plot.add_stat('KW_MKTELL_MAX_WATERCOL',
-                         value=tellu_props['MAX_WATERCOL'])
-    recipe.plot.add_stat('KW_MKTELL_MIN_NUM_GOOD',
-                         value=tellu_props['MIN_NUM_GOOD'])
-    recipe.plot.add_stat('KW_MKTELL_BTRANS_PERC',
-                         value=tellu_props['BTRANS_PERCENT'])
-    recipe.plot.add_stat('KW_MKTELL_NSIGCLIP',
-                         value=tellu_props['NSIGCLIP'])
-    recipe.plot.add_stat('KW_MKTELL_TRANS_TMFILT',
-                         value=tellu_props['TRANS_TMEDFILT'])
-    recipe.plot.add_stat('KW_MKTELL_SMALL_W_ERR',
-                         value=tellu_props['SMALL_W_ERR'])
-    recipe.plot.add_stat('KW_MKTELL_IM_PSIZE',
-                         value=tellu_props['IMAGE_PIXEL_SIZE'])
-    recipe.plot.add_stat('KW_MKTELL_TAU_WATER_U',
-                         value=tellu_props['TAU_WATER_UPPER'])
-    recipe.plot.add_stat('KW_MKTELL_TAU_OTHER_L',
-                         value=tellu_props['TAU_OTHER_LOWER'])
-    recipe.plot.add_stat('KW_MKTELL_TAU_OTHER_U',
-                         value=tellu_props['TAU_OTHER_UPPER'])
-    recipe.plot.add_stat('KW_MKTELL_TAPAS_SNUM',
-                         value=tellu_props['TAPAS_SMALL_NUM'])
     recipe.plot.add_stat('KW_MKTELL_AIRMASS',
                          value=tellu_props['RECOV_AIRMASS'])
     recipe.plot.add_stat('KW_MKTELL_WATER',
@@ -543,8 +342,7 @@ def mk_tellu_summary(recipe, it, params, qc_params, tellu_props, fiber):
 # Write functions
 # =============================================================================
 def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
-                              tapas_props, mprops, nprops, tprops, tpreprops,
-                              qc_params):
+                              mprops, nprops, tprops, tpreprops, qc_params):
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     transfile = recipe.outputs['TELLU_TRANS'].newcopy(recipe=recipe,
@@ -586,29 +384,10 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     # add blaze parameters
     transfile.add_hkey('KW_MKTELL_BLAZE_PRCT', value=nprops['BLAZE_PERCENTILE'])
     transfile.add_hkey('KW_MKTELL_BLAZE_CUT', value=nprops['BLAZE_CUT_NORM'])
-    # add tapas parameteres
-    transfile.add_hkey('KW_MKTELL_TAPASFILE', value=tapas_props['TAPAS_FILE'])
-    transfile.add_hkey('KW_MKTELL_FWHMPLSF',
-                       value=tapas_props['FWHM_PIXEL_LSF'])
     # add tprops parameters
     transfile.add_hkey('KW_MKTELL_DEF_CONV_WID', value=tprops['DEFAULT_CWIDTH'])
     transfile.add_hkey('KW_MKTELL_FIN_CONV_WID', value=tprops['FINER_CWIDTH'])
     transfile.add_hkey('KW_MKTELL_TEMP_MEDFILT', value=tprops['TEMP_MED_FILT'])
-    transfile.add_hkey('KW_MKTELL_DPARAM_THRES', value=tprops['DPARAM_THRES'])
-    transfile.add_hkey('KW_MKTELL_MAX_ITER', value=tprops['MAX_ITERATIONS'])
-    transfile.add_hkey('KW_MKTELL_THRES_TFIT', value=tprops['THRES_TRANSFIT'])
-    transfile.add_hkey('KW_MKTELL_MIN_WATERCOL', value=tprops['MIN_WATERCOL'])
-    transfile.add_hkey('KW_MKTELL_MAX_WATERCOL', value=tprops['MAX_WATERCOL'])
-    transfile.add_hkey('KW_MKTELL_MIN_NUM_GOOD', value=tprops['MIN_NUM_GOOD'])
-    transfile.add_hkey('KW_MKTELL_BTRANS_PERC', value=tprops['BTRANS_PERCENT'])
-    transfile.add_hkey('KW_MKTELL_NSIGCLIP', value=tprops['NSIGCLIP'])
-    transfile.add_hkey('KW_MKTELL_TRANS_TMFILT', value=tprops['TRANS_TMEDFILT'])
-    transfile.add_hkey('KW_MKTELL_SMALL_W_ERR', value=tprops['SMALL_W_ERR'])
-    transfile.add_hkey('KW_MKTELL_IM_PSIZE', value=tprops['IMAGE_PIXEL_SIZE'])
-    transfile.add_hkey('KW_MKTELL_TAU_WATER_U', value=tprops['TAU_WATER_UPPER'])
-    transfile.add_hkey('KW_MKTELL_TAU_OTHER_L', value=tprops['TAU_OTHER_LOWER'])
-    transfile.add_hkey('KW_MKTELL_TAU_OTHER_U', value=tprops['TAU_OTHER_UPPER'])
-    transfile.add_hkey('KW_MKTELL_TAPAS_SNUM', value=tprops['TAPAS_SMALL_NUM'])
     # ----------------------------------------------------------------------
     # add tellu pre-clean keys
     transfile.add_hkey('KW_TELLUP_EXPO_WATER', value=tpreprops['EXPO_WATER'])
