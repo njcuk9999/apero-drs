@@ -933,8 +933,10 @@ out_tellu_trans = drs_finput('TELLU_TRANS', KW_OUTPUT='TELLU_TRANS',
                              outfunc=out.general_file)
 
 # add make_telluric outputs to output fileset
+out_file.addset(out_tellu_pclean)
 out_file.addset(out_tellu_conv)
 out_file.addset(out_tellu_trans)
+tellu_file.addset(out_tellu_pclean)
 tellu_file.addset(out_tellu_conv)
 tellu_file.addset(out_tellu_trans)
 
