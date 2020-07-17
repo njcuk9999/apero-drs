@@ -1159,11 +1159,11 @@ def qc_exit_tellu_preclean(params, recipe, image, infile, wavemap,
     expo_others = float(hdr_airmass)
     expo_water = float(default_water_abso)
     # get the absorption
-    abso_e2ds = get_abso_expo(wavemap, expo_others, expo_water, spl_others,
-                              spl_water, ww=qc_ker_width, ex_gau=qc_ker_shape,
-                              dv_abso=0.0, ker_thres=ker_thres,
-                              wavestart=wavestart, waveend=waveend,
-                              dvgrid=dvgrid)
+    abso_e2ds = get_abso_expo(params, wavemap, expo_others, expo_water,
+                              spl_others, spl_water, ww=qc_ker_width,
+                              ex_gau=qc_ker_shape, dv_abso=0.0,
+                              ker_thres=ker_thres, wavestart=wavestart,
+                              waveend=waveend, dvgrid=dvgrid)
     # mask transmission below certain threshold
     mask = abso_e2ds < np.exp(trans_thres)
     # correct e2ds
@@ -1256,7 +1256,7 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
     tpclfile.add_hkey('KW_CDBWAVE', value=wprops['WAVEFILE'])
     # ----------------------------------------------------------------------
     # set images
-    dimages = [props['CORRECTED_E2DS'], props['TRANS_MASK'],
+    dimages = [props['CORRECTED_E2DS'], props['TRANS_MASK'].astype(float),
                props['ABSO_E2DS'], props['SKY_MODEL'], props['CCFPOWER_WATER'],
                props['CCFPOWER_OTHERS']]
     # add extention info
@@ -1418,7 +1418,7 @@ def read_tellu_preclean(params, recipe, infile, fiber):
     # ----------------------------------------------------------------------
     # push arrays into parameter dictionary
     props['CORRECTED_E2DS'] = tpclfile.data_array[0]
-    props['TRANS_MASK'] = tpclfile.data_array[1]
+    props['TRANS_MASK'] = tpclfile.data_array[1].astype(bool)
     props['ABSO_E2DS'] = tpclfile.data_array[2]
     props['SKY_MODEL'] = tpclfile.data_array[3]
     props['CCFPOWER_WATER'] = tpclfile.data_array[4]
