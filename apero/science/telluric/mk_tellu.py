@@ -165,8 +165,8 @@ def calculate_tellu_res_absorption(params, recipe, image, template,
     # add output dictionary
     tprops = ParamDict()
     tprops['PASSED'] = True
-    tprops['RECOV_AIRMASS'] = tpreprops['EXPO_WATER']
-    tprops['RECOV_WATER'] = tpreprops['EXPO_OTHERS']
+    tprops['RECOV_AIRMASS'] = tpreprops['EXPO_OTHERS']
+    tprops['RECOV_WATER'] = tpreprops['EXPO_WATER']
     tprops['AIRMASS'] = airmass
     tprops['IMAGE_OUT'] = image1
     tprops['SED_OUT'] = sed
