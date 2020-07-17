@@ -1391,6 +1391,12 @@ def read_tellu_preclean(params, recipe, infile, fiber):
     if not tpclfile.basename in pclean_basenames:
         return None
     # ----------------------------------------------------------------------
+    # log progress
+    # TODO: move to language database
+    msg = 'Reading pre-cleaned file from: {0}'
+    args = [tpclfile.basename]
+    WLOG(params, '', msg.format(*args))
+    # ----------------------------------------------------------------------
     # start a parameter dictionary
     props = ParamDict()
     # else we read the multi-fits file
