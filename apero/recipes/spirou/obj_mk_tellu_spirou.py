@@ -205,6 +205,9 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # telluric pre-cleaning
         # ------------------------------------------------------------------
+        # TODO: remove breakpoint
+        constants.break_point(params)
+
         tpreprops = telluric.tellu_preclean(params, recipe, infile, wprops,
                                             fiber, rawfiles, combine)
         # get variables out of tpreprops
