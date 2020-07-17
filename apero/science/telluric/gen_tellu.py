@@ -425,6 +425,9 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         image_e2ds, sky_model = np.array(image), np.zeros_like(image)
     # ----------------------------------------------------------------------
     if not do_precleaning:
+        # log progress
+        # TODO: move the language DB
+        WLOG(params, '', 'Skipping pre-cleaning')
         # populate qc params
         qc_params = [qc_names, qc_values, qc_logic, qc_pass]
         # populate parameter dictionary
@@ -480,6 +483,9 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # ------------------------------------------------------------------
         # return props
         return props
+    # log progress
+    # TODO: move to language database
+    WLOG(params, '', 'Pre-cleaning data')
     # ----------------------------------------------------------------------
     # we ravel the wavelength grid to make it a 1d array of increasing
     #     wavelength. We will trim the overlapping domain between orders
@@ -931,6 +937,10 @@ def clean_ohline_pca(params, image, wavemap, **kwargs):
                        func_name)
     filename = pcheck(params, 'TELLUP_OHLINE_PCA_FILE', 'filename', kwargs,
                       func_name)
+    # ----------------------------------------------------------------------
+    # log progress
+    # TODO: add to language db
+    WLOG(params, '', 'Cleaning OH lines')
     # ----------------------------------------------------------------------
     # get shape of the e2ds
     nbo, nbpix = image.shape
