@@ -665,7 +665,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
             qc_pass[1] = 0
             # flag qc as failed and break
             flag_qc = True
-            # break
+            break
         else:
             qc_values[1] = num_nan_ccf
             qc_pass[1] = 1
@@ -755,7 +755,6 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                 expo_others = others_bounds[0]
                 # flag qc as failed and break
                 flag_qc = True
-                #break
             else:
                 qc_values[2] = expo_others
                 qc_pass[2] = 1
@@ -768,7 +767,6 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                 expo_others = others_bounds[1]
                 # flag qc as failed and break
                 flag_qc = True
-                #break
             else:
                 qc_values[3] = expo_others
                 qc_pass[3] = 1
@@ -784,7 +782,6 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                 expo_water = water_bounds[0]
                 # flag qc as failed and break
                 flag_qc = True
-                #break
             else:
                 qc_values[4] = expo_others
                 qc_pass[4] = 1
@@ -797,7 +794,6 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                 expo_water = water_bounds[1]
                 # flag qc as failed and break
                 flag_qc = True
-                #break
             else:
                 qc_values[5] = expo_water
                 qc_pass[5] = 1
@@ -809,6 +805,9 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                 part1 = expo_water_prev - expo_water
                 part2 = expo_others_prev - expo_others
                 dexpo = np.sqrt(part1 ** 2 + part2 ** 2)
+            # break if qc flag True don't try to converge
+            if flag_qc:
+                break
         # --------------------------------------------------------------
         # keep track of the convergence params
         expo_water_prev = float(expo_water)
