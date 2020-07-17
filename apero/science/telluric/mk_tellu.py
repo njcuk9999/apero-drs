@@ -7,14 +7,7 @@ Created on 2020-07-2020-07-15 17:56
 
 @author: cook
 """
-from astropy.table import Table
 import numpy as np
-from astropy.time import Time
-from scipy.ndimage import filters
-from scipy.optimize import curve_fit
-import os
-import warnings
-from collections import OrderedDict
 
 from apero import core
 from apero.core import constants

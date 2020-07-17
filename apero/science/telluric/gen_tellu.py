@@ -11,6 +11,7 @@ Created on 2019-08-12 at 17:16
 """
 import numpy as np
 from astropy import constants as cc
+from astropy import units as uu
 from scipy.optimize import curve_fit
 import warnings
 
