@@ -919,7 +919,7 @@ out_tellu_conv = drs_ninput('TELLU_CONV', KW_OUTPUT='TELLU_CONV',
                             outfunc=out.general_file)
 
 # tapas file in format for pre-cleaning
-out_tellu_abso_npy = drs_ninput('TELLU_TAPAS',
+out_tellu_spl_npy = drs_ninput('TELLU_TAPAS',
                                 filetype='.npy',
                                 basename='tapas_spl.npy',
                                 outfunc=out.set_file)
@@ -936,9 +936,11 @@ out_tellu_trans = drs_finput('TELLU_TRANS', KW_OUTPUT='TELLU_TRANS',
 out_file.addset(out_tellu_pclean)
 out_file.addset(out_tellu_conv)
 out_file.addset(out_tellu_trans)
+out_file.addset(out_tellu_spl_npy)
 tellu_file.addset(out_tellu_pclean)
 tellu_file.addset(out_tellu_conv)
 tellu_file.addset(out_tellu_trans)
+tellu_file.addset(out_tellu_spl_npy)
 
 # -----------------------------------------------------------------------------
 # fit telluric
