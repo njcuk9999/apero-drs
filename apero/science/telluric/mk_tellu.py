@@ -183,7 +183,7 @@ def calculate_tellu_res_absorption(params, recipe, image, template,
     tprops['DEFAULT_CWIDTH'] = default_conv_width
     tprops['TEMP_MED_FILT'] = med_filt1
     # set sources
-    keys = ['DEFAULT_CWIDTH', 'FINER_CWIDTH', 'TEMP_MED_FILT']
+    keys = ['DEFAULT_CWIDTH', 'TEMP_MED_FILT']
     tprops.set_sources(keys, func_name)
     # return tprops
     return tprops
@@ -326,8 +326,6 @@ def mk_tellu_summary(recipe, it, params, qc_params, tellu_props, fiber):
     recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
     recipe.plot.add_stat('KW_MKTELL_DEF_CONV_WID',
                          value=tellu_props['DEFAULT_CWIDTH'])
-    recipe.plot.add_stat('KW_MKTELL_FIN_CONV_WID',
-                         value=tellu_props['FINER_CWIDTH'])
     recipe.plot.add_stat('KW_MKTELL_TEMP_MEDFILT',
                          value=tellu_props['TEMP_MED_FILT'])
     recipe.plot.add_stat('KW_MKTELL_AIRMASS',
@@ -386,7 +384,6 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     transfile.add_hkey('KW_MKTELL_BLAZE_CUT', value=nprops['BLAZE_CUT_NORM'])
     # add tprops parameters
     transfile.add_hkey('KW_MKTELL_DEF_CONV_WID', value=tprops['DEFAULT_CWIDTH'])
-    transfile.add_hkey('KW_MKTELL_FIN_CONV_WID', value=tprops['FINER_CWIDTH'])
     transfile.add_hkey('KW_MKTELL_TEMP_MEDFILT', value=tprops['TEMP_MED_FILT'])
     # ----------------------------------------------------------------------
     # add tellu pre-clean keys

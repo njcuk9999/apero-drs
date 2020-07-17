@@ -1118,10 +1118,6 @@ KW_MKTELL_BLAZE_CUT = Keyword('KW_MKTELL_BLAZE_CUT', key='', dtype=float,
 KW_MKTELL_DEF_CONV_WID = Keyword('KW_MKTELL_DEF_CONV_WID', key='', dtype=int,
                                  source=__NAME__)
 
-# The finer convolution width in pix used for mktellu calculation
-KW_MKTELL_FIN_CONV_WID = Keyword('KW_MKTELL_FIN_CONV_WID', key='', dtype=int,
-                                 source=__NAME__)
-
 # The median filter width used for mktellu calculation
 KW_MKTELL_TEMP_MEDFILT = Keyword('KW_MKTELL_TEMP_MEDFILT', key='', dtype=float,
                                  source=__NAME__)

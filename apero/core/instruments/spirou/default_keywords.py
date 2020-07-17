@@ -1403,11 +1403,6 @@ KW_MKTELL_DEF_CONV_WID = KW_MKTELL_DEF_CONV_WID.copy(__NAME__)
 KW_MKTELL_DEF_CONV_WID.set(key='MKTDCONV',
                            comment='mktellu default conv width used')
 
-# The finer convolution width in pix used for mktellu calculation
-KW_MKTELL_FIN_CONV_WID = KW_MKTELL_FIN_CONV_WID.copy(__NAME__)
-KW_MKTELL_FIN_CONV_WID.set(key='MKTFCONV',
-                           comment='mktellu finer conv width used')
-
 # The median filter width used for mktellu calculation
 KW_MKTELL_TEMP_MEDFILT = KW_MKTELL_TEMP_MEDFILT.copy(__NAME__)
 KW_MKTELL_TEMP_MEDFILT.set(key='MKT_TMED',
