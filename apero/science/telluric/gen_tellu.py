@@ -371,7 +371,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     dvgrid = pcheck(params, 'EXT_S1D_BIN_UVELO', 'dvgrid', kwargs, func_name)
     # ----------------------------------------------------------------------
     # get image and header from infile
-    image = infile.image
+    image = infile.data
     header = infile.header
     # get airmass from header
     hdr_airmass = infile.get_key('KW_AIRMASS', dtype=float)
@@ -929,7 +929,7 @@ def clean_ohline_pca(params, image, wavemap, **kwargs):
     # get parameters from params/kwargs
     relfolder = pcheck(params, 'TELLU_LIST_DIRECOTRY', 'directory', kwargs,
                        func_name)
-    filename = pcheck(params, 'TELLU_BLACKLIST_NAME', 'filename', kwargs,
+    filename = pcheck(params, 'TELLUP_OHLINE_PCA_FILE', 'filename', kwargs,
                       func_name)
     # ----------------------------------------------------------------------
     # get shape of the e2ds
@@ -937,7 +937,7 @@ def clean_ohline_pca(params, image, wavemap, **kwargs):
     # ----------------------------------------------------------------------
     # load principle components data file
     ohpcdata, ohfile = drs_data.load_fits_file(params, filename, relfolder,
-                                            func_name)
+                                               func_name)
     # ----------------------------------------------------------------------
     # get the number of components
     n_components = ohpcdata.shape[1] - 1
@@ -958,7 +958,7 @@ def clean_ohline_pca(params, image, wavemap, **kwargs):
         # shift the principle component from ohwave grid to input e2ds wave grid
         ohpcshift = wave_to_wave(params, ohpcas[:, :, ncomp], ohwave, wavemap)
         # push into ribbons
-        ribbons_pcs[ncomp] = ohpcshift
+        ribbons_pcs[ncomp] = ohpcshift.ravel()
     # ----------------------------------------------------------------------
     # output for the sky model
     sky_model = np.zeros_like(ribbon_e2ds)
@@ -975,7 +975,8 @@ def clean_ohline_pca(params, image, wavemap, **kwargs):
     for ncomp in range(n_components):
         sky_model += ribbons_pcs[ncomp] * amps[ncomp]
     # sky model cannot be negative
-    sky_model[sky_model < 0] = 0
+    with warnings.catch_warnings(record=True) as _:
+        sky_model[sky_model < 0] = 0
     # push sky_model into correct shape
     sky_model = sky_model.reshape(nbo, nbpix)
     # ----------------------------------------------------------------------
