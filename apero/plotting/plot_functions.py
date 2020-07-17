@@ -2896,8 +2896,7 @@ def plot_tellup_abso_spec(plotter, graph, kwargs):
     # plot abso
     frame.plot(wave, trans, color='orange', label='abso', alpha=0.3)
     # add legend
-    frame.legend()
-    frame.set_title()
+    frame.legend(loc=0)
     # get ymax value
     ymax = mp.nanmax(spectrum_ini / (trans * mask) / scale) * 1.05
     # set limits
