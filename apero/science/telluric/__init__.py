@@ -51,8 +51,6 @@ get_whitelist = gen_tellu.get_whitelist
 
 load_conv_tapas = gen_tellu.load_conv_tapas
 
-load_tapas_convolved = gen_tellu.load_tapas_convolved
-
 load_templates = gen_tellu.load_templates
 
 load_tellu_file = gen_tellu.load_tellu_file
