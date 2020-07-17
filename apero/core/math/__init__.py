@@ -53,6 +53,8 @@ iuv_spline = general.iuv_spline
 
 killnan = nan.killnan
 
+lowpassfilter = general.lowpassfilter
+
 measure_box_min_max = general.measure_box_min_max
 
 medbin = general.medbin
