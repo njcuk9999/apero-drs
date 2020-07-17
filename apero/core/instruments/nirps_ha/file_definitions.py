@@ -913,6 +913,14 @@ calib_file.addset(out_wave_night)
 # -----------------------------------------------------------------------------
 # make telluric
 # -----------------------------------------------------------------------------
+# cleaned spectrum
+out_tellu_pclean = drs_finput('TELLU_PCLEAN', KW_OUTPUT='TELLU_PCLEAN',
+                              fibers=['A', 'B'],
+                              filetype='.fits', intype=out_ext_e2dsff,
+                              suffix='_tellu_pclean', remove_insuffix=True,
+                              dbname='telluric', dbkey='TELLU_PCLEAN',
+                              outfunc=out.general_file)
+
 # convolved tapas map (with wave solution)
 out_tellu_conv = drs_ninput('TELLU_CONV', KW_OUTPUT='TELLU_CONV',
                             fibers=['A', 'B'],
