@@ -26,7 +26,6 @@ def get_abso_sp(wave, expo_others, expo_water, spl_others, spl_water, ww = 4.95,
     # optional:
     #   ww -> gaussian width of the kernel
     #   ex_gau -> exponent of the gaussian, ex_gau = 2 is a gaussian, ex_gau > 2 is boxy
-    # TODO: Question: What is dv_abso
 
     if (expo_others == 0)*(expo_water==0):
         # for some tests, one may give 0 as exponents and get just a flat 1
@@ -222,6 +221,7 @@ def hybrid_fit_tellu(image_e2ds, wave_e2ds, hdr_e2ds, doplot = False, force_airm
     # we ravel the wavelength grid to make it a 1d array of increasing wavelength. We will trim the overlapping domain
     # between orders
     keep = np.ones_like(wave_e2ds)
+    orders, _ = np.indices(wave_e2ds.shape)
     for iord in range(1,49-1):
         keep[iord] = (wave_e2ds[iord]>(wave_e2ds[iord-1][::-1]))*(wave_e2ds[iord]<(wave_e2ds[iord+1][::-1]))
     keep[0] = 0 # firts and last orders are rejected
@@ -256,22 +256,17 @@ def hybrid_fit_tellu(image_e2ds, wave_e2ds, hdr_e2ds, doplot = False, force_airm
         return graceful_error_in_tellu(image_e2ds, wave_e2ds)
 
     # we are going to mask all orders with an snr below a certain threshold. SNR=10 is fine
-    # TODO: Question: Why masking into other orders???
     mask_low_snr = np.zeros_like(wave)
     for iord in range(49):
         if snr[iord]<snr_min:
-            w1 = np.min(wave_e2ds[iord])
-            w2 = np.max(wave_e2ds[iord])
-            mask_low_snr[ (wave>w1)*(wave<w2) ] = 1
-
-    # mask bad domain to avoid fitting it
-    sp[mask_low_snr == 1] = np.nan
+            mask_orders = orders == iord
+            # mask bad domain to avoid fitting it
+            sp[mask_orders] = np.nan
 
     # for numerical stabiility, remove NaNs. Setting to zero biases a bit the CCF, but this should be OK
     # after we converge
-    # TODO: Question: Why removing NaNs and then adding them back in again (for neg values)???
     sp[np.isfinite(sp) == False] = 0
-    sp[sp<0] = np.nan
+    sp[sp<0] = 0
 
     # scanning range for the ccf computation
     dd = np.arange(-ccf_scan_range,ccf_scan_range+1,1.0)
@@ -385,7 +380,8 @@ def hybrid_fit_tellu(image_e2ds, wave_e2ds, hdr_e2ds, doplot = False, force_airm
         else:
             # we have 2 values or more, if this is iteration<5, we fit a line and find the
             # point where amp would be 0. If we have >5, we get smarter and fit a 2nd order polynomial
-            # TODO: Question what happens to fit_others on ite>5 if force_airmass=True
+            fit_others = [np.nan, hdr_e2ds['AIRMASS'], np.nan]
+
             if ite>5:
                 if ~force_airmass:
                     ord = np.argsort(np.abs(amps_others))
@@ -395,24 +391,20 @@ def hybrid_fit_tellu(image_e2ds, wave_e2ds, hdr_e2ds, doplot = False, force_airm
                 fit_water = np.polyfit(amps_water[ord[0:4]],expos_water[ord[0:4]],1)
 
             else:
-                fit_others = np.polyfit(amps_others,expos_others,1)
+                if ~force_airmass:
+                    fit_others = np.polyfit(amps_others,expos_others,1)
                 fit_water = np.polyfit(amps_water,expos_water,1)
 
             # next guess
-            if force_airmass:
-                expo_others = hdr_e2ds['AIRMASS']  # in all cases
-            else:
-                expo_others = fit_others[1]
+            expo_others = fit_others[1]
 
-                # TODO: Question how do we use these as an error flag if you
-                #   continue on any way?
-                if expo_others < others_bounds[0]:
-                    expo_others = others_bounds[0]
-                    flag_error = True
+            if expo_others < others_bounds[0]:
+                expo_others = others_bounds[0]
+                flag_error = True
 
-                if expo_others > others_bounds[1]:
-                    expo_others = others_bounds[1]
-                    flag_error = True
+            if expo_others > others_bounds[1]:
+                expo_others = others_bounds[1]
+                flag_error = True
 
             expo_water = fit_water[1] # find best guess for exponent
 
@@ -481,16 +473,13 @@ def hybrid_fit_tellu(image_e2ds, wave_e2ds, hdr_e2ds, doplot = False, force_airm
     mask = abso_e2ds < np.exp(-1)
     abso_e2ds[mask] = np.nan
     corrected_e2ds = (image_e2ds_ini-sky_model)/abso_e2ds
-    # TODO: Question - this doesn't do anything    (nan - sky)/ abso = nan
-    corrected_e2ds[np.isfinite(image_e2ds_ini) ==  False] = np.nan
 
     if return_ccf_power == False:
         return corrected_e2ds, mask, abso_e2ds, sky_model,  expo_water, expo_others, dv_water, dv_others
 
     else:
         # this is a debug mode. We return the CCF power just to better adjust the shape of the LSF
-        # TODO: Question - should this be related to ccf_scan_range?
-        keep = np.abs(dd)<10
+        keep = np.abs(dd)<ccf_scan_range/4
         return np.nansum(np.gradient(ccf_water)[keep]**2),np.nansum(np.gradient(ccf_others)[keep]**2)
 
 
