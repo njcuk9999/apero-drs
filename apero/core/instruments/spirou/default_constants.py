@@ -1706,7 +1706,7 @@ TELLU_ABSORBERS.value = 'combined, h2o, o3, n2o, o2, co2, ch4'
 
 # define the default convolution width [in pixels]
 MKTELLU_DEFAULT_CONV_WIDTH = MKTELLU_DEFAULT_CONV_WIDTH.copy(__NAME__)
-MKTELLU_DEFAULT_CONV_WIDTH.value = 900
+MKTELLU_DEFAULT_CONV_WIDTH.value = 100
 
 # define the finer convolution width [in pixels]
 MKTELLU_FINER_CONV_WIDTH = MKTELLU_FINER_CONV_WIDTH.copy(__NAME__)
@@ -1715,7 +1715,8 @@ MKTELLU_FINER_CONV_WIDTH.value = 100
 # define which orders are clean enough of tellurics to use the finer
 #     convolution width (should be a string list separated by commas)
 MKTELLU_CLEAN_ORDERS = MKTELLU_CLEAN_ORDERS.copy(__NAME__)
-MKTELLU_CLEAN_ORDERS.value = '2, 3, 5, 6, 7, 8, 9, 14, 15, 19, 20, 28, 29, 30, 31, 32, 33, 34, 35, 43, 44'
+# MKTELLU_CLEAN_ORDERS.value = '2, 3, 5, 6, 7, 8, 9, 14, 15, 19, 20, 28, 29, 30, 31, 32, 33, 34, 35, 43, 44'
+MKTELLU_CLEAN_ORDERS.value = ''
 
 # median-filter the template. we know that stellar features
 #    are very broad. this avoids having spurious noise in our
