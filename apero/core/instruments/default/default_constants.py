@@ -187,17 +187,10 @@ __all__ = [
     'TELLUP_OTHER_BOUNDS', 'TELLUP_WATER_BOUNDS',
     # make telluric constants
     'MKTELLU_BLAZE_PERCENTILE', 'MKTELLU_CUT_BLAZE_NORM', 'TELLU_ABSORBERS',
-    'MKTELLU_DEFAULT_CONV_WIDTH', 'MKTELLU_FINER_CONV_WIDTH',
-    'MKTELLU_CLEAN_ORDERS', 'MKTELLU_TEMP_MED_FILT', 'MKTELLU_DPARAMS_THRES',
-    'MKTELLU_MAX_ITER', 'MKTELLU_THRES_TRANSFIT', 'MKTELLU_TRANS_FIT_UPPER_BAD',
-    'MKTELLU_TRANS_MIN_WATERCOL', 'MKTELLU_TRANS_MAX_WATERCOL',
-    'MKTELLU_TRANS_MIN_NUM_GOOD', 'MKTELLU_TRANS_TAU_PERCENTILE',
-    'MKTELLU_TRANS_SIGMA_CLIP', 'MKTELLU_TRANS_TEMPLATE_MEDFILT',
-    'MKTELLU_SMALL_WEIGHTING_ERROR', 'MKTELLU_PLOT_ORDER_NUMS',
-    'MKTELLU_TAU_WATER_ULIMIT', 'MKTELLU_TAU_OTHER_LLIMIT',
-    'MKTELLU_TAU_OTHER_ULIMIT', 'MKTELLU_SMALL_LIMIT', 'MKTELLU_QC_SNR_ORDER',
-    'MKTELLU_QC_SNR_MIN', 'MKTELLU_QC_AIRMASS_DIFF', 'MKTELLU_HBAND_LOWER',
-    'MKTELLU_HBAND_UPPER',
+    'MKTELLU_DEFAULT_CONV_WIDTH', 'MKTELLU_TEMP_MED_FILT',
+    'MKTELLU_PLOT_ORDER_NUMS', 'MKTELLU_TAU_WATER_ULIMIT',
+    'MKTELLU_QC_SNR_ORDER', 'MKTELLU_QC_SNR_MIN', 'MKTELLU_QC_AIRMASS_DIFF',
+    'MKTELLU_TRANS_MAX_WATERCOL', 'MKTELLU_TRANS_MIN_WATERCOL',
     # fit telluric constants,
     'FTELLU_NUM_PRINCIPLE_COMP', 'FTELLU_ADD_DERIV_PC', 'FTELLU_FIT_DERIV_PC',
     'FTELLU_FIT_KEEP_NUM', 'FTELLU_FIT_MIN_TRANS', 'FTELLU_LAMBDA_MIN',
@@ -2085,8 +2078,8 @@ TELLUP_ABSO_EXPO_KWID = Const('TELLUP_ABSO_EXPO_KWID', value=None,
 # define the gaussian exponent of the kernel used in abso_expo
 #   a value of 2 is gaussian, a value >2 is boxy
 TELLUP_ABSO_EXPO_KEXP = Const('TELLUP_ABSO_EXPO_KEXP', value=None,
-                             dtype=float, source=__NAME__, group=cgroup,
-                             minimum=0.0)
+                              dtype=float, source=__NAME__, group=cgroup,
+                              minimum=0.0)
 
 # define the transmission threshold (in exponential form) for keeping
 #   valid transmission
@@ -2139,76 +2132,11 @@ TELLU_ABSORBERS = Const('TELLU_ABSORBERS', value=None, dtype=str,
 MKTELLU_DEFAULT_CONV_WIDTH = Const('MKTELLU_DEFAULT_CONV_WIDTH', value=None,
                                    dtype=int, source=__NAME__, group=cgroup)
 
-# define the finer convolution width [in pixels]
-MKTELLU_FINER_CONV_WIDTH = Const('MKTELLU_FINER_CONV_WIDTH', value=None,
-                                 dtype=int, source=__NAME__, group=cgroup)
-
-# define which orders are clean enough of tellurics to use the finer
-#     convolution width (should be a string list separated by commas)
-MKTELLU_CLEAN_ORDERS = Const('MKTELLU_CLEAN_ORDERS', value=None,
-                             dtype=str, source=__NAME__, group=cgroup)
-
 # median-filter the template. we know that stellar features
 #    are very broad. this avoids having spurious noise in our
 #    templates [pixel]
 MKTELLU_TEMP_MED_FILT = Const('MKTELLU_TEMP_MED_FILT', value=None, dtype=int,
                               source=__NAME__, group=cgroup)
-
-# threshold in absorbance where we will stop iterating the absorption
-#     model fit
-MKTELLU_DPARAMS_THRES = Const('MKTELLU_DPARAMS_THRES', value=None, dtype=float,
-                              source=__NAME__, group=cgroup)
-
-# max number of iterations, normally converges in about 12 iterations
-MKTELLU_MAX_ITER = Const('MKTELLU_MAX_ITER', value=None, dtype=int,
-                         source=__NAME__, minimum=1, group=cgroup)
-
-# minimum transmission required for use of a given pixel in the TAPAS
-#    and SED fitting
-MKTELLU_THRES_TRANSFIT = Const('MKTELLU_THRES_TRANSFIT', value=None,
-                               dtype=float, source=__NAME__, group=cgroup)
-
-# Defines the bad pixels if the spectrum is larger than this value.
-#    These values are likely an OH line or a cosmic ray
-MKTELLU_TRANS_FIT_UPPER_BAD = Const('MKTELLU_TRANS_FIT_UPPER_BAD', value=None,
-                                    dtype=float, source=__NAME__, group=cgroup)
-
-# Defines the minimum allowed value for the recovered water vapor optical
-#    depth (should not be able 1)
-MKTELLU_TRANS_MIN_WATERCOL = Const('MKTELLU_TRANS_MIN_WATERCOL', value=None,
-                                   dtype=float, source=__NAME__, group=cgroup)
-
-# Defines the maximum allowed value for the recovered water vapor optical
-#    depth
-MKTELLU_TRANS_MAX_WATERCOL = Const('MKTELLU_TRANS_MAX_WATERCOL', value=None,
-                                   dtype=float, source=__NAME__, group=cgroup)
-
-# Defines the minimum number of good points required to normalise the
-#    spectrum, if less than this we don't normalise the spectrum by its
-#    median
-MKTELLU_TRANS_MIN_NUM_GOOD = Const('MKTELLU_TRANS_MIN_NUM_GOOD', value=None,
-                                   dtype=int, source=__NAME__, group=cgroup)
-
-# Defines the percentile used to gauge which transmission points should
-#    be used to median (above this percentile is used to median)
-MKTELLU_TRANS_TAU_PERCENTILE = Const('MKTELLU_TRANS_TAU_PERCENTILE', value=None,
-                                     dtype=float, source=__NAME__, group=cgroup)
-
-# sigma-clipping of the residuals of the difference between the
-# spectrum divided by the fitted TAPAS absorption and the
-# best guess of the SED
-MKTELLU_TRANS_SIGMA_CLIP = Const('MKTELLU_TRANS_SIGMA_CLIP', value=None,
-                                 dtype=float, source=__NAME__, group=cgroup)
-
-# median-filter the trans data measured in pixels
-MKTELLU_TRANS_TEMPLATE_MEDFILT = Const('MKTELLU_TRANS_TEMPLATE_MEDFILT',
-                                       value=None, dtype=int, source=__NAME__,
-                                       group=cgroup)
-
-# Define the threshold for "small" values that do not add to the weighting
-MKTELLU_SMALL_WEIGHTING_ERROR = Const('MKTELLU_SMALL_WEIGHTING_ERROR',
-                                      value=None, dtype=float, source=__NAME__,
-                                      group=cgroup)
 
 # Define the orders to plot (not too many)
 #    values should be a string list separated by commas
@@ -2219,29 +2147,20 @@ MKTELLU_PLOT_ORDER_NUMS = Const('MKTELLU_PLOT_ORDER_NUMS', value=None,
 MKTELLU_TAU_WATER_ULIMIT = Const('MKTELLU_TAU_WATER_ULIMIT', value=None,
                                  dtype=float, source=__NAME__, group=cgroup)
 
-# set a lower and upper limit for the allowed line-of-sight optical depth
-#    for other absorbers (upper limit equivalent to airmass limit)
-# line-of-sight optical depth for other absorbers cannot be less than one
-#      (that's zenith) keep the limit at 0.2 just so that the value gets
-#      propagated to header and leaves open the possibility that during
-#      the convergence of the algorithm, values go slightly below 1.0
-MKTELLU_TAU_OTHER_LLIMIT = Const('MKTELLU_TAU_OTHER_LLIMIT', value=None,
-                                 dtype=float, source=__NAME__, group=cgroup)
-
-# line-of-sight optical depth for other absorbers cannot be greater than 5
-#       that would be an airmass of 5 and SPIRou cannot observe there
-MKTELLU_TAU_OTHER_ULIMIT = Const('MKTELLU_TAU_OTHER_ULIMIT', value=None,
-                                 dtype=float, source=__NAME__, group=cgroup)
-
-# bad values and small values are set to this value (as a lower limit to
-#   avoid dividing by small numbers or zero
-MKTELLU_SMALL_LIMIT = Const('MKTELLU_SMALL_LIMIT', value=None, dtype=float,
-                            source=__NAME__, minimum=0.0, group=cgroup)
-
 #   Define the order to use for SNR check when accepting tellu files
 #      to the telluDB
 MKTELLU_QC_SNR_ORDER = Const('MKTELLU_QC_SNR_ORDER', value=None, dtype=int,
                              source=__NAME__, minimum=0, group=cgroup)
+
+# Defines the maximum allowed value for the recovered water vapor optical
+#    depth
+MKTELLU_TRANS_MAX_WATERCOL = Const('MKTELLU_TRANS_MAX_WATERCOL', value=None,
+                                   dtype=float, source=__NAME__, group=cgroup)
+
+# Defines the minimum allowed value for the recovered water vapor optical
+#    depth (should not be able 1)
+MKTELLU_TRANS_MIN_WATERCOL = Const('MKTELLU_TRANS_MIN_WATERCOL', value=None,
+                                   dtype=float, source=__NAME__, group=cgroup)
 
 #  Define the minimum SNR for order "QC_TELLU_SNR_ORDER" that will be
 #      accepted to the telluDB
@@ -2251,16 +2170,6 @@ MKTELLU_QC_SNR_MIN = Const('MKTELLU_QC_SNR_MIN', value=None, dtype=float,
 # Define the allowed difference between recovered and input airmass
 MKTELLU_QC_AIRMASS_DIFF = Const('MKTELLU_QC_AIRMASS_DIFF', value=None,
                                 dtype=float, source=__NAME__, group=cgroup)
-
-# Define the MKO H-band limit limit [nm]
-#    from http://www.ifa.hawaii.edu/~tokunaga/MKO-NIR_filter_set.html
-MKTELLU_HBAND_LOWER = Const('MKTELLU_HBAND_LOWER', value=None,
-                            dtype=float, source=__NAME__, group=cgroup)
-
-# Define the MKO H-band upper limit [nm]
-#    from http://www.ifa.hawaii.edu/~tokunaga/MKO-NIR_filter_set.html
-MKTELLU_HBAND_UPPER = Const('MKTELLU_HBAND_UPPER', value=None,
-                            dtype=float, source=__NAME__, group=cgroup)
 
 # =============================================================================
 # OBJECT: FIT TELLURIC SETTINGS
