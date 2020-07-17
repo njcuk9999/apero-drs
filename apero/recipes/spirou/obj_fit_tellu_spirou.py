@@ -179,6 +179,11 @@ def __main__(recipe, params):
             WLOG(params, 'warning', TextEntry('10-019-00002', args=wargs))
             # continue
             continue
+        else:
+            # TODO: move to language database
+            msg = 'File validated: OBJECT={0} DPRTYPE={1}'
+            args = [objname, dprtype]
+            WLOG(params, 'info', msg.format(*args))
         # ------------------------------------------------------------------
         # get fiber from infile
         fiber = infile.get_fiber(header=header)
