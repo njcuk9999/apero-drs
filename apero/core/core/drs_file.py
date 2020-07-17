@@ -2318,7 +2318,7 @@ class DrsFitsFile(DrsInputFile):
 
         # deal with mapf
         if mapf is not None:
-            if mapf == 'slist':
+            if mapf == 'list':
                 value = ', '.join(np.array(value).astype(str))
 
         # check for kwstore in params
