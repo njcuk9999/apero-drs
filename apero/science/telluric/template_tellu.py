@@ -275,6 +275,10 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
                     big_cube[order_num, :, it] /= lowpass
             # calculate the median of the big cube
             median = mp.nanmedian(big_cube, axis=2)
+
+            # TODO: only accept pixels where we have a fraction of values
+            #    finite (i.e. if <30 obs need 50%  if >30 need 30)
+
     # ----------------------------------------------------------------------
     # setup output parameter dictionary
     props = ParamDict()
