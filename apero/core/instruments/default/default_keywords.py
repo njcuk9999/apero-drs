@@ -5,167 +5,158 @@ from apero.core.constants import constant_functions
 # Define variables
 # -----------------------------------------------------------------------------
 # all definition
-__all__ = [# input keys
-           'KW_ACQTIME', 'KW_OBJRA', 'KW_OBJDEC', 'KW_OBJNAME', 'KW_OBJEQUIN',
-           'KW_OBJRAPM', 'KW_OBJDECPM', 'KW_RDNOISE', 'KW_GAIN', 'KW_EXPTIME',
-           'KW_UTC_OBS', 'KW_EXPTIME_UNITS', 'KW_OBSTYPE', 'KW_CCAS',
-           'KW_CREF', 'KW_CDEN', 'KW_CMMTSEQ', 'KW_AIRMASS', 'KW_MJDEND',
-           'KW_CMPLTEXP', 'KW_NEXP', 'KW_PI_NAME', 'KW_PLX', 'KW_CALIBWH',
-           'KW_TARGET_TYPE', 'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP',
-           'KW_HUMIDITY', 'KW_GAIA_ID', 'KW_INPUTRV', 'KW_OBJ_TEMP',
-           'KW_SATURATE', 'KW_FRMTIME', 'KW_OBJECTNAME',
-           # general output keys
-           'KW_VERSION', 'KW_PPVERSION', 'KW_DPRTYPE', 'KW_PID',
-           'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3',
-           'KW_DRS_QC', 'KW_DRS_QC_VAL', 'KW_DRS_QC_NAME', 'KW_DRS_QC_LOGIC',
-           'KW_DRS_QC_PASS', 'KW_DATE_OBS', 'KW_OUTPUT',
-           'KW_DRS_DATE', 'KW_C_FLIP', 'KW_C_CVRTE',
-           'KW_C_RESIZE', 'KW_DRS_DATE_NOW', 'KW_C_FTYPE',
-           'KW_MID_OBS_TIME', 'KW_MID_OBSTIME_METHOD',
-           # calibration file header keys
-           'KW_CDBDARK', 'KW_CDBBAD', 'KW_CDBBACK', 'KW_CDBORDP', 'KW_CDBLOCO',
-           'KW_CDBSHAPEL', 'KW_CDBSHAPEDX', 'KW_CDBSHAPEDY', 'KW_CDBFLAT',
-           'KW_CDBBLAZE',  'KW_CDBWAVE', 'KW_CDBTHERMAL',
-           # preprocess keys
-           'KW_PPSHIFTX', 'KW_PPSHIFTY', 'KW_PPMSTR_NSIG', 'KW_PPMSTR_FILE',
-           # dark keys
-           'KW_DARK_DEAD', 'KW_DARK_MED', 'KW_DARK_B_DEAD',
-           'KW_DARK_B_MED', 'KW_DARK_R_DEAD', 'KW_DARK_R_MED', 'KW_DARK_CUT',
-           # bad pix keys
-           'KW_BHOT', 'KW_BBFLAT', 'KW_BNDARK', 'KW_BNFLAT', 'KW_BBAD',
-           'KW_BNILUM', 'KW_BTOT',
-           # loc keys
-           'ROOT_DRS_LOC', 'KW_LOC_BCKGRD',
-           'KW_LOC_NBO', 'KW_LOC_DEG_C', 'KW_LOC_DEG_W', 'KW_LOC_MAXFLX',
-           'KW_LOC_SMAXPTS_CTR', 'KW_LOC_SMAXPTS_WID', 'KW_LOC_RMS_CTR',
-           'KW_LOC_RMS_WID', 'KW_LOC_CTR_COEFF', 'KW_LOC_WID_COEFF',
-           # shape keys
-           'KW_SHAPE_DX', 'KW_SHAPE_DY', 'KW_SHAPE_A', 'KW_SHAPE_B',
-           'KW_SHAPE_C', 'KW_SHAPE_D',
-           # flat values
-           'KW_BLAZE_WID', 'KW_BLAZE_CUT', 'KW_BLAZE_DEG', 'KW_BLAZE_SCUT',
-           'KW_BLAZE_SIGFIG', 'KW_BLAZE_BPRCNTL', 'KW_BLAZE_NITER',
-           # extraction values
-           'KW_EXT_TYPE', 'KW_EXT_SNR', 'KW_EXT_START', 'KW_EXT_END',
-           'KW_EXT_RANGE1', 'KW_EXT_RANGE2', 'KW_COSMIC', 'KW_COSMIC_CUT',
-           'KW_COSMIC_THRES', 'KW_SAT_QC', 'KW_SAT_LEVEL', 'KW_S1D_WAVESTART',
-           'KW_S1D_WAVEEND', 'KW_S1D_KIND', 'KW_S1D_BWAVE', 'KW_S1D_BVELO',
-           'KW_S1D_SMOOTH', 'KW_S1D_BLAZET', 'KW_BERVRA', 'KW_BERVDEC',
-           'KW_BERVEPOCH', 'KW_BERVPMRA', 'KW_BERVPMDE', 'KW_BERVPLX',
-           'KW_BERV_POS_SOURCE', 'KW_BERVLAT', 'KW_BERVLONG', 'KW_BERVALT',
-           'KW_BERV', 'KW_BJD', 'KW_BERVMAX', 'KW_BERVSOURCE',
-           'KW_BERV_EST', 'KW_BJD_EST', 'KW_BERVMAX_EST',
-           'KW_BERV_OBSTIME', 'KW_BERV_OBSTIME_METHOD',
-           'KW_BERVGAIA_ID', 'KW_FIBER', 'KW_BERVOBJNAME', 'KW_BERVRV',
-           'KW_BERV_GAIA_GMAG', 'KW_BERV_GAIA_BPMAG', 'KW_BERV_GAIA_RPMAG',
-           'KW_BERV_GAIA_MAGLIM', 'KW_BERV_GAIA_PLXLIM', 'KW_DBERV',
-           'KW_DBERV_EST',
-           # leakage values
-           'KW_LEAK_CORR', 'KW_LEAK_BP_U', 'KW_LEAK_NP_U', 'KW_LEAK_WSMOOTH',
-           'KW_LEAK_KERSIZE', 'KW_LEAK_LP_U', 'KW_LEAK_UP_U', 'KW_LEAK_BADR_U',
-           # wave values
-           'KW_WAVE_NBO', 'KW_WAVE_DEG', 'KW_WAVEFILE', 'KW_WAVESOURCE',
-           'KW_WAVECOEFFS', 'KW_WAVE_FITDEG', 'KW_WAVE_MODE_HC',
-           'KW_WAVE_MODE_FP', 'KW_WAVE_ECHELLE_START', 'KW_WAVE_HCG_WSIZE',
-           'KW_WAVE_HCG_SIGPEAK', 'KW_WAVE_HCG_GFITMODE',
-           'KW_WAVE_HCG_FB_RMSMIN', 'KW_WAVE_HCG_FB_RMSMAX',
-           'KW_WAVE_HCG_EWMIN', 'KW_WAVE_HCG_EWMAX', 'KW_WAVE_HCLL_FILE',
-           'KW_WAVE_TRP_NBRIGHT', 'KW_WAVE_TRP_NITER', 'KW_WAVE_TRP_CATGDIST',
-           'KW_WAVE_TRP_FITDEG', 'KW_WAVE_TRP_MIN_NLINES',
-           'KW_WAVE_TRP_TOT_NLINES', 'KW_WAVE_TRP_ORDER_FITCONT',
-           'KW_WAVE_TRP_SCLIPNUM', 'KW_WAVE_TRP_SCLIPTHRES',
-           'KW_WAVE_TRP_DVCUTORD', 'KW_WAVE_TRP_DVCUTALL',
-           'KW_WAVE_RES_MAPSIZE', 'KW_WAVE_RES_WSIZE',
-           'KW_WAVE_RES_MAXDEVTHRES', 'KW_INIT_WAVE', 'KW_WAVETIME',
-           # wave littrow values
-           'KW_WAVE_LIT_START_1', 'KW_WAVE_LIT_END_1', 'KW_WAVE_LIT_RORDERS',
-           'KW_WAVE_LIT_ORDER_INIT_1', 'KW_WAVE_LIT_ORDER_START_1',
-           'KW_WAVE_LIT_ORDER_END_1', 'KW_WAVE_LITT_XCUTSTEP_1',
-           'KW_WAVE_LITT_FITDEG_1', 'KW_WAVE_LITT_EXT_FITDEG_1',
-           'KW_WAVE_LITT_EXT_ORD_START_1',
-            # wave fp values
-           'KW_WFP_ORD_START', 'KW_WFP_ORD_FINAL', 'KW_WFP_BLZ_THRES',
-           'KW_WFP_XDIFF_MIN', 'KW_WFP_XDIFF_MAX', 'KW_WFP_DOPD0',
-           'KW_WFP_LL_OFFSET', 'KW_WFP_DVMAX', 'KW_WFP_LLFITDEG',
-           'KW_WFP_UPDATECAV', 'KW_WFP_FPCAV_MODE', 'KW_WFP_LLFIT_MODE',
-           'KW_WFP_ERRX_MIN', 'KW_WFP_MAXLL_FIT_RMS', 'KW_WFP_T_ORD_START',
-           'KW_WFP_WEI_THRES', 'KW_WFP_CAVFIT_DEG', 'KW_WFP_LARGE_JUMP',
-           'KW_WFP_CM_INDX', 'KW_WFP_NPERCENT', 'KW_WFP_LIMIT',
-           'KW_WFP_CUTWIDTH', 'KW_WFP_FILE', 'KW_WFP_DRIFT', 'KW_WFP_WIDUSED',
-           'KW_WFP_FWHM', 'KW_WFP_CONTRAST', 'KW_WFP_MASK',
-           'KW_WFP_LINES', 'KW_WFP_TARG_RV', 'KW_WFP_WIDTH',
-           'KW_WFP_STEP', 'KW_WFP_SIGDET', 'KW_WFP_BOXSIZE', 'KW_WFP_MAXFLUX',
-           'KW_WFP_DETNOISE', 'KW_WFP_NMAX', 'KW_WFP_MASKMIN', 'KW_WFP_MASKWID',
-           'KW_WFP_MASKUNITS',
-           # wave night values
-           'KW_WNT_DCAVITY', 'KW_WNT_DCAVSRCE',
-           'KW_WNT_NITER1', 'KW_WNT_NITER2', 'KW_WNT_HCSIGCLIP',
-           'KW_WNT_MADLIMIT', 'KW_WNT_NSIG_FIT',
-           # telluric preclean variables
-           'KW_TELLUP_EXPO_WATER', 'KW_TELLUP_EXPO_OTHERS',
-           'KW_TELLUP_DV_WATER', 'KW_TELLUP_DV_OTHERS', 'KW_TELLUP_DO_PRECLEAN',
-           'KW_TELLUP_DFLT_WATER', 'KW_TELLUP_CCF_SRANGE',
-           'KW_TELLUP_CLEAN_OHLINES', 'KW_TELLUP_REMOVE_ORDS',
-           'KW_TELLUP_SNR_MIN_THRES', 'KW_TELLUP_DEXPO_CONV_THRES',
-           'KW_TELLUP_DEXPO_MAX_ITR', 'KW_TELLUP_ABSOEXPO_KTHRES',
-           'KW_TELLUP_WAVE_START', 'KW_TELLUP_WAVE_END',
-           'KW_TELLUP_DVGRID', 'KW_TELLUP_ABSOEXPO_KWID',
-           'KW_TELLUP_ABSOEXPO_KEXP', 'KW_TELLUP_TRANS_THRES',
-           'KW_TELLUP_TRANS_SIGL', 'KW_TELLUP_FORCE_AIRMASS',
-           'KW_TELLUP_OTHER_BOUNDS', 'KW_TELLUP_WATER_BOUNDS',
-           # mktellu values
-           'KW_MKTELL_TEMP_FILE', 'KW_MKTELL_BLAZE_PRCT', 'KW_MKTELL_BLAZE_CUT',
-           'KW_MKTELL_TAPASFILE', 'KW_MKTELL_FWHMPLSF',
-           'KW_MKTELL_DEF_CONV_WID', 'KW_MKTELL_FIN_CONV_WID',
-           'KW_MKTELL_TEMP_MEDFILT', 'KW_MKTELL_DPARAM_THRES',
-           'KW_MKTELL_MAX_ITER', 'KW_MKTELL_THRES_TFIT',
-           'KW_MKTELL_MIN_WATERCOL', 'KW_MKTELL_MAX_WATERCOL',
-           'KW_MKTELL_MIN_NUM_GOOD', 'KW_MKTELL_BTRANS_PERC',
-           'KW_MKTELL_NSIGCLIP', 'KW_MKTELL_TRANS_TMFILT',
-           'KW_MKTELL_SMALL_W_ERR', 'KW_MKTELL_IM_PSIZE',
-           'KW_MKTELL_TAU_WATER_U', 'KW_MKTELL_TAU_OTHER_L',
-           'KW_MKTELL_TAU_OTHER_U', 'KW_MKTELL_TAPAS_SNUM',
-           'KW_MKTELL_AIRMASS', 'KW_MKTELL_WATER',
-           # fittellu values
-           'KW_FTELLU_NPC', 'KW_FTELLU_ADD_DPC', 'KW_FTELLU_FIT_DPC',
-           'KW_FTELLU_ABSO_SRC', 'KW_FTELLU_FIT_KEEP_NUM',
-           'KW_FTELLU_FIT_MIN_TRANS', 'KW_FTELLU_LAMBDA_MIN',
-           'KW_FTELLU_LAMBDA_MAX', 'KW_FTELLU_KERN_VSINI',
-           'KW_FTELLU_IM_PX_SIZE', 'KW_FTELLU_FIT_ITERS', 'KW_FTELLU_RECON_LIM',
-           'KW_FTELLU_AMP_PC', 'KW_FTELLU_DVTELL1', 'KW_FTELLU_DVTELL2',
-           'KW_FTELLU_TAU_H2O', 'KW_FTELLU_TAU_REST', 'KW_FTELLU_ABSO_PREFIX',
-           'KW_FTELLU_TEMPLATE',
-           # make template values
-           'KW_MKTEMP_SNR_ORDER', 'KW_MKTEMP_SNR_THRES',
-           # ccf values
-           'KW_CCF_MEAN_RV', 'KW_CCF_MEAN_CONSTRAST', 'KW_CCF_MEAN_FWHM',
-           'KW_CCF_TOT_LINES', 'KW_CCF_MASK',
-           'KW_CCF_STEP', 'KW_CCF_WIDTH', 'KW_CCF_TARGET_RV', 'KW_CCF_SIGDET',
-           'KW_CCF_BOXSIZE', 'KW_CCF_MAXFLUX', 'KW_CCF_NMAX', 'KW_CCF_MASK_MIN',
-           'KW_CCF_MASK_WID', 'KW_CCF_MASK_UNITS', 'KW_CCF_RV_WAVE_FP',
-           'KW_CCF_RV_SIMU_FP', 'KW_CCF_RV_DRIFT', 'KW_CCF_RV_OBJ',
-           'KW_CCF_RV_CORR', 'KW_CCF_RV_WAVEFILE', 'KW_CCF_RV_WAVETIME',
-           'KW_CCF_RV_TIMEDIFF', 'KW_CCF_RV_WAVESRCE', 'KW_CCF_DVRMS_SP',
-           'KW_CCF_DVRMS_CC',
-           # polar values
-           'KW_POL_STOKES', 'KW_POL_NEXP', 'KW_POL_METHOD', 'KW_POL_FILES',
-           'KW_POL_EXPS', 'KW_POL_MJDS', 'KW_POL_MJDENDS', 'KW_POL_BJDS',
-           'KW_POL_BERVS', 'KW_POL_EXPTIME', 'KW_POL_ELAPTIME', 'KW_POL_MJDCEN',
-           'KW_POL_BJDCEN', 'KW_POL_BERVCEN', 'KW_POL_MEANBJD',
-           'KW_USED_MIN_FILES', 'KW_USED_VALID_FIBERS', 'KW_USED_VALID_STOKES',
-           'KW_USED_CONT_BINSIZE', 'KW_USED_CONT_OVERLAP', 'KW_POLAR_LSD_MASK',
-           'KW_POLAR_LSD_FIT_RV', 'KW_POLAR_LSD_FIT_RESOL',
-           'KW_POLAR_LSD_MEANPOL', 'KW_POLAR_LSD_STDPOL', 'KW_POLAR_LSD_MEDPOL',
-           'KW_POLAR_LSD_MEDABSDEV', 'KW_POLAR_LSD_MEANSVQU',
-           'KW_POLAR_LSD_STDSVQU', 'KW_POLAR_LSD_MEANNULL',
-           'KW_POLAR_LSD_STDNULL', 'KW_POL_LSD_COL1', 'KW_POL_LSD_COL2',
-           'KW_POL_LSD_COL3', 'KW_POL_LSD_COL4', 'KW_POL_LSD_COL5',
-           'KW_POLAR_LSD_MLDEPTH', 'KW_POLAR_LSD_VINIT', 'KW_POLAR_LSD_VFINAL',
-           'KW_POLAR_LSD_NORM', 'KW_POLAR_LSD_NBIN1', 'KW_POLAR_LSD_NLAP1',
-           'KW_POLAR_LSD_NSIG1', 'KW_POLAR_LSD_NWIN1', 'KW_POLAR_LSD_NMODE1',
-           'KW_POLAR_LSD_NLFIT1', 'KW_POLAR_LSD_NPOINTS', 'KW_POLAR_LSD_NBIN2',
-           'KW_POLAR_LSD_NLAP2', 'KW_POLAR_LSD_NSIG2', 'KW_POLAR_LSD_NWIN2',
-           'KW_POLAR_LSD_NMODE2', 'KW_POLAR_LSD_NLFIT2',
+__all__ = [  # input keys
+    'KW_ACQTIME', 'KW_OBJRA', 'KW_OBJDEC', 'KW_OBJNAME', 'KW_OBJEQUIN',
+    'KW_OBJRAPM', 'KW_OBJDECPM', 'KW_RDNOISE', 'KW_GAIN', 'KW_EXPTIME',
+    'KW_UTC_OBS', 'KW_EXPTIME_UNITS', 'KW_OBSTYPE', 'KW_CCAS',
+    'KW_CREF', 'KW_CDEN', 'KW_CMMTSEQ', 'KW_AIRMASS', 'KW_MJDEND',
+    'KW_CMPLTEXP', 'KW_NEXP', 'KW_PI_NAME', 'KW_PLX', 'KW_CALIBWH',
+    'KW_TARGET_TYPE', 'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP',
+    'KW_HUMIDITY', 'KW_GAIA_ID', 'KW_INPUTRV', 'KW_OBJ_TEMP',
+    'KW_SATURATE', 'KW_FRMTIME', 'KW_OBJECTNAME',
+    # general output keys
+    'KW_VERSION', 'KW_PPVERSION', 'KW_DPRTYPE', 'KW_PID',
+    'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3',
+    'KW_DRS_QC', 'KW_DRS_QC_VAL', 'KW_DRS_QC_NAME', 'KW_DRS_QC_LOGIC',
+    'KW_DRS_QC_PASS', 'KW_DATE_OBS', 'KW_OUTPUT',
+    'KW_DRS_DATE', 'KW_C_FLIP', 'KW_C_CVRTE',
+    'KW_C_RESIZE', 'KW_DRS_DATE_NOW', 'KW_C_FTYPE',
+    'KW_MID_OBS_TIME', 'KW_MID_OBSTIME_METHOD',
+    # calibration file header keys
+    'KW_CDBDARK', 'KW_CDBBAD', 'KW_CDBBACK', 'KW_CDBORDP', 'KW_CDBLOCO',
+    'KW_CDBSHAPEL', 'KW_CDBSHAPEDX', 'KW_CDBSHAPEDY', 'KW_CDBFLAT',
+    'KW_CDBBLAZE', 'KW_CDBWAVE', 'KW_CDBTHERMAL',
+    # preprocess keys
+    'KW_PPSHIFTX', 'KW_PPSHIFTY', 'KW_PPMSTR_NSIG', 'KW_PPMSTR_FILE',
+    # dark keys
+    'KW_DARK_DEAD', 'KW_DARK_MED', 'KW_DARK_B_DEAD',
+    'KW_DARK_B_MED', 'KW_DARK_R_DEAD', 'KW_DARK_R_MED', 'KW_DARK_CUT',
+    # bad pix keys
+    'KW_BHOT', 'KW_BBFLAT', 'KW_BNDARK', 'KW_BNFLAT', 'KW_BBAD',
+    'KW_BNILUM', 'KW_BTOT',
+    # loc keys
+    'ROOT_DRS_LOC', 'KW_LOC_BCKGRD',
+    'KW_LOC_NBO', 'KW_LOC_DEG_C', 'KW_LOC_DEG_W', 'KW_LOC_MAXFLX',
+    'KW_LOC_SMAXPTS_CTR', 'KW_LOC_SMAXPTS_WID', 'KW_LOC_RMS_CTR',
+    'KW_LOC_RMS_WID', 'KW_LOC_CTR_COEFF', 'KW_LOC_WID_COEFF',
+    # shape keys
+    'KW_SHAPE_DX', 'KW_SHAPE_DY', 'KW_SHAPE_A', 'KW_SHAPE_B',
+    'KW_SHAPE_C', 'KW_SHAPE_D',
+    # flat values
+    'KW_BLAZE_WID', 'KW_BLAZE_CUT', 'KW_BLAZE_DEG', 'KW_BLAZE_SCUT',
+    'KW_BLAZE_SIGFIG', 'KW_BLAZE_BPRCNTL', 'KW_BLAZE_NITER',
+    # extraction values
+    'KW_EXT_TYPE', 'KW_EXT_SNR', 'KW_EXT_START', 'KW_EXT_END',
+    'KW_EXT_RANGE1', 'KW_EXT_RANGE2', 'KW_COSMIC', 'KW_COSMIC_CUT',
+    'KW_COSMIC_THRES', 'KW_SAT_QC', 'KW_SAT_LEVEL', 'KW_S1D_WAVESTART',
+    'KW_S1D_WAVEEND', 'KW_S1D_KIND', 'KW_S1D_BWAVE', 'KW_S1D_BVELO',
+    'KW_S1D_SMOOTH', 'KW_S1D_BLAZET', 'KW_BERVRA', 'KW_BERVDEC',
+    'KW_BERVEPOCH', 'KW_BERVPMRA', 'KW_BERVPMDE', 'KW_BERVPLX',
+    'KW_BERV_POS_SOURCE', 'KW_BERVLAT', 'KW_BERVLONG', 'KW_BERVALT',
+    'KW_BERV', 'KW_BJD', 'KW_BERVMAX', 'KW_BERVSOURCE',
+    'KW_BERV_EST', 'KW_BJD_EST', 'KW_BERVMAX_EST',
+    'KW_BERV_OBSTIME', 'KW_BERV_OBSTIME_METHOD',
+    'KW_BERVGAIA_ID', 'KW_FIBER', 'KW_BERVOBJNAME', 'KW_BERVRV',
+    'KW_BERV_GAIA_GMAG', 'KW_BERV_GAIA_BPMAG', 'KW_BERV_GAIA_RPMAG',
+    'KW_BERV_GAIA_MAGLIM', 'KW_BERV_GAIA_PLXLIM', 'KW_DBERV',
+    'KW_DBERV_EST',
+    # leakage values
+    'KW_LEAK_CORR', 'KW_LEAK_BP_U', 'KW_LEAK_NP_U', 'KW_LEAK_WSMOOTH',
+    'KW_LEAK_KERSIZE', 'KW_LEAK_LP_U', 'KW_LEAK_UP_U', 'KW_LEAK_BADR_U',
+    # wave values
+    'KW_WAVE_NBO', 'KW_WAVE_DEG', 'KW_WAVEFILE', 'KW_WAVESOURCE',
+    'KW_WAVECOEFFS', 'KW_WAVE_FITDEG', 'KW_WAVE_MODE_HC',
+    'KW_WAVE_MODE_FP', 'KW_WAVE_ECHELLE_START', 'KW_WAVE_HCG_WSIZE',
+    'KW_WAVE_HCG_SIGPEAK', 'KW_WAVE_HCG_GFITMODE',
+    'KW_WAVE_HCG_FB_RMSMIN', 'KW_WAVE_HCG_FB_RMSMAX',
+    'KW_WAVE_HCG_EWMIN', 'KW_WAVE_HCG_EWMAX', 'KW_WAVE_HCLL_FILE',
+    'KW_WAVE_TRP_NBRIGHT', 'KW_WAVE_TRP_NITER', 'KW_WAVE_TRP_CATGDIST',
+    'KW_WAVE_TRP_FITDEG', 'KW_WAVE_TRP_MIN_NLINES',
+    'KW_WAVE_TRP_TOT_NLINES', 'KW_WAVE_TRP_ORDER_FITCONT',
+    'KW_WAVE_TRP_SCLIPNUM', 'KW_WAVE_TRP_SCLIPTHRES',
+    'KW_WAVE_TRP_DVCUTORD', 'KW_WAVE_TRP_DVCUTALL',
+    'KW_WAVE_RES_MAPSIZE', 'KW_WAVE_RES_WSIZE',
+    'KW_WAVE_RES_MAXDEVTHRES', 'KW_INIT_WAVE', 'KW_WAVETIME',
+    # wave littrow values
+    'KW_WAVE_LIT_START_1', 'KW_WAVE_LIT_END_1', 'KW_WAVE_LIT_RORDERS',
+    'KW_WAVE_LIT_ORDER_INIT_1', 'KW_WAVE_LIT_ORDER_START_1',
+    'KW_WAVE_LIT_ORDER_END_1', 'KW_WAVE_LITT_XCUTSTEP_1',
+    'KW_WAVE_LITT_FITDEG_1', 'KW_WAVE_LITT_EXT_FITDEG_1',
+    'KW_WAVE_LITT_EXT_ORD_START_1',
+    # wave fp values
+    'KW_WFP_ORD_START', 'KW_WFP_ORD_FINAL', 'KW_WFP_BLZ_THRES',
+    'KW_WFP_XDIFF_MIN', 'KW_WFP_XDIFF_MAX', 'KW_WFP_DOPD0',
+    'KW_WFP_LL_OFFSET', 'KW_WFP_DVMAX', 'KW_WFP_LLFITDEG',
+    'KW_WFP_UPDATECAV', 'KW_WFP_FPCAV_MODE', 'KW_WFP_LLFIT_MODE',
+    'KW_WFP_ERRX_MIN', 'KW_WFP_MAXLL_FIT_RMS', 'KW_WFP_T_ORD_START',
+    'KW_WFP_WEI_THRES', 'KW_WFP_CAVFIT_DEG', 'KW_WFP_LARGE_JUMP',
+    'KW_WFP_CM_INDX', 'KW_WFP_NPERCENT', 'KW_WFP_LIMIT',
+    'KW_WFP_CUTWIDTH', 'KW_WFP_FILE', 'KW_WFP_DRIFT', 'KW_WFP_WIDUSED',
+    'KW_WFP_FWHM', 'KW_WFP_CONTRAST', 'KW_WFP_MASK',
+    'KW_WFP_LINES', 'KW_WFP_TARG_RV', 'KW_WFP_WIDTH',
+    'KW_WFP_STEP', 'KW_WFP_SIGDET', 'KW_WFP_BOXSIZE', 'KW_WFP_MAXFLUX',
+    'KW_WFP_DETNOISE', 'KW_WFP_NMAX', 'KW_WFP_MASKMIN', 'KW_WFP_MASKWID',
+    'KW_WFP_MASKUNITS',
+    # wave night values
+    'KW_WNT_DCAVITY', 'KW_WNT_DCAVSRCE',
+    'KW_WNT_NITER1', 'KW_WNT_NITER2', 'KW_WNT_HCSIGCLIP',
+    'KW_WNT_MADLIMIT', 'KW_WNT_NSIG_FIT',
+    # telluric preclean variables
+    'KW_TELLUP_EXPO_WATER', 'KW_TELLUP_EXPO_OTHERS',
+    'KW_TELLUP_DV_WATER', 'KW_TELLUP_DV_OTHERS', 'KW_TELLUP_DO_PRECLEAN',
+    'KW_TELLUP_DFLT_WATER', 'KW_TELLUP_CCF_SRANGE',
+    'KW_TELLUP_CLEAN_OHLINES', 'KW_TELLUP_REMOVE_ORDS',
+    'KW_TELLUP_SNR_MIN_THRES', 'KW_TELLUP_DEXPO_CONV_THRES',
+    'KW_TELLUP_DEXPO_MAX_ITR', 'KW_TELLUP_ABSOEXPO_KTHRES',
+    'KW_TELLUP_WAVE_START', 'KW_TELLUP_WAVE_END',
+    'KW_TELLUP_DVGRID', 'KW_TELLUP_ABSOEXPO_KWID',
+    'KW_TELLUP_ABSOEXPO_KEXP', 'KW_TELLUP_TRANS_THRES',
+    'KW_TELLUP_TRANS_SIGL', 'KW_TELLUP_FORCE_AIRMASS',
+    'KW_TELLUP_OTHER_BOUNDS', 'KW_TELLUP_WATER_BOUNDS',
+    # mktellu values
+    'KW_MKTELL_TEMP_FILE', 'KW_MKTELL_BLAZE_PRCT', 'KW_MKTELL_BLAZE_CUT',
+    'KW_MKTELL_DEF_CONV_WID', 'KW_MKTELL_FIN_CONV_WID',
+    'KW_MKTELL_TEMP_MEDFILT', 'KW_MKTELL_AIRMASS', 'KW_MKTELL_WATER',
+    # fittellu values
+    'KW_FTELLU_NPC', 'KW_FTELLU_ADD_DPC', 'KW_FTELLU_FIT_DPC',
+    'KW_FTELLU_ABSO_SRC', 'KW_FTELLU_FIT_KEEP_NUM',
+    'KW_FTELLU_FIT_MIN_TRANS', 'KW_FTELLU_LAMBDA_MIN',
+    'KW_FTELLU_LAMBDA_MAX', 'KW_FTELLU_KERN_VSINI',
+    'KW_FTELLU_IM_PX_SIZE', 'KW_FTELLU_FIT_ITERS', 'KW_FTELLU_RECON_LIM',
+    'KW_FTELLU_AMP_PC', 'KW_FTELLU_DVTELL1', 'KW_FTELLU_DVTELL2',
+    'KW_FTELLU_TAU_H2O', 'KW_FTELLU_TAU_REST', 'KW_FTELLU_ABSO_PREFIX',
+    'KW_FTELLU_TEMPLATE',
+    # make template values
+    'KW_MKTEMP_SNR_ORDER', 'KW_MKTEMP_SNR_THRES',
+    # ccf values
+    'KW_CCF_MEAN_RV', 'KW_CCF_MEAN_CONSTRAST', 'KW_CCF_MEAN_FWHM',
+    'KW_CCF_TOT_LINES', 'KW_CCF_MASK',
+    'KW_CCF_STEP', 'KW_CCF_WIDTH', 'KW_CCF_TARGET_RV', 'KW_CCF_SIGDET',
+    'KW_CCF_BOXSIZE', 'KW_CCF_MAXFLUX', 'KW_CCF_NMAX', 'KW_CCF_MASK_MIN',
+    'KW_CCF_MASK_WID', 'KW_CCF_MASK_UNITS', 'KW_CCF_RV_WAVE_FP',
+    'KW_CCF_RV_SIMU_FP', 'KW_CCF_RV_DRIFT', 'KW_CCF_RV_OBJ',
+    'KW_CCF_RV_CORR', 'KW_CCF_RV_WAVEFILE', 'KW_CCF_RV_WAVETIME',
+    'KW_CCF_RV_TIMEDIFF', 'KW_CCF_RV_WAVESRCE', 'KW_CCF_DVRMS_SP',
+    'KW_CCF_DVRMS_CC',
+    # polar values
+    'KW_POL_STOKES', 'KW_POL_NEXP', 'KW_POL_METHOD', 'KW_POL_FILES',
+    'KW_POL_EXPS', 'KW_POL_MJDS', 'KW_POL_MJDENDS', 'KW_POL_BJDS',
+    'KW_POL_BERVS', 'KW_POL_EXPTIME', 'KW_POL_ELAPTIME', 'KW_POL_MJDCEN',
+    'KW_POL_BJDCEN', 'KW_POL_BERVCEN', 'KW_POL_MEANBJD',
+    'KW_USED_MIN_FILES', 'KW_USED_VALID_FIBERS', 'KW_USED_VALID_STOKES',
+    'KW_USED_CONT_BINSIZE', 'KW_USED_CONT_OVERLAP', 'KW_POLAR_LSD_MASK',
+    'KW_POLAR_LSD_FIT_RV', 'KW_POLAR_LSD_FIT_RESOL',
+    'KW_POLAR_LSD_MEANPOL', 'KW_POLAR_LSD_STDPOL', 'KW_POLAR_LSD_MEDPOL',
+    'KW_POLAR_LSD_MEDABSDEV', 'KW_POLAR_LSD_MEANSVQU',
+    'KW_POLAR_LSD_STDSVQU', 'KW_POLAR_LSD_MEANNULL',
+    'KW_POLAR_LSD_STDNULL', 'KW_POL_LSD_COL1', 'KW_POL_LSD_COL2',
+    'KW_POL_LSD_COL3', 'KW_POL_LSD_COL4', 'KW_POL_LSD_COL5',
+    'KW_POLAR_LSD_MLDEPTH', 'KW_POLAR_LSD_VINIT', 'KW_POLAR_LSD_VFINAL',
+    'KW_POLAR_LSD_NORM', 'KW_POLAR_LSD_NBIN1', 'KW_POLAR_LSD_NLAP1',
+    'KW_POLAR_LSD_NSIG1', 'KW_POLAR_LSD_NWIN1', 'KW_POLAR_LSD_NMODE1',
+    'KW_POLAR_LSD_NLFIT1', 'KW_POLAR_LSD_NPOINTS', 'KW_POLAR_LSD_NBIN2',
+    'KW_POLAR_LSD_NLAP2', 'KW_POLAR_LSD_NSIG2', 'KW_POLAR_LSD_NWIN2',
+    'KW_POLAR_LSD_NMODE2', 'KW_POLAR_LSD_NLFIT2',
 ]
 
 # set name
@@ -312,7 +303,7 @@ KW_MID_OBS_TIME = Keyword('KW_MID_OBS_TIME', key='', source=__NAME__)
 
 # Define the method by which the MJD was calculated
 KW_MID_OBSTIME_METHOD = Keyword('KW_MID_OBS_TIME_METHOD', key='', dtype=str,
-                                 source=__NAME__)
+                                source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define DRS input keywords
@@ -1007,7 +998,7 @@ KW_WNT_HCSIGCLIP = Keyword('KW_WNT_HCSIGCLIP', key='', dtype=float,
 
 # median absolute deviation cut off used
 KW_WNT_MADLIMIT = Keyword('KW_WNT_MADLIMIT', key='', dtype=float,
-                           source=__NAME__)
+                          source=__NAME__)
 
 # sigma clipping for the fit used in wave night
 KW_WNT_NSIG_FIT = Keyword('KW_WNT_NSIG_FIT', key='', dtype=int, source=__NAME__)
@@ -1032,22 +1023,21 @@ KW_TELLUP_DV_WATER = Keyword('KW_TELLUP_DV_WATER', key='', dtype=float,
 KW_TELLUP_DV_OTHERS = Keyword('KW_TELLUP_DV_OTHERS', key='', dtype=float,
                               source=__NAME__)
 
-
 # Define whether precleaning was done (tellu pre-cleaning)
 KW_TELLUP_DO_PRECLEAN = Keyword('KW_TELLUP_DO_PRECLEAN', key='', dtype=bool,
                                 source=__NAME__)
 
 # Define default water absorption used (tellu pre-cleaning)
 KW_TELLUP_DFLT_WATER = Keyword('KW_TELLUP_DFLT_WATER', key='', dtype=float,
-                                source=__NAME__)
+                               source=__NAME__)
 
 # Define ccf scan range that was used (tellu pre-cleaning)
 KW_TELLUP_CCF_SRANGE = Keyword('KW_TELLUP_CCF_SRANGE', key='', dtype=float,
-                                source=__NAME__)
+                               source=__NAME__)
 
 # Define whether we cleaned OH lines
 KW_TELLUP_CLEAN_OHLINES = Keyword('KW_TELLUP_CCF_SRANGE', key='', dtype=float,
-                                source=__NAME__)
+                                  source=__NAME__)
 
 # Define which orders were removed from tellu pre-cleaning
 KW_TELLUP_REMOVE_ORDS = Keyword('KW_TELLUP_REMOVE_ORDSv', key='', dtype=str,
@@ -1095,7 +1085,7 @@ KW_TELLUP_TRANS_THRES = Keyword('KW_TELLUP_TRANS_THRES', key='',
 
 # Define the threshold for discrepant tramission used for tellu pre-cleaning
 KW_TELLUP_TRANS_SIGL = Keyword('KW_TELLUP_TRANS_SIGL', key='',
-                                dtype=float, source=__NAME__)
+                               dtype=float, source=__NAME__)
 
 # Define the whether to force fit to header airmass used for tellu pre-cleaning
 KW_TELLUP_FORCE_AIRMASS = Keyword('KW_TELLUP_FORCE_AIRMASS', key='',
@@ -1103,11 +1093,11 @@ KW_TELLUP_FORCE_AIRMASS = Keyword('KW_TELLUP_FORCE_AIRMASS', key='',
 
 # Define the bounds of the exponent of other species used for tellu pre-cleaning
 KW_TELLUP_OTHER_BOUNDS = Keyword('KW_TELLUP_OTHER_BOUNDS', key='',
-                                  dtype=str, source=__NAME__)
+                                 dtype=str, source=__NAME__)
 
 # Define the bounds of the exponent of water used for tellu pre-cleaning
 KW_TELLUP_WATER_BOUNDS = Keyword('KW_TELLUP_WATER_BOUNDS', key='',
-                                  dtype=str, source=__NAME__)
+                                 dtype=str, source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define make telluric variables
@@ -1124,14 +1114,6 @@ KW_MKTELL_BLAZE_PRCT = Keyword('KW_MKTELL_BLAZE_PRCT', key='', dtype=float,
 KW_MKTELL_BLAZE_CUT = Keyword('KW_MKTELL_BLAZE_CUT', key='', dtype=float,
                               source=__NAME__)
 
-# The original tapas file used for mktellu calculation
-KW_MKTELL_TAPASFILE = Keyword('KW_MKTELL_TAPASFILE', key='', dtype=str,
-                              source=__NAME__)
-
-# The mean line width in pix used for mktellu calculation
-KW_MKTELL_FWHMPLSF = Keyword('KW_MKTELL_FWHMPLSF', key='', dtype=float,
-                             source=__NAME__)
-
 # The default convolution width in pix used for mktellu calculation
 KW_MKTELL_DEF_CONV_WID = Keyword('KW_MKTELL_DEF_CONV_WID', key='', dtype=int,
                                  source=__NAME__)
@@ -1143,66 +1125,6 @@ KW_MKTELL_FIN_CONV_WID = Keyword('KW_MKTELL_FIN_CONV_WID', key='', dtype=int,
 # The median filter width used for mktellu calculation
 KW_MKTELL_TEMP_MEDFILT = Keyword('KW_MKTELL_TEMP_MEDFILT', key='', dtype=float,
                                  source=__NAME__)
-
-# The threshold in absorbance used for mktellu calculation
-KW_MKTELL_DPARAM_THRES = Keyword('KW_MKTELL_DPARAM_THRES', key='', dtype=float,
-                                 source=__NAME__)
-
-# The max num of iterations used for mktellu calculation
-KW_MKTELL_MAX_ITER = Keyword('KW_MKTELL_MAX_ITER', key='', dtype=int,
-                             source=__NAME__)
-
-# The min transmission requirement used for mktellu calculation
-KW_MKTELL_THRES_TFIT = Keyword('KW_MKTELL_THRES_TFIT', key='', dtype=float,
-                               source=__NAME__)
-
-# The min allowed value for recovered water vapor optical depth in mktellu
-KW_MKTELL_MIN_WATERCOL = Keyword('KW_MKTELL_MIN_WATERCOL', key='', dtype=float,
-                                 source=__NAME__)
-
-# The max allowed value for recovered water vapor optical depth in mktellu
-KW_MKTELL_MAX_WATERCOL = Keyword('KW_MKTELL_MAX_WATERCOL', key='', dtype=float,
-                                 source=__NAME__)
-
-# The min num of good points requirement used for mktellu calculation
-KW_MKTELL_MIN_NUM_GOOD = Keyword('KW_MKTELL_MIN_NUM_GOOD', key='', dtype=int,
-                                 source=__NAME__)
-
-# The transmission percentile used to normalise by for mktellu calculation
-KW_MKTELL_BTRANS_PERC = Keyword('KW_MKTELL_BTRANS_PERC', key='', dtype=float,
-                                source=__NAME__)
-
-# The sigma clip used to clip residuals of the diff for mktellu calculation
-KW_MKTELL_NSIGCLIP = Keyword('KW_MKTELL_NSIGCLIP', key='', dtype=float,
-                             source=__NAME__)
-
-# The median filter used for the trans data used for mktellu calculation
-KW_MKTELL_TRANS_TMFILT = Keyword('KW_MKTELL_TRANS_TMFILT', key='', dtype=float,
-                                 source=__NAME__)
-
-# The threshold for small values to be weighted used for mktellu calculation
-KW_MKTELL_SMALL_W_ERR = Keyword('KW_MKTELL_SMALL_W_ERR', key='', dtype=float,
-                                source=__NAME__)
-
-# The image pixel size used (in km/s) used for mktellu calculation
-KW_MKTELL_IM_PSIZE = Keyword('KW_MKTELL_IM_PSIZE', key='', dtype=float,
-                             source=__NAME__)
-
-# The upper lim allowed for optical depth of water used for mktellu calculation
-KW_MKTELL_TAU_WATER_U = Keyword('KW_MKTELL_TAU_WATER_U', key='', dtype=float,
-                                source=__NAME__)
-
-# The lower lim allowed for other absorbers used for mktellu calculation
-KW_MKTELL_TAU_OTHER_L = Keyword('KW_MKTELL_TAU_OTHER_L', key='', dtype=float,
-                                source=__NAME__)
-
-# The upper lim allowed for other absorbers used for mktellu calculation
-KW_MKTELL_TAU_OTHER_U = Keyword('KW_MKTELL_TAU_OTHER_U', key='', dtype=float,
-                                source=__NAME__)
-
-# The bad values are set to this small number, used for mktellu calculation
-KW_MKTELL_TAPAS_SNUM = Keyword('KW_MKTELL_TAPAS_SNUM', key='', dtype=float,
-                               source=__NAME__)
 
 # The recovered airmass value calculated in mktellu calculation
 KW_MKTELL_AIRMASS = Keyword('KW_MKTELL_AIRMASS', key='', dtype=float,
@@ -1360,11 +1282,11 @@ KW_CCF_MASK_UNITS = Keyword('KW_CCF_MASK_UNITS', key='', dtype=str,
 
 # the dv rms calculated for spectrum [m/s]
 KW_CCF_DVRMS_SP = Keyword('KW_CCF_DVRMS_SP', key='', dtype=float,
-                            source=__NAME__)
+                          source=__NAME__)
 
 # the dev rms calculated during the CCF [m/s]
 KW_CCF_DVRMS_CC = Keyword('KW_CCF_DVRMS_CC', key='', dtype=float,
-                            source=__NAME__)
+                          source=__NAME__)
 
 # The radial velocity measured from the wave solution FP CCF
 KW_CCF_RV_WAVE_FP = Keyword('KW_CCF_RV_WAVE_FP', key='', dtype=float,
@@ -1378,7 +1300,7 @@ KW_CCF_RV_SIMU_FP = Keyword('KW_CCF_RV_SIMU_FP', key='', dtype=float,
 # The radial velocity drift between wave sol FP and simultaneous FP (if present)
 #   if simulataneous FP not present this is just the wave solution FP CCF value
 KW_CCF_RV_DRIFT = Keyword('KW_CCF_RV_DRIFT', key='', dtype=float,
-                            source=__NAME__)
+                          source=__NAME__)
 
 # The radial velocity measured from the object CCF against the CCF MASK
 KW_CCF_RV_OBJ = Keyword('KW_CCF_RV_OBJ', key='', dtype=float, source=__NAME__)

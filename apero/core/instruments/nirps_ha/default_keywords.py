@@ -1269,14 +1269,6 @@ KW_MKTELL_BLAZE_PRCT.set(key='MKTBPRCT', comment='mktellu blaze percentile')
 KW_MKTELL_BLAZE_CUT = KW_MKTELL_BLAZE_CUT.copy(__NAME__)
 KW_MKTELL_BLAZE_CUT.set(key='MKTBZCUT', comment='mktellu blaze cut used')
 
-# The original tapas file used for mktellu calculation
-KW_MKTELL_TAPASFILE = KW_MKTELL_TAPASFILE.copy(__NAME__)
-KW_MKTELL_TAPASFILE.set(key='MKTTAPAS', comment='mktellu tapas file used')
-
-# The mean line width in pix used for mktellu calculation
-KW_MKTELL_FWHMPLSF = KW_MKTELL_FWHMPLSF.copy(__NAME__)
-KW_MKTELL_FWHMPLSF.set(key='MKTFWHMP', comment='mktellu FWHM pixel LSF used')
-
 # The default convolution width in pix used for mktellu calculation
 KW_MKTELL_DEF_CONV_WID = KW_MKTELL_DEF_CONV_WID.copy(__NAME__)
 KW_MKTELL_DEF_CONV_WID.set(key='MKTDCONV',
@@ -1291,77 +1283,6 @@ KW_MKTELL_FIN_CONV_WID.set(key='MKTFCONV',
 KW_MKTELL_TEMP_MEDFILT = KW_MKTELL_TEMP_MEDFILT.copy(__NAME__)
 KW_MKTELL_TEMP_MEDFILT.set(key='MKT_TMED',
                            comment='mktellu template med filter used')
-
-# The threshold in absorbance used for mktellu calculation
-KW_MKTELL_DPARAM_THRES = KW_MKTELL_DPARAM_THRES.copy(__NAME__)
-KW_MKTELL_DPARAM_THRES.set(key='MKTDPART',
-                           comment='mktellu absorbance threshold used')
-
-# The max num of iterations used for mktellu calculation
-KW_MKTELL_MAX_ITER = KW_MKTELL_MAX_ITER.copy(__NAME__)
-KW_MKTELL_MAX_ITER.set(key='MKTMAXIT', comment='mktellu max iterations used')
-
-# The min transmission requirement used for mktellu calculation
-KW_MKTELL_THRES_TFIT = KW_MKTELL_THRES_TFIT.copy(__NAME__)
-KW_MKTELL_THRES_TFIT.set(key='MKTTTFIT',
-                         comment='mktellu min transmission used')
-
-# The min allowed value for recovered water vapor optical depth in mktellu
-KW_MKTELL_MIN_WATERCOL = KW_MKTELL_MIN_WATERCOL.copy(__NAME__)
-KW_MKTELL_MIN_WATERCOL.set(key='MKTMINWC',
-                           comment='mktellu min water col opt. depth allowed')
-
-# The max allowed value for recovered water vapor optical depth in mktellu
-KW_MKTELL_MAX_WATERCOL = KW_MKTELL_MAX_WATERCOL.copy(__NAME__)
-KW_MKTELL_MAX_WATERCOL.set(key='MKTMAXWC',
-                           comment='mktellu max water col opt. depth allowed')
-
-# The min num of good points requirement used for mktellu calculation
-KW_MKTELL_MIN_NUM_GOOD = KW_MKTELL_MIN_NUM_GOOD.copy(__NAME__)
-KW_MKTELL_MIN_NUM_GOOD.set(key='MKTMNUMG',
-                           comment='mktellu min num good points required')
-
-# The transmission percentile used to normalise by for mktellu calculation
-KW_MKTELL_BTRANS_PERC = KW_MKTELL_BTRANS_PERC.copy(__NAME__)
-KW_MKTELL_BTRANS_PERC.set(key='MKTBTRP',
-                          comment='mktellu trans percentile used for norm')
-
-# The sigma clip used to clip residuals of the diff for mktellu calculation
-KW_MKTELL_NSIGCLIP = KW_MKTELL_NSIGCLIP.copy(__NAME__)
-KW_MKTELL_NSIGCLIP.set(key='MKTNSIGC', comment='mktellu sig clip res diff used')
-
-# The median filter used for the trans data used for mktellu calculation
-KW_MKTELL_TRANS_TMFILT = KW_MKTELL_TRANS_TMFILT.copy(__NAME__)
-KW_MKTELL_TRANS_TMFILT.set(key='MKTTTMF',
-                           comment='mktellu med filt used for trans data')
-
-# The threshold for small values to be weighted used for mktellu calculation
-KW_MKTELL_SMALL_W_ERR = KW_MKTELL_SMALL_W_ERR.copy(__NAME__)
-KW_MKTELL_SMALL_W_ERR.set(key='MKTSMWE', comment='mktellu small weight value')
-
-# The image pixel size used (in km/s) used for mktellu calculation
-KW_MKTELL_IM_PSIZE = KW_MKTELL_IM_PSIZE.copy(__NAME__)
-KW_MKTELL_IM_PSIZE.set(key='MKTIMPS', comment='mktellu image pixel size used')
-
-# The upper lim allowed for optical depth of water used for mktellu calculation
-KW_MKTELL_TAU_WATER_U = KW_MKTELL_TAU_WATER_U.copy(__NAME__)
-KW_MKTELL_TAU_WATER_U.set(key='MKTTAUWU',
-                          comment='mktellu upper limit for tau water')
-
-# The lower lim allowed for other absorbers used for mktellu calculation
-KW_MKTELL_TAU_OTHER_L = KW_MKTELL_TAU_OTHER_L.copy(__NAME__)
-KW_MKTELL_TAU_OTHER_L.set(key='MKTTAUOL',
-                          comment='mktellu lower limit for tau others')
-
-# The upper lim allowed for other absorbers used for mktellu calculation
-KW_MKTELL_TAU_OTHER_U = KW_MKTELL_TAU_OTHER_U.copy(__NAME__)
-KW_MKTELL_TAU_OTHER_U.set(key='MKTTAUOU',
-                          comment='mktellu upper limit for tau others')
-
-# The bad values are set to this small number, used for mktellu calculation
-KW_MKTELL_TAPAS_SNUM = KW_MKTELL_TAPAS_SNUM.copy(__NAME__)
-KW_MKTELL_TAPAS_SNUM.set(key='MKTTAPSN',
-                         comment='mktellu tapas small bad num')
 
 # The recovered airmass value calculated in mktellu calculation
 KW_MKTELL_AIRMASS = KW_MKTELL_AIRMASS.copy(__NAME__)
