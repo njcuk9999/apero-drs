@@ -201,19 +201,10 @@ def __main__(recipe, params):
         # load wavelength solution for this fiber
         wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
                                        infile=infile)
-        # ------------------------------------------------------------------
-        # Load the TAPAS atmospheric transmission convolved with the
-        #   master wave solution
-        # ------------------------------------------------------------------
-        largs = [header, mprops, fiber]
-        tapas_props = telluric.load_conv_tapas(params, recipe, *largs)
 
         # ------------------------------------------------------------------
         # telluric pre-cleaning
         # ------------------------------------------------------------------
-        # TODO: remove break point
-        constants.break_point(params)
-
         tpreprops = telluric.tellu_preclean(params, recipe, infile, wprops,
                                             fiber, rawfiles, combine)
         # get variables out of tpreprops
@@ -236,9 +227,8 @@ def __main__(recipe, params):
         # Calculate telluric absorption
         # ------------------------------------------------------------------
         cargs = [recipe, image1, template, template_file, header, mprops,
-                 wprops, tapas_props, bprops]
-        # TODO: rename to calculate telluric residual absorption
-        tellu_props = telluric.calculate_telluric_absorption(params, *cargs)
+                 wprops, bprops, tpreprops]
+        tellu_props = telluric.calculate_tellu_res_absorption(params, *cargs)
         # ------------------------------------------------------------------
         # Quality control
         # ------------------------------------------------------------------
@@ -250,7 +240,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Save transmission map to file
         # ------------------------------------------------------------------
-        targs = [infile, rawfiles, fiber, combine, tapas_props, mprops,
+        targs = [infile, rawfiles, fiber, combine, mprops,
                  nprops, tellu_props, tpreprops, qc_params]
         transfile = telluric.mk_tellu_write_trans_file(params, recipe, *targs)
         # ------------------------------------------------------------------
