@@ -1887,14 +1887,15 @@ class DrsFitsFile(DrsInputFile):
     # fits file header methods
     # -------------------------------------------------------------------------
     def get_key(self, key, has_default=False, default=None, required=True,
-                dtype: Type = float):
+                dtype: Type = float, listtype=None):
         # set function name
         _ = display_func(None, 'get_key', __NAME__, 'DrsFitsFile')
         # run read_header_key method
-        return self.read_header_key(key, has_default, default, required, dtype)
+        return self.read_header_key(key, has_default, default, required, dtype,
+                                    listtype=listtype)
 
     def read_header_key(self, key, has_default=False, default=None,
-                        required=True, dtype=float):
+                        required=True, dtype: Type = float, listtype=None):
         """
         Looks for a key in DrsFile.header, if has_default is
         True sets value of key to 'default' if not found else if "required"
@@ -1943,6 +1944,24 @@ class DrsFitsFile(DrsInputFile):
                         emsg = TextEntry('09-000-00006', args=eargs)
                     self.__error__(emsg)
                     value = None
+        # deal with booleans
+        if isinstance(value, str):
+            # if dtype is a bool try to push to a boolean
+            if dtype == bool or dtype == 'bool':
+                if value.upper() in ['1', 'TRUE', 'T']:
+                    value = True
+                else:
+                    value = False
+        # deal with input lists
+        if isinstance(value, str):
+            # if dtype is a list
+            if dtype == list:
+                # try to split the value as a list
+                value = value.split(',')
+                value = list(np.char.array(value).strip())
+                # cast to required list type
+                if listtype is not None and isinstance(listtype, type):
+                    value = list(map(lambda x: listtype(x), value))
 
         # try to convert to dtype else just return as string
         try:
@@ -2267,7 +2286,7 @@ class DrsFitsFile(DrsInputFile):
 
 
     def add_hkey(self, key=None, keyword=None, value=None, comment=None,
-                 fullpath=False):
+                 fullpath=False, mapf=None):
         """
         Add a new key to DrsFile.hdict from kwstore. If kwstore is None
         and key and comment are defined these are used instead.
@@ -2296,6 +2315,12 @@ class DrsFitsFile(DrsInputFile):
         """
         # set function name
         func_name = display_func(None, 'add_hkey', __NAME__, 'DrsFitsFile')
+
+        # deal with mapf
+        if mapf is not None:
+            if mapf == 'slist':
+                value = ', '.join(np.array(value).astype(str))
+
         # check for kwstore in params
         self.check_recipe()
         params = self.recipe.drs_params
