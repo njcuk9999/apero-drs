@@ -1661,8 +1661,8 @@ TELLUP_ABSO_EXPO_KWID.value = 4.95
 
 # define the gaussian exponent of the kernel used in abso_expo
 #   a value of 2 is gaussian, a value >2 is boxy
-TELLUP_ABSO_EXP_KEXP = TELLUP_ABSO_EXP_KEXP.copy(__NAME__)
-TELLUP_ABSO_EXP_KEXP.value = 2.20
+TELLUP_ABSO_EXPO_KEXP = TELLUP_ABSO_EXPO_KEXP.copy(__NAME__)
+TELLUP_ABSO_EXPO_KEXP.value = 2.20
 
 # define the transmission threshold (in exponential form) for keeping
 #   valid transmission

@@ -182,7 +182,7 @@ __all__ = [
     'TELLUP_OHLINE_PCA_FILE', 'TELLUP_REMOVE_ORDS', 'TELLUP_SNR_MIN_THRES',
     'TELLUP_OTHERS_CCF_FILE', 'TELLUP_H2O_CCF_FILE', 'TELLUP_DEXPO_CONV_THRES',
     'TELLUP_DEXPO_MAX_ITR', 'TELLUP_ABSO_EXPO_KTHRES',
-    'TELLUP_ABSO_EXPO_KWID', 'TELLUP_ABSO_EXP_KEXP', 'TELLUP_TRANS_THRES',
+    'TELLUP_ABSO_EXPO_KWID', 'TELLUP_ABSO_EXPO_KEXP', 'TELLUP_TRANS_THRES',
     'TELLUP_TRANS_SIGLIM', 'TELLUP_FORCE_AIRMASS', 'TELLUP_D_WATER_ABSO',
     'TELLUP_OTHER_BOUNDS', 'TELLUP_WATER_BOUNDS',
     # make telluric constants
@@ -2084,7 +2084,7 @@ TELLUP_ABSO_EXPO_KWID = Const('TELLUP_ABSO_EXPO_KWID', value=None,
 
 # define the gaussian exponent of the kernel used in abso_expo
 #   a value of 2 is gaussian, a value >2 is boxy
-TELLUP_ABSO_EXP_KEXP = Const('TELLUP_ABSO_EXP_KEXP', value=None,
+TELLUP_ABSO_EXPO_KEXP = Const('TELLUP_ABSO_EXPO_KEXP', value=None,
                              dtype=float, source=__NAME__, group=cgroup,
                              minimum=0.0)
 
