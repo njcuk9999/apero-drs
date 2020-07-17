@@ -230,8 +230,8 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         # load the expected atmospheric transmission
         # ----------------------------------------------------------------------
-        tpargs = [header, mprops, fiber]
-        tapas_props = telluric.load_tapas_convolved(params, recipe, *tpargs)
+        largs = [header, mprops, fiber]
+        tapas_props = telluric.load_conv_tapas(params, recipe, *largs)
         # ----------------------------------------------------------------------
         # Generate the absorption map + calculate PCA components
         # ----------------------------------------------------------------------
