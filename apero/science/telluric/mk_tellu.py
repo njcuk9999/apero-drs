@@ -145,19 +145,14 @@ def calculate_tellu_res_absorption(params, recipe, image, template,
     # ---------------------------------------------------------------------
     # plot mk tellu wave flux plot for specified orders
     for order_num in plot_order_nums:
-        # TODO: remove tau1 from plots
-        tau1 = np.ones_like(image1)
-        keep = np.ones_like(image1).astype(bool)
         # plot debug plot
-        recipe.plot('MKTELLU_WAVE_FLUX2', keep=keep, wavemap=mwavemap,
-                    tau1=tau1, sp=image, oimage=image1, sed=sed,
-                    order=order_num, has_template=(not template_flag),
-                    template=template)
+        recipe.plot('MKTELLU_WAVE_FLUX2', wavemap=mwavemap, sp=image,
+                    oimage=image1, sed=sed, order=order_num,
+                    has_template=(not template_flag), template=template)
         # plot summary plot
-        recipe.plot('SUM_MKTELLU_WAVE_FLUX', keep=keep, wavemap=mwavemap,
-                    tau1=tau1, sp=image, oimage=image1, sed=sed,
-                    order=order_num, has_template=(not template_flag),
-                    template=template)
+        recipe.plot('SUM_MKTELLU_WAVE_FLUX', wavemap=mwavemap, sp=image,
+                    oimage=image1, sed=sed, order=order_num,
+                    has_template=(not template_flag), template=template)
     # ---------------------------------------------------------------------
     # calculate transmission map
     transmission_map = image1 / sed
