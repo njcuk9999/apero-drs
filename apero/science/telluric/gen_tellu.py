@@ -572,7 +572,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # storage for plotting
     dd_iterations = []
     ccf_water_iterations = []
-    ccf_others_iteations = []
+    ccf_others_iterations = []
     # ----------------------------------------------------------------------
     # first guess at the velocity of absoprtion is 0 km/s
     dv_abso = 0.0
@@ -589,9 +589,9 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         flag_qc = False
         # log progress
         # TODO: move to language db
-        msg = ('dexpo loop iteration={0}'
-               '\n\tdexo={1} expo_water={2} expo_others={3}')
-        args = [iteration, dexpo, expo_water, expo_others]
+        msg = ('dexpo loop iteration={0} \n\tdexpo={1} expo_water={2} '
+               'expo_others={3} dv_abso={4} [km/s]')
+        args = [iteration, dexpo, expo_water, expo_others, dv_abso]
         WLOG(params, '', msg.format(*args))
 
         # get the absorption spectrum
@@ -644,9 +644,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # calculate and subtract external part
         external_water = np.nanmedian(ccf_water[external_mask])
         ccf_water = ccf_water - external_water
-        if not force_airmass:
-            external_others = np.nanmedian(ccf_others[external_mask])
-            ccf_others = ccf_others - external_others
+        external_others = np.nanmedian(ccf_others[external_mask])
+        ccf_others = ccf_others - external_others
         # ------------------------------------------------------------------
         # get the amplitude of the middle of the CCF
         # work out the internal part mask
@@ -666,7 +665,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
             qc_pass[1] = 0
             # flag qc as failed and break
             flag_qc = True
-            break
+            # break
         else:
             qc_values[1] = num_nan_ccf
             qc_pass[1] = 1
@@ -756,7 +755,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                 expo_others = others_bounds[0]
                 # flag qc as failed and break
                 flag_qc = True
-                break
+                #break
             else:
                 qc_values[2] = expo_others
                 qc_pass[2] = 1
@@ -769,7 +768,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                 expo_others = others_bounds[1]
                 # flag qc as failed and break
                 flag_qc = True
-                break
+                #break
             else:
                 qc_values[3] = expo_others
                 qc_pass[3] = 1
@@ -785,7 +784,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                 expo_water = water_bounds[0]
                 # flag qc as failed and break
                 flag_qc = True
-                break
+                #break
             else:
                 qc_values[4] = expo_others
                 qc_pass[4] = 1
@@ -798,7 +797,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                 expo_water = water_bounds[1]
                 # flag qc as failed and break
                 flag_qc = True
-                break
+                #break
             else:
                 qc_values[5] = expo_water
                 qc_pass[5] = 1
@@ -817,8 +816,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         # ------------------------------------------------------------------
         # storage for plotting
         dd_iterations.append(drange)
-        ccf_water_iterations.append(ccf_water)
-        ccf_others_iteations.append(ccf_others)
+        ccf_water_iterations.append(np.array(ccf_water))
+        ccf_others_iterations.append(np.array(ccf_others))
         # ------------------------------------------------------------------
         # finally add one to the iterator
         iteration += 1
@@ -843,10 +842,10 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # show CCF plot to see if correlation peaks have been killed
     recipe.plot('TELLUP_WAVE_TRANS', dd_arr=dd_iterations,
                 ccf_water_arr=ccf_water_iterations,
-                ccf_others_arr=ccf_water_iterations)
+                ccf_others_arr=ccf_others_iterations)
     recipe.plot('SUM_TELLUP_WAVE_TRANS', dd_arr=dd_iterations,
                 ccf_water_arr=ccf_water_iterations,
-                ccf_others_arr=ccf_water_iterations)
+                ccf_others_arr=ccf_others_iterations)
     # plot to show absorption spectrum
     recipe.plot('TELLUP_ABSO_SPEC', trans=trans, wave=wavemap,
                 thres=trans_thres, spectrum=spectrum, spectrum_ini=spectrum_ini,
