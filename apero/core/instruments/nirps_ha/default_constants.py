@@ -1607,6 +1607,92 @@ TELLU_BLACKLIST_NAME = TELLU_BLACKLIST_NAME.copy(__NAME__)
 TELLU_BLACKLIST_NAME.value = 'tellu_blacklist.txt'
 
 # =============================================================================
+# OBJECT: TELLURIC PRE-CLEANING SETTINGS
+# =============================================================================
+# define whether we do pre-cleaning
+TELLUP_DO_PRECLEANING = TELLUP_DO_PRECLEANING.copy(__NAME__)
+TELLUP_DO_PRECLEANING.value = True
+
+# width in km/s for the ccf scan to determine the abso in pre-cleaning
+TELLUP_CCF_SCAN_RANGE = TELLUP_CCF_SCAN_RANGE.copy(__NAME__)
+TELLUP_CCF_SCAN_RANGE.value = 20
+
+# define whether to clean OH lines
+TELLUP_CLEAN_OH_LINES = TELLUP_CLEAN_OH_LINES.copy(__NAME__)
+TELLUP_CLEAN_OH_LINES.value = True
+
+# define the OH line pca file
+TELLUP_OHLINE_PCA_FILE = TELLUP_OHLINE_PCA_FILE.copy(__NAME__)
+TELLUP_OHLINE_PCA_FILE.value = 'sky_PCs.fits'
+
+# define the orders not to use in pre-cleaning fit (due to theraml
+# background)
+TELLUP_REMOVE_ORDS = TELLUP_REMOVE_ORDS.copy(__NAME__)
+TELLUP_REMOVE_ORDS.value = '47, 48'
+
+# define the minimum snr to accept orders for pre-cleaning fit
+TELLUP_SNR_MIN_THRES = TELLUP_SNR_MIN_THRES.copy(__NAME__)
+TELLUP_SNR_MIN_THRES.value = 10.0
+
+# define the telluric trans other abso CCF file
+TELLUP_OTHERS_CCF_FILE = TELLUP_OTHERS_CCF_FILE.copy(__NAME__)
+TELLUP_OTHERS_CCF_FILE.value = 'trans_others_abso_ccf.mas'
+
+# define the telluric trans water abso CCF file
+TELLUP_H2O_CCF_FILE = TELLUP_H2O_CCF_FILE.copy(__NAME__)
+TELLUP_H2O_CCF_FILE.value = 'trans_h2o_abso_ccf.mas'
+
+# define dexpo convergence threshold
+TELLUP_DEXPO_CONV_THRES = TELLUP_DEXPO_CONV_THRES.copy(__NAME__)
+TELLUP_DEXPO_CONV_THRES.value = 1.0e-4
+
+# define the maximum number of iterations to try to get dexpo
+# convergence
+TELLUP_DEXPO_MAX_ITR = TELLUP_DEXPO_MAX_ITR.copy(__NAME__)
+TELLUP_DEXPO_MAX_ITR.value = 20
+
+# define the kernel threshold in abso_expo
+TELLUP_ABSO_EXPO_KTHRES = TELLUP_ABSO_EXPO_KTHRES.copy(__NAME__)
+TELLUP_ABSO_EXPO_KTHRES.value = 1.0e-6
+
+# define the gaussian width of the kernel used in abso_expo
+TELLUP_ABSO_EXPO_KWID = TELLUP_ABSO_EXPO_KWID.copy(__NAME__)
+TELLUP_ABSO_EXPO_KWID.value = 4.95
+
+# define the gaussian exponent of the kernel used in abso_expo
+#   a value of 2 is gaussian, a value >2 is boxy
+TELLUP_ABSO_EXP_KEXP = TELLUP_ABSO_EXP_KEXP.copy(__NAME__)
+TELLUP_ABSO_EXP_KEXP.value = 2.20
+
+# define the transmission threshold (in exponential form) for keeping
+#   valid transmission
+TELLUP_TRANS_THRES = TELLUP_TRANS_THRES.copy(__NAME__)
+TELLUP_TRANS_THRES.value = -1
+
+# define the threshold for discrepant transmission (in sigma)
+TELLUP_TRANS_SIGLIM = TELLUP_TRANS_SIGLIM.copy(__NAME__)
+TELLUP_TRANS_SIGLIM.value = 10
+
+# define whether to force airmass fit to header airmass value
+TELLUP_FORCE_AIRMASS = TELLUP_FORCE_AIRMASS.copy(__NAME__)
+TELLUP_FORCE_AIRMASS.value = False
+
+# set the typical water abso exponent. Compare to values in header for
+#    high-snr targets later
+TELLUP_D_WATER_ABSO = TELLUP_D_WATER_ABSO.copy(__NAME__)
+TELLUP_D_WATER_ABSO.value = 4.0
+
+# set the lower and upper bounds (String list) for the exponent of
+#  the other species of absorbers
+TELLUP_OTHER_BOUNDS = TELLUP_OTHER_BOUNDS.copy(__NAME__)
+TELLUP_OTHER_BOUNDS.value = '0.8, 3.0'
+
+# set the lower and upper bounds (string list) for the exponent of
+#  water absorber
+TELLUP_WATER_BOUNDS = TELLUP_WATER_BOUNDS.copy(__NAME__)
+TELLUP_WATER_BOUNDS.value = '0.1, 15'
+
+# =============================================================================
 # OBJECT: MAKE TELLURIC SETTINGS
 # =============================================================================
 # value below which the blaze in considered too low to be useful
@@ -1658,7 +1744,7 @@ MKTELLU_THRES_TRANSFIT.value = 0.3
 # Defines the bad pixels if the spectrum is larger than this value.
 #    These values are likely an OH line or a cosmic ray
 MKTELLU_TRANS_FIT_UPPER_BAD = MKTELLU_TRANS_FIT_UPPER_BAD.copy(__NAME__)
-MKTELLU_TRANS_FIT_UPPER_BAD.value = 1.1
+MKTELLU_TRANS_FIT_UPPER_BAD.value = 1.5
 
 # Defines the minimum allowed value for the recovered water vapor optical
 #    depth (should not be able 1)
