@@ -117,7 +117,7 @@ __all__ = [  # input keys
     # mktellu values
     'KW_MKTELL_TEMP_FILE', 'KW_MKTELL_BLAZE_PRCT', 'KW_MKTELL_BLAZE_CUT',
     'KW_MKTELL_DEF_CONV_WID',  'KW_MKTELL_TEMP_MEDFILT', 'KW_MKTELL_AIRMASS',
-    'KW_MKTELL_WATER',
+    'KW_MKTELL_WATER', 'KW_MKTELL_THRES_TFIT', 'KW_MKTELL_TRANS_FIT_UPPER_BAD',
     # fittellu values
     'KW_FTELLU_NPC', 'KW_FTELLU_ADD_DPC', 'KW_FTELLU_FIT_DPC',
     'KW_FTELLU_ABSO_SRC', 'KW_FTELLU_FIT_KEEP_NUM',
@@ -1138,6 +1138,14 @@ KW_MKTELL_AIRMASS = Keyword('KW_MKTELL_AIRMASS', key='', dtype=float,
 # The recovered water optical depth calculated in mktellu calculation
 KW_MKTELL_WATER = Keyword('KW_MKTELL_WATER', key='', dtype=float,
                           source=__NAME__)
+
+# The min transmission requirement used for mktellu/ftellu
+KW_MKTELL_THRES_TFIT = Keyword('KW_MKTELL_THRES_TFIT', key='', dtype=float,
+                          source=__NAME__)
+
+# The upper limit for trans fit used in mktellu/ftellu
+KW_MKTELL_TRANS_FIT_UPPER_BAD = Keyword('KW_MKTELL_TRANS_FIT_UPPER_BAD',
+                                        key='', dtype=float, source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define fit telluric variables

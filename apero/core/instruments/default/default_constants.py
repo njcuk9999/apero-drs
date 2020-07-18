@@ -191,6 +191,7 @@ __all__ = [
     'MKTELLU_PLOT_ORDER_NUMS', 'MKTELLU_TAU_WATER_ULIMIT',
     'MKTELLU_QC_SNR_ORDER', 'MKTELLU_QC_SNR_MIN', 'MKTELLU_QC_AIRMASS_DIFF',
     'MKTELLU_TRANS_MAX_WATERCOL', 'MKTELLU_TRANS_MIN_WATERCOL',
+    'MKTELLU_THRES_TRANSFIT', 'MKTELLU_TRANS_FIT_UPPER_BAD',
     # fit telluric constants,
     'FTELLU_NUM_PRINCIPLE_COMP', 'FTELLU_ADD_DERIV_PC', 'FTELLU_FIT_DERIV_PC',
     'FTELLU_FIT_KEEP_NUM', 'FTELLU_FIT_MIN_TRANS', 'FTELLU_LAMBDA_MIN',
@@ -2161,6 +2162,16 @@ MKTELLU_TRANS_MAX_WATERCOL = Const('MKTELLU_TRANS_MAX_WATERCOL', value=None,
 #    depth (should not be able 1)
 MKTELLU_TRANS_MIN_WATERCOL = Const('MKTELLU_TRANS_MIN_WATERCOL', value=None,
                                    dtype=float, source=__NAME__, group=cgroup)
+
+# minimum transmission required for use of a given pixel in the TAPAS
+#    and SED fitting
+MKTELLU_THRES_TRANSFIT = Const('MKTELLU_THRES_TRANSFIT', value=None,
+                               dtype=float, source=__NAME__, group=cgroup)
+
+# Defines the bad pixels if the spectrum is larger than this value.
+#    These values are likely an OH line or a cosmic ray
+MKTELLU_TRANS_FIT_UPPER_BAD = Const('MKTELLU_TRANS_FIT_UPPER_BAD', value=None,
+                                    dtype=float, source=__NAME__, group=cgroup)
 
 #  Define the minimum SNR for order "QC_TELLU_SNR_ORDER" that will be
 #      accepted to the telluDB
