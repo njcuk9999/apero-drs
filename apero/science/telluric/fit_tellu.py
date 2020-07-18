@@ -653,6 +653,8 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
     props['FIT_DERIV_PC'] = fit_deriv_pc
     props['RECON_LIMIT'] = recon_limit
     props['TELLU_ABSORBERS'] = tellu_absorbers
+    props['THRES_TRANSFIT'] = thres_transfit_low
+    props['TRANS_FIT_UPPER_BAD'] = thres_transfit_upper
     # set sources
     keys = ['FIT_MIN_TRANS', 'LAMBDA_MIN', 'LAMBDA_MAX', 'KERNEL_VSINI',
             'IMAGE_PIXEL_SIZE', 'FIT_ITERATIONS',
@@ -795,6 +797,10 @@ def fit_tellu_summary(recipe, it, params, qc_params, pca_props, sprops,
                          value=cprops['FIT_ITERATIONS'])
     recipe.plot.add_stat('KW_FTELLU_RECON_LIM',
                          value=cprops['RECON_LIMIT'])
+    recipe.plot.add_stat('KW_MKTELL_THRES_TFIT',
+                         value=cprops['THRES_TRANSFIT'])
+    recipe.plot.add_stat('KW_MKTELL_TRANS_FIT_UPPER_BAD',
+                         value=cprops['TRANS_FIT_UPPER_BAD'])
     # construct summary
     recipe.plot.summary_document(it)
 
@@ -858,6 +864,9 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     corrfile.add_hkey('KW_FTELLU_IM_PX_SIZE', value=cprops['IMAGE_PIXEL_SIZE'])
     corrfile.add_hkey('KW_FTELLU_FIT_ITERS', value=cprops['FIT_ITERATIONS'])
     corrfile.add_hkey('KW_FTELLU_RECON_LIM', value=cprops['RECON_LIMIT'])
+    corrfile.add_hkey('KW_MKTELL_THRES_TFIT', value=cprops['THRES_TRANSFIT'])
+    corrfile.add_hkey('KW_MKTELL_TRANS_FIT_UPPER_BAD',
+                      value=cprops['TRANS_FIT_UPPER_BAD'])
     # ----------------------------------------------------------------------
     # add tellu pre-clean keys
     corrfile.add_hkey('KW_TELLUP_EXPO_WATER', value=tpreprops['EXPO_WATER'])
