@@ -1434,6 +1434,16 @@ KW_MKTELL_WATER = KW_MKTELL_WATER.copy(__NAME__)
 KW_MKTELL_WATER.set(key='MTAUH2O',
                     comment='mktellu recovered water depth (tau H2O)')
 
+# The min transmission requirement used for mktellu/ftellu
+KW_MKTELL_THRES_TFIT = KW_MKTELL_THRES_TFIT.copy(__NAME__)
+KW_MKTELL_THRES_TFIT.set(key='MKTTTFIT',
+                         comment='mktellu min transmission used')
+
+# The upper limit for trans fit used in mktellu/ftellu
+KW_MKTELL_TRANS_FIT_UPPER_BAD = KW_MKTELL_TRANS_FIT_UPPER_BAD.copy(__NAME__)
+KW_MKTELL_TRANS_FIT_UPPER_BAD.set(key='MKTTTMAX',
+                                  comment='mktellu max transmission used')
+
 # -----------------------------------------------------------------------------
 # Define fit telluric variables
 # -----------------------------------------------------------------------------

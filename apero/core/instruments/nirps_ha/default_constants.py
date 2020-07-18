@@ -1738,6 +1738,16 @@ MKTELLU_TRANS_MIN_WATERCOL.value = 0.2
 MKTELLU_TRANS_MAX_WATERCOL = MKTELLU_TRANS_MAX_WATERCOL.copy(__NAME__)
 MKTELLU_TRANS_MAX_WATERCOL.value = 99
 
+# minimum transmission required for use of a given pixel in the TAPAS
+#    and SED fitting
+MKTELLU_THRES_TRANSFIT = MKTELLU_THRES_TRANSFIT.copy(__NAME__)
+MKTELLU_THRES_TRANSFIT.value = 0.3
+
+# Defines the bad pixels if the spectrum is larger than this value.
+#    These values are likely an OH line or a cosmic ray
+MKTELLU_TRANS_FIT_UPPER_BAD = MKTELLU_TRANS_FIT_UPPER_BAD.copy(__NAME__)
+MKTELLU_TRANS_FIT_UPPER_BAD.value = 1.1
+
 #  Define the minimum SNR for order "QC_TELLU_SNR_ORDER" that will be
 #      accepted to the telluDB
 MKTELLU_QC_SNR_MIN = MKTELLU_QC_SNR_MIN.copy(__NAME__)
