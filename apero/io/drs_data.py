@@ -276,7 +276,7 @@ def load_ccf_mask(params, **kwargs):
         WLOG(params, 'error', TextEntry('00-020-00002', args=eargs))
 
 
-def load_sp_mask_lsd(params, temperature, **kwargs):
+def load_sp_mask_lsd(params, temperature=None, **kwargs):
     # get parameters from params/kwargs
     func_name = kwargs.get('func', __NAME__ + '.load_sp_mask_lsd()')
     relfolder = pcheck(params, 'POLAR_LSD_PATH', 'directory', kwargs,
@@ -326,7 +326,7 @@ def load_sp_mask_lsd(params, temperature, **kwargs):
     # ----------------------------------------------------------------------
     # file currently must be an ascii file and must start on line 1
     kwargs['fmt'] = 'ascii'
-    kwargs['colnames'] = ['wavec', 'znum', 'depth', 'lande', '_1', '_2']
+    kwargs['colnames'] = ['wavec', 'znum', 'depth', 'excpotf', 'lande', 'flagf']
     kwargs['datastart'] = 1
     # ----------------------------------------------------------------------
     # return image
