@@ -295,7 +295,7 @@ run apero/recipes/spirou/cal_badpix_spirou.py --flatfiles file1.fits --darkfiles
 ```
 
 i.e. in a python script
-```python
+```
 import cal_badpix_spirou
 
 ll = cal_badpix_spirou.main('night_name', flatfiles='file1.fits', darkfiles='file2.fits')
@@ -382,35 +382,41 @@ where `recipe` is the recipe run and `short_name` is the name used in the `RUN_I
 i.e. for RUN_XXXX and SKIP_XXXX.
 
 
-| recipe                                                          | SHORT_NAME |
-| --------------------------------------------------------------- | ---------- | 
-| cal_preprocessing                                               | PP         |
-| cal_dark_master                                                 | DARKM      |
-| cal_badpix [master night]                                       | BADM       |
-| cal_loc [DARK_FLAT; master night]                               | LOCM       |
-| cal_loc [FLAT_DARK; master night]                               | LOCM       |
-| cal_shape_master                                                | SHAPEM     |
-| cal_shape [master night]                                        | SHAPELM    |
-| cal_ff [master night]                                           | FLATM      |
-| cal_leak_master [master_night]                                  | LEAKM      |
-| cal_thermal [DARK_DARK_INT; master night]                       | THIM       |
-| cal_thermal [DARK_DARK_TEL; master night]                       | THTM       |
-| cal_wave_master                                                 | WAVEM      |
-|                                                                 |            |
-| cal_badpix [every night]                                        | BAD        |
-| cal_loc [DARK_FLAT; every night]                                | LOC        |
-| cal_loc [FLAT_DARK; every night]                                | LOC        |
-| cal_shape [every night]                                         | SHAPE      |
-| cal_ff [every night]                                            | FF         |
-| cal_thermal [DARK_DARK_INT; every night]                        | THERMAL    |
-| cal_thermal [DARK_DARK_TEL; every night]                        | THERMAL    |
-| cal_wave_night [every night]                                    | WAVE       |
-| cal_extract [OBJ_DARK + OBJ_FP; every night; ALL OBJECTS]       | EXTALL     |
-| cal_leak [OBJ_FP; every night; ALL OBJECTS]                     | LEAKALL    |
-| obj_mk_tellu_db                                                 | MKTELLDB   |
-| obj_fit_tellu_db                                                | FTELLDB    |
-| cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night]              | CCF        |
+| recipe                                                          | SHORT_NAME | COMMENT |
+| --------------------------------------------------------------- | ---------- | ------- | 
+| cal_preprocessing                                               | PP         |         |
+| cal_dark_master                                                 | DARKM      |         |
+| cal_badpix [master night]                                       | BADM       |         |
+| cal_loc [DARK_FLAT; master night]                               | LOCM       |         |
+| cal_loc [FLAT_DARK; master night]                               | LOCM       |         |
+| cal_shape_master                                                | SHAPEM     |         |
+| cal_shape [master night]                                        | SHAPELM    |         |
+| cal_ff [master night]                                           | FLATM      |         |
+| cal_leak_master [master_night]                                  | LEAKM      |         |
+| cal_thermal [DARK_DARK_INT; master night]                       | THIM       |         |
+| cal_thermal [DARK_DARK_TEL; master night]                       | THTM       |         |
+| cal_wave_master                                                 | WAVEM      |         |
+|                                                                 |            |         |
+| cal_badpix [every night]                                        | BAD        |         |
+| cal_loc [DARK_FLAT; every night]                                | LOC        |         |
+| cal_loc [FLAT_DARK; every night]                                | LOC        |         |
+| cal_shape [every night]                                         | SHAPE      |         |
+| cal_ff [every night]                                            | FF         |         |
+| cal_thermal [DARK_DARK_INT; every night]                        | THERMAL    |         |
+| cal_thermal [DARK_DARK_TEL; every night]                        | THERMAL    |         |
+| cal_wave_night [every night]                                    | WAVE       |         |
+| cal_extract [OBJ_DARK + OBJ_FP; every night; ALL OBJECTS]       | EXTALL     |         |
+| cal_leak [OBJ_FP; every night; ALL OBJECTS]                     | LEAKALL    |         |
+| obj_mk_tellu_db                                                 | MKTELLDB   | 1       |
+| obj_fit_tellu_db                                                | FTELLDB    | 1       |
+| obj_fit_tellu        [OBJ_FP + OBJ_DARK; fiber=AB; every night] | FTELLU     | 1       |
+| cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night]              | CCF        |         |
 
+###### Comments
+
+- 1 Note you don't need to use `obj_fit_tellu_db` (FTELLUDB) and `obj_fit_tellu` (FTELLU).
+    - Use `obj_fit_tellu_db` (FTELLUDB) when you want to generate new templates (i.e. use with `obj_mk_tellu_db`) 
+    - Use `obj_fit_tellu` (FTELLU) to just correct tellurics (Should turn off `obj_mk_tellu_db` (MKTELLUDB) and `obj_fit_tellu_db` (FTELLUDB))
 
 ##### 2. `limited_seq`
 
