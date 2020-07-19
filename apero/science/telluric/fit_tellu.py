@@ -564,10 +564,9 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
                 wavemap=wavemap, sp2=sp2, template=template2, recon=recon_abso,
                 orders=params.listp('FTELLU_PLOT_ORDER_NUMS', dtype=int))
 
-
     # ------------------------------------------------------------------
     # convert the recon back into a true transmission
-    recon_abso = recon_abso * tpreprops['ABSO_E2DS']
+    recon_abso = recon_abso * tpreprops['ABSO_E2DS'].ravel()
 
     # ------------------------------------------------------------------
     # calculate molecular absorption
