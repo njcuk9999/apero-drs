@@ -1929,8 +1929,8 @@ def wave_to_wave(params, spectrum, wave1, wave2, reshape=False):
     for iord in range(sz[0]):
         # only interpolate valid pixels
         g = np.isfinite(spectrum[iord, :])
-        # if no valid pixel, thn skip order
-        if mp.nansum(g) != 0:
+        # if not enough valid pixel, then skip order (need k+1 points)
+        if mp.nansum(g) > 6:
             # spline the spectrum
             spline = mp.iuv_spline(wave1[iord, g], spectrum[iord, g],
                                    k=5, ext=1)
