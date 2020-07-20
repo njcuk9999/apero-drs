@@ -331,9 +331,8 @@ def __main__(recipe, params):
             if sfiber == fiber:
                 continue
             # else correct/create s1d/ and save
-            coargs = [sfiber, infile, cprops, wprops, nprops,
-                      rawfiles, combine, pca_props, sprops, qc_params,
-                      template_file, tpreprops]
+            coargs = [sfiber, infile, cprops, rawfiles, combine, pca_props,
+                      sprops, qc_params, template_file, tpreprops]
             telluric.correct_other_science(params, recipe, *coargs)
 
         # ------------------------------------------------------------------
