@@ -691,13 +691,14 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     # ------------------------------------------------------------------
     nargs = [image, header, fiber]
     _, nprops = gen_tellu.normalise_by_pblaze(params, *nargs)
-    # normalise by the blaze
-    image1 = image / nprops['NBLAZE']
+    # # normalise by the blaze
+    # image1 = image / nprops['NBLAZE']
     # ------------------------------------------------------------------
     # Correct spectrum with simple division
     # ------------------------------------------------------------------
     # corrected data is just input data / recon
-    scorr = image1 / cprops['RECON_ABSO_SP']
+    scorr = image / cprops['RECON_ABSO_SP']
+    # scorr = scorr * nprops['NBLAZE']
     # ------------------------------------------------------------------
     # Create 1d spectra (s1d) of the corrected E2DS file
     # ------------------------------------------------------------------
