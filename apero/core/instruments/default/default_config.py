@@ -25,7 +25,7 @@ __all__ = [  # global settings
     'DRS_BADPIX_DATA', 'DRS_CALIB_DATA', 'DRS_RESET_CALIBDB_PATH',
     'DRS_RESET_TELLUDB_PATH', 'DRS_USER_PROGRAM', 'DRS_INDEX_FILE',
     'DRS_PDB_RC_FILE', 'IPYTHON_RETURN', 'ALLOW_BREAKPOINTS',
-    'DRS_RESET_RUN_PATH', 'DRS_INSTRUMENTS',
+    'DRS_RESET_RUN_PATH', 'DRS_INSTRUMENTS', 'DRS_PDB_RC_FILENAME',
     # DRS INDEXING SETTINGS
     'DRS_INDEX_FILE', 'DRS_INDEX_FILENAME',
     # DATABASE SETTINGS
@@ -294,8 +294,13 @@ DRS_RESET_RUN_PATH = Const('DRS_RESET_RUN_PATH', dtype=str, source=__NAME__,
                            group=cgroup)
 
 # where the pdb rc file is
-DRS_PDB_RC_FILE = Const('DRS_PDB_RC_FILE', value='./data/core/.pdbrc',
+DRS_PDB_RC_FILE = Const('DRS_PDB_RC_FILE', value='./data/core/pdbrc_full',
                         dtype=str, source=__NAME__, group=cgroup)
+
+# what the pdb file should be called
+DRS_PDB_RC_FILENAME = Const('DRS_PDB_RC_FILENAME', value='.pdbrc',
+                            dtype=str, source=__NAME__, group=cgroup)
+
 
 # =============================================================================
 # DRS INDEXING SETTINGS
