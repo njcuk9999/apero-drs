@@ -18,6 +18,7 @@ from apero import lang
 from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.io import drs_fits
+from apero.io import drs_path
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave
 from apero.science import extract
