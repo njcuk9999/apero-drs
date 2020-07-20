@@ -19,6 +19,7 @@ from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.io import drs_fits
 from apero.io import drs_path
+from apero.science.calib import wave
 from apero.science import extract
 from apero.science.telluric import gen_tellu
 
@@ -665,9 +666,15 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
     return props
 
 
-def correct_other_science(params, recipe, fiber, infile, cprops, wprops, nprops,
-                          rawfiles, combine, pca_props, sprops, qc_params,
+def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
+                          combine, pca_props, sprops, qc_params,
                           template_file, tpreprops):
+    # get the header
+    header = infile.header
+    # ------------------------------------------------------------------
+    # load wavelength solution for this fiber
+    wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
+                                   infile=infile)
     # ------------------------------------------------------------------
     # Construct fiber file name and read data
     # ------------------------------------------------------------------
@@ -677,11 +684,20 @@ def correct_other_science(params, recipe, fiber, infile, cprops, wprops, nprops,
                                       fiber=fiber)
     # read fiber file
     fiber_infile.read_file()
+    # get image
+    image = fiber_infile.data
+    # ------------------------------------------------------------------
+    # Normalize image by peak blaze
+    # ------------------------------------------------------------------
+    nargs = [image, header, fiber]
+    _, nprops = gen_tellu.normalise_by_pblaze(params, *nargs)
+    # normalise by the blaze
+    image1 = image / nprops['NBLAZE']
     # ------------------------------------------------------------------
     # Correct spectrum with simple division
     # ------------------------------------------------------------------
     # corrected data is just input data / recon
-    scorr = fiber_infile.data / cprops['RECON_ABSO_SP']
+    scorr = image1 / cprops['RECON_ABSO_SP']
     # ------------------------------------------------------------------
     # Create 1d spectra (s1d) of the corrected E2DS file
     # ------------------------------------------------------------------
