@@ -19,6 +19,7 @@ from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.io import drs_fits
 from apero.io import drs_path
+from apero.science.calib import flat_blaze
 from apero.science.calib import wave
 from apero.science import extract
 from apero.science.telluric import gen_tellu
@@ -689,20 +690,17 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     # ------------------------------------------------------------------
     # Normalize image by peak blaze
     # ------------------------------------------------------------------
-    nargs = [image, header, fiber]
-    _, nprops = gen_tellu.normalise_by_pblaze(params, *nargs)
-    # # normalise by the blaze
-    # image1 = image / nprops['NBLAZE']
+    # load the blaze file for this fiber
+    blaze_file, blaze = flat_blaze.get_blaze(params, header, fiber)
     # ------------------------------------------------------------------
     # Correct spectrum with simple division
     # ------------------------------------------------------------------
     # corrected data is just input data / recon
-    scorr = image / cprops['RECON_ABSO_SP']
-    # scorr = scorr * nprops['NBLAZE']
+    scorr = image * blaze / cprops['RECON_ABSO_SP']
     # ------------------------------------------------------------------
     # Create 1d spectra (s1d) of the corrected E2DS file
     # ------------------------------------------------------------------
-    scargs = [wprops['WAVEMAP'], scorr, nprops['BLAZE']]
+    scargs = [wprops['WAVEMAP'], scorr,blaze]
     scwprops = extract.e2ds_to_s1d(params, recipe, *scargs, wgrid='wave',
                                    fiber=fiber, kind='corrected sp')
     scvprops = extract.e2ds_to_s1d(params, recipe, *scargs,
@@ -711,7 +709,7 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     # ------------------------------------------------------------------
     # Save corrected E2DS to file
     # ------------------------------------------------------------------
-    fargs = [fiber_infile, rawfiles, fiber, combine, nprops, wprops,
+    fargs = [fiber_infile, rawfiles, fiber, combine, blaze_file, wprops,
              pca_props, sprops, cprops, qc_params, template_file, tpreprops]
     fkwargs = dict(CORRECTED_SP=scorr)
     corrfile = fit_tellu_write_corrected(params, recipe, *fargs, **fkwargs)
@@ -827,7 +825,7 @@ def fit_tellu_summary(recipe, it, params, qc_params, pca_props, sprops,
 # Write functions
 # =============================================================================
 def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
-                              nprops, wprops, pca_props, sprops, cprops,
+                              blaze_file, wprops, pca_props, sprops, cprops,
                               qc_params, tfile, tpreprops, **kwargs):
     func_name = __NAME__ + '.fit_tellu_write_corrected()'
     # get parameters from params
@@ -863,7 +861,7 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
         hfiles = [infile.basename]
     corrfile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
     # add  calibration files used
-    corrfile.add_hkey('KW_CDBBLAZE', value=nprops['BLAZE_FILE'])
+    corrfile.add_hkey('KW_CDBBLAZE', value=blaze_file)
     corrfile.add_hkey('KW_CDBWAVE', value=wprops['WAVEFILE'])
     # ----------------------------------------------------------------------
     # add qc parameters
