@@ -565,6 +565,8 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
                 orders=params.listp('FTELLU_PLOT_ORDER_NUMS', dtype=int))
 
     # ------------------------------------------------------------------
+    # copy the residual recon for use below
+    recon_abso_res = np.array(recon_abso)
     # convert the recon back into a true transmission
     recon_abso = recon_abso * tpreprops['ABSO_E2DS'].ravel()
 
@@ -618,7 +620,7 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
     # correct spectrum
     # ------------------------------------------------------------------
     # divide spectrum by reconstructed absorption
-    sp_out = sp2 / recon_abso
+    sp_out = sp2 / recon_abso_res
     sp_out = sp_out.reshape(image.shape)
     # multiple by the normalised blaze
     sp_out = sp_out * nblaze
