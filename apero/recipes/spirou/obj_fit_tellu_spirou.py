@@ -209,9 +209,6 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # telluric pre-cleaning
         # ------------------------------------------------------------------
-        # TODO: remove break point
-        constants.break_point(params)
-
         tpreprops = telluric.tellu_preclean(params, recipe, infile, wprops,
                                             fiber, rawfiles, combine)
         # get variables out of tpreprops
@@ -334,9 +331,9 @@ def __main__(recipe, params):
             if sfiber == fiber:
                 continue
             # else correct/create s1d/ and save
-            coargs = [sfiber, infile, corrfile, cprops, wprops, nprops,
+            coargs = [sfiber, infile, cprops, wprops, nprops,
                       rawfiles, combine, pca_props, sprops, qc_params,
-                      template_file]
+                      template_file, tpreprops]
             telluric.correct_other_science(params, recipe, *coargs)
 
         # ------------------------------------------------------------------
