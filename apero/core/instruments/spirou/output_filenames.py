@@ -84,12 +84,14 @@ def calib_file(params, **kwargs):
     # get output file
     outfile = kwargs.get('outfile', None)
     # get nightname
-    nightname = kwargs.get('nightname', None)
+    # nightname = kwargs.get('nightname', None)
     # get prefix
     if outfile is None:
-        prefix = _calibration_prefix(params, nightname)
+        # prefix = _calibration_prefix(params, nightname)
+        prefix = ''
     else:
-        prefix = _calibration_prefix(params, nightname) + outfile.prefix
+        # prefix = _calibration_prefix(params, nightname) + outfile.prefix
+        prefix = outfile.prefix
     # update keywords func name
     kwargs['func'] = func
     # return general file with prefix updated
