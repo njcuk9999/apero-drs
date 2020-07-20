@@ -18,7 +18,6 @@ from apero import lang
 from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.io import drs_fits
-from apero.io import drs_path
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave
 from apero.science import extract
@@ -692,6 +691,9 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     # ------------------------------------------------------------------
     # load the blaze file for this fiber
     blaze_file, blaze = flat_blaze.get_blaze(params, header, fiber)
+    # fake nprop dict
+    nprops = dict()
+    nprops['BLAZE_FILE'] = blaze_file
     # ------------------------------------------------------------------
     # Correct spectrum with simple division
     # ------------------------------------------------------------------
@@ -709,7 +711,7 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     # ------------------------------------------------------------------
     # Save corrected E2DS to file
     # ------------------------------------------------------------------
-    fargs = [fiber_infile, rawfiles, fiber, combine, blaze_file, wprops,
+    fargs = [fiber_infile, rawfiles, fiber, combine, nprops, wprops,
              pca_props, sprops, cprops, qc_params, template_file, tpreprops]
     fkwargs = dict(CORRECTED_SP=scorr)
     corrfile = fit_tellu_write_corrected(params, recipe, *fargs, **fkwargs)
@@ -825,7 +827,7 @@ def fit_tellu_summary(recipe, it, params, qc_params, pca_props, sprops,
 # Write functions
 # =============================================================================
 def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
-                              blaze_file, wprops, pca_props, sprops, cprops,
+                              nprops, wprops, pca_props, sprops, cprops,
                               qc_params, tfile, tpreprops, **kwargs):
     func_name = __NAME__ + '.fit_tellu_write_corrected()'
     # get parameters from params
@@ -861,7 +863,7 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
         hfiles = [infile.basename]
     corrfile.add_hkey_1d('KW_INFILE1', values=hfiles, dim1name='file')
     # add  calibration files used
-    corrfile.add_hkey('KW_CDBBLAZE', value=blaze_file)
+    corrfile.add_hkey('KW_CDBBLAZE', value=nprops['BLAZE_FILE'])
     corrfile.add_hkey('KW_CDBWAVE', value=wprops['WAVEFILE'])
     # ----------------------------------------------------------------------
     # add qc parameters
