@@ -427,8 +427,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # ----------------------------------------------------------------------
     if not do_precleaning:
         # log progress
-        # TODO: move the language DB
-        WLOG(params, '', 'Skipping pre-cleaning')
+        WLOG(params, '', TextEntry('10-019-00008'))
         # populate qc params
         qc_params = [qc_names, qc_values, qc_logic, qc_pass]
         # populate parameter dictionary
@@ -582,18 +581,14 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # set up a qc flag
     flag_qc = False
     # log progress
-    # TODO: move to language database
-    WLOG(params, '', 'Pre-cleaning data')
+    WLOG(params, '', TextEntry('40-019-00040'))
     # loop around until convergence or 20th iteration
     while (dexpo > dexpo_thres) and (iteration < max_iterations):
         # set up a qc flag
         flag_qc = False
         # log progress
-        # TODO: move to language db
-        msg = ('\titeration={0} dexpo={1:.3e} dv_abso={4:.3f} [m/s]'
-               '\n\t\texpo_water={2:.3f} expo_others={3:.3f}')
         args = [iteration, dexpo, expo_water, expo_others, dv_abso * 1000]
-        WLOG(params, '', msg.format(*args))
+        WLOG(params, '', TextEntry('40-019-00041', args=args))
         # get the absorption spectrum
         trans = get_abso_expo(params, wavemap, expo_others, expo_water,
                               spl_others, spl_water, ww=ker_width,
@@ -949,8 +944,7 @@ def clean_ohline_pca(params, image, wavemap, **kwargs):
                       func_name)
     # ----------------------------------------------------------------------
     # log progress
-    # TODO: add to language db
-    WLOG(params, '', 'Cleaning OH lines')
+    WLOG(params, '', TextEntry('40-019-00042'))
     # ----------------------------------------------------------------------
     # get shape of the e2ds
     nbo, nbpix = image.shape
@@ -1338,8 +1332,7 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
                       value=props['TELLUP_WATER_BOUNDS'], mapf='list')
     # ----------------------------------------------------------------------
     # print progress
-    # TODO: move to language database
-    WLOG(params, '', 'Writing file: {0}'.format(tpclfile.filename))
+    WLOG(params, '', TextEntry('40-019-00044', args=[tpclfile.filename]))
     # write to file
     tpclfile.data = dimages[0]
     tpclfile.write_multi(data_list=dimages[1:])
@@ -1393,10 +1386,7 @@ def read_tellu_preclean(params, recipe, infile, fiber):
         return None
     # ----------------------------------------------------------------------
     # log progress
-    # TODO: move to language database
-    msg = 'Reading pre-cleaned file from: {0}'
-    args = [tpclfile.basename]
-    WLOG(params, '', msg.format(*args))
+    WLOG(params, '', TextEntry('40-019-00043', args=args))
     # ----------------------------------------------------------------------
     # start a parameter dictionary
     props = ParamDict()
@@ -1598,8 +1588,7 @@ def load_templates(params, header, objname, fiber):
     # get key
     temp_key = out_temp.get_dbkey(fiber=fiber)
     # log status
-    # TODO: move to language database
-    WLOG(params, '', 'Loading {0} files'.format(temp_key))
+    WLOG(params, '', TextEntry('40-019-00045', args=[temp_key]))
     # load tellu file, header and abspaths
     temp_out = load_tellu_file(params, temp_key, header, get_header=True,
                                n_entries='all', required=False)
@@ -1645,10 +1634,8 @@ def get_transmission_files(params, recipe, header, fiber):
                                          kind='red', fiber=fiber)
     # get key
     trans_key = out_trans.get_dbkey(fiber=fiber)
-
     # log status
-    # TODO: move to language database
-    WLOG(params, '', 'Loading {0} files'.format(trans_key))
+    WLOG(params, '', TextEntry('40-019-00046', args=[trans_key]))
     # load tellu file, header and abspaths
     _, trans_filenames = load_tellu_file(params, trans_key, header,
                                          n_entries='all', get_image=False)
@@ -1812,8 +1799,8 @@ def load_tapas_spl(params, recipe, header):
         # Save tapas file for later use
         # ------------------------------------------------------------------
         # log saving
-        # TODO: add to language database
-        WLOG(params, '', 'Writing file: {0}'.format(out_tellu_tapas.filename))
+        args = [out_tellu_tapas.filename]
+        WLOG(params, '', TextEntry('40-019-00047', args=[args]))
         # save to disk
         out_tellu_tapas.data = tmp_tapas
         out_tellu_tapas.write_file(params)

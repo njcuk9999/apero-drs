@@ -159,7 +159,6 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
     with warnings.catch_warnings(record=True) as _:
         keep &= mp.nanmin(log_abso, axis=0) > -1
     fraction = mp.nansum(keep) / len(keep)
-    # TODO: change transmission --> residual transmission (remove 1-1/e)
     WLOG(params, '', TextEntry('40-019-00016', args=[fraction]))
     # ----------------------------------------------------------------------
     # Perform PCA analysis on the log of the telluric absorption map
@@ -526,12 +525,12 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
         keep &= mp.nansum(np.isfinite(fit_pc2), axis=1) == npc
 
         # TODO: added a constraint on the max deviation in fit_dd
-        # TODO: this prevents points that are very deviant to be include
-        # TODO: in principle, there should be NO very deviant point as
-        # TODO: we already have a cut on the abso from TAPAS, but this
-        # TODO: is used as a sigma-clipping. The cut is expressed in log
-        # TODO: abso, so a value of 1 is equivalent to a 2.7x difference
-        # TODO: in residual.
+        #     this prevents points that are very deviant to be include
+        #     in principle, there should be NO very deviant point as
+        #     we already have a cut on the abso from TAPAS, but this
+        #     is used as a sigma-clipping. The cut is expressed in log
+        #     abso, so a value of 1 is equivalent to a 2.7x difference
+        #     in residual.
         sigma = 1.0  # mp.nanmedian(np.abs(fit_dd))
         with warnings.catch_warnings(record=True) as _:
             keep &= (np.abs(fit_dd) < sigma)

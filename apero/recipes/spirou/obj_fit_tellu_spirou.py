@@ -184,10 +184,9 @@ def __main__(recipe, params):
             # continue
             continue
         else:
-            # TODO: move to language database
-            msg = 'File validated: OBJECT={0} DPRTYPE={1}'
+            # log that file is validated
             args = [objname, dprtype]
-            WLOG(params, 'info', msg.format(*args))
+            WLOG(params, 'info', TextEntry('40-019-00048', args=args))
         # ------------------------------------------------------------------
         # get fiber from infile
         fiber = infile.get_fiber(header=header)
