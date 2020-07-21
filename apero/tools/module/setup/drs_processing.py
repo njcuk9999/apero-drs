@@ -1410,10 +1410,6 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
         # deal with filters
         filters = _get_filters(params, srecipe)
 
-        # TODO: break point
-        if 'ccf' in srecipe.name or 'tellu' in srecipe.name:
-            constants.break_point(params)
-
         # get fiber filter
         allowedfibers = srecipe.allowedfibers
         # get runs for this recipe

@@ -1887,7 +1887,7 @@ def _get_file_list(limit, path, ext=None, recursive=False,
     levelsep = '\t'
     level = ''
     # walk through directories
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(path, followlinks=True):
         if len(file_list) > limit:
             file_list.append(level + '...')
             return file_list

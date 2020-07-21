@@ -908,18 +908,16 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, **kwargs):
     pconst = constants.pload(params['INSTRUMENT'])
     sfibers, rfiber = pconst.FIBER_KINDS()
     # ----------------------------------------------------------------------
-    # deal with fiber
+    # deal with fiber being the reference fiber
     if fiber != rfiber:
-        # TODO: add to language database
-        emsg = 'Skipping FPLINES (Fiber = {0})'
-        WLOG(params, 'debug', emsg.format(fiber))
+        # Skipping FPLINES (Fiber = {0})'
+        WLOG(params, 'debug', TextEntry('90-016-00003', args=[fiber]))
         return None
     # ----------------------------------------------------------------------
     # deal with allowed dprtypes
     if dprtype not in allowtypes:
-        # TODO: add to language database
-        dmsg = 'Skipping FPLINES (DPRTYPE = {0})'
-        WLOG(params, 'debug', dmsg.format(dprtype))
+        # Skipping FPLINES (DPRTYPE = {0})
+        WLOG(params, 'debug', TextEntry('90-016-000034', args=[dprtype]))
         return None
     # ----------------------------------------------------------------------
     # get master hc lines and fp lines from calibDB
@@ -1538,9 +1536,6 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
     values = ['LEAK_BCKGRD_PERCENTILE_USED', 'LEAK_NORM_PERCENTILE_USED',
               'LEAK_LOW_PERCENTILE_USED', 'LEAK_HIGH_PERCENTILE_USED',
               'LEAK_BAD_RATIO_OFFSET_USED']
-
-    # TODO: remove break point
-    constants.break_point(params)
 
     # ----------------------------------------------------------------------
     # 2D files

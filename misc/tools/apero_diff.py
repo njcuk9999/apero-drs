@@ -20,8 +20,8 @@ from astropy.time import Time
 # Define variables
 # =============================================================================
 # workspace for comparison (above reduced/calibDB/telluDB etc)
-WORKSPACE1 = '/scratch3/rali/spirou/md_20200618/'
-WORKSPACE2 = '/scratch3/LAMsync/md_v0_6_106/'
+WORKSPACE1 = '/scratch3/rali/spirou/md_20200703/'
+WORKSPACE2 = '/scratch3/LAMsync/lam_v_0_6_115/'
 # define directories to compare
 directories = ['calibDB', 'tmp', 'reduced', 'telluDB']
 # define fit file suffixes

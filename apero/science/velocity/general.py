@@ -607,7 +607,12 @@ def locate_reference_file(params, recipe, infile):
     # set function name
     func_name = display_func(params, 'locate_reference_file', __NAME__)
     # get pp file name
+    # TODO: fix how we get pp file
     pp_filename = infile.filename.split('_pp')[0] + '_pp.fits'
+    # get pseudo const
+    pconst = constants.pload(params['INSTRUMENT'])
+    # get reference fiber
+    _, reffiber = pconst.FIBER_KINDS()
     # deal with infile being telluric file (we do not have reference file
     #   for telluric files) --> must use the telluric files "intype file"
     if infile.name == 'TELLU_OBJ':
@@ -623,7 +628,7 @@ def locate_reference_file(params, recipe, infile):
         eargs = [infile.name, ppfile.name, infile.filename, func_name]
         WLOG(params, 'error', TextEntry('00-020-00003', args=eargs))
     # make a new copy of this instance
-    outfile = instance.newcopy(recipe=recipe, fiber='C')
+    outfile = instance.newcopy(recipe=recipe, fiber=reffiber)
     # construct filename
     outfile.construct_filename(params, infile=ppfile)
     # read outfile
@@ -876,10 +881,6 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     mkwargs = dict(filename=ccfmask, mask_width=mask_width,
                    mask_units=mask_units)
     ll_mask_d, ll_mask_ctr, w_mask = get_ccf_mask(params, **mkwargs)
-
-
-    # TODO: remove break point
-    constants.break_point(params)
     # calculate the CCF
     props = ccf_calculation(params, image, blaze, wavemap, berv, targetrv,
                             ccfwidth, ccfstep, ll_mask_ctr, w_mask, fit_type,
@@ -998,9 +999,6 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
     ccf_lines = []
     ccf_all_snr = []
     ccf_norm_all = []
-
-    # TODO: remove break point
-    constants.break_point(params)
     # ----------------------------------------------------------------------
     # loop around the orders
     for order_num in range(nbo):

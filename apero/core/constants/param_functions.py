@@ -1347,10 +1347,10 @@ def get_module_names(instrument=None, mod_list=None, instrument_path=None,
         if os.path.isdir(filename):
             directories.append(filename)
     # construct sub-module name
-    relpath = instrument_path.replace('.', '').replace(os.sep, '.')
-    relpath = relpath.strip('.')
-    corepath = default_path.replace('.', '').replace(os.sep, '.')
-    corepath = corepath.strip('.')
+    relpath = os.path.normpath(instrument_path).replace('.', '')
+    relpath = relpath.replace(os.sep, '.').strip('.')
+    corepath = os.path.normpath(default_path).replace('.', '')
+    corepath = corepath.replace(os.sep, '.').strip('.')
 
     # construct module import name
     if instrument is None:
@@ -2056,8 +2056,7 @@ def _copy_pdb_rc(params, level=0):
     package = params['DRS_PACKAGE']
     # get path
     path = params['DRS_PDB_RC_FILE']
-    # get file name
-    filename = os.path.basename(path)
+    filename = params['DRS_PDB_RC_FILENAME']
     # get current path
     CURRENT_PATH = os.getcwd()
     # get absolute path
@@ -2089,10 +2088,8 @@ def _copy_pdb_rc(params, level=0):
 def _remove_pdb_rc(params):
     # set function name (cannot break here --> no access to inputs)
     _ = str(__NAME__) + '_remove_pdb_rc()'
-    # get path
-    path = params['DRS_PDB_RC_FILE']
     # get file name
-    filename = os.path.basename(path)
+    filename = params['DRS_PDB_RC_FILENAME']
     # get newsrc
     newsrc = os.path.join(CURRENT_PATH, filename)
     # remove

@@ -142,8 +142,8 @@ def get_berv(params, infile=None, header=None, props=None, log=True,
     bprops = get_times(params, bprops, infile, header)
     # ----------------------------------------------------------------------
     # debug final parameters to use
-    # TODO: add to language database
-    WLOG(params, 'debug', 'Final berv input parameters:')
+    # log: Final berv input parameters:
+    WLOG(params, 'debug', TextEntry('90-016-00002'))
     for key in bprops:
         bstrval = str(bprops[key])[:50]
         WLOG(params, 'debug', '\t{0:20s}{1}'.format(key, bstrval))

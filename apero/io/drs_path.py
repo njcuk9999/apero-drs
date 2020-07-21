@@ -211,7 +211,7 @@ def makedirs(params, path):
 
 
 def copytree(src: Union[str, Path], dst: Union[str, Path]):
-    for root, dirs, files in os.walk(src):
+    for root, dirs, files in os.walk(src, followlinks=True):
         # out root
         outroot = root.replace(str(src), str(dst))
         # deal with directory not existing

@@ -235,13 +235,13 @@ def reset_log_fits(params, log=True):
     logfiles = []
     #   in the tmp folder
     path = params['DRS_DATA_WORKING']
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(path, followlinks=True):
         for filename in files:
             if os.path.basename(filename) == params['DRS_LOG_FITS_NAME']:
                 logfiles.append(os.path.join(root, filename))
     #   in the red folder
     path = params['DRS_DATA_REDUC']
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(path, followlinks=True):
         for filename in files:
             if os.path.basename(filename) == params['DRS_LOG_FITS_NAME']:
                 logfiles.append(os.path.join(root, filename))
@@ -276,7 +276,7 @@ def remove_all(params, path, log=True, skipfiles=None):
             WLOG(params, 'error', TextEntry('00-502-00002', args=[path]))
     # loop around files and folders in calib_dir
     allfiles = []
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(path, followlinks=True):
         for filename in files:
             allfiles.append(os.path.join(root, filename))
     # loop around all files (adding all files from sub directories
