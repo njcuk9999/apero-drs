@@ -913,6 +913,14 @@ calib_file.addset(out_wave_night)
 # -----------------------------------------------------------------------------
 # make telluric
 # -----------------------------------------------------------------------------
+# cleaned spectrum
+out_tellu_pclean = drs_finput('TELLU_PCLEAN', KW_OUTPUT='TELLU_PCLEAN',
+                              fibers=['A', 'B'],
+                              filetype='.fits', intype=out_ext_e2dsff,
+                              suffix='_tellu_pclean', remove_insuffix=True,
+                              dbname='telluric', dbkey='TELLU_PCLEAN',
+                              outfunc=out.general_file)
+
 # convolved tapas map (with wave solution)
 out_tellu_conv = drs_ninput('TELLU_CONV', KW_OUTPUT='TELLU_CONV',
                             fibers=['A', 'B'],
@@ -920,6 +928,13 @@ out_tellu_conv = drs_ninput('TELLU_CONV', KW_OUTPUT='TELLU_CONV',
                             suffix='_tellu_conv', remove_insuffix=True,
                             dbname='telluric', dbkey='TELLU_CONV',
                             outfunc=out.general_file)
+
+
+# tapas file in format for pre-cleaning
+out_tellu_spl_npy = drs_ninput('TELLU_TAPAS', filetype='.npy',
+                                basename='tapas_spl.npy',
+                                dbname='telluric', dbkey='TELLU_TAPAS',
+                                outfunc=out.set_file)
 
 # transmission map
 out_tellu_trans = drs_finput('TELLU_TRANS', KW_OUTPUT='TELLU_TRANS',
@@ -930,10 +945,14 @@ out_tellu_trans = drs_finput('TELLU_TRANS', KW_OUTPUT='TELLU_TRANS',
                              outfunc=out.general_file)
 
 # add make_telluric outputs to output fileset
+out_file.addset(out_tellu_pclean)
 out_file.addset(out_tellu_conv)
 out_file.addset(out_tellu_trans)
+out_file.addset(out_tellu_spl_npy)
+tellu_file.addset(out_tellu_pclean)
 tellu_file.addset(out_tellu_conv)
 tellu_file.addset(out_tellu_trans)
+tellu_file.addset(out_tellu_spl_npy)
 
 # -----------------------------------------------------------------------------
 # fit telluric

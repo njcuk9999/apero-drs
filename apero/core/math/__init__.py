@@ -37,6 +37,8 @@ gaussian_function_nn =  gauss.gaussian_function_nn
 
 gauss_function = gauss.gauss_function
 
+gauss_function_nodc = gauss.gauss_function_nodc
+
 gauss_beta_function = gauss.gauss_beta_function
 
 gauss_fit_s = gauss.gauss_fit_s
@@ -50,6 +52,8 @@ get_ll_from_coefficients_cheb = general.get_ll_from_coefficients_cheb
 iuv_spline = general.iuv_spline
 
 killnan = nan.killnan
+
+lowpassfilter = general.lowpassfilter
 
 measure_box_min_max = general.measure_box_min_max
 

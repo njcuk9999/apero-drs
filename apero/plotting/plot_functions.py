@@ -2823,6 +2823,92 @@ definitions += [wave_hc_guess, wave_hc_brightest_lines, wave_hc_tfit_grid,
 # =============================================================================
 # Define telluric plotting functions
 # =============================================================================
+def plot_tellup_wave_trans(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    dd_arr = kwargs['dd_arr']
+    ccf_water_arr = kwargs['ccf_water_arr']
+    ccf_others_arr = kwargs['ccf_others_arr']
+    n_iterations = len(dd_arr)
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=1, ncols=2)
+    # ------------------------------------------------------------------
+    # plot ccfs
+    for n_it in range(n_iterations):
+        # plot water ccf
+        frames[0].plot(dd_arr[n_it], ccf_water_arr[n_it])
+        frames[0].set(xlabel='dv [km/s]', ylabel='CCF power',
+                      title='Water CCF')
+        # plot other species ccf
+        frames[1].plot(dd_arr[n_it], ccf_others_arr[n_it])
+        frames[1].set(xlabel='dv [km/s]', ylabel='CCF power',
+                      title='Dry CCF')
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_tellup_abso_spec(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    trans = kwargs['trans']
+    wave = kwargs['wave']
+    thres = kwargs['thres']
+    spectrum = kwargs['spectrum']
+    spectrum_ini = kwargs['spectrum_ini']
+    objname = kwargs['objname']
+    clean_ohlines = kwargs['clean_ohlines']
+    # ------------------------------------------------------------------
+    # calculate normalisation
+    median = np.nanmedian(spectrum)
+    spectrum = spectrum / median
+    spectrum_ini = spectrum_ini / median
+    # calculate mask for transmissiong
+    mask = np.ones_like(trans)
+    # set lower tranmission to NaNs in mask
+    mask[trans < np.exp(thres)] = np.nan
+    # set NaN values in spectrum to NaNs in mask
+    mask[~np.isfinite(spectrum)] = np.nan
+    # work out a scaling
+    scale = np.nanpercentile(spectrum/trans*mask, 99.5)
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+    # ------------------------------------------------------------------
+    # plot input spectrum
+    frame.plot(wave, spectrum / scale, color='red', label='input')
+    # plot oh lines
+    if clean_ohlines:
+        frame.plot(wave, spectrum_ini / (trans * mask) / scale, color='magenta',
+                   alpha=0.5, label='prior to OH')
+    # plot input/derived_trans
+    frame.plot(wave, spectrum / trans * mask / scale, color='green',
+               label='input/derived_trans')
+    # plot abso
+    frame.plot(wave, trans, color='orange', label='abso', alpha=0.3)
+    # add legend
+    frame.legend(loc=0)
+    # get ymax value
+    ymax = mp.nanmax(spectrum_ini / (trans * mask) / scale) * 1.05
+    # set limits
+    frame.set(xlabel='Wavelength [nm]', ylabel='Normalized flux\n transmission',
+              title='OBJECT = {0}'.format(objname), ylim=[0, ymax])
+    # make figure tight
+    fig.tight_layout()
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
 def plot_mktellu_wave_flux(plotter, graph, kwargs):
     # ------------------------------------------------------------------
     # start the plotting process
@@ -2830,9 +2916,7 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
         return
     # ------------------------------------------------------------------
     # get the arguments from kwargs
-    keep = kwargs['keep']
     wavemap = kwargs['wavemap']
-    tau1 = kwargs['tau1']
     sp = kwargs['sp']
     sed = kwargs['sed']
     oimage = kwargs['oimage']
@@ -2841,7 +2925,7 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
     template = kwargs.get('template', None)
     # ------------------------------------------------------------------
     if order is None:
-        order_gen = plotter.plotloop(np.arange(len(keep)))
+        order_gen = plotter.plotloop(np.arange(len(wavemap)))
         # prompt to start looper
         plotter.close_plots(loop=True)
     # else we just deal with the order specified
@@ -2851,9 +2935,7 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
     # loop around orders
     for order_num in order_gen:
         # get this orders values
-        good = keep[order_num]
         x = wavemap[order_num]
-        y1 = tau1[order_num]
         y2 = sp[order_num]
         y3 = (sp[order_num] / template[order_num]) / sed[order_num]
         y4 = oimage[order_num] * template[order_num]
@@ -2869,7 +2951,6 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
         fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
         # ------------------------------------------------------------------
         # plot data
-        frame.plot(x, y1, color='c', marker='+', label='tapas fit')
         frame.plot(x, y2, color='k', label='input spectrum')
         frame.plot(x, y3, color='b', label='measured transmission')
 
@@ -2879,20 +2960,18 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
         else:
             label4 = 'SED calculation value (No template)'
 
-        frame.plot(x[good], y4[good], color='r', marker='.', linestyle='None',
+        frame.plot(x, y4, color='r', marker='.', linestyle='None',
                    label='SED calculation value')
         frame.plot(x, y5, color='g', linestyle='--', label=label4)
 
         # get max / min y
-        values = list(y1[good]) + list(y2[good]) + list(y3[good])
-        values += list(y4[good]) + list(y5[good])
+        values = list(y2) + list(y3) + list(y4) + list(y5)
         mins = 0.95 * np.nanmin([0, np.nanmin(values)])
         maxs = 1.05 * np.nanmax(values)
 
         # plot legend and set up labels / limits / title
         frame.legend(loc=0)
-        frame.set(xlim=(np.min(x[good]), np.max(x[good])),
-                  ylim=(mins, maxs),
+        frame.set(xlim=(np.min(x), np.max(x)), ylim=(mins, maxs),
                   xlabel='Wavelength [nm]', ylabel='Normalised flux',
                   title='Order: {0}'.format(order_num))
         # update filename (adding order_num to end)
@@ -3006,7 +3085,8 @@ def plot_ftellu_recon_spline(plotter, graph, kwargs):
         # plot spectra for selected order
         frame.plot(swave, simage / np.nanmedian(simage), label='Observed SP')
         frame.plot(swave, stemp / np.nanmedian(stemp), label='Template SP')
-        frame.plot(swave, srecov / np.nanmedian(srecov), label='Recov abso SP')
+        frame.plot(swave, srecov / np.nanmedian(srecov),
+                   label='Recov abso SP (Observed/Template)')
         # add legend
         frame.legend(loc=0)
         # add labels
@@ -3156,12 +3236,26 @@ def plot_ftellu_recon_abso(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
+# telluric pre clean graph instances
+tellup_wave_trans = Graph('TELLUP_WAVE_TRANS', kind='debug',
+                          func=plot_tellup_wave_trans)
+sum_desc = ('Plot to show the measured CCF of water and other species '
+            'calculated during the telluric pre-cleaning')
+sum_tellup_wave_trans = Graph('SUM_TELLUP_WAVE_TRANS', kind='summary',
+                              func=plot_tellup_wave_trans,
+                              figsize=(16, 10), dpi=150, description=sum_desc)
+tellup_abso_spec = Graph('TELLUP_ABSO_SPEC', kind='debug',
+                         func=plot_tellup_abso_spec)
+sum_desc = 'Plot to the result of the telluric pre-cleaning'
+sum_tellup_abso_spec = Graph('SUM_TELLUP_ABSO_SPEC', kind='summary',
+                             func=plot_tellup_abso_spec,
+                             figsize=(16, 10), dpi=150, description=sum_desc)
 # make telluric graph instances
 mktellu_wave_flux1 = Graph('MKTELLU_WAVE_FLUX1', kind='debug',
                            func=plot_mktellu_wave_flux)
 mktellu_wave_flux2 = Graph('MKTELLU_WAVE_FLUX2', kind='debug',
                            func=plot_mktellu_wave_flux)
-sum_desc = ('Plot to show the measured transmission (and calcaulted SED for'
+sum_desc = ('Plot to show the measured transmission (and calcaulted SED) for'
             ' input rapidly rotating hot star')
 sum_mktellu_wave_flux = Graph('SUM_MKTELLU_WAVE_FLUX', kind='summary',
                               func=plot_mktellu_wave_flux,
@@ -3191,7 +3285,9 @@ sum_ftellu_recon_abso = Graph('SUM_FTELLU_RECON_ABSO', kind='summary',
 definitions += [mktellu_wave_flux1, mktellu_wave_flux2, sum_mktellu_wave_flux,
                 ftellu_pca_comp1, ftellu_pca_comp2, ftellu_recon_spline1,
                 ftellu_recon_spline2, ftellu_wave_shift1, ftellu_wave_shift2,
-                ftellu_recon_abso1, ftellu_recon_abso2, sum_ftellu_recon_abso]
+                ftellu_recon_abso1, ftellu_recon_abso2, sum_ftellu_recon_abso,
+                tellup_wave_trans, sum_tellup_wave_trans,
+                tellup_abso_spec, sum_tellup_abso_spec]
 
 
 # =============================================================================

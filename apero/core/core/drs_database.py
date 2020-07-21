@@ -535,6 +535,10 @@ def get_db_file(params, abspath, ext=0, fmt='fits', kind='image',
     # set function name
     func_name = display_func(params, 'get_db_file', __NAME__)
 
+    # don't lock if we aren't getting image or header
+    if not get_image and not get_header:
+        return None, None
+
     # ------------------------------------------------------------------
     # define a synchoronized lock for indexing (so multiple instances do not
     #  run at the same time)
