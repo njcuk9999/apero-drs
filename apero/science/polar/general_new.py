@@ -399,8 +399,6 @@ class PolarObj:
         mwavemap = self.mwaveprops['WAVEMAP']
         wavemap = self.waveprops['WAVEMAP']
 
-        # TODO: remove breakpoint
-        constants.break_point()
         # ------------------------------------------------------------------
         # set up arrays as all NaN
         self.flux = np.zeros_like(self.rawflux) * np.nan
@@ -1270,7 +1268,7 @@ def normalize_stokes_i(params, pprops, **kwargs):
     return pprops
 
 
-def clean_polar_data(params, pprops, sigclip=False, nsig=3, overwrite=False):
+def clean_polar_data(params, pprops, **kwargs):
     """
     Function to clean polarimetry data.
 
@@ -1282,6 +1280,12 @@ def clean_polar_data(params, pprops, sigclip=False, nsig=3, overwrite=False):
             POL: numpy array (2D), degree of polarization data
             POLERR: numpy array (2D), errors of degree of polarization
             NULL2: numpy array (2D), 2nd null polarization
+
+    :keyword sigclip: bool, if True sigma clip
+    :keyword nsig: int, set the number of sigmas to clip at (deafult = 3)
+    :keyword overwrite: bool, if True overwrite input data with sigma clipped
+                        data
+
     :return loc: parameter dictionaries,
         The updated parameter dictionary adds/updates the following:
             WAVE: numpy array (1D), wavelength data
@@ -1294,6 +1298,13 @@ def clean_polar_data(params, pprops, sigclip=False, nsig=3, overwrite=False):
     """
     # set the function
     func_name = display_func(params, 'clean_polar_data', __NAME__)
+    # get parameters from params
+    sigclip = pcheck(params, 'POLAR_CLEAN_SIGCLIP', 'sigclip',
+                     kwargs, func_name, default=False)
+    nsig = pcheck(params, 'POLAR_NSIGMA_CLIPPING', 'nsig', kwargs, func_name,
+                  default=3)
+    overwrite = pcheck(params, 'POLAR_SIGCLIP_OVERWRITE', 'overwrite',
+                       kwargs, func_name)
     # storage for clean outputs
     clean_wave, clean_stokesi, clean_stokesierr = [], [], []
     clean_pol, clean_polerr, clean_null1, clean_null2 = [], [], [], []

@@ -679,7 +679,7 @@ def _find_log_file(params, logfile):
     # get basename of logfile
     basename = os.path.basename(logfile)
     # walk through dirs
-    for root, dirs, files in os.walk(logdir):
+    for root, dirs, files in os.walk(logdir, followlinks=True):
         for filename in files:
             if basename == filename:
                 return True, os.path.join(root, filename)

@@ -116,6 +116,10 @@ class Header(fits.Header):
     def __nan_check(value):
         if isinstance(value, float) and np.isnan(value):
             return 'NaN'
+        elif isinstance(value, float) and np.isposinf(value):
+            return 'INF'
+        elif isinstance(value, float) and np.isneginf(value):
+            return '-INF'
         elif type(value) == tuple:
             return (Header.__nan_check(value[0]),) + value[1:]
         else:
@@ -338,7 +342,7 @@ def read_header(params, filename, ext=0, log=True):
     return header
 
 
-def _read_fitsmulti(params, filename, getdata, gethdr):
+def _read_fitsmulti(params, filename, getdata, gethdr, log=True):
     func_name = __NAME__ + '._read_fitsmulti()'
     # attempt to open hdu of fits file
     try:
@@ -366,8 +370,12 @@ def _read_fitsmulti(params, filename, getdata, gethdr):
             try:
                 headerarr.append(hdulist[it].header)
             except Exception as e:
-                eargs = [os.path.basename(filename), it, type(e), e, func_name]
-                WLOG(params, 'error', TextEntry('01-001-00008', args=eargs))
+                if log:
+                    eargs = [os.path.basename(filename), it, type(e), e,
+                             func_name]
+                    WLOG(params, 'error', TextEntry('01-001-00008', args=eargs))
+                else:
+                    raise e
             # append data
             try:
                 if isinstance(hdulist[it].data, fits.BinTableHDU):
@@ -375,8 +383,12 @@ def _read_fitsmulti(params, filename, getdata, gethdr):
                 else:
                     dataarr.append(hdulist[it].data)
             except Exception as e:
-                eargs = [os.path.basename(filename), it, type(e), e, func_name]
-                WLOG(params, 'error', TextEntry('01-001-00007', args=eargs))
+                if log:
+                    eargs = [os.path.basename(filename), it, type(e), e,
+                             func_name]
+                    WLOG(params, 'error', TextEntry('01-001-00007', args=eargs))
+                else:
+                    raise e
         data = list(dataarr)
         header = list(headerarr)
     # -------------------------------------------------------------------------
@@ -840,7 +852,7 @@ def get_index_files(params, path=None, required=True, night=None):
     # storage of index files
     index_files = []
     # walk through path and find index files
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(path, followlinks=True):
         # skip nights if required
         if night is not None:
             if not root.strip(os.sep).endswith(night):
@@ -1199,7 +1211,7 @@ def _get_files(params, recipe, path, rpath, **kwargs):
         bnightnames = None
     # ----------------------------------------------------------------------
     # get files (walk through path)
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(path, followlinks=True):
         # loop around files in this root directory
         for filename in files:
             # --------------------------------------------------------------

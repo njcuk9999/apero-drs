@@ -184,6 +184,20 @@ def __main__(recipe, params):
     params.set('POLAR_REMOVE_CONTINUUM', value=True, source=mainname)
     # define whether to normalize Stokes I
     params.set('POLAR_NORMALIZE_STOKES_I', value=True, source=mainname)
+    # Apply polarimetric sigma-clip cleanning
+    #    (Works better if continuum is removed)
+    params.set('POLAR_CLEAN_BY_SIGMA_CLIPPING', value=True, source=mainname)
+    # Define whether to sigma clip in sigma cliping function
+    params.set('POLAR_CLEAN_SIGCLIP', value=True, source=mainname)
+    # Define number of sigmas within which apply clipping
+    params.set('POLAR_NSIGMA_CLIPPING', value=4, source=mainname)
+    # Define whether to overwrite input data with sigma clipping data
+    params.set('POLAR_SIGCLIP_OVERWRITE', value=True, source=mainname)
+    # Define minimum lande of lines to be used in the LSD analyis
+    params.set('POLAR_LSD_MIN_LANDE', value=0.0)
+    # Define maximum lande of lines to be used in the LSD analyis
+    params.set('POLAR_LSD_MAX_LANDE', value=10.0)
+
     # TODO: ------------------------------------------------------------------
 
     # set the location (must do before any plotting starts)
@@ -221,7 +235,9 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Apply sigma-clipping
     # ----------------------------------------------------------------------
-    pprops = general_new.clean_polar_data(params, pprops)
+    if params['POLAR_CLEAN_BY_SIGMA_CLIPPING']:
+
+        pprops = general_new.clean_polar_data(params, pprops)
 
     # ----------------------------------------------------------------------
     # Plots

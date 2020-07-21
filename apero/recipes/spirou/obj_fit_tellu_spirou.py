@@ -164,6 +164,8 @@ def __main__(recipe, params):
             # log that we are skipping
             wargs = [dprtype, recipe.name, allowed_dprtypes, infile.basename]
             WLOG(params, 'warning', TextEntry('10-019-00001', args=wargs))
+            # end log correctly
+            log1.end(params)
             # continue
             continue
         # ------------------------------------------------------------------
@@ -177,8 +179,14 @@ def __main__(recipe, params):
             # log that we are skipping
             wargs = [infile.basename, params['KW_OBJNAME'][0], objname]
             WLOG(params, 'warning', TextEntry('10-019-00002', args=wargs))
+            # end log correctly
+            log1.end(params)
             # continue
             continue
+        else:
+            # log that file is validated
+            args = [objname, dprtype]
+            WLOG(params, 'info', TextEntry('40-019-00048', args=args))
         # ------------------------------------------------------------------
         # get fiber from infile
         fiber = infile.get_fiber(header=header)
@@ -196,34 +204,42 @@ def __main__(recipe, params):
         # load wavelength solution for this fiber
         wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
                                        infile=infile)
+
+        # ------------------------------------------------------------------
+        # telluric pre-cleaning
+        # ------------------------------------------------------------------
+        tpreprops = telluric.tellu_preclean(params, recipe, infile, wprops,
+                                            fiber, rawfiles, combine)
+        # get variables out of tpreprops
+        image1 = tpreprops['CORRECTED_E2DS']
         # ------------------------------------------------------------------
         # Normalize image by peak blaze
         # ------------------------------------------------------------------
-        nargs = [image, header, fiber]
+        nargs = [image1, header, fiber]
         _, nprops = telluric.normalise_by_pblaze(params, *nargs)
         # normalise by the blaze
-        image2 = image / nprops['NBLAZE']
+        image2 = image1 / nprops['NBLAZE']
         # ------------------------------------------------------------------
         # Get barycentric corrections (BERV)
         # ------------------------------------------------------------------
         bprops = extract.get_berv(params, infile, dprtype=dprtype)
-        # ----------------------------------------------------------------------
+        # ------------------------------------------------------------------
         # Load transmission files
-        # ----------------------------------------------------------------------
+        # ------------------------------------------------------------------
         trans_files = telluric.get_trans_files(params, recipe, header, fiber)
         # ------------------------------------------------------------------
         # Get template file (if available)
         # ------------------------------------------------------------------
         tout = telluric.load_templates(params, header, objname, fiber)
         template, template_file = tout
-        # ----------------------------------------------------------------------
+        # ------------------------------------------------------------------
         # load the expected atmospheric transmission
-        # ----------------------------------------------------------------------
-        tpargs = [header, mprops, fiber]
-        tapas_props = telluric.load_tapas_convolved(params, recipe, *tpargs)
-        # ----------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        largs = [header, mprops, fiber]
+        tapas_props = telluric.load_conv_tapas(params, recipe, *largs)
+        # ------------------------------------------------------------------
         # Generate the absorption map + calculate PCA components
-        # ----------------------------------------------------------------------
+        # ------------------------------------------------------------------
         pargs = [image2, trans_files, fiber, mprops]
         pca_props = telluric.gen_abso_pca_calc(params, recipe, *pargs)
         # ------------------------------------------------------------------
@@ -237,7 +253,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Calculate reconstructed absorption + correct E2DS file
         # ------------------------------------------------------------------
-        cargs = [image2, wprops, pca_props, sprops, nprops]
+        cargs = [image2, wprops, pca_props, sprops, nprops, tpreprops]
         cprops = telluric.calc_recon_and_correct(params, recipe, *cargs)
 
         # ------------------------------------------------------------------
@@ -272,7 +288,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Quality control
         # ------------------------------------------------------------------
-        qc_params, passed = telluric.fit_tellu_quality_control(params, infile)
+        qc_params, passed = telluric.fit_tellu_quality_control(params, infile,
+                                                               tpreprops)
         # update recipe log
         log1.add_qc(params, qc_params, passed)
 
@@ -280,7 +297,7 @@ def __main__(recipe, params):
         # Save corrected E2DS to file
         # ------------------------------------------------------------------
         fargs = [infile, rawfiles, fiber, combine, nprops, wprops, pca_props,
-                 sprops, cprops, qc_params, template_file]
+                 sprops, cprops, qc_params, template_file, tpreprops]
         corrfile = telluric.fit_tellu_write_corrected(params, recipe, *fargs)
 
         # ------------------------------------------------------------------
@@ -294,6 +311,25 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         frargs = [infile, corrfile, fiber, cprops, rcwprops, rcvprops]
         reconfile = telluric.fit_tellu_write_recon(params, recipe, *frargs)
+
+        # ------------------------------------------------------------------
+        # Correct other science fibers (using recon)
+        # ------------------------------------------------------------------
+        # get fibers
+        pconst = constants.pload(params['INSTRUMENT'])
+        sfibers, rfiber = pconst.FIBER_KINDS()
+        # loop around fibers and correct/create s1d/save
+        for sfiber in sfibers:
+            # print that we are correcting other fibers
+            # log: Correcting fiber {0}
+            WLOG(params, 'info', TextEntry('40-019-00049', args=[sfiber]))
+            # skip master fiber
+            if sfiber == fiber:
+                continue
+            # else correct/create s1d/ and save
+            coargs = [sfiber, infile, cprops, rawfiles, combine, pca_props,
+                      sprops, qc_params, template_file, tpreprops]
+            telluric.correct_other_science(params, recipe, *coargs)
 
         # ------------------------------------------------------------------
         # Add TELLU_OBJ and TELLU_RECON to database

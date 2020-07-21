@@ -7,7 +7,7 @@ set PATH={PATH};%PATH%
 set PYTHONPATH={PYTHONPATH};%PYTHONPATH%
 
 # setup drs config path
-export DRS_UCONFIG="{USER_CONFIG}"
+set DRS_UCONFIG="{USER_CONFIG}"
 
 # force numpy  to only use 1 core max
 set MKL_DYNAMIC=FALSE
@@ -17,3 +17,6 @@ set OPENBLAS_NUM_THREADS=1
 set MKL_NUM_THREADS=1
 set VECLIB_MAXIMUM_THREADS=1
 set NUMEXPR_NUM_THREADS=1
+
+# windows specific (force UTF8)
+set PYTHONUTF8=1

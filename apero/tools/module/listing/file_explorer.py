@@ -840,7 +840,7 @@ class LoadData:
 
         else:
             # walk through all sub-directories
-            for root, dirs, files in os.walk(self.path):
+            for root, dirs, files in os.walk(self.path, followlinks=True):
                 # loop around files in current sub-directory
                 for filename in files:
                     # only save index files
