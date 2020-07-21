@@ -908,18 +908,16 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, **kwargs):
     pconst = constants.pload(params['INSTRUMENT'])
     sfibers, rfiber = pconst.FIBER_KINDS()
     # ----------------------------------------------------------------------
-    # deal with fiber
+    # deal with fiber being the reference fiber
     if fiber != rfiber:
-        # TODO: add to language database
-        emsg = 'Skipping FPLINES (Fiber = {0})'
-        WLOG(params, 'debug', emsg.format(fiber))
+        # Skipping FPLINES (Fiber = {0})'
+        WLOG(params, 'debug', TextEntry('90-016-00003', args=[fiber]))
         return None
     # ----------------------------------------------------------------------
     # deal with allowed dprtypes
     if dprtype not in allowtypes:
-        # TODO: add to language database
-        dmsg = 'Skipping FPLINES (DPRTYPE = {0})'
-        WLOG(params, 'debug', dmsg.format(dprtype))
+        # Skipping FPLINES (DPRTYPE = {0})
+        WLOG(params, 'debug', TextEntry('90-016-000034', args=[dprtype]))
         return None
     # ----------------------------------------------------------------------
     # get master hc lines and fp lines from calibDB
