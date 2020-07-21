@@ -510,7 +510,6 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
     for it in range(len(vfilenames)):
         residual_cube[:, it] -= median
     # calculate rms (median of residuals)
-    # TODO: Ask Etienne problem with rms
     rms = mp.nanmedian(np.abs(residual_cube), axis=1)
     # ----------------------------------------------------------------------
     # setup output parameter dictionary

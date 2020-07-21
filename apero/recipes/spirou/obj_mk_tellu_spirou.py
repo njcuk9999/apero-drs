@@ -191,19 +191,16 @@ def __main__(recipe, params):
             continue
         elif objname not in whitelist:
             # log that we are skipping
-            # TODO: move to language database
-            msg = 'Object="{0}" is not a valid telluric star (hot star)'
             args = [objname]
-            WLOG(params, 'info', msg.format(*args))
+            WLOG(params, 'warning', TextEntry('10-019-00009', args=args))
             # end log correctly
             log1.end(params)
             # continue
             continue
         else:
-            # TODO: move to language database
-            msg = 'File validated: OBJECT={0} DPRTYPE={1}'
+            # log that file is validated
             args = [objname, dprtype]
-            WLOG(params, 'info', msg.format(*args))
+            WLOG(params, 'info', TextEntry('40-019-00048', args=args))
         # ------------------------------------------------------------------
         # get fiber from infile
         fiber = infile.get_fiber(header=header)
@@ -225,9 +222,6 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # telluric pre-cleaning
         # ------------------------------------------------------------------
-        # TODO: remove breakpoint
-        constants.break_point(params)
-
         tpreprops = telluric.tellu_preclean(params, recipe, infile, wprops,
                                             fiber, rawfiles, combine)
         # get variables out of tpreprops
