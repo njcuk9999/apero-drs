@@ -8,8 +8,7 @@ APERO Documentation
 ******************************************
 
 ===========================================
-Latest version: 0.6.115   :maxdepth: 1
-
+Latest version: 0.6.124
    misc/pythoninstallation.rst
    misc/glossary.rst
    misc/changelog.rst
