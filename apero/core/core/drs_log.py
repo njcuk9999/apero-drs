@@ -503,7 +503,7 @@ class Printer():
 
 class RecipeLog:
 
-    def __init__(self, name, params, level=0):
+    def __init__(self, name, params, level=0, wlog=None):
         # get the recipe name
         self.name = str(name)
         self.kind = str(params['DRS_RECIPE_KIND'])
@@ -512,6 +512,7 @@ class RecipeLog:
         self.inputdir = str(params['INPATH'])
         self.outputdir = str(params['OUTPATH'])
         self.params = params
+        self.wlog = wlog
         # set the pid
         self.pid = str(params['PID'])
         self.htime = str(params['DATE_NOW'])
@@ -626,7 +627,7 @@ class RecipeLog:
         # get new level
         level = self.level + 1
         # create new log
-        newlog = RecipeLog(self.name, params, level=level)
+        newlog = RecipeLog(self.name, params, level=level, wlog=WLOG)
         # copy from parent
         newlog.copy(self)
         # record level criteria
@@ -774,7 +775,8 @@ class RecipeLog:
                 # RecipeLogError: Cannot make path {0} for recipe log.'
                 eargs = [path]
                 emsg = TextEntry('00-005-00014', args=eargs)
-                WLOG(self.params, 'error', emsg)
+                if self.wlog is not None:
+                    self.wlog(self.params, 'error', emsg)
         # ------------------------------------------------------------------
         # return absolute log file path
         return os.path.join(path, self.logfitsfile)
@@ -838,13 +840,15 @@ class RecipeLog:
                 # RecipeLog: Reading file
                 dargs = [writepath]
                 dmsg = TextEntry('90-008-00012', args=dargs)
-                WLOG(self.params, 'debug', dmsg)
+                if self.wlog is not None:
+                    self.wlog(self.params, 'debug', dmsg)
                 table = Table.read(writepath, format='fits')
             except Exception as e:
                 # RecipeLogError: Cannot read file
                 eargs = [writepath, type(e), str(e)]
                 emsg = TextEntry('00-005-00016', args=eargs)
-                WLOG(self.params, 'error', emsg)
+                if self.wlog is not None:
+                    self.wlog(self.params, 'error', emsg)
         else:
             table = None
         # ------------------------------------------------------------------
@@ -897,13 +901,17 @@ class RecipeLog:
         # write to disk
         try:
             # debug log
-            dargs = [writepath]
-            WLOG(self.params, 'debug', TextEntry('90-008-00011', args=dargs))
+            if self.wlog is not None:
+                dargs = [writepath]
+                dmsg = TextEntry('90-008-00011', args=dargs)
+                self.wlog(self.params, 'debug', dmsg)
             mastertable.write(writepath, format='fits', overwrite=True)
         except Exception as e:
             # RecipeLogError: Cannot write file {0}
-            eargs = [writepath, type(e), str(e)]
-            WLOG(self.params, 'error', TextEntry('00-005-00015', args=eargs))
+            if self.wlog is not None:
+                eargs = [writepath, type(e), str(e)]
+                emsg = TextEntry('00-005-00015', args=eargs)
+                self.wlog(self.params, 'error', emsg)
 
 
 # =============================================================================
@@ -1603,17 +1611,17 @@ if __name__ == "__main__":
     pp['RECIPE'] = ''
 
     # Get Logging function
-    WLOG = wlog
+    testwlog = wlog
     # Title test
-    WLOG(pp, '', ' *****************************************')
-    WLOG(pp, '', ' * TEST @(#) Some Observatory (' + 'V0.0.-1' + ')')
-    WLOG(pp, '', ' *****************************************')
+    testwlog(pp, '', ' *****************************************')
+    testwlog(pp, '', ' * TEST @(#) Some Observatory (' + 'V0.0.-1' + ')')
+    testwlog(pp, '', ' *****************************************')
     # info log
-    WLOG(pp, 'info', "This is an info test")
+    testwlog(pp, 'info', "This is an info test")
     # warning log
-    WLOG(pp, 'warning', "This is a warning test")
+    testwlog(pp, 'warning', "This is a warning test")
     # error log
-    WLOG(pp, 'error', "This is an error test")
+    testwlog(pp, 'error', "This is an error test")
 
 # =============================================================================
 # End of code
