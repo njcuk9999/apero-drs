@@ -9,70 +9,75 @@ Created on 2019-01-17 at 14:31
 
 @author: cook
 """
-from apero.science.telluric import general
+from apero.science.telluric import gen_tellu
+from apero.science.telluric import mk_tellu
+from apero.science.telluric import fit_tellu
+from apero.science.telluric import template_tellu
 
-__all__ = ['calculate_telluric_absorption', 'get_blacklist', 'get_whitelist',
+__all__ = ['calculate_tellu_res_absorption', 'get_blacklist', 'get_whitelist',
            'load_conv_tapas', 'load_templates', 'mk_tellu_quality_control',
            'normalise_by_pblaze']
 
 # =============================================================================
 # Define functions
 # =============================================================================
-calc_recon_and_correct = general.calc_recon_and_correct
+calc_recon_and_correct = fit_tellu.calc_recon_and_correct
 
-calculate_telluric_absorption = general.calculate_telluric_absorption
+calculate_tellu_res_absorption = mk_tellu.calculate_tellu_res_absorption
 
-fit_tellu_write_corrected = general.fit_tellu_write_corrected
+correct_other_science = fit_tellu.correct_other_science
 
-fit_tellu_write_corrected_s1d = general.fit_tellu_write_corrected_s1d
+fit_tellu_write_corrected = fit_tellu.fit_tellu_write_corrected
 
-fit_tellu_write_recon = general.fit_tellu_write_recon
+fit_tellu_write_corrected_s1d = fit_tellu.fit_tellu_write_corrected_s1d
 
-fit_tellu_quality_control = general.fit_tellu_quality_control
+fit_tellu_write_recon = fit_tellu.fit_tellu_write_recon
 
-fit_tellu_summary = general.fit_tellu_summary
+fit_tellu_quality_control = fit_tellu.fit_tellu_quality_control
 
-gen_abso_pca_calc = general.gen_abso_pca_calc
+fit_tellu_summary = fit_tellu.fit_tellu_summary
 
-get_blacklist = general.get_blacklist
+gen_abso_pca_calc = fit_tellu.gen_abso_pca_calc
 
-get_non_tellu_objs = general.get_non_tellu_objs
+get_blacklist = gen_tellu.get_blacklist
 
-get_trans_files = general.get_transmission_files
+get_non_tellu_objs = gen_tellu.get_non_tellu_objs
 
-get_tellu_objs = general.get_tellu_objs
+get_trans_files = gen_tellu.get_transmission_files
 
-get_whitelist = general.get_whitelist
+get_tellu_objs = gen_tellu.get_tellu_objs
 
-load_conv_tapas = general.load_conv_tapas
+get_whitelist = gen_tellu.get_whitelist
 
-load_tapas_convolved = general.load_tapas_convolved
+load_conv_tapas = gen_tellu.load_conv_tapas
 
-load_templates = general.load_templates
+load_templates = gen_tellu.load_templates
 
-load_tellu_file = general.load_tellu_file
+load_tellu_file = gen_tellu.load_tellu_file
 
-make_1d_template_cube = general.make_1d_template_cube
+make_1d_template_cube = template_tellu.make_1d_template_cube
 
-make_template_cubes = general.make_template_cubes
+make_template_cubes = template_tellu.make_template_cubes
 
-mk_tellu_quality_control = general.mk_tellu_quality_control
+mk_tellu_quality_control = mk_tellu.mk_tellu_quality_control
 
-mk_tellu_write_trans_file = general.mk_tellu_write_trans_file
+mk_tellu_write_trans_file = mk_tellu.mk_tellu_write_trans_file
 
-mk_tellu_summary = general.mk_tellu_summary
+mk_tellu_summary = mk_tellu.mk_tellu_summary
 
-mk_1d_template_write = general.mk_1d_template_write
+mk_1d_template_write = template_tellu.mk_1d_template_write
 
-mk_template_qc = general.mk_template_qc
+mk_template_qc = template_tellu.mk_template_qc
 
-mk_template_write = general.mk_template_write
+mk_template_write = template_tellu.mk_template_write
 
-mk_template_summary = general.mk_template_summary
+mk_template_summary = template_tellu.mk_template_summary
 
-normalise_by_pblaze = general.normalise_by_pblaze
+tellu_preclean = gen_tellu.tellu_preclean
 
-shift_all_to_frame = general.shift_all_to_frame
+normalise_by_pblaze = gen_tellu.normalise_by_pblaze
+
+shift_all_to_frame = fit_tellu.shift_all_to_frame
 
 # =============================================================================
 # End of code

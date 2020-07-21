@@ -1752,11 +1752,10 @@ def _set_force_dirs(recipe, fkwargs):
             if '=' in arg:
                 pos = None
                 indir = arg.split('=')[-1]
-                # TODO: move to language database
-                dmsg = 'Setting {0}={1} from sys.argv[{2}] ({3})'
+                # Setting {0}={1} from sys.argv[{2}] ({3})
                 dargs = ['recipe.inputdir', indir, dirkey, '=']
-                WLOG(recipe.drs_params, 'debug', dmsg.format(*dargs))
-
+                dmsg = TextEntry('90-008-00013', args=dargs)
+                WLOG(recipe.drs_params, 'debug', dmsg)
             else:
                 pos = it
                 indir = None
@@ -1765,19 +1764,19 @@ def _set_force_dirs(recipe, fkwargs):
         pass
     elif pos is not None:
         indir = sys.argv[pos + 1]
-        # TODO: move to language database
-        dmsg = 'Setting {0}={1} from sys.argv[{2}] ({3})'
+        # Setting {0}={1} from sys.argv[{2}] ({3})
         dargs = ['recipe.inputdir', indir, dirkey, 'white-space']
-        WLOG(recipe.drs_params, 'debug', dmsg.format(*dargs))
+        dmsg = TextEntry('90-008-00013', args=dargs)
+        WLOG(recipe.drs_params, 'debug', dmsg)
 
     # check fkwargs
     for kwarg in fkwargs:
         if 'force_indir' in kwarg:
             indir = fkwargs[kwarg]
-            # TODO: move to language database
-            dmsg = 'Setting {0}={1} from fkwargs[{2}]'
+            # Setting {0}={1} from fkwargs[{2}]
             dargs = ['recipe.inputdir', indir, kwarg]
-            WLOG(recipe.drs_params, 'debug', dmsg.format(*dargs))
+            dmsg = TextEntry('90-008-00014', args=dargs)
+            WLOG(recipe.drs_params, 'debug', dmsg)
 
     # set recipe.inputdir
     if indir is not None:
@@ -1798,10 +1797,10 @@ def _set_force_dirs(recipe, fkwargs):
             if '=' in arg:
                 pos = None
                 outdir = arg.split('=')[-1]
-                # TODO: move to language database
-                dmsg = 'Setting {0}={1} from sys.argv[{2}] ({3})'
+                # Setting {0}={1} from sys.argv[{2}] ({3})
                 dargs = ['recipe.outputdir', indir, dirkey, '=']
-                WLOG(recipe.drs_params, 'debug', dmsg.format(*dargs))
+                dmsg = TextEntry('90-008-00013', args=dargs)
+                WLOG(recipe.drs_params, 'debug', dmsg)
             else:
                 pos = it
                 outdir = None
@@ -1810,18 +1809,18 @@ def _set_force_dirs(recipe, fkwargs):
         pass
     elif pos is not None:
         outdir = sys.argv[pos + 1]
-        # TODO: move to language database
-        dmsg = 'Setting {0}={1} from sys.argv[{2}] ({3})'
+        # Setting {0}={1} from sys.argv[{2}] ({3})
         dargs = ['recipe.outputdir', indir, dirkey, 'white-space']
-        WLOG(recipe.drs_params, 'debug', dmsg.format(*dargs))
+        dmsg = TextEntry('90-008-00013', args=dargs)
+        WLOG(recipe.drs_params, 'debug', dmsg)
     # check fkwargs
     for kwarg in fkwargs:
         if 'force_outdir' in kwarg:
             outdir = fkwargs[kwarg]
-            # TODO: move to language database
-            dmsg = 'Setting {0}={1} from fkwargs[{2}]'
+            # Setting {0}={1} from fkwargs[{2}]
             dargs = ['recipe.outputdir', indir, kwarg]
-            WLOG(recipe.drs_params, 'debug', dmsg.format(*dargs))
+            dmsg = TextEntry('90-008-00014', args=dargs)
+            WLOG(recipe.drs_params, 'debug', dmsg)
     # set recipe.outputdir
     if outdir is not None:
         if os.path.exists(os.path.abspath(outdir)):

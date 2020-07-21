@@ -342,7 +342,7 @@ def read_header(params, filename, ext=0, log=True):
     return header
 
 
-def _read_fitsmulti(params, filename, getdata, gethdr):
+def _read_fitsmulti(params, filename, getdata, gethdr, log=True):
     func_name = __NAME__ + '._read_fitsmulti()'
     # attempt to open hdu of fits file
     try:
@@ -370,8 +370,12 @@ def _read_fitsmulti(params, filename, getdata, gethdr):
             try:
                 headerarr.append(hdulist[it].header)
             except Exception as e:
-                eargs = [os.path.basename(filename), it, type(e), e, func_name]
-                WLOG(params, 'error', TextEntry('01-001-00008', args=eargs))
+                if log:
+                    eargs = [os.path.basename(filename), it, type(e), e,
+                             func_name]
+                    WLOG(params, 'error', TextEntry('01-001-00008', args=eargs))
+                else:
+                    raise e
             # append data
             try:
                 if isinstance(hdulist[it].data, fits.BinTableHDU):
@@ -379,8 +383,12 @@ def _read_fitsmulti(params, filename, getdata, gethdr):
                 else:
                     dataarr.append(hdulist[it].data)
             except Exception as e:
-                eargs = [os.path.basename(filename), it, type(e), e, func_name]
-                WLOG(params, 'error', TextEntry('01-001-00007', args=eargs))
+                if log:
+                    eargs = [os.path.basename(filename), it, type(e), e,
+                             func_name]
+                    WLOG(params, 'error', TextEntry('01-001-00007', args=eargs))
+                else:
+                    raise e
         data = list(dataarr)
         header = list(headerarr)
     # -------------------------------------------------------------------------

@@ -169,21 +169,38 @@ def __main__(recipe, params):
             # log that we are skipping
             wargs = [dprtype, recipe.name, allowed_dprtypes, infile.basename]
             WLOG(params, 'warning', TextEntry('10-019-00001', args=wargs))
+            # end log correctly
+            log1.end(params)
             # continue
             continue
         # ------------------------------------------------------------------
-        # check that file objname is not in blacklist
+        # check that file objname is not in blacklist / is in whitelist
         # ------------------------------------------------------------------
         objname = infile.get_key('KW_OBJNAME', dtype=str)
         # get black list
         blacklist, _ = telluric.get_blacklist(params)
+        whitelist, _ = telluric.get_whitelist(params)
         # if objname in blacklist then skip
         if objname in blacklist:
             # log that we are skipping
             wargs = [infile.basename, params['KW_OBJNAME'][0], objname]
             WLOG(params, 'warning', TextEntry('10-019-00002', args=wargs))
+            # end log correctly
+            log1.end(params)
             # continue
             continue
+        elif objname not in whitelist:
+            # log that we are skipping
+            args = [objname]
+            WLOG(params, 'warning', TextEntry('10-019-00009', args=args))
+            # end log correctly
+            log1.end(params)
+            # continue
+            continue
+        else:
+            # log that file is validated
+            args = [objname, dprtype]
+            WLOG(params, 'info', TextEntry('40-019-00048', args=args))
         # ------------------------------------------------------------------
         # get fiber from infile
         fiber = infile.get_fiber(header=header)
@@ -202,18 +219,17 @@ def __main__(recipe, params):
         wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
                                        infile=infile)
 
-        # TODO: add in EA pre cleaning
-
         # ------------------------------------------------------------------
-        # Load the TAPAS atmospheric transmission convolved with the
-        #   master wave solution
+        # telluric pre-cleaning
         # ------------------------------------------------------------------
-        largs = [header, mprops, fiber]
-        tapas_props = telluric.load_conv_tapas(params, recipe, *largs)
+        tpreprops = telluric.tellu_preclean(params, recipe, infile, wprops,
+                                            fiber, rawfiles, combine)
+        # get variables out of tpreprops
+        image1 = tpreprops['CORRECTED_E2DS']
         # ------------------------------------------------------------------
         # Normalize image by peak blaze
         # ------------------------------------------------------------------
-        nargs = [image, header, fiber]
+        nargs = [image1, header, fiber]
         image, nprops = telluric.normalise_by_pblaze(params, *nargs)
         # ------------------------------------------------------------------
         # Get barycentric corrections (BERV)
@@ -227,13 +243,13 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Calculate telluric absorption
         # ------------------------------------------------------------------
-        cargs = [recipe, image, template, template_file, header, mprops, wprops,
-                 tapas_props, bprops]
-        tellu_props = telluric.calculate_telluric_absorption(params, *cargs)
+        cargs = [recipe, image1, template, template_file, header, mprops,
+                 wprops, bprops, tpreprops]
+        tellu_props = telluric.calculate_tellu_res_absorption(params, *cargs)
         # ------------------------------------------------------------------
         # Quality control
         # ------------------------------------------------------------------
-        pargs = [tellu_props, infile]
+        pargs = [tellu_props, infile, tpreprops]
         qc_params, passed = telluric.mk_tellu_quality_control(params, *pargs)
         # update recipe log
         log1.add_qc(params, qc_params, passed)
@@ -241,8 +257,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Save transmission map to file
         # ------------------------------------------------------------------
-        targs = [infile, rawfiles, fiber, combine, tapas_props, mprops,
-                 nprops, tellu_props, qc_params]
+        targs = [infile, rawfiles, fiber, combine, mprops,
+                 nprops, tellu_props, tpreprops, qc_params]
         transfile = telluric.mk_tellu_write_trans_file(params, recipe, *targs)
         # ------------------------------------------------------------------
         # Add transmission map to telluDB

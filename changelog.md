@@ -2,6 +2,257 @@ Changelog
 =========
 
 
+0.6.124 (2020-07-21)
+--------------------
+- Update language database. [njcuk9999]
+- Apero.science.telluric - remove language database todos. [njcuk9999]
+- Apero.telluric.fit_tellu.py - undo import removal. [njcuk9999]
+- Apero.telluric.fit_tellu.py - fit_tellu_write_corrected must have
+  nprops as input. [njcuk9999]
+- Apero.telluric.fit_tellu.py - correct blaze correction. [njcuk9999]
+- Apero.recipe.spirou.obj_fit_tellu_spirou.py +
+  apero.science.telluric.fit_tellu.py - do not normalize by the blaze,
+  just apply the recon. [njcuk9999]
+- Apero.recipe.spirou.obj_fit_tellu_spirou.py +
+  apero.science.telluric.fit_tellu.py - must get blaze/wave inside
+  function and normalize inside. [njcuk9999]
+- Apero.recipe.spirou.obj_fit_tellu_spirou.py +
+  apero.science.telluric.fit_tellu.py - fix arguments for
+  correct_other_science. [njcuk9999]
+- Apero.recipes.spirou.obj_fit_tellu_spirou.py - try out the correction
+  of A and B files + add break point to test. [njcuk9999]
+- Apero.data.core.pdbrc_full - rename .pdbrc. [njcuk9999]
+- Apero.core.instruments.*.output_filenames.py - remove calibration date
+  prefix. [njcuk9999]
+- Core.constants.param_functions.py - change name of default .pdbrc file
+  (to avoid deletion if in that directory) [njcuk9999]
+- Apero.recipes.spirou.obj_fit_tellu_spirou.py +
+  science.telluric.fit_tellu.py - the spectrum must be divided by the
+  recon_abso_res not the recon_abso. [njcuk9999]
+- Apero.science.telluric.fit_tellu.py - recon is flatten so abso_e2ds
+  needs to be too (49,4088)-->200312. [njcuk9999]
+- Apero.science.telluric.gen_tellu.py - need at least k+1 points to
+  spline. [njcuk9999]
+
+
+0.6.123 (2020-07-18)
+--------------------
+- Apero.core.instruments.*.default_keywords.py - add parents for
+  KW_MKTELL_THRES_TFIT and KW_MKTELL_TRANS_FIT_UPPER_BAD. [Neil Cook]
+- Apero.science.telluric.fit_tellu.py - add back in KW_MKTELL_THRES_TFIT
+  and KW_MKTELL_TRANS_FIT_UPPER_BAD. [Neil Cook]
+- Apero.core.*.default_constants.py + default_keywords.py - add back in
+  MKTELLU_THRES_TRANSFIT and MKTELLU_TRANS_FIT_UPPER_BAD. [Neil Cook]
+- Aper.science.telluric.gen_tellu.py - put back in break points. [Neil
+  Cook]
+- Apero.science.telluric.mk_tellu.py - remove tau from plot. [Neil Cook]
+- Apero.science.telluric.gen_tellu.py - add tpclfile to index file.
+  [Neil Cook]
+- Apero.recipe.spirou.obj_*_tellu_spirou.py -  end logging properly when
+  file skipped. [Neil Cook]
+- Apero.recipe.spirou.obj_*_tellu_spirou.py - add printout validating
+  files. [Neil Cook]
+- Apero.science.telluric.gen_tellu.py - add that we read pclean from
+  file. [Neil Cook]
+- Apero.science.telluric.gen_tellu.py - correct typo. [Neil Cook]
+- Core.instruments.*.default_keywords.py - move CCF water/others to
+  header (from images) [Neil Cook]
+- Apero.io.drs_fits.py - _read_fitsmulti - add log option. [Neil Cook]
+- Apero.science.telluric.gen_tellu.py - compare file basenamse for
+  tpclfile. [Neil Cook]
+- Apero.recipe.spirou.obj_mk_tellu_spirou.py - add break point to see
+  loading of preclean file. [Neil Cook]
+- Apero.science.telluric.mk_tellu.py - mixed up recov_airmass and
+  recov_water (blame EA) [Neil Cook]
+- Apero.science.telluric.* - remove FINER_CWIDTH and
+  KW_MKTELL_FIN_CONV_WID. [Neil Cook]
+- Apero.science.telluric.* - remove FINER_CWIDTH and
+  KW_MKTELL_FIN_CONV_WID. [Neil Cook]
+- Apero.science.telluric.__init__.py - remove unused alias. [Neil Cook]
+- Apero.science.telluric.mk_tellu.py - remove lowpassfilter (to math
+  module) + sort out unused header keys/unused constants. [Neil Cook]
+- Apero.science.telluric.gen_tellu.py - remove load_tapas_convolved
+  function + edit iteration msg. [Neil Cook]
+- Aper.recipes.spirou.obj_mk_tellu_spirou.py - remove tapas conv not
+  needed in mk_tellu any more (done in tellu pre-clean) + rename
+  calculate_telluric_absorption to calculate_tellu_res_absorption. [Neil
+  Cook]
+- Recipes.spirou.obj_fit_tellu_spirou.py - fit_tellu must
+  load_conv_tapas for first time (not done in mk_tellu any more) [Neil
+  Cook]
+- Core.math.genearl.py - add lowpassfilter function from EA. [Neil Cook]
+- Core.instruments.*.default_keywords.py - remove unused keywords. [Neil
+  Cook]
+- Core.instruments.*.default_constants.py - remove unused constants.
+  [Neil Cook]
+- Apero.science.telluric.mk_tellu.py - update lowpassfilter. [Neil Cook]
+- Apero.core.instruments.spirou.default_constants.py - change conv width
+  and orders. [Neil Cook]
+- Apero.science.telluric.gen_tellu.py - trans_mask must be floats when
+  saved to fits. [Neil Cook]
+- Apero.core.core.drs_file.py - correct typo mapf slist-->list. [Neil
+  Cook]
+- Apero.science.telluric.gen_tellu.py - corrections with EA. [Neil Cook]
+- Apero.plotting.plot_functions.py - correct set_title. [Neil Cook]
+- Apero.plotting.plot_functions.py - add plot definitions + correct
+  gauss function guess/return. [Neil Cook]
+- Apero.science.telluric.gen_tellu.py - add print outs and edit mas
+  files (no title) [Neil Cook]
+- Apero.science.telluric.gen_tellu.py - make sure we can deal with
+  conv_paths unset (none found) [Neil Cook]
+- Aper.core.instruments.*.file_definitions.py - add dbname/dbkey for
+  TELLU_TAPAS. [Neil Cook]
+- Apero.science.telluric.gen_tellu.py - update ohline filename + ravel
+  ohpcshift + add warning to sky_model < 0. [Neil Cook]
+- Apero.core.instruments.*.file_definitons.py - fix out_tellu_spl_npy.
+  [Neil Cook]
+- Apero.core.instruments.*.default_constants.py - correct typo
+  TELLUP_ABSO_EXP_KEXP --> TELLUP_ABSO_EXPO_KEXP. [Neil Cook]
+- Apero.science.telluric.gen_tellu.py - deal with no pclean files found.
+  [Neil Cook]
+- Apero.science.telluric.gen_tellu.py - do not require clean files (may
+  not exist) [Neil Cook]
+- Apero.core.instruments.spirou.file_definitions.py - add
+  out_tellu_pclean to file sets out_file and tellu_file. [Neil Cook]
+- Apero.science.telluric.gen_tellu.py mk_tellu.py - fix imports. [Neil
+  Cook]
+- Apero.recipes.spirou.obj_*_tellu_spirou.py - add break points to test
+  EA changes. [Neil Cook]
+
+
+0.6.122 (2020-07-17)
+--------------------
+- Apero.science.telluric.template_tellu.py - add possible todo later.
+  [Neil Cook]
+- Misc.hybrid_tellu.hybrid_tellu.py - add EA changes after questions.
+  [Neil Cook]
+- Apero.recipes.spirou.*tellu*.py + science.telluric.*.py - continue to
+  add EA pre-cleaning changes. [Neil Cook]
+- Apero.plotting.plot_functions.py - add plot_tellup_wave_trans and
+  plot_tellup_abso_spec functions for tellu pre-cleaning. [Neil Cook]
+- Apero.core.instruments.*.recipe_definition.py - add plots and outputs
+  to obj_mk_tellu and obj_fit_tellu recipe definitions. [Neil Cook]
+- Apero.core.instruments.spirou.file_definitions.py - add
+  out_tellu_pclean file. [Neil Cook]
+- Apero.core.instruments.*.default_keywords.py - add KW_TELLUP keywords.
+  [Neil Cook]
+- Apero.core.instruments.*.default_constants.py - add TELLUP constants +
+  PLOT constants. [Neil Cook]
+- Core.core.drs_file.py - add listtype argument and deal with booleans
+  and list dtype better + add mapf to add_hkey method to add string
+  lists. [Neil Cook]
+
+
+0.6.121 (2020-07-16)
+--------------------
+- Misc.hybrid_tellu.hybrid_tellu.py - add questions for EA about code.
+  [Neil Cook]
+- Apero.science.telluric.gen_tellu.py - add EA telluric pre-cleaning.
+  [Neil Cook]
+- Apero.science.telluric.* - general.py --> gen_tellu.py in imports.
+  [Neil Cook]
+- Apero.recipes.spirou.obj_fit_tellu_spirou.py - temp add params here
+  (for constants file) [Neil Cook]
+- Aper.core.math.gauss.py - add gauss_function_nodc. [Neil Cook]
+- Apero.core.instruemnts.spirou.file_definitions.py - add
+  out_tellu_abso_npy. [Neil Cook]
+- Apero-drs.misc.hybrid_tellu.* - add temp space for EA pre-cleaning
+  code. [Neil Cook]
+- Obj_fit_tellu_spirou.py - prep for EA precleaning changes. [Neil Cook]
+- Apero.science.telluric.* - rearrange telluric functions. [Neil Cook]
+- Data.spirou.telluric.* - add telluric pre-cleaning data. [Neil Cook]
+- Apero.plotting.plot_functions.py - add label change to cron plot.
+  [Neil Cook]
+- Core.core.drs_database.py - do not load image/header if not required.
+  [Neil Cook]
+- Apero.recipes.spirou.obj_fit_tellu_spirou.py - add break point for EA
+  changes. [Neil Cook]
+- Apero.science.telluric.general.py -  correct typo. [Neil Cook]
+- Apero.recipes.spirou.obj_fit_tellu_spirou.py +
+  science.telluric.general.py - add adjustments to test fit tellu. [Neil
+  Cook]
+
+
+0.6.120 (2020-07-14)
+--------------------
+- Apero.* - remove break points. [Neil Cook]
+- Apero.tools.module.setup.drs_processing.py - remove break point. [Neil
+  Cook]
+- Apero.recipes.spirou.obj_fit_tellu_spirou.py - add
+  correct_other_science to correct fibers A and B for tellurics. [Neil
+  Cook]
+- Apero.science.velocity.general.py - add todo about filename. [Neil
+  Cook]
+- Core.core.drs_log.py - deal with directory (nightname) not defined -
+  go into "other" directory. [Neil Cook]
+- Apero.science.telluric - change where Templates/BigCubes are saved to
+  (no info about nightname) - fix. [Neil Cook]
+- Apero.science.telluric - change where Templates/BigCubes are saved to
+  (no info about nightname) [Neil Cook]
+- Apero.science.telluric - change where Templates/BigCubes are saved to
+  (no info about nightname) [Neil Cook]
+- Apero.science.telluric.general.py - continue etiennes changes. [Neil
+  Cook]
+
+
+0.6.119 (2020-07-13)
+--------------------
+- Apero.science.telluric.general.py - must set key for header (remove
+  later) [Neil Cook]
+- Apero.recipes.spirou.obj_mk_tellu_spirou.py +
+  science.telluric.general.py - start adding changes for EA telluric
+  cleaning. [Neil Cook]
+- Update README.md. [Neil Cook]
+- Misc.tools.apero_diff.py - update paths. [Neil Cook]
+- Apero.recipe.spirou.poly_spirou_new.py - continue updating polar code.
+  [Neil Cook]
+- Apero.recipes.spirou.cal_extract_spirou.py - undo commentation. [Neil
+  Cook]
+- Apero.io.drs_data.py - update colnames from load_sp_mask_lsd. [Neil
+  Cook]
+- Apero.data.spirou.lsd - add masks. [Neil Cook]
+- Remove apero.data.core.runs.* [Neil Cook]
+- Apero.core.instruments.spirou.recipe_definitions.py - add
+  obj_fit_tellu to full_seq. [Neil Cook]
+- Apero.core.instruments.*.recipe_defintiions.py - make obj_mk_tellu_db
+  and obj_fit_tellu_db non master recipes (do not require master night
+  to run these) [Neil Cook]
+- README.md - remove some formatting. [Neil Cook]
+
+
+0.6.118 (2020-07-09)
+--------------------
+- Apero.science.extract.crossmatch.py + science.extract.crossmatch.py -
+  move breakpoint. [njcuk9999]
+- Apero.science.extract.crossmatch.py - add break point to investigate
+  obj table. [njcuk9999]
+- Apero.core.constants.param_functions.py - add normpath (see Issue
+  #635) [njcuk9999]
+- Apero.recipes.spirou.pol_spirou.py - add back in constants removed for
+  upgrade (Issue #639) [njcuk9999]
+- Apero.science.velocity.general.py - replace hard coded C with reffiber
+  form pseudo constants (FIBER_KINDS) [njcuk9999]
+
+
+0.6.117 (2020-07-07)
+--------------------
+- Misc.tools.create_science_targets.py - add all priority targets to
+  string. [njcuk9999]
+- Apero.io.drs_fits.py - deal with INFs and -INFs in floats (for
+  headers) --> pipe to string INF/-INF. [njcuk9999]
+- Aper.core.math.general.py - create a better exception when len(x) <
+  k+1 in iuv_spline. [njcuk9999]
+- Apero.core.core.drs_log.py - divide up errors better. [njcuk9999]
+- Apero.science.telluric.general.py - if column is filename make it
+  absolute paths. [njcuk9999]
+
+
+0.6.116 (2020-07-06)
+--------------------
+- Update the readme (working version update) [njcuk9999]
+- Update date/version/changelog/documentation. [njcuk9999]
+
+
 0.6.115 (2020-07-04)
 --------------------
 - Update language database. [njcuk9999]

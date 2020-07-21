@@ -275,9 +275,6 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
     fp_cube_files, fpsubdir = None, None
     # row counter
     row = 0
-
-    # TODO: remove break point
-    constants.break_point(params)
     # loop through groups
     for g_it, group_num in enumerate(u_groups):
         # log progress
