@@ -627,7 +627,7 @@ class RecipeLog:
         # get new level
         level = self.level + 1
         # create new log
-        newlog = RecipeLog(self.name, params, level=level, wlog=WLOG)
+        newlog = RecipeLog(self.name, params, level=level, wlog=self.wlog)
         # copy from parent
         newlog.copy(self)
         # record level criteria
