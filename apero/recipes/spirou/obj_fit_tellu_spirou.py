@@ -315,17 +315,14 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Correct other science fibers (using recon)
         # ------------------------------------------------------------------
-        # TODO: remove break point
-        constants.break_point(params)
-
         # get fibers
         pconst = constants.pload(params['INSTRUMENT'])
         sfibers, rfiber = pconst.FIBER_KINDS()
         # loop around fibers and correct/create s1d/save
         for sfiber in sfibers:
             # print that we are correcting other fibers
-            # TODO: Move to language database
-            WLOG(params, 'info', 'Correcting fiber {0}'.format(sfiber))
+            # log: Correcting fiber {0}
+            WLOG(params, 'info', TextEntry('40-019-00049', args=[sfiber]))
             # skip master fiber
             if sfiber == fiber:
                 continue

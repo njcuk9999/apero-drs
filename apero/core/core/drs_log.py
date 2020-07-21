@@ -511,6 +511,7 @@ class RecipeLog:
         self.logfitsfile = str(params['DRS_LOG_FITS_NAME'])
         self.inputdir = str(params['INPATH'])
         self.outputdir = str(params['OUTPATH'])
+        self.params = params
         # set the pid
         self.pid = str(params['PID'])
         self.htime = str(params['DATE_NOW'])
@@ -770,10 +771,10 @@ class RecipeLog:
             try:
                 os.makedirs(path)
             except:
-                # TODO: move to language database
-                emsg = 'RecipeLogError: Cannot make path {0} for recipe log.'
+                # RecipeLogError: Cannot make path {0} for recipe log.'
                 eargs = [path]
-                raise DrsError(emsg.format(*eargs))
+                emsg = TextEntry('00-005-00014', args=eargs)
+                WLOG(self.params, 'error', emsg)
         # ------------------------------------------------------------------
         # return absolute log file path
         return os.path.join(path, self.logfitsfile)
@@ -834,13 +835,16 @@ class RecipeLog:
         # check to see if table already exists
         if os.path.exists(writepath):
             try:
-                print('RecipeLog: Reading file: {0}'.format(writepath))
+                # RecipeLog: Reading file
+                dargs = [writepath]
+                dmsg = TextEntry('90-008-00012', args=dargs)
+                WLOG(self.params, 'debug', dmsg)
                 table = Table.read(writepath, format='fits')
             except Exception as e:
-                # TODO: move to language database
-                emsg = 'RecipeLogError: Cannot read file {0} \n\t {1}: {2}'
+                # RecipeLogError: Cannot read file
                 eargs = [writepath, type(e), str(e)]
-                raise DrsError(emsg.format(*eargs))
+                emsg = TextEntry('00-005-00016', args=eargs)
+                WLOG(self.params, 'error', emsg)
         else:
             table = None
         # ------------------------------------------------------------------
@@ -892,13 +896,14 @@ class RecipeLog:
         # ------------------------------------------------------------------
         # write to disk
         try:
-            print('RecipeLog: Writing file: {0}'.format(writepath))
+            # debug log
+            dargs = [writepath]
+            WLOG(self.params, 'debug', TextEntry('90-008-00011', args=dargs))
             mastertable.write(writepath, format='fits', overwrite=True)
         except Exception as e:
-            # TODO: move to language database
-            emsg = 'RecipeLogError: Cannot write file {0} \n\t Error {1}: {2}'
+            # RecipeLogError: Cannot write file {0}
             eargs = [writepath, type(e), str(e)]
-            raise DrsError(emsg.format(*eargs))
+            WLOG(self.params, 'error', TextEntry('00-005-00015', args=eargs))
 
 
 # =============================================================================

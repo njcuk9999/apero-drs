@@ -478,6 +478,8 @@ def large_image_combine(params: ParamDict, files: List[str],
     :return: numpy 2D array: the nan-median image of all files
     :rtype: np.ndarray
     """
+    # set function name
+    func_name = __NAME__ + '.large_image_combine()'
     # deal with math mode
     if math == 'median':
         cfunc = mp.nanmedian
@@ -513,8 +515,9 @@ def large_image_combine(params: ParamDict, files: List[str],
     elif fmt == 'npy':
         image0 = drs_path.numpy_load(files[0])
     else:
-        # TODO: move this to language database
-        WLOG(params, 'error', 'fmt="{0}" is incorrect'.format(fmt))
+        # fmt="{0}" is incorrect
+        eargs = [fmt, 'fits, npy', func_name]
+        WLOG(params, 'error', TextEntry('00-001-00044', args=eargs))
         image0 = None
     # get the shape of the image
     mdim1, mdim2 = np.array(image0.shape).astype(int)
@@ -528,10 +531,9 @@ def large_image_combine(params: ParamDict, files: List[str],
     # loop arouynd files and save ribbons as numpy arrays
     for f_it, filename in enumerate(files):
         # log message so we know how far through we are
-        # TODO: move this to language database
-        wmsg = 'Processing file {0} / {1}'
+        # Processing file {0} / {1}
         wargs = [f_it + 1, numfiles]
-        WLOG(params, '', wmsg.format(*wargs))
+        WLOG(params, '', TextEntry('40-000-00012', args=wargs))
         # ------------------------------------------------------------------
         # load file
         if fmt == 'fits':
@@ -539,8 +541,9 @@ def large_image_combine(params: ParamDict, files: List[str],
         elif fmt == 'npy':
             image = drs_path.numpy_load(filename)
         else:
-            # TODO: move this to language database
-            WLOG(params, 'error', 'fmt="{0}" is incorrect'.format(fmt))
+            # fmt="{0}" is incorrect
+            eargs = [fmt, 'fits, npy', func_name]
+            WLOG(params, 'error', TextEntry('00-001-00044', args=eargs))
             image = None
         # get the shape of the image
         dim1, dim2 = np.array(image.shape).astype(int)
@@ -550,12 +553,10 @@ def large_image_combine(params: ParamDict, files: List[str],
         # check that dimensions are the same as first file
         if dim1 != mdim1 or dim2 != mdim2:
             # log error
-            # TODO: move to language database
-            emsg = ('Files are not the same shape'
-                    '\n\tFile[0] = ({0}x{1}) \n\tFile[{2}] = ({3}x{4})'
-                    '\n\tFile[0]: {5}\n\tFile[{2}]: {6}')
-            eargs = [mdim1, mdim2, f_it, dim1, dim2, files[0], files[1]]
-            WLOG(params, 'error', emsg.format(*eargs))
+            # Files are not the same shape
+            eargs = [mdim1, mdim2, f_it, dim1, dim2, files[0], files[1],
+                     func_name]
+            WLOG(params, 'error', TextEntry('00-001-00045', args=eargs))
         # ------------------------------------------------------------------
         # extract and save ribbons
         for b_it in range(len(bins) - 1):
@@ -565,7 +566,8 @@ def large_image_combine(params: ParamDict, files: List[str],
             ribbon_name = '{0}_ribbon{1:06d}.npy'.format(clean_filename, b_it)
             ribbon_path = os.path.join(subfilepath, ribbon_name)
             # save ribbon to file
-            WLOG(params, '', '\tSaving file: {0}'.format(ribbon_path))
+            # log: Saving file: {0}
+            WLOG(params, '', TextEntry('40-000-00013', args=[ribbon_path]))
             np.save(ribbon_path, ribbon)
             # delete ribbon
             del ribbon
@@ -577,10 +579,9 @@ def large_image_combine(params: ParamDict, files: List[str],
     # loop through the files of the same ribbon
     for b_it in range(len(bins) - 1):
         # log message so we know how far through we are
-        # TODO: move this to language database
-        wmsg = 'Combining ribbon {0} / {1}'
+        # Combining ribbon {0} / {1}
         wargs = [b_it + 1, len(bins)]
-        WLOG(params, '', wmsg.format(*wargs))
+        WLOG(params, '', TextEntry('40-000-00014', args=wargs))
         # store box
         box = []
         # ------------------------------------------------------------------
@@ -591,10 +592,12 @@ def large_image_combine(params: ParamDict, files: List[str],
             ribbon_name = '{0}_ribbon{1:06d}.npy'.format(clean_filename, b_it)
             ribbon_path = os.path.join(subfilepath, ribbon_name)
             # load ribbon
-            WLOG(params, '', '\tLoading file: {0}'.format(ribbon_path))
+            # log: Loading file: {0}
+            WLOG(params, '', TextEntry('40-000-00015', args=[ribbon_path]))
             ribbon = np.load(ribbon_path)
             # delete this ribbon from disk
-            WLOG(params, '', '\tRemoving file: {0}'.format(ribbon_path))
+            # log: Removing file: {0}
+            WLOG(params, '', TextEntry('40-000-00016', args=[ribbon_path]))
             os.remove(ribbon_path)
             # append to box
             box.append(np.array(ribbon))
