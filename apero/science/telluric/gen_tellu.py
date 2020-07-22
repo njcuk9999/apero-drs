@@ -1386,7 +1386,8 @@ def read_tellu_preclean(params, recipe, infile, fiber):
         return None
     # ----------------------------------------------------------------------
     # log progress
-    WLOG(params, '', TextEntry('40-019-00043', args=args))
+    # log: Reading pre-cleaned file from: {0}
+    WLOG(params, '', TextEntry('40-019-00043', args=[tpclfile.filename]))
     # ----------------------------------------------------------------------
     # start a parameter dictionary
     props = ParamDict()
