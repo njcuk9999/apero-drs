@@ -173,25 +173,31 @@ class Comparison:
         # ------------------------------------------------------------------
         # populate values
         if values is not None:
-            self.stats[indexkey] = str(index)
-            self.stats[minkey] = np.nanmin(values)
-            self.stats[maxkey] = np.nanmax(values)
-            self.stats[stdkey] = np.nanstd(values)
-            self.stats[meankey] = np.nanmean(values)
-            self.stats[medkey] = np.nanmedian(values)
-            self.stats[nnankey] = np.sum(np.isnan(values))
-            # deal with number of total pixels
-            if index is not None:
-                self.stats[ntotkey] = len(values)
-            else:
-                self.stats[ntotkey] = np.product(values.shape)
-            # deal with percentiles
-            for p_it, percentile in enumerate(PERCENTILES):
-                pkey = pkeys[p_it]
-                self.stats[pkey] = np.nanpercentile(values, percentile)
-        # ------------------------------------------------------------------
-        # else fill in the None values
+            try:
+                self.stats[indexkey] = str(index)
+                self.stats[minkey] = np.nanmin(values)
+                self.stats[maxkey] = np.nanmax(values)
+                self.stats[stdkey] = np.nanstd(values)
+                self.stats[meankey] = np.nanmean(values)
+                self.stats[medkey] = np.nanmedian(values)
+                self.stats[nnankey] = np.sum(np.isnan(values))
+                # deal with number of total pixels
+                if index is not None:
+                    self.stats[ntotkey] = len(values)
+                else:
+                    self.stats[ntotkey] = np.product(values.shape)
+                # deal with percentiles
+                for p_it, percentile in enumerate(PERCENTILES):
+                    pkey = pkeys[p_it]
+                    self.stats[pkey] = np.nanpercentile(values, percentile)
+                populated = True
+            except Exception:
+                populated = False
         else:
+            populated = False
+        # ------------------------------------------------------------------
+        # if not populated fill in the None values
+        if not populated:
             self.stats[indexkey] = 'None'
             self.stats[minkey] = np.nan
             self.stats[maxkey] = np.nan
