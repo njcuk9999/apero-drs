@@ -27,7 +27,6 @@ from apero.io import drs_data
 from apero.io import drs_fits
 from apero.science.calib import flat_blaze
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -159,6 +158,9 @@ def get_non_tellu_objs(params, recipe, fiber, filetype=None, dprtypes=None,
     :param params:
     :param fiber:
     :param filetype:
+    :param dprtypes:
+    :param robjnames:
+
     :return:
     """
     # get the telluric star names (we don't want to process these)
@@ -247,7 +249,7 @@ def get_tellu_objs(params, key, objnames=None, **kwargs):
     # ----------------------------------------------------------------------
     # deal with all entries / one column return
     if column in [None, 'None', '', 'ALL']:
-        outputs =  obj_entries[mask]
+        outputs = obj_entries[mask]
     else:
         outputs = np.unique(obj_entries[column][mask])
     # ----------------------------------------------------------------------
@@ -265,7 +267,7 @@ def get_tellu_objs(params, key, objnames=None, **kwargs):
         outputs = list(abspaths)
     # ----------------------------------------------------------------------
     # display how many files found
-    margs = [len(outputs),  typestr]
+    margs = [len(outputs), typestr]
     WLOG(params, '', TextEntry('40-019-00039', args=margs))
     return outputs
 
@@ -280,12 +282,12 @@ def get_sp_linelists(params, **kwargs):
     othersfile = pcheck(params, 'TELLUP_OTHERS_CCF_FILE', 'filename', kwargs,
                         func_name)
     waterfile = pcheck(params, 'TELLUP_H2O_CCF_FILE', 'filename', kwargs,
-                        func_name)
+                       func_name)
     # load the others file list
     mask_others, _ = drs_data.load_ccf_mask(params, directory=relfolder,
                                             filename=othersfile)
     mask_water, _ = drs_data.load_ccf_mask(params, directory=relfolder,
-                                            filename=waterfile)
+                                           filename=waterfile)
     # return masks
     return mask_others, mask_water
 
@@ -318,9 +320,12 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
 
     :param params:
     :param recipe:
-    :param image:
+    :param infile:
     :param wprops:
-    :param mprops:
+    :param fiber:
+    :param rawfiles:
+    :param combine:
+
     :return:
     """
     # set the function name
@@ -628,7 +633,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
             ccf_others[d_it] = np.nanmean(tmp_others[tmp_others != 0.0])
             # computer for water
             lwater = np.array(mask_water['ll_mask_s']) * scaling
-            tmp_water = spline(lwater)* mask_water['w_mask']
+            tmp_water = spline(lwater) * mask_water['w_mask']
             ccf_water[d_it] = np.nanmean(tmp_water[tmp_water != 0.0])
         # ------------------------------------------------------------------
         # subtract the median of the ccf outside the core of the gaussian.
@@ -1279,19 +1284,19 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
     for qc_it in range(len(qc_names)):
         # add name
         qkwn = ['TQCCN{0}'.format(qc_it), qc_names[qc_it],
-               'Name {0}'.format(qc_it)]
+                'Name {0}'.format(qc_it)]
         tpclfile.add_hkey(key=qkwn)
         # add value
         qkwv = ['TQCCV{0}'.format(qc_it), qc_values[qc_it],
-               'Value {0}'.format(qc_it)]
+                'Value {0}'.format(qc_it)]
         tpclfile.add_hkey(key=qkwv)
         # add logic
         qkwl = ['TQCCL{0}'.format(qc_it), qc_values[qc_it],
-               'Logic {0}'.format(qc_it)]
+                'Logic {0}'.format(qc_it)]
         tpclfile.add_hkey(key=qkwl)
         # add pass
         qkwp = ['TQCCP{0}'.format(qc_it), qc_values[qc_it],
-               'Pass {0}'.format(qc_it)]
+                'Pass {0}'.format(qc_it)]
         tpclfile.add_hkey(key=qkwp)
     # ----------------------------------------------------------------------
     # add constants used (can come from kwargs)
@@ -1474,8 +1479,8 @@ def read_tellu_preclean(params, recipe, infile, fiber):
                                                      dtype=bool)
     props['TELLUP_OTHER_BOUNDS'] = tpclfile.get_key('KW_TELLUP_OTHER_BOUNDS',
                                                     dtype=list, listtype=float)
-    props['TELLUP_WATER_BOUNDS']  = tpclfile.get_key('KW_TELLUP_WATER_BOUNDS',
-                                                     dtype=list, listtype=float)
+    props['TELLUP_WATER_BOUNDS'] = tpclfile.get_key('KW_TELLUP_WATER_BOUNDS',
+                                                    dtype=list, listtype=float)
     # set the source from header
     keys = ['TELLUP_D_WATER_ABSO', 'TELLUP_CCF_SCAN_RANGE',
             'TELLUP_CLEAN_OH_LINES', 'TELLUP_REMOVE_ORDS',
@@ -1576,7 +1581,6 @@ def load_tellu_file(params, key=None, inheader=None, filename=None,
 
 
 def load_templates(params, header, objname, fiber):
-
     # TODO: update - bad loads all files just to get one header
     #   OBJNAME in database --> select most recent and only load that file
     # get file definition
@@ -1756,7 +1760,6 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
 
 
 def load_tapas_spl(params, recipe, header):
-
     # get file definition
     tellu_tapas = core.get_file_definition('TELLU_TAPAS', params['INSTRUMENT'],
                                            kind='red')
