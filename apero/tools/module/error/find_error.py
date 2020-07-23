@@ -18,7 +18,7 @@ import re
 
 from apero.core import constants
 from apero import core
-from apero.lang import drs_text
+from apero import lang
 
 # =============================================================================
 # Define variables
@@ -177,8 +177,9 @@ class Navbar:
         self.menubar = tk.Menu(master)
         # set title
         self.title = 'About {0}'.format(PROGRAM_NAME)
-        self.dpath = drs_text.get_relative_folder(drs_text.PACKAGE,
-                                                  drs_text.DEFAULT_PATH)
+        package = lang.drs_text.PACKAGE
+        default_path = lang.drs_text.DEFAULT_PATH
+        self.dpath = lang.drs_text.get_relative_folder(package, default_path)
         # add file menu
         self.filemenu = tk.Menu(self.menubar, tearoff=0)
         self.filemenu.add_command(label='Open database folder',
@@ -797,11 +798,12 @@ class LoadData:
         :rtype: tuple[dict, dict, dict, dict, dict]
         """
         # get filelist (from drs_text)
-        filelist = drs_text.ERROR_FILES + drs_text.HELP_FILES
+        filelist = lang.drs_text.ERROR_FILES + lang.drs_text.HELP_FILES
         # get dictionary files (full path)
-        dict_files = drs_text._get_dict_files(self.instrument, filelist)
+        dict_files = lang.drs_text._get_dict_files(self.instrument, filelist)
         # get value_dict, source_dict, arg_dict, kind_dict, comment_dict
-        out = drs_text._read_dict_files(dict_files, self.drs_params['LANGUAGE'])
+        out = lang.drs_text._read_dict_files(dict_files,
+                                             self.drs_params['LANGUAGE'])
         # return databases
         return out
 
@@ -821,9 +823,9 @@ class LoadData:
         wmsg = 'Generating line list for instrument = "{0}"'
         WLOG(self.drs_params, 'info', wmsg.format(self.instrument))
         # get package (from drs_text)
-        package = drs_text.PACKAGE
+        package = lang.drs_text.PACKAGE
         # get level above package
-        modpath = drs_text.get_relative_folder(package, '..')
+        modpath = lang.drs_text.get_relative_folder(package, '..')
         # get python scripts in modpath
         pyfiles = find_all_py_files(modpath)
         # open and combine in to single list of lines
@@ -884,8 +886,8 @@ def open_all_py_files(files):
     :rtype: tuple[list[str], list[str], list[str]]
     """
     # get package and relative path to database (basaed on drs_text values)
-    package = drs_text.PACKAGE
-    path = drs_text.get_relative_folder(package, '..')
+    package = lang.drs_text.PACKAGE
+    path = lang.drs_text.get_relative_folder(package, '..')
     # set up storage
     all_entries = []
     all_line_numbers = []

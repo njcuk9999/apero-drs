@@ -23,7 +23,7 @@ from astropy.io import fits
 from collections import OrderedDict
 
 from apero.core import constants
-from apero.lang import drs_text
+from apero import lang
 from apero.core.core import drs_log
 
 from apero.io import drs_lock
@@ -47,7 +47,7 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = drs_text.TextEntry
+TextEntry = lang.drs_text.TextEntry
 
 # -----------------------------------------------------------------------------
 # define list of integers

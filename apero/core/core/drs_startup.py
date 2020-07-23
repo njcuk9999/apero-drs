@@ -21,8 +21,7 @@ from signal import signal, SIGINT
 from collections import OrderedDict
 from typing import Union, List
 
-from apero.lang import drs_text
-from apero.lang import drs_exceptions
+from apero import lang
 from apero.core import constants
 from apero.core.instruments.default import pseudo_const
 from apero.io import drs_table
@@ -32,6 +31,7 @@ from apero import plotting
 from apero.core.core import drs_log
 from apero.core.core import drs_recipe
 from apero.core.core import drs_file
+
 
 # =============================================================================
 # Define variables
@@ -59,17 +59,17 @@ DrsRecipe = drs_recipe.DrsRecipe
 DrsFitsFile = drs_file.DrsFitsFile
 DrsInputFile = drs_file.DrsInputFile
 # get the Drs Exceptions
-DrsError = drs_exceptions.DrsError
-DrsWarning = drs_exceptions.DrsWarning
-TextError = drs_exceptions.TextError
-TextWarning = drs_exceptions.TextWarning
-ConfigError = drs_exceptions.ConfigError
-ConfigWarning = drs_exceptions.ConfigWarning
+DrsError = lang.drs_exceptions.DrsError
+DrsWarning = lang.drs_exceptions.DrsWarning
+TextError = lang.drs_exceptions.TextError
+TextWarning = lang.drs_exceptions.TextWarning
+ConfigError = lang.drs_exceptions.ConfigError
+ConfigWarning = lang.drs_exceptions.ConfigWarning
 # Get the text types
-TextEntry = drs_text.TextEntry
-TextDict = drs_text.TextDict
-HelpEntry = drs_text.HelpEntry
-HelpText = drs_text.HelpDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
+HelpEntry = lang.drs_text.HelpEntry
+HelpText = lang.drs_text.HelpDict
 # recipe control path
 INSTRUMENT_PATH = Constants['DRS_MOD_INSTRUMENT_CONFIG']
 CORE_PATH = Constants['DRS_MOD_CORE_CONFIG']
@@ -356,7 +356,7 @@ def run(func, recipe, params):
             llmain = func(recipe, params)
             llmain['e'], llmain['tb'] = None, None
             success = True
-        except drs_exceptions.DebugExit as e:
+        except lang.drs_exceptions.DebugExit as e:
             WLOG(params, 'error', e.errormessage, raise_exception=False)
             # on debug exit was not a success
             success = False
@@ -386,7 +386,7 @@ def run(func, recipe, params):
                 recipe.log.add_error(params, 'KeyboardInterrupt', '')
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
-        except drs_exceptions.LogExit as e:
+        except lang.drs_exceptions.LogExit as e:
             # get trace back
             string_trackback = traceback.format_exc()
             # on LogExit was not a success
@@ -555,7 +555,7 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
                     # index outputs to reduced dir
                     _index_outputs(params, recipe)
             # Must close lock file
-            except drs_exceptions.LogExit as e_:
+            except lang.drs_exceptions.LogExit as e_:
                 # log error
                 eargs = [type(e_), e_.errormessage, func_name]
                 WLOG(params, 'error', TextEntry('00-000-00002', args=eargs))
@@ -606,7 +606,7 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
         WLOG.clean_log(params['PID'])
         # ---------------------------------------------------------------------
         # deal with clearing warnings
-        drs_exceptions.clear_warnings()
+        lang.drs_exceptions.clear_warnings()
     # -------------------------------------------------------------------------
     # deal with closing graphs
     # -------------------------------------------------------------------------

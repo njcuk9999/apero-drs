@@ -1,7 +1,6 @@
 from apero.core import constants
 from apero.core.core import drs_recipe
-from apero.lang import drs_text
-
+from apero import lang
 from apero.core.instruments.nirps_ha import file_definitions as sf
 
 # =============================================================================
@@ -12,7 +11,7 @@ __INSTRUMENT__ = 'NIRPS_HA'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get Help
-Help = drs_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
+Help = lang.drs_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
 # Get version and author
 __version__ = Constants['DRS_VERSION']
 __author__ = Constants['AUTHORS']
