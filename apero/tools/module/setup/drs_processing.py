@@ -1037,7 +1037,7 @@ def generate_ids(params, runtable, mod, skiptable, rlist=None, **kwargs):
     WLOG(params, 'info', TextEntry('40-503-00015', args=[len(runlist)]))
 
     # TODO: remove break point
-    constants.break_point()
+    constants.break_point(params)
     # iterate through and make run objects
     run_objects = []
     for it, run_item in enumerate(runlist):
