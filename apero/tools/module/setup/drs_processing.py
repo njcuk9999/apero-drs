@@ -1094,6 +1094,10 @@ def skip_run_object(params, runobj, skiptable, textdict):
         if not params[runobj.runname]:
             return True, textdict['40-503-00007']
     # ----------------------------------------------------------------------
+
+    # TODO: break breakpoint
+    constants.break_point(params)
+
     # check if the user wants to skip
     if runobj.skipname in params:
         # if master in skipname do not skip
