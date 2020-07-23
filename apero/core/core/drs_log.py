@@ -51,12 +51,12 @@ TextWarning = drs_exceptions.TextWarning
 ConfigError = drs_exceptions.ConfigError
 ConfigWarning = drs_exceptions.ConfigWarning
 # Get the text types
-TextEntry = drs_text.TextEntry
-TextDict = drs_text.TextDict
-HelpEntry = drs_text.HelpEntry
-HelpText = drs_text.HelpDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
+HelpEntry = lang.drs_text.HelpEntry
+HelpText = lang.drs_text.HelpDict
 # get the default language
-DEFAULT_LANGUAGE = drs_text.DEFAULT_LANGUAGE
+DEFAULT_LANGUAGE = lang.drs_text.DEFAULT_LANGUAGE
 # Get the Color dict
 Color = pseudo_const.Colors
 # define log format
