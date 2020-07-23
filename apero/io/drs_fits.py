@@ -1201,15 +1201,14 @@ def _get_files(params, recipe, path, rpath, **kwargs):
         kwargs[key] = []
     # ----------------------------------------------------------------------
     # deal with white/black list for nights
+    wnightnames = None
     if 'WNIGHTNAMES' in params:
         if not drs_text.null_text(params['WNIGHTNAMES'], ['None', 'All', '']):
             wnightnames = params.listp('WNIGHTNAMES', dtype=str)
-    else:
-        wnightnames = None
-    if not drs_text.null_text(params['BNIGHTNAMES'], ['None', 'All', '']):
-        bnightnames = params.listp('BNIGHTNAMES', dtype=str)
-    else:
-        bnightnames = None
+    bnightnames = None
+    if 'BNIGHTNAMES' in params:
+        if not drs_text.null_text(params['BNIGHTNAMES'], ['None', 'All', '']):
+            bnightnames = params.listp('BNIGHTNAMES', dtype=str)
     # ----------------------------------------------------------------------
     # get files (walk through path)
     for root, dirs, files in os.walk(path, followlinks=True):
