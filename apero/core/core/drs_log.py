@@ -23,7 +23,7 @@ from collections import OrderedDict
 
 from apero.core.instruments.default import pseudo_const
 from apero.core import constants
-from apero.lang import drs_text
+from apero import lang
 from apero.lang import drs_exceptions
 from apero.core.math import time
 

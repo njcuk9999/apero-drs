@@ -13,7 +13,7 @@ import sys
 
 from apero import core
 from apero.core import constants
-from apero.lang import drs_text
+from apero import lang
 from apero.core.constants import constant_functions as cf
 from apero.core.constants import param_functions as pf
 from apero.core.core import drs_recipe
@@ -39,10 +39,10 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = drs_text.TextEntry
-TextDict = drs_text.TextDict
-HelpEntry = drs_text.HelpEntry
-HelpText = drs_text.HelpDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
+HelpEntry = lang.drs_text.HelpEntry
+HelpText = lang.drs_text.HelpDict
 # get DrsRecipe
 DrsRecipe = drs_recipe.DrsRecipe
 DrsFitsFile = drs_file.DrsFitsFile
@@ -170,7 +170,7 @@ class Demo:
 
     def get_lang_db_loc(self):
         # get language database relative path
-        relpath = drs_text.DEFAULT_PATH
+        relpath = lang.drs_text.DEFAULT_PATH
         # return absolute language database path
         return pf.get_relative_folder(self.package, relpath)
 

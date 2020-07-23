@@ -18,7 +18,7 @@ from collections import OrderedDict
 
 from apero.core.instruments.default import pseudo_const
 from apero.core import constants
-from apero.lang import drs_text
+from apero import lang
 from apero.core.core import drs_log
 
 # =============================================================================
@@ -44,9 +44,9 @@ ParamDict = constants.ParamDict
 ConfigError = constants.ConfigError
 ArgumentError = constants.ArgumentError
 # Get the text types
-TextEntry = drs_text.TextEntry
-TextDict = drs_text.TextDict
-HelpText = drs_text.HelpDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
+HelpText = lang.drs_text.HelpDict
 # define display strings for types
 STRTYPE = OrderedDict()
 STRTYPE[int] = 'int'
@@ -1963,7 +1963,7 @@ def get_uncommon_path(path1, path2):
 # =============================================================================
 # Make functions
 # =============================================================================
-def make_listing(params):
+def make_listing(params, htext):
     """
     Make a custom special argument: Sets whether to display listing files
     up to DRS_MAX_IO_DISPLAY_LIMIT in number.
@@ -1978,8 +1978,6 @@ def make_listing(params):
     _ = display_func(params, 'make_listing', __NAME__)
     # define the listing limit (used in listing help
     limit = params['DRS_MAX_IO_DISPLAY_LIMIT']
-    # get the help text dictionary
-    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -1996,7 +1994,7 @@ def make_listing(params):
     return props
 
 
-def make_alllisting(params):
+def make_alllisting(params, htext):
     """
     Make a custom special argument: Sets whether to display all listing files
 
@@ -2008,8 +2006,6 @@ def make_alllisting(params):
     """
     # set function name
     _ = display_func(params, 'make_alllisting', __NAME__)
-    # get the help text dictionary
-    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -2026,7 +2022,7 @@ def make_alllisting(params):
     return props
 
 
-def make_debug(params):
+def make_debug(params, htext):
     """
     Make a custom special argument: Sets which debug mode to be in
 
@@ -2038,8 +2034,6 @@ def make_debug(params):
     """
     # set function name
     _ = display_func(params, 'make_debug', __NAME__)
-    # get the help text dictionary
-    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -2056,11 +2050,9 @@ def make_debug(params):
     return props
 
 
-def set_inputdir(params):
+def set_inputdir(params, htext):
     # set function name
     _ = display_func(params, 'set_inputdir', __NAME__)
-    # get the help text dictionary
-    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -2078,11 +2070,9 @@ def set_inputdir(params):
     return props
 
 
-def set_outputdir(params):
+def set_outputdir(params, htext):
     # set function name
     _ = display_func(params, 'set_outputdir', __NAME__)
-    # get the help text dictionary
-    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -2100,7 +2090,7 @@ def set_outputdir(params):
     return props
 
 
-def make_version(params):
+def make_version(params, htext):
     """
     Make a custom special argument: Whether to display drs version information
 
@@ -2112,8 +2102,6 @@ def make_version(params):
     """
     # set function name
     _ = display_func(params, 'make_version', __NAME__)
-    # get the help text dictionary
-    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -2130,7 +2118,7 @@ def make_version(params):
     return props
 
 
-def make_info(params):
+def make_info(params, htext):
     """
     Make a custom special argument: Whether to display recipe information
 
@@ -2142,8 +2130,6 @@ def make_info(params):
     """
     # set function name
     _ = display_func(params, 'make_info', __NAME__)
-    # get the help text dictionary
-    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -2160,7 +2146,7 @@ def make_info(params):
     return props
 
 
-def set_program(params):
+def set_program(params, htext):
     """
     Make a custom special argument: Set the program name
 
@@ -2172,8 +2158,6 @@ def set_program(params):
     """
     # set function name
     _ = display_func(params, 'set_program', __NAME__)
-    # get the help text dictionary
-    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -2190,7 +2174,7 @@ def set_program(params):
     return props
 
 
-def set_ipython_return(params):
+def set_ipython_return(params, htext):
     """
     Make a custom special argument: Set the use of ipython return after
     script ends
@@ -2203,8 +2187,6 @@ def set_ipython_return(params):
     """
     # set function name
     _ = display_func(params, 'set_ipython_return', __NAME__)
-    # get the help text dictionary
-    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -2221,7 +2203,7 @@ def set_ipython_return(params):
     return props
 
 
-def breakpoints(params):
+def breakpoints(params, htext):
     """
     Make a custom special argument: Set the use of break_point
 
@@ -2233,8 +2215,6 @@ def breakpoints(params):
     """
     # set function name
     _ = display_func(params, 'breakpoints', __NAME__)
-    # get the help text dictionary
-    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -2251,7 +2231,7 @@ def breakpoints(params):
     return props
 
 
-def is_master(params):
+def is_master(params, htext):
     """
     Make a custom special argument: Set the use of break_point
 
@@ -2263,8 +2243,6 @@ def is_master(params):
     """
     # set function name
     _ = display_func(params, 'is_master', __NAME__)
-    # get the help text dictionary
-    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -2281,7 +2259,7 @@ def is_master(params):
     return props
 
 
-def make_breakfunc(params):
+def make_breakfunc(params, htext):
     """
     Make a custom special argument: Set a break function
 
@@ -2293,8 +2271,6 @@ def make_breakfunc(params):
     """
     # set function name
     _ = display_func(params, 'make_breakfunc', __NAME__)
-    # get the help text dictionary
-    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -2311,7 +2287,7 @@ def make_breakfunc(params):
     return props
 
 
-def set_quiet(params):
+def set_quiet(params, htext):
     """
     Make a custom special argument: Set the quiet mode
 
@@ -2323,8 +2299,6 @@ def set_quiet(params):
     """
     # set function name (cannot break here --> no access to params)
     _ = display_func(params, 'set_quiet', __NAME__)
-    # get the help text dictionary
-    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
