@@ -25,7 +25,7 @@ from apero import lang
 from apero.io import drs_table
 from apero.io import drs_lock
 from apero.io import drs_path
-
+from apero.io import drs_text
 
 # =============================================================================
 # Define variables
@@ -1201,11 +1201,12 @@ def _get_files(params, recipe, path, rpath, **kwargs):
         kwargs[key] = []
     # ----------------------------------------------------------------------
     # deal with white/black list for nights
-    if 'WNIGHTNAMES' in params and params['WNIGHTNAMES'] is not None:
-        wnightnames = params.listp('WNIGHTNAMES', dtype=str)
+    if 'WNIGHTNAMES' in params:
+        if not drs_text.null_text(params['WNIGHTNAMES'], ['None', 'All', '']):
+            wnightnames = params.listp('WNIGHTNAMES', dtype=str)
     else:
         wnightnames = None
-    if 'BNIGHTNAMES' in params and params['BNIGHTNAMES'] is not None:
+    if not drs_text.null_text(params['BNIGHTNAMES'], ['None', 'All', '']):
         bnightnames = params.listp('BNIGHTNAMES', dtype=str)
     else:
         bnightnames = None
@@ -1236,7 +1237,7 @@ def _get_files(params, recipe, path, rpath, **kwargs):
                 continue
             # --------------------------------------------------------------
             # deal with blacklist/whitelist
-            if bnightnames not in [None, 'None', '']:
+            if not drs_text.null_text(bnightnames, ['None', 'All', '']):
                 if ucpath in bnightnames:
                     # only print path if not already in blist
                     if ucpath not in blist:
@@ -1247,7 +1248,7 @@ def _get_files(params, recipe, path, rpath, **kwargs):
                         blist.append(ucpath)
                     # skip this night
                     continue
-            if wnightnames not in [None, 'None', '']:
+            if not drs_text.null_text(wnightnames, ['None', 'All', '']):
                 if ucpath not in wnightnames:
                     # skip this night
                     continue
