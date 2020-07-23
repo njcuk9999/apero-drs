@@ -196,6 +196,50 @@ def combine_uncommon_text(stringlist, prefix=None, suffix=None, fmt=None):
     return text
 
 
+def null_text(variable, nulls=None):
+    """
+    Deal with variables that are unset (i.e. None) but may be text nulls
+    like "None" or ''  - nulls are set by "nulls" input
+
+    :param variable: object, any variable to test for Null
+    :param nulls: list of strings or None - if set extra strings that can be
+                  a null value
+    :return:
+    """
+    # if variable is None return True
+    if variable is None:
+        return True
+    # if variable is in nulls (and nulls is set) return True
+    if isinstance(variable, str):
+        if nulls is not None:
+            for null in nulls:
+                if variable.upper() == null.upper():
+                    return True
+    # else in all other cases return False
+    return False
+
+
+def true_text(variable):
+    """
+    Deal with variables that should be True or False  even when a string
+    (defaults to False)
+
+    i.e. returns True if variable = True, 1, "True", "T", "t", "true" etc
+
+    :param variable:
+    :return:
+    """
+    # if variable is a True or 1 return True
+    if variable in [True, 1]:
+        return True
+    # if variable is string test string Trues
+    if isinstance(variable, str):
+        if variable.upper() in ['TRUE', 'T', '1']:
+            return True
+    # else in all other cases return False
+    return False
+
+
 # =============================================================================
 # Start of code
 # =============================================================================
