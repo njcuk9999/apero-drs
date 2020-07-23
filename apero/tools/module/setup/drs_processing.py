@@ -1051,6 +1051,8 @@ def generate_ids(params, runtable, mod, skiptable, rlist=None, **kwargs):
         # create run object
         run_object = Run(params, run_item, mod=mod, priority=keylist[it],
                          inrecipe=input_recipe)
+        # TODO: remove print statement
+        print('Run Object made')
         # deal with input recipe
         if input_recipe is None:
             input_recipe = run_object.recipe
@@ -1094,10 +1096,6 @@ def skip_run_object(params, runobj, skiptable, textdict):
         if not params[runobj.runname]:
             return True, textdict['40-503-00007']
     # ----------------------------------------------------------------------
-
-    # TODO: break breakpoint
-    constants.break_point(params)
-
     # check if the user wants to skip
     if runobj.skipname in params:
         # if master in skipname do not skip
@@ -1119,7 +1117,7 @@ def skip_run_object(params, runobj, skiptable, textdict):
             # clean run string
             clean_runstring = skip_clean_arguments(runstring)
             # mask skip table by recipe
-            mask = skiptable['RECIPE'] == recipe.name
+            mask = skiptable['RECIPE'].strip('.py') == recipe.name.strip('.py')
             # get valid arguments to check
             arguments = skiptable['RUNSTRING'][mask]
             #
