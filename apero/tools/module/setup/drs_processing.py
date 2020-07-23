@@ -1117,7 +1117,7 @@ def skip_run_object(params, runobj, skiptable, textdict):
             # clean run string
             clean_runstring = skip_clean_arguments(runstring)
             # mask skip table by recipe
-            mask = skiptable['RECIPE'].strip('.py') == recipe.name.strip('.py')
+            mask = skiptable['RECIPE'] == recipe.name.strip('.py')
             # get valid arguments to check
             arguments = skiptable['RUNSTRING'][mask]
             #
