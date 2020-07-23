@@ -21,10 +21,10 @@ import itertools
 
 from apero.core.instruments.default import pseudo_const
 from apero.core import constants
-from apero.lang import drs_text
+from apero import lang
 from apero.core.core import drs_log
 from apero.core.core import drs_argument
-
+from apero.io import drs_text
 
 # =============================================================================
 # Define variables
@@ -50,9 +50,9 @@ ParamDict = constants.ParamDict
 ConfigError = constants.ConfigError
 ArgumentError = constants.ArgumentError
 # Get the text types
-TextEntry = drs_text.TextEntry
-TextDict = drs_text.TextDict
-HelpText = drs_text.HelpDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
+HelpText = lang.drs_text.HelpDict
 # define name of index file
 INDEX_FILE = Constants['DRS_INDEX_FILE']
 INDEX_FILE_NAME_COL = Constants['DRS_INDEX_FILENAME']
@@ -610,7 +610,7 @@ class DrsRecipe(object):
         # return the runlist
         return runlist
 
-    def add_extra(self, params, arguments, tstars=None):
+    def add_extra(self, params, arguments, tstars=None, ostars=None):
         # set function name
         func_name = display_func(params, 'add_extra', __NAME__, 'DrsRecipe')
         # load pseudo constants
@@ -638,8 +638,16 @@ class DrsRecipe(object):
                 # deal with telluric targets being None
                 if arguments[argname] == 'TELLURIC_TARGETS':
                     if isinstance(value, (type(None), str)):
-                        if value in ['None', None, '']:
+                        # test for null text
+                        if drs_text.null_text(value, ['None', 'All', '']):
                             value = tstars
+
+                if arguments[argname] == 'SCIENCE_TARGETS':
+                    if isinstance(value, (type(None), str)):
+                        # test for null text
+                        if drs_text.null_text(value, ['None', 'All', '']):
+                            value = ostars
+
             # check for argument in args
             if argname in self.args:
                 self.extras[argname] = value
@@ -762,48 +770,53 @@ class DrsRecipe(object):
 
         :return None:
         """
+        instrument = self.drs_params['INSTRUMENT']
+        language = self.drs_params['LANGUAGE']
+        # get the help text dictionary
+        htext = lang.drs_text.HelpDict(instrument, language)
         # ---------------------------------------------------------------------
         # make debug functionality
-        self._make_special(drs_argument.make_debug, skip=False)
+        self._make_special(drs_argument.make_debug, skip=False, htext=htext)
         # ---------------------------------------------------------------------
         # make listing functionality
-        self._make_special(drs_argument.make_listing, skip=True)
+        self._make_special(drs_argument.make_listing, skip=True, htext=htext)
         # ---------------------------------------------------------------------
         # make listing all functionality
-        self._make_special(drs_argument.make_alllisting, skip=True)
+        self._make_special(drs_argument.make_alllisting, skip=True, htext=htext)
         # ---------------------------------------------------------------------
         # make version functionality
-        self._make_special(drs_argument.make_version, skip=True)
+        self._make_special(drs_argument.make_version, skip=True, htext=htext)
         # ---------------------------------------------------------------------
         # make info functionality
-        self._make_special(drs_argument.make_info, skip=True)
+        self._make_special(drs_argument.make_info, skip=True, htext=htext)
         # ---------------------------------------------------------------------
         # set program functionality
-        self._make_special(drs_argument.set_program, skip=False)
+        self._make_special(drs_argument.set_program, skip=False, htext=htext)
         # ---------------------------------------------------------------------
         # set ipython return functionality
-        self._make_special(drs_argument.set_ipython_return, skip=False)
+        self._make_special(drs_argument.set_ipython_return, skip=False,
+                           htext=htext)
         # ---------------------------------------------------------------------
         # set is_master functionality
-        self._make_special(drs_argument.is_master, skip=False)
+        self._make_special(drs_argument.is_master, skip=False, htext=htext)
         # ---------------------------------------------------------------------
         # set breakpoint functionality
-        self._make_special(drs_argument.breakpoints, skip=False)
+        self._make_special(drs_argument.breakpoints, skip=False, htext=htext)
         # ---------------------------------------------------------------------
         # set breakfunc functionality
-        self._make_special(drs_argument.make_breakfunc, skip=False)
+        self._make_special(drs_argument.make_breakfunc, skip=False, htext=htext)
         # ---------------------------------------------------------------------
         # set quiet functionality
-        self._make_special(drs_argument.set_quiet, skip=False)
+        self._make_special(drs_argument.set_quiet, skip=False, htext=htext)
         # ---------------------------------------------------------------------
         # force input and output directories
-        self._make_special(drs_argument.set_inputdir, skip=False)
-        self._make_special(drs_argument.set_outputdir, skip=False)
+        self._make_special(drs_argument.set_inputdir, skip=False, htext=htext)
+        self._make_special(drs_argument.set_outputdir, skip=False, htext=htext)
 
 
-    def _make_special(self, function, skip=False):
+    def _make_special(self, function, skip=False, htext=None):
         # make debug functionality
-        props = function(self.drs_params)
+        props = function(self.drs_params, htext=htext)
         name = props['name']
         try:
             spec = DrsArgument(name, kind='special', altnames=props['altnames'])
@@ -1203,6 +1216,8 @@ class DrsRunSequence(object):
         self.sequence = []
         self.adds = []
         self.arguments = dict()
+        self.tstars = None
+        self.ostars = None
 
     def __str__(self):
         return 'DrsRunSequence[{0}]'.format(self.name)
@@ -1213,12 +1228,14 @@ class DrsRunSequence(object):
     def add(self, recipe, **kwargs):
         self.adds.append([recipe, dict(kwargs)])
 
-    def process_adds(self, params, tstars=None):
+    def process_adds(self, params, tstars=None, ostars=None):
         # set function name
         func_name = display_func(params, 'process_adds', __NAME__,
                                  class_name='DrsRunSequence')
         # set telluric stars (may be needed)
         self.tstars = tstars
+        # set other stars
+        self.ostars = ostars
         # get filemod and recipe mod
         pconst = constants.pload(self.instrument)
         filemod = pconst.FILEMOD()
@@ -1287,7 +1304,8 @@ class DrsRunSequence(object):
     def update_args(self, params, frecipe, fargs):
         # deal with arguments overwrite
         if 'arguments' in fargs:
-            frecipe.add_extra(params, fargs['arguments'], tstars=self.tstars)
+            frecipe.add_extra(params, fargs['arguments'], tstars=self.tstars,
+                              ostars=self.ostars)
         # ------------------------------------------------------------------
         # update args - loop around positional arguments
         frecipe.args = self._update_arg(frecipe.args, fargs)
