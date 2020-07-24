@@ -2,6 +2,113 @@ Changelog
 =========
 
 
+0.6.127 (2020-07-24)
+--------------------
+- Apero.tools.modeul.setup.drs_processing.py - filter objects by dprtype
+  and obstype. [njcuk9999]
+- Apero.core.core.drs_recipe.py - have to make sure string is not in
+  null text before making a string list. [njcuk9999]
+- Apero.core.core.drs_recipe.py - add break point to test mk_template
+  with All. [njcuk9999]
+- Apero.tools.module.setup.drs_processing.py - only keep log entries
+  that finished (we will only skip finished recipes) [njcuk9999]
+- Update language database. [njcuk9999]
+- Apero.tools.module.setup.drs_processing.py - remove breakpoint + only
+  keep unique entries in skip_storage. [njcuk9999]
+- Apero.tools.module.setup.drs_processing.py - need to remove all
+  arguments until we find one to keep (as --args might have spaces after
+  them) [njcuk9999]
+- Apero.tools.module.setup.drs_processing.py - change skip runstring
+  comparison from adding all arguments to just keeping required
+  arguments. [njcuk9999]
+- Apero.tools.module.setup.drs_processing.py - add --master to skip
+  remove args (added after this step) [njcuk9999]
+- Apero.tools.module.setup.drs_processing.py - move breakpoint.
+  [njcuk9999]
+- Apero.tools.module.setup.drs_processing.py - move breakpoint.
+  [njcuk9999]
+- Apero.tools.module.setup.drs_processing.py - update breakpoint to test
+  thermal/wave/extract. [njcuk9999]
+- Apero.tools.module.setup.drs_processing.py - add add_set_kwargs to add
+  optional args to runstring (for skip check comparison) [njcuk9999]
+- Apero.tools.module.setup.drs_processing.py - move break point.
+  [njcuk9999]
+- Apero.tools.module.setup.drs_processing.py - move break point.
+  [njcuk9999]
+- Apero.lang.core.drs_execptions.py + core.core.drs_log.py - remove
+  @profile. [njcuk9999]
+- Apero.lang.core.drs_execptions.py - add @profile. [njcuk9999]
+- Apero.core.core.drs_log.py - add more @profile. [njcuk9999]
+- Apero.core.core.drs_log.py - add @profile to test speed. [njcuk9999]
+
+
+0.6.126 (2020-07-23)
+--------------------
+- Apero.tools.module.setup.drs_processing.py - add break point and test
+  timings. [njcuk9999]
+- Apero.tools.module.setup.drs_processing.py - add break point and test
+  timings. [njcuk9999]
+- Apero.tools.module.setup.drs_processing.py - only strip recipe.name
+  not column. [njcuk9999]
+- Apero.tools.module.setup.drs_processing.py - strip .py from name.
+  [njcuk9999]
+- Apero.tools.module.setup.drs_processing.py - add break point to test
+  skipping. [njcuk9999]
+- Apero.io.drs_fits.py - make sure wnightnames and bnightnames are
+  defined. [njcuk9999]
+- Apero.io.drs_fits.py - deal with filtering files by
+  whitelist/blacklist nightnames (accept 'All') [njcuk9999]
+- Apero.core.core.drs_log.py - correct missing lang.drs_text.
+  [njcuk9999]
+- Apero.tools.modules.setup.drs_processing.py + apero_processing.py -
+  re-work skipping file feature and change
+  SCIENCE_TARGETS/TELLUIRC_TARGETS to "All" [njcuk9999]
+- Update language database. [njcuk9999]
+- Apero.io.drs_text.py - add null_text and true_text functions for
+  determining with text is unset/true. [njcuk9999]
+- Apero.data.*.reset.runs.* - update all ini files. [njcuk9999]
+- Core.core.drs_recipe.py - when SCIENCE_TARGETS is None use "other
+  stars" list (non-tellurics) + allow TELLUIC_TARGETS and
+  SCIENCE_TARGETS = ALL or None. [njcuk9999]
+- Change from apero.lange import drs_text --> from apero import lang.
+  [njcuk9999]
+
+
+0.6.125 (2020-07-22)
+--------------------
+- Apero.science.telluric.gen_tellu.py - some pep8 correction.
+  [njcuk9999]
+- Apero.science.telluric.gen_tellu.py - correct argument of
+  40-019-00043. [njcuk9999]
+- Apero.core.core.drs_log.py - add_level does not have WLOG -->
+  self.wlog. [njcuk9999]
+- Apero.core.core.drs_log.py + drs_startup.py - RecipeLog cannot use
+  WLOG (get it from construction) [njcuk9999]
+- Update README.md. [njcuk9999]
+- Merge branch 'neil' into working. [njcuk9999]
+- Merge branch 'neil_tellu' into neil. [njcuk9999]
+
+  # Conflicts:
+  #	apero/recipes/spirou/obj_fit_tellu_spirou.py
+  #	apero/recipes/spirou/obj_mk_tellu_spirou.py
+- Update language database. [njcuk9999]
+- Move text to language database. [njcuk9999]
+- Update language database. [njcuk9999]
+- Update date/version/changelog/documentation. [njcuk9999]
+- Merge branch 'neil' of https://github.com/njcuk9999/apero-drs into
+  neil. [njcuk9999]
+- Os.walk should alwawys follow symbolic links. [njcuk9999]
+- Update object database (now 65 entries) [njcuk9999]
+- Update the windows setup files (to include forcing utf8) - Issue #640.
+  [njcuk9999]
+- Merge pull request #632 from njcuk9999/neil. [Neil Cook]
+
+  Neil --> Working (based on mini run test error)
+- Merge pull request #631 from njcuk9999/neil. [Neil Cook]
+
+  Neil --> Working (for mini data test)
+
+
 0.6.124 (2020-07-21)
 --------------------
 - Update language database. [njcuk9999]
