@@ -1041,7 +1041,7 @@ def generate_ids(params, runtable, mod, skiptable, rlist=None, **kwargs):
     run_objects = []
     for it, run_item in enumerate(runlist):
 
-        if 'preprocessing' not in run_item:
+        if 'preprocess' not in run_item:
             # TODO: remove break point
             constants.break_point(params)
         # get runid
