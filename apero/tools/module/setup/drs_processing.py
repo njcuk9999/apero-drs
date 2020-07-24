@@ -111,6 +111,7 @@ class Run:
         self.recipemod = None
         self.kwargs = dict()
         self.fileargs = dict()
+        self.required_args = []
         # set parameters
         self.kind = None
         self.nightname = None
@@ -250,6 +251,11 @@ class Run:
         # get properties
         self.get_recipe_kind()
         self.get_night_name()
+        # populate a list of reciped arguments
+        for kwarg in self.recipe.kwargs:
+            if self.recipe.kwargs[kwarg].required:
+                self.required_args.append(kwarg)
+
 
     def prerun_test(self):
         """
@@ -624,31 +630,41 @@ def skip_clean_arguments(runstring):
     return ' '.join(args[mask])
 
 
-def add_set_kwargs(runobj, kwargs):
+def skip_remove_non_required_args(runstrings, runobj):
     """
-    Add all optional kwargs to runstring (from runobj)
+    remove any non-required arguments from runstrings (for skip comparison)
 
+    :param runstrings:
     :param runobj:
-    :param kwargs:
     :return:
     """
-    # get run string
-    runstring = runobj.runstring
-    # get args from
-    args = runobj.recipe.args
-
-    for kwarg in kwargs:
-        # skip args
-        if kwarg in args:
-            continue
-        # get optional kwarg value
-        value = kwargs[kwarg]
-        # only add if not already in runstring
-        if '--{0}'.format(kwarg) not in runstring:
-            if value is not None:
-                runstring += ' --{0}={1}'.format(kwarg, value)
-    # return runstring
-    return runstring
+    # get list of required args
+    reqargs = runobj.required_args
+    # deasl with runstrings as a string
+    if isinstance(runstrings, str):
+        runstrings = [runstrings]
+    # new runstrings
+    new_runstrings = []
+    # loop around run strings
+    for runstring in runstrings:
+        # make prev_arg a list
+        args = np.array(runstring.split(' '))
+        # mask for arguments to keep
+        mask = np.ones(len(args)).astype(bool)
+        # loop around arguments and figure out whether to keep them
+        for it, arg in enumerate(args):
+            # only deal with optional arguments
+            if arg.startswith('--'):
+                keep = False
+                # loop around keep arguments
+                for keep_arg in reqargs:
+                    if arg.startswith('--{0}'.format(keep_arg)):
+                        keep = True
+                mask[it] = keep
+        # append to new_runstrings
+        new_runstrings.append(' '.join(args[mask]))
+    # return new runstrings
+    return new_runstrings
 
 
 
@@ -1072,9 +1088,10 @@ def generate_ids(params, runtable, mod, skiptable, rlist=None, **kwargs):
     runlist = list(commands[sortmask])
     keylist = list(numbers[sortmask])
     inrecipelist = list(inrecipes[sortmask])
+    # store skip previous runstrings (so it is not recalculated every time)
+    skip_storage = dict()
     # log progress: Validating ids
     WLOG(params, 'info', TextEntry('40-503-00015', args=[len(runlist)]))
-
     # iterate through and make run objects
     run_objects = []
     for it, run_item in enumerate(runlist):
@@ -1095,7 +1112,8 @@ def generate_ids(params, runtable, mod, skiptable, rlist=None, **kwargs):
         if input_recipe is None:
             input_recipe = run_object.recipe
         # deal with skip
-        skip, reason = skip_run_object(params, run_object, skiptable, textdict)
+        skip, reason = skip_run_object(params, run_object, skiptable, textdict,
+                                       skip_storage)
 
         # TODO: remove break point
         if not skip:
@@ -1128,7 +1146,7 @@ def generate_ids(params, runtable, mod, skiptable, rlist=None, **kwargs):
     return run_objects
 
 
-def skip_run_object(params, runobj, skiptable, textdict):
+def skip_run_object(params, runobj, skiptable, textdict, skip_storage):
     # get recipe and runstring
     recipe = runobj.recipe
     # ----------------------------------------------------------------------
@@ -1142,14 +1160,21 @@ def skip_run_object(params, runobj, skiptable, textdict):
     if runobj.skipname in params:
         # if user wants to skip
         if params[runobj.skipname]:
-            # need to add optional arguments to runstring
-            runstring = add_set_kwargs(runobj, runobj.kwargs)
             # clean run string
-            clean_runstring = skip_clean_arguments(runstring)
-            # mask skip table by recipe
-            mask = skiptable['RECIPE'] == recipe.name.strip('.py')
-            # get valid arguments to check
-            arguments = skiptable['RUNSTRING'][mask]
+            clean_runstring = skip_clean_arguments(runobj.runstring)
+            # check for recipe in skip storage
+            if recipe.name.strip('.py') in skip_storage:
+                arguments = skip_storage[recipe.name.strip('.py')]
+            else:
+                # mask skip table by recipe
+                mask = skiptable['RECIPE'] == recipe.name.strip('.py')
+                # get valid arguments to check
+                arguments = skiptable['RUNSTRING'][mask]
+                # re-clean arguments this time using additional recipe
+                #    requirements
+                arguments = skip_remove_non_required_args(arguments, runobj)
+                # update skip storage (so we don't do this again)
+                skip_storage[recipe.name.strip('.py')] = arguments
             # if the clean run string is in the arguments list then we skip
             if clean_runstring in arguments:
                 # User set skip to 'True' and argument previously used
@@ -1166,11 +1191,9 @@ def skip_run_object(params, runobj, skiptable, textdict):
     else:
         # debug log
         dargs = [runobj.skipname]
-        WLOG(params, 'debug', TextEntry('90-503-00005', args=dargs))
+        WLOG(params, '', TextEntry('90-503-00005', args=dargs))
         # return False and no reason
-        return False, None
-
-
+        return False, '{0} not present'.format(runobj.skipname)
 
 
 # TODO: remove later
