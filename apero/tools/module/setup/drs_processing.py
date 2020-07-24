@@ -651,6 +651,8 @@ def skip_remove_non_required_args(runstrings, runobj):
         args = np.array(runstring.split(' '))
         # mask for arguments to keep
         mask = np.ones(len(args)).astype(bool)
+        # set keep to False
+        keep = True
         # loop around arguments and figure out whether to keep them
         for it, arg in enumerate(args):
             # only deal with optional arguments
@@ -660,7 +662,7 @@ def skip_remove_non_required_args(runstrings, runobj):
                 for keep_arg in reqargs:
                     if arg.startswith('--{0}'.format(keep_arg)):
                         keep = True
-                mask[it] = keep
+            mask[it] = keep
         # append to new_runstrings
         new_runstrings.append(' '.join(args[mask]))
     # return new runstrings
