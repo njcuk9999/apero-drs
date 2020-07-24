@@ -584,7 +584,17 @@ def generate_skip_table(params):
     for logfile in logfiles:
         # load table
         try:
+            # load log table
             logtable = Table.read(logfile, format='fits')
+            # debug printout
+            dargs = [len(logtable), logfile]
+            WLOG(params, 'debug', TextEntry('90-503-00019', args=dargs))
+            # only keep those that finished
+            ended = logtable['ENDED']
+            logtable = logtable[ended]
+            # log debug: number that ended
+            dargs = [len(logtable)]
+            WLOG(params, 'debug', TextEntry('90-503-00020', args=dargs))
             # append to storage
             recipes += list(logtable['RECIPE'])
             # get run string
