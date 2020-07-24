@@ -174,10 +174,11 @@ class DrsError(DrsException):
         return _flatmessage(self.message)
 
 
-@profile
+
 class DrsWarning:
     global USED_DRS_WARNINGS
 
+    @profile
     def __init__(self, message=None, level=None, wlog=None, kwargs=None,
                  errorobj=None):
 
@@ -460,6 +461,7 @@ def wlogbasic(_, level, message, **kwargs):
         return basiclogger(message=message, level=level, **kwargs)
 
 
+@profile
 def basiclogger(message=None, level=None, name=None, force_exit=True,
                 wlog=None, **kwargs):
 
