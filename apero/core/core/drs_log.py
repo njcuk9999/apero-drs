@@ -27,7 +27,6 @@ from apero import lang
 from apero.lang import drs_exceptions
 from apero.core.math import time
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -103,7 +102,6 @@ class Logger:
             self.pout[storekey[key]] = []
         self.pout['LOGGER_FULL'] = []
 
-    @profile
     def __call__(self, params=None, key='', message=None, printonly=False,
                  logonly=False, wrap=True, option=None, colour=None,
                  raise_exception=True):
@@ -367,7 +365,6 @@ class Logger:
             elif raise_exception:
                 raise drs_exceptions.LogExit(errorstring)
 
-    @profile
     def update_param_dict(self, paramdict):
         # update the parameter dictionary
         for key in paramdict:
@@ -426,7 +423,7 @@ class Logger:
         if printonly:
             return 0
         # get pid
-        pid =  params['PID']
+        pid = params['PID']
         # make sub dictionary
         if pid not in self.pout:
             self.pout[pid] = ParamDict()
@@ -487,6 +484,7 @@ class Logger:
 
 class Printer():
     """Print things to stdout on one line dynamically"""
+
     def __init__(self, params, level, message):
         self.params = params
         self.level = level
@@ -588,7 +586,7 @@ class RecipeLog:
 
     def set_plot_dir(self, params, location, write=True):
         if location is not None:
-            self.plot_dir =location
+            self.plot_dir = location
             # update children
             if len(self.set) != 0:
                 for child in self.set:
@@ -1220,7 +1218,7 @@ def warninglogger(p, w, funcname=None):
                 wlog(p, 'warning', TextEntry(key, args=wargs))
                 displayed_warnings.append(wmsg)
 
-@profile
+
 def get_logfilepath(logobj, params, use_group=True):
     """
     Construct the log file path and filename (normally from "DRS_DATA_MSG"
@@ -1506,7 +1504,6 @@ def writelog(logobj, params, message, key, logfilepath):
 
 
 def _clean_message(message):
-
     # get all attributes of Color
     all_attr = Color.__dict__
     # storeage for codes
@@ -1527,7 +1524,7 @@ def _clean_message(message):
     # return message
     return message
 
-@profile
+
 def get_drs_data_msg(params, group=None, reset=False):
     # if we have a full path in params we use this
     if 'DRS_DATA_MSG_FULL' in params and not reset:
@@ -1598,7 +1595,6 @@ def get_drs_data_msg(params, group=None, reset=False):
 # =============================================================================
 # Define Recipe Log functions
 # =============================================================================
-
 
 
 # =============================================================================

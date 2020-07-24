@@ -12,6 +12,7 @@ Created on 2019-01-24 at 16:33
 from astropy.time import Time
 import sys
 
+
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -174,11 +175,9 @@ class DrsError(DrsException):
         return _flatmessage(self.message)
 
 
-
 class DrsWarning:
     global USED_DRS_WARNINGS
 
-    @profile
     def __init__(self, message=None, level=None, wlog=None, kwargs=None,
                  errorobj=None):
 
@@ -461,7 +460,6 @@ def wlogbasic(_, level, message, **kwargs):
         return basiclogger(message=message, level=level, **kwargs)
 
 
-@profile
 def basiclogger(message=None, level=None, name=None, force_exit=True,
                 wlog=None, **kwargs):
 
@@ -500,10 +498,12 @@ def basiclogger(message=None, level=None, name=None, force_exit=True,
         key = '{0} -   |{1} Log| {2}'
     # deal with printing log messages
     if print_statement:
+        # get time
+        # TODO: first time Time.now is done it takes a very long time
+        atime = Time.now()
+        htime = atime.iso.split(' ')[-1]
+        # loop around message
         for mess in message:
-            # get time
-            atime = Time.now()
-            htime = atime.iso.split(' ')[-1]
             # print log message
             print(key.format(htime, name, mess))
     # deal with exiting
