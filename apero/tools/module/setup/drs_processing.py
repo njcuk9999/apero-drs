@@ -666,7 +666,7 @@ def skip_remove_non_required_args(runstrings, runobj):
         # append to new_runstrings
         new_runstrings.append(' '.join(args[mask]))
     # return new runstrings
-    return new_runstrings
+    return np.unique(new_runstrings)
 
 
 
@@ -1116,11 +1116,6 @@ def generate_ids(params, runtable, mod, skiptable, rlist=None, **kwargs):
         # deal with skip
         skip, reason = skip_run_object(params, run_object, skiptable, textdict,
                                        skip_storage)
-
-        # TODO: remove break point
-        if not skip:
-            constants.break_point(params)
-
         # deal with passing debug
         if params['DRS_DEBUG'] > 0:
             dargs = [run_object.runstring, params['DRS_DEBUG']]
@@ -1166,6 +1161,8 @@ def skip_run_object(params, runobj, skiptable, textdict, skip_storage):
             clean_runstring = skip_clean_arguments(runobj.runstring)
             # check for recipe in skip storage
             if recipe.name.strip('.py') in skip_storage:
+                # get the cleaned arguments directory from skip_storage
+                #   (quicker than re-calculating)
                 arguments = skip_storage[recipe.name.strip('.py')]
             else:
                 # mask skip table by recipe
