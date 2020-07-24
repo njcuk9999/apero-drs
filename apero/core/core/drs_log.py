@@ -367,6 +367,7 @@ class Logger:
             elif raise_exception:
                 raise drs_exceptions.LogExit(errorstring)
 
+    @profile
     def update_param_dict(self, paramdict):
         # update the parameter dictionary
         for key in paramdict:
@@ -1219,7 +1220,7 @@ def warninglogger(p, w, funcname=None):
                 wlog(p, 'warning', TextEntry(key, args=wargs))
                 displayed_warnings.append(wmsg)
 
-
+@profile
 def get_logfilepath(logobj, params, use_group=True):
     """
     Construct the log file path and filename (normally from "DRS_DATA_MSG"
@@ -1526,7 +1527,7 @@ def _clean_message(message):
     # return message
     return message
 
-
+@profile
 def get_drs_data_msg(params, group=None, reset=False):
     # if we have a full path in params we use this
     if 'DRS_DATA_MSG_FULL' in params and not reset:

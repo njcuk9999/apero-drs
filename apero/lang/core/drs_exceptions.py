@@ -174,6 +174,7 @@ class DrsError(DrsException):
         return _flatmessage(self.message)
 
 
+@profile
 class DrsWarning:
     global USED_DRS_WARNINGS
 
