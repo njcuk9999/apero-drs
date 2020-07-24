@@ -1075,17 +1075,12 @@ def generate_ids(params, runtable, mod, skiptable, rlist=None, **kwargs):
     # log progress: Validating ids
     WLOG(params, 'info', TextEntry('40-503-00015', args=[len(runlist)]))
 
+    # TODO: remove break point
+    constants.break_point(params)
 
     # iterate through and make run objects
     run_objects = []
     for it, run_item in enumerate(runlist):
-        # TODO: remove break point
-        cond = 'thermal' in run_item
-        cond |= 'wave' in run_item
-        cond |= 'extract' in run_item
-        if cond:
-            constants.break_point(params)
-        # TODO: end of  break point
         # get runid
         runid = '{0}{1:05d}'.format(run_key, keylist[it])
         # get recipe
