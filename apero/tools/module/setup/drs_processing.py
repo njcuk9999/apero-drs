@@ -2048,17 +2048,26 @@ def _get_non_telluric_stars(params, table, tstars):
     # deal with no tstars
     if drs_text.null_text(tstars, ['None', '']):
         tstars = []
+    # ----------------------------------------------------------------------
+    # lets narrow down our list
+    # ----------------------------------------------------------------------
+    # 1. keep only obj fp and obj dark files
+    dprtype = table['KW_DPRTYPE']
+    mask = (dprtype == 'OBJ_FP') | (dprtype == 'OBJ_DARK')
+    # 2. keep only obstype = OBJECT
+    mask &= table['KW_OBSTYPE'] == 'OBJECT'
     # get all object names from all object columns
     raw_objects = []
     for col in table.colnames:
         if col in OBJNAMECOLS:
-            raw_objects += list(table[col])
+            raw_objects += list(table[col][mask])
     # make a unique list of names
     all_objects = np.unique(raw_objects)
     # now find all those not in tstars
     other_objects = []
     # loop around all objects
     for objname in all_objects:
+        # do not add telluric stars
         if objname not in tstars:
             other_objects.append(objname)
     # add to debug log
