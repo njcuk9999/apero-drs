@@ -630,14 +630,16 @@ class DrsRecipe(object):
                     value = params[value]
                 # deal with SPECIAL_LIST_KEYS
                 if arguments[argname] in SPECIAL_LIST_KEYS:
-                    # may not be strings (if set from params)
-                    if isinstance(value, str):
-                        # these must be lists
-                        value = value.split(',')
-                        # make sure there are no white spaces
-                        value = np.char.strip(value)
-                        # deal with object name cleaning
-                        value = list(map(pconst.DRS_OBJ_NAME, value))
+                    # do not make null text a list of strings
+                    if not drs_text.null_text(value, ['None', 'All', '']):
+                        # may not be strings (if set from params)
+                        if isinstance(value, str):
+                            # these must be lists
+                            value = value.split(',')
+                            # make sure there are no white spaces
+                            value = np.char.strip(value)
+                            # deal with object name cleaning
+                            value = list(map(pconst.DRS_OBJ_NAME, value))
 
                 # deal with telluric targets being None
                 if arguments[argname] == 'TELLURIC_TARGETS':
