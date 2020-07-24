@@ -602,6 +602,17 @@ def generate_skip_table(params):
 
 
 def skip_clean_arguments(runstring):
+    """
+    Clean arguments for skip check - these are arguments that may change
+    between otherwise identical runs
+
+    i.e. --prog depends on what is run
+         --plot and --debug do not change run
+         --skip should not determine same run
+
+    :param runstring:
+    :return:
+    """
     args = np.array(runstring.split(' '))
     # mask for arguments to keep
     mask = np.ones(len(args)).astype(bool)
@@ -611,6 +622,34 @@ def skip_clean_arguments(runstring):
             if arg.startswith(remove_arg):
                 mask[it] = False
     return ' '.join(args[mask])
+
+
+def add_set_kwargs(runobj, kwargs):
+    """
+    Add all optional kwargs to runstring (from runobj)
+
+    :param runobj:
+    :param kwargs:
+    :return:
+    """
+    # get run string
+    runstring = runobj.runstring
+    # get args from
+    args = runobj.recipe.args
+
+    for kwarg in kwargs:
+        # skip args
+        if kwarg in args:
+            continue
+        # get optional kwarg value
+        value = kwargs[kwarg]
+        # only add if not already in runstring
+        if '--{0}'.format(kwarg) not in runstring:
+            if value is not None:
+                runstring += ' --{0}={1}'.format(kwarg, value)
+    # return runstring
+    return runstring
+
 
 
 def fix_run_file(runfile):
@@ -1092,7 +1131,6 @@ def generate_ids(params, runtable, mod, skiptable, rlist=None, **kwargs):
 def skip_run_object(params, runobj, skiptable, textdict):
     # get recipe and runstring
     recipe = runobj.recipe
-    runstring = runobj.runstring
     # ----------------------------------------------------------------------
     # check if the user wants to run this runobj (in run list)
     if runobj.runname in params:
@@ -1118,6 +1156,8 @@ def skip_run_object(params, runobj, skiptable, textdict):
             #         # debug log
             #         WLOG(params, 'debug', TextEntry('90-503-00007'))
             #         return False, None
+            # need to add optional arguments to runstring
+            runstring = add_set_kwargs(runobj, runobj.kwargs)
             # clean run string
             clean_runstring = skip_clean_arguments(runstring)
             # mask skip table by recipe
