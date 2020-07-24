@@ -103,6 +103,7 @@ class Logger:
             self.pout[storekey[key]] = []
         self.pout['LOGGER_FULL'] = []
 
+    @profile
     def __call__(self, params=None, key='', message=None, printonly=False,
                  logonly=False, wrap=True, option=None, colour=None,
                  raise_exception=True):
