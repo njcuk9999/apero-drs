@@ -1075,9 +1075,6 @@ def generate_ids(params, runtable, mod, skiptable, rlist=None, **kwargs):
     # log progress: Validating ids
     WLOG(params, 'info', TextEntry('40-503-00015', args=[len(runlist)]))
 
-    # TODO: remove break point
-    constants.break_point(params)
-
     # iterate through and make run objects
     run_objects = []
     for it, run_item in enumerate(runlist):
@@ -1099,6 +1096,11 @@ def generate_ids(params, runtable, mod, skiptable, rlist=None, **kwargs):
             input_recipe = run_object.recipe
         # deal with skip
         skip, reason = skip_run_object(params, run_object, skiptable, textdict)
+
+        # TODO: remove break point
+        if not skip:
+            constants.break_point(params)
+
         # deal with passing debug
         if params['DRS_DEBUG'] > 0:
             dargs = [run_object.runstring, params['DRS_DEBUG']]
