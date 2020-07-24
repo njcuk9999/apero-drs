@@ -89,7 +89,7 @@ SPECIAL_LIST_KEYS = drs_recipe.SPECIAL_LIST_KEYS
 # get list of obj name cols
 OBJNAMECOLS = ['KW_OBJNAME']
 # list of arguments to remove from skip check
-SKIP_REMOVE_ARGS = ['--skip', '--program', '--debug', '--plot']
+SKIP_REMOVE_ARGS = ['--skip', '--program', '--debug', '--plot', '--master']
 
 
 # =============================================================================
