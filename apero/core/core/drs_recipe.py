@@ -615,6 +615,10 @@ class DrsRecipe(object):
         func_name = display_func(params, 'add_extra', __NAME__, 'DrsRecipe')
         # load pseudo constants
         pconst = constants.pload(instrument=params['INSTRUMENT'])
+
+        # TODO: remove breakpoint
+        constants.break_point(params)
+
         # loop around arguments
         for argname in arguments:
             # get value
