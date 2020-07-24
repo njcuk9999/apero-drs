@@ -1079,10 +1079,13 @@ def generate_ids(params, runtable, mod, skiptable, rlist=None, **kwargs):
     # iterate through and make run objects
     run_objects = []
     for it, run_item in enumerate(runlist):
-
-        if 'preprocess' not in run_item:
-            # TODO: remove break point
+        # TODO: remove break point
+        cond = 'thermal' in run_item
+        cond |= 'wave' in run_item
+        cond |= 'extract' in run_item
+        if cond:
             constants.break_point(params)
+        # TODO: end of  break point
         # get runid
         runid = '{0}{1:05d}'.format(run_key, keylist[it])
         # get recipe
@@ -1140,22 +1143,8 @@ def skip_run_object(params, runobj, skiptable, textdict):
     # ----------------------------------------------------------------------
     # check if the user wants to skip
     if runobj.skipname in params:
-        # if master in skipname do not skip
-        if runobj.master:
-            # debug log
-            dargs = [runobj.skipname]
-            WLOG(params, 'debug', TextEntry('90-503-00003', args=dargs))
-            # return False and no reason
-            return False, None
-        # else if user wants to skip
-        elif params[runobj.skipname]:
-            # TODO: Not sure we want this bit any more
-            # # deal with adding skip to recipes
-            # if 'skip' in recipe.kwargs:
-            #     if '--skip' in runstring:
-            #         # debug log
-            #         WLOG(params, 'debug', TextEntry('90-503-00007'))
-            #         return False, None
+        # if user wants to skip
+        if params[runobj.skipname]:
             # need to add optional arguments to runstring
             runstring = add_set_kwargs(runobj, runobj.kwargs)
             # clean run string
@@ -1164,7 +1153,7 @@ def skip_run_object(params, runobj, skiptable, textdict):
             mask = skiptable['RECIPE'] == recipe.name.strip('.py')
             # get valid arguments to check
             arguments = skiptable['RUNSTRING'][mask]
-            #
+            # if the clean run string is in the arguments list then we skip
             if clean_runstring in arguments:
                 # User set skip to 'True' and argument previously used
                 return True, textdict['40-503-00032']
