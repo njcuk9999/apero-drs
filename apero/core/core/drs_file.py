@@ -1115,6 +1115,13 @@ class DrsFitsFile(DrsInputFile):
             if key not in header:
                 wargs = [key, self.filename]
                 WLOG(params, 'warning', TextEntry('10-001-00008', args=wargs))
+                found = False
+                errors[key] = (found, argname, rvalue, value)
+
+                # TODO: remove breakpoint
+                constants.break_point()
+
+                continue
             # get value and required value
             value = header[key].strip()
             rvalue = rkeys[drskey].strip()
