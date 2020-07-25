@@ -1320,7 +1320,7 @@ def _get_files(params, recipe, path, rpath, **kwargs):
                                            raise_exception=True)
                 except lang.drs_exceptions.DrsHeaderError as e:
                     # log warning message
-                    eargs = [e.key, e.filename]
+                    eargs = [e.key, abspath]
                     emsg = TextEntry('10-001-00008', args=eargs)
                     WLOG(params, 'warning', emsg)
                     # remove from lists

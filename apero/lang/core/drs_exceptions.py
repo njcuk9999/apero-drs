@@ -218,9 +218,6 @@ class DrsHeaderError(DrsException):
             self.level = 'error'
         else:
             self.level = level
-        # send to basic logger
-        basiclogger(message=self.message, level=self.level,  name='DRS',
-                    force_exit=False, wlog=wlog, **kwargs)
 
     def __str__(self):
         return _flatmessage(self.message)
