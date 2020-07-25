@@ -103,6 +103,7 @@ class PseudoConstants:
         params = kwargs.get('params')
         recipe = kwargs.get('recipe')
         header = kwargs.get('header')
+        filename = kwargs.get('filename')
         # return header
         return header
 

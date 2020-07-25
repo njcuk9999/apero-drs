@@ -915,7 +915,8 @@ def find_raw_files(params, recipe, **kwargs):
     return mastertable, rpath
 
 
-def fix_header(params, recipe, infile=None, header=None, **kwargs):
+def fix_header(params, recipe, infile=None, header=None,
+               raise_exception=False, **kwargs):
     """
     Instrument specific header fixes are define in pseudo_const.py for an
     instrument and called here (function in pseudo_const.py is HEADER_FIXES)
@@ -927,17 +928,28 @@ def fix_header(params, recipe, infile=None, header=None, **kwargs):
     if header is None:
         header = infile.header
         hdict = infile.hdict
+        filename = infile.filename
         has_infile = True
     else:
         has_infile = False
         hdict = Header()
+        filename = None
 
     # load pseudo constants
     pconst = constants.pload(params['INSTRUMENT'])
     # use pseudo constant to apply any header fixes required (specific to
     #   a specific instrument) and update the header
-    header, hdict = pconst.HEADER_FIXES(params=params, recipe=recipe,
-                                        header=header, hdict=hdict, **kwargs)
+    try:
+        header, hdict = pconst.HEADER_FIXES(params=params, recipe=recipe,
+                                            header=header, hdict=hdict,
+                                            filename=filename,
+                                            **kwargs)
+    except lang.drs_exceptions.DrsHeaderError as e:
+        if raise_exception:
+            raise e
+        else:
+            eargs = [e.key, e.filename]
+            WLOG(params, 'error', TextEntry('01-001-00027', args=eargs))
     # if the input was an infile return the infile back
     if has_infile:
         # return the updated infile
@@ -1303,7 +1315,22 @@ def _get_files(params, recipe, path, rpath, **kwargs):
                 # read the header
                 header = read_header(params, abspath)
                 # fix the headers
-                header, _ = fix_header(params, recipe, header=header)
+                try:
+                    header, _ = fix_header(params, recipe, header=header,
+                                           raise_exception=True)
+                except lang.drs_exceptions.DrsHeaderError as e:
+                    # log warning message
+                    eargs = [e.key, e.filename]
+                    emsg = TextEntry('10-001-00008', args=eargs)
+                    WLOG(params, 'warning', emsg)
+                    # remove from lists
+                    nightnames.pop()
+                    filelist.pop()
+                    basenames.pop()
+                    mod_times.pop()
+                    # continue to next file
+                    continue
+
                 # loop around header keys
                 for key in headerkeys:
                     rkey = params[key][0]

@@ -175,6 +175,58 @@ class DrsError(DrsException):
         return _flatmessage(self.message)
 
 
+class DrsHeaderError(DrsException):
+    """
+    Custom Config Error for passing to the log
+    """
+
+    def __init__(self, message=None, level=None, wlog=None, kwargs=None,
+                 errorobj=None, key=None, filename=None):
+        """
+        Constructor for DRSError sets message to self.message and level to
+        self.level
+
+        if key is not None defined self.message reads "key [key] must be
+        defined in config file (located at [config_file]
+
+        if config_file is None then deafult config file is used in its place
+
+        :param message: list or string, the message to print in the error
+        :param level: string, level (for logging) must be key in TRIG key above
+                      default = all, error, warning, info or graph
+        """
+        # deal with errorobj
+        if errorobj is not None:
+            message = errorobj[0].get(errorobj[1], report=True)
+            message = message.split('\n')
+            level = 'error'
+        # get key and filename
+        self.key = key
+        self.filename = filename
+        # deal with kwargs being None
+        if kwargs is None:
+            kwargs = dict()
+        # deal with message
+        if message is None:
+            self.message = 'Unknown'
+        elif type(message) == str:
+            self.message = message
+        else:
+            self.message = list(message)
+        # set logging level
+        if level is None:
+            self.level = 'error'
+        else:
+            self.level = level
+        # send to basic logger
+        basiclogger(message=self.message, level=self.level,  name='DRS',
+                    force_exit=False, wlog=wlog, **kwargs)
+
+    def __str__(self):
+        return _flatmessage(self.message)
+
+
+
 class DrsWarning:
     global USED_DRS_WARNINGS
 
