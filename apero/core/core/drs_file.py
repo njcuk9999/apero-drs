@@ -1111,6 +1111,10 @@ class DrsFitsFile(DrsInputFile):
                 key = params[drskey][0]
             else:
                 key = drskey
+            # check that key is in header
+            if key not in header:
+                wargs = [key, self.filename]
+                WLOG(params, 'warning', TextEntry('10-001-00008', args=wargs))
             # get value and required value
             value = header[key].strip()
             rvalue = rkeys[drskey].strip()
