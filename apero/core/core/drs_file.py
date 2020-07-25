@@ -1116,7 +1116,7 @@ class DrsFitsFile(DrsInputFile):
                 wargs = [key, self.filename]
                 WLOG(params, 'warning', TextEntry('10-001-00008', args=wargs))
                 found = False
-                errors[key] = (found, argname, rvalue, value)
+                errors[key] = (found, argname, rkeys[drskey].strip(), 'None')
 
                 # TODO: remove breakpoint
                 constants.break_point()
