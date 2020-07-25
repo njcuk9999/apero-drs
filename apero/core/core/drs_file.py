@@ -1074,7 +1074,8 @@ class DrsFitsFile(DrsInputFile):
         #   messages
         return True, None
 
-    def has_correct_hkeys(self, header=None, argname=None, log=True):
+    def has_correct_hkeys(self, header=None, argname=None, log=True,
+                          filename=None):
         # set function name
         _ = display_func(None, 'has_correct_hkeys', __NAME__, 'DrsFitsFile')
         # -----------------------------------------------------------------
@@ -1091,6 +1092,8 @@ class DrsFitsFile(DrsInputFile):
             self.check_read(header_only=True, load=True)
             # get header
             header = self.header
+            # get file
+            filename = self.filename
         # get short hand to required header keys
         rkeys = self.required_header_keys
         # -----------------------------------------------------------------
@@ -1113,15 +1116,9 @@ class DrsFitsFile(DrsInputFile):
                 key = drskey
             # check that key is in header
             if key not in header:
-                wargs = [key, self.filename]
-                WLOG(params, 'warning', TextEntry('10-001-00008', args=wargs))
-                found = False
-                errors[key] = (found, argname, rkeys[drskey].strip(), 'None')
-
-                # TODO: remove breakpoint
-                constants.break_point()
-
-                continue
+                ekwargs = dict(level='error', key=key, filename=filename)
+                raise lang.drs_exceptions.DrsHeaderError('Key not found',
+                                                         **ekwargs)
             # get value and required value
             value = header[key].strip()
             rvalue = rkeys[drskey].strip()
