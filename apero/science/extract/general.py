@@ -1025,17 +1025,21 @@ def e2ds_to_s1d(params, recipe, wavemap, e2ds, blaze, fiber=None, wgrid='wave',
     for order_num in range(nord):
         # identify the valid pixels
         valid = np.isfinite(se2ds[order_num]) & np.isfinite(sblaze[order_num])
-        valid_float = valid.astype(float)
+
         # if we have no valid points we need to skip
         if np.sum(valid) == 0:
             continue
         # get this orders vectors
         owave = wavemap[order_num]
         oe2ds = se2ds[order_num, valid]
-        oblaze = sblaze[order_num, valid]
+        oblaze = sblaze[order_num]
         # create the splines for this order
         spline_sp = mp.iuv_spline(owave[valid], oe2ds, k=5, ext=1)
-        spline_bl = mp.iuv_spline(owave[valid], oblaze, k=5, ext=1)
+        spline_bl = mp.iuv_spline(owave, oblaze, k=1, ext=1)
+
+        valid_float = valid.astype(float)
+        # we mask pixels that are neighbours to a NaN.
+        valid_float = np.convolve(valid_float, np.ones(3) / 3.0, mode='same')
         spline_valid = mp.iuv_spline(owave, valid_float, k=1, ext=1)
         # can only spline in domain of the wave
         useful_range = (wavegrid > mp.nanmin(owave[valid]))
