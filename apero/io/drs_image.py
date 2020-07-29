@@ -528,7 +528,7 @@ def large_image_combine(params: ParamDict, files: List[str],
     bins = np.array(np.arange(0, nribbons) / (nribbons - 1)).astype(int)
     bins = bins * mdim1
     # ----------------------------------------------------------------------
-    # loop arouynd files and save ribbons as numpy arrays
+    # loop around files and save ribbons as numpy arrays
     for f_it, filename in enumerate(files):
         # log message so we know how far through we are
         # Processing file {0} / {1}
