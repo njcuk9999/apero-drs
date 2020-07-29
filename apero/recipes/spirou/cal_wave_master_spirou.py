@@ -17,6 +17,7 @@ from apero.core import constants
 from apero.core.core import drs_database
 from apero.io import drs_image
 from apero.io import drs_fits
+from apero.science.calib import general
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave
 from apero.science.extract import other as extractother
@@ -109,6 +110,8 @@ def __main__(recipe, params):
         fpfiles = None
     else:
         fpfiles = params['INPUTS']['FPFILES'][1]
+        # must check fp files pass quality control
+        fpfiles = general.check_fp_files(params, fpfiles)
     # get list of filenames (for output)
     rawhcfiles, rawfpfiles = [], []
     for infile in hcfiles:

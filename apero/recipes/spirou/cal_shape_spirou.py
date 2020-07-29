@@ -94,6 +94,8 @@ def __main__(recipe, params):
     mainname = __NAME__ + '._main()'
     # get files
     infiles = params['INPUTS']['FILES'][1]
+    # must check fp files pass quality control
+    infiles = general.check_fp_files(params, infiles)
     # get list of filenames (for output)
     rawfiles = []
     for infile in infiles:
