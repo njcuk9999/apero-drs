@@ -72,6 +72,13 @@ def construct_fp_table(params, filenames):
         nightname = drs_path.get_nightname(params, filenames[it])
         # read the header
         hdr = drs_fits.read_header(params, filenames[it])
+        # must load file here to check if fp is valid
+        image = drs_fits.readfits(params, filenames[it], log=False)
+        # if image is not valid skip
+        if not general.check_fp(params, image):
+            continue
+        # delete image we'll get it again later in more memory efficient manner
+        del image
         # get keys from hdr
         acqtime, acqmethod = drs_fits.get_mid_obs_time(params, hdr, 'mjd')
         exptime = hdr[params['KW_EXPTIME'][0]]
