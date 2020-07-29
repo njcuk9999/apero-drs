@@ -132,6 +132,18 @@ OBJ_LIST_GAIA_EPOCH.value = 2015.5
 OBJ_LIST_GAIA_PLX_LIM = OBJ_LIST_GAIA_PLX_LIM.copy(__NAME__)
 OBJ_LIST_GAIA_PLX_LIM.value = 5
 
+# define the check FP percentile level
+CALIB_CHECK_FP_PERCENTILE = CALIB_CHECK_FP_PERCENTILE.copy(__NAME__)
+CALIB_CHECK_FP_PERCENTILE.value = 95
+
+# define the check FP threshold qc parameter
+CALIB_CHECK_FP_THRES = CALIB_CHECK_FP_THRES.copy(__NAME__)
+CALIB_CHECK_FP_THRES.value = 100
+
+# define the check FP center image size [px]
+CALIB_CHECK_FP_CENT_SIZE = CALIB_CHECK_FP_CENT_SIZE.copy(__NAME__)
+CALIB_CHECK_FP_CENT_SIZE.value = 100
+
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS
 # =============================================================================
