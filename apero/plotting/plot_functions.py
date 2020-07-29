@@ -886,11 +886,11 @@ def plot_loc_check_coeffs(plotter, graph, kwargs):
             frame1.set(title=title.format(kind, order_num),
                        ylabel='y pixel position')
             frame2.set(xlabel='x pixel position',
-                       ylabel='$\Delta$y pixel position')
+                       ylabel=r'$\Delta$y pixel position')
         else:
             frame2.set(title=title.format(kind, order_num),
                        xlabel='x pixel position',
-                       ylabel='$\Delta$y pixel position')
+                       ylabel=r'$\Delta$y pixel position')
         # ------------------------------------------------------------------
         # adjust plot
         plt.subplots_adjust(top=0.925, bottom=0.125, left=0.1, right=0.975,
@@ -1505,7 +1505,7 @@ def plot_thermal_background(plotter, graph, kwargs):
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     params = kwargs['params']
-    wave = kwargs['wave']
+    wavemap = kwargs['wave']
     image = kwargs['image']
     thermal = kwargs['thermal']
     torder = kwargs['torder']
@@ -1515,10 +1515,10 @@ def plot_thermal_background(plotter, graph, kwargs):
     # get properties from params
     startorder = params['THERMAL_PLOT_START_ORDER']
     # correct data for graph
-    rwave = np.ravel(wave[startorder:])
+    rwave = np.ravel(wavemap[startorder:])
     rimage = np.ravel(image[startorder:])
     rthermal = np.ravel(thermal[startorder:])
-    swave = wave[torder, tmask]
+    swave = wavemap[torder, tmask]
     sthermal = thermal[torder][tmask]
     # ------------------------------------------------------------------
     # set up plot
@@ -1557,7 +1557,7 @@ def plot_extract_spectral_order(plotter, graph, kwargs):
     e2ds = kwargs['eprops']['E2DS']
     e2dsff = kwargs['eprops']['E2DSFF']
     blaze = kwargs['eprops']['BLAZE']
-    wave = kwargs['wave']
+    wavemap = kwargs['wave']
     fiber = kwargs['fiber']
     # get optional arguments
     order = kwargs.get('order', None)
@@ -1585,12 +1585,12 @@ def plot_extract_spectral_order(plotter, graph, kwargs):
         e2dsffn = e2dsff[order_num] / np.nanmedian(e2ds[order_num])
         blazen = blaze[order_num] / np.nanmedian(blaze[order_num])
         # plot fits
-        frames[0].plot(wave[order_num], e2dsn, label='e2ds')
-        frames[0].plot(wave[order_num], e2dsffn, label='e2dsff')
-        frames[0].plot(wave[order_num], blazen, label='blaze')
+        frames[0].plot(wavemap[order_num], e2dsn, label='e2ds')
+        frames[0].plot(wavemap[order_num], e2dsffn, label='e2dsff')
+        frames[0].plot(wavemap[order_num], blazen, label='blaze')
         # plot blaze corrected
-        frames[1].plot(wave[order_num], e2dsb[order_num], label='e2ds')
-        frames[1].plot(wave[order_num], e2dsffb[order_num], label='e2dsff')
+        frames[1].plot(wavemap[order_num], e2dsb[order_num], label='e2ds')
+        frames[1].plot(wavemap[order_num], e2dsffb[order_num], label='e2dsff')
         # add legends
         frames[0].legend(loc=0)
         frames[1].legend(loc=0)
@@ -1628,13 +1628,13 @@ def plot_extract_s1d(plotter, graph, kwargs):
     zoom1 = params.listp('EXTRACT_S1D_PLOT_ZOOM1', dtype=float)
     zoom2 = params.listp('EXTRACT_S1D_PLOT_ZOOM2', dtype=float)
     # get data from s1d table
-    wave = stable['wavelength']
+    wavemap = stable['wavelength']
     flux = stable['flux']
     # ------------------------------------------------------------------
     # set up plot
     fig, frames = graph.set_figure(plotter, ncols=1, nrows=len(zoom1))
     # get the normalised colours based on the full wavelength range
-    norm = plt.Normalize(np.nanmin(wave), np.nanmax(wave))
+    norm = plt.Normalize(np.nanmin(wavemap), np.nanmax(wavemap))
     # loop around frames
     for row in range(len(zoom1)):
         # get bounds
@@ -1643,7 +1643,7 @@ def plot_extract_s1d(plotter, graph, kwargs):
         # get frame
         frame = frames[row]
         # mask data between bounds
-        mask = (wave >= lowerbound) & (wave <= upperbound)
+        mask = (wavemap >= lowerbound) & (wavemap <= upperbound)
         # if first figure add title
         if row == 0:
             if kind is not None:
@@ -1652,8 +1652,8 @@ def plot_extract_s1d(plotter, graph, kwargs):
                 title = 'Spectrum (1D) fiber {1}'
             frame.set_title(title.format(kind, fiber))
         # plot 1d spectrum
-        mc_line(frame, plt, linecollection, wave[mask], flux[mask],
-                z=wave[mask], norm=norm, cmap='jet')
+        mc_line(frame, plt, linecollection, wavemap[mask], flux[mask],
+                z=wavemap[mask], norm=norm, cmap='jet')
         frame.set_xlim(lowerbound, upperbound)
         # set the y limits to 5 and 95 percentiles (to avoid outliers)
         with warnings.catch_warnings(record=True) as _:
@@ -1687,7 +1687,7 @@ def plot_extract_s1d_weights(plotter, graph, kwargs):
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     params = kwargs['params']
-    wave = kwargs['wave']
+    wavemap = kwargs['wave']
     flux = kwargs['flux']
     weight = kwargs['weight']
     kind = kwargs['kind']
@@ -1713,11 +1713,11 @@ def plot_extract_s1d_weights(plotter, graph, kwargs):
         # get frame
         frame = frames[row]
         # mask data between bounds
-        mask = (wave >= lowerbound) & (wave <= upperbound)
+        mask = (wavemap >= lowerbound) & (wavemap <= upperbound)
         # plot 1d spectrum
-        frame.plot(wave[mask], weight[mask], label='weight vector')
-        frame.plot(wave[mask], flux1[mask], label='prior to division')
-        frame.plot(wave[mask], flux2[mask], label='after division')
+        frame.plot(wavemap[mask], weight[mask], label='weight vector')
+        frame.plot(wavemap[mask], flux1[mask], label='prior to division')
+        frame.plot(wavemap[mask], flux2[mask], label='after division')
         # add legend (only for first row)
         if row == 0:
             frame.legend(loc=0, ncol=3)
@@ -1787,7 +1787,7 @@ def plot_wave_hc_guess(plotter, graph, kwargs):
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     params = kwargs['params']
-    wave = kwargs['wave']
+    wavemap = kwargs['wave']
     spec = kwargs['spec']
     llprops = kwargs['llprops']
     nbo = kwargs['nbo']
@@ -1834,13 +1834,14 @@ def plot_wave_hc_guess(plotter, graph, kwargs):
         label1_1 = label1[np.mod(order_num, 2)]
         label2_1 = label2[np.mod(order_num, 2)]
         # plot spectrum for order
-        frame.plot(wave[order_num, :], spec[order_num, :], color=col1_1,
+        frame.plot(wavemap[order_num, :], spec[order_num, :], color=col1_1,
                    label=label1_1)
         # over plot all fits
         for line_it in range(len(oxfit)):
             xpix = oxfit[line_it]
             g2 = ogfit[line_it]
-            frame.plot(wave[order_num, xpix], g2, color=col2_1, label=label2_1)
+            frame.plot(wavemap[order_num, xpix], g2, color=col2_1,
+                       label=label2_1)
         # plot unique legend
         ulegend(frame, plotter, loc=0, fontsize=12)
         # set title and labels
@@ -1867,7 +1868,7 @@ def plot_wave_hc_brightest_lines(plotter, graph, kwargs):
     plt = plotter.plt
     # ------------------------------------------------------------------
     # get the arguments from kwargs
-    wave = kwargs['wave']
+    wavemap = kwargs['wave']
     dv = kwargs['dv']
     mask = kwargs['mask']
     iteration = kwargs['iteration']
@@ -1877,9 +1878,9 @@ def plot_wave_hc_brightest_lines(plotter, graph, kwargs):
     fig, frame = graph.set_figure(plotter, ncols=1, nrows=1)
     # ------------------------------------------------------------------
     # plot all lines
-    frame.scatter(wave[~mask], dv[~mask], color='g', s=5, label='All lines')
+    frame.scatter(wavemap[~mask], dv[~mask], color='g', s=5, label='All lines')
     # plot brightest lines
-    frame.scatter(wave[mask], dv[mask], color='r', s=5, label='Brightest lines')
+    frame.scatter(wavemap[mask], dv[mask], color='r', s=5, label='Brightest lines')
     # plot legend
     frame.legend(loc=0)
     # plot title and labels
@@ -1904,7 +1905,7 @@ def plot_wave_hc_tfit_grid(plotter, graph, kwargs):
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     orders = kwargs['orders']
-    wave = kwargs['wave']
+    wavemap = kwargs['wave']
     recon = kwargs['recon']
     rms = kwargs['rms']
     xgau = kwargs['xgau']
@@ -1915,7 +1916,7 @@ def plot_wave_hc_tfit_grid(plotter, graph, kwargs):
     # get all orders
     all_orders = np.unique(orders)
     # calculate dv values
-    dv = ((wave / recon) - 1) * speed_of_light
+    dv = ((wavemap / recon) - 1) * speed_of_light
     # ------------------------------------------------------------------
     # get colours
     colours = plt.rcParams['axes.prop_cycle'].by_key()['color']
@@ -1935,7 +1936,7 @@ def plot_wave_hc_tfit_grid(plotter, graph, kwargs):
         # get colour for this order
         colour = colours[order_num]
         # plot frame1
-        frame1.scatter(wave[good], dv[good], s=5, color=colour)
+        frame1.scatter(wavemap[good], dv[good], s=5, color=colour)
         # plot frame2
         frame2.scatter(np.log10(1.0 / rms[good]), dv[good], s=5, color=colour)
         # plot frame3
@@ -2169,14 +2170,14 @@ def plot_wave_fp_final_order(plotter, graph, kwargs):
     fpdata = kwargs['fpdata']
 
     # get data from llprops
-    wave = llprops['LITTROW_EXTRAP_SOL_{0}'.format(iteration)][selected_order]
+    wavemap = llprops['LITTROW_EXTRAP_SOL_{0}'.format(iteration)][selected_order]
     fp_data = fpdata[selected_order]
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
     # ------------------------------------------------------------------
     # plot
-    frame.plot(wave, fp_data)
+    frame.plot(wavemap, fp_data)
     # set title labels limits
     title = 'spectral order {0} fiber {1} (iteration = {2})'
     frame.set(xlabel='Wavelength [nm]', ylabel='flux',
@@ -2490,7 +2491,7 @@ def plot_wave_fp_single_order(plotter, graph, kwargs):
     hcdata = kwargs['hcdata']
     # get data from llprops
     all_lines = llprops['ALL_LINES_1']
-    wave = llprops['LL_OUT_2']
+    wavemap = llprops['LL_OUT_2']
     # get number of orders
     nbo = llprops['LL_OUT_2'].shape[0]
     # ------------------------------------------------------------------
@@ -2511,7 +2512,7 @@ def plot_wave_fp_single_order(plotter, graph, kwargs):
         # get the maximum point for this order
         maxpoint = mp.nanmax(hcdata[order_num])
         # plot order and flux
-        frame.plot(wave[order_num], hcdata[order_num], label='HC Spectrum')
+        frame.plot(wavemap[order_num], hcdata[order_num], label='HC Spectrum')
         # loop around lines in order
         for it in range(0, len(all_lines[order_num])):
             # get x and y
@@ -2861,7 +2862,7 @@ def plot_tellup_abso_spec(plotter, graph, kwargs):
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     trans = kwargs['trans']
-    wave = kwargs['wave']
+    wavemap = kwargs['wave']
     thres = kwargs['thres']
     spectrum = kwargs['spectrum']
     spectrum_ini = kwargs['spectrum_ini']
@@ -2885,16 +2886,16 @@ def plot_tellup_abso_spec(plotter, graph, kwargs):
     fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
     # ------------------------------------------------------------------
     # plot input spectrum
-    frame.plot(wave, spectrum / scale, color='red', label='input')
+    frame.plot(wavemap, spectrum / scale, color='red', label='input')
     # plot oh lines
     if clean_ohlines:
-        frame.plot(wave, spectrum_ini / (trans * mask) / scale, color='magenta',
-                   alpha=0.5, label='prior to OH')
+        frame.plot(wavemap, spectrum_ini / (trans * mask) / scale,
+                   color='magenta', alpha=0.5, label='prior to OH')
     # plot input/derived_trans
-    frame.plot(wave, spectrum / trans * mask / scale, color='green',
+    frame.plot(wavemap, spectrum / trans * mask / scale, color='green',
                label='input/derived_trans')
     # plot abso
-    frame.plot(wave, trans, color='orange', label='abso', alpha=0.3)
+    frame.plot(wavemap, trans, color='orange', label='abso', alpha=0.3)
     # add legend
     frame.legend(loc=0)
     # get ymax value
