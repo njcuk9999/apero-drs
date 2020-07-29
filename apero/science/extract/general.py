@@ -405,9 +405,9 @@ def tcorrect2(params, recipe, image, header, fiber, wavemap, thermal=None,
     thermal = thermal / ratio
     # ----------------------------------------------------------------------
     # plot thermal background plot
-    recipe.plot('THERMAL_BACKGROUND', params=params, wave=wave, image=image,
-                thermal=thermal, torder=torder, tmask=wavemask, fiber=fiber,
-                kind=kind)
+    recipe.plot('THERMAL_BACKGROUND', params=params, wavemap=wavemap,
+                image=image, thermal=thermal, torder=torder, tmask=wavemask,
+                fiber=fiber, kind=kind)
     # ----------------------------------------------------------------------
     # correct image
     corrected_image = image - thermal

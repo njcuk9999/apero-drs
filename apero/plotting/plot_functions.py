@@ -1505,7 +1505,7 @@ def plot_thermal_background(plotter, graph, kwargs):
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     params = kwargs['params']
-    wavemap = kwargs['wave']
+    wavemap = kwargs['wavemap']
     image = kwargs['image']
     thermal = kwargs['thermal']
     torder = kwargs['torder']
