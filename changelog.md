@@ -2,6 +2,46 @@ Changelog
 =========
 
 
+0.6.129 (2020-07-29)
+--------------------
+- Apero.science.calib.general.py - add check_fp and check_fp_files
+  functionality. [njcuk9999]
+- Apero.recipes.spirou.cal_shape_master_spirou.py + cal_shape_spirou.py
+  + cal_wave_master_spirou.py + cal_wave_night_spirou.py - check 2d fp
+  files are good to use before using them! [njcuk9999]
+- Apero.io.drs_image.py - correct typo in comment. [njcuk9999]
+- Apero.core.instruments.*.default_constants.py - add in check fp
+  constants. [njcuk9999]
+- Apero.core.instruments.*.file_definitions.py - add LFC_FP to file
+  types (Issue #641) [njcuk9999]
+- Apero.plotting.plot_functions.py + apero.science.extract.general.py -
+  remove reference to wave (change to wavemap) [njcuk9999]
+- Apero.plotting.plot_functions.py - remove reference to wave (change to
+  wavemap) [njcuk9999]
+- Apero.science.calib.flat_blaze.py - try curve_fitting two ways (when
+  first method fails) [njcuk9999]
+- Misc.problems.spikes.* - add test codes for EA. [njcuk9999]
+
+
+0.6.128 (2020-07-28)
+--------------------
+- Apero.science.extract.general.py - address spikes in s1d data (EA
+  changes) [njcuk9999]
+- Apero.io.drs_fits.py + apero.lang.core.drs_exceptions.py - get the
+  filename from abspath and don't print in DrsHeaderError. [njcuk9999]
+- Apero.core.core.drs_file.py + apero.core.instruments.*.pseudo_const.py
+  + apero.io.drs_fits.py + apero.lang.core.drs_exceptions.py - add
+  checks for header key and deal with exception of not finding them
+  properly + update language database. [njcuk9999]
+- Apero.core.core.drs_file.py - rvalue and value do not exist.
+  [njcuk9999]
+- Apero.core.core.drs_file.py - add breakpoint to test error.
+  [njcuk9999]
+- Apero.core.core.drs_file.py - must check that id header keys exist and
+  report error it not + update language db. [njcuk9999]
+- Update version/date/changelog/documentation/update notes. [njcuk9999]
+
+
 0.6.127 (2020-07-24)
 --------------------
 - Apero.tools.modeul.setup.drs_processing.py - filter objects by dprtype
