@@ -1,6 +1,6 @@
-# Update Note Summary - Version 0.6.127
+# Update Note Summary - Version 0.6.129
 
-Date: 2020-07-24
+Date: 2020-07-29
 
 ## Updates since Version 0.6.099 - 0.6.101
 
@@ -28,6 +28,14 @@ Date: 2020-07-24
     - os.walk should now follow symbolic links
     - Better more consistent cleaning of OBJNAME
     - added --plot=-1 mode to stop plotting summary plot (not recommended)
+    - added 2D FP quality control (to remove bad images)
+
+- Flat/Blaze
+    - try re-fitting blaze without bounds when having bounds fails
+
+- Preprocessing
+    - now allow processing of LFC_FP files
+    - add checks that basic SPIRou header keys exist - and exit gracefully
 
 
 ## Still to do:
@@ -62,6 +70,7 @@ Date: 2020-07-24
 
 ## Known issues:
     - Locking of files means using >5 cores slows down a lot (fix with database)
+        - if locking is big problem use only 1 core
     - Weird residuals left in order_profile after dark_flat (loc)
     - Calibrations switch over at different points from PM to AM calibrations
         - should really only use "older"
