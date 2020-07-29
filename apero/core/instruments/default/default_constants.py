@@ -27,6 +27,7 @@ __all__ = [
     'CAVITY_1M_FILE', 'CAVITY_LL_FILE', 'OBJ_LIST_FILE', 'OBJ_LIST_FILE_FMT',
     'OBJ_LIST_CROSS_MATCH_RADIUS', 'OBJ_LIST_GAIA_URL', 'OBJ_LIST_SIMBAD_URL',
     'OBJ_LIST_GAIA_MAG_CUT', 'OBJ_LIST_GAIA_EPOCH', 'OBJ_LIST_GAIA_PLX_LIM',
+    'CALIB_CHECK_FP_PERCENTILE', 'CALIB_CHECK_FP_THRES', 'CALIB_CHECK_FP_CENT_SIZE',
     # qc constants
     'QC_DARK_TIME', 'QC_MAX_DEAD', 'DARK_QMIN', 'DARK_QMAX',
     'QC_MAX_DARK', 'QC_LOC_MAXFIT_REMOVED_CTR',
@@ -173,7 +174,9 @@ __all__ = [
     'WAVE_NIGHT_HC_SIGCLIP', 'WAVE_NIGHT_MED_ABS_DEV',
     'WAVE_NIGHT_NSIG_FIT_CUT', 'WAVENIGHT_PLT_BINL', 'WAVENIGHT_PLT_BINU',
     'WAVENIGHT_PLT_NBINS',
-    # telluric constants
+    # telluric constants# =============================================================================
+    # # CALIBRATION: DARK SETTINGS
+    # # =============================================================================
     'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM',
     'TELLU_ALLOWED_DPRTYPES', 'TELLURIC_FILETYPE', 'TELLURIC_FIBER_TYPE',
     'TELLU_LIST_DIRECOTRY', 'TELLU_WHITELIST_NAME', 'TELLU_BLACKLIST_NAME',
@@ -431,6 +434,21 @@ OBJ_LIST_GAIA_EPOCH = Const('OBJ_LIST_GAIA_EPOCH', value=None, dtype=float,
 # Define the gaia parallax limit for using gaia point
 OBJ_LIST_GAIA_PLX_LIM = Const('OBJ_LIST_GAIA_PLX_LIM', value=None, dtype=float,
                               source=__NAME__, minimum=0.0, group=cgroup)
+
+# define the check FP percentile level
+CALIB_CHECK_FP_PERCENTILE = Const('CALIB_CHECK_FP_PERCENTILE', value=None,
+                                  dtype=int, minimum=0, source=__NAME__,
+                                  group=cgroup)
+
+# define the check FP threshold qc parameter
+CALIB_CHECK_FP_THRES = Const('CALIB_CHECK_FP_THRES', value=None,
+                             dtype=float, minimum=0.0, source=__NAME__,
+                             group=cgroup)
+
+# define the check FP center image size [px]
+CALIB_CHECK_FP_CENT_SIZE = Const('CALIB_CHECK_FP_CENT_SIZE', value=None,
+                                 dtype=int, minimum=0, source=__NAME__,
+                                 group=cgroup)
 
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS
