@@ -547,6 +547,23 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 | cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night; SCIENCE_TARGETS] | CCF        |
 
 
+##### 7. engineering sequences
+
+Other sequences, probably only useful for engineering data
+
+| recipe                                                              | SHORT_NAME |
+| ------------------------------------------------------------------- | ---------- | 
+| cal_preprocess [HC1_HC1]                                            | PP_HC1HC1  |
+| cal_preprocess [FP_FP]                                              | PP_FPFP    |
+| cal_preprocess [DARK_FP]                                            | PP_DFP     |
+| cal_preprocess [DARK_DARK_SKY]                                      | PP_SKY     |
+| cal_preprocess [LFC_LFC]                                            | PP_LFC     |
+| cal_extract [HC1_HC1]                                               | EXT_HC1HC1 |
+| cal_extract [FP_FP]                                                 | EXT_FPFP   |
+| cal_extract [DARK_FP]                                               | EXT_DFP    |
+| cal_extract [DARK_DARK_SKY]                                         | EXT_SKY    |
+| cal_extract [LFC_LFC]                                               | EXT_LFC    |
+
 
 ---
 
