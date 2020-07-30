@@ -34,7 +34,7 @@ RECIPE_DEFINITIONS = dict()
 RECIPE_DEFINITIONS['SPIROU'] = 'apero.core.instruments.spirou.recipe_definitions'
 RECIPE_DEFINITIONS['NIRPS_HA'] = 'apero.core.instruments.nirps_ha.recipe_definitions'
 # default data dir
-DATA_DIR = 'mini_data_0_6_099'
+DATA_DIR = 'mini_data_0_6_129'
 # set raw sub dir
 RAW_DIR = 'raw'
 # set tmp sub dir
