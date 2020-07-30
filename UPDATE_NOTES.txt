@@ -8,6 +8,7 @@ Date: 2020-07-29
     - fixed bug that took all tellurics from disk (now taken just from telluDB)
     - added EA pre-cleaning
     - added EA OH line cleaning
+    - added correction of A and B fibers
 
 - Extraction and BERV
     - update crossmatch to fix bug going to top row (fixed?)
