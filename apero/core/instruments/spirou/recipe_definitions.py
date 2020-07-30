@@ -105,7 +105,7 @@ shapeyfile = dict(name='--shapey', dtype='file', default='None',
 shapelfile = dict(name='--shapel', dtype='file', default='None',
                   files=[sf.out_shape_local], helpstr=Help['SHAPELFILE_HELP'])
 # -----------------------------------------------------------------------------
-thermalfile = dict(name='--thermal', dtype='file', default='None',
+thermalfile = dict(name='--thermalfile', dtype='file', default='None',
                    files=[sf.out_thermal_e2ds_int, sf.out_thermal_e2ds_tel],
                    helpstr=Help['THERMALFILE_HELP'])
 # -----------------------------------------------------------------------------
@@ -582,6 +582,7 @@ cal_leak.set_arg(name='files', dtype='files', pos='1+',
                  files=[sf.out_ext_e2dsff],
                  helpstr=Help['FILES_HELP'] + Help['LEAK_FILES_HELP'],
                  limit=1)
+cal_leak.set_kwarg(**add_db)
 cal_leak.set_kwarg(**plot)
 cal_leak.set_kwarg(name='--leakfile', dtype='file', default='None',
                    files=[sf.out_leak_master],
@@ -1281,9 +1282,9 @@ full_seq.add(cal_shape_master, master=True)
 full_seq.add(cal_shape, name='SHAPELM', master=True)
 full_seq.add(cal_ff, name='FLATM', master=True)
 full_seq.add(cal_leak_master, master=True)
-full_seq.add(cal_thermal, name='THIM', files=[sf.pp_dark_dark_int],
+full_seq.add(cal_thermal, name='THI_M', files=[sf.pp_dark_dark_int],
              master=True)
-full_seq.add(cal_thermal, name='THTM', files=[sf.pp_dark_dark_tel],
+full_seq.add(cal_thermal, name='THT_M', files=[sf.pp_dark_dark_tel],
              master=True)
 full_seq.add(cal_wave_master, hcfiles=[sf.pp_hc1_hc1], fpfiles=[sf.pp_fp_fp],
              master=True)
@@ -1325,9 +1326,9 @@ limited_seq.add(cal_shape_master, master=True)
 limited_seq.add(cal_shape, name='SHAPELM', master=True)
 limited_seq.add(cal_ff, name='FLATM', master=True)
 limited_seq.add(cal_leak_master, master=True)
-limited_seq.add(cal_thermal, name='THIM', files=[sf.pp_dark_dark_int],
+limited_seq.add(cal_thermal, name='THI_M', files=[sf.pp_dark_dark_int],
                 master=True)
-limited_seq.add(cal_thermal, name='THTM', files=[sf.pp_dark_dark_tel],
+limited_seq.add(cal_thermal, name='THT_M', files=[sf.pp_dark_dark_tel],
                 master=True)
 limited_seq.add(cal_wave_master, hcfiles=[sf.pp_hc1_hc1], fpfiles=[sf.pp_fp_fp],
                 master=True)
@@ -1357,8 +1358,8 @@ limited_seq.add(cal_leak, name='LEAKOBJ', KW_OBJNAME='SCIENCE_TARGETS',
                 files=[sf.out_ext_e2dsff], fiber='AB', KW_DPRTYPE=['OBJ_FP'])
 
 # telluric recipes
-# limited_run.add(obj_mk_tellu_db, arguments=dict(cores='CORES'))
-# limited_run.add(obj_fit_tellu_db, arguments=dict(cores='CORES'))
+limited_seq.add(obj_mk_tellu_db, arguments=dict(cores='CORES'))
+limited_seq.add(obj_fit_tellu_db, arguments=dict(cores='CORES'))
 
 # other telluric recipes
 limited_seq.add(obj_mk_tellu, name='MKTELLU1', KW_OBJNAME='TELLURIC_TARGETS',
