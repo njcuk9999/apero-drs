@@ -105,7 +105,7 @@ shapeyfile = dict(name='--shapey', dtype='file', default='None',
 shapelfile = dict(name='--shapel', dtype='file', default='None',
                   files=[sf.out_shape_local], helpstr=Help['SHAPELFILE_HELP'])
 # -----------------------------------------------------------------------------
-thermalfile = dict(name='--thermal', dtype='file', default='None',
+thermalfile = dict(name='--thermalfile', dtype='file', default='None',
                    files=[sf.out_thermal_e2ds_int, sf.out_thermal_e2ds_tel],
                    helpstr=Help['THERMALFILE_HELP'])
 # -----------------------------------------------------------------------------
@@ -597,6 +597,7 @@ cal_leak.set_arg(name='files', dtype='files', pos='1+',
                  files=[sf.out_ext_e2dsff],
                  helpstr=Help['FILES_HELP'] + Help['LEAK_FILES_HELP'],
                  limit=1)
+cal_leak.set_kwarg(**add_db)
 cal_leak.set_kwarg(**plot)
 cal_leak.set_kwarg(name='--leakfile', dtype='file', default='None',
                    files=[sf.out_leak_master],
@@ -1158,6 +1159,7 @@ full_seq.add(cal_loc, files=[sf.pp_dark_flat])
 full_seq.add(cal_loc, files=[sf.pp_flat_dark])
 full_seq.add(cal_shape)
 full_seq.add(cal_ff, files=[sf.pp_flat_flat])
+full_seq.add(cal_thermal)
 full_seq.add(cal_wave_night)
 # extract all OBJ_DARK and OBJ_FP
 full_seq.add(cal_extract, name='EXTALL', files=[sf.pp_obj_dark, sf.pp_obj_fp])
@@ -1167,6 +1169,9 @@ full_seq.add(cal_leak, name='LEAKALL', files=[sf.out_ext_e2dsff],
 # telluric recipes
 full_seq.add(obj_mk_tellu_db, arguments=dict(cores='CORES'))
 full_seq.add(obj_fit_tellu_db, arguments=dict(cores='CORES'))
+full_seq.add(obj_fit_tellu, name='FTELLU',
+             files=[sf.out_ext_e2dsff], fiber='AB',
+             W_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 
 # ccf on all OBJ_DARK / OBJ_FP
 full_seq.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
@@ -1213,8 +1218,8 @@ limited_seq.add(cal_leak, name='LEAKOBJ', KW_OBJNAME='SCIENCE_TARGETS',
                 files=[sf.out_ext_e2dsff], fiber='AB', KW_DPRTYPE=['OBJ_FP'])
 
 # telluric recipes
-# limited_run.add(obj_mk_tellu_db, arguments=dict(cores='CORES'))
-# limited_run.add(obj_fit_tellu_db, arguments=dict(cores='CORES'))
+# limited_seq.add(obj_mk_tellu_db, arguments=dict(cores='CORES'))
+# limited_seq.add(obj_fit_tellu_db, arguments=dict(cores='CORES'))
 
 # other telluric recipes
 # limited_seq.add(obj_mk_tellu, name='MKTELLU1', KW_OBJNAME='TELLURIC_TARGETS',
@@ -1256,6 +1261,11 @@ pp_seq_opt.add(cal_pp_master, master=True)
 pp_seq_opt.add(cal_pp, name='PP_CAL', KW_OBJNAME='Calibration')
 pp_seq_opt.add(cal_pp, name='PP_SCI', KW_OBJNAME='SCIENCE_TARGETS')
 pp_seq_opt.add(cal_pp, name='PP_TEL', KW_OBJNAME='TELLURIC_TARGETS')
+pp_seq_opt.add(cal_pp, name='PP_HC1HC1', files=[sf.raw_hc1_hc1])
+pp_seq_opt.add(cal_pp, name='PP_FPFP', files=[sf.raw_fp_fp])
+pp_seq_opt.add(cal_pp, name='PP_DFP', files=[sf.raw_dark_fp])
+pp_seq_opt.add(cal_pp, name='PP_SKY', files=[sf.raw_dark_dark_sky])
+pp_seq_opt.add(cal_pp, name='PP_LFC', files=[sf.raw_lfc_lfc])
 
 # -----------------------------------------------------------------------------
 # master sequence (for trigger)
@@ -1290,6 +1300,7 @@ calib_seq.add(cal_wave_night)
 tellu_seq = drs_recipe.DrsRunSequence('tellu_seq', __INSTRUMENT__)
 # extract science
 tellu_seq.add(cal_extract, name='EXTOBJ', KW_OBJNAME='TELLURIC_TARGETS',
+              KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK'],
               files=[sf.pp_obj_dark, sf.pp_obj_fp])
 # correct leakage for any telluric targets that are OBJ_FP
 tellu_seq.add(cal_leak, name='LEAKTELL', KW_OBJNAME='TELLURIC_TARGETS',
@@ -1315,6 +1326,7 @@ tellu_seq.add(obj_mk_tellu, name='MKTELLU4', KW_OBJNAME='TELLURIC_TARGETS',
 science_seq = drs_recipe.DrsRunSequence('science_seq', __INSTRUMENT__)
 # extract science
 science_seq.add(cal_extract, name='EXTOBJ', KW_OBJNAME='SCIENCE_TARGETS',
+                KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK'],
                 files=[sf.pp_obj_dark, sf.pp_obj_fp])
 # correct leakage for any science targets that are OBJ_FP
 science_seq.add(cal_leak, name='LEAKOBJ', KW_OBJNAME='SCIENCE_TARGETS',
@@ -1338,9 +1350,11 @@ science_seq.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
 eng_seq = drs_recipe.DrsRunSequence('eng_seq', __INSTRUMENT__)
 
 # extract sequences
-eng_seq.add(cal_extract, name='EXTHC1', files=[sf.pp_hc1_hc1])
-eng_seq.add(cal_extract, name='EXTFPFP', files=[sf.pp_fp_fp])
-eng_seq.add(cal_extract, name='EXTDFP', files=[sf.pp_dark_fp])
+eng_seq.add(cal_extract, name='EXT_HC1HC1', files=[sf.pp_hc1_hc1])
+eng_seq.add(cal_extract, name='EXT_FPFP', files=[sf.pp_fp_fp])
+eng_seq.add(cal_extract, name='EXT_DFP', files=[sf.pp_dark_fp])
+eng_seq.add(cal_extract, name='EXT_SKY', files=[sf.pp_dark_dark_sky])
+eng_seq.add(cal_extract, name='EXT_LFC', files=[sf.pp_lfc_lfc])
 
 # -----------------------------------------------------------------------------
 # sequences list
