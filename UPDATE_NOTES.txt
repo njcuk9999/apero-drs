@@ -29,6 +29,7 @@ Date: 2020-07-29
     - Better more consistent cleaning of OBJNAME
     - added --plot=-1 mode to stop plotting summary plot (not recommended)
     - added 2D FP quality control (to remove bad images)
+    - update run.ini files and added complete_run.ini and other_run.ini (examples of more sequences)
 
 - Flat/Blaze
     - try re-fitting blaze without bounds when having bounds fails
