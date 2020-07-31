@@ -62,6 +62,7 @@ def construct_fp_table(params, filenames):
     # define storage for table columns
     fp_time, fp_exp, fp_pp_version = [], [], []
     basenames, nightnames = [], []
+    valid_files = []
     # log that we are reading all dark files
     WLOG(params, '', TextEntry('40-014-00003'))
     # loop through file headers
@@ -84,6 +85,7 @@ def construct_fp_table(params, filenames):
         exptime = hdr[params['KW_EXPTIME'][0]]
         ppversion = hdr[params['KW_PPVERSION'][0]]
         # append to lists
+        valid_files.append(filenames[it])
         fp_time.append(float(acqtime))
         fp_exp.append(float(exptime))
         fp_pp_version.append(ppversion)
@@ -92,7 +94,7 @@ def construct_fp_table(params, filenames):
     # convert lists to table
     columns = ['NIGHTNAME', 'BASENAME', 'FILENAME', 'MJDATE', 'EXPTIME',
                'PPVERSION']
-    values = [nightnames, basenames, filenames, fp_time, fp_exp,
+    values = [nightnames, basenames, valid_files, fp_time, fp_exp,
               fp_pp_version]
     # make table using columns and values
     fp_table = drs_table.make_table(params, columns, values)
