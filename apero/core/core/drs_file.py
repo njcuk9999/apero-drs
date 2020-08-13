@@ -1499,7 +1499,7 @@ class DrsFitsFile(DrsInputFile):
     # -------------------------------------------------------------------------
     # fits file methods
     # -------------------------------------------------------------------------
-    def read_file(self, ext=None, check=False, params=None):
+    def read_file(self, ext=None, check=False, params=None, copy=False):
         """
         Read this fits file data and header
 
@@ -1538,8 +1538,11 @@ class DrsFitsFile(DrsInputFile):
 
         out = drs_fits.readfits(params, self.filename, getdata=True,
                                 gethdr=True, fmt=fmt, ext=ext)
-
-        self.data = out[0]
+        # deal with copying
+        if copy:
+            self.data = np.array(out[0])
+        else:
+            self.data = out[0]
         self.header = drs_fits.Header.from_fits_header(out[1])
         # update fiber parameter from header
         if self.header is not None:
@@ -1552,7 +1555,7 @@ class DrsFitsFile(DrsInputFile):
         elif self.data is not None:
             self.shape = [len(self.data)]
 
-    def read_data(self, ext=0, log=True):
+    def read_data(self, ext=0, log=True, copy=False):
         # set function name
         _ = display_func(None, 'read_data', __NAME__, 'DrsFitsFile')
         # check that filename is set
@@ -1564,9 +1567,12 @@ class DrsFitsFile(DrsInputFile):
         # set number of data sets to 1
         self.numfiles = 1
         # assign to object
-        self.data = data
+        if copy:
+            self.data = np.array(data)
+        else:
+            self.data = data
 
-    def read_header(self, ext=None, log=True):
+    def read_header(self, ext=None, log=True, copy=False):
         # set function name
         _ = display_func(None, 'read_header', __NAME__, 'DrsFitsFile')
         # check that filename is set
@@ -1581,7 +1587,10 @@ class DrsFitsFile(DrsInputFile):
         # get header
         header = drs_fits.read_header(params, self.filename, ext=ext, log=log)
         # assign to object
-        self.header = header
+        if copy:
+            self.header = drs_fits.Header(header)
+        else:
+            self.header = header
         # update fiber parameter from header
         if self.header is not None:
             self.fiber = self.get_key('KW_FIBER', dtype=str, required=False)
