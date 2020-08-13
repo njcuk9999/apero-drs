@@ -159,14 +159,12 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
         # log progres: reading file: {0}
         wargs = [infile.filename]
         WLOG(params, '', TextEntry('40-019-00033', args=wargs))
-        # read data
-        infile.read_file()
+        # read data (but copy data)
+        infile.read_file(copy=True)
         # get image and set up shifted image
         image = np.array(infile.data)
-
         # normalise image by the normalised blaze
         image2 = image / nprops['NBLAZE']
-
         # get dprtype
         dprtype = infile.get_key('KW_DPRTYPE', dtype=str)
         # ------------------------------------------------------------------
@@ -215,6 +213,8 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
         b_cols['SHAPELFILE'].append(infile.get_key('KW_CDBSHAPEL', **bkwargs))
         b_cols['THERMALFILE'].append(infile.get_key('KW_CDBTHERMAL', **bkwargs))
         b_cols['WAVEFILE'].append(os.path.basename(wprops['WAVEFILE']))
+        # remove the infile
+        del infile
         # ------------------------------------------------------------------
         # skip if bad snr object
         # ------------------------------------------------------------------
@@ -231,7 +231,8 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
         # get velocity shift due to berv
         dvshift = mp.relativistic_waveshift(berv, units='km/s')
         # shift the image
-        simage = gen_tellu.wave_to_wave(params, image2, wavemap * dvshift, mwavemap)
+        simage = gen_tellu.wave_to_wave(params, image2, wavemap * dvshift,
+                                        mwavemap)
         # ------------------------------------------------------------------
         # normalise by the median of each order
         # ------------------------------------------------------------------
