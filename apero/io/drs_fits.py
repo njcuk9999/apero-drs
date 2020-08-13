@@ -255,7 +255,7 @@ def id_drs_file(params, recipe, drs_file_sets, filename=None, nentries=None,
 # Define read functions
 # =============================================================================
 def readfits(params, filename, getdata=True, gethdr=False, fmt='fits-image',
-             ext=0, func=None, log=True):
+             ext=0, func=None, log=True, copy=False):
     """
     The drs fits file read function
 
@@ -314,6 +314,11 @@ def readfits(params, filename, getdata=True, gethdr=False, fmt='fits-image',
         eargs = [filename, fmt, cfmts, func_name]
         WLOG(params, 'error', TextEntry('00-008-00019', args=eargs))
         data, header = None, None
+    # -------------------------------------------------------------------------
+    # deal with copying
+    if copy:
+        data = np.array(data)
+        header = fits.Header(header)
     # -------------------------------------------------------------------------
     # deal with return
     if getdata and gethdr:
