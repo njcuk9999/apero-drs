@@ -1,42 +1,21 @@
-# Update Note Summary - Version 0.6.129
+# Update Note Summary - Version 0.6.130
 
-Date: 2020-07-29
+Date: 2020-08-14
 
-## Updates since Version 0.6.099 - 0.6.101
+## Updates since Version 0.6.129
 
-- Tellurics
-    - fixed bug that took all tellurics from disk (now taken just from telluDB)
-    - added EA pre-cleaning
-    - added EA OH line cleaning
 
-- Extraction and BERV
-    - update crossmatch to fix bug going to top row (fixed?)
+- cal_wave_master
+    - added header keys to wave res map (NBO, NREGIONS)
+    - updated gaussian param header valeus with names
 
-- CCF
-    - fix problems with infs in plotting and infs in headers
+- obj_make_template
+    - copied arrays to close fits files (to stop many fits being open at same
+      time while creating template)
 
-- Processing
-    - SCIENCE_TARGETS and TELLURIC_TARGETS now both take 'All' as an argument
-    - how we skip runs is now based on log.fits run string (will skip identical strings of required arguments)
-    - when night blacklist/whitelist in use do not scan all directories
-
-- General
-    - files that have been combined now save to disk and update filename
-        - i.e. files = 12345,12346,12347,12348 --> 1234F5T8
-        - read as {1234} from 5 to 8
-        - will eventually be replaced with checksum based on input arguments
-    - os.walk should now follow symbolic links
-    - Better more consistent cleaning of OBJNAME
-    - added --plot=-1 mode to stop plotting summary plot (not recommended)
-    - added 2D FP quality control (to remove bad images)
-    - update run.ini files and added complete_run.ini and other_run.ini (examples of more sequences)
-
-- Flat/Blaze
-    - try re-fitting blaze without bounds when having bounds fails
-
-- Preprocessing
-    - now allow processing of LFC_FP files
-    - add checks that basic SPIRou header keys exist - and exit gracefully
+- Tools
+    - update spirou/nirps tool names to follow conventions
+    -
 
 
 ## Still to do:
