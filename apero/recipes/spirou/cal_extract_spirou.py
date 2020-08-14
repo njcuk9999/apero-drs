@@ -294,9 +294,9 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             if quicklook:
                 fargs = [params, recipe, infile, rawfiles, combine, fiber,
-                         orderpfile, props, lprops, wprops, eprops,
-                         shapelocalfile, shapexfile, shapeyfile, shapelocal,
-                         flat_file, blaze_file, qc_params]
+                         orderpfile, props, lprops, eprops, shapelocalfile,
+                         shapexfile, shapeyfile, shapelocal, flat_file,
+                         blaze_file, qc_params]
                 outfiles = extract.write_extraction_files_ql(*fargs)
                 e2dsfile, e2dsfffile = outfiles
             else:
