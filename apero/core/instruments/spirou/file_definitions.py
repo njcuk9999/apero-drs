@@ -623,6 +623,21 @@ calib_file.addset(out_ff_blaze)
 calib_file.addset(out_ff_flat)
 
 # -----------------------------------------------------------------------------
+# extract files (quick look)
+# -----------------------------------------------------------------------------
+# extract E2DS without flat fielding
+out_ql_e2ds = drs_finput('QL_E2DS', KW_OUTPUT='QL_E2DS',
+                         fibers=['AB', 'A', 'B', 'C'],
+                         filetype='.fits', intype=pp_file,
+                         suffix='_q2ds', outfunc=out.general_file)
+
+# extract E2DS with flat fielding
+out_ql_e2dsff = drs_finput('QL_E2DS_FF', KW_OUTPUT='QL_E2DS_FF',
+                           fibers=['AB', 'A', 'B', 'C'],
+                           filetype='.fits', intype=pp_file,
+                           suffix='_q2dsff', outfunc=out.general_file)
+
+# -----------------------------------------------------------------------------
 # extract files
 # -----------------------------------------------------------------------------
 # extract E2DS without flat fielding
