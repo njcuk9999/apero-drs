@@ -26,8 +26,8 @@ from apero.tools.module.testing import drs_dev
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'create_pp_hotpix.py'
-__INSTRUMENT__ = 'SPIROU'
+__NAME__ = 'cal_pphotpix_nirps_ha.py'
+__INSTRUMENT__ = 'NIRPS_HA'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get version and author

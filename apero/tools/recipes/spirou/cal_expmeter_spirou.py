@@ -26,7 +26,7 @@ from apero.tools.module.utils import inverse
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'expmeter_spirou.py'
+__NAME__ = 'cal_expmeter_spirou.py'
 __INSTRUMENT__ = 'SPIROU'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
