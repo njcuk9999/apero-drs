@@ -43,14 +43,15 @@ REC_MODULES['bottleneck'] = [1, 3, 1], 'conda install bottleneck==1.3.1'
 REC_MODULES['numba'] = [0, 47, 0], 'conda install numba==0.47.0'
 REC_MODULES['pandas'] = [0, 25, 3], 'conda install pandas==0.25.3'
 REC_MODULES['PIL'] = [7, 0, 0], 'conda install Pillow==7.0.0'
-
 REC_MODULES['tqdm'] = [4, 42, 1], 'conda install tdqm==4.42.1'
 REC_MODULES['yagmail'] = [0, 11, 224], 'pip install yagmail==0.11.224'
+
 DEV_MODULES = dict()
 DEV_MODULES['gitchangelog'] = [3, 0, 4], 'pip install gitchangelog==3.0.4'
 DEV_MODULES['ipdb'] = None, 'conda install ipdb'
 DEV_MODULES['IPython'] = [7, 13, 0], 'conda install ipython==7.13.0'
 DEV_MODULES['sphinx'] = [2, 3, 1], 'conda install sphinx==2.3.1'
+DEV_MODULES['xlrd'] = [1, 2, 0], 'pip install xlrd==1.2.0'
 
 
 # =============================================================================
