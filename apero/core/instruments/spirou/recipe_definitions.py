@@ -613,7 +613,7 @@ cal_extract.set_outputs(E2DS_FILE=sf.out_ext_e2ds,
                         DEBUG_BACK=sf.debug_back,
                         EXT_FPLINES=sf.out_ext_fplines,
                         Q2DS_FILE=sf.out_ql_e2ds,
-                        Q2DSFF_FILE=sf.out_ext_e2dsff)
+                        Q2DSFF_FILE=sf.out_ql_e2dsff)
 cal_extract.set_debug_plots('FLAT_ORDER_FIT_EDGES1', 'FLAT_ORDER_FIT_EDGES2',
                             'FLAT_BLAZE_ORDER1', 'FLAT_BLAZE_ORDER2',
                             'THERMAL_BACKGROUND', 'EXTRACT_SPECTRAL_ORDER1',
