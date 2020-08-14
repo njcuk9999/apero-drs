@@ -111,7 +111,7 @@ __all__ = [
     'EXT_ALLOWED_BERV_DPRTYPES', 'EXT_BERV_EST_ACC', 'EXT_BERV_KIND',
     'EXT_BERV_BARYCORRPY_DIR', 'EXT_BERV_IERSFILE', 'EXT_BERV_IERS_A_URL',
     'EXT_BERV_LEAPDIR', 'EXT_BERV_LEAPUPDATE', 'EXTRACT_PLOT_ORDER',
-    'EXTRACT_S1D_PLOT_ZOOM1', 'EXTRACT_S1D_PLOT_ZOOM2',
+    'EXTRACT_S1D_PLOT_ZOOM1', 'EXTRACT_S1D_PLOT_ZOOM2', 'EXT_QUICK_LOOK',
     # thermal constants
     'THERMAL_CORRECT', 'THERMAL_ALWAYS_EXTRACT', 'THERMAL_EXTRACT_TYPE',
     'THERMAL_CORRETION_TYPE1', 'THERMAL_CORRETION_TYPE2', 'THERMAL_ORDER',
@@ -1234,12 +1234,17 @@ LEAK_SAVE_UNCORRECTED = Const('LEAK_SAVE_UNCORRECTED', value=None, dtype=bool,
 # CALIBRATION: EXTRACTION SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION: EXTRACTION SETTINGS'
+#    Whether extraction code is done in quick look mode (do not use for
+#       final products)
+EXT_QUICK_LOOK = Const('EXT_QUICK_LOOK', value=None, dtype=bool,
+                       source=__NAME__, group=cgroup)
+
 #  Start order of the extraction in cal_ff if None starts from 0
-EXT_START_ORDER = Const('EXT_START_ORDER', value=None, dtype=None,
+EXT_START_ORDER = Const('EXT_START_ORDER', value=None, dtype=int,
                         source=__NAME__, group=cgroup)
 
 #  End order of the extraction in cal_ff if None ends at last order
-EXT_END_ORDER = Const('EXT_END_ORDER', value=None, dtype=None,
+EXT_END_ORDER = Const('EXT_END_ORDER', value=None, dtype=int,
                       source=__NAME__, group=cgroup)
 
 # Half-zone extraction width left side (formally plage1)
