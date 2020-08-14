@@ -4,6 +4,8 @@ Date: 2020-08-14
 
 ## Updates since Version 0.6.129
 
+- cal_shape_master
+    - correct ALLOWED_FP_TYPES (didn't break but would on change of input)
 
 - cal_wave_master
     - added header keys to wave res map (NBO, NREGIONS)
@@ -15,7 +17,7 @@ Date: 2020-08-14
 
 - Tools
     - update spirou/nirps tool names to follow conventions
-    -
+    - add first attempt at cal_drift from wave sol CCF
 
 
 ## Still to do:
