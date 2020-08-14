@@ -611,7 +611,9 @@ cal_extract.set_outputs(E2DS_FILE=sf.out_ext_e2ds,
                         S1D_V_FILE=sf.out_ext_s1d_v,
                         ORDERP_SFILE=sf.out_orderp_straight,
                         DEBUG_BACK=sf.debug_back,
-                        EXT_FPLINES=sf.out_ext_fplines)
+                        EXT_FPLINES=sf.out_ext_fplines,
+                        Q2DS_FILE=sf.out_ql_e2ds,
+                        Q2DSFF_FILE=sf.out_ext_e2dsff)
 cal_extract.set_debug_plots('FLAT_ORDER_FIT_EDGES1', 'FLAT_ORDER_FIT_EDGES2',
                             'FLAT_BLAZE_ORDER1', 'FLAT_BLAZE_ORDER2',
                             'THERMAL_BACKGROUND', 'EXTRACT_SPECTRAL_ORDER1',
@@ -623,6 +625,9 @@ cal_extract.set_arg(pos=0, **directory)
 cal_extract.set_arg(name='files', dtype='files', pos='1+', files=[sf.pp_file],
                     helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
                     limit=1)
+cal_extract.set_kwarg(name='--quicklook', dtype='bool', default=False,
+                      helpstr=Help['QUICK_LOOK_EXT_HELP'],
+                      default_ref='EXT_QUICK_LOOK')
 cal_extract.set_kwarg(**badfile)
 cal_extract.set_kwarg(**dobad)
 cal_extract.set_kwarg(**backsub)
