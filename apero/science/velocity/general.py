@@ -834,7 +834,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
 
 
 def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
-                   **kwargs):
+                   sum_plot=True, **kwargs):
     func_name = __NAME__ + '.compute_ccf_fp()'
     # get constants from params/kwargs
     noise_sigdet = pcheck(params, 'WAVE_CCF_NOISE_SIGDET', 'sigdet', kwargs,
@@ -960,11 +960,12 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
                 rv=props['MEAN_CCF_COEFFS'][1], ccfmask=ccfmask,
                 orders=None, order=None)
     # the mean ccf for summary
-    recipe.plot('SUM_CCF_RV_FIT', params=params, x=props['RV_CCF'],
-                y=mean_ccf, yfit=mean_ccf_fit,
-                kind='MEAN FP fiber={0}'.format(fiber),
-                rv=ccf_rv, ccfmask=ccfmask,
-                orders=None, order=None)
+    if sum_plot:
+        recipe.plot('SUM_CCF_RV_FIT', params=params, x=props['RV_CCF'],
+                    y=mean_ccf, yfit=mean_ccf_fit,
+                    kind='MEAN FP fiber={0}'.format(fiber),
+                    rv=ccf_rv, ccfmask=ccfmask,
+                    orders=None, order=None)
 
     # TODO : Add QC of the FP CCF once they are defined
 
