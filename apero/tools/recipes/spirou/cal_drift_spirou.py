@@ -9,7 +9,6 @@ Created on 2020-08-2020-08-14 12:48
 """
 import numpy as np
 import os
-import warnings
 
 from apero import core
 from apero import lang
@@ -90,13 +89,11 @@ DEFAULT_FILETYPE = 'EXT_E2DS_FF'
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(directory=None, **kwargs):
+def main(**kwargs):
     """
     Main function for exposuremeter_spirou.py
 
     :param kwargs: additional keyword arguments
-
-    :type instrument: str
 
     :keyword debug: int, debug level (0 for None)
 
@@ -104,20 +101,20 @@ def main(directory=None, **kwargs):
     :rtype: dict
     """
     # assign function calls (must add positional)
-    fkwargs = dict(directory=directory, **kwargs)
-    # ----------------------------------------------------------------------
+    fkwargs = dict(**kwargs)
+    # -------------------------------------------------------------------------
     # deal with command line inputs / function call inputs
     recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs,
                                 rmod=RMOD)
     # solid debug mode option
     if kwargs.get('DEBUG0000', False):
         return recipe, params
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # run main bulk of code (catching all errors)
     llmain, success = core.run(__main__, recipe, params)
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # End Message
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     return core.end_main(params, llmain, recipe, success)
 
 
@@ -129,9 +126,9 @@ def __main__(recipe, params):
     :param params:
     :return:
     """
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # Main Code
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     mainname = __NAME__ + '._main()'
     # set up plotting (no plotting before this)
     recipe.plot.set_location()
@@ -157,7 +154,7 @@ def __main__(recipe, params):
                     WLOG(params, 'error', emsg.format(*eargs))
     # -------------------------------------------------------------------------
     # deal with other user inputs
-    # ------------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # get all nights
     allnights = os.listdir(params['DRS_DATA_REDUC'])
     # get nights from user (or set to None)
@@ -220,40 +217,40 @@ def __main__(recipe, params):
             filenames += list(files)
         # convert to numpy array
         filenames = np.array(filenames)
-        # -------------------------------------------------------------------------
+        # ---------------------------------------------------------------------
         # find file instance in set (verify user input)
         drsfile = core.get_file_definition(filetype, params['INSTRUMENT'],
                                            kind='red')
-        # -------------------------------------------------------------------------
+        # ---------------------------------------------------------------------
         # storage for table
-        basenames, mjdmids, mean_rvs, mean_contrasts = [], [] ,[] ,[]
+        basenames, mjdmids, mean_rvs, mean_contrasts = [], [], [] ,[]
         mean_fwhms, mean_tot_lines, dvrms_sps, dv_rms_ccs = [], [], [], []
         wavetimes, wavefiles, wavesrces, paths = [], [], [], []
-        # -------------------------------------------------------------------------
+        # ---------------------------------------------------------------------
         # loop around files
         for f_it, filename in enumerate(filenames):
-            # --------------------------------------------------------------
+            # -----------------------------------------------------------------
             WLOG(params, 'info', params['DRS_HEADER'])
             pargs = [f_it + 1, len(filenames)]
             WLOG(params, 'info', 'Processing file {0} of {1}'.format(*pargs))
             WLOG(params, 'info', params['DRS_HEADER'])
-            # --------------------------------------------------------------
+            # -----------------------------------------------------------------
             # make a new copy of infile
             infile = drsfile.newcopy(filename=filename, recipe=recipe)
             # read file
             infile.read_file()
             # get header
             header = infile.header
-            # --------------------------------------------------------------
+            # -----------------------------------------------------------------
             # load wavelength solution for this fiber
             wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber)
-            # --------------------------------------------------------------
+            # -----------------------------------------------------------------
             # load the blaze file for this fiber
             blaze_file, blaze = flat_blaze.get_blaze(params, header, fiber)
 
-            # ==================================================================
+            # =================================================================
             # FP CCF COMPUTATION
-            # ==================================================================
+            # =================================================================
             # choose which wprops to use
             wprops = ParamDict(wprops)
             # compute the ccf
@@ -261,7 +258,7 @@ def __main__(recipe, params):
                        wprops['WAVEMAP'], fiber]
             rvprops = velocity.compute_ccf_fp(params, recipe, *ccfargs,
                                               sum_plot=False)
-            # ---------------------------------------------------------------------
+            # -----------------------------------------------------------------
             # push rvprops to storage
             basenames.append(infile.basename)
             mjdmids.append(infile.get_key('KW_MID_OBS_TIME'))
@@ -275,7 +272,7 @@ def __main__(recipe, params):
             wavefiles.append(wprops['WAVEFILE'])
             wavesrces.append(wprops['WAVESOURCE'])
             paths.append(infile.filename)
-        # ------------------------------------------------------------------------
+        # ---------------------------------------------------------------------
         # convert storage to table
         columnnames = ['FILENAME', 'MJDMID', 'RV', 'CONTRAST', 'FWHM',
                        'TOTLINES', 'DVRMS_SP', 'DVRMS_CC', 'WAVETIME',
@@ -285,7 +282,7 @@ def __main__(recipe, params):
                         wavetimes, wavefiles, wavesrces, paths]
         # make table
         table = drs_table.make_table(params, columnnames, columnvalues)
-        # -------------------------------------------------------------------------
+        # ---------------------------------------------------------------------
         # construct filename
         cargs = [params['DRS_DATA_REDUC'], params['NIGHTNAME'],
                  OUTPUT_FILENAME.format(fiber)]
@@ -295,9 +292,9 @@ def __main__(recipe, params):
         # save the table to file
         drs_table.write_table(params, table, out_filename, fmt='fits')
 
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # End of main code
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     return core.return_locals(params, locals())
 
 
