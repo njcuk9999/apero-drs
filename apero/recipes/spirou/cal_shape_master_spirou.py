@@ -166,9 +166,9 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # check file type
     filetype = fpprops['DPRTYPE']
-    if filetype not in params['ALLOWED_FP_TYPES']:
+    if filetype not in params.listp('ALLOWED_FP_TYPES', dtype=str):
         emsg = TextEntry('01-001-00020', args=[filetype, mainname])
-        for allowedtype in params['ALLOWED_FP_TYPES']:
+        for allowedtype in params.listp('ALLOWED_FP_TYPES', dtype=str):
             emsg += '\n\t - "{0}"'.format(allowedtype)
         WLOG(params, 'error', emsg)
     # get all "filetype" filenames
