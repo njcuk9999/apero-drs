@@ -3009,6 +3009,7 @@ def generate_resolution_map(params, recipe, llprops, e2dsfile, **kwargs):
                              guess=init_guess)
                 # do curve fit on point
                 try:
+                    # note if we change this must update map_param_names below
                     popt, pcov = mp.fit_gauss_with_slope(**fargs)
                 except Exception as e:
                     # log error: Resolution map curve_fit error
@@ -3044,10 +3045,13 @@ def generate_resolution_map(params, recipe, llprops, e2dsfile, **kwargs):
         map_lines.append(order_lines)
         map_params.append(order_params)
 
+    # set the names of each map parameter
+    map_param_names = ['Amp', 'Pos', 'Sig', 'DC', 'Slope']
     # push to llprops
     llprops['RES_MAP_DVS'] = map_dvs
     llprops['RES_MAP_LINES'] = map_lines
     llprops['RES_MAP_PARAMS'] = map_params
+    llprops['RES_MAP_PARAM_NAMES'] = map_param_names
     llprops['RES_MAP'] = resolution_map
     # set source
     keys = ['RES_MAP_DVS', 'RES_MAP_LINES', 'RES_MAP_PARAMS', 'RES_MAP']
@@ -3162,6 +3166,7 @@ def generate_res_files(params, llprops, outfile, **kwargs):
     map_dvs = np.array(llprops['RES_MAP_DVS'])
     map_lines = np.array(llprops['RES_MAP_LINES'])
     map_params = np.array(llprops['RES_MAP_PARAMS'])
+    map_param_names = llprops['RES_MAP_PARAM_NAMES']
     resolution_map = np.array(llprops['RES_MAP'])
     # get dimensions
     nbo, nbpix = llprops['NBO'], llprops['NBPIX']
@@ -3187,20 +3192,30 @@ def generate_res_files(params, llprops, outfile, **kwargs):
             start_order = order_num
             end_order = start_order + bin_order - 1
             # generate header keywordstores
+            kw_numorders = ['NORDS', '', 'Total number of orders']
             kw_startorder = ['ORDSTART', '', 'First order covered in res map']
             kw_endorder = ['ORDEND', '', 'Last order covered in res map']
+            kw_tot_regions = ['TREGIONS', 'Total number of regions']
             kw_region = ['REGION', '', 'Region along x-axis in res map']
             largs = [order_num, order_num + bin_order - 1, xpos]
             comment = 'Resolution: order={0}-{1} r={2}'
             kw_res = ['RESOL', '', comment.format(*largs)]
-            comment = 'Gaussian params: order={0}-{1} r={2}'
-            kw_params = ['GPARAMS', '', comment.format(*largs)]
             # add keys to headed
+            tmpfile.add_hkey(kw_numorders, value=nbo)
             tmpfile.add_hkey(kw_startorder, value=start_order)
             tmpfile.add_hkey(kw_endorder, value=end_order)
+            tmpfile.add_hkey(kw_tot_regions, value=len(x_range))
             tmpfile.add_hkey(kw_region, value=xpos)
             tmpfile.add_hkey(kw_res, value=resolution)
-            tmpfile.add_hkey_1d(kw_params, dim1name='coeff', values=gparams)
+            # loop aroound gaussian parameters
+            for g_it, gparam in enumerate(gparams):
+                # set up the gaussian parameter header comment
+                gcomm = 'Gaussian {3}: order={0}-{1} r={2} '
+                gargs = largs + [map_param_names[g_it]]
+                # set up the gaussian parameter header keystore
+                kw_params = ['GPARAM{0}'.format(g_it), '', gcomm.format(*gargs)]
+                # add gaussian parameter header key to hdict
+                tmpfile.add_hkey(kw_params, values=gparam)
             # append this hdict to hicts
             hdicts.append(tmpfile.hdict.to_fits_header())
             # push data into correct columns
