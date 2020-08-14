@@ -338,7 +338,6 @@ def run(func, recipe, params):
     :param recipe: DrsRecipe, the drs recipe to use with "func"
     :param params: Paramdict, the constant parameter dictionary
 
-    :type func: function
     :type recipe: DrsRecipe
     :type params: ParamDict
 
