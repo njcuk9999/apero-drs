@@ -21,7 +21,7 @@ __NAME__ = 'core.instruments.spirou.default_constants.py'
 # =============================================================================
 # Define the data engineering path
 DATA_ENGINEERING = DATA_ENGINEERING.copy(__NAME__)
-DATA_ENGINEERING.value = './data/spirou/engineering/'
+DATA_ENGINEERING.value = 'engineering/'
 
 # Define core data path
 DATA_CORE = DATA_CORE.copy(__NAME__)
@@ -1440,7 +1440,7 @@ WAVE_CCF_MASK_UNITS.value = 'nm'
 
 # Define the ccf mask path the FP CCF
 WAVE_CCF_MASK_PATH = WAVE_CCF_MASK_PATH.copy(__NAME__)
-WAVE_CCF_MASK_PATH.value = './data/spirou/ccf/'
+WAVE_CCF_MASK_PATH.value = 'ccf_masks/'
 
 # Define the CCF mask format (must be an astropy.table format)
 WAVE_CCF_MASK_FMT = WAVE_CCF_MASK_FMT.copy(__NAME__)
@@ -1608,7 +1608,7 @@ TELLU_CUT_BLAZE_NORM.value = 0.2
 
 # Define telluric black/white list directory
 TELLU_LIST_DIRECOTRY = TELLU_LIST_DIRECOTRY.copy(__NAME__)
-TELLU_LIST_DIRECOTRY.value = './data/spirou/telluric/'
+TELLU_LIST_DIRECOTRY.value = 'telluric/'
 
 # Define telluric white list name
 TELLU_WHITELIST_NAME = TELLU_WHITELIST_NAME.copy(__NAME__)
@@ -1884,7 +1884,7 @@ MKTEMPLATE_S1D_LOWF_SIZE.value = 501
 # =============================================================================
 # Define the ccf mask path
 CCF_MASK_PATH = CCF_MASK_PATH.copy(__NAME__)
-CCF_MASK_PATH.value = './data/spirou/ccf/'
+CCF_MASK_PATH.value = 'ccf_masks/'
 
 # Define the default CCF MASK to use
 CCF_DEFAULT_MASK = CCF_DEFAULT_MASK.copy(__NAME__)
@@ -2016,7 +2016,7 @@ POLAR_LSD_ANALYSIS.value = True
 
 #  Define the spectral lsd mask directory for lsd polar calculations
 POLAR_LSD_PATH = POLAR_LSD_PATH.copy(__NAME__)
-POLAR_LSD_PATH.value = './data/spirou/lsd/'
+POLAR_LSD_PATH.value = 'lsd/'
 
 #  Define the file regular expression key to lsd mask files
 POLAR_LSD_FILE_KEY = POLAR_LSD_FILE_KEY.copy(__NAME__)
