@@ -5689,6 +5689,7 @@ def update_smart_fp_mask(params, **kwargs):
     # get constants from params
     update_mask = pcheck(params, 'WAVE_CCF_UPDATE_MASK', 'update_mask', kwargs,
                          func_name)
+    assetdir = pcheck(params, 'DRS_DATA_ASSET', 'assetsdir', kwargs, func_name)
     ccfpath = pcheck(params, 'WAVE_CCF_MASK_PATH', 'ccfpath', kwargs, func_name)
     ccfmask = pcheck(params, 'WAVE_CCF_MASK', 'ccfmask', kwargs, func_name)
     dvwidth = pcheck(params, 'WAVE_CCF_SMART_MASK_WIDTH', 'dvwidth',
@@ -5710,7 +5711,7 @@ def update_smart_fp_mask(params, **kwargs):
         return
     # ----------------------------------------------------------------------
     # construct output filename
-    outfile = drs_data.construct_path(params, ccfmask, ccfpath, func=func_name)
+    outfile = os.path.join(assetdir, ccfpath, ccfmask)
     # load current cavity files
     fit_1m_d, fit_ll_d = drs_data.load_cavity_files(params, required=False)
     # ----------------------------------------------------------------------
