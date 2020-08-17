@@ -66,13 +66,15 @@ def get_whitelist(params, **kwargs):
     # get pseudo constants
     pconst = constants.pload(instrument=params['INSTRUMENT'])
     # get parameters from params/kwargs
+    assetdir = pcheck(params, 'DRS_DATA_ASSET', 'assetsdir', kwargs, func_name)
     relfolder = pcheck(params, 'TELLU_LIST_DIRECOTRY', 'directory', kwargs,
                        func_name)
     filename = pcheck(params, 'TELLU_WHITELIST_NAME', 'filename', kwargs,
                       func_name)
+    # get absolulte filename
+    absfilename = os.path.join(assetdir, relfolder, filename)
     # load the white list
-    wout = drs_data.load_text_file(params, filename, relfolder, kwargs,
-                                   func_name, dtype=str)
+    wout = drs_data.load_text_file(params, absfilename, func_name, dtype=str)
     whitelist, whitelistfile = wout
     # must clean names
     whitelist = list(map(pconst.DRS_OBJ_NAME, whitelist))
@@ -85,13 +87,15 @@ def get_blacklist(params, **kwargs):
     # get pseudo constants
     pconst = constants.pload(instrument=params['INSTRUMENT'])
     # get parameters from params/kwargs
+    assetdir = pcheck(params, 'DRS_DATA_ASSET', 'assetsdir', kwargs, func_name)
     relfolder = pcheck(params, 'TELLU_LIST_DIRECOTRY', 'directory', kwargs,
                        func_name)
     filename = pcheck(params, 'TELLU_BLACKLIST_NAME', 'filename', kwargs,
                       func_name)
+    # get absolulte filename
+    absfilename = os.path.join(assetdir, relfolder, filename)
     # load the white list
-    bout = drs_data.load_text_file(params, filename, relfolder, kwargs,
-                                   func_name, dtype=str)
+    bout = drs_data.load_text_file(params, absfilename, func_name, dtype=str)
     blacklist, blacklistfile = bout
     # must clean names
     blacklist = list(map(pconst.DRS_OBJ_NAME, blacklist))
@@ -943,6 +947,7 @@ def clean_ohline_pca(params, image, wavemap, **kwargs):
     func_name = __NAME__ + '.clean_ohline_pca()'
     # ----------------------------------------------------------------------
     # get parameters from params/kwargs
+    assetdir = pcheck(params, 'DRS_DATA_ASSET', 'assetsdir', kwargs, func_name)
     relfolder = pcheck(params, 'TELLU_LIST_DIRECOTRY', 'directory', kwargs,
                        func_name)
     filename = pcheck(params, 'TELLUP_OHLINE_PCA_FILE', 'filename', kwargs,
@@ -955,8 +960,8 @@ def clean_ohline_pca(params, image, wavemap, **kwargs):
     nbo, nbpix = image.shape
     # ----------------------------------------------------------------------
     # load principle components data file
-    ohpcdata, ohfile = drs_data.load_fits_file(params, filename, relfolder,
-                                               func_name)
+    ohfile = os.path.join(assetdir, relfolder, filename)
+    ohpcdata = drs_data.load_fits_file(params, ohfile, func_name)
     # ----------------------------------------------------------------------
     # get the number of components
     n_components = ohpcdata.shape[1] - 1
