@@ -54,11 +54,11 @@ class Const:
     e.g. stores information to read and check config/constant file constants
 
     """
-    def __init__(self, name, value=None, dtype=None, dtypei=None,
-                 options=None, maximum=None, minimum=None, source=None,
-                 unit=None, default=None, datatype=None, dataformat=None,
-                 group=None, user=False, active=False, description=None,
-                 author=None, parent=None):
+    def __init__(self, name, value=None, dtype: Union[None, str, type] = None,
+                 dtypei=None, options=None, maximum=None, minimum=None,
+                 source=None, unit=None, default=None, datatype=None,
+                 dataformat=None, group=None, user=False, active=False,
+                 description=None, author=None, parent=None):
         """
         Construct the constant instance
 
