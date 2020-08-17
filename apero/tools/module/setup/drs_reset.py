@@ -144,7 +144,7 @@ def reset_telludb(params, log=True):
 
 
 def reset_dbdir(params, name, db_dir, reset_path, log=True,
-                empty_first=True):
+                empty_first=True, relative_path=None):
     # log progress
     WLOG(params, '', TextEntry('40-502-00003', args=[name]))
     # loop around files and folders in calib_dir
@@ -153,6 +153,11 @@ def reset_dbdir(params, name, db_dir, reset_path, log=True,
     # remake path
     if not os.path.exists(db_dir):
         os.makedirs(db_dir)
+    # construct relative path if None given
+    if relative_path is None:
+        reset_path = os.path.join(params['DRS_DATA_ASSETS'], reset_path)
+    else:
+        reset_path = os.path.abspath(reset_path)
     # copy default data back
     copy_default_db(params, name, db_dir, reset_path, log)
 
@@ -161,20 +166,18 @@ def copy_default_db(params, name, db_dir, reset_path, log=True):
     # -------------------------------------------------------------------------
     # get reset directory location
     # -------------------------------------------------------------------------
-    # get absolute folder path from package and relfolder
-    absfolder = drs_data.construct_path(params, directory=reset_path)
     # check that absfolder exists
-    if not os.path.exists(absfolder):
-        eargs = [name, absfolder]
+    if not os.path.exists(reset_path):
+        eargs = [name, reset_path]
         WLOG(params, 'error', TextEntry('00-502-00001', args=eargs))
     # -------------------------------------------------------------------------
     # define needed files:
-    files = np.sort(os.listdir(absfolder))
+    files = np.sort(os.listdir(reset_path))
     # -------------------------------------------------------------------------
     # copy required calibDB files to DRS_CALIB_DB path
     for filename in files:
         # get old and new paths
-        oldpath = os.path.join(absfolder, filename)
+        oldpath = os.path.join(reset_path, filename)
         newpath = os.path.join(db_dir, filename)
         # check that old path exists
         if os.path.exists(oldpath):
@@ -189,7 +192,7 @@ def copy_default_db(params, name, db_dir, reset_path, log=True):
             shutil.copy(oldpath, newpath)
         else:
             if log:
-                wargs = [filename, absfolder]
+                wargs = [filename, reset_path]
                 WLOG(params, 'warning', TextEntry('10-502-00001', args=wargs))
 
 
@@ -225,9 +228,19 @@ def reset_run(params, log=True):
     reset_path = params['DRS_RESET_RUN_PATH']
     # loop around files and folders in reduced dir
     reset_dbdir(params, name, run_dir, reset_path, log=log, empty_first=False)
-    # remake path
-    if not os.path.exists(run_dir):
-        os.makedirs(run_dir)
+
+
+def reset_assets(params, log=True):
+    name = 'assets'
+
+    # TODO: deal with getting online
+
+    asset_path = params['DRS_DATA_ASSETS']
+    reset_path = os.path.join(params['DRS_RESET_ASSETS_PATH'],
+                              params['INSTRUMENTS'])
+    # loop around files and folders in reduced dir
+    reset_dbdir(params, name, asset_path, reset_path, log=log,
+                empty_first=False, relative_path='MODULE')
 
 
 def reset_log_fits(params, log=True):
