@@ -19,21 +19,34 @@ from astropy.io import fits
 # =============================================================================
 # Define variables
 # =============================================================================
-# TARGETS = ('TOI-442, Gl699, Gl876, Gl436, Gl514, Gl382, Gl846, Trappist-1, '
-#            'Gl15A, HD189733, GJ1002, GJ1214').split(',')
-# TARGETS = ('AUMic, Gl388, TOI-1278, TOI-1759, TOI-1452').split(',')
-# TARGETS = ('TOI-233, K2-147, TOI-736, K2-33, TOI-876, TOI-732',
-#            'TYC 4384-1735-1').split()
-TARGETS = ('TOI-442, Gl699, Gl876, Gl436, Gl514, Gl382, Gl846, Trappist-1, '
-           'Gl15A, HD189733, GJ1002, GJ1214, AUMic, Gl388, TOI-1278, '
-           'TOI-1759, TOI-1452, TOI-233, K2-147, TOI-736, K2-33, TOI-876, '
-           'TOI-732, TYC 4384-1735-1').split(',')
+VERSION = '0.6.129'
 
-IN_WORKSPACE = '/spirou/cfht_nights/cfht_june1/reduced/'
+TARGETS = []
+# priority 0
+# TARGETS += ['TOI-442', ' Gl699', ' Gl876', ' Gl436', ' Gl514', ' Gl382',
+#             ' Gl846', ' Trappist-1', ' Gl15A', ' HD189733', ' GJ1002',
+#             ' GJ1214']
+# # priority 1
+# TARGETS += ['AUMic', ' Gl388', ' TYC 4384-1735-1', ' TOI-1278', ' TOI-1759',
+#             ' TOI-1452']
+# # priority 2
+TARGETS += ['TOI-233', ' K2-147', ' TOI-736', ' K2-33', ' TOI-876', ' TOI-732']
+# # priority 3
+# TARGETS += ['epsilonEri', ' GJ9827', ' Gl725A', ' Gl412A', ' Gl687', ' Gl725B']
+# # priority 4
+# TARGETS += ['Gl411', ' TYC3980-1081-1', ' GJ1289', ' GJ1286', ' Gl536']
+# # priority 5
+# TARGETS += ['V883Ori', ' DRTau', ' XZTau', ' BBW76', ' NYOri', ' V582Aur']
+# # priority 6
+# TARGETS += ['TauBoo', ' V900Mon', ' V1057Cyg', ' V1515Cyg', ' WASP-127']
+
+
+IN_WORKSPACE = '/spirou/cfht_nights/cfht_july1/reduced/'
 OUT_WORKSPACE = '/spirou/cfht_nights/science_targets/'
 TAR_WORKSPACE = '/home/cook/www/download/science_targets/'
 # extensions to look for
 EXTENSIONS = ['o_pp_e2dsff_AB.fits',
+              'o_pp_e2dsff_C.fits',
               'o_pp_e2dsff_tcorr_AB.fits',
               'o_pp_s1d_v_tcorr_AB.fits',
               'o_pp_s1d_v_recon_AB.fits',
@@ -46,7 +59,8 @@ EXTHDR = 0
 # odocode suffix
 ODOCODE_SUFFIX = 'o_pp'
 # extra files
-EXTRA_FILES = ['Template_s1d_{OBJ}_sc1d_v_file_AB.fits']
+EXTRA_FILES = ['Template_s1d_{OBJ}_sc1d_v_file_AB.fits',
+               'Template_{OBJ}_tellu_obj_AB.fits']
 
 
 # =============================================================================
@@ -146,7 +160,7 @@ if __name__ == "__main__":
             os.symlink(filename, dst)
         # tar dir
         print('Making tar.gz for OBJECT={0}'.format(objname))
-        dst = '{0}_v0.6.100.tar.gz'.format(cobjname)
+        dst = '{0}_v{1}.tar.gz'.format(cobjname, VERSION)
         command = 'tar -hczvf {0} {1}'.format(dst, outputdir)
         os.system(command)
     # change back to current dir
