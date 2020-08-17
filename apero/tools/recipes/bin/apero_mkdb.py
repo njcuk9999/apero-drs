@@ -89,18 +89,19 @@ def __main__(recipe, params):
     mainname = __NAME__ + '._main()'
     # get database type
     db_type = params['INPUTS']['KIND']
+    assetdir = params['DRS_DATA_ASSETS']
     # ----------------------------------------------------------------------
     # get the settings for each type of database
     if db_type == 'calibration':
         db_path = params['DRS_CALIB_DB']
         db_master_name = params['CALIB_DB_NAME']
-        db_reset = params['DRS_RESET_CALIBDB_PATH']
+        db_reset = os.path.join(assetdir, params['DRS_RESET_CALIBDB_PATH'])
         name = 'calibration database'
         file_set_name = 'calib_file'
     elif db_type == 'telluric':
         db_path = params['DRS_TELLU_DB']
         db_master_name = params['TELLU_DB_NAME']
-        db_reset = params['DRS_RESET_TELLUDB_PATH']
+        db_reset = os.path.join(assetdir, params['DRS_RESET_TELLUDB_PATH'])
         name = 'telluric database'
         file_set_name = 'tellu_file'
     else:
