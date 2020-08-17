@@ -76,6 +76,7 @@ DATA_PATHS['DRS_CALIB_DB'] = ['Calibration DB data directory', 'calibDB']
 DATA_PATHS['DRS_TELLU_DB'] = ['Telluric DB data directory', 'telluDB']
 DATA_PATHS['DRS_DATA_PLOT'] = ['Plotting directory', 'plot']
 DATA_PATHS['DRS_DATA_RUN'] = ['Run directory', 'runs']
+DATA_PATHS['DRS_DATA_ASSETS'] = ['Assets directory', 'assets']
 DATA_PATHS['DRS_DATA_MSG'] = ['Log directory', 'msg']
 # set the reset paths (must be checked for empty)
 RESET_PATHS = ['DRS_CALIB_DB', 'DRS_TELLU_DB', 'DRS_DATA_RUN']
@@ -88,7 +89,9 @@ DATA_ARGS['DRS_CALIB_DB'] = 'calibdir'
 DATA_ARGS['DRS_TELLU_DB'] = 'telludir'
 DATA_ARGS['DRS_DATA_PLOT'] = 'plotdir'
 DATA_ARGS['DRS_DATA_RUN'] = 'rundir'
+DATA_ARGS['DRS_DATA_ASSETS'] = 'assetsdir'
 DATA_ARGS['DRS_DATA_MSG'] = 'logdir'
+
 
 # Messages for user interface
 message1 = """
