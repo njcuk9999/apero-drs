@@ -41,6 +41,9 @@ class Database:
             return self.tables[0]
         return table
 
+    def _commit(self):
+        self._conn_.commit()
+
     def execute(self, command):
         '''Directly execute an SQL command on the database and return any results.
 
@@ -63,6 +66,7 @@ class Database:
         # Get the new list of tables
         self.tables = self.execute('SELECT name from sqlite_master where type= "table"')
         self.tables = [i[0] for i in self.tables]
+        self._commit()
         return
 
     def addTable(self, name, fieldNames, fieldTypes):
@@ -88,7 +92,6 @@ class Database:
         command = "CREATE TABLE {}({});".format(name, ", ".join(fields))
         self.execute(command)
         self._updateTableList_()
-        self._conn_.commit()
         return
 
     def deleteTable(self, name):
@@ -108,6 +111,7 @@ class Database:
             newName: The new name of the table.  This must not be already taken or an SQL keyword.
         '''
         self.execute("ALTER TABLE {} RENAME TO {}".format(oldName, newName))
+        self._commit()
         return
 
     def get(self, columns='*', table=None, condition=None, sortBy=None, sortDescending=True, maxRows=None,
@@ -179,7 +183,7 @@ class Database:
             columns = "(" + ", ".join(columns) + ")"
         command = "INSERT INTO {}{} VALUES({})".format(table, columns, ', '.join(values))
         self.execute(command)
-        self._conn_.commit()
+        self._commit()
         return
 
     def set(self, columns, values, condition, table=None):
@@ -219,7 +223,7 @@ class Database:
         if condition is not None:
             command += " WHERE {}".format(condition)
         self.execute(command)
-        self._conn_.commit()
+        self._commit()
         return
 
 # =============================================================================
