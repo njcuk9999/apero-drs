@@ -10,7 +10,7 @@ __all__ = [  # global settings
     # path settings
     'DRS_ROOT', 'DRS_DATA_RAW', 'DRS_DATA_REDUC', 'DRS_CALIB_DB',
     'DRS_TELLU_DB', 'DRS_DATA_MSG', 'DRS_DATA_WORKING', 'DRS_DATA_RUN',
-    'DRS_DS9_PATH', 'DRS_PDFLATEX_PATH', 'DRS_DATA_MSG_FULL',
+    'DRS_DS9_PATH', 'DRS_PDFLATEX_PATH', 'DRS_DATA_MSG_FULL', 'DRS_DATA_ASSETS',
     # General properites
     'DRS_VERSION', 'AUTHORS', 'DRS_RELEASE', 'DRS_DATE', 'LANGUAGE',
     # Instrument/Observatory Constants
@@ -22,16 +22,17 @@ __all__ = [  # global settings
     'DRS_USER_DEFAULT', 'DRS_MOD_DATA_PATH', 'DRS_MOD_INSTRUMENT_CONFIG',
     'DRS_MOD_CORE_CONFIG', 'DRS_WAVE_DATA',
     'DRS_INSTRUMENT_RECIPE_PATH', 'DRS_DEFAULT_RECIPE_PATH',
-    'DRS_BADPIX_DATA', 'DRS_CALIB_DATA', 'DRS_RESET_CALIBDB_PATH',
+    'DRS_BADPIX_DATA', 'DRS_CALIB_DATA',
+    'DRS_RESET_ASSETS_PATH', 'DRS_RESET_CALIBDB_PATH',
     'DRS_RESET_TELLUDB_PATH', 'DRS_USER_PROGRAM', 'DRS_INDEX_FILE',
     'DRS_PDB_RC_FILE', 'IPYTHON_RETURN', 'ALLOW_BREAKPOINTS',
     'DRS_RESET_RUN_PATH', 'DRS_INSTRUMENTS', 'DRS_PDB_RC_FILENAME',
     # DRS INDEXING SETTINGS
     'DRS_INDEX_FILE', 'DRS_INDEX_FILENAME',
     # DATABASE SETTINGS
-    'DB_MAX_WAIT', 'DB_MATCH', 'LOCKOPEN_MAX_WAIT', 'TELLU_DB_NAME',
-    'CALIB_DB_NAME', 'CALIB_DB_MATCH', 'CALIB_DB_COLS', 'CALIB_DB_KEY_COL',
-    'CALIB_DB_TIME_COL', 'CALIB_DB_FILE_COL',
+    'DATABASE_DIR', 'DB_MAX_WAIT', 'DB_MATCH', 'LOCKOPEN_MAX_WAIT',
+    'TELLU_DB_NAME', 'CALIB_DB_NAME', 'CALIB_DB_MATCH', 'CALIB_DB_COLS',
+    'CALIB_DB_KEY_COL', 'CALIB_DB_TIME_COL', 'CALIB_DB_FILE_COL',
     'TELLU_DB_MATCH', 'TELLU_DB_COLS', 'TELLU_DB_KEY_COL', 'TELLU_DB_TIME_COL',
     'TELLU_DB_FILE_COL',
     # DISPLAY/LOGGING SETTINGS
@@ -140,6 +141,12 @@ DRS_DATA_PLOT = Const('DRS_DATA_PLOT', dtype='path', source=__NAME__, user=True,
 DRS_DATA_RUN = Const('DRS_DATA_RUN', dtype='path', source=__NAME__, user=True,
                      active=True, group=cgroup, value='./apero-data/runs',
                      description='Define the run directory')
+
+#   Define the assets directory
+DRS_DATA_ASSETS = Const('DRS_DATA_ASSETS', dtype='path', source=__NAME__,
+                        user=True, active=True, group=cgroup,
+                        value='./apero-data/assets',
+                        description='Define the assets directory')
 
 #   Define ds9 path (optional)
 DRS_DS9_PATH = Const('DRS_DS9_PATH', dtype=str, source=__NAME__, user=True,
@@ -271,25 +278,30 @@ DRS_DEFAULT_RECIPE_PATH = Const('DRS_DEFAULT_RECIPE_PATH', dtype=str,
                                 value='./recipes/', source=__NAME__,
                                 group=cgroup)
 
-#  where the bad pixel data are stored
+#  where the bad pixel data are stored (within assets directory)
 DRS_BADPIX_DATA = Const('DRS_BADPIX_DATA', dtype=str, source=__NAME__,
                         group=cgroup)
 
-# where the calibration data are stored
+# where the calibration data are stored (within assets directory)
 DRS_CALIB_DATA = Const('DRS_CALIB_DATA', dtype=str, source=__NAME__,
                        group=cgroup)
 
-# where the wave data are stored
+# where the wave data are stored (within assets directory)
 DRS_WAVE_DATA = Const('DRS_WAVE_DATA', dtype=str, source=__NAME__, group=cgroup)
 
-# where the reset data are stored
-# for calibDB
+# where the assets directory is (relative to apero module)
+# TODO: remove and replace with online link / user link
+DRS_RESET_ASSETS_PATH = Const('DRS_RESET_ASSETS_PATH', dtype=str,
+                              source=__NAME__, group=cgroup)
+
+# where the reset data are stored (within assets directory)
+# for calibDB (within assets directory)
 DRS_RESET_CALIBDB_PATH = Const('DRS_RESET_CALIBDB_PATH', dtype=str,
                                source=__NAME__, group=cgroup)
-# for telluDB
+# for telluDB (within assets directory)
 DRS_RESET_TELLUDB_PATH = Const('DRS_RESET_TELLUDB_PATH', dtype=str,
                                source=__NAME__, group=cgroup)
-# for run files
+# for run files (within assets directory)
 DRS_RESET_RUN_PATH = Const('DRS_RESET_RUN_PATH', dtype=str, source=__NAME__,
                            group=cgroup)
 
@@ -318,6 +330,11 @@ DRS_INDEX_FILENAME = Const('DRS_INDEX_FILENAME', dtype=str, value='FILENAME',
 # DATABASE SETTINGS
 # =============================================================================
 cgroup = 'DATABASE SETTINGS'
+
+# Define database directory (relative to assets directory)
+DATABASE_DIR = Const('DATABASE_DIR', dtype=str, value='databases/',
+                     source=__NAME__, group=cgroup)
+
 #   the maximum wait time for calibration database file to be in use (locked)
 #       after which an error is raised (in seconds)
 DB_MAX_WAIT = Const('DB_MAX_WAIT', dtype=int, value=600, minimum=1,

@@ -83,6 +83,10 @@ DRS_DATA_PLOT.value = '/drs/nirps_ha/data/plot'
 DRS_DATA_RUN = DRS_DATA_RUN.copy(__NAME__)
 DRS_DATA_RUN.value = '/drs/nirps_ha/data/run'
 
+#   Define the assets directory
+DRS_DATA_ASSETS = DRS_DATA_ASSETS.copy(__NAME__)
+DRS_DATA_ASSETS.value = '/drs/nirps_ha/data/assets'
+
 #   Define ds9 path (optional)
 DRS_DS9_PATH = DRS_DS9_PATH.copy(__NAME__)
 DRS_DS9_PATH.value = '/usr/bin/ds9'
@@ -170,29 +174,33 @@ TELLU_DB_FILE_COL.value = 'filename'
 DRS_INSTRUMENT_RECIPE_PATH = DRS_INSTRUMENT_RECIPE_PATH.copy(__NAME__)
 DRS_INSTRUMENT_RECIPE_PATH.value = './recipes/'
 
-#  where the bad pixel data are stored
+#  where the bad pixel data are stored (within assets directory)
 DRS_BADPIX_DATA = DRS_BADPIX_DATA.copy(__NAME__)
-DRS_BADPIX_DATA.value = './data/nirps_ha/engineering/'
+DRS_BADPIX_DATA.value = 'engineering/'
 
-# where the calibration data are stored
+# where the calibration data are stored (within assets directory)
 DRS_CALIB_DATA = DRS_CALIB_DATA.copy(__NAME__)
-DRS_CALIB_DATA.value = './data/nirps_ha/calib/'
+DRS_CALIB_DATA.value = 'calib/'
 
-# where the wave data are stored
+# where the wave data are stored (within assets directory)
 DRS_WAVE_DATA = DRS_WAVE_DATA.copy(__NAME__)
-DRS_WAVE_DATA.value = './data/nirps_ha/calib/'
+DRS_WAVE_DATA.value = 'calib/'
 
-# where the reset data are stored
-# for calibDB
+# where the assets directory is (relative to apero module)
+# TODO: remove and replace with online link / user link
+DRS_RESET_ASSETS_PATH = DRS_RESET_ASSETS_PATH.copy(__NAME__)
+DRS_RESET_ASSETS_PATH.value = './data/'
+
+# where the reset data are stored (within assets directory)
+# for calibDB (within assets directory)
 DRS_RESET_CALIBDB_PATH = DRS_RESET_CALIBDB_PATH.copy(__NAME__)
-DRS_RESET_CALIBDB_PATH.value = './data/nirps_ha/reset/calibdb/'
-# for telluDB
+DRS_RESET_CALIBDB_PATH.value = 'reset/calibdb/'
+# for telluDB (within assets directory)
 DRS_RESET_TELLUDB_PATH = DRS_RESET_TELLUDB_PATH.copy(__NAME__)
-DRS_RESET_TELLUDB_PATH.value = './data/nirps_ha/reset/telludb/'
-# for run files
+DRS_RESET_TELLUDB_PATH.value = 'reset/telludb/'
+# for run files (within assets directory)
 DRS_RESET_RUN_PATH = DRS_RESET_RUN_PATH.copy(__NAME__)
-DRS_RESET_RUN_PATH.value = './data/nirps_ha/reset/runs/'
-
+DRS_RESET_RUN_PATH.value = 'reset/runs/'
 
 # =============================================================================
 #  End of configuration file
