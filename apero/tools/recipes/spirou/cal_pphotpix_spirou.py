@@ -184,9 +184,10 @@ def __main__(recipe, params):
     table['ypix'] = y
 
     # get outpath
+    assetdir = params['DRS_DATA_ASSET']
     filename = params['PP_HOTPIX_FILE']
     relpath = params['DATA_ENGINEERING']
-    absoutpath = drs_data.construct_path(params, filename, relpath)
+    absoutpath = os.path.join(assetdir, relpath, filename)
     # write output as a csv file
     WLOG(params, '', '\t Saved to: {0}'.format(absoutpath))
     table.write(absoutpath, format='csv', overwrite=True)
@@ -194,7 +195,7 @@ def __main__(recipe, params):
     # if debug is True save the mask (to compare to image)
     if debug:
         # get debug file
-        debugabspath = drs_data.construct_path(params, DEBUGFILE, relpath)
+        debugabspath = os.path.join(assetdir, relpath, DEBUGFILE)
         # print progress
         WLOG(params, '', '\t Saved debug to: {0}'.format(debugabspath))
         # write to file
