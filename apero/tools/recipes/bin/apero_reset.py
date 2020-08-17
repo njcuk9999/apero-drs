@@ -92,9 +92,19 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Perform resets
     # ----------------------------------------------------------------------
+    reset0 = True
     reset1, reset2, reset3 = True, True, True
     reset4, reset5, reset6 = True, True, True
     reset7, reset8 = True, True
+    # ----------------------------------------------------------------------
+    # assets folder
+    if warn:
+        reset0 = drs_reset.reset_confirmation(params, 'Assets',
+                                              params['DRS_DATA_ASSETS'])
+    if reset0:
+        drs_reset.reset_assets(params)
+    else:
+        WLOG(params, '', 'Not resetting assets.')
     # ----------------------------------------------------------------------
     # tmp folder
     if warn:
