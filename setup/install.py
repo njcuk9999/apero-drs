@@ -96,9 +96,10 @@ def get_args():
     parser.add_argument('--instrument', action='store', dest='instrument',
                         help='The instrument to install (if not given '
                              'prompts the user for each available instrument).'
-                             'THIS ARGUMENT IS REQUIRED TO SET --datadir,'
-                             '--rawdir, --tmpdir, --reddir, --calibdir,'
-                             '--telludir, --plotdir, --rundir, --logdir',
+                             'THIS ARGUMENT IS REQUIRED TO SET --datadir, '
+                             '--rawdir, --tmpdir, --reddir, --calibdir, '
+                             '--telludir, --plotdir, --rundir, --assetdir, '
+                             '--logdir',
                         choices=['SPIROU'])
     parser.add_argument('--datadir', action='store', dest='datadir',
                         help='The data directory (if given overrides all '
@@ -143,6 +144,12 @@ def get_args():
                              'each directory separately)')
     parser.add_argument('--rundir', action='store', dest='rundir',
                         help='The run directory where run/batch files are '
+                             'stored.'
+                             '(if not given and --datadir not given prompts'
+                             'the user to input if user chooses to install '
+                             'each directory separately)')
+    parser.add_argument('--assetsdir', action='store', dest='assetsdir',
+                        help='The assets directory where assets files are '
                              'stored.'
                              '(if not given and --datadir not given prompts'
                              'the user to input if user chooses to install '
