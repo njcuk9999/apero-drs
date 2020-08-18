@@ -173,7 +173,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         objname = infile.get_key('KW_OBJNAME', dtype=str)
         # get black list
-        blacklist, _ = telluric.get_blacklist(params)
+        blacklist = telluric.get_blacklist(params)
         # if objname in blacklist then skip
         if objname in blacklist:
             # log that we are skipping

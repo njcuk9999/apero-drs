@@ -109,7 +109,7 @@ def __main__(recipe, params):
     params.set('TEST_RUN', False)
     params.set('CORES', params['INPUTS']['CORES'])
     # get the telluric star names
-    objnames, _ = telluric.get_whitelist(params)
+    objnames = telluric.get_whitelist(params)
     objnames = list(objnames)
     # ----------------------------------------------------------------------
     # get objects that match this object name
