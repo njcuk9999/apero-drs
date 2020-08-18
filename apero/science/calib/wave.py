@@ -3195,7 +3195,7 @@ def generate_res_files(params, llprops, outfile, **kwargs):
             kw_numorders = ['NORDS', '', 'Total number of orders']
             kw_startorder = ['ORDSTART', '', 'First order covered in res map']
             kw_endorder = ['ORDEND', '', 'Last order covered in res map']
-            kw_tot_regions = ['TREGIONS', 'Total number of regions']
+            kw_tot_regions = ['TREGIONS', '', 'Total number of regions']
             kw_region = ['REGION', '', 'Region along x-axis in res map']
             largs = [order_num, order_num + bin_order - 1, xpos]
             comment = 'Resolution: order={0}-{1} r={2}'
