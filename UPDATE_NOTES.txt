@@ -11,9 +11,12 @@ Date: 2020-08-14
     - added header keys to wave res map (NBO, NREGIONS)
     - updated gaussian param header valeus with names
 
-- obj_make_template
+- obj_mk_template
     - copied arrays to close fits files (to stop many fits being open at same
       time while creating template)
+
+- obj_fit_tellu
+    - apply bounds to magic grid for pre-cleaning abso_expo vector
 
 - Tools
     - update spirou/nirps tool names to follow conventions
