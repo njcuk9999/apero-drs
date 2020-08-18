@@ -184,7 +184,7 @@ def __main__(recipe, params):
     table['ypix'] = y
 
     # get outpath
-    assetdir = params['DRS_DATA_ASSET']
+    assetdir = params['DRS_DATA_ASSETS']
     filename = params['PP_HOTPIX_FILE']
     relpath = params['DATA_ENGINEERING']
     absoutpath = os.path.join(assetdir, relpath, filename)
