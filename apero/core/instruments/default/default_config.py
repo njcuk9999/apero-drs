@@ -29,9 +29,12 @@ __all__ = [  # global settings
     'DRS_RESET_RUN_PATH', 'DRS_INSTRUMENTS', 'DRS_PDB_RC_FILENAME',
     # DRS INDEXING SETTINGS
     'DRS_INDEX_FILE', 'DRS_INDEX_FILENAME',
-    # DATABASE SETTINGS
-    'DATABASE_DIR', 'DB_MAX_WAIT', 'DB_MATCH', 'LOCKOPEN_MAX_WAIT',
-    'TELLU_DB_NAME', 'CALIB_DB_NAME', 'CALIB_DB_MATCH', 'CALIB_DB_COLS',
+    # OLD DATABASE SETTINGS
+    'DATABASE_DIR', 'CALIB_DB_NAME', 'TELLU_DB_NAME', 'INDEX_DB_NAME',
+    'LANG_DB_NAME', 'LOG_DB_NAME', 'PARAM_DB_NAME', 'OBJECT_DB_NAME',
+    # OLD DATABASE SETTINGS
+    'DB_MAX_WAIT', 'DB_MATCH', 'LOCKOPEN_MAX_WAIT',
+    'CALIB_DB_MATCH', 'CALIB_DB_COLS',
     'CALIB_DB_KEY_COL', 'CALIB_DB_TIME_COL', 'CALIB_DB_FILE_COL',
     'TELLU_DB_MATCH', 'TELLU_DB_COLS', 'TELLU_DB_KEY_COL', 'TELLU_DB_TIME_COL',
     'TELLU_DB_FILE_COL',
@@ -335,6 +338,37 @@ cgroup = 'DATABASE SETTINGS'
 DATABASE_DIR = Const('DATABASE_DIR', dtype=str, value='databases/',
                      source=__NAME__, group=cgroup)
 
+# the calibration database name
+CALIB_DB_NAME = Const('CALIB_DB_NAME', dtype=str, source=__NAME__,
+                      value='calib.db', group=cgroup)
+
+# the telluric database name
+TELLU_DB_NAME = Const('TELLU_DB_NAME', dtype=str, source=__NAME__,
+                      value='tellu.db', group=cgroup)
+
+# Define index database name
+INDEX_DB_NAME = Const('INDEX_DB_NAME', dtype=str, source=__NAME__,
+                      value='index.db', group=cgroup)
+
+# Define language database name
+LANG_DB_NAME = Const('LANG_DB_NAME', dtype=str, source=__NAME__,
+                      value='lang.db', group=cgroup)
+
+# Define the log database name
+LOG_DB_NAME = Const('LOG_DB_NAME', dtype=str, source=__NAME__,
+                      value='log.db', group=cgroup)
+
+# Define the param database name
+PARAM_DB_NAME = Const('PARAM_DB_NAME', dtype=str, source=__NAME__,
+                      value='param.db', group=cgroup)
+
+# Define the object database name
+OBJECT_DB_NAME = Const('OBJECT_DB_NAME', dtype=str, source=__NAME__,
+                      value='object.db', group=cgroup)
+
+# =============================================================================
+# OLD DATABASE SETTINGS
+# =============================================================================
 #   the maximum wait time for calibration database file to be in use (locked)
 #       after which an error is raised (in seconds)
 DB_MAX_WAIT = Const('DB_MAX_WAIT', dtype=int, value=600, minimum=1,

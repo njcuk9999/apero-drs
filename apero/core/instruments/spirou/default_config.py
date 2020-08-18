@@ -103,6 +103,37 @@ DRS_PDFLATEX_PATH.value = '/usr/bin/pdflatex'
 DATABASE_DIR = DATABASE_DIR.copy(__NAME__)
 DATABASE_DIR.value = 'databases/'
 
+# Define calibration database name
+CALIB_DB_NAME = CALIB_DB_NAME.copy(__NAME__)
+CALIB_DB_NAME.value = 'calib.db'
+
+# Define telluric database name
+TELLU_DB_NAME = TELLU_DB_NAME.copy(__NAME__)
+TELLU_DB_NAME.value = 'tellu.db'
+
+# Define index database name
+INDEX_DB_NAME = INDEX_DB_NAME.copy(__NAME__)
+INDEX_DB_NAME.value = 'index.db'
+
+# Define language database name
+LANG_DB_NAME = LANG_DB_NAME.copy(__NAME__)
+LANG_DB_NAME.value = 'lang.db'
+
+# Define the log database name
+LOG_DB_NAME = LOG_DB_NAME.copy(__NAME__)
+LOG_DB_NAME.value = 'log.db'
+
+# Define the param database name
+PARAM_DB_NAME = PARAM_DB_NAME.copy(__NAME__)
+PARAM_DB_NAME.value = 'param.db'
+
+# Define the object database name
+OBJECT_DB_NAME = OBJECT_DB_NAME.copy(__NAME__)
+OBJECT_DB_NAME.value = 'object.db'
+
+# =============================================================================
+# OLD DATABASE SETTINGS
+# =============================================================================
 #   the maximum wait time for calibration database file to be in use (locked)
 #       after which an error is raised (in seconds)
 DB_MAX_WAIT = DB_MAX_WAIT.copy(__NAME__)
@@ -112,13 +143,13 @@ DB_MAX_WAIT.value = 600
 LOCKOPEN_MAX_WAIT = LOCKOPEN_MAX_WAIT.copy(__NAME__)
 LOCKOPEN_MAX_WAIT.value = 600
 
-# the telluric database name
-TELLU_DB_NAME = TELLU_DB_NAME.copy(__NAME__)
-TELLU_DB_NAME.value = 'master_tellu_SPIROU.txt'
-
-# the calibration database name
-CALIB_DB_NAME = CALIB_DB_NAME.copy(__NAME__)
-CALIB_DB_NAME.value = 'master_calib_SPIROU.txt'
+# # the telluric database name
+# TELLU_DB_NAME = TELLU_DB_NAME.copy(__NAME__)
+# TELLU_DB_NAME.value = 'master_tellu_SPIROU.txt'
+#
+# # the calibration database name
+# CALIB_DB_NAME = CALIB_DB_NAME.copy(__NAME__)
+# CALIB_DB_NAME.value = 'master_calib_SPIROU.txt'
 
 #   Define the match type for calibDB files
 #         match = 'older'  when more than one file for each key will
