@@ -15,8 +15,9 @@ Date: 2020-08-14
     - copied arrays to close fits files (to stop many fits being open at same
       time while creating template)
 
-- obj_fit_tellu
+- obj_mk_tellu / obj_fit_tellu
     - apply bounds to magic grid for pre-cleaning abso_expo vector
+    - when saving pre-clean only mask to exp(-2) not exp(-1)
 
 - Tools
     - update spirou/nirps tool names to follow conventions
