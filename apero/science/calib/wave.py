@@ -3215,7 +3215,7 @@ def generate_res_files(params, llprops, outfile, **kwargs):
                 # set up the gaussian parameter header keystore
                 kw_params = ['GPARAM{0}'.format(g_it), '', gcomm.format(*gargs)]
                 # add gaussian parameter header key to hdict
-                tmpfile.add_hkey(kw_params, values=gparam)
+                tmpfile.add_hkey(kw_params, value=gparam)
             # append this hdict to hicts
             hdicts.append(tmpfile.hdict.to_fits_header())
             # push data into correct columns
