@@ -11,15 +11,15 @@ Created on 2019-05-07 at 15:22
 """
 import numpy as np
 import os
-import shutil
 import sys
 
 from apero import core
 from apero.core import drs_log
 from apero import lang
 from apero.core import constants
-from apero.io import drs_data
 from apero.io import drs_lock
+from apero.io import drs_path
+from apero.io import drs_data
 
 
 # =============================================================================
@@ -175,26 +175,7 @@ def copy_default_db(params, name, db_dir, reset_path, log=True):
     files = np.sort(os.listdir(reset_path))
     # -------------------------------------------------------------------------
     # copy required calibDB files to DRS_CALIB_DB path
-    for filename in files:
-        # get old and new paths
-        oldpath = os.path.join(reset_path, filename)
-        newpath = os.path.join(db_dir, filename)
-        # check that old path exists
-        if os.path.exists(oldpath):
-            # log progress
-            if log:
-                wargs = [filename, db_dir]
-                WLOG(params, '', TextEntry('40-502-00007', args=wargs))
-            # remove the old file
-            if os.path.exists(newpath):
-                os.remove(newpath)
-            # copy over the new file
-            shutil.copy(oldpath, newpath)
-        else:
-            if log:
-                wargs = [filename, reset_path]
-                WLOG(params, 'warning', TextEntry('10-502-00001', args=wargs))
-
+    drs_path.copytree(reset_path, db_dir)
 
 def reset_log(params, log=True):
     # log progress
@@ -234,12 +215,14 @@ def reset_assets(params, log=True):
     name = 'assets'
 
     # TODO: deal with getting online
-
     asset_path = params['DRS_DATA_ASSETS']
     reset_path = os.path.join(params['DRS_RESET_ASSETS_PATH'],
-                              params['INSTRUMENTS'])
+                              params['INSTRUMENT'].lower())
+    # get reset_path from apero module dir
+    abs_reset_path = drs_data.construct_path(params, '', reset_path)
+
     # loop around files and folders in reduced dir
-    reset_dbdir(params, name, asset_path, reset_path, log=log,
+    reset_dbdir(params, name, asset_path, abs_reset_path, log=log,
                 empty_first=False, relative_path='MODULE')
 
 
