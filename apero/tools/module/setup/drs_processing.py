@@ -352,7 +352,7 @@ def run_process(params, recipe, module, *gargs, terminate=False, **gkwargs):
     # generate run table (dictionary from reprocessing)
     runtable = generate_run_table(params, module, *gargs, **gkwargs)
     # Generate run list
-    rlist = generate_run_list(params, None, runtable)
+    rlist = generate_run_list(params, None, runtable, None)
     # Process run list
     outlist, has_errors = process_run_list(params, recipe, rlist)
     # display errors
@@ -607,6 +607,10 @@ def generate_skip_table(params):
                 arguments.append(clean_runstring)
         except:
             continue
+
+    # deal with nothing to skip
+    if len(recipes) == 0:
+        return None
     # push into skip table
     skip_table = Table()
     skip_table['RECIPE'] = recipes
@@ -1163,6 +1167,10 @@ def skip_run_object(params, runobj, skiptable, textdict, skip_storage):
         if not params[runobj.runname]:
             return True, textdict['40-503-00007']
     # ----------------------------------------------------------------------
+    # deal with skip table being empty
+    if skiptable is None:
+        return False, None
+    # ----------------------------------------------------------------------
     # check if the user wants to skip
     if runobj.skipname in params:
         # if user wants to skip
@@ -1469,7 +1477,7 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
     piname_col = pcheck(params, 'REPROCESS_PINAMECOL', 'piname_col', kwargs,
                         func_name)
     # get all telluric stars
-    tstars, wfilename = telluric.get_whitelist(params)
+    tstars = telluric.get_whitelist(params)
     # get all other stars
     ostars = _get_non_telluric_stars(params, table, tstars)
     # get filemod and recipe mod
@@ -2166,7 +2174,7 @@ def _get_filters(params, srecipe):
             slvalues = ['ALL', 'NONE']
             if (user_filter is None) or (user_filter.upper() in slvalues):
                 if value == 'TELLURIC_TARGETS':
-                    wlist, wfilename = telluric.get_whitelist(params)
+                    wlist = telluric.get_whitelist(params)
                     # note we need to update this list to match
                     # the cleaning that is done in preprocessing
                     cwlist = list(map(pconst.DRS_OBJ_NAME, wlist))
