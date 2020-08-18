@@ -66,20 +66,20 @@ def get_whitelist(params, **kwargs):
     # get pseudo constants
     pconst = constants.pload(instrument=params['INSTRUMENT'])
     # get parameters from params/kwargs
-    assetdir = pcheck(params, 'DRS_DATA_ASSET', 'assetsdir', kwargs, func_name)
+    assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', kwargs, func_name)
     relfolder = pcheck(params, 'TELLU_LIST_DIRECOTRY', 'directory', kwargs,
                        func_name)
     filename = pcheck(params, 'TELLU_WHITELIST_NAME', 'filename', kwargs,
                       func_name)
     # get absolulte filename
-    absfilename = os.path.join(assetdir, relfolder, filename)
+    whitelistfile = os.path.join(assetdir, relfolder, filename)
     # load the white list
-    wout = drs_data.load_text_file(params, absfilename, func_name, dtype=str)
-    whitelist, whitelistfile = wout
+    whitelist = drs_data.load_text_file(params, whitelistfile, func_name,
+                                        dtype=str)
     # must clean names
     whitelist = list(map(pconst.DRS_OBJ_NAME, whitelist))
     # return the whitelist
-    return whitelist, whitelistfile
+    return whitelist
 
 
 def get_blacklist(params, **kwargs):
@@ -87,16 +87,16 @@ def get_blacklist(params, **kwargs):
     # get pseudo constants
     pconst = constants.pload(instrument=params['INSTRUMENT'])
     # get parameters from params/kwargs
-    assetdir = pcheck(params, 'DRS_DATA_ASSET', 'assetsdir', kwargs, func_name)
+    assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', kwargs, func_name)
     relfolder = pcheck(params, 'TELLU_LIST_DIRECOTRY', 'directory', kwargs,
                        func_name)
     filename = pcheck(params, 'TELLU_BLACKLIST_NAME', 'filename', kwargs,
                       func_name)
     # get absolulte filename
-    absfilename = os.path.join(assetdir, relfolder, filename)
+    blacklistfile = os.path.join(assetdir, relfolder, filename)
     # load the white list
-    bout = drs_data.load_text_file(params, absfilename, func_name, dtype=str)
-    blacklist, blacklistfile = bout
+    blacklist = drs_data.load_text_file(params, blacklistfile, func_name,
+                                        dtype=str)
     # must clean names
     blacklist = list(map(pconst.DRS_OBJ_NAME, blacklist))
     # return the whitelist
@@ -168,7 +168,7 @@ def get_non_tellu_objs(params, recipe, fiber, filetype=None, dprtypes=None,
     :return:
     """
     # get the telluric star names (we don't want to process these)
-    objnames, _ = get_whitelist(params)
+    objnames = get_whitelist(params)
     objnames = list(objnames)
     # deal with filetype being string
     if isinstance(filetype, str):
@@ -947,7 +947,7 @@ def clean_ohline_pca(params, image, wavemap, **kwargs):
     func_name = __NAME__ + '.clean_ohline_pca()'
     # ----------------------------------------------------------------------
     # get parameters from params/kwargs
-    assetdir = pcheck(params, 'DRS_DATA_ASSET', 'assetsdir', kwargs, func_name)
+    assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', kwargs, func_name)
     relfolder = pcheck(params, 'TELLU_LIST_DIRECOTRY', 'directory', kwargs,
                        func_name)
     filename = pcheck(params, 'TELLUP_OHLINE_PCA_FILE', 'filename', kwargs,
