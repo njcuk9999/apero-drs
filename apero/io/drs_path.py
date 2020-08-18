@@ -264,6 +264,7 @@ def numpy_load(filename):
         pass
     # try the load, loading as a string first
     try:
+        # noinspection PyTypeChecker
         return np.load(open(filename, 'rb'))
     except Exception as _:
         pass
