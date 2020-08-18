@@ -127,8 +127,8 @@ def load_cavity_files(params, required=True, **kwargs):
             return None, None
 
     # load text files
-    fit_1m = load_text_file(params, filename_1m, func_name, dtype=float)
-    fit_ll = load_text_file(params, filename_ll, func_name, dtype=float)
+    fit_1m = load_text_file(params, absfilename_1m, func_name, dtype=float)
+    fit_ll = load_text_file(params, absfilename_ll, func_name, dtype=float)
     # return arrays from text files
     return np.array(fit_1m), np.array(fit_ll)
 
