@@ -1,4 +1,4 @@
-# Update Note Summary - Version 0.6.130
+# Update Note Summary - Version 0.7.000
 
 Date: 2020-08-14
 
@@ -18,6 +18,12 @@ Date: 2020-08-14
 - Tools
     - update spirou/nirps tool names to follow conventions
     - add first attempt at cal_drift from wave sol CCF
+    - processing now skips based on log.fits recipe calls (i.e. will skip
+      identical recipe calls)
+
+- General
+    - now have an assets directory (on install/reset apero.data moved here for
+      local storage/modification) - eventually will get this from e.g. wget
 
 
 ## Still to do:
