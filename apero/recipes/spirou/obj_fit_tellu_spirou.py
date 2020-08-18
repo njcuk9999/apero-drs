@@ -210,6 +210,10 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         tpreprops = telluric.tellu_preclean(params, recipe, infile, wprops,
                                             fiber, rawfiles, combine)
+
+        # TODO: remove break point
+        constants.break_point(params)
+
         # get variables out of tpreprops
         image1 = tpreprops['CORRECTED_E2DS']
         # ------------------------------------------------------------------
