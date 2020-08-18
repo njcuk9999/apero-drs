@@ -9,13 +9,12 @@ Created on 2019-07-26 at 09:47
 
 @author: cook
 """
-import numpy as np
 import sys
 
 from apero import core
 from apero import lang
 from apero.core import constants
-from apero.tools.module.setup import drs_processing
+from apero.tools.module.processing import drs_processing
 from apero.io import drs_fits
 
 # =============================================================================

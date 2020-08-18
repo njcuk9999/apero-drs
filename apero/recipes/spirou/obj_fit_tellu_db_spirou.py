@@ -17,7 +17,7 @@ from apero import lang
 from apero.core import constants
 from apero.io import drs_path
 from apero.science import telluric
-from apero.tools.module.setup import drs_processing
+from apero.tools.module.processing import drs_processing
 
 from apero.core.instruments.spirou import recipe_definitions as rd
 
