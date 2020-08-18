@@ -867,7 +867,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                               waveend=waveend, dvgrid=dvgrid)
     # all absorption deeper than exp(trans_thres) is considered too deep to
     #    be corrected. We set values there to NaN
-    mask = abso_e2ds < np.exp(trans_thres)
+    mask = abso_e2ds < np.exp(2 * trans_thres)
     # set deep lines to NaN
     abso_e2ds[mask] = np.nan
     # ----------------------------------------------------------------------
