@@ -12,6 +12,7 @@ Created on 2019-01-18 at 14:44
 import importlib
 import sys
 import os
+from typing import List, Tuple
 
 from apero.lang import drs_exceptions
 
@@ -564,6 +565,82 @@ class PseudoConstants:
         if params['DRS_PLOT_FONT_SIZE'] > 0:
             font['size'] = params['DRS_PLOT_FONT_SIZE']
         return font
+
+    # =========================================================================
+    # DATABASE SETTINGS
+    # =========================================================================
+    def CALIBRATION_DB_COLUMNS(self) -> Tuple[List[str], List[type]]:
+        """
+        Define the columns used in the calibration database
+        :return: list of columns (strings)
+        """
+        columns = ['KEY', 'FIBER', 'SUPER', 'FILENAME', 'HUMANTIME',
+                   'UNIXTIME', 'USED']
+        ctypes = [str, str, int, str, str, float, int]
+        return columns, ctypes
+
+    def TELLURIC_DB_COLUMNS(self) -> Tuple[List[str], List[type]]:
+        """
+        Define the columns used in the telluric database
+        :return: list of columns (strings)
+        """
+        columns = ['KEY', 'FIBER', 'SUPER', 'FILENAME', 'HUMANTIME',
+                   'UNIXTIME', 'OBJECT', 'AIRMASS', 'TAU_WATER', 'TAU_OTHERS',
+                   'USED']
+        ctypes = [str, str, int, str, str, float, str, float, float, float, int]
+        return columns, ctypes
+
+    def INDEX_DB_COLUMNS(self) -> Tuple[List[str], List[type]]:
+        """
+        Define the columns used in the index database
+        :return: list of columns (strings)
+        """
+        columns = ['DIRECTORY', 'FILENAME', 'KIND', 'LAST_MODIFIED',
+                   'DATE-OBS', 'UTC-OBS', 'MJDMID', 'OBJNAME', 'OBSTYPE',
+                   'EXPTIME', 'CCAS', 'CREF', 'CDEN', 'DPRTYPE', 'TRGTYPE',
+                   'OUTPUT', 'EXPSEQ', 'NUMEXP', 'VERSION', 'PPVERSION',
+                   'PINAME', 'PID', 'FIBER', 'UID']
+        ctypes = [str, str, str, float, str, str, float, str, str, float,
+                  str, str, float, str, str, str, int, int, str, str, str,
+                  str, str, str]
+        return columns, ctypes
+
+    def LOG_DB_COLUMNS(self) -> Tuple[List[str], List[type]]:
+        """
+        Define the columns use in the log database
+        :return: list of columns (strings)
+        """
+        columns = ['RECIPE', 'RKIND', 'PID', 'HUMANTIME', 'UNIXTIME', 'GROUP',
+                   'LEVEL', 'SUBLEVEL', 'LEVELCRIT', 'INPATH', 'OUTPATH',
+                   'DIRECTORY', 'LOGFILE', 'PLOTDIR', 'RUNSTRING', 'ARGS',
+                   'KWARGS', 'SKWARGS', 'STARTED', 'PASSED_ALL_QC',
+                   'QC_STRING', 'QC_NAMES', 'QC_VALUES', 'QC_LOGIC', 'QC_PASS',
+                   'ERRORS', 'ENDED']
+        ctypes = [str, str, str, str, str, str, int, int, str, str, str,
+                  str, str, str, str, str, str, str, int, int, str, str, str,
+                  str, str, str, int]
+        return columns, ctypes
+
+    def OBJECT_DB_COLUMNS(self) -> Tuple[List[str], List[type]]:
+        """
+        Define the columns use in the object database
+        :return: list of columns (strings)
+        """
+        columns = ['OBJNAME', 'GAIAID', 'RA', 'DEC', 'PMRA', 'PMDE', 'PLX',
+                   'RV', 'GMAG', 'BPMAG', 'RPMAG', 'EPOCH', 'TEFF']
+        ctypes = [str, str, float, float, float, float, float, float, float,
+                  float, float, float, float]
+        return columns, ctypes
+
+
+    def PARAMS_DB_COLUMNS(self) -> Tuple[List[str], List[type]]:
+        """
+        Define the columns use in the parameter database
+        :return: list of columns (Strings)
+        """
+        columns = ['KEY', 'VALUE', 'DTYPE', 'SOURCE', 'LAST_MODIFIED']
+        ctypes = [str, str, str, str, float]
+        return columns, ctypes
 
 
 # =============================================================================

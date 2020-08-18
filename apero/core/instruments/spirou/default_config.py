@@ -107,6 +107,10 @@ DATABASE_DIR.value = 'databases/'
 CALIB_DB_NAME = CALIB_DB_NAME.copy(__NAME__)
 CALIB_DB_NAME.value = 'calib.db'
 
+# Define reset file for calibration database
+# CALIB_DB_RESET = CALIB_DB_RESET.copy(__NAME__)
+# CALIB_DB_RESET.value = 'reset.calib.csv'
+
 # Define telluric database name
 TELLU_DB_NAME = TELLU_DB_NAME.copy(__NAME__)
 TELLU_DB_NAME.value = 'tellu.db'
@@ -131,6 +135,10 @@ PARAM_DB_NAME.value = 'param.db'
 OBJECT_DB_NAME = OBJECT_DB_NAME.copy(__NAME__)
 OBJECT_DB_NAME.value = 'object.db'
 
+# Define reset file for object database
+# OBJECT_DB_RESET = OBJECT_DB_RESET.copy(__NAME__)
+# OBJECT_DB_RESET.value = 'reset.object.csv'
+
 # =============================================================================
 # OLD DATABASE SETTINGS
 # =============================================================================
@@ -143,13 +151,13 @@ DB_MAX_WAIT.value = 600
 LOCKOPEN_MAX_WAIT = LOCKOPEN_MAX_WAIT.copy(__NAME__)
 LOCKOPEN_MAX_WAIT.value = 600
 
-# # the telluric database name
-# TELLU_DB_NAME = TELLU_DB_NAME.copy(__NAME__)
-# TELLU_DB_NAME.value = 'master_tellu_SPIROU.txt'
-#
-# # the calibration database name
-# CALIB_DB_NAME = CALIB_DB_NAME.copy(__NAME__)
-# CALIB_DB_NAME.value = 'master_calib_SPIROU.txt'
+# the telluric database name
+TELLU_DB_NAME = TELLU_DB_NAME.copy(__NAME__)
+TELLU_DB_NAME.value = 'master_tellu_SPIROU.txt'
+
+# the calibration database name
+CALIB_DB_NAME = CALIB_DB_NAME.copy(__NAME__)
+CALIB_DB_NAME.value = 'master_calib_SPIROU.txt'
 
 #   Define the match type for calibDB files
 #         match = 'older'  when more than one file for each key will
