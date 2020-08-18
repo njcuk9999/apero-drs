@@ -37,7 +37,7 @@ from apero.core import constants
 from apero.core import math as mp
 from apero import core
 from apero.tools.module.gui import widgets
-from apero.tools.module.setup import drs_processing
+from apero.tools.module.processing import drs_processing
 from apero import plotting
 
 # =============================================================================
