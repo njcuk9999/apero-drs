@@ -63,7 +63,7 @@ class LoadException(Exception):
 def load_linelist(params, **kwargs):
     # get parameters from params/kwargs
     func_name = kwargs.get('func', __NAME__ + '.load_full_flat_badpix()')
-    assetdir = pcheck(params, 'DRS_DATA_ASSET', 'assetsdir', kwargs, func_name)
+    assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', kwargs, func_name)
     relfolder = pcheck(params, 'DRS_WAVE_DATA', 'directory', kwargs,
                        func_name)
     filename = pcheck(params, 'WAVE_LINELIST_FILE', 'filename', kwargs,
@@ -107,7 +107,7 @@ def load_cavity_files(params, required=True, **kwargs):
 
     func_name = __NAME__ + '.load_cavity_files()'
     # get parameters from params/kwargs
-    assetdir = pcheck(params, 'DRS_DATA_ASSET', 'assetsdir', kwargs, func_name)
+    assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', kwargs, func_name)
     relfolder = pcheck(params, 'DRS_CALIB_DATA', 'directory', kwargs,
                        func_name)
 
@@ -137,7 +137,7 @@ def save_cavity_files(params, fit_1m_d, fit_ll_d, **kwargs):
     func_name = __NAME__ + '.save_cavity_files()'
     # TODO: Ask about when and where we save this file
     # get parameters from params/kwargs
-    assetdir = pcheck(params, 'DRS_DATA_ASSET', 'assetsdir', kwargs, func_name)
+    assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', kwargs, func_name)
     relfolder = pcheck(params, 'DRS_CALIB_DATA', 'directory', kwargs,
                        func_name)
     filename_1m = pcheck(params, 'CAVITY_1M_FILE', 'filename', kwargs,
@@ -155,7 +155,7 @@ def save_cavity_files(params, fit_1m_d, fit_ll_d, **kwargs):
 def load_full_flat_badpix(params, **kwargs):
     # get parameters from params/kwargs
     func_name = kwargs.get('func', __NAME__ + '.load_full_flat_badpix()')
-    assetdir = pcheck(params, 'DRS_DATA_ASSET', 'assetsdir', kwargs, func_name)
+    assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', kwargs, func_name)
     relfolder = pcheck(params, 'DRS_BADPIX_DATA', 'directory', kwargs,
                        func_name)
     filename = pcheck(params, 'BADPIX_FULL_FLAT', 'filename', kwargs,
@@ -178,7 +178,7 @@ def load_full_flat_badpix(params, **kwargs):
 def load_hotpix(params, **kwargs):
     # get parameters from params/kwargs
     func_name = kwargs.get('func', __NAME__ + '.load_full_flat_pp()')
-    assetdir = pcheck(params, 'DRS_DATA_ASSET', 'assetsdir', kwargs, func_name)
+    assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', kwargs, func_name)
     relfolder = pcheck(params, 'DATA_ENGINEERING', 'directory', kwargs,
                        func_name)
     filename = pcheck(params, 'PP_HOTPIX_FILE', 'filename', kwargs,
@@ -204,7 +204,7 @@ def load_hotpix(params, **kwargs):
 def load_tapas(params, **kwargs):
     # get parameters from params/kwargs
     func_name = kwargs.get('func', __NAME__ + '.load_full_flat_pp()')
-    assetdir = pcheck(params, 'DRS_DATA_ASSET', 'assetsdir', kwargs, func_name)
+    assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', kwargs, func_name)
     relfolder = pcheck(params, 'TELLU_LIST_DIRECOTRY', 'directory', kwargs,
                        func_name)
     filename = pcheck(params, 'TAPAS_FILE', 'filename', kwargs, func_name)
@@ -230,7 +230,7 @@ def load_tapas(params, **kwargs):
 def load_object_list(params, **kwargs):
     # get parameters from params/kwargs
     func_name = kwargs.get('func', __NAME__ + '.load_full_flat_pp()')
-    assetdir = pcheck(params, 'DRS_DATA_ASSET', 'assetsdir', kwargs, func_name)
+    assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', kwargs, func_name)
     relfolder = pcheck(params, 'DATABASE_DIR', 'directory', kwargs,
                        func_name)
     filename = pcheck(params, 'OBJ_LIST_FILE', 'filename', kwargs, func_name)
@@ -257,7 +257,7 @@ def load_object_list(params, **kwargs):
 def load_ccf_mask(params, **kwargs):
     # get parameters from params/kwargs
     func_name = kwargs.get('func', __NAME__ + '.load_ccf_mask()')
-    assetdir = pcheck(params, 'DRS_DATA_ASSET', 'assetsdir', kwargs, func_name)
+    assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', kwargs, func_name)
     relfolder = pcheck(params, 'CCF_MASK_PATH', 'directory', kwargs,
                        func_name)
     filename = pcheck(params, 'CCF_MASK', 'filename', kwargs, func_name)
@@ -284,7 +284,7 @@ def load_ccf_mask(params, **kwargs):
 def load_sp_mask_lsd(params, temperature=None, **kwargs):
     # get parameters from params/kwargs
     func_name = kwargs.get('func', __NAME__ + '.load_sp_mask_lsd()')
-    assetdir = pcheck(params, 'DRS_DATA_ASSET', 'assetsdir', kwargs, func_name)
+    assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', kwargs, func_name)
     relfolder = pcheck(params, 'POLAR_LSD_PATH', 'directory', kwargs,
                        func_name)
     filekey = pcheck(params, 'POLAR_LSD_FILE_KEY', 'filekey', kwargs,
@@ -350,7 +350,7 @@ def load_sp_mask_lsd(params, temperature=None, **kwargs):
 def load_order_mask(params, **kwargs):
     # get parameters from params/kwargs
     func_name = kwargs.get('func', __NAME__ + '.load_sp_mask_lsd()')
-    assetdir = pcheck(params, 'DRS_DATA_ASSET', 'assetsdir', kwargs, func_name)
+    assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', kwargs, func_name)
     relfolder = pcheck(params, 'POLAR_LSD_PATH', 'directory', kwargs,
                        func_name)
     filename = pcheck(params, 'POLAR_LSD_ORDER_MASK', 'filename', kwargs,
