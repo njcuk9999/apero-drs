@@ -1789,7 +1789,8 @@ FTELLU_NUM_PRINCIPLE_COMP.value = 5
 # The number of transmission files to use in the PCA fit (use this number of
 #    trans files closest in expo_h20 and expo_water
 FTELLU_NUM_TRANS = FTELLU_NUM_TRANS.copy(__NAME__)
-FTELLU_NUM_TRANS.value = 50
+# TODO: put back to 50 after test
+FTELLU_NUM_TRANS.value = 20
 
 # Define whether to add the first derivative and broadening factor to the
 #     principal components this allows a variable resolution and velocity
