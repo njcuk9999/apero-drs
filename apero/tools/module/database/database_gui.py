@@ -12,10 +12,14 @@ import tkinter as tk
 import pandas as pd
 from pandastable import Table, TableModel, applyStyle
 
+from apero.core import constants
+from apero.tools.module.database import create_databases
+from apero.core.core import drs_database2
 
 # =============================================================================
 # Define variables
 # =============================================================================
+Database = drs_database2.Database
 # define database 1
 DATABASE1 = TableModel.getSampleData()
 # define database 2
@@ -30,14 +34,13 @@ DATABASE2['USE'] = np.ones_like(DATABASE2['X']).astype(bool)
 # =============================================================================
 # Define classes
 # =============================================================================
-class Database:
-    def __init__(self, name, path=None, df=None, conn=None):
+class DatabaseHolder:
+    def __init__(self, name, path=None, df=None):
         self.name = name
         self.path = path
         self.df = df
-        self.conn = conn
 
-    def load(self):
+    def load_dataframe(self):
         # if we already have the dataframe don't load it
         if isinstance(self.df, pd.DataFrame):
             return
@@ -46,14 +49,16 @@ class Database:
             emsg = 'Database "{0}" must have path or df set'
             raise ValueError(emsg.format(self.name))
 
-        if self.path.endwith('.csv'):
+        if self.path.endswith('.csv'):
             self.df = pd.read_csv(self.path)
-        elif self.path.endwith('.db'):
-            if self.conn is None:
-                # TODO: connect to database here using pipeline interface
-                emsg = 'Database "{0}" (SQL database) need conn defined'
-                raise ValueError(emsg.format(self.name))
-            self.df = pd.read_sql(self.path, self.conn)
+        elif self.path.endswith('.db'):
+            # start database
+            database = Database(self.path)
+            dataframe = database.get('*', return_pandas=True)
+            if len(dataframe) == 0:
+                self.df = None
+            else:
+                self.df = dataframe
 
 
 class DatabaseTable(Table):
@@ -158,8 +163,8 @@ class DatabaseExplorer(tk.Frame):
 
         # deal with database
         if databases is None:
-            database1 = Database('DATABASE1', df=DATABASE1)
-            database2 = Database('DATABASE2', df=DATABASE2)
+            database1 = DatabaseHolder('DATABASE1', df=DATABASE1)
+            database2 = DatabaseHolder('DATABASE2', df=DATABASE2)
             self.databases = dict()
             self.databases[database1.name] = database1
             self.databases[database2.name] = database2
@@ -177,7 +182,7 @@ class DatabaseExplorer(tk.Frame):
         # start with database1
         database = self.databases[list(self.databases.keys())[0]]
         # load new database
-        database.load()
+        database.load_dataframe()
         # remake the new dataframe
         self.make_table(database.df)
         # make menu
@@ -206,9 +211,14 @@ class DatabaseExplorer(tk.Frame):
         self.dataframe = dataframe
         self.table_frame = tk.Frame(self.main)
         self.table_frame.pack(fill=tk.BOTH, expand=1)
-        self.table = DatabaseTable(self.table_frame, dataframe=self.dataframe,
-                                   showtoolbar=False, showstatusbar=True)
-        self.table.show()
+        if self.dataframe is None:
+            self.table = None
+            # TODO: THIS IS BROKEN
+        else:
+            kwargs = dict(dataframe=self.dataframe, showtoolbar=False,
+                          showstatusbar=True)
+            self.table = DatabaseTable(self.table_frame, **kwargs)
+            self.table.show()
 
     def change_table(self, *args):
         database_name = self.database_option.get()
@@ -216,7 +226,7 @@ class DatabaseExplorer(tk.Frame):
         # destroy current table_Frame
         self.table_frame.destroy()
         # load new database
-        database.load()
+        database.load_dataframe()
         # remake the new dataframe
         self.make_table(database.df)
 
@@ -283,7 +293,21 @@ class DatabaseExplorer(tk.Frame):
 # Start of code
 # =============================================================================
 if __name__ == "__main__":
-    app = DatabaseExplorer()
+
+    # get params
+    # TODO: get instrument from args
+    params = constants.load('SPIROU')
+    # TODO: remove - for tests only
+    params.set('CALIB_DB_NAME', value='calib.db')
+    params.set('TELLU_DB_NAME', value='tellu.db')
+    # get database paths
+    paths = create_databases.list_databases(params)
+    # push into database holder
+    databases = dict()
+    for key in paths:
+        databases[key] = DatabaseHolder(key, path=paths[key])
+    # construct app
+    app = DatabaseExplorer(databases=databases)
     # launch the app
     app.mainloop()
 
