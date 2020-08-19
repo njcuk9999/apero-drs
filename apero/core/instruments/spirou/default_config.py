@@ -108,8 +108,8 @@ CALIB_DB_NAME = CALIB_DB_NAME.copy(__NAME__)
 CALIB_DB_NAME.value = 'calib.db'
 
 # Define reset file for calibration database
-# CALIB_DB_RESET = CALIB_DB_RESET.copy(__NAME__)
-# CALIB_DB_RESET.value = 'reset.calib.csv'
+CALIB_DB_RESET = CALIB_DB_RESET.copy(__NAME__)
+CALIB_DB_RESET.value = 'reset.calib.csv'
 
 # Define telluric database name
 TELLU_DB_NAME = TELLU_DB_NAME.copy(__NAME__)
@@ -127,17 +127,18 @@ LANG_DB_NAME.value = 'lang.db'
 LOG_DB_NAME = LOG_DB_NAME.copy(__NAME__)
 LOG_DB_NAME.value = 'log.db'
 
-# Define the param database name
-PARAM_DB_NAME = PARAM_DB_NAME.copy(__NAME__)
-PARAM_DB_NAME.value = 'param.db'
-
 # Define the object database name
 OBJECT_DB_NAME = OBJECT_DB_NAME.copy(__NAME__)
 OBJECT_DB_NAME.value = 'object.db'
 
 # Define reset file for object database
-# OBJECT_DB_RESET = OBJECT_DB_RESET.copy(__NAME__)
-# OBJECT_DB_RESET.value = 'reset.object.csv'
+OBJECT_DB_RESET = OBJECT_DB_RESET.copy(__NAME__)
+OBJECT_DB_RESET.value = 'reset.object.csv'
+
+# Define the param database name
+PARAM_DB_NAME = PARAM_DB_NAME.copy(__NAME__)
+PARAM_DB_NAME.value = 'param.db'
+
 
 # =============================================================================
 # OLD DATABASE SETTINGS

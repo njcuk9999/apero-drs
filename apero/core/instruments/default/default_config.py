@@ -29,9 +29,10 @@ __all__ = [  # global settings
     'DRS_RESET_RUN_PATH', 'DRS_INSTRUMENTS', 'DRS_PDB_RC_FILENAME',
     # DRS INDEXING SETTINGS
     'DRS_INDEX_FILE', 'DRS_INDEX_FILENAME',
-    # OLD DATABASE SETTINGS
+    # DATABASE SETTINGS
     'DATABASE_DIR', 'CALIB_DB_NAME', 'TELLU_DB_NAME', 'INDEX_DB_NAME',
     'LANG_DB_NAME', 'LOG_DB_NAME', 'PARAM_DB_NAME', 'OBJECT_DB_NAME',
+    'CALIB_DB_RESET', 'OBJECT_DB_RESET',
     # OLD DATABASE SETTINGS
     'DB_MAX_WAIT', 'DB_MATCH', 'LOCKOPEN_MAX_WAIT',
     'CALIB_DB_MATCH', 'CALIB_DB_COLS',
@@ -342,6 +343,10 @@ DATABASE_DIR = Const('DATABASE_DIR', dtype=str, value='databases/',
 CALIB_DB_NAME = Const('CALIB_DB_NAME', dtype=str, source=__NAME__,
                       value='calib.db', group=cgroup)
 
+# Define calibration database name
+CALIB_DB_RESET = Const('CALIB_DB_RESET', dtype=str, source=__NAME__,
+                       value='reset.calib.csv', group=cgroup)
+
 # the telluric database name
 TELLU_DB_NAME = Const('TELLU_DB_NAME', dtype=str, source=__NAME__,
                       value='tellu.db', group=cgroup)
@@ -358,13 +363,18 @@ LANG_DB_NAME = Const('LANG_DB_NAME', dtype=str, source=__NAME__,
 LOG_DB_NAME = Const('LOG_DB_NAME', dtype=str, source=__NAME__,
                       value='log.db', group=cgroup)
 
+# Define the object database name
+OBJECT_DB_NAME = Const('OBJECT_DB_NAME', dtype=str, source=__NAME__,
+                      value='object.db', group=cgroup)
+
+# Define reset file for object database
+OBJECT_DB_RESET = Const('OBJECT_DB_RESET', dtype=str, source=__NAME__,
+                        value='reset.object.csv', group=cgroup)
+
 # Define the param database name
 PARAM_DB_NAME = Const('PARAM_DB_NAME', dtype=str, source=__NAME__,
                       value='param.db', group=cgroup)
 
-# Define the object database name
-OBJECT_DB_NAME = Const('OBJECT_DB_NAME', dtype=str, source=__NAME__,
-                      value='object.db', group=cgroup)
 
 # =============================================================================
 # OLD DATABASE SETTINGS

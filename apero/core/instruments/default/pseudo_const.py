@@ -596,7 +596,7 @@ class PseudoConstants:
         :return: list of columns (strings)
         """
         columns = ['DIRECTORY', 'FILENAME', 'KIND', 'LAST_MODIFIED',
-                   'DATE-OBS', 'UTC-OBS', 'MJDMID', 'OBJNAME', 'OBSTYPE',
+                   'DATE_OBS', 'UTC_OBS', 'MJDMID', 'OBJNAME', 'OBSTYPE',
                    'EXPTIME', 'CCAS', 'CREF', 'CDEN', 'DPRTYPE', 'TRGTYPE',
                    'OUTPUT', 'EXPSEQ', 'NUMEXP', 'VERSION', 'PPVERSION',
                    'PINAME', 'PID', 'FIBER', 'UID']
