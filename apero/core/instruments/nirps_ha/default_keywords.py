@@ -1454,6 +1454,11 @@ KW_FTELLU_NPC = KW_FTELLU_NPC.copy(__NAME__)
 KW_FTELLU_NPC.set(key='FTT_NPC',
                   comment='ftellu Number of principal components used')
 
+# The number of trans files used in pc fit (closest in expo h20/others)
+KW_FTELLU_NTRANS = KW_FTELLU_NTRANS.copy(__NAME__)
+KW_FTELLU_NTRANS.set(key='FTT_NTRS',
+                     comment='ftellu NUmber of trans files used in pc fit')
+
 # whether we added first derivative to principal components
 KW_FTELLU_ADD_DPC = KW_FTELLU_ADD_DPC.copy(__NAME__)
 KW_FTELLU_ADD_DPC.set(key='FTT_ADPC',
