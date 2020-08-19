@@ -939,6 +939,7 @@ obj_fit_tellu.description = Help['FTELLU_DESC']
 obj_fit_tellu.epilog = Help['FTELLU_EXAMPLE']
 obj_fit_tellu.kind = 'recipe'
 obj_fit_tellu.set_outputs(ABSO_NPY=sf.out_tellu_abso_npy,
+                          ABSO1_NPY=sf.out_tellu_abso1_npy,
                           TELLU_OBJ=sf.out_tellu_obj,
                           SC1D_W_FILE=sf.out_tellu_sc1d_w,
                           SC1D_V_FILE=sf.out_tellu_sc1d_v,
