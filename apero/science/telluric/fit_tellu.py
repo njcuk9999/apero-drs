@@ -19,6 +19,7 @@ from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.io import drs_fits
 from apero.io import drs_path
+from apero.io import drs_table
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave
 from apero.science import extract
@@ -55,7 +56,7 @@ pcheck = core.pcheck
 # General functions
 # =============================================================================
 def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
-                      **kwargs):
+                      tpreprops, **kwargs):
     func_name = __NAME__ + '.gen_abso_pca_calc()'
     # ----------------------------------------------------------------------
     # get constants from params/kwargs
@@ -68,7 +69,8 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
                                 'thres_transfit_low', kwargs, func_name)
     thres_transfit_upper = pcheck(params, 'MKTELLU_TRANS_FIT_UPPER_BAD',
                                   'thres_transfit_upper', kwargs, func_name)
-
+    num_trans = pcheck(params, 'FTELLU_NUM_TRANS', 'num_trans', kwargs,
+                       func_name)
     # ------------------------------------------------------------------
     # get the transmission map key
     # ----------------------------------------------------------------------
@@ -91,16 +93,21 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
     # ----------------------------------------------------------------------
     # get most recent file time
     recent_filetime = drs_path.get_most_recent(transfiles)
-    # get new instance of ABSO_NPY file
+    # get new instances of ABSO_NPY files
     abso_npy = recipe.outputs['ABSO_NPY'].newcopy(recipe=recipe, fiber=fiber)
+    abso1_npy = recipe.outputs['ABSO1_NPY'].newcopy(recipe=recipe, fiber=fiber)
     # construct the filename from file instance
     abso_npy_filename = 'tellu_save_{0}.npy'.format(recent_filetime)
     abso_npy.construct_filename(params, filename=abso_npy_filename,
+                                path=params['DRS_TELLU_DB'])
+    abso1_npy_filename = 'tellu_save1_{0}.npy'.format(recent_filetime)
+    abso1_npy.construct_filename(params, filename=abso1_npy_filename,
                                 path=params['DRS_TELLU_DB'])
     # noinspection PyBroadException
     try:
         # try loading from file
         abso = drs_path.numpy_load(abso_npy.filename)
+        abso1 = drs_path.numpy_load(abso1_npy.filename)
         # log that we have loaded abso from file
         wargs = [abso_npy.filename]
         WLOG(params, '', TextEntry('40-019-00012', args=wargs))
@@ -113,20 +120,33 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
         WLOG(params, 'debug', TextEntry('90-019-00001', args=dargs))
         # set up storage for the absorption
         abso = np.zeros([len(transfiles), np.product(image.shape)])
+        abso1 = np.zeros([len(transfiles), 2])
         # storage for transfile used
         transfiles_used = []
         # load all the trans files
         for it, filename in enumerate(transfiles):
             # load trans image
-            transimage = drs_fits.readfits(params, filename)
+            tout = drs_fits.readfits(params, filename, gethdr=True)
+            transimage, transhdr = tout
             # test whether whole transimage is NaNs
             if np.sum(np.isnan(transimage)) == np.product(transimage):
                 # log that we are removing a trans file
                 wargs = [transfiles[it]]
                 WLOG(params, '', TextEntry('40-019-00014', args=wargs))
+            # make sure we have required header key for expo_water
+            elif params['KW_TELLUP_EXPO_WATER'][0] not in transhdr:
+                wargs = [params['KW_TELLUP_EXPO_WATER'][0], transfiles[it]]
+                WLOG(params, '', TextEntry('40-019-00050', args=wargs))
+            # make sure we have required header key for expo_others
+            elif params['KW_TELLUP_EXPO_OTHERS'][0] not in transhdr:
+                wargs = [params['KW_TELLUP_EXPO_OTHERS'][0], transfiles[it]]
+                WLOG(params, '', TextEntry('40-019-00050', args=wargs))
             else:
                 # push data into abso array
                 abso[it, :] = transimage.reshape(np.product(image.shape))
+                # get header keys
+                abso1[it, 0] = transhdr[params['KW_TELLUP_EXPO_WATER'][0]]
+                abso1[it, 1] = transhdr[params['KW_TELLUP_EXPO_OTHERS'][0]]
                 # add to the trans files used list
                 transfiles_used.append(filename)
         # set abso source
@@ -135,9 +155,33 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
         WLOG(params, '', TextEntry('40-019-00013', args=[abso_npy.filename]))
         # remove all other abso npy files
         _remove_absonpy_files(params, params['DRS_TELLU_DB'], 'tellu_save_')
+        _remove_absonpy_files(params, params['DRS_TELLU_DB'], 'tellu_save1_')
         # write to npy file
         abso_npy.data = abso
         abso_npy.write_file(params)
+        abso1_npy.data = abso1
+        abso1_npy.write_file(params)
+    # ----------------------------------------------------------------------
+    # use abso1 (water/others exponent) to create a mask for abso
+    # ----------------------------------------------------------------------
+    # deal with number of trans file less that num_trans required
+    if len(list(transfiles)) < num_trans:
+        num_trans = len(list(transfiles))
+    # extract the expo water/others from abso1
+    expo_water_tellu = abso1[:, 0]
+    expo_others_tellu = abso1[:, 1]
+    # get differences between trans files and current file
+    water_diff = tpreprops['EXPO_WATER'] - expo_water_tellu
+    others_diff = tpreprops['EXPO_OTHERS'] - expo_others_tellu
+    # combine differences
+    rad_expo = np.sqrt(water_diff ** 2 + others_diff ** 2)
+    # make mask
+    radmask = rad_expo < rad_expo[np.argsort(rad_expo)[num_trans]]
+    # ----------------------------------------------------------------------
+    # mask the abso
+    abso = abso[radmask]
+    # mask the used files
+    transfiles_used = np.array(transfiles_used)[radmask]
     # ----------------------------------------------------------------------
     # log the absorption cube
     # ----------------------------------------------------------------------
@@ -208,14 +252,18 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
     props['LOG_ABSO'] = log_abso
     props['PC'] = pc
     props['NPC'] = npc
+    props['NTRANS'] = num_trans
     props['FIT_PC'] = fit_pc
     props['ADD_DERIV_PC'] = add_deriv_pc
     props['FIT_DERIV_PC'] = fit_deriv_pc
     props['ABSO_SOURCE'] = abso_source
     props['TRANS_FILE_USED'] = transfiles_used
+    props['TRANS_FILE_EH2O'] = expo_water_tellu
+    props['TRANS_FILE_EOTR'] = expo_others_tellu
     # set the source
-    keys = ['ABSO', 'LOG_ABSO', 'PC', 'NPC', 'FIT_PC', 'TRANS_FILE_USED',
-            'ADD_DERIV_PC', 'FIT_DERIV_PC', 'ABSO_SOURCE']
+    keys = ['ABSO', 'LOG_ABSO', 'PC', 'NPC', 'NTRANS', 'FIT_PC',
+            'TRANS_FILE_USED', 'ADD_DERIV_PC', 'FIT_DERIV_PC', 'ABSO_SOURCE',
+            'TRANS_FILE_EH2O', 'TRANS_FILE_EOTR']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # return props
@@ -839,6 +887,16 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     sp_out = kwargs.get('CORRECTED_SP', cprops['CORRECTED_SP'])
     amps_abso_t = cprops['AMPS_ABSO_TOTAL']
     tau_molecules = cprops['TAU_MOLECULES']
+
+    # ------------------------------------------------------------------
+    # Set up fit_tellu trans table
+    # ------------------------------------------------------------------
+    columns = ['TRANS_FILE', 'EXPO_H2O', 'EXPO_OTHERS']
+    values = [pca_props['TRANS_FILE_USED'],
+              pca_props['TRANS_FILE_EH2O'],
+              pca_props['TRANS_FILE_EOTR']]
+    # construct table
+    trans_table = drs_table.make_table(params, columns=columns, values=values)
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     corrfile = recipe.outputs['TELLU_OBJ'].newcopy(recipe=recipe, fiber=fiber)
@@ -971,7 +1029,7 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     # log that we are saving rotated image
     WLOG(params, '', TextEntry('40-019-00023', args=[corrfile.filename]))
     # write image to file
-    corrfile.write_file()
+    corrfile.write_multi(data_list=[trans_table], datatype_list=['table'])
     # add to output files (for indexing)
     recipe.add_output_file(corrfile)
     # ------------------------------------------------------------------
