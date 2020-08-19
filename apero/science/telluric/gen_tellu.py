@@ -1085,7 +1085,7 @@ def get_abso_expo(params, wavemap, expo_others, expo_water, spl_others,
     # ----------------------------------------------------------------------
     # get bounds of magic grid
     min_magic = np.nanmin(magic_grid)
-    max_magic = np.nanmin(magic_grid)
+    max_magic = np.nanmax(magic_grid)
     # set all out of bound values to NaN
     mask = (wavemap < min_magic) | (wavemap > max_magic)
     out_vector[mask] = np.nan
