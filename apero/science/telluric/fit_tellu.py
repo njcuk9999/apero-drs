@@ -180,8 +180,10 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
     # ----------------------------------------------------------------------
     # mask the abso
     abso = abso[radmask]
-    # mask the used files
+    # mask the used files and expo arrays
     transfiles_used = np.array(transfiles_used)[radmask]
+    expo_water_tellu = expo_water_tellu[radmask]
+    expo_others_tellu = expo_others_tellu[radmask]
     # ----------------------------------------------------------------------
     # log the absorption cube
     # ----------------------------------------------------------------------
