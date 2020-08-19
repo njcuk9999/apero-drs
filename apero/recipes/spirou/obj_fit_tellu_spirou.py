@@ -244,7 +244,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Generate the absorption map + calculate PCA components
         # ------------------------------------------------------------------
-        pargs = [image2, trans_files, fiber, mprops]
+        pargs = [image2, trans_files, fiber, mprops, tpreprops]
         pca_props = telluric.gen_abso_pca_calc(params, recipe, *pargs)
         # ------------------------------------------------------------------
         # Shift the template/pca components and tapas spectrum to correct

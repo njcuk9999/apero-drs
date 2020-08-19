@@ -126,7 +126,7 @@ __all__ = [  # input keys
     'KW_FTELLU_IM_PX_SIZE', 'KW_FTELLU_FIT_ITERS', 'KW_FTELLU_RECON_LIM',
     'KW_FTELLU_AMP_PC', 'KW_FTELLU_DVTELL1', 'KW_FTELLU_DVTELL2',
     'KW_FTELLU_TAU_H2O', 'KW_FTELLU_TAU_REST', 'KW_FTELLU_ABSO_PREFIX',
-    'KW_FTELLU_TEMPLATE',
+    'KW_FTELLU_TEMPLATE', 'KW_FTELLU_NTRANS',
     # make template values
     'KW_MKTEMP_SNR_ORDER', 'KW_MKTEMP_SNR_THRES',
     # ccf values
@@ -1152,6 +1152,10 @@ KW_MKTELL_TRANS_FIT_UPPER_BAD = Keyword('KW_MKTELL_TRANS_FIT_UPPER_BAD',
 # -----------------------------------------------------------------------------
 # The number of principle components used
 KW_FTELLU_NPC = Keyword('KW_FTELLU_NPC', key='', dtype=int, source=__NAME__)
+
+# The number of trans files used in pc fit (closest in expo h20/others)
+KW_FTELLU_NTRANS = Keyword('KW_FTELLU_NTRANS', key='', dtype=int,
+                           source=__NAME__)
 
 # whether we added first derivative to principal components
 KW_FTELLU_ADD_DPC = Keyword('KW_FTELLU_ADD_DPC', key='', dtype=bool,

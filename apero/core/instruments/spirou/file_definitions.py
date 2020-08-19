@@ -974,6 +974,10 @@ out_tellu_abso_npy = drs_ninput('ABSO_NPY',
                                 filetype='.npy',
                                 basename='tellu_save.npy',
                                 outfunc=out.set_file)
+out_tellu_abso1_npy = drs_ninput('ABSO1_NPY',
+                                 filetype='.npy',
+                                 basename='tellu_save1.npy',
+                                 outfunc=out.set_file)
 
 # telluric corrected e2ds spectrum
 out_tellu_obj = drs_finput('TELLU_OBJ', KW_OUTPUT='TELLU_OBJ',

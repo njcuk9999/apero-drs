@@ -200,7 +200,7 @@ __all__ = [
     'FTELLU_FIT_KEEP_NUM', 'FTELLU_FIT_MIN_TRANS', 'FTELLU_LAMBDA_MIN',
     'FTELLU_LAMBDA_MAX', 'FTELLU_KERNEL_VSINI', 'FTELLU_FIT_ITERS',
     'FTELLU_FIT_RECON_LIMIT', 'FTELLU_PLOT_ORDER_NUMS', 'FTELLU_SPLOT_ORDER',
-    'FTELLU_QC_SNR_ORDER', 'FTELLU_QC_SNR_MIN',
+    'FTELLU_QC_SNR_ORDER', 'FTELLU_QC_SNR_MIN', 'FTELLU_NUM_TRANS',
     # make template constants
     'MKTEMPLATE_SNR_ORDER', 'MKTEMPLATE_FILETYPE', 'MKTEMPLATE_FIBER_TYPE',
     'MKTEMPLATE_E2DS_ITNUM', 'MKTEMPLATE_E2DS_LOWF_SIZE',
@@ -2226,6 +2226,16 @@ FTELLU_NUM_PRINCIPLE_COMP = Const('FTELLU_NUM_PRINCIPLE_COMP', value=None,
                                   user=True, active=False, group=cgroup,
                                   description='The number of principle '
                                               'components to use in PCA fit')
+
+# The number of transmission files to use in the PCA fit (use this number of
+#    trans files closest in expo_h20 and expo_water
+FTELLU_NUM_TRANS = Const('FTELLU_NUM_TRANS', value=None, dtype=int,
+                         source=__NAME__, minimum=1,
+                         user=True, active=False, group=cgroup,
+                         description='The number of transmission files to use '
+                                     'in the PCA fit (use this number of '
+                                     'trans files closest in expo_h20 and '
+                                     'expo_water')
 
 # Define whether to add the first derivative and broadening factor to the
 #     principal components this allows a variable resolution and velocity
