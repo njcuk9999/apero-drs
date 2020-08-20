@@ -401,6 +401,7 @@ def clean_obj_name(params=None, header=None, hdict=None, objname=None,
     # clean object name
     objectname = rawobjname.strip()
     objectname = objectname.replace(' ', '_')
+    objectname = objectname.upper()
     # deal with returning header
     if return_header:
         # add it to the header with new keyword
