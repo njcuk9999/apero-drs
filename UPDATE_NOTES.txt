@@ -4,6 +4,20 @@ Date: 2020-08-14
 
 ## Updates since Version 0.6.129
 
+- cal_preprocessing
+    - all OBJECTs now upper case
+
+- cal_extract
+    - added a quick look which only produces new files
+        {odocode}_pp_e2ds_AB.fits --> {odocode}_pp_q2ds_AB.fits
+        {odocode}_pp_e2dsff_AB.fits --> {odocode}_pp_q2dsff_AB.fits
+    - normal cal_extract:
+        - 291.809 s
+    - cal_extract --quicklook=True:
+        - 118.873 s
+    - cal_extract --quicklook=True --fiber=AB:
+        - 58.165 s
+
 - cal_shape_master
     - correct ALLOWED_FP_TYPES (didn't break but would on change of input)
 
@@ -18,11 +32,13 @@ Date: 2020-08-14
 - obj_mk_tellu / obj_fit_tellu
     - apply bounds to magic grid for pre-cleaning abso_expo vector
     - when saving pre-clean only mask to exp(-2) not exp(-1)
+    - filter trans files by expo H2O and expo OTHERS and use 50 closest to
+      fit pca
 
 - Tools
     - update spirou/nirps tool names to follow conventions
     - add first attempt at cal_drift from wave sol CCF
-
+        - located in apero-drs/tools/spirou
 
 ## Still to do:
     - polar code update
@@ -43,7 +59,6 @@ Date: 2020-08-14
     - make classes picklable and then switch from multiprocessing.pool to spawn
     - NIRPS implementation of cal_wave onwards
     - EA masks from templates
-    - cal_drift recipe?
 
 ## To do later:
     - implement persistence correction
