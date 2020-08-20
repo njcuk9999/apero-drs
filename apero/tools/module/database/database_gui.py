@@ -20,6 +20,11 @@ from apero.core.core import drs_database2
 # Define variables
 # =============================================================================
 Database = drs_database2.Database
+# Define an empty table
+EMPTY_DATABASE = pd.DataFrame()
+EMPTY_DATABASE['NONE'] = ['No data found']
+
+
 # define database 1
 DATABASE1 = TableModel.getSampleData()
 # define database 2
@@ -54,7 +59,7 @@ class DatabaseHolder:
         elif self.path.endswith('.db'):
             # start database
             database = Database(self.path)
-            dataframe = database.get('*', return_pandas=True)
+            dataframe = database.get('*', table='MAIN', return_pandas=True)
             if len(dataframe) == 0:
                 self.df = None
             else:
@@ -211,14 +216,12 @@ class DatabaseExplorer(tk.Frame):
         self.dataframe = dataframe
         self.table_frame = tk.Frame(self.main)
         self.table_frame.pack(fill=tk.BOTH, expand=1)
-        if self.dataframe is None:
-            self.table = None
-            # TODO: THIS IS BROKEN
-        else:
-            kwargs = dict(dataframe=self.dataframe, showtoolbar=False,
-                          showstatusbar=True)
-            self.table = DatabaseTable(self.table_frame, **kwargs)
-            self.table.show()
+        if self.dataframe is None or len(self.dataframe) == 0:
+            self.dataframe = EMPTY_DATABASE
+        kwargs = dict(dataframe=self.dataframe, showtoolbar=False,
+                      showstatusbar=True)
+        self.table = DatabaseTable(self.table_frame, **kwargs)
+        self.table.show()
 
     def change_table(self, *args):
         database_name = self.database_option.get()

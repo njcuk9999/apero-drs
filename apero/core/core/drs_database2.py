@@ -8,15 +8,20 @@ Created on 2020-08-2020-08-18 15:15
 @author: cook
 """
 from astropy.table import Table
+from astropy.time import Time
+
 import numpy as np
 import pandas as pd
 import sqlite3
 import sys
-from astropy.time import Time
+from typing import Union, List
+
 
 # =============================================================================
 # Define variables
 # =============================================================================
+__NAME__ = 'apero.core.core.drs_database2.py'
+# import time.now first to speed up later
 __NOW__ = Time.now()
 
 
@@ -28,18 +33,26 @@ class DatabaseException(Exception):
 
 
 class DatabaseError(DatabaseException):
-    def __init__(self, message=None, errorobj=None):
+    def __init__(self, message=None, errorobj=None, path=None,
+                 func_name=None):
         self.message = message
         self.errorobj = errorobj
+        self.path = path
+        self.func_name = func_name
 
     def __str__(self):
-        return 'DatabaseError: {0}'.format(self.message)
+        emsg = 'DatabaseError: {0}'
+        if self.path is not None:
+            emsg += '\n\t Database path = {1}'
+        if self.func_name is not None:
+            emsg += '\n\t Function = {2}'
+        return emsg.format(self.message, self.path, self.func_name)
 
 
 class Database:
     '''A wrapper for an SQLite database.'''
 
-    def __init__(self, path: str, verbose=False):
+    def __init__(self, path: str, verbose: bool = False):
         '''
         Create an object for reading and writing to a SQLite database.
 
@@ -47,18 +60,21 @@ class Database:
                      This may be :memory: to create a temporary in-memory
                      database which will not be saved when the program closes.
         '''
+        func_name = __NAME__ + 'Database.__init__()'
         # store whether we want to print steps
         self._verbose_ = verbose
         # try to connect the the SQL3 database
         try:
             self._conn_ = sqlite3.connect(path)
         except Exception as e:
-            raise DatabaseError(message=str(e), errorobj=e)
+            raise DatabaseError(message=str(e), errorobj=e, path=path,
+                                func_name=func_name)
         # try to get the SQL3 connection cursor
         try:
             self._cursor_ = self._conn_.cursor()
         except Exception as e:
-            raise DatabaseError(message=str(e), errorobj=e)
+            raise DatabaseError(message=str(e), errorobj=e, path=path,
+                                func_name=func_name)
         # storage for tables
         self.tables = []
         # storage for database path
@@ -66,21 +82,14 @@ class Database:
         # update table list
         self._update_table_list_()
 
-    def _infer_table_(self, table):
-        if table is None:
-            if len(self.tables) != 1:
-                emsg = ('The are multiple tables in the database. You must '
-                        'pick one -- table cannot be None')
-                raise DatabaseError(message=emsg)
-            return self.tables[0]
-        return table
+    def __str__(self):
+        return 'Database[{0}]'.format(self.path)
 
-    def _commit(self):
-        if self._verbose_:
-            print('SQL: COMMIT')
-        self._conn_.commit()
+    def __repr__(self):
+        return 'Database[{0}]'.format(self.path)
 
-    def execute(self, command, return_cursor=False):
+    # get / set / execute / add methods
+    def execute(self, command: str, return_cursor: bool = False):
         '''
         Directly execute an SQL command on the database and return
         any results.
@@ -90,91 +99,36 @@ class Database:
         Returns:
             The outputs of the command, if any, as a list.
         '''
+        # set function name
+        func_name = __NAME__ + '.Database.execute()'
+        # print input if verbose
         if self._verbose_:
             print("SQL INPUT: ", command)
-        cursor = self._cursor_.execute(command)
-        result = self._cursor_.fetchall()
+        # try to execute SQL command
+        try:
+            cursor = self._cursor_.execute(command)
+            result = self._cursor_.fetchall()
+        # catch all errors and pipe to database error
+        except Exception as e:
+            raise DatabaseError(message=str(e), errorobj=e, path=self.path,
+                                func_name=func_name)
+        # print output of sql command if verbose
         if self._verbose_:
             print("SQL OUTPUT:", result)
+        # return the sql result and cursor if required
         if return_cursor:
             return result, cursor
+        # else just return the sql result
         else:
             return result
 
-    def _update_table_list_(self):
-        '''
-        Reads the database for tables and updates the class members
-        accordingly.
-        '''
-        # Get the new list of tables
-        command = 'SELECT name from sqlite_master where type= "table"'
-        self.tables = self.execute(command)
-        self.tables = [i[0] for i in self.tables]
-        self._commit()
-        return
-
-    def add_table(self, name, field_names, field_types):
-        '''
-        Adds a table to the database file.
-
-        :param name: The name of the table to create. This must not already be
-                     in use or a SQL keyword.
-        :param field_names: The names of the fields (columns) in the table as a
-                           list of str objects.  These can't be SQL keywords.
-        :param field_types: The data types of the fields as a list. The list
-                            can contain either SQL type specifiers or the
-                            python int, str, and float types.
-
-        Examples:
-            # "REAL" does the same thing as float
-            db.addTable('planets', ['name', 'mass', 'radius'],
-                        [str, float, "REAL"])
-        '''
-        translator = {str: "TEXT", int: "INTEGER", float: "REAL"}
-        fields = []
-        for n, t in zip(field_names, field_types):
-            assert type(n) is str
-            if type(t) is type:
-                t = translator[t]
-            else:
-                assert type(t) is str
-            fields.append(n + ' ' + t)
-        cargs = [name, ", ".join(fields)]
-        command = "CREATE TABLE IF NOT EXISTS {}({});".format(*cargs)
-        self.execute(command)
-        self._update_table_list_()
-        self._commit()
-        return
-
-    def delete_table(self, name):
-        '''
-        Deletes a table from the database, erasing all contained data
-        permenantly!
-
-        :param name: The name of the table to be deleted.
-                     See Database.tables for a list of eligible tables.
-        '''
-        self.execute("DROP TABLE {}".format(name))
-        self._update_table_list_()
-        self._commit()
-        return
-
-    def rename_table(self, oldName, newName):
-        '''Renames a table.
-
-
-        :param oldName: The name of the table to be deleted. See Database.tables
-                        for a list of eligible tables.
-        :param newName: The new name of the table.  This must not be already
-                        taken or an SQL keyword.
-        '''
-        self.execute("ALTER TABLE {} RENAME TO {}".format(oldName, newName))
-        self._commit()
-        return
-
-    def get(self, columns='*', table=None, condition=None, sort_by=None,
-            sort_descending=True, max_rows=None, return_array=False,
-            return_table=False, return_pandas=False):
+    def get(self, columns: str = '*', table: Union[None, str] = None,
+            condition: Union[None, str] = None,
+            sort_by: Union[None, str] = None,
+            sort_descending: bool = True,
+            max_rows: Union[int, None] = None, return_array: bool = False,
+            return_table: bool = False, return_pandas: bool = False
+            ) -> Union[tuple, pd.DataFrame, np.ndarray]:
         '''
         Retrieves data from the database with a variety of options.
 
@@ -221,82 +175,55 @@ class Database:
             # Returns the names of the five largest planets.
             db.get("name", sortBy="radius", maxRows=5)
         '''
+        # set function name
+        func_name = __NAME__ + '.Database.get()'
+        # infer table name
         table = self._infer_table_(table)
-        command = "SELECT {} from {}".format(columns, table)
+        # construct basic command SELECT {COLUMNS} FROM {TABLE}
+        command = "SELECT {} FROM {}".format(columns, table)
+        # add WHERE statement if condition is set
         if condition is not None:
-            assert type(condition) is str
+            # make sure condition is a string
+            if not isinstance(condition, str):
+                emsg = 'get condition must be a string (for WHERE)'
+                raise DatabaseError(emsg, path=self.path, func_name=func_name)
             command += " WHERE {} ".format(condition)
+        # add ORDER BY if sort_by is set
         if sort_by is not None:
             command += " ORDER BY {} ".format(sort_by)
+            # sort descending of ascending depending on sort_descending input
             if sort_descending:
                 command += "DESC"
             else:
                 command += "ASC"
+        # if max rows is set use it to set the limit
         if max_rows is not None:
-            assert type(max_rows) is int
+            # make sure max_rows is an integer
+            if not isinstance(max_rows, int):
+                emsg = 'get max_rows must be an integer (for LIMIT)'
+                raise DatabaseError(emsg, path=self.path, func_name=func_name)
+            # add LIMIT command
             command += " LIMIT {}".format(max_rows)
-
+        # if a pandas table is requested use the _to_pandas method to
+        #  execute the command
         if return_pandas:
             return self._to_pandas(command)
+        # else we execute natively
         else:
             result, cursor = self.execute(command, return_cursor=True)
+            # if numpy array requested return it as one
             if return_array:
                 return np.asarray(result)
+            # if astropy table request return it as one (need the cursor for
+            #    columns)
             if return_table:
                 return self._to_table(cursor, result)
+            # else just return the result as is (a tuple)
             return result
 
-    def add_row(self, values, table=None, columns="*", commit=True):
-        '''
-        Adds a row to the specified tables with the given values.
-
-        :param values: an iterable of the values to fill into the new row.
-        :param table: A str which specifies which table within the database
-                      to retrieve data from.  If there is only one table to
-                      pick from, this may be left as None to use it
-                      automatically.
-        :param columns: If you only want to initialize some of the columns,
-                        you may list them here.  Otherwise, '*' indicates that
-                        all columns will be initialized.
-        '''
-        table = self._infer_table_(table)
-
-        _values = []
-        for i in values:
-            if not isinstance(i, str):
-                _values.append(str(i))
-            else:
-                _values.append('"{0}"'.format(i))
-
-        if columns == '*':
-            columns = ''
-        else:
-            columns = "(" + ", ".join(columns) + ")"
-        cargs = [table, columns, ', '.join(_values)]
-        command = "INSERT INTO {}{} VALUES({})".format(*cargs)
-        self.execute(command)
-        if commit:
-            self._commit()
-
-    def add_from_pandas(self, df, table, if_exists='append', index=False,
-                        commit=True):
-        """
-        Use pandas to add rows to database
-
-        :param df:
-        :param table:
-        :param if_exists:
-        :param index:
-        :return:
-        """
-        table = self._infer_table_(table)
-        # add pandas dataframe to table
-        df.to_sql(table, self._conn_, if_exists=if_exists, index=index)
-        # commit change to database if requested
-        if commit:
-            self._commit()
-
-    def set(self, columns, values, condition, table=None):
+    def set(self, columns: Union[str, List[str]],
+            values: Union[str, List[str]], condition: Union[str, None] = None,
+            table: Union[str, None] = None, commit: bool = True):
         '''
         Changes the data in existing rows.
 
@@ -312,6 +239,10 @@ class Database:
         :param condition: An SQL condition string to identify the rows to be
                           modified.  This may be set to None to apply the
                           modification to all rows.
+        :param table: A str which specifies which table within the database to
+                   retrieve data from.  If there is only one table to pick
+                   from, this may be left as None to use it automatically.
+        :param commit: boolean, if True will commit changes to sql database
 
         Examples:
             # Sets the mass of a particular row identified by name.
@@ -321,28 +252,232 @@ class Database:
             # Resets all mass and radius values to null
             db.set(['mass', 'radius'], [b'null', b'null'], None)
         '''
-        if type(columns) is str:
+        # set function name
+        func_name = __NAME__ + '.Database.set()'
+        # we expect columns to be a list but if it is a string we can just make
+        #   it a one item list
+        if isinstance(columns, str):
             columns = [columns]
-            if type(values) is not list:
+            if not isinstance(values, list):
                 values = [values]
+        # infer table name
         table = self._infer_table_(table)
-        setStr = []
-        assert len(columns) == len(values)
-        for c, v in zip(columns, values):
-            assert type(c) is str, "The column to set must be a string."
-            if type(v) is bytes:
-                setStr.append(c + " = " + v.decode("utf-8"))
-            elif type(v) is str:
-                setStr.append(c + ' = "' + v + '"')
+        # storage for set string
+        set_str = []
+        # make sure columns and values have the same length
+        if len(columns) != len(values):
+            emsg = 'The column list must be same length as value list'
+            raise DatabaseError(emsg, path=self.path, func_name=func_name)
+        # loop around the rows
+        for it in range(len(columns)):
+            # get this rows column/value
+            column = columns[it]
+            value = values[it]
+            # column must be a string
+            if not isinstance(column, str):
+                emsg = 'The column to set must be a string'
+                raise DatabaseError(emsg, path=self.path, func_name=func_name)
+
+            # deal with value being types (decode to string)
+            if isinstance(value, bytes):
+                sargs = [column, value.decode('utf=8')]
+                set_str.append('{0} = {1}'.format(*sargs))
+            elif isinstance(value, str):
+                set_str.append('{0} = "{1}"'.format(column, value))
             else:
-                setStr.append(c + " = " + str(v))
-        command = "UPDATE {} SET {}".format(table, ", ".join(setStr))
+                set_str.append('{0} = {1}'.format(column,  value))
+        # construct sql set command
+        command = "UPDATE {} SET {}".format(table, ", ".join(set_str))
+        # if we have a condition add it now
         if condition is not None:
+            # make sure condition is a string
+            if not isinstance(condition, str):
+                emsg = 'get condition must be a string (for WHERE)'
+                raise DatabaseError(emsg, path=self.path, func_name=func_name)
+            # add to command
             command += " WHERE {}".format(condition)
+        # execute sql command
         self.execute(command)
+        # commit changes to the database (if requested)
+        if commit:
+            self._commit()
+
+    def add_row(self, values: List[object], table: Union[None, str] = None,
+                columns: Union[str, List[str]] = "*",
+                commit: bool = True):
+        '''
+        Adds a row to the specified tables with the given values.
+
+        :param values: an iterable of the values to fill into the new row.
+        :param table: A str which specifies which table within the database
+                      to retrieve data from.  If there is only one table to
+                      pick from, this may be left as None to use it
+                      automatically.
+        :param columns: If you only want to initialize some of the columns,
+                        you may list them here.  Otherwise, '*' indicates that
+                        all columns will be initialized.
+        :param commit: boolean, if True will commit changes to sql database
+        '''
+        # set function name
+        func_name = __NAME__ + '.Database.add_row()'
+        # infer table name
+        table = self._infer_table_(table)
+        # push values into strings
+        _values = []
+        for value in values:
+            # deal with value being types (decode to string)
+            if isinstance(value, bytes):
+                _values.append(value.decode('utf=8'))
+            # if it is not a string already just pipe it to string
+            elif not isinstance(value, str):
+                _values.append(str(value))
+            # it if is
+            else:
+                _values.append('"{0}"'.format(value))
+        # deal with columns being all columns
+        if columns == '*':
+            columns = ''
+        # if not join them (COLUMN1, COLUMN2, COLUMN3)
+        else:
+            columns = "(" + ", ".join(columns) + ")"
+        # construct the command
+        cargs = [table, columns, ', '.join(_values)]
+        command = "INSERT INTO {}{} VALUES({})".format(*cargs)
+        # execute the sql command
+        self.execute(command)
+        # if commit is request commit changes to SQL database
+        if commit:
+            self._commit()
+
+    def add_from_pandas(self, df: pd.DataFrame, table: Union[str, None] = None,
+                        if_exists: str = 'append', index: bool = False,
+                        commit: bool = True):
+        """
+        Use pandas to add rows to database
+
+        :param df: pandas dataframe, the pandas dataframe to add to the database
+        :param table: A str which specifies which table within the database
+                      to retrieve data from.  If there is only one table to
+                      pick from, this may be left as None to use it
+                      automatically.
+        :param if_exists: how to behave if the table already exists in database
+                          valid responses are 'fail', 'replace' or 'append'
+                          * fail: Raise a ValueError.
+                          * replace: Drop the table before inserting new values.
+                          * append: Insert new values to the existing table.
+
+        :param index:
+        :return:
+        """
+        # set function name
+        func_name = __NAME__ + '.Database.add_from_pandas()'
+        # infer table name
+        table = self._infer_table_(table)
+        # check if_exists criteria
+        if if_exists not in ['fail', 'replace', 'append']:
+            emsg = 'if_exists must be either "fail", "replace" or "append"'
+            raise DatabaseError(emsg, path=self.path, func_name=func_name)
+        # try to add pandas dataframe to table
+        try:
+            df.to_sql(table, self._conn_, if_exists=if_exists, index=index)
+        except Exception as e:
+            raise DatabaseError(str(e), path=self.path, errorobj=e,
+                                func_name=func_name)
+        # commit change to database if requested
+        if commit:
+            self._commit()
+
+    # table methods
+    def add_table(self, name: str, field_names: List[str],
+                  field_types: List[Union[str, type]]):
+        '''
+        Adds a table to the database file.
+
+        :param name: The name of the table to create. This must not already be
+                     in use or a SQL keyword.
+        :param field_names: The names of the fields (columns) in the table as a
+                           list of str objects.  These can't be SQL keywords.
+        :param field_types: The data types of the fields as a list. The list
+                            can contain either SQL type specifiers or the
+                            python int, str, and float types.
+
+        Examples:
+            # "REAL" does the same thing as float
+            db.addTable('planets', ['name', 'mass', 'radius'],
+                        [str, float, "REAL"])
+        '''
+        func_name = __NAME__ + '.Database.add_table()'
+        # translator between python types and SQL types
+        translator = {str: "TEXT", int: "INTEGER", float: "REAL"}
+        # storage for fields
+        fields = []
+        # make sure field_names and field_types are the same size
+        if len(field_names) != len(field_types):
+            emsg = 'field_names and field_types must be the same length'
+            raise DatabaseError(emsg, path=self.path, func_name=func_name)
+        # loop around fields
+        for it in range(len(field_names)):
+            # get this iterations values
+            fname, ftype = field_names[it], field_types[it]
+            # make sure names are strings
+            if not isinstance(fname, str):
+                emsg = 'field_names must be strings'
+                raise DatabaseError(emsg, path=self.path, func_name=func_name)
+            # deal with type
+            if isinstance(ftype, type):
+                # deal with wrong type
+                if ftype not in translator:
+                    emsg = 'field_types must be string or [int/float/str]'
+                    raise DatabaseError(emsg, path=self.path,
+                                        func_name=func_name)
+                # set as sql type
+                ftype = translator[ftype]
+            # else we must have a string --> so break if not
+            elif not isinstance(ftype, str):
+                emsg = 'field_types must be string or [int/float/str]'
+                raise DatabaseError(emsg, path=self.path, func_name=func_name)
+            # set type
+            fields.append('{0} {1}'.format(fname, ftype))
+        # now create sql command
+        cargs = [name, ", ".join(fields)]
+        command = "CREATE TABLE IF NOT EXISTS {}({});".format(*cargs)
+        # execute command
+        self.execute(command)
+        # update the table list and commit
+        self._update_table_list_()
+
+    def delete_table(self, name: str):
+        '''
+        Deletes a table from the database, erasing all contained data
+        permenantly!
+
+        :param name: The name of the table to be deleted.
+                     See Database.tables for a list of eligible tables.
+        '''
+        func_name = __NAME__ + '.Database.delete_table()'
+        # make sure table is a string
+        if not isinstance(name, str):
+            emsg = 'table "name" must be a string'
+            raise DatabaseError(emsg, path=self.path, func_name=func_name)
+        # execute a sql drop table
+        self.execute("DROP TABLE {}".format(name))
+        # update the table list and commit
+        self._update_table_list_()
+
+    def rename_table(self, oldName, newName):
+        '''Renames a table.
+
+
+        :param oldName: The name of the table to be deleted. See Database.tables
+                        for a list of eligible tables.
+        :param newName: The new name of the table.  This must not be already
+                        taken or an SQL keyword.
+        '''
+        self.execute("ALTER TABLE {} RENAME TO {}".format(oldName, newName))
         self._commit()
         return
 
+    # admin methods
     def backup(self):
         # make backup database
         backup_conn = sqlite3.connect(self.path.replace('.db', 'backup.db'))
@@ -355,6 +490,33 @@ class Database:
 
     def unlock(self):
         self.execute('COMMIT;')
+
+    # private methods
+    def _infer_table_(self, table):
+        if table is None:
+            if len(self.tables) != 1:
+                emsg = ('The are multiple tables in the database. You must '
+                        'pick one -- table cannot be None')
+                raise DatabaseError(message=emsg, path=self.path)
+            return self.tables[0]
+        return table
+
+    def _update_table_list_(self):
+        '''
+        Reads the database for tables and updates the class members
+        accordingly.
+        '''
+        # Get the new list of tables
+        command = 'SELECT name from sqlite_master where type= "table"'
+        self.tables = self.execute(command)
+        self.tables = [i[0] for i in self.tables]
+        self._commit()
+        return
+
+    def _commit(self):
+        if self._verbose_:
+            print('SQL: COMMIT')
+        self._conn_.commit()
 
     def _get_columns(self, cursor=None, table=None):
         """
