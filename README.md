@@ -459,10 +459,9 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 
 | recipe                                                                   | SHORT_NAME |
 | ------------------------------------------------------------------------ | ---------- | 
-| cal_preprocessing [OBJ_DARK + OBJ_FP; every night; OBJECT="Calibration"] | PP_CAL     |
-| cal_preprocessing [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]      | PP_SCI     |
-| cal_preprocessing [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]     | PP_TEL     |
-
+| cal_preprocessing [every night; OBJECT="Calibration"]                    | PP_CAL     |
+| cal_preprocessing [every night; SCIENCE_TARGETS]                         | PP_SCI     |
+| cal_preprocessing [every night; TELLURIC_TARGETS]                        | PP_TEL     |
 
 
 
