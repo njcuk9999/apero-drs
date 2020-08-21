@@ -11,6 +11,7 @@ import numpy as np
 import tkinter as tk
 import pandas as pd
 from pandastable import Table, TableModel, applyStyle
+from pandastable import dialogs
 
 from apero.core import constants
 from apero.tools.module.database import create_databases
@@ -64,6 +65,18 @@ class DatabaseHolder:
                 self.df = None
             else:
                 self.df = dataframe
+
+    def save_dataframe(self, df):
+        # if dataframe is None do nothing
+        if df is None:
+            return
+        # start database
+        database = Database(self.path)
+        # push dataframe to replace SQL table
+        database.add_from_pandas(df, if_exists='replace', index=False,
+                                 commit=True)
+        # print we are saving database
+        print('Saving database {0}'.format(self.name))
 
 
 class DatabaseTable(Table):
@@ -161,6 +174,11 @@ class DatabaseTable(Table):
         applyStyle(popupmenu)
         return popupmenu
 
+    def getaColor(self, oldcolor):
+        # TODO: may be removed if bug in pandas table fixed (Issue #183)
+        return dialogs.pickColor(self, oldcolor=oldcolor)
+
+
 
 class DatabaseExplorer(tk.Frame):
 
@@ -181,9 +199,12 @@ class DatabaseExplorer(tk.Frame):
         self.main = self.master
 
         self.main.geometry('600x400+200+100')
-        self.main.title('Database Explorer')
+        self.main.title('APERO Database Explorer')
         # make database selector frame
         self.make_selector()
+        # set initial properties
+        self.current_dataframe = None
+        self.has_data = False
         # start with database1
         database = self.databases[list(self.databases.keys())[0]]
         # load new database
@@ -213,29 +234,51 @@ class DatabaseExplorer(tk.Frame):
         self.database_option.trace('w', self.change_table)
 
     def make_table(self, dataframe):
-        self.dataframe = dataframe
+        self.current_dataframe = dataframe
+        self.has_data = True
         self.table_frame = tk.Frame(self.main)
         self.table_frame.pack(fill=tk.BOTH, expand=1)
-        if self.dataframe is None or len(self.dataframe) == 0:
-            self.dataframe = EMPTY_DATABASE
-        kwargs = dict(dataframe=self.dataframe, showtoolbar=False,
+        if self.current_dataframe is None or len(self.current_dataframe) == 0:
+            self.current_dataframe = EMPTY_DATABASE
+            self.has_data = False
+        kwargs = dict(dataframe=self.current_dataframe, showtoolbar=False,
                       showstatusbar=True)
         self.table = DatabaseTable(self.table_frame, **kwargs)
         self.table.show()
 
+    def update_table(self, dataframe):
+        self.current_dataframe = dataframe
+        if self.current_dataframe is None or len(self.current_dataframe) == 0:
+            self.current_dataframe = EMPTY_DATABASE
+            self.has_data = False
+        self.table.updateModel(TableModel(self.current_dataframe))
+        self.table.redraw()
+
     def change_table(self, *args):
         database_name = self.database_option.get()
-        database = self.databases[database_name]
-        # destroy current table_Frame
+        databasehldr = self.databases[database_name]
+        # destroy frame
         self.table_frame.destroy()
         # load new database
-        database.load_dataframe()
+        databasehldr.load_dataframe()
         # remake the new dataframe
-        self.make_table(database.df)
+        self.make_table(databasehldr.df)
+
+    def update_database(self):
+        # do not update if we had no data initially
+        if not self.has_data:
+            return
+        # get updated data
+        dataframe = self.table.model.df
+        # get the database holder
+        database_name = self.database_option.get()
+        databasehldr = self.databases[database_name]
+        # save dataframe
+        databasehldr.save_dataframe(dataframe)
 
     def menu(self):
 
-        # taken from Table.core populMenu
+        # modified from Table.core populMenu
         defaultactions = {
                         "Undo" : lambda: self.table.undo(),
                         #"Fill Right" : lambda: self.fillAcross(cols, rows),
@@ -264,7 +307,8 @@ class DatabaseExplorer(tk.Frame):
                         "Clear Formatting" : self.table.clearFormatting,
                         "Undo Last Change": self.table.undo,
                         "Copy Table": self.table.copyTable,
-                        "Find/Replace": self.table.findText}
+                        "Find/Replace": self.table.findText,
+                        "Update Database": self.update_database}
 
         filecommands = ['Open','Import Text/CSV','Save','Save As','Export',
                         'Preferences']
@@ -272,8 +316,8 @@ class DatabaseExplorer(tk.Frame):
                         'Filter Rows', 'Add Row(s)', 'Add Column(s)',
                         'Select All']
         plotcommands = ['Plot Selected','Hide plot','Show plot']
-        tablecommands = ['Table to Text','Clean Data','Clear Formatting',
-                         'Table Info']
+        tablecommands = ['Update Database', 'Table to Text','Clean Data',
+                         'Clear Formatting', 'Table Info']
 
         # top level menu bar
         self.menubar = tk.Menu(self.main)
