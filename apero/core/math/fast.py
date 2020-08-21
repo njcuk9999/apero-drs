@@ -9,10 +9,10 @@ Created on 2019-09-18 at 10:53
 
 @author: cook
 """
-
+from apero.core import constants
 import numpy as np
 from scipy import signal
-from apero.core import constants
+from typing import Tuple, Union
 
 # try to import bottleneck module
 try:
@@ -47,7 +47,9 @@ __release__ = Constants['DRS_RELEASE']
 # =============================================================================
 # Define functions
 # =============================================================================
-def nanargmax(a, axis=None):
+def nanargmax(a: Union[list, np.ndarray],
+              axis: Union[None, int, Tuple[int]] = None
+              ) -> Union[int, float, np.ndarray]:
     """
     Bottleneck or numpy implementation of nanargmax depending on imports
 
@@ -70,7 +72,9 @@ def nanargmax(a, axis=None):
         return np.nanargmax(a, axis=axis)
 
 
-def nanargmin(a, axis=None):
+def nanargmin(a: Union[list, np.ndarray],
+              axis: Union[None, int, Tuple[int]] = None
+              ) -> Union[int, float, np.ndarray]:
     """
     Bottleneck or numpy implementation of nanargmin depending on imports
 
@@ -93,7 +97,9 @@ def nanargmin(a, axis=None):
         return np.nanargmin(a, axis=axis)
 
 
-def nanmax(a, axis=None, **kwargs):
+def nanmax(a: Union[list, np.ndarray],
+           axis: Union[None, int, Tuple[int]] = None,
+           **kwargs) -> Union[int, float, np.ndarray]:
     """
     Bottleneck or numpy implementation of nanmax depending on imports
 
@@ -117,7 +123,9 @@ def nanmax(a, axis=None, **kwargs):
         return np.nanmax(a, axis=axis, **kwargs)
 
 
-def nanmin(a, axis=None, **kwargs):
+def nanmin(a: Union[list, np.ndarray],
+           axis: Union[None, int, Tuple[int]] = None,
+           **kwargs) -> Union[int, float, np.ndarray]:
     """
     Bottleneck or numpy implementation of nanmin depending on imports
 
@@ -141,7 +149,9 @@ def nanmin(a, axis=None, **kwargs):
         return np.nanmin(a, axis=axis, **kwargs)
 
 
-def nanmean(a, axis=None, **kwargs):
+def nanmean(a: Union[list, np.ndarray],
+            axis: Union[None, int, Tuple[int]] = None,
+            **kwargs) -> Union[int, float, np.ndarray]:
     """
     Bottleneck or numpy implementation of nanmean depending on imports
 
@@ -165,7 +175,9 @@ def nanmean(a, axis=None, **kwargs):
         return np.nanmean(a, axis=axis, **kwargs)
 
 
-def nanmedian(a, axis=None, **kwargs):
+def nanmedian(a: Union[list, np.ndarray],
+              axis: Union[None, int, Tuple[int]] = None,
+              **kwargs) -> Union[int, float, np.ndarray]:
     """
     Bottleneck or numpy implementation of nanmedian depending on imports
 
@@ -189,7 +201,9 @@ def nanmedian(a, axis=None, **kwargs):
         return np.nanmedian(a, axis=axis, **kwargs)
 
 
-def nanstd(a, axis=None, ddof=0, **kwargs):
+def nanstd(a: Union[list, np.ndarray],
+           axis: Union[None, int, Tuple[int]] = None, ddof: int = 0,
+           **kwargs) -> Union[int, float, np.ndarray]:
     """
     Bottleneck or numpy implementation of nanstd depending on imports
 
@@ -217,7 +231,9 @@ def nanstd(a, axis=None, ddof=0, **kwargs):
         return np.nanstd(a, axis=axis, ddof=ddof, **kwargs)
 
 
-def nansum(a, axis=None, **kwargs):
+def nansum(a: Union[list, np.ndarray],
+              axis: Union[None, int, Tuple[int]] = None,
+              **kwargs) -> Union[int, float, np.ndarray]:
     """
     Bottleneck or numpy implementation of nansum depending on imports
 
@@ -247,7 +263,9 @@ def nansum(a, axis=None, **kwargs):
         return np.nansum(a, axis=axis, **kwargs)
 
 
-def median(a, axis=None, **kwargs):
+def median(a: Union[list, np.ndarray],
+           axis: Union[None, int, Tuple[int]] = None,
+           **kwargs) -> Union[int, float, np.ndarray]:
     """
     Bottleneck or numpy implementation of median depending on imports
 
@@ -271,7 +289,8 @@ def median(a, axis=None, **kwargs):
         return np.median(a, axis=axis, **kwargs)
 
 
-def medfilt_1d(a, window=None):
+def medfilt_1d(a: Union[list, np.ndarray],
+               window: Union[None, int] = None) -> np.ndarray:
     """
     Bottleneck or scipy.signal implementation of medfilt depending on imports
 
@@ -313,14 +332,31 @@ if not HAS_NUMBA:
 
 # Set "nopython" mode for best performance, equivalent to @nji
 @jit(nopython=True)
-def lin_mini(vector, sample, mm, v, sz_sample, case, recon, amps,
-             no_recon=False):
-    #
-    # vector of N elements
-    # sample: matrix N * M each M column is adjusted in amplitude to minimize
-    # the chi2 according to the input vector
-    # output: vector of length M gives the amplitude of each column
-    #
+def lin_mini(vector: np.ndarray, sample: np.ndarray, mm: np.ndarray,
+             v: np.ndarray, sz_sample: Tuple[int], case: int,
+             recon: np.ndarray, amps: np.ndarray,
+             no_recon: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Linear minimization of sample with vector
+
+    Used internally in math.genearl.linear_minimization - you probably should
+    use the linear_minization function instead of this directly
+
+    :param vector: vector of N elements
+    :param sample: sample: matrix N * M each M column is adjusted in
+                   amplitude to minimize the chi2 according to the input vector
+    :param mm: zero filled vector for filling size = M
+    :param v: zero filled vector for filling size = M
+    :param sz_sample: tuple the shape of the sample (N, M)
+    :param case: int, if case = 1 then vector.shape[0] = sample.shape[1],
+                 if case = 2 vector.shape[0] = sample.shape[0]
+    :param recon: zero filled vector size = N, recon output
+    :param amps: zero filled vector size = M, amplitudes output
+    :param no_recon: boolean if True does not calculate recon
+                     (output = input for recon)
+
+    :returns: amps, recon
+    """
     if case == 1:
         # fill-in the co-variance matrix
         for i in range(sz_sample[0]):

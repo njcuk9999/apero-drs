@@ -17,6 +17,7 @@ from scipy.interpolate import UnivariateSpline
 from scipy.special import erf
 import warnings
 from scipy import stats
+from typing import Tuple, Union
 
 from apero.core import constants
 from apero.core.math import fast
@@ -45,7 +46,8 @@ speed_of_light = cc.c.to(uu.km / uu.s).value
 # =============================================================================
 # Define General functions
 # =============================================================================
-def measure_box_min_max(y, size):
+def measure_box_min_max(y: np.ndarray,
+                        size: int) -> Tuple[np.ndarray, np.ndarray]:
     """
     Measure the minimum and maximum pixel value for each pixel using a box which
     surrounds that pixel by:  pixel-size to pixel+size.
@@ -85,7 +87,8 @@ def measure_box_min_max(y, size):
     return min_image, max_image
 
 
-def calculate_polyvals(coeffs, dim):
+def calculate_polyvals(coeffs: Union[list, np.ndarray],
+                       dim: int) -> np.ndarray:
     """
     Calculates all fits in coeffs array across pixels of size=dim
 
@@ -109,7 +112,8 @@ def calculate_polyvals(coeffs, dim):
     return yfits
 
 
-def ea_airy_function(x, amp, x0, w, beta, zp):
+def ea_airy_function(x: np.ndarray, amp: float, x0: float, w: float,
+                     beta: float, zp: float) -> np.ndarray:
     """
     Calculate dampened cosine with sharper positive peaks for high beta values
     Used to approximate a FP peak
@@ -126,7 +130,15 @@ def ea_airy_function(x, amp, x0, w, beta, zp):
     return y
 
 
-def fit2dpoly(x, y, z):
+def fit2dpoly(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
+    """
+    Calculate the 2d polynomial (degree=2) over X, Y and Z
+
+    :param x: np.ndarray (1D) the x axis positions
+    :param y: np.ndarray (1D) the y axis positions
+    :param z: np.ndarray (2D) the 2D points for each x and y position
+    :return: the coefficients of the 2d polynomial fit
+    """
     # fit a 2nd order polynomial in 2d over x/y/z pixel points
     ones = np.ones_like(x)
     a = np.array([ones, x, y, x ** 2, y ** 2, x * y]).T
@@ -137,18 +149,19 @@ def fit2dpoly(x, y, z):
     return coeff
 
 
-def normal_fraction(sigma=1.0):
+def normal_fraction(sigma: Union[float, np.ndarray] = 1.0
+                    ) -> Union[float, np.ndarray]:
     """
     Return the expected fraction of population inside a range
     (Assuming data is normally distributed)
 
-    :param sigma:
+    :param sigma: the number of sigma away from the median to be
     :return:
     """
     return erf(sigma / np.sqrt(2.0))
 
 
-def fwhm(sigma=1.0):
+def fwhm(sigma: Union[float, np.ndarray] = 1.0) -> Union[float, np.ndarray]:
     """
     Get the Full-width-half-maximum value from the sigma value (~2.3548)
 
@@ -158,13 +171,15 @@ def fwhm(sigma=1.0):
     return 2 * np.sqrt(2 * np.log(2)) * sigma
 
 
-def linear_minimization(vector, sample, no_recon=False):
+def linear_minimization(vector: np.ndarray, sample: np.ndarray,
+                        no_recon: bool = False
+                        ) -> Tuple[np.ndarray, np.ndarray]:
     """
     wrapper function that sets everything for the @jit later
     In particular, we avoid the np.zeros that are not handled
     by numba, size of input vectors and sample to be adjusted
 
-    :param vector: 2d matrix that is N x M or M x N
+    :param vector: 2d matrix that is (N x M) or (M x N)
     :param sample: 1d vector of length N
     :return:
     """
@@ -250,7 +265,19 @@ def linear_minimization(vector, sample, no_recon=False):
     return amp_out, recon_out
 
 
-def iuv_spline(x, y, **kwargs):
+def iuv_spline(x: np.ndarray, y: np.ndarray, **kwargs
+               ) -> InterpolatedUnivariateSpline:
+    """
+    Do an Interpolated Univariate Spline taking into account NaNs (with masks)
+
+    (from scipy.interpolate import InterpolatedUnivariateSpline)
+
+    :param x: the x values of the input to Interpolated Univariate Spline
+    :param y: the y values of the input ot Interpolated Univariate Spline
+
+    :param kwargs: passed to scipy.interpolate.InterpolatedUnivariateSpline
+    :return: spline instance (from InterpolatedUnivariateSpline(x, y, **kwargs))
+    """
     # deal with dimensions error (on k)
     #   otherwise get   dfitpack.error: (m>k) failed for hidden m
     if kwargs.get('k', None) is not None:
@@ -279,7 +306,18 @@ def iuv_spline(x, y, **kwargs):
     return InterpolatedUnivariateSpline(x, y, **kwargs)
 
 
-def robust_polyfit(x, y, degree, nsigcut):
+def robust_polyfit(x: np.ndarray, y: np.ndarray, degree: int,
+                   nsigcut: float) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    A robust polyfit (iterating on the residuals) until nsigma is below the
+    nsigcut threshold. Takes care of NaNs before fitting
+
+    :param x: np.ndarray, the x array to pass to np.polyval
+    :param y: np.ndarray, the y array to pass to np.polyval
+    :param degree: int, the degree of polynomial fit passed to np.polyval
+    :param nsigcut: float, the threshold sigma required to return result
+    :return:
+    """
     keep = np.isfinite(y)
     # set the nsigmax to infinite
     nsigmax = np.inf
@@ -303,10 +341,10 @@ def robust_polyfit(x, y, degree, nsigcut):
         # re-work out the keep criteria
         keep = nsig < nsigcut
     # return the fit and the mask of good values
-    return fit, keep
+    return np.array(fit), np.array(keep)
 
 
-def robust_nanstd(x):
+def robust_nanstd(x: np.ndarray) -> float:
     """
     Calculates the standard deviation (assumes normal distribution where
     1 sigma = the standard deviation)
@@ -317,7 +355,7 @@ def robust_nanstd(x):
     :return:
     """
     # get the 1 sigma error value
-    erfvalue = erf(1) * 100
+    erfvalue = erf(1.0) * 100
     # work out the high and low bounds
     low = np.nanpercentile(x, 100 - erfvalue)
     high = np.nanpercentile(x, erfvalue)
@@ -325,8 +363,9 @@ def robust_nanstd(x):
     return (high - low) / 2.0
 
 
-def sinc(x, amp, period, lin_center, quad_scale, cube_scale, slope,
-         peak_cut=0.0):
+def sinc(x: np.ndarray, amp: float, period: float, lin_center: float,
+         quad_scale: float, cube_scale: float, slope: float,
+         peak_cut: float = 0.0) -> np.ndarray:
     """
     Calculates the sinc function with a slope (and position threshold cut)
 
@@ -386,7 +425,8 @@ def sinc(x, amp, period, lin_center, quad_scale, cube_scale, slope,
     return yy
 
 
-def sigfig(x, n):
+def sigfig(x: Union[list, np.ndarray, float, int], n: int
+           ) -> Union[list, np.ndarray, float]:
     """
     Produces x values to "n" significant figures
 
@@ -394,15 +434,20 @@ def sigfig(x, n):
 
     :param x: numpy array, the values to round
     :param n: int, the number of significant figures required
-    :return:
+    :return: numpy array like x at significant figures
     """
-
+    # deal with differing formats of x (cast to numpy array)
     if isinstance(x, np.ndarray):
         xin = np.array(x)
+        dtype = None
     elif isinstance(x, list):
         xin = np.array(x)
-    else:
+        dtype = None
+    elif isinstance(x, (float, int)):
         xin = np.array([x])
+        dtype = type(x)
+    else:
+        raise DrsMathException('x must be array/list/float/int')
     # filter out zeros
     mask = (xin != 0) & (np.isfinite(xin))
     # get the power and factor
@@ -418,7 +463,7 @@ def sigfig(x, n):
     elif isinstance(x, list):
         return list(xr)
     else:
-        return xr[0]
+        return dtype(xr[0])
 
 
 # TODO: remove now in polar code?
@@ -545,7 +590,7 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
     return continuum_val, xbin, ybin
 
 
-def rot8(image, nrotation, invert=False):
+def rot8(image: np.ndarray, nrotation: int, invert: bool = False) -> np.ndarray:
     """
     Rotation of a 2d image with the 8 possible geometries. Rotation 0-3
     do not flip the image, 4-7 perform a flip
@@ -582,7 +627,7 @@ def rot8(image, nrotation, invert=False):
     return np.rot90(image[::1 - 2 * (nrot // 4)], nrot % 4)
 
 
-def medbin(image, by, bx):
+def medbin(image: np.ndarray, by: int, bx: int) -> np.ndarray:
     """
     Median-bin an image to a given size through some funny reshapping.
 
@@ -627,7 +672,7 @@ def medbin(image, by, bx):
     return med2
 
 
-def lowpassfilter(input_vect, width=101):
+def lowpassfilter(input_vect: np.ndarray, width: int = 101) -> np.ndarray:
     """
     Computes a low-pass filter of an input vector.
 
