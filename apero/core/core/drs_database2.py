@@ -128,7 +128,7 @@ class Database:
             sort_descending: bool = True,
             max_rows: Union[int, None] = None, return_array: bool = False,
             return_table: bool = False, return_pandas: bool = False
-            ) -> Union[tuple, pd.DataFrame, np.ndarray]:
+            ) -> Union[tuple, pd.DataFrame, np.ndarray, Table]:
         '''
         Retrieves data from the database with a variety of options.
 
@@ -217,7 +217,7 @@ class Database:
             # if astropy table request return it as one (need the cursor for
             #    columns)
             if return_table:
-                return self._to_table(cursor, result)
+                return self._to_astropy_table(cursor, result)
             # else just return the result as is (a tuple)
             return result
 
@@ -465,7 +465,8 @@ class Database:
         self._update_table_list_()
 
     def rename_table(self, oldName, newName):
-        '''Renames a table.
+        '''
+        Renames a table.
 
 
         :param oldName: The name of the table to be deleted. See Database.tables
@@ -479,6 +480,11 @@ class Database:
 
     # admin methods
     def backup(self):
+        """
+        Back up the database
+
+        :return:
+        """
         # make backup database
         backup_conn = sqlite3.connect(self.path.replace('.db', 'backup.db'))
         # copy main into backup database
@@ -486,13 +492,28 @@ class Database:
             self._conn_.backup(backup_conn)
 
     def lock(self):
+        """
+        Lock the database (until unlock or a commit is done)
+        :return:
+        """
         self.execute('BEGIN EXCLUSIVE;')
 
     def unlock(self):
+        """
+        Unlock the database (when a lock was done)
+        :return:
+        """
         self.execute('COMMIT;')
 
     # private methods
-    def _infer_table_(self, table):
+    def _infer_table_(self, table: Union[None, str]) -> str:
+        """
+        Infer the table name if table is None (if only one table)
+
+        :param table: str or None - if None tries to infer the table name
+                      (only if we have one table)
+        :return:
+        """
         if table is None:
             if len(self.tables) != 1:
                 emsg = ('The are multiple tables in the database. You must '
@@ -508,44 +529,83 @@ class Database:
         '''
         # Get the new list of tables
         command = 'SELECT name from sqlite_master where type= "table"'
-        self.tables = self.execute(command)
-        self.tables = [i[0] for i in self.tables]
-        self._commit()
-        return
+        # execute command
+        _tables = self.execute(command)
+        # the table names are the first entry in each row so get the table
+        #  names from these (and update self.tables)
+        self.tables = []
+        for _table in _tables:
+            self.tables.append(_table[0])
 
     def _commit(self):
+        """
+        Commit to the SQL database
+        :return:
+        """
+        # if verbose then print the commit statement
         if self._verbose_:
             print('SQL: COMMIT')
+        # commit
         self._conn_.commit()
 
-    def _get_columns(self, cursor=None, table=None):
+    def _get_columns(self, cursor=None,
+                     table: Union[str, None] = None ) -> List[str]:
         """
         Get the columns names for a particular execute command (using cursor)
         :param cursor: return of the self._cursor_.execute command
         :return:
         """
+        # deal with no cursor defined (get it)
         if cursor is None:
             table = self._infer_table_(table)
             command = "SELECT {} from {}".format('*', table)
             _, cursor = self.execute(command, return_cursor=True)
-
+        # return a list of columns
         return list(map(lambda x: x[0], cursor.description))
 
-    def _to_table(self, cursor, result):
+    def _to_astropy_table(self, cursor, result) -> Table:
+        """
+        Convert result to astropy table
+
+        :param cursor:
+        :param result:
+        :return:
+        """
+        # set function name
+        func_name = __NAME__ + '.Database._to_astropy_table()'
         # get columns
         columns = self._get_columns(cursor)
         # set up table
         table = Table()
         for it, col in enumerate(columns):
-            table[col] = list(map(lambda x: x[it], result))
+            try:
+                table[col] = list(map(lambda x: x[it], result))
+            except Exception as e:
+                emsg = 'Cannot convert command to astropy table'
+                emsg += '\n\t{0}: {1}'.format(type(e), e)
+                raise DatabaseError(emsg, path=self.path, errorobj=e,
+                                    func_name=func_name)
+        # return astropy table
+        return table
 
-    def _to_pandas(self, command):
+    def _to_pandas(self, command: str) -> pd.DataFrame:
         """
         Use pandas to get sql command
         :param command:
         :return:
         """
-        return pd.read_sql(command, self._conn_)
+        # set function name
+        func_name = __NAME__ + '.Database._to_pandas()'
+        # try to read sql using pandas
+        try:
+            df = pd.read_sql(command, self._conn_)
+        except Exception as e:
+            emsg = 'Could not read SQL command as pandas table'
+            emsg += '\n\tCommand = {0}'.format(command)
+            raise DatabaseError(emsg, path=self.path, errorobj=e,
+                                func_name=func_name)
+        # return dataframe
+        return df
 
 
 # =============================================================================
