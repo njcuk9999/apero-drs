@@ -19,25 +19,24 @@ from collections import OrderedDict
 from pathlib import Path
 from typing import Union
 
+from apero.base import base
+from apero.base import drs_exceptions
+from apero.base import drs_misc
 from apero.core import constants
-from apero.core.instruments.default import pseudo_const
-from apero.lang import drs_exceptions
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'tools.module.setup.drs_installation.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 
 # get colors
-Colors = pseudo_const.Colors()
+Colors = drs_misc.Colors()
 # get param dict
 ParamDict = constants.ParamDict
 # get the Drs Exceptions

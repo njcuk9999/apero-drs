@@ -1,6 +1,8 @@
 # This is the main config file
-from apero.core.constants import constant_functions
 import numpy as np
+
+from apero.base import base
+from apero.core.constants import constant_functions
 
 # =============================================================================
 # Define variables
@@ -280,7 +282,11 @@ __all__ = [
 
 # set name
 __NAME__ = 'core.instruments.default.default_constants.py'
-
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Constants class
 Const = constant_functions.Const
 

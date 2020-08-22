@@ -12,9 +12,20 @@ Created on 2019-05-30 at 10:47
 import numpy as np
 import datetime
 
+from apero.base import base
+
 # =============================================================================
 # Define variables
 # =============================================================================
+__NAME__ = 'science.extract.bervset.py'
+__INSTRUMENT__ = 'None'
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
+
+
 ra = 269.4479583333333
 dec = 4.746166666666666
 jd = 2458262.9810702

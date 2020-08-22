@@ -9,9 +9,20 @@ Created on 2020-01-28 at 11:56
 
 @author: cook
 
-Import rules: Cannot import from drs
+Import rules: only apero.base
 """
-# Do not import from the drs
+from apero.base import base
+
+# =============================================================================
+# Define variables
+# =============================================================================
+__NAME__ = 'apero.lang.core.drs_lang_db.py'
+__INSTRUMENT__ = 'None'
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 
 
 # =============================================================================

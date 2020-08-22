@@ -3,26 +3,30 @@
 """
 CODE DESCRIPTION HERE
 
-Created on 2020-08-2020-08-18 15:15
+Created on 2020-08-2020-08-21 18:13
 
 @author: cook
 """
 from astropy.table import Table
-from astropy.time import Time
-
 import numpy as np
 import pandas as pd
 import sqlite3
-import sys
 from typing import Union, List
 
+from apero.base import base
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero.core.core.drs_database2.py'
-# import time.now first to speed up later
-__NOW__ = Time.now()
+__NAME__ = 'apero.base.drs_db.py'
+__PACKAGE__ = base.__PACKAGE__
+__INSTRUMENT__ = 'None'
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
+# get astropy time
+Time = base.AstropyTime
 
 
 # =============================================================================

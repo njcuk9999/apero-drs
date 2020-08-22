@@ -14,35 +14,33 @@ import os
 import shutil
 from datetime import datetime
 
+from apero.base import base
 from apero import core
-from apero.core import constants
 from apero import lang
-from apero.io import drs_path
+
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'drs_changelog.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
+TextEntry = lang.core.drs_lang_text.TextEntry
+TextDict = lang.core.drs_lang_text.TextDict
 # -----------------------------------------------------------------------------
 # define line parameters
-VERSIONSTR_PREFIX = 'DRS_VERSION = Const('
-DATESTR_PREFIX = 'DRS_DATE = Const('
+VERSIONSTR_PREFIX = '__version__ = '
+DATESTR_PREFIX = '__date__ = '
 
-VERSIONSTR = "DRS_VERSION = Const('DRS_VERSION', value='{0}', dtype=str,"
-DATESTR = "DRS_DATE = Const('DATE', value='{0}', dtype=str, source=__NAME__,"
+VERSIONSTR = "__version__ = '{0}'"
+DATESTR = "__date__ = '{0}'"
 
 
 # =============================================================================

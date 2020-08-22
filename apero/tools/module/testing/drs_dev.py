@@ -11,47 +11,42 @@ Created on 2020-02-04 at 13:37
 """
 import sys
 
+from apero.base import base
 from apero import core
 from apero.core import constants
 from apero import lang
-from apero.core.constants import constant_functions as cf
 from apero.core.constants import param_functions as pf
-from apero.core.core import drs_recipe
-from apero.core.core import drs_file
+from apero.core.utils import drs_recipe, drs_file
 
 # =============================================================================
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'drs_startup.py'
+__NAME__ = 'tools.module.testing.drs_dev.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Define package name
-PACKAGE = Constants['DRS_PACKAGE']
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
-HelpEntry = lang.drs_text.HelpEntry
-HelpText = lang.drs_text.HelpDict
+TextEntry = lang.core.drs_lang_text.TextEntry
+TextDict = lang.core.drs_lang_text.TextDict
+HelpEntry = lang.core.drs_lang_text.HelpEntry
+HelpText = lang.core.drs_lang_text.HelpDict
 # get DrsRecipe
 DrsRecipe = drs_recipe.DrsRecipe
 DrsFitsFile = drs_file.DrsFitsFile
 DrsInputFile = drs_file.DrsInputFile
 DrsNpyFile = drs_file.DrsNpyFile
 # recipe control path
-INSTRUMENT_PATH = Constants['DRS_MOD_INSTRUMENT_CONFIG']
-CORE_PATH = Constants['DRS_MOD_CORE_CONFIG']
-PDB_RC_FILE = Constants['DRS_PDB_RC_FILE']
+INSTRUMENT_PATH = base.CONST_PATH
+CORE_PATH = base.CORE_PATH
+PDB_RC_FILE = base.PDB_RC_FILE
 CURRENT_PATH = ''
 # -----------------------------------------------------------------------------
 
@@ -151,7 +146,7 @@ class Demo:
     def __init__(self, params=None):
         # get parameters
         if params is None:
-            self.params = Constants
+            self.params = constants.load('None')
         else:
             self.params = params
         # get package
@@ -170,7 +165,7 @@ class Demo:
 
     def get_lang_db_loc(self):
         # get language database relative path
-        relpath = lang.drs_text.DEFAULT_PATH
+        relpath = lang.core.drs_lang_text.DEFAULT_PATH
         # return absolute language database path
         return pf.get_relative_folder(self.package, relpath)
 

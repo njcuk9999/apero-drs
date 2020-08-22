@@ -12,33 +12,33 @@ Created on 2019-03-21 at 11:36
 import numpy as np
 from astropy.io import fits
 from astropy.table import Table
-from astropy.time import Time, TimeDelta
 from astropy import version as av
-from astropy import units as uu
 import os
 import warnings
 import traceback
 
+from apero.base import base
+from apero.base import drs_exceptions
 from apero.core import constants
 from apero.core.core import drs_log
 from apero import lang
 from apero.io import drs_table
 from apero.io import drs_lock
 from apero.io import drs_path
-from apero.io import drs_text
+from apero.base import drs_text
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'io.drs_fits.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
+# Get Astropy Time and Time Delta
+Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 # get param dict
 ParamDict = constants.ParamDict
 # Get Logging function
@@ -46,7 +46,7 @@ WLOG = drs_log.wlog
 # alias pcheck
 pcheck = drs_log.find_param
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
+TextEntry = lang.core.drs_lang_text.TextEntry
 # TODO: This should be changed for astropy -> 2.0.1
 # bug that hdu.scale has bug before version 2.0.1
 if av.major < 2 or (av.major == 2 and av.minor < 1):
@@ -949,7 +949,7 @@ def fix_header(params, recipe, infile=None, header=None,
                                             header=header, hdict=hdict,
                                             filename=filename,
                                             **kwargs)
-    except lang.drs_exceptions.DrsHeaderError as e:
+    except drs_exceptions.DrsHeaderError as e:
         if raise_exception:
             raise e
         else:
@@ -1323,7 +1323,7 @@ def _get_files(params, recipe, path, rpath, **kwargs):
                 try:
                     header, _ = fix_header(params, recipe, header=header,
                                            raise_exception=True)
-                except lang.drs_exceptions.DrsHeaderError as e:
+                except drs_exceptions.DrsHeaderError as e:
                     # log warning message
                     eargs = [e.key, abspath]
                     emsg = TextEntry('10-001-00008', args=eargs)

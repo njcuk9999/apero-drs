@@ -11,7 +11,7 @@ Created on 2019-01-17 at 14:31
 """
 
 from apero.core.core import drs_log
-from apero.core.core import drs_startup
+from apero.core.utils import drs_startup
 
 __all__ = ['setup', 'end_main', 'wlog']
 

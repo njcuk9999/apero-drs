@@ -21,8 +21,10 @@ import sys
 from typing import Union, List, Type
 from pathlib import Path
 
+from apero.base import base
+from apero.base import drs_exceptions
 from apero.core.constants import constant_functions
-from apero.lang import drs_exceptions
+
 
 
 # =============================================================================
@@ -30,16 +32,12 @@ from apero.lang import drs_exceptions
 # =============================================================================
 # Define script name
 __NAME__ = 'param_functions.py'
-# Define package name
-PACKAGE = 'apero'
-# Define relative path to 'const' sub-package
-CONST_PATH = './core/instruments/'
-CORE_PATH = './core/instruments/default/'
-# Define config/constant/keyword scripts to open
-SCRIPTS = ['default_config.py', 'default_constants.py', 'default_keywords.py']
-USCRIPTS = ['user_config.ini', 'user_constants.ini', 'user_keywords.ini']
-PSEUDO_CONST_FILE = 'pseudo_const.py'
-PSEUDO_CONST_CLASS = 'PseudoConstants'
+__PACKAGE__ = base.__PACKAGE__
+__INSTRUMENT__ = 'None'
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # get the Drs Exceptions
 ArgumentError = drs_exceptions.ArgumentError
 ArgumentWarning = drs_exceptions.ArgumentWarning
@@ -58,6 +56,14 @@ PCONFIG_CACHE = dict()
 # cache some settings
 SETTINGS_CACHE_KEYS = ['DRS_DEBUG', 'ALLOW_BREAKPOINTS']
 SETTINGS_CACHE = dict()
+# get parameters from base
+CONST_PATH = base.CONST_PATH
+CORE_PATH = base.CORE_PATH
+# Define config/constant/keyword scripts to open
+SCRIPTS = base.SCRIPTS
+USCRIPTS = base.USCRIPTS
+PSEUDO_CONST_FILE = base.PSEUDO_CONST_FILE
+PSEUDO_CONST_CLASS = base.PSEUDO_CONST_CLASS
 
 
 # =============================================================================
@@ -1277,10 +1283,10 @@ def get_file_names(instrument=None, file_list=None, instrument_path=None,
     # set function name (cannot break here --> no access to inputs)
     func_name = display_func(None, 'get_file_names', __NAME__)
     # get core path
-    core_path = get_relative_folder(PACKAGE, default_path)
+    core_path = get_relative_folder(__PACKAGE__, default_path)
     # get constants package path
     if instrument is not None:
-        const_path = get_relative_folder(PACKAGE, instrument_path)
+        const_path = get_relative_folder(__PACKAGE__, instrument_path)
         # get the directories within const_path
         filelist = np.sort(os.listdir(const_path))
         directories = []
@@ -1338,8 +1344,8 @@ def get_module_names(instrument=None, mod_list=None, instrument_path=None,
         default_path = CORE_PATH
 
     # get constants package path
-    const_path = get_relative_folder(PACKAGE, instrument_path)
-    core_path = get_relative_folder(PACKAGE, default_path)
+    const_path = get_relative_folder(__PACKAGE__, instrument_path)
+    core_path = get_relative_folder(__PACKAGE__, default_path)
     # get the directories within const_path
     filelist = np.sort(os.listdir(const_path))
     directories = []
@@ -1354,10 +1360,10 @@ def get_module_names(instrument=None, mod_list=None, instrument_path=None,
 
     # construct module import name
     if instrument is None:
-        modpath = '{0}.{1}'.format(PACKAGE, corepath)
+        modpath = '{0}.{1}'.format(__PACKAGE__, corepath)
         filepath = os.path.join(core_path, '')
     else:
-        modpath = '{0}.{1}.{2}'.format(PACKAGE, relpath, instrument.lower())
+        modpath = '{0}.{1}.{2}'.format(__PACKAGE__, relpath, instrument.lower())
         filepath = os.path.join(const_path, instrument.lower())
 
     # get module names
@@ -1616,7 +1622,7 @@ def _get_file_names(params, instrument=None):
     # get user default path (if environmental path unset)
     user_dpath = params['DRS_USER_DEFAULT']
     # get the package name
-    drs_package = params['DRS_PACKAGE']
+    drs_package = __PACKAGE__
     # change user_dpath to a absolute path
     user_dpath = get_relative_folder(drs_package, user_dpath)
     # deal with no user environment and no default path
@@ -1891,12 +1897,12 @@ def _check_mod_source(source: str) -> str:
     if not os.path.exists(source):
         return source
     # get package path
-    package_path = get_relative_folder(PACKAGE, '')
+    package_path = get_relative_folder(__PACKAGE__, '')
     # if package path not in source then skip
     if package_path not in source:
         return source
     # remove package path and replace with PACKAGE
-    source = source.replace(package_path, PACKAGE.lower())
+    source = source.replace(package_path, __PACKAGE__.lower())
     # replace separators with .
     source = source.replace(os.sep, '.')
     # remove double dots
@@ -2053,7 +2059,7 @@ def _copy_pdb_rc(params, level=0):
     # set global CURRENT_PATH
     global CURRENT_PATH
     # get package
-    package = params['DRS_PACKAGE']
+    package = __PACKAGE__
     # get path
     path = params['DRS_PDB_RC_FILE']
     filename = params['DRS_PDB_RC_FILENAME']

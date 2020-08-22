@@ -11,6 +11,7 @@ Created on 2019-07-26 at 09:40
 """
 import sys
 
+from apero.base import base
 from apero.lang.core import port_database
 
 
@@ -19,8 +20,13 @@ from apero.lang.core import port_database
 # =============================================================================
 __NAME__ = 'apero_langdb.py'
 __INSTRUMENT__ = 'None'
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # define the drs name (and module name)
-DRS_PATH = 'apero'
+DRS_PATH = __PACKAGE__
 
 # the help message
 HELP_MESSAGE = """

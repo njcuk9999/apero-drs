@@ -9,22 +9,31 @@ Created on 2020-08-2020-08-18 11:25
 """
 import numpy as np
 import tkinter as tk
+from tkinter import messagebox
 import pandas as pd
 from pandastable import Table, TableModel, applyStyle
 from pandastable import dialogs
 
+from apero.base import base
 from apero.core import constants
+from apero.base import drs_db
 from apero.tools.module.database import create_databases
-from apero.core.core import drs_database2
 
 # =============================================================================
 # Define variables
 # =============================================================================
-Database = drs_database2.Database
+__NAME__ = 'apero.tools.module.database.database_gui.py'
+__INSTRUMENT__ = 'None'
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
+
+Database = drs_db.Database
 # Define an empty table
 EMPTY_DATABASE = pd.DataFrame()
 EMPTY_DATABASE['NONE'] = ['No data found']
-
 
 # define database 1
 DATABASE1 = TableModel.getSampleData()
@@ -45,6 +54,8 @@ class DatabaseHolder:
         self.name = name
         self.path = path
         self.df = df
+        self.empty = False
+        self.changed = False
 
     def load_dataframe(self):
         # if we already have the dataframe don't load it
@@ -57,12 +68,19 @@ class DatabaseHolder:
 
         if self.path.endswith('.csv'):
             self.df = pd.read_csv(self.path)
+            if len(self.df) == 0:
+                self.df = None
+                self.empty = True
         elif self.path.endswith('.db'):
             # start database
             database = Database(self.path)
             dataframe = database.get('*', table='MAIN', return_pandas=True)
             if len(dataframe) == 0:
                 self.df = None
+                self.empty = True
+            if dataframe is None:
+                self.df = None
+                self.empty = True
             else:
                 self.df = dataframe
 
@@ -82,6 +100,7 @@ class DatabaseHolder:
 class DatabaseTable(Table):
     def __init__(self, parent=None, **kwargs):
         Table.__init__(self, parent, **kwargs)
+        self.table_changed = False
 
     def popupMenu(self, event, rows=None, cols=None, outside=None):
         """
@@ -178,7 +197,10 @@ class DatabaseTable(Table):
         # TODO: may be removed if bug in pandas table fixed (Issue #183)
         return dialogs.pickColor(self, oldcolor=oldcolor)
 
-
+    def handleCellEntry(self, row, col):
+        """Callback for cell entry"""
+        super().handleCellEntry(row, col)
+        self.table_changed = True
 
 class DatabaseExplorer(tk.Frame):
 
@@ -193,24 +215,36 @@ class DatabaseExplorer(tk.Frame):
             self.databases[database2.name] = database2
         else:
             self.databases = databases
-
+        # set parent if defined
         self.parent = parent
+        # start the super frame instance
         tk.Frame.__init__(self)
+        # set the master to main
         self.main = self.master
-
-        self.main.geometry('600x400+200+100')
+        # set default window size
+        self.main.geometry('1024x512+512+256')
+        # set title
         self.main.title('APERO Database Explorer')
+        # deal with window closes
+        self.main.protocol('WM_DELETE_WINDOW', self.on_exit)
+        # deal with changes to any table
+        self.table_change = False
         # make database selector frame
         self.make_selector()
         # set initial properties
         self.current_dataframe = None
+        self.current_database_name = None
         self.has_data = False
         # start with database1
-        database = self.databases[list(self.databases.keys())[0]]
+        databasehldr = self.databases[list(self.databases.keys())[0]]
+        # set up storage for table models loaded into memory
+        self.all_databases = dict()
+        # set current database name
+        self.current_database_name = databasehldr.name
         # load new database
-        database.load_dataframe()
+        databasehldr.load_dataframe()
         # remake the new dataframe
-        self.make_table(database.df)
+        self.make_table(databasehldr.df)
         # make menu
         self.menu()
         # cannot make menu until table defined
@@ -246,17 +280,21 @@ class DatabaseExplorer(tk.Frame):
         self.table = DatabaseTable(self.table_frame, **kwargs)
         self.table.show()
 
-    def update_table(self, dataframe):
-        self.current_dataframe = dataframe
-        if self.current_dataframe is None or len(self.current_dataframe) == 0:
-            self.current_dataframe = EMPTY_DATABASE
-            self.has_data = False
-        self.table.updateModel(TableModel(self.current_dataframe))
-        self.table.redraw()
-
     def change_table(self, *args):
+        # do not ask if no changes were made
+        if self.table.table_changed:
+            self.table_change = True
+            # need to make sure the previous table has been marked as changed
+            self.databases[self.current_database_name].changed = True
+            # get dataframe back from model
+            prev_df = pd.DataFrame(self.table.model.df)
+            # need to add to all databases
+            self.all_databases[self.current_database_name] = prev_df
+        # get the new database (based on database_option selector)
         database_name = self.database_option.get()
         databasehldr = self.databases[database_name]
+        # set current database name
+        self.current_database_name = databasehldr.name
         # destroy frame
         self.table_frame.destroy()
         # load new database
@@ -265,16 +303,38 @@ class DatabaseExplorer(tk.Frame):
         self.make_table(databasehldr.df)
 
     def update_database(self):
-        # do not update if we had no data initially
-        if not self.has_data:
+        # update table_change
+        if self.table.table_changed:
+            self.table_change = True
+            # need to make sure the previous table has been marked as changed
+            self.databases[self.current_database_name].changed = True
+            # get dataframe back from model
+            prev_df = pd.DataFrame(self.table.model.df)
+            # need to add to all databases
+            self.all_databases[self.current_database_name] = prev_df
+        # do not update if no changes have been made
+        if not self.table_change:
             return
-        # get updated data
-        dataframe = self.table.model.df
-        # get the database holder
-        database_name = self.database_option.get()
-        databasehldr = self.databases[database_name]
-        # save dataframe
-        databasehldr.save_dataframe(dataframe)
+
+        # warn user
+        if self.update_warning():
+            # loop around databases and update
+            for database_name in self.databases:
+                # get the database holder
+                databasehldr = self.databases[database_name]
+                # do not save over empty data
+                if not databasehldr.changed:
+                    continue
+                # get updated data
+                if database_name in self.all_databases:
+                    dataframe = self.all_databases[database_name]
+                    # save dataframe
+                    databasehldr.save_dataframe(dataframe)
+                    # now we have saved it mark it as not changed
+                    databasehldr.changed = False
+            # now we have updated we can set table_changes to False
+            self.table_change = False
+
 
     def menu(self):
 
@@ -334,6 +394,32 @@ class DatabaseExplorer(tk.Frame):
         createSubMenu(self.menubar, 'Edit', editcommands)
         # createSubMenu(self.menubar, 'Plot', plotcommands)
         createSubMenu(self.menubar, 'Table', tablecommands)
+
+    def update_warning(self) -> bool:
+        # set up message box
+        title = 'Update ALL SQL database(s)?'
+        message = ('Are you sure you want to commit changes '
+                   'to database (This is permanent)?')
+        msgbox = messagebox.askquestion(title, message, icon='warning')
+        # return a bool
+        if msgbox == 'yes':
+            return True
+        else:
+            return False
+
+    def on_exit(self):
+        # do not ask if no changes were made
+        if self.table_change:
+            # set up message box
+            title = 'Exit without updating database?'
+            message = ('Are you sure you want to exit without committing '
+                       'changes to the SQL database?')
+            msgbox = messagebox.askquestion(title, message, icon='warning')
+            # only exit if yes
+            if msgbox == 'yes':
+                self.main.destroy()
+        else:
+            self.main.destroy()
 
 
 # =============================================================================

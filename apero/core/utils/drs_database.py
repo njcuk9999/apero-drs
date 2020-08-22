@@ -10,13 +10,12 @@ Created on 2019-03-25 at 16:49
 @author: cook
 """
 import numpy as np
-from astropy.time import Time
 from astropy.table import Table, vstack
 import os
-import sys
 import shutil
 from collections import OrderedDict
 
+from apero.base import base
 from apero.core import constants
 from apero import lang
 from apero.io import drs_lock
@@ -31,19 +30,19 @@ from apero.core.core import drs_log
 # =============================================================================
 __NAME__ = 'core.core.drs_database.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
+# Get Astropy Time and Time Delta
+Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 # Get Logging function
 WLOG = drs_log.wlog
 # Get function string
 display_func = drs_log.display_func
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
+TextEntry = lang.core.drs_lang_text.TextEntry
 # alias pcheck
 pcheck = drs_log.find_param
 

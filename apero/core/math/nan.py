@@ -12,7 +12,7 @@ Created on 2019-05-15 at 12:24
 import numpy as np
 import warnings
 
-from apero.core import constants
+from apero.base import base
 from apero.core.math import fast
 
 # =============================================================================
@@ -20,14 +20,12 @@ from apero.core.math import fast
 # =============================================================================
 __NAME__ = 'core.math.nan.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-PConstants = constants.pload(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
+
 
 # =============================================================================
 # Define NaN functions

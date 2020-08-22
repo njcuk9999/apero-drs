@@ -19,20 +19,22 @@ import warnings
 from astropy import units as uu
 from typing import Union
 
-from apero.lang import drs_exceptions
-from apero.lang import drs_lang_db
+from apero.base import base
+from apero.base import drs_exceptions
+from apero.lang.core import drs_lang_db
 
 # =============================================================================
 # Define variables
 # =============================================================================
 # Define script name
 __NAME__ = 'constant_functions.py'
-# Define simple types allowed for constants
-SIMPLE_TYPES = [int, float, str, bool, list]
-SIMPLE_STYPES = ['int', 'float', 'str', 'bool', 'list']
-# define valid characters
-VALID_CHARS = list(string.ascii_letters) + list(string.digits)
-VALID_CHARS += list(string.punctuation) + list(string.whitespace)
+__PACKAGE__ = base.__PACKAGE__
+__INSTRUMENT__ = 'None'
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
+
 # get the Drs Exceptions
 DRSError = drs_exceptions.DrsError
 DRSWarning = drs_exceptions.DrsWarning
@@ -42,7 +44,10 @@ ConfigError = drs_exceptions.ConfigError
 ConfigWarning = drs_exceptions.ConfigWarning
 # get the logger
 BLOG = drs_exceptions.basiclogger
-
+# get simple types
+SIMPLE_TYPES = base.SIMPLE_TYPES
+SIMPLE_STYPES = base.SIMPLE_STYPES
+VALID_CHARS = base.VALID_CHARS
 
 # =============================================================================
 # Define classes

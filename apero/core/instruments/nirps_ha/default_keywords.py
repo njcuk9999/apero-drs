@@ -5,12 +5,19 @@ Created on 2019-01-17
 
 @author: cook
 """
-from apero.core.instruments.default.default_keywords import *
 from astropy import units as uu
+
+from apero.base import base
+from apero.core.instruments.default.default_keywords import *
 
 # Note: If variables are not showing up MUST CHECK __all__ definition
 #       in import * module
 __NAME__ = 'config.instruments.nirps_ha.default_keywords.py'
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 
 # -----------------------------------------------------------------------------
 # Required header keys (main fits file)

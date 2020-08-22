@@ -8,10 +8,10 @@ Created on 2019-03-05 16:37
 @author: ncook
 Version 0.0.1
 """
+from apero.base import base
 from apero.core import constants
 from apero import core
-from apero.core.core import drs_file
-from apero.core.core import drs_recipe
+from apero.core.utils import drs_recipe, drs_file
 from apero import lang
 from apero.io import drs_fits
 
@@ -21,13 +21,11 @@ from apero.io import drs_fits
 # =============================================================================
 __NAME__ = 'preprocessing.identification.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get Logging function
 WLOG = core.wlog
 # get param dict
@@ -35,7 +33,7 @@ ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
 DrsRecipe = drs_recipe.DrsRecipe
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
+TextEntry = lang.core.drs_lang_text.TextEntry
 
 
 # =============================================================================

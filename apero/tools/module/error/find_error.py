@@ -16,6 +16,7 @@ from tkinter import messagebox
 import webbrowser
 import re
 
+from apero.base import base
 from apero.core import constants
 from apero import core
 from apero import lang
@@ -25,13 +26,11 @@ from apero import lang
 # =============================================================================
 __NAME__ = 'find_error.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get Logging function
 WLOG = core.wlog
 
@@ -177,9 +176,9 @@ class Navbar:
         self.menubar = tk.Menu(master)
         # set title
         self.title = 'About {0}'.format(PROGRAM_NAME)
-        package = lang.drs_text.PACKAGE
-        default_path = lang.drs_text.DEFAULT_PATH
-        self.dpath = lang.drs_text.get_relative_folder(package, default_path)
+        package = lang.core.drs_lang_text.PACKAGE
+        default_path = lang.core.drs_lang_text.DEFAULT_PATH
+        self.dpath = lang.core.drs_lang_text.get_relative_folder(package, default_path)
         # add file menu
         self.filemenu = tk.Menu(self.menubar, tearoff=0)
         self.filemenu.add_command(label='Open database folder',
@@ -798,11 +797,11 @@ class LoadData:
         :rtype: tuple[dict, dict, dict, dict, dict]
         """
         # get filelist (from drs_text)
-        filelist = lang.drs_text.ERROR_FILES + lang.drs_text.HELP_FILES
+        filelist = lang.core.drs_lang_text.ERROR_FILES + lang.core.drs_lang_text.HELP_FILES
         # get dictionary files (full path)
-        dict_files = lang.drs_text._get_dict_files(self.instrument, filelist)
+        dict_files = lang.core.drs_lang_text._get_dict_files(self.instrument, filelist)
         # get value_dict, source_dict, arg_dict, kind_dict, comment_dict
-        out = lang.drs_text._read_dict_files(dict_files,
+        out = lang.core.drs_lang_text._read_dict_files(dict_files,
                                              self.drs_params['LANGUAGE'])
         # return databases
         return out
@@ -823,9 +822,9 @@ class LoadData:
         wmsg = 'Generating line list for instrument = "{0}"'
         WLOG(self.drs_params, 'info', wmsg.format(self.instrument))
         # get package (from drs_text)
-        package = lang.drs_text.PACKAGE
+        package = lang.core.drs_lang_text.PACKAGE
         # get level above package
-        modpath = lang.drs_text.get_relative_folder(package, '..')
+        modpath = lang.core.drs_lang_text.get_relative_folder(package, '..')
         # get python scripts in modpath
         pyfiles = find_all_py_files(modpath)
         # open and combine in to single list of lines
@@ -886,8 +885,8 @@ def open_all_py_files(files):
     :rtype: tuple[list[str], list[str], list[str]]
     """
     # get package and relative path to database (basaed on drs_text values)
-    package = lang.drs_text.PACKAGE
-    path = lang.drs_text.get_relative_folder(package, '..')
+    package = lang.core.drs_lang_text.PACKAGE
+    path = lang.core.drs_lang_text.get_relative_folder(package, '..')
     # set up storage
     all_entries = []
     all_line_numbers = []

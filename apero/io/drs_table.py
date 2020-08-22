@@ -22,10 +22,10 @@ from astropy.io.registry import get_formats
 from astropy.io import fits
 from collections import OrderedDict
 
+from apero.base import base
 from apero.core import constants
 from apero import lang
 from apero.core.core import drs_log
-
 from apero.io import drs_lock
 
 
@@ -35,19 +35,17 @@ from apero.io import drs_lock
 # Name of program
 __NAME__ = 'drs_table.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # get the parameter dictionary
 ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
+TextEntry = lang.core.drs_lang_text.TextEntry
 
 # -----------------------------------------------------------------------------
 # define list of integers

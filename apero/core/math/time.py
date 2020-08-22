@@ -9,13 +9,22 @@ Created on 2019-01-18 at 15:54
 
 @author: cook
 """
-
-from astropy.time import Time
-
+from apero.base import base
 
 # =============================================================================
 # Define variables
 # =============================================================================
+__NAME__ = 'core.math.time.py'
+__INSTRUMENT__ = 'None'
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
+
+# Get Astropy Time and Time Delta
+Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
+
 
 # -----------------------------------------------------------------------------
 

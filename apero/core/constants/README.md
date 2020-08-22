@@ -1,9 +1,8 @@
-# Readme for drsmodule.constants
+# Readme for apero.core.constants
 
 ## import rules
 
-- sub-modules to the constants package cannot import any other DRS sub-modules
-- with the exception of the locale package
+only from core.constants, apero.lang, apero.base
 
 ## core
 

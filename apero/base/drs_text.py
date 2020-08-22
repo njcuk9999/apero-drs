@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
-
-# CODE DESCRIPTION HERE
+Text and string manipulation functions here
 
 Created on 2019-08-12 at 17:23
 
@@ -12,51 +10,40 @@ Created on 2019-08-12 at 17:23
 import numpy as np
 import warnings
 
-from apero.core import constants
-from apero import lang
-from apero.core.core import drs_log
+from apero.base import base
+from apero.base import drs_exceptions
 
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'io.drs_text.py'
+__PACKAGE__ = base.__PACKAGE__
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
-# get param dict
-ParamDict = constants.ParamDict
-# Get Logging function
-WLOG = drs_log.wlog
-# Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
-# alias pcheck
-pcheck = drs_log.find_param
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
+# get exceptions
+DrsCodedException = drs_exceptions.DrsCodedException
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def load_text_file(params, filename, comments='#', delimiter='='):
+def load_text_file(filename, comments='#', delimiter='='):
     with warnings.catch_warnings(record=True) as _:
         # noinspection PyBroadException
         try:
             raw = np.genfromtxt(filename, comments=comments,
                                 delimiter=delimiter, dtype=str).astype(str)
         except Exception:
-            raw = read_lines(params, filename, comments=comments,
-                             delimiter=delimiter)
+            raw = read_lines(filename, comments=comments, delimiter=delimiter)
     # return the raw lines
     return raw
 
 
-def read_lines(params, filename, comments='#', delimiter=' '):
+def read_lines(filename, comments='#', delimiter=' '):
     """
 
     :param filename:
@@ -72,8 +59,8 @@ def read_lines(params, filename, comments='#', delimiter=' '):
             lines = f.readlines()
     except Exception as e:
         eargs = [filename, type(e), e, func_name]
-        WLOG(params, 'error', TextEntry('01-001-00024', args=eargs))
-        lines = None
+        raise DrsCodedException(codeid='01-001-00024', targs=eargs,
+                                level='error', func_name=func_name)
     # valid lines
     raw = []
     # loop around lines
@@ -92,18 +79,20 @@ def read_lines(params, filename, comments='#', delimiter=' '):
                 key, value = line.split(delimiter)
             except ValueError as _:
                 eargs = [filename, l + 1, line, delimiter, func_name]
-                WLOG(params, 'error', TextEntry('01-001-00025', args=eargs))
-                key, value = None, None
+                raise DrsCodedException(codeid='01-001-00025', targs=eargs,
+                                        level='error', func_name=func_name)
             # append to raw list
             raw.append([key, value])
     # check that raw has entries
     if len(raw) == 0:
-        WLOG(params, 'error', TextEntry('01-001-00026', args=[filename]))
+        eargs = [filename]
+        raise DrsCodedException(codeid='01-001-00026', targs=eargs,
+                                level='error', func_name=func_name)
     # return raw
     return np.array(raw)
 
 
-def save_text_file(params, filename, array, func_name=None):
+def save_text_file(filename, array, func_name=None):
     if func_name is None:
         func_name = __NAME__ + '.save_text_file()'
     # try to save text file
@@ -112,7 +101,8 @@ def save_text_file(params, filename, array, func_name=None):
             np.savetxt(filename, array)
         except Exception as e:
             eargs = [filename, type(e), e, func_name]
-            WLOG(params, 'error', TextEntry('00-008-00020', args=eargs))
+            raise DrsCodedException(codeid='00-008-00020', targs=eargs,
+                                    level='error', func_name=func_name)
 
 
 def common_text(stringlist, kind='prefix'):
@@ -238,6 +228,97 @@ def true_text(variable):
             return True
     # else in all other cases return False
     return False
+
+
+def include_exclude(inlist, includes=None, excludes=None, ilogic='AND',
+                    elogic='AND'):
+    """
+    Filter a list by a list of include and exclude strings
+    (can use AND or OR) in both includes and excludes
+
+    includes: if ilogic=='AND'  all must be in list entry
+              if ilogic=='OR'   one must be in list entry
+
+    excludes: if elogic=='AND'   all must not be in list entry
+              if elogic=='OR'    one must not be in list entry
+
+    :param inlist: list, the input list of strings to check
+    :param includes: list or string, the include string(s)
+    :param excludes: list or string, the exclude string(s)
+    :param ilogic: string, 'AND' or 'OR' logic to use when combining includes
+    :param elogic: string, 'AND' or 'OR' logic to use when combining excludes
+
+    :type inlist: list
+    :type includes: Union[None, list, str]
+    :type excludes: Union[None, list, str]
+    :type ilogic: str
+    :type elogic: str
+
+    :return: the filtered list of strings
+    :rtype: list
+    """
+    # ----------------------------------------------------------------------
+    if includes is None and excludes is None:
+        return list(inlist)
+    # ----------------------------------------------------------------------
+    mask = np.ones(len(inlist)).astype(bool)
+    # ----------------------------------------------------------------------
+    if includes is not None:
+        if isinstance(includes, str):
+            includes = [includes]
+        elif not isinstance(includes, list):
+            raise ValueError('includes list must be a list or string')
+        # loop around values
+        for row, value in enumerate(inlist):
+            # start off assuming we need to keep value
+            if ilogic == 'AND':
+                keep = True
+            else:
+                keep = False
+            # loop around include strings
+            for include in includes:
+                if ilogic == 'AND':
+                    if include in value:
+                        keep &= True
+                    else:
+                        keep &= False
+                else:
+                    if include in value:
+                        keep |= True
+                    else:
+                        keep |= False
+            # change mask
+            mask[row] = keep
+    # ----------------------------------------------------------------------
+    if excludes is not None:
+        if isinstance(excludes, str):
+            excludes = [excludes]
+        elif not isinstance(excludes, list):
+            raise ValueError('excludes list must be a list or string')
+        # loop around values
+        for row, value in enumerate(inlist):
+            # start off assuming we need to keep value
+            if ilogic == 'AND':
+                keep = True
+            else:
+                keep = False
+            # loop around include strings
+            for exclude in excludes:
+                if elogic == 'AND':
+                    if exclude not in value:
+                        keep &= True
+                    else:
+                        keep &= False
+                else:
+                    if exclude not in value:
+                        keep |= True
+                    else:
+                        keep |= False
+            # update mask
+            mask[row] &= keep
+    # ----------------------------------------------------------------------
+    # return outlist
+    return list(np.array(inlist)[mask])
 
 
 # =============================================================================

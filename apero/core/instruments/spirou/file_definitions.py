@@ -13,8 +13,8 @@ Created on 2018-10-31 at 18:06
 
 @author: cook
 """
-from apero.core import constants
-from apero.core.core import drs_file
+from apero.base import base
+from apero.core.utils import drs_file
 from apero.core.instruments.spirou import output_filenames as out
 
 # =============================================================================
@@ -22,13 +22,12 @@ from apero.core.instruments.spirou import output_filenames as out
 # =============================================================================
 __NAME__ = 'config.instruments.spirou.file_defintions.py'
 __INSTRUMENT__ = 'SPIROU'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
+
 
 # =============================================================================
 # Define Files

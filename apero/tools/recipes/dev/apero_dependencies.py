@@ -11,9 +11,9 @@ Created on 2019-11-27 at 13:58
 """
 import numpy as np
 import os
-import pkg_resources
 from collections import OrderedDict
 
+from apero.base import base
 from apero import core
 from apero import lang
 from apero.core import constants
@@ -23,17 +23,15 @@ from apero.core import constants
 # =============================================================================
 __NAME__ = 'apero_dependencies.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
+TextEntry = lang.core.drs_lang_text.TextEntry
 # --------------------------------------------------------------------------
 # path strings to exclude
 EXCLUDE_PATH_STR = []
