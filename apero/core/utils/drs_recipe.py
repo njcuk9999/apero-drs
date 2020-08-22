@@ -52,9 +52,6 @@ ArgumentError = constants.ArgumentError
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict
 HelpText = lang.core.drs_lang_text.HelpDict
-# define name of index file
-INDEX_FILE = Constants['DRS_INDEX_FILE']
-INDEX_FILE_NAME_COL = Constants['DRS_INDEX_FILENAME']
 # -----------------------------------------------------------------------------
 # Get Classes from drs_argument
 DrsArgumentParser = drs_argument.DrsArgumentParser
