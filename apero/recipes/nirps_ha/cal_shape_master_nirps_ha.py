@@ -11,15 +11,14 @@ Created on 2019-03-23 at 13:01
 """
 import numpy as np
 
+from apero.base import base
 from apero import core
 from apero import lang
-from apero.core import constants
-from apero.core.core import drs_database
+from apero.core.utils import drs_database
 from apero.io import drs_fits
 from apero.io import drs_table
 from apero.science.calib import general
 from apero.science.calib import localisation
-from apero.science.calib import wave
 from apero.science.calib import shape
 
 
@@ -28,18 +27,16 @@ from apero.science.calib import shape
 # =============================================================================
 __NAME__ = 'cal_shape_master_nirps_ha.py'
 __INSTRUMENT__ = 'NIRPS_HA'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
+TextEntry = lang.core.drs_lang_text.TextEntry
+TextDict = lang.core.drs_lang_text.TextDict
 # alias pcheck
 pcheck = core.pcheck
 

@@ -9,14 +9,9 @@ Created on 2019-01-23 at 17:55
 
 @author: cook
 """
+import apero.lang.core.drs_lang_text
 
-from .core import drs_text
-from .core import drs_exceptions
-from .core import drs_lang_db
-
-__all__ = ['drs_text', 'drs_exceptions']
-
-
+__all__ = ''
 # =============================================================================
 # End of code
 # =============================================================================

@@ -18,6 +18,7 @@ import signal
 import shutil
 from pathlib import Path
 
+from apero.base import base
 from apero.core import constants
 from apero.tools.module.setup import drs_installation as install
 from apero.io import drs_path
@@ -25,6 +26,13 @@ from apero.io import drs_path
 # =============================================================================
 # Define variables
 # =============================================================================
+__NAME__ = 'setup.newprofile.py'
+__INSTRUMENT__ = 'SPIROU'
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # define the drs name (and module name)
 DRS_PATH = 'apero'
 # define the place where the constant recipes are
@@ -36,8 +44,7 @@ SUFFICES = ['.bash.setup', '.sh.setup']
 # text replace
 OLDTEXT = '" ${YELLOW}}'
 
-TEXTCHANGE = ['${{yellow}}{PROFILENAME}',
-              '${{YELLOW}}{PROFILENAME}',
+TEXTCHANGE = ['${{yellow}}{PROFILENAME}', '${{YELLOW}}{PROFILENAME}',
               '{UCONFIG}']
 
 # =============================================================================

@@ -16,7 +16,9 @@ import os
 import copy
 from collections import OrderedDict
 
-from apero.core.instruments.default import pseudo_const
+from apero.base import base
+from apero.base import drs_exceptions
+from apero.base import drs_misc
 from apero.core import constants
 from apero import lang
 from apero.core.core import drs_log
@@ -26,40 +28,29 @@ from apero.core.core import drs_log
 # =============================================================================
 __NAME__ = 'drs_argument.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
 # Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 display_func = drs_log.display_func
 # get print colours
-COLOR = pseudo_const.Colors()
+COLOR = drs_misc.Colors()
 # get param dict
 ParamDict = constants.ParamDict
 # get the config error
-ConfigError = constants.ConfigError
-ArgumentError = constants.ArgumentError
+ConfigError = drs_exceptions.ConfigError
+ArgumentError = drs_exceptions.ArgumentError
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
-HelpText = lang.drs_text.HelpDict
+TextEntry = lang.core.drs_lang_text.TextEntry
+TextDict = lang.core.drs_lang_text.TextDict
+HelpText = lang.core.drs_lang_text.HelpDict
 # define display strings for types
-STRTYPE = OrderedDict()
-STRTYPE[int] = 'int'
-STRTYPE[float] = 'float'
-STRTYPE[str] = 'str'
-STRTYPE[complex] = 'complex'
-STRTYPE[list] = 'list'
-STRTYPE[np.ndarray] = 'np.ndarray'
-# define types that we can do min and max on
-NUMBER_TYPES = [int, float]
-# define name of index file
-INDEX_FILE = Constants['DRS_INDEX_FILE']
-INDEX_FILE_NAME_COL = Constants['DRS_INDEX_FILENAME']
+STRTYPE = base.STRTYPE
+NUMBER_TYPES = base.NUMBER_TYPES
 
 
 # =============================================================================

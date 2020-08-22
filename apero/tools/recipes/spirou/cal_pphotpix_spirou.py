@@ -14,13 +14,12 @@ import os
 from scipy.signal import medfilt,convolve2d
 from astropy.table import Table
 from astropy.io import fits
-import argparse
 
+from apero.base import base
 from apero import core
 from apero import lang
 from apero.core import constants
 from apero.core import math as mp
-from apero.io import drs_data
 from apero.tools.module.testing import drs_dev
 
 # =============================================================================
@@ -28,21 +27,21 @@ from apero.tools.module.testing import drs_dev
 # =============================================================================
 __NAME__ = 'cal_pphotpix_spirou.py'
 __INSTRUMENT__ = 'SPIROU'
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
 # get param dict
 ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
-Help = lang.drs_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
+TextEntry = lang.core.drs_lang_text.TextEntry
+TextDict = lang.core.drs_lang_text.TextDict
+Help = lang.core.drs_lang_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
 
 # whether this is a debug run (produces mask image)
 DEBUG = False

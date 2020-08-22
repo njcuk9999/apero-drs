@@ -18,36 +18,39 @@ import copy
 import warnings
 from typing import Type
 
+from apero.base import base
+from apero.base import drs_exceptions
 from apero.core.core import drs_log
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.instruments.default import output_filenames as outf
 from apero import lang
-from apero.io import drs_text
+from apero.base import drs_text
 from apero.io import drs_fits
 from apero.io import drs_path
-from apero.io import drs_strings
+
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'drs_file.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get function string
 display_func = drs_log.display_func
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
-HelpText = lang.drs_text.HelpDict
+TextEntry = lang.core.drs_lang_text.TextEntry
+TextDict = lang.core.drs_lang_text.TextDict
+HelpText = lang.core.drs_lang_text.HelpDict
+# get exceptions
+DrsHeaderError = drs_exceptions.DrsHeaderError
+DrsCodedException = drs_exceptions.DrsCodedException
 # TODO: This should be changed for astropy -> 2.0.1
 # bug that hdu.scale has bug before version 2.0.1
 if av.major < 2 or (av.major == 2 and av.minor < 1):
@@ -508,7 +511,14 @@ class DrsInputFile:
         kwargs['infile'] = infile
         # if we have a function use it
         if self.outfunc is not None:
-            abspath = self.outfunc(params, **kwargs)
+            try:
+                abspath = self.outfunc(params, **kwargs)
+            except DrsCodedException as e:
+                level = e.get('level', 'error')
+                eargs = e.get('targs', None)
+                WLOG(params, level, TextEntry(e.codeid, args=eargs))
+                abspath = None
+
             self.filename = abspath
             self.basename = os.path.basename(abspath)
         # else raise an error
@@ -1117,8 +1127,7 @@ class DrsFitsFile(DrsInputFile):
             # check that key is in header
             if key not in header:
                 ekwargs = dict(level='error', key=key, filename=filename)
-                raise lang.drs_exceptions.DrsHeaderError('Key not found',
-                                                         **ekwargs)
+                raise DrsHeaderError('Key not found', **ekwargs)
             # get value and required value
             value = header[key].strip()
             rvalue = rkeys[drskey].strip()
@@ -1286,8 +1295,14 @@ class DrsFitsFile(DrsInputFile):
         for fiber in fibers:
             # 2. need to assign an output filename for out file
             if self.outfunc is not None:
-                outfilename = self.outfunc(params, infile=infile, outfile=self,
-                                           fiber=fiber)
+                try:
+                    outfilename = self.outfunc(params, infile=infile,
+                                               outfile=self, fiber=fiber)
+                except DrsCodedException as e:
+                    level = e.get('level', 'error')
+                    eargs = e.get('targs', None)
+                    WLOG(params, level, TextEntry(e.codeid, args=eargs))
+                    outfilename = None
             else:
                 eargs = [self.name, recipe.name, func_name]
                 WLOG(params, 'error', TextEntry('09-503-00009', args=eargs))
@@ -2078,7 +2093,7 @@ class DrsFitsFile(DrsInputFile):
             rawwildvalues = list(self.header[wildkey].keys())
             # deal with includes/excludes
             ieargs = [rawwildvalues, includes, excludes, ilogic, elogic]
-            wildvalues = drs_strings.include_exclude(*ieargs)
+            wildvalues = drs_text.include_exclude(*ieargs)
             # deal with no wild card values found
             if wildvalues is None:
                 eargs = [wildkey, dim1, self.basename, func_name]

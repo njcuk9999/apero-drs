@@ -1,4 +1,5 @@
 # This is the main config file
+from apero.base import base
 from apero.core.constants import constant_functions
 
 # =============================================================================
@@ -54,7 +55,11 @@ __all__ = [  # global settings
 
 # set name
 __NAME__ = 'apero.constants.default.default_config'
-
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Constants definition
 Const = constant_functions.Const
 
@@ -83,7 +88,8 @@ DRS_DEBUG = Const('DRS_DEBUG', value=0, dtype=int, source=__NAME__, user=True,
                               'printouts')
 
 # Language
-LANGUAGE = Const('LANGUAGE', value='ENG', dtype=str, options=['ENG', 'FR'],
+LANGUAGE = Const('LANGUAGE', value=base.DEFAULT_LANG, dtype=str,
+                 options=base.LANGUAGES,
                  source=__NAME__, user=True, active=True, group=cgroup,
                  description='Language for DRS messages (if translated)')
 
@@ -173,21 +179,19 @@ DRS_PDFLATEX_PATH = Const('DRS_PDFLATEX_PATH', dtype=str, source=__NAME__,
 # =============================================================================
 cgroup = 'INTERNAL: General properites'
 # Version
-DRS_VERSION = Const('DRS_VERSION', value='0.6.129', dtype=str,
+DRS_VERSION = Const('DRS_VERSION', value=__version__, dtype=str,
                     source=__NAME__, group=cgroup)
 
 # Authors
-AUTHORS = Const('AUTHOR',
-                value=['N. Cook', 'E. Artigau', 'F. Bouchy', 'M. Hobson',
-                       'C. Moutou', 'I. Boisse', 'E. Martioli'],
+AUTHORS = Const('AUTHOR', value=__author__,
                 dtype=list, dtypei=str, source=__NAME__, group=cgroup)
 
 # Release version
-DRS_RELEASE = Const('RELEASE', value='alpha pre-release', dtype=str,
+DRS_RELEASE = Const('RELEASE', value=__release__, dtype=str,
                     source=__NAME__, group=cgroup)
 
 # Date
-DRS_DATE = Const('DATE', value='2020-07-29', dtype=str, source=__NAME__,
+DRS_DATE = Const('DATE', value=__date__, dtype=str, source=__NAME__,
                  group=cgroup)
 
 # =============================================================================
@@ -195,7 +199,7 @@ DRS_DATE = Const('DATE', value='2020-07-29', dtype=str, source=__NAME__,
 # =============================================================================
 cgroup = 'INTERNAL: DRS SETTINGS'
 #   The top-level package name (i.e. import PACKAGE)
-DRS_PACKAGE = Const('DRS_PACKAGE', value='apero', dtype=str,
+DRS_PACKAGE = Const('DRS_PACKAGE', value=__PACKAGE__, dtype=str,
                     source=__NAME__, group=cgroup)
 
 #   User-config environmental variable
@@ -265,12 +269,12 @@ DRS_MOD_DATA_PATH = Const('DRS_MOD_DATA_PATH', value='./data/', dtype=str,
 
 #   where instrument configuration files are stored
 DRS_MOD_INSTRUMENT_CONFIG = Const('DRS_MOD_INSTRUMENT_CONFIG', dtype=str,
-                                  value='./core/instruments/',
+                                  value=base.CONST_PATH,
                                   source=__NAME__, group=cgroup)
 
 #   where the core configuration files are stored
 DRS_MOD_CORE_CONFIG = Const('DRS_MOD_CORE_CONFIG', dtype=str,
-                            value='./core/instruments/default',
+                            value=base.CORE_PATH,
                             source=__NAME__, group=cgroup)
 
 # where the instrument recipes are stored
@@ -310,7 +314,7 @@ DRS_RESET_RUN_PATH = Const('DRS_RESET_RUN_PATH', dtype=str, source=__NAME__,
                            group=cgroup)
 
 # where the pdb rc file is
-DRS_PDB_RC_FILE = Const('DRS_PDB_RC_FILE', value='./data/core/pdbrc_full',
+DRS_PDB_RC_FILE = Const('DRS_PDB_RC_FILE', value=base.PDB_RC_FILE,
                         dtype=str, source=__NAME__, group=cgroup)
 
 # what the pdb file should be called

@@ -14,7 +14,9 @@ import sys
 import os
 from typing import List, Tuple
 
-from apero.lang import drs_exceptions
+from apero.base import base
+from apero.base import drs_misc
+from apero.base import drs_exceptions
 
 # =============================================================================
 # Define variables
@@ -22,6 +24,11 @@ from apero.lang import drs_exceptions
 # Name of program
 __NAME__ = 'instruments.default.pseudo_const'
 __PATH__ = 'instruments.default'
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # get error
 ConfigError = drs_exceptions.ConfigError
 # get not implemented error
@@ -196,7 +203,7 @@ class PseudoConstants:
         Allowed colour strings are found here:
                 see here:
                 http://ozzmaker.com/add-colour-to-text-in-python/
-                or in spirouConst.colors (colour class):
+                or in drs_misc.Colors (colour class):
                     HEADER, OKBLUE, OKGREEN, WARNING, FAIL,
                     BOLD, UNDERLINE
 
@@ -207,7 +214,7 @@ class PseudoConstants:
                              http://ozzmaker.com/add-colour-to-text-in-python/
         """
         # reference:
-        colors = Colors()
+        colors = drs_misc.Colors()
         if p is not None:
             if 'THEME' in p:
                 colors.update_theme(p['THEME'])
@@ -599,10 +606,10 @@ class PseudoConstants:
                    'DATE_OBS', 'UTC_OBS', 'MJDMID', 'OBJNAME', 'OBSTYPE',
                    'EXPTIME', 'CCAS', 'CREF', 'CDEN', 'DPRTYPE', 'TRGTYPE',
                    'OUTPUT', 'EXPSEQ', 'NUMEXP', 'VERSION', 'PPVERSION',
-                   'PINAME', 'PID', 'FIBER', 'UID']
+                   'PINAME', 'PID', 'FIBER', 'UID', 'USED']
         ctypes = [str, str, str, float, str, str, float, str, str, float,
                   str, str, float, str, str, str, int, int, str, str, str,
-                  str, str, str]
+                  str, str, str, int]
         return columns, ctypes
 
     def LOG_DB_COLUMNS(self) -> Tuple[List[str], List[type]]:
@@ -615,10 +622,10 @@ class PseudoConstants:
                    'DIRECTORY', 'LOGFILE', 'PLOTDIR', 'RUNSTRING', 'ARGS',
                    'KWARGS', 'SKWARGS', 'STARTED', 'PASSED_ALL_QC',
                    'QC_STRING', 'QC_NAMES', 'QC_VALUES', 'QC_LOGIC', 'QC_PASS',
-                   'ERRORS', 'ENDED']
+                   'ERRORS', 'ENDED', 'USED']
         ctypes = [str, str, str, str, str, str, int, int, str, str, str,
                   str, str, str, str, str, str, str, int, int, str, str, str,
-                  str, str, str, int]
+                  str, str, str, int, int]
         return columns, ctypes
 
     def OBJECT_DB_COLUMNS(self) -> Tuple[List[str], List[type]]:
@@ -627,9 +634,9 @@ class PseudoConstants:
         :return: list of columns (strings)
         """
         columns = ['OBJNAME', 'GAIAID', 'RA', 'DEC', 'PMRA', 'PMDE', 'PLX',
-                   'RV', 'GMAG', 'BPMAG', 'RPMAG', 'EPOCH', 'TEFF']
+                   'RV', 'GMAG', 'BPMAG', 'RPMAG', 'EPOCH', 'TEFF', 'USED']
         ctypes = [str, str, float, float, float, float, float, float, float,
-                  float, float, float, float]
+                  float, float, float, float, int]
         return columns, ctypes
 
 
@@ -638,8 +645,8 @@ class PseudoConstants:
         Define the columns use in the parameter database
         :return: list of columns (Strings)
         """
-        columns = ['KEY', 'VALUE', 'DTYPE', 'SOURCE', 'LAST_MODIFIED']
-        ctypes = [str, str, str, str, float]
+        columns = ['KEY', 'VALUE', 'DTYPE', 'SOURCE', 'LAST_MODIFIED', 'USED']
+        ctypes = [str, str, str, str, float, int]
         return columns, ctypes
 
 
@@ -647,74 +654,6 @@ class PseudoConstants:
 # Define functions
 # =============================================================================
 # defines the colours
-class Colors:
-    BLACK1 = '\033[90;1m'
-    RED1 = '\033[1;91;1m'
-    GREEN1 = '\033[92;1m'
-    YELLOW1 = '\033[1;93;1m'
-    BLUE1 = '\033[94;1m'
-    MAGENTA1 = '\033[1;95;1m'
-    CYAN1 = '\033[1;96;1m'
-    WHITE1 = '\033[97;1m'
-    BLACK2 = '\033[1;30m'
-    RED2 = '\033[1;31m'
-    GREEN2 = '\033[1;32m'
-    YELLOW2 = '\033[1;33m'
-    BLUE2 = '\033[1;34m'
-    MAGENTA2 = '\033[1;35m'
-    CYAN2 = '\033[1;36m'
-    WHITE2 = '\033[1;37m'
-    ENDC = '\033[0;0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-
-    def __init__(self, theme=None):
-        if theme is None:
-            self.theme = 'DARK'
-        else:
-            self.theme = theme
-        self.endc = self.ENDC
-        self.bold = self.BOLD
-        self.underline = self.UNDERLINE
-        self.update_theme()
-
-    def update_theme(self, theme=None):
-        if theme is not None:
-            self.theme = theme
-        if self.theme == 'DARK':
-            self.header = self.MAGENTA1
-            self.okblue = self.BLUE1
-            self.okgreen = self.GREEN1
-            self.ok = self.MAGENTA2
-            self.warning = self.YELLOW1
-            self.fail = self.RED1
-            self.debug = self.BLACK1
-        else:
-            self.header = self.MAGENTA2
-            self.okblue = self.MAGENTA2
-            self.okgreen = self.BLACK2
-            self.ok = self.MAGENTA2
-            self.warning = self.BLUE2
-            self.fail = self.RED2
-            self.debug = self.GREEN2
-
-    def print(self, message, colour):
-        if colour in ['b', 'blue']:
-            start = self.BLUE1
-        elif colour in ['r', 'red']:
-            start = self.RED1
-        elif colour in ['g', 'green']:
-            start = self.GREEN1
-        elif colour in ['y', 'yellow']:
-            start = self.YELLOW1
-        elif colour in ['m', 'magenta']:
-            start = self.MAGENTA1
-        elif colour in ['k', 'black', 'grey']:
-            start = self.BLACK1
-        else:
-            start = self.endc
-        # return colour mesage
-        return start + message + self.endc
 
 
 # =============================================================================

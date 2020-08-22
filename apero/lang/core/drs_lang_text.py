@@ -15,23 +15,27 @@ from astropy.table import Table
 from collections import OrderedDict
 import pkg_resources
 
-from apero.lang.core import drs_exceptions
+from apero.base import base
+from apero.base import drs_exceptions
 
 # =============================================================================
 # Define variables
 # =============================================================================
 # Name of program
-__NAME__ = 'drs_text.py'
+__NAME__ = 'apero.lang.core.drs_lang_text.py'
 __INSTRUMENT__ = 'None'
-# Define package name
-PACKAGE = 'apero'
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # file locations
-DEFAULT_PATH = './lang/databases/'
-INSTRUMENT_PATH = './lang/databases/'
+DEFAULT_PATH = base.LANG_DEFAULT_PATH
+INSTRUMENT_PATH = base.LANG_INSTRUMNET_PATH
 # must be csv files
 HELP_FILES = ['help.csv']
 ERROR_FILES = ['error.csv']
-DEFAULT_LANGUAGE = 'ENG'
+DEFAULT_LANGUAGE = base.DEFAULT_LANG
 # define escape characters
 ESCAPE_CHARS = {'\n': '\\n', '\t': '\\t'}
 # get the Drs Exceptions
@@ -504,9 +508,9 @@ def _get_dict_files(instrument, filelist):
     # setup storage for return file list
     return_files = []
     # get instrument path
-    ifolder = get_relative_folder(PACKAGE, INSTRUMENT_PATH)
+    ifolder = get_relative_folder(__PACKAGE__, INSTRUMENT_PATH)
     # get default file
-    dfolder = get_relative_folder(PACKAGE, DEFAULT_PATH)
+    dfolder = get_relative_folder(__PACKAGE__, DEFAULT_PATH)
     dfiles = []
     for file_d in filelist:
         abspath_d = os.path.join(dfolder, file_d)

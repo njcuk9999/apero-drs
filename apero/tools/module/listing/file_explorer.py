@@ -33,6 +33,7 @@ else:
     import ttk
     import tkFileDialog as filedialog
 
+from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
 from apero import core
@@ -45,13 +46,11 @@ from apero import plotting
 # =============================================================================
 __NAME__ = 'file_explorer.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get Logging function
 WLOG = core.wlog
 # -----------------------------------------------------------------------------

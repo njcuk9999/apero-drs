@@ -1,4 +1,5 @@
 # This is the main config file
+from apero.base import base
 from apero.core.constants import constant_functions
 
 # -----------------------------------------------------------------------------
@@ -162,6 +163,11 @@ __all__ = [  # input keys
 
 # set name
 __NAME__ = 'apero.constants.default.default_keywords'
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Constants definition
 Const = constant_functions.Const
 # Keyword defintion

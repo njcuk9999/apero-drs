@@ -5,13 +5,18 @@ Created on 2019-01-17
 
 @author: cook
 """
+from apero.base import base
 from apero.core.instruments.default.default_constants import *
 
 # Note: If variables are not showing up MUST CHECK __all__ definition
 #       in import * module
 
 __NAME__ = 'core.instruments.spirou.default_constants.py'
-
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # =============================================================================
 # Spirou Constant definitions
 # =============================================================================

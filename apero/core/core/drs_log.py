@@ -21,10 +21,11 @@ from time import sleep
 from astropy.table import Table
 from collections import OrderedDict
 
-from apero.core.instruments.default import pseudo_const
+from apero.base import base
+from apero.base import drs_exceptions
+from apero.base import drs_misc
 from apero.core import constants
 from apero import lang
-from apero.lang import drs_exceptions
 from apero.core.math import time
 
 # =============================================================================
@@ -33,13 +34,12 @@ from apero.core.math import time
 # Name of program
 __NAME__ = 'drs_log.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
 # Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get the parameter dictionary
 ParamDict = constants.ParamDict
 # Get the Config error
@@ -50,16 +50,14 @@ TextWarning = drs_exceptions.TextWarning
 ConfigError = drs_exceptions.ConfigError
 ConfigWarning = drs_exceptions.ConfigWarning
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
-HelpEntry = lang.drs_text.HelpEntry
-HelpText = lang.drs_text.HelpDict
+TextEntry = lang.core.drs_lang_text.TextEntry
+TextDict = lang.core.drs_lang_text.TextDict
+HelpEntry = lang.core.drs_lang_text.HelpEntry
+HelpText = lang.core.drs_lang_text.HelpDict
 # get the default language
-DEFAULT_LANGUAGE = lang.drs_text.DEFAULT_LANGUAGE
+DEFAULT_LANGUAGE = lang.core.drs_lang_text.DEFAULT_LANGUAGE
 # Get the Color dict
-Color = pseudo_const.Colors
-# define log format
-LOGFMT = Constants['DRS_LOG_FORMAT']
+Color = drs_misc.Colors
 
 
 # =============================================================================
@@ -277,7 +275,7 @@ class Logger:
                         if not new_message.startswith(' '):
                             new_message = ' ' + new_message
                         cmdargs = [human_time, code, option, new_message]
-                        cmd = LOGFMT.format(*cmdargs)
+                        cmd = params['DRS_LOG_FORMAT'].format(*cmdargs)
                         # append separate commands for log writing
                         cmds.append(cmd)
                         # add to logger storage
@@ -287,7 +285,7 @@ class Logger:
                         printlog(self, params, cmd, key, colour)
                 else:
                     cmdargs = [human_time, code, option, mess]
-                    cmd = LOGFMT.format(*cmdargs)
+                    cmd = params['DRS_LOG_FORMAT'].format(*cmdargs)
                     # append separate commands for log writing
                     cmds.append(cmd)
                     # add to logger storage
@@ -323,7 +321,7 @@ class Logger:
                 # storage for cmds
                 cmds = []
                 cmdargs = [human_time, code, option, mess]
-                cmd = LOGFMT.format(*cmdargs)
+                cmd = params['DRS_LOG_FORMAT'].format(*cmdargs)
                 # append separate commands for log writing
                 cmds.append(cmd)
                 # get logfilepath
@@ -1067,11 +1065,11 @@ def printlogandcmd(logobj, params, message, key, human_time, option, wrap,
             new_messages = textwrap(mess, char_len)
             for new_message in new_messages:
                 cmdargs = [human_time, code, option, new_message]
-                cmd = LOGFMT.format(*cmdargs)
+                cmd = params['DRS_LOG_FORMAT'].format(*cmdargs)
                 printlog(logobj, params, cmd, key, colour)
         else:
             cmdargs = [human_time, code, option, mess]
-            cmd = LOGFMT.format(*cmdargs)
+            cmd = params['DRS_LOG_FORMAT'].format(*cmdargs)
             printlog(logobj, params, cmd, key, colour)
 
 

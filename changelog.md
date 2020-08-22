@@ -98,7 +98,7 @@ Changelog
   defined. [njcuk9999]
 - Apero.io.drs_fits.py - deal with filtering files by
   whitelist/blacklist nightnames (accept 'All') [njcuk9999]
-- Apero.core.core.drs_log.py - correct missing lang.drs_text.
+- Apero.core.core.drs_log.py - correct missing lang.core.drs_lang_text.
   [njcuk9999]
 - Apero.tools.modules.setup.drs_processing.py + apero_processing.py -
   re-work skipping file feature and change

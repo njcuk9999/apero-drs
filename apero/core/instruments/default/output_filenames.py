@@ -11,8 +11,8 @@ Created on 2019-03-21 at 18:35
 """
 import os
 
-from apero.core import constants
-from apero.core import drs_log
+from apero.base import base
+from apero.base import drs_exceptions
 from apero import lang
 
 
@@ -21,17 +21,15 @@ from apero import lang
 # =============================================================================
 __NAME__ = 'config.core.default.output_filenames.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
-# Get Logging function
-WLOG = drs_log.wlog
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
+TextEntry = lang.core.drs_lang_text.TextEntry
+# get exceptions
+DrsCodedException = drs_exceptions.DrsCodedException
 
 
 # =============================================================================
@@ -50,17 +48,19 @@ def general_file(params, **kwargs):
     path = kwargs.get('path', None)
     # deal with kwargs that are required
     if infile is None:
-        WLOG(params, 'error', TextEntry('00-001-00017', args=[func_name]))
+        raise DrsCodedException('00-001-00017', level='error',
+                                targs=[func_name], func_name=func_name)
     if outfile is None:
-        WLOG(params, 'error', TextEntry('00-001-00018', args=[func_name]))
+        raise DrsCodedException('00-001-00018', level='error',
+                                targs=[func_name], func_name=func_name)
     # try to get fiber from outfile
     if fiber is None:
         fiber = outfile.fiber
     # deal with fiber being required but still unset
     if outfile.fibers is not None and fiber is None:
         eargs = [outfile, func_name]
-        WLOG(params, 'error', TextEntry('00-001-00032', args=eargs))
-
+        raise DrsCodedException('00-001-00032', level='error',
+                                targs=eargs, func_name=func_name)
     # set infile basename
     inbasename = infile.basename
     # get condition to remove input file prefix
@@ -95,7 +95,8 @@ def general_file(params, **kwargs):
         outpath = params['OUTPATH']
         # check if outpath is set
         if outpath is None:
-            WLOG(params, 'error', TextEntry('01-001-00023', args=[func_name]))
+            raise DrsCodedException('00-001-00023', level='error',
+                                    targs=[func_name], func_name=func_name)
         # get output night name from params
         if params['NIGHTNAME'] is None:
             outdirectory = ''
@@ -120,11 +121,13 @@ def npy_file(params, **kwargs):
     # get out file and report error if not set
     outfile = kwargs.get('outfile', None)
     if outfile is None:
-        WLOG(params, 'error', TextEntry('00-001-00018', args=[func_name]))
+        raise DrsCodedException('00-001-00018', level='error',
+                                targs=[func_name], func_name=func_name)
     # make sure filetype is .npy
     filetype = outfile.filetype
     if '.npy' not in filetype:
-        WLOG(params, 'error', TextEntry('00-001-00033', args=[filetype]))
+        raise DrsCodedException('00-001-00033', level='error',
+                                targs=[filetype], func_name=func_name)
     # update keywords func name
     kwargs['func'] = func
     return general_file(params, **kwargs)
@@ -158,7 +161,8 @@ def blank(params, **kwargs):
     infile = kwargs.get('infile', None)
     # deal with kwargs that are required
     if infile is None:
-        WLOG(params, 'error', TextEntry('00-001-00017', args=[func_name]))
+        raise DrsCodedException('00-001-00017', level='error',
+                                targs=[func_name], func_name=func_name)
     # return absolute path
     return infile.filename
 
@@ -175,13 +179,15 @@ def set_file(params, **kwargs):
     outfile = kwargs.get('outfile', None)
     # deal with no outfile set
     if outfile is None:
-        WLOG(params, 'error', TextEntry('00-001-00018', args=[func_name]))
+        raise DrsCodedException('00-001-00018', level='error',
+                                targs=[func_name], func_name=func_name)
     # get filename from outfile if None
     if filename is None:
         filename = outfile.basename
     # deal with no file name set and filename must be a basename (no path)
     if filename is None:
-        WLOG(params, 'error', TextEntry('00-001-00041', args=[func_name]))
+        raise DrsCodedException('00-001-00041', level='error',
+                                targs=[func_name], func_name=func_name)
     else:
         filename = os.path.basename(filename)
     # get suffix
@@ -204,7 +210,8 @@ def set_file(params, **kwargs):
         outpath = params['OUTPATH']
         # check if outpath is set
         if outpath is None:
-            WLOG(params, 'error', TextEntry('01-001-00023', args=[func_name]))
+            raise DrsCodedException('00-001-00023', level='error',
+                                    targs=[func_name], func_name=func_name)
         # get output night name from params
         outdirectory = params['NIGHTNAME']
         # make sure night name folder exists (create it if not)
@@ -235,8 +242,8 @@ def get_outfilename(params, infilename, prefix=None, suffix=None,
         outfilename = str(infilename[:-len(inext)])
     else:
         eargs = [infilename, inext, func_name]
-        WLOG(params, 'error', TextEntry('00-001-00031', args=eargs))
-        outfilename = ''
+        raise DrsCodedException('00-001-00031', level='error',
+                                targs=eargs, func_name=func_name)
     # add prefix and suffix
     if prefix is not None:
         outfilename = '{0}{1}'.format(prefix, outfilename)
@@ -278,14 +285,15 @@ def make_night_name(params, nightname, path):
             os.chdir(cwd)
         except Exception as e:
             eargs = [rel_path, path, type(e), e, func_name]
-            WLOG(params, 'error', TextEntry('09-002-00002', args=eargs))
+            raise DrsCodedException('09-002-00002', level='error',
+                                    targs=eargs, func_name=func_name)
     # try to see if path exists one last time
     if os.path.exists(full_path):
         return
     else:
         eargs = [rel_path, path, func_name]
-        WLOG(params, 'error', TextEntry('09-002-00003', args=eargs))
-
+        raise DrsCodedException('09-002-00003', level='error',
+                                targs=eargs, func_name=func_name)
 
 # =============================================================================
 # Start of code

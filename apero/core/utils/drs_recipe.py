@@ -10,7 +10,7 @@ Created on 2019-01-19 at 12:02
 @author: cook
 """
 import numpy as np
-from astropy.table import Table, vstack
+from astropy.table import Table
 import argparse
 import os
 import sys
@@ -19,40 +19,39 @@ from collections import OrderedDict
 import copy
 import itertools
 
-from apero.core.instruments.default import pseudo_const
+from apero.base import base
+from apero.base import drs_misc
 from apero.core import constants
 from apero import lang
 from apero.core.core import drs_log
 from apero.core.core import drs_argument
-from apero.io import drs_text
+from apero.base import drs_text
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'drs_recipe.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get function string
 display_func = drs_log.display_func
 # Get Logging function
 WLOG = drs_log.wlog
 # get print colours
-COLOR = pseudo_const.Colors()
+COLOR = drs_misc.Colors()
 # get param dict
 ParamDict = constants.ParamDict
 # get the config error
 ConfigError = constants.ConfigError
 ArgumentError = constants.ArgumentError
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
-HelpText = lang.drs_text.HelpDict
+TextEntry = lang.core.drs_lang_text.TextEntry
+TextDict = lang.core.drs_lang_text.TextDict
+HelpText = lang.core.drs_lang_text.HelpDict
 # define name of index file
 INDEX_FILE = Constants['DRS_INDEX_FILE']
 INDEX_FILE_NAME_COL = Constants['DRS_INDEX_FILENAME']
@@ -615,10 +614,6 @@ class DrsRecipe(object):
         func_name = display_func(params, 'add_extra', __NAME__, 'DrsRecipe')
         # load pseudo constants
         pconst = constants.pload(instrument=params['INSTRUMENT'])
-
-        # TODO: remove breakpoint
-        constants.break_point(params)
-
         # loop around arguments
         for argname in arguments:
             # get value
@@ -779,7 +774,7 @@ class DrsRecipe(object):
         instrument = self.drs_params['INSTRUMENT']
         language = self.drs_params['LANGUAGE']
         # get the help text dictionary
-        htext = lang.drs_text.HelpDict(instrument, language)
+        htext = lang.core.drs_lang_text.HelpDict(instrument, language)
         # ---------------------------------------------------------------------
         # make debug functionality
         self._make_special(drs_argument.make_debug, skip=False, htext=htext)

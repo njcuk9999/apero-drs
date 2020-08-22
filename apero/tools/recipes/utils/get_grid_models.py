@@ -16,10 +16,9 @@ from astropy import units as uu
 import os
 import shutil
 
-
+from apero.base import base
 from apero import core
 from apero import lang
-from apero.core import constants
 
 
 # =============================================================================
@@ -27,18 +26,16 @@ from apero.core import constants
 # =============================================================================
 __NAME__ = 'get_grid_models.py'
 __INSTRUMENT__ = 'SPIROU'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
+TextEntry = lang.core.drs_lang_text.TextEntry
+TextDict = lang.core.drs_lang_text.TextDict
 # alias pcheck
 pcheck = core.pcheck
 

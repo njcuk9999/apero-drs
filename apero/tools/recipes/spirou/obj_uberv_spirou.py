@@ -12,6 +12,7 @@ Created on 2019-07-05 at 16:46
 import itertools
 import os
 
+from apero.base import base
 from apero import core
 from apero import lang
 from apero.core import constants
@@ -24,20 +25,20 @@ from apero.tools.module.testing import drs_dev
 # =============================================================================
 __NAME__ = 'update_berv.py'
 __INSTRUMENT__ = 'SPIROU'
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
 # get param dict
 ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
+TextEntry = lang.core.drs_lang_text.TextEntry
+TextDict = lang.core.drs_lang_text.TextDict
 # -----------------------------------------------------------------------------
 # set up recipe definitions (overwrites default one)
 RMOD = drs_dev.RecipeDefinition(instrument=__INSTRUMENT__)

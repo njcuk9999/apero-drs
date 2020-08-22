@@ -13,11 +13,11 @@ import os
 import warnings
 from scipy import ndimage
 
+from apero.base import base
 from apero.core import constants
-from apero.core.core import drs_database
 from apero.core import math as mp
 from apero import core
-from apero.io import drs_data
+from apero.core.utils import drs_data, drs_database
 from apero.io import drs_fits
 
 
@@ -26,13 +26,11 @@ from apero.io import drs_fits
 # =============================================================================
 __NAME__ = 'preprocessing.detector.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get Logging function
 WLOG = core.wlog
 # get param dict

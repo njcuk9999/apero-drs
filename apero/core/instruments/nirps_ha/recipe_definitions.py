@@ -1,5 +1,6 @@
+from apero.base import base
 from apero.core import constants
-from apero.core.core import drs_recipe
+from apero.core.utils import drs_recipe
 from apero import lang
 from apero.core.instruments.nirps_ha import file_definitions as sf
 
@@ -8,15 +9,15 @@ from apero.core.instruments.nirps_ha import file_definitions as sf
 # =============================================================================
 __NAME__ = 'core.instruments.nirps_ha.recipe_definitions.py'
 __INSTRUMENT__ = 'NIRPS_HA'
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get Help
-Help = lang.drs_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+Help = lang.core.drs_lang_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
 
 # =============================================================================
 # Commonly used arguments

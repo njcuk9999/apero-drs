@@ -11,10 +11,11 @@ Created on 2019-08-16 at 09:23
 """
 import numpy as np
 
+from apero.base import base
 from apero import core
 from apero import lang
 from apero.core import constants
-from apero.core.core import drs_database
+from apero.core.utils import drs_database
 from apero.io import drs_image
 from apero.io import drs_fits
 from apero.science.calib import general
@@ -28,19 +29,17 @@ from apero.science import velocity
 # =============================================================================
 __NAME__ = 'cal_wave_master_spirou.py'
 __INSTRUMENT__ = 'SPIROU'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get Logging function
 WLOG = core.wlog
 ParamDict = constants.ParamDict
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
+TextEntry = lang.core.drs_lang_text.TextEntry
+TextDict = lang.core.drs_lang_text.TextDict
 # define extraction code to use
 EXTRACT_NAME = 'cal_extract_spirou.py'
 

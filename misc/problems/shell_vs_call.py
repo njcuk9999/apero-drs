@@ -80,7 +80,7 @@ def main():
     # apero setup
     try:
         import apero
-        from apero.core import drs_startup as drs
+        from apero.core.utils import drs_startup as drs
         from apero.core import constants
         instruments = drs.Constants['DRS_INSTRUMENTS']
 

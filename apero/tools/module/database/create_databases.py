@@ -10,13 +10,22 @@ Created on 2020-08-2020-08-18 17:13
 import os
 import pandas as pd
 
+from apero.base import base
+from apero.base import drs_db
 from apero.core import constants
-from apero.core.core import drs_database2 as drs_database
 
 # =============================================================================
 # Define variables
 # =============================================================================
-Database = drs_database.Database
+__NAME__ = 'apero.tools.module.database.create_database.py'
+__INSTRUMENT__ = 'None'
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
+# Get database definition
+Database = drs_db.Database
 
 
 # =============================================================================
@@ -58,7 +67,7 @@ def list_databases(params):
 
 
 
-def create_databases(params, skip=None):
+def install_databases(params, skip=None):
 
     # deal with skip
     if skip is None:
@@ -276,7 +285,10 @@ def create_params_database(pconst, databases) -> Database:
 # Start of code
 # =============================================================================
 if __name__ == "__main__":
-    print('Hello World')
+    # test with spirou
+    params = constants.load('SPIROU')
+    # install database
+    install_databases(params)
 
 # =============================================================================
 # End of code

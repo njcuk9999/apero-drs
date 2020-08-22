@@ -11,34 +11,32 @@ Created on 2020-03-30 at 14:47
 """
 import numpy as np
 
+from apero.base import base
 from apero import core
 from apero import lang
 from apero.core import constants
 from apero.science.calib import localisation
 from apero.science.calib import shape
-from apero.core.core import drs_recipe
-
+from apero.core.utils import drs_recipe
 
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'cal_update_berv.py'
-__INSTRUMENT__ = 'SPIROU'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__NAME__ = 'tools.modeule.inverse.py'
+__INSTRUMENT__ = 'None'
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
-Help = lang.drs_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
+TextEntry = lang.core.drs_lang_text.TextEntry
+TextDict = lang.core.drs_lang_text.TextDict
+Help = lang.core.drs_lang_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
 
 
 # =============================================================================

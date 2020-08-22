@@ -14,9 +14,18 @@ import os
 import glob
 from collections import OrderedDict
 
+from apero.base import base
+
 # =============================================================================
 # Define variables
 # =============================================================================
+__NAME__ = 'plotting.html.py'
+__INSTRUMENT__ = 'None'
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # define known extensions
 KNOWN_EXTENSIONS = ['.pdf', '.tex', '.html']
 # define colours

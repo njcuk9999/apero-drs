@@ -18,15 +18,13 @@ import os
 import warnings
 import copy
 
+from apero.base import base
 from apero import core
 from apero.core import constants
 from apero.core import math as mp
 from apero import lang
-from apero.core.core import drs_database
 from apero.core.core import drs_log
-from apero.core.core import drs_file
-from apero.core.core import drs_startup
-from apero.io import drs_data
+from apero.core.utils import drs_data, drs_file, drs_startup, drs_database
 from apero.io import drs_table
 from apero.io import drs_image
 from apero.science import velocity
@@ -39,21 +37,19 @@ from apero.science.calib import flat_blaze
 # =============================================================================
 __NAME__ = 'science.calib.wave.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
+TextEntry = lang.core.drs_lang_text.TextEntry
+TextDict = lang.core.drs_lang_text.TextDict
 # alias pcheck
 pcheck = core.pcheck
 # Speed of light

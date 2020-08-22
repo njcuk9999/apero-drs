@@ -14,19 +14,27 @@ from astropy.table import Table
 import importlib
 import os
 import shutil
-from apero.lang import drs_text
-from apero.lang import drs_exceptions
+
+from apero.base import base
+from apero.base import drs_exceptions
+from apero.lang.core import drs_lang_text
 
 
 # =============================================================================
 # Define variables
 # =============================================================================
-# define the package name
-PACKAGE = 'apero'
+__NAME__ = 'apero.lang.core.port_database.py'
+__INSTRUMENT__ = 'None'
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
+
 # define the database path relative to package
-DATABASE_PATH = './lang/databases/'
+DATABASE_PATH = base.LANG_DEFAULT_PATH
 # define the backup path relative to package
-BACKUP_PATH = './lang/backup/'
+BACKUP_PATH = base.LANG_BACKUP_PATH
 # define the database (xls file)
 DATABASE_FILE = 'language.xls'
 # define the database names (sheet names in the xls file)
@@ -124,8 +132,9 @@ def validate_csv(files):
 def main():
     # ----------------------------------------------------------------------
     # get abspath from relative path
-    database_path = drs_text.get_relative_folder(PACKAGE, DATABASE_PATH)
-    backup_path = drs_text.get_relative_folder(PACKAGE, BACKUP_PATH)
+    database_path = drs_lang_text.get_relative_folder(__PACKAGE__,
+                                                      DATABASE_PATH)
+    backup_path = drs_lang_text.get_relative_folder(__PACKAGE__, BACKUP_PATH)
     # ----------------------------------------------------------------------
     # get database abspath
     dabspath = os.path.join(database_path, DATABASE_FILE)

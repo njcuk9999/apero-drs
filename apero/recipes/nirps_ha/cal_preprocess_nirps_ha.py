@@ -11,9 +11,9 @@ Version 0.0.1
 import numpy as np
 import os
 
+from apero.base import base
 from apero import core
 from apero import lang
-from apero.core import constants
 from apero.science import preprocessing as pp
 from apero.io import drs_image
 from apero.io import drs_fits
@@ -25,17 +25,15 @@ from apero.core.instruments.spirou import file_definitions
 # =============================================================================
 __NAME__ = 'cal_preprocess_nirps_ha.py'
 __INSTRUMENT__ = 'NIRPS_HA'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get Logging function
 WLOG = core.wlog
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
+TextEntry = lang.core.drs_lang_text.TextEntry
 # Raw prefix
 RAW_PREFIX = file_definitions.raw_prefix
 

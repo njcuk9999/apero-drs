@@ -17,7 +17,7 @@ import shutil
 from pathlib import Path
 from typing import Union
 
-from apero.core import constants
+from apero.base import base
 from apero.core import math as mp
 from apero.core.core import drs_log
 from apero import lang
@@ -28,19 +28,17 @@ from apero import lang
 # =============================================================================
 __NAME__ = 'io.drs_path.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get function string
 display_func = drs_log.display_func
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
+TextEntry = lang.core.drs_lang_text.TextEntry
 # -----------------------------------------------------------------------------
 
 

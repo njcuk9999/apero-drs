@@ -8,16 +8,26 @@
 Created on 2019-01-24 at 16:33
 
 @author: cook
-"""
-from astropy.time import Time
-import sys
 
+Rules only import base.py from apero.base no other apero modules
+"""
+import sys
+from typing import Union
+
+from apero.base import base
 
 # =============================================================================
 # Define variables
 # =============================================================================
-# Define package name
-PACKAGE = 'apero'
+__NAME__ = 'apero.base.drs_exceptions.py'
+__PACKAGE__ = base.__PACKAGE__
+__INSTRUMENT__ = 'None'
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
+# get astropy time
+Time = base.Time
 # track used warnings
 USED_TEXT_WARNINGS = []
 USED_DRS_WARNINGS = []
@@ -221,7 +231,6 @@ class DrsHeaderError(DrsException):
 
     def __str__(self):
         return _flatmessage(self.message)
-
 
 
 class DrsWarning:
@@ -485,6 +494,51 @@ class DebugExit(Exit):
         super().__init__(*args, **kwargs)
 
 
+class DrsCodedException(DrsException):
+    """
+    Exception to be passed to drs logger (up the chain)
+    """
+    def __init__(self, codeid, level=None, targs=Union[None, list, str],
+                 func_name: str = None):
+        self.codeid = codeid
+        self.level = level
+        self.targs = targs
+        self.func_name = None
+
+    def get(self, key, default):
+        """
+        Quick get function with default key if not present
+        :param key:
+        :param default:
+        :return:
+        """
+        if hasattr(self, key):
+            value = getattr(self, key)
+            if value is None:
+                return default
+            else:
+                return value
+        else:
+            return default
+
+    def __str__(self):
+        emsg = 'DrsCodedException[{0}]'.format(self.codeid)
+        if self.level is not None:
+            emsg += '\n\tLevel: {0}'.format(self.level)
+        if self.args is not None:
+            if isinstance(self.targs, list):
+                for it, arg in enumerate(self.targs):
+                    emsg += '\n\t Arg[{0}] = {1}'.format(it, arg)
+            else:
+                emsg += '\n\tArgs: {0}'.format(self.args)
+        if self.func_name is not None:
+            emsg += '\n\tFunction: {0}'.format(self.func_name)
+
+    def __repr__(self):
+        return self.__str__()
+
+
+
 # =============================================================================
 # Define functions
 # =============================================================================
@@ -521,7 +575,7 @@ def basiclogger(message=None, level=None, name=None, force_exit=True,
 
     # deal with no name
     if name is None:
-        name = PACKAGE.upper()
+        name = __PACKAGE__.upper()
     # capitalize name
     name = name.capitalize()
     # deal with no level

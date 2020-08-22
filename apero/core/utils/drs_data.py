@@ -14,37 +14,33 @@ import numpy as np
 import os
 import glob
 
+from apero.base import base
+from apero.base import drs_exceptions
+from apero.base import drs_text
 from apero import core
-from apero.core import constants
 from apero import lang
 from apero.core.core import drs_log
-from apero.core.core import drs_file
 from apero.io import drs_path
 from apero.io import drs_fits
 from apero.io import drs_table
-from apero.io import drs_text
-
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'io.drs_data.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
-# get param dict
-ParamDict = constants.ParamDict
-DrsFitsFile = drs_file.DrsFitsFile
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
+TextEntry = lang.core.drs_lang_text.TextEntry
+TextDict = lang.core.drs_lang_text.TextDict
+# get exceptions
+DrsCodedException = drs_exceptions.DrsCodedException
 # alias pcheck
 pcheck = core.pcheck
 
@@ -421,8 +417,13 @@ def load_text_file(params, filename, func_name=None, dtype=float):
         eargs = [filename, func_name]
         raise LoadException(textdict['01-001-00022'].format(*eargs))
     # load text as list
-    textlist = drs_text.load_text_file(params, filename, comments='#',
-                                       delimiter=' ')
+    try:
+        textlist = drs_text.load_text_file(filename, '#', ' ')
+    except DrsCodedException as e:
+        elevel = e.get('level', 'error')
+        eargs = e.get('targs', None)
+        WLOG(params, elevel, TextEntry(e.codeid, args=eargs))
+        textlist = None
     # deal with change list to numpy array
     textlist = np.array(textlist).astype(dtype)
     # return image
@@ -433,7 +434,12 @@ def save_text_file(params, filename, array, func_name):
     if func_name is None:
         func_name = __NAME__ + '.save_text_file()'
     # save text file
-    drs_text.save_text_file(params, filename, array, func_name)
+    try:
+        drs_text.save_text_file(filename, array, func_name)
+    except DrsCodedException as e:
+        elevel = e.get('level', 'error')
+        eargs = e.get('targs', None)
+        WLOG(params, elevel, TextEntry(e.codeid, args=eargs))
 
 
 def construct_path(params, filename=None, directory=None, **kwargs):

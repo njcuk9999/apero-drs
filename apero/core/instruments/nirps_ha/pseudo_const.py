@@ -11,25 +11,32 @@ Created on 2019-01-18 at 14:44
 """
 import importlib
 import numpy as np
-from astropy.time import Time, TimeDelta
 
+from apero.base import base
+from apero.base import drs_exceptions
 from apero.core import constants
 from apero.core.instruments.default import pseudo_const
-from apero.lang import drs_exceptions
+
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'config.instruments.nirps_ha.pseudo_const'
 __INSTRUMENT__ = 'NIRPS_HA'
-# get parameters
-PARAMS = constants.load(__INSTRUMENT__)
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
+# Get Astropy Time and Time Delta
+Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 # Get Parmeter Dictionary class
 ParamDict = constants.ParamDict
 # get default Constant class
 DefaultConstants = pseudo_const.PseudoConstants
 # get error
 ConfigError = drs_exceptions.ConfigError
+DrsHeaderError = drs_exceptions.DrsHeaderError
 
 
 # =============================================================================
@@ -389,9 +396,8 @@ def clean_obj_name(params=None, header=None, hdict=None, objname=None,
         kwobjname = params['KW_OBJNAME'][0]
         # get raw object name
         if kwrawobjname not in header:
-            raise drs_exceptions.DrsHeaderError('Key not found',
-                                                level='error', key=kwrawobjname,
-                                                filename=filename)
+            raise DrsHeaderError('Key not found', level='error',
+                                 key=kwrawobjname, filename=filename)
         rawobjname = header[kwrawobjname]
     # else just set up blank parameters
     else:
@@ -421,15 +427,13 @@ def get_trg_type(params, header, hdict, filename=None):
     kwtrgcomment = params['KW_TARGET_TYPE'][2]
     # get objname
     if kwobjname not in header:
-        raise drs_exceptions.DrsHeaderError('Key not found',
-                                            level='error', key=kwobjname,
-                                            filename=filename)
+        raise DrsHeaderError('Key not found', level='error', key=kwobjname,
+                             filename=filename)
     objname = header[kwobjname]
     # get obstype
     if kwobstype not in header:
-        raise drs_exceptions.DrsHeaderError('Key not found',
-                                            level='error', key=kwobstype,
-                                            filename=filename)
+        raise DrsHeaderError('Key not found', level='error', key=kwobstype,
+                             filename=filename)
     obstype = header[kwobstype]
     # deal with setting value
     if obstype != 'OBJECT':
@@ -458,9 +462,8 @@ def get_mid_obs_time(params, header, hdict, filename=None):
     exp_timeunit = params.instances['KW_EXPTIME'].unit
     # get exptime
     if exp_timekey not in header:
-        raise drs_exceptions.DrsHeaderError('Key not found',
-                                            level='error', key=exp_timekey,
-                                            filename=filename)
+        raise DrsHeaderError('Key not found', level='error', key=exp_timekey,
+                             filename=filename)
     exptime = timetype(header[exp_timekey])
     # -------------------------------------------------------------------
     # get header time
@@ -522,9 +525,8 @@ def get_header_end_time(params, header, filename=None):
     timetype = params.instances['KW_MJDEND'].dataformat
     # get time key from header
     if time_key not in header:
-        raise drs_exceptions.DrsHeaderError('Key not found',
-                                            level='error', key=time_key,
-                                            filename=filename)
+        raise DrsHeaderError('Key not found', level='error', key=time_key,
+                             filename=filename)
     rawtime = header[time_key]
     # ----------------------------------------------------------------------
     # get astropy time

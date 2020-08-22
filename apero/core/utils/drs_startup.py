@@ -10,7 +10,6 @@ Created on 2019-01-19 at 13:37
 @author: cook
 """
 import numpy as np
-from astropy.time import Time
 import traceback
 import string
 import time
@@ -21,17 +20,17 @@ from signal import signal, SIGINT
 from collections import OrderedDict
 from typing import Union, List
 
+from apero.base import base
+from apero.base import drs_exceptions
+from apero.base import drs_misc
 from apero import lang
 from apero.core import constants
-from apero.core.instruments.default import pseudo_const
 from apero.io import drs_table
 from apero.io import drs_path
 from apero.io import drs_lock
 from apero import plotting
 from apero.core.core import drs_log
-from apero.core.core import drs_recipe
-from apero.core.core import drs_file
-
+from apero.core.utils import drs_recipe, drs_file
 
 # =============================================================================
 # Define variables
@@ -39,41 +38,39 @@ from apero.core.core import drs_file
 # Name of program
 __NAME__ = 'drs_startup.py'
 __INSTRUMENT__ = 'None'
-# Get constants
-Constants = constants.load(__INSTRUMENT__)
-# Define package name
-PACKAGE = Constants['DRS_PACKAGE']
-# Get version and author
-__version__ = Constants['DRS_VERSION']
-__author__ = Constants['AUTHORS']
-__date__ = Constants['DRS_DATE']
-__release__ = Constants['DRS_RELEASE']
+__PACKAGE__ = base.__PACKAGE__
+__version__ = base.__version__
+__author__ = base.__author__
+__date__ = base.__date__
+__release__ = base.__release__
+# Get Astropy Time and Time Delta
+Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 # Get Logging function
 WLOG = drs_log.wlog
 TLOG = drs_log.Printer
 # get print colours
-COLOR = pseudo_const.Colors
+COLOR = drs_misc.Colors
 # get param dict
 ParamDict = constants.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
 DrsFitsFile = drs_file.DrsFitsFile
 DrsInputFile = drs_file.DrsInputFile
 # get the Drs Exceptions
-DrsError = lang.drs_exceptions.DrsError
-DrsWarning = lang.drs_exceptions.DrsWarning
-TextError = lang.drs_exceptions.TextError
-TextWarning = lang.drs_exceptions.TextWarning
-ConfigError = lang.drs_exceptions.ConfigError
-ConfigWarning = lang.drs_exceptions.ConfigWarning
+DrsError = drs_exceptions.DrsError
+DrsWarning = drs_exceptions.DrsWarning
+TextError = drs_exceptions.TextError
+TextWarning = drs_exceptions.TextWarning
+ConfigError = drs_exceptions.ConfigError
+ConfigWarning = drs_exceptions.ConfigWarning
 # Get the text types
-TextEntry = lang.drs_text.TextEntry
-TextDict = lang.drs_text.TextDict
-HelpEntry = lang.drs_text.HelpEntry
-HelpText = lang.drs_text.HelpDict
+TextEntry = lang.core.drs_lang_text.TextEntry
+TextDict = lang.core.drs_lang_text.TextDict
+HelpEntry = lang.core.drs_lang_text.HelpEntry
+HelpText = lang.core.drs_lang_text.HelpDict
 # recipe control path
-INSTRUMENT_PATH = Constants['DRS_MOD_INSTRUMENT_CONFIG']
-CORE_PATH = Constants['DRS_MOD_CORE_CONFIG']
-PDB_RC_FILE = Constants['DRS_PDB_RC_FILE']
+INSTRUMENT_PATH = base.CONST_PATH
+CORE_PATH = base.CORE_PATH
+PDB_RC_FILE = base.PDB_RC_FILE
 CURRENT_PATH = ''
 # get all chars
 CHARS = string.ascii_uppercase + string.digits
