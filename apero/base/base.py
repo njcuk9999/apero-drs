@@ -15,7 +15,7 @@ from collections import OrderedDict
 # =============================================================================
 # Define variables
 # =============================================================================
-__PACKAGE__ = 'APERO'
+__PACKAGE__ = 'apero'
 __INSTRUMENT__ = 'None'
 __version__ = '0.7.000'
 __author__ = ['N. Cook', 'E. Artigau', 'F. Bouchy', 'M. Hobson', 'C. Moutou',

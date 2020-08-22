@@ -352,7 +352,7 @@ def run(func, recipe, params):
             llmain = func(recipe, params)
             llmain['e'], llmain['tb'] = None, None
             success = True
-        except lang.drs_exceptions.DebugExit as e:
+        except drs_exceptions.DebugExit as e:
             WLOG(params, 'error', e.errormessage, raise_exception=False)
             # on debug exit was not a success
             success = False
@@ -382,7 +382,7 @@ def run(func, recipe, params):
                 recipe.log.add_error(params, 'KeyboardInterrupt', '')
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
-        except lang.drs_exceptions.LogExit as e:
+        except drs_exceptions.LogExit as e:
             # get trace back
             string_trackback = traceback.format_exc()
             # on LogExit was not a success
@@ -551,7 +551,7 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
                     # index outputs to reduced dir
                     _index_outputs(params, recipe)
             # Must close lock file
-            except lang.drs_exceptions.LogExit as e_:
+            except drs_exceptions.LogExit as e_:
                 # log error
                 eargs = [type(e_), e_.errormessage, func_name]
                 WLOG(params, 'error', TextEntry('00-000-00002', args=eargs))
@@ -602,7 +602,7 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
         WLOG.clean_log(params['PID'])
         # ---------------------------------------------------------------------
         # deal with clearing warnings
-        lang.drs_exceptions.clear_warnings()
+        drs_exceptions.clear_warnings()
     # -------------------------------------------------------------------------
     # deal with closing graphs
     # -------------------------------------------------------------------------
