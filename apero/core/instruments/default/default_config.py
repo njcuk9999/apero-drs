@@ -33,7 +33,8 @@ __all__ = [  # global settings
     # DATABASE SETTINGS
     'DATABASE_DIR', 'CALIB_DB_NAME', 'TELLU_DB_NAME', 'INDEX_DB_NAME',
     'LANG_DB_NAME', 'LOG_DB_NAME', 'PARAM_DB_NAME', 'OBJECT_DB_NAME',
-    'CALIB_DB_RESET', 'OBJECT_DB_RESET',
+    'CALIB_DB_RESET', 'OBJECT_DB_RESET', 'CALIB_DBFILE_PATH',
+    'TELLU_DBFILE_PATH',
     # OLD DATABASE SETTINGS
     'DB_MAX_WAIT', 'DB_MATCH', 'LOCKOPEN_MAX_WAIT',
     'CALIB_DB_MATCH', 'CALIB_DB_COLS',
@@ -267,12 +268,12 @@ DRS_USER_DEFAULT = Const('DRS_USER_DEFAULT', value='../config/', dtype=str,
 DRS_MOD_DATA_PATH = Const('DRS_MOD_DATA_PATH', value='./data/', dtype=str,
                           source=__NAME__, group=cgroup)
 
-#   where instrument configuration files are stored
+#   where instrument configuration files are stored (do not change here)
 DRS_MOD_INSTRUMENT_CONFIG = Const('DRS_MOD_INSTRUMENT_CONFIG', dtype=str,
                                   value=base.CONST_PATH,
                                   source=__NAME__, group=cgroup)
 
-#   where the core configuration files are stored
+#   where the core configuration files are stored (do not change here)
 DRS_MOD_CORE_CONFIG = Const('DRS_MOD_CORE_CONFIG', dtype=str,
                             value=base.CORE_PATH,
                             source=__NAME__, group=cgroup)
@@ -313,12 +314,12 @@ DRS_RESET_TELLUDB_PATH = Const('DRS_RESET_TELLUDB_PATH', dtype=str,
 DRS_RESET_RUN_PATH = Const('DRS_RESET_RUN_PATH', dtype=str, source=__NAME__,
                            group=cgroup)
 
-# where the pdb rc file is
+# where the pdb rc file is (do not change - just here for use)
 DRS_PDB_RC_FILE = Const('DRS_PDB_RC_FILE', value=base.PDB_RC_FILE,
                         dtype=str, source=__NAME__, group=cgroup)
 
-# what the pdb file should be called
-DRS_PDB_RC_FILENAME = Const('DRS_PDB_RC_FILENAME', value='.pdbrc',
+# what the pdb file should be called (do not change - just here for use)
+DRS_PDB_RC_FILENAME = Const('DRS_PDB_RC_FILENAME', value=base.PDB_RC_FILENAME,
                             dtype=str, source=__NAME__, group=cgroup)
 
 
@@ -343,6 +344,11 @@ cgroup = 'DATABASE SETTINGS'
 DATABASE_DIR = Const('DATABASE_DIR', dtype=str, value='databases/',
                      source=__NAME__, group=cgroup)
 
+# Define calibration database, database file path (default is to get it from
+#    DRS_CALIB_BD value)
+CALIB_DBFILE_PATH = Const('CALIB_DBFILE_PATH', dtype=str, value='DRS_CALIB_DB',
+                          source=__NAME__, group=cgroup)
+
 # the calibration database name
 CALIB_DB_NAME = Const('CALIB_DB_NAME', dtype=str, source=__NAME__,
                       value='calib.db', group=cgroup)
@@ -350,6 +356,11 @@ CALIB_DB_NAME = Const('CALIB_DB_NAME', dtype=str, source=__NAME__,
 # Define calibration database name
 CALIB_DB_RESET = Const('CALIB_DB_RESET', dtype=str, source=__NAME__,
                        value='reset.calib.csv', group=cgroup)
+
+# Define telluric database, database file path (default is to get it from
+#    DRS_TELLU_DB value)
+TELLU_DBFILE_PATH = Const('TELLU_DBFILE_PATH', dtype=str, value='DRS_TELLU_DB',
+                          source=__NAME__, group=cgroup)
 
 # the telluric database name
 TELLU_DB_NAME = Const('TELLU_DB_NAME', dtype=str, source=__NAME__,
@@ -422,7 +433,8 @@ CALIB_DB_NAME = Const('CALIB_DB_NAME', dtype=str, source=__NAME__,
 #    if two files match with keys and time the key lower in the
 #         calibDB file will be used
 CALIB_DB_MATCH = Const('CALIB_DB_MATCH', dtype=str, source=__NAME__,
-                       value='closest', group=cgroup)
+                       value='closest', options=['closest', 'newer', 'older'],
+                       group=cgroup)
 
 # define the calibration database columns
 CALIB_DB_COLS = Const('CALIB_DB_COLS', dtype=str, source=__NAME__, group=cgroup)

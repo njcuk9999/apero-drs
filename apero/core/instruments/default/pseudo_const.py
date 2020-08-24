@@ -639,7 +639,6 @@ class PseudoConstants:
                   float, float, float, float, int]
         return columns, ctypes
 
-
     def PARAMS_DB_COLUMNS(self) -> Tuple[List[str], List[type]]:
         """
         Define the columns use in the parameter database
@@ -647,6 +646,15 @@ class PseudoConstants:
         """
         columns = ['KEY', 'VALUE', 'DTYPE', 'SOURCE', 'LAST_MODIFIED', 'USED']
         ctypes = [str, str, str, str, float, int]
+        return columns, ctypes
+
+    def LANG_DB_COLUMNS(self) -> Tuple[List[str], List[type]]:
+        """
+        Define the columns use in the language database
+        :return:
+        """
+        columns = ['KEY', 'KIND', 'COMMENT', 'ARGUMENTS'] + base.LANGUAGES
+        ctypes = [str, str, str, str] + [str]*len(base.LANGUAGES)
         return columns, ctypes
 
 
