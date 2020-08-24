@@ -18,6 +18,8 @@ from pathlib import Path
 from typing import Union
 
 from apero.base import base
+from apero.base import drs_break
+from apero.base import drs_exceptions
 from apero.core import math as mp
 from apero.core.core import drs_log
 from apero import lang
@@ -35,6 +37,8 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get function string
 display_func = drs_log.display_func
+# Get exceptions
+DrsCodedException = drs_exceptions.DrsCodedException
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
@@ -57,29 +61,11 @@ def get_relative_folder(params, package, folder):
     :return data: string, the absolute path and filename of the default config
                   file
     """
-    func_name = __NAME__ + '.get_relative_folder()'
-    # get the package.__init__ file path
     try:
-        init = pkg_resources.resource_filename(package, '__init__.py')
-    except ImportError:
-        eargs = [package, func_name]
-        WLOG(params, 'error', TextEntry('00-008-00001', args=eargs))
-        init = None
-    # Get the config_folder from relative path
-    current = os.getcwd()
-    # get directory name of folder
-    dirname = os.path.dirname(init)
-    # change to directory in init
-    os.chdir(dirname)
-    # get the absolute path of the folder
-    data_folder = os.path.abspath(folder)
-    # change back to working dir
-    os.chdir(current)
-    # test that folder exists
-    if not os.path.exists(data_folder):
-        eargs = [os.path.basename(data_folder), os.path.dirname(data_folder),
-                 func_name]
-        WLOG(params, 'error', TextEntry('00-008-00002', args=eargs))
+        data_folder = drs_break.get_relative_folder(package, folder)
+    except DrsCodedException as e:
+        WLOG(params, e.level, TextEntry(e.codeid, args=e.targs))
+        data_folder = None
     # return the absolute data_folder path
     return data_folder
 
