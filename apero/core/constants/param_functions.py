@@ -22,7 +22,9 @@ from typing import Union, List, Type
 from pathlib import Path
 
 from apero.base import base
+from apero.base import drs_break
 from apero.base import drs_exceptions
+from apero.base import drs_misc
 from apero.core.constants import constant_functions
 
 
@@ -64,7 +66,8 @@ SCRIPTS = base.SCRIPTS
 USCRIPTS = base.USCRIPTS
 PSEUDO_CONST_FILE = base.PSEUDO_CONST_FILE
 PSEUDO_CONST_CLASS = base.PSEUDO_CONST_CLASS
-
+# get display func
+display_func = drs_misc.display_func
 
 # =============================================================================
 # Define Custom classes
@@ -1283,10 +1286,10 @@ def get_file_names(instrument=None, file_list=None, instrument_path=None,
     # set function name (cannot break here --> no access to inputs)
     func_name = display_func(None, 'get_file_names', __NAME__)
     # get core path
-    core_path = get_relative_folder(__PACKAGE__, default_path)
+    core_path = drs_break.get_relative_folder(__PACKAGE__, default_path)
     # get constants package path
     if instrument is not None:
-        const_path = get_relative_folder(__PACKAGE__, instrument_path)
+        const_path = drs_break.get_relative_folder(__PACKAGE__, instrument_path)
         # get the directories within const_path
         filelist = np.sort(os.listdir(const_path))
         directories = []
@@ -1344,8 +1347,8 @@ def get_module_names(instrument=None, mod_list=None, instrument_path=None,
         default_path = CORE_PATH
 
     # get constants package path
-    const_path = get_relative_folder(__PACKAGE__, instrument_path)
-    core_path = get_relative_folder(__PACKAGE__, default_path)
+    const_path = drs_break.get_relative_folder(__PACKAGE__, instrument_path)
+    core_path = drs_break.get_relative_folder(__PACKAGE__, default_path)
     # get the directories within const_path
     filelist = np.sort(os.listdir(const_path))
     directories = []
@@ -1436,34 +1439,6 @@ def print_error(error):
     print('=' * 70, '\n')
 
 
-def break_point(params=None, allow=None, level=2):
-    # set function name (cannot break inside break function)
-    _ = str(__NAME__) + '.break_point()'
-    # if we don't have parameters load them from config file
-    if params is None:
-        params = load_config()
-        # force to True
-        params['ALLOW_BREAKPOINTS'] = True
-    # if allow is not set
-    if allow is None:
-        allow = params['ALLOW_BREAKPOINTS']
-    # if still not allowed the return
-    if not allow:
-        return
-    # copy pdbrc
-    _copy_pdb_rc(params, level=level)
-    # catch bdb quit
-    # noinspection PyPep8
-    try:
-        _execute_ipdb()
-    except Exception:
-        emsg = 'USER[00-000-00000]: Debugger breakpoint exit.'
-        raise drs_exceptions.DebugExit(emsg)
-    finally:
-        # delete pdbrc
-        _remove_pdb_rc(params)
-
-
 # noinspection PyUnusedLocal
 def catch_sigint(signal_received, frame):
     # set function name (cannot break here --> no access to inputs)
@@ -1515,99 +1490,6 @@ def window_size(drows=80, dcols=80):
     return drows, dcols
 
 
-def display_func(params=None, name=None, program=None, class_name=None,
-                 wlog=None, textentry=None):
-    # set function name (cannot break here --> no access to inputs)
-    func_name = str(__NAME__) + '.display_func()'
-    # deal with no wlog defined
-    if wlog is None:
-        wlog = drs_exceptions.wlogbasic
-    # deal with not text entry defined
-    if textentry is None:
-        textentry = constant_functions.DisplayText()
-    # start the string function
-    strfunc = ''
-    # deal with no file name
-    if name is None:
-        name = 'Unknown'
-    # ----------------------------------------------------------------------
-    # add the program
-    if program is not None:
-        strfunc = str(program)
-    if class_name is not None:
-        strfunc += '.{0}'.format(class_name)
-    # add the name
-    strfunc += '.{0}'.format(name)
-    # add brackets to show function
-    if not strfunc.endswith('()'):
-        strfunc += '()'
-    # ----------------------------------------------------------------------
-    # deal with adding a break point
-    if params is not None:
-        if 'INPUTS' in params and 'BREAKFUNC' in params['INPUTS']:
-            # get break function
-            breakfunc = params['INPUTS']['BREAKFUNC']
-            # only deal with break function if it is set
-            if breakfunc not in [None, 'None', '']:
-                # get function name (without ending)
-                funcname = strfunc.replace('()', '')
-                # if function name endwith break function then we break here
-                if funcname.endswith(breakfunc):
-                    # log we are breaking due to break function
-                    wargs = [breakfunc]
-                    msg = textentry('10-005-00004', args=wargs)
-                    wlog(params, 'warning', msg)
-                    break_point(params, allow=True, level=3)
-    # ----------------------------------------------------------------------
-    # deal with no params (do not log)
-    if params is None:
-        return strfunc
-    # deal with debug level too low (just return here)
-    if params['DRS_DEBUG'] < params['DEBUG_MODE_FUNC_PRINT']:
-        return strfunc
-    # ----------------------------------------------------------------------
-    # below here just for debug mode func print
-    # ----------------------------------------------------------------------
-    # add the string function to param dict
-    if 'DEBUG_FUNC_LIST' not in params:
-        params.set('DEBUG_FUNC_LIST', value=[None], source=func_name)
-    if 'DEBUG_FUNC_DICT' not in params:
-        params.set('DEBUG_FUNC_DICT', value=dict(), source=func_name)
-    # append to list
-    params['DEBUG_FUNC_LIST'].append(strfunc)
-    # update debug dictionary
-    if strfunc in params['DEBUG_FUNC_DICT']:
-        params['DEBUG_FUNC_DICT'][strfunc] += 1
-    else:
-        params['DEBUG_FUNC_DICT'][strfunc] = 1
-    # get count
-    count = params['DEBUG_FUNC_DICT'][strfunc]
-    # find previous entry
-    previous = params['DEBUG_FUNC_LIST'][-2]
-    # find out whether we have the same entry
-    same_entry = previous == strfunc
-    # add count
-    strfunc += ' (N={0})'.format(count)
-    # if we don't have a list then just print
-    if params['DEBUG_FUNC_LIST'][-2] is None:
-        # log in func
-        wlog(params, 'debug', textentry('90-000-00004', args=[strfunc]),
-             wrap=False)
-    elif not same_entry:
-        # get previous set of counts
-        previous_count = _get_prev_count(params, previous)
-        # only log if count is greater than 1
-        if previous_count > 1:
-            # log how many of previous there were
-            dargs = [previous_count]
-            wlog(params, 'debug', textentry('90-000-00005', args=dargs))
-        # log in func
-        wlog(params, 'debug', textentry('90-000-00004', args=[strfunc]),
-             wrap=False)
-    # return func_name
-    return strfunc
-
-
 # =============================================================================
 # Config loading private functions
 # =============================================================================
@@ -1624,7 +1506,7 @@ def _get_file_names(params, instrument=None):
     # get the package name
     drs_package = __PACKAGE__
     # change user_dpath to a absolute path
-    user_dpath = get_relative_folder(drs_package, user_dpath)
+    user_dpath = drs_break.get_relative_folder(drs_package, user_dpath)
     # deal with no user environment and no default path
     if user_env is None and user_dpath is None:
         return []
@@ -1720,64 +1602,6 @@ def _get_subdir(directory, instrument, source):
         ConfigWarning(textentry('10-002-00001', args=wargs))
     # return the subdir
     return subdir
-
-
-def get_relative_folder(package, folder: Union[str, Path]):
-    """
-    Get the absolute path of folder defined at relative path
-    folder from package
-
-    :param package: string, the python package name
-    :param folder: string, the relative path of the config folder
-
-    :return data: string, the absolute path and filename of the default config
-                  file
-    """
-    global REL_CACHE
-
-    # TODO: update to pathlib.Path
-    if isinstance(folder, Path):
-        folder = str(folder)
-    # set function name (cannot break here --> no access to inputs)
-    func_name = display_func(None, 'get_relative_folder', __NAME__)
-    # get text entry
-    textentry = constant_functions.DisplayText()
-    # ----------------------------------------------------------------------
-    # check relative folder cache
-    if package in REL_CACHE and folder in REL_CACHE[package]:
-        return REL_CACHE[package][folder]
-    # ----------------------------------------------------------------------
-    # get the package.__init__ file path
-    try:
-        init = pkg_resources.resource_filename(package, '__init__.py')
-    except ImportError:
-        eargs = [package, func_name]
-        raise ConfigError(textentry('00-008-00001', args=eargs), level='error')
-    # Get the config_folder from relative path
-    current = os.getcwd()
-    # get directory name of folder
-    dirname = os.path.dirname(init)
-    # change to directory in init
-    os.chdir(dirname)
-    # get the absolute path of the folder
-    data_folder = os.path.abspath(folder)
-    # change back to working dir
-    os.chdir(current)
-    # test that folder exists
-    if not os.path.exists(data_folder):
-        # raise exception
-        eargs = [os.path.basename(data_folder), os.path.dirname(data_folder)]
-        raise ConfigError(textentry('00-003-00005', args=eargs), level='error')
-
-    # ----------------------------------------------------------------------
-    # update REL_CACHE
-    if package not in REL_CACHE:
-        REL_CACHE[package] = dict()
-    # update entry
-    REL_CACHE[folder] = data_folder
-    # ----------------------------------------------------------------------
-    # return the absolute data_folder path
-    return data_folder
 
 
 def _load_from_module(modules, quiet=False):
@@ -1897,7 +1721,7 @@ def _check_mod_source(source: str) -> str:
     if not os.path.exists(source):
         return source
     # get package path
-    package_path = get_relative_folder(__PACKAGE__, '')
+    package_path = drs_break.get_relative_folder(__PACKAGE__, '')
     # if package path not in source then skip
     if package_path not in source:
         return source
@@ -2051,73 +1875,6 @@ def _map_dictparameter(value: str, dtype: Union[None, Type] = None) -> dict:
     except Exception as e:
         eargs = [value, type(e), e, func_name]
         BLOG(message=textentry('00-003-00003', args=eargs), level='error')
-
-
-def _copy_pdb_rc(params, level=0):
-    # set function name (cannot break here --> no access to inputs)
-    _ = str(__NAME__) + '_copy_pdb_rc()'
-    # set global CURRENT_PATH
-    global CURRENT_PATH
-    # get package
-    package = __PACKAGE__
-    # get path
-    path = params['DRS_PDB_RC_FILE']
-    filename = params['DRS_PDB_RC_FILENAME']
-    # get current path
-    CURRENT_PATH = os.getcwd()
-    # get absolute path
-    oldsrc = get_relative_folder(package, path)
-    tmppath = oldsrc + '_tmp'
-    # get newsrc
-    newsrc = os.path.join(CURRENT_PATH, filename)
-    # read the lines
-    with open(oldsrc, 'r') as f:
-        lines = f.readlines()
-    # deal with levels
-    if level == 0:
-        upkey = ''
-    else:
-        upkey = 'up\n' * level
-    # loop around lines and replace
-    newlines = []
-    for line in lines:
-        newlines.append(line.format(up=upkey))
-    # write the lines
-    with open(tmppath, 'w') as f:
-        f.writelines(newlines)
-    # copy
-    shutil.copy(tmppath, newsrc)
-    # remove tmp file
-    os.remove(tmppath)
-
-
-def _remove_pdb_rc(params):
-    # set function name (cannot break here --> no access to inputs)
-    _ = str(__NAME__) + '_remove_pdb_rc()'
-    # get file name
-    filename = params['DRS_PDB_RC_FILENAME']
-    # get newsrc
-    newsrc = os.path.join(CURRENT_PATH, filename)
-    # remove
-    if os.path.exists(newsrc):
-        os.remove(newsrc)
-
-
-def _get_prev_count(params, previous):
-    # set function name (cannot break here --> no access to inputs)
-    _ = str(__NAME__) + '._get_prev_count()'
-    # get the debug list
-    debug_list = params['DEBUG_FUNC_LIST'][:-1]
-    # get the number of iterations
-    n_elements = 0
-    # loop around until we get to
-    for row in range(len(debug_list))[::-1]:
-        if debug_list[row] != previous:
-            break
-        else:
-            n_elements += 1
-    # return number of element founds
-    return n_elements
 
 
 # =============================================================================
