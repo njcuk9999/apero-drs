@@ -20,6 +20,7 @@ import copy
 import itertools
 
 from apero.base import base
+from apero.base import drs_break
 from apero.base import drs_misc
 from apero.core import constants
 from apero import lang
@@ -1939,7 +1940,7 @@ def _check_arg_path(params, arg, directory):
         # get package name
         package = params['DRS_PACKAGE']
         # get absolute path
-        path = constants.get_relative_folder(package, path)
+        path = drs_break.get_relative_folder(package, path)
     # make path absolute
     path = os.path.abspath(path)
     # now check that path is valid
