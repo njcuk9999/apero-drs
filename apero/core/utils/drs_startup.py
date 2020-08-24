@@ -21,6 +21,7 @@ from collections import OrderedDict
 from typing import Union, List
 
 from apero.base import base
+from apero.base import drs_break
 from apero.base import drs_exceptions
 from apero.base import drs_misc
 from apero import lang
@@ -471,7 +472,7 @@ def get_params(recipe='None', instrument='None', **kwargs):
 
 def return_locals(params, ll):
     # deal with a ipython return
-    constants.break_point(params, allow=params['IPYTHON_RETURN'])
+    drs_break.break_point(params, allow=params['IPYTHON_RETURN'])
     # else return ll
     return ll
 
