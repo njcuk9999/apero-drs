@@ -20,7 +20,7 @@ __NAME__ = 'constants.__init__.py'
 # define all functions
 __all__ = ['load', 'pload', 'ParamDict', 'ArgumentError', 'ConfigError',
            'ConfigWarning', 'gen_all', 'getmodnames', 'import_module',
-           'get_filenames', 'get_relative_folder', 'break_point']
+           'get_filenames']
 
 # =============================================================================
 # Define functions
@@ -34,8 +34,6 @@ pload = param_functions.load_pconfig
 
 # get module names
 getmodnames = param_functions.get_module_names
-
-get_relative_folder = param_functions.get_relative_folder
 
 # import modules
 import_module = constant_functions.import_module
@@ -64,9 +62,6 @@ gen_all = param_functions.get_config_all
 uparamdicts = param_functions.update_paramdicts
 
 update_file = constant_functions.update_file
-
-# generate a drs breakpoint
-break_point = param_functions.break_point
 
 # catching Ctrl+C and other code interruptions
 catch_sigint = param_functions.catch_sigint
