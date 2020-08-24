@@ -27,7 +27,9 @@ from apero.io import drs_path
 from apero.io import drs_fits
 from apero.io import drs_image
 from apero.io import drs_table
-from apero.core.utils import drs_data, drs_file
+from apero.core.utils import drs_data
+from apero.core.utils import drs_file
+from apero.core.utils import drs_database2 as drs_database
 from apero.science.calib import general
 from apero.science.calib import localisation
 
@@ -1255,78 +1257,97 @@ def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
     return master_dymap
 
 
-def get_master_fp(params, header, filename=None):
+def get_master_fp(params, header, filename=None, database=None):
     # get file definition
     out_fpmaster = core.get_file_definition('MASTER_FP', params['INSTRUMENT'],
                                             kind='red')
     # get key
     key = out_fpmaster.dbkey
-    # ------------------------------------------------------------------------
-    # check for filename in inputs
-    filename = general.get_input_files(params, 'FPMASTER', key, header,
-                                       filename)
-    # ------------------------------------------------------------------------
-    # load calib file
-    fpmaster, fpmaster_file = general.load_calib_file(params, key, header,
-                                                      filename=filename,
-                                                      n_entries=1)
+    # load database
+    if database is None:
+        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm.load_db()
+    else:
+        calibdbm = database
+    # ----------------------------------------------------------------------
+    # load master fp
+    cout = general.load_calib_file(params, key, header, filename=filename,
+                                   userinputkey='FPMASTER', database=calibdbm)
+    fpmaster, fhdr, fpmaster_file = cout
+    # ----------------------------------------------------------------------
     # log which fpmaster file we are using
     WLOG(params, '', TextEntry('40-014-00030', args=[fpmaster_file]))
     # return the master image
     return fpmaster_file, fpmaster
 
 
-def get_shapex(params, header, filename=None):
+def get_shapex(params, header, filename=None, database=None):
     # get file definition
     out_shape_dxmap = core.get_file_definition('SHAPE_X', params['INSTRUMENT'],
                                                kind='red')
     # get key
     key = out_shape_dxmap.dbkey
+    # load database
+    if database is None:
+        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm.load_db()
+    else:
+        calibdbm = database
+    # ----------------------------------------------------------------------
+    # load shape x file
+    cout = general.load_calib_file(params, key, header, filename=filename,
+                                   userinputkey='SHAPEX', database=calibdbm)
+    dxmap, fhdr, shapex_file = cout
     # ------------------------------------------------------------------------
-    # check for filename in inputs
-    filename = general.get_input_files(params, 'SHAPEX', key, header, filename)
-    # ------------------------------------------------------------------------
-    # load calib file
-    dxmap, shapex_file = general.load_calib_file(params, key, header,
-                                                 filename=filename)
     # log which fpmaster file we are using
     WLOG(params, '', TextEntry('40-014-00031', args=[shapex_file]))
     # return the master image
     return shapex_file, dxmap
 
 
-def get_shapey(params, header, filename=None):
+def get_shapey(params, header, filename=None, database=None):
     # get file definition
     out_shape_dymap = core.get_file_definition('SHAPE_Y', params['INSTRUMENT'],
                                                kind='red')
     # get key
     key = out_shape_dymap.dbkey
+    # load database
+    if database is None:
+        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm.load_db()
+    else:
+        calibdbm = database
+    # ----------------------------------------------------------------------
+    # load shape x file
+    cout = general.load_calib_file(params, key, header, filename=filename,
+                                   userinputkey='SHAPEY', database=calibdbm)
+    dymap, fhdr, shapey_file = cout
     # ------------------------------------------------------------------------
-    # check for filename in inputs
-    filename = general.get_input_files(params, 'SHAPEY', key, header, filename)
-    # ------------------------------------------------------------------------
-    # load calib file
-    dymap, shapey_file = general.load_calib_file(params, key, header,
-                                                 filename=filename)
     # log which fpmaster file we are using
     WLOG(params, '', TextEntry('40-014-00032', args=[shapey_file]))
     # return the master image
     return shapey_file, dymap
 
 
-def get_shapelocal(params, header, filename=None):
+def get_shapelocal(params, header, filename=None, database=None):
     # get file definition
     out_shape_local = core.get_file_definition('SHAPEL', params['INSTRUMENT'],
                                                kind='red')
     # get key
     key = out_shape_local.dbkey
+    # ----------------------------------------------------------------------
+    # load database
+    if database is None:
+        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm.load_db()
+    else:
+        calibdbm = database
+    # ----------------------------------------------------------------------
+    # load shape x file
+    cout = general.load_calib_file(params, key, header, filename=filename,
+                                   userinputkey='SHAPEL', database=calibdbm)
+    shapel, fhdr, shapel_file = cout
     # ------------------------------------------------------------------------
-    # check for filename in inputs
-    filename = general.get_input_files(params, 'SHAPEL', key, header, filename)
-    # ------------------------------------------------------------------------
-    # load calib file
-    shapel, shapel_file = general.load_calib_file(params, key, header,
-                                                  filename=filename)
     # log which fpmaster file we are using
     WLOG(params, '', TextEntry('40-014-00039', args=[shapel_file]))
     # return the master image

@@ -352,11 +352,13 @@ class PolarObj:
         # get parameters from params
         mfiber = pcheck(self.params, 'POLAR_MASTER_FIBER', 'pfiber', kwargs,
                         func_name)
+        database = kwargs.get('database', None)
         # ----------------------------------------------------------------------
         # load wavelength solution for this fiber
         # ----------------------------------------------------------------------
         wprops = wave.get_wavesolution(self.params, self.recipe,
-                                       fiber=self.fiber, infile=self.infile)
+                                       fiber=self.fiber, infile=self.infile,
+                                       database=database)
         # get a copy of the wave map
         wavemap = np.array(wprops['WAVEMAP'])
         # ------------------------------------------------------------------
@@ -384,7 +386,9 @@ class PolarObj:
         # ------------------------------------------------------------------
         # get master fiber
         self.mwaveprops = wave.get_wavesolution(self.params, self.recipe,
-                                                fiber=mfiber, infile=self.infile)
+                                                fiber=mfiber,
+                                                infile=self.infile,
+                                                database=database)
 
     def _clean(self, **kwargs):
         # set function name

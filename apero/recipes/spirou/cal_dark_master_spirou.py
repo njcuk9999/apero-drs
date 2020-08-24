@@ -15,7 +15,7 @@ from apero.base import base
 from apero import core
 from apero import lang
 from apero.core import constants
-from apero.core.utils import drs_database
+from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_fits
 from apero.io import drs_path
 from apero.science.calib import dark
@@ -93,6 +93,9 @@ def __main__(recipe, params):
     allowedtypes = params.listp('ALLOWED_DARK_TYPES', dtype=str)
     # set up plotting (no plotting before this)
     recipe.plot.set_location()
+    # load the calibration database
+    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm.load_db()
 
     # ----------------------------------------------------------------------
     # Get all preprocessed dark files
@@ -153,7 +156,7 @@ def __main__(recipe, params):
     # Move to calibDB and update calibDB
     # ------------------------------------------------------------------
     if passed:
-        drs_database.add_file(params, outfile)
+        calibdbm.add_calib_file(params, outfile)
 
     # ------------------------------------------------------------------
     # Construct summary document

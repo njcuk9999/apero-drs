@@ -12,7 +12,7 @@ Created on 2019-03-23 at 13:01
 from apero.base import base
 from apero import core
 from apero import lang
-from apero.core.utils import drs_database
+from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_fits
 from apero.science.calib import general
 from apero.science.calib import shape
@@ -112,6 +112,9 @@ def __main__(recipe, params):
         combine = False
     # get the number of infiles
     num_files = len(infiles)
+    # load the calibration database
+    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm.load_db()
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
@@ -128,8 +131,6 @@ def __main__(recipe, params):
         infile = infiles[it]
         # get header from file instance
         header = infile.header
-        # get calibrations for this data
-        drs_database.copy_calibrations(params, header)
         # ------------------------------------------------------------------
         # Correction of file
         # ------------------------------------------------------------------
@@ -137,9 +138,11 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Load master fp, shape dxmap and dymap
         # ------------------------------------------------------------------
-        masterfp_file, masterfp_image = shape.get_master_fp(params, header)
-        dxmap_file, dxmap = shape.get_shapex(params, header)
-        dymap_file, dymap = shape.get_shapey(params, header)
+        fkwargs = dict(database=calibdbm)
+        masterfp_file, masterfp_image = shape.get_master_fp(params, header,
+                                                            **fkwargs)
+        dxmap_file, dxmap = shape.get_shapex(params, header, **fkwargs)
+        dymap_file, dymap = shape.get_shapey(params, header, **fkwargs)
         # ----------------------------------------------------------------------
         # Get transform parameters (transform image onto fpmaster)
         # ----------------------------------------------------------------------
@@ -171,7 +174,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         if passed:
             # add shapel transforms
-            drs_database.add_file(params, outfile)
+            calibdbm.add_calib_file(params, outfile)
         # ------------------------------------------------------------------
         # plot a zoom in of non-shifted vs shifted
         # ------------------------------------------------------------------

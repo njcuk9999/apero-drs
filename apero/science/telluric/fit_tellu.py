@@ -717,13 +717,13 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
 
 def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
                           combine, pca_props, sprops, qc_params,
-                          template_file, tpreprops):
+                          template_file, tpreprops, database=None):
     # get the header
     header = infile.header
     # ------------------------------------------------------------------
     # load wavelength solution for this fiber
     wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
-                                   infile=infile)
+                                   infile=infile, database=database)
     # ------------------------------------------------------------------
     # Construct fiber file name and read data
     # ------------------------------------------------------------------

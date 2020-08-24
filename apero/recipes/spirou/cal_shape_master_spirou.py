@@ -14,7 +14,7 @@ import numpy as np
 from apero.base import base
 from apero import core
 from apero import lang
-from apero.core.utils import drs_database
+from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_fits
 from apero.io import drs_table
 from apero.science.calib import general
@@ -124,9 +124,9 @@ def __main__(recipe, params):
     # get the headers (should be the header of the first file in each)
     hcheader = hcfile.header
     fpheader = fpfile.header
-    # get calibrations for this data
-    drs_database.copy_calibrations(params, fpheader)
-    drs_database.copy_calibrations(params, hcheader)
+    # load the calibration database
+    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm.load_db()
 
     # ----------------------------------------------------------------------
     # Get localisation coefficients for fp file
@@ -136,10 +136,9 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Get wave coefficients from master wavefile
     # ----------------------------------------------------------------------
-    # get master wave filename
-    mwavefile = wave.get_masterwave_filename(params, fiber)
     # get master wave map
-    wprops = wave.get_wavesolution(params, recipe, filename=mwavefile)
+    wprops = wave.get_wavesolution(params, recipe, fiber=fiber, master=True,
+                                   database=calibdbm)
 
     # ------------------------------------------------------------------
     # Correction of fp file
@@ -188,7 +187,8 @@ def __main__(recipe, params):
         else:
             filename = params['INPUTS']['FPMASTER'][0][0]
         # do stuff
-        fpkwargs = dict(header=fpfile.header, filename=filename)
+        fpkwargs = dict(header=fpfile.header, filename=filename,
+                        database=calibdbm)
         # read fpmaster file
         masterfp_file, master_fp = shape.get_master_fp(params, **fpkwargs)
         # read table
@@ -267,11 +267,11 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     if passed:
         # add dxmap
-        drs_database.add_file(params, outfile1)
+        calibdbm.add_calib_file(params, outfile1)
         # add dymap
-        drs_database.add_file(params, outfile2)
+        calibdbm.add_calib_file(params, outfile2)
         # add master fp file
-        drs_database.add_file(params, outfile3)
+        calibdbm.add_calib_file(params, outfile3)
     # ------------------------------------------------------------------
     # Construct summary document
     # ------------------------------------------------------------------

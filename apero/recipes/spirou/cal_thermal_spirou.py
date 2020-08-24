@@ -12,7 +12,7 @@ Created on 2019-07-05 at 16:46
 from apero.base import base
 from apero import core
 from apero import lang
-from apero.core.utils import drs_database
+from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_fits
 from apero.io import drs_image
 from apero.science.extract import other as extractother
@@ -115,6 +115,9 @@ def __main__(recipe, params):
     num_files = len(infiles)
     # get the fiber types from a list parameter
     fiber_types = drs_image.get_fiber_types(params)
+    # load the calibration database
+    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm.load_db()
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
@@ -160,7 +163,7 @@ def __main__(recipe, params):
         # loop around fiber types
         for fiber in fiber_types:
             # add output from thermal files
-            drs_database.add_file(params, thermal_files[fiber])
+            calibdbm.add_calib_file(params, thermal_files[fiber])
         # ------------------------------------------------------------------
         # update recipe log file
         # ------------------------------------------------------------------

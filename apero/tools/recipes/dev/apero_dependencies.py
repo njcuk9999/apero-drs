@@ -14,6 +14,7 @@ import os
 from collections import OrderedDict
 
 from apero.base import base
+from apero.base import drs_break
 from apero import core
 from apero import lang
 from apero.core import constants
@@ -83,7 +84,7 @@ def __main__(recipe, params):
 
     # ----------------------------------------------------------------------
     # define DRS path
-    drs_path = constants.get_relative_folder(params['DRS_PACKAGE'], '')
+    drs_path = drs_break.get_relative_folder(params['DRS_PACKAGE'], '')
     # ----------------------------------------------------------------------
     # get all python files
     WLOG(params, '', 'Getting python files')
@@ -204,7 +205,7 @@ def get_import_statements(params, files):
 
         if DEBUG:
             # get package path
-            packagepath = constants.get_relative_folder(package, '')
+            packagepath = drs_break.get_relative_folder(package, '')
             # get relative path
             relfilename = filename.split(packagepath)[-1]
             # remove leading/trailing separators

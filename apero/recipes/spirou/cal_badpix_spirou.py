@@ -15,7 +15,7 @@ from apero.base import base
 from apero import core
 from apero import lang
 from apero.core import math as mp
-from apero.core.utils import drs_database
+from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_fits
 from apero.io import drs_image
 from apero.science.calib import badpix
@@ -227,8 +227,13 @@ def __main__(recipe, params):
         # Move to calibDB and update calibDB
         # ------------------------------------------------------------------
         if passed:
-            drs_database.add_file(params, badpixfile)
-            drs_database.add_file(params, backmapfile)
+            # construct database instance
+            calibdbm = drs_database.CalibrationDatabase(params)
+            # load database
+            calibdbm.load_db()
+            # add calibration files
+            calibdbm.add_calib_file(badpixfile)
+            calibdbm.add_calib_file(backmapfile)
         # ------------------------------------------------------------------
         # Summary plots
         # ------------------------------------------------------------------

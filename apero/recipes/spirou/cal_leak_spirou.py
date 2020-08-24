@@ -13,6 +13,7 @@ from apero.base import base
 from apero import core
 from apero import lang
 from apero.core import constants
+from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_fits
 from apero.science.extract import general as extgen
 
@@ -118,7 +119,9 @@ def __main__(recipe, params):
     pconst = constants.pload(params['INSTRUMENT'])
     # science fibers should be list of strings, reference fiber should be string
     sci_fibers, ref_fiber =  pconst.FIBER_KINDS()
-
+    # load the calibration database
+    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm.load_db()
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
@@ -196,7 +199,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Re-calculate s1d files
         # ------------------------------------------------------------------
-        cprops = extgen.dark_fp_regen_s1d(params, recipe, cprops)
+        cprops = extgen.dark_fp_regen_s1d(params, recipe, cprops,
+                                          database=calibdbm)
 
         # ------------------------------------------------------------------
         # Quality control

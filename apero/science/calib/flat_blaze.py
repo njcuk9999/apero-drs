@@ -20,6 +20,7 @@ from apero import lang
 from apero.core import math as mp
 from apero.core.core import drs_log
 from apero.core.utils import drs_file
+from apero.core.utils import drs_database2 as drs_database
 from apero.science.calib import general
 
 # =============================================================================
@@ -235,20 +236,24 @@ def calculate_blaze_flat_sinc(params, e2ds_ini, peak_cut, nsigfit, badpercentile
     return e2ds_ini, flat, blaze, rms
 
 
-def get_flat(params, header, fiber, filename=None, quiet=False):
+def get_flat(params, header, fiber, filename=None, quiet=False, database=None):
     # get file definition
     out_flat = core.get_file_definition('FF_FLAT', params['INSTRUMENT'],
                                         kind='red')
     # get key
     key = out_flat.get_dbkey(fiber=fiber)
+    # load database
+    if database is None:
+        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm.load_db()
+    else:
+        calibdbm = database
     # ------------------------------------------------------------------------
-    # check for filename in inputs
-    filename = general.get_input_files(params, 'FLATFILE', key, header,
-                                       filename)
+    # load flat file
+    cout = general.load_calib_file(params, key, header, filename=filename,
+                                   userinputkey='FLATFILE', database=calibdbm)
+    flat, fhdr, flat_file = cout
     # ------------------------------------------------------------------------
-    # load calib file
-    flat, flat_file = general.load_calib_file(params, key, header,
-                                              filename=filename)
     # log which fpmaster file we are using
     if not quiet:
         WLOG(params, '', TextEntry('40-015-00006', args=[flat_file]))
@@ -256,20 +261,24 @@ def get_flat(params, header, fiber, filename=None, quiet=False):
     return flat_file, flat
 
 
-def get_blaze(params, header, fiber, filename=None):
+def get_blaze(params, header, fiber, filename=None, database=None):
     # get file definition
     out_blaze = core.get_file_definition('FF_BLAZE', params['INSTRUMENT'],
                                          kind='red')
     # get key
     key = out_blaze.get_dbkey(fiber=fiber)
+    # load database
+    if database is None:
+        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm.load_db()
+    else:
+        calibdbm = database
     # ------------------------------------------------------------------------
-    # check for filename in inputs
-    filename = general.get_input_files(params, 'BLAZEFILE', key, header,
-                                       filename)
+    # load blaze file
+    cout = general.load_calib_file(params, key, header, filename=filename,
+                                   userinputkey='BLAZEFILE', database=calibdbm)
+    blaze, bhdr, blaze_file = cout
     # ------------------------------------------------------------------------
-    # load calib file
-    blaze, blaze_file = general.load_calib_file(params, key, header,
-                                              filename=filename)
     # log which fpmaster file we are using
     WLOG(params, '', TextEntry('40-015-00007', args=[blaze_file]))
     # return the master image

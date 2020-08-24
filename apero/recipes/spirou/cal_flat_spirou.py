@@ -12,7 +12,7 @@ Created on 2019-07-05 at 16:45
 from apero.base import base
 from apero import core
 from apero import lang
-from apero.core.utils import drs_database
+from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_fits
 from apero.io import drs_image
 from apero.science.calib import general
@@ -114,6 +114,9 @@ def __main__(recipe, params):
         combine = False
     # get the number of infiles
     num_files = len(infiles)
+    # load the calibration database
+    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm.load_db()
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
@@ -130,22 +133,22 @@ def __main__(recipe, params):
         infile = infiles[it]
         # get header from file instance
         header = infile.header
-        # get calibrations for this data
-        drs_database.copy_calibrations(params, header)
         # get the fiber types needed
         fibertypes = drs_image.get_fiber_types(params)
 
         # ------------------------------------------------------------------
         # Load shape components
         # ------------------------------------------------------------------
-        shapexfile, shapex = shape.get_shapex(params, header)
-        shapeyfile, shapey = shape.get_shapey(params, header)
-        shapelocalfile, shapelocal = shape.get_shapelocal(params, header)
+        shapexfile, shapex = shape.get_shapex(params, header, database=calibdbm)
+        shapeyfile, shapey = shape.get_shapey(params, header, database=calibdbm)
+        shapelocalfile, shapelocal = shape.get_shapelocal(params, header,
+                                                          database=calibdbm)
 
         # ------------------------------------------------------------------
         # Correction of file
         # ------------------------------------------------------------------
-        props, image = general.calibrate_ppfile(params, recipe, infile)
+        props, image = general.calibrate_ppfile(params, recipe, infile,
+                                                database=calibdbm)
 
         # ------------------------------------------------------------------
         # Load and straighten order profiles
@@ -174,7 +177,8 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # load the localisation properties for this fiber
             lprops = localisation.get_coefficients(params, recipe, header,
-                                                   fiber=fiber, merge=True)
+                                                   fiber=fiber, merge=True,
+                                                   database=calibdbm)
             # get the localisation center coefficients for this fiber
             lcoeffs = lprops['CENT_COEFFS']
             # shift the coefficients
@@ -230,9 +234,9 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             if passed:
                 # copy the blaze file to the calibDB
-                drs_database.add_file(params, blazefile)
+                calibdbm.add_calib_file(params, blazefile)
                 # copy the flat file to the calibDB
-                drs_database.add_file(params, flatfile)
+                calibdbm.add_calib_file(params, flatfile)
             # ------------------------------------------------------------------
             # Summary plots
             # ------------------------------------------------------------------

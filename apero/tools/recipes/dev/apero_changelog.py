@@ -14,6 +14,7 @@ import shutil
 
 import apero
 from apero.base import base
+from apero.base import drs_break
 from apero import core
 from apero.core import constants
 from apero import lang
@@ -92,11 +93,11 @@ def __main__(recipe, params):
     # get package
     package = params['DRS_PACKAGE']
     # get filename
-    filename = constants.get_relative_folder(package, CLOGFILENAME)
+    filename = drs_break.get_relative_folder(package, CLOGFILENAME)
     # get version file path
-    versionfile = constants.get_relative_folder(package, VERSIONFILE)
+    versionfile = drs_break.get_relative_folder(package, VERSIONFILE)
     # get const file path
-    constfile = constants.get_relative_folder(package, CONSTFILE)
+    constfile = drs_break.get_relative_folder(package, CONSTFILE)
     # get the text dictionary
     textdict = TextDict('None', params['LANGUAGE'])
     # ----------------------------------------------------------------------
@@ -156,9 +157,9 @@ def __main__(recipe, params):
             os.remove('tmp.txt')
     # ----------------------------------------------------------------------
     # get doc paths
-    doc_confpath = constants.get_relative_folder(package, DOC_CONFPATH)
-    doc_clogpath = constants.get_relative_folder(package, DOC_CHANGELOGPATH)
-    doc_indxpath = constants.get_relative_folder(package, DOC_INDEXPATH)
+    doc_confpath = drs_break.get_relative_folder(package, DOC_CONFPATH)
+    doc_clogpath = drs_break.get_relative_folder(package, DOC_CHANGELOGPATH)
+    doc_indxpath = drs_break.get_relative_folder(package, DOC_INDEXPATH)
     # update documentation (conf.py)
     strversion = '\'{0}\'\n'.format(version)
     drs_changelog.update_file(doc_confpath, DOC_CONF_PREFIX, strversion)

@@ -13,7 +13,7 @@ from apero.base import base
 from apero import core
 from apero import lang
 from apero.core import constants
-from apero.core.utils import drs_database
+from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_fits
 from apero.io import drs_image
 from apero.science.calib import flat_blaze
@@ -120,7 +120,9 @@ def __main__(recipe, params):
 
     # get quick look mode
     quicklook = params['EXT_QUICK_LOOK']
-
+    # load the calibration database
+    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm.load_db()
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
@@ -153,21 +155,21 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # get header from file instance
         header = infile.header
-        # get calibrations for this data
-        drs_database.copy_calibrations(params, header)
         # get the fiber types needed
         fibertypes = drs_image.get_fiber_types(params)
         # ------------------------------------------------------------------
         # Load shape components
         # ------------------------------------------------------------------
-        shapexfile, shapex = shape.get_shapex(params, header)
-        shapeyfile, shapey = shape.get_shapey(params, header)
-        shapelocalfile, shapelocal = shape.get_shapelocal(params, header)
+        shapexfile, shapex = shape.get_shapex(params, header, database=calibdbm)
+        shapeyfile, shapey = shape.get_shapey(params, header, database=calibdbm)
+        shapelocalfile, shapelocal = shape.get_shapelocal(params, header,
+                                                          database=calibdbm)
 
         # ------------------------------------------------------------------
         # Correction of file
         # ------------------------------------------------------------------
-        props, image = general.calibrate_ppfile(params, recipe, infile)
+        props, image = general.calibrate_ppfile(params, recipe, infile,
+                                                database=calibdbm)
 
         # ------------------------------------------------------------------
         # Load and straighten order profiles
@@ -208,21 +210,25 @@ def __main__(recipe, params):
             WLOG(params, 'info', TextEntry('40-016-00014', args=wargs))
             # --------------------------------------------------------------
             # load wavelength solution for this fiber
-            wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber)
+            wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
+                                           database=calibdbm)
             # --------------------------------------------------------------
             # load the localisation properties for this fiber
             lprops = localisation.get_coefficients(params, recipe, header,
-                                                   fiber=fiber, merge=True)
+                                                   fiber=fiber, merge=True,
+                                                   database=calibdbm)
             # get the localisation center coefficients for this fiber
             lcoeffs = lprops['CENT_COEFFS']
             # shift the coefficients
             lcoeffs2 = shape.ea_transform_coeff(image2, lcoeffs, shapelocal)
             # --------------------------------------------------------------
             # load the flat file for this fiber
-            flat_file, flat = flat_blaze.get_flat(params, header, fiber)
+            flat_file, flat = flat_blaze.get_flat(params, header, fiber,
+                                                  database=calibdbm)
             # --------------------------------------------------------------
             # load the blaze file for this fiber
-            blaze_file, blaze = flat_blaze.get_blaze(params, header, fiber)
+            blaze_file, blaze = flat_blaze.get_blaze(params, header, fiber,
+                                                     database=calibdbm)
             # --------------------------------------------------------------
             # get the number of frames used
             nframes = infile.numfiles
@@ -242,7 +248,8 @@ def __main__(recipe, params):
             # thermal correction of spectrum
             if not quicklook:
                 eprops = extract.thermal_correction(params, recipe, header,
-                                                    props, eprops, fiber=fiber)
+                                                    props, eprops, fiber=fiber,
+                                                    database=calibdbm)
             # --------------------------------------------------------------
             if not quicklook:
                 s1dextfile = params['EXT_S1D_INTYPE']
@@ -312,7 +319,8 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             if not quicklook:
                 rargs = [e2dsfile, wprops['WAVEMAP'], fiber]
-                rfpl = extract.ref_fplines(params, recipe, *rargs)
+                rfpl = extract.ref_fplines(params, recipe, *rargs,
+                                           database=calibdbm)
                 # write rfpl file
                 if rfpl is not None:
                     rargs = [rfpl, e2dsfile, e2dsfile, fiber, 'EXT_FPLINES']

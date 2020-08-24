@@ -13,6 +13,7 @@ import pandas as pd
 from apero.base import base
 from apero.base import drs_db
 from apero.core import constants
+from apero.core.utils import drs_database2 as drs_database
 
 # =============================================================================
 # Define variables
@@ -36,32 +37,30 @@ def list_databases(params):
     databases = dict()
     # get parameters from params
     asset_dir = params['DRS_DATA_ASSETS']
-    calib_dir = params['DRS_CALIB_DB']
-    calib_file = params['CALIB_DB_NAME']
-    tellu_dir = params['DRS_TELLU_DB']
-    tellu_file = params['TELLU_DB_NAME']
-    index_dir = params['DATABASE_DIR']
-    index_file = params['INDEX_DB_NAME']
-    log_dir = params['DATABASE_DIR']
-    log_file = params['LOG_DB_NAME']
-    object_dir = params['DATABASE_DIR']
-    object_file = params['OBJECT_DB_NAME']
     params_dir = params['DATABASE_DIR']
     params_file = params['LOG_DB_NAME']
-    # construct paths
-    calib_abspath = os.path.join(calib_dir, calib_file)
-    tellu_abspath = os.path.join(tellu_dir, tellu_file)
-    index_abspath = os.path.join(asset_dir, index_dir, index_file)
-    log_abspath = os.path.join(asset_dir, log_dir, log_file)
-    object_abspath = os.path.join(asset_dir, object_dir, object_file)
+    lang_dir = params['DATABASE_DIR']
+    lang_file = params['LANG_DB_NAME']
+
+    # construct paths for native databases (don't come from managers)
     params_abspath = os.path.join(asset_dir, params_dir, params_file)
+    lang_abspath = os.path.join(asset_dir, lang_dir, lang_file)
+
+    # get databases from managers (later databases)
+    calibdbm = drs_database.CalibrationDatabase(params, check=False)
+    telludbm = drs_database.TelluricDatabase(params, check=False)
+    indexdbm = drs_database.IndexDatabase(params, check=False)
+    logdbm = drs_database.LogDatabase(params, check=False)
+    objectdbm = drs_database.ObjectDatabase(params, check=False)
+
     # add to storage
-    databases['calib'] = calib_abspath
-    databases['tellu'] = tellu_abspath
-    databases['index'] = index_abspath
-    databases['log'] = log_abspath
-    databases['object'] = object_abspath
+    databases['calib'] = calibdbm.path
+    databases['tellu'] = telludbm.path
+    databases['index'] = indexdbm.path
+    databases['log'] = logdbm.path
+    databases['object'] = objectdbm.path
     databases['params'] = params_abspath
+    databases['lang'] = lang_abspath
     # return the databases
     return databases
 
@@ -107,6 +106,9 @@ def install_databases(params, skip=None):
     if 'params' not in skip:
         paramsdb = create_params_database(pconst, databases)
     # -------------------------------------------------------------------------
+    # create language database
+    if 'lang' not in skip:
+        langdb = create_lang_database(pconst, databases)
 
 
 def create_calibration_database(params, pconst, databases) -> Database:
@@ -279,6 +281,30 @@ def create_params_database(pconst, databases) -> Database:
     paramsdb.add_table('MAIN', columns, ctypes)
     # -------------------------------------------------------------------------
     return paramsdb
+
+
+def create_lang_database(pconst, databases) -> Database:
+    """
+    Setup for the index database
+    :param params:
+    :param pconst:
+    :return:
+    """
+    # get columns and ctypes from pconst
+    columns, ctypes = pconst.LANG_DB_COLUMNS()
+    # -------------------------------------------------------------------------
+    # construct directory
+    lang_abspath = databases['params']
+    # -------------------------------------------------------------------------
+    # make database
+    langdb = Database(lang_abspath)
+    # -------------------------------------------------------------------------
+    if 'MAIN' in langdb.tables:
+        langdb.delete_table('MAIN')
+    # add main table
+    langdb.add_table('MAIN', columns, ctypes)
+    # -------------------------------------------------------------------------
+    return langdb
 
 
 # =============================================================================

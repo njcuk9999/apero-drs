@@ -16,6 +16,7 @@ from apero.base import base
 from apero import core
 from apero import lang
 from apero.core import constants
+from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_fits
 from apero.core import math as mp
 from apero.science.calib import shape
@@ -140,6 +141,9 @@ def __main__(recipe, params):
     filetype = 'WAVE_NIGHT'
     # get pseudo constants
     pconst = constants.pload(params['INSTRUMENT'])
+    # load the calibration database
+    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm.load_db()
     # get fibers
     fibers = pconst.INDIVIDUAL_FIBERS()
 
@@ -189,7 +193,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # load wavelength solution for this fiber
         wprops = wave.get_wavesolution(params, recipe,
-                                       filename=wave_infiles[fiber].filename)
+                                       filename=wave_infiles[fiber].filename,
+                                       database=calibdbm)
         # ------------------------------------------------------------------
         # Load the TAPAS atmospheric transmission convolved with the
         #   master wave solution (1D spectrum)
