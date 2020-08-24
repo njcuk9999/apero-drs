@@ -15,6 +15,7 @@ from apero.base import base
 from apero import core
 from apero import lang
 from apero.core import constants
+from apero.core.utils import drs_database2  as drs_database
 from apero.io import drs_fits
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave
@@ -114,7 +115,9 @@ def __main__(recipe, params):
         combine = False
     # get the number of infiles
     num_files = len(infiles)
-
+    # load the calibration database
+    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm.load_db()
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
@@ -166,7 +169,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # load wavelength solution for this fiber
         wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
-                                       infile=infile)
+                                       infile=infile, database=calibdbm)
         # ------------------------------------------------------------------
         # Get blaze
         # ------------------------------------------------------------------
@@ -202,7 +205,8 @@ def __main__(recipe, params):
             infile_r = velocity.locate_reference_file(params, recipe, infile)
             # get the wave solution associated with this file
             wprops_r = wave.get_wavesolution(params, recipe, fiber='C',
-                                             infile=infile_r)
+                                             infile=infile_r,
+                                             database=calibdbm)
             # get c fiber file time
             filetime_r = infile_r.get_key('KW_MID_OBS_TIME')
 

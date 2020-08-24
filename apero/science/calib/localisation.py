@@ -20,7 +20,8 @@ from apero.core import constants
 from apero import lang
 from apero.core import math as mp
 from apero.core.core import drs_log
-from apero.core.utils import drs_file, drs_database
+from apero.core.utils import drs_file
+from apero.core.utils import drs_database2 as drs_database
 from apero.science.calib import general
 
 # =============================================================================
@@ -518,7 +519,7 @@ def image_superimp(image, coeffs):
     return newimage
 
 
-def get_coefficients(params, recipe, header, fiber, **kwargs):
+def get_coefficients(params, recipe, header, fiber, database=None, **kwargs):
     func_name = __NAME__ + '.get_coefficients()'
     # get pseudo constants
     pconst = constants.pload(params['INSTRUMENT'])
@@ -533,26 +534,18 @@ def get_coefficients(params, recipe, header, fiber, **kwargs):
                                         kind='red')
     # get calibration key
     key = locofile.get_dbkey(func=func_name, fiber=usefiber)
-    # ------------------------------------------------------------------------
-    # check for filename in inputs
-    filename = general.get_input_files(params, 'LOCOFILE', key, header,
-                                       filename)
-    # ------------------------------------------------------------------------
-    # get loco filename
-    if filename is not None:
-        locofilepath = filename
+    # load database
+    if database is None:
+        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm.load_db()
     else:
-        # get calibDB
-        cdb = drs_database.get_full_database(params, 'calibration')
-        # get filename col
-        filecol = cdb.file_col
-
-        # get the badpix entries
-        locoentries = drs_database.get_key_from_db(params, key, cdb, header,
-                                                   n_ent=1)
-        # get badpix filename
-        locofilename = locoentries[filecol][0]
-        locofilepath = os.path.join(params['DRS_CALIB_DB'], locofilename)
+        calibdbm = database
+    # load loco file
+    locofilepath = general.load_calib_file(params, key, header,
+                                           filename=filename,
+                                           userinputkey='LOCOFILE',
+                                           database=calibdbm,
+                                           return_filename=True)
     # ------------------------------------------------------------------------
     # construct new infile instance and read data/header
     locofile = locofile.newcopy(filename=locofilepath, recipe=recipe,

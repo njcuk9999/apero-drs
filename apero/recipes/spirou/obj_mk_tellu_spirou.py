@@ -39,7 +39,7 @@ from apero.base import base
 from apero import core
 from apero import lang
 from apero.core import constants
-from apero.core.utils import drs_database
+from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_fits
 from apero.science.calib import wave
 from apero.science import extract
@@ -138,7 +138,11 @@ def __main__(recipe, params):
         combine = False
     # get the number of infiles
     num_files = len(infiles)
-
+    # load the calibration and telluric databases
+    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm.load_db()
+    telludbm = drs_database.TelluricDatabase(params)
+    telludbm.load_db()
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
@@ -212,11 +216,12 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # load master wavelength solution
         mprops = wave.get_wavesolution(params, recipe, header, master=True,
-                                       fiber=fiber, infile=infile)
+                                       fiber=fiber, infile=infile,
+                                       database=calibdbm)
         # ------------------------------------------------------------------
         # load wavelength solution for this fiber
         wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
-                                       infile=infile)
+                                       infile=infile, database=calibdbm)
 
         # ------------------------------------------------------------------
         # telluric pre-cleaning
@@ -264,7 +269,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         if np.all(qc_params[3]):
             # copy the transmission map to telluDB
-            drs_database.add_file(params, transfile)
+            telludbm.add_tellu_file(params, transfile)
         # ------------------------------------------------------------------
         # Construct summary document
         # ------------------------------------------------------------------

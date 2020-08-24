@@ -33,7 +33,7 @@ from apero.base import base
 from apero import core
 from apero import lang
 from apero.core import constants
-from apero.core.utils import drs_database
+from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_fits
 from apero.science.calib import wave
 from apero.science import extract
@@ -133,7 +133,11 @@ def __main__(recipe, params):
         combine = False
     # get the number of infiles
     num_files = len(infiles)
-
+    # load the calibration and telluric databases
+    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm.load_db()
+    telludbm = drs_database.TelluricDatabase(params)
+    telludbm.load_db()
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
@@ -198,20 +202,18 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # load master wavelength solution
         mprops = wave.get_wavesolution(params, recipe, header, master=True,
-                                       fiber=fiber, infile=infile)
+                                       fiber=fiber, infile=infile,
+                                       database=calibdbm)
         # ------------------------------------------------------------------
         # load wavelength solution for this fiber
         wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
-                                       infile=infile)
+                                       infile=infile, database=calibdbm)
 
         # ------------------------------------------------------------------
         # telluric pre-cleaning
         # ------------------------------------------------------------------
         tpreprops = telluric.tellu_preclean(params, recipe, infile, wprops,
                                             fiber, rawfiles, combine)
-
-        # TODO: remove break point
-        constants.break_point(params)
 
         # get variables out of tpreprops
         image1 = tpreprops['CORRECTED_E2DS']
@@ -332,16 +334,17 @@ def __main__(recipe, params):
             # else correct/create s1d/ and save
             coargs = [sfiber, infile, cprops, rawfiles, combine, pca_props,
                       sprops, qc_params, template_file, tpreprops]
-            telluric.correct_other_science(params, recipe, *coargs)
+            telluric.correct_other_science(params, recipe, *coargs,
+                                           database=calibdbm)
 
         # ------------------------------------------------------------------
         # Add TELLU_OBJ and TELLU_RECON to database
         # ------------------------------------------------------------------
         if np.all(qc_params[3]):
             # copy the tellu_obj file to database
-            drs_database.add_file(params, corrfile)
+            telludbm.add_tellu_file(params, corrfile)
             # copy the tellu_rcon file to database
-            drs_database.add_file(params, reconfile)
+            telludbm.add_tellu_file(params, reconfile)
 
         # ------------------------------------------------------------------
         # Summary plots

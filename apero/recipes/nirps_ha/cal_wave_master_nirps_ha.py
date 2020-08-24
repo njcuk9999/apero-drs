@@ -15,7 +15,7 @@ from apero.base import base
 from apero import core
 from apero import lang
 from apero.core import constants
-from apero.core.utils import drs_database
+from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_image
 from apero.io import drs_fits
 from apero.science.calib import flat_blaze
@@ -148,6 +148,9 @@ def __main__(recipe, params):
     fiber_types = drs_image.get_fiber_types(params)
     # get wave master file (controller fiber)
     master_fiber = params['WAVE_MASTER_FIBER']
+    # load the calibration database
+    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm.load_db()
     # ----------------------------------------------------------------------
     # For wave master may need update cavity file
     # TODO: Figure out when we should do this - if it is every time we
@@ -199,7 +202,8 @@ def __main__(recipe, params):
         # load initial wavelength solution (start point) for this fiber
         #    this should only be a master wavelength solution
         iwprops = wave.get_wavesolution(params, recipe, infile=hc_e2ds_file,
-                                        fiber=master_fiber, master=True)
+                                        fiber=master_fiber, master=True,
+                                        database=calibdbm)
         # check that wave parameters are consistent with required number
         #   of parameters (from constants)
         iwprops = wave.check_wave_consistency(params, iwprops)
@@ -407,11 +411,11 @@ def __main__(recipe, params):
             # ----------------------------------------------------------
             if passed:
                 # copy the hc wave solution file to the calibDB
-                drs_database.add_file(params, fpwavefile)
+                calibdbm.add_calib_file(params, fpwavefile)
                 # copy the hc line ref file to the calibDB
-                drs_database.add_file(params, hclinefile)
+                calibdbm.add_calib_file(params, hclinefile)
                 # copy the fp line ref file to the calibDB
-                drs_database.add_file(params, fplinefile)
+                calibdbm.add_calib_file(params, fplinefile)
         # ----------------------------------------------------------
         # update recipe log file for fp fiber
         # ----------------------------------------------------------

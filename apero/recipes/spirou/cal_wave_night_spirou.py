@@ -14,8 +14,7 @@ Created on 2019-12-18 at 16:57
 from apero.base import base
 from apero import core
 from apero import lang
-from apero.core import constants
-from apero.core.utils import drs_database
+from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_image
 from apero.io import drs_fits
 from apero.science.calib import general
@@ -147,7 +146,9 @@ def __main__(recipe, params):
     num_files = len(hcfiles)
     # get the fiber types from a list parameter (or from inputs)
     fiber_types = drs_image.get_fiber_types(params)
-
+    # load the calibration database
+    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm.load_db()
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
@@ -191,14 +192,14 @@ def __main__(recipe, params):
             # get master hc lines and fp lines from calibDB
             wargs = []
             wout = wave.get_wavelines(params, recipe, fiber,
-                                      infile=hc_e2ds_file)
+                                      infile=hc_e2ds_file, database=calibdbm)
             mhclines, mhclsource, mfplines, mfplsource = wout
             # --------------------------------------------------------------
             # load wavelength solution (start point) for this fiber
             #    this should only be a master wavelength solution
             wprops = wave.get_wavesolution(params, recipe, infile=hc_e2ds_file,
                                            fiber=fiber, master=True,
-                                           forcefiber=True)
+                                           forcefiber=True, database=calibdbm)
             # --------------------------------------------------------------
             # define the header as being from the hc e2ds file
             hcheader = hc_e2ds_file.header
@@ -278,7 +279,7 @@ def __main__(recipe, params):
             # ----------------------------------------------------------
             if passed:
                 # copy the hc wave solution file to the calibDB
-                drs_database.add_file(params, wavefile)
+                calibdbm.add_calib_file(params, wavefile)
 
             # ----------------------------------------------------------
             # Update header of current files with FP solution

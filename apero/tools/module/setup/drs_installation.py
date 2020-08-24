@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Union
 
 from apero.base import base
+from apero.base import drs_break
 from apero.base import drs_exceptions
 from apero.base import drs_misc
 from apero.core import constants
@@ -659,13 +660,13 @@ def bin_paths(params, all_params):
     # get available instruments
     drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
     # get root path
-    root = Path(constants.get_relative_folder(package, ''))
+    root = Path(drs_break.get_relative_folder(package, ''))
     # get out bin path
-    out_bin_path = Path(constants.get_relative_folder(package, OUT_BINPATH))
+    out_bin_path = Path(drs_break.get_relative_folder(package, OUT_BINPATH))
     # get out tools bin path
-    out_tool_path = Path(constants.get_relative_folder(package, OUT_TOOLPATH))
+    out_tool_path = Path(drs_break.get_relative_folder(package, OUT_TOOLPATH))
     # get tools save location
-    in_tool_path = Path(constants.get_relative_folder(package, IN_TOOLPATH))
+    in_tool_path = Path(drs_break.get_relative_folder(package, IN_TOOLPATH))
     # add recipe bin directory to all params
     all_params['DRS_OUT_BIN_PATH'] = out_bin_path
     # add toool directory to all params
@@ -764,7 +765,7 @@ def create_shell_scripts(params, all_params):
     else:
         pname = package
     # get tools save location
-    in_tool_path = Path(constants.get_relative_folder(package, IN_TOOLPATH))
+    in_tool_path = Path(drs_break.get_relative_folder(package, IN_TOOLPATH))
     # ----------------------------------------------------------------------
     # get paths and add in correct order and add bin directory
     paths = [str(all_params['DRS_ROOT'].parent),
@@ -774,7 +775,7 @@ def create_shell_scripts(params, all_params):
         paths.append(str(directory))
     # ----------------------------------------------------------------------
     # find setup files
-    setup_path = Path(constants.get_relative_folder(package, SETUP_PATH))
+    setup_path = Path(drs_break.get_relative_folder(package, SETUP_PATH))
     # deal with windows
     if os.name == 'nt':
         sep = '";"'
@@ -871,7 +872,7 @@ def clean_install(params, all_params):
     else:
         cleanwarn = True
     # get tools save location
-    in_tool_path = Path(constants.get_relative_folder(package, IN_TOOLPATH))
+    in_tool_path = Path(drs_break.get_relative_folder(package, IN_TOOLPATH))
     # append tool path
     sys.path.append(str(in_tool_path.joinpath('bin')))
     toolmod = importlib.import_module(RESET_CODE)
@@ -908,7 +909,7 @@ def create_symlinks(params, all_params):
     out_bin_path = all_params['DRS_OUT_BIN_PATH']
     out_tool_path = all_params['DRS_OUT_TOOL_PATH']
     # get tools save location
-    in_tool_path = Path(constants.get_relative_folder(package, IN_TOOLPATH))
+    in_tool_path = Path(drs_break.get_relative_folder(package, IN_TOOLPATH))
 
     # ------------------------------------------------------------------
     # Copy bin files (for each instrument)
@@ -924,7 +925,7 @@ def create_symlinks(params, all_params):
 
         # find recipe folder for this instrument
         recipe_raw = Path(str(IN_BINPATH).format(instrument.lower()))
-        recipe_dir = Path(constants.get_relative_folder(package, recipe_raw))
+        recipe_dir = Path(drs_break.get_relative_folder(package, recipe_raw))
         # define suffix
         suffix = '*_{0}.py'.format(instrument.lower())
         # create sym links

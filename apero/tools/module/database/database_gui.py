@@ -66,12 +66,12 @@ class DatabaseHolder:
             emsg = 'Database "{0}" must have path or df set'
             raise ValueError(emsg.format(self.name))
 
-        if self.path.endswith('.csv'):
+        if str(self.path).endswith('.csv'):
             self.df = pd.read_csv(self.path)
             if len(self.df) == 0:
                 self.df = None
                 self.empty = True
-        elif self.path.endswith('.db'):
+        elif str(self.path).endswith('.db'):
             # start database
             database = Database(self.path)
             dataframe = database.get('*', table='MAIN', return_pandas=True)

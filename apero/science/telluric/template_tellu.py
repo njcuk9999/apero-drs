@@ -55,7 +55,7 @@ pcheck = core.pcheck
 # General functions
 # =============================================================================
 def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
-                        fiber, **kwargs):
+                        fiber, database=None, **kwargs):
     # set function mame
     func_name = display_func(params, 'make_template_cubes', __NAME__)
     # get parameters from params/kwargs
@@ -181,7 +181,7 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
         # load wavelength solution for this fiber
         # ------------------------------------------------------------------
         wprops = wave.get_wavesolution(params, recipe, infile=infile,
-                                       fiber=fiber)
+                                       fiber=fiber, database=database)
         # get wavemap
         wavemap = wprops['WAVEMAP']
         # ------------------------------------------------------------------

@@ -34,7 +34,7 @@ from apero.base import base
 from apero import core
 from apero import lang
 from apero.core import constants
-from apero.core.utils import drs_database
+from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_fits
 from apero.io import drs_path
 from apero.science.calib import wave
@@ -122,6 +122,11 @@ def __main__(recipe, params):
     filetype = params['INPUTS']['FILETYPE']
     # get the fiber type required
     fiber = params['INPUTS']['FIBER']
+    # load the calibration and telluric databases
+    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm.load_db()
+    telludbm = drs_database.TelluricDatabase(params)
+    telludbm.load_db()
     # ----------------------------------------------------------------------
     # get objects that match this object name
     if params['MKTEMPLATE_FILESOURCE'].upper() == 'DISK':
@@ -177,7 +182,8 @@ def __main__(recipe, params):
     recipe.plot.set_location(0)
     # ----------------------------------------------------------------------
     # load master wavelength solution
-    mkwargs = dict(header=infile.header, master=True, fiber=fiber)
+    mkwargs = dict(header=infile.header, master=True, fiber=fiber,
+                   database=calibdbm)
     mprops = wave.get_wavesolution(params, recipe, **mkwargs)
     # ------------------------------------------------------------------
     # Normalize image by peak blaze
@@ -188,7 +194,8 @@ def __main__(recipe, params):
     # Make data cubes
     # ----------------------------------------------------------------------
     cargs = [object_filenames, infile, mprops, nprops, fiber]
-    cprops = telluric.make_template_cubes(params, recipe, *cargs)
+    cprops = telluric.make_template_cubes(params, recipe, *cargs,
+                                          database=calibdbm)
     # deal with no good files
     if cprops['MEDIAN'] is None:
         return core.return_locals(params, locals())
@@ -239,7 +246,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     if passed:
         # copy the big cube median to the calibDB
-        drs_database.add_file(params, template_file, night=nightname)
+        telludbm.add_tellu_file(params, template_file) #, night=nightname)
 
     # ----------------------------------------------------------------------
     # plots

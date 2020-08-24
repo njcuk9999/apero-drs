@@ -151,58 +151,37 @@ def measure_dark_badpix(params, image, nanmask, **kwargs):
     return baddark, dadeadall
 
 
-def correction(params, image, header, nfiles=1, return_dark=False, **kwargs):
+def correction(params, image, nfiles, darkfile, return_dark=False):
     """
     Corrects "image" for "dark" using calibDB file (header must contain
     value of p['ACQTIME_KEY'] as a keyword)
 
     :param p: parameter dictionary, ParamDict containing constants
-        Must contain at least:
-                nbframes: int, the number of frames/files (usually the length
-                          of "arg_file_names")
-                calibDB: dictionary, the calibration database dictionary
-                         (if not in "p" we construct it and need "max_time_unix"
-                max_time_unix: float, the unix time to use as the time of
-                                reference (used only if calibDB is not defined)
-                log_opt: string, log option, normally the program name
-                DRS_CALIB_DB: string, the directory that the calibration
-                              files should be saved to/read from
-
     :param image: numpy array (2D), the image
-    :param header: dictionary, the header dictionary created by
-                   spirouFITS.ReadImage
-    :param nfiles: int or None, number of files that created image (need to
-                   multiply by this to get the total dark) if None uses
-                   p['NBFRAMES']
-    :param return_dark: bool, if True returns corrected_image and dark
-                        if False (default) returns corrected_image
+    :param nfiles: int, number of files that created image (need to
+                   multiply by this to get the total dark)
+    :param darkfile: str, the absolute path to the dark calibration file
+    :param return_dark: bool, if True return the dark as well as the corrected
+                        image
 
     :return corrected_image: numpy array (2D), the dark corrected image
                              only returned if return_dark = True:
     :return darkimage: numpy array (2D), the dark
     """
     func_name = __NAME__ + '.correct_for_dark()'
-    # check kwargs for filename
-    filename = kwargs.get('filename', None)
-    # -------------------------------------------------------------------------
-    # get filename
-    if filename is not None:
-        use_file, use_type = filename, 'user'
-    else:
-        use_file, use_type = get_dark_master_file(params, header)
     # -------------------------------------------------------------------------
     # do dark using correct file
-    darkimage, dhdr = drs_fits.readfits(params, use_file, gethdr=True)
+    darkimage, dhdr = drs_fits.readfits(params, darkfile, gethdr=True)
     # Read dark file
-    wargs = [use_type, use_file]
+    wargs = ['DARK_FILE', darkfile]
     WLOG(params, '', TextEntry('40-011-00011', args=wargs))
     corrected_image = image - (darkimage * nfiles)
     # -------------------------------------------------------------------------
     # finally return datac
     if return_dark:
-        return use_file, corrected_image, darkimage
+        return corrected_image, darkimage
     else:
-        return use_file, corrected_image
+        return corrected_image
 
 
 # =============================================================================

@@ -12,10 +12,10 @@ Created on 2020-02-04 at 13:37
 import sys
 
 from apero.base import base
+from apero.base import drs_break
 from apero import core
 from apero.core import constants
 from apero import lang
-from apero.core.constants import param_functions as pf
 from apero.core.utils import drs_recipe, drs_file
 
 # =============================================================================
@@ -167,7 +167,7 @@ class Demo:
         # get language database relative path
         relpath = lang.core.drs_lang_text.DEFAULT_PATH
         # return absolute language database path
-        return pf.get_relative_folder(self.package, relpath)
+        return drs_break.get_relative_folder(self.package, relpath)
 
     def change_lang(self, params, language):
         # get instrument

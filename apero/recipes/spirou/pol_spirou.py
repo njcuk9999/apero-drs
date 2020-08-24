@@ -9,6 +9,7 @@ from apero.base import base
 from apero import core
 from apero import lang
 from apero.core import constants
+from apero.core.utils import drs_database2 as drs_database
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave
 from apero.science import extract
@@ -103,6 +104,9 @@ def __main__(recipe, params):
     if 'files' in params['DATA_DICT']:
         infiles = params['DATA_DICT']['files']
         rawfiles = params['DATA_DICT']['rawfiles']
+    # load the calibration database
+    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm.load_db()
     # set the location (must do before any plotting starts)
     recipe.plot.set_location()
     # ----------------------------------------------------------------------
@@ -118,7 +122,7 @@ def __main__(recipe, params):
     # load wavelength solution for this fiber
     # ----------------------------------------------------------------------
     wprops = wave.get_wavesolution(params, recipe, fiber=pobj.fiber,
-                                   infile=pobj.infile)
+                                   infile=pobj.infile, database=calibdbm)
     # ----------------------------------------------------------------------
     # load the blaze file for this fiber
     # ----------------------------------------------------------------------

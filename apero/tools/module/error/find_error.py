@@ -17,7 +17,7 @@ import webbrowser
 import re
 
 from apero.base import base
-from apero.core import constants
+from apero.base import drs_break
 from apero import core
 from apero import lang
 
@@ -178,7 +178,7 @@ class Navbar:
         self.title = 'About {0}'.format(PROGRAM_NAME)
         package = lang.core.drs_lang_text.PACKAGE
         default_path = lang.core.drs_lang_text.DEFAULT_PATH
-        self.dpath = lang.core.drs_lang_text.get_relative_folder(package, default_path)
+        self.dpath = drs_break.get_relative_folder(package, default_path)
         # add file menu
         self.filemenu = tk.Menu(self.menubar, tearoff=0)
         self.filemenu.add_command(label='Open database folder',
@@ -822,9 +822,9 @@ class LoadData:
         wmsg = 'Generating line list for instrument = "{0}"'
         WLOG(self.drs_params, 'info', wmsg.format(self.instrument))
         # get package (from drs_text)
-        package = lang.core.drs_lang_text.PACKAGE
+        package = __PACKAGE__
         # get level above package
-        modpath = lang.core.drs_lang_text.get_relative_folder(package, '..')
+        modpath = drs_break.get_relative_folder(package, '..')
         # get python scripts in modpath
         pyfiles = find_all_py_files(modpath)
         # open and combine in to single list of lines
@@ -885,8 +885,8 @@ def open_all_py_files(files):
     :rtype: tuple[list[str], list[str], list[str]]
     """
     # get package and relative path to database (basaed on drs_text values)
-    package = lang.core.drs_lang_text.PACKAGE
-    path = lang.core.drs_lang_text.get_relative_folder(package, '..')
+    package = __PACKAGE__
+    path = drs_break.get_relative_folder(package, '..')
     # set up storage
     all_entries = []
     all_line_numbers = []

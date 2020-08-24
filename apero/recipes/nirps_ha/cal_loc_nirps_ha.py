@@ -13,7 +13,7 @@ from apero.base import base
 from apero import core
 from apero import lang
 from apero.core import math as mp
-from apero.core.utils import drs_database
+from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_fits
 from apero.science.calib import general
 from apero.science.calib import localisation
@@ -112,7 +112,9 @@ def __main__(recipe, params):
         combine = False
     # get the number of infiles
     num_files = len(infiles)
-
+    # load the calibration database
+    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm.load_db()
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
@@ -129,13 +131,11 @@ def __main__(recipe, params):
         infile = infiles[it]
         # get header from file instance
         header = infile.header
-        # get calibrations for this data
-        drs_database.copy_calibrations(params, header)
-
         # ------------------------------------------------------------------
         # Correction of file
         # ------------------------------------------------------------------
-        props, image = general.calibrate_ppfile(params, recipe, infile)
+        props, image = general.calibrate_ppfile(params, recipe, infile,
+                                                database=calibdbm)
 
         # ------------------------------------------------------------------
         # Identify fiber type
@@ -227,9 +227,9 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         if passed:
             # copy the order profile to the calibDB
-            drs_database.add_file(params, orderpfile)
+            calibdbm.add_calib_file(params, orderpfile)
             # copy the loco file to the calibDB
-            drs_database.add_file(params, loco1file)
+            calibdbm.add_calib_file(params, loco1file)
         # ------------------------------------------------------------------
         # Summary plots
         # ------------------------------------------------------------------

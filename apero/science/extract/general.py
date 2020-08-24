@@ -66,7 +66,7 @@ display_func = drs_log.display_func
 # Define general functions
 # =============================================================================
 def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
-                   shapey, orderpfile, filenames=None):
+                   shapey, orderpfile, filenames=None, database=None):
     func_name = __NAME__ + '.order_profiles()'
     # filenames must be a dictionary
     if not isinstance(filenames, dict):
@@ -91,6 +91,10 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
         # check for filename in inputs
         filename = general.get_input_files(params, 'ORDERPFILE', key, header,
                                            default=filenames[fiber])
+
+
+        # TODO: GOT TO HERE
+
         # ------------------------------------------------------------------
         # construct order profile file
         orderpsfile = orderpfile.newcopy(recipe=recipe, fiber=fiber)
@@ -138,7 +142,7 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
 # Define thermal functions
 # =============================================================================
 def thermal_correction(params, recipe, header, props=None, eprops=None,
-                       fiber=None, **kwargs):
+                       fiber=None, database=None, **kwargs):
     func_name = __NAME__ + '.thermal_correction()'
     # deal with props = None
     if props is None:
@@ -180,10 +184,10 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     # get fiber dprtype
     fibertype = pconst.FIBER_DATA_TYPE(dprtype, fiber)
     # ----------------------------------------------------------------------
-    # get master wave filename
-    mwavefile = wave.get_masterwave_filename(params, fiber)
     # get master wave map
-    wprops = wave.get_wavesolution(params, recipe, filename=mwavefile)
+    # TODO: Are we sure this should be the master solution?
+    wprops = wave.get_wavesolution(params, recipe, master=True,
+                                   database=database)
     # get the wave solution
     wavemap = wprops['WAVEMAP']
 
@@ -205,11 +209,13 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     if fibertype in corrtype1:
         thermalfile, thermal = get_thermal(params, header, fiber=fiber,
                                            filename=thermal_file,
-                                           kind='THERMALT_E2DS')
+                                           kind='THERMALT_E2DS',
+                                           database=database)
     elif fibertype in corrtype2:
         thermalfile, thermal = get_thermal(params, header, fiber=fiber,
                                            filename=thermal_file,
-                                           kind='THERMALI_E2DS')
+                                           kind='THERMALI_E2DS',
+                                           database=database)
     else:
         thermal = None
         thermalfile = 'None'
@@ -253,7 +259,8 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     return eprops
 
 
-def get_thermal(params, header, fiber, kind, filename=None):
+def get_thermal(params, header, fiber, kind, filename=None,
+                database=None):
     # get file definition
     out_thermal = core.get_file_definition(kind, params['INSTRUMENT'],
                                            kind='red')
@@ -717,7 +724,7 @@ def correct_dark_fp(params, extractdict, **kwargs):
     return props
 
 
-def dark_fp_regen_s1d(params, recipe, props, **kwargs):
+def dark_fp_regen_s1d(params, recipe, props, database=None, **kwargs):
     # set function name
     func_name = __NAME__ + '.dark_fp_regen_s1d()'
     # get outputs from props
@@ -739,7 +746,8 @@ def dark_fp_regen_s1d(params, recipe, props, **kwargs):
         blaze_file, blaze = flat_blaze.get_blaze(params, header, fiber)
         # --------------------------------------------------------------
         # load wavelength solution for this fiber
-        wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber)
+        wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
+                                       database=database)
         # --------------------------------------------------------------
         # create 1d spectra (s1d) of the e2ds file
         sargs = [wprops['WAVEMAP'], extfile.data, blaze]
@@ -894,7 +902,8 @@ def save_uncorrected_ext_fp(params, extractdict):
             drs_path.copyfile(params, inpath, outpath)
 
 
-def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, **kwargs):
+def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
+                **kwargs):
     # set up function name
     func_name = display_func(params, 'ref_fplines', __NAME__)
     # get constant from params
@@ -919,7 +928,8 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, **kwargs):
         return None
     # ----------------------------------------------------------------------
     # get master hc lines and fp lines from calibDB
-    wout = wave.get_wavelines(params, recipe, fiber, infile=e2dsfile)
+    wout = wave.get_wavelines(params, recipe, fiber, infile=e2dsfile,
+                              database=database)
     mhclines, mhclsource, mfplines, mfplsource = wout
     # deal with no fplines found
     if mfplines is None:

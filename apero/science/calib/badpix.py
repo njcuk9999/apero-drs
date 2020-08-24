@@ -268,7 +268,7 @@ def locate_bad_pixels_full(params, image, **kwargs):
     return mask, badpix_stats
 
 
-def correction(params, image=None, header=None, return_map=False, **kwargs):
+def correction(params, image, badpixfile, return_map=False):
     """
     Corrects "image" for "BADPIX" using calibDB file (header must contain
     value of p['ACQTIME_KEY'] as a keyword) - sets all bad pixels to zeros
@@ -284,6 +284,7 @@ def correction(params, image=None, header=None, return_map=False, **kwargs):
                               files should be saved to/read from
 
     :param image: numpy array (2D), the image
+    :param badpixfile: str, the bad pixel calibration file
     :param header: dictionary, the header dictionary created by
                    spirouFITS.ReadImage
     :param return_map: bool, if True returns bad pixel map else returns
@@ -293,35 +294,6 @@ def correction(params, image=None, header=None, return_map=False, **kwargs):
               set to zeros or the bad pixel map (if return_map = True)
     """
     func_name = __NAME__ + '.correct_for_baxpix()'
-    # check for filename in kwargs
-    filename = kwargs.get('filename', None)
-    # deal with no header
-    if header is None:
-        WLOG(params, 'error', TextEntry('00-012-00002', args=[func_name]))
-    # deal with no image (when return map is False)
-    if (not return_map) and (image is None):
-        WLOG(params, 'error', TextEntry('00-012-00003', args=[func_name]))
-
-    # get loco file instance
-    badinst = core.get_file_definition('BADPIX', params['INSTRUMENT'],
-                                       kind='red')
-    # get calibration key
-    badkey = badinst.get_dbkey(func=func_name)
-    # -------------------------------------------------------------------------
-    # get filename
-    if filename is not None:
-        badpixfile = filename
-    else:
-        # get calibDB
-        cdb = drs_database.get_full_database(params, 'calibration')
-        # get filename col
-        filecol = cdb.file_col
-        # get the badpix entries
-        badpixentries = drs_database.get_key_from_db(params, badkey, cdb,
-                                                     header, n_ent=1)
-        # get badpix filename
-        badpixfilename = badpixentries[filecol][0]
-        badpixfile = os.path.join(params['DRS_CALIB_DB'], badpixfilename)
     # -------------------------------------------------------------------------
     # get bad pixel file
     badpiximage = drs_fits.readfits(params, badpixfile)
@@ -330,7 +302,7 @@ def correction(params, image=None, header=None, return_map=False, **kwargs):
     # -------------------------------------------------------------------------
     # if return map just return the bad pixel map
     if return_map:
-        return badpixfile, mask
+        return mask
     # else put NaNs into the image
     else:
         # log that we are setting background pixels to NaN
@@ -339,7 +311,7 @@ def correction(params, image=None, header=None, return_map=False, **kwargs):
         corrected_image = np.array(image)
         corrected_image[mask] = np.nan
         # finally return corrected_image
-        return badpixfile, corrected_image
+        return corrected_image
 
 
 # =============================================================================

@@ -14,6 +14,7 @@ from apero.base import base
 from apero import core
 from apero import lang
 from apero.core import constants
+from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_fits
 from apero.io import drs_table
 from apero.base import drs_text
@@ -135,6 +136,9 @@ def __main__(recipe, params):
     recipe.plot.set_location()
     # get pseudo constants
     pconst = constants.pload(params['INSTRUMENT'])
+    # load the calibration database
+    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm.load_db()
     # get the fibers
     sfibers, rfiber = pconst.FIBER_KINDS()
     dfibers = sfibers + [rfiber]
@@ -244,7 +248,8 @@ def __main__(recipe, params):
             header = infile.header
             # -----------------------------------------------------------------
             # load wavelength solution for this fiber
-            wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber)
+            wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
+                                           database=calibdbm)
             # -----------------------------------------------------------------
             # load the blaze file for this fiber
             blaze_file, blaze = flat_blaze.get_blaze(params, header, fiber)

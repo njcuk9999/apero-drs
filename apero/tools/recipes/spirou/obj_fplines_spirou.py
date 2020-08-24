@@ -13,6 +13,7 @@ from apero.base import base
 from apero import core
 from apero import lang
 from apero.core import constants
+from apero.core.utils import drs_database2 as drs_database
 from apero.science.calib import wave
 from apero.science import extract
 from apero.tools.module.testing import drs_dev
@@ -122,6 +123,9 @@ def __main__(recipe, params):
     infiles = params['INPUTS']['FILES'][1]
     # get number of files
     num_files = len(infiles)
+    # load the calibration database
+    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm.load_db()
     # loop around files
     for it in range(num_files):
         # set up plotting (no plotting before this)
@@ -143,12 +147,14 @@ def __main__(recipe, params):
         fiber = e2dsfile.get_key('KW_FIBER', dtype=str)
         # --------------------------------------------------------------
         # load wavelength solution for this fiber
-        wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber)
+        wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
+                                       database=calibdbm)
         # --------------------------------------------------------------
         # create fplines file for required fibers
         # --------------------------------------------------------------
         rargs = [e2dsfile, wprops['WAVEMAP'], fiber]
-        rfpl = extract.ref_fplines(params, recipe, *rargs)
+        rfpl = extract.ref_fplines(params, recipe, *rargs,
+                                   database=calibdbm)
         # write rfpl file
         if rfpl is not None:
             rargs = [rfpl, e2dsfile, e2dsfile, fiber, 'EXT_FPLINES']
