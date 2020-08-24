@@ -369,62 +369,6 @@ def add_file(params, outfile, night=None, copy_files=True, log=True):
         update_calibdb(params, dbname, dbkey, outfile, night, log)
 
 
-def copy_calibrations(params, header, **kwargs):
-    # set function name
-    func_name = display_func(params, 'copy_calibrations', __NAME__)
-    # get parameters from params/kwargs
-    mode = pcheck(params, 'CALIB_DB_MATCH', 'mode', kwargs, func_name)
-    # set the dbname
-    dbname = 'calibration'
-    # get the output filename directory
-    outpath = os.path.join(params['OUTPATH'], params['NIGHTNAME'])
-    # ----------------------------------------------------------------------
-    # get calibration database
-    cdb = get_full_database(params, dbname)
-    # get shortname
-    dbshort = cdb.dbshort
-    # ----------------------------------------------------------------------
-    # get each unique key get the entry
-    entry_tables = []
-    # loop around unique keys and add to list
-    gkwargs = dict(database=cdb, header=header, n_ent=1, required=False,
-                   mode=mode)
-    for key in cdb.unique_keys:
-        # get closest key
-        entry_table = get_key_from_db(params, key, **gkwargs)
-        # append to list of tables if we have rows
-        if len(entry_table) > 0:
-            entry_tables.append(entry_table)
-    # ----------------------------------------------------------------------
-    # stack the tables vertically
-    ctable = vstack(entry_tables)
-    # get the filenames
-    filecol = cdb.file_col
-    infilenames = ctable[filecol]
-    # ----------------------------------------------------------------------
-    # loop around file names and copy
-    for infilename in infilenames:
-        # get absolute paths
-        inpath = _get_outpath(params, dbname)
-        inabspath = os.path.join(inpath, infilename)
-        outabspath = os.path.join(outpath, infilename)
-        # debug message
-        dargs = [dbname, inabspath, outabspath]
-        WLOG(params, 'debug',TextEntry('90-002-00001', args=dargs))
-        # if file exists do not copy it
-        if os.path.exists(outabspath):
-            # log copying skipped
-            wargs = [dbshort, infilename]
-            WLOG(params, '', TextEntry('40-006-00002', args=wargs))
-        # else copy it
-        else:
-            # log copying
-            wargs = [dbshort, infilename, outpath]
-            WLOG(params, '', TextEntry('40-006-00003', args=wargs))
-            # copy the database file
-            _copy_db_file(params, dbname, inabspath, outabspath, log=False)
-
-
 def get_header_time(params, database, header):
     # set function name
     func_name = display_func(params, 'get_header_time', __NAME__)
