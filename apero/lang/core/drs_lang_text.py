@@ -13,9 +13,9 @@ import numpy as np
 import os
 from astropy.table import Table
 from collections import OrderedDict
-import pkg_resources
 
 from apero.base import base
+from apero.base import drs_break
 from apero.base import drs_exceptions
 
 # =============================================================================
@@ -508,9 +508,9 @@ def _get_dict_files(instrument, filelist):
     # setup storage for return file list
     return_files = []
     # get instrument path
-    ifolder = get_relative_folder(__PACKAGE__, INSTRUMENT_PATH)
+    ifolder = drs_break.get_relative_folder(__PACKAGE__, INSTRUMENT_PATH)
     # get default file
-    dfolder = get_relative_folder(__PACKAGE__, DEFAULT_PATH)
+    dfolder = drs_break.get_relative_folder(__PACKAGE__, DEFAULT_PATH)
     dfiles = []
     for file_d in filelist:
         abspath_d = os.path.join(dfolder, file_d)
@@ -547,43 +547,6 @@ def _get_dict_files(instrument, filelist):
                 return_files.append(ifilepath)
     # finally return files
     return return_files
-
-
-def get_relative_folder(package, folder):
-    """
-    Get the absolute path of folder defined at relative path
-    folder from package
-
-    :param package: string, the python package name
-    :param folder: string, the relative path of the config folder
-
-    :return data: string, the absolute path and filename of the default config
-                  file
-    """
-    func_name = __NAME__ + '.get_relative_folder()'
-    # get the package.__init__ file path
-    try:
-        init = pkg_resources.resource_filename(package, '__init__.py')
-    except ImportError:
-        emsg = 'DRS Error: Package name = "{0}" is invalid (function = {1})'
-        raise ValueError(emsg.format(package, func_name))
-    # Get the config_folder from relative path
-    current = os.getcwd()
-    # get directory name of folder
-    dirname = os.path.dirname(init)
-    # change to directory in init
-    os.chdir(dirname)
-    # get the absolute path of the folder
-    data_folder = os.path.abspath(folder)
-    # change back to working dir
-    os.chdir(current)
-    # test that folder exists
-    if not os.path.exists(data_folder):
-        emsg = 'DRS Error: Folder "{0}" does not exist in {1}'
-        eargs = [os.path.basename(data_folder), os.path.dirname(data_folder)]
-        raise ValueError(emsg.format(*eargs))
-    # return the absolute data_folder path
-    return data_folder
 
 
 def _read_dict_files(dict_files, language):

@@ -16,8 +16,8 @@ import os
 import shutil
 
 from apero.base import base
+from apero.base import drs_break
 from apero.base import drs_exceptions
-from apero.lang.core import drs_lang_text
 
 
 # =============================================================================
@@ -132,9 +132,9 @@ def validate_csv(files):
 def main():
     # ----------------------------------------------------------------------
     # get abspath from relative path
-    database_path = drs_lang_text.get_relative_folder(__PACKAGE__,
+    database_path = drs_break.get_relative_folder(__PACKAGE__,
                                                       DATABASE_PATH)
-    backup_path = drs_lang_text.get_relative_folder(__PACKAGE__, BACKUP_PATH)
+    backup_path = drs_break.get_relative_folder(__PACKAGE__, BACKUP_PATH)
     # ----------------------------------------------------------------------
     # get database abspath
     dabspath = os.path.join(database_path, DATABASE_FILE)
