@@ -522,21 +522,26 @@ class DrsCodedException(DrsException):
             return default
 
     def __str__(self):
-        emsg = 'DrsCodedException[{0}]'.format(self.codeid)
-        if self.level is not None:
-            emsg += '\n\tLevel: {0}'.format(self.level)
-        if self.args is not None:
-            if isinstance(self.targs, list):
-                for it, arg in enumerate(self.targs):
-                    emsg += '\n\t Arg[{0}] = {1}'.format(it, arg)
-            else:
-                emsg += '\n\tArgs: {0}'.format(self.args)
-        if self.func_name is not None:
-            emsg += '\n\tFunction: {0}'.format(self.func_name)
+
+        return base_printer(self.codeid, self.level, self.targs, self.func_name)
 
     def __repr__(self):
         return self.__str__()
 
+
+def base_printer(codeid, level, args, func_name):
+    emsg = 'DrsCodedException[{0}]'.format(codeid)
+    if level is not None:
+        emsg += '\n\tLevel: {0}'.format(level)
+    if args is not None:
+        if isinstance(args, list):
+            for it, arg in enumerate(args):
+                emsg += '\n\t Arg[{0}] = {1}'.format(it, arg)
+        else:
+            emsg += '\n\tArgs: {0}'.format(args)
+    if func_name is not None:
+        emsg += '\n\tFunction: {0}'.format(func_name)
+    return emsg
 
 
 # =============================================================================
