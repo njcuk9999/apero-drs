@@ -1147,10 +1147,8 @@ def debug_start(logobj, params, raise_exception):
 
 def display_func(params=None, name=None, program=None, class_name=None):
     # run the display function
-    return constants.param_functions.display_func(params, name,
-                                                  program, class_name,
-                                                  wlog=wlog,
-                                                  textentry=TextEntry)
+    return drs_misc.display_func(params, name, program, class_name, wlog=wlog,
+                                 textentry=TextEntry)
 
 
 def _get_prev_count(params, previous):
