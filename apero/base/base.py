@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Some things must be defined once and used throughout the drs
+No functions in here please
 
 Created on 2020-08-2020-08-21 19:43
 
@@ -36,6 +37,7 @@ VALID_CHARS += list(string.punctuation) + list(string.whitespace)
 CONST_PATH = './core/instruments/'
 CORE_PATH = './core/instruments/default/'
 PDB_RC_FILE = './data/core/pdbrc_full'
+PDB_RC_FILENAME = '.pdbrc'
 LANG_DEFAULT_PATH = './lang/databases/'
 LANG_INSTRUMNET_PATH = './lang/databases/'
 LANG_BACKUP_PATH = './lang/backup/'
