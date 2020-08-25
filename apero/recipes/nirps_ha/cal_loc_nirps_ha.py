@@ -227,9 +227,9 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         if passed:
             # copy the order profile to the calibDB
-            calibdbm.add_calib_file(params, orderpfile)
+            calibdbm.add_calib_file(orderpfile)
             # copy the loco file to the calibDB
-            calibdbm.add_calib_file(params, loco1file)
+            calibdbm.add_calib_file(loco1file)
         # ------------------------------------------------------------------
         # Summary plots
         # ------------------------------------------------------------------

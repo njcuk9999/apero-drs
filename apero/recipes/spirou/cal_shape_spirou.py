@@ -174,7 +174,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         if passed:
             # add shapel transforms
-            calibdbm.add_calib_file(params, outfile)
+            calibdbm.add_calib_file(outfile)
         # ------------------------------------------------------------------
         # plot a zoom in of non-shifted vs shifted
         # ------------------------------------------------------------------

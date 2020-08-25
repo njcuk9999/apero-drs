@@ -246,7 +246,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     if passed:
         # copy the big cube median to the calibDB
-        telludbm.add_tellu_file(params, template_file) #, night=nightname)
+        telludbm.add_tellu_file(template_file) #, night=nightname)
 
     # ----------------------------------------------------------------------
     # plots

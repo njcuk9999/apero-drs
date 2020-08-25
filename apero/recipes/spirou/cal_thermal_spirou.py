@@ -163,7 +163,7 @@ def __main__(recipe, params):
         # loop around fiber types
         for fiber in fiber_types:
             # add output from thermal files
-            calibdbm.add_calib_file(params, thermal_files[fiber])
+            calibdbm.add_calib_file(thermal_files[fiber])
         # ------------------------------------------------------------------
         # update recipe log file
         # ------------------------------------------------------------------

@@ -279,7 +279,7 @@ def __main__(recipe, params):
             # ----------------------------------------------------------
             if passed:
                 # copy the hc wave solution file to the calibDB
-                calibdbm.add_calib_file(params, wavefile)
+                calibdbm.add_calib_file(wavefile)
 
             # ----------------------------------------------------------
             # Update header of current files with FP solution

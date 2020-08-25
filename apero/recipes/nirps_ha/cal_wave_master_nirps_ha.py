@@ -411,11 +411,11 @@ def __main__(recipe, params):
             # ----------------------------------------------------------
             if passed:
                 # copy the hc wave solution file to the calibDB
-                calibdbm.add_calib_file(params, fpwavefile)
+                calibdbm.add_calib_file(fpwavefile)
                 # copy the hc line ref file to the calibDB
-                calibdbm.add_calib_file(params, hclinefile)
+                calibdbm.add_calib_file(hclinefile)
                 # copy the fp line ref file to the calibDB
-                calibdbm.add_calib_file(params, fplinefile)
+                calibdbm.add_calib_file(fplinefile)
         # ----------------------------------------------------------
         # update recipe log file for fp fiber
         # ----------------------------------------------------------
