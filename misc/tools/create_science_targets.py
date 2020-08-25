@@ -30,11 +30,11 @@ TARGETS = []
 # TARGETS += ['AUMic', ' Gl388', ' TYC 4384-1735-1', ' TOI-1278', ' TOI-1759',
 #             ' TOI-1452']
 # # priority 2
-TARGETS += ['TOI-233', ' K2-147', ' TOI-736', ' K2-33', ' TOI-876', ' TOI-732']
+# TARGETS += ['TOI-233', ' K2-147', ' TOI-736', ' K2-33', ' TOI-876', ' TOI-732']
 # # priority 3
 # TARGETS += ['epsilonEri', ' GJ9827', ' Gl725A', ' Gl412A', ' Gl687', ' Gl725B']
 # # priority 4
-# TARGETS += ['Gl411', ' TYC3980-1081-1', ' GJ1289', ' GJ1286', ' Gl536']
+TARGETS += ['Gl411', ' TYC3980-1081-1', ' GJ1289', ' GJ1286', ' Gl536']
 # # priority 5
 # TARGETS += ['V883Ori', ' DRTau', ' XZTau', ' BBW76', ' NYOri', ' V582Aur']
 # # priority 6
