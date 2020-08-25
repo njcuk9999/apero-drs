@@ -131,7 +131,8 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Get localisation coefficients for fp file
     # ----------------------------------------------------------------------
-    lprops = localisation.get_coefficients(params, recipe, fpheader, fiber)
+    lprops = localisation.get_coefficients(params, recipe, fpheader, fiber,
+                                           database=calibdbm)
 
     # ----------------------------------------------------------------------
     # Get wave coefficients from master wavefile

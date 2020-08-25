@@ -148,9 +148,9 @@ def calibrate_ppfile(params, recipe, infile, database=None, **kwargs):
                                         kind='red')
 
     # get calibration key
-    darkkey = darkinst.get_dbkey(func=func_name)
-    badkey = badinst.get_dbkey(func=func_name)
-    backkey = backinst.get_dbkey(func=func_name)
+    darkkey = darkinst.get_dbkey()
+    badkey = badinst.get_dbkey()
+    backkey = backinst.get_dbkey()
     # load database
     if database is None:
         calibdbm = drs_database.CalibrationDatabase(params)
@@ -250,8 +250,8 @@ def calibrate_ppfile(params, recipe, infile, database=None, **kwargs):
                                    userinputkey='BACKFILE',
                                     return_filename=True, database=calibdbm)
         # correct image for background
-        bkgrdfile, image4 = background.correction(recipe, params, infile,
-                                                  image3, bkgrdfile=bkgrdfile)
+        image4 = background.correction(recipe, params, infile, image3,
+                                       bkgrdfile=bkgrdfile)
     else:
         image4 = np.array(image3)
         bkgrdfile = 'None'
@@ -356,7 +356,7 @@ def add_calibs_to_header(outfile, props):
 
 
 def load_calib_file(params, key=None, inheader=None, filename=None,
-                    get_image=True, get_header=False,
+                    get_image=True, get_header=False, fiber=None,
                     userinputkey=None, database=None,
                     return_filename=False, return_source=False, **kwargs):
     # set function
@@ -401,7 +401,7 @@ def load_calib_file(params, key=None, inheader=None, filename=None,
         # load filename from database
         filename = database.get_calib_file(key, header=inheader,
                                            timemode=mode, nentries=n_entries,
-                                           required=required)
+                                           required=required, fiber=fiber)
         source = 'calibDB'
     # -------------------------------------------------------------------------
     # if we are just returning filename return here

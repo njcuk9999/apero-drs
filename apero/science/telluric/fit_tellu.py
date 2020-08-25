@@ -76,7 +76,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
     out_trans = core.get_file_definition('TELLU_TRANS', params['INSTRUMENT'],
                                          kind='red', fiber=fiber)
     # get key
-    trans_key = out_trans.get_dbkey(fiber=fiber)
+    trans_key = out_trans.get_dbkey() + '[{0}]'.format(fiber)
     # ----------------------------------------------------------------------
     # check that we have enough trans files for pca calculation (must be greater
     #     than number of principle components

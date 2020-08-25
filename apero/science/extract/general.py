@@ -94,15 +94,14 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
     for fiber in fibertypes:
         # log progress (straightening orderp)
         WLOG(params, 'info', TextEntry('40-016-00003', args=[fiber]))
-
         # get key
-        key = orderpfile.get_dbkey(fiber=fiber)
+        key = orderpfile.get_dbkey()
         # ------------------------------------------------------------------
         # get the order profile filename
         filename = general.load_calib_file(params, key, header,
                                            filename=filenames[fiber],
                                            userinputkey='ORDERPFILE',
-                                           database=calibdbm,
+                                           database=calibdbm, fiber=fiber,
                                            return_filename=True)
         # ------------------------------------------------------------------
         # construct order profile file
@@ -273,7 +272,7 @@ def get_thermal(params, header, fiber, kind, filename=None,
     out_thermal = core.get_file_definition(kind, params['INSTRUMENT'],
                                            kind='red')
     # get key
-    key = out_thermal.get_dbkey(fiber=fiber)
+    key = out_thermal.get_dbkey()
     # ----------------------------------------------------------------------
     # load database
     if database is None:
@@ -284,7 +283,7 @@ def get_thermal(params, header, fiber, kind, filename=None,
     # ------------------------------------------------------------------------
     # load calib file
     ckwargs = dict(key=key, userinputkey='THERMALFILE', filename=filename,
-                   inheader=header, database=database)
+                   inheader=header, database=database, fiber=fiber)
     thermal, thdr, thermal_file = general.load_calib_file(params, **ckwargs)
     # log which fpmaster file we are using
     WLOG(params, '', TextEntry('40-016-00027', args=[thermal_file]))
@@ -784,7 +783,7 @@ def get_leak_master(params, header, fiber, kind, filename=None,
     out_leak = core.get_file_definition(kind, params['INSTRUMENT'],
                                            kind='red')
     # get key
-    key = out_leak.get_dbkey(fiber=fiber)
+    key = out_leak.get_dbkey()
     # ----------------------------------------------------------------------
     # load database
     if database is None:
@@ -794,7 +793,7 @@ def get_leak_master(params, header, fiber, kind, filename=None,
         calibdbm = database
     # ------------------------------------------------------------------------
     # load calib file
-    ckwargs = dict(key=key, inheader=header, filename=filename,
+    ckwargs = dict(key=key, inheader=header, filename=filename, fiber=fiber,
                    userinputkey='LEAKFILE', database=calibdbm)
     leak, _, leak_file = general.load_calib_file(params, **ckwargs)
     # ------------------------------------------------------------------------

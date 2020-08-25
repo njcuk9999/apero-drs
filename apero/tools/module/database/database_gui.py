@@ -57,9 +57,9 @@ class DatabaseHolder:
         self.empty = False
         self.changed = False
 
-    def load_dataframe(self):
+    def load_dataframe(self, reload=False):
         # if we already have the dataframe don't load it
-        if isinstance(self.df, pd.DataFrame):
+        if isinstance(self.df, pd.DataFrame) and (not reload):
             return
         # if we don't have path we have a problem
         if self.path is None:
@@ -74,7 +74,11 @@ class DatabaseHolder:
         elif str(self.path).endswith('.db'):
             # start database
             database = Database(self.path)
-            dataframe = database.get('*', table='MAIN', return_pandas=True)
+            # try to get database (as a pandas table)
+            try:
+                dataframe = database.get('*', table='MAIN', return_pandas=True)
+            except drs_db.DatabaseError as _:
+                dataframe = []
             if len(dataframe) == 0:
                 self.df = None
                 self.empty = True
@@ -280,16 +284,18 @@ class DatabaseExplorer(tk.Frame):
         self.table = DatabaseTable(self.table_frame, **kwargs)
         self.table.show()
 
-    def change_table(self, *args):
+    def change_table(self, *args, reload=False):
         # do not ask if no changes were made
         if self.table.table_changed:
             self.table_change = True
             # need to make sure the previous table has been marked as changed
             self.databases[self.current_database_name].changed = True
-            # get dataframe back from model
-            prev_df = pd.DataFrame(self.table.model.df)
-            # need to add to all databases
-            self.all_databases[self.current_database_name] = prev_df
+            # deal with reload
+            if not reload:
+                # get dataframe back from model
+                prev_df = pd.DataFrame(self.table.model.df)
+                # need to add to all databases
+                self.all_databases[self.current_database_name] = prev_df
         # get the new database (based on database_option selector)
         database_name = self.database_option.get()
         databasehldr = self.databases[database_name]
@@ -332,9 +338,24 @@ class DatabaseExplorer(tk.Frame):
                     databasehldr.save_dataframe(dataframe)
                     # now we have saved it mark it as not changed
                     databasehldr.changed = False
+                    # remove database from all_databases (now updated)
+                    del self.all_databases[database_name]
             # now we have updated we can set table_changes to False
             self.table_change = False
 
+    def refresh_database(self):
+        # see if we really want to refresh
+        if self.table.table_changed or self.table_change:
+            refresh = self.refresh_warning()
+        else:
+            refresh = True
+
+        if refresh:
+            # loop around databases and update
+            for database_name in self.databases:
+                self.databases[database_name].load_dataframe(reload=True)
+            # change table
+            self.change_table(reload=True)
 
     def menu(self):
 
@@ -368,7 +389,8 @@ class DatabaseExplorer(tk.Frame):
                         "Undo Last Change": self.table.undo,
                         "Copy Table": self.table.copyTable,
                         "Find/Replace": self.table.findText,
-                        "Update Database": self.update_database}
+                        "Refresh from Database": self.refresh_database,
+                        "Save to Database": self.update_database}
 
         filecommands = ['Open','Import Text/CSV','Save','Save As','Export',
                         'Preferences']
@@ -376,8 +398,9 @@ class DatabaseExplorer(tk.Frame):
                         'Filter Rows', 'Add Row(s)', 'Add Column(s)',
                         'Select All']
         plotcommands = ['Plot Selected','Hide plot','Show plot']
-        tablecommands = ['Update Database', 'Table to Text','Clean Data',
-                         'Clear Formatting', 'Table Info']
+        tablecommands = ['Refresh from Database', 'Save to Database',
+                         'Table to Text','Clean Data', 'Clear Formatting',
+                         'Table Info']
 
         # top level menu bar
         self.menubar = tk.Menu(self.main)
@@ -400,6 +423,18 @@ class DatabaseExplorer(tk.Frame):
         title = 'Update ALL SQL database(s)?'
         message = ('Are you sure you want to commit changes '
                    'to database (This is permanent)?')
+        msgbox = messagebox.askquestion(title, message, icon='warning')
+        # return a bool
+        if msgbox == 'yes':
+            return True
+        else:
+            return False
+
+    def refresh_warning(self) -> bool:
+        # set up message box
+        title = 'Refresh ALL SQL database(s)?'
+        message = ('There are unsaved changes are you sure you want to refresh '
+                   'all databases (This is permanent)?')
         msgbox = messagebox.askquestion(title, message, icon='warning')
         # return a bool
         if msgbox == 'yes':

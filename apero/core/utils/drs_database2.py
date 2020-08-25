@@ -143,7 +143,7 @@ class DatabaseManager():
         if self.path is not None:
             # log that we are loading database
             margs = [self.name, self.path]
-            WLOG(self.params, '', TextEntry('40-006-00005', args=margs))
+            WLOG(self.params, 'info', TextEntry('40-006-00005', args=margs))
             # load database
             self.database = drs_db.Database(self.path)
 
@@ -283,13 +283,18 @@ class CalibrationDatabase(DatabaseManager):
             # return filename
             if len(entries) == 1:
                 return entries[0][0]
+            else:
+                return None
         elif len(columns) == 1:
             # return array for ease
             sql['return_array'] = True
             # do sql query
             entries = self.database.get(columns, 'MAIN', **sql)
             # return one list
-            return entries[:, 0]
+            if len(entries) == 0:
+                return []
+            else:
+                return entries[:, 0]
         else:
             # return as pandas table
             sql['return_pandas'] = True
@@ -304,7 +309,8 @@ class CalibrationDatabase(DatabaseManager):
                        timemode: Union[str, None] = None,
                        nentries: Union[str, int] = 1,
                        required: bool = True,
-                       no_times: bool = False):
+                       no_times: bool = False,
+                       fiber: Union[str, None] = None):
         """
         Handles getting a filename from calibration database (from filename,
         user input, or key in SQL database
@@ -331,6 +337,8 @@ class CalibrationDatabase(DatabaseManager):
                          entries to return
         :param required: bool, if True will cause an exception when no entries
                          found
+        :param fiber: str or None, if set sets the fiber to use - if no fiber
+                      required do not set
         :return:
         """
         # set function
@@ -351,9 +359,6 @@ class CalibrationDatabase(DatabaseManager):
             # need to get filetime
             filetime = _get_time(self.params, self.name, hdict, header)
         # ---------------------------------------------------------------------
-        # get fiber
-        fiber = _get_hkey(self.params, 'KW_FIBER', header, hdict)
-        # ---------------------------------------------------------------------
         # deal with default time mode
         if timemode is None:
             # get default mode from params
@@ -366,16 +371,19 @@ class CalibrationDatabase(DatabaseManager):
         # ---------------------------------------------------------------------
         # do sql query
         # ---------------------------------------------------------------------
+        # get calibration database entries --> FILENAME
+        #   if nentries = 1 : str or None
+        #   if nentries > 1 : 1d numpy array
         filenames = self.get_calib_entry('FILENAME', key, fiber, filetime,
                                          timemode, nentries)
         # ---------------------------------------------------------------------
         # return absolute paths
         # ---------------------------------------------------------------------
         # deal with no filenames found and not required
-        if len(filenames) == 0 and not required:
+        if (filenames is None or len(filenames) == 0) and not required:
             return None
         # deal with no filenames found elsewise --> error
-        if len(filenames) == 0:
+        if (filenames is None or len(filenames) == 0):
             # get unique set of keys
             keys = np.unique(self.database.get('KEY', return_array=True))
             # get file description
