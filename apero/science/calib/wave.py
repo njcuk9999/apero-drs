@@ -152,11 +152,11 @@ def get_wave_solution_from_wavefile(params, recipe, usefiber, inwavefile,
         # ---------------------------------------------------------------------
         # load filename from inputs/calibDB
         # ---------------------------------------------------------------------
-        lkwargs = dict(userinputkey='WAVEFILE', database=calibdbm,
+        lkwargs = dict(userinputkey='WAVEFILE', database=calibdbm, key=key_fp,
+                       inheader=header, filename=inwavefile,
                        return_filename=True, required=False, return_source=True)
-
-        fout = general.load_calib_file(params, key_fp, header,
-                                       filename=inwavefile, **lkwargs)
+        # load wave fp file
+        fout = general.load_calib_file(params, key_fp, **lkwargs)
         # get filename and source from outputs
         inwavefile, source = fout
         if isinstance(source, str):
@@ -164,8 +164,10 @@ def get_wave_solution_from_wavefile(params, recipe, usefiber, inwavefile,
         # ---------------------------------------------------------------------
         # then check hc solution (if we don't have an fp solution filename
         if inwavefile is None:
-            fout = general.load_calib_file(params, key_hc, header,
-                                           filename=inwavefile, **lkwargs)
+            # need to re-add filename (may have changed value)
+            lkwargs['filename'] = inwavefile
+            # load wave hc file
+            fout = general.load_calib_file(params, key_hc, **lkwargs)
             # get filename and source from outputs
             filename, source = fout
             if isinstance(source, str):

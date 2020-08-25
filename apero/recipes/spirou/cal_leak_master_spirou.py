@@ -12,7 +12,7 @@ Created on 2020-03-02 at 17:26
 from apero.base import base
 from apero import core
 from apero import lang
-from apero.core.utils import drs_database
+from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_fits
 from apero.science.extract import other as extother
 from apero.science.extract import general as extgen
@@ -92,6 +92,9 @@ def __main__(recipe, params):
     allowedtypes = params.listp('ALLOWED_LEAKM_TYPES', dtype=str)
     # set up plotting (no plotting before this)
     recipe.plot.set_location()
+    # load the calibration database
+    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm.load_db()
     # ----------------------------------------------------------------------
     # Get all dark_fp files for directory
     # ----------------------------------------------------------------------
@@ -204,7 +207,7 @@ def __main__(recipe, params):
             # get outfile
             outfile = medcubes[fiber]
             # copy the order profile to the calibDB
-            drs_database.add_file(params, outfile)
+            calibdbm.add_calib_file(params, outfile)
     # ------------------------------------------------------------------
     # update recipe log file
     # ------------------------------------------------------------------

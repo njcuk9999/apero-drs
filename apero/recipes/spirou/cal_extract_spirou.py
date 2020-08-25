@@ -176,7 +176,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         sargs = [infile, fibertypes, shapelocal, shapex, shapey,
                  recipe.outputs['ORDERP_SFILE']]
-        orderps, orderpfiles = extract.order_profiles(params, recipe, *sargs)
+        orderps, orderpfiles = extract.order_profiles(params, recipe, *sargs,
+                                                      database=calibdbm)
 
         # ------------------------------------------------------------------
         # Apply shape transformations

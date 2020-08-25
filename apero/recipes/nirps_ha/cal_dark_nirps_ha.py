@@ -14,7 +14,7 @@ import numpy as np
 from apero.base import base
 from apero import core
 from apero import lang
-from apero.core.utils import drs_database
+from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_fits
 from apero.io import drs_image
 from apero.science.calib import dark
@@ -111,6 +111,9 @@ def __main__(recipe, params):
         combine = False
     # get the number of infiles
     num_files = len(infiles)
+    # load the calibration database
+    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm.load_db()
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
@@ -212,7 +215,7 @@ def __main__(recipe, params):
         # Move to calibDB and update calibDB
         # ------------------------------------------------------------------
         if passed:
-            drs_database.add_file(params, outfile)
+            calibdbm.add_calib_file(params, outfile)
         # ------------------------------------------------------------------
         # Summary plots
         # ------------------------------------------------------------------

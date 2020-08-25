@@ -1273,7 +1273,7 @@ def get_master_fp(params, header, filename=None, database=None):
     # load master fp
     cout = general.load_calib_file(params, key, header, filename=filename,
                                    userinputkey='FPMASTER', database=calibdbm)
-    fpmaster, fhdr, fpmaster_file = cout
+    fpmaster, _, fpmaster_file = cout
     # ----------------------------------------------------------------------
     # log which fpmaster file we are using
     WLOG(params, '', TextEntry('40-014-00030', args=[fpmaster_file]))

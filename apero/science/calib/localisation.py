@@ -588,25 +588,6 @@ def get_coefficients(params, recipe, header, fiber, database=None, **kwargs):
     return props
 
 
-def load_orderp(params, header, fiber, filename=None):
-    # get pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
-    # deal with fibers that we don't have
-    usefiber = pconst.FIBER_LOC_TYPES(fiber)
-    # get file definition
-    out_loc_orderp = core.get_file_definition('LOC_ORDERP',
-                                               params['INSTRUMENT'], kind='red')
-    # get key
-    key = out_loc_orderp.get_dbkey(fiber=usefiber)
-    # load calib file
-    orderp, orderp_file = general.load_calib_file(params, key, header,
-                                                     filename=filename)
-    # log which fpmaster file we are using
-    WLOG(params, '', TextEntry('40-013-00022', args=[orderp_file]))
-    # return the master image
-    return orderp_file, orderp
-
-
 # =============================================================================
 # write files and qc functions
 # =============================================================================
