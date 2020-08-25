@@ -155,7 +155,7 @@ def __main__(recipe, params):
     # Move to calibDB and update calibDB
     # ------------------------------------------------------------------
     if passed:
-        calibdbm.add_calib_file(params, outfile)
+        calibdbm.add_calib_file(outfile)
 
     # ------------------------------------------------------------------
     # Construct summary document

@@ -207,7 +207,7 @@ def __main__(recipe, params):
             # get outfile
             outfile = medcubes[fiber]
             # copy the order profile to the calibDB
-            calibdbm.add_calib_file(params, outfile)
+            calibdbm.add_calib_file(outfile)
     # ------------------------------------------------------------------
     # update recipe log file
     # ------------------------------------------------------------------

@@ -342,9 +342,9 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         if np.all(qc_params[3]):
             # copy the tellu_obj file to database
-            telludbm.add_tellu_file(params, corrfile)
+            telludbm.add_tellu_file(corrfile)
             # copy the tellu_rcon file to database
-            telludbm.add_tellu_file(params, reconfile)
+            telludbm.add_tellu_file(reconfile)
 
         # ------------------------------------------------------------------
         # Summary plots

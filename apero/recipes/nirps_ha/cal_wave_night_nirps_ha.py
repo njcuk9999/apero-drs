@@ -276,7 +276,7 @@ def __main__(recipe, params):
             # ----------------------------------------------------------
             if passed:
                 # copy the hc wave solution file to the calibDB
-                calibdbm.add_calib_file(params, wavefile)
+                calibdbm.add_calib_file(wavefile)
 
             # ----------------------------------------------------------
             # Update header of current files with FP solution
@@ -287,7 +287,7 @@ def __main__(recipe, params):
                                                       hc_e2ds_file, nprops,
                                                       EXTRACT_NAME, fiber)
                 # update the e2ds and s1d files for fp
-                #  we returrn the fp e2ds file as it has an updated header
+                #  we return the fp e2ds file as it has an updated header
                 newfpe2ds = wave.update_extract_files(params, recipe,
                                                       fp_e2ds_file, nprops,
                                                       EXTRACT_NAME, fiber)

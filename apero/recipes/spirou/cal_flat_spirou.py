@@ -235,9 +235,9 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             if passed:
                 # copy the blaze file to the calibDB
-                calibdbm.add_calib_file(params, blazefile)
+                calibdbm.add_calib_file(blazefile)
                 # copy the flat file to the calibDB
-                calibdbm.add_calib_file(params, flatfile)
+                calibdbm.add_calib_file(flatfile)
             # ------------------------------------------------------------------
             # Summary plots
             # ------------------------------------------------------------------

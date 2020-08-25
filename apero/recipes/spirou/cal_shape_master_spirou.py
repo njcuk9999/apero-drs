@@ -267,11 +267,11 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     if passed:
         # add dxmap
-        calibdbm.add_calib_file(params, outfile1)
+        calibdbm.add_calib_file(outfile1)
         # add dymap
-        calibdbm.add_calib_file(params, outfile2)
+        calibdbm.add_calib_file(outfile2)
         # add master fp file
-        calibdbm.add_calib_file(params, outfile3)
+        calibdbm.add_calib_file(outfile3)
     # ------------------------------------------------------------------
     # Construct summary document
     # ------------------------------------------------------------------

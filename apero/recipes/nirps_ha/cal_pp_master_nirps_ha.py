@@ -198,7 +198,7 @@ def __main__(recipe, params):
         # add to calibration database
         # ------------------------------------------------------------------
         # copy the mask to the calibDB
-        calibdbm.add_calib_file(params, outfile)
+        calibdbm.add_calib_file(outfile)
         # ------------------------------------------------------------------
         # update recipe log file
         # ------------------------------------------------------------------
