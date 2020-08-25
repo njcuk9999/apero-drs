@@ -18,9 +18,10 @@ from apero.base import base
 from apero import core
 from apero import lang
 from apero.core import constants
-from apero.core.utils import drs_database
+from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_fits
 from apero.tools.module.setup import drs_reset
+from apero.tools.module.database import create_databases
 
 # =============================================================================
 # Define variables
@@ -89,53 +90,53 @@ def __main__(recipe, params):
     # get database type
     db_type = params['INPUTS']['KIND']
     assetdir = params['DRS_DATA_ASSETS']
+    # get the pseudo constants
+    pconst = constants.pload(params['INSTRUMENT'])
     # ----------------------------------------------------------------------
     # get the settings for each type of database
     if db_type == 'calibration':
         db_path = params['DRS_CALIB_DB']
-        db_master_name = params['CALIB_DB_NAME']
-        db_reset = os.path.join(assetdir, params['DRS_RESET_CALIBDB_PATH'])
         name = 'calibration database'
         file_set_name = 'calib_file'
+        # load the calibration database
+        dbmanager = drs_database.CalibrationDatabase(params)
+        dbmanager.load_db()
     elif db_type == 'telluric':
         db_path = params['DRS_TELLU_DB']
-        db_master_name = params['TELLU_DB_NAME']
-        db_reset = os.path.join(assetdir, params['DRS_RESET_TELLUDB_PATH'])
         name = 'telluric database'
         file_set_name = 'tellu_file'
+        # load the telluric database
+        dbmanager = drs_database.TelluricDatabase(params)
+        dbmanager.load_db()
     else:
         eargs = [db_type]
         WLOG(params, 'error', TextEntry('09-505-00001', args=[db_type]))
-        db_path, db_master_name = None, None
-        name, db_reset = None, None
+        dbmanager = None
+        db_path = None
+        name = None
         file_set_name = None
     # ----------------------------------------------------------------------
-    # construct calibDB master file
-    db_master_file = os.path.join(db_path, db_master_name)
-    db_backup_file = db_master_file + '.replace.bkup'
-    # ----------------------------------------------------------------------
-    # check for master calibDB file
-    if os.path.exists(db_master_file):
-        wargs = [db_master_file]
-        WLOG(params, 'warning', TextEntry('10-505-00001', args=wargs))
-        uinput = input('Do you want to delete? [Y]es or [N]o: \t')
-        if 'Y' not in uinput.upper():
-            return core.return_locals(params, dict(locals()))
-        else:
-            # else back up the file
-            shutil.copy(db_master_file, db_backup_file)
-            # and remove file
-            os.remove(db_master_file)
-    # ----------------------------------------------------------------------
-    # now replace the master calibDB file with the correct one from
-    #  reset
-    drs_reset.copy_default_db(params, name, db_path, db_reset, log=False)
+    # get a list of all database paths
+    db_list = create_databases.list_databases(params)
+    # backup database
+    dbmanager.database.backup()
+    # reset database
+    if db_type == 'calibration':
+        # reset database
+        create_databases.create_calibration_database(params, pconst, db_list)
+        # reload the calibration database
+        dbmanager = drs_database.CalibrationDatabase(params)
+        dbmanager.load_db()
+    elif db_type == 'telluric':
+        create_databases.create_telluric_database(pconst, db_list)
+        # reload the telluric database
+        dbmanager = drs_database.CalibrationDatabase(params)
+        dbmanager.load_db()
     # ----------------------------------------------------------------------
     # get all fits files in the cdb path
     db_files = np.sort(glob.glob(db_path + os.sep + '*.fits'))
     # ----------------------------------------------------------------------
     # get the file mod for this instrument
-    pconst = constants.pload(params['INSTRUMENT'])
     filemod = pconst.FILEMOD()
     # ----------------------------------------------------------------------
     # define storage of found files
@@ -178,8 +179,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # try to find cdb_file
         found, kind = drs_fits.id_drs_file(params, recipe, db_out_file,
-                                           filename=db_file, get_data=False,
-                                           nentries=1, required=False)
+                                           filename=db_file, nentries=1,
+                                           required=False)
         # ------------------------------------------------------------------
         # append to cdb_data
         if found:
@@ -187,7 +188,11 @@ def __main__(recipe, params):
             WLOG(params, '', TextEntry('40-505-00002', args=[kind]))
             # --------------------------------------------------------------
             # add the files back to the database
-            drs_database.add_file(params, kind, copy_files=False, log=False)
+            if db_type == 'calibration':
+                dbmanager.add_calib_file(kind, copy_files=False, verbose=False)
+            elif db_type == 'telluric':
+                dbmanager.add_tellu_file(kind, copy_files=False, verbose=False)
+
         # ------------------------------------------------------------------
         # delete file
         del kind, db_out_file

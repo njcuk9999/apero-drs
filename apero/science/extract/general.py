@@ -22,9 +22,12 @@ from apero.core import constants
 from apero.core import math as mp
 from apero import lang
 from apero.core.core import drs_log
-from apero.core.utils import drs_data, drs_file, drs_startup
+from apero.core.utils import drs_data
+from apero.core.utils import drs_file
+from apero.core.utils import drs_startup
+from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_path
-from apero.science.calib import localisation
+from apero.io import drs_fits
 from apero.science.calib import shape
 from apero.science.calib import wave
 from apero.science.calib import general
@@ -76,6 +79,13 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
     # ------------------------------------------------------------------------
     # get header from infile
     header = infile.header
+    # ----------------------------------------------------------------------
+    # load database
+    if database is None:
+        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm.load_db()
+    else:
+        calibdbm = database
     # ------------------------------------------------------------------------
     # storage for order profiles
     orderprofiles = dict()
@@ -88,13 +98,12 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
         # get key
         key = orderpfile.get_dbkey(fiber=fiber)
         # ------------------------------------------------------------------
-        # check for filename in inputs
-        filename = general.get_input_files(params, 'ORDERPFILE', key, header,
-                                           default=filenames[fiber])
-
-
-        # TODO: GOT TO HERE
-
+        # get the order profile filename
+        filename = general.load_calib_file(params, key, header,
+                                           filename=filenames[fiber],
+                                           userinputkey='ORDERPFILE',
+                                           database=calibdbm,
+                                           return_filename=True)
         # ------------------------------------------------------------------
         # construct order profile file
         orderpsfile = orderpfile.newcopy(recipe=recipe, fiber=fiber)
@@ -117,10 +126,9 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
             orderpfilename = orderpsfile.filename
         # load the order profile
         else:
-            # load using localisation load order profile function
-            out = localisation.load_orderp(params, header, fiber=fiber,
-                                           filename=filename)
-            orderpfilename, orderp = out
+            # load order profile
+            orderp = drs_fits.readfits(params, filename)
+            orderpfilename = filename
             # straighten orders
             orderp = shape.ea_transform(params, orderp, shapelocal,
                                         dxmap=shapex, dymap=shapey)
@@ -225,7 +233,7 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
                    tapas_thres=tapas_thres, envelope=envelope,
                    filter_wid=filter_wid, torder=torder,
                    red_limit=red_limt, blue_limit=blue_limit,
-                   thermal=thermal)
+                   thermal=thermal, database=database)
 
     # base thermal correction on fiber type
     if fibertype in corrtype1:
@@ -266,14 +274,18 @@ def get_thermal(params, header, fiber, kind, filename=None,
                                            kind='red')
     # get key
     key = out_thermal.get_dbkey(fiber=fiber)
-    # ------------------------------------------------------------------------
-    # check for filename in inputs
-    filename = general.get_input_files(params, 'THERMALFILE', key, header,
-                                       filename)
+    # ----------------------------------------------------------------------
+    # load database
+    if database is None:
+        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm.load_db()
+    else:
+        calibdbm = database
     # ------------------------------------------------------------------------
     # load calib file
-    thermal, thermal_file = general.load_calib_file(params, key, header,
-                                                    filename=filename)
+    ckwargs = dict(key=key, userinputkey='THERMALFILE', filename=filename,
+                   inheader=header, database=database)
+    thermal, thdr, thermal_file = general.load_calib_file(params, **ckwargs)
     # log which fpmaster file we are using
     WLOG(params, '', TextEntry('40-016-00027', args=[thermal_file]))
     # return the master image
@@ -281,7 +293,7 @@ def get_thermal(params, header, fiber, kind, filename=None,
 
 
 def tcorrect1(params, recipe, image, header, fiber, wavemap, thermal=None,
-              flat=None, **kwargs):
+              flat=None, database=None, **kwargs):
     # get parameters from skwargs
     tapas_thres = kwargs.get('tapas_thres', None)
     filter_wid = kwargs.get('filter_wid', None)
@@ -293,7 +305,7 @@ def tcorrect1(params, recipe, image, header, fiber, wavemap, thermal=None,
     if thermal is None:
         # get thermal
         _, thermal = get_thermal(params, header, fiber=fiber,
-                                 kind='THERMALT_E2DS')
+                                 kind='THERMALT_E2DS', database=database)
     # ----------------------------------------------------------------------
     # if we have a flat we should apply it to the thermal
     if flat is not None:
@@ -350,7 +362,7 @@ def tcorrect1(params, recipe, image, header, fiber, wavemap, thermal=None,
 
 
 def tcorrect2(params, recipe, image, header, fiber, wavemap, thermal=None,
-              flat=None, **kwargs):
+              flat=None, database=None, **kwargs):
     envelope_percent = kwargs.get('envelope', None)
     filter_wid = kwargs.get('filter_wid', None)
     torder = kwargs.get('torder', None)
@@ -364,7 +376,7 @@ def tcorrect2(params, recipe, image, header, fiber, wavemap, thermal=None,
     if thermal is None:
         # get thermal
         _, thermal = get_thermal(params, header, fiber=fiber,
-                                 kind='THERMALI_E2DS')
+                                 kind='THERMALI_E2DS', database=database)
     # ----------------------------------------------------------------------
     # if we have a flat we should apply it to the thermal
     if flat is not None:
@@ -543,7 +555,7 @@ def correct_master_dark_fp(params, extractdict, **kwargs):
     return outputs, props
 
 
-def correct_dark_fp(params, extractdict, **kwargs):
+def correct_dark_fp(params, extractdict, database=None, **kwargs):
     # set the function name
     func_name = __NAME__ + '.correct_dark_fp()'
     # get properties from parameters
@@ -582,7 +594,7 @@ def correct_dark_fp(params, extractdict, **kwargs):
     for fiber in all_fibers:
         # get leak master for file
         _, leakmaster = get_leak_master(params, ref_header, fiber,
-                                        'LEAKM_E2DS')
+                                        'LEAKM_E2DS', database=database)
         # append to storage
         master_leaks[fiber] = leakmaster
     # ----------------------------------------------------------------------
@@ -766,20 +778,26 @@ def dark_fp_regen_s1d(params, recipe, props, database=None, **kwargs):
     return props
 
 
-def get_leak_master(params, header, fiber, kind, filename=None):
+def get_leak_master(params, header, fiber, kind, filename=None,
+                    database=None):
     # get file definition
     out_leak = core.get_file_definition(kind, params['INSTRUMENT'],
                                            kind='red')
     # get key
     key = out_leak.get_dbkey(fiber=fiber)
-    # ------------------------------------------------------------------------
-    # check for filename in inputs
-    filename = general.get_input_files(params, 'LEAKFILE', key, header,
-                                       filename)
+    # ----------------------------------------------------------------------
+    # load database
+    if database is None:
+        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm.load_db()
+    else:
+        calibdbm = database
     # ------------------------------------------------------------------------
     # load calib file
-    leak, leak_file = general.load_calib_file(params, key, header,
-                                                    filename=filename)
+    ckwargs = dict(key=key, inheader=header, filename=filename,
+                   userinputkey='LEAKFILE', database=calibdbm)
+    leak, _, leak_file = general.load_calib_file(params, **ckwargs)
+    # ------------------------------------------------------------------------
     # log which fpmaster file we are using
     WLOG(params, '', TextEntry('40-016-00028', args=[leak_file]))
     # return the master image

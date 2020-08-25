@@ -252,7 +252,7 @@ def get_flat(params, header, fiber, filename=None, quiet=False, database=None):
     # load flat file
     cout = general.load_calib_file(params, key, header, filename=filename,
                                    userinputkey='FLATFILE', database=calibdbm)
-    flat, fhdr, flat_file = cout
+    flat, _, flat_file = cout
     # ------------------------------------------------------------------------
     # log which fpmaster file we are using
     if not quiet:
@@ -277,7 +277,7 @@ def get_blaze(params, header, fiber, filename=None, database=None):
     # load blaze file
     cout = general.load_calib_file(params, key, header, filename=filename,
                                    userinputkey='BLAZEFILE', database=calibdbm)
-    blaze, bhdr, blaze_file = cout
+    blaze, _, blaze_file = cout
     # ------------------------------------------------------------------------
     # log which fpmaster file we are using
     WLOG(params, '', TextEntry('40-015-00007', args=[blaze_file]))

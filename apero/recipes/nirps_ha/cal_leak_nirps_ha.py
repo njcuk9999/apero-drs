@@ -192,7 +192,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Correct with dark fp
         # ------------------------------------------------------------------
-        cprops = extgen.correct_dark_fp(params, ext_outputs)
+        cprops = extgen.correct_dark_fp(params, ext_outputs, database=calibdbm)
 
         # ------------------------------------------------------------------
         # Re-calculate s1d files

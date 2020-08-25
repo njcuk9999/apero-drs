@@ -270,7 +270,7 @@ def calibrate_ppfile(params, recipe, infile, database=None, **kwargs):
     if cleanhotpix:
         # log progress
         WLOG(params, '', TextEntry('40-014-00012'))
-        # load the pad pix file
+        # load the bad pix file
         badpfile = load_calib_file(params, badkey, header, filename=badpixfile,
                                    userinputkey='BADPIXFILE', database=calibdbm,
                                    return_filename=True)

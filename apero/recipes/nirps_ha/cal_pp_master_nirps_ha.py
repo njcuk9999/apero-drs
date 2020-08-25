@@ -13,7 +13,7 @@ import numpy as np
 from apero.base import base
 from apero import core
 from apero import lang
-from apero.core.utils import drs_database
+from apero.core.utils import drs_database2 as drs_database
 from apero.core.instruments.spirou import file_definitions
 from apero.io import drs_fits
 from apero.science import preprocessing
@@ -138,7 +138,9 @@ def __main__(recipe, params):
     infiles = [drs_fits.combine(params, recipe, infiles, math='median')]
     # get the number of infiles
     num_files = len(infiles)
-
+    # load the calibration database
+    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm.load_db()
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
@@ -196,7 +198,7 @@ def __main__(recipe, params):
         # add to calibration database
         # ------------------------------------------------------------------
         # copy the mask to the calibDB
-        drs_database.add_file(params, outfile)
+        calibdbm.add_calib_file(params, outfile)
         # ------------------------------------------------------------------
         # update recipe log file
         # ------------------------------------------------------------------
