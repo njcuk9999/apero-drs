@@ -533,7 +533,7 @@ def get_coefficients(params, recipe, header, fiber, database=None, **kwargs):
     locofile = core.get_file_definition('LOC_LOCO', params['INSTRUMENT'],
                                         kind='red')
     # get calibration key
-    key = locofile.get_dbkey(func=func_name, fiber=usefiber)
+    key = locofile.get_dbkey()
     # load database
     if database is None:
         calibdbm = drs_database.CalibrationDatabase(params)
@@ -544,7 +544,7 @@ def get_coefficients(params, recipe, header, fiber, database=None, **kwargs):
     locofilepath = general.load_calib_file(params, key, header,
                                            filename=filename,
                                            userinputkey='LOCOFILE',
-                                           database=calibdbm,
+                                           database=calibdbm, fiber=usefiber,
                                            return_filename=True)
     # ------------------------------------------------------------------------
     # construct new infile instance and read data/header

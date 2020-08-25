@@ -379,7 +379,7 @@ def get_pp_mask(params, header):
     ppmstr = core.get_file_definition('PPMSTR', params['INSTRUMENT'],
                                       kind='red')
     # get calibration key
-    ppkey = ppmstr.get_dbkey(func=func_name)
+    ppkey = ppmstr.get_dbkey()
     # get calibDB
     cdb = drs_database.get_full_database(params, 'calibration')
     # get filename col

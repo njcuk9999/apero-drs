@@ -1377,12 +1377,12 @@ def read_tellu_preclean(params, recipe, infile, fiber):
     out_pclean = core.get_file_definition('TELLU_PCLEAN', params['INSTRUMENT'],
                                           kind='red', fiber=fiber)
     # get key
-    pclean_key = out_pclean.get_dbkey(fiber=fiber)
+    pclean_key = out_pclean.get_dbkey()
 
     # load tellu file, header and abspaths
     _, pclean_filenames = load_tellu_file(params, pclean_key, infile.header,
                                           n_entries='all', get_image=False,
-                                          required=False)
+                                          required=False, fiber=fiber)
     # if we don't have the file return None
     if pclean_filenames is None:
         return None
@@ -1602,12 +1602,12 @@ def load_templates(params, header, objname, fiber):
         if not params['INPUTS']['USE_TEMPLATE']:
             return None, None
     # get key
-    temp_key = out_temp.get_dbkey(fiber=fiber)
+    temp_key = out_temp.get_dbkey()
     # log status
     WLOG(params, '', TextEntry('40-019-00045', args=[temp_key]))
     # load tellu file, header and abspaths
     temp_out = load_tellu_file(params, temp_key, header, get_header=True,
-                               n_entries='all', required=False)
+                               n_entries='all', required=False, fiber=fiber)
     temp_images, temp_headers, temp_filenames = temp_out
 
     # deal with no files in database
@@ -1649,11 +1649,11 @@ def get_transmission_files(params, recipe, header, fiber):
     out_trans = core.get_file_definition('TELLU_TRANS', params['INSTRUMENT'],
                                          kind='red', fiber=fiber)
     # get key
-    trans_key = out_trans.get_dbkey(fiber=fiber)
+    trans_key = out_trans.get_dbkey()
     # log status
     WLOG(params, '', TextEntry('40-019-00046', args=[trans_key]))
     # load tellu file, header and abspaths
-    _, trans_filenames = load_tellu_file(params, trans_key, header,
+    _, trans_filenames = load_tellu_file(params, trans_key, header, fiber=fiber,
                                          n_entries='all', get_image=False)
     # storage for valid files/images/times
     valid_filenames = []
@@ -1696,10 +1696,11 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
                                                   params['INSTRUMENT'],
                                                   kind='red', fiber=fiber)
         # get key
-        conv_key = out_tellu_conv.get_dbkey(fiber=fiber)
+        conv_key = out_tellu_conv.get_dbkey()
     # load tellu file
     _, conv_paths = load_tellu_file(params, conv_key, header, n_entries='all',
-                                    get_image=False, required=False)
+                                    get_image=False, required=False,
+                                    fiber=fiber)
     if conv_paths is None:
         conv_paths = []
     # construct the filename from file instance

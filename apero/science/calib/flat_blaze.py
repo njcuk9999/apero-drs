@@ -241,7 +241,7 @@ def get_flat(params, header, fiber, filename=None, quiet=False, database=None):
     out_flat = core.get_file_definition('FF_FLAT', params['INSTRUMENT'],
                                         kind='red')
     # get key
-    key = out_flat.get_dbkey(fiber=fiber)
+    key = out_flat.get_dbkey()
     # load database
     if database is None:
         calibdbm = drs_database.CalibrationDatabase(params)
@@ -266,7 +266,7 @@ def get_blaze(params, header, fiber, filename=None, database=None):
     out_blaze = core.get_file_definition('FF_BLAZE', params['INSTRUMENT'],
                                          kind='red')
     # get key
-    key = out_blaze.get_dbkey(fiber=fiber)
+    key = out_blaze.get_dbkey()
     # load database
     if database is None:
         calibdbm = drs_database.CalibrationDatabase(params)
@@ -276,7 +276,8 @@ def get_blaze(params, header, fiber, filename=None, database=None):
     # ------------------------------------------------------------------------
     # load blaze file
     cout = general.load_calib_file(params, key, header, filename=filename,
-                                   userinputkey='BLAZEFILE', database=calibdbm)
+                                   userinputkey='BLAZEFILE', database=calibdbm,
+                                   fiber=fiber)
     blaze, _, blaze_file = cout
     # ------------------------------------------------------------------------
     # log which fpmaster file we are using

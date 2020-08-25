@@ -723,9 +723,6 @@ class DrsFitsFile(DrsInputFile):
 
         # TODO: IS this used?? What is it used for?
         self.s1d = kwargs.get('s1d', [])
-        # update database key based on whether we have the fiber
-        if self.fiber is not None:
-            self.get_dbkey()
 
     def get_header_keys(self, kwargs):
         # set function name
@@ -2708,31 +2705,14 @@ class DrsFitsFile(DrsInputFile):
     # -------------------------------------------------------------------------
     # database methods
     # -------------------------------------------------------------------------
-    def get_dbkey(self, **kwargs):
+    def get_dbkey(self):
         # set function name
-        func_name = display_func(None, 'get_dbkey', __NAME__, 'DrsFitsFile')
-        # update func name if in keywords
-        func_name = kwargs.get('func', func_name)
+        _ = display_func(None, 'get_dbkey', __NAME__, 'DrsFitsFile')
         # deal with dbkey not set
         if self.raw_dbkey is None or self.dbkey is None:
             return None
-        # update fiber if needed
-        self.fiber = kwargs.get('fiber', self.fiber)
-        # get parameters for error message
-        if self.recipe is not None:
-            params = self.recipe.drs_params
-        else:
-            params = None
-        # deal with fiber being required but still unset
-        if self.fibers is not None and self.fiber is None:
-            eargs = [self, func_name]
-            WLOG(params, 'error', TextEntry('00-001-00032', args=eargs))
-        # add fiber name to dbkey
-        if self.fibers is not None:
-            if not self.raw_dbkey.endswith('_' + self.fiber):
-                self.dbkey = '{0}_{1}'.format(self.raw_dbkey, self.fiber)
-        else:
-            self.dbkey = str(self.raw_dbkey)
+        # set db key from raw dbkey
+        self.dbkey = str(self.raw_dbkey)
         # make dbkey uppdercase
         if self.dbkey is not None:
             self.dbkey = self.dbkey.upper()

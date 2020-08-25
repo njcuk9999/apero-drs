@@ -542,7 +542,7 @@ def get_dark_master_file(params, header):
     darkinst = core.get_file_definition('DARKM', params['INSTRUMENT'],
                                         kind='red')
     # get calibration key
-    darkkey = darkinst.get_dbkey(func=func_name)
+    darkkey = darkinst.get_dbkey()
     # get calibDB
     cdb = drs_database.get_full_database(params, 'calibration')
     # get filename col

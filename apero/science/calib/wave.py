@@ -79,6 +79,10 @@ def get_masterwave_filename(params, fiber, database=None):
     :param database:
     :return:
     """
+    # TODO: remove break point
+    from apero.base import drs_break
+    drs_break.break_point(params)
+
     # set function name
     func_name = display_func(params, 'get_masterwave_filename', __NAME__)
     # get pseudo constants
@@ -105,11 +109,11 @@ def get_masterwave_filename(params, fiber, database=None):
         if out_wave is None:
             continue
         # get calibration key
-        key = out_wave.get_dbkey(fiber=usefiber)
+        key = out_wave.get_dbkey()
         # ---------------------------------------------------------------------
         # load master key
         filename = calibdbm.get_calib_file(key, no_times=True, nentries=1,
-                                           required=False)
+                                           required=False, fiber=usefiber)
         # stop loop if we have found our master file
         if filename is not None:
             break
@@ -122,7 +126,7 @@ def get_masterwave_filename(params, fiber, database=None):
 
 
 def get_wave_solution_from_wavefile(params, recipe, usefiber, inwavefile,
-                                    header, database, master):
+                                    header, database=None, master=False):
     # ------------------------------------------------------------------------
     # get file definitions (wave solution FP and wave solution HC)
     out_wave_fp = core.get_file_definition('WAVE_FP', params['INSTRUMENT'],
@@ -133,15 +137,16 @@ def get_wave_solution_from_wavefile(params, recipe, usefiber, inwavefile,
     # deal with master = True
     if master is True:
         # get master path
-        inwavefile = get_masterwave_filename(params, fiber=usefiber)
+        inwavefile = get_masterwave_filename(params, fiber=usefiber,
+                                             database=database)
         source = 'master'
     else:
         # ---------------------------------------------------------------------
         # setup calib db keys
         # ---------------------------------------------------------------------
         # get calibration key
-        key_fp = out_wave_fp.get_dbkey(fiber=usefiber)
-        key_hc = out_wave_hc.get_dbkey(fiber=usefiber)
+        key_fp = out_wave_fp.get_dbkey()
+        key_hc = out_wave_hc.get_dbkey()
         # ---------------------------------------------------------------------
         if database is None:
             # load the calibration database
@@ -153,7 +158,7 @@ def get_wave_solution_from_wavefile(params, recipe, usefiber, inwavefile,
         # load filename from inputs/calibDB
         # ---------------------------------------------------------------------
         lkwargs = dict(userinputkey='WAVEFILE', database=calibdbm, key=key_fp,
-                       inheader=header, filename=inwavefile,
+                       inheader=header, filename=inwavefile, fiber=usefiber,
                        return_filename=True, required=False, return_source=True)
         # load wave fp file
         fout = general.load_calib_file(params, key_fp, **lkwargs)
@@ -176,7 +181,8 @@ def get_wave_solution_from_wavefile(params, recipe, usefiber, inwavefile,
         # if inwavefile is still None
         if inwavefile is None:
             # get master path
-            inwavefile = get_masterwave_filename(params, fiber=usefiber)
+            inwavefile = get_masterwave_filename(params, fiber=usefiber,
+                                                 database=database)
     # -------------------------------------------------------------------------
     # construct new infile instance (first fp solution then hc solutions)
     if out_wave_fp.suffix in inwavefile:
@@ -480,16 +486,16 @@ def get_wavelines(params, recipe, fiber, header=None, infile=None,
     out_wave_hc = core.get_file_definition('WAVE_HCLIST_MASTER',
                                            params['INSTRUMENT'], kind='red')
     # get calibration key
-    key_fp = out_wave_fp.get_dbkey(fiber=usefiber)
-    key_hc = out_wave_hc.get_dbkey(fiber=usefiber)
+    key_fp = out_wave_fp.get_dbkey()
+    key_hc = out_wave_hc.get_dbkey()
     # ------------------------------------------------------------------------
     # get hc lines
     # ------------------------------------------------------------------------
-    hclinefile = general.load_calib_file(params, key_hc, header,
-                                         filename=hclinefile,
-                                         userinputkey='HCLINEFILE',
-                                         database=calibdbm,
-                                         return_filename=True)
+    lkwargs = dict(database=calibdbm, fiber=usefiber, return_filename=True,
+                   inheader=header)
+
+    hclinefile = general.load_calib_file(params, key_hc,  filename=hclinefile,
+                                         userinputkey='HCLINEFILE', **lkwargs)
     # construct new infile instance
     hclfile = out_wave_fp.newcopy(filename=hclinefile, recipe=recipe,
                                   fiber=usefiber)
@@ -502,11 +508,8 @@ def get_wavelines(params, recipe, fiber, header=None, infile=None,
     # ------------------------------------------------------------------------
     # get fp lines
     # ------------------------------------------------------------------------
-    fplinefile = general.load_calib_file(params, key_fp, header,
-                                         filename=fplinefile,
-                                         userinputkey='FPLINEFILE',
-                                         database=calibdbm,
-                                         return_filename=True)
+    fplinefile = general.load_calib_file(params, key_fp,  filename=fplinefile,
+                                         userinputkey='FPLINEFILE', **lkwargs)
     # construct new infile instance
     fplfile = out_wave_fp.newcopy(filename=fplinefile, recipe=recipe,
                                   fiber=usefiber)
