@@ -2,6 +2,101 @@ Changelog
 =========
 
 
+0.6.130 (2020-08-21)
+--------------------
+- Update README.md. [Neil Cook]
+
+  update `pp_seq_opt`
+- Update `UPDATE_NOTES.txt`. [Neil Cook]
+- `Core.instruments.*.pseudo_const.py` - make all obj names upper. [Neil
+  Cook]
+- `Apero.science.telluric.fit_tellu.py` - must mask `expo_water/expo_others`
+  for trans files. [Neil Cook]
+- `Apero.core.instruments.spirou.default_constants.py` - set
+  `FTELLU_NUM_TRANS` to 20. [Neil Cook]
+- `Apero.recipes.spirou.obj_fit_tell_spirou.py` - add tpreprops to inputs
+  of `gen_abso_pca_calc`. [Neil Cook]
+- `Science.telluric.fit_tellu.py` - add a trans file mask based on
+  `expo_h2o` and `expo_others` (and use closest N trans files to science
+  object) [Neil Cook]
+- `Apero.core.instruments.*.file_definitions.py` + `recipe_definitions.py` -
+  add `ABSO1_NPY` (for trans `expo_h2o+exp_others` vector) [Neil Cook]
+- `Apero.core.instruments.*.default_constants.py` + `default_keywords.py` -
+  add `KW_FTELLU_NTRANS` and `FTELLU_NUM_TRANS`. [Neil Cook]
+- `Apero.science.telluric.gen_tellu.py` - nanmin --> nanmax. [Neil Cook]
+- `Apero.science.telluric.gen_tellu.py` - when saving pre-clean only mask
+  to exp(-2) not exp(-1) [Neil Cook]
+- `Apero.science.telluric.gen_tellu.py` - make sure we don't spline
+  outside magic grid. [Neil Cook]
+- Update `UPDATE_NOTES.txt`. [Neil Cook]
+- Merge remote-tracking branch 'origin/v0.6.130-pre' into v0.6.130-pre.
+  [Neil Cook]
+- Update wave.py. [Neil Cook]
+
+  `apero.science.calib.wave.py` - `add_hkey` values-->value
+- `Apero.recipes.spirou.obj_fit_tellu_spirou.py` - add break point for EA.
+  [Neil Cook]
+- Apero-drs.misc.INTROOT - move old INTROOT code to apero-utils. [Neil
+  Cook]
+- `Apero.science.calib.wave.py` - correct TREGIONS. [Neil Cook]
+- `Apero.core.instruments.spirou.recipe_definitions.py` - make sure q2dsff
+  file links to correct file. [Neil Cook]
+- Update language database. [Neil Cook]
+- `Apero.science.extract.general.py` - add `write_extraction_files_ql`
+  function (to write quick look files) [Neil Cook]
+- `Apero.recipes.spirou.cal_extract_spirou.py` - add quick look switches.
+  [Neil Cook]
+- `Apero.core.instruments.spirou.recipe_definitions.py` - add Q2DS and
+  Q2DSFF files for quicklook. [Neil Cook]
+- `Apero.core.instruments.spirou.file_definitions.py` - add quick look
+  e2ds/e2dsff files. [Neil Cook]
+- `Apero.core.instruments.*.default_constants.py` - add `EXT_QUICK_LOOK`
+  constant value. [Neil Cook]
+- `Apero.tools.recipes.spirou.cal_drift_spirou.py` - clean up. [Neil Cook]
+- `Apero.core.core.drs_startup.py` - remove type function (doesn't work as
+  :type:) [Neil Cook]
+- Update the update notes (work in progress) [Neil Cook]
+- `Apero.tools.recipe.spirou.cal_drift_spirou.py` - add first version of
+  `cal_drift_spirou`. [Neil Cook]
+- `Apero.recipes.*.cal_shape_master_*.py` - correct `ALLOWED_FP_TYPES`
+  (didn't break but would on change of input) [Neil Cook]
+- Merge remote-tracking branch 'origin/developer' into v0.6.130-pre.
+  [Neil Cook]
+
+  # Conflicts:
+  #    `UPDATE_NOTES.txt`
+- Merge remote-tracking branch 'origin/developer' into developer.
+  [njcuk9999]
+- `Apero.science.calib.shape.py` - filenames must be filtered as well
+  (append to `valid_files)` [njcuk9999]
+- `Apero.science.extract.general.py` - correct typo from release.
+  [njcuk9999]
+- Update object query list. [njcuk9999]
+- Update mtl sync codes. [njcuk9999]
+- `Apero.tools.recipes.spirou.cal_drift_spirou.py` - first commit plan for
+  `cal_drift_spirou.py`. [Neil Cook]
+- `Apero-drs.apero.science.calib.wave.py` - add header keys NBO/NREGIONS
+  and update gaussian params with names in hdr. [Neil Cook]
+- `Apero-drs.tools.recipes.*.*` - update instrumental tool recipe names to
+  follow conventions. [Neil Cook]
+- `Apero.science.telluric.template_tellu.py` - copy data and delete infile
+  when done (hopefully stops having so many fits file open at once)
+  [Neil Cook]
+- `Apero.io.drs_fits.py` - readfits - add options to copy data implicity
+  (slower) [Neil Cook]
+- `Apero.core.core.drs_file.py` - `read_file/read_data/read_header` - add
+  option to copy data implicitly. [Neil Cook]
+- `Apero-drs.update_notes.txt` - update update notes. [njcuk9999]
+- `Apero.data.spirou.reset.runs.*` - update runs and add complete + other
+  run.ini. [njcuk9999]
+- Apero-drs.README.md - update read me with latest version. [njcuk9999]
+- `Apero.core.instruments.*.recipe_definitions.py` - update args for
+  thermal. [njcuk9999]
+- `Apero.data.spirou.reset.runs.*run.ini` - update THIM and THTM --> `THI_M`
+  and `THT_M`. [njcuk9999]
+- Update changelog/date/version/update notes/documentation. [njcuk9999]
+
+
 0.6.129 (2020-07-29)
 --------------------
 - `Apero.science.calib.general.py` - add `check_fp` and `check_fp_files`
