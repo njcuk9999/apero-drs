@@ -172,12 +172,14 @@ class CalibrationDatabase(DatabaseManager):
         # set database directory
         self.filedir = Path(str(self.params['DRS_CALIB_DB']))
 
-    def add_calib_file(self, drsfile, verbose: bool = True):
+    def add_calib_file(self, drsfile, verbose: bool = True,
+                       copy_files=True):
         """
         Add DrsFile to the calibration database
 
         :param drsfile: DrsFile, the DrsFile to add
         :params verbose: bool, if True logs progress
+        :param copy_files: bool, if True copies file to self.filedir
         :return:
         """
         # set function
@@ -211,8 +213,9 @@ class CalibrationDatabase(DatabaseManager):
                 return
         # ------------------------------------------------------------------
         # copy file to database directory
-        _copy_db_file(self.params, drsfile, self.filedir, self.name,
-                      verbose=verbose)
+        if copy_files:
+            _copy_db_file(self.params, drsfile, self.filedir, self.name,
+                          verbose=verbose)
         # ------------------------------------------------------------------
         # get entries in correct format
         key = str(dbkey).strip()
@@ -422,12 +425,14 @@ class TelluricDatabase(DatabaseManager):
         self.filedir = Path(str(self.params['DRS_TELLU_DB']))
 
 
-    def add_tellu_file(self, drsfile, verbose: bool = True):
+    def add_tellu_file(self, drsfile, verbose: bool = True,
+                       copy_files=True):
         """
         Add DrsFile to the calibration database
 
         :param drsfile: DrsFile, the DrsFile to add
         :params verbose: bool, if True logs progress
+        :param copy_files: bool, if True copies file to self.filedir
         :return:
         """
         # set function
@@ -472,8 +477,9 @@ class TelluricDatabase(DatabaseManager):
                 return
         # ------------------------------------------------------------------
         # copy file to database directory
-        _copy_db_file(self.params, drsfile, self.filedir, self.name,
-                      verbose=verbose)
+        if copy_files:
+            _copy_db_file(self.params, drsfile, self.filedir, self.name,
+                          verbose=verbose)
         # ------------------------------------------------------------------
         # get entries in correct format
         key = str(dbkey).strip()
