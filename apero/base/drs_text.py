@@ -33,6 +33,92 @@ DrsCodedException = drs_exceptions.DrsCodedException
 # =============================================================================
 # Define functions
 # =============================================================================
+class DisplayText:
+    """
+    Manually enter wlog TextEntries here -- will be in english only
+
+    This is used for when we cannot have access to the language database
+
+    In the future we will call the database here using drs_db
+    """
+
+    def __init__(self):
+        """
+        Constructs the manual language database (into `self.entries`)
+        """
+        # set function name (cannot break here --> no access to inputs)
+        _ = __NAME__ + '._DisplayText.__init__()'
+
+        self.language = base.DEFAULT_LANG
+        # TODO: make connection to language database
+
+    def __call__(self, key, args=None):
+        """
+        When constructed this call method acts like a TextEntry instance,
+        returning a string that can be used in WLOG and is formatted by
+        arguments `args`
+
+        :param key: str, the key code from the language database
+                    (i.e. 00-001-00001)
+        :param args: list of objects, if there is formating in entry this
+                     is how arguments are supplied i.e.
+                     `'LOG MESSAGE {0}: Message = {1}'.format(*args)`
+
+        :type key: str
+        :type args: list[objects]
+
+        :return: returns string
+        :rtype: str
+        """
+        # set function name (cannot break here --> no access to inputs)
+        _ = str(__NAME__) + '._DisplayText.__init__()'
+        # return the entry for key with the arguments used for formatting
+
+        # TODO: access code in database
+        msg = 'Text[{0}]'.format(key)
+        # add arguments if we have them
+        if args is not None:
+            # if it is a list of args add them one by one
+            if isinstance(args, list):
+                for it, arg in enumerate(args):
+                    msg += '\n\t Arg[{0}] = {1}'.format(it, arg)
+            # else assume we have a string
+            else:
+                msg += '\n\tArgs: {0}'.format(args)
+        # return the msg
+        return msg
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state (for pickle)
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        Return string represenation of Const class
+        :return:
+        """
+        return 'DisplayText[{0}]'.format(self.language)
+
+
+# =============================================================================
+# Define functions
+# =============================================================================
 def load_text_file(filename: Union[str, Path], comments: str = '#',
                    delimiter: str = '=') -> np.ndarray:
     """
@@ -237,6 +323,62 @@ def combine_uncommon_text(stringlist: List[str],
     text = fmt.format(prefix, entries[0], entries[-1], suffix)
     # return text
     return text
+
+
+def textwrap(input_string: str, length: int) -> List[str]:
+    """
+    Wraps the text `input_string` to the length of `length` new lines are
+    indented with a tab
+
+    Modified version of this: https://stackoverflow.com/a/16430754
+
+    :param input_string: str, the input text to wrap
+    :param length: int, the length of the wrap
+    :type input_string: str
+    :type length: int
+    :return: list of strings, the new set of wrapped lines
+    :rtype: list[str]
+    """
+    # set function name (cannot break here --> no access to inputs)
+    _ = str(__NAME__) + '.textwrap()'
+    # set up a new empty list of strings
+    new_string = []
+    # loop around the input string split by new lines
+    for substring in input_string.split("\n"):
+        # if line is empty add an empty line to new_string
+        if substring == "":
+            new_string.append('')
+        # set the current line length to zero initially
+        wlen = 0
+        # storage
+        line = []
+        # loop around words in string and split at words if length is too long
+        #   words are definied by white spaces
+        for dor in substring.split():
+            # if the word + current length is shorter than the wrap length
+            #   then append to current line
+            if wlen + len(dor) + 1 <= length:
+                line.append(dor)
+                # update the current line length
+                wlen += len(dor) + 1
+            # else we have to wrap
+            else:
+                # add the current line to the output string
+                new_string.append(" ".join(line))
+                # start a new line with the word that broke the wrap
+                line = [dor]
+                # set the current line length to the length of the word
+                wlen = len(dor)
+        # if the length of the line is larger than zero append line
+        if len(line) > 0:
+            new_string.append(" ".join(line))
+    # add a tab to all but first line
+    new_string2 = [new_string[0]]
+    # loop around lines in new strings (except the first line)
+    for it in range(1, len(new_string)):
+        new_string2.append('\t' + new_string[it])
+    # return the new string with tabs for subsequent lines
+    return new_string2
 
 
 def null_text(variable: Any, nulls: Union[None, List[str]] = None) -> bool:

@@ -13,7 +13,7 @@ Rules only import base.py from apero.base no other apero modules
 """
 import sys
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, List, Union
 
 from apero.base import base
 
@@ -123,7 +123,7 @@ class TextError(TextException):
 class TextWarning:
     global USED_TEXT_WARNINGS
 
-    def __init__(self, message: Union[str, None] = None,
+    def __init__(self, message: Union[str, List[str], None] = None,
                  level: Union[str, None] = None,
                  wlog: Any = None, kwargs: Union[None, dict] = None,
                  errorobj: Any = None):
@@ -205,7 +205,7 @@ class DrsError(DrsException):
     Custom Config Error for passing to the log
     """
 
-    def __init__(self, message: Union[str, None] = None,
+    def __init__(self, message: Union[str, List[str], None] = None,
                  level: Union[str, None] = None,
                  wlog: Any = None, kwargs: Union[None, dict] = None,
                  errorobj: Any = None):
@@ -278,7 +278,7 @@ class DrsHeaderError(DrsException):
     Custom Config Error for passing to the log
     """
 
-    def __init__(self, message: Union[str, None] = None,
+    def __init__(self, message: Union[str, List[str], None] = None,
                  level: Union[str, None] = None,
                  wlog: Any = None, kwargs: Union[None, dict] = None,
                  errorobj: Any = None, key: Union[None, str] = None,
@@ -358,7 +358,7 @@ class DrsHeaderError(DrsException):
 class DrsWarning:
     global USED_DRS_WARNINGS
 
-    def __init__(self, message: Union[str, None] = None,
+    def __init__(self, message: Union[str, List[str], None] = None,
                  level: Union[str, None] = None,
                  wlog: Any = None, kwargs: Union[None, dict] = None,
                  errorobj: Any = None):
@@ -445,7 +445,7 @@ class ConfigError(ConfigException):
     Custom Config Error for passing to the log
     """
 
-    def __init__(self, message: Union[str, None] = None,
+    def __init__(self, message: Union[str, List[str], None] = None,
                  level: Union[str, None] = None,
                  wlog: Any = None, kwargs: Union[None, dict] = None,
                  errorobj: Any = None):
@@ -520,7 +520,7 @@ class ConfigError(ConfigException):
 class ConfigWarning:
     global USED_CONFIG_WARNINGS
 
-    def __init__(self, message: Union[str, None] = None,
+    def __init__(self, message: Union[str, List[str], None] = None,
                  level: Union[str, None] = None,
                  wlog: Any = None, kwargs: Union[None, dict] = None,
                  errorobj: Any = None):
@@ -605,7 +605,7 @@ class ArgumentException(Exception):
 class ArgumentError(ArgumentException):
     # Custom Config Error for passing to the log
 
-    def __init__(self, message: Union[str, None] = None,
+    def __init__(self, message: Union[str, List[str], None] = None,
                  level: Union[str, None] = None,
                  wlog: Any = None, kwargs: Union[None, dict] = None,
                  errorobj: Any = None):
@@ -680,7 +680,7 @@ class ArgumentError(ArgumentException):
 class ArgumentWarning:
     global USED_CONFIG_WARNINGS
 
-    def __init__(self, message: Union[str, None] = None,
+    def __init__(self, message: Union[str, List[str], None] = None,
                  level: Union[str, None] = None,
                  wlog: Any = None, kwargs: Union[None, dict] = None,
                  errorobj: Any = None):

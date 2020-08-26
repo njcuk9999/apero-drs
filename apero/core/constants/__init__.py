@@ -19,8 +19,7 @@ from apero.core.constants import param_functions
 __NAME__ = 'constants.__init__.py'
 # define all functions
 __all__ = ['load', 'pload', 'ParamDict', 'ArgumentError', 'ConfigError',
-           'ConfigWarning', 'gen_all', 'getmodnames', 'import_module',
-           'get_filenames']
+           'ConfigWarning', 'gen_all', 'getmodnames', 'import_module']
 
 # =============================================================================
 # Define functions
@@ -39,9 +38,6 @@ getmodnames = param_functions.get_module_names
 import_module = constant_functions.import_module
 
 get_constants_from_file = constant_functions.get_constants_from_file
-
-# get file names
-get_filenames = param_functions.get_file_names
 
 # param dict
 ParamDict = param_functions.ParamDict
