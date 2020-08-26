@@ -92,6 +92,26 @@ class TextError(TextException):
         basiclogger(message=self.message, level=self.level,  name='Text',
                     force_exit=False, wlog=wlog, **kwargs)
 
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state (for pickle)
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
     def __str__(self):
         """
         String representation used for raise Exception message printing
@@ -154,6 +174,26 @@ class TextWarning:
             basiclogger(message=self.message, level=self.level, name='Text',
                         force_exit=False, wlog=wlog, **kwargs)
 
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state (for pickle)
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
 
 class DrsException(Exception):
     """Raised when config file is incorrect"""
@@ -208,6 +248,26 @@ class DrsError(DrsException):
         # send to basic logger
         basiclogger(message=self.message, level=self.level,  name='DRS',
                     force_exit=False, wlog=wlog, **kwargs)
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state (for pickle)
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
 
     def __str__(self):
         return _flatmessage(self.message)
@@ -270,6 +330,26 @@ class DrsHeaderError(DrsException):
             self.level = 'error'
         else:
             self.level = level
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state (for pickle)
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
 
     def __str__(self):
         return _flatmessage(self.message)
@@ -334,6 +414,26 @@ class DrsWarning:
             basiclogger(message=self.message, level=self.level, name='DRS',
                         force_exit=False, wlog=wlog, **kwargs)
 
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state (for pickle)
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
 
 class ConfigException(Exception):
     """Raised when config file is incorrect"""
@@ -388,6 +488,26 @@ class ConfigError(ConfigException):
         # send to basic logger
         basiclogger(message=self.message, level=self.level, name='Config',
                     force_exit=False, wlog=wlog, **kwargs)
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state (for pickle)
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
 
     def __str__(self):
         """
@@ -456,6 +576,26 @@ class ConfigWarning:
             basiclogger(message=self.message, level=self.level,
                         name='Config', force_exit=False, wlog=wlog, **kwargs)
 
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state (for pickle)
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
 
 class ArgumentException(Exception):
     """Raised when config file is incorrect"""
@@ -508,6 +648,26 @@ class ArgumentError(ArgumentException):
         # send to basic logger
         basiclogger(message=self.message, level=self.level, name='Config',
                     force_exit=False, wlog=wlog, **kwargs)
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state (for pickle)
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
 
     def __str__(self):
         """
@@ -576,6 +736,26 @@ class ArgumentWarning:
             basiclogger(message=self.message, level=self.level,
                         name='Config', force_exit=False, wlog=wlog, **kwargs)
 
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state (for pickle)
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
 
 class Exit(SystemExit):
     # Raised when exit is called
@@ -595,6 +775,26 @@ class LogExit(Exit):
         self.errormessage = errormessage
         Exit.__init__(*args, **kwargs)
 
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state (for pickle)
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
 
 class DebugExit(Exit):
     # This exception should only be used when exiting the debugger (ipdb/pdb)
@@ -608,6 +808,26 @@ class DebugExit(Exit):
         """
         self.errormessage = errormessage
         Exit.__init__(*args, **kwargs)
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state (for pickle)
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
 
 
 class DrsCodedException(DrsException):
@@ -632,6 +852,41 @@ class DrsCodedException(DrsException):
         self.targs = targs
         self.func_name = func_name
 
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state (for pickle)
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self):
+        """
+        The string representation of the error: used as message when raised
+        :return:
+        """
+        # return the base printer version string represntation
+        return base_printer(self.codeid, self.level, self.targs, self.func_name)
+
+    def __repr__(self):
+        """
+        The string representation of the error class
+        :return:
+        """
+        return self.__str__()
+
     def get(self, key: str, default: Any):
         """
         Quick get attribute (codeid/level/targs/func_name) and give a default
@@ -655,21 +910,6 @@ class DrsCodedException(DrsException):
         # else return the default value
         else:
             return default
-
-    def __str__(self):
-        """
-        The string representation of the error: used as message when raised
-        :return:
-        """
-        # return the base printer version string represntation
-        return base_printer(self.codeid, self.level, self.targs, self.func_name)
-
-    def __repr__(self):
-        """
-        The string representation of the error class
-        :return:
-        """
-        return self.__str__()
 
 
 def base_printer(codeid: str, level: Union[str, None] = None,
