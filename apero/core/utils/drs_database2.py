@@ -9,8 +9,8 @@ Created on 2020-08-2020-08-18 15:15
 """
 import numpy as np
 from pathlib import Path
-from typing import Union
 import shutil
+from typing import List, Union
 
 from apero.base import base
 from apero.base import drs_db
@@ -310,7 +310,8 @@ class CalibrationDatabase(DatabaseManager):
                        nentries: Union[str, int] = 1,
                        required: bool = True,
                        no_times: bool = False,
-                       fiber: Union[str, None] = None):
+                       fiber: Union[str, None] = None
+                       ) -> Union[None, Path, List[Path]]:
         """
         Handles getting a filename from calibration database (from filename,
         user input, or key in SQL database
