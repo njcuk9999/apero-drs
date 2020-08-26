@@ -55,10 +55,30 @@ class DatabaseError(DatabaseException):
         self.path = path
         self.func_name = func_name
 
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state (for pickle)
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
     def __str__(self):
         """
         Standard __str__ return (used in raising as Exception)
-        :return: 
+        :return:
         """
         emsg = 'DatabaseError: {0}'
         if self.path is not None:
@@ -81,24 +101,64 @@ class Database:
         func_name = __NAME__ + 'Database.__init__()'
         # store whether we want to print steps
         self._verbose_ = verbose
+        # storage for tables
+        self.tables = []
+        # storage for database path
+        self.path = path
         # try to connect the the SQL3 database
         try:
-            self._conn_ = sqlite3.connect(path)
+            self._conn_ = sqlite3.connect(self.path)
         except Exception as e:
-            raise DatabaseError(message=str(e), errorobj=e, path=path,
+            raise DatabaseError(message=str(e), errorobj=e, path=self.path,
                                 func_name=func_name)
         # try to get the SQL3 connection cursor
         try:
             self._cursor_ = self._conn_.cursor()
         except Exception as e:
-            raise DatabaseError(message=str(e), errorobj=e, path=path,
+            raise DatabaseError(message=str(e), errorobj=e, path=self.path,
                                 func_name=func_name)
-        # storage for tables
-        self.tables = []
-        # storage for database path
-        self.path = path
         # update table list
         self._update_table_list_()
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # what to exclude from state
+        exclude = ['_conn_', '_cursor_']
+        # need a dictionary for pickle
+        state = dict()
+        for key, item in self.__dict__:
+            if key not in exclude:
+                state[key] = item
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # set function name
+        func_name = __NAME__ + 'Database.__setstate__()'
+        # update dict with state
+        self.__dict__.update(state)
+        # need to reset _conn_ and _cursor_ manually
+        # try to connect the the SQL3 database
+        try:
+            self._conn_ = sqlite3.connect(self.path)
+        except Exception as e:
+            raise DatabaseError(message=str(e), errorobj=e, path=self.path,
+                                func_name=func_name)
+        # try to get the SQL3 connection cursor
+        try:
+            self._cursor_ = self._conn_.cursor()
+        except Exception as e:
+            raise DatabaseError(message=str(e), errorobj=e, path=self.path,
+                                func_name=func_name)
 
     def __str__(self):
         """

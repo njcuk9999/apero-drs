@@ -79,6 +79,33 @@ class Colors:
         # update all others via theme
         self.update_theme()
 
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state (for pickle)
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        Return string represenation of Const class
+        :return:
+        """
+        return 'Colors[{0}]'.format(self.theme)
+
     def update_theme(self, theme: Union[str, None] = None):
         """
         Update themed object names
