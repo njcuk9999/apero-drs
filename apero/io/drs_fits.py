@@ -16,6 +16,7 @@ from astropy import version as av
 import os
 import warnings
 import traceback
+from typing import Any, Union
 
 from apero.base import base
 from apero.base import drs_exceptions
@@ -53,6 +54,8 @@ if av.major < 2 or (av.major == 2 and av.minor < 1):
     SCALEARGS = dict(bscale=(1.0 + 1.0e-8), bzero=1.0e-8)
 else:
     SCALEARGS = dict(bscale=1, bzero=0)
+# Define any simple type for typing
+AnySimple = Union[int, float, str, bool]
 
 
 # =============================================================================
@@ -68,49 +71,133 @@ class Header(fits.Header):
     """
 
     def __init__(self, *args, **kwargs):
+        """
+        Construct the Apero Fits Header
+
+        :param args: passed to super astropy.io.fits.Header
+        :param kwargs: passed to super astropy.io.fits.Header
+        """
+        # construct astropy.io.fits.Header class
         super().__init__(*args, **kwargs)
+        # set storage for temporary items
         self.__temp_items = {}
 
-    def __setitem__(self, key, item):
+    def __setitem__(self, key: str, item: AnySimple):
+        """
+        Set a key with "item"
+        same as using: header[key] = item
+
+        :param key: str, the key to add to the header
+        :param item: object, the object to
+        :return: None
+        """
+        # if key starts with @@@ add to temp items (without @@@)
         if key.startswith('@@@'):
+            # use the __get_temp_key method to strip key
             self.__temp_items.__setitem__(self.__get_temp_key(key), item)
+        # do not add empty keys
         elif key == '':
             pass
+        # else add normal keys
         else:
+            # check for NaN values (and convert -- cannot put directly in)
             nan_filtered = self.__nan_check(item)
+            # do the super __setitem__ on nan filtered item
             super().__setitem__(key, nan_filtered)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> AnySimple:
+        """
+        Get an "item" with key
+        same as using: item = header[key]
+
+        :param key: str, the key in the header to get item for
+        :return: the item in the header with key="key"
+        """
+        # if key starts with @@@ get it from the temporary items storage
         if key.startswith('@@@'):
             return self.__temp_items.__getitem__(self.__get_temp_key(key))
+        # else get it from the normal storage location (in super)
         else:
             return super().__getitem__(key)
 
-    def __contains__(self, key):
+    def __contains__(self, key: str) -> bool:
+        """
+        Whether key is in header
+        same as using: key in header
+
+        :param key: str, the key to search for in the header
+        :return:
+        """
+        # if key starts with @@@ then get it from the temp_items
         if key.startswith('@@@'):
             return self.__temp_items.__contains__(self.__get_temp_key(key))
+        # else just do the super contains
         else:
             return super().__contains__(key)
 
-    def copy(self, strip=False):
+    def copy(self, strip: bool = False) -> 'Header':
+        """
+        Copy an entire header (including temp items)
+
+        :param strip: If `True`, strip any headers that are specific to one
+                      of the standard HDU types, so that this header can be
+                      used in a different HDU.
+
+        :return: copy of the header
+        """
         header = Header(super().copy(strip), copy=False)
+        # copy temp items
         header.__temp_items = self.__temp_items.copy()
         return header
 
-    def to_fits_header(self, strip=True, nan_to_string=True):
+    def to_fits_header(self, strip: bool = True,
+                       nan_to_string: bool = True) -> fits.Header:
+        """
+        Cast Header in to astropy.io.fits.Header (including the NaN to
+        string and no temp items)
+
+        :param strip: If `True`, strip any headers that are specific to one
+                      of the standard HDU types, so that this header can be
+                      used in a different HDU.
+
+        :param nan_to_string: bool, whether to convert NaNs to strings (for
+                              saving to HDU)
+        :return: copy of the header
+        """
         header = super().copy(strip=strip)
+        # if nan to string is True set all header keys (note the __setitem__
+        #   converts NaNs to strings)
         if nan_to_string:
             for key in list(header.keys()):
                 header[key] = header[key]
+        # return fits header
         return header
 
     @staticmethod
-    def from_fits_header(fits_header):
+    def from_fits_header(fits_header: fits.Header) -> 'Header':
+        """
+        Get the Header instance from a fits.Header instance (copy all keys)
+
+        :param fits_header: astropy.io.fits Header
+        :return:
+        """
+        # construct new Header instance
         return Header(fits_header, copy=True)
 
     @staticmethod
-    def __get_temp_key(key):
-        return key[3:]
+    def __get_temp_key(key: str, chars: str = '@@@'):
+        """
+        Remove first three characters ('chars') from a key if they are there
+        else return the key unchanged
+
+        :param key: the key to change
+        :param chars: the characters to remove
+        :return:
+        """
+        if key.startswith(chars):
+            return key[len(chars):]
+        else:
+            return key
 
     @staticmethod
     def __nan_check(value):
@@ -254,8 +341,11 @@ def id_drs_file(params, recipe, drs_file_sets, filename=None, nentries=None,
 # =============================================================================
 # Define read functions
 # =============================================================================
-def readfits(params, filename, getdata=True, gethdr=False, fmt='fits-image',
-             ext=0, func=None, log=True, copy=False):
+def readfits(params: ParamDict, filename: Union[str, Path],
+             getdata: bool = True, gethdr: bool = False,
+             fmt: str = 'fits-image',
+             ext: int = 0, func: Union[str, None] = None,
+             log: bool = True, copy: bool = False):
     """
     The drs fits file read function
 
@@ -565,7 +655,7 @@ def _write_fits(params, filename, data, header, datatype='image', dtype=None,
         start = 1
     else:
         hdu0 = fits.PrimaryHDU()
-        start = 0
+        start = 1
 
     if dtype is not None:
         hdu0.scale(type=dtype[0], **SCALEARGS)
