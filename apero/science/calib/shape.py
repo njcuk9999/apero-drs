@@ -353,9 +353,9 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
                 transforms_list.append(transforms)
                 # now add extract properties to main group
                 valid_matched_id.append(group_num)
-                valid_dark_files.append(props['DARKFILE'])
-                valid_badpfiles.append(props['BADPFILE'])
-                valid_backfiles.append(props['BACKFILE'])
+                valid_dark_files.append(str(props['DARKFILE']))
+                valid_badpfiles.append(str(props['BADPFILE']))
+                valid_backfiles.append(str(props['BACKFILE']))
             # validate table mask
             table_mask[indices] = True
         else:

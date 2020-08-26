@@ -9,6 +9,7 @@ Created on 2019-06-27 at 10:48
 """
 import numpy as np
 import os
+from typing import Union, Tuple
 from pathlib import Path
 import warnings
 
@@ -49,6 +50,19 @@ TextDict = lang.core.drs_lang_text.TextDict
 pcheck = core.pcheck
 # get display func
 display_func = drs_log.display_func
+
+# =============================================================================
+# define complex Typing
+# =============================================================================
+# for: load_calib_file
+LoadCalibFileReturn = Union[# if return filename
+                            str,
+                            # if return_filename + return_source
+                            Tuple[str, str],
+                            # default
+                            Tuple[np.ndarray, drs_fits.Header, str],
+                            # if return_source
+                            Tuple[np.ndarray, drs_fits.Header, str, str]]
 
 
 # =============================================================================
@@ -358,7 +372,8 @@ def add_calibs_to_header(outfile, props):
 def load_calib_file(params, key=None, inheader=None, filename=None,
                     get_image=True, get_header=False, fiber=None,
                     userinputkey=None, database=None,
-                    return_filename=False, return_source=False, **kwargs):
+                    return_filename=False, return_source=False,
+                    **kwargs) -> LoadCalibFileReturn:
     # set function
     _ = display_func(params, 'load_calib_file', __NAME__)
     # ------------------------------------------------------------------------
@@ -381,14 +396,14 @@ def load_calib_file(params, key=None, inheader=None, filename=None,
     if return_source:
         filename, source = fout
     else:
-        filename, source = fout, None
+        filename, source = fout, 'None'
     # ------------------------------------------------------------------------
     # if filename is defined this is the filename we should return
     if filename is not None and return_filename:
         if return_source:
-            return filename, source
+            return str(filename), source
         else:
-            return filename
+            return str(filename)
     # -------------------------------------------------------------------------
     # else we have to load from database
     if filename is None:
@@ -407,18 +422,18 @@ def load_calib_file(params, key=None, inheader=None, filename=None,
     # if we are just returning filename return here
     if return_filename:
         if return_source:
-            return filename, source
+            return str(filename), source
         else:
-            return filename
+            return str(filename)
     # -------------------------------------------------------------------------
     # now read the calibration file
     image, header = read_calib_file(params, filename, get_image, get_header,
                                     kind, fmt, ext)
     # return all
     if return_source:
-        return image, header, filename, source
+        return image, header, str(filename), source
     else:
-        return image, header, filename
+        return image, header, str(filename)
 
 
 def check_fp(params, image, **kwargs):
@@ -537,17 +552,18 @@ def get_file_from_inputs(params, dbmname, userinputkey=None, default=None,
             return value
 
 
-def read_calib_file(params, abspath, get_image, get_header, kind, fmt, ext):
+def read_calib_file(params, abspath: Union[str, Path], get_image, get_header,
+                    kind, fmt, ext):
     # set function
     func_name = display_func(params, 'load_calib_file', __NAME__)
     # ------------------------------------------------------------------
     # deal with npy files
-    if abspath.endswith('.npy'):
+    if str(abspath).endswith('.npy'):
         image = drs_path.numpy_load(abspath)
         return image, None
     # ------------------------------------------------------------------
     # get db fits file
-    if (not get_image) or (not abspath.endswith('.fits')):
+    if (not get_image) or (not str(abspath).endswith('.fits')):
         image = None
     elif kind == 'image':
         image = drs_fits.readfits(params, abspath, ext=ext)
