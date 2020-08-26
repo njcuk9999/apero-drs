@@ -432,7 +432,7 @@ class DrsRecipe(object):
                 rpath = params['DRS_INSTRUMENT_RECIPE_PATH']
                 dpath = params['DRS_DEFAULT_RECIPE_PATH']
                 margs = [instrument, [self.name], rpath, dpath]
-                modules = constants.getmodnames(*margs, path=False)
+                modules = constants.getmodnames(*margs, return_paths=False)
                 # return module
                 self.module = self._import_module(modules[0], full=True,
                                                   quiet=True)

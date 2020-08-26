@@ -688,7 +688,7 @@ def get_file_definition(name, instrument, kind='raw', return_all=False,
 
     # else we have a name and an instrument
     margs = [instrument, ['file_definitions.py'], ipath, CORE_PATH]
-    modules = constants.getmodnames(*margs, path=False)
+    modules = constants.getmodnames(*margs, return_paths=False)
     # load module
     mod = constants.import_module(func_name, modules[0], full=True)
     # get a list of all recipes from modules
@@ -1476,7 +1476,7 @@ def find_recipe(name='None', instrument='None', mod=None):
     # else we have a name and an instrument
     if mod is None:
         margs = [instrument, ['recipe_definitions.py'], ipath, CORE_PATH]
-        modules = constants.getmodnames(*margs, path=False)
+        modules = constants.getmodnames(*margs, return_paths=False)
         # load module
         mod = constants.import_module(func_name, modules[0], full=True)
     # get a list of all recipes from modules
