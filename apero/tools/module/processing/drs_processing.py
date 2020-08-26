@@ -2119,7 +2119,7 @@ def _get_recipe_module(params, **kwargs):
         ipath = instrument_path
     # else we have a name and an instrument
     margs = [instrument, ['recipe_definitions.py'], ipath, core_path]
-    modules = constants.getmodnames(*margs, path=False)
+    modules = constants.getmodnames(*margs, return_paths=False)
     # load module
     mod = constants.import_module(func_name, modules[0], full=True)
     # return module

@@ -77,7 +77,7 @@ class RecipeDefinition():
             ipath = INSTRUMENT_PATH
         # get recipe definitions module
         margs = [self.instrument, ['recipe_definitions.py'], ipath, CORE_PATH]
-        modules = constants.getmodnames(*margs, path=False)
+        modules = constants.getmodnames(*margs, return_paths=False)
         # load module
         mod = constants.import_module(func_name, modules[0], full=True)
         # add to recipes
@@ -132,7 +132,7 @@ class FileDefinition():
             ipath = INSTRUMENT_PATH
         # get recipe definitions module
         margs = [self.instrument, ['file_definitions.py'], ipath, CORE_PATH]
-        modules = constants.getmodnames(*margs, path=False)
+        modules = constants.getmodnames(*margs, return_paths=False)
         # load module
         mod = constants.import_module(func_name, modules[0], full=True)
         # add to recipes
