@@ -7,11 +7,12 @@ Created on 2020-08-2020-08-21 19:17
 
 @author: cook
 """
-import os
+from typing import Any, Union
 
 from apero.base import base
 from apero.base import drs_break
 from apero.base import drs_exceptions
+
 
 # =============================================================================
 # Define variables
@@ -25,44 +26,73 @@ __date__ = base.__date__
 __release__ = base.__release__
 
 
-
 # =============================================================================
 # Basic logging functions
 # =============================================================================
 class Colors:
-    BLACK1 = '\033[90;1m'
-    RED1 = '\033[1;91;1m'
-    GREEN1 = '\033[92;1m'
-    YELLOW1 = '\033[1;93;1m'
-    BLUE1 = '\033[94;1m'
-    MAGENTA1 = '\033[1;95;1m'
-    CYAN1 = '\033[1;96;1m'
-    WHITE1 = '\033[97;1m'
-    BLACK2 = '\033[1;30m'
-    RED2 = '\033[1;31m'
-    GREEN2 = '\033[1;32m'
-    YELLOW2 = '\033[1;33m'
-    BLUE2 = '\033[1;34m'
-    MAGENTA2 = '\033[1;35m'
-    CYAN2 = '\033[1;36m'
-    WHITE2 = '\033[1;37m'
-    ENDC = '\033[0;0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-
-    def __init__(self, theme=None):
+    def __init__(self, theme: Union[str, None] = None):
+        """
+        Constructor of the colour class (colours based on theme)
+        :param theme: str, if set sets the theme ('DARK' or 'LIGHT') defaults
+                      to 'DARK'
+        """
+        # Basic definition of colours to use in log to screen
+        self.BLACK1 = '\033[90;1m'
+        self.RED1 = '\033[1;91;1m'
+        self.GREEN1 = '\033[92;1m'
+        self.YELLOW1 = '\033[1;93;1m'
+        self.BLUE1 = '\033[94;1m'
+        self.MAGENTA1 = '\033[1;95;1m'
+        self.CYAN1 = '\033[1;96;1m'
+        self.WHITE1 = '\033[97;1m'
+        self.BLACK2 = '\033[1;30m'
+        self.RED2 = '\033[1;31m'
+        self.GREEN2 = '\033[1;32m'
+        self.YELLOW2 = '\033[1;33m'
+        self.BLUE2 = '\033[1;34m'
+        self.MAGENTA2 = '\033[1;35m'
+        self.CYAN2 = '\033[1;36m'
+        self.WHITE2 = '\033[1;37m'
+        self.ENDC = '\033[0;0m'
+        self.BOLD = '\033[1m'
+        self.UNDERLINE = '\033[4m'
+        # if we have no theme set - set the default
         if theme is None:
             self.theme = 'DARK'
+        # if anything else set the theme to them
         else:
             self.theme = theme
+        # get inital definitions of themed objects
+        self.header = self.MAGENTA1
+        self.okblue = self.BLUE1
+        self.okgreen = self.GREEN1
+        self.ok = self.MAGENTA2
+        self.warning = self.YELLOW1
+        self.fail = self.RED1
+        self.debug = self.BLACK1
+        # define the end of string code (block to reset)
         self.endc = self.ENDC
+        # define the bold string code
         self.bold = self.BOLD
+        # define the underline string code
         self.underline = self.UNDERLINE
+        # update all others via theme
         self.update_theme()
 
-    def update_theme(self, theme=None):
+    def update_theme(self, theme: Union[str, None] = None):
+        """
+        Update themed object names
+            header/okblue/okgreen/ok/warning/fail/debug
+        based on theme
+
+        :param theme: str, if set sets the theme ('DARK' or 'LIGHT') defaults
+                      to 'DARK'
+        :return:
+        """
+        # if we have no theme set - set the default
         if theme is not None:
             self.theme = theme
+        # set the dark colours
         if self.theme == 'DARK':
             self.header = self.MAGENTA1
             self.okblue = self.BLUE1
@@ -71,6 +101,7 @@ class Colors:
             self.warning = self.YELLOW1
             self.fail = self.RED1
             self.debug = self.BLACK1
+        # set the light colours
         else:
             self.header = self.MAGENTA2
             self.okblue = self.MAGENTA2
@@ -80,7 +111,17 @@ class Colors:
             self.fail = self.RED2
             self.debug = self.GREEN2
 
-    def print(self, message, colour):
+    def print(self, message: str, colour: str) -> str:
+        """
+        A basic coloured print mesage
+        If colour is incorrect does nothing
+
+        :param message: str, the message to print
+        :param colour: str, the colour to print, colour must be one of the
+                       following: b, r, h, y, m, k
+
+        :return: a coloured string ready to be printed to stdout
+        """
         if colour in ['b', 'blue']:
             start = self.BLUE1
         elif colour in ['r', 'red']:
@@ -99,8 +140,41 @@ class Colors:
         return start + message + self.endc
 
 
-def display_func(params=None, name=None, program=None, class_name=None,
-                 wlog=None, textentry=None):
+def display_func(params: Any = None, name: Union[str, None] = None,
+                 program: Union[str, None] = None,
+                 class_name: Union[str, None] = None,
+                 wlog: Any = None, textentry: Any = None) -> str:
+    """
+    Start of function setup. Returns a properly constructed string
+    representation of where the function is.
+
+    string is formatted as follows:
+        program.class_name.name    (if class_name and program set)
+        program.name               (if class_name not set and program set)
+        name                       (if class_name and program not set)
+
+    If params is a ParamDict checks the inputs for a breakfunc and if the
+    "name" matched the breakfunc - will add a break point at the start of
+    function where display_func was used
+
+    :param params: None or ParamDict (containing "INPUTS" for breakfunc/
+                   breakpoint)
+    :param name: str or None - if set is the name of the function
+                 (i.e. def myfunction   name = "myfunction")
+                 if unset, set to "Unknown"
+    :param program: str or None, the program or recipe the function is defined
+                    in, if unset not added to the output string
+    :param class_name: str or None, the class name, if unset not added
+                       (i.e. class myclass   class_name = "myclass"
+    :param wlog: None or drs_log.wlog logger - prints log messages to wlog or
+                 if not set uses drs_exceptions.wlogbasic to print log message
+    :param textentry: None or TextEntry class - used to turn code ids into
+                      human-readable text messages - if not set uses
+                      drs_exceptions.base_printer to print the error message
+                      (as a raw text id)
+    :returns: a properly constructed string representation of where the
+              function is.
+    """
     # set function name (cannot break here --> no access to inputs)
     func_name = str(__NAME__) + '.display_func()'
     # deal with no wlog defined
@@ -207,9 +281,22 @@ def display_func(params=None, name=None, program=None, class_name=None,
     return strfunc
 
 
-def _get_prev_count(params, previous):
+def _get_prev_count(params: Any, previous: str) -> int:
+    """
+    Get the previous number of times a function was found in
+    params['DEBUG_FUNC_LIST']
+
+    :param params: None or ParamDict containing at least DEBUG_FUNC_LIST (a list
+                   of debug functions)
+    :param previous: str, the last debug function used
+
+    :return: number of times function occurs in DEBUG_FUNC_LIST
+    """
     # set function name (cannot break here --> no access to inputs)
     _ = str(__NAME__) + '._get_prev_count()'
+    # deal with no params
+    if params is None:
+        return 0
     # get the debug list
     debug_list = params['DEBUG_FUNC_LIST'][:-1]
     # get the number of iterations

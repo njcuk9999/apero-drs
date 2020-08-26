@@ -24,6 +24,7 @@ __author__ = ['N. Cook', 'E. Artigau', 'F. Bouchy', 'M. Hobson', 'C. Moutou',
 __date__ = '2020-08-21'
 __release__ = 'alpha pre-release'
 # do this once per drs import
+# TODO: first time Time.now is done it takes a very long time
 __now__ = Time.now()
 AstropyTime = Time
 AstropyTimeDelta = TimeDelta

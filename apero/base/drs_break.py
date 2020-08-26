@@ -13,7 +13,7 @@ import os
 import shutil
 from pathlib import Path
 import pkg_resources
-from typing import Union
+from typing import Any, Union
 
 from apero.base import base
 from apero.base import drs_exceptions
@@ -32,12 +32,25 @@ __release__ = base.__release__
 DrsCodedException = drs_exceptions.DrsCodedException
 # relative folder cache
 REL_CACHE = dict()
+# define current path
+CURRENT_PATH = os.getcwd()
 
 
 # =============================================================================
 # Basic breakpoint/debug functions
 # =============================================================================
-def break_point(params=None, allow=None, level=2):
+def break_point(params: Any = None, allow: Union[None, bool] = None,
+                level: int = 2):
+    """
+    Break and go into pdb (python debugger)/ipdb (ipython debugger)
+
+    :param params: if not None is a ParamDict or dictionary containing the key
+                   'ALLOW_BREAKPOINTS' (a boolean similar to allow)
+    :param allow: bool, switch to turn on/off the break points
+    :param level: int, the level above where the break point was called to
+                  go into the ipdb/pdb debugger
+    :return:
+    """
     # set function name (cannot break inside break function)
     _ = str(__NAME__) + '.break_point()'
     # if we don't have parameters load them from config file
@@ -62,7 +75,7 @@ def break_point(params=None, allow=None, level=2):
         raise drs_exceptions.DebugExit(emsg)
     finally:
         # delete pdbrc
-        _remove_pdb_rc(params)
+        _remove_pdb_rc()
 
 
 def get_relative_folder(package: Union[None, str],
@@ -126,7 +139,13 @@ def get_relative_folder(package: Union[None, str],
 # =============================================================================
 # Define worker functions
 # =============================================================================
-def _copy_pdb_rc(level=0):
+def _copy_pdb_rc(level: int = 0):
+    """
+    Copy the .pdbrc file to the current directory
+    (needed to start pdb/ipdb with correct setup)
+    :param level:
+    :return:
+    """
     # set function name (cannot break here --> no access to inputs)
     _ = str(__NAME__) + '_copy_pdb_rc()'
     # set global CURRENT_PATH
@@ -164,11 +183,16 @@ def _copy_pdb_rc(level=0):
     os.remove(tmppath)
 
 
-def _remove_pdb_rc(params):
+def _remove_pdb_rc():
+    """
+    Remove .pdbrc file from current CURRENT_PATH
+
+    :return:
+    """
     # set function name (cannot break here --> no access to inputs)
     _ = str(__NAME__) + '_remove_pdb_rc()'
     # get file name
-    filename = params['DRS_PDB_RC_FILENAME']
+    filename = base.PDB_RC_FILENAME
     # get newsrc
     newsrc = os.path.join(CURRENT_PATH, filename)
     # remove
@@ -177,6 +201,11 @@ def _remove_pdb_rc(params):
 
 
 def _execute_ipdb():
+    """
+    start debugger (either ipdb if installed or pdb elsewise)
+
+    :return:
+    """
     # set function name (cannot break here --> within break function)
     _ = str(__NAME__) + '._execute_ipdb()'
     # start ipdb
