@@ -9,19 +9,21 @@ Created on 2019-01-17 at 14:09
 
 @author: cook
 """
+from astropy import units as uu
+import importlib
 import numpy as np
 import os
+from pathlib import Path
 import sys
 import traceback
-import importlib
-import string
-import warnings
-from astropy import units as uu
-from typing import Union
+from types import ModuleType
+from typing import Any, List, Tuple, Union
 
 from apero.base import base
 from apero.base import drs_exceptions
-from apero.lang.core import drs_lang_db
+from apero.base import drs_misc
+from apero.base import drs_text
+
 
 # =============================================================================
 # Define variables
@@ -48,6 +50,11 @@ BLOG = drs_exceptions.basiclogger
 SIMPLE_TYPES = base.SIMPLE_TYPES
 SIMPLE_STYPES = base.SIMPLE_STYPES
 VALID_CHARS = base.VALID_CHARS
+# get display function
+display_func = drs_misc.display_func
+# get the display text function
+DisplayText = drs_text.DisplayText
+
 
 # =============================================================================
 # Define classes
@@ -59,11 +66,20 @@ class Const:
     e.g. stores information to read and check config/constant file constants
 
     """
-    def __init__(self, name, value=None, dtype: Union[None, str, type] = None,
-                 dtypei=None, options=None, maximum=None, minimum=None,
-                 source=None, unit=None, default=None, datatype=None,
-                 dataformat=None, group=None, user=False, active=False,
-                 description=None, author=None, parent=None):
+    def __init__(self, name: str, value: Any = None,
+                 dtype: Union[None, str, type] = None,
+                 dtypei: Union[None, str, type] = None,
+                 options: List = None,
+                 maximum: Union[int, float, None] = None,
+                 minimum: Union[int, float, None] = None,
+                 source: Union[str, None] = None,
+                 unit: Union[uu.Unit] = None, default: Any = None,
+                 datatype: Union[type, None] = None,
+                 dataformat: Union[str, None] = None,
+                 group: Union[str, None] = None, user: bool = False,
+                 active: bool = False, description: Union[str, None] = None,
+                 author: Union[str, List[str], None] = None,
+                 parent: Union[str, None] = None):
         """
         Construct the constant instance
 
@@ -87,32 +103,15 @@ class Const:
                        (for user config file generation)
         :param description: str, the description for this constant
         :param author: str, the author of this constant (i.e. who to contact)
-        :param parent: Const, the parent of this constant (if a constant is
+        :param parent: str, the parent of this constant (if a constant is
                        related to or comes from another constant)
-
-        :type name: str
-        :type value: object
-        :type dtype: Union[str, type]
-        :type dtypei: Union[str, type]
-        :type options: list[object]
-        :type maximum: object
-        :type minimum: object
-        :type source: str
-        :type unit: uu.Unit
-        :type default: object
-        :type datatype: str
-        :type dataformat: str
-        :type group: str
-        :type user: bool
-        :type active: bool
-        :type description: str
-        :type author: str
-        :type parent: Const
 
         :returns: None (constructor)
         """
-        # set function name (cannot break function here)
-        _ = str(__NAME__) + '.Const.validate()'
+        # set class name
+        self.class_name = 'Const'
+        # set function name
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
         # set the name of the constant
         self.name = name
         # set the value of the constant
@@ -155,7 +154,35 @@ class Const:
         # set true value
         self.true_value = None
 
-    def validate(self, test_value=None, quiet=False, source=None):
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state (for pickle)
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        Return string represenation of Const class
+        :return:
+        """
+        return 'Const[{0}]'.format(self.name)
+
+    def validate(self, test_value: Any = None, quiet: bool = False,
+                 source: Union[str, None] = None) -> Union[bool, Any]:
         """
         Validate a value either from definition (when `test_value` is None)
         or test a new value for this constant instance (`test_value` set).
@@ -179,8 +206,8 @@ class Const:
         :rtype: Union[bool, object]
         :raises ConfigError: if value is not valid
         """
-        # set function name (cannot break function here)
-        _ = str(__NAME__) + '.Const.validate()'
+        # set function name
+        _ = display_func(None, 'validate', __NAME__, self.class_name)
         # deal with no test value (use value set at module level)
         if test_value is None:
             value = self.value
@@ -206,7 +233,7 @@ class Const:
         else:
             return true_value
 
-    def copy(self, source=None):
+    def copy(self, source: Union[str, None] = None) -> 'Const':
         """
         Shallow copy of constant instance
 
@@ -218,8 +245,8 @@ class Const:
         :rtype: Const
         :raises ConfigError: if source is None
         """
-        # set function name (cannot break function here)
-        func_name = str(__NAME__) + '.Const.copy()'
+        # set function name
+        func_name = display_func(None, 'copy', __NAME__, self.class_name)
         # get display text
         textentry = DisplayText()
         # check that source is valid
@@ -235,7 +262,7 @@ class Const:
                      description=self.description, author=self.author,
                      parent=self.parent)
 
-    def write_line(self, value=None):
+    def write_line(self, value: Any = None) -> List[str]:
         """
         Creates the lines required for a config/constant file for this constant
 
@@ -254,8 +281,8 @@ class Const:
 
         :rtype: list[str]
         """
-        # set function name (cannot break function here)
-        _ = str(__NAME__) + '.Const.write_line()'
+        # set function name
+        _ = display_func(None, 'write_line', __NAME__, self.class_name)
         # set up line list
         lines = ['']
         # deal with value
@@ -265,10 +292,10 @@ class Const:
         # add description
         # -------------------------------------------------------------------
         # check if we have a description defined
-        if self.description not in ['', 'None', None]:
+        if not drs_text.null_text(self.description, ['', 'None']):
             description = self.description.strip().capitalize()
             # wrap long descriptions by words
-            wrapdesc = textwrap(description, 77)
+            wrapdesc = drs_text.textwrap(description, 77)
             # loop around wrapped lines and add as comments
             for wline in wrapdesc:
                 # add wrapped line to
@@ -337,10 +364,19 @@ class Keyword(Const):
 
     """
 
-    def __init__(self, name, key=None, value=None, dtype=None, comment=None,
-                 options=None, maximum=None, minimum=None, source=None,
-                 unit=None, default=None, datatype=None, dataformat=None,
-                 group=None, author=None, parent=None):
+    def __init__(self, name: str, key: Union[str, None] = None,
+                 value: Any = None, dtype: Union[None, str, type] = None,
+                 comment: Union[str, None] = None,
+                 options: List = None,
+                 maximum: Union[int, float, None] = None,
+                 minimum: Union[int, float, None] = None,
+                 source: Union[str, None] = None,
+                 unit: Union[uu.Unit] = None, default: Any = None,
+                 datatype: Union[type, None] = None,
+                 dataformat: Union[str, None] = None,
+                 group: Union[str, None] = None,
+                 author: Union[str, List[str], None] = None,
+                 parent: Union[str, None] = None):
         """
         Construct the keyword instance
 
@@ -383,8 +419,10 @@ class Keyword(Const):
 
         :returns: None (constructor)
         """
-        # set function name (cannot break function here)
-        _ = str(__NAME__) + '.Keyword.__init__()'
+        # set class name
+        self.class_name = 'Keyword'
+        # set function name
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
         # Initialize the constant parameters (super)
         Const.__init__(self, name, value, dtype, None, options, maximum,
                        minimum, source, unit, default, datatype, dataformat,
@@ -416,10 +454,46 @@ class Keyword(Const):
         #   or comes from another constant/keyword)
         self.parent = parent
 
-    def set(self, key=None, value=None, dtype=None, comment=None,
-            options=None, unit=None, maximum=None, minimum=None,
-            source=None, default=None, datatype=None,
-            dataformat=None, group=None, author=None, parent=None):
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state (for pickle)
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        Return string represenation of Const class
+        :return:
+        """
+        return 'Const[{0}]'.format(self.name)
+
+    def set(self, key: str = None, value: Any = None,
+            dtype: Union[None, str, type] = None,
+            comment: Union[str, None] = None,
+            options: List = None,
+            maximum: Union[int, float, None] = None,
+            minimum: Union[int, float, None] = None,
+            source: Union[str, None] = None,
+            unit: Union[uu.Unit] = None, default: Any = None,
+            datatype: Union[type, None] = None,
+            dataformat: Union[str, None] = None,
+            group: Union[str, None] = None,
+            author: Union[str, List[str], None] = None,
+            parent: Union[str, None] = None):
         """
         Set attributes of the Keyword instance
 
@@ -460,8 +534,8 @@ class Keyword(Const):
 
         :returns: None
         """
-        # set function name (cannot break function here)
-        _ = str(__NAME__) + '.Keyword.set()'
+        # set function name
+        _ = display_func(None, 'set', __NAME__, self.class_name)
         # set the header key associated with this keyword
         if key is not None:
             self.key = key
@@ -511,7 +585,8 @@ class Keyword(Const):
         if parent is not None:
             self.parent = parent
 
-    def validate(self, test_value=None, quiet=False, source=None):
+    def validate(self, test_value: Any = None, quiet: bool = False,
+                 source: Union[str, None] = None) -> Union[bool, Any]:
         """
         Validate a value either from definition (when `test_value` is None)
         or test a new value for this keyword instance (`test_value` set).
@@ -541,8 +616,8 @@ class Keyword(Const):
         :rtype: Union[bool, object]
         :raises ConfigError: if value is not valid
         """
-        # set function name (cannot break function here)
-        _ = str(__NAME__) + '.Keyword.validate()'
+        # set function name
+        _ = display_func(None, 'validate', __NAME__, self.class_name)
         # deal with no test value (use value set at module level)
         if test_value is None:
             value = self.value
@@ -572,7 +647,7 @@ class Keyword(Const):
         else:
             return true_value
 
-    def copy(self, source=None):
+    def copy(self, source: Union[str, None] = None) -> 'Keyword':
         """
         Shallow copy of keyword instance
 
@@ -584,8 +659,8 @@ class Keyword(Const):
         :rtype: Keyword
         :raises ConfigError: if source is None
         """
-        # set function name (cannot break function here)
-        func_name = str(__NAME__) + '.Keyword.copy()'
+        # set function name
+        func_name = display_func(None, 'copy', __NAME__, self.class_name)
         # get display text
         textentry = DisplayText()
         # check that source is valid
@@ -601,54 +676,16 @@ class Keyword(Const):
                        author=self.author, parent=self.parent)
 
 
-class DisplayText:
-    """
-    Manually enter wlog TextEntries here -- will be in english only
-
-    This is used for when we cannot have access to the language database
-    """
-
-    def __init__(self):
-        """
-        Constructs the manual language database (into `self.entries`)
-        """
-        # set function name (cannot break here --> no access to inputs)
-        _ = __NAME__ + '._DisplayText.__init__()'
-        # get the entries from module
-        self.entries = drs_lang_db.get_entries()
-
-    def __call__(self, key, args=None):
-        """
-        When constructed this call method acts like a TextEntry instance,
-        returning a string that can be used in WLOG and is formatted by
-        arguments `args`
-
-        :param key: str, the key code from the language database
-                    (i.e. 00-001-00001)
-        :param args: list of objects, if there is formating in entry this
-                     is how arguments are supplied i.e.
-                     `'LOG MESSAGE {0}: Message = {1}'.format(*args)`
-
-        :type key: str
-        :type args: list[objects]
-
-        :return: returns string
-        :rtype: str
-        """
-        # set function name (cannot break here --> no access to inputs)
-        _ = str(__NAME__) + '._DisplayText.__init__()'
-        # return the entry for key with the arguments used for formatting
-        if args is not None:
-            return self.entries[key].format(*args)
-        # else just return the entry
-        else:
-            return self.entries[key]
+# =============================================================================
+# Define complex type returns
+# =============================================================================
+GenConsts = Tuple[List[str], Union[List[Const], List[Keyword]]]
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def generate_consts(modulepath):
+def generate_consts(modulepath: str) -> GenConsts:
     """
     Get all Const and Keyword instances from a module - basically load
     constants from a python file
@@ -661,8 +698,8 @@ def generate_consts(modulepath):
     :rtype: tuple[list[str], list[Const, Keyword]]
     :raises ConfigError: if module name is not valid
     """
-    # set function name (cannot break here --> no access to inputs)
-    func_name = str(__NAME__) + '.generate_consts()'
+    # set function name
+    func_name = display_func(None, 'generate_consts', __NAME__)
     # import module
     mod = import_module(func_name, modulepath)
     # get keys and values
@@ -686,7 +723,8 @@ def generate_consts(modulepath):
     return new_keys, new_values
 
 
-def import_module(func, modulepath, full=False, quiet=False):
+def import_module(func: str, modulepath: str, full: bool = False,
+                  quiet: bool = False) -> ModuleType:
     """
     Import a module given a module path
 
@@ -707,7 +745,8 @@ def import_module(func, modulepath, full=False, quiet=False):
     """
     # set function name (cannot break here --> no access to inputs)
     if func is None:
-        func_name = str(__NAME__) + '.import_module()'
+        # set function name
+        func_name = display_func(None, 'import_module', __NAME__)
     else:
         func_name = str(func)
     # get display text
@@ -743,7 +782,7 @@ def import_module(func, modulepath, full=False, quiet=False):
                               level='error')
 
 
-def get_constants_from_file(filename):
+def get_constants_from_file(filename: str) -> Tuple[List[str], List[str]]:
     """
     Read config file and convert to key, value pairs
         comments have a '#' at the start
@@ -759,12 +798,12 @@ def get_constants_from_file(filename):
     :raises ConfigError: if there is a profile read constants from file
     """
     # set function name (cannot break here --> no access to inputs)
-    _ = str(__NAME__) + '.get_constants_from_file()'
+    _ = display_func(None, 'get_constants_from_file', __NAME__)
     # first try to reformat text file to avoid weird characters
     #   (like mac smart quotes)
     _validate_text_file(filename)
     # read raw config file as strings
-    raw = _get_raw_txt(filename, comments='#', delimiter='=')
+    raw = drs_text.load_text_file(filename, comments='#', delimiter='=')
     # check that we have lines in config file
     if len(raw) == 0:
         return [], []
@@ -798,7 +837,7 @@ def get_constants_from_file(filename):
     return keys, values
 
 
-def update_file(filename, dictionary):
+def update_file(filename: str, dictionary: dict):
     """
     Updates a config/constants file with key/value pairs in the `dictionary`
     If key not found in config/constants file does not add key/value to file
@@ -853,156 +892,11 @@ def update_file(filename, dictionary):
                           level='error')
 
 
-def textwrap(input_string, length):
-    """
-    Wraps the text `input_string` to the length of `length` new lines are
-    indented with a tab
-
-    Modified version of this: https://stackoverflow.com/a/16430754
-
-    :param input_string: str, the input text to wrap
-    :param length: int, the length of the wrap
-    :type input_string: str
-    :type length: int
-    :return: list of strings, the new set of wrapped lines
-    :rtype: list[str]
-    """
-    # set function name (cannot break here --> no access to inputs)
-    _ = str(__NAME__) + '.textwrap()'
-    # set up a new empty list of strings
-    new_string = []
-    # loop around the input string split by new lines
-    for s in input_string.split("\n"):
-        # if line is empty add an empty line to new_string
-        if s == "":
-            new_string.append('')
-        # set the current line length to zero initially
-        wlen = 0
-        # storage
-        line = []
-        # loop around words in string and split at words if length is too long
-        #   words are definied by white spaces
-        for dor in s.split():
-            # if the word + current length is shorter than the wrap length
-            #   then append to current line
-            if wlen + len(dor) + 1 <= length:
-                line.append(dor)
-                # update the current line length
-                wlen += len(dor) + 1
-            # else we have to wrap
-            else:
-                # add the current line to the output string
-                new_string.append(" ".join(line))
-                # start a new line with the word that broke the wrap
-                line = [dor]
-                # set the current line length to the length of the word
-                wlen = len(dor)
-        # if the length of the line is larger than zero append line
-        if len(line) > 0:
-            new_string.append(" ".join(line))
-    # add a tab to all but first line
-    new_string2 = [new_string[0]]
-    # loop around lines in new strings (except the first line)
-    for it in range(1, len(new_string)):
-        new_string2.append('\t' + new_string[it])
-    # return the new string with tabs for subsequent lines
-    return new_string2
-
-
 # =============================================================================
 # Define private functions
 # =============================================================================
-def _get_raw_txt(filename,  comments,  delimiter):
-    """
-    Read raw text from a file `filename` where comments are prefixed by
-    `comments` and columns separated by `delimiter`. By default tries to use
-    np.genfromtxt but if this fails tries a slower method.
-
-    :param filename: str, the absolute file path to read
-    :param comments: str, the comment character to look for
-    :param delimiter: str, the delimiter value to look for
-    :type filename: str
-    :type comments: str
-    :type delimiter: str
-
-    :return: numpy array containing columns delimited by `delimiter`
-    :rtype: np.ndarray
-    """
-    # set function name (cannot break here --> no access to inputs)
-    _ = str(__NAME__) + '._get_raw_txt()'
-    # catch warnings from here
-    with warnings.catch_warnings(record=True) as _:
-        # noinspection PyBroadException
-        # try to read the text file using numpy's genfromtxt (faster)
-        try:
-            raw = np.genfromtxt(filename, comments=comments,
-                                delimiter=delimiter, dtype=str).astype(str)
-        # if this fails for any read use a slow method (defined below)
-        except Exception:
-            raw = _read_lines(filename, comments=comments, delimiter=delimiter)
-    # return the raw lines
-    return raw
-
-
-def _read_lines(filename, comments='#', delimiter=' '):
-    """
-    Basic way to open file containing tabular data
-
-    :param filename: str, the absolute file path to read
-    :param comments: str, the comment character to look for
-    :param delimiter: str, the delimiter value to look for
-    :type filename: str
-    :type comments: str
-    :type delimiter: str
-
-    :return: numpy array containing columns delimited by `delimiter`
-    :rtype: np.ndarray
-    :raises ConfigError: if filename cannot be read
-    """
-    # set function name (cannot break here --> no access to inputs)
-    func_name = str(__NAME__) + '.read_lines()'
-    # get display text
-    textentry = DisplayText()
-    # manually open file (slow)
-    try:
-        # read the lines
-        with open(filename, 'r') as f:
-            lines = f.readlines()
-    except Exception as e:
-        eargs = [filename, func_name, type(e), e]
-        raise ConfigError(textentry('00-004-00003', args=eargs),
-                          level='error')
-    # valid lines
-    raw = []
-    # loop around lines
-    for l, line in enumerate(lines):
-        # remove line endings and blanks at start and end
-        line = line.replace('\n', '').strip()
-        # do not include blank lines
-        if len(line) == 0:
-            continue
-        # do not include commented lines
-        elif line[0] == comments:
-            continue
-        else:
-            # append to raw
-            try:
-                key, value = line.split(delimiter)
-            except ValueError as _:
-                eargs = [l + 1, filename, line, func_name]
-                raise ConfigError(textentry('00-003-00022', args=eargs),
-                                  level='error')
-            raw.append([key, value])
-    # check that raw has entries
-    if len(raw) == 0:
-        eargs = [filename, func_name]
-        raise ConfigError(textentry('00-003-00023', args=eargs),
-                          level='error')
-    # return raw
-    return np.array(raw)
-
-
-def _test_dtype(name, invalue, dtype, source, quiet=False):
+def _test_dtype(name: str, invalue: Any, dtype: Union[str, type],
+                source: str, quiet: bool = False) -> Any:
     """
     Test the data type of a variable `invalue`
 
@@ -1032,7 +926,7 @@ def _test_dtype(name, invalue, dtype, source, quiet=False):
         return None
     # check paths (must be strings and must exist)
     if dtype == 'path':
-        if type(invalue) is not str:
+        if not isinstance(invalue, str):
             if not quiet:
                 eargs = [name, type(invalue), invalue, source, func_name]
                 raise ConfigError(textentry('00-003-00009', args=eargs),
@@ -1044,7 +938,7 @@ def _test_dtype(name, invalue, dtype, source, quiet=False):
                                   level='error')
         return str(invalue)
     # deal with casting a string into a list
-    if (dtype is list) and (type(invalue) is str):
+    if (dtype is list) and isinstance(invalue, str):
         if not quiet:
             eargs = [name, invalue, source, func_name]
             raise ConfigError(textentry('00-003-00011', args=eargs),
@@ -1063,8 +957,11 @@ def _test_dtype(name, invalue, dtype, source, quiet=False):
     return outvalue
 
 
-def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
-                    quiet=False, source=None):
+def _validate_value(name: str, dtype: Union[str, type, None],
+                    value: Any, dtypei: Union[str, type, None],
+                    options: list, maximum: Union[int, float, None],
+                    minimum: Union[int, float, None], quiet: bool = False,
+                    source: Union[None, str] = None) -> Tuple[Any, str]:
     """
     Checks whether a variable `value` is valid based on the specifications given
 
@@ -1170,7 +1067,8 @@ def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
     return true_value, source
 
 
-def _validate_text_file(filename, comments='#'):
+def _validate_text_file(filename: Union[str, Path],
+                        comments: str = '#'):
     """
     Validation on any text file, makes sure all non commented lines have
     valid characters (i.e. are either letters, digits, punctuation or
@@ -1196,7 +1094,7 @@ def _validate_text_file(filename, comments='#'):
     with open(filename, 'r') as f:
         lines = f.readlines()
     # loop around each line in text file
-    for l, line in enumerate(lines):
+    for l_it, line in enumerate(lines):
         # ignore blank lines
         if len(line.strip()) == 0:
             continue
@@ -1211,7 +1109,7 @@ def _validate_text_file(filename, comments='#'):
         for char in line:
             if char not in VALID_CHARS:
                 invalid = True
-                emsg += textentry('00-003-00021', args=[char, l + 1])
+                emsg += textentry('00-003-00021', args=[char, l_it + 1])
         # only raise an error if invalid is True (if we found bad characters)
         if invalid:
             raise ConfigError(emsg, level='error')
