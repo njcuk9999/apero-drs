@@ -79,10 +79,6 @@ def get_masterwave_filename(params, fiber, database=None):
     :param database:
     :return:
     """
-    # TODO: remove break point
-    from apero.base import drs_break
-    drs_break.break_point(params)
-
     # set function name
     func_name = display_func(params, 'get_masterwave_filename', __NAME__)
     # get pseudo constants
@@ -185,7 +181,7 @@ def get_wave_solution_from_wavefile(params, recipe, usefiber, inwavefile,
                                                  database=database)
     # -------------------------------------------------------------------------
     # construct new infile instance (first fp solution then hc solutions)
-    if out_wave_fp.suffix in inwavefile:
+    if out_wave_fp.suffix in str(inwavefile):
         wavefile = out_wave_fp.newcopy(filename=inwavefile, recipe=recipe,
                                        fiber=usefiber)
     else:
