@@ -751,6 +751,7 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     orderpfile.add_hkey('KW_PID', value=params['PID'])
     # add output tag
     orderpfile.add_hkey('KW_OUTPUT', value=orderpfile.name)
+    orderpfile.add_hkey('KW_FIBER', value=fiber)
     # add input files (and deal with combining or not combining)
     if combine:
         hfiles = rawfiles
