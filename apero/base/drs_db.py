@@ -10,8 +10,10 @@ Created on 2020-08-2020-08-21 18:13
 from astropy.table import Table
 import numpy as np
 import pandas as pd
+from pathlib import Path
 import sqlite3
-from typing import Union, List
+from typing import Any, Union, List
+
 
 from apero.base import base
 
@@ -37,14 +39,27 @@ class DatabaseException(Exception):
 
 
 class DatabaseError(DatabaseException):
-    def __init__(self, message=None, errorobj=None, path=None,
-                 func_name=None):
+    def __init__(self, message: Union[str, None] = None, 
+                 errorobj: Any = None, path: Union[str, Path] = None,
+                 func_name: Union[str, None] = None):
+        """
+        Construct the Database Error instance
+        
+        :param message: str a mesage to pass / print 
+        :param errorobj: the error instance (or anything else)
+        :param path: str/Path the path of the database
+        :param func_name: str, the function name where error occured
+        """
         self.message = message
         self.errorobj = errorobj
         self.path = path
         self.func_name = func_name
 
     def __str__(self):
+        """
+        Standard __str__ return (used in raising as Exception)
+        :return: 
+        """
         emsg = 'DatabaseError: {0}'
         if self.path is not None:
             emsg += '\n\t Database path = {1}'
@@ -54,16 +69,15 @@ class DatabaseError(DatabaseException):
 
 
 class Database:
-    '''A wrapper for an SQLite database.'''
-
+    # A wrapper for an SQLite database.
     def __init__(self, path: str, verbose: bool = False):
-        '''
+        """
         Create an object for reading and writing to a SQLite database.
 
         :param path: the location on disk of the database.
                      This may be :memory: to create a temporary in-memory
                      database which will not be saved when the program closes.
-        '''
+        """
         func_name = __NAME__ + 'Database.__init__()'
         # store whether we want to print steps
         self._verbose_ = verbose
@@ -87,22 +101,31 @@ class Database:
         self._update_table_list_()
 
     def __str__(self):
+        """
+        Standard string return
+        :return: 
+        """
         return 'Database[{0}]'.format(self.path)
 
     def __repr__(self):
-        return 'Database[{0}]'.format(self.path)
+        """
+        Standard string representation
+        :return: 
+        """
+        return self.__str__()
 
     # get / set / execute / add methods
-    def execute(self, command: str, return_cursor: bool = False):
-        '''
+    def execute(self, command: str, return_cursor: bool = False) -> Any:
+        """
         Directly execute an SQL command on the database and return
         any results.
 
-        :param command: The SQL command to be run.
+        :param command: str, The SQL command to be run.
+        :param return_cursor: bool, whether we need the cursor return for
+                              further use
 
-        Returns:
-            The outputs of the command, if any, as a list.
-        '''
+        :returns: The outputs of the command, if any, as a list.
+        """
         # set function name
         func_name = __NAME__ + '.Database.execute()'
         # print input if verbose
@@ -133,7 +156,7 @@ class Database:
             max_rows: Union[int, None] = None, return_array: bool = False,
             return_table: bool = False, return_pandas: bool = False
             ) -> Union[tuple, pd.DataFrame, np.ndarray, Table]:
-        '''
+        """
         Retrieves data from the database with a variety of options.
 
         :param columns: a string containing the comma-separated columns to
@@ -157,9 +180,14 @@ class Database:
                                set to None.
         :param max_rows: The number of rows to truncate the output to.
                         If this is None, all matching rows are returned.
-        :param returnAray: Whether to transform the results into a numpy array.
+        :param return_array: Whether to transform the results into a numpy array.
                         This works well only when the outputs all have the
-                        same type, so it is off by default.
+                        same type, so it is off by default. Takes slightly
+                        longer than default return
+        :param return_table: Whether to transform the results into astropy
+                             table - takes slightly longer than return_array
+        :param return_pandas: Whether to transform the results into a pandas
+                              table - takes slightly longer than return_array
 
         :returns:
             The requested data (if any) filtered, sorted, and truncated
@@ -178,7 +206,7 @@ class Database:
             db.get(condition="mass > 1 and radius > 1")
             # Returns the names of the five largest planets.
             db.get("name", sortBy="radius", maxRows=5)
-        '''
+        """
         # set function name
         func_name = __NAME__ + '.Database.get()'
         # infer table name
@@ -228,7 +256,7 @@ class Database:
     def set(self, columns: Union[str, List[str]],
             values: Union[str, List[str]], condition: Union[str, None] = None,
             table: Union[str, None] = None, commit: bool = True):
-        '''
+        """
         Changes the data in existing rows.
 
         :param columns: The names of the columns to be changed, as a list of
@@ -255,7 +283,7 @@ class Database:
             db.set('counts', b'counts+1', None)
             # Resets all mass and radius values to null
             db.set(['mass', 'radius'], [b'null', b'null'], None)
-        '''
+        """
         # set function name
         func_name = __NAME__ + '.Database.set()'
         # we expect columns to be a list but if it is a string we can just make
@@ -309,7 +337,7 @@ class Database:
     def add_row(self, values: List[object], table: Union[None, str] = None,
                 columns: Union[str, List[str]] = "*",
                 commit: bool = True):
-        '''
+        """
         Adds a row to the specified tables with the given values.
 
         :param values: an iterable of the values to fill into the new row.
@@ -321,9 +349,9 @@ class Database:
                         you may list them here.  Otherwise, '*' indicates that
                         all columns will be initialized.
         :param commit: boolean, if True will commit changes to sql database
-        '''
+        """
         # set function name
-        func_name = __NAME__ + '.Database.add_row()'
+        _ = __NAME__ + '.Database.add_row()'
         # infer table name
         table = self._infer_table_(table)
         # push values into strings
@@ -369,8 +397,9 @@ class Database:
                           * fail: Raise a ValueError.
                           * replace: Drop the table before inserting new values.
                           * append: Insert new values to the existing table.
-
-        :param index:
+        :param index: whether to include an index column in database
+        :param commit: whether to commit changes to SQL database after adding
+                       (or wait to another commit event)
         :return:
         """
         # set function name
@@ -394,7 +423,7 @@ class Database:
     # table methods
     def add_table(self, name: str, field_names: List[str],
                   field_types: List[Union[str, type]]):
-        '''
+        """
         Adds a table to the database file.
 
         :param name: The name of the table to create. This must not already be
@@ -409,7 +438,7 @@ class Database:
             # "REAL" does the same thing as float
             db.addTable('planets', ['name', 'mass', 'radius'],
                         [str, float, "REAL"])
-        '''
+        """
         func_name = __NAME__ + '.Database.add_table()'
         # translator between python types and SQL types
         translator = {str: "TEXT", int: "INTEGER", float: "REAL"}
@@ -435,6 +464,7 @@ class Database:
                     raise DatabaseError(emsg, path=self.path,
                                         func_name=func_name)
                 # set as sql type
+                # noinspection PyTypeChecker
                 ftype = translator[ftype]
             # else we must have a string --> so break if not
             elif not isinstance(ftype, str):
@@ -451,13 +481,13 @@ class Database:
         self._update_table_list_()
 
     def delete_table(self, name: str):
-        '''
+        """
         Deletes a table from the database, erasing all contained data
         permenantly!
 
         :param name: The name of the table to be deleted.
                      See Database.tables for a list of eligible tables.
-        '''
+        """
         func_name = __NAME__ + '.Database.delete_table()'
         # make sure table is a string
         if not isinstance(name, str):
@@ -468,19 +498,17 @@ class Database:
         # update the table list and commit
         self._update_table_list_()
 
-    def rename_table(self, oldName, newName):
-        '''
+    def rename_table(self, old_name: str, new_name: str):
+        """
         Renames a table.
 
-
-        :param oldName: The name of the table to be deleted. See Database.tables
-                        for a list of eligible tables.
-        :param newName: The new name of the table.  This must not be already
-                        taken or an SQL keyword.
-        '''
-        self.execute("ALTER TABLE {} RENAME TO {}".format(oldName, newName))
+        :param old_name: The name of the table to be deleted. See
+                         Database.tables for a list of eligible tables.
+        :param new_name: The new name of the table. This must not be already
+                         taken or an SQL keyword.
+        """
+        self.execute("ALTER TABLE {} RENAME TO {}".format(old_name, new_name))
         self._commit()
-        return
 
     # admin methods
     def backup(self):
@@ -527,10 +555,10 @@ class Database:
         return table
 
     def _update_table_list_(self):
-        '''
+        """
         Reads the database for tables and updates the class members
         accordingly.
-        '''
+        """
         # Get the new list of tables
         command = 'SELECT name from sqlite_master where type= "table"'
         # execute command
@@ -553,7 +581,7 @@ class Database:
         self._conn_.commit()
 
     def _get_columns(self, cursor=None,
-                     table: Union[str, None] = None ) -> List[str]:
+                     table: Union[str, None] = None) -> List[str]:
         """
         Get the columns names for a particular execute command (using cursor)
         :param cursor: return of the self._cursor_.execute command
