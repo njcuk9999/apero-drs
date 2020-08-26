@@ -24,6 +24,7 @@ from collections import OrderedDict
 from apero.base import base
 from apero.base import drs_exceptions
 from apero.base import drs_misc
+from apero.base import drs_text
 from apero.core import constants
 from apero import lang
 from apero.core.math import time
@@ -269,7 +270,7 @@ class Logger:
                 # check if line is over 80 chars
                 if (len(mess) > char_len) and wrap:
                     # get new messages (wrapped at CHAR_LEN)
-                    new_messages = textwrap(mess, char_len)
+                    new_messages = drs_text.textwrap(mess, char_len)
                     for new_message in new_messages:
                         # add a space to the start of messages (if not present)
                         if not new_message.startswith(' '):
@@ -1062,7 +1063,7 @@ def printlogandcmd(logobj, params, message, key, human_time, option, wrap,
         # check if line is over 80 chars
         if (len(mess) > char_len) and wrap:
             # get new messages (wrapped at CHAR_LEN)
-            new_messages = textwrap(mess, char_len)
+            new_messages = drs_text.textwrap(mess, char_len)
             for new_message in new_messages:
                 cmdargs = [human_time, code, option, new_message]
                 cmd = params['DRS_LOG_FORMAT'].format(*cmdargs)
@@ -1313,10 +1314,6 @@ def printlog(logobj, params, message, key='all', colour=None):
     # if the colours are not None then print the message
     if c1 is not None and c2 is not None:
         print(c1 + message + c2)
-
-
-def textwrap(input_string, length):
-    return constants.constant_functions.textwrap(input_string, length)
 
 
 def printcolour(logobj, params, key='all', func_name=None, colour=None):

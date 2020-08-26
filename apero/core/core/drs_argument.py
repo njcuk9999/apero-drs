@@ -19,6 +19,7 @@ from collections import OrderedDict
 from apero.base import base
 from apero.base import drs_exceptions
 from apero.base import drs_misc
+from apero.base import drs_text
 from apero.core import constants
 from apero import lang
 from apero.core.core import drs_log
@@ -1734,7 +1735,7 @@ def _help_format(keys, helpstr, options=None):
 
     # split by max number of characters allowed
     if len(helpstr) > maxsize:
-        helpstrs = _textwrap(helpstr, maxsize)
+        helpstrs = drs_text.textwrap(helpstr, maxsize)
     else:
         helpstrs = [helpstr]
 
@@ -1744,13 +1745,6 @@ def _help_format(keys, helpstr, options=None):
 
     # return formatted string
     return fmtstring
-
-
-def _textwrap(input_string, length):
-    # set function name (cannot break here --> no access to params)
-    _ = display_func(None, '_textwrap', __NAME__)
-    # return text wrap
-    return constants.constant_functions.textwrap(input_string, length)
 
 
 def _print_list_msg(recipe, fulldir, dircond=False, return_string=False,
