@@ -14,6 +14,7 @@ from astropy.io import fits
 from astropy.table import Table
 from astropy import version as av
 import os
+from pathlib import Path
 import warnings
 import traceback
 from typing import Any, Union
