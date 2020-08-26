@@ -57,7 +57,7 @@ HelpText = lang.core.drs_lang_text.HelpDict
 # get the default language
 DEFAULT_LANGUAGE = lang.core.drs_lang_text.DEFAULT_LANGUAGE
 # Get the Color dict
-Color = drs_misc.Colors
+Color = drs_misc.Colors()
 
 
 # =============================================================================
@@ -1391,9 +1391,6 @@ def override_colour(params, colour):
                      log returns the ending colour, if not returns empty
                      string if key is not accepted does not print
     """
-
-    # get the colour codes
-    codes = Color
     # get theme
     if 'THEME' not in params:
         theme = 'DARK'
@@ -1403,46 +1400,46 @@ def override_colour(params, colour):
     if theme == 'DARK':
         # find colour 1 in colour
         if colour.lower() == "red":
-            colour1 = codes.RED1
+            colour1 = Color.RED1
         elif colour.lower() == "green":
-            colour1 = codes.GREEN1
+            colour1 = Color.GREEN1
         elif colour.lower() == "blue":
-            colour1 = codes.BLUE1
+            colour1 = Color.BLUE1
         elif colour.lower() == "yellow":
-            colour1 = codes.YELLOW1
+            colour1 = Color.YELLOW1
         elif colour.lower() == "cyan":
-            colour1 = codes.CYAN1
+            colour1 = Color.CYAN1
         elif colour.lower() == "magenta":
-            colour1 = codes.MAGENTA1
+            colour1 = Color.MAGENTA1
         elif colour.lower() == 'black':
-            colour1 = codes.BLACK1
+            colour1 = Color.BLACK1
         elif colour.lower() == 'white':
-            colour1 = codes.WHITE1
+            colour1 = Color.WHITE1
         else:
             colour1 = None
     # get colour 1
     else:
         # find colour 1 in colour
         if colour.lower() == "red":
-            colour1 = codes.RED2
+            colour1 = Color.RED2
         elif colour.lower() == "green":
-            colour1 = codes.GREEN2
+            colour1 = Color.GREEN2
         elif colour.lower() == "blue":
-            colour1 = codes.BLUE2
+            colour1 = Color.BLUE2
         elif colour.lower() == "yellow":
-            colour1 = codes.YELLOW2
+            colour1 = Color.YELLOW2
         elif colour.lower() == "cyan":
-            colour1 = codes.CYAN2
+            colour1 = Color.CYAN2
         elif colour.lower() == "magenta":
-            colour1 = codes.MAGENTA2
+            colour1 = Color.MAGENTA2
         elif colour.lower() == 'black':
-            colour1 = codes.BLACK2
+            colour1 = Color.BLACK2
         elif colour.lower() == 'white':
-            colour1 = codes.WHITE2
+            colour1 = Color.WHITE2
         else:
             colour1 = None
     # last code should be the end
-    colour2 = codes.ENDC
+    colour2 = Color.ENDC
     # return colour1 and colour2
     return colour1, colour2
 
@@ -1500,6 +1497,11 @@ def writelog(logobj, params, message, key, logfilepath):
 
 
 def _clean_message(message):
+    """
+    Remove colours from a message
+    :param message:
+    :return:
+    """
     # get all attributes of Color
     all_attr = Color.__dict__
     # storeage for codes

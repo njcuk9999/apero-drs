@@ -50,7 +50,7 @@ Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 WLOG = drs_log.wlog
 TLOG = drs_log.Printer
 # get print colours
-COLOR = drs_misc.Colors
+COLOR = drs_misc.Colors()
 # get param dict
 ParamDict = constants.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
@@ -895,7 +895,7 @@ def _display_drs_title(params, group=None, printonly=False, logonly=False):
     :returns: None
     """
     # get colours
-    colors = COLOR()
+    colors = COLOR
 
     # create title
     title = ' * '
@@ -940,7 +940,7 @@ def _display_title(params, title, group=None, printonly=False, logonly=False):
 
 def _display_logo(params):
     # get colours
-    colors = COLOR()
+    colors = COLOR
     # get pconstant
     pconstant = constants.pload(params['INSTRUMENT'])
     # noinspection PyPep8
@@ -966,7 +966,7 @@ def _display_ee(params):
     :returns: None
     """
     # get colours
-    colors = COLOR()
+    colors = COLOR
     # get pconstant
     pconstant = constants.pload(params['INSTRUMENT'])
     # noinspection PyPep8
