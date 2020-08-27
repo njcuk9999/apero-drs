@@ -94,6 +94,8 @@ def __main__(recipe, params):
     mainname = __NAME__ + '._main()'
     # get files
     infiles = params['INPUTS']['FILES'][1]
+    # must check fp files pass quality control
+    infiles = general.check_fp_files(params, infiles)
     # get list of filenames (for output)
     rawfiles = []
     for infile in infiles:
@@ -106,7 +108,7 @@ def __main__(recipe, params):
     # combine input images if required
     elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        infiles = [drs_fits.combine(params, infiles, math='median')]
+        infiles = [drs_fits.combine(params, recipe, infiles, math='median')]
         combine = True
     else:
         combine = False

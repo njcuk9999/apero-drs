@@ -103,6 +103,7 @@ class PseudoConstants:
         params = kwargs.get('params')
         recipe = kwargs.get('recipe')
         header = kwargs.get('header')
+        filename = kwargs.get('filename')
         # return header
         return header
 
@@ -136,9 +137,8 @@ class PseudoConstants:
     def OUTPUT_FILE_HEADER_KEYS(self):
         """
         Output file header keys.
+        Used for indexing
 
-        This list is the master list and RAW_OUTPUT_COLUMNS, REDUC_OUTPUT_COLUMNS
-        etc must be in this list
         :param p:
         :return:
         """
@@ -147,35 +147,38 @@ class PseudoConstants:
                        'KW_MID_OBS_TIME', 'KW_OBJNAME', 'KW_OBSTYPE',
                        'KW_EXPTIME', 'KW_CCAS', 'KW_CREF', 'KW_CDEN',
                        'KW_DPRTYPE', 'KW_OUTPUT', 'KW_CMPLTEXP', 'KW_NEXP',
-                       'KW_VERSION', 'KW_PPVERSION', 'KW_PI_NAME']
+                       'KW_VERSION', 'KW_PPVERSION', 'KW_PI_NAME', 'KW_PID',
+                       'KW_FIBER']
         # return output_keys
         return output_keys
 
-    # noinspection PyPep8Naming
-    def RAW_OUTPUT_KEYS(self):
-        # define selected keys
-        output_keys = ['KW_DATE_OBS', 'KW_UTC_OBS', 'KW_ACQTIME',
-                       'KW_MID_OBS_TIME', 'KW_OBJNAME', 'KW_OBSTYPE',
-                       'KW_EXPTIME', 'KW_DPRTYPE', 'KW_CCAS', 'KW_CREF',
-                       'KW_CDEN', 'KW_CMPLTEXP', 'KW_NEXP', 'KW_PI_NAME']
-        # return these keys
-        return output_keys
-
-    # noinspection PyPep8Naming
-    def REDUC_OUTPUT_KEYS(self):
-        # define selected keys
-        output_keys = ['KW_DATE_OBS', 'KW_UTC_OBS', 'KW_MID_OBS_TIME',
-                       'KW_OBJNAME', 'KW_OUTPUT', 'KW_DPRTYPE',
-                       'KW_VERSION']
-        # return these keys
-        return output_keys
-
-    # noinspection PyPep8Naming
-    def GEN_OUTPUT_COLUMNS(self):
-        output_keys = ['KW_DATE_OBS', 'KW_UTC_OBS', 'KW_MID_OBS_TIME',
-                       'KW_OBJNAME', 'KW_OBSTYPE', 'KW_EXPTIME',
-                       'KW_OUTPUT', 'KW_DPRTYPE', 'KW_VERSION']
-        return output_keys
+    # TODO: remove these
+    # # noinspection PyPep8Naming
+    # def RAW_OUTPUT_KEYS(self):
+    #     # define selected keys
+    #     output_keys = ['KW_DATE_OBS', 'KW_UTC_OBS', 'KW_ACQTIME',
+    #                    'KW_MID_OBS_TIME', 'KW_OBJNAME', 'KW_OBSTYPE',
+    #                    'KW_EXPTIME', 'KW_DPRTYPE', 'KW_CCAS', 'KW_CREF',
+    #                    'KW_CDEN', 'KW_CMPLTEXP', 'KW_NEXP', 'KW_PI_NAME',
+    #                    'KW_PID']
+    #     # return these keys
+    #     return output_keys
+    #
+    # # noinspection PyPep8Naming
+    # def REDUC_OUTPUT_KEYS(self):
+    #     # define selected keys
+    #     output_keys = ['KW_DATE_OBS', 'KW_UTC_OBS', 'KW_MID_OBS_TIME',
+    #                    'KW_OBJNAME', 'KW_OUTPUT', 'KW_DPRTYPE',
+    #                    'KW_VERSION', 'KW_PID', 'KW_FIBER']
+    #     # return these keys
+    #     return output_keys
+    #
+    # # noinspection PyPep8Naming
+    # def GEN_OUTPUT_COLUMNS(self):
+    #     output_keys = ['KW_DATE_OBS', 'KW_UTC_OBS', 'KW_MID_OBS_TIME',
+    #                    'KW_OBJNAME', 'KW_OBSTYPE', 'KW_EXPTIME',
+    #                    'KW_OUTPUT', 'KW_DPRTYPE', 'KW_VERSION', 'KW_PID']
+    #     return output_keys
 
     # =========================================================================
     # DISPLAY/LOGGING SETTINGS

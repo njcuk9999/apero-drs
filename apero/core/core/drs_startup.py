@@ -19,10 +19,9 @@ import os
 import random
 from signal import signal, SIGINT
 from collections import OrderedDict
-from typing import Union
+from typing import Union, List
 
-from apero.lang import drs_text
-from apero.lang import drs_exceptions
+from apero import lang
 from apero.core import constants
 from apero.core.instruments.default import pseudo_const
 from apero.io import drs_table
@@ -32,6 +31,7 @@ from apero import plotting
 from apero.core.core import drs_log
 from apero.core.core import drs_recipe
 from apero.core.core import drs_file
+
 
 # =============================================================================
 # Define variables
@@ -59,17 +59,17 @@ DrsRecipe = drs_recipe.DrsRecipe
 DrsFitsFile = drs_file.DrsFitsFile
 DrsInputFile = drs_file.DrsInputFile
 # get the Drs Exceptions
-DrsError = drs_exceptions.DrsError
-DrsWarning = drs_exceptions.DrsWarning
-TextError = drs_exceptions.TextError
-TextWarning = drs_exceptions.TextWarning
-ConfigError = drs_exceptions.ConfigError
-ConfigWarning = drs_exceptions.ConfigWarning
+DrsError = lang.drs_exceptions.DrsError
+DrsWarning = lang.drs_exceptions.DrsWarning
+TextError = lang.drs_exceptions.TextError
+TextWarning = lang.drs_exceptions.TextWarning
+ConfigError = lang.drs_exceptions.ConfigError
+ConfigWarning = lang.drs_exceptions.ConfigWarning
 # Get the text types
-TextEntry = drs_text.TextEntry
-TextDict = drs_text.TextDict
-HelpEntry = drs_text.HelpEntry
-HelpText = drs_text.HelpDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
+HelpEntry = lang.drs_text.HelpEntry
+HelpText = lang.drs_text.HelpDict
 # recipe control path
 INSTRUMENT_PATH = Constants['DRS_MOD_INSTRUMENT_CONFIG']
 CORE_PATH = Constants['DRS_MOD_CORE_CONFIG']
@@ -166,8 +166,11 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     # need to set debug mode now
     recipe = _set_debug_from_input(recipe, fkwargs)
     # -------------------------------------------------------------------------
+    # need to see if we are forcing directories
+    recipe = _set_force_dirs(recipe, fkwargs)
+    # -------------------------------------------------------------------------
     # do not need to display if we have special keywords
-    quiet = _special_keys_present(recipe, quiet, fkwargs)
+    quiet = _quiet_keys_present(recipe, quiet, fkwargs)
     # -------------------------------------------------------------------------
     # display (print only no log)
     if (not quiet) and ('instrument' not in recipe.args):
@@ -205,8 +208,10 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
         recipe.drs_params.set('DRS_RECIPE_KIND', recipe.kind, source=func_name)
         # need to set debug mode now
         recipe = _set_debug_from_input(recipe, fkwargs)
+        # need to see if we are forcing directories
+        recipe = _set_force_dirs(recipe, fkwargs)
         # do not need to display if we have special keywords
-        quiet = _special_keys_present(recipe, quiet, fkwargs)
+        quiet = _quiet_keys_present(recipe, quiet, fkwargs)
         # -------------------------------------------------------------------------
         # display
         if not quiet:
@@ -247,8 +252,8 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     params = recipe.drs_params.copy()
     # -------------------------------------------------------------------------
     # deal with setting night name, inputdir and outputdir
-    params['INPATH'] = recipe.get_input_dir()
-    params['OUTPATH'] = recipe.get_output_dir()
+    params['INPATH'] = recipe.get_input_dir(force=recipe.force_dirs[0])
+    params['OUTPATH'] = recipe.get_output_dir(force=recipe.force_dirs[0])
     if 'DIRECTORY' in params['INPUTS']:
         gargs = [params['INPATH'], params['INPUTS']['DIRECTORY']]
         params['NIGHTNAME'] = drs_path.get_uncommon_path(*gargs)
@@ -264,9 +269,13 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     cond3 = params['OUTPATH'] is not None
     cond4 = params['NIGHTNAME'] is not None
     if cond1 and cond2 and cond4:
-        _make_dirs(params, os.path.join(params['INPATH'], params['NIGHTNAME']))
+        inpath = str(params['INPATH'])
+        nightname = str(params['NIGHTNAME'])
+        _make_dirs(params, os.path.join(inpath, nightname))
     if cond1 and cond3 and cond4:
-        _make_dirs(params, os.path.join(params['OUTPATH'], params['NIGHTNAME']))
+        outpath = str(params['OUTPATH'])
+        nightname = str(params['NIGHTNAME'])
+        _make_dirs(params, os.path.join(outpath, nightname))
     # -------------------------------------------------------------------------
     # deal with data passed from call to main function
     if 'DATA_DICT' in fkwargs:
@@ -301,7 +310,7 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     # -------------------------------------------------------------------------
     # add the recipe log
     if (instrument is not None) and (params['DRS_RECIPE_KIND'] == 'recipe'):
-        recipe.log = drs_log.RecipeLog(recipe.name, params)
+        recipe.log = drs_log.RecipeLog(recipe.name, params, wlog=WLOG)
         # add log file to log (only used to save where the log is)
         logfile = drs_log.get_logfilepath(WLOG, params)
         recipe.log.set_log_file(logfile)
@@ -329,7 +338,6 @@ def run(func, recipe, params):
     :param recipe: DrsRecipe, the drs recipe to use with "func"
     :param params: Paramdict, the constant parameter dictionary
 
-    :type func: function
     :type recipe: DrsRecipe
     :type params: ParamDict
 
@@ -347,7 +355,7 @@ def run(func, recipe, params):
             llmain = func(recipe, params)
             llmain['e'], llmain['tb'] = None, None
             success = True
-        except drs_exceptions.DebugExit as e:
+        except lang.drs_exceptions.DebugExit as e:
             WLOG(params, 'error', e.errormessage, raise_exception=False)
             # on debug exit was not a success
             success = False
@@ -377,7 +385,7 @@ def run(func, recipe, params):
                 recipe.log.add_error(params, 'KeyboardInterrupt', '')
             # reset the lock directory
             drs_lock.reset_lock_dir(params)
-        except drs_exceptions.LogExit as e:
+        except lang.drs_exceptions.LogExit as e:
             # get trace back
             string_trackback = traceback.format_exc()
             # on LogExit was not a success
@@ -472,7 +480,7 @@ def return_locals(params, ll):
 
 
 def main_end_script(params, llmain, recipe, success, outputs='reduced',
-                    end=True, quiet=False):
+                    end=True, quiet=False, keys=None):
     """
     Function to deal with the end of a recipe.main script
         1. indexes outputs
@@ -485,11 +493,14 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
     :param success: bool, if True program has successfully completed else
                     it has not
     :param outputs: string, the type of outputs i.e:
+        - 'None'  (for no outputs)
         - 'raw'
         - 'tmp'
         - 'reduced'
     :param end: bool, if we should run full end routines
     :param quiet: bool, if we should not print out standard output
+    :param keys: list of string, any variable in main function can be named here
+                 and will be returned on completion
 
     :type params: ParamDict
     :type llmain: Union[dict, None]
@@ -498,6 +509,7 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
     :type outputs: str
     :type end: bool
     :type quiet: bool
+    :type keys: Union[None, List[str]]
 
     :exception SystemExit: on caught errors
 
@@ -542,7 +554,7 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
                     # index outputs to reduced dir
                     _index_outputs(params, recipe)
             # Must close lock file
-            except drs_exceptions.LogExit as e_:
+            except lang.drs_exceptions.LogExit as e_:
                 # log error
                 eargs = [type(e_), e_.errormessage, func_name]
                 WLOG(params, 'error', TextEntry('00-000-00002', args=eargs))
@@ -593,7 +605,7 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
         WLOG.clean_log(params['PID'])
         # ---------------------------------------------------------------------
         # deal with clearing warnings
-        drs_exceptions.clear_warnings()
+        lang.drs_exceptions.clear_warnings()
     # -------------------------------------------------------------------------
     # deal with closing graphs
     # -------------------------------------------------------------------------
@@ -624,6 +636,11 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
         # special (shallow) copy from cal_extract
         if 'e2dsoutputs' in llmain:
             outdict['e2dsoutputs'] = llmain['e2dsoutputs']
+        # deal with special keys
+        if keys is not None:
+            for key in keys:
+                if key in llmain:
+                    outdict[key] = llmain[key]
         # return outdict
         return outdict
 
@@ -834,7 +851,7 @@ def group_name(params, suffix='group'):
 # =============================================================================
 # Define display functions
 # =============================================================================
-def _special_keys_present(recipe, quiet, fkwargs):
+def _quiet_keys_present(recipe, quiet, fkwargs):
     """
     Decides whether displaying is necessary based on whether we have special
     keys in fkwargs or sys.argv (input from command line)
@@ -864,6 +881,7 @@ def _special_keys_present(recipe, quiet, fkwargs):
             quiet = False
         else:
             quiet = True
+
     # return the updated quiet flag
     return quiet
 
@@ -1170,7 +1188,7 @@ def _index_pp(params, recipe):
         WLOG(params, '', TextEntry('40-004-00001'))
         return
     # get the index columns
-    icolumns = pconstant.RAW_OUTPUT_KEYS()
+    icolumns = pconstant.OUTPUT_FILE_HEADER_KEYS()
     # ------------------------------------------------------------------------
     # index files
     istore = indexing(params, outputs, icolumns, abspath)
@@ -1211,7 +1229,7 @@ def _index_outputs(params, recipe):
         WLOG(params, '', TextEntry('40-004-00001'))
         return
     # get the index columns
-    icolumns = pconstant.REDUC_OUTPUT_KEYS()
+    icolumns = pconstant.OUTPUT_FILE_HEADER_KEYS()
     # ------------------------------------------------------------------------
     # index files
     istore = indexing(params, outputs, icolumns, abspath)
@@ -1250,6 +1268,11 @@ def indexing(params, outputs, icolumns, abspath):
     istore = OrderedDict()
     # get output path
     opath = os.path.dirname(abspath)
+    # get directory from params
+    if 'NIGHTNAME' in params:
+        nightname = str(params['NIGHTNAME'])
+    else:
+        nightname = '--'
     # looop around outputs
     for output in outputs:
         # get absfilename
@@ -1263,9 +1286,11 @@ def indexing(params, outputs, icolumns, abspath):
         # get filename
         if 'FILENAME' not in istore:
             istore['FILENAME'] = [output]
+            istore['NIGHTNAME'] = [nightname]
             istore['LAST_MODIFIED'] = [mtime]
         else:
             istore['FILENAME'].append(output)
+            istore['NIGHTNAME'].append(nightname)
             istore['LAST_MODIFIED'].append(mtime)
 
         # loop around index columns and add outputs to istore
@@ -1298,6 +1323,7 @@ def indexing(params, outputs, icolumns, abspath):
                 continue
             # else add filename
             istore['FILENAME'].append(idict['FILENAME'][row])
+            istore['NIGHTNAME'].append(idict['NIGHTNAME'][row])
             istore['LAST_MODIFIED'].append(idict['LAST_MODIFIED'][row])
             # loop around columns
             for icol in icolumns:
@@ -1329,7 +1355,7 @@ def save_index_file(p, istore, abspath):
     """
     # ------------------------------------------------------------------------
     # sort the istore by column name and add to table
-    sortmask = np.argsort(istore['FILENAME'])
+    sortmask = np.argsort(istore['LAST_MODIFIED'])
     # loop around columns and apply sort
     for icol in istore:
         istore[icol] = np.array(istore[icol])[sortmask]
@@ -1393,6 +1419,15 @@ def _assign_pid():
     :return: the process id and the human time at creation
     :rtype: tuple[str, str]
     """
+    # get unix char code
+    unixtime, humantime, rval = unix_char_code()
+    # write pid
+    pid = 'PID-{0:020d}-{1}'.format(int(unixtime), rval)
+    # return pid and human time
+    return pid, humantime
+
+
+def unix_char_code():
     # we need a random seed
     np.random.seed(random.randint(1, 2**30))
     # generate a random number (in case time is too similar)
@@ -1407,10 +1442,8 @@ def _assign_pid():
     humantime = timenow.iso
     # generate random four characters to make sure pid is unique
     rval = ''.join(np.random.choice(list(CHARS), size=4))
-    # write pid
-    pid = 'PID-{0:020d}-{1}'.format(int(unixtime), rval)
-    # return pid and human time
-    return pid, humantime
+    return unixtime, humantime, rval
+
 
 
 def find_recipe(name='None', instrument='None', mod=None):
@@ -1431,7 +1464,7 @@ def find_recipe(name='None', instrument='None', mod=None):
     """
     func_name = __NAME__ + '.find_recipe()'
     # get text entry
-    textentry = constants.constant_functions._DisplayText()
+    textentry = constants.constant_functions.DisplayText()
     # deal with no instrument
     if instrument == 'None' or instrument is None:
         ipath = CORE_PATH
@@ -1691,6 +1724,110 @@ def _set_debug_from_input(recipe, fkwargs):
         # set the drs debug level to 1
         recipe.drs_params['DRS_DEBUG'] = debug_mode
         recipe.drs_params.set_source('DRS_DEBUG', func_name)
+    # return recipe
+    return recipe
+
+
+def _set_force_dirs(recipe, fkwargs):
+    """
+    Decides whether we need to force the input and outdir based on user inputs
+
+
+    :param recipe:
+    :param fkwargs:
+    :return:
+    """
+    # set function name
+    func_name = __NAME__ + '._set_force_dirs()'
+    # ----------------------------------------------------------------------
+    # set debug key
+    dirkey = '--force_indir'
+    # assume debug is not there
+    indir = None
+    pos = None
+    # check sys.argv
+    for it, arg in enumerate(sys.argv):
+        if dirkey in arg:
+            if '=' in arg:
+                pos = None
+                indir = arg.split('=')[-1]
+                # Setting {0}={1} from sys.argv[{2}] ({3})
+                dargs = ['recipe.inputdir', indir, dirkey, '=']
+                dmsg = TextEntry('90-008-00013', args=dargs)
+                WLOG(recipe.drs_params, 'debug', dmsg)
+            else:
+                pos = it
+                indir = None
+    # deal with position
+    if pos is None:
+        pass
+    elif pos is not None:
+        indir = sys.argv[pos + 1]
+        # Setting {0}={1} from sys.argv[{2}] ({3})
+        dargs = ['recipe.inputdir', indir, dirkey, 'white-space']
+        dmsg = TextEntry('90-008-00013', args=dargs)
+        WLOG(recipe.drs_params, 'debug', dmsg)
+
+    # check fkwargs
+    for kwarg in fkwargs:
+        if 'force_indir' in kwarg:
+            indir = fkwargs[kwarg]
+            # Setting {0}={1} from fkwargs[{2}]
+            dargs = ['recipe.inputdir', indir, kwarg]
+            dmsg = TextEntry('90-008-00014', args=dargs)
+            WLOG(recipe.drs_params, 'debug', dmsg)
+
+    # set recipe.inputdir
+    if indir is not None:
+        if os.path.exists(os.path.abspath(indir)):
+            indir = os.path.abspath(indir)
+        # set the input dir
+        recipe.inputdir = indir
+        recipe.force_dirs[0] = True
+    # ----------------------------------------------------------------------
+    # set debug key
+    dirkey = '--force_outdir'
+    # assume debug is not there
+    outdir = None
+    pos = None
+    # check sys.argv
+    for it, arg in enumerate(sys.argv):
+        if dirkey in arg:
+            if '=' in arg:
+                pos = None
+                outdir = arg.split('=')[-1]
+                # Setting {0}={1} from sys.argv[{2}] ({3})
+                dargs = ['recipe.outputdir', indir, dirkey, '=']
+                dmsg = TextEntry('90-008-00013', args=dargs)
+                WLOG(recipe.drs_params, 'debug', dmsg)
+            else:
+                pos = it
+                outdir = None
+    # deal with position
+    if pos is None:
+        pass
+    elif pos is not None:
+        outdir = sys.argv[pos + 1]
+        # Setting {0}={1} from sys.argv[{2}] ({3})
+        dargs = ['recipe.outputdir', indir, dirkey, 'white-space']
+        dmsg = TextEntry('90-008-00013', args=dargs)
+        WLOG(recipe.drs_params, 'debug', dmsg)
+    # check fkwargs
+    for kwarg in fkwargs:
+        if 'force_outdir' in kwarg:
+            outdir = fkwargs[kwarg]
+            # Setting {0}={1} from fkwargs[{2}]
+            dargs = ['recipe.outputdir', indir, kwarg]
+            dmsg = TextEntry('90-008-00014', args=dargs)
+            WLOG(recipe.drs_params, 'debug', dmsg)
+    # set recipe.outputdir
+    if outdir is not None:
+        if os.path.exists(os.path.abspath(outdir)):
+            outdir = os.path.abspath(outdir)
+        # set the input dir
+        recipe.outputdir = outdir
+        recipe.force_dirs[1] = True
+    # ----------------------------------------------------------------------
     # return recipe
     return recipe
 

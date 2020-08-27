@@ -1,7 +1,6 @@
 from apero.core import constants
 from apero.core.core import drs_recipe
-from apero.lang import drs_text
-
+from apero import lang
 from apero.core.instruments.spirou import file_definitions as sf
 
 # =============================================================================
@@ -12,7 +11,7 @@ __INSTRUMENT__ = 'SPIROU'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get Help
-Help = drs_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
+Help = lang.drs_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
 # Get version and author
 __version__ = Constants['DRS_VERSION']
 __author__ = Constants['AUTHORS']
@@ -28,10 +27,6 @@ directory = dict(name='directory', dtype='directory',
 # =============================================================================
 # Option definitions
 # =============================================================================
-#
-# Note for these to work MUST add to spirouStartup.spirou_options_manager
-#
-# -----------------------------------------------------------------------------
 add_db = dict(name='--database', dtype='bool', default=True,
               helpstr=Help['ADD_CAL_HELP'])
 # -----------------------------------------------------------------------------
@@ -62,7 +57,7 @@ fluxunits = dict(name='--fluxunits', dtype='options', default='e-',
                  helpstr=Help['FLUXUNITS_HELP'], options=['ADU/s', 'e-'])
 # -----------------------------------------------------------------------------
 plot = dict(name='--plot', dtype=int, helpstr=Help['PLOT_HELP'],
-            default_ref='DRS_PLOT', minimum=0, maximum=2)
+            default_ref='DRS_PLOT', minimum=-1, maximum=2)
 # -----------------------------------------------------------------------------
 resize = dict(name='--resize', dtype='bool', default=True,
               helpstr=Help['RESIZE_HELP'], default_ref='INPUT_RESIZE_IMAGE')
@@ -110,7 +105,7 @@ shapeyfile = dict(name='--shapey', dtype='file', default='None',
 shapelfile = dict(name='--shapel', dtype='file', default='None',
                   files=[sf.out_shape_local], helpstr=Help['SHAPELFILE_HELP'])
 # -----------------------------------------------------------------------------
-thermalfile = dict(name='--thermal', dtype='file', default='None',
+thermalfile = dict(name='--thermalfile', dtype='file', default='None',
                    files=[sf.out_thermal_e2ds_int, sf.out_thermal_e2ds_tel],
                    helpstr=Help['THERMALFILE_HELP'])
 # -----------------------------------------------------------------------------
@@ -122,7 +117,6 @@ wavefile = dict(name='--wavefile', dtype='file', default='None',
 # Setup for recipes
 # =============================================================================
 DrsRecipe = drs_recipe.DrsRecipe
-
 # push into a list
 recipes = []
 
@@ -379,13 +373,13 @@ cal_shape_master.set_debug_plots('SHAPE_DX', 'SHAPE_ANGLE_OFFSET_ALL',
                                  'SHAPE_ANGLE_OFFSET', 'SHAPE_LINEAR_TPARAMS')
 cal_shape_master.set_summary_plots('SUM_SHAPE_ANGLE_OFFSET')
 cal_shape_master.set_arg(pos=0, **directory)
+cal_shape_master.set_kwarg(name='--fpfiles', dtype='files', files=[sf.pp_fp_fp],
+                           nargs='+', filelogic='exclusive', required=True,
+                           helpstr=Help['SHAPE_FPFILES_HELP'], default=[])
 cal_shape_master.set_kwarg(name='--hcfiles', dtype='files',
                            files=[sf.pp_hc1_hc1],
                            nargs='+', filelogic='exclusive', required=True,
                            helpstr=Help['SHAPE_HCFILES_HELP'], default=[])
-cal_shape_master.set_kwarg(name='--fpfiles', dtype='files', files=[sf.pp_fp_fp],
-                           nargs='+', filelogic='exclusive', required=True,
-                           helpstr=Help['SHAPE_FPFILES_HELP'], default=[])
 cal_shape_master.set_kwarg(**add_db)
 cal_shape_master.set_kwarg(**badfile)
 cal_shape_master.set_kwarg(**dobad)
@@ -533,12 +527,11 @@ cal_thermal.set_kwarg(**shapexfile)
 cal_thermal.set_kwarg(**shapeyfile)
 cal_thermal.set_kwarg(**shapelfile)
 cal_thermal.set_kwarg(**wavefile)
-cal_thermal.set_kwarg(name='--forceext', dtype='bool',
+cal_thermal.set_kwarg(name='--forceext', dtype='bool', default=False,
                       default_ref='THERMAL_ALWAYS_EXTRACT',
                       helpstr='THERMAL_EXTRACT_HELP')
 # add to recipe
 recipes.append(cal_thermal)
-
 
 # -----------------------------------------------------------------------------
 # cal_leak_master_spirou
@@ -566,7 +559,7 @@ cal_leak_master.set_kwarg(**plot)
 recipes.append(cal_leak_master)
 
 # -----------------------------------------------------------------------------
-# cal_leak_master_spirou
+# cal_leak_spirou
 # -----------------------------------------------------------------------------
 cal_leak = DrsRecipe(__INSTRUMENT__)
 cal_leak.name = 'cal_leak_spirou.py'
@@ -589,6 +582,7 @@ cal_leak.set_arg(name='files', dtype='files', pos='1+',
                  files=[sf.out_ext_e2dsff],
                  helpstr=Help['FILES_HELP'] + Help['LEAK_FILES_HELP'],
                  limit=1)
+cal_leak.set_kwarg(**add_db)
 cal_leak.set_kwarg(**plot)
 cal_leak.set_kwarg(name='--leakfile', dtype='file', default='None',
                    files=[sf.out_leak_master],
@@ -616,7 +610,10 @@ cal_extract.set_outputs(E2DS_FILE=sf.out_ext_e2ds,
                         S1D_W_FILE=sf.out_ext_s1d_w,
                         S1D_V_FILE=sf.out_ext_s1d_v,
                         ORDERP_SFILE=sf.out_orderp_straight,
-                        DEBUG_BACK=sf.debug_back)
+                        DEBUG_BACK=sf.debug_back,
+                        EXT_FPLINES=sf.out_ext_fplines,
+                        Q2DS_FILE=sf.out_ql_e2ds,
+                        Q2DSFF_FILE=sf.out_ql_e2dsff)
 cal_extract.set_debug_plots('FLAT_ORDER_FIT_EDGES1', 'FLAT_ORDER_FIT_EDGES2',
                             'FLAT_BLAZE_ORDER1', 'FLAT_BLAZE_ORDER2',
                             'THERMAL_BACKGROUND', 'EXTRACT_SPECTRAL_ORDER1',
@@ -628,6 +625,9 @@ cal_extract.set_arg(pos=0, **directory)
 cal_extract.set_arg(name='files', dtype='files', pos='1+', files=[sf.pp_file],
                     helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
                     limit=1)
+cal_extract.set_kwarg(name='--quicklook', dtype='bool', default=False,
+                      helpstr=Help['QUICK_LOOK_EXT_HELP'],
+                      default_ref='EXT_QUICK_LOOK')
 cal_extract.set_kwarg(**badfile)
 cal_extract.set_kwarg(**dobad)
 cal_extract.set_kwarg(**backsub)
@@ -678,7 +678,8 @@ cal_wave_master.set_outputs(WAVE_E2DS=sf.out_ext_e2dsff,
                             WAVEM_FPRESTAB=sf.out_wavem_res_table,
                             WAVEM_FPLLTAB=sf.out_wavem_ll_table,
                             WAVEM_HCLIST=sf.out_wave_hclist_master,
-                            WAVEM_FPLIST=sf.out_wave_fplist_master)
+                            WAVEM_FPLIST=sf.out_wave_fplist_master,
+                            CCF_RV=sf.out_ccf_fits)
 cal_wave_master.set_debug_plots('WAVE_HC_GUESS', 'WAVE_HC_BRIGHTEST_LINES',
                                 'WAVE_HC_TFIT_GRID', 'WAVE_HC_RESMAP',
                                 'WAVE_LITTROW_CHECK1', 'WAVE_LITTROW_EXTRAP1',
@@ -692,11 +693,14 @@ cal_wave_master.set_debug_plots('WAVE_HC_GUESS', 'WAVE_HC_BRIGHTEST_LINES',
                                 'CCF_RV_FIT', 'CCF_RV_FIT_LOOP',
                                 'WAVEREF_EXPECTED', 'EXTRACT_S1D',
                                 'EXTRACT_S1D_WEIGHT', 'WAVE_FIBER_COMPARISON',
-                                'WAVE_FIBER_COMP')
+                                'WAVE_FIBER_COMP', 'WAVENIGHT_ITERPLOT',
+                                'WAVENIGHT_HISTPLOT')
 cal_wave_master.set_summary_plots('SUM_WAVE_FP_IPT_CWID_LLHC',
                                   'SUM_WAVE_LITTROW_CHECK',
                                   'SUM_WAVE_LITTROW_EXTRAP',
-                                  'SUM_CCF_RV_FIT', 'SUM_WAVE_FIBER_COMP')
+                                  'SUM_CCF_RV_FIT', 'SUM_WAVE_FIBER_COMP',
+                                  'SUM_WAVENIGHT_ITERPLOT',
+                                  'SUM_WAVENIGHT_HISTPLOT',)
 cal_wave_master.set_arg(pos=0, **directory)
 cal_wave_master.set_kwarg(name='--hcfiles', dtype='files',
                           files=[sf.pp_hc1_hc1],
@@ -737,7 +741,7 @@ cal_wave_master.set_kwarg(name='--fpmode', dtype='options',
 recipes.append(cal_wave_master)
 
 # -----------------------------------------------------------------------------
-# cal_wave_night
+# cal_wave_night_spirou
 # -----------------------------------------------------------------------------
 cal_wave_night = DrsRecipe(__INSTRUMENT__)
 cal_wave_night.name = 'cal_wave_night_spirou.py'
@@ -753,7 +757,8 @@ cal_wave_night.kind = 'recipe'
 cal_wave_night.set_outputs(WAVE_E2DS=sf.out_ext_e2dsff,
                            WAVEMAP_NIGHT=sf.out_wave_night,
                            WAVE_HCLIST=sf.out_wave_hclist,
-                           WAVE_FPLIST=sf.out_wave_fplist)
+                           WAVE_FPLIST=sf.out_wave_fplist,
+                           CCF_RV=sf.out_ccf_fits)
 cal_wave_night.set_debug_plots('WAVENIGHT_ITERPLOT', 'WAVENIGHT_HISTPLOT',
                                'WAVEREF_EXPECTED', 'CCF_RV_FIT',
                                'CCF_RV_FIT_LOOP', 'EXTRACT_S1D',
@@ -845,12 +850,11 @@ cal_ccf.set_kwarg(name='--step', dtype=float, default_ref='CCF_DEFAULT_STEP',
 cal_ccf.set_kwarg(**add_db)
 cal_ccf.set_kwarg(**blazefile)
 cal_ccf.set_kwarg(**plot)
-cal_ccf.set_kwarg(**plot)
 # add to recipe
 recipes.append(cal_ccf)
 
 # -----------------------------------------------------------------------------
-# obj_mk_tellu
+# obj_mk_tellu_spirou
 # -----------------------------------------------------------------------------
 obj_mk_tellu = DrsRecipe(__INSTRUMENT__)
 obj_mk_tellu.name = 'obj_mk_tellu_spirou.py'
@@ -864,9 +868,12 @@ obj_mk_tellu.description = Help['MKTELL_DESC']
 obj_mk_tellu.epilog = Help['MKTELL_EXAMPLE']
 obj_mk_tellu.kind = 'recipe'
 obj_mk_tellu.set_outputs(TELLU_CONV=sf.out_tellu_conv,
-                         TELLU_TRANS=sf.out_tellu_trans)
-obj_mk_tellu.set_debug_plots('MKTELLU_WAVE_FLUX1', 'MKTELLU_WAVE_FLUX2')
-obj_mk_tellu.set_summary_plots('SUM_MKTELLU_WAVE_FLUX')
+                         TELLU_TRANS=sf.out_tellu_trans,
+                         TELLU_PCLEAN=sf.out_tellu_pclean)
+obj_mk_tellu.set_debug_plots('MKTELLU_WAVE_FLUX1', 'MKTELLU_WAVE_FLUX2',
+                             'TELLUP_WAVE_TRANS', 'TELLUP_ABSO_SPEC')
+obj_mk_tellu.set_summary_plots('SUM_MKTELLU_WAVE_FLUX',
+                               'SUM_TELLUP_WAVE_TRANS', 'SUM_TELLUP_ABSO_SPEC')
 obj_mk_tellu.set_arg(pos=0, **directory)
 obj_mk_tellu.set_arg(name='files', dtype='files', pos='1+',
                      files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
@@ -885,12 +892,12 @@ obj_mk_tellu.set_kwarg(name='--use_template', dtype='bool', default=True,
 recipes.append(obj_mk_tellu)
 
 # -----------------------------------------------------------------------------
-# obj_mk_tellu_db
+# obj_mk_tellu_db_spirou
 # -----------------------------------------------------------------------------
 obj_mk_tellu_db = DrsRecipe(__INSTRUMENT__)
 obj_mk_tellu_db.name = 'obj_mk_tellu_db_spirou.py'
 obj_mk_tellu_db.shortname = 'MKTELLDB'
-obj_mk_tellu_db.master = True
+obj_mk_tellu_db.master = False
 obj_mk_tellu_db.instrument = __INSTRUMENT__
 obj_mk_tellu_db.outputdir = 'reduced'
 obj_mk_tellu_db.inputdir = 'reduced'
@@ -918,7 +925,7 @@ obj_mk_tellu_db.set_kwarg(**wavefile)
 recipes.append(obj_mk_tellu_db)
 
 # -----------------------------------------------------------------------------
-# obj_fit_tellu
+# obj_fit_tellu_spirou
 # -----------------------------------------------------------------------------
 obj_fit_tellu = DrsRecipe(__INSTRUMENT__)
 obj_fit_tellu.name = 'obj_fit_tellu_spirou.py'
@@ -932,18 +939,22 @@ obj_fit_tellu.description = Help['FTELLU_DESC']
 obj_fit_tellu.epilog = Help['FTELLU_EXAMPLE']
 obj_fit_tellu.kind = 'recipe'
 obj_fit_tellu.set_outputs(ABSO_NPY=sf.out_tellu_abso_npy,
+                          ABSO1_NPY=sf.out_tellu_abso1_npy,
                           TELLU_OBJ=sf.out_tellu_obj,
                           SC1D_W_FILE=sf.out_tellu_sc1d_w,
                           SC1D_V_FILE=sf.out_tellu_sc1d_v,
                           TELLU_RECON=sf.out_tellu_recon,
                           RC1D_W_FILE=sf.out_tellu_rc1d_w,
-                          RC1D_V_FILE=sf.out_tellu_rc1d_v)
+                          RC1D_V_FILE=sf.out_tellu_rc1d_v,
+                          TELLU_PCLEAN=sf.out_tellu_pclean)
 obj_fit_tellu.set_debug_plots('EXTRACT_S1D', 'EXTRACT_S1D_WEIGHT',
                               'FTELLU_PCA_COMP1', 'FTELLU_PCA_COMP2',
                               'FTELLU_RECON_SPLINE1', 'FTELLU_RECON_SPLINE2',
                               'FTELLU_WAVE_SHIFT1', 'FTELLU_WAVE_SHIFT2',
-                              'FTELLU_RECON_ABSO1', 'FTELLU_RECON_ABSO2')
-obj_fit_tellu.set_summary_plots('SUM_EXTRACT_S1D', 'SUM_FTELLU_RECON_ABSO')
+                              'FTELLU_RECON_ABSO1', 'FTELLU_RECON_ABSO2',
+                              'TELLUP_WAVE_TRANS', 'TELLUP_ABSO_SPEC')
+obj_fit_tellu.set_summary_plots('SUM_EXTRACT_S1D', 'SUM_FTELLU_RECON_ABSO',
+                                'SUM_TELLUP_WAVE_TRANS', 'SUM_TELLUP_ABSO_SPEC')
 obj_fit_tellu.set_arg(pos=0, **directory)
 obj_fit_tellu.set_arg(name='files', dtype='files', pos='1+',
                       files=[sf.out_ext_e2ds, sf.out_ext_e2dsff],
@@ -962,12 +973,12 @@ obj_fit_tellu.set_kwarg(**wavefile)
 recipes.append(obj_fit_tellu)
 
 # -----------------------------------------------------------------------------
-# obj_fit_tellu_db
+# obj_fit_tellu_db_spirou
 # -----------------------------------------------------------------------------
 obj_fit_tellu_db = DrsRecipe(__INSTRUMENT__)
 obj_fit_tellu_db.name = 'obj_fit_tellu_db_spirou.py'
 obj_fit_tellu_db.shortname = 'FTELLDB'
-obj_fit_tellu_db.master = True
+obj_fit_tellu_db.master = False
 obj_fit_tellu_db.instrument = __INSTRUMENT__
 obj_fit_tellu_db.outputdir = 'reduced'
 obj_fit_tellu_db.inputdir = 'reduced'
@@ -998,7 +1009,7 @@ obj_fit_tellu_db.set_kwarg(**wavefile)
 recipes.append(obj_fit_tellu_db)
 
 # -----------------------------------------------------------------------------
-# obj_mk_temp
+# obj_mk_template_spirou
 # -----------------------------------------------------------------------------
 obj_mk_template = DrsRecipe(__INSTRUMENT__)
 obj_mk_template.name = 'obj_mk_template_spirou.py'
@@ -1112,6 +1123,72 @@ pol_spirou.set_kwarg(**wavefile)
 # add to recipe
 recipes.append(pol_spirou)
 
+
+# -----------------------------------------------------------------------------
+# pol_spirou_new
+# -----------------------------------------------------------------------------
+pol_spirou_new = DrsRecipe(__INSTRUMENT__)
+pol_spirou_new.name = 'pol_spirou_new.py'
+pol_spirou_new.shortname = 'POLAR'
+pol_spirou_new.instrument = __INSTRUMENT__
+pol_spirou_new.outputdir = 'reduced'
+pol_spirou_new.inputdir = 'reduced'
+pol_spirou_new.inputtype = 'reduced'
+pol_spirou_new.extension = 'fits'
+pol_spirou_new.description = Help['FTELLU_DESC']
+pol_spirou_new.epilog = Help['FTELLU_EXAMPLE']
+pol_spirou_new.kind = 'recipe'
+pol_spirou_new.set_outputs(POL_DEG_FILE=sf.out_pol_deg,
+                       POL_NULL1=sf.out_pol_null1,
+                       POL_NULL2=sf.out_pol_null2,
+                       POL_STOKESI=sf.out_pol_stokesi,
+                       POL_LSD=sf.out_pol_lsd,
+                       S1DW_POL=sf.out_pol_s1dw,
+                       S1DV_POL=sf.out_pol_s1dv,
+                       S1DW_NULL1=sf.out_null1_s1dw,
+                       S1DV_NULL1=sf.out_null1_s1dv,
+                       S1DW_NULL2=sf.out_null2_s1dw,
+                       S1DV_NULL2=sf.out_null2_s1dv,
+                       S1DW_STOKESI=sf.out_stokesi_s1dw,
+                       S1DV_STOKESI=sf.out_stokesi_s1dv)
+pol_spirou_new.set_debug_plots('POLAR_CONTINUUM', 'POLAR_RESULTS',
+                           'POLAR_STOKES_I', 'POLAR_LSD',
+                           'EXTRACT_S1D', 'EXTRACT_S1D_WEIGHT')
+pol_spirou_new.set_summary_plots('SUM_EXTRACT_S1D')
+pol_spirou_new.set_arg(pos=0, **directory)
+
+pol_spirou_new.set_kwarg(name='--exp1', altnames=['-1'], dtype='file',
+                     files=[sf.out_ext_e2dsff, sf.out_tellu_obj],
+                     nargs=1, filelogic='exclusive', required=True,
+                     default=[], helpstr='Input exposure 1')
+pol_spirou_new.set_kwarg(name='--exp2', altnames=['-2'], dtype='file',
+                     files=[sf.out_ext_e2dsff, sf.out_tellu_obj],
+                     nargs=1, filelogic='exclusive', required=True,
+                     default=[], helpstr='Input exposure 2')
+pol_spirou_new.set_kwarg(name='--exp3', altnames=['-3'], dtype='file',
+                     files=[sf.out_ext_e2dsff, sf.out_tellu_obj],
+                     nargs=1, filelogic='exclusive', required=True,
+                     default=[], helpstr='Input exposure 3')
+pol_spirou_new.set_kwarg(name='--exp4', altnames=['-4'], dtype='file',
+                     files=[sf.out_ext_e2dsff, sf.out_tellu_obj],
+                     nargs=1, filelogic='exclusive', required=True,
+                     default=[], helpstr='Input exposure 4')
+
+pol_spirou_new.set_kwarg(name='--lsdmask', altnames=['-m'], dtype=str,
+                         nargs=1, helpstr='LSD mask', default='None')
+pol_spirou_new.set_kwarg(name='--output', altnames=['-o'], dtype=str,
+                         nargs=1, helpstr='Output file', default='None')
+pol_spirou_new.set_kwarg(name='--output_lsd', altnames=['-l'], dtype=str,
+                         nargs=1, helpstr='Output LSD file', default='None')
+pol_spirou_new.set_kwarg(name='--lsd', altnames=['-L'], dtype='bool',
+                         nargs=1, default=False, helpstr='Run LSD analysis')
+
+pol_spirou_new.set_kwarg(**blazefile)
+pol_spirou_new.set_kwarg(**plot)
+pol_spirou_new.set_kwarg(**wavefile)
+# add to recipe
+recipes.append(pol_spirou_new)
+
 # -----------------------------------------------------------------------------
 # obj_spec_spirou
 # -----------------------------------------------------------------------------
@@ -1211,9 +1288,9 @@ full_seq.add(cal_shape_master, master=True)
 full_seq.add(cal_shape, name='SHAPELM', master=True)
 full_seq.add(cal_ff, name='FLATM', master=True)
 full_seq.add(cal_leak_master, master=True)
-full_seq.add(cal_thermal, name='THIM', files=[sf.pp_dark_dark_int],
+full_seq.add(cal_thermal, name='THI_M', files=[sf.pp_dark_dark_int],
              master=True)
-full_seq.add(cal_thermal, name='THTM', files=[sf.pp_dark_dark_tel],
+full_seq.add(cal_thermal, name='THT_M', files=[sf.pp_dark_dark_tel],
              master=True)
 full_seq.add(cal_wave_master, hcfiles=[sf.pp_hc1_hc1], fpfiles=[sf.pp_fp_fp],
              master=True)
@@ -1233,6 +1310,9 @@ full_seq.add(cal_leak, name='LEAKALL', files=[sf.out_ext_e2dsff],
 # telluric recipes
 full_seq.add(obj_mk_tellu_db, arguments=dict(cores='CORES'))
 full_seq.add(obj_fit_tellu_db, arguments=dict(cores='CORES'))
+full_seq.add(obj_fit_tellu, name='FTELLU',
+             files=[sf.out_ext_e2dsff], fiber='AB',
+             W_DPRTYPE=['OBJ_DARK', 'OBJ_FP'])
 
 # ccf on all OBJ_DARK / OBJ_FP
 full_seq.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
@@ -1252,9 +1332,9 @@ limited_seq.add(cal_shape_master, master=True)
 limited_seq.add(cal_shape, name='SHAPELM', master=True)
 limited_seq.add(cal_ff, name='FLATM', master=True)
 limited_seq.add(cal_leak_master, master=True)
-limited_seq.add(cal_thermal, name='THIM', files=[sf.pp_dark_dark_int],
+limited_seq.add(cal_thermal, name='THI_M', files=[sf.pp_dark_dark_int],
                 master=True)
-limited_seq.add(cal_thermal, name='THTM', files=[sf.pp_dark_dark_tel],
+limited_seq.add(cal_thermal, name='THT_M', files=[sf.pp_dark_dark_tel],
                 master=True)
 limited_seq.add(cal_wave_master, hcfiles=[sf.pp_hc1_hc1], fpfiles=[sf.pp_fp_fp],
                 master=True)
@@ -1284,8 +1364,8 @@ limited_seq.add(cal_leak, name='LEAKOBJ', KW_OBJNAME='SCIENCE_TARGETS',
                 files=[sf.out_ext_e2dsff], fiber='AB', KW_DPRTYPE=['OBJ_FP'])
 
 # telluric recipes
-# limited_run.add(obj_mk_tellu_db, arguments=dict(cores='CORES'))
-# limited_run.add(obj_fit_tellu_db, arguments=dict(cores='CORES'))
+limited_seq.add(obj_mk_tellu_db, arguments=dict(cores='CORES'))
+limited_seq.add(obj_fit_tellu_db, arguments=dict(cores='CORES'))
 
 # other telluric recipes
 limited_seq.add(obj_mk_tellu, name='MKTELLU1', KW_OBJNAME='TELLURIC_TARGETS',
@@ -1325,6 +1405,11 @@ pp_seq_opt = drs_recipe.DrsRunSequence('pp_seq_opt', __INSTRUMENT__)
 pp_seq_opt.add(cal_pp, name='PP_CAL', KW_OBJNAME='Calibration')
 pp_seq_opt.add(cal_pp, name='PP_SCI', KW_OBJNAME='SCIENCE_TARGETS')
 pp_seq_opt.add(cal_pp, name='PP_TEL', KW_OBJNAME='TELLURIC_TARGETS')
+pp_seq_opt.add(cal_pp, name='PP_HC1HC1', files=[sf.raw_hc1_hc1])
+pp_seq_opt.add(cal_pp, name='PP_FPFP', files=[sf.raw_fp_fp])
+pp_seq_opt.add(cal_pp, name='PP_DFP', files=[sf.raw_dark_fp])
+pp_seq_opt.add(cal_pp, name='PP_SKY', files=[sf.raw_dark_dark_sky])
+pp_seq_opt.add(cal_pp, name='PP_LFC', files=[sf.raw_lfc_lfc])
 
 # -----------------------------------------------------------------------------
 # master sequence (for trigger)
@@ -1365,6 +1450,7 @@ calib_seq.add(cal_wave_night)
 tellu_seq = drs_recipe.DrsRunSequence('tellu_seq', __INSTRUMENT__)
 # extract science
 tellu_seq.add(cal_extract, name='EXTOBJ', KW_OBJNAME='TELLURIC_TARGETS',
+              KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK'],
               files=[sf.pp_obj_dark, sf.pp_obj_fp])
 # correct leakage for any telluric targets that are OBJ_FP
 tellu_seq.add(cal_leak, name='LEAKTELL', KW_OBJNAME='TELLURIC_TARGETS',
@@ -1390,6 +1476,7 @@ tellu_seq.add(obj_mk_tellu, name='MKTELLU4', KW_OBJNAME='TELLURIC_TARGETS',
 science_seq = drs_recipe.DrsRunSequence('science_seq', __INSTRUMENT__)
 # extract science
 science_seq.add(cal_extract, name='EXTOBJ', KW_OBJNAME='SCIENCE_TARGETS',
+                KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK'],
                 files=[sf.pp_obj_dark, sf.pp_obj_fp])
 # correct leakage for any science targets that are OBJ_FP
 science_seq.add(cal_leak, name='LEAKOBJ', KW_OBJNAME='SCIENCE_TARGETS',
@@ -1413,9 +1500,11 @@ science_seq.add(cal_ccf, files=[sf.out_tellu_obj], fiber='AB',
 eng_seq = drs_recipe.DrsRunSequence('eng_seq', __INSTRUMENT__)
 
 # extract sequences
-eng_seq.add(cal_extract, name='EXTHC1', files=[sf.pp_hc1_hc1])
-eng_seq.add(cal_extract, name='EXTFPFP', files=[sf.pp_fp_fp])
-eng_seq.add(cal_extract, name='EXTDFP', files=[sf.pp_dark_fp])
+eng_seq.add(cal_extract, name='EXT_HC1HC1', files=[sf.pp_hc1_hc1])
+eng_seq.add(cal_extract, name='EXT_FPFP', files=[sf.pp_fp_fp])
+eng_seq.add(cal_extract, name='EXT_DFP', files=[sf.pp_dark_fp])
+eng_seq.add(cal_extract, name='EXT_SKY', files=[sf.pp_dark_dark_sky])
+eng_seq.add(cal_extract, name='EXT_LFC', files=[sf.pp_lfc_lfc])
 
 # -----------------------------------------------------------------------------
 # sequences list

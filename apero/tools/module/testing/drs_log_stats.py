@@ -18,7 +18,7 @@ import glob
 from collections import OrderedDict
 
 from apero.core import constants
-from apero.lang import drs_text
+from apero import lang
 from apero.core.core import drs_log
 
 
@@ -40,9 +40,9 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = drs_text.TextEntry
-TextDict = drs_text.TextDict
-HelpText = drs_text.HelpDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
+HelpText = lang.drs_text.HelpDict
 # define columns from log files
 RECIPECOL = 'RECIPE'
 STARTCOL = 'STARTED'
@@ -132,7 +132,7 @@ class LogObj:
 def get_log_files(params, recipe, path, nightname=None):
     # ----------------------------------------------------------------------
     # load night names
-    files = glob.glob(os.path.join(path, '*'))
+    files = np.sort(glob.glob(os.path.join(path, '*')))
     # ----------------------------------------------------------------------
     # log progress
     WLOG(params, 'info', 'Finding night directories for {0}'.format(path))
@@ -679,7 +679,7 @@ def _find_log_file(params, logfile):
     # get basename of logfile
     basename = os.path.basename(logfile)
     # walk through dirs
-    for root, dirs, files in os.walk(logdir):
+    for root, dirs, files in os.walk(logdir, followlinks=True):
         for filename in files:
             if basename == filename:
                 return True, os.path.join(root, filename)

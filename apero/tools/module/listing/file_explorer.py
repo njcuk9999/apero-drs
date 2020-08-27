@@ -840,7 +840,7 @@ class LoadData:
 
         else:
             # walk through all sub-directories
-            for root, dirs, files in os.walk(self.path):
+            for root, dirs, files in os.walk(self.path, followlinks=True):
                 # loop around files in current sub-directory
                 for filename in files:
                     # only save index files
@@ -851,6 +851,8 @@ class LoadData:
                         if os.path.exists(abspath):
                             # append to storage
                             self.index_files.append(abspath)
+            # sort index files
+            self.index_files = np.sort(self.index_files)
 
     def combine_files(self):
         # define storage

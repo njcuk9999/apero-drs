@@ -51,6 +51,21 @@ def gauss_function(x, a, x0, sigma, dc):
     return a * np.exp(-0.5 * ((x - x0) / sigma) ** 2) + dc
 
 
+def gauss_function_nodc(x, a, x0, sigma):
+    """
+    A standard 1D gaussian function (for fitting against) without a dc
+    parameter
+
+    :param x: numpy array (1D), the x data points
+    :param a: float, the amplitude
+    :param x0: float, the mean of the gaussian
+    :param sigma: float, the standard deviation (FWHM) of the gaussian
+
+    :return gauss: numpy array (1D), size = len(x), the output gaussian
+    """
+    return a * np.exp(-0.5 * ((x - x0) / sigma) ** 2)
+
+
 def gauss_beta_function(x, a, x0, sigma, dc, beta):
     """
     A 1D gaussian function with beta power (for fitting against)

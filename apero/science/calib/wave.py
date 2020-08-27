@@ -151,8 +151,13 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     # get pseudo constants
     pconst = constants.pload(params['INSTRUMENT'])
 
-    # deal with fibers that we don't have
-    usefiber = pconst.FIBER_WAVE_TYPES(fiber)
+    # deal with which fiber to use
+    if kwargs.get('forcefiber', False):
+        usefiber = str(fiber)
+    elif master:
+        usefiber = pconst.FIBER_WAVE_TYPES(fiber)
+    else:
+        usefiber = str(fiber)
     # ------------------------------------------------------------------------
     # get file definitions (wave solution FP and wave solution HC)
     out_wave_fp = core.get_file_definition('WAVE_FP', params['INSTRUMENT'],
@@ -337,6 +342,8 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     nbo = wavefile.read_header_key('KW_WAVE_NBO', dtype=int)
     deg = wavefile.read_header_key('KW_WAVE_DEG', dtype=int)
     # get the wfp keys
+    wfp_file = wavefile.read_header_key('KW_WFP_FILE', dtype=str,
+                                         required=False)
     wfp_drift = wavefile.read_header_key('KW_WFP_DRIFT', dtype=float,
                                          required=False)
     wfp_fwhm = wavefile.read_header_key('KW_WFP_FWHM', dtype=float,
@@ -369,6 +376,7 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     # store wave properties in parameter dictionary
     wprops = ParamDict()
     wprops['WAVEFILE'] = wavefile.filename
+    wprops['WAVEINIT'] = wavefile.filename
     wprops['WAVESOURCE'] = wavesource
     wprops['NBO'] = nbo
     if wavemap is not None:
@@ -381,9 +389,9 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     wprops['WAVEINST'] = wavefile.completecopy(wavefile)
     wprops['WAVETIME'] = wavetime
     # add the wfp keys
-    wfp_keys = ['WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
+    wfp_keys = ['WFP_FILE', 'WFP_DRIFT', 'WFP_FWHM', 'WFP_CONTRAST', 'WFP_MASK',
                 'WFP_LINES', 'WFP_TARG_RV', 'WFP_WIDTH', 'WFP_STEP']
-    wfp_values = [wfp_drift, wfp_fwhm, wfp_contrast, wfp_mask,
+    wfp_values = [wfp_file, wfp_drift, wfp_fwhm, wfp_contrast, wfp_mask,
                   wfp_lines, wfp_target_rv, wfp_width, wfp_step]
     # add keys accounting for 'None' and blanks
     for wfpi in range(len(wfp_keys)):
@@ -392,8 +400,8 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
         else:
             wprops[wfp_keys[wfpi]] = wfp_values[wfpi]
     # set the source
-    keys = ['WAVEMAP', 'WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG', 'COEFFS',
-            'WAVETIME', 'WAVEINST', 'NBPIX'] + wfp_keys
+    keys = ['WAVEMAP', 'WAVEFILE', 'WAVEINIT', 'WAVESOURCE', 'NBO', 'DEG',
+            'COEFFS', 'WAVETIME', 'WAVEINST', 'NBPIX'] + wfp_keys
     wprops.set_sources(keys, func_name)
 
     # -------------------------------------------------------------------------
@@ -414,14 +422,17 @@ def get_wavemap_from_coeffs(wave_coeffs, nbo, nbx):
     return wavemap
 
 
-def get_wavelines(params, recipe, header=None, infile=None, **kwargs):
+def get_wavelines(params, recipe, fiber, header=None, infile=None, **kwargs):
     # set up function name
     func_name = display_func(params, 'get_wavelines', __NAME__)
+    # get psuedo constants
+    pconst = constants.pload(params['INSTRUMENT'])
     # get parameters from params/kwargs
     hclinefile = kwargs.get('hclinefile', None)
     fplinefile = kwargs.get('fplinefile', None)
+    required = kwargs.get('required', True)
     # deal with fibers that we don't have
-    usefiber = 'AB'
+    usefiber = pconst.FIBER_WAVE_TYPES(fiber)
     # ------------------------------------------------------------------------
     # log progress
     WLOG(params, '', TextEntry('40-017-00040'))
@@ -472,7 +483,9 @@ def get_wavelines(params, recipe, header=None, infile=None, **kwargs):
         hcentries = drs_database.get_key_from_db(params, key_hc, cdb, header,
                                                  n_ent=1, required=False)
         # if there are still no wave entries use master wave file
-        if len(hcentries) == 0:
+        if len(hcentries) == 0 and not required:
+            return None, None, None, None
+        elif len(hcentries) == 0:
             # Raise error - no master hc lines found
             eargs = ['HC', 'cal_wave_master', func_name]
             WLOG(params, 'error', TextEntry('00-017-00010', args=eargs))
@@ -503,7 +516,9 @@ def get_wavelines(params, recipe, header=None, infile=None, **kwargs):
         fpentries = drs_database.get_key_from_db(params, key_fp, cdb, header,
                                                  n_ent=1, required=False)
         # if there are still no wave entries use master wave file
-        if len(fpentries) == 0:
+        if len(fpentries) == 0 and not required:
+            return None, None, None, None
+        elif len(fpentries) == 0:
             # Raise error - no master fp lines found
             eargs = ['FP', 'cal_wave_master', func_name]
             WLOG(params, 'error', TextEntry('00-017-00010', args=eargs))
@@ -538,7 +553,7 @@ def add_wave_keys(params, infile, props):
     infile.add_hkeys_2d('KW_WAVECOEFFS', values=props['COEFFS'],
                         dim1name='order', dim2name='coeffs')
     # add wave fp parameters
-    infile.add_hkey('KW_WFP_FILE', value=props['WAVEFILE'])
+    infile.add_hkey('KW_WFP_FILE', value=props['WFP_FILE'])
     infile.add_hkey('KW_WFP_DRIFT', value=props['WFP_DRIFT'])
     infile.add_hkey('KW_WFP_FWHM', value=props['WFP_FWHM'])
     infile.add_hkey('KW_WFP_CONTRAST', value=props['WFP_CONTRAST'])
@@ -717,7 +732,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
         else:
             # load the cavity polynomial from file
             _, fit_ll = drs_data.load_cavity_files(params)
-            cavity_length_poly = fit_ll[::-1]
+            cavity_length_poly = fit_ll
         # ------------------------------------------------------------------
         # range of the N FP peaks
         nth_peak = np.arange(fp_nlow, fp_nhigh)
@@ -727,7 +742,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
         wave0 = wave0 * np.nanmean(wavemap)
         # need a few iterations to invert polynomial relations
         for _ in range(fp_inv_itr):
-            wave0 = np.polyval(cavity_length_poly[::-1], wave0)
+            wave0 = np.polyval(cavity_length_poly, wave0)
             wave0 = wave0 * 2 / nth_peak
         # keep lines within the master_wavelength domain
         keep = (wave0 > np.min(wavemap)) & (wave0 < np.max(wavemap))
@@ -784,7 +799,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
         # length relative to the master night. By construction, this is
         # always an integer. The factor 2 comes from the FP equation.
         # It arrises from the back-and-forth within the FP cavity
-        cavfit = np.polyval(cavity_length_poly[::-1], list_waves)
+        cavfit = np.polyval(cavity_length_poly, list_waves)
         peak_number = np.array(cavfit * 2 / list_waves, dtype=int)
 
     # ----------------------------------------------------------------------
@@ -1097,6 +1112,7 @@ def hc_wavesol(params, recipe, iprops, e2dsfile, blaze, fiber, **kwargs):
     wprops['DEG'] = llprops['WAVE_FIT_DEGREE']
     wprops['NBPIX'] = llprops['NBPIX']
     # FP values (set to None for HC)
+    wprops['WFP_FILE'] = None
     wprops['WFP_DRIFT'] = None
     wprops['WFP_FWHM'] = None
     wprops['WFP_CONTRAST'] = None
@@ -1467,7 +1483,7 @@ def fp_wavesol_lovis(params, recipe, llprops, fpe2dsfile, hce2dsfile,
     llout = fit_wavemap_cav_iteratively(params, recipe,
                                         inwavemap=llprops['WAVE'],
                                         e2dsfile=fpe2dsfile,
-                                        cavity_poly=fit_ll_d[::-1])
+                                        cavity_poly=fit_ll_d)
     ll_out_2, ll_params_2, xmean2, xvar2 = llout[:4]
     xdetails2, lldetails2, scale2, totallines2 = llout[4:]
     # update llprops
@@ -2993,6 +3009,7 @@ def generate_resolution_map(params, recipe, llprops, e2dsfile, **kwargs):
                              guess=init_guess)
                 # do curve fit on point
                 try:
+                    # note if we change this must update map_param_names below
                     popt, pcov = mp.fit_gauss_with_slope(**fargs)
                 except Exception as e:
                     # log error: Resolution map curve_fit error
@@ -3028,10 +3045,13 @@ def generate_resolution_map(params, recipe, llprops, e2dsfile, **kwargs):
         map_lines.append(order_lines)
         map_params.append(order_params)
 
+    # set the names of each map parameter
+    map_param_names = ['Amp', 'Pos', 'Sig', 'DC', 'Slope']
     # push to llprops
     llprops['RES_MAP_DVS'] = map_dvs
     llprops['RES_MAP_LINES'] = map_lines
     llprops['RES_MAP_PARAMS'] = map_params
+    llprops['RES_MAP_PARAM_NAMES'] = map_param_names
     llprops['RES_MAP'] = resolution_map
     # set source
     keys = ['RES_MAP_DVS', 'RES_MAP_LINES', 'RES_MAP_PARAMS', 'RES_MAP']
@@ -3146,6 +3166,7 @@ def generate_res_files(params, llprops, outfile, **kwargs):
     map_dvs = np.array(llprops['RES_MAP_DVS'])
     map_lines = np.array(llprops['RES_MAP_LINES'])
     map_params = np.array(llprops['RES_MAP_PARAMS'])
+    map_param_names = llprops['RES_MAP_PARAM_NAMES']
     resolution_map = np.array(llprops['RES_MAP'])
     # get dimensions
     nbo, nbpix = llprops['NBO'], llprops['NBPIX']
@@ -3171,20 +3192,30 @@ def generate_res_files(params, llprops, outfile, **kwargs):
             start_order = order_num
             end_order = start_order + bin_order - 1
             # generate header keywordstores
+            kw_numorders = ['NORDS', '', 'Total number of orders']
             kw_startorder = ['ORDSTART', '', 'First order covered in res map']
             kw_endorder = ['ORDEND', '', 'Last order covered in res map']
+            kw_tot_regions = ['TREGIONS', '', 'Total number of regions']
             kw_region = ['REGION', '', 'Region along x-axis in res map']
             largs = [order_num, order_num + bin_order - 1, xpos]
             comment = 'Resolution: order={0}-{1} r={2}'
             kw_res = ['RESOL', '', comment.format(*largs)]
-            comment = 'Gaussian params: order={0}-{1} r={2}'
-            kw_params = ['GPARAMS', '', comment.format(*largs)]
             # add keys to headed
+            tmpfile.add_hkey(kw_numorders, value=nbo)
             tmpfile.add_hkey(kw_startorder, value=start_order)
             tmpfile.add_hkey(kw_endorder, value=end_order)
+            tmpfile.add_hkey(kw_tot_regions, value=len(x_range))
             tmpfile.add_hkey(kw_region, value=xpos)
             tmpfile.add_hkey(kw_res, value=resolution)
-            tmpfile.add_hkey_1d(kw_params, dim1name='coeff', values=gparams)
+            # loop aroound gaussian parameters
+            for g_it, gparam in enumerate(gparams):
+                # set up the gaussian parameter header comment
+                gcomm = 'Gaussian {3}: order={0}-{1} r={2} '
+                gargs = largs + [map_param_names[g_it]]
+                # set up the gaussian parameter header keystore
+                kw_params = ['GPARAM{0}'.format(g_it), '', gcomm.format(*gargs)]
+                # add gaussian parameter header key to hdict
+                tmpfile.add_hkey(kw_params, value=gparam)
             # append this hdict to hicts
             hdicts.append(tmpfile.hdict.to_fits_header())
             # push data into correct columns
@@ -4934,13 +4965,17 @@ def join_orders(llprops, start, end):
 # =============================================================================
 # Define fp aux functions
 # =============================================================================
-def fp_quality_control(params, fpprops, qc_params, **kwargs):
+def fp_quality_control(params, fpprops, qc_params, rvprops, **kwargs):
     func_name = __NAME__ + '.fp_quality_control()'
     # get parameters from params/kwargs
     rms_littrow_max = pcheck(params, 'WAVE_LITTROW_QC_RMS_MAX',
                              'rms_littrow_max', kwargs, func_name)
     dev_littrow_max = pcheck(params, 'WAVE_LITTROW_QC_DEV_MAX',
                              'dev_littrow_max', kwargs, func_name)
+    master_fiber = pcheck(params, 'WAVE_MASTER_FIBER', 'master_fiber', kwargs,
+                          func_name)
+    rv_thres = pcheck(params, 'WAVE_CCF_RV_THRES_QC', 'rv_thres', kwargs,
+                      func_name)
     # --------------------------------------------------------------
     # set passed variable and fail message list
     fail_msg = []
@@ -5015,6 +5050,31 @@ def fp_quality_control(params, fpprops, qc_params, **kwargs):
         qc_names.append('max or min littrow')
         qc_logic.append('max or min littrow > {0:.2f}'
                         ''.format(dev_littrow_max))
+    # --------------------------------------------------------------
+    # rv quality controls between fibers
+    # --------------------------------------------------------------
+    # get master RV [km/s] --> [m/s]
+    master_rv = rvprops[master_fiber]['MEAN_RV'] * 1000
+    # get the fiber types from a list parameter (or from inputs)
+    fiber_types = drs_image.get_fiber_types(params)
+    # loop around fibers
+    for fiber in fiber_types:
+        # do not compare master to master
+        if fiber == master_fiber:
+            continue
+        # get rv for this fiber [km/s] --> [m/s]
+        rvfiber = rvprops[fiber]['MEAN_RV'] * 1000
+        # deal with rv threshold
+        if np.abs(master_rv - rvfiber) > rv_thres:
+            qc_pass.append(0)
+        else:
+            qc_pass.append(1)
+        # add to qc header lists
+        qc_values.append(master_rv - rvfiber)
+        qc_names.append('RV[{0} - {1}]'.format(master_fiber, fiber))
+        qargs = [master_fiber, fiber, rv_thres]
+        qc_logic.append('abs(RV[{0} - {1}]) > {2} m/s'.format(*qargs))
+
     # --------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
     #     quality control QC = 0 if we fail quality control
@@ -5285,6 +5345,12 @@ def fp_write_wavesol_master(params, recipe, llprops, hcfile, fpfile, fiber,
                                                      fiber=fiber)
     # construct the filename from file instance
     wavefile.construct_filename(params, infile=hcfile)
+    # set some wave keys as "SELF" (i.e. from this wave solution)
+    wprops['WAVEFILE'] = wavefile.basename
+    wprops['WAVETIME'] = hcfile.get_key('KW_MID_OBS_TIME', dtype=float)
+    sargs = [recipe.name, params['DRS_VERSION']]
+    wprops['WAVESOURCE'] = '{0} [{1}]'.format(*sargs)
+    wprops['WFP_FILE'] = wavefile.basename
     # ------------------------------------------------------------------
     # copy keys from hcwavefile
     wavefile.copy_hdict(hcwavefile)
@@ -5446,6 +5512,60 @@ def fpm_write_linelist_table(params, recipe, llprops, hcfile, fiber):
 # =============================================================================
 # Define non-master fiber functions
 # =============================================================================
+def process_fibers(params, recipe, mprops, mfpl, mhcl, fp_outputs, hc_outputs):
+    # set function name
+    _ = display_func(params, 'process_fibers', __NAME__)
+    # get wave master file (controller fiber)
+    master_fiber = params['WAVE_MASTER_FIBER']
+    plot_order = params['WAVE_FIBER_COMP_PLOT_ORD']
+    # get the fiber types from a list parameter (or from inputs)
+    fiber_types = drs_image.get_fiber_types(params)
+    # set dcavity to None initially
+    dcavity = None
+    # storage for coeffients
+    solutions = dict()
+    # loop around fibers
+    for fiber in fiber_types:
+        wavemap = mprops['WAVEMAP']
+        wavefile = mprops['WAVEFILE']
+        # get the e2ds_files for this fiber
+        hc_e2ds_file = hc_outputs[fiber]
+        fp_e2ds_file = fp_outputs[fiber]
+        # ==================================================================
+        # RUN THE NIGHTLY WAVE SOLUTION ON FIBER
+        # ==================================================================
+        # Note we do this to force consistency between night wave solutions
+        #   the wave solution is basically regenerated based on the hc
+        #   and fp lines (and dcavity is recomputed using both HC and FP)
+        wargs = [hc_e2ds_file, fp_e2ds_file, mhcl, mfpl, wavemap, wavefile,
+                 master_fiber, dcavity]
+
+        nprops = night_wavesolution(params, recipe, *wargs)
+
+        # if this is the master fiber - update hclines, fplines and dcavity
+        if fiber == master_fiber:
+            # get the hc and fp lines
+            mhcl, mfpl = nprops['HCLINES'], nprops['FPLINES']
+            # update dcavity
+            dcavity = nprops['DCAVITY']
+            # update mprops
+            mprops = nprops
+        # storage
+        solutions[fiber] = nprops
+    # ----------------------------------------------------------------------
+    # plot comparison between master fiber and fibers
+    # ----------------------------------------------------------------------
+    recipe.plot('WAVE_FIBER_COMPARISON', solutions=solutions, master=mprops,
+                order=None, masterfiber=master_fiber)
+    recipe.plot('WAVE_FIBER_COMP', solutions=solutions, master=mprops,
+                order=plot_order, masterfiber=master_fiber)
+    recipe.plot('SUM_WAVE_FIBER_COMP', solutions=solutions, master=mprops,
+                order=plot_order, masterfiber=master_fiber)
+    # ----------------------------------------------------------------------
+    # return all the solutions for all fibers
+    return solutions
+
+
 def process_other_fibers(params, recipe, mprops, mfpl, fp_outputs):
     # set function name
     func_name = display_func(params, 'process_other_fibers', __NAME__)
@@ -5563,11 +5683,105 @@ def process_other_fibers(params, recipe, mprops, mfpl, fp_outputs):
     return solutions
 
 
+def update_smart_fp_mask(params, **kwargs):
+    # set function name
+    func_name = display_func(params, 'update_smart_fp_mask', __NAME__)
+    # get constants from params
+    update_mask = pcheck(params, 'WAVE_CCF_UPDATE_MASK', 'update_mask', kwargs,
+                         func_name)
+    ccfpath = pcheck(params, 'WAVE_CCF_MASK_PATH', 'ccfpath', kwargs, func_name)
+    ccfmask = pcheck(params, 'WAVE_CCF_MASK', 'ccfmask', kwargs, func_name)
+    dvwidth = pcheck(params, 'WAVE_CCF_SMART_MASK_WIDTH', 'dvwidth',
+                        kwargs, func_name)
+    mask_units = pcheck(params, 'WAVE_CCF_MASK_UNITS', 'mask_units', kwargs,
+                        func_name)
+    minlambda = pcheck(params, 'WAVE_CCF_SMART_MASK_MINLAM', 'minlambda',
+                       kwargs, func_name)
+    maxlambda = pcheck(params, 'WAVE_CCF_SMART_MASK_MAXLAM', 'maxlambda',
+                       kwargs, func_name)
+    nmin = pcheck(params, 'WAVE_CCF_SMART_MASK_TRIAL_NMIN', 'nmin', kwargs,
+                  func_name)
+    nmax = pcheck(params, 'WAVE_CCF_SMART_MASK_TRIAL_NMAX', 'nmax', kwargs,
+                  func_name)
+    threshold = pcheck(params, 'WAVE_CCF_SMART_MASK_DWAVE_THRES', 'threshold',
+                       kwargs, func_name)
+    # if we don't want to update the mask then don't
+    if not update_mask:
+        return
+    # ----------------------------------------------------------------------
+    # construct output filename
+    outfile = drs_data.construct_path(params, ccfmask, ccfpath, func=func_name)
+    # load current cavity files
+    fit_1m_d, fit_ll_d = drs_data.load_cavity_files(params, required=False)
+    # ----------------------------------------------------------------------
+    # start with a broader range of FP N values and clip later on
+    n_fp_fpeak = np.arange(nmin, nmax)
+
+    # placeholder for wavelength, needs to be iterated-on with
+    #    the cavity length polynomial
+    # the starting wavelength is the midpoint between the extremities of
+    #    the domain
+    wave_fp_peak = np.repeat(np.mean([minlambda, maxlambda]), len(n_fp_fpeak))
+    # ----------------------------------------------------------------------
+    # we perform the following loop
+    #
+    # Take the wavelength and derive a cavity length
+    # Take the Nth peak and derive a line wavelength from the
+    # cavity length
+    # Take the new wavelength and dereive a new cavity length
+    # Find an update wavelength for the Nth peak
+    #  .... converge down to a 'threshold' error in wavelength
+
+    dwave = np.inf
+    while abs(dwave) > threshold:
+        # keep track of the central line to check convergence
+        prev = wave_fp_peak[len(wave_fp_peak) // 2]
+        # derive a new wavelength for each fp peak
+        wave_fp_peak = np.polyval(fit_ll_d, wave_fp_peak) * 2 / n_fp_fpeak
+        # check convergnce
+        dwave = prev - wave_fp_peak[len(wave_fp_peak) // 2]
+    # ----------------------------------------------------------------------
+    # keep lines within the domain
+    keep = (wave_fp_peak > minlambda) & (wave_fp_peak < maxlambda)
+    # ----------------------------------------------------------------------
+    # apply keep mask to wavelength solution and n peak
+    wave_fp_peak = wave_fp_peak[keep]
+    # ----------------------------------------------------------------------
+    # get unit object from mask units string
+    try:
+        unit = getattr(uu, mask_units)
+    except Exception as e:
+        # log error
+        eargs = [mask_units, type(e), e, func_name]
+        WLOG(params, 'error', TextEntry('09-020-00002', args=eargs))
+        return
+    # add units
+    wave_fp_peak = wave_fp_peak * unit
+    # convert to nanometers
+    wave_fp_peak = wave_fp_peak.to(uu.nm).value
+    # ----------------------------------------------------------------------
+    # calculate wavelength bounds of line
+    wavelower = wave_fp_peak * (1 - 0.5 * dvwidth / speed_of_light)
+    waveupper = wave_fp_peak * (1 + 0.5 * dvwidth / speed_of_light)
+    weights = np.repeat(1.0, len(wavelower))
+    # ----------------------------------------------------------------------
+    # Create table to store them in
+    # ----------------------------------------------------------------------
+    columnnames = ['WLOW', 'WHIGH', 'WEIGHT']
+    columnvalues = [wavelower, waveupper, weights]
+    # make table
+    table = drs_table.make_table(params, columnnames, columnvalues)
+    # print that we are saving smart fp header
+    WLOG(params, '', TextEntry('40-017-00053', args=outfile))
+    # write smart mask table to file
+    drs_table.write_table(params, table, outfile, fmt='ascii.fast_no_header')
+
+
 # =============================================================================
 # Define night functions
 # =============================================================================
-def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
-                       fiber, indcavity=None, **kwargs):
+def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, mwave,
+                       wavefile, fiber, indcavity=None, **kwargs):
     # set function name
     func_name = display_func(params, 'night_wavesolution', __NAME__)
     # ----------------------------------------------------------------------
@@ -5598,8 +5812,6 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
         # no need to iterate on d_cavity
         niterations2 = 1
     # ----------------------------------------------------------------------
-    # get the master wavelength solution
-    mwave = wprops['WAVEMAP']
     # get image shape
     nbo, nbpix = mwave.shape
     # ----------------------------------------------------------------------
@@ -5779,16 +5991,19 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, wprops,
     # add data
     nprops['COEFFS'] = night_coeffs
     nprops['WAVEMAP'] = night_wave
-    nprops['WAVEFILE'] = wprops['WAVEFILE']
-    nprops['WAVETIME'] = wprops['WAVETIME']
+    nprops['WAVEFILE'] = wavefile
+    nprops['WAVETIME'] = hce2ds.get_key('KW_MID_OBS_TIME', dtype=float)
     nprops['WAVESOURCE'] = recipe.name
+    nprops['WAVEINIT'] = wavefile
     nprops['NBO'] = night_coeffs.shape[0]
     nprops['DEG'] = night_coeffs.shape[1] - 1
+    nprops['NBPIX'] = night_wave.shape[1]
     nprops['HCLINES'] = rhcl
     nprops['FPLINES'] = rfpl
+
     # set sources
     keys = ['COEFFS', 'WAVEMAP', 'WAVEFILE', 'WAVESOURCE', 'NBO', 'DEG',
-            'HCLINES', 'FPLINES']
+            'HCLINES', 'FPLINES', 'WAVETIME', 'WAVEINIT', 'NBPIX']
     nprops.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # add constants
@@ -5875,10 +6090,16 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
                                                        fiber=fiber)
     # construct the filename from file instance
     wavefile.construct_filename(params, infile=hcfile)
+    # set some wave keys as "SELF" (i.e. from this wave solution)
+    nprops['WAVEFILE'] = wavefile.basename
+    nprops['WAVETIME'] = hcfile.get_key('KW_MID_OBS_TIME', dtype=float)
+    sargs = [recipe.name, params['DRS_VERSION']]
+    nprops['WAVESOURCE'] = '{0} [{1}]'.format(*sargs)
+    nprops['WFP_FILE'] = wavefile.basename
     # ----------------------------------------------------------------------
     # define header keys for output file
     # copy keys from input file
-    wavefile.copy_original_keys(hcfile)
+    wavefile.copy_original_keys(hcfile, exclude_groups='wave')
     # ----------------------------------------------------------------------
     # copy in wave file keys
     wavefile.copy_original_keys(inwavefile, group='wave')
@@ -5911,6 +6132,8 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
     # ----------------------------------------------------------------------
     # add the order num, fit degree and fit coefficients
     wavefile = add_wave_keys(params, wavefile, nprops)
+    # add wave init
+    wavefile.add_hkey('KW_INIT_WAVE', value=nprops['WAVEINIT'])
     # ----------------------------------------------------------------------
     # add qc parameters
     wavefile.add_qckeys(qc_params)
@@ -5950,17 +6173,27 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
     # ------------------------------------------------------------------
     # write fp lines
     # ------------------------------------------------------------------
+    write_fplines(params, recipe, nprops['FPLINES'], fpfile, wavefile, fiber)
+    # ----------------------------------------------------------------------
+    # return hc wavefile
+    return wavefile, nprops
+
+
+def write_fplines(params, recipe, rfpl, infile, hfile, fiber, kind=None):
+    # deal with no kind set
+    if kind is None:
+        kind = 'WAVE_FPLIST'
     # get copy of instance of wave file (WAVE_HCMAP)
-    fplfile = recipe.outputs['WAVE_FPLIST'].newcopy(recipe=recipe, fiber=fiber)
+    fplfile = recipe.outputs[kind].newcopy(recipe=recipe, fiber=fiber)
     # construct the filename from file instance
-    fplfile.construct_filename(params, infile=fpfile)
+    fplfile.construct_filename(params, infile=infile)
     # ------------------------------------------------------------------
-    # copy keys from hcwavefile
-    fplfile.copy_hdict(wavefile)
+    # copy keys from hfile
+    fplfile.copy_hdict(hfile)
     # set output key
-    fplfile.add_hkey('KW_OUTPUT', value=fplfile.name)
+    fplfile.add_hkey('KW_OUTPUT', value=infile.name)
     # set data
-    fplfile.data = nprops['FPLINES']
+    fplfile.data = rfpl
     fplfile.datatype = 'table'
     # ------------------------------------------------------------------
     # log that we are saving rotated image
@@ -5970,9 +6203,6 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
     fplfile.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(fplfile)
-    # ----------------------------------------------------------------------
-    # return hc wavefile
-    return wavefile
 
 
 # =============================================================================
@@ -5990,7 +6220,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     input_filename = extract_file.get_key('INF1000')
     input_file = extract_file.intype
     # ----------------------------------------------------------------------
-    # make a new copy of infile
+    # make a new copy of infileexclude_group
     infile = input_file.newcopy(recipe=extrecipe)
     infile.set_filename(input_filename)
     # ----------------------------------------------------------------------
@@ -6100,6 +6330,9 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     s1dv_file.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(s1dv_file)
+
+    # return e2dsff file
+    return e2dsff_file
 
 
 # =============================================================================

@@ -109,7 +109,7 @@ def __main__(recipe, params):
     # combine input images if required
     elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        infiles = [drs_fits.combine(params, infiles, math='median')]
+        infiles = [drs_fits.combine(params, recipe, infiles, math='median')]
         combine = True
     else:
         combine = False
@@ -281,7 +281,8 @@ def __main__(recipe, params):
         rv_props1['RV_OBJ'] = rv_obj
         rv_props1['RV_CORR'] = rv_corrected
         # set sources
-        keys = ['RV_WAVE_FP', 'RV_SIMU_FP', 'RV_DRIFT', 'RV_OBJ', 'RV_CORR']
+        keys = ['RV_WAVEFILE', 'RV_WAVETIME', 'RV_WAVESRCE', 'RV_TIMEDIFF',
+                'RV_WAVE_FP', 'RV_SIMU_FP', 'RV_DRIFT', 'RV_OBJ', 'RV_CORR']
         rv_props1.set_sources(keys, mainname)
         # add the fp fiber properties
         if has_fp:

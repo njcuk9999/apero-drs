@@ -112,12 +112,15 @@ def __main__(recipe, params):
     # combine input images if required
     elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        infiles = [drs_fits.combine(params, infiles, math='median')]
+        infiles = [drs_fits.combine(params, recipe, infiles, math='median')]
         combine = True
     else:
         combine = False
     # get the number of infiles
     num_files = len(infiles)
+
+    # get quick look mode
+    quicklook = params['EXT_QUICK_LOOK']
 
     # ----------------------------------------------------------------------
     # Loop around input files
@@ -133,6 +136,7 @@ def __main__(recipe, params):
         core.file_processing_update(params, it, num_files)
         # ge this iterations file
         infile = infiles[it]
+
         # ------------------------------------------------------------------
         # deal with skipping files defined by inputs OBJNAME and DPRTYPE
         skip, skip_conditions = general.check_files(params, infile)
@@ -144,7 +148,7 @@ def __main__(recipe, params):
                 wargs = skip_conditions[2]
                 WLOG(params, 'warning', TextEntry('10-016-00013', args=wargs))
             # write log here
-            log1.writelog()
+            log1.write_logfile(params)
             # skip this file
             continue
         # ------------------------------------------------------------------
@@ -184,7 +188,11 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Calculate Barycentric correction
         # ------------------------------------------------------------------
-        bprops = extract.get_berv(params, infile, header, props)
+        if not quicklook:
+            bprops = extract.get_berv(params, infile, header, props)
+        else:
+            bprops = None
+
         # storage for return
         e2dsoutputs = dict()
         # ------------------------------------------------------------------
@@ -230,19 +238,25 @@ def __main__(recipe, params):
             eprops = extract.extract2d(params, image2, orderp, lcoeffs2, nframes,
                                        props, inflat=flat, inblaze=blaze,
                                        fiber=fiber)
+
             # --------------------------------------------------------------
             # thermal correction of spectrum
-            eprops = extract.thermal_correction(params, recipe, header, props,
-                                                eprops, fiber=fiber)
+            if not quicklook:
+                eprops = extract.thermal_correction(params, recipe, header,
+                                                    props, eprops, fiber=fiber)
             # --------------------------------------------------------------
-            s1dextfile = params['EXT_S1D_INTYPE']
-            # create 1d spectra (s1d) of the e2ds file
-            sargs = [wprops['WAVEMAP'], eprops[s1dextfile], eprops['BLAZE']]
-            swprops = extract.e2ds_to_s1d(params, recipe, *sargs, wgrid='wave',
-                                          fiber=fiber, kind=s1dextfile)
-            svprops = extract.e2ds_to_s1d(params, recipe, *sargs,
-                                          wgrid='velocity', fiber=fiber,
-                                          kind=s1dextfile)
+            if not quicklook:
+                s1dextfile = params['EXT_S1D_INTYPE']
+                # create 1d spectra (s1d) of the e2ds file
+                sargs = [wprops['WAVEMAP'], eprops[s1dextfile], eprops['BLAZE']]
+                swprops = extract.e2ds_to_s1d(params, recipe, *sargs,
+                                              wgrid='wave', fiber=fiber,
+                                              kind=s1dextfile)
+                svprops = extract.e2ds_to_s1d(params, recipe, *sargs,
+                                              wgrid='velocity', fiber=fiber,
+                                              kind=s1dextfile)
+            else:
+                swprops, svprops = None,  None
 
             # --------------------------------------------------------------
             # Plots
@@ -265,8 +279,9 @@ def __main__(recipe, params):
             recipe.plot('EXTRACT_SPECTRAL_ORDER2', order=sorder, eprops=eprops,
                         wave=wprops['WAVEMAP'], fiber=fiber)
             # plot the s1d plot
-            recipe.plot('EXTRACT_S1D', params=params, props=svprops,
-                        fiber=fiber, kind='E2DSFF')
+            if not quicklook:
+                recipe.plot('EXTRACT_S1D', params=params, props=svprops,
+                            fiber=fiber, kind='E2DSFF')
             # --------------------------------------------------------------
             # Quality control
             # --------------------------------------------------------------
@@ -277,52 +292,75 @@ def __main__(recipe, params):
             # --------------------------------------------------------------
             # write files
             # --------------------------------------------------------------
-            fargs = [infile, rawfiles, combine, fiber, orderpfile, props,
-                     lprops, wprops, eprops, bprops, swprops, svprops,
-                     shapelocalfile, shapexfile, shapeyfile, shapelocal,
-                     flat_file, blaze_file, qc_params]
-            outfiles = extract.write_extraction_files(params, recipe, *fargs)
-            e2dsfile, e2dsfffile = outfiles
+            if quicklook:
+                fargs = [params, recipe, infile, rawfiles, combine, fiber,
+                         orderpfile, props, lprops, eprops, shapelocalfile,
+                         shapexfile, shapeyfile, shapelocal, flat_file,
+                         blaze_file, qc_params]
+                outfiles = extract.write_extraction_files_ql(*fargs)
+                e2dsfile, e2dsfffile = outfiles
+            else:
+                fargs = [params, recipe, infile, rawfiles, combine, fiber,
+                         orderpfile, props, lprops, wprops, eprops, bprops,
+                         swprops, svprops, shapelocalfile, shapexfile,
+                         shapeyfile, shapelocal, flat_file, blaze_file,
+                         qc_params]
+                outfiles = extract.write_extraction_files(*fargs)
+                e2dsfile, e2dsfffile = outfiles
+
+            # --------------------------------------------------------------
+            # create fplines file for required fibers
+            # --------------------------------------------------------------
+            if not quicklook:
+                rargs = [e2dsfile, wprops['WAVEMAP'], fiber]
+                rfpl = extract.ref_fplines(params, recipe, *rargs)
+                # write rfpl file
+                if rfpl is not None:
+                    rargs = [rfpl, e2dsfile, e2dsfile, fiber, 'EXT_FPLINES']
+                    wave.write_fplines(params, recipe, *rargs)
 
             # --------------------------------------------------------------
             # add files to outputs
             # --------------------------------------------------------------
-            ekeys = ['E2DS', 'E2DSFF']
-            efiles = [e2dsfile, e2dsfffile]
-            # loop around keys to add
-            for key, efile in zip(ekeys, efiles):
-                # construct output key
-                outkey = '{0}_{1}'.format(key, fiber)
-                # copy file to dictionary
-                e2dsoutputs[outkey] = efile.completecopy(efile)
+            if not quicklook:
+                ekeys = ['E2DS', 'E2DSFF']
+                efiles = [e2dsfile, e2dsfffile]
+                # loop around keys to add
+                for key, efile in zip(ekeys, efiles):
+                    # construct output key
+                    outkey = '{0}_{1}'.format(key, fiber)
+                    # copy file to dictionary
+                    e2dsoutputs[outkey] = efile.completecopy(efile)
             # ------------------------------------------------------------------
             # Summary plots
             # ------------------------------------------------------------------
-            sorder = params['EXTRACT_PLOT_ORDER']
-            # plot (in a loop) order fit + e2ds (on original image)
-            recipe.plot('SUM_FLAT_ORDER_FIT_EDGES', params=params, image1=image,
-                        image2=image2, order=sorder, coeffs1=lcoeffs,
-                        coeffs2=lcoeffs2, fiber=fiber)
-            # plot for sorder the fitted blaze and calculated flat with the
-            #     e2ds image
-            recipe.plot('SUM_EXTRACT_SP_ORDER', order=sorder,
-                        wave=wprops['WAVEMAP'], eprops=eprops, fiber=fiber)
-            # plot the s1d plot
-            recipe.plot('SUM_EXTRACT_S1D', params=params, props=svprops,
-                        fiber=fiber)
+            if not quicklook:
+                sorder = params['EXTRACT_PLOT_ORDER']
+                # plot (in a loop) order fit + e2ds (on original image)
+                recipe.plot('SUM_FLAT_ORDER_FIT_EDGES', params=params,
+                            image1=image, image2=image2, order=sorder,
+                            coeffs1=lcoeffs, coeffs2=lcoeffs2, fiber=fiber)
+                # plot for sorder the fitted blaze and calculated flat with the
+                #     e2ds image
+                recipe.plot('SUM_EXTRACT_SP_ORDER', order=sorder,
+                            wave=wprops['WAVEMAP'], eprops=eprops, fiber=fiber)
+                # plot the s1d plot
+                recipe.plot('SUM_EXTRACT_S1D', params=params, props=svprops,
+                            fiber=fiber)
             # ------------------------------------------------------------------
             # Construct summary document
             # ------------------------------------------------------------------
-            extract.extract_summary(recipe, params, qc_params, e2dsfile,
-                                    shapelocal, eprops, fiber)
+            if not quicklook:
+                extract.extract_summary(recipe, params, qc_params, e2dsfile,
+                                        shapelocal, eprops, fiber)
             # ------------------------------------------------------------------
             # update recipe log file
             # ------------------------------------------------------------------
             log2.end(params)
 
         # construct summary (outside fiber loop)
-        recipe.plot.summary_document(it)
-
+        if not quicklook:
+            recipe.plot.summary_document(it)
 
     # ----------------------------------------------------------------------
     # End of main code

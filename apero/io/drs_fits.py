@@ -25,7 +25,7 @@ from apero import lang
 from apero.io import drs_table
 from apero.io import drs_lock
 from apero.io import drs_path
-
+from apero.io import drs_text
 
 # =============================================================================
 # Define variables
@@ -116,6 +116,10 @@ class Header(fits.Header):
     def __nan_check(value):
         if isinstance(value, float) and np.isnan(value):
             return 'NaN'
+        elif isinstance(value, float) and np.isposinf(value):
+            return 'INF'
+        elif isinstance(value, float) and np.isneginf(value):
+            return '-INF'
         elif type(value) == tuple:
             return (Header.__nan_check(value[0]),) + value[1:]
         else:
@@ -177,7 +181,15 @@ def id_drs_file(params, recipe, drs_file_sets, filename=None, nentries=None,
             # --------------------------------------------------------------
             # load the header for this kind
             try:
+                # need to read the file header for this specific drs file
                 file_in.read_header(log=False)
+                # copy in hdict from file_set
+                # - this is the only way to get keys added from file that is
+                #   read above
+                if file_set.hdict is not None:
+                    for key in file_set.hdict:
+                        file_in.header[key] = file_set.hdict[key]
+
             # if exception occurs continue to next file
             #    (this is not the correct file)
             except Exception as _:
@@ -243,7 +255,7 @@ def id_drs_file(params, recipe, drs_file_sets, filename=None, nentries=None,
 # Define read functions
 # =============================================================================
 def readfits(params, filename, getdata=True, gethdr=False, fmt='fits-image',
-             ext=0, func=None, log=True):
+             ext=0, func=None, log=True, copy=False):
     """
     The drs fits file read function
 
@@ -303,6 +315,11 @@ def readfits(params, filename, getdata=True, gethdr=False, fmt='fits-image',
         WLOG(params, 'error', TextEntry('00-008-00019', args=eargs))
         data, header = None, None
     # -------------------------------------------------------------------------
+    # deal with copying
+    if copy:
+        data = np.array(data)
+        header = fits.Header(header)
+    # -------------------------------------------------------------------------
     # deal with return
     if getdata and gethdr:
         return data, header
@@ -330,7 +347,7 @@ def read_header(params, filename, ext=0, log=True):
     return header
 
 
-def _read_fitsmulti(params, filename, getdata, gethdr):
+def _read_fitsmulti(params, filename, getdata, gethdr, log=True):
     func_name = __NAME__ + '._read_fitsmulti()'
     # attempt to open hdu of fits file
     try:
@@ -358,8 +375,12 @@ def _read_fitsmulti(params, filename, getdata, gethdr):
             try:
                 headerarr.append(hdulist[it].header)
             except Exception as e:
-                eargs = [os.path.basename(filename), it, type(e), e, func_name]
-                WLOG(params, 'error', TextEntry('01-001-00008', args=eargs))
+                if log:
+                    eargs = [os.path.basename(filename), it, type(e), e,
+                             func_name]
+                    WLOG(params, 'error', TextEntry('01-001-00008', args=eargs))
+                else:
+                    raise e
             # append data
             try:
                 if isinstance(hdulist[it].data, fits.BinTableHDU):
@@ -367,8 +388,12 @@ def _read_fitsmulti(params, filename, getdata, gethdr):
                 else:
                     dataarr.append(hdulist[it].data)
             except Exception as e:
-                eargs = [os.path.basename(filename), it, type(e), e, func_name]
-                WLOG(params, 'error', TextEntry('01-001-00007', args=eargs))
+                if log:
+                    eargs = [os.path.basename(filename), it, type(e), e,
+                             func_name]
+                    WLOG(params, 'error', TextEntry('01-001-00007', args=eargs))
+                else:
+                    raise e
         data = list(dataarr)
         header = list(headerarr)
     # -------------------------------------------------------------------------
@@ -666,12 +691,12 @@ def find_files(params, recipe, kind=None, path=None, logic='and', fiber=None,
         index_files = [mpath]
     elif kind == 'tmp':
         path = params['DRS_DATA_WORKING']
-        columns = pconst.RAW_OUTPUT_KEYS()
+        columns = pconst.OUTPUT_FILE_HEADER_KEYS()
         index_files = None
         index_dir = None
     elif kind == 'red':
         path = params['DRS_DATA_REDUC']
-        columns = pconst.REDUC_OUTPUT_KEYS()
+        columns = pconst.OUTPUT_FILE_HEADER_KEYS()
         index_files = None
         index_dir = None
     else:
@@ -832,7 +857,7 @@ def get_index_files(params, path=None, required=True, night=None):
     # storage of index files
     index_files = []
     # walk through path and find index files
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(path, followlinks=True):
         # skip nights if required
         if night is not None:
             if not root.strip(os.sep).endswith(night):
@@ -847,7 +872,7 @@ def get_index_files(params, path=None, required=True, night=None):
         eargs = [path, func_name]
         WLOG(params, 'error', TextEntry('01-001-00021', args=eargs))
     # return the index files
-    return index_files
+    return np.sort(index_files)
 
 
 def find_raw_files(params, recipe, **kwargs):
@@ -895,7 +920,8 @@ def find_raw_files(params, recipe, **kwargs):
     return mastertable, rpath
 
 
-def fix_header(params, recipe, infile=None, header=None, **kwargs):
+def fix_header(params, recipe, infile=None, header=None,
+               raise_exception=False, **kwargs):
     """
     Instrument specific header fixes are define in pseudo_const.py for an
     instrument and called here (function in pseudo_const.py is HEADER_FIXES)
@@ -906,31 +932,45 @@ def fix_header(params, recipe, infile=None, header=None, **kwargs):
     # deal with no header
     if header is None:
         header = infile.header
+        hdict = infile.hdict
+        filename = infile.filename
         has_infile = True
     else:
         has_infile = False
+        hdict = Header()
+        filename = None
 
     # load pseudo constants
     pconst = constants.pload(params['INSTRUMENT'])
     # use pseudo constant to apply any header fixes required (specific to
     #   a specific instrument) and update the header
-    header = pconst.HEADER_FIXES(params=params, recipe=recipe, header=header,
-                                 **kwargs)
+    try:
+        header, hdict = pconst.HEADER_FIXES(params=params, recipe=recipe,
+                                            header=header, hdict=hdict,
+                                            filename=filename,
+                                            **kwargs)
+    except lang.drs_exceptions.DrsHeaderError as e:
+        if raise_exception:
+            raise e
+        else:
+            eargs = [e.key, e.filename]
+            WLOG(params, 'error', TextEntry('01-001-00027', args=eargs))
     # if the input was an infile return the infile back
     if has_infile:
         # return the updated infile
         infile.header = header
+        infile.hdict = hdict
         return infile
     # else return the header (assuming input was a header only)
     else:
         # else return the header
-        return header
+        return header, hdict
 
 
 # =============================================================================
 # Define other functions
 # =============================================================================
-def combine(params, infiles, math='average', same_type=True):
+def combine(params, recipe, infiles, math='average', same_type=True):
     """
     Takes a list of infiles and combines them (infiles must be DrsFitsFiles)
     combines using the math given.
@@ -979,10 +1019,29 @@ def combine(params, infiles, math='average', same_type=True):
             if infile.name != infiles[0].name:
                 eargs = [infiles[0].name, it, infile.name, func_name]
                 WLOG(params, 'error', TextEntry('00-001-00021', args=eargs))
+
+    # get output path from params
+    outpath = str(params['OUTPATH'])
+    # check if outpath is set
+    if outpath is None:
+        WLOG(params, 'error', TextEntry('01-001-00023', args=[func_name]))
+        return None
+    # get the absolute path (for combined output)
+    if params['NIGHTNAME'] is None:
+        outdirectory = ''
+    else:
+        outdirectory = params['NIGHTNAME']
+    # combine outpath and out directory
+    abspath = os.path.join(outpath, outdirectory)
     # make new infile using math
-    outfile = infiles[0].combine(infiles[1:], math, same_type)
+    outfile = infiles[0].combine(infiles[1:], math, same_type, path=abspath)
     # update the number of files
     outfile.numfiles = len(infiles)
+    # write to disk
+    WLOG(params, '', TextEntry('40-001-00025', args=[outfile.filename]))
+    outfile.write_file()
+    # add to output files (for indexing)
+    recipe.add_output_file(outfile)
     # return combined infile
     return outfile
 
@@ -1139,12 +1198,13 @@ def _get_files(params, recipe, path, rpath, **kwargs):
     pconst = constants.pload(params['INSTRUMENT'])
     # ----------------------------------------------------------------------
     # get header keys
-    headerkeys = pconst.RAW_OUTPUT_KEYS()
+    headerkeys = pconst.OUTPUT_FILE_HEADER_KEYS()
     # get raw valid files
     raw_valid = pconst.VALID_RAW_FILES()
     # ----------------------------------------------------------------------
     # storage list
     filelist, basenames, nightnames, mod_times = [], [], [], []
+    blist = []
     # load raw index
     rawindexfile = os.path.join(params['DRS_DATA_RUN'], raw_index_file)
     if os.path.exists(rawindexfile):
@@ -1157,8 +1217,18 @@ def _get_files(params, recipe, path, rpath, **kwargs):
     for key in headerkeys:
         kwargs[key] = []
     # ----------------------------------------------------------------------
+    # deal with white/black list for nights
+    wnightnames = None
+    if 'WNIGHTNAMES' in params:
+        if not drs_text.null_text(params['WNIGHTNAMES'], ['None', 'All', '']):
+            wnightnames = params.listp('WNIGHTNAMES', dtype=str)
+    bnightnames = None
+    if 'BNIGHTNAMES' in params:
+        if not drs_text.null_text(params['BNIGHTNAMES'], ['None', 'All', '']):
+            bnightnames = params.listp('BNIGHTNAMES', dtype=str)
+    # ----------------------------------------------------------------------
     # get files (walk through path)
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(path, followlinks=True):
         # loop around files in this root directory
         for filename in files:
             # --------------------------------------------------------------
@@ -1182,9 +1252,33 @@ def _get_files(params, recipe, path, rpath, **kwargs):
             if len(ucpath) == 0:
                 continue
             # --------------------------------------------------------------
+            # deal with blacklist/whitelist
+            if not drs_text.null_text(bnightnames, ['None', 'All', '']):
+                if ucpath in bnightnames:
+                    # only print path if not already in blist
+                    if ucpath not in blist:
+                        # log blacklisted
+                        margs = [ucpath]
+                        WLOG(params, '', TextEntry('40-503-00031', args=margs))
+                        # add to blist for printouts
+                        blist.append(ucpath)
+                    # skip this night
+                    continue
+            if not drs_text.null_text(wnightnames, ['None', 'All', '']):
+                if ucpath not in wnightnames:
+                    # skip this night
+                    continue
+                # elif we haven't seen this night before log statement
+                elif ucpath not in nightnames:
+                    # log: whitelisted
+                    margs = [ucpath]
+                    WLOG(params, '', TextEntry('40-503-00030', args=margs))
+            # --------------------------------------------------------------
             # log the night directory
-            if ucpath not in nightnames:
-                WLOG(params, '', TextEntry('40-503-00003', args=[ucpath]))
+            if (ucpath not in nightnames) and (ucpath != rpath):
+                # log: scnannming directory
+                margs = [ucpath]
+                WLOG(params, '', TextEntry('40-503-00003', args=margs))
             # --------------------------------------------------------------
             # get absolute path
             abspath = os.path.join(root, filename)
@@ -1226,7 +1320,22 @@ def _get_files(params, recipe, path, rpath, **kwargs):
                 # read the header
                 header = read_header(params, abspath)
                 # fix the headers
-                header = fix_header(params, recipe, header=header)
+                try:
+                    header, _ = fix_header(params, recipe, header=header,
+                                           raise_exception=True)
+                except lang.drs_exceptions.DrsHeaderError as e:
+                    # log warning message
+                    eargs = [e.key, abspath]
+                    emsg = TextEntry('10-001-00008', args=eargs)
+                    WLOG(params, 'warning', emsg)
+                    # remove from lists
+                    nightnames.pop()
+                    filelist.pop()
+                    basenames.pop()
+                    mod_times.pop()
+                    # continue to next file
+                    continue
+
                 # loop around header keys
                 for key in headerkeys:
                     rkey = params[key][0]
@@ -1234,6 +1343,16 @@ def _get_files(params, recipe, path, rpath, **kwargs):
                         kwargs[key].append(header[rkey])
                     else:
                         kwargs[key].append('')
+    # ----------------------------------------------------------------------
+    # sort by filename
+    sortmask = np.argsort(filelist)
+    filelist = np.array(filelist)[sortmask]
+    nightnames = np.array(nightnames)[sortmask]
+    basenames = np.array(basenames)[sortmask]
+    mod_times = np.array(mod_times)[sortmask]
+    # need to sort kwargs
+    for key in kwargs:
+        kwargs[key] = np.array(kwargs[key])[sortmask]
     # ----------------------------------------------------------------------
     # return filelist
     return nightnames, filelist, basenames, mod_times, kwargs

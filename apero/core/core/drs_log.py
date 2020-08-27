@@ -16,16 +16,16 @@ Version 0.0.1
 import numpy as np
 import os
 import sys
+import copy
 from time import sleep
 from astropy.table import Table
 from collections import OrderedDict
 
 from apero.core.instruments.default import pseudo_const
 from apero.core import constants
-from apero.lang import drs_text
+from apero import lang
 from apero.lang import drs_exceptions
 from apero.core.math import time
-
 
 # =============================================================================
 # Define variables
@@ -50,12 +50,12 @@ TextWarning = drs_exceptions.TextWarning
 ConfigError = drs_exceptions.ConfigError
 ConfigWarning = drs_exceptions.ConfigWarning
 # Get the text types
-TextEntry = drs_text.TextEntry
-TextDict = drs_text.TextDict
-HelpEntry = drs_text.HelpEntry
-HelpText = drs_text.HelpDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
+HelpEntry = lang.drs_text.HelpEntry
+HelpText = lang.drs_text.HelpDict
 # get the default language
-DEFAULT_LANGUAGE = drs_text.DEFAULT_LANGUAGE
+DEFAULT_LANGUAGE = lang.drs_text.DEFAULT_LANGUAGE
 # Get the Color dict
 Color = pseudo_const.Colors
 # define log format
@@ -423,7 +423,7 @@ class Logger:
         if printonly:
             return 0
         # get pid
-        pid =  params['PID']
+        pid = params['PID']
         # make sub dictionary
         if pid not in self.pout:
             self.pout[pid] = ParamDict()
@@ -484,6 +484,7 @@ class Logger:
 
 class Printer():
     """Print things to stdout on one line dynamically"""
+
     def __init__(self, params, level, message):
         self.params = params
         self.level = level
@@ -502,7 +503,7 @@ class Printer():
 
 class RecipeLog:
 
-    def __init__(self, name, params, level=0):
+    def __init__(self, name, params, level=0, wlog=None):
         # get the recipe name
         self.name = str(name)
         self.kind = str(params['DRS_RECIPE_KIND'])
@@ -510,19 +511,27 @@ class RecipeLog:
         self.logfitsfile = str(params['DRS_LOG_FITS_NAME'])
         self.inputdir = str(params['INPATH'])
         self.outputdir = str(params['OUTPATH'])
+        self.params = params
+        self.wlog = wlog
         # set the pid
         self.pid = str(params['PID'])
         self.htime = str(params['DATE_NOW'])
         self.group = str(params['DRS_GROUP'])
-        # set the night name directory
-        self.directory = str(params['NIGHTNAME'])
-        # get lof fits path
+        # set the night name directory (and deal with no value)
+        if 'NIGHTNAME' not in params:
+            self.directory = 'other'
+        elif params['NIGHTNAME'] in [None, 'None', '']:
+            self.directory = 'other'
+        else:
+            self.directory = str(params['NIGHTNAME'])
+        # get log fits path
         self.logfitspath = self._get_write_dir()
         # define lockfile (we need to lock the directory while this is
         #   being done)
         self.lockfile = self.directory + self.logfitsfile.replace('.', '_')
         # set the log file name (just used to save log directory)
         self.log_file = 'None'
+        self.plot_dir = 'None'
         # set the inputs
         self.args = ''
         self.kwargs = ''
@@ -575,6 +584,19 @@ class RecipeLog:
     def set_log_file(self, logfile):
         self.log_file = logfile
 
+    def set_plot_dir(self, params, location, write=True):
+        if location is not None:
+            self.plot_dir = location
+            # update children
+            if len(self.set) != 0:
+                for child in self.set:
+                    child.set_plot_dir(params, location, write=False)
+        else:
+            self.plot_dir = 'None'
+        # whether to write (update) recipe log file
+        if write:
+            self.write_logfile(params)
+
     def set_inputs(self, params, rargs, rkwargs, rskwargs):
         # deal with not having inputs
         if 'INPUTS' not in params:
@@ -605,7 +627,7 @@ class RecipeLog:
         # get new level
         level = self.level + 1
         # create new log
-        newlog = RecipeLog(self.name, params, level=level)
+        newlog = RecipeLog(self.name, params, level=level, wlog=self.wlog)
         # copy from parent
         newlog.copy(self)
         # record level criteria
@@ -657,7 +679,7 @@ class RecipeLog:
             self.write_logfile(params)
 
     def add_error(self, params, errortype, errormsg, write=True):
-        self.errors += '"{0}":"{1}" '.format(errortype, errormsg)
+        self.errors += '"{0}":"{1}"||'.format(errortype, errormsg)
         # whether to write (update) recipe log file
         if write:
             self.write_logfile(params)
@@ -740,10 +762,7 @@ class RecipeLog:
         # ------------------------------------------------------------------
         # get log path
         if self.outputdir not in ['None', '', None]:
-            path = self.outputdir
-            # if we have a night name add it
-            if self.directory not in ['None', '', None]:
-                path = os.path.join(path, self.directory)
+            path = os.path.join(self.outputdir, self.directory)
         # else use the default path
         else:
             path = self.defaultpath
@@ -753,10 +772,11 @@ class RecipeLog:
             try:
                 os.makedirs(path)
             except:
-                # TODO: move to language database
-                emsg = 'RecipeLogError: Cannot make path {0} for recipe log.'
+                # RecipeLogError: Cannot make path {0} for recipe log.'
                 eargs = [path]
-                raise DrsError(emsg.format(*eargs))
+                emsg = TextEntry('00-005-00014', args=eargs)
+                if self.wlog is not None:
+                    self.wlog(self.params, 'error', emsg)
         # ------------------------------------------------------------------
         # return absolute log file path
         return os.path.join(path, self.logfitsfile)
@@ -775,6 +795,7 @@ class RecipeLog:
         row['OUTPATH'] = self.outputdir
         row['DIRECTORY'] = self.directory
         row['LOGFILE'] = self.log_file
+        row['PLOTDIR'] = self.plot_dir
         row['RUNSTRING'] = self.runstring
         # add inputs
         row['ARGS'] = self.args
@@ -816,13 +837,18 @@ class RecipeLog:
         # check to see if table already exists
         if os.path.exists(writepath):
             try:
-                print('RecipeLog: Reading file: {0}'.format(writepath))
+                # RecipeLog: Reading file
+                dargs = [writepath]
+                dmsg = TextEntry('90-008-00012', args=dargs)
+                if self.wlog is not None:
+                    self.wlog(self.params, 'debug', dmsg)
                 table = Table.read(writepath, format='fits')
             except Exception as e:
-                # TODO: move to language database
-                emsg = 'RecipeLogError: Cannot read file {0} \n\t {1}: {2}'
+                # RecipeLogError: Cannot read file
                 eargs = [writepath, type(e), str(e)]
-                raise DrsError(emsg.format(*eargs))
+                emsg = TextEntry('00-005-00016', args=eargs)
+                if self.wlog is not None:
+                    self.wlog(self.params, 'error', emsg)
         else:
             table = None
         # ------------------------------------------------------------------
@@ -874,13 +900,18 @@ class RecipeLog:
         # ------------------------------------------------------------------
         # write to disk
         try:
-            print('RecipeLog: Writing file: {0}'.format(writepath))
+            # debug log
+            if self.wlog is not None:
+                dargs = [writepath]
+                dmsg = TextEntry('90-008-00011', args=dargs)
+                self.wlog(self.params, 'debug', dmsg)
             mastertable.write(writepath, format='fits', overwrite=True)
         except Exception as e:
-            # TODO: move to language database
-            emsg = 'RecipeLogError: Cannot write file {0} \n\t Error {1}: {2}'
-            eargs = [writepath, type(e), str(e)]
-            raise DrsError(emsg.format(*eargs))
+            # RecipeLogError: Cannot write file {0}
+            if self.wlog is not None:
+                eargs = [writepath, type(e), str(e)]
+                emsg = TextEntry('00-005-00015', args=eargs)
+                self.wlog(self.params, 'error', emsg)
 
 
 # =============================================================================
@@ -896,6 +927,45 @@ wlog = Logger()
 def find_param(params=None, key=None, name=None, kwargs=None, func=None,
                mapf=None, dtype=None, paramdict=None, required=True,
                default=None):
+    """
+    Find a parameter "key" first in params or paramdict (if defined)
+    or in kwargs (with "name") - note if "name" in kwargs overrides
+    params/paramdict
+
+    :param params: ParamDict, the constants Parameter dictionary
+    :param key: string, the key to search for in "params"
+                (or paramdict if defined)
+    :param name: string, the name in kwargs of the constant - overrides use
+                 of param
+    :param kwargs: dict, the keyword arg dictionary (or any dictionary
+                   containing "key"
+    :param func: string, the function name "find_param" was used
+                 in (for logging)
+    :param mapf: string, 'list' or 'dict' - the way to map a string parameter
+                 i.e. 'a,b,c' mapf='list' -->  ['a', 'b', 'c']
+                 i.e. '{a:1, b:2}  mapf='dict' --> dict(a=1, b=2)
+    :param dtype: type, the data type for output of mapf (list or dict) for
+                  key
+    :param paramdict: ParamDict, if defined overrides the use of params for
+                      searching for "key"
+    :param required: bool, if True and "key" not found
+                     (and "constant" not found)
+    :param default: object, the default value of key if not found (if None
+                    does not set and raises error if required=True)
+
+    :type params: ParamDict
+    :type key: str
+    :type name: str
+    :type kwargs: dict
+    :type func: str
+    :type mapf: str
+    :type dtype: type
+    :type paramdict: ParamDict
+    :type required: bool
+    :type default: object
+
+    :return: returns the object or list/dict (if mapf='list'/'dict')
+    """
     # deal with params being None
     if params is None:
         params = ParamDict()
@@ -934,21 +1004,24 @@ def find_param(params=None, key=None, name=None, kwargs=None, func=None,
     not_in_paramdict = name not in rkwargs
     not_in_rkwargs = key not in paramdict
     return_default = (not required) or (default is not None)
+
+    # now return a deep copied version of the value
+
     # if we don't require value
     if return_default and not_in_paramdict and not_in_rkwargs:
-        return default
+        return copy.deepcopy(default)
     elif not_in_paramdict and not_in_rkwargs:
         eargs = [key, func]
         wlog(params, 'error', TextEntry('00-003-00001', args=eargs))
-        return default
+        return copy.deepcopy(default)
     elif name in rkwargs:
-        return rkwargs[name]
+        return copy.deepcopy(rkwargs[name])
     elif mapf == 'list':
-        return paramdict.listp(key, dtype=dtype)
+        return copy.deepcopy(paramdict.listp(key, dtype=dtype))
     elif mapf == 'dict':
-        return paramdict.dictp(key, dtype=dtype)
+        return copy.deepcopy(paramdict.dictp(key, dtype=dtype))
     else:
-        return paramdict[key]
+        return copy.deepcopy(paramdict[key])
 
 
 def printlogandcmd(logobj, params, message, key, human_time, option, wrap,
@@ -1431,7 +1504,6 @@ def writelog(logobj, params, message, key, logfilepath):
 
 
 def _clean_message(message):
-
     # get all attributes of Color
     all_attr = Color.__dict__
     # storeage for codes
@@ -1525,7 +1597,6 @@ def get_drs_data_msg(params, group=None, reset=False):
 # =============================================================================
 
 
-
 # =============================================================================
 # Start of code
 # =============================================================================
@@ -1538,17 +1609,17 @@ if __name__ == "__main__":
     pp['RECIPE'] = ''
 
     # Get Logging function
-    WLOG = wlog
+    testwlog = wlog
     # Title test
-    WLOG(pp, '', ' *****************************************')
-    WLOG(pp, '', ' * TEST @(#) Some Observatory (' + 'V0.0.-1' + ')')
-    WLOG(pp, '', ' *****************************************')
+    testwlog(pp, '', ' *****************************************')
+    testwlog(pp, '', ' * TEST @(#) Some Observatory (' + 'V0.0.-1' + ')')
+    testwlog(pp, '', ' *****************************************')
     # info log
-    WLOG(pp, 'info', "This is an info test")
+    testwlog(pp, 'info', "This is an info test")
     # warning log
-    WLOG(pp, 'warning', "This is a warning test")
+    testwlog(pp, 'warning', "This is a warning test")
     # error log
-    WLOG(pp, 'error', "This is an error test")
+    testwlog(pp, 'error', "This is an error test")
 
 # =============================================================================
 # End of code

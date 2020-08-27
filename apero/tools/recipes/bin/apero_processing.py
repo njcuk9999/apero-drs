@@ -76,7 +76,8 @@ def main(instrument=None, runfile=None, **kwargs):
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    return core.end_main(params, llmain, recipe, success, outputs='None')
+    return core.end_main(params, llmain, recipe, success, outputs='None',
+                         keys=['outlist'])
 
 
 def __main__(recipe, params):
@@ -120,11 +121,14 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # get raw files
     rawtable, rawpath = drs_fits.find_raw_files(params, recipe)
+    # find all previous runs
+    skiptable = drs_processing.generate_skip_table(params)
 
     # ----------------------------------------------------------------------
     # Generate run list
     # ----------------------------------------------------------------------
-    rlist = drs_processing.generate_run_list(params, rawtable, runtable)
+    rlist = drs_processing.generate_run_list(params, rawtable, runtable,
+                                             skiptable)
 
     # ----------------------------------------------------------------------
     # Process run list

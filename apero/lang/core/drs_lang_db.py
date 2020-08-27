@@ -92,11 +92,11 @@ def get_entries_eng():
 
     vs['00-003-00030'] = "ParamDict Error: parameter '{0}' not found in parameter dictionary (via listp)"
 
-    vs['00-003-00031'] = "ParamDict Error: parameter '{0}' not found in parameter dictionary (via listp)"
+    vs['00-003-00031'] = "ParamDict Error: parameter '{0}' not found in parameter dictionary (via dictp)"
 
-    vs['00-003-00032'] = ""
+    vs['00-003-00032'] = "ParamDict Error: parameter '{0}' must be a string to convert (via listp)"
 
-    vs[''] = ""
+    vs['00-003-00033'] = "ParamDict Error: parameter '{0}' must be a string to convert (via dictp)"
 
     vs[''] = ""
 

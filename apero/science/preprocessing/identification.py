@@ -12,7 +12,7 @@ from apero.core import constants
 from apero import core
 from apero.core.core import drs_file
 from apero.core.core import drs_recipe
-from apero.lang import drs_text
+from apero import lang
 from apero.io import drs_fits
 
 
@@ -35,7 +35,7 @@ ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
 DrsRecipe = drs_recipe.DrsRecipe
 # Get the text types
-TextEntry = drs_text.TextEntry
+TextEntry = lang.drs_text.TextEntry
 
 
 # =============================================================================

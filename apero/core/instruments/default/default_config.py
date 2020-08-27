@@ -25,7 +25,7 @@ __all__ = [  # global settings
     'DRS_BADPIX_DATA', 'DRS_CALIB_DATA', 'DRS_RESET_CALIBDB_PATH',
     'DRS_RESET_TELLUDB_PATH', 'DRS_USER_PROGRAM', 'DRS_INDEX_FILE',
     'DRS_PDB_RC_FILE', 'IPYTHON_RETURN', 'ALLOW_BREAKPOINTS',
-    'DRS_RESET_RUN_PATH', 'DRS_INSTRUMENTS',
+    'DRS_RESET_RUN_PATH', 'DRS_INSTRUMENTS', 'DRS_PDB_RC_FILENAME',
     # DRS INDEXING SETTINGS
     'DRS_INDEX_FILE', 'DRS_INDEX_FILENAME',
     # DATABASE SETTINGS
@@ -162,7 +162,7 @@ DRS_PDFLATEX_PATH = Const('DRS_PDFLATEX_PATH', dtype=str, source=__NAME__,
 # =============================================================================
 cgroup = 'INTERNAL: General properites'
 # Version
-DRS_VERSION = Const('DRS_VERSION', value='0.6.082', dtype=str,
+DRS_VERSION = Const('DRS_VERSION', value='0.6.130', dtype=str,
                     source=__NAME__, group=cgroup)
 
 # Authors
@@ -176,7 +176,7 @@ DRS_RELEASE = Const('RELEASE', value='alpha pre-release', dtype=str,
                     source=__NAME__, group=cgroup)
 
 # Date
-DRS_DATE = Const('DATE', value='2020-05-04', dtype=str, source=__NAME__,
+DRS_DATE = Const('DATE', value='2020-08-27', dtype=str, source=__NAME__,
                  group=cgroup)
 
 # =============================================================================
@@ -294,8 +294,13 @@ DRS_RESET_RUN_PATH = Const('DRS_RESET_RUN_PATH', dtype=str, source=__NAME__,
                            group=cgroup)
 
 # where the pdb rc file is
-DRS_PDB_RC_FILE = Const('DRS_PDB_RC_FILE', value='./data/core/.pdbrc',
+DRS_PDB_RC_FILE = Const('DRS_PDB_RC_FILE', value='./data/core/pdbrc_full',
                         dtype=str, source=__NAME__, group=cgroup)
+
+# what the pdb file should be called
+DRS_PDB_RC_FILENAME = Const('DRS_PDB_RC_FILENAME', value='.pdbrc',
+                            dtype=str, source=__NAME__, group=cgroup)
+
 
 # =============================================================================
 # DRS INDEXING SETTINGS

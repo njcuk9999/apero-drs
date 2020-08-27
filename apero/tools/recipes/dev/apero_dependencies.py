@@ -121,7 +121,7 @@ def __main__(recipe, params):
 
 def get_python_files(path):
     pyfiles = []
-    for path, dirs, files in os.walk(path):
+    for path, dirs, files in os.walk(path, followlinks=True):
         for filename in files:
             # set up abs path
             abspath = os.path.join(path, filename)
@@ -135,7 +135,7 @@ def get_python_files(path):
             # make sure they are python files
             if '.py' in filename and '.pyc' not in filename:
                 pyfiles.append(abspath)
-    return pyfiles
+    return np.sort(pyfiles)
 
 
 def get_import_statements(params, files):

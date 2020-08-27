@@ -23,7 +23,7 @@ from astropy.io import fits
 from collections import OrderedDict
 
 from apero.core import constants
-from apero.lang import drs_text
+from apero import lang
 from apero.core.core import drs_log
 
 from apero.io import drs_lock
@@ -47,9 +47,13 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = drs_text.TextEntry
+TextEntry = lang.drs_text.TextEntry
 
 # -----------------------------------------------------------------------------
+# define list of integers
+INTEGERS = (np.int, np.int32, np.int64, int)
+STRINGS = (str, np.str)
+FLOATS = (np.float, np.float32, np.float64, float)
 
 
 # =============================================================================
@@ -224,7 +228,6 @@ def write_table(params, table, filename, fmt='fits', header=None):
         # reset lock
         lock.reset()
         raise e
-
 
 
 def merge_table(p, table, filename, fmt='fits'):
@@ -506,7 +509,6 @@ def write_fits_table(p, astropy_table, output_filename):
         WLOG(p, 'error', TextEntry('01-002-00017', args=eargs))
 
 
-
 # TODO: Find cause of this problem and fix properly
 def deal_with_missing_end_card(p, filename, e, func_name):
     """
@@ -612,6 +614,59 @@ def vstack_cols(params, tablelist):
             newtable[col] = valuedict[col]
         # vstack all rows
         return newtable
+
+
+def force_dtype_col(column, dtype=str, **kwargs):
+    import numpy as np
+    INTEGERS = (np.int, np.int32, np.int64, int)
+    STRINGS = (str, np.str)
+    FLOATS = (np.float, np.float32, np.float64, float)
+    # if we have no columns don't do anything
+    if len(column) == 0:
+        return column, None
+    # if dtype not set try to work it out
+    if dtype is None:
+        if isinstance(column[0], INTEGERS):
+            dtype = int
+        elif isinstance(column[0], STRINGS):
+            dtype = str
+        elif isinstance(column[0], FLOATS):
+            dtype = float
+        else:
+            dtype = None
+    # deal with string columns
+    if dtype in STRINGS:
+        try:
+            # cast to string (may be byte)
+            col = np.array(column).astype(str)
+            # create character array
+            col = np.char.array(col)
+            if kwargs.get('lower', False):
+                col = col.lower()
+            if kwargs.get('upper', False):
+                col = col.upper()
+            if kwargs.get('strip', False):
+                col = col.strip()
+            # return the column
+            return col, str
+        except:
+            return None, None
+    # deal with integer columns
+    if dtype in INTEGERS:
+        try:
+            col = np.array(column).astype(int)
+            return col, int
+        except:
+            return None, None
+    # deal with float columns
+    if dtype in FLOATS:
+        try:
+            col = np.array(column).astype(float)
+            return col, float
+        except:
+            return None, None
+    # else just return the column as is
+    return np.array(column), None
 
 
 # =============================================================================

@@ -196,14 +196,25 @@ def calculate_blaze_flat_sinc(params, e2ds_ini, peak_cut, nsigfit, badpercentile
         #     popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep],
         #                            p0=fit_guess) #, bounds=bounds)
     except RuntimeError as e:
-        strlist = 'amp={0} period={1} lin={2} quad={3} cube={4} slope={5}'
-        strguess = strlist.format(*fit_guess)
-        strlower = strlist.format(*bounds[0])
-        strupper = strlist.format(*bounds[1])
-        eargs = [order_num, fiber, n_it, strguess, strlower, strupper,
-                 type(e), str(e), func_name]
-        WLOG(params, 'error', TextEntry('40-015-00009', args=eargs))
-        blaze = None
+        # if it failed with bounds try without bounds
+        try:
+            # we optimize over pixels that are not NaN (this time with no bounds)
+            popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep],
+                                   p0=fit_guess)
+            # ------------------------------------------------------------------
+            # set the model to zeros at first
+            blaze = mp.sinc(xpix, popt[0], popt[1], popt[2], popt[3], popt[4],
+                            popt[5], peak_cut=peak_cut)
+
+        except RuntimeError as e:
+            strlist = 'amp={0} period={1} lin={2} quad={3} cube={4} slope={5}'
+            strguess = strlist.format(*fit_guess)
+            strlower = strlist.format(*bounds[0])
+            strupper = strlist.format(*bounds[1])
+            eargs = [order_num, fiber, n_it, strguess, strlower, strupper,
+                     type(e), str(e), func_name]
+            WLOG(params, 'error', TextEntry('40-015-00009', args=eargs))
+            blaze = None
 
     # ----------------------------------------------------------------------
     # remove nan in the blaze also in the e2ds

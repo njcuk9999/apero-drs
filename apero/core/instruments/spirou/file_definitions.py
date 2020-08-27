@@ -137,8 +137,13 @@ raw_file.addset(raw_fp_fp)
 # -----------------------------------------------------------------------------
 # raw LFC files
 raw_lfc_lfc = drs_finput('RAW_LFC_LFC', KW_CCAS='pos_rs', KW_CREF='pos_rs',
-                         filetype='.fits', suffix='', KW_OBSTYPE='ALIGN')
+                         filetype='.fits', suffix='', KW_OBSTYPE='ALIGN',
+                         outfunc=out.blank)
 raw_file.addset(raw_lfc_lfc)
+
+raw_lfc_fp = drs_finput('RAW_LFC_FP', KW_CCAS='pos_rs', KW_CREF='pos_fp',
+                         filetype='.fits', suffix='', KW_OBSTYPE='ALIGN')
+raw_file.addset(raw_lfc_fp)
 
 # -----------------------------------------------------------------------------
 # raw object files
@@ -311,6 +316,11 @@ pp_lfc_lfc = drs_finput('LFC_LFC', KW_DPRTYPE='LFC_LFC',
                         inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_lfc_lfc)
 
+pp_lfc_fp = drs_finput('LFC_FP', KW_DPRTYPE='LFC_FP',
+                        filetype='.fits', suffix='_pp', intype=raw_lfc_fp,
+                        inext='.fits', outfunc=out.general_file)
+pp_file.addset(pp_lfc_fp)
+
 # -----------------------------------------------------------------------------
 #  object
 pp_obj_dark = drs_finput('OBJ_DARK', KW_DPRTYPE='OBJ_DARK',
@@ -449,12 +459,12 @@ calib_file.addset(out_dark_master)
 # badpix out file
 out_badpix = drs_finput('BADPIX', KW_OUTPUT='BADPIX',
                         filetype='.fits',
-                        intype=[pp_dark_dark_int, pp_dark_dark_tel],
+                        intype=[pp_flat_flat],
                         suffix='_badpixel',
                         outfunc=out.calib_file,
                         dbname='calibration', dbkey='BADPIX')
 out_backmap = drs_finput('BKGRD_MAP', KW_OUTPUT='BKGRD_MAP',
-                         intype=[pp_dark_dark_int, pp_dark_dark_tel],
+                         intype=[pp_flat_flat],
                          suffix='_bmap.fits', outfunc=out.calib_file,
                          dbname='calibration', dbkey='BKGRDMAP')
 
@@ -613,6 +623,21 @@ calib_file.addset(out_ff_blaze)
 calib_file.addset(out_ff_flat)
 
 # -----------------------------------------------------------------------------
+# extract files (quick look)
+# -----------------------------------------------------------------------------
+# extract E2DS without flat fielding
+out_ql_e2ds = drs_finput('QL_E2DS', KW_OUTPUT='QL_E2DS',
+                         fibers=['AB', 'A', 'B', 'C'],
+                         filetype='.fits', intype=pp_file,
+                         suffix='_q2ds', outfunc=out.general_file)
+
+# extract E2DS with flat fielding
+out_ql_e2dsff = drs_finput('QL_E2DS_FF', KW_OUTPUT='QL_E2DS_FF',
+                           fibers=['AB', 'A', 'B', 'C'],
+                           filetype='.fits', intype=pp_file,
+                           suffix='_q2dsff', outfunc=out.general_file)
+
+# -----------------------------------------------------------------------------
 # extract files
 # -----------------------------------------------------------------------------
 # extract E2DS without flat fielding
@@ -646,6 +671,15 @@ out_ext_s1d_v = drs_finput('EXT_S1D_V', KW_OUTPUT='EXT_S1D_V',
                            fibers=['AB', 'A', 'B', 'C'],
                            filetype='.fits', intype=pp_file, datatype='table',
                            suffix='_s1d_v', outfunc=out.general_file)
+
+# fp line file from night
+out_ext_fplines = drs_finput('EXT_FPLIST', KW_OUTPUT='EXT_FPLIST',
+                                    fibers=['AB', 'A', 'B', 'C'],
+                                    filetype='.fits', remove_insuffix=True,
+                                    intype=[out_ext_e2ds, out_ext_e2dsff],
+                                    suffix='_ext_fplines',
+                                    outfunc=out.general_file)
+
 # add extract outputs to output fileset
 out_file.addset(out_ext_e2ds)
 out_file.addset(out_ext_e2dsff)
@@ -653,6 +687,7 @@ out_file.addset(out_ext_e2dsll)
 out_file.addset(out_ext_loco)
 out_file.addset(out_ext_s1d_w)
 out_file.addset(out_ext_s1d_v)
+out_file.addset(out_ext_fplines)
 
 # -----------------------------------------------------------------------------
 # thermal files
@@ -728,7 +763,7 @@ out_wavem_res_table = drs_input('WAVE_FPRESTAB', KW_OUTPUT='WAVE_FPRESTAB',
                                 filetype='.tbl',
                                 intype=[out_ext_e2ds, out_ext_e2dsff],
                                 outfunc=out.set_file,
-                                filename='cal_wave_results')
+                                basename='cal_wave_results')
 
 # fp line list table
 out_wavem_ll_table = drs_input('WAVE_FPLLTABL', KW_OUTPUT='WAVE_FPLLTAB',
@@ -836,7 +871,7 @@ out_wave_res_table = drs_input('WAVE_FPRESTAB', KW_OUTPUT='WAVE_FPRESTAB',
                                filetype='.tbl',
                                intype=[out_ext_e2ds, out_ext_e2dsff],
                                outfunc=out.set_file,
-                               filename='cal_wave_results')
+                               basename='cal_wave_results')
 
 # fp line list table
 out_wave_ll_table = drs_input('WAVE_FPLLTABL', KW_OUTPUT='WAVE_FPLLTAB',
@@ -870,6 +905,8 @@ out_file.addset(out_wave_hcline)
 out_file.addset(out_wave_hcres)
 out_file.addset(out_wave_res_table)
 out_file.addset(out_wave_ll_table)
+out_file.addset(out_wave_hclist)
+out_file.addset(out_wave_fplist)
 calib_file.addset(out_wave_hc)
 calib_file.addset(out_wave_fp)
 calib_file.addset(out_wave_night)
@@ -889,6 +926,14 @@ calib_file.addset(out_wave_night)
 # -----------------------------------------------------------------------------
 # make telluric
 # -----------------------------------------------------------------------------
+# cleaned spectrum
+out_tellu_pclean = drs_finput('TELLU_PCLEAN', KW_OUTPUT='TELLU_PCLEAN',
+                              fibers=['AB', 'A', 'B', 'C'],
+                              filetype='.fits', intype=out_ext_e2dsff,
+                              suffix='_tellu_pclean', remove_insuffix=True,
+                              dbname='telluric', dbkey='TELLU_PCLEAN',
+                              outfunc=out.general_file)
+
 # convolved tapas map (with wave solution)
 out_tellu_conv = drs_ninput('TELLU_CONV', KW_OUTPUT='TELLU_CONV',
                             fibers=['AB', 'A', 'B', 'C'],
@@ -896,6 +941,12 @@ out_tellu_conv = drs_ninput('TELLU_CONV', KW_OUTPUT='TELLU_CONV',
                             suffix='_tellu_conv', remove_insuffix=True,
                             dbname='telluric', dbkey='TELLU_CONV',
                             outfunc=out.general_file)
+
+# tapas file in format for pre-cleaning
+out_tellu_spl_npy = drs_ninput('TELLU_TAPAS', filetype='.npy',
+                                basename='tapas_spl.npy',
+                                dbname='telluric', dbkey='TELLU_TAPAS',
+                                outfunc=out.set_file)
 
 # transmission map
 out_tellu_trans = drs_finput('TELLU_TRANS', KW_OUTPUT='TELLU_TRANS',
@@ -906,10 +957,14 @@ out_tellu_trans = drs_finput('TELLU_TRANS', KW_OUTPUT='TELLU_TRANS',
                              outfunc=out.general_file)
 
 # add make_telluric outputs to output fileset
+out_file.addset(out_tellu_pclean)
 out_file.addset(out_tellu_conv)
 out_file.addset(out_tellu_trans)
+out_file.addset(out_tellu_spl_npy)
+tellu_file.addset(out_tellu_pclean)
 tellu_file.addset(out_tellu_conv)
 tellu_file.addset(out_tellu_trans)
+tellu_file.addset(out_tellu_spl_npy)
 
 # -----------------------------------------------------------------------------
 # fit telluric
@@ -917,8 +972,12 @@ tellu_file.addset(out_tellu_trans)
 # absorption files (npy file)
 out_tellu_abso_npy = drs_ninput('ABSO_NPY',
                                 filetype='.npy',
-                                filename='tellu_save.npy',
+                                basename='tellu_save.npy',
                                 outfunc=out.set_file)
+out_tellu_abso1_npy = drs_ninput('ABSO1_NPY',
+                                 filetype='.npy',
+                                 basename='tellu_save1.npy',
+                                 outfunc=out.set_file)
 
 # telluric corrected e2ds spectrum
 out_tellu_obj = drs_finput('TELLU_OBJ', KW_OUTPUT='TELLU_OBJ',
@@ -981,7 +1040,7 @@ out_tellu_template = drs_finput('TELLU_TEMP', KW_OUTPUT='TELLU_TEMP',
                                 fibers=['AB', 'A', 'B', 'C'],
                                 filetype='.fits',
                                 intype=[out_ext_e2dsff, out_tellu_obj],
-                                filename='Template',
+                                basename='Template',
                                 dbname='telluric', dbkey='TELLU_TEMP',
                                 outfunc=out.set_file)
 
@@ -990,7 +1049,7 @@ out_tellu_bigcube = drs_finput('TELLU_BIGCUBE', KW_OUTPUT='TELLU_BIGCUBE',
                                fibers=['AB', 'A', 'B', 'C'],
                                filetype='.fits',
                                intype=[out_ext_e2dsff, out_tellu_obj],
-                               filename='BigCube',
+                               basename='BigCube',
                                outfunc=out.set_file)
 
 # template cube file (before shift)
@@ -998,7 +1057,7 @@ out_tellu_bigcube0 = drs_finput('TELLU_BIGCUBE0', KW_OUTPUT='TELLU_BIGCUBE0',
                                 fibers=['AB', 'A', 'B', 'C'],
                                 filetype='.fits',
                                 intype=[out_ext_e2dsff, out_tellu_obj],
-                                filename='BigCube0',
+                                basename='BigCube0',
                                 outfunc=out.set_file)
 
 # s1d template file (median)
@@ -1007,7 +1066,7 @@ out_tellu_s1d_template = drs_finput('TELLU_TEMP_S1D',
                                     fibers=['AB', 'A', 'B', 'C'],
                                     filetype='.fits',
                                     intype=[out_ext_e2dsff, out_tellu_obj],
-                                    filename='Template_s1d', datatype='table',
+                                    basename='Template_s1d', datatype='table',
                                     outfunc=out.set_file)
 
 # s1d cibe file (after shift)
@@ -1016,7 +1075,7 @@ out_tellu_s1d_bigcube = drs_finput('TELLU_BIGCUBE_S1D',
                                    fibers=['AB', 'A', 'B', 'C'],
                                    filetype='.fits',
                                    intype=[out_ext_e2dsff, out_tellu_obj],
-                                   filename='BigCube_s1d',
+                                   basename='BigCube_s1d',
                                    outfunc=out.set_file)
 
 # add make template outputs to output fileset

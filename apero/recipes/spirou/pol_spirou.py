@@ -85,6 +85,11 @@ def __main__(recipe, params):
     :param params:
     :return:
     """
+
+    # TODO: these are added in as they were removed for pol_spirou_new
+    params.set('POLAR_CONT_BINSIZE ', value=1000, source=__NAME__)
+    params.set('POLAR_CONT_OVERLAP', value=0, source=__NAME__)
+
     # ----------------------------------------------------------------------
     # Main Code
     # ----------------------------------------------------------------------

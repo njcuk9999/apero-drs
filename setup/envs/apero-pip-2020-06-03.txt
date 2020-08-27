@@ -1,0 +1,5 @@
+pip install astroquery==0.3.10
+pip install barycorrpy==0.3.1
+pip install gitchangelog==3.0.4
+pip install yagmail==0.11.224
+pip install ipdb==0.13.2

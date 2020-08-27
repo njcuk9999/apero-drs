@@ -18,6 +18,8 @@ from apero.core.core import drs_database
 from apero.core import math as mp
 from apero import core
 from apero.io import drs_data
+from apero.io import drs_fits
+
 
 # =============================================================================
 # Define variables
@@ -343,7 +345,10 @@ def nirps_correction(params, image, mask=None, header=None):
     namps = params['PP_TOTAL_AMP_NUM']
     # deal with not having a mask
     if mask is None:
-        get_pp_mask(params, header)
+        # get pp mask file
+        mask, pfile = get_pp_mask(params, header)
+    else:
+        pfile = 'user'
     # get image shape
     dim1, dim2 = image.shape
     # create masked version of data
@@ -366,7 +371,7 @@ def nirps_correction(params, image, mask=None, header=None):
     # subtract off the masked image (scattered light correction?)
     image = image - np.tile(med_image2, dim1).reshape(dim1, dim2)
     # return corrected image
-    return image
+    return image, pfile
 
 
 def get_pp_mask(params, header):
@@ -388,8 +393,10 @@ def get_pp_mask(params, header):
     # try to read PPMSTR from cdb
     ppfilename = ppentries[filecol][0]
     ppfile = os.path.join(params['DRS_CALIB_DB'], ppfilename)
+    # read file
+    mask = drs_fits.readfits(params, ppfile)
     # return use_file
-    return ppfile
+    return mask, ppfile
 
 
 def med_amplifiers(image, namps):
@@ -468,11 +475,13 @@ def nirps_order_mask(params, mask_image):
     sig_image = mp.nanmedian(np.abs(image))
     # find pixels that are more than nsig absolute deviations from the image
     # median
-    mask = image > nsig * sig_image
+    with warnings.catch_warnings(record=True):
+        mask = image > nsig * sig_image
     # correct the image (as in preprocessing)
-    image = nirps_correction(params, image, mask)
+    image, _ = nirps_correction(params, image, mask)
     # generate a better estimate of the mask (after correction)
-    mask = image > nsig * sig_image
+    with warnings.catch_warnings(record=True):
+        mask = image > nsig * sig_image
     # set properties
     props = ParamDict()
     props['PPM_MASK_NSIG'] = nsig

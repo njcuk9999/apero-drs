@@ -9,6 +9,7 @@ Created on 2019-05-07 at 15:22
 
 @author: cook
 """
+import numpy as np
 import os
 import shutil
 import sys
@@ -168,7 +169,7 @@ def copy_default_db(params, name, db_dir, reset_path, log=True):
         WLOG(params, 'error', TextEntry('00-502-00001', args=eargs))
     # -------------------------------------------------------------------------
     # define needed files:
-    files = os.listdir(absfolder)
+    files = np.sort(os.listdir(absfolder))
     # -------------------------------------------------------------------------
     # copy required calibDB files to DRS_CALIB_DB path
     for filename in files:
@@ -234,13 +235,13 @@ def reset_log_fits(params, log=True):
     logfiles = []
     #   in the tmp folder
     path = params['DRS_DATA_WORKING']
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(path, followlinks=True):
         for filename in files:
             if os.path.basename(filename) == params['DRS_LOG_FITS_NAME']:
                 logfiles.append(os.path.join(root, filename))
     #   in the red folder
     path = params['DRS_DATA_REDUC']
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(path, followlinks=True):
         for filename in files:
             if os.path.basename(filename) == params['DRS_LOG_FITS_NAME']:
                 logfiles.append(os.path.join(root, filename))
@@ -275,7 +276,7 @@ def remove_all(params, path, log=True, skipfiles=None):
             WLOG(params, 'error', TextEntry('00-502-00002', args=[path]))
     # loop around files and folders in calib_dir
     allfiles = []
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(path, followlinks=True):
         for filename in files:
             allfiles.append(os.path.join(root, filename))
     # loop around all files (adding all files from sub directories

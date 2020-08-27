@@ -9,6 +9,7 @@ Created on 2019-01-24 at 13:49
 
 @author: cook
 """
+import numpy as np
 from astropy.table import Table
 import importlib
 import os
@@ -142,7 +143,7 @@ def main():
     shutil.copy(dabspath, babspath)
     # ----------------------------------------------------------------------
     #  first get contents of database directory
-    files = os.listdir(database_path)
+    files = np.sort(os.listdir(database_path))
     # ----------------------------------------------------------------------
     # clear files from database (other than database)
     for filename in files:
