@@ -2444,7 +2444,8 @@ class _SetQuiet(DrsAction):
 # =============================================================================
 class DrsArgument(object):
     def __init__(self, name: Union[str, None] = None,
-                 kind: Union[str, None] = None, pos: Union[int, None] = None,
+                 kind: Union[str, None] = None,
+                 pos: Union[int, str, None] = None,
                  altnames: Union[List[str], None] = None,
                  dtype: Union[str, Type, None] = None,
                  options: Union[List[str], None] = None,
