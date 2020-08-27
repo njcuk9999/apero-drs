@@ -34,9 +34,9 @@ TARGETS = []
 # # priority 3
 # TARGETS += ['epsilonEri', ' GJ9827', ' Gl725A', ' Gl412A', ' Gl687', ' Gl725B']
 # # priority 4
-TARGETS += ['Gl411', ' TYC3980-1081-1', ' GJ1289', ' GJ1286', ' Gl536']
+# TARGETS += ['Gl411', ' TYC3980-1081-1', ' GJ1289', ' GJ1286', ' Gl536']
 # # priority 5
-# TARGETS += ['V883Ori', ' DRTau', ' XZTau', ' BBW76', ' NYOri', ' V582Aur']
+TARGETS += ['V883Ori', ' DRTau', ' XZTau', ' BBW76', ' NYOri', ' V582Aur']
 # # priority 6
 # TARGETS += ['TauBoo', ' V900Mon', ' V1057Cyg', ' V1515Cyg', ' WASP-127']
 
