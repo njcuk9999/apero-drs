@@ -157,6 +157,7 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         # storage
         snr_hotpix, rms_list = [], []
+        shiftdy, shiftdx = 0.0, 0.0
         # do this iteratively as if there is a shift need to re-workout QC
         for iteration in range(2):
             # get pass condition
@@ -202,7 +203,7 @@ def __main__(recipe, params):
 
         # correct by a median filter from the dark amplifiers
         WLOG(params, '', TextEntry('40-010-00016'))
-        image = pp.nirps_correction(params, image)
+        image, pfile = pp.nirps_correction(params, image, header=infile.header)
 
         # ------------------------------------------------------------------
         # calculate mid observation time
@@ -239,6 +240,7 @@ def __main__(recipe, params):
         # add the shift that was used to correct the image
         outfile.add_hkey('KW_PPSHIFTX', value=shiftdx)
         outfile.add_hkey('KW_PPSHIFTY', value=shiftdy)
+        outfile.add_hkey('KW_PPMSTR_FILE', value=os.path.basename(pfile))
         # add mid observation time
         outfile.add_hkey('KW_MID_OBS_TIME', value=mid_obs_time.mjd)
         outfile.add_hkey('KW_MID_OBSTIME_METHOD', value=mid_obs_method)

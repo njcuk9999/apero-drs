@@ -137,7 +137,7 @@ def __main__(recipe, params):
             rawfiles.append(infile.basename)
 
     # get combined file
-    infiles = [drs_fits.combine(params, infiles, math='median')]
+    infiles = [drs_fits.combine(params, recipe, infiles, math='median')]
     # get the number of infiles
     num_files = len(infiles)
 

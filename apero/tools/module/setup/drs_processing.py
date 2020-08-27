@@ -12,7 +12,7 @@ Created on 2019-08-06 at 11:57
 import numpy as np
 import os
 import sys
-import copy
+from copy import deepcopy
 import time
 from astropy.table import Table
 from collections import OrderedDict
@@ -28,12 +28,11 @@ from apero.lang import drs_exceptions
 from apero.core import constants
 from apero import plotting
 from apero.io import drs_table
-from apero.io import drs_path
-from apero.io import drs_fits
 from apero.io import drs_lock
+from apero.io import drs_text
 from apero.tools.module.setup import drs_reset
 from apero.science import telluric
-from apero.science import preprocessing
+
 
 # =============================================================================
 # Define variables
@@ -65,6 +64,7 @@ RUN_KEYS['EMAIL_ADDRESS'] = None
 RUN_KEYS['NIGHTNAME'] = None
 RUN_KEYS['BNIGHTNAMES'] = None
 RUN_KEYS['WNIGHTNAMES'] = None
+RUN_KEYS['PI_NAMES'] = None
 RUN_KEYS['MASTER_NIGHT'] = None
 RUN_KEYS['CORES'] = 1
 RUN_KEYS['STOP_AT_EXCEPTION'] = False
@@ -86,6 +86,11 @@ RUN_KEYS['SCIENCE_TARGETS'] = None
 REMOVE_ENG_NIGHTS = []
 # get special list from recipes
 SPECIAL_LIST_KEYS = drs_recipe.SPECIAL_LIST_KEYS
+# get list of obj name cols
+OBJNAMECOLS = ['KW_OBJNAME']
+# list of arguments to remove from skip check
+SKIP_REMOVE_ARGS = ['--skip', '--program', '--debug', '--plot', '--master']
+
 
 # =============================================================================
 # Define classes
@@ -106,6 +111,7 @@ class Run:
         self.recipemod = None
         self.kwargs = dict()
         self.fileargs = dict()
+        self.required_args = []
         # set parameters
         self.kind = None
         self.nightname = None
@@ -155,7 +161,7 @@ class Run:
                 #   through possible options
                 else:
                     # option 1: the argument is None --> del argument
-                    if self.kwargs[kwargname] in [None, 'None']:
+                    if drs_text.null_text(self.kwargs[kwargname], ['None']):
                         del self.kwargs[kwargname]
                     # option 2: the argument is empty --> del argument
                     elif len(self.kwargs[kwargname]) == 0:
@@ -245,6 +251,11 @@ class Run:
         # get properties
         self.get_recipe_kind()
         self.get_night_name()
+        # populate a list of reciped arguments
+        for kwarg in self.recipe.kwargs:
+            if self.recipe.kwargs[kwarg].required:
+                self.required_args.append(kwarg)
+
 
     def prerun_test(self):
         """
@@ -458,60 +469,215 @@ def read_runfile(params, runfile, **kwargs):
     # ----------------------------------------------------------------------
     # nightname
     if 'NIGHTNAME' in params['INPUTS']:
-        if params['INPUTS']['NIGHTNAME'] not in ['None', '', None]:
-            params['NIGHTNAME'] = params['INPUTS']['NIGHTNAME']
+        # get night name
+        _nightname = params['INPUTS']['NIGHTNAME']
+        # deal with none nulls
+        if not drs_text.null_text(_nightname, ['None', '', 'All']):
+            params['NIGHTNAME'] = _nightname
     # make sure nightname is str or None
-    if params['NIGHTNAME'] in ['None', '']:
+    if drs_text.null_text(params['NIGHTNAME'], ['None', '', 'All']):
         params['NIGHTNAME'] = None
     # ----------------------------------------------------------------------
     # nightname blacklist
     if 'BNIGHTNAMES' in params['INPUTS']:
-        if params['INPUTS']['BNIGHTNAMES'] not in ['None', '', None]:
+        # get night name blacklist
+        _bnightnames = params['INPUTS']['BNIGHTNAMES']
+        # deal with non-null value
+        if not drs_text.null_text(_bnightnames, ['None', '', 'All']):
             params['BNIGHTNAMES'] = params['INPUTS'].listp('BNIGHTNAMES')
     # ----------------------------------------------------------------------
     # nightname whitelist
     if 'WNIGHTNAMES' in params['INPUTS']:
-        if params['INPUTS']['WNIGHTNAMES'] not in ['None', '', None]:
+        # get night name whitelist
+        _wnightnames = params['INPUTS']['WNIGHTNAMES']
+        # deal with non-null value
+        if not drs_text.null_text(_wnightnames, ['None', '', 'All']):
             params['WNIGHTNAMES'] = params['INPUTS'].listp('WNIGHTNAMES')
+    # ----------------------------------------------------------------------
+    # add pi name list
+    if 'PI_NAMES' in params['INPUTS']:
+        # get list of pi names
+        _pinames = params['INPUTS']['PI_NAMES']
+        # deal with non-null value
+        if not drs_text.null_text(_pinames, ['None', '', 'All']):
+            params['PI_NAMES'] = params['INPUTS'].listp('PI_NAMES')
     # ----------------------------------------------------------------------
     # deal with having a file specified
     params['FILENAME'] = None
     if 'FILENAME' in params['INPUTS']:
-        if params['INPUTS']['FILENAME'] not in ['None', '', None]:
+        # get filename arg
+        _filename = params['INPUTS']['FILENAME']
+        # deal with non-null value
+        if not drs_text.null_text(_filename, ['None', '', 'All']):
+            # if it is a string treat it as a list of string (just a string
+            #   works too)
             if isinstance(params['INPUTS']['FILENAME'], str):
                 params['FILENAME'] = params['INPUTS'].listp('FILENAME')
+            # should really get here but set it to the _filename value anyway
             else:
-                params['FILENAME'] = params['INPUTS']['FILENAME']
+                params['FILENAME'] = _filename
     # ----------------------------------------------------------------------
     # deal with getting test run from user input
     if 'TEST' in params['INPUTS']:
-        test = params['INPUTS']['TEST']
-        if test not in ['', 'None', None]:
-            if test in [True, 'True', 'TRUE', '1', 1]:
-                params['TEST_RUN'] = True
-            else:
-                params['TEST_RUN'] = False
+        # get the value of test
+        _test = params['INPUTS']['TEST']
+        # deal with non null value
+        if not drs_text.null_text(_test, ['', 'None']):
+            # test for true value
+            params['TEST_RUN'] = drs_text.true_text(_test)
     # ----------------------------------------------------------------------
     # deal with getting trigger run from user input
     if 'TRIGGER' in params['INPUTS']:
-        trigger = params['INPUTS']['TRIGGER']
-        if trigger not in ['', 'None', None]:
-            if trigger in [True, 'True', '1', 1]:
-                params['TRIGGER_RUN'] = True
-            else:
-                params['TRIGGER_RUN'] = False
+        # get the value of trigger
+        _trigger = params['INPUTS']['TRIGGER']
+        # deal with non null values
+        if not drs_text.null_text(_trigger, ['', 'None']):
+            # test for true value
+            params['TRIGGER_RUN'] = drs_text.true_text(_trigger)
 
         # if trigger if defined night name must be as well
         if params['NIGHTNAME'] is None and params['TRIGGER_RUN']:
             # cause an error if nightname not set
             WLOG(params, 'error', TextEntry('09-503-00010'))
-
     # ----------------------------------------------------------------------
     # relock params
     params.lock()
     # ----------------------------------------------------------------------
     # return parameter dictionary and runtable
     return params, runtable
+
+
+def generate_skip_table(params):
+    """
+    Uses the log.fits files to generate a list of previous run recipes
+    skips will occur when arguments are identical
+
+    :param params:
+    :return:
+    """
+    # log process
+    WLOG(params, '', TextEntry('90-503-00017'))
+    # get parameters from params
+    logfitsfile = params['DRS_LOG_FITS_NAME']
+    tmpdir = params['DRS_DATA_WORKING']
+    reddir = params['DRS_DATA_REDUC']
+
+    # storage log files
+    logfiles = []
+    # search tmp path for log files
+    for root, dirs, files in os.walk(tmpdir):
+        for filename in files:
+            if filename == logfitsfile:
+                logfiles.append(os.path.join(root, filename))
+    # search reduced path for log files
+    for root, dirs, files in os.walk(reddir):
+        for filename in files:
+            if filename == logfitsfile:
+                logfiles.append(os.path.join(root, filename))
+
+    # sort log files by name and only keep unique ones (shouldn't happen)
+    logfiles = np.unique(logfiles)
+    logfiles = np.sort(logfiles)
+    # storage for recipe args
+    recipes, arguments = [], []
+    # loop around log files and
+    for logfile in logfiles:
+        # load table
+        try:
+            # load log table
+            logtable = Table.read(logfile, format='fits')
+            # debug printout
+            dargs = [len(logtable), logfile]
+            WLOG(params, 'debug', TextEntry('90-503-00019', args=dargs))
+            # only keep those that finished
+            ended = logtable['ENDED']
+            logtable = logtable[ended]
+            # log debug: number that ended
+            dargs = [len(logtable)]
+            WLOG(params, 'debug', TextEntry('90-503-00020', args=dargs))
+            # append to storage
+            recipes += list(logtable['RECIPE'])
+            # get run string
+            runstrings = list(logtable['RUNSTRING'])
+            # loop around runstrings
+            for runstring in runstrings:
+                # clean run string
+                clean_runstring = skip_clean_arguments(runstring)
+                # append only clean arguments
+                arguments.append(clean_runstring)
+        except:
+            continue
+    # push into skip table
+    skip_table = Table()
+    skip_table['RECIPE'] = recipes
+    skip_table['RUNSTRING'] = arguments
+    # log number of runs found
+    WLOG(params, '', TextEntry('90-503-00018', args=[len(skip_table)]))
+    # return skip table
+    return skip_table
+
+
+def skip_clean_arguments(runstring):
+    """
+    Clean arguments for skip check - these are arguments that may change
+    between otherwise identical runs
+
+    i.e. --prog depends on what is run
+         --plot and --debug do not change run
+         --skip should not determine same run
+
+    :param runstring:
+    :return:
+    """
+    args = np.array(runstring.split(' '))
+    # mask for arguments to keep
+    mask = np.ones(len(args)).astype(bool)
+    # loop around arguments and figure out whether to keep them
+    for it, arg in enumerate(args):
+        for remove_arg in SKIP_REMOVE_ARGS:
+            if arg.startswith(remove_arg):
+                mask[it] = False
+    return ' '.join(args[mask])
+
+
+def skip_remove_non_required_args(runstrings, runobj):
+    """
+    remove any non-required arguments from runstrings (for skip comparison)
+
+    :param runstrings:
+    :param runobj:
+    :return:
+    """
+    # get list of required args
+    reqargs = runobj.required_args
+    # deasl with runstrings as a string
+    if isinstance(runstrings, str):
+        runstrings = [runstrings]
+    # new runstrings
+    new_runstrings = []
+    # loop around run strings
+    for runstring in runstrings:
+        # make prev_arg a list
+        args = np.array(runstring.split(' '))
+        # mask for arguments to keep
+        mask = np.ones(len(args)).astype(bool)
+        # set keep to False
+        keep = True
+        # loop around arguments and figure out whether to keep them
+        for it, arg in enumerate(args):
+            # only deal with optional arguments
+            if arg.startswith('--'):
+                keep = False
+                # loop around keep arguments
+                for keep_arg in reqargs:
+                    if arg.startswith('--{0}'.format(keep_arg)):
+                        keep = True
+            mask[it] = keep
+        # append to new_runstrings
+        new_runstrings.append(' '.join(args[mask]))
+    # return new runstrings
+    return np.unique(new_runstrings)
+
 
 
 def fix_run_file(runfile):
@@ -640,9 +806,11 @@ def reset_files(params):
             drs_reset.reset_log_fits(params)
 
 
-def generate_run_list(params, table, runtable):
+def generate_run_list(params, table, runtable, skiptable):
     # print progress: generating run list
     WLOG(params, 'info', TextEntry('40-503-00011'))
+    # need to update table object names to match preprocessing
+    table = _update_table_objnames(params, table)
     # get recipe defintions module (for this instrument)
     recipemod = _get_recipe_module(params)
     # get all values (upper case) using map function
@@ -665,7 +833,7 @@ def generate_run_list(params, table, runtable):
     # all runtable elements should now be in recipe list
     _check_runtable(params, runtable, recipemod)
     # return Run instances for each runtable element
-    return generate_ids(params, runtable, recipemod, rlist)
+    return generate_ids(params, runtable, recipemod, skiptable, rlist)
 
 
 def process_run_list(params, recipe, runlist, group=None):
@@ -687,11 +855,11 @@ def process_run_list(params, recipe, runlist, group=None):
     # remove lock files
     drs_lock.reset_lock_dir(params)
 
-    # convert to ParamDict and set all sources
+    # convert to dict
     odict = OrderedDict()
     keys = np.sort(np.array(list(rdict.keys())))
     for key in keys:
-        odict[key] = ParamDict(rdict[key])
+        odict[key] = dict(rdict[key])
 
     # see if we have any errors
     errors = False
@@ -912,13 +1080,15 @@ def generate_run_table(params, recipe, *args, **kwargs):
 # =============================================================================
 # Define "from id" functions
 # =============================================================================
-def generate_ids(params, runtable, mod, rlist=None, **kwargs):
+def generate_ids(params, runtable, mod, skiptable, rlist=None, **kwargs):
     func_name = __NAME__ + '.generate_ids()'
     # get keys from params
     run_key = pcheck(params, 'REPROCESS_RUN_KEY', 'run_key', kwargs, func_name)
     # should just need to sort these
     numbers = np.array(list(runtable.keys()))
     commands = np.array(list(runtable.values()))
+    # create text dictionary
+    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # deal with unset rlist (recipe list)
     if rlist is not None:
         inrecipes = np.array(list(rlist.values()))
@@ -930,6 +1100,8 @@ def generate_ids(params, runtable, mod, rlist=None, **kwargs):
     runlist = list(commands[sortmask])
     keylist = list(numbers[sortmask])
     inrecipelist = list(inrecipes[sortmask])
+    # store skip previous runstrings (so it is not recalculated every time)
+    skip_storage = dict()
     # log progress: Validating ids
     WLOG(params, 'info', TextEntry('40-503-00015', args=[len(runlist)]))
     # iterate through and make run objects
@@ -952,7 +1124,8 @@ def generate_ids(params, runtable, mod, rlist=None, **kwargs):
         if input_recipe is None:
             input_recipe = run_object.recipe
         # deal with skip
-        skip, reason = skip_run_object(params, run_object)
+        skip, reason = skip_run_object(params, run_object, skiptable, textdict,
+                                       skip_storage)
         # deal with passing debug
         if params['DRS_DEBUG'] > 0:
             dargs = [run_object.runstring, params['DRS_DEBUG']]
@@ -980,7 +1153,60 @@ def generate_ids(params, runtable, mod, rlist=None, **kwargs):
     return run_objects
 
 
-def skip_run_object(params, runobj):
+def skip_run_object(params, runobj, skiptable, textdict, skip_storage):
+    # get recipe and runstring
+    recipe = runobj.recipe
+    # ----------------------------------------------------------------------
+    # check if the user wants to run this runobj (in run list)
+    if runobj.runname in params:
+        # if user has set the runname to False then we want to skip
+        if not params[runobj.runname]:
+            return True, textdict['40-503-00007']
+    # ----------------------------------------------------------------------
+    # check if the user wants to skip
+    if runobj.skipname in params:
+        # if user wants to skip
+        if params[runobj.skipname]:
+            # clean run string
+            clean_runstring = skip_clean_arguments(runobj.runstring)
+            # check for recipe in skip storage
+            if recipe.name.strip('.py') in skip_storage:
+                # get the cleaned arguments directory from skip_storage
+                #   (quicker than re-calculating)
+                arguments = skip_storage[recipe.name.strip('.py')]
+            else:
+                # mask skip table by recipe
+                mask = skiptable['RECIPE'] == recipe.name.strip('.py')
+                # get valid arguments to check
+                arguments = skiptable['RUNSTRING'][mask]
+                # re-clean arguments this time using additional recipe
+                #    requirements
+                arguments = skip_remove_non_required_args(arguments, runobj)
+                # update skip storage (so we don't do this again)
+                skip_storage[recipe.name.strip('.py')] = arguments
+            # if the clean run string is in the arguments list then we skip
+            if clean_runstring in arguments:
+                # User set skip to 'True' and argument previously used
+                return True, textdict['40-503-00032']
+            else:
+                return False, None
+        else:
+            # debug log
+            dargs = [runobj.skipname]
+            WLOG(params, 'debug', TextEntry('90-503-00004', args=dargs))
+            # return False and no reason
+            return False, None
+    # ----------------------------------------------------------------------
+    else:
+        # debug log
+        dargs = [runobj.skipname]
+        WLOG(params, '', TextEntry('90-503-00005', args=dargs))
+        # return False and no reason
+        return False, '{0} not present'.format(runobj.skipname)
+
+
+# TODO: remove later
+def skip_run_object_old(params, runobj):
     # create text dictionary
     textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # get recipe and runstring
@@ -1086,6 +1312,7 @@ def _get_paths(params, runobj, directory):
     return inpath, outpath, nightname
 
 
+# TODO: no longer used?
 def _check_for_files(params, runobj):
     # create text dictionary
     textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
@@ -1239,14 +1466,18 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
     # get parameters from params/kwargs
     night_col = pcheck(params, 'REPROCESS_NIGHTCOL', 'night_col', kwargs,
                        func_name)
+    piname_col = pcheck(params, 'REPROCESS_PINAMECOL', 'piname_col', kwargs,
+                        func_name)
     # get all telluric stars
     tstars, wfilename = telluric.get_whitelist(params)
+    # get all other stars
+    ostars = _get_non_telluric_stars(params, table, tstars)
     # get filemod and recipe mod
     pconst = constants.pload(params['INSTRUMENT'])
     filemod = pconst.FILEMOD()
     recipemod = pconst.RECIPEMOD()
     # generate sequence
-    sequence[1].process_adds(params, tstars=list(tstars))
+    sequence[1].process_adds(params, tstars=list(tstars), ostars=list(ostars))
     # get the sequence recipe list
     srecipelist = sequence[1].sequence
     # storage for new runs to add
@@ -1274,12 +1505,16 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
         # copy table
         # ------------------------------------------------------------------
         ftable = Table(table)
+        # ------------------------------------------------------------------
+        # deal with black and white lists
+        # ------------------------------------------------------------------
+
 
         # ------------------------------------------------------------------
         # deal with black and white lists
         # ------------------------------------------------------------------
         # black list
-        if params['BNIGHTNAMES'] not in ['', 'None', None]:
+        if not drs_text.null_text(params['BNIGHTNAMES'], ['', 'All', 'None']):
             # start by assuming we want to keep everything
             mask = np.ones(len(ftable), dtype=bool)
             # get black list from params
@@ -1304,12 +1539,12 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
                     sys.exit()
         # ------------------------------------------------------------------
         # white list
-        if params['WNIGHTNAMES'] not in ['', 'None', None]:
+        if not drs_text.null_text(params['WNIGHTNAMES'], ['', 'All', 'None']):
             # start by assuming we want to keep nothing
             mask = np.zeros(len(ftable), dtype=bool)
-            # get black list from params
+            # get white list from params
             whitelist_nights = params.listp('WNIGHTNAMES', dtype=str)
-            # loop around black listed nights and set them to False
+            # loop around white listed nights and set them to False
             for whitelist_night in whitelist_nights:
                 mask |= (ftable[night_col] == whitelist_night)
             # apply mask to table
@@ -1320,6 +1555,30 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
             # deal with empty ftable
             if len(ftable) == 0:
                 WLOG(params, 'warning', TextEntry('10-503-00007'))
+                # get response for how to continue (skip or exit)
+                response = prompt(params)
+                if response:
+                    continue
+                else:
+                    sys.exit()
+        # ------------------------------------------------------------------
+        # pi name list
+        if not drs_text.null_text(params['PI_NAMES'], ['', 'All', 'None']):
+            # start by assuming we want to keep nothing
+            mask = np.zeros(len(ftable), dtype=bool)
+            # get pi name list from params
+            pi_names = params.listp('PI_NAMES', dtype=str)
+            # loop around pi names and set them to False
+            for pi_name in pi_names:
+                mask |= (ftable[piname_col] == pi_name)
+            # apply mask to table
+            ftable = ftable[mask]
+            # log blacklist
+            wargs = [' ,'.join(pi_names)]
+            WLOG(params, '', TextEntry('40-503-00029', args=wargs))
+            # deal with empty ftable
+            if len(ftable) == 0:
+                WLOG(params, 'warning', TextEntry('10-503-00015'))
                 # get response for how to continue (skip or exit)
                 response = prompt(params)
                 if response:
@@ -1347,7 +1606,7 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
             mask = ftable[night_col] == nightname
             ftable = Table(ftable[mask])
 
-        elif params['NIGHTNAME'] not in ['', 'None', None]:
+        if not drs_text.null_text(params['NIGHTNAME'], ['', 'All', 'None']):
             nightname = params['NIGHTNAME']
             # mask table by nightname
             mask = ftable[night_col] == nightname
@@ -1370,6 +1629,7 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
             ftable = _remove_engineering(params, ftable)
         # deal with filters
         filters = _get_filters(params, srecipe)
+
         # get fiber filter
         allowedfibers = srecipe.allowedfibers
         # get runs for this recipe
@@ -1473,6 +1733,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
         pp['COREUSED'] = number
         pp['CORETOT'] = cores
         pp['GROUP'] = group
+        pp['STATE'] = 'None'
         # ------------------------------------------------------------------
         # add drs group to keyword arguments
         pp['ARGS']['DRS_GROUP'] = group
@@ -1488,10 +1749,15 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             # log which core is being used
             WLOG(params, 'info', 'T' + wmsg, colour='magenta', wrap=False)
             # add default outputs
+            pp['PID'] = None
             pp['ERROR'] = []
             pp['WARNING'] = []
             pp['OUTPUTS'] = dict()
             pp['TIMING'] = None
+            pp['TRACEBACK'] = ''
+            pp['SUCCESS'] = False
+            pp['PASSED'] = False
+            pp['STATE'] = 'TEST'
             # flag finished
             finished = True
         # --------------------------------------------------------------
@@ -1502,11 +1768,14 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             WLOG(params, 'debug', emsg.format(priority))
             # deal with returns
             pp = dict()
+            pp['PID'] = None
             pp['ERROR'] = []
             pp['WARNING'] = []
             pp['OUTPUTS'] = dict()
             pp['TRACEBACK'] = ''
             pp['SUCCESS'] = False
+            pp['PASSED'] = False
+            pp['STATE'] = 'SKIPPED:EVENT'
             finished = False
         # --------------------------------------------------------------
         # deal with an event set -- skip
@@ -1528,6 +1797,10 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 pp['TRACEBACK'] = ''
                 pp['TIMING'] = 0
                 pp['FINISHED'] = True
+                pp['SUCCESS'] = False
+                pp['PID'] = None
+                pp['PASSED'] = False
+                pp['STATE'] = 'SKIPPED:PRERUN'
                 return_dict[priority] = pp
                 # deal with a master not passing
                 #   we cannot idely skip master files
@@ -1549,11 +1822,14 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 # keep only some parameters
                 llparams = ll_item['params']
                 llrecipe = ll_item['recipe']
-                pp['ERROR'] = copy.deepcopy(llparams['LOGGER_ERROR'])
-                pp['WARNING'] = copy.deepcopy(llparams['LOGGER_WARNING'])
-                pp['OUTPUTS'] = copy.deepcopy(llrecipe.output_files)
+                pp['PID'] = deepcopy(llparams.get('PID', 'None'))
+                pp['ERROR'] = deepcopy(llparams.get('LOGGER_ERROR', []))
+                pp['WARNING'] = deepcopy(llparams.get('LOGGER_WARNING', []))
+                pp['OUTPUTS'] = deepcopy(llrecipe.output_files)
                 pp['TRACEBACK'] = []
-                pp['SUCCESS'] = bool(ll_item['success'])
+                pp['SUCCESS'] = bool(ll_item.get('success', False))
+                pp['PASSED'] = bool(ll_item.get('passed', False))
+                pp['STATE'] = 'RETURN'
                 # delete ll_item
                 del llparams
                 del ll_item
@@ -1563,10 +1839,14 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             # Manage debug exit interrupt errors
             except drs_exceptions.DebugExit as _:
                 # deal with returns
+                pp['PID'] = None
                 pp['ERROR'] = []
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
                 pp['TRACEBACK'] = ''
+                pp['SUCCESS'] = False
+                pp['PASSED'] = False
+                pp['STATE'] = 'EXCEPTION:DEBUG'
                 # flag not finished
                 finished = False
                 # deal with setting event (if it is defined -- only defined
@@ -1577,10 +1857,14 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             # Manage Keyboard interrupt errors
             except KeyboardInterrupt:
                 # deal with returns
+                pp['PID'] = None
                 pp['ERROR'] = []
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
                 pp['TRACEBACK'] = ''
+                pp['SUCCESS'] = False
+                pp['PASSED'] = False
+                pp['STATE'] = 'EXCEPTION:KeyboardInterrupt'
                 # flag not finished
                 finished = False
                 # deal with setting event (if it is defined -- only defined
@@ -1594,9 +1878,13 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 for emsg in e.errormessage.split('\n'):
                     emsgs.append('\n' + emsg)
                 WLOG(params, 'warning', emsgs)
+                pp['PID'] = None
                 pp['ERROR'] = emsgs
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
+                pp['SUCCESS'] = False
+                pp['PASSED'] = False
+                pp['STATE'] = 'EXCEPTION:LogExit'
                 # expected error does not need traceback
                 pp['TRACEBACK'] = []
                 # flag not finished
@@ -1614,10 +1902,14 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 for emsg in str(e).split('\n'):
                     emsgs.append('\n' + emsg)
                 WLOG(params, 'warning', emsgs)
+                pp['PID'] = None
                 pp['ERROR'] = emsgs
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
+                pp['SUCCESS'] = False
                 pp['TRACEBACK'] = str(string_traceback)
+                pp['PASSED'] = False
+                pp['STATE'] = 'EXCEPTION:UNEXPECTED'
                 # flag not finished
                 finished = False
             # --------------------------------------------------------------
@@ -1633,10 +1925,14 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 for emsg in str(e).split('\n'):
                     emsgs.append('\n' + emsg)
                 WLOG(params, 'warning', emsgs)
+                pp['PID'] = None
                 pp['ERROR'] = emsgs
                 pp['WARNING'] = []
                 pp['OUTPUTS'] = dict()
                 pp['TRACEBACK'] = str(string_traceback)
+                pp['SUCCESS'] = False
+                pp['PASSED'] = False
+                pp['STATE'] = 'EXCEPTION:SystemExit'
                 # flag not finished
                 finished = False
             # --------------------------------------------------------------
@@ -1738,6 +2034,67 @@ def _multi_process1(params, recipe, runlist, cores, groupname=None):
 # =============================================================================
 # Define working functions
 # =============================================================================
+def _get_non_telluric_stars(params, table, tstars):
+    """
+    Takes a table and gets all objects that are not in tstars
+
+    :param params:
+    :param table:
+    :param tstars:
+    :return:
+    """
+    # add to debug log
+    WLOG(params, 'debug', TextEntry('90-503-00015'))
+    # deal with no tstars
+    if drs_text.null_text(tstars, ['None', '']):
+        tstars = []
+    # ----------------------------------------------------------------------
+    # lets narrow down our list
+    # ----------------------------------------------------------------------
+    # 1. keep only obj fp and obj dark files
+    dprtype = table['KW_DPRTYPE']
+    mask = (dprtype == 'OBJ_FP') | (dprtype == 'OBJ_DARK')
+    # 2. keep only obstype = OBJECT
+    mask &= table['KW_OBSTYPE'] == 'OBJECT'
+    # get all object names from all object columns
+    raw_objects = []
+    for col in table.colnames:
+        if col in OBJNAMECOLS:
+            raw_objects += list(table[col][mask])
+    # make a unique list of names
+    all_objects = np.unique(raw_objects)
+    # now find all those not in tstars
+    other_objects = []
+    # loop around all objects
+    for objname in all_objects:
+        # do not add telluric stars
+        if objname not in tstars:
+            other_objects.append(objname)
+    # add to debug log
+    WLOG(params, 'debug', TextEntry('90-503-00016', args=[len(other_objects)]))
+    # return other objects
+    return np.sort(other_objects)
+
+
+def _update_table_objnames(params, table):
+    """
+    Takes a table and forces updates to object name columns
+
+    :param params:
+    :param table:
+    :return:
+    """
+    # get pseudo constants
+    pconst = constants.pload(instrument=params['INSTRUMENT'])
+    # loop around columns
+    for col in table.colnames:
+        if col in OBJNAMECOLS:
+            # need to map values by new drs obj name
+            table[col] = list(map(pconst.DRS_OBJ_NAME, list(table[col])))
+    # return table
+    return table
+
+
 def _get_recipe_module(params, **kwargs):
     func_name = __NAME__ + '.get_recipe_module()'
     # log progress: loading recipe module files
@@ -1749,7 +2106,7 @@ def _get_recipe_module(params, **kwargs):
     core_path = pcheck(params, 'DRS_MOD_CORE_CONFIG', 'core_path', kwargs,
                        func_name)
     # deal with no instrument
-    if instrument == 'None' or instrument is None:
+    if drs_text.null_text(instrument, ['None', '']):
         ipath = core_path
         instrument = None
     else:
@@ -1789,6 +2146,8 @@ def _check_runtable(params, runtable, recipemod):
 def _get_filters(params, srecipe):
     # set up function name
     func_name = __NAME__ + '._get_filters()'
+    # get pseudo constatns
+    pconst = constants.pload(instrument=params['INSTRUMENT'])
     # set up filter storage
     filters = dict()
     # loop around recipe filters
@@ -1798,21 +2157,35 @@ def _get_filters(params, srecipe):
         # deal with list
         if isinstance(value, list):
             filters[key] = value
-        # if this is in params set this value
+        # if this is in params set this value - these are dealing with
+        #  object names
         elif (value in params) and (value in SPECIAL_LIST_KEYS):
             # get values from
             user_filter = params[value]
             # deal with unset value
-            if (user_filter is None) or (user_filter.upper() == 'NONE'):
+            slvalues = ['ALL', 'NONE']
+            if (user_filter is None) or (user_filter.upper() in slvalues):
                 if value == 'TELLURIC_TARGETS':
                     wlist, wfilename = telluric.get_whitelist(params)
-                    filters[key] = list(wlist)
+                    # note we need to update this list to match
+                    # the cleaning that is done in preprocessing
+                    cwlist = list(map(pconst.DRS_OBJ_NAME, wlist))
+                    # add cleaned obj list to filters
+                    filters[key] = list(cwlist)
                 else:
                     continue
             # else assume we have a special list that is a string list
             #   (i.e. SCIENCE_TARGETS = "target1, target2, target3"
             elif isinstance(user_filter, str):
-                filters[key] = _split_string_list(user_filter)
+                wlist =  _split_string_list(user_filter)
+                # note we need to update this list to match
+                # the cleaning that is done in preprocessing
+                cwlist = list(map(pconst.DRS_OBJ_NAME, wlist))
+                # add cleaned obj list to filters
+                filters[key] = list(cwlist)
+                if value == 'SCIENCE_TARGETS':
+                    # update science targets
+                    params.set('SCIENCE_TARGETS', value=', '.join(cwlist))
             else:
                 continue
         # else assume we have a straight string to look for (if it is a valid
@@ -1843,7 +2216,7 @@ def _get_cores(params):
         # get value from inputs
         cores = params['INPUTS']['CORES']
         # only update params if cores is not None
-        if cores not in ['', 'None', None]:
+        if not drs_text.null_text(cores, ['None', '']):
             try:
                 cores = int(cores)
             except ValueError as e:

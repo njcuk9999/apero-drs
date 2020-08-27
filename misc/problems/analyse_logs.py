@@ -104,7 +104,7 @@ if __name__ == "__main__":
     masterpath = os.path.join(WORKSPACE, MASTER_LOG_FILE)
     path = os.path.join(WORKSPACE, GROUP_DIR)
     print('Constructing list of files')
-    files = glob.glob('{0}/*{1}'.format(path, LOG_RECIPE))
+    files = np.sort(glob.glob('{0}/*{1}'.format(path, LOG_RECIPE)))
 
 
     masterlogfile = Log(masterpath)

@@ -135,6 +135,7 @@ class Text:
     def __repr__(self):
         return 'Text[{0},{1}]'.format(self.instrument, self.language)
 
+
 class TextDict(Text):
     def __init__(self, instrument, language):
         """
@@ -162,6 +163,7 @@ class TextDict(Text):
     def __repr__(self):
         return 'TextDict[{0},{1}]'.format(self.instrument, self.language)
 
+
 class HelpDict(Text):
     def __init__(self, instrument, language):
         Text.__init__(self, instrument, language)
@@ -177,6 +179,7 @@ class HelpDict(Text):
 
     def __repr__(self):
         return 'HelpDict[{0},{1}]'.format(self.instrument, self.language)
+
 
 class Entry:
     def __init__(self, key, args=None, kwargs=None):

@@ -79,6 +79,11 @@ def lsd_analysis_wrapper(params, pobjects, pprops, wprops, **kwargs):
                       func_name, mapf='list', dtype=float)
     min_depth = pcheck(params, 'POLAR_LSD_MIN_LINEDEPTH', 'min_depth', kwargs,
                        func_name)
+    min_lande = pcheck(params, 'POLAR_LSD_MIN_LANDE', 'min_lande', kwargs,
+                       func_name)
+    max_lande = pcheck(params, 'POLAR_LSD_MAX_LANDE', 'max_lande',kwargs,
+                       func_name)
+
     vinit = pcheck(params, 'POLAR_LSD_VINIT', 'vinit', kwargs, func_name)
     vfinal = pcheck(params, 'POLAR_LSD_VFINAL', 'vfinal', kwargs, func_name)
     normalize = pcheck(params, 'POLAR_LSD_NORM', 'normalize', kwargs, func_name)
@@ -113,10 +118,29 @@ def lsd_analysis_wrapper(params, pobjects, pprops, wprops, **kwargs):
     # deal with not running lsd
     if not do_lsd:
         oargs = [lprops, func_name, do_lsd, wl_lower, wl_upper, min_depth,
+                 min_lande, max_lande,
                  vinit, vfinal, normalize, nbinsize1, noverlap1, nsigclip1,
                  nwindow1, nmode1, nlfit1, npoints, nbinsize2, noverlap2,
                  nsigclip2, nwindow2, nmode2, nlfit2]
         return add_outputs(*oargs)
+    # ----------------------------------------------------------------------
+    # get lsd mask file name (if set)
+    lsdmask = kwargs.get('lsdmask', None)
+    if lsdmask is None:
+        lsdmask = params['INPUTS'].get('lsdmask', None)
+    # check that path exists
+    if lsdmask is not None:
+        # make sure path is absolute
+        lsdmask = os.path.abspath(lsdmask)
+        # check that lsd mask exists
+        if not os.path.exists(lsdmask):
+            # warn user we are not using LSD mask
+            # TODO: move to language DB
+            wmsg = 'LSD mask "{0}" does not exist - using defaults'
+            wargs = [lsdmask]
+            WLOG(params, 'warning', wmsg.format(*wargs))
+            # set lsdmask to None
+            lsdmask = None
     # ----------------------------------------------------------------------
     # get data from pprops
     pol = pprops['POL']
@@ -133,7 +157,7 @@ def lsd_analysis_wrapper(params, pobjects, pprops, wprops, **kwargs):
     temperature = pobj.infile.get_key('KW_OBJ_TEMP', dtype=float,
                                       required=False)
     # deal with no temperature
-    if temperature is None:
+    if temperature is None and lsdmask is None:
         eargs = [pobj.filename, params['KW_OBJTEMP'][0], func_name]
         WLOG(params, 'warning', TextEntry('09-021-00008', args=eargs))
         # return outputs
@@ -146,7 +170,7 @@ def lsd_analysis_wrapper(params, pobjects, pprops, wprops, **kwargs):
     # load the spectral lines
     # ----------------------------------------------------------------------
     out = load_lsd_spectral_lines(params, temperature, wl_lower, wl_upper,
-                                  min_depth)
+                                  min_depth, lsdmask)
     sp_filename, wavec, zn, depth, weight = out
 
     # ----------------------------------------------------------------------
@@ -220,7 +244,7 @@ def lsd_analysis_wrapper(params, pobjects, pprops, wprops, **kwargs):
 # Define worker functions
 # =============================================================================
 def load_lsd_spectral_lines(params, temperature, wl_lower, wl_upper,
-                            min_depth):
+                            min_depth, lsdmask=None):
     """
     Function to load spectral lines data for LSD analysis.
 
@@ -246,12 +270,15 @@ def load_lsd_spectral_lines(params, temperature, wl_lower, wl_upper,
     func_name = display_func(params, 'load_lsd_spectral_lines', __NAME__)
     # ----------------------------------------------------------------------
     # get temperature data
-    sp_data, sp_filename = drs_data.load_sp_mask_lsd(params, temperature)
-    # get data
-    wavec = sp_data['wavec']
-    znum = sp_data['znum']
-    depth = sp_data['depth']
-    lande = sp_data['lande']
+    sp_data, sp_filename = drs_data.load_sp_mask_lsd(params, temperature,
+                                                     filename=lsdmask)
+    # get flag for lines
+    flagf = np.array(sp_data['flagf'] == 1)
+    # get data and mask by flag
+    wavec = sp_data['wavec'][flagf]
+    znum = sp_data['znum'][flagf]
+    depth = sp_data['depth'][flagf]
+    lande = sp_data['lande'][flagf]
     # ----------------------------------------------------------------------
     # set up mask for wl ranges
     wl_mask = np.zeros(len(wavec), dtype=bool)
@@ -267,6 +294,14 @@ def load_lsd_spectral_lines(params, temperature, wl_lower, wl_upper,
     # PS. Below it applies a line depth mask, however the cut in line depth
     # should be done according to the SNR. This will be studied and implemented
     # later. E. Martioli, Aug 10 2018.
+
+    # create mask to cutoff lines with lande g-factor without sensible values
+    gmask = (lande > min_lande) & (lande < max_lande)
+    # apply mask to the data
+    wavec = wavec[gmask]
+    zn = zn[gmask]
+    depth = depth[gmask]
+    lande = lande[gmask]
 
     # create mask to cut lines with depth lower than POLAR_LSD_MIN_LINEDEPTH
     dmask = np.where(depth > min_depth)
@@ -609,6 +644,7 @@ def fit_gauss_lsd_profile(vels, zz):
 
 
 def add_outputs(lprops, func_name, do_lsd, wl_lower, wl_upper, min_depth,
+                min_lande, max_lande,
                 vinit, vfinal, normalize, nbinsize1, noverlap1, nsigclip1,
                 nwindow1, nmode1, nlfit1, npoints, nbinsize2, noverlap2,
                 nsigclip2, nwindow2, nmode2, nlfit2):
@@ -617,6 +653,8 @@ def add_outputs(lprops, func_name, do_lsd, wl_lower, wl_upper, min_depth,
     lprops['LSD_WL_LOWER'] = wl_lower
     lprops['LSD_WL_UPPER'] = wl_upper
     lprops['LSD_MIN_LINEDEPTH'] = min_depth
+    lprops['LSD_MIN_LANDE'] = min_lande
+    lprops['LSD_MAX_LANDE'] = max_lande
     lprops['LSD_VINIT'] = vinit
     lprops['LSD_VFINAL'] = vfinal
     lprops['LSD_NORM'] = normalize
@@ -635,7 +673,8 @@ def add_outputs(lprops, func_name, do_lsd, wl_lower, wl_upper, min_depth,
     lprops['LSD_NLFIT2'] = nlfit2
     # set sources
     keys = ['LSD_ANALYSIS', 'LSD_WL_LOWER', 'LSD_WL_UPPER',
-            'LSD_MIN_LINEDEPTH', 'LSD_VINIT', 'LSD_VFINAL',
+            'LSD_MIN_LINEDEPTH', 'LSD_MIN_LANDE', 'LSD_MAX_LANDE',
+            'LSD_VINIT', 'LSD_VFINAL',
             'LSD_NORM', 'LSD_NBIN1', 'LSD_NOVERLAP1',
             'LSD_NSIGCLIP1', 'LSD_NWINDOW1', 'LSD_NMODE1',
             'LSD_NLFIT1', 'LSD_NPOINTS', 'LSD_NBIN2',

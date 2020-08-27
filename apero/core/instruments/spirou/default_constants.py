@@ -130,6 +130,18 @@ OBJ_LIST_GAIA_EPOCH.value = 2015.5
 OBJ_LIST_GAIA_PLX_LIM = OBJ_LIST_GAIA_PLX_LIM.copy(__NAME__)
 OBJ_LIST_GAIA_PLX_LIM.value = 5
 
+# define the check FP percentile level
+CALIB_CHECK_FP_PERCENTILE = CALIB_CHECK_FP_PERCENTILE.copy(__NAME__)
+CALIB_CHECK_FP_PERCENTILE.value = 95
+
+# define the check FP threshold qc parameter
+CALIB_CHECK_FP_THRES = CALIB_CHECK_FP_THRES.copy(__NAME__)
+CALIB_CHECK_FP_THRES.value = 100
+
+# define the check FP center image size [px]
+CALIB_CHECK_FP_CENT_SIZE = CALIB_CHECK_FP_CENT_SIZE.copy(__NAME__)
+CALIB_CHECK_FP_CENT_SIZE.value = 100
+
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS
 # =============================================================================
@@ -841,6 +853,11 @@ LEAK_SAVE_UNCORRECTED.value = True
 # =============================================================================
 # CALIBRATION: EXTRACTION SETTINGS
 # =============================================================================
+#    Whether extraction code is done in quick look mode (do not use for
+#       final products)
+EXT_QUICK_LOOK = EXT_QUICK_LOOK.copy(__NAME__)
+EXT_QUICK_LOOK.value = False
+
 #    Start order of the extraction in cal_ff if None starts from 0
 EXT_START_ORDER = EXT_START_ORDER.copy(__NAME__)
 EXT_START_ORDER.value = None
@@ -886,7 +903,6 @@ EXT_S1D_INTYPE.value = 'E2DSFF'
 # Define which extraction file (recipe definitons) linked to EXT_S1D_INTYPE
 EXT_S1D_INFILE = EXT_S1D_INFILE.copy(__NAME__)
 EXT_S1D_INFILE.value = 'E2DSFF_FILE'
-
 
 # Define the start s1d wavelength (in nm)
 EXT_S1D_WAVESTART = EXT_S1D_WAVESTART.copy(__NAME__)
@@ -958,6 +974,10 @@ EXTRACT_S1D_PLOT_ZOOM2.value = '1050, 1285, 1670, 2100, 2500'
 # =============================================================================
 # CALIBRATION: THERMAL SETTINGS
 # =============================================================================
+# whether to apply the thermal correction to extractions
+THERMAL_CORRECT = THERMAL_CORRECT.copy(__NAME__)
+THERMAL_CORRECT.value = True
+
 # define whether to always extract thermals (i.e. overwrite existing files)
 THERMAL_ALWAYS_EXTRACT = THERMAL_ALWAYS_EXTRACT.copy(__NAME__)
 THERMAL_ALWAYS_EXTRACT.value = False
@@ -975,7 +995,7 @@ THERMAL_CORRETION_TYPE1.value = 'OBJ'
 # define DPRTYPEs we need to correct thermal background using
 #     method 2 (must be a string list separated by a comma)
 THERMAL_CORRETION_TYPE2 = THERMAL_CORRETION_TYPE2.copy(__NAME__)
-THERMAL_CORRETION_TYPE2.value = 'FP, HC, FLAT'
+THERMAL_CORRETION_TYPE2.value = 'FP, HC, HCONE, HCTWO, FLAT'
 
 # define the order to perform the thermal background scaling on
 THERMAL_ORDER = THERMAL_ORDER.copy(__NAME__)
@@ -1272,19 +1292,28 @@ WAVE_FP_PLOT_MULTI_INIT.value = 20
 WAVE_FP_PLOT_MULTI_NBO = WAVE_FP_PLOT_MULTI_NBO.copy(__NAME__)
 WAVE_FP_PLOT_MULTI_NBO.value = 5
 
+# define the dprtype for generating FPLINES (string list)
+WAVE_FP_DPRLIST = WAVE_FP_DPRLIST.copy(__NAME__)
+WAVE_FP_DPRLIST.value = 'OBJ_FP'
 
 # =============================================================================
 # CALIBRATION: WAVE LITTROW SETTINGS
 # =============================================================================
-#  Define the order to start the Littrow fit from
+#  Define the order to start the Littrow fit from for the HC wave solution
 WAVE_LITTROW_ORDER_INIT_1 = WAVE_LITTROW_ORDER_INIT_1.copy(__NAME__)
 WAVE_LITTROW_ORDER_INIT_1.value = 0
+
+#  Define the order to start the Littrow fit from for the FP wave solution
+# TODO: Note currently used
 WAVE_LITTROW_ORDER_INIT_2 = WAVE_LITTROW_ORDER_INIT_2.copy(__NAME__)
 WAVE_LITTROW_ORDER_INIT_2.value = 1
 
-#  Define the order to end the Littrow fit at
+#  Define the order to end the Littrow fit at for the HC wave solution
 WAVE_LITTROW_ORDER_FINAL_1 = WAVE_LITTROW_ORDER_FINAL_1.copy(__NAME__)
 WAVE_LITTROW_ORDER_FINAL_1.value = 47
+
+#  Define the order to end the Littrow fit at for the FP wave solution
+# TODO: Note currently used
 WAVE_LITTROW_ORDER_FINAL_2 = WAVE_LITTROW_ORDER_FINAL_2.copy(__NAME__)
 WAVE_LITTROW_ORDER_FINAL_2.value = 47
 
@@ -1293,15 +1322,21 @@ WAVE_LITTROW_ORDER_FINAL_2.value = 47
 WAVE_LITTROW_REMOVE_ORDERS = WAVE_LITTROW_REMOVE_ORDERS.copy(__NAME__)
 WAVE_LITTROW_REMOVE_ORDERS.value = ''
 
-#  Define the littrow cut steps
+#  Define the littrow cut steps for the HC wave solution
 WAVE_LITTROW_CUT_STEP_1 = WAVE_LITTROW_CUT_STEP_1.copy(__NAME__)
 WAVE_LITTROW_CUT_STEP_1.value = 250
+
+#  Define the littrow cut steps for the FP wave solution
 WAVE_LITTROW_CUT_STEP_2 = WAVE_LITTROW_CUT_STEP_2.copy(__NAME__)
 WAVE_LITTROW_CUT_STEP_2.value = 500
 
 #  Define the fit polynomial order for the Littrow fit (fit across the orders)
+#    for the HC wave solution
 WAVE_LITTROW_FIG_DEG_1 = WAVE_LITTROW_FIG_DEG_1.copy(__NAME__)
 WAVE_LITTROW_FIG_DEG_1.value = 8  # 5  # 4
+
+#  Define the fit polynomial order for the Littrow fit (fit across the orders)
+#    for the FP wave solution
 WAVE_LITTROW_FIG_DEG_2 = WAVE_LITTROW_FIG_DEG_2.copy(__NAME__)
 WAVE_LITTROW_FIG_DEG_2.value = 8  # 4
 
@@ -1394,6 +1429,7 @@ WAVE_CCF_DETNOISE = WAVE_CCF_DETNOISE.copy(__NAME__)
 WAVE_CCF_DETNOISE.value = 100.0
 
 #  The filename of the CCF Mask to use for the FP CCF
+#     Note this file is copied over if WAVE_CCF_UPDATE_MASK = True
 WAVE_CCF_MASK = WAVE_CCF_MASK.copy(__NAME__)
 # WAVE_CCF_MASK.value = 'fp.mas'
 WAVE_CCF_MASK.value = 'smart_fp_mask.mas'
@@ -1423,6 +1459,41 @@ WAVE_CCF_MASK_WIDTH.value = 1.7
 WAVE_CCF_N_ORD_MAX = WAVE_CCF_N_ORD_MAX.copy(__NAME__)
 WAVE_CCF_N_ORD_MAX.value = 48
 
+#  Define whether to regenerate the fp mask (WAVE_CCF_MASK) when we
+#      update the cavity width in the master wave solution recipe
+WAVE_CCF_UPDATE_MASK = WAVE_CCF_UPDATE_MASK.copy(__NAME__)
+WAVE_CCF_UPDATE_MASK.value = True
+
+# define the width of the lines in the smart mask [km/s]
+WAVE_CCF_SMART_MASK_WIDTH = WAVE_CCF_SMART_MASK_WIDTH.copy(__NAME__)
+WAVE_CCF_SMART_MASK_WIDTH.value = 1.0
+
+# define the minimum wavelength for the smart mask [nm]
+WAVE_CCF_SMART_MASK_MINLAM = WAVE_CCF_SMART_MASK_MINLAM.copy(__NAME__)
+WAVE_CCF_SMART_MASK_MINLAM.value = 950
+
+# define the maximum wavelength for the smart mask [nm]
+WAVE_CCF_SMART_MASK_MAXLAM = WAVE_CCF_SMART_MASK_MAXLAM.copy(__NAME__)
+WAVE_CCF_SMART_MASK_MAXLAM.value = 2500
+
+# define a trial minimum FP N value (should be lower than true
+#     minimum FP N value)
+WAVE_CCF_SMART_MASK_TRIAL_NMIN = WAVE_CCF_SMART_MASK_TRIAL_NMIN.copy(__NAME__)
+WAVE_CCF_SMART_MASK_TRIAL_NMIN.value = 9000
+
+# define a trial maximum FP N value (should be higher than true
+#     maximum FP N value)
+WAVE_CCF_SMART_MASK_TRIAL_NMAX = WAVE_CCF_SMART_MASK_TRIAL_NMAX.copy(__NAME__)
+WAVE_CCF_SMART_MASK_TRIAL_NMAX.value = 27000
+
+# define the converges parameter for dwave in smart mask generation
+WAVE_CCF_SMART_MASK_DWAVE_THRES = WAVE_CCF_SMART_MASK_DWAVE_THRES.copy(__NAME__)
+WAVE_CCF_SMART_MASK_DWAVE_THRES.value = 1.0e-9
+
+# define the quality control threshold from RV of CCF FP between master
+#    fiber and other fibers, above this limit fails QC [m/s]
+WAVE_CCF_RV_THRES_QC = WAVE_CCF_RV_THRES_QC.copy(__NAME__)
+WAVE_CCF_RV_THRES_QC.value = 0.5
 
 # =============================================================================
 # CALIBRATION: WAVE MASTER REFERENCE SETTINGS
@@ -1548,6 +1619,92 @@ TELLU_BLACKLIST_NAME = TELLU_BLACKLIST_NAME.copy(__NAME__)
 TELLU_BLACKLIST_NAME.value = 'tellu_blacklist.txt'
 
 # =============================================================================
+# OBJECT: TELLURIC PRE-CLEANING SETTINGS
+# =============================================================================
+# define whether we do pre-cleaning
+TELLUP_DO_PRECLEANING = TELLUP_DO_PRECLEANING.copy(__NAME__)
+TELLUP_DO_PRECLEANING.value = True
+
+# width in km/s for the ccf scan to determine the abso in pre-cleaning
+TELLUP_CCF_SCAN_RANGE = TELLUP_CCF_SCAN_RANGE.copy(__NAME__)
+TELLUP_CCF_SCAN_RANGE.value = 20
+
+# define whether to clean OH lines
+TELLUP_CLEAN_OH_LINES = TELLUP_CLEAN_OH_LINES.copy(__NAME__)
+TELLUP_CLEAN_OH_LINES.value = True
+
+# define the OH line pca file
+TELLUP_OHLINE_PCA_FILE = TELLUP_OHLINE_PCA_FILE.copy(__NAME__)
+TELLUP_OHLINE_PCA_FILE.value = 'sky_PCs.fits'
+
+# define the orders not to use in pre-cleaning fit (due to theraml
+# background)
+TELLUP_REMOVE_ORDS = TELLUP_REMOVE_ORDS.copy(__NAME__)
+TELLUP_REMOVE_ORDS.value = '47, 48'
+
+# define the minimum snr to accept orders for pre-cleaning fit
+TELLUP_SNR_MIN_THRES = TELLUP_SNR_MIN_THRES.copy(__NAME__)
+TELLUP_SNR_MIN_THRES.value = 10.0
+
+# define the telluric trans other abso CCF file
+TELLUP_OTHERS_CCF_FILE = TELLUP_OTHERS_CCF_FILE.copy(__NAME__)
+TELLUP_OTHERS_CCF_FILE.value = 'trans_others_abso_ccf.mas'
+
+# define the telluric trans water abso CCF file
+TELLUP_H2O_CCF_FILE = TELLUP_H2O_CCF_FILE.copy(__NAME__)
+TELLUP_H2O_CCF_FILE.value = 'trans_h2o_abso_ccf.mas'
+
+# define dexpo convergence threshold
+TELLUP_DEXPO_CONV_THRES = TELLUP_DEXPO_CONV_THRES.copy(__NAME__)
+TELLUP_DEXPO_CONV_THRES.value = 1.0e-4
+
+# define the maximum number of iterations to try to get dexpo
+# convergence
+TELLUP_DEXPO_MAX_ITR = TELLUP_DEXPO_MAX_ITR.copy(__NAME__)
+TELLUP_DEXPO_MAX_ITR.value = 20
+
+# define the kernel threshold in abso_expo
+TELLUP_ABSO_EXPO_KTHRES = TELLUP_ABSO_EXPO_KTHRES.copy(__NAME__)
+TELLUP_ABSO_EXPO_KTHRES.value = 1.0e-6
+
+# define the gaussian width of the kernel used in abso_expo
+TELLUP_ABSO_EXPO_KWID = TELLUP_ABSO_EXPO_KWID.copy(__NAME__)
+TELLUP_ABSO_EXPO_KWID.value = 4.95
+
+# define the gaussian exponent of the kernel used in abso_expo
+#   a value of 2 is gaussian, a value >2 is boxy
+TELLUP_ABSO_EXPO_KEXP = TELLUP_ABSO_EXPO_KEXP.copy(__NAME__)
+TELLUP_ABSO_EXPO_KEXP.value = 2.20
+
+# define the transmission threshold (in exponential form) for keeping
+#   valid transmission
+TELLUP_TRANS_THRES = TELLUP_TRANS_THRES.copy(__NAME__)
+TELLUP_TRANS_THRES.value = -1
+
+# define the threshold for discrepant transmission (in sigma)
+TELLUP_TRANS_SIGLIM = TELLUP_TRANS_SIGLIM.copy(__NAME__)
+TELLUP_TRANS_SIGLIM.value = 10
+
+# define whether to force airmass fit to header airmass value
+TELLUP_FORCE_AIRMASS = TELLUP_FORCE_AIRMASS.copy(__NAME__)
+TELLUP_FORCE_AIRMASS.value = False
+
+# set the typical water abso exponent. Compare to values in header for
+#    high-snr targets later
+TELLUP_D_WATER_ABSO = TELLUP_D_WATER_ABSO.copy(__NAME__)
+TELLUP_D_WATER_ABSO.value = 4.0
+
+# set the lower and upper bounds (String list) for the exponent of
+#  the other species of absorbers
+TELLUP_OTHER_BOUNDS = TELLUP_OTHER_BOUNDS.copy(__NAME__)
+TELLUP_OTHER_BOUNDS.value = '0.8, 3.0'
+
+# set the lower and upper bounds (string list) for the exponent of
+#  water absorber
+TELLUP_WATER_BOUNDS = TELLUP_WATER_BOUNDS.copy(__NAME__)
+TELLUP_WATER_BOUNDS.value = '0.1, 15'
+
+# =============================================================================
 # OBJECT: MAKE TELLURIC SETTINGS
 # =============================================================================
 # value below which the blaze in considered too low to be useful
@@ -1565,16 +1722,7 @@ TELLU_ABSORBERS.value = 'combined, h2o, o3, n2o, o2, co2, ch4'
 
 # define the default convolution width [in pixels]
 MKTELLU_DEFAULT_CONV_WIDTH = MKTELLU_DEFAULT_CONV_WIDTH.copy(__NAME__)
-MKTELLU_DEFAULT_CONV_WIDTH.value = 900
-
-# define the finer convolution width [in pixels]
-MKTELLU_FINER_CONV_WIDTH = MKTELLU_FINER_CONV_WIDTH.copy(__NAME__)
-MKTELLU_FINER_CONV_WIDTH.value = 100
-
-# define which orders are clean enough of tellurics to use the finer
-#     convolution width (should be a string list separated by commas)
-MKTELLU_CLEAN_ORDERS = MKTELLU_CLEAN_ORDERS.copy(__NAME__)
-MKTELLU_CLEAN_ORDERS.value = '2, 3, 5, 6, 7, 8, 9, 14, 15, 19, 20, 28, 29, 30, 31, 32, 33, 34, 35, 43, 44'
+MKTELLU_DEFAULT_CONV_WIDTH.value = 100
 
 # median-filter the template. we know that stellar features
 #    are very broad. this avoids having spurious noise in our
@@ -1582,24 +1730,15 @@ MKTELLU_CLEAN_ORDERS.value = '2, 3, 5, 6, 7, 8, 9, 14, 15, 19, 20, 28, 29, 30, 3
 MKTELLU_TEMP_MED_FILT = MKTELLU_TEMP_MED_FILT.copy(__NAME__)
 MKTELLU_TEMP_MED_FILT.value = 15
 
-# threshold in absorbance where we will stop iterating the absorption
-#     model fit
-MKTELLU_DPARAMS_THRES = MKTELLU_DPARAMS_THRES.copy(__NAME__)
-MKTELLU_DPARAMS_THRES.value = 0.001
+# Define the orders to plot (not too many)
+#    values should be a string list separated by commas
+MKTELLU_PLOT_ORDER_NUMS = MKTELLU_PLOT_ORDER_NUMS.copy(__NAME__)
+MKTELLU_PLOT_ORDER_NUMS.value = '19, 26, 35'
 
-# max number of iterations, normally converges in about 12 iterations
-MKTELLU_MAX_ITER = MKTELLU_MAX_ITER.copy(__NAME__)
-MKTELLU_MAX_ITER.value = 50
-
-# minimum transmission required for use of a given pixel in the TAPAS
-#    and SED fitting
-MKTELLU_THRES_TRANSFIT = MKTELLU_THRES_TRANSFIT.copy(__NAME__)
-MKTELLU_THRES_TRANSFIT.value = 0.3
-
-# Defines the bad pixels if the spectrum is larger than this value.
-#    These values are likely an OH line or a cosmic ray
-MKTELLU_TRANS_FIT_UPPER_BAD = MKTELLU_TRANS_FIT_UPPER_BAD.copy(__NAME__)
-MKTELLU_TRANS_FIT_UPPER_BAD.value = 1.1
+#   Define the order to use for SNR check when accepting tellu files
+#      to the telluDB
+MKTELLU_QC_SNR_ORDER = MKTELLU_QC_SNR_ORDER.copy(__NAME__)
+MKTELLU_QC_SNR_ORDER.value = 33
 
 # Defines the minimum allowed value for the recovered water vapor optical
 #    depth (should not be able 1)
@@ -1611,63 +1750,15 @@ MKTELLU_TRANS_MIN_WATERCOL.value = 0.2
 MKTELLU_TRANS_MAX_WATERCOL = MKTELLU_TRANS_MAX_WATERCOL.copy(__NAME__)
 MKTELLU_TRANS_MAX_WATERCOL.value = 99
 
-# Defines the minimum number of good points required to normalise the
-#    spectrum, if less than this we don't normalise the spectrum by its
-#    median
-MKTELLU_TRANS_MIN_NUM_GOOD = MKTELLU_TRANS_MIN_NUM_GOOD.copy(__NAME__)
-MKTELLU_TRANS_MIN_NUM_GOOD.value = 100
+# minimum transmission required for use of a given pixel in the TAPAS
+#    and SED fitting
+MKTELLU_THRES_TRANSFIT = MKTELLU_THRES_TRANSFIT.copy(__NAME__)
+MKTELLU_THRES_TRANSFIT.value = 0.3
 
-# Defines the percentile used to gauge which transmission points should
-#    be used to median (above this percentile is used to median)
-MKTELLU_TRANS_TAU_PERCENTILE = MKTELLU_TRANS_TAU_PERCENTILE.copy(__NAME__)
-MKTELLU_TRANS_TAU_PERCENTILE.value = 95
-
-# sigma-clipping of the residuals of the difference between the
-# spectrum divided by the fitted TAPAS absorption and the
-# best guess of the SED
-MKTELLU_TRANS_SIGMA_CLIP = MKTELLU_TRANS_SIGMA_CLIP.copy(__NAME__)
-MKTELLU_TRANS_SIGMA_CLIP.value = 20.0
-
-# median-filter the trans data measured in pixels
-MKTELLU_TRANS_TEMPLATE_MEDFILT = MKTELLU_TRANS_TEMPLATE_MEDFILT.copy(__NAME__)
-MKTELLU_TRANS_TEMPLATE_MEDFILT.value = 31
-
-# Define the threshold for "small" values that do not add to the weighting
-MKTELLU_SMALL_WEIGHTING_ERROR = MKTELLU_SMALL_WEIGHTING_ERROR.copy(__NAME__)
-MKTELLU_SMALL_WEIGHTING_ERROR.value = 0.01
-
-# Define the orders to plot (not too many)
-#    values should be a string list separated by commas
-MKTELLU_PLOT_ORDER_NUMS = MKTELLU_PLOT_ORDER_NUMS.copy(__NAME__)
-MKTELLU_PLOT_ORDER_NUMS.value = '19, 26, 35'
-
-# Set an upper limit for the allowed line-of-sight optical depth of water
-MKTELLU_TAU_WATER_ULIMIT = MKTELLU_TAU_WATER_ULIMIT.copy(__NAME__)
-MKTELLU_TAU_WATER_ULIMIT.value = 99
-
-# set a lower and upper limit for the allowed line-of-sight optical depth
-#    for other absorbers (upper limit equivalent to airmass limit)
-# line-of-sight optical depth for other absorbers cannot be less than one
-#      (that's zenith) keep the limit at 0.2 just so that the value gets
-#      propagated to header and leaves open the possibility that during
-#      the convergence of the algorithm, values go slightly below 1.0
-MKTELLU_TAU_OTHER_LLIMIT = MKTELLU_TAU_OTHER_LLIMIT.copy(__NAME__)
-MKTELLU_TAU_OTHER_LLIMIT.value = 0.2
-
-# line-of-sight optical depth for other absorbers cannot be greater than 5
-#       that would be an airmass of 5 and SPIRou cannot observe there
-MKTELLU_TAU_OTHER_ULIMIT = MKTELLU_TAU_OTHER_ULIMIT.copy(__NAME__)
-MKTELLU_TAU_OTHER_ULIMIT.value = 5.0
-
-# bad values and small values are set to this value (as a lower limit to
-#   avoid dividing by small numbers or zero
-MKTELLU_SMALL_LIMIT = MKTELLU_SMALL_LIMIT.copy(__NAME__)
-MKTELLU_SMALL_LIMIT.value = 1.0e-9
-
-#   Define the order to use for SNR check when accepting tellu files
-#      to the telluDB
-MKTELLU_QC_SNR_ORDER = MKTELLU_QC_SNR_ORDER.copy(__NAME__)
-MKTELLU_QC_SNR_ORDER.value = 33
+# Defines the bad pixels if the spectrum is larger than this value.
+#    These values are likely an OH line or a cosmic ray
+MKTELLU_TRANS_FIT_UPPER_BAD = MKTELLU_TRANS_FIT_UPPER_BAD.copy(__NAME__)
+MKTELLU_TRANS_FIT_UPPER_BAD.value = 1.1
 
 #  Define the minimum SNR for order "QC_TELLU_SNR_ORDER" that will be
 #      accepted to the telluDB
@@ -1678,22 +1769,28 @@ MKTELLU_QC_SNR_MIN.value = 100
 MKTELLU_QC_AIRMASS_DIFF = MKTELLU_QC_AIRMASS_DIFF.copy(__NAME__)
 MKTELLU_QC_AIRMASS_DIFF.value = 0.3
 
-# Define the MKO H-band limit limit [nm]
-#    from http://www.ifa.hawaii.edu/~tokunaga/MKO-NIR_filter_set.html
-MKTELLU_HBAND_LOWER = MKTELLU_HBAND_LOWER.copy(__NAME__)
-MKTELLU_HBAND_LOWER.value = 1490
-
-# Define the MKO H-band upper limit [nm]
-#    from http://www.ifa.hawaii.edu/~tokunaga/MKO-NIR_filter_set.html
-MKTELLU_HBAND_UPPER = MKTELLU_HBAND_UPPER.copy(__NAME__)
-MKTELLU_HBAND_UPPER.value = 1780
-
 # =============================================================================
 # OBJECT: FIT TELLURIC SETTINGS
 # =============================================================================
+#   Define the order to use for SNR check when accepting tellu files
+#      to the telluDB
+FTELLU_QC_SNR_ORDER = FTELLU_QC_SNR_ORDER.copy(__NAME__)
+FTELLU_QC_SNR_ORDER.value = 33
+
+#  Define the minimum SNR for order "QC_TELLU_SNR_ORDER" that will be
+#      accepted to the telluDB
+FTELLU_QC_SNR_MIN = MKTELLU_QC_SNR_MIN.copy(__NAME__)
+FTELLU_QC_SNR_MIN.value = 15
+
 # The number of principle components to use in PCA fit
 FTELLU_NUM_PRINCIPLE_COMP = FTELLU_NUM_PRINCIPLE_COMP.copy(__NAME__)
 FTELLU_NUM_PRINCIPLE_COMP.value = 5
+
+# The number of transmission files to use in the PCA fit (use this number of
+#    trans files closest in expo_h20 and expo_water
+FTELLU_NUM_TRANS = FTELLU_NUM_TRANS.copy(__NAME__)
+# TODO: put back to 50 after test
+FTELLU_NUM_TRANS.value = 20
 
 # Define whether to add the first derivative and broadening factor to the
 #     principal components this allows a variable resolution and velocity
@@ -1759,6 +1856,10 @@ MKTEMPLATE_FILETYPE.value = 'TELLU_OBJ'
 # the fiber required for input template files
 MKTEMPLATE_FIBER_TYPE = MKTEMPLATE_FIBER_TYPE.copy(__NAME__)
 MKTEMPLATE_FIBER_TYPE.value = 'AB'
+
+# the source of the input files (either "disk" or "telludb")
+MKTEMPLATE_FILESOURCE = MKTEMPLATE_FILESOURCE.copy(__NAME__)
+MKTEMPLATE_FILESOURCE.value = 'telludb'
 
 # the order to use for signal to noise cut requirement
 MKTEMPLATE_SNR_ORDER = MKTEMPLATE_SNR_ORDER.copy(__NAME__)
@@ -1904,14 +2005,6 @@ POLAR_VALID_STOKES.value = 'V, Q, U'
 #         - Difference
 POLAR_METHOD = POLAR_METHOD.copy(__NAME__)
 POLAR_METHOD.value = 'Ratio'
-
-#  Define the polarimetry continuum bin size (for plotting)
-POLAR_CONT_BINSIZE = POLAR_CONT_BINSIZE.copy(__NAME__)
-POLAR_CONT_BINSIZE.value = 1000
-
-#  Define the polarimetry continuum overlap size (for plotting)
-POLAR_CONT_OVERLAP = POLAR_CONT_OVERLAP.copy(__NAME__)
-POLAR_CONT_OVERLAP.value = 0
 
 #  Define the telluric mask for calculation of continnum lower limits
 #    (string list)
@@ -2214,6 +2307,14 @@ PLOT_WAVENIGHT_ITERPLOT.value = True
 PLOT_WAVENIGHT_HISTPLOT = PLOT_WAVENIGHT_HISTPLOT.copy(__NAME__)
 PLOT_WAVENIGHT_HISTPLOT.value = True
 
+# turn on the telluric pre-cleaning ccf debug plot
+PLOT_TELLUP_WAVE_TRANS = PLOT_TELLUP_WAVE_TRANS.copy(__NAME__)
+PLOT_TELLUP_WAVE_TRANS.value = True
+
+# turn on the telluric pre-cleaning result debug plot
+PLOT_TELLUP_ABSO_SPEC = PLOT_TELLUP_ABSO_SPEC.copy(__NAME__)
+PLOT_TELLUP_ABSO_SPEC.value = True
+
 # turn on the make tellu wave flux debug plot (in loop)
 PLOT_MKTELLU_WAVE_FLUX1 = PLOT_MKTELLU_WAVE_FLUX1.copy(__NAME__)
 PLOT_MKTELLU_WAVE_FLUX1.value = False
@@ -2248,7 +2349,7 @@ PLOT_FTELLU_WAVE_SHIFT2.value = True
 
 # turn on the fit tellu reconstructed absorption debug plot (in loop)
 PLOT_FTELLU_RECON_ABSO1 = PLOT_FTELLU_RECON_ABSO1.copy(__NAME__)
-PLOT_FTELLU_RECON_ABSO1.value = False
+PLOT_FTELLU_RECON_ABSO1.value = True
 
 # turn on the fit tellu reconstructed absorption debug plot (single order)
 PLOT_FTELLU_RECON_ABSO2 = PLOT_FTELLU_RECON_ABSO2.copy(__NAME__)
@@ -2297,6 +2398,10 @@ REPROCESS_RUN_KEY.value = 'ID'
 REPROCESS_NIGHTCOL = REPROCESS_NIGHTCOL.copy(__NAME__)
 REPROCESS_NIGHTCOL.value = '__NIGHTNAME'
 
+# Define the pi name column name for raw file table
+REPROCESS_PINAMECOL = REPROCESS_PINAMECOL.copy(__NAME__)
+REPROCESS_PINAMECOL.value = 'KW_PI_NAME'
+
 # Define the absolute file column name for raw file table
 REPROCESS_ABSFILECOL = REPROCESS_ABSFILECOL.copy(__NAME__)
 REPROCESS_ABSFILECOL.value = '__ABSFILE'
@@ -2337,7 +2442,6 @@ EXPMETER_MAX_LAMBDA.value = 1823.1
 # Define exposure meter telluric threshold (minimum tapas transmission)
 EXPMETER_TELLU_THRES = EXPMETER_TELLU_THRES.copy(__NAME__)
 EXPMETER_TELLU_THRES.value = 0.95
-
 
 # =============================================================================
 #  End of configuration file

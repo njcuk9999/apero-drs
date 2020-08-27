@@ -50,6 +50,8 @@ pcheck = core.pcheck
 # Define user functions
 # =============================================================================
 def check_files(params, infile):
+    # get pseudo constants
+    pconst = constants.pload(instrument=params['INSTRUMENT'])
     # get infile DPRTYPE and OBJNAME
     dprtype = infile.get_key('KW_DPRTYPE', dtype=str, required=False)
     objname = infile.get_key('KW_OBJNAME', dtype=str, required=False)
@@ -61,23 +63,29 @@ def check_files(params, infile):
         objname = 'None'
     # clean (capitalize and remove white spaces)
     dprtype = clean_strings(dprtype)
-    objname = clean_strings(objname)
+    objname = pconst.DRS_OBJ_NAME(objname)
     # get inputs
-    objname_inputs = params['INPUTS']['OBJNAME'].split(',')
     dprtype_inputs = params['INPUTS']['DPRTYPE'].split(',')
+    objname_inputs = params['INPUTS']['OBJNAME'].split(',')
     # clean (capitalize and remove white spaces)
-    objname_inputs = clean_strings(objname_inputs)
     dprtype_inputs = clean_strings(dprtype_inputs)
+    objname_inputs = list(map(pconst.DRS_OBJ_NAME, objname_inputs))
+    # ----------------------------------------------------------------------
+    # log checking file info
+    wargs = [dprtype, objname]
+    WLOG(params, 'info', TextEntry('40-016-00032', args=wargs))
     # ----------------------------------------------------------------------
     # storage of outputs
     skip = False
     skip_conditions = [[], [], []]
     # ----------------------------------------------------------------------
+    # convert objname_inputs to char array
+    objarray = np.char.array(objname_inputs).upper()
     # deal with objname filter
-    if 'NONE' in objname_inputs:
+    if 'NONE' in objarray:
         skip = skip or False
     # else check for objname in
-    elif objname in objname_inputs:
+    elif objname.upper() in objarray:
         skip = skip or False
     # else we skip
     else:
@@ -422,6 +430,68 @@ def load_calib_file(params, key=None, inheader=None, filename=None,
             return images[-1], abspaths[-1]
         else:
             return images, abspaths
+
+
+def check_fp(params, image, **kwargs):
+    """
+    Checks that a 2D image containing FP is valid
+    :param params:
+    :param image:
+    :return:
+    """
+    # set the function name
+    func_name = __NAME__ + '.check_fp()'
+    # get properties from params
+    percentile = pcheck(params, 'CALIB_CHECK_FP_PERCENTILE', 'percentile',
+                        kwargs, func_name)
+    fp_qc = pcheck(params, 'CALIB_CHECK_FP_THRES', 'fp_qc', kwargs, func_name)
+    centersize = pcheck(params, 'CALIB_CHECK_FP_CENT_SIZE', 'centersize',
+                        kwargs, func_name)
+    num_ref = pcheck(params, 'PP_NUM_REF_TOP', 'num_ref', kwargs, func_name)
+    # get the image size
+    nbypix, nbxpix = image.shape
+    # find the 95th percentile of the center of the image
+    xlower, xupper = (nbxpix // 2) - centersize, (nbxpix // 2) + centersize
+    ylower, yupper = (nbypix // 2) - centersize, (nbypix // 2) + centersize
+    # get the center percentile of image
+    cent = np.nanpercentile(image[xlower:xupper, ylower:yupper], percentile)
+    # work out the residuals in the reference pixels
+    residuals = np.abs(image[:num_ref]) - np.nanmedian(image[:num_ref])
+    # get the quality control on fp
+    passed = (cent / np.nanmedian(residuals)) > fp_qc
+    # return passed
+    return passed
+
+
+def check_fp_files(params, fpfiles):
+    """
+    Check a set of fpfiles for valid (2D) fp data
+
+    :param params:
+    :param fpfiles:
+    :return:
+    """
+    # set the function name
+    func_name = __NAME__ + '.check_fp_files()'
+    # storage for valid fp files
+    newfpfiles, fpfilenames = [], []
+    # loop around fp files
+    for fpfile in fpfiles:
+        # add to list
+        fpfilenames.append(fpfile.filename)
+        # check if fp is good
+        if check_fp(params, fpfile.data):
+            newfpfiles.append(fpfile)
+        else:
+            # log a warning that file removed
+            wargs = [fpfile.filename]
+            WLOG(params, 'warning', TextEntry('10-001-00009', args=wargs))
+    # deal with having no files left
+    if len(newfpfiles) == 0:
+        # log: No FP files passed 2D quality control. \n\t Function = {0}
+        WLOG(params, 'error', TextEntry('09-000-00010', args=[func_name]))
+    # return new fp files
+    return newfpfiles
 
 
 # =============================================================================

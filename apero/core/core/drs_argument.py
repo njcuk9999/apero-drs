@@ -18,7 +18,7 @@ from collections import OrderedDict
 
 from apero.core.instruments.default import pseudo_const
 from apero.core import constants
-from apero.lang import drs_text
+from apero import lang
 from apero.core.core import drs_log
 
 # =============================================================================
@@ -44,9 +44,9 @@ ParamDict = constants.ParamDict
 ConfigError = constants.ConfigError
 ArgumentError = constants.ArgumentError
 # Get the text types
-TextEntry = drs_text.TextEntry
-TextDict = drs_text.TextDict
-HelpText = drs_text.HelpDict
+TextEntry = lang.drs_text.TextEntry
+TextDict = lang.drs_text.TextDict
+HelpText = lang.drs_text.HelpDict
 # define display strings for types
 STRTYPE = OrderedDict()
 STRTYPE[int] = 'int'
@@ -859,6 +859,108 @@ class _ActivateDebug(DrsAction):
             value = list(map(self._set_debug, values))
         else:
             value = self._set_debug(values)
+        # Add the attribute
+        setattr(namespace, self.dest, value)
+
+
+class _ForceInputDir(DrsAction):
+    def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, '_ForceInputDir')
+        # define recipe as None (overwritten in __call__)
+        self.recipe = None
+        # force super initialisation
+        DrsAction.__init__(self, *args, **kwargs)
+
+    def _force_input_dir(self, values, recipe=None):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_force_input_dir', __NAME__,
+                         '_ForceInputDir')
+        # get params
+        params = self.recipe.drs_params
+        # deal with using without call
+        if self.recipe is None:
+            self.recipe = recipe
+        if values is None:
+            return None
+        # test value
+        # noinspection PyPep8,PyBroadException
+        try:
+            # only take first value (if a list)
+            if type(values) != str and hasattr(values, '__len__'):
+                values = values[0]
+            # try to make an string
+            value = str(values)
+            # now update constants file
+            # spirouConfig.Constants.UPDATE_PP(self.recipe.drs_params)
+            # return value
+            return value
+        except:
+            eargs = [self.dest, values]
+            WLOG(params, 'error', TextEntry('09-001-00020', args=eargs))
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # get drs parameters
+        self.recipe = parser.recipe
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         '_ForceInputDir')
+        # display listing
+        if type(values) == list:
+            value = list(map(self._force_input_dir, values))[0]
+        else:
+            value = self._force_input_dir(values)
+        # Add the attribute
+        setattr(namespace, self.dest, value)
+
+
+class _ForceOutputDir(DrsAction):
+    def __init__(self, *args, **kwargs):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, '_ForceOutputDir')
+        # define recipe as None (overwritten in __call__)
+        self.recipe = None
+        # force super initialisation
+        DrsAction.__init__(self, *args, **kwargs)
+
+    def _force_output_dir(self, values, recipe=None):
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_force_output_dir', __NAME__,
+                         '_ForceOutputDir')
+        # get params
+        params = self.recipe.drs_params
+        # deal with using without call
+        if self.recipe is None:
+            self.recipe = recipe
+        if values is None:
+            return None
+        # test value
+        # noinspection PyPep8,PyBroadException
+        try:
+            # only take first value (if a list)
+            if type(values) != str and hasattr(values, '__len__'):
+                values = values[0]
+            # try to make an string
+            value = str(values)
+            # now update constants file
+            # spirouConfig.Constants.UPDATE_PP(self.recipe.drs_params)
+            # return value
+            return value
+        except:
+            eargs = [self.dest, values]
+            WLOG(params, 'error', TextEntry('09-001-00020', args=eargs))
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # get drs parameters
+        self.recipe = parser.recipe
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         '_ForceOutputDir')
+        # display listing
+        if type(values) == list:
+            value = list(map(self._force_output_dir, values))[0]
+        else:
+            value = self._force_output_dir(values)
         # Add the attribute
         setattr(namespace, self.dest, value)
 
@@ -1785,7 +1887,7 @@ def _get_file_list(limit, path, ext=None, recursive=False,
     levelsep = '\t'
     level = ''
     # walk through directories
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(path, followlinks=True):
         if len(file_list) > limit:
             file_list.append(level + '...')
             return file_list
@@ -1829,7 +1931,7 @@ def _get_file_list(limit, path, ext=None, recursive=False,
     if len(file_list) == 0:
         file_list = ['No valid files found.']
     # return file_list
-    return file_list, limit_reached
+    return np.sort(file_list), limit_reached
 
 
 def get_uncommon_path(path1, path2):
@@ -1861,7 +1963,7 @@ def get_uncommon_path(path1, path2):
 # =============================================================================
 # Make functions
 # =============================================================================
-def make_listing(params):
+def make_listing(params, htext):
     """
     Make a custom special argument: Sets whether to display listing files
     up to DRS_MAX_IO_DISPLAY_LIMIT in number.
@@ -1876,8 +1978,6 @@ def make_listing(params):
     _ = display_func(params, 'make_listing', __NAME__)
     # define the listing limit (used in listing help
     limit = params['DRS_MAX_IO_DISPLAY_LIMIT']
-    # get the help text dictionary
-    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -1894,7 +1994,7 @@ def make_listing(params):
     return props
 
 
-def make_alllisting(params):
+def make_alllisting(params, htext):
     """
     Make a custom special argument: Sets whether to display all listing files
 
@@ -1906,8 +2006,6 @@ def make_alllisting(params):
     """
     # set function name
     _ = display_func(params, 'make_alllisting', __NAME__)
-    # get the help text dictionary
-    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -1924,7 +2022,7 @@ def make_alllisting(params):
     return props
 
 
-def make_debug(params):
+def make_debug(params, htext):
     """
     Make a custom special argument: Sets which debug mode to be in
 
@@ -1936,8 +2034,6 @@ def make_debug(params):
     """
     # set function name
     _ = display_func(params, 'make_debug', __NAME__)
-    # get the help text dictionary
-    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -1954,7 +2050,47 @@ def make_debug(params):
     return props
 
 
-def make_version(params):
+def set_inputdir(params, htext):
+    # set function name
+    _ = display_func(params, 'set_inputdir', __NAME__)
+    # set up an output storage dictionary
+    props = OrderedDict()
+    # set the argument name
+    props['name'] = '--force_indir'
+    # set any argument alternative names
+    props['altnames'] = []
+    # set the argument action function
+    props['action'] = _ForceInputDir
+    # set the number of argument to expect
+    props['nargs'] = 1
+    # set the help message
+    # TODO: move the language db
+    props['help'] = 'Force the default input directory (Normally set by recipe)'
+    # return the argument dictionary
+    return props
+
+
+def set_outputdir(params, htext):
+    # set function name
+    _ = display_func(params, 'set_outputdir', __NAME__)
+    # set up an output storage dictionary
+    props = OrderedDict()
+    # set the argument name
+    props['name'] = '--force_outdir'
+    # set any argument alternative names
+    props['altnames'] = []
+    # set the argument action function
+    props['action'] = _ForceOutputDir
+    # set the number of argument to expect
+    props['nargs'] = 1
+    # set the help message
+    # TODO: move the language db
+    props['help'] = 'Force the default output directory (Normally set by recipe)'
+    # return the argument dictionary
+    return props
+
+
+def make_version(params, htext):
     """
     Make a custom special argument: Whether to display drs version information
 
@@ -1966,8 +2102,6 @@ def make_version(params):
     """
     # set function name
     _ = display_func(params, 'make_version', __NAME__)
-    # get the help text dictionary
-    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -1984,7 +2118,7 @@ def make_version(params):
     return props
 
 
-def make_info(params):
+def make_info(params, htext):
     """
     Make a custom special argument: Whether to display recipe information
 
@@ -1996,8 +2130,6 @@ def make_info(params):
     """
     # set function name
     _ = display_func(params, 'make_info', __NAME__)
-    # get the help text dictionary
-    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -2014,7 +2146,7 @@ def make_info(params):
     return props
 
 
-def set_program(params):
+def set_program(params, htext):
     """
     Make a custom special argument: Set the program name
 
@@ -2026,8 +2158,6 @@ def set_program(params):
     """
     # set function name
     _ = display_func(params, 'set_program', __NAME__)
-    # get the help text dictionary
-    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -2044,7 +2174,7 @@ def set_program(params):
     return props
 
 
-def set_ipython_return(params):
+def set_ipython_return(params, htext):
     """
     Make a custom special argument: Set the use of ipython return after
     script ends
@@ -2057,8 +2187,6 @@ def set_ipython_return(params):
     """
     # set function name
     _ = display_func(params, 'set_ipython_return', __NAME__)
-    # get the help text dictionary
-    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -2075,7 +2203,7 @@ def set_ipython_return(params):
     return props
 
 
-def breakpoints(params):
+def breakpoints(params, htext):
     """
     Make a custom special argument: Set the use of break_point
 
@@ -2087,8 +2215,6 @@ def breakpoints(params):
     """
     # set function name
     _ = display_func(params, 'breakpoints', __NAME__)
-    # get the help text dictionary
-    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -2105,7 +2231,7 @@ def breakpoints(params):
     return props
 
 
-def is_master(params):
+def is_master(params, htext):
     """
     Make a custom special argument: Set the use of break_point
 
@@ -2117,8 +2243,6 @@ def is_master(params):
     """
     # set function name
     _ = display_func(params, 'is_master', __NAME__)
-    # get the help text dictionary
-    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -2135,7 +2259,7 @@ def is_master(params):
     return props
 
 
-def make_breakfunc(params):
+def make_breakfunc(params, htext):
     """
     Make a custom special argument: Set a break function
 
@@ -2147,8 +2271,6 @@ def make_breakfunc(params):
     """
     # set function name
     _ = display_func(params, 'make_breakfunc', __NAME__)
-    # get the help text dictionary
-    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name
@@ -2165,7 +2287,7 @@ def make_breakfunc(params):
     return props
 
 
-def set_quiet(params):
+def set_quiet(params, htext):
     """
     Make a custom special argument: Set the quiet mode
 
@@ -2177,8 +2299,6 @@ def set_quiet(params):
     """
     # set function name (cannot break here --> no access to params)
     _ = display_func(params, 'set_quiet', __NAME__)
-    # get the help text dictionary
-    htext = drs_text.HelpDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set up an output storage dictionary
     props = OrderedDict()
     # set the argument name

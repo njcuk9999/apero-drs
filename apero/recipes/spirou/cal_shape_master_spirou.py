@@ -106,6 +106,8 @@ def __main__(recipe, params):
     # get files
     hcfiles = params['INPUTS']['HCFILES'][1]
     fpfiles = params['INPUTS']['FPFILES'][1]
+    # must check fp files pass quality control
+    fpfiles = general.check_fp_files(params, fpfiles)
     # get list of filenames (for output)
     rawhcfiles, rawfpfiles = [], []
     for infile in hcfiles:
@@ -117,9 +119,9 @@ def __main__(recipe, params):
     fiber = pcheck(params, 'SHAPE_MASTER_FIBER', func=mainname)
 
     # get combined hcfile
-    hcfile = drs_fits.combine(params, hcfiles, math='median')
+    hcfile = drs_fits.combine(params, recipe, hcfiles, math='median')
     # get combined fpfile
-    fpfile = drs_fits.combine(params, fpfiles, math='median')
+    fpfile = drs_fits.combine(params, recipe, fpfiles, math='median')
 
     # get the headers (should be the header of the first file in each)
     hcheader = hcfile.header
@@ -164,9 +166,9 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # check file type
     filetype = fpprops['DPRTYPE']
-    if filetype not in params['ALLOWED_FP_TYPES']:
+    if filetype not in params.listp('ALLOWED_FP_TYPES', dtype=str):
         emsg = TextEntry('01-001-00020', args=[filetype, mainname])
-        for allowedtype in params['ALLOWED_FP_TYPES']:
+        for allowedtype in params.listp('ALLOWED_FP_TYPES', dtype=str):
             emsg += '\n\t - "{0}"'.format(allowedtype)
         WLOG(params, 'error', emsg)
     # get all "filetype" filenames
@@ -202,13 +204,13 @@ def __main__(recipe, params):
         # match files by date and median to produce master fp
         # ----------------------------------------------------------------------
         cargs = [params, recipe, fpprops['DPRTYPE'], fp_table, fpimage]
-        fpcube, fp_table = shape.construct_master_fp(*cargs)
-
+        # fpcube, fp_table = shape.construct_master_fp(*cargs)
+        master_fp, fp_table = shape.construct_master_fp(*cargs)
         # log process (master construction complete + number of groups added)
-        wargs = [len(fpcube)]
-        WLOG(params, 'info', TextEntry('40-014-00011', args=wargs))
+        # wargs = [len(fpcube)]
+        # WLOG(params, 'info', TextEntry('40-014-00011', args=wargs))
         # sum the cube to make fp data
-        master_fp = np.sum(fpcube, axis=0)
+        # master_fp = np.sum(fpcube, axis=0)
 
     # ----------------------------------------------------------------------
     # Calculate dx shape map

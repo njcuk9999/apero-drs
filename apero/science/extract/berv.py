@@ -141,6 +141,13 @@ def get_berv(params, infile=None, header=None, props=None, log=True,
     # ----------------------------------------------------------------------
     bprops = get_times(params, bprops, infile, header)
     # ----------------------------------------------------------------------
+    # debug final parameters to use
+    # log: Final berv input parameters:
+    WLOG(params, 'debug', TextEntry('90-016-00002'))
+    for key in bprops:
+        bstrval = str(bprops[key])[:50]
+        WLOG(params, 'debug', '\t{0:20s}{1}'.format(key, bstrval))
+    # ----------------------------------------------------------------------
     # try to run barcorrpy
     if kind == 'barycorrpy':
         try:
@@ -482,8 +489,8 @@ def get_outputs(params, infile, header, props, kwargs):
                 found = True
         # get the value of the key from header
         elif (kind == 'header') and (header is not None) and (value is None):
-            if hkey in infile.header:
-                value = infile.header[hkey]
+            if hkey in header:
+                value = header[hkey]
                 datatype = params.instances[outkey].datatype
                 found = True
         # get the value from props
@@ -605,12 +612,15 @@ def get_header_input_props(params, gprops, rparams, inputs, infile, header,
     gprops['objname'], s_obj = get_raw_param(params, 'objname',
                                              inputs['objname'], infile, header,
                                              props, kwargs)
-    gprops.set_sources(['gaiaid', 'objname'], [s_id, s_obj])
+    # store the original header object name here (may be required later)
+    gprops['hobjname'] = str(gprops['objname'])
+    # set the sources
+    gprops.set_sources(['gaiaid', 'objname', 'hobjname'], [s_id, s_obj, s_obj])
     # ----------------------------------------------------------------------
     # loop around each parameter to get into the format we require
     for param in rparams.keys():
         # skip ra and dec
-        if param in ['ra', 'dec', 'gaiaid', 'objname']:
+        if param in ['ra', 'dec', 'gaiaid', 'objname', 'hobjname']:
             continue
         # ------------------------------------------------------------------
         # get require parameter instance
@@ -717,36 +727,41 @@ def get_input_props_gaia(params, gprops, **kwargs):
                      paramdict=gprops)
     objname = pcheck(params, 'objname', 'objname', kwargs, func_name,
                      paramdict=gprops)
+    hdr_objname = pcheck(params, 'hobjname', 'objname', kwargs, func_name,
+                         paramdict=gprops)
     ra = pcheck(params, 'ra', 'ra', kwargs, func_name, paramdict=gprops)
     dec = pcheck(params, 'dec', 'dec', kwargs, func_name, paramdict=gprops)
     # -----------------------------------------------------------------------
     # case 1: we have gaia id
     # -----------------------------------------------------------------------
     if gaia_id is not None and gaia_id != 'None':
-        props, fail = crossmatch.get_params(params, gprops, gaiaid=gaia_id,
-                                            objname=objname, ra=ra, dec=dec)
+        pprops, fail = crossmatch.get_params(params, gprops, gaiaid=gaia_id,
+                                             objname=objname, ra=ra, dec=dec,
+                                             hdr_objname=hdr_objname)
         # deal with failure
         if not fail:
             WLOG(params, '', TextEntry('40-016-00016', args=['gaiaid']))
-            return props
+            return pprops
     # -----------------------------------------------------------------------
     # case 2: we have objname
     # -----------------------------------------------------------------------
     if gprops['objname'] is not None and gprops['objname'] != 'None':
-        props, fail = crossmatch.get_params(params, gprops, objname=objname,
-                                            ra=ra, dec=dec)
+        pprops, fail = crossmatch.get_params(params, gprops, objname=objname,
+                                             ra=ra, dec=dec,
+                                             hdr_objname=hdr_objname)
         # deal with failure
         if not fail:
             WLOG(params, '', TextEntry('40-016-00016', args=['objname']))
-            return props
+            return pprops
     # -----------------------------------------------------------------------
     # case 3: use ra and dec
     # -----------------------------------------------------------------------
-    props, fail = crossmatch.get_params(params, gprops, ra=ra, dec=dec)
+    pprops, fail = crossmatch.get_params(params, gprops, ra=ra, dec=dec,
+                                         hdr_objname=hdr_objname)
     # deal with failure
     if not fail:
         WLOG(params, '', TextEntry('40-016-00016', args=['ra/dec']))
-        return props
+        return pprops
     else:
         WLOG(params, '', TextEntry('40-016-00016', args=['header']))
         # return gprops

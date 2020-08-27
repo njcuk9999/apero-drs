@@ -1,59 +1,78 @@
-# Update Note Summary - Version 0.6.082
+# Update Note Summary - Version 0.6.130
 
+Date: 2020-08-27
 
-master wavelength solution upgrade
+## Updates since Version 0.6.129
 
-    - AB wave solution worked out as before
-    - A, B and C wave solutions worked out using cavity width from AB and fp lines
-    - add EXTRACT_S1D_WEIGHT plot to allowed plots
-    - add CCF of fibers AB, A, B and C
-    - fit FPs with a periodic function instead of gaussian
-    - update the cavity polynomial file
-    - use smart FP mask (from cavity width)
-    - update figures
-    - update the UNe line list (calculated from drs wave sol.)
+- cal_preprocessing
+    - all OBJECTs now upper case
 
-wave night solution upgrade
-    - change way wave night is calculated
-    - A, B and C wave solutions no longer recalculate dcavity
-    - add EXTRACT_S1D_WEIGHT plot to allowed plots
-    - add hc lines and fp line outputs (like master wave)
-    - update figures
+- cal_extract
+    - added a quick look which only produces new files
+        {odocode}_pp_e2ds_AB.fits --> {odocode}_pp_q2ds_AB.fits
+        {odocode}_pp_e2dsff_AB.fits --> {odocode}_pp_q2dsff_AB.fits
+    - normal cal_extract:
+        - 291.809 s
+    - cal_extract --quicklook=True:
+        - 118.873 s
+    - cal_extract --quicklook=True --fiber=AB:
+        - 58.165 s
 
-CCF
-    - save wave file used for RV, wave time and time difference between wave solution and observation
-    - correct parameters going into CCF_fp file
-    - use smart FP mask (from cavity width)
+- cal_shape_master
+    - correct ALLOWED_FP_TYPES (didn't break but would on change of input)
 
-Other
-    - change preprocessing hotpix mask (now made from dark_dark mask)
-    - added exposure meter code
-    - replace _run _seq for recipe sequences (avoid confusion with run.ini files)
-    - locale module now lang module (conflict with native python module)
-    - added QC to shape master
-    - now allowed to define an fpmaster argument for shape master (if we already have one)
-    - changed the way header is copied (avoid weird python rounding)
-    - update TAP+ link for GAIA crossmatch (now https)
-    - pep8 adjustments
-    - change PIL --> Pillow in requirements.txt
-    - sort files in dark_master and shape_master by time before reading
-    - add MKL environmental variables to setup files
+- cal_wave_master
+    - added header keys to wave res map (NBO, NREGIONS)
+    - updated gaussian param header valeus with names
 
+- obj_mk_template
+    - copied arrays to close fits files (to stop many fits being open at same
+      time while creating template)
 
-Still to do:
+- obj_mk_tellu / obj_fit_tellu
+    - apply bounds to magic grid for pre-cleaning abso_expo vector
+    - when saving pre-clean only mask to exp(-2) not exp(-1)
+    - filter trans files by expo H2O and expo OTHERS and use 50 closest to
+      fit pca
 
-    - add CCF to QC of wave night
-    - put A and B wavesolutions in e2ds_A and e2ds_B files (currently still AB)
-    - add CCF output for wave solutions (CCF per order like in CCF recipe)
-    - add fplines for all extracted FPs (C fiber in cal_extract)
-    - bisector for CCF (new extension in CCF outputs?)
-    - object database (in preprocessing?)
+- Tools
+    - update spirou/nirps tool names to follow conventions
+    - add first attempt at cal_drift from wave sol CCF
+        - located in apero-drs/tools/spirou
+
+## Still to do:
     - polar code update
+    - Implement database instead of text/fits files for databases
+        - index.fits, log.fits, object database, calibDB, telluDB
+    - Blacklist odometer codes
+    - Move data to user files + download / host not from github
+    - move all fits-images to start in extension 1 (not 0)
+    - add option to set template for mk_tellu and fit_tellu from args
+    - create script to get custom config (larger list of constants)
+    - add plot modes 3 and 4
+        - `plot== 3` (all debug plots shown) and `plot==4` (all debug plots saved) modes
+    - make code to check constants/keywords usage (function usage)
+    - separate warning messages into codes 10-000-00000 and 20-000-00000
+        - codes 20-000-00000 for trigger to catch
+    - go through all summary plots and decide which plots, write figure captions, improve plots, write quality control description, decide which header keys to print
+    - add all functions doc strings + display func for all functions
+    - make classes picklable and then switch from multiprocessing.pool to spawn
+    - NIRPS implementation of cal_wave onwards
     - EA masks from templates
-    - outputs like cfht
-    - summary plot review
-    - commenting doc strings/constants and documentation
 
-Known Issues:
+## To do later:
+    - implement persistence correction
+    - CCF wrapper using weighting/sanitise/bisector etc?
+    - propagate uncertainies / flags for NaNs
+    - proper SNR calculation
+    - integrate CFHT outputs input drs
+    - write documentation
+    - write paper
 
-    - cannot run code inside reduced or tmp directory (overwrites paths and cannot find files)
+## Known issues:
+    - Locking of files means using >5 cores slows down a lot (fix with database)
+        - if locking is big problem use only 1 core
+    - Weird residuals left in order_profile after dark_flat (loc)
+    - Calibrations switch over at different points from PM to AM calibrations
+        - should really only use "older"
+    - NIRPS breaks in shape

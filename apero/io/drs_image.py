@@ -9,13 +9,17 @@ Created on 2019-03-21 at 14:28
 """
 import numpy as np
 import warnings
+import os
+from typing import List, Union, Tuple, Callable
 
 from apero import core
 from apero.core import constants
+from apero.core import drs_startup
 from apero.core import math as mp
 from apero.core.core import drs_log
 from apero import lang
-
+from apero.io import drs_fits
+from apero.io import drs_path
 
 # =============================================================================
 # Define variables
@@ -83,8 +87,8 @@ def resize(params, image, x=None, y=None, xlow=0, xhigh=None,
     :param ylow: int, y pixel value (x, y) in the bottom left corner,
                  default = 0
     :param yhigh: int, y pixel value (x, y) in the top right corner,
-                 if None default is image.shape(0)
-    :param getshape: bool, if True returns shape of newimage with newimage
+                 if None default is image.shape[0]
+
 
     if getshape = True
     :return newimage: numpy array (2D), the new resized image
@@ -143,7 +147,7 @@ def flip_image(params, image, fliprows=True, flipcols=True):
     """
     Flips the image in the x and/or the y direction
 
-    :param p: ParamDict, the constants parameter dictionary
+    :param params: ParamDict, the constants parameter dictionary
     :param image: numpy array (2D), the image
     :param fliprows: bool, if True reverses row order (axis = 0)
     :param flipcols: bool, if True reverses column order (axis = 1)
@@ -173,11 +177,11 @@ def convert_to_e(params, image, **kwargs):
     """
     Converts image from ADU/s into e-
 
-    :param image: numpy array (2D), the image
-    :param p: parameter dictionary, ParamDict containing constants
+    :param params: parameter dictionary, ParamDict containing constants
             Must contain at least: (if exptime is None)
                 exptime: float, the exposure time of the image
                 gain: float, the gain of the image
+    :param image: numpy array (2D), the image
 
     :keyword gain: float, if p is None, used as the gain to multiple the
                    image by
@@ -200,11 +204,10 @@ def convert_to_adu(params, image, **kwargs):
     """
     Converts image from ADU/s into ADU
 
-    :param image:
-
-    :param p: parameter dictionary, ParamDict containing constants
+    :param params: parameter dictionary, ParamDict containing constants
         Must contain at least: (if exptime is None)
             exptime: float, the exposure time of the image
+    :param image:
 
     :keyword exptime: float, if p is None, used as the exposure time the image
                     is multiplied by
@@ -306,8 +309,8 @@ def clean_hotpix(image, badpix):
             # fill in the values for box and keep
             # box3d[:, ix + 1, iy + 1] = image[x + ix, y + iy]
             # keep3d[:, ix + 1, iy + 1] = ~badpix[x + ix, y + iy]
-            box3d[:,ix+1,iy+1] = image[(x+ix) % sz[0], (y+iy) % sz[1]]
-            keep3d[:,ix+1,iy+1] = ~badpix[(x+ix)% sz[0], (y+iy) % sz[1]]
+            box3d[:, ix + 1, iy + 1] = image[(x + ix) % sz[0], (y + iy) % sz[1]]
+            keep3d[:, ix + 1, iy + 1] = ~badpix[(x + ix) % sz[0], (y + iy) % sz[1]]
 
     # find valid neighbours
     nvalid = np.sum(np.sum(keep3d, axis=1), axis=1)
@@ -354,7 +357,8 @@ def clean_hotpix(image, badpix):
     # return the cleaned image
     return image1
 
-def get_fiber_types(params, **kwargs):
+
+def get_fiber_types(params: ParamDict, **kwargs):
     func_name = __NAME__ + '.get_fiber_type()'
     # get parameter list from params/kwargs
     validfibertypes = params.listp('FIBER_TYPES', dtype=str)
@@ -387,6 +391,232 @@ def get_fiber_types(params, **kwargs):
     else:
         eargs = [fiber, ', '.join(validfibertypes), func_name]
         WLOG(params, 'error', TextEntry('09-001-00030', args=eargs))
+
+
+def npy_filelist(params: ParamDict, name: str, index: int,
+                 array: np.ndarray, filenames: Union[List[str], None],
+                 subdir: Union[str, None] = None,
+                 outdir: Union[str, None] = None) -> Tuple[List[str], str]:
+    # deal with no filenames
+    if filenames is None:
+        filenames = []
+    # deal with not outdir
+    if outdir is None:
+        outdir = ''
+    # deal with having no subdir
+    if subdir is None:
+        # get unix char code
+        unixtime, humantime, rval = drs_startup.unix_char_code()
+        # create subdir
+        subdir = 'LIM-{0:020d}-{1}'.format(int(unixtime), rval)
+    # construct file name
+    filename = '{0}_{1:06d}.npy'.format(name, index)
+    filepath = os.path.join(outdir, subdir)
+    # create subdir
+    if not os.path.exists(filepath):
+        WLOG(params, '', 'Creating directory: {0}'.format(filepath))
+        os.mkdir(filepath)
+    # construct absolute path to file
+    abspath = os.path.join(filepath, filename)
+    # save to disk
+    np.save(abspath, array)
+    # add to list
+    filenames.append(abspath)
+    # return appended filenames list
+    return filenames, subdir
+
+
+def npy_fileclean(params: ParamDict, filenames: Union[List[str], None],
+                  subdir: Union[str, None],
+                  outdir: Union[str, None] = None):
+    # deal with not outdir
+    if outdir is None:
+        outdir = ''
+    # remove files
+    for filename in filenames:
+        WLOG(params, '', 'Removing file: {0}'.format(filename))
+        os.remove(filename)
+    # construct file dir
+    filepath = os.path.join(outdir, subdir)
+    # ----------------------------------------------------------------------
+    # delete the sub directory
+    while os.path.exists(filepath):
+        WLOG(params, '', 'Removing directory: {0}'.format(filepath))
+        os.removedirs(filepath)
+
+
+def large_image_combine(params: ParamDict, files: List[str],
+                        math: str = 'median', fmt='fits', nmax: int = 2e7,
+                        subdir: Union[str, None] = None,
+                        outdir: Union[str, None] = None) -> np.ndarray:
+    """
+    Pass a large list of images and combine in a memory efficient
+    way. (math = 'median', 'mean', 'sum')
+
+    Set the nmax parameter to the maximum number of pixels to load into memory
+    Memory requirements = 64 bits * nmax
+
+    i.e. nmax = 2e7 ~ 1.28 Gb
+
+    :param params: the constant parameter dictionary
+    :param files: list of strings, the files to open
+    :param math: the mathematical operation to combine (median, mean, sum)
+    :param nmax: int, the maximum number of pixels to open at any given time
+                 note assuming 64 bits per pixel this gives a direct memory
+                 constraint - 2e7 pixels ~ 1.28 Gb
+    :param subdir: None or string, the sub-directory to store temporary
+                   products in - should be unique
+    :param outdir: the output directory for intermediate products (if unset
+                   uses the current directory)
+
+    :type params: ParamDict
+    :type files: List[str]
+    :type nmax: int
+    :type subdir: Union[str, None]
+    :type outdir: Union[str, None]
+
+    :return: numpy 2D array: the nan-median image of all files
+    :rtype: np.ndarray
+    """
+    # set function name
+    func_name = __NAME__ + '.large_image_combine()'
+    # deal with math mode
+    if math == 'median':
+        cfunc = mp.nanmedian
+    elif math == 'mean':
+        cfunc = mp.nanmean
+    elif math == 'sum':
+        cfunc = mp.nansum
+    else:
+        emsg = 'Math error: {0} is invalid must be: {1}'
+        eargs = [math, '"median" or "mean" or "sum"']
+        WLOG(params, 'error', emsg.format(*eargs))
+        cfunc = None
+    # deal with not outdir
+    if outdir is None:
+        outdir = ''
+    # deal with having no subdir
+    if subdir is None:
+        # get unix char code
+        unixtime, humantime, rval = drs_startup.unix_char_code()
+        # create subdir
+        subdir = 'LIM-{0:020d}-{1}'.format(int(unixtime), rval)
+    # construct file dir
+    subfilepath = os.path.join(outdir, subdir)
+    # create subdir
+    if not os.path.exists(subfilepath):
+        os.mkdir(subfilepath)
+    # get the number of files
+    numfiles = len(files)
+    # ----------------------------------------------------------------------
+    # load first image
+    if fmt == 'fits':
+        image0 = drs_fits.readfits(params, files[0])
+    elif fmt == 'npy':
+        image0 = drs_path.numpy_load(files[0])
+    else:
+        # fmt="{0}" is incorrect
+        eargs = [fmt, 'fits, npy', func_name]
+        WLOG(params, 'error', TextEntry('00-001-00044', args=eargs))
+        image0 = None
+    # get the shape of the image
+    mdim1, mdim2 = np.array(image0.shape).astype(int)
+    del image0
+    # number of ribbons considering dimensions
+    nribbons = int(np.ceil((mdim1 * mdim2 * numfiles / nmax)))
+    # find pixels in each ribbon
+    bins = np.array(np.arange(0, nribbons) / (nribbons - 1)).astype(int)
+    bins = bins * mdim1
+    # ----------------------------------------------------------------------
+    # loop around files and save ribbons as numpy arrays
+    for f_it, filename in enumerate(files):
+        # log message so we know how far through we are
+        # Processing file {0} / {1}
+        wargs = [f_it + 1, numfiles]
+        WLOG(params, '', TextEntry('40-000-00012', args=wargs))
+        # ------------------------------------------------------------------
+        # load file
+        if fmt == 'fits':
+            image = drs_fits.readfits(params, filename)
+        elif fmt == 'npy':
+            image = drs_path.numpy_load(filename)
+        else:
+            # fmt="{0}" is incorrect
+            eargs = [fmt, 'fits, npy', func_name]
+            WLOG(params, 'error', TextEntry('00-001-00044', args=eargs))
+            image = None
+        # get the shape of the image
+        dim1, dim2 = np.array(image.shape).astype(int)
+        # construct clean version of filename
+        clean_filename = filename.replace('.', '_')
+        # ------------------------------------------------------------------
+        # check that dimensions are the same as first file
+        if dim1 != mdim1 or dim2 != mdim2:
+            # log error
+            # Files are not the same shape
+            eargs = [mdim1, mdim2, f_it, dim1, dim2, files[0], files[1],
+                     func_name]
+            WLOG(params, 'error', TextEntry('00-001-00045', args=eargs))
+        # ------------------------------------------------------------------
+        # extract and save ribbons
+        for b_it in range(len(bins) - 1):
+            # get ribbon from file
+            ribbon = np.array(image[bins[b_it]: bins[b_it + 1]])
+            # construct ribbon nmae
+            ribbon_name = '{0}_ribbon{1:06d}.npy'.format(clean_filename, b_it)
+            ribbon_path = os.path.join(subfilepath, ribbon_name)
+            # save ribbon to file
+            # log: Saving file: {0}
+            WLOG(params, '', TextEntry('40-000-00013', args=[ribbon_path]))
+            np.save(ribbon_path, ribbon)
+            # delete ribbon
+            del ribbon
+        # delete image from memory
+        del image
+    # ----------------------------------------------------------------------
+    # storage for output image
+    out_image = np.zeros((mdim1, mdim2))
+    # loop through the files of the same ribbon
+    for b_it in range(len(bins) - 1):
+        # log message so we know how far through we are
+        # Combining ribbon {0} / {1}
+        wargs = [b_it + 1, len(bins)]
+        WLOG(params, '', TextEntry('40-000-00014', args=wargs))
+        # store box
+        box = []
+        # ------------------------------------------------------------------
+        # loop around each ribbon and add to the box
+        for f_it, filename in enumerate(files):
+            # construct ribbon nmae
+            clean_filename = filename.replace('.', '_')
+            ribbon_name = '{0}_ribbon{1:06d}.npy'.format(clean_filename, b_it)
+            ribbon_path = os.path.join(subfilepath, ribbon_name)
+            # load ribbon
+            # log: Loading file: {0}
+            WLOG(params, '', TextEntry('40-000-00015', args=[ribbon_path]))
+            ribbon = np.load(ribbon_path)
+            # delete this ribbon from disk
+            # log: Removing file: {0}
+            WLOG(params, '', TextEntry('40-000-00016', args=[ribbon_path]))
+            os.remove(ribbon_path)
+            # append to box
+            box.append(np.array(ribbon))
+            # delete ribbon
+            del ribbon
+        # ------------------------------------------------------------------
+        # convert box to a numpy array
+        box = np.array(box)
+        # fill the full image
+        out_image[bins[b_it]: bins[b_it + 1]] = cfunc(box, axis=0)
+        # delete the box
+        del box
+    # ----------------------------------------------------------------------
+    # delete the sub directory
+    if os.path.exists(subfilepath):
+        os.removedirs(subfilepath)
+    # ----------------------------------------------------------------------
+    # return the out image
+    return out_image
 
 
 # =============================================================================

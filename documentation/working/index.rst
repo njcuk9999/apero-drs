@@ -8,19 +8,4 @@ APERO Documentation
 ******************************************
 
 ===========================================
-Latest version: 0.6.082   dev/developer_guide.rst
-
-===========================================
-Other
-===========================================
-
-*  :ref:`genindex`
-*  :ref:`modindex`
-*  :ref:`search`
-
-.. toctree::
-   :maxdepth: 1
-
-   misc/pythoninstallation.rst
-   misc/glossary.rst
-   misc/changelog.rst
+Latest version: 0.6.130

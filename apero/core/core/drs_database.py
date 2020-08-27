@@ -266,7 +266,7 @@ class Database():
             entries = self.data[mask1]
             r_entries = self.rdata[mask1]
         # if mode is None then we just want all data from this entry
-        if mode is None:
+        if mode in [None, 'None', '', 'ALL']:
             # sort by time
             timesort = np.argsort(r_entries['rtime'])
             # return the first n_entries (after timesorting)
@@ -438,12 +438,24 @@ def get_header_time(params, database, header):
 # =============================================================================
 def get_key_from_db(params, key, database, header, n_ent=1, required=True,
                     mode=None, **kwargs):
+    """
+
+    :param params:
+    :param key:
+    :param database:
+    :param header:
+    :param n_ent:
+    :param required:
+    :param mode: should be None, 'TELLU_DB_MATCH', 'CALIB_DB_MATCH', 'DB_MATCH'
+                 or 'ALL'
+    :param kwargs:
+    :return:
+    """
     # set function name
     func_name = display_func(params, 'get_key_from_db', __NAME__)
     # ----------------------------------------------------------------------
     # deal with no mode set (assume from calibDB)
     if mode is None:
-
         if database.dbname == 'telluric':
             mode = pcheck(params, 'TELLU_DB_MATCH', 'mode', kwargs, func_name)
         elif database.dbname == 'calibration':
@@ -455,7 +467,10 @@ def get_key_from_db(params, key, database, header, n_ent=1, required=True,
     WLOG(params, 'debug', TextEntry('90-002-00002', args=dargs))
     # ----------------------------------------------------------------------
     # get time from header
-    header_time = _get_time(params, database.dbname, header=header)
+    if mode != 'ALL':
+        header_time = _get_time(params, database.dbname, header=header)
+    else:
+        header_time = None
     # get the correct entry from database
     gkwargs = dict(mode=mode, usetime=header_time, n_entries=n_ent,
                    required=required)
@@ -519,32 +534,58 @@ def get_db_file(params, abspath, ext=0, fmt='fits', kind='image',
                 get_image=True, get_header=False):
     # set function name
     func_name = display_func(params, 'get_db_file', __NAME__)
+
+    # don't lock if we aren't getting image or header
+    if not get_image and not get_header:
+        return None, None
+
     # ------------------------------------------------------------------
-    # deal with npy files
-    if abspath.endswith('.npy'):
-        image = drs_path.numpy_load(abspath)
-        return image, None
+    # define a synchoronized lock for indexing (so multiple instances do not
+    #  run at the same time)
+    lockfile = os.path.basename(abspath)
+    # start a lock
+    lock = drs_lock.Lock(params, lockfile)
     # ------------------------------------------------------------------
-    # get db fits file
-    if (not get_image) or (not abspath.endswith('.fits')):
-        image = None
-    elif kind == 'image':
-        image = drs_fits.readfits(params, abspath, ext=ext)
-    elif kind == 'table':
-        image = drs_table.read_table(params, abspath, fmt=fmt)
-    else:
-        # raise error is kind is incorrect
-        eargs = [' or '.join(['image', 'table']), func_name]
-        WLOG(params, 'error', TextEntry('00-001-00038', args=eargs))
-        image = None
+    # make locked read function
+    @drs_lock.synchronized(lock, params['PID'])
+    def locked_db():
+        # ------------------------------------------------------------------
+        # deal with npy files
+        if abspath.endswith('.npy'):
+            image = drs_path.numpy_load(abspath)
+            return image, None
+        # ------------------------------------------------------------------
+        # get db fits file
+        if (not get_image) or (not abspath.endswith('.fits')):
+            image = None
+        elif kind == 'image':
+            image = drs_fits.readfits(params, abspath, ext=ext)
+        elif kind == 'table':
+            image = drs_table.read_table(params, abspath, fmt=fmt)
+        else:
+            # raise error is kind is incorrect
+            eargs = [' or '.join(['image', 'table']), func_name]
+            WLOG(params, 'error', TextEntry('00-001-00038', args=eargs))
+            image = None
+        # ------------------------------------------------------------------
+        # get header if required (and a fits file)
+        if get_header and abspath.endswith('.fits'):
+            header = drs_fits.read_header(params, abspath, ext=ext)
+        else:
+            header = None
+        # return the image and header
+        return image, header
     # ------------------------------------------------------------------
-    # get header if required (and a fits file)
-    if get_header and abspath.endswith('.fits'):
-        header = drs_fits.read_header(params, abspath, ext=ext)
-    else:
-        header = None
-    # return the image and header
-    return image, header
+    # try to run locked read function
+    try:
+        return locked_db()
+    except KeyboardInterrupt as e:
+        lock.reset()
+        raise e
+    except Exception as e:
+        # reset lock
+        lock.reset()
+        raise e
 
 
 # =============================================================================

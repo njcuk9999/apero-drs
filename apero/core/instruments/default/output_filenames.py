@@ -12,7 +12,7 @@ Created on 2019-03-21 at 18:35
 import os
 
 from apero.core import constants
-from apero import core
+from apero.core import drs_log
 from apero import lang
 
 
@@ -29,7 +29,7 @@ __author__ = Constants['AUTHORS']
 __date__ = Constants['DRS_DATE']
 __release__ = Constants['DRS_RELEASE']
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get the text types
 TextEntry = lang.drs_text.TextEntry
 
@@ -178,10 +178,12 @@ def set_file(params, **kwargs):
         WLOG(params, 'error', TextEntry('00-001-00018', args=[func_name]))
     # get filename from outfile if None
     if filename is None:
-        filename = outfile.filename
-    # deal with no file name set
+        filename = outfile.basename
+    # deal with no file name set and filename must be a basename (no path)
     if filename is None:
         WLOG(params, 'error', TextEntry('00-001-00041', args=[func_name]))
+    else:
+        filename = os.path.basename(filename)
     # get suffix
     suffix = kwargs.get('suffix', None)
     # get path
@@ -214,13 +216,14 @@ def set_file(params, **kwargs):
     # return absolute path
     return abspath
 
-
 # =============================================================================
 # Define user functions
 # =============================================================================
 def get_outfilename(params, infilename, prefix=None, suffix=None,
                     inext=None, outext=None, fiber=None):
     func_name = __NAME__ + '.get_outfilename()'
+    # make surte infilename is a basename not a path
+    infilename = os.path.basename(infilename)
     # deal with fiber
     if fiber is not None:
         suffix = '{0}_{1}'.format(suffix, fiber.upper())

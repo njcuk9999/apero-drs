@@ -121,6 +121,7 @@ def measure_fp_peaks(params, props, limit, normpercent):
     allamppeak = []
     alldcpeak = []
     allshapepeak = []
+
     # loop through the orders
     for order_num in range(speref.shape[0]):
         # storage for order of peaks
@@ -272,16 +273,15 @@ def fit_fp_peaks(x, y, size, return_model=False):
             if warns is None:
                 warns = ''
             warns += ('\nBoundError: Lower bound {0} incorrect (lower={1} '
-                      'upper={2})')
-            warns += warns.format(pnames[p_it], lowerbounds[p_it],
-                                  upperbounds[p_it])
+                      'upper={2})'.format(pnames[p_it], lowerbounds[p_it],
+                                  upperbounds[p_it]))
         if p0[p_it] < lowerbounds[p_it] or p0[p_it] > upperbounds[p_it]:
             if warns is None:
                 warns = ''
             warns += ('\nBoundError: Inital guess for {0} out of bounds '
-                      '(guess={1} lower={2} upper={3})')
-            warns += warns.format(pnames[p_it], p0[p_it],
-                                  lowerbounds[p_it], upperbounds[p_it])
+                      '(guess={1} lower={2} upper={3})'
+                      ''.format(pnames[p_it], p0[p_it],
+                                lowerbounds[p_it], upperbounds[p_it]))
 
     # deal with bad bounds
     if warns is not None:
@@ -433,7 +433,7 @@ def remove_wide_peaks(params, props, cutwidth):
     return props
 
 
-def get_ccf_mask(params, filename, mask_min, mask_width, mask_units='nm'):
+def get_ccf_mask(params, filename, mask_width, mask_units='nm'):
     func_name = __NAME__ + '.get_ccf_mask()'
     # load table
     table, absfilename = drs_data.load_ccf_mask(params, filename=filename)
@@ -448,15 +448,6 @@ def get_ccf_mask(params, filename, mask_min, mask_width, mask_units='nm'):
         ll_mask_d = mask_width * ll_mask_s / speed_of_light
     # make w_mask an array
     w_mask = np.array(table['w_mask']).astype(float)
-    # use w_min to select on w_mask or keep all if w_mask_min >= 1
-    if mask_min < 1.0:
-        mask = w_mask > mask_min
-        ll_mask_d = ll_mask_d[mask]
-        ll_mask_ctr = ll_mask_ctr[mask]
-        w_mask = w_mask[mask]
-    # else set all w_mask to one (and use all lines in file)
-    else:
-        w_mask = np.ones(len(ll_mask_d))
     # ----------------------------------------------------------------------
     # deal with the units of ll_mask_d and ll_mask_ctr
     # must be returned in nanometers
@@ -512,15 +503,17 @@ def delta_v_rms_2d(spe, wave, sigdet, threshold, size):
     nspe = (spe[:, 2:] - spe[:, :-2]) / sxn
     # get the mask value
     maskv = flag[:, 2:] * flag[:, 1:-1] * flag[:, :-2]
-    # get the total
+    # get the total per order
     tot = mp.nansum(sxn * ((nwave * nspe) ** 2) * maskv, axis=1)
     # convert to dvrms2
     with warnings.catch_warnings(record=True) as _:
         dvrms2 = (speed_of_light_ms ** 2) / abs(tot)
     # weighted mean of dvrms2 values
     weightedmean = 1. / np.sqrt(mp.nansum(1.0 / dvrms2))
+    # per order value
+    weightedmeanorder = np.sqrt(dvrms2)
     # return dv rms and weighted mean
-    return dvrms2, weightedmean
+    return dvrms2, weightedmean, weightedmeanorder
 
 
 def remove_telluric_domain(params, recipe, infile, fiber, **kwargs):
@@ -614,7 +607,12 @@ def locate_reference_file(params, recipe, infile):
     # set function name
     func_name = display_func(params, 'locate_reference_file', __NAME__)
     # get pp file name
+    # TODO: fix how we get pp file
     pp_filename = infile.filename.split('_pp')[0] + '_pp.fits'
+    # get pseudo const
+    pconst = constants.pload(params['INSTRUMENT'])
+    # get reference fiber
+    _, reffiber = pconst.FIBER_KINDS()
     # deal with infile being telluric file (we do not have reference file
     #   for telluric files) --> must use the telluric files "intype file"
     if infile.name == 'TELLU_OBJ':
@@ -630,7 +628,7 @@ def locate_reference_file(params, recipe, infile):
         eargs = [infile.name, ppfile.name, infile.filename, func_name]
         WLOG(params, 'error', TextEntry('00-020-00003', args=eargs))
     # make a new copy of this instance
-    outfile = instance.newcopy(recipe=recipe, fiber='C')
+    outfile = instance.newcopy(recipe=recipe, fiber=reffiber)
     # construct filename
     outfile.construct_filename(params, infile=ppfile)
     # read outfile
@@ -653,6 +651,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
                         func_name)
     noise_thres = pcheck(params, 'CCF_NOISE_THRES', 'noise_thres', kwargs,
                          func_name)
+    # TODO: Remove this (not used any more)
     mask_min = pcheck(params, 'CCF_MASK_MIN_WEIGHT', 'mask_min', kwargs,
                       func_name)
     mask_width = pcheck(params, 'CCF_MASK_WIDTH', 'mask_width', kwargs,
@@ -723,25 +722,15 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     dkwargs = dict(spe=image, wave=wavemap, sigdet=noise_sigdet,
                    size=noise_size, threshold=noise_thres)
     # run DeltaVrms2D
-    dvrmsref, wmeanref = delta_v_rms_2d(**dkwargs)
+    dvrmsref, wmeanref, wmeanrefo = delta_v_rms_2d(**dkwargs)
     # log the estimated RV uncertainty
     wargs = [fiber, wmeanref]
     WLOG(params, 'info', TextEntry('40-020-00003', args=wargs))
     # ----------------------------------------------------------------------
-    # Reference plots
-    # ----------------------------------------------------------------------
-    # the image vs wavelength for an order
-    recipe.plot('CCF_SWAVE_REF', wavemap=wavemap, image=image, fiber=fiber,
-                nbo=nbo)
-    # the photon noise uncertainty plot
-    recipe.plot('CCF_PHOTON_UNCERT', x=np.arange(nbo), y=dvrmsref)
-    # as a summary plot
-    recipe.plot('SUM_CCF_PHOTON_UNCERT', x=np.arange(nbo), y=dvrmsref)
-    # ----------------------------------------------------------------------
     # Do the CCF calculations
     # ----------------------------------------------------------------------
     # get the mask parameters
-    mkwargs = dict(filename=ccfmask, mask_min=mask_min, mask_width=mask_width,
+    mkwargs = dict(filename=ccfmask, mask_width=mask_width,
                    mask_units=mask_units)
     ll_mask_d, ll_mask_ctr, w_mask = get_ccf_mask(params, **mkwargs)
 
@@ -749,7 +738,18 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     props = ccf_calculation(params, image, blaze, wavemap, berv, targetrv,
                             ccfwidth, ccfstep, ll_mask_ctr, w_mask,
                             fit_type, fiber)
-
+    # ----------------------------------------------------------------------
+    # Reference plots
+    # ----------------------------------------------------------------------
+    # the image vs wavelength for an order
+    recipe.plot('CCF_SWAVE_REF', wavemap=wavemap, image=image, fiber=fiber,
+                nbo=nbo)
+    # the photon noise uncertainty plot
+    recipe.plot('CCF_PHOTON_UNCERT', x=np.arange(nbo), y_sp=wmeanrefo,
+                y_cc=props['CCF_NOISE'])
+    # as a summary plot
+    recipe.plot('SUM_CCF_PHOTON_UNCERT', x=np.arange(nbo), y_sp=wmeanrefo,
+                y_cc=props['CCF_NOISE'])
     # ----------------------------------------------------------------------
     # Calculate the mean CCF
     # ----------------------------------------------------------------------
@@ -769,30 +769,16 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     # get the FWHM value
     ccf_fwhm = mean_ccf_coeffs[2] * mp.fwhm()
     # ----------------------------------------------------------------------
-    #  CCF_NOISE uncertainty
-    ccf_noise_tot = np.sqrt(mp.nanmean(props['CCF_NOISE'] ** 2, axis=0))
-    # Calculate the slope of the CCF
-    average_ccf_diff = (mean_ccf[2:] - mean_ccf[:-2])
-    rv_ccf_diff = (props['RV_CCF'][2:] - props['RV_CCF'][:-2])
-    ccf_slope = average_ccf_diff / rv_ccf_diff
-    # Calculate the CCF oversampling
-    ccf_oversamp = image_pixel_size / ccfstep
-    # create a list of indices based on the oversample grid size
-    flist = np.arange(np.round(len(ccf_slope) / ccf_oversamp))
-    indexlist = np.array(flist * ccf_oversamp, dtype=int)
-    # we only want the unique pixels (not oversampled)
-    indexlist = np.unique(indexlist)
-    # get the rv noise from the sum of pixels for those points that are
-    #     not oversampled
-    keep_ccf_slope = ccf_slope[indexlist]
-    keep_ccf_noise = ccf_noise_tot[1:-1][indexlist]
-    rv_noise = mp.nansum(keep_ccf_slope ** 2 / keep_ccf_noise ** 2) ** (-0.5)
+    #  combined CCF_NOISE uncertainty
+    rv_noise = 1.0 / np.sqrt(mp.nansum(1.0 / props['CCF_NOISE'] ** 2))
     # ----------------------------------------------------------------------
     # log the stats
     wargs = [ccf_contrast, float(mean_ccf_coeffs[1]), rv_noise, ccf_fwhm]
     WLOG(params, 'info', TextEntry('40-020-00004', args=wargs))
     # ----------------------------------------------------------------------
     # add to output array
+    props['TOT_SPEC_RMS'] = wmeanref
+    props['ORD_SPEC_RMS'] = wmeanrefo
     props['MEAN_CCF'] = mean_ccf
     props['MEAN_RV'] = ccf_rv
     props['MEAN_CONTRAST'] = ccf_contrast
@@ -801,8 +787,9 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     props['MEAN_CCF_FIT'] = mean_ccf_fit
     props['MEAN_RV_NOISE'] = rv_noise
     # set the source
-    keys = ['MEAN_CCF', 'MEAN_RV', 'MEAN_CONTRAST', 'MEAN_FWHM', 'MEAN_CCF_RES',
-            'MEAN_CCF_FIT', 'MEAN_RV_NOISE']
+    keys = ['TOT_SPEC_RMS', 'ORD_SPEC_RMS', 'MEAN_CCF', 'MEAN_RV',
+            'MEAN_CONTRAST', 'MEAN_FWHM', 'MEAN_CCF_RES', 'MEAN_CCF_FIT',
+            'MEAN_RV_NOISE']
     props.set_sources(keys, func_name)
     # add constants to props
     props['CCF_MASK'] = ccfmask
@@ -847,7 +834,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
 
 
 def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
-                   **kwargs):
+                   sum_plot=True, **kwargs):
     func_name = __NAME__ + '.compute_ccf_fp()'
     # get constants from params/kwargs
     noise_sigdet = pcheck(params, 'WAVE_CCF_NOISE_SIGDET', 'sigdet', kwargs,
@@ -882,7 +869,7 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     dkwargs = dict(spe=image, wave=wavemap, sigdet=noise_sigdet,
                    size=noise_size, threshold=noise_thres)
     # run DeltaVrms2D
-    dvrmsref, wmeanref = delta_v_rms_2d(**dkwargs)
+    dvrmsref, wmeanref, wmeanrefo = delta_v_rms_2d(**dkwargs)
 
     # log the estimated RV uncertainty
     wargs = [fiber, wmeanref]
@@ -891,7 +878,7 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     # Do the CCF calculations
     # ----------------------------------------------------------------------
     # get the mask parameters
-    mkwargs = dict(filename=ccfmask, mask_min=mask_min, mask_width=mask_width,
+    mkwargs = dict(filename=ccfmask, mask_width=mask_width,
                    mask_units=mask_units)
     ll_mask_d, ll_mask_ctr, w_mask = get_ccf_mask(params, **mkwargs)
     # calculate the CCF
@@ -917,34 +904,16 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     # get the FWHM value
     ccf_fwhm = mean_ccf_coeffs[2] * mp.fwhm()
     # ----------------------------------------------------------------------
-
-    # TODO: Need Etienne's help this ccf_noise is not the same as
-    # TODO:   Francois one - his gives a sigdet per rv element
-
-    #  CCF_NOISE uncertainty
-    ccf_noise_tot = np.sqrt(mp.nanmean(props['CCF_NOISE'] ** 2, axis=0))
-    # Calculate the slope of the CCF
-    average_ccf_diff = (mean_ccf[2:] - mean_ccf[:-2])
-    rv_ccf_diff = (props['RV_CCF'][2:] - props['RV_CCF'][:-2])
-    ccf_slope = average_ccf_diff / rv_ccf_diff
-    # Calculate the CCF oversampling
-    ccf_oversamp = image_pixel_size / ccfstep
-    # create a list of indices based on the oversample grid size
-    flist = np.arange(np.round(len(ccf_slope) / ccf_oversamp))
-    indexlist = np.array(flist * ccf_oversamp, dtype=int)
-    # we only want the unique pixels (not oversampled)
-    indexlist = np.unique(indexlist)
-    # get the rv noise from the sum of pixels for those points that are
-    #     not oversampled
-    keep_ccf_slope = ccf_slope[indexlist]
-    keep_ccf_noise = ccf_noise_tot[1:-1][indexlist]
-    rv_noise = mp.nansum(keep_ccf_slope ** 2 / keep_ccf_noise ** 2) ** (-0.5)
+    #  combined CCF_NOISE uncertainty
+    rv_noise = 1.0 / np.sqrt(mp.nansum(1.0 / props['CCF_NOISE'] ** 2))
     # ----------------------------------------------------------------------
     # log the stats
     wargs = [ccf_contrast, float(mean_ccf_coeffs[1]), rv_noise, ccf_fwhm]
     WLOG(params, 'info', TextEntry('40-020-00004', args=wargs))
     # ----------------------------------------------------------------------
     # add to output array
+    props['TOT_SPEC_RMS'] = wmeanref
+    props['ORD_SPEC_RMS'] = wmeanrefo
     props['MEAN_CCF'] = mean_ccf
     props['MEAN_RV'] = ccf_rv
     props['MEAN_CONTRAST'] = ccf_contrast
@@ -953,8 +922,9 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     props['MEAN_CCF_FIT'] = mean_ccf_fit
     props['MEAN_RV_NOISE'] = rv_noise
     # set the source
-    keys = ['MEAN_CCF', 'MEAN_RV', 'MEAN_CONTRAST', 'MEAN_FWHM',
-            'MEAN_CCF_COEFFS', 'MEAN_CCF_FIT', 'MEAN_RV_NOISE']
+    keys = ['TOT_SPEC_RMS', 'ORD_SPEC_RMS', 'MEAN_CCF', 'MEAN_RV',
+            'MEAN_CONTRAST', 'MEAN_FWHM', 'MEAN_CCF_COEFFS', 'MEAN_CCF_FIT',
+            'MEAN_RV_NOISE']
     props.set_sources(keys, func_name)
     # add constants to props
     props['CCF_MASK'] = ccfmask
@@ -990,11 +960,12 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
                 rv=props['MEAN_CCF_COEFFS'][1], ccfmask=ccfmask,
                 orders=None, order=None)
     # the mean ccf for summary
-    recipe.plot('SUM_CCF_RV_FIT', params=params, x=props['RV_CCF'],
-                y=mean_ccf, yfit=mean_ccf_fit,
-                kind='MEAN FP fiber={0}'.format(fiber),
-                rv=ccf_rv, ccfmask=ccfmask,
-                orders=None, order=None)
+    if sum_plot:
+        recipe.plot('SUM_CCF_RV_FIT', params=params, x=props['RV_CCF'],
+                    y=mean_ccf, yfit=mean_ccf_fit,
+                    kind='MEAN FP fiber={0}'.format(fiber),
+                    rv=ccf_rv, ccfmask=ccfmask,
+                    orders=None, order=None)
 
     # TODO : Add QC of the FP CCF once they are defined
 
@@ -1039,6 +1010,11 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         wa_ord = np.array(wavemap[order_num])
         sp_ord = np.array(image[order_num])
         bl_ord = np.array(blaze[order_num])
+
+        # we express sp_ord as a flux in photons per km/s
+        grad = speed_of_light * np.gradient(wa_ord)/wa_ord
+        sp_ord = sp_ord / grad
+
         # normalize per-ord blaze to its peak value
         # this gets rid of the calibration lamp SED
         bl_ord /= np.nanpercentile(bl_ord, blaze_norm_percentile)
@@ -1051,8 +1027,8 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         min_ord_wav = mp.nanmin(wa_ord[blazemask])
         max_ord_wav = mp.nanmax(wa_ord[blazemask])
         # adjust for rv shifts
-        min_ord_wav = min_ord_wav * (1 - rvmin / speed_of_light)
-        max_ord_wav = max_ord_wav * (1 - rvmax / speed_of_light)
+        # min_ord_wav = min_ord_wav * (1 - rvmin / speed_of_light)
+        # max_ord_wav = max_ord_wav * (1 - rvmax / speed_of_light)
         # mask the ccf mask by the order length
         mask_wave_mask = (mask_centers > min_ord_wav)
         mask_wave_mask &= (mask_centers < max_ord_wav)
@@ -1072,7 +1048,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
             ccf_all.append(np.repeat(np.nan, len(rv_ccf)))
             ccf_all_fit.append(np.repeat(np.nan, len(rv_ccf)))
             ccf_all_results.append(np.repeat(np.nan, 4))
-            ccf_noise_all.append(np.repeat(np.nan, len(rv_ccf)))
+            ccf_noise_all.append(np.nan)
             ccf_lines.append(0)
             ccf_all_snr.append(np.nan)
             ccf_norm_all.append(np.nan)
@@ -1087,7 +1063,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
             ccf_all.append(np.repeat(np.nan, len(rv_ccf)))
             ccf_all_fit.append(np.repeat(np.nan, len(rv_ccf)))
             ccf_all_results.append(np.repeat(np.nan, 4))
-            ccf_noise_all.append(np.repeat(np.nan, len(rv_ccf)))
+            ccf_noise_all.append(np.nan)
             ccf_lines.append(0)
             ccf_all_snr.append(np.nan)
             ccf_norm_all.append(np.nan)
@@ -1098,16 +1074,68 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         bl_ord[nanmask] = 0
         # now every value that is zero is masked (we don't want to spline these)
         good = (sp_ord != 0) & (bl_ord != 0)
+        weight_ord = np.array(good, dtype=float)
         # ------------------------------------------------------------------
         # spline the spectrum and the blaze
         spline_sp = mp.iuv_spline(wa_ord[good], sp_ord[good], k=5, ext=1)
         spline_bl = mp.iuv_spline(wa_ord[good], bl_ord[good], k=5, ext=1)
+        spline_weight = mp.iuv_spline(wa_ord, weight_ord, k=1, ext=1)
         # ------------------------------------------------------------------
         # set up the ccf for this order
         ccf_ord = np.zeros_like(rv_ccf)
         # ------------------------------------------------------------------
         # get the wavelength shift (dv) in relativistic way
         wave_shifts = mp.relativistic_waveshift(rv_ccf - berv)
+        # ------------------------------------------------------------------
+        # propagating the extreme wave shifts to see if any lines fall off
+        #  the domain that is considered valid for the spline
+
+        # find the wave grid for the first shift
+        wave_tmp_start = omask_centers * wave_shifts[0]
+        # find the wave grid for the last shift
+        wave_tmp_end = omask_centers * wave_shifts[-1]
+        # find the valid lines within these limits
+        # (ext=1 puts 0 when point is beyond domain)
+        valid_lines_start = spline_bl(wave_tmp_start) != 0
+        valid_lines_end = spline_bl(wave_tmp_end) != 0
+        # combine the valid masks for start and end
+        keep = valid_lines_start & valid_lines_end
+        # ------------------------------------------------------------------
+        # deal with no valid lines
+        if np.sum(keep) == 0:
+            # log all NaN
+            wargs = [order_num]
+            WLOG(params, 'warning', TextEntry('10-020-00007', args=wargs))
+            # set all values to NaN
+            ccf_all.append(np.repeat(np.nan, len(rv_ccf)))
+            ccf_all_fit.append(np.repeat(np.nan, len(rv_ccf)))
+            ccf_all_results.append(np.repeat(np.nan, 4))
+            ccf_noise_all.append(np.nan)
+            ccf_lines.append(0)
+            ccf_all_snr.append(np.nan)
+            ccf_norm_all.append(np.nan)
+            continue
+        # ------------------------------------------------------------------
+        # apply masks to centers and weights
+        omask_centers = omask_centers[keep]
+        omask_weights = omask_weights[keep]
+        # normalise omask weights by
+        omask_weights = omask_weights / np.nanmean(omask_weights)
+
+        # Number of photons at line centers for 1 CCF step
+        sweights = spline_weight(omask_centers)
+        nphot = spline_sp(omask_centers) * sweights / ccfstep
+
+        # Poisson noise is a bit bigger because of weights
+        wsum = np.sum(nphot*omask_weights)
+        wsum2 = np.sum(nphot*omask_weights**2)
+        # we can't calculate wnoise for negative values --> set to inf
+        if (wsum <= 0) or (wsum2 <= 0):
+            wargs = [order_num]
+            WLOG(params, 'warning', TextEntry('10-020-00008', args=wargs))
+            wsum, wnoise = 0.0, np.inf
+        else:
+            wnoise = np.sqrt(wsum2)
         # ------------------------------------------------------------------
         # set number of valid lines used to zero
         numlines = 0
@@ -1117,10 +1145,11 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
             wave_tmp = omask_centers * wave_shifts[rv_element]
             part1 = spline_sp(wave_tmp)
             part2 = spline_bl(wave_tmp)
+            part4 = spline_weight(wave_tmp)
             numlines = np.sum(spline_bl(wave_tmp) != 0)
             # CCF is the division of the sums
             with warnings.catch_warnings(record=True) as _:
-                ccf_element = ((part1 * part3) / part2) * omask_weights
+                ccf_element = ((part1 * part3) / part2) * omask_weights * part4
                 ccf_ord[rv_element] = mp.nansum(ccf_element)
         # ------------------------------------------------------------------
         # deal with NaNs in ccf
@@ -1132,7 +1161,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
             ccf_all.append(np.repeat(np.nan, len(rv_ccf)))
             ccf_all_fit.append(np.repeat(np.nan, len(rv_ccf)))
             ccf_all_results.append(np.repeat(np.nan, 4))
-            ccf_noise_all.append(np.repeat(np.nan, len(rv_ccf)))
+            ccf_noise_all.append(np.nan)
             ccf_lines.append(0)
             ccf_all_snr.append(np.nan)
             ccf_norm_all.append(np.nan)
@@ -1152,12 +1181,16 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         fargs = [order_num, rv_ccf, ccf_ord, fit_type]
         ccf_coeffs_ord, ccf_fit_ord = fit_ccf(params, *fargs)
         # ------------------------------------------------------------------
-        # calculate the residuals of the ccf fit
-        res = ccf_ord - ccf_fit_ord
-        # calculate the CCF noise per order
-        ccf_noise = np.array(res)
-        # calculate the snr for this order
-        ccf_snr = np.abs(ccf_coeffs_ord[0] / mp.nanmedian(np.abs(ccf_noise)))
+        # get the RV accuracy from Bouchy 2001 equation
+        dv_pix = (np.gradient(ccf_ord)/np.gradient(rv_ccf))/wnoise
+        # set the bad values for ccf noise and ccf snr --> NaN value is bad
+        if wsum == 0:
+                ccf_noise = np.nan
+                ccf_snr = np.nan
+        else:
+            ccf_noise = 1 / np.sqrt(np.nansum(dv_pix ** 2))
+            # ge the snr
+            ccf_snr = wsum / wnoise
         # ------------------------------------------------------------------
         # append ccf to storage
         ccf_all.append(ccf_ord)
@@ -1174,7 +1207,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
     props['CCF'] = np.array(ccf_all)
     props['CCF_LINES'] = np.array(ccf_lines)
     props['TOT_LINE'] = np.sum(ccf_lines)
-    props['CCF_NOISE'] = np.array(ccf_noise_all)
+    props['CCF_NOISE'] = np.array(ccf_noise_all) * 1000   # [m/s]
     props['CCF_SNR'] = np.array(ccf_all_snr)
     props['CCF_FIT'] = np.array(ccf_all_fit)
     props['CCF_FIT_COEFFS'] = np.array(ccf_all_results)
@@ -1285,6 +1318,8 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     table2['DC'] = coeffs[:, 3]
     table2['SNR'] = props['CCF_SNR']
     table2['NORM'] = props['CCF_NORM']
+    table2['DVRMS_SP'] = props['ORD_SPEC_RMS']
+    table2['DVRMS_CC'] = props['CCF_NOISE']
     # ----------------------------------------------------------------------
     # archive ccf to fits file
     # ----------------------------------------------------------------------
@@ -1324,8 +1359,9 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     ccf_file.add_hkey('KW_CCF_MEAN_RV', value=props['MEAN_RV'])
     ccf_file.add_hkey('KW_CCF_MEAN_CONSTRAST', value=props['MEAN_CONTRAST'])
     ccf_file.add_hkey('KW_CCF_MEAN_FWHM', value=props['MEAN_FWHM'])
-    ccf_file.add_hkey('KW_CCF_MEAN_RV_NOISE', value=props['MEAN_RV_NOISE'])
     ccf_file.add_hkey('KW_CCF_TOT_LINES', value=props['TOT_LINE'])
+    ccf_file.add_hkey('KW_CCF_DVRMS_SP', value=props['TOT_SPEC_RMS'])
+    ccf_file.add_hkey('KW_CCF_DVRMS_CC', value=props['MEAN_RV_NOISE'])
     # ----------------------------------------------------------------------
     # add constants used to process
     ccf_file.add_hkey('KW_CCF_MASK', value=props['CCF_MASK'])

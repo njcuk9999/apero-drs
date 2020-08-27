@@ -28,6 +28,7 @@ Created on 2019-09-05 at 14:58
 @author: cook
 """
 import numpy as np
+import os
 
 from apero import core
 from apero import lang
@@ -114,16 +115,28 @@ def __main__(recipe, params):
     mainname = __NAME__ + '._main()'
     # get the object name
     objname = params['INPUTS']['OBJNAME']
+    # need to convert object to drs object name
+    pconst = constants.pload(instrument=params['INSTRUMENT'])
+    objname = pconst.DRS_OBJ_NAME(objname)
+
     # get the filetype (this is overwritten from user inputs if defined)
     filetype = params['INPUTS']['FILETYPE']
     # get the fiber type required
     fiber = params['INPUTS']['FIBER']
     # ----------------------------------------------------------------------
     # get objects that match this object name
-    object_filenames = drs_fits.find_files(params, recipe, kind='red',
-                                           fiber=fiber,
-                                           KW_OBJNAME=objname,
-                                           KW_OUTPUT=filetype)
+    if params['MKTEMPLATE_FILESOURCE'].upper() == 'DISK':
+        object_filenames = drs_fits.find_files(params, recipe, kind='red',
+                                               fiber=fiber,
+                                               KW_OBJNAME=objname,
+                                               KW_OUTPUT=filetype)
+    else:
+        # define the type of files we want to locate in the telluric database
+        tkey = '{0}_{1}'.format(filetype, fiber)
+        object_filenames = telluric.get_tellu_objs(params, tkey,
+                                                   objnames=[objname])
+
+
     # deal with no files being present
     if len(object_filenames) == 0:
         wargs = [objname, filetype]
@@ -146,9 +159,20 @@ def __main__(recipe, params):
     infile.set_filename(object_filenames[-1])
     # read data
     infile.read_file()
-    # get night name
-    nightname = drs_path.get_nightname(params, infile.filename)
-    params.set(key='NIGHTNAME', value=nightname, source=mainname)
+    # Need to deal with how we set the night name (depending on location)
+    if params['MKTEMPLATE_FILESOURCE'].upper() == 'DISK':
+        # get night name
+        nightname = drs_path.get_nightname(params, infile.filename)
+        params.set(key='NIGHTNAME', value=nightname, source=mainname)
+    else:
+        # set night name (we have no info about filename)
+        nightname = 'other'
+        params.set(key='NIGHTNAME', value='other', source=mainname)
+        # make night directory (if it doesn't exist)
+        absnightpath = os.path.join(params['OUTPATH'], nightname)
+        if not os.path.exists(absnightpath):
+            os.makedirs(absnightpath)
+
     # set up plotting (no plotting before this) -- must be after setting
     #   night name
     recipe.plot.set_location(0)

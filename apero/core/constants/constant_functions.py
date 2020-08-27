@@ -216,7 +216,7 @@ class Const:
         # set function name (cannot break function here)
         func_name = str(__NAME__) + '.Const.copy()'
         # get display text
-        textentry = _DisplayText()
+        textentry = DisplayText()
         # check that source is valid
         if source is None:
             raise ConfigError(textentry('00-003-00007', args=[func_name]),
@@ -582,7 +582,7 @@ class Keyword(Const):
         # set function name (cannot break function here)
         func_name = str(__NAME__) + '.Keyword.copy()'
         # get display text
-        textentry = _DisplayText()
+        textentry = DisplayText()
         # check that source is valid
         if source is None:
             raise ConfigError(textentry('00-003-00008', args=[func_name]),
@@ -596,7 +596,7 @@ class Keyword(Const):
                        author=self.author, parent=self.parent)
 
 
-class _DisplayText:
+class DisplayText:
     """
     Manually enter wlog TextEntries here -- will be in english only
 
@@ -706,7 +706,7 @@ def import_module(func, modulepath, full=False, quiet=False):
     else:
         func_name = str(func)
     # get display text
-    textentry = _DisplayText()
+    textentry = DisplayText()
     # deal with getting module
     if full:
         modfile = modulepath
@@ -810,7 +810,7 @@ def update_file(filename, dictionary):
     # set function name (cannot break here --> no access to inputs)
     func_name = str(__NAME__) + '.update_file()'
     # get display text
-    textentry = _DisplayText()
+    textentry = DisplayText()
     # open file
     try:
         # read the lines
@@ -957,7 +957,7 @@ def _read_lines(filename, comments='#', delimiter=' '):
     # set function name (cannot break here --> no access to inputs)
     func_name = str(__NAME__) + '.read_lines()'
     # get display text
-    textentry = _DisplayText()
+    textentry = DisplayText()
     # manually open file (slow)
     try:
         # read the lines
@@ -1021,7 +1021,7 @@ def _test_dtype(name, invalue, dtype, source, quiet=False):
     # set function name (cannot break here --> no access to inputs)
     func_name = str(__NAME__) + '._test_dtype()'
     # get display text
-    textentry = _DisplayText()
+    textentry = DisplayText()
     # if we don't have a value (i.e. it is None) don't test
     if invalue is None:
         return None
@@ -1089,7 +1089,7 @@ def _validate_value(name, dtype, value, dtypei, options, maximum, minimum,
     # set function name (cannot break here --> no access to inputs)
     func_name = str(__NAME__) + '._validate_value()'
     # get display text
-    textentry = _DisplayText()
+    textentry = DisplayText()
     # deal with no source
     if source is None:
         source = 'Unknown ({0})'.format(func_name)
@@ -1186,7 +1186,7 @@ def _validate_text_file(filename, comments='#'):
     # set function name (cannot break here --> no access to inputs)
     func_name = str(__NAME__) + '._validate_text_file()'
     # get display text
-    textentry = _DisplayText()
+    textentry = DisplayText()
     # read the lines
     with open(filename, 'r') as f:
         lines = f.readlines()

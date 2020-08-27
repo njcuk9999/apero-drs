@@ -13,7 +13,6 @@ from astropy.io import fits
 from astropy.time import Time
 import matplotlib.pyplot as plt
 import glob
-from tqdm import tqdm
 
 # =============================================================================
 # Define variables
@@ -29,9 +28,9 @@ KW_DRIFT = 'WFPDRIFT'
 # =============================================================================
 if __name__ == "__main__":
     # get wave night files
-    files = glob.glob('*wave_night*')
+    files = np.sort(glob.glob('*wave_night*'))
     # get wave master fp files
-    files += glob.glob('*wavem_fp_*')
+    files += np.sort(glob.glob('*wavem_fp_*'))
 
     # storage
     fibers = []
@@ -41,7 +40,10 @@ if __name__ == "__main__":
     night = []
 
     # loop around file and save to storage
-    for filename in tqdm(files):
+    for f_it, filename in enumerate(files):
+        # log progress
+        print('File {0}/{1}'.format(f_it + 1, len(files)))
+        # get header
         header = fits.getheader(filename)
         # add fiber
         if KW_FIBER in header:
@@ -91,9 +93,9 @@ if __name__ == "__main__":
     fiberc_m = (fibers == 'C') & ~night
 
     # plot
+    print('Plotting graph...')
     plt.close()
-    fig, frame = plt.subplots(ncols=1, nrows=1)
-
+    fig1, frame = plt.subplots(ncols=1, nrows=1)
     frame.plot_date(times[fiberab_m].plot_date, drifts[fiberab_m],
                     markeredgecolor='r', markerfacecolor='None', marker='x',
                     ls='None', markersize=10, label='AB MASTER')
@@ -122,7 +124,44 @@ if __name__ == "__main__":
 
     frame.legend(loc=0)
     frame.set(xlabel='Date', ylabel='RV (CCF FP) [m/s]')
-    fig.autofmt_xdate()
+    fig1.autofmt_xdate()
     frame.ticklabel_format(axis='y', useOffset=False)
+
+
+    # plot
+    print('Plotting graph...')
+    fig2, frame = plt.subplots(ncols=1, nrows=1)
+
+    frame.plot_date(times[fibera_m].plot_date, drifts[fibera_m]-drifts[fiberab_m],
+                    markeredgecolor='b', markerfacecolor='None', marker='x',
+                    ls='None', markersize=10, label='A MASTER - AB MASTER')
+    frame.plot_date(times[fiberb_m].plot_date, drifts[fiberb_m]-drifts[fiberab_m],
+                    markeredgecolor='g', markerfacecolor='None', marker='x',
+                    ls='None', markersize=10, label='B MASTER - AB MASTER')
+    frame.plot_date(times[fiberc_m].plot_date, drifts[fiberc_m]-drifts[fiberab_m],
+                    markeredgecolor='orange', markerfacecolor='None',
+                    marker='x', ls='None', markersize=10, label='C MASTER - AB MASTER')
+
+    frame.plot_date(times[fibera_n].plot_date, drifts[fibera_n]-drifts[fiberab_n],
+                    markerfacecolor='b', markeredgecolor='k', marker='o',
+                    ls='None', markersize=7, label='A NIGHT - AB NIGHT')
+    frame.plot_date(times[fiberb_n].plot_date, drifts[fiberb_n]-drifts[fiberab_n],
+                    markerfacecolor='g', markeredgecolor='k', marker='o',
+                    ls='None', markersize=7, label='B NIGHT - AB NIGHT')
+    frame.plot_date(times[fiberc_n].plot_date, drifts[fiberc_n]-drifts[fiberab_n],
+                    markerfacecolor='orange', markeredgecolor='k',
+                    marker='o', ls='None', markersize=7, label='C NIGHT - AB NIGHT')
+
+    frame.legend(loc=0)
+    frame.set(xlabel='Date', ylabel='RV (CCF FP) [m/s]')
+    fig2.autofmt_xdate()
+    frame.ticklabel_format(axis='y', useOffset=False)
+
     plt.show()
     plt.close()
+
+    print('Code finished successfully')
+
+# =============================================================================
+# End of code
+# =============================================================================

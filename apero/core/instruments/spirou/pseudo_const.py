@@ -94,39 +94,50 @@ class PseudoConstants(DefaultConstants):
         params = kwargs.get('params')
         recipe = kwargs.get('recipe')
         header = kwargs.get('header')
+        hdict = kwargs.get('hdict')
+        filename = kwargs.get('filename')
+
         # get keys from params
         kwobjname = params['KW_OBJNAME'][0]
         kwtrgtype = params['KW_TARGET_TYPE'][0]
         kwmidobstime = params['KW_MID_OBS_TIME'][0]
         kwdprtype = params['KW_DPRTYPE'][0]
+
         # ------------------------------------------------------------------
         # Deal with cleaning object name
         # ------------------------------------------------------------------
         if kwobjname not in header:
-            header = clean_obj_name(params, header)
+            header, hdict = clean_obj_name(params, header, hdict,
+                                           filename=filename)
 
         # ------------------------------------------------------------------
         # Deal with TRG_TYPE
         # ------------------------------------------------------------------
         if kwtrgtype not in header:
-            header = get_trg_type(params, header)
+            header, hdict = get_trg_type(params, header, hdict,
+                                         filename=filename)
 
         # ------------------------------------------------------------------
         # Deal with MIDMJD
         # ------------------------------------------------------------------
         if kwmidobstime not in header:
-            header = get_mid_obs_time(params, header)
+            header, hdict = get_mid_obs_time(params, header, hdict,
+                                             filename=filename)
 
         # ------------------------------------------------------------------
         # Deal with dprtype
         # ------------------------------------------------------------------
         if kwdprtype not in header:
-            header = get_dprtype(params, recipe, header)
+            header, hdict = get_dprtype(params, recipe, header, hdict,
+                                        filename=filename)
 
         # ------------------------------------------------------------------
         # Return header
         # ------------------------------------------------------------------
-        return header
+        return header, hdict
+
+    def DRS_OBJ_NAME(self, objname):
+        return clean_obj_name(objname=objname)
 
     def VALID_RAW_FILES(self):
         valid = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
@@ -383,32 +394,61 @@ class PseudoConstants(DefaultConstants):
         # return keys
         return keys
 
+
 # =============================================================================
 # Functions used by pseudo const (instrument specific)
 # =============================================================================
-def clean_obj_name(params, header):
-    # get keys from params
-    kwrawobjname = params['KW_OBJECTNAME'][0]
-    kwobjname = params['KW_OBJNAME'][0]
-    # get raw object name
-    rawobjname = header[kwrawobjname]
-    # let clean it
-    objname = rawobjname.strip()
-    objname = objname.replace(' ', '_')
-    # add it to the header with new keyword
-    header[kwobjname] = objname
-    # return header
-    return header
+def clean_obj_name(params=None, header=None, hdict=None, objname=None,
+                   filename=None):
+    # deal with no objname --> header mode
+    if objname is None:
+        return_header = True
+        # get keys from params
+        kwrawobjname = params['KW_OBJECTNAME'][0]
+        kwobjname = params['KW_OBJNAME'][0]
+        # get raw object name
+        if kwrawobjname not in header:
+            raise drs_exceptions.DrsHeaderError('Key not found',
+                                                level='error', key=kwrawobjname,
+                                                filename=filename)
+        rawobjname = header[kwrawobjname]
+    # else just set up blank parameters
+    else:
+        kwrawobjname, kwobjname = '', ''
+        return_header = False
+        rawobjname = str(objname)
+    # clean object name
+    objectname = rawobjname.strip()
+    objectname = objectname.replace(' ', '_')
+    objectname = objectname.upper()
+    # deal with returning header
+    if return_header:
+        # add it to the header with new keyword
+        header[kwobjname] = objectname
+        hdict[kwobjname] = objectname
+        # return header
+        return header, hdict
+    else:
+        return objectname
 
 
-def get_trg_type(params, header):
+def get_trg_type(params, header, hdict, filename=None):
     # get keys from params
     kwobjname = params['KW_OBJNAME'][0]
     kwobstype = params['KW_OBSTYPE'][0]
     kwtrgtype = params['KW_TARGET_TYPE'][0]
     kwtrgcomment = params['KW_TARGET_TYPE'][2]
-    # get objname and obstype
+    # get objname
+    if kwobjname not in header:
+        raise drs_exceptions.DrsHeaderError('Key not found',
+                                            level='error', key=kwobjname,
+                                            filename=filename)
     objname = header[kwobjname]
+    # get obstype
+    if kwobstype not in header:
+        raise drs_exceptions.DrsHeaderError('Key not found',
+                                            level='error', key=kwobstype,
+                                            filename=filename)
     obstype = header[kwobstype]
     # deal with setting value
     if obstype != 'OBJECT':
@@ -419,11 +459,12 @@ def get_trg_type(params, header):
         trg_type = 'TARGET'
     # update header
     header[kwtrgtype] = (trg_type, kwtrgcomment)
+    hdict[kwtrgtype] = (trg_type, kwtrgcomment)
     # return header
-    return header
+    return header, hdict
 
 
-def get_mid_obs_time(params, header):
+def get_mid_obs_time(params, header, hdict, filename=None):
     func_name = __NAME__ + '.get_mid_obs_time()'
     kwmidobstime = params['KW_MID_OBS_TIME'][0]
     kwmidcomment = params['KW_MID_OBS_TIME'][2]
@@ -434,10 +475,15 @@ def get_mid_obs_time(params, header):
     timetype = params.instances['KW_MID_OBS_TIME'].dataformat
     exp_timekey = params['KW_EXPTIME'][0]
     exp_timeunit = params.instances['KW_EXPTIME'].unit
+    # get exptime
+    if exp_timekey not in header:
+        raise drs_exceptions.DrsHeaderError('Key not found',
+                                            level='error', key=exp_timekey,
+                                            filename=filename)
     exptime = timetype(header[exp_timekey])
     # -------------------------------------------------------------------
     # get header time
-    endtime = get_header_end_time(params, header)
+    endtime = get_header_end_time(params, header, filename)
     # get the time after start of the observation
     timedelta = TimeDelta(exptime * exp_timeunit) / 2.0
     # calculate observation time
@@ -448,24 +494,31 @@ def get_mid_obs_time(params, header):
     # return time in requested format
     if timefmt is None:
         header[kwmidobstime] = (obstime.iso, kwmidcomment)
+        hdict[kwmidobstime] = (obstime.iso, kwmidcomment)
     elif timefmt == 'mjd':
         header[kwmidobstime] = (float(obstime.mjd), kwmidcomment)
+        hdict[kwmidobstime] = (float(obstime.mjd), kwmidcomment)
     elif timefmt == 'jd':
         header[kwmidobstime] = (float(obstime.jd), kwmidcomment)
+        hdict[kwmidobstime] = (float(obstime.jd), kwmidcomment)
     elif timefmt == 'iso' or timefmt == 'human':
         header[kwmidobstime] = (obstime.iso, kwmidcomment)
+        hdict[kwmidobstime] = (obstime.iso, kwmidcomment)
     elif timefmt == 'unix':
         header[kwmidobstime] = (float(obstime.unix), kwmidcomment)
+        hdict[kwmidobstime] = (float(obstime.unix), kwmidcomment)
     elif timefmt == 'decimalyear':
         header[kwmidobstime] = (float(obstime.decimalyear), kwmidcomment)
+        hdict[kwmidobstime] = (float(obstime.decimalyear), kwmidcomment)
     # -------------------------------------------------------------------
     # add method
     header[kwmidmethod] = (method, methodcomment)
+    hdict[kwmidmethod] = (method, methodcomment)
     # return the header
-    return header
+    return header, hdict
 
 
-def get_header_end_time(params, header):
+def get_header_end_time(params, header, filename=None):
     """
     Get acquisition time from header
 
@@ -486,20 +539,23 @@ def get_header_end_time(params, header):
     time_key = params['KW_MJDEND'][0]
     timefmt = params.instances['KW_MJDEND'].datatype
     timetype = params.instances['KW_MJDEND'].dataformat
+
+    # get time key from header
+    if time_key not in header:
+        raise drs_exceptions.DrsHeaderError('Key not found',
+                                            level='error', key=time_key,
+                                            filename=filename)
     rawtime = header[time_key]
     # ----------------------------------------------------------------------
     # get astropy time
     return Time(timetype(rawtime), format=timefmt)
 
 
-def get_dprtype(params, recipe, header):
+def get_dprtype(params, recipe, header, hdict, filename=None):
     # set key
     kwdprtype = params['KW_DPRTYPE'][0]
     kwdprcomment = params['KW_DPRTYPE'][1]
     # get the drs files and raw_prefix
-
-
-
     drsfiles = recipe.filemod.raw_file.fileset
     raw_prefix = recipe.filemod.raw_prefix
     # set up inname
@@ -509,7 +565,8 @@ def get_dprtype(params, recipe, header):
         # set recipe
         drsfile.set_recipe(recipe)
         # find out whether file is valid
-        valid, _ = drsfile.has_correct_hkeys(header, log=False)
+        valid, _ = drsfile.has_correct_hkeys(header, log=False,
+                                             filename=filename)
         # if valid the assign dprtype
         if valid:
             # remove prefix if not None
@@ -521,8 +578,9 @@ def get_dprtype(params, recipe, header):
             break
     # update header
     header[kwdprtype] = (dprtype, kwdprcomment)
+    hdict[kwdprtype] = (dprtype, kwdprcomment)
     # return header
-    return header
+    return header, hdict
 
 
 # =============================================================================

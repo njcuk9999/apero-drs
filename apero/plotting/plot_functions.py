@@ -886,11 +886,11 @@ def plot_loc_check_coeffs(plotter, graph, kwargs):
             frame1.set(title=title.format(kind, order_num),
                        ylabel='y pixel position')
             frame2.set(xlabel='x pixel position',
-                       ylabel='$\Delta$y pixel position')
+                       ylabel=r'$\Delta$y pixel position')
         else:
             frame2.set(title=title.format(kind, order_num),
                        xlabel='x pixel position',
-                       ylabel='$\Delta$y pixel position')
+                       ylabel=r'$\Delta$y pixel position')
         # ------------------------------------------------------------------
         # adjust plot
         plt.subplots_adjust(top=0.925, bottom=0.125, left=0.1, right=0.975,
@@ -1505,7 +1505,7 @@ def plot_thermal_background(plotter, graph, kwargs):
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     params = kwargs['params']
-    wave = kwargs['wave']
+    wavemap = kwargs['wavemap']
     image = kwargs['image']
     thermal = kwargs['thermal']
     torder = kwargs['torder']
@@ -1515,10 +1515,10 @@ def plot_thermal_background(plotter, graph, kwargs):
     # get properties from params
     startorder = params['THERMAL_PLOT_START_ORDER']
     # correct data for graph
-    rwave = np.ravel(wave[startorder:])
+    rwave = np.ravel(wavemap[startorder:])
     rimage = np.ravel(image[startorder:])
     rthermal = np.ravel(thermal[startorder:])
-    swave = wave[torder, tmask]
+    swave = wavemap[torder, tmask]
     sthermal = thermal[torder][tmask]
     # ------------------------------------------------------------------
     # set up plot
@@ -1557,7 +1557,7 @@ def plot_extract_spectral_order(plotter, graph, kwargs):
     e2ds = kwargs['eprops']['E2DS']
     e2dsff = kwargs['eprops']['E2DSFF']
     blaze = kwargs['eprops']['BLAZE']
-    wave = kwargs['wave']
+    wavemap = kwargs['wave']
     fiber = kwargs['fiber']
     # get optional arguments
     order = kwargs.get('order', None)
@@ -1585,12 +1585,12 @@ def plot_extract_spectral_order(plotter, graph, kwargs):
         e2dsffn = e2dsff[order_num] / np.nanmedian(e2ds[order_num])
         blazen = blaze[order_num] / np.nanmedian(blaze[order_num])
         # plot fits
-        frames[0].plot(wave[order_num], e2dsn, label='e2ds')
-        frames[0].plot(wave[order_num], e2dsffn, label='e2dsff')
-        frames[0].plot(wave[order_num], blazen, label='blaze')
+        frames[0].plot(wavemap[order_num], e2dsn, label='e2ds')
+        frames[0].plot(wavemap[order_num], e2dsffn, label='e2dsff')
+        frames[0].plot(wavemap[order_num], blazen, label='blaze')
         # plot blaze corrected
-        frames[1].plot(wave[order_num], e2dsb[order_num], label='e2ds')
-        frames[1].plot(wave[order_num], e2dsffb[order_num], label='e2dsff')
+        frames[1].plot(wavemap[order_num], e2dsb[order_num], label='e2ds')
+        frames[1].plot(wavemap[order_num], e2dsffb[order_num], label='e2dsff')
         # add legends
         frames[0].legend(loc=0)
         frames[1].legend(loc=0)
@@ -1628,13 +1628,13 @@ def plot_extract_s1d(plotter, graph, kwargs):
     zoom1 = params.listp('EXTRACT_S1D_PLOT_ZOOM1', dtype=float)
     zoom2 = params.listp('EXTRACT_S1D_PLOT_ZOOM2', dtype=float)
     # get data from s1d table
-    wave = stable['wavelength']
+    wavemap = stable['wavelength']
     flux = stable['flux']
     # ------------------------------------------------------------------
     # set up plot
     fig, frames = graph.set_figure(plotter, ncols=1, nrows=len(zoom1))
     # get the normalised colours based on the full wavelength range
-    norm = plt.Normalize(np.nanmin(wave), np.nanmax(wave))
+    norm = plt.Normalize(np.nanmin(wavemap), np.nanmax(wavemap))
     # loop around frames
     for row in range(len(zoom1)):
         # get bounds
@@ -1643,7 +1643,7 @@ def plot_extract_s1d(plotter, graph, kwargs):
         # get frame
         frame = frames[row]
         # mask data between bounds
-        mask = (wave >= lowerbound) & (wave <= upperbound)
+        mask = (wavemap >= lowerbound) & (wavemap <= upperbound)
         # if first figure add title
         if row == 0:
             if kind is not None:
@@ -1652,8 +1652,8 @@ def plot_extract_s1d(plotter, graph, kwargs):
                 title = 'Spectrum (1D) fiber {1}'
             frame.set_title(title.format(kind, fiber))
         # plot 1d spectrum
-        mc_line(frame, plt, linecollection, wave[mask], flux[mask],
-                z=wave[mask], norm=norm, cmap='jet')
+        mc_line(frame, plt, linecollection, wavemap[mask], flux[mask],
+                z=wavemap[mask], norm=norm, cmap='jet')
         frame.set_xlim(lowerbound, upperbound)
         # set the y limits to 5 and 95 percentiles (to avoid outliers)
         with warnings.catch_warnings(record=True) as _:
@@ -1687,7 +1687,7 @@ def plot_extract_s1d_weights(plotter, graph, kwargs):
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     params = kwargs['params']
-    wave = kwargs['wave']
+    wavemap = kwargs['wave']
     flux = kwargs['flux']
     weight = kwargs['weight']
     kind = kwargs['kind']
@@ -1713,11 +1713,11 @@ def plot_extract_s1d_weights(plotter, graph, kwargs):
         # get frame
         frame = frames[row]
         # mask data between bounds
-        mask = (wave >= lowerbound) & (wave <= upperbound)
+        mask = (wavemap >= lowerbound) & (wavemap <= upperbound)
         # plot 1d spectrum
-        frame.plot(wave[mask], weight[mask], label='weight vector')
-        frame.plot(wave[mask], flux1[mask], label='prior to division')
-        frame.plot(wave[mask], flux2[mask], label='after division')
+        frame.plot(wavemap[mask], weight[mask], label='weight vector')
+        frame.plot(wavemap[mask], flux1[mask], label='prior to division')
+        frame.plot(wavemap[mask], flux2[mask], label='after division')
         # add legend (only for first row)
         if row == 0:
             frame.legend(loc=0, ncol=3)
@@ -1787,7 +1787,7 @@ def plot_wave_hc_guess(plotter, graph, kwargs):
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     params = kwargs['params']
-    wave = kwargs['wave']
+    wavemap = kwargs['wave']
     spec = kwargs['spec']
     llprops = kwargs['llprops']
     nbo = kwargs['nbo']
@@ -1834,13 +1834,14 @@ def plot_wave_hc_guess(plotter, graph, kwargs):
         label1_1 = label1[np.mod(order_num, 2)]
         label2_1 = label2[np.mod(order_num, 2)]
         # plot spectrum for order
-        frame.plot(wave[order_num, :], spec[order_num, :], color=col1_1,
+        frame.plot(wavemap[order_num, :], spec[order_num, :], color=col1_1,
                    label=label1_1)
         # over plot all fits
         for line_it in range(len(oxfit)):
             xpix = oxfit[line_it]
             g2 = ogfit[line_it]
-            frame.plot(wave[order_num, xpix], g2, color=col2_1, label=label2_1)
+            frame.plot(wavemap[order_num, xpix], g2, color=col2_1,
+                       label=label2_1)
         # plot unique legend
         ulegend(frame, plotter, loc=0, fontsize=12)
         # set title and labels
@@ -1867,7 +1868,7 @@ def plot_wave_hc_brightest_lines(plotter, graph, kwargs):
     plt = plotter.plt
     # ------------------------------------------------------------------
     # get the arguments from kwargs
-    wave = kwargs['wave']
+    wavemap = kwargs['wave']
     dv = kwargs['dv']
     mask = kwargs['mask']
     iteration = kwargs['iteration']
@@ -1877,9 +1878,9 @@ def plot_wave_hc_brightest_lines(plotter, graph, kwargs):
     fig, frame = graph.set_figure(plotter, ncols=1, nrows=1)
     # ------------------------------------------------------------------
     # plot all lines
-    frame.scatter(wave[~mask], dv[~mask], color='g', s=5, label='All lines')
+    frame.scatter(wavemap[~mask], dv[~mask], color='g', s=5, label='All lines')
     # plot brightest lines
-    frame.scatter(wave[mask], dv[mask], color='r', s=5, label='Brightest lines')
+    frame.scatter(wavemap[mask], dv[mask], color='r', s=5, label='Brightest lines')
     # plot legend
     frame.legend(loc=0)
     # plot title and labels
@@ -1904,7 +1905,7 @@ def plot_wave_hc_tfit_grid(plotter, graph, kwargs):
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     orders = kwargs['orders']
-    wave = kwargs['wave']
+    wavemap = kwargs['wave']
     recon = kwargs['recon']
     rms = kwargs['rms']
     xgau = kwargs['xgau']
@@ -1915,7 +1916,7 @@ def plot_wave_hc_tfit_grid(plotter, graph, kwargs):
     # get all orders
     all_orders = np.unique(orders)
     # calculate dv values
-    dv = ((wave / recon) - 1) * speed_of_light
+    dv = ((wavemap / recon) - 1) * speed_of_light
     # ------------------------------------------------------------------
     # get colours
     colours = plt.rcParams['axes.prop_cycle'].by_key()['color']
@@ -1935,7 +1936,7 @@ def plot_wave_hc_tfit_grid(plotter, graph, kwargs):
         # get colour for this order
         colour = colours[order_num]
         # plot frame1
-        frame1.scatter(wave[good], dv[good], s=5, color=colour)
+        frame1.scatter(wavemap[good], dv[good], s=5, color=colour)
         # plot frame2
         frame2.scatter(np.log10(1.0 / rms[good]), dv[good], s=5, color=colour)
         # plot frame3
@@ -2169,14 +2170,14 @@ def plot_wave_fp_final_order(plotter, graph, kwargs):
     fpdata = kwargs['fpdata']
 
     # get data from llprops
-    wave = llprops['LITTROW_EXTRAP_SOL_{0}'.format(iteration)][selected_order]
+    wavemap = llprops['LITTROW_EXTRAP_SOL_{0}'.format(iteration)][selected_order]
     fp_data = fpdata[selected_order]
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
     # ------------------------------------------------------------------
     # plot
-    frame.plot(wave, fp_data)
+    frame.plot(wavemap, fp_data)
     # set title labels limits
     title = 'spectral order {0} fiber {1} (iteration = {2})'
     frame.set(xlabel='Wavelength [nm]', ylabel='flux',
@@ -2490,7 +2491,7 @@ def plot_wave_fp_single_order(plotter, graph, kwargs):
     hcdata = kwargs['hcdata']
     # get data from llprops
     all_lines = llprops['ALL_LINES_1']
-    wave = llprops['LL_OUT_2']
+    wavemap = llprops['LL_OUT_2']
     # get number of orders
     nbo = llprops['LL_OUT_2'].shape[0]
     # ------------------------------------------------------------------
@@ -2511,7 +2512,7 @@ def plot_wave_fp_single_order(plotter, graph, kwargs):
         # get the maximum point for this order
         maxpoint = mp.nanmax(hcdata[order_num])
         # plot order and flux
-        frame.plot(wave[order_num], hcdata[order_num], label='HC Spectrum')
+        frame.plot(wavemap[order_num], hcdata[order_num], label='HC Spectrum')
         # loop around lines in order
         for it in range(0, len(all_lines[order_num])):
             # get x and y
@@ -2823,6 +2824,92 @@ definitions += [wave_hc_guess, wave_hc_brightest_lines, wave_hc_tfit_grid,
 # =============================================================================
 # Define telluric plotting functions
 # =============================================================================
+def plot_tellup_wave_trans(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    dd_arr = kwargs['dd_arr']
+    ccf_water_arr = kwargs['ccf_water_arr']
+    ccf_others_arr = kwargs['ccf_others_arr']
+    n_iterations = len(dd_arr)
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frames = graph.set_figure(plotter, nrows=1, ncols=2)
+    # ------------------------------------------------------------------
+    # plot ccfs
+    for n_it in range(n_iterations):
+        # plot water ccf
+        frames[0].plot(dd_arr[n_it], ccf_water_arr[n_it])
+        frames[0].set(xlabel='dv [km/s]', ylabel='CCF power',
+                      title='Water CCF')
+        # plot other species ccf
+        frames[1].plot(dd_arr[n_it], ccf_others_arr[n_it])
+        frames[1].set(xlabel='dv [km/s]', ylabel='CCF power',
+                      title='Dry CCF')
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
+def plot_tellup_abso_spec(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    trans = kwargs['trans']
+    wavemap = kwargs['wave']
+    thres = kwargs['thres']
+    spectrum = kwargs['spectrum']
+    spectrum_ini = kwargs['spectrum_ini']
+    objname = kwargs['objname']
+    clean_ohlines = kwargs['clean_ohlines']
+    # ------------------------------------------------------------------
+    # calculate normalisation
+    median = np.nanmedian(spectrum)
+    spectrum = spectrum / median
+    spectrum_ini = spectrum_ini / median
+    # calculate mask for transmissiong
+    mask = np.ones_like(trans)
+    # set lower tranmission to NaNs in mask
+    mask[trans < np.exp(thres)] = np.nan
+    # set NaN values in spectrum to NaNs in mask
+    mask[~np.isfinite(spectrum)] = np.nan
+    # work out a scaling
+    scale = np.nanpercentile(spectrum/trans*mask, 99.5)
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+    # ------------------------------------------------------------------
+    # plot input spectrum
+    frame.plot(wavemap, spectrum / scale, color='red', label='input')
+    # plot oh lines
+    if clean_ohlines:
+        frame.plot(wavemap, spectrum_ini / (trans * mask) / scale,
+                   color='magenta', alpha=0.5, label='prior to OH')
+    # plot input/derived_trans
+    frame.plot(wavemap, spectrum / trans * mask / scale, color='green',
+               label='input/derived_trans')
+    # plot abso
+    frame.plot(wavemap, trans, color='orange', label='abso', alpha=0.3)
+    # add legend
+    frame.legend(loc=0)
+    # get ymax value
+    ymax = mp.nanmax(spectrum_ini / (trans * mask) / scale) * 1.05
+    # set limits
+    frame.set(xlabel='Wavelength [nm]', ylabel='Normalized flux\n transmission',
+              title='OBJECT = {0}'.format(objname), ylim=[0, ymax])
+    # make figure tight
+    fig.tight_layout()
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
 def plot_mktellu_wave_flux(plotter, graph, kwargs):
     # ------------------------------------------------------------------
     # start the plotting process
@@ -2830,9 +2917,7 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
         return
     # ------------------------------------------------------------------
     # get the arguments from kwargs
-    keep = kwargs['keep']
     wavemap = kwargs['wavemap']
-    tau1 = kwargs['tau1']
     sp = kwargs['sp']
     sed = kwargs['sed']
     oimage = kwargs['oimage']
@@ -2841,7 +2926,7 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
     template = kwargs.get('template', None)
     # ------------------------------------------------------------------
     if order is None:
-        order_gen = plotter.plotloop(np.arange(len(keep)))
+        order_gen = plotter.plotloop(np.arange(len(wavemap)))
         # prompt to start looper
         plotter.close_plots(loop=True)
     # else we just deal with the order specified
@@ -2851,9 +2936,7 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
     # loop around orders
     for order_num in order_gen:
         # get this orders values
-        good = keep[order_num]
         x = wavemap[order_num]
-        y1 = tau1[order_num]
         y2 = sp[order_num]
         y3 = (sp[order_num] / template[order_num]) / sed[order_num]
         y4 = oimage[order_num] * template[order_num]
@@ -2869,7 +2952,6 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
         fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
         # ------------------------------------------------------------------
         # plot data
-        frame.plot(x, y1, color='c', marker='+', label='tapas fit')
         frame.plot(x, y2, color='k', label='input spectrum')
         frame.plot(x, y3, color='b', label='measured transmission')
 
@@ -2879,20 +2961,18 @@ def plot_mktellu_wave_flux(plotter, graph, kwargs):
         else:
             label4 = 'SED calculation value (No template)'
 
-        frame.plot(x[good], y4[good], color='r', marker='.', linestyle='None',
+        frame.plot(x, y4, color='r', marker='.', linestyle='None',
                    label='SED calculation value')
         frame.plot(x, y5, color='g', linestyle='--', label=label4)
 
         # get max / min y
-        values = list(y1[good]) + list(y2[good]) + list(y3[good])
-        values += list(y4[good]) + list(y5[good])
+        values = list(y2) + list(y3) + list(y4) + list(y5)
         mins = 0.95 * np.nanmin([0, np.nanmin(values)])
         maxs = 1.05 * np.nanmax(values)
 
         # plot legend and set up labels / limits / title
         frame.legend(loc=0)
-        frame.set(xlim=(np.min(x[good]), np.max(x[good])),
-                  ylim=(mins, maxs),
+        frame.set(xlim=(np.min(x), np.max(x)), ylim=(mins, maxs),
                   xlabel='Wavelength [nm]', ylabel='Normalised flux',
                   title='Order: {0}'.format(order_num))
         # update filename (adding order_num to end)
@@ -3006,7 +3086,8 @@ def plot_ftellu_recon_spline(plotter, graph, kwargs):
         # plot spectra for selected order
         frame.plot(swave, simage / np.nanmedian(simage), label='Observed SP')
         frame.plot(swave, stemp / np.nanmedian(stemp), label='Template SP')
-        frame.plot(swave, srecov / np.nanmedian(srecov), label='Recov abso SP')
+        frame.plot(swave, srecov / np.nanmedian(srecov),
+                   label='Recov abso SP (Observed/Template)')
         # add legend
         frame.legend(loc=0)
         # add labels
@@ -3156,12 +3237,26 @@ def plot_ftellu_recon_abso(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
+# telluric pre clean graph instances
+tellup_wave_trans = Graph('TELLUP_WAVE_TRANS', kind='debug',
+                          func=plot_tellup_wave_trans)
+sum_desc = ('Plot to show the measured CCF of water and other species '
+            'calculated during the telluric pre-cleaning')
+sum_tellup_wave_trans = Graph('SUM_TELLUP_WAVE_TRANS', kind='summary',
+                              func=plot_tellup_wave_trans,
+                              figsize=(16, 10), dpi=150, description=sum_desc)
+tellup_abso_spec = Graph('TELLUP_ABSO_SPEC', kind='debug',
+                         func=plot_tellup_abso_spec)
+sum_desc = 'Plot to the result of the telluric pre-cleaning'
+sum_tellup_abso_spec = Graph('SUM_TELLUP_ABSO_SPEC', kind='summary',
+                             func=plot_tellup_abso_spec,
+                             figsize=(16, 10), dpi=150, description=sum_desc)
 # make telluric graph instances
 mktellu_wave_flux1 = Graph('MKTELLU_WAVE_FLUX1', kind='debug',
                            func=plot_mktellu_wave_flux)
 mktellu_wave_flux2 = Graph('MKTELLU_WAVE_FLUX2', kind='debug',
                            func=plot_mktellu_wave_flux)
-sum_desc = ('Plot to show the measured transmission (and calcaulted SED for'
+sum_desc = ('Plot to show the measured transmission (and calcaulted SED) for'
             ' input rapidly rotating hot star')
 sum_mktellu_wave_flux = Graph('SUM_MKTELLU_WAVE_FLUX', kind='summary',
                               func=plot_mktellu_wave_flux,
@@ -3191,7 +3286,9 @@ sum_ftellu_recon_abso = Graph('SUM_FTELLU_RECON_ABSO', kind='summary',
 definitions += [mktellu_wave_flux1, mktellu_wave_flux2, sum_mktellu_wave_flux,
                 ftellu_pca_comp1, ftellu_pca_comp2, ftellu_recon_spline1,
                 ftellu_recon_spline2, ftellu_wave_shift1, ftellu_wave_shift2,
-                ftellu_recon_abso1, ftellu_recon_abso2, sum_ftellu_recon_abso]
+                ftellu_recon_abso1, ftellu_recon_abso2, sum_ftellu_recon_abso,
+                tellup_wave_trans, sum_tellup_wave_trans,
+                tellup_abso_spec, sum_tellup_abso_spec]
 
 
 # =============================================================================
@@ -3335,17 +3432,38 @@ def plot_ccf_photon_uncert(plotter, graph, kwargs):
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     x = kwargs.get('x')
-    y = kwargs.get('y')
+    y_sp = kwargs.get('y_sp')
+    y_ccf = kwargs.get('y_cc')
+    # get max/min points
+    with warnings.catch_warnings(record=True) as _:
+        ymin = mp.nanmin(y_ccf)
+        ymax = mp.nanmax(y_ccf)
+        if not np.isfinite(ymin):
+            ymin = mp.nanmin(y_sp)
+        if not np.isfinite(ymax):
+            ymax = mp.nanmax(y_sp)
     # ------------------------------------------------------------------
     # set up plot
     fig, frame = graph.set_figure(plotter)
     # ------------------------------------------------------------------
     # plot fits
-    frame.plot(x, y)
+    frame.plot(x, y_sp, label='DVRMS Spectrum', marker='x', linestyle='None')
+    # plot ccf noise (unless all NaNs)
+    if np.sum(np.isnan(y_ccf)) != len(y_ccf):
+        frame.plot(x, y_ccf, label='DVRMS CCF', marker='o', linestyle='None')
     # set title labels limits
     title = 'Photon noise uncertainty versus spectral order'
-    frame.set(xlabel='Order number', ylabel='Photon noise uncertainty',
+    frame.set(xlabel='Order number', ylabel='Photon noise uncertainty [m/s]',
               title=title)
+    # deal with limits (may be NaN)
+    if np.isfinite(ymin) and np.isfinite(ymax):
+        frame.set_ylim(bottom=ymin, top=ymax)
+    elif np.isfinite(ymin):
+        frame.set_ylim(bottom=ymin)
+    else:
+        frame.set_ylim(top=ymax)
+
+    frame.legend(loc=0)
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)

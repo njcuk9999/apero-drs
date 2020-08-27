@@ -127,7 +127,7 @@ def nirps_pp(files):
     ref_hdr = fits.getheader('ref_hdr.fits')
 
     if type(files) == str:
-        files = glob.glob(files)
+        files = np.sort(glob.glob(files))
 
     for file in files:
         outname = '_pp.'.join(file.split('.'))

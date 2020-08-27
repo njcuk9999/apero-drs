@@ -43,7 +43,7 @@ def get_index_files(path):
     # storage for index files
     index_files = []
     # walk through all sub-directories
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(path, followlinks=True):
         # loop around files in current sub-directory
         for filename in files:
             # only save index files
@@ -51,7 +51,7 @@ def get_index_files(path):
                 # append to storage
                 index_files.append(os.path.join(root, filename))
     # return index files
-    return index_files
+    return np.sort(index_files)
 
 
 def combine_files(files):

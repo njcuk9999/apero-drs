@@ -9,6 +9,7 @@ Created on 2019-09-16 at 14:07
 
 @author: cook
 """
+import numpy as np
 import os
 import copy
 from collections import OrderedDict
@@ -58,7 +59,7 @@ def get_all_files(params, path):
     # storage of files
     fits_files = []
     # walk through directories
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(path, followlinks=True):
         # get night name
         ucpath = drs_path.get_uncommon_path(path, root)
         # do not search directories with no files
@@ -75,13 +76,13 @@ def get_all_files(params, path):
                 # append to storage
                 fits_files.append(abspath)
     # return fits files
-    return fits_files
+    return np.sort(fits_files)
 
 
 def get_nightnames(params, path):
     night_names = []
     # walk through directories
-    for root, dirs, files in os.walk(path):
+    for root, dirs, files in os.walk(path, followlinks=True):
         # do not search directories with no files
         if len(files) == 0:
             continue
@@ -90,7 +91,7 @@ def get_nightnames(params, path):
         # append to night names
         night_names.append(ucpath)
     # return night names
-    return night_names
+    return np.sort(night_names)
 
 
 def get_outputs(params, files):

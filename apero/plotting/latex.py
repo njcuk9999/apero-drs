@@ -105,7 +105,7 @@ class LatexDocument:
 
     def cleanup(self):
         # get all files in directory that have the filename (without extension)
-        files = glob.glob(self.filename + '*')
+        files = np.sort(glob.glob(self.filename + '*'))
         # loop around files
         for filename in files:
             # get extension
