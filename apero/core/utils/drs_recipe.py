@@ -9,15 +9,16 @@ Created on 2019-01-19 at 12:02
 
 @author: cook
 """
-import numpy as np
-from astropy.table import Table
 import argparse
-import os
-import sys
-import glob
+from astropy.table import Table
 from collections import OrderedDict
 import copy
 import itertools
+import glob
+import numpy as np
+import os
+import sys
+from typing import Any, List, Type, Union
 
 from apero.base import base
 from apero.base import drs_break
@@ -340,22 +341,99 @@ class DrsRecipe(object):
                 self.drs_params[key] = input_parameters[key]
                 self.drs_params.set_source(key, input_parameters.sources[key])
 
-    def set_arg(self, name=None, **kwargs):
+    def set_arg(self, name: Union[str, None] = None,
+                pos: Union[int, str, None] = None,
+                altnames: Union[List[str], None] = None,
+                dtype: Union[str, Type, None] = None,
+                options: Union[List[str], None] = None,
+                helpstr: Union[str, None] = '',
+                files: Union[List[str], None] = None,
+                parent: Union[str, None] = None, limit: Union[int, None] = None,
+                minimum: Union[int, float, None] = None,
+                maximum: Union[int, float, None] = None,
+                filelogic: str = 'inclusive', default: Union[Any, None] = None,
+                default_ref: Union[Any, None] = None,
+                required: bool = None, reprocess: bool = False):
         """
         Add an argument to the recipe
 
-        :param name: string or None, the name and reference of the argument
-        :param kwargs: arguments that can be assigned to DrsArgument kwargs
+        :param name: string, the name of the argument and call, for optional
+                     arguments should include the "-" and "--" in front
+                     ("arg.name" will not include these but "arg.argname"
+                     and "arg.names" will)
 
-        :return None:
+        :param pos: int or None, the position of a position argument, if None
+                   not a positional argument (i.e. optional argument)
+
+        :param altnames: list of strings or None, the alternative calls to
+                        the argument in argparse (as well as "name"), if None
+                        only call to argument is "name"
+
+        :param dtype: string or type or None, the data type currently must
+                     be one of the following:
+                        ['files', 'file', 'directory', 'bool',
+                         'options', 'switch', int, float, str, list]
+                     if None set to string.
+                     these control the checking of the argument in most cases.
+                     int/flat/str/list are not checked
+
+        :param options: list of strings or None, sets the allowed string values
+                       of the argument, if None no options are required (other
+                       than those set by dtype)
+
+        :param helpstr: string or None, if not None sets the text to add to the
+                       help string
+
+        :param files: list of DrsInput objects or None, if not None and dtype
+                     is "files" or "file" sets the type of file to expect
+                     the way the list is understood is based on "filelogic"
+
+        :param parent: str, a parent Const or Keyword that this is spawned
+                       from
+
+        :param limit: int, file limit for processing
+
+        :param minimum: int, float, the minimum value for this argument
+
+        :param maximum: int, float, the maximum value for this argument
+
+        :param filelogic: string, either "inclusive" or "exclusive", if
+                         inclusive and combination of DrsInput objects are
+                         valid, if exclusive only one DrsInput in the list is
+                         valid for all files i.e.
+                         - if files = [A, B] and filelogic = 'inclusive'
+                           the input files may all be A or all be B
+                         - if files = [A, B] and filelogic = 'exclusive'
+                           the input files may be either A or B
+
+        :param default: the default value to give the argument if unset,
+                        either this or defaulf_ref must be set for kwargs
+
+        :param default_ref: str, the key in the constant parameter dictionary
+                            where the default value it set, either this or
+                            defaulf_ref must be set for kwargs
+
+        :param required: bool, if True this is a required argument and must
+                         be used as an argument or exception raised
+
+        :param reprocess: bool, if True this argument will be used in processing
+                          script as a required argument (but does not raise an
+                          exception when recipe used individually)
+
         """
         # set name
         if name is None:
             name = 'Arg{0}'.format(len(self.args) + 1)
         # create argument
         try:
-            argument = DrsArgument(name, kind='arg', **kwargs)
-        except ArgumentError as e:
+            argument = DrsArgument(name, kind='arg', pos=pos, altnames=altnames,
+                                   dtype=dtype, options=options,
+                                   helpstr=helpstr, files=files, parent=parent,
+                                   limit=limit, minimum=minimum,
+                                   maximum=maximum, filelogic=filelogic,
+                                   default=default, default_ref=default_ref,
+                                   required=required, reprocess=reprocess)
+        except ArgumentError as _:
             sys.exit(0)
         # make arg parser properties
         argument.make_properties()
@@ -364,20 +442,106 @@ class DrsRecipe(object):
         # add to arg list
         self.args[name] = argument
 
-    def set_kwarg(self, name=None, **kwargs):
+    def set_kwarg(self, name: Union[str, None] = None,
+                  altnames: Union[List[str], None] = None,
+                  dtype: Union[str, Type, None] = None,
+                  options: Union[List[str], None] = None,
+                  helpstr: Union[str, None] = '',
+                  files: Union[List[str], None] = None,
+                  parent: Union[str, None] = None,
+                  limit: Union[int, None] = None,
+                  minimum: Union[int, float, None] = None,
+                  maximum: Union[int, float, None] = None,
+                  filelogic: str = 'inclusive',
+                  default: Union[Any, None] = None,
+                  default_ref: Union[Any, None] = None,
+                  required: bool = None, reprocess: bool = False):
         """
         Add a keyword argument to the recipe
 
-        :param name: string or None, the name and reference of the argument
-        :param kwargs: arguments that can be assigned to DrsArgument kwargs
-        :return None:
+        :param name: string, the name of the argument and call, for optional
+                     arguments should include the "-" and "--" in front
+                     ("arg.name" will not include these but "arg.argname"
+                     and "arg.names" will)
+
+        :param kind: string the argument kind (argument or keyword argument)
+
+        :param kwargs: currently allowed kwargs are:
+
+        :param pos: int or None, the position of a position argument, if None
+                   not a positional argument (i.e. optional argument)
+
+        :param altnames: list of strings or None, the alternative calls to
+                        the argument in argparse (as well as "name"), if None
+                        only call to argument is "name"
+
+        :param dtype: string or type or None, the data type currently must
+                     be one of the following:
+                        ['files', 'file', 'directory', 'bool',
+                         'options', 'switch', int, float, str, list]
+                     if None set to string.
+                     these control the checking of the argument in most cases.
+                     int/flat/str/list are not checked
+
+        :param options: list of strings or None, sets the allowed string values
+                       of the argument, if None no options are required (other
+                       than those set by dtype)
+
+        :param helpstr: string or None, if not None sets the text to add to the
+                       help string
+
+        :param files: list of DrsInput objects or None, if not None and dtype
+                     is "files" or "file" sets the type of file to expect
+                     the way the list is understood is based on "filelogic"
+
+        :param parent: str, a parent Const or Keyword that this is spawned
+                       from
+
+        :param limit: int, file limit for processing
+
+        :param minimum: int, float, the minimum value for this argument
+
+        :param maximum: int, float, the maximum value for this argument
+
+        :param filelogic: string, either "inclusive" or "exclusive", if
+                         inclusive and combination of DrsInput objects are
+                         valid, if exclusive only one DrsInput in the list is
+                         valid for all files i.e.
+                         - if files = [A, B] and filelogic = 'inclusive'
+                           the input files may all be A or all be B
+                         - if files = [A, B] and filelogic = 'exclusive'
+                           the input files may be either A or B
+
+        :param default: the default value to give the argument if unset,
+                        either this or defaulf_ref must be set for kwargs
+
+        :param default_ref: str, the key in the constant parameter dictionary
+                            where the default value it set, either this or
+                            defaulf_ref must be set for kwargs
+
+        :param required: bool, if True this is a required argument and must
+                         be used as an argument or exception raised
+
+        :param reprocess: bool, if True this argument will be used in processing
+                          script as a required argument (but does not raise an
+                          exception when recipe used individually)
+
         """
         if name is None:
             name = 'Kwarg{0}'.format(len(self.args) + 1)
         # create keyword argument
         try:
-            keywordargument = DrsArgument(name, kind='kwarg', **kwargs)
-        except ArgumentError as e:
+            keywordargument = DrsArgument(name, kind='kwargs', pos=None,
+                                          altnames=altnames, dtype=dtype,
+                                          options=options, helpstr=helpstr,
+                                          files=files, parent=parent,
+                                          limit=limit, minimum=minimum,
+                                          maximum=maximum, filelogic=filelogic,
+                                          default=default,
+                                          default_ref=default_ref,
+                                          required=required,
+                                          reprocess=reprocess)
+        except ArgumentError as _:
             sys.exit(0)
         # make arg parser properties
         keywordargument.make_properties()
@@ -1058,7 +1222,7 @@ class DrsRecipe(object):
                 file_in = drs_file.newcopy(filename=filename_it, recipe=self)
                 file_in.read_file()
                 # set the directory
-                fdir = drs_argument.get_uncommon_path(directory, inputdir)
+                fdir = drs_misc.get_uncommon_path(directory, inputdir)
                 file_in.directory = fdir
 
                 # -------------------------------------------------------------
