@@ -1,6 +1,6 @@
 # Update Note Summary - Version 0.6.130
 
-Date: 2020-08-24
+Date: 2020-08-27
 
 ## Updates since Version 0.6.129
 
