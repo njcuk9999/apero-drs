@@ -36,20 +36,20 @@ Last updated: 2020-07-04
 ##  1 Latest version
 [Back to top](#apero---a-pipeline-to-reduce-observations)
 
-- master (long term stable) V0.6.082 (2020-05-04)
+- master (long term stable) V0.6.130 (2020-08-27)
     ```
     This is the version currently recommended for all general use. It may not
     contain the most up-to-date features until long term support and stability can
     be verified.
     ```
-- developer (tested) V0.6.129 (2020-07-29)
+- developer (tested) V0.6.130 (2020-08-27)
     ```
     Note the developer version should have been tested and semi-stable but not
     ready for full sets of processing and defintely not for release for 
     non-developers or for data put on archives. Some changes may not be
     in this version that are in the working version.
     ```
-- working (untested) V0.6.129 (2020-07-29)
+- working (untested) V0.6.130 (2020-08-27)
     ```
     Note the working version will be the most up-to-date version but has not been
     tested for stability - use at own risk.
@@ -459,10 +459,9 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 
 | recipe                                                                   | SHORT_NAME |
 | ------------------------------------------------------------------------ | ---------- | 
-| cal_preprocessing [every night; OBJECT="Calibration"] | PP_CAL     |
-| cal_preprocessing [every night; SCIENCE_TARGETS]      | PP_SCI     |
-| cal_preprocessing [every night; TELLURIC_TARGETS]     | PP_TEL     |
-
+| cal_preprocessing [every night; OBJECT="Calibration"]                    | PP_CAL     |
+| cal_preprocessing [every night; SCIENCE_TARGETS]                         | PP_SCI     |
+| cal_preprocessing [every night; TELLURIC_TARGETS]                        | PP_TEL     |
 
 
 
