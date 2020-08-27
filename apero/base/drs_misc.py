@@ -7,6 +7,7 @@ Created on 2020-08-2020-08-21 19:17
 
 @author: cook
 """
+import os
 from typing import Any, Union
 
 from apero.base import base
@@ -320,7 +321,7 @@ def _get_prev_count(params: Any, previous: str) -> int:
     :return: number of times function occurs in DEBUG_FUNC_LIST
     """
     # set function name (cannot break here --> no access to inputs)
-    _ = str(__NAME__) + '._get_prev_count()'
+    _ = display_func(None, '._get_prev_count()', __NAME__)
     # deal with no params
     if params is None:
         return 0
@@ -336,6 +337,32 @@ def _get_prev_count(params: Any, previous: str) -> int:
             n_elements += 1
     # return number of element founds
     return n_elements
+
+
+def get_uncommon_path(path1, path2):
+    """
+    Get the uncommon path of "path1" compared to "path2"
+
+    i.e. if path1 = /home/user/dir1/dir2/dir3/
+         and path2 = /home/user/dir1/
+
+         the output should be /dir2/dir3/
+
+    :param path1: string, the longer root path to return (without the common
+                  path)
+    :param path2: string, the shorter root path to compare to
+
+    :return uncommon_path: string, the uncommon path between path1 and path2
+    """
+    # set function name (cannot break here --> no access to params)
+    _ = display_func(None, 'get_uncommon_path', __NAME__)
+    # paths must be absolute
+    path1 = os.path.abspath(path1)
+    path2 = os.path.abspath(path2)
+    # get common path
+    common = os.path.commonpath([path2, path1]) + os.sep
+    # return the non-common part of the path
+    return path1.split(common)[-1]
 
 
 # =============================================================================
