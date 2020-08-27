@@ -20,6 +20,7 @@ from typing import Union
 from apero.base import base
 from apero.base import drs_break
 from apero.base import drs_exceptions
+from apero.base import drs_misc
 from apero.core import math as mp
 from apero.core.core import drs_log
 from apero import lang
@@ -72,9 +73,7 @@ def get_relative_folder(params, package, folder):
 
 def get_uncommon_path(path1, path2):
     # get common source
-    common = os.path.commonpath([path2, path1]) + os.sep
-    uncommon = path2.split(common)[-1]
-    return uncommon
+    return drs_misc.get_uncommon_path(path1, path2)
 
 
 def get_nightname(params, filepath, root=None):
