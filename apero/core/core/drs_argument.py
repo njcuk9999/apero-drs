@@ -9,12 +9,13 @@ Created on 2019-02-04 at 16:40
 
 @author: cook
 """
-import numpy as np
 import argparse
-import sys
-import os
-import copy
 from collections import OrderedDict
+import copy
+import numpy as np
+import os
+import sys
+from typing import Any, IO, List, Tuple, Type, Union
 
 from apero.base import base
 from apero.base import drs_exceptions
@@ -23,6 +24,7 @@ from apero.base import drs_text
 from apero.core import constants
 from apero import lang
 from apero.core.core import drs_log
+
 
 # =============================================================================
 # Define variables
@@ -59,7 +61,16 @@ NUMBER_TYPES = base.NUMBER_TYPES
 # =============================================================================
 # Adapted from: https://stackoverflow.com/a/16942165
 class DrsArgumentParser(argparse.ArgumentParser):
-    def __init__(self, recipe, **kwargs):
+    # argparse.ArgumentParser cannot be pickled
+    #   so cannot pickle DrsArgumentParser either
+
+    def __init__(self, recipe: Any, **kwargs):
+        """
+        Construct the Drs Argument parser
+
+        :param recipe: Drs Recipe - the recipe class for these arguments
+        :param kwargs: keyword arguments passed to argparse.ArgumentParser
+        """
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(None, '__init__', __NAME__, 'DRSArgumentParser')
         # define the recipe
@@ -81,7 +92,19 @@ class DrsArgumentParser(argparse.ArgumentParser):
         # run the argument parser (super)
         argparse.ArgumentParser.__init__(self, **kwargs)
 
-    def parse_args(self, args=None, namespace=None):
+    def parse_args(self, args: Union[None, list] = None,
+                   namespace: argparse.Namespace = None) -> argparse.Namespace:
+        """
+        Parse the arguments (from sys.argv for args) and push them into a
+        parameter - overrides class from argparser.Parser
+
+        :param args: a list of string arguments (similar to output of sys.argv)
+                     used to override arguments coming from sys.argv (default)
+        :param namespace: argparse Namespace instance - parsed
+        :return: a argparse Namespace instance with the arguments loaded in
+                 (after checking) use  params = vars(return) to force into
+                 a dictionary of key/value pairs
+        """
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, 'parse_args', __NAME__,
                          'DRSArgumentParser')
@@ -104,7 +127,13 @@ class DrsArgumentParser(argparse.ArgumentParser):
             self.error(self.textdict['09-001-00002'].format(' '.join(argv)))
         return args
 
-    def error(self, message):
+    def error(self, message: str):
+        """
+        Prints a usage message incorporating the message to stderr and
+        exits. (Overrides argparse.Parser.error
+
+        raises an exit via WLOG error
+        """
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, 'error', __NAME__,
                          'DRSArgumentParser')
@@ -119,7 +148,16 @@ class DrsArgumentParser(argparse.ArgumentParser):
         emsg_obj = TextEntry('09-001-00001', args=emsg_args)
         WLOG(params, 'error', emsg_obj)
 
-    def _print_message(self, message, file=None):
+    def _print_message(self, message: str, file: Union[None, IO] = None):
+        """
+        Custom help text displayed after an error occurs overrides
+        functionality of argparse.Parser._print_message
+
+        :param message: str, required for super but not used here
+        :param file: file instance, required for super but not used here
+
+        :return: None
+        """
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '_print_message', __NAME__,
                          'DRSArgumentParser')
@@ -145,7 +183,13 @@ class DrsArgumentParser(argparse.ArgumentParser):
         print()
         print(blue + self.format_help() + end)
 
-    def format_usage(self):
+    def format_usage(self) -> str:
+        """
+        Set how to use this recipe based on arguments added (overrides
+        argparse.Parser.format_usage)
+
+        :return: string representation of the usage for printing
+        """
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, 'format_usage', __NAME__,
                          'DRSArgumentParser')
@@ -155,7 +199,13 @@ class DrsArgumentParser(argparse.ArgumentParser):
         # return messages
         return return_string
 
-    def format_help(self):
+    def format_help(self) -> str:
+        """
+        Generates the string used for the help menu (used from the --help or -h
+        argument)
+
+        :return: str, the help string to display
+        """
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, 'format_help', __NAME__,
                          'DRSArgumentParser')
@@ -212,7 +262,15 @@ class DrsArgumentParser(argparse.ArgumentParser):
         # return messages
         return return_string
 
-    def _has_special(self):
+    def _has_special(self) -> bool:
+        """
+        Deals with (1) when -h and --help are triggered --> print help and then
+        exit elsewise finds whether recipe has special arguments definited
+
+        :return: If recipe has special arguments returns True, else returns
+                 false
+        :raises: _sys.exit if -h or --help in sys.argv
+        """
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '_has_special', __NAME__,
                          'DRSArgumentParser')
@@ -246,20 +304,32 @@ class DrsArgumentParser(argparse.ArgumentParser):
 
 class DrsAction(argparse.Action):
     def __init__(self, *args, **kwargs):
+        """
+        Construct the base DrsAction class (Abstract should not be used)
+
+        :param args: arguments passed to argparse.Action.__init__
+        :param kwargs: keyword arguments passed to argparse.Action.__init__
+        """
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(None, '__init__', __NAME__, 'DrsAction')
         # run the argument parser (super)
         argparse.Action.__init__(self, *args, **kwargs)
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser: DrsArgumentParser,
+                 namespace: argparse.Namespace, values: Any,
+                 option_string: Any = None):
         """
-        :param parser: 
-        :param namespace: 
-        :param values: 
-        :param option_string: 
-        
-        :type parser: DrsArgumentParser
-        :return: 
+        Define an Abstract call to Action (required for overwriting)
+        Should call setattr(namespace, destination, value) to set
+        destination = value  in the namespace
+
+        :param parser: DrsArgumentParser instance
+        :param namespace: argparse.Namespace instance
+        :param values: Any, the values to use to set destination
+        :param option_string: None in most cases but used to get options
+                              for testing the value if required
+
+        :return: None
         """
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(None, '__call__', __NAME__, 'DrsAction')
@@ -269,18 +339,62 @@ class DrsAction(argparse.Action):
 
 class _CheckDirectory(DrsAction):
     def __init__(self, *args, **kwargs):
+        """
+        Construct the Check Directory action (for checking a directory argument)
+
+        :param args: arguments passed to argparse.Action.__init__
+        :param kwargs: keyword arguments passed to argparse.Action.__init__
+        """
+        # set the class name
+        self.class_name = '_CheckDirectory'
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(None, '__init__', __NAME__, '_CheckDirectory')
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
         # set the recipe and parser to None
         self.recipe = None
-        self.parser = None
         # force super initialisation
         DrsAction.__init__(self, *args, **kwargs)
 
-    def _check_directory(self, value):
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        String representation of this class
+        :return:
+        """
+        return '_CheckDirectory[DrsAction]'
+
+    def _check_directory(self, value: Any) -> str:
+        """
+        Check the value of the directory is valid - raise exception if not
+        valid, else return the value
+
+        :param value: Any, the value to test whether valid for directory
+        argument
+
+        :return: str: the valid directory (raises exception if invalid)
+        :raises: drs_exceptions.LogExit
+        """
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '_check_directory', __NAME__,
-                         '_CheckDirectory')
+                         self.class_name)
         # ---------------------------------------------------------------------
         # deal with no check
         if not self.recipe.input_validation:
@@ -317,13 +431,26 @@ class _CheckDirectory(DrsAction):
             # log messages
             WLOG(params, 'error', wmsgs)
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser: DrsArgumentParser,
+                 namespace: argparse.Namespace, values: Any,
+                 option_string: Any = None):
+        """
+        Call the action _CheckDirectory() - sets the _CheckDirectory.dest
+        to value if valid else raises exception
+
+        :param parser: DrsArgumentParser instance
+        :param namespace: argparse.Namespace instance
+        :param values: Any, the values to check directory argument
+        :param option_string: None in most cases but used to get options
+                              for testing the value if required
+        :return: None
+        :raises: drs_exceptions.LogExit
+        """
         # get drs parameters
         self.recipe = parser.recipe
-        self.parser = parser
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
-                         '_CheckDirectory')
+                         self.class_name)
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
@@ -337,19 +464,78 @@ class _CheckDirectory(DrsAction):
 
 class _CheckFiles(DrsAction):
     def __init__(self, *args, **kwargs):
+        """
+        Construct the Check Files action (for checking a files argument)
+
+        :param args: arguments passed to argparse.Action.__init__
+        :param kwargs: keyword arguments passed to argparse.Action.__init__
+        """
+        # set the class name
+        self.class_name = '_CheckFiles'
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(None, '__init__', __NAME__, '_CheckFiles')
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
         # get the recipe, namespace and directory (if not added set to None)
         self.recipe = kwargs.get('recipe', None)
         self.namespace = kwargs.get('namespace', None)
         self.directory = kwargs.get('directory', None)
+        self.parser = None
         # force super initialisation
         DrsAction.__init__(self, *args, **kwargs)
 
-    def _check_files(self, value, current_typelist=None, current_filelist=None):
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # what to exclude from state
+        exclude = ['parser']
+        # need a dictionary for pickle
+        state = dict()
+        for key, item in self.__dict__:
+            if key not in exclude:
+                state[key] = item
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+        # set parser to None (Is this a problem?)
+        self.parser = None
+
+    def __str__(self) -> str:
+        """
+        String representation of this class
+        :return:
+        """
+        return '_CheckFiles[DrsAction]'
+
+    def _check_files(self, value: Any,
+                     current_typelist: Union[None, List[Any]] = None,
+                     current_filelist: Union[None, List[str]] = None
+                     ) -> Tuple[List[str], List[Any]]:
+        """
+        Check the values of the files are valid - raise exception if not
+        valid, else return the value
+
+        :param value: Any, the value to test whether valid for directory
+        argument
+        :param current_typelist: list of DrsFile types or None
+        :param current_filelist: list of string file paths or None
+
+        :return: the valid filename and its DrsFile instance
+                 (raises exception if invalid)
+        :raises: drs_exceptions.LogExit
+        """
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '_check_files', __NAME__,
-                         '_CheckFiles')
+                         self.class_name)
         # ---------------------------------------------------------------------
         # deal with no check
         if not self.recipe.input_validation:
@@ -386,13 +572,29 @@ class _CheckFiles(DrsAction):
             # log messages
             WLOG(params, 'error', emsgs, wrap=False)
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser: DrsArgumentParser,
+                 namespace: argparse.Namespace, values: Any,
+                 option_string: Any = None):
+        """
+        Call the action _CheckFiles() - sets the _CheckFiles.dest
+        to value if valid else raises exception
+
+        _CheckFiles.dest = [filename, DrsFile instance]
+
+        :param parser: DrsArgumentParser instance
+        :param namespace: argparse.Namespace instance
+        :param values: Any, the values to check directory argument
+        :param option_string: None in most cases but used to get options
+                              for testing the value if required
+        :return: None
+        :raises: drs_exceptions.LogExit
+        """
         # get drs parameters
         self.recipe = parser.recipe
         self.parser = parser
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
-                         '_CheckFiles')
+                         self.class_name)
         # store the namespace
         self.namespace = namespace
         # check for help
@@ -400,15 +602,20 @@ class _CheckFiles(DrsAction):
         skip = parser._has_special()
         if skip:
             return 0
+        # if we have a string value just check this one file but make it a
+        #  one element list
         elif isinstance(values, str):
             filelist, typelist = self._check_files([values], [], [])
             files, types = filelist, typelist
+        # else we have a vector of files check all of them
         elif type(values) in [list, np.ndarray]:
             files, types = [], []
             for value in values:
                 filelist, typelist = self._check_files(value, types, files)
                 files += filelist
                 types += typelist
+        # else just try to make if a one element list and check this list of
+        #  files for validity
         else:
             filelist, typelist = self._check_files([values], [], [])
             files, types = filelist, typelist
@@ -418,6 +625,14 @@ class _CheckFiles(DrsAction):
 
 class _CheckBool(DrsAction):
     def __init__(self, *args, **kwargs):
+        """
+        Construct the Check Boolean action (for checking a boolean argument)
+
+        :param args: arguments passed to argparse.Action.__init__
+        :param kwargs: keyword arguments passed to argparse.Action.__init__
+        """
+        # set class name
+        self.class_name = '_CheckBool'
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(None, '__init__', __NAME__, '_CheckBool')
         # define recipe as unset
@@ -425,7 +640,49 @@ class _CheckBool(DrsAction):
         # force super initialisation
         DrsAction.__init__(self, *args, **kwargs)
 
-    def _check_bool(self, value):
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        String representation of this class
+        :return:
+        """
+        return '_CheckBool[DrsAction]'
+
+    def _check_bool(self, value) -> bool:
+        """
+        Check the value of the boolean is valid - raise exception if not
+        valid, else return the value
+
+        Casts to string and accepts 'yes', 'true', 't', 'y', '1' as True
+        Casts to string and accepts 'no', 'false', 'f', 'n', '0' as False
+        with an upper/lower character cases
+
+        :param value: Any, the value to test whether valid for directory
+        argument
+
+        :return: bool, the proper type casted value
+                 (raises exception if invalid for a boolean)
+        :raises: drs_exceptions.LogExit
+        """
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '_check_bool', __NAME__,
                          '_CheckBool')
@@ -460,7 +717,21 @@ class _CheckBool(DrsAction):
             eargs = [self.dest, value]
             WLOG(params, 'error', TextEntry('09-001-00013', args=eargs))
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser: DrsArgumentParser,
+                 namespace: argparse.Namespace, values: Any,
+                 option_string: Any = None):
+        """
+        Call the action _CheckBool() - sets the _CheckBool.dest
+        to value if valid else raises exception
+
+        :param parser: DrsArgumentParser instance
+        :param namespace: argparse.Namespace instance
+        :param values: Any, the values to check boolean argument
+        :param option_string: None in most cases but used to get options
+                              for testing the value if required
+        :return: None
+        :raises: drs_exceptions.LogExit
+        """
         # get drs parameters
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
@@ -481,32 +752,64 @@ class _CheckBool(DrsAction):
 
 class _CheckType(DrsAction):
     def __init__(self, *args, **kwargs):
+        """
+        Construct the Check Type action (for checking a type argument)
+
+        :param args: arguments passed to argparse.Action.__init__
+        :param kwargs: keyword arguments passed to argparse.Action.__init__
+        """
+        # set class name
+        self.class_name = '_CheckType'
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(None, '__init__', __NAME__, '_CheckType')
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
         # define recipe as None
         self.recipe = None
         # force super initialisation
         DrsAction.__init__(self, *args, **kwargs)
 
-    def _eval_type(self, value):
-        # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '_eval_type', __NAME__,
-                         '_CheckType')
-        # get parameters
-        params = self.recipe.drs_params
-        # get type error
-        eargs = [self.dest, value, self.type]
-        try:
-            return self.type(value)
-        except ValueError as _:
-            WLOG(params, 'error', TextEntry('09-001-00014', args=eargs))
-        except TypeError as _:
-            WLOG(params, 'error', TextEntry('09-001-00015', args=eargs))
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
 
-    def _check_type(self, value):
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+        # set parser to None (Is this a problem?)
+        self.parser = None
+
+    def __str__(self) -> str:
+        """
+        String representation of this class
+        :return:
+        """
+        return '_CheckType[DrsAction]'
+
+    def _check_type(self, value: Any) -> Any:
+        """
+        Check the value of the type is valid - raise exception if not
+        valid, else return the value
+
+        :param value: Any, the value to test whether valid for directory
+        argument
+
+        :return: Any, based on the type required (raises exception if invalid)
+        :raises: drs_exceptions.LogExit
+        """
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '_check_type', __NAME__,
-                         '_CheckType')
+                         self.class_name)
         # ---------------------------------------------------------------------
         # deal with no check
         if not self.recipe.input_validation:
@@ -538,10 +841,40 @@ class _CheckType(DrsAction):
             eargs = [self.dest, self.nargs, type(value), value]
             WLOG(params, 'error', TextEntry('09-001-00018', args=eargs))
 
-    def _check_limits(self, values):
+    def _eval_type(self, value: Any) -> Any:
+        """
+        Try to cast the value into self.type
+
+        :param value: Any, value to try to change to self.type
+        :return: Any, the value type-casted into self.type type
+        :raises: drs_exceptions.LogExit
+        """
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '_eval_type', __NAME__,
+                         self.class_name)
+        # get parameters
+        params = self.recipe.drs_params
+        # get type error
+        eargs = [self.dest, value, self.type]
+        try:
+            return self.type(value)
+        except ValueError as _:
+            WLOG(params, 'error', TextEntry('09-001-00014', args=eargs))
+        except TypeError as _:
+            WLOG(params, 'error', TextEntry('09-001-00015', args=eargs))
+
+    def _check_limits(self, values: Any) -> Union[List[Any], Any]:
+        """
+        Checks the limits (maximum and minimum) of a value or set of values
+        (maximum and minimum obtained from Argument definition)
+
+        :param values: Any, the input values to test
+        :return: Any, the same values as input (unless outside max and/or min)
+        :raises: drs_exceptions.LogExit
+        """
         # set function name (cannot break here --> no access to inputs)
         func_name = display_func(self.recipe.drs_params, '_check_type',
-                                 __NAME__, '_CheckType')
+                                 __NAME__, self.class_name)
         # ---------------------------------------------------------------------
         # deal with no check
         if not self.recipe.input_validation:
@@ -620,12 +953,26 @@ class _CheckType(DrsAction):
         else:
             return values[0]
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser: DrsArgumentParser,
+                 namespace: argparse.Namespace, values: Any,
+                 option_string: Any = None):
+        """
+        Call the action _CheckType() - sets the _CheckType.dest
+        to value if valid else raises exception
+
+        :param parser: DrsArgumentParser instance
+        :param namespace: argparse.Namespace instance
+        :param values: Any, the values to check directory argument
+        :param option_string: None in most cases but used to get options
+                              for testing the value if required
+        :return: None
+        :raises: drs_exceptions.LogExit
+        """
         # get drs parameters
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '_check_type', __NAME__,
-                         '_CheckType')
+                         self.class_name)
         # check for help
         # noinspection PyProtectedMember
         skip = parser._has_special()
@@ -645,6 +992,12 @@ class _CheckType(DrsAction):
 
 class _CheckOptions(DrsAction):
     def __init__(self, *args, **kwargs):
+        """
+        Construct the Check Options action (for checking a options argument)
+
+        :param args: arguments passed to argparse.Action.__init__
+        :param kwargs: keyword arguments passed to argparse.Action.__init__
+        """
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(None, '__init__', __NAME__, '_CheckOptions')
         # define recipe as None (overwritten by __call__)
@@ -652,7 +1005,44 @@ class _CheckOptions(DrsAction):
         # force super initialisation
         DrsAction.__init__(self, *args, **kwargs)
 
-    def _check_options(self, value):
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        String representation of this class
+        :return:
+        """
+        return '_CheckOptions[DrsAction]'
+
+    def _check_options(self, value: Any) -> Any:
+        """
+        Check the value of the options are valid - raise exception if not
+        valid, else return the value
+
+        :param value: Any, the value to test whether valid for directory
+        argument
+
+        :return: str: the valid directory (raises exception if invalid)
+        :raises: drs_exceptions.LogExit
+        """
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '_check_options', __NAME__,
                          '_CheckOptions')
@@ -670,7 +1060,21 @@ class _CheckOptions(DrsAction):
             eargs = [self.dest, ' or '.join(self.choices), value]
             WLOG(params, 'error', TextEntry('09-001-00019', args=eargs))
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser: DrsArgumentParser,
+                 namespace: argparse.Namespace, values: Any,
+                 option_string: Any = None):
+        """
+        Call the action _CheckOptions() - sets the _CheckOptions.dest
+        to value if valid else raises exception
+
+        :param parser: DrsArgumentParser instance
+        :param namespace: argparse.Namespace instance
+        :param values: Any, the values to check directory argument
+        :param option_string: None in most cases but used to get options
+                              for testing the value if required
+        :return: None
+        :raises: drs_exceptions.LogExit
+        """
         # get drs parameters
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
@@ -694,6 +1098,14 @@ class _CheckOptions(DrsAction):
 # =============================================================================
 class _MakeListing(DrsAction):
     def __init__(self, *args, **kwargs):
+        """
+        Construct the Make Listing action (for checking a directory argument)
+
+        :param args: arguments passed to argparse.Action.__init__
+        :param kwargs: keyword arguments passed to argparse.Action.__init__
+        """
+        # set class name
+        self.class_name = '_MakeListing'
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(None, '__init__', __NAME__, '_MakeListing')
         # define recipe as None (overwritten in __call__)
@@ -705,10 +1117,51 @@ class _MakeListing(DrsAction):
         # force super initialisation
         DrsAction.__init__(self, *args, **kwargs)
 
-    def _display_listing(self, namespace):
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # what to exclude from state
+        exclude = ['parser']
+        # need a dictionary for pickle
+        state = dict()
+        for key, item in self.__dict__:
+            if key not in exclude:
+                state[key] = item
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+        # set parser to None (Is this a problem?)
+        self.parser = None
+
+    def __str__(self) -> str:
+        """
+        String representation of this class
+        :return:
+        """
+        return '_MakeListing[DrsAction]'
+
+    def _display_listing(self, namespace: argparse.Namespace):
+        """
+        Display the listing for an input_dir and directory
+        (taken from namespace)
+
+        :return: str: the valid directory (raises exception if invalid)
+        :raises: drs_exceptions.LogExit
+        """
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '_display_listing', __NAME__,
-                         '_MakeListing')
+                         self.class_name)
         # get input dir
         # noinspection PyProtectedMember
         input_dir = self.recipe.get_input_dir()
@@ -730,12 +1183,26 @@ class _MakeListing(DrsAction):
         # ---------------------------------------------------------------------
         _print_list_msg(self.recipe, fulldir, dircond, list_all=False)
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser: DrsArgumentParser,
+                 namespace: argparse.Namespace, values: Any,
+                 option_string: Any = None):
+        """
+        Call the action _MakeListing() - displays a directory listing
+        to value if valid else raises exception
+
+        :param parser: DrsArgumentParser instance
+        :param namespace: argparse.Namespace instance
+        :param values: Any, the values to check directory argument
+        :param option_string: None in most cases but used to get options
+                              for testing the value if required
+        :return: None
+        :raises: drs_exceptions.LogExit
+        """
         # get drs parameters
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
-                         '_MakeListing')
+                         self.class_name)
         # store parser
         self.parser = parser
         # check for help
@@ -748,9 +1215,17 @@ class _MakeListing(DrsAction):
 
 
 class _MakeAllListing(DrsAction):
+    """
+    Construct the Make All Listings action (for checking a directory argument)
+
+    :param args: arguments passed to argparse.Action.__init__
+    :param kwargs: keyword arguments passed to argparse.Action.__init__
+    """
     def __init__(self, *args, **kwargs):
+        # set class name
+        self.class_name = '_MakeAllListing'
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(None, '__init__', __NAME__, '_MakeAllListing')
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
         # define recipe as None (overwritten in __call__)
         self.recipe = None
         # define name space as None (overwritten in __call__)
@@ -760,10 +1235,51 @@ class _MakeAllListing(DrsAction):
         # force super initialisation
         DrsAction.__init__(self, *args, **kwargs)
 
-    def _display_listing(self, namespace):
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # what to exclude from state
+        exclude = ['parser']
+        # need a dictionary for pickle
+        state = dict()
+        for key, item in self.__dict__:
+            if key not in exclude:
+                state[key] = item
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+        # set parser to None (Is this a problem?)
+        self.parser = None
+
+    def __str__(self) -> str:
+        """
+        String representation of this class
+        :return:
+        """
+        return '_MakeListing[DrsAction]'
+
+    def _display_listing(self, namespace: argparse.Namespace):
+        """
+        Display the listing for an input_dir and directory
+        (taken from namespace)
+
+        :return: str: the valid directory (raises exception if invalid)
+        :raises: drs_exceptions.LogExit
+        """
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '_display_listing', __NAME__,
-                         '_MakeAllListing')
+                         self.class_name)
         # get input dir
         # noinspection PyProtectedMember
         input_dir = self.recipe.get_input_dir()
@@ -785,7 +1301,21 @@ class _MakeAllListing(DrsAction):
         # ---------------------------------------------------------------------
         _print_list_msg(self.recipe, fulldir, dircond, list_all=True)
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser: DrsArgumentParser,
+                 namespace: argparse.Namespace, values: Any,
+                 option_string: Any = None):
+        """
+        Call the action _MakeAllListing() - displays all directory listings
+        to value if valid else raises exception
+
+        :param parser: DrsArgumentParser instance
+        :param namespace: argparse.Namespace instance
+        :param values: Any, the values to check directory argument
+        :param option_string: None in most cases but used to get options
+                              for testing the value if required
+        :return: None
+        :raises: drs_exceptions.LogExit
+        """
         # get drs parameters
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
@@ -804,22 +1334,64 @@ class _MakeAllListing(DrsAction):
 
 class _ActivateDebug(DrsAction):
     def __init__(self, *args, **kwargs):
+        """
+        Construct the Activate Debug action (for activating debug mode)
+
+        :param args: arguments passed to argparse.Action.__init__
+        :param kwargs: keyword arguments passed to argparse.Action.__init__
+        """
+        # set class name
+        self.class_name = '_ActivateDebug'
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(None, '__init__', __NAME__, '_ActivateDebug')
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
         # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
         DrsAction.__init__(self, *args, **kwargs)
 
-    def _set_debug(self, values, recipe=None):
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state (for pickle)
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+        # set parser to None (Is this a problem?)
+        self.parser = None
+
+    def __str__(self) -> str:
+        """
+        String representation of this class
+        :return:
+        """
+        return '_ActivateDebug[DrsAction]'
+
+    def _set_debug(self, values: Any) -> int:
+        """
+        Set the debug mode based on value
+
+        :param values: Any value to ttest whether it is a debug mode
+        :return: int, the debug mode found
+        :raises: drs_exceptions.LogExit
+        """
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '_set_debug', __NAME__,
-                         '_ActivateDebug')
+                         self.class_name)
         # get params
         params = self.recipe.drs_params
-        # deal with using without call
-        if self.recipe is None:
-            self.recipe = recipe
+        # deal with a value of None
         if values is None:
             return 1
         # test value
@@ -836,16 +1408,30 @@ class _ActivateDebug(DrsAction):
             # spirouConfig.Constants.UPDATE_PP(self.recipe.drs_params)
             # return value
             return value
-        except:
+        except Exception as _:
             eargs = [self.dest, values]
             WLOG(params, 'error', TextEntry('09-001-00020', args=eargs))
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser: DrsArgumentParser,
+                 namespace: argparse.Namespace, values: Any,
+                 option_string: Any = None):
+        """
+        Call the action _ActivateDebug() - sets the debug mode
+        to value else raises exception
+
+        :param parser: DrsArgumentParser instance
+        :param namespace: argparse.Namespace instance
+        :param values: Any, the values to check directory argument
+        :param option_string: None in most cases but used to get options
+                              for testing the value if required
+        :return: None
+        :raises: drs_exceptions.LogExit
+        """
         # get drs parameters
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
-                         '_ActivateDebug')
+                         self.class_name)
         # display listing
         if type(values) == list:
             value = list(map(self._set_debug, values))
@@ -857,22 +1443,64 @@ class _ActivateDebug(DrsAction):
 
 class _ForceInputDir(DrsAction):
     def __init__(self, *args, **kwargs):
+        """
+        Construct the Force Input Directory action (for forcing the input
+        directory to a user argument)
+
+        :param args: arguments passed to argparse.Action.__init__
+        :param kwargs: keyword arguments passed to argparse.Action.__init__
+        """
+        self.class_name = '_ForceInputDir'
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(None, '__init__', __NAME__, '_ForceInputDir')
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
         # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
         DrsAction.__init__(self, *args, **kwargs)
 
-    def _force_input_dir(self, values, recipe=None):
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        String representation of this class
+        :return:
+        """
+        return '_ForceInputDir[DrsAction]'
+
+    def _force_input_dir(self, values: Any) -> Union[str, None]:
+        """
+        If value is a valid string sets _ForceInputDir.dest to the string
+        representation of values[0] if list or otherwise = values
+        raises exception if cannot convert to string
+
+        :param values: Any, the value(s) to be converted to a string
+        :return: None or str, if value can go to a string and is not None
+                 returns string representation of values[0] if list or values
+        """
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '_force_input_dir', __NAME__,
-                         '_ForceInputDir')
+                         self.class_name)
         # get params
         params = self.recipe.drs_params
-        # deal with using without call
-        if self.recipe is None:
-            self.recipe = recipe
+        # deal with value of None
         if values is None:
             return None
         # test value
@@ -887,16 +1515,30 @@ class _ForceInputDir(DrsAction):
             # spirouConfig.Constants.UPDATE_PP(self.recipe.drs_params)
             # return value
             return value
-        except:
+        except Exception as _:
             eargs = [self.dest, values]
             WLOG(params, 'error', TextEntry('09-001-00020', args=eargs))
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser: DrsArgumentParser,
+                 namespace: argparse.Namespace, values: Any,
+                 option_string: Any = None):
+        """
+        Call the action _ForceInputDir() - sets the _ForceInputDir.dest
+        to value if valid else raises exception
+
+        :param parser: DrsArgumentParser instance
+        :param namespace: argparse.Namespace instance
+        :param values: Any, the values to check boolean argument
+        :param option_string: None in most cases but used to get options
+                              for testing the value if required
+        :return: None
+        :raises: drs_exceptions.LogExit
+        """
         # get drs parameters
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
-                         '_ForceInputDir')
+                         self.class_name)
         # display listing
         if type(values) == list:
             value = list(map(self._force_input_dir, values))[0]
@@ -908,22 +1550,65 @@ class _ForceInputDir(DrsAction):
 
 class _ForceOutputDir(DrsAction):
     def __init__(self, *args, **kwargs):
+        """
+        Construct the Force Input Directory action (for forcing the output
+        directory to a user argument)
+
+        :param args: arguments passed to argparse.Action.__init__
+        :param kwargs: keyword arguments passed to argparse.Action.__init__
+        """
+        # set class name
+        self.class_name = '_ForceOutputDir'
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(None, '__init__', __NAME__, '_ForceOutputDir')
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
         # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
         DrsAction.__init__(self, *args, **kwargs)
 
-    def _force_output_dir(self, values, recipe=None):
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        String representation of this class
+        :return:
+        """
+        return '_ForceOutputDir[DrsAction]'
+
+    def _force_output_dir(self, values: Any) -> Union[str, None]:
+        """
+        If value is a valid string sets _ForceOutputDir.dest to the string
+        representation of values[0] if list or otherwise = values
+        raises exception if cannot convert to string
+
+        :param values: Any, the value(s) to be converted to a string
+        :return: None or str, if value can go to a string and is not None
+                 returns string representation of values[0] if list or values
+        """
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '_force_output_dir', __NAME__,
                          '_ForceOutputDir')
         # get params
         params = self.recipe.drs_params
-        # deal with using without call
-        if self.recipe is None:
-            self.recipe = recipe
+        # deal with None value
         if values is None:
             return None
         # test value
@@ -938,11 +1623,25 @@ class _ForceOutputDir(DrsAction):
             # spirouConfig.Constants.UPDATE_PP(self.recipe.drs_params)
             # return value
             return value
-        except:
+        except Exception as _:
             eargs = [self.dest, values]
             WLOG(params, 'error', TextEntry('09-001-00020', args=eargs))
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser: DrsArgumentParser,
+                 namespace: argparse.Namespace, values: Any,
+                 option_string: Any = None):
+        """
+        Call the action _ForceOutputDir() - sets the _ForceOutputDir.dest
+        to value if valid else raises exception
+
+        :param parser: DrsArgumentParser instance
+        :param namespace: argparse.Namespace instance
+        :param values: Any, the values to check boolean argument
+        :param option_string: None in most cases but used to get options
+                              for testing the value if required
+        :return: None
+        :raises: drs_exceptions.LogExit
+        """
         # get drs parameters
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
@@ -959,17 +1658,56 @@ class _ForceOutputDir(DrsAction):
 
 class _DisplayVersion(DrsAction):
     def __init__(self, *args, **kwargs):
+        """
+        Construct the Display Version action (for display version number)
+
+        :param args: arguments passed to argparse.Action.__init__
+        :param kwargs: keyword arguments passed to argparse.Action.__init__
+        """
+        # set class name
+        self.class_name = '_DisplayVersion'
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(None, '__init__', __NAME__, '_DisplayVersion')
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
         # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
         DrsAction.__init__(self, *args, **kwargs)
 
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        String representation of this class
+        :return:
+        """
+        return '_DisplayVersion[DrsAction]'
+
     def _display_version(self):
+        """
+        Display the version info print out
+        :return:
+        """
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '_display_version', __NAME__,
-                         '_DisplayVersion')
+                         self.class_name)
         # get params
         params = self.recipe.drs_params
         # get colours
@@ -986,12 +1724,24 @@ class _DisplayVersion(DrsAction):
         # end header
         print(green + params['DRS_HEADER'] + end)
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser: DrsArgumentParser,
+                 namespace: argparse.Namespace, values: Any,
+                 option_string: Any = None):
+        """
+        Call the action _DisplayVersion() - display the version info
+
+        :param parser: DrsArgumentParser instance
+        :param namespace: argparse.Namespace instance
+        :param values: Any, the values to check boolean argument
+        :param option_string: None in most cases but used to get options
+                              for testing the value if required
+        :return: None
+        """
         # set recipe from parser
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
-                         '_DisplayVersion')
+                         self.class_name)
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
@@ -1004,17 +1754,56 @@ class _DisplayVersion(DrsAction):
 
 class _DisplayInfo(DrsAction):
     def __init__(self, *args, **kwargs):
+        """
+        Construct the Display Info action (for display version number)
+
+        :param args: arguments passed to argparse.Action.__init__
+        :param kwargs: keyword arguments passed to argparse.Action.__init__
+        """
+        # set class name
+        self.class_name = '_DisplayInfo'
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(None, '__init__', __NAME__, '_DisplayInfo')
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
         # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
         DrsAction.__init__(self, *args, **kwargs)
 
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        String representation of this class
+        :return:
+        """
+        return '_DisplayInfo[DrsAction]'
+
     def _display_info(self):
+        """
+        Display the info print out
+        :return:
+        """
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '_display_info', __NAME__,
-                         '_DisplayInfo')
+                         self.class_name)
         # get params
         recipe = self.recipe
         params = recipe.drs_params
@@ -1060,7 +1849,19 @@ class _DisplayInfo(DrsAction):
         # end header
         print(green + params['DRS_HEADER'] + end)
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser: DrsArgumentParser,
+                 namespace: argparse.Namespace, values: Any,
+                 option_string: Any = None):
+        """
+        Call the action _DisplayInfo() - display the info print out
+
+        :param parser: DrsArgumentParser instance
+        :param namespace: argparse.Namespace instance
+        :param values: Any, the values to check boolean argument
+        :param option_string: None in most cases but used to get options
+                              for testing the value if required
+        :return: None
+        """
         # set recipe from parser
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
@@ -1077,17 +1878,61 @@ class _DisplayInfo(DrsAction):
 
 class _SetProgram(DrsAction):
     def __init__(self, *args, **kwargs):
+        """
+        Construct the Set Program action (for setting the drs program from an
+        argument)
+
+        :param args: arguments passed to argparse.Action.__init__
+        :param kwargs: keyword arguments passed to argparse.Action.__init__
+        """
+        # set class name
+        self.class_name = '_SetProgram'
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(None, '__init__', __NAME__, '_SetProgram')
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
         # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
         DrsAction.__init__(self, *args, **kwargs)
 
-    def _set_program(self, values):
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        String representation of this class
+        :return:
+        """
+        return '_SetProgram[DrsAction]'
+
+    def _set_program(self, values: Any) -> str:
+        """
+        Set the program name from the values (if we can convert to a string)
+        elsewise raise an error
+
+        :param values: Any, the value to set the program name to
+        :return: str, the string representation of values (for program name)
+        :raises: drs_exceptions.LogExit
+        """
         # set function name (cannot break here --> no access to inputs)
         func_name = display_func(self.recipe.drs_params, '_set_program',
-                                 __NAME__, '_SetProgram')
+                                 __NAME__, self.class_name)
         # deal with difference datatypes for values
         if isinstance(values, list):
             strvalue = values[0]
@@ -1105,12 +1950,26 @@ class _SetProgram(DrsAction):
         # return strvalue
         return strvalue
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser: DrsArgumentParser,
+                 namespace: argparse.Namespace, values: Any,
+                 option_string: Any = None):
+        """
+        Call the action _SetProgram() - sets the drs program name
+        to value if valid else raises exception
+
+        :param parser: DrsArgumentParser instance
+        :param namespace: argparse.Namespace instance
+        :param values: Any, the values to check boolean argument
+        :param option_string: None in most cases but used to get options
+                              for testing the value if required
+        :return: None
+        :raises: drs_exceptions.LogExit
+        """
         # get recipe from parser
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
-                         '_SetProgram')
+                         self.class_name)
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
@@ -1122,17 +1981,57 @@ class _SetProgram(DrsAction):
 
 class _SetIPythonReturn(DrsAction):
     def __init__(self, *args, **kwargs):
+        """
+        Construct the Set IPython Return action (for setting IPYTHON_RETURN)
+
+        :param args: arguments passed to argparse.Action.__init__
+        :param kwargs: keyword arguments passed to argparse.Action.__init__
+        """
+        # set class name
+        self.class_name = '_SetIPythonReturn'
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(None, '__init__', __NAME__, '_SetIPythonReturn')
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
         # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
         DrsAction.__init__(self, *args, **kwargs)
 
-    def _set_return(self, _):
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        String representation of this class
+        :return:
+        """
+        return '_SetIPythonReturn[DrsAction]'
+
+    def _set_return(self) -> True:
+        """
+        Set the IPYTHON_RETURN value to True if argument is present
+
+        :return: True and params['IPYTHON_RETURN'] = True
+        """
         # set function name (cannot break here --> no access to inputs)
         func_name = display_func(self.recipe.drs_params, '_set_return',
-                                 __NAME__, '_SetIPythonReturn')
+                                 __NAME__, self.class_name)
         # debug message: setting program to: "strvalue"
         dmsg = TextEntry('90-001-00032')
         WLOG(self.recipe.drs_params, 'debug', dmsg)
@@ -1143,34 +2042,88 @@ class _SetIPythonReturn(DrsAction):
         # return strvalue
         return True
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser: DrsArgumentParser,
+                 namespace: argparse.Namespace, values: Any,
+                 option_string: Any = None):
+        """
+        Call the action _SetIPythonReturn() - sets the _SetIPythonReturn.dest
+        to True if argument is present
+
+        :param parser: DrsArgumentParser instance
+        :param namespace: argparse.Namespace instance
+        :param values: Any, the values to check directory argument
+        :param option_string: None in most cases but used to get options
+                              for testing the value if required
+        :return: None
+        """
         # get recipe from parser
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
-                         '_SetIPythonReturn')
+                         self.class_name)
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
         # display version
-        value = self._set_return(values)
+        value = self._set_return()
         # Add the attribute
         setattr(namespace, self.dest, value)
 
 
 class _Breakpoints(DrsAction):
     def __init__(self, *args, **kwargs):
+        """
+        Construct the Breakpoints action (for activating break points with
+        argument)
+
+        :param args: arguments passed to argparse.Action.__init__
+        :param kwargs: keyword arguments passed to argparse.Action.__init__
+        """
+        # set class name
+        self.class_name = '_Breakpoints'
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(None, '__init__', __NAME__, '_Breakpoints')
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
         # define recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
         DrsAction.__init__(self, *args, **kwargs)
 
-    def _set_return(self, _):
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        String representation of this class
+        :return:
+        """
+        return '_Breakpoints[DrsAction]'
+
+    def _set_return(self) -> True:
+        """
+        Set the ALLOW_BREAKPOINTS value to True if argument is present
+
+        :return: True and params['ALLOW_BREAKPOINTS'] = True
+        """
         # set function name (cannot break here --> no access to inputs)
         func_name = display_func(self.recipe.drs_params, '_set_return',
-                                 __NAME__, '_Breakpoints')
+                                 __NAME__, self.class_name)
         # debug message: setting program to: "strvalue"
         dmsg = TextEntry('90-001-00033')
         WLOG(self.recipe.drs_params, 'debug', dmsg)
@@ -1181,7 +2134,20 @@ class _Breakpoints(DrsAction):
         # return strvalue
         return True
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser: DrsArgumentParser,
+                 namespace: argparse.Namespace, values: Any,
+                 option_string: Any = None):
+        """
+        Call the action _Breakpoints() - sets the _Breakpoints.dest
+        to True if argument is present
+
+        :param parser: DrsArgumentParser instance
+        :param namespace: argparse.Namespace instance
+        :param values: Any, the values to check directory argument
+        :param option_string: None in most cases but used to get options
+                              for testing the value if required
+        :return: None
+        """
         # get recipe from parser
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
@@ -1191,13 +2157,22 @@ class _Breakpoints(DrsAction):
         # noinspection PyProtectedMember
         parser._has_special()
         # display version
-        value = self._set_return(values)
+        value = self._set_return()
         # Add the attribute
         setattr(namespace, self.dest, value)
 
 
 class _Breakfunc(DrsAction):
     def __init__(self, *args, **kwargs):
+        """
+        Construct the Break at Function action (for breaking at a display
+        function)
+
+        :param args: arguments passed to argparse.Action.__init__
+        :param kwargs: keyword arguments passed to argparse.Action.__init__
+        """
+        # set class name
+        self.class_name = '_Breakfunc'
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(None, '__init__', __NAME__, '_Breakfunc')
         # set recipe as None (overwritten in __call__)
@@ -1205,17 +2180,69 @@ class _Breakfunc(DrsAction):
         # force super initialisation
         DrsAction.__init__(self, *args, **kwargs)
 
-    def _set_breakfunc(self, value):
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        String representation of this class
+        :return:
+        """
+        return '_Breakfunc[DrsAction]'
+
+    def _set_breakfunc(self, value: Any) -> Union[None, str]:
+        """
+        Set the breakfunction value to the string representation of "value"
+
+        :param value: Any, value to turn to string representation of value
+
+        :return: str: the valid directory (raises exception if invalid)
+        :raises: drs_exceptions.LogExit
+        """
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '_set_breakfunc',
-                         __NAME__, '_Breakfunc')
+                         __NAME__, self.class_name)
         # deal with unset value
         if value is None:
             return None
         else:
             return str(value)
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser: DrsArgumentParser,
+                 namespace: argparse.Namespace, values: Any,
+                 option_string: Any = None):
+        """
+        Call the action _Breakfunc() - sets the _Breakfunc.dest
+        to value if valid else raises exception
+
+        :param parser: DrsArgumentParser instance
+        :param namespace: argparse.Namespace instance
+        :param values: Any, the values to check directory argument
+        :param option_string: None in most cases but used to get options
+                              for testing the value if required
+        :return: None
+        :raises: drs_exceptions.LogExit
+        """
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+                         self.class_name)
         # get drs parameters
         self.recipe = parser.recipe
         # display listing
@@ -1232,24 +2259,84 @@ class _Breakfunc(DrsAction):
 
 class _IsMaster(DrsAction):
     def __init__(self, *args, **kwargs):
+        """
+        Construct the Is Master action (for setting a recipe to a master
+        via an argument)
+
+        :param args: arguments passed to argparse.Action.__init__
+        :param kwargs: keyword arguments passed to argparse.Action.__init__
+        """
+        # set class name
+        self.class_name = '_IsMaster'
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(None, '__init__', __NAME__, '_IsMaster')
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
         # set recipe as None (overwritten in __call__)
         self.recipe = None
         # force super initialisation
         DrsAction.__init__(self, *args, **kwargs)
 
-    def _set_master(self, value):
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        String representation of this class
+        :return:
+        """
+        return '_IsMaster[DrsAction]'
+
+    def _set_master(self, value: Any) -> Union[str, None]:
+        """
+        Sets the master value to string representation of value
+
+        :param value: Any, value to turn to string representation of value
+
+        :return: str: the valid directory (raises exception if invalid)
+        """
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '_set_master',
-                         __NAME__, '_IsMaster')
+                         __NAME__, self.class_name)
         # deal with unset value
         if value is None:
             return None
         else:
             return str(value)
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser: DrsArgumentParser,
+                 namespace: argparse.Namespace, values: Any,
+                 option_string: Any = None):
+        """
+        Call the action _IsMaster() - sets the _IsMaster.dest
+        to value if valid else raises exception
+
+        :param parser: DrsArgumentParser instance
+        :param namespace: argparse.Namespace instance
+        :param values: Any, the values to check directory argument
+        :param option_string: None in most cases but used to get options
+                              for testing the value if required
+        :return: None
+        :raises: drs_exceptions.LogExit
+        """
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.drs_params, '__call__',
+                         __NAME__, self.class_name)
         # get drs parameters
         self.recipe = parser.recipe
         # display listing
@@ -1266,6 +2353,14 @@ class _IsMaster(DrsAction):
 
 class _SetQuiet(DrsAction):
     def __init__(self, *args, **kwargs):
+        """
+        Construct the Set Quiet action (make a recipe quiet via argument)
+
+        :param args: arguments passed to argparse.Action.__init__
+        :param kwargs: keyword arguments passed to argparse.Action.__init__
+        """
+        # set class name
+        self.class_name = '_SetQuiet'
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(None, '__init__', __NAME__, '_SetQuiet')
         # set recipe as None (overwritten in __call__)
@@ -1273,27 +2368,73 @@ class _SetQuiet(DrsAction):
         # force super initialisation
         DrsAction.__init__(self, *args, **kwargs)
 
-    def _set_return(self, _):
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        String representation of this class
+        :return:
+        """
+        return '_SetQuiet[DrsAction]'
+
+    def _set_return(self) -> True:
+        """
+        Return True (and a debug message)
+
+        :return: True
+        """
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '_set_return', __NAME__,
-                         '_SetQuiet')
+                         self.class_name)
         # debug message: setting program to: "strvalue"
         dmsg = TextEntry('90-001-00034')
         WLOG(self.recipe.drs_params, 'debug', dmsg)
         # return strvalue
         return True
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser: DrsArgumentParser,
+                 namespace: argparse.Namespace, values: Any,
+                 option_string: Any = None):
+        """
+        Call the action _SetQuiet() - sets the _SetQuiet.dest to True if
+        argument is present
+
+        :param parser: DrsArgumentParser instance
+        :param namespace: argparse.Namespace instance
+        :param values: Any, the values to check directory argument
+        :param option_string: None in most cases but used to get options
+                              for testing the value if required
+        :return: None
+        :raises: drs_exceptions.LogExit
+        """
         # get recipe from parser
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
-                         '_SetQuiet')
+                         self.class_name)
         # check for help
         # noinspection PyProtectedMember
         parser._has_special()
         # display version
-        value = self._set_return(values)
+        value = self._set_return()
         # Add the attribute
         setattr(namespace, self.dest, value)
 
@@ -1302,7 +2443,20 @@ class _SetQuiet(DrsAction):
 # Define Argument Class
 # =============================================================================
 class DrsArgument(object):
-    def __init__(self, name=None, kind=None, **kwargs):
+    def __init__(self, name: Union[str, None] = None,
+                 kind: Union[str, None] = None, pos: Union[int, None] = None,
+                 altnames: Union[List[str], None] = None,
+                 dtype: Union[str, Type, None] = None,
+                 options: Union[List[str], None] = None,
+                 helpstr: Union[str, None] = '',
+                 files: Union[List[str], None] = None,
+                 parent: Union[str, None] = None,
+                 limit: Union[int, None] = None,
+                 minimum: Union[int, float, None] = None,
+                 maximum: Union[int, float, None] = None,
+                 filelogic: str = 'inclusive', default: Union[Any, None] = None,
+                 default_ref: Union[str, None] = None,
+                 required: bool = None, reprocess: bool = False):
         """
         Create a DRS Argument object
 
@@ -1311,16 +2465,16 @@ class DrsArgument(object):
                      ("arg.name" will not include these but "arg.argname"
                      and "arg.names" will)
 
-        :param kwargs: currently allowed kwargs are:
+        :param kind: string the argument kind (argument or keyword argument)
 
-            - pos: int or None, the position of a position argument, if None
+        :param pos: int or None, the position of a position argument, if None
                    not a positional argument (i.e. optional argument)
 
-            - altnames: list of strings or None, the alternative calls to
+        :param altnames: list of strings or None, the alternative calls to
                         the argument in argparse (as well as "name"), if None
                         only call to argument is "name"
 
-            - dtype: string or type or None, the data type currently must
+        :param dtype: string or type or None, the data type currently must
                      be one of the following:
                         ['files', 'file', 'directory', 'bool',
                          'options', 'switch', int, float, str, list]
@@ -1328,18 +2482,27 @@ class DrsArgument(object):
                      these control the checking of the argument in most cases.
                      int/flat/str/list are not checked
 
-            - options: list of strings or None, sets the allowed string values
+        :param options: list of strings or None, sets the allowed string values
                        of the argument, if None no options are required (other
                        than those set by dtype)
 
-            - helpstr: string or None, if not None sets the text to add to the
+        :param helpstr: string or None, if not None sets the text to add to the
                        help string
 
-            - files: list of DrsInput objects or None, if not None and dtype
+        :param files: list of DrsInput objects or None, if not None and dtype
                      is "files" or "file" sets the type of file to expect
                      the way the list is understood is based on "filelogic"
 
-            - filelogic: string, either "inclusive" or "exclusive", if
+        :param parent: str, a parent Const or Keyword that this is spawned
+                       from
+
+        :param limit: int, file limit for processing
+
+        :param minimum: int, float, the minimum value for this argument
+
+        :param maximum: int, float, the maximum value for this argument
+
+        :param filelogic: string, either "inclusive" or "exclusive", if
                          inclusive and combination of DrsInput objects are
                          valid, if exclusive only one DrsInput in the list is
                          valid for all files i.e.
@@ -1347,9 +2510,26 @@ class DrsArgument(object):
                            the input files may all be A or all be B
                          - if files = [A, B] and filelogic = 'exclusive'
                            the input files may be either A or B
+
+        :param default: the default value to give the argument if unset,
+                        either this or defaulf_ref must be set for kwargs
+
+        :param default_ref: str, the key in the constant parameter dictionary
+                            where the default value it set, either this or
+                            defaulf_ref must be set for kwargs
+
+        :param required: bool, if True this is a required argument and must
+                         be used as an argument or exception raised
+
+        :param reprocess: bool, if True this argument will be used in processing
+                          script as a required argument (but does not raise an
+                          exception when recipe used individually)
+
         """
+        # set class name
+        self.class_name = 'DrsArgument'
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(None, '__init__', __NAME__, 'DrsArgument')
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
         # ------------------------------------------------------------------
         # define class constants
         # ------------------------------------------------------------------
@@ -1411,26 +2591,31 @@ class DrsArgument(object):
         # special parameter (whether to skip other arguments)
         self.skip = False
         # get position
-        self.pos = kwargs.get('pos', None)
+        self.pos = pos
         # add names from altnames
-        self.names = [self.argname] + kwargs.get('altnames', [])
+        if altnames is None:
+            altnames = []
+        self.names = [self.argname] + altnames
         # get dtype
-        self.dtype = kwargs.get('dtype', None)
+        self.dtype = dtype
         # get options
-        self.options = kwargs.get('options', None)
+        self.options = options
         # get help str
-        self.helpstr = kwargs.get('helpstr', '')
+        self.helpstr = helpstr
         # get files
-        self.files = kwargs.get('files', [])
+        if files is None:
+            self.files = []
+        else:
+            self.files = files
         # define the input path for files
-        self.path = kwargs.get('path', None)
+        self.parent = parent
         # get limit
-        self.limit = kwargs.get('limit', None)
+        self.limit = limit
         # get limits
-        self.minimum = kwargs.get('minimum', None)
-        self.maximum = kwargs.get('maximum', None)
+        self.minimum = minimum
+        self.maximum = maximum
         # get file logic
-        self.filelogic = kwargs.get('filelogic', 'inclusive')
+        self.filelogic = filelogic
         if self.filelogic not in ['inclusive', 'exclusive']:
             # Get text for default language/instrument
             text = TextDict('None', 'None')
@@ -1440,28 +2625,74 @@ class DrsArgument(object):
         # deal with no default/default_ref for kwarg
         if kind == 'kwarg':
             # get entry
-            if ('default' not in kwargs) and ('default_ref' not in kwargs):
+            if (default is None) and (default_ref is None):
                 # Get text for default language/instrument
                 text = TextDict('None', 'None')
                 # get entry to log error
                 ee = TextEntry('00-006-00009', args=self.filelogic)
                 self.exception(None, errorobj=[ee, text])
         # get default
-        self.default = kwargs.get('default', None)
+        self.default = default
         # get default_ref
-        self.default_ref = kwargs.get('default_ref', None)
-
+        self.default_ref = default_ref
         # get required
         if self.kind == 'arg':
-            self.required = kwargs.get('required', True)
+            if required is None:
+                self.required = True
+            else:
+                self.required = required
         else:
-            self.required = kwargs.get('required', False)
+            if required is None:
+                self.required = False
+            else:
+                self.required = required
         # get whether we need this arguement for processing scripts
-        self.reprocess = kwargs.get('reprocess', False)
-
+        self.reprocess = reprocess
         # set empty
         self.props = OrderedDict()
         self.value = None
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        Defines the str(DrsArgument) return for DrsArgument
+        :return str: the string representation of DrSArgument
+                     i.e. DrsArgument[name]
+        """
+        # set function name (cannot break here --> no access to params)
+        _ = display_func(None, '__str__', __NAME__, self.class_name)
+        # return string representation
+        return self.__repr__()
+
+    def __repr__(self) -> str:
+        """
+        Defines the print(DrsArgument) return for DrsArgument
+        :return str: the string representation of DrSArgument
+                     i.e. DrsArgument[name]
+        """
+        # set function name (cannot break here --> no access to params)
+        _ = display_func(None, '__str__', __NAME__, self.class_name)
+        # return string representation
+        return 'DrsArgument[{0}]'.format(self.name)
 
     def make_properties(self):
         """
@@ -1535,7 +2766,7 @@ class DrsArgument(object):
         # add help string
         self.props['help'] = self.helpstr
 
-    def assign_properties(self, props):
+    def assign_properties(self, props: dict):
         """
         Assigns argparse properties from "props"
 
@@ -1558,31 +2789,13 @@ class DrsArgument(object):
             if prop in props:
                 self.props[prop] = props[prop]
 
-    def exception(self, message=None, errorobj=None):
-        # set function name (cannot break here --> no access to params)
-        _ = display_func(None, 'exception', __NAME__, 'DrsArgument')
-        # deal with required (positional) argument
-        if self.kind == 'arg':
-            log_opt = 'A[{0}] '.format(self.name)
-        # deal with optional argument
-        elif self.kind == 'kwarg':
-            log_opt = 'K[{0}] '.format(self.name)
-        # deal with special optional argument
-        elif self.kind == 'special':
-            log_opt = 'S[{0}] '.format(self.name)
-        # deal with anything else (should not get here)
-        else:
-            log_opt = 'X[{0}] '.format(self.name)
-        # if we have an error object then raise an argument error with
-        #   the error object
-        if errorobj is not None:
-            errorobj[0] = log_opt + errorobj[0]
-            raise ArgumentError(errorobj=errorobj)
-        # else raise the argument error with just the message
-        else:
-            raise ArgumentError(message)
+    def copy(self, argument: 'DrsArgument'):
+        """
+        Copies another DrsArgument into this DrsArgument
 
-    def copy(self, argument):
+        :param argument: a DrsArgument instance
+        :return: None
+        """
         # set function name (cannot break here --> no access to params)
         _ = display_func(None, 'copy', __NAME__, 'DrsArgument')
         # get argument name
@@ -1623,7 +2836,7 @@ class DrsArgument(object):
             drsfile = argument.files
             self.files = [drsfile.completecopy(drsfile)]
         # copy the path
-        self.path = copy.deepcopy(argument.path)
+        self.parent = copy.deepcopy(argument.parent)
         # get limit
         if argument.limit is None:
             self.limit = None
@@ -1645,33 +2858,54 @@ class DrsArgument(object):
         self.props = copy.deepcopy(argument.props)
         self.value = copy.deepcopy(argument.value)
 
-    def __str__(self):
+    def exception(self, message: Union[str, None] = None,
+                  errorobj: Any = None):
         """
-        Defines the str(DrsArgument) return for DrsArgument
-        :return str: the string representation of DrSArgument
-                     i.e. DrsArgument[name]
-        """
-        # set function name (cannot break here --> no access to params)
-        _ = display_func(None, '__str__', __NAME__, 'DrsArgument')
-        # return string representation
-        return self.__repr__()
+        Internal exception generator --> raises an Argument Error with
+        message including a logging code for debug purposes
 
-    def __repr__(self):
-        """
-        Defines the print(DrsArgument) return for DrsArgument
-        :return str: the string representation of DrSArgument
-                     i.e. DrsArgument[name]
+        :param message: str, the error message to print
+        :param errorobj: an error exception instance
+        :return: None
+        :raises: drs_exceptions.ArgumentError
         """
         # set function name (cannot break here --> no access to params)
-        _ = display_func(None, '__str__', __NAME__, 'DrsArgument')
-        # return string representation
-        return 'DrsArgument[{0}]'.format(self.name)
+        _ = display_func(None, 'exception', __NAME__, 'DrsArgument')
+        # deal with required (positional) argument
+        if self.kind == 'arg':
+            log_opt = 'A[{0}] '.format(self.name)
+        # deal with optional argument
+        elif self.kind == 'kwarg':
+            log_opt = 'K[{0}] '.format(self.name)
+        # deal with special optional argument
+        elif self.kind == 'special':
+            log_opt = 'S[{0}] '.format(self.name)
+        # deal with anything else (should not get here)
+        else:
+            log_opt = 'X[{0}] '.format(self.name)
+        # if we have an error object then raise an argument error with
+        #   the error object
+        if errorobj is not None:
+            errorobj[0] = log_opt + errorobj[0]
+            raise ArgumentError(errorobj=errorobj)
+        # else raise the argument error with just the message
+        else:
+            raise ArgumentError(message)
 
 
 # =============================================================================
 # Worker functions
 # =============================================================================
-def _get_version_info(params, green='', end=''):
+def _get_version_info(params: ParamDict, green: str = '',
+                      end: str = '') -> List[str]:
+    """
+    Get a list of strings of the version info
+
+    :param params: ParamDict, the constants parameter dictionary
+    :param green: str, the code for green text (from Colors())
+    :param end: str, the code for reset text end character (from Colors())
+    :return: a list of strings for the print out
+    """
     # set function name (cannot break here --> no access to params)
     _ = display_func(params, '_get_version_info', __NAME__)
     # get name
@@ -1702,7 +2936,17 @@ def _get_version_info(params, green='', end=''):
     return imsgs
 
 
-def _help_format(keys, helpstr, options=None):
+def _help_format(keys: List[str], helpstr: str,
+                 options: Union[List[Any], None] = None) -> str:
+    """
+    The help formater - returns a string representation of the argument
+
+    :param keys: list of strings, the argument names to add
+    :param helpstr: str, the help string to add
+    :param options: list of Any, the options to add (must be convertable to
+                    list of strings)
+    :return: str, the help text
+    """
     # set function name (cannot break here --> no access to params)
     _ = display_func(None, '_help_format', __NAME__)
     # set up empty format string
@@ -1747,8 +2991,9 @@ def _help_format(keys, helpstr, options=None):
     return fmtstring
 
 
-def _print_list_msg(recipe, fulldir, dircond=False, return_string=False,
-                    list_all=False):
+def _print_list_msg(recipe: Any, fulldir: str, dircond: bool = False,
+                    return_string: bool = False,
+                    list_all: bool = False) -> Union[None, List[str]]:
     """
     Prints the listing message (using "get_file_list")
 
@@ -1759,7 +3004,8 @@ def _print_list_msg(recipe, fulldir, dircond=False, return_string=False,
     :param return_string: bool, if True returns string output instead of
                           printing
     :param list_all: bool, if True overrides lmit (set by HARD_DISPLAY_LIMIT)
-    :return:
+
+    :return: if return_strings is True return list msg instead of printing
     """
     # get params from recipe
     params = recipe.drs_params
@@ -1838,8 +3084,9 @@ def _print_list_msg(recipe, fulldir, dircond=False, return_string=False,
             print(pmsg)
 
 
-def _get_file_list(limit, path, ext=None, recursive=False,
-                   dir_only=False, list_all=False):
+def _get_file_list(limit: int, path: str, ext: Union[str, None] = None,
+                   recursive: bool = False, dir_only: bool = False,
+                   list_all: bool = False) -> Tuple[np.ndarray, bool]:
     """
     Get a list of files in a path
 
@@ -1853,8 +3100,9 @@ def _get_file_list(limit, path, ext=None, recursive=False,
     :param list_all: bool, if True overides the limit feature and lists all
                      directories/files
 
-    :return file_list: list of strings, the files found with extension (if not
-                       None, up to the number limit
+    :return file_list: tuple, np.array the files found with extension (if not
+                       None, up to the number limit) and bool whether the limit
+                       was reached
     """
     # set function name (cannot break here --> no access to params)
     _ = display_func(None, '_get_file_list', __NAME__)
@@ -1875,7 +3123,7 @@ def _get_file_list(limit, path, ext=None, recursive=False,
     for root, dirs, files in os.walk(path, followlinks=True):
         if len(file_list) > limit:
             file_list.append(level + '...')
-            return file_list
+            return np.array(file_list), True
         if not recursive and root != path:
             continue
         if len(files) > 0 and recursive:
@@ -1883,7 +3131,7 @@ def _get_file_list(limit, path, ext=None, recursive=False,
         if not dir_only:
             # add root to file list (minus path)
             if root != path:
-                directory = get_uncommon_path(root, path) + os.sep
+                directory = drs_misc.get_uncommon_path(root, path) + os.sep
                 # count number of separators in directory
                 num = directory.count(os.sep)
                 level = levelsep * num
@@ -1899,7 +3147,7 @@ def _get_file_list(limit, path, ext=None, recursive=False,
                 if len(file_list) > limit:
                     file_list.append(filelevel + '...')
                     limit_reached = True
-                    return file_list, limit_reached
+                    return np.array(file_list), limit_reached
                 # do not display if extension is true
                 if not filename.endswith(ext):
                     continue
@@ -1908,7 +3156,7 @@ def _get_file_list(limit, path, ext=None, recursive=False,
         elif len(files) > 0:
             # add root to file list (minus path)
             if root != path:
-                directory = get_uncommon_path(root, path) + os.sep
+                directory = drs_misc.get_uncommon_path(root, path) + os.sep
                 # append to list
                 file_list.append(level + levelsep + directory)
 
@@ -1919,42 +3167,16 @@ def _get_file_list(limit, path, ext=None, recursive=False,
     return np.sort(file_list), limit_reached
 
 
-def get_uncommon_path(path1, path2):
-    """
-    Get the uncommon path of "path1" compared to "path2"
-
-    i.e. if path1 = /home/user/dir1/dir2/dir3/
-         and path2 = /home/user/dir1/
-
-         the output should be /dir2/dir3/
-
-    :param path1: string, the longer root path to return (without the common
-                  path)
-    :param path2: string, the shorter root path to compare to
-
-    :return uncommon_path: string, the uncommon path between path1 and path2
-    """
-    # set function name (cannot break here --> no access to params)
-    _ = display_func(None, 'get_uncommon_path', __NAME__)
-    # paths must be absolute
-    path1 = os.path.abspath(path1)
-    path2 = os.path.abspath(path2)
-    # get common path
-    common = os.path.commonpath([path2, path1]) + os.sep
-    # return the non-common part of the path
-    return path1.split(common)[-1]
-
-
 # =============================================================================
 # Make functions
 # =============================================================================
-def make_listing(params, htext):
+def make_listing(params: ParamDict, htext: HelpText) -> OrderedDict:
     """
     Make a custom special argument: Sets whether to display listing files
     up to DRS_MAX_IO_DISPLAY_LIMIT in number.
 
     :param params: ParamDict, Parameter Dictionary of constants
-    :type params: ParamDict
+    :param htext: HelpText, the help text instance (text from lang database)
 
     :return: an ordered dictionary with argument parameters
     :rtype: OrderedDict
@@ -1979,12 +3201,12 @@ def make_listing(params, htext):
     return props
 
 
-def make_alllisting(params, htext):
+def make_alllisting(params: ParamDict, htext: HelpText) -> OrderedDict:
     """
     Make a custom special argument: Sets whether to display all listing files
 
     :param params: ParamDict, Parameter Dictionary of constants
-    :type params: ParamDict
+    :param htext: HelpText, the help text instance (text from lang database)
 
     :return: an ordered dictionary with argument parameters
     :rtype: OrderedDict
@@ -2007,12 +3229,12 @@ def make_alllisting(params, htext):
     return props
 
 
-def make_debug(params, htext):
+def make_debug(params: ParamDict, htext: HelpText) -> OrderedDict:
     """
     Make a custom special argument: Sets which debug mode to be in
 
     :param params: ParamDict, Parameter Dictionary of constants
-    :type params: ParamDict
+    :param htext: HelpText, the help text instance (text from lang database)
 
     :return: an ordered dictionary with argument parameters
     :rtype: OrderedDict
@@ -2035,7 +3257,16 @@ def make_debug(params, htext):
     return props
 
 
-def set_inputdir(params, htext):
+def set_inputdir(params: ParamDict, htext: HelpText) -> OrderedDict:
+    """
+    Make a custom special argument: Sets input directory
+
+    :param params: ParamDict, Parameter Dictionary of constants
+    :param htext: HelpText, the help text instance (text from lang database)
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
+    """
     # set function name
     _ = display_func(params, 'set_inputdir', __NAME__)
     # set up an output storage dictionary
@@ -2049,13 +3280,21 @@ def set_inputdir(params, htext):
     # set the number of argument to expect
     props['nargs'] = 1
     # set the help message
-    # TODO: move the language db
-    props['help'] = 'Force the default input directory (Normally set by recipe)'
+    props['help'] = htext['SET_INPUT_DIR_HELP']
     # return the argument dictionary
     return props
 
 
-def set_outputdir(params, htext):
+def set_outputdir(params: ParamDict, htext: HelpText) -> OrderedDict:
+    """
+    Make a custom special argument: Sets output directory
+
+    :param params: ParamDict, Parameter Dictionary of constants
+    :param htext: HelpText, the help text instance (text from lang database)
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
+    """
     # set function name
     _ = display_func(params, 'set_outputdir', __NAME__)
     # set up an output storage dictionary
@@ -2069,18 +3308,17 @@ def set_outputdir(params, htext):
     # set the number of argument to expect
     props['nargs'] = 1
     # set the help message
-    # TODO: move the language db
-    props['help'] = 'Force the default output directory (Normally set by recipe)'
+    props['help'] = htext['SET_OUTPUT_DIR_HELP']
     # return the argument dictionary
     return props
 
 
-def make_version(params, htext):
+def make_version(params: ParamDict, htext: HelpText) -> OrderedDict:
     """
     Make a custom special argument: Whether to display drs version information
 
     :param params: ParamDict, Parameter Dictionary of constants
-    :type params: ParamDict
+    :param htext: HelpText, the help text instance (text from lang database)
 
     :return: an ordered dictionary with argument parameters
     :rtype: OrderedDict
@@ -2103,12 +3341,12 @@ def make_version(params, htext):
     return props
 
 
-def make_info(params, htext):
+def make_info(params: ParamDict, htext: HelpText) -> OrderedDict:
     """
     Make a custom special argument: Whether to display recipe information
 
     :param params: ParamDict, Parameter Dictionary of constants
-    :type params: ParamDict
+    :param htext: HelpText, the help text instance (text from lang database)
 
     :return: an ordered dictionary with argument parameters
     :rtype: OrderedDict
@@ -2131,12 +3369,12 @@ def make_info(params, htext):
     return props
 
 
-def set_program(params, htext):
+def set_program(params: ParamDict, htext: HelpText) -> OrderedDict:
     """
     Make a custom special argument: Set the program name
 
     :param params: ParamDict, Parameter Dictionary of constants
-    :type params: ParamDict
+    :param htext: HelpText, the help text instance (text from lang database)
 
     :return: an ordered dictionary with argument parameters
     :rtype: OrderedDict
@@ -2159,13 +3397,13 @@ def set_program(params, htext):
     return props
 
 
-def set_ipython_return(params, htext):
+def set_ipython_return(params: ParamDict, htext: HelpText) -> OrderedDict:
     """
     Make a custom special argument: Set the use of ipython return after
     script ends
 
     :param params: ParamDict, Parameter Dictionary of constants
-    :type params: ParamDict
+    :param htext: HelpText, the help text instance (text from lang database)
 
     :return: an ordered dictionary with argument parameters
     :rtype: OrderedDict
@@ -2188,12 +3426,12 @@ def set_ipython_return(params, htext):
     return props
 
 
-def breakpoints(params, htext):
+def breakpoints(params: ParamDict, htext: HelpText) -> OrderedDict:
     """
     Make a custom special argument: Set the use of break_point
 
     :param params: ParamDict, Parameter Dictionary of constants
-    :type params: ParamDict
+    :param htext: HelpText, the help text instance (text from lang database)
 
     :return: an ordered dictionary with argument parameters
     :rtype: OrderedDict
@@ -2216,12 +3454,12 @@ def breakpoints(params, htext):
     return props
 
 
-def is_master(params, htext):
+def is_master(params: ParamDict, htext: HelpText) -> OrderedDict:
     """
     Make a custom special argument: Set the use of break_point
 
     :param params: ParamDict, Parameter Dictionary of constants
-    :type params: ParamDict
+    :param htext: HelpText, the help text instance (text from lang database)
 
     :return: an ordered dictionary with argument parameters
     :rtype: OrderedDict
@@ -2244,12 +3482,12 @@ def is_master(params, htext):
     return props
 
 
-def make_breakfunc(params, htext):
+def make_breakfunc(params: ParamDict, htext: HelpText) -> OrderedDict:
     """
     Make a custom special argument: Set a break function
 
     :param params: ParamDict, Parameter Dictionary of constants
-    :type params: ParamDict
+    :param htext: HelpText, the help text instance (text from lang database)
 
     :return: an ordered dictionary with argument parameters
     :rtype: OrderedDict
@@ -2272,12 +3510,12 @@ def make_breakfunc(params, htext):
     return props
 
 
-def set_quiet(params, htext):
+def set_quiet(params: ParamDict, htext: HelpText) -> OrderedDict:
     """
     Make a custom special argument: Set the quiet mode
 
     :param params: ParamDict, Parameter Dictionary of constants
-    :type params: ParamDict
+    :param htext: HelpText, the help text instance (text from lang database)
 
     :return: an ordered dictionary with argument parameters
     :rtype: OrderedDict
