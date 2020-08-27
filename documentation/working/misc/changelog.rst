@@ -2,8 +2,10 @@ Changelog
 =========
 
 
-0.6.130 (2020-08-21)
+0.6.130 (2020-08-25)
 --------------------
+- Update date/version/changelog/update notes. [Neil Cook]
+- Update date/version/changelog/update notes. [Neil Cook]
 - Update README.md. [Neil Cook]
 
   update `pp_seq_opt`

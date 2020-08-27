@@ -8,4 +8,4 @@ APERO Documentation
 ******************************************
 
 ===========================================
-Latest version: 0.6.130   misc/changelog.rst
+Latest version: 0.6.130
