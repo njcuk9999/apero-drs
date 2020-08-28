@@ -36,9 +36,10 @@ TARGETS = []
 # # priority 4
 # TARGETS += ['Gl411', ' TYC3980-1081-1', ' GJ1289', ' GJ1286', ' Gl536']
 # # priority 5
-TARGETS += ['V883Ori', ' DRTau', ' XZTau', ' BBW76', ' NYOri', ' V582Aur']
+# TARGETS += ['V883Ori', ' DRTau', ' XZTau', ' BBW76', ' NYOri', ' V582Aur',
+#             'RULup']
 # # priority 6
-# TARGETS += ['TauBoo', ' V900Mon', ' V1057Cyg', ' V1515Cyg', ' WASP-127']
+TARGETS += ['TauBoo', ' V900Mon', ' V1057Cyg', ' V1515Cyg', ' WASP-127']
 
 
 IN_WORKSPACE = '/spirou/cfht_nights/cfht_july1/reduced/'
