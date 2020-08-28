@@ -531,7 +531,7 @@ class DrsRecipe(object):
             name = 'Kwarg{0}'.format(len(self.args) + 1)
         # create keyword argument
         try:
-            keywordargument = DrsArgument(name, kind='kwargs', pos=None,
+            keywordargument = DrsArgument(name, kind='kwarg', pos=None,
                                           altnames=altnames, dtype=dtype,
                                           options=options, helpstr=helpstr,
                                           files=files, parent=parent,
