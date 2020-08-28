@@ -2586,6 +2586,7 @@ class DrsArgument(object):
                 ee = TextEntry('00-006-00017', args=[self.argname])
                 self.exception(None, errorobj=[ee, text])
         else:
+            self.kind = kind
             emsg = '"kind" must be "arg" or "kwarg" or "special"'
             self.exception(emsg)
         # ------------------------------------------------------------------
