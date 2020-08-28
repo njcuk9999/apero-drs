@@ -13,13 +13,15 @@ Import rules: Only from spirouConfig and spirouCore
 
 Version 0.0.1
 """
-import numpy as np
-import os
-import sys
-import copy
-from time import sleep
 from astropy.table import Table
 from collections import OrderedDict
+import copy
+import numpy as np
+import os
+from pathlib import Path
+import sys
+from time import sleep
+from typing import Any, Dict, List, Union
 
 from apero.base import base
 from apero.base import drs_exceptions
@@ -65,12 +67,17 @@ Color = drs_misc.Colors()
 # Define classes
 # =============================================================================
 class Logger:
-    def __init__(self, paramdict=None, instrument=None):
+    def __init__(self, paramdict: ParamDict = None, instrument: str = None):
         """
-        Construct logger (storage param dict here)
+        Construct logger class - for all the printing to screen and to log file
+        Normally used via the call and this class is only constructed once.
+
         :param paramdict:
         """
-        func_name = __NAME__ + '.Logger.__init__()'
+        # set class name
+        self.class_name = 'Logger'
+        # set function name
+        _ = drs_misc.display_func(None, '__init__', __NAME__, self.class_name)
         # ---------------------------------------------------------------------
         # save the parameter dictionary for access to constants
         if paramdict is not None:
@@ -101,9 +108,58 @@ class Logger:
             self.pout[storekey[key]] = []
         self.pout['LOGGER_FULL'] = []
 
-    def __call__(self, params=None, key='', message=None, printonly=False,
-                 logonly=False, wrap=True, option=None, colour=None,
-                 raise_exception=True):
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # what to exclude from state
+        exclude = ['pconstant', 'textdict', 'helptext', 'd_textdict',
+                   'd_helptext']
+        # need a dictionary for pickle
+        state = dict()
+        for key, item in self.__dict__:
+            if key not in exclude:
+                state[key] = item
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+        # read attributes not in state
+        self.pconstant = constants.pload(self.instrument)
+        self.textdict = TextDict(self.instrument, self.language)
+        self.helptext = HelpText(self.instrument, self.language)
+        self.d_textdict = TextDict(self.instrument, DEFAULT_LANGUAGE)
+        self.d_helptext = HelpText(self.instrument, DEFAULT_LANGUAGE)
+
+    def __str__(self) -> str:
+        """
+        String representation of the logger
+        :return:
+        """
+        return 'Logger[{0}][{1}]'.format(self.instrument, self.language)
+
+    def __repr__(self) -> str:
+        """
+        String representation of the logger
+        :return:
+        """
+        return self.__str__()
+
+    def __call__(self, params: ParamDict = None, key: str = '',
+                 message: Union[str, None, TextEntry, HelpEntry] = None,
+                 printonly: bool = False,
+                 logonly: bool = False, wrap: bool = True,
+                 option: str = None, colour: str = None,
+                 raise_exception: bool = True):
         """
         Function-like cal to instance of logger (i.e. WLOG)
         Parses a key (error/warning/info/graph), an option and a message to the
@@ -141,7 +197,9 @@ class Logger:
 
         :return None:
         """
-        func_name = __NAME__ + '.Logger.__call__()'
+        # set function name
+        func_name = drs_misc.display_func(None, '__call__', __NAME__,
+                                          self.class_name)
         # ---------------------------------------------------------------------
         # deal with debug mode. If DRS_DEBUG is zero do not print these
         #     messages
@@ -364,7 +422,18 @@ class Logger:
             elif raise_exception:
                 raise drs_exceptions.LogExit(errorstring)
 
-    def update_param_dict(self, paramdict):
+    def update_param_dict(self, paramdict: ParamDict):
+        """
+        Update the parameter dictionary when a change in instrument or
+        language is detected
+
+        :param paramdict: ParamDict, the parameter dictionary of constants to
+                          update
+        :return:
+        """
+        # set function name
+        _ = drs_misc.display_func(paramdict, 'update_param_dict', __NAME__,
+                                  self.class_name)
         # update the parameter dictionary
         for key in paramdict:
             # set pin value from paramdict
@@ -386,8 +455,20 @@ class Logger:
             self.textdict = TextDict(self.instrument, self.language)
             self.helptext = HelpText(self.instrument, self.language)
 
-    def output_param_dict(self, paramdict, new=False):
-        func_name = __NAME__ + '.Logger.output_param_dict()'
+    def output_param_dict(self, paramdict: ParamDict,
+                          new: bool = False) -> ParamDict:
+        """
+        Push the LOG_STORAGE_KEYS into a parameter dictionary (either new
+        if new = True or self.pout otherwise and return it
+
+        :param paramdict: ParamDict, the current constants parameter dictionary
+        :param new: bool, if True populate and return a new ParamDict instead
+                    of updating self.pout
+        :return:
+        """
+        # set function name
+        func_name = drs_misc.display_func(paramdict, 'output_param_dict',
+                                          __NAME__, self.class_name)
         # get the process id from paramdict
         pid = paramdict['PID']
         # deal with new switch
@@ -417,8 +498,24 @@ class Logger:
         # return paramdict
         return pdict
 
-    def logger_storage(self, params, key, ttime, mess, printonly=False):
-        func_name = __NAME__ + '.Logger.logger_storage()'
+    def logger_storage(self, params: ParamDict, key: str,
+                       ttime: str, mess: str, printonly: bool = False):
+        """
+        Stoger log messages in a dictionary (for access later)
+        stored in Logger.pout
+
+        :param params: ParamDict, the constants parameter dictionary
+        :param key: str, the key to append (normally the log level)
+        :param ttime: str, the human time HH:MM:SS.SS
+        :param mess: str, the log message to store
+        :param printonly: bool, if True do not log (we are only printing the
+                          message not logging it)
+        :return: None
+        """
+        # set function name
+        func_name = drs_misc.display_func(params, 'logger_storage',
+                                          __NAME__, self.class_name)
+        # if we are printing only just return
         if printonly:
             return 0
         # get pid
@@ -445,8 +542,17 @@ class Logger:
         else:
             self.pout[pid]['LOGGER_FULL'] = [[ttime, mess]]
 
-    def clean_log(self, processid):
-        func_name = __NAME__ + '.Logger.clean_log()'
+    def clean_log(self, processid: str):
+        """
+        Clean the log of all entries for a specific process id
+
+        :param processid: str, the unique apero process ID generated once
+                          per recipe run
+        :return:
+        """
+        # set function name
+        func_name = drs_misc.display_func(self.pin, 'clean_log',
+                                          __NAME__, self.class_name)
         # get log storage keys
         storekey = self.pconstant.LOG_STORAGE_KEYS()
         # clean out for this ID
@@ -462,7 +568,17 @@ class Logger:
         # set the source
         self.pout[processid].set_source('LOGGER_FULL', func_name)
 
-    def printmessage(self, params, messages, colour=None):
+    def printmessage(self, params: ParamDict, messages: Union[str, List[str]],
+                     colour: Union[str, None] = None):
+        """
+        Print the log message(s) in a certain colour (not at a certain level)
+
+        :param params: ParamDict, the parameter dictionary of constants,
+                       required to get levels to print at etc
+        :param messages: list of strings or string, the message(s) to print
+        :param colour: string, the colour wanted for the printed message
+        :return: None
+        """
         # check whether message is string (if so make a list)
         if isinstance(messages, str):
             messages = [messages]
@@ -470,7 +586,16 @@ class Logger:
         for message in messages:
             printlog(self, params, message, key='all', colour=colour)
 
-    def logmessage(self, params, messages):
+    def logmessage(self, params: ParamDict, messages: Union[str, List[str]]):
+        """
+        Writes the log message(s) to disk
+
+        :param params: ParamDict, the parameter dictionary of constants,
+                       required to get levels to print at etc
+        :param messages: list of strings or string, the message(s) to print
+
+        :return: None
+        """
         # get logfilepath
         logfilepath = get_logfilepath(self, params)
         # check whether message is string (if so make a list)
@@ -481,10 +606,25 @@ class Logger:
             writelog(self, params, message, key='all', logfilepath=logfilepath)
 
 
-class Printer():
+class Printer:
     """Print things to stdout on one line dynamically"""
 
-    def __init__(self, params, level, message):
+    def __init__(self, params: ParamDict, level: str,
+                 message: Union[list, np.ndarray, str]):
+        """
+        Dynamically print text to stdout, flushing the line so it appears
+        to come from only one line (does not have new lines)
+
+        :param params: ParamDict, the constants parameter dictionary
+                       (Not used but here to emulate Logger.__call__())
+        :param level: str,
+        :param message:
+        """
+        # set class name
+        self.class_name = 'Printer'
+        # set function name
+        _ = drs_misc.display_func(None, '__init__', __NAME__, self.class_name)
+        # set params and level
         self.params = params
         self.level = level
 
@@ -499,22 +639,65 @@ class Printer():
             sys.stdout.flush()
             sleep(sleeptimer)
 
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
 
 class RecipeLog:
 
-    def __init__(self, name, params, level=0, wlog=None):
+    def __init__(self, name: str, params: ParamDict, level: int = 0,
+                 wlog: Union[None, Logger] = None):
+        """
+        Constructor for the recipe log
+
+        :param name: str, the recipe name this recipe log belong to
+        :param params: ParamDict, the constants parameter dictionary
+        :param level: int, the level of this log 0 is root, higher numbers are
+                      children of the root
+        :param wlog:
+        """
+        # set class name
+        self.class_name = 'RecipeLog'
+        # set function name
+        _ = drs_misc.display_func(None, '__init__', __NAME__, self.class_name)
         # get the recipe name
         self.name = str(name)
+        # the kind of recipe ("recipe", "tool", "processing") from recipe.kind
         self.kind = str(params['DRS_RECIPE_KIND'])
+        # the default logging absolute path
         self.defaultpath = str(params['DRS_DATA_MSG_FULL'])
+        # the log fits file name (log.fits)
         self.logfitsfile = str(params['DRS_LOG_FITS_NAME'])
+        # the recipe input directory from recipe.inputdir
         self.inputdir = str(params['INPATH'])
+        # the recipe output directory from recipe.outputdir
         self.outputdir = str(params['OUTPATH'])
+        # the parameter dictionary of constants
         self.params = params
+        # the Logger instances (or None)
         self.wlog = wlog
         # set the pid
         self.pid = str(params['PID'])
+        # set the human time
         self.htime = str(params['DATE_NOW'])
+        # set the group name
         self.group = str(params['DRS_GROUP'])
         # set the night name directory (and deal with no value)
         if 'NIGHTNAME' not in params:
@@ -529,7 +712,10 @@ class RecipeLog:
         #   being done)
         self.lockfile = self.directory + self.logfitsfile.replace('.', '_')
         # set the log file name (just used to save log directory)
+        #  for log table entry
         self.log_file = 'None'
+        # set the plot file name (just used to save the plot directory) for
+        #   log table entry
         self.plot_dir = 'None'
         # set the inputs
         self.args = ''
@@ -560,7 +746,46 @@ class RecipeLog:
         # set lock function
         self.lfunc = None
 
-    def copy(self, rlog):
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        String representation of this class
+        :return:
+        """
+        # set function name
+        _ = drs_misc.display_func(None, '__str__', __NAME__, self.class_name)
+        # return string representation of RecipeLOg
+        return 'RecipeLog[{0}]'.format(self.name)
+
+    def copy(self, rlog: 'RecipeLog'):
+        """
+        Copy another RecipeLog over this one
+
+        :param rlog: Another RecipeLog instance
+        :return:
+        """
+        # set function name
+        _ = drs_misc.display_func(None, 'copy', __NAME__, self.class_name)
+        # copy parameters
         self.name = str(rlog.name)
         self.kind = str(rlog.kind)
         self.defaultpath = str(rlog.defaultpath)
@@ -580,12 +805,36 @@ class RecipeLog:
         self.level_criteria = str(rlog.level_criteria)
         self.lfunc = rlog.lfunc
 
-    def set_log_file(self, logfile):
-        self.log_file = logfile
+    def set_log_file(self, logfile: Union[str, Path]):
+        """
+        Set the log file
 
-    def set_plot_dir(self, params, location, write=True):
+        :param logfile: str, the log file
+        :return:
+        """
+        # set function name
+        _ = drs_misc.display_func(None, 'set_log_file', __NAME__,
+                                  self.class_name)
+        # set the log file
+        self.log_file = str(logfile)
+
+    def set_plot_dir(self, params: ParamDict,
+                     location: Union[str, Path, None] = None,
+                     write: bool = True):
+        """
+        Set the plot directory for RecipeLog and all children
+
+        :param params: ParamDict, the constants parameter dictionary
+        :param location: str or Path, the path of the plot directory
+        :param write: bool, if True update the log file
+        :return:
+        """
+        # set function name
+        _ = drs_misc.display_func(None, 'set_plot_dir', __NAME__,
+                                  self.class_name)
+        # deal with location being set
         if location is not None:
-            self.plot_dir = location
+            self.plot_dir = str(location)
             # update children
             if len(self.set) != 0:
                 for child in self.set:
@@ -596,7 +845,27 @@ class RecipeLog:
         if write:
             self.write_logfile(params)
 
-    def set_inputs(self, params, rargs, rkwargs, rskwargs):
+    def set_inputs(self, params: ParamDict, rargs: Dict[Any],
+                   rkwargs: Dict[Any], rskwargs: Dict[Any]):
+        """
+        Set the recipes input arguments (rargs), input keyword arguments
+        (rkwargs) and special keyword arguments (rskwargs) - usually from
+        recipe.args, recipe.kwargs, recipe.rskwargs
+
+        :param params: ParamDict, the constants parameter dictionary
+        :param rargs: OrderedDict, the dictionary containing the arguments,
+                      arguments should be drs_argument.DrsArgument instances
+        :param rkwargs:OrderedDict, the dictionary containing the keyword
+                       arguments, keyword arguments should be
+                       drs_argument.DrsArgument instances
+        :param rskwargs:OrderedDict, the dictionary containing the special
+                        keyword arguments, special keyword arguments should be
+                        drs_argument.DrsArgument instances
+        :return:
+        """
+        # set function name
+        _ = drs_misc.display_func(None, 'set_inputs', __NAME__,
+                                  self.class_name)
         # deal with not having inputs
         if 'INPUTS' not in params:
             return
@@ -619,10 +888,42 @@ class RecipeLog:
         # strip the runstring
         self.runstring.strip()
 
-    def set_lock_func(self, func):
+    def set_lock_func(self, func: Any):
+        """
+        Set the lock function apero.io.drs_lock.locker
+
+        :param func: the locking function apero.io.drs_lock.locker
+        :return:
+        """
+        # set function name
+        _ = drs_misc.display_func(None, 'set_lock_func', __NAME__,
+                                  self.class_name)
+        # set the lock function
         self.lfunc = func
 
-    def add_level(self, params, key, value, write=True):
+    def add_level(self, params: ParamDict, key: str, value: Any,
+                  write: bool = True) -> 'RecipeLog':
+        """
+        Add a child level to the recipe log i.e. inside a for loop we may want
+        one log entry for each iteration (level is incremented - root = 0)
+
+        :param params: ParamDict, the constants parameter dictionary
+        :param key: str, text describing this new level (i.e. fiber or
+                    iteration) converted to key = value
+                    e.g.  key: fiber
+                              we have a level with the following:
+                              fiber = A
+                              fiber = B
+                              fiber = C
+
+        :param value: Any (must be convertable to string) the value of this
+                      iterations key  i.e. key = value
+        :param write: bool, if True writes to RecipeLog fits file
+        :return: RecipeLog, the child instance of the parent RecipeLog
+                 all children are stored inside a parent
+        """
+        # set function name
+        _ = drs_misc.display_func(None, 'add_level', __NAME__, self.class_name)
         # get new level
         level = self.level + 1
         # create new log
@@ -641,7 +942,27 @@ class RecipeLog:
         # return newlog (for use)
         return newlog
 
-    def add_qc(self, params, qc_params, passed, write=True):
+    def add_qc(self, params: ParamDict,
+               qc_params: List[List[str], List[Any], List[str], List[int]],
+               passed: Union[int, bool, str], write: bool = True):
+        """
+        Add the quality control criteria (stored in qc_params) to the recipe
+        log
+
+        :param params: Paramdict, the constants parameter dictionary
+        :param qc_params: the quality control storage, constists of
+                          qc_names, qc_values, qc_logic, qc_pass where
+                          qc_names is a list of variable names,
+                          qc_values is a list of value for each variable
+                          qc_logic is the pass/fail logic for variable
+                          qc_pass is either 1 for passed qc or 0 for failure
+        :param passed: int/bool/str if 1 or True or '1' all quality control was
+                       passed (this is stored as a column in log database)
+        :param write: bool, if True write parameters to log database
+        :return:
+        """
+        # set function name
+        _ = drs_misc.display_func(None, 'add_qc', __NAME__, self.class_name)
         # update passed
         if passed in [1, True, '1']:
             self.passed_qc = True
@@ -671,30 +992,78 @@ class RecipeLog:
         if write:
             self.write_logfile(params)
 
-    def no_qc(self, params, write=True):
+    def no_qc(self, params: ParamDict, write: bool = True):
+        """
+        Writes that quality control passed (there were no quality control)
+
+        :param params: ParamDict, the constants parameter dictionary
+        :param write: bool, whether to write to log database
+        :return:
+        """
+        # set function name
+        _ = drs_misc.display_func(None, 'no_qc', __NAME__, self.class_name)
+        # set passed_qc to True (no qc means automatic pass)
         self.passed_qc = True
         # whether to write (update) recipe log file
         if write:
             self.write_logfile(params)
 
-    def add_error(self, params, errortype, errormsg, write=True):
+    def add_error(self, params: ParamDict, errortype: Union[Exception, str],
+                  errormsg: str, write: bool = True):
+        """
+        Add an error (exception) to the database in the errors column
+        errors are separate by two ||
+
+            ErrorType: ErrorMessage ||
+
+        :param params: ParamDict, the constants parameter dictionary
+        :param errortype: Exception or string, the error exception or a string
+                          representation of it
+        :param errormsg: str, the error message to store
+        :param write: bool, if True writes to the log database
+        :return:
+        """
+        # set function name
+        _ = drs_misc.display_func(None, 'add_error', __NAME__, self.class_name)
+        # add errors in form ErrorType: ErrorMessage ||
         self.errors += '"{0}":"{1}"||'.format(errortype, errormsg)
         # whether to write (update) recipe log file
         if write:
             self.write_logfile(params)
 
-    def end(self, params, write=True):
+    def end(self, params: ParamDict, write: bool = True):
+        """
+        Add the row that says recipe finished correctly to database
 
+        :param params:
+        :param write:
+        :return:
+        """
+        # set function name
+        _ = drs_misc.display_func(None, 'end', __NAME__, self.class_name)
+        # set the ended parameter to True
         self.ended = True
         # whether to write (update) recipe log file
         if write:
             self.write_logfile(params)
 
-    def write_logfile(self, params):
+    def write_logfile(self, params: ParamDict):
+        """
+        The
+        :param params:
+        :return:
+        """
+        # set function name
+        _ = drs_misc.display_func(None, 'end', __NAME__, self.class_name)
+        # do not write the lock file is a lock file is not present
         if self.lfunc is None:
-            return 0
+            return
+        # if we do have a lock file then we can write using a lock file and
+        #   the _writer function
         else:
-            return self.lfunc(params, self.lockfile, self._writer)
+            self.lfunc(params, self.lockfile, self._writer)
+
+    # TODO: Got to here
 
     def _input_str(self, inputs, argdict, kind='arg'):
         # setup input str
@@ -1290,7 +1659,8 @@ def correct_level(logobj, key, level):
     return thislevel >= outlevel
 
 
-def printlog(logobj, params, message, key='all', colour=None):
+def printlog(logobj: Logger, params: ParamDict, message: str,
+             key: str = 'all', colour: str = None):
     """
     print message to stdout (if level is correct - set by PRINT_LEVEL)
     is coloured unless spirouConfig.Constants.COLOURED_LOG() is False
