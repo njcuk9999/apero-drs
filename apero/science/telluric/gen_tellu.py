@@ -395,29 +395,29 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     qc_values.append(np.nan)
     qc_names.append('EXTSNR')
     qc_logic.append('EXTSNR < {0}'.format(snr_min_thres))
-    qc_pass.append(1)
+    qc_pass.append(np.nan)
     # 2. ccf is NaN (pos = 1)
     qc_values.append(np.nan)
     qc_names.append('NUM_NAN_CCF')
     qc_logic.append('NUM_NAN_CCF > 0')
-    qc_pass.append(1)
+    qc_pass.append(np.nan)
     # 3. exponent for others out of bounds (pos = 2 and 3)
     qc_values += [np.nan, np.nan]
-    qc_names += ['EXPO_OTHERS', 'EXPO_OTHERS']
-    qc_logic += ['EXPO_OTHERS < {0}'.format(others_bounds[0]),
-                 'EXPO_OTHERS > {0}'.format(others_bounds[1])]
-    qc_pass += [1, 1]
+    qc_names += ['EXPO_OTHERS L', 'EXPO_OTHERS U']
+    qc_logic += ['EXPO_OTHERS L < {0}'.format(others_bounds[0]),
+                 'EXPO_OTHERS U > {0}'.format(others_bounds[1])]
+    qc_pass += [np.nan, np.nan]
     # 4. exponent for water  out of bounds (pos 4 and 5)
     qc_values += [np.nan, np.nan]
-    qc_names += ['EXPO_WATER', 'EXPO_WATER']
-    qc_logic += ['EXPO_WATER < {0}'.format(water_bounds[0]),
-                 'EXPO_WATER > {0}'.format(water_bounds[1])]
-    qc_pass += [1, 1]
+    qc_names += ['EXPO_WATER L', 'EXPO_WATER U']
+    qc_logic += ['EXPO_WATER L < {0}'.format(water_bounds[0]),
+                 'EXPO_WATER U > {0}'.format(water_bounds[1])]
+    qc_pass += [np.nan, np.nan]
     # 5. max iterations exceeded (pos = 6)
     qc_values.append(np.nan)
     qc_names.append('ITERATIONS')
     qc_logic.append('ITERATIONS = {0}'.format(max_iterations - 1))
-    qc_pass.append(1)
+    qc_pass.append(np.nan)
     # dev note: if adding a new one must add tfailmsgs for all uses in qc
     #  (mk_tellu and fit_tellu)
     # ----------------------------------------------------------------------
@@ -745,57 +745,57 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
                 fit_water = np.polyfit(amp_water_arr, expo_water_arr, 1)
             # --------------------------------------------------------------
             # find best guess for other species exponent
-            expo_others = fit_others[1]
+            expo_others = float(fit_others[1])
             # deal with lower bounds for other species
             if expo_others < others_bounds[0]:
                 # update qc params
-                qc_values[2] = float(expo_others)
+                qc_values[2] = float(fit_others[1])
                 qc_pass[2] = 0
                 # set expo_others to lower others bound
-                expo_others = others_bounds[0]
+                expo_others = float(others_bounds[0])
                 # flag qc as failed and break
                 flag_qc = True
             else:
-                qc_values[2] = expo_others
+                qc_values[2] = float(fit_others[1])
                 qc_pass[2] = 1
             # deal with upper bounds for other species
             if expo_others > others_bounds[1]:
                 # update qc params
-                qc_values[3] = float(expo_others)
+                qc_values[3] = float(fit_others[1])
                 qc_pass[3] = 0
                 # set the expo_others to the upper others bound
-                expo_others = others_bounds[1]
+                expo_others = float(others_bounds[1])
                 # flag qc as failed and break
                 flag_qc = True
             else:
-                qc_values[3] = expo_others
+                qc_values[3] = float(fit_others[1])
                 qc_pass[3] = 1
             # --------------------------------------------------------------
             # find best guess for water exponent
-            expo_water = fit_water[1]
+            expo_water = float(fit_water[1])
             # deal with lower bounds for water
             if expo_water < water_bounds[0]:
                 # update qc params
-                qc_values[4] = expo_water
+                qc_values[4] = float(fit_water[1])
                 qc_pass[4] = 0
                 # set the expo_water to the lower water bound
-                expo_water = water_bounds[0]
+                expo_water = float(water_bounds[0])
                 # flag qc as failed and break
                 flag_qc = True
             else:
-                qc_values[4] = expo_others
+                qc_values[4] = float(fit_water[1])
                 qc_pass[4] = 1
             # deal with upper bounds for water
             if expo_water > water_bounds[1]:
                 # update qc params
-                qc_values[5] = expo_water
+                qc_values[5] = float(fit_water[1])
                 qc_pass[5] = 0
                 # set the expo_water to the upper water bound
-                expo_water = water_bounds[1]
+                expo_water = float(water_bounds[1])
                 # flag qc as failed and break
                 flag_qc = True
             else:
-                qc_values[5] = expo_water
+                qc_values[5] = float(fit_water[1])
                 qc_pass[5] = 1
             # --------------------------------------------------------------
             # check whether we have converged yet (by updating dexpo)
@@ -833,6 +833,13 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # ----------------------------------------------------------------------
     # deal with the qc flags
     if flag_qc:
+        # log that qc flagged
+        for qit in range(len(qc_pass)):
+            if qc_pass[qit] == 0:
+                wargs = [qc_logic[qit], qc_names[qit], qc_values[qit]]
+                wmsg = 'Pre cleaning failed. \n\tCriteria: {0} \n\tActual: {1} = {2}'
+                WLOG(params, 'warning', wmsg.format(*wargs))
+
         qc_params = [qc_names, qc_values, qc_logic, qc_pass]
         # return qc_exit_tellu_preclean
         return qc_exit_tellu_preclean(params, recipe, image_e2ds, infile,
