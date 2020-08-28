@@ -66,3 +66,5 @@
 "LOGSTAT_HELP_KIND","HELP","","None","[STRING] The kind of logs to analyze","",""
 "LOGSTAT_HELP_NIGHTNAME","HELP","","None","[STRING] The directory/night name to rebuild for (default is to do all directories)","",""
 "IS_MASTER_HELP","HELP","","None","If set then recipe is a master recipe (e.g. master recipes write to calibration database as master calibrations)","",""
+"SET_INPUT_DIR_HELP","HELP","","None","[STRING] Force the default input directory (Normally set by recipe)","",""
+"SET_OUTPUT_DIR_HELP","HELP","","None","[STRING] Force the default output directory (Normally set by recipe)","",""
