@@ -217,7 +217,7 @@ def mk_tellu_quality_control(params, tprops, infile, tpreprops, **kwargs):
     # loop around all tqc
     for qc_it in range(len(tqc_names)):
         # if tqc_pass failed (zero) make fail message
-        if tqc_pass == 0:
+        if tqc_pass[qc_it] == 0:
             fail_msg.append(tqc_logic[qc_it].lower())
             qc_pass.append(0)
         else:
