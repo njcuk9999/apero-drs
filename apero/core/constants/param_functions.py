@@ -78,6 +78,7 @@ Exceptions = Union[ArgumentError, ArgumentWarning, DRSError, DRSWarning,
 
 ModLoads = Tuple[List[str], List[Any], List[str], List[Union[Const, Keyword]]]
 
+
 # =============================================================================
 # Define Custom classes
 # =============================================================================
@@ -129,7 +130,6 @@ class CaseInsensitiveDict(UserDict):
 
         :type key: str
         :type value: object
-        :type source: str
 
         :return: None
         """
@@ -263,7 +263,6 @@ class StrCaseINSDict(CaseInsensitiveDict):
 
         :type key: str
         :type value: list
-        :type source: str
 
         :return: None
         """
@@ -301,7 +300,6 @@ class ListCaseINSDict(CaseInsensitiveDict):
 
         :type key: str
         :type value: list
-        :type source: str
 
         :return: None
         """
@@ -339,7 +337,6 @@ class CKCaseINSDict(CaseInsensitiveDict):
 
         :type key: str
         :type value: list
-        :type source: str
 
         :return: None
         """
