@@ -173,11 +173,11 @@ test.description = Help['TEST_DESC']
 test.epilog = Help['TEST_EXAMPLE']
 test.kind = 'test'
 test.set_arg(pos=0, **directory)
-test.set_kwarg(name='--filelist1', dtype='files', default=[], nargs='+',
+test.set_kwarg(name='--filelist1', dtype='files', default=[],
                files=[sf.pp_dark_dark_int, sf.pp_flat_flat],
                filelogic='inclusive',
                helpstr=Help['TEST_FILELIST1_HELP'], required=True)
-test.set_kwarg(name='--filelist2', dtype='files', default=[], nargs='+',
+test.set_kwarg(name='--filelist2', dtype='files', default=[],
                files=[sf.pp_fp_fp], helpstr=Help['TEST_FILELIST2_HELP'],
                required=True)
 test.set_kwarg(**plot)
@@ -235,11 +235,11 @@ cal_badpix.set_debug_plots('BADPIX_MAP')
 cal_badpix.set_summary_plots('SUM_BADPIX_MAP')
 cal_badpix.set_arg(pos=0, **directory)
 cal_badpix.set_kwarg(name='--flatfiles', dtype='files', files=[sf.pp_flat_flat],
-                     nargs='+', filelogic='exclusive', required=True,
+                     filelogic='exclusive', required=True,
                      helpstr=Help['BADPIX_FLATFILE_HELP'], default=[])
 cal_badpix.set_kwarg(name='--darkfiles', dtype='files',
                      files=[sf.pp_dark_dark_tel, sf.pp_dark_dark_int],
-                     nargs='+', filelogic='exclusive', required=True,
+                     filelogic='exclusive', required=True,
                      helpstr=Help['BADPIX_DARKFILE_HELP'], default=[])
 cal_badpix.set_kwarg(**add_db)
 cal_badpix.set_kwarg(default=True, **combine)
@@ -376,11 +376,11 @@ cal_shape_master.set_debug_plots('SHAPE_DX', 'SHAPE_ANGLE_OFFSET_ALL',
 cal_shape_master.set_summary_plots('SUM_SHAPE_ANGLE_OFFSET')
 cal_shape_master.set_arg(pos=0, **directory)
 cal_shape_master.set_kwarg(name='--fpfiles', dtype='files', files=[sf.pp_fp_fp],
-                           nargs='+', filelogic='exclusive', required=True,
+                           filelogic='exclusive', required=True,
                            helpstr=Help['SHAPE_FPFILES_HELP'], default=[])
 cal_shape_master.set_kwarg(name='--hcfiles', dtype='files',
                            files=[sf.pp_hc1_hc1],
-                           nargs='+', filelogic='exclusive', required=True,
+                           filelogic='exclusive', required=True,
                            helpstr=Help['SHAPE_HCFILES_HELP'], default=[])
 cal_shape_master.set_kwarg(**add_db)
 cal_shape_master.set_kwarg(**badfile)
@@ -706,10 +706,10 @@ cal_wave_master.set_summary_plots('SUM_WAVE_FP_IPT_CWID_LLHC',
 cal_wave_master.set_arg(pos=0, **directory)
 cal_wave_master.set_kwarg(name='--hcfiles', dtype='files',
                           files=[sf.pp_hc1_hc1],
-                          nargs='+', filelogic='exclusive', required=True,
+                          filelogic='exclusive', required=True,
                           helpstr=Help['WAVE_HCFILES_HELP'], default=[])
 cal_wave_master.set_kwarg(name='--fpfiles', dtype='files', files=[sf.pp_fp_fp],
-                          nargs='+', filelogic='exclusive', required=True,
+                          filelogic='exclusive', required=True,
                           helpstr=Help['WAVE_FPFILES_HELP'], default=[])
 cal_wave_master.set_kwarg(**add_db)
 cal_wave_master.set_kwarg(**badfile)
@@ -770,10 +770,10 @@ cal_wave_night.set_summary_plots('SUM_WAVENIGHT_ITERPLOT',
                                  'SUM_CCF_RV_FIT')
 cal_wave_night.set_arg(pos=0, **directory)
 cal_wave_night.set_kwarg(name='--hcfiles', dtype='files', files=[sf.pp_hc1_hc1],
-                         nargs='+', filelogic='exclusive', required=True,
+                         filelogic='exclusive', required=True,
                          helpstr=Help['WAVE_HCFILES_HELP'], default=[])
 cal_wave_night.set_kwarg(name='--fpfiles', dtype='files', files=[sf.pp_fp_fp],
-                         nargs='+', filelogic='exclusive', required=True,
+                         filelogic='exclusive', required=True,
                          helpstr=Help['WAVE_FPFILES_HELP'], default=[])
 cal_wave_night.set_kwarg(**add_db)
 cal_wave_night.set_kwarg(**badfile)
@@ -1161,29 +1161,29 @@ pol_spirou_new.set_arg(pos=0, **directory)
 
 pol_spirou_new.set_kwarg(name='--exp1', altnames=['-1'], dtype='file',
                      files=[sf.out_ext_e2dsff, sf.out_tellu_obj],
-                     nargs=1, filelogic='exclusive', required=True,
+                     filelogic='exclusive', required=True,
                      default=[], helpstr='Input exposure 1')
 pol_spirou_new.set_kwarg(name='--exp2', altnames=['-2'], dtype='file',
                      files=[sf.out_ext_e2dsff, sf.out_tellu_obj],
-                     nargs=1, filelogic='exclusive', required=True,
+                     filelogic='exclusive', required=True,
                      default=[], helpstr='Input exposure 2')
 pol_spirou_new.set_kwarg(name='--exp3', altnames=['-3'], dtype='file',
                      files=[sf.out_ext_e2dsff, sf.out_tellu_obj],
-                     nargs=1, filelogic='exclusive', required=True,
+                     filelogic='exclusive', required=True,
                      default=[], helpstr='Input exposure 3')
 pol_spirou_new.set_kwarg(name='--exp4', altnames=['-4'], dtype='file',
                      files=[sf.out_ext_e2dsff, sf.out_tellu_obj],
-                     nargs=1, filelogic='exclusive', required=True,
+                     filelogic='exclusive', required=True,
                      default=[], helpstr='Input exposure 4')
 
 pol_spirou_new.set_kwarg(name='--lsdmask', altnames=['-m'], dtype=str,
-                         nargs=1, helpstr='LSD mask', default='None')
+                         helpstr='LSD mask', default='None')
 pol_spirou_new.set_kwarg(name='--output', altnames=['-o'], dtype=str,
-                         nargs=1, helpstr='Output file', default='None')
+                         helpstr='Output file', default='None')
 pol_spirou_new.set_kwarg(name='--output_lsd', altnames=['-l'], dtype=str,
-                         nargs=1, helpstr='Output LSD file', default='None')
+                         helpstr='Output LSD file', default='None')
 pol_spirou_new.set_kwarg(name='--lsd', altnames=['-L'], dtype='bool',
-                         nargs=1, default=False, helpstr='Run LSD analysis')
+                         default=False, helpstr='Run LSD analysis')
 
 pol_spirou_new.set_kwarg(**blazefile)
 pol_spirou_new.set_kwarg(**plot)
