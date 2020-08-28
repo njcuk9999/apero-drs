@@ -758,7 +758,7 @@
 "10-019-00007","WARNING","Means that no good files were found for template cube","{0} = object name","No good files found for object = {0}. Skipping.","",""
 "10-019-00008","WARNING","Means that the user decided not to do pre-cleaning","None","Skipping pre-cleaning (user switch)","",""
 "10-019-00009","WARNING","Means that object was not in telluric whitelist","{0} = object name","Object='{0}' is not a vliad telluric (hot) star.","",""
-"","","","","","",""
+"10-019-00010","WARNING","Means that the telluric pre-cleaning failed (a quality control qc parameter failed)","{0} = qc logic; {1} = qc name; {2} = qc value","","",""
 "","","","","","",""
 "","","","","","",""
 "","","","","","",""
