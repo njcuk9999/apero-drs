@@ -328,7 +328,7 @@ class CKCaseINSDict(CaseInsensitiveDict):
         _ = display_func(None, '__getitem__', __NAME__, 'CKCaseINSDict')
         # return from supers dictionary storage
         # noinspection PyTypeChecker
-        return list(super(CKCaseINSDict, self).__getitem__(key))
+        return super(CKCaseINSDict, self).__getitem__(key)
 
     def __setitem__(self, key: str, value: Union[None, Const, Keyword]):
         """
@@ -346,7 +346,7 @@ class CKCaseINSDict(CaseInsensitiveDict):
         # set function name
         _ = display_func(None, '__setitem__', __NAME__, 'CKCaseINSDict')
         # then do the normal dictionary setting
-        super(CKCaseINSDict, self).__setitem__(key, list(value))
+        super(CKCaseINSDict, self).__setitem__(key, value)
 
 
 class ParamDict(CaseInsensitiveDict):
