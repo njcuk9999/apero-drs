@@ -10,19 +10,17 @@ Created on 2019-05-13 at 12:40
 @author: cook
 """
 import numpy as np
-import os
 import warnings
 from scipy.signal import convolve2d
 from scipy.ndimage import map_coordinates as mapc
 from scipy.ndimage import zoom
 
 from apero.base import base
-from apero import core
 from apero import lang
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_log
-from apero.core.utils import drs_file, drs_database
+from apero.core.utils import drs_file
 from apero.io import drs_fits
 
 

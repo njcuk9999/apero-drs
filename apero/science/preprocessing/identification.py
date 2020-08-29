@@ -10,8 +10,9 @@ Version 0.0.1
 """
 from apero.base import base
 from apero.core import constants
-from apero import core
-from apero.core.utils import drs_recipe, drs_file
+from apero.core.core import drs_log
+from apero.core.utils import drs_recipe
+from apero.core.utils import drs_file
 from apero import lang
 from apero.io import drs_fits
 
@@ -27,7 +28,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # get param dict
 ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile

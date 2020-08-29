@@ -14,10 +14,10 @@ import shutil
 
 from apero.base import base
 from apero.base import drs_break
-from apero import core
-from apero.core import constants
 from apero import lang
+from apero.core.core import drs_log
 from apero.io import drs_path
+
 
 # =============================================================================
 # Define variables
@@ -30,7 +30,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict

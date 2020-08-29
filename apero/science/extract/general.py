@@ -17,7 +17,6 @@ import os
 import warnings
 
 from apero.base import base
-from apero import core
 from apero.core import constants
 from apero.core import math as mp
 from apero import lang
@@ -269,8 +268,8 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
 def get_thermal(params, header, fiber, kind, filename=None,
                 database=None):
     # get file definition
-    out_thermal = core.get_file_definition(kind, params['INSTRUMENT'],
-                                           kind='red')
+    out_thermal = drs_startup.get_file_definition(kind, params['INSTRUMENT'],
+                                                  kind='red')
     # get key
     key = out_thermal.get_dbkey()
     # ----------------------------------------------------------------------
@@ -283,7 +282,7 @@ def get_thermal(params, header, fiber, kind, filename=None,
     # ------------------------------------------------------------------------
     # load calib file
     ckwargs = dict(key=key, userinputkey='THERMALFILE', filename=filename,
-                   inheader=header, database=database, fiber=fiber)
+                   inheader=header, database=calibdbm, fiber=fiber)
     thermal, thdr, thermal_file = general.load_calib_file(params, **ckwargs)
     # log which fpmaster file we are using
     WLOG(params, '', TextEntry('40-016-00027', args=[thermal_file]))
@@ -454,7 +453,7 @@ def correct_master_dark_fp(params, extractdict, **kwargs):
     # get this instruments science fibers and reference fiber
     pconst = constants.pload(params['INSTRUMENT'])
     # science fibers should be list of strings, reference fiber should be string
-    sci_fibers, ref_fiber =  pconst.FIBER_KINDS()
+    sci_fibers, ref_fiber = pconst.FIBER_KINDS()
     # output storage (dictionary of corrected extracted files)
     outputs = dict()
     # ----------------------------------------------------------------------
@@ -577,7 +576,7 @@ def correct_dark_fp(params, extractdict, database=None, **kwargs):
     # get this instruments science fibers and reference fiber
     pconst = constants.pload(params['INSTRUMENT'])
     # science fibers should be list of strings, reference fiber should be string
-    sci_fibers, ref_fiber =  pconst.FIBER_KINDS()
+    sci_fibers, ref_fiber = pconst.FIBER_KINDS()
     all_fibers = sci_fibers + [ref_fiber]
     # ----------------------------------------------------------------------
     # get reference file
@@ -780,8 +779,8 @@ def dark_fp_regen_s1d(params, recipe, props, database=None, **kwargs):
 def get_leak_master(params, header, fiber, kind, filename=None,
                     database=None):
     # get file definition
-    out_leak = core.get_file_definition(kind, params['INSTRUMENT'],
-                                           kind='red')
+    out_leak = drs_startup.get_file_definition(kind, params['INSTRUMENT'],
+                                               kind='red')
     # get key
     key = out_leak.get_dbkey()
     # ----------------------------------------------------------------------
@@ -846,7 +845,7 @@ def get_extraction_files(params, recipe, infile, extname):
     # get this instruments science fibers and reference fiber
     pconst = constants.pload(params['INSTRUMENT'])
     # science fibers should be list of strings, reference fiber should be string
-    sci_fibers, ref_fiber =  pconst.FIBER_KINDS()
+    sci_fibers, ref_fiber = pconst.FIBER_KINDS()
     all_fibers = sci_fibers + [ref_fiber]
     # get the input pp list
     rawfiles = infile.read_header_key_1d_list('KW_INFILE1', dtype=str)
@@ -1504,8 +1503,6 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     return e2dsfile, e2dsfffile
 
 
-
-
 def extract_summary(recipe, params, qc_params, e2dsfile, shapelocal, eprops,
                     fiber):
     # add qc params (fiber specific)
@@ -1545,7 +1542,6 @@ def extract_summary(recipe, params, qc_params, e2dsfile, shapelocal, eprops,
                          value=eprops['COSMIC_THRESHOLD'])
 
 
-
 def qc_leak_master(params, medcubes):
     # output storage
     qc_params = dict()
@@ -1556,7 +1552,7 @@ def qc_leak_master(params, medcubes):
         WLOG(params, 'info', TextEntry('40-016-00026', args=[fiber]))
         # set passed variable and fail message list
         fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
-        textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+        # textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
         # no quality control currently
         qc_values.append('None')
         qc_names.append('None')
@@ -1598,7 +1594,7 @@ def qc_leak(params, props, **kwargs):
         WLOG(params, 'info', TextEntry('40-016-00026', args=[fiber]))
         # set passed variable and fail message list
         fail_msg = []
-        textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
+        # textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
         # ------------------------------------------------------------------
         # deal with old qc params
         # ------------------------------------------------------------------
@@ -1771,7 +1767,6 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
         # add to output files (for indexing)
         recipe.add_output_file(s1dvfile)
         # ------------------------------------------------------------------
-
 
 
 # =============================================================================

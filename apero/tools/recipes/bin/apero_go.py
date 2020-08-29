@@ -13,9 +13,10 @@ import os
 import sys
 
 from apero.base import base
-from apero import core
 from apero import lang
 from apero.core import constants
+from apero.core.utils import drs_startup
+
 
 # =============================================================================
 # Define variables
@@ -176,7 +177,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return core.return_locals(params, locals())
+    return drs_startup.return_locals(params, locals())
 
 
 def get_path(params, storage, props, input_key, param_key):

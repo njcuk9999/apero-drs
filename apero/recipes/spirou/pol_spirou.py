@@ -6,9 +6,10 @@ Created on 2019-09-05 at 14:58
 @author: cook
 """
 from apero.base import base
-from apero import core
 from apero import lang
 from apero.core import constants
+from apero.core.core import drs_log
+from apero.core.utils import drs_startup
 from apero.core.utils import drs_database2 as drs_database
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave
@@ -29,7 +30,7 @@ __release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict
@@ -64,17 +65,17 @@ def main(directory=None, files=None, **kwargs):
     fkwargs = dict(directory=directory, files=files, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs)
+    recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)
     # solid debug mode option
     if kwargs.get('DEBUG0000', False):
         return recipe, params
     # ----------------------------------------------------------------------
     # run main bulk of code (catching all errors)
-    llmain, success = core.run(__main__, recipe, params)
+    llmain, success = drs_startup.run(__main__, recipe, params)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    return core.end_main(params, llmain, recipe, success)
+    return drs_startup.end_main(params, llmain, recipe, success)
 
 
 def __main__(recipe, params):
@@ -145,7 +146,6 @@ def __main__(recipe, params):
     # ---------------------------------------------------------------------
     lprops = polar.lsd_analysis_wrapper(params, pobjects, pprops, wprops)
 
-
     # ----------------------------------------------------------------------
     # Create 1d soectra (s1d) of all products [pol, null1, null2, stokesi]
     # ----------------------------------------------------------------------
@@ -212,8 +212,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return core.return_locals(params, locals())
-
+    return drs_startup.return_locals(params, locals())
 
 
 # =============================================================================

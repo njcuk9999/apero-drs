@@ -12,9 +12,9 @@ Created on 2019-09-16 at 13:48
 import os
 
 from apero.base import base
-from apero import core
 from apero import lang
 from apero.core import constants
+from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.tools.module import listing
 from apero.io import drs_fits
@@ -32,7 +32,7 @@ __release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict
@@ -65,17 +65,17 @@ def main(instrument=None, **kwargs):
     fkwargs = dict(instrument=instrument, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs)
+    recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)
     # solid debug mode option
     if kwargs.get('DEBUG0000', False):
         return recipe, params
     # ----------------------------------------------------------------------
     # run main bulk of code (catching all errors)
-    llmain, success = core.run(__main__, recipe, params)
+    llmain, success = drs_startup.run(__main__, recipe, params)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    return core.end_main(params, llmain, recipe, success)
+    return drs_startup.end_main(params, llmain, recipe, success)
 
 
 def __main__(recipe, params):
@@ -106,7 +106,7 @@ def __main__(recipe, params):
         # push files in to runs/raw_index
         _ = drs_fits.find_raw_files(params, recipe)
 
-        return core.return_locals(params, locals())
+        return drs_startup.return_locals(params, locals())
     elif kind.lower() == 'tmp':
         path = params['DRS_DATA_WORKING']
         columns = pconst.OUTPUT_FILE_HEADER_KEYS()
@@ -164,7 +164,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return core.return_locals(params, locals())
+    return drs_startup.return_locals(params, locals())
 
 
 # =============================================================================

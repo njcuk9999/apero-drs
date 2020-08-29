@@ -13,9 +13,10 @@ import itertools
 import os
 
 from apero.base import base
-from apero import core
 from apero import lang
 from apero.core import constants
+from apero.core.core import drs_log
+from apero.core.utils import drs_startup
 from apero.io import drs_fits
 from apero.science import extract
 from apero.tools.module.testing import drs_dev
@@ -35,7 +36,7 @@ Constants = constants.load(__INSTRUMENT__)
 # get param dict
 ParamDict = constants.ParamDict
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict
@@ -56,7 +57,6 @@ cal_update_berv.kind = 'misc'
 cal_update_berv.set_kwarg(name='--skip', dtype='bool', default=True,
                           helpstr='Skip files already with BERV measurement')
 cal_update_berv.set_kwarg(name='--objects', dtype=str, default='None',
-                          nargs='?',
                           helpstr='List of objects to correct berv for')
 # add recipe to recipe definition
 RMOD.add(cal_update_berv)
@@ -88,18 +88,18 @@ def main(**kwargs):
     fkwargs = dict(**kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs,
-                                rmod=RMOD)
+    recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs,
+                                       rmod=RMOD)
     # solid debug mode option
     if kwargs.get('DEBUG0000', False):
         return recipe, params
     # ----------------------------------------------------------------------
     # run main bulk of code (catching all errors)
-    llmain, success = core.run(__main__, recipe, params)
+    llmain, success = drs_startup.run(__main__, recipe, params)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    return core.end_main(params, llmain, recipe, success)
+    return drs_startup.end_main(params, llmain, recipe, success)
 
 
 def __main__(recipe, params):
@@ -133,7 +133,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # get all combinations
     combinations = list(itertools.product(filetypes, intypes, fibers))
-    # get files of this type and the intypes
+    # get files of this type and the in types
     filenames, infiletypes = dict(), dict()
     # ----------------------------------------------------------------------
     # loop around files and update BERV
@@ -148,8 +148,9 @@ def __main__(recipe, params):
         WLOG(params, 'info', msg.format(*wargs))
         WLOG(params, 'info', params['DRS_HEADER'])
         # get the in file type
-        infiletype = core.get_file_definition(intype, params['INSTRUMENT'],
-                                              kind='red')
+        infiletype = drs_startup.get_file_definition(intype,
+                                                     params['INSTRUMENT'],
+                                                     kind='red')
         # get the files for this filetype
         fkwargs = dict()
         fkwargs['kind'] = 'red'
@@ -210,7 +211,7 @@ def __main__(recipe, params):
             # ----------------------------------------------------------
             # skip if already using barycorppy
             if header1['BERVSRCE'] != 'barycorrpy':
-                    skip = False
+                skip = False
             # ----------------------------------------------------------
         # deal with skip
         if skip:
@@ -259,7 +260,7 @@ def __main__(recipe, params):
             WLOG(params, '', wmsg)
             # update header
             infile1.copy_original_keys(infile1, forbid_keys=False,
-                                      allkeys=True)
+                                       allkeys=True)
             extract.add_berv_keys(params, infile1, bprops)
             # write data to file
             infile1.write_file()
@@ -267,17 +268,15 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return core.return_locals(params, locals())
+    return drs_startup.return_locals(params, locals())
 
 
 # =============================================================================
 # Start of code
 # =============================================================================
 if __name__ == "__main__":
-
-    #import sys
-    #sys.argv = 'update_berv.py --objects TOI-1278,TOI-1759,AUMic,TOI-1452,TOI-233,TOI-736,TOI-876,TOI-732'.split()
-
+    # import sys
+    # sys.argv = 'update_berv.py --objects TOI-1278,TOI-1759,AUMic,TOI-1452,TOI-233,TOI-736,TOI-876,TOI-732'.split()
 
     # run main with no arguments (get from command line - sys.argv)
     ll = main()

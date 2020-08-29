@@ -477,6 +477,11 @@ def return_locals(params, ll):
     return ll
 
 
+def end_main(params, llmain, recipe, success, outputs='reduced',
+                    end=True, quiet=False, keys=None):
+    return main_end_script(params, llmain, recipe, success, outputs,
+                           end, quiet, keys)
+
 def main_end_script(params, llmain, recipe, success, outputs='reduced',
                     end=True, quiet=False, keys=None):
     """

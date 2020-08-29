@@ -13,7 +13,6 @@ import os
 from typing import List, Union, Tuple
 
 from apero.base import base
-from apero import core
 from apero.core import constants
 from apero.core.utils import drs_startup
 from apero.core import math as mp

@@ -11,18 +11,18 @@ import numpy as np
 import os
 
 from apero.base import base
-from apero import core
+from apero.base import drs_text
 from apero import lang
 from apero.core import constants
+from apero.core.core import drs_log
+from apero.core.utils import drs_startup
 from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_fits
 from apero.io import drs_table
-from apero.base import drs_text
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave
 from apero.science import velocity
 from apero.tools.module.testing import drs_dev
-
 
 # =============================================================================
 # Define variables
@@ -39,7 +39,7 @@ Constants = constants.load(__INSTRUMENT__)
 # get param dict
 ParamDict = constants.ParamDict
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict
@@ -62,14 +62,14 @@ cal_drift.description = 'Calculates the drift in a set of FP_FP files'
 cal_drift.kind = 'misc'
 cal_drift.set_debug_plots('CCF_RV_FIT_LOOP', 'CCF_RV_FIT')
 cal_drift.set_summary_plots()
-cal_drift.set_kwarg(name='--fibers', dtype=str, default='None', nargs=1,
+cal_drift.set_kwarg(name='--fibers', dtype=str, default='None',
                     helpstr='List of fiber(s) to process '
                             '(comma separated no spaces) i.e. A,B')
-cal_drift.set_kwarg(name='--dprtype', dtype=str, default='None', nargs=1,
+cal_drift.set_kwarg(name='--dprtype', dtype=str, default='None',
                     helpstr='DPRTYPE of file to use (e.g. FP_FP)')
-cal_drift.set_kwarg(name='--filetype', dtype=str, default='None', nargs=1,
+cal_drift.set_kwarg(name='--filetype', dtype=str, default='None',
                     helpstr='file type of file to use (e.g. EXT_E2DS_FF)')
-cal_drift.set_kwarg(name='--nights', dtype=str, default='None', nargs=1,
+cal_drift.set_kwarg(name='--nights', dtype=str, default='None',
                     helpstr='List of night(s) to process'
                             '(comma separated no spaces) i.e. NIGHT1,NIGHT2')
 # add recipe to recipe definition
@@ -106,18 +106,18 @@ def main(**kwargs):
     fkwargs = dict(**kwargs)
     # -------------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs,
-                                rmod=RMOD)
+    recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs,
+                                       rmod=RMOD)
     # solid debug mode option
     if kwargs.get('DEBUG0000', False):
         return recipe, params
     # -------------------------------------------------------------------------
     # run main bulk of code (catching all errors)
-    llmain, success = core.run(__main__, recipe, params)
+    llmain, success = drs_startup.run(__main__, recipe, params)
     # -------------------------------------------------------------------------
     # End Message
     # -------------------------------------------------------------------------
-    return core.end_main(params, llmain, recipe, success)
+    return drs_startup.end_main(params, llmain, recipe, success)
 
 
 def __main__(recipe, params):
@@ -224,11 +224,12 @@ def __main__(recipe, params):
         filenames = np.array(filenames)
         # ---------------------------------------------------------------------
         # find file instance in set (verify user input)
-        drsfile = core.get_file_definition(filetype, params['INSTRUMENT'],
-                                           kind='red')
+        drsfile = drs_startup.get_file_definition(filetype,
+                                                  params['INSTRUMENT'],
+                                                  kind='red')
         # ---------------------------------------------------------------------
         # storage for table
-        basenames, mjdmids, mean_rvs, mean_contrasts = [], [], [] ,[]
+        basenames, mjdmids, mean_rvs, mean_contrasts = [], [], [], []
         mean_fwhms, mean_tot_lines, dvrms_sps, dv_rms_ccs = [], [], [], []
         wavetimes, wavefiles, wavesrces, paths = [], [], [], []
         # ---------------------------------------------------------------------
@@ -301,7 +302,7 @@ def __main__(recipe, params):
     # -------------------------------------------------------------------------
     # End of main code
     # -------------------------------------------------------------------------
-    return core.return_locals(params, locals())
+    return drs_startup.return_locals(params, locals())
 
 
 # =============================================================================

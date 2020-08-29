@@ -12,11 +12,11 @@ Created on 2019-08-16 at 11:18
 import os
 
 from apero.base import base
-from apero import core
-from apero.core import constants
 from apero import lang
-from apero.core.utils import drs_file, drs_startup
+from apero.core import constants
 from apero.core.core import drs_log
+from apero.core.utils import drs_startup
+from apero.core.utils import drs_file
 from apero.io import drs_image
 
 # =============================================================================
@@ -125,9 +125,9 @@ def extract_leak_files(params, recipe, extname, darkfpfile, **kwargs):
     fileinst = recipe.outputs['LEAK_E2DS_FILE']
     # get outputs
     darkfp_outputs = extract_files(params, recipe, darkfpfile, fileinst,
-                                    therm_always_extract, extrecipe,
-                                    therm_extract_type, kind='leakage',
-                                    func_name=func_name)
+                                   therm_always_extract, extrecipe,
+                                   therm_extract_type, kind='leakage',
+                                   func_name=func_name)
     
     # ----------------------------------------------------------------------
     # return extraction outputs
@@ -197,7 +197,7 @@ def extract_files(params, recipe, infile, outfile, always_extract,
     # Get the output hc e2ds filename (and check if it exists)
     # ------------------------------------------------------------------
     # set up drs group (for logging)
-    groupname = core.group_name(params, suffix='extract')
+    groupname = drs_startup.group_name(params, suffix='extract')
     # ------------------------------------------------------------------
     # Get the output hc e2ds filename (and check if it exists)
     # ------------------------------------------------------------------
@@ -230,8 +230,8 @@ def extract_files(params, recipe, infile, outfile, always_extract,
         nightname = os.path.dirname(infile.filename)
         dirname = os.path.dirname(nightname)
         # need to handle passing keywords from main
-        kwargs = core.copy_kwargs(params, extrecipe, directory=nightname,
-                                  files=[infile.basename])
+        kwargs = drs_startup.copy_kwargs(params, extrecipe, directory=nightname,
+                                         files=[infile.basename])
         # set the program name (shouldn't be cal_extract)
         kwargs['program'] = '{0}_extract'.format(kind)
         # force the input directory (combined files go to reduced dir)

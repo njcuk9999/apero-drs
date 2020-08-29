@@ -16,12 +16,12 @@ from scipy.optimize import curve_fit
 import os
 
 from apero.base import base
-from apero import core
 from apero.core import math as mp
 from apero import lang
 from apero.core import constants
 from apero.core.core import drs_log
-from apero.core.utils import drs_data, drs_file
+from apero.core.utils import drs_data
+from apero.core.utils import drs_file
 
 # =============================================================================
 # Define variables
@@ -37,7 +37,7 @@ __release__ = base.__release__
 ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get function string
 display_func = drs_log.display_func
 # Get the text types
@@ -78,7 +78,7 @@ def lsd_analysis_wrapper(params, pobjects, pprops, wprops, **kwargs):
                        func_name)
     min_lande = pcheck(params, 'POLAR_LSD_MIN_LANDE', 'min_lande', kwargs,
                        func_name)
-    max_lande = pcheck(params, 'POLAR_LSD_MAX_LANDE', 'max_lande',kwargs,
+    max_lande = pcheck(params, 'POLAR_LSD_MAX_LANDE', 'max_lande', kwargs,
                        func_name)
 
     vinit = pcheck(params, 'POLAR_LSD_VINIT', 'vinit', kwargs, func_name)
@@ -87,9 +87,9 @@ def lsd_analysis_wrapper(params, pobjects, pprops, wprops, **kwargs):
     nbinsize1 = pcheck(params, 'POLAR_LSD_NBIN1', 'nbinsize1', kwargs,
                        func_name)
     noverlap1 = pcheck(params, 'POLAR_LSD_NOVERLAP1', 'noverlap1', kwargs,
-                      func_name)
+                       func_name)
     nsigclip1 = pcheck(params, 'POLAR_LSD_NSIGCLIP1', 'nsigclip1', kwargs,
-                      func_name)
+                       func_name)
     nwindow1 = pcheck(params, 'POLAR_LSD_NWINDOW1', 'nwindow1', kwargs,
                       func_name)
     nmode1 = pcheck(params, 'POLAR_LSD_NMODE1', 'nmode1', kwargs, func_name)
@@ -99,9 +99,9 @@ def lsd_analysis_wrapper(params, pobjects, pprops, wprops, **kwargs):
     nbinsize2 = pcheck(params, 'POLAR_LSD_NBIN2', 'nbinsize2', kwargs,
                        func_name)
     noverlap2 = pcheck(params, 'POLAR_LSD_NOVERLAP2', 'noverlap2', kwargs,
-                      func_name)
+                       func_name)
     nsigclip2 = pcheck(params, 'POLAR_LSD_NSIGCLIP1', 'nsigclip1', kwargs,
-                      func_name)
+                       func_name)
     nwindow2 = pcheck(params, 'POLAR_LSD_NWINDOW2', 'nwindow2', kwargs,
                       func_name)
     nmode2 = pcheck(params, 'POLAR_LSD_NMODE2', 'nmode2', kwargs, func_name)
@@ -245,7 +245,7 @@ def load_lsd_spectral_lines(params, temperature, wl_lower, wl_upper,
     """
     Function to load spectral lines data for LSD analysis.
 
-    :param p: parameter dictionary, ParamDict containing constants
+    :param params: parameter dictionary, ParamDict containing constants
         Must contain at least:
             LOG_OPT: string, option for logging
             IC_POLAR_LSD_CCFLINES: list of strings, list of files containing
@@ -361,12 +361,12 @@ def prepare_polarimetry_data(params, wavemap, stokesi, stokesierr, pol, polerr,
     """
     Function to prepare polarimetry data for LSD analysis.
 
-    :param wave: numpy array (2D), wavelength data
+    :param wavemap: numpy array (2D), wavelength data
     :param stokesi: numpy array (2D), Stokes I data
     :param stokesierr: numpy array (2D), errors of Stokes I
     :param pol: numpy array (2D), degree of polarization data
     :param polerr: numpy array (2D), errors of degree of polarization
-    :param null2: numpy array (2D), 2nd null polarization
+    :param null: numpy array (2D), 2nd null polarization
     :param normalize: bool, normalize Stokes I data
 
     :returns: updated data (wave, stokesi, stokesierr, pol, polerr, null2)
@@ -390,8 +390,8 @@ def prepare_polarimetry_data(params, wavemap, stokesi, stokesierr, pol, polerr,
         nanmask = np.isfinite(stokesi[order_num]) & np.isfinite(pol[order_num])
         # ------------------------------------------------------------------
         # mask by wavelength
-        wavemask  = wavemap[order_num] > owl_lower[order_num]
-        wavemask  &= wavemap[order_num] < owl_upper[order_num]
+        wavemask = wavemap[order_num] > owl_lower[order_num]
+        wavemask &= wavemap[order_num] < owl_upper[order_num]
         # ------------------------------------------------------------------
         # combine masks
         mask = nanmask & wavemask

@@ -12,8 +12,9 @@ import numpy as np
 import os
 
 from apero.base import base
-from apero import core
 from apero import lang
+from apero.core.core import drs_log
+from apero.core.utils import drs_startup
 from apero.science import preprocessing as pp
 from apero.io import drs_image
 from apero.io import drs_fits
@@ -31,7 +32,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 # Raw prefix
@@ -67,18 +68,17 @@ def main(directory=None, files=None, **kwargs):
     fkwargs = dict(directory=directory, files=files, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs)
+    recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)
     # solid debug mode option
     if kwargs.get('DEBUG0000', False):
         return recipe, params
     # ----------------------------------------------------------------------
     # run main bulk of code (catching all errors)
-    llmain, success = core.run(__main__, recipe, params)
+    llmain, success = drs_startup.run(__main__, recipe, params)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    return core.end_main(params, llmain, recipe, success, outputs='None')
-
+    return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
 
 
 def __main__(recipe, params):
@@ -107,7 +107,7 @@ def __main__(recipe, params):
         log1 = recipe.log.add_level(params, 'num', it)
         # ------------------------------------------------------------------
         # print file iteration progress
-        core.file_processing_update(params, it, num_files)
+        drs_startup.file_processing_update(params, it, num_files)
         # ge this iterations file
         file_instance = infiles[it]
         # ------------------------------------------------------------------
@@ -155,6 +155,7 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         # storage
         snr_hotpix, rms_list = [], []
+        shiftdx, shiftdy = 0, 0
         # do this iteratively as if there is a shift need to re-workout QC
         for iteration in range(2):
             # get pass condition
@@ -257,8 +258,8 @@ def __main__(recipe, params):
         # add to output files (for indexing)
         recipe.add_output_file(outfile)
         # index this file
-        core.end_main(params, None, recipe, success=True, outputs='pp',
-                      end=False)
+        drs_startup.end_main(params, None, recipe, success=True, outputs='pp',
+                             end=False)
         # ------------------------------------------------------------------
         # append to output storage in p
         # ------------------------------------------------------------------
@@ -271,7 +272,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return core.return_locals(params, dict(locals()))
+    return drs_startup.return_locals(params, dict(locals()))
 
 
 # =============================================================================

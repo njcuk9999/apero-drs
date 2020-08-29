@@ -10,7 +10,8 @@ Created on 2019-07-26 at 09:39
 @author: cook
 """
 from apero.base import base
-from apero import core
+from apero.core.core import drs_log
+from apero.core.utils import drs_startup
 from apero.tools.module.listing import file_explorer
 
 # =============================================================================
@@ -24,7 +25,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # -----------------------------------------------------------------------------
 # define the program name
 PROGRAM_NAME = 'APERO File Explorer'
@@ -54,18 +55,18 @@ def main(instrument=None, **kwargs):
     fkwargs = dict(instrument=instrument, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs,
-                                enable_plotter=False)
+    recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs,
+                                       enable_plotter=False)
     # solid debug mode option
     if kwargs.get('DEBUG0000', False):
         return recipe, params
     # ----------------------------------------------------------------------
     # run main bulk of code (catching all errors)
-    llmain, success = core.run(__main__, recipe, params)
+    llmain, success = drs_startup.run(__main__, recipe, params)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    return core.end_main(params, llmain, recipe, success, outputs='None')
+    return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
 
 
 def __main__(recipe, params):
@@ -95,7 +96,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return core.return_locals(params, locals())
+    return drs_startup.return_locals(params, locals())
 
 
 # =============================================================================

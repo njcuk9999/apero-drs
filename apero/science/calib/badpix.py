@@ -11,17 +11,16 @@ Created on 2019-05-13 at 11:28
 """
 import numpy as np
 import warnings
-import os
 from scipy.ndimage import filters
 
 from apero.base import base
-from apero import core
 from apero.core import constants
 from apero import lang
 from apero.core import math as mp
 from apero.core.core import drs_log
 from apero.io import drs_fits
-from apero.core.utils import drs_data, drs_file, drs_database
+from apero.core.utils import drs_data, drs_file
+
 
 # =============================================================================
 # Define variables

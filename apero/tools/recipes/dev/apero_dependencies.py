@@ -15,9 +15,9 @@ from collections import OrderedDict
 
 from apero.base import base
 from apero.base import drs_break
-from apero import core
 from apero import lang
-from apero.core import constants
+from apero.core.core import drs_log
+from apero.core.utils import drs_startup
 
 # =============================================================================
 # Define variables
@@ -30,7 +30,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 # --------------------------------------------------------------------------
@@ -66,17 +66,17 @@ def main(**kwargs):
     fkwargs = dict(**kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs)
+    recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)
     # solid debug mode option
     if kwargs.get('DEBUG0000', False):
         return recipe, params
     # ----------------------------------------------------------------------
     # run main bulk of code (catching all errors)
-    llmain, success = core.run(__main__, recipe, params)
+    llmain, success = drs_startup.run(__main__, recipe, params)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    return core.end_main(params, llmain, recipe, success, outputs='None')
+    return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
 
 
 def __main__(recipe, params):
@@ -115,7 +115,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return core.return_locals(params, dict(locals()))
+    return drs_startup.return_locals(params, dict(locals()))
 
 
 def get_python_files(path):
@@ -213,7 +213,7 @@ def get_import_statements(params, files):
             # add package to start
             relfilename = os.path.join(package, relfilename)
             # print total number of lines
-            WLOG(params, '', '='*60)
+            WLOG(params, '', '=' * 60)
             WLOG(params, '', 'Stats file={0}'.format(relfilename))
             WLOG(params, '', '=' * 60)
             stats = statsdict2[filename]
@@ -243,7 +243,6 @@ def deal_with_doc_strings(line, docstring_skip):
 
 
 def clean_imports(rawimports):
-
     # clean up (keep unique only)
     uimports = np.unique(rawimports)
     # loop around unique imports
@@ -287,7 +286,6 @@ def get_current_versions(importslist):
         except ImportError:
             versionslist.append('NOT INSTALLED')
     return versionslist
-
 
 
 # =============================================================================

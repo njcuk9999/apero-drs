@@ -115,6 +115,14 @@ class PseudoConstants:
         # return header
         return header
 
+    def DRS_OBJ_NAME(self, objname):
+        """
+        Do nothing by default
+        :param objname: str
+        :return:
+        """
+        return objname
+
     # =========================================================================
     # INDEXING SETTINGS
     # =========================================================================

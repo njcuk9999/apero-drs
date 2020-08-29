@@ -17,8 +17,8 @@ from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
 from apero import lang
-from apero import core
 from apero.core.core import drs_log
+from apero.core.utils import drs_startup
 from apero.core.utils import drs_file, drs_database
 from apero.io import drs_fits
 from apero.io import drs_path
@@ -316,8 +316,8 @@ def construct_master_dark(params, recipe, dark_table, **kwargs):
     # get file type of last file
     filetype = filetypes[lastpos]
     # get infile from filetype
-    infile = core.get_file_definition(filetype, params['INSTRUMENT'],
-                                      kind='tmp')
+    infile = drs_startup.get_file_definition(filetype, params['INSTRUMENT'],
+                                             kind='tmp')
     # construct new infile instance and read data
     infile = infile.newcopy(filename=filenames[lastpos], recipe=recipe)
     infile.read_file()
@@ -539,8 +539,8 @@ def dark_summary(recipe, it, params, dadead_full, med_full, dadead_blue,
 def get_dark_master_file(params, header):
     func_name = __NAME__ + '.get_dark_file()'
     # get loco file instance
-    darkinst = core.get_file_definition('DARKM', params['INSTRUMENT'],
-                                        kind='red')
+    darkinst = drs_startup.get_file_definition('DARKM', params['INSTRUMENT'],
+                                               kind='red')
     # get calibration key
     darkkey = darkinst.get_dbkey()
     # get calibDB

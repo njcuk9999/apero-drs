@@ -18,15 +18,16 @@ from scipy.interpolate import splrep, splev, UnivariateSpline, interp1d
 from scipy import stats, signal
 
 from apero.base import base
-from apero import core
 from apero.core import math as mp
 from apero import lang
 from apero.core import constants
 from apero.core.core import drs_log
+from apero.core.utils import drs_startup
 from apero.core.utils import drs_file
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave
 from apero.science import extract
+
 
 # =============================================================================
 # Define variables
@@ -42,7 +43,7 @@ __release__ = base.__release__
 ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get function string
 display_func = drs_log.display_func
 # Get the text types
@@ -192,10 +193,12 @@ class PolarObj:
                           kwargs, func_name)
         # ----------------------------------------------------------------------
         # get file definition
-        tfile = core.get_file_definition(tcorr_key, self.params['INSTRUMENT'],
-                                         kind='red')
-        rfile = core.get_file_definition(recon_key, self.params['INSTRUMENT'],
-                                         kind='red')
+        tfile = drs_startup.get_file_definition(tcorr_key,
+                                                self.params['INSTRUMENT'],
+                                                kind='red')
+        rfile = drs_startup.get_file_definition(recon_key,
+                                                self.params['INSTRUMENT'],
+                                                kind='red')
         # get copies of the file definitions (for filling out)
         tcorr_file = tfile.newcopy(recipe=self.recipe, fiber=tfiber)
         recon_file = rfile.newcopy(recipe=self.recipe, fiber=tfiber)
@@ -280,8 +283,9 @@ class PolarObj:
                              'ccf_correct', kwargs, func_name)
         # ----------------------------------------------------------------------
         # get file definition
-        cfile = core.get_file_definition(ccf_key, self.params['INSTRUMENT'],
-                                         kind='red', fiber=pfiber)
+        cfile = drs_startup.get_file_definition(ccf_key,
+                                                self.params['INSTRUMENT'],
+                                                kind='red', fiber=pfiber)
         # get copies of the file definitions (for filling out)
         ccf_file = cfile.newcopy(recipe=self.recipe)
         # push mask to suffix
@@ -745,7 +749,7 @@ def validate_polar_files(params, recipe, infiles, **kwargs):
     # loop around files
     for it in range(num_files):
         # print file iteration progress
-        core.file_processing_update(params, it, num_files)
+        drs_startup.file_processing_update(params, it, num_files)
         # ge this iterations file
         infile = infiles[it]
         # extract polar values and validate file

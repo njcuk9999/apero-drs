@@ -17,10 +17,9 @@ import os
 import shutil
 
 from apero.base import base
-from apero import core
 from apero.core import constants
 from apero import lang
-
+from apero.core.core import drs_log
 
 # =============================================================================
 # Define variables
@@ -33,11 +32,11 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict
-# alias pcheck
+# alias to parameter check class
 pcheck = constants.PCheck(wlog=WLOG)
 
 # MIN WAVELENGTH (slightly before detector)   [um]
@@ -66,6 +65,7 @@ MODEL_PATH = 'PHOENIX-ACES-AGSS-COND-2011/Z-0.0/'
 MODEL_FILE = 'lte0{teff}-4.50-0.0.PHOENIX-ACES-AGSS-COND-2011-HiRes.fits'
 # Define the output table name
 TABLENAME = 'goettingen_model_grids.fits'
+
 
 # =============================================================================
 # Define functions
@@ -129,6 +129,7 @@ def main():
     # Write table
     # ----------------------------------------------------------------------
     table.write(TABLENAME, overwrite=True)
+
 
 # =============================================================================
 # Start of code

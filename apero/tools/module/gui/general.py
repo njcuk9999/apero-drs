@@ -20,10 +20,12 @@ else:
 from ttkthemes import ThemedTk
 
 from apero.base import base
-from apero import core
 from apero import lang
 from apero.core import constants
+from apero.core.core import drs_log
+from apero.core.utils import drs_startup
 from apero.tools.module.gui import widgets
+
 
 # =============================================================================
 # Define variables
@@ -38,7 +40,7 @@ __release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict
@@ -224,7 +226,7 @@ def test(instrument=None):
     :rtype: dict
     """
     # get parameters from apero
-    recipe, params = core.setup('None', instrument, quiet=True)
+    recipe, params = drs_startup.setup('None', instrument, quiet=True)
     # Log that we are running indexing
     WLOG(params, '', 'Running file explorer application')
     # Main code here

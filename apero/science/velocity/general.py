@@ -18,12 +18,13 @@ from scipy.optimize import curve_fit
 import warnings
 
 from apero.base import base
-from apero import core
 from apero import lang
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_log
-from apero.core.utils import drs_data, drs_file
+from apero.core.utils import drs_startup
+from apero.core.utils import drs_data
+from apero.core.utils import drs_file
 
 # =============================================================================
 # Define variables
@@ -533,14 +534,15 @@ def remove_telluric_domain(params, recipe, infile, fiber, **kwargs):
         eargs = [infile.filename, ext_type, e2dsabsfilename]
         WLOG(params, 'error', TextEntry('09-020-00003', args=eargs))
     # get infile
-    e2dsinst = core.get_file_definition(ext_type, params['INSTRUMENT'],
-                                        kind='red')
+    e2dsinst = drs_startup.get_file_definition(ext_type, params['INSTRUMENT'],
+                                               kind='red')
     # construct e2ds file
     e2dsfile = e2dsinst.newcopy(recipe=recipe, fiber=fiber)
     e2dsfile.set_filename(e2dsfilename)
     # get recon file
-    reconinst = core.get_file_definition('TELLU_RECON', params['INSTRUMENT'],
-                                         kind='red')
+    reconinst = drs_startup.get_file_definition('TELLU_RECON',
+                                                params['INSTRUMENT'],
+                                                kind='red')
     # construct recon file
     reconfile = reconinst.newcopy(recipe=recipe, fiber=fiber)
     reconfile.construct_filename(params, infile=e2dsfile)

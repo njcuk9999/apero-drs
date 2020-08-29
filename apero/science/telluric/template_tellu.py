@@ -13,7 +13,6 @@ import os
 from collections import OrderedDict
 
 from apero.base import base
-from apero import core
 from apero.core import constants
 from apero.core import math as mp
 from apero import lang

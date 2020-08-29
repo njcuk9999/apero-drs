@@ -2448,7 +2448,7 @@ class DrsArgument(object):
                  pos: Union[int, str, None] = None,
                  altnames: Union[List[str], None] = None,
                  dtype: Union[str, Type, None] = None,
-                 options: Union[List[str], None] = None,
+                 options: Union[List[Any], None] = None,
                  helpstr: Union[str, None] = '',
                  files: Union[List[str], None] = None,
                  parent: Union[str, None] = None,
