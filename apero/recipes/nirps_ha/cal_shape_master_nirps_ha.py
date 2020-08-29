@@ -14,6 +14,7 @@ import numpy as np
 from apero.base import base
 from apero import core
 from apero import lang
+from apero.core import constants
 from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_fits
 from apero.io import drs_table
@@ -38,7 +39,7 @@ WLOG = core.wlog
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict
 # alias pcheck
-pcheck = core.pcheck
+pcheck = constants.PCheck(wlog=WLOG)
 
 
 # =============================================================================

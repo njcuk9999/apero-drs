@@ -21,7 +21,7 @@ import os
 from pathlib import Path
 import sys
 from time import sleep
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Type, Union
 
 from apero.base import base
 from apero.base import drs_exceptions
@@ -52,6 +52,7 @@ TextError = drs_exceptions.TextError
 TextWarning = drs_exceptions.TextWarning
 ConfigError = drs_exceptions.ConfigError
 ConfigWarning = drs_exceptions.ConfigWarning
+DrsCodedException = drs_exceptions.DrsCodedException
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict
@@ -1035,8 +1036,8 @@ class RecipeLog:
         """
         Add the row that says recipe finished correctly to database
 
-        :param params:
-        :param write:
+        :param params: ParamDict, the constants parameter dictionary
+        :param write: bool, whether to write to log database
         :return:
         """
         # set function name
@@ -1049,9 +1050,12 @@ class RecipeLog:
 
     def write_logfile(self, params: ParamDict):
         """
-        The
-        :param params:
-        :return:
+        The lcoked writer function - do not use _writer directly
+        this locks the write procses using the predefined lock function
+
+        :param params: ParamDict, the constants parameter dictionary
+
+        :return: None
         """
         # set function name
         _ = drs_misc.display_func(None, 'end', __NAME__, self.class_name)
@@ -1063,9 +1067,23 @@ class RecipeLog:
         else:
             self.lfunc(params, self.lockfile, self._writer)
 
-    # TODO: Got to here
 
-    def _input_str(self, inputs, argdict, kind='arg'):
+    def _input_str(self, inputs: Union[ParamDict, dict],
+                   argdict: Dict[Any], kind: str = 'arg') -> str:
+        """
+        From the user inputs add an entry for all args in argdict
+
+        :param inputs: dictionary of arguments from the user (normally from
+                       param['INPUTS']
+        :param argdict: dictionary of arguments from the recipe defintion
+                        arguments should be drs_argument.DrsArgument instances
+        :param kind: str, either 'arg', 'kwarg', or 'skwarg' - changes how
+                     the input string is made kwarg and skwarg have the
+                     --{name}=value and arg is just {name}=value
+        :return: str, the recreated input string as would be typed by the user
+        """
+        # set function name
+        _ = drs_misc.display_func(None, '_input_str', __NAME__, self.class_name)
         # setup input str
         inputstr = ''
         # deal with kind
@@ -1126,7 +1144,17 @@ class RecipeLog:
         return inputstr.strip().strip('||').strip()
 
     # private methods
-    def _get_write_dir(self):
+    def _get_write_dir(self) -> str:
+        """
+        Construct the recipe log write directory from RecipeLog.outputdir
+        and RecipeLog.directory and RecipeLog.logfitsfile
+
+        :return: str, the write path for the RecipeLog file
+        :raises: drs_exceptions.LogExit if path is not valid
+        """
+        # set function name
+        _ = drs_misc.display_func(None, '_get_write_dir', __NAME__,
+                                  self.class_name)
         # ------------------------------------------------------------------
         # get log path
         if self.outputdir not in ['None', '', None]:
@@ -1149,7 +1177,14 @@ class RecipeLog:
         # return absolute log file path
         return os.path.join(path, self.logfitsfile)
 
-    def _make_row(self):
+    def _make_row(self) -> OrderedDict:
+        """
+        Make a row in the RecipeLog file
+        :return: OrderedDict the row entry where each key is a column name
+        """
+        # set function name
+        _ = drs_misc.display_func(None, '_make_row', __NAME__, self.class_name)
+        # set rows
         row = OrderedDict()
         row['RECIPE'] = self.name
         row['KIND'] = self.kind
@@ -1186,7 +1221,16 @@ class RecipeLog:
         # return row
         return row
 
-    def _get_rows(self):
+    def _get_rows(self) -> List[OrderedDict]:
+        """
+        Get all rows for a entry (including all rows from the child Recipelog
+        entries
+
+        :return:
+        """
+        # set function name
+        _ = drs_misc.display_func(None, '_get_rows', __NAME__, self.class_name)
+        # set rows storage
         rows = []
         # case where we have no sets
         if len(self.set) == 0:
@@ -1199,6 +1243,14 @@ class RecipeLog:
         return rows
 
     def _writer(self):
+        """
+        The actual write function for the RecipeLog
+
+        :return:
+        """
+        # set function name
+        func_name = drs_misc.display_func(None, '_writer', __NAME__,
+                                          self.class_name)
         # get write path
         writepath = self.logfitspath
         # ------------------------------------------------------------------
@@ -1217,6 +1269,10 @@ class RecipeLog:
                 emsg = TextEntry('00-005-00016', args=eargs)
                 if self.wlog is not None:
                     self.wlog(self.params, 'error', emsg)
+                    return
+                else:
+                    raise DrsCodedException('00-005-00016', level='error',
+                                            targs=eargs, func_name=func_name)
         else:
             table = None
         # ------------------------------------------------------------------
@@ -1292,104 +1348,7 @@ wlog = Logger()
 # =============================================================================
 # Define Logger functions
 # =============================================================================
-def find_param(params=None, key=None, name=None, kwargs=None, func=None,
-               mapf=None, dtype=None, paramdict=None, required=True,
-               default=None):
-    """
-    Find a parameter "key" first in params or paramdict (if defined)
-    or in kwargs (with "name") - note if "name" in kwargs overrides
-    params/paramdict
 
-    :param params: ParamDict, the constants Parameter dictionary
-    :param key: string, the key to search for in "params"
-                (or paramdict if defined)
-    :param name: string, the name in kwargs of the constant - overrides use
-                 of param
-    :param kwargs: dict, the keyword arg dictionary (or any dictionary
-                   containing "key"
-    :param func: string, the function name "find_param" was used
-                 in (for logging)
-    :param mapf: string, 'list' or 'dict' - the way to map a string parameter
-                 i.e. 'a,b,c' mapf='list' -->  ['a', 'b', 'c']
-                 i.e. '{a:1, b:2}  mapf='dict' --> dict(a=1, b=2)
-    :param dtype: type, the data type for output of mapf (list or dict) for
-                  key
-    :param paramdict: ParamDict, if defined overrides the use of params for
-                      searching for "key"
-    :param required: bool, if True and "key" not found
-                     (and "constant" not found)
-    :param default: object, the default value of key if not found (if None
-                    does not set and raises error if required=True)
-
-    :type params: ParamDict
-    :type key: str
-    :type name: str
-    :type kwargs: dict
-    :type func: str
-    :type mapf: str
-    :type dtype: type
-    :type paramdict: ParamDict
-    :type required: bool
-    :type default: object
-
-    :return: returns the object or list/dict (if mapf='list'/'dict')
-    """
-    # deal with params being None
-    if params is None:
-        params = ParamDict()
-    # deal with dictionary being None
-    if paramdict is None:
-        paramdict = params
-    else:
-        paramdict = ParamDict(paramdict)
-    # deal with key being None
-    if key is None and name is None:
-        wlog(params, 'error', TextEntry('00-003-00004'))
-    elif key is None:
-        key = 'Not set'
-    # deal with no kwargs
-    if kwargs is None:
-        rkwargs = dict()
-    else:
-        rkwargs = dict()
-        # force all kwargs to be upper case
-        for kwarg in kwargs:
-            rkwargs[kwarg.upper()] = kwargs[kwarg]
-    # deal with no function
-    if func is None:
-        func = 'UNKNOWN'
-    # deal with no name
-    if name is None:
-        name = key.upper()
-    else:
-        name = name.upper()
-
-    # deal with None in rkwargs (take it as being unset)
-    if name in rkwargs:
-        if rkwargs[name] is None:
-            del rkwargs[name]
-    # deal with key not found in params
-    not_in_paramdict = name not in rkwargs
-    not_in_rkwargs = key not in paramdict
-    return_default = (not required) or (default is not None)
-
-    # now return a deep copied version of the value
-
-    # if we don't require value
-    if return_default and not_in_paramdict and not_in_rkwargs:
-        return copy.deepcopy(default)
-    elif not_in_paramdict and not_in_rkwargs:
-        eargs = [key, func]
-        wlog(params, 'error', TextEntry('00-003-00001', args=eargs))
-        return copy.deepcopy(default)
-    elif name in rkwargs:
-        return copy.deepcopy(rkwargs[name])
-    elif mapf == 'list':
-        return copy.deepcopy(paramdict.listp(key, dtype=dtype))
-    elif mapf == 'dict':
-        return copy.deepcopy(paramdict.dictp(key, dtype=dtype))
-    else:
-        return copy.deepcopy(paramdict[key])
 
 
 def printlogandcmd(logobj, params, message, key, human_time, option, wrap,

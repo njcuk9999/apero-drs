@@ -45,7 +45,7 @@ WLOG = core.wlog
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict
 # alias pcheck
-pcheck = core.pcheck
+pcheck = constants.PCheck(wlog=WLOG)
 # master crossmatch query
 QUERY_MASTER = 'SELECT {0} FROM {1} WHERE {2}'
 QCOLS = ('ra as ra, dec as dec, source_id as gaiaid, parallax as plx, '

@@ -31,6 +31,9 @@ load = param_functions.load_config
 # load the pseudo constants (based on instrument)
 pload = param_functions.load_pconfig
 
+# pchcek
+PCheck = param_functions.PCheck
+
 # get module names
 getmodnames = param_functions.get_module_names
 

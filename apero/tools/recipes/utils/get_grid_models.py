@@ -18,6 +18,7 @@ import shutil
 
 from apero.base import base
 from apero import core
+from apero.core import constants
 from apero import lang
 
 
@@ -37,7 +38,7 @@ WLOG = core.wlog
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict
 # alias pcheck
-pcheck = core.pcheck
+pcheck = constants.PCheck(wlog=WLOG)
 
 # MIN WAVELENGTH (slightly before detector)   [um]
 WAVE_MIN = 950
