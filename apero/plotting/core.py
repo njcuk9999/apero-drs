@@ -18,6 +18,7 @@ from collections import OrderedDict
 
 from apero.base import base
 from apero import lang
+from apero.core import constants
 from apero.core import drs_log
 from apero.core import math as mp
 from apero.io import drs_path
@@ -44,7 +45,7 @@ WLOG = drs_log.wlog
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict
 # alias pcheck
-pcheck = drs_log.find_param
+pcheck = constants.PCheck(wlog=WLOG)
 # get plotting definitions
 definitions = plot_functions.definitions
 # get Graph function

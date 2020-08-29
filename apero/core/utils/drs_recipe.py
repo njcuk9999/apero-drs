@@ -59,7 +59,7 @@ HelpText = lang.core.drs_lang_text.HelpDict
 DrsArgumentParser = drs_argument.DrsArgumentParser
 DrsArgument = drs_argument.DrsArgument
 # alias pcheck
-pcheck = drs_log.find_param
+pcheck = constants.PCheck(wlog=WLOG)
 # define special keys
 SPECIAL_LIST_KEYS = ['SCIENCE_TARGETS', 'TELLURIC_TARGETS']
 

@@ -17,7 +17,7 @@ import glob
 from apero.base import base
 from apero.base import drs_exceptions
 from apero.base import drs_text
-from apero import core
+from apero.core import constants
 from apero import lang
 from apero.core.core import drs_log
 from apero.io import drs_path
@@ -42,7 +42,7 @@ TextDict = lang.core.drs_lang_text.TextDict
 # get exceptions
 DrsCodedException = drs_exceptions.DrsCodedException
 # alias pcheck
-pcheck = core.pcheck
+pcheck = constants.PCheck(wlog=WLOG)
 
 
 # =============================================================================
@@ -68,7 +68,6 @@ def load_linelist(params, **kwargs):
     tablecols = pcheck(params, 'WAVE_LINELIST_COLS', 'cols', kwargs, func_name)
     tablestart = pcheck(params, 'WAVE_LINELIST_START', 'start', kwargs,
                         func_name)
-
     wavecol = pcheck(params, 'WAVE_LINELIST_WAVECOL', 'wavecol', kwargs,
                      func_name)
     ampcol = pcheck(params, 'WAVE_LINELIST_AMPCOL', 'ampcol', kwargs,

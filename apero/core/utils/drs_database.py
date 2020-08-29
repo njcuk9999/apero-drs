@@ -44,7 +44,7 @@ display_func = drs_log.display_func
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 # alias pcheck
-pcheck = drs_log.find_param
+pcheck = constants.PCheck(wlog=WLOG)
 
 
 # =============================================================================
@@ -540,7 +540,7 @@ def update_calibdb(params, dbname, dbkey, outfile, night=None, log=True):
     func_name = display_func(params, 'update_calibdb', __NAME__)
     # deal with no night name
     if night is None:
-        night = drs_log.find_param(params, 'NIGHTNAME', func=func_name)
+        night = pcheck(params, 'NIGHTNAME', func=func_name)
     if night == '' or night is None:
         night = 'None'
     # get whether recipe is master

@@ -36,9 +36,6 @@ fiber_processing_update = drs_startup.fiber_processing_update
 # get a file defintion from a filetype name
 get_file_definition = drs_startup.get_file_definition
 
-# param checking function
-pcheck = drs_log.find_param
-
 # Run __main__ function
 run = drs_startup.run
 

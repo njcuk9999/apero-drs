@@ -46,7 +46,7 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # alias pcheck
-pcheck = drs_log.find_param
+pcheck = constants.PCheck(wlog=WLOG)
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 # TODO: This should be changed for astropy -> 2.0.1

@@ -24,6 +24,7 @@ from apero.base import base
 from apero.base import drs_break
 from apero.base import drs_exceptions
 from apero.base import drs_misc
+from apero import lang
 from apero.core.constants import constant_functions
 from apero.core.instruments.default import pseudo_const
 
@@ -47,6 +48,7 @@ TextError = drs_exceptions.TextError
 TextWarning = drs_exceptions.TextWarning
 ConfigError = drs_exceptions.ConfigError
 ConfigWarning = drs_exceptions.ConfigWarning
+DrsCodedException = drs_exceptions.DrsCodedException
 # get the logger
 BLOG = drs_exceptions.basiclogger
 # relative folder cache
@@ -64,6 +66,11 @@ SCRIPTS = base.SCRIPTS
 USCRIPTS = base.USCRIPTS
 PSEUDO_CONST_FILE = base.PSEUDO_CONST_FILE
 PSEUDO_CONST_CLASS = base.PSEUDO_CONST_CLASS
+# Get the text types
+TextEntry = lang.core.drs_lang_text.TextEntry
+TextDict = lang.core.drs_lang_text.TextDict
+HelpEntry = lang.core.drs_lang_text.HelpEntry
+HelpText = lang.core.drs_lang_text.HelpDict
 # get display func
 display_func = drs_misc.display_func
 
@@ -74,7 +81,7 @@ Const, Keyword = constant_functions.Const, constant_functions.Keyword
 
 Exceptions = Union[ArgumentError, ArgumentWarning, DRSError, DRSWarning,
                    TextError, TextWarning, ConfigError, ConfigWarning,
-                   drs_exceptions.DrsCodedException]
+                   DrsCodedException]
 
 ModLoads = Tuple[List[str], List[Any], List[str], List[Union[Const, Keyword]]]
 
@@ -95,8 +102,10 @@ class CaseInsensitiveDict(UserDict):
         :param arg: arguments passed to dict
         :param kw: keyword arguments passed to dict
         """
+        # set class name
+        self.class_name = 'CaseInsensitiveDict'
         # set function name
-        _ = display_func(None, '__init__', __NAME__, 'CaseInsensitiveDict')
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
         # super from dict
         super(CaseInsensitiveDict, self).__init__(*arg, **kw)
         # force keys to be capitals (internally)
@@ -134,7 +143,7 @@ class CaseInsensitiveDict(UserDict):
         :return: None
         """
         # set function name
-        _ = display_func(None, '__setitem__', __NAME__, 'CaseInsensitiveDict')
+        _ = display_func(None, '__setitem__', __NAME__, self.class_name)
         # capitalise string keys
         key = _capitalise_key(key)
         # then do the normal dictionary setting
@@ -232,9 +241,35 @@ class CaseInsensitiveDict(UserDict):
                 # set the new key
                 super(CaseInsensitiveDict, self).__setitem__(key, value)
 
+    def __str__(self):
+        """
+        Return the string representation of the class
+        :return: str, the string representation
+        """
+        return '{0}[UserDict]'.format(self.class_name)
+
+    def __repr__(self) -> str:
+        """
+        Return the string representation of the class
+        :return: str, the string representation
+        """
+        return self.__str__()
+
 
 class StrCaseINSDict(CaseInsensitiveDict):
     # Case insensitive dictionary only containing strings
+    def __init__(self, *arg, **kw):
+        """
+        Construct the string elements case insensitive dictionary class
+        :param arg: arguments passed to dict
+        :param kw: keyword arguments passed to dict
+        """
+        # set class name
+        self.class_name = 'StrCaseINSDict'
+        # set function name
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
+        # super from dict
+        super(StrCaseINSDict, self).__init__(*arg, **kw)
 
     def __getitem__(self, key: str) -> Union[None, str]:
         """
@@ -249,7 +284,7 @@ class StrCaseINSDict(CaseInsensitiveDict):
         :return value: list, the value stored at position "key"
         """
         # set function name
-        _ = display_func(None, '__getitem__', __NAME__, 'ListCaseINSDict')
+        _ = display_func(None, '__getitem__', __NAME__, self.class_name)
         # return from supers dictionary storage
         # noinspection PyTypeChecker
         return list(super(StrCaseINSDict, self).__getitem__(key))
@@ -267,12 +302,39 @@ class StrCaseINSDict(CaseInsensitiveDict):
         :return: None
         """
         # set function name
-        _ = display_func(None, '__setitem__', __NAME__, 'ListCaseINSDict')
+        _ = display_func(None, '__setitem__', __NAME__, self.class_name)
         # then do the normal dictionary setting
         super(StrCaseINSDict, self).__setitem__(key, list(value))
 
+    def __str__(self):
+        """
+        Return the string representation of the class
+        :return: str, the string representation
+        """
+        return '{0}[CaseInsensitiveDict]'.format(self.class_name)
+
+    def __repr__(self) -> str:
+        """
+        Return the string representation of the class
+        :return: str, the string representation
+        """
+        return self.__str__()
+
 
 class ListCaseINSDict(CaseInsensitiveDict):
+    def __init__(self, *arg, **kw):
+        """
+        Construct the list elements case insensitive dictionary class
+        :param arg: arguments passed to dict
+        :param kw: keyword arguments passed to dict
+        """
+        # set class name
+        self.class_name = 'ListCaseINSDict'
+        # set function name
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
+        # super from dict
+        super(ListCaseINSDict, self).__init__(*arg, **kw)
+
     def __getitem__(self, key: str) -> list:
         """
         Method used to get the value of an item using "key"
@@ -286,7 +348,7 @@ class ListCaseINSDict(CaseInsensitiveDict):
         :return value: list, the value stored at position "key"
         """
         # set function name
-        _ = display_func(None, '__getitem__', __NAME__, 'ListCaseINSDict')
+        _ = display_func(None, '__getitem__', __NAME__, self.class_name)
         # return from supers dictionary storage
         # noinspection PyTypeChecker
         return list(super(ListCaseINSDict, self).__getitem__(key))
@@ -304,12 +366,39 @@ class ListCaseINSDict(CaseInsensitiveDict):
         :return: None
         """
         # set function name
-        _ = display_func(None, '__setitem__', __NAME__, 'ListCaseINSDict')
+        _ = display_func(None, '__setitem__', __NAME__, self.class_name)
         # then do the normal dictionary setting
         super(ListCaseINSDict, self).__setitem__(key, list(value))
 
+    def __str__(self):
+        """
+        Return the string representation of the class
+        :return: str, the string representation
+        """
+        return '{0}[CaseInsensitiveDict]'.format(self.class_name)
+
+    def __repr__(self) -> str:
+        """
+        Return the string representation of the class
+        :return: str, the string representation
+        """
+        return self.__str__()
+
 
 class CKCaseINSDict(CaseInsensitiveDict):
+    def __init__(self, *arg, **kw):
+        """
+        Construct the Const/Keyword elements case insensitive dictionary class
+        :param arg: arguments passed to dict
+        :param kw: keyword arguments passed to dict
+        """
+        # set class name
+        self.class_name = 'CKCaseINSDict'
+        # set function name
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
+        # super from dict
+        super(CKCaseINSDict, self).__init__(*arg, **kw)
+
     def __getitem__(self, key: str) -> Union[None, Const, Keyword]:
         """
         Method used to get the value of an item using "key"
@@ -323,7 +412,7 @@ class CKCaseINSDict(CaseInsensitiveDict):
         :return value: list, the value stored at position "key"
         """
         # set function name
-        _ = display_func(None, '__getitem__', __NAME__, 'CKCaseINSDict')
+        _ = display_func(None, '__getitem__', __NAME__, self.class_name)
         # return from supers dictionary storage
         # noinspection PyTypeChecker
         return super(CKCaseINSDict, self).__getitem__(key)
@@ -341,9 +430,23 @@ class CKCaseINSDict(CaseInsensitiveDict):
         :return: None
         """
         # set function name
-        _ = display_func(None, '__setitem__', __NAME__, 'CKCaseINSDict')
+        _ = display_func(None, '__setitem__', __NAME__, self.class_name)
         # then do the normal dictionary setting
         super(CKCaseINSDict, self).__setitem__(key, value)
+
+    def __str__(self):
+        """
+        Return the string representation of the class
+        :return: str, the string representation
+        """
+        return '{0}[CaseInsensitiveDict]'.format(self.class_name)
+
+    def __repr__(self) -> str:
+        """
+        Return the string representation of the class
+        :return: str, the string representation
+        """
+        return self.__str__()
 
 
 class ParamDict(CaseInsensitiveDict):
@@ -1269,6 +1372,190 @@ class ParamDict(CaseInsensitiveDict):
             print(self.textentry('40-000-00010', args=[key]))
 
 
+class PCheck:
+    def __init__(self, wlog: Any = None):
+        """
+        Constructor for checking a parameter dictionary
+
+        :param wlog: Either None or the wlog (for printing) if wlog is not
+                     defined may have to catch a DrsCodedException
+                     (can put in here or in the call)
+        """
+        # set class name
+        self.class_name = 'PCheck'
+        # set function name
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
+        # set wlog from inputs
+        self.wlog = wlog
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state (for pickle)
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self):
+        """
+        Return the string representation of the class
+        :return: str, the string representation
+        """
+        # set function name
+        _ = display_func(None, '__str__', __NAME__, self.class_name)
+        # return string representation
+        return '{0}[CaseInsensitiveDict]'.format(self.class_name)
+
+    def __repr__(self) -> str:
+        """
+        Return the string representation of the class
+        :return: str, the string representation
+        """
+        # set function name
+        _ = display_func(None, '__repr__', __NAME__, self.class_name)
+        # return string representation
+        return self.__str__()
+
+    def __call__(self, params: Union[ParamDict, None] = None,
+                   key: Union[str, None] = None,
+                   name: Union[str, None] = None,
+                   kwargs: Union[dict, None] = None,
+                   func: Union[str, None] = None,
+                   mapf: Union[str, None] = None,
+                   dtype: Union[Type, None] = None,
+                   paramdict: Union[ParamDict, None] = None,
+                   required: bool = True,
+                   default: Any = None, wlog: Union[Any, None] = None) -> Any:
+        """
+         Find a parameter "key" first in params or paramdict (if defined)
+         or in kwargs (with "name") - note if "name" in kwargs overrides
+         params/paramdict
+
+         :param params: ParamDict, the constants Parameter dictionary
+         :param key: string, the key to search for in "params"
+                     (or paramdict if defined)
+         :param name: string, the name in kwargs of the constant - overrides use
+                      of param
+         :param kwargs: dict, the keyword arg dictionary (or any dictionary
+                        containing "key"
+         :param func: string, the function name "find_param" was used
+                      in (for logging)
+         :param mapf: string, 'list' or 'dict' - the way to map a string parameter
+                      i.e. 'a,b,c' mapf='list' -->  ['a', 'b', 'c']
+                      i.e. '{a:1, b:2}  mapf='dict' --> dict(a=1, b=2)
+         :param dtype: type, the data type for output of mapf (list or dict) for
+                       key
+         :param paramdict: ParamDict, if defined overrides the use of params for
+                           searching for "key"
+         :param required: bool, if True and "key" not found
+                          (and "constant" not found)
+         :param default: object, the default value of key if not found (if None
+                         does not set and raises error if required=True)
+         :param wlog: Either None or the wlog (for printing) if wlog is not defined
+                      may have to catch a DrsCodedException
+                      (can put in here or before in the __init__)
+
+         :type params: ParamDict
+         :type key: str
+         :type name: str
+         :type kwargs: dict
+         :type func: str
+         :type mapf: str
+         :type dtype: type
+         :type paramdict: ParamDict
+         :type required: bool
+         :type default: object
+
+         :return: returns the object or list/dict (if mapf='list'/'dict')
+         """
+        # set function name
+        func_name = display_func(params, 'find_param', __NAME__,
+                                 self.class_name)
+        # deal with wlog
+        if wlog is None:
+            wlog = self.wlog
+
+        # deal with params being None
+        if params is None:
+            params = ParamDict()
+        # deal with dictionary being None
+        if paramdict is None:
+            paramdict = params
+        else:
+            paramdict = ParamDict(paramdict)
+        # deal with key being None
+        if key is None and name is None:
+            if wlog is not None:
+                wlog(params, 'error', TextEntry('00-003-00004'))
+            else:
+                raise DrsCodedException('00-003-00004', level='error',
+                                        func_name=func_name)
+        elif key is None:
+            key = 'Not set'
+        # deal with no kwargs
+        if kwargs is None:
+            rkwargs = dict()
+        else:
+            rkwargs = dict()
+            # force all kwargs to be upper case
+            for kwarg in kwargs:
+                rkwargs[kwarg.upper()] = kwargs[kwarg]
+        # deal with no function
+        if func is None:
+            func = 'UNKNOWN'
+        # deal with no name
+        if name is None:
+            name = key.upper()
+        else:
+            name = name.upper()
+
+        # deal with None in rkwargs (take it as being unset)
+        if name in rkwargs:
+            if rkwargs[name] is None:
+                del rkwargs[name]
+        # deal with key not found in params
+        not_in_paramdict = name not in rkwargs
+        not_in_rkwargs = key not in paramdict
+        return_default = (not required) or (default is not None)
+
+        # now return a deep copied version of the value
+
+        # if we don't require value
+        if return_default and not_in_paramdict and not_in_rkwargs:
+            return copy.deepcopy(default)
+        elif not_in_paramdict and not_in_rkwargs:
+            eargs = [key, func]
+            if wlog is not None:
+                wlog(params, 'error', TextEntry('00-003-00001', args=eargs))
+            else:
+                raise DrsCodedException('00-003-00001', level='error', targs=eargs,
+                                        func_name=func_name)
+            return copy.deepcopy(default)
+        elif name in rkwargs:
+            return copy.deepcopy(rkwargs[name])
+        elif mapf == 'list':
+            return copy.deepcopy(paramdict.listp(key, dtype=dtype))
+        elif mapf == 'dict':
+            return copy.deepcopy(paramdict.dictp(key, dtype=dtype))
+        else:
+            return copy.deepcopy(paramdict[key])
+
+
+
+
+
 # =============================================================================
 # Define functions
 # =============================================================================
@@ -1395,6 +1682,10 @@ def load_pconfig(instrument: Union[str, None] = None
     # update cache
     PCONFIG_CACHE[instrument] = pconfig
     return pconfig
+
+
+
+
 
 
 def get_config_all():
