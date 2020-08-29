@@ -13,7 +13,6 @@ import numpy as np
 import warnings
 
 from apero.base import base
-from apero import core
 from apero.core import constants
 from apero.core import math as mp
 from apero import lang

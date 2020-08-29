@@ -11,15 +11,16 @@ Created on 2020-04-05 11:44:00
 """
 import numpy as np
 import os
-from scipy.signal import medfilt,convolve2d
+from scipy.signal import medfilt, convolve2d
 from astropy.table import Table
 from astropy.io import fits
 
 from apero.base import base
-from apero import core
 from apero import lang
 from apero.core import constants
 from apero.core import math as mp
+from apero.core.core import drs_log
+from apero.core.utils import drs_startup
 from apero.tools.module.testing import drs_dev
 
 # =============================================================================
@@ -37,7 +38,7 @@ Constants = constants.load(__INSTRUMENT__)
 # get param dict
 ParamDict = constants.ParamDict
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict
@@ -47,7 +48,6 @@ Help = lang.core.drs_lang_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
 DEBUG = False
 # define relative output path
 DEBUGFILE = 'mask_hotpix_pp.fits'
-
 
 # -----------------------------------------------------------------------------
 # get file definitions for this instrument
@@ -105,22 +105,21 @@ def main(instrument=None, directory=None, darkfile=None, **kwargs):
                    darkfile=darkfile, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs,
-                                rmod=RMOD)
+    recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs,
+                                       rmod=RMOD)
     # solid debug mode option
     if kwargs.get('DEBUG0000', False):
         return recipe, params
     # ----------------------------------------------------------------------
     # run main bulk of code (catching all errors)
-    llmain, success = core.run(__main__, recipe, params)
+    llmain, success = drs_startup.run(__main__, recipe, params)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    return core.end_main(params, llmain, recipe, success)
+    return drs_startup.end_main(params, llmain, recipe, success)
 
 
 def __main__(recipe, params):
-
     # get input dark file drs fits file instance
     darkfile = params['INPUTS']['darkfile'][1][0]
     debug = params['INPUTS']['debugfile']
@@ -203,7 +202,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return core.return_locals(params, locals())
+    return drs_startup.return_locals(params, locals())
 
 
 # =============================================================================

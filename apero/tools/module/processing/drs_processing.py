@@ -22,7 +22,6 @@ from multiprocessing import Pool, Process, Manager, Event
 from apero.base import base
 from apero.base import drs_exceptions
 from apero.base import drs_text
-from apero import core
 from apero.core.core import drs_log
 from apero.core.utils import drs_recipe, drs_startup
 from apero import lang
@@ -45,7 +44,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # get the parameter dictionary
 ParamDict = constants.ParamDict
 # Get the text types

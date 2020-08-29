@@ -12,8 +12,10 @@ import numpy as np
 import os
 
 from apero.base import base
-from apero import core
 from apero import lang
+from apero.core.core import drs_log
+from apero.core.utils import drs_startup
+from apero.core.utils import drs_database2 as drs_database
 from apero.science import preprocessing as pp
 from apero.io import drs_image
 from apero.io import drs_fits
@@ -31,7 +33,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 # Raw prefix
@@ -67,17 +69,17 @@ def main(directory=None, files=None, **kwargs):
     fkwargs = dict(directory=directory, files=files, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs)
+    recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)
     # solid debug mode option
     if kwargs.get('DEBUG0000', False):
         return recipe, params
     # ----------------------------------------------------------------------
     # run main bulk of code (catching all errors)
-    llmain, success = core.run(__main__, recipe, params)
+    llmain, success = drs_startup.run(__main__, recipe, params)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    return core.end_main(params, llmain, recipe, success, outputs='None')
+    return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
 
 
 
@@ -99,7 +101,9 @@ def __main__(recipe, params):
     num_files = len(params['INPUTS']['FILES'][1])
     # storage for output files
     output_names = []
-
+    # load the calibration database
+    calibdbm = drs_database.CalibrationDatabase(params)
+    calibdbm.load_db()
     # loop around number of files
     for it in range(num_files):
         # ------------------------------------------------------------------
@@ -107,7 +111,7 @@ def __main__(recipe, params):
         log1 = recipe.log.add_level(params, 'num', it)
         # ------------------------------------------------------------------
         # print file iteration progress
-        core.file_processing_update(params, it, num_files)
+        drs_startup.file_processing_update(params, it, num_files)
         # ge this iterations file
         file_instance = infiles[it]
         # ------------------------------------------------------------------
@@ -201,7 +205,8 @@ def __main__(recipe, params):
 
         # correct by a median filter from the dark amplifiers
         WLOG(params, '', TextEntry('40-010-00016'))
-        image, pfile = pp.nirps_correction(params, image, header=infile.header)
+        image, pfile = pp.nirps_correction(params, image, header=infile.header,
+                                           database=calibdbm)
 
         # ------------------------------------------------------------------
         # calculate mid observation time
@@ -255,8 +260,8 @@ def __main__(recipe, params):
         # add to output files (for indexing)
         recipe.add_output_file(outfile)
         # index this file
-        core.end_main(params, None, recipe, success=True, outputs='pp',
-                      end=False)
+        drs_startup.end_main(params, None, recipe, success=True, outputs='pp',
+                             end=False)
         # ------------------------------------------------------------------
         # append to output storage in p
         # ------------------------------------------------------------------
@@ -269,7 +274,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return core.return_locals(params, dict(locals()))
+    return drs_startup.return_locals(params, dict(locals()))
 
 
 # =============================================================================

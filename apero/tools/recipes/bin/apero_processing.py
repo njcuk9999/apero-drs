@@ -12,10 +12,12 @@ Created on 2019-07-26 at 09:47
 import sys
 
 from apero.base import base
-from apero import core
 from apero import lang
-from apero.tools.module.processing import drs_processing
+from apero.core.core import drs_log
+from apero.core.utils import drs_startup
 from apero.io import drs_fits
+from apero.tools.module.processing import drs_processing
+
 
 # =============================================================================
 # Define variables
@@ -28,7 +30,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict
@@ -63,18 +65,18 @@ def main(instrument=None, runfile=None, **kwargs):
     fkwargs = dict(instrument=instrument, runfile=runfile, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs)
+    recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)
     # solid debug mode option
     if kwargs.get('DEBUG0000', False):
         return recipe, params
     # ----------------------------------------------------------------------
     # run main bulk of code (catching all errors)
-    llmain, success = core.run(__main__, recipe, params)
+    llmain, success = drs_startup.run(__main__, recipe, params)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    return core.end_main(params, llmain, recipe, success, outputs='None',
-                         keys=['outlist'])
+    return drs_startup.end_main(params, llmain, recipe, success, outputs='None',
+                                keys=['outlist'])
 
 
 def __main__(recipe, params):
@@ -92,7 +94,7 @@ def __main__(recipe, params):
     # get run file from inputs
     runfile = params['INPUTS']['RUNFILE']
     # set up drs group (for logging)
-    groupname = core.group_name(params)
+    groupname = drs_startup.group_name(params)
 
     # ----------------------------------------------------------------------
     # Deal with run file
@@ -158,7 +160,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return core.return_locals(params, locals())
+    return drs_startup.return_locals(params, locals())
 
 
 # =============================================================================

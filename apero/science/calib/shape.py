@@ -18,20 +18,21 @@ from scipy.stats import stats
 import warnings
 
 from apero.base import base
-from apero import core
 from apero.core import constants
 from apero import lang
 from apero.core import math as mp
 from apero.core.core import drs_log
+from apero.core.utils import drs_startup
+from apero.core.utils import drs_data
+from apero.core.utils import drs_file
+from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_path
 from apero.io import drs_fits
 from apero.io import drs_image
 from apero.io import drs_table
-from apero.core.utils import drs_data
-from apero.core.utils import drs_file
-from apero.core.utils import drs_database2 as drs_database
 from apero.science.calib import general
 from apero.science.calib import localisation
+
 
 # =============================================================================
 # Define variables
@@ -295,8 +296,9 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
         # only combine if 3 or more images were taken
         if len(fp_ids) >= min_num:
             # get infile from filetype
-            file_inst = core.get_file_definition(dprtype, params['INSTRUMENT'],
-                                                 kind='tmp')
+            file_inst = drs_startup.get_file_definition(dprtype,
+                                                        params['INSTRUMENT'],
+                                                        kind='tmp')
             # perform a large image median on FP files in this group
             groupfp = drs_image.large_image_combine(params, fp_ids,
                                                     math='median',
@@ -1259,8 +1261,9 @@ def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
 
 def get_master_fp(params, header, filename=None, database=None):
     # get file definition
-    out_fpmaster = core.get_file_definition('MASTER_FP', params['INSTRUMENT'],
-                                            kind='red')
+    out_fpmaster = drs_startup.get_file_definition('MASTER_FP',
+                                                   params['INSTRUMENT'],
+                                                   kind='red')
     # get key
     key = out_fpmaster.dbkey
     # load database
@@ -1283,8 +1286,9 @@ def get_master_fp(params, header, filename=None, database=None):
 
 def get_shapex(params, header, filename=None, database=None):
     # get file definition
-    out_shape_dxmap = core.get_file_definition('SHAPE_X', params['INSTRUMENT'],
-                                               kind='red')
+    out_shape_dxmap = drs_startup.get_file_definition('SHAPE_X',
+                                                      params['INSTRUMENT'],
+                                                      kind='red')
     # get key
     key = out_shape_dxmap.dbkey
     # load database
@@ -1307,8 +1311,9 @@ def get_shapex(params, header, filename=None, database=None):
 
 def get_shapey(params, header, filename=None, database=None):
     # get file definition
-    out_shape_dymap = core.get_file_definition('SHAPE_Y', params['INSTRUMENT'],
-                                               kind='red')
+    out_shape_dymap = drs_startup.get_file_definition('SHAPE_Y',
+                                                      params['INSTRUMENT'],
+                                                      kind='red')
     # get key
     key = out_shape_dymap.dbkey
     # load database
@@ -1331,8 +1336,9 @@ def get_shapey(params, header, filename=None, database=None):
 
 def get_shapelocal(params, header, filename=None, database=None):
     # get file definition
-    out_shape_local = core.get_file_definition('SHAPEL', params['INSTRUMENT'],
-                                               kind='red')
+    out_shape_local = drs_startup.get_file_definition('SHAPEL',
+                                                      params['INSTRUMENT'],
+                                                      kind='red')
     # get key
     key = out_shape_local.dbkey
     # ----------------------------------------------------------------------

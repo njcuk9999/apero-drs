@@ -1189,7 +1189,7 @@ class ParamDict(CaseInsensitiveDict):
         return return_string + '\n'
 
     def listp(self, key: str, separator: str = ',',
-              dtype: Union[None, Type] = None) -> list:
+              dtype: Union[None, Type, str] = None) -> list:
         """
         Turn a string list parameter (separated with `separator`) into a list
         of objects (of data type `dtype`)
@@ -1227,7 +1227,7 @@ class ParamDict(CaseInsensitiveDict):
             emsg = self.textentry('00-003-00032', args=[key])
             raise ConfigError(emsg, level='error')
 
-    def dictp(self, key: str, dtype: Union[str, None] = None) -> dict:
+    def dictp(self, key: str, dtype: Union[str, Type, None] = None) -> dict:
         """
         Turn a string dictionary parameter into a python dictionary
         of objects (of data type `dtype`)
@@ -1486,7 +1486,6 @@ class PCheck:
         # deal with wlog
         if wlog is None:
             wlog = self.wlog
-
         # deal with params being None
         if params is None:
             params = ParamDict()
@@ -1540,8 +1539,8 @@ class PCheck:
             if wlog is not None:
                 wlog(params, 'error', TextEntry('00-003-00001', args=eargs))
             else:
-                raise DrsCodedException('00-003-00001', level='error', targs=eargs,
-                                        func_name=func_name)
+                raise DrsCodedException('00-003-00001', level='error',
+                                        targs=eargs, func_name=func_name)
             return copy.deepcopy(default)
         elif name in rkwargs:
             return copy.deepcopy(rkwargs[name])
@@ -1551,9 +1550,6 @@ class PCheck:
             return copy.deepcopy(paramdict.dictp(key, dtype=dtype))
         else:
             return copy.deepcopy(paramdict[key])
-
-
-
 
 
 # =============================================================================

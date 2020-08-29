@@ -18,9 +18,9 @@ import os
 import warnings
 
 from apero.base import base
-from apero import core
 from apero import lang
 from apero.core import constants
+from apero.core.core import drs_log
 from apero.io import drs_lock
 from apero.core.utils import drs_data
 from apero.io import drs_table
@@ -40,7 +40,7 @@ Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 # get param dict
 ParamDict = constants.ParamDict
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict
@@ -55,12 +55,11 @@ QCOLS = ('ra as ra, dec as dec, source_id as gaiaid, parallax as plx, '
 QSOURCE = 'gaiadr2.gaia_source'
 QWHERE1 = 'source_id = {id}'
 QWHERE2 = ('1=CONTAINS(POINT(\'ICRS\', ra, dec), CIRCLE(\'ICRS\', {ra}, '
-          '{dec}, {radius}))')
+           '{dec}, {radius}))')
 QWHERE3 = ('(parallax is not NULL) AND (pmdec is not NULL) AND '
            '(pmra is not NULL)')
-QWHERE4 = ('(phot_rp_mean_mag < {0})')
-QWHERE5 = ('(parallax > {0})')
-
+QWHERE4 = '(phot_rp_mean_mag < {0})'
+QWHERE5 = '(parallax > {0})'
 
 
 # =============================================================================
@@ -147,6 +146,7 @@ def get_params(params, _props, gaiaid=None, objname=None, ra=None, dec=None,
         # ----------------------------------------------------------------------
         # return props and fail criteria
         return _props, fail
+
     # -------------------------------------------------------------------------
     # try to run locked makedirs
     try:
@@ -249,7 +249,7 @@ def inlookuptable(params, table, gaiaid=None, objname=None, ra=None, dec=None,
     # deal with having ra and dec
     if (ra is not None) and (dec is not None) and (not intable):
         # get radius in degress
-        radius_degrees = (radius*uu.arcsec).to(uu.deg)
+        radius_degrees = (radius * uu.arcsec).to(uu.deg)
         # crossmatch table
         try:
             # force ra and dec columsn to floats
@@ -502,7 +502,6 @@ def query_simbad(params, object_name):
         WLOG(params, 'warning', TextEntry('10-016-00020', args=wargs))
         # return unset ra/dec
         return None, None
-
 
 
 # =============================================================================

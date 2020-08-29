@@ -10,7 +10,6 @@ Created on 2020-07-2020-07-15 17:56
 import numpy as np
 
 from apero.base import base
-from apero import core
 from apero.core import constants
 from apero.core import math as mp
 from apero import lang

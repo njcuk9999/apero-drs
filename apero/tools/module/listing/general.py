@@ -15,9 +15,9 @@ import copy
 from collections import OrderedDict
 
 from apero.base import base
-from apero import core
 from apero import lang
 from apero.core import constants
+from apero.core.core import drs_log
 from apero.io import drs_fits
 from apero.io import drs_path
 
@@ -34,7 +34,7 @@ __release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict

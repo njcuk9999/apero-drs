@@ -10,19 +10,19 @@ Created on 2019-05-15 at 13:48
 @author: cook
 """
 import numpy as np
-import os
 import warnings
 from collections import OrderedDict
 
 from apero.base import base
-from apero import core
-from apero.core import constants
 from apero import lang
+from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_log
+from apero.core.utils import drs_startup
 from apero.core.utils import drs_file
 from apero.core.utils import drs_database2 as drs_database
 from apero.science.calib import general
+
 
 # =============================================================================
 # Define variables
@@ -530,8 +530,8 @@ def get_coefficients(params, recipe, header, fiber, database=None, **kwargs):
     usefiber = pconst.FIBER_LOC_TYPES(fiber)
     # -------------------------------------------------------------------------
     # get loco file instance
-    locofile = core.get_file_definition('LOC_LOCO', params['INSTRUMENT'],
-                                        kind='red')
+    locofile = drs_startup.get_file_definition('LOC_LOCO', params['INSTRUMENT'],
+                                               kind='red')
     # get calibration key
     key = locofile.get_dbkey()
     # load database

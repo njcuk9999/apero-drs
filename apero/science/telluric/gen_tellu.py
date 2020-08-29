@@ -17,12 +17,14 @@ import warnings
 import os
 
 from apero.base import base
-from apero import core
 from apero.core import constants
 from apero.core import math as mp
 from apero import lang
 from apero.core.core import drs_log
-from apero.core.utils import drs_data, drs_file, drs_database
+from apero.core.utils import drs_startup
+from apero.core.utils import drs_data
+from apero.core.utils import drs_file
+from apero.core.utils import drs_database
 from apero.io import drs_fits
 from apero.science.calib import flat_blaze
 
@@ -1380,8 +1382,9 @@ def read_tellu_preclean(params, recipe, infile, fiber):
     # ------------------------------------------------------------------
     # get the tellu preclean map key
     # ----------------------------------------------------------------------
-    out_pclean = core.get_file_definition('TELLU_PCLEAN', params['INSTRUMENT'],
-                                          kind='red', fiber=fiber)
+    out_pclean = drs_startup.get_file_definition('TELLU_PCLEAN',
+                                                 params['INSTRUMENT'],
+                                                 kind='red', fiber=fiber)
     # get key
     pclean_key = out_pclean.get_dbkey()
 
@@ -1601,8 +1604,9 @@ def load_templates(params, header, objname, fiber):
     # TODO: update - bad loads all files just to get one header
     #   OBJNAME in database --> select most recent and only load that file
     # get file definition
-    out_temp = core.get_file_definition('TELLU_TEMP', params['INSTRUMENT'],
-                                        kind='red', fiber=fiber)
+    out_temp = drs_startup.get_file_definition('TELLU_TEMP',
+                                               params['INSTRUMENT'],
+                                               kind='red', fiber=fiber)
     # deal with user not using template
     if 'USE_TEMPLATE' in params['INPUTS']:
         if not params['INPUTS']['USE_TEMPLATE']:
@@ -1652,8 +1656,9 @@ def load_templates(params, header, objname, fiber):
 
 def get_transmission_files(params, recipe, header, fiber):
     # get file definition
-    out_trans = core.get_file_definition('TELLU_TRANS', params['INSTRUMENT'],
-                                         kind='red', fiber=fiber)
+    out_trans = drs_startup.get_file_definition('TELLU_TRANS',
+                                                params['INSTRUMENT'],
+                                                kind='red', fiber=fiber)
     # get key
     trans_key = out_trans.get_dbkey()
     # log status
@@ -1698,9 +1703,10 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
         conv_key = out_tellu_conv.get_dbkey()
     else:
         # get file definition
-        out_tellu_conv = core.get_file_definition('TELLU_CONV',
-                                                  params['INSTRUMENT'],
-                                                  kind='red', fiber=fiber)
+        out_tellu_conv = drs_startup.get_file_definition('TELLU_CONV',
+                                                         params['INSTRUMENT'],
+                                                         kind='red',
+                                                         fiber=fiber)
         # get key
         conv_key = out_tellu_conv.get_dbkey()
     # load tellu file
@@ -1779,8 +1785,9 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
 
 def load_tapas_spl(params, recipe, header):
     # get file definition
-    tellu_tapas = core.get_file_definition('TELLU_TAPAS', params['INSTRUMENT'],
-                                           kind='red')
+    tellu_tapas = drs_startup.get_file_definition('TELLU_TAPAS',
+                                                  params['INSTRUMENT'],
+                                                  kind='red')
     # make new copy of the file definition
     out_tellu_tapas = tellu_tapas.newcopy(recipe=recipe)
     # get key

@@ -12,12 +12,13 @@ Created on 2020-03-30 at 14:47
 import numpy as np
 
 from apero.base import base
-from apero import core
 from apero import lang
 from apero.core import constants
+from apero.core.core import drs_log
 from apero.science.calib import localisation
 from apero.science.calib import shape
 from apero.core.utils import drs_recipe
+
 
 # =============================================================================
 # Define variables
@@ -32,11 +33,10 @@ __release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict
-Help = lang.core.drs_lang_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
 
 
 # =============================================================================

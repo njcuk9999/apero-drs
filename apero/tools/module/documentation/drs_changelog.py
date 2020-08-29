@@ -15,8 +15,8 @@ import shutil
 from datetime import datetime
 
 from apero.base import base
-from apero import core
 from apero import lang
+from apero.core.core import drs_log
 
 
 # =============================================================================
@@ -30,7 +30,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict

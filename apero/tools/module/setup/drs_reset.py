@@ -14,7 +14,6 @@ import os
 import sys
 
 from apero.base import base
-from apero import core
 from apero.core import drs_log
 from apero import lang
 from apero.io import drs_lock
@@ -33,7 +32,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict

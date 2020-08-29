@@ -10,8 +10,9 @@ Created on 2020-03-02 at 17:26
 @author: cook
 """
 from apero.base import base
-from apero import core
 from apero import lang
+from apero.core.core import drs_log
+from apero.core.utils import drs_startup
 from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_fits
 from apero.science.extract import other as extother
@@ -29,7 +30,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict
@@ -61,17 +62,17 @@ def main(directory=None, **kwargs):
     fkwargs = dict(directory=directory, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs)
+    recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)
     # solid debug mode option
     if kwargs.get('DEBUG0000', False):
         return recipe, params
     # ----------------------------------------------------------------------
     # run main bulk of code (catching all errors)
-    llmain, success = core.run(__main__, recipe, params)
+    llmain, success = drs_startup.run(__main__, recipe, params)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    return core.end_main(params, llmain, recipe, success)
+    return drs_startup.end_main(params, llmain, recipe, success)
 
 
 def __main__(recipe, params):
@@ -111,8 +112,9 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # check whether filetype is allowed for instrument
         # get definition
-        darkfpfile = core.get_file_definition(filetype, params['INSTRUMENT'],
-                                              kind='tmp', required=False)
+        fdkwargs = dict(instrument=params['INSTRUMENT'], kind='tmp',
+                        required=False)
+        darkfpfile = drs_startup.get_file_definition(filetype, **fdkwargs)
         # deal with defintion not found
         if darkfpfile is None:
             eargs = [filetype, recipe.name, mainname]
@@ -139,7 +141,7 @@ def __main__(recipe, params):
         # update recipe log file
         recipe.log.end(params)
         # End of main code
-        return core.return_locals(params, locals())
+        return drs_startup.return_locals(params, locals())
     # ----------------------------------------------------------------------
     # set up plotting (no plotting before this)
     recipe.plot.set_location()
@@ -152,7 +154,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     for it in range(num_files):
         # print file iteration progress
-        core.file_processing_update(params, it, num_files)
+        drs_startup.file_processing_update(params, it, num_files)
         # ge this iterations file
         infile = infiles[it]
         # get header from file instance
@@ -215,7 +217,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return core.return_locals(params, locals())
+    return drs_startup.return_locals(params, locals())
 
 
 # =============================================================================

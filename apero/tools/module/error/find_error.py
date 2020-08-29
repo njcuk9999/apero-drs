@@ -18,8 +18,10 @@ import re
 
 from apero.base import base
 from apero.base import drs_break
-from apero import core
 from apero import lang
+from apero.core.core import drs_log
+from apero.core.utils import drs_startup
+
 
 # =============================================================================
 # Define variables
@@ -32,7 +34,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 
 # -----------------------------------------------------------------------------
 # define the program name
@@ -176,7 +178,7 @@ class Navbar:
         self.menubar = tk.Menu(master)
         # set title
         self.title = 'About {0}'.format(PROGRAM_NAME)
-        package = lang.core.drs_lang_text.PACKAGE
+        package = __PACKAGE__
         default_path = lang.core.drs_lang_text.DEFAULT_PATH
         self.dpath = drs_break.get_relative_folder(package, default_path)
         # add file menu
@@ -725,7 +727,7 @@ def main(instrument=None):
     # end with a log message
     WLOG(params, '', 'Program has completed successfully')
     # return a copy of locally defined variables in the memory
-    return core.return_locals(params, locals())
+    return drs_startup.return_locals(params, locals())
 
 
 class LoadData:
@@ -774,7 +776,7 @@ class LoadData:
         """
         self.instrument = instrument
         # get parameters from apero
-        _, params = core.setup('None', instrument, quiet=True)
+        _, params = drs_startup.setup('None', instrument, quiet=True)
         self.drs_params = params
         # get database
         dout = self.load_databases()

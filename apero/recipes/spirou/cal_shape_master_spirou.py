@@ -12,8 +12,9 @@ Created on 2019-03-23 at 13:01
 import numpy as np
 
 from apero.base import base
-from apero import core
 from apero import lang
+from apero.core.core import drs_log
+from apero.core.utils import drs_startup
 from apero.core import constants
 from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_fits
@@ -35,7 +36,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict
@@ -75,17 +76,17 @@ def main(directory=None, hcfiles=None, fpfiles=None, **kwargs):
                    fpfiles=fpfiles, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs)
+    recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)
     # solid debug mode option
     if kwargs.get('DEBUG0000', False):
         return recipe, params
     # ----------------------------------------------------------------------
     # run main bulk of code (catching all errors)
-    llmain, success = core.run(__main__, recipe, params)
+    llmain, success = drs_startup.run(__main__, recipe, params)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    return core.end_main(params, llmain, recipe, success)
+    return drs_startup.end_main(params, llmain, recipe, success)
 
 
 def __main__(recipe, params):
@@ -224,7 +225,7 @@ def __main__(recipe, params):
                  max_dxmap_info[2]]
         WLOG(params, 'warning', TextEntry('10-014-00003', args=fargs))
         # return a copy of locally defined variables in the memory
-        return core.return_locals(params, locals())
+        return drs_startup.return_locals(params, locals())
 
     # ----------------------------------------------------------------------
     # Calculate dy shape map
@@ -286,7 +287,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return core.return_locals(params, locals())
+    return drs_startup.return_locals(params, locals())
 
 
 # =============================================================================

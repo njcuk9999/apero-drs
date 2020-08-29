@@ -31,9 +31,10 @@ import numpy as np
 import os
 
 from apero.base import base
-from apero import core
 from apero import lang
 from apero.core import constants
+from apero.core.core import drs_log
+from apero.core.utils import drs_startup
 from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_fits
 from apero.io import drs_path
@@ -54,7 +55,7 @@ __release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict
@@ -87,17 +88,17 @@ def main(objname=None, **kwargs):
     fkwargs = dict(objname=objname, **kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    recipe, params = core.setup(__NAME__, __INSTRUMENT__, fkwargs)
+    recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)
     # solid debug mode option
     if kwargs.get('DEBUG0000', False):
         return recipe, params
     # ----------------------------------------------------------------------
     # run main bulk of code (catching all errors)
-    llmain, success = core.run(__main__, recipe, params)
+    llmain, success = drs_startup.run(__main__, recipe, params)
     # ----------------------------------------------------------------------
     # End Message
     # ----------------------------------------------------------------------
-    return core.end_main(params, llmain, recipe, success)
+    return drs_startup.end_main(params, llmain, recipe, success)
 
 
 def __main__(recipe, params):
@@ -140,7 +141,6 @@ def __main__(recipe, params):
         object_filenames = telluric.get_tellu_objs(params, tkey,
                                                    objnames=[objname])
 
-
     # deal with no files being present
     if len(object_filenames) == 0:
         wargs = [objname, filetype]
@@ -152,11 +152,11 @@ def __main__(recipe, params):
         # update recipe log file
         recipe.log.end(params)
         # end this run
-        return core.return_locals(params, locals())
+        return drs_startup.return_locals(params, locals())
     # ----------------------------------------------------------------------
     # Get filetype definition
-    infiletype = core.get_file_definition(filetype, params['INSTRUMENT'],
-                                          kind='red')
+    infiletype = drs_startup.get_file_definition(filetype, params['INSTRUMENT'],
+                                                 kind='red')
     # get new copy of file definition
     infile = infiletype.newcopy(recipe=recipe, fiber=fiber)
     # set reference filename
@@ -198,7 +198,7 @@ def __main__(recipe, params):
                                           database=calibdbm)
     # deal with no good files
     if cprops['MEDIAN'] is None:
-        return core.return_locals(params, locals())
+        return drs_startup.return_locals(params, locals())
     # ----------------------------------------------------------------------
     # Make s1d cubes
     # ----------------------------------------------------------------------
@@ -209,7 +209,7 @@ def __main__(recipe, params):
         WLOG(params, 'info', TextEntry('40-019-00038', args=[s1d_filetype]))
         # Get filetype definition
         dkwargs = dict(instrument=params['INSTRUMENT'], kind='red')
-        s1d_inst = core.get_file_definition(s1d_filetype, **dkwargs)
+        s1d_inst = drs_startup.get_file_definition(s1d_filetype, **dkwargs)
         # get new copy of file definition
         s1d_file = s1d_inst.newcopy(recipe=recipe, fiber=fiber)
         # get s1d filenames
@@ -246,7 +246,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     if passed:
         # copy the big cube median to the calibDB
-        telludbm.add_tellu_file(template_file) #, night=nightname)
+        telludbm.add_tellu_file(template_file)    # , night=nightname)
 
     # ----------------------------------------------------------------------
     # plots
@@ -270,8 +270,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # End of main code
     # ----------------------------------------------------------------------
-    return core.return_locals(params, locals())
-
+    return drs_startup.return_locals(params, locals())
 
 
 # =============================================================================

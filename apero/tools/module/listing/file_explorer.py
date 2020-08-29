@@ -36,7 +36,7 @@ else:
 from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
-from apero import core
+from apero.core.core import drs_log
 from apero.tools.module.gui import widgets
 from apero.tools.module.processing import drs_processing
 from apero import plotting
@@ -52,7 +52,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # -----------------------------------------------------------------------------
 # define the program name
 PROGRAM_NAME = 'APERO File Explorer'

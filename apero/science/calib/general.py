@@ -8,17 +8,16 @@ Created on 2019-06-27 at 10:48
 @author: cook
 """
 import numpy as np
-import os
 from typing import Union, Tuple
 from pathlib import Path
 import warnings
 
 from apero.base import base
 from apero.base import drs_text
-from apero import core
-from apero.core import drs_log
 from apero import lang
 from apero.core import constants
+from apero.core import drs_log
+from apero.core.utils import drs_startup
 from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_fits
 from apero.io import drs_image
@@ -42,7 +41,7 @@ __release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict
@@ -55,7 +54,7 @@ display_func = drs_log.display_func
 # define complex Typing
 # =============================================================================
 # for: load_calib_file
-LoadCalibFileReturn = Union[# if return filename
+LoadCalibFileReturn = Union[   # if return filename
                             str,
                             # if return_filename + return_source
                             Tuple[str, str],
@@ -154,13 +153,13 @@ def calibrate_ppfile(params, recipe, infile, database=None, **kwargs):
 
     # -------------------------------------------------------------------------
     # get loco file instance
-    darkinst = core.get_file_definition('DARKM', params['INSTRUMENT'],
-                                        kind='red')
-    badinst = core.get_file_definition('BADPIX', params['INSTRUMENT'],
-                                        kind='red')
-    backinst = core.get_file_definition('BKGRD_MAP', params['INSTRUMENT'],
-                                        kind='red')
-
+    darkinst = drs_startup.get_file_definition('DARKM', params['INSTRUMENT'],
+                                               kind='red')
+    badinst = drs_startup.get_file_definition('BADPIX', params['INSTRUMENT'],
+                                              kind='red')
+    backinst = drs_startup.get_file_definition('BKGRD_MAP',
+                                               params['INSTRUMENT'],
+                                               kind='red')
     # get calibration key
     darkkey = darkinst.get_dbkey()
     badkey = badinst.get_dbkey()
@@ -261,7 +260,7 @@ def calibrate_ppfile(params, recipe, infile, database=None, **kwargs):
     if correctback:
         # load background file from inputs/calibdb
         bkgrdfile = load_calib_file(params, backkey, header, filename=backfile,
-                                   userinputkey='BACKFILE',
+                                    userinputkey='BACKFILE',
                                     return_filename=True, database=calibdbm)
         # correct image for background
         image4 = background.correction(recipe, params, infile, image3,

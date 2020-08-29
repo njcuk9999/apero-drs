@@ -12,11 +12,11 @@ import os
 import warnings
 
 from apero.base import base
-from apero import core
 from apero.core import constants
 from apero.core import math as mp
 from apero import lang
 from apero.core.core import drs_log
+from apero.core.utils import drs_startup
 from apero.core.utils import drs_file
 from apero.io import drs_fits
 from apero.io import drs_path
@@ -73,8 +73,9 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
     # ------------------------------------------------------------------
     # get the transmission map key
     # ----------------------------------------------------------------------
-    out_trans = core.get_file_definition('TELLU_TRANS', params['INSTRUMENT'],
-                                         kind='red', fiber=fiber)
+    out_trans = drs_startup.get_file_definition('TELLU_TRANS',
+                                                params['INSTRUMENT'],
+                                                kind='red', fiber=fiber)
     # get key
     trans_key = out_trans.get_dbkey() + '[{0}]'.format(fiber)
     # ----------------------------------------------------------------------

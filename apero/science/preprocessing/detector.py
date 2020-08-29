@@ -9,17 +9,17 @@ Created on 2019-03-05 16:37
 Version 0.0.1
 """
 import numpy as np
-import os
 import warnings
 from scipy import ndimage
 
 from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
-from apero import core
-from apero.core.utils import drs_data, drs_database
+from apero.core.core import drs_log
+from apero.core.utils import drs_startup
+from apero.core.utils import drs_data
+from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_fits
-
 
 # =============================================================================
 # Define variables
@@ -32,7 +32,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # get param dict
 ParamDict = constants.ParamDict
 
@@ -83,7 +83,7 @@ def ref_top_bottom(params, image):
     pix_in_amp = dim2 // tamp
     pix_in_amp_2 = pix_in_amp // 2
     # work out the weights for y pixels
-    weight = np.arange(dim1)/(dim1-1)
+    weight = np.arange(dim1) / (dim1 - 1)
     # pipe into array to cover odd pixels and even pixels
     weightarr = np.repeat(weight, dim2 // pix_in_amp_2)
     # reshape
@@ -100,7 +100,7 @@ def ref_top_bottom(params, image):
             # work out contribution to subtract from top and bottom
             contrib = (top * weightarr) + (bottom * (1 - weightarr))
             # subtraction contribution from image for this amplifier
-            image[:, pixmask+oddeven] -= contrib
+            image[:, pixmask + oddeven] -= contrib
     # return corrected image
     return image
 
@@ -110,7 +110,7 @@ def median_filter_dark_amp(params, image):
     Use the dark amplifiers to produce a median pattern and apply this to the
     image
 
-    :param p: parameter dictionary, ParamDict containing constants
+    :param params: parameter dictionary, ParamDict containing constants
     :param image: numpy array (2D), the image
 
     :type params: ParamDict
@@ -206,7 +206,7 @@ def median_one_over_f_noise(params, image):
     Use the dark amplifiers to create a map of the 1/f (residual) noise and
     apply it to the image
 
-    :param p: parameter dictionary, ParamDict containing constants
+    :param params: parameter dictionary, ParamDict containing constants
     :param image: numpy array (2D), the image
 
     :type params: ParamDict
@@ -252,7 +252,7 @@ def test_for_corrupt_files(params, image, hotpix):
     Test for corrupted files by using the hotpix map and generate some
     quality control criteria (SNR_HOTPIX, RMS0, RMS1, RMS2, RMS3)
 
-    :param p: parameter dictionary, ParamDict containing constants
+    :param params: parameter dictionary, ParamDict containing constants
     :param image: numpy array (2D), the image
     :param hotpix: tuple of numpy arrays, the y and x (2d numpy array)
                    positions of the hot pixels
@@ -336,7 +336,7 @@ def test_for_corrupt_files(params, image, hotpix):
 # =============================================================================
 # Define nirps detector functions
 # =============================================================================
-def nirps_correction(params, image, mask=None, header=None):
+def nirps_correction(params, image, mask=None, header=None, database=None):
     # define the bin size for low level frequencies
     binsize = params['PP_MEDAMP_BINSIZE']
     # number of amplifiers in total
@@ -344,7 +344,7 @@ def nirps_correction(params, image, mask=None, header=None):
     # deal with not having a mask
     if mask is None:
         # get pp mask file
-        mask, pfile = get_pp_mask(params, header)
+        mask, pfile = get_pp_mask(params, header, database=database)
     else:
         pfile = 'user'
     # get image shape
@@ -372,25 +372,25 @@ def nirps_correction(params, image, mask=None, header=None):
     return image, pfile
 
 
-def get_pp_mask(params, header):
-    func_name = __NAME__ + '.get_pp_mask()'
-
+def get_pp_mask(params, header, database=None):
+    _ = __NAME__ + '.get_pp_mask()'
     # get file instance
-    ppmstr = core.get_file_definition('PPMSTR', params['INSTRUMENT'],
-                                      kind='red')
+    ppmstr = drs_startup.get_file_definition('PPMSTR', params['INSTRUMENT'],
+                                             kind='red')
     # get calibration key
     ppkey = ppmstr.get_dbkey()
-    # get calibDB
-    cdb = drs_database.get_full_database(params, 'calibration')
-    # get filename col
-    filecol, timecol = cdb.file_col, cdb.time_col
-    # get the ppmstr entries
-    ppentries = drs_database.get_key_from_db(params, ppkey, cdb, header,
-                                             n_ent=1, require=True)
-    # -------------------------------------------------------------------------
-    # try to read PPMSTR from cdb
-    ppfilename = ppentries[filecol][0]
-    ppfile = os.path.join(params['DRS_CALIB_DB'], ppfilename)
+    # ---------------------------------------------------------------------
+    # load database
+    if database is None:
+        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm.load_db()
+    else:
+        calibdbm = database
+    # ---------------------------------------------------------------------
+    # load filename from database
+    ppfile = calibdbm.get_calib_file(ppkey, header=header, nentries=1,
+                                     required=True)
+    # ---------------------------------------------------------------------
     # read file
     mask = drs_fits.readfits(params, ppfile)
     # return use_file

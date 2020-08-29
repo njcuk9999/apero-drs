@@ -13,11 +13,11 @@ import numpy as np
 import warnings
 
 from apero.base import base
-from apero import core
 from apero.core import math as mp
 from apero import lang
 from apero.core import constants
 from apero.core.core import drs_log
+from apero.core.utils import drs_startup
 from apero.core.utils import drs_file
 from apero.io import drs_table
 from apero.science import extract
@@ -36,7 +36,7 @@ __release__ = base.__release__
 ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
-WLOG = core.wlog
+WLOG = drs_log.wlog
 # Get function string
 display_func = drs_log.display_func
 # Get the text types
@@ -129,11 +129,11 @@ def validate_polar_files(params, infiles, **kwargs):
     # ----------------------------------------------------------------------
     # storage dictionary
     pobjects = ParamDict()
-    stokes, fibers, basenames = [], [] ,[]
+    stokes, fibers, basenames = [], [], []
     # loop around files
     for it in range(num_files):
         # print file iteration progress
-        core.file_processing_update(params, it, num_files)
+        drs_startup.file_processing_update(params, it, num_files)
         # ge this iterations file
         infile = infiles[it]
         # extract polar values and validate file
@@ -198,7 +198,7 @@ def validate_polar_files(params, infiles, **kwargs):
             kind = None
     else:
         eargs = [valid_fibers[0], valid_fibers[1],
-                ' or '.join([str(min_files * 2), str(min_files)])]
+                 ' or '.join([str(min_files * 2), str(min_files)])]
         WLOG(params, 'error', TextEntry('09-021-00005', args=eargs))
         kind = None
     # ----------------------------------------------------------------------
@@ -306,7 +306,6 @@ def calculate_continuum(params, pprops, wprops, **kwargs):
     Function to calculate the continuum polarization
 
     :param params: ParamDict, parameter dictionary of constants
-    :param pobjs: dict, dictionary of polar object instance
     :param pprops: parameter dictionary, ParamDict containing data
         Must contain at least:
             POL: numpy array (2D), e2ds degree of polarization data
@@ -315,7 +314,7 @@ def calculate_continuum(params, pprops, wprops, **kwargs):
             NULL2: numpy array (2D), e2ds 2nd null polarization
             STOKESI: numpy array (2D), e2ds Stokes I data
             STOKESIERR: numpy array (2D), e2ds errors of Stokes I
-    :params wprops: parameter dictionary, ParamDict containing wave data
+    :param wprops: parameter dictionary, ParamDict containing wave data
 
     :return pprop: parameter dictionary, the updated parameter dictionary
         Adds/updates the following:
@@ -405,7 +404,6 @@ def calculate_continuum(params, pprops, wprops, **kwargs):
 # Define quality control and writing functions
 # =============================================================================
 def quality_control(params):
-
     # ----------------------------------------------------------------------
     # set passed variable and fail message list
     fail_msg = []
@@ -435,7 +433,6 @@ def quality_control(params):
 
 def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
                 polstats, s1dprops, qc_params):
-
     # use the first file as reference
     pobj = pobjects['A_1']
     # get the infile from pobj
@@ -475,17 +472,17 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
     polfile.add_hkey('KW_POL_METHOD', value=pprops['METHOD'])
     # ----------------------------------------------------------------------
     # add polar statistics
-    polfile.add_hkey_1d('KW_POL_FILES', values=polstats['FILES'], 
+    polfile.add_hkey_1d('KW_POL_FILES', values=polstats['FILES'],
                         dim1name='exposure')
-    polfile.add_hkey_1d('KW_POL_EXPS', values=polstats['EXPS'], 
+    polfile.add_hkey_1d('KW_POL_EXPS', values=polstats['EXPS'],
                         dim1name='exposure')
-    polfile.add_hkey_1d('KW_POL_MJDS', values=polstats['MJDS'], 
+    polfile.add_hkey_1d('KW_POL_MJDS', values=polstats['MJDS'],
                         dim1name='exposure')
-    polfile.add_hkey_1d('KW_POL_MJDENDS', values=polstats['MJDENDS'], 
+    polfile.add_hkey_1d('KW_POL_MJDENDS', values=polstats['MJDENDS'],
                         dim1name='exposure')
-    polfile.add_hkey_1d('KW_POL_BJDS', values=polstats['BJDS'], 
+    polfile.add_hkey_1d('KW_POL_BJDS', values=polstats['BJDS'],
                         dim1name='exposure')
-    polfile.add_hkey_1d('KW_POL_BERVS', values=polstats['BERVS'], 
+    polfile.add_hkey_1d('KW_POL_BERVS', values=polstats['BERVS'],
                         dim1name='exposure')
     polfile.add_hkey('KW_POL_EXPTIME', value=polstats['TOTAL_EXPTIME'])
     polfile.add_hkey('KW_POL_ELAPTIME', value=polstats['ELAPSED_TIME'])
@@ -526,7 +523,7 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
     polfile.write_multi(data_list=[pprops['POLERR']])
     # add to output files (for indexing)
     recipe.add_output_file(polfile)
-    
+
     # ----------------------------------------------------------------------
     # Store null1 in file
     # ----------------------------------------------------------------------
@@ -546,7 +543,7 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
     null1file.write_file()
     # add to output files (for indexing)
     recipe.add_output_file(null1file)
-    
+
     # ----------------------------------------------------------------------
     # Store null2 in file
     # ----------------------------------------------------------------------
@@ -736,9 +733,9 @@ def generate_statistics(params, pobjects):
     # work out mean bjd
     mean_bjd = mp.nanmean(bjds)
     # calculate MJD at center of polarimetric sequence
-    mjd_cen = mjds[0] + 0.5 * (mjds[-1] - mjds[0] + exps[-1]/86400.0)
+    mjd_cen = mjds[0] + 0.5 * (mjds[-1] - mjds[0] + exps[-1] / 86400.0)
     # calculate BJD at center of polarimetric sequence
-    bjd_cen = bjds[0] + 0.5 * (bjds[-1] - bjds[0] + exps[-1]/86400.0)
+    bjd_cen = bjds[0] + 0.5 * (bjds[-1] - bjds[0] + exps[-1] / 86400.0)
     # calculate BERV at center by linear interpolation
     berv_slope = (bervs[-1] - bervs[0]) / (bjds[-1] - bjds[0])
     berv_intercept = bervs[0] - (berv_slope * bjds[0])
@@ -747,7 +744,7 @@ def generate_statistics(params, pobjects):
     bervmax = np.max(bervmaxs)
     # ----------------------------------------------------------------------
     polstats = ParamDict()
-    
+
     polstats['FILES'] = files
     polstats['EXPS'] = exps
     polstats['MJDS'] = mjds
@@ -763,13 +760,13 @@ def generate_statistics(params, pobjects):
     polstats['BERV_CEN'] = berv_cen
     polstats['BERVMAX'] = bervmax
     # set source
-    keys = ['FILES', 'EXPS', 'MJDS', 'MJDENDS', 'BJDS', 'BERVS', 
-            'TOTAL_EXPTIME', 'ELAPSED_TIME', 'MEAN_BJD', 'MJD_CEN', 
+    keys = ['FILES', 'EXPS', 'MJDS', 'MJDENDS', 'BJDS', 'BERVS',
+            'TOTAL_EXPTIME', 'ELAPSED_TIME', 'MEAN_BJD', 'MJD_CEN',
             'MJD_CEN', 'BJD_CEN', 'BERV_CEN', 'BERVMAX']
     polstats.set_sources(keys, func_name)
     # return pol stats
     return polstats
-    
+
 
 # =============================================================================
 # Define worker functions
