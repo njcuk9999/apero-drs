@@ -830,6 +830,11 @@ class DebugExit(Exit):
         self.__dict__.update(state)
 
 
+class DrsMathException(Exception):
+    """Raised when config file is incorrect"""
+    pass
+
+
 class DrsCodedException(DrsException):
     """
     Exception to be passed to drs logger (up the chain)

@@ -18,6 +18,7 @@ from scipy.interpolate import splrep, splev, UnivariateSpline, interp1d
 from scipy import stats, signal
 
 from apero.base import base
+from apero.base.drs_exceptions import DrsMathException
 from apero.core import math as mp
 from apero import lang
 from apero.core import constants
@@ -2023,7 +2024,7 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
                     ybin.append(np.mean(ytmp[nanmask][filtermask]))
                 else:
                     emsg = 'Mode "{0}" is not recognised for continuum fit'
-                    raise mp.general.DrsMathException(emsg.format(mode))
+                    raise DrsMathException(emsg.format(mode))
 
     # ----------------------------------------------------------------------
     # Option to use a linearfit within a given window
@@ -2143,7 +2144,7 @@ def fit_continuum(wav, spec, func='polynomial', order=3, nit=5,
         spl = splrep(wav[~mspec.mask], spec[~mspec.mask], k=3, t=knots)
         cont = splev(wav, spl)
     else:
-        raise mp.general.DrsMathException('func="{0}" is invalid'.format(func))
+        raise DrsMathException('func="{0}" is invalid'.format(func))
     # iteration loop: reject outliers and fit again
     if nit > 0:
         for it in range(nit):
@@ -2178,7 +2179,7 @@ def fit_continuum(wav, spec, func='polynomial', order=3, nit=5,
                 cont = splev(wav, spl)
             else:
                 emsg = 'func="{0}" is invalid'
-                raise mp.general.DrsMathException(emsg.format(func))
+                raise DrsMathException(emsg.format(func))
     # compute residual and rms
     res = fspec - cont
     sigm = np.std(res[~mspec.mask])
@@ -2272,7 +2273,7 @@ def continuum_polarization(x, y, binsize=200, overlap=100,
                 ybin.append(np.mean(ytmp[nanmask]))
             else:
                 emsg = 'Mode "{0}" is not recognised for continuum fit'
-                raise mp.general.DrsMathException(emsg.format(mode))
+                raise DrsMathException(emsg.format(mode))
 
         if i == nbins - 1:
             xbin.append(x[-1] + np.abs(x[-1] - x[-2]))

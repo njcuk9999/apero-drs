@@ -14,22 +14,25 @@ from scipy import signal
 from typing import Tuple, Union
 
 from apero.base import base
-
+from apero.base import drs_misc
 
 # try to import bottleneck module
+# noinspection PyBroadException
 try:
     import bottleneck as bn
+
     HAS_BOTTLENECK = True
 except Exception as e:
     HAS_BOTTLENECK = False
 # try to import numba module
+# noinspection PyBroadException
 try:
     from numba import jit
+
     HAS_NUMBA = True
-except:
+except Exception as _:
     jit = None
     HAS_NUMBA = False
-
 
 # =============================================================================
 # Define variables
@@ -41,6 +44,8 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
+# get display func
+display_func = drs_misc.display_func
 
 
 # =============================================================================
@@ -61,8 +66,11 @@ def nanargmax(a: Union[list, np.ndarray],
     :type a: np.ndarray
     :type axis: int
 
-    :return:
+    :return: the argument maximum of array `a` (int, float or np.ndarray)
     """
+    # set function name
+    _ = display_func(None, 'nanargmax', __NAME__)
+    # check bottleneck functionality
     if HAS_BOTTLENECK:
         # return bottleneck function
         return bn.nanargmax(a, axis=axis)
@@ -86,8 +94,11 @@ def nanargmin(a: Union[list, np.ndarray],
     :type a: np.ndarray
     :type axis: int
 
-    :return:
+    :return: the argument minimum of array `a` (int, float or np.ndarray)
     """
+    # set function name
+    _ = display_func(None, 'nanargmin', __NAME__)
+    # check bottleneck functionality
     if HAS_BOTTLENECK:
         # return bottleneck function
         return bn.nanargmin(a, axis=axis)
@@ -112,8 +123,11 @@ def nanmax(a: Union[list, np.ndarray],
     :type a: np.ndarray
     :type axis: int
 
-    :return:
+    :return: the maximum of array `a` (int, float or np.ndarray)
     """
+    # set function name
+    _ = display_func(None, 'nanmax', __NAME__)
+    # check bottleneck functionality
     if HAS_BOTTLENECK and len(kwargs) == 0:
         # return bottleneck function
         return bn.nanmax(a, axis=axis)
@@ -138,8 +152,11 @@ def nanmin(a: Union[list, np.ndarray],
     :type a: np.ndarray
     :type axis: int
 
-    :return:
+    :return: the minimum of array `a` (int, float or np.ndarray)
     """
+    # set function name
+    _ = display_func(None, 'nanmin', __NAME__)
+    # check bottleneck functionality
     if HAS_BOTTLENECK and len(kwargs) == 0:
         # return bottleneck function
         return bn.nanmin(a, axis=axis)
@@ -164,8 +181,11 @@ def nanmean(a: Union[list, np.ndarray],
     :type a: np.ndarray
     :type axis: int
 
-    :return:
+    :return: the mean of array `a` (int, float or np.ndarray)
     """
+    # set function name
+    _ = display_func(None, 'nanmin', __NAME__)
+    # check bottleneck functionality
     if HAS_BOTTLENECK and len(kwargs) == 0:
         # return bottleneck function
         return bn.nanmean(a, axis=axis)
@@ -190,8 +210,11 @@ def nanmedian(a: Union[list, np.ndarray],
     :type a: np.ndarray
     :type axis: int
 
-    :return:
+    :return: the median of array `a` (int, float or np.ndarray)
     """
+    # set function name
+    _ = display_func(None, 'nanmedian', __NAME__)
+    # check bottleneck functionality
     if HAS_BOTTLENECK and len(kwargs) == 0:
         # return bottleneck function
         return bn.nanmedian(a, axis=axis)
@@ -220,8 +243,11 @@ def nanstd(a: Union[list, np.ndarray],
     :type axis: int
     :type ddof: int
 
-    :return:
+    :return: the standard deviation of array `a` (int, float or np.ndarray)
     """
+    # set function name
+    _ = display_func(None, 'nanstd', __NAME__)
+    # check bottleneck functionality
     if HAS_BOTTLENECK and len(kwargs) == 0:
         # return bottleneck function
         return bn.nanstd(a, axis=axis, ddof=ddof)
@@ -231,8 +257,8 @@ def nanstd(a: Union[list, np.ndarray],
 
 
 def nansum(a: Union[list, np.ndarray],
-              axis: Union[None, int, Tuple[int]] = None,
-              **kwargs) -> Union[int, float, np.ndarray]:
+           axis: Union[None, int, Tuple[int]] = None,
+           **kwargs) -> Union[int, float, np.ndarray]:
     """
     Bottleneck or numpy implementation of nansum depending on imports
 
@@ -246,8 +272,11 @@ def nansum(a: Union[list, np.ndarray],
     :type a: np.ndarray
     :type axis: int
 
-    :return:
+    :return: the sum of array `a` (int, float or np.ndarray)
     """
+    # set function name
+    _ = display_func(None, 'nansum', __NAME__)
+    # check bottleneck functionality
     if HAS_BOTTLENECK and len(kwargs) == 0:
         # make sure a is an array
         a1 = np.array(a)
@@ -278,8 +307,11 @@ def median(a: Union[list, np.ndarray],
     :type a: np.ndarray
     :type axis: int
 
-    :return:
+    :return: the median of array `a` (int, float or np.ndarray)
     """
+    # set function name
+    _ = display_func(None, 'nansum', __NAME__)
+    # check bottleneck functionality
     if HAS_BOTTLENECK and len(kwargs) == 0:
         # return bottleneck function
         return bn.median(a, axis=axis)
@@ -300,8 +332,11 @@ def medfilt_1d(a: Union[list, np.ndarray],
     :type a: np.ndarray
     :type window: int
 
-    :return:
+    :return: the 1D median filtered array of `a` (int, float or np.ndarray)
     """
+    # set function name
+    _ = display_func(None, 'medfilt_1d', __NAME__)
+    # check bottleneck functionality
     if HAS_BOTTLENECK:
         # get half window size
         half_window = window // 2
@@ -325,7 +360,9 @@ if not HAS_NUMBA:
         def decorator(func):
             def wrapper(*args, **kwargs):
                 return func(*args, **kwargs)
+
             return wrapper
+
         return decorator
 
 
@@ -356,6 +393,9 @@ def lin_mini(vector: np.ndarray, sample: np.ndarray, mm: np.ndarray,
 
     :returns: amps, recon
     """
+    # set function name
+    _ = display_func(None, 'lin_mini', __NAME__)
+    # case 1
     if case == 1:
         # fill-in the co-variance matrix
         for i in range(sz_sample[0]):
@@ -377,7 +417,7 @@ def lin_mini(vector: np.ndarray, sample: np.ndarray, mm: np.ndarray,
         # retrieve amplitudes
         for i in range(len(v)):
             for j in range(len(v)):
-                amps[i]+=inv[i,j]*v[j]
+                amps[i] += inv[i, j] * v[j]
         # reconstruction of the best-fit from the input sample and derived
         # amplitudes
         if not no_recon:
@@ -404,7 +444,7 @@ def lin_mini(vector: np.ndarray, sample: np.ndarray, mm: np.ndarray,
         # retrieve amplitudes
         for i in range(len(v)):
             for j in range(len(v)):
-                amps[i]+=inv[i,j]*v[j]
+                amps[i] += inv[i, j] * v[j]
         # reconstruction of the best-fit from the input sample and derived
         # amplitudes
         if not no_recon:

@@ -19,8 +19,10 @@ from scipy import stats
 from typing import Tuple, Union
 
 from apero.base import base
+from apero.base import drs_misc
+from apero.base.drs_exceptions import DrsMathException
 from apero.core.math import fast
-from apero.core.math.exceptions import DrsMathException
+
 
 # =============================================================================
 # Define variables
@@ -37,6 +39,8 @@ __release__ = base.__release__
 speed_of_light_ms = cc.c.to(uu.m / uu.s).value
 # noinspection PyUnresolvedReferences
 speed_of_light = cc.c.to(uu.km / uu.s).value
+# get display func
+display_func = drs_misc.display_func
 
 
 # =============================================================================
@@ -62,6 +66,8 @@ def measure_box_min_max(y: np.ndarray,
                        for maximum pixel defined by a box of pixel-size to
                        pixel+size for all columns
     """
+    # set function name
+    _ = display_func(None, 'measure_box_min_max', __NAME__)
     # get length of rows
     ny = y.shape[0]
     # Set up min and max arrays (length = number of rows)
@@ -97,6 +103,8 @@ def calculate_polyvals(coeffs: Union[list, np.ndarray],
                    size = (number of orders x dim)
                    the fit for each order at each pixel values from 0 to dim
     """
+    # set function name
+    _ = display_func(None, 'calculate_polyvals', __NAME__)
     # create storage array
     yfits = np.zeros((len(coeffs), dim))
     # get pixel range for dimension
@@ -122,6 +130,9 @@ def ea_airy_function(x: np.ndarray, amp: float, x0: float, w: float,
     :param zp: the dc level
     :return:
     """
+    # set function name
+    _ = display_func(None, 'calculate_polyvals', __NAME__)
+    # calculate ea_airy_function
     y = zp + amp * ((1 + np.cos(2 * np.pi * (x - x0) / w)) / 2.0) ** beta
     return y
 
@@ -135,6 +146,8 @@ def fit2dpoly(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
     :param z: np.ndarray (2D) the 2D points for each x and y position
     :return: the coefficients of the 2d polynomial fit
     """
+    # set function name
+    _ = display_func(None, 'fit2dpoly', __NAME__)
     # fit a 2nd order polynomial in 2d over x/y/z pixel points
     ones = np.ones_like(x)
     a = np.array([ones, x, y, x ** 2, y ** 2, x * y]).T
@@ -154,6 +167,9 @@ def normal_fraction(sigma: Union[float, np.ndarray] = 1.0
     :param sigma: the number of sigma away from the median to be
     :return:
     """
+    # set function name
+    _ = display_func(None, 'normal_fraction', __NAME__)
+    # return error function
     return erf(sigma / np.sqrt(2.0))
 
 
@@ -164,6 +180,9 @@ def fwhm(sigma: Union[float, np.ndarray] = 1.0) -> Union[float, np.ndarray]:
     :param sigma: float, the sigma, default value is 1.0 (normalised gaussian)
     :return: 2 * sqrt(2 * log(2)) * sigma = 2.3548200450309493 * sigma
     """
+    # set function name
+    _ = display_func(None, 'fwhm', __NAME__)
+    # return fwdm
     return 2 * np.sqrt(2 * np.log(2)) * sigma
 
 
@@ -177,11 +196,12 @@ def linear_minimization(vector: np.ndarray, sample: np.ndarray,
 
     :param vector: 2d matrix that is (N x M) or (M x N)
     :param sample: 1d vector of length N
+    :param no_recon: bool, if True does not calculate recon
     :return:
     """
-    # setup function name
-    func_name = __NAME__ + '.linear_minimization()'
-
+    # set function name
+    func_name = display_func(None, 'linear_minimization', __NAME__)
+    # get sample and vector shapes
     sz_sample = sample.shape  # 1d vector of length N
     sz_vector = vector.shape  # 2d matrix that is N x M or M x N
     # define which way the sample is flipped relative to the input vector
@@ -274,6 +294,8 @@ def iuv_spline(x: np.ndarray, y: np.ndarray, **kwargs
     :param kwargs: passed to scipy.interpolate.InterpolatedUnivariateSpline
     :return: spline instance (from InterpolatedUnivariateSpline(x, y, **kwargs))
     """
+    # set function name
+    _ = display_func(None, 'iuv_spline', __NAME__)
     # deal with dimensions error (on k)
     #   otherwise get   dfitpack.error: (m>k) failed for hidden m
     if kwargs.get('k', None) is not None:
@@ -314,6 +336,9 @@ def robust_polyfit(x: np.ndarray, y: np.ndarray, degree: int,
     :param nsigcut: float, the threshold sigma required to return result
     :return:
     """
+    # set function name
+    _ = display_func(None, 'robust_polyfit', __NAME__)
+    # set up mask
     keep = np.isfinite(y)
     # set the nsigmax to infinite
     nsigmax = np.inf
@@ -347,11 +372,13 @@ def robust_nanstd(x: np.ndarray) -> float:
 
     Done in a robust way to avoid being affected by outliers and nans
 
-    :param x:
-    :return:
+    :param x: numpy array the array to get the percentile of
+    :return: the sigma to 100 - sigma value / 2
     """
+    # set function name
+    _ = display_func(None, 'robust_polyfit', __NAME__)
     # get the 1 sigma error value
-    erfvalue = erf(1.0) * 100
+    erfvalue = erf(np.array([1.0]))[0] * 100
     # work out the high and low bounds
     low = np.nanpercentile(x, 100 - erfvalue)
     high = np.nanpercentile(x, erfvalue)
@@ -399,12 +426,14 @@ def sinc(x: np.ndarray, amp: float, period: float, lin_center: float,
              filled before this fraction of the sinc max amplitude
     :rtype: np.ndarray
     """
+    # set function name
+    _ = display_func(None, 'sinc', __NAME__)
     # Transform the x expressed in pixels into a stretched version
     # expressed in phase. The quadratic terms allows for a variation of
     # dispersion along the other
     deltax = x - lin_center
     cent = deltax + quad_scale * deltax ** 2 + cube_scale * deltax ** 3
-    xp = 2 * np.pi * ((cent) / period)
+    xp = 2 * np.pi * (cent / period)
     # this avoids a division by zero
     if np.min(np.abs(xp) / period) < 1e-9:
         small_x = (np.abs(xp) / period) < 1e-9
@@ -432,6 +461,8 @@ def sigfig(x: Union[list, np.ndarray, float, int], n: int
     :param n: int, the number of significant figures required
     :return: numpy array like x at significant figures
     """
+    # set function name
+    _ = display_func(None, 'sigfig', __NAME__)
     # deal with differing formats of x (cast to numpy array)
     if isinstance(x, np.ndarray):
         xin = np.array(x)
@@ -486,6 +517,8 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
         xbin,ybin: numpy arrays (1D) containing the bins used to interpolate
                    data for obtaining the continuum
     """
+    # set function name
+    _ = display_func(None, 'continuum', __NAME__)
     # deal with no excl_bands
     if excl_bands is None:
         excl_bands = []
@@ -608,10 +641,12 @@ def rot8(image: np.ndarray, nrotation: int, invert: bool = False) -> np.ndarray:
                         rot8(invert=True) --> image
 
     :type image: np.ndarray
-    :type rotnum: int
+    :type nrotation: int
 
     :return: rotated and/or flipped image
     """
+    # set function name
+    _ = display_func(None, 'rot8', __NAME__)
     # how to invert them (if invert is True
     inversion = {1: 3, 2: 2, 3: 1, 4: 4, 5: 7, 6: 6, 7: 5, 0: 0}
     # module 8 number
@@ -648,7 +683,7 @@ def medbin(image: np.ndarray, by: int, bx: int) -> np.ndarray:
     """
     # TODO: Question: are "bx" and "by" the right way around?
     # set function name
-    func_name = __NAME__ + '.medbin()'
+    func_name = display_func(None, 'medbin', __NAME__)
     # exception message
     emsg = '{0}: {1} must be a factor of {2}'
     # get the shape of the image
@@ -693,6 +728,8 @@ def lowpassfilter(input_vect: np.ndarray, width: int = 101) -> np.ndarray:
 
     :return:
     """
+    # set function name
+    _ = display_func(None, 'lowpassfilter', __NAME__)
     # indices along input vector
     index = np.arange(len(input_vect))
     # placeholders for x and y position along vector
@@ -748,8 +785,10 @@ def lowpassfilter(input_vect: np.ndarray, width: int = 101) -> np.ndarray:
 # =============================================================================
 # Define wave functions
 # =============================================================================
-def get_ll_from_coefficients(pixel_shift_inter, pixel_shift_slope, allcoeffs,
-                             nx, nbo):
+def get_ll_from_coefficients(pixel_shift_inter: float,
+                             pixel_shift_slope: float,
+                             allcoeffs: np.ndarray,
+                             nx: int, nbo: int) -> np.ndarray:
     """
     Use the coefficient matrix "params" to construct fit values for each order
     (dimension 0 of coefficient matrix) for values of x from 0 to nx
@@ -775,6 +814,8 @@ def get_ll_from_coefficients(pixel_shift_inter, pixel_shift_slope, allcoeffs,
     :return ll: numpy array (2D): the yfit values for each order
                 (i.e. ll = [yfit_1, yfit_2, yfit_3, ..., yfit_nbo] )
     """
+    # set function name
+    _ = display_func(None, 'get_ll_from_coefficients', __NAME__)
     # create x values
     xfit = np.arange(nx) + pixel_shift_inter + (
             pixel_shift_slope * np.arange(nx))
@@ -793,8 +834,10 @@ def get_ll_from_coefficients(pixel_shift_inter, pixel_shift_slope, allcoeffs,
     return ll
 
 
-def get_ll_from_coefficients_cheb(pixel_shift_inter, pixel_shift_slope,
-                                  allcoeffs, nx, nbo):
+def get_ll_from_coefficients_cheb(pixel_shift_inter: float,
+                                  pixel_shift_slope: float,
+                                  allcoeffs: np.ndarray,
+                                  nx: int, nbo: int) -> np.ndarray:
     """
     Use the coefficient matrix "params" to construct fit values for each order
     (dimension 0 of coefficient matrix) for values of x from 0 to nx
@@ -820,6 +863,8 @@ def get_ll_from_coefficients_cheb(pixel_shift_inter, pixel_shift_slope,
     :return ll: numpy array (2D): the yfit values for each order
                 (i.e. ll = [yfit_1, yfit_2, yfit_3, ..., yfit_nbo] )
     """
+    # set function name
+    _ = display_func(None, 'get_ll_from_coefficients_cheb', __NAME__)
     # create x values
     xfit = np.arange(nx) + pixel_shift_inter + (
             pixel_shift_slope * np.arange(nx))
@@ -838,7 +883,8 @@ def get_ll_from_coefficients_cheb(pixel_shift_inter, pixel_shift_slope,
     return ll
 
 
-def get_dll_from_coefficients(allcoeffs, nx, nbo):
+def get_dll_from_coefficients(allcoeffs: np.ndarray, nx: int,
+                              nbo: int) -> np.ndarray:
     """
     Derivative of the coefficients, using the coefficient matrix "params"
     to construct the derivative of the fit values for each order
@@ -865,7 +911,8 @@ def get_dll_from_coefficients(allcoeffs, nx, nbo):
     :return ll: numpy array (2D): the yfit values for each order
                 (i.e. ll = [dyfit_1, dyfit_2, dyfit_3, ..., dyfit_nbo] )
     """
-
+    # set function name
+    _ = display_func(None, 'get_dll_from_coefficients', __NAME__)
     # create x values
     xfit = np.arange(nx)
     # create empty line list storage
@@ -886,7 +933,9 @@ def get_dll_from_coefficients(allcoeffs, nx, nbo):
     return ll
 
 
-def relativistic_waveshift(dv, units='km/s'):
+def relativistic_waveshift(dv: Union[float, np.ndarray],
+                           units: Union[uu.Unit, str] = 'km/s'
+                           ) -> Union[float, np.ndarray]:
     """
     Relativistic offset in wavelength
 
@@ -896,6 +945,8 @@ def relativistic_waveshift(dv, units='km/s'):
     :param units: string or astropy units, the units of dv
     :return:
     """
+    # set function name
+    _ = display_func(None, 'relativistic_waveshift', __NAME__)
     # get c in correct units
     # noinspection PyUnresolvedReferences
     if units == 'km/s' or units == uu.km / uu.s:
