@@ -236,7 +236,6 @@ DRS_RECIPE_KIND = Const('DRS_RECIPE_KIND', value=None, dtype=str,
 IS_MASTER = Const('IS_MASTER', value=False, dtype=bool, source=__NAME__,
                   group=cgroup)
 
-
 # =============================================================================
 # Instrument/Observatory Constants
 # =============================================================================
@@ -322,7 +321,6 @@ DRS_PDB_RC_FILE = Const('DRS_PDB_RC_FILE', value=base.PDB_RC_FILE,
 DRS_PDB_RC_FILENAME = Const('DRS_PDB_RC_FILENAME', value=base.PDB_RC_FILENAME,
                             dtype=str, source=__NAME__, group=cgroup)
 
-
 # =============================================================================
 # DRS INDEXING SETTINGS
 # =============================================================================
@@ -372,15 +370,15 @@ INDEX_DB_NAME = Const('INDEX_DB_NAME', dtype=str, source=__NAME__,
 
 # Define language database name
 LANG_DB_NAME = Const('LANG_DB_NAME', dtype=str, source=__NAME__,
-                      value='lang.db', group=cgroup)
+                     value='lang.db', group=cgroup)
 
 # Define the log database name
 LOG_DB_NAME = Const('LOG_DB_NAME', dtype=str, source=__NAME__,
-                      value='log.db', group=cgroup)
+                    value='log.db', group=cgroup)
 
 # Define the object database name
 OBJECT_DB_NAME = Const('OBJECT_DB_NAME', dtype=str, source=__NAME__,
-                      value='object.db', group=cgroup)
+                       value='object.db', group=cgroup)
 
 # Define reset file for object database
 OBJECT_DB_RESET = Const('OBJECT_DB_RESET', dtype=str, source=__NAME__,
@@ -389,7 +387,6 @@ OBJECT_DB_RESET = Const('OBJECT_DB_RESET', dtype=str, source=__NAME__,
 # Define the param database name
 PARAM_DB_NAME = Const('PARAM_DB_NAME', dtype=str, source=__NAME__,
                       value='param.db', group=cgroup)
-
 
 # =============================================================================
 # OLD DATABASE SETTINGS
@@ -415,13 +412,13 @@ DB_MATCH = Const('DB_MATCH', dtype=str, source=__NAME__,
 LOCKOPEN_MAX_WAIT = Const('LOCKOPEN_MAX_WAIT', dtype=int, value=600, minimum=1,
                           source=__NAME__, group=cgroup)
 
-# the telluric database name
-TELLU_DB_NAME = Const('TELLU_DB_NAME', dtype=str, source=__NAME__,
-                      value='master_tellu.txt', group=cgroup)
-
-# the calibration database name
-CALIB_DB_NAME = Const('CALIB_DB_NAME', dtype=str, source=__NAME__,
-                      value='master_calib.txt', group=cgroup)
+# # the telluric database name
+# TELLU_DB_NAME = Const('TELLU_DB_NAME', dtype=str, source=__NAME__,
+#                       value='master_tellu.txt', group=cgroup)
+#
+# # the calibration database name
+# CALIB_DB_NAME = Const('CALIB_DB_NAME', dtype=str, source=__NAME__,
+#                       value='master_calib.txt', group=cgroup)
 
 #   Define the match type for calibDB files
 #         match = 'older'  when more than one file for each key will
@@ -530,7 +527,6 @@ DRS_LOG_FORMAT = Const('DRS_LOG_FORMAT', value='{0}-{1}|{2}|{3}',
 # Define the log fits file name
 DRS_LOG_FITS_NAME = Const('DRS_LOG_FITS_NAME', value='log.fits', dtype=str,
                           source=__NAME__, group=cgroup)
-
 
 # =============================================================================
 # PLOT SETTINGS

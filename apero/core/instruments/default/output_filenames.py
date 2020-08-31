@@ -10,11 +10,13 @@ Created on 2019-03-21 at 18:35
 @author: cook
 """
 import os
+from typing import Any, Union
 
 from apero.base import base
 from apero.base import drs_exceptions
+from apero.base import drs_misc
 from apero import lang
-
+from apero.core.constants import param_functions
 
 # =============================================================================
 # Define variables
@@ -30,22 +32,45 @@ __release__ = base.__release__
 TextEntry = lang.core.drs_lang_text.TextEntry
 # get exceptions
 DrsCodedException = drs_exceptions.DrsCodedException
+# get parameter dictionary
+ParamDict = param_functions.ParamDict
+# get display func
+display_func = drs_misc.display_func
 
 
 # =============================================================================
 # Define file functions
 # =============================================================================
-def general_file(params, **kwargs):
-    func = __NAME__ + '.general_file()'
-    if 'func' in kwargs:
-        func_name = '{0} [{1}]'.format(kwargs.get('func', ''), func)
-    else:
-        func_name = func
-    # get parameters from keyword arguments
-    infile = kwargs.get('infile', None)
-    outfile = kwargs.get('outfile', None)
-    fiber = kwargs.get('fiber', None)
-    path = kwargs.get('path', None)
+def general_file(params: ParamDict, infile: Any, outfile: Any,
+                 fiber: Union[str, None] = None, path: Union[str, None] = None,
+                 func: Union[str, None] = None,
+                 remove_insuffix: Union[bool, None] = None,
+                 prefix: Union[str, None] = None,
+                 suffix: Union[str, None] = None) -> str:
+    """
+    Construct a general absolute filename from infile/outfile
+
+    :param params: ParamDict, paremeter dictionary of constants
+    :param infile: DrsFitsFile, input file - must be defined
+    :param outfile: DrsFitsFile, output file - must be defined
+    :param fiber: str, the fiber - must be set if infile.fibers is populated
+    :param path: str, the path the file should have (if not set, set to
+                 params['OUTPATH']  with params['NIGHTNAME'] if set)
+    :param func: str, the function name if set (for errors)
+    :param remove_insuffix: bool if set removes input suffix if not set
+                            defaults to the outfile.remove_insuffix
+    :param prefix: str, if set the prefix of the file (defaults to
+                   outfile.prefix)
+    :param suffix: str, if set the suffix of the file (defaults to
+                   outfile.suffix)
+
+    :return: the aboslute path to the file
+    """
+    # set function name
+    func_name = display_func(params, 'general_file', __NAME__)
+    # set function name from args
+    if func is not None:
+        func_name = '{0} [{1}]'.format(func, func_name)
     # deal with kwargs that are required
     if infile is None:
         raise DrsCodedException('00-001-00017', level='error',
@@ -64,7 +89,8 @@ def general_file(params, **kwargs):
     # set infile basename
     inbasename = infile.basename
     # get condition to remove input file prefix
-    remove_insuffix = kwargs.get('remove_insuffix', outfile.remove_insuffix)
+    if remove_insuffix is None:
+        remove_insuffix = outfile.remove_insuffix
     # if remove in suffix is True then remove it from inbasename
     if remove_insuffix and (infile.suffix is not None):
         # get the infile suffix
@@ -81,8 +107,10 @@ def general_file(params, **kwargs):
             inbasename = inbasename.replace(insuffix, '')
 
     # get kwargs where default dependent on required arguments
-    prefix = kwargs.get('prefix', outfile.prefix)
-    suffix = kwargs.get('suffix', outfile.suffix)
+    if prefix is None:
+        prefix = outfile.prefix
+    if suffix is None:
+        suffix = outfile.suffix
     # construct out filename
     inext = infile.filetype
     outext = outfile.filetype
@@ -112,14 +140,25 @@ def general_file(params, **kwargs):
     return abspath
 
 
-def npy_file(params, **kwargs):
-    func = __NAME__ + '.npy_file()'
-    if 'func' in kwargs:
-        func_name = '{0} [{1}]'.format(kwargs.get('func', ''), func)
-    else:
-        func_name = func
+def npy_file(params: ParamDict, infile: Any, outfile: Any,
+             func: Union[str, None] = None) -> str:
+    """
+    Construct a NPY filename from infile/outfile
+
+    :param params: ParamDict, paremeter dictionary of constants
+    :param infile: DrsFitsFile, input file - must be defined
+    :param outfile: DrsFitsFile, output file - must be defined
+    :param func: str, the function name if set (for errors)
+
+    :return: the aboslute path to the file
+    """
+    # set function name
+    func_name = display_func(params, 'npy_file', __NAME__)
+    # set function name from args
+    if func is not None:
+        func_name = '{0} [{1}]'.format(func, func_name)
+
     # get out file and report error if not set
-    outfile = kwargs.get('outfile', None)
     if outfile is None:
         raise DrsCodedException('00-001-00018', level='error',
                                 targs=[func_name], func_name=func_name)
@@ -129,56 +168,96 @@ def npy_file(params, **kwargs):
         raise DrsCodedException('00-001-00033', level='error',
                                 targs=[filetype], func_name=func_name)
     # update keywords func name
-    kwargs['func'] = func
-    return general_file(params, **kwargs)
+    return general_file(params, infile, outfile, func=func_name)
 
 
-def debug_file(params, **kwargs):
-    func = __NAME__ + '.debug_back()'
-    if 'func' in kwargs:
-        func_name = '{0} [{1}]'.format(kwargs.get('func', ''), func)
-    else:
-        func_name = func
-    # update keywords func name
-    kwargs['func'] = func_name
-    # get parameters from keyword arguments
-    outfile = kwargs.get('outfile', None)
+def debug_file(params: ParamDict, infile: Any, outfile: Any,
+               func: Union[str, None] = None,
+               prefix: Union[str, None] = None) -> str:
+    """
+    Construct a NPY filename from infile/outfile
+
+    :param params: ParamDict, paremeter dictionary of constants
+    :param infile: DrsFitsFile, input file - must be defined
+    :param outfile: DrsFitsFile, output file - must be defined
+    :param func: str, the function name if set (for errors)
+    :param prefix: str, if set the prefix of the file (defaults to
+                   outfile.prefix)
+
+    :return: the aboslute path to the file
+    """
+    # set function name
+    func_name = display_func(params, 'npy_file', __NAME__)
+    # set function name from args
+    if func is not None:
+        func_name = '{0} [{1}]'.format(func, func_name)
+    # deal with no prefix
+    if prefix is None:
+        prefix = outfile.prefix
+    # get out file and report error if not set
     if outfile is not None:
-        prefix = 'DEBUG_' + kwargs.get('prefix', outfile.prefix)
+        prefix = 'DEBUG_' + prefix
     else:
         prefix = 'DEBUG_'
     # return absolute path
-    return general_file(params, prefix=prefix, **kwargs)
+    return general_file(params, infile, outfile, prefix=prefix, func=func_name)
 
 
-def blank(params, **kwargs):
-    func = __NAME__ + '.blank()'
-    if 'func' in kwargs:
-        func_name = '{0} [{1}]'.format(kwargs.get('func', ''), func)
-    else:
-        func_name = func
-    # get parameters from keyword arguments
-    infile = kwargs.get('infile', None)
+def blank(params: ParamDict, infile: Any, outfile: Any,
+          func: Union[str, None] = None) -> str:
+    """
+    Construct a blank filename from infile
+
+    :param params: ParamDict, paremeter dictionary of constants
+    :param infile: DrsFitsFile, input file - must be defined
+    :param outfile: DrsFitsFile, output file - must be defined
+    :param func: str, the function name if set (for errors)
+
+    :return: the aboslute path to the file
+    """
+    # set function name
+    func_name = display_func(params, 'blank', __NAME__)
+    # set function name from args
+    if func is None:
+        func_name = '{0} [{1}]'.format(func, func_name)
     # deal with kwargs that are required
     if infile is None:
+        _ = outfile
         raise DrsCodedException('00-001-00017', level='error',
                                 targs=[func_name], func_name=func_name)
     # return absolute path
     return infile.filename
 
 
-def set_file(params, **kwargs):
-    func = __NAME__ + '.set_file()'
-    if 'func' in kwargs:
-        func_name = '{0} [{1}]'.format(kwargs.get('func', ''), func)
-    else:
-        func_name = func
-    # get set filename from kwargs
-    filename = kwargs.get('filename', None)
-    # get output file
-    outfile = kwargs.get('outfile', None)
+def set_file(params: ParamDict, infile: Any, outfile: Any,
+             path: Union[str, None] = None,
+             func: Union[str, None] = None,
+             suffix: Union[str, None] = None,
+             filename: Union[str, None] = None) -> str:
+    """
+    Construct a absolute filename based on the filename, can replace
+    suffix
+
+    :param params: ParamDict, paremeter dictionary of constants
+    :param infile: DrsFitsFile, input file - must be defined
+    :param outfile: DrsFitsFile, output file - must be defined
+    :param path: str, the path the file should have (if not set, set to
+                 params['OUTPATH']  with params['NIGHTNAME'] if set)
+    :param func: str, the function name if set (for errors)
+    :param suffix: str, if set the suffix of the file (defaults to
+                   outfile.suffix)
+    :param filename: str, the filename to give the file
+
+    :return: the aboslute path to the file
+    """
+    # set function name
+    func_name = display_func(params, 'set_file', __NAME__)
+    # set function name from args
+    if func is None:
+        func_name = '{0} [{1}]'.format(func, func_name)
     # deal with no outfile set
     if outfile is None:
+        _ = infile
         raise DrsCodedException('00-001-00018', level='error',
                                 targs=[func_name], func_name=func_name)
     # get filename from outfile if None
@@ -190,10 +269,6 @@ def set_file(params, **kwargs):
                                 targs=[func_name], func_name=func_name)
     else:
         filename = os.path.basename(filename)
-    # get suffix
-    suffix = kwargs.get('suffix', None)
-    # get path
-    path = kwargs.get('path', None)
     # get extension
     if suffix is None:
         outext = outfile.filetype
@@ -223,12 +298,32 @@ def set_file(params, **kwargs):
     # return absolute path
     return abspath
 
+
 # =============================================================================
 # Define user functions
 # =============================================================================
-def get_outfilename(params, infilename, prefix=None, suffix=None,
-                    inext=None, outext=None, fiber=None):
-    func_name = __NAME__ + '.get_outfilename()'
+def get_outfilename(params: ParamDict, infilename: str,
+                    prefix: Union[str, None] = None,
+                    suffix: Union[str, None] = None,
+                    inext: Union[str, None] = None,
+                    outext: Union[str, None] = None,
+                    fiber: Union[str, None] = None) -> str:
+    """
+    Get the output filename from a input filename (with inext) and add a
+    prefix/suffix fiber etc
+
+    :param params: ParamDict, paremeter dictionary of constants
+    :param infilename: str, the infile name
+    :param prefix: str, if set the prefix of the file
+    :param suffix: str, if set the suffix of the file
+    :param inext: str, the infile extension (to remove)
+    :param outext: str, the outfile extension (to add)
+    :param fiber: str, the fiber to add (if set)
+
+    :return: str, the filename correct for prefix/suffix/fiber etc
+    """
+    # set function name
+    func_name = display_func(params, 'get_outfilename', __NAME__)
     # make surte infilename is a basename not a path
     infilename = os.path.basename(infilename)
     # deal with fiber
@@ -259,11 +354,23 @@ def get_outfilename(params, infilename, prefix=None, suffix=None,
     return outfilename
 
 
-def make_night_name(params, nightname, path):
-    func_name = __NAME__ + '.make_night_name()'
+def make_night_name(params: ParamDict, nightname: Union[str, None],
+                    path: str) -> str:
+    """
+    Make a directory with a night directory given - and also add the directory
+    if needed
+
+    :param params: ParamDict, parameter dictionary constants dictionary
+    :param nightname: str or None, if set add this to the directory path
+    :param path: str, the absolute path (above nightname level)
+
+    :return: str, the path with the night name added (if set)
+    """
+    # set function name
+    func_name = display_func(params, 'get_outfilename', __NAME__)
     # deal with no night name set
     if nightname is None:
-        return
+        return path
     # make full path
     full_path = os.path.join(path, nightname)
 
@@ -271,7 +378,7 @@ def make_night_name(params, nightname, path):
 
     # if full path exists then just return
     if os.path.exists(full_path):
-        return
+        return full_path
     # else try to create it
     else:
         try:
@@ -289,11 +396,12 @@ def make_night_name(params, nightname, path):
                                     targs=eargs, func_name=func_name)
     # try to see if path exists one last time
     if os.path.exists(full_path):
-        return
+        return full_path
     else:
         eargs = [rel_path, path, func_name]
         raise DrsCodedException('09-002-00003', level='error',
                                 targs=eargs, func_name=func_name)
+
 
 # =============================================================================
 # Start of code

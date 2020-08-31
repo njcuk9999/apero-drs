@@ -139,7 +139,7 @@ raw_lfc_lfc = drs_finput('RAW_LFC_LFC', KW_CCAS='pos_rs', KW_CREF='pos_rs',
 raw_file.addset(raw_lfc_lfc)
 
 raw_lfc_fp = drs_finput('RAW_LFC_FP', KW_CCAS='pos_rs', KW_CREF='pos_fp',
-                         filetype='.fits', suffix='', KW_OBSTYPE='ALIGN')
+                        filetype='.fits', suffix='', KW_OBSTYPE='ALIGN')
 raw_file.addset(raw_lfc_fp)
 
 # -----------------------------------------------------------------------------
@@ -314,8 +314,8 @@ pp_lfc_lfc = drs_finput('LFC_LFC', KW_DPRTYPE='LFC_LFC',
 pp_file.addset(pp_lfc_lfc)
 
 pp_lfc_fp = drs_finput('LFC_FP', KW_DPRTYPE='LFC_FP',
-                        filetype='.fits', suffix='_pp', intype=raw_lfc_fp,
-                        inext='.fits', outfunc=out.general_file)
+                       filetype='.fits', suffix='_pp', intype=raw_lfc_fp,
+                       inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_lfc_fp)
 # -----------------------------------------------------------------------------
 #  object
@@ -667,11 +667,11 @@ out_ext_s1d_v = drs_finput('EXT_S1D_V', KW_OUTPUT='EXT_S1D_V',
 
 # fp line file from night
 out_ext_fplines = drs_finput('EXT_FPLIST', KW_OUTPUT='EXT_FPLIST',
-                                    fibers=['AB', 'A', 'B', 'C'],
-                                    filetype='.fits', remove_insuffix=True,
-                                    intype=[out_ext_e2ds, out_ext_e2dsff],
-                                    suffix='_ext_fplines',
-                                    outfunc=out.general_file)
+                             fibers=['AB', 'A', 'B', 'C'],
+                             filetype='.fits', remove_insuffix=True,
+                             intype=[out_ext_e2ds, out_ext_e2dsff],
+                             suffix='_ext_fplines',
+                             outfunc=out.general_file)
 
 # add extract outputs to output fileset
 out_file.addset(out_ext_e2ds)
@@ -876,19 +876,19 @@ out_wave_ll_table = drs_input('WAVE_FPLLTABL', KW_OUTPUT='WAVE_FPLLTAB',
 
 # hc line file from night
 out_wave_hclist = drs_finput('WAVE_HCLIST', KW_OUTPUT='WAVE_HCLIST',
-                                    fibers=['A', 'B'],
-                                    filetype='.fits',
-                                    intype=[out_ext_e2ds, out_ext_e2dsff],
-                                    suffix='_wave_hclines',
-                                    outfunc=out.calib_file)
+                             fibers=['A', 'B'],
+                             filetype='.fits',
+                             intype=[out_ext_e2ds, out_ext_e2dsff],
+                             suffix='_wave_hclines',
+                             outfunc=out.calib_file)
 
 # fp line file from night
 out_wave_fplist = drs_finput('WAVE_FPLIST', KW_OUTPUT='WAVE_FPLIST',
-                                    fibers=['A', 'B'],
-                                    filetype='.fits',
-                                    intype=[out_ext_e2ds, out_ext_e2dsff],
-                                    suffix='_wave_fplines',
-                                    outfunc=out.calib_file)
+                             fibers=['A', 'B'],
+                             filetype='.fits',
+                             intype=[out_ext_e2ds, out_ext_e2dsff],
+                             suffix='_wave_fplines',
+                             outfunc=out.calib_file)
 
 # add wave outputs to output fileset
 out_file.addset(out_wave_hc)
@@ -935,12 +935,11 @@ out_tellu_conv = drs_ninput('TELLU_CONV', KW_OUTPUT='TELLU_CONV',
                             dbname='telluric', dbkey='TELLU_CONV',
                             outfunc=out.general_file)
 
-
 # tapas file in format for pre-cleaning
 out_tellu_spl_npy = drs_ninput('TELLU_TAPAS', filetype='.npy',
-                                basename='tapas_spl.npy',
-                                dbname='telluric', dbkey='TELLU_TAPAS',
-                                outfunc=out.set_file)
+                               basename='tapas_spl.npy',
+                               dbname='telluric', dbkey='TELLU_TAPAS',
+                               outfunc=out.set_file)
 
 # transmission map
 out_tellu_trans = drs_finput('TELLU_TRANS', KW_OUTPUT='TELLU_TRANS',
@@ -1093,7 +1092,6 @@ out_ccf_fits = drs_finput('CCF_RV', KW_OUTPUT='CCF_RV',
                           outfunc=out.general_file)
 
 out_file.addset(out_ccf_fits)
-
 
 # -----------------------------------------------------------------------------
 # exposure map

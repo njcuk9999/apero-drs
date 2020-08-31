@@ -11,8 +11,13 @@ Created on 2019-01-18 at 14:44
 """
 import importlib
 import numpy as np
+from pathlib import Path
+from types import ModuleType
+from typing import Any, List, Tuple, Union
 
 from apero.base import base
+from apero.base import drs_base_classes as base_class
+from apero.base import drs_misc
 from apero.base import drs_exceptions
 from apero.core import constants
 from apero.core.instruments.default import pseudo_const
@@ -37,15 +42,70 @@ DefaultConstants = pseudo_const.PseudoConstants
 # get error
 ConfigError = drs_exceptions.ConfigError
 DrsHeaderError = drs_exceptions.DrsHeaderError
+# get display func
+display_func = drs_misc.display_func
 
 
 # =============================================================================
 # Define Constants class (pseudo constants)
 # =============================================================================
 class PseudoConstants(DefaultConstants):
-    def __init__(self, instrument=None):
+    def __init__(self, instrument: Union[str, None] = None):
+        """
+        Pseudo Constants constructor
+
+        :param instrument: str, the drs instrument name
+        """
+        # set class name
+        self.class_name = 'PsuedoConstants'
+        # set function name
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
+        # set instrument name
         self.instrument = instrument
-        DefaultConstants.__init__(self, instrument)
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set function name
+        _ = display_func(None, '__getstate__', __NAME__, self.class_name)
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # set function name
+        _ = display_func(None, '__setstate__', __NAME__, self.class_name)
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        string representation of PseudoConstants
+        :return:
+        """
+        # set function name
+        _ = display_func(None, '__str__', __NAME__, self.class_name)
+        # return string representation
+        return self.__repr__()
+
+    def __repr__(self) -> str:
+        """
+        string representation of PseudoConstants
+        :return:
+        """
+        # set function name
+        _ = display_func(None, '__repr__', __NAME__, self.class_name)
+        # return string representation
+        return '{0}[{1}]'.format(self.class_name, self.instrument)
 
     # -------------------------------------------------------------------------
     # OVERWRITE PSEUDO-CONSTANTS from constants.default.pseudo_const.py here
@@ -54,19 +114,62 @@ class PseudoConstants(DefaultConstants):
     # =========================================================================
     # File and Recipe definitions
     # =========================================================================
-    def FILEMOD(self):
+    def FILEMOD(self) -> ModuleType:
+        """
+        The import for the file definitions
+        :return: file_definitions
+        """
+        # set function name
+        func_name = display_func(None, 'FILEMOD', __NAME__, self.class_name)
+        # set module name
         module_name = 'apero.core.instruments.nirps_ha.file_definitions'
-        return importlib.import_module(module_name)
+        # try to import module
+        try:
+            return importlib.import_module(module_name)
+        except Exception as e:
+            # raise coded exception
+            eargs = [module_name, 'system', func_name, type(e), str(e), '']
+            ekwargs = dict(codeid='00-000-00003', level='error',
+                           targs=eargs, func_name=func_name)
+            raise drs_exceptions.DrsCodedException(**ekwargs)
 
-    def RECIPEMOD(self):
+    def RECIPEMOD(self) -> ModuleType:
+        """
+        The import for the recipe defintions
+
+        :return: file_definitions
+        """
+        # set function name
+        func_name = display_func(None, 'RECIPEMOD', __NAME__, self.class_name)
+        # set module name
         module_name = 'apero.core.instruments.nirps_ha.recipe_definitions'
-        return importlib.import_module(module_name)
+        # try to import module
+        try:
+            return importlib.import_module(module_name)
+        except Exception as e:
+            # raise coded exception
+            eargs = [module_name, 'system', func_name, type(e), str(e), '']
+            ekwargs = dict(codeid='00-000-00003', level='error',
+                           targs=eargs, func_name=func_name)
+            raise drs_exceptions.DrsCodedException(**ekwargs)
 
     # =========================================================================
     # HEADER SETTINGS
     # =========================================================================
+    def VALID_RAW_FILES(self) -> List[str]:
+        """
+        Return the extensions that are valid for raw files
+
+        :return: a list of strings of valid extensions
+        """
+        # set function name
+        _ = display_func(None, 'VALID_RAW_FILES', __NAME__, self.class_name)
+        # set valid extentions
+        valid = ['.fits']
+        return valid
+
     # noinspection PyPep8Naming
-    def FORBIDDEN_COPY_KEYS(self):
+    def FORBIDDEN_COPY_KEYS(self) -> List[str]:
         """
         Defines the keys in a HEADER file not to copy when copying over all
         HEADER keys to a new fits file
@@ -74,6 +177,9 @@ class PseudoConstants(DefaultConstants):
         :return forbidden_keys: list of strings, the keys in a HEADER file not
                                 to copy from and old fits file
         """
+        # set function name
+        _ = display_func(None, 'FORBIDDEN_COPY_KEYS', __NAME__, self.class_name)
+        # set forbidden keys
         forbidden_keys = ['SIMPLE', 'BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2',
                           'EXTEND', 'COMMENT', 'CRVAL1', 'CRPIX1', 'CDELT1',
                           'CRVAL2', 'CRPIX2', 'CDELT2', 'BSCALE', 'BZERO',
@@ -81,11 +187,11 @@ class PseudoConstants(DefaultConstants):
         # return keys
         return forbidden_keys
 
-    def HEADER_FIXES(self, **kwargs):
+    def HEADER_FIXES(self, params: Any, recipe: Any, header: Any,
+                     hdict: Any, filename: str) -> Any:
         """
-        For SPIRou the following keys may or may not be present (older data
+        For NIRPS_HA the following keys may or may not be present (older data
         may need these adding):
-
 
         KW_TARGET_TYPE:   if KW_OBSTYPE=="OBJECT"
                                     TRG_TYPE = "SKY" if a sky observation
@@ -93,16 +199,19 @@ class PseudoConstants(DefaultConstants):
                           if KW_OBSTYPE!="OBJECT"
                                     TRG_TYPE = ""
 
-        :param header: DrsFitsFile header
+        :param params: ParamDict, the parameter dictionary of constants
+        :param recipe: DrsRecipe instance, the recipe instance the call came
+                       from
+        :param header: drs_fits.Header or astropy.io.fits.Header - containing
+                       key words, can be unset if hdict set
+        :param hdict:  drs_fits.Header, alternate source for keys, can be
+                       unset if header set
+        :param filename: str, used for filename reported in exceptions
 
         :return: the fixed header
         """
-        # get arguments from kwargs
-        params = kwargs.get('params')
-        recipe = kwargs.get('recipe')
-        header = kwargs.get('header')
-        hdict = kwargs.get('hdict')
-        filename = kwargs.get('filename')
+        # set function name
+        _ = display_func(params, 'HEADER_FIXES', __NAME__, self.class_name)
         # get keys from params
         kwobjname = params['KW_OBJNAME'][0]
         kwtrgtype = params['KW_TARGET_TYPE'][0]
@@ -114,44 +223,53 @@ class PseudoConstants(DefaultConstants):
         if kwobjname not in header:
             header, hdict = clean_obj_name(params, header, hdict,
                                            filename=filename)
-
         # ------------------------------------------------------------------
         # Deal with TRG_TYPE
         # ------------------------------------------------------------------
         if kwtrgtype not in header:
             header, hdict = get_trg_type(params, header, hdict,
                                          filename=filename)
-
         # ------------------------------------------------------------------
         # Deal with MIDMJD
         # ------------------------------------------------------------------
         if kwmidobstime not in header:
             header, hdict = get_mid_obs_time(params, header, hdict,
                                              filename=filename)
-
         # ------------------------------------------------------------------
         # Deal with dprtype
         # ------------------------------------------------------------------
         if kwdprtype not in header:
             header, hdict = get_dprtype(params, recipe, header, hdict,
                                         filename=filename)
-
         # ------------------------------------------------------------------
         # Return header
         # ------------------------------------------------------------------
         return header, hdict
 
-    def DRS_OBJ_NAME(self, objname):
-        return clean_obj_name(objname=objname)
+    def DRS_OBJ_NAME(self, objname: str) -> str:
+        """
+        Clean and standardize an object name
+        i.e. make upper case and remove white spaces
 
-    def VALID_RAW_FILES(self):
-        valid = ['.fits']
-        return valid
+        :param objname: str, input object name
+        :return:
+        """
+        # set function name
+        _ = display_func(None, 'DRS_OBJ_NAME', __NAME__, self.class_name)
+        # clean object name
+        return clean_obj_name(objname=objname)
 
     # =========================================================================
     # DISPLAY/LOGGING SETTINGS
     # =========================================================================
-    def SPLASH(self):
+    def SPLASH(self) -> List[str]:
+        """
+        The splash image for the instrument
+        :return:
+        """
+        # set function name
+        _ = display_func(None, 'SPLASH', __NAME__, self.class_name)
+        # set the logo
         logo = ["                                                                                                    ",
                 "    %%,                *##*      *##(      *#####(/*,           (######(/,            *#&&&&,  ,    ",
                 "    **#%               /**/      /**/      /********/(&%        /********/(       /#/*******(&%     ",
@@ -175,13 +293,17 @@ class PseudoConstants(DefaultConstants):
     # =========================================================================
     def FIBER_SETTINGS(self, params, fiber):
         """
-        Get the fiber settings
+        Get the fiber settings for localisation setup for a specific fiber
+        (keys must be stored in params as a set of parameters with all fibers
+         provided for i.e. MYKEY_AB, MYKEY_A, MYKEY_B, MYKEY_C)
 
-        :param params:
-        :param fiber:
+        :param params: ParamDict the parameter dictionary of constants
+        :param fiber: str, the fiber to get keys for
         :return:
         """
-        source = __NAME__ + '.FIBER_SETTINGS()'
+        # set function name
+        func_name = display_func(None, 'FIBER_SETTINGS', __NAME__,
+                                 self.class_name)
         # list fiber keys
         keys = ['FIBER_FIRST_ORDER_JUMP', 'FIBER_MAX_NUM_ORDERS',
                 'FIBER_SET_NUM_FIBERS']
@@ -198,25 +320,28 @@ class PseudoConstants(DefaultConstants):
             # if key exists add it for this fiber
             else:
                 fiberparams[key] = params[key1]
-                fiberparams.set_source(key, source)
+                fiberparams.set_source(key, func_name)
         # return params
         return fiberparams
 
-    def FIBER_LOC_TYPES(self, fiber):
+    def FIBER_LOC_TYPES(self, fiber: str) -> str:
         """
-        For localisation only AB and C loco files exist thus need to
-        use AB for AB or A or B fibers and use C for the C fiber
-        note only having AB and C files also affects FIBER_LOC_COEFF_EXT
+        The fiber localisation types to use (i.e. some fiber types should use
+        another fiber for localisation e.g. SPIRou A or B --> AB
 
-        :param fiber:
-        :return:
+        :param fiber: str, the input fiber
+
+        :return: str, the fiber to use for input fiber
         """
+        # set function name
+        _ = display_func(None, 'FIBER_LOC_TYPES', __NAME__, self.class_name)
+        # check fiber against list
         if fiber in ['A']:
             return 'A'
         else:
             return 'B'
 
-    def FIBER_WAVE_TYPES(self, fiber):
+    def FIBER_WAVE_TYPES(self, fiber: str) -> str:
         """
         For wave only AB and C loco files exist thus need to
         use AB for AB or A or B fibers and use C for the C fiber
@@ -225,12 +350,15 @@ class PseudoConstants(DefaultConstants):
         :param fiber:
         :return:
         """
+        # set function name
+        _ = display_func(None, 'FIBER_WAVE_TYPES', __NAME__, self.class_name)
+        # check fiber against list
         if fiber in ['A']:
             return 'A'
         else:
             return 'B'
 
-    def FIBER_DPR_POS(self, dprtype, fiber):
+    def FIBER_DPR_POS(self, dprtype: str, fiber: str) -> str:
         """
         When we have a DPRTYPE figure out what is in the fiber requested
 
@@ -240,23 +368,30 @@ class PseudoConstants(DefaultConstants):
 
         :return:
         """
+        # set function name
+        _ = display_func(None, 'FIBER_DPR_POS', __NAME__, self.class_name)
+        # split DPRTYPE
         dprtypes = dprtype.split('_')
-
+        # check fiber type
         if fiber in ['A']:
             return dprtypes[0]
         else:
             return dprtypes[1]
 
-    def FIBER_LOC_COEFF_EXT(self, coeffs, fiber):
+    def FIBER_LOC_COEFF_EXT(self, coeffs: np.ndarray,
+                            fiber: str) -> Tuple[np.ndarray, int]:
         """
         Extract the localisation coefficients based on how they are stored
         for nirps we have either A or B of size 49
         orders.
 
-        :param coeffs:
-        :param fiber:
-        :return:
+        :param coeffs: the input localisation coefficients
+        :param fiber: str, the fiber
+
+        :returns: the update coefficients and the number of orders
         """
+        # set function name
+        _ = display_func(None, 'FIBER_LOC_COEFF_EXT', __NAME__, self.class_name)
         # for A we take all of them (as there are only the A components)
         if fiber == 'A':
             acc = coeffs
@@ -280,17 +415,36 @@ class PseudoConstants(DefaultConstants):
 
         :return:
         """
+        # set function name
+        _ = display_func(None, 'FIBER_DATA_TYPE', __NAME__, self.class_name)
+        # check fiber type
         if fiber in ['A']:
             return dprtype.split('_')[0]
         else:
             return dprtype.split('_')[1]
 
-    def FIBER_CCF(self):
+    def FIBER_CCF(self) -> Tuple[str, str]:
+        """
+        Get the science and reference fiber to use in the CCF process
+
+        :return: the science and reference fiber
+        """
+        # set function name
+        _ = display_func(None, 'FIBER_CCF', __NAME__, self.class_name)
+        # set the fibers and return
         science = 'A'
         reference = 'B'
         return science, reference
 
-    def FIBER_KINDS(self):
+    def FIBER_KINDS(self) -> Tuple[List[str], str]:
+        """
+        Set the fiber kinds (those to be though as as "science" and those to be
+        though as as "reference" fibers.
+
+        :return: list of science fibers and the reference fiber
+        """
+        # set function name
+        _ = display_func(None, 'FIBER_KINDS', __NAME__, self.class_name)
         # can be multiple science channels
         science = ['A']
         # can only be one reference
@@ -298,24 +452,40 @@ class PseudoConstants(DefaultConstants):
         # return science and reference fiber(s)
         return science, reference
 
-    def INDIVIDUAL_FIBERS(self):
+    def INDIVIDUAL_FIBERS(self) -> List[str]:
+        """
+        List the individual fiber names
+
+        :return: list of strings, the individual fiber names
+        """
+        # set function name
+        _ = display_func(None, 'INDIVIDUAL_FIBERS', __NAME__, self.class_name)
         # list the individual fiber names
         return ['A', 'B']
 
     # =========================================================================
     # BERV_KEYS
     # =========================================================================
-    def BERV_INKEYS(self):
+    def BERV_INKEYS(self) -> base_class.ListDict:
+        """
+        Define how we get (INPUT) BERV parameters
+        stored as a dictionary of list where each list has format:
 
-        # FORMAT:   [in_key, out_key, kind, default]
-        #
-        #    Where 'in_key' is the header key or param key to use
-        #    Where 'out_key' is the output header key to save to
-        #    Where 'kind' is 'header' or 'const'
-        #    Where default is the default value to assign
-        #
-        #    Must include ra and dec
-        inputs = dict()
+        [in_key, out_key, kind, default]
+
+           Where 'in_key' is the header key or param key to use
+           Where 'out_key' is the output header key to save to
+           Where 'kind' is 'header' or 'const'
+           Where default is the default value to assign
+
+           Must include ra and dec
+
+        :return: dictionary of list with above format
+        """
+        # set function name
+        _ = display_func(None, 'BERV_INKEYS', __NAME__, self.class_name)
+        #     [in_key, out_key, kind, default]
+        inputs = base_class.ListDict()
         inputs['gaiaid'] = ['KW_GAIA_ID', 'KW_BERVGAIA_ID', 'header', 'None']
         inputs['objname'] = ['KW_OBJNAME', 'KW_BERVOBJNAME', 'header', 'None']
         inputs['ra'] = ['KW_OBJRA', 'KW_BERVRA', 'header', None]
@@ -345,15 +515,27 @@ class PseudoConstants(DefaultConstants):
         # return inputs
         return inputs
 
-    def BERV_OUTKEYS(self):
+    def BERV_OUTKEYS(self) -> base_class.ListDict:
+        """
+        Define how we store (OUTPUT) BERV parameters
+        stored as a dictionary of list where each list has format:
 
-        # FORMAT:   [in_key, out_key, kind, dtype]
-        #
-        #    Where 'in_key' is the header key or param key to use
-        #    Where 'out_key' is the output header key to save to
-        #    Where 'kind' is 'header' or 'const'
-        #    Where dtype is the expected data type
-        outputs = dict()
+        [in_key, out_key, kind, default]
+
+           Where 'in_key' is the header key or param key to use
+           Where 'out_key' is the output header key to save to
+           Where 'kind' is 'header' or 'const'
+           Where default is the default value to assign
+
+           Must include ra and dec
+
+        :return: dictionary of list with above format
+        """
+        # set function name
+        _ = display_func(None, 'BERV_OUTKEYS', __NAME__, self.class_name)
+        # set up storage
+        #     [in_key, out_key, kind, default]
+        outputs = base_class.ListDict()
         outputs['berv'] = ['BERV', 'KW_BERV', 'header', float]
         outputs['bjd'] = ['BJD', 'KW_BJD', 'header', float]
         outputs['bervmax'] = ['BERV_MAX', 'KW_BERVMAX', 'header', float]
@@ -372,22 +554,29 @@ class PseudoConstants(DefaultConstants):
         # return outputs
         return outputs
 
-    # =========================================================================
-    # OTHER KEYS
-    # =========================================================================
-    def MASTER_DB_KEYS(self):
-        # define a list of database keys that are master files
-        keys = ['DARKM', 'FPMASTER', 'SHAPEX', 'SHAPEY', 'LEAKM',
-                'WAVEM', 'WAVEM_D']
-        # return keys
-        return keys
-
 
 # =============================================================================
 # Functions used by pseudo const (instrument specific)
 # =============================================================================
-def clean_obj_name(params=None, header=None, hdict=None, objname=None,
-                   filename=None):
+def clean_obj_name(params: ParamDict = None, header: Any = None,
+                   hdict: Any = None, objname: Union[str, None] = None,
+                   filename: Union[None, str, Path] = None
+                   ) -> Union[Tuple[Any, Any], str]:
+    """
+    Clean an object name (remove spaces and make upper case strip white space)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param header: drs_fits.Header or astropy.io.fits.Header, the header to
+                   check for objname (if "objname" not set)
+    :param hdict: drs_fits.Header the output header dictionary to update with
+                  objname (as well as "header" if "objname" not set)
+    :param objname: str, the uncleaned object name to clean
+    :param filename: str, the filename header came from (for exception)
+
+    :return: if objname set return str, else return the updated header and hdict
+    """
+    # set function name
+    _ = display_func(params, 'clean_obj_name', __NAME__)
     # deal with no objname --> header mode
     if objname is None:
         return_header = True
@@ -419,7 +608,23 @@ def clean_obj_name(params=None, header=None, hdict=None, objname=None,
         return objectname
 
 
-def get_trg_type(params, header, hdict, filename=None):
+def get_trg_type(params: ParamDict, header: Any, hdict: Any,
+                 filename: Union[None, str, Path] = None) -> Tuple[Any, Any]:
+    """
+    Make sure "header" has TRG_TYPE key (and if not try to guess what it should
+    be)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param header: drs_fits.Header or astropy.io.fits.Header, the header to
+                   check for objname (if "objname" not set)
+    :param hdict: drs_fits.Header the output header dictionary to update with
+                  objname (as well as "header" if "objname" not set)
+    :param filename: str, the filename header came from (for exception)
+
+    :return: the updated header and hdict
+    """
+    # set function name
+    _ = display_func(params, 'get_trg_type', __NAME__)
     # get keys from params
     kwobjname = params['KW_OBJNAME'][0]
     kwobstype = params['KW_OBSTYPE'][0]
@@ -449,8 +654,24 @@ def get_trg_type(params, header, hdict, filename=None):
     return header, hdict
 
 
-def get_mid_obs_time(params, header, hdict, filename=None):
-    func_name = __NAME__ + '.get_mid_obs_time()'
+def get_mid_obs_time(params: ParamDict, header: Any, hdict: Any,
+                     filename: Union[None, str, Path] = None
+                     ) -> Tuple[Any, Any]:
+    """
+    Make sure "header" has MJDMID (the mid expsoure time)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param header: drs_fits.Header or astropy.io.fits.Header, the header to
+                   check for objname (if "objname" not set)
+    :param hdict: drs_fits.Header the output header dictionary to update with
+                  objname (as well as "header" if "objname" not set)
+    :param filename: str, the filename header came from (for exception)
+
+    :return: the updated header and hdict
+    """
+    # set function name
+    _ = display_func(params, 'get_mid_obs_time', __NAME__)
+    # get keys from params
     kwmidobstime = params['KW_MID_OBS_TIME'][0]
     kwmidcomment = params['KW_MID_OBS_TIME'][2]
     kwmidmethod = params['KW_MID_OBSTIME_METHOD'][0]
@@ -502,23 +723,20 @@ def get_mid_obs_time(params, header, hdict, filename=None):
     return header, hdict
 
 
-def get_header_end_time(params, header, filename=None):
+def get_header_end_time(params: ParamDict, header: Any,
+                        filename: Union[str, None, Path] = None) -> Time:
     """
     Get acquisition time from header
 
-    :param params:
-    :param hdr:
-    :param out_fmt:
-    :param func: str, input function name
-    :param name:
+    :param params: ParamDict, the parameter dictionary of constants
+    :param header: drs_fits.Header or astropy.io.fits.Header - the header to get
+                   time from
+    :param filename: str, the filename header came from (for exception)
 
-    :type params: ParamDict
-    :type hdr: Header
-    :type out_fmt: str
-
-    :return:
+    :return: astropy.Time instance for the header time
     """
-    # ----------------------------------------------------------------------
+    # set function name
+    _ = display_func(params, 'get_header_end_time', __NAME__)
     # get acqtime
     time_key = params['KW_MJDEND'][0]
     timefmt = params.instances['KW_MJDEND'].datatype
@@ -533,7 +751,23 @@ def get_header_end_time(params, header, filename=None):
     return Time(timetype(rawtime), format=timefmt)
 
 
-def get_dprtype(params, recipe, header, hdict, filename=None):
+def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
+                filename: Union[None, str, Path] = None) -> Tuple[Any, Any]:
+    """
+    Get the DPRTYPE from the header
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: DrsRecipe instance, the recipe call from
+    :param header: drs_fits.Header or astropy.io.fits.Header, the header to
+                   check for objname (if "objname" not set)
+    :param hdict: drs_fits.Header the output header dictionary to update with
+                  objname (as well as "header" if "objname" not set)
+    :param filename: str, the filename header came from (for exception)
+
+    :return: the updated header and hdict
+    """
+    # set function name
+    _ = display_func(params, 'get_dprtype', __NAME__)
     # set key
     kwdprtype = params['KW_DPRTYPE'][0]
     kwdprcomment = params['KW_DPRTYPE'][1]
