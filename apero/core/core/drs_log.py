@@ -15,13 +15,12 @@ Version 0.0.1
 """
 from astropy.table import Table
 from collections import OrderedDict
-import copy
 import numpy as np
 import os
 from pathlib import Path
 import sys
 from time import sleep
-from typing import Any, Dict, List, Type, Union
+from typing import Any, Dict, List, Tuple, Union
 
 from apero.base import base
 from apero.base import drs_exceptions
@@ -358,7 +357,7 @@ class Logger:
         # ---------------------------------------------------------------------
         # Get the key code (default is a whitespace)
         code = self.pconstant.LOG_TRIG_KEYS().get(key, ' ')
-        report = self.pconstant.REPORT_KEYS().get(key, False)
+        # report = self.pconstant.REPORT_KEYS().get(key, False)
         # get messages
         if type(message) is HelpEntry:
             raw_message2 = msg_obj.get(self.d_helptext, report=True,
@@ -664,7 +663,7 @@ class Printer:
 class RecipeLog:
 
     def __init__(self, name: str, params: ParamDict, level: int = 0,
-                 wlog: Union[None, Logger] = None):
+                 logger: Union[None, Logger] = None):
         """
         Constructor for the recipe log
 
@@ -672,7 +671,7 @@ class RecipeLog:
         :param params: ParamDict, the constants parameter dictionary
         :param level: int, the level of this log 0 is root, higher numbers are
                       children of the root
-        :param wlog:
+        :param logger: if set the WLOG (Logger) instance to use
         """
         # set class name
         self.class_name = 'RecipeLog'
@@ -693,7 +692,7 @@ class RecipeLog:
         # the parameter dictionary of constants
         self.params = params
         # the Logger instances (or None)
-        self.wlog = wlog
+        self.wlog = logger
         # set the pid
         self.pid = str(params['PID'])
         # set the human time
@@ -928,7 +927,7 @@ class RecipeLog:
         # get new level
         level = self.level + 1
         # create new log
-        newlog = RecipeLog(self.name, params, level=level, wlog=self.wlog)
+        newlog = RecipeLog(self.name, params, level=level, logger=self.wlog)
         # copy from parent
         newlog.copy(self)
         # record level criteria
@@ -1067,7 +1066,6 @@ class RecipeLog:
         else:
             self.lfunc(params, self.lockfile, self._writer)
 
-
     def _input_str(self, inputs: Union[ParamDict, dict],
                    argdict: Dict[Any], kind: str = 'arg') -> str:
         """
@@ -1165,9 +1163,10 @@ class RecipeLog:
         # ------------------------------------------------------------------
         # check that directory exists
         if not os.path.exists(path):
+            # noinspection PyBroadException
             try:
                 os.makedirs(path)
-            except:
+            except Exception as _:
                 # RecipeLogError: Cannot make path {0} for recipe log.'
                 eargs = [path]
                 emsg = TextEntry('00-005-00014', args=eargs)
@@ -1221,7 +1220,7 @@ class RecipeLog:
         # return row
         return row
 
-    def _get_rows(self) -> List[OrderedDict]:
+    def get_rows(self) -> List[OrderedDict]:
         """
         Get all rows for a entry (including all rows from the child Recipelog
         entries
@@ -1238,7 +1237,7 @@ class RecipeLog:
         else:
             # else we have children
             for child in self.set:
-                rows += child._get_rows()
+                rows += child.get_rows()
         # return rows
         return rows
 
@@ -1288,7 +1287,7 @@ class RecipeLog:
                 table = table[~mask]
         # ------------------------------------------------------------------
         # generate row(s) to add to table
-        rows = self._get_rows()
+        rows = self.get_rows()
         # ------------------------------------------------------------------
         # add rows to table
         # ------------------------------------------------------------------
@@ -1348,11 +1347,10 @@ wlog = Logger()
 # =============================================================================
 # Define Logger functions
 # =============================================================================
-
-
-
-def printlogandcmd(logobj, params, message, key, human_time, option, wrap,
-                   colour):
+def printlogandcmd(logobj: Logger, params: ParamDict,
+                   message: Union[str, List[str]], key: str,
+                   human_time: str, option: str, wrap: bool = True,
+                   colour: str = 'green'):
     """
     Prints log to standard output/screen (for internal use only when
     logger cannot be used)
@@ -1402,14 +1400,15 @@ def printlogandcmd(logobj, params, message, key, human_time, option, wrap,
             printlog(logobj, params, cmd, key, colour)
 
 
-def debug_start(logobj, params, raise_exception):
+def debug_start(logobj: Logger, params: ParamDict,
+                raise_exception: bool = True):
     """
     Initiate debugger (for DEBUG mode) - will start when an error is raised
     if 'DRS_DEBUG' is set to True or 1 (in config.py)
 
     :param logobj: logger instance, the logger object (for pconstant)
-    :param errorstring: string, the error to pipe to Sys.Exit after
-                        debugging options selected
+    :param params: the ParamDict of constants
+    :param raise_exception: bool, if True raises an exception on error
 
     uses pdb to do python debugging
 
@@ -1469,33 +1468,38 @@ def debug_start(logobj, params, raise_exception):
                 logobj.pconstant.EXIT(params)()
         elif raise_exception:
             logobj.pconstant.EXIT(params)()
-    except:
+    except Exception as _:
         if raise_exception:
             logobj.pconstant.EXIT(params)()
 
 
-def display_func(params=None, name=None, program=None, class_name=None):
+def display_func(params: Union[ParamDict, None] = None,
+                 name: Union[str, None] = None,
+                 program: Union[str, None] = None,
+                 class_name: Union[str, None] = None) -> str:
+    """
+    Alias to display function (but always with wlog set from Logger()
+
+    :param params: None or ParamDict (containing "INPUTS" for breakfunc/
+                   breakpoint)
+    :param name: str or None - if set is the name of the function
+                 (i.e. def myfunction   name = "myfunction")
+                 if unset, set to "Unknown"
+    :param program: str or None, the program or recipe the function is defined
+                    in, if unset not added to the output string
+    :param class_name: str or None, the class name, if unset not added
+                       (i.e. class myclass   class_name = "myclass"
+
+    :return: a properly constructed string representation of where the
+              function is.
+    """
     # run the display function
     return drs_misc.display_func(params, name, program, class_name, wlog=wlog,
                                  textentry=TextEntry)
 
 
-def _get_prev_count(params, previous):
-    # get the debug list
-    debug_list = params['DEBUG_FUNC_LIST'][:-1]
-    # get the number of iterations
-    n_elements = 0
-    # loop around until we get to
-    for row in range(len(debug_list))[::-1]:
-        if debug_list[row] != previous:
-            break
-        else:
-            n_elements += 1
-    # return number of element founds
-    return n_elements
-
-
-def warninglogger(p, w, funcname=None):
+def warninglogger(params: ParamDict, warnlist: Union[list, str],
+                  funcname: Union[str, None] = None):
     """
     Warning logger - takes "w" - a list of caught warnings and pipes them on
     to the log functions. If "funcname" is not None then t "funcname" is
@@ -1505,34 +1509,37 @@ def warninglogger(p, w, funcname=None):
     to catch warnings use the following:
 
     >> import warnings
-    >> with warnings.catch_warnings(record=True) as w:
+    >> with warnings.catch_warnings(record=True) as warnlist:
     >>     code_to_generate_warnings()
-    >> warninglogger(w, 'some name for logging')
+    >> warninglogger(parmas, warnlist, 'some function name for logging')
 
-    :param p: ParamDict, the constants dictionary passed in call
-    :param w: list of warnings, the list of warnings from
-               warnings.catch_warnings
+    :param params: ParamDict, the constants dictionary passed in call
+    :param warnlist: list of warnings, the list of warnings from
+                     warnings.catch_warnings
     :param funcname: string or None, if string then also pipes "funcname" to the
                      warning message (intended to be used to identify the code/
                      function/module warning was generated in)
     :return:
     """
-    textdict = TextDict(p['INSTRUMENT'], p['LANGUAGE'])
-
+    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # get pconstant
-    pconstant = constants.pload(p['INSTRUMENT'])
+    pconstant = constants.pload(params['INSTRUMENT'])
     log_warnings = pconstant.LOG_CAUGHT_WARNINGS()
-
+    # deal with warnlist as string
+    if isinstance(warnlist, str):
+        warnlist = [warnlist]
     # deal with warnings
     displayed_warnings = []
-    if log_warnings and (len(w) > 0):
-        for wi in w:
+    if log_warnings and (len(warnlist) > 0):
+        for warnitem in warnlist:
+
             # if we have a function name then use it else just report the
             #    line number (not recommended)
             if funcname is None:
-                wargs = [wi.lineno, '', wi.message]
+                wargs = [warnitem.lineno, '', warnitem.message]
             else:
-                wargs = [wi.lineno, '({0})'.format(funcname), wi.message]
+                wargs = [warnitem.lineno, '({0})'.format(funcname),
+                         warnitem.message]
             # log message
             key = '10-005-00001'
             wmsg = textdict[key].format(*wargs)
@@ -1540,16 +1547,21 @@ def warninglogger(p, w, funcname=None):
             if wmsg in displayed_warnings:
                 continue
             else:
-                wlog(p, 'warning', TextEntry(key, args=wargs))
+                wlog(params, 'warning', TextEntry(key, args=wargs))
                 displayed_warnings.append(wmsg)
 
 
-def get_logfilepath(logobj, params, use_group=True):
+def get_logfilepath(logobj: Logger, params: ParamDict,
+                    use_group: bool = True) -> str:
     """
     Construct the log file path and filename (normally from "DRS_DATA_MSG"
     generates an ConfigError exception.
 
     "DRS_DATA_MSG" is defined in "config.py"
+
+    :param logobj: wlog (Logger) instance
+    :param params: Parameter dictionary of constants
+    :param use_group: bool if True use group name in log file path
 
     :return lpath: string, the path and filename for the log file to be used
     :return warning: bool, if True print warnings about log file path
@@ -1575,7 +1587,7 @@ def get_logfilepath(logobj, params, use_group=True):
     return lpath
 
 
-def correct_level(logobj, key, level):
+def correct_level(logobj: Logger, key: str, level: str):
     """
     Decides (based on WRITE_LEVEL) whether this level ("key") is to be printed/
     logged (based on the level "level"), return True if we should log key based
@@ -1645,7 +1657,9 @@ def printlog(logobj: Logger, params: ParamDict, message: str,
         print(c1 + message + c2)
 
 
-def printcolour(logobj, params, key='all', func_name=None, colour=None):
+def printcolour(logobj: Logger, params: ParamDict, key: str = 'all',
+                func_name: Union[str, None] = None,
+                colour: Union[str, None] = None) -> Tuple[str, str]:
     """
     Get the print colour (start and end) based on "key".
     This should be used as follows:
@@ -1701,7 +1715,7 @@ def printcolour(logobj, params, key='all', func_name=None, colour=None):
     return colour1, colour2
 
 
-def override_colour(params, colour):
+def override_colour(params: ParamDict, colour: str) -> Tuple[str, str]:
     """
     Override the colour with the themed colours
 
@@ -1770,7 +1784,8 @@ def override_colour(params, colour):
     return colour1, colour2
 
 
-def writelog(logobj, params, message, key, logfilepath):
+def writelog(logobj: Logger, params: ParamDict, message: str, key: str,
+             logfilepath: str):
     """
     write message to log file (if level is correct - set by LOG_LEVEL)
 
@@ -1779,7 +1794,6 @@ def writelog(logobj, params, message, key, logfilepath):
     :param message: string, message to write to log file
     :param key: string, either "error" or "warning" or "info" or graph, this
                 gives a character code in output
-
     :param logfilepath: string, the file name to write the log to
 
     :return:
@@ -1822,11 +1836,13 @@ def writelog(logobj, params, message, key, logfilepath):
             raise ConfigError(errorobj=[emsg, logobj.textdict])
 
 
-def _clean_message(message):
+def _clean_message(message: str) -> str:
     """
     Remove colours from a message
-    :param message:
-    :return:
+
+    :param message: str, message to clean
+
+    :return: str, cleaned message
     """
     # get all attributes of Color
     all_attr = Color.__dict__
@@ -1849,7 +1865,18 @@ def _clean_message(message):
     return message
 
 
-def get_drs_data_msg(params, group=None, reset=False):
+def get_drs_data_msg(params: ParamDict, group: Union[str, None] = None,
+                     reset: bool = False) -> str:
+    """
+    Get the drs message full path (either from existing one, or create one
+    using group name)
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param group: str, the group name (if set)
+    :param reset: bool, if True recalculates drs message full path
+
+    :return: str, the drs message full path
+    """
     # if we have a full path in params we use this
     if 'DRS_DATA_MSG_FULL' in params and not reset:
         # check that path exists - if it does skip next steps
@@ -1883,9 +1910,10 @@ def get_drs_data_msg(params, group=None, reset=False):
     # ----------------------------------------------------------------------
     # try to create directory
     if not os.path.exists(dir_data_msg):
+        # noinspection PyBroadException
         try:
             os.makedirs(dir_data_msg)
-        except Exception:
+        except Exception as _:
             pass
     # ----------------------------------------------------------------------
     # if None use we have to create it
@@ -1907,6 +1935,7 @@ def get_drs_data_msg(params, group=None, reset=False):
         default_msg = os.path.join(homedir, '.terrapipe_msg/')
         # check that deafult message directory exists
         if not os.path.exists(default_msg):
+            # noinspection PyBroadException
             try:
                 os.makedirs(default_msg)
                 return default_msg
