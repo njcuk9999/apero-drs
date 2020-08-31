@@ -20,6 +20,7 @@ from types import ModuleType
 from typing import Any, List, Tuple, Union
 
 from apero.base import base
+from apero.base import drs_base_classes as base_class
 from apero.base import drs_exceptions
 from apero.base import drs_misc
 from apero.base import drs_text
@@ -674,6 +675,71 @@ class Keyword(Const):
                        default=self.default, datatype=self.datatype,
                        dataformat=self.dataformat, group=self.group,
                        author=self.author, parent=self.parent)
+
+
+class CKCaseINSDict(base_class.CaseInsensitiveDict):
+    def __init__(self, *arg, **kw):
+        """
+        Construct the Const/Keyword elements case insensitive dictionary class
+        :param arg: arguments passed to dict
+        :param kw: keyword arguments passed to dict
+        """
+        # set class name
+        self.class_name = 'CKCaseINSDict'
+        # set function name
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
+        # super from dict
+        super(CKCaseINSDict, self).__init__(*arg, **kw)
+
+    def __getitem__(self, key: str) -> Union[None, Const, Keyword]:
+        """
+        Method used to get the value of an item using "key"
+        used as x.__getitem__(y) <==> x[y]
+        where key is case insensitive
+
+        :param key: string, the key for the value returned (case insensitive)
+
+        :type key: str
+
+        :return value: list, the value stored at position "key"
+        """
+        # set function name
+        _ = display_func(None, '__getitem__', __NAME__, self.class_name)
+        # return from supers dictionary storage
+        # noinspection PyTypeChecker
+        return super(CKCaseINSDict, self).__getitem__(key)
+
+    def __setitem__(self, key: str, value: Union[None, Const, Keyword]):
+        """
+        Sets an item wrapper for self[key] = value
+        :param key: string, the key to set for the parameter
+        :param value: object, the object to set (as in dictionary) for the
+                      parameter
+
+        :type key: str
+        :type value: list
+
+        :return: None
+        """
+        # set function name
+        _ = display_func(None, '__setitem__', __NAME__, self.class_name)
+        # then do the normal dictionary setting
+        super(CKCaseINSDict, self).__setitem__(key, value)
+
+    def __str__(self):
+        """
+        Return the string representation of the class
+        :return: str, the string representation
+        """
+        return '{0}[CaseInsensitiveDict]'.format(self.class_name)
+
+    def __repr__(self) -> str:
+        """
+        Return the string representation of the class
+        :return: str, the string representation
+        """
+        return self.__str__()
+
 
 
 # =============================================================================
