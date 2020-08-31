@@ -19,7 +19,6 @@ Constants = constants.load(__INSTRUMENT__)
 # Get Help
 Help = lang.core.drs_lang_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
 
-
 # =============================================================================
 # Commonly used arguments
 # =============================================================================
@@ -702,7 +701,7 @@ cal_wave_master.set_summary_plots('SUM_WAVE_FP_IPT_CWID_LLHC',
                                   'SUM_WAVE_LITTROW_EXTRAP',
                                   'SUM_CCF_RV_FIT', 'SUM_WAVE_FIBER_COMP',
                                   'SUM_WAVENIGHT_ITERPLOT',
-                                  'SUM_WAVENIGHT_HISTPLOT',)
+                                  'SUM_WAVENIGHT_HISTPLOT', )
 cal_wave_master.set_arg(pos=0, **directory)
 cal_wave_master.set_kwarg(name='--hcfiles', dtype='files',
                           files=[sf.pp_hc1_hc1],
@@ -1048,7 +1047,6 @@ obj_mk_template.set_kwarg(**wavefile)
 # add to recipe
 recipes.append(obj_mk_template)
 
-
 # -----------------------------------------------------------------------------
 # polar recipe
 # -----------------------------------------------------------------------------
@@ -1125,7 +1123,6 @@ pol_spirou.set_kwarg(**wavefile)
 # add to recipe
 recipes.append(pol_spirou)
 
-
 # -----------------------------------------------------------------------------
 # pol_spirou_new
 # -----------------------------------------------------------------------------
@@ -1141,40 +1138,40 @@ pol_spirou_new.description = Help['FTELLU_DESC']
 pol_spirou_new.epilog = Help['FTELLU_EXAMPLE']
 pol_spirou_new.kind = 'recipe'
 pol_spirou_new.set_outputs(POL_DEG_FILE=sf.out_pol_deg,
-                       POL_NULL1=sf.out_pol_null1,
-                       POL_NULL2=sf.out_pol_null2,
-                       POL_STOKESI=sf.out_pol_stokesi,
-                       POL_LSD=sf.out_pol_lsd,
-                       S1DW_POL=sf.out_pol_s1dw,
-                       S1DV_POL=sf.out_pol_s1dv,
-                       S1DW_NULL1=sf.out_null1_s1dw,
-                       S1DV_NULL1=sf.out_null1_s1dv,
-                       S1DW_NULL2=sf.out_null2_s1dw,
-                       S1DV_NULL2=sf.out_null2_s1dv,
-                       S1DW_STOKESI=sf.out_stokesi_s1dw,
-                       S1DV_STOKESI=sf.out_stokesi_s1dv)
+                           POL_NULL1=sf.out_pol_null1,
+                           POL_NULL2=sf.out_pol_null2,
+                           POL_STOKESI=sf.out_pol_stokesi,
+                           POL_LSD=sf.out_pol_lsd,
+                           S1DW_POL=sf.out_pol_s1dw,
+                           S1DV_POL=sf.out_pol_s1dv,
+                           S1DW_NULL1=sf.out_null1_s1dw,
+                           S1DV_NULL1=sf.out_null1_s1dv,
+                           S1DW_NULL2=sf.out_null2_s1dw,
+                           S1DV_NULL2=sf.out_null2_s1dv,
+                           S1DW_STOKESI=sf.out_stokesi_s1dw,
+                           S1DV_STOKESI=sf.out_stokesi_s1dv)
 pol_spirou_new.set_debug_plots('POLAR_CONTINUUM', 'POLAR_RESULTS',
-                           'POLAR_STOKES_I', 'POLAR_LSD',
-                           'EXTRACT_S1D', 'EXTRACT_S1D_WEIGHT')
+                               'POLAR_STOKES_I', 'POLAR_LSD',
+                               'EXTRACT_S1D', 'EXTRACT_S1D_WEIGHT')
 pol_spirou_new.set_summary_plots('SUM_EXTRACT_S1D')
 pol_spirou_new.set_arg(pos=0, **directory)
 
 pol_spirou_new.set_kwarg(name='--exp1', altnames=['-1'], dtype='file',
-                     files=[sf.out_ext_e2dsff, sf.out_tellu_obj],
-                     filelogic='exclusive', required=True,
-                     default=[], helpstr='Input exposure 1')
+                         files=[sf.out_ext_e2dsff, sf.out_tellu_obj],
+                         filelogic='exclusive', required=True,
+                         default=[], helpstr='Input exposure 1')
 pol_spirou_new.set_kwarg(name='--exp2', altnames=['-2'], dtype='file',
-                     files=[sf.out_ext_e2dsff, sf.out_tellu_obj],
-                     filelogic='exclusive', required=True,
-                     default=[], helpstr='Input exposure 2')
+                         files=[sf.out_ext_e2dsff, sf.out_tellu_obj],
+                         filelogic='exclusive', required=True,
+                         default=[], helpstr='Input exposure 2')
 pol_spirou_new.set_kwarg(name='--exp3', altnames=['-3'], dtype='file',
-                     files=[sf.out_ext_e2dsff, sf.out_tellu_obj],
-                     filelogic='exclusive', required=True,
-                     default=[], helpstr='Input exposure 3')
+                         files=[sf.out_ext_e2dsff, sf.out_tellu_obj],
+                         filelogic='exclusive', required=True,
+                         default=[], helpstr='Input exposure 3')
 pol_spirou_new.set_kwarg(name='--exp4', altnames=['-4'], dtype='file',
-                     files=[sf.out_ext_e2dsff, sf.out_tellu_obj],
-                     filelogic='exclusive', required=True,
-                     default=[], helpstr='Input exposure 4')
+                         files=[sf.out_ext_e2dsff, sf.out_tellu_obj],
+                         filelogic='exclusive', required=True,
+                         default=[], helpstr='Input exposure 4')
 
 pol_spirou_new.set_kwarg(name='--lsdmask', altnames=['-m'], dtype=str,
                          helpstr='LSD mask', default='None')

@@ -18,7 +18,6 @@ Constants = param_functions.load_config(__INSTRUMENT__)
 # Get Help
 Help = lang.core.drs_lang_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
 
-
 # =============================================================================
 # Commonly used arguments
 # =============================================================================
@@ -110,7 +109,6 @@ remake_doc.set_kwarg(name='--upload', dtype='bool', default=False,
                      helpstr='[Bool] If True upload documentation to '
                              'defined server (for web access)')
 
-
 # -----------------------------------------------------------------------------
 # apero_explorer.py
 # -----------------------------------------------------------------------------
@@ -122,7 +120,6 @@ explorer.kind = 'tool'
 explorer.set_arg(pos=0, name='instrument', dtype='options',
                  helpstr=Help['EXPLORER_INST_HEPL'],
                  options=Constants['DRS_INSTRUMENTS'])
-
 
 # -----------------------------------------------------------------------------
 # apero_changelog.py
@@ -144,7 +141,6 @@ go_recipe.set_kwarg(name='--calib', default=False, dtype='switch')
 go_recipe.set_kwarg(name='--tellu', default=False, dtype='switch')
 go_recipe.set_kwarg(name='--msg', default=False, dtype='switch')
 go_recipe.set_kwarg(name='--plot', default=False, dtype='switch')
-
 
 # -----------------------------------------------------------------------------
 # apero_listing.py
@@ -172,13 +168,13 @@ logstats.kind = 'tool'
 logstats.set_debug_plots('LOGSTATS_BAR')
 logstats.set_summary_plots()
 logstats.set_arg(pos=0, name='instrument', dtype='options',
-                helpstr=Help['LOGSTAT_HELP_INSTRUMENT'],
-                options=Constants['DRS_INSTRUMENTS'])
+                 helpstr=Help['LOGSTAT_HELP_INSTRUMENT'],
+                 options=Constants['DRS_INSTRUMENTS'])
 logstats.set_kwarg(name='--nightname', dtype=str, default='',
-                  helpstr=Help['LOGSTAT_HELP_NIGHTNAME'])
+                   helpstr=Help['LOGSTAT_HELP_NIGHTNAME'])
 logstats.set_kwarg(name='--kind', dtype=str, default='red',
-                  options=['tmp', 'red'],
-                  helpstr=Help['LOGSTAT_HELP_KIND'])
+                   options=['tmp', 'red'],
+                   helpstr=Help['LOGSTAT_HELP_KIND'])
 # TODO: add help string
 logstats.set_kwarg(name='--recipe', dtype=str, default='None',
                    helpstr='Define a recipe name (the full python name) to'
@@ -216,7 +212,6 @@ remake_db.set_kwarg(name='--kind', dtype='options',
                     options=['calibration', 'telluric'],
                     default_ref='REMAKE_DATABASE_DEFAULT',
                     helpstr=Help['REMAKE_HELP_KIND'], default='calibration')
-
 
 # -----------------------------------------------------------------------------
 # apero_processing.py
@@ -268,7 +263,6 @@ reset.set_kwarg(name='--log', dtype='bool', default=True,
                 helpstr=Help['RESET_LOG_HELP'])
 reset.set_kwarg(name='--warn', dtype='bool', default=True,
                 helpstr=Help['RESET_WARN_HELP'])
-
 
 # -----------------------------------------------------------------------------
 # apero_validate.py

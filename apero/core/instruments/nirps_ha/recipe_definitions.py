@@ -711,7 +711,7 @@ cal_wave_master.set_summary_plots('SUM_WAVE_FP_IPT_CWID_LLHC',
                                   'SUM_WAVE_LITTROW_EXTRAP',
                                   'SUM_CCF_RV_FIT', 'SUM_WAVE_FIBER_COMP',
                                   'SUM_WAVENIGHT_ITERPLOT',
-                                  'SUM_WAVENIGHT_HISTPLOT',)
+                                  'SUM_WAVENIGHT_HISTPLOT', )
 cal_wave_master.set_arg(pos=0, **directory)
 cal_wave_master.set_kwarg(name='--hcfiles', dtype='files',
                           files=[sf.pp_hc1_hc1],
