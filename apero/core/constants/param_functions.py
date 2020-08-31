@@ -98,6 +98,7 @@ class ParamDict(base_class.CaseInsensitiveDict):
     Custom dictionary to retain source of a parameter (added via setSource,
     retreived via getSource). String keys are case insensitive.
     """
+
     def __init__(self, *arg, **kw):
         """
         Constructor for parameter dictionary, calls dict.__init__
@@ -1073,15 +1074,15 @@ class PCheck:
         return self.__str__()
 
     def __call__(self, params: Union[ParamDict, None] = None,
-                   key: Union[str, None] = None,
-                   name: Union[str, None] = None,
-                   kwargs: Union[dict, None] = None,
-                   func: Union[str, None] = None,
-                   mapf: Union[str, None] = None,
-                   dtype: Union[Type, None] = None,
-                   paramdict: Union[ParamDict, None] = None,
-                   required: bool = True,
-                   default: Any = None, wlog: Union[Any, None] = None) -> Any:
+                 key: Union[str, None] = None,
+                 name: Union[str, None] = None,
+                 kwargs: Union[dict, None] = None,
+                 func: Union[str, None] = None,
+                 mapf: Union[str, None] = None,
+                 dtype: Union[Type, None] = None,
+                 paramdict: Union[ParamDict, None] = None,
+                 required: bool = True,
+                 default: Any = None, wlog: Union[Any, None] = None) -> Any:
         """
          Find a parameter "key" first in params or paramdict (if defined)
          or in kwargs (with "name") - note if "name" in kwargs overrides
@@ -1322,10 +1323,6 @@ def load_pconfig(instrument: Union[str, None] = None
     # update cache
     PCONFIG_CACHE[instrument] = pconfig
     return pconfig
-
-
-
-
 
 
 def get_config_all():
@@ -1841,7 +1838,6 @@ def _check_mod_source(source: str) -> Union[None, str]:
 # =============================================================================
 # Other private functions
 # =============================================================================
-
 
 
 def _string_repr_list(key: str, values: Union[list, np.ndarray], source: str,
