@@ -10,6 +10,7 @@ Created on 2019-01-18 at 15:54
 @author: cook
 """
 from apero.base import base
+from apero.base import drs_misc
 
 # =============================================================================
 # Define variables
@@ -21,17 +22,16 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
-
 # Get Astropy Time and Time Delta
 Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
+# get display func
+display_func = drs_misc.display_func
 
-
-# -----------------------------------------------------------------------------
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def get_time_now():
+def get_time_now() -> str:
     """
     Returns the time now (YYYY-mm-dd HH:MM:SS.SSS)
 
@@ -41,7 +41,7 @@ def get_time_now():
     return atime.iso
 
 
-def get_hhmmss_now():
+def get_hhmmss_now() -> str:
     """
     Returns the time (HH:MM:SS.SSS)
 
