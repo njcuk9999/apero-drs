@@ -1038,8 +1038,7 @@ def fix_header(params, recipe, infile=None, header=None,
     try:
         header, hdict = pconst.HEADER_FIXES(params=params, recipe=recipe,
                                             header=header, hdict=hdict,
-                                            filename=filename,
-                                            **kwargs)
+                                            filename=filename)
     except drs_exceptions.DrsHeaderError as e:
         if raise_exception:
             raise e
