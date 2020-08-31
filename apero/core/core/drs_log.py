@@ -1449,7 +1449,7 @@ def debug_start(logobj: Logger, params: ParamDict,
                 ipython = embed
                 import ipdb
                 ipdb.set_trace()
-            except:
+            except Exception as _:
                 import pdb
                 pdb.set_trace()
 
