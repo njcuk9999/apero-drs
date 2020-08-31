@@ -521,6 +521,25 @@ def include_exclude(inlist: List[str],
     return list(np.array(inlist)[mask])
 
 
+# capitalisation function (for case insensitive keys)
+def capitalise_key(key: str) -> str:
+    """
+    Capitalizes "key" (used to make ParamDict case insensitive), only if
+    key is a string
+
+    :param key: string or object, if string then key is capitalized else
+                nothing is done
+
+    :return key: capitalized string (or unchanged object)
+    """
+    # set function name (cannot break here --> no access to inputs)
+    _ = __NAME__ + '.capitalise_key()'
+    # capitalise string keys
+    if type(key) == str:
+        key = key.upper()
+    return key
+
+
 # =============================================================================
 # Start of code
 # =============================================================================
