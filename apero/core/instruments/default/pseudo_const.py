@@ -552,7 +552,7 @@ class PseudoConstants:
         return write_level
 
     # noinspection PyPep8Naming
-    def REPORT_KEYS(self) -> Dict[bool]:
+    def REPORT_KEYS(self) -> dict:
         """
         The report levels. Keys must be the same as spirouConst.LOG_TRIG_KEYS()
 
