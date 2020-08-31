@@ -11,7 +11,7 @@ Created on 2019-01-17 at 15:24
 
 @author: cook
 """
-from collections import OrderedDict, UserDict
+from collections import OrderedDict
 import copy
 import numpy as np
 import os
@@ -21,9 +21,11 @@ from typing import Any, List, Tuple, Type, Union
 from pathlib import Path
 
 from apero.base import base
+from apero.base import drs_base_classes as base_class
 from apero.base import drs_break
 from apero.base import drs_exceptions
 from apero.base import drs_misc
+from apero.base import drs_text
 from apero import lang
 from apero.core.constants import constant_functions
 from apero.core.instruments.default import pseudo_const
@@ -89,367 +91,9 @@ ModLoads = Tuple[List[str], List[Any], List[str], List[Union[Const, Keyword]]]
 # =============================================================================
 # Define Custom classes
 # =============================================================================
-# case insensitive dictionary
-class CaseInsensitiveDict(UserDict):
-    # Custom dictionary with string keys that are case insensitive
-    # Note we inherit from UserDict and not dict due to problems with pickle
-    #  UserDict allows __setstate__ and __getstate__ to work as expected
-    #  not true for dict
-
-    def __init__(self, *arg, **kw):
-        """
-        Construct the case insensitive dictionary class
-        :param arg: arguments passed to dict
-        :param kw: keyword arguments passed to dict
-        """
-        # set class name
-        self.class_name = 'CaseInsensitiveDict'
-        # set function name
-        _ = display_func(None, '__init__', __NAME__, self.class_name)
-        # super from dict
-        super(CaseInsensitiveDict, self).__init__(*arg, **kw)
-        # force keys to be capitals (internally)
-        self.__capitalise_keys__()
-
-    def __getitem__(self, key: str) -> object:
-        """
-        Method used to get the value of an item using "key"
-        used as x.__getitem__(y) <==> x[y]
-        where key is case insensitive
-
-        :param key: string, the key for the value returned (case insensitive)
-
-        :type key: str
-
-        :return value: object, the value stored at position "key"
-        """
-        # set function name
-        _ = display_func(None, '__getitem__', __NAME__, 'CaseInsensitiveDict')
-        # make key capitals
-        key = _capitalise_key(key)
-        # return from supers dictionary storage
-        return super(CaseInsensitiveDict, self).__getitem__(key)
-
-    def __setitem__(self, key: str, value: Any):
-        """
-        Sets an item wrapper for self[key] = value
-        :param key: string, the key to set for the parameter
-        :param value: object, the object to set (as in dictionary) for the
-                      parameter
-
-        :type key: str
-        :type value: object
-
-        :return: None
-        """
-        # set function name
-        _ = display_func(None, '__setitem__', __NAME__, self.class_name)
-        # capitalise string keys
-        key = _capitalise_key(key)
-        # then do the normal dictionary setting
-        super(CaseInsensitiveDict, self).__setitem__(key, value)
-
-    def __contains__(self, key: str) -> bool:
-        """
-        Method to find whether CaseInsensitiveDict instance has key="key"
-        used with the "in" operator
-        if key exists in CaseInsensitiveDict True is returned else False
-        is returned
-
-        :param key: string, "key" to look for in CaseInsensitiveDict instance
-        :type key: str
-
-        :return bool: True if CaseInsensitiveDict instance has a key "key",
-        else False
-        :rtype: bool
-        """
-        # set function name
-        _ = display_func(None, '__contains__', __NAME__, 'CaseInsensitiveDict')
-        # capitalize key first
-        key = _capitalise_key(key)
-        # return True if key in keys else return False
-        return super(CaseInsensitiveDict, self).__contains__(key)
-
-    def __delitem__(self, key: str):
-        """
-        Deletes the "key" from CaseInsensitiveDict instance, case insensitive
-
-        :param key: string, the key to delete from ParamDict instance,
-                    case insensitive
-        :type key: str
-
-        :return None:
-        """
-        # set function name
-        _ = display_func(None, '__delitem__', __NAME__, 'CaseInsensitiveDict')
-        # capitalize key first
-        key = _capitalise_key(key)
-        # delete key from keys
-        super(CaseInsensitiveDict, self).__delitem__(key)
-
-    def get(self, key: str, default: Union[None, object] = None):
-        """
-        Overrides the dictionary get function
-        If "key" is in CaseInsensitiveDict instance then returns this value,
-        else returns "default" (if default returned source is set to None)
-        key is case insensitive
-
-        :param key: string, the key to search for in ParamDict instance
-                    case insensitive
-        :param default: object or None, if key not in ParamDict instance this
-                        object is returned
-
-        :type key: str
-        :type default: Union[None, object]
-
-        :return value: if key in ParamDict instance this value is returned else
-                       the default value is returned (None if undefined)
-        """
-        # set function name
-        _ = display_func(None, 'get', __NAME__, 'CaseInsensitiveDict')
-        # capitalise string keys
-        key = _capitalise_key(key)
-        # if we have the key return the value
-        if key in self.keys():
-            return self.__getitem__(key)
-        # else return the default key (None if not defined)
-        else:
-            return default
-
-    def __capitalise_keys__(self):
-        """
-        Capitalizes all keys in ParamDict (used to make ParamDict case
-        insensitive), only if keys entered are strings
-
-        :return None:
-        """
-        # set function name
-        _ = display_func(None, '__capitalise_keys__', __NAME__,
-                         'CaseInsensitiveDict')
-        # make keys a list
-        keys = list(self.keys())
-        # loop around key in keys
-        for key in keys:
-            # check if key is a string
-            if type(key) == str:
-                # get value
-                value = super(CaseInsensitiveDict, self).__getitem__(key)
-                # delete old key
-                super(CaseInsensitiveDict, self).__delitem__(key)
-                # if it is a string set it to upper case
-                key = key.upper()
-                # set the new key
-                super(CaseInsensitiveDict, self).__setitem__(key, value)
-
-    def __str__(self):
-        """
-        Return the string representation of the class
-        :return: str, the string representation
-        """
-        return '{0}[UserDict]'.format(self.class_name)
-
-    def __repr__(self) -> str:
-        """
-        Return the string representation of the class
-        :return: str, the string representation
-        """
-        return self.__str__()
 
 
-class StrCaseINSDict(CaseInsensitiveDict):
-    # Case insensitive dictionary only containing strings
-    def __init__(self, *arg, **kw):
-        """
-        Construct the string elements case insensitive dictionary class
-        :param arg: arguments passed to dict
-        :param kw: keyword arguments passed to dict
-        """
-        # set class name
-        self.class_name = 'StrCaseINSDict'
-        # set function name
-        _ = display_func(None, '__init__', __NAME__, self.class_name)
-        # super from dict
-        super(StrCaseINSDict, self).__init__(*arg, **kw)
-
-    def __getitem__(self, key: str) -> Union[None, str]:
-        """
-        Method used to get the value of an item using "key"
-        used as x.__getitem__(y) <==> x[y]
-        where key is case insensitive
-
-        :param key: string, the key for the value returned (case insensitive)
-
-        :type key: str
-
-        :return value: list, the value stored at position "key"
-        """
-        # set function name
-        _ = display_func(None, '__getitem__', __NAME__, self.class_name)
-        # return from supers dictionary storage
-        # noinspection PyTypeChecker
-        return list(super(StrCaseINSDict, self).__getitem__(key))
-
-    def __setitem__(self, key: str, value: Union[None, str]):
-        """
-        Sets an item wrapper for self[key] = value
-        :param key: string, the key to set for the parameter
-        :param value: str, the object to set (as in dictionary) for the
-                      parameter
-
-        :type key: str
-        :type value: list
-
-        :return: None
-        """
-        # set function name
-        _ = display_func(None, '__setitem__', __NAME__, self.class_name)
-        # then do the normal dictionary setting
-        super(StrCaseINSDict, self).__setitem__(key, list(value))
-
-    def __str__(self):
-        """
-        Return the string representation of the class
-        :return: str, the string representation
-        """
-        return '{0}[CaseInsensitiveDict]'.format(self.class_name)
-
-    def __repr__(self) -> str:
-        """
-        Return the string representation of the class
-        :return: str, the string representation
-        """
-        return self.__str__()
-
-
-class ListCaseINSDict(CaseInsensitiveDict):
-    def __init__(self, *arg, **kw):
-        """
-        Construct the list elements case insensitive dictionary class
-        :param arg: arguments passed to dict
-        :param kw: keyword arguments passed to dict
-        """
-        # set class name
-        self.class_name = 'ListCaseINSDict'
-        # set function name
-        _ = display_func(None, '__init__', __NAME__, self.class_name)
-        # super from dict
-        super(ListCaseINSDict, self).__init__(*arg, **kw)
-
-    def __getitem__(self, key: str) -> list:
-        """
-        Method used to get the value of an item using "key"
-        used as x.__getitem__(y) <==> x[y]
-        where key is case insensitive
-
-        :param key: string, the key for the value returned (case insensitive)
-
-        :type key: str
-
-        :return value: list, the value stored at position "key"
-        """
-        # set function name
-        _ = display_func(None, '__getitem__', __NAME__, self.class_name)
-        # return from supers dictionary storage
-        # noinspection PyTypeChecker
-        return list(super(ListCaseINSDict, self).__getitem__(key))
-
-    def __setitem__(self, key: str, value: list):
-        """
-        Sets an item wrapper for self[key] = value
-        :param key: string, the key to set for the parameter
-        :param value: object, the object to set (as in dictionary) for the
-                      parameter
-
-        :type key: str
-        :type value: list
-
-        :return: None
-        """
-        # set function name
-        _ = display_func(None, '__setitem__', __NAME__, self.class_name)
-        # then do the normal dictionary setting
-        super(ListCaseINSDict, self).__setitem__(key, list(value))
-
-    def __str__(self):
-        """
-        Return the string representation of the class
-        :return: str, the string representation
-        """
-        return '{0}[CaseInsensitiveDict]'.format(self.class_name)
-
-    def __repr__(self) -> str:
-        """
-        Return the string representation of the class
-        :return: str, the string representation
-        """
-        return self.__str__()
-
-
-class CKCaseINSDict(CaseInsensitiveDict):
-    def __init__(self, *arg, **kw):
-        """
-        Construct the Const/Keyword elements case insensitive dictionary class
-        :param arg: arguments passed to dict
-        :param kw: keyword arguments passed to dict
-        """
-        # set class name
-        self.class_name = 'CKCaseINSDict'
-        # set function name
-        _ = display_func(None, '__init__', __NAME__, self.class_name)
-        # super from dict
-        super(CKCaseINSDict, self).__init__(*arg, **kw)
-
-    def __getitem__(self, key: str) -> Union[None, Const, Keyword]:
-        """
-        Method used to get the value of an item using "key"
-        used as x.__getitem__(y) <==> x[y]
-        where key is case insensitive
-
-        :param key: string, the key for the value returned (case insensitive)
-
-        :type key: str
-
-        :return value: list, the value stored at position "key"
-        """
-        # set function name
-        _ = display_func(None, '__getitem__', __NAME__, self.class_name)
-        # return from supers dictionary storage
-        # noinspection PyTypeChecker
-        return super(CKCaseINSDict, self).__getitem__(key)
-
-    def __setitem__(self, key: str, value: Union[None, Const, Keyword]):
-        """
-        Sets an item wrapper for self[key] = value
-        :param key: string, the key to set for the parameter
-        :param value: object, the object to set (as in dictionary) for the
-                      parameter
-
-        :type key: str
-        :type value: list
-
-        :return: None
-        """
-        # set function name
-        _ = display_func(None, '__setitem__', __NAME__, self.class_name)
-        # then do the normal dictionary setting
-        super(CKCaseINSDict, self).__setitem__(key, value)
-
-    def __str__(self):
-        """
-        Return the string representation of the class
-        :return: str, the string representation
-        """
-        return '{0}[CaseInsensitiveDict]'.format(self.class_name)
-
-    def __repr__(self) -> str:
-        """
-        Return the string representation of the class
-        :return: str, the string representation
-        """
-        return self.__str__()
-
-
-class ParamDict(CaseInsensitiveDict):
+class ParamDict(base_class.CaseInsensitiveDict):
     """
     Custom dictionary to retain source of a parameter (added via setSource,
     retreived via getSource). String keys are case insensitive.
@@ -467,11 +111,11 @@ class ParamDict(CaseInsensitiveDict):
         # set function name
         _ = display_func(None, '__init__', __NAME__, self.class_name)
         # storage for the sources
-        self.sources = CaseInsensitiveDict()
+        self.sources = base_class.CaseInsensitiveDict()
         # storage for the source history
-        self.source_history = ListCaseINSDict()
+        self.source_history = base_class.ListCaseINSDict()
         # storage for the Const/Keyword instances
-        self.instances = CKCaseINSDict()
+        self.instances = constant_functions.CKCaseINSDict()
         # the print format
         self.pfmt = '\t{0:30s}{1:45s} # {2}'
         # the print format for list items
@@ -713,7 +357,7 @@ class ParamDict(CaseInsensitiveDict):
         # set function name
         _ = display_func(None, 'set_source', __NAME__, self.class_name)
         # capitalise
-        key = _capitalise_key(key)
+        key = drs_text.capitalise_key(key)
         # don't put full path for sources in package
         source = _check_mod_source(source)
         # only add if key is in main dictionary
@@ -747,7 +391,7 @@ class ParamDict(CaseInsensitiveDict):
         # set function name
         _ = display_func(None, 'set_instance', __NAME__, self.class_name)
         # capitalise
-        key = _capitalise_key(key)
+        key = drs_text.capitalise_key(key)
         # only add if key is in main dictionary
         if key in self.keys():
             self.instances[key] = instance
@@ -772,7 +416,7 @@ class ParamDict(CaseInsensitiveDict):
         # set function name
         _ = display_func(None, 'append_source', __NAME__, self.class_name)
         # capitalise
-        key = _capitalise_key(key)
+        key = drs_text.capitalise_key(key)
         # if key exists append source to it
         if key in self.keys() and key in list(self.sources.keys()):
             self.sources[key] += ' {0}'.format(source)
@@ -805,7 +449,7 @@ class ParamDict(CaseInsensitiveDict):
             # assign the key from k_it
             key = keys[k_it]
             # capitalise
-            key = _capitalise_key(key)
+            key = drs_text.capitalise_key(key)
             # Get source for this iteration
             if type(sources) == list:
                 source = sources[k_it]
@@ -842,7 +486,7 @@ class ParamDict(CaseInsensitiveDict):
             # assign the key from k_it
             key = keys[k_it]
             # capitalise
-            key = _capitalise_key(key)
+            key = drs_text.capitalise_key(key)
             # Get source for this iteration
             if type(instances) == list:
                 instance = instances[k_it]
@@ -878,7 +522,7 @@ class ParamDict(CaseInsensitiveDict):
             # assign the key from k_it
             key = keys[k_it]
             # capitalise
-            key = _capitalise_key(key)
+            key = drs_text.capitalise_key(key)
             # Get source for this iteration
             if type(sources) == list:
                 source = sources[k_it]
@@ -904,7 +548,7 @@ class ParamDict(CaseInsensitiveDict):
         # loop around each key in keys
         for key in self.keys():
             # capitalise
-            key = _capitalise_key(key)
+            key = drs_text.capitalise_key(key)
             # set key
             self.sources[key] = source
 
@@ -923,7 +567,7 @@ class ParamDict(CaseInsensitiveDict):
         # loop around each key in keys
         for key in self.keys():
             # capitalise
-            key = _capitalise_key(key)
+            key = drs_text.capitalise_key(key)
             # set key
             self.sources[key] += ' {0}'.format(source)
 
@@ -940,7 +584,7 @@ class ParamDict(CaseInsensitiveDict):
         # set function name
         _ = display_func(None, 'get_source', __NAME__, self.class_name)
         # capitalise
-        key = _capitalise_key(key)
+        key = drs_text.capitalise_key(key)
         # if key in keys and sources then return source
         if key in self.keys() and key in self.sources.keys():
             return str(self.sources[key])
@@ -963,7 +607,7 @@ class ParamDict(CaseInsensitiveDict):
         # set function name
         _ = display_func(None, 'get_instance', __NAME__, self.class_name)
         # capitalise
-        key = _capitalise_key(key)
+        key = drs_text.capitalise_key(key)
         # if key in keys and sources then return source
         if key in self.keys() and key in self.instances.keys():
             return self.instances[key]
@@ -2197,23 +1841,7 @@ def _check_mod_source(source: str) -> Union[None, str]:
 # =============================================================================
 # Other private functions
 # =============================================================================
-# capitalisation function (for case insensitive keys)
-def _capitalise_key(key: str) -> str:
-    """
-    Capitalizes "key" (used to make ParamDict case insensitive), only if
-    key is a string
 
-    :param key: string or object, if string then key is capitalized else
-                nothing is done
-
-    :return key: capitalized string (or unchanged object)
-    """
-    # set function name (cannot break here --> no access to inputs)
-    _ = display_func(None, '_capitalise_key', __NAME__)
-    # capitalise string keys
-    if type(key) == str:
-        key = key.upper()
-    return key
 
 
 def _string_repr_list(key: str, values: Union[list, np.ndarray], source: str,
