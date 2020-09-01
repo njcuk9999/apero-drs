@@ -136,6 +136,9 @@ def __main__(recipe, params):
             infiles.append(infile)
             rawfiles.append(infile.basename)
 
+    # TODO: remove break point
+    constants.break_point(params)
+
     # get combined file
     infiles = [drs_fits.combine(params, recipe, infiles, math='median')]
     # get the number of infiles
