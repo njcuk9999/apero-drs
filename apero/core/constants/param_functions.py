@@ -91,8 +91,6 @@ ModLoads = Tuple[List[str], List[Any], List[str], List[Union[Const, Keyword]]]
 # =============================================================================
 # Define Custom classes
 # =============================================================================
-
-
 class ParamDict(base_class.CaseInsensitiveDict):
     """
     Custom dictionary to retain source of a parameter (added via setSource,
