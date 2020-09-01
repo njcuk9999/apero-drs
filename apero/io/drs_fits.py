@@ -84,7 +84,7 @@ class Header(fits.Header):
         if isinstance(key, tuple):
             if key[0].startswith('@@@'):
                 tmpkey = self.__get_temp_key(key[0])
-                self.__temp_items.__setitem__(tmpkey,item)
+                self.__temp_items.__setitem__(tmpkey, item)
             else:
                 # check for NaN values (and convert -- cannot put directly in)
                 nan_filtered = self.__nan_check(item)
