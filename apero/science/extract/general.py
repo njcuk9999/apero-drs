@@ -487,9 +487,6 @@ def correct_master_dark_fp(params, extractdict, **kwargs):
     reffile.data = refimage
     outputs[ref_fiber] = reffile
 
-    # TODO: remove break point
-    constants.break_point(params)
-
     # ----------------------------------------------------------------------
     # process the science fibers
     # ----------------------------------------------------------------------
