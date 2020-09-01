@@ -72,6 +72,10 @@ class Header(fits.Header):
         self.__temp_items = {}
 
     def __setitem__(self, key, item):
+        if not isinstance(key, str):
+            nan_filtered = self.__nan_check(item)
+            super().__setitem__(key, nan_filtered)
+            return
         if key.startswith('@@@'):
             self.__temp_items.__setitem__(self.__get_temp_key(key), item)
         elif key == '':
@@ -81,12 +85,16 @@ class Header(fits.Header):
             super().__setitem__(key, nan_filtered)
 
     def __getitem__(self, key):
+        if not isinstance(key, str):
+            return super().__getitem__(key)
         if key.startswith('@@@'):
             return self.__temp_items.__getitem__(self.__get_temp_key(key))
         else:
             return super().__getitem__(key)
 
     def __contains__(self, key):
+        if not isinstance(key, str):
+            return super().__contains__(key)
         if key.startswith('@@@'):
             return self.__temp_items.__contains__(self.__get_temp_key(key))
         else:
