@@ -1082,7 +1082,8 @@ class PCheck:
                  dtype: Union[Type, None] = None,
                  paramdict: Union[ParamDict, None] = None,
                  required: bool = True,
-                 default: Any = None, wlog: Union[Any, None] = None) -> Any:
+                 default: Any = None, wlog: Union[Any, None] = None,
+                 override: Any = None) -> Any:
         """
          Find a parameter "key" first in params or paramdict (if defined)
          or in kwargs (with "name") - note if "name" in kwargs overrides
@@ -1111,6 +1112,8 @@ class PCheck:
          :param wlog: Either None or the wlog (for printing) if wlog is not defined
                       may have to catch a DrsCodedException
                       (can put in here or before in the __init__)
+        :param override: Any, an override value if set takes precendence over
+                         other values
 
          :type params: ParamDict
          :type key: str
@@ -1128,6 +1131,9 @@ class PCheck:
         # set function name
         func_name = display_func(params, 'find_param', __NAME__,
                                  self.class_name)
+        # deal with override value
+        if override is not None:
+            return copy.deepcopy(override)
         # deal with wlog
         if wlog is None:
             wlog = self.wlog

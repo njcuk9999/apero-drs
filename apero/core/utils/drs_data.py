@@ -10,9 +10,11 @@ Created on 2019-07-02 at 09:24
 
 @author: cook
 """
+import glob
 import numpy as np
 import os
-import glob
+from pathlib import Path
+from typing import Tuple, Union
 
 from apero.base import base
 from apero.base import drs_exceptions
@@ -36,43 +38,77 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get ParamDict
+ParamDict = constants.ParamDict
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict
 # get exceptions
 DrsCodedException = drs_exceptions.DrsCodedException
+LoadException = drs_exceptions.LoadException
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 
 
 # =============================================================================
-# Define classes
-# =============================================================================
-class LoadException(Exception):
-    """Raised when config file is incorrect"""
-    pass
-
-
-# =============================================================================
 # Define functions
 # =============================================================================
-def load_linelist(params, **kwargs):
+def load_linelist(params: ParamDict,
+                  assetsdir: Union[str, None] = None,
+                  directory: Union[str, Path, None] = None,
+                  filename: Union[str, None] = None,
+                  fmt: Union[str, None] = None,
+                  cols: Union[str, None] = None,
+                  start: Union[int, None] = None,
+                  wavecol: Union[str, None] = None,
+                  ampcol: Union[str, None] = None,
+                  return_filename: bool = False,
+                  **kwargs) -> Union[str, Tuple[np.ndarray, np.ndarray]]:
+    """
+    Load wave line list file
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param kwargs: keywords to override parameters from params
+    :param assetsdir: str, Define the assets directory -- overrides
+                      params['DRS_DATA_ASSETS']
+    :param directory: str, where the wave data are stored (within assets
+                      directory) -- overrides params['DRS_WAVE_DATA']
+    :param filename: str, Define the line list file (located in the
+                       DRS_WAVE_DATA directory) -- overrides
+                       params['WAVE_LINELIST_FILE']
+    :param fmt: str, Define the line list file format (must be astropy.table
+                  format) -- overrides params['WAVE_LINELIST_FMT']
+    :param cols: str, Define the line list file column names (must be
+                   separated by commas and must be equal to the number of
+                   columns in file) -- overrides params['WAVE_LINELIST_COLS']
+    :param start: int, Define the line list file row the data starts
+                    -- overrides params['WAVE_LINELIST_START']
+    :param wavecol: str, Define the line list file wavelength column name
+                      -- overrides params['WAVE_LINELIST_WAVECOL']
+    :param ampcol: str,  Define the line list file amplitude column name
+                     -- overrides params['WAVE_LINELIST_AMPCOL']
+    :param return_filename: bool, whether to return filename
+
+    :return:
+    """
     # get parameters from params/kwargs
     func_name = kwargs.get('func', __NAME__ + '.load_full_flat_badpix()')
-    assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', kwargs, func_name)
-    relfolder = pcheck(params, 'DRS_WAVE_DATA', 'directory', kwargs,
-                       func_name)
-    filename = pcheck(params, 'WAVE_LINELIST_FILE', 'filename', kwargs,
-                      func_name)
-    tablefmt = pcheck(params, 'WAVE_LINELIST_FMT', 'fmt', kwargs, func_name)
-    tablecols = pcheck(params, 'WAVE_LINELIST_COLS', 'cols', kwargs, func_name)
-    tablestart = pcheck(params, 'WAVE_LINELIST_START', 'start', kwargs,
-                        func_name)
-    wavecol = pcheck(params, 'WAVE_LINELIST_WAVECOL', 'wavecol', kwargs,
-                     func_name)
-    ampcol = pcheck(params, 'WAVE_LINELIST_AMPCOL', 'ampcol', kwargs,
-                    func_name)
-    return_filename = kwargs.get('return_filename', False)
+    assetdir = pcheck(params, 'DRS_DATA_ASSETS', func=func_name,
+                      override=assetsdir)
+    relfolder = pcheck(params, 'DRS_WAVE_DATA', func=func_name,
+                       override=directory)
+    filename = pcheck(params, 'WAVE_LINELIST_FILE', func=func_name,
+                      override=filename)
+    tablefmt = pcheck(params, 'WAVE_LINELIST_FMT', func=func_name,
+                      override=fmt)
+    tablecols = pcheck(params, 'WAVE_LINELIST_COLS', func=func_name,
+                       override=cols)
+    tablestart = pcheck(params, 'WAVE_LINELIST_START', func=func_name,
+                        override=start)
+    wavecol = pcheck(params, 'WAVE_LINELIST_WAVECOL', func=func_name,
+                     override=wavecol)
+    ampcol = pcheck(params, 'WAVE_LINELIST_AMPCOL', func=func_name,
+                    override=ampcol)
     # deal with return_filename
     absfilename = os.path.join(assetdir, relfolder, filename)
     if return_filename:
@@ -83,7 +119,6 @@ def load_linelist(params, **kwargs):
     kwargs['fmt'] = tablefmt
     kwargs['colnames'] = tablecols
     kwargs['datastart'] = int(tablestart)
-
     # return image
     try:
         table = load_table_file(params, absfilename, kwargs, func_name)
