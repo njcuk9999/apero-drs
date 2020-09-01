@@ -520,6 +520,10 @@ def large_image_combine(params: ParamDict, files: List[str],
     # ----------------------------------------------------------------------
     # deal with only having 1 file
     if numfiles == 1:
+        # delete the sub directory
+        if os.path.exists(subfilepath):
+            os.removedirs(subfilepath)
+        # return the only image
         return image0
     # ----------------------------------------------------------------------
     # get the shape of the image
