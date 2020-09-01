@@ -161,7 +161,11 @@ class Header(fits.Header):
         header = super().copy(strip=strip)
         if nan_to_string:
             for key in list(header.keys()):
-                header[key] = header[key]
+
+                if isinstance(header[key], fits.header._HeaderCommentaryCards):
+                    header[key] = header[key][0]
+                else:
+                    header[key] = header[key]
         return header
 
     @staticmethod
