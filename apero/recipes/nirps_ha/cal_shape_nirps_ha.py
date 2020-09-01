@@ -143,6 +143,9 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         # Get transform parameters (transform image onto fpmaster)
         # ----------------------------------------------------------------------
+        # TODO: remove break point
+        constants.break_point(params)
+
         # log progress
         WLOG(params, '', TextEntry('40-014-00033'))
         # transform
