@@ -478,10 +478,6 @@ def large_image_combine(params: ParamDict, files: List[str],
     :return: numpy 2D array: the nan-median image of all files
     :rtype: np.ndarray
     """
-
-    # TODO: remove break point
-    constants.break_point(params)
-
     # set function name
     func_name = __NAME__ + '.large_image_combine()'
     # deal with math mode
@@ -523,6 +519,11 @@ def large_image_combine(params: ParamDict, files: List[str],
         eargs = [fmt, 'fits, npy', func_name]
         WLOG(params, 'error', TextEntry('00-001-00044', args=eargs))
         image0 = None
+    # ----------------------------------------------------------------------
+    # deal with only having 1 file
+    if numfiles == 1:
+        return image0
+    # ----------------------------------------------------------------------
     # get the shape of the image
     mdim1, mdim2 = np.array(image0.shape).astype(int)
     del image0
