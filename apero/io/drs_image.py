@@ -517,6 +517,11 @@ def large_image_combine(params: ParamDict, files: List[str],
         eargs = [fmt, 'fits, npy', func_name]
         WLOG(params, 'error', TextEntry('00-001-00044', args=eargs))
         image0 = None
+    # ----------------------------------------------------------------------
+    # deal with only having 1 file
+    if numfiles == 1:
+        return image0
+    # ----------------------------------------------------------------------
     # get the shape of the image
     mdim1, mdim2 = np.array(image0.shape).astype(int)
     del image0
