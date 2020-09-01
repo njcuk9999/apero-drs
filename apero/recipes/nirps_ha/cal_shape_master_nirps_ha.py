@@ -150,9 +150,6 @@ def __main__(recipe, params):
     # convert to numpy array
     filenames = np.array(filenames)
 
-    # TODO: remove break point
-    constants.break_point(params)
-
     # ----------------------------------------------------------------------
     # Obtain FP master (from file or calculate)
     # ----------------------------------------------------------------------
