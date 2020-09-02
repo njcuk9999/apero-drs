@@ -16,7 +16,8 @@ import os
 from collections import OrderedDict
 import copy
 import warnings
-from typing import Type
+from types import FunctionType
+from typing import Any, List, Union, Tuple, Type
 
 from apero.base import base
 from apero.base import drs_exceptions
@@ -64,46 +65,82 @@ else:
 # Define File classes
 # =============================================================================
 class DrsInputFile:
-    def __init__(self, name, **kwargs):
+    def __init__(self, name, filetype: str = '', suffix: str = '',
+                 remove_insuffix: bool = False, prefix: str = '',
+                 fibers: Union[List[str], None] = None,
+                 fiber: Union[str, None] = None, recipe: Any = None,
+                 filename: Union[str, None] = None, intype: Any = None,
+                 path: Union[str, None] = None,
+                 basename: Union[str, None] = None,
+                 inputdir: Union[str, None] = None,
+                 directory: Union[str, None] = None,
+                 data: Union[np.ndarray, None] = None,
+                 header: Union[drs_fits.Header, None] = None,
+                 fileset: Union[list, None] = None,
+                 filesetnames: Union[List[str], None] = None,
+                 outfunc: Union[FunctionType, None] = None):
         """
         Create a DRS Input File object
 
         :param name: string, the name of the DRS input file
-        :param ext: string, the extension for the DRS input file (without
-                    the '.' i.e. A.txt  ext='txt'
+        :param filetype:
+        :param suffix:
+        :param remove_insuffix:
+        :param prefix:
+        :param fibers:
+        :param fiber:
+        :param recipe:
+        :param filename:
+        :param intype:
+        :param path:
+        :param basename:
+        :param inputdir:
+        :param directory:
+        :param data:
+        :param header:
+        :param fileset:
+        :param filesetnames:
+        :param outfunc:
 
         - Parent class for Drs Fits File object (DrsFitsFile)
         """
+        # set class name
+        self.class_name = 'DrsInputFile'
         # set function name
-        _ = display_func(None, '__init__', __NAME__, 'DrsInputFile')
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
         # define a name
         self.name = name
         # define the extension
-        self.filetype = kwargs.get('filetype', '')
-        self.suffix = kwargs.get('suffix', '')
-        self.remove_insuffix = kwargs.get('remove_insuffix', False)
-        self.prefix = kwargs.get('prefix', '')
-        self.filename = None
-        self.intype = None
+        self.filetype = filetype
+        self.suffix = suffix
+        self.remove_insuffix = remove_insuffix
+        self.prefix = prefix
+        self.filename = filename
+        self.intype = intype
         # get fiber type (if set)
-        self.fibers = kwargs.get('fibers', None)
-        self.fiber = kwargs.get('fiber', None)
+        self.fibers = fibers
+        self.fiber = fiber
         # allow instance to be associated with a recipe
-        self.recipe = kwargs.get('recipe', None)
+        self.recipe = recipe
         # set empty file attributes
-        self.filename = kwargs.get('filename', None)
-        self.path = kwargs.get('path', None)
-        self.basename = kwargs.get('basename', None)
-        self.inputdir = kwargs.get('inputdir', None)
-        self.directory = kwargs.get('directory', None)
-        self.data = kwargs.get('data', None)
-        self.header = kwargs.get('header', None)
-        self.fileset = kwargs.get('fileset', [])
-        self.filesetnames = kwargs.get('filesetnames', [])
-        self.indextable = kwargs.get('index', None)
-        self.outfunc = kwargs.get('outfunc', None)
+        self.filename = filename
+        self.path = path
+        self.basename = basename
+        self.inputdir = inputdir
+        self.directory = directory
+        self.data = data
+        self.header = header
+        if fileset is None:
+            self.fileset = []
+        else:
+            self.fileset = fileset
+        if filesetnames is None:
+            self.filesetnames = []
+        else:
+            self.filesetnames = filesetnames
+        self.outfunc = outfunc
         # allow instance to be associated with a filename
-        self.set_filename(kwargs.get('filename', None))
+        self.set_filename(filename)
 
     def set_filename(self, filename):
         """
@@ -184,7 +221,6 @@ class DrsInputFile:
         kwargs['header'] = kwargs.get('header', self.header)
         kwargs['fileset'] = kwargs.get('fileset', self.fileset)
         kwargs['filesetnames'] = kwargs.get('filesetnames', self.filesetnames)
-        kwargs['indextable'] = kwargs.get('indextable', self.indextable)
         kwargs['outfunc'] = kwargs.get('outfunc', self.outfunc)
         # return new instance
         return DrsInputFile(name, **kwargs)
@@ -339,7 +375,6 @@ class DrsInputFile:
             nkwargs['fileset'] = drsfile.fileset
         nkwargs['filesetnames'] = drsfile.filesetnames
         # ------------------------------------------------------------------
-        nkwargs['indextable'] = copy.deepcopy(drsfile.indextable)
         nkwargs['outfunc'] = drsfile.outfunc
         # return new instance
         return DrsInputFile(**nkwargs)
@@ -627,8 +662,6 @@ class DrsInputFile:
         self.basename = outfilename
 
 
-
-
 class DrsFitsFile(DrsInputFile):
     def __init__(self, name, **kwargs):
         """
@@ -696,8 +729,6 @@ class DrsFitsFile(DrsInputFile):
         # update fiber parameter from header
         if self.header is not None:
             self.fiber = self.get_key('KW_FIBER', dtype=str, required=False)
-        # get the index table related to this file # TODO: Is this used still?
-        self.indextable = kwargs.get('index', None)
         # get the number of files associated with this drs fits file
         self.numfiles = kwargs.get('numfiles', 0)
         # get the shape of the fits data array (self.data)
@@ -2858,7 +2889,6 @@ class DrsNpyFile(DrsInputFile):
         kwargs['header'] = kwargs.get('header', self.header)
         kwargs['fileset'] = kwargs.get('fileset', self.fileset)
         kwargs['filesetnames'] = kwargs.get('filesetnames', self.filesetnames)
-        kwargs['indextable'] = kwargs.get('indextable', self.indextable)
         kwargs['outfunc'] = kwargs.get('outfunc', self.outfunc)
         kwargs['dbname'] = kwargs.get('dbname', self.dbname)
         kwargs['dbkey'] = kwargs.get('dbkey', self.dbkey)
@@ -2902,7 +2932,6 @@ class DrsNpyFile(DrsInputFile):
             nkwargs['fileset'] = drsfile.fileset
         nkwargs['filesetnames'] = list(drsfile.filesetnames)
         # ------------------------------------------------------------------
-        nkwargs['indextable'] = copy.deepcopy(drsfile.indextable)
         nkwargs['outfunc'] = drsfile.outfunc
         nkwargs['dbname'] = copy.deepcopy(drsfile.dbname)
         nkwargs['dbkey'] = copy.deepcopy(drsfile.dbkey)

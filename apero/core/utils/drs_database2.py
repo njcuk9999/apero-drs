@@ -8,19 +8,19 @@ Created on 2020-08-2020-08-18 15:15
 @author: cook
 """
 import numpy as np
+import pandas as pd
 from pathlib import Path
 import shutil
-from typing import List, Union
+from typing import Any, List, Tuple, Type, Union
 
 from apero.base import base
 from apero.base import drs_db
 from apero.base import drs_exceptions
-from apero.base import drs_text
 from apero import lang
-from apero.core import drs_log
 from apero.core import constants
+from apero.core.core import drs_log
+from apero.core.utils import drs_file
 from apero.io import drs_fits
-
 
 # =============================================================================
 # Define variables
@@ -42,24 +42,31 @@ DrsCodedException = drs_exceptions.DrsCodedException
 display_func = drs_log.display_func
 # get WLOG
 WLOG = drs_log.wlog
+# get drs header
+DrsHeader = drs_fits.Header
+FitsHeader = drs_fits.fits.Header
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
+# define drs files
+DrsFileTypes = Union[drs_file.DrsInputFile, drs_file.DrsFitsFile,
+                     drs_file.DrsNpyFile]
 
 
 # =============================================================================
 # Define classes
 # =============================================================================
-class DatabaseManager():
+class DatabaseManager:
     """
     Apero Database Manager class (basically abstract)
     """
+
     def __init__(self, params: ParamDict, check: bool = False):
         """
         Construct the Database Manager
 
-        :param params: ParamDict containing constants
+        :param params: ParamDict, parameter dictionary of constants
         :param check: bool, if True makes sure database file exists (otherwise
-                      assumes it is)
+                      assumes it is) - base class does nothing
         """
         # save class name
         self.classname = 'DatabaseManager'
@@ -69,6 +76,8 @@ class DatabaseManager():
         self.params = params
         # set name
         self.name = 'DatabaseManager'
+        # check does nothing
+        _ = check
         # set path
         self.path = None
         # set database
@@ -100,9 +109,10 @@ class DatabaseManager():
         while dirname in self.params:
             dirname = self.params[dirname]
         # deal with dirname still being a parameter
+        # noinspection PyBroadException
         try:
             dirname = Path(dirname)
-        except Exception as e:
+        except Exception as _:
             # log error: Directory {0} invalid for database: {1}
             eargs = [dirname, self.name, func_name]
             WLOG(self.params, 'error', TextEntry('00-002-00016', args=eargs))
@@ -131,13 +141,20 @@ class DatabaseManager():
         # set path
         self.path = abspath
 
-    def load_db(self):
+    def load_db(self, check: bool = False):
         """
         Load the database class and connect to SQL database
+
+        :param check: if True will reload the database even if already defined
+                      else if we Database.database is set this function does
+                      nothing
+
         :return:
         """
+        # set function
+        _ = display_func(self.params, 'load_db', __NAME__, self.classname)
         # if we already have database do nothing
-        if self.database is not None:
+        if (self.database is not None) and (not check):
             return
         # load database only if path is set
         if self.path is not None:
@@ -148,9 +165,23 @@ class DatabaseManager():
             self.database = drs_db.Database(self.path)
 
     def __str__(self):
+        """
+        Return the string representation of the class
+        :return:
+        """
+        # set function
+        _ = display_func(self.params, '__str__', __NAME__, self.classname)
+        # return string representation
         return '{0}[{1}]'.format(self.classname, self.path)
 
     def __repr__(self):
+        """
+        Return the string representation of the class
+        :return:
+        """
+        # set function
+        _ = display_func(self.params, '__repr__', __NAME__, self.classname)
+        # return string representation
         return self.__str__()
 
 
@@ -159,6 +190,15 @@ class DatabaseManager():
 # =============================================================================
 class CalibrationDatabase(DatabaseManager):
     def __init__(self, params: ParamDict, check: bool = True):
+        """
+        Constructor of the Calibration Database class
+
+        :param params: ParamDict, parameter dictionary of constants
+        :param check: bool, if True makes sure database file exists (otherwise
+                      assumes it is)
+
+        :return: None
+        """
         # save class name
         self.classname = 'CalibrationDatabaseManager'
         # set function
@@ -178,9 +218,10 @@ class CalibrationDatabase(DatabaseManager):
         Add DrsFile to the calibration database
 
         :param drsfile: DrsFile, the DrsFile to add
-        :params verbose: bool, if True logs progress
+        :param verbose: bool, if True logs progress
         :param copy_files: bool, if True copies file to self.filedir
-        :return:
+
+        :return: None
         """
         # set function
         _ = display_func(self.params, 'add_calib_file', __NAME__,
@@ -230,19 +271,30 @@ class CalibrationDatabase(DatabaseManager):
         values = [key, fiber, is_super, filename, human_time, unix_time, used]
         self.database.add_row(values, 'MAIN', commit=True)
 
-    def get_calib_entry(self, columns: str , key: str, fiber: Union[str, None],
-                        filetime: Union[Time, None], timemode: str ='older',
-                        nentries: Union[int, str] = '*'):
+    def get_calib_entry(self, columns: str, key: str, fiber: Union[str, None],
+                        filetime: Union[Time, None], timemode: str = 'older',
+                        nentries: Union[int, str] = '*'
+                        ) -> Union[None, list, tuple, np.ndarray, pd.DataFrame]:
         """
+        Get an entry from the calibration database
 
         :param columns: str, pushed to SQL (i.e. list columns or '*' for all)
         :param key: str, KEY=="key" condition
         :param fiber: str or None, if set FIBER=="fiber"
         :param filetime: astropy.Time,
-        :param timemode:
-        :param nentries:
-        :return:
+        :param timemode: str, the way in which to select which calibration to
+                         use (either 'older' 'closest' or 'newer'
+        :param nentries: int or str, the number of entries to return
+                         only valid string is '*' for all entries
+
+        :return: the entries of columns, if nentries = 1 returns either that
+                 entry (as a tuple) or None, if len(columns) = 1, returns
+                 a np.ndarray, else returns a pandas table
         """
+        # set function
+        _ = display_func(self.params, 'get_calib_entry', __NAME__,
+                         self.classname)
+        # set up kwargs from database query
         sql = dict()
         # set up sql kwargs
         sql['sort_by'] = None
@@ -303,7 +355,6 @@ class CalibrationDatabase(DatabaseManager):
             # return pandas table
             return entries
 
-
     def get_calib_file(self, key: str, drsfile=None, header=None, hdict=None,
                        filetime: Union[None, Time] = None,
                        timemode: Union[str, None] = None,
@@ -327,17 +378,16 @@ class CalibrationDatabase(DatabaseManager):
                         (unless filetime set)
         :param header: if set get time from header (unless filetime set)
         :param hdict: if set get time from hdict (unless filetime set)
-        :param userinputkey: str or None, if in params['INPUTS'] and exists
-                             this is the file return
         :param filetime: Astropy Time or None - if set do not need
                          drsfile/header/hdict
-        :param filename: str or None, if set and exists this is the file return
         :param timemode: None to use default or 'older' for only files older
                          that time in header/hdict/drsfile
         :param nentries: int/str if using the sql database sets max number of
                          entries to return
         :param required: bool, if True will cause an exception when no entries
                          found
+        :param no_times: bool, if True does not use times to choose correct
+                         files
         :param fiber: str or None, if set sets the fiber to use - if no fiber
                       required do not set
         :return:
@@ -353,7 +403,7 @@ class CalibrationDatabase(DatabaseManager):
         # ---------------------------------------------------------------------
         if no_times:
             filetime = None
-        elif (filetime is None):
+        elif filetime is None:
             # need to get hdict/header
             hdict, header = _get_hdict(self.params, self.name, drsfile, hdict,
                                        header)
@@ -384,7 +434,7 @@ class CalibrationDatabase(DatabaseManager):
         if (filenames is None or len(filenames) == 0) and not required:
             return None
         # deal with no filenames found elsewise --> error
-        if (filenames is None or len(filenames) == 0):
+        if filenames is None or len(filenames) == 0:
             # get unique set of keys
             keys = np.unique(self.database.get('KEY', return_array=True))
             # get file description
@@ -420,6 +470,15 @@ class CalibrationDatabase(DatabaseManager):
 
 class TelluricDatabase(DatabaseManager):
     def __init__(self, params: ParamDict, check: bool = True):
+        """
+        Constructor of the Telluric Database class
+
+        :param params: ParamDict, parameter dictionary of constants
+        :param check: bool, if True makes sure database file exists (otherwise
+                      assumes it is)
+
+        :return: None
+        """
         # save class name
         self.classname = 'TelluricDatabaseManager'
         # set function
@@ -433,16 +492,16 @@ class TelluricDatabase(DatabaseManager):
         # set database directory
         self.filedir = Path(str(self.params['DRS_TELLU_DB']))
 
-
     def add_tellu_file(self, drsfile, verbose: bool = True,
                        copy_files=True):
         """
         Add DrsFile to the calibration database
 
         :param drsfile: DrsFile, the DrsFile to add
-        :params verbose: bool, if True logs progress
+        :param verbose: bool, if True logs progress
         :param copy_files: bool, if True copies file to self.filedir
-        :return:
+
+        :return: None
         """
         # set function
         _ = display_func(self.params, 'add_tellu_file', __NAME__,
@@ -474,7 +533,7 @@ class TelluricDatabase(DatabaseManager):
                               header, dtype=float)
         # get tau_others
         tau_others = _get_hkey(self.params, 'KW_TELLUP_EXPO_OTHERS', hdict,
-                              header, dtype=float)
+                               header, dtype=float)
         # ------------------------------------------------------------------
         # deal with database input being set to False
         if 'DATABASE' in self.params['INPUTS']:
@@ -508,14 +567,15 @@ class TelluricDatabase(DatabaseManager):
 # =============================================================================
 # Define specific file functions (for use in specific file databases above)
 # =============================================================================
-def _get_dbkey(params, drsfile, dbmname):
+def _get_dbkey(params: ParamDict, drsfile: DrsFileTypes, dbmname: str) -> str:
     """
     Get the dbkey attribute from a drsfile
 
-    :param params:
-    :param drsfile:
-    :param dbmname:
-    :return:
+    :param params: ParamDict, parameter dictionary of constants
+    :param drsfile: DrsFile instance used to get the dbkey
+    :param dbmname: str, the name of the database
+
+    :return: str, the dbkey
     """
     # set function
     func_name = display_func(params, '_get_dbkey', __NAME__)
@@ -525,16 +585,18 @@ def _get_dbkey(params, drsfile, dbmname):
     else:
         eargs = [drsfile.name, dbmname, func_name]
         WLOG(params, 'error', TextEntry('00-008-00012', args=eargs))
-        return
+        return 'None'
 
 
-def _get_dbname(params, drsfile, dbmname):
+def _get_dbname(params: ParamDict, drsfile: DrsFileTypes, dbmname: str) -> bool:
     """
-    Get the dbname attribute from a drsfile
-    :param params:
-    :param drsfile:
-    :param dbmname:
-    :return:
+    Check the dbname attribute from a drsfile matches the database type
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param drsfile: DrsInputFile (fits or npy) instance to get dbname from
+    :param dbmname: str, the name of the database
+
+    :return: bool, True if passed (raises exception otherwise)
     """
     # set function
     func_name = display_func(params, '_get_dbname', __NAME__)
@@ -546,18 +608,33 @@ def _get_dbname(params, drsfile, dbmname):
             eargs = [drsfile.name, dbname, dbmname.upper(), drsfile.filename,
                      func_name]
             WLOG(params, 'error', TextEntry('00-002-00019', args=eargs))
+            return False
     else:
         eargs = [drsfile.name, dbmname, func_name]
         WLOG(params, 'error', TextEntry('00-008-00012', args=eargs))
-        return
+        return False
+    # if we are here return True --> success
+    return True
 
 
-def _get_hkey(params, pkey, header, hdict, dtype: type = str):
+def _get_hkey(params: ParamDict, pkey: str,
+              header: Union[FitsHeader, DrsHeader, None],
+              hdict: Union[DrsHeader, None], dtype: Type = str) -> Any:
     """
-    Get the drs key fiber value (if present)
-    :param drsfile:
-    :return:
+    Get the value for a header key "pkey (if present in hdict, then in header)
+    else if not present return None
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param pkey: str, the key in the headers to check
+    :param header: astropy.io.fits header or drs_fits.Header to check for pkey
+    :param hdict: drs_fits.Header to check for pkey (takes precendence over
+                  header
+    :param dtype: type the type to force return value to
+
+    :return: Any, the value for pkey (None if not found)
     """
+    # set function
+    func_name = display_func(params, '_get_hkey', __NAME__)
     # gey key from params
     key = params[pkey][0]
     # set fiber to None
@@ -572,17 +649,22 @@ def _get_hkey(params, pkey, header, hdict, dtype: type = str):
             value = header[key]
     # deal with dtype
     if value is not None:
-        value = dtype(value)
+        try:
+            value = dtype(value)
+        except Exception as e:
+            eargs = [type(e), str(e), func_name]
+            WLOG(params, 'error', TextEntry('00-000-00002', args=eargs))
     # return fiber
     return value
 
 
-def _get_is_super(params):
+def _get_is_super(params: ParamDict) -> int:
     """
     Find out whether file entry is from a super set or not
 
-    :param params:
-    :return:
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: 1 if code is super else returns 0
     """
     # get master setting from params
     is_super = params['IS_MASTER']
@@ -592,10 +674,24 @@ def _get_is_super(params):
         is_super = 1
     else:
         is_super = 0
+    # return is super value
     return is_super
 
 
-def _copy_db_file(params, drsfile, outpath, dbmname, verbose):
+def _copy_db_file(params: ParamDict, drsfile: DrsFileTypes,
+                  outpath: Union[str, Path], dbmname: str,
+                  verbose: bool = True):
+    """
+    Copy a database file from drsfile.filename to outpath
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param drsfile: DrsInputFile (fits or npy) instance to get .filename from
+    :param outpath: str or Path, the output directory to copy the file to
+    :param dbmname: str, the database name
+    :param verbose: bool, if True log that we are copying files
+
+    :return: None
+    """
     # set function
     func_name = display_func(params, '_copy_db_file', __NAME__)
     # construct in path
@@ -619,7 +715,25 @@ def _copy_db_file(params, drsfile, outpath, dbmname, verbose):
         WLOG(params, 'error', TextEntry('00-002-00014', args=eargs))
 
 
-def _get_hdict(params, dbname, drsfile, hdict=None, header=None):
+HeaderType = Union[DrsHeader, FitsHeader, None]
+
+
+def _get_hdict(params: ParamDict, dbname: str, drsfile: DrsFileTypes = None,
+               hdict: HeaderType = None,
+               header: HeaderType = None) -> Tuple[HeaderType, HeaderType]:
+    """
+    Get the hdict and header (either from inputs or drsfile)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param dbname: str, the database name
+    :param drsfile: DrsInputFile (fits or npy) instance to get the hdict/header
+                    from (if hdict and header are both None)
+    :param header: astropy.io.fits header or drs_fits.Header to check for pkey
+    :param hdict: drs_fits.Header to check for pkey (takes precendence over
+                  header
+
+    :return: hdict (None if not found) and header (None if not found)
+    """
     # set function name
     func_name = display_func(params, '_get_hdict', __NAME__)
     # deal with having hdict input
@@ -642,7 +756,20 @@ def _get_hdict(params, dbname, drsfile, hdict=None, header=None):
     return hdict, header
 
 
-def _get_time(params, dbname, header=None, hdict=None, kind=None):
+def _get_time(params: ParamDict, dbname: str,
+              hdict: HeaderType = None, header: HeaderType = None,
+              kind: Union[str, None] = None) -> Union[Time, str, float]:
+    """
+    Get the time from the header/hdict and return in format "kind"
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param dbname: str, the database name
+    :param header: astropy.io.fits header or drs_fits.Header to check for pkey
+    :param hdict: drs_fits.Header to check for pkey (takes precendence over
+                  header
+    :param kind: str
+    :return:
+    """
     # set function name
     func_name = display_func(params, '_get_time', __NAME__)
     # ----------------------------------------------------------------------
@@ -663,6 +790,15 @@ def _get_time(params, dbname, header=None, hdict=None, kind=None):
 # =============================================================================
 class IndexDatabase(DatabaseManager):
     def __init__(self, params: ParamDict, check: bool = True):
+        """
+        Constructor of the Index Database class
+
+        :param params: ParamDict, parameter dictionary of constants
+        :param check: bool, if True makes sure database file exists (otherwise
+                      assumes it is)
+
+        :return: None
+        """
         # save class name
         self.classname = 'IndexDatabaseManager'
         # set function
@@ -677,6 +813,15 @@ class IndexDatabase(DatabaseManager):
 
 class LogDatabase(DatabaseManager):
     def __init__(self, params: ParamDict, check: bool = True):
+        """
+        Constructor of the Log Database class
+
+        :param params: ParamDict, parameter dictionary of constants
+        :param check: bool, if True makes sure database file exists (otherwise
+                      assumes it is)
+
+        :return: None
+        """
         # save class name
         self.classname = 'LogDatabaseManager'
         # set function
@@ -691,6 +836,15 @@ class LogDatabase(DatabaseManager):
 
 class ObjectDatabase(DatabaseManager):
     def __init__(self, params: ParamDict, check: bool = True):
+        """
+        Constructor of the Object Database class
+
+        :param params: ParamDict, parameter dictionary of constants
+        :param check: bool, if True makes sure database file exists (otherwise
+                      assumes it is)
+
+        :return: None
+        """
         # save class name
         self.classname = 'ObjectDatabaseManager'
         # set function
@@ -701,7 +855,6 @@ class ObjectDatabase(DatabaseManager):
         self.name = 'object'
         # set path
         self.set_path(None, 'OBJECT_DB_NAME', check=check)
-
 
 
 # =============================================================================
