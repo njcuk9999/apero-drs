@@ -94,6 +94,7 @@ class Header(fits.Header):
         """
         # deal with key not being string
         if isinstance(key, tuple):
+            # assume it is a tuple (key, id) - therefore we check key[0]
             if key[0].startswith('@@@'):
                 tmpkey = self.__get_temp_key(key[0])
                 self.__temp_items.__setitem__(tmpkey,item)
@@ -126,6 +127,7 @@ class Header(fits.Header):
         """
         # deal with key not being string
         if isinstance(key, tuple):
+            # assume it is a tuple (key, id) - therefore we check key[0]
             if key[0].startswith('@@@'):
                 tmpkey = self.__get_temp_key(key[0])
                 return self.__temp_items.__getitem__(tmpkey)
@@ -198,7 +200,12 @@ class Header(fits.Header):
         #   converts NaNs to strings)
         if nan_to_string:
             for key in list(header.keys()):
-                header[key] = header[key]
+                # need to deal with comment keys
+                #    Cannot do header['COMMENT'] = header['COMMENT']
+                if isinstance(header[key], fits.header._HeaderCommentaryCards):
+                    header[key] = header[key][0]
+                else:
+                    header[key] = header[key]
         # return fits header
         return header
 
@@ -1164,7 +1171,9 @@ def combine(params, recipe, infiles, math='average', same_type=True):
     return outfile
 
 
-def get_mid_obs_time(params, header, out_fmt=None, **kwargs):
+def get_mid_obs_time(params: ParamDict, header: Union[Header, fits.Header],
+                     out_fmt: Union[str, None] = None
+                     ) -> Tuple[Union[Time, str, float], str]:
     func_name = __NAME__ + '.get_mid_obs_time()'
     # get obs_time
     outkey = params['KW_MID_OBS_TIME'][0]
