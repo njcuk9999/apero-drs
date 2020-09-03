@@ -111,9 +111,15 @@ def __main__(recipe, params):
     robjnames = params['INPUTS']['OBJNAME']
     if robjnames == 'None':
         robjnames = None
+
+
     # set properties set in run file
     params.set('STOP_AT_EXCEPTION', False)
-    params.set('TEST_RUN', False)
+
+    # TODO: remove break point
+    constants.break_point(params)
+    # TODO: set TEST_RUN to False / or better add it to arguments
+    params.set('TEST_RUN', True)
     params.set('CORES', params['INPUTS']['CORES'])
     # ----------------------------------------------------------------------
     # get objects that match this object name

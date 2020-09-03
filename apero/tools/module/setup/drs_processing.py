@@ -352,7 +352,7 @@ def run_process(params, recipe, module, *gargs, terminate=False, **gkwargs):
     # generate run table (dictionary from reprocessing)
     runtable = generate_run_table(params, module, *gargs, **gkwargs)
     # Generate run list
-    rlist = generate_run_list(params, None, runtable)
+    rlist = generate_run_list(params, None, runtable, None)
     # Process run list
     outlist, has_errors = process_run_list(params, recipe, rlist)
     # display errors
