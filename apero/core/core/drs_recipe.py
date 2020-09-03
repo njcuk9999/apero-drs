@@ -100,6 +100,11 @@ class DrsRecipe(object):
             self.drs_params = params
             if self.instrument is None:
                 self.instrument = params['INSTRUMENT']
+        self.drs_pconstant = None
+        self.textdict = None
+        self.helptext = None
+        # get drs params
+        self.get_drs_params()
         # run rest of initialization
         self.__initialize()
 
@@ -113,6 +118,8 @@ class DrsRecipe(object):
             'instrument': self.instrument,
             'name': self.name,
             'drs_params': self.drs_params,
+            'drs_pconstant': self.drs_pconstant,
+            'force_dirs': self.force_dirs,
             'filemodstr': self.filemod.__name__,
         }
 
@@ -153,9 +160,6 @@ class DrsRecipe(object):
         self.arg_list = []
         self.str_arg_list = None
         self.used_command = []
-        self.drs_pconstant = None
-        self.textdict = None
-        self.helptext = None
         self.input_params = ParamDict()
         self.required_args = []
         self.optional_args = []
@@ -170,8 +174,6 @@ class DrsRecipe(object):
         self.log = None
         # set up the input validation (should be True to check arguments)
         self.input_validation = True
-        # get drs params
-        self.get_drs_params()
         # make special arguments
         self._make_specials()
 
