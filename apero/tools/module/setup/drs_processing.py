@@ -810,7 +810,8 @@ def generate_run_list(params, table, runtable, skiptable):
     # print progress: generating run list
     WLOG(params, 'info', TextEntry('40-503-00011'))
     # need to update table object names to match preprocessing
-    table = _update_table_objnames(params, table)
+    if table is not None:
+        table = _update_table_objnames(params, table)
     # get recipe defintions module (for this instrument)
     recipemod = _get_recipe_module(params)
     # get all values (upper case) using map function
