@@ -16,6 +16,7 @@ from apero import core
 from apero import lang
 from apero.core import constants
 from apero.io import drs_path
+from apero.io import drs_text
 from apero.science import telluric
 from apero.tools.module.setup import drs_processing
 
@@ -112,15 +113,14 @@ def __main__(recipe, params):
     if robjnames == 'None':
         robjnames = None
 
-
     # set properties set in run file
     params.set('STOP_AT_EXCEPTION', False)
-
-    # TODO: remove break point
-    constants.break_point(params)
-    # TODO: set TEST_RUN to False / or better add it to arguments
-    params.set('TEST_RUN', True)
     params.set('CORES', params['INPUTS']['CORES'])
+    # set test run from inputs
+    params.set('TEST_RUN', False)
+    if 'TEST' in params['INPUTS']:
+        if drs_text.true_text(params['INPUTS']['TEST']):
+            params.set('TEST_RUN', True)
     # ----------------------------------------------------------------------
     # get objects that match this object name
     gargs = [fiber, filetype, dprtypes, robjnames]

@@ -927,6 +927,9 @@ obj_mk_tellu_db.set_kwarg(name='--fiber', dtype=str,
                           default_ref='TELLURIC_FIBER_TYPE',
                           helpstr=Help['MKTELLDB_FIBER'],
                           options=['AB', 'A', 'B', 'C'])
+obj_mk_tellu_db.set_kwarg(name='--test', dtype=str, default='None',
+                          options=['True', 'False', '1', '0', 'None'],
+                          helpstr=Help['PROCESS_TEST_HELP'])
 obj_mk_tellu_db.set_kwarg(**add_db)
 obj_mk_tellu_db.set_kwarg(**blazefile)
 obj_mk_tellu_db.set_kwarg(**plot)
@@ -1011,6 +1014,9 @@ obj_fit_tellu_db.set_kwarg(name='--objname', dtype=str, default='None',
 obj_fit_tellu_db.set_kwarg(name='--dprtype', dtype=str,
                            default_ref='TELLU_ALLOWED_DPRTYPES',
                            helpstr=Help['FTELLUDB_DPRTYPES'])
+obj_fit_tellu_db.set_kwarg(name='--test', dtype=str, default='None',
+                           options=['True', 'False', '1', '0', 'None'],
+                           helpstr=Help['PROCESS_TEST_HELP'])
 obj_fit_tellu_db.set_kwarg(**add_db)
 obj_fit_tellu_db.set_kwarg(**add_db)
 obj_fit_tellu_db.set_kwarg(**plot)
