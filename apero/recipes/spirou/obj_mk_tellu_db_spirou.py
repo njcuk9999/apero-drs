@@ -13,6 +13,7 @@ import os
 from collections import OrderedDict
 
 from apero.base import base
+from apero.base import drs_text
 from apero import lang
 from apero.core import constants
 from apero.core.core import drs_log
@@ -106,8 +107,12 @@ def __main__(recipe, params):
     fiber = params['INPUTS']['FIBER']
     # set properties set in run file
     params.set('STOP_AT_EXCEPTION', False)
-    params.set('TEST_RUN', False)
     params.set('CORES', params['INPUTS']['CORES'])
+    # set test run from inputs
+    params.set('TEST_RUN', False)
+    if 'TEST' in params['INPUTS']:
+        if drs_text.true_text(params['INPUTS']['TEST']):
+            params.set('TEST_RUN', True)
     # get the telluric star names
     objnames = telluric.get_whitelist(params)
     objnames = list(objnames)

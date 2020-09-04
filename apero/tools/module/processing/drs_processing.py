@@ -811,7 +811,9 @@ def generate_run_list(params, table, runtable, skiptable):
     # print progress: generating run list
     WLOG(params, 'info', TextEntry('40-503-00011'))
     # need to update table object names to match preprocessing
-    table = _update_table_objnames(params, table)
+    #   table can be None if coming from e.g fit_tellu_db
+    if table is not None:
+        table = _update_table_objnames(params, table)
     # get recipe defintions module (for this instrument)
     recipemod = _get_recipe_module(params)
     # get all values (upper case) using map function
@@ -1510,6 +1512,10 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
         # copy table
         # ------------------------------------------------------------------
         ftable = Table(table)
+        # skip if table is empty
+        if len(ftable) == 0:
+            continue
+
         # ------------------------------------------------------------------
         # deal with black and white lists
         # ------------------------------------------------------------------
@@ -2053,6 +2059,10 @@ def _get_non_telluric_stars(params, table, tstars):
     # deal with no tstars
     if drs_text.null_text(tstars, ['None', '']):
         tstars = []
+    # deal with no table
+    #    (can happen when coming from mk_tellu_db or fit_tellu_db etc)
+    if (table is None) or len(table) == 0:
+        return []
     # ----------------------------------------------------------------------
     # lets narrow down our list
     # ----------------------------------------------------------------------
