@@ -222,7 +222,8 @@ if __name__ == "__main__":
             labels.append(ll[it])
     # add legend
     frame.legend(handles, labels, loc=0)
-
+    # stop scientific notation
+    frame.ticklabel_format(useOffset=False)
     # change ylabels
     frame.set_yticks(ypos)
     frame.set_yticklabels(ynames)
