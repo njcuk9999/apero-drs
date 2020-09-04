@@ -87,6 +87,16 @@ class DatabaseError(DatabaseException):
         return emsg.format(self.message, self.path, self.func_name)
 
 
+# def database_wrapper(path, verbose):
+#
+#     os.enivon['DRS_UCONFIG']
+#
+#     if os.enivon['DRS_DB_MODE'] == 'sqlite3':
+#         return Database(path, verbose)
+#     else:
+#         return Database1(path, verbose)
+
+
 class Database:
     # A wrapper for an SQLite database.
     def __init__(self, path: str, verbose: bool = False):
