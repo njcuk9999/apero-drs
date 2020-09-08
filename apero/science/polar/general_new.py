@@ -141,12 +141,12 @@ class PolarObj:
         self.nbo = self.rawflux.shape[0]
         self.nbpix = self.rawflux.shape[1]
         # get keys from header
-        self.mjd = self.infile.get_key('KW_MID_OBS_TIME', dtype=float)
-        self.exptime = self.infile.get_key('KW_EXPTIME', dtype=float)
+        self.mjd = self.infile.get_hkey('KW_MID_OBS_TIME', dtype=float)
+        self.exptime = self.infile.get_hkey('KW_EXPTIME', dtype=float)
         self.exptime_hrs = (self.exptime * uu.s).to(uu.hr).value
         self.mjdstart = self.mjd - (self.exptime / 2)
         self.mjdend = self.mjd + (self.exptime / 2)
-        self.dprtype = self.infile.get_key('KW_DPRTYPE', dtype=str)
+        self.dprtype = self.infile.get_hkey('KW_DPRTYPE', dtype=str)
         # get berv properties
         bprops = extract.get_berv(self.params, self.infile,
                                   dprtype=self.dprtype)
@@ -340,7 +340,7 @@ class PolarObj:
         # load source rv
         if ccf_correct:
             ccf_file.read_header()
-            self.ccfprops['SOURCE_RV'] = ccf_file.get_key('KW_CCF_RV_CORR')
+            self.ccfprops['SOURCE_RV'] = ccf_file.get_hkey('KW_CCF_RV_CORR')
         else:
             self.ccfprops['SOURCE_RV'] = 0.0
         # set source
@@ -1435,9 +1435,9 @@ def valid_polar_file(params, infile, **kwargs):
                           func_name, mapf='list', dtype=str)
     # ----------------------------------------------------------------------
     # get cmmtseq key
-    cmmtseq = infile.get_key('KW_CMMTSEQ')
+    cmmtseq = infile.get_hkey('KW_CMMTSEQ')
     # get fiber type
-    fiber = infile.get_key('KW_FIBER')
+    fiber = infile.get_hkey('KW_FIBER')
     # ----------------------------------------------------------------------
     # deal with bad file
     if cmmtseq in [None, '', 'None']:

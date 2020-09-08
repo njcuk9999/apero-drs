@@ -71,8 +71,8 @@ def check_files(params, infile):
     # get pseudo constants
     pconst = constants.pload(instrument=params['INSTRUMENT'])
     # get infile DPRTYPE and OBJNAME
-    dprtype = infile.get_key('KW_DPRTYPE', dtype=str, required=False)
-    objname = infile.get_key('KW_OBJNAME', dtype=str, required=False)
+    dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str, required=False)
+    objname = infile.get_hkey('KW_OBJNAME', dtype=str, required=False)
     filename = infile.filename
     # deal with unset value
     if dprtype is None:
@@ -172,12 +172,12 @@ def calibrate_ppfile(params, recipe, infile, database=None, **kwargs):
         calibdbm = database
 
     # Get basic image properties
-    sigdet = infile.get_key('KW_RDNOISE')
-    exptime = infile.get_key('KW_EXPTIME')
-    gain = infile.get_key('KW_GAIN')
-    dprtype = infile.get_key('KW_DPRTYPE', dtype=str)
-    saturate = infile.get_key('KW_SATURATE', dtype=float)
-    frmtime = infile.get_key('KW_FRMTIME', dtype=float)
+    sigdet = infile.get_hkey('KW_RDNOISE')
+    exptime = infile.get_hkey('KW_EXPTIME')
+    gain = infile.get_hkey('KW_GAIN')
+    dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str)
+    saturate = infile.get_hkey('KW_SATURATE', dtype=float)
+    frmtime = infile.get_hkey('KW_FRMTIME', dtype=float)
     nfiles = infile.numfiles
 
     # log that we are calibrating a file

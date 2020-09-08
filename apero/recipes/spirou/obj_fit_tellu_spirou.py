@@ -160,7 +160,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # check that file has valid DPRTYPE
         # ------------------------------------------------------------------
-        dprtype = infile.get_key('KW_DPRTYPE', dtype=str)
+        dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str)
         # if dprtype is incorrect skip
         if dprtype not in params.listp('TELLU_ALLOWED_DPRTYPES'):
             # join allowed dprtypes
@@ -175,7 +175,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # check that file objname is not in blacklist
         # ------------------------------------------------------------------
-        objname = infile.get_key('KW_OBJNAME', dtype=str)
+        objname = infile.get_hkey('KW_OBJNAME', dtype=str)
         # get black list
         blacklist = telluric.get_blacklist(params)
         # if objname in blacklist then skip

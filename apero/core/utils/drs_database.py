@@ -358,8 +358,8 @@ def add_file(params, outfile, night=None, copy_files=True, log=True):
     # update database with key
     if dbname.lower() == 'telluric':
         # get object name
-        if hasattr(outfile, 'get_key'):
-            objname = outfile.get_key('KW_OBJNAME', dtype=str)
+        if hasattr(outfile, 'get_hkey'):
+            objname = outfile.get_hkey('KW_OBJNAME', dtype=str)
         else:
             objname = 'None'
         # update telluric database

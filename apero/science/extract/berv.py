@@ -779,7 +779,7 @@ def get_raw_param(params, param, inparam, infile, header, props, kwargs):
     rawvalue, source = None, 'None'
     # get value from infile
     if (infile is not None) and (inparam.hkey is not None):
-        rawvalue = infile.get_key(inparam.hkey, required=False)
+        rawvalue = infile.get_hkey(inparam.hkey, required=False)
         source = str(infile)
     # if not get value from header
     useheader = (inparam.hkey is not None) and (rawvalue is None)

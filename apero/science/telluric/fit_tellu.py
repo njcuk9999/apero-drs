@@ -805,7 +805,7 @@ def fit_tellu_quality_control(params, infile, tpreprops, **kwargs):
     # ----------------------------------------------------------------------
     # get SNR for each order from header
     nbo, nbpix = infile.shape
-    snr = infile.read_header_key_1d_list('KW_EXT_SNR', nbo, dtype=float)
+    snr = infile.get_hkey_1d('KW_EXT_SNR', nbo, dtype=float)
     # check that SNR is high enough
     if snr[snr_order] < qc_snr_min:
         fargs = [snr_order, snr[snr_order], qc_snr_min]

@@ -197,8 +197,8 @@ def get_wave_solution_from_wavefile(params, recipe, usefiber, inwavefile,
     # set wave source of wave file
     wavesource = source
     # get wave time
-    wavetime = wavefile.read_header_key('KW_MID_OBS_TIME', dtype=float,
-                                        has_default=True, default=0.0)
+    wavetime = wavefile.get_hkey('KW_MID_OBS_TIME', dtype=float,
+                                 has_default=True, default=0.0)
     # return to main get_wave function
     return wavefile, wavemap, wavesource, wavetime
 
@@ -251,13 +251,13 @@ def get_wave_solution_from_inheader(params, recipe, infile, header, usefiber):
     else:
         wavefile = infile.completecopy(infile)
         # set the file name to the wave file
-        wavefile.filename = wavefile.get_key('KW_WAVEFILE')
+        wavefile.filename = wavefile.get_hkey('KW_WAVEFILE')
         # if we have a wave time use it
         if params['KW_WAVETIME'][0] in header:
-            wavetime = wavefile.get_key('KW_WAVETIME')
+            wavetime = wavefile.get_hkey('KW_WAVETIME')
         else:
-            wavetime = wavefile.read_header_key('KW_MID_OBS_TIME', dtype=float,
-                                                has_default=True, default=0.0)
+            wavetime = wavefile.get_hkey('KW_MID_OBS_TIME', dtype=float,
+                                         has_default=True, default=0.0)
         # wave source is the infile
         wavesource = 'infile'
         # get wave map
@@ -360,30 +360,30 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     # Now deal with using wavefile
     # -------------------------------------------------------------------------
     # extract keys from header
-    nbo = wavefile.read_header_key('KW_WAVE_NBO', dtype=int)
-    deg = wavefile.read_header_key('KW_WAVE_DEG', dtype=int)
+    nbo = wavefile.get_hkey('KW_WAVE_NBO', dtype=int)
+    deg = wavefile.get_hkey('KW_WAVE_DEG', dtype=int)
     # get the wfp keys
-    wfp_file = wavefile.read_header_key('KW_WFP_FILE', dtype=str,
+    wfp_file = wavefile.get_hkey('KW_WFP_FILE', dtype=str,
                                          required=False)
-    wfp_drift = wavefile.read_header_key('KW_WFP_DRIFT', dtype=float,
+    wfp_drift = wavefile.get_hkey('KW_WFP_DRIFT', dtype=float,
                                          required=False)
-    wfp_fwhm = wavefile.read_header_key('KW_WFP_FWHM', dtype=float,
+    wfp_fwhm = wavefile.get_hkey('KW_WFP_FWHM', dtype=float,
                                         required=False)
-    wfp_contrast = wavefile.read_header_key('KW_WFP_CONTRAST', dtype=float,
+    wfp_contrast = wavefile.get_hkey('KW_WFP_CONTRAST', dtype=float,
                                             required=False)
-    wfp_mask = wavefile.read_header_key('KW_WFP_MASK', dtype=float,
+    wfp_mask = wavefile.get_hkey('KW_WFP_MASK', dtype=float,
                                         required=False)
-    wfp_lines = wavefile.read_header_key('KW_WFP_LINES', dtype=float,
+    wfp_lines = wavefile.get_hkey('KW_WFP_LINES', dtype=float,
                                          required=False)
-    wfp_target_rv = wavefile.read_header_key('KW_TARG_RV', dtype=float,
+    wfp_target_rv = wavefile.get_hkey('KW_TARG_RV', dtype=float,
                                              required=False)
-    wfp_width = wavefile.read_header_key('KW_WFP_WIDTH', dtype=float,
+    wfp_width = wavefile.get_hkey('KW_WFP_WIDTH', dtype=float,
                                          required=False)
-    wfp_step = wavefile.read_header_key('KW_WFP_STEP', dtype=float,
+    wfp_step = wavefile.get_hkey('KW_WFP_STEP', dtype=float,
                                         required=False)
     # extract cofficients from header
-    wave_coeffs = wavefile.read_header_key_2d_list('KW_WAVECOEFFS',
-                                                   dim1=nbo, dim2=deg + 1)
+    wave_coeffs = wavefile.get_hkey_2d('KW_WAVECOEFFS',
+                                       dim1=nbo, dim2=deg + 1)
     # -------------------------------------------------------------------------
     # if wavemap is unset create it from wave coefficients
     if wavemap is None:
@@ -535,8 +535,8 @@ def add_wave_keys(params, infile, props):
     infile.add_hkey('KW_WAVESOURCE', value=props['WAVESOURCE'])
     infile.add_hkey('KW_WAVE_NBO', value=props['NBO'])
     infile.add_hkey('KW_WAVE_DEG', value=props['DEG'])
-    infile.add_hkeys_2d('KW_WAVECOEFFS', values=props['COEFFS'],
-                        dim1name='order', dim2name='coeffs')
+    infile.add_hkey_2d('KW_WAVECOEFFS', values=props['COEFFS'],
+                       dim1name='order', dim2name='coeffs')
     # add wave fp parameters
     infile.add_hkey('KW_WFP_FILE', value=props['WFP_FILE'])
     infile.add_hkey('KW_WFP_DRIFT', value=props['WFP_DRIFT'])
@@ -630,9 +630,9 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
     # get the shape from the wavemap
     nbo, nbpix = wavemap.shape
     # get dprtype
-    dprtype = e2dsfile.get_key('KW_DPRTYPE', dtype=str)
+    dprtype = e2dsfile.get_hkey('KW_DPRTYPE', dtype=str)
     # get fiber type
-    fiber = e2dsfile.get_key('KW_FIBER', dtype=str)
+    fiber = e2dsfile.get_hkey('KW_FIBER', dtype=str)
     # get fiber type
     fibtype = pconst.FIBER_DPR_POS(dprtype, fiber)
     # set up the xpixels
@@ -1089,7 +1089,7 @@ def hc_wavesol(params, recipe, iprops, e2dsfile, blaze, fiber, **kwargs):
     # set wprops values (expected for output)
     wprops = ParamDict()
     wprops['WAVEFILE'] = wavefile.filename
-    wprops['WAVETIME'] = e2dsfile.get_key('KW_MID_OBS_TIME', dtype=float)
+    wprops['WAVETIME'] = e2dsfile.get_hkey('KW_MID_OBS_TIME', dtype=float)
     wprops['WAVESOURCE'] = recipe.name + 'HC'
     wprops['COEFFS'] = llprops['POLY_WAVE_SOL']
     wprops['WAVEMAP'] = llprops['WAVE_MAP2']
@@ -1263,7 +1263,7 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
     # ----------------------------------------------------------------------
     wprops['WAVEFILE'] = wavefile.filename
     wprops['WAVESOURCE'] = recipe.name
-    wprops['WAVETIME'] = fpe2dsfile.get_key('KW_MID_OBS_TIME', dtype=float)
+    wprops['WAVETIME'] = fpe2dsfile.get_hkey('KW_MID_OBS_TIME', dtype=float)
     wprops['COEFFS'] = llprops['LL_PARAM_FINAL']
     wprops['WAVEMAP'] = llprops['LL_FINAL']
     wprops['NBO'] = llprops['LL_PARAM_FINAL'].shape[0]
@@ -5332,7 +5332,7 @@ def fp_write_wavesol_master(params, recipe, llprops, hcfile, fpfile, fiber,
     wavefile.construct_filename(params, infile=hcfile)
     # set some wave keys as "SELF" (i.e. from this wave solution)
     wprops['WAVEFILE'] = wavefile.basename
-    wprops['WAVETIME'] = hcfile.get_key('KW_MID_OBS_TIME', dtype=float)
+    wprops['WAVETIME'] = hcfile.get_hkey('KW_MID_OBS_TIME', dtype=float)
     sargs = [recipe.name, params['DRS_VERSION']]
     wprops['WAVESOURCE'] = '{0} [{1}]'.format(*sargs)
     wprops['WFP_FILE'] = wavefile.basename
@@ -5608,7 +5608,7 @@ def process_other_fibers(params, recipe, mprops, mfpl, fp_outputs):
         rwavemap = get_wavemap_from_coeffs(rwavecoeffs, nbo, nbpix)
         # ----------------------------------------------------------------------
         # get dprtype
-        dprtype = fpe2dsfile.get_key('KW_DPRTYPE', dtype=str)
+        dprtype = fpe2dsfile.get_hkey('KW_DPRTYPE', dtype=str)
         # get fiber type
         fibtype = pconst.FIBER_DPR_POS(dprtype, fiber)
         # get the difference between measured and reference pixels
@@ -5634,7 +5634,8 @@ def process_other_fibers(params, recipe, mprops, mfpl, fp_outputs):
         rwprops = ParamDict()
         rwprops['WAVEFILE'] = wavefile.filename
         rwprops['WAVESOURCE'] = recipe.name
-        rwprops['WAVETIME'] = fpe2dsfile.get_key('KW_MID_OBS_TIME', dtype=float)
+        rwprops['WAVETIME'] = fpe2dsfile.get_hkey('KW_MID_OBS_TIME',
+                                                  dtype=float)
         rwprops['COEFFS'] = rwavecoeffs
         rwprops['WAVEMAP'] = rwavemap
         rwprops['NBO'] = nbo
@@ -5945,7 +5946,7 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, mwave,
     rpixels = rfpl['PIXEL_MEAS']
     rwaveref = rfpl['WAVE_REF']
     # get dprtype
-    dprtype = fpe2ds.get_key('KW_DPRTYPE', dtype=str)
+    dprtype = fpe2ds.get_hkey('KW_DPRTYPE', dtype=str)
     # get fiber type
     fibtype = pconst.FIBER_DPR_POS(dprtype, fiber)
     # get the difference between measured and reference pixels
@@ -5961,7 +5962,7 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, mwave,
     rpixels = rhcl['PIXEL_MEAS']
     rwaveref = rhcl['WAVE_REF']
     # get dprtype
-    dprtype = hce2ds.get_key('KW_DPRTYPE', dtype=str)
+    dprtype = hce2ds.get_hkey('KW_DPRTYPE', dtype=str)
     # get fiber type
     fibtype = pconst.FIBER_DPR_POS(dprtype, fiber)
     # get the difference between measured and reference pixels
@@ -5978,7 +5979,7 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, mwave,
     nprops['COEFFS'] = night_coeffs
     nprops['WAVEMAP'] = night_wave
     nprops['WAVEFILE'] = wavefile
-    nprops['WAVETIME'] = hce2ds.get_key('KW_MID_OBS_TIME', dtype=float)
+    nprops['WAVETIME'] = hce2ds.get_hkey('KW_MID_OBS_TIME', dtype=float)
     nprops['WAVESOURCE'] = recipe.name
     nprops['WAVEINIT'] = wavefile
     nprops['NBO'] = night_coeffs.shape[0]
@@ -6078,7 +6079,7 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
     wavefile.construct_filename(params, infile=hcfile)
     # set some wave keys as "SELF" (i.e. from this wave solution)
     nprops['WAVEFILE'] = wavefile.basename
-    nprops['WAVETIME'] = hcfile.get_key('KW_MID_OBS_TIME', dtype=float)
+    nprops['WAVETIME'] = hcfile.get_hkey('KW_MID_OBS_TIME', dtype=float)
     sargs = [recipe.name, params['DRS_VERSION']]
     nprops['WAVESOURCE'] = '{0} [{1}]'.format(*sargs)
     nprops['WFP_FILE'] = wavefile.basename
@@ -6203,7 +6204,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     extrecipe.drs_params = params
     # ----------------------------------------------------------------------
     # get input to extract file
-    input_filename = extract_file.get_key('INF1000')
+    input_filename = extract_file.get_hkey('INF1000')
     input_file = extract_file.intype
     # ----------------------------------------------------------------------
     # make a new copy of infileexclude_group

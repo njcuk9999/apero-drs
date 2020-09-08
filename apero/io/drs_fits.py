@@ -83,7 +83,8 @@ class Header(fits.Header):
         # set storage for temporary items
         self.__temp_items = {}
 
-    def __setitem__(self, key: str, item: AnySimple):
+    def __setitem__(self, key: str,
+                    item: Union[AnySimple, Tuple[AnySimple, str]]):
         """
         Set a key with "item"
         same as using: header[key] = item
@@ -117,7 +118,7 @@ class Header(fits.Header):
             # do the super __setitem__ on nan filtered item
             super().__setitem__(key, nan_filtered)
 
-    def __getitem__(self, key: str) -> AnySimple:
+    def __getitem__(self, key: str) -> Union[AnySimple, dict]:
         """
         Get an "item" with key
         same as using: item = header[key]

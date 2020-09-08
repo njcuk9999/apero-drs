@@ -84,10 +84,10 @@ class PolarObj:
         self.basename = self.infile.basename
         self.header = self.infile.get_header()
         # get keys from header
-        self.exptime = self.infile.get_key('KW_EXPTIME', dtype=float)
-        self.mjd = self.infile.get_key('KW_ACQTIME', dtype=float)
-        self.mjdend = self.infile.get_key('KW_MJDEND', dtype=float)
-        self.dprtype = self.infile.get_key('KW_DPRTYPE', dtype=str)
+        self.exptime = self.infile.get_hkey('KW_EXPTIME', dtype=float)
+        self.mjd = self.infile.get_hkey('KW_ACQTIME', dtype=float)
+        self.mjdend = self.infile.get_hkey('KW_MJDEND', dtype=float)
+        self.dprtype = self.infile.get_hkey('KW_DPRTYPE', dtype=str)
         # get berv properties
         bprops = extract.get_berv(params, self.infile, dprtype=self.dprtype)
         # store berv properties
@@ -802,9 +802,9 @@ def valid_polar_file(params, infile, **kwargs):
                           func_name, mapf='list', dtype=str)
     # ----------------------------------------------------------------------
     # get cmmtseq key
-    cmmtseq = infile.get_key('KW_CMMTSEQ')
+    cmmtseq = infile.get_hkey('KW_CMMTSEQ')
     # get fiber type
-    fiber = infile.get_key('KW_FIBER')
+    fiber = infile.get_hkey('KW_FIBER')
     # ----------------------------------------------------------------------
     # deal with bad file
     if cmmtseq in [None, '', 'None']:

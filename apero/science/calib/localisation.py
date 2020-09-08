@@ -553,15 +553,15 @@ def get_coefficients(params, recipe, header, fiber, database=None, **kwargs):
     locofile.read_file()
     # -------------------------------------------------------------------------
     # extract keys from header
-    nbo = locofile.read_header_key('KW_LOC_NBO', dtype=int)
-    deg_c = locofile.read_header_key('KW_LOC_DEG_C', dtype=int)
-    deg_w = locofile.read_header_key('KW_LOC_DEG_W', dtype=int)
+    nbo = locofile.get_hkey('KW_LOC_NBO', dtype=int)
+    deg_c = locofile.get_hkey('KW_LOC_DEG_C', dtype=int)
+    deg_w = locofile.get_hkey('KW_LOC_DEG_W', dtype=int)
     nset = params['FIBER_SET_NUM_FIBERS_{0}'.format(fiber)]
     # extract coefficients from header
-    cent_coeffs = locofile.read_header_key_2d_list('KW_LOC_CTR_COEFF',
-                                                   dim1=nbo, dim2=deg_c + 1)
-    wid_coeffs = locofile.read_header_key_2d_list('KW_LOC_WID_COEFF',
-                                                  dim1=nbo, dim2=deg_w + 1)
+    cent_coeffs = locofile.get_hkey_2d('KW_LOC_CTR_COEFF',
+                                       dim1=nbo, dim2=deg_c + 1)
+    wid_coeffs = locofile.get_hkey_2d('KW_LOC_WID_COEFF',
+                                      dim1=nbo, dim2=deg_w + 1)
     # merge or extract individual coeffs
     if merge:
         cent_coeffs, nbo = pconst.FIBER_LOC_COEFF_EXT(cent_coeffs, fiber)
@@ -806,11 +806,11 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     loco1file.add_hkey('KW_LOC_RMS_CTR', value=rmsmax_cent)
     loco1file.add_hkey('KW_LOC_RMS_WID', value=rmsmax_wid)
     # write 2D list of position fit coefficients
-    loco1file.add_hkeys_2d('KW_LOC_CTR_COEFF', values=cent_coeffs,
-                           dim1name='order', dim2name='coeff')
+    loco1file.add_hkey_2d('KW_LOC_CTR_COEFF', values=cent_coeffs,
+                          dim1name='order', dim2name='coeff')
     # write 2D list of width fit coefficients
-    loco1file.add_hkeys_2d('KW_LOC_WID_COEFF', values=wid_coeffs,
-                           dim1name='order', dim2name='coeff')
+    loco1file.add_hkey_2d('KW_LOC_WID_COEFF', values=wid_coeffs,
+                          dim1name='order', dim2name='coeff')
     # add qc parameters
     loco1file.add_qckeys(qc_params)
     # copy data

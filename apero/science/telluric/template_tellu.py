@@ -68,7 +68,7 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
     # get master wave map
     mwavemap = mprops['WAVEMAP']
     # get the objname
-    objname = reffile.get_key('KW_OBJNAME', dtype=str)
+    objname = reffile.get_hkey('KW_OBJNAME', dtype=str)
     # log that we are constructing the cubes
     WLOG(params, 'info', TextEntry('40-019-00027'))
     # ----------------------------------------------------------------------
@@ -90,11 +90,11 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
         # read header only
         infile.read_header()
         # get number of orders
-        nbo = infile.get_key('KW_WAVE_NBO', dtype=int)
+        nbo = infile.get_hkey('KW_WAVE_NBO', dtype=int)
         # get snr
-        snr = infile.read_header_key_1d_list('KW_EXT_SNR', nbo, dtype=float)
+        snr = infile.get_hkey_1d('KW_EXT_SNR', nbo, dtype=float)
         # get times (for sorting)
-        midexp = infile.get_key('KW_MID_OBS_TIME', dtype=float)
+        midexp = infile.get_hkey('KW_MID_OBS_TIME', dtype=float)
         # append filename
         vfilenames.append(filename)
         vbasenames.append(os.path.basename(filename))
@@ -165,7 +165,7 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
         # normalise image by the normalised blaze
         image2 = image / nprops['NBLAZE']
         # get dprtype
-        dprtype = infile.get_key('KW_DPRTYPE', dtype=str)
+        dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str)
         # ------------------------------------------------------------------
         # Get barycentric corrections (BERV)
         # ------------------------------------------------------------------
@@ -189,28 +189,28 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
         # get string/file kwargs
         bkwargs = dict(dtype=str, required=False)
         # get drs date now
-        drs_date_now = infile.get_key('KW_DRS_DATE_NOW', dtype=str)
+        drs_date_now = infile.get_hkey('KW_DRS_DATE_NOW', dtype=str)
         # add values
         b_cols['RowNum'].append(it)
         b_cols['Filename'].append(infile.basename)
-        b_cols['OBJNAME'].append(infile.get_key('KW_OBJNAME', dtype=str))
+        b_cols['OBJNAME'].append(infile.get_hkey('KW_OBJNAME', dtype=str))
         b_cols['BERV'].append(berv)
         b_cols['SNR{0}'.format(snr_order)].append(snr_all[it])
         b_cols['MidObsHuman'].append(Time(midexps[it], format='mjd').iso)
         b_cols['MidObsMJD'].append(midexps[it])
-        b_cols['VERSION'].append(infile.get_key('KW_VERSION', dtype=str))
+        b_cols['VERSION'].append(infile.get_hkey('KW_VERSION', dtype=str))
         b_cols['Process_Date'].append(drs_date_now)
-        b_cols['DRS_Date'].append(infile.get_key('KW_DRS_DATE', dtype=str))
-        b_cols['DARKFILE'].append(infile.get_key('KW_CDBDARK', **bkwargs))
-        b_cols['BADFILE'].append(infile.get_key('KW_CDBBAD', **bkwargs))
-        b_cols['BACKFILE'].append(infile.get_key('KW_CDBBACK', **bkwargs))
-        b_cols['LOCOFILE'].append(infile.get_key('KW_CDBLOCO', **bkwargs))
-        b_cols['BLAZEFILE'].append(infile.get_key('KW_CDBBLAZE', **bkwargs))
-        b_cols['FLATFILE'].append(infile.get_key('KW_CDBFLAT', **bkwargs))
-        b_cols['SHAPEXFILE'].append(infile.get_key('KW_CDBSHAPEDX', **bkwargs))
-        b_cols['SHAPEYFILE'].append(infile.get_key('KW_CDBSHAPEDY', **bkwargs))
-        b_cols['SHAPELFILE'].append(infile.get_key('KW_CDBSHAPEL', **bkwargs))
-        b_cols['THERMALFILE'].append(infile.get_key('KW_CDBTHERMAL', **bkwargs))
+        b_cols['DRS_Date'].append(infile.get_hkey('KW_DRS_DATE', dtype=str))
+        b_cols['DARKFILE'].append(infile.get_hkey('KW_CDBDARK', **bkwargs))
+        b_cols['BADFILE'].append(infile.get_hkey('KW_CDBBAD', **bkwargs))
+        b_cols['BACKFILE'].append(infile.get_hkey('KW_CDBBACK', **bkwargs))
+        b_cols['LOCOFILE'].append(infile.get_hkey('KW_CDBLOCO', **bkwargs))
+        b_cols['BLAZEFILE'].append(infile.get_hkey('KW_CDBBLAZE', **bkwargs))
+        b_cols['FLATFILE'].append(infile.get_hkey('KW_CDBFLAT', **bkwargs))
+        b_cols['SHAPEXFILE'].append(infile.get_hkey('KW_CDBSHAPEDX', **bkwargs))
+        b_cols['SHAPEYFILE'].append(infile.get_hkey('KW_CDBSHAPEDY', **bkwargs))
+        b_cols['SHAPELFILE'].append(infile.get_hkey('KW_CDBSHAPEL', **bkwargs))
+        b_cols['THERMALFILE'].append(infile.get_hkey('KW_CDBTHERMAL', **bkwargs))
         b_cols['WAVEFILE'].append(os.path.basename(wprops['WAVEFILE']))
         # remove the infile
         del infile
@@ -340,11 +340,11 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
         # read header only
         infile.read_header(ext=1)
         # get number of orders
-        nbo = infile.get_key('KW_WAVE_NBO', dtype=int)
+        nbo = infile.get_hkey('KW_WAVE_NBO', dtype=int)
         # get snr
-        snr = infile.read_header_key_1d_list('KW_EXT_SNR', nbo, dtype=float)
+        snr = infile.get_hkey_1d('KW_EXT_SNR', nbo, dtype=float)
         # get times (for sorting)
-        midexp = infile.get_key('KW_MID_OBS_TIME', dtype=float)
+        midexp = infile.get_hkey('KW_MID_OBS_TIME', dtype=float)
         # append filename
         vfilenames.append(filename)
         vbasenames.append(os.path.basename(filename))
@@ -415,7 +415,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
         image2 = image / mp.nanmedian(image)
 
         # get dprtype
-        dprtype = infile.get_key('KW_DPRTYPE', dtype=str)
+        dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str)
         # ------------------------------------------------------------------
         # Get barycentric corrections (BERV)
         # ------------------------------------------------------------------
@@ -432,28 +432,28 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
         # get string/file kwargs
         bkwargs = dict(dtype=str, required=False)
         # get drs date now
-        drs_date_now = infile.get_key('KW_DRS_DATE_NOW', dtype=str)
+        drs_date_now = infile.get_hkey('KW_DRS_DATE_NOW', dtype=str)
         # add values
         b_cols['RowNum'].append(it)
         b_cols['Filename'].append(infile.basename)
-        b_cols['OBJNAME'].append(infile.get_key('KW_OBJNAME', dtype=str))
+        b_cols['OBJNAME'].append(infile.get_hkey('KW_OBJNAME', dtype=str))
         b_cols['BERV'].append(berv)
         b_cols['SNR{0}'.format(snr_order)].append(snr_all[it])
         b_cols['MidObsHuman'].append(Time(midexps[it], format='mjd').iso)
         b_cols['MidObsMJD'].append(midexps[it])
-        b_cols['VERSION'].append(infile.get_key('KW_VERSION', dtype=str))
+        b_cols['VERSION'].append(infile.get_hkey('KW_VERSION', dtype=str))
         b_cols['Process_Date'].append(drs_date_now)
-        b_cols['DRS_Date'].append(infile.get_key('KW_DRS_DATE', dtype=str))
-        b_cols['DARKFILE'].append(infile.get_key('KW_CDBDARK', **bkwargs))
-        b_cols['BADFILE'].append(infile.get_key('KW_CDBBAD', **bkwargs))
-        b_cols['BACKFILE'].append(infile.get_key('KW_CDBBACK', **bkwargs))
-        b_cols['LOCOFILE'].append(infile.get_key('KW_CDBLOCO', **bkwargs))
-        b_cols['BLAZEFILE'].append(infile.get_key('KW_CDBBLAZE', **bkwargs))
-        b_cols['FLATFILE'].append(infile.get_key('KW_CDBFLAT', **bkwargs))
-        b_cols['SHAPEXFILE'].append(infile.get_key('KW_CDBSHAPEDX', **bkwargs))
-        b_cols['SHAPEYFILE'].append(infile.get_key('KW_CDBSHAPEDY', **bkwargs))
-        b_cols['SHAPELFILE'].append(infile.get_key('KW_CDBSHAPEL', **bkwargs))
-        b_cols['THERMALFILE'].append(infile.get_key('KW_CDBTHERMAL', **bkwargs))
+        b_cols['DRS_Date'].append(infile.get_hkey('KW_DRS_DATE', dtype=str))
+        b_cols['DARKFILE'].append(infile.get_hkey('KW_CDBDARK', **bkwargs))
+        b_cols['BADFILE'].append(infile.get_hkey('KW_CDBBAD', **bkwargs))
+        b_cols['BACKFILE'].append(infile.get_hkey('KW_CDBBACK', **bkwargs))
+        b_cols['LOCOFILE'].append(infile.get_hkey('KW_CDBLOCO', **bkwargs))
+        b_cols['BLAZEFILE'].append(infile.get_hkey('KW_CDBBLAZE', **bkwargs))
+        b_cols['FLATFILE'].append(infile.get_hkey('KW_CDBFLAT', **bkwargs))
+        b_cols['SHAPEXFILE'].append(infile.get_hkey('KW_CDBSHAPEDX', **bkwargs))
+        b_cols['SHAPEYFILE'].append(infile.get_hkey('KW_CDBSHAPEDY', **bkwargs))
+        b_cols['SHAPELFILE'].append(infile.get_hkey('KW_CDBSHAPEL', **bkwargs))
+        b_cols['THERMALFILE'].append(infile.get_hkey('KW_CDBTHERMAL', **bkwargs))
         b_cols['WAVEFILE'].append(os.path.basename(filename))
         # ------------------------------------------------------------------
         # skip if bad snr object
@@ -583,7 +583,7 @@ def mk_template_summary(recipe, params, cprops, qc_params):
 def mk_template_write(params, recipe, infile, cprops, filetype,
                       fiber, wprops, qc_params):
     # get objname
-    objname = infile.get_key('KW_OBJNAME', dtype=str)
+    objname = infile.get_hkey('KW_OBJNAME', dtype=str)
     # construct suffix
     suffix = '_{0}_{1}_{2}'.format(objname, filetype.lower(), fiber)
 
@@ -679,7 +679,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
 def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
                          wprops, qc_params):
     # get objname
-    objname = infile.get_key('KW_OBJNAME', dtype=str)
+    objname = infile.get_hkey('KW_OBJNAME', dtype=str)
     # construct suffix
     suffix = '_{0}_{1}_{2}'.format(objname, filetype.lower(), fiber)
 

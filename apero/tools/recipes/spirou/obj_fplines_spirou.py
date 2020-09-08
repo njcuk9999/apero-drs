@@ -136,8 +136,8 @@ def __main__(recipe, params):
         # get this iterations e2ds file
         e2dsfile = infiles[it]
         # print file stats
-        args = [e2dsfile.basename, e2dsfile.get_key('KW_DPRTYPE'),
-                e2dsfile.get_key('KW_OBJNAME')]
+        args = [e2dsfile.basename, e2dsfile.get_hkey('KW_DPRTYPE'),
+                e2dsfile.get_hkey('KW_OBJNAME')]
         WLOG(params, '', '\t For file {0}'.format(*args))
         WLOG(params, '', '\t DPRTYPE = {1}'.format(*args))
         WLOG(params, '', '\t OBJECT = {2}'.format(*args))
@@ -145,7 +145,7 @@ def __main__(recipe, params):
         # get header from file instance
         header = e2dsfile.get_header()
         # get fiber
-        fiber = e2dsfile.get_key('KW_FIBER', dtype=str)
+        fiber = e2dsfile.get_hkey('KW_FIBER', dtype=str)
         # --------------------------------------------------------------
         # load wavelength solution for this fiber
         wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,

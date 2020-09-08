@@ -66,7 +66,7 @@ def extract_thermal_files(params, recipe, extname, thermalfile, **kwargs):
                                     func_name=func_name)
 
     # Need to figure out the thermal output
-    dprtype = thermalfile.get_key('KW_DPRTYPE', dtype=str)
+    dprtype = thermalfile.get_hkey('KW_DPRTYPE', dtype=str)
     # TODO: Add sky dark here
     if dprtype == 'DARK_DARK_INT':
         thoutinst = recipe.outputs['THERMALI_FILE']

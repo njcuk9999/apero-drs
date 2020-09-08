@@ -522,10 +522,10 @@ def remove_telluric_domain(params, recipe, infile, fiber, **kwargs):
     # get the image
     image = infile.get_data(copy=True)
     # get extraction type from the header
-    ext_type = infile.get_key('KW_EXT_TYPE', dtype=str)
+    ext_type = infile.get_hkey('KW_EXT_TYPE', dtype=str)
     # get the input file (assumed to be the first file from header
-    e2dsfiles = infile.read_header_key_1d_list('KW_INFILE1', dim1=None,
-                                               dtype=str)
+    e2dsfiles = infile.get_hkey_1d('KW_INFILE1', dim1=None,
+                                   dtype=str)
     e2dsfilename = e2dsfiles[0]
     # construct absolute path for the e2ds file
     e2dsabsfilename = os.path.join(infile.path, e2dsfilename)
@@ -677,7 +677,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     # TODO: object has a constant target rv
     # need to deal with no target rv step
     if np.isnan(targetrv):
-        targetrv = infile.get_key('KW_INPUTRV', required=False, dtype=float)
+        targetrv = infile.get_hkey('KW_INPUTRV', required=False, dtype=float)
         # set target rv to zero if we don't have a value
         if targetrv is None:
             wargs = [params['KW_INPUTRV'][0], infile.filename]
