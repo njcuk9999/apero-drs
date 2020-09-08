@@ -162,7 +162,7 @@ DRS_PDFLATEX_PATH = Const('DRS_PDFLATEX_PATH', dtype=str, source=__NAME__,
 # =============================================================================
 cgroup = 'INTERNAL: General properites'
 # Version
-DRS_VERSION = Const('DRS_VERSION', value='0.6.130', dtype=str,
+DRS_VERSION = Const('DRS_VERSION', value='0.6.131', dtype=str,
                     source=__NAME__, group=cgroup)
 
 # Authors
@@ -176,7 +176,7 @@ DRS_RELEASE = Const('RELEASE', value='alpha pre-release', dtype=str,
                     source=__NAME__, group=cgroup)
 
 # Date
-DRS_DATE = Const('DATE', value='2020-08-27', dtype=str, source=__NAME__,
+DRS_DATE = Const('DATE', value='2020-09-07', dtype=str, source=__NAME__,
                  group=cgroup)
 
 # =============================================================================
