@@ -382,7 +382,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # get image and header from infile
     header = infile.get_header()
     # get airmass from header
-    hdr_airmass = infile.get_key('KW_AIRMASS', dtype=float)
+    hdr_airmass = infile.get_hkey('KW_AIRMASS', dtype=float)
     # copy e2ds input image
     image_e2ds_ini = infile.get_data(copy=True)
     # get shape of the e2ds
@@ -521,7 +521,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     spl_others, spl_water = load_tapas_spl(params, recipe, header)
     # ----------------------------------------------------------------------
     # load the snr from e2ds file
-    snr = infile.read_header_key_1d_list('KW_EXT_SNR', nbo, dtype=float)
+    snr = infile.get_hkey_1d('KW_EXT_SNR', nbo, dtype=float)
     # remove infinite / NaN snr
     snr[~np.isfinite(snr)] = 0.0
     # remove snr from these orders (due to thermal background)
@@ -857,11 +857,11 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # plot to show absorption spectrum
     recipe.plot('TELLUP_ABSO_SPEC', trans=trans, wave=wavemap,
                 thres=trans_thres, spectrum=spectrum, spectrum_ini=spectrum_ini,
-                objname=infile.get_key('KW_OBJNAME', dtype=str),
+                objname=infile.get_hkey('KW_OBJNAME', dtype=str),
                 clean_ohlines=clean_ohlines)
     recipe.plot('SUM_TELLUP_ABSO_SPEC', trans=trans, wave=wavemap,
                 thres=trans_thres, spectrum=spectrum, spectrum_ini=spectrum_ini,
-                objname=infile.get_key('KW_OBJNAME', dtype=str),
+                objname=infile.get_hkey('KW_OBJNAME', dtype=str),
                 clean_ohlines=clean_ohlines)
     # ----------------------------------------------------------------------
     # create qc_params (all passed now but we have updated values)
@@ -1167,7 +1167,7 @@ def qc_exit_tellu_preclean(params, recipe, image, infile, wavemap,
     image_e2ds = np.array(image)
     header = infile.get_header()
     # get airmass from header
-    hdr_airmass = infile.get_key('KW_AIRMASS', dtype=float)
+    hdr_airmass = infile.get_hkey('KW_AIRMASS', dtype=float)
     # ----------------------------------------------------------------------
     # load tapas in correct format
     spl_others, spl_water = load_tapas_spl(params, recipe, header)
@@ -1423,22 +1423,22 @@ def read_tellu_preclean(params, recipe, infile, fiber):
     # read qc parameters
     qc_names, qc_values, qc_logic, qc_pass = [], [], [], []
     # first add number of QCs
-    num_qcs = tpclfile.get_key('TQCCNUM', dtype=int)
+    num_qcs = tpclfile.get_hkey('TQCCNUM', dtype=int)
     # now add the keys
     for qc_it in range(num_qcs):
         # add name
-        qc_names.append(tpclfile.get_key('TQCCN{0}'.format(qc_it), dtype=str))
+        qc_names.append(tpclfile.get_hkey('TQCCN{0}'.format(qc_it), dtype=str))
         # add value
-        value = tpclfile.get_key('TQCCV{0}'.format(qc_it), dtype=str)
+        value = tpclfile.get_hkey('TQCCV{0}'.format(qc_it), dtype=str)
         # evaluate vaule
         try:
             qc_values.append(eval(value))
         except:
             qc_values.append(value)
         # add logic
-        qc_logic.append(tpclfile.get_key('TQCCL{0}'.format(qc_it), dtype=str))
+        qc_logic.append(tpclfile.get_hkey('TQCCL{0}'.format(qc_it), dtype=str))
         # add pass
-        qc_pass.append(tpclfile.get_key('TQCCP{0}'.format(qc_it), dtype=int))
+        qc_pass.append(tpclfile.get_hkey('TQCCP{0}'.format(qc_it), dtype=int))
     # push into props
     props['QC_PARAMS'] = [qc_names, qc_values, qc_logic, qc_pass]
     # ----------------------------------------------------------------------
@@ -1449,14 +1449,14 @@ def read_tellu_preclean(params, recipe, infile, fiber):
     props['SKY_MODEL'] = tpclfile.data_array[3]
     # ----------------------------------------------------------------------
     # push into props
-    props['EXPO_WATER'] = tpclfile.get_key('KW_TELLUP_EXPO_WATER', dtype=float)
-    props['EXPO_OTHERS'] = tpclfile.get_key('KW_TELLUP_EXPO_OTHERS',
+    props['EXPO_WATER'] = tpclfile.get_hkey('KW_TELLUP_EXPO_WATER', dtype=float)
+    props['EXPO_OTHERS'] = tpclfile.get_hkey('KW_TELLUP_EXPO_OTHERS',
                                             dtype=float)
-    props['DV_WATER'] = tpclfile.get_key('KW_TELLUP_DV_WATER', dtype=float)
-    props['DV_OTHERS'] = tpclfile.get_key('KW_TELLUP_DV_OTHERS', dtype=float)
-    props['CCFPOWER_WATER'] = tpclfile.get_key('KW_TELLUP_CCFP_WATER',
+    props['DV_WATER'] = tpclfile.get_hkey('KW_TELLUP_DV_WATER', dtype=float)
+    props['DV_OTHERS'] = tpclfile.get_hkey('KW_TELLUP_DV_OTHERS', dtype=float)
+    props['CCFPOWER_WATER'] = tpclfile.get_hkey('KW_TELLUP_CCFP_WATER',
                                                dtype=float)
-    props['CCFPOWER_OTHERS'] = tpclfile.get_key('KW_TELLUP_CCFP_OTHERS',
+    props['CCFPOWER_OTHERS'] = tpclfile.get_hkey('KW_TELLUP_CCFP_OTHERS',
                                                 dtype=float)
     # set sources
     keys = ['CORRECTED_E2DS', 'TRANS_MASK', 'ABSO_E2DS', 'EXPO_WATER',
@@ -1465,42 +1465,42 @@ def read_tellu_preclean(params, recipe, infile, fiber):
     props.set_sources(keys, 'header')
     # ----------------------------------------------------------------------
     # add constants used (can come from kwargs)
-    props['TELLUP_DO_PRECLEANING'] = tpclfile.get_key('KW_TELLUP_DO_PRECLEAN',
+    props['TELLUP_DO_PRECLEANING'] = tpclfile.get_hkey('KW_TELLUP_DO_PRECLEAN',
                                                       dtype=bool)
-    props['TELLUP_D_WATER_ABSO'] = tpclfile.get_key('KW_TELLUP_DFLT_WATER',
+    props['TELLUP_D_WATER_ABSO'] = tpclfile.get_hkey('KW_TELLUP_DFLT_WATER',
                                                     dtype=float)
-    props['TELLUP_CCF_SCAN_RANGE'] = tpclfile.get_key('KW_TELLUP_CCF_SRANGE',
+    props['TELLUP_CCF_SCAN_RANGE'] = tpclfile.get_hkey('KW_TELLUP_CCF_SRANGE',
                                                       dtype=float)
-    props['TELLUP_CLEAN_OH_LINES'] = tpclfile.get_key('KW_TELLUP_CLEAN_OHLINES',
-                                                      dtype=bool)
-    props['TELLUP_REMOVE_ORDS'] = tpclfile.get_key('KW_TELLUP_REMOVE_ORDS',
+    kw_clean_oh = 'KW_TELLUP_CLEAN_OHLINES'
+    props['TELLUP_CLEAN_OH_LINES'] = tpclfile.get_hkey(kw_clean_oh, dtype=bool)
+    props['TELLUP_REMOVE_ORDS'] = tpclfile.get_hkey('KW_TELLUP_REMOVE_ORDS',
                                                    dtype=list, listtype=int)
-    props['TELLUP_SNR_MIN_THRES'] = tpclfile.get_key('KW_TELLUP_SNR_MIN_THRES',
+    props['TELLUP_SNR_MIN_THRES'] = tpclfile.get_hkey('KW_TELLUP_SNR_MIN_THRES',
                                                      dtype=float)
     kw_dexpo = 'KW_TELLUP_DEXPO_CONV_THRES'
-    props['TELLUP_DEXPO_CONV_THRES'] = tpclfile.get_key(kw_dexpo, dtype=float)
-    props['TELLUP_DEXPO_MAX_ITR'] = tpclfile.get_key('KW_TELLUP_DEXPO_MAX_ITR',
+    props['TELLUP_DEXPO_CONV_THRES'] = tpclfile.get_hkey(kw_dexpo, dtype=float)
+    props['TELLUP_DEXPO_MAX_ITR'] = tpclfile.get_hkey('KW_TELLUP_DEXPO_MAX_ITR',
                                                      dtype=int)
     kw_kthres = 'KW_TELLUP_ABSOEXPO_KTHRES'
-    props['TELLUP_ABSO_EXPO_KTHRES'] = tpclfile.get_key(kw_kthres, dtype=float)
-    props['TELLUP_WAVE_START'] = tpclfile.get_key('KW_TELLUP_WAVE_START',
+    props['TELLUP_ABSO_EXPO_KTHRES'] = tpclfile.get_hkey(kw_kthres, dtype=float)
+    props['TELLUP_WAVE_START'] = tpclfile.get_hkey('KW_TELLUP_WAVE_START',
                                                   dtype=float)
-    props['TELLUP_WAVE_END'] = tpclfile.get_key('KW_TELLUP_WAVE_END',
+    props['TELLUP_WAVE_END'] = tpclfile.get_hkey('KW_TELLUP_WAVE_END',
                                                 dtype=float)
-    props['TELLUP_DVGRID'] = tpclfile.get_key('KW_TELLUP_DVGRID', dtype=float)
-    props['TELLUP_ABSO_EXPO_KWID'] = tpclfile.get_key('KW_TELLUP_ABSOEXPO_KWID',
-                                                      dtype=float)
-    props['TELLUP_ABSO_EXPO_KEXP'] = tpclfile.get_key('KW_TELLUP_ABSOEXPO_KEXP',
-                                                      dtype=float)
-    props['TELLUP_TRANS_THRES'] = tpclfile.get_key('KW_TELLUP_TRANS_THRES',
+    props['TELLUP_DVGRID'] = tpclfile.get_hkey('KW_TELLUP_DVGRID', dtype=float)
+    kw_ae_kwid = 'KW_TELLUP_ABSOEXPO_KWID'
+    props['TELLUP_ABSO_EXPO_KWID'] = tpclfile.get_hkey(kw_ae_kwid, dtype=float)
+    kw_ae_kexp = 'KW_TELLUP_ABSOEXPO_KEXP'
+    props['TELLUP_ABSO_EXPO_KEXP'] = tpclfile.get_hkey(kw_ae_kexp, dtype=float)
+    props['TELLUP_TRANS_THRES'] = tpclfile.get_hkey('KW_TELLUP_TRANS_THRES',
                                                    dtype=float)
-    props['TELLUP_TRANS_SIGLIM'] = tpclfile.get_key('KW_TELLUP_TRANS_SIGL',
+    props['TELLUP_TRANS_SIGLIM'] = tpclfile.get_hkey('KW_TELLUP_TRANS_SIGL',
                                                     dtype=float)
-    props['TELLUP_FORCE_AIRMASS'] = tpclfile.get_key('KW_TELLUP_FORCE_AIRMASS',
+    props['TELLUP_FORCE_AIRMASS'] = tpclfile.get_hkey('KW_TELLUP_FORCE_AIRMASS',
                                                      dtype=bool)
-    props['TELLUP_OTHER_BOUNDS'] = tpclfile.get_key('KW_TELLUP_OTHER_BOUNDS',
+    props['TELLUP_OTHER_BOUNDS'] = tpclfile.get_hkey('KW_TELLUP_OTHER_BOUNDS',
                                                     dtype=list, listtype=float)
-    props['TELLUP_WATER_BOUNDS'] = tpclfile.get_key('KW_TELLUP_WATER_BOUNDS',
+    props['TELLUP_WATER_BOUNDS'] = tpclfile.get_hkey('KW_TELLUP_WATER_BOUNDS',
                                                     dtype=list, listtype=float)
     # set the source from header
     keys = ['TELLUP_D_WATER_ABSO', 'TELLUP_CCF_SCAN_RANGE',

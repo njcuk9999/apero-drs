@@ -140,7 +140,7 @@ def __main__(recipe, params):
         # Deal with wrong DPRTYPE
         # ------------------------------------------------------------------
         # get dprtype
-        dprtype = infile.get_key('KW_DPRTYPE', dtype=str)
+        dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str)
         # only correction OBJ_FP
         if dprtype not in allowed_filetypes:
             # print warning
@@ -154,7 +154,7 @@ def __main__(recipe, params):
         # Deal with wrong fiber
         # ------------------------------------------------------------------
         # get fiber
-        fiber = infile.get_key('KW_FIBER', dtype=str)
+        fiber = infile.get_hkey('KW_FIBER', dtype=str)
         # only correct a science fiber
         if fiber not in sci_fibers:
             # print warning
@@ -168,7 +168,7 @@ def __main__(recipe, params):
         # Check for previous correction
         # ------------------------------------------------------------------
         # TODO: Eventually this should be required
-        leakcorr = infile.get_key('KW_LEAK_CORR', required=False)
+        leakcorr = infile.get_hkey('KW_LEAK_CORR', required=False)
         if leakcorr is not None:
             if leakcorr in ['True', True, 1, '1']:
                 # print warning

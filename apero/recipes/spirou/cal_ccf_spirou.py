@@ -138,7 +138,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # check that file has valid DPRTYPE
         # ------------------------------------------------------------------
-        dprtype = infile.get_key('KW_DPRTYPE', dtype=str)
+        dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str)
         # if dprtype is incorrect skip
         if dprtype not in params.listp('CCF_ALLOWED_DPRTYPES'):
             # join allowed dprtypes
@@ -179,7 +179,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         #   Remove domain with telluric > 50%
         # ------------------------------------------------------------------
-        outtype = infile.get_key('KW_OUTPUT', dtype=str)
+        outtype = infile.get_hkey('KW_OUTPUT', dtype=str)
 
         if outtype in params['CCF_CORRECT_TELLU_TYPES']:
             # remove telluric domain below a defined threshold
@@ -209,7 +209,7 @@ def __main__(recipe, params):
                                              infile=infile_r,
                                              database=calibdbm)
             # get c fiber file time
-            filetime_r = infile_r.get_key('KW_MID_OBS_TIME')
+            filetime_r = infile_r.get_hkey('KW_MID_OBS_TIME')
 
             # --------------------------------------------------------------
             # deal with differing wavelength solutions (between science and

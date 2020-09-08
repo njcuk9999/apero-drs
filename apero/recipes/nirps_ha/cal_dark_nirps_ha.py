@@ -135,13 +135,13 @@ def __main__(recipe, params):
         # Get basic image properties
         # ------------------------------------------------------------------
         # get image readout noise
-        sigdet = infile.get_key('KW_RDNOISE')
+        sigdet = infile.get_hkey('KW_RDNOISE')
         # get expsoure time
-        exptime = infile.get_key('KW_EXPTIME')
+        exptime = infile.get_hkey('KW_EXPTIME')
         # get gain
-        gain = infile.get_key('KW_GAIN')
+        gain = infile.get_hkey('KW_GAIN')
         # get data type
-        dprtype = infile.get_key('KW_DPRTYPE', dtype=str)
+        dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str)
         # ------------------------------------------------------------------
         # Dark exposure time check
         # ------------------------------------------------------------------

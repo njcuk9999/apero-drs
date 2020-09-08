@@ -466,7 +466,7 @@ def correct_master_dark_fp(params, extractdict, **kwargs):
     # get the reference file
     reffile = extractdict[ref_fiber]
     # get dprtype
-    dprtype = reffile.get_key('KW_DPRTYPE')
+    dprtype = reffile.get_hkey('KW_DPRTYPE')
     # get dpr type for ref image
     refdpr = pconst.FIBER_DPR_POS(dprtype, ref_fiber)
     # check that refdpr is FP (must be a FP)
@@ -849,7 +849,7 @@ def get_extraction_files(params, recipe, infile, extname):
     sci_fibers, ref_fiber = pconst.FIBER_KINDS()
     all_fibers = sci_fibers + [ref_fiber]
     # get the input pp list
-    rawfiles = infile.read_header_key_1d_list('KW_INFILE1', dtype=str)
+    rawfiles = infile.get_hkey_1d('KW_INFILE1', dtype=str)
     # get the preprocessed file
     ppfile = infile.intype.newcopy(recipe=recipe)
     # get the preprocessed file path
@@ -927,7 +927,7 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
     allowtypes = pcheck(params, 'WAVE_FP_DPRLIST', 'fptypes', kwargs, func_name,
                         mapf='list')
     # get dprtype
-    dprtype = e2dsfile.get_key('KW_DPRTYPE', dtype=str)
+    dprtype = e2dsfile.get_hkey('KW_DPRTYPE', dtype=str)
     # get psuedo constants
     pconst = constants.pload(params['INSTRUMENT'])
     sfibers, rfiber = pconst.FIBER_KINDS()

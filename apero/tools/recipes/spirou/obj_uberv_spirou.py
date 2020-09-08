@@ -229,7 +229,7 @@ def __main__(recipe, params):
         # Calculate Barycentric correction
         # --------------------------------------------------------------
         props = ParamDict()
-        props['DPRTYPE'] = infile.get_key('KW_DPRTYPE', dtype=float)
+        props['DPRTYPE'] = infile.get_hkey('KW_DPRTYPE', dtype=float)
         bprops = extract.get_berv(params, infile, header, props,
                                   warn=True, force=True)
         args = [infile.basename, bprops['USE_BERV']]

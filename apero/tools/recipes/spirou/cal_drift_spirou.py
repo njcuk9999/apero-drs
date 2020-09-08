@@ -268,7 +268,7 @@ def __main__(recipe, params):
             # -----------------------------------------------------------------
             # push rvprops to storage
             basenames.append(infile.basename)
-            mjdmids.append(infile.get_key('KW_MID_OBS_TIME'))
+            mjdmids.append(infile.get_hkey('KW_MID_OBS_TIME'))
             mean_rvs.append(rvprops['MEAN_RV'])
             mean_contrasts.append(rvprops['MEAN_CONTRAST'])
             mean_fwhms.append(rvprops['MEAN_FWHM'])

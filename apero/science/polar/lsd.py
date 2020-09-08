@@ -151,8 +151,8 @@ def lsd_analysis_wrapper(params, pobjects, pprops, wprops, **kwargs):
     pobj = pobjects['A_1']
     # ----------------------------------------------------------------------
     # get temperature from file
-    temperature = pobj.infile.get_key('KW_OBJ_TEMP', dtype=float,
-                                      required=False)
+    temperature = pobj.infile.get_hkey('KW_OBJ_TEMP', dtype=float,
+                                       required=False)
     # deal with no temperature
     if temperature is None and lsdmask is None:
         eargs = [pobj.filename, params['KW_OBJTEMP'][0], func_name]

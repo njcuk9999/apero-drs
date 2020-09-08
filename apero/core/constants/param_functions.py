@@ -908,7 +908,7 @@ class ParamDict(base_class.CaseInsensitiveDict):
             emsg = self.textentry('00-003-00033', args=[key])
             raise ConfigError(emsg.format(key), level='error')
 
-    def get_instanceof(self, lookup: Union[Const, Keyword],
+    def get_instanceof(self, lookup: Union[Const, Keyword, Type],
                        nameattr: str = 'name') -> dict:
         """
         Get all instances of object instance lookup
