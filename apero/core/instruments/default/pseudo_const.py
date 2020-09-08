@@ -462,7 +462,7 @@ class PseudoConstants:
         return lpath
 
     # noinspection PyPep8Naming
-    def LOG_STORAGE_KEYS(self) -> Dict[str]:
+    def LOG_STORAGE_KEYS(self) -> Dict[str, str]:
         """
         Create a dictionary of all the levels of logging available (values
         are the params[KEY] to save them in
@@ -495,7 +495,7 @@ class PseudoConstants:
         return warn
 
     # noinspection PyPep8Naming
-    def LOG_TRIG_KEYS(self) -> Dict[str]:
+    def LOG_TRIG_KEYS(self) -> Dict[str, str]:
         """
         The log trigger key characters to use in log. Keys must be the same as
         spirouConst.WRITE_LEVELS()
@@ -521,7 +521,7 @@ class PseudoConstants:
         return trig_key
 
     # noinspection PyPep8Naming
-    def WRITE_LEVEL(self) -> Dict[str]:
+    def WRITE_LEVEL(self) -> Dict[str, str]:
         """
         The write levels. Keys must be the same as spirouConst.LOG_TRIG_KEYS()
 
