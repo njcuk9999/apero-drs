@@ -52,7 +52,7 @@ KEY2 = 'SBCREF_P'
 # =============================================================================
 # Define functions
 # =============================================================================
-def valid_night(night_path: Path) -> Tuple[bool, bool, bool, Dict]:
+def valid_night(night_path: Path) -> Tuple[bool, bool, bool, dict]:
     """
 
     :param night_path: Path

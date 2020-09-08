@@ -845,8 +845,8 @@ class RecipeLog:
         if write:
             self.write_logfile(params)
 
-    def set_inputs(self, params: ParamDict, rargs: Dict[Any],
-                   rkwargs: Dict[Any], rskwargs: Dict[Any]):
+    def set_inputs(self, params: ParamDict, rargs: Dict[str, Any],
+                   rkwargs: Dict[str, Any], rskwargs: Dict[str, Any]):
         """
         Set the recipes input arguments (rargs), input keyword arguments
         (rkwargs) and special keyword arguments (rskwargs) - usually from
