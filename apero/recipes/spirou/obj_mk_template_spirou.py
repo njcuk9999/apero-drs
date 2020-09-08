@@ -182,13 +182,13 @@ def __main__(recipe, params):
     recipe.plot.set_location(0)
     # ----------------------------------------------------------------------
     # load master wavelength solution
-    mkwargs = dict(header=infile.header, master=True, fiber=fiber,
+    mkwargs = dict(header=infile.get_header(), master=True, fiber=fiber,
                    database=calibdbm)
     mprops = wave.get_wavesolution(params, recipe, **mkwargs)
     # ------------------------------------------------------------------
     # Normalize image by peak blaze
     # ------------------------------------------------------------------
-    nargs = [np.array(infile.data), infile.header, fiber]
+    nargs = [infile.get_data(copy=True), infile.get_header(), fiber]
     _, nprops = telluric.normalise_by_pblaze(params, *nargs)
     # ----------------------------------------------------------------------
     # Make data cubes

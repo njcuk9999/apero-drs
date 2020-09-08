@@ -134,7 +134,7 @@ def __main__(recipe, params):
         # ge this iterations file
         infile = infiles[it]
         # get header from file instance
-        header = infile.header
+        header = infile.get_header()
         # ------------------------------------------------------------------
         # check that file has valid DPRTYPE
         # ------------------------------------------------------------------
@@ -187,7 +187,7 @@ def __main__(recipe, params):
             targs = [infile, fiber]
             image = velocity.remove_telluric_domain(params, recipe, *targs)
         else:
-            image = np.array(infile.data)
+            image = infile.get_data(copy=True)
 
         # ------------------------------------------------------------------
         # Compute CCF on science channel
@@ -225,7 +225,7 @@ def __main__(recipe, params):
             WLOG(params, 'info', TextEntry('40-020-00007', args=[fiber]))
             # --------------------------------------------------------------
             # Compute CCF on reference channel
-            cargs = [infile_r, infile_r.data, blaze, wprops_r['WAVEMAP'],
+            cargs = [infile_r, infile_r.get_data(), blaze, wprops_r['WAVEMAP'],
                      rfiber]
             rv_props2 = velocity.compute_ccf_fp(params, recipe, *cargs)
             # get the time difference (between file and wave)

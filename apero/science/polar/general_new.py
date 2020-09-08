@@ -131,12 +131,12 @@ class PolarObj:
         :return:
         """
         # set the flux data
-        self.rawflux = self.infile.data
+        self.rawflux = self.infile.get_data()
         self.eflux = np.sqrt(self.rawflux)
         # set file names and header
         self.filename = self.infile.filename
         self.basename = self.infile.basename
-        self.header = self.infile.header
+        self.header = self.infile.get_header()
         # get sizes
         self.nbo = self.rawflux.shape[0]
         self.nbpix = self.rawflux.shape[1]
@@ -264,7 +264,7 @@ class PolarObj:
         # load recon only if telluric correction required
         if tcorrect and recon_file is not None:
             recon_file.read_file()
-            self.telluprops['RAW_RECON_DATA'] = recon_file.data
+            self.telluprops['RAW_RECON_DATA'] = recon_file.get_data()
         else:
             self.telluprops['RAW_RECON_DATA'] = None
         # add recon data source
@@ -512,7 +512,7 @@ class PolarObjOut(PolarObj):
         self.header0 = self.hdu[0].header
         self.header1 = self.hdu[1].header
         flux_key = FLUX_HDU_KEY.format(fiber=self.fiber)
-        self.rawflux = np.array(self.hdu[flux_key].data)
+        self.rawflux = np.array(self.hdu[flux_key].get_data())
         self.raweflux = np.sqrt(self.rawflux)
         self.filename = self.infile.filename
         self.basename = self.infile.basename
@@ -551,7 +551,7 @@ class PolarObjOut(PolarObj):
         wargs = [blaze_key]
         WLOG(self.params, '', wmsg.format(*wargs))
         # load blaze
-        blaze = np.array(self.hdu[blaze_key].data)
+        blaze = np.array(self.hdu[blaze_key].get_data())
         blaze_file = 'HDU[{0}]'.format(blaze_key)
         # normalise
         # TODO: Question: Are you sure you want to normalise by the whole array
@@ -615,7 +615,7 @@ class PolarObjOut(PolarObj):
         # load recon only if telluric correction required
         if tcorrect and recon_filename is not None:
             thdu = fits.open(tcorr_filename)
-            self.telluprops['RAW_RECON_DATA'] = np.array(thdu[4].data)
+            self.telluprops['RAW_RECON_DATA'] = np.array(thdu[4].get_data())
             thdu.close()
         else:
             self.telluprops['RAW_RECON_DATA'] = None
@@ -682,7 +682,7 @@ class PolarObjOut(PolarObj):
         # load wavelength solution for this fiber
         # ----------------------------------------------------------------------
         wavekey = WAVE_HDU_KEY.format(fiber=self.fiber)
-        wavemap = np.array(self.hdu[wavekey].data)
+        wavemap = np.array(self.hdu[wavekey].get_data())
         # log which telluric files we are using
         wmsg = 'Using wave from HDU: {0}'
         wargs = [wavekey]
@@ -718,7 +718,7 @@ class PolarObjOut(PolarObj):
         # ------------------------------------------------------------------
         # get master fiber
         mwavekey = WAVE_HDU_KEY.format(fiber=mfiber)
-        mwavemap = np.array(self.hdu[mwavekey].data)
+        mwavemap = np.array(self.hdu[mwavekey].get_data())
         # ------------------------------------------------------------------
         # load into wave props
         self.mwaveprops = ParamDict()

@@ -155,7 +155,7 @@ def __main__(recipe, params):
             continue
         # ------------------------------------------------------------------
         # get header from file instance
-        header = infile.header
+        header = infile.get_header()
         # get the fiber types needed
         fibertypes = drs_image.get_fiber_types(params)
         # ------------------------------------------------------------------

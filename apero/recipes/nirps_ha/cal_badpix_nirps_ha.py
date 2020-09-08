@@ -148,8 +148,8 @@ def __main__(recipe, params):
         flatfile = flatfiles[it]
         darkfile = darkfiles[it]
         # get data from file instance
-        flat_image = np.array(flatfile.data)
-        dark_image = np.array(darkfile.data)
+        flat_image = flatfile.get_data(copy=True)
+        dark_image = darkfile.get_data(copy=True)
         # ------------------------------------------------------------------
         # Normalise flat and median of flat
         # ------------------------------------------------------------------

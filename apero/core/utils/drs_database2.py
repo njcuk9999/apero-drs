@@ -746,9 +746,10 @@ def _get_hdict(params: ParamDict, dbname: str, drsfile: DrsFileTypes = None,
     if hasattr(drsfile, 'hdict') and len(list(drsfile.hdict.keys())) != 0:
         hdict = drsfile.hdict
         header = None
-    elif hasattr(drsfile, 'header') and len(list(drsfile.header.keys())) != 0:
+    elif (hasattr(drsfile, 'header') and
+          len(list(drsfile.get_header().keys())) != 0):
         hdict = None
-        header = drsfile.header
+        header = drsfile.get_header()
     else:
         eargs = [dbname, drsfile.name, func_name]
         WLOG(params, 'error', TextEntry('00-001-00027', args=eargs))

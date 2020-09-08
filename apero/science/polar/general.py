@@ -79,10 +79,10 @@ class PolarObj:
         return '{0}_{1}'.format(self.fiber, self.exposure)
 
     def _get_properites(self, params):
-        self.data = self.infile.data
+        self.data = self.infile.get_data()
         self.filename = self.infile.filename
         self.basename = self.infile.basename
-        self.header = self.infile.header
+        self.header = self.infile.get_header()
         # get keys from header
         self.exptime = self.infile.get_key('KW_EXPTIME', dtype=float)
         self.mjd = self.infile.get_key('KW_ACQTIME', dtype=float)
@@ -270,8 +270,8 @@ def calculate_stokes_i(params, pobjs, pprops):
     # loop around exposures
     for it in range(1, int(nexp) + 1):
         # get a and b data for this exposure
-        data_a = pobjs['A_{0}'.format(it)].data
-        data_b = pobjs['B_{0}'.format(it)].data
+        data_a = pobjs['A_{0}'.format(it)].get_data()
+        data_b = pobjs['B_{0}'.format(it)].get_data()
         # Calculate sum of fluxes from fibers A and B
         flux_ab = data_a + data_b
         # Save A+B flux for each exposure
@@ -901,8 +901,8 @@ def polar_diff_method(params, pobjs, props):
     gg, gvar = [], []
     for it in range(1, int(nexp) + 1):
         # get a and b data for this exposure
-        data_a = pobjs['A_{0}'.format(it)].data
-        data_b = pobjs['B_{0}'.format(it)].data
+        data_a = pobjs['A_{0}'.format(it)].get_data()
+        data_b = pobjs['B_{0}'.format(it)].get_data()
         # ---------------------------------------------------------------------
         # STEP 1 - calculate the quantity Gn (Eq #12-14 on page 997 of
         #          Bagnulo et al. 2009), n being the pair of exposures
@@ -1041,8 +1041,8 @@ def polar_ratio_method(params, pobjs, props):
     # loop around exposures
     for it in range(1, int(nexp) + 1):
         # get a and b data for this exposure
-        data_a = pobjs['A_{0}'.format(it)].data
-        data_b = pobjs['B_{0}'.format(it)].data
+        data_a = pobjs['A_{0}'.format(it)].get_data()
+        data_b = pobjs['B_{0}'.format(it)].get_data()
         # ---------------------------------------------------------------------
         # STEP 1 - calculate ratio of beams for each exposure
         #          (Eq #12 on page 997 of Bagnulo et al. 2009 )

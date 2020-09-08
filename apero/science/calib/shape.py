@@ -314,7 +314,7 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
             # construct new infile instance
             groupfile = file_inst.newcopy(recipe=recipe)
             groupfile.data = groupfp
-            groupfile.header = drs_fits.Header(fpfile0.header)
+            groupfile.header = drs_fits.Header(fpfile0.get_header())
             groupfile.filename = fp_ids[0]
             groupfile.basename = os.path.basename(fp_ids[0])
             # get and correct file

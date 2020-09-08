@@ -154,9 +154,9 @@ def __main__(recipe, params):
         # ge this iterations file
         infile = infiles[it]
         # get header from file instance
-        header = infile.header
+        header = infile.get_header()
         # get image
-        image = infile.data
+        image = infile.get_data(copy=True)
         # ------------------------------------------------------------------
         # check that file has valid DPRTYPE
         # ------------------------------------------------------------------

@@ -143,7 +143,7 @@ def __main__(recipe, params):
         WLOG(params, '', '\t OBJECT = {2}'.format(*args))
         # ------------------------------------------------------------------
         # get header from file instance
-        header = e2dsfile.header
+        header = e2dsfile.get_header()
         # get fiber
         fiber = e2dsfile.get_key('KW_FIBER', dtype=str)
         # --------------------------------------------------------------

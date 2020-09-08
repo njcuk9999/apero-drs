@@ -484,8 +484,8 @@ def get_outputs(params, infile, header, props, kwargs):
             hkey = outkey
         # get the value of the key from infile
         if kind == 'header' and infile is not None:
-            if hkey in infile.header:
-                value = infile.header[hkey]
+            if hkey in infile.get_header():
+                value = infile.get_header()[hkey]
                 datatype = params.instances[outkey].datatype
                 found = True
         # get the value of the key from header
@@ -823,7 +823,7 @@ def get_times(params, bprops, infile, header):
     # ---------------------------------------------------------------------
     # deal with header
     if infile is not None:
-        header = infile.header
+        header = infile.get_header()
     elif header is not None:
         pass
     else:

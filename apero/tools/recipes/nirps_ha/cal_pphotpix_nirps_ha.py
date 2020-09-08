@@ -129,7 +129,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     WLOG(params, '', 'Loading dark and preparing image')
     # load file
-    image = darkfile.data
+    image = darkfile.get_data(copy=True)
     # set NaNS and infs to zero. NaN pixels will not be flagged as hot pixels
     image[~np.isfinite(image)] = 0
     # subtract a DC offset of the image level

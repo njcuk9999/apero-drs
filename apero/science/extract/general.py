@@ -77,7 +77,7 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
             filenames[fiber] = None
     # ------------------------------------------------------------------------
     # get header from infile
-    header = infile.header
+    header = infile.get_header()
     # ----------------------------------------------------------------------
     # load database
     if database is None:
@@ -120,7 +120,7 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
                 eargs = [orderpsfile.__str__(), func_name]
                 WLOG(params, 'error', TextEntry('00-016-00023', args=eargs))
             # push data into orderp
-            orderp = orderpsfile.data
+            orderp = orderpsfile.get_data()
             orderpfilename = orderpsfile.filename
         # load the order profile
         else:
@@ -476,7 +476,7 @@ def correct_master_dark_fp(params, extractdict, **kwargs):
         WLOG(params, 'error', TextEntry('00-016-00025', args=eargs))
 
     # get the data for the reference image
-    refimage = np.array(reffile.data)
+    refimage = reffile.get_data(copy=True)
     # get reference image size
     nord, nbpix = refimage.shape
     # ----------------------------------------------------------------------
@@ -511,7 +511,7 @@ def correct_master_dark_fp(params, extractdict, **kwargs):
         # get the science image
         scifile = extractdict[sci_fiber]
         # get the data for the reference image
-        sciimage = np.array(scifile.data)
+        sciimage = scifile.get_data(copy=True)
         # get the science image size
         nord, nbpix = sciimage.shape
         # loop around orders
@@ -581,8 +581,8 @@ def correct_dark_fp(params, extractdict, database=None, **kwargs):
     # ----------------------------------------------------------------------
     # get reference file
     ref_file = extractdict[ref_fiber][extfiletype]
-    refimage = np.array(ref_file.data)
-    ref_header = ref_file.header
+    refimage = ref_file.get_data(copy=True)
+    ref_header = ref_file.get_header()
     # get size of reference image
     nbo, nbpix = refimage.shape
     # ----------------------------------------------------------------------
@@ -675,12 +675,13 @@ def correct_dark_fp(params, extractdict, database=None, **kwargs):
             # get extfile
             extfile = extractdict[fiber][extfiletype]
             # get the extraction image
-            extimage = np.array(extfile.data)
+            extimage = extfile.get_data(copy=True)
             # --------------------------------------------------------------
             # if we are dealing with the E2DS we need the flat
             if extfiletype == 'E2DS_FILE':
                 # load the flat file for this fiber
-                flat_file, flat = flat_blaze.get_flat(params, extfile.header,
+                flat_file, flat = flat_blaze.get_flat(params,
+                                                      extfile.get_header(),
                                                       fiber, quiet=True)
             # else we set it to None
             else:
@@ -750,7 +751,7 @@ def dark_fp_regen_s1d(params, recipe, props, database=None, **kwargs):
         # get the s1d in file type
         extfile = outputs[fiber][s1dextfile]
         # get the ext file header
-        header = extfile.header
+        header = extfile.get_header()
         # --------------------------------------------------------------
         # load the blaze file for this fiber
         blaze_file, blaze = flat_blaze.get_blaze(params, header, fiber)
@@ -760,7 +761,7 @@ def dark_fp_regen_s1d(params, recipe, props, database=None, **kwargs):
                                        database=database)
         # --------------------------------------------------------------
         # create 1d spectra (s1d) of the e2ds file
-        sargs = [wprops['WAVEMAP'], extfile.data, blaze]
+        sargs = [wprops['WAVEMAP'], extfile.get_data(), blaze]
         swprops = e2ds_to_s1d(params, recipe, *sargs, wgrid='wave',
                               fiber=fiber, kind=s1dextfile)
         svprops = e2ds_to_s1d(params, recipe, *sargs, wgrid='velocity',
@@ -823,7 +824,7 @@ def master_dark_fp_cube(params, recipe, extractdict):
         # loop around files and get data cube
         for it in range(len(extfiles)):
             # add to cube
-            cube.append(extfiles[it].data)
+            cube.append(extfiles[it].get_data())
         # make cube a numpy array
         cube = np.array(cube)
         # produce super dark using median
