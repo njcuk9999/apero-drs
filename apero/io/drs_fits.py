@@ -1057,7 +1057,7 @@ def fix_header(params, recipe, infile=None, header=None,
     """
     # deal with no header
     if header is None:
-        header = infile.header
+        header = infile.get_header()
         hdict = infile.hdict
         filename = infile.filename
         has_infile = True

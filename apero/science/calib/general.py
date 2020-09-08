@@ -147,9 +147,9 @@ def calibrate_ppfile(params, recipe, infile, database=None, **kwargs):
 
     # get image and header
     if image is None:
-        image = np.array(infile.data)
+        image = infile.get_data(copy=True)
     if header is None:
-        header = infile.header
+        header = infile.get_header()
 
     # -------------------------------------------------------------------------
     # get loco file instance
@@ -483,7 +483,7 @@ def check_fp_files(params, fpfiles):
         # add to list
         fpfilenames.append(fpfile.filename)
         # check if fp is good
-        if check_fp(params, fpfile.data):
+        if check_fp(params, fpfile.get_data()):
             newfpfiles.append(fpfile)
         else:
             # log a warning that file removed

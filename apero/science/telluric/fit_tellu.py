@@ -720,7 +720,7 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
                           combine, pca_props, sprops, qc_params,
                           template_file, tpreprops, database=None):
     # get the header
-    header = infile.header
+    header = infile.get_header()
     # ------------------------------------------------------------------
     # load wavelength solution for this fiber
     wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
@@ -735,7 +735,7 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     # read fiber file
     fiber_infile.read_file()
     # get image
-    image = fiber_infile.data
+    image = fiber_infile.get_data()
     # ------------------------------------------------------------------
     # Normalize image by peak blaze
     # ------------------------------------------------------------------

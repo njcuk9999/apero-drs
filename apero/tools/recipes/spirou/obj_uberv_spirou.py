@@ -205,7 +205,7 @@ def __main__(recipe, params):
             # read data
             infile1.read_file()
             # get header from file instance
-            header1 = infile1.header
+            header1 = infile1.get_header()
             # append to list
             infiles.append(infile1)
             # ----------------------------------------------------------
@@ -224,7 +224,7 @@ def __main__(recipe, params):
         infile = infiles[0]
         # --------------------------------------------------------------
         # get header from file instance
-        header = infile.header
+        header = infile.get_header()
         # --------------------------------------------------------------
         # Calculate Barycentric correction
         # --------------------------------------------------------------
@@ -243,8 +243,8 @@ def __main__(recipe, params):
         # log the change to berv parameters (input vs output)
         WLOG(params, '', 'Final berv input parameters:')
         for key in bprops:
-            if key in infile.header:
-                wargs = [key, infile.header[key], bprops[key]]
+            if key in infile.get_header():
+                wargs = [key, infile.get_header()[key], bprops[key]]
                 WLOG(params, '', '\t{0:20s}{1} --> {2}'.format(*wargs))
         # --------------------------------------------------------------
         # overwrite file(s)
@@ -253,7 +253,7 @@ def __main__(recipe, params):
             # get infile from storage
             infile1 = infiles[jt]
             # get header from file instance
-            header1 = infile1.header
+            header1 = infile1.get_header()
             # ----------------------------------------------------------
             # log progress
             wmsg = 'Writing to file: {0}'.format(infile1.filename)

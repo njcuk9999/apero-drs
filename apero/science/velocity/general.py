@@ -520,7 +520,7 @@ def remove_telluric_domain(params, recipe, infile, fiber, **kwargs):
     ccf_tellu_thres = pcheck(params, 'CCF_TELLU_THRES', 'ccf_tellu_thres',
                              kwargs, func_name)
     # get the image
-    image = np.array(infile.data)
+    image = infile.get_data(copy=True)
     # get extraction type from the header
     ext_type = infile.get_key('KW_EXT_TYPE', dtype=str)
     # get the input file (assumed to be the first file from header
@@ -554,7 +554,7 @@ def remove_telluric_domain(params, recipe, infile, fiber, **kwargs):
     reconfile.read_file()
     # find all places below threshold
     with warnings.catch_warnings(record=True) as _:
-        keep = reconfile.data > ccf_tellu_thres
+        keep = reconfile.get_data() > ccf_tellu_thres
     # set all bad data to NaNs
     image[~keep] = np.nan
     # return in file

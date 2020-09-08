@@ -246,7 +246,7 @@ def __main__(recipe, params):
             # read file
             infile.read_file()
             # get header
-            header = infile.header
+            header = infile.get_header()
             # -----------------------------------------------------------------
             # load wavelength solution for this fiber
             wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
@@ -261,7 +261,7 @@ def __main__(recipe, params):
             # choose which wprops to use
             wprops = ParamDict(wprops)
             # compute the ccf
-            ccfargs = [infile, infile.data, blaze,
+            ccfargs = [infile, infile.get_data(), blaze,
                        wprops['WAVEMAP'], fiber]
             rvprops = velocity.compute_ccf_fp(params, recipe, *ccfargs,
                                               sum_plot=False)

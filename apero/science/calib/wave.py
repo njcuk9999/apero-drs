@@ -193,7 +193,7 @@ def get_wave_solution_from_wavefile(params, recipe, usefiber, inwavefile,
     # read data/header
     wavefile.read_file()
     # get wave map
-    wavemap = np.array(wavefile.data)
+    wavemap = wavefile.get_data(copy=True)
     # set wave source of wave file
     wavesource = source
     # get wave time
@@ -320,7 +320,7 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     # ------------------------------------------------------------------------
     # deal with no header but an infile
     if header is None and infile is not None:
-        header = infile.header
+        header = infile.get_header()
     # we need a header unless master is True
     if not master and header is None:
         WLOG(params, 'error', TextEntry('00-017-00009', args=[func_name]))
@@ -389,7 +389,7 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     if wavemap is None:
         # get image dimensions
         if infile is not None:
-            nby, nbx = infile.data.shape
+            nby, nbx = infile.get_data().shape
         else:
             nby, nbx = header['NAXIS2'], header['NAXIS1']
         wavemap = get_wavemap_from_coeffs(wave_coeffs, nbo, nbx)
@@ -473,7 +473,7 @@ def get_wavelines(params, recipe, fiber, header=None, infile=None,
     # ------------------------------------------------------------------------
     # deal with no header but an infile
     if header is None and infile is not None:
-        header = infile.header
+        header = infile.get_header()
     # deal with still having no header
     if header is None:
         # log error: header not defined.
@@ -504,7 +504,7 @@ def get_wavelines(params, recipe, fiber, header=None, infile=None,
     # read data/header
     hclfile.read_file()
     # get wave map
-    hclines = Table(hclfile.data)
+    hclines = hclfile.get_data(copy=True)
     # set wave source of wave file
     hcsource = hclfile.filename
     # ------------------------------------------------------------------------
@@ -518,7 +518,7 @@ def get_wavelines(params, recipe, fiber, header=None, infile=None,
     # read data/header
     fplfile.read_file()
     # get wave map
-    fplines = Table(fplfile.data)
+    fplines = fplfile.get_data(copy=True)
     # set wave source of wave file
     fpsource = fplfile.filename
     # ------------------------------------------------------------------------
@@ -815,7 +815,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
     # loop around orders
     for order_num in range(nbo):
         # get the order spectrum
-        sorder = e2dsfile.data[order_num]
+        sorder = e2dsfile.get_data()[order_num]
         # find all lines in this order
         good = np.where(list_orders == order_num)[0]
         # get order lines
@@ -1245,7 +1245,7 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
     # Plot single order, wavelength-calibrated, with found lines
     # ------------------------------------------------------------------
     recipe.plot('WAVE_FP_SINGLE_ORDER', order=None, llprops=llprops,
-                hcdata=hce2dsfile.data)
+                hcdata=hce2dsfile.get_data())
 
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
@@ -1314,7 +1314,7 @@ def fp_wavesol_bauer(params, recipe, llprops, fpe2dsfile, blaze, fiber,
     # FP solution plots
     # ------------------------------------------------------------------
     recipe.plot('WAVE_FP_FINAL_ORDER', llprops=llprops, fiber=fiber,
-                iteration=1, end=end, fpdata=fpe2dsfile.data)
+                iteration=1, end=end, fpdata=fpe2dsfile.get_data())
     recipe.plot('WAVE_FP_LWID_OFFSET', llprops=llprops)
     recipe.plot('WAVE_FP_WAVE_RES', llprops=llprops)
 
@@ -1513,7 +1513,7 @@ def fp_wavesol_lovis(params, recipe, llprops, fpe2dsfile, hce2dsfile,
         WLOG(params, 'warning', TextEntry('10-017-00012', args=wargs))
     else:
         recipe.plot('WAVE_FP_MULTI_ORDER', hc_ll=hc_ll_test, hc_ord=hc_ord_test,
-                    hcdata=hce2dsfile.data, wave=llprops['LL_OUT_2'],
+                    hcdata=hce2dsfile.get_data(), wave=llprops['LL_OUT_2'],
                     init=n_plot_init, fin=n_fin, nbo=n_nbo, params=params)
 
     # ----------------------------------------------------------------------
@@ -1754,7 +1754,7 @@ def hc_log_global_stats(params, hcprops, e2dsfile, fiber):
     sumres_hc = 0.0
     sumres2_hc = 0.0
     # loop around orders
-    for order in range(e2dsfile.data.shape[0]):
+    for order in range(e2dsfile.get_data().shape[0]):
         # get HC line wavelengths for the order
         order_mask = hcprops['ORD_T'] == order
         hc_x_ord = hcprops['XGAU_T'][order_mask]
@@ -2113,9 +2113,9 @@ def find_hc_gauss_peaks(params, recipe, iprops, e2dsfile, fiber, **kwargs):
                     func_name)
     filefmt = pcheck(params, 'WAVE_HCLL_FILE_FMT', 'filefmt', kwargs, func_name)
     # get image
-    hc_sp = e2dsfile.data
+    hc_sp = e2dsfile.get_data()
     # get dimensions from image
-    nbo, nbpix = e2dsfile.data.shape
+    nbo, nbpix = e2dsfile.get_data().shape
     # print process
     WLOG(params, '', TextEntry('40-017-00003'))
     # get initial line list
@@ -2891,7 +2891,7 @@ def generate_resolution_map(params, recipe, llprops, e2dsfile, **kwargs):
     max_dev_thres = pcheck(params, 'WAVE_HC_RES_MAXDEV_THRES', 'max_dev_thres',
                            kwargs, func_name)
     # get image
-    hc_sp = np.array(e2dsfile.data)
+    hc_sp = np.array(e2dsfile.get_data())
     xgau = np.array(llprops['XGAU_T'])
     orders = np.array(llprops['ORD_T'])
     gauss_rms_dev = np.array(llprops['GAUSS_RMS_DEV_T'])
@@ -3252,11 +3252,11 @@ def littrow(params, recipe, llprops, start, end, wavell, infile, blaze,
     # ------------------------------------------------------------------
     plotname = 'WAVE_LITTROW_EXTRAP{0}'.format(iteration)
     recipe.plot(plotname, params=params, llprops=llprops,
-                iteration=iteration, fiber=fiber, image=infile.data)
+                iteration=iteration, fiber=fiber, image=infile.get_data())
     # only plot summary plot for final iteration
     if iteration == 2:
         recipe.plot('SUM_WAVE_LITTROW_EXTRAP', params=params, llprops=llprops,
-                    iteration=iteration, fiber=fiber, image=infile.data)
+                    iteration=iteration, fiber=fiber, image=infile.get_data())
     # ------------------------------------------------------------------
     # add parameters to llprops
     llprops['LITTROW_START_{0}'.format(iteration)] = start
@@ -3362,7 +3362,7 @@ def calculate_littrow_sol(params, llprops, echelle_order, wavell, infile,
     # get the total number of orders to fit
     num_orders = len(echelle_order)
     # get dimensions from image
-    ydim, xdim = infile.data.shape
+    ydim, xdim = infile.get_data().shape
     # ----------------------------------------------------------------------
     # test if n_order_init is in remove_orders
     if n_order_init in remove_orders:
@@ -3548,7 +3548,7 @@ def extrapolate_littrow_sol(params, llprops, wavell, infile, iteration=0,
     # get parameters from llprop
     litt_param = llprops['LITTROW_PARAM_{0}'.format(iteration)]
     # get the dimensions of the data
-    ydim, xdim = infile.data.shape
+    ydim, xdim = infile.get_data().shape
     # get the pixel positions
     x_points = np.arange(xdim)
     # construct the Littrow cut points (in pixels)
@@ -3557,7 +3557,7 @@ def extrapolate_littrow_sol(params, llprops, wavell, infile, iteration=0,
     ll_cut_points = wavell[n_order_init][x_cut_points]
     # set up storage
     littrow_extrap = np.zeros((ydim, len(x_cut_points)), dtype=float)
-    littrow_extrap_sol = np.zeros_like(infile.data)
+    littrow_extrap_sol = np.zeros_like(infile.get_data())
     littrow_extrap_param = np.zeros((ydim, fit_degree + 1), dtype=float)
     # calculate the echelle order position for this order
     echelle_order_nums = t_order_start - np.arange(ydim)
@@ -3865,7 +3865,7 @@ def find_fp_lines_new(params, llprops, fpe2dsfile, **kwargs):
                       kwargs, func_name)
     # get redefined variables (pipe inputs to llprops with correct names)
     # set fpfile as ref file
-    llprops['SPEREF'] = fpe2dsfile.data
+    llprops['SPEREF'] = fpe2dsfile.get_data()
     # set wavelength solution as the one from the HC lines
     llprops['WAVE'] = llprops['LITTROW_EXTRAP_SOL_1']
     # use rv module to get the position of FP peaks from reference file
@@ -6262,9 +6262,10 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # Need to re-calculate the s1d files
     # ----------------------------------------------------------------------
     # load the blaze file for this fiber
-    blaze_file, blaze = flat_blaze.get_blaze(params, e2dsff_file.header, fiber)
+    blaze_file, blaze = flat_blaze.get_blaze(params, e2dsff_file.get_header(),
+                                             fiber)
     # calculate s1d file
-    sargs = [wprops['WAVEMAP'], e2dsff_file.data, blaze]
+    sargs = [wprops['WAVEMAP'], e2dsff_file.get_data(), blaze]
     swprops = extract.e2ds_to_s1d(params, recipe, *sargs, wgrid='wave',
                                   fiber=fiber, kind='E2DSFF')
     svprops = extract.e2ds_to_s1d(params, recipe, *sargs,

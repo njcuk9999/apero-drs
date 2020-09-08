@@ -115,7 +115,7 @@ def __main__(recipe, params):
     fpfile = drs_fits.combine(params, recipe, fpfiles, math='median')
 
     # get the headers (should be the header of the first file in each)
-    fpheader = fpfile.header
+    fpheader = fpfile.get_header()
 
     # ----------------------------------------------------------------------
     # Get localisation coefficients for fp file
@@ -164,7 +164,7 @@ def __main__(recipe, params):
         else:
             filename = params['INPUTS']['FPMASTER'][0][0]
         # do stuff
-        fpkwargs = dict(header=fpfile.header, filename=filename,
+        fpkwargs = dict(header=fpfile.get_header(), filename=filename,
                         database=calibdbm)
         # read fpmaster file
         masterfp_file, master_fp = shape.get_master_fp(params, **fpkwargs)

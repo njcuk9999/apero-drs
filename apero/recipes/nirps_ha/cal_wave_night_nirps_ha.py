@@ -200,7 +200,7 @@ def __main__(recipe, params):
                                            forcefiber=True, database=calibdbm)
             # --------------------------------------------------------------
             # define the header as being from the hc e2ds file
-            hcheader = hc_e2ds_file.header
+            hcheader = hc_e2ds_file.get_header()
             # load the blaze file for this fiber
             blaze_file, blaze = flat_blaze.get_blaze(params, hcheader, fiber)
             # --------------------------------------------------------------
@@ -222,7 +222,7 @@ def __main__(recipe, params):
             # pconst = constants.pload(params['INSTRUMENT'])
             # sfiber, rfiber = pconst.FIBER_CCF()
             # compute the ccf
-            ccfargs = [fp_e2ds_file, fp_e2ds_file.data, blaze,
+            ccfargs = [fp_e2ds_file, fp_e2ds_file.get_data(), blaze,
                        nprops['WAVEMAP'], fiber]
             rvprops = velocity.compute_ccf_fp(params, recipe, *ccfargs)
 

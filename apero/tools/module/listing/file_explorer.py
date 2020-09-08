@@ -437,7 +437,7 @@ class TableSection:
         self.tableframe.pack(padx=10, pady=10, fill=tk.BOTH, expand=tk.YES,
                              side=tk.TOP)
         # get data, cols and mask
-        data = self.master.datastore.data
+        data = self.master.datastore.get_data()
         cols = self.master.datastore.cols
         mask = self.master.datastore.mask
         # ---------------------------------------------------------------------
@@ -502,7 +502,7 @@ class TableSection:
 
     def on_double_click(self, event):
         # get data, cols and mask
-        data = np.array(self.master.datastore.data)
+        data = np.array(self.master.datastore.get_data())
         mask = self.master.datastore.mask
         path = self.master.datastore.path
         # ---------------------------------------------------------------------

@@ -130,7 +130,7 @@ def __main__(recipe, params):
         # ge this iterations file
         infile = infiles[it]
         # get data from file instance
-        image = np.array(infile.data)
+        image = infile.get_data(copy=True)
         # ------------------------------------------------------------------
         # Get basic image properties
         # ------------------------------------------------------------------

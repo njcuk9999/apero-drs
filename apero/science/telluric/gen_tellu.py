@@ -380,11 +380,11 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     dvgrid = pcheck(params, 'EXT_S1D_BIN_UVELO', 'dvgrid', kwargs, func_name)
     # ----------------------------------------------------------------------
     # get image and header from infile
-    header = infile.header
+    header = infile.get_header()
     # get airmass from header
     hdr_airmass = infile.get_key('KW_AIRMASS', dtype=float)
     # copy e2ds input image
-    image_e2ds_ini = np.array(infile.data)
+    image_e2ds_ini = infile.get_data(copy=True)
     # get shape of the e2ds
     nbo, nbpix = image_e2ds_ini.shape
     # get wave map for the input e2ds
@@ -1165,7 +1165,7 @@ def qc_exit_tellu_preclean(params, recipe, image, infile, wavemap,
     # ----------------------------------------------------------------------
     # get image and header from infile
     image_e2ds = np.array(image)
-    header = infile.header
+    header = infile.get_header()
     # get airmass from header
     hdr_airmass = infile.get_key('KW_AIRMASS', dtype=float)
     # ----------------------------------------------------------------------
@@ -1389,7 +1389,8 @@ def read_tellu_preclean(params, recipe, infile, fiber):
     pclean_key = out_pclean.get_dbkey()
 
     # load tellu file, header and abspaths
-    _, pclean_filenames = load_tellu_file(params, pclean_key, infile.header,
+    _, pclean_filenames = load_tellu_file(params, pclean_key,
+                                          infile.get_header(),
                                           n_entries='all', get_image=False,
                                           required=False, fiber=fiber)
     # if we don't have the file return None
@@ -1729,7 +1730,7 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
         # load npy file
         out_tellu_conv.read_file(params)
         # push data into array
-        tapas_all_species = np.array(out_tellu_conv.data)
+        tapas_all_species = out_tellu_conv.get_data(copy=True)
     # else we need to load tapas and generate the convolution
     else:
         # ------------------------------------------------------------------
@@ -1803,7 +1804,7 @@ def load_tapas_spl(params, recipe, header):
     if (conv_paths is not None) and (out_tellu_tapas.filename in conv_paths):
         out_tellu_tapas.read_file(params)
         # push into arrays
-        tmp_tapas = np.array(out_tellu_tapas.data)
+        tmp_tapas = out_tellu_tapas.get_data(copy=True)
         tapas_wave = tmp_tapas[0]
         trans_others = tmp_tapas[1]
         trans_water = tmp_tapas[2]

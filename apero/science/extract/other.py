@@ -90,11 +90,11 @@ def extract_thermal_files(params, recipe, extname, thermalfile, **kwargs):
         # construct the filename from e2ds file (it is the same file)
         thermal_file.construct_filename(params, infile=thermalfile)
         # copy header and hdict
-        thermal_file.hdict = thermal_outputs[fiber].header
-        thermal_file.header = thermal_outputs[fiber].header
+        thermal_file.hdict = thermal_outputs[fiber].get_header()
+        thermal_file.header = thermal_outputs[fiber].get_header()
         # add data from thermal_outputs
         thermal_file.datatype = thermal_outputs[fiber].datatype
-        thermal_file.data = thermal_outputs[fiber].data
+        thermal_file.data = thermal_outputs[fiber].get_data()
         # update drs out id
         thermal_file.hdict[params['KW_OUTPUT'][0]] = thermal_file.name
         thermal_file.header[params['KW_OUTPUT'][0]] = thermal_file.name

@@ -158,10 +158,10 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
         # log progres: reading file: {0}
         wargs = [infile.filename]
         WLOG(params, '', TextEntry('40-019-00033', args=wargs))
-        # read data (but copy data)
-        infile.read_file(copy=True)
+        # read data
+        infile.read_file()
         # get image and set up shifted image
-        image = np.array(infile.data)
+        image = infile.get_data(copy=True)
         # normalise image by the normalised blaze
         image2 = image / nprops['NBLAZE']
         # get dprtype
@@ -319,7 +319,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
     reffile.set_filename(filenames[0])
     reffile.read_file()
     # get the reference wave map
-    rwavemap = np.array(reffile.data['wavelength'])
+    rwavemap = np.array(reffile.get_data()['wavelength'])
 
     # ----------------------------------------------------------------------
     # Compile a median SNR for rejection of bad files
@@ -408,8 +408,8 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
         # read data
         infile.read_file()
         # get image and set up shifted image
-        image = np.array(infile.data['flux'])
-        wavemap = np.array(infile.data['wavelength'])
+        image = np.array(infile.get_data()['flux'])
+        wavemap = np.array(infile.get_data()['wavelength'])
 
         # normalise image by the normalised blaze
         image2 = image / mp.nanmedian(image)

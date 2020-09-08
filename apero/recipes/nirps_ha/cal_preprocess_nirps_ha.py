@@ -134,8 +134,7 @@ def __main__(recipe, params):
             WLOG(params, 'info', TextEntry('40-010-00002', args=eargs))
             continue
         # get data from file instance
-        image = np.array(infile.data)
-
+        image = infile.get_data(copy=True)
         # ------------------------------------------------------------------
         # Get out file and check skip
         # ------------------------------------------------------------------
@@ -205,13 +204,13 @@ def __main__(recipe, params):
 
         # correct by a median filter from the dark amplifiers
         WLOG(params, '', TextEntry('40-010-00016'))
-        image, pfile = pp.nirps_correction(params, image, header=infile.header,
+        image, pfile = pp.nirps_correction(params, image,
+                                           header=infile.get_header(),
                                            database=calibdbm)
-
         # ------------------------------------------------------------------
         # calculate mid observation time
         # ------------------------------------------------------------------
-        mout = drs_fits.get_mid_obs_time(params, infile.header)
+        mout = drs_fits.get_mid_obs_time(params, infile.get_header())
         mid_obs_time, mid_obs_method = mout
 
         # ------------------------------------------------------------------

@@ -180,7 +180,7 @@ def __main__(recipe, params):
         # read file
         infile.read_file()
         # append to storage
-        wave_images[fiber] = infile.data
+        wave_images[fiber] = infile.get_data()
         wave_infiles[fiber] = infile
 
     # ----------------------------------------------------------------------
@@ -191,8 +191,8 @@ def __main__(recipe, params):
 
     for fiber in fibers:
         # wave infile
-        header = wave_infiles[fiber].header
-        ishape = wave_images[fiber].shape
+        header = wave_infiles[fiber].get_header()
+        ishape = wave_images[fiber].get_data().shape
         # ------------------------------------------------------------------
         # load wavelength solution for this fiber
         wprops = wave.get_wavesolution(params, recipe,
@@ -214,7 +214,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # get ref image
     ref_infile = wave_infiles[fibers[0]]
-    ref_header = ref_infile.header
+    ref_header = ref_infile.get_header()
     # get image shape
     ishape = inverse.drs_image_shape(params)
 
@@ -237,7 +237,7 @@ def __main__(recipe, params):
     # loop around fibers
     for fiber in fibers:
         # wave infile
-        header = wave_infiles[fiber].header
+        header = wave_infiles[fiber].get_header()
         # get the localisation parameters for this fiber
         WLOG(params, '', '\t Getting localisation for Fiber={0}'.format(fiber))
         cents, wids = inverse.calc_central_localisation(params, recipe, fiber,
@@ -256,7 +256,7 @@ def __main__(recipe, params):
     # loop around fibers
     for fiber in fibers:
         # wave infile
-        header = wave_infiles[fiber].header
+        header = wave_infiles[fiber].get_header()
         # get the localisation parameters for this fiber
         cents, wids = centers[fiber], widths[fiber]
         # get straighted wave image
@@ -275,7 +275,7 @@ def __main__(recipe, params):
     # loop around fibers
     for fiber in fibers:
         # wave infile
-        header = wave_infiles[fiber].header
+        header = wave_infiles[fiber].get_header()
         # get the localisation parameters for this fiber
         cents, wids = centers[fiber], widths[fiber]
         # get straighted wave image

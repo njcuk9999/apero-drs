@@ -162,7 +162,7 @@ def __main__(recipe, params):
         # print progress
         WLOG(params, '', TextEntry('40-010-00014', args=[infile.name]))
         # make order mask
-        mask, props = preprocessing.nirps_order_mask(params, infile.data)
+        mask, props = preprocessing.nirps_order_mask(params, infile.get_data())
         # convert to integers
         mask = np.array(mask).astype(int)
         # ------------------------------------------------------------------

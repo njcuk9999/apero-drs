@@ -128,7 +128,7 @@ def __main__(recipe, params):
     # load the blaze file for this fiber
     # ----------------------------------------------------------------------
     blaze_file, blaze = flat_blaze.get_blaze(params, fiber=pobj.fiber,
-                                             header=pobj.infile.header)
+                                             header=pobj.infile.get_header())
     # ----------------------------------------------------------------------
     # polarimetry computation
     # ----------------------------------------------------------------------
