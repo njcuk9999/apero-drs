@@ -9,15 +9,16 @@ Created on 2019-01-19 at 12:03
 
 @author: cook
 """
-import numpy as np
-from astropy import version as av
 from astropy.table import Table
-import os
+from astropy import version as av
 from collections import OrderedDict
-import copy
-import warnings
+from copy import deepcopy
+import numpy as np
+import os
+from pathlib import Path
 from types import FunctionType
 from typing import Any, List, Union, Tuple, Type
+import warnings
 
 from apero.base import base
 from apero.base import drs_exceptions
@@ -25,6 +26,7 @@ from apero.core.core import drs_log
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.instruments.default import output_filenames as outf
+from apero.core.instruments.default import pseudo_const
 from apero import lang
 from apero.base import drs_text
 from apero.io import drs_fits
@@ -44,6 +46,8 @@ __release__ = base.__release__
 display_func = drs_log.display_func
 # Get Logging function
 WLOG = drs_log.wlog
+# get parameter dictionary
+ParamDict = constants.ParamDict
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict
@@ -57,9 +61,13 @@ if av.major < 2 or (av.major == 2 and av.minor < 1):
     SCALEARGS = dict(bscale=(1.0 + 1.0e-8), bzero=1.0e-8)
 else:
     SCALEARGS = dict(bscale=1, bzero=0)
-
-
+# get header comment card from drs_fits
+HCC = drs_fits.fits.header._HeaderCommentaryCards
+# get default psuedo constants class
+PseudoConstants = pseudo_const.PseudoConstants
 # -----------------------------------------------------------------------------
+# define complex typing
+QCParamList = List[List[str], List[Any], List[str], List[int]]
 
 
 # =============================================================================
@@ -207,7 +215,7 @@ class DrsInputFile:
             self.filesetnames = filesetnames
         self.outfunc = outfunc
 
-        # following keys are used in inherited classes
+        # following keys are not used in this class
         self.inext = inext
         self.dbname = dbname
         self.dbkey = dbkey
@@ -218,7 +226,11 @@ class DrsInputFile:
         self.numfiles = numfiles
         self.shape = shape
         self.hdict = hdict
-        self.output_dict = output_dict
+        # get the storage dictionary for output parameters
+        if output_dict is None:
+            self.output_dict = OrderedDict()
+        else:
+            self.output_dict = output_dict
         self.datatype = datatype
         self.dtype = dtype
         self.is_combined = is_combined
@@ -227,6 +239,48 @@ class DrsInputFile:
 
         # allow instance to be associated with a filename
         self.set_filename(filename)
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        Defines the str(DrsInputFile) return for DrsInputFile
+        :return str: the string representation of DrsInputFile
+                     i.e. DrsInputFile[name]
+        """
+        # set function name
+        _ = display_func(None, '__str__', __NAME__, self.class_name)
+        # return the string representation of DrsInputFile
+        return '{0}[{1}]'.format(self.class_name, self.name)
+
+    def __repr__(self) -> str:
+        """
+        Defines the print(DrsInputFile) return for DrsInputFile
+        :return str: the string representation of DrsInputFile
+                     i.e. DrsInputFile[name]
+        """
+        # set function name
+        _ = display_func(None, '__repr__', __NAME__, self.class_name)
+        # return the string representation of DrsInputFile
+        return 'DrsInputFile[{0}]'.format(self.name)
 
     def set_filename(self, filename: str):
         """
@@ -426,28 +480,6 @@ class DrsInputFile:
             eargs = [func, self.filename, func + '.set_filename()']
             self.__error__(TextEntry('00-001-00003', args=eargs))
 
-    def __str__(self) -> str:
-        """
-        Defines the str(DrsInputFile) return for DrsInputFile
-        :return str: the string representation of DrsInputFile
-                     i.e. DrsInputFile[name]
-        """
-        # set function name
-        _ = display_func(None, '__str__', __NAME__, self.class_name)
-        # return the string representation of DrsInputFile
-        return '{0}[{1}]'.format(self.class_name, self.name)
-
-    def __repr__(self) -> str:
-        """
-        Defines the print(DrsInputFile) return for DrsInputFile
-        :return str: the string representation of DrsInputFile
-                     i.e. DrsInputFile[name]
-        """
-        # set function name
-        _ = display_func(None, '__repr__', __NAME__, self.class_name)
-        # return the string representation of DrsInputFile
-        return 'DrsInputFile[{0}]'.format(self.name)
-
     def __error__(self, messages: Union[TextEntry, str]):
         """
         Raise an Logger message (level = error)
@@ -646,7 +678,6 @@ class DrsInputFile:
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, s1d, **kwargs)
 
-
     def completecopy(self, drsfile,
                      name: Union[str, None] = None,
                      filetype: Union[str, None] = None,
@@ -680,7 +711,7 @@ class DrsInputFile:
                      is_combined: Union[bool, None] = None,
                      combined_list: Union[list, None] = None,
                      s1d: Union[list, None] = None,
-                     ** kwargs):
+                     **kwargs):
         """
         Copy all keys from drsfile (unless other arguments set - these override
         copy from drsfile)
@@ -778,7 +809,7 @@ class DrsInputFile:
         # set function name
         _ = display_func(None, 'check_another_file', __NAME__, self.class_name)
         # 1. check extension
-        cond1, msg1 = self.has_correct_extension(input_file.ext)
+        cond1, msg1 = self.has_correct_extension(input_file.inext)
         if not cond1:
             return False, msg1
         # 2. check file header keys exist
@@ -841,9 +872,12 @@ class DrsInputFile:
         # always return True and None (abstract placeholder)
         return True, None
 
-    def hkeys_exist(self, header=None, filename=None, argname=None):
+    def hkeys_exist(self, header: Union[drs_fits.Header, None] = None,
+                    filename: Union[str, None] = None,
+                    argname: Union[str, None] = None) -> Tuple[bool, None]:
         """
         Placeholder - cannot check header for DrsInputFile
+        always returns True and no error message
 
         :param header: drs_fits.Header - the header file to check
                        [Not used in DrsInputFile]
@@ -865,18 +899,19 @@ class DrsInputFile:
 
     def has_correct_hkeys(self, header: Union[drs_fits.Header, None] = None,
                           argname: Union[str, None] = None,
-                          log: bool = True,  filename: Union[str, None] = None,
+                          log: bool = True, filename: Union[str, None] = None,
                           ) -> Tuple[bool, Union[dict, None]]:
         """
         Placeholder - cannot check header for DrsInputFile
 
         :param header: drs_fits.Header - the header file to check
                        [Not used in DrsInputFile]
-        :param filename: None or filename the filename to check (if None sets
-                         this from self.filename [Not used in DrsInputFile]
         :param argname: str, the name of the argument we are checking the
                         extension of [Not used in DrsInputFile]
-
+        :param log: bool, log checking [Not used in DrsInputFile]
+        :param filename: None or filename the filename to check (if None sets
+                         this from self.filename [Not used in DrsInputFile]
+                         
         :return: True and no reason (None)
         """
         # set function name
@@ -890,80 +925,55 @@ class DrsInputFile:
         return True, None
 
     # -------------------------------------------------------------------------
-    # file checking (old)
-    # -------------------------------------------------------------------------
-    def check_file_exists(self, quiet=False):
-        # set function name
-        _ = display_func(None, 'check_file_exists', __NAME__, 'DrsInputFile')
-        # check that filename exists
-        cond = os.path.exists(self.filename)
-        # if it does add to log that file is found
-        if cond:
-            eargs = [self.basename, self.path]
-            emsg = TextEntry('09-000-00001', args=eargs)
-        # if it does not add to log that file is not found
-        else:
-            eargs = [self.basename, self.path]
-            emsg = TextEntry('09-000-00002', args=eargs)
-        # deal with printout and return
-        # if we failed and aren't in quiet mode --> display error
-        if (not cond) and (not quiet):
-            self.__error__(emsg)
-        # if we didn't fail and aren't in quiet mode --> display message
-        elif not quiet:
-            self.__message__(emsg)
-        # return the condition and (error) message
-        return cond, emsg
-
-    def check_file_extension(self, quiet=False):
-        # set function name
-        _ = display_func(None, 'check_file_exists', __NAME__, 'DrsInputFile')
-        # if filetype is None add message and set pass condition
-        #   to True
-        if self.filetype is None:
-            msg = TextEntry('09-000-00003', args=[self.basename])
-            cond = True
-        # if filetype is set and is correct add message and set pass condition
-        #   to True
-        elif self.filename.endswith(self.filetype):
-            msg = TextEntry('09-000-00004', args=[self.basename, self.filetype])
-            cond = True
-        # if it has failed set error message and set pass condition to False
-        else:
-            msg = TextEntry('09-000-00005', args=[self.basename, self.filetype])
-            cond = False
-        # deal with printout and return
-        if (not cond) and (not quiet):
-            self.__error__(msg)
-        elif not quiet:
-            self.__message__(msg)
-        # return condition and message
-        return cond, msg
-
-    def check_file_header(self, quiet=False):
-        # set function name
-        _ = display_func(None, 'check_file_header', __NAME__, 'DrsInputFile')
-        # there is no header for non-fits input files --> return True and
-        #   a blank message
-        return True, TextEntry('')
-
-    # -------------------------------------------------------------------------
     # read/write methods
     # -------------------------------------------------------------------------
-    def read_file(self, ext=None, check=False, params=None):
-        # set function name
-        _ = display_func(None, 'read_file', __NAME__, 'DrsInputFile')
-        # do nothing else (no current read option for generic input files)
+    def read_file(self, ext: Union[int, None] = None, check: bool = False,
+                  params: Union[ParamDict, None] = None, copy: bool = False):
+        """
+        Does nothing - abstract at this point - cannot read a generic file
 
-    def write_file(self, params=None):
+        :param ext: int or None, the data extension to open
+        :param check: bool, if True checks if data is already read and does
+                      not read again, to overwrite/re-read set "check" to False
+        :param params: Parameter Dict (not used --in overridden definition)
+        :param copy: bool, if True make sure data is copied to HDU (i.e. can
+                     close after even if numpy array is still used) numpy
+                     array is stored in DrsFitsFile.data
+        :return None:
+        """
         # set function name
-        _ = display_func(None, 'write_file', __NAME__, 'DrsInputFile')
+        _ = display_func(None, 'read_file', __NAME__, self.class_name)
+        # do nothing else (no current read option for generic input files)
+        _ = ext
+        _ = check
+        _ = params
+        _ = copy
+
+    def write_file(self, params: Union[ParamDict, None] = None):
+        """
+        Does nothing - abstract at this point - cannot write a generic file
+
+        :param params: ParamDict, parameter dictionary of constants
+        :return: None
+        """
+        # set function name
+        _ = display_func(None, 'write_file', __NAME__, self.class_name)
         # do nothing else (no current write option for generic input files)
+        _ = params
 
     # -------------------------------------------------------------------------
     # user functions
     # -------------------------------------------------------------------------
-    def construct_filename(self, params, infile=None, check=True, **kwargs):
+    def construct_filename(self, params: ParamDict,
+                           infile: Union['DrsInputFile', None] = None,
+                           outfile: Union['DrsInputFile', None] = None,
+                           fiber: Union[str, None] = None,
+                           path: Union[str, None] = None,
+                           func: Union[str, None] = None,
+                           remove_insuffix: Union[bool, None] = None,
+                           prefix: Union[str, None] = None,
+                           suffix: Union[str, None] = None,
+                           check: bool = True):
         """
         Constructs the filename from the parameters defined at instance
         definition and using the infile (if required). If check is True, checks
@@ -972,22 +982,31 @@ class DrsInputFile:
 
         :param params: Param Dict
         :param infile: Drsfile, the input DrsFile
-        :param check: bool, whether to check infile.name against self.intype
-        :param kwargs: keyword arguments passed to self.outfunc
+        :param outfile: DrsFitsFile, output file - must be defined
+        :param fiber: str, the fiber - must be set if infile.fibers is populated
+        :param path: str, the path the file should have (if not set, set to
+                     params['OUTPATH']  with params['NIGHTNAME'] if set)
+        :param func: str, the function name if set (for errors)
+        :param remove_insuffix: bool if set removes input suffix if not set
+                                defaults to the outfile.remove_insuffix
+        :param prefix: str, if set the prefix of the file (defaults to
+                       outfile.prefix)
+        :param suffix: str, if set the suffix of the file (defaults to
+                       outfile.suffix)
 
-        :return: Sets self.filename and self.basename to the correct values
+        :param check: bool, whether to check infile.name against self.intype
+
+        :return: None, Sets self.filename and self.basename to the
+                       correct values
         """
         # set function name
         func_name = display_func(params, 'construct_filename', __NAME__,
-                                 'DrsInputFile')
-        # set outfile from self
-        kwargs['outfile'] = self
-        kwargs['func'] = func_name
-        kwargs['infile'] = infile
+                                 self.class_name)
         # if we have a function use it
         if self.outfunc is not None:
             try:
-                abspath = self.outfunc(params, **kwargs)
+                abspath = self.outfunc(params, infile, outfile, fiber, path,
+                                       func, remove_insuffix, prefix, suffix)
             except DrsCodedException as e:
                 level = e.get('level', 'error')
                 eargs = e.get('targs', None)
@@ -1011,18 +1030,18 @@ class DrsInputFile:
                     eargs = [infile.name, reqstr, self.filename, func_name]
                     WLOG(params, 'error', TextEntry('00-008-00017', args=eargs))
 
-    def generate_reqfiles(self):
+    def generate_reqfiles(self) -> List[str]:
         """
-        Takes "intype" and works out all the combinations of file names that
-        are valid for this "intype" (i.e. if we have a fileset in one of the
-        "intypes" we should add all files from this set)
+        Takes DrsInputFile.intype and works out all the combinations of
+        file names that are valid for this "intype" (i.e. if we have a
+        fileset in one of the "intypes" we should add all files from this set)
 
         :return: list of DrsInputFile names (drsfile.name) to know which names
                  are valid
         :rtype list:
         """
         # set function name
-        _ = display_func(None, 'generate_reqfiles', __NAME__, 'DrsInputFile')
+        _ = display_func(None, 'generate_reqfiles', __NAME__, self.class_name)
         # deal with intype being unset
         if self.intype is None:
             return []
@@ -1039,7 +1058,7 @@ class DrsInputFile:
                     required_names.append(intype.name)
                 else:
                     required_names.append(intype.name)
-        else:
+        elif isinstance(self.intype, DrsInputFile):
             intype = self.intype
             # deal with intype having fileset (set of files associated
             #   with this file)
@@ -1053,9 +1072,36 @@ class DrsInputFile:
         # return required names
         return required_names
 
-    def reconstruct_filename(self, params, outext, prefix=None, suffix=None,
-                             inext=None, fiber=None):
+    def reconstruct_filename(self, params: ParamDict,
+                             outext: Union[str, None] = None,
+                             prefix: Union[str, None] = None,
+                             suffix: Union[str, None] = None,
+                             inext: Union[str, None] = None,
+                             fiber: Union[str, None] = None):
+        """
+        Reconstructs the output filename based on the current filename (that is
+        then striped back to the original input file name) and then added
+        based on the input settings
 
+        remove is based on the current DrsInputFile.filename,
+        DrsInputFile.basename, DrsInputFile.prefix, DrsInputFile.suffix,
+        DrsInputFile.fiber, DrsInputFile.filetype
+
+        :param params: ParamDict, paremeter dictionary of constants
+        :param outext: str, the outfile extension (to add)
+        :param prefix: str, if set the prefix of the file
+        :param suffix: str, if set the suffix of the file
+        :param inext: str, the infile extension (to remove)
+        :param fiber: str, the fiber to add (if set)
+
+        :return: None, updates DrsInputFile.filename,  DrsInputFile.basename,
+                 DrsInputFile.prefix, DrsInputFile.suffix, DrsInputFile.fiber,
+                 DrsInputFile.inext
+        """
+        # set function name
+        _ = display_func(params, 'reconstruct_filename', __NAME__,
+                         self.class_name)
+        # get current path and filename
         currentpath = os.path.dirname(self.filename)
         currentfile = self.basename
         # ----------------------------------------------------------------------
@@ -1253,7 +1299,7 @@ class DrsFitsFile(DrsInputFile):
         self.header = header
         # update fiber parameter from header
         if self.header is not None:
-            self.fiber = self.get_key('KW_FIBER', dtype=str, required=False)
+            self.fiber = self.get_hkey('KW_FIBER', dtype=str, required=False)
         # get the number of files associated with this drs fits file
         self.numfiles = numfiles
         # get the shape of the fits data array (self.data)
@@ -1290,6 +1336,48 @@ class DrsFitsFile(DrsInputFile):
             self.s1d = []
         else:
             self.s1d = s1d
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        Defines the str(DrsFitsFile) return for DrsFitsFile
+        :return str: the string representation of DrsFitsFile
+                     i.e. DrsFitsFile[name] or DrsFitsFile[name_fiber]
+        """
+        # set function name
+        _ = display_func(None, '__str__', __NAME__, self.class_name)
+        # return the string output
+        return self.string_output()
+
+    def __repr__(self) -> str:
+        """
+        Defines the print(DrsFitsFile) return for DrsFitsFile
+        :return str: the string representation of DrsFitsFile
+                     i.e. DrsFitsFile[name] or DrsFitsFile[name_fiber]
+        """
+        # set function name
+        _ = display_func(None, '__repr__', __NAME__, self.class_name)
+        # return the string output
+        return self.string_output()
 
     def get_header_keys(self, kwargs: dict):
         """
@@ -1459,28 +1547,6 @@ class DrsFitsFile(DrsInputFile):
             # set required header keys
             self.required_header_keys[key] = value
 
-    def __str__(self) -> str:
-        """
-        Defines the str(DrsFitsFile) return for DrsFitsFile
-        :return str: the string representation of DrsFitsFile
-                     i.e. DrsFitsFile[name] or DrsFitsFile[name_fiber]
-        """
-        # set function name
-        _ = display_func(None, '__str__', __NAME__, self.class_name)
-        # return the string output
-        return self.string_output()
-
-    def __repr__(self) -> str:
-        """
-        Defines the print(DrsFitsFile) return for DrsFitsFile
-        :return str: the string representation of DrsFitsFile
-                     i.e. DrsFitsFile[name] or DrsFitsFile[name_fiber]
-        """
-        # set function name
-        _ = display_func(None, '__repr__', __NAME__, self.class_name)
-        # return the string output
-        return self.string_output()
-
     def copyother(self, drsfile, name: Union[str, None] = None,
                   filetype: Union[str, None] = None,
                   suffix: Union[str, None] = None,
@@ -1602,7 +1668,6 @@ class DrsFitsFile(DrsInputFile):
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, s1d, **kwargs)
 
-
     def completecopy(self, drsfile,
                      name: Union[str, None] = None,
                      filetype: Union[str, None] = None,
@@ -1636,7 +1701,7 @@ class DrsFitsFile(DrsInputFile):
                      is_combined: Union[bool, None] = None,
                      combined_list: Union[list, None] = None,
                      s1d: Union[list, None] = None,
-                     ** kwargs):
+                     **kwargs):
         """
         Copy all keys from drsfile (unless other arguments set - these override
         copy from drsfile)
@@ -1828,7 +1893,7 @@ class DrsFitsFile(DrsInputFile):
         # deal with no input header
         if header is None:
             # check file has been read
-            self.check_read(header_only=True, load=True)
+            self.check_read(header_only=True)
             # get header
             header = self.header
         # deal with no input filename
@@ -1877,7 +1942,7 @@ class DrsFitsFile(DrsInputFile):
 
     def has_correct_hkeys(self, header: Union[drs_fits.Header, None] = None,
                           argname: Union[str, None] = None,
-                          log: bool = True,  filename: Union[str, None] = None,
+                          log: bool = True, filename: Union[str, None] = None,
                           ) -> Tuple[bool, Union[dict, None]]:
         """
         Check whether the header keys exist in the header
@@ -1902,7 +1967,7 @@ class DrsFitsFile(DrsInputFile):
         # deal with no input header
         if header is None:
             # check file has been read
-            self.check_read(header_only=True, load=True)
+            self.check_read(header_only=True)
             # get header
             header = self.header
             # get file
@@ -1951,9 +2016,16 @@ class DrsFitsFile(DrsInputFile):
         # return found (bool) and errors
         return found, errors
 
-    def has_fiber(self, header=None):
+    def has_fiber(self, header: Union[drs_fits.Header, None] = None):
+        """
+        Checks for fiber key in header and sets self.fiber based on this key
+        if fiber key not found in header self.fiber is None
+
+        :param header: drs_fits.Header - the header file to check
+        :return: None
+        """
         # set function name
-        _ = display_func(None, 'has_fiber', __NAME__, 'DrsFitsFile')
+        _ = display_func(None, 'has_fiber', __NAME__, self.class_name)
         # -----------------------------------------------------------------
         # check whether fiber already set (in which case ignore)
         if self.fiber is not None:
@@ -1964,7 +2036,7 @@ class DrsFitsFile(DrsInputFile):
         # deal with no input header
         if header is None:
             # check file has been read
-            self.check_read(header_only=True, load=True)
+            self.check_read(header_only=True)
             # get header
             header = self.header
         # get recipe and parameters
@@ -1975,18 +2047,6 @@ class DrsFitsFile(DrsInputFile):
         # deal with fiber
         if kw_fiber in self.header:
             fiber = header[kw_fiber]
-        # TODO: remove elif when fiber is always in header if file
-        # TODO:     has a fiber
-        # TODO: START OF REMOVE ------------------------------------------------
-        elif 'AB' in self.basename.split('_')[-1]:
-            fiber = 'AB'
-        elif 'A' in self.basename.split('_')[-1]:
-            fiber = 'A'
-        elif 'B' in self.basename.split('_')[-1]:
-            fiber = 'B'
-        elif 'C' in self.basename.split('_')[-1]:
-            fiber = 'C'
-        # TODO: END OF REMOVE --------------------------------------------------
         else:
             fiber = None
         # update fiber value
@@ -1996,11 +2056,33 @@ class DrsFitsFile(DrsInputFile):
     # -------------------------------------------------------------------------
     # table checking
     # -------------------------------------------------------------------------
-    def get_infile_outfilename(self, params, recipe, infilename,
-                               allowedfibers=None, ext='.fits'):
+    # TODO: this function needs to change when using checksum
+    def get_infile_outfilename(self, params: ParamDict, recipe: Any,
+                               infilename: Union[str, Path],
+                               allowfibers: Union[List[str], str, None] = None,
+                               ext: Union[str, None] = '.fits'
+                               ) -> Tuple['DrsFitsFile', bool, Union[str, None]]:
+        """
+        Get the DrsFitsFile.intype DrsFitsFile output instance based on the
+        infilename (string) and whether it is valid infilename for the intype
+        i.e. if intype = ppfile  then infilename should be a pp file
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param recipe: DrsRecipe, the DrsRecipe instance this is being called
+                       from
+        :param infilename: string, the input file to use to create the output
+                           filename
+        :param allowfibers: list of strings or string, the fiber or fibers
+                            allowed for the output file created
+        :param ext: string, the input file filetype (i.e. a fits file)
+        :returns: a tuple of three things, 1. the output DrsFitsFile instance,
+                  2. whether infilename was valid for the given input file
+                  (if False output DrsFitsFile may be None) 3. the output
+                  filename generated (also in output DrsFitsFile.filename)
+        """
         # set function name
-        _ = display_func(None, 'get_infile_outfilename', __NAME__,
-                         'DrsFitsFile')
+        _ = display_func(params, 'get_infile_outfilename', __NAME__,
+                         self.class_name)
         # ------------------------------------------------------------------
         # 1. need to assign an input type for our raw file
         if self.intype is not None:
@@ -2041,7 +2123,7 @@ class DrsFitsFile(DrsInputFile):
             bottomfile.basename = os.path.basename(filename)
             # check whether we need fiber
             if bottomfile.fibers is not None:
-                fiber = allowedfibers
+                fiber = allowfibers
             else:
                 fiber = None
             # get out file name
@@ -2060,23 +2142,31 @@ class DrsFitsFile(DrsInputFile):
         # ------------------------------------------------------------------
         # get outfilename (final)
         valid, outfilename = self.check_table_filename(params, recipe, infile,
-                                                       allowedfibers)
+                                                       allowfibers)
         # ------------------------------------------------------------------
         # return infile
         return infile, valid, outfilename
 
-    def check_table_filename(self, params, recipe, infile, allowedfibers=None,
-                             fullpath=False):
+    def check_table_filename(self, params: ParamDict, recipe: Any,
+                             infile: 'DrsFitsFile',
+                             allowedfibers: Union[List[str], str, None] = None,
+                             fullpath: bool = False
+                             ) -> Tuple[bool, Union[str, None]]:
         """
-        Checks whether raw "filename" belongs to this DrsFile
+        Checks whether an "infile" (DrsFitsFile) is the same kind as this
+        DrsFitsFile and returns the output filename (based on infile.filename)
 
-        :param params:
-        :param recipe:
-        :param infile:
-        :param allowedfibers:
-        :param fullpath:
+        :param params: ParamDict, the parameter dictionary of constants
+        :param recipe: DrsRecipe, the recipe instance where this function was
+                       called
+        :param infile: DrsFitsFile, the FitsFile instance to check
+        :param allowedfibers: list of strings or string, the fiber or fibers
+                            allowed for the output file created
+        :param fullpath: bool, if True returns the absolute path, else returns
+                         just the filename
 
-        :return:
+        :return: tuple of length 2, 1. whether the infile is valid, 2.
+                 the output path of the infile (if infile is valid else None)
         """
         # set function name
         func_name = display_func(None, 'check_table_filename', __NAME__,
@@ -2158,19 +2248,21 @@ class DrsFitsFile(DrsInputFile):
         else:
             return valid, os.path.basename(outfilename)
 
-    def check_table_keys(self, params, filedict, rkeys=None):
+    def check_table_keys(self, params: ParamDict, filedict: dict,
+                         rkeys: Union[dict, None] = None) -> bool:
         """
         Checks whether a dictionary contains the required key/value pairs
         to belong to this DrsFile
 
-        :param params:
-        :param filedict:
-        :param rkeys:
+        :param params: ParamDict, the parameter dictionary of constants
+        :param filedict: dictionary, the dictionary of key/value pairs to
+                         check against rkeys (or DrsFitsFile.rkeys if unset)
+        :param rkeys: dictionary or None, if set use this as DrsFitsFile.rkeys
 
-        :return:
+        :return: bool, True if dictionary of keys is valid for DrsFitsFile.rkeys
         """
         # set function name
-        _ = display_func(None, 'check_table_keys', __NAME__, 'DrsFitsFile')
+        _ = display_func(None, 'check_table_keys', __NAME__, self.class_name)
         # ------------------------------------------------------------------
         # get required keys
         if rkeys is None:
@@ -2216,108 +2308,14 @@ class DrsFitsFile(DrsInputFile):
                 # Log that key was not found
                 dargs = [key, filedict['OUT'], ', '.join(list(filedict.keys()))]
                 WLOG(params, 'debug', TextEntry('90-008-00002', args=dargs))
-
         # return valid
         return valid
 
     # -------------------------------------------------------------------------
-    # fits file checking (OLD)
-    # -------------------------------------------------------------------------
-    def check_file_header(self, quiet=False, argname=None):
-        """
-        Check file header has all required header keys
-        :param quiet:
-        :param argname: string, the name of the argument we are checking
-                        (for error and debug messages)
-
-        :return:
-        """
-        # set function name
-        func_name = display_func(None, 'check_file_header', __NAME__,
-                                 'DrsFitsFile')
-        # -----------------------------------------------------------------
-        # check file has been read
-        self.read_file()
-        # check recipe has been set
-        self.check_recipe()
-        params = self.recipe.drs_params
-        rkeys = self.required_header_keys
-        # -----------------------------------------------------------------
-        # deal with no argument name
-        if argname is None:
-            argname = TextEntry('40-001-00018')
-        # -----------------------------------------------------------------
-        # Step 1: Check that required keys are in header
-        for drskey in rkeys:
-            # check whether header key is in param dict (i.e. from a
-            #    keywordstore) or whether we have to use the key as is
-            if drskey in params:
-                key = params[drskey][0]
-                source = params.sources[drskey]
-            else:
-                key = drskey
-                source = func_name
-            # deal with empty key
-            if (key is None) or key == '':
-                eargs = [key, drskey, source]
-                WLOG(params, 'error', TextEntry('00-006-00011', args=eargs))
-            # check if key is in header
-            if key not in self.header:
-                eargs = [argname, key]
-                emsg = TextEntry('09-001-00007', args=eargs)
-                return [False, True], None, [emsg, None]
-            else:
-                dargs = [argname, key, os.path.basename(self.filename)]
-                WLOG(params, 'debug', TextEntry('90-001-00010', args=dargs),
-                     wrap=False)
-        # -----------------------------------------------------------------
-        # Step 2: search for correct value for each header key
-        found = True
-
-        # storage
-        errors = dict()
-
-        # loop around required keys
-        for drskey in rkeys:
-            # check whether header key is in param dict (i.e. from a
-            #    keywordstore) or whether we have to use the key as is
-            if drskey in params:
-                key = params[drskey][0]
-            else:
-                key = drskey
-            # get value and required value
-            value = self.header[key].strip()
-            rvalue = rkeys[drskey].strip()
-
-            # write error message
-            # emsg1 = '{0} Header key {1} value is incorrect'
-            # emsg2 = '\tvalue = {2}   required = {3}'
-            # eargs = [argstring, key, value, rvalue, self.filename]
-            # emsgs = [emsg1.format(*eargs), emsg2.format(*eargs)]
-
-            # check if key is valid
-            if rvalue != value:
-                dargs = [argname, key, rvalue]
-                WLOG(params, 'debug', TextEntry('90-001-00011', args=dargs),
-                     wrap=False)
-                found = False
-            else:
-                dargs = [argname, key, rvalue]
-                WLOG(params, 'debug', TextEntry('90-001-00012', args=dargs),
-                     wrap=False)
-            # store info
-            errors[key] = (found, argname, rvalue, value)
-        # return:
-        #       [valid cond1, valid cond2], self, [errors1, errors2]
-        if found:
-            return [True, True], self, [None, errors]
-        else:
-            return [True, False], self, [None, errors]
-
-    # -------------------------------------------------------------------------
     # fits file methods
     # -------------------------------------------------------------------------
-    def read_file(self, ext=None, check=False, params=None, copy=False):
+    def read_file(self, ext: Union[int, None] = None, check: bool = False,
+                  params: Union[ParamDict, None] = None, copy: bool = False):
         """
         Read this fits file data and header
 
@@ -2325,11 +2323,14 @@ class DrsFitsFile(DrsInputFile):
         :param check: bool, if True checks if data is already read and does
                       not read again, to overwrite/re-read set "check" to False
         :param params: Parameter Dict (not used --in overridden definition)
+        :param copy: bool, if True make sure data is copied to HDU (i.e. can
+                     close after even if numpy array is still used) numpy
+                     array is stored in DrsFitsFile.data (slower but safer)
 
         :return None:
         """
         # set function name
-        _ = display_func(None, 'read_file', __NAME__, 'DrsFitsFile')
+        _ = display_func(None, 'read_file', __NAME__, self.class_name)
         # check if we have data set
         if check:
             cond1 = self.data is not None
@@ -2358,13 +2359,16 @@ class DrsFitsFile(DrsInputFile):
                                 gethdr=True, fmt=fmt, ext=ext)
         # deal with copying
         if copy:
-            self.data = np.array(out[0])
+            if self.datatype == 'table':
+                self.data = Table(out[0])
+            else:
+                self.data = np.array(out[0])
         else:
             self.data = out[0]
         self.header = drs_fits.Header.from_fits_header(out[1])
         # update fiber parameter from header
         if self.header is not None:
-            self.fiber = self.get_key('KW_FIBER', dtype=str, required=False)
+            self.fiber = self.get_hkey('KW_FIBER', dtype=str, required=False)
         # set number of data sets to 1
         self.numfiles = 1
         # set the shape
@@ -2373,9 +2377,22 @@ class DrsFitsFile(DrsInputFile):
         elif self.data is not None:
             self.shape = [len(self.data)]
 
-    def read_data(self, ext=0, log=True, copy=False):
+    # TODO: when we change to default ext=1 this needs updating
+    def read_data(self, ext: int = 0, log: bool = True,
+                  copy: bool = False):
+        """
+        Read an image from DrsFitsFile.filename into DrsFitsFile.data
+
+        :param ext: int, the extension to read
+        :param log: bool, if True logs that file was read (via
+                    drs_fits.readfits)
+        :param copy: bool, if True copieds the data before setting it (allows
+                     HDU to be closed when opening many files (slower but
+                     safer)
+        :return: None
+        """
         # set function name
-        _ = display_func(None, 'read_data', __NAME__, 'DrsFitsFile')
+        _ = display_func(None, 'read_data', __NAME__, self.class_name)
         # check that filename is set
         self.check_filename()
         # get params
@@ -2386,13 +2403,33 @@ class DrsFitsFile(DrsInputFile):
         self.numfiles = 1
         # assign to object
         if copy:
-            self.data = np.array(data)
+            if self.datatype == 'table':
+                return Table(self.data)
+            else:
+                return np.array(self.data)
         else:
             self.data = data
+        # set shape
+        if hasattr(self.data, 'shape'):
+            self.shape = self.data.shape
+        else:
+            self.shape = None
 
-    def read_header(self, ext=None, log=True, copy=False):
+    def read_header(self, ext: Union[int, None] = None, log: bool = True,
+                    copy: bool = False):
+        """
+        Read a header from DrsFitsFile.filename into DrsFitsFile.header
+
+        :param ext: int, the extension to read
+        :param log: bool, if True logs that file was read (via
+                    drs_fits.readfits)
+        :param copy: bool, if True copieds the header before setting it (allows
+                     HDU to be closed when opening many files (slower but
+                     safer)
+        :return: None
+        """
         # set function name
-        _ = display_func(None, 'read_header', __NAME__, 'DrsFitsFile')
+        _ = display_func(None, 'read_header', __NAME__, self.class_name)
         # check that filename is set
         self.check_filename()
         # deal with no extension
@@ -2411,43 +2448,136 @@ class DrsFitsFile(DrsInputFile):
             self.header = header
         # update fiber parameter from header
         if self.header is not None:
-            self.fiber = self.get_key('KW_FIBER', dtype=str, required=False)
+            self.fiber = self.get_hkey('KW_FIBER', dtype=str, required=False)
 
-    # TODO: sort out header_only and load_data -- ambiguous
-    def check_read(self, header_only=False, load=False, load_data=True):
+    def check_read(self, header_only: bool = False, data_only: bool = False,
+                   load: bool = True):
+        """
+        Check whether data and header (from a fits file) have been read
+        if load is True and they haven't been read them read them
+
+        data is loaded into DrsFitsFile.data
+        header is loaded into DrsFitsFile.header
+
+        :param header_only: bool, if True only read/check header
+        :param data_only: bool, if True only read/check data
+        :param load: bool, if True load header and / or data
+
+        :return: None
+        """
         # set function name
-        _ = display_func(None, 'check_read', __NAME__, 'DrsFitsFile')
+        _ = display_func(None, 'check_read', __NAME__, self.class_name)
+        # ---------------------------------------------------------------------
+        # deal with header only
+        # ---------------------------------------------------------------------
         # deal with only wanting to check if header is read
         if header_only:
             if self.header is None:
-                if not load_data:
-                    return self.read_header()
                 if load:
-                    return self.read_file()
+                    return self.read_header()
+                # raise exception
                 func = self.__repr__()
                 eargs = [func, func + '.read_file()']
                 self.__error__(TextEntry('00-001-00004', args=eargs))
+                return 0
             else:
                 return 1
-        # check that data/header/comments is not None
-        if self.header is None and not load_data:
-            return self.read_header()
-        if self.data is None:
-            if load:
-                return self.read_file()
-            func = self.__repr__()
-            eargs = [func, func + '.read_file()']
-            self.__error__(TextEntry('00-001-00004', args=eargs))
+        # ---------------------------------------------------------------------
+        # deal with data only
+        # ---------------------------------------------------------------------
+        if data_only:
+            if self.data is None:
+                if load:
+                    return self.read_data()
+                # raise exception
+                func = self.__repr__()
+                eargs = [func, func + '.read_file()']
+                self.__error__(TextEntry('00-001-00004', args=eargs))
+                return 0
+            else:
+                return 1
+        # ---------------------------------------------------------------------
+        # deal with both data and header
+        # ---------------------------------------------------------------------
+        if self.header is None and self.data is None:
+            self.read_file()
+            return 1
+        if self.header is not None:
+            self.read_header()
+            return 1
+        if self.data is not None:
+            self.read_data()
+            return 1
+        # raise exception
+        func = self.__repr__()
+        eargs = [func, func + '.read_file()']
+        self.__error__(TextEntry('00-001-00004', args=eargs))
+        return 0
 
-    def read_multi(self, ext=None, check=True):
+    def get_data(self, copy: bool = False) -> Union[np.ndarray, Table, None]:
+        """
+        return the data array
+
+        :param copy: bool, if True deep copies the data
+        :return: the data (numpy array)
+        """
         # set function name
-        _ = display_func(None, 'read_multi', __NAME__, 'DrsFitsFile')
+        _ = display_func(None, 'get_data', __NAME__, self.class_name)
+        # check data exists
+        if self.data is None:
+            self.check_read(data_only=True)
+        # deal with copying data
+        if copy:
+            if self.datatype == 'table':
+                return Table(self.data)
+            else:
+                return np.array(self.data)
+        else:
+            return self.data
+
+    def get_header(self, copy: bool = False) -> Union[drs_fits.Header, None]:
+        """
+        return the header
+
+        :param copy: bool, if True deep copies the header
+        :return: the header (drs_fits.Header)
+        """
+        # set function name
+        _ = display_func(None, 'get_header', __NAME__, self.class_name)
+        # check header exists
+        if self.header is None:
+            self.check_read(header_only=True)
+        # deal with copying header
+        if copy:
+            return self.header.copy()
+        else:
+            return self.header
+
+    def read_multi(self, ext: Union[int, None] = None,
+                   check: bool = False) -> Union[bool, None]:
+        """
+        Read multiple extensions from a fits file
+        sets the primary ext to DrsFitsFile.data and additional ones to
+        DrsFitsFile.data_array
+        and similarly primary header to DrsFitsFile.header and additional ones
+        to DrsfitsFile.header_array
+
+        :param ext: int or None, the primary extension
+        :param check: if True this is just a check that DrsFitsFile.data and
+                      DrsFitsFile.header exist
+        :return: normally just sets DrsFitsFile attributes, but if check is True
+                 returns bool, True if data/header are set, False otherwise
+        """
+        # set function name
+        _ = display_func(None, 'read_multi', __NAME__, self.class_name)
         # check if we have data set
         if check:
             cond1 = self.data is not None
             cond2 = self.header is not None
             if cond1 and cond2:
                 return True
+            else:
+                return False
         # get params
         params = self.recipe.drs_params
         # check that filename is set
@@ -2464,7 +2594,7 @@ class DrsFitsFile(DrsInputFile):
         self.header = drs_fits.Header.from_fits_header(out[1][0])
         # update fiber parameter from header
         if self.header is not None:
-            self.fiber = self.get_key('KW_FIBER', dtype=str, required=False)
+            self.fiber = self.get_hkey('KW_FIBER', dtype=str, required=False)
 
         self.data_array = out[0]
         # set number of data sets to 1
@@ -2478,22 +2608,42 @@ class DrsFitsFile(DrsInputFile):
             self.shape = self.data.shape
 
     def update_header_with_hdict(self):
+        """
+        Updates header with hdict entries
+        :return:
+        """
+
         # set function name
         _ = display_func(None, 'update_header_with_hdict', __NAME__,
-                         'DrsFitsFile')
+                         self.class_name)
         # deal with unset header
         if self.header is None:
-            if isinstance(self.hdict, drs_fits.fits.Header):
+            if isinstance(self.hdict, drs_fits.Header):
                 self.header = self.hdict.copy()
                 return
             self.header = drs_fits.Header()
         # add keys from hdict
         for key in self.hdict:
-            self.header[key] = (self.hdict[key], self.hdict.comments[key])
+            # deal with COMMENT cards
+            if isinstance(self.hdict[key], HCC):
+                self.header[key] = (self.hdict[key][0],
+                                    self.hdict.comments[key][0])
+            # just set them to  header[key] = (VALUE, COMMENT)
+            else:
+                self.header[key] = (self.hdict[key], self.hdict.comments[key])
 
-    def write_file(self, params=None):
+    def write_file(self, params: ParamDict = None):
+        """
+        Write a single Table/numpy array to disk useing DrsFitsFile.data,
+        DrsFitsfile.header to write to DrsFitsFile.filename
+
+        also used to update output_dictionary for index database
+
+        :param params: ParamDict, parameter dictionary of constants
+        :return: None
+        """
         # set function name
-        func_name = display_func(None, 'write_file', __NAME__, 'DrsFitsFile')
+        func_name = display_func(None, 'write_file', __NAME__, self.class_name)
         # get params
         params = self.recipe.drs_params
         # ---------------------------------------------------------------------
@@ -2508,10 +2658,38 @@ class DrsFitsFile(DrsInputFile):
         # write output dictionary
         self.output_dictionary()
 
-    def write_multi(self, data_list, header_list=None, datatype_list=None,
-                    dtype_list=None):
+    def write_multi(self, data_list: List[Union[Table, np.ndarray]],
+                    header_list: Union[List[drs_fits.Header], None] = None,
+                    datatype_list: Union[List[str], None] = None,
+                    dtype_list: Union[List[Type, None], None] = None):
+        """
+        Write a set of Tables/numpy arrays to disk useing DrsFitsFile.data,
+        DrsFitsfile.header to write to DrsFitsFile.filename
+        also requires a list of addition numpy arrays/Tables (and optionally
+        a list of headers) - must supply data_type list if a mix of numpy
+        array and Tables (defaults to all being numpy arrays --> FitsImage)
+
+        also used to update output_dictionary for index database
+
+        :param data_list: list of numpy arrays or astropy Tables - MUST NOT
+                          INCLUDE first entry (set by DrsFitsFile.data)
+                          if all are numpy arrays do not need to set
+                          datatype_list if mixed or Table then must set
+        :param header_list: optional list of headers (not including primary
+                            this is set by DrsFitsFile.header) if not set
+                            these are the same as DrsFitsFile.header
+        :param datatype_list: list of strings (or unset) these can either be
+                              'image' or 'table' and must be set for each
+                            numpy array / table in the list (must be same length
+                            as data list)
+        :param dtype_list: list of types - if set tries to force each extension
+                           to this data type (only works for numpy arrays)
+                           set individual elements to None if you don't want
+                           to force data type for that entry
+        :return: None
+        """
         # set function name
-        func_name = display_func(None, 'write_multi', __NAME__, 'DrsFitsFile')
+        func_name = display_func(None, 'write_multi', __NAME__, self.class_name)
         # get params
         params = self.recipe.drs_params
         # ---------------------------------------------------------------------
@@ -2552,9 +2730,19 @@ class DrsFitsFile(DrsInputFile):
         # write output dictionary
         self.output_dictionary()
 
-    def get_fiber(self, header=None):
+    def get_fiber(self, header: Union[drs_fits.Header, None] = None
+                  ) -> Union[str, None]:
+        """
+        Get the fiber from the header (if it exists) - if not forcing header
+        header must be loaded before using this
+
+        :param header: None (uses DrsFitsFile.header) or force a different
+                       header
+        :return: str or None - if found in header returns the fiber name else
+                 returns None
+        """
         # set function name
-        _ = display_func(None, 'get_fiber', __NAME__, 'DrsFitsFile')
+        _ = display_func(None, 'get_fiber', __NAME__, self.class_name)
         # get params
         params = self.recipe.drs_params
         # must have fibers defined to be able to get a fiber
@@ -2611,12 +2799,31 @@ class DrsFitsFile(DrsInputFile):
             else:
                 self.output_dict[key] = '--'
 
-    def combine(self, infiles, math='sum', same_type=True, path=None):
+    def combine(self, infiles: List['DrsFitsFile'], math: str = 'sum',
+                same_type: bool = True,
+                path: Union[str, None] = None) -> 'DrsFitsFile':
+        """
+        Combine a set of DrsFitsFiles into a single file using the "math"
+        operation (i.e. sum, mean, median etc)
+
+        :param infiles: a list of DrsFitsFile instances, to be combined
+        :param math: str, the way to mathematically combine files
+                     valid options are: sum, average, mean, median, med,
+                     add, +, subtract, -, divide, /, multiple, times, *
+        :param same_type: bool, if True input DrsFitsFile must be the same
+                          type (DrsFitsFile.name identical) to combine otherwise
+                          exception is raised
+        :param path: None or str, update the path for the output combined
+                     DrsFitsFile (added to new filename)
+
+        :return: a new DrsFitsFile instance of the combined file
+        """
         # set function name
-        func_name = display_func(None, 'combine', __NAME__, 'DrsFitsFile')
+        func_name = display_func(None, 'combine', __NAME__, self.class_name)
         # define usable math
-        available_math = ['sum', 'add', '+', 'average', 'mean', 'subtract',
-                          '-', 'divide', '/', 'multiply', 'times', '*']
+        available_math = ['sum', 'average', 'mean', 'median', 'med',
+                          'add', '+', 'subtract', '-', 'divide', '/',
+                          'multiply', 'times', '*']
         # --------------------------------------------------------------------
         # check that recipe is set
         self.check_recipe()
@@ -2721,18 +2928,10 @@ class DrsFitsFile(DrsInputFile):
     # -------------------------------------------------------------------------
     # fits file header methods
     # -------------------------------------------------------------------------
-    def get_key(self, key, has_default=False, default=None, required=True,
-                dtype: Type = float, listtype=None):
-        # set function name
-        _ = display_func(None, 'get_key', __NAME__, 'DrsFitsFile')
-        # run read_header_key method
-        return self.read_header_key(key, has_default, default, required, dtype,
-                                    listtype=listtype)
-
-    def read_header_key(self, key, has_default=False, default=None,
-                        required=True, dtype: Type = float, listtype=None):
+    def get_hkey(self, key, has_default=False, default=None, required=True,
+                 dtype: Type = float, listtype: Union[Type, None] = None) -> Any:
         """
-        Looks for a key in DrsFile.header, if has_default is
+        Looks for a key in DrsFitsFile.header, if has_default is
         True sets value of key to 'default' if not found else if "required"
         logs an error
 
@@ -2745,16 +2944,17 @@ class DrsFitsFile(DrsInputFile):
         :param required: bool, if True key is required and causes error is
                          missing if False and key not found value is None
         :param dtype: type, the data type for output
+        :param listtype: if type is a list this is the type of the list elements
 
         :return: the value from the header for key
         """
         # set function name
         func_name = display_func(None, 'read_header_key', __NAME__,
-                                 'DrsFitsFile')
+                                 self.class_name)
         # check that recipe is set
         self.check_recipe()
         # check that data is read
-        self.check_read(header_only=True, load=True)
+        self.check_read(header_only=True)
         # check key is valid
         drskey = self._check_key(key)
         # if we have a default key try to get key else use default value
@@ -2797,7 +2997,6 @@ class DrsFitsFile(DrsInputFile):
                 # cast to required list type
                 if listtype is not None and isinstance(listtype, type):
                     value = list(map(lambda x: listtype(x), value))
-
         # try to convert to dtype else just return as string
         try:
             value = dtype(value)
@@ -2805,17 +3004,17 @@ class DrsFitsFile(DrsInputFile):
             value = str(value)
         except TypeError:
             value = str(value)
-
         # return value
         return value
 
-    def read_header_keys(self, keys, has_default=False, defaults=None):
+    def get_hkeys(self, keys: List[str], has_default: bool = False,
+                  defaults: Union[List[Any], None] = None) -> List[Any]:
         """
         Looks for a set of keys in DrsFile.header, if has_default is
         True sets value of key to 'default' if not found else if "required"
         logs an error
 
-        :param keys: string, key in the dictionary to find
+        :param keys: list of string, key in the dictionary to find
         :param has_default: bool, if True uses "default" as the value if key
                             not found
         :param defaults: object, value of the key if not found and
@@ -2826,11 +3025,11 @@ class DrsFitsFile(DrsInputFile):
         """
         # set function name
         func_name = display_func(None, 'read_header_keys', __NAME__,
-                                 'DrsFitsFile')
+                                 self.class_name)
         # check that recipe is set
         self.check_recipe()
         # check that data is read
-        self.check_read(header_only=True, load=True)
+        self.check_read(header_only=True)
         # make sure keys is a list
         try:
             keys = list(keys)
@@ -2851,40 +3050,44 @@ class DrsFitsFile(DrsInputFile):
         values = []
         for k_it, key in enumerate(keys):
             # get the value for key
-            v = self.read_header_key(key, has_default, default=defaults[k_it])
+            v = self.get_hkey(key, has_default, default=defaults[k_it])
             # append value to values list
             values.append(v)
         # return values
         return values
 
-    def read_header_key_1d_list(self, key, dim1=None, dtype=float,
-                                start=0, excludes=None, includes=None,
-                                elogic='AND', ilogic='AND'):
+    def get_hkey_1d(self, key: str, dim1: Union[str, None] = None,
+                    dtype: Type = float, start: int = 0,
+                    excludes: Union[None, List[str], str] = None,
+                    includes: Union[None, List[str], str] = None,
+                    elogic: str = 'AND', ilogic: str = 'AND') -> np.ndarray:
         """
         Read a set of header keys that were created from a 1D list
 
         :param key: string, prefix of HEADER key to construct 1D list from
                      key[row number]
-
         :param dim1: int, the number of elements in dimension 1
                      (number of rows) if unset tries to guess number of rows
-
         :param dtype: type, the type to force the data to be (i.e. float, int)
-
         :param start: int, the start index for the 1d list (normally 0)
-
-        :type key: str
-        :type dim1: Union[int, None]
-        :type dtype: type
-        :type start: int
+        :param excludes: List of strings or string, sub-strings to exclude
+                         from matched header keys - requires using {} in the
+                         key in place of missing text
+        :param includes: List of strings or string, sub-strings to include
+                         from matched header keys - requires using {} in the
+                         key in place of missing text
+        :param elogic: string, either 'AND' or 'OR' for combining multiple
+                       excludes
+        :param ilogic: string, either 'AND' or 'OR' for combining multiple
+                       includes
 
         :return values: numpy array (1D), the values force to type = dtype
         """
         # set function name
-        func_name = display_func(None, 'read_header_key_1d_list', __NAME__,
-                                 'DrsFitsFile')
+        func_name = display_func(None, 'get_hkey_1d', __NAME__,
+                                 self.class_name)
         # check that data is read
-        self.check_read(header_only=True, load=True)
+        self.check_read(header_only=True)
         # check key is valid
         drskey = self._check_key(key)
         # ------------------------------------------------------------------
@@ -2922,30 +3125,28 @@ class DrsFitsFile(DrsInputFile):
         # return values
         return np.array(values)
 
-    def read_header_key_2d_list(self, key, dim1, dim2, dtype=float):
+    def get_hkey_2d(self, key: str, dim1: Union[str, None],
+                    dim2: Union[str, None], dtype: Type = float) -> np.ndarray:
         """
         Read a set of header keys that were created from a 2D list
 
         :param key: string, prefix of HEADER key to construct 2D list from
                      key[number]
-
                where number = (row number * number of columns) + column number
                where column number = dim2 and row number = range(0, dim1)
-
         :param dim1: int, the number of elements in dimension 1
                      (number of rows)
         :param dim2: int, the number of columns in dimension 2
                      (number of columns)
-
         :param dtype: type, the type to force the data to be (i.e. float, int)
 
         :return values: numpy array (2D), the values force to type = dtype
         """
         # set function name
-        func_name = display_func(None, 'read_header_key_2d_list', __NAME__,
-                                 'DrsFitsFile')
+        func_name = display_func(None, 'get_hkey_2d', __NAME__,
+                                 self.class_name)
         # check that data is read
-        self.check_read(header_only=True, load=True)
+        self.check_read(header_only=True)
         # check key is valid
         drskey = self._check_key(key)
         # create 2d list
@@ -2967,9 +3168,19 @@ class DrsFitsFile(DrsInputFile):
         # return values
         return values
 
-    def _check_key(self, key):
+    def _check_key(self, key: str) -> str:
+        """
+        Checks whether a key comes from a keywordstore (stored inside parameter
+        dictionary: DrsFitsFile.recipe.drs_params::ParamDict)
+
+        :param key: str, the key to check - if key is in paramdict then
+                    key = params[key] - if output is a list (keyword store)
+                    we assume key = key[0]
+
+        :return: str, either the key, params[key], key[0], params[key][0]
+        """
         # set function name
-        _ = display_func(None, '_check_key', __NAME__, 'DrsFitsFile')
+        _ = display_func(None, '_check_key', __NAME__, self.class_name)
         # get drs parameters
         drs_params = self.recipe.drs_params
         # need to check drs_params for key (if key is not in header)
@@ -2977,11 +3188,11 @@ class DrsFitsFile(DrsInputFile):
             store = drs_params[key]
             # see if we have key store
             if isinstance(store, list) and len(store) == 3:
-                drskey = store[0]
+                drskey = str(store[0])
                 source = 'store[0]'
             # if we dont assume we have a string
             else:
-                drskey = store
+                drskey = str(store)
                 source = 'store'
         else:
             drskey = str(key)
@@ -2992,8 +3203,12 @@ class DrsFitsFile(DrsInputFile):
         # return drskey
         return drskey
 
-    def copy_original_keys(self, drs_file=None, forbid_keys=True, root=None,
-                           allkeys=False, group=None, exclude_groups=None):
+    def copy_original_keys(self, drs_file: 'DrsFitsFile' = None,
+                           forbid_keys: bool = True,
+                           root: Union[str, None] = None,
+                           allkeys: bool = False,
+                           group: Union[str, None] = None,
+                           exclude_groups: Union[str, List[str], None] = None):
         """
         Copies keys from hdr dictionary to DrsFile.hdict,
         if forbid_keys is True some keys will not be copied
@@ -3025,18 +3240,18 @@ class DrsFitsFile(DrsInputFile):
         :return None:
         """
         # set function name
-        _ = display_func(None, 'copy_original_keys', __NAME__, 'DrsFitsFile')
+        _ = display_func(None, 'copy_original_keys', __NAME__, self.class_name)
         # deal with exclude groups
         if exclude_groups is not None:
             if isinstance(exclude_groups, str):
                 exclude_groups = [exclude_groups]
         # get drs_file header/comments
         if drs_file is None:
-            self.check_read(header_only=True, load=True)
+            self.check_read(header_only=True)
             fileheader = self.header
         else:
             # check that data/header is read
-            drs_file.check_read(header_only=True, load=True)
+            drs_file.check_read(header_only=True)
             fileheader = drs_file.header
         # get cards to copy
         _cards = self.copy_cards(self.recipe.drs_params, fileheader.cards,
@@ -3048,19 +3263,51 @@ class DrsFitsFile(DrsInputFile):
         else:
             for _card in _cards:
                 self.hdict.append(_card)
-        # return True to show completed successfully
-        return True
 
-    def copy_cards(self, params, cards, root=None, exclude_groups=None,
-                   group=None, forbid_keys=True, allkeys=False):
+    def copy_cards(self, params: ParamDict, cards: drs_fits.Header.cards,
+                   root: Union[str, None] = None,
+                   exclude_groups: Union[str, List[str], None] = None,
+                   group: Union[str, None] = None,
+                   forbid_keys: bool = True, allkeys: bool = False
+                   ) -> drs_fits.Header.cards:
+        """
+        Copy header cards in the correct way
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param cards: astropy.io.fits.header.Cards instance
+        :param root: str, if we have "root" then only copy keywords that
+                     start with this string (prefix)
+        :param exclude_groups: string or list or strings, if not None sets the
+                              group or groups not to include in copy
+        :param group: string, if not None sets the group to use (will only
+                      copy this groups header keys)
+        :param forbid_keys: bool, if True uses the forbidden copy keys
+                            (defined in
+                               spirouConfig.Constants.FORBIDDEN_COPY_KEYS()
+                            to remove certain keys from those being copied,
+                            if False copies all keys from input header
+        :param allkeys: bool, if True return all keys from header
+
+        :return: astropy.io.fits.header.Cards instance - updated
+        """
+        # set function name
+        _ = display_func(None, 'copy_cards', __NAME__, self.class_name)
         # generate instances from params
-        Keyword = constants.constant_functions.Keyword
-        keyworddict = params.get_instanceof(Keyword, nameattr='key')
+        keyword_inst = constants.constant_functions.Keyword
+        keyworddict = params.get_instanceof(keyword_inst, nameattr='key')
         # get pconstant
         pconstant = self.recipe.drs_pconstant
 
         # filter function
-        def __keep_card(card):
+        def __keep_card(card: drs_fits.fits.header.Card) -> bool:
+            """
+            Filter function to sort out whether to keep a card returns
+            True if we should keep a card False if we shoudn't
+
+            :param card: a astropy.io.fits.header.Card instance
+
+            :return: True if we should keep a card False if we shoudn't
+            """
             key = card[0]
             if root is not None:
                 if not key.startswith(root):
@@ -3121,41 +3368,45 @@ class DrsFitsFile(DrsInputFile):
         # return cards for copy
         return _copy_cards
 
-    def add_hkey(self, key=None, keyword=None, value=None, comment=None,
-                 fullpath=False, mapf=None):
+    def add_hkey(self, key: Union[str, None] = None,
+                 keyword: Union[list, None] = None, value: Any = None,
+                 comment: Union[str, None] = None,
+                 fullpath: bool = False, mapf: Union[str, None] = None):
         """
         Add a new key to DrsFile.hdict from kwstore. If kwstore is None
         and key and comment are defined these are used instead.
 
             Each keywordstore is in form:
                 [key, value, comment]    where key and comment are strings
-
             DrsFile.hdict is updated with hdict[key] = (value, comment)
 
         :param key: string or None, if kwstore not defined this is the key to
                     set in hdict[key] = (value, comment)
-
-        :param keyword:
-
+        :param keyword: if key not set use the keywordstore
+                        keyword must be in the format:
+                        keyword = [key, value, comment]
         :param value: object or None, if any python object (other than None)
                       will set the value of hdict[key] to (value, comment)
-
         :param comment: string or None, if kwstore not define this is the
                         comment to set in hdict[key] = (value, comment)
-
         :param fullpath: bool, if true header keys retain the full path
                          if False filenames are cut down to just the filename
                          (os.path.basename)
+        :param mapf: string, sets how we interpret "value" - mapf can either be
+                     "list" or "dict", if list then value should be a list of
+                     values, if dict then value should be a dict
 
-        :return:
+        :return: None (but updates DrsFitsFile.hdict)
         """
         # set function name
-        func_name = display_func(None, 'add_hkey', __NAME__, 'DrsFitsFile')
+        func_name = display_func(None, 'add_hkey', __NAME__, self.class_name)
 
         # deal with mapf
         if mapf is not None:
             if mapf == 'list':
                 value = ', '.join(np.array(value).astype(str))
+            elif mapf == 'dict':
+                value = value.__str__()
 
         # check for kwstore in params
         self.check_recipe()
@@ -3190,8 +3441,10 @@ class DrsFitsFile(DrsInputFile):
         # add to the hdict dictionary in form (value, comment)
         self.hdict[okey] = (value, comment)
 
-    def add_hkeys(self, kwstores=None, values=None, keys=None,
-                  comments=None):
+    def add_hkeys(self, keys: Union[List[str], None] = None,
+                  kwstores: Union[List[list], None] = None,
+                  values: Union[List[Any], None] = None,
+                  comments: Union[List[str], None] = None):
         """
         Add a set of new key to DrsFile.hdict from keywordstores. If kwstores
         is None and keys and comments are defined these are used instead.
@@ -3199,6 +3452,9 @@ class DrsFitsFile(DrsInputFile):
         Each kwstores is in form:
                 [key, value, comment]    where key and comment are strings
 
+
+        :param keys: list of strings, if kwstores is None this is the list
+                         of keys (must be same size as "comments")
         :param kwstores: list of lists, list of "keyword list" lists
                               each "keyword list" must be in form:
                               [string, value, string]
@@ -3206,17 +3462,13 @@ class DrsFitsFile(DrsInputFile):
                        (other than None) will replace the values in kwstores
                        (i.e. kwstore[1]) with value[i], if None uses the
                        value = kwstore[1] for each kwstores
-
-        :param keys: list of strings, if kwstores is None this is the list
-                         of keys (must be same size as "comments")
-
         :param comments: list of string, if kwstores is None this is the list
                          of comments (must be same size as "keys")
 
         :return None:
         """
         # set function name
-        func_name = display_func(None, 'add_hkeys', __NAME__, 'DrsFitsFile')
+        func_name = display_func(None, 'add_hkeys', __NAME__, self.class_name)
         # deal with no keywordstore
         if (kwstores is None) and (keys is None or comments is None):
             self.__error__(TextEntry('00-001-00009', args=[func_name]))
@@ -3227,7 +3479,7 @@ class DrsFitsFile(DrsInputFile):
                 self.__error__(TextEntry('00-001-00010', args=[func_name]))
             # loop around entries
             for k_it, kwstore in enumerate(kwstores):
-                self.add_hkey(key=kwstore, value=values[k_it])
+                self.add_hkey(keyword=kwstore, value=values[k_it])
         # else we assume keys and comments
         else:
             if not isinstance(keys, list):
@@ -3241,8 +3493,11 @@ class DrsFitsFile(DrsInputFile):
                 self.add_hkey(key=keys[k_it], value=values[k_it],
                               comment=comments[k_it])
 
-    def add_hkey_1d(self, key=None, values=None, keyword=None,
-                    comment=None, dim1name=None):
+    def add_hkey_1d(self, key: Union[str, None] = None,
+                    values: Union[List[Any], np.ndarray, None] = None,
+                    keyword: Union[List[list], None] = None,
+                    comment: Union[str, None] = None,
+                    dim1name: Union[str, None] = None):
         """
         Add a new 1d list to key using the "kwstore"[0] or "key" as prefix
         in form:
@@ -3267,10 +3522,11 @@ class DrsFitsFile(DrsInputFile):
                              comment = kwstore[2] dim1name={row number}
                              or
                              comment = "comment" dim1name={row number}
-        :return None:
+
+        :return None: updates DrsFitsFile.hdict
         """
         # set function name
-        func_name = display_func(None, 'add_hkey_1d', __NAME__, 'DrsFitsFile')
+        func_name = display_func(None, 'add_hkey_1d', __NAME__, self.class_name)
         # deal with no keywordstore
         if (key is None) and (keyword is None or comment is None):
             self.__error__(TextEntry('00-001-00014', args=[func_name]))
@@ -3320,8 +3576,12 @@ class DrsFitsFile(DrsInputFile):
             # add to header dictionary
             self.hdict[keyname] = (value, comm)
 
-    def add_hkeys_2d(self, key=None, keyword=None, values=None,
-                     comment=None, dim1name=None, dim2name=None):
+    def add_hkey_2d(self, key: Union[str, None] = None,
+                    keyword: Union[List[list], None] = None,
+                    values: Union[np.ndarray, None] = None,
+                    comment: Union[str, None] = None,
+                    dim1name: Union[str, None] = None,
+                    dim2name: Union[str, None] = None):
         """
         Add a new 2d list to key using the "kwstore"[0] or "key" as prefix
         in form:
@@ -3335,8 +3595,8 @@ class DrsFitsFile(DrsInputFile):
 
         :param key: string or None, if kwstore not defined this is the key to
                     set in hdict[key] = (value, comment)
-        :param values: numpy array or 1D list of keys or None
-                       if numpy array or 1D list will create a set of keys
+        :param values: numpy array or None
+                       if numpy array will create a set of keys
                        in form keyword = kwstore + row number
                       where row number is the position in values
                       with value = values[row number][column number]
@@ -3354,10 +3614,11 @@ class DrsFitsFile(DrsInputFile):
                              comment = kwstore[2] dim1name={row number}
                              or
                              comment = "comment" dim1name={row number}
-        :return None:
+
+        :return None: updates DrsFitsFile.hdict
         """
         # set function name
-        func_name = display_func(None, 'add_hkeys_2d', __NAME__, 'DrsFitsFile')
+        func_name = display_func(None, 'add_hkey_2d', __NAME__, self.class_name)
         # deal with no dim names
         if dim1name is None:
             dim1name = 'dim1'
@@ -3407,15 +3668,37 @@ class DrsFitsFile(DrsInputFile):
                 # add to header dictionary
                 self.hdict[keyname] = (value, comm)
 
-    def add_qckeys(self, qcparams):
+    def add_qckeys(self, qcparams: Union[QCParamList, None] = None):
+        """
+        Add the quality control keys to the header, if None passed a single
+        empty qc parameter is added with 'None' for all values
+
+        :param qcparams: List of list containing:
+                            [quality control names,
+                             quality control values,
+                             quality control logic,
+                             quality control pass/fail]
+
+        :return: None, updates DrsFitsFile.hdict
+        """
         # set function name
-        func_name = display_func(None, 'add_qckeys', __NAME__, 'DrsFitsFile')
+        func_name = display_func(None, 'add_qckeys', __NAME__, self.class_name)
         # get parameters
         qc_kws = ['KW_DRS_QC_NAME', 'KW_DRS_QC_VAL', 'KW_DRS_QC_LOGIC',
                   'KW_DRS_QC_PASS']
         # check for kwstore in params
         self.check_recipe()
         params = self.recipe.drs_params
+        # deal with qcparams = None
+        if qcparams is None:
+            qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
+            # add to qc header lists
+            qc_pass.append(1)
+            qc_values.append('None')
+            qc_names.append('None')
+            qc_logic.append('None')
+            # store in qc_params
+            qcparams = [qc_names, qc_values, qc_logic, qc_pass]
         # check lengths are the same
         lengths = []
         for qcparam in qcparams:
@@ -3440,30 +3723,42 @@ class DrsFitsFile(DrsInputFile):
         qc_all = params['KW_DRS_QC'][0]
         self.hdict[qc_all] = np.all(qcparams[3])
 
-    def get_qckeys(self):
+    def get_qckeys(self) -> QCParamList:
+        """
+        Get the quality control header keys from the header
+        Note values will be pushed to strings (and may need to change data
+        type after return)
+
+        :return: List of list containing:
+                            [quality control names,
+                             quality control values,
+                             quality control logic,
+                             quality control pass/fail]
+        """
         # set function name
-        func_name = display_func(None, 'get_qckeys', __NAME__, 'DrsFitsFile')
+        _ = display_func(None, 'get_qckeys', __NAME__, self.class_name)
         # check for kwstore in params
         self.check_recipe()
         params = self.recipe.drs_params
         # get qc all value
         qc_all = params['KW_DRS_QC'][0]
         # get qc_values
-        qc_values = self.read_header_key_1d_list('KW_DRS_QC_VAL', dtype=str,
-                                                 start=1, excludes=qc_all)
-        qc_names = self.read_header_key_1d_list('KW_DRS_QC_NAME', dtype=str,
-                                                start=1, excludes=qc_all)
-        qc_logic = self.read_header_key_1d_list('KW_DRS_QC_LOGIC', dtype=str,
-                                                start=1, excludes=qc_all)
-        qc_pass = self.read_header_key_1d_list('KW_DRS_QC_PASS', dtype=int,
-                                               start=1, excludes=qc_all)
+        qc_values = self.get_hkey_1d('KW_DRS_QC_VAL', dtype=str,
+                                     start=1, excludes=qc_all)
+        qc_names = self.get_hkey_1d('KW_DRS_QC_NAME', dtype=str,
+                                    start=1, excludes=qc_all)
+        qc_logic = self.get_hkey_1d('KW_DRS_QC_LOGIC', dtype=str,
+                                    start=1, excludes=qc_all)
+        qc_pass = self.get_hkey_1d('KW_DRS_QC_PASS', dtype=int,
+                                   start=1, excludes=qc_all)
         # push into qc params
         qc_params = [list(qc_names), list(qc_values), list(qc_logic),
                      list(qc_pass)]
         # return qc params
         return qc_params
 
-    def get_keywordstore(self, kwstore=None, func_name=None):
+    def get_keywordstore(self, kwstore: List[str, Any, str],
+                         func_name=None) -> Tuple[str, Any, str]:
         """
         Deal with extraction of key, value and comment from kwstore
         the kwstore should be a list in the following form:
@@ -3485,7 +3780,7 @@ class DrsFitsFile(DrsInputFile):
         if func_name is None:
             # set function name
             func_name = display_func(None, 'get_keywordstore', __NAME__,
-                                     'DrsFitsFile')
+                                     self.class_name)
         # extract keyword, value and comment and put it into hdict
         # noinspection PyBroadException
         try:
@@ -3497,24 +3792,41 @@ class DrsFitsFile(DrsInputFile):
         # return values
         return key, dvalue, comment
 
-    def copy_hdict(self, drsfile):
+    def copy_hdict(self, drsfile: 'DrsFitsFile'):
+        """
+        Copy a hdict entry from drsfile (a DrsFitsFile instance)
+
+        :param drsfile: DrsFitsFile instance (containing drsfile.hdict)
+        :return: None, updates DrsFitsFile.hdict
+        """
         # set function name
-        _ = display_func(None, 'copy_hdict', __NAME__, 'DrsFitsFile')
+        _ = display_func(None, 'copy_hdict', __NAME__, self.class_name)
         # set this instance to the hdict instance of another drs fits file
         self.hdict = drsfile.hdict.copy()
 
-    def copy_header(self, drsfile):
+    def copy_header(self, drsfile: 'DrsFitsFile'):
+        """
+        Copy a header entry from drsfile (a DrsFitsFile instance)
+        :param drsfile: DrsFitsFile instance (containing drsfile.hdict)
+        :return: None, updates DrsFitsFile.header
+        """
         # set function name
-        _ = display_func(None, 'copy_header', __NAME__, 'DrsFitsFile')
+        _ = display_func(None, 'copy_header', __NAME__, self.class_name)
         # set this instance to the header instance of another drs fits file
         self.header = drsfile.header.copy()
 
     # -------------------------------------------------------------------------
     # database methods
     # -------------------------------------------------------------------------
-    def get_dbkey(self):
+    def get_dbkey(self) -> Union[str, None]:
+        """
+        Returns the database key for DrsFitsFile
+
+        :return: str or None, if set returns the string name for the database
+                 key
+        """
         # set function name
-        _ = display_func(None, 'get_dbkey', __NAME__, 'DrsFitsFile')
+        _ = display_func(None, 'get_dbkey', __NAME__, self.class_name)
         # deal with dbkey not set
         if self.raw_dbkey is None or self.dbkey is None:
             return None
@@ -3528,50 +3840,166 @@ class DrsFitsFile(DrsInputFile):
 
 
 class DrsNpyFile(DrsInputFile):
-    def __init__(self, name, **kwargs):
+    def __init__(self, name, filetype: str = '.npy',
+                 suffix: str = '',
+                 remove_insuffix: bool = False,
+                 prefix: str = '',
+                 fibers: Union[List[str], None] = None,
+                 fiber: Union[str, None] = None,
+                 recipe: Any = None,
+                 filename: Union[str, None] = None,
+                 intype: Any = None,
+                 path: Union[str, None] = None,
+                 basename: Union[str, None] = None,
+                 inputdir: Union[str, None] = None,
+                 directory: Union[str, None] = None,
+                 data: Union[np.ndarray, None] = None,
+                 header: Union[drs_fits.Header, None] = None,
+                 fileset: Union[list, None] = None,
+                 filesetnames: Union[List[str], None] = None,
+                 outfunc: Union[FunctionType, None] = None,
+                 inext: Union[str, None] = '.npy',
+                 dbname: Union[str, None] = None,
+                 dbkey: Union[str, None] = None,
+                 rkeys: Union[dict, None] = None,
+                 numfiles: Union[int, None] = None,
+                 shape: Union[int, None] = None,
+                 hdict: Union[drs_fits.Header, None] = None,
+                 output_dict: Union[OrderedDict, None] = None,
+                 datatype: Union[str, None] = None,
+                 dtype: Union[type, None] = None,
+                 is_combined: Union[bool, None] = None,
+                 combined_list: Union[list, None] = None,
+                 s1d: Union[list, None] = None,
+                 **kwargs):
         """
-        Create a DRS Fits File Input object
+        Create a DRS Npy File Input object
 
         :param name: string, the name of the DRS input file
-
-        :param kwargs: currently allowed kwargs are:
-
-            - ext: string or None, the extension for the DRS input file
-                   (without the '.' i.e. A.txt  ext='txt'). This will be
-                   checked if used in a DrsArgument is not None.
-
-            - fiber: string or None, the fiber of the Fits File.
-
-            - KW_{str}: string, any keywordstore variable name currently
-                        defined in spirouKeywords.py. If used in DrsArgument
-                        the HEADER of this fits file must have the value
-                        of this KW_{str} to be a valid argument.
-
+        :param filetype: string, the file type i.e. ".fits"
+        :param suffix: NOT USED FOR NPY FILE CLASS
+        :param remove_insuffix: NOT USED FOR NPY FILE CLASS
+        :param prefix: NOT USED FOR NPY FILE CLASS
+        :param fibers: list of strings, the possible fibers this file can be
+                       associated with, should be None if it is not associated
+                       with a specific fiber
+        :param fiber: string, the specific fiber that this file is associated
+                      with
+        :param recipe: NOT USED FOR NPY FILE CLASS
+        :param filename: string, the filename to give to this file (may override
+                         other options)
+        :param intype: NOT USED FOR NPY FILE CLASS
+        :param path: NOT USED FOR NPY FILE CLASS
+        :param basename: string, the basename (i.e. filename without path) for
+                         the file
+        :param inputdir: NOT USED FOR NPY FILE CLASS
+        :param directory: NOT USED FOR NPY FILE CLASS
+        :param data: np.array - when loaded the data is stored here
+        :param header: NOT USED FOR NPY FILE CLASS
+        :param fileset: List of DrsFile instances - this file can be used as
+                        a container for a set of DrsFiles
+        :param filesetnames: List of strings, the names of each DrsFile same
+                             as doing list(map(lambda x: x.name, fileset))
+        :param outfunc: Function, the output function to generate the output
+                        name (using in constructing filename)
+        :param inext: str, the input file extension [not used in DrsInputFile]
+        :param dbname: str, the database name this file can go in
+                    (i.e. cailbration or telluric) [not used in DrsInputFile]
+        :param dbkey: str, the database key [not used in DrsInputFile]
+        :param rkeys: NOT USED FOR NPY FILE CLASS
+        :param numfiles: NOT USED FOR NPY FILE CLASS
+        :param shape: NOT USED FOR NPY FILE CLASS
+        :param hdict: NOT USED FOR NPY FILE CLASS
+        :param output_dict: NOT USED FOR NPY FILE CLASS
+        :param datatype: NOT USED FOR NPY FILE CLASS
+        :param dtype: NOT USED FOR NPY FILE CLASS
+        :param is_combined: NOT USED FOR NPY FILE CLASS
+        :param combined_list: NOT USED FOR NPY FILE CLASS
+        :param s1d: NOT USED FOR NPY FILE CLASS
+        :param kwargs: NOT USED FOR NPY FILE CLASS
         """
+        # set class name
+        self.class_name = 'DrsNpyFile'
         # set function name
-        _ = display_func(None, '__init__', __NAME__, 'DrsNpyFile')
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
         # define a name
         self.name = name
         # get super init
-        DrsInputFile.__init__(self, name, **kwargs)
-        # if ext in kwargs then we have a file extension to check
-        self.filetype = kwargs.get('filetype', '.fits')
-        self.inext = kwargs.get('inext', '.fits')
-        # get fiber type (if set)
-        self.fibers = kwargs.get('fibers', None)
-        self.fiber = kwargs.get('fiber', None)
+        DrsInputFile.__init__(self, name, filetype, suffix, remove_insuffix,
+                              prefix, fibers, fiber, recipe, filename, intype,
+                              path, basename, inputdir, directory, data, header,
+                              fileset, filesetnames, outfunc, inext, dbname,
+                              dbkey, rkeys, numfiles, shape, hdict,
+                              output_dict, datatype, dtype, is_combined,
+                              combined_list, s1d, **kwargs)
+        # these keys are not set in DrsInputFile
+        self.inext = inext
         # get tag
-        self.outfunc = kwargs.get('outfunc', None)
-        self.dbname = kwargs.get('dbname', None)
-        self.raw_dbkey = kwargs.get('dbkey', None)
-        self.dbkey = kwargs.get('dbkey', None)
-        # set empty fits file storage
-        self.data = kwargs.get('data', None)
-        self.filename = kwargs.get('filename', None)
+        self.dbname = dbname
+        self.raw_dbkey = dbkey
+        self.dbkey = None
+        if dbkey is not None:
+            self.dbkey = str(dbkey)
 
-    def read_file(self, ext=None, check=False, params=None):
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        Defines the str(DrsFitsFile) return for DrsFitsFile
+        :return str: the string representation of DrsFitsFile
+                     i.e. DrsFitsFile[name] or DrsFitsFile[name_fiber]
+        """
         # set function name
-        func_name = display_func(None, 'read_file', __NAME__, 'DrsNpyFile')
+        _ = display_func(None, '__str__', __NAME__, self.class_name)
+        # return string output
+        return self.string_output()
+
+    def __repr__(self) -> str:
+        """
+        Defines the print(DrsFitsFile) return for DrsFitsFile
+        :return str: the string representation of DrsFitsFile
+                     i.e. DrsFitsFile[name] or DrsFitsFile[name_fiber]
+        """
+        # set function name
+        _ = display_func(None, '__repr__', __NAME__, self.class_name)
+        # return string output
+        return self.string_output()
+
+    def read_file(self, ext: Union[int, None] = None, check: bool = False,
+                  params: Union[ParamDict, None] = None, copy: bool = False):
+        """
+        Read a npy file (using advance np.load via drs_path.numpy_load)
+
+        :param ext: NOT USED FOR NPY FILE CLASS
+        :param check: NOT USED FOR NPY FILE CLASS
+        :param params: Parameter Dict (not used --in overridden definition)
+        :param copy: NOT USED FOR NPY FILE CLASS
+        :return None:
+        """
+        # not used
+        _ = ext
+        _ = check
+        _ = copy
+        # set function name
+        func_name = display_func(None, 'read_file', __NAME__, self.class_name)
         # if filename is set
         if self.filename is not None:
             try:
@@ -3584,9 +4012,18 @@ class DrsNpyFile(DrsInputFile):
         else:
             WLOG(params, 'error', TextEntry('00-008-00013', args=[func_name]))
 
-    def write_file(self, params=None):
+    def write_file(self, params: Union[ParamDict, None] = None):
+        """
+        Write a npy file (using np.save)
+
+        also used to update output_dictionary for index database
+
+        :param params: ParamDict, parameter dictionary of constants
+
+        :return: None
+        """
         # set function name
-        func_name = display_func(None, 'write_file', __NAME__, 'DrsNpyFile')
+        func_name = display_func(None, 'write_file', __NAME__, self.class_name)
         # if filename is not set raise error
         if self.filename is None:
             WLOG(params, 'error', TextEntry('00-008-00013', args=[func_name]))
@@ -3601,7 +4038,7 @@ class DrsNpyFile(DrsInputFile):
             eargs = [self.filename, func_name]
             WLOG(params, 'error', TextEntry('00-008-00014', args=eargs))
 
-    def string_output(self):
+    def string_output(self) -> str:
         """
         String output for DrsFitsFile. If fiber is not None this also
         contains the fiber type
@@ -3610,7 +4047,7 @@ class DrsNpyFile(DrsInputFile):
         :return string: str, the string to print
         """
         # set function name
-        _ = display_func(None, 'string_output', __NAME__, 'DrsNpyFile')
+        _ = display_func(None, 'string_output', __NAME__, self.class_name)
         # if we do not have a fiber print the string representation of drs npy
         if self.fiber is None:
             return 'DrsNpyFile[{0}]'.format(self.name)
@@ -3618,128 +4055,208 @@ class DrsNpyFile(DrsInputFile):
         else:
             return 'DrsNpyFile[{0}_{1}]'.format(self.name, self.fiber)
 
-    def __str__(self):
+    def newcopy(self, name: Union[str, None] = None,
+                filetype: Union[str, None] = None,
+                suffix: Union[str, None] = None,
+                remove_insuffix: bool = False,
+                prefix: Union[str, None] = None,
+                fibers: Union[List[str], None] = None,
+                fiber: Union[str, None] = None,
+                recipe: Any = None,
+                filename: Union[str, None] = None,
+                intype: Any = None,
+                path: Union[str, None] = None,
+                basename: Union[str, None] = None,
+                inputdir: Union[str, None] = None,
+                directory: Union[str, None] = None,
+                data: Union[np.ndarray, None] = None,
+                header: Union[drs_fits.Header, None] = None,
+                fileset: Union[list, None] = None,
+                filesetnames: Union[List[str], None] = None,
+                outfunc: Union[FunctionType, None] = None,
+                inext: Union[str, None] = None,
+                dbname: Union[str, None] = None,
+                dbkey: Union[str, None] = None,
+                rkeys: Union[dict, None] = None,
+                numfiles: Union[int, None] = None,
+                shape: Union[int, None] = None,
+                hdict: Union[drs_fits.Header, None] = None,
+                output_dict: Union[OrderedDict, None] = None,
+                datatype: Union[str, None] = None,
+                dtype: Union[type, None] = None,
+                is_combined: Union[bool, None] = None,
+                combined_list: Union[list, None] = None,
+                s1d: Union[list, None] = None,
+                **kwargs):
         """
-        Defines the str(DrsFitsFile) return for DrsFitsFile
-        :return str: the string representation of DrsFitsFile
-                     i.e. DrsFitsFile[name] or DrsFitsFile[name_fiber]
-        """
-        # set function name
-        _ = display_func(None, '__str__', __NAME__, 'DrsNpyFile')
-        # return string output
-        return self.string_output()
+        Create a new copy of DRS Npy File object - unset parameters come
+        from current instance of Drs Input File
 
-    def __repr__(self):
-        """
-        Defines the print(DrsFitsFile) return for DrsFitsFile
-        :return str: the string representation of DrsFitsFile
-                     i.e. DrsFitsFile[name] or DrsFitsFile[name_fiber]
+        :param name: string, the name of the DRS input file
+        :param filetype: string, the file type i.e. ".fits"
+        :param suffix: NOT USED FOR NPY FILE CLASS
+        :param remove_insuffix: NOT USED FOR NPY FILE CLASS
+        :param prefix: NOT USED FOR NPY FILE CLASS
+        :param fibers: list of strings, the possible fibers this file can be
+                       associated with, should be None if it is not associated
+                       with a specific fiber
+        :param fiber: string, the specific fiber that this file is associated
+                      with
+        :param recipe: NOT USED FOR NPY FILE CLASS
+        :param filename: string, the filename to give to this file (may override
+                         other options)
+        :param intype: NOT USED FOR NPY FILE CLASS
+        :param path: NOT USED FOR NPY FILE CLASS
+        :param basename: string, the basename (i.e. filename without path) for
+                         the file
+        :param inputdir: NOT USED FOR NPY FILE CLASS
+        :param directory: NOT USED FOR NPY FILE CLASS
+        :param data: np.array - when loaded the data is stored here
+        :param header: NOT USED FOR NPY FILE CLASS
+        :param fileset: List of DrsFile instances - this file can be used as
+                        a container for a set of DrsFiles
+        :param filesetnames: List of strings, the names of each DrsFile same
+                             as doing list(map(lambda x: x.name, fileset))
+        :param outfunc: Function, the output function to generate the output
+                        name (using in constructing filename)
+        :param inext: str, the input file extension [not used in DrsInputFile]
+        :param dbname: str, the database name this file can go in
+                    (i.e. cailbration or telluric) [not used in DrsInputFile]
+        :param dbkey: str, the database key [not used in DrsInputFile]
+        :param rkeys: NOT USED FOR NPY FILE CLASS
+        :param numfiles: NOT USED FOR NPY FILE CLASS
+        :param shape: NOT USED FOR NPY FILE CLASS
+        :param hdict: NOT USED FOR NPY FILE CLASS
+        :param output_dict: NOT USED FOR NPY FILE CLASS
+        :param datatype: NOT USED FOR NPY FILE CLASS
+        :param dtype: NOT USED FOR NPY FILE CLASS
+        :param is_combined: NOT USED FOR NPY FILE CLASS
+        :param combined_list: NOT USED FOR NPY FILE CLASS
+        :param s1d: NOT USED FOR NPY FILE CLASS
+        :param kwargs: NOT USED FOR NPY FILE CLASS
         """
         # set function name
-        _ = display_func(None, '__repr__', __NAME__, 'DrsNpyFile')
-        # return string output
-        return self.string_output()
-
-    def newcopy(self, **kwargs):
-        # set function name
-        _ = display_func(None, 'newcopy', __NAME__, 'DrsNpyFile')
+        _ = display_func(None, 'newcopy', __NAME__, self.class_name)
         # copy this instances values (if not overwritten)
-        name = kwargs.get('name', self.name)
-        kwargs['filetype'] = kwargs.get('filetype', self.filetype)
-        kwargs['suffix'] = kwargs.get('suffix', self.suffix)
-        kwargs['remove_insuffix'] = kwargs.get('remove_insuffix',
-                                               self.remove_insuffix)
-        kwargs['prefix'] = kwargs.get('prefix', self.prefix)
-        kwargs['fiber'] = kwargs.get('fiber', self.fiber)
-        kwargs['fibers'] = kwargs.get('fibers', self.fibers)
-        kwargs['recipe'] = kwargs.get('recipe', self.recipe)
-        kwargs['filename'] = kwargs.get('filename', self.filename)
-        kwargs['path'] = kwargs.get('path', self.path)
-        kwargs['basename'] = kwargs.get('basename', self.basename)
-        kwargs['inputdir'] = kwargs.get('inputdir', self.inputdir)
-        kwargs['directory'] = kwargs.get('directory', self.directory)
-        kwargs['data'] = kwargs.get('data', self.data)
-        kwargs['header'] = kwargs.get('header', self.header)
-        kwargs['fileset'] = kwargs.get('fileset', self.fileset)
-        kwargs['filesetnames'] = kwargs.get('filesetnames', self.filesetnames)
-        kwargs['outfunc'] = kwargs.get('outfunc', self.outfunc)
-        kwargs['dbname'] = kwargs.get('dbname', self.dbname)
-        kwargs['dbkey'] = kwargs.get('dbkey', self.dbkey)
-        kwargs['raw_dbkey'] = kwargs.get('raw_dbkey', self.raw_dbkey)
-        # return new instance
-        return DrsNpyFile(name, **kwargs)
+        return _copydrsfile(DrsNpyFile, self, None, name, filetype, suffix,
+                            remove_insuffix, prefix, fibers, fiber, recipe,
+                            filename, intype, path, basename, inputdir,
+                            directory, data, header, fileset, filesetnames,
+                            outfunc, inext, dbname, dbkey, rkeys, numfiles,
+                            shape, hdict, output_dict, datatype, dtype,
+                            is_combined, combined_list, s1d, **kwargs)
 
-    def completecopy(self, drsfile):
+    def completecopy(self, drsfile: 'DrsNpyFile',
+                     name: Union[str, None] = None,
+                     filetype: Union[str, None] = None,
+                     suffix: Union[str, None] = None,
+                     remove_insuffix: bool = False,
+                     prefix: Union[str, None] = None,
+                     fibers: Union[List[str], None] = None,
+                     fiber: Union[str, None] = None,
+                     recipe: Any = None,
+                     filename: Union[str, None] = None,
+                     intype: Any = None,
+                     path: Union[str, None] = None,
+                     basename: Union[str, None] = None,
+                     inputdir: Union[str, None] = None,
+                     directory: Union[str, None] = None,
+                     data: Union[np.ndarray, None] = None,
+                     header: Union[drs_fits.Header, None] = None,
+                     fileset: Union[list, None] = None,
+                     filesetnames: Union[List[str], None] = None,
+                     outfunc: Union[FunctionType, None] = None,
+                     inext: Union[str, None] = None,
+                     dbname: Union[str, None] = None,
+                     dbkey: Union[str, None] = None,
+                     rkeys: Union[dict, None] = None,
+                     numfiles: Union[int, None] = None,
+                     shape: Union[int, None] = None,
+                     hdict: Union[drs_fits.Header, None] = None,
+                     output_dict: Union[OrderedDict, None] = None,
+                     datatype: Union[str, None] = None,
+                     dtype: Union[type, None] = None,
+                     is_combined: Union[bool, None] = None,
+                     combined_list: Union[list, None] = None,
+                     s1d: Union[list, None] = None,
+                     **kwargs):
+        """
+        Copy all keys from drsfile (unless other arguments set - these override
+        copy from drsfile)
+
+        :param drsfile: DrsNpyFile instance, the instance to copy parameters
+                        from
+        :param name: string, the name of the DRS input file
+        :param filetype: string, the file type i.e. ".fits"
+        :param suffix: NOT USED FOR NPY FILE CLASS
+        :param remove_insuffix: NOT USED FOR NPY FILE CLASS
+        :param prefix: NOT USED FOR NPY FILE CLASS
+        :param fibers: list of strings, the possible fibers this file can be
+                       associated with, should be None if it is not associated
+                       with a specific fiber
+        :param fiber: string, the specific fiber that this file is associated
+                      with
+        :param recipe: NOT USED FOR NPY FILE CLASS
+        :param filename: string, the filename to give to this file (may override
+                         other options)
+        :param intype: NOT USED FOR NPY FILE CLASS
+        :param path: NOT USED FOR NPY FILE CLASS
+        :param basename: string, the basename (i.e. filename without path) for
+                         the file
+        :param inputdir: NOT USED FOR NPY FILE CLASS
+        :param directory: NOT USED FOR NPY FILE CLASS
+        :param data: np.array - when loaded the data is stored here
+        :param header: NOT USED FOR NPY FILE CLASS
+        :param fileset: List of DrsFile instances - this file can be used as
+                        a container for a set of DrsFiles
+        :param filesetnames: List of strings, the names of each DrsFile same
+                             as doing list(map(lambda x: x.name, fileset))
+        :param outfunc: Function, the output function to generate the output
+                        name (using in constructing filename)
+        :param inext: str, the input file extension [not used in DrsInputFile]
+        :param dbname: str, the database name this file can go in
+                    (i.e. cailbration or telluric) [not used in DrsInputFile]
+        :param dbkey: str, the database key [not used in DrsInputFile]
+        :param rkeys: NOT USED FOR NPY FILE CLASS
+        :param numfiles: NOT USED FOR NPY FILE CLASS
+        :param shape: NOT USED FOR NPY FILE CLASS
+        :param hdict: NOT USED FOR NPY FILE CLASS
+        :param output_dict: NOT USED FOR NPY FILE CLASS
+        :param datatype: NOT USED FOR NPY FILE CLASS
+        :param dtype: NOT USED FOR NPY FILE CLASS
+        :param is_combined: NOT USED FOR NPY FILE CLASS
+        :param combined_list: NOT USED FOR NPY FILE CLASS
+        :param s1d: NOT USED FOR NPY FILE CLASS
+        :param kwargs: NOT USED FOR NPY FILE CLASS
+        """
         # set function name
-        _ = display_func(None, 'completecopy', __NAME__, 'DrsNpyFile')
-        # set empty file attributes
-        nkwargs = dict()
-        nkwargs['name'] = copy.deepcopy(drsfile.name)
-        nkwargs['filetype'] = copy.deepcopy(drsfile.filetype)
-        nkwargs['suffix'] = copy.deepcopy(drsfile.suffix)
-        nkwargs['remove_insuffix'] = bool(drsfile.remove_insuffix)
-        nkwargs['prefix'] = copy.deepcopy(drsfile.prefix)
-        nkwargs['recipe'] = drsfile.recipe
-        nkwargs['fiber'] = copy.deepcopy(drsfile.fiber)
-        nkwargs['fibers'] = copy.deepcopy(drsfile.fibers)
-        nkwargs['filename'] = copy.deepcopy(drsfile.filename)
-        nkwargs['path'] = copy.deepcopy(drsfile.path)
-        nkwargs['basename'] = copy.deepcopy(drsfile.basename)
-        nkwargs['inputdir'] = copy.deepcopy(drsfile.inputdir)
-        nkwargs['directory'] = copy.deepcopy(drsfile.directory)
-        nkwargs['data'] = copy.deepcopy(drsfile.data)
-        nkwargs['header'] = copy.deepcopy(drsfile.header)
-        # ------------------------------------------------------------------
-        if drsfile.fileset is None:
-            nkwargs['fileset'] = None
-        elif isinstance(drsfile.fileset, list):
-            # set up new file set storage
-            newfileset = []
-            # loop around file sets
-            for fileseti in drsfile.fileset:
-                newfileset.append(fileseti.completecopy(fileseti))
-            # append to nkwargs
-            nkwargs['fileset'] = newfileset
-
-        else:
-            nkwargs['fileset'] = drsfile.fileset
-        nkwargs['filesetnames'] = list(drsfile.filesetnames)
-        # ------------------------------------------------------------------
-        nkwargs['outfunc'] = drsfile.outfunc
-        nkwargs['dbname'] = copy.deepcopy(drsfile.dbname)
-        nkwargs['dbkey'] = copy.deepcopy(drsfile.dbkey)
-        nkwargs['raw_dbkey'] = copy.deepcopy(drsfile.raw_dbkey)
-        # return new instance of DrsFitsFile
-        return DrsNpyFile(**nkwargs)
+        _ = display_func(None, 'completecopy', __NAME__, self.class_name)
+        # copy this instances values (if not overwritten)
+        return _copydrsfile(DrsNpyFile, drsfile, None, name, filetype, suffix,
+                            remove_insuffix, prefix, fibers, fiber, recipe,
+                            filename, intype, path, basename, inputdir,
+                            directory, data, header, fileset, filesetnames,
+                            outfunc, inext, dbname, dbkey, rkeys, numfiles,
+                            shape, hdict, output_dict, datatype, dtype,
+                            is_combined, combined_list, s1d, **kwargs)
 
     # -------------------------------------------------------------------------
     # database methods
     # -------------------------------------------------------------------------
-    def get_dbkey(self, **kwargs):
+    def get_dbkey(self) -> Union[str, None]:
+        """
+        Returns the database key for DrsFitsFile
+
+        :return: str or None, if set returns the string name for the database
+                 key
+        """
         # set function name
-        func_name = display_func(None, 'get_dbkey', __NAME__, 'DrsNpyFile')
-        # if we have function name
-        func_name = kwargs.get('func', func_name)
+        _ = display_func(None, 'get_dbkey', __NAME__, self.class_name)
         # deal with dbkey not set
         if self.raw_dbkey is None or self.dbkey is None:
             return None
-        # update fiber if needed
-        self.fiber = kwargs.get('fiber', self.fiber)
-        # get parameters for error message
-        if self.recipe is not None:
-            params = self.recipe.drs_params
-        else:
-            params = None
-        # deal with fiber being required but still unset
-        if self.fibers is not None and self.fiber is None:
-            eargs = [self, func_name]
-            WLOG(params, 'error', TextEntry('00-001-00032', args=eargs))
-        # add fiber name to dbkey
-        if self.fibers is not None:
-            if not self.raw_dbkey.endswith('_' + self.fiber):
-                self.dbkey = '{0}_{1}'.format(self.raw_dbkey, self.fiber)
-        else:
-            self.dbkey = str(self.raw_dbkey)
+        # set db key from raw dbkey
+        self.dbkey = str(self.raw_dbkey)
         # make dbkey uppdercase
         if self.dbkey is not None:
             self.dbkey = self.dbkey.upper()
@@ -3748,148 +4265,23 @@ class DrsNpyFile(DrsInputFile):
 
 
 # =============================================================================
-# User functions
-# =============================================================================
-def add_required_keywords(drs_filelist, keys):
-    # set function name
-    _ = display_func(None, 'add_required_keywords', __NAME__)
-    # setup new list
-    drs_filelist1 = []
-    # loop around the DrsFitsFiles in "drs_filelist"
-    for drs_file in drs_filelist:
-        # create a copy of the DrsFitsfile
-        drs_file1 = drs_file.newcopy()
-        # storage for addition to drs_file1 name
-        nameadd = []
-        # loop around the key, value pairs
-        for key in keys:
-            if 'KW_' in key:
-                drs_file1.set_required_key(key, keys[key])
-                nameadd.append(keys[key])
-        # add to name
-        if len(nameadd) > 0:
-            drs_file1.name += '({0})'.format(','.join(nameadd))
-        # append to new list
-        drs_filelist1.append(drs_file1)
-    # return new file list
-    return drs_filelist1
-
-
-# =============================================================================
 # Worker functions
 # =============================================================================
-def deal_with_bad_header(p, hdu, filename):
+def test_for_formatting(key: str, number: Union[int, float]) -> str:
     """
-    Deal with bad headers by iterating through good hdu's until we hit a
-    problem
+    Specific test of a string that may either be:
 
-    :param p: ParamDict, the constants file
-    :param hdu: astropy.io.fits HDU
-    :param filename: string - the filename for logging
+    key   or {key}{number}
 
-    :return data:
-    :return header:
+    e.g. if key = XXX{0}  --> XXX{number}
+    e.g. if key = XXX --> XXX
+
+    Note if XXX{0:.3f} number must be a float
+
+    :param key: str, the key to test (and return if no formatting present)
+    :param number: int or float, depending on format of key (and key present)
+    :return: str, the ouput either modified (if with formatting) or "key"
     """
-    # set function name
-    _ = display_func(None, 'deal_with_bad_header', __NAME__)
-    # define condition to pass
-    cond = True
-    # define iterator
-    it = 0
-    # define storage
-    datastore = []
-    headerstore = []
-    # loop through HDU's until we cannot open them
-    while cond:
-        # noinspection PyBroadException,PyPep8
-        try:
-            datastore.append(hdu[it].data)
-            headerstore.append(hdu[it].header)
-        except:
-            cond = False
-        # iterate
-        it += 1
-    # print message
-    if len(datastore) > 0:
-        dargs = [it - 1, filename]
-        WLOG(p, 'warning', TextEntry('10-001-00001', args=dargs))
-    # find the first one that contains equal shaped array
-    valid = []
-    for d_it in range(len(datastore)):
-        if hasattr(datastore[d_it], 'shape'):
-            valid.append(d_it)
-    # if valid is empty we have a problem
-    if len(valid) == 0:
-        WLOG(p, 'error', TextEntry('01-001-00001', args=[filename]))
-        data, header = None, None
-    else:
-        data = datastore[valid[0]]
-        header = hdu[0].header
-    # return data and header
-    return data, header
-
-
-def construct_header_error(herrors, params, drs_files, logic):
-    # set function name
-    _ = display_func(None, 'construct_header_error', __NAME__)
-    # get error storage
-    keys, rvalues, values = herrors
-    # get text for this language/instrument
-    text = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
-    # if we have no keys return None
-    if len(keys) == 0:
-        return None
-    # set up a message for the error messages
-    emsgs = [text['09-001-00009']]
-    used = []
-    # loop around the current values
-    for it, key in enumerate(keys):
-        emsg = '\t{0} = {1}'.format(key, values[it])
-        if (key, values[it]) not in used:
-            emsgs.append(emsg)
-            used.append((key, values[it]))
-
-    # print the required values
-    emsgs.append(text['09-001-00010'])
-    used, used_it = [], []
-    # log around the required values
-    for it, drs_file in enumerate(drs_files):
-        # do not list files we have already checked
-        if drs_file in used:
-            continue
-        # add to used list
-        used.append(drs_file)
-        used_it.append(str(it + 1))
-        # get emsg
-        emsg = '\t{0}. '.format(it + 1)
-        # get rkeys
-        rkeys = drs_file.required_header_keys
-        # loop around keys in drs_file
-        keys = []
-        for drskey in rkeys:
-            # get key from drs_params
-            if drskey in params:
-                key = params[drskey][0]
-            else:
-                key = drskey
-            # append key to file
-            keys.append('{0}={1}'.format(key, rkeys[drskey]))
-        emsg += ' and '.join(keys)
-        # append to emsgs
-        emsgs.append(emsg)
-    # deal with exclusivity message
-    emsg = ' or '.join(used_it)
-    if logic == 'exclusive':
-        emsgs.append(emsg + ' ' + text['09-001-00011'])
-    elif logic == 'inclusive':
-        emsgs.append(emsg + ' ' + text['09-001-00012'])
-    else:
-        emsgs.append(emsg)
-    # return error strings
-    return emsgs
-
-
-def test_for_formatting(key, number):
     # set function name
     _ = display_func(None, 'test_for_formatting', __NAME__)
     # test the formatting by entering a number as format
@@ -3902,7 +4294,18 @@ def test_for_formatting(key, number):
         return test_str
 
 
-def is_forbidden_prefix(pconstant, key):
+def is_forbidden_prefix(pconstant: PseudoConstants, key: str) -> bool:
+    """
+    Boolean check of the Pseudo Constants class for FORBIDDEN_HEADER_PREFIXES
+    if key starts with forbidden header prefixes False is returned, otherwise
+    True is return
+
+    :param pconstant: PseudoConstants class instance
+    :param key: str, the key to check
+
+    :return: bool, True if key does not start with any forbidden header prefix,
+             False if it does
+    """
     # set function name
     _ = display_func(None, 'is_forbidden_prefix', __NAME__)
     # assume key is not forbidden
@@ -3916,7 +4319,8 @@ def is_forbidden_prefix(pconstant, key):
     return cond
 
 
-def _check_keyworddict(key, keyworddict):
+def _check_keyworddict(key: str,
+                       keyworddict: dict) -> Tuple[bool, Union[str, None]]:
     """
     Some keys have formatting i.e. LOCE{0:04d} and thus for these we need to
     check their prefix matches the key (else we just check whole key)
@@ -3966,7 +4370,8 @@ def _check_keyworddict(key, keyworddict):
     return False, None
 
 
-def _copydrsfile(DrsFile, instance1, instance2,
+def _copydrsfile(drsfileclass, instance1: DrsInputFile,
+                 instance2: Union[DrsInputFile, None],
                  name: Union[str, None] = None,
                  filetype: Union[str, None] = None,
                  suffix: Union[str, None] = None,
@@ -4005,7 +4410,7 @@ def _copydrsfile(DrsFile, instance1, instance2,
     instance1 = self normally
     instance2 = another file instance (if required)
 
-    :param DrsFile: the class to use to create new instance
+    :param drsfileclass: the class to use to create new instance
     :param instance1: the class we are copying basic details from
     :param instance2: None or the class we are copying fits file data from
                       (including filename etc)
@@ -4088,49 +4493,49 @@ def _copydrsfile(DrsFile, instance1, instance2,
     # copy this instances values (if not overwritten)
     # set name if not set
     if name is None:
-        name = copy.deepcopy(instance1.name)
+        name = deepcopy(instance1.name)
     # set filetype
     if filetype is None:
-        filetype = copy.deepcopy(instance1.filetype)
+        filetype = deepcopy(instance1.filetype)
     # set suffix
     if suffix is None:
-        suffix = copy.deepcopy(instance1.suffix)
+        suffix = deepcopy(instance1.suffix)
     # set remove insuffix
     if remove_insuffix is None:
-        remove_insuffix = copy.deepcopy(instance1.remove_insuffix)
+        remove_insuffix = deepcopy(instance1.remove_insuffix)
     # set prefix
     if prefix is None:
-        prefix = copy.deepcopy(instance1.prefix)
+        prefix = deepcopy(instance1.prefix)
     # set filename
     if filename is None:
-        filename = copy.deepcopy(instance2.filename)
+        filename = deepcopy(instance2.filename)
     # set intype
     if intype is None:
         intype = instance2.intype
     # set fiber
     if fiber is None:
-        fiber = copy.deepcopy(instance1.fiber)
+        fiber = deepcopy(instance1.fiber)
     # set fibers
     if fibers is None:
-        fibers = copy.deepcopy(instance1.fibers)
+        fibers = deepcopy(instance1.fibers)
     # set recipe
     if recipe is None:
         recipe = instance1.recipe
     # set path
     if path is None:
-        path = copy.deepcopy(instance2.path)
+        path = deepcopy(instance2.path)
     # set basename
     if basename is None:
-        basename = copy.deepcopy(instance2.basename)
+        basename = deepcopy(instance2.basename)
     # set inputdir
     if inputdir is None:
-        inputdir = copy.deepcopy(instance2.basename)
+        inputdir = deepcopy(instance2.basename)
     # set directory
     if directory is None:
-        directory = copy.deepcopy(instance2.directory)
+        directory = deepcopy(instance2.directory)
     # set data
     if data is None:
-        data = copy.deepcopy(instance2.data)
+        data = deepcopy(instance2.data)
     # set header
     if header is None:
         header = instance2.header
@@ -4148,43 +4553,43 @@ def _copydrsfile(DrsFile, instance1, instance2,
             fileset = instance1.fileset
     # set filesetnames
     if filesetnames is None:
-        filesetnames = copy.deepcopy(instance1.filesetnames)
+        filesetnames = deepcopy(instance1.filesetnames)
     # set outfunc
     if outfunc is None:
         outfunc = instance1.outfunc
     # set inext
     if inext is None:
-        inext = copy.deepcopy(instance2.inext)
+        inext = deepcopy(instance2.inext)
     # set dbname
     if dbname is None:
-        dbname = copy.deepcopy(instance1.dbname)
+        dbname = deepcopy(instance1.dbname)
     # set dbkey
     if dbkey is None:
-        dbkey = copy.deepcopy(instance1.dbkey)
+        dbkey = deepcopy(instance1.dbkey)
     # set rkeys
     if rkeys is None:
-        rkeys = copy.deepcopy(instance1.required_header_keys)
+        rkeys = deepcopy(instance1.required_header_keys)
     # set numfiles
     if numfiles is None:
-        numfiles = copy.deepcopy(instance2.numfiles)
+        numfiles = deepcopy(instance2.numfiles)
     # set shape
     if shape is None:
-        shape = copy.deepcopy(instance2.shape)
+        shape = deepcopy(instance2.shape)
     # set hdict
     if hdict is None:
         hdict = instance2.hdict
     # set output dict
     if output_dict is None:
-        output_dict = copy.deepcopy(output_dict)
+        output_dict = deepcopy(output_dict)
     # set data type
     if datatype is None:
-        datatype = copy.deepcopy(datatype)
+        datatype = deepcopy(datatype)
     # set dtype
     if dtype is None:
-        dtype = copy.deepcopy(dtype)
+        dtype = deepcopy(dtype)
     # set is_combined
     if is_combined is None:
-        is_combined = copy.deepcopy(instance2.is_combined)
+        is_combined = deepcopy(instance2.is_combined)
     # set combined_list
     if combined_list is None:
         combined_list = instance2.combined_list
@@ -4196,14 +4601,13 @@ def _copydrsfile(DrsFile, instance1, instance2,
         if key not in kwargs:
             kwargs[key] = instance1.required_header_keys[key]
     # return new instance
-    return DrsFile(name, filetype, suffix, remove_insuffix, prefix,
-                   fibers, fiber, recipe, filename, intype, path,
-                   basename, inputdir, directory, data, header,
-                   fileset, filesetnames, outfunc, inext, dbname,
-                   dbkey, rkeys, numfiles, shape, hdict,
-                   output_dict, datatype, dtype, is_combined,
-                   combined_list, s1d, **kwargs)
-
+    return drsfileclass(name, filetype, suffix, remove_insuffix, prefix,
+                        fibers, fiber, recipe, filename, intype, path,
+                        basename, inputdir, directory, data, header,
+                        fileset, filesetnames, outfunc, inext, dbname,
+                        dbkey, rkeys, numfiles, shape, hdict,
+                        output_dict, datatype, dtype, is_combined,
+                        combined_list, s1d, **kwargs)
 
 # =============================================================================
 # End of code
