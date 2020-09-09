@@ -414,7 +414,7 @@ class ImportModule:
         self.path = path
         # ---------------------------------------------------------------------
         # deal with mod
-        if self.mod is not None:
+        if mod is not None:
             # set whether module has be imported
             self.modset = True
             # set storage for the module
@@ -494,8 +494,14 @@ class ImportModule:
             except Exception as e:
                 # forget if we have ever imported the module
                 self.modset = False
+                try:
+                    import traceback
+                    string_traceback = traceback.format_exc()
+                except Exception as _:
+                    string_traceback = ''
                 # set exception arguments
-                eargs = [self.name, self.path, func_name, type(e), str(e), '']
+                eargs = [self.name, self.path, func_name, type(e), str(e),
+                         string_traceback]
                 # raise an exception
                 raise DrsCodedException('00-000-00003', level='error',
                                         targs=eargs, func_name=func_name)

@@ -91,7 +91,7 @@ class Logger:
         else:
             self.pin = constants.load()
             self.language = 'ENG'
-            self.instrument = None
+            self.instrument = 'None'
         # load additional resources based on instrument/language
         self.pconstant = constants.pload(self.instrument)
         self.textdict = TextDict(self.instrument, self.language)

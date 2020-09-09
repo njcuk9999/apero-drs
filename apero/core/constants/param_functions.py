@@ -1229,7 +1229,7 @@ def update_paramdicts(*args: List[ParamDict], key: str,
             arg.set(key, value=value, source=source, instance=instance)
 
 
-def load_config(instrument: Union[None, str] = None,
+def load_config(instrument: str = 'None',
                 from_file: bool = True,
                 cache: bool = True) -> ParamDict:
     """
@@ -1248,10 +1248,6 @@ def load_config(instrument: Union[None, str] = None,
     # check config cache
     if instrument in CONFIG_CACHE and cache:
         return CONFIG_CACHE[instrument].copy()
-    # deal with instrument set to 'None'
-    if isinstance(instrument, str):
-        if instrument.upper() == 'NONE':
-            instrument = None
     # get instrument sub-package constants files
     modules = get_module_names(instrument)
     # get constants from modules
@@ -1291,8 +1287,7 @@ def load_config(instrument: Union[None, str] = None,
     return params
 
 
-def load_pconfig(instrument: Union[str, None] = None
-                 ) -> pseudo_const.PseudoConstants:
+def load_pconfig(instrument: str = 'None') -> pseudo_const.PseudoConstants:
     """
     Load an instrument pseudo constants
 
@@ -1306,10 +1301,6 @@ def load_pconfig(instrument: Union[str, None] = None
     # check cache
     if instrument in PCONFIG_CACHE:
         return PCONFIG_CACHE[instrument]
-    # deal with instrument set to 'None'
-    if isinstance(instrument, str):
-        if instrument.upper() == 'NONE':
-            instrument = None
     # get instrument sub-package constants files
     modules = get_module_names(instrument, mod_list=[PSEUDO_CONST_FILE])
     # import module
@@ -1339,7 +1330,7 @@ def get_config_all():
     # set function name
     _ = display_func(None, 'get_config_all', __NAME__)
     # get module names
-    modules = get_module_names(None)
+    modules = get_module_names('None')
     # loop around modules and print our __all__ statement
     for module in modules:
         # generate a list of all functions in a module
@@ -1353,7 +1344,7 @@ def get_config_all():
         print('')
 
 
-def get_module_names(instrument: str = None,
+def get_module_names(instrument: str = 'None',
                      mod_list: Union[None, List[str]] = None,
                      instrument_path: Union[str, Path, None] = None,
                      default_path: Union[str, Path, None] = None,
@@ -1380,7 +1371,7 @@ def get_module_names(instrument: str = None,
     if mod_list is None:
         mod_list = SCRIPTS
     # deal with no path
-    if instrument_path is None:
+    if instrument_path == None:
         instrument_path = CONST_PATH
     if default_path is None:
         default_path = CORE_PATH
@@ -1400,7 +1391,7 @@ def get_module_names(instrument: str = None,
     corepath = corepath.replace(os.sep, '.').strip('.')
 
     # construct module import name
-    if instrument is None:
+    if instrument == 'None':
         modpath = '{0}.{1}'.format(__PACKAGE__, corepath)
         filepath = os.path.join(core_path, '')
     else:

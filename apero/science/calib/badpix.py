@@ -17,10 +17,9 @@ from apero.base import base
 from apero.core import constants
 from apero import lang
 from apero.core import math as mp
-from apero.core.core import drs_log
+from apero.core.core import drs_log, drs_file
 from apero.io import drs_fits
-from apero.core.utils import drs_data, drs_file
-
+from apero.core.utils import drs_data
 
 # =============================================================================
 # Define variables

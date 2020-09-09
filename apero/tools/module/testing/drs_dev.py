@@ -15,10 +15,8 @@ from apero.base import base
 from apero.base import drs_break
 from apero.core import constants
 from apero import lang
-from apero.core.core import drs_log
+from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_recipe
-from apero.core.utils import drs_file
-
 
 # =============================================================================
 # Define variables

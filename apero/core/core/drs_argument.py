@@ -12,19 +12,21 @@ Created on 2019-02-04 at 16:40
 import argparse
 from collections import OrderedDict
 import copy
+import glob
 import numpy as np
 import os
 import sys
-from typing import Any, IO, List, Tuple, Type, Union
+from typing import Any, IO, Dict, List, Tuple, Type, Union
 
 from apero.base import base
+from apero.base import drs_break
 from apero.base import drs_exceptions
 from apero.base import drs_misc
 from apero.base import drs_text
 from apero.core import constants
 from apero import lang
 from apero.core.core import drs_log
-
+from apero.core.core import drs_file
 
 # =============================================================================
 # Define variables
@@ -44,9 +46,12 @@ display_func = drs_log.display_func
 COLOR = drs_misc.Colors()
 # get param dict
 ParamDict = constants.ParamDict
+# get DrsInputFile (for typing)
+DrsInputFile = drs_file.DrsInputFile
 # get the config error
 ConfigError = drs_exceptions.ConfigError
 ArgumentError = drs_exceptions.ArgumentError
+DrsCodedException = drs_exceptions.DrsCodedException
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict
@@ -310,8 +315,10 @@ class DrsAction(argparse.Action):
         :param args: arguments passed to argparse.Action.__init__
         :param kwargs: keyword arguments passed to argparse.Action.__init__
         """
+        # set class name
+        self.class_name = 'DrsAction'
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(None, '__init__', __NAME__, 'DrsAction')
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
         # run the argument parser (super)
         argparse.Action.__init__(self, *args, **kwargs)
 
@@ -332,9 +339,9 @@ class DrsAction(argparse.Action):
         :return: None
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(None, '__call__', __NAME__, 'DrsAction')
+        func_name = display_func(None, '__call__', __NAME__, self.class_name)
         # raise not implemented error
-        raise NotImplementedError(_('.__call__() not defined'))
+        raise NotImplementedError('{0} not defined'.format(func_name))
 
 
 class _CheckDirectory(DrsAction):
@@ -409,8 +416,10 @@ class _CheckDirectory(DrsAction):
         if params['DRS_DEBUG'] > 0:
             print('')
         WLOG(params, 'debug', TextEntry('90-001-00018', args=[argname]))
-        # noinspection PyProtectedMember
-        out = self.recipe.valid_directory(argname, value, return_error=True)
+        # find out whether to force input directory
+        force = self.recipe.force_dirs[0]
+        # check whether we have a valid directory
+        out = valid_directory(params, argname, value, force=force)
         cond, directory, emsgs = out
         # if we have found directory return directory
         if cond:
@@ -557,12 +566,17 @@ class _CheckFiles(DrsAction):
         params = self.recipe.drs_params
         # debug checking output
         WLOG(params, 'debug', TextEntry('90-001-00019', args=[argname]))
+        # get recipe args and kwargs
+        rargs = self.recipe.args
+        rkwargs = self.recipe.kwargs
+        force_input_dir = self.recipe.force_dirs[0]
+        input_dir = self.recipe.inputdir
         # check if files are valid
-        # noinspection PyProtectedMember
-        out = self.recipe._valid_files(argname, value, directory,
-                                       return_error=True,
-                                       alltypelist=current_typelist,
-                                       allfilelist=current_filelist)
+        out = valid_files(params, argname, value, self.recipe.name,
+                          rargs, rkwargs, directory,
+                          alltypelist=current_typelist,
+                          allfilelist=current_filelist,
+                          force=force_input_dir, forced_dir=input_dir)
         cond, files, types, emsgs = out
         # if they are return files
         if cond:
@@ -2450,8 +2464,8 @@ class DrsArgument(object):
                  dtype: Union[str, Type, None] = None,
                  options: Union[List[Any], None] = None,
                  helpstr: Union[str, None] = '',
-                 files: Union[List[str], None] = None,
-                 parent: Union[str, None] = None,
+                 files: Union[List[DrsInputFile], None] = None,
+                 path: Union[str, None] = None,
                  limit: Union[int, None] = None,
                  minimum: Union[int, float, None] = None,
                  maximum: Union[int, float, None] = None,
@@ -2494,8 +2508,8 @@ class DrsArgument(object):
                      is "files" or "file" sets the type of file to expect
                      the way the list is understood is based on "filelogic"
 
-        :param parent: str, a parent Const or Keyword that this is spawned
-                       from
+        :param path: str, if set overwrites any directory parameter
+                     Note path can be a parameter in ParamDict
 
         :param limit: int, file limit for processing
 
@@ -2530,7 +2544,7 @@ class DrsArgument(object):
         # set class name
         self.class_name = 'DrsArgument'
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(None, '__init__', __NAME__, self.class_name)
+        func_name = display_func(None, '__init__', __NAME__, self.class_name)
         # ------------------------------------------------------------------
         # define class constants
         # ------------------------------------------------------------------
@@ -2604,13 +2618,36 @@ class DrsArgument(object):
         self.options = options
         # get help str
         self.helpstr = helpstr
+        # ---------------------------------------------------------------------
         # get files
-        if files is None:
-            self.files = []
+        self.files = []
+        for drsfile in files:
+            if isinstance(drsfile, DrsInputFile):
+                # copy attributes from drsfile
+                newdrsfile = drsfile.completecopy(drsfile)
+                # append to files
+                self.files.append(newdrsfile)
+            else:
+                # get exception argumnets
+                eargs = [self.name, 'DrsInputFile', func_name]
+                # raise exception
+                raise DrsCodedException('00-006-00021', level='error',
+                                        targs=eargs, func_name=func_name)
+        # else assume file is a single file (but put it into a list any way)
         else:
-            self.files = files
-        # define the input path for files
-        self.parent = parent
+            drsfile = files
+            if isinstance(drsfile, DrsInputFile):
+                self.files = [drsfile.completecopy(drsfile)]
+            else:
+                # get exception argumnets
+                eargs = [self.name, 'DrsInputFile', func_name]
+                # raise exception
+                raise DrsCodedException('00-006-00021', level='error',
+                                        targs=eargs, func_name=func_name)
+        # ---------------------------------------------------------------------
+        # define the override input path for files (defaults to directory)
+        #    Note path can be a parameter in param dict
+        self.path = path
         # get limit
         self.limit = limit
         # get limits
@@ -2799,7 +2836,7 @@ class DrsArgument(object):
         :return: None
         """
         # set function name (cannot break here --> no access to params)
-        _ = display_func(None, 'copy', __NAME__, 'DrsArgument')
+        func_name = display_func(None, 'copy', __NAME__, 'DrsArgument')
         # get argument name
         self.argname = str(argument.argname)
         # get full name
@@ -2829,16 +2866,31 @@ class DrsArgument(object):
         # deal with files as a list
         if isinstance(argument.files, list):
             for drsfile in argument.files:
-                # copy attributes from drsfile
-                newdrsfile = drsfile.completecopy(drsfile)
-                # append to files
-                self.files.append(newdrsfile)
+                if isinstance(drsfile, DrsInputFile):
+                    # copy attributes from drsfile
+                    newdrsfile = drsfile.completecopy(drsfile)
+                    # append to files
+                    self.files.append(newdrsfile)
+                else:
+                    # get exception argumnets
+                    eargs = [self.name, 'DrsInputFile', func_name]
+                    # raise exception
+                    raise DrsCodedException('00-006-00021', level='error',
+                                            targs=eargs, func_name=func_name)
         # else assume file is a single file (but put it into a list any way)
         else:
             drsfile = argument.files
-            self.files = [drsfile.completecopy(drsfile)]
-        # copy the path
-        self.parent = copy.deepcopy(argument.parent)
+            if isinstance(drsfile, DrsInputFile):
+                self.files = [drsfile.completecopy(drsfile)]
+            else:
+                # get exception argumnets
+                eargs = [self.name, 'DrsInputFile', func_name]
+                # raise exception
+                raise DrsCodedException('00-006-00021', level='error',
+                                        targs=eargs, func_name=func_name)
+        # copy the override input path
+        #    Note path can be a parameter in param dict
+        self.path = copy.deepcopy(argument.path)
         # get limit
         if argument.limit is None:
             self.limit = None
@@ -2893,6 +2945,415 @@ class DrsArgument(object):
         # else raise the argument error with just the message
         else:
             raise ArgumentError(message)
+
+
+
+# =============================================================================
+# Check functions
+# =============================================================================
+def get_dir(params: ParamDict, dir_string: str, kind: str = 'input') -> str:
+    """
+    Get the directory based on "dir_string" (either RAW, TMP, REDUCED)
+    obtained via params
+
+    Note if dir_string is full path we do not use path from params
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param dir_string: str, either 'RAW', 'TMP' or 'REDUCED' (case insensitive)
+    :param kind: str, type of dir for logging (either 'input' or 'output')
+
+    :return: str, the directory path
+    """
+    # check if path has been set to an absolute path (that exists)
+    if os.path.exists(os.path.abspath(dir_string)):
+        return os.path.abspath(dir_string)
+    # get the input directory from recipe.inputdir keyword
+    if dir_string.upper() == 'RAW':
+        dirpath = params['DRS_DATA_RAW']
+    elif dir_string.upper() == 'TMP':
+        dirpath = params['DRS_DATA_WORKING']
+    elif dir_string.upper() == 'REDUCED':
+        dirpath = params['DRS_DATA_REDUC']
+    # if not found produce error
+    else:
+        emsg = TextEntry('00-007-00002', args=[kind, dir_string])
+        WLOG(params, 'error', emsg)
+        dirpath = None
+    return dirpath
+
+
+def get_input_dir(params: ParamDict, directory: Union[str, None] = None,
+                  force: bool = False,
+                  forced_dir: Union[str, None] = str) -> Union[str, None]:
+    """
+    Get the input directory for this recipe based on what was set in
+    initialisation (construction)
+
+    :param params: the Parameter dictionary of constants
+    :param directory: None or string - force the input dir (if it exists)
+    :param force: bool if True allows force setting
+    :param forced_dir: str, if set if the forced dir value to get (can be
+                       a full path or 'RAW', 'TMP', 'REDUCED'
+
+    if RAW uses DRS_DATA_RAW from drs_params
+    if TMP uses DRS_DATA_WORKING from drs_params
+    if REDUCED uses DRS_DATA_REDUC from drs_params
+
+    :return input_dir: string, the input directory
+    """
+    # set function name
+    func_name = display_func(params, 'get_input_dir', __NAME__)
+    # deal with manual override of input dir
+    if force and (directory is not None) and (os.path.exists(directory)):
+        return directory
+    # deal with no forced dir set
+    if forced_dir is None:
+        # raise error
+        eargs = ['input', func_name]
+        WLOG(params, 'error', TextEntry('00-006-00020', args=eargs))
+    # deal with absolute path existing
+    if force and os.path.exists(os.path.abspath(forced_dir)):
+        return os.path.abspath(forced_dir)
+    # check if "input_dir" is in namespace
+    input_dir_pick = forced_dir.upper()
+    # return input_dir
+    return get_dir(params, input_dir_pick, kind='input')
+
+
+def get_output_dir(params: ParamDict, directory: Union[str, None] = None,
+                   force: bool = False,
+                   forced_dir: Union[str, None] = str) -> Union[str, None]:
+    """
+    Get the input directory for this recipe based on what was set in
+    initialisation (construction)
+
+    :param params: the Parameter dictionary of constants
+    :param directory: None or string - force the output dir (if it exists)
+    :param force: bool if True allows force setting
+    :param forced_dir: str, if set if the forced dir value to get (can be
+                       a full path or 'RAW', 'TMP', 'REDUCED'
+
+    if RAW uses DRS_DATA_RAW from drs_params
+    if TMP uses DRS_DATA_WORKING from drs_params
+    if REDUCED uses DRS_DATA_REDUC from drs_params
+
+    :return input_dir: string, the input directory
+    """
+    # set function name
+    func_name = display_func(params, 'get_output_dir', __NAME__)
+    # deal with manual override of input dir
+    if force and (directory is not None) and (os.path.exists(directory)):
+        return directory
+    # deal with no forced dir set
+    if forced_dir is None:
+        # raise error
+        eargs = ['output', func_name]
+        WLOG(params, 'error', TextEntry('00-006-00020', args=eargs))
+    # deal with absolute path existing
+    if force and os.path.exists(os.path.abspath(forced_dir)):
+        return os.path.abspath(forced_dir)
+    # check if "input_dir" is in namespace
+    output_dir_pick = forced_dir.upper()
+    # return input_dir
+    return get_dir(params, output_dir_pick, kind='output')
+
+
+def valid_directory(params: ParamDict, argname: str, directory: Any,
+                    force: bool = False, forced_dir: Union[str, None] = None,
+                    ) -> Tuple[bool, Union[str, None], Union[TextEntry, str, None]]:
+    """
+    Find out whether we have a valid directory
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param argname: str, the argumnet name "directory" came from (for error
+                    logging)
+    :param directory: Any, the value to test whether it is a valid directory)
+    :param input_dir_func: Function, the input directory function (must return
+                           a string)
+    :param force: bool, if True forces the input directory (via input_dir_func)
+
+    :return: tuple: 1. whether directory is valid, 2. the full directory path
+             (if passed) or None if failed, 3. the reason for failure (or None
+             if passed)
+    """
+    # get input directory
+    input_dir = os.path.realpath(get_input_dir(params, force=force,
+                                               forced_dir=forced_dir))
+    # ---------------------------------------------------------------------
+    # Make sure directory is a string
+    if type(directory) not in [str, np.str_]:
+        eargs = [argname, directory, type(directory)]
+        emsg = TextEntry('09-001-00003', args=eargs)
+        return False, None, emsg
+    # ---------------------------------------------------------------------
+    # step 1: check if directory is full absolute path
+    if os.path.exists(directory):
+        # log that we found the path (debug mode)
+        dmsg = TextEntry('90-001-00001', args=[argname, directory])
+        dmsg += TextEntry('')
+        WLOG(params, 'debug', dmsg, wrap=False)
+        # get the absolute path
+        abspath = os.path.abspath(directory)
+        # check whether abspath is consistent with input dir from recipe
+        #    definitions (this can happen e.g. if in reduced instead of tmp)
+        if not abspath.startswith(input_dir):
+            # log that directory found not consistent with input path
+            dargs = [input_dir]
+            WLOG(params, 'debug', TextEntry('90-001-00035', args=dargs))
+            pass
+        else:
+            return True, os.path.abspath(directory), None
+    # ---------------------------------------------------------------------
+    # step 2: check if directory is in input directory
+    input_dir = get_input_dir(params, force=force, forced_dir=forced_dir)
+    test_path = os.path.join(input_dir, directory)
+    if os.path.exists(test_path):
+        dmsg = TextEntry('90-001-00017', args=[argname, directory])
+        dmsg += TextEntry('')
+        WLOG(params, 'debug', dmsg, wrap=False)
+        return True, os.path.abspath(test_path), None
+    # ---------------------------------------------------------------------
+    # else deal with errors
+    eargs = [argname, directory, test_path]
+    emsg = TextEntry('09-001-00004', args=eargs)
+    # ---------------------------------------------------------------------
+    # return False (directory did not pass), no string, and the reason for the
+    #  failure
+    return False, None, emsg
+
+
+# define complex return for valid_file
+ValidFileType = Tuple[bool, Union[List[str], None],
+                      Union[List[DrsInputFile], None], Union[TextEntry, None]]
+
+
+def valid_file(params: ParamDict, argname: str, filename: str,
+               recipename: str, rargs: Dict[str, DrsArgument],
+               rkwargs: Dict[str, DrsArgument], directory=None,
+               alltypelist: Union[List[DrsInputFile], None] = None,
+               allfilelist: Union[List[str], None] = None,
+               force: bool = False,
+               forced_dir: Union[str, None] = None) -> ValidFileType:
+    """
+    Test for whether a file is valid
+
+    :param params: ParamDict - parameter dictionary of constants
+    :param argname: str, the name of the argument we are testing
+    :param filename: string, the filename to test
+    :param recipename: str, the recipe name
+    :param rargs: dictionary of DrsArguments - the positional arguments
+    :param rkwargs: dictionary of DrsArguments - the optional arguments
+    :param directory:
+
+    :return cond: bool, if True file is valid, if False file is not valid
+    :return filelist: list of strings, list of files found
+    :return error: list of strings, if there was an error (cond = False)
+                   and return_error=True, return a list of strings
+                   describing the error
+    """
+    # set function name
+    func_name = display_func(params, '_valid_file', __NAME__, 'DrsRecipe')
+    # deal with no current typelist (alltypelist=None)
+    if alltypelist is None:
+        alltypelist = []
+    if allfilelist is None:
+        allfilelist = []
+    # get the argument that we are checking the file of
+    arg = _get_arg(rargs, rkwargs, argname)
+    drsfiles = arg.files
+    # get the drs logic
+    drs_logic = arg.filelogic
+    # deal with arg.path set
+    directory = _check_arg_path(params, arg, directory)
+    # ---------------------------------------------------------------------
+    # Step 1: Check file location is valid
+    # ---------------------------------------------------------------------
+    # if debug mode print progress
+    WLOG(params, 'debug', TextEntry('90-001-00002', args=[filename]),
+         wrap=False)
+    # perform location check
+    out = _check_file_location(params, argname, directory, filename,
+                               force=force, forced_dir=forced_dir)
+    valid, files, error = out
+    if not valid:
+        return False, None, None, error
+    # perform file/directory check
+    out = _check_if_directory(argname, files)
+    valid, files, error = out
+    if not valid:
+        return False, None, None, error
+    # ---------------------------------------------------------------------
+    # The next steps are different depending on the DRS file and
+    # we may have multiple files
+    out_files = []
+    out_types = []
+    # storage of checked files
+    checked_files = []
+    # storage of errors (if we have no files)
+    errors = TextEntry(None)
+    # loop around filename
+    for filename_it in files:
+        # start of with the file not being valid
+        valid = False
+        # storage of errors (reset)
+        errors = TextEntry(None)
+        header_errors = dict()
+        # add to checked files
+        checked_files.append(filename_it)
+        # deal with not having any drs files set
+        if len(drsfiles) == 0:
+            # files must be set
+            eargs = [argname, func_name]
+            WLOG(params, 'error', TextEntry('00-006-00019', args=eargs))
+        # loop around file types
+        for drsfile in drsfiles:
+            # if in debug mode print progres
+            dargs = [drsfile.name, os.path.basename(filename_it)]
+            WLOG(params, 'debug', TextEntry('90-001-00008', args=dargs),
+                 wrap=False)
+            # -------------------------------------------------------------
+            # make instance of the DrsFile
+            inputdir = get_input_dir(params, force=force, forced_dir=forced_dir)
+            # create an instance of this drs_file with the filename set
+            file_in = drsfile.newcopy(filename=filename_it, params=params)
+            file_in.read_file()
+            # set the directory
+            fdir = drs_misc.get_uncommon_path(directory, inputdir)
+            file_in.directory = fdir
+            # -------------------------------------------------------------
+            # Step 2: Check extension
+            # -------------------------------------------------------------
+            # check the extension
+            valid1, error1 = file_in.has_correct_extension(argname=argname)
+            # -------------------------------------------------------------
+            # Step 3: Check file header has required keys
+            # -------------------------------------------------------------
+            valid2a, error2a = file_in.hkeys_exist(argname=argname)
+            # -------------------------------------------------------------
+            # Step 4: Check file header has correct required keys
+            # -------------------------------------------------------------
+            valid2b, error2b = file_in.has_correct_hkeys(argname=argname)
+            # -------------------------------------------------------------
+            # Step 4: Check exclusivity
+            # -------------------------------------------------------------
+            # only check if file correct
+            if valid1 and valid2a and valid2b:
+                exargs = [params, argname, drs_file, recipename, drs_logic,
+                          out_types, alltypelist]
+                valid3, error3 = _check_file_exclusivity(*exargs)
+            else:
+                valid3, error3 = True, None
+            # -------------------------------------------------------------
+            # Step 5: Combine
+            # -------------------------------------------------------------
+            valid = valid1 and valid2a and valid2b and valid3
+            # choose which to print as error
+            if (not valid1) and valid2a and valid2b and valid3:
+                if error1 is not None:
+                    errors += error1
+            if (not valid2a) and valid1 and valid3:
+                if error2a is not None:
+                    errors += error2a
+            if valid1 and valid2a:
+                if error2b is not None:
+                    header_errors[drsfile.name] = error2b
+            # only add check3 if check2 was valid
+            if (not valid3) and valid2a and valid2b and valid1:
+                if error3 is not None:
+                    errors += error3
+            # check validity and append if valid
+            if valid:
+                dargs = [argname, os.path.basename(filename_it), file_in]
+                wmsg = TextEntry('90-001-00016', args=dargs)
+                WLOG(params, 'debug', wmsg, wrap=False)
+                # append to out files/types
+                out_files.append(filename_it)
+                out_types.append(file_in)
+                # break out the inner loop if valid (we don't need to
+                #    check other drs_files)
+                break
+        # if this file is not valid we should break here
+        if not valid:
+            # add header errors (needed outside drs_file loop)
+            errors += _gen_header_errors(header_errors)
+            # add file error (needed only once per filename)
+            eargs = [os.path.abspath(filename_it)]
+            errors += '\n' + TextEntry('09-001-00024', args=eargs)
+            break
+    # must append all files checked
+    allfiles = allfilelist + checked_files
+    if len(allfiles) > 1:
+        errors += '\n' + TextEntry('40-001-00019')
+        for filename_it in allfiles:
+            errors += TextEntry('\n\t\t{0}'.format(filename_it))
+    # ---------------------------------------------------------------------
+    # clean up errors (do not repeat same lines)
+    cleaned_errors = TextEntry(None)
+    for error in errors:
+        if error not in cleaned_errors:
+            cleaned_errors += error
+    # ---------------------------------------------------------------------
+    # deal with return types:
+    # a. if we don't have the right number of files then we failed
+    if len(out_files) != len(files):
+        return False, None, None, cleaned_errors
+    # b. if we did but expect an error returned return True with an error
+    else:
+        return True, out_files, out_types, TextEntry(None)
+
+
+def valid_files(params: ParamDict, argname: str, files: Union[List[str], str],
+                recipename: str, rargs: Dict[str, DrsArgument],
+                rkwargs: Dict[str, DrsArgument], directory=None,
+                alltypelist: Union[List[DrsInputFile], None] = None,
+                allfilelist: Union[List[str], None] = None,
+                force: bool = False,
+                forced_dir: Union[str, None] = None) -> ValidFileType:
+    """
+
+    :param params:
+    :param argname:
+    :param files:
+    :param recipename:
+    :param rargs:
+    :param rkwargs:
+    :param directory:
+    :param alltypelist:
+    :param allfilelist:
+    :param force:
+    :param forced_dir:
+    :return:
+    """
+    # deal with no current typelist (alltypelist=None)
+    if alltypelist is None:
+        alltypelist = []
+    # deal with no current filelist (allfilelist=None)
+    if allfilelist is None:
+        allfilelist = []
+    # deal with non-lists
+    if isinstance(files, str):
+        files = [files]
+    elif type(files) not in [list, np.ndarray]:
+        files = [files]
+    # loop around files
+    all_files = []
+    all_types = []
+    for filename in files:
+        # check single file
+        out = valid_file(params, argname, filename, recipename, rargs, rkwargs,
+                         directory, alltypelist=alltypelist,
+                         allfilelist=allfilelist, force=force,
+                         forced_dir=forced_dir)
+        file_valid, filelist, typelist, error = out
+        # if single file is not valid return the error (and False)
+        if not file_valid:
+            return False, None, None, error
+        # else we append filelist to all_files
+        else:
+            all_files += filelist
+            all_types += typelist
+    # if we are at this point everything passed and file is valid
+    return True, all_files, all_types, None
 
 
 # =============================================================================
@@ -3167,6 +3628,360 @@ def _get_file_list(limit: int, path: str, ext: Union[str, None] = None,
         file_list = ['No valid files found.']
     # return file_list
     return np.sort(file_list), limit_reached
+
+
+def _get_arg(rargs: Dict[str, DrsArgument],
+             rkwargs: Dict[str, DrsArgument], argname: str) -> DrsArgument:
+    """
+    Find an argument in the DrsRecipes argument dictionary or if not found
+    find argument in the DrsRecipes keyword argument dictionary or it not found
+    at all return None
+
+    :param recipe: DrsRecipe instance
+
+    :params rargs: dictionary of positional arguments (from recipe.args)
+    :params rkwargs: dictionary of optional arguments (from recipe.kwargs)
+    :param argname: string, the argument/keyword argument to look for
+
+    :return: DrsArgument instance, the argument in DrsRecipe.args or
+             DrsRecipe.kwargs
+    """
+    if argname in rargs:
+        arg = rargs[argname]
+    elif argname in rkwargs:
+        arg = rkwargs[argname]
+    else:
+        arg = None
+    # return arg
+    return arg
+
+
+def _check_arg_path(params: ParamDict, arg: DrsArgument,
+                    directory: str) -> str:
+    """
+    Check if an override path is set (via DrsArgument.path) if it isn't
+    then we stick with "directory" as our path to the file
+    Note DrsArgument.path can be a parameter in param dict
+
+    :param params: Paramdict
+    :param arg:
+    :param directory:
+    :return:
+    """
+    # set function name
+    func_name = display_func(params, '_check_arg_path', __NAME__)
+    # set the path as directory if arg.path is None
+    if arg.path is None:
+        return os.path.abspath(directory)
+    # deal with arg.path being a link to a constant
+    if arg.path in params:
+        path = params[arg.path]
+    # else assume arg.path is a path
+    else:
+        path = arg.path
+    # path may be relative to main drs package to get full path
+    if not os.path.exists(path):
+        # get package name
+        package = params['DRS_PACKAGE']
+        # get absolute path
+        path = drs_break.get_relative_folder(package, path)
+    # make path absolute
+    path = os.path.abspath(path)
+    # now check that path is valid
+    if not os.path.exists(path):
+        # log that arg path was wrong
+        eargs = [arg.name, arg.path, func_name]
+        WLOG(params, 'error', TextEntry('00-006-00018', args=eargs))
+    else:
+        return path
+
+
+# define complex typing for _check_file_location
+CheckFileLocType = Tuple[bool, Union[List[str], None],  Union[TextEntry, None]]
+
+
+def _check_file_location(params: ParamDict, argname: str,
+                         directory: Union[str, None], filename: str,
+                         force: bool = False,
+                         forced_dir: Union[str, None] = None
+                         ) -> CheckFileLocType:
+    """
+    Checks file location is valid on:
+        "filename" as full link to file (including wildcards)
+        "filename" + recipe.inputdir.upper() (including wildcards)
+        "filename" + ".fits" as full link to file (inlcluding wildcards)
+        "filename" + ".fits" + recipe.inputdir.upper() (including wildcards)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param argname: str, the argument name
+    :param directory: str, the directory name if set (if None uses
+    :param filename: string, the filename to test
+
+    :return cond: Tuple - 1. bool, if True file is valid, if False file is
+                  not valid 2. list of strings, list of files found, 3.
+                  TextEntry, if there was an error return TextEntry describing
+                  the error
+    """
+    output_files = []
+    # get input directory
+    if directory is not None:
+        input_dir = str(directory)
+    else:
+        # noinspection PyProtectedMember
+        input_dir = get_input_dir(params, force=force, forced_dir=forced_dir)
+    # -------------------------------------------------------------------------
+    # Step 1: check "filename" as full link to file (including wildcards)
+    # -------------------------------------------------------------------------
+    # get glob list of files using glob
+    raw_files = np.sort(glob.glob(filename))
+    # debug output
+    if len(raw_files) == 0:
+        dargs = [argname, filename]
+        WLOG(params, 'debug', TextEntry('90-001-00003', args=dargs),
+             wrap=False)
+    # if we have file(s) then add them to output files
+    for raw_file in raw_files:
+        dargs = [argname, raw_file]
+        WLOG(params, 'debug', TextEntry('90-001-00004', args=dargs),
+             wrap=False)
+        output_files.append(raw_file)
+    # check if we are finished here
+    if len(output_files) > 0:
+        return True, output_files, None
+    # -------------------------------------------------------------------------
+    # Step 2: recipe.inputdir.upper() (including wildcards)
+    # -------------------------------------------------------------------------
+    # get glob list of files using glob
+    raw_files = np.sort(glob.glob(os.path.join(input_dir, filename)))
+    # debug output
+    if len(raw_files) == 0:
+        dargs = [argname, filename]
+        WLOG(params, 'debug', TextEntry('90-001-00003', args=dargs),
+             wrap=False)
+    # if we have file(s) then add them to output files
+    for raw_file in raw_files:
+        dargs = [argname, raw_file]
+        WLOG(params, 'debug', TextEntry('90-001-00005', args=dargs),
+             wrap=False)
+        output_files.append(raw_file)
+    # check if we are finished here
+    if len(output_files) > 0:
+        return True, output_files, None
+    # -------------------------------------------------------------------------
+    # Step 3: check "filename" as full link to file (including wildcards)
+    #         + .fits
+    # -------------------------------------------------------------------------
+    # get glob list of files using glob
+    raw_files = np.sort(glob.glob(filename + '.fits'))
+    # debug output
+    if len(raw_files) == 0 and not filename.endswith('.fits'):
+        dargs = [argname, filename + '.fits']
+        WLOG(params, 'debug', TextEntry('90-001-00003', args=dargs),
+             wrap=False)
+    # if we have file(s) then add them to output files
+    for raw_file in raw_files:
+        dargs = [argname, raw_file]
+        WLOG(params, 'debug', TextEntry('90-001-00006', args=dargs),
+             wrap=False)
+        output_files.append(raw_file)
+    # check if we are finished here
+    if len(output_files) > 0:
+        return True, output_files, None
+    # -------------------------------------------------------------------------
+    # Step 4: recipe.inputdir.upper() (including wildcards)
+    #         + .fits
+    # -------------------------------------------------------------------------
+    # get glob list of files using glob
+    raw_files = np.sort(glob.glob(os.path.join(input_dir, filename + '.fits')))
+    # debug output
+    if len(raw_files) == 0 and not filename.endswith('.fits'):
+        dargs = [argname, os.path.join(input_dir, filename + '.fits')]
+        WLOG(params, 'debug', TextEntry('90-001-00003', args=dargs),
+             wrap=False)
+    # if we have file(s) then add them to output files
+    for raw_file in raw_files:
+        dargs = [argname, raw_file]
+        WLOG(params, 'debug', TextEntry('90-001-00007', args=dargs),
+             wrap=False)
+        output_files.append(raw_file)
+    # check if we are finished here
+    if len(output_files) > 0:
+        return True, output_files, None
+    # -------------------------------------------------------------------------
+    # Deal with cases where we didn't find file
+    # -------------------------------------------------------------------------
+    eargs = [argname, filename, os.path.join(input_dir, filename)]
+    emsg = TextEntry('09-001-00005', args=eargs)
+    if not filename.endswith('.fits'):
+        fitsfile1 = filename + '.fits'
+        fitsfile2 = os.path.join(input_dir, fitsfile1)
+        emsg += TextEntry('\t\t"{0}"'.format(fitsfile1))
+        emsg += TextEntry('\t\t"{0}"'.format(fitsfile2))
+    # return False, no files and error messages
+    return False, None, emsg
+
+
+def _check_if_directory(argname: str, files: List[str]
+                        ) -> Tuple[bool, Union[List[str], None],
+                                   Union[TextEntry, None]]:
+    """
+    Simple check to see if each file in files is a directory and then
+    checks if file in files is a file with os.path.isfile
+
+    :param argname:
+    :param files:
+    :return:
+    """
+    # empty error entry
+    emsgs = TextEntry(None)
+    # loop around files
+    it = 0
+    for filename in files:
+        # set eargs
+        eargs = [argname, filename]
+        # check if directory
+        if os.path.isdir(filename):
+            # Need to add as new line
+            if len(emsgs) > 0:
+                emsgs += '\n' + TextEntry('09-001-00026', args=eargs)
+            else:
+                emsgs += TextEntry('09-001-00026', args=eargs)
+            continue
+        # check if not file (or link to file)
+        if not os.path.isfile(filename) and not os.path.islink(filename):
+            # Need to add as new line
+            if len(emsgs) > 0:
+                emsgs += '\n' + TextEntry('09-001-00025', args=eargs)
+            else:
+                emsgs += TextEntry('09-001-00025', args=eargs)
+
+    # if we have emsgs then we need to get the errors
+    if len(emsgs) > 0:
+        return False, None, emsgs
+    else:
+        return True, files, None
+
+
+def _check_file_exclusivity(params: ParamDict, argname: str,
+                            drsfile: DrsInputFile, recipename: str,
+                            logic: str, otypes: List[DrsInputFile],
+                            allotypes: Union[List[DrsInputFile], None] = None
+                            ) -> Tuple[bool, Union[TextEntry, None]]:
+    """
+    Check the file exclusivity of a drsfile
+
+    i.e. if logic = 'exclusive'
+    then names of drsfile must match (i.e. from the same instance)
+    i.e. if logic = 'inclusive'
+    then any drsfile name allowed
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param argname: str, the argument name this was called from
+    :param drsfile: DrsInputFile, the drs file instance to check for exclusivity
+    :param recipename: str, the name of the recipe (for logging)
+    :param logic: str, either 'exclusive' or 'inclusive' if 'exclusive' checks
+                  that drsfile.name matches
+    :param otypes: list of DrsInputFile instances - the current set of instances
+                   (combined with allotypes to check for exclusivity)
+    :param allotypes: list of DrsInputfile instances - the global set of
+                      instance for this argument (combiend with otypes to check
+                      for exclusivity)
+    :return: tuple, 1. flag whether drsfile passes (True/False), 2. the reason
+             why drsfile failed (if it failed) otherwise None
+    """
+    # deal with no alltypelist
+    if allotypes is None:
+        allotypes = list(otypes)
+    else:
+        allotypes = list(allotypes) + list(otypes)
+
+    # if we have no files yet we don't need to check exclusivity
+    if len(allotypes) == 0:
+        dargs = [argname, drsfile.name]
+        WLOG(params, 'debug', TextEntry('90-001-00013', args=dargs),
+             wrap=False)
+        return True, None
+    # if argument logic is set to "exclusive" we need to check that the
+    #   drs_file.name is the same for this as the last file in outtypes
+    if logic == 'exclusive':
+        # match by name of drs_file
+        cond = drsfile.name == allotypes[-1].name
+        # if condition not met return False and error
+        if not cond:
+            eargs = [argname, drsfile.name, allotypes[-1].name]
+            emsg = TextEntry('09-001-00008', args=eargs)
+            return False, emsg
+        # if condition is met return True and empty error
+        else:
+            dargs = [argname, drsfile.name]
+            WLOG(params, 'debug', TextEntry('90-001-00014', args=dargs),
+                 wrap=False)
+            return True, None
+    # if logic is 'inclusive' we just need to return True
+    elif logic == 'inclusive':
+        WLOG(params, 'debug', TextEntry('90-001-00015', args=[argname]),
+             wrap=False)
+        return True, None
+    # else logic is wrong - raise error
+    else:
+        eargs = [argname, recipename]
+        WLOG(params, 'error', TextEntry('00-006-00004', args=eargs),
+             wrap=False)
+
+
+def _gen_header_errors(header_errors: Dict[str, Dict[str, tuple]]
+                       ) -> Union[TextEntry, None]:
+    """
+    Generate the header error text using the errors give in header_errors
+    (a dctionary of drsfile names each with a dictionary of keys)
+    i.e.
+    header_errors[drsname1] = dict(KW_XXX=(found, argname, rvalue, value),
+                                   KW_YYY=(found, argname, rvalue, value))
+
+    where
+        - found is True or False (whether header key was found)
+        - argname is a str, the argument name this belongs to
+        - rvalue is the required value (fails if incorrect)
+        - value is value in the header
+
+    :param header_errors: the header dictionary of dictionarys (see description
+                          above)
+
+    :return: combined TextEntry (if errors exist  or None)
+    """
+    # set up message storage
+    emsgs = TextEntry(None)
+    # set up initial argname
+    argname = ''
+    # check if file passed (all header_errors are True) - skip if passed
+    for drsfilename in header_errors.keys():
+        passed = True
+        for key in header_errors[drsfilename]:
+            passed &= header_errors[drsfilename][key][0]
+        if passed:
+            return None
+    # loop around drs files in header_errors
+    for drsfilename in header_errors.keys():
+        # get this iterations values in this drs_file
+        header_error = header_errors[drsfilename]
+        # append this file
+        emsgs += '\n' + TextEntry('09-001-00021', args=[drsfilename])
+        # loop around keys in this drs_file
+        for key in header_error:
+            # get this iterations entry
+            entry = header_error[key]
+            # get the argname
+            argname = entry[1]
+            # construct error message
+            eargs = [key, entry[3], entry[2]]
+            if not entry[0]:
+                emsgs += '\n' + TextEntry('09-001-00022', args=eargs)
+    if len(emsgs) > 0:
+        emsg0 = TextEntry('09-001-00023', args=[argname])
+    else:
+        emsg0 = TextEntry(None)
+    # return TextEntry (of combined TextEntrys)
+    return emsg0 + emsgs
 
 
 # =============================================================================

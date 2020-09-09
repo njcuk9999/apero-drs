@@ -18,8 +18,7 @@ from apero.base import drs_db
 from apero.base import drs_exceptions
 from apero import lang
 from apero.core import constants
-from apero.core.core import drs_log
-from apero.core.utils import drs_file
+from apero.core.core import drs_log, drs_file
 from apero.io import drs_fits
 
 # =============================================================================

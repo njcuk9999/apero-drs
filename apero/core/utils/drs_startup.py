@@ -18,7 +18,7 @@ import os
 import random
 from signal import signal, SIGINT
 from collections import OrderedDict
-from typing import Union, List
+from typing import Any, Dict, List, Union
 
 from apero.base import base
 from apero.base import drs_break
@@ -30,8 +30,8 @@ from apero.io import drs_table
 from apero.io import drs_path
 from apero.io import drs_lock
 from apero import plotting
-from apero.core.core import drs_log
-from apero.core.utils import drs_recipe, drs_file
+from apero.core.core import drs_log, drs_file
+from apero.core.utils import drs_recipe
 
 # =============================================================================
 # Define variables
@@ -114,9 +114,6 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     # catch sigint (if not threaded) -- if threaded can only be in main thread
     if not threaded:
         signal(SIGINT, constants.catch_sigint)
-    # deal with unset instrument
-    if instrument == 'None':
-        instrument = None
     # deal with no keywords
     if fkwargs is None:
         fkwargs = dict()
@@ -478,12 +475,7 @@ def return_locals(params, ll):
 
 
 def end_main(params, llmain, recipe, success, outputs='reduced',
-                    end=True, quiet=False, keys=None):
-    return main_end_script(params, llmain, recipe, success, outputs,
-                           end, quiet, keys)
-
-def main_end_script(params, llmain, recipe, success, outputs='reduced',
-                    end=True, quiet=False, keys=None):
+                    end=True, quiet=False, keys=None) -> Dict[str, Any]:
     """
     Function to deal with the end of a recipe.main script
         1. indexes outputs
@@ -698,11 +690,11 @@ def get_file_definition(name, instrument, kind='raw', return_all=False,
     mod = constants.import_module(func_name, modules[0], full=True)
     # get a list of all recipes from modules
     if kind == 'raw':
-        all_files = mod.raw_file.fileset
+        all_files = mod.get().raw_file.fileset
     elif kind == 'tmp':
-        all_files = mod.pp_file.fileset
+        all_files = mod.get().pp_file.fileset
     elif kind.startswith('red'):
-        all_files = mod.out_file.fileset
+        all_files = mod.get().out_file.fileset
     else:
         all_files = []
 
@@ -1037,21 +1029,24 @@ def _display_initial_parameterisation(params, printonly=False, logonly=False):
     :return: None
     """
     # Add initial parameterisation
-    wmsgs = TextEntry('\n\tDRS_DATA_RAW={DRS_DATA_RAW}'.format(**params))
-    wmsgs += TextEntry('\n\tDRS_DATA_REDUC={DRS_DATA_REDUC}'.format(**params))
-    wmsgs += TextEntry('\n\tDRS_DATA_WORKING={DRS_DATA_WORKING}'
+    wmsgs = TextEntry('\n\tDRS_DATA_RAW: {DRS_DATA_RAW}'.format(**params))
+    wmsgs += TextEntry('\n\tDRS_DATA_REDUC: {DRS_DATA_REDUC}'.format(**params))
+    wmsgs += TextEntry('\n\tDRS_DATA_WORKING: {DRS_DATA_WORKING}'
                        ''.format(**params))
-    wmsgs += TextEntry('\n\tDRS_CALIB_DB={DRS_CALIB_DB}'.format(**params))
-    wmsgs += TextEntry('\n\tDRS_TELLU_DB={DRS_TELLU_DB}'.format(**params))
-    wmsgs += TextEntry('\n\tDRS_DATA_MSG={DRS_DATA_MSG}'.format(**params))
-    wmsgs += TextEntry('\n\tDRS_DATA_PLOT={DRS_DATA_PLOT}'.format(**params))
+    wmsgs += TextEntry('\n\tDRS_CALIB_DB: {DRS_CALIB_DB}'.format(**params))
+    wmsgs += TextEntry('\n\tDRS_TELLU_DB: {DRS_TELLU_DB}'.format(**params))
+    wmsgs += TextEntry('\n\tDRS_DATA_ASSETS: {DRS_DATA_ASSETS}'
+                       .format(**params))
+    wmsgs += TextEntry('\n\tDRS_DATA_MSG: {DRS_DATA_MSG}'.format(**params))
+    wmsgs += TextEntry('\n\tDRS_DATA_RUN: {DRS_DATA_RUN}'.format(**params))
+    wmsgs += TextEntry('\n\tDRS_DATA_PLOT: {DRS_DATA_PLOT}'.format(**params))
     # add config sources
     for source in np.sort(params['DRS_CONFIG']):
-        wmsgs += TextEntry('\n\tDRS_CONFIG={0}'.format(source))
+        wmsgs += TextEntry('\n\tDRS_CONFIG: {0}'.format(source))
     # add others
-    wmsgs += TextEntry('\n\tPRINT_LEVEL={DRS_PRINT_LEVEL}'.format(**params))
-    wmsgs += TextEntry('\n\tLOG_LEVEL={DRS_LOG_LEVEL}'.format(**params))
-    wmsgs += TextEntry('\n\tDRS_PLOT={DRS_PLOT}'.format(**params))
+    wmsgs += TextEntry('\n\tPRINT_LEVEL: {DRS_PRINT_LEVEL}'.format(**params))
+    wmsgs += TextEntry('\n\tLOG_LEVEL: {DRS_LOG_LEVEL}'.format(**params))
+    wmsgs += TextEntry('\n\tDRS_PLOT: {DRS_PLOT}'.format(**params))
     if params['DRS_DEBUG'] > 0:
         wargs = ['DRS_DEBUG', params['DRS_DEBUG']]
         wmsgs += '\n' + TextEntry('40-001-00009', args=wargs)
@@ -1479,13 +1474,13 @@ def find_recipe(name='None', instrument='None', mod=None):
         empty = drs_recipe.DrsRecipe(name='Empty', instrument=instrument)
         return empty, None
     # else we have a name and an instrument
-    if mod is None:
+    if mod.get() is None:
         margs = [instrument, ['recipe_definitions.py'], ipath, CORE_PATH]
         modules = constants.getmodnames(*margs, return_paths=False)
         # load module
         mod = constants.import_module(func_name, modules[0], full=True)
     # get a list of all recipes from modules
-    all_recipes = mod.recipes
+    all_recipes = mod.get().recipes
     # try to locate this recipe
     found_recipe = None
     for recipe in all_recipes:
