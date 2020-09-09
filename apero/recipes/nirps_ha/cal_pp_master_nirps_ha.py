@@ -130,7 +130,7 @@ def __main__(recipe, params):
                                     KW_DPRTYPE=filetype)
         # create infiles
         for filename in files:
-            infile = rawfile.newcopy(filename=filename, recipe=recipe)
+            infile = rawfile.newcopy(filename=filename, params=params)
             infile.read_file()
             infiles.append(infile)
             rawfiles.append(infile.basename)
@@ -168,9 +168,9 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Save mask image
         # ------------------------------------------------------------------
-        outfile = recipe.outputs['PP_MASTER'].newcopy(recipe=recipe)
+        outfile = recipe.outputs['PP_MASTER'].newcopy(params=params)
         # construct out filename
-        outfile.construct_filename(params, infile=infile)
+        outfile.construct_filename(infile=infile)
         # copy keys from input file
         outfile.copy_original_keys(infile)
         # add version

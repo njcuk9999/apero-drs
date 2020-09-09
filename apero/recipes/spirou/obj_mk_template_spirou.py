@@ -158,7 +158,7 @@ def __main__(recipe, params):
     infiletype = drs_startup.get_file_definition(filetype, params['INSTRUMENT'],
                                                  kind='red')
     # get new copy of file definition
-    infile = infiletype.newcopy(recipe=recipe, fiber=fiber)
+    infile = infiletype.newcopy(params=params, fiber=fiber)
     # set reference filename
     infile.set_filename(object_filenames[-1])
     # read data
@@ -211,7 +211,7 @@ def __main__(recipe, params):
         dkwargs = dict(instrument=params['INSTRUMENT'], kind='red')
         s1d_inst = drs_startup.get_file_definition(s1d_filetype, **dkwargs)
         # get new copy of file definition
-        s1d_file = s1d_inst.newcopy(recipe=recipe, fiber=fiber)
+        s1d_file = s1d_inst.newcopy(params=params, fiber=fiber)
         # get s1d filenames
         fkwargs = dict(kind='red', fiber=fiber, KW_OBJNAME=objname,
                        KW_OUTPUT=s1d_filetype)

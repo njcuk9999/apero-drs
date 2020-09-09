@@ -442,9 +442,9 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
     # Store pol in file
     # ----------------------------------------------------------------------
     # get a new copy of the pol file
-    polfile = recipe.outputs['POL_DEG_FILE'].newcopy(recipe=recipe)
+    polfile = recipe.outputs['POL_DEG_FILE'].newcopy(params=params)
     # construct the filename from file instance
-    polfile.construct_filename(params, infile=infile)
+    polfile.construct_filename(infile=infile)
     # define header keys for output file
     # copy keys from input file
     polfile.copy_original_keys(infile)
@@ -528,9 +528,9 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
     # Store null1 in file
     # ----------------------------------------------------------------------
     # get a new copy of the pol file
-    null1file = recipe.outputs['POL_NULL1'].newcopy(recipe=recipe)
+    null1file = recipe.outputs['POL_NULL1'].newcopy(params=params)
     # construct the filename from file instance
-    null1file.construct_filename(params, infile=infile)
+    null1file.construct_filename(infile=infile)
     # copy header from corrected e2ds file
     null1file.copy_hdict(polfile)
     # add output tag
@@ -548,9 +548,9 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
     # Store null2 in file
     # ----------------------------------------------------------------------
     # get a new copy of the pol file
-    null2file = recipe.outputs['POL_NULL2'].newcopy(recipe=recipe)
+    null2file = recipe.outputs['POL_NULL2'].newcopy(params=params)
     # construct the filename from file instance
-    null2file.construct_filename(params, infile=infile)
+    null2file.construct_filename(infile=infile)
     # copy header from corrected e2ds file
     null2file.copy_hdict(polfile)
     # add output tag
@@ -568,9 +568,9 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
     # Store null2 in file
     # ----------------------------------------------------------------------
     # get a new copy of the pol file
-    stokesfile = recipe.outputs['POL_STOKESI'].newcopy(recipe=recipe)
+    stokesfile = recipe.outputs['POL_STOKESI'].newcopy(params=params)
     # construct the filename from file instance
-    stokesfile.construct_filename(params, infile=infile)
+    stokesfile.construct_filename(infile=infile)
     # copy header from corrected e2ds file
     stokesfile.copy_hdict(polfile)
     # add output tag
@@ -591,9 +591,9 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
     # ----------------------------------------------------------------------
     for s1dkey in s1dprops:
         # get a new copy of the pol file
-        s1dfile = recipe.outputs[s1dkey].newcopy(recipe=recipe)
+        s1dfile = recipe.outputs[s1dkey].newcopy(params=params)
         # construct the filename from file instance
-        s1dfile.construct_filename(params, infile=infile)
+        s1dfile.construct_filename(infile=infile)
         # copy header from corrected e2ds file
         s1dfile.copy_hdict(polfile)
         # add output tag
@@ -627,9 +627,9 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
         lsd_table = drs_table.make_table(params, columns=columns, values=values)
         # ------------------------------------------------------------------
         # get a new copy of the pol file
-        lsd_file = recipe.outputs['POL_LSD'].newcopy(recipe=recipe)
+        lsd_file = recipe.outputs['POL_LSD'].newcopy(params=params)
         # construct the filename from file instance
-        lsd_file.construct_filename(params, infile=infile)
+        lsd_file.construct_filename(infile=infile)
         # copy header from corrected e2ds file
         lsd_file.copy_hdict(polfile)
         # add output tag

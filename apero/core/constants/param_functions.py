@@ -1313,7 +1313,9 @@ def load_pconfig(instrument: Union[str, None] = None
     # get instrument sub-package constants files
     modules = get_module_names(instrument, mod_list=[PSEUDO_CONST_FILE])
     # import module
-    mod = constant_functions.import_module(func_name, modules[0])
+    module = constant_functions.import_module(func_name, modules[0])
+    # get the correct module for this class
+    mod = module.get()
     # check that we have class and import it
     if hasattr(mod, PSEUDO_CONST_CLASS):
         psconst = getattr(mod, PSEUDO_CONST_CLASS)

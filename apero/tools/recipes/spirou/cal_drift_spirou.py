@@ -242,7 +242,7 @@ def __main__(recipe, params):
             WLOG(params, 'info', params['DRS_HEADER'])
             # -----------------------------------------------------------------
             # make a new copy of infile
-            infile = drsfile.newcopy(filename=filename, recipe=recipe)
+            infile = drsfile.newcopy(filename=filename, params=params)
             # read file
             infile.read_file()
             # get header

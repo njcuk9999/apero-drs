@@ -609,7 +609,7 @@ class Logger:
 class Printer:
     """Print things to stdout on one line dynamically"""
 
-    def __init__(self, params: ParamDict, level: str,
+    def __init__(self, params: Union[ParamDict, None], level: Union[str, None],
                  message: Union[list, np.ndarray, str]):
         """
         Dynamically print text to stdout, flushing the line so it appears
@@ -943,7 +943,7 @@ class RecipeLog:
         return newlog
 
     def add_qc(self, params: ParamDict,
-               qc_params: List[List[str], List[Any], List[str], List[int]],
+               qc_params: Tuple[List[str], List[Any], List[str], List[int]],
                passed: Union[int, bool, str], write: bool = True):
         """
         Add the quality control criteria (stored in qc_params) to the recipe
@@ -1067,7 +1067,7 @@ class RecipeLog:
             self.lfunc(params, self.lockfile, self._writer)
 
     def _input_str(self, inputs: Union[ParamDict, dict],
-                   argdict: Dict[Any], kind: str = 'arg') -> str:
+                   argdict: Dict[str, Any], kind: str = 'arg') -> str:
         """
         From the user inputs add an entry for all args in argdict
 

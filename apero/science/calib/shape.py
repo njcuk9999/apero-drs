@@ -180,7 +180,7 @@ def construct_fp_table(params, filenames):
 #             # calibrate group fp
 #             # --------------------------------------------------------------
 #             # construct new infile instance
-#             groupfile = file_inst.newcopy(recipe=recipe)
+#             groupfile = file_inst.newcopy(params=params)
 #             groupfile.data = groupfp
 #             groupfile.header = vheaders[0]
 #             groupfile.filename = fp_ids[0]
@@ -306,13 +306,13 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
             # -------------------------------------------------------------
             # get first file header
             # construct new infile instance
-            fpfile0 = file_inst.newcopy(filename=fp_ids[0], recipe=recipe)
+            fpfile0 = file_inst.newcopy(filename=fp_ids[0], params=params)
             fpfile0.read_header()
             # --------------------------------------------------------------
             # calibrate group fp
             # --------------------------------------------------------------
             # construct new infile instance
-            groupfile = file_inst.newcopy(recipe=recipe)
+            groupfile = file_inst.newcopy(params=params)
             groupfile.data = groupfp
             groupfile.header = drs_fits.Header(fpfile0.get_header())
             groupfile.filename = fp_ids[0]
@@ -1371,9 +1371,9 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     # Writing DXMAP to file
     # ----------------------------------------------------------------------
     # define outfile
-    outfile1 = recipe.outputs['DXMAP_FILE'].newcopy(recipe=recipe)
+    outfile1 = recipe.outputs['DXMAP_FILE'].newcopy(params=params)
     # construct the filename from file instance
-    outfile1.construct_filename(params, infile=fpfile)
+    outfile1.construct_filename(infile=fpfile)
     # ------------------------------------------------------------------
     # define header keys for output file
     # copy keys from input file
@@ -1417,9 +1417,9 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     # Writing DYMAP to file
     # ----------------------------------------------------------------------
     # define outfile
-    outfile2 = recipe.outputs['DYMAP_FILE'].newcopy(recipe=recipe)
+    outfile2 = recipe.outputs['DYMAP_FILE'].newcopy(params=params)
     # construct the filename from file instance
-    outfile2.construct_filename(params, infile=fpfile)
+    outfile2.construct_filename(infile=fpfile)
     # copy header from outfile1
     outfile2.copy_hdict(outfile1)
     # set output key
@@ -1436,9 +1436,9 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     # Writing Master FP to file
     # ----------------------------------------------------------------------
     # define outfile
-    outfile3 = recipe.outputs['FPMASTER_FILE'].newcopy(recipe=recipe)
+    outfile3 = recipe.outputs['FPMASTER_FILE'].newcopy(params=params)
     # construct the filename from file instance
-    outfile3.construct_filename(params, infile=fpfile)
+    outfile3.construct_filename(infile=fpfile)
     # copy header from outfile1
     outfile3.copy_hdict(outfile1)
     # set output key
@@ -1460,8 +1460,8 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         # ------------------------------------------------------------------
         # deal with the unstraighted dxmap
         # ------------------------------------------------------------------
-        debugfile0 = recipe.outputs['SHAPE_BDXMAP_FILE'].newcopy(recipe=recipe)
-        debugfile0.construct_filename(params, infile=fpfile)
+        debugfile0 = recipe.outputs['SHAPE_BDXMAP_FILE'].newcopy(params=params)
+        debugfile0.construct_filename(infile=fpfile)
         debugfile0.copy_hdict(outfile1)
         debugfile0.add_hkey('KW_OUTPUT', value=debugfile0.name)
         debugfile0.data = dxmap0
@@ -1472,8 +1472,8 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         # for the fp files take the header from outfile1
         # ------------------------------------------------------------------
         # in file
-        debugfile1 = recipe.outputs['SHAPE_IN_FP_FILE'].newcopy(recipe=recipe)
-        debugfile1.construct_filename(params, infile=fpfile)
+        debugfile1 = recipe.outputs['SHAPE_IN_FP_FILE'].newcopy(params=params)
+        debugfile1.construct_filename(infile=fpfile)
         debugfile1.copy_hdict(outfile1)
         debugfile1.add_hkey('KW_OUTPUT', value=debugfile1.name)
         debugfile1.data = fpimage
@@ -1481,8 +1481,8 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         # add to output files (for indexing)
         recipe.add_output_file(debugfile1)
         # out file
-        debugfile2 = recipe.outputs['SHAPE_OUT_FP_FILE'].newcopy(recipe=recipe)
-        debugfile2.construct_filename(params, infile=fpfile)
+        debugfile2 = recipe.outputs['SHAPE_OUT_FP_FILE'].newcopy(params=params)
+        debugfile2.construct_filename(infile=fpfile)
         debugfile2.copy_hdict(outfile1)
         debugfile2.add_hkey('KW_OUTPUT', value=debugfile2.name)
         debugfile2.data = fpimage2
@@ -1495,8 +1495,8 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         if 'SHAPE_IN_HC_FILE' in recipe.outputs:
             # in file
             shape_in_hc_file = recipe.outputs['SHAPE_IN_HC_FILE']
-            debugfile3 = shape_in_hc_file.newcopy(recipe=recipe)
-            debugfile3.construct_filename(params, infile=hcfile)
+            debugfile3 = shape_in_hc_file.newcopy(params=params)
+            debugfile3.construct_filename(infile=hcfile)
             debugfile3.copy_original_keys(hcfile)
             # add version
             debugfile3.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
@@ -1524,8 +1524,8 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
             if 'SHAPE_OUT_HC_FILE' in recipe.outputs:
                 # out file
                 shape_out_hc_file = recipe.outputs['SHAPE_OUT_HC_FILE']
-                debugfile4 = shape_out_hc_file.newcopy(recipe=recipe)
-                debugfile4.construct_filename(params, infile=hcfile)
+                debugfile4 = shape_out_hc_file.newcopy(params=params)
+                debugfile4.construct_filename(infile=hcfile)
                 debugfile4.copy_hdict(debugfile3)
                 debugfile4.add_hkey('KW_OUTPUT', value=debugfile4.name)
                 debugfile4.data = hcimage2
@@ -1649,9 +1649,9 @@ def shape_local_qc(params, transform, xres, yres):
 def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
                             transform, image, image2, qc_params):
     # define outfile
-    outfile = recipe.outputs['LOCAL_SHAPE_FILE'].newcopy(recipe=recipe)
+    outfile = recipe.outputs['LOCAL_SHAPE_FILE'].newcopy(params=params)
     # construct the filename from file instance
-    outfile.construct_filename(params, infile=infile)
+    outfile.construct_filename(infile=infile)
     # ------------------------------------------------------------------
     # define header keys for output file
     # copy keys from input file
@@ -1700,8 +1700,8 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
         WLOG(params, '', TextEntry('40-014-00029'))
         # in file
         shapel_in_fp_file = recipe.outputs['SHAPEL_IN_FP_FILE']
-        debugfile1 = shapel_in_fp_file.newcopy(recipe=recipe)
-        debugfile1.construct_filename(params, infile=infile)
+        debugfile1 = shapel_in_fp_file.newcopy(params=params)
+        debugfile1.construct_filename(infile=infile)
         debugfile1.copy_hdict(outfile)
         debugfile1.add_hkey('KW_OUTPUT', value=debugfile1.name)
         debugfile1.data = image
@@ -1710,8 +1710,8 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
         recipe.add_output_file(debugfile1)
         # out file
         shapel_out_fp_file = recipe.outputs['SHAPEL_OUT_FP_FILE']
-        debugfile2 = shapel_out_fp_file.newcopy(recipe=recipe)
-        debugfile2.construct_filename(params, infile=infile)
+        debugfile2 = shapel_out_fp_file.newcopy(params=params)
+        debugfile2.construct_filename(infile=infile)
         debugfile2.copy_hdict(outfile)
         debugfile2.add_hkey('KW_OUTPUT', value=debugfile2.name)
         debugfile2.data = image2

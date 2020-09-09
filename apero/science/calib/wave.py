@@ -185,10 +185,10 @@ def get_wave_solution_from_wavefile(params, recipe, usefiber, inwavefile,
     # -------------------------------------------------------------------------
     # construct new infile instance (first fp solution then hc solutions)
     if out_wave_fp.suffix in str(inwavefile):
-        wavefile = out_wave_fp.newcopy(filename=inwavefile, recipe=recipe,
+        wavefile = out_wave_fp.newcopy(filename=inwavefile, params=params,
                                        fiber=usefiber)
     else:
-        wavefile = out_wave_hc.newcopy(filename=inwavefile, recipe=recipe,
+        wavefile = out_wave_hc.newcopy(filename=inwavefile, params=params,
                                        fiber=usefiber)
     # read data/header
     wavefile.read_file()
@@ -499,7 +499,7 @@ def get_wavelines(params, recipe, fiber, header=None, infile=None,
     hclinefile = general.load_calib_file(params, key_hc,  filename=hclinefile,
                                          userinputkey='HCLINEFILE', **lkwargs)
     # construct new infile instance
-    hclfile = out_wave_fp.newcopy(filename=hclinefile, recipe=recipe,
+    hclfile = out_wave_fp.newcopy(filename=hclinefile, params=params,
                                   fiber=usefiber)
     # read data/header
     hclfile.read_file()
@@ -513,7 +513,7 @@ def get_wavelines(params, recipe, fiber, header=None, infile=None,
     fplinefile = general.load_calib_file(params, key_fp,  filename=fplinefile,
                                          userinputkey='FPLINEFILE', **lkwargs)
     # construct new infile instance
-    fplfile = out_wave_fp.newcopy(filename=fplinefile, recipe=recipe,
+    fplfile = out_wave_fp.newcopy(filename=fplinefile, params=params,
                                   fiber=usefiber)
     # read data/header
     fplfile.read_file()
@@ -931,10 +931,10 @@ def write_master_lines(params, recipe, hce2ds, fpe2ds, hclines, fplines,
     # write hc lines
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    hcfile = recipe.outputs['WAVEM_HCLIST'].newcopy(recipe=recipe,
+    hcfile = recipe.outputs['WAVEM_HCLIST'].newcopy(params=params,
                                                     fiber=fiber)
     # construct the filename from file instance
-    hcfile.construct_filename(params, infile=hce2ds)
+    hcfile.construct_filename(infile=hce2ds)
     # ------------------------------------------------------------------
     # copy keys from hcwavefile
     hcfile.copy_hdict(fpwavefile)
@@ -955,10 +955,10 @@ def write_master_lines(params, recipe, hce2ds, fpe2ds, hclines, fplines,
     # write fp lines
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    fpfile = recipe.outputs['WAVEM_FPLIST'].newcopy(recipe=recipe,
+    fpfile = recipe.outputs['WAVEM_FPLIST'].newcopy(params=params,
                                                     fiber=fiber)
     # construct the filename from file instance
-    fpfile.construct_filename(params, infile=fpe2ds)
+    fpfile.construct_filename(infile=fpe2ds)
     # ------------------------------------------------------------------
     # copy keys from hcwavefile
     fpfile.copy_hdict(fpwavefile)
@@ -1078,13 +1078,13 @@ def hc_wavesol(params, recipe, iprops, e2dsfile, blaze, fiber, **kwargs):
     # get copy of instance of wave file (WAVE_HCMAP)
     # TODO: remove if once we only use cal_wave or cal_wave_master/night
     if 'WAVEM_HCMAP' in recipe.outputs:
-        wavefile = recipe.outputs['WAVEM_HCMAP'].newcopy(recipe=recipe,
+        wavefile = recipe.outputs['WAVEM_HCMAP'].newcopy(params=params,
                                                          fiber=fiber)
     else:
-        wavefile = recipe.outputs['WAVE_HCMAP'].newcopy(recipe=recipe,
+        wavefile = recipe.outputs['WAVE_HCMAP'].newcopy(params=params,
                                                         fiber=fiber)
     # construct the filename from file instance
-    wavefile.construct_filename(params, infile=e2dsfile)
+    wavefile.construct_filename(infile=e2dsfile)
     # ----------------------------------------------------------------------
     # set wprops values (expected for output)
     wprops = ParamDict()
@@ -1251,13 +1251,13 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
     # get copy of instance of wave file (WAVE_HCMAP)
     # TODO: remove if once we only use cal_wave or cal_wave_master/night
     if 'WAVEM_FPMAP' in recipe.outputs:
-        wavefile = recipe.outputs['WAVEM_FPMAP'].newcopy(recipe=recipe,
+        wavefile = recipe.outputs['WAVEM_FPMAP'].newcopy(params=params,
                                                          fiber=fiber)
     else:
-        wavefile = recipe.outputs['WAVE_FPMAP'].newcopy(recipe=recipe,
+        wavefile = recipe.outputs['WAVE_FPMAP'].newcopy(params=params,
                                                         fiber=fiber)
     # construct the filename from file instance
-    wavefile.construct_filename(params, infile=hce2dsfile)
+    wavefile.construct_filename(infile=hce2dsfile)
     # ----------------------------------------------------------------------
     # Update wprops
     # ----------------------------------------------------------------------
@@ -1782,10 +1782,10 @@ def hc_write_wavesolution(params, recipe, llprops, infile, fiber, combine,
     _ = display_func(params, 'hc_write_wavesolution', __NAME__)
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    wavefile = recipe.outputs['WAVE_HCMAP'].newcopy(recipe=recipe,
+    wavefile = recipe.outputs['WAVE_HCMAP'].newcopy(params=params,
                                                     fiber=fiber)
     # construct the filename from file instance
-    wavefile.construct_filename(params, infile=infile)
+    wavefile.construct_filename(infile=infile)
     # ------------------------------------------------------------------
     # define header keys for output file
     # copy keys from input file
@@ -1888,10 +1888,10 @@ def hc_write_resmap(params, recipe, llprops, infile, wavefile, fiber):
     _ = display_func(params, 'hc_write_resmap', __NAME__)
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    resfile = recipe.outputs['WAVE_HCRES'].newcopy(recipe=recipe,
+    resfile = recipe.outputs['WAVE_HCRES'].newcopy(params=params,
                                                    fiber=fiber)
     # construct the filename from file instance
-    resfile.construct_filename(params, infile=infile)
+    resfile.construct_filename(infile=infile)
     # ------------------------------------------------------------------
     # define header keys for output file
     # copy keys from wavefile
@@ -1919,10 +1919,10 @@ def hc_write_wavesol_master(params, recipe, llprops, infile, fiber, combine,
     _ = display_func(params, 'hc_write_wavesol_master', __NAME__)
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    wavefile = recipe.outputs['WAVEM_HCMAP'].newcopy(recipe=recipe,
+    wavefile = recipe.outputs['WAVEM_HCMAP'].newcopy(params=params,
                                                      fiber=fiber)
     # construct the filename from file instance
-    wavefile.construct_filename(params, infile=infile)
+    wavefile.construct_filename(infile=infile)
     # ------------------------------------------------------------------
     # define header keys for output file
     # copy keys from input file (exclude all current wave keys)
@@ -2024,10 +2024,10 @@ def hc_write_resmap_master(params, recipe, llprops, infile, wavefile, fiber):
     _ = display_func(params, 'hc_write_resmap_master', __NAME__)
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    resfile = recipe.outputs['WAVEM_HCRES'].newcopy(recipe=recipe,
+    resfile = recipe.outputs['WAVEM_HCRES'].newcopy(params=params,
                                                     fiber=fiber)
     # construct the filename from file instance
-    resfile.construct_filename(params, infile=infile)
+    resfile.construct_filename(infile=infile)
     # ------------------------------------------------------------------
     # define header keys for output file
     # copy keys from wavefile
@@ -2269,8 +2269,8 @@ def load_hc_init_linelist(params, recipe, e2dsfile, fiber, **kwargs):
     filefmt = pcheck(params, 'WAVE_HCLL_FILE_FMT', 'filefmt', kwargs, func_name)
 
     # construct hcll file
-    hcllfile = recipe.outputs['WAVE_HCLL'].newcopy(recipe=recipe)
-    hcllfile.construct_filename(params, infile=e2dsfile, fiber=fiber)
+    hcllfile = recipe.outputs['WAVE_HCLL'].newcopy(params=params)
+    hcllfile.construct_filename(infile=e2dsfile, fiber=fiber)
     # get filename
     hcllfilename = hcllfile.filename
     # define columns for hc line list
@@ -5080,10 +5080,10 @@ def fp_write_wavesolution(params, recipe, llprops, hcfile, fpfile,
                           wprops, hcwavefile):
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    wavefile = recipe.outputs['WAVE_FPMAP'].newcopy(recipe=recipe,
+    wavefile = recipe.outputs['WAVE_FPMAP'].newcopy(params=params,
                                                     fiber=fiber)
     # construct the filename from file instance
-    wavefile.construct_filename(params, infile=hcfile)
+    wavefile.construct_filename(infile=hcfile)
     # ------------------------------------------------------------------
     # copy keys from hcwavefile
     wavefile.copy_hdict(hcwavefile)
@@ -5179,10 +5179,10 @@ def fp_write_results_table(params, recipe, llprops, hcfile, fiber):
     sig_littrow = 1000 * np.array(llprops['LITTROW_SIG_' + str(lit_it)])
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    wavefile = recipe.outputs['WAVE_FPRESTAB'].newcopy(recipe=recipe,
+    wavefile = recipe.outputs['WAVE_FPRESTAB'].newcopy(params=params,
                                                        fiber=fiber)
     # construct the filename from file instance
-    wavefile.construct_filename(params, infile=hcfile)
+    wavefile.construct_filename(infile=hcfile)
     # ------------------------------------------------------------------
     # construct and write table
     columnnames = ['night_name', 'file_name', 'fiber', 'mean', 'rms',
@@ -5211,10 +5211,10 @@ def fp_write_results_table(params, recipe, llprops, hcfile, fiber):
 def fp_write_linelist_table(params, recipe, llprops, hcfile, fiber):
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    wavefile = recipe.outputs['WAVE_FPLLTAB'].newcopy(recipe=recipe,
+    wavefile = recipe.outputs['WAVE_FPLLTAB'].newcopy(params=params,
                                                       fiber=fiber)
     # construct the filename from file instance
-    wavefile.construct_filename(params, infile=hcfile)
+    wavefile.construct_filename(infile=hcfile)
     # ------------------------------------------------------------------
     # construct and write table
     columnnames = ['order', 'll', 'dv', 'w', 'xi', 'xo', 'dvdx']
@@ -5326,10 +5326,10 @@ def fp_write_wavesol_master(params, recipe, llprops, hcfile, fpfile, fiber,
                             wprops, hcwavefile):
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    wavefile = recipe.outputs['WAVEM_FPMAP'].newcopy(recipe=recipe,
+    wavefile = recipe.outputs['WAVEM_FPMAP'].newcopy(params=params,
                                                      fiber=fiber)
     # construct the filename from file instance
-    wavefile.construct_filename(params, infile=hcfile)
+    wavefile.construct_filename(infile=hcfile)
     # set some wave keys as "SELF" (i.e. from this wave solution)
     wprops['WAVEFILE'] = wavefile.basename
     wprops['WAVETIME'] = hcfile.get_hkey('KW_MID_OBS_TIME', dtype=float)
@@ -5430,10 +5430,10 @@ def fpm_write_results_table(params, recipe, llprops, hcfile, fiber):
     sig_littrow = 1000 * np.array(llprops['LITTROW_SIG_' + str(lit_it)])
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    wavefile = recipe.outputs['WAVEM_FPRESTAB'].newcopy(recipe=recipe,
+    wavefile = recipe.outputs['WAVEM_FPRESTAB'].newcopy(params=params,
                                                         fiber=fiber)
     # construct the filename from file instance
-    wavefile.construct_filename(params, infile=hcfile)
+    wavefile.construct_filename(infile=hcfile)
     # ------------------------------------------------------------------
     # construct and write table
     columnnames = ['night_name', 'file_name', 'fiber', 'mean', 'rms',
@@ -5461,10 +5461,10 @@ def fpm_write_results_table(params, recipe, llprops, hcfile, fiber):
 def fpm_write_linelist_table(params, recipe, llprops, hcfile, fiber):
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    wavefile = recipe.outputs['WAVEM_FPLLTAB'].newcopy(recipe=recipe,
+    wavefile = recipe.outputs['WAVEM_FPLLTAB'].newcopy(params=params,
                                                        fiber=fiber)
     # construct the filename from file instance
-    wavefile.construct_filename(params, infile=hcfile)
+    wavefile.construct_filename(infile=hcfile)
     # ------------------------------------------------------------------
     # construct and write table
     columnnames = ['order', 'll', 'dv', 'w', 'xi', 'xo', 'dvdx']
@@ -5621,13 +5621,13 @@ def process_other_fibers(params, recipe, mprops, mfpl, fp_outputs):
         # get copy of instance of wave file (WAVE_HCMAP)
         # TODO: remove if once we only use cal_wave or cal_wave_master/night
         if 'WAVEM_FPMAP' in recipe.outputs:
-            wavefile = recipe.outputs['WAVEM_FPMAP'].newcopy(recipe=recipe,
+            wavefile = recipe.outputs['WAVEM_FPMAP'].newcopy(params=params,
                                                              fiber=fiber)
         else:
-            wavefile = recipe.outputs['WAVE_FPMAP'].newcopy(recipe=recipe,
+            wavefile = recipe.outputs['WAVE_FPMAP'].newcopy(params=params,
                                                             fiber=fiber)
         # construct the filename from file instance
-        wavefile.construct_filename(params, infile=fp_outputs[master_fiber])
+        wavefile.construct_filename(infile=fp_outputs[master_fiber])
         # ----------------------------------------------------------------------
         # create wprops
         # ----------------------------------------------------------------------
@@ -6073,10 +6073,10 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
                              inwavefile):
     # ----------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    wavefile = recipe.outputs['WAVEMAP_NIGHT'].newcopy(recipe=recipe,
+    wavefile = recipe.outputs['WAVEMAP_NIGHT'].newcopy(params=params,
                                                        fiber=fiber)
     # construct the filename from file instance
-    wavefile.construct_filename(params, infile=hcfile)
+    wavefile.construct_filename(infile=hcfile)
     # set some wave keys as "SELF" (i.e. from this wave solution)
     nprops['WAVEFILE'] = wavefile.basename
     nprops['WAVETIME'] = hcfile.get_hkey('KW_MID_OBS_TIME', dtype=float)
@@ -6138,9 +6138,9 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
     # write hc lines
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    hclfile = recipe.outputs['WAVE_HCLIST'].newcopy(recipe=recipe, fiber=fiber)
+    hclfile = recipe.outputs['WAVE_HCLIST'].newcopy(params=params, fiber=fiber)
     # construct the filename from file instance
-    hclfile.construct_filename(params, infile=hcfile)
+    hclfile.construct_filename(infile=hcfile)
     # ------------------------------------------------------------------
     # copy keys from hcwavefile
     hclfile.copy_hdict(wavefile)
@@ -6171,9 +6171,9 @@ def write_fplines(params, recipe, rfpl, infile, hfile, fiber, kind=None):
     if kind is None:
         kind = 'WAVE_FPLIST'
     # get copy of instance of wave file (WAVE_HCMAP)
-    fplfile = recipe.outputs[kind].newcopy(recipe=recipe, fiber=fiber)
+    fplfile = recipe.outputs[kind].newcopy(params=params, fiber=fiber)
     # construct the filename from file instance
-    fplfile.construct_filename(params, infile=infile)
+    fplfile.construct_filename(infile=infile)
     # ------------------------------------------------------------------
     # copy keys from hfile
     fplfile.copy_hdict(hfile)
@@ -6201,34 +6201,34 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # find the extraction recipe
     extrecipe, _ = drs_startup.find_recipe(extname, params['INSTRUMENT'],
                                            mod=recipe.recipemod)
-    extrecipe.drs_params = params
+    extrecipe.params = params
     # ----------------------------------------------------------------------
     # get input to extract file
     input_filename = extract_file.get_hkey('INF1000')
     input_file = extract_file.intype
     # ----------------------------------------------------------------------
     # make a new copy of infileexclude_group
-    infile = input_file.newcopy(recipe=extrecipe)
+    infile = input_file.newcopy(params=params)
     infile.set_filename(input_filename)
     # ----------------------------------------------------------------------
     # get extraction files
-    e2ds_file = extrecipe.outputs['E2DS_FILE'].newcopy(recipe=extrecipe,
+    e2ds_file = extrecipe.outputs['E2DS_FILE'].newcopy(params=params,
                                                        fiber=fiber)
-    e2dsff_file = extrecipe.outputs['E2DSFF_FILE'].newcopy(recipe=extrecipe,
+    e2dsff_file = extrecipe.outputs['E2DSFF_FILE'].newcopy(params=params,
                                                            fiber=fiber)
-    e2dsll_file = extrecipe.outputs['E2DSLL_FILE'].newcopy(recipe=extrecipe,
+    e2dsll_file = extrecipe.outputs['E2DSLL_FILE'].newcopy(params=params,
                                                            fiber=fiber)
-    s1dw_file = extrecipe.outputs['S1D_W_FILE'].newcopy(recipe=extrecipe,
+    s1dw_file = extrecipe.outputs['S1D_W_FILE'].newcopy(params=params,
                                                         fiber=fiber)
-    s1dv_file = extrecipe.outputs['S1D_V_FILE'].newcopy(recipe=extrecipe,
+    s1dv_file = extrecipe.outputs['S1D_V_FILE'].newcopy(params=params,
                                                         fiber=fiber)
     # ----------------------------------------------------------------------
     # construct filename
-    e2ds_file.construct_filename(params, infile=infile)
-    e2dsff_file.construct_filename(params, infile=infile)
-    e2dsll_file.construct_filename(params, infile=infile)
-    s1dw_file.construct_filename(params, infile=infile)
-    s1dv_file.construct_filename(params, infile=infile)
+    e2ds_file.construct_filename(infile=infile)
+    e2dsff_file.construct_filename(infile=infile)
+    e2dsll_file.construct_filename(infile=infile)
+    s1dw_file.construct_filename(infile=infile)
+    s1dv_file.construct_filename(infile=infile)
     # ----------------------------------------------------------------------
     # log that we are updating the file with wave params
     wargs = [e2ds_file.name, e2ds_file.filename]

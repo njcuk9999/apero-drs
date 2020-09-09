@@ -76,7 +76,7 @@ class DrsArgumentParser(argparse.ArgumentParser):
         # define the recipe
         self.recipe = recipe
         # get the recipes parameter dictionary
-        params = self.recipe.drs_params
+        params = self.recipe.params
         # get the text dictionary
         self.textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
         # get the help dictionary
@@ -106,7 +106,7 @@ class DrsArgumentParser(argparse.ArgumentParser):
                  a dictionary of key/value pairs
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, 'parse_args', __NAME__,
+        _ = display_func(self.recipe.params, 'parse_args', __NAME__,
                          'DRSArgumentParser')
         # deal with no args passed (get from sys.argv)
         if args is None:
@@ -135,14 +135,14 @@ class DrsArgumentParser(argparse.ArgumentParser):
         raises an exit via WLOG error
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, 'error', __NAME__,
+        _ = display_func(self.recipe.params, 'error', __NAME__,
                          'DRSArgumentParser')
         # self.print_help(sys.stderr)
         # self.exit(2, '%s: error: %s\n' % (self.prog, message))
         # get parameterse from drs_params
-        program = str(self.recipe.drs_params['RECIPE'])
+        program = str(self.recipe.params['RECIPE'])
         # get parameters from drs_params
-        params = self.recipe.drs_params
+        params = self.recipe.params
         # log message
         emsg_args = [message, program]
         emsg_obj = TextEntry('09-001-00001', args=emsg_args)
@@ -159,13 +159,13 @@ class DrsArgumentParser(argparse.ArgumentParser):
         :return: None
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '_print_message', __NAME__,
+        _ = display_func(self.recipe.params, '_print_message', __NAME__,
                          'DRSArgumentParser')
         # get parameters from drs_params
-        params = self.recipe.drs_params
+        params = self.recipe.params
         program = str(params['RECIPE'])
         # construct error message
-        if self.recipe.drs_params['DRS_COLOURED_LOG']:
+        if self.recipe.params['DRS_COLOURED_LOG']:
             green, end = COLOR.GREEN1, COLOR.ENDC
             yellow, blue = COLOR.YELLOW1, COLOR.BLUE1
         else:
@@ -177,7 +177,7 @@ class DrsArgumentParser(argparse.ArgumentParser):
         helptitletext = self.textdict['40-002-00001'].format(program)
         print(green + ' ' + helptitletext + end)
         print(green + params['DRS_HEADER'] + end)
-        imsgs = _get_version_info(self.recipe.drs_params, green, end)
+        imsgs = _get_version_info(self.recipe.params, green, end)
         for imsg in imsgs:
             print(imsg)
         print()
@@ -191,7 +191,7 @@ class DrsArgumentParser(argparse.ArgumentParser):
         :return: string representation of the usage for printing
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, 'format_usage', __NAME__,
+        _ = display_func(self.recipe.params, 'format_usage', __NAME__,
                          'DRSArgumentParser')
         # noinspection PyProtectedMember
         return_string = (' ' + self.helptext['USAGE_TEXT'] + ' ' +
@@ -207,7 +207,7 @@ class DrsArgumentParser(argparse.ArgumentParser):
         :return: str, the help string to display
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, 'format_help', __NAME__,
+        _ = display_func(self.recipe.params, 'format_help', __NAME__,
                          'DRSArgumentParser')
         # empty help message at intialization
         hmsgs = []
@@ -217,15 +217,15 @@ class DrsArgumentParser(argparse.ArgumentParser):
         # add description
         if self.recipe.description is not None:
             # add header line
-            hmsgs += ['', self.recipe.drs_params['DRS_HEADER']]
+            hmsgs += ['', self.recipe.params['DRS_HEADER']]
             # add description title
             hmsgs += [' ' + self.helptext['DESCRIPTION_TEXT']]
             # add header line
-            hmsgs += [self.recipe.drs_params['DRS_HEADER'], '']
+            hmsgs += [self.recipe.params['DRS_HEADER'], '']
             # add description text
             hmsgs += [' ' + self.recipe.description]
             # add header line
-            hmsgs += [self.recipe.drs_params['DRS_HEADER']]
+            hmsgs += [self.recipe.params['DRS_HEADER']]
         # deal with required (positional) arguments
         hmsgs += ['', self.textdict['40-002-00002'], '']
         # loop around each required (positional) arguments
@@ -249,11 +249,11 @@ class DrsArgumentParser(argparse.ArgumentParser):
         hmsgs.append(_help_format(['--help', '-h'], helpstr))
         # add epilog
         if self.recipe.epilog is not None:
-            hmsgs += ['', self.recipe.drs_params['DRS_HEADER']]
+            hmsgs += ['', self.recipe.params['DRS_HEADER']]
             hmsgs += [' ' + self.helptext['EXAMPLES_TEXT']]
-            hmsgs += [self.recipe.drs_params['DRS_HEADER'], '']
+            hmsgs += [self.recipe.params['DRS_HEADER'], '']
             hmsgs += [' ' + self.recipe.epilog]
-            hmsgs += [self.recipe.drs_params['DRS_HEADER']]
+            hmsgs += [self.recipe.params['DRS_HEADER']]
         # return string
         return_string = ''
         for hmsg in hmsgs:
@@ -272,7 +272,7 @@ class DrsArgumentParser(argparse.ArgumentParser):
         :raises: _sys.exit if -h or --help in sys.argv
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '_has_special', __NAME__,
+        _ = display_func(self.recipe.params, '_has_special', __NAME__,
                          'DRSArgumentParser')
         # deal with help
         if '-h' in sys.argv:
@@ -393,7 +393,7 @@ class _CheckDirectory(DrsAction):
         :raises: drs_exceptions.LogExit
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '_check_directory', __NAME__,
+        _ = display_func(self.recipe.params, '_check_directory', __NAME__,
                          self.class_name)
         # ---------------------------------------------------------------------
         # deal with no check
@@ -403,7 +403,7 @@ class _CheckDirectory(DrsAction):
         # get the argument name
         argname = self.dest
         # get the params from recipe
-        params = self.recipe.drs_params
+        params = self.recipe.params
         textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
         # debug checking output
         if params['DRS_DEBUG'] > 0:
@@ -449,7 +449,7 @@ class _CheckDirectory(DrsAction):
         # get drs parameters
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+        _ = display_func(self.recipe.params, '__call__', __NAME__,
                          self.class_name)
         # check for help
         # noinspection PyProtectedMember
@@ -593,7 +593,7 @@ class _CheckFiles(DrsAction):
         self.recipe = parser.recipe
         self.parser = parser
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+        _ = display_func(self.recipe.params, '__call__', __NAME__,
                          self.class_name)
         # store the namespace
         self.namespace = namespace
@@ -684,7 +684,7 @@ class _CheckBool(DrsAction):
         :raises: drs_exceptions.LogExit
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '_check_bool', __NAME__,
+        _ = display_func(self.recipe.params, '_check_bool', __NAME__,
                          '_CheckBool')
         # ---------------------------------------------------------------------
         # deal with no check
@@ -692,7 +692,7 @@ class _CheckBool(DrsAction):
             return value
         # ---------------------------------------------------------------------
         # get parameters
-        params = self.recipe.drs_params
+        params = self.recipe.params
         # get the argument name
         argname = self.dest
         # debug progress
@@ -735,7 +735,7 @@ class _CheckBool(DrsAction):
         # get drs parameters
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+        _ = display_func(self.recipe.params, '__call__', __NAME__,
                          '_CheckBool')
         # check for help
         # noinspection PyProtectedMember
@@ -808,7 +808,7 @@ class _CheckType(DrsAction):
         :raises: drs_exceptions.LogExit
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '_check_type', __NAME__,
+        _ = display_func(self.recipe.params, '_check_type', __NAME__,
                          self.class_name)
         # ---------------------------------------------------------------------
         # deal with no check
@@ -816,7 +816,7 @@ class _CheckType(DrsAction):
             return value
         # ---------------------------------------------------------------------
         # get parameters
-        params = self.recipe.drs_params
+        params = self.recipe.params
         # check that type matches
         if type(value) is self.type:
             return value
@@ -850,10 +850,10 @@ class _CheckType(DrsAction):
         :raises: drs_exceptions.LogExit
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '_eval_type', __NAME__,
+        _ = display_func(self.recipe.params, '_eval_type', __NAME__,
                          self.class_name)
         # get parameters
-        params = self.recipe.drs_params
+        params = self.recipe.params
         # get type error
         eargs = [self.dest, value, self.type]
         try:
@@ -873,7 +873,7 @@ class _CheckType(DrsAction):
         :raises: drs_exceptions.LogExit
         """
         # set function name (cannot break here --> no access to inputs)
-        func_name = display_func(self.recipe.drs_params, '_check_type',
+        func_name = display_func(self.recipe.params, '_check_type',
                                  __NAME__, self.class_name)
         # ---------------------------------------------------------------------
         # deal with no check
@@ -881,7 +881,7 @@ class _CheckType(DrsAction):
             return values
         # ---------------------------------------------------------------------
         # get parameters
-        params = self.recipe.drs_params
+        params = self.recipe.params
         # get the argument name
         argname = self.dest
         # ---------------------------------------------------------------------
@@ -971,7 +971,7 @@ class _CheckType(DrsAction):
         # get drs parameters
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '_check_type', __NAME__,
+        _ = display_func(self.recipe.params, '_check_type', __NAME__,
                          self.class_name)
         # check for help
         # noinspection PyProtectedMember
@@ -1044,7 +1044,7 @@ class _CheckOptions(DrsAction):
         :raises: drs_exceptions.LogExit
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '_check_options', __NAME__,
+        _ = display_func(self.recipe.params, '_check_options', __NAME__,
                          '_CheckOptions')
         # ---------------------------------------------------------------------
         # deal with no check
@@ -1052,7 +1052,7 @@ class _CheckOptions(DrsAction):
             return value
         # ---------------------------------------------------------------------
         # get parameters
-        params = self.recipe.drs_params
+        params = self.recipe.params
         # check options
         if value in self.choices:
             return value
@@ -1078,7 +1078,7 @@ class _CheckOptions(DrsAction):
         # get drs parameters
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+        _ = display_func(self.recipe.params, '__call__', __NAME__,
                          '_CheckOptions')
         # check for help
         # noinspection PyProtectedMember
@@ -1160,7 +1160,7 @@ class _MakeListing(DrsAction):
         :raises: drs_exceptions.LogExit
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '_display_listing', __NAME__,
+        _ = display_func(self.recipe.params, '_display_listing', __NAME__,
                          self.class_name)
         # get input dir
         # noinspection PyProtectedMember
@@ -1201,7 +1201,7 @@ class _MakeListing(DrsAction):
         # get drs parameters
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+        _ = display_func(self.recipe.params, '__call__', __NAME__,
                          self.class_name)
         # store parser
         self.parser = parser
@@ -1278,7 +1278,7 @@ class _MakeAllListing(DrsAction):
         :raises: drs_exceptions.LogExit
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '_display_listing', __NAME__,
+        _ = display_func(self.recipe.params, '_display_listing', __NAME__,
                          self.class_name)
         # get input dir
         # noinspection PyProtectedMember
@@ -1319,7 +1319,7 @@ class _MakeAllListing(DrsAction):
         # get drs parameters
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+        _ = display_func(self.recipe.params, '__call__', __NAME__,
                          '_MakeAllListing')
         # check for help
         # noinspection PyProtectedMember
@@ -1387,10 +1387,10 @@ class _ActivateDebug(DrsAction):
         :raises: drs_exceptions.LogExit
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '_set_debug', __NAME__,
+        _ = display_func(self.recipe.params, '_set_debug', __NAME__,
                          self.class_name)
         # get params
-        params = self.recipe.drs_params
+        params = self.recipe.params
         # deal with a value of None
         if values is None:
             return 1
@@ -1403,7 +1403,7 @@ class _ActivateDebug(DrsAction):
             # try to make an integer
             value = int(values)
             # set DRS_DEBUG (must use the self version)
-            self.recipe.drs_params['DRS_DEBUG'] = value
+            self.recipe.params['DRS_DEBUG'] = value
             # now update constants file
             # spirouConfig.Constants.UPDATE_PP(self.recipe.drs_params)
             # return value
@@ -1430,7 +1430,7 @@ class _ActivateDebug(DrsAction):
         # get drs parameters
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+        _ = display_func(self.recipe.params, '__call__', __NAME__,
                          self.class_name)
         # display listing
         if type(values) == list:
@@ -1496,10 +1496,10 @@ class _ForceInputDir(DrsAction):
                  returns string representation of values[0] if list or values
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '_force_input_dir', __NAME__,
+        _ = display_func(self.recipe.params, '_force_input_dir', __NAME__,
                          self.class_name)
         # get params
-        params = self.recipe.drs_params
+        params = self.recipe.params
         # deal with value of None
         if values is None:
             return None
@@ -1537,7 +1537,7 @@ class _ForceInputDir(DrsAction):
         # get drs parameters
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+        _ = display_func(self.recipe.params, '__call__', __NAME__,
                          self.class_name)
         # display listing
         if type(values) == list:
@@ -1604,10 +1604,10 @@ class _ForceOutputDir(DrsAction):
                  returns string representation of values[0] if list or values
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '_force_output_dir', __NAME__,
+        _ = display_func(self.recipe.params, '_force_output_dir', __NAME__,
                          '_ForceOutputDir')
         # get params
-        params = self.recipe.drs_params
+        params = self.recipe.params
         # deal with None value
         if values is None:
             return None
@@ -1645,7 +1645,7 @@ class _ForceOutputDir(DrsAction):
         # get drs parameters
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+        _ = display_func(self.recipe.params, '__call__', __NAME__,
                          '_ForceOutputDir')
         # display listing
         if type(values) == list:
@@ -1706,10 +1706,10 @@ class _DisplayVersion(DrsAction):
         :return:
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '_display_version', __NAME__,
+        _ = display_func(self.recipe.params, '_display_version', __NAME__,
                          self.class_name)
         # get params
-        params = self.recipe.drs_params
+        params = self.recipe.params
         # get colours
         if params['DRS_COLOURED_LOG']:
             green, end = COLOR.GREEN1, COLOR.ENDC
@@ -1740,7 +1740,7 @@ class _DisplayVersion(DrsAction):
         # set recipe from parser
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+        _ = display_func(self.recipe.params, '__call__', __NAME__,
                          self.class_name)
         # check for help
         # noinspection PyProtectedMember
@@ -1802,11 +1802,11 @@ class _DisplayInfo(DrsAction):
         :return:
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '_display_info', __NAME__,
+        _ = display_func(self.recipe.params, '_display_info', __NAME__,
                          self.class_name)
         # get params
         recipe = self.recipe
-        params = recipe.drs_params
+        params = recipe.params
         etext = recipe.textdict
         htext = recipe.helptext
         program = str(params['RECIPE'])
@@ -1865,7 +1865,7 @@ class _DisplayInfo(DrsAction):
         # set recipe from parser
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+        _ = display_func(self.recipe.params, '__call__', __NAME__,
                          '_DisplayInfo')
         # check for help
         # noinspection PyProtectedMember
@@ -1931,7 +1931,7 @@ class _SetProgram(DrsAction):
         :raises: drs_exceptions.LogExit
         """
         # set function name (cannot break here --> no access to inputs)
-        func_name = display_func(self.recipe.drs_params, '_set_program',
+        func_name = display_func(self.recipe.params, '_set_program',
                                  __NAME__, self.class_name)
         # deal with difference datatypes for values
         if isinstance(values, list):
@@ -1942,11 +1942,11 @@ class _SetProgram(DrsAction):
             strvalue = str(values)
         # debug message: setting program to: "strvalue"
         dmsg = TextEntry('90-001-00031', args=[strvalue])
-        WLOG(self.recipe.drs_params, 'debug', dmsg)
+        WLOG(self.recipe.params, 'debug', dmsg)
         # set DRS_DEBUG (must use the self version)
-        self.recipe.drs_params['DRS_USER_PROGRAM'] = strvalue
-        self.recipe.drs_params.set_source('DRS_USER_PROGRAM', func_name)
-        self.recipe.drs_params.set_instance('DRS_USER_PROGRAM', None)
+        self.recipe.params['DRS_USER_PROGRAM'] = strvalue
+        self.recipe.params.set_source('DRS_USER_PROGRAM', func_name)
+        self.recipe.params.set_instance('DRS_USER_PROGRAM', None)
         # return strvalue
         return strvalue
 
@@ -1968,7 +1968,7 @@ class _SetProgram(DrsAction):
         # get recipe from parser
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+        _ = display_func(self.recipe.params, '__call__', __NAME__,
                          self.class_name)
         # check for help
         # noinspection PyProtectedMember
@@ -2030,15 +2030,15 @@ class _SetIPythonReturn(DrsAction):
         :return: True and params['IPYTHON_RETURN'] = True
         """
         # set function name (cannot break here --> no access to inputs)
-        func_name = display_func(self.recipe.drs_params, '_set_return',
+        func_name = display_func(self.recipe.params, '_set_return',
                                  __NAME__, self.class_name)
         # debug message: setting program to: "strvalue"
         dmsg = TextEntry('90-001-00032')
-        WLOG(self.recipe.drs_params, 'debug', dmsg)
+        WLOG(self.recipe.params, 'debug', dmsg)
         # set DRS_DEBUG (must use the self version)
-        self.recipe.drs_params['IPYTHON_RETURN'] = True
-        self.recipe.drs_params.set_source('IPYTHON_RETURN', func_name)
-        self.recipe.drs_params.set_instance('IPYTHON_RETURN', None)
+        self.recipe.params['IPYTHON_RETURN'] = True
+        self.recipe.params.set_source('IPYTHON_RETURN', func_name)
+        self.recipe.params.set_instance('IPYTHON_RETURN', None)
         # return strvalue
         return True
 
@@ -2059,7 +2059,7 @@ class _SetIPythonReturn(DrsAction):
         # get recipe from parser
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+        _ = display_func(self.recipe.params, '__call__', __NAME__,
                          self.class_name)
         # check for help
         # noinspection PyProtectedMember
@@ -2122,15 +2122,15 @@ class _Breakpoints(DrsAction):
         :return: True and params['ALLOW_BREAKPOINTS'] = True
         """
         # set function name (cannot break here --> no access to inputs)
-        func_name = display_func(self.recipe.drs_params, '_set_return',
+        func_name = display_func(self.recipe.params, '_set_return',
                                  __NAME__, self.class_name)
         # debug message: setting program to: "strvalue"
         dmsg = TextEntry('90-001-00033')
-        WLOG(self.recipe.drs_params, 'debug', dmsg)
+        WLOG(self.recipe.params, 'debug', dmsg)
         # set DRS_DEBUG (must use the self version)
-        self.recipe.drs_params['ALLOW_BREAKPOINTS'] = True
-        self.recipe.drs_params.set_source('ALLOW_BREAKPOINTS', func_name)
-        self.recipe.drs_params.set_instance('ALLOW_BREAKPOINTS', None)
+        self.recipe.params['ALLOW_BREAKPOINTS'] = True
+        self.recipe.params.set_source('ALLOW_BREAKPOINTS', func_name)
+        self.recipe.params.set_instance('ALLOW_BREAKPOINTS', None)
         # return strvalue
         return True
 
@@ -2151,7 +2151,7 @@ class _Breakpoints(DrsAction):
         # get recipe from parser
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+        _ = display_func(self.recipe.params, '__call__', __NAME__,
                          '_Breakpoints')
         # check for help
         # noinspection PyProtectedMember
@@ -2217,7 +2217,7 @@ class _Breakfunc(DrsAction):
         :raises: drs_exceptions.LogExit
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '_set_breakfunc',
+        _ = display_func(self.recipe.params, '_set_breakfunc',
                          __NAME__, self.class_name)
         # deal with unset value
         if value is None:
@@ -2241,7 +2241,7 @@ class _Breakfunc(DrsAction):
         :raises: drs_exceptions.LogExit
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+        _ = display_func(self.recipe.params, '__call__', __NAME__,
                          self.class_name)
         # get drs parameters
         self.recipe = parser.recipe
@@ -2311,7 +2311,7 @@ class _IsMaster(DrsAction):
         :return: str: the valid directory (raises exception if invalid)
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '_set_master',
+        _ = display_func(self.recipe.params, '_set_master',
                          __NAME__, self.class_name)
         # deal with unset value
         if value is None:
@@ -2335,7 +2335,7 @@ class _IsMaster(DrsAction):
         :raises: drs_exceptions.LogExit
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '__call__',
+        _ = display_func(self.recipe.params, '__call__',
                          __NAME__, self.class_name)
         # get drs parameters
         self.recipe = parser.recipe
@@ -2402,11 +2402,11 @@ class _SetQuiet(DrsAction):
         :return: True
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '_set_return', __NAME__,
+        _ = display_func(self.recipe.params, '_set_return', __NAME__,
                          self.class_name)
         # debug message: setting program to: "strvalue"
         dmsg = TextEntry('90-001-00034')
-        WLOG(self.recipe.drs_params, 'debug', dmsg)
+        WLOG(self.recipe.params, 'debug', dmsg)
         # return strvalue
         return True
 
@@ -2428,7 +2428,7 @@ class _SetQuiet(DrsAction):
         # get recipe from parser
         self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '__call__', __NAME__,
+        _ = display_func(self.recipe.params, '__call__', __NAME__,
                          self.class_name)
         # check for help
         # noinspection PyProtectedMember
@@ -3010,7 +3010,7 @@ def _print_list_msg(recipe: Any, fulldir: str, dircond: bool = False,
     :return: if return_strings is True return list msg instead of printing
     """
     # get params from recipe
-    params = recipe.drs_params
+    params = recipe.params
     # set function name
     _ = display_func(params, '_print_list_msg', __NAME__)
     # get text

@@ -104,8 +104,8 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
                                            return_filename=True)
         # ------------------------------------------------------------------
         # construct order profile file
-        orderpsfile = orderpfile.newcopy(recipe=recipe, fiber=fiber)
-        orderpsfile.construct_filename(params, infile=infile)
+        orderpsfile = orderpfile.newcopy(params=params, fiber=fiber)
+        orderpsfile.construct_filename(infile=infile)
         # check if temporary file exists
         if orderpsfile.file_exists() and (filename is None):
             # load the numpy temporary file
@@ -115,7 +115,7 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
                 wargs = [orderpsfile.filename]
                 WLOG(params, '', TextEntry('40-013-00023', args=wargs))
                 # read npy file
-                orderpsfile.read_file(params)
+                orderpsfile.read_file()
             else:
                 eargs = [orderpsfile.__str__(), func_name]
                 WLOG(params, 'error', TextEntry('00-016-00023', args=eargs))
@@ -136,7 +136,7 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
             wargs = [orderpsfile.filename]
             WLOG(params, '', TextEntry('40-013-00024', args=wargs))
             # save for use later (as .npy)
-            orderpsfile.write_file(params)
+            orderpsfile.write_file()
         # store in storage dictionary
         orderprofiles[fiber] = orderp
         orderprofilefiles[fiber] = orderpfilename
@@ -813,10 +813,10 @@ def master_dark_fp_cube(params, recipe, extractdict):
         # get the first file as reference
         extfile = extfiles[0]
         # construct the leak master file instance
-        outfile = recipe.outputs['LEAK_MASTER'].newcopy(recipe=recipe,
+        outfile = recipe.outputs['LEAK_MASTER'].newcopy(params=params,
                                                         fiber=fiber)
         # construct the filename from file instance
-        outfile.construct_filename(params, infile=extfile)
+        outfile.construct_filename(infile=extfile)
         # copy keys from input file
         outfile.copy_original_keys(extfile)
         # storage for cube
@@ -851,7 +851,7 @@ def get_extraction_files(params, recipe, infile, extname):
     # get the input pp list
     rawfiles = infile.get_hkey_1d('KW_INFILE1', dtype=str)
     # get the preprocessed file
-    ppfile = infile.intype.newcopy(recipe=recipe)
+    ppfile = infile.intype.newcopy(params=params)
     # get the preprocessed file path
     pppath = os.path.join(params['DRS_DATA_WORKING'], params['NIGHTNAME'])
     # get the pp filename
@@ -860,7 +860,7 @@ def get_extraction_files(params, recipe, infile, extname):
     # find the extraction recipe
     extrecipe, _ = drs_startup.find_recipe(extname, params['INSTRUMENT'],
                                            mod=recipe.recipemod)
-    extrecipe.drs_params = params
+    extrecipe.params = params
     # ------------------------------------------------------------------
     # storage for outputs
     extouts = recipe.outputs.keys()
@@ -873,10 +873,10 @@ def get_extraction_files(params, recipe, infile, extname):
         # loop around extraction outputs
         for extout in extouts:
             # get extraction file instance
-            outfile = extrecipe.outputs[extout].newcopy(recipe=extrecipe,
+            outfile = extrecipe.outputs[extout].newcopy(params=params,
                                                         fiber=fiber)
             # construct filename
-            outfile.construct_filename(params, infile=ppfile)
+            outfile.construct_filename(infile=ppfile)
             # read 2D image (not 1D images -- these will be re-generated)
             if extout in leak2dext:
                 outfile.read_file()
@@ -1187,10 +1187,10 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # Store E2DS in file
     # ----------------------------------------------------------------------
     # get a new copy of the e2ds file
-    e2dsfile = recipe.outputs['E2DS_FILE'].newcopy(recipe=recipe,
+    e2dsfile = recipe.outputs['E2DS_FILE'].newcopy(params=params,
                                                    fiber=fiber)
     # construct the filename from file instance
-    e2dsfile.construct_filename(params, infile=infile)
+    e2dsfile.construct_filename(infile=infile)
     # define header keys for output file
     # copy keys from input file (excluding loc)
     e2dsfile.copy_original_keys(infile, exclude_groups=['loc'])
@@ -1287,10 +1287,10 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # Store E2DSFF in file
     # ----------------------------------------------------------------------
     # get a new copy of the e2dsff file
-    e2dsfffile = recipe.outputs['E2DSFF_FILE'].newcopy(recipe=recipe,
+    e2dsfffile = recipe.outputs['E2DSFF_FILE'].newcopy(params=params,
                                                        fiber=fiber)
     # construct the filename from file instance
-    e2dsfffile.construct_filename(params, infile=infile)
+    e2dsfffile.construct_filename(infile=infile)
     # copy header from e2dsff file
     e2dsfffile.copy_hdict(e2dsfile)
     # add extraction type (does not change for future files)
@@ -1311,10 +1311,10 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # Store E2DSLL in file
     # ----------------------------------------------------------------------
     # get a new copy of the e2dsll file
-    e2dsllfile = recipe.outputs['E2DSLL_FILE'].newcopy(recipe=recipe,
+    e2dsllfile = recipe.outputs['E2DSLL_FILE'].newcopy(params=params,
                                                        fiber=fiber)
     # construct the filename from file instance
-    e2dsllfile.construct_filename(params, infile=infile)
+    e2dsllfile.construct_filename(infile=infile)
     # copy header from e2dsll file
     e2dsllfile.copy_hdict(e2dsfile)
     # set output key
@@ -1333,10 +1333,10 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # Store S1D_W in file
     # ----------------------------------------------------------------------
     # get a new copy of the s1d_w file
-    s1dwfile = recipe.outputs['S1D_W_FILE'].newcopy(recipe=recipe,
+    s1dwfile = recipe.outputs['S1D_W_FILE'].newcopy(params=params,
                                                     fiber=fiber)
     # construct the filename from file instance
-    s1dwfile.construct_filename(params, infile=infile)
+    s1dwfile.construct_filename(infile=infile)
     # copy header from e2dsll file
     s1dwfile.copy_hdict(e2dsfile)
     # set output key
@@ -1359,10 +1359,10 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # Store S1D_V in file
     # ----------------------------------------------------------------------
     # get a new copy of the s1d_v file
-    s1dvfile = recipe.outputs['S1D_V_FILE'].newcopy(recipe=recipe,
+    s1dvfile = recipe.outputs['S1D_V_FILE'].newcopy(params=params,
                                                     fiber=fiber)
     # construct the filename from file instance
-    s1dvfile.construct_filename(params, infile=infile)
+    s1dvfile.construct_filename(infile=infile)
     # copy header from e2dsll file
     s1dvfile.copy_hdict(e2dsfile)
     # add new header keys
@@ -1394,10 +1394,10 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     # Store E2DS in file
     # ----------------------------------------------------------------------
     # get a new copy of the e2ds file
-    e2dsfile = recipe.outputs['Q2DS_FILE'].newcopy(recipe=recipe,
+    e2dsfile = recipe.outputs['Q2DS_FILE'].newcopy(params=params,
                                                    fiber=fiber)
     # construct the filename from file instance
-    e2dsfile.construct_filename(params, infile=infile)
+    e2dsfile.construct_filename(infile=infile)
     # define header keys for output file
     # copy keys from input file (excluding loc)
     e2dsfile.copy_original_keys(infile, exclude_groups=['loc'])
@@ -1479,10 +1479,10 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     # Store E2DSFF in file
     # ----------------------------------------------------------------------
     # get a new copy of the e2dsff file
-    e2dsfffile = recipe.outputs['Q2DSFF_FILE'].newcopy(recipe=recipe,
+    e2dsfffile = recipe.outputs['Q2DSFF_FILE'].newcopy(params=params,
                                                        fiber=fiber)
     # construct the filename from file instance
-    e2dsfffile.construct_filename(params, infile=infile)
+    e2dsfffile.construct_filename(infile=infile)
     # copy header from e2dsff file
     e2dsfffile.copy_hdict(e2dsfile)
     # add extraction type (does not change for future files)

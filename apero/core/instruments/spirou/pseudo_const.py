@@ -113,7 +113,7 @@ class PseudoConstants(DefaultConstants):
     # =========================================================================
     # File and Recipe definitions
     # =========================================================================
-    def FILEMOD(self) -> ModuleType:
+    def FILEMOD(self) -> base_class.ImportModule:
         """
         The import for the file definitions
         :return: file_definitions
@@ -124,7 +124,8 @@ class PseudoConstants(DefaultConstants):
         module_name = 'apero.core.instruments.spirou.file_definitions'
         # try to import module
         try:
-            return importlib.import_module(module_name)
+            return base_class.ImportModule('spirou.file_definitions',
+                                           module_name)
         except Exception as e:
             # raise coded exception
             eargs = [module_name, 'system', func_name, type(e), str(e), '']
@@ -132,7 +133,7 @@ class PseudoConstants(DefaultConstants):
                            targs=eargs, func_name=func_name)
             raise drs_exceptions.DrsCodedException(**ekwargs)
 
-    def RECIPEMOD(self) -> ModuleType:
+    def RECIPEMOD(self) -> base_class.ImportModule:
         """
         The import for the recipe defintions
 
@@ -144,7 +145,8 @@ class PseudoConstants(DefaultConstants):
         module_name = 'apero.core.instruments.spirou.recipe_definitions'
         # try to import module
         try:
-            return importlib.import_module(module_name)
+            return base_class.ImportModule('spirou.recipe_definitions',
+                                           module_name)
         except Exception as e:
             # raise coded exception
             eargs = [module_name, 'system', func_name, type(e), str(e), '']
@@ -790,14 +792,14 @@ def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
     kwdprtype = params['KW_DPRTYPE'][0]
     kwdprcomment = params['KW_DPRTYPE'][1]
     # get the drs files and raw_prefix
-    drsfiles = recipe.filemod.raw_file.fileset
-    raw_prefix = recipe.filemod.raw_prefix
+    drsfiles = recipe.filemod.get().raw_file.fileset
+    raw_prefix = recipe.filemod.get().raw_prefix
     # set up inname
     dprtype = 'Unknown'
     # loop around drs files
     for drsfile in drsfiles:
         # set recipe
-        drsfile.set_recipe(recipe)
+        drsfile.set_params(params)
         # find out whether file is valid
         valid, _ = drsfile.has_correct_hkeys(header, log=False,
                                              filename=filename)

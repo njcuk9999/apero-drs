@@ -17,6 +17,7 @@ from types import ModuleType
 from typing import Any, Dict, List, Tuple, Union
 
 from apero.base import base
+from apero.base import drs_base_classes as base_class
 from apero.base import drs_misc
 from apero.base import drs_exceptions
 
@@ -106,7 +107,7 @@ class PseudoConstants:
     # File and Recipe definitions
     # =========================================================================
     # noinspection PyPep8Naming
-    def FILEMOD(self) -> ModuleType:
+    def FILEMOD(self) -> base_class.ImportModule:
         """
         The import for the file definitions
         :return: file_definitions
@@ -117,7 +118,8 @@ class PseudoConstants:
         module_name = 'apero.core.instruments.default.file_definitions'
         # try to import module
         try:
-            return importlib.import_module(module_name)
+            return base_class.ImportModule('default.file_definitions',
+                                           module_name)
         except Exception as e:
             # raise coded exception
             eargs = [module_name, 'system', func_name, type(e), str(e), '']
@@ -126,7 +128,7 @@ class PseudoConstants:
             raise drs_exceptions.DrsCodedException(**ekwargs)
 
     # noinspection PyPep8Naming
-    def RECIPEMOD(self) -> ModuleType:
+    def RECIPEMOD(self) -> base_class.ImportModule:
         """
         The import for the recipe defintions
 
@@ -138,7 +140,8 @@ class PseudoConstants:
         module_name = 'apero.core.instruments.default.recipe_definitions'
         # try to import module
         try:
-            return importlib.import_module(module_name)
+            return base_class.ImportModule('default.recipe_definitions',
+                                           module_name)
         except Exception as e:
             # raise coded exception
             eargs = [module_name, 'system', func_name, type(e), str(e), '']

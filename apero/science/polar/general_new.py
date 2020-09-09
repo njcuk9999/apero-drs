@@ -201,15 +201,15 @@ class PolarObj:
                                                 self.params['INSTRUMENT'],
                                                 kind='red')
         # get copies of the file definitions (for filling out)
-        tcorr_file = tfile.newcopy(recipe=self.recipe, fiber=tfiber)
-        recon_file = rfile.newcopy(recipe=self.recipe, fiber=tfiber)
+        tcorr_file = tfile.newcopy(params=self.params, fiber=tfiber)
+        recon_file = rfile.newcopy(params=self.params, fiber=tfiber)
         # ----------------------------------------------------------------------
         # need to deal with input file being the telluric corrected file
         if self.infile.name == tcorr_file.name:
             # File is already telluric corrected
             self.is_telluric_corrected = True
             # copy telluric file instance
-            tcorr_file = self.infile.newcopy(recipe=self.recipe)
+            tcorr_file = self.infile.newcopy(params=self.params)
             # in this case set recon file to None - we do not need it
             recon_file = None
         else:
@@ -220,7 +220,7 @@ class PolarObj:
             # for this fiber
             if self.fiber != tfiber:
                 # copy file (for update)
-                t_infile = self.infile.newcopy(recipe=self.recipe)
+                t_infile = self.infile.newcopy(params=self.params)
                 # reconstruct file name forcing new fiber
                 t_infile.reconstruct_filename(self.params,
                                               outext=self.infile.filetype,
@@ -228,10 +228,8 @@ class PolarObj:
             else:
                 t_infile = self.infile
             # construct the filenames from file instances
-            tcorr_file.construct_filename(self.params, infile=t_infile,
-                                          fiber=tfiber)
-            recon_file.construct_filename(self.params, infile=t_infile,
-                                          fiber=tfiber)
+            tcorr_file.construct_filename(infile=t_infile, fiber=tfiber)
+            recon_file.construct_filename(infile=t_infile, fiber=tfiber)
         # ----------------------------------------------------------------------
         # check whether files exist
         if not os.path.exists(tcorr_file.filename):
@@ -288,7 +286,7 @@ class PolarObj:
                                                 self.params['INSTRUMENT'],
                                                 kind='red', fiber=pfiber)
         # get copies of the file definitions (for filling out)
-        ccf_file = cfile.newcopy(recipe=self.recipe)
+        ccf_file = cfile.newcopy(params=self.params)
         # push mask to suffix
         suffix = ccf_file.suffix
         mask_file = os.path.basename(mask_file).replace('.mas', '')
@@ -305,21 +303,20 @@ class PolarObj:
                 # get telluric tcorr file
                 tfile = self.telluprops['TCORR_INST']
                 # copy file (for update)
-                p_infile = tfile.newcopy(recipe=self.recipe)
+                p_infile = tfile.newcopy(params=self.params)
             else:
                 # copy file (for update)
-                p_infile = self.infile.newcopy(recipe=self.recipe)
+                p_infile = self.infile.newcopy(params=self.params)
                 # reconstruct file name forcing new fiber
-                p_infile.reconstruct_filename(self.params,
-                                              outext=self.infile.filetype,
+                p_infile.reconstruct_filename(outext=self.infile.filetype,
                                               fiber=pfiber)
                 p_infile.fiber = pfiber
         else:
             p_infile = self.infile
         # ----------------------------------------------------------------------
         # construct the filename from file instance
-        ccf_file.construct_filename(self.params, infile=p_infile,
-                                    suffix=suffix, fiber=pfiber)
+        ccf_file.construct_filename(infile=p_infile, suffix=suffix,
+                                    fiber=pfiber)
         # deal with no ccf file
         if not os.path.exists(ccf_file.filename):
             return

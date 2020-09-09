@@ -305,9 +305,9 @@ def correction(recipe, params, infile, image, bkgrdfile, return_map=False,
 
 def debug_file(recipe, params, infile, dlist):
     # debug output
-    debug_back = recipe.outputs['DEBUG_BACK'].newcopy(recipe=recipe)
+    debug_back = recipe.outputs['DEBUG_BACK'].newcopy(params=params)
     # construct the filename from file instance
-    debug_back.construct_filename(params, infile=infile, check=False)
+    debug_back.construct_filename(infile=infile, check=False)
     # copy keys from input file
     debug_back.copy_original_keys(infile)
     # add version

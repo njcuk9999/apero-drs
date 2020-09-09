@@ -548,7 +548,7 @@ def get_coefficients(params, recipe, header, fiber, database=None, **kwargs):
                                            return_filename=True)
     # ------------------------------------------------------------------------
     # construct new infile instance and read data/header
-    locofile = locofile.newcopy(filename=locofilepath, recipe=recipe,
+    locofile = locofile.newcopy(filename=locofilepath, params=params,
                                 fiber=usefiber)
     locofile.read_file()
     # -------------------------------------------------------------------------
@@ -735,10 +735,10 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     # Write image order_profile to file
     # ------------------------------------------------------------------
     # get a new copy to the order profile
-    orderpfile = recipe.outputs['ORDERP_FILE'].newcopy(recipe=recipe,
+    orderpfile = recipe.outputs['ORDERP_FILE'].newcopy(params=params,
                                                        fiber=fiber)
     # construct the filename from file instance
-    orderpfile.construct_filename(params, infile=infile)
+    orderpfile.construct_filename(infile=infile)
     # define header keys for output file
     # copy keys from input file
     orderpfile.copy_original_keys(infile)
@@ -774,10 +774,10 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     # Save and record of image of localization with order center
     #     and keywords
     # ------------------------------------------------------------------
-    loco1file = recipe.outputs['LOCO_FILE'].newcopy(recipe=recipe,
+    loco1file = recipe.outputs['LOCO_FILE'].newcopy(params=params,
                                                     fiber=fiber)
     # construct the filename from file instance
-    loco1file.construct_filename(params, infile=infile)
+    loco1file.construct_filename(infile=infile)
     # ------------------------------------------------------------------
     # define header keys for output file
     # copy keys from input file
@@ -825,10 +825,10 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     # ------------------------------------------------------------------
     # Save and record of image of sigma
     # ------------------------------------------------------------------
-    loco2file = recipe.outputs['FWHM_FILE'].newcopy(recipe=recipe,
+    loco2file = recipe.outputs['FWHM_FILE'].newcopy(params=params,
                                                     fiber=fiber)
     # construct the filename from file instance
-    loco2file.construct_filename(params, infile=infile)
+    loco2file.construct_filename(infile=infile)
     # ------------------------------------------------------------------
     # define header keys for output file
     # copy keys from loco1file
@@ -852,10 +852,10 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
         # super impose zeros over the fit in the image
         image5 = image_superimp(image, cent_coeffs)
         # --------------------------------------------------------------
-        loco3file = recipe.outputs['SUP_FILE'].newcopy(recipe=recipe,
+        loco3file = recipe.outputs['SUP_FILE'].newcopy(params=params,
                                                        fiber=fiber)
         # construct the filename from file instance
-        loco3file.construct_filename(params, infile=infile)
+        loco3file.construct_filename(infile=infile)
         # --------------------------------------------------------------
         # define header keys for output file
         # copy keys from loco1file

@@ -139,7 +139,7 @@ def __main__(recipe, params):
         oargs = [params, recipe, infile, recipe.outputs['PP_FILE'], RAW_PREFIX]
         found, outfile = pp.drs_outfile_id(*oargs)
         # construct out filename
-        outfile.construct_filename(params, infile=infile)
+        outfile.construct_filename(infile=infile)
         # if we didn't find the output file we should log this error
         if not found:
             eargs = [outfile.name]

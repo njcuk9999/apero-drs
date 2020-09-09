@@ -346,9 +346,9 @@ def quality_control(params):
 def write_files(params, recipe, flatfile, darkfile, backmap, combine,
                        rawflatfiles, rawdarkfiles, bstats_a, bstats_b, btotal,
                        bad_pixel_map1, qc_params):
-    badpixfile = recipe.outputs['BADPIX'].newcopy(recipe=recipe)
+    badpixfile = recipe.outputs['BADPIX'].newcopy(params=params)
     # construct the filename from file instance
-    badpixfile.construct_filename(params, infile=flatfile)
+    badpixfile.construct_filename(infile=flatfile)
     # ------------------------------------------------------------------
     # define header keys for output file
     # copy keys from input file
@@ -395,9 +395,9 @@ def write_files(params, recipe, flatfile, darkfile, backmap, combine,
     # ----------------------------------------------------------------------
     # Save background map file
     # ----------------------------------------------------------------------
-    backmapfile = recipe.outputs['BACKMAP'].newcopy(recipe=recipe)
+    backmapfile = recipe.outputs['BACKMAP'].newcopy(params=params)
     # construct the filename from file instance
-    backmapfile.construct_filename(params, infile=flatfile)
+    backmapfile.construct_filename(infile=flatfile)
     # ------------------------------------------------------------------
     # define header keys for output file (copy of badpixfile)
     backmapfile.copy_hdict(badpixfile)

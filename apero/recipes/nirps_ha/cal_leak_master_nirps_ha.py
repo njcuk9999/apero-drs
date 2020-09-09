@@ -126,7 +126,7 @@ def __main__(recipe, params):
                                     KW_DPRTYPE=filetype)
         # create infiles
         for filename in files:
-            infile = darkfpfile.newcopy(filename=filename, recipe=recipe)
+            infile = darkfpfile.newcopy(filename=filename, params=params)
             infile.read_file()
             infiles.append(infile)
             rawfiles.append(infile.basename)

@@ -339,10 +339,10 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     # Store Blaze in file
     # --------------------------------------------------------------
     # get a new copy of the blaze file
-    blazefile = recipe.outputs['BLAZE_FILE'].newcopy(recipe=recipe,
+    blazefile = recipe.outputs['BLAZE_FILE'].newcopy(params=params,
                                                      fiber=fiber)
     # construct the filename from file instance
-    blazefile.construct_filename(params, infile=infile)
+    blazefile.construct_filename(infile=infile)
     # define header keys for output file
     # copy keys from input file
     blazefile.copy_original_keys(infile)
@@ -421,10 +421,10 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     # Store Flat-field in file
     # --------------------------------------------------------------
     # get a new copy of the blaze file
-    flatfile = recipe.outputs['FLAT_FILE'].newcopy(recipe=recipe,
+    flatfile = recipe.outputs['FLAT_FILE'].newcopy(params=params,
                                                    fiber=fiber)
     # construct the filename from file instance
-    flatfile.construct_filename(params, infile=infile)
+    flatfile.construct_filename(infile=infile)
     # copy header from blaze file
     flatfile.copy_hdict(blazefile)
     # set output key
@@ -443,10 +443,10 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     # Store E2DSLL in file
     # --------------------------------------------------------------
     # get a new copy of the blaze file
-    e2dsllfile = recipe.outputs['E2DSLL_FILE'].newcopy(recipe=recipe,
+    e2dsllfile = recipe.outputs['E2DSLL_FILE'].newcopy(params=params,
                                                        fiber=fiber)
     # construct the filename from file instance
-    e2dsllfile.construct_filename(params, infile=infile)
+    e2dsllfile.construct_filename(infile=infile)
     # copy header from blaze file
     e2dsllfile.copy_hdict(blazefile)
     # set output key

@@ -94,14 +94,14 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
     # get most recent file time
     recent_filetime = drs_path.get_most_recent(transfiles)
     # get new instances of ABSO_NPY files
-    abso_npy = recipe.outputs['ABSO_NPY'].newcopy(recipe=recipe, fiber=fiber)
-    abso1_npy = recipe.outputs['ABSO1_NPY'].newcopy(recipe=recipe, fiber=fiber)
+    abso_npy = recipe.outputs['ABSO_NPY'].newcopy(params=params, fiber=fiber)
+    abso1_npy = recipe.outputs['ABSO1_NPY'].newcopy(params=params, fiber=fiber)
     # construct the filename from file instance
     abso_npy_filename = 'tellu_save_{0}.npy'.format(recent_filetime)
-    abso_npy.construct_filename(params, filename=abso_npy_filename,
+    abso_npy.construct_filename(filename=abso_npy_filename,
                                 path=params['DRS_TELLU_DB'])
     abso1_npy_filename = 'tellu_save1_{0}.npy'.format(recent_filetime)
-    abso1_npy.construct_filename(params, filename=abso1_npy_filename,
+    abso1_npy.construct_filename(filename=abso1_npy_filename,
                                 path=params['DRS_TELLU_DB'])
     # noinspection PyBroadException
     try:
@@ -158,9 +158,9 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
         _remove_absonpy_files(params, params['DRS_TELLU_DB'], 'tellu_save1_')
         # write to npy file
         abso_npy.data = abso
-        abso_npy.write_file(params)
+        abso_npy.write_file()
         abso1_npy.data = abso1
-        abso1_npy.write_file(params)
+        abso1_npy.write_file()
     # ----------------------------------------------------------------------
     # use abso1 (water/others exponent) to create a mask for abso
     # ----------------------------------------------------------------------
@@ -729,8 +729,8 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     # Construct fiber file name and read data
     # ------------------------------------------------------------------
     # locate fiber spectrum
-    fiber_infile = infile.newcopy(recipe=recipe)
-    fiber_infile.reconstruct_filename(params, outext=fiber_infile.filetype,
+    fiber_infile = infile.newcopy(params=params)
+    fiber_infile.reconstruct_filename(outext=fiber_infile.filetype,
                                       fiber=fiber)
     # read fiber file
     fiber_infile.read_file()
@@ -901,9 +901,9 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     trans_table = drs_table.make_table(params, columns=columns, values=values)
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    corrfile = recipe.outputs['TELLU_OBJ'].newcopy(recipe=recipe, fiber=fiber)
+    corrfile = recipe.outputs['TELLU_OBJ'].newcopy(params=params, fiber=fiber)
     # construct the filename from file instance
-    corrfile.construct_filename(params, infile=infile)
+    corrfile.construct_filename(infile=infile)
     # ------------------------------------------------------------------
     # copy keys from input file
     corrfile.copy_original_keys(infile)
@@ -1043,10 +1043,10 @@ def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
                                   scwprops, scvprops):
     # ------------------------------------------------------------------
     # get new copy of the corrected s1d_w file
-    sc1dwfile = recipe.outputs['SC1D_W_FILE'].newcopy(recipe=recipe,
+    sc1dwfile = recipe.outputs['SC1D_W_FILE'].newcopy(params=params,
                                                       fiber=fiber)
     # construct the filename from file instance
-    sc1dwfile.construct_filename(params, infile=infile)
+    sc1dwfile.construct_filename(infile=infile)
     # copy header from corrected e2ds file
     sc1dwfile.copy_hdict(corrfile)
     # add output tag
@@ -1066,10 +1066,10 @@ def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
     recipe.add_output_file(sc1dwfile)
     # ------------------------------------------------------------------
     # get new copy of the corrected s1d_v file
-    sc1dvfile = recipe.outputs['SC1D_V_FILE'].newcopy(recipe=recipe,
+    sc1dvfile = recipe.outputs['SC1D_V_FILE'].newcopy(params=params,
                                                       fiber=fiber)
     # construct the filename from file instance
-    sc1dvfile.construct_filename(params, infile=infile)
+    sc1dvfile.construct_filename(infile=infile)
     # copy header from corrected e2ds file
     sc1dvfile.copy_hdict(corrfile)
     # add output tag
@@ -1093,10 +1093,10 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
                           rcwprops, rcvprops):
     # ------------------------------------------------------------------
     # get new copy of the corrected s1d_w file
-    reconfile = recipe.outputs['TELLU_RECON'].newcopy(recipe=recipe,
+    reconfile = recipe.outputs['TELLU_RECON'].newcopy(params=params,
                                                       fiber=fiber)
     # construct the filename from file instance
-    reconfile.construct_filename(params, infile=infile)
+    reconfile.construct_filename(infile=infile)
     # copy header from corrected e2ds file
     reconfile.copy_hdict(corrfile)
     # add output tag
@@ -1111,10 +1111,10 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     recipe.add_output_file(reconfile)
     # ------------------------------------------------------------------
     # get new copy of the corrected s1d_w file
-    rc1dwfile = recipe.outputs['RC1D_W_FILE'].newcopy(recipe=recipe,
+    rc1dwfile = recipe.outputs['RC1D_W_FILE'].newcopy(params=params,
                                                       fiber=fiber)
     # construct the filename from file instance
-    rc1dwfile.construct_filename(params, infile=infile)
+    rc1dwfile.construct_filename(infile=infile)
     # copy header from corrected e2ds file
     rc1dwfile.copy_hdict(corrfile)
     # add output tag
@@ -1134,10 +1134,10 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     recipe.add_output_file(rc1dwfile)
     # ------------------------------------------------------------------
     # get new copy of the corrected s1d_v file
-    rc1dvfile = recipe.outputs['RC1D_V_FILE'].newcopy(recipe=recipe,
+    rc1dvfile = recipe.outputs['RC1D_V_FILE'].newcopy(params=params,
                                                       fiber=fiber)
     # construct the filename from file instance
-    rc1dvfile.construct_filename(params, infile=infile)
+    rc1dvfile.construct_filename(infile=infile)
     # copy header from corrected e2ds file
     rc1dvfile.copy_hdict(corrfile)
     # add output tag

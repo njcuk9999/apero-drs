@@ -86,9 +86,9 @@ def extract_thermal_files(params, recipe, extname, thermalfile, **kwargs):
     # loop around fibers
     for fiber in thermal_outputs:
         # get copy file instance
-        thermal_file = thoutinst.newcopy(recipe=recipe, fiber=fiber)
+        thermal_file = thoutinst.newcopy(params=params, fiber=fiber)
         # construct the filename from e2ds file (it is the same file)
-        thermal_file.construct_filename(params, infile=thermalfile)
+        thermal_file.construct_filename(infile=thermalfile)
         # copy header and hdict
         thermal_file.hdict = thermal_outputs[fiber].get_header()
         thermal_file.header = thermal_outputs[fiber].get_header()
@@ -208,9 +208,9 @@ def extract_files(params, recipe, infile, outfile, always_extract,
     # loop around fiber types
     for fiber in fiber_types:
         # get copy file instance
-        e2ds_file = outfile.newcopy(recipe=recipe, fiber=fiber)
+        e2ds_file = outfile.newcopy(params=params, fiber=fiber)
         # construct the filename from file instance
-        e2ds_file.construct_filename(params, infile=infile)
+        e2ds_file.construct_filename(infile=infile)
         # check whether e2ds file exists
         if os.path.exists(e2ds_file.filename):
             exists = exists and True

@@ -537,15 +537,15 @@ def remove_telluric_domain(params, recipe, infile, fiber, **kwargs):
     e2dsinst = drs_startup.get_file_definition(ext_type, params['INSTRUMENT'],
                                                kind='red')
     # construct e2ds file
-    e2dsfile = e2dsinst.newcopy(recipe=recipe, fiber=fiber)
+    e2dsfile = e2dsinst.newcopy(params=params, fiber=fiber)
     e2dsfile.set_filename(e2dsfilename)
     # get recon file
     reconinst = drs_startup.get_file_definition('TELLU_RECON',
                                                 params['INSTRUMENT'],
                                                 kind='red')
     # construct recon file
-    reconfile = reconinst.newcopy(recipe=recipe, fiber=fiber)
-    reconfile.construct_filename(params, infile=e2dsfile)
+    reconfile = reconinst.newcopy(params=params, fiber=fiber)
+    reconfile.construct_filename(infile=e2dsfile)
     # check recon file exists
     if not os.path.exists(reconfile.filename):
         eargs = [infile.filename, reconfile.name, e2dsfile.filename]
@@ -619,7 +619,7 @@ def locate_reference_file(params, recipe, infile):
     else:
         instance = infile
     # get pp file
-    ppfile = instance.intype.newcopy(recipe=recipe)
+    ppfile = instance.intype.newcopy(params=params)
     ppfile.set_filename(pp_filename)
     # check that ppfile is a ppfile
     if ppfile.suffix != '_pp':
@@ -627,9 +627,9 @@ def locate_reference_file(params, recipe, infile):
         eargs = [infile.name, ppfile.name, infile.filename, func_name]
         WLOG(params, 'error', TextEntry('00-020-00003', args=eargs))
     # make a new copy of this instance
-    outfile = instance.newcopy(recipe=recipe, fiber=reffiber)
+    outfile = instance.newcopy(params=params, fiber=reffiber)
     # construct filename
-    outfile.construct_filename(params, infile=ppfile)
+    outfile.construct_filename(infile=ppfile)
     # read outfile
     outfile.read_file()
     # return outfile
@@ -1323,7 +1323,7 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     # archive ccf to fits file
     # ----------------------------------------------------------------------
     # get a new copy of the ccf file
-    ccf_file = recipe.outputs['CCF_RV'].newcopy(recipe=recipe, fiber=fiber)
+    ccf_file = recipe.outputs['CCF_RV'].newcopy(params=params, fiber=fiber)
     # push mask to suffix
     suffix = ccf_file.suffix
     mask_file = os.path.basename(props['CCF_MASK']).replace('.mas', '')
@@ -1332,7 +1332,7 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     else:
         suffix = '_ccf_{0}'.format(mask_file).lower()
     # construct the filename from file instance
-    ccf_file.construct_filename(params, infile=infile, suffix=suffix)
+    ccf_file.construct_filename(infile=infile, suffix=suffix)
     # define header keys for output file
     # copy keys from input file
     ccf_file.copy_original_keys(infile)

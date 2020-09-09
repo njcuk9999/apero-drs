@@ -19,7 +19,7 @@ from collections import OrderedDict
 from apero.base import base
 from apero import lang
 from apero.core import constants
-from apero.core import drs_log
+from apero.core.core import drs_log
 from apero.core import math as mp
 from apero.io import drs_path
 
