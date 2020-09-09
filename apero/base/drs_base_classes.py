@@ -8,11 +8,14 @@ Created on 2020-08-2020-08-31 16:07
 @author: cook
 """
 from collections import UserDict
+import importlib
 from typing import Any, Union
 
 from apero.base import base
 from apero.base import drs_misc
 from apero.base import drs_text
+from apero.base import drs_exceptions
+
 
 # =============================================================================
 # Define variables
@@ -26,6 +29,8 @@ __date__ = base.__date__
 __release__ = base.__release__
 # get display function
 display_func = drs_misc.display_func
+# get exceptions
+DrsCodedException = drs_exceptions.DrsCodedException
 
 
 # =============================================================================
@@ -388,6 +393,124 @@ class ListDict(UserDict):
         :return: str, the string representation
         """
         return self.__str__()
+
+
+class ImportModule:
+    def __init__(self, name: str, path: str, mod: Any = None):
+        """
+        Constructor of the import module class - this is how we can keep
+        a module open (and not re-import it) but also pickle it when required
+
+        :param name: str, the name of the module to be imported
+        :param path: str, the path to the module
+        """
+        # set class name
+        self.class_name = 'ImportModule'
+        # set function name
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
+        # set the name of the module to be imported
+        self.name = name
+        # set the path to the module to be imported
+        self.path = path
+        # ---------------------------------------------------------------------
+        # deal with mod
+        if self.mod is not None:
+            # set whether module has be imported
+            self.modset = True
+            # set storage for the module
+            self.mod = mod
+        else:
+            # set whether module has be imported
+            self.modset = False
+            # set storage for the module
+            self.mod = None
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set function name
+        _ = display_func(None, '__getstate__', __NAME__, self.class_name)
+        # what to exclude from state
+        exclude = ['mod']
+        # need a dictionary for pickle
+        state = dict()
+        for key, item in self.__dict__:
+            if key not in exclude:
+                state[key] = item
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+
+        :return:
+        """
+        # set function name
+        _ = display_func(None, '__setstate__', __NAME__, self.class_name)
+        # update dict with state
+        self.__dict__.update(state)
+        # now re-get module (if module is set)
+        if self.modset:
+            self.get()
+
+    def __repr__(self) -> str:
+        """
+        String representation of import module class
+        :return:
+        """
+        return 'ImportMod[{0}]'.format(self.name)
+
+    def __str__(self) -> str:
+        """
+        String representation of import module class
+        :return:
+        """
+        return self.__repr__()
+
+    def get(self) -> Any:
+        """
+        Import the module using importlib.import_module
+        :return:
+        """
+        # set function name
+        func_name = display_func(None, 'get', __NAME__, self.class_name)
+        # if we already have the module set then just return it
+        if self.modset:
+            return self.mod
+        else:
+            # try to import the module
+            try:
+                # import the module
+                self.mod = importlib.import_module(self.path)
+                # remember that we have imported the module
+                self.modset = True
+                # return module
+                return self.mod
+            except Exception as e:
+                # forget if we have ever imported the module
+                self.modset = False
+                # set exception arguments
+                eargs = [self.name, self.path, func_name, type(e), str(e), '']
+                # raise an exception
+                raise DrsCodedException('00-000-00003', level='error',
+                                        targs=eargs, func_name=func_name)
+
+    def copy(self) -> 'ImportModule':
+        """
+        Copy the import module class
+        :return:
+        """
+        module = ImportModule(self.name, self.path)
+        # check if module is set
+        if self.modset:
+            module.mod = self.mod
+        # return import module instances
+        return module
 
 
 # =============================================================================

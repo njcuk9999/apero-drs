@@ -176,7 +176,7 @@ def __main__(recipe, params):
             emsg = 'No files found for {0} (fiber = {1}) \n\t Function = {2}'
             WLOG(params, 'error', emsg.format(*eargs))
         # make a new copy of infile
-        infile = drsfile.newcopy(filename=files[-1], recipe=recipe)
+        infile = drsfile.newcopy(filename=files[-1], params=params)
         # read file
         infile.read_file()
         # append to storage
@@ -324,9 +324,9 @@ def __main__(recipe, params):
     # write pp out file
     # ----------------------------------------------------------------------
     # get a new copy of the out file
-    out_pp_file = exp_pp_file.newcopy(recipe=recipe)
+    out_pp_file = exp_pp_file.newcopy(params=params)
     # construct filename
-    out_pp_file.construct_filename(params, infile=ref_infile)
+    out_pp_file.construct_filename(infile=ref_infile)
     # copy header from ref file
     out_pp_file.copy_original_keys(ref_infile)
     # add header keys
@@ -344,9 +344,9 @@ def __main__(recipe, params):
     # write raw out file
     # ----------------------------------------------------------------------
     # get a new copy of the out file
-    out_raw_file = exp_raw_file.newcopy(recipe=recipe)
+    out_raw_file = exp_raw_file.newcopy(params=params)
     # construct filename
-    out_raw_file.construct_filename(params, infile=ref_infile)
+    out_raw_file.construct_filename(infile=ref_infile)
     # copy header from ref file
     out_raw_file.copy_original_keys(ref_infile)
     # add header keys

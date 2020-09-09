@@ -140,10 +140,10 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     # find recipe
     recipe, recipemod = find_recipe(name, instrument, mod=recipemod)
     # set file module and recipe module
-    recipe.filemod = filemod
+    recipe.filemod = filemod.copy()
     recipe.recipemod = recipemod
     # clean params
-    recipe.drs_params = ParamDict()
+    recipe.params = ParamDict()
     # set recipemod
     recipe.recipemod = recipemod
     # quietly load DRS parameters (for setup)
@@ -156,10 +156,10 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     else:
         drsgroup = None
     # set DRS_GROUP
-    recipe.drs_params.set('DRS_GROUP', drsgroup, source=func_name)
-    recipe.drs_params.set('DRS_RECIPE_KIND', recipe.kind, source=func_name)
+    recipe.params.set('DRS_GROUP', drsgroup, source=func_name)
+    recipe.params.set('DRS_RECIPE_KIND', recipe.kind, source=func_name)
     # set master
-    recipe.drs_params.set('IS_MASTER', recipe.master, source=func_name)
+    recipe.params.set('IS_MASTER', recipe.master, source=func_name)
     # -------------------------------------------------------------------------
     # need to set debug mode now
     recipe = _set_debug_from_input(recipe, fkwargs)
@@ -173,10 +173,10 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     # display (print only no log)
     if (not quiet) and ('instrument' not in recipe.args):
         # display title
-        _display_drs_title(recipe.drs_params, drsgroup, printonly=True)
+        _display_drs_title(recipe.params, drsgroup, printonly=True)
     # -------------------------------------------------------------------------
     # display loading message
-    TLOG(recipe.drs_params, '', 'Loading Arguments. Please wait...')
+    TLOG(recipe.params, '', 'Loading Arguments. Please wait...')
     # -------------------------------------------------------------------------
     # interface between "recipe", "fkwargs" and command line (via argparse)
     recipe.recipe_setup(fkwargs)
@@ -187,12 +187,12 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     # WLOG.update_param_dict(recipe.drs_params)
     # -------------------------------------------------------------------------
     # clear loading message
-    TLOG(recipe.drs_params, '', '')
+    TLOG(recipe.params, '', '')
     # -------------------------------------------------------------------------
     # need to deal with instrument set in input arguments
-    if 'INSTRUMENT' in recipe.drs_params['INPUTS']:
+    if 'INSTRUMENT' in recipe.params['INPUTS']:
         # set instrumet
-        instrument = recipe.drs_params['INPUTS']['INSTRUMENT']
+        instrument = recipe.params['INPUTS']['INSTRUMENT']
         # update the instrument
         recipe.instrument = instrument
         # quietly load DRS parameters (for setup)
@@ -202,8 +202,8 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
         recipe.filemod = pconst.FILEMOD()
         recipe.recipemod = pconst.RECIPEMOD()
         # set DRS_GROUP
-        recipe.drs_params.set('DRS_GROUP', drsgroup, source=func_name)
-        recipe.drs_params.set('DRS_RECIPE_KIND', recipe.kind, source=func_name)
+        recipe.params.set('DRS_GROUP', drsgroup, source=func_name)
+        recipe.params.set('DRS_RECIPE_KIND', recipe.kind, source=func_name)
         # need to set debug mode now
         recipe = _set_debug_from_input(recipe, fkwargs)
         # need to see if we are forcing directories
@@ -214,10 +214,10 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
         # display
         if not quiet:
             # display title
-            _display_drs_title(recipe.drs_params, printonly=True)
+            _display_drs_title(recipe.params, printonly=True)
         # -------------------------------------------------------------------------
         # display loading message
-        TLOG(recipe.drs_params, '', 'Loading Arguments. Please wait...')
+        TLOG(recipe.params, '', 'Loading Arguments. Please wait...')
         # -------------------------------------------------------------------------
         # interface between "recipe", "fkwargs" and command line (via argparse)
         recipe.recipe_setup(fkwargs)
@@ -226,28 +226,28 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
         recipe.option_manager()
         # -------------------------------------------------------------------------
         # clear loading message
-        TLOG(recipe.drs_params, '', '')
+        TLOG(recipe.params, '', '')
     # -------------------------------------------------------------------------
     # display
     if not quiet:
         # display initial parameterisation
-        if recipe.drs_params['DRS_DEBUG'] == 42:
-            _display_ee(recipe.drs_params)
+        if recipe.params['DRS_DEBUG'] == 42:
+            _display_ee(recipe.params)
         # display initial parameterisation
-        _display_initial_parameterisation(recipe.drs_params, printonly=True)
+        _display_initial_parameterisation(recipe.params, printonly=True)
         # print out of the parameters used
         _display_run_time_arguments(recipe, fkwargs, printonly=True)
     # -------------------------------------------------------------------------
     # We must have DRS_DATA_MSG_FULL (the full path for this recipe)
-    drs_data_msg_full = drs_log.get_drs_data_msg(recipe.drs_params, reset=True,
+    drs_data_msg_full = drs_log.get_drs_data_msg(recipe.params, reset=True,
                                                  group=drsgroup)
-    recipe.drs_params['DRS_DATA_MSG_FULL'] = drs_data_msg_full
-    recipe.drs_params.set_source('DRS_DATA_MSG_FULL', func_name)
+    recipe.params['DRS_DATA_MSG_FULL'] = drs_data_msg_full
+    recipe.params.set_source('DRS_DATA_MSG_FULL', func_name)
     # -------------------------------------------------------------------------
     # update params in log
-    WLOG.pin = recipe.drs_params.copy()
+    WLOG.pin = recipe.params.copy()
     # copy params
-    params = recipe.drs_params.copy()
+    params = recipe.params.copy()
     # -------------------------------------------------------------------------
     # deal with setting night name, inputdir and outputdir
     params['INPATH'] = recipe.get_input_dir(force=recipe.force_dirs[0])
@@ -288,17 +288,17 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     # lock parameter dictionary (cannot add items after this point)
     params.lock()
     # update params in log / and recipes after locking
-    recipe.drs_params = params.copy()
+    recipe.params = params.copy()
     WLOG.pin = params.copy()
     # -------------------------------------------------------------------------
     # push display into log (before was print only)
     if not quiet:
         # display title
-        _display_drs_title(recipe.drs_params, drsgroup, logonly=True)
+        _display_drs_title(recipe.params, drsgroup, logonly=True)
         # display initial parameterisation
-        _display_initial_parameterisation(recipe.drs_params, logonly=True)
+        _display_initial_parameterisation(recipe.params, logonly=True)
         # display system info (log only)
-        _display_system_info(recipe.drs_params, logonly=True)
+        _display_system_info(recipe.params, logonly=True)
         # print out of the parameters used
         _display_run_time_arguments(recipe, fkwargs, logonly=True)
     # -------------------------------------------------------------------------
@@ -599,7 +599,7 @@ def main_end_script(params, llmain, recipe, success, outputs='reduced',
         # add the logger messages to params
         params = WLOG.output_param_dict(params)
         # update params in log / and recipes after locking
-        recipe.drs_params = params.copy()
+        recipe.params = params.copy()
         WLOG.pin = params.copy()
         # lock parameter dictionary (cannot add items after this point)
         params.lock()
@@ -1120,7 +1120,7 @@ def _display_run_time_arguments(recipe, fkwargs=None, printonly=False,
     """
     log_strings = []
     # get parameters
-    params = recipe.drs_params
+    params = recipe.params
     # get special keys
     skeys = _get_recipe_keys(recipe.specialargs, remove_prefix='-',
                              add=['--help', '-h'])
@@ -1497,7 +1497,7 @@ def find_recipe(name='None', instrument='None', mod=None):
             found_recipe = recipe
 
     if instrument is None and found_recipe is None:
-        empty = drs_recipe.DrsRecipe(name='Empty', instrument=None)
+        empty = drs_recipe.DrsRecipe(name='Empty', instrument='None')
         return empty, None
     if found_recipe is None:
         # may not have access to this
@@ -1725,8 +1725,8 @@ def _set_debug_from_input(recipe, fkwargs):
     # set DRS_DEBUG
     if debug_mode is not None:
         # set the drs debug level to 1
-        recipe.drs_params['DRS_DEBUG'] = debug_mode
-        recipe.drs_params.set_source('DRS_DEBUG', func_name)
+        recipe.params['DRS_DEBUG'] = debug_mode
+        recipe.params.set_source('DRS_DEBUG', func_name)
     # return recipe
     return recipe
 
@@ -1757,7 +1757,7 @@ def _set_force_dirs(recipe, fkwargs):
                 # Setting {0}={1} from sys.argv[{2}] ({3})
                 dargs = ['recipe.inputdir', indir, dirkey, '=']
                 dmsg = TextEntry('90-008-00013', args=dargs)
-                WLOG(recipe.drs_params, 'debug', dmsg)
+                WLOG(recipe.params, 'debug', dmsg)
             else:
                 pos = it
                 indir = None
@@ -1769,7 +1769,7 @@ def _set_force_dirs(recipe, fkwargs):
         # Setting {0}={1} from sys.argv[{2}] ({3})
         dargs = ['recipe.inputdir', indir, dirkey, 'white-space']
         dmsg = TextEntry('90-008-00013', args=dargs)
-        WLOG(recipe.drs_params, 'debug', dmsg)
+        WLOG(recipe.params, 'debug', dmsg)
 
     # check fkwargs
     for kwarg in fkwargs:
@@ -1778,7 +1778,7 @@ def _set_force_dirs(recipe, fkwargs):
             # Setting {0}={1} from fkwargs[{2}]
             dargs = ['recipe.inputdir', indir, kwarg]
             dmsg = TextEntry('90-008-00014', args=dargs)
-            WLOG(recipe.drs_params, 'debug', dmsg)
+            WLOG(recipe.params, 'debug', dmsg)
 
     # set recipe.inputdir
     if indir is not None:
@@ -1802,7 +1802,7 @@ def _set_force_dirs(recipe, fkwargs):
                 # Setting {0}={1} from sys.argv[{2}] ({3})
                 dargs = ['recipe.outputdir', indir, dirkey, '=']
                 dmsg = TextEntry('90-008-00013', args=dargs)
-                WLOG(recipe.drs_params, 'debug', dmsg)
+                WLOG(recipe.params, 'debug', dmsg)
             else:
                 pos = it
                 outdir = None
@@ -1814,7 +1814,7 @@ def _set_force_dirs(recipe, fkwargs):
         # Setting {0}={1} from sys.argv[{2}] ({3})
         dargs = ['recipe.outputdir', indir, dirkey, 'white-space']
         dmsg = TextEntry('90-008-00013', args=dargs)
-        WLOG(recipe.drs_params, 'debug', dmsg)
+        WLOG(recipe.params, 'debug', dmsg)
     # check fkwargs
     for kwarg in fkwargs:
         if 'force_outdir' in kwarg:
@@ -1822,7 +1822,7 @@ def _set_force_dirs(recipe, fkwargs):
             # Setting {0}={1} from fkwargs[{2}]
             dargs = ['recipe.outputdir', indir, kwarg]
             dmsg = TextEntry('90-008-00014', args=dargs)
-            WLOG(recipe.drs_params, 'debug', dmsg)
+            WLOG(recipe.params, 'debug', dmsg)
     # set recipe.outputdir
     if outdir is not None:
         if os.path.exists(os.path.abspath(outdir)):

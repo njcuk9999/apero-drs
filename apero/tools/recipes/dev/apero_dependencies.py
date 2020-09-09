@@ -218,7 +218,14 @@ def get_import_statements(params, files):
             WLOG(params, '', '=' * 60)
             stats = statsdict2[filename]
             for stat in stats:
-                WLOG(params, '', '\t{0}: {1}'.format(stat, stats[stat]))
+                lines_of_code = stats['total lines of code']
+                lines_of_comment = stats['total lines of comments']
+                # yellow message if code > comments
+                if lines_of_code > lines_of_comment:
+                    WLOG(params, '', '\t{0}: {1}'.format(stat, stats[stat]),
+                         colour='yellow')
+                else:
+                    WLOG(params, '', '\t{0}: {1}'.format(stat, stats[stat]))
 
     # return
     return importslist, statsdict, infodict

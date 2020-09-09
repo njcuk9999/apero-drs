@@ -137,7 +137,7 @@ def __main__(recipe, params):
     # Have to update nightname while locked for all param dicts (do not copy)
     #     Note: do not use 'uparamdicts' unless you know what you are doing.
     ukwargs = dict(key='NIGHTNAME', value=nightname, source=mainname)
-    constants.uparamdicts(params, recipe.drs_params, WLOG.pin, **ukwargs)
+    constants.uparamdicts(params, recipe.params, WLOG.pin, **ukwargs)
 
     # ------------------------------------------------------------------
     # Quality control

@@ -766,8 +766,10 @@ def generate_consts(modulepath: str) -> GenConsts:
     """
     # set function name
     func_name = display_func(None, 'generate_consts', __NAME__)
-    # import module
-    mod = import_module(func_name, modulepath)
+    # get the import module class
+    module = import_module(func_name, modulepath)
+    # get the correct module for this class
+    mod = module.get()
     # get keys and values
     keys, values = list(mod.__dict__.keys()), list(mod.__dict__.values())
     # storage for all values
@@ -790,7 +792,7 @@ def generate_consts(modulepath: str) -> GenConsts:
 
 
 def import_module(func: str, modulepath: str, full: bool = False,
-                  quiet: bool = False) -> ModuleType:
+                  quiet: bool = False) -> base_class.ImportModule:
     """
     Import a module given a module path
 
@@ -831,7 +833,12 @@ def import_module(func: str, modulepath: str, full: bool = False,
             del sys.modules[modfile]
         if not full:
             sys.path.insert(0, moddir)
-        mod = importlib.import_module(modfile)
+        # get name for import module class
+        name = modfile.split('.')[-1]
+        # construct class and get module
+        mod = base_class.ImportModule(name, modfile)
+        mod.get()
+        # remove mod directory from sys.path (if not full)
         if not full:
             sys.path.remove(moddir)
         # return

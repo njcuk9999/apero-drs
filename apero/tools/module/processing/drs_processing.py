@@ -18,8 +18,10 @@ from astropy.table import Table
 from collections import OrderedDict
 import multiprocessing
 from multiprocessing import Pool, Process, Manager, Event
+from typing import Tuple, Union
 
 from apero.base import base
+from apero.base import drs_base_classes as base_class
 from apero.base import drs_exceptions
 from apero.base import drs_text
 from apero.core.core import drs_log
@@ -93,7 +95,9 @@ SKIP_REMOVE_ARGS = ['--skip', '--program', '--debug', '--plot', '--master']
 # Define classes
 # =============================================================================
 class Run:
-    def __init__(self, params, runstring, mod=None, priority=0, inrecipe=None):
+    def __init__(self, params, runstring,
+                 mod: Union[base_class.ImportModule, None] = None,
+                 priority=0, inrecipe=None):
         self.params = params
         self.pconst = constants.pload(params['INSTRUMENT'])
         self.runstring = runstring
@@ -103,7 +107,10 @@ class Run:
         self.runname = None
         self.skipname = None
         self.recipe = inrecipe
-        self.module = mod
+        if self.module is not None:
+            self.module = mod.copy()
+        else:
+            self.module = None
         self.master = False
         self.recipemod = None
         self.kwargs = dict()
@@ -169,7 +176,8 @@ class Run:
                     else:
                         self.kwargs[kwargname] = self.kwargs[kwargname][0]
 
-    def find_recipe(self, mod=None):
+    def find_recipe(self, mod=None) -> Tuple[drs_recipe.DrsRecipe,
+                                       base_class.ImportModule]:
         """
 
         :param mod: Module
@@ -1364,7 +1372,7 @@ def _check_for_files(params, runobj):
             infiledef = recipe.filemod.out_file
         # ------------------------------------------------------------------
         # add required properties to infile
-        infile = infiledef.newcopy(recipe=recipe)
+        infile = infiledef.newcopy(params=params)
         infile.filename = os.path.join(inpath, filename)
         infile.basename = basename
         # append to infiles
@@ -1387,14 +1395,14 @@ def _check_for_files(params, runobj):
             else:
                 infile.filetype = output.intype.filetype
             # define outfile
-            outfile = output.newcopy(recipe=recipe)
+            outfile = output.newcopy(params=params)
             # --------------------------------------------------------------
             # check whether we need to add fibers
             if output.fibers is not None:
                 # loop around fibers
                 for fiber in output.fibers:
                     # construct file name
-                    outfile.construct_filename(params, infile=infile,
+                    outfile.construct_filename(infile=infile,
                                                fiber=fiber, path=outpath,
                                                nightname=nightname, check=False)
                     # get outfilename absolute path
@@ -1407,7 +1415,7 @@ def _check_for_files(params, runobj):
                         outfiles.append(outfilename)
             else:
                 # construct file name
-                outfile.construct_filename(params, infile=infile, path=outpath,
+                outfile.construct_filename(infile=infile, path=outpath,
                                            nightname=nightname, check=False)
                 # get outfilename absolute path
                 outfilename = outfile.filename
@@ -1507,7 +1515,7 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
         if srecipe.recipemod is None:
             srecipe.recipemod = recipemod
         if srecipe.filemod is None:
-            srecipe.filemod = filemod
+            srecipe.filemod = filemod.copy()
         # ------------------------------------------------------------------
         # copy table
         # ------------------------------------------------------------------
@@ -1644,7 +1652,7 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
         # get fiber filter
         allowedfibers = srecipe.allowedfibers
         # get runs for this recipe
-        sruns = srecipe.generate_runs(params, ftable, filters=filters,
+        sruns = srecipe.generate_runs(ftable, filters=filters,
                                       allowedfibers=allowedfibers)
         # ------------------------------------------------------------------
         # if we are in trigger mode we need to stop when we have no

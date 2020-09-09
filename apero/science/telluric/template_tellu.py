@@ -84,7 +84,7 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
         if os.path.basename(filename) in vbasenames:
             continue
         # get new copy of file definition
-        infile = reffile.newcopy(recipe=recipe, fiber=fiber)
+        infile = reffile.newcopy(params=params, fiber=fiber)
         # set filename
         infile.set_filename(filename)
         # read header only
@@ -334,7 +334,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
         if os.path.basename(filename) in vbasenames:
             continue
         # get new copy of file definition
-        infile = reffile.newcopy(recipe=recipe, fiber=fiber)
+        infile = reffile.newcopy(params=params, fiber=fiber)
         # set filename
         infile.set_filename(filename)
         # read header only
@@ -600,10 +600,10 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # write the template file (TELLU_TEMP)
     # ------------------------------------------------------------------
     # get copy of instance of file
-    template_file = recipe.outputs['TELLU_TEMP'].newcopy(recipe=recipe,
+    template_file = recipe.outputs['TELLU_TEMP'].newcopy(params=params,
                                                          fiber=fiber)
     # construct the filename from file instance
-    template_file.construct_filename(params, infile=infile, suffix=suffix)
+    template_file.construct_filename(infile=infile, suffix=suffix)
     # ------------------------------------------------------------------
     # copy keys from input file
     template_file.copy_original_keys(infile, exclude_groups='wave')
@@ -635,10 +635,10 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # ------------------------------------------------------------------
     # write the big cube file
     # ------------------------------------------------------------------
-    bigcubefile = recipe.outputs['TELLU_BIGCUBE'].newcopy(recipe=recipe,
+    bigcubefile = recipe.outputs['TELLU_BIGCUBE'].newcopy(params=params,
                                                           fiber=fiber)
     # construct the filename from file instance
-    bigcubefile.construct_filename(params, infile=infile, suffix=suffix)
+    bigcubefile.construct_filename(infile=infile, suffix=suffix)
     # copy header from corrected e2ds file
     bigcubefile.copy_hdict(bigcubefile)
     # add output tag
@@ -655,10 +655,10 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # ------------------------------------------------------------------
     # write the big cube 0 file
     # ------------------------------------------------------------------
-    bigcubefile0 = recipe.outputs['TELLU_BIGCUBE0'].newcopy(recipe=recipe,
+    bigcubefile0 = recipe.outputs['TELLU_BIGCUBE0'].newcopy(params=params,
                                                             fiber=fiber)
     # construct the filename from file instance
-    bigcubefile0.construct_filename(params, infile=infile, suffix=suffix)
+    bigcubefile0.construct_filename(infile=infile, suffix=suffix)
     # copy header from corrected e2ds file
     bigcubefile0.copy_hdict(bigcubefile0)
     # add output tag
@@ -705,10 +705,10 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     # write the s1d template file (TELLU_TEMP)
     # ------------------------------------------------------------------
     # get copy of instance of file
-    template_file = recipe.outputs['TELLU_TEMP_S1D'].newcopy(recipe=recipe,
+    template_file = recipe.outputs['TELLU_TEMP_S1D'].newcopy(params=params,
                                                              fiber=fiber)
     # construct the filename from file instance
-    template_file.construct_filename(params, infile=infile, suffix=suffix)
+    template_file.construct_filename(infile=infile, suffix=suffix)
     # copy keys from input file
     template_file.copy_original_keys(infile, exclude_groups='wave')
     # add wave keys
@@ -739,10 +739,10 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     # ------------------------------------------------------------------
     # write the big cube file
     # ------------------------------------------------------------------
-    bigcubefile = recipe.outputs['TELLU_BIGCUBE_S1D'].newcopy(recipe=recipe,
+    bigcubefile = recipe.outputs['TELLU_BIGCUBE_S1D'].newcopy(params=params,
                                                               fiber=fiber)
     # construct the filename from file instance
-    bigcubefile.construct_filename(params, infile=infile, suffix=suffix)
+    bigcubefile.construct_filename(infile=infile, suffix=suffix)
     # copy header from corrected e2ds file
     bigcubefile.copy_hdict(bigcubefile)
     # add output tag

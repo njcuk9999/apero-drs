@@ -154,9 +154,9 @@ def __main__(recipe, params):
         # make e2ds files
         for fiber in fiber_types:
             # get copy file instance
-            e2ds_file = E2DSFF.newcopy(recipe=recipe, fiber=fiber)
+            e2ds_file = E2DSFF.newcopy(params=params, fiber=fiber)
             # construct the filename from file instance
-            e2ds_file.construct_filename(params, infile=ppfile)
+            e2ds_file.construct_filename(infile=ppfile)
             # check whether e2ds file exists
             if os.path.exists(e2ds_file.filename):
                 # add to storage (for existing fiber)

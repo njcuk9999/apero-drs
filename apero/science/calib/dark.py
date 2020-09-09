@@ -319,7 +319,7 @@ def construct_master_dark(params, recipe, dark_table, **kwargs):
     infile = drs_startup.get_file_definition(filetype, params['INSTRUMENT'],
                                              kind='tmp')
     # construct new infile instance and read data
-    infile = infile.newcopy(filename=filenames[lastpos], recipe=recipe)
+    infile = infile.newcopy(filename=filenames[lastpos], params=params)
     infile.read_file()
     # -------------------------------------------------------------------------
     # return master dark and the reference file
@@ -357,9 +357,9 @@ def master_qc(params):
 def write_master_files(params, recipe, reffile, master_dark, dark_table,
                        qc_params):
     # define outfile
-    outfile = recipe.outputs['DARK_MASTER_FILE'].newcopy(recipe=recipe)
+    outfile = recipe.outputs['DARK_MASTER_FILE'].newcopy(params=params)
     # construct the filename from file instance
-    outfile.construct_filename(params, infile=reffile)
+    outfile.construct_filename(infile=reffile)
     # ------------------------------------------------------------------
     # define header keys for output file
     # copy keys from input file
@@ -461,15 +461,15 @@ def dark_write_files(params, recipe, dprtype, infile, combine, rawfiles,
                      dadead_red, med_red, qc_params, image0):
     # define outfile
     if dprtype == 'DARK_DARK_INT':
-        outfile = recipe.outputs['DARK_INT_FILE'].newcopy(recipe=recipe)
+        outfile = recipe.outputs['DARK_INT_FILE'].newcopy(params=params)
     elif dprtype == 'DARK_DARK_TEL':
-        outfile = recipe.outputs['DARK_TEL_FIEL'].newcopy(recipe=recipe)
+        outfile = recipe.outputs['DARK_TEL_FIEL'].newcopy(params=params)
     elif dprtype == 'DARK_DARK_SKY':
-        outfile = recipe.outputs['DARK_SKY_FILE'].newcopy(recipe=recipe)
+        outfile = recipe.outputs['DARK_SKY_FILE'].newcopy(params=params)
     else:
         outfile = None
     # construct the filename from file instance
-    outfile.construct_filename(params, infile=infile)
+    outfile.construct_filename(infile=infile)
     # ------------------------------------------------------------------
     # define header keys for output file
     # copy keys from input file

@@ -1247,10 +1247,10 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
                          props, wprops):
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    tpclfile = recipe.outputs['TELLU_PCLEAN'].newcopy(recipe=recipe,
+    tpclfile = recipe.outputs['TELLU_PCLEAN'].newcopy(params=params,
                                                       fiber=fiber)
     # construct the filename from file instance
-    tpclfile.construct_filename(params, infile=infile)
+    tpclfile.construct_filename(infile=infile)
     # ------------------------------------------------------------------
     # copy keys from input file
     tpclfile.copy_original_keys(infile)
@@ -1398,10 +1398,10 @@ def read_tellu_preclean(params, recipe, infile, fiber):
         return None
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    tpclfile = recipe.outputs['TELLU_PCLEAN'].newcopy(recipe=recipe,
+    tpclfile = recipe.outputs['TELLU_PCLEAN'].newcopy(params=params,
                                                       fiber=fiber)
     # construct the filename from file instance
-    tpclfile.construct_filename(params, infile=infile)
+    tpclfile.construct_filename(infile=infile)
     # ------------------------------------------------------------------
     # only keep basenames
     pclean_basenames = []
@@ -1698,7 +1698,7 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
     # get file definition
     if 'TELLU_CONV' in recipe.outputs:
         # get file definition
-        out_tellu_conv = recipe.outputs['TELLU_CONV'].newcopy(recipe=recipe,
+        out_tellu_conv = recipe.outputs['TELLU_CONV'].newcopy(params=params,
                                                               fiber=fiber)
         # get key
         conv_key = out_tellu_conv.get_dbkey()
@@ -1717,7 +1717,7 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
     if conv_paths is None:
         conv_paths = []
     # construct the filename from file instance
-    out_tellu_conv.construct_filename(params, infile=mprops['WAVEINST'],
+    out_tellu_conv.construct_filename(infile=mprops['WAVEINST'],
                                       path=params['DRS_TELLU_DB'])
     # if our npy file already exists then we just need to read it
     if out_tellu_conv.filename in conv_paths:
@@ -1790,19 +1790,18 @@ def load_tapas_spl(params, recipe, header):
                                                   params['INSTRUMENT'],
                                                   kind='red')
     # make new copy of the file definition
-    out_tellu_tapas = tellu_tapas.newcopy(recipe=recipe)
+    out_tellu_tapas = tellu_tapas.newcopy(params=params)
     # get key
     conv_key = out_tellu_tapas.get_dbkey()
     # load tellu file
     _, conv_paths = load_tellu_file(params, conv_key, header, n_entries='all',
                                     get_image=False, required=False)
     # construct the filename from file instance
-    out_tellu_tapas.construct_filename(params,
-                                       path=params['DRS_TELLU_DB'])
+    out_tellu_tapas.construct_filename(path=params['DRS_TELLU_DB'])
     # ----------------------------------------------------------------------
     # if our npy file already exists then we just need to read it
     if (conv_paths is not None) and (out_tellu_tapas.filename in conv_paths):
-        out_tellu_tapas.read_file(params)
+        out_tellu_tapas.read_file()
         # push into arrays
         tmp_tapas = out_tellu_tapas.get_data(copy=True)
         tapas_wave = tmp_tapas[0]
@@ -1833,7 +1832,7 @@ def load_tapas_spl(params, recipe, header):
         WLOG(params, '', TextEntry('40-019-00047', args=[args]))
         # save to disk
         out_tellu_tapas.data = tmp_tapas
-        out_tellu_tapas.write_file(params)
+        out_tellu_tapas.write_file()
         # ------------------------------------------------------------------
         # Move to telluDB and update telluDB
         # ------------------------------------------------------------------

@@ -174,7 +174,7 @@ def __main__(recipe, params):
             continue
         # ------------------------------------------------------------------
         # make a new copy of out_file
-        db_out_file = file_set.newcopy(recipe=recipe)
+        db_out_file = file_set.newcopy(params=params)
         # ------------------------------------------------------------------
         # try to find cdb_file
         found, kind = drs_fits.id_drs_file(params, recipe, db_out_file,

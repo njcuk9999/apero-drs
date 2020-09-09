@@ -195,7 +195,7 @@ def __main__(recipe, params):
         # loop around ofiles
         for jt, filename in enumerate(ofiles):
             # get new copy of file definition
-            infile1 = ointypes[jt].newcopy(recipe=recipe)
+            infile1 = ointypes[jt].newcopy(params=params)
             # set filename
             infile1.set_filename(ofiles[jt])
             # skip missing files (they shouldn't be missing unless

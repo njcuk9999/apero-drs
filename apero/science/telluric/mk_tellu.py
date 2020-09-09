@@ -337,10 +337,10 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
                               mprops, nprops, tprops, tpreprops, qc_params):
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
-    transfile = recipe.outputs['TELLU_TRANS'].newcopy(recipe=recipe,
+    transfile = recipe.outputs['TELLU_TRANS'].newcopy(params=params,
                                                       fiber=fiber)
     # construct the filename from file instance
-    transfile.construct_filename(params, infile=infile)
+    transfile.construct_filename(infile=infile)
     # ------------------------------------------------------------------
     # copy keys from input file
     transfile.copy_original_keys(infile, exclude_groups='wave')

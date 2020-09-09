@@ -1341,9 +1341,9 @@ def _get_files(params, recipe, path, rpath, **kwargs):
         rawindex = None
     # ----------------------------------------------------------------------
     # populate the storage dictionary
-    kwargs = dict()
+    okwargs = dict()
     for key in headerkeys:
-        kwargs[key] = []
+        okwargs[key] = []
     # ----------------------------------------------------------------------
     # deal with white/black list for nights
     wnightnames = None
@@ -1435,7 +1435,7 @@ def _get_files(params, recipe, path, rpath, **kwargs):
                     row = np.where(rowmask)[0][0]
                     # if both conditions met load from raw fits file
                     for key in headerkeys:
-                        kwargs[key].append(rawindex[key][row])
+                        okwargs[key].append(rawindex[key][row])
                     # file was found
                     rfound = True
                 else:
@@ -1468,9 +1468,9 @@ def _get_files(params, recipe, path, rpath, **kwargs):
                 for key in headerkeys:
                     rkey = params[key][0]
                     if rkey in header:
-                        kwargs[key].append(header[rkey])
+                        okwargs[key].append(header[rkey])
                     else:
-                        kwargs[key].append('')
+                        okwargs[key].append('')
     # ----------------------------------------------------------------------
     # sort by filename
     sortmask = np.argsort(filelist)
@@ -1479,11 +1479,11 @@ def _get_files(params, recipe, path, rpath, **kwargs):
     basenames = np.array(basenames)[sortmask]
     mod_times = np.array(mod_times)[sortmask]
     # need to sort kwargs
-    for key in kwargs:
-        kwargs[key] = np.array(kwargs[key])[sortmask]
+    for key in okwargs:
+        okwargs[key] = np.array(okwargs[key])[sortmask]
     # ----------------------------------------------------------------------
     # return filelist
-    return nightnames, filelist, basenames, mod_times, kwargs
+    return nightnames, filelist, basenames, mod_times, okwargs
 
 
 # =============================================================================
