@@ -10,9 +10,8 @@ Version 0.0.1
 """
 from apero.base import base
 from apero.core import constants
-from apero.core.core import drs_log
+from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_recipe
-from apero.core.utils import drs_file
 from apero import lang
 from apero.io import drs_fits
 

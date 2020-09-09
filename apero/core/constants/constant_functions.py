@@ -45,6 +45,7 @@ TextError = drs_exceptions.TextError
 TextWarning = drs_exceptions.TextWarning
 ConfigError = drs_exceptions.ConfigError
 ConfigWarning = drs_exceptions.ConfigWarning
+DrsCodedException = drs_exceptions.DrsCodedException
 # get the logger
 BLOG = drs_exceptions.basiclogger
 # get simple types
@@ -112,7 +113,7 @@ class Const:
         # set class name
         self.class_name = 'Const'
         # set function name
-        _ = display_func(None, '__init__', __NAME__, self.class_name)
+        func_name = display_func(None, '__init__', __NAME__, self.class_name)
         # set the name of the constant
         self.name = name
         # set the value of the constant
@@ -128,7 +129,12 @@ class Const:
         # set the kind (Const or Keyword)
         self.kind = 'Const'
         # set the source file of the constant
-        self.source = source
+        if source is None:
+            eargs = [self.class_name, self.name]
+            raise DrsCodedException('00-003-00034', level='error',
+                                    targs=eargs, func_name=func_name)
+        else:
+            self.source = source
         # set the units of the constant (astropy units)
         self.unit = unit
         # set the default value of the constant
@@ -226,7 +232,7 @@ class Const:
                  self.maximum, self.minimum, ]
         vkwargs = dict(quiet=quiet, source=source)
 
-        true_value, self.source = _validate_value(*vargs, **vkwargs)
+        true_value, source = _validate_value(*vargs, **vkwargs)
         # deal with storing
         if test_value is None:
             self.true_value = true_value
@@ -423,7 +429,16 @@ class Keyword(Const):
         # set class name
         self.class_name = 'Keyword'
         # set function name
-        _ = display_func(None, '__init__', __NAME__, self.class_name)
+        func_name = display_func(None, '__init__', __NAME__, self.class_name)
+        # set the name
+        self.name = name
+        # set the source file of the Keyword
+        if source is None:
+            eargs = [self.class_name, self.name]
+            raise DrsCodedException('00-003-00034', level='error',
+                                    targs=eargs, func_name=func_name)
+        else:
+            self.source = source
         # Initialize the constant parameters (super)
         Const.__init__(self, name, value, dtype, None, options, maximum,
                        minimum, source, unit, default, datatype, dataformat,
@@ -435,8 +450,6 @@ class Keyword(Const):
         self.comment = comment
         # set the kind (Const or Keyword)
         self.kind = 'Keyword'
-        # set the source file of the Keyword
-        self.source = source
         # set the units of the Keyword (for use when reading and converting)
         self.unit = unit
         # set the default value of this constant
@@ -631,7 +644,7 @@ class Keyword(Const):
         vargs = [self.name, self.dtype, value, self.dtypei, self.options,
                  self.maximum, self.minimum, ]
         vkwargs = dict(quiet=quiet, source=source)
-        true_value, self.source = _validate_value(*vargs, **vkwargs)
+        true_value, source = _validate_value(*vargs, **vkwargs)
         # deal with no comment
         if self.comment is None:
             self.comment = ''

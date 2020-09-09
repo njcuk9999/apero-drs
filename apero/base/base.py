@@ -60,6 +60,28 @@ NUMBER_TYPES = [int, float]
 # default language
 DEFAULT_LANG = 'ENG'
 LANGUAGES = ['ENG', 'FR']
+# define colours (should not be used if we have access to drs_misc)
+COLOURS = dict()
+COLOURS['BLACK1'] = '\033[90;1m'
+COLOURS['RED1'] = '\033[1;91;1m'
+COLOURS['GREEN1'] = '\033[92;1m'
+COLOURS['YELLOW1'] = '\033[1;93;1m'
+COLOURS['BLUE1'] = '\033[94;1m'
+COLOURS['MAGENTA1'] = '\033[1;95;1m'
+COLOURS['CYAN1'] = '\033[1;96;1m'
+COLOURS['WHITE1'] = '\033[97;1m'
+COLOURS['BLACK2'] = '\033[1;30m'
+COLOURS['RED2'] = '\033[1;31m'
+COLOURS['GREEN2'] = '\033[1;32m'
+COLOURS['YELLOW2'] = '\033[1;33m'
+COLOURS['BLUE2'] = '\033[1;34m'
+COLOURS['MAGENTA2'] = '\033[1;35m'
+COLOURS['CYAN2'] = '\033[1;36m'
+COLOURS['WHITE2'] = '\033[1;37m'
+COLOURS['ENDC'] = '\033[0;0m'
+COLOURS['BOLD'] = '\033[1m'
+COLOURS['UNDERLINE'] = '\033[4m'
+
 
 # =============================================================================
 # Define functions

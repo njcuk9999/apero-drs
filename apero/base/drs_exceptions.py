@@ -935,23 +935,28 @@ def base_printer(codeid: str, level: Union[str, None] = None,
                        exception occured
     :return:
     """
+    red = base.COLOURS['RED1']
+    yellow = base.COLOURS['YELLOW1']
+    green = base.COLOURS['GREEN1']
+    end = base.COLOURS['ENDC']
+
     # start off with the excedption name and code id
-    emsg = 'DrsCodedException[{0}]'.format(codeid)
+    emsg = red + 'DrsCodedException[{0}]'.format(codeid) + end
     # if we have a level add it as a new line to the message
     if level is not None:
-        emsg += '\n\tLevel: {0}'.format(level)
+        emsg += yellow + '\n\tLevel: {0}'.format(level) + end
     # if we have args add them one by one as new lines to the message
     if args is not None:
         # if it is a list of args add them one by one
         if isinstance(args, list):
             for it, arg in enumerate(args):
-                emsg += '\n\t Arg[{0}] = {1}'.format(it, arg)
+                emsg += green + '\n\t\tArg[{0}] '.format(it) + end + str(arg)
         # else assume we have a string
         else:
-            emsg += '\n\tArgs: {0}'.format(args)
+            emsg += green + '\n\t\tArgs: ' + end + '{0}'.format(args)
     # add function name where error occurred too (if set)
     if func_name is not None:
-        emsg += '\n\tFunction: {0}'.format(func_name)
+        emsg += green + '\n\t\tFunction: ' + end + '{0}'.format(func_name)
     # return the error message
     return emsg
 

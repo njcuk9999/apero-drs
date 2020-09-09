@@ -15,15 +15,15 @@ from astropy import units as uu
 from scipy.optimize import curve_fit
 import warnings
 import os
+from typing import List
 
 from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
 from apero import lang
-from apero.core.core import drs_log
+from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_data
-from apero.core.utils import drs_file
 from apero.core.utils import drs_database
 from apero.io import drs_fits
 from apero.science.calib import flat_blaze
@@ -60,7 +60,7 @@ speed_of_light = cc.c.to(uu.km / uu.s).value
 # =============================================================================
 # Define functions
 # =============================================================================
-def get_whitelist(params, **kwargs):
+def get_whitelist(params: ParamDict, **kwargs) -> List[str]:
     func_name = __NAME__ + '.get_whitelist()'
     # get pseudo constants
     pconst = constants.pload(instrument=params['INSTRUMENT'])

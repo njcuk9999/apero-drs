@@ -14,7 +14,6 @@ from astropy.table import Table
 from collections import OrderedDict
 import copy
 import itertools
-import glob
 import numpy as np
 import os
 import sys
@@ -22,15 +21,12 @@ from typing import Any, Dict, List, Type, Union
 
 from apero.base import base
 from apero.base import drs_base_classes as base_class
-from apero.base import drs_break
 from apero.base import drs_misc
 from apero.base import drs_text
 from apero.core import constants
 from apero import lang
-from apero.core.core import drs_log
+from apero.core.core import drs_log, drs_file
 from apero.core.core import drs_argument
-from apero.core.utils import drs_file
-
 
 # =============================================================================
 # Define variables
@@ -89,8 +85,8 @@ class DrsRecipe(object):
         """
         # set class name
         self.class_name = 'DrsRecipe'
-        # set function name
-        _ = display_func(params, '__init__', __NAME__, self.class_name)
+        # set function name (cannot
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
         # get instrument
         self.instrument = instrument
         # deal with name
@@ -105,7 +101,10 @@ class DrsRecipe(object):
         else:
             self.name = str(name)
         # set drs file module related to this recipe
-        self.filemod = filemod.copy()
+        if filemod is None:
+            self.filemod = None
+        else:
+            self.filemod = filemod.copy()
         # get drs parameters (will be loaded later)
         if params is None:
             self.params = ParamDict()
@@ -216,7 +215,7 @@ class DrsRecipe(object):
         _ = display_func(self.params, '__repr__', __NAME__,
                          self.class_name)
         # return string representation
-        return 'DrsRecipe[{0}]'.format(self.name)
+        return '{0}[{1}]'.format(self.class_name, self.name)
 
     def get_drs_params(self, **kwargs):
         """
@@ -229,7 +228,7 @@ class DrsRecipe(object):
                  DrsRecipe.textdict, DrsRecipe.helptext
         """
         # set function name
-        func_name = display_func(self.params, 'get_drs_params', __NAME__,
+        func_name = display_func(None, 'get_drs_params', __NAME__,
                                  self.class_name)
         # Get config parameters from primary file
         self.params = constants.load(self.instrument)
@@ -253,7 +252,7 @@ class DrsRecipe(object):
         self.params.set_sources(['INPUTS'], func_name)
 
     def recipe_setup(self, fkwargs: Union[dict, None] = None,
-                     inargs: Union[list, None]  = None
+                     inargs: Union[list, None] = None
                      ) -> Union[Dict[str, Any], None]:
         """
         Interface between "recipe", inputs to function ("fkwargs") and argparse
@@ -719,13 +718,13 @@ class DrsRecipe(object):
             emsg = TextEntry('00-008-00016', args=eargs)
             WLOG(self.params, 'error', emsg)
 
-    def main(self, **kwargs):
+    def main(self, **kwargs) -> Dict[str, Any]:
         """
         Run the main function associated with this recipe
 
         :param kwargs: kwargs passed to the main functions
 
-        :return:
+        :return: dictionary, a drs recipe main functions dictionary
         """
         # set function name
         func_name = display_func(self.params, 'main', __NAME__,
@@ -762,8 +761,10 @@ class DrsRecipe(object):
             WLOG(self.params, 'error', emsg)
 
     def get_input_dir(self, directory: Union[str, None] = None,
-                      force: bool = False) -> str:
+                      force: bool = False) -> Union[str, None]:
         """
+        Alias to drs_argument.get_input_dir
+
         Get the input directory for this recipe based on what was set in
         initialisation (construction)
 
@@ -781,20 +782,15 @@ class DrsRecipe(object):
                          self.class_name)
         # make sure if force is True we use it
         force = self.force_dirs[0] or force
-        # deal with manual override of input dir
-        if force and (directory is not None) and (os.path.exists(directory)):
-            return directory
-        # deal with absolute path existing
-        if force and os.path.exists(os.path.abspath(self.inputdir)):
-            return os.path.abspath(self.inputdir)
-        # check if "input_dir" is in namespace
-        input_dir_pick = self.inputdir.upper()
-        # return input_dir
-        return self.get_dir(input_dir_pick, kind='input')
+        # return alised call
+        return drs_argument.get_input_dir(self.params, directory, force,
+                                          forced_dir=self.inputdir)
 
     def get_output_dir(self, directory: Union[str, None] = None,
-                       force: bool = False) -> str:
+                       force: bool = False) -> Union[str, None]:
         """
+        Alias to drs_argument.get_output_dir
+
         Get the input directory for this recipe based on what was set in
         initialisation (construction)
 
@@ -807,18 +803,14 @@ class DrsRecipe(object):
 
         :return input_dir: string, the input directory
         """
+        # set function name
+        _ = display_func(self.params, 'get_output_dir', __NAME__,
+                         self.class_name)
         # make sure if force is True we use it
-        force = self.force_dirs[1] or force
-        # deal with manual override of input dir
-        if force and (directory is not None) and (os.path.exists(directory)):
-            return directory
-        # deal with absolute path existing
-        if force and os.path.exists(os.path.abspath(self.outputdir)):
-            return os.path.abspath(self.outputdir)
-        # check if "input_dir" is in namespace
-        output_dir_pick = self.outputdir.upper()
-        # return input_dir
-        return self.get_dir(output_dir_pick, kind='output')
+        force = self.force_dirs[0] or force
+        # return alised call
+        return drs_argument.get_output_dir(self.params, directory, force,
+                                           forced_dir=self.outputdir)
 
     def copy(self, recipe: 'DrsRecipe'):
         """
@@ -833,7 +825,10 @@ class DrsRecipe(object):
         # name
         self.name = str(recipe.name)
         # set drs file module related to this recipe
-        self.filemod = recipe.filemod.copy()
+        if recipe.filemod is None:
+            self.filemod = None
+        else:
+            self.filemod = recipe.filemod.copy()
         # set filters
         self.filters = dict(recipe.filters)
         self.master = bool(recipe.master)
@@ -905,7 +900,8 @@ class DrsRecipe(object):
     # =========================================================================
     # Reprocessing methods
     # =========================================================================
-    def generate_runs(self, table: Table, filters: Union[dict, None] = None,
+    def generate_runs(self, table: Table,
+                      filters: Union[Dict[str, Any], None] = None,
                       allowedfibers: Union[List[str], str, None] = None
                       ) -> List[str]:
         """
@@ -954,10 +950,35 @@ class DrsRecipe(object):
         # return the runlist
         return runlist
 
-    def add_extra(self, arguments, tstars=None, ostars=None):
+    def add_extra(self, arguments: Union[dict, None] = None,
+                  tstars: Union[List[str], None] = None,
+                  ostars: Union[List[str], None] = None):
+        """
+        Add extra arguments to this DrsRecipe instance
+        i.e. from arguments (a dictionary of arguments where each key is the
+        value that would have been used at run time
+        e.g. --objname  goes tp arguments['objname'] = VALUES
 
-        # TODO: Got to here
+        This is only really for use with the DrsRunSequence.add function (adding
+        a recipe to a run sequence)
 
+        :param arguments: dictionary of keys where each key is a valid
+                          position or optional argument for this recipe
+                          (see the recipe definition) and each value are those
+                          value(s) that this argument is allowed to have
+                          i.e. --objname --> arguments['objname'] = VALUES
+                          so one can force the value of --objname
+        :param tstars: list of strings, the list of telluric star object names
+                       - this is required when using alias "TELLURIC_TARGETS"
+                       and TELLURIC_TARGETS value = ['None', 'All', '']
+                       to list all telluric targets currently definied
+        :param ostars: list of strings, the list of object names that are not
+                       telluric stars - this is required when using alias
+                       "SCIENCE_TARGETS" and SCIENCE_TARGETS
+                       value = ['None', 'All', ''] to list all non-telluric
+                       'science targets' currently defined
+        :return: None - updates DrsRecipe.extras (for later use)
+        """
         # set function name
         func_name = display_func(self.params, 'add_extra', __NAME__,
                                  self.class_name)
@@ -986,20 +1007,19 @@ class DrsRecipe(object):
                             value = np.char.strip(value)
                             # deal with object name cleaning
                             value = list(map(pconst.DRS_OBJ_NAME, value))
-
                 # deal with telluric targets being None
                 if arguments[argname] == 'TELLURIC_TARGETS':
                     if isinstance(value, (type(None), str)):
                         # test for null text
                         if drs_text.null_text(value, ['None', 'All', '']):
                             value = tstars
-
+                # deal with science targets being None (use all non-telluric
+                #   targets)
                 if arguments[argname] == 'SCIENCE_TARGETS':
                     if isinstance(value, (type(None), str)):
                         # test for null text
                         if drs_text.null_text(value, ['None', 'All', '']):
                             value = ostars
-
             # check for argument in args
             if argname in self.args:
                 self.extras[argname] = value
@@ -1014,9 +1034,22 @@ class DrsRecipe(object):
     # =========================================================================
     # Private Methods (Not to be used externally to drs_recipe.py)
     # =========================================================================
-    def _import_module(self, name=None, full=False,
-                       quiet=False) -> Union[base_class.ImportModule, None]:
-        func_name = __NAME__ + '.drs_recipe._import_module()'
+    def _import_module(self, name: Union[str, None] = None, full: bool = False,
+                       quiet: bool = False
+                       ) -> Union[base_class.ImportModule, None]:
+        """
+        Private function to import the import_module class for this recipe
+
+        :param name: str, the name of the recipe
+        :param full: bool, if True then the name is assumed to be the full
+                     module path
+        :param quiet: bool, if True raises a ValueError instead of a ConfigError
+
+        :return: the imported module instance
+        """
+        # set function name
+        func_name = display_func(self.params, '_import_module', __NAME__,
+                                 self.class_name)
         # deal with no name
         if name is None:
             name = self.name
@@ -1029,7 +1062,7 @@ class DrsRecipe(object):
         except Exception:
             return None
 
-    def _parse_args(self, dictionary=None):
+    def _parse_args(self, dictionary: Union[Dict[str, Any], None] = None):
         """
         Parse a dictionary of arguments into argparser in the format required
         to match up to the recipe.args/recipe.kwarg assigned to this
@@ -1040,9 +1073,14 @@ class DrsRecipe(object):
                            and keyword arguments. This is then passed into
                            "recipe.str_arg_list" for parsing into argparser
                            directly (and overiding run time arguments)
-        :return None:
+
+        :return: None- updates DrsRecipe.str_arg_list
         """
+        # set function name
+        _ = display_func(self.params, '_parse_args', __NAME__, self.class_name)
+        # set up storage
         self.str_arg_list = []
+        # deal with no dictionary set
         if dictionary is None:
             return None
         for argname in self.args:
@@ -1079,17 +1117,20 @@ class DrsRecipe(object):
         if len(self.str_arg_list) == 0:
             self.str_arg_list = None
 
-    def _parse_arg(self, arg, values):
+    def _parse_arg(self, arg: DrsArgument, values: Any):
         """
         Parse argument to "recipe.str_arg_list"
 
-        :param arg: str, the name of the argument (with "-" and "--" for
+        :param arg: DrsArgument, the argument to parse (with "-" and "--" for
                     optional arguments)
         :param values: object, the object to push into the value of argument.
                        The string representation of this value must be
                        readable by argparser i.e. int/float/str etc
-        :return None:
+
+        :return: None - updates DrsRecipe.str_arg_list (appends to list)
         """
+        # set function name
+        _ = display_func(self.params, '_parse_arg', __NAME__, self.class_name)
         # check that value is not None
         if values is None:
             return
@@ -1119,10 +1160,27 @@ class DrsRecipe(object):
 
         Currently adds the following special arguments:
 
-        --listing, --list     List the files in the given input directory
+        --debug --d --verbose    Change the debug mode
+        --listing --list         List the files in the given input directory
+        --listingall --listall   List all the files available to use
+        --version                Display the drs version
+        --info --usage           Display the recipe usage information
+        -- program --prog        Set the program name (for logging)
+        --idebug --idb           set ipython return mode
+        --master                 set whether a recipe is a master recipe
+        --breakpoints --break    set whether to use breakpoints
+        --breakfunc              set whether to break in a certain function
+        --quiet -q               set whether to run in queit mode
+        --force_indir            force the input directory of the recipe
+        --force_outdir           force the output directory of the recipe
 
-        :return None:
+        :return None: updates DrsRecipe.specialargs
+                      (via DrsRecipe._make_special)
         """
+        # set function name
+        _ = display_func(self.params, '_make_specials', __NAME__,
+                         self.class_name)
+        # get instrument and language
         instrument = self.params['INSTRUMENT']
         language = self.params['LANGUAGE']
         # get the help text dictionary
@@ -1166,7 +1224,24 @@ class DrsRecipe(object):
         self._make_special(drs_argument.set_inputdir, skip=False, htext=htext)
         self._make_special(drs_argument.set_outputdir, skip=False, htext=htext)
 
-    def _make_special(self, function, skip=False, htext=None):
+    def _make_special(self, function: Any, skip: bool = False,
+                      htext: Union[HelpText, None] = None):
+        """
+        Make a special argument using a special DrsArgument method (function)
+        to supplies the properties of this special argument
+
+        :param function: function, a DrsArgument method
+                         (i.e. DrsArgument.make_XXX)
+        :param skip: bool, force the skip to be True - if skip is True does not
+                     run the recipe just runs the function and then exits
+        :param htext: HelpText - the language database for help text (used
+                      to set help via the function call
+
+        :return: None - updates DrsRecipe.specialargs
+        """
+        # set function name
+        _ = display_func(self.params, '_make_special', __NAME__,
+                         self.class_name)
         # make debug functionality
         props = function(self.params, htext=htext)
         name = props['name']
@@ -1179,7 +1254,18 @@ class DrsRecipe(object):
         spec.helpstr = props['help']
         self.specialargs[name] = spec
 
-    def _drs_usage(self):
+    def _drs_usage(self) -> str:
+        """
+        Create a string that shows this recipes usage
+
+        i.e.
+
+        Usage: {name} {args} {optional args}
+
+        :return: str, the usage string (for use in --help --info etc)
+        """
+        # set function name
+        _ = display_func(self.params, '_drs_usage', __NAME__, self.class_name)
         # reset required args
         self.required_args = []
         self.optional_args = []
@@ -1227,347 +1313,130 @@ class DrsRecipe(object):
         usage = '{0}.py {1} [{2}]'.format(*uargs)
         return usage
 
-    def valid_directory(self, argname, directory, return_error=False):
-        # get drs parameters
-        params = self.params
-        # get input directory
-        force = self.force_dirs[0]
-        input_dir = os.path.realpath(self.get_input_dir(force=force))
-        # ---------------------------------------------------------------------
-        # Make sure directory is a string
-        if type(directory) not in [str, np.str_]:
-            eargs = [argname, directory, type(directory)]
-            emsg = TextEntry('09-001-00003', args=eargs)
-            if return_error:
-                return False, emsg
-            else:
-                return False
-        # ---------------------------------------------------------------------
-        # step 1: check if directory is full absolute path
-        if os.path.exists(directory):
-            # log that we found the path (debug mode)
-            dmsg = TextEntry('90-001-00001', args=[argname, directory])
-            dmsg += TextEntry('')
-            WLOG(params, 'debug', dmsg, wrap=False)
-            # get the absolute path
-            abspath = os.path.abspath(directory)
-            # check whether abspath is consistent with input dir from recipe
-            #    definitions (this can happen e.g. if in reduced instead of tmp)
-            if not abspath.startswith(input_dir):
-                # log that directory found not consistent with input path
-                dargs = [input_dir]
-                WLOG(params, 'debug', TextEntry('90-001-00035', args=dargs))
-                pass
-            elif return_error:
-                return True, os.path.abspath(directory), None
-            else:
-                return False, os.path.abspath(directory)
-        # ---------------------------------------------------------------------
-        # step 2: check if directory is in input directory
-        input_dir = self.get_input_dir()
-        test_path = os.path.join(input_dir, directory)
-        if os.path.exists(test_path):
-            dmsg = TextEntry('90-001-00017', args=[argname, directory])
-            dmsg += TextEntry('')
-            WLOG(params, 'debug', dmsg, wrap=False)
-            if return_error:
-                return True, os.path.abspath(test_path), None
-            else:
-                return True, os.path.abspath(test_path)
-        # ---------------------------------------------------------------------
-        # else deal with errors
-        eargs = [argname, directory, test_path]
-        emsg = TextEntry('09-001-00004', args=eargs)
 
-        return False, None, emsg
-
-    def _valid_files(self, argname, files, directory=None, return_error=False,
-                     alltypelist=None, allfilelist=None):
-        # deal with no current typelist (alltypelist=None)
-        if alltypelist is None:
-            alltypelist = []
-        # deal with no current filelist (allfilelist=None)
-        if allfilelist is None:
-            allfilelist = []
-        # deal with non-lists
-        if isinstance(files, str):
-            files = [files]
-        elif type(files) not in [list, np.ndarray]:
-            files = [files]
-        # loop around files
-        all_files = []
-        all_types = []
-        for filename in files:
-            # check single file
-            out = self._valid_file(argname, filename, directory, True,
-                                   alltypelist=alltypelist,
-                                   allfilelist=allfilelist)
-            file_valid, filelist, typelist, error = out
-            # if single file is not valid return the error (and False)
-            if not file_valid:
-                if return_error:
-                    return False, None, None, error
-                else:
-                    return False, None, None
-            # else we append filelist to all_files
-            else:
-                all_files += filelist
-                all_types += typelist
-        # if we are at this point everything passed and file is valid
-        if return_error:
-            return True, all_files, all_types, []
-        else:
-            return True, all_files, all_types, []
-
-    def _valid_file(self, argname, filename, directory=None, return_error=False,
-                    alltypelist=None, allfilelist=None):
+class DrsRunSequence:
+    def __init__(self, name: str, instrument: str = 'None'):
         """
-        Test for whether a file is valid for this recipe
+        Construct a Drs Run Sequence (used in processing a set of recipes)
 
-        :param filename: string, the filename to test
-        :param return_error: bool, if True returns error list
-
-        :return cond: bool, if True file is valid, if False file is not valid
-        :return filelist: list of strings, list of files found
-        :return error: list of strings, if there was an error (cond = False)
-                       and return_error=True, return a list of strings
-                       describing the error
+        :param name: str, name of sequence
+        :param instrument: str, the instrument this sequence belongs to
         """
-        # get drs parameters
-        params = self.params
+        # set class name
+        self.class_name = 'DrsRunSequence'
         # set function name
-        func_name = display_func(params, '_valid_file', __NAME__, 'DrsRecipe')
-        # deal with no current typelist (alltypelist=None)
-        if alltypelist is None:
-            alltypelist = []
-        if allfilelist is None:
-            allfilelist = []
-        # get the argument that we are checking the file of
-        arg = _get_arg(self, argname)
-        drs_files = arg.files
-        # make sure drs_files is a list
-        if not isinstance(drs_files, list):
-            drs_files = [drs_files]
-        # get the drs logic
-        drs_logic = arg.filelogic
-        # deal with arg.path set
-        directory = _check_arg_path(params, arg, directory)
-        # ---------------------------------------------------------------------
-        # Step 1: Check file location is valid
-        # ---------------------------------------------------------------------
-        # if debug mode print progress
-        WLOG(params, 'debug', TextEntry('90-001-00002', args=[filename]),
-             wrap=False)
-        # perform location check
-        out = _check_file_location(self, argname, directory, filename)
-        valid, files, error = out
-        if not valid:
-            if return_error:
-                return False, None, None, error
-            else:
-                return False, None, None
-        # perform file/directory check
-        out = _check_if_directory(argname, files)
-        valid, files, error = out
-        if not valid:
-            if return_error:
-                return False, None, None, error
-            else:
-                return False, None, None
-
-        # ---------------------------------------------------------------------
-        # The next steps are different depending on the DRS file and
-        # we may have multiple files
-        out_files = []
-        out_types = []
-        # storage of checked files
-        checked_files = []
-        # storage of errors (if we have no files)
-        errors = TextEntry(None)
-        # loop around filename
-        for filename_it in files:
-            # start of with the file not being valid
-            valid = False
-            # storage of errors (reset)
-            errors = TextEntry(None)
-            header_errors = dict()
-            # add to checked files
-            checked_files.append(filename_it)
-            # deal with not having any drs files set
-            if len(drs_files) == 0:
-                # files must be set
-                eargs = [argname, func_name]
-                WLOG(params, 'error', TextEntry('00-006-00019', args=eargs))
-            # loop around file types
-            for drs_file in drs_files:
-                # if in debug mode print progres
-                dargs = [drs_file.name, os.path.basename(filename_it)]
-                WLOG(params, 'debug', TextEntry('90-001-00008', args=dargs),
-                     wrap=False)
-                # -------------------------------------------------------------
-                # make instance of the DrsFile
-                inputdir = self.get_input_dir()
-                # create an instance of this drs_file with the filename set
-                file_in = drs_file.newcopy(filename=filename_it, params=params)
-                file_in.read_file()
-                # set the directory
-                fdir = drs_misc.get_uncommon_path(directory, inputdir)
-                file_in.directory = fdir
-
-                # -------------------------------------------------------------
-                # Step 2: Check extension
-                # -------------------------------------------------------------
-                # check the extension
-                valid1, error1 = file_in.has_correct_extension(argname=argname)
-
-                # -------------------------------------------------------------
-                # Step 3: Check file header has required keys
-                # -------------------------------------------------------------
-                valid2a, error2a = file_in.hkeys_exist(argname=argname)
-
-                # -------------------------------------------------------------
-                # Step 4: Check file header has correct required keys
-                # -------------------------------------------------------------
-                valid2b, error2b = file_in.has_correct_hkeys(argname=argname)
-
-                # -------------------------------------------------------------
-                # Step 4: Check exclusivity
-                # -------------------------------------------------------------
-                # only check if file correct
-                if valid1 and valid2a and valid2b:
-                    exargs = [self, argname, drs_file, drs_logic,
-                              out_types, alltypelist]
-                    valid3, error3 = _check_file_exclusivity(*exargs)
-                else:
-                    valid3, error3 = True, None
-
-                # -------------------------------------------------------------
-                # Step 5: Combine
-                # -------------------------------------------------------------
-                valid = valid1 and valid2a and valid2b and valid3
-                # choose which to print as error
-                if (not valid1) and valid2a and valid2b and valid3:
-                    if error1 is not None:
-                        errors += error1
-                if (not valid2a) and valid1 and valid3:
-                    if error2a is not None:
-                        errors += error2a
-                if valid1 and valid2a:
-                    if error2b is not None:
-                        header_errors[drs_file.name] = error2b
-                # only add check3 if check2 was valid
-                if (not valid3) and valid2a and valid2b and valid1:
-                    if error3 is not None:
-                        errors += error3
-
-                # check validity and append if valid
-                if valid:
-                    dargs = [argname, os.path.basename(filename_it), file_in]
-                    wmsg = TextEntry('90-001-00016', args=dargs)
-                    WLOG(params, 'debug', wmsg, wrap=False)
-                    # append to out files/types
-                    out_files.append(filename_it)
-                    out_types.append(file_in)
-                    # break out the inner loop if valid (we don't need to
-                    #    check other drs_files)
-                    break
-
-            # if this file is not valid we should break here
-            if not valid:
-                # add header errors (needed outside drs_file loop)
-                errors += _gen_header_errors(params, header_errors)
-                # add file error (needed only once per filename)
-                eargs = [os.path.abspath(filename_it)]
-                errors += '\n' + self.textdict['09-001-00024'].format(*eargs)
-                break
-
-        # must append all files checked
-        allfiles = allfilelist + checked_files
-
-        if len(allfiles) > 1:
-            errors += self.textdict['40-001-00019']
-            for filename_it in allfiles:
-                errors += TextEntry('\n\t\t{0}'.format(filename_it))
-
-        # ---------------------------------------------------------------------
-        # clean up errors (do not repeat same lines)
-        cleaned_errors = TextEntry(None)
-        for error in errors:
-            if error not in cleaned_errors:
-                cleaned_errors += error
-        # ---------------------------------------------------------------------
-        # deal with return types:
-        # a. if we don't have the right number of files then we failed
-        if len(out_files) != len(files):
-            return False, None, None, cleaned_errors
-        # b. if we did but expect an error returned return True with an error
-        elif return_error:
-            return True, out_files, out_types, TextEntry(None)
-        # c. if we did and don't expect an error return True without an error
-        else:
-            return True, out_files, out_types
-
-    def get_dir(self, dir_string, kind='input'):
-        # get parameters from recipe call
-        params = self.params
-        # check if path has been set to an absolute path (that exists)
-        if os.path.exists(os.path.abspath(dir_string)):
-            return os.path.abspath(dir_string)
-        # get the input directory from recipe.inputdir keyword
-        if dir_string == 'RAW':
-            dirpath = self.params['DRS_DATA_RAW']
-        elif dir_string == 'TMP':
-            dirpath = self.params['DRS_DATA_WORKING']
-        elif dir_string == 'REDUCED':
-            dirpath = self.params['DRS_DATA_REDUC']
-        # if not found produce error
-        else:
-            emsg = TextEntry('00-007-00002', args=[kind, dir_string])
-            WLOG(params, 'error', emsg)
-            dirpath = None
-        return dirpath
-
-    def __error__(self):
-        """
-        The option log for WLOG for all errors in class
-
-        :return log_opt: string, the log_opt message for WLOG
-        """
-        func_name = __NAME__ + 'DrsRecipe.__error__()'
-
-        if 'PID' not in self.params:
-            self.params['PID'] = None
-            self.params.set_source('PID', func_name)
-        if 'RECIPE' not in self.params:
-            self.params['RECIPE'] = str(__NAME__.replace('.py', ''))
-            self.params.set_source('RECIPE', func_name)
-        # return drs_params
-        return self.params
-
-
-class DrsRunSequence(object):
-    def __init__(self, name, instrument=None):
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
+        # set the name of the sequence
         self.name = name
+        # set the instrument this sequence belongs to
         self.instrument = instrument
+        # set up storage for recipes in this sequence (as a list)
         self.sequence = []
+        # set up storage for recipes to add to sequence (before actually
+        #    assigning them to the sequence as this is not instantaneous)
         self.adds = []
-        self.arguments = dict()
+        # set up storage for the telluric stars list
         self.tstars = None
+        # set up storage for the non-telluric stars list
         self.ostars = None
 
-    def __str__(self):
-        return 'DrsRunSequence[{0}]'.format(self.name)
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set function name
+        _ = display_func(None, '__getstate__', __NAME__, self.class_name)
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state (for pickle)
+        return state
 
-    def __repr__(self):
-        return 'DrsRunSequence[{0}]'.format(self.name)
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # set function name
+        _ = display_func(None, '__setstate__', __NAME__, self.class_name)
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        Return the string representation of the class
+        :return:
+        """
+        # set function name
+        _ = display_func(None, '__str__', __NAME__, self.class_name)
+        # return string representation
+        return self.__repr__()
+
+    def __repr__(self) -> str:
+        """
+        Return the string representation of the class
+        :return:
+        """
+        # set function name
+        _ = display_func(None, '__str__', __NAME__, self.class_name)
+        # return string representation
+        return '{0}[{1}]'.format(self.class_name, self.name)
 
     def add(self, recipe: DrsRecipe, name: Union[str, None] = None,
             master: Union[bool, None] = None, fiber: Union[str, None] = None,
-            arguments: Union[dict, None] = None,
-            filters: Union[dict, None]=None,
+            arguments: Union[Dict[str, Any], None] = None,
+            filters: Union[Dict[str, Any], None] = None,
             files: Union[List[drs_file.DrsInputFile], None] = None,
-            rargs: Union[dict, None] = None, rkwargs: Union[dict, None] = None):
+            rargs: Union[Dict[DrsArgument], None] = None,
+            rkwargs: Union[Dict[DrsArgument], None] = None):
+        """
+        Add a recipe to the sequence, can overwrite default recipe behaviour
+        with the name (shortname), master, fiber keys and add more specialised
+        commands with:
+        - arguments: a dictionary of arguments to parse directly to the recipe
+                     (i.e. if a recipe has --objname add arguments['objname']
+                      with the require value(s) to push
+                      i.e. arguments['objname'] = 'SCIENCE_TARGETS'
+        - filters: a dictionary of header keyword keys (i.e. KW_XXX) these are
+                   used to filter files that can be used with this recipe
+                   i.e. filter['KW_DPRTYPE'] = FLAT_FLAT would only allow
+                   files with header key matching KW_DPRTYPE (from constants)
+                   with the value of 'FLAT_FLAT'
+        - files: a list of DrsInputfile (or DrsFitFiles/DrsNpyFiles) that can
+                 be used with this recipe (usually when a recipe has the
+                 "files" positional argument
 
+        :param recipe: DrsRecipe, a DrsRecipe instance to add to the sequence
+        :param name: str, the short name to give the recipe (used to distinguish
+                     two nearly identical DrsRecipe instances from each other)
+                     i.e. when using cal_dark (shortname=DARK) can have
+                     DARK1 and DARK2 in same sequence
+        :param master: bool, if True mark this recipe as a master sequence
+                       affects skipping and adds the --master=True argument
+        :param fiber: str, the fiber allowed for this recipe
+        :param arguments: dict, a dictionary of arguments to parse directly
+                          to the recipe (i.e. if a recipe has --objname add
+                          arguments['objname'] with the require value(s) to push
+                          i.e. arguments['objname'] = 'SCIENCE_TARGETS'
+        :param filters: dict, a dictionary of header keyword keys (i.e. KW_XXX)
+                        these are used to filter files that can be used with
+                        this recipe i.e. filter['KW_DPRTYPE'] = FLAT_FLAT would
+                        only allow  files with header key matching KW_DPRTYPE
+                        (from constants) with the value of 'FLAT_FLAT'
+        :param files: a list of DrsInputfile (or DrsFitFiles/DrsNpyFiles)
+                      that can be used with this recipe (usually when a recipe
+                      has the "files" positional argument
+        :param rargs: dictionary of DrsArguments, the recipe positional
+                      arguments already loaded from recipe defintions
+        :param rkwargs: dictionary of DrsArguments, the recipe optional
+                        arguments already loaded from recipe definitions
+
+        :return: None - updates DrsRunSequence.adds
+        """
+        # set function name
+        _ = display_func(recipe.params, 'add', __NAME__, self.class_name)
         # add these parameters to keyword args
         add_set = dict()
         add_set['recipe'] = recipe
@@ -1590,10 +1459,24 @@ class DrsRunSequence(object):
         # append to to adds
         self.adds.append(add_set)
 
-    def process_adds(self, params, tstars=None, ostars=None):
+    def process_adds(self, params: ParamDict,
+                     tstars: Union[List[str], None] = None,
+                     ostars: Union[List[str], None] = None):
+        """
+        Process the DrsRunSequence.adds list (that have been added/defined
+        previous) - this actually creates copies of the recipes and modifies
+        them according to the settings in DrsRecipeSequence.adds
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param tstars: list of strings, the list of telluric stars (OBJECT
+                       names)
+        :param ostars: list of strings, the list of non-telluric stars (OBJECT
+                       names)
+
+        :return: None - updates DrsRunSequence.sequence
+        """
         # set function name
-        func_name = display_func(params, 'process_adds', __NAME__,
-                                 class_name='DrsRunSequence')
+        _ = display_func(params, 'process_adds', __NAME__, self.class_name)
         # set telluric stars (may be needed)
         self.tstars = tstars
         # set other stars
@@ -1623,23 +1506,42 @@ class DrsRunSequence(object):
             frecipe = self.add_filters(frecipe, add['files'], add['filters'])
             # update file definitions
             frecipe = self.update_args(frecipe, arguments=add['arguments'],
-                                       fargs=add['args'], fkwargs=add['kwargs'])
+                                       rargs=add['args'], rkwargs=add['kwargs'])
             # update master
             if add['master'] is not None:
                 frecipe.master = add['master']
             # add to sequence storage
             self.sequence.append(frecipe)
 
-    def add_filters(self, frecipe, files=None, infilters=None):
+    def add_filters(self, frecipe: DrsRecipe,
+                    files: Union[List[drs_file.DrsFitsFile], None] = None,
+                    infilters: Union[Dict[str, Any], None] = None) -> DrsRecipe:
+        """
+        Add the filters to frecipe.filters (normally from DrsRunSequence.adds
+
+        :param frecipe: DrsRecipe, the Drs recipe to add the filters to
+        :param files: list of DrsFitsFile instances - if header keys are not
+                      set in infilters these files are used to get a list of
+                      required header keys - keys should have KW_XXX and
+                      values are the test of a valid file
+                      (from DrsFitsFile.required_header_keys)
+        :param infilters: dictionary of keyword headers where keys should have
+                          KW_XXX and values are the test of a valid file
+                          overrides keys coming from 'files' input
+
+        :return: DrsRecipe, the Drs recipe with updated DrsRecipe.filters
+        """
+        # set function name
+        _ = display_func(None, 'add_filters', __NAME__, self.class_name)
         # add filters
         filters = dict()
+        # loop around in filters and add them (if they start with KW_)
         for infilter in infilters:
             if 'KW_' in infilter:
                 filters[infilter] = infilters[infilter]
-
         # add keyword args from file arguments
         if files is not None:
-            if isinstance(files, str):
+            if isinstance(files, drs_file.DrsFitsFile):
                 files = [files]
             # loop around files and find file filters
             file_filters = dict()
@@ -1665,22 +1567,55 @@ class DrsRunSequence(object):
         # return frecipe
         return frecipe
 
-    def update_args(self, frecipe, arguments, fargs, fkwargs):
+    def update_args(self, frecipe: DrsRecipe,
+                    arguments: Union[Dict[str, Any], None] = None,
+                    rargs: Union[Dict[DrsArgument], None] = None,
+                    rkwargs: Union[Dict[DrsArgument], None] = None
+                    ) -> DrsRecipe:
+        """
+        Update the recipes arguments (usually based on 'arguments' from
+        DrsRunSequence.adds) - these are copied from the reference copy of
+        the recipe via rargs and rkwargs
+
+        :param frecipe: DrsRecipe - the recipe to update the arguments of
+        :param arguments: dictionary of arguments to update the currently set
+                          positional arguments (DrsRecipe.args) and the
+                          optional arguments (DrsRecipe.kwargs)
+        :param rargs: dictionary the recipe reference positional arguments
+        :param rkwargs: dictionary the recipe reference optional arguments
+
+        :return: DrsRecipe, the updated drs recipe
+        """
+        # set function name
+        _ = display_func(None, 'update_args', __NAME__, self.class_name)
         # deal with arguments overwrite
         if arguments is not None:
             frecipe.add_extra(arguments, tstars=self.tstars,
                               ostars=self.ostars)
         # ------------------------------------------------------------------
         # update args - loop around positional arguments
-        frecipe.args = self._update_arg(frecipe.args, fargs)
+        frecipe.args = self._update_arg(frecipe.args, rargs)
         # ------------------------------------------------------------------
         # update kwargs - loop around positional arguments
-        frecipe.kwargs = self._update_arg(frecipe.kwargs, fkwargs)
+        frecipe.kwargs = self._update_arg(frecipe.kwargs, rkwargs)
         # ------------------------------------------------------------------
         # return recipes
         return frecipe
 
-    def _update_arg(self, arguments, fargs):
+    def _update_arg(self, arguments: Dict[DrsArgument],
+                    fargs: Dict[DrsArgument]) -> Dict[DrsArgument]:
+        """
+        Update either the positional args (DrsRecipe.args) or optional args
+        (DrsRecipe.kwargs)
+
+        :param arguments: dictionary of args (args or kwargs) - these are what
+                          we are going to update with (if and only if they are
+                          present as arguments in fargs)
+        :param fargs:  dictionary of reference args (args or kwargs) - those
+                       in the origional recipe
+
+        :return: dictionary of args (args or kwargs) - updated correctly
+        """
         # loop around each argument
         for argname in arguments:
             # if positional argument in function args (fargs) then we can
@@ -1707,6 +1642,8 @@ class DrsRunSequence(object):
         return arguments
 
 
+# TODO: Move to drs_exceptions?
+# Drs Recipe Exception
 class DrsRecipeException(Exception):
     pass
 
@@ -1714,232 +1651,68 @@ class DrsRecipeException(Exception):
 # =============================================================================
 # Define file check functions
 # =============================================================================
-def make_default_recipe(params=None, name=None):
-    return DrsRecipe(params=params, name=name)
-
-
-# =============================================================================
-# Define file check functions
-# =============================================================================
-def _check_file_location(recipe, argname, directory, filename):
+# TODO: Should this be used?
+def make_default_recipe(params: ParamDict = None,
+                        name: str = None) -> DrsRecipe:
     """
-    Checks file location is valid on:
-        "filename" as full link to file (including wildcards)
-        "filename" + recipe.inputdir.upper() (including wildcards)
-        "filename" + ".fits" as full link to file (inlcluding wildcards)
-        "filename" + ".fits" + recipe.inputdir.upper() (including wildcards)
-
-    :param recipe: DrsRecipe instance
-    :param filename: string, the filename to test
-
-    :return cond: bool, if True file is valid, if False file is not valid
-    :return filelist: list of strings, list of files found
-    :return error: list of strings, if there was an error (cond = False)
-                   and return_error=True, return a list of strings
-                   describing the error
-    """
-    output_files = []
-    # get drs parameters
-    params = recipe.params
-    # get input directory
-    if directory is not None:
-        input_dir = str(directory)
-    else:
-        # noinspection PyProtectedMember
-        input_dir = recipe.get_input_dir()
-    # -------------------------------------------------------------------------
-    # Step 1: check "filename" as full link to file (including wildcards)
-    # -------------------------------------------------------------------------
-    # get glob list of files using glob
-    raw_files = np.sort(glob.glob(filename))
-    # debug output
-    if len(raw_files) == 0:
-        dargs = [argname, filename]
-        WLOG(params, 'debug', TextEntry('90-001-00003', args=dargs),
-             wrap=False)
-    # if we have file(s) then add them to output files
-    for raw_file in raw_files:
-        dargs = [argname, raw_file]
-        WLOG(params, 'debug', TextEntry('90-001-00004', args=dargs),
-             wrap=False)
-        output_files.append(raw_file)
-    # check if we are finished here
-    if len(output_files) > 0:
-        return True, output_files, []
-    # -------------------------------------------------------------------------
-    # Step 2: recipe.inputdir.upper() (including wildcards)
-    # -------------------------------------------------------------------------
-    # get glob list of files using glob
-    raw_files = np.sort(glob.glob(os.path.join(input_dir, filename)))
-    # debug output
-    if len(raw_files) == 0:
-        dargs = [argname, filename]
-        WLOG(params, 'debug', TextEntry('90-001-00003', args=dargs),
-             wrap=False)
-    # if we have file(s) then add them to output files
-    for raw_file in raw_files:
-        dargs = [argname, raw_file]
-        WLOG(params, 'debug', TextEntry('90-001-00005', args=dargs),
-             wrap=False)
-        output_files.append(raw_file)
-    # check if we are finished here
-    if len(output_files) > 0:
-        return True, output_files, []
-    # -------------------------------------------------------------------------
-    # Step 3: check "filename" as full link to file (including wildcards)
-    #         + .fits
-    # -------------------------------------------------------------------------
-    # get glob list of files using glob
-    raw_files = np.sort(glob.glob(filename + '.fits'))
-    # debug output
-    if len(raw_files) == 0 and not filename.endswith('.fits'):
-        dargs = [argname, filename + '.fits']
-        WLOG(params, 'debug', TextEntry('90-001-00003', args=dargs),
-             wrap=False)
-    # if we have file(s) then add them to output files
-    for raw_file in raw_files:
-        dargs = [argname, raw_file]
-        WLOG(params, 'debug', TextEntry('90-001-00006', args=dargs),
-             wrap=False)
-        output_files.append(raw_file)
-    # check if we are finished here
-    if len(output_files) > 0:
-        return True, output_files, []
-    # -------------------------------------------------------------------------
-    # Step 4: recipe.inputdir.upper() (including wildcards)
-    #         + .fits
-    # -------------------------------------------------------------------------
-    # get glob list of files using glob
-    raw_files = np.sort(glob.glob(os.path.join(input_dir, filename + '.fits')))
-    # debug output
-    if len(raw_files) == 0 and not filename.endswith('.fits'):
-        dargs = [argname, os.path.join(input_dir, filename + '.fits')]
-        WLOG(params, 'debug', TextEntry('90-001-00003', args=dargs),
-             wrap=False)
-    # if we have file(s) then add them to output files
-    for raw_file in raw_files:
-        dargs = [argname, raw_file]
-        WLOG(params, 'debug', TextEntry('90-001-00007', args=dargs),
-             wrap=False)
-        output_files.append(raw_file)
-
-    # -------------------------------------------------------------------------
-    # Deal with cases where we didn't find file
-    # -------------------------------------------------------------------------
-    eargs = [argname, filename, os.path.join(input_dir, filename)]
-    emsg = TextEntry('09-001-00005', args=eargs)
-    if not filename.endswith('.fits'):
-        fitsfile1 = filename + '.fits'
-        fitsfile2 = os.path.join(input_dir, fitsfile1)
-        emsg += TextEntry('\t\t"{0}"'.format(fitsfile1))
-        emsg += TextEntry('\t\t"{0}"'.format(fitsfile2))
-    # return False, no files and error messages
-    return False, None, emsg
-
-
-def _check_if_directory(argname, files):
-    """
-    Simple check to see if each file in files is a directory and then
-    checks if file in files is a file with os.path.isfile
-
-    :param argname:
-    :param files:
+    Create a blank version of a recipe
+    :param params: ParamDict, the parameter dictionary of constants
+    :param name: str, the name of the recipe
     :return:
     """
-    # empty error entry
-    emsgs = TextEntry(None)
-    # loop around files
-    it = 0
-    for filename in files:
-        # set eargs
-        eargs = [argname, filename]
-        # check if directory
-        if os.path.isdir(filename):
-            # Need to add as new line
-            if len(emsgs) > 0:
-                emsgs += '\n' + TextEntry('09-001-00026', args=eargs)
-            else:
-                emsgs += TextEntry('09-001-00026', args=eargs)
-            continue
-        # check if not file (or link to file)
-        if not os.path.isfile(filename) and not os.path.islink(filename):
-            # Need to add as new line
-            if len(emsgs) > 0:
-                emsgs += '\n' + TextEntry('09-001-00025', args=eargs)
-            else:
-                emsgs += TextEntry('09-001-00025', args=eargs)
-
-    # if we have emsgs then we need to get the errors
-    if len(emsgs) > 0:
-        return False, None, emsgs
-    else:
-        return True, files, []
-
-
-def _check_file_exclusivity(recipe, argname, drs_file, logic, outtypes,
-                            alltypelist=None):
-    # get drs parameters
-    params = recipe.params
-    # deal with no alltypelist
-    if alltypelist is None:
-        alltypelist = list(outtypes)
-    else:
-        alltypelist = list(alltypelist) + list(outtypes)
-
-    # if we have no files yet we don't need to check exclusivity
-    if len(alltypelist) == 0:
-        dargs = [argname, drs_file.name]
-        WLOG(params, 'debug', TextEntry('90-001-00013', args=dargs),
-             wrap=False)
-        return True, None
-    # if argument logic is set to "exclusive" we need to check that the
-    #   drs_file.name is the same for this as the last file in outtypes
-    if logic == 'exclusive':
-        # match by name of drs_file
-        cond = drs_file.name == alltypelist[-1].name
-        # if condition not met return False and error
-        if not cond:
-            eargs = [argname, drs_file.name, alltypelist[-1].name]
-            emsg = TextEntry('09-001-00008', args=eargs)
-            return False, emsg
-        # if condition is met return True and empty error
-        else:
-            dargs = [argname, drs_file.name]
-            WLOG(params, 'debug', TextEntry('90-001-00014', args=dargs),
-                 wrap=False)
-            return True, None
-    # if logic is 'inclusive' we just need to return True
-    elif logic == 'inclusive':
-        WLOG(params, 'debug', TextEntry('90-001-00015', args=[argname]),
-             wrap=False)
-        return True, None
-    # else logic is wrong - raise error
-    else:
-        eargs = [argname, recipe.name]
-        WLOG(params, 'error', TextEntry('00-006-00004', args=eargs),
-             wrap=False)
+    # return a 'blank' instance of the DrsRecipe
+    return DrsRecipe(params=params, name=name)
 
 
 # =============================================================================
 # Define run making functions
 # =============================================================================
-def find_run_files(params, recipe, table, args, filters=None,
-                   allowedfibers: Union[List[str], str, None] = None, **kwargs):
+def find_run_files(params: ParamDict, recipe: DrsRecipe,
+                   table: Table, args: Dict[str, DrsArgument],
+                   filters: Union[Dict[str, Any], None] = None,
+                   allowedfibers: Union[List[str], str, None] = None,
+                   absfile_col: Union[str, None] = None,
+                   check_required: bool = False) -> Dict[str, Dict[str, Table]]:
+    """
+    Given a specifc recipe and args (args or kwargs) use the other arguments
+    to generate a set of astropy.table.Table for each arg (args or kwargs)
+    - it does this via checking the full 'table' against all filters etc
+    and returns (for each arg/kwargs)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe for which to find files (uses some
+                   properties (i.e. extras and master) already set previously
+    :param table: astropy.table.Table - the full table (must contain all
+                  filter keys as columns
+    :param args: dict, either args or kwargs - the DrsRecipe.args or
+                 DrsRecipe.kwargs to use - produces a table for each key in
+                 this dict
+    :param filters: dict, the keys to check (should be KW_XXX) and should also
+                    be columns in 'table'
+    :param allowedfibers: str, the allowed fiber(s) (should be in KW_FIBER
+                          column in 'table'
+    :param absfile_col: str, the absolute file column name (if not set is taken
+                        from params['REPROCESS_ABSFILECOL'] - recommended
+    :param check_required: bool, if True checks whether parameter is required
+                           (set in argument definition - in recipe definition)
+
+    :return: a dictionary for each 'arg' key, each dictionary has a
+             sub-dictionary for each unique drsfile type found (the value of
+             the sub-dictionary is an astropy.table - a sub-set of the full
+             table matching this argument/drsfile combination
+    """
     # set function name
     func_name = display_func(params, 'find_run_files', __NAME__)
     # storage for valid files for each argument
     filedict = OrderedDict()
     # get constants from params
-    absfile_col = pcheck(params, 'REPROCESS_ABSFILECOL', 'absfile_col',
-                         kwargs, func_name)
-    check_required = kwargs.get('check_required', False)
+    absfile_col = pcheck(params, 'REPROCESS_ABSFILECOL', func=func_name,
+                         override=absfile_col)
     # get raw filenames from table
     files = table[absfile_col]
-
     # debug log the number of files found
     dargs = [func_name, len(files)]
     WLOG(params, 'debug', TextEntry('90-503-00011', args=dargs))
-
     # loop around arguments
     for argname in args:
         # get arg instance
@@ -2094,6 +1867,9 @@ def find_run_files(params, recipe, table, args, filters=None,
 
 
 def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
+
+    # TODO: Got to here
+
     # set function name
     func_name = display_func(params, 'group_run_files', __NAME__)
     # get parameters from params
@@ -2288,97 +2064,6 @@ def convert_to_command(self, params, runargs):
 # =============================================================================
 # Define worker functions
 # =============================================================================
-def _check_arg_path(params, arg, directory):
-    # set function name
-    func_name = display_func(params, '_check_arg_path', __NAME__)
-    # set the path as directory if arg.path is None
-    if arg.path is None:
-        return os.path.abspath(directory)
-    # deal with arg.path being a link to a constant
-    if arg.path in params:
-        path = params[arg.path]
-    # else assume arg.path is a path
-    else:
-        path = arg.path
-    # path may be relative to main drs package to get full path
-    if not os.path.exists(path):
-        # get package name
-        package = params['DRS_PACKAGE']
-        # get absolute path
-        path = drs_break.get_relative_folder(package, path)
-    # make path absolute
-    path = os.path.abspath(path)
-    # now check that path is valid
-    if not os.path.exists(path):
-        # log that arg path was wrong
-        eargs = [arg.name, arg.path, func_name]
-        WLOG(params, 'error', TextEntry('00-006-00018', args=eargs))
-    else:
-        return path
-
-
-def _gen_header_errors(params, header_errors):
-    # set up message storage
-    emsgs = TextEntry(None)
-    # get text
-    text = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
-    # set up initial argname
-    argname = ''
-
-    # check if file passed (all header_errors are True) - skip if passed
-    for drsfile in header_errors.keys():
-        passed = True
-        for key in header_errors[drsfile]:
-            passed &= header_errors[drsfile][key][0]
-        if passed:
-            return []
-
-    # loop around drs files in header_errors
-    for drsfile in header_errors.keys():
-        # get this iterations values in this drs_file
-        header_error = header_errors[drsfile]
-        # append this file
-        emsgs += '\n' + text['09-001-00021'].format(drsfile)
-        # loop around keys in this drs_file
-        for key in header_error:
-            # get this iterations entry
-            entry = header_error[key]
-            # get the argname
-            argname = entry[1]
-            # construct error message
-            eargs = [key, entry[3], entry[2]]
-            if not entry[0]:
-                emsgs += '\n' + text['09-001-00022'].format(*eargs)
-    if len(emsgs) > 0:
-        emsg0 = TextEntry('09-001-00023', args=[argname])
-    else:
-        emsg0 = TextEntry(None)
-
-    return emsg0 + emsgs
-
-
-def _get_arg(recipe, argname):
-    """
-    Find an argument in the DrsRecipes argument dictionary or if not found
-    find argument in the DrsRecipes keyword argument dictionary or it not found
-    at all return None
-
-    :param recipe: DrsRecipe instance
-    :param argname: string, the argument/keyword argument to look for
-
-    :return: DrsArgument instance, the argument in DrsRecipe.args or
-             DrsRecipe.kwargs
-    """
-    if argname in recipe.args:
-        arg = recipe.args[argname]
-    elif argname in recipe.kwargs:
-        arg = recipe.kwargs[argname]
-    else:
-        arg = None
-    # return arg
-    return arg
-
-
 def _group_drs_files(params, drstable, **kwargs):
     # set function name
     func_name = display_func(params, '_group_drs_files', __NAME__)
@@ -2624,28 +2309,6 @@ def _find_first_filearg(params, runorder, argdict, kwargdict):
             if isinstance(kwargdict[argname], OrderedDict):
                 return argname, kwargdict[argname]
     return None
-
-
-# def _find_next_group(argname, drstable, usedgroups, groups, ugroups):
-#     # make sure argname is in usedgroups
-#     if argname not in usedgroups:
-#         usedgroups[argname] = []
-#
-#     arggroup = list(usedgroups[argname])
-#     # loop around unique groups
-#     for group in ugroups:
-#         # if used skip
-#         if group in arggroup:
-#             continue
-#         else:
-#             # find rows in this group
-#             mask = groups == group
-#             # add group to used groups
-#             usedgroups[argname].append(group)
-#             # return masked table and usedgroups
-#             return Table(drstable[mask]), usedgroups
-#     # return None if all groups used
-#     return None, usedgroups
 
 
 def _find_next_group(argname, drstable, usedgroups, groups, ugroups):

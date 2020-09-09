@@ -38,25 +38,25 @@ class Colors:
                       to 'DARK'
         """
         # Basic definition of colours to use in log to screen
-        self.BLACK1 = '\033[90;1m'
-        self.RED1 = '\033[1;91;1m'
-        self.GREEN1 = '\033[92;1m'
-        self.YELLOW1 = '\033[1;93;1m'
-        self.BLUE1 = '\033[94;1m'
-        self.MAGENTA1 = '\033[1;95;1m'
-        self.CYAN1 = '\033[1;96;1m'
-        self.WHITE1 = '\033[97;1m'
-        self.BLACK2 = '\033[1;30m'
-        self.RED2 = '\033[1;31m'
-        self.GREEN2 = '\033[1;32m'
-        self.YELLOW2 = '\033[1;33m'
-        self.BLUE2 = '\033[1;34m'
-        self.MAGENTA2 = '\033[1;35m'
-        self.CYAN2 = '\033[1;36m'
-        self.WHITE2 = '\033[1;37m'
-        self.ENDC = '\033[0;0m'
-        self.BOLD = '\033[1m'
-        self.UNDERLINE = '\033[4m'
+        self.BLACK1 = base.COLOURS['BLACK1']
+        self.RED1 = base.COLOURS['RED1']
+        self.GREEN1 = base.COLOURS['GREEN1']
+        self.YELLOW1 = base.COLOURS['YELLOW1']
+        self.BLUE1 = base.COLOURS['BLUE1']
+        self.MAGENTA1 = base.COLOURS['MAGENTA1']
+        self.CYAN1 = base.COLOURS['CYAN1']
+        self.WHITE1 = base.COLOURS['WHITE1']
+        self.BLACK2 = base.COLOURS['BLACK2']
+        self.RED2 = base.COLOURS['RED2']
+        self.GREEN2 = base.COLOURS['GREEN2']
+        self.YELLOW2 = base.COLOURS['YELLOW2']
+        self.BLUE2 = base.COLOURS['BLUE2']
+        self.MAGENTA2 = base.COLOURS['MAGENTA2']
+        self.CYAN2 = base.COLOURS['CYAN2']
+        self.WHITE2 = base.COLOURS['WHITE2']
+        self.ENDC = base.COLOURS['ENDC']
+        self.BOLD = base.COLOURS['BOLD']
+        self.UNDERLINE = base.COLOURS['UNDERLINE']
         # if we have no theme set - set the default
         if theme is None:
             self.theme = 'DARK'
@@ -248,6 +248,9 @@ def display_func(params: Any = None, name: Union[str, None] = None,
     # ----------------------------------------------------------------------
     # deal with no params (do not log)
     if params is None:
+        return strfunc
+    # deal with no debug mode
+    if 'DRS_DEBUG' not in params or 'DEBUG_MODE_FUNC_PRINT' not in params:
         return strfunc
     # deal with debug level too low (just return here)
     if params['DRS_DEBUG'] < params['DEBUG_MODE_FUNC_PRINT']:

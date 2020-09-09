@@ -21,7 +21,7 @@ import numpy as np
 import os
 from pathlib import Path
 from types import FunctionType
-from typing import Any, List, Union, Tuple, Type
+from typing import Any, Dict, List, Union, Tuple, Type
 import warnings
 
 from apero.base import base
@@ -1916,7 +1916,7 @@ class DrsFitsFile(DrsInputFile):
     def has_correct_hkeys(self, header: Union[drs_fits.Header, None] = None,
                           argname: Union[str, None] = None,
                           log: bool = True, filename: Union[str, None] = None,
-                          ) -> Tuple[bool, Union[dict, None]]:
+                          ) -> Tuple[bool, Dict[str, tuple]]:
         """
         Check whether the header keys exist in the header
 
@@ -1928,7 +1928,13 @@ class DrsFitsFile(DrsInputFile):
         :param log: bool, if True logs that we have correct keys
 
         :return: True or False for correct header keys and the reason why
-                 if False
+                 if False, and a dictionary of header keywords where each value
+                 is in the form of a tuple: (found, argname, rvalue, value)
+                 where
+                 - found is True or False (whether header key was found)
+                 - argname is a str, the argument name this belongs to
+                 - rvalue is the required value (fails if incorrect)
+                 - value is value in the header
         """
         # set function name
         _ = display_func(self.params, 'has_correct_hkeys', __NAME__,
@@ -3894,7 +3900,7 @@ class DrsNpyFile(DrsInputFile):
         # set class name
         self.class_name = 'DrsNpyFile'
         # set function name
-        _ = display_func(self.params, '__init__', __NAME__, self.class_name)
+        _ = display_func(params, '__init__', __NAME__, self.class_name)
         # define a name
         self.name = name
         # get super init

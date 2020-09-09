@@ -14,7 +14,7 @@ Created on 2018-10-31 at 18:06
 @author: cook
 """
 from apero.base import base
-from apero.core.utils import drs_file
+from apero.core.core import drs_file
 
 # =============================================================================
 # Define variables

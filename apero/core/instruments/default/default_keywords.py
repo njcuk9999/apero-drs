@@ -204,7 +204,8 @@ KW_FRMTIME = Keyword('KW_FRMTIME', key='', dtype=float, source=__NAME__)
 KW_EXPTIME = Keyword('KW_EXPTIME', key='', dtype=float, source=__NAME__)
 # This is the units for the exposure time
 KW_EXPTIME_UNITS = Const('KW_EXPTIME_UNITS', value='s', dtype=str,
-                         options=['s', 'min', 'hr', 'day'])
+                         options=['s', 'min', 'hr', 'day'],
+                         source=__NAME__)
 
 # define the observation type HEADER key
 KW_OBSTYPE = Keyword('KW_OBSTYPE', key='', dtype=str, source=__NAME__)

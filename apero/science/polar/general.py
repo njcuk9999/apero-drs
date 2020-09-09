@@ -16,9 +16,8 @@ from apero.base import base
 from apero.core import math as mp
 from apero import lang
 from apero.core import constants
-from apero.core.core import drs_log
+from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_startup
-from apero.core.utils import drs_file
 from apero.io import drs_table
 from apero.science import extract
 

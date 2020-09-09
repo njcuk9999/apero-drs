@@ -18,7 +18,7 @@ from astropy.table import Table
 from collections import OrderedDict
 import multiprocessing
 from multiprocessing import Pool, Process, Manager, Event
-from typing import Tuple, Union
+from typing import List, Tuple, Union
 
 from apero.base import base
 from apero.base import drs_base_classes as base_class
@@ -1513,7 +1513,7 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
         WLOG(params, '', TextEntry('40-503-00012', args=wargs))
         # add file and recipe mod if not set
         if srecipe.recipemod is None:
-            srecipe.recipemod = recipemod
+            srecipe.recipemod = recipemod.copy()
         if srecipe.filemod is None:
             srecipe.filemod = filemod.copy()
         # ------------------------------------------------------------------
@@ -2053,9 +2053,10 @@ def _multi_process1(params, recipe, runlist, cores, groupname=None):
 # =============================================================================
 # Define working functions
 # =============================================================================
-def _get_non_telluric_stars(params, table, tstars):
+def _get_non_telluric_stars(params, table, tstars: List[str]) -> List[str]:
     """
-    Takes a table and gets all objects that are not in tstars
+    Takes a table and gets all objects (OBJ_DARK and OBJ_FP) that are not in
+    tstars (telluric stars)
 
     :param params:
     :param table:
@@ -2096,7 +2097,7 @@ def _get_non_telluric_stars(params, table, tstars):
     # add to debug log
     WLOG(params, 'debug', TextEntry('90-503-00016', args=[len(other_objects)]))
     # return other objects
-    return np.sort(other_objects)
+    return list(np.sort(other_objects))
 
 
 def _update_table_objnames(params, table):
