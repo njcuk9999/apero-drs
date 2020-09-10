@@ -183,6 +183,11 @@ def __main__(recipe, params):
         eargs = [params, recipe, EXTRACT_NAME, hcfile, fpfile]
         # run extraction
         hc_outputs, fp_outputs = extractother.extract_wave_files(*eargs)
+
+
+        # TODO: remove breakpoint
+        constants.break_point(params)
+
         # ==================================================================
         # HC WAVE SOLUTION MASTER FIBER
         # ==================================================================

@@ -20,6 +20,7 @@ from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.io import drs_fits
 from apero.io import drs_path
+from apero.io import drs_text
 from apero.science import telluric
 from apero.tools.module.processing import drs_processing
 

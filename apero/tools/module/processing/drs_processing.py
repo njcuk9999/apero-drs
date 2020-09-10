@@ -831,7 +831,8 @@ def generate_run_list(params, table, runtable, skiptable):
     # set rlist to None (for no sequences)
     rlist = None
     # if we have found sequences need to deal with them
-    if sequencelist is not None:
+    #   also table cannot be None at this point
+    if (sequencelist is not None) and (table is not None):
         # loop around sequences
         for sequence in sequencelist:
             # log progress

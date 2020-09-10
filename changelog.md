@@ -2,10 +2,53 @@ Changelog
 =========
 
 
-0.6.130 (2020-08-25)
+0.6.131 (2020-09-10)
 --------------------
+- Apero.recipes.spirou.pol_spirou.py - hack from Issue #639 re: linear
+  algebra error. [Neil Cook]
+- Identical? [Neil Cook]
+- Apero.core.core.drs_startup.py - format of splash update. [Neil Cook]
+- Update date/version/docs/changelog. [Neil Cook]
+- Update object query list. [Neil Cook]
+- Issue #644 - deal with table = None in generate_run_list + add
+  --test=True to codes which use processing (obj_mk_tellu_db an
+  dobj_fit_tellu_db) [Neil Cook]
+- Apero.tools.module.setup.drs_processing.py - deal with table being
+  None (just to test if things work with this option) [Neil Cook]
+- Apero.recipes.spirou.obj_fit_tellu_db_spirou.py - add break point and
+  TEST_RUN = True for test. [Neil Cook]
+- Apero.io.drs_fits.py - remove breakpoint. [Neil Cook]
+- Apero.io.drs_fits.py - try to fix copying comments. [Neil Cook]
+- Apero.recipes.nirps_ha.cal_pp_master_nirps_ha.py - move break point to
+  test error. [Neil Cook]
+- Apero.io.drs_fits.py - deal with header key not being str. [Neil Cook]
+- Apero.io.drs_fits.py - deal with header key not being str. [Neil Cook]
+- Apero.recipes.nirps_ha.cal_wave_master_nirps_ha.py -- move breakpoint.
+  [Neil Cook]
+- Apeor.data.nirps_ha.calib - add catalogue_UNe.csv file. [Neil Cook]
+- Apero.science.extract.general.py - remove breakpoint
+  apero.core.instruments.default.default_constants.py - make
+  LEAKM_WSMOOTH an int. [Neil Cook]
+- Apero.science.extract.general.py - move breakpoint. [Neil Cook]
+- Apero.io.drs_image.py - deal with only one image in large_image_median
+  (return image without medianing) [Neil Cook]
+- Apero.recipes.nirps_ha.cal_shape_nirps_ha.py -- move break point.
+  [Neil Cook]
+- Apero.recipes.nirps_ha.cal_shape_nirps_ha.py -- move break point.
+  [Neil Cook]
+- Apero.recipes.nirps_ha.cal_shape_nirps_ha.py -- add break point. [Neil
+  Cook]
+- Apero.recipes.spirou.obj_fit_tellu_spirou.py +
+  science/telluric/fit_tellu.py + gen_tellu.py + mk_tellu.py - fix
+  problem with qc for tellu pre clean. [njcuk9999]
+- Update version in readme for master/developer/working. [Neil Cook]
 - Update date/version/changelog/update notes. [Neil Cook]
 - Update date/version/changelog/update notes. [Neil Cook]
+- Update date/version/changelog/update notes. [Neil Cook]
+
+
+0.6.130 (2020-08-21)
+--------------------
 - Update README.md. [Neil Cook]
 
   update pp_seq_opt
