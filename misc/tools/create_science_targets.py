@@ -20,6 +20,8 @@ from astropy.io import fits
 # Define variables
 # =============================================================================
 VERSION = '0.6.129'
+KIND  = 'SCIENCE'
+KIND = 'TELLURIC'
 
 TARGETS = []
 # priority 0
@@ -39,12 +41,23 @@ TARGETS = []
 # TARGETS += ['V883Ori', ' DRTau', ' XZTau', ' BBW76', ' NYOri', ' V582Aur',
 #             'RULup']
 # # priority 6
-TARGETS += ['TauBoo', ' V900Mon', ' V1057Cyg', ' V1515Cyg', ' WASP-127']
+# TARGETS += ['TauBoo', ' V900Mon', ' V1057Cyg', ' V1515Cyg', ' WASP-127']
 
 
-IN_WORKSPACE = '/spirou/cfht_nights/cfht_july1/reduced/'
-OUT_WORKSPACE = '/spirou/cfht_nights/science_targets/'
-TAR_WORKSPACE = '/home/cook/www/download/science_targets/'
+TARGETS += ['74PscB','31Cas','gamTri','HR875','HR1314','pi.02Ori','HR1832',
+           'zetLep','HR2180','HR2209','24Lyn','HR3131','33Lyn','etaPyx',
+           '23LMi','lLeo','phiLeo','HR4687','HR4722','zetVir','82UMa',
+           'HD130917','betSer','HR6025','HD159170','gamSct','51Dra','iotCyg',
+           'omiCapA','chiCap','17Peg','HR8489','59Peg']
+
+if KIND == 'TELLURIC':
+    IN_WORKSPACE = '/spirou/cfht_nights/cfht_july1/reduced/'
+    OUT_WORKSPACE = '/spirou/cfht_nights/telluric_targets/'
+    TAR_WORKSPACE = '/home/cook/www/download/telluric_targets/'
+else:
+    IN_WORKSPACE = '/spirou/cfht_nights/cfht_july1/reduced/'
+    OUT_WORKSPACE = '/spirou/cfht_nights/science_targets/'
+    TAR_WORKSPACE = '/home/cook/www/download/science_targets/'
 # extensions to look for
 EXTENSIONS = ['o_pp_e2dsff_AB.fits',
               'o_pp_e2dsff_C.fits',
