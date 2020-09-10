@@ -352,7 +352,7 @@ def run_process(params, recipe, module, *gargs, terminate=False, **gkwargs):
     # generate run table (dictionary from reprocessing)
     runtable = generate_run_table(params, module, *gargs, **gkwargs)
     # Generate run list
-    rlist = generate_run_list(params, None, runtable)
+    rlist = generate_run_list(params, None, runtable, None)
     # Process run list
     outlist, has_errors = process_run_list(params, recipe, rlist)
     # display errors
@@ -810,7 +810,8 @@ def generate_run_list(params, table, runtable, skiptable):
     # print progress: generating run list
     WLOG(params, 'info', TextEntry('40-503-00011'))
     # need to update table object names to match preprocessing
-    table = _update_table_objnames(params, table)
+    if table is not None:
+        table = _update_table_objnames(params, table)
     # get recipe defintions module (for this instrument)
     recipemod = _get_recipe_module(params)
     # get all values (upper case) using map function
@@ -820,7 +821,8 @@ def generate_run_list(params, table, runtable, skiptable):
     # set rlist to None (for no sequences)
     rlist = None
     # if we have found sequences need to deal with them
-    if sequencelist is not None:
+    #   also table cannot be None at this point
+    if (sequencelist is not None) and (table is not None):
         # loop around sequences
         for sequence in sequencelist:
             # log progress
@@ -1505,6 +1507,10 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
         # copy table
         # ------------------------------------------------------------------
         ftable = Table(table)
+        # skip if table is empty
+        if len(ftable) == 0:
+            continue
+
         # ------------------------------------------------------------------
         # deal with black and white lists
         # ------------------------------------------------------------------
@@ -2048,6 +2054,9 @@ def _get_non_telluric_stars(params, table, tstars):
     # deal with no tstars
     if drs_text.null_text(tstars, ['None', '']):
         tstars = []
+    # deal with no table
+    if (table is None) or len(table) == 0:
+        return []
     # ----------------------------------------------------------------------
     # lets narrow down our list
     # ----------------------------------------------------------------------

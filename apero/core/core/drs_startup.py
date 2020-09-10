@@ -1034,21 +1034,21 @@ def _display_initial_parameterisation(params, printonly=False, logonly=False):
     :return: None
     """
     # Add initial parameterisation
-    wmsgs = TextEntry('\n\tDRS_DATA_RAW={DRS_DATA_RAW}'.format(**params))
-    wmsgs += TextEntry('\n\tDRS_DATA_REDUC={DRS_DATA_REDUC}'.format(**params))
-    wmsgs += TextEntry('\n\tDRS_DATA_WORKING={DRS_DATA_WORKING}'
+    wmsgs = TextEntry('\n\tDRS_DATA_RAW: {DRS_DATA_RAW}'.format(**params))
+    wmsgs += TextEntry('\n\tDRS_DATA_REDUC: {DRS_DATA_REDUC}'.format(**params))
+    wmsgs += TextEntry('\n\tDRS_DATA_WORKING: {DRS_DATA_WORKING}'
                        ''.format(**params))
-    wmsgs += TextEntry('\n\tDRS_CALIB_DB={DRS_CALIB_DB}'.format(**params))
-    wmsgs += TextEntry('\n\tDRS_TELLU_DB={DRS_TELLU_DB}'.format(**params))
-    wmsgs += TextEntry('\n\tDRS_DATA_MSG={DRS_DATA_MSG}'.format(**params))
-    wmsgs += TextEntry('\n\tDRS_DATA_PLOT={DRS_DATA_PLOT}'.format(**params))
+    wmsgs += TextEntry('\n\tDRS_CALIB_DB: {DRS_CALIB_DB}'.format(**params))
+    wmsgs += TextEntry('\n\tDRS_TELLU_DB: {DRS_TELLU_DB}'.format(**params))
+    wmsgs += TextEntry('\n\tDRS_DATA_MSG: {DRS_DATA_MSG}'.format(**params))
+    wmsgs += TextEntry('\n\tDRS_DATA_PLOT: {DRS_DATA_PLOT}'.format(**params))
     # add config sources
     for source in np.sort(params['DRS_CONFIG']):
-        wmsgs += TextEntry('\n\tDRS_CONFIG={0}'.format(source))
+        wmsgs += TextEntry('\n\tDRS_CONFIG: {0}'.format(source))
     # add others
-    wmsgs += TextEntry('\n\tPRINT_LEVEL={DRS_PRINT_LEVEL}'.format(**params))
-    wmsgs += TextEntry('\n\tLOG_LEVEL={DRS_LOG_LEVEL}'.format(**params))
-    wmsgs += TextEntry('\n\tDRS_PLOT={DRS_PLOT}'.format(**params))
+    wmsgs += TextEntry('\n\tPRINT_LEVEL: {DRS_PRINT_LEVEL}'.format(**params))
+    wmsgs += TextEntry('\n\tLOG_LEVEL: {DRS_LOG_LEVEL}'.format(**params))
+    wmsgs += TextEntry('\n\tDRS_PLOT: {DRS_PLOT}'.format(**params))
     if params['DRS_DEBUG'] > 0:
         wargs = ['DRS_DEBUG', params['DRS_DEBUG']]
         wmsgs += '\n' + TextEntry('40-001-00009', args=wargs)

@@ -486,6 +486,7 @@ def correct_master_dark_fp(params, extractdict, **kwargs):
     # save corrected refimage into output storage
     reffile.data = refimage
     outputs[ref_fiber] = reffile
+
     # ----------------------------------------------------------------------
     # process the science fibers
     # ----------------------------------------------------------------------

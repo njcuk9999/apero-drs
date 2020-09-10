@@ -1205,8 +1205,8 @@ LEAK_NORM_PERCENTILE = Const('LEAK_NORM_PERCENTILE', value=None, dtype=float,
                              source=__NAME__, group=cgroup)
 
 # define the e-width of the smoothing kernel for leak master
-LEAKM_WSMOOTH = Const('LEAKM_WSMOOTH', value=None, dtype=float,
-                      source=__NAME__, minimum=0.0, group=cgroup)
+LEAKM_WSMOOTH = Const('LEAKM_WSMOOTH', value=None, dtype=int,
+                      source=__NAME__, minimum=0, group=cgroup)
 
 # define the kernel size for leak master
 LEAKM_KERSIZE = Const('LEAKM_KERSIZE', value=None, dtype=float,
