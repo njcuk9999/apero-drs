@@ -2,8 +2,13 @@ Changelog
 =========
 
 
-0.6.131 (2020-09-08)
+0.6.131 (2020-09-10)
 --------------------
+- Apero.recipes.spirou.pol_spirou.py - hack from Issue #639 re: linear
+  algebra error. [Neil Cook]
+- Identical? [Neil Cook]
+- Apero.core.core.drs_startup.py - format of splash update. [Neil Cook]
+- Update date/version/docs/changelog. [Neil Cook]
 - Update object query list. [Neil Cook]
 - Issue #644 - deal with table = None in generate_run_list + add
   --test=True to codes which use processing (obj_mk_tellu_db an
@@ -38,12 +43,12 @@ Changelog
   problem with qc for tellu pre clean. [njcuk9999]
 - Update version in readme for master/developer/working. [Neil Cook]
 - Update date/version/changelog/update notes. [Neil Cook]
+- Update date/version/changelog/update notes. [Neil Cook]
+- Update date/version/changelog/update notes. [Neil Cook]
 
 
-0.6.130 (2020-08-25)
+0.6.130 (2020-08-21)
 --------------------
-- Update date/version/changelog/update notes. [Neil Cook]
-- Update date/version/changelog/update notes. [Neil Cook]
 - Update README.md. [Neil Cook]
 
   update pp_seq_opt
