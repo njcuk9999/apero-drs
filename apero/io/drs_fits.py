@@ -71,24 +71,84 @@ class Header(fits.Header):
         super().__init__(*args, **kwargs)
         self.__temp_items = {}
 
-    def __setitem__(self, key, item):
+    def __setitem__(self, key: str, item):
+        """
+        Set a key with "item"
+        same as using: header[key] = item
+
+        :param key: str, the key to add to the header
+        :param item: object, the object to
+        :return: None
+        """
+        # deal with key not being string
+        if isinstance(key, tuple):
+            if key[0].startswith('@@@'):
+                tmpkey = self.__get_temp_key(key[0])
+                self.__temp_items.__setitem__(tmpkey, item)
+            else:
+                # check for NaN values (and convert -- cannot put directly in)
+                nan_filtered = self.__nan_check(item)
+                # do the super __setitem__ on nan filtered item
+                super().__setitem__(key, nan_filtered)
+        # if key starts with @@@ add to temp items (without @@@)
         if key.startswith('@@@'):
+            # use the __get_temp_key method to strip key
             self.__temp_items.__setitem__(self.__get_temp_key(key), item)
+        # do not add empty keys
         elif key == '':
             pass
+        # else add normal keys
         else:
+            # check for NaN values (and convert -- cannot put directly in)
             nan_filtered = self.__nan_check(item)
+            # do the super __setitem__ on nan filtered item
             super().__setitem__(key, nan_filtered)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str):
+        """
+        Get an "item" with key
+        same as using: item = header[key]
+
+        :param key: str, the key in the header to get item for
+        :return: the item in the header with key="key"
+        """
+        # deal with key not being string
+        if isinstance(key, tuple):
+            if key[0].startswith('@@@'):
+                tmpkey = self.__get_temp_key(key[0])
+                return self.__temp_items.__getitem__(tmpkey)
+            else:
+                return super().__getitem__(key)
+        elif not isinstance(key, str):
+            return super().__getitem__(key)
+        # if key starts with @@@ get it from the temporary items storage
         if key.startswith('@@@'):
             return self.__temp_items.__getitem__(self.__get_temp_key(key))
+        # else get it from the normal storage location (in super)
         else:
             return super().__getitem__(key)
 
-    def __contains__(self, key):
+    def __contains__(self, key: str):
+        """
+        Whether key is in header
+        same as using: key in header
+
+        :param key: str, the key to search for in the header
+        :return:
+        """
+        # deal with key not being str
+        if isinstance(key, tuple):
+            if key[0].startswith('@@@'):
+                tmpkey = self.__get_temp_key(key[0])
+                return self.__temp_items.__contains__(tmpkey)
+            else:
+                return super().__contains__(key)
+        elif not isinstance(key, str):
+            return super().__contains__(key)
+        # if key starts with @@@ then get it from the temp_items
         if key.startswith('@@@'):
             return self.__temp_items.__contains__(self.__get_temp_key(key))
+        # else just do the super contains
         else:
             return super().__contains__(key)
 
@@ -101,7 +161,11 @@ class Header(fits.Header):
         header = super().copy(strip=strip)
         if nan_to_string:
             for key in list(header.keys()):
-                header[key] = header[key]
+
+                if isinstance(header[key], fits.header._HeaderCommentaryCards):
+                    header[key] = header[key][0]
+                else:
+                    header[key] = header[key]
         return header
 
     @staticmethod

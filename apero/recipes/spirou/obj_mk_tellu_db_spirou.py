@@ -17,6 +17,7 @@ from apero import lang
 from apero.core import constants
 from apero.io import drs_fits
 from apero.io import drs_path
+from apero.io import drs_text
 from apero.science import telluric
 from apero.tools.module.setup import drs_processing
 
@@ -106,8 +107,12 @@ def __main__(recipe, params):
     fiber = params['INPUTS']['FIBER']
     # set properties set in run file
     params.set('STOP_AT_EXCEPTION', False)
-    params.set('TEST_RUN', False)
     params.set('CORES', params['INPUTS']['CORES'])
+    # set test run from inputs
+    params.set('TEST_RUN', False)
+    if 'TEST' in params['INPUTS']:
+        if drs_text.true_text(params['INPUTS']['TEST']):
+            params.set('TEST_RUN', True)
     # get the telluric star names
     objnames, _ = telluric.get_whitelist(params)
     objnames = list(objnames)
