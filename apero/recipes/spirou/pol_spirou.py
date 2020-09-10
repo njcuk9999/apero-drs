@@ -5,6 +5,8 @@ Created on 2019-09-05 at 14:58
 
 @author: cook
 """
+import numpy as np
+
 from apero.base import base
 from apero import lang
 from apero.core import constants
@@ -144,7 +146,12 @@ def __main__(recipe, params):
     # ---------------------------------------------------------------------
     # LSD Analysis
     # ---------------------------------------------------------------------
-    lprops = polar.lsd_analysis_wrapper(params, pobjects, pprops, wprops)
+    try:
+        lprops = polar.lsd_analysis_wrapper(params, pobjects, pprops, wprops)
+    except np.linalg.LinAlgError:
+        # TODO: Hack to avoid error - if presistent should deal with it better
+        #  inside lsd_analysis_wrapper
+        lprops = dict(LSD_ANALYSIS=False)
 
     # ----------------------------------------------------------------------
     # Create 1d soectra (s1d) of all products [pol, null1, null2, stokesi]

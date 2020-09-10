@@ -19,6 +19,7 @@ from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.io import drs_path
+from apero.io import drs_text
 from apero.science import telluric
 from apero.tools.module.processing import drs_processing
 
@@ -112,6 +113,7 @@ def __main__(recipe, params):
     robjnames = params['INPUTS']['OBJNAME']
     if robjnames == 'None':
         robjnames = None
+
     # set properties set in run file
     params.set('STOP_AT_EXCEPTION', False)
     params.set('CORES', params['INPUTS']['CORES'])
