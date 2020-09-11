@@ -58,7 +58,7 @@ pcheck = constants.PCheck(wlog=WLOG)
 # Run keys
 RUN_KEYS = dict()
 RUN_KEYS['RUN_NAME'] = 'Run Unknown'
-RUN_KEYS['SEND_EMAIL'] = 'False'
+RUN_KEYS['SEND_EMAIL'] = False
 RUN_KEYS['EMAIL_ADDRESS'] = None
 RUN_KEYS['NIGHTNAME'] = None
 RUN_KEYS['BNIGHTNAMES'] = None
