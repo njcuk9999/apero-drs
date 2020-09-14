@@ -15,9 +15,8 @@ from collections import OrderedDict
 import copy
 import itertools
 import numpy as np
-import os
 import sys
-from typing import Any, Dict, List, Type, Union
+from typing import Any, Dict, List, Tuple, Type, Union
 
 from apero.base import base
 from apero.base import drs_base_classes as base_class
@@ -132,6 +131,8 @@ class DrsRecipe(object):
         self.inputdir = 'tmp'
         # input type (RAW/REDUCED)
         self.inputtype = 'raw'
+        # whether to force input/outputdir
+        self.force_dirs = [False, False]
         # recipe description/epilog
         self.description = 'No description defined'
         self.epilog = ''
@@ -433,7 +434,7 @@ class DrsRecipe(object):
                 options: Union[List[Any], None] = None,
                 helpstr: Union[str, None] = '',
                 files: Union[List[str], None] = None,
-                parent: Union[str, None] = None, limit: Union[int, None] = None,
+                path: Union[str, None] = None, limit: Union[int, None] = None,
                 minimum: Union[int, float, None] = None,
                 maximum: Union[int, float, None] = None,
                 filelogic: str = 'inclusive', default: Union[Any, None] = None,
@@ -473,8 +474,8 @@ class DrsRecipe(object):
                      is "files" or "file" sets the type of file to expect
                      the way the list is understood is based on "filelogic"
 
-        :param parent: str, a parent Const or Keyword that this is spawned
-                       from
+        :param path: str, if set overwrites any directory parameter
+                     Note path can be a parameter in ParamDict
 
         :param limit: int, file limit for processing
 
@@ -516,7 +517,7 @@ class DrsRecipe(object):
         try:
             argument = DrsArgument(name, kind='arg', pos=pos, altnames=altnames,
                                    dtype=dtype, options=options,
-                                   helpstr=helpstr, files=files, parent=parent,
+                                   helpstr=helpstr, files=files, path=path,
                                    limit=limit, minimum=minimum,
                                    maximum=maximum, filelogic=filelogic,
                                    default=default, default_ref=default_ref,
@@ -536,7 +537,7 @@ class DrsRecipe(object):
                   options: Union[List[Any], None] = None,
                   helpstr: Union[str, None] = '',
                   files: Union[List[str], None] = None,
-                  parent: Union[str, None] = None,
+                  path: Union[str, None] = None,
                   limit: Union[int, None] = None,
                   minimum: Union[int, float, None] = None,
                   maximum: Union[int, float, None] = None,
@@ -551,13 +552,6 @@ class DrsRecipe(object):
                      arguments should include the "-" and "--" in front
                      ("arg.name" will not include these but "arg.argname"
                      and "arg.names" will)
-
-        :param kind: string the argument kind (argument or keyword argument)
-
-        :param kwargs: currently allowed kwargs are:
-
-        :param pos: int or None, the position of a position argument, if None
-                   not a positional argument (i.e. optional argument)
 
         :param altnames: list of strings or None, the alternative calls to
                         the argument in argparse (as well as "name"), if None
@@ -582,8 +576,8 @@ class DrsRecipe(object):
                      is "files" or "file" sets the type of file to expect
                      the way the list is understood is based on "filelogic"
 
-        :param parent: str, a parent Const or Keyword that this is spawned
-                       from
+        :param path: str, if set overwrites any directory parameter
+                     Note path can be a parameter in ParamDict
 
         :param limit: int, file limit for processing
 
@@ -627,7 +621,7 @@ class DrsRecipe(object):
             keywordargument = DrsArgument(name, kind='kwarg', pos=None,
                                           altnames=altnames, dtype=dtype,
                                           options=options, helpstr=helpstr,
-                                          files=files, parent=parent,
+                                          files=files, path=path,
                                           limit=limit, minimum=minimum,
                                           maximum=maximum, filelogic=filelogic,
                                           default=default,
@@ -944,7 +938,7 @@ class DrsRecipe(object):
         #   arguments and construct the runs
         runargs = group_run_files(params, self, argdict, kwargdict)
         # now we have the runargs we can convert to a runlist
-        runlist = convert_to_command(self, params, runargs)
+        runlist = convert_to_command(params, self, runargs)
         # clear printer
         drs_log.Printer(None, None, '')
         # return the runlist
@@ -1056,6 +1050,7 @@ class DrsRecipe(object):
         if (name is None) or (name.upper() == 'UNKNOWNRECIPE'):
             return None
         # get local copy of module
+        # noinspection PyBroadException
         try:
             return constants.import_module(func_name, name, full=full,
                                            quiet=quiet)
@@ -1616,6 +1611,8 @@ class DrsRunSequence:
 
         :return: dictionary of args (args or kwargs) - updated correctly
         """
+        # set function name
+        _ = display_func(None, '_update_arg', __NAME__, self.class_name)
         # loop around each argument
         for argname in arguments:
             # if positional argument in function args (fargs) then we can
@@ -1667,12 +1664,16 @@ def make_default_recipe(params: ParamDict = None,
 # =============================================================================
 # Define run making functions
 # =============================================================================
+# define complex type argdict
+ArgDictType = Union[Dict[str, Table], OrderedDict, None]
+
+
 def find_run_files(params: ParamDict, recipe: DrsRecipe,
                    table: Table, args: Dict[str, DrsArgument],
                    filters: Union[Dict[str, Any], None] = None,
                    allowedfibers: Union[List[str], str, None] = None,
                    absfile_col: Union[str, None] = None,
-                   check_required: bool = False) -> Dict[str, Dict[str, Table]]:
+                   check_required: bool = False) -> Dict[str, ArgDictType]:
     """
     Given a specifc recipe and args (args or kwargs) use the other arguments
     to generate a set of astropy.table.Table for each arg (args or kwargs)
@@ -1866,17 +1867,43 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
     return outfiledict
 
 
-def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
+def group_run_files(params: ParamDict, recipe: DrsRecipe,
+                    argdict: Dict[str, ArgDictType],
+                    kwargdict: Dict[str, ArgDictType],
+                    nightcol: Union[str, None] = None) -> List[Dict[str, Any]]:
+    """
+    Take the arg and kwarg dictionary of tables (argdict and kwargdict) and
+    force them into groups (based on sequence number and number in sequence)
+    for each positional/optional argument. Then take these sets of files
+    and push them into recipe runs (one set of files for each recipe run)
+    return is a list of these runs where each 'run' is a dictionary of
+    arguments each with the values that specific argument should have
 
-    # TODO: Got to here
+    i.e. cal_extract should have at least ['directory', 'files']
 
+    :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe these args/kwargs are associated with
+    :param argdict: dict, a dictionary of dictionaries containing a table of
+                    files each - top level key is a positional argument for this
+                    recipe and sub-dict key is a DrsFitsFile instance i.e.:
+                    argdict[argument][drsfile] = Table
+    :param kwargdict: dict, a dictionary of dictionaries containing a table of
+                    files each - top level key is an optional argument for this
+                    recipe and sub-dict key is a DrsFitsFile instance i.e.:
+                    kwargdict[argument][drsfile] = Table
+    :param nightcol: str or None, if set overrides the
+                     params['REPROCESS_NIGHTCOL'] value (which sets the column
+                     in the index database that has the night sub directory
+                     information
+    :return: a list of dictionaries, each dictionary is a different run.
+             each 'run' is a dictionary of arguments each with the values that
+             specific argument should have
+    """
     # set function name
     func_name = display_func(params, 'group_run_files', __NAME__)
     # get parameters from params
-    file_col = pcheck(params, 'DRS_INDEX_FILENAME', 'filecol', kwargs,
-                      func_name)
-    night_col = pcheck(params, 'REPROCESS_NIGHTCOL', 'night_col', kwargs,
-                       func_name)
+    night_col = pcheck(params, 'REPROCESS_NIGHTCOL', func=func_name,
+                       override=nightcol)
     # flag for having no file arguments
     has_file_args = False
     # ----------------------------------------------------------------------
@@ -1925,7 +1952,7 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
             kwargdict[kwargname][name] = _group_drs_files(*gargs, limit=limit)
     # ----------------------------------------------------------------------
     # figure out arg/kwarg order
-    runorder, rundict = _get_runorder(recipe, argdict, kwargdict)
+    runorder, rundict = _get_argposorder(recipe, argdict, kwargdict)
     # ----------------------------------------------------------------------
     # brute force approach
     runs = []
@@ -1991,7 +2018,6 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
                 # print statement
                 pmsg = '\t\tProcessing run {0}'.format(len(runs))
                 drs_log.Printer(None, None, pmsg)
-
                 # check for None
                 if rundict[arg0][drsfilekey] is None:
                     break
@@ -2009,7 +2035,7 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
                 #   try/except here to catch it
                 try:
                     new_runs = _gen_run(params, rundict, runorder, nightname,
-                                        meantime, arg0, gtable0, file_col,
+                                        meantime, arg0, gtable0,
                                         masternight=recipe.master)
                 # catch exception
                 except DrsRecipeException:
@@ -2024,20 +2050,33 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
         return runs
 
 
-def convert_to_command(self, params, runargs):
+def convert_to_command(params: ParamDict, recipe: DrsRecipe,
+                       runargs: List[Dict[str, Any]]) -> List[str]:
+    """
+    Converts our list of dictionaries (for each run) to a list of strings,
+    each string representing what would be entered on the command line
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe instance this is for
+    :param runargs: a list of dictionaries, each dictionary is a different run.
+                    each 'run' is a dictionary of arguments each with the
+                    values that specific argument should have
+    :return: list of strings, each string representing what would be entered
+             on the command line
+    """
     # set function name
-    func_name = display_func(params, 'convert_to_command', __NAME__)
+    _ = display_func(params, 'convert_to_command', __NAME__)
     # get args/kwargs from recipe
-    args = self.args
-    kwargs = self.kwargs
+    args = recipe.args
+    kwargs = recipe.kwargs
     # define storage
     outputs = []
     # loop around arguement
     for runarg in runargs:
         # command first arg
-        command = '{0} '.format(self.name)
+        command = '{0} '.format(recipe.name)
         # get run order
-        runorder, _ = _get_runorder(self, runarg, runarg)
+        runorder, _ = _get_argposorder(recipe, runarg, runarg)
         # loop around run order
         for argname in runorder:
             # get raw value
@@ -2064,17 +2103,56 @@ def convert_to_command(self, params, runargs):
 # =============================================================================
 # Define worker functions
 # =============================================================================
-def _group_drs_files(params, drstable, **kwargs):
+def _group_drs_files(params: ParamDict, drstable: Table,
+                     night_col: Union[str, None] = None,
+                     seq_col: Union[str, None] = None,
+                     time_col: Union[str, None] = None,
+                     limit: Union[int, None] = None) -> Table:
+    """
+    Take a table (astropy.table.Table) "drstable" and sort them
+    by observation time - such that if the sequence number increases
+    (info stored in seq_col) files should be grouped together. If next entry
+    has a sequence number lower than previous seqeunce number this is a new
+    group of files.
+    Note "drstable" must only contain rows with same (DrsFitsFile) type of files
+    i.e. they are meant to be compared as part of the same group (if the follow
+    sequentially)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param drstable: astropy.table.Table - the table of files where all
+                     rows should be files of the same DrsFitsFile type
+                     i.e. all FLAT_FLAT
+    :param night_col: str or None, if set overrides params['REPROCESS_NIGHTCOL']
+                      - which sets which column in drstable has the night
+                      sub-directory information
+    :param seq_col: str or None, if set overrides params['REPROCESS_SEQCOL']
+                    - which sets the sequence number column i.e.
+                    1,2,3,4,1,2,3,1,2,3,4  is 3 groups of objects (4,3,4)
+                    when sorted in time (by 'time_col')
+    :param time_col: str or None, if set overrides params['REPROCESS_TIMECOL']
+                    - which is the column to sort the drstable by (and thus
+                    put sequences in time order) - must be a float time
+                    (i.e. MJD) in order to be sortable
+    :param limit: int or None, if set sets the number of files allowed to be
+                  in a group - if group gets to more than this many files starts
+                  a new group (i.e. may break-up sequences) however new
+                  sequences should start a new group even if less than limit
+                  number
+    :return: astropy.table.Table - the same drstable input - but with two
+             new columns 'GROUPS' - the group number for each object, and
+             'MEANDATE' - the mean of time_col for that group (helps when
+             trying to match groups of differing files
+    """
+
     # set function name
     func_name = display_func(params, '_group_drs_files', __NAME__)
     # get properties from params
-    night_col = pcheck(params, 'REPROCESS_NIGHTCOL', 'night_col', kwargs,
-                       func_name)
-    seq_colname = pcheck(params, 'REPROCESS_SEQCOL', 'seq_col', kwargs,
-                         func_name)
-    time_colname = pcheck(params, 'REPROCESS_TIMECOL', 'time_col', kwargs,
-                          func_name)
-    limit = kwargs.get('limit', None)
+    night_col = pcheck(params, 'REPROCESS_NIGHTCOL', func=func_name,
+                       override=night_col)
+    seq_colname = pcheck(params, 'REPROCESS_SEQCOL', func=func_name,
+                         override=seq_col)
+    time_colname = pcheck(params, 'REPROCESS_TIMECOL', func=func_name,
+                          override=time_col)
     # deal with limit unset
     if limit is None:
         limit = np.inf
@@ -2164,9 +2242,42 @@ def _group_drs_files(params, drstable, **kwargs):
     return drstable
 
 
-def _get_runorder(recipe, argdict, kwargdict):
+def _get_argposorder(recipe: DrsRecipe, argdict: Dict[str, ArgDictType],
+                     kwargdict: Dict[str, ArgDictType]
+                     ) -> Tuple[List[str], Dict[str, ArgDictType]]:
+    """
+    Get the arguent position order
+
+    Take the dictionaries of arguments and figure out which order these
+    positional arguments and keyword arguments should be in for this recipe
+    i.e. cal_extract  directory comes before files and before optional arguments
+
+    for positional arguments this is defined by recipe.args[{arg}].pos,
+    for optional arguments they are added to the end in whichever order they
+    come
+
+    :param recipe: DrsRecipe, the recipe instance these arguments belong to
+    :param argdict: dictionary of values for each of the positional arguments
+                   (each key is a positional argument name, each value is the
+                    value that argument should have i.e.
+                    directory should have value '2019-04-20'
+                    --> dict(directory='2019-04-20', files=[file1, file2])
+    :param kwargdict: dictionary of values for each of the optional arguments
+                      (each key is an optional argument name, each value is the
+                      value that argument should have i.e.
+                      --{key}={value}    --plot=1
+                      --> dict(plot=1)
+    :return: tuple,
+             1. runorder: list of strings of argument names, in the correct
+                order - the value is the name of the argument
+                (i.e. DrsArgument.name),
+             2. rundict: a dictionary where the keys are the argument name and
+                the value are a dictionary of DrsFitFile names and the values
+                of these are astropy.table.Tables containing the
+                files associated with this [argument][drsfile]
+    """
     # set function name
-    func_name = display_func(recipe.params, '_get_runorder', __NAME__)
+    _ = display_func(recipe.params, '_get_argposorder', __NAME__)
     # set up storage
     runorder = OrderedDict()
     # get args/kwargs from recipe
@@ -2214,6 +2325,7 @@ def _get_runorder(recipe, argdict, kwargdict):
         else:
             runorder[1000 + it] = kwargname
             it += 1
+    # recast run order into a numpy array of strings
     sortrunorder = np.argsort(list(runorder.keys()))
     runorder = np.array(list(runorder.values()))[sortrunorder]
     # merge argdict and kwargdict
@@ -2224,11 +2336,48 @@ def _get_runorder(recipe, argdict, kwargdict):
         else:
             rundict[rorder] = kwargdict[rorder]
     # return run order and run dictionary
-    return runorder, rundict
+    return list(runorder), rundict
 
 
-def _gen_run(params, rundict, runorder, nightname=None, meantime=None,
-             arg0=None, gtable0=None, file_col=None, masternight=False):
+def _gen_run(params: ParamDict, rundict: Dict[str, ArgDictType],
+             runorder: List[str], nightname: Union[str, None] = None,
+             meantime: Union[float, None] = None,
+             arg0: Union[str, None] = None, gtable0: Union[Table, None] = None,
+             masternight: bool = False) -> List[Dict[str, Any]]:
+    """
+    Generate a recipe run dictionary of arguments based on the argument position
+    order and if a secondary argument has a list of files match appriopriately
+    with arg0 (using meantime) - returns a list of runs of this recipe
+    where each entry is a dictionary where the key is the argument name and the
+    value is the value(s) that argument can take
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param rundict: a dictionary where the keys are the argument name and the
+                    value are a dictionary of DrsFitFile names and the values
+                    of these are astropy.table.Tables containing the
+                    files associated with this [argument][drsfile]
+    :param runorder: list of strings, the argument names in the correct order
+    :param nightname: str or None, sets the night name (i.e. directory) for
+                      this recipe run (if None set from params['NIGHTNAME']
+    :param meantime: float or None, sets the mean time (as MJD) for this
+                     argument (associated to a set of files) - used when we have
+                     a second set of files that need to be matched to the first
+                     set of files, if not set meantime = 0.0
+    :param arg0: str or None, if set this is the name of the first argument
+                 that contains files (name comes from DrsArgument.name)
+    :param gtable0: astropy.table.Table or None, if set this is the the case
+                    where argname=arg0, and thus the file set should come from
+                    a list of files
+    :param masternight: bool, if True this is a master recipe, and therefore
+                        the nightname should be the master night, master night
+                        is obtained from params['MASTER_NIGHT']
+
+    :return: a list of runs of this recipe where each entry is a dictionary
+             where the key is the argument name and the value is the value(s)
+             that argument can take
+    """
+    # set function name
+    _ = display_func(params, '_gen_run', __NAME__)
     # deal with unset values (not used)
     if arg0 is None:
         arg0 = ''
@@ -2251,13 +2400,12 @@ def _gen_run(params, rundict, runorder, nightname=None, meantime=None,
             pkeys.append(argname)
     # convert pkey to array
     pkeys = np.array(pkeys)
-    # deal with no list values
-    if len(pkeys) == 0:
-        combinations = [None]
-    # else we assume we want every combination of arguments (otherwise it is
+    # we assume we want every combination of arguments (otherwise it is
     #   more complicated)
-    else:
+    if len(pkeys) != 0:
         combinations = list(itertools.product(*pvalues))
+    else:
+        combinations = [None]
     # storage for new runs
     new_runs = []
     # loop around combinations
@@ -2297,21 +2445,74 @@ def _gen_run(params, rundict, runorder, nightname=None, meantime=None,
     return new_runs
 
 
-def _find_first_filearg(params, runorder, argdict, kwargdict):
+def _find_first_filearg(params: ParamDict, runorder: List[str],
+                        argdict: Dict[str, Dict[str, Table]],
+                        kwargdict: Dict[str, Dict[str, Table]]
+                        ) -> Union[Tuple[str, Dict[str, Table]], None]:
+    """
+    Find the first file-type argument in a set of arguments
+    If none exist return None, else return the argument name of the first
+    file-type argument, and the values it can have (from argdict/kwargdict)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param runorder: list of strings, the argument names in the correct run
+                     order
+    :param argdict: dictionary of positional arguments (key = argument name,
+                    value =  dictionary of Tables, where each sub-key is a
+                    drsFitsFile type (str) and the values are astropy tables
+    :param kwargdict: dictionary of optional arguments (key = argument name,
+                    value =  dictionary of Tables, where each sub-key is a
+                    drsFitsFile type (str) and the values are astropy tables
+    :return: tuple, 1. the argument name of the first file argumnet,
+             2. the dictionary of drs file tables for this argument
+    """
     # set function name
-    func_name = display_func(params, '_find_first_filearg', __NAME__)
+    _ = display_func(params, '_find_first_filearg', __NAME__)
     # loop around the run order
     for argname in runorder:
+        # if argument is a positional argument return the argdict dictionary
+        # of tables
         if argname in argdict:
+            # it could be None here (if None supplied) so check argdict is
+            #   a dictionary as expected
             if isinstance(argdict[argname], OrderedDict):
                 return argname, argdict[argname]
+        # else if the argument is an optional argument
         elif argname in kwargdict:
+            # it could be None here (if None supplied) so check kwargdict is
+            #   a dictionary as expected
             if isinstance(kwargdict[argname], OrderedDict):
                 return argname, kwargdict[argname]
+    # if we get to here we don't have a file argument (or it had no files)
+    #   therefore return None --> deal with a None call on return
     return None
 
 
-def _find_next_group(argname, drstable, usedgroups, groups, ugroups):
+def _find_next_group(argname: str, drstable: Table,
+                     usedgroups: Dict[str, List[str]],
+                     groups: np.ndarray, ugroups: np.ndarray
+                     ) -> Tuple[Union[Table, None], Dict[str, List[str]]]:
+    """
+    Find the next file group in a set of arguments
+
+    :param argname: str, the name of the argument containing the first set of
+                    files
+    :param drstable: Table, the astropy.table.Table containing same DrsFitsFiles
+                     entries (valid for this argument)
+    :param usedgroups: dictionary of lists of strings - the previously used
+                       group names, where each key is an argument name, and
+                       each value is a list of group names that belong to
+                       that argument
+    :param groups: numpy array (1D), the full list of group names (as strings)
+    :param ugroups: numpy array (1D), the unique + sorted list of group names
+                    (as strings)
+    :return: tuple, 1. the Table corresponding to the next group of files,
+             2, dictionary of lists of strings - the previously used group
+             names - where each key is an argument name, and each value is a
+             list of group names that belong to that argument
+    """
+    # set function name
+    _ = display_func(None, '_find_next_group', __NAME__)
     # make sure argname is in usedgroups
     if argname not in usedgroups:
         usedgroups[argname] = []
@@ -2332,14 +2533,39 @@ def _find_next_group(argname, drstable, usedgroups, groups, ugroups):
     return Table(drstable[mask]), usedgroups
 
 
-def _match_group(params, argname, rundict, nightname, meantime, **kwargs):
-    func_name = __NAME__ + '._match_groups()'
+def _match_group(params: ParamDict, argname: str,
+                 rundict: Dict[str, ArgDictType],
+                 nightname: Union[str, None], meantime: float,
+                 nightcol: Union[str, None] = None) -> List[str]:
+    """
+    Find the best group  of files from 'argname' (table of files taken from
+    rundict) to a specific nightname + mean time (night name matched on
+    column night_col or params['REPROCESS_NIGHTCOL'], mean time matched on
+    MEANDATE column)
 
+    :param params: ParamDict, parameter dictionary of constnats
+    :param argname: str, the argument name we are matching (not the one for
+                    meantime) the one to get table in rundict[argname][drsfile]
+    :param rundict: a dictionary where the keys are the argument name and the
+                    value are a dictionary of DrsFitFile names and the values
+                    of these are astropy.table.Tables containing the
+                    files associated with this [argument][drsfile]
+    :param nightname: str or None, if set the night name to match to
+                     (do not consider any files not from the night name) -
+                     nightname controlled by table in rundict[argname][*] column
+                     'nightcol' or params['REPROCESS_NIGHTCOL']
+    :param meantime: float, the time to match (with time in column 'MEANDATE'
+                     from table in rundict[argname][*])
+    :param nightcol: str or None, if set the column name in rundict[argname][*]
+                     table, if not set uses params['REPROCES_NIGHTCOL']
+    :return: list of strings, the filenames that match the argument with
+             nightname and meantime
+    """
+    # set function name
+    func_name = display_func(params, '_match_groups', __NAME__)
     # get parmaeters from params/kwargs
-    file_col = pcheck(params, 'DRS_INDEX_FILENAME', 'filecol', kwargs,
-                      func_name)
-    night_col = pcheck(params, 'REPROCESS_NIGHTCOL', 'night_col', kwargs,
-                       func_name)
+    night_col = pcheck(params, 'REPROCESS_NIGHTCOL', func=func_name,
+                       override=nightcol)
     # get drsfiles
     drsfiles1 = list(rundict[argname].keys())
     # storage of valid groups [group number, drsfile, meandate]
@@ -2349,7 +2575,10 @@ def _match_group(params, argname, rundict, nightname, meantime, **kwargs):
         # get table
         ftable1 = rundict[argname][drsfile]
         # mask by night name
-        mask = ftable1[night_col] == nightname
+        if nightname is not None:
+            mask = ftable1[night_col] == nightname
+        else:
+            mask = np.ones(len(ftable1)).astype(bool)
         # check that we have some files with this nightname
         if np.sum(mask) == 0:
             continue
@@ -2383,6 +2612,9 @@ def _match_group(params, argname, rundict, nightname, meantime, **kwargs):
     drsfile_s = valid_groups[min_pos][1]
     # get table for minpos
     table_s = rundict[argname][drsfile_s]
+    # deal with table still being None
+    if table_s is None:
+        raise DrsRecipeException('No valid groups')
     # mask by group
     mask_s = np.array(table_s['GROUPS']).astype(int) == group_s
     # ----------------------------------------------------------------------
@@ -2394,15 +2626,19 @@ def _match_group(params, argname, rundict, nightname, meantime, **kwargs):
     return list(table_s['OUT'][mask_s])
 
 
-def vstack_cols(params, tablelist):
+def vstack_cols(params: ParamDict, tablelist: List[Table]
+                ) -> Union[Table, None]:
     """
     Take a list of Astropy Tables and stack into single Astropy Table
     Note same as io.drs_table.vstack_cols
 
-    :param params:
-    :param tablelist:
-    :return:
+    :param params: ParamDict, the parameter dictionary of constants
+    :param tablelist: a list of astropy.table.Table to stack
+
+    :return: the stacked astropy.table
     """
+    # set function name
+    _ = display_func(params, 'vstack_cols', __NAME__)
     # deal with empty list
     if len(tablelist) == 0:
         # append a None
@@ -2434,6 +2670,7 @@ def vstack_cols(params, tablelist):
             newtable[col] = valuedict[col]
         # vstack all rows
         return newtable
+
 
 # =============================================================================
 # End of code
