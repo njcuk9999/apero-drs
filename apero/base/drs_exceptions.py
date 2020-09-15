@@ -773,7 +773,6 @@ class LogExit(Exit):
         :param kwargs: kwargs passed to Exit-->SystemExit class
         """
         self.errormessage = errormessage
-        Exit.__init__(*args, **kwargs)
 
     def __getstate__(self) -> dict:
         """
