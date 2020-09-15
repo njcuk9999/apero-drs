@@ -54,13 +54,13 @@ CURRENT_PATH = ''
 # Define functions
 # =============================================================================
 class TmpRecipe(DrsRecipe):
-    def __init__(self, instrument=None, name=None, filemod=None):
+    def __init__(self, instrument='None', name=None, filemod=None):
         # load super class
         super().__init__(instrument, name, filemod)
 
 
 class RecipeDefinition():
-    def __init__(self, instrument=None):
+    def __init__(self, instrument='None'):
         self.instrument = instrument
         self.recipes = []
         self.mod = None
@@ -115,7 +115,7 @@ class TmpNpyFile(DrsFitsFile):
 
 
 class FileDefinition():
-    def __init__(self, instrument=None):
+    def __init__(self, instrument='None'):
         self.instrument = instrument
         self.files = None
         self.out = None

@@ -737,7 +737,7 @@ class LoadData:
     database)
     """
 
-    def __init__(self, instrument='None'):
+    def __init__(self, instrument=None):
         """
         LoadData constructor - loads both database and lines
 

@@ -107,7 +107,7 @@ class Run:
         self.runname = None
         self.skipname = None
         self.recipe = inrecipe
-        if self.module is not None:
+        if mod is not None:
             self.module = mod.copy()
         else:
             self.module = None
@@ -1366,11 +1366,11 @@ def _check_for_files(params, runobj):
         basename = os.path.basename(filename)
         # make infile
         if runobj.kind == 0:
-            infiledef = recipe.filemod.raw_file
+            infiledef = recipe.filemod.get().raw_file
         elif runobj.kind == 1:
-            infiledef = recipe.filemod.pp_file
+            infiledef = recipe.filemod.get().pp_file
         else:
-            infiledef = recipe.filemod.out_file
+            infiledef = recipe.filemod.get().out_file
         # ------------------------------------------------------------------
         # add required properties to infile
         infile = infiledef.newcopy(params=params)
@@ -1456,7 +1456,7 @@ def _remove_py(innames):
 # =============================================================================
 def _check_for_sequences(rvalues, mod):
     # find sequences
-    all_sequences = mod.sequences
+    all_sequences = mod.get().sequences
     # get sequences names
     all_seqnames = list(map(lambda x: x.name, all_sequences))
     # convert to uppercase
@@ -1517,6 +1517,8 @@ def _generate_run_from_sequence(params, sequence, table, **kwargs):
             srecipe.recipemod = recipemod.copy()
         if srecipe.filemod is None:
             srecipe.filemod = filemod.copy()
+        # add params to srecipe
+        srecipe.params = params
         # ------------------------------------------------------------------
         # copy table
         # ------------------------------------------------------------------
@@ -2152,7 +2154,7 @@ def _get_rvalues(runtable):
 def _check_runtable(params, runtable, recipemod):
     func_name = __NAME__ + '._check_runtable()'
     # get recipe list
-    recipelist = list(map(lambda x: x.name, recipemod.recipes))
+    recipelist = list(map(lambda x: x.name, recipemod.get().recipes))
     # remove .py
     recipelist = np.char.replace(recipelist, '.py', '')
     # check that all run items start with a recipe
