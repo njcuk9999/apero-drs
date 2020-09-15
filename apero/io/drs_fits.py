@@ -295,6 +295,8 @@ def id_drs_file(params, recipe, drs_file_sets, filename=None, nentries=None,
         # ------------------------------------------------------------------
         # loop around files
         for drs_file in fileset:
+            # set params
+            drs_file.params = params
             # --------------------------------------------------------------
             # debug
             dargs = [str(drs_file)]
