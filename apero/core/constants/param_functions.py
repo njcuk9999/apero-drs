@@ -1558,7 +1558,7 @@ def _get_file_names(params: ParamDict,
     # set function name (cannot break here --> no access to inputs)
     _ = display_func(params, '_get_file_names', __NAME__)
     # deal with no instrument
-    if instrument is None:
+    if drs_text.null_text(instrument, ['None', '']):
         return []
     # get user environmental path
     user_env = params['DRS_USERENV']
@@ -1660,7 +1660,7 @@ def _get_subdir(directory: str, instrument: str, source: str) -> str:
         if cond1 and cond2:
             subdir = filename
     # deal with instrument sub-folder not found
-    if subdir is None:
+    if subdir is None and instrument != 'None':
         # raise a config warning that directory not found
         wargs = [source, instrument.lower(), directory]
         ConfigWarning(textentry('10-002-00001', args=wargs))
