@@ -221,7 +221,7 @@ ALLOW_BREAKPOINTS = Const('ALLOW_BREAKPOINTS', value=False, dtype=bool,
 # Currently installed instruments
 # TODO: This needs to be updated with new instruments
 DRS_INSTRUMENTS = Const('DRS_INSTRUMENTS',
-                        value=['SPIROU', 'NIRPS_HA'],
+                        value=['SPIROU', 'NIRPS_HA', 'None'],
                         dtype=list, source=__NAME__, group=cgroup)
 
 # The group this target is set as (set in drs_setup)
@@ -241,7 +241,7 @@ IS_MASTER = Const('IS_MASTER', value=False, dtype=bool, source=__NAME__,
 # =============================================================================
 cgroup = 'Instrument/Observatory Constants'
 # Instrument Name
-INSTRUMENT = Const('INSTRUMENT', value=None, dtype=str,
+INSTRUMENT = Const('INSTRUMENT', value='None', dtype=str,
                    options=DRS_INSTRUMENTS.value, source=__NAME__, group=cgroup)
 
 # Defines the longitude West is negative

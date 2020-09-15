@@ -37,14 +37,16 @@ display_func = drs_misc.display_func
 
 
 # =============================================================================
-# Define functions
+# Define file output functions
+# - Note should all have the same inputs and return
 # =============================================================================
 def general_file(params: ParamDict, infile: Any, outfile: Any,
                  fiber: Union[str, None] = None, path: Union[str, None] = None,
                  func: Union[str, None] = None,
                  remove_insuffix: Union[bool, None] = None,
                  prefix: Union[str, None] = None,
-                 suffix: Union[str, None] = None) -> str:
+                 suffix: Union[str, None] = None,
+                 filename: Union[str, None] = None) -> str:
     """
     Construct a general absolute filename from infile/outfile
 
@@ -61,6 +63,7 @@ def general_file(params: ParamDict, infile: Any, outfile: Any,
                    outfile.prefix)
     :param suffix: str, if set the suffix of the file (defaults to
                    outfile.suffix)
+    :param filename: Not used for general file
 
     :return: the aboslute path to the file
     """
@@ -71,11 +74,16 @@ def general_file(params: ParamDict, infile: Any, outfile: Any,
         func_name = '{0} [{1}]'.format(func, func_name)
     return output_filenames.general_file(params, infile, outfile, fiber,
                                          path, func_name, remove_insuffix,
-                                         prefix, suffix)
+                                         prefix, suffix, filename)
 
 
 def npy_file(params: ParamDict, infile: Any, outfile: Any,
-             func: Union[str, None] = None) -> str:
+             fiber: Union[str, None] = None, path: Union[str, None] = None,
+             func: Union[str, None] = None,
+             remove_insuffix: Union[bool, None] = None,
+             prefix: Union[str, None] = None,
+             suffix: Union[str, None] = None,
+             filename: Union[str, None] = None) -> str:
     """
     Construct a NPY filename from infile/outfile
 
@@ -83,6 +91,11 @@ def npy_file(params: ParamDict, infile: Any, outfile: Any,
     :param infile: DrsFitsFile, input file - must be defined
     :param outfile: DrsFitsFile, output file - must be defined
     :param func: str, the function name if set (for errors)
+    :param fiber: not used for npy_file
+    :param path: not used for npy_file
+    :param prefix: not used for npy_file
+    :param suffix: not used for npy_file
+    :param filename: not used for npy_file
 
     :return: the aboslute path to the file
     """
@@ -92,12 +105,18 @@ def npy_file(params: ParamDict, infile: Any, outfile: Any,
     if func is not None:
         func_name = '{0} [{1}]'.format(func, func_name)
 
-    return output_filenames.npy_file(params, infile, outfile, func=func_name)
+    return output_filenames.npy_file(params, infile, outfile, fiber,
+                                     path, func_name, remove_insuffix,
+                                     prefix, suffix, filename)
 
 
 def debug_file(params: ParamDict, infile: Any, outfile: Any,
+               fiber: Union[str, None] = None, path: Union[str, None] = None,
                func: Union[str, None] = None,
-               prefix: Union[str, None] = None) -> str:
+               remove_insuffix: Union[bool, None] = None,
+               prefix: Union[str, None] = None,
+               suffix: Union[str, None] = None,
+               filename: Union[str, None] = None) -> str:
     """
     Construct a NPY filename from infile/outfile
 
@@ -107,6 +126,11 @@ def debug_file(params: ParamDict, infile: Any, outfile: Any,
     :param func: str, the function name if set (for errors)
     :param prefix: str, if set the prefix of the file (defaults to
                    outfile.prefix)
+    :param fiber: not used for debug_file
+    :param path: not used for debug_file
+    :param remove_insuffix: not used for debug_file
+    :param suffix: not used for debug_file
+    :param filename: not used for debug_file
 
     :return: the aboslute path to the file
     """
@@ -115,15 +139,18 @@ def debug_file(params: ParamDict, infile: Any, outfile: Any,
     # set function name from args
     if func is not None:
         func_name = '{0} [{1}]'.format(func, func_name)
-    return output_filenames.debug_file(params, infile, outfile,
-                                       func_name, prefix)
+    return output_filenames.debug_file(params, infile, outfile, fiber,
+                                       path, func_name, remove_insuffix,
+                                       prefix, suffix, filename)
 
 
 def calib_file(params: ParamDict, infile: Any, outfile: Any,
                fiber: Union[str, None] = None, path: Union[str, None] = None,
                func: Union[str, None] = None,
                remove_insuffix: Union[bool, None] = None,
-               suffix: Union[str, None] = None) -> str:
+               prefix: Union[str, None] = None,
+               suffix: Union[str, None] = None,
+               filename: Union[str, None] = None) -> str:
     """
     Construct a general absolute filename from infile/outfile
 
@@ -138,6 +165,8 @@ def calib_file(params: ParamDict, infile: Any, outfile: Any,
                             defaults to the outfile.remove_insuffix
     :param suffix: str, if set the suffix of the file (defaults to
                    outfile.suffix)
+    :param prefix: not used for calib_file
+    :param filename: not used for calib_File
 
     :return: the aboslute path to the file
     """
@@ -149,20 +178,22 @@ def calib_file(params: ParamDict, infile: Any, outfile: Any,
     # get nightname
     # nightname = kwargs.get('nightname', None)
     # get prefix
-    if outfile is None:
-        # prefix = _calibration_prefix(params, nightname)
-        prefix = ''
-    else:
+    if outfile is not None:
         # prefix = _calibration_prefix(params, nightname) + outfile.prefix
         prefix = outfile.prefix
     # return general file with prefix updated
-    return output_filenames.general_file(params, infile, outfile, fiber, path,
-                                         func_name, remove_insuffix, prefix,
-                                         suffix)
+    return output_filenames.general_file(params, infile, outfile, fiber,
+                                         path, func_name, remove_insuffix,
+                                         prefix, suffix, filename)
 
 
 def blank(params: ParamDict, infile: Any, outfile: Any,
-          func: Union[str, None] = None) -> str:
+          fiber: Union[str, None] = None, path: Union[str, None] = None,
+          func: Union[str, None] = None,
+          remove_insuffix: Union[bool, None] = None,
+          prefix: Union[str, None] = None,
+          suffix: Union[str, None] = None,
+          filename: Union[str, None] = None) -> str:
     """
     Construct a blank filename from infile
 
@@ -170,15 +201,31 @@ def blank(params: ParamDict, infile: Any, outfile: Any,
     :param infile: DrsFitsFile, input file - must be defined
     :param outfile: DrsFitsFile, output file - must be defined
     :param func: str, the function name if set (for errors)
+    :param fiber: not used for blank output
+    :param path: not used for blank output
+    :param remove_insuffix: not used for blank output
+    :param prefix: not used for blank output
+    :param suffix: not used for blank output
+    :param filename: not used for blank output
 
     :return: the aboslute path to the file
     """
-    return output_filenames.blank(params, infile, outfile, func)
+    # set function name
+    func_name = display_func(params, 'blank', __NAME__)
+    # set function name from args
+    if func is not None:
+        func_name = '{0} [{1}]'.format(func, func_name)
+    # return blank from default
+    return output_filenames.blank(params, infile, outfile, fiber,
+                                  path, func_name, remove_insuffix,
+                                  prefix, suffix, filename)
 
 
 def set_file(params: ParamDict, infile: Any, outfile: Any,
-             path: Union[str, None] = None,
+             fiber: Union[str, None] = None, path: Union[str, None] = None,
              func: Union[str, None] = None,
+             remove_insuffix: Union[bool, None] = None,
+             prefix: Union[str, None] = None,
              suffix: Union[str, None] = None,
              filename: Union[str, None] = None) -> str:
     """
@@ -194,11 +241,21 @@ def set_file(params: ParamDict, infile: Any, outfile: Any,
     :param suffix: str, if set the suffix of the file (defaults to
                    outfile.suffix)
     :param filename: str, the filename to give the file
+    :param fiber: not used for set_file
+    :param remove_insuffix: not used for set_file
+    :param prefix: not used for set file
 
     :return: the aboslute path to the file
     """
-    return output_filenames.set_file(params, infile, outfile, path, func,
-                                     suffix, filename)
+    # set function name
+    func_name = display_func(params, 'blank', __NAME__)
+    # set function name from args
+    if func is not None:
+        func_name = '{0} [{1}]'.format(func, func_name)
+    # return set_file from defaults
+    return output_filenames.set_file(params, infile, outfile, fiber,
+                                     path, func_name, remove_insuffix,
+                                     prefix, suffix, filename)
 
 
 # =============================================================================
