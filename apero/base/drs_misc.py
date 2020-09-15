@@ -342,7 +342,7 @@ def _get_prev_count(params: Any, previous: str) -> int:
     return n_elements
 
 
-def get_uncommon_path(path1, path2):
+def get_uncommon_path(path1: str, path2: str) -> str:
     """
     Get the uncommon path of "path1" compared to "path2"
 
@@ -359,13 +359,20 @@ def get_uncommon_path(path1, path2):
     """
     # set function name (cannot break here --> no access to params)
     _ = display_func(None, 'get_uncommon_path', __NAME__)
+    # may need to switch paths if len(path2) > len(path1)
+    if len(path2) > len(path1):
+        _path1 = str(path2)
+        _path2 = str(path1)
+    else:
+        _path1 = str(path1)
+        _path2 = str(path2)
     # paths must be absolute
-    path1 = os.path.abspath(path1)
-    path2 = os.path.abspath(path2)
+    _path1 = os.path.abspath(_path1)
+    _path2 = os.path.abspath(_path2)
     # get common path
-    common = os.path.commonpath([path2, path1]) + os.sep
+    common = os.path.commonpath([_path2, _path1]) + os.sep
     # return the non-common part of the path
-    return path1.split(common)[-1]
+    return _path1.split(common)[-1]
 
 
 # =============================================================================
