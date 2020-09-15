@@ -9,29 +9,32 @@ Created on 2019-01-19 at 13:37
 
 @author: cook
 """
+from collections import OrderedDict
 import numpy as np
-import traceback
-import string
-import time
-import sys
 import os
 import random
 from signal import signal, SIGINT
-from collections import OrderedDict
-from typing import Any, Dict, List, Union
+import string
+import sys
+import time
+import traceback
+from typing import Any, Dict, List, Tuple, Union
 
 from apero.base import base
+from apero.base import drs_base_classes as base_class
 from apero.base import drs_break
 from apero.base import drs_exceptions
 from apero.base import drs_misc
 from apero import lang
 from apero.core import constants
+from apero.core.core import drs_argument
+from apero.core.core import drs_file
+from apero.core.core import drs_log
+from apero.core.utils import drs_recipe
 from apero.io import drs_table
 from apero.io import drs_path
 from apero.io import drs_lock
 from apero import plotting
-from apero.core.core import drs_log, drs_file
-from apero.core.utils import drs_recipe
 
 # =============================================================================
 # Define variables
@@ -56,6 +59,8 @@ ParamDict = constants.ParamDict
 DrsRecipe = drs_recipe.DrsRecipe
 DrsFitsFile = drs_file.DrsFitsFile
 DrsInputFile = drs_file.DrsInputFile
+# Get function string
+display_func = drs_log.display_func
 # get the Drs Exceptions
 DrsError = drs_exceptions.DrsError
 DrsWarning = drs_exceptions.DrsWarning
@@ -80,8 +85,10 @@ CHARS = string.ascii_uppercase + string.digits
 # =============================================================================
 # Define functions
 # =============================================================================
-def setup(name='None', instrument='None', fkwargs=None, quiet=False,
-          threaded=False, enable_plotter=True, rmod=None):
+def setup(name: str = 'None', instrument: str = 'None',
+          fkwargs: Union[Dict[str, Any], None] = None, quiet: bool = False,
+          threaded: bool = False, enable_plotter: bool = True,
+          rmod: Any = None) -> Tuple[DrsRecipe, ParamDict]:
     """
     Recipe setup script for recipe "name" and "instrument"
 
@@ -108,9 +115,10 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
 
     :returns: returns the recipe instance (DrsRecipe) and parameter
               dictionary for constants (ParamDict)
-    :rtype: tuple[DrsRecipe, ParamDict]
+    :rtype: Tuple[DrsRecipe, ParamDict]
     """
-    func_name = __NAME__ + '.setup()'
+    # set function name
+    func_name = display_func(None, 'setup', __NAME__)
     # catch sigint (if not threaded) -- if threaded can only be in main thread
     if not threaded:
         signal(SIGINT, constants.catch_sigint)
@@ -321,7 +329,8 @@ def setup(name='None', instrument='None', fkwargs=None, quiet=False,
     return recipe, params
 
 
-def run(func, recipe, params):
+def run(func: Any, recipe: DrsRecipe,
+        params: ParamDict) -> Tuple[Dict[str, Any], bool]:
     """
     Runs the function "func" that must have arguments "recipe" and "params"
     and nothing else.
@@ -340,6 +349,8 @@ def run(func, recipe, params):
               successful. If DEBUG0000 in keywords
     :rtype: tuple[dict, bool]
     """
+    # set function name
+    _ = display_func(params, 'run', __NAME__)
     # run main bulk of code (catching all errors)
     if params['DRS_DEBUG'] > 0:
         llmain = func(recipe, params)
@@ -434,48 +445,28 @@ def run(func, recipe, params):
     return llmain, success
 
 
-def get_params(recipe='None', instrument='None', **kwargs):
+def return_locals(params: ParamDict, ll: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Get parameter dictionary without a recipe definition
+    Deal with returning into ipython (if params['IPYTHON_RETURN'] is True)
 
-    :param recipe: string, the recipe name, if 'None', assumes there is no
-                   recipe set
-    :param instrument: string, the instrument name, if 'None' assumes there is
-                       no instrument set
-    :param kwargs: keyword arguments to push into parameter dictionary
+    :param params: ParamDict, parameter dictionary of constants
+    :param ll: dictionary, the local namespace in dictionary form - normally
+               called with locals()
 
-    :type recipe: str
-    :type instrument: str
-
-    :exception SystemExit: on caught errors
-
-    :return: parameter dictionary of constants (ParamDict)
-    :rtype: ParamDict
+    :return: dictionary, the lcoal namespace in dictionary form
     """
-    _, params = setup(recipe, instrument, quiet=True)
-    # unlock params for editing
-    params.unlock()
-    # overwrite parameters with kwargs
-    for kwarg in kwargs:
-        params[kwarg] = kwargs[kwarg]
-    # update params in log / and recipes after locking
-    recipe.drs_params = params.copy()
-    WLOG.pin = params.copy()
-    # lock parameter dictionary (cannot add items after this point)
-    params.lock()
-    # return parameters
-    return params
-
-
-def return_locals(params, ll):
+    # set function name
+    _ = display_func(params, 'return_locals', __NAME__)
     # deal with a ipython return
     drs_break.break_point(params, allow=params['IPYTHON_RETURN'])
     # else return ll
     return ll
 
 
-def end_main(params, llmain, recipe, success, outputs='reduced',
-                    end=True, quiet=False, keys=None) -> Dict[str, Any]:
+def end_main(params: ParamDict, llmain: Dict[str, Any], recipe: DrsRecipe,
+             success: bool, outputs: str = 'reduced',
+             end: bool = True, quiet: bool = False,
+             keys: Union[List[str], None] = None) -> Dict[str, Any]:
     """
     Function to deal with the end of a recipe.main script
         1. indexes outputs
@@ -511,7 +502,8 @@ def end_main(params, llmain, recipe, success, outputs='reduced',
     :return: the updated parameter dictionary
     :rtype: ParamDict
     """
-    func_name = __NAME__ + '.main_end_script()'
+    # set function name
+    func_name = display_func(params, 'end_main', __NAME__)
     # -------------------------------------------------------------------------
     # get params/plotter from llmain if present
     #     (from __main__ function not main)
@@ -557,6 +549,7 @@ def end_main(params, llmain, recipe, success, outputs='reduced',
                 # log error
                 eargs = [type(e_), e_, func_name]
                 WLOG(params, 'error', TextEntry('00-000-00002', args=eargs))
+
         # -------------------------------------------------------------------------
         # index if we have outputs
         if (outputs is not None) and (outputs != 'None') and success:
@@ -570,7 +563,6 @@ def end_main(params, llmain, recipe, success, outputs='reduced',
                 lock.reset()
                 # re-raise error
                 raise e
-
     # -------------------------------------------------------------------------
     # log end message
     if end:
@@ -640,8 +632,10 @@ def end_main(params, llmain, recipe, success, outputs='reduced',
         return outdict
 
 
-def get_file_definition(name, instrument, kind='raw', return_all=False,
-                        fiber=None, required=True):
+def get_file_definition(name: str, instrument: str, kind: str = 'raw',
+                        return_all: bool = False,
+                        fiber: Union[str, None] = None, required: bool = True
+                        ) -> Union[DrsFitsFile, List[DrsFitsFile], None]:
     """
     Finds a given recipe in the instruments definitions
 
@@ -663,10 +657,12 @@ def get_file_definition(name, instrument, kind='raw', return_all=False,
 
     :exception SystemExit: on caught errors
 
-    :returns: if found the DrsRecipe, else raises SystemExit
-    :rtype: DrsFitsFile
+    :returns: if found the DrsRecipe, else raises SystemExit if required = True
+              else returns None
+    :rtype: Union[DrsFitsFile, List[DrsFitsFile], None]
     """
-    func_name = __NAME__ + '.get_file_definition()'
+    # set function name
+    func_name = display_func(None, 'get_file_definition', __NAME__)
     # deal with no instrument
     if instrument == 'None' or instrument is None:
         ipath = CORE_PATH
@@ -675,14 +671,15 @@ def get_file_definition(name, instrument, kind='raw', return_all=False,
         ipath = INSTRUMENT_PATH
     # deal with no name or no instrument
     if name == 'None' or name is None:
-        empty = drs_recipe.DrsRecipe(name='Empty', instrument=instrument)
-        return empty
+        if required:
+            eargs = [name, 'unknown', func_name]
+            WLOG(None, 'error', TextEntry('00-008-00011', args=eargs))
+        return None
     # deal with fiber (needs removing)
     if fiber is not None:
         suffix = '_{0}'.format(fiber)
         if name.endswith(suffix):
             name = name[:-(len(suffix))]
-
     # else we have a name and an instrument
     margs = [instrument, ['file_definitions.py'], ipath, CORE_PATH]
     modules = constants.getmodnames(*margs, return_paths=False)
@@ -697,7 +694,6 @@ def get_file_definition(name, instrument, kind='raw', return_all=False,
         all_files = mod.get().out_file.fileset
     else:
         all_files = []
-
     # try to locate this recipe
     found_files = []
     for filet in all_files:
@@ -722,10 +718,13 @@ def get_file_definition(name, instrument, kind='raw', return_all=False,
         return found_files[-1]
 
 
-def copy_kwargs(params, recipe=None, recipename=None, recipemod=None,
-                **kwargs):
+def copy_kwargs(params: ParamDict, recipe: Union[DrsRecipe, None] = None,
+                recipename: Union[str, None] = None,
+                recipemod: Union[base_class.ImportModule, None] = None,
+                **kwargs) -> Dict[str, Any]:
     """
-    Copy kwargs from "recipe1" main to "recipe2" main
+    Copy input arguments (positional and optional) from "recipe" main to a
+    dictionary (for later use)
 
     i.e. if we had recipe1.main(arg1, arg2, arg3) we want to produce
     dict(arg1=arg1, arg2=arg2, arg3=arg3) for recipe 2
@@ -739,14 +738,23 @@ def copy_kwargs(params, recipe=None, recipename=None, recipemod=None,
 
          output is: dict(arg1=arg1, arg2='test', arg3=arg3)
 
-    :param params:
-    :param recipe:
-    :param recipename:
-    :param recipemod:
-    :param kwargs:
-    :return:
+    :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe to copy keywords from (if not set
+                   must set recipename -- and then we find the recipe instance)
+    :param recipename: str, if 'recipe' not set uses the name to search for
+                       a recipe instance (using find_recipe) - this is then
+                       the recipe the keywords are copied from
+    :param recipemod: ImportModule instance of the recipe definitions import
+                      module - this avoids loading the module again
+                      (if already loaded) - can be not set (and loads module)
+    :param kwargs: override the keys in recipe that are copied to the
+                   dictionary - used when using the recipe args for a new
+                   run (with some arguments updated)
+
+    :return: dictionary of args i.e. dict(arg1=arg1, arg2='test', arg3=arg3)
     """
-    func_name = __NAME__ + '.copy_kwargs()'
+    # set function name
+    func_name = display_func(params, 'copy_kwargs', __NAME__)
     # deal with no recipe
     if recipe is None and recipename is None:
         WLOG(params, 'error', TextEntry('00-001-00040', args=func_name))
@@ -799,30 +807,87 @@ def copy_kwargs(params, recipe=None, recipename=None, recipemod=None,
     return outkwargs
 
 
-def file_processing_update(params, it, num_files):
+def file_processing_update(params: ParamDict, it: int, num_files: int):
+    """
+    Printout via wlog of the file process
+    i.e. Process file {it+1} of {num_files}
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param it: int, the current iteration (starts at zero but display it + 1)
+    :param num_files: int, the total number of files to process (it + 1 of
+                      total)
+
+    :return: None, logs via WLOG
+    """
+    # set function name
+    _ = display_func(params, 'file_processing_update', __NAME__)
+    # log
     WLOG(params, '', params['DRS_HEADER'])
     eargs = [it + 1, num_files]
     WLOG(params, '', TextEntry('40-001-00020', args=eargs))
     WLOG(params, '', params['DRS_HEADER'])
 
 
-def fiber_processing_update(params, fiber):
+def fiber_processing_update(params: ParamDict, fiber: str):
+    """
+    Printout via wlog of which fiber we are processing
+    i.e. Process fiber {fiber}
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param fiber: str, the fiber name for this iteration
+
+    :return: None, logs via WLOG
+    """
+    # set function name
+    _ = display_func(params, 'fiber_processing_update', __NAME__)
+    # log
     WLOG(params, '', params['DRS_HEADER'])
     WLOG(params, '', TextEntry('40-001-00022', args=[fiber]))
     WLOG(params, '', params['DRS_HEADER'])
 
 
-def end_plotting(params, recipe):
+def end_plotting(params: ParamDict, recipe: Union[DrsRecipe, None]):
+    """
+    Closes all currently opened plots (via DrsRecipe.plot.close_plots)
+    required as plt is not defined unless inside DrsRecipe.plot)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, if set is the recipe instance with the ability
+                   to close plots via DrsRecipe.plot.close_plots() - if
+                   None just loads matplotlib.pyplot as plt and plt.close('all')
+
+    :return: None
+    """
+    # set function name
+    _ = display_func(params, 'end_plotting', __NAME__)
+    # only do this is we don't have a recipe
+    if recipe is None or not hasattr(recipe, 'plot'):
+        # TODO: Add to language db
+        WLOG(params, 'debug', 'Closing plots manually')
+        import matplotlib.pyplot as plt
+        plt.close('all')
+        return
+    # get the plotter from recipe
     plotter = recipe.plot
     if plotter is not None:
+        # TODO: Add to language db
         WLOG(params, 'debug', 'Closing plots')
         if len(plotter.debug_graphs) > 0:
             plotter.close_plots()
 
 
-def group_name(params, suffix='group'):
+def group_name(params: ParamDict, suffix: str = 'group') -> str:
+    """
+    Constructs the group name APEROG-{PID}_{RECIPE}_{SUFFIX}
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param suffix: str, the suffix to add to the group name (defaults
+                   to 'group')
+
+    :return: str, the group name APEROG-{PID}_{RECIPE}_{SUFFIX}
+    """
     # set function name
-    func_name = __NAME__ + '.group_name()'
+    _ = display_func(params, 'group_name', __NAME__)
     # ----------------------------------------------------------------------
     # deal with no PID
     if 'PID' not in params:
@@ -846,7 +911,8 @@ def group_name(params, suffix='group'):
 # =============================================================================
 # Define display functions
 # =============================================================================
-def _quiet_keys_present(recipe, quiet, fkwargs):
+def _quiet_keys_present(recipe: DrsRecipe, quiet: bool,
+                        fkwargs: Dict[str, Any]) -> bool:
     """
     Decides whether displaying is necessary based on whether we have special
     keys in fkwargs or sys.argv (input from command line)
@@ -862,6 +928,8 @@ def _quiet_keys_present(recipe, quiet, fkwargs):
     :returns: bool, the updated status of quiet flag
     :rtype: bool
     """
+    # set function name
+    _ = display_func(recipe.params, '_quiet_keys_present', __NAME__)
     # get the special keys
     skeys = _get_recipe_keys(recipe.specialargs, add=['--help', '-h'])
     # see if we have a key
@@ -881,19 +949,22 @@ def _quiet_keys_present(recipe, quiet, fkwargs):
     return quiet
 
 
-def _display_drs_title(params, group=None, printonly=False, logonly=False):
+def _display_drs_title(params: ParamDict, group: Union[str, None] = None,
+                       printonly: bool = False, logonly: bool = False):
     """
     Display title for this execution
 
-    :param params: dictionary, parameter dictionary
-
-    :type params: ParamDict
+    :param params: ParamDict, parameter dictionary of constants
+    :param group: str, the group name (can be None)
+    :param printonly: bool, if True prints the title only
+    :param logonly: bool, if True logs the title only (no printing)
 
     :returns: None
     """
+    # set function name
+    _ = display_func(params, '_display_drs_title', __NAME__)
     # get colours
     colors = COLOR
-
     # create title
     title = ' * '
     title += colors.RED1 + ' {INSTRUMENT} ' + colors.okgreen + '@{PID}'
@@ -908,11 +979,13 @@ def _display_drs_title(params, group=None, printonly=False, logonly=False):
         _display_logo(params)
 
 
-def _display_title(params, title, group=None, printonly=False, logonly=False):
+def _display_title(params: ParamDict, title: str,
+                   group: Union[str, None] = None, printonly: bool = False,
+                   logonly: bool = False):
     """
     Display any title between HEADER bars via the WLOG command
 
-    :param params: dictionary, parameter dictionary
+    :param params: ParamDict, parameter dictionary of constants
     :param title: string, title string
 
     :type params: ParamDict
@@ -920,6 +993,8 @@ def _display_title(params, title, group=None, printonly=False, logonly=False):
 
     :returns: None
     """
+    # set function name
+    _ = display_func(params, '_display_title', __NAME__)
     # print and log
     WLOG(params, '', params['DRS_HEADER'], wrap=False, printonly=printonly,
          logonly=logonly)
@@ -935,7 +1010,16 @@ def _display_title(params, title, group=None, printonly=False, logonly=False):
          printonly=printonly, logonly=logonly)
 
 
-def _display_logo(params):
+def _display_logo(params: ParamDict):
+    """
+    Display the instrument logo
+
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: None
+    """
+    # set function name
+    _ = display_func(params, '_display_logo', __NAME__)
     # get colours
     colors = COLOR
     # get pconstant
@@ -948,7 +1032,7 @@ def _display_logo(params):
     WLOG(params, '', params['DRS_HEADER'], wrap=False, printonly=True)
 
 
-def _display_ee(params):
+def _display_ee(params: ParamDict):
     """
     Display the logo text
 
@@ -962,6 +1046,8 @@ def _display_ee(params):
 
     :returns: None
     """
+    # set function name
+    _ = display_func(params, '_display_ee', __NAME__)
     # get colours
     colors = COLOR
     # get pconstant
@@ -974,7 +1060,9 @@ def _display_ee(params):
     WLOG(params, '', params['DRS_HEADER'], printonly=True)
 
 
-def _display_initial_parameterisation(params, printonly=False, logonly=False):
+def _display_initial_parameterisation(params: ParamDict,
+                                      printonly: bool = False,
+                                      logonly: bool = False):
     """
     Display initial parameterisation for this execution
 
@@ -1028,6 +1116,8 @@ def _display_initial_parameterisation(params, printonly=False, logonly=False):
 
     :return: None
     """
+    # set function name
+    _ = display_func(params, '_display_initial_parameterisation', __NAME__)
     # Add initial parameterisation
     wmsgs = TextEntry('\n\tDRS_DATA_RAW: {DRS_DATA_RAW}'.format(**params))
     wmsgs += TextEntry('\n\tDRS_DATA_REDUC: {DRS_DATA_REDUC}'.format(**params))
@@ -1059,7 +1149,9 @@ def _display_initial_parameterisation(params, printonly=False, logonly=False):
          logonly=logonly)
 
 
-def _display_system_info(params, logonly=True, return_message=False):
+def _display_system_info(params: ParamDict, logonly: bool = True,
+                         return_message: bool = False
+                         ) -> Union[TextEntry, str, None]:
     """
     Display system information via the WLOG command
 
@@ -1074,8 +1166,11 @@ def _display_system_info(params, logonly=True, return_message=False):
     :type logonly: bool
     :type return_message: bool
 
-    :returns: None
+    :returns: None, unless return_message = True, then returns the message
+              string and does not print/log
     """
+    # set function name
+    _ = display_func(params, '_display_system_info', __NAME__)
     # noinspection PyListCreation
     messages = ' ' + TextEntry('40-001-00010')
     messages += '\n' + TextEntry(params['DRS_HEADER'])
@@ -1113,6 +1208,9 @@ def _display_run_time_arguments(recipe, fkwargs=None, printonly=False,
     :returns: None
 
     """
+    # set function name
+    _ = display_func(recipe.params, '_display_run_time_arguments', __NAME__)
+    # storage for logging strings
     log_strings = []
     # get parameters
     params = recipe.params
@@ -1161,7 +1259,7 @@ def _display_run_time_arguments(recipe, fkwargs=None, printonly=False,
 # =============================================================================
 # Indexing functions
 # =============================================================================
-def _index_pp(params, recipe):
+def _index_pp(params: ParamDict, recipe: DrsRecipe):
     """
     Index the pre-processed files (into p["TMP"] directory)
 
@@ -1171,6 +1269,8 @@ def _index_pp(params, recipe):
 
     :returns: None
     """
+    # set function name
+    _ = display_func(params, '_index_pp', __NAME__)
     # get pconstant from p
     pconstant = constants.pload(params['INSTRUMENT'])
     # get index filename
@@ -1195,7 +1295,7 @@ def _index_pp(params, recipe):
     save_index_file(params, istore, abspath)
 
 
-def _index_outputs(params, recipe):
+def _index_outputs(params: ParamDict, recipe: DrsRecipe):
     """
     Index the reduced files (into p["REDUCED_DIR"] directory)
 
@@ -1209,6 +1309,8 @@ def _index_outputs(params, recipe):
 
     :returns: None
     """
+    # set function name
+    _ = display_func(params, '_index_outputs', __NAME__)
     # get pconstant from p
     pconstant = constants.pload(params['INSTRUMENT'])
     # get index filename
@@ -1236,7 +1338,8 @@ def _index_outputs(params, recipe):
     save_index_file(params, istore, abspath)
 
 
-def indexing(params, outputs, icolumns, abspath):
+def indexing(params: ParamDict, outputs: Dict[str, Dict[str, Any]],
+             icolumns: List[str], abspath: str) -> Dict[str, List[Any]]:
     """
     Adds the "outputs" to index file at "abspath"
 
@@ -1249,8 +1352,8 @@ def indexing(params, outputs, icolumns, abspath):
     :param abspath: string, the absolute path to the index file
 
     :type params: ParamDict
-    :type outputs: dict[dict]
-    :type icolumns: list[str]
+    :type outputs: Dict[str, Dict[str, Any]]
+    :type icolumns: List[str]
     :type abspath: str
 
     :exception SystemExit: on caught errors
@@ -1259,6 +1362,8 @@ def indexing(params, outputs, icolumns, abspath):
               "outputs" and old from "abspath")
     :rtype: OrderedDict
     """
+    # set function name
+    _ = display_func(params, 'indexing', __NAME__)
     # ------------------------------------------------------------------------
     # log indexing
     WLOG(params, '', TextEntry('40-004-00002', args=[abspath]))
@@ -1335,22 +1440,25 @@ def indexing(params, outputs, icolumns, abspath):
     return istore
 
 
-def save_index_file(p, istore, abspath):
+def save_index_file(params: ParamDict, istore: Dict[str, List[Any]],
+                    abspath: str):
     """
     Saves the index file (from input "istore") at location "abspath"
 
-    :param p: ParamDict, the constants parameter dictionary
+    :param params: ParamDict, the constants parameter dictionary
     :param istore: An ordered dict with the index columns of all outputs
                    (new from "outputs" and old from "abspath")
                    - generated by _indexing() function
     :param abspath: string, the absolute path to save the index file to
 
-    :type p: ParamDict
-    :type istore: OrderedDict
+    :type params: ParamDict
+    :type istore: Dict[str, List[Any]]
     :type abspath: str
 
     :returns: None
     """
+    # set function name
+    _ = display_func(params, 'save_index_file', __NAME__)
     # ------------------------------------------------------------------------
     # sort the istore by column name and add to table
     sortmask = np.argsort(istore['LAST_MODIFIED'])
@@ -1360,13 +1468,13 @@ def save_index_file(p, istore, abspath):
     # ------------------------------------------------------------------------
     # Make fits table and write fits table
     itable = drs_table.make_fits_table(istore)
-    drs_table.write_fits_table(p, itable, abspath)
+    drs_table.write_fits_table(params, itable, abspath)
 
 
 # =============================================================================
 # Exit functions
 # =============================================================================
-def _find_interactive():
+def _find_interactive() -> bool:
     """
     Find whether user is using an interactive session
 
@@ -1384,20 +1492,29 @@ def _find_interactive():
     :return: True if interactive
     :rtype: bool
     """
+    # set function name
+    _ = display_func(None, '_find_interactive', __NAME__)
+    # if system flags this as an interactive session
     cond1 = sys.flags.interactive
+    # if sys has ps1 as an attribute
     cond2 = hasattr(sys, 'ps1')
+    # if sys.stdderr.isatty = False
     cond3 = not sys.stderr.isatty()
+    # if any of these are True we have an interactive session
     return cond1 or cond2 or cond3
 
 
 # noinspection PyUnresolvedReferences
-def _find_ipython():
+def _find_ipython() -> bool:
     """
     Find whether user is using ipython or python
 
     :return: True if using ipython, false otherwise
     :rtype: bool
     """
+    # set function name
+    _ = display_func(None, '_find_ipython', __NAME__)
+    # see if we are in ipython
     try:
         # noinspection PyStatementEffect
         __IPYTHON__  # Note python wont define this, ipython will
@@ -1409,14 +1526,16 @@ def _find_ipython():
 # =============================================================================
 # Worker functions
 # =============================================================================
-def _assign_pid():
+def _assign_pid() -> Tuple[str, str]:
     """
     Assign a process id based on the time now and return it and the
     time now
 
     :return: the process id and the human time at creation
-    :rtype: tuple[str, str]
+    :rtype: Tuple[str, str]
     """
+    # set function name
+    _ = display_func(None, '_assign_pid', __NAME__)
     # get unix char code
     unixtime, humantime, rval = unix_char_code()
     # write pid
@@ -1425,9 +1544,18 @@ def _assign_pid():
     return pid, humantime
 
 
-def unix_char_code():
+def unix_char_code() -> Tuple[float, str, str]:
+    """
+    Get the time now (using astropy.Time) and return the unix time
+    human time and a random code of 4 characters
+
+    :return: tuple, 1. the unix time now, 2. the human time now, 3. a random
+             set of 4 characters
+    """
+    # set function name
+    _ = display_func(None, 'unix_char_code', __NAME__)
     # we need a random seed
-    np.random.seed(random.randint(1, 2**30))
+    np.random.seed(random.randint(1, 2 ** 30))
     # generate a random number (in case time is too similar)
     #  -- happens a lot in multiprocessing
     rint = np.random.randint(1000, 9999, 1) / 1e7
@@ -1443,8 +1571,9 @@ def unix_char_code():
     return unixtime, humantime, rval
 
 
-
-def find_recipe(name='None', instrument='None', mod=None):
+def find_recipe(name: str = 'None', instrument: str = 'None',
+                mod: Union[base_class.ImportModule, None] = None
+                ) -> Tuple[DrsRecipe, Union[base_class.ImportModule, None]]:
     """
     Finds a given recipe in the instruments definitions
 
@@ -1457,10 +1586,14 @@ def find_recipe(name='None', instrument='None', mod=None):
 
     :exception SystemExit: on caught errors
 
-    :returns: if found the DrsRecipe, else raises SystemExit
-    :rtype: DrsRecipe
+    :returns: if found the DrsRecipe and the import module for recipe
+              definitions, else raises SystemExit or returns empty recipe and
+              None for the mod
+
+    :rtype: DrsRecipe and the ImportModule class for recipe definitions
     """
-    func_name = __NAME__ + '.find_recipe()'
+    # set function name
+    func_name = display_func(None, 'find_recipe', __NAME__)
     # get text entry
     textentry = constants.constant_functions.DisplayText()
     # deal with no instrument
@@ -1510,7 +1643,7 @@ def find_recipe(name='None', instrument='None', mod=None):
     return copy_recipe, mod
 
 
-def _get_arg_strval(value):
+def _get_arg_strval(value: Any):
     """
     Get the string value representation of "value" (specifically for a listof
     DrsFitsFiles)
@@ -1518,8 +1651,11 @@ def _get_arg_strval(value):
     :param value: object, the value to be printed
     :return out: string, the string representation of "object"
     """
-    drs_fitsfile_type = drs_file.DrsFitsFile
-    drs_file_type = drs_file.DrsInputFile
+    # set function name
+    _ = display_func(None, '_get_arg_strval', __NAME__)
+    # if we done have list return value
+    if not hasattr(value, '__len__'):
+        return value
 
     # if list is empty --> return
     if len(value) == 0:
@@ -1528,19 +1664,19 @@ def _get_arg_strval(value):
     # if we don't have a list of lists --> 1D array --> return
     if len(value) == 1:
         return value
-
+    # if not a list of numpy array return value 1
     if type(value[1]) not in [list, np.ndarray]:
         return value
 
     # if we have a list of list we may have a DrsFile return
-    if isinstance(value[1][0], drs_fitsfile_type):
+    if isinstance(value[1][0], DrsFitsFile):
         out = []
         for it in range(len(value[0])):
             filename = os.path.basename(value[0][it])
             kind = value[1][it].name
             out.append('[{0}] {1}'.format(kind, filename))
         return out
-    elif isinstance(value[1][0], drs_file_type):
+    elif isinstance(value[1][0], DrsInputFile):
         out = []
         for it in range(len(value[0])):
             filename = os.path.basename(value[0][it])
@@ -1551,7 +1687,10 @@ def _get_arg_strval(value):
         return []
 
 
-def _get_recipe_keys(args, remove_prefix=None, add=None, allow_skips=True):
+def _get_recipe_keys(args: Dict[str, drs_argument.DrsArgument],
+                     remove_prefix: Union[str, None] = None,
+                     add: Union[List[str], None] = None,
+                     allow_skips: bool = True) -> List[str]:
     """
     Obtain the recipe keys from reipce "args"
 
@@ -1567,9 +1706,11 @@ def _get_recipe_keys(args, remove_prefix=None, add=None, allow_skips=True):
     :return keys: list of strings, the defined recipe keys (may be stipped of
                   a prefix if remove_prefix is not None)
     """
+    # set function name
+    _ = display_func(None, '_get_recipe_keys', __NAME__)
     # get the special keys
     keys = []
-
+    # loop around arguments in args (positional, optional or special)
     for argname in args:
         arg = args[argname]
         # deal with skips (skips should not be added to keys here - unless
@@ -1598,7 +1739,9 @@ def _get_recipe_keys(args, remove_prefix=None, add=None, allow_skips=True):
     return keys
 
 
-def _keys_present(recipe, fkwargs=None, remove_prefix=None):
+def _keys_present(recipe: DrsRecipe,
+                  fkwargs: Union[Dict[str, Any], None] = None,
+                  remove_prefix: Union[str, None] = None) -> List[str]:
     """
     Returns a list of keys present in argument parsing (i.e. from sys.argv/or
     "fkwargs" - that is from call to function)
@@ -1611,6 +1754,8 @@ def _keys_present(recipe, fkwargs=None, remove_prefix=None):
     :return keys: list of strings, the present keys (may be stipped of a prefix
                   if remove_prefix is not None)
     """
+    # set function name
+    _ = display_func(recipe.params, '_keys_present', __NAME__)
     # deal with no fkwargs
     if fkwargs is None:
         fkwargs = dict()
@@ -1643,7 +1788,8 @@ def _keys_present(recipe, fkwargs=None, remove_prefix=None):
     return keys
 
 
-def _search_for_key(key, fkwargs=None):
+def _search_for_key(key: str,
+                    fkwargs: Union[Dict[str, Any], None] = None) -> bool:
     """
     Search for a key in sys.argv (list of strings) and fkwargs (dictionary)
     in order to quickly tell if key was present when parsing arguments
@@ -1653,6 +1799,8 @@ def _search_for_key(key, fkwargs=None):
 
     :return cond: bool, True if key found in fkwargs/sys.argv, False otherwise
     """
+    # set function name
+    _ = display_func(None, '_search_for_key', __NAME__)
     # deal with no fkwargs
     if fkwargs is None:
         fkwargs = dict()
@@ -1670,8 +1818,13 @@ def _search_for_key(key, fkwargs=None):
         return False
 
 
-def _set_debug_from_input(recipe, fkwargs):
+def _set_debug_from_input(recipe: DrsRecipe,
+                          fkwargs: Union[Dict[str, Any], None] = None
+                          ) -> DrsRecipe:
     """
+    Set the debug parameter by searching fkwargs (from function call) and/or
+    sys.argv (user input) looking for --debug.
+    Updates recipe.params['DRS_DEBUG']
 
     :param recipe: DrsRecipe instance
     :param fkwargs: dictionary: keys to check from function call
@@ -1682,7 +1835,7 @@ def _set_debug_from_input(recipe, fkwargs):
     :rtype: DrsRecipe
     """
     # set function name
-    func_name = __NAME__ + '._set_debug_from_input()'
+    func_name = display_func(recipe.params, '_set_debug_from_input', __NAME__)
     # set debug key
     debug_key = '--debug'
     # assume debug is not there
@@ -1726,17 +1879,17 @@ def _set_debug_from_input(recipe, fkwargs):
     return recipe
 
 
-def _set_force_dirs(recipe, fkwargs):
+def _set_force_dirs(recipe: DrsRecipe,
+                    fkwargs: Union[Dict[str, Any], None] = None) -> DrsRecipe:
     """
     Decides whether we need to force the input and outdir based on user inputs
 
-
-    :param recipe:
-    :param fkwargs:
+    :param recipe: DrsRecipe instance
+    :param fkwargs: dictionary: keys to check from function call
     :return:
     """
     # set function name
-    func_name = __NAME__ + '._set_force_dirs()'
+    _ = display_func(recipe.params, '_set_force_dirs', __NAME__)
     # ----------------------------------------------------------------------
     # set debug key
     dirkey = '--force_indir'
@@ -1830,16 +1983,20 @@ def _set_force_dirs(recipe, fkwargs):
     return recipe
 
 
-def _sort_version(messages=None):
+def _sort_version(messages: Union[TextEntry, str, None] = None
+                  ) -> Union[TextEntry, List[str]]:
     """
     Obtain and sort version info
 
-    :param messages: list of strings or None, if defined is a list of messages
-                     that version_info is added to, else new list of strings
-                     is created
+    :param messages: list of strings, TextEntry or None, if defined is a
+                     list of messages that version_info is added to, else new
+                     list of strings is created
 
-    :return messages: list of strings updated or created (if messages is None)
+    :return messages: TextEntry list of strings updated or created
+                      (if messages is None)
     """
+    # set function name
+    _ = display_func(None, '_sort_version', __NAME__)
     # deal with no messages
     if messages is None:
         messages = []
@@ -1878,7 +2035,18 @@ def _sort_version(messages=None):
     return messages
 
 
-def _make_dirs(params, path):
+def _make_dirs(params: ParamDict, path: str):
+    """
+    Check and if it doesn't exist make the directory 'path'
+    (locking path as necessary)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param path: str, the path to check and make
+
+    :return: None
+    """
+    # set function name
+    _ = display_func(params, '_make_dirs', __NAME__)
     # first check if path already exists
     if os.path.exists(path):
         # return
@@ -1923,7 +2091,6 @@ def _make_dirs(params, path):
         # reset lock
         lock.reset()
         raise e
-
 
 # =============================================================================
 # End of code
