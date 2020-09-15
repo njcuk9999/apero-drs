@@ -71,8 +71,21 @@ def get_relative_folder(params, package, folder):
     return data_folder
 
 
-def get_uncommon_path(path1, path2):
-    # get common source
+def get_uncommon_path(path1: str, path2: str ) -> str:
+    """
+    Get the uncommon path of "path1" compared to "path2"
+
+    i.e. if path1 = /home/user/dir1/dir2/dir3/
+         and path2 = /home/user/dir1/
+
+         the output should be /dir2/dir3/
+
+    :param path1: string, the longer root path to return (without the common
+                  path)
+    :param path2: string, the shorter root path to compare to
+
+    :return uncommon_path: string, the uncommon path between path1 and path2
+    """
     return drs_misc.get_uncommon_path(path1, path2)
 
 
