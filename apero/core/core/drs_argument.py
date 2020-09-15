@@ -543,7 +543,7 @@ class _CheckFiles(DrsAction):
         :raises: drs_exceptions.LogExit
         """
         # set function name (cannot break here --> no access to inputs)
-        _ = display_func(self.recipe.drs_params, '_check_files', __NAME__,
+        _ = display_func(self.recipe.params, '_check_files', __NAME__,
                          self.class_name)
         # ---------------------------------------------------------------------
         # deal with no check
@@ -563,7 +563,7 @@ class _CheckFiles(DrsAction):
         # get the argument name
         argname = self.dest
         # get the params from recipe
-        params = self.recipe.drs_params
+        params = self.recipe.params
         # debug checking output
         WLOG(params, 'debug', TextEntry('90-001-00019', args=[argname]))
         # get recipe args and kwargs
@@ -1419,7 +1419,7 @@ class _ActivateDebug(DrsAction):
             # set DRS_DEBUG (must use the self version)
             self.recipe.params['DRS_DEBUG'] = value
             # now update constants file
-            # spirouConfig.Constants.UPDATE_PP(self.recipe.drs_params)
+            # spirouConfig.Constants.UPDATE_PP(self.recipe.params)
             # return value
             return value
         except Exception as _:
@@ -1525,8 +1525,6 @@ class _ForceInputDir(DrsAction):
                 values = values[0]
             # try to make an string
             value = str(values)
-            # now update constants file
-            # spirouConfig.Constants.UPDATE_PP(self.recipe.drs_params)
             # return value
             return value
         except Exception as _:
@@ -1633,8 +1631,6 @@ class _ForceOutputDir(DrsAction):
                 values = values[0]
             # try to make an string
             value = str(values)
-            # now update constants file
-            # spirouConfig.Constants.UPDATE_PP(self.recipe.drs_params)
             # return value
             return value
         except Exception as _:
@@ -2254,11 +2250,11 @@ class _Breakfunc(DrsAction):
         :return: None
         :raises: drs_exceptions.LogExit
         """
+        # get drs parameters
+        self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.params, '__call__', __NAME__,
                          self.class_name)
-        # get drs parameters
-        self.recipe = parser.recipe
         # display listing
         if type(values) == list:
             value = list(map(self._set_breakfunc, values))
@@ -2348,11 +2344,11 @@ class _IsMaster(DrsAction):
         :return: None
         :raises: drs_exceptions.LogExit
         """
+        # get drs parameters
+        self.recipe = parser.recipe
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.params, '__call__',
                          __NAME__, self.class_name)
-        # get drs parameters
-        self.recipe = parser.recipe
         # display listing
         if type(values) == list:
             value = list(map(self._set_master, values))
@@ -2621,25 +2617,29 @@ class DrsArgument(object):
         # ---------------------------------------------------------------------
         # get files
         self.files = []
-        for drsfile in files:
-            if isinstance(drsfile, DrsInputFile):
-                # copy attributes from drsfile
-                newdrsfile = drsfile.completecopy(drsfile)
-                # append to files
-                self.files.append(newdrsfile)
-            else:
-                # get exception argumnets
-                eargs = [self.name, 'DrsInputFile', func_name]
-                # raise exception
-                raise DrsCodedException('00-006-00021', level='error',
-                                        targs=eargs, func_name=func_name)
+        if files is None:
+            pass
+        # deal with files having a length (i.e. a list)
+        elif hasattr(files, '__len__'):
+            for drsfile in files:
+                if isinstance(drsfile, DrsInputFile):
+                    # copy attributes from drsfile
+                    newdrsfile = drsfile.completecopy(drsfile)
+                    # append to files
+                    self.files.append(newdrsfile)
+                else:
+                    # get exception argumnets
+                    eargs = [self.name, 'DrsInputFile', func_name]
+                    # raise exception
+                    raise DrsCodedException('00-006-00021', level='error',
+                                            targs=eargs, func_name=func_name)
         # else assume file is a single file (but put it into a list any way)
         else:
             drsfile = files
             if isinstance(drsfile, DrsInputFile):
                 self.files = [drsfile.completecopy(drsfile)]
             else:
-                # get exception argumnets
+                # get exception arguments
                 eargs = [self.name, 'DrsInputFile', func_name]
                 # raise exception
                 raise DrsCodedException('00-006-00021', level='error',
