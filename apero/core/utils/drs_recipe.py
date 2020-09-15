@@ -45,6 +45,8 @@ WLOG = drs_log.wlog
 COLOR = drs_misc.Colors()
 # get param dict
 ParamDict = constants.ParamDict
+# get the input file
+DrsInputFile = drs_file.DrsInputFile
 # get the config error
 ConfigError = constants.ConfigError
 ArgumentError = constants.ArgumentError
@@ -637,7 +639,7 @@ class DrsRecipe(object):
         # set to keyword argument
         self.kwargs[name] = keywordargument
 
-    def set_outputs(self, **kwargs: drs_file.DrsInputFile):
+    def set_outputs(self, **kwargs: DrsInputFile):
         """
         Set the output files
 
@@ -652,7 +654,7 @@ class DrsRecipe(object):
         # loop around kwargs
         for kwarg in kwargs:
             # check if kwarg is the drs_file.DrsInputFile (only add these)
-            if isinstance(kwargs[kwarg], drs_file.DrsInputFile):
+            if isinstance(kwargs[kwarg], DrsInputFile):
                 self.outputs[kwarg] = kwargs[kwarg]
 
     def set_debug_plots(self, *args: str):
@@ -690,11 +692,11 @@ class DrsRecipe(object):
             if isinstance(arg, str):
                 self.summary_plots.append(arg)
 
-    def add_output_file(self, outfile: drs_file.DrsInputFile):
+    def add_output_file(self, outfile: DrsInputFile):
         """
         Add an output file to DrsRecipe.output_files (for the index database)
 
-        :param outfile: drs_file.DrsInputFile instance (the output file to add)
+        :param outfile: DrsInputFile instance (the output file to add)
 
         :return: None - updates DrsRecipe.output_files
         """
@@ -1383,9 +1385,9 @@ class DrsRunSequence:
             master: Union[bool, None] = None, fiber: Union[str, None] = None,
             arguments: Union[Dict[str, Any], None] = None,
             filters: Union[Dict[str, Any], None] = None,
-            files: Union[List[drs_file.DrsInputFile], None] = None,
-            rargs: Union[Dict[DrsArgument], None] = None,
-            rkwargs: Union[Dict[DrsArgument], None] = None):
+            files: Union[List[DrsInputFile], None] = None,
+            rargs: Union[Dict[str, List[DrsInputFile]], None] = None,
+            rkwargs: Union[Dict[str, List[DrsInputFile]], None] = None):
         """
         Add a recipe to the sequence, can overwrite default recipe behaviour
         with the name (shortname), master, fiber keys and add more specialised
@@ -1423,10 +1425,14 @@ class DrsRunSequence:
         :param files: a list of DrsInputfile (or DrsFitFiles/DrsNpyFiles)
                       that can be used with this recipe (usually when a recipe
                       has the "files" positional argument
-        :param rargs: dictionary of DrsArguments, the recipe positional
-                      arguments already loaded from recipe defintions
-        :param rkwargs: dictionary of DrsArguments, the recipe optional
-                        arguments already loaded from recipe definitions
+        :param rargs: dictionary, keys are positional argument names -
+                      where positional argument is of type 'files', values
+                      are a list of DrsInputFiles - the files that this
+                      argument is allowed to have
+        :param rkwargs: dictionary, keys are optional argument names -
+                        where positional argument is of type 'files', values
+                        are a list of DrsInputFiles - the files that this
+                        argument is allowed to have
 
         :return: None - updates DrsRunSequence.adds
         """
@@ -1531,9 +1537,10 @@ class DrsRunSequence:
         # add filters
         filters = dict()
         # loop around in filters and add them (if they start with KW_)
-        for infilter in infilters:
-            if 'KW_' in infilter:
-                filters[infilter] = infilters[infilter]
+        if infilters is not None:
+            for infilter in infilters:
+                if 'KW_' in infilter:
+                    filters[infilter] = infilters[infilter]
         # add keyword args from file arguments
         if files is not None:
             if isinstance(files, drs_file.DrsFitsFile):
@@ -1564,8 +1571,8 @@ class DrsRunSequence:
 
     def update_args(self, frecipe: DrsRecipe,
                     arguments: Union[Dict[str, Any], None] = None,
-                    rargs: Union[Dict[DrsArgument], None] = None,
-                    rkwargs: Union[Dict[DrsArgument], None] = None
+                    rargs: Union[Dict[str, List[DrsInputFile]], None] = None,
+                    rkwargs: Union[Dict[str, List[DrsInputFile]], None] = None
                     ) -> DrsRecipe:
         """
         Update the recipes arguments (usually based on 'arguments' from
@@ -1576,8 +1583,10 @@ class DrsRunSequence:
         :param arguments: dictionary of arguments to update the currently set
                           positional arguments (DrsRecipe.args) and the
                           optional arguments (DrsRecipe.kwargs)
-        :param rargs: dictionary the recipe reference positional arguments
-        :param rkwargs: dictionary the recipe reference optional arguments
+        :param rargs: dictionary, keys are positional argument names, values
+                      are the values to assign to each argument
+        :param rkwargs: dictionary, keys are optional argument names, values
+                        are the values to assign to each argument
 
         :return: DrsRecipe, the updated drs recipe
         """
@@ -1589,16 +1598,19 @@ class DrsRunSequence:
                               ostars=self.ostars)
         # ------------------------------------------------------------------
         # update args - loop around positional arguments
-        frecipe.args = self._update_arg(frecipe.args, rargs)
+        if rargs is not None:
+            frecipe.args = self._update_arg(frecipe.args, rargs)
         # ------------------------------------------------------------------
         # update kwargs - loop around positional arguments
-        frecipe.kwargs = self._update_arg(frecipe.kwargs, rkwargs)
+        if rkwargs is not None:
+            frecipe.kwargs = self._update_arg(frecipe.kwargs, rkwargs)
         # ------------------------------------------------------------------
         # return recipes
         return frecipe
 
-    def _update_arg(self, arguments: Dict[DrsArgument],
-                    fargs: Dict[DrsArgument]) -> Dict[DrsArgument]:
+    def _update_arg(self, arguments: Dict[str, DrsArgument],
+                    fargs: Dict[str, List[DrsInputFile]]
+                    ) -> Dict[str, DrsArgument]:
         """
         Update either the positional args (DrsRecipe.args) or optional args
         (DrsRecipe.kwargs)
@@ -1606,8 +1618,9 @@ class DrsRunSequence:
         :param arguments: dictionary of args (args or kwargs) - these are what
                           we are going to update with (if and only if they are
                           present as arguments in fargs)
-        :param fargs:  dictionary of reference args (args or kwargs) - those
-                       in the origional recipe
+        :param fargs: dictionary, keys are argument names (positional or
+                      optional), values are the values to assign to each
+                      argument
 
         :return: dictionary of args (args or kwargs) - updated correctly
         """
@@ -1615,10 +1628,11 @@ class DrsRunSequence:
         _ = display_func(None, '_update_arg', __NAME__, self.class_name)
         # loop around each argument
         for argname in arguments:
-            # if positional argument in function args (fargs) then we can
-            #   update the value
+            # if argument is found in fargs then we need to update the
+            #   .files of this argument
             if argname in fargs:
                 # get the value of each key
+                # value here should be a list of drs file arguments or None
                 value = fargs[argname]
                 # if we have a file or files we need to copy them properly
                 if arguments[argname].dtype in ['files', 'file']:
@@ -1631,10 +1645,12 @@ class DrsRunSequence:
                         arguments[argname].files = []
                         # loop around files
                         for drsfile in value:
-                            # copy file
-                            drsfilecopy = drsfile.completecopy(drsfile)
-                            # append to new list
-                            arguments[argname].files.append(drsfilecopy)
+                            # check that we4
+                            if isinstance(drsfile, DrsInputFile):
+                                # copy file
+                                drsfilecopy = drsfile.completecopy(drsfile)
+                                # append to new list
+                                arguments[argname].files.append(drsfilecopy)
         # return the arguments
         return arguments
 
@@ -1785,6 +1801,8 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
             # copy table
             ftable = Table(table[filtermask])
             ffiles = np.array(files)[filtermask]
+            # set params for drsfile
+            drsfile.params = params
             # debug log: the file being tested
             dargs = [drsfile.name]
             WLOG(params, 'debug', TextEntry('90-503-00013', args=dargs))
@@ -1806,7 +1824,7 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
                 drs_log.Printer(None, None, pmsg)
                 # get infile instance (i.e. raw or pp file) and assign the
                 #   correct outfile (from filename)
-                out = drsfile.get_infile_outfilename(params, recipe.name,
+                out = drsfile.get_infile_outfilename(recipe.name,
                                                      filename, allowedfibers)
                 infile, valid, outfilename = out
                 # if still valid add to list
@@ -1828,17 +1846,19 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
                 # skip those that were invalid
                 if infile is None:
                     continue
+                # else make sure params is set
+                else:
+                    infile.params = params
                 # get table dictionary
                 tabledict = dict(zip(ftable.colnames, ftable[it]))
                 # check whether tabledict means that file is valid for this
                 #   infile
-                valid1 = infile.check_table_keys(params, tabledict)
+                valid1 = infile.check_table_keys(tabledict)
                 # do not continue if valid1 not True
                 if not valid1:
                     continue
                 # check whether filters are found
-                valid2 = infile.check_table_keys(params, tabledict,
-                                                 rkeys=filters)
+                valid2 = infile.check_table_keys(tabledict, rkeys=filters)
                 # do not continue if valid2 not True
                 if not valid2:
                     continue
