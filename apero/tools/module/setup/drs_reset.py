@@ -14,7 +14,7 @@ import os
 import sys
 
 from apero.base import base
-from apero.core import drs_log
+from apero.core.core import drs_log
 from apero import lang
 from apero.io import drs_lock
 from apero.io import drs_path
