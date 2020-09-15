@@ -465,14 +465,17 @@ class DrsInputFile:
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, s1d, **kwargs)
 
-    def check_params(self):
+    def check_params(self, func):
         """
         Check that params is set - if not return an error
         :return:
         """
         # set function name
-        func_name = display_func(self.params, 'check_params', __NAME__,
-                                 self.class_name)
+        if func is not None:
+            func_name = func
+        else:
+            func_name = display_func(self.params, 'check_params', __NAME__,
+                                     self.class_name)
         # ---------------------------------------------------------------------
         # check that params isn't None
         if self.params is None:
@@ -979,7 +982,7 @@ class DrsInputFile:
         func_name = display_func(self.params, 'construct_filename', __NAME__,
                                  self.class_name)
         # get parameters
-        self.check_params()
+        self.check_params(func_name)
         params = self.params
         # if we have a function use it
         if self.outfunc is not None:
@@ -1077,10 +1080,10 @@ class DrsInputFile:
                  DrsInputFile.inext
         """
         # set function name
-        _ = display_func(self.params, 'reconstruct_filename', __NAME__,
-                         self.class_name)
+        func_name = display_func(self.params, 'reconstruct_filename', __NAME__,
+                                 self.class_name)
         # get parameters
-        self.check_params()
+        self.check_params(func_name)
         params = self.params
         # get current path and filename
         currentpath = os.path.dirname(self.filename)
@@ -1630,9 +1633,10 @@ class DrsFitsFile(DrsInputFile):
                        [not used in DrsInputFile]
         """
         # set function name
-        _ = display_func(self.params, 'copyother', __NAME__, self.class_name)
+        func_name = display_func(self.params, 'copyother', __NAME__,
+                                 self.class_name)
         # check params has been set
-        self.check_params()
+        self.check_params(func_name)
         # copy this instances values (if not overwritten)
         return _copydrsfile(DrsFitsFile, self, drsfile, name, filetype, suffix,
                             remove_insuffix, prefix, fibers, fiber, params,
@@ -1802,8 +1806,8 @@ class DrsFitsFile(DrsInputFile):
         :return: True or False for correct extension and the reason why if False
         """
         # set function name
-        _ = display_func(self.params, 'has_correct_extension', __NAME__,
-                         self.class_name)
+        func_name = display_func(self.params, 'has_correct_extension', __NAME__,
+                                 self.class_name)
         # deal with no input extension
         if filetype is None:
             filetype = self.filetype
@@ -1819,7 +1823,7 @@ class DrsFitsFile(DrsInputFile):
             argname = TextEntry('40-001-00018')
         # -----------------------------------------------------------------
         # check params has been set
-        self.check_params()
+        self.check_params(func_name)
         # get parameters
         params = self.params
         # -----------------------------------------------------------------
@@ -1876,7 +1880,7 @@ class DrsFitsFile(DrsInputFile):
             basename = os.path.basename(filename)
         # -----------------------------------------------------------------
         # check params has been set
-        self.check_params()
+        self.check_params(func_name)
         # get parameters
         params = self.params
         rkeys = self.required_header_keys
@@ -1937,11 +1941,11 @@ class DrsFitsFile(DrsInputFile):
                  - value is value in the header
         """
         # set function name
-        _ = display_func(self.params, 'has_correct_hkeys', __NAME__,
-                         self.class_name)
+        func_name = display_func(self.params, 'has_correct_hkeys', __NAME__,
+                                 self.class_name)
         # -----------------------------------------------------------------
         # check params has been set
-        self.check_params()
+        self.check_params(func_name)
         # get parameters
         params = self.params
         # deal with no input header
@@ -2005,14 +2009,15 @@ class DrsFitsFile(DrsInputFile):
         :return: None
         """
         # set function name
-        _ = display_func(self.params, 'has_fiber', __NAME__, self.class_name)
+        func_name = display_func(self.params, 'has_fiber', __NAME__,
+                                 self.class_name)
         # -----------------------------------------------------------------
         # check whether fiber already set (in which case ignore)
         if self.fiber is not None:
             return
         # -----------------------------------------------------------------
         # check params has been set
-        self.check_params()
+        self.check_params(func_name)
         # deal with no input header
         if header is None:
             # check file has been read
@@ -2059,10 +2064,10 @@ class DrsFitsFile(DrsInputFile):
                   filename generated (also in output DrsFitsFile.filename)
         """
         # set function name
-        _ = display_func(self.params, 'get_infile_outfilename', __NAME__,
-                         self.class_name)
+        func_name = display_func(self.params, 'get_infile_outfilename',
+                                 __NAME__, self.class_name)
         # get parameters
-        self.check_params()
+        self.check_params(func_name)
         params = self.params
         # ------------------------------------------------------------------
         # 1. need to assign an input type for our raw file
@@ -2107,6 +2112,8 @@ class DrsFitsFile(DrsInputFile):
                 fiber = allowfibers
             else:
                 fiber = None
+            # make sure cintype has params
+            cintype.params = params
             # get out file name
             out = cintype.check_table_filename(recipename, bottomfile,
                                                fullpath=True,
@@ -2151,7 +2158,7 @@ class DrsFitsFile(DrsInputFile):
         func_name = display_func(self.params, 'check_table_filename', __NAME__,
                                  'DrsFitsFile')
         # get parameters
-        self.check_params()
+        self.check_params(func_name)
         params = self.params
         # ------------------------------------------------------------------
         # deal with fibers
@@ -2243,10 +2250,10 @@ class DrsFitsFile(DrsInputFile):
         :return: bool, True if dictionary of keys is valid for DrsFitsFile.rkeys
         """
         # set function name
-        _ = display_func(self.params, 'check_table_keys', __NAME__,
-                         self.class_name)
+        func_name = display_func(self.params, 'check_table_keys', __NAME__,
+                                 self.class_name)
         # get parameters
-        self.check_params()
+        self.check_params(func_name)
         params = self.params
         # ------------------------------------------------------------------
         # get required keys
@@ -2761,10 +2768,10 @@ class DrsFitsFile(DrsInputFile):
         :return None:
         """
         # set function name
-        _ = display_func(self.params, 'output_dictionary', __NAME__,
-                         self.class_name)
+        func_name = display_func(self.params, 'output_dictionary', __NAME__,
+                                 self.class_name)
         # check that params is set
-        self.check_params()
+        self.check_params(func_name)
         params = self.params
         pconstant = constants.pload(params['INSTRUMENT'])
         # get output dictionary
@@ -2813,7 +2820,7 @@ class DrsFitsFile(DrsInputFile):
                           'multiply', 'times', '*']
         # --------------------------------------------------------------------
         # check that params is set
-        self.check_params()
+        self.check_params(func_name)
         params = self.params
         # check that data is read
         self.check_read()
@@ -2922,7 +2929,7 @@ class DrsFitsFile(DrsInputFile):
         func_name = display_func(self.params, 'read_header_key', __NAME__,
                                  self.class_name)
         # check that params is set
-        self.check_params()
+        self.check_params(func_name)
         # check that data is read
         self.check_read(header_only=True)
         # check key is valid
@@ -2997,7 +3004,7 @@ class DrsFitsFile(DrsInputFile):
         func_name = display_func(self.params, 'read_header_keys', __NAME__,
                                  self.class_name)
         # check that params is set
-        self.check_params()
+        self.check_params(func_name)
         # check that data is read
         self.check_read(header_only=True)
         # make sure keys is a list
@@ -3260,9 +3267,10 @@ class DrsFitsFile(DrsInputFile):
         :return: astropy.io.fits.header.Cards instance - updated
         """
         # set function name
-        _ = display_func(self.params, 'copy_cards', __NAME__, self.class_name)
+        func_name = display_func(self.params, 'copy_cards', __NAME__,
+                                 self.class_name)
         # get parameters
-        self.check_params()
+        self.check_params(func_name)
         params = self.params
         # generate instances from params
         keyword_inst = constants.constant_functions.Keyword
@@ -3381,7 +3389,7 @@ class DrsFitsFile(DrsInputFile):
                 value = value.__str__()
 
         # check for kwstore in params
-        self.check_params()
+        self.check_params(func_name)
         params = self.params
         # if key is set use it (it should be from parameter dictionary
         if key is not None:
@@ -3509,7 +3517,7 @@ class DrsFitsFile(DrsInputFile):
         if dim1name is None:
             dim1name = 'dim1'
         # check for kwstore in params
-        self.check_params()
+        self.check_params(func_name)
         params = self.params
         # if key is set use it (it should be from parameter dictionary
         if key is not None:
@@ -3602,7 +3610,7 @@ class DrsFitsFile(DrsInputFile):
         if dim2name is None:
             dim2name = 'dim2'
         # check for kwstore in params
-        self.check_params()
+        self.check_params(func_name)
         params = self.params
         # if key is set use it (it should be from parameter dictionary
         if key is not None:
@@ -3666,7 +3674,7 @@ class DrsFitsFile(DrsInputFile):
         qc_kws = ['KW_DRS_QC_NAME', 'KW_DRS_QC_VAL', 'KW_DRS_QC_LOGIC',
                   'KW_DRS_QC_PASS']
         # check for kwstore in params
-        self.check_params()
+        self.check_params(func_name)
         params = self.params
         # deal with qcparams = None
         if qcparams is None:
@@ -3715,9 +3723,10 @@ class DrsFitsFile(DrsInputFile):
                              quality control pass/fail]
         """
         # set function name
-        _ = display_func(self.params, 'get_qckeys', __NAME__, self.class_name)
+        func_name = display_func(self.params, 'get_qckeys', __NAME__,
+                                 self.class_name)
         # check for kwstore in params
-        self.check_params()
+        self.check_params(func_name)
         params = self.params
         # get qc all value
         qc_all = params['KW_DRS_QC'][0]
@@ -3976,12 +3985,12 @@ class DrsNpyFile(DrsInputFile):
         _ = ext
         _ = check
         _ = copy
-        # get parameters
-        self.check_params()
-        params = self.params
         # set function name
         func_name = display_func(self.params, 'read_file', __NAME__,
                                  self.class_name)
+        # get parameters
+        self.check_params(func_name)
+        params = self.params
         # if filename is set
         if self.filename is not None:
             try:
@@ -4006,7 +4015,7 @@ class DrsNpyFile(DrsInputFile):
         func_name = display_func(self.params, 'write_file', __NAME__,
                                  self.class_name)
         # get parameters
-        self.check_params()
+        self.check_params(func_name)
         params = self.params
         # if filename is not set raise error
         if self.filename is None:
