@@ -16,6 +16,7 @@ from astropy import units as uu
 from astropy.coordinates import SkyCoord
 
 from apero.base import base
+from apero.base import drs_exceptions
 from apero import lang
 from apero.core import constants
 from apero.core.core import drs_log
@@ -41,6 +42,8 @@ __release__ = base.__release__
 Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 # get param dict
 ParamDict = constants.ParamDict
+# Get exceptions
+DrsCodedException = drs_exceptions.DrsCodedException
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
@@ -602,10 +605,16 @@ def get_header_input_props(params, gprops, rparams, inputs, infile, header,
     # add to output
     gprops['ra'] = coords.ra.value
     gprops.set_source('ra', source_name.format(func_name, s_dec))
-    gprops.set_instance('ra', coords.ra)
+    try:
+        gprops.set_instance('ra', coords.ra)
+    except DrsCodedException as e:
+        WLOG(params, 'error', TextEntry(e.codeid, args=e.targs))
     gprops['dec'] = coords.dec.value
     gprops.set_source('dec', source_name.format(func_name, s_dec))
-    gprops.set_instance('dec', coords.dec)
+    try:
+        gprops.set_instance('dec', coords.dec)
+    except DrsCodedException as e:
+        WLOG(params, 'error', TextEntry(e.codeid, args=e.targs))
     # ----------------------------------------------------------------------
     # deal with gaia id and objname
     gprops['gaiaid'], s_id = get_raw_param(params, 'gaiaid', inputs['gaiaid'],
@@ -692,7 +701,10 @@ def get_header_input_props(params, gprops, rparams, inputs, infile, header,
             gprops[param] = value
         # add source
         gprops.set_source(param, source_name.format(func_name, source))
-        gprops.set_instance(param, inputs[param])
+        try:
+            gprops.set_instance(param, inputs[param])
+        except DrsCodedException as e:
+            WLOG(params, 'error', TextEntry(e.codeid, args=e.targs))
     # set the input source
     gprops['INPUTSOURCE'] = 'header'
     gprops.set_source('INPUTSOURCE', func_name)

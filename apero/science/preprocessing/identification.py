@@ -98,6 +98,8 @@ def drs_outfile_id(params, recipe, infile, drsfileset, prefix=None):
     kind, inname = None, 'not set'
     # loop around files
     for fileseti in fileset:
+        # make sure fileseti has params
+        fileseti.params = params
         # remove prefix if not None
         if prefix is not None:
             inname = infile.name.split(prefix)[-1]

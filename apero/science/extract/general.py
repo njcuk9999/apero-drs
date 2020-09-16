@@ -17,6 +17,7 @@ import os
 import warnings
 
 from apero.base import base
+from apero.base import drs_text
 from apero.core import constants
 from apero.core import math as mp
 from apero import lang
@@ -67,13 +68,21 @@ display_func = drs_log.display_func
 # Define general functions
 # =============================================================================
 def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
-                   shapey, orderpfile, filenames=None, database=None):
+                   shapey, shapelocalfile, filenames=None, database=None):
     func_name = __NAME__ + '.order_profiles()'
     # filenames must be a dictionary
     if not isinstance(filenames, dict):
         filenames = dict()
         for fiber in fibertypes:
-            filenames[fiber] = None
+            filenames[fiber] = 'None'
+    # ------------------------------------------------------------------------
+    # get generic drs file types required
+    opfile = drs_startup.get_file_definition('LOC_ORDERP',
+                                             params['INSTRUMENT'], kind='red')
+    ospfile = drs_startup.get_file_definition('ORDERP_STRAIGHT',
+                                              params['INSTRUMENT'], kind='red')
+    slocalfile = drs_startup.get_file_definition('SHAPEL', params['INSTRUMENT'],
+                                                 kind='red')
     # ------------------------------------------------------------------------
     # get header from infile
     header = infile.get_header()
@@ -92,21 +101,27 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
     for fiber in fibertypes:
         # log progress (straightening orderp)
         WLOG(params, 'info', TextEntry('40-016-00003', args=[fiber]))
-        # get key
-        key = orderpfile.get_dbkey()
         # ------------------------------------------------------------------
         # get the order profile filename
-        filename = general.load_calib_file(params, key, header,
-                                           filename=filenames[fiber],
-                                           userinputkey='ORDERPFILE',
-                                           database=calibdbm, fiber=fiber,
-                                           return_filename=True)
+        filename = filenames[fiber]
         # ------------------------------------------------------------------
-        # construct order profile file
-        orderpsfile = orderpfile.newcopy(params=params, fiber=fiber)
-        orderpsfile.construct_filename(infile=infile)
+        # deal with filename from user entry
+        cond1 = not drs_text.null_text(filename, ['None'])
+        cond2 = os.path.exists(filename)
+        if cond1 and cond2:
+            # construct order profile straightened
+            orderpsfile = ospfile.newcopy(params=params, fiber=fiber)
+            orderpsfile.set_filename(filename)
+        else:
+            # infile of opderpsfile should be a shape local file
+            oinfile = slocalfile.newcopy(params=params, fiber=fiber)
+            oinfile.set_filename(shapelocalfile)
+            # construct order profile straightened
+            orderpsfile = ospfile.newcopy(params=params, fiber=fiber)
+            orderpsfile.construct_filename(infile=oinfile)
+        # ------------------------------------------------------------------
         # check if temporary file exists
-        if orderpsfile.file_exists() and (filename is None):
+        if orderpsfile.file_exists():
             # load the numpy temporary file
             #    Note: NpyFitsFile needs arguments params!
             if isinstance(orderpsfile, DrsNpyFile):
@@ -121,8 +136,23 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
             # push data into orderp
             orderp = orderpsfile.get_data()
             orderpfilename = orderpsfile.filename
-        # load the order profile
+        # if straighted order profile doesn't exist and we have no filename
+        #   defined then we need to figure out the order profile file -
+        #   load it and then save it as a straighted version (orderpsfile)
         else:
+            # get key
+            key = opfile.get_dbkey()
+            # get pseudo constants
+            pconst = constants.pload(params['INSTRUMENT'])
+            # get fiber to use for ORDERPFILE (i.e. AB,A,B --> AB  and C-->C)
+            usefiber = pconst.FIBER_LOC_TYPES(fiber)
+            # get the order profile filename
+            filename = general.load_calib_file(params, key, header,
+                                               filename=filename,
+                                               userinputkey='ORDERPFILE',
+                                               database=calibdbm,
+                                               fiber=usefiber,
+                                               return_filename=True)
             # load order profile
             orderp = drs_fits.readfits(params, filename)
             orderpfilename = filename
