@@ -158,7 +158,7 @@ def get_wave_solution_from_wavefile(params, recipe, usefiber, inwavefile,
                        inheader=header, filename=inwavefile, fiber=usefiber,
                        return_filename=True, required=False, return_source=True)
         # load wave fp file
-        fout = general.load_calib_file(params, key_fp, **lkwargs)
+        fout = general.load_calib_file(params, **lkwargs)
         # get filename and source from outputs
         inwavefile, source = fout
         if isinstance(source, str):
@@ -168,8 +168,9 @@ def get_wave_solution_from_wavefile(params, recipe, usefiber, inwavefile,
         if inwavefile is None:
             # need to re-add filename (may have changed value)
             lkwargs['filename'] = inwavefile
+            lkwargs['key'] = key_hc
             # load wave hc file
-            fout = general.load_calib_file(params, key_hc, **lkwargs)
+            fout = general.load_calib_file(params, **lkwargs)
             # get filename and source from outputs
             filename, source = fout
             if isinstance(source, str):
@@ -663,7 +664,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
         # print progress Running get ref lines for HC
         WLOG(params, 'info', TextEntry('40-017-00049'))
         # load the line list
-        wavell, ampll = drs_data.load_linelist(params, **kwargs)
+        wavell, ampll = drs_data.load_linelist(params)
         # storage for outputs
         list_waves, list_orders, list_pixels = [], [], []
         # loop around orders and get the lines that fall within each

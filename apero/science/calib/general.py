@@ -418,21 +418,25 @@ def load_calib_file(params, key=None, inheader=None, filename=None,
                                            required=required, fiber=fiber)
         source = 'calibDB'
     # -------------------------------------------------------------------------
+    # deal with filename being a path --> string (unless None)
+    if filename is not None:
+        filename = str(filename)
+    # -------------------------------------------------------------------------
     # if we are just returning filename return here
     if return_filename:
         if return_source:
-            return str(filename), source
+            return filename, source
         else:
-            return str(filename)
+            return filename
     # -------------------------------------------------------------------------
     # now read the calibration file
     image, header = read_calib_file(params, filename, get_image, get_header,
                                     kind, fmt, ext)
     # return all
     if return_source:
-        return image, header, str(filename), source
+        return image, header, filename, source
     else:
-        return image, header, str(filename)
+        return image, header, filename
 
 
 def check_fp(params, image, **kwargs):
