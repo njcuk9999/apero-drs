@@ -170,6 +170,7 @@ fabric.properties
 
 # ignore whole .idea folder
 .idea
+.run/*.xml
 
 # Ignore config.py
 #/INTROOT/misc/
