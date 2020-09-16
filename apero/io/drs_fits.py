@@ -279,9 +279,8 @@ def id_drs_file(params, recipe, drs_file_sets, filename=None, nentries=None,
         if len(file_set.fileset) == 0:
             continue
         # ------------------------------------------------------------------
-        # check we have a recipe set
-        if file_set.recipe is None:
-            file_set.recipe = recipe
+        # check we have a params set for file_set
+        file_set.params = params
         # ------------------------------------------------------------------
         # check we ahve a file set
         if file_set.filename is None:
@@ -661,7 +660,11 @@ def _write_fits(params, filename, data, header, datatype='image', dtype=None,
     if not isinstance(data, list):
         data = [data]
     if not isinstance(header, list):
-        header = [header.to_fits_header()]
+        # convert Header instance to astropy.io.fits header
+        if isinstance(header, Header):
+            header = [header.to_fits_header()]
+        else:
+            header = [header]
     if not isinstance(datatype, list):
         datatype = [datatype]
     if dtype is not None and not isinstance(dtype, list):
@@ -1161,6 +1164,9 @@ def combine(params, recipe, infiles, math='average', same_type=True):
         outdirectory = params['NIGHTNAME']
     # combine outpath and out directory
     abspath = os.path.join(outpath, outdirectory)
+    # read all infiles (must be done before combine)
+    for infile in infiles:
+        infile.read_file()
     # make new infile using math
     outfile = infiles[0].combine(infiles[1:], math, same_type, path=abspath)
     # update the number of files
