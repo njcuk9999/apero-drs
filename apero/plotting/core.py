@@ -17,6 +17,7 @@ import matplotlib
 from collections import OrderedDict
 
 from apero.base import base
+from apero.base import drs_text
 from apero import lang
 from apero.core import constants
 from apero.core.core import drs_log
@@ -565,7 +566,12 @@ class Plotter:
         doc.write_latex()
         # get log file
         logfile = drs_log.get_logfilepath(WLOG, self.params)
-        doc.compile(logfile.replace('.log', '.latex'))
+        if not drs_text.null_text(self.params['DRS_PDFLATEX_PATH'],
+                                  ['None', '']):
+            doc.compile(logfile.replace('.log', '.latex'))
+        else:
+            WLOG(self.params, '', TextEntry('40-100-00008'))
+            return doc
         # check that pdf was created
         if not os.path.exists(doc.pdffilename):
             wargs = [doc.pdffilename]
