@@ -154,7 +154,7 @@ def __main__(recipe, params):
         # Load and straighten order profiles
         # ------------------------------------------------------------------
         sargs = [infile, fibertypes, shapelocal, shapex, shapey,
-                 recipe.outputs['ORDERP_SFILE']]
+                 shapelocalfile]
         orderps, orderpfiles = extract.order_profiles(params, recipe, *sargs,
                                                       database=calibdbm)
 
