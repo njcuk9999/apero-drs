@@ -619,8 +619,8 @@ out_ff_flat = drs_finput('FF_FLAT', KW_OUTPUT='FF_FLAT',
 
 out_orderp_straight = drs_ninput('ORDERP_STRAIGHT', KW_OUTPUT='ORDERP_STRAIGHT',
                                  fibers=['A', 'B'],
-                                 filetype='.npy', intype=pp_flat_flat,
-                                 suffix='_orderp',
+                                 filetype='.npy', intype=out_shape_local,
+                                 suffix='_orderps',
                                  outfunc=out.npy_file)
 
 # add flat outputs to output fileset
