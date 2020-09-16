@@ -1201,6 +1201,7 @@ def skip_run_object(params, runobj, skiptable, textdict, skip_storage):
                 # update skip storage (so we don't do this again)
                 skip_storage[recipe.name.strip('.py')] = arguments
             # if the clean run string is in the arguments list then we skip
+            # TODO: problem with clean_runstring being a list??
             if clean_runstring in arguments:
                 # User set skip to 'True' and argument previously used
                 return True, textdict['40-503-00032']
