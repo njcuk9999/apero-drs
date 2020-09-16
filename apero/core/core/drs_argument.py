@@ -419,7 +419,8 @@ class _CheckDirectory(DrsAction):
         # find out whether to force input directory
         force = self.recipe.force_dirs[0]
         # check whether we have a valid directory
-        out = valid_directory(params, argname, value, force=force)
+        out = valid_directory(params, argname, value, force=force,
+                              forced_dir=self.recipe.inputdir)
         cond, directory, emsgs = out
         # if we have found directory return directory
         if cond:
@@ -1417,11 +1418,11 @@ class _ActivateDebug(DrsAction):
             # try to make an integer
             value = int(values)
             # set DRS_DEBUG (must use the self version)
-            self.recipe.params['DRS_DEBUG'] = value
-            # now update constants file
-            # spirouConfig.Constants.UPDATE_PP(self.recipe.params)
+            self.recipe.params.set('DRS_DEBUG', value)
             # return value
             return value
+        except drs_exceptions.DrsCodedException as e:
+            WLOG(params, 'error', TextEntry(e.codeid, args=e.targs))
         except Exception as _:
             eargs = [self.dest, values]
             WLOG(params, 'error', TextEntry('09-001-00020', args=eargs))
@@ -3058,9 +3059,13 @@ def get_output_dir(params: ParamDict, directory: Union[str, None] = None,
     return get_dir(params, output_dir_pick, kind='output')
 
 
+# define complex typing for valid directory return
+ValidDirType = Tuple[bool, Union[str, None], Union[TextEntry, str, None]]
+
+
 def valid_directory(params: ParamDict, argname: str, directory: Any,
-                    force: bool = False, forced_dir: Union[str, None] = None,
-                    ) -> Tuple[bool, Union[str, None], Union[TextEntry, str, None]]:
+                    force: bool = False,
+                    forced_dir: Union[str, None] = None) -> ValidDirType:
     """
     Find out whether we have a valid directory
 
@@ -3216,7 +3221,7 @@ def valid_file(params: ParamDict, argname: str, filename: str,
             inputdir = get_input_dir(params, force=force, forced_dir=forced_dir)
             # create an instance of this drs_file with the filename set
             file_in = drsfile.newcopy(filename=filename_it, params=params)
-            file_in.read_file()
+            file_in.get_header()
             # set the directory
             fdir = drs_misc.get_uncommon_path(directory, inputdir)
             file_in.directory = fdir
@@ -3238,7 +3243,7 @@ def valid_file(params: ParamDict, argname: str, filename: str,
             # -------------------------------------------------------------
             # only check if file correct
             if valid1 and valid2a and valid2b:
-                exargs = [params, argname, drs_file, recipename, drs_logic,
+                exargs = [params, argname, drsfile, recipename, drs_logic,
                           out_types, alltypelist]
                 valid3, error3 = _check_file_exclusivity(*exargs)
             else:

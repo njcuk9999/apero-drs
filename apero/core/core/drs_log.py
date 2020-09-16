@@ -1493,6 +1493,14 @@ def display_func(params: Union[ParamDict, None] = None,
     :return: a properly constructed string representation of where the
               function is.
     """
+    # set function name (obviously can't use display func here)
+    func_name = __NAME__ + 'display_func()'
+    # check display_func (must be ParamDict or None)
+    if params is not None and not isinstance(params, ParamDict):
+        # log error
+        eargs = [type(params), str(params)[:20], func_name]
+        raise DrsCodedException('00-001-00050', targs=eargs, level='error',
+                                func_name=func_name)
     # run the display function
     return drs_misc.display_func(params, name, program, class_name, wlog=wlog,
                                  textentry=TextEntry)
