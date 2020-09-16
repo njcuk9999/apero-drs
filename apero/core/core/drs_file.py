@@ -20,7 +20,6 @@ from copy import deepcopy
 import numpy as np
 import os
 from pathlib import Path
-from types import FunctionType
 from typing import Any, Dict, List, Union, Tuple, Type
 import warnings
 
@@ -96,7 +95,7 @@ class DrsInputFile:
                  header: Union[drs_fits.Header, None] = None,
                  fileset: Union[list, None] = None,
                  filesetnames: Union[List[str], None] = None,
-                 outfunc: Union[FunctionType, None] = None,
+                 outfunc: Union[Any, None] = None,
                  inext: Union[str, None] = None,
                  dbname: Union[str, None] = None,
                  dbkey: Union[str, None] = None,
@@ -368,7 +367,7 @@ class DrsInputFile:
                 header: Union[drs_fits.Header, None] = None,
                 fileset: Union[list, None] = None,
                 filesetnames: Union[List[str], None] = None,
-                outfunc: Union[FunctionType, None] = None,
+                outfunc: Union[Any, None] = None,
                 inext: Union[str, None] = None,
                 dbname: Union[str, None] = None,
                 dbkey: Union[str, None] = None,
@@ -568,7 +567,7 @@ class DrsInputFile:
                   header: Union[drs_fits.Header, None] = None,
                   fileset: Union[list, None] = None,
                   filesetnames: Union[List[str], None] = None,
-                  outfunc: Union[FunctionType, None] = None,
+                  outfunc: Union[Any, None] = None,
                   inext: Union[str, None] = None,
                   dbname: Union[str, None] = None,
                   dbkey: Union[str, None] = None,
@@ -683,7 +682,7 @@ class DrsInputFile:
                      header: Union[drs_fits.Header, None] = None,
                      fileset: Union[list, None] = None,
                      filesetnames: Union[List[str], None] = None,
-                     outfunc: Union[FunctionType, None] = None,
+                     outfunc: Union[Any, None] = None,
                      inext: Union[str, None] = None,
                      dbname: Union[str, None] = None,
                      dbkey: Union[str, None] = None,
@@ -984,6 +983,9 @@ class DrsInputFile:
         # get parameters
         self.check_params(func_name)
         params = self.params
+        # deal with not outfile
+        if outfile is None:
+            outfile = self
         # if we have a function use it
         if self.outfunc is not None:
             try:
@@ -1148,7 +1150,7 @@ class DrsFitsFile(DrsInputFile):
                  header: Union[drs_fits.Header, None] = None,
                  fileset: Union[list, None] = None,
                  filesetnames: Union[List[str], None] = None,
-                 outfunc: Union[FunctionType, None] = None,
+                 outfunc: Union[Any, None] = None,
                  inext: Union[str, None] = '.fits',
                  dbname: Union[str, None] = None,
                  dbkey: Union[str, None] = None,
@@ -1300,7 +1302,10 @@ class DrsFitsFile(DrsInputFile):
         else:
             self.output_dict = output_dict
         # get the data type for this drs fits file (either image or table)
-        self.datatype = datatype
+        if datatype is None:
+            self.datatype = 'image'
+        else:
+            self.datatype = datatype
         # get the dtype internally for fits image files (i.e. float or int)
         self.dtype = None
         # get the data array (for multi-extension fits)
@@ -1399,7 +1404,7 @@ class DrsFitsFile(DrsInputFile):
                 header: Union[drs_fits.Header, None] = None,
                 fileset: Union[list, None] = None,
                 filesetnames: Union[List[str], None] = None,
-                outfunc: Union[FunctionType, None] = None,
+                outfunc: Union[Any, None] = None,
                 inext: Union[str, None] = None,
                 dbname: Union[str, None] = None,
                 dbkey: Union[str, None] = None,
@@ -1547,7 +1552,7 @@ class DrsFitsFile(DrsInputFile):
                   header: Union[drs_fits.Header, None] = None,
                   fileset: Union[list, None] = None,
                   filesetnames: Union[List[str], None] = None,
-                  outfunc: Union[FunctionType, None] = None,
+                  outfunc: Union[Any, None] = None,
                   inext: Union[str, None] = None,
                   dbname: Union[str, None] = None,
                   dbkey: Union[str, None] = None,
@@ -1665,7 +1670,7 @@ class DrsFitsFile(DrsInputFile):
                      header: Union[drs_fits.Header, None] = None,
                      fileset: Union[list, None] = None,
                      filesetnames: Union[List[str], None] = None,
-                     outfunc: Union[FunctionType, None] = None,
+                     outfunc: Union[Any, None] = None,
                      inext: Union[str, None] = None,
                      dbname: Union[str, None] = None,
                      dbkey: Union[str, None] = None,
@@ -2343,9 +2348,10 @@ class DrsFitsFile(DrsInputFile):
             fmt = 'fits-image'
         elif self.datatype == 'table':
             fmt = 'fits-table'
+        # default to fits-image
         else:
-            fmt = None
-
+            fmt = 'fits-image'
+        # read the fits file
         out = drs_fits.readfits(params, self.filename, getdata=True,
                                 gethdr=True, fmt=fmt, ext=ext)
         # deal with copying
@@ -2493,17 +2499,14 @@ class DrsFitsFile(DrsInputFile):
         if self.header is None and self.data is None:
             self.read_file()
             return 1
-        if self.header is not None:
+        if self.header is None:
             self.read_header()
             return 1
-        if self.data is not None:
+        if self.data is None:
             self.read_data()
             return 1
-        # raise exception
-        func = self.__repr__()
-        eargs = [func, func + '.read_file()']
-        self.__error__(TextEntry('00-001-00004', args=eargs))
-        return 0
+        # if we get here we are good - both data and read are loaded
+        return 1
 
     def get_data(self, copy: bool = False) -> Union[np.ndarray, Table, None]:
         """
@@ -3845,7 +3848,7 @@ class DrsNpyFile(DrsInputFile):
                  header: Union[drs_fits.Header, None] = None,
                  fileset: Union[list, None] = None,
                  filesetnames: Union[List[str], None] = None,
-                 outfunc: Union[FunctionType, None] = None,
+                 outfunc: Union[Any, None] = None,
                  inext: Union[str, None] = '.npy',
                  dbname: Union[str, None] = None,
                  dbkey: Union[str, None] = None,
@@ -4003,6 +4006,65 @@ class DrsNpyFile(DrsInputFile):
         else:
             WLOG(params, 'error', TextEntry('00-008-00013', args=[func_name]))
 
+    def check_read(self, header_only: bool = False, data_only: bool = False,
+                   load: bool = True):
+        """
+        Check whether data have been read
+        if load is True and they haven't been read them read them
+
+        data is loaded into DrsFitsFile.data
+
+        :param header_only: not used for Npy File
+        :param data_only: bool, if True only read/check data
+        :param load: bool, if True load header and / or data
+
+        :return: None
+        """
+        # set function name
+        _ = display_func(self.params, 'check_read', __NAME__, self.class_name)
+        # header only is not used
+        _ = header_only
+        # ---------------------------------------------------------------------
+        # deal with data only
+        # ---------------------------------------------------------------------
+        if data_only:
+            if self.data is None:
+                if load:
+                    return self.read_file()
+                # raise exception
+                func = self.__repr__()
+                eargs = [func, func + '.read_file()']
+                self.__error__(TextEntry('00-001-00004', args=eargs))
+                return 0
+            else:
+                return 1
+        # ---------------------------------------------------------------------
+        # deal with both data and header
+        # ---------------------------------------------------------------------
+        if self.data is None:
+            self.read_file()
+            return 1
+        # if we got here we are good - data has been read
+        return 1
+
+    def get_data(self, copy: bool = False) -> Union[np.ndarray, Table, None]:
+        """
+        return the data array
+
+        :param copy: bool, if True deep copies the data
+        :return: the data (numpy array)
+        """
+        # set function name
+        _ = display_func(self.params, 'get_data', __NAME__, self.class_name)
+        # check data exists
+        if self.data is None:
+            self.check_read(data_only=True)
+        # deal with copying data
+        if copy:
+            return np.array(self.data)
+        else:
+            return self.data
+
     def write_file(self):
         """
         Write a npy file (using np.save)
@@ -4067,7 +4129,7 @@ class DrsNpyFile(DrsInputFile):
                 header: Union[drs_fits.Header, None] = None,
                 fileset: Union[list, None] = None,
                 filesetnames: Union[List[str], None] = None,
-                outfunc: Union[FunctionType, None] = None,
+                outfunc: Union[Any, None] = None,
                 inext: Union[str, None] = None,
                 dbname: Union[str, None] = None,
                 dbkey: Union[str, None] = None,
@@ -4159,7 +4221,7 @@ class DrsNpyFile(DrsInputFile):
                      header: Union[drs_fits.Header, None] = None,
                      fileset: Union[list, None] = None,
                      filesetnames: Union[List[str], None] = None,
-                     outfunc: Union[FunctionType, None] = None,
+                     outfunc: Union[Any, None] = None,
                      inext: Union[str, None] = None,
                      dbname: Union[str, None] = None,
                      dbkey: Union[str, None] = None,
@@ -4384,7 +4446,7 @@ def _copydrsfile(drsfileclass, instance1: DrsInputFile,
                  header: Union[drs_fits.Header, None] = None,
                  fileset: Union[list, None] = None,
                  filesetnames: Union[List[str], None] = None,
-                 outfunc: Union[FunctionType, None] = None,
+                 outfunc: Union[Any, None] = None,
                  inext: Union[str, None] = None,
                  dbname: Union[str, None] = None,
                  dbkey: Union[str, None] = None,
