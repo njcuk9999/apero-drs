@@ -393,8 +393,7 @@ def lin_mini(vector: np.ndarray, sample: np.ndarray, mm: np.ndarray,
 
     :returns: amps, recon
     """
-    # set function name
-    _ = display_func(None, 'lin_mini', __NAME__)
+    # do not set function name here -- cannot use functions here
     # case 1
     if case == 1:
         # fill-in the co-variance matrix
