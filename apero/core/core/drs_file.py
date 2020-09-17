@@ -4591,7 +4591,14 @@ def _copydrsfile(drsfileclass, instance1: DrsInputFile,
         data = deepcopy(instance2.data)
     # set header
     if header is None:
-        header = instance2.header
+        # deep copy drs_fits.Header
+        if isinstance(instance2.header, drs_fits.Header):
+            header = instance2.header.copy()
+            # deep copy astropy.io.fits.Header
+        elif isinstance(instance2.header, drs_fits.fits.Header):
+            header = instance2.header.copy()
+        else:
+            header = None
     # set fileset
     if fileset is None:
         if instance1.fileset is None:
@@ -4630,7 +4637,14 @@ def _copydrsfile(drsfileclass, instance1: DrsInputFile,
         shape = deepcopy(instance2.shape)
     # set hdict
     if hdict is None:
-        hdict = instance2.hdict
+        # deep copy drs_fits.Header
+        if isinstance(instance2.hdict, drs_fits.Header):
+            hdict = instance2.hdict.copy()
+        # deep copy astropy.io.fits.Header
+        elif isinstance(instance2.hdict, drs_fits.fits.Header):
+            hdict = instance2.hdict.copy()
+        else:
+            hdict = None
     # set output dict
     if output_dict is None:
         output_dict = deepcopy(output_dict)
