@@ -736,7 +736,6 @@ def _copy_db_file(params, dbname, inpath, outpath, log=True):
         # noinspection PyExceptClausesOrder
         try:
             shutil.copyfile(inpath, outpath)
-            os.chmod(outpath, 0o0644)
         except IOError as e:
             # log and raise error
             eargs = [dbname, inpath, outpath, type(e), e, func_name]
