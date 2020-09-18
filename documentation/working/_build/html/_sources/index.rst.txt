@@ -11,7 +11,7 @@ APERO Documentation
 ******************************************
 
 ===========================================
-Latest version: 0.7.000
+Latest version: 0.6.131
 ===========================================
 
   APERO is a pipeline designed to reduce astrophysical observations (specifically from echelle spectrographs).

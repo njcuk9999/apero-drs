@@ -131,7 +131,7 @@
 
 \title{APERO Documentation}
 \date{Sep 18, 2020}
-\release{0.7.000}
+\release{0.6.131}
 \author{Neil Cook}
 \newcommand{\sphinxlogo}{\sphinxincludegraphics{apero_logo.png}\par}
 \renewcommand{\releasename}{ }
@@ -155,7 +155,7 @@
             \end{figure}
             
             \vspace{5mm}
-            \Large \textbf{Version 0.7.000}
+            \Large \textbf{Version 0.6.131}
             
             \vspace{5mm}
             \Large \textbf{{Neil Cook}}
@@ -184,8 +184,8 @@
 
 
 
-\chapter{Latest version: 0.7.000}
-\label{\detokenize{index:latest-version-0-7-000}}\begin{quote}
+\chapter{Latest version: 0.6.131}
+\label{\detokenize{index:latest-version-0-6-131}}\begin{quote}
 
 APERO is a pipeline designed to reduce astrophysical observations (specifically from echelle spectrographs).
 It is the official pipeline for:
@@ -679,12 +679,1025 @@ This section describes the process to use APERO.
 \label{\detokenize{user/spirou/recipes_spirou:spirou-recipes}}\label{\detokenize{user/spirou/recipes_spirou:recipes-spirou}}\label{\detokenize{user/spirou/recipes_spirou::doc}}
 This section describes are all the SPIROU recipes to use with APERO.
 
-List of recipes:
-\begin{itemize}
-\item {} 
-\sphinxtitleref{cal\_ccf\_spirou.py}
 
-\end{itemize}
+\subsubsection{Preprocessing Recipe}
+\label{\detokenize{user/spirou/recipes/preprocessing:preprocessing-recipe}}\label{\detokenize{user/spirou/recipes/preprocessing:recipes-spirou-preprocessing}}\label{\detokenize{user/spirou/recipes/preprocessing::doc}}
+Cleans file of detector effects.
+
+
+\paragraph{Run}
+\label{\detokenize{user/spirou/recipes/preprocessing:run}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+cal\PYGZus{}preprocess\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}RAW\PYGZus{}FILES\PYG{o}{]}
+\end{sphinxVerbatim}
+
+
+\paragraph{Optional Arguments}
+\label{\detokenize{user/spirou/recipes/preprocessing:optional-arguments}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYGZhy{}\PYGZhy{}skip, \PYGZhy{}\PYGZhy{}debug, \PYGZhy{}\PYGZhy{}listing, \PYGZhy{}\PYGZhy{}listingall, \PYGZhy{}\PYGZhy{}version, \PYGZhy{}\PYGZhy{}info,
+\PYGZhy{}\PYGZhy{}program, \PYGZhy{}\PYGZhy{}idebug, \PYGZhy{}\PYGZhy{}breakpoints, \PYGZhy{}\PYGZhy{}quiet, \PYGZhy{}\PYGZhy{}help
+\end{sphinxVerbatim}
+
+
+\paragraph{Output Dir:}
+\label{\detokenize{user/spirou/recipes/preprocessing:output-dir}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+DRS\PYGZus{}DATA\PYGZus{}WORKING   \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} default: \PYG{l+s+s2}{\PYGZdq{}tmp\PYGZdq{}} directory
+\end{sphinxVerbatim}
+
+
+\paragraph{Output files}
+\label{\detokenize{user/spirou/recipes/preprocessing:output-files}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp.fits  \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} preprocessed files \PYG{o}{(}4096x4096\PYG{o}{)}
+\end{sphinxVerbatim}
+
+
+\paragraph{Plots}
+\label{\detokenize{user/spirou/recipes/preprocessing:plots}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+None
+\end{sphinxVerbatim}
+
+
+\subsubsection{Dark Master Recipe}
+\label{\detokenize{user/spirou/recipes/dark_master:dark-master-recipe}}\label{\detokenize{user/spirou/recipes/dark_master:recipes-spirou-dark-master}}\label{\detokenize{user/spirou/recipes/dark_master::doc}}
+Collects all dark files and creates a master dark image to use for correction.
+
+
+\paragraph{Run}
+\label{\detokenize{user/spirou/recipes/dark_master:run}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+cal\PYGZus{}dark\PYGZus{}master\PYGZus{}spirou.py
+\end{sphinxVerbatim}
+
+
+\paragraph{Optional Arguments}
+\label{\detokenize{user/spirou/recipes/dark_master:optional-arguments}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYGZhy{}\PYGZhy{}filetype, \PYGZhy{}\PYGZhy{}database, \PYGZhy{}\PYGZhy{}plot,
+\PYGZhy{}\PYGZhy{}debug, \PYGZhy{}\PYGZhy{}listing, \PYGZhy{}\PYGZhy{}listingall, \PYGZhy{}\PYGZhy{}version, \PYGZhy{}\PYGZhy{}info,
+\PYGZhy{}\PYGZhy{}program, \PYGZhy{}\PYGZhy{}idebug, \PYGZhy{}\PYGZhy{}breakpoints, \PYGZhy{}\PYGZhy{}quiet, \PYGZhy{}\PYGZhy{}help
+\end{sphinxVerbatim}
+
+
+\paragraph{Output Dir}
+\label{\detokenize{user/spirou/recipes/dark_master:output-dir}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+DRS\PYGZus{}DATA\PYGZus{}REDUC   \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} default \PYG{l+s+s2}{\PYGZdq{}reduced\PYGZdq{}} directory
+\end{sphinxVerbatim}
+
+
+\paragraph{Calibration database entry}
+\label{\detokenize{user/spirou/recipes/dark_master:calibration-database-entry}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+DARKM \PYG{o}{\PYGZob{}}NIGHT\PYGZus{}NAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}FILENAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}HUMAN DATE\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}UNIX DATE\PYG{o}{\PYGZcb{}}
+\end{sphinxVerbatim}
+
+
+\paragraph{Output files}
+\label{\detokenize{user/spirou/recipes/dark_master:output-files}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}dark\PYGZus{}master.fits  \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} dark master file \PYG{o}{(}4096x4096\PYG{o}{)} + FITS\PYGZhy{}TABLE
+\end{sphinxVerbatim}
+
+
+\paragraph{Plots}
+\label{\detokenize{user/spirou/recipes/dark_master:plots}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+None
+\end{sphinxVerbatim}
+
+
+\paragraph{Notes}
+\label{\detokenize{user/spirou/recipes/dark_master:notes}}
+Does not require a master night choice \sphinxhyphen{} finds darks from all preprocessed nights.
+
+
+\subsubsection{Bad Pixel Correction Recipe}
+\label{\detokenize{user/spirou/recipes/bad_pixel:bad-pixel-correction-recipe}}\label{\detokenize{user/spirou/recipes/bad_pixel:recipes-spirou-bad-pixels}}\label{\detokenize{user/spirou/recipes/bad_pixel::doc}}
+Creates a bad pixel mask for identifying and deal with bad pixels.
+
+
+\paragraph{Run}
+\label{\detokenize{user/spirou/recipes/bad_pixel:run}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+cal\PYGZus{}badpix\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYGZhy{}flatfiles \PYG{o}{[}FLAT\PYGZus{}FLAT\PYG{o}{]} \PYGZhy{}darkfiles \PYG{o}{[}DARK\PYGZus{}DARK\PYGZus{}TEL\PYG{o}{]}
+cal\PYGZus{}badpix\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYGZhy{}flatfiles \PYG{o}{[}FLAT\PYGZus{}FLAT\PYG{o}{]} \PYGZhy{}darkfiles \PYG{o}{[}DARK\PYGZus{}DARK\PYGZus{}INT\PYG{o}{]}
+\end{sphinxVerbatim}
+
+
+\paragraph{Optional Arguments}
+\label{\detokenize{user/spirou/recipes/bad_pixel:optional-arguments}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYGZhy{}\PYGZhy{}database, \PYGZhy{}\PYGZhy{}combine, \PYGZhy{}\PYGZhy{}flipimage, \PYGZhy{}\PYGZhy{}fluxunits, \PYGZhy{}\PYGZhy{}plot, \PYGZhy{}\PYGZhy{}resize,
+\PYGZhy{}\PYGZhy{}debug, \PYGZhy{}\PYGZhy{}listing, \PYGZhy{}\PYGZhy{}listingall, \PYGZhy{}\PYGZhy{}version, \PYGZhy{}\PYGZhy{}info,
+\PYGZhy{}\PYGZhy{}program, \PYGZhy{}\PYGZhy{}idebug, \PYGZhy{}\PYGZhy{}breakpoints, \PYGZhy{}\PYGZhy{}quiet, \PYGZhy{}\PYGZhy{}help
+\end{sphinxVerbatim}
+
+
+\paragraph{Output Dir}
+\label{\detokenize{user/spirou/recipes/bad_pixel:output-dir}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+DRS\PYGZus{}DATA\PYGZus{}REDUC   \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} default \PYG{l+s+s2}{\PYGZdq{}reduced\PYGZdq{}} directory
+\end{sphinxVerbatim}
+
+
+\paragraph{Calibration database entry}
+\label{\detokenize{user/spirou/recipes/bad_pixel:calibration-database-entry}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+BADPIX \PYG{o}{\PYGZob{}}NIGHT\PYGZus{}NAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}FILENAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}HUMAN DATE\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}UNIX DATE\PYG{o}{\PYGZcb{}}
+BKGRDMAP \PYG{o}{\PYGZob{}}NIGHT\PYGZus{}NAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}FILENAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}HUMAN DATE\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}UNIX DATE\PYG{o}{\PYGZcb{}}
+\end{sphinxVerbatim}
+
+
+\paragraph{Output files}
+\label{\detokenize{user/spirou/recipes/bad_pixel:output-files}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}badpixel.fits  \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} bad pixel map file \PYG{o}{(}3100x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}bmap.fits      \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} background mask file \PYG{o}{(}3100x4088\PYG{o}{)}
+DEBUG\PYGZus{}\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}background.fits \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} debug background file \PYG{o}{(}7x3100x4088\PYG{o}{)}
+\end{sphinxVerbatim}
+
+
+\paragraph{Plots}
+\label{\detokenize{user/spirou/recipes/bad_pixel:plots}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+BADPIX\PYGZus{}MAP
+\end{sphinxVerbatim}
+
+
+\subsubsection{Localisation Recipe}
+\label{\detokenize{user/spirou/recipes/localisation:localisation-recipe}}\label{\detokenize{user/spirou/recipes/localisation:recipes-spirou-localisation}}\label{\detokenize{user/spirou/recipes/localisation::doc}}
+Finds the orders on the image.
+
+
+\paragraph{Run}
+\label{\detokenize{user/spirou/recipes/localisation:run}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+cal\PYGZus{}loc\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}FLAT\PYGZus{}DARK\PYG{o}{]}
+cal\PYGZus{}loc\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}DARK\PYGZus{}FLAT\PYG{o}{]}
+\end{sphinxVerbatim}
+
+
+\paragraph{Optional Arguments}
+\label{\detokenize{user/spirou/recipes/localisation:optional-arguments}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYGZhy{}\PYGZhy{}database, \PYGZhy{}\PYGZhy{}badpixfile, \PYGZhy{}\PYGZhy{}badcorr, \PYGZhy{}\PYGZhy{}backsub, \PYGZhy{}\PYGZhy{}combine,
+\PYGZhy{}\PYGZhy{}darkfile, \PYGZhy{}\PYGZhy{}darkcorr,  \PYGZhy{}\PYGZhy{}flipimage, \PYGZhy{}\PYGZhy{}fluxunits, \PYGZhy{}\PYGZhy{}plot, \PYGZhy{}\PYGZhy{}resize,
+\PYGZhy{}\PYGZhy{}debug, \PYGZhy{}\PYGZhy{}listing, \PYGZhy{}\PYGZhy{}listingall, \PYGZhy{}\PYGZhy{}version, \PYGZhy{}\PYGZhy{}info,
+\PYGZhy{}\PYGZhy{}program, \PYGZhy{}\PYGZhy{}idebug, \PYGZhy{}\PYGZhy{}breakpoints, \PYGZhy{}\PYGZhy{}quiet, \PYGZhy{}\PYGZhy{}help
+\end{sphinxVerbatim}
+
+
+\paragraph{Output Dir}
+\label{\detokenize{user/spirou/recipes/localisation:output-dir}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+DRS\PYGZus{}DATA\PYGZus{}REDUC   \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} default \PYG{l+s+s2}{\PYGZdq{}reduced\PYGZdq{}} directory
+\end{sphinxVerbatim}
+
+
+\paragraph{Calibration database entry}
+\label{\detokenize{user/spirou/recipes/localisation:calibration-database-entry}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+ORDER\PYGZus{}PROFILE\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}NIGHT\PYGZus{}NAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}FILENAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}HUMAN DATE\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}UNIX DATE\PYG{o}{\PYGZcb{}}
+LOC\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}NIGHT\PYGZus{}NAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}FILENAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}HUMAN DATE\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}UNIX DATE\PYG{o}{\PYGZcb{}}
+\end{sphinxVerbatim}
+
+
+\paragraph{Output files}
+\label{\detokenize{user/spirou/recipes/localisation:output-files}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}order\PYGZus{}profile\PYGZus{}C.fits  \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} order profile file \PYG{o}{(}3100x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}loco\PYGZus{}C.fits           \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} localisation centers map file \PYG{o}{(}49x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}fwhm\PYGZhy{}order\PYGZus{}C.fits     \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} localisation widths map file \PYG{o}{(}49x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}with\PYGZhy{}order\PYGZus{}C.fits     \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} localisation superposition file \PYG{o}{(}3100x4088\PYG{o}{)}
+DEBUG\PYGZus{}\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}background.fits \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} debug background file \PYG{o}{(}7x3100x4088\PYG{o}{)}
+\end{sphinxVerbatim}
+
+
+\paragraph{Plots}
+\label{\detokenize{user/spirou/recipes/localisation:plots}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+LOC\PYGZus{}MINMAX\PYGZus{}CENTS, LOC\PYGZus{}MIN\PYGZus{}CENTS\PYGZus{}THRES, LOC\PYGZus{}FINDING\PYGZus{}ORDERS, LOC\PYGZus{}IM\PYGZus{}SAT\PYGZus{}THRES,
+LOC\PYGZus{}ORD\PYGZus{}VS\PYGZus{}RMS, LOC\PYGZus{}CHECK\PYGZus{}COEFFS, LOC\PYGZus{}FIT\PYGZus{}RESIDUALS
+\end{sphinxVerbatim}
+
+
+\subsubsection{Shape Master Recipe}
+\label{\detokenize{user/spirou/recipes/shape_master:shape-master-recipe}}\label{\detokenize{user/spirou/recipes/shape_master:recipes-spirou-shape-master}}\label{\detokenize{user/spirou/recipes/shape_master::doc}}
+Creates a master FP image from all FPs processed. Uses this to work out the
+required shifts due to the FP master image, slicer pupil geometry and the
+bending of the orders (found in localisation).
+
+
+\paragraph{Run}
+\label{\detokenize{user/spirou/recipes/shape_master:run}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+cal\PYGZus{}shape\PYGZus{}master\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYGZhy{}hcfiles \PYG{o}{[}HCONE\PYGZus{}HCONE\PYG{o}{]} \PYGZhy{}fpfiles \PYG{o}{[}FP\PYGZus{}FP\PYG{o}{]}
+\end{sphinxVerbatim}
+
+
+\paragraph{Optional Arguments}
+\label{\detokenize{user/spirou/recipes/shape_master:optional-arguments}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYGZhy{}\PYGZhy{}database, \PYGZhy{}\PYGZhy{}badpixfile, \PYGZhy{}\PYGZhy{}badcorr, \PYGZhy{}\PYGZhy{}backsub, \PYGZhy{}\PYGZhy{}combine,
+\PYGZhy{}\PYGZhy{}darkfile, \PYGZhy{}\PYGZhy{}darkcorr,  \PYGZhy{}\PYGZhy{}flipimage, \PYGZhy{}\PYGZhy{}fluxunits, \PYGZhy{}\PYGZhy{}locofile,
+\PYGZhy{}\PYGZhy{}plot, \PYGZhy{}\PYGZhy{}resize,
+\PYGZhy{}\PYGZhy{}debug, \PYGZhy{}\PYGZhy{}listing, \PYGZhy{}\PYGZhy{}listingall, \PYGZhy{}\PYGZhy{}version, \PYGZhy{}\PYGZhy{}info,
+\PYGZhy{}\PYGZhy{}program, \PYGZhy{}\PYGZhy{}idebug, \PYGZhy{}\PYGZhy{}breakpoints, \PYGZhy{}\PYGZhy{}quiet, \PYGZhy{}\PYGZhy{}help
+\end{sphinxVerbatim}
+
+
+\paragraph{Output Dir}
+\label{\detokenize{user/spirou/recipes/shape_master:output-dir}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+DRS\PYGZus{}DATA\PYGZus{}REDUC   \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} default \PYG{l+s+s2}{\PYGZdq{}reduced\PYGZdq{}} directory
+\end{sphinxVerbatim}
+
+
+\paragraph{Calibration database entry}
+\label{\detokenize{user/spirou/recipes/shape_master:calibration-database-entry}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+SHAPEX \PYG{o}{\PYGZob{}}NIGHT\PYGZus{}NAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}FILENAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}HUMAN DATE\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}UNIX DATE\PYG{o}{\PYGZcb{}}
+SHAPEY \PYG{o}{\PYGZob{}}NIGHT\PYGZus{}NAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}FILENAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}HUMAN DATE\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}UNIX DATE\PYG{o}{\PYGZcb{}}
+FPMASTER \PYG{o}{\PYGZob{}}NIGHT\PYGZus{}NAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}FILENAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}HUMAN DATE\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}UNIX DATE\PYG{o}{\PYGZcb{}}
+\end{sphinxVerbatim}
+
+
+\paragraph{Output files}
+\label{\detokenize{user/spirou/recipes/shape_master:output-files}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}shapex.fits            \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} dx shape map \PYG{o}{(}3100x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}shapey.fits            \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} dy shape map \PYG{o}{(}3100x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}fpmaster.fits          \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} fp master file \PYG{o}{(}3100x4088\PYG{o}{)} + FITS\PYGZhy{}TABLE
+DEBUG\PYGZus{}\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}shape\PYGZus{}out\PYGZus{}bdx.fits  \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} dx map before dy map \PYG{o}{(}3100x4088\PYG{o}{)}
+DEBUG\PYGZus{}\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}shape\PYGZus{}in\PYGZus{}fp.fits    \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} input fp before shape corr \PYG{o}{(}3100x4088\PYG{o}{)}
+DEBUG\PYGZus{}\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}shape\PYGZus{}out\PYGZus{}fp.fits   \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} input fp after shape corr \PYG{o}{(}3100x4088\PYG{o}{)}
+DEBUG\PYGZus{}\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}shape\PYGZus{}in\PYGZus{}hc.fits    \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} input hc before shape corr \PYG{o}{(}3100x4088\PYG{o}{)}
+DEBUG\PYGZus{}\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}shape\PYGZus{}out\PYGZus{}hc.fits   \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} input hc after shape corr \PYG{o}{(}3100x4088\PYG{o}{)}
+DEBUG\PYGZus{}\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}background.fits \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} debug background file \PYG{o}{(}7x3100x4088\PYG{o}{)}
+\end{sphinxVerbatim}
+
+
+\paragraph{Plots}
+\label{\detokenize{user/spirou/recipes/shape_master:plots}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+SHAPE\PYGZus{}DX, SHAPE\PYGZus{}ANGLE\PYGZus{}OFFSET\PYGZus{}ALL, SHAPE\PYGZus{}ANGLE\PYGZus{}OFFSET, SHAPE\PYGZus{}LINEAR\PYGZus{}TPARAMS
+\end{sphinxVerbatim}
+
+
+\subsubsection{Shape (per night) Recipe}
+\label{\detokenize{user/spirou/recipes/shape_local:shape-per-night-recipe}}\label{\detokenize{user/spirou/recipes/shape_local:recipes-spirou-shape-local}}\label{\detokenize{user/spirou/recipes/shape_local::doc}}
+Takes the shape master outputs (shapex, shapey and fpmaster) and applies
+these transformations to shift the image to the master fp frame, unbend images
+and shift to correct for slicer pupil geometry.
+
+
+\paragraph{Run}
+\label{\detokenize{user/spirou/recipes/shape_local:run}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+cal\PYGZus{}shape\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}FP\PYGZus{}FP\PYG{o}{]}
+\end{sphinxVerbatim}
+
+
+\paragraph{Optional Arguments}
+\label{\detokenize{user/spirou/recipes/shape_local:optional-arguments}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYGZhy{}\PYGZhy{}database, \PYGZhy{}\PYGZhy{}badpixfile, \PYGZhy{}\PYGZhy{}badcorr, \PYGZhy{}\PYGZhy{}backsub, \PYGZhy{}\PYGZhy{}combine,
+\PYGZhy{}\PYGZhy{}darkfile, \PYGZhy{}\PYGZhy{}darkcorr,  \PYGZhy{}\PYGZhy{}flipimage, \PYGZhy{}\PYGZhy{}fluxunits, \PYGZhy{}\PYGZhy{}fpmaster,
+\PYGZhy{}\PYGZhy{}plot, \PYGZhy{}\PYGZhy{}resize, \PYGZhy{}\PYGZhy{}shapex, \PYGZhy{}\PYGZhy{}shapey,
+\PYGZhy{}\PYGZhy{}debug, \PYGZhy{}\PYGZhy{}listing, \PYGZhy{}\PYGZhy{}listingall, \PYGZhy{}\PYGZhy{}version, \PYGZhy{}\PYGZhy{}info,
+\PYGZhy{}\PYGZhy{}program, \PYGZhy{}\PYGZhy{}idebug, \PYGZhy{}\PYGZhy{}breakpoints, \PYGZhy{}\PYGZhy{}quiet, \PYGZhy{}\PYGZhy{}help
+\end{sphinxVerbatim}
+
+
+\paragraph{Output Dir}
+\label{\detokenize{user/spirou/recipes/shape_local:output-dir}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+DRS\PYGZus{}DATA\PYGZus{}REDUC   \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} default \PYG{l+s+s2}{\PYGZdq{}reduced\PYGZdq{}} directory
+\end{sphinxVerbatim}
+
+
+\paragraph{Calibration database entry}
+\label{\detokenize{user/spirou/recipes/shape_local:calibration-database-entry}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+SHAPEL \PYG{o}{\PYGZob{}}NIGHT\PYGZus{}NAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}FILENAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}HUMAN DATE\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}UNIX DATE\PYG{o}{\PYGZcb{}}
+\end{sphinxVerbatim}
+
+
+\paragraph{Output files}
+\label{\detokenize{user/spirou/recipes/shape_local:output-files}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}shapel.fits            \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} \PYG{n+nb}{local} shape map \PYG{o}{(}3100x4088\PYG{o}{)}
+DEBUG\PYGZus{}\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}shape\PYGZus{}in\PYGZus{}fp.fits    \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} input fp before shape corr \PYG{o}{(}3100x4088\PYG{o}{)}
+DEBUG\PYGZus{}\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}shape\PYGZus{}out\PYGZus{}fp.fits   \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} input fp after shape corr \PYG{o}{(}3100x4088\PYG{o}{)}
+DEBUG\PYGZus{}\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}background.fits \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} debug background file \PYG{o}{(}7x3100x4088\PYG{o}{)}
+\end{sphinxVerbatim}
+
+
+\paragraph{Plots}
+\label{\detokenize{user/spirou/recipes/shape_local:plots}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+SHAPE\PYGZus{}DX, SHAPE\PYGZus{}ANGLE\PYGZus{}OFFSET\PYGZus{}ALL, SHAPE\PYGZus{}ANGLE\PYGZus{}OFFSET, SHAPE\PYGZus{}LINEAR\PYGZus{}TPARAMS
+\end{sphinxVerbatim}
+
+
+\subsubsection{Flat/Blaze Correction Recipe}
+\label{\detokenize{user/spirou/recipes/flat_blaze:flat-blaze-correction-recipe}}\label{\detokenize{user/spirou/recipes/flat_blaze:recipes-spirou-flat-blaze}}\label{\detokenize{user/spirou/recipes/flat_blaze::doc}}
+Extracts out flat images in order to measure the blaze and produced blaze
+correction and flat correction images.
+
+
+\paragraph{Run}
+\label{\detokenize{user/spirou/recipes/flat_blaze:run}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+cal\PYGZus{}flat\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}FLAT\PYGZus{}FLAT\PYG{o}{]}
+\end{sphinxVerbatim}
+
+
+\paragraph{Optional Arguments}
+\label{\detokenize{user/spirou/recipes/flat_blaze:optional-arguments}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYGZhy{}\PYGZhy{}database, \PYGZhy{}\PYGZhy{}badpixfile, \PYGZhy{}\PYGZhy{}badcorr, \PYGZhy{}\PYGZhy{}backsub, \PYGZhy{}\PYGZhy{}combine,
+\PYGZhy{}\PYGZhy{}darkfile, \PYGZhy{}\PYGZhy{}darkcorr,  \PYGZhy{}\PYGZhy{}fiber, \PYGZhy{}\PYGZhy{}flipimage, \PYGZhy{}\PYGZhy{}fluxunits,
+\PYGZhy{}\PYGZhy{}locofile, \PYGZhy{}\PYGZhy{}orderpfile, \PYGZhy{}\PYGZhy{}plot, \PYGZhy{}\PYGZhy{}resize,
+\PYGZhy{}\PYGZhy{}shapex, \PYGZhy{}\PYGZhy{}shapey, \PYGZhy{}\PYGZhy{}shapel,
+\PYGZhy{}\PYGZhy{}debug, \PYGZhy{}\PYGZhy{}listing, \PYGZhy{}\PYGZhy{}listingall, \PYGZhy{}\PYGZhy{}version, \PYGZhy{}\PYGZhy{}info,
+\PYGZhy{}\PYGZhy{}program, \PYGZhy{}\PYGZhy{}idebug, \PYGZhy{}\PYGZhy{}breakpoints, \PYGZhy{}\PYGZhy{}quiet, \PYGZhy{}\PYGZhy{}help
+\end{sphinxVerbatim}
+
+
+\paragraph{Output Dir}
+\label{\detokenize{user/spirou/recipes/flat_blaze:output-dir}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+DRS\PYGZus{}DATA\PYGZus{}REDUC   \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} default \PYG{l+s+s2}{\PYGZdq{}reduced\PYGZdq{}} directory
+\end{sphinxVerbatim}
+
+
+\paragraph{Calibration database entry}
+\label{\detokenize{user/spirou/recipes/flat_blaze:calibration-database-entry}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+FLAT\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}NIGHT\PYGZus{}NAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}FILENAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}HUMAN DATE\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}UNIX DATE\PYG{o}{\PYGZcb{}}
+BLAZE\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}NIGHT\PYGZus{}NAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}FILENAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}HUMAN DATE\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}UNIX DATE\PYG{o}{\PYGZcb{}}
+\end{sphinxVerbatim}
+
+
+\paragraph{Output files}
+\label{\detokenize{user/spirou/recipes/flat_blaze:output-files}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}blaze\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits          \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} blaze correction file \PYG{o}{(}49x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}flat\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits           \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} blaze correction file \PYG{o}{(}49x4088\PYG{o}{)}
+DEBUG\PYGZus{}\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2dsll\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits   \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} debug pre extract file \PYG{o}{(}7x3100x4088\PYG{o}{)}
+DEBUG\PYGZus{}\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}background.fits       \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} debug background file \PYG{o}{(}7x3100x4088\PYG{o}{)}
+\end{sphinxVerbatim}
+
+
+\paragraph{Plots}
+\label{\detokenize{user/spirou/recipes/flat_blaze:plots}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+FLAT\PYGZus{}ORDER\PYGZus{}FIT\PYGZus{}EDGES1, FLAT\PYGZus{}ORDER\PYGZus{}FIT\PYGZus{}EDGES2, FLAT\PYGZus{}BLAZE\PYGZus{}ORDER1,
+FLAT\PYGZus{}BLAZE\PYGZus{}ORDER2
+\end{sphinxVerbatim}
+
+
+\subsubsection{Thermal Correction Recipe}
+\label{\detokenize{user/spirou/recipes/thermal:thermal-correction-recipe}}\label{\detokenize{user/spirou/recipes/thermal:recipes-spirou-thermal}}\label{\detokenize{user/spirou/recipes/thermal::doc}}
+Extracts dark frames in order to provide correction for the thermal background
+after extraction of science / calibration frames.
+
+
+\paragraph{Run}
+\label{\detokenize{user/spirou/recipes/thermal:run}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+cal\PYGZus{}thermal\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}DARK\PYGZus{}DARK\PYGZus{}INT\PYG{o}{]}
+cal\PYGZus{}thermal\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}DARK\PYGZus{}DARK\PYGZus{}TEL\PYG{o}{]}
+\end{sphinxVerbatim}
+
+
+\paragraph{Optional Arguments}
+\label{\detokenize{user/spirou/recipes/thermal:optional-arguments}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYGZhy{}\PYGZhy{}database, \PYGZhy{}\PYGZhy{}badpixfile, \PYGZhy{}\PYGZhy{}badcorr, \PYGZhy{}\PYGZhy{}backsub, \PYGZhy{}\PYGZhy{}combine,
+\PYGZhy{}\PYGZhy{}darkfile, \PYGZhy{}\PYGZhy{}darkcorr,  \PYGZhy{}\PYGZhy{}fiber, \PYGZhy{}\PYGZhy{}flipimage, \PYGZhy{}\PYGZhy{}fluxunits,
+\PYGZhy{}\PYGZhy{}locofile, \PYGZhy{}\PYGZhy{}orderpfile, \PYGZhy{}\PYGZhy{}plot, \PYGZhy{}\PYGZhy{}resize,
+\PYGZhy{}\PYGZhy{}shapex, \PYGZhy{}\PYGZhy{}shapey, \PYGZhy{}\PYGZhy{}shapel, \PYGZhy{}\PYGZhy{}wavefile,
+\PYGZhy{}\PYGZhy{}debug, \PYGZhy{}\PYGZhy{}listing, \PYGZhy{}\PYGZhy{}listingall, \PYGZhy{}\PYGZhy{}version, \PYGZhy{}\PYGZhy{}info,
+\PYGZhy{}\PYGZhy{}program, \PYGZhy{}\PYGZhy{}idebug, \PYGZhy{}\PYGZhy{}breakpoints, \PYGZhy{}\PYGZhy{}quiet, \PYGZhy{}\PYGZhy{}help
+\end{sphinxVerbatim}
+
+
+\paragraph{Output Dir}
+\label{\detokenize{user/spirou/recipes/thermal:output-dir}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+DRS\PYGZus{}DATA\PYGZus{}REDUC   \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} default \PYG{l+s+s2}{\PYGZdq{}reduced\PYGZdq{}} directory
+\end{sphinxVerbatim}
+
+
+\paragraph{Calibration database entry}
+\label{\detokenize{user/spirou/recipes/thermal:calibration-database-entry}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+THERMALT\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}NIGHT\PYGZus{}NAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}FILENAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}HUMAN DATE\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}UNIX DATE\PYG{o}{\PYGZcb{}}
+THERMALI\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}NIGHT\PYGZus{}NAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}FILENAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}HUMAN DATE\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}UNIX DATE\PYG{o}{\PYGZcb{}}
+\end{sphinxVerbatim}
+
+
+\paragraph{Output files}
+\label{\detokenize{user/spirou/recipes/thermal:output-files}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2ds\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits              \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} extracted + flat field file \PYG{o}{(}49x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2dsff\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits            \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} extracted + flat field file \PYG{o}{(}49x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}s1d\PYGZus{}w\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits             \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} s1d constant in pixel space \PYG{o}{(}FITS\PYGZhy{}TABLE\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}s1d\PYGZus{}v\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits             \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} s1d constant in velocity space \PYG{o}{(}FITS\PYGZhy{}TABLE\PYG{o}{)}
+DEBUG\PYGZus{}\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2dsll\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits      \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} debug pre extract file \PYG{o}{(}7x3100x4088\PYG{o}{)}
+DEBUG\PYGZus{}\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}background.fits       \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} debug background file \PYG{o}{(}7x3100x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}thermal\PYGZus{}e2ds\PYGZus{}int\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits  \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} extracted thermal \PYG{k}{for} dark\PYGZus{}dark\PYGZus{}int \PYG{o}{(}49x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}thermal\PYGZus{}e2ds\PYGZus{}tel\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits  \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} extracted thermal \PYG{k}{for} dark\PYGZus{}dark\PYGZus{}tel \PYG{o}{(}49x4088\PYG{o}{)}
+\end{sphinxVerbatim}
+
+
+\paragraph{Plots}
+\label{\detokenize{user/spirou/recipes/thermal:plots}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+None
+\end{sphinxVerbatim}
+
+
+\subsubsection{Master leak correction recipe}
+\label{\detokenize{user/spirou/recipes/leak_master:master-leak-correction-recipe}}\label{\detokenize{user/spirou/recipes/leak_master:recipes-spirou-leak-master}}\label{\detokenize{user/spirou/recipes/leak_master::doc}}
+Extracts all DARK\_FP files and creates a model for later leak correction.
+
+
+\paragraph{Run}
+\label{\detokenize{user/spirou/recipes/leak_master:run}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+cal\PYGZus{}leak\PYGZus{}master.py \PYG{o}{[}DIRECTORY\PYG{o}{]}
+\end{sphinxVerbatim}
+
+
+\paragraph{Optional Arguments}
+\label{\detokenize{user/spirou/recipes/leak_master:optional-arguments}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYGZhy{}\PYGZhy{}filetype, \PYGZhy{}\PYGZhy{}database, \PYGZhy{}\PYGZhy{}plot
+\PYGZhy{}\PYGZhy{}debug, \PYGZhy{}\PYGZhy{}listing, \PYGZhy{}\PYGZhy{}listingall, \PYGZhy{}\PYGZhy{}version, \PYGZhy{}\PYGZhy{}info,
+\PYGZhy{}\PYGZhy{}program, \PYGZhy{}\PYGZhy{}idebug, \PYGZhy{}\PYGZhy{}breakpoints, \PYGZhy{}\PYGZhy{}quiet, \PYGZhy{}\PYGZhy{}help
+\end{sphinxVerbatim}
+
+
+\paragraph{Output Dir}
+\label{\detokenize{user/spirou/recipes/leak_master:output-dir}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+DRS\PYGZus{}DATA\PYGZus{}REDUC   \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} default \PYG{l+s+s2}{\PYGZdq{}reduced\PYGZdq{}} directory
+\end{sphinxVerbatim}
+
+
+\paragraph{Calibration database entry}
+\label{\detokenize{user/spirou/recipes/leak_master:calibration-database-entry}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+WAVE\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}NIGHT\PYGZus{}NAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}FILENAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}HUMAN DATE\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}UNIX DATE\PYG{o}{\PYGZcb{}}
+\end{sphinxVerbatim}
+
+
+\paragraph{Output files}
+\label{\detokenize{user/spirou/recipes/leak_master:output-files}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2dsff\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits            \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} extracted + flat field file \PYG{o}{(}49x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}leak\PYGZus{}master\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits        \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} leak correction maste rfile \PYG{o}{(}49x4088\PYG{o}{)}
+\end{sphinxVerbatim}
+
+
+\paragraph{Plots}
+\label{\detokenize{user/spirou/recipes/leak_master:plots}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+None
+\end{sphinxVerbatim}
+
+
+\subsubsection{Master wavelength solution Recipe}
+\label{\detokenize{user/spirou/recipes/wave_master:master-wavelength-solution-recipe}}\label{\detokenize{user/spirou/recipes/wave_master:recipes-spirou-wave-master}}\label{\detokenize{user/spirou/recipes/wave_master::doc}}
+Creates a wavelength solution and measures drifts (via CCF) of the FP relative
+to the FP master
+
+
+\paragraph{Run}
+\label{\detokenize{user/spirou/recipes/wave_master:run}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+cal\PYGZus{}wave\PYGZus{}master\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYGZhy{}hcfiles \PYG{o}{[}HCONE\PYGZus{}HCONE\PYG{o}{]} \PYGZhy{}fpfiles \PYG{o}{[}FP\PYGZus{}FP\PYG{o}{]}
+\end{sphinxVerbatim}
+
+
+\paragraph{Optional Arguments}
+\label{\detokenize{user/spirou/recipes/wave_master:optional-arguments}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYGZhy{}\PYGZhy{}database, \PYGZhy{}\PYGZhy{}badpixfile, \PYGZhy{}\PYGZhy{}badcorr, \PYGZhy{}\PYGZhy{}backsub, \PYGZhy{}\PYGZhy{}blazefile,
+\PYGZhy{}\PYGZhy{}combine, \PYGZhy{}\PYGZhy{}darkfile, \PYGZhy{}\PYGZhy{}darkcorr,  \PYGZhy{}\PYGZhy{}fiber, \PYGZhy{}\PYGZhy{}flipimage,
+\PYGZhy{}\PYGZhy{}fluxunits,  \PYGZhy{}\PYGZhy{}locofile, \PYGZhy{}\PYGZhy{}orderpfile, \PYGZhy{}\PYGZhy{}plot, \PYGZhy{}\PYGZhy{}resize,
+\PYGZhy{}\PYGZhy{}shapex, \PYGZhy{}\PYGZhy{}shapey, \PYGZhy{}\PYGZhy{}shapel, \PYGZhy{}\PYGZhy{}wavefile, \PYGZhy{}hcmode, \PYGZhy{}fpmode,
+\PYGZhy{}\PYGZhy{}forceext,
+\PYGZhy{}\PYGZhy{}debug, \PYGZhy{}\PYGZhy{}listing, \PYGZhy{}\PYGZhy{}listingall, \PYGZhy{}\PYGZhy{}version, \PYGZhy{}\PYGZhy{}info,
+\PYGZhy{}\PYGZhy{}program, \PYGZhy{}\PYGZhy{}idebug, \PYGZhy{}\PYGZhy{}breakpoints, \PYGZhy{}\PYGZhy{}quiet, \PYGZhy{}\PYGZhy{}help
+\end{sphinxVerbatim}
+
+
+\paragraph{Output Dir}
+\label{\detokenize{user/spirou/recipes/wave_master:output-dir}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+DRS\PYGZus{}DATA\PYGZus{}REDUC   \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} default \PYG{l+s+s2}{\PYGZdq{}reduced\PYGZdq{}} directory
+\end{sphinxVerbatim}
+
+
+\paragraph{Calibration database entry}
+\label{\detokenize{user/spirou/recipes/wave_master:calibration-database-entry}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+WAVEM\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}NIGHT\PYGZus{}NAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}FILENAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}HUMAN DATE\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}UNIX DATE\PYG{o}{\PYGZcb{}}
+WAVEHCL\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}NIGHT\PYGZus{}NAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}FILENAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}HUMAN DATE\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}UNIX DATE\PYG{o}{\PYGZcb{}}
+WAVEFPL\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}NIGHT\PYGZus{}NAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}FILENAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}HUMAN DATE\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}UNIX DATE\PYG{o}{\PYGZcb{}}
+\end{sphinxVerbatim}
+
+
+\paragraph{Output files}
+\label{\detokenize{user/spirou/recipes/wave_master:output-files}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2ds\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits              \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} extracted + flat field file \PYG{o}{(}49x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2dsff\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits            \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} extracted + flat field file \PYG{o}{(}49x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}s1d\PYGZus{}w\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits             \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} s1d constant in pixel space \PYG{o}{(}FITS\PYGZhy{}TABLE\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}s1d\PYGZus{}v\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits             \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} s1d constant in velocity space \PYG{o}{(}FITS\PYGZhy{}TABLE\PYG{o}{)}
+DEBUG\PYGZus{}\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2dsll\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits      \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} debug pre extract file \PYG{o}{(}7x3100x4088\PYG{o}{)}
+DEBUG\PYGZus{}\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}background.fits          \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} debug background file \PYG{o}{(}7x3100x4088\PYG{o}{)}
+
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2dsff\PYGZus{}linelist\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.dat      \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} wave stats hc line list
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2dsff\PYGZus{}wavemres\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits     \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} wave res table \PYG{o}{(}multi extension fits\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2dsff\PYGZus{}wavem\PYGZus{}hc\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits     \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} wave solution from hc only \PYG{o}{(}49x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2dsff\PYGZus{}wavem\PYGZus{}fp\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits     \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} wave solution from hc + fp \PYG{o}{(}49x4088\PYG{o}{)}
+cal\PYGZus{}wave\PYGZus{}results.tbl                                \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} wave res table \PYG{o}{(}ASCII\PYGZhy{}table\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2dsff\PYGZus{}mhc\PYGZus{}lines\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.tbl     \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} wave hc lines \PYG{o}{(}ASCII\PYGZhy{}table\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}wavem\PYGZus{}hclines\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits       \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} wave hc ref/measured lines table \PYG{o}{(}FITS\PYGZhy{}TABLE\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}wavem\PYGZus{}fplines\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits      \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} wave fp ref/measured lines table \PYG{o}{(}FITS\PYGZhy{}TABLE\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2dsff\PYGZus{}ccf\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits          \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} ccf code \PYG{o}{[}FITS\PYGZhy{}TABLE\PYG{o}{]}
+\end{sphinxVerbatim}
+
+
+\paragraph{Plots}
+\label{\detokenize{user/spirou/recipes/wave_master:plots}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+WAVE\PYGZus{}HC\PYGZus{}GUESS, WAVE\PYGZus{}HC\PYGZus{}BRIGHTEST\PYGZus{}LINES, WAVE\PYGZus{}HC\PYGZus{}TFIT\PYGZus{}GRID, WAVE\PYGZus{}HC\PYGZus{}RESMAP, WAVE\PYGZus{}LITTROW\PYGZus{}CHECK1,
+WAVE\PYGZus{}LITTROW\PYGZus{}EXTRAP1, WAVE\PYGZus{}LITTROW\PYGZus{}CHECK2, WAVE\PYGZus{}LITTROW\PYGZus{}EXTRAP2, WAVE\PYGZus{}FP\PYGZus{}FINAL\PYGZus{}ORDER,
+WAVE\PYGZus{}FP\PYGZus{}LWID\PYGZus{}OFFSET, WAVE\PYGZus{}FP\PYGZus{}WAVE\PYGZus{}RES, WAVE\PYGZus{}FP\PYGZus{}M\PYGZus{}X\PYGZus{}RES, WAVE\PYGZus{}FP\PYGZus{}IPT\PYGZus{}CWID\PYGZus{}1MHC, WAVE\PYGZus{}FP\PYGZus{}IPT\PYGZus{}CWID\PYGZus{}LLHC,
+WAVE\PYGZus{}FP\PYGZus{}LL\PYGZus{}DIFF, WAVE\PYGZus{}FP\PYGZus{}MULTI\PYGZus{}ORDER, WAVE\PYGZus{}FP\PYGZus{}SINGLE\PYGZus{}ORDER, CCF\PYGZus{}RV\PYGZus{}FIT, CCF\PYGZus{}RV\PYGZus{}FIT\PYGZus{}LOOP, WAVEREF\PYGZus{}EXPECTED,
+EXTRACT\PYGZus{}S1D, EXTRACT\PYGZus{}S1D\PYGZus{}WEIGHT, WAVE\PYGZus{}FIBER\PYGZus{}COMPARISON, WAVE\PYGZus{}FIBER\PYGZus{}COMP, WAVENIGHT\PYGZus{}ITERPLOT, WAVENIGHT\PYGZus{}HISTPLOT
+\end{sphinxVerbatim}
+
+
+\subsubsection{Nightly wavelength solution Recipe}
+\label{\detokenize{user/spirou/recipes/wave_local:nightly-wavelength-solution-recipe}}\label{\detokenize{user/spirou/recipes/wave_local:recipes-spirou-wave-local}}\label{\detokenize{user/spirou/recipes/wave_local::doc}}
+Calculates corrections to the master wavelength solution as a nightly wavelength
+solution and measures drifts (via CCF) of the FP relative to the FP master
+
+
+\paragraph{Run}
+\label{\detokenize{user/spirou/recipes/wave_local:run}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+cal\PYGZus{}wave\PYGZus{}night\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYGZhy{}hcfiles \PYG{o}{[}HCONE\PYGZus{}HCONE\PYG{o}{]} \PYGZhy{}fpfiles \PYG{o}{[}FP\PYGZus{}FP\PYG{o}{]}
+\end{sphinxVerbatim}
+
+
+\paragraph{Optional Arguments}
+\label{\detokenize{user/spirou/recipes/wave_local:optional-arguments}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYGZhy{}\PYGZhy{}database, \PYGZhy{}\PYGZhy{}badpixfile, \PYGZhy{}\PYGZhy{}badcorr, \PYGZhy{}\PYGZhy{}backsub, \PYGZhy{}\PYGZhy{}blazefile,
+\PYGZhy{}\PYGZhy{}combine, \PYGZhy{}\PYGZhy{}darkfile, \PYGZhy{}\PYGZhy{}darkcorr,  \PYGZhy{}\PYGZhy{}fiber, \PYGZhy{}\PYGZhy{}flipimage,
+\PYGZhy{}\PYGZhy{}fluxunits,  \PYGZhy{}\PYGZhy{}locofile, \PYGZhy{}\PYGZhy{}orderpfile, \PYGZhy{}\PYGZhy{}plot, \PYGZhy{}\PYGZhy{}resize,
+\PYGZhy{}\PYGZhy{}shapex, \PYGZhy{}\PYGZhy{}shapey, \PYGZhy{}\PYGZhy{}shapel, \PYGZhy{}\PYGZhy{}wavefile, \PYGZhy{}hcmode, \PYGZhy{}fpmode,
+\PYGZhy{}\PYGZhy{}forceext
+\PYGZhy{}\PYGZhy{}debug, \PYGZhy{}\PYGZhy{}listing, \PYGZhy{}\PYGZhy{}listingall, \PYGZhy{}\PYGZhy{}version, \PYGZhy{}\PYGZhy{}info,
+\PYGZhy{}\PYGZhy{}program, \PYGZhy{}\PYGZhy{}idebug, \PYGZhy{}\PYGZhy{}breakpoints, \PYGZhy{}\PYGZhy{}quiet, \PYGZhy{}\PYGZhy{}help
+\end{sphinxVerbatim}
+
+
+\paragraph{Output Dir}
+\label{\detokenize{user/spirou/recipes/wave_local:output-dir}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+DRS\PYGZus{}DATA\PYGZus{}REDUC   \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} default \PYG{l+s+s2}{\PYGZdq{}reduced\PYGZdq{}} directory
+\end{sphinxVerbatim}
+
+
+\paragraph{Calibration database entry}
+\label{\detokenize{user/spirou/recipes/wave_local:calibration-database-entry}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+WAVE\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}NIGHT\PYGZus{}NAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}FILENAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}HUMAN DATE\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}UNIX DATE\PYG{o}{\PYGZcb{}}
+\end{sphinxVerbatim}
+
+
+\paragraph{Output files}
+\label{\detokenize{user/spirou/recipes/wave_local:output-files}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2ds\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits              \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} extracted + flat field file \PYG{o}{(}49x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2dsff\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits            \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} extracted + flat field file \PYG{o}{(}49x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}s1d\PYGZus{}w\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits             \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} s1d constant in pixel space \PYG{o}{(}FITS\PYGZhy{}TABLE\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}s1d\PYGZus{}v\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits             \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} s1d constant in velocity space \PYG{o}{(}FITS\PYGZhy{}TABLE\PYG{o}{)}
+DEBUG\PYGZus{}\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2dsll\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits      \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} debug pre extract file \PYG{o}{(}7x3100x4088\PYG{o}{)}
+DEBUG\PYGZus{}\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}background.fits          \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} debug background file \PYG{o}{(}7x3100x4088\PYG{o}{)}
+
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2dsff\PYGZus{}\PYGZus{}wave\PYGZus{}night\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits     \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} wave night solution \PYG{o}{(}49x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}wavem\PYGZus{}hclines\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits       \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} wave hc ref/measured lines table \PYG{o}{(}FITS\PYGZhy{}TABLE\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}wavem\PYGZus{}fplines\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits      \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} wave fp ref/measured lines table \PYG{o}{(}FITS\PYGZhy{}TABLE\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2dsff\PYGZus{}ccf\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits          \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} ccf code \PYG{o}{[}FITS\PYGZhy{}TABLE\PYG{o}{]}
+\end{sphinxVerbatim}
+
+
+\paragraph{Plots}
+\label{\detokenize{user/spirou/recipes/wave_local:plots}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+WAVENIGHT\PYGZus{}ITERPLOT WAVENIGHT\PYGZus{}HISTPLOT WAVEREF\PYGZus{}EXPECTED
+CCF\PYGZus{}RV\PYGZus{}FIT CCF\PYGZus{}RV\PYGZus{}FIT\PYGZus{}LOOP EXTRACT\PYGZus{}S1D EXTRACT\PYGZus{}S1D\PYGZus{}WEIGHT
+\end{sphinxVerbatim}
+
+
+\subsubsection{Extraction Recipe}
+\label{\detokenize{user/spirou/recipes/extraction:extraction-recipe}}\label{\detokenize{user/spirou/recipes/extraction:recipes-spirou-extraction}}\label{\detokenize{user/spirou/recipes/extraction::doc}}
+Extracts any preprocessed image using all the calibrations required.
+
+
+\paragraph{Run}
+\label{\detokenize{user/spirou/recipes/extraction:run}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+cal\PYGZus{}extract\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}PP\PYGZus{}FILE\PYG{o}{]}
+\end{sphinxVerbatim}
+
+
+\paragraph{Optional Arguments}
+\label{\detokenize{user/spirou/recipes/extraction:optional-arguments}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYGZhy{}\PYGZhy{}badpixfile, \PYGZhy{}\PYGZhy{}badcorr, \PYGZhy{}\PYGZhy{}backsub, \PYGZhy{}\PYGZhy{}blazefile,
+\PYGZhy{}\PYGZhy{}combine, \PYGZhy{}\PYGZhy{}objname, \PYGZhy{}\PYGZhy{}dprtype, \PYGZhy{}\PYGZhy{}darkfile, \PYGZhy{}\PYGZhy{}darkcorr,
+\PYGZhy{}\PYGZhy{}fiber, \PYGZhy{}\PYGZhy{}flipimage, \PYGZhy{}\PYGZhy{}fluxunits, \PYGZhy{}\PYGZhy{}flatfile,
+\PYGZhy{}\PYGZhy{}locofile, \PYGZhy{}\PYGZhy{}orderpfile, \PYGZhy{}\PYGZhy{}plot, \PYGZhy{}\PYGZhy{}resize,
+\PYGZhy{}\PYGZhy{}shapex, \PYGZhy{}\PYGZhy{}shapey, \PYGZhy{}\PYGZhy{}shapel, \PYGZhy{}\PYGZhy{}thermal, \PYGZhy{}\PYGZhy{}thermalfile, \PYGZhy{}\PYGZhy{}wavefile,
+\PYGZhy{}\PYGZhy{}debug, \PYGZhy{}\PYGZhy{}listing, \PYGZhy{}\PYGZhy{}listingall, \PYGZhy{}\PYGZhy{}version, \PYGZhy{}\PYGZhy{}info,
+\PYGZhy{}\PYGZhy{}program, \PYGZhy{}\PYGZhy{}idebug, \PYGZhy{}\PYGZhy{}breakpoints, \PYGZhy{}\PYGZhy{}quiet, \PYGZhy{}\PYGZhy{}help
+\end{sphinxVerbatim}
+
+
+\paragraph{Output Dir}
+\label{\detokenize{user/spirou/recipes/extraction:output-dir}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+DRS\PYGZus{}DATA\PYGZus{}REDUC   \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} default \PYG{l+s+s2}{\PYGZdq{}reduced\PYGZdq{}} directory
+\end{sphinxVerbatim}
+
+
+\paragraph{Output files}
+\label{\detokenize{user/spirou/recipes/extraction:output-files}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2ds\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits              \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} extracted + flat field file \PYG{o}{(}49x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2dsff\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits            \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} extracted + flat field file \PYG{o}{(}49x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}s1d\PYGZus{}w\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits             \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} s1d constant in pixel space \PYG{o}{(}FITS\PYGZhy{}TABLE\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}s1d\PYGZus{}v\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits             \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} s1d constant in velocity space \PYG{o}{(}FITS\PYGZhy{}TABLE\PYG{o}{)}
+DEBUG\PYGZus{}\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2dsll\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits      \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} debug pre extract file \PYG{o}{(}7x3100x4088\PYG{o}{)}
+DEBUG\PYGZus{}\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}background.fits          \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} debug background file \PYG{o}{(}7x3100x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}ext\PYGZus{}fplines\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}} .fits      \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} the FP ref/measured lines \PYG{o}{(}FOR OBJ\PYGZus{}FP only\PYG{o}{)}
+\end{sphinxVerbatim}
+
+
+\paragraph{Plots}
+\label{\detokenize{user/spirou/recipes/extraction:plots}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+FLAT\PYGZus{}ORDER\PYGZus{}FIT\PYGZus{}EDGES1, FLAT\PYGZus{}ORDER\PYGZus{}FIT\PYGZus{}EDGES2, FLAT\PYGZus{}BLAZE\PYGZus{}ORDER1,
+FLAT\PYGZus{}BLAZE\PYGZus{}ORDER2, THERMAL\PYGZus{}BACKGROUND, EXTRACT\PYGZus{}SPECTRAL\PYGZus{}ORDER1,
+EXTRACT\PYGZus{}SPECTRAL\PYGZus{}ORDER2, EXTRACT\PYGZus{}S1D, EXTRACT\PYGZus{}S1D\PYGZus{}WEIGHT
+\end{sphinxVerbatim}
+
+
+\subsubsection{Leak correction Recipe}
+\label{\detokenize{user/spirou/recipes/leak_corr:leak-correction-recipe}}\label{\detokenize{user/spirou/recipes/leak_corr:recipes-spirou-leak-corr}}\label{\detokenize{user/spirou/recipes/leak_corr::doc}}
+Corrects extracted files for leakage coming from a FP (for OBJ\_FP files only)
+
+
+\paragraph{Run}
+\label{\detokenize{user/spirou/recipes/leak_corr:run}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+cal\PYGZus{}leak\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}PP\PYGZus{}FILE\PYG{o}{]}
+\end{sphinxVerbatim}
+
+
+\paragraph{Optional Arguments}
+\label{\detokenize{user/spirou/recipes/leak_corr:optional-arguments}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYGZhy{}\PYGZhy{}database, \PYGZhy{}\PYGZhy{}plot, \PYGZhy{}\PYGZhy{}leakfile
+\PYGZhy{}\PYGZhy{}debug, \PYGZhy{}\PYGZhy{}listing, \PYGZhy{}\PYGZhy{}listingall, \PYGZhy{}\PYGZhy{}version, \PYGZhy{}\PYGZhy{}info,
+\PYGZhy{}\PYGZhy{}program, \PYGZhy{}\PYGZhy{}idebug, \PYGZhy{}\PYGZhy{}breakpoints, \PYGZhy{}\PYGZhy{}quiet, \PYGZhy{}\PYGZhy{}help
+\end{sphinxVerbatim}
+
+
+\paragraph{Output Dir}
+\label{\detokenize{user/spirou/recipes/leak_corr:output-dir}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+DRS\PYGZus{}DATA\PYGZus{}REDUC   \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} default \PYG{l+s+s2}{\PYGZdq{}reduced\PYGZdq{}} directory
+\end{sphinxVerbatim}
+
+
+\paragraph{Output files}
+\label{\detokenize{user/spirou/recipes/leak_corr:output-files}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2ds\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits              \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} extracted + flat field file \PYG{o}{(}49x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2dsff\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits            \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} extracted + flat field file \PYG{o}{(}49x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}s1d\PYGZus{}w\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits             \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} s1d constant in pixel space \PYG{o}{(}FITS\PYGZhy{}TABLE\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}s1d\PYGZus{}v\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits             \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} s1d constant in velocity space \PYG{o}{(}FITS\PYGZhy{}TABLE\PYG{o}{)}
+DEBUG\PYGZus{}\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2dsll\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits      \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} debug pre extract file \PYG{o}{(}7x3100x4088\PYG{o}{)}
+DEBUG\PYGZus{}\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}background.fits          \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} debug background file \PYG{o}{(}7x3100x4088\PYG{o}{)}
+\end{sphinxVerbatim}
+
+
+\paragraph{Plots}
+\label{\detokenize{user/spirou/recipes/leak_corr:plots}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+None
+\end{sphinxVerbatim}
+
+
+\subsubsection{Make Telluric Recipe}
+\label{\detokenize{user/spirou/recipes/make_tellu:make-telluric-recipe}}\label{\detokenize{user/spirou/recipes/make_tellu:recipes-spirou-mk-tellu}}\label{\detokenize{user/spirou/recipes/make_tellu::doc}}
+Takes a hot star and calculates telluric transmission
+
+
+\paragraph{Run}
+\label{\detokenize{user/spirou/recipes/make_tellu:run}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+obj\PYGZus{}mk\PYGZus{}tellu\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}E2DS \PYG{p}{\PYGZam{}} OBJ\PYGZus{}DARK\PYG{o}{]}
+obj\PYGZus{}mk\PYGZus{}tellu\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}E2DSFF \PYG{p}{\PYGZam{}} OBJ\PYGZus{}DARK\PYG{o}{]}
+obj\PYGZus{}mk\PYGZus{}tellu\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}E2DS \PYG{p}{\PYGZam{}} OBJ\PYGZus{}FP\PYG{o}{]}
+obj\PYGZus{}mk\PYGZus{}tellu\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}E2DSFF \PYG{p}{\PYGZam{}} OBJ\PYGZus{}FP\PYG{o}{]}
+\end{sphinxVerbatim}
+
+
+\paragraph{Optional Arguments}
+\label{\detokenize{user/spirou/recipes/make_tellu:optional-arguments}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYGZhy{}\PYGZhy{}database, \PYGZhy{}\PYGZhy{}blazefile, \PYGZhy{}\PYGZhy{}plot, \PYGZhy{}\PYGZhy{}wavefile
+\PYGZhy{}\PYGZhy{}debug, \PYGZhy{}\PYGZhy{}listing, \PYGZhy{}\PYGZhy{}listingall, \PYGZhy{}\PYGZhy{}version, \PYGZhy{}\PYGZhy{}info,
+\PYGZhy{}\PYGZhy{}program, \PYGZhy{}\PYGZhy{}idebug, \PYGZhy{}\PYGZhy{}breakpoints, \PYGZhy{}\PYGZhy{}quiet, \PYGZhy{}\PYGZhy{}help
+\end{sphinxVerbatim}
+
+
+\paragraph{Output Dir}
+\label{\detokenize{user/spirou/recipes/make_tellu:output-dir}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+DRS\PYGZus{}DATA\PYGZus{}REDUC   \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} default \PYG{l+s+s2}{\PYGZdq{}reduced\PYGZdq{}} directory
+\end{sphinxVerbatim}
+
+
+\paragraph{Telluric database entry}
+\label{\detokenize{user/spirou/recipes/make_tellu:telluric-database-entry}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+TELLU\PYGZus{}CONV\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}NIGHT\PYGZus{}NAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}FILENAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}HUMAN DATE\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}UNIX DATE\PYG{o}{\PYGZcb{}}
+TELLU\PYGZus{}TRANS\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}NIGHT\PYGZus{}NAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}FILENAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}HUMAN DATE\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}UNIX DATE\PYG{o}{\PYGZcb{}}
+\end{sphinxVerbatim}
+
+
+\paragraph{Output files}
+\label{\detokenize{user/spirou/recipes/make_tellu:output-files}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}tellu\PYGZus{}trans\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits    \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} telluric transmission file \PYG{o}{(}49x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}WAVEFILE\PYG{o}{\PYGZcb{}}\PYGZus{}tellu\PYGZus{}conv\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.npy              \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} tapas convolved with wave file \PYG{o}{(}49x4088\PYG{o}{)}
+\end{sphinxVerbatim}
+
+
+\paragraph{Plots}
+\label{\detokenize{user/spirou/recipes/make_tellu:plots}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+MKTELLU\PYGZus{}WAVE\PYGZus{}FLUX1, MKTELLU\PYGZus{}WAVE\PYGZus{}FLUX2
+\end{sphinxVerbatim}
+
+
+\subsubsection{Fit Telluric Recipe}
+\label{\detokenize{user/spirou/recipes/fit_tellu:fit-telluric-recipe}}\label{\detokenize{user/spirou/recipes/fit_tellu:recipes-spirou-fit-tellu}}\label{\detokenize{user/spirou/recipes/fit_tellu::doc}}
+Using the telluric tramission calculates principle components (PCA) to
+correct input images of atmospheric absorption.
+
+
+\paragraph{Run}
+\label{\detokenize{user/spirou/recipes/fit_tellu:run}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+obj\PYGZus{}fit\PYGZus{}tellu\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}E2DS \PYG{p}{\PYGZam{}} OBJ\PYGZus{}DARK\PYG{o}{]}
+obj\PYGZus{}fit\PYGZus{}tellu\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}E2DSFF \PYG{p}{\PYGZam{}} OBJ\PYGZus{}DARK\PYG{o}{]}
+obj\PYGZus{}fit\PYGZus{}tellu\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}E2DS \PYG{p}{\PYGZam{}} OBJ\PYGZus{}FP\PYG{o}{]}
+obj\PYGZus{}fit\PYGZus{}tellu\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}E2DSFF \PYG{p}{\PYGZam{}} OBJ\PYGZus{}FP\PYG{o}{]}
+\end{sphinxVerbatim}
+
+
+\paragraph{Optional Arguments}
+\label{\detokenize{user/spirou/recipes/fit_tellu:optional-arguments}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYGZhy{}\PYGZhy{}database, \PYGZhy{}\PYGZhy{}blazefile, \PYGZhy{}\PYGZhy{}plot, \PYGZhy{}\PYGZhy{}wavefile
+\PYGZhy{}\PYGZhy{}debug, \PYGZhy{}\PYGZhy{}listing, \PYGZhy{}\PYGZhy{}listingall, \PYGZhy{}\PYGZhy{}version, \PYGZhy{}\PYGZhy{}info,
+\PYGZhy{}\PYGZhy{}program, \PYGZhy{}\PYGZhy{}idebug, \PYGZhy{}\PYGZhy{}breakpoints, \PYGZhy{}\PYGZhy{}quiet, \PYGZhy{}\PYGZhy{}help
+\end{sphinxVerbatim}
+
+
+\paragraph{Output Dir}
+\label{\detokenize{user/spirou/recipes/fit_tellu:output-dir}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+DRS\PYGZus{}DATA\PYGZus{}REDUC   \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} default \PYG{l+s+s2}{\PYGZdq{}reduced\PYGZdq{}} directory
+\end{sphinxVerbatim}
+
+
+\paragraph{Telluric database entry}
+\label{\detokenize{user/spirou/recipes/fit_tellu:telluric-database-entry}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+TELLU\PYGZus{}CONV\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}NIGHT\PYGZus{}NAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}FILENAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}HUMAN DATE\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}UNIX DATE\PYG{o}{\PYGZcb{}}
+TELLU\PYGZus{}TRANS\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}NIGHT\PYGZus{}NAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}FILENAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}HUMAN DATE\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}UNIX DATE\PYG{o}{\PYGZcb{}}
+\end{sphinxVerbatim}
+
+
+\paragraph{Output files}
+\label{\detokenize{user/spirou/recipes/fit_tellu:output-files}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2dsff\PYGZus{}tcorr\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits    \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} telluric corrected e2dsff file \PYG{o}{(}49x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}s1d\PYGZus{}w\PYGZus{}tcorr\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits     \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} telluric corrected s1d constant in pixel space \PYG{o}{(}FITS\PYGZhy{}TABLE\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}s1d\PYGZus{}v\PYGZus{}tcorr\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits     \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} telluric corrected s1d constant in velocity space \PYG{o}{(}FITS\PYGZhy{}TABLE\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}e2dsff\PYGZus{}recon\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits    \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} reconstructed transmission e2dsff file \PYG{o}{(}49x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}s1d\PYGZus{}w\PYGZus{}recon\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits     \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} reconstructed transmission s1d constant in pixel space \PYG{o}{(}FITS\PYGZhy{}TABLE\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}s1d\PYGZus{}v\PYGZus{}recon\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits     \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} reconstructed transmission s1d constant in velocity space \PYG{o}{(}FITS\PYGZhy{}TABLE\PYG{o}{)}
+\end{sphinxVerbatim}
+
+
+\paragraph{Plots}
+\label{\detokenize{user/spirou/recipes/fit_tellu:plots}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+EXTRACT\PYGZus{}S1D, EXTRACT\PYGZus{}S1D\PYGZus{}WEIGHT, FTELLU\PYGZus{}PCA\PYGZus{}COMP1, FTELLU\PYGZus{}PCA\PYGZus{}COMP2,
+FTELLU\PYGZus{}RECON\PYGZus{}SPLINE1, FTELLU\PYGZus{}RECON\PYGZus{}SPLINE2, FTELLU\PYGZus{}WAVE\PYGZus{}SHIFT1,
+FTELLU\PYGZus{}WAVE\PYGZus{}SHIFT2, FTELLU\PYGZus{}RECON\PYGZus{}ABSO1, FTELLU\PYGZus{}RECON\PYGZus{}ABSO2
+\end{sphinxVerbatim}
+
+
+\subsubsection{Make Template Recipe}
+\label{\detokenize{user/spirou/recipes/make_template:make-template-recipe}}\label{\detokenize{user/spirou/recipes/make_template:recipes-spirou-make-template}}\label{\detokenize{user/spirou/recipes/make_template::doc}}
+Uses all telluric corrected images of a certain object name to create
+and BERV and wavelength corrected template in order to server as a better
+model SED for telluric correction.
+
+\sphinxtitleref{obj\_mk\_tellu\_spirou.py} and \sphinxtitleref{obj\_fit\_tellu\_spirou.py} need to be rerun after
+template generation.
+
+
+\paragraph{Run}
+\label{\detokenize{user/spirou/recipes/make_template:run}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+obj\PYGZus{}mk\PYGZus{}template\PYGZus{}spirou.py \PYG{o}{[}OBJNAME\PYG{o}{]}
+\end{sphinxVerbatim}
+
+
+\paragraph{Optional Arguments}
+\label{\detokenize{user/spirou/recipes/make_template:optional-arguments}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYGZhy{}\PYGZhy{}filetype, \PYGZhy{}fiber,
+\PYGZhy{}\PYGZhy{}database, \PYGZhy{}\PYGZhy{}blazefile, \PYGZhy{}\PYGZhy{}plot, \PYGZhy{}\PYGZhy{}wavefile
+\PYGZhy{}\PYGZhy{}debug, \PYGZhy{}\PYGZhy{}listing, \PYGZhy{}\PYGZhy{}listingall, \PYGZhy{}\PYGZhy{}version, \PYGZhy{}\PYGZhy{}info,
+\PYGZhy{}\PYGZhy{}program, \PYGZhy{}\PYGZhy{}idebug, \PYGZhy{}\PYGZhy{}breakpoints, \PYGZhy{}\PYGZhy{}quiet, \PYGZhy{}\PYGZhy{}help
+\end{sphinxVerbatim}
+
+
+\paragraph{Output Dir}
+\label{\detokenize{user/spirou/recipes/make_template:output-dir}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+DRS\PYGZus{}DATA\PYGZus{}REDUC   \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} default \PYG{l+s+s2}{\PYGZdq{}reduced\PYGZdq{}} directory
+\end{sphinxVerbatim}
+
+
+\paragraph{Telluric database entry}
+\label{\detokenize{user/spirou/recipes/make_template:telluric-database-entry}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+TELLU\PYGZus{}CONV\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}NIGHT\PYGZus{}NAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}FILENAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}HUMAN DATE\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}UNIX DATE\PYG{o}{\PYGZcb{}}
+TELLU\PYGZus{}TRANS\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}NIGHT\PYGZus{}NAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}FILENAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}HUMAN DATE\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}UNIX DATE\PYG{o}{\PYGZcb{}}
+\end{sphinxVerbatim}
+
+
+\paragraph{Output files}
+\label{\detokenize{user/spirou/recipes/make_template:output-files}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+Template\PYGZus{}\PYG{o}{\PYGZob{}}OBJNAME\PYG{o}{\PYGZcb{}}\PYGZus{}\PYG{o}{\PYGZob{}}filetype\PYG{o}{\PYGZcb{}}\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits  \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} Template \PYG{k}{for} object \PYG{o}{(}3100x4088\PYG{o}{)} + FITS TABLE
+Template\PYGZus{}s1d\PYGZus{}\PYG{o}{\PYGZob{}}OBJNAME\PYG{o}{\PYGZcb{}}\PYGZus{}sc1d\PYGZus{}w\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits  \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} Template s1d constant in pixel space \PYG{k}{for} object FITS TABLE + FITS TABLE
+Template\PYGZus{}s1d\PYGZus{}\PYG{o}{\PYGZob{}}OBJNAME\PYG{o}{\PYGZcb{}}\PYGZus{}sc1d\PYGZus{}v\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits  \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} Template s1d constant in velocity space \PYG{k}{for} object FITS TABLE + FITS TABLE
+BigCube0\PYGZus{}\PYG{o}{\PYGZob{}}OBJNAME\PYG{o}{\PYGZcb{}}\PYGZus{}\PYG{o}{\PYGZob{}}filetype\PYG{o}{\PYGZcb{}}\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits  \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} Cube of obs making template earth reference \PYG{o}{(}\PYG{l+m}{49} x N x \PYG{l+m}{4088}\PYG{o}{)}
+BigCube\PYGZus{}\PYG{o}{\PYGZob{}}OBJNAME\PYG{o}{\PYGZcb{}}\PYGZus{}\PYG{o}{\PYGZob{}}filetype\PYG{o}{\PYGZcb{}}\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits   \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} Cube of obs making template star reference \PYG{o}{(}\PYG{l+m}{49} x N x \PYG{l+m}{4088}\PYG{o}{)}
+\end{sphinxVerbatim}
+
+
+\paragraph{Plots}
+\label{\detokenize{user/spirou/recipes/make_template:plots}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+EXTRACT\PYGZus{}S1D
+\end{sphinxVerbatim}
+
+
+\subsubsection{CCF Recipe}
+\label{\detokenize{user/spirou/recipes/ccf:ccf-recipe}}\label{\detokenize{user/spirou/recipes/ccf:recipes-spirou-ccf}}\label{\detokenize{user/spirou/recipes/ccf::doc}}
+Cross correlates the input image against a mask and measures a radial velocity
+per order, and combines to give an over all radial velocity measurement.
+Also (where possible) takes into account the FP drift measured by a CCF in the
+wave solution (when wave solution used a FP)
+
+
+\paragraph{Run}
+\label{\detokenize{user/spirou/recipes/ccf:run}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+cal\PYGZus{}ccf\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}E2DS \PYG{p}{\PYGZam{}} OBJ\PYGZus{}FP\PYG{o}{]}
+cal\PYGZus{}ccf\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}E2DSFF \PYG{p}{\PYGZam{}} OBJ\PYGZus{}FP\PYG{o}{]}
+cal\PYGZus{}ccf\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}E2DS\PYGZus{}CORR \PYG{p}{\PYGZam{}} OBJ\PYGZus{}FP\PYG{o}{]}
+cal\PYGZus{}ccf\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}E2DSFF\PYGZus{}CORR \PYG{p}{\PYGZam{}} OBJ\PYGZus{}FP\PYG{o}{]}
+cal\PYGZus{}ccf\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}E2DS \PYG{p}{\PYGZam{}} OBJ\PYGZus{}DARK\PYG{o}{]}
+cal\PYGZus{}ccf\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}E2DSFF \PYG{p}{\PYGZam{}} OBJ\PYGZus{}DARK\PYG{o}{]}
+cal\PYGZus{}ccf\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}E2DS\PYGZus{}CORR \PYG{p}{\PYGZam{}} OBJ\PYGZus{}DARK\PYG{o}{]}
+cal\PYGZus{}ccf\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}E2DSFF\PYGZus{}CORR \PYG{p}{\PYGZam{}} OBJ\PYGZus{}DARK\PYG{o}{]}
+\end{sphinxVerbatim}
+
+
+\paragraph{Optional Arguments}
+\label{\detokenize{user/spirou/recipes/ccf:optional-arguments}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYGZhy{}\PYGZhy{}mask, \PYGZhy{}\PYGZhy{}rv, \PYGZhy{}\PYGZhy{}width, \PYGZhy{}\PYGZhy{}step
+\PYGZhy{}\PYGZhy{}database, \PYGZhy{}\PYGZhy{}blazefile, \PYGZhy{}\PYGZhy{}plot
+\PYGZhy{}\PYGZhy{}debug, \PYGZhy{}\PYGZhy{}listing, \PYGZhy{}\PYGZhy{}listingall, \PYGZhy{}\PYGZhy{}version, \PYGZhy{}\PYGZhy{}info,
+\PYGZhy{}\PYGZhy{}program, \PYGZhy{}\PYGZhy{}idebug, \PYGZhy{}\PYGZhy{}breakpoints, \PYGZhy{}\PYGZhy{}quiet, \PYGZhy{}\PYGZhy{}help
+\end{sphinxVerbatim}
+
+
+\paragraph{Output Dir}
+\label{\detokenize{user/spirou/recipes/ccf:output-dir}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+DRS\PYGZus{}DATA\PYGZus{}REDUC   \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} default \PYG{l+s+s2}{\PYGZdq{}reduced\PYGZdq{}} directory
+\end{sphinxVerbatim}
+
+
+\paragraph{Output files}
+\label{\detokenize{user/spirou/recipes/ccf:output-files}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}\PYG{o}{\PYGZob{}}INTYPE\PYG{o}{\PYGZcb{}}\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}\PYGZus{}ccf\PYGZus{}\PYG{o}{\PYGZob{}}mask\PYG{o}{\PYGZcb{}}\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits  \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} CCF \PYG{k}{for} science channel file \PYG{o}{(}FITS\PYGZhy{}TABLE\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}\PYG{o}{\PYGZob{}}INTYPE\PYG{o}{\PYGZcb{}}\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}\PYGZus{}ccf\PYGZus{}fp\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits      \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} CCF \PYG{k}{for} reference channel file \PYG{o}{(}FITS\PYGZhy{}TABLE\PYG{o}{)}
+\end{sphinxVerbatim}
+
+
+\paragraph{Plots}
+\label{\detokenize{user/spirou/recipes/ccf:plots}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+CCF\PYGZus{}RV\PYGZus{}FIT, CCF\PYGZus{}RV\PYGZus{}FIT\PYGZus{}LOOP, CCF\PYGZus{}SWAVE\PYGZus{}REF, CCF\PYGZus{}PHOTON\PYGZus{}UNCERT
+\end{sphinxVerbatim}
+
+
+\subsubsection{Polarimetry Recipe}
+\label{\detokenize{user/spirou/recipes/polar:polarimetry-recipe}}\label{\detokenize{user/spirou/recipes/polar:recipes-spirou-polar}}\label{\detokenize{user/spirou/recipes/polar::doc}}
+Produces all polarimetry outputs.
+
+
+\paragraph{Run}
+\label{\detokenize{user/spirou/recipes/polar:run}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+pol\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}E2DSFF\PYG{o}{]}
+pol\PYGZus{}spirou.py \PYG{o}{[}DIRECTORY\PYG{o}{]} \PYG{o}{[}E2DSFF\PYGZus{}CORR\PYG{o}{]}
+\end{sphinxVerbatim}
+
+
+\paragraph{Optional Arguments}
+\label{\detokenize{user/spirou/recipes/polar:optional-arguments}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYGZhy{}\PYGZhy{}blazefile, \PYGZhy{}\PYGZhy{}plot, \PYGZhy{}\PYGZhy{}wavefile,
+\PYGZhy{}\PYGZhy{}debug, \PYGZhy{}\PYGZhy{}listing, \PYGZhy{}\PYGZhy{}listingall, \PYGZhy{}\PYGZhy{}version, \PYGZhy{}\PYGZhy{}info,
+\PYGZhy{}\PYGZhy{}program, \PYGZhy{}\PYGZhy{}idebug, \PYGZhy{}\PYGZhy{}breakpoints, \PYGZhy{}\PYGZhy{}quiet, \PYGZhy{}\PYGZhy{}help
+\end{sphinxVerbatim}
+
+
+\paragraph{Output Dir}
+\label{\detokenize{user/spirou/recipes/polar:output-dir}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+DRS\PYGZus{}DATA\PYGZus{}REDUC   \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} default \PYG{l+s+s2}{\PYGZdq{}reduced\PYGZdq{}} directory
+\end{sphinxVerbatim}
+
+
+\paragraph{Output files}
+\label{\detokenize{user/spirou/recipes/polar:output-files}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}\PYG{o}{\PYGZob{}}INTYPE\PYG{o}{\PYGZcb{}}\PYGZus{}pol.fits               // polar file
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}\PYG{o}{\PYGZob{}}INTYPE\PYG{o}{\PYGZcb{}}\PYGZus{}StokesI.fits           // stokes file
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}\PYG{o}{\PYGZob{}}INTYPE\PYG{o}{\PYGZcb{}}\PYGZus{}null1\PYGZus{}pol.fits         // null \PYG{l+m}{1} file
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}\PYG{o}{\PYGZob{}}INTYPE\PYG{o}{\PYGZcb{}}\PYGZus{}null2\PYGZus{}pol.fits         // null \PYG{l+m}{2} file
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}\PYG{o}{\PYGZob{}}INTYPE\PYG{o}{\PYGZcb{}}\PYGZus{}lsd\PYGZus{}pol.fits           // lsd file
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}\PYG{o}{\PYGZob{}}INTYPE\PYG{o}{\PYGZcb{}}\PYGZus{}s1d\PYGZus{}w\PYGZus{}pol.fits         // s1d polar file constant in pixel space \PYG{k}{for} object
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}\PYG{o}{\PYGZob{}}INTYPE\PYG{o}{\PYGZcb{}}\PYGZus{}s1d\PYGZus{}v\PYGZus{}pol.fits         // s1d polar file constant in velocity space
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}\PYG{o}{\PYGZob{}}INTYPE\PYG{o}{\PYGZcb{}}\PYGZus{}s1d\PYGZus{}w\PYGZus{}null1.fits       // s1d null \PYG{l+m}{1} file constant in pixel space \PYG{k}{for} object
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}\PYG{o}{\PYGZob{}}INTYPE\PYG{o}{\PYGZcb{}}\PYGZus{}s1d\PYGZus{}v\PYGZus{}null1.fits       // s1d null \PYG{l+m}{1} file constant in velocity space
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}\PYG{o}{\PYGZob{}}INTYPE\PYG{o}{\PYGZcb{}}\PYGZus{}s1d\PYGZus{}w\PYGZus{}null2.fits       // s1d null \PYG{l+m}{2} file constant in pixel space \PYG{k}{for} object
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}\PYG{o}{\PYGZob{}}INTYPE\PYG{o}{\PYGZcb{}}\PYGZus{}s1d\PYGZus{}v\PYGZus{}null2.fits       // s1d null \PYG{l+m}{2} file constant in velocity space
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}\PYG{o}{\PYGZob{}}INTYPE\PYG{o}{\PYGZcb{}}\PYGZus{}s1d\PYGZus{}w\PYGZus{}stokesi.fits     // s1d stokes file constant in pixel space \PYG{k}{for} object
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}\PYG{o}{\PYGZob{}}INTYPE\PYG{o}{\PYGZcb{}}\PYGZus{}s1d\PYGZus{}v\PYGZus{}stokesi.fits     // s1d stokes file constant in velocity space
+\end{sphinxVerbatim}
+
+
+\paragraph{Plots}
+\label{\detokenize{user/spirou/recipes/polar:plots}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+POLAR\PYGZus{}CONTINUUM, POLAR\PYGZus{}RESULTS, POLAR\PYGZus{}STOKES\PYGZus{}I, POLAR\PYGZus{}LSD,
+EXTRACT\PYGZus{}S1D, EXTRACT\PYGZus{}S1D\PYGZus{}WEIGHT
+\end{sphinxVerbatim}
 
 
 \subsection{SPIRou Tools}
