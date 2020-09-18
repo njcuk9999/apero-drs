@@ -692,12 +692,14 @@ def _write_fits(params, filename, data, header, datatype='image', dtype=None,
         header0 = header[0]
     # set up primary HDU (if data[0] == image then put this in the primary)
     #   else if table then primary HDU should be empty
+    # TODO: need to fix this so hdu[0] is always empty
+    # TODO:    --> start = 0 and no data[0] in PrimaryHDU
     if datatype[0] == 'image':
         hdu0 = fits.PrimaryHDU(data[0], header=header0)
         start = 1
     else:
-        hdu0 = fits.PrimaryHDU()
-        start = 1
+        hdu0 = fits.PrimaryHDU(header=header0)
+        start = 0
 
     if dtype is not None:
         hdu0.scale(type=dtype[0], **SCALEARGS)
@@ -731,6 +733,7 @@ def _write_fits(params, filename, data, header, datatype='image', dtype=None,
     with warnings.catch_warnings(record=True) as w:
         try:
             hdulist.writeto(filename, overwrite=True)
+            hdulist.close()
         except Exception as e:
             eargs = [os.path.basename(filename), type(e), e, func_name]
             WLOG(params, 'error', TextEntry('01-001-00005', args=eargs))
