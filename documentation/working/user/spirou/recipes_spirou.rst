@@ -7,6 +7,10 @@ SPIRou Recipes
 
 This section describes are all the SPIROU recipes to use with APERO.
 
+For information on how to run these recipes (either individually or with the
+processing tools) see :ref:`here <using_apero_default>`.
+
+
 .. toctree::
     :maxdepth: 1
     :caption: SPIROU recipes

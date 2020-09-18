@@ -6,7 +6,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>Using APERO with SPIRou &#8212; APERO 0.6.131 documentation</title>
+    <title>Using APERO &#8212; APERO 0.6.131 documentation</title>
     <link rel="stylesheet" href="../../_static/bizstyle.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../_static/apero.css" />
@@ -106,6 +106,16 @@
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Using APERO</a><ul>
+<li><a class="reference internal" href="#activating-the-apero-profile">Activating the APERO profile</a></li>
+<li><a class="reference internal" href="#running-recipes-indvidiually">Running recipes indvidiually</a></li>
+<li><a class="reference internal" href="#using-the-processing-script">Using the processing script</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
   <p class="topless"><a href="installation.html"
                         title="previous chapter">Installation</a></p>
@@ -137,10 +147,87 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="using-apero-with-spirou">
-<span id="using-apero-default"></span><h1>Using APERO with SPIRou<a class="headerlink" href="#using-apero-with-spirou" title="Permalink to this headline">¶</a></h1>
-<p>This section describes the process to use APERO.</p>
+  <div class="section" id="using-apero">
+<span id="using-apero-default"></span><h1>Using APERO<a class="headerlink" href="#using-apero" title="Permalink to this headline">¶</a></h1>
+<p>The user scripts to reduce data are referred to as ‘recipes’.</p>
+<p>From a coding point of view this due to the fact that they literally list
+the steps (where each step is a function or set of functions).</p>
+<p>By design recipes are kept to a bare minimum of code and all heavy functionality
+is done in the functions that are called in the recipes.</p>
+<p>Currently supported instruments are:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>SPIRou (See the section on recipes <a class="reference internal" href="../spirou/recipes_spirou.html#recipes-spirou"><span class="std std-ref">here</span></a>)</p></li>
+</ul>
+</div></blockquote>
+<p>There are two ways to use APERO:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Using recipes individually</p></li>
+<li><p>Using the processing script to automatically generate batches of recipe
+runs (based on provided run files)</p></li>
+</ol>
+<p>both of these require installation (see <a class="reference internal" href="installation.html#installation"><span class="std std-ref">here</span></a>)
+and activating a profile (see the next section <a class="reference internal" href="#activating-apero-profile"><span class="std std-ref">here</span></a>)</p>
+</div></blockquote>
+<div class="section" id="activating-the-apero-profile">
+<span id="activating-apero-profile"></span><h2>Activating the APERO profile<a class="headerlink" href="#activating-the-apero-profile" title="Permalink to this headline">¶</a></h2>
+<p>To activate an apero profile you need to source the <cite>{DRS_UCONGIG}/{PROFILE}.{SYSTEM}</cite>.setup script.</p>
+<p>Details of this should be in green at the end of the installation process</p>
+<p>i.e. for bash:</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span> <span class="o">{</span>DRS_UCONFIG<span class="o">}</span>/<span class="o">{</span>PROFILE<span class="o">}</span>.bash.setup
+</pre></div>
+</div>
+</div></blockquote>
+<p>i.e. for tcsh/csh/sh</p>
+<blockquote>
+<div><div class="highlight-csh notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span> <span class="o">{</span>DRS_UCONFIG<span class="o">}</span>/<span class="o">{</span>PROFILE<span class="o">}</span>.sh.setup
+</pre></div>
+</div>
+</div></blockquote>
+<p>e.g. with bash and our example profile above:</p>
+<blockquote>
+<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">source</span> <span class="p">{</span><span class="n">DRS_UCONFIG</span><span class="p">}</span><span class="o">/</span><span class="p">{</span><span class="n">PROFILE</span><span class="p">}</span><span class="o">.</span><span class="n">sh</span><span class="o">.</span><span class="n">setup</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>We strongly recommend setting up a alias for this</p>
+<p>i.e. for bash (i.e. in <code class="file docutils literal notranslate"><span class="pre">~/.bashrc</span></code> <code class="file docutils literal notranslate"><span class="pre">~/.profile</span></code> or <code class="file docutils literal notranslate"><span class="pre">~/.bash_aliases</span></code>):</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">alias</span> <span class="o">{</span>PROFILE<span class="o">}=</span><span class="s2">&quot;source {DRS_UCONFIG}/{PROFILE}.bash.setup&quot;</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>i.e. for tcsh/csh/sh  (i.e. in <code class="file docutils literal notranslate"><span class="pre">~/.tcshrc</span></code>, <code class="file docutils literal notranslate"><span class="pre">~/.cshrc</span></code> etc)</p>
+<blockquote>
+<div><div class="highlight-csh notranslate"><div class="highlight"><pre><span></span><span class="nb">alias</span> <span class="o">{</span>PROFILE<span class="o">}</span> <span class="s2">&quot;source {DRS_UCONFIG}/{PROFILE}.sh.setup&quot;</span>
+</pre></div>
+</div>
+</div></blockquote>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This must be done every time one wishes to use APERO (and must be
+done after one activates the conda environment</p>
+<p><cite>conda activate apero-env</cite></p>
+<p>One could add these both to automatically happen in a <code class="file docutils literal notranslate"><span class="pre">~/.bashrc</span></code> but
+we recommend activating each time.</p>
+</div>
+<p>Following on from typing this command you should see a splash screen validating the
+installation and letting you know everything is good to run APERO recipes and tools.</p>
+<img alt="../../_images/apero_splash.png" src="../../_images/apero_splash.png" />
 <p><a class="reference internal" href="#using-apero-default"><span class="std std-ref">Back to top</span></a></p>
+</div>
+<div class="section" id="running-recipes-indvidiually">
+<span id="id1"></span><h2>Running recipes indvidiually<a class="headerlink" href="#running-recipes-indvidiually" title="Permalink to this headline">¶</a></h2>
+<p>How to run an individual recipe.</p>
+<p><a class="reference internal" href="#using-apero-default"><span class="std std-ref">Back to top</span></a></p>
+</div>
+<div class="section" id="using-the-processing-script">
+<span id="using-apero-processing"></span><h2>Using the processing script<a class="headerlink" href="#using-the-processing-script" title="Permalink to this headline">¶</a></h2>
+<p>How to use the APERO processing script.</p>
+<p><a class="reference internal" href="#using-apero-default"><span class="std std-ref">Back to top</span></a></p>
+</div>
 </div>
 
 

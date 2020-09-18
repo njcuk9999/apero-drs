@@ -9,6 +9,8 @@ Below is a guide for those developing APERO for the current set of instruments
 and for future instruments.
 
 
+.. _dev_main_quicklinks:
+
 ------------------------------
 Quick add links
 ------------------------------
@@ -23,6 +25,7 @@ Quick add links
   adding_new_filetype.rst
   adding_new_plot.rst
 
+.. _dev_main_full_tuts:
 
 ------------------------------
 Full tutorials
@@ -38,6 +41,8 @@ Full tutorials
 - Plotter
 - Git hub interface
 - Writing documentation
+
+.. _dev_main_other:
 
 ------------------------------
 Other

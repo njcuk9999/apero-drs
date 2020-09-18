@@ -37,7 +37,12 @@ extensions = ['sphinx.ext.autodoc',
     'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
-    'sphinx.ext.githubpages']
+    'sphinx.ext.githubpages',
+    ] #'sphinx.ext.autosectionlabel']
+
+# make sure to add the prefix
+#autoselectionlabel_prefix_document = True
+#autoselectionlabel_maxdepth = 5
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
