@@ -6,7 +6,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>TODO &#8212; APERO 0.6.037 documentation</title>
+    <title>TODO &#8212; APERO 0.7.000 documentation</title>
     <link rel="stylesheet" href="../../_static/bizstyle.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../_static/apero.css" />
@@ -100,7 +100,7 @@
         <li class="right" >
           <a href="known_issues.html" title="Known Issues"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.6.037 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.000 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../general_guide.html" accesskey="U">General User documentation</a> &#187;</li> 
       </ul>
     </div>
@@ -150,7 +150,7 @@
   <div class="section" id="todo">
 <span id="id1"></span><h1>TODO<a class="headerlink" href="#todo" title="Permalink to this headline">¶</a></h1>
 <p>This is the currently list of items that need to still be completed.
-Last updated: 2020-02-19 (NJC).</p>
+Last updated: 2020-05-04 (NJC).</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>bullet points are not ordered</p>
@@ -160,20 +160,14 @@ Last updated: 2020-02-19 (NJC).</p>
 <p>For all instruments / in general.</p>
 <p>High priority:</p>
 <ul class="simple">
-<li><p>add a version for SPIRou and for NIRPS (but keep the rolling version for APERO)</p></li>
-<li><p>add in <cite>dark_fp</cite> correction</p></li>
-<li><p>fix headers for having bad wave and loc keys (remove?)</p></li>
-<li><p>fix s1d for <cite>FP_FP</cite> and <cite>HC_HC</cite> they need updating after wave sol produced</p></li>
-<li><p>add rv from header for ccf</p></li>
-<li><p>add version for instruments (separate from apero version which will change with any update)</p></li>
-<li><p>code to get data sets from rsync</p></li>
+<li><p>fix headers for having bad wave and loc keys (remove?) [NEEDS DISCUSSION]</p></li>
 </ul>
 <p>Low priority:</p>
-<ul class="simple">
+<ul>
 <li><p>go through all summary plots and decide which plots, write figure captions, improve plots, write quality control description, decide which header keys to print</p></li>
 <li><p>add all functions doc strings</p></li>
 <li><p>write documentation</p>
-<ul>
+<ul class="simple">
 <li><p>code to write constants/keywords</p></li>
 <li><p>write doc strings</p></li>
 <li><p>autodoc with sphinx once doc strings are in</p></li>
@@ -181,16 +175,25 @@ Last updated: 2020-02-19 (NJC).</p>
 <li><p>add authors to constants</p></li>
 </ul>
 </li>
+<li><p>newprofile.py outpaths for setup files are not correct (missing directory)</p></li>
 <li><p>add more debug printouts</p></li>
 <li><p>deal with all python warnings</p></li>
 <li><p>display func for all functions</p></li>
 <li><p>add doc strings to all functions, descriptions to all constants, review all constant min/max/dtypes</p></li>
 <li><p>proper SNR calculation</p></li>
-<li><p>defining night_name in run.ini scripts does not work</p></li>
 <li><p>add option to set template for mk_tellu and fit_tellu</p></li>
 <li><p>add flag for parellel / non parellel mode - can disable locking then?</p></li>
 <li><p>named break points</p></li>
 <li><p>add trigger option to drs where processing script stops when it cannot get any further with current set of files</p></li>
+<li><p>data separate download from DRS</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>this includes copying this data to the user data directory for adding
+things like custom masks etc - this could also be a solution to
+where to put the <cite>object_query_list.fits</cite> file</p></li>
+</ul>
+</div></blockquote>
+</li>
 </ul>
 <p>Later:</p>
 <ul class="simple">
@@ -199,7 +202,6 @@ Last updated: 2020-02-19 (NJC).</p>
 <li><p>add EA mask generation from templates</p></li>
 <li><p>add EA template matching</p></li>
 <li><p>uncertainty propagation</p></li>
-<li><p>data separate download from DRS</p></li>
 <li><p>add <cite>plot== 3</cite> (all debug plots shown) and <cite>plot==4</cite> (all debug plots saved) modes</p></li>
 <li><p>move <cite>object_query_list.fits</cite> to <cite>calibDB</cite></p></li>
 <li><p>co-production of e2ds and e2dsff still needed?</p></li>
@@ -213,18 +215,15 @@ Last updated: 2020-02-19 (NJC).</p>
 <h2>SPIRou specific<a class="headerlink" href="#spirou-specific" title="Permalink to this headline">¶</a></h2>
 <p>High priority:</p>
 <ul class="simple">
-<li><p>trigger implementation / interface with drs</p></li>
-<li><p>add exposure meter recipes (<cite>cal_exposuremeter_spirou.py</cite>)</p></li>
+<li><p>bisector for CCF (new extension in CCF outputs?)</p></li>
+<li><p>object database (in preprocessing?)</p></li>
+<li><p>polar code update</p></li>
+<li><p>EA masks from templates</p></li>
 </ul>
 <p>Low priority:</p>
 <ul class="simple">
 <li><p>output files like CFHT (e.fits, p.fits, v.fits etc)</p></li>
 <li><p>finish <cite>obj_spec_spirou</cite> and <cite>obj_pol_spirou</cite> [Do not use them now]</p></li>
-<li><p>output in form required for CFHT/CADC (discussion required)</p></li>
-</ul>
-<p>Later:</p>
-<ul class="simple">
-<li><p>T.B.D.</p></li>
 </ul>
 </div>
 <div class="section" id="nirps-specific">
@@ -233,7 +232,6 @@ Last updated: 2020-02-19 (NJC).</p>
 <ul class="simple">
 <li><p>convert/adapt cal_preprocessing</p></li>
 <li><p>convert/adapt cal_wave / cal_wave_master</p></li>
-<li><p>proposal for trigger using processing code</p></li>
 </ul>
 <p>Low priority:</p>
 <ul class="simple">
@@ -268,7 +266,7 @@ Last updated: 2020-02-19 (NJC).</p>
         <li class="right" >
           <a href="known_issues.html" title="Known Issues"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.6.037 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.000 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../general_guide.html" >General User documentation</a> &#187;</li> 
       </ul>
     </div>

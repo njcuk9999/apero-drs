@@ -7,6 +7,11 @@ SPIRou Recipes
 
 This section describes are all the SPIROU recipes to use with APERO.
 
+List of recipes:
+
+- `cal_ccf_spirou.py`
+
+
 .. only:: html
 
   :ref:`Back to top <recipes_spirou>`
