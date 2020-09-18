@@ -1,6 +1,10 @@
+.. _required_input_hkeys:
+
 ********************************************************************************
 Required Input Header Keys
 ********************************************************************************
+
+.. _required_input_hkeys_main:
 
 -------------------------------------------------------------------------------
 Main
@@ -60,6 +64,8 @@ Used to know what position fibers/wheel where in:
     SBCCAS_P= 'pos_pk  '           / SPIRou Cassegrain Fiber Position (predefined)
     SBCDEN_P=                 1.96 / SPIRou Calib-Reference density (0 to 3.3)  [ONLY USED FOR LOGGING?]
     SBCALI_P= 'P5      '           / SPIRou calibwh predefined position or angle
+
+.. _required_input_hkeys_other:
 
 -------------------------------------------------------------------------------
 Other

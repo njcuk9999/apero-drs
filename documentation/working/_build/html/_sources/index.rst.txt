@@ -6,9 +6,16 @@
 .. only:: html
 
 
+
+.. _apero_doc_main:
+
 ******************************************
 APERO Documentation
 ******************************************
+
+
+
+.. _apero_doc_main_latest:
 
 ===========================================
 Latest version: 0.6.131
@@ -27,6 +34,10 @@ Latest version: 0.6.131
    user/general_guide.rst
    user/spirou.rst
    dev/developer_guide.rst
+
+
+
+.. _apero_doc_main_other:
 
 ===========================================
 Other

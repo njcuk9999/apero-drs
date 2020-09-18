@@ -1,6 +1,5 @@
 .. _installation:
 
-
 ************************************************************************************
 Installation
 ************************************************************************************
@@ -15,13 +14,18 @@ Installation
   * :ref:`installation-update`
 
 
+Once you have installed APERO you can read about running APERO
+:ref:`here <using_apero_default>`.
+
+
 .. _installation-prerequisites:
 
 ====================================================================================
 Prerequisites 
 ====================================================================================
 
-APERO is tested with `python 3 <https://www.python.org/download/releases/3.0/>`_
+APERO is coded using `python 3 <https://www.python.org/download/releases/3.0/>`_
+Please do not use python 2 with APERO.
 
 The following python modules are required
 
@@ -29,23 +33,25 @@ The following python modules are required
 
         astropy
         matplotlib
+        pandas
         numpy
         scipy
+        yaml
 
 The following python modules are recommended
 
     .. code-block:: bash
 
-        astroquery
-        barycorrpy
-        bottleneck
-        ipdb
-        numba
-        pandas
-        PIL
-        tqdm
+        astroquery (required for precision BERV)
+        barycorrpy (required for precision BERV)
+        bottleneck (faster)
+        ipdb       (debugging)
+        numba      (faster)
+        PIL        (some graphical interfaces)
+        tqdm       (for some tools)
+        yagmail    (for an email settings)
 
-See :ref: `here <python_install>` for guide to intalling python and modules with
+See :ref:`here <python-installation>` for guide to intalling python and modules with
 the recommended setup.
 
 
@@ -58,6 +64,10 @@ the recommended setup.
 ====================================================================================
 Download from GitHub
 ====================================================================================
+
+Change to your desired installation directory (from now on this is referred to
+as :term:`DRS_ROOT`) e.g. :file:`/home/user/bin/apero-drs/`
+
 
 Clone
 -------------------------------------------------------------------------------------------
@@ -77,7 +87,7 @@ and we still have many (now redundant) files from the spirou_py3 repository.
 Choose branch
 -------------------------------------------------------------------------------------------
 
-Change to the `apero-drs` directory
+Change to the `{DRS_ROOT}` directory
 
 Choose which branch:
 
@@ -131,13 +141,22 @@ Setup
 Run the installation script
 -------------------------------------------------------------------------------------------
 
-Change to the `apero-drs` directory
+Change to the `{DRS_ROOT}` directory
 
 Run the installation script
 
     .. code-block:: bash
 
-        python setup/install.py
+        python setup/install.py --name={PROFILE}
+
+    where {:term:`PROFILE`} is a short descriptive name for a setup (you can have multiple
+    profiles with one installation)
+
+    e.g.
+
+    .. code-block:: bash
+
+        python setup/install.py --name=setup_njc_200903
 
 
 Step-by-step guide
@@ -147,8 +166,8 @@ Follow the step-by-step guide:
 
 * A: User configuration path
 
-    This is the path where your configuration will be saved. If it doesn't exist you will be prompted to create it. (This will be referred to as :term:`DRS_UCONFIG` 
-    from now on (default is :file:`/home/user/apero/`)
+    This is the path where your configuration will be saved. If it doesn't exist you will be prompted to create it.
+    (This will be referred to as :term:`DRS_UCONFIG` from now on (default is :file:`/home/user/apero/{PROFILE}`)
 
 
 * B: Instrument settings
@@ -189,6 +208,67 @@ command)
 
   :ref:`Back to top <installation>`
 
+
+.. _installation-activate:
+
+====================================================================================
+Activating the APERO profile
+====================================================================================
+
+To activate an apero profile you need to source the `{DRS_UCONGIG}/{PROFILE}.{SYSTEM}`.setup script.
+
+Details of this should be in green at the end of the installation process
+
+i.e. for bash:
+
+    .. code-block:: bash
+
+        source {DRS_UCONFIG}/{PROFILE}.bash.setup
+
+i.e. for tcsh/csh/sh
+
+    .. code-block:: csh
+
+        source {DRS_UCONFIG}/{PROFILE}.sh.setup
+
+
+e.g. with bash and our example profile above:
+
+    .. code-block::
+
+        source {DRS_UCONFIG}/{PROFILE}.sh.setup
+
+
+We strongly recommend setting up a alias for this
+
+i.e. for bash (i.e. in :file:`~/.bashrc` :file:`~/.profile` or :file:`~/.bash_aliases`):
+
+    .. code-block:: bash
+
+        alias {PROFILE}="source {DRS_UCONFIG}/{PROFILE}.bash.setup"
+
+i.e. for tcsh/csh/sh  (i.e. in :file:`~/.tcshrc`, :file:`~/.cshrc` etc)
+
+    .. code-block:: csh
+
+        alias {PROFILE} "source {DRS_UCONFIG}/{PROFILE}.sh.setup"
+
+
+.. note:: This must be done every time one wishes to use APERO (and must be
+          done after one activates the conda environment
+
+          `conda activate apero-env`
+
+          One could add these both to automatically happen in a :file:`~/.bashrc` but
+          we recommend activating each time.
+
+
+Following on from typing this command you should see a splash screen validating the
+installation and letting you know everything is good to run APERO recipes and tools.
+
+.. image:: ../../_static/images/apero_splash.png
+
+
 .. _installation-update:
 
 ====================================================================================
@@ -203,7 +283,32 @@ Updating from github
 
         git pull origin {branch}
 
-3. Update using the installation script
+3. Make sure you are in an APERO profile
+
+    .. code-block:: bash
+
+        source {DRS_UCONFIG}/{PROFILE}/setup.bash.setup
+
+    or if you have it aliased
+
+    .. code-block:: bash
+
+        {PROFILE}
+
+    e.g.
+
+    .. code-block:: bash
+
+        source /home/user/apero/setup_njc_200903/setup.bash.setup
+
+    or if you have it aliased
+
+    .. code-block:: bash
+
+        setup_njc_200903
+
+
+4. Update using the installation script
 
     .. code-block:: bash
 

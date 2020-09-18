@@ -19,7 +19,7 @@
     <script type="text/javascript" src="../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Using APERO with SPIRou" href="using_apero_default.html" />
+    <link rel="next" title="Using APERO" href="using_apero_default.html" />
     <link rel="prev" title="General User documentation" href="../general_guide.html" />
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
           rel='stylesheet' type='text/css' />
@@ -95,7 +95,7 @@
           <a href="../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="using_apero_default.html" title="Using APERO with SPIRou"
+          <a href="using_apero_default.html" title="Using APERO"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="../general_guide.html" title="General User documentation"
@@ -121,6 +121,7 @@
 <li><a class="reference internal" href="#additional-options">Additional options</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#activating-the-apero-profile">Activating the APERO profile</a></li>
 <li><a class="reference internal" href="#updating-from-github">Updating from github</a></li>
 </ul>
 </li>
@@ -131,7 +132,7 @@
                         title="previous chapter">General User documentation</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="using_apero_default.html"
-                        title="next chapter">Using APERO with SPIRou</a></p>
+                        title="next chapter">Using APERO</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -166,37 +167,44 @@
 <li><p><a class="reference internal" href="#installation-setup"><span class="std std-ref">Setup</span></a></p></li>
 <li><p><a class="reference internal" href="#installation-update"><span class="std std-ref">Updating from github</span></a></p></li>
 </ul>
+<p>Once you have installed APERO you can read about running APERO
+<a class="reference internal" href="using_apero_default.html#using-apero-default"><span class="std std-ref">here</span></a>.</p>
 <div class="section" id="prerequisites">
 <span id="installation-prerequisites"></span><h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h2>
-<p>APERO is tested with <a class="reference external" href="https://www.python.org/download/releases/3.0/">python 3</a></p>
+<p>APERO is coded using <a class="reference external" href="https://www.python.org/download/releases/3.0/">python 3</a>
+Please do not use python 2 with APERO.</p>
 <p>The following python modules are required</p>
 <blockquote>
 <div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>astropy
 matplotlib
+pandas
 numpy
 scipy
+yaml
 </pre></div>
 </div>
 </div></blockquote>
 <p>The following python modules are recommended</p>
 <blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>astroquery
-barycorrpy
-bottleneck
-ipdb
-numba
-pandas
-PIL
-tqdm
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>astroquery <span class="o">(</span>required <span class="k">for</span> precision BERV<span class="o">)</span>
+barycorrpy <span class="o">(</span>required <span class="k">for</span> precision BERV<span class="o">)</span>
+bottleneck <span class="o">(</span>faster<span class="o">)</span>
+ipdb       <span class="o">(</span>debugging<span class="o">)</span>
+numba      <span class="o">(</span>faster<span class="o">)</span>
+PIL        <span class="o">(</span>some graphical interfaces<span class="o">)</span>
+tqdm       <span class="o">(</span><span class="k">for</span> some tools<span class="o">)</span>
+yagmail    <span class="o">(</span><span class="k">for</span> an email settings<span class="o">)</span>
 </pre></div>
 </div>
 </div></blockquote>
-<p>See :ref: <cite>here &lt;python_install&gt;</cite> for guide to intalling python and modules with
+<p>See <a class="reference internal" href="../../misc/pythoninstallation.html#python-installation"><span class="std std-ref">here</span></a> for guide to intalling python and modules with
 the recommended setup.</p>
 <p><a class="reference internal" href="#installation"><span class="std std-ref">Back to top</span></a></p>
 </div>
 <div class="section" id="download-from-github">
 <span id="installation-download"></span><h2>Download from GitHub<a class="headerlink" href="#download-from-github" title="Permalink to this headline">¶</a></h2>
+<p>Change to your desired installation directory (from now on this is referred to
+as <a class="reference internal" href="../../misc/glossary.html#term-drs-root"><span class="xref std std-term">DRS_ROOT</span></a>) e.g. <code class="file docutils literal notranslate"><span class="pre">/home/user/bin/apero-drs/</span></code></p>
 <div class="section" id="clone">
 <h3>Clone<a class="headerlink" href="#clone" title="Permalink to this headline">¶</a></h3>
 <p>Clone from <a class="reference external" href="https://github.com/njcuk9999/apero-drs">github</a></p>
@@ -210,7 +218,7 @@ and we still have many (now redundant) files from the spirou_py3 repository.</p>
 </div>
 <div class="section" id="choose-branch">
 <span id="installation-choose-branch"></span><h3>Choose branch<a class="headerlink" href="#choose-branch" title="Permalink to this headline">¶</a></h3>
-<p>Change to the <cite>apero-drs</cite> directory</p>
+<p>Change to the <cite>{DRS_ROOT}</cite> directory</p>
 <p>Choose which branch:</p>
 <ul>
 <li><dl>
@@ -257,10 +265,16 @@ git pull origin working
 <span id="installation-setup"></span><h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="run-the-installation-script">
 <h3>Run the installation script<a class="headerlink" href="#run-the-installation-script" title="Permalink to this headline">¶</a></h3>
-<p>Change to the <cite>apero-drs</cite> directory</p>
+<p>Change to the <cite>{DRS_ROOT}</cite> directory</p>
 <p>Run the installation script</p>
 <blockquote>
-<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python setup/install.py
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python setup/install.py --name<span class="o">={</span>PROFILE<span class="o">}</span>
+</pre></div>
+</div>
+<p>where {<a class="reference internal" href="../../misc/glossary.html#term-profile"><span class="xref std std-term">PROFILE</span></a>} is a short descriptive name for a setup (you can have multiple
+profiles with one installation)</p>
+<p>e.g.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python setup/install.py --name<span class="o">=</span>setup_njc_200903
 </pre></div>
 </div>
 </div></blockquote>
@@ -271,8 +285,8 @@ git pull origin working
 <ul>
 <li><p>A: User configuration path</p>
 <blockquote>
-<div><p>This is the path where your configuration will be saved. If it doesn’t exist you will be prompted to create it. (This will be referred to as <a class="reference internal" href="../../misc/glossary.html#term-drs-uconfig"><span class="xref std std-term">DRS_UCONFIG</span></a>
-from now on (default is <code class="file docutils literal notranslate"><span class="pre">/home/user/apero/</span></code>)</p>
+<div><p>This is the path where your configuration will be saved. If it doesn’t exist you will be prompted to create it.
+(This will be referred to as <a class="reference internal" href="../../misc/glossary.html#term-drs-uconfig"><span class="xref std std-term">DRS_UCONFIG</span></a> from now on (default is <code class="file docutils literal notranslate"><span class="pre">/home/user/apero/</span><em><span class="pre">PROFILE</span></em></code>)</p>
 </div></blockquote>
 </li>
 <li><p>B: Instrument settings</p>
@@ -317,6 +331,53 @@ command)</p>
 <p><a class="reference internal" href="#installation"><span class="std std-ref">Back to top</span></a></p>
 </div>
 </div>
+<div class="section" id="activating-the-apero-profile">
+<span id="installation-activate"></span><h2>Activating the APERO profile<a class="headerlink" href="#activating-the-apero-profile" title="Permalink to this headline">¶</a></h2>
+<p>To activate an apero profile you need to source the <cite>{DRS_UCONGIG}/{PROFILE}.{SYSTEM}</cite>.setup script.</p>
+<p>Details of this should be in green at the end of the installation process</p>
+<p>i.e. for bash:</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span> <span class="o">{</span>DRS_UCONFIG<span class="o">}</span>/<span class="o">{</span>PROFILE<span class="o">}</span>.bash.setup
+</pre></div>
+</div>
+</div></blockquote>
+<p>i.e. for tcsh/csh/sh</p>
+<blockquote>
+<div><div class="highlight-csh notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span> <span class="o">{</span>DRS_UCONFIG<span class="o">}</span>/<span class="o">{</span>PROFILE<span class="o">}</span>.sh.setup
+</pre></div>
+</div>
+</div></blockquote>
+<p>e.g. with bash and our example profile above:</p>
+<blockquote>
+<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">source</span> <span class="p">{</span><span class="n">DRS_UCONFIG</span><span class="p">}</span><span class="o">/</span><span class="p">{</span><span class="n">PROFILE</span><span class="p">}</span><span class="o">.</span><span class="n">sh</span><span class="o">.</span><span class="n">setup</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>We strongly recommend setting up a alias for this</p>
+<p>i.e. for bash (i.e. in <code class="file docutils literal notranslate"><span class="pre">~/.bashrc</span></code> <code class="file docutils literal notranslate"><span class="pre">~/.profile</span></code> or <code class="file docutils literal notranslate"><span class="pre">~/.bash_aliases</span></code>):</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">alias</span> <span class="o">{</span>PROFILE<span class="o">}=</span><span class="s2">&quot;source {DRS_UCONFIG}/{PROFILE}.bash.setup&quot;</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>i.e. for tcsh/csh/sh  (i.e. in <code class="file docutils literal notranslate"><span class="pre">~/.tcshrc</span></code>, <code class="file docutils literal notranslate"><span class="pre">~/.cshrc</span></code> etc)</p>
+<blockquote>
+<div><div class="highlight-csh notranslate"><div class="highlight"><pre><span></span><span class="nb">alias</span> <span class="o">{</span>PROFILE<span class="o">}</span> <span class="s2">&quot;source {DRS_UCONFIG}/{PROFILE}.sh.setup&quot;</span>
+</pre></div>
+</div>
+</div></blockquote>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This must be done every time one wishes to use APERO (and must be
+done after one activates the conda environment</p>
+<p><cite>conda activate apero-env</cite></p>
+<p>One could add these both to automatically happen in a <code class="file docutils literal notranslate"><span class="pre">~/.bashrc</span></code> but
+we recommend activating each time.</p>
+</div>
+<p>Following on from typing this command you should see a splash screen validating the
+installation and letting you know everything is good to run APERO recipes and tools.</p>
+<img alt="../../_images/apero_splash.png" src="../../_images/apero_splash.png" />
+</div>
 <div class="section" id="updating-from-github">
 <span id="installation-update"></span><h2>Updating from github<a class="headerlink" href="#updating-from-github" title="Permalink to this headline">¶</a></h2>
 <ol class="arabic">
@@ -324,6 +385,25 @@ command)</p>
 <li><p>Update the branch (pull from github)</p>
 <blockquote>
 <div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git pull origin <span class="o">{</span>branch<span class="o">}</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Make sure you are in an APERO profile</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span> <span class="o">{</span>DRS_UCONFIG<span class="o">}</span>/<span class="o">{</span>PROFILE<span class="o">}</span>/setup.bash.setup
+</pre></div>
+</div>
+<p>or if you have it aliased</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">{</span>PROFILE<span class="o">}</span>
+</pre></div>
+</div>
+<p>e.g.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">source</span> /home/user/apero/setup_njc_200903/setup.bash.setup
+</pre></div>
+</div>
+<p>or if you have it aliased</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>setup_njc_200903
 </pre></div>
 </div>
 </div></blockquote>
@@ -354,7 +434,7 @@ command)</p>
           <a href="../../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="using_apero_default.html" title="Using APERO with SPIRou"
+          <a href="using_apero_default.html" title="Using APERO"
              >next</a> |</li>
         <li class="right" >
           <a href="../general_guide.html" title="General User documentation"
