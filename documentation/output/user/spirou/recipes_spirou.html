@@ -6,7 +6,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>SPIRou Recipes &#8212; APERO 0.7.000 documentation</title>
+    <title>SPIRou Recipes &#8212; APERO 0.6.131 documentation</title>
     <link rel="stylesheet" href="../../_static/bizstyle.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../_static/apero.css" />
@@ -19,7 +19,7 @@
     <script type="text/javascript" src="../../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="SPIRou Tools" href="tools_spirou.html" />
+    <link rel="next" title="Preprocessing Recipe" href="recipes/preprocessing.html" />
     <link rel="prev" title="Using APERO with SPIRou" href="using_apero_spirou.html" />
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
           rel='stylesheet' type='text/css' />
@@ -95,12 +95,12 @@
           <a href="../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="tools_spirou.html" title="SPIRou Tools"
+          <a href="recipes/preprocessing.html" title="Preprocessing Recipe"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="using_apero_spirou.html" title="Using APERO with SPIRou"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.000 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.6.131 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../spirou.html" accesskey="U">SPIRou documentation</a> &#187;</li> 
       </ul>
     </div>
@@ -110,8 +110,8 @@
   <p class="topless"><a href="using_apero_spirou.html"
                         title="previous chapter">Using APERO with SPIRou</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="tools_spirou.html"
-                        title="next chapter">SPIRou Tools</a></p>
+  <p class="topless"><a href="recipes/preprocessing.html"
+                        title="next chapter">Preprocessing Recipe</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -140,10 +140,29 @@
   <div class="section" id="spirou-recipes">
 <span id="recipes-spirou"></span><h1>SPIRou Recipes<a class="headerlink" href="#spirou-recipes" title="Permalink to this headline">¶</a></h1>
 <p>This section describes are all the SPIROU recipes to use with APERO.</p>
-<p>List of recipes:</p>
-<ul class="simple">
-<li><p><cite>cal_ccf_spirou.py</cite></p></li>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">SPIROU recipes</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="recipes/preprocessing.html">Preprocessing Recipe</a></li>
+<li class="toctree-l1"><a class="reference internal" href="recipes/dark_master.html">Dark Master Recipe</a></li>
+<li class="toctree-l1"><a class="reference internal" href="recipes/bad_pixel.html">Bad Pixel Correction Recipe</a></li>
+<li class="toctree-l1"><a class="reference internal" href="recipes/localisation.html">Localisation Recipe</a></li>
+<li class="toctree-l1"><a class="reference internal" href="recipes/shape_master.html">Shape Master Recipe</a></li>
+<li class="toctree-l1"><a class="reference internal" href="recipes/shape_local.html">Shape (per night) Recipe</a></li>
+<li class="toctree-l1"><a class="reference internal" href="recipes/flat_blaze.html">Flat/Blaze Correction Recipe</a></li>
+<li class="toctree-l1"><a class="reference internal" href="recipes/thermal.html">Thermal Correction Recipe</a></li>
+<li class="toctree-l1"><a class="reference internal" href="recipes/leak_master.html">Master leak correction recipe</a></li>
+<li class="toctree-l1"><a class="reference internal" href="recipes/wave_master.html">Master wavelength solution Recipe</a></li>
+<li class="toctree-l1"><a class="reference internal" href="recipes/wave_local.html">Nightly wavelength solution Recipe</a></li>
+<li class="toctree-l1"><a class="reference internal" href="recipes/extraction.html">Extraction Recipe</a></li>
+<li class="toctree-l1"><a class="reference internal" href="recipes/leak_corr.html">Leak correction Recipe</a></li>
+<li class="toctree-l1"><a class="reference internal" href="recipes/make_tellu.html">Make Telluric Recipe</a></li>
+<li class="toctree-l1"><a class="reference internal" href="recipes/fit_tellu.html">Fit Telluric Recipe</a></li>
+<li class="toctree-l1"><a class="reference internal" href="recipes/make_template.html">Make Template Recipe</a></li>
+<li class="toctree-l1"><a class="reference internal" href="recipes/ccf.html">CCF Recipe</a></li>
+<li class="toctree-l1"><a class="reference internal" href="recipes/polar.html">Polarimetry Recipe</a></li>
 </ul>
+</div>
 <p><a class="reference internal" href="#recipes-spirou"><span class="std std-ref">Back to top</span></a></p>
 </div>
 
@@ -160,12 +179,12 @@
           <a href="../../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="tools_spirou.html" title="SPIRou Tools"
+          <a href="recipes/preprocessing.html" title="Preprocessing Recipe"
              >next</a> |</li>
         <li class="right" >
           <a href="using_apero_spirou.html" title="Using APERO with SPIRou"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.000 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.6.131 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../spirou.html" >SPIRou documentation</a> &#187;</li> 
       </ul>
     </div>
