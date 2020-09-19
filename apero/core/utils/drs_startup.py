@@ -25,6 +25,7 @@ from apero.base import drs_base_classes as base_class
 from apero.base import drs_break
 from apero.base import drs_exceptions
 from apero.base import drs_misc
+from apero.base import drs_text
 from apero import lang
 from apero.core import constants
 from apero.core.core import drs_argument
@@ -267,7 +268,7 @@ def setup(name: str = 'None', instrument: str = 'None',
     params['OUTFILES'] = OrderedDict()
     params.set_source('OUTFILES', func_name)
     # -------------------------------------------------------------------------
-    cond1 = instrument is not None
+    cond1 = not drs_text.null_text(instrument, ['None', ''])
     cond2 = params['INPATH'] is not None
     cond3 = params['OUTPATH'] is not None
     cond4 = params['NIGHTNAME'] is not None
@@ -312,7 +313,9 @@ def setup(name: str = 'None', instrument: str = 'None',
         recipe.plot = plotting.Plotter(params, recipe)
     # -------------------------------------------------------------------------
     # add the recipe log
-    if (instrument is not None) and (params['DRS_RECIPE_KIND'] == 'recipe'):
+    cond1 = not drs_text.null_text(instrument, ['None', ''])
+    cond2 = params['DRS_RECIPE_KIND'] == 'recipe'
+    if cond1 and cond2:
         recipe.log = drs_log.RecipeLog(recipe.name, params, logger=WLOG)
         # add log file to log (only used to save where the log is)
         logfile = drs_log.get_logfilepath(WLOG, params)
@@ -2063,7 +2066,7 @@ def _make_dirs(params: ParamDict, path: str):
     lock = drs_lock.Lock(params, lockfile)
 
     # make locked makedirs function
-    @drs_lock.synchronized(lock, params['PID'])
+    @drs_lock.synchronized(lock, params['PID'] + lockfile)
     def locked_makedirs():
         # check again path already exists
         if os.path.exists(path):
