@@ -842,7 +842,7 @@ def get_times(params, bprops, infile, header):
         WLOG(params, 'error', TextEntry('00-016-00019', args=[func_name]))
     # ---------------------------------------------------------------------
     # get obs_time
-    obstime, method = drs_fits.get_mid_obs_time(params, header, func=func_name)
+    obstime, method = drs_fits.get_mid_obs_time(params, header)
 
     # for the maximum peak to peak need an array of times
     times = obstime.jd + np.arange(0, 365, 5.0/3.0)
