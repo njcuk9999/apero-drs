@@ -4647,13 +4647,13 @@ def _copydrsfile(drsfileclass, instance1: DrsInputFile,
             hdict = None
     # set output dict
     if output_dict is None:
-        output_dict = deepcopy(output_dict)
+        output_dict = deepcopy(instance2.output_dict)
     # set data type
     if datatype is None:
-        datatype = deepcopy(datatype)
+        datatype = deepcopy(instance2.datatype)
     # set dtype
     if dtype is None:
-        dtype = deepcopy(dtype)
+        dtype = deepcopy(instance2.dtype)
     # set is_combined
     if is_combined is None:
         is_combined = deepcopy(instance2.is_combined)
