@@ -1,0 +1,177 @@
+\babel@toc {english}{}
+\contentsline {chapter}{Table of contents}{1}{chapter*.1}%
+\contentsline {chapter}{\numberline {1}Latest version: 0.6.131}{2}{chapter.1}%
+\contentsline {section}{\numberline {1.1}General User documentation}{2}{section.1.1}%
+\contentsline {subsection}{\numberline {1.1.1}Installation}{2}{subsection.1.1.1}%
+\contentsline {subsubsection}{\numberline {1.1.1.1}Prerequisites}{2}{subsubsection.1.1.1.1}%
+\contentsline {subsubsection}{\numberline {1.1.1.2}Download from GitHub}{3}{subsubsection.1.1.1.2}%
+\contentsline {paragraph}{Clone}{3}{paragraph*.3}%
+\contentsline {paragraph}{Choose branch}{3}{paragraph*.4}%
+\contentsline {subsubsection}{\numberline {1.1.1.3}Setup}{3}{subsubsection.1.1.1.3}%
+\contentsline {paragraph}{Run the installation script}{3}{paragraph*.5}%
+\contentsline {paragraph}{Step\sphinxhyphen {}by\sphinxhyphen {}step guide}{4}{paragraph*.6}%
+\contentsline {paragraph}{Additional options}{4}{paragraph*.7}%
+\contentsline {subsubsection}{\numberline {1.1.1.4}Activating the APERO profile}{4}{subsubsection.1.1.1.4}%
+\contentsline {subsubsection}{\numberline {1.1.1.5}Updating from github}{5}{subsubsection.1.1.1.5}%
+\contentsline {subsection}{\numberline {1.1.2}Using APERO}{6}{subsection.1.1.2}%
+\contentsline {subsubsection}{\numberline {1.1.2.1}Activating the APERO profile}{6}{subsubsection.1.1.2.1}%
+\contentsline {subsubsection}{\numberline {1.1.2.2}Running recipes indvidiually}{7}{subsubsection.1.1.2.2}%
+\contentsline {subsubsection}{\numberline {1.1.2.3}Using the processing script}{7}{subsubsection.1.1.2.3}%
+\contentsline {subsection}{\numberline {1.1.3}Known Issues}{7}{subsection.1.1.3}%
+\contentsline {subsubsection}{\numberline {1.1.3.1}Recipes}{7}{subsubsection.1.1.3.1}%
+\contentsline {subsubsection}{\numberline {1.1.3.2}External}{8}{subsubsection.1.1.3.2}%
+\contentsline {subsection}{\numberline {1.1.4}TODO}{8}{subsection.1.1.4}%
+\contentsline {subsubsection}{\numberline {1.1.4.1}APERO}{8}{subsubsection.1.1.4.1}%
+\contentsline {subsubsection}{\numberline {1.1.4.2}SPIRou specific}{9}{subsubsection.1.1.4.2}%
+\contentsline {subsubsection}{\numberline {1.1.4.3}NIRPS specific}{9}{subsubsection.1.1.4.3}%
+\contentsline {subsection}{\numberline {1.1.5}General Tools}{9}{subsection.1.1.5}%
+\contentsline {section}{\numberline {1.2}SPIRou documentation}{9}{section.1.2}%
+\contentsline {subsection}{\numberline {1.2.1}Using APERO with SPIRou}{9}{subsection.1.2.1}%
+\contentsline {subsection}{\numberline {1.2.2}SPIRou Recipes}{9}{subsection.1.2.2}%
+\contentsline {subsubsection}{\numberline {1.2.2.1}Preprocessing Recipe}{10}{subsubsection.1.2.2.1}%
+\contentsline {paragraph}{Run}{10}{paragraph*.8}%
+\contentsline {paragraph}{Optional Arguments}{10}{paragraph*.9}%
+\contentsline {paragraph}{Output Dir:}{10}{paragraph*.10}%
+\contentsline {paragraph}{Output files}{10}{paragraph*.11}%
+\contentsline {paragraph}{Plots}{10}{paragraph*.12}%
+\contentsline {subsubsection}{\numberline {1.2.2.2}Dark Master Recipe}{10}{subsubsection.1.2.2.2}%
+\contentsline {paragraph}{Run}{10}{paragraph*.13}%
+\contentsline {paragraph}{Optional Arguments}{10}{paragraph*.14}%
+\contentsline {paragraph}{Output Dir}{11}{paragraph*.15}%
+\contentsline {paragraph}{Calibration database entry}{11}{paragraph*.16}%
+\contentsline {paragraph}{Output files}{11}{paragraph*.17}%
+\contentsline {paragraph}{Plots}{11}{paragraph*.18}%
+\contentsline {paragraph}{Notes}{11}{paragraph*.19}%
+\contentsline {subsubsection}{\numberline {1.2.2.3}Bad Pixel Correction Recipe}{11}{subsubsection.1.2.2.3}%
+\contentsline {paragraph}{Run}{11}{paragraph*.20}%
+\contentsline {paragraph}{Optional Arguments}{11}{paragraph*.21}%
+\contentsline {paragraph}{Output Dir}{11}{paragraph*.22}%
+\contentsline {paragraph}{Calibration database entry}{12}{paragraph*.23}%
+\contentsline {paragraph}{Output files}{12}{paragraph*.24}%
+\contentsline {paragraph}{Plots}{12}{paragraph*.25}%
+\contentsline {subsubsection}{\numberline {1.2.2.4}Localisation Recipe}{12}{subsubsection.1.2.2.4}%
+\contentsline {paragraph}{Run}{12}{paragraph*.26}%
+\contentsline {paragraph}{Optional Arguments}{12}{paragraph*.27}%
+\contentsline {paragraph}{Output Dir}{12}{paragraph*.28}%
+\contentsline {paragraph}{Calibration database entry}{12}{paragraph*.29}%
+\contentsline {paragraph}{Output files}{13}{paragraph*.30}%
+\contentsline {paragraph}{Plots}{13}{paragraph*.31}%
+\contentsline {subsubsection}{\numberline {1.2.2.5}Shape Master Recipe}{13}{subsubsection.1.2.2.5}%
+\contentsline {paragraph}{Run}{13}{paragraph*.32}%
+\contentsline {paragraph}{Optional Arguments}{13}{paragraph*.33}%
+\contentsline {paragraph}{Output Dir}{13}{paragraph*.34}%
+\contentsline {paragraph}{Calibration database entry}{13}{paragraph*.35}%
+\contentsline {paragraph}{Output files}{14}{paragraph*.36}%
+\contentsline {paragraph}{Plots}{14}{paragraph*.37}%
+\contentsline {subsubsection}{\numberline {1.2.2.6}Shape (per night) Recipe}{14}{subsubsection.1.2.2.6}%
+\contentsline {paragraph}{Run}{14}{paragraph*.38}%
+\contentsline {paragraph}{Optional Arguments}{14}{paragraph*.39}%
+\contentsline {paragraph}{Output Dir}{14}{paragraph*.40}%
+\contentsline {paragraph}{Calibration database entry}{14}{paragraph*.41}%
+\contentsline {paragraph}{Output files}{15}{paragraph*.42}%
+\contentsline {paragraph}{Plots}{15}{paragraph*.43}%
+\contentsline {subsubsection}{\numberline {1.2.2.7}Flat/Blaze Correction Recipe}{15}{subsubsection.1.2.2.7}%
+\contentsline {paragraph}{Run}{15}{paragraph*.44}%
+\contentsline {paragraph}{Optional Arguments}{15}{paragraph*.45}%
+\contentsline {paragraph}{Output Dir}{15}{paragraph*.46}%
+\contentsline {paragraph}{Calibration database entry}{15}{paragraph*.47}%
+\contentsline {paragraph}{Output files}{15}{paragraph*.48}%
+\contentsline {paragraph}{Plots}{16}{paragraph*.49}%
+\contentsline {subsubsection}{\numberline {1.2.2.8}Thermal Correction Recipe}{16}{subsubsection.1.2.2.8}%
+\contentsline {paragraph}{Run}{16}{paragraph*.50}%
+\contentsline {paragraph}{Optional Arguments}{16}{paragraph*.51}%
+\contentsline {paragraph}{Output Dir}{16}{paragraph*.52}%
+\contentsline {paragraph}{Calibration database entry}{16}{paragraph*.53}%
+\contentsline {paragraph}{Output files}{16}{paragraph*.54}%
+\contentsline {paragraph}{Plots}{17}{paragraph*.55}%
+\contentsline {subsubsection}{\numberline {1.2.2.9}Master leak correction recipe}{17}{subsubsection.1.2.2.9}%
+\contentsline {paragraph}{Run}{17}{paragraph*.56}%
+\contentsline {paragraph}{Optional Arguments}{17}{paragraph*.57}%
+\contentsline {paragraph}{Output Dir}{17}{paragraph*.58}%
+\contentsline {paragraph}{Calibration database entry}{17}{paragraph*.59}%
+\contentsline {paragraph}{Output files}{17}{paragraph*.60}%
+\contentsline {paragraph}{Plots}{17}{paragraph*.61}%
+\contentsline {subsubsection}{\numberline {1.2.2.10}Master wavelength solution Recipe}{17}{subsubsection.1.2.2.10}%
+\contentsline {paragraph}{Run}{18}{paragraph*.62}%
+\contentsline {paragraph}{Optional Arguments}{18}{paragraph*.63}%
+\contentsline {paragraph}{Output Dir}{18}{paragraph*.64}%
+\contentsline {paragraph}{Calibration database entry}{18}{paragraph*.65}%
+\contentsline {paragraph}{Output files}{18}{paragraph*.66}%
+\contentsline {paragraph}{Plots}{19}{paragraph*.67}%
+\contentsline {subsubsection}{\numberline {1.2.2.11}Nightly wavelength solution Recipe}{19}{subsubsection.1.2.2.11}%
+\contentsline {paragraph}{Run}{19}{paragraph*.68}%
+\contentsline {paragraph}{Optional Arguments}{19}{paragraph*.69}%
+\contentsline {paragraph}{Output Dir}{19}{paragraph*.70}%
+\contentsline {paragraph}{Calibration database entry}{19}{paragraph*.71}%
+\contentsline {paragraph}{Output files}{19}{paragraph*.72}%
+\contentsline {paragraph}{Plots}{20}{paragraph*.73}%
+\contentsline {subsubsection}{\numberline {1.2.2.12}Extraction Recipe}{20}{subsubsection.1.2.2.12}%
+\contentsline {paragraph}{Run}{20}{paragraph*.74}%
+\contentsline {paragraph}{Optional Arguments}{20}{paragraph*.75}%
+\contentsline {paragraph}{Output Dir}{20}{paragraph*.76}%
+\contentsline {paragraph}{Output files}{20}{paragraph*.77}%
+\contentsline {paragraph}{Plots}{20}{paragraph*.78}%
+\contentsline {subsubsection}{\numberline {1.2.2.13}Leak correction Recipe}{21}{subsubsection.1.2.2.13}%
+\contentsline {paragraph}{Run}{21}{paragraph*.79}%
+\contentsline {paragraph}{Optional Arguments}{21}{paragraph*.80}%
+\contentsline {paragraph}{Output Dir}{21}{paragraph*.81}%
+\contentsline {paragraph}{Output files}{21}{paragraph*.82}%
+\contentsline {paragraph}{Plots}{21}{paragraph*.83}%
+\contentsline {subsubsection}{\numberline {1.2.2.14}Make Telluric Recipe}{21}{subsubsection.1.2.2.14}%
+\contentsline {paragraph}{Run}{21}{paragraph*.84}%
+\contentsline {paragraph}{Optional Arguments}{22}{paragraph*.85}%
+\contentsline {paragraph}{Output Dir}{22}{paragraph*.86}%
+\contentsline {paragraph}{Telluric database entry}{22}{paragraph*.87}%
+\contentsline {paragraph}{Output files}{22}{paragraph*.88}%
+\contentsline {paragraph}{Plots}{22}{paragraph*.89}%
+\contentsline {subsubsection}{\numberline {1.2.2.15}Fit Telluric Recipe}{22}{subsubsection.1.2.2.15}%
+\contentsline {paragraph}{Run}{22}{paragraph*.90}%
+\contentsline {paragraph}{Optional Arguments}{22}{paragraph*.91}%
+\contentsline {paragraph}{Output Dir}{23}{paragraph*.92}%
+\contentsline {paragraph}{Telluric database entry}{23}{paragraph*.93}%
+\contentsline {paragraph}{Output files}{23}{paragraph*.94}%
+\contentsline {paragraph}{Plots}{23}{paragraph*.95}%
+\contentsline {subsubsection}{\numberline {1.2.2.16}Make Template Recipe}{23}{subsubsection.1.2.2.16}%
+\contentsline {paragraph}{Run}{23}{paragraph*.96}%
+\contentsline {paragraph}{Optional Arguments}{23}{paragraph*.97}%
+\contentsline {paragraph}{Output Dir}{24}{paragraph*.98}%
+\contentsline {paragraph}{Telluric database entry}{24}{paragraph*.99}%
+\contentsline {paragraph}{Output files}{24}{paragraph*.100}%
+\contentsline {paragraph}{Plots}{24}{paragraph*.101}%
+\contentsline {subsubsection}{\numberline {1.2.2.17}CCF Recipe}{24}{subsubsection.1.2.2.17}%
+\contentsline {paragraph}{Run}{24}{paragraph*.102}%
+\contentsline {paragraph}{Optional Arguments}{25}{paragraph*.103}%
+\contentsline {paragraph}{Output Dir}{25}{paragraph*.104}%
+\contentsline {paragraph}{Output files}{25}{paragraph*.105}%
+\contentsline {paragraph}{Plots}{25}{paragraph*.106}%
+\contentsline {subsubsection}{\numberline {1.2.2.18}Polarimetry Recipe}{25}{subsubsection.1.2.2.18}%
+\contentsline {paragraph}{Run}{25}{paragraph*.107}%
+\contentsline {paragraph}{Optional Arguments}{25}{paragraph*.108}%
+\contentsline {paragraph}{Output Dir}{25}{paragraph*.109}%
+\contentsline {paragraph}{Output files}{26}{paragraph*.110}%
+\contentsline {paragraph}{Plots}{26}{paragraph*.111}%
+\contentsline {subsection}{\numberline {1.2.3}SPIRou Tools}{26}{subsection.1.2.3}%
+\contentsline {section}{\numberline {1.3}Developer how to guide}{26}{section.1.3}%
+\contentsline {subsection}{\numberline {1.3.1}Quick add links}{26}{subsection.1.3.1}%
+\contentsline {subsubsection}{\numberline {1.3.1.1}Adding a new constant}{26}{subsubsection.1.3.1.1}%
+\contentsline {subsubsection}{\numberline {1.3.1.2}Adding a new keyword}{26}{subsubsection.1.3.1.2}%
+\contentsline {subsubsection}{\numberline {1.3.1.3}Adding a new recipe}{26}{subsubsection.1.3.1.3}%
+\contentsline {subsubsection}{\numberline {1.3.1.4}Adding a new filetype}{26}{subsubsection.1.3.1.4}%
+\contentsline {subsubsection}{\numberline {1.3.1.5}Adding a new plot}{26}{subsubsection.1.3.1.5}%
+\contentsline {subsection}{\numberline {1.3.2}Full tutorials}{26}{subsection.1.3.2}%
+\contentsline {subsection}{\numberline {1.3.3}Other}{27}{subsection.1.3.3}%
+\contentsline {subsubsection}{\numberline {1.3.3.1}Required Input Header Keys}{27}{subsubsection.1.3.3.1}%
+\contentsline {paragraph}{Main}{27}{paragraph*.112}%
+\contentsline {paragraph}{Other}{28}{paragraph*.113}%
+\contentsline {chapter}{\numberline {2}Other}{29}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Python installation}{29}{section.2.1}%
+\contentsline {subsection}{\numberline {2.1.1}Installing miniconda (with supplied environment)}{29}{subsection.2.1.1}%
+\contentsline {subsection}{\numberline {2.1.2}Using miniconda (conda/pip install packages)}{30}{subsection.2.1.2}%
+\contentsline {subsection}{\numberline {2.1.3}Using anaconda (with supplied environment)}{31}{subsection.2.1.3}%
+\contentsline {subsection}{\numberline {2.1.4}Using anaconda (conda/pip install packages)}{31}{subsection.2.1.4}%
+\contentsline {subsection}{\numberline {2.1.5}Manually using pip}{32}{subsection.2.1.5}%
+\contentsline {section}{\numberline {2.2}Constants}{32}{section.2.2}%
+\contentsline {section}{\numberline {2.3}Glossary}{33}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Changelog}{33}{section.2.4}%
+\contentsline {subsection}{\numberline {2.4.1}0.6.131 (2020\sphinxhyphen {}09\sphinxhyphen {}10)}{33}{subsection.2.4.1}%
+\contentsline {chapter}{Index}{34}{subsection.2.4.1}%
