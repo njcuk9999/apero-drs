@@ -42,6 +42,7 @@ DATESTR_PREFIX = '__date__ = '
 VERSIONSTR = "__version__ = '{0}'"
 DATESTR = "__date__ = '{0}'"
 
+NUMBER_OF_CHANGELOG_ENTRIES_LATEX = 4
 
 # =============================================================================
 # Define functions
@@ -174,7 +175,7 @@ def update_file(filename, prefix, suffix):
         else:
             outline = line
         # add new line at end if not there
-        if not line.endswith('\n'):
+        if not outline.endswith('\n'):
             outline += '\n'
         # append to output lines
         outlines.append(outline)
@@ -184,15 +185,36 @@ def update_file(filename, prefix, suffix):
             f.write(outline)
 
 
-def format_rst(filename):
+def format_rst(filename, special=None):
+
+    n_entries = NUMBER_OF_CHANGELOG_ENTRIES_LATEX
     # ----------------------------------------------------------------------
     # read the lines
     with open(filename, 'r') as f:
         lines = f.readlines()
     # ----------------------------------------------------------------------
+    # this is used to find which bits are for latex and which are for html
+    #    for latex we only keep the first n_entries in the change log
+    #    for html we keep the lot
+    used = 0
+    start = ''
     outlines = []
     # loop around in lines
     for line in lines:
+
+        if special == 'changelog':
+            if used < n_entries and line.startswith('----'):
+                used += 1
+            elif line.startswith('----'):
+                # need to store previous line as we are going to change it
+                tmp = str(outlines[-1])
+                # need to add only html code
+                outlines[-1] = '\n.. only:: html \n\n'
+                # need to re-add last line
+                outlines.append(tmp)
+                # special
+                special = None
+                start = '\t'
         # ------------------------------------------------------------------
         # deal with special characters
         line = _special_chars(line)
@@ -201,7 +223,7 @@ def format_rst(filename):
         if not line.endswith('\n'):
             line += '\n'
         # append line to outlines
-        outlines.append(line)
+        outlines.append(start + line)
     # ----------------------------------------------------------------------
     # write outlines
     with open(filename, 'w') as f:
