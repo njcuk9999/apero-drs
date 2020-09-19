@@ -33,15 +33,15 @@ REQ_MODULES = dict()
 REQ_MODULES['astropy'] = [4, 0, 0], 'conda install astropy==4.0'
 REQ_MODULES['matplotlib'] = [3, 1, 2], 'conda install matplotlib==3.1.2'
 REQ_MODULES['numpy'] = [1, 18, 1], 'conda install numpy==1.18.1'
+REQ_MODULES['pandas'] = [0, 25, 3], 'conda install pandas==0.25.3'
 REQ_MODULES['scipy'] = [1, 4, 1], 'conda install scipy==1.4.1'
 REQ_MODULES['yaml']  = [5, 3, 1], 'conda install pyyaml==5.3.1'
 
 REC_MODULES = dict()
 REC_MODULES['astroquery'] = [0, 3, 10], 'pip install astroquery==0.3.10'
-REC_MODULES['barycorrpy'] = [0, 3, 1], 'pip install barycorrp=y=0.3.1'
+REC_MODULES['barycorrpy'] = [0, 3, 1], 'pip install barycorrpy=0.3.1'
 REC_MODULES['bottleneck'] = [1, 3, 1], 'conda install bottleneck==1.3.1'
 REC_MODULES['numba'] = [0, 47, 0], 'conda install numba==0.47.0'
-REC_MODULES['pandas'] = [0, 25, 3], 'conda install pandas==0.25.3'
 REC_MODULES['PIL'] = [7, 0, 0], 'conda install Pillow==7.0.0'
 REC_MODULES['tqdm'] = [4, 42, 1], 'conda install tdqm==4.42.1'
 REC_MODULES['yagmail'] = [0, 11, 224], 'pip install yagmail==0.11.224'
