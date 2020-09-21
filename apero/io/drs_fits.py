@@ -17,17 +17,19 @@ import os
 from pathlib import Path
 import warnings
 import traceback
-from typing import Any, Tuple, Union
+from typing import Any, List, Tuple, Union
 
 from apero.base import base
 from apero.base import drs_exceptions
+from apero.base import drs_text
 from apero.core import constants
 from apero.core.core import drs_log
+from apero.core.core import drs_file
 from apero import lang
 from apero.io import drs_table
 from apero.io import drs_lock
 from apero.io import drs_path
-from apero.base import drs_text
+
 
 # =============================================================================
 # Define variables
@@ -43,6 +45,8 @@ __release__ = base.__release__
 Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 # get param dict
 ParamDict = constants.ParamDict
+# Drs File class
+DrsInputFile = drs_file.DrsInputFile
 # Get Logging function
 WLOG = drs_log.wlog
 # alias pcheck
@@ -222,7 +226,7 @@ class Header(fits.Header):
         return Header(fits_header, copy=True)
 
     @staticmethod
-    def __get_temp_key(key: str, chars: str = '@@@'):
+    def __get_temp_key(key: str, chars: str = '@@@') -> Any:
         """
         Remove first three characters ('chars') from a key if they are there
         else return the key unchanged
@@ -237,7 +241,7 @@ class Header(fits.Header):
             return key
 
     @staticmethod
-    def __nan_check(value):
+    def __nan_check(value) -> Any:
         if isinstance(value, float) and np.isnan(value):
             return 'NaN'
         elif isinstance(value, float) and np.isposinf(value):
@@ -253,8 +257,41 @@ class Header(fits.Header):
 # =============================================================================
 # Define read functions
 # =============================================================================
-def id_drs_file(params, recipe, drs_file_sets, filename=None, nentries=None,
-                required=True, use_input_file=False):
+def id_drs_file(params: ParamDict, recipe: Any,
+                drs_file_sets: Union[List[DrsInputFile], DrsInputFile],
+                filename: Union[List[str], str, None] = None,
+                nentries: Union[int, None] = None,
+                required: bool = True, use_input_file: bool = False
+                ) -> Tuple[bool, Union[DrsInputFile, List[DrsInputFile]]]:
+    """
+    Identify the drs file (or set of drs files) each with DrsInputFile.name
+    and DrsInputFile.filename (or 'filename') set (important must have filename
+    to be able to read header) - uses the DrsInputFile.fileset to search for a
+    specific DrsInputFile that this filename / header describes.
+    If nentries = 1 returns the first DrsInputFile that statisfies header,
+    otherwise returns all DrsInputFile(s) that statisfy the header.
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: DrsRecipe, the recipe to associate with this DrsInputFile
+    :param drs_file_sets: List[DrsInputFile] or DrsInputFile - the file instance
+                          containing the filename, fileset (set of DrsinputFiles
+                          for this group i.e. raw files) etc
+                          if DrsInputFile.filename is not set then 'filename'
+                          must be set (raises error elsewise)
+    :param filename: str or None, if DrsInputFile (or instance in
+                     List[DrsInputFile]) does not have filename set it from here
+                     this filename is the file that the header is read from
+    :param nentries: int or None, if equal to 1 returns just the first
+                     DrsInputFile.fileset entry which matches the header - else
+                     returns all DrsInputFile(s) that match header
+    :param required: bool, if True raises an error when filename/header combo
+                     does not match a DrsInputFile in any of the fileset(s)
+    :param use_input_file: bool, if True set the data and header from the
+                           inpit file (i.e. the DrsInputFile with the fileset)
+    :return: tuple, 1. bool, whether file was found,
+                    2. the DrsInputFile matching (if entries=1) else all the
+                       DrsInputFile(s) matching i.e. List[DrsInputFile]
+    """
 
     func_name = __NAME__ + '.id_drs_file()'
     # ----------------------------------------------------------------------
@@ -379,6 +416,8 @@ def id_drs_file(params, recipe, drs_file_sets, filename=None, nentries=None,
 # =============================================================================
 # Define read functions
 # =============================================================================
+# TODO: Got to here with the python typing
+
 def readfits(params: ParamDict, filename: Union[str, Path],
              getdata: bool = True, gethdr: bool = False,
              fmt: str = 'fits-image',
