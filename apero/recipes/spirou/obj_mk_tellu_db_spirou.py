@@ -120,7 +120,8 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # get objects that match this object name
     tellu_stars = drs_fits.find_files(params, recipe, kind='red', fiber=fiber,
-                                      KW_OBJNAME=objnames, KW_OUTPUT=filetype)
+                                      filters=dict(KW_OBJNAME=objnames,
+                                                   KW_OUTPUT=filetype))
     # ----------------------------------------------------------------------
     # get night names for each object
     night_names, tellu_basenames = [], []

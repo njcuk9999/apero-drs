@@ -133,8 +133,8 @@ def __main__(recipe, params):
     if params['MKTEMPLATE_FILESOURCE'].upper() == 'DISK':
         object_filenames = drs_fits.find_files(params, recipe, kind='red',
                                                fiber=fiber,
-                                               KW_OBJNAME=objname,
-                                               KW_OUTPUT=filetype)
+                                               filters=dict(KW_OBJNAME=objname,
+                                                            KW_OUTPUT=filetype))
     else:
         # define the type of files we want to locate in the telluric database
         tkey = '{0}_{1}'.format(filetype, fiber)
@@ -213,8 +213,8 @@ def __main__(recipe, params):
         # get new copy of file definition
         s1d_file = s1d_inst.newcopy(params=params, fiber=fiber)
         # get s1d filenames
-        fkwargs = dict(kind='red', fiber=fiber, KW_OBJNAME=objname,
-                       KW_OUTPUT=s1d_filetype)
+        fkwargs = dict(kind='red', fiber=fiber,
+                       filters=dict(KW_OBJNAME=objname, KW_OUTPUT=s1d_filetype))
         s1d_filenames = drs_fits.find_files(params, recipe, **fkwargs)
         # make s1d cube
         margs = [s1d_filenames, s1d_file, fiber]

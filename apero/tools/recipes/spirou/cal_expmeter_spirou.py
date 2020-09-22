@@ -167,9 +167,9 @@ def __main__(recipe, params):
                                                   params['INSTRUMENT'],
                                                   kind='red')
         # get all "filetype" filenames
-        files = drs_fits.find_files(params, recipe, kind='red',
-                                    KW_OUTPUT=filetype, fiber=fiber,
-                                    night=params['NIGHTNAME'])
+        files = drs_fits.find_files(params, recipe, kind='red', fiber=fiber,
+                                    night=params['NIGHTNAME'],
+                                    filters=dict(KW_OUTPUT=filetype))
         # deal with no files found
         if len(files) == 0:
             eargs = [filetype, fiber, mainname]
