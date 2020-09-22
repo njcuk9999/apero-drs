@@ -123,7 +123,7 @@ def __main__(recipe, params):
         # get all "filetype" filenames
         files = drs_fits.find_files(params, recipe, kind='tmp',
                                     night=params['NIGHTNAME'],
-                                    KW_DPRTYPE=filetype)
+                                    filters=dict(KW_DPRTYPE=filetype))
         # create infiles
         for filename in files:
             infile = darkfpfile.newcopy(filename=filename, params=params)

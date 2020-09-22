@@ -143,7 +143,7 @@ def __main__(recipe, params):
         WLOG(params, 'error', emsg)
     # get all "filetype" filenames
     filenames = drs_fits.find_files(params, recipe, kind='tmp',
-                                    KW_DPRTYPE=filetype)
+                                    filters=dict(KW_DPRTYPE=filetype))
     # convert to numpy array
     filenames = np.array(filenames)
 

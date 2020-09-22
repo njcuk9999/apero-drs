@@ -183,7 +183,7 @@ def get_non_tellu_objs(params, recipe, fiber, filetype=None, dprtypes=None,
         fkwargs['KW_DPRTYPE'] = dprtypes
     # # find files
     out = drs_fits.find_files(params, recipe, kind='red', return_table=True,
-                              fiber=fiber, **fkwargs)
+                              fiber=fiber, filters=fkwargs)
     obj_filenames, obj_table = out
     # filter out telluric stars
     obj_stars, obj_names = [], []

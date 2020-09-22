@@ -153,14 +153,13 @@ def __main__(recipe, params):
                                                      kind='red')
         # get the files for this filetype
         fkwargs = dict()
-        fkwargs['kind'] = 'red'
-        fkwargs['fiber'] = fiber
         fkwargs['KW_OUTPUT'] = intype
         fkwargs['KW_DPRTYPE'] = filetype
         if skip_objects is not None:
             fkwargs['KW_OBJNAME'] = skip_objects
         WLOG(params, '', 'Finding files...')
-        filenames1 = drs_fits.find_files(params, recipe, **fkwargs)
+        filenames1 = drs_fits.find_files(params, recipe, kind='red',
+                                         fiber=fiber, filters=fkwargs)
         # group files
         for filename in filenames1:
             odocode = os.path.basename(filename).split('_pp')[0]

@@ -216,8 +216,10 @@ def __main__(recipe, params):
                     WLOG(params, 'error', emsg.format(night))
             # find files for this night (or None)
             files = drs_fits.find_files(params, recipe, kind='reduced',
-                                        KW_DPRTYPE=dprtype, KW_OUTPUT=filetype,
-                                        KW_FIBER=fiber, night=night)
+                                        night=night,
+                                        filters=dict(KW_DPRTYPE=dprtype,
+                                                     KW_OUTPUT=filetype,
+                                                     KW_FIBER=fiber))
             # append to list of files
             filenames += list(files)
         # convert to numpy array
