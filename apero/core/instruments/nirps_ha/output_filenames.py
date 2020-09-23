@@ -91,6 +91,7 @@ def npy_file(params: ParamDict, infile: Any, outfile: Any,
     :param infile: DrsFitsFile, input file - must be defined
     :param outfile: DrsFitsFile, output file - must be defined
     :param func: str, the function name if set (for errors)
+    :param remove_insuffix: not used for npy_file
     :param fiber: not used for npy_file
     :param path: not used for npy_file
     :param prefix: not used for npy_file

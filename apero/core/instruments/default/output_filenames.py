@@ -160,6 +160,7 @@ def npy_file(params: ParamDict, infile: Any, outfile: Any,
     :param outfile: DrsFitsFile, output file - must be defined
     :param func: str, the function name if set (for errors)
     :param fiber: not used for npy_file
+    :param remove_insuffix: not used for npy_file
     :param path: not used for npy_file
     :param prefix: not used for npy_file
     :param suffix: not used for npy_file
@@ -232,12 +233,12 @@ def debug_file(params: ParamDict, infile: Any, outfile: Any,
 
 
 def blank(params: ParamDict, infile: Any, outfile: Any,
-               fiber: Union[str, None] = None, path: Union[str, None] = None,
-               func: Union[str, None] = None,
-               remove_insuffix: Union[bool, None] = None,
-               prefix: Union[str, None] = None,
-               suffix: Union[str, None] = None,
-               filename: Union[str, None] = None) -> str:
+          fiber: Union[str, None] = None, path: Union[str, None] = None,
+          func: Union[str, None] = None,
+          remove_insuffix: Union[bool, None] = None,
+          prefix: Union[str, None] = None,
+          suffix: Union[str, None] = None,
+          filename: Union[str, None] = None) -> str:
     """
     Construct a blank filename from infile
 
@@ -271,12 +272,12 @@ def blank(params: ParamDict, infile: Any, outfile: Any,
 
 
 def set_file(params: ParamDict, infile: Any, outfile: Any,
-               fiber: Union[str, None] = None, path: Union[str, None] = None,
-               func: Union[str, None] = None,
-               remove_insuffix: Union[bool, None] = None,
-               prefix: Union[str, None] = None,
-               suffix: Union[str, None] = None,
-               filename: Union[str, None] = None) -> str:
+             fiber: Union[str, None] = None, path: Union[str, None] = None,
+             func: Union[str, None] = None,
+             remove_insuffix: Union[bool, None] = None,
+             prefix: Union[str, None] = None,
+             suffix: Union[str, None] = None,
+             filename: Union[str, None] = None) -> str:
     """
     Construct a absolute filename based on the filename, can replace
     suffix
