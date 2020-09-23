@@ -15,8 +15,9 @@ import rules:
 """
 import numpy as np
 import os
-import time
 import random
+import time
+from typing import Tuple, Union
 
 from apero.base import base
 from apero.core import constants
@@ -36,6 +37,8 @@ __date__ = base.__date__
 __release__ = base.__release__
 # get the parameter dictionary
 ParamDict = constants.ParamDict
+# Get function string
+display_func = drs_log.display_func
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
@@ -52,14 +55,19 @@ class Lock:
     Class to control locking of decorated functions
     """
 
-    def __init__(self, params, lockname):
+    def __init__(self, params: ParamDict, lockname: str):
         """
         Construct the lock instance
 
-        :param params:
-        :param lockname:
+        :param params: ParamDict, parameter dictionary of constants
+        :param lockname: str, the name for the lock file
+        
+        :returns: None
         """
-        func_name = __NAME__ + '.Lock.__init__()'
+        # set class name
+        self.classname = 'Lock'
+        # set function
+        func_name = display_func(None, '__init__', __NAME__, self.classname)
         # set the bad characters to clean
         self.bad_chars = ['/', '\\', '.', ',']
         # replace all . and whitespace with _
@@ -97,6 +105,8 @@ class Lock:
 
         :return:
         """
+        # set function
+        _ = display_func(None, '__makelockdir', __NAME__, self.classname)
         # set up a timer
         timer = 0
         # keep trying to create the folder
@@ -124,13 +134,16 @@ class Lock:
             else:
                 break
 
-    def __makelockfile(self, name):
+    def __makelockfile(self, name: str):
         """
         Internal use only: make the lock file "name.lock"
 
-        :param name:
-        :return:
+        :param name: str, the name of the item in lock queue
+        
+        :return: None - writes lock file to disk
         """
+        # set function
+        _ = display_func(None, '__makelockfile', __NAME__, self.classname)
         # check that path exists
         if not os.path.exists(self.path):
             self.__makelockdir()
@@ -167,34 +180,34 @@ class Lock:
             else:
                 break
 
-    def __getfirst(self, name):
+    def __getfirst(self, name: str) -> str:
         """
         Internal use only: get the first (based on creation time) file in
         self.path
+        
+        :param name: str, the name of the item in lock queue
 
-        :return:
+        :returns: str, the first item in the lock queue 
         """
+        # set function
+        _ = display_func(None, '__getfirst', __NAME__, self.classname)
+        # set path from self.path
         path = self.path
-
         # check path exists - if it doesn't then create it
         if not os.path.exists(path):
             self.enqueue(name)
-
         # get the raw list
         rawlist = np.sort(os.listdir(path))
-
         # if we don't have this file add it to the end of the list
         if name + '.lock' not in rawlist:
             self.enqueue(name)
             rawlist = np.sort(os.listdir(path))
-
         # deal with no raw files
         if len(rawlist) == 0:
             self.enqueue(name)
             rawlist = np.sort(os.listdir(path))
-
         # get times
-        pos, mintime = np.nan, np.inf
+        pos, mintime, it = np.nan, np.inf, 0
         for it in range(len(rawlist)):
             # get the absolute path
             abspath = os.path.join(path, rawlist[it])
@@ -204,7 +217,7 @@ class Lock:
             if filetime < mintime:
                 mintime = filetime
                 pos = it
-
+        # deal with a NaN position (impossible?)
         if np.isnan(pos):
             eargs = [name + '.lock', path, ','.join(rawlist[it])]
             emsg = 'Impossible Error: {0} not in {1} '
@@ -214,19 +227,21 @@ class Lock:
         # return list
         return rawlist[pos]
 
-    def __remove_file(self, name):
+    def __remove_file(self, name: str):
         """
         Internal use only: Remove file "name.lock"
 
-        :param name:
-        :return:
+        :param name: str, the name of the item in lock queue
+        
+        :return: None
         """
+        # set function
+        _ = display_func(None, '__remove_file', __NAME__, self.classname)
         # clean name
         name = self.__clean_name(name)
         # get the absolute path
         filename = name + '.lock'
         abspath = os.path.join(self.path, filename)
-
         # loop until we have desired result (or have tried 10 times)
         attempt = 0
         while 1:
@@ -252,19 +267,32 @@ class Lock:
             else:
                 break
 
-    def __clean_name(self, name):
+    def __clean_name(self, name: str) -> str:
+        """
+        Clean the item name (replace bad characters with '_')
+
+        :param name: str, the name of the item in lock queue
+
+        :return: str, the cleaned name of the item in lock queue
+        """
+        # set function
+        _ = display_func(None, '__clean_name', __NAME__, self.classname)
         # loop around bad characters and replace them
         for char in self.bad_chars:
             name = name.replace(char, '_')
+        # return the cleaned name
         return name
 
-    def enqueue(self, name):
+    def enqueue(self, name: str):
         """
-        Used to add "name" to the queue
+        Used to add "name" item to the queue
 
-        :param name:
-        :return:
+        :param name: str, the name of the item in lock queue
+
+        :return: None - writes name.lock to disk (and waits a short time)
         """
+        # set function
+        _ = display_func(None, '__clean_name', __NAME__, self.classname)
         # clean name
         name = self.__clean_name(name)
         # log progress: lock file added to queue
@@ -276,12 +304,16 @@ class Lock:
         # put in just to see if we are appending too quickly
         time.sleep(0.1 * random.random())
 
-    def myturn(self, name):
+
+    # TODO: got to here with typing
+
+    def myturn(self, name: str) -> Tuple[bool, Union[Exception, None]]:
         """
         Used to check whether it is time to run function for "name" (based on
         position in queue)
 
-        :param name:
+        :param name: str, the name of the item in lock queue
+
         :return:
         """
         # clean name
