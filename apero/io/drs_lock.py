@@ -17,7 +17,7 @@ import numpy as np
 import os
 import random
 import time
-from typing import Tuple, Union
+from typing import Any, Tuple, Union
 
 from apero.base import base
 from apero.core import constants
@@ -67,7 +67,7 @@ class Lock:
         # set class name
         self.classname = 'Lock'
         # set function
-        func_name = display_func(None, '__init__', __NAME__, self.classname)
+        func_name = display_func(params, '__init__', __NAME__, self.classname)
         # set the bad characters to clean
         self.bad_chars = ['/', '\\', '.', ',']
         # replace all . and whitespace with _
@@ -99,6 +99,26 @@ class Lock:
         # make the lock directory
         self.__makelockdir()
 
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
     def __makelockdir(self):
         """
         Internal use only: make the lock directory
@@ -106,13 +126,14 @@ class Lock:
         :return:
         """
         # set function
-        _ = display_func(None, '__makelockdir', __NAME__, self.classname)
+        _ = display_func(self.params, '__makelockdir', __NAME__, self.classname)
         # set up a timer
         timer = 0
         # keep trying to create the folder
         while timer < self.maxwait:
             # if path does not exist try to create it
             if not os.path.exists(self.path):
+                # noinspection PyBroadException
                 try:
                     os.mkdir(self.path)
                     # log that lock has been activated
@@ -120,7 +141,7 @@ class Lock:
                     WLOG(self.params, 'debug',
                          TextEntry('40-101-00001', args=wargs))
                     break
-                except:
+                except Exception as _:
                     # whatever the problem sleep for a second
                     time.sleep(0.1 * random.random())
                     # add to the timer
@@ -143,7 +164,8 @@ class Lock:
         :return: None - writes lock file to disk
         """
         # set function
-        _ = display_func(None, '__makelockfile', __NAME__, self.classname)
+        _ = display_func(self.params, '__makelockfile', __NAME__,
+                         self.classname)
         # check that path exists
         if not os.path.exists(self.path):
             self.__makelockdir()
@@ -158,13 +180,14 @@ class Lock:
         while timer < self.maxwait:
             # if path does not exist try to create it
             if not os.path.exists(abspath):
+                # noinspection PyBroadException
                 try:
                     # write filename
                     with open(abspath, 'w') as f:
                         msg = 'File={0} Timer={1}'
                         f.write(msg.format([filename, timer]))
                     break
-                except:
+                except Exception as _:
                     # whatever the problem sleep for a second
                     time.sleep(0.1 * random.random())
                     # add to the timer
@@ -190,7 +213,7 @@ class Lock:
         :returns: str, the first item in the lock queue 
         """
         # set function
-        _ = display_func(None, '__getfirst', __NAME__, self.classname)
+        _ = display_func(self.params, '__getfirst', __NAME__, self.classname)
         # set path from self.path
         path = self.path
         # check path exists - if it doesn't then create it
@@ -236,7 +259,7 @@ class Lock:
         :return: None
         """
         # set function
-        _ = display_func(None, '__remove_file', __NAME__, self.classname)
+        _ = display_func(self.params, '__remove_file', __NAME__, self.classname)
         # clean name
         name = self.__clean_name(name)
         # get the absolute path
@@ -276,7 +299,7 @@ class Lock:
         :return: str, the cleaned name of the item in lock queue
         """
         # set function
-        _ = display_func(None, '__clean_name', __NAME__, self.classname)
+        _ = display_func(self.params, '__clean_name', __NAME__, self.classname)
         # loop around bad characters and replace them
         for char in self.bad_chars:
             name = name.replace(char, '_')
@@ -292,7 +315,7 @@ class Lock:
         :return: None - writes name.lock to disk (and waits a short time)
         """
         # set function
-        _ = display_func(None, '__clean_name', __NAME__, self.classname)
+        _ = display_func(self.params, '__clean_name', __NAME__, self.classname)
         # clean name
         name = self.__clean_name(name)
         # log progress: lock file added to queue
@@ -304,9 +327,6 @@ class Lock:
         # put in just to see if we are appending too quickly
         time.sleep(0.1 * random.random())
 
-
-    # TODO: got to here with typing
-
     def myturn(self, name: str) -> Tuple[bool, Union[Exception, None]]:
         """
         Used to check whether it is time to run function for "name" (based on
@@ -314,8 +334,11 @@ class Lock:
 
         :param name: str, the name of the item in lock queue
 
-        :return:
+        :return: tuple, 1. bool - whether it is 'name' item turn to be unlocked
+                        2. None or exception (to be handled elsewhere)
         """
+        # set function
+        _ = display_func(self.params, 'myturn', __NAME__, self.classname)
         # clean name
         name = self.__clean_name(name)
         filename = name + '.lock'
@@ -336,13 +359,17 @@ class Lock:
         else:
             return False, None
 
-    def dequeue(self, name):
+    def dequeue(self, name: str):
         """
         Used to remove "name" from queue
 
-        :param name:
-        :return:
+        :param name: str, the name of the item in lock queue
+
+        :return: None - removes lock file for 'name' to 'name' item can be
+                 unlocked
         """
+        # set function
+        _ = display_func(self.params, 'dequeue', __NAME__, self.classname)
         # log that lock file has been removed from the queue
         filename = name + '.lock'
         abspath = os.path.join(self.path, filename)
@@ -354,8 +381,10 @@ class Lock:
         """
         Used to remove all entries from a queue (and start again)
 
-        :return:
+        :return: None - remove lock file and all items in it (reset lock queue)
         """
+        # set function
+        _ = display_func(self.params, 'reset', __NAME__, self.classname)
         # log that lock is deactivated
         WLOG(self.params, 'debug', TextEntry('40-101-00005', args=[self.path]))
         # get the raw list
@@ -393,19 +422,55 @@ class Lock:
                     WLOG(self.params, 'warning', emsg)
 
 
-def synchronized(lock, name):
+def synchronized(lock: Lock, name: str):
     """
     Synchroisation decorator - wraps the function to lock
     calls to function are added to a queue based on the lock given and
     the name for this call to the function (must be unique)
 
-    :param lock:
-    :param name:
-    :return:
-    """
+    use as follows:
 
+    1. generate lock instance:
+    >> mylock = Lock(params, lockfile)
+
+    2. decorate a function that is to be locked
+    >> @synchronized(mylock, name)
+    >> def my_locked_function(*args, **kwargs):
+    >>     do something pythonic that requires locking
+
+    3. call locked function normally
+    >> my_locked_function(*args, **kwargs)
+
+
+    :param lock: Lock instance
+    :param name: str, the name of the item in lock queue
+
+    :return: wrapper around function (decorator uses this in place of the
+             function itself)
+    """
     def wrap(func):
+        """
+        Internal wrap around decorator - required to pull in function to be
+        locked (see how to on defining decorator)
+
+        :param func: function to be locked
+
+        :return: return the wrapper function (which does the locking before
+                 running 'func' - passes all args, kwargs to the 'func'
+        """
         def wrapperfunc(*args, **kw):
+            """
+            The proxy wrapper of 'func' i.e. in here is where we do the locking
+            then run the function - this function is what is called when
+            'func' is called (and is run internally after all locking
+            functionality is complete
+
+            :param args: the positional arguments passed to 'func'
+            :param kw: the keyword arguments passed to 'func'
+            :return: the returns of 'func' for args, kwargs
+            """
+            # set function
+            _ = display_func(lock.params, 'wrapperfunc', __NAME__)
             # add to the queue
             lock.enqueue(name)
             # timer
@@ -457,7 +522,26 @@ def synchronized(lock, name):
     return wrap
 
 
-def locker(params, lockfile, my_func, *args, **kwargs):
+def locker(params: ParamDict, lockfile: str, my_func: Any, *args, **kwargs):
+    """
+    A one function solution to avoid having to deal with decorators.
+    Lock file is created in here, and locked function is decorated/run
+    using 'my_func' as the function to be locked and passing all args, kwargs
+    to it
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param lockfile: str, the file that is being locked
+    :param my_func: function, the function to lock at until specific item is
+                    unlocked
+    :param args: positional arguments passed to my_func (after locking
+                 functionality)
+    :param kwargs: optional arguments passed to my_func (after locking
+                   functionatity)
+
+    :return: the return of 'my_func' for args, kwargs
+    """
+    # set function
+    _ = display_func(params, 'locker', __NAME__)
     # define lock file
     lock = Lock(params, lockfile)
 
@@ -466,7 +550,6 @@ def locker(params, lockfile, my_func, *args, **kwargs):
     @synchronized(lock, params['PID'])
     def locked_function():
         return my_func(*args, **kwargs)
-
     # ------------------------------------------------------------------
     # try to run locked read function
     try:
@@ -480,7 +563,19 @@ def locker(params, lockfile, my_func, *args, **kwargs):
         raise e
 
 
-def reset_lock_dir(params, log=False):
+def reset_lock_dir(params: ParamDict, log: bool = False):
+    """
+    Reset the full lock directory (if empty and if it exists) of all
+    sub-directories - should only be used when we know no locking is expected
+    after this point
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param log: bool, if True logs the removal of files (via __remove_empty__)
+
+    :return: None - just removes lock directory
+    """
+    # set function
+    _ = display_func(params, 'locker', __NAME__)
     # get the lock path
     lockpath = os.path.join(params['DRS_DATA_MSG_FULL'], 'lock')
     if not os.path.exists(lockpath):
@@ -489,13 +584,27 @@ def reset_lock_dir(params, log=False):
     __remove_empty__(params, lockpath, remove_head=False, log=log)
 
 
-def __remove_empty__(params, path, remove_head=True, log=False):
+def __remove_empty__(params: ParamDict, path: str, remove_head: bool = True,
+                     log: bool = False):
+    """
+    Remove empty directories/sub-directories from under 'path' (and remove
+    'path' if remove_head = True
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param path: str, the path to remove all empty sub-directories from
+    :param remove_head: bool, if True also try to remove the path directory
+                        (after removing all sub-directories) again if empty
+    :param log: bool, if True log that we are remove directories
+
+    :return: None - just removes directories
+    """
+    # set function
+    _ = display_func(params, '__remove_empty__', __NAME__)
     # define function name
     func_name = __NAME__ + '.__remove_empty__()'
     # check if path is not a directory or if path is link
     if not os.path.isdir(path) or os.path.islink(path):
         return
-
     # remove empty subfolders
     files = np.sort(os.listdir(path))
     if len(files):
@@ -503,7 +612,6 @@ def __remove_empty__(params, path, remove_head=True, log=False):
             fullpath = os.path.join(path, f)
             if os.path.isdir(fullpath):
                 __remove_empty__(params, fullpath, log=log)
-
     # if folder empty, delete it
     files = np.sort(os.listdir(path))
     if len(files) == 0 and remove_head:
@@ -524,14 +632,16 @@ def __remove_empty__(params, path, remove_head=True, log=False):
 # =============================================================================
 # Main code here
 if __name__ == "__main__":
+    # testing the locking mechanism in a multiprocess way
 
     # testing the locking mechanism
     from multiprocessing import Process
     import string
-
+    # load parameters
     _params = constants.load()
 
-
+    # define a function to print (this is the function to be called in a
+    #    parallelised way)
     def printfunc(i, j):
         # set up the lock file (usually a file or function)
         mylock = Lock(_params, 'printfunc')
@@ -542,21 +652,20 @@ if __name__ == "__main__":
             for k in list(string.ascii_lowercase):
                 print('{0}-{1}-{2}'.format(i, j, k))
             time.sleep(0.1)
-
         # this is where we run the function
         try:
             lockprint()
+        # allow Ctrl+Z interrupt - and deal with locking accordingly
         except KeyboardInterrupt as e:
             mylock.reset()
             raise e
-
-
+    # loop around 2 iterations for each with 10 sub groups
     for jjjt in range(2):
         jobs = []
         # loop around sub groups (to be run at same time)
         for iiit in range(10):
             # get parallel process
-            process = Process(target=printfunc, args=[iiit, jjjt])
+            process = Process(target=printfunc, args=(iiit, jjjt))
             process.start()
             jobs.append(process)
         # do not continue until finished
