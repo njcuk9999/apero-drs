@@ -540,6 +540,34 @@ def capitalise_key(key: str) -> str:
     return key
 
 
+def test_format(fmt: str) -> bool:
+    """
+    Test the format string with a floating point number
+
+    :param fmt: string, the format string i.e. "7.4f"
+
+    :type fmt: str
+
+    :returns: bool, if valid returns True else returns False
+    :rtype: bool
+    """
+    # set function
+    _ = __NAME__ + '.test_format()'
+    # test format of a string
+    try:
+        if fmt.startswith('{') and fmt.endswith('}'):
+            return True
+        elif 's' in fmt:
+            return True
+        elif 'd' in fmt:
+            _ = ('{0:' + fmt + '}').format(123)
+        else:
+            _ = ('{0:' + fmt + '}').format(123.456789)
+        return True
+    except ValueError:
+        return False
+
+
 # =============================================================================
 # Start of code
 # =============================================================================
