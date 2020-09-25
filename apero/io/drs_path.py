@@ -9,18 +9,18 @@ Created on 2019-03-21 at 11:36
 
 @author: cook
 """
-import pkg_resources
 import numpy as np
 from astropy import units as uu
 import os
 import shutil
 from pathlib import Path
-from typing import Union
+from typing import Any, List, Union
 
 from apero.base import base
 from apero.base import drs_break
 from apero.base import drs_exceptions
 from apero.base import drs_misc
+from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_log
 from apero import lang
@@ -36,6 +36,8 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
+# get the parameter dictionary
+ParamDict = constants.ParamDict
 # Get function string
 display_func = drs_log.display_func
 # Get exceptions
@@ -50,10 +52,11 @@ TextEntry = lang.core.drs_lang_text.TextEntry
 # =============================================================================
 # Define functions
 # =============================================================================
-def get_relative_folder(params, package, folder):
+def get_relative_folder(params: ParamDict, package: str, folder: str) -> str:
     """
     Get the absolute path of folder defined at relative path
-    folder from package
+    folder from package (wrapper around drs_break.get_relative_folder to catch
+    DrsCodedException)
 
     :param params: ParamDict, the parameter dictionary of constants
     :param package: string, the python package name
@@ -62,6 +65,9 @@ def get_relative_folder(params, package, folder):
     :return data: string, the absolute path and filename of the default config
                   file
     """
+    # set function
+    _ = display_func(params, 'get_relative_folder', __NAME__)
+    # try to get relative directory
     try:
         data_folder = drs_break.get_relative_folder(package, folder)
     except DrsCodedException as e:
@@ -71,7 +77,7 @@ def get_relative_folder(params, package, folder):
     return data_folder
 
 
-def get_uncommon_path(path1: str, path2: str ) -> str:
+def get_uncommon_path(path1: str, path2: str) -> str:
     """
     Get the uncommon path of "path1" compared to "path2"
 
@@ -86,10 +92,14 @@ def get_uncommon_path(path1: str, path2: str ) -> str:
 
     :return uncommon_path: string, the uncommon path between path1 and path2
     """
+    # set function
+    _ = display_func(None, 'get_uncommon_path', __NAME__)
+    # return result from drs_misc.get_uncommon_path
     return drs_misc.get_uncommon_path(path1, path2)
 
 
-def get_nightname(params, filepath, root=None):
+def get_nightname(params: ParamDict, filepath: str,
+                  root: Union[str, None] = None) -> str:
     """
     Get the night name from a absolute filepath
         structure of filepath should be:
@@ -103,9 +113,11 @@ def get_nightname(params, filepath, root=None):
     :type filepath: str
     :type root: str
 
-    :return: the night name
+    :return: str, the night name
     :rtype: str
     """
+    # set function
+    _ = display_func(params, 'get_nightname', __NAME__)
     # deal with no root
     if root is None:
         root = params['INPATH']
@@ -123,8 +135,27 @@ def get_nightname(params, filepath, root=None):
     return night_name
 
 
-def group_files_by_time(params, times, time_thres, time_unit='hours'):
-    func_name = __NAME__ + '.group_files_by_time()'
+def group_files_by_time(params: ParamDict, times: np.ndarray,
+                        time_thres: Union[uu.Quantity, float],
+                        time_unit: Union[uu.Unit, str] = 'hours') -> np.ndarray:
+    """
+    Take a np.array of times ('times') and sort them into groups based on
+    being closer to each other than "time_thres'
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param times: np.array of Time objects (if time_thres is a astropy.Quantity)
+                  else a list of floats (either in 'hours' or 'days' - changable
+                  using 'time_unit'
+    :param time_thres: the largest separation of times for two times to be
+                       grouped together
+    :param time_unit: the unit of the time for 'times' and 'time_thres' must be
+                      either astropy.Unit or a string ['hours' or 'days']
+
+    :return: np.array of group numbers (the groups assigned to each element of
+             'times'
+    """
+    # set function
+    func_name = display_func(params, 'group_files_by_time', __NAME__)
     # make sure time units are correct
     cond1 = not isinstance(time_unit, str)
     cond2 = isinstance(time_thres, uu.Quantity)
@@ -169,14 +200,16 @@ def group_files_by_time(params, times, time_thres, time_unit='hours'):
     return matched_id
 
 
-def get_most_recent(filelist):
+def get_most_recent(filelist: List[str]) -> Union[float, None]:
     """
-    Find the most recent file in a list of files
+    Find the most recent file in a list of files and return its modified time
 
     :param filelist: list of strings, the file list (absolute paths)
 
-    :return:
+    :return: float the modified time of the most recent file
     """
+    # set function
+    _ = display_func(None, 'get_most_recent', __NAME__)
     # set most recent time to None to start
     most_recent = None
     # loop around file list
@@ -192,7 +225,15 @@ def get_most_recent(filelist):
     return most_recent
 
 
-def makedirs(params, path):
+def makedirs(params: ParamDict, path: str):
+    """
+    Make directory 'path' and all sub-directories
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param path: str, the directory + sub-directories to make (as one path)
+
+    :return: None - just makes the 'path'
+    """
     # set function name
     func_name = display_func(params, 'makedirs', __NAME__)
     # test if path does not already exist
@@ -207,6 +248,17 @@ def makedirs(params, path):
 
 
 def copytree(src: Union[str, Path], dst: Union[str, Path]):
+    """
+    Copy a file/directory tree - from path 'src' to 'dst'
+
+    :param src: str, the source path
+    :param dst: str, the desination path
+
+    :return: None - just copies directories
+    """
+    # set function name
+    _ = display_func(None, 'makedirs', __NAME__)
+    # loop around src path and go to every directory/sub-directory/file
     for root, dirs, files in os.walk(src, followlinks=True):
         # out root
         outroot = root.replace(str(src), str(dst))
@@ -224,9 +276,19 @@ def copytree(src: Union[str, Path], dst: Union[str, Path]):
             shutil.copy(str(infile), str(outfile))
 
 
-def copyfile(params, src, dst, log=True):
+def copyfile(params: ParamDict, src: str, dst: str, log: bool = True):
+    """
+    Copy a single file (catching exceptions where possible)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param src: str, the source file path
+    :param dst: str, the output file path
+    :param log: bool, if True logs that this file has been copied
+
+    :return: None - just copies file
+    """
     # set function name
-    func_name = __NAME__ + '.copyfile()'
+    func_name = display_func(params, 'copyfile', __NAME__)
     # only copy if we have the source file
     if os.path.exists(src):
         # if logging then log
@@ -245,20 +307,31 @@ def copyfile(params, src, dst, log=True):
         WLOG(params, 'error', TextEntry('00-004-00005', args=eargs))
 
 
-def numpy_load(filename):
+def numpy_load(filename: str) -> Any:
+    """
+    do np.load (but with some added tries when it fails - i.e. with pickle
+    or just opening the file first before raising exception
+
+    :param filename: str, the numpy file to load
+
+    :return: the return from np.load for 'filename'
+    """
     # set function name
-    func_name = __NAME__ + '.numpy_load()'
+    func_name = display_func(None, 'numpy_load', __NAME__)
     # try the original load function
+    # noinspection PyBroadException
     try:
         return np.load(filename)
     except Exception as _:
         pass
     # try the load with pickle allowed
+    # noinspection PyBroadException
     try:
         return np.load(filename, allow_pickle=True)
     except Exception as _:
         pass
     # try the load, loading as a string first
+    # noinspection PyBroadException
     try:
         # noinspection PyTypeChecker
         return np.load(open(filename, 'rb'))
