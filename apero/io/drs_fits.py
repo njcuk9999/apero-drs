@@ -1399,11 +1399,13 @@ def _get_files(params, recipe, path, rpath, **kwargs):
                     mod_times.pop()
                     # continue to next file
                     continue
-
                 # loop around header keys
                 for key in headerkeys:
                     rkey = params[key][0]
-                    if rkey in header:
+                    # deal with no key set
+                    if len(rkey) == 0:
+                        kwargs[key].append('')
+                    elif rkey in header:
                         kwargs[key].append(header[rkey])
                     else:
                         kwargs[key].append('')
