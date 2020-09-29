@@ -153,13 +153,23 @@ def calibrate_ppfile(params, recipe, infile, **kwargs):
                                  badpixfile)
     backfile = get_input_files(params, 'BACKFILE', backkey, header, backfile)
 
+    # some keys have to come from params for nirps
+    if params['INSTRUMENT'] == 'NIRPS_HA':
+        ikwargs = dict()
+        ikwargs['saturate'] = dict(has_default=True,
+                                   default=params['IMAGE_SATURATION'])
+        ikwargs['frmtime'] = dict(has_default=True,
+                                  default=params['IMAGE_FRAME_TIME'])
+    else:
+        ikwargs = dict(saturate=dict(), frmtime=dict())
+
     # Get basic image properties
     sigdet = infile.get_key('KW_RDNOISE')
     exptime = infile.get_key('KW_EXPTIME')
     gain = infile.get_key('KW_GAIN')
     dprtype = infile.get_key('KW_DPRTYPE', dtype=str)
-    saturate = infile.get_key('KW_SATURATE', dtype=float)
-    frmtime = infile.get_key('KW_FRMTIME', dtype=float)
+    saturate = infile.get_key('KW_SATURATE', dtype=float, **ikwargs['saturate'])
+    frmtime = infile.get_key('KW_FRMTIME', dtype=float, **ikwargs['frmtime'])
     nfiles = infile.numfiles
 
     # log that we are calibrating a file
