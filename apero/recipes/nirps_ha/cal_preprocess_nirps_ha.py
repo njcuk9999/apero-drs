@@ -200,10 +200,13 @@ def __main__(recipe, params):
         # correct for the top and bottom reference pixels
         WLOG(params, '', TextEntry('40-010-00003'))
         image = pp.correct_top_bottom(params, image)
+        # correct the left / right (not needed for spirou)
+        image = pp.correct_left_right(params, image)
 
         # correct by a median filter from the dark amplifiers
         WLOG(params, '', TextEntry('40-010-00016'))
-        image, pfile = pp.nirps_correction(params, image, header=infile.header)
+        # image, pfile = pp.nirps_correction(params, image, header=infile.header)
+        pfile = 'None'
 
         # ------------------------------------------------------------------
         # calculate mid observation time
