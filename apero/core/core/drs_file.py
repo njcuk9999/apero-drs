@@ -1397,7 +1397,7 @@ class DrsFitsFile(DrsInputFile):
             else:
                 # Log that key was not found
                 dargs = [key, filedict['OUT'], ', '.join(list(filedict.keys()))]
-                WLOG(params, 'debug', TextEntry('90-008-00002', args=dargs))
+                WLOG(params, 'error', TextEntry('90-008-00002', args=dargs))
 
         # return valid
         return valid
@@ -1939,6 +1939,12 @@ class DrsFitsFile(DrsInputFile):
         self.check_read(header_only=True, load=True)
         # check key is valid
         drskey = self._check_key(key)
+        # deal with no drs key (this will work with self.header['']
+        if len(drskey) == 0:
+            if has_default:
+                return default
+            else:
+                return None
         # if we have a default key try to get key else use default value
         if has_default:
             value = self.header.get(drskey, default)
