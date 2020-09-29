@@ -1868,8 +1868,13 @@ def _get_files(params: ParamDict, recipe: Any, path: str, rpath: str,
                 # loop around header keys
                 for key in headerkeys:
                     rkey = params[key][0]
-                    if rkey in header:
+                    # deal with no key set
+                    if len(rkey) == 0:
+                        okwargs[key].append('')
+                    # deal with key in header
+                    elif rkey in header:
                         okwargs[key].append(header[rkey])
+                    # else be blank (like no key set)
                     else:
                         okwargs[key].append('')
     # ----------------------------------------------------------------------
