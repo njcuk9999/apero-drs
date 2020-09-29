@@ -13,7 +13,7 @@ from apero.core.instruments.default.default_constants import *
 __NAME__ = 'core.instruments.nirps_ha.default_constants.py'
 
 # =============================================================================
-# Spirou Constant definitions
+# NIRPS_HA Constant definitions
 # =============================================================================
 
 # =============================================================================
@@ -92,6 +92,15 @@ IMAGE_PIXEL_SIZE.value = 1.00
 # Define mean line width expressed in pix
 FWHM_PIXEL_LSF = FWHM_PIXEL_LSF.copy(__NAME__)
 FWHM_PIXEL_LSF.value = 3.0
+
+# Define the point at which the detector saturates
+IMAGE_SATURATION = IMAGE_SATURATION.copy(__NAME__)
+IMAGE_SATURATION.value = 60000
+
+# Define the frame time for an image
+IMAGE_FRAME_TIME = IMAGE_FRAME_TIME.copy(__NAME__)
+IMAGE_FRAME_TIME.value = 5.57192
+
 
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
@@ -311,7 +320,7 @@ HISTO_RANGE_HIGH.value = 0.8
 #        only find those types define by 'filetype' but 'filetype' must
 #        be one of theses (strings separated by commas)
 ALLOWED_DARK_TYPES = ALLOWED_DARK_TYPES.copy(__NAME__)
-ALLOWED_DARK_TYPES.value = 'DARK_DARK_TEL, DARK_DARK_INT'
+ALLOWED_DARK_TYPES.value = 'DARK_DARK'
 
 #   Define the maximum time span to combine dark files over (in hours)
 DARK_MASTER_MATCH_TIME = DARK_MASTER_MATCH_TIME.copy(__NAME__)

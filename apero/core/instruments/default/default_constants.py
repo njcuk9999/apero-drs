@@ -22,7 +22,8 @@ __all__ = [
     'IMAGE_X_LOW', 'IMAGE_X_HIGH',
     'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_LOW', 'IMAGE_X_HIGH',
     'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_BLUE_LOW',
-    'IMAGE_PIXEL_SIZE', 'FWHM_PIXEL_LSF',
+    'IMAGE_PIXEL_SIZE', 'FWHM_PIXEL_LSF', 'IMAGE_SATURATION',
+    'IMAGE_FRAME_TIME',
     # general calib constants
     'CAVITY_1M_FILE', 'CAVITY_LL_FILE', 'OBJ_LIST_FILE', 'OBJ_LIST_FILE_FMT',
     'OBJ_LIST_CROSS_MATCH_RADIUS', 'OBJ_LIST_GAIA_URL', 'OBJ_LIST_SIMBAD_URL',
@@ -385,6 +386,14 @@ IMAGE_PIXEL_SIZE = Const('IMAGE_PIXEL_SIZE', value=None, dtype=float,
 # Define mean line width expressed in pix
 FWHM_PIXEL_LSF = Const('FWHM_PIXEL_LSF', value=None, dtype=float,
                        source=__NAME__, group=cgroup)
+
+# Define the point at which the detector saturates
+IMAGE_SATURATION = Const('IMAGE_SATURATION', value=None, dtype=float,
+                         source=__NAME__, group=cgroup)
+
+# Define the frame time for an image
+IMAGE_FRAME_TIME = Const('IMAGE_FRAME_TIME', value=None, dtype=float,
+                         source=__NAME__, group=cgroup)
 
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS

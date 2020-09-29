@@ -91,6 +91,14 @@ IMAGE_PIXEL_SIZE.value = 2.28
 FWHM_PIXEL_LSF = FWHM_PIXEL_LSF.copy(__NAME__)
 FWHM_PIXEL_LSF.value = 2.1
 
+# Define the point at which the detector saturates
+IMAGE_SATURATION = IMAGE_SATURATION.copy(__NAME__)
+IMAGE_SATURATION.value = 60000
+
+# Define the frame time for an image
+IMAGE_FRAME_TIME = IMAGE_FRAME_TIME.copy(__NAME__)
+IMAGE_FRAME_TIME.value = 5.57192
+
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
 # =============================================================================
