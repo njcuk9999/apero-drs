@@ -143,6 +143,25 @@ class PseudoConstants(DefaultConstants):
         valid = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
         return valid
 
+    # noinspection PyPep8Naming
+    def OUTPUT_FILE_HEADER_KEYS(self):
+        """
+        Output file header keys.
+        Used for indexing
+
+        :param p:
+        :return:
+        """
+        # Get required header keys from spirouKeywords.py (via p)
+        output_keys = ['KW_DATE_OBS', 'KW_UTC_OBS', 'KW_ACQTIME',
+                       'KW_MID_OBS_TIME', 'KW_OBJNAME', 'KW_OBSTYPE',
+                       'KW_EXPTIME', 'KW_CCAS', 'KW_CREF', 'KW_CDEN',
+                       'KW_DPRTYPE', 'KW_OUTPUT', 'KW_CMPLTEXP', 'KW_NEXP',
+                       'KW_VERSION', 'KW_PPVERSION', 'KW_PI_NAME', 'KW_PID',
+                       'KW_FIBER']
+        # return output_keys
+        return output_keys
+
     # =========================================================================
     # DISPLAY/LOGGING SETTINGS
     # =========================================================================

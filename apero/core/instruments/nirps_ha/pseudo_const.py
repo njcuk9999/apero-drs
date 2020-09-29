@@ -141,6 +141,27 @@ class PseudoConstants(DefaultConstants):
         valid = ['.fits']
         return valid
 
+
+    # noinspection PyPep8Naming
+    def OUTPUT_FILE_HEADER_KEYS(self):
+        """
+        Output file header keys.
+        Used for indexing
+
+        :param p:
+        :return:
+        """
+        # Get required header keys from spirouKeywords.py (via p)
+        output_keys = ['KW_DATE_OBS', 'KW_UTC_OBS', 'KW_ACQTIME',
+                       'KW_MID_OBS_TIME', 'KW_OBJNAME', 'KW_OBSTYPE',
+                       'KW_EXPTIME', 'KW_RAW_DPRTYPE',
+                       'KW_DPRTYPE', 'KW_OUTPUT', 'KW_CMPLTEXP', 'KW_NEXP',
+                       'KW_VERSION', 'KW_PPVERSION', 'KW_PI_NAME', 'KW_PID',
+                       'KW_FIBER']
+        # return output_keys
+        return output_keys
+
+
     # =========================================================================
     # DISPLAY/LOGGING SETTINGS
     # =========================================================================
@@ -415,29 +436,24 @@ def clean_obj_name(params=None, header=None, hdict=None, objname=None,
 
 def get_trg_type(params, header, hdict, filename=None):
     # get keys from params
-    kwobjname = params['KW_OBJNAME'][0]
     kwobstype = params['KW_OBSTYPE'][0]
     kwtrgtype = params['KW_TARGET_TYPE'][0]
     kwtrgcomment = params['KW_TARGET_TYPE'][2]
-    # get objname
-    if kwobjname not in header:
-        raise drs_exceptions.DrsHeaderError('Key not found',
-                                            level='error', key=kwobjname,
-                                            filename=filename)
-    objname = header[kwobjname]
     # get obstype
     if kwobstype not in header:
         raise drs_exceptions.DrsHeaderError('Key not found',
                                             level='error', key=kwobstype,
                                             filename=filename)
     obstype = header[kwobstype]
+    # obstype might be in form "TYPE,DPRTYPE[0], DPRTYPE[1]"
+    obstype = obstype.split(',')[0]
     # deal with setting value
-    if obstype != 'OBJECT':
-        trg_type = ''
-    elif 'sky' in objname:
+    if obstype in ['OBJECT', 'STAR']:
+        trg_type = 'TARGET'
+    elif obstype in ['SKY']:
         trg_type = 'SKY'
     else:
-        trg_type = 'TARGET'
+        trg_type = ''
     # update header
     header[kwtrgtype] = (trg_type, kwtrgcomment)
     hdict[kwtrgtype] = (trg_type, kwtrgcomment)
@@ -445,7 +461,31 @@ def get_trg_type(params, header, hdict, filename=None):
     return header, hdict
 
 
+# TODO: update once we have a proper time
 def get_mid_obs_time(params, header, hdict, filename=None):
+
+    # TODO: START --------------------------------------------------------------
+    # TODO: FIX: temporary measure: fix time header keys
+    rawtime = Time(header['DATE'], format='fits')
+    exptime = header['HIERARCH ESO DET2 EXPO TIME']
+    # TODO: FIX: MJDATE should be the 'mid time' - exptime in days
+    header['MJDATE'] = (rawtime.mjd - exptime / (3600*24),
+                        'Modified Julian Date at start of observation')
+    hdict['MJDATE'] = header['MJDATE']
+    # TODO: FIX: MJDEND should be the 'mid time' + exptime in days
+    header['MJDEND'] = (rawtime.mjd + exptime / (3600*24),
+                       'Modified Julian Date at end of observation')
+    hdict['MJDEND'] = header['MJDEND']
+    # TODO: FIX: DATE-OBS should be DATE: YYYY-mm-dd
+    header['DATE-OBS'] = (rawtime.iso.split()[0],
+                         'Date at start of observation (UTC)')
+    hdict['DATE-OBS'] = header['DATE-OBS']
+    # TODO: FIX: UTC-OBS should be DATE: HH:MM:SS.SS
+    header['UTC-OBS'] = (rawtime.iso.split()[1],
+                         'Time at start of observation (UTC)')
+    hdict['UTC-OBS'] = header['UTC-OBS']
+    # TODO: END ---------------------------------------------------------------
+    # --------------------------------------------------------------------------
     func_name = __NAME__ + '.get_mid_obs_time()'
     kwmidobstime = params['KW_MID_OBS_TIME'][0]
     kwmidcomment = params['KW_MID_OBS_TIME'][2]
@@ -495,6 +535,7 @@ def get_mid_obs_time(params, header, hdict, filename=None):
     # add method
     header[kwmidmethod] = (method, methodcomment)
     hdict[kwmidmethod] = (method, methodcomment)
+
     # return the header
     return header, hdict
 
