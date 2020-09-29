@@ -13,7 +13,7 @@ __all__ = [  # input keys
     'KW_CMPLTEXP', 'KW_NEXP', 'KW_PI_NAME', 'KW_PLX', 'KW_CALIBWH',
     'KW_TARGET_TYPE', 'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP',
     'KW_HUMIDITY', 'KW_GAIA_ID', 'KW_INPUTRV', 'KW_OBJ_TEMP',
-    'KW_SATURATE', 'KW_FRMTIME', 'KW_OBJECTNAME',
+    'KW_SATURATE', 'KW_FRMTIME', 'KW_OBJECTNAME', 'KW_RAW_DPRTYPE',
     # general output keys
     'KW_VERSION', 'KW_PPVERSION', 'KW_DPRTYPE', 'KW_PID',
     'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3',
@@ -229,6 +229,11 @@ KW_NEXP = Keyword('KW_NEXP', key='', dtype=int, source=__NAME__)
 
 # define the pi name HEADER key
 KW_PI_NAME = Keyword('KW_PI_NAME', key='', dtype=str, source=__NAME__)
+
+# -----------------------------------------------------------------------------
+# Required header keys (main fits file) - NIRPS specfic
+# -----------------------------------------------------------------------------
+KW_RAW_DPRTYPE = Keyword('KW_RAW_DPRTYPE', key='', dtype=str, source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Required header keys (related to science object)
