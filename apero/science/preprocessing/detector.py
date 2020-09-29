@@ -12,6 +12,7 @@ import numpy as np
 import os
 import warnings
 from scipy import ndimage
+from scipy.ndimage import median_filter
 
 from apero.core import constants
 from apero.core.core import drs_database
@@ -105,6 +106,38 @@ def ref_top_bottom(params, image):
             image[:, pixmask+oddeven] -= contrib
     # return corrected image
     return image
+
+
+def correct_left_right(params, image):
+    # TODO: change to NUM_REF_LEFT NUM_REF_RIGHT
+    nleft = params['PP_NUM_REF_TOP']
+    nright = params['PP_NUM_REF_BOTTOM']
+    width = 5
+    # get the shape
+    ypix, xpix = image.shape
+    # we correct for the left-right reference pixels
+    # we take the median of the 8 left-right pixels to derive
+    # a noise pattern that is 4096 pixels long. This noise pattern
+    # is median-filtered with a kernel with a "width". Typical
+    # values for this parameter are 10-20 pixels
+    sides = list(range(0, nleft)) + list(range(xpix - nright, xpix))
+    # get the reference pixels
+    reference_pixels_sides = image[:, sides]
+    # loop around each reference pixel
+    for it in range(len(sides)):
+        # remove DC level between pixels so that the median+axis=1 really
+        # filters noise. Otherwise, the median would just select the pixel
+        # that has the median DC level
+        nanmed = np.nanmedian(reference_pixels_sides[:, it])
+        reference_pixels_sides[:, it] -= nanmed
+    # median profile of the 8 pixels
+    medprofile = np.nanmedian(reference_pixels_sides,axis=1)
+    # filter profile with width
+    medprofile_filtered = median_filter(medprofile, width)
+    # correlated noise replicated onto the output image format
+    correlated_noise = np.repeat(medprofile_filtered, ypix).reshape(ypix, xpix)
+    # return the corrected image
+    return image - correlated_noise
 
 
 def median_filter_dark_amp(params, image):
