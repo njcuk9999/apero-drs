@@ -10,7 +10,8 @@ Created on 2019-01-21 at 09:33
 @author: cook
 
 Import rules:
-    Not from core.utils
+    only from core.core.drs_log, core.io, core.math, core.constants,
+    apero.lang, apero.base
 """
 from astropy.table import Column, Table, vstack
 from astropy.table import TableMergeError

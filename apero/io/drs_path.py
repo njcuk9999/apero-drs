@@ -10,7 +10,10 @@ Created on 2019-03-21 at 11:36
 @author: cook
 
 Import rules:
-    Not from core.utils
+    only from core.core.drs_log, core.io, core.math, core.constants,
+    apero.lang, apero.base
+
+    do not import from core.io.drs_image
 """
 import numpy as np
 from astropy import units as uu

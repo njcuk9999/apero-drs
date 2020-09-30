@@ -8,8 +8,8 @@ Created on 2019-03-21 at 14:28
 @author: cook
 
 Import rules:
-
-Not from core.utils
+    only from core.core.drs_log, core.io, core.math, core.constants,
+    apero.lang, apero.base
 """
 import numpy as np
 import warnings
