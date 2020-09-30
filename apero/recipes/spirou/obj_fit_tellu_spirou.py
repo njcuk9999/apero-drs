@@ -214,8 +214,8 @@ def __main__(recipe, params):
         # telluric pre-cleaning
         # ------------------------------------------------------------------
         tpreprops = telluric.tellu_preclean(params, recipe, infile, wprops,
-                                            fiber, rawfiles, combine)
-
+                                            fiber, rawfiles, combine,
+                                            database=telludbm)
         # get variables out of tpreprops
         image1 = tpreprops['CORRECTED_E2DS']
         # ------------------------------------------------------------------
