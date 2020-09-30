@@ -11,7 +11,10 @@ Created on 2019-01-21 at 09:37
 
 
 Import rules:
-    Not from core.utils
+    only from core.core.drs_log, core.io, core.math, core.constants,
+    apero.lang, apero.base
+
+    not from core.io.drs_table, core.io.drs_fits
 
 """
 import numpy as np
@@ -69,11 +72,12 @@ class Lock:
         self.classname = 'Lock'
         # set function
         func_name = display_func(params, '__init__', __NAME__, self.classname)
+        # set params
+        self.params = params
         # set the bad characters to clean
         self.bad_chars = ['/', '\\', '.', ',']
         # replace all . and whitespace with _
         self.lockname = self.__clean_name(lockname)
-        self.params = params
         # get the lock path
         self.lockpath = os.path.join(params['DRS_DATA_MSG'], 'lock')
         # ------------------------------------------------------------------
