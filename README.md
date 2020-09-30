@@ -355,6 +355,7 @@ Currently defined sequences are:
 where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
 i.e. for RUN_XXXX and SKIP_XXXX.
 
+Note: these default to True - set to False if not needed.
 
 | recipe                                                          | SHORT_NAME | COMMENT |
 | --------------------------------------------------------------- | ---------- | ------- | 
@@ -399,6 +400,9 @@ to filter the objects processed (in `cal_extract`, `obj_mk_tellu`, `obj_fit_tell
 
 where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
 i.e. for RUN_XXXX and SKIP_XXXX.
+
+
+Note: these default to True - set to False if not needed.
 
 | recipe                                                              | SHORT_NAME |
 | ------------------------------------------------------------------- | ---------- | 
@@ -457,6 +461,10 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
 i.e. for RUN_XXXX and SKIP_XXXX.
 
+Note: these default to True - set to False if not needed.
+Note: there are overlaps - `PP_CAL` overlaps with `PP_HC1HC1`, `PP_FPFP` etc so set
+only the ones you need to True - otherwise you will process the same files twice.
+
 | recipe                                                                   | SHORT_NAME |
 | ------------------------------------------------------------------------ | ---------- | 
 | cal_preprocessing [every night; OBJECT="Calibration"]                    | PP_CAL     |
@@ -468,12 +476,16 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 | cal_preprocessing [every night; DARK_DARK_SKY]                           | PP_SKY     |
 | cal_preprocessing [every night; LFC_LFC]                                 | PP_LFC     |
 
+
+
 ##### 4. `master_seq`
 
 Only run the master recipes
 
 where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
 i.e. for RUN_XXXX and SKIP_XXXX.
+
+Note: these default to True - set to False if not needed.
 
 | recipe                                                              | SHORT_NAME |
 | ------------------------------------------------------------------- | ---------- | 
@@ -499,6 +511,8 @@ Only run the nightly calibration sequences and make a complete calibration datab
 where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
 i.e. for RUN_XXXX and SKIP_XXXX.
 
+Note: these default to True - set to False if not needed.
+
 | recipe                                                              | SHORT_NAME |
 | ------------------------------------------------------------------- | ---------- | 
 | cal_badpix [every night]                                            | BAD        |
@@ -520,6 +534,8 @@ Only run the steps required to process `{TELLURIC_TARGETS}` and make the telluri
 where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
 i.e. for RUN_XXXX and SKIP_XXXX.
 
+Note: these default to True - set to False if not needed.
+
 | recipe                                                              | SHORT_NAME |
 | ------------------------------------------------------------------- | ---------- | 
 | cal_extract [OBJ_DARK + OBJ_FP; every night; TELLURIC_TARGETS]      | EXTTELL    |
@@ -539,6 +555,8 @@ Only run the steps required to process `{SCIENCE_TARGETS}`
 where `recipe` is the recipe run and `short_name` is the name used in the `RUN_INI_FILES`
 i.e. for RUN_XXXX and SKIP_XXXX.
 
+Note: these default to True - set to False if not needed.
+
 | recipe                                                              | SHORT_NAME |
 | ------------------------------------------------------------------- | ---------- | 
 | cal_extract [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]       | EXTOBJ     |
@@ -553,13 +571,11 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 
 Other sequences, probably only useful for engineering data
 
+Note: these default to True - set to False if not needed.
+
+
 | recipe                                                              | SHORT_NAME |
 | ------------------------------------------------------------------- | ---------- | 
-| cal_preprocess [HC1_HC1]                                            | PP_HC1HC1  |
-| cal_preprocess [FP_FP]                                              | PP_FPFP    |
-| cal_preprocess [DARK_FP]                                            | PP_DFP     |
-| cal_preprocess [DARK_DARK_SKY]                                      | PP_SKY     |
-| cal_preprocess [LFC_LFC]                                            | PP_LFC     |
 | cal_extract [HC1_HC1]                                               | EXT_HC1HC1 |
 | cal_extract [FP_FP]                                                 | EXT_FPFP   |
 | cal_extract [DARK_FP]                                               | EXT_DFP    |
