@@ -45,6 +45,8 @@ WLOG = drs_log.wlog
 # get drs header
 DrsHeader = drs_file.Header
 FitsHeader = drs_file.FitsHeader
+# get file types
+DrsInputFile = drs_file.DrsInputFile
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 # define drs files
@@ -271,8 +273,10 @@ class CalibrationDatabase(DatabaseManager):
         values = [key, fiber, is_super, filename, human_time, unix_time, used]
         self.database.add_row(values, 'MAIN', commit=True)
 
-    def get_calib_entry(self, columns: str, key: str, fiber: Union[str, None],
-                        filetime: Union[Time, None], timemode: str = 'older',
+    def get_calib_entry(self, columns: str, key: str,
+                        fiber: Union[str, None] = None,
+                        filetime: Union[Time, None] = None,
+                        timemode: str = 'older',
                         nentries: Union[int, str] = '*'
                         ) -> Union[None, list, tuple, np.ndarray, pd.DataFrame]:
         """
@@ -346,7 +350,11 @@ class CalibrationDatabase(DatabaseManager):
                 return entries[0][0]
             else:
                 return None
-        elif len(columns) == 1:
+
+        # deal with having the possibility of more than one column
+        colnames = self.database.colnames(columns)
+        # if we have one column return a list
+        if len(colnames) == 1:
             # return array for ease
             sql['return_array'] = True
             # do sql query
@@ -356,6 +364,7 @@ class CalibrationDatabase(DatabaseManager):
                 return []
             else:
                 return entries[:, 0]
+        # else return a pandas table
         else:
             # return as pandas table
             sql['return_pandas'] = True
@@ -501,8 +510,13 @@ class TelluricDatabase(DatabaseManager):
         # set database directory
         self.filedir = Path(str(self.params['DRS_TELLU_DB']))
 
-    def add_tellu_file(self, drsfile, verbose: bool = True,
-                       copy_files=True):
+
+    def add_tellu_file(self, drsfile: DrsInputFile, verbose: bool = True,
+                       copy_files: bool = True,
+                       objname: Union[str, None] = None,
+                       airmass: Union[float, None] = None,
+                       tau_water: Union[float, None] = None,
+                       tau_others: Union[float, None] = None):
         """
         Add DrsFile to the calibration database
 
@@ -533,16 +547,20 @@ class TelluricDatabase(DatabaseManager):
         # get time
         header_time = _get_time(self.params, self.name, header, hdict)
         # get object name
-        objname = _get_hkey(self.params, 'KW_OBJNAME', hdict, header)
+        if objname is None:
+            objname = _get_hkey(self.params, 'KW_OBJNAME', hdict, header)
         # get airmass
-        airmass = _get_hkey(self.params, 'KW_AIRMASS', hdict, header,
+        if airmass is None:
+            airmass = _get_hkey(self.params, 'KW_AIRMASS', hdict, header,
                             dtype=float)
         # get tau_water
-        tau_water = _get_hkey(self.params, 'KW_TELLUP_EXPO_WATER', hdict,
-                              header, dtype=float)
+        if tau_water is None:
+            tau_water = _get_hkey(self.params, 'KW_TELLUP_EXPO_WATER', hdict,
+                                  header, dtype=float)
         # get tau_others
-        tau_others = _get_hkey(self.params, 'KW_TELLUP_EXPO_OTHERS', hdict,
-                               header, dtype=float)
+        if tau_others is None:
+            tau_others = _get_hkey(self.params, 'KW_TELLUP_EXPO_OTHERS', hdict,
+                                   header, dtype=float)
         # ------------------------------------------------------------------
         # deal with database input being set to False
         if 'DATABASE' in self.params['INPUTS']:
@@ -566,14 +584,21 @@ class TelluricDatabase(DatabaseManager):
         human_time = str(header_time.iso)
         unix_time = str(header_time.unix).strip()
         used = 1
+        # deal with no tau_water/tau_other being None (should be float)
+        # if tau_water is None:
+        #     tau_water = 'None'
+        # if tau_others is None:
+        #     tau_others = 'None'
         # ------------------------------------------------------------------
         # add entry to database
         values = [key, fiber, is_super, filename, human_time, unix_time,
                   objname, airmass, tau_water, tau_others, used]
         self.database.add_row(values, 'MAIN', commit=True)
 
-    def get_tellu_entry(self, columns: str, key: str, fiber: Union[str, None],
-                        filetime: Union[Time, None], timemode: str = 'older',
+    def get_tellu_entry(self, columns: str, key: str,
+                        fiber: Union[str, None] = None,
+                        filetime: Union[Time, None] = None,
+                        timemode: str = 'older',
                         nentries: Union[int, str] = '*',
                         objname: Union[str, None] = None,
                         tau_water: Union[Tuple[float, float], None] = None,
@@ -672,7 +697,10 @@ class TelluricDatabase(DatabaseManager):
                 return entries[0][0]
             else:
                 return None
-        elif len(columns) == 1:
+        # deal with having the possibility of more than one column
+        colnames = self.database.colnames(columns)
+        # if we have one column return a list
+        if len(colnames) == 1:
             # return array for ease
             sql['return_array'] = True
             # do sql query
@@ -682,6 +710,7 @@ class TelluricDatabase(DatabaseManager):
                 return []
             else:
                 return entries[:, 0]
+        # else return a pandas table
         else:
             # return as pandas table
             sql['return_pandas'] = True
@@ -777,6 +806,9 @@ class TelluricDatabase(DatabaseManager):
         filenames = self.get_tellu_entry('FILENAME', key, fiber, filetime,
                                          timemode, nentries, objname,
                                          tau_water, tau_others)
+        # deal with filename being pandas dataframe (i.e.
+
+
         # ---------------------------------------------------------------------
         # return absolute paths
         # ---------------------------------------------------------------------
@@ -816,6 +848,8 @@ class TelluricDatabase(DatabaseManager):
                 outfilenames.append(outfilename)
             # return outfilenames
             return outfilenames
+
+
 
 
 # =============================================================================
@@ -953,7 +987,7 @@ def _copy_db_file(params: ParamDict, drsfile: DrsFileTypes,
     # construct out path
     outpath = Path(outpath).joinpath(drsfile.basename)
     # skip if inpath and outpath are the same
-    if inpath == outpath:
+    if str(inpath) == str(outpath):
         return
     # copy
     try:
