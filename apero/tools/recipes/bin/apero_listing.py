@@ -14,10 +14,11 @@ import os
 from apero.base import base
 from apero import lang
 from apero.core import constants
+from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.tools.module import listing
-from apero.io import drs_fits
+
 
 # =============================================================================
 # Define variables
@@ -104,7 +105,7 @@ def __main__(recipe, params):
     # deal with kind
     if kind.lower() == 'raw':
         # push files in to runs/raw_index
-        _ = drs_fits.find_raw_files(params, recipe)
+        _ = drs_file.find_raw_files(params, recipe)
 
         return drs_startup.return_locals(params, locals())
     elif kind.lower() == 'tmp':

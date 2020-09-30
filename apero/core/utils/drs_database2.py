@@ -18,8 +18,9 @@ from apero.base import drs_db
 from apero.base import drs_exceptions
 from apero import lang
 from apero.core import constants
-from apero.core.core import drs_log, drs_file
-from apero.io import drs_fits
+from apero.core.core import drs_file
+from apero.core.core import drs_log
+
 
 # =============================================================================
 # Define variables
@@ -42,8 +43,8 @@ display_func = drs_log.display_func
 # get WLOG
 WLOG = drs_log.wlog
 # get drs header
-DrsHeader = drs_fits.Header
-FitsHeader = drs_fits.fits.Header
+DrsHeader = drs_file.Header
+FitsHeader = drs_file.FitsHeader
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
 # define drs files
@@ -280,7 +281,8 @@ class CalibrationDatabase(DatabaseManager):
         :param columns: str, pushed to SQL (i.e. list columns or '*' for all)
         :param key: str, KEY=="key" condition
         :param fiber: str or None, if set FIBER=="fiber"
-        :param filetime: astropy.Time,
+        :param filetime: astropy.Time, if Not None the point in time to order
+                         the files by
         :param timemode: str, the way in which to select which calibration to
                          use (either 'older' 'closest' or 'newer'
         :param nentries: int or str, the number of entries to return
@@ -313,6 +315,7 @@ class CalibrationDatabase(DatabaseManager):
             #       ABS(UNIXTIME - FILETIME)
             sql['condition'] += ' AND UNIXTIME - {0} < 0'.format(filetime.unix)
             sql['sort_by'] = 'abs(UNIXTIME - {0})'.format(filetime.unix)
+            sql['sort_descending'] = False
         elif timemode == 'newer' and filetime is not None:
             # condition:
             #       UNIXTIME - FILETIME > 0
@@ -320,10 +323,17 @@ class CalibrationDatabase(DatabaseManager):
             #       ABS(UNIXTIME - FILETIME)
             sql['condition'] += ' AND UNIXTIME - {0} > 0'.format(filetime.unix)
             sql['sort_by'] = 'abs(UNIXTIME - {0})'.format(filetime.unix)
+            sql['sort_descending'] = False
         elif filetime is not None:
             # sort by:
             #       ABS(UNIXTIME - FILETIME)
             sql['sort_by'] = 'abs(UNIXTIME - {0})'.format(filetime.unix)
+            sql['sort_descending'] = False
+        else:
+            # sort by: UNIXTIME
+            sql['sort_by'] = 'UNIXTIME'
+            sql['sort_descending'] = True
+
         # add the number of entries to get
         if isinstance(nentries, int):
             sql['max_rows'] = nentries
@@ -400,7 +410,7 @@ class CalibrationDatabase(DatabaseManager):
         # ---------------------------------------------------------------------
         # else we get it from database
         # ---------------------------------------------------------------------
-        if no_times:
+        if no_times or header is None:
             filetime = None
         elif filetime is None:
             # need to get hdict/header
@@ -561,6 +571,251 @@ class TelluricDatabase(DatabaseManager):
         values = [key, fiber, is_super, filename, human_time, unix_time,
                   objname, airmass, tau_water, tau_others, used]
         self.database.add_row(values, 'MAIN', commit=True)
+
+    def get_tellu_entry(self, columns: str, key: str, fiber: Union[str, None],
+                        filetime: Union[Time, None], timemode: str = 'older',
+                        nentries: Union[int, str] = '*',
+                        objname: Union[str, None] = None,
+                        tau_water: Union[Tuple[float, float], None] = None,
+                        tau_others: Union[Tuple[float, float], None] = None,
+                        ) -> Union[None, list, tuple, np.ndarray, pd.DataFrame]:
+        """
+        Get an entry from the calibration database
+
+        :param columns: str, pushed to SQL (i.e. list columns or '*' for all)
+        :param key: str, KEY=="key" condition
+        :param fiber: str or None, if set FIBER=="fiber"
+        :param filetime: astropy.Time, if Not None the point in time to order
+                         the files by
+        :param timemode: str, the way in which to select which telluric to
+                         use (either 'older' 'closest' or 'newer')
+                         based on filetime as the "zero point" time
+        :param nentries: int or str, the number of entries to return
+                         only valid string is '*' for all entries
+        :param objname: str or None, if set OBJECT=="fiber"
+        :param tau_water: tuple or None, if set sets the lower and upper
+                          bounds for tau water i.e.
+                          TAU_WATER > tau_water[0]
+                          TAU_WATER < tau_water[1]
+        :param tau_others: tuple or None, if set sets the lower and upper bounds
+                           for tau others  i.e.
+                           TAU_OTHERS > tau_others[0]
+                           TAU_OTHERS < tau_others[1]
+        :return: the entries of columns, if nentries = 1 returns either that
+                 entry (as a tuple) or None, if len(columns) = 1, returns
+                 a np.ndarray, else returns a pandas table
+        """
+        # set function
+        _ = display_func(self.params, 'get_tellu_entry', __NAME__,
+                         self.classname)
+        # set up kwargs from database query
+        sql = dict()
+        # set up sql kwargs
+        sql['sort_by'] = None
+        sql['sort_descending'] = True
+        # condition for key
+        sql['condition'] = 'KEY == "{0}"'.format(key)
+        # condition for used
+        sql['condition'] += ' AND USED == 1'
+        # condition for fiber
+        if fiber is not None:
+            sql['condition'] += ' AND FIBER == "{0}"'.format(fiber)
+        # condition for objname
+        if objname is not None:
+            sql['condition'] += ' AND OBJECT == "{0}"'.format(objname)
+
+        # condition for tau_water
+        if tau_water is not None and len(tau_water) == 2:
+            sql['condition'] += 'AND TAU_WATER > {0}'.format(tau_water[0])
+            sql['condition'] += 'AND TAU_WATER < {0}'.format(tau_water[1])
+
+        # condition for tau_other
+        if tau_others is not None and len(tau_others) == 2:
+            sql['condition'] += 'AND TAU_OTHERS > {0}'.format(tau_others[0])
+            sql['condition'] += 'AND TAU_OTHERS < {0}'.format(tau_others[1])
+
+        # sql for time mode
+        if timemode == 'older' and filetime is not None:
+            # condition:
+            #       UNIXTIME - FILETIME < 0
+            # sort by:
+            #       ABS(UNIXTIME - FILETIME)
+            sql['condition'] += ' AND UNIXTIME - {0} < 0'.format(filetime.unix)
+            sql['sort_by'] = 'abs(UNIXTIME - {0})'.format(filetime.unix)
+            sql['sort_descending'] = False
+        elif timemode == 'newer' and filetime is not None:
+            # condition:
+            #       UNIXTIME - FILETIME > 0
+            # sort by:
+            #       ABS(UNIXTIME - FILETIME)
+            sql['condition'] += ' AND UNIXTIME - {0} > 0'.format(filetime.unix)
+            sql['sort_by'] = 'abs(UNIXTIME - {0})'.format(filetime.unix)
+            sql['sort_descending'] = False
+        elif filetime is not None:
+            # sort by:
+            #       ABS(UNIXTIME - FILETIME)
+            sql['sort_by'] = 'abs(UNIXTIME - {0})'.format(filetime.unix)
+            sql['sort_descending'] = False
+        else:
+            # sort by: UNIXTIME
+            sql['sort_by'] = 'UNIXTIME'
+            sql['sort_descending'] = True
+        # add the number of entries to get
+        if isinstance(nentries, int):
+            sql['max_rows'] = nentries
+        # if we have one entry just get the tuple back
+        if nentries == 1:
+            # do sql query
+            entries = self.database.get(columns, 'MAIN', **sql)
+            # return filename
+            if len(entries) == 1:
+                return entries[0][0]
+            else:
+                return None
+        elif len(columns) == 1:
+            # return array for ease
+            sql['return_array'] = True
+            # do sql query
+            entries = self.database.get(columns, 'MAIN', **sql)
+            # return one list
+            if len(entries) == 0:
+                return []
+            else:
+                return entries[:, 0]
+        else:
+            # return as pandas table
+            sql['return_pandas'] = True
+            # do sql query
+            entries = self.database.get(columns, 'MAIN', **sql)
+            # return pandas table
+            return entries
+
+    def get_tellu_file(self, key: str, drsfile=None, header=None, hdict=None,
+                       filetime: Union[None, Time] = None,
+                       timemode: Union[str, None] = None,
+                       nentries: Union[str, int] = 1,
+                       required: bool = True,
+                       no_times: bool = False,
+                       objname: Union[str, None] = None,
+                       tau_water: Union[Tuple[float, float], None] = None,
+                       tau_others: Union[Tuple[float, float], None] = None,
+                       fiber: Union[str, None] = None
+                       ) -> Union[None, Path, List[Path]]:
+        """
+        Handles getting a filename from telluric database (from filename,
+        user input, or key in SQL database
+
+        if filename is set or userinputkey in params['INPUTS'] sql database
+        is not used
+
+        for file time precedence is as follows:
+            filetime >> hdict >> header >> drsfile
+
+        :param key: str, the calibration key to look for in sql database
+        :param drsfile: if set get time from drsfile header/hdict
+                        (unless filetime set)
+        :param header: if set get time from header (unless filetime set)
+        :param hdict: if set get time from hdict (unless filetime set)
+        :param filetime: Astropy Time or None - if set do not need
+                         drsfile/header/hdict
+        :param timemode: None to use default or 'older' for only files older
+                         that time in header/hdict/drsfile
+        :param nentries: int/str if using the sql database sets max number of
+                         entries to return
+        :param required: bool, if True will cause an exception when no entries
+                         found
+        :param no_times: bool, if True does not use times to choose correct
+                         files
+        :param objname: str or None, if set filters by object name
+
+        :param tau_water: tuple or None, filters the lower and upper
+                          bounds for tau water i.e.
+                          TAU_WATER > tau_water[0]
+                          TAU_WATER < tau_water[1]
+        :param tau_others: tuple or None, filters the lower and upper bounds
+                           for tau others  i.e.
+                           TAU_OTHERS > tau_others[0]
+                           TAU_OTHERS < tau_others[1]
+
+        :param fiber: str or None, if set sets the fiber to use - if no fiber
+                      required do not set
+        :return:
+        """
+        # set function
+        func_name = display_func(self.params, 'get_calib_file', __NAME__,
+                                 self.classname)
+        # deal with no database
+        if self.database is None:
+            self.load_db()
+        # ---------------------------------------------------------------------
+        # else we get it from database
+        # ---------------------------------------------------------------------
+        if no_times or header is None:
+            filetime = None
+        elif filetime is None:
+            # need to get hdict/header
+            hdict, header = _get_hdict(self.params, self.name, drsfile, hdict,
+                                       header)
+            # need to get filetime
+            filetime = _get_time(self.params, self.name, hdict, header)
+        # ---------------------------------------------------------------------
+        # deal with default time mode
+        if timemode is None:
+            # get default mode from params
+            timemode = self.params['TELLU_DB_MATCH']
+            if timemode not in ['closest', 'older', 'newer']:
+                # log error: Time mode invalid for Calibration database.
+                eargs = [timemode, ' or '.join(['closest', 'older', 'newer'])]
+                emsg = TextEntry('00-002-00021', args=eargs)
+                WLOG(self.params, 'error', emsg)
+        # ---------------------------------------------------------------------
+        # do sql query
+        # ---------------------------------------------------------------------
+        # get calibration database entries --> FILENAME
+        #   if nentries = 1 : str or None
+        #   if nentries > 1 : 1d numpy array
+        filenames = self.get_tellu_entry('FILENAME', key, fiber, filetime,
+                                         timemode, nentries, objname,
+                                         tau_water, tau_others)
+        # ---------------------------------------------------------------------
+        # return absolute paths
+        # ---------------------------------------------------------------------
+        # deal with no filenames found and not required
+        if (filenames is None or len(filenames) == 0) and not required:
+            return None
+        # deal with no filenames found elsewise --> error
+        if filenames is None or len(filenames) == 0:
+            # get unique set of keys
+            keys = np.unique(self.database.get('KEY', return_array=True))
+            # get file description
+            if drsfile is not None:
+                if no_times:
+                    infile = '{0} [NoTime]'.format(drsfile.filename)
+                else:
+                    infile = '{0} [Time={1}]'.format(drsfile.filename,
+                                                     filetime.iso)
+            else:
+                if no_times:
+                    infile = 'File[NoTime]'
+                else:
+                    infile = 'File[Time={0}]'.format(filetime.iso)
+            # log error: No entries found in {0} database for key='{1}
+            eargs = [self.name, key, ', '.join(keys), infile, func_name]
+            WLOG(self.params, 'error', TextEntry('00-002-00015', args=eargs))
+        # make all files absolute paths
+        if isinstance(filenames, str):
+            return Path(self.filedir).joinpath(filenames).absolute()
+        # else loop around them (assume they are iterable)
+        else:
+            # set output storage
+            outfilenames = []
+            # loop around filenames
+            for filename in filenames:
+                outfilename = Path(self.filedir).joinpath(filename).absolute()
+                # append to storage
+                outfilenames.append(outfilename)
+            # return outfilenames
+            return outfilenames
 
 
 # =============================================================================
@@ -775,10 +1030,10 @@ def _get_time(params: ParamDict, dbname: str,
     # ----------------------------------------------------------------------
     # get raw time from hdict / header
     if hdict is not None:
-        t, m = drs_fits.get_mid_obs_time(params, hdict, out_fmt=kind)
+        t, m = drs_file.get_mid_obs_time(params, hdict, out_fmt=kind)
         return t
     elif header is not None:
-        t, m = drs_fits.get_mid_obs_time(params, header, out_fmt=kind)
+        t, m = drs_file.get_mid_obs_time(params, header, out_fmt=kind)
         return t
     else:
         eargs = [dbname, func_name]

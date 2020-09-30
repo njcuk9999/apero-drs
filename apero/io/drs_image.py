@@ -6,6 +6,10 @@ Functions for dealing with drs images
 Created on 2019-03-21 at 14:28
 
 @author: cook
+
+Import rules:
+
+Not from core.utils
 """
 import numpy as np
 import warnings
@@ -13,13 +17,14 @@ import os
 from typing import List, Union, Tuple
 
 from apero.base import base
+from apero.base import drs_misc
 from apero.core import constants
-from apero.core.utils import drs_startup
 from apero.core import math as mp
 from apero.core.core import drs_log
 from apero import lang
 from apero.io import drs_fits
 from apero.io import drs_path
+
 
 # =============================================================================
 # Define variables
@@ -457,7 +462,7 @@ def npy_filelist(params: ParamDict, name: str, index: int,
     # deal with having no subdir
     if subdir is None:
         # get unix char code
-        unixtime, humantime, rval = drs_startup.unix_char_code()
+        unixtime, humantime, rval = drs_misc.unix_char_code()
         # create subdir
         subdir = 'LIM-{0:020d}-{1}'.format(int(unixtime), rval)
     # construct file name

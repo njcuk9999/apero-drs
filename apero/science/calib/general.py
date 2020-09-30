@@ -7,8 +7,9 @@ Created on 2019-06-27 at 10:48
 
 @author: cook
 """
+from astropy.table import Table
 import numpy as np
-from typing import Union, Tuple
+from typing import List, Union, Tuple
 from pathlib import Path
 import warnings
 
@@ -19,10 +20,12 @@ from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_database2 as drs_database
+from apero.core.utils import drs_data
 from apero.io import drs_fits
 from apero.io import drs_image
 from apero.io import drs_path
 from apero.io import drs_table
+
 from apero.science.calib import dark
 from apero.science.calib import badpix
 from apero.science.calib import background
@@ -40,6 +43,8 @@ __date__ = base.__date__
 __release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
+# get calibration database
+CalibDatabase = drs_database.CalibrationDatabase
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
@@ -49,19 +54,6 @@ TextDict = lang.core.drs_lang_text.TextDict
 pcheck = constants.PCheck(wlog=WLOG)
 # get display func
 display_func = drs_log.display_func
-
-# =============================================================================
-# define complex Typing
-# =============================================================================
-# for: load_calib_file
-LoadCalibFileReturn = Union[   # if return filename
-                            str,
-                            # if return_filename + return_source
-                            Tuple[str, str],
-                            # default
-                            Tuple[np.ndarray, drs_fits.Header, str],
-                            # if return_source
-                            Tuple[np.ndarray, drs_fits.Header, str, str]]
 
 
 # =============================================================================
@@ -166,7 +158,7 @@ def calibrate_ppfile(params, recipe, infile, database=None, **kwargs):
     backkey = backinst.get_dbkey()
     # load database
     if database is None:
-        calibdbm = drs_database.CalibrationDatabase(params)
+        calibdbm = CalibDatabase(params)
         calibdbm.load_db()
     else:
         calibdbm = database
@@ -368,30 +360,103 @@ def add_calibs_to_header(outfile, props):
     return outfile
 
 
-def load_calib_file(params, key=None, inheader=None, filename=None,
-                    get_image=True, get_header=False, fiber=None,
-                    userinputkey=None, database=None,
-                    return_filename=False, return_source=False,
-                    **kwargs) -> LoadCalibFileReturn:
+# for: load_calib_file
+LoadCalibFileReturn = Union[# if return filename
+                            str,
+                            # if return_filename + return_source
+                            Tuple[str, str],
+                            # default
+                            Tuple[Union[np.ndarray, Table, None],
+                                  Union[drs_fits.Header, None],
+                                  str],
+                            # if return_source
+                            Tuple[Union[np.ndarray, Table, None],
+                                  Union[drs_fits.Header, None],
+                                  str, str],
+                            # if nentries > 1
+                            List[str],
+                            # if nentries > 1 + return source
+                            Tuple[List[str], str],
+                            # if nentries > 1 + default
+                            Tuple[List[Union[np.ndarray, Table, None]],
+                                  List[Union[drs_fits.Header, None]],
+                                  List[str]],
+                            # if nentries > 1 + return source
+                            Tuple[List[Union[np.ndarray, None]],
+                                  List[Union[drs_fits.Header, None]],
+                                  List[str], str]
+                            ]
+
+
+def load_calib_file(params: ParamDict, key: str,
+                    inheader: Union[drs_fits.Header, None] = None,
+                    filename: Union[str, None] = None,
+                    get_image: bool = True, get_header: bool = False,
+                    fiber: Union[str, None] = None,
+                    userinputkey: Union[str, None] = None,
+                    database: Union[CalibDatabase, None] = None,
+                    return_filename: bool = False, return_source: bool = False,
+                    mode: Union[str, None] = None,
+                    n_entries: Union[int, str] = 1,
+                    required: bool = True, ext: int = 0, fmt: str = 'fits',
+                    kind: str = 'image') -> LoadCalibFileReturn:
+    """
+    Load one or many calibration files
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param key: str, the key from the calibration database to select a
+                specific calibration with
+    :param inheader: fits.Header - the header file (required to match by time)
+                     if None does not match by a 'zero point' time)
+
+    :param filename: str or None, if set overrides filename from database
+    :param get_image: bool, if True loads image (or images if nentries > 1),
+                      if False image is None (or list of Nones if nentries > 1)
+    :param get_header: bool, if True loads header (or headers if nentries > 1)
+                       if False header is None (or list of Nones if
+                       nentries > 1)
+    :param fiber: str or None, if set must be the fiber type - all returned
+                  calibrations are filtered by this fiber type
+    :param userinputkey: str or None, if set checks params['INPUTS'] for this
+                         key and sets filename from here - note params['INPUTS']
+                         is where command line arguments are stored
+    :param database: drs calibration database instance - set this if calibration
+                     database already loaded (if unset will reload the database)
+    :param return_filename: bool, if True returns the filename only
+    :param return_source: bool, if True returns the source of the calib file(s)
+    :param mode: str or None, the time mode for getting from sql
+                 ('closest'/'newer'/'older')
+    :param n_entries: int or str, maximum number of calibration files to return
+                      for all entries use '*'
+    :param required: bool, whether we require an entry - will raise exception
+                     if required=True and no entries found
+    :param ext: int, valid extension (zero by default) when kind='image'
+    :param fmt: str, astropy.table.Table valid format (when kind='table')
+    :param kind: str, either 'image' for fits image or 'table' for table
+
+    :return:
+             if get_image, also returns image/table or list of images/tables
+             if get_header, also returns header or list of headers
+             if return_filename, returns filename or list of filenames
+             if return_source, also returns source
+
+             i.e. possible returns are:
+                 filename
+                 filename, source
+                 image, header, filename
+                 image, header, filename, source
+                 List[filename]
+                 List[filename], source
+                 List[image], List[header], List[filename]
+                 List[image], List[header], List[filename], source
+
+    """
     # set function
     _ = display_func(params, 'load_calib_file', __NAME__)
     # ------------------------------------------------------------------------
-    # the time mode for getting from sql ('closest'/'newer'/'older')
-    mode = kwargs.get('mode', None)
-    # get inptus from kwargs
-    n_entries = kwargs.get('n_entries', 1)
-    # whether we require an entry
-    required = kwargs.get('required', True)
-    # valid extension (zero by default)
-    ext = kwargs.get('ext', 0)
-    # fmt = valid astropy table format
-    fmt = kwargs.get('fmt', 'fits')
-    # kind = 'image' or 'table'
-    kind = kwargs.get('kind', 'image')
-    # ------------------------------------------------------------------------
     # first try to get file from inputs
-    fout = get_file_from_inputs(params, 'calibration', userinputkey, filename,
-                                return_source=return_source)
+    fout = drs_data.get_file_from_inputs(params, 'calibration', userinputkey,
+                                         filename, return_source=return_source)
     if return_source:
         filename, source = fout
     else:
@@ -409,7 +474,7 @@ def load_calib_file(params, key=None, inheader=None, filename=None,
         # check if we have the database
         if database is None:
             # construct a new database instance
-            database = drs_database.CalibrationDatabase(params)
+            database = CalibDatabase(params)
             # load the database
             database.load_db()
         # load filename from database
@@ -420,7 +485,10 @@ def load_calib_file(params, key=None, inheader=None, filename=None,
     # -------------------------------------------------------------------------
     # deal with filename being a path --> string (unless None)
     if filename is not None:
-        filename = str(filename)
+        if isinstance(filename, list):
+            filename = list(map(lambda strfile: str(strfile), filename))
+        else:
+            filename = str(filename)
     # -------------------------------------------------------------------------
     # if we are just returning filename return here
     if return_filename:
@@ -429,14 +497,33 @@ def load_calib_file(params, key=None, inheader=None, filename=None,
         else:
             return filename
     # -------------------------------------------------------------------------
-    # now read the calibration file
-    image, header = read_calib_file(params, filename, get_image, get_header,
-                                    kind, fmt, ext)
-    # return all
-    if return_source:
-        return image, header, filename, source
+    # need to deal with a list of files
+    if isinstance(filename, list):
+        # storage for images and headres
+        images, headers = [], []
+        # loop around files
+        for file_it in filename:
+            # now read the calibration file
+            image, header = drs_data.read_db_file(params, file_it, get_image,
+                                                  get_header, kind, fmt, ext)
+            # append to storage
+            images.append(image)
+            headers.append(headers)
+        # return all
+        if return_source:
+            return images, headers, filename, source
+        else:
+            return images, headers, filename
+
     else:
-        return image, header, filename
+        # now read the calibration file
+        image, header = drs_data.read_db_file(params, filename, get_image,
+                                              get_header, kind, fmt, ext)
+        # return all
+        if return_source:
+            return image, header, filename, source
+        else:
+            return image, header, filename
 
 
 def check_fp(params, image, **kwargs):
@@ -504,89 +591,6 @@ def check_fp_files(params, fpfiles):
 # =============================================================================
 # Define worker functions
 # =============================================================================
-def get_file_from_inputs(params, dbmname, userinputkey=None, default=None,
-                         return_source=False):
-    """
-    Get a file from the params['INPUTS'] user input param dict
-
-    :param params:
-    :param userinputkey:
-    :param default:
-    :return:
-    """
-    func_name = display_func(params, 'get_file_from_inputs', __NAME__)
-    # set source
-    strsource, source = None, None
-    value = None
-    # user input key file overwrites database use
-    if 'INPUTS' in params:
-        if userinputkey is None:
-            value = default
-            source = 'call to function: {0}'.format(func_name)
-        elif userinputkey in params['INPUTS']:
-            # get value from inputs
-            value = params['INPUTS'][userinputkey]
-            strsource = 'command line --{0}'.format(userinputkey.lower())
-            source = '--{0}'.format(userinputkey.lower())
-            # deal with list value (assume [[filename, DrsFile]])
-            if isinstance(value, list):
-                value = value[0][0]
-            # deal with null values
-            if drs_text.null_text(value, ['None', '']):
-                value = default
-                strsource = 'call to function: {0}'.format(func_name)
-                source = 'CALL'
-    # deal with value still being None
-    if drs_text.null_text(value, ['None', '']):
-        if return_source:
-            return None, None
-        else:
-            return None
-    # make sure file exists
-    if not Path(value).exists():
-        # log error: Database {0} - file was defined in {1} but path
-        #            does not exist.
-        eargs = [dbmname, strsource, func_name]
-        WLOG(params, 'error', TextEntry('00-002-00020', args=eargs))
-    else:
-        if return_source:
-            return value, source
-        else:
-            return value
-
-
-def read_calib_file(params, abspath: Union[str, Path], get_image, get_header,
-                    kind, fmt, ext):
-    # set function
-    func_name = display_func(params, 'load_calib_file', __NAME__)
-    # ------------------------------------------------------------------
-    # deal with npy files
-    if str(abspath).endswith('.npy'):
-        image = drs_path.numpy_load(abspath)
-        return image, None
-    # ------------------------------------------------------------------
-    # get db fits file
-    if (not get_image) or (not str(abspath).endswith('.fits')):
-        image = None
-    elif kind == 'image':
-        image = drs_fits.readfits(params, abspath, ext=ext)
-    elif kind == 'table':
-        image = drs_table.read_table(params, abspath, fmt=fmt)
-    else:
-        # raise error is kind is incorrect
-        eargs = [' or '.join(['image', 'table']), func_name]
-        WLOG(params, 'error', TextEntry('00-001-00038', args=eargs))
-        image = None
-    # ------------------------------------------------------------------
-    # get header if required (and a fits file)
-    if get_header and abspath.endswith('.fits'):
-        header = drs_fits.read_header(params, abspath, ext=ext)
-    else:
-        header = None
-    # return the image and header
-    return image, header
-
-
 def clean_strings(strings):
     if isinstance(strings, str):
         return strings.strip().upper()

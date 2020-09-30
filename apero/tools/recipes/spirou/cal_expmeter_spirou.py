@@ -16,10 +16,10 @@ from apero.base import base
 from apero import lang
 from apero.core import constants
 from apero.core import math as mp
+from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_database2 as drs_database
-from apero.io import drs_fits
 from apero.science.calib import shape
 from apero.science.calib import wave
 from apero.science import telluric
@@ -167,7 +167,7 @@ def __main__(recipe, params):
                                                   params['INSTRUMENT'],
                                                   kind='red')
         # get all "filetype" filenames
-        files = drs_fits.find_files(params, recipe, kind='red', fiber=fiber,
+        files = drs_file.find_files(params, recipe, kind='red', fiber=fiber,
                                     night=params['NIGHTNAME'],
                                     filters=dict(KW_OUTPUT=filetype))
         # deal with no files found

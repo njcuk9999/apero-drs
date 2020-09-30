@@ -15,6 +15,7 @@ from apero.base import base
 from apero import lang
 from apero.core import constants
 from apero.core.core import drs_log
+from apero.core.core import drs_file
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_fits
@@ -112,7 +113,7 @@ def __main__(recipe, params):
     fiber = pcheck(params, 'SHAPE_MASTER_FIBER', func=mainname)
 
     # get combined fpfile
-    fpfile = drs_fits.combine(params, recipe, fpfiles, math='median')
+    fpfile = drs_file.combine(params, recipe, fpfiles, math='median')
 
     # get the headers (should be the header of the first file in each)
     fpheader = fpfile.get_header()
@@ -142,7 +143,7 @@ def __main__(recipe, params):
             emsg += '\n\t - "{0}"'.format(allowedtype)
         WLOG(params, 'error', emsg)
     # get all "filetype" filenames
-    filenames = drs_fits.find_files(params, recipe, kind='tmp',
+    filenames = drs_file.find_files(params, recipe, kind='tmp',
                                     filters=dict(KW_DPRTYPE=filetype))
     # convert to numpy array
     filenames = np.array(filenames)

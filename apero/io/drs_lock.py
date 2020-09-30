@@ -7,11 +7,12 @@
 
 Created on 2019-01-21 at 09:37
 
-import rules:
-    Cannot import drs_table
-    Cannot import whole of apero.config (drs_setup uses drs_table)
-
 @author: cook
+
+
+Import rules:
+    Not from core.utils
+
 """
 import numpy as np
 import os

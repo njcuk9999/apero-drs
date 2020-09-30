@@ -17,6 +17,7 @@ from collections import OrderedDict
 from apero.base import base
 from apero import lang
 from apero.core import constants
+from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.io import drs_fits
 from apero.io import drs_path
@@ -45,7 +46,7 @@ TextDict = lang.core.drs_lang_text.TextDict
 # =============================================================================
 def remove_index_files(params, path):
     # find all index files
-    index_files = drs_fits.get_index_files(params, path, required=False)
+    index_files = drs_file.get_index_files(params, path, required=False)
     # remove all index files
     for index_file in index_files:
         # log progress

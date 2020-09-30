@@ -13,12 +13,12 @@ import os
 
 from apero.base import base
 from apero import lang
+from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_database2 as drs_database
 from apero.science import preprocessing as pp
 from apero.io import drs_image
-from apero.io import drs_fits
 from apero.core.instruments.spirou import file_definitions
 
 
@@ -118,7 +118,7 @@ def __main__(recipe, params):
         # Fix the nirps header
         # ------------------------------------------------------------------
         # certain keys may not be in some spirou files
-        file_instance = drs_fits.fix_header(params, recipe, file_instance)
+        file_instance = drs_file.fix_header(params, recipe, file_instance)
         # ------------------------------------------------------------------
         # identification of file drs type
         # ------------------------------------------------------------------
@@ -210,7 +210,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # calculate mid observation time
         # ------------------------------------------------------------------
-        mout = drs_fits.get_mid_obs_time(params, infile.get_header())
+        mout = drs_file.get_mid_obs_time(params, infile.get_header())
         mid_obs_time, mid_obs_method = mout
 
         # ------------------------------------------------------------------

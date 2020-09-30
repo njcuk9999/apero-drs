@@ -7,10 +7,10 @@
 
 Created on 2019-01-21 at 09:33
 
-import rules:
-    Cannot import whole of apero.config (drs_setup uses drs_table)
-
 @author: cook
+
+Import rules:
+    Not from core.utils
 """
 from astropy.table import Column, Table, vstack
 from astropy.table import TableMergeError

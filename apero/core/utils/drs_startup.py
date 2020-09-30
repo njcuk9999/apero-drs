@@ -79,8 +79,6 @@ INSTRUMENT_PATH = base.CONST_PATH
 CORE_PATH = base.CORE_PATH
 PDB_RC_FILE = base.PDB_RC_FILE
 CURRENT_PATH = ''
-# get all chars
-CHARS = string.ascii_uppercase + string.digits
 
 
 # =============================================================================
@@ -1540,38 +1538,11 @@ def _assign_pid() -> Tuple[str, str]:
     # set function name
     _ = display_func(None, '_assign_pid', __NAME__)
     # get unix char code
-    unixtime, humantime, rval = unix_char_code()
+    unixtime, humantime, rval = drs_misc.unix_char_code()
     # write pid
     pid = 'PID-{0:020d}-{1}'.format(int(unixtime), rval)
     # return pid and human time
     return pid, humantime
-
-
-def unix_char_code() -> Tuple[float, str, str]:
-    """
-    Get the time now (using astropy.Time) and return the unix time
-    human time and a random code of 4 characters
-
-    :return: tuple, 1. the unix time now, 2. the human time now, 3. a random
-             set of 4 characters
-    """
-    # set function name
-    _ = display_func(None, 'unix_char_code', __NAME__)
-    # we need a random seed
-    np.random.seed(random.randint(1, 2 ** 30))
-    # generate a random number (in case time is too similar)
-    #  -- happens a lot in multiprocessing
-    rint = np.random.randint(1000, 9999, 1) / 1e7
-    # wait a fraction of time (between 1us and 1ms)
-    time.sleep(rint)
-    # get the time now from astropy
-    timenow = Time.now()
-    # get unix and human time from astropy time now
-    unixtime = timenow.unix * 1e7
-    humantime = timenow.iso
-    # generate random four characters to make sure pid is unique
-    rval = ''.join(np.random.choice(list(CHARS), size=4))
-    return unixtime, humantime, rval
 
 
 def find_recipe(name: str = 'None', instrument: str = 'None',

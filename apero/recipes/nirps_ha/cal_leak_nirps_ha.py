@@ -12,10 +12,10 @@ Created on 2019-07-05 at 16:46
 from apero.base import base
 from apero import lang
 from apero.core.core import drs_log
+from apero.core.core import drs_file
 from apero.core.utils import drs_startup
 from apero.core import constants
 from apero.core.utils import drs_database2 as drs_database
-from apero.io import drs_fits
 from apero.science.extract import general as extgen
 
 
@@ -108,7 +108,7 @@ def __main__(recipe, params):
     # combine input images if required
     elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        infiles = [drs_fits.combine(params, recipe, infiles, math='median')]
+        infiles = [drs_file.combine(params, recipe, infiles, math='median')]
         combine = True
     else:
         combine = False

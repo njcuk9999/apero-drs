@@ -13,6 +13,7 @@ import numpy as np
 from apero.base import base
 from apero import lang
 from apero.core.core import drs_log
+from apero.core.core import drs_file
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_database2 as drs_database
 from apero.core.instruments.spirou import file_definitions
@@ -125,7 +126,7 @@ def __main__(recipe, params):
             WLOG(params, 'error', TextEntry('09-010-00001', args=eargs))
         # ------------------------------------------------------------------
         # get all "filetype" filenames
-        files = drs_fits.find_files(params, recipe, kind='raw',
+        files = drs_file.find_files(params, recipe, kind='raw',
                                     night=params['NIGHTNAME'],
                                     filters=dict(KW_DPRTYPE=filetype))
         # create infiles
@@ -135,7 +136,7 @@ def __main__(recipe, params):
             infiles.append(infile)
             rawfiles.append(infile.basename)
     # get combined file
-    infiles = [drs_fits.combine(params, recipe, infiles, math='median')]
+    infiles = [drs_file.combine(params, recipe, infiles, math='median')]
     # get the number of infiles
     num_files = len(infiles)
     # load the calibration database
@@ -156,7 +157,7 @@ def __main__(recipe, params):
         # Fix the nirps header
         # ------------------------------------------------------------------
         # certain keys may not be in some spirou files
-        infile = drs_fits.fix_header(params, recipe, infile)
+        infile = drs_file.fix_header(params, recipe, infile)
         # ------------------------------------------------------------------
         # print progress
         WLOG(params, '', TextEntry('40-010-00014', args=[infile.name]))

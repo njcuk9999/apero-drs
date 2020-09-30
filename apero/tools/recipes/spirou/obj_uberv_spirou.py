@@ -15,9 +15,9 @@ import os
 from apero.base import base
 from apero import lang
 from apero.core import constants
+from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
-from apero.io import drs_fits
 from apero.science import extract
 from apero.tools.module.testing import drs_dev
 
@@ -158,7 +158,7 @@ def __main__(recipe, params):
         if skip_objects is not None:
             fkwargs['KW_OBJNAME'] = skip_objects
         WLOG(params, '', 'Finding files...')
-        filenames1 = drs_fits.find_files(params, recipe, kind='red',
+        filenames1 = drs_file.find_files(params, recipe, kind='red',
                                          fiber=fiber, filters=fkwargs)
         # group files
         for filename in filenames1:

@@ -15,9 +15,9 @@ from apero.base import base
 from apero import lang
 from apero.core import math as mp
 from apero.core.core import drs_log
+from apero.core.core import drs_file
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_database2 as drs_database
-from apero.io import drs_fits
 from apero.io import drs_image
 from apero.science.calib import badpix
 from apero.science.calib import background
@@ -114,9 +114,9 @@ def __main__(recipe, params):
     # combine input images if required
     elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        flatfiles = [drs_fits.combine(params, recipe, flatfiles, math='median')]
+        flatfiles = [drs_file.combine(params, recipe, flatfiles, math='median')]
         # get combined file
-        darkfiles = [drs_fits.combine(params, recipe, darkfiles, math='median')]
+        darkfiles = [drs_file.combine(params, recipe, darkfiles, math='median')]
         combine = True
     else:
         combine = False
