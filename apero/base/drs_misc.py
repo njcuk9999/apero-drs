@@ -7,8 +7,12 @@ Created on 2020-08-2020-08-21 19:17
 
 @author: cook
 """
+import numpy as np
 import os
-from typing import Any, Union
+import random
+import string
+import time
+from typing import Any, Union, Tuple
 
 from apero.base import base
 from apero.base import drs_break
@@ -25,6 +29,10 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
+# Get time
+Time = base.Time
+# get all chars
+CHARS = string.ascii_uppercase + string.digits
 
 
 # =============================================================================
@@ -312,6 +320,9 @@ def display_func(params: Any = None, name: Union[str, None] = None,
     return strfunc
 
 
+# =============================================================================
+# Basic other functions
+# =============================================================================
 def _get_prev_count(params: Any, previous: str) -> int:
     """
     Get the previous number of times a function was found in
@@ -373,6 +384,35 @@ def get_uncommon_path(path1: str, path2: str) -> str:
     common = os.path.commonpath([_path2, _path1]) + os.sep
     # return the non-common part of the path
     return _path1.split(common)[-1]
+
+
+
+def unix_char_code() -> Tuple[float, str, str]:
+    """
+    Get the time now (using astropy.Time) and return the unix time
+    human time and a random code of 4 characters
+
+    :return: tuple, 1. the unix time now, 2. the human time now, 3. a random
+             set of 4 characters
+    """
+    # set function name
+    _ = display_func(None, 'unix_char_code', __NAME__)
+    # we need a random seed
+    np.random.seed(random.randint(1, 2 ** 30))
+    # generate a random number (in case time is too similar)
+    #  -- happens a lot in multiprocessing
+    rint = np.random.randint(1000, 9999, 1) / 1e7
+    # wait a fraction of time (between 1us and 1ms)
+    time.sleep(rint)
+    # get the time now from astropy
+    timenow = Time.now()
+    # get unix and human time from astropy time now
+    unixtime = timenow.unix * 1e7
+    humantime = timenow.iso
+    # generate random four characters to make sure pid is unique
+    rval = ''.join(np.random.choice(list(CHARS), size=4))
+    return unixtime, humantime, rval
+
 
 
 # =============================================================================

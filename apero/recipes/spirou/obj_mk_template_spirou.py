@@ -27,16 +27,15 @@ Created on 2019-09-05 at 14:58
 
 @author: cook
 """
-import numpy as np
 import os
 
 from apero.base import base
 from apero import lang
 from apero.core import constants
+from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_database2 as drs_database
-from apero.io import drs_fits
 from apero.io import drs_path
 from apero.science.calib import wave
 from apero.science import telluric
@@ -131,7 +130,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # get objects that match this object name
     if params['MKTEMPLATE_FILESOURCE'].upper() == 'DISK':
-        object_filenames = drs_fits.find_files(params, recipe, kind='red',
+        object_filenames = drs_file.find_files(params, recipe, kind='red',
                                                fiber=fiber,
                                                filters=dict(KW_OBJNAME=objname,
                                                             KW_OUTPUT=filetype))
@@ -215,7 +214,7 @@ def __main__(recipe, params):
         # get s1d filenames
         fkwargs = dict(kind='red', fiber=fiber,
                        filters=dict(KW_OBJNAME=objname, KW_OUTPUT=s1d_filetype))
-        s1d_filenames = drs_fits.find_files(params, recipe, **fkwargs)
+        s1d_filenames = drs_file.find_files(params, recipe, **fkwargs)
         # make s1d cube
         margs = [s1d_filenames, s1d_file, fiber]
         s1d_props = telluric.make_1d_template_cube(params, recipe, *margs)

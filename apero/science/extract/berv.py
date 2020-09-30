@@ -9,19 +9,19 @@ Created on 2019-07-23 at 09:29
 
 @author: cook
 """
+from astropy import units as uu
+from astropy.coordinates import SkyCoord
 import numpy as np
 import os
 import warnings
-from astropy import units as uu
-from astropy.coordinates import SkyCoord
 
 from apero.base import base
 from apero.base import drs_exceptions
 from apero import lang
 from apero.core import constants
+from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core import math as mp
-from apero.io import drs_fits
 from apero.io import drs_lock
 from apero.io import drs_path
 from apero.science.extract import bervest
@@ -842,7 +842,7 @@ def get_times(params, bprops, infile, header):
         WLOG(params, 'error', TextEntry('00-016-00019', args=[func_name]))
     # ---------------------------------------------------------------------
     # get obs_time
-    obstime, method = drs_fits.get_mid_obs_time(params, header)
+    obstime, method = drs_file.get_mid_obs_time(params, header)
 
     # for the maximum peak to peak need an array of times
     times = obstime.jd + np.arange(0, 365, 5.0/3.0)

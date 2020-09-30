@@ -14,11 +14,11 @@ import numpy as np
 from apero.base import base
 from apero import lang
 from apero.core import constants
+from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_image
-from apero.io import drs_fits
 from apero.science.calib import general
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave
@@ -131,10 +131,10 @@ def __main__(recipe, params):
     # combine input images if required
     elif params['INPUT_COMBINE_IMAGES']:
         # get combined file
-        hcfiles = [drs_fits.combine(params, recipe, hcfiles, math='median')]
+        hcfiles = [drs_file.combine(params, recipe, hcfiles, math='median')]
         # get combined file
         if fpfiles is not None:
-            fpfiles = [drs_fits.combine(params, recipe, fpfiles, math='median')]
+            fpfiles = [drs_file.combine(params, recipe, fpfiles, math='median')]
         combine = True
     else:
         combine = False

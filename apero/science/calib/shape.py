@@ -21,7 +21,8 @@ from apero.base import base
 from apero.core import constants
 from apero import lang
 from apero.core import math as mp
-from apero.core.core import drs_log, drs_file
+from apero.core.core import drs_file
+from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_data
 from apero.core.utils import drs_database2 as drs_database
@@ -81,7 +82,7 @@ def construct_fp_table(params, filenames):
         # delete image we'll get it again later in more memory efficient manner
         del image
         # get keys from hdr
-        acqtime, acqmethod = drs_fits.get_mid_obs_time(params, hdr, 'mjd')
+        acqtime, acqmethod = drs_file.get_mid_obs_time(params, hdr, 'mjd')
         exptime = hdr[params['KW_EXPTIME'][0]]
         ppversion = hdr[params['KW_PPVERSION'][0]]
         # append to lists

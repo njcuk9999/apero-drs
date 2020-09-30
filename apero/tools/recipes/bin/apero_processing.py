@@ -13,9 +13,9 @@ import sys
 
 from apero.base import base
 from apero import lang
+from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
-from apero.io import drs_fits
 from apero.tools.module.processing import drs_processing
 
 
@@ -119,7 +119,7 @@ def __main__(recipe, params):
     # find all raw files
     # ----------------------------------------------------------------------
     # get raw files
-    rawtable, rawpath = drs_fits.find_raw_files(params, recipe)
+    rawtable, rawpath = drs_file.find_raw_files(params, recipe)
     # find all previous runs
     skiptable = drs_processing.generate_skip_table(params)
 

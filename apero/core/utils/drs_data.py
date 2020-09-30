@@ -147,8 +147,7 @@ def load_cavity_files(params: ParamDict,
                       directory: Union[str, None] = None,
                       file1m: Union[str, None] = None,
                       filell: Union[str, None] = None
-                      ) -> Union[Tuple[None, None],
-                                 Tuple[np.ndarray, np.ndarray]]:
+                      ) -> Union[Tuple[None, None], Tuple[np.ndarray, np.ndarray]]:
     """
     Load the 1/m file and ll wavelength cavity files
 
@@ -641,6 +640,130 @@ def load_order_mask(params: ParamDict,
     except LoadException:
         eargs = [filename, os.path.join(assetdir, relfolder)]
         WLOG(params, 'error', TextEntry('00-020-00002', args=eargs))
+
+
+# =============================================================================
+# database data functions
+# =============================================================================
+# define complex return type for et_file_from_inputs
+FileInputType = Union[# if return_source = False
+                      Union[Path, str, None],
+                      # if return_source = True
+                      Tuple[Union[Path, str, None], Union[str, None]]]
+
+
+def get_file_from_inputs(params: ParamDict, dbmname: str,
+                         userinputkey: Union[str, None] = None,
+                         default: Union[Path, str, None] = None,
+                         return_source: bool =False) -> FileInputType:
+    """
+    Get a file from the params['INPUTS'] user input param dict
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param userinputkey: str or None, if set looks for argument from user
+                         input (i.e. from command line and stored in
+                         params['INPUTS']
+    :param default: if userinputkey is None - this is the default value of the
+                    path
+
+    :return: if return_source = False: returns the filename from inputs
+             (either a path, str or None if not set)
+             if return_source = True: returns the a tuple
+             1. The filename from inputs (path/str/None)
+             2. The source of the filename
+    """
+    func_name = display_func(params, 'get_file_from_inputs', __NAME__)
+    # set source
+    strsource, source = None, None
+    value = None
+    # user input key file overwrites database use
+    if 'INPUTS' in params:
+        if userinputkey is None:
+            value = default
+            source = 'call to function: {0}'.format(func_name)
+        elif userinputkey in params['INPUTS']:
+            # get value from inputs
+            value = params['INPUTS'][userinputkey]
+            strsource = 'command line --{0}'.format(userinputkey.lower())
+            source = '--{0}'.format(userinputkey.lower())
+            # deal with list value (assume [[filename, DrsFile]])
+            if isinstance(value, list):
+                value = value[0][0]
+            # deal with null values
+            if drs_text.null_text(value, ['None', '']):
+                value = default
+                strsource = 'call to function: {0}'.format(func_name)
+                source = 'CALL'
+    # deal with value still being None
+    if drs_text.null_text(value, ['None', '']):
+        if return_source:
+            return None, None
+        else:
+            return None
+    # make sure file exists
+    if not Path(value).exists():
+        # log error: Database {0} - file was defined in {1} but path
+        #            does not exist.
+        eargs = [dbmname, strsource, func_name]
+        WLOG(params, 'error', TextEntry('00-002-00020', args=eargs))
+    else:
+        if return_source:
+            return value, source
+        else:
+            return value
+
+
+# complex DB file type return for read_db_file
+DBType = Tuple[Union[np.ndarray, None],
+               Union[drs_fits.Header, None]]
+
+
+def read_db_file(params: ParamDict, abspath: Union[str, Path],
+                 get_image: bool, get_header: bool,
+                 kind: str, fmt: str, ext: int) -> DBType:
+    """
+    Read a database file (image or table)
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param abspath: str, the path of the file to read
+    :param get_image: bool, if True reads image, else returns None for image
+    :param get_header: bool, if True reads header, else returns None for header
+    :param kind: str, either 'image' or 'table'
+    :param fmt: str, format of the table to read (i.e. astropy.table.Table
+                format) only used if kind=='table'
+    :param ext: int, the extension to read if kind=='image' (fits extension)
+
+    :return: Tuple, 1. the image or None (if get_image=False)
+                    2. the header or None (if get_image=False)
+    """
+    # set function
+    func_name = display_func(params, 'load_calib_file', __NAME__)
+    # ------------------------------------------------------------------
+    # deal with npy files
+    if str(abspath).endswith('.npy'):
+        image = drs_path.numpy_load(abspath)
+        return image, None
+    # ------------------------------------------------------------------
+    # get db fits file
+    if (not get_image) or (not str(abspath).endswith('.fits')):
+        image = None
+    elif kind == 'image':
+        image = drs_fits.readfits(params, abspath, ext=ext)
+    elif kind == 'table':
+        image = drs_table.read_table(params, abspath, fmt=fmt)
+    else:
+        # raise error is kind is incorrect
+        eargs = [' or '.join(['image', 'table']), func_name]
+        WLOG(params, 'error', TextEntry('00-001-00038', args=eargs))
+        image = None
+    # ------------------------------------------------------------------
+    # get header if required (and a fits file)
+    if get_header and abspath.endswith('.fits'):
+        header = drs_fits.read_header(params, abspath, ext=ext)
+    else:
+        header = None
+    # return the image and header
+    return image, header
 
 
 # =============================================================================

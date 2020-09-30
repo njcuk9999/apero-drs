@@ -111,7 +111,7 @@ def __main__(recipe, params):
                 emsg += '\n\t - "{0}"'.format(allowedtype)
             WLOG(params, 'error', emsg)
         # get all "filetype" filenames
-        files = drs_fits.find_files(params, recipe, kind='tmp',
+        files = drs_file.find_files(params, recipe, kind='tmp',
                                     filters=dict(KW_DPRTYPE=filetype))
         # append to filenames
         filenames += list(files)

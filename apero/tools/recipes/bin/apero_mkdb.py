@@ -16,6 +16,7 @@ import glob
 from apero.base import base
 from apero import lang
 from apero.core import constants
+from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_database2 as drs_database
@@ -177,7 +178,7 @@ def __main__(recipe, params):
         db_out_file = file_set.newcopy(params=params)
         # ------------------------------------------------------------------
         # try to find cdb_file
-        found, kind = drs_fits.id_drs_file(params, recipe, db_out_file,
+        found, kind = drs_file.id_drs_file(params, recipe, db_out_file,
                                            filename=db_file, nentries=1,
                                            required=False)
         # ------------------------------------------------------------------

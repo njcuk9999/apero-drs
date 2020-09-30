@@ -9,7 +9,11 @@ Created on 2017-10-11 at 10:59
 
 @author: cook
 
-Import rules: Only from spirouConfig and spirouCore
+Import rules:
+    only from core.math, core.constants, apero.lang, apero.base
+
+    do not import from core.core.drs_argument
+    do not import from core.core.drs_file
 
 Version 0.0.1
 """

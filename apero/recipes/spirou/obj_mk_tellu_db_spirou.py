@@ -16,11 +16,10 @@ from apero.base import base
 from apero.base import drs_text
 from apero import lang
 from apero.core import constants
+from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
-from apero.io import drs_fits
 from apero.io import drs_path
-from apero.io import drs_text
 from apero.science import telluric
 from apero.tools.module.processing import drs_processing
 
@@ -119,7 +118,7 @@ def __main__(recipe, params):
     objnames = list(objnames)
     # ----------------------------------------------------------------------
     # get objects that match this object name
-    tellu_stars = drs_fits.find_files(params, recipe, kind='red', fiber=fiber,
+    tellu_stars = drs_file.find_files(params, recipe, kind='red', fiber=fiber,
                                       filters=dict(KW_OBJNAME=objnames,
                                                    KW_OUTPUT=filetype))
     # ----------------------------------------------------------------------

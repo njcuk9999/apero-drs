@@ -8,6 +8,9 @@
 Created on 2019-03-21 at 11:36
 
 @author: cook
+
+Import rules:
+    Not from core.utils
 """
 import numpy as np
 from astropy import units as uu

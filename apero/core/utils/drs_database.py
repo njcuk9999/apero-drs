@@ -10,13 +10,14 @@ Created on 2019-03-25 at 16:49
 @author: cook
 """
 import numpy as np
-from astropy.table import Table, vstack
+from astropy.table import Table
 import os
 import shutil
 from collections import OrderedDict
 
 from apero.base import base
 from apero.core import constants
+from apero.core.core import drs_file
 from apero import lang
 from apero.io import drs_lock
 from apero.io import drs_fits
@@ -771,10 +772,10 @@ def _get_time(params, dbname, header=None, hdict=None, kind=None):
     # ----------------------------------------------------------------------
     # get raw time from hdict / header
     if hdict is not None:
-        t, m = drs_fits.get_mid_obs_time(params, hdict, out_fmt=kind)
+        t, m = drs_file.get_mid_obs_time(params, hdict, out_fmt=kind)
         return t
     elif header is not None:
-        t, m = drs_fits.get_mid_obs_time(params, header, out_fmt=kind)
+        t, m = drs_file.get_mid_obs_time(params, header, out_fmt=kind)
         return t
     else:
         eargs = [dbname, func_name]
