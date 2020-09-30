@@ -9,13 +9,14 @@ Created on 2019-08-12 at 17:16
 
 @author: cook
 """
-import numpy as np
 from astropy import constants as cc
 from astropy import units as uu
-from scipy.optimize import curve_fit
-import warnings
+from astropy.table import Table
+import numpy as np
 import os
-from typing import List
+from scipy.optimize import curve_fit
+from typing import List, Tuple, Union
+import warnings
 
 from apero.base import base
 from apero.core import constants
@@ -24,7 +25,7 @@ from apero import lang
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_data
-from apero.core.utils import drs_database
+from apero.core.utils import drs_database2 as drs_database
 from apero.io import drs_fits
 from apero.science.calib import flat_blaze
 
@@ -41,6 +42,8 @@ __release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
+# get calibration database
+TelluDatabase = drs_database.TelluricDatabase
 # Get function string
 display_func = drs_log.display_func
 # Get Logging function
@@ -182,7 +185,7 @@ def get_non_tellu_objs(params, recipe, fiber, filetype=None, dprtypes=None,
     if dprtypes is not None:
         fkwargs['KW_DPRTYPE'] = dprtypes
     # # find files
-    out = drs_fits.find_files(params, recipe, kind='red', return_table=True,
+    out = drs_file.find_files(params, recipe, kind='red', return_table=True,
                               fiber=fiber, filters=fkwargs)
     obj_filenames, obj_table = out
     # filter out telluric stars
@@ -206,79 +209,68 @@ def get_non_tellu_objs(params, recipe, fiber, filetype=None, dprtypes=None,
     return obj_stars, obj_names
 
 
-def get_tellu_objs(params, key, objnames=None, **kwargs):
+def get_tellu_objs(params: ParamDict, key: str,
+                   objnames: Union[List[str], str, None] = None,
+                   database: Union[TelluDatabase, None] = None) -> List[str]:
     """
-    Get objects defined be "key" from telluric database (in list objname)
+    Get objects defined by "key" from telluric database (in list objname)
 
-    :param params:
-    :param key:
-    :param objnames:
-    :param kwargs:
-    :return:
+    :param params: ParamDict, the parameter dictionary of constants
+    :param key: str, the database key to filter telluric database entries by
+    :param objnames: str or list of strings, the object names to filter
+                     the telluric database 'OBJECT' column by
+    :param database: TelluricDatabase instance or None, if set does not have to
+                     load database
+
+    :return: list of strings, the absolute filenames for database entries of
+             KEY == 'key' and OBJECT in 'objnames'
     """
-    # deal with column to select from entries
-    column = kwargs.get('column', 'filename')
-    objcol = kwargs.get('objcol', 'objname')
+    func_name = display_func(params, 'get_tellu_objs', __NAME__)
     # ----------------------------------------------------------------------
     # deal with objnames
+    if objnames is None:
+        objnames = []
     if isinstance(objnames, str):
         objnames = [objnames]
     # ----------------------------------------------------------------------
-    # load telluric obj entries (based on key)
-    obj_entries = load_tellu_file(params, key=key, inheader=None, mode='ALL',
-                                  return_entries=True, n_entries='all',
-                                  required=False)
-    # add to type
-    typestr = str(key)
+    # deal with not having database
+    if database is None:
+        database = TelluDatabase(params)
+        # load database
+        database.load_db()
     # ----------------------------------------------------------------------
-    # keep only objects with objnames
-    mask = np.zeros(len(obj_entries)).astype(bool)
-    # deal with no object found
-    if len(obj_entries) == 0:
+    # get all obj_entries from the telluric database
+    table = database.get_tellu_entry('FILENAME, OBJECT', key=key)
+    # ----------------------------------------------------------------------
+    # deal with no objects found
+    if len(table) == 0:
         return []
-    elif objnames is not None:
-        # storage for found objects
-        found_objs = []
-        # loop around objnames
-        for objname in objnames:
-            # update the mask
-            mask |= obj_entries[objcol] == objname
-            # only add to the mask if objname found
-            if objname in obj_entries[objcol]:
-                # update the found objs
-                found_objs.append(objname)
-        # update type string
-        typestr += ' OBJNAME={0}'.format(', '.join(found_objs))
     # ----------------------------------------------------------------------
-    # deal with all entries / one column return
-    if column in [None, 'None', '', 'ALL']:
-        outputs = obj_entries[mask]
-    else:
-        outputs = np.unique(obj_entries[column][mask])
+    # filter by objnames (set by input)
+    mask = np.zeros(len(table)).astype(bool)
+    for objname in objnames:
+        mask |= np.array(table['OBJECT'] == objname)
+    # get base filenames with this mask
+    # noinspection PyTypeChecker
+    filenames = list(table['FILENAME'][mask])
     # ----------------------------------------------------------------------
-    # deal with getting absolute paths
-    if column == 'filename':
-        abspaths = []
-        # loop around filenames
-        for filename in outputs:
-            # get absolute path
-            abspath = drs_database.get_db_abspath(params, filename,
-                                                  where='telluric')
-            # append to list
-            abspaths.append(abspath)
-        # push back into outputs
-        outputs = list(abspaths)
+    # make path absolute
+    absfilenames = []
+    for filename in filenames:
+        # construct absolute path
+        absfilename = database.filedir.join(filename)
+        # check exists
+        if absfilename.exists():
+            absfilenames.append(str(absfilename))
     # ----------------------------------------------------------------------
     # display how many files found
-    margs = [len(outputs), typestr]
+    margs = [len(absfilenames), key]
     WLOG(params, '', TextEntry('40-019-00039', args=margs))
-    return outputs
+    return absfilenames
 
 
 def get_sp_linelists(params, **kwargs):
     func_name = __NAME__ + '.get_sp_linelists()'
-    # get pseudo constants
-    pconst = constants.pload(instrument=params['INSTRUMENT'])
     # get parameters from params/kwargs
     relfolder = pcheck(params, 'TELLU_LIST_DIRECOTRY', 'directory', kwargs,
                        func_name)
@@ -299,7 +291,7 @@ def get_sp_linelists(params, **kwargs):
 # pre-cleaning functions
 # =============================================================================
 def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
-                   **kwargs):
+                   database=None, **kwargs):
     """
     Main telluric pre-cleaning functionality.
 
@@ -335,7 +327,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     func_name = __NAME__ + '.tellu_preclean()'
     # ----------------------------------------------------------------------
     # look for precleaned file
-    loadprops = read_tellu_preclean(params, recipe, infile, fiber)
+    loadprops = read_tellu_preclean(params, recipe, infile, fiber,
+                                    database=database)
     # if precleaned load and return
     if loadprops is not None:
         return loadprops
@@ -518,7 +511,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     orders = orders.ravel()[flatkeep]
     # ----------------------------------------------------------------------
     # load tapas in correct format
-    spl_others, spl_water = load_tapas_spl(params, recipe, header)
+    spl_others, spl_water = load_tapas_spl(params, header, database=database)
     # ----------------------------------------------------------------------
     # load the snr from e2ds file
     snr = infile.get_hkey_1d('KW_EXT_SNR', nbo, dtype=float)
@@ -534,8 +527,9 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         qc_pass[0] = 0
         qc_params = [qc_names, qc_values, qc_logic, qc_pass]
         # return qc_exit_tellu_preclean
-        return qc_exit_tellu_preclean(params, recipe, image_e2ds, infile,
-                                      wave_e2ds, qc_params, sky_model)
+        return qc_exit_tellu_preclean(params, image_e2ds, infile,
+                                      wave_e2ds, qc_params, sky_model,
+                                      database=database)
     else:
         qc_values[0] = np.nanmax(snr)
         qc_pass[0] = 1
@@ -844,8 +838,9 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
 
         qc_params = [qc_names, qc_values, qc_logic, qc_pass]
         # return qc_exit_tellu_preclean
-        return qc_exit_tellu_preclean(params, recipe, image_e2ds, infile,
-                                      wave_e2ds, qc_params, sky_model)
+        return qc_exit_tellu_preclean(params, image_e2ds, infile,
+                                      wave_e2ds, qc_params, sky_model,
+                                      database=database)
     # ----------------------------------------------------------------------
     # show CCF plot to see if correlation peaks have been killed
     recipe.plot('TELLUP_WAVE_TRANS', dd_arr=dd_iterations,
@@ -941,7 +936,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # ----------------------------------------------------------------------
     # save pre-cleaned file
     tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
-                         props, wprops)
+                         props, wprops, database=database)
     # ----------------------------------------------------------------------
     # return props
     return props
@@ -1104,8 +1099,8 @@ def get_abso_expo(params, wavemap, expo_others, expo_water, spl_others,
     return out_vector
 
 
-def qc_exit_tellu_preclean(params, recipe, image, infile, wavemap,
-                           qc_params, sky_model, **kwargs):
+def qc_exit_tellu_preclean(params, image, infile, wavemap,
+                           qc_params, sky_model, database=None, **kwargs):
     """
     Provides an exit point for tellu_preclean via a quality control failure
 
@@ -1170,7 +1165,7 @@ def qc_exit_tellu_preclean(params, recipe, image, infile, wavemap,
     hdr_airmass = infile.get_hkey('KW_AIRMASS', dtype=float)
     # ----------------------------------------------------------------------
     # load tapas in correct format
-    spl_others, spl_water = load_tapas_spl(params, recipe, header)
+    spl_others, spl_water = load_tapas_spl(params, header, database=database)
     # ----------------------------------------------------------------------
     # force expo values
     expo_others = float(hdr_airmass)
@@ -1244,7 +1239,8 @@ def qc_exit_tellu_preclean(params, recipe, image, infile, wavemap,
 
 
 def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
-                         props, wprops):
+                         props, wprops,
+                         database: Union[TelluDatabase, None] = None):
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     tpclfile = recipe.outputs['TELLU_PCLEAN'].newcopy(params=params,
@@ -1363,11 +1359,17 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
     # add to output files (for indexing)
     recipe.add_output_file(tpclfile)
     # ----------------------------------------------------------------------
+    # load database only if not already loaded
+    if database is None:
+        database = TelluDatabase(params)
+        # load the database
+        database.load_db()
+    # ----------------------------------------------------------------------
     # copy the pre-cleaned file to telluDB
-    drs_database.add_file(params, tpclfile)
+    database.add_tellu_file(tpclfile)
 
 
-def read_tellu_preclean(params, recipe, infile, fiber):
+def read_tellu_preclean(params, recipe, infile, fiber, database=None):
     """
     Read all TELLU_PCLEAN files and if infile is one of them load the images
     and properties, else return None
@@ -1379,6 +1381,9 @@ def read_tellu_preclean(params, recipe, infile, fiber):
     :return:
     """
 
+    # get infile object name
+    objname = infile.get_hkey('KW_OBJNAME')
+
     # ------------------------------------------------------------------
     # get the tellu preclean map key
     # ----------------------------------------------------------------------
@@ -1387,12 +1392,13 @@ def read_tellu_preclean(params, recipe, infile, fiber):
                                                  kind='red', fiber=fiber)
     # get key
     pclean_key = out_pclean.get_dbkey()
-
     # load tellu file, header and abspaths
-    _, pclean_filenames = load_tellu_file(params, pclean_key,
-                                          infile.get_header(),
-                                          n_entries='all', get_image=False,
-                                          required=False, fiber=fiber)
+    pclean_filenames = load_tellu_file(params, pclean_key,
+                                       infile.get_header(),
+                                       n_entries='*', get_image=False,
+                                       required=False, fiber=fiber,
+                                       objname=objname, return_filename=True,
+                                       database=database)
     # if we don't have the file return None
     if pclean_filenames is None:
         return None
@@ -1451,13 +1457,13 @@ def read_tellu_preclean(params, recipe, infile, fiber):
     # push into props
     props['EXPO_WATER'] = tpclfile.get_hkey('KW_TELLUP_EXPO_WATER', dtype=float)
     props['EXPO_OTHERS'] = tpclfile.get_hkey('KW_TELLUP_EXPO_OTHERS',
-                                            dtype=float)
+                                             dtype=float)
     props['DV_WATER'] = tpclfile.get_hkey('KW_TELLUP_DV_WATER', dtype=float)
     props['DV_OTHERS'] = tpclfile.get_hkey('KW_TELLUP_DV_OTHERS', dtype=float)
     props['CCFPOWER_WATER'] = tpclfile.get_hkey('KW_TELLUP_CCFP_WATER',
-                                               dtype=float)
-    props['CCFPOWER_OTHERS'] = tpclfile.get_hkey('KW_TELLUP_CCFP_OTHERS',
                                                 dtype=float)
+    props['CCFPOWER_OTHERS'] = tpclfile.get_hkey('KW_TELLUP_CCFP_OTHERS',
+                                                 dtype=float)
     # set sources
     keys = ['CORRECTED_E2DS', 'TRANS_MASK', 'ABSO_E2DS', 'EXPO_WATER',
             'EXPO_OTHERS', 'DV_WATER', 'DV_OTHERS', 'CCFPOWER_WATER',
@@ -1466,42 +1472,42 @@ def read_tellu_preclean(params, recipe, infile, fiber):
     # ----------------------------------------------------------------------
     # add constants used (can come from kwargs)
     props['TELLUP_DO_PRECLEANING'] = tpclfile.get_hkey('KW_TELLUP_DO_PRECLEAN',
-                                                      dtype=bool)
+                                                       dtype=bool)
     props['TELLUP_D_WATER_ABSO'] = tpclfile.get_hkey('KW_TELLUP_DFLT_WATER',
-                                                    dtype=float)
+                                                     dtype=float)
     props['TELLUP_CCF_SCAN_RANGE'] = tpclfile.get_hkey('KW_TELLUP_CCF_SRANGE',
-                                                      dtype=float)
+                                                       dtype=float)
     kw_clean_oh = 'KW_TELLUP_CLEAN_OHLINES'
     props['TELLUP_CLEAN_OH_LINES'] = tpclfile.get_hkey(kw_clean_oh, dtype=bool)
     props['TELLUP_REMOVE_ORDS'] = tpclfile.get_hkey('KW_TELLUP_REMOVE_ORDS',
-                                                   dtype=list, listtype=int)
+                                                    dtype=list, listtype=int)
     props['TELLUP_SNR_MIN_THRES'] = tpclfile.get_hkey('KW_TELLUP_SNR_MIN_THRES',
-                                                     dtype=float)
+                                                      dtype=float)
     kw_dexpo = 'KW_TELLUP_DEXPO_CONV_THRES'
     props['TELLUP_DEXPO_CONV_THRES'] = tpclfile.get_hkey(kw_dexpo, dtype=float)
     props['TELLUP_DEXPO_MAX_ITR'] = tpclfile.get_hkey('KW_TELLUP_DEXPO_MAX_ITR',
-                                                     dtype=int)
+                                                      dtype=int)
     kw_kthres = 'KW_TELLUP_ABSOEXPO_KTHRES'
     props['TELLUP_ABSO_EXPO_KTHRES'] = tpclfile.get_hkey(kw_kthres, dtype=float)
     props['TELLUP_WAVE_START'] = tpclfile.get_hkey('KW_TELLUP_WAVE_START',
-                                                  dtype=float)
+                                                   dtype=float)
     props['TELLUP_WAVE_END'] = tpclfile.get_hkey('KW_TELLUP_WAVE_END',
-                                                dtype=float)
+                                                 dtype=float)
     props['TELLUP_DVGRID'] = tpclfile.get_hkey('KW_TELLUP_DVGRID', dtype=float)
     kw_ae_kwid = 'KW_TELLUP_ABSOEXPO_KWID'
     props['TELLUP_ABSO_EXPO_KWID'] = tpclfile.get_hkey(kw_ae_kwid, dtype=float)
     kw_ae_kexp = 'KW_TELLUP_ABSOEXPO_KEXP'
     props['TELLUP_ABSO_EXPO_KEXP'] = tpclfile.get_hkey(kw_ae_kexp, dtype=float)
     props['TELLUP_TRANS_THRES'] = tpclfile.get_hkey('KW_TELLUP_TRANS_THRES',
-                                                   dtype=float)
-    props['TELLUP_TRANS_SIGLIM'] = tpclfile.get_hkey('KW_TELLUP_TRANS_SIGL',
                                                     dtype=float)
+    props['TELLUP_TRANS_SIGLIM'] = tpclfile.get_hkey('KW_TELLUP_TRANS_SIGL',
+                                                     dtype=float)
     props['TELLUP_FORCE_AIRMASS'] = tpclfile.get_hkey('KW_TELLUP_FORCE_AIRMASS',
-                                                     dtype=bool)
+                                                      dtype=bool)
     props['TELLUP_OTHER_BOUNDS'] = tpclfile.get_hkey('KW_TELLUP_OTHER_BOUNDS',
-                                                    dtype=list, listtype=float)
+                                                     dtype=list, listtype=float)
     props['TELLUP_WATER_BOUNDS'] = tpclfile.get_hkey('KW_TELLUP_WATER_BOUNDS',
-                                                    dtype=list, listtype=float)
+                                                     dtype=list, listtype=float)
     # set the source from header
     keys = ['TELLUP_D_WATER_ABSO', 'TELLUP_CCF_SCAN_RANGE',
             'TELLUP_CLEAN_OH_LINES', 'TELLUP_REMOVE_ORDS',
@@ -1521,138 +1527,327 @@ def read_tellu_preclean(params, recipe, infile, fiber):
 # =============================================================================
 # Database functions
 # =============================================================================
-def load_tellu_file(params, key=None, inheader=None, filename=None,
-                    get_image=True, get_header=False, return_entries=False,
-                    **kwargs):
-    # get keys from params/kwargs
-    n_entries = kwargs.get('n_entries', 1)
-    required = kwargs.get('required', True)
-    mode = kwargs.get('mode', None)
-    # valid extension (zero by default)
-    ext = kwargs.get('ext', 0)
-    # fmt = valid astropy table format
-    fmt = kwargs.get('fmt', 'fits')
-    # kind = 'image' or 'table'
-    kind = kwargs.get('kind', 'image')
-    # ----------------------------------------------------------------------
-    # deal with filename set
-    if filename is not None:
-        # get db fits file
-        abspath = drs_database.get_db_abspath(params, filename, where='guess')
-        image, header = drs_database.get_db_file(params, abspath, ext, fmt,
-                                                 kind, get_image, get_header)
-        # return here
-        if get_header:
-            return [image], [header], [abspath]
-        else:
-            return [image], [abspath]
-    # ----------------------------------------------------------------------
-    # get telluDB
-    tdb = drs_database.get_full_database(params, 'telluric')
-    # get calibration entries
-    entries = drs_database.get_key_from_db(params, key, tdb, inheader,
-                                           n_ent=n_entries, mode=mode,
-                                           required=required)
-    # ----------------------------------------------------------------------
-    # deal with return entries
-    if return_entries:
-        return entries
-    # ----------------------------------------------------------------------
-    # get filename col
-    filecol = tdb.file_col
-    # ----------------------------------------------------------------------
-    # storage
-    images, headers, abspaths = [], [], []
-    # ----------------------------------------------------------------------
-    # loop around entries
-    for it, entry in enumerate(entries):
-        # get entry filename
-        filename = entry[filecol]
-        # ------------------------------------------------------------------
-        # get absolute path
-        abspath = drs_database.get_db_abspath(params, filename,
-                                              where='telluric')
-        # append to storage
-        abspaths.append(abspath)
-        # load image/header
-        image, header = drs_database.get_db_file(params, abspath, ext, fmt,
-                                                 kind, get_image, get_header)
-        # append to storage
-        images.append(image)
-        # append to storage
-        headers.append(header)
-    # ----------------------------------------------------------------------
-    # deal with returns with and without header
-    if get_header:
-        if not required and len(images) == 0:
-            return None, None, None
-        # deal with if n_entries is 1 (just return file not list)
-        if n_entries == 1:
-            return images[-1], headers[-1], abspaths[-1]
-        else:
-            return images, headers, abspaths
+
+# for: load_tellu_file
+LoadTelluFileReturn = Union[  # if return filename
+    str,
+    # if return_filename + return_source
+    Tuple[str, str],
+    # default
+    Tuple[Union[np.ndarray, Table, None],
+          Union[drs_fits.Header, None],
+          str],
+    # if return_source
+    Tuple[Union[np.ndarray, Table, None],
+          Union[drs_fits.Header, None],
+          str, str],
+    # if nentries > 1
+    List[str],
+    # if nentries > 1 + return source
+    Tuple[List[str], str],
+    # if nentries > 1 + default
+    Tuple[List[Union[np.ndarray, Table, None]],
+          List[Union[drs_fits.Header, None]],
+          List[str]],
+    # if nentries > 1 + return source
+    Tuple[List[Union[np.ndarray, None]],
+          List[Union[drs_fits.Header, None]],
+          List[str], str]
+]
+
+
+def load_tellu_file(params: ParamDict, key: str,
+                    inheader: Union[drs_fits.Header, None] = None,
+                    filename: Union[str, None] = None,
+                    get_image: bool = True, get_header: bool = False,
+                    fiber: Union[str, None] = None,
+                    userinputkey: Union[str, None] = None,
+                    database: Union[TelluDatabase, None] = None,
+                    return_filename: bool = False, return_source: bool = False,
+                    mode: Union[str, None] = None,
+                    n_entries: Union[int, str] = 1,
+                    objname: Union[str, None] = None,
+                    tau_water: Union[Tuple[float, float], None] = None,
+                    tau_others: Union[Tuple[float, float], None] = None,
+                    no_times: bool = False,
+                    required: bool = True, ext: int = 0, fmt: str = 'fits',
+                    kind: str = 'image') -> LoadTelluFileReturn:
+    """
+    Load one or many telluric files
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param key: str, the key from the telluric database to select a
+                specific telluric with
+    :param inheader: fits.Header - the header file (required to match by time)
+                     if None does not match by a 'zero point' time)
+
+    :param filename: str or None, if set overrides filename from database
+    :param get_image: bool, if True loads image (or images if nentries > 1),
+                      if False image is None (or list of Nones if nentries > 1)
+    :param get_header: bool, if True loads header (or headers if nentries > 1)
+                       if False header is None (or list of Nones if
+                       nentries > 1)
+    :param fiber: str or None, if set must be the fiber type - all returned
+                  calibrations are filtered by this fiber type
+    :param userinputkey: str or None, if set checks params['INPUTS'] for this
+                         key and sets filename from here - note params['INPUTS']
+                         is where command line arguments are stored
+    :param database: drs telluric database instance - set this if calibration
+                     database already loaded (if unset will reload the database)
+    :param return_filename: bool, if True returns the filename only
+    :param return_source: bool, if True returns the source of the calib file(s)
+    :param mode: str or None, the time mode for getting from sql
+                 ('closest'/'newer'/'older')
+    :param n_entries: int or str, maximum number of calibration files to return
+                      for all entries use '*'
+    :param objname: str or None, if set OBJECT=="fiber"
+    :param tau_water: tuple or None, if set sets the lower and upper
+                      bounds for tau water i.e.
+                      TAU_WATER > tau_water[0]
+                      TAU_WATER < tau_water[1]
+    :param tau_others: tuple or None, if set sets the lower and upper bounds
+                       for tau others  i.e.
+                       TAU_OTHERS > tau_others[0]
+                       TAU_OTHERS < tau_others[1]
+    :param no_times: bool, if True does not use times to choose correct
+                 files
+    :param required: bool, whether we require an entry - will raise exception
+                     if required=True and no entries found
+    :param ext: int, valid extension (zero by default) when kind='image'
+    :param fmt: str, astropy.table.Table valid format (when kind='table')
+    :param kind: str, either 'image' for fits image or 'table' for table
+
+    :return:
+             if get_image, also returns image/table or list of images/tables
+             if get_header, also returns header or list of headers
+             if return_filename, returns filename or list of filenames
+             if return_source, also returns source
+
+             i.e. possible returns are:
+                 filename
+                 filename, source
+                 image, header, filename
+                 image, header, filename, source
+                 List[filename]
+                 List[filename], source
+                 List[image], List[header], List[filename]
+                 List[image], List[header], List[filename], source
+
+    """
+    # set function
+    _ = display_func(params, 'load_tellu_file', __NAME__)
+    # ------------------------------------------------------------------------
+    # first try to get file from inputs
+    fout = drs_data.get_file_from_inputs(params, 'telluric', userinputkey,
+                                         filename, return_source=return_source)
+    if return_source:
+        filename, source = fout
     else:
-        if not required and len(images) == 0:
-            return None, None
-        # deal with if n_entries is 1 (just return file not list)
-        if n_entries == 1:
-            return images[-1], abspaths[-1]
+        filename, source = fout, 'None'
+    # ------------------------------------------------------------------------
+    # if filename is defined this is the filename we should return
+    if filename is not None and return_filename:
+        if return_source:
+            return str(filename), source
         else:
-            return images, abspaths
+            return str(filename)
+    # -------------------------------------------------------------------------
+    # else we have to load from database
+    if filename is None:
+        # check if we have the database
+        if database is None:
+            # construct a new database instance
+            database = TelluDatabase(params)
+            # load the database
+            database.load_db()
+        # load filename from database
+        filename = database.get_tellu_file(key, header=inheader,
+                                           timemode=mode, nentries=n_entries,
+                                           required=required, fiber=fiber,
+                                           objname=objname, tau_water=tau_water,
+                                           tau_others=tau_others,
+                                           no_times=no_times)
+        source = 'telluDB'
+    # -------------------------------------------------------------------------
+    # deal with filename being a path --> string (unless None)
+    if filename is not None:
+        if isinstance(filename, list):
+            filename = list(map(lambda strfile: str(strfile), filename))
+        else:
+            filename = str(filename)
+    # -------------------------------------------------------------------------
+    # if we are just returning filename return here
+    if return_filename:
+        if return_source:
+            return filename, source
+        else:
+            return filename
+    # -------------------------------------------------------------------------
+    # need to deal with a list of files
+    if isinstance(filename, list):
+        # storage for images and headres
+        images, headers = [], []
+        # loop around files
+        for file_it in filename:
+            # now read the calibration file
+            image, header = drs_data.read_db_file(params, file_it, get_image,
+                                                  get_header, kind, fmt, ext)
+            # append to storage
+            images.append(image)
+            headers.append(headers)
+        # return all
+        if return_source:
+            return images, headers, filename, source
+        else:
+            return images, headers, filename
+    # -------------------------------------------------------------------------
+    else:
+        # now read the calibration file
+        image, header = drs_data.read_db_file(params, filename, get_image,
+                                              get_header, kind, fmt, ext)
+        # return all
+        if return_source:
+            return image, header, filename, source
+        else:
+            return image, header, filename
 
 
-def load_templates(params, header, objname, fiber):
-    # TODO: update - bad loads all files just to get one header
-    #   OBJNAME in database --> select most recent and only load that file
+# def load_tellu_file(params, key=None, inheader=None, filename=None,
+#                     get_image=True, get_header=False, return_entries=False,
+#                     **kwargs):
+#     # get keys from params/kwargs
+#     n_entries = kwargs.get('n_entries', 1)
+#     required = kwargs.get('required', True)
+#     mode = kwargs.get('mode', None)
+#     # valid extension (zero by default)
+#     ext = kwargs.get('ext', 0)
+#     # fmt = valid astropy table format
+#     fmt = kwargs.get('fmt', 'fits')
+#     # kind = 'image' or 'table'
+#     kind = kwargs.get('kind', 'image')
+#     # ----------------------------------------------------------------------
+#     # deal with filename set
+#     if filename is not None:
+#         # get db fits file
+#         abspath = drs_database.get_db_abspath(params, filename, where='guess')
+#         image, header = drs_database.get_db_file(params, abspath, ext, fmt,
+#                                                  kind, get_image, get_header)
+#         # return here
+#         if get_header:
+#             return [image], [header], [abspath]
+#         else:
+#             return [image], [abspath]
+#     # ----------------------------------------------------------------------
+#     # get telluDB
+#     tdb = drs_database.get_full_database(params, 'telluric')
+#     # get calibration entries
+#     entries = drs_database.get_key_from_db(params, key, tdb, inheader,
+#                                            n_ent=n_entries, mode=mode,
+#                                            required=required)
+#     # ----------------------------------------------------------------------
+#     # deal with return entries
+#     if return_entries:
+#         return entries
+#     # ----------------------------------------------------------------------
+#     # get filename col
+#     filecol = tdb.file_col
+#     # ----------------------------------------------------------------------
+#     # storage
+#     images, headers, abspaths = [], [], []
+#     # ----------------------------------------------------------------------
+#     # loop around entries
+#     for it, entry in enumerate(entries):
+#         # get entry filename
+#         filename = entry[filecol]
+#         # ------------------------------------------------------------------
+#         # get absolute path
+#         abspath = drs_database.get_db_abspath(params, filename,
+#                                               where='telluric')
+#         # append to storage
+#         abspaths.append(abspath)
+#         # load image/header
+#         image, header = drs_database.get_db_file(params, abspath, ext, fmt,
+#                                                  kind, get_image, get_header)
+#         # append to storage
+#         images.append(image)
+#         # append to storage
+#         headers.append(header)
+#     # ----------------------------------------------------------------------
+#     # deal with returns with and without header
+#     if get_header:
+#         if not required and len(images) == 0:
+#             return None, None, None
+#         # deal with if n_entries is 1 (just return file not list)
+#         if n_entries == 1:
+#             return images[-1], headers[-1], abspaths[-1]
+#         else:
+#             return images, headers, abspaths
+#     else:
+#         if not required and len(images) == 0:
+#             return None, None
+#         # deal with if n_entries is 1 (just return file not list)
+#         if n_entries == 1:
+#             return images[-1], abspaths[-1]
+#         else:
+#             return images, abspaths
+
+
+def load_templates(params: ParamDict,
+                   header: Union[drs_fits.Header, None] = None,
+                   objname: Union[str, None] = None,
+                   fiber: Union[str, None] = None,
+                   database: Union[TelluDatabase, None] = None
+                   ) -> Tuple[Union[np.ndarray, None], Union[str, None]]:
+    """
+    Load the most recent template from the telluric database for 'objname'
+
+    :param params: ParamDict, the parameter dictionary of constnats
+    :param header: fits.Header or None -
+    :param objname:
+    :param fiber:
+    :param database:
+    :return:
+    """
     # get file definition
     out_temp = drs_startup.get_file_definition('TELLU_TEMP',
                                                params['INSTRUMENT'],
                                                kind='red', fiber=fiber)
+    # -------------------------------------------------------------------------
     # deal with user not using template
     if 'USE_TEMPLATE' in params['INPUTS']:
         if not params['INPUTS']['USE_TEMPLATE']:
             return None, None
+    # -------------------------------------------------------------------------
     # get key
     temp_key = out_temp.get_dbkey()
+    # -------------------------------------------------------------------------
+    # load database
+    if database is None:
+        telludbm = TelluDatabase(params)
+        telludbm.load_db()
+    else:
+        telludbm = database
+    # -------------------------------------------------------------------------
     # log status
     WLOG(params, '', TextEntry('40-019-00045', args=[temp_key]))
     # load tellu file, header and abspaths
-    temp_out = load_tellu_file(params, temp_key, header, get_header=True,
-                               n_entries='all', required=False, fiber=fiber)
-    temp_images, temp_headers, temp_filenames = temp_out
-
+    temp_out = load_tellu_file(params, temp_key, header,
+                               n_entries=1, required=False, fiber=fiber,
+                               objname=objname, database=telludbm,
+                               mode=None)
+    temp_image, temp_header, temp_filename = temp_out
+    # -------------------------------------------------------------------------
     # deal with no files in database
-    if temp_images is None:
+    if temp_image is None:
         # log that we found no templates in database
         WLOG(params, '', TextEntry('40-019-00003'))
         return None, None
-    if len(temp_images) == 0:
-        # log that we found no templates in database
-        WLOG(params, '', TextEntry('40-019-00003'))
-        return None, None
-    # storage of valid files
-    valid_images, valid_filenames, valid_times = [], [], []
-    # loop around header and filter by objname
-    for it, temp_header in enumerate(temp_headers):
-        # get objname
-        temp_objname = temp_header[params['KW_OBJNAME'][0]]
-        # if temp_objname is the same as objname (input) then we have a
-        #   valid template
-        if temp_objname.upper().strip() == objname.upper().strip():
-            valid_images.append(temp_images[it])
-            valid_filenames.append(temp_filenames[it])
-
-    # deal with no files for this object name
-    if len(valid_images) == 0:
-        # log that we found no templates for this object
-        wargs = [params['KW_OBJNAME'][0], objname]
-        WLOG(params, 'info', TextEntry('40-019-00004', args=wargs))
-        return None, None
+    # -------------------------------------------------------------------------
     # log which template we are using
-    wargs = [valid_filenames[-1]]
+    wargs = [temp_filename]
     WLOG(params, 'info', TextEntry('40-019-00005', args=wargs))
     # only return most recent template
-    return valid_images[-1], valid_filenames[-1]
+    return temp_image, temp_filename
 
 
 def get_transmission_files(params, recipe, header, fiber):
@@ -1784,7 +1979,7 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
     return tapas_props
 
 
-def load_tapas_spl(params, recipe, header):
+def load_tapas_spl(params, header, database=None):
     # get file definition
     tellu_tapas = drs_startup.get_file_definition('TELLU_TAPAS',
                                                   params['INSTRUMENT'],
@@ -1794,8 +1989,9 @@ def load_tapas_spl(params, recipe, header):
     # get key
     conv_key = out_tellu_tapas.get_dbkey()
     # load tellu file
-    _, conv_paths = load_tellu_file(params, conv_key, header, n_entries='all',
-                                    get_image=False, required=False)
+    conv_paths = load_tellu_file(params, conv_key, n_entries='*',
+                                 get_image=False, required=False,
+                                 return_filename=True)
     # construct the filename from file instance
     out_tellu_tapas.construct_filename(path=params['DRS_TELLU_DB'])
     # ----------------------------------------------------------------------
@@ -1839,8 +2035,15 @@ def load_tapas_spl(params, recipe, header):
         # npy file must set header/hdict (to update)
         out_tellu_tapas.header = header
         out_tellu_tapas.hdict = header
+        # deal with no database
+        if database is None:
+            database = TelluDatabase(params)
+            # load the database
+            database.load_db()
         # copy the order profile to the telluDB
-        drs_database.add_file(params, out_tellu_tapas)
+        database.add_tellu_file(out_tellu_tapas, copy_files=False,
+                                objname='None', airmass='None',
+                                tau_water='None', tau_others='None')
     # ----------------------------------------------------------------------
     # need to spline others and water
     spl_others = mp.iuv_spline(tapas_wave, trans_others, k=1, ext=3)
