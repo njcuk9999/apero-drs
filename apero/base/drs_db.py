@@ -378,15 +378,9 @@ class Database:
             if not isinstance(column, str):
                 emsg = 'The column to set must be a string'
                 raise DatabaseError(emsg, path=self.path, func_name=func_name)
+            # deal with value
+            set_str.append('{0} = {1}'.format(column, _decode_value(value)))
 
-            # deal with value being types (decode to string)
-            if isinstance(value, bytes):
-                sargs = [column, value.decode('utf=8')]
-                set_str.append('{0} = {1}'.format(*sargs))
-            elif isinstance(value, str):
-                set_str.append('{0} = "{1}"'.format(column, value))
-            else:
-                set_str.append('{0} = {1}'.format(column,  value))
         # construct sql set command
         command = "UPDATE {} SET {}".format(table, ", ".join(set_str))
         # if we have a condition add it now
@@ -424,17 +418,7 @@ class Database:
         # infer table name
         table = self._infer_table_(table)
         # push values into strings
-        _values = []
-        for value in values:
-            # deal with value being types (decode to string)
-            if isinstance(value, bytes):
-                _values.append(value.decode('utf=8'))
-            # if it is not a string already just pipe it to string
-            elif not isinstance(value, str):
-                _values.append(str(value))
-            # it if is
-            else:
-                _values.append('"{0}"'.format(value))
+        _values = list(map(_decode_value, values))
         # deal with columns being all columns
         if columns == '*':
             columns = ''
@@ -606,6 +590,15 @@ class Database:
         """
         self.execute('COMMIT;')
 
+    # other methods
+    def colnames(self, columns: str,
+               table: Union[str, None] = None):
+        table = self._infer_table_(table)
+        command = "SELECT {} from {}".format(columns, table)
+        _, cursor = self.execute(command, return_cursor=True)
+        # return a list of columns
+        return list(map(lambda x: x[0], cursor.description))
+
     # private methods
     def _infer_table_(self, table: Union[None, str]) -> str:
         """
@@ -707,6 +700,38 @@ class Database:
                                 func_name=func_name)
         # return dataframe
         return df
+
+
+def _decode_value(value: Any) -> str:
+    """
+    Convert to string that can go into sql
+
+    :param value: Any value to convert to string
+
+    :return:
+    """
+
+    # deal with value being types (decode to string)
+    if isinstance(value, bytes):
+        return value.decode('utf=8')
+    # deal with value being None
+    elif value is None:
+        return '"None"'
+    # deal with nan
+    elif isinstance(value, float) and np.isnan(value):
+        return '"NAN"'
+    # deal with inf
+    elif isinstance(value, float) and np.isinf(value):
+        if np.isneginf(value):
+            return '"-INF"'
+        else:
+            return '"INF"'
+    # if it is not a string already just pipe it to string
+    elif not isinstance(value, str):
+        return str(value)
+    # else push it in as a string
+    else:
+        return '"{0}"'.format(value)
 
 
 # =============================================================================
