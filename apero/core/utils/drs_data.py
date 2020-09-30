@@ -728,7 +728,7 @@ def read_db_file(params: ParamDict, abspath: Union[str, Path],
     :param abspath: str, the path of the file to read
     :param get_image: bool, if True reads image, else returns None for image
     :param get_header: bool, if True reads header, else returns None for header
-    :param kind: str, either 'image' or 'table'
+    :param kind: str, either 'image' or 'table' or 'npy'
     :param fmt: str, format of the table to read (i.e. astropy.table.Table
                 format) only used if kind=='table'
     :param ext: int, the extension to read if kind=='image' (fits extension)
@@ -751,6 +751,8 @@ def read_db_file(params: ParamDict, abspath: Union[str, Path],
         image = drs_fits.readfits(params, abspath, ext=ext)
     elif kind == 'table':
         image = drs_table.read_table(params, abspath, fmt=fmt)
+    elif kind == 'npy':
+        image = drs_path.numpy_load(abspath)
     else:
         # raise error is kind is incorrect
         eargs = [' or '.join(['image', 'table']), func_name]
