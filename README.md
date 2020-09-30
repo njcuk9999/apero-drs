@@ -462,8 +462,11 @@ i.e. for RUN_XXXX and SKIP_XXXX.
 | cal_preprocessing [every night; OBJECT="Calibration"]                    | PP_CAL     |
 | cal_preprocessing [every night; SCIENCE_TARGETS]                         | PP_SCI     |
 | cal_preprocessing [every night; TELLURIC_TARGETS]                        | PP_TEL     |
-
-
+| cal_preprocessing [every night; HC1_HC1]                                 | PP_HC1HC1  |
+| cal_preprocessing [every night; FP_FP]                                   | PP_FPFP    |
+| cal_preprocessing [every night; DARK_FP]                                 | PP_DFP     |
+| cal_preprocessing [every night; DARK_DARK_SKY]                           | PP_SKY     |
+| cal_preprocessing [every night; LFC_LFC]                                 | PP_LFC     |
 
 ##### 4. `master_seq`
 
