@@ -1,61 +1,29 @@
-# Update Note Summary - Version 0.6.131
+# Update Note Summary - Version 0.7.000
 
 Date: 2020-09-10
 
-## Updates since Version 0.6.130
-
-- tellurics
-    - fix problem with pre-cleaning QC not making it to full QC rejection
-    - update obj_fit_tellu_db and obj_mk_tellu_db with table=None fix and
-      allow --test=True as an argument
-
-- polar
-    - hack fix suggesed by Chris for pol_spirou (when we get numpy linear
-      algebra exception)
-
-- other
-    - deal with having only one file in large_image_median (crashed before)
-    - LEAKM_WSMOOTH should be an int (crashed cal_leak_master code)
-    - update object query list
+## Updates since Version 0.6.131
 
 
-## Still to do:
-    - polar code update
-    - Implement database instead of text/fits files for databases
-        - index.fits, log.fits, object database, calibDB, telluDB
-    - Blacklist odometer codes
-    - Move data to user files + download / host not from github
-    - move all fits-images to start in extension 1 (not 0)
-    - add option to set template for mk_tellu and fit_tellu from args
-    - create script to get custom config (larger list of constants)
-    - add plot modes 3 and 4
-        - `plot== 3` (all debug plots shown) and `plot==4`
-           (all debug plots saved) modes
-    - make code to check constants/keywords usage (function usage)
-    - separate warning messages into codes 10-000-00000 and 20-000-00000
-        - codes 20-000-00000 for trigger to catch
-    - go through all summary plots and decide which plots, write figure
-      captions, improve plots, write quality control description, decide which
-      header keys to print
-    - add all functions doc strings + display func for all functions
-    - make classes picklable and then switch from multiprocessing.pool to spawn
-    - NIRPS implementation of cal_wave onwards
-    - EA masks from templates
-    - skip table need to take into account blacklist/whitelist nights
+- database
+    - complete code change on how databases are handled. Currently supported
+      databases are
+        - calibration database (instead of master_calib_SPIROU.py)
+    - still to do
+        - telluric database (instead of master_tellu_SPIROU.py)
+        - file database (instead of index.fits files in each dir)
+        - log database (instead of index.fits files in each dir)
+        - object database (instead of object_query_list.fits)
+        - language database (instead of the language csv files)
+        - param database (to help load parameters faster?)
 
-## To do later:
-    - implement persistence correction
-    - CCF wrapper using weighting/sanitise/bisector etc?
-    - propagate uncertainies / flags for NaNs
-    - proper SNR calculation
-    - integrate CFHT outputs input drs
-    - write documentation
-    - write paper
+- processing
+    - moving to use multiprocess.Pool instead of multiprocess.Process (should
+      speed up how we handle jobs on multiple cores) - requires classes be
+      pickle-able
 
-## Known issues:
-    - Locking of files means using >5 cores slows down a lot (fix with database)
-        - if locking is big problem use only 1 core
-    - Weird residuals left in order_profile after dark_flat (loc)
-    - Calibrations switch over at different points from PM to AM calibrations
-        - should really only use "older"
-    - run.ini files with multiple sequences sometime loose middle sequence
+
+- general
+    - all functions should be pickle-able and python typed and have doc strings
+    - reorganisation of modulular structure - minimize circular importing
+      minimize when certain modules are imported/not imported
