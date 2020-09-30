@@ -2917,8 +2917,9 @@ class DrsFitsFile(DrsInputFile):
     # -------------------------------------------------------------------------
     # fits file header methods
     # -------------------------------------------------------------------------
-    def get_hkey(self, key, has_default=False, default=None, required=True,
-                 dtype: Type = float, listtype: Union[Type, None] = None) -> Any:
+    def get_hkey(self, key, has_default=False, default=None,
+                 required=True, dtype: Type = float,
+                 listtype: Union[Type, None] = None) -> Any:
         """
         Looks for a key in DrsFitsFile.header, if has_default is
         True sets value of key to 'default' if not found else if "required"
