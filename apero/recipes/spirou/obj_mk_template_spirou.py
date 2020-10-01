@@ -136,8 +136,7 @@ def __main__(recipe, params):
                                                             KW_OUTPUT=filetype))
     else:
         # define the type of files we want to locate in the telluric database
-        tkey = '{0}_{1}'.format(filetype, fiber)
-        object_filenames = telluric.get_tellu_objs(params, tkey,
+        object_filenames = telluric.get_tellu_objs(params, filetype,
                                                    objnames=[objname],
                                                    database=telludbm)
 
