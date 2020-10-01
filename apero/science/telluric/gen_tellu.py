@@ -157,15 +157,17 @@ def normalise_by_pblaze(params, image, header, fiber, **kwargs):
     return image1, nprops
 
 
-def get_non_tellu_objs(params, recipe, fiber, filetype=None, dprtypes=None,
-                       robjnames=None):
+def get_non_tellu_objs(params: ParamDict, recipe, fiber, filetype=None,
+                       dprtypes=None, robjnames: List[str] = None):
     """
-    Get the objects of "filetype" and "
-    :param params:
+    Get the objects of "filetype" and that are not telluric objects
+    :param params: ParamDict - the parameter dictionary of constants
+    :param recipe: DrsRecipe
     :param fiber:
     :param filetype:
     :param dprtypes:
-    :param robjnames:
+    :param robjnames: list of strings - a list of all object names (only return
+                      if found and in this list
 
     :return:
     """
@@ -225,7 +227,7 @@ def get_tellu_objs(params: ParamDict, key: str,
     :return: list of strings, the absolute filenames for database entries of
              KEY == 'key' and OBJECT in 'objnames'
     """
-    func_name = display_func(params, 'get_tellu_objs', __NAME__)
+    _ = display_func(params, 'get_tellu_objs', __NAME__)
     # ----------------------------------------------------------------------
     # deal with objnames
     if objnames is None:
@@ -258,7 +260,7 @@ def get_tellu_objs(params: ParamDict, key: str,
     absfilenames = []
     for filename in filenames:
         # construct absolute path
-        absfilename = database.filedir.join(filename)
+        absfilename = database.filedir.joinpath(filename)
         # check exists
         if absfilename.exists():
             absfilenames.append(str(absfilename))
@@ -291,7 +293,7 @@ def get_sp_linelists(params, **kwargs):
 # pre-cleaning functions
 # =============================================================================
 def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
-                   database=None, **kwargs):
+                   database: Union[TelluDatabase, None] = None, **kwargs):
     """
     Main telluric pre-cleaning functionality.
 
@@ -320,6 +322,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     :param fiber:
     :param rawfiles:
     :param combine:
+    :param database:
 
     :return:
     """
@@ -1026,10 +1029,14 @@ def get_abso_expo(params, wavemap, expo_others, expo_water, spl_others,
     :param ex_gau: exponent of the gaussian (ex_gau = 2 is a gaussian, >2
                    is boxy)
     :param dv_abso: velocity of the absorption
+    :param ker_thres:
+    :param wavestart:
+    :param waveend:
+    :param dvgrid:
     :return:
     """
     # set the function name
-    func_name = __NAME__ + '.get_abso_expo()'
+    _ = display_func(params, 'get_abso_expo', __NAME__)
     # ----------------------------------------------------------------------
     # for some test one may give 0 as exponents and for this we just return
     #    a flat vector
@@ -1106,10 +1113,12 @@ def qc_exit_tellu_preclean(params, image, infile, wavemap,
 
     :param params:
     :param image:
+    :param infile:
     :param wavemap:
-    :param qc_value:
-    :param qc_name:
-    :param qc_logic:
+    :param qc_params:
+    :param sky_model:
+    :param database:
+
     :return:
     """
     # set the function name
@@ -1378,6 +1387,8 @@ def read_tellu_preclean(params, recipe, infile, fiber, database=None):
     :param recipe:
     :param infile:
     :param fiber:
+    :param database:
+
     :return:
     """
 
@@ -1414,7 +1425,7 @@ def read_tellu_preclean(params, recipe, infile, fiber, database=None):
     for pclean_filename in pclean_filenames:
         pclean_basenames.append(os.path.basename(pclean_filename))
     # see if file is in database
-    if not tpclfile.basename in pclean_basenames:
+    if tpclfile.basename not in pclean_basenames:
         return None
     # ----------------------------------------------------------------------
     # log progress
@@ -1437,9 +1448,10 @@ def read_tellu_preclean(params, recipe, infile, fiber, database=None):
         # add value
         value = tpclfile.get_hkey('TQCCV{0}'.format(qc_it), dtype=str)
         # evaluate vaule
+        # noinspection PyBroadException
         try:
             qc_values.append(eval(value))
-        except:
+        except Exception as _:
             qc_values.append(value)
         # add logic
         qc_logic.append(tpclfile.get_hkey('TQCCL{0}'.format(qc_it), dtype=str))
