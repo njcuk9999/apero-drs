@@ -175,7 +175,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
     # combine differences
     rad_expo = np.sqrt(water_diff ** 2 + others_diff ** 2)
     # make mask
-    radmask = rad_expo < rad_expo[np.argsort(rad_expo)[num_trans]]
+    radmask = rad_expo <= rad_expo[np.argsort(rad_expo)[num_trans - 1]]
     # ----------------------------------------------------------------------
     # mask the abso
     abso = abso[radmask]
