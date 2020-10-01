@@ -1306,11 +1306,11 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
                 'Value {0}'.format(qc_it)]
         tpclfile.add_hkey(key=qkwv)
         # add logic
-        qkwl = ['TQCCL{0}'.format(qc_it), qc_values[qc_it],
+        qkwl = ['TQCCL{0}'.format(qc_it), qc_logic[qc_it],
                 'Logic {0}'.format(qc_it)]
         tpclfile.add_hkey(key=qkwl)
         # add pass
-        qkwp = ['TQCCP{0}'.format(qc_it), qc_values[qc_it],
+        qkwp = ['TQCCP{0}'.format(qc_it), qc_pass[qc_it],
                 'Pass {0}'.format(qc_it)]
         tpclfile.add_hkey(key=qkwp)
     # ----------------------------------------------------------------------
@@ -1821,19 +1821,12 @@ def load_templates(params: ParamDict,
     # get key
     temp_key = out_temp.get_dbkey()
     # -------------------------------------------------------------------------
-    # load database
-    if database is None:
-        telludbm = TelluDatabase(params)
-        telludbm.load_db()
-    else:
-        telludbm = database
-    # -------------------------------------------------------------------------
     # log status
     WLOG(params, '', TextEntry('40-019-00045', args=[temp_key]))
     # load tellu file, header and abspaths
     temp_out = load_tellu_file(params, temp_key, header,
                                n_entries=1, required=False, fiber=fiber,
-                               objname=objname, database=telludbm,
+                               objname=objname, database=database,
                                mode=None)
     temp_image, temp_header, temp_filename = temp_out
     # -------------------------------------------------------------------------
@@ -1850,7 +1843,7 @@ def load_templates(params: ParamDict,
     return temp_image, temp_filename
 
 
-def get_transmission_files(params, recipe, header, fiber):
+def get_transmission_files(params, header, fiber, database=None):
     # get file definition
     out_trans = drs_startup.get_file_definition('TELLU_TRANS',
                                                 params['INSTRUMENT'],
@@ -1860,33 +1853,33 @@ def get_transmission_files(params, recipe, header, fiber):
     # log status
     WLOG(params, '', TextEntry('40-019-00046', args=[trans_key]))
     # load tellu file, header and abspaths
-    _, trans_filenames = load_tellu_file(params, trans_key, header, fiber=fiber,
-                                         n_entries='all', get_image=False)
+    trans_filenames = load_tellu_file(params, trans_key, header, fiber=fiber,
+                                      n_entries='*', get_image=False,
+                                      database=database, return_filename=True)
     # storage for valid files/images/times
-    valid_filenames = []
-    # loop around header and get times
-    for filename in trans_filenames:
-        # only add if filename not in list already (files will be overwritten
-        #   but we can have multiple entries in database)
-        if filename not in valid_filenames:
-            # append to list
-            valid_filenames.append(filename)
-    # convert arrays
-    valid_filenames = np.array(valid_filenames)
+    valid_filenames = np.unique(trans_filenames)
     # return all valid sorted in time
-    return valid_filenames
+    return list(valid_filenames)
 
 
 # =============================================================================
 # Tapas functions
 # =============================================================================
-def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
+def load_conv_tapas(params, recipe, header, mprops, fiber, database=None,
+                    absorbers: Union[List[str], None] = None,
+                    fwhm_lsf: Union[float, None] = None):
     func_name = __NAME__ + '.load_conv_tapas()'
     # get parameters from params/kwargs
-    tellu_absorbers = pcheck(params, 'TELLU_ABSORBERS', 'absorbers', kwargs,
-                             func_name, mapf='list', dtype=str)
-    fwhm_pixel_lsf = pcheck(params, 'FWHM_PIXEL_LSF', 'fwhm_lsf', kwargs,
-                            func_name)
+    tellu_absorbers = pcheck(params, 'TELLU_ABSORBERS', func=func_name,
+                             mapf='list', dtype=str, override=absorbers)
+    fwhm_pixel_lsf = pcheck(params, 'FWHM_PIXEL_LSF', func=func_name,
+                            override=fwhm_lsf)
+    # ----------------------------------------------------------------------
+    # deal with database not being loaded
+    if database is None:
+        database = TelluDatabase(params)
+        # load database
+        database.load_db()
     # ----------------------------------------------------------------------
     # Load any convolved files from database
     # ----------------------------------------------------------------------
@@ -1903,17 +1896,20 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
                                                          params['INSTRUMENT'],
                                                          kind='red',
                                                          fiber=fiber)
+        out_tellu_conv.params = params
         # get key
         conv_key = out_tellu_conv.get_dbkey()
     # load tellu file
-    _, conv_paths = load_tellu_file(params, conv_key, header, n_entries='all',
-                                    get_image=False, required=False,
-                                    fiber=fiber)
+    conv_paths = load_tellu_file(params, conv_key, header, n_entries='*',
+                                 get_image=False, required=False,
+                                 fiber=fiber, return_filename=True,
+                                 database=database)
     if conv_paths is None:
         conv_paths = []
     # construct the filename from file instance
     out_tellu_conv.construct_filename(infile=mprops['WAVEINST'],
-                                      path=params['DRS_TELLU_DB'])
+                                      path=params['DRS_TELLU_DB'],
+                                      fiber=fiber)
     # if our npy file already exists then we just need to read it
     if out_tellu_conv.filename in conv_paths:
         # log that we are loading tapas convolved file
@@ -1945,7 +1941,7 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
         wargs = [out_tellu_conv.filename]
         WLOG(params, '', TextEntry('40-019-00002', args=wargs))
         # save
-        out_tellu_conv.write_file(params)
+        out_tellu_conv.write_file()
         # ------------------------------------------------------------------
         # Move to telluDB and update telluDB
         # ------------------------------------------------------------------
@@ -1953,7 +1949,7 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, **kwargs):
         out_tellu_conv.header = header
         out_tellu_conv.hdict = header
         # copy the order profile to the calibDB
-        drs_database.add_file(params, out_tellu_conv)
+        database.add_tellu_file(out_tellu_conv)
 
     # ------------------------------------------------------------------
     # get the tapas_water and tapas_others data
