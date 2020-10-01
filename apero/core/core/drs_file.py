@@ -961,7 +961,8 @@ class DrsInputFile:
                            remove_insuffix: Union[bool, None] = None,
                            prefix: Union[str, None] = None,
                            suffix: Union[str, None] = None,
-                           check: bool = True):
+                           check: bool = True,
+                           filename: Union[str, None] = None):
         """
         Constructs the filename from the parameters defined at instance
         definition and using the infile (if required). If check is True, checks
@@ -980,6 +981,8 @@ class DrsInputFile:
                        outfile.prefix)
         :param suffix: str, if set the suffix of the file (defaults to
                        outfile.suffix)
+        :param filename: str or None, only used for specific out fcuntions
+                         (like set_file)
 
         :param check: bool, whether to check infile.name against self.intype
 
@@ -999,7 +1002,8 @@ class DrsInputFile:
         if self.outfunc is not None:
             try:
                 abspath = self.outfunc(params, infile, outfile, fiber, path,
-                                       func, remove_insuffix, prefix, suffix)
+                                       func, remove_insuffix, prefix, suffix,
+                                       filename)
             except DrsCodedException as e:
                 level = e.get('level', 'error')
                 eargs = e.get('targs', None)
