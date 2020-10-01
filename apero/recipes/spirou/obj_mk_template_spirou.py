@@ -138,7 +138,8 @@ def __main__(recipe, params):
         # define the type of files we want to locate in the telluric database
         tkey = '{0}_{1}'.format(filetype, fiber)
         object_filenames = telluric.get_tellu_objs(params, tkey,
-                                                   objnames=[objname])
+                                                   objnames=[objname],
+                                                   database=telludbm)
 
     # deal with no files being present
     if len(object_filenames) == 0:

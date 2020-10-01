@@ -232,17 +232,20 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Load transmission files
         # ------------------------------------------------------------------
-        trans_files = telluric.get_trans_files(params, recipe, header, fiber)
+        trans_files = telluric.get_trans_files(params, header, fiber,
+                                               database=telludbm)
         # ------------------------------------------------------------------
         # Get template file (if available)
         # ------------------------------------------------------------------
-        tout = telluric.load_templates(params, header, objname, fiber)
+        tout = telluric.load_templates(params, header, objname, fiber,
+                                       database=telludbm)
         template, template_file = tout
         # ------------------------------------------------------------------
         # load the expected atmospheric transmission
         # ------------------------------------------------------------------
         largs = [header, mprops, fiber]
-        tapas_props = telluric.load_conv_tapas(params, recipe, *largs)
+        tapas_props = telluric.load_conv_tapas(params, recipe, *largs,
+                                               database=telludbm)
         # ------------------------------------------------------------------
         # Generate the absorption map + calculate PCA components
         # ------------------------------------------------------------------
