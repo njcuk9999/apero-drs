@@ -120,12 +120,6 @@ class Database:
         except Exception as e:
             raise DatabaseError(message=str(e), errorobj=e, path=self.path,
                                 func_name=func_name)
-        # try to get the SQL3 connection cursor
-        try:
-            self._cursor_ = self._conn_.cursor()
-        except Exception as e:
-            raise DatabaseError(message=str(e), errorobj=e, path=self.path,
-                                func_name=func_name)
         # update table list
         self._update_table_list_()
 
@@ -184,14 +178,12 @@ class Database:
         return self.__str__()
 
     # get / set / execute / add methods
-    def execute(self, command: str, return_cursor: bool = False) -> Any:
+    def execute(self, command: str) -> Any:
         """
         Directly execute an SQL command on the database and return
         any results.
 
         :param command: str, The SQL command to be run.
-        :param return_cursor: bool, whether we need the cursor return for
-                              further use
 
         :returns: The outputs of the command, if any, as a list.
         """
@@ -200,23 +192,28 @@ class Database:
         # print input if verbose
         if self._verbose_:
             print("SQL INPUT: ", command)
+
+        # get cursor
+        cursor = self._conn_.cursor()
         # try to execute SQL command
         try:
-            cursor = self._cursor_.execute(command)
-            result = self._cursor_.fetchall()
+            cursor.execute(command)
+            result = cursor.fetchall()
+            # close cursor
+            cursor.close()
         # catch all errors and pipe to database error
         except Exception as e:
+            # close cursor
+            cursor.close()
+            # raise exception
             raise DatabaseError(message=str(e), errorobj=e, path=self.path,
                                 func_name=func_name)
+
         # print output of sql command if verbose
         if self._verbose_:
             print("SQL OUTPUT:", result)
-        # return the sql result and cursor if required
-        if return_cursor:
-            return result, cursor
-        # else just return the sql result
-        else:
-            return result
+        # return the sql result
+        return result
 
     def get(self, columns: str = '*', table: Union[None, str] = None,
             condition: Union[None, str] = None,
@@ -311,14 +308,14 @@ class Database:
             return self._to_pandas(command)
         # else we execute natively
         else:
-            result, cursor = self.execute(command, return_cursor=True)
+            result = self.execute(command)
             # if numpy array requested return it as one
             if return_array:
                 return np.asarray(result)
             # if astropy table request return it as one (need the cursor for
             #    columns)
             if return_table:
-                return self._to_astropy_table(cursor, result)
+                return self._to_astropy_table(result)
             # else just return the result as is (a tuple)
             return result
 
@@ -560,6 +557,7 @@ class Database:
         :param new_name: The new name of the table. This must not be already
                          taken or an SQL keyword.
         """
+        _ = __NAME__ + '.Database.rename_table()'
         self.execute("ALTER TABLE {} RENAME TO {}".format(old_name, new_name))
         self._commit()
 
@@ -592,12 +590,39 @@ class Database:
 
     # other methods
     def colnames(self, columns: str,
-               table: Union[str, None] = None):
+                 table: Union[str, None] = None) -> List[str]:
+        """
+        Get the column names from table (i.e. deal with * or columns separated
+        by commas)
+
+        :param columns: str, comma separate set of column names or *
+        :param table: str, the name of the Table
+
+        :return: list of strings, the column names
+        """
+        func_name = __NAME__ + '.Database.colnames()'
+        # infer the table name if None
         table = self._infer_table_(table)
+        # set up command
         command = "SELECT {} from {}".format(columns, table)
-        _, cursor = self.execute(command, return_cursor=True)
+        # get cursor
+        cursor = self._conn_.cursor()
+        # try to execute SQL command
+        try:
+            cursor.execute(command)
+            # get columns
+            colnames = list(map(lambda x: x[0], cursor.description))
+            # close cursors
+            cursor.close()
+        # catch all errors and pipe to database error
+        except Exception as e:
+            # close cursor
+            cursor.close()
+            # raise exception
+            raise DatabaseError(message=str(e), errorobj=e, path=self.path,
+                                func_name=func_name)
         # return a list of columns
-        return list(map(lambda x: x[0], cursor.description))
+        return colnames
 
     # private methods
     def _infer_table_(self, table: Union[None, str]) -> str:
@@ -642,33 +667,17 @@ class Database:
         # commit
         self._conn_.commit()
 
-    def _get_columns(self, cursor=None,
-                     table: Union[str, None] = None) -> List[str]:
-        """
-        Get the columns names for a particular execute command (using cursor)
-        :param cursor: return of the self._cursor_.execute command
-        :return:
-        """
-        # deal with no cursor defined (get it)
-        if cursor is None:
-            table = self._infer_table_(table)
-            command = "SELECT {} from {}".format('*', table)
-            _, cursor = self.execute(command, return_cursor=True)
-        # return a list of columns
-        return list(map(lambda x: x[0], cursor.description))
-
-    def _to_astropy_table(self, cursor, result) -> Table:
+    def _to_astropy_table(self, result) -> Table:
         """
         Convert result to astropy table
 
-        :param cursor:
         :param result:
         :return:
         """
         # set function name
         func_name = __NAME__ + '.Database._to_astropy_table()'
         # get columns
-        columns = self._get_columns(cursor)
+        columns = self.colnames('*')
         # set up table
         table = Table()
         for it, col in enumerate(columns):
