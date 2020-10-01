@@ -1492,7 +1492,7 @@ calib_seq.add(cal_wave_night)
 # -----------------------------------------------------------------------------
 tellu_seq = drs_recipe.DrsRunSequence('tellu_seq', __INSTRUMENT__)
 # extract science
-tellu_seq.add(cal_extract, name='EXTOBJ',
+tellu_seq.add(cal_extract, name='EXTTELL',
               files=[files.pp_obj_dark, files.pp_obj_fp],
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                            KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
