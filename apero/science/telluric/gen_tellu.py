@@ -1307,11 +1307,11 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
                 'Value {0}'.format(qc_it)]
         tpclfile.add_hkey(key=qkwv)
         # add logic
-        qkwl = ['TQCCL{0}'.format(qc_it), qc_values[qc_it],
+        qkwl = ['TQCCL{0}'.format(qc_it), qc_logic[qc_it],
                 'Logic {0}'.format(qc_it)]
         tpclfile.add_hkey(key=qkwl)
         # add pass
-        qkwp = ['TQCCP{0}'.format(qc_it), qc_values[qc_it],
+        qkwp = ['TQCCP{0}'.format(qc_it), qc_pass[qc_it],
                 'Pass {0}'.format(qc_it)]
         tpclfile.add_hkey(key=qkwp)
     # ----------------------------------------------------------------------
