@@ -21,7 +21,6 @@ from apero.core import constants
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -510,21 +509,33 @@ class TelluricDatabase(DatabaseManager):
         # set database directory
         self.filedir = Path(str(self.params['DRS_TELLU_DB']))
 
-
     def add_tellu_file(self, drsfile: DrsInputFile, verbose: bool = True,
                        copy_files: bool = True,
                        objname: Union[str, None] = None,
-                       airmass: Union[float, None] = None,
-                       tau_water: Union[float, None] = None,
-                       tau_others: Union[float, None] = None):
+                       airmass: Union[float, str, None] = None,
+                       tau_water: Union[float, str, None] = None,
+                       tau_others: Union[float, str, None] = None):
         """
         Add DrsFile to the calibration database
 
         :param drsfile: DrsFile, the DrsFile to add
         :param verbose: bool, if True logs progress
         :param copy_files: bool, if True copies file to self.filedir
+        :param objname: str or None, the object name if None uses object name
+                        from drsfile.header
+        :param airmass: float or str or None, if flaot is the airmass value
+                        if str then should be 'None' to show no value wanted
+                        if None then uses airmass from drsfile.header
+        :param tau_water:  float or str or None, if flaot is the tau_water value
+                           if str then should be 'None' to show no value wanted
+                           if None then uses tau_water from drsfile.header
+        :param tau_others: float or str or None, if flaot is the tau_others
+                           value if str then should be 'None' to show no value
+                           wanted if None then uses tau_others from
+                           drsfile.header
 
-        :return: None
+        :return: None - adds row to the database (and copies file if
+                        copy_files=True)
         """
         # set function
         _ = display_func(self.params, 'add_tellu_file', __NAME__,
@@ -552,7 +563,7 @@ class TelluricDatabase(DatabaseManager):
         # get airmass
         if airmass is None:
             airmass = _get_hkey(self.params, 'KW_AIRMASS', hdict, header,
-                            dtype=float)
+                                dtype=float)
         # get tau_water
         if tau_water is None:
             tau_water = _get_hkey(self.params, 'KW_TELLUP_EXPO_WATER', hdict,
@@ -808,7 +819,6 @@ class TelluricDatabase(DatabaseManager):
                                          tau_water, tau_others)
         # deal with filename being pandas dataframe (i.e.
 
-
         # ---------------------------------------------------------------------
         # return absolute paths
         # ---------------------------------------------------------------------
@@ -848,8 +858,6 @@ class TelluricDatabase(DatabaseManager):
                 outfilenames.append(outfilename)
             # return outfilenames
             return outfilenames
-
-
 
 
 # =============================================================================
