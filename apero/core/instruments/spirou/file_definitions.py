@@ -932,10 +932,11 @@ out_tellu_pclean = drs_finput('TELLU_PCLEAN', KW_OUTPUT='TELLU_PCLEAN',
                               dbname='telluric', dbkey='TELLU_PCLEAN',
                               outfunc=out.general_file)
 
-# convolved tapas map (with wave solution)
+# convolved tapas map (with master wave solution)
 out_tellu_conv = drs_ninput('TELLU_CONV', KW_OUTPUT='TELLU_CONV',
                             fibers=['AB', 'A', 'B', 'C'],
-                            filetype='.npy', intype=out_ext_e2dsff,
+                            filetype='.npy',
+                            intype=[out_wavem_fp, out_wavem_hc],
                             suffix='_tellu_conv', remove_insuffix=True,
                             dbname='telluric', dbkey='TELLU_CONV',
                             outfunc=out.general_file)
