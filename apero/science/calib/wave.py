@@ -124,10 +124,10 @@ def get_wave_solution_from_wavefile(params, recipe, usefiber, inwavefile,
                                     header, database=None, master=False):
     # ------------------------------------------------------------------------
     # get file definitions (wave solution FP and wave solution HC)
-    out_wave_fp = drs_startup.get_file_definition('WAVE_FP',
+    out_wave_fp = drs_startup.get_file_definition('WAVEM_FP',
                                                   params['INSTRUMENT'],
                                                   kind='red')
-    out_wave_hc = drs_startup.get_file_definition('WAVE_HC',
+    out_wave_hc = drs_startup.get_file_definition('WAVEM_HC',
                                                   params['INSTRUMENT'],
                                                   kind='red')
     # ------------------------------------------------------------------------
@@ -1928,6 +1928,9 @@ def hc_write_wavesol_master(params, recipe, llprops, infile, fiber, combine,
     wavefile.copy_original_keys(infile, exclude_groups=['wave'])
     # add version
     wavefile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add dates
+    wavefile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    wavefile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
     # add output tag
     wavefile.add_hkey('KW_OUTPUT', value=wavefile.name)
     wavefile.add_hkey('KW_FIBER', value=fiber)
@@ -6092,6 +6095,9 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
     # ----------------------------------------------------------------------
     # add version
     wavefile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add dates
+    wavefile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    wavefile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
     # add output tag
     wavefile.add_hkey('KW_OUTPUT', value=wavefile.name)
     wavefile.add_hkey('KW_FIBER', value=fiber)
