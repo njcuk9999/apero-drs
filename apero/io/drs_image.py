@@ -571,7 +571,7 @@ def large_image_combine(params: ParamDict, files: List[str],
     # deal with having no subdir
     if subdir is None:
         # get unix char code
-        unixtime, humantime, rval = drs_startup.unix_char_code()
+        unixtime, humantime, rval = drs_misc.unix_char_code()
         # create subdir
         subdir = 'LIM-{0:020d}-{1}'.format(int(unixtime), rval)
     # construct file dir
