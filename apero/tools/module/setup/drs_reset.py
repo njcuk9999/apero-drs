@@ -14,12 +14,13 @@ import os
 import sys
 
 from apero.base import base
+from apero.core import constants
 from apero.core.core import drs_log
 from apero import lang
 from apero.io import drs_lock
 from apero.io import drs_path
 from apero.core.utils import drs_data
-
+from apero.tools.module.database import create_databases
 
 # =============================================================================
 # Define variables
@@ -121,10 +122,20 @@ def reset_calibdb(params, log=True):
     :param log:
     :return:
     """
+    # get database paths
+    databases = create_databases.list_databases(params)
+    # load pseudo constants
+    pconst = constants.pload(params['INSTRUMENT'])
+    # name the database
     name = 'calibration database'
+    # get the calibration database file directory
     calib_dir = params['DRS_CALIB_DB']
+    # get the reset path
     reset_path = params['DRS_RESET_CALIBDB_PATH']
+    # reset files
     reset_dbdir(params, name, calib_dir, reset_path, log=log)
+    # create calibration database
+    create_databases.create_calibration_database(params, pconst, databases)
 
 
 def reset_telludb(params, log=True):
@@ -134,10 +145,20 @@ def reset_telludb(params, log=True):
     :param log:
     :return:
     """
+    # get database paths
+    databases = create_databases.list_databases(params)
+    # load pseudo constants
+    pconst = constants.pload(params['INSTRUMENT'])
+    # name the database
     name = 'tellruic database'
+    # get the telluric database file directory
     tellu_dir = params['DRS_TELLU_DB']
+    # get the reset path
     reset_path = params['DRS_RESET_TELLUDB_PATH']
+    # reset files
     reset_dbdir(params, name, tellu_dir, reset_path, log=log)
+    # create telluric database
+    create_databases.create_telluric_database(pconst, databases)
 
 
 def reset_dbdir(params, name, db_dir, reset_path, log=True,
@@ -210,7 +231,10 @@ def reset_run(params, log=True):
 
 def reset_assets(params, log=True):
     name = 'assets'
-
+    # get database paths
+    databases = create_databases.list_databases(params)
+    # load pseudo constants
+    pconst = constants.pload(params['INSTRUMENT'])
     # TODO: deal with getting online
     asset_path = params['DRS_DATA_ASSETS']
     reset_path = os.path.join(params['DRS_RESET_ASSETS_PATH'],
@@ -221,6 +245,16 @@ def reset_assets(params, log=True):
     # loop around files and folders in reduced dir
     reset_dbdir(params, name, asset_path, abs_reset_path, log=log,
                 empty_first=False, relative_path='MODULE')
+    # create index database
+    create_databases.create_index_database(pconst, databases)
+    # create log database
+    create_databases.create_log_database(pconst, databases)
+    # create object database
+    create_databases.create_object_database(params, pconst, databases)
+    # create params database
+    create_databases.create_params_database(pconst, databases)
+    # create language database
+    create_databases.create_lang_database(pconst, databases)
 
 
 def reset_log_fits(params, log=True):
