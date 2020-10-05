@@ -11,15 +11,19 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 import shutil
-from typing import Any, List, Tuple, Type, Union
+from typing import Any, Dict, List, Tuple, Type, Union
 
 from apero.base import base
+from apero.base import drs_misc
 from apero.base import drs_db
 from apero.base import drs_exceptions
+from apero.base import drs_text
 from apero import lang
 from apero.core import constants
 from apero.core.core import drs_file
 from apero.core.core import drs_log
+from apero.io import drs_fits
+
 
 # =============================================================================
 # Define variables
@@ -51,6 +55,9 @@ TextEntry = lang.core.drs_lang_text.TextEntry
 # define drs files
 DrsFileTypes = Union[drs_file.DrsInputFile, drs_file.DrsFitsFile,
                      drs_file.DrsNpyFile]
+# get list of obj name cols
+OBJNAMECOLS = ['KW_OBJNAME']
+
 
 
 # =============================================================================
@@ -75,6 +82,8 @@ class DatabaseManager:
         _ = display_func(params, '__init__', __NAME__, self.classname)
         # save params for use throughout
         self.params = params
+        # get pconst (for use throughout)
+        self.pconst = constants.pload(params['INSTRUMENT'])
         # set name
         self.name = 'DatabaseManager'
         # check does nothing
@@ -1083,7 +1092,7 @@ def _get_time(params: ParamDict, dbname: str,
 
 
 # =============================================================================
-# Define other databases
+# Define index databases
 # =============================================================================
 class IndexDatabase(DatabaseManager):
     def __init__(self, params: ParamDict, check: bool = True):
@@ -1105,9 +1114,469 @@ class IndexDatabase(DatabaseManager):
         # set name
         self.name = 'index'
         # set path
-        self.set_path(None, 'TELLU_DB_NAME', check=check)
+        self.set_path(None, 'INDEX_DB_NAME', check=check)
+
+    def add_entry(self, directory: str, filename: Union[Path, str], kind: str,
+                  hkeys: Dict[str, str]):
+        """
+        Add an entry to the index database
+
+        :param directory: str, the sub-directory name (under the raw/reduced/
+                          tmp directory)
+        :param filename: str or Path, the filename to add (can be absolute file
+                         or basename, but must exist on disk)
+        :param kind: str, either 'raw', 'red', 'tmp', 'calib', 'tellu', 'asset'
+                     this determines the path of the file i.e.
+                     path/directory/filename (unless filename is an absolute
+                     path) - note in this case directory should still be
+                     filled correctly (for database)
+
+        :param hkeys: dictionary of strings, for each instrument a set
+                            of header keys is index - add any that are set to
+                            here (see pseudo_constants.INDEX_HEADER_KEYS)
+                            any that are not set here are set to 'None'
+        :return: None - adds entry to index database
+        """
+        # set function
+        func_name = display_func(self.params, 'add_entry', __NAME__,
+                                 self.classname)
+        # deal with filename/basename/path
+        filename, basename, path = _deal_with_filename(self.params, self.name,
+                                                       kind, directory,
+                                                       filename, func=func_name)
+        # set used to 1
+        used = 1
+        # ------------------------------------------------------------------
+        # get last modified time for file (need absolute path)
+        last_modified = filename.stat().st_mtime
+        # ------------------------------------------------------------------
+        # get allowed header keys
+        rkeys, rtypes = self.pconst.INDEX_HEADER_KEYS()
+        # store values in correct order for database.add_row
+        hvalues = []
+        # loop around allowed header keys and check for them in headers
+        #  keys - if not there set to 'None'
+        for h_it, hkey in enumerate(rkeys):
+            if hkey in hkeys:
+                try:
+                    # get data type
+                    dtype = rtypes[h_it]
+                    # try to case and append
+                    hvalues.append(dtype(hkeys[hkey]))
+                except Exception as _:
+                    wargs = [self.name, hkey, hkeys[hkey],
+                             rtypes[h_it], func_name]
+                    wmsg = TextEntry('10-002-00003', args=wargs)
+                    WLOG(self.params, 'warning', wmsg)
+                    hvalues.append('None')
+            else:
+                hvalues.append('None')
+        # ------------------------------------------------------------------
+        # make absolute path
+        path = Path(path).joinpath(directory, filename)
+        # ------------------------------------------------------------------
+        # get current list of paths for
+        currentpath = self.get_entries('PATH', directory=directory,
+                                       filename=basename, nentries=1)
+        # ------------------------------------------------------------------
+        # deal with updating entry
+        if currentpath is not None and currentpath == path:
+            # add new entry to database
+            values = [path, directory, basename, kind, last_modified]
+            values += hvalues + [used]
+            # set up condition
+            condition = 'FILENAME == "{0}"'.format(filename)
+            condition += ' AND DIRECTORY == "{0}"'.format(directory)
+            condition += ' AND PATH == "{0}"'.format(path)
+            # update row in database
+            self.database.set('*', values, condition=condition, table='MAIN',
+                              commit=True)
+        else:
+            # add new entry to database
+            values = [path, directory, basename, kind, last_modified]
+            values += hvalues + [used]
+            self.database.add_row(values, 'MAIN', commit=True)
 
 
+    def update_entries(self, kind,
+                       include_directories: Union[List[str], None],
+                       exclude_directories: Union[List[str], None],
+                       filename: Union[List[Path], Path, List[str], str, None],
+                       suffix: str = ''):
+        """
+        Update the index database for files of 'kind', deal with including
+        and excluding directories for files with 'suffix'
+
+        :param kind: str, either 'raw', 'red', 'tmp', 'calib', 'tellu', 'asset'
+                     this determines the path of the file i.e.
+                     path/directory/filename (unless filename is an absolute
+                     path) - note in this case directory should still be
+                     filled correctly (for database)
+        :param include_directories: list of strings or None, if set only
+                                    include these directories to update
+                                    index database
+        :param exclude_directories: list of strings or None, if set exclude
+                                    these directories from being updated
+                                    in the index database
+        :param filename: str, Path, list of strs/Paths or None, if set we only
+                         include this filename or these filenames
+        :param suffix: str, the suffix (i.e. extension of filenames) - filters
+                       to only set these files
+
+        :return: None - updates the index database
+        """
+        # get the path for kind
+        path = _deal_with_filename(self.params, self.name, kind, None, None)
+        # ---------------------------------------------------------------------
+        # deal with a predefined file list (or single file)
+        if filename is not None:
+            if isinstance(filename, (str, Path)):
+                include_files = [filename]
+            else:
+                include_files = filename
+        else:
+            include_files = []
+        # ---------------------------------------------------------------------
+        # deal with files we don't need (already have)
+        exclude_files = self.get_entries('PATH', kind=kind)
+        # ---------------------------------------------------------------------
+        # locate all files within path
+        reqfiles = _get_files(path, kind, include_directories,
+                              exclude_directories, include_files,
+                              exclude_files, suffix)
+        # ---------------------------------------------------------------------
+        # get a list of keys
+        rkeys, rtypes = self.pconst.INDEX_HEADER_KEYS()
+        # ---------------------------------------------------------------------
+        # add required files to the database
+        for reqfile in reqfiles:
+            # set directory
+            uncommonpath = drs_misc.get_uncommon_path(path, reqfile)
+            # get the directory name
+            directory = Path(uncommonpath).name
+            # get the basename
+            basename = reqfile.name
+            # get header keys
+            hkeys = dict()
+            # load missing files
+            if str(reqfile).endswith('.fits'):
+                # load header
+                header = drs_fits.read_header(self.params, str(reqfile))
+                # loop around required keys
+                for rkey in rkeys:
+                    drs_key = self.params[rkey][0]
+                    if drs_key in header:
+                        hkeys[rkey] = header[drs_key]
+            # add to database
+            self.add_entry(directory, basename, kind, hkeys)
+
+    def get_entries(self, columns: str = '*',
+                    directory: Union[str, None] = None,
+                    filename: Union[Path, str, None] = None,
+                    kind: Union[str, None] = None,
+                    hkeys: Union[Dict[str, str], None] = None,
+                    nentries: Union[int, None] = None,
+                    condition: Union[str, None] = None,
+                    ) -> Union[None, list, tuple, np.ndarray, pd.DataFrame]:
+        """
+        Get an entry from the index database (can set columns to return, or
+        filter by specific columns)
+
+        :param columns: str, the columns to return ('*' for all)
+        :param directory: str or None, if set filters results by directory name
+        :param filename: str or None, if set filters results by filename
+        :param kind: str or None, if set filters results by kind
+        :param hkeys: dict or None, if set is a dictionary of strings
+                            where each string is one of the index database
+                            header keys (see pseudo_constants.INDEX_HEADER_KEYS)
+        :param nentries: int or None, if set limits the number of entries to get
+                         back - sorted newest to oldest
+        :param condition: str or None, if set the SQL query to add
+
+        :return: the entries of columns, if nentries = 1 returns either that
+                 entry (as a tuple) or None, if len(columns) = 1, returns
+                 a np.ndarray, else returns a pandas table
+        """
+        # set function
+        func_name = display_func(self.params, 'get_entries', __NAME__,
+                                 self.classname)
+        # ------------------------------------------------------------------
+        # set up kwargs from database query
+        sql = dict()
+        # set up sql kwargs
+        sql['sort_by'] = None
+        sql['sort_descending'] = True
+        # sort by last modified
+        sql['sort_by'] = 'LAST_MODIFIED'
+        # condition for used
+        sql['condition'] = 'USED == 1'
+        # ------------------------------------------------------------------
+        if condition is not None:
+            sql['condition'] += ' AND {0}'.format(condition)
+        # ------------------------------------------------------------------
+        # deal with kind set
+        if kind is not None:
+            sql['condition'] += ' AND KIND == "{0}"'.format(kind)
+        # ------------------------------------------------------------------
+        # deal with directory set
+        if directory is not None:
+            sql['condition'] += ' AND DIRECTORY == "{0}"'.format(directory)
+        # ------------------------------------------------------------------
+        # deal with filename set
+        if filename is not None:
+            sql['condition'] += ' AND FILENAME == "{0}"'.format(filename)
+        # ------------------------------------------------------------------
+        # get allowed header keys
+        rkeys, rtypes = self.pconst.INDEX_HEADER_KEYS()
+        # deal with filter by header keys
+        if hkeys is not None and isinstance(hkeys, dict):
+
+            for h_it, hkey in enumerate(rkeys):
+                if hkey in hkeys:
+                    try:
+                        # get data type
+                        dtype = rtypes[h_it]
+                        # try to case and add to condition
+                        hargs = [hkey, dtype(hkeys[hkey])]
+                        sql['condition'] += ' AND {0} == "{1}"'.format(*hargs)
+                    except Exception as e:
+                        wargs = [self.name, hkey, hkeys[hkey],
+                                 rtypes[h_it], func_name]
+                        wmsg = TextEntry('10-002-00003', args=wargs)
+                        WLOG(self.params, 'warning', wmsg)
+        # ------------------------------------------------------------------
+        # add the number of entries to get
+        if isinstance(nentries, int):
+            sql['max_rows'] = nentries
+        # if we have one entry just get the tuple back
+        if nentries == 1:
+            # do sql query
+            entries = self.database.get(columns, 'MAIN', **sql)
+            # return filename
+            if len(entries) == 1:
+                return entries[0][0]
+            else:
+                return None
+        # ------------------------------------------------------------------
+        # deal with having the possibility of more than one column
+        colnames = self.database.colnames(columns)
+        # if we have one column return a list
+        if len(colnames) == 1:
+            # return array for ease
+            sql['return_array'] = True
+            # do sql query
+            entries = self.database.get(columns, 'MAIN', **sql)
+            # return one list
+            if len(entries) == 0:
+                return []
+            else:
+                return entries[:, 0]
+        # else return a pandas table
+        else:
+            # return as pandas table
+            sql['return_pandas'] = True
+            # do sql query
+            entries = self.database.get(columns, 'MAIN', **sql)
+            # return pandas table
+            return entries
+
+    def update_objname(self):
+
+        # get columns
+        colnames = self.database.colnames('*')
+
+        # loop around columns
+        for objcol in OBJNAMECOLS:
+
+            if objcol in colnames:
+                # get object names
+                objnames = self.get_entries(objcol)
+                # fixed objnames
+                fixed_objnames = []
+                # loop around object names
+                for objname in objnames:
+                    # do not include null text
+                    if not drs_text.null_text(objname, ['None']):
+                        # fix object
+                        fixed_objnames.append(self.pconst.DRS_OBJ_NAME(objname))
+                    else:
+                        fixed_objnames.append(objname)
+                # update object names
+                # TODO: PROBLEM THIS DOES NOT WORK!!!!
+                self.database.set(objcol, [fixed_objnames], table='MAIN',
+                                  commit=True)
+
+
+
+def _deal_with_filename(params: ParamDict, name: str, kind: str,
+                        directory: Union[str, None] = None,
+                        filename: Union[str, None] = None,
+                        func: Union[str, None] = None
+                        ) -> Union[str, Tuple[Path, str, str]]:
+    """
+    Takes a filename (either str or Path) and a kind and directory and
+    checks that file exists and returns basename/filename/path in correct
+    format for database
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param name: str, the name of the database used in
+    :param directory: str, the sub-directory name (under the raw/reduced/
+                      tmp directory)
+    :param filename: str or Path, the filename to add (can be absolute file
+                     or basename, but must exist on disk)
+    :param kind: str, either 'raw', 'red', 'tmp', 'calib', 'tellu', 'asset'
+                 this determines the path of the file i.e.
+                 path/directory/filename (unless filename is an absolute
+                 path) - note in this case directory should still be
+                 filled correctly (for database)
+    :param func: str, the function name where this func was called (for error
+                 logging)
+    :return: if directory and filename are None returns just the path (based on
+             kind, else returns a tuple, 1. the filename (Path),
+             2. the basename and the path
+    """
+    # ------------------------------------------------------------------
+    # deal with function name
+    if func is None:
+        func_name = display_func(params, '_deal_with_filename', __NAME__)
+    else:
+        func_name = str(func)
+    # ------------------------------------------------------------------
+    # deal with kind
+    if kind == 'raw':
+        path = params['DRS_DATA_RAW']
+    elif kind == 'red':
+        path = params['DRS_DATA_REDUC']
+    elif kind == 'tmp':
+        path = params['DRS_DATA_WORKING']
+    elif kind == 'calib':
+        path = params['DRS_CALIB_DB']
+    elif kind == 'tellu':
+        path = params['DRS_TELLU_DB']
+    elif kind == 'asset':
+        path = params['DRS_DATA_ASSETS']
+    else:
+        eargs = [name, kind, 'raw, red, tmp, calib, tellu, asset',
+                 func_name]
+        WLOG(params, 'error', TextEntry('00-002-00022', args=eargs))
+        raise DrsCodedException('00-002-00022', targs=eargs,
+                                func_name=func_name)
+    # deal with no directory and/or no filename (just want the path)
+    if directory is None or filename is None:
+        return path
+    # ------------------------------------------------------------------
+    # make filename a Path
+    if isinstance(filename, str):
+        filename = Path(filename)
+
+    # get absolute path for file if not given
+    if isinstance(filename, Path):
+        if filename.exists():
+            filename = filename.absolute()
+        elif Path(path).joinpath(directory, filename).exists():
+            filename = Path(path).joinpath(directory, filename)
+            filename = filename.absolute()
+        else:
+            eargs = [name, filename, func_name]
+            emsg = TextEntry('00-002-00023', args=eargs)
+            WLOG(params, 'error', emsg)
+            raise DrsCodedException('00-002-00023', targs=eargs,
+                                    func_name=func_name)
+    # get basename
+    basename = str(filename.name)
+
+    # return the filename as Path object (absolute), basename and path
+    return filename, basename, path
+
+
+def _get_files(path: Union[Path, str], kind: str,
+               incdirs: Union[List[Union[str, Path], None]] = None,
+               excdirs: Union[List[Union[str, Path], None]] = None,
+               incfiles: Union[List[Union[str, Path], None]] = None,
+               excfiles: Union[List[Union[str, Path], None]] = None,
+               suffix: str = '') -> List[Path]:
+    """
+    Get files in 'path'. If kind in ['raw' 'tmp' 'red'] then look through
+    subdirectories including 'incdirs' directories and excluding 'excdirs'
+    directories
+
+    :param path: Path or str, the path to the directory to find files for
+    :param kind: str, the kind of files to kind (raw/tmp/red/calib/tellu etc)
+    :param incdirs: list of strings or None, if set list the only directories
+                    to include in the file list
+    :param excdirs: list of strings or None, if set list any directories the
+                    file list should exclude
+    :param incfiles: list of files to include - if set only these files should
+                     be included in the returned file list
+    :param excfiles: list of files to exclude - if set none of these files
+                     should be included in the returned file list
+    :param suffix: str, the suffix which all files returns must have
+                   (i.e. the extension)
+
+    :return: list of paths, the file list (absolute file list) as Path instances
+    """
+    # fix path as string
+    if isinstance(path, Path):
+        path = Path(path)
+    # only use sub-directories for the following kinds
+    if kind in ['raw', 'tmp', 'red']:
+        # ---------------------------------------------------------------------
+        # get directory path
+        raw_subdirs = path.glob('*')
+        # loop around directories
+        subdirs = []
+        for subdir in raw_subdirs:
+            # skip non-directories
+            if not subdir.is_dir():
+                continue
+            # skip directories not in included directories
+            if incdirs is not None:
+                if subdir not in incdirs:
+                    continue
+            # skip directories in excluded directories
+            if excdirs is not None:
+                if subdir in excdirs:
+                    continue
+            # if we have reached here then append subdirs
+            subdirs.append(subdir)
+    # else we do not use subdirs
+    else:
+        subdirs = None
+    # -------------------------------------------------------------------------
+    # deal with no subdirs
+    if subdirs is None:
+        # get all files in path
+        allfiles =  list(path.glob('*{0}'.format(suffix)))
+    # -------------------------------------------------------------------------
+    # else we have subdirs
+    else:
+        allfiles = []
+        # loop around subdirs
+        for subdir in subdirs:
+            # append to filenames
+            allfiles += list(subdir.glob('*{0}'.format(suffix)))
+    # -------------------------------------------------------------------------
+    # store valid files
+    valid_files = []
+    # filter files
+    for filename in allfiles:
+        # include files
+        if incfiles is not None:
+            if filename not in incfiles:
+                continue
+        # exclude files
+        if excfiles is not None:
+            if filename in excfiles:
+                continue
+        # add file to valid file list
+        valid_files.append(filename.absolute())
+    # return valid files
+    return valid_files
+
+
+# =============================================================================
+# Define other databases
+# =============================================================================
 class LogDatabase(DatabaseManager):
     def __init__(self, params: ParamDict, check: bool = True):
         """
