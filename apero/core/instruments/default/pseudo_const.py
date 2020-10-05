@@ -9,12 +9,10 @@ Created on 2019-01-18 at 14:44
 
 @author: cook
 """
-import importlib
 import numpy as np
 import sys
 import os
-from types import ModuleType
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Type, Union
 
 from apero.base import base
 from apero.base import drs_base_classes as base_class
@@ -324,6 +322,22 @@ class PseudoConstants:
                        'KW_FIBER']
         # return output_keys
         return output_keys
+
+    def INDEX_HEADER_KEYS(self) -> Tuple[List[str], List[Type]]:
+        """
+        Which header keys should we have in the index database.
+
+        Only keys where you have to read many files to get these should be
+        added - if you access file by file do not need header key to be here.
+
+        Must overwrite for each instrument
+
+        :return:
+        """
+        keys = []
+        ctypes = []
+        # return index header keys
+        return keys, ctypes
 
     # =========================================================================
     # DISPLAY/LOGGING SETTINGS
@@ -930,20 +944,30 @@ class PseudoConstants:
     def INDEX_DB_COLUMNS(self) -> Tuple[List[str], List[type]]:
         """
         Define the columns used in the index database
+
+        Currently defined columns
+            - PATH: the path under which files are stored (based on KIND)
+            - DIRECTORY: the sub-directory in PATH which files are stored
+            - FILENAME: the name of the file (basename)
+            - KIND: either raw/tmp/red/calib/tellu/asset
+            - LAST_MODIFIED: float, the last modified time of this file
+                             (for sorting)
+            - RUNSTRING: the arguments entered to make this file
+                         (used for checksum)
+            - {HKEYS}: see INDEX_HEADER_KEYS()
+            - USED: int, whether entry should be used or ignored
+
         :return: list of columns (strings)
         """
         # set function name
         _ = display_func(None, 'INDEX_DB_COLUMNS', __NAME__,
                          self.class_name)
+        # get header keys
+        hkeys, htypes = self.INDEX_HEADER_KEYS()
         # set columns
-        columns = ['DIRECTORY', 'FILENAME', 'KIND', 'LAST_MODIFIED',
-                   'DATE_OBS', 'UTC_OBS', 'MJDMID', 'OBJNAME', 'OBSTYPE',
-                   'EXPTIME', 'CCAS', 'CREF', 'CDEN', 'DPRTYPE', 'TRGTYPE',
-                   'OUTPUT', 'EXPSEQ', 'NUMEXP', 'VERSION', 'PPVERSION',
-                   'PINAME', 'PID', 'FIBER', 'UID', 'USED']
-        ctypes = [str, str, str, float, str, str, float, str, str, float,
-                  str, str, float, str, str, str, int, int, str, str, str,
-                  str, str, str, int]
+        columns = ['PATH', 'DIRECTORY', 'FILENAME', 'KIND',
+                   'LAST_MODIFIED', 'RUNSTRING'] + hkeys + ['USED']
+        ctypes = [str, str, str, str, float, str] + htypes + [int]
         return columns, ctypes
 
     # noinspection PyPep8Naming
