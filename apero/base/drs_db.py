@@ -354,6 +354,11 @@ class Database:
         """
         # set function name
         func_name = __NAME__ + '.Database.set()'
+
+        # deal with columns = '*'
+        if columns == '*':
+            columns = self.colnames('*', table=table)
+
         # we expect columns to be a list but if it is a string we can just make
         #   it a one item list
         if isinstance(columns, str):
