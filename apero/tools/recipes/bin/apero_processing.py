@@ -15,7 +15,9 @@ from apero.base import base
 from apero import lang
 from apero.core.core import drs_file
 from apero.core.core import drs_log
+from apero.core.utils import drs_database
 from apero.core.utils import drs_startup
+from apero.core.utils import drs_utils
 from apero.tools.module.processing import drs_processing
 
 
@@ -116,17 +118,18 @@ def __main__(recipe, params):
     drs_processing.reset_files(params)
 
     # ----------------------------------------------------------------------
-    # find all raw files
+    # find all raw files via index database
     # ----------------------------------------------------------------------
-    # get raw files
-    rawtable, rawpath = drs_file.find_raw_files(params, recipe)
+    # update the index database (taking into account whitelist/blacklist)
+    indexdbm = drs_utils.update_index_db
+
     # find all previous runs
     skiptable = drs_processing.generate_skip_table(params)
 
     # ----------------------------------------------------------------------
     # Generate run list
     # ----------------------------------------------------------------------
-    rlist = drs_processing.generate_run_list(params, rawtable, runtable,
+    rlist = drs_processing.generate_run_list(params, indexdbm, runtable,
                                              skiptable)
 
     # ----------------------------------------------------------------------
