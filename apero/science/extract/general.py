@@ -24,7 +24,7 @@ from apero import lang
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_data
 from apero.core.utils import drs_startup
-from apero.core.utils import drs_database2 as drs_database
+from apero.core.utils import drs_database
 from apero.io import drs_path
 from apero.io import drs_fits
 from apero.science.calib import shape

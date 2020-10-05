@@ -1,30 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-# CODE NAME HERE
+CODE DESCRIPTION HERE
 
-# CODE DESCRIPTION HERE
-
-Created on 2019-03-25 at 16:49
+Created on 2020-08-2020-08-18 15:15
 
 @author: cook
 """
 import numpy as np
-from astropy.table import Table
-import os
+import pandas as pd
+from pathlib import Path
 import shutil
-from collections import OrderedDict
+from typing import Any, List, Tuple, Type, Union
 
 from apero.base import base
+from apero.base import drs_db
+from apero.base import drs_exceptions
+from apero import lang
 from apero.core import constants
 from apero.core.core import drs_file
-from apero import lang
-from apero.io import drs_lock
-from apero.io import drs_fits
-from apero.io import drs_path
-from apero.io import drs_table
 from apero.core.core import drs_log
-
 
 # =============================================================================
 # Define variables
@@ -36,737 +31,1042 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
-# Get Astropy Time and Time Delta
-Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
-# Get Logging function
-WLOG = drs_log.wlog
-# Get function string
+# get astropy Time from base
+Time = base.Time
+# get ParamDict
+ParamDict = constants.ParamDict
+# get execption
+DrsCodedException = drs_exceptions.DrsCodedException
+# get display func
 display_func = drs_log.display_func
+# get WLOG
+WLOG = drs_log.wlog
+# get drs header
+DrsHeader = drs_file.Header
+FitsHeader = drs_file.FitsHeader
+# get file types
+DrsInputFile = drs_file.DrsInputFile
 # Get the text types
 TextEntry = lang.core.drs_lang_text.TextEntry
-# alias pcheck
-pcheck = constants.PCheck(wlog=WLOG)
+# define drs files
+DrsFileTypes = Union[drs_file.DrsInputFile, drs_file.DrsFitsFile,
+                     drs_file.DrsNpyFile]
 
 
 # =============================================================================
-# Define database class
+# Define classes
 # =============================================================================
-class Database():
-    def __init__(self, params, dbname):
-        # set function name
-        func_name = display_func(params, '__init__', __NAME__, 'Database')
-        # set value from construction
+class DatabaseManager:
+    """
+    Apero Database Manager class (basically abstract)
+    """
+
+    def __init__(self, params: ParamDict, check: bool = False):
+        """
+        Construct the Database Manager
+
+        :param params: ParamDict, parameter dictionary of constants
+        :param check: bool, if True makes sure database file exists (otherwise
+                      assumes it is) - base class does nothing
+        """
+        # save class name
+        self.classname = 'DatabaseManager'
+        # set function
+        _ = display_func(params, '__init__', __NAME__, self.classname)
+        # save params for use throughout
         self.params = params
-        self.pconst = constants.pload(params['INSTRUMENT'])
-        self.dbname = dbname
-        # set column names
-        if self.dbname == 'telluric':
-            self.colnames = params.listp('TELLU_DB_COLS', dtype=str)
-            self.key_col = params['TELLU_DB_KEY_COL']
-            self.time_col = params['TELLU_DB_TIME_COL']
-            self.file_col = params['TELLU_DB_FILE_COL']
-        elif self.dbname == 'calibration':
-            self.colnames = params.listp('CALIB_DB_COLS', dtype=str)
-            self.key_col = params['CALIB_DB_KEY_COL']
-            self.time_col = params['CALIB_DB_TIME_COL']
-            self.file_col = params['CALIB_DB_FILE_COL']
-        else:
-            eargs = [self.dbname, 'calibration or telluric', func_name]
-            WLOG(self.params, 'error', TextEntry('00-002-00001', args=eargs))
-            self.colnames = []
-            self.key_col = None
-            self.time_col = None
-            self.file_col = None
-        # empty to fill later
-        self.key_pos = None
-        self.time_pos = None
-        self.file_pos = None
-        self.unique_keys = None
-        self.rdata = None
-        self.data = None
-        # get values based on dbname
-        self.dbfile = _get_database_file(self.params, self.dbname)
-        self.dbshort = _get_dbshort(self.params, self.dbname)
-        self.outpath = _get_outpath(self.params, self.dbname)
-        self.abspath = os.path.join(self.outpath, self.dbfile)
-        self.get_colname_props()
+        # set name
+        self.name = 'DatabaseManager'
+        # check does nothing
+        _ = check
+        # set path
+        self.path = None
+        # set database
+        self.database = None
 
-    def get_colname_props(self):
+    def set_path(self, dirname: Union[str, None] = None,
+                 filename: Union[str, None] = None,
+                 check: bool = True):
         """
-        Get the column names using the database name (set in construction)
+        Set the path for the database
+
+        :param dirname: str, either a valid Path or parameter in params
+        :param filename: str, the filename or parameter in params
+        :param check: bool, if True the filename has to exist
         :return:
         """
-        # set function name
-        func_name = display_func(self.params, 'get_colnames', __NAME__,
-                                 'Database')
-        # get column names
-        colnames = self.colnames
-        # check required columns are present
-        if self.key_col not in colnames:
-            eargs = [self.key_col, self.dbname, colnames, func_name]
-            WLOG(self.params, 'error', TextEntry('00-002-00002', args=eargs))
-        if self.time_col not in colnames:
-            eargs = [self.key_col, self.dbname, colnames, func_name]
-            WLOG(self.params, 'error', TextEntry('00-002-00003', args=eargs))
-        if self.file_col not in colnames:
-            eargs = [self.key_col, self.dbname, colnames, func_name]
-            WLOG(self.params, 'error', TextEntry('00-002-00004', args=eargs))
-        # find positions of required columns
-        self.key_pos = np.where(self.key_col == np.array(colnames))[0][0]
-        self.time_pos = np.where(self.time_col == np.array(colnames))[0][0]
-        self.file_pos = np.where(self.file_col == np.array(colnames))[0][0]
-
-    def check_read(self):
-        if self.rdata is None:
-            self.read_database()
-
-    def read_database(self):
-        """
-        Read the database from file and store in astropy.table format
-        :return:
-        """
-        func_name = display_func(self.params, 'read_database', __NAME__,
-                                 'Database')
-        # ------------------------------------------------------------------
-        # define a synchoronized lock for indexing (so multiple instances do not
-        #  run at the same time)
-        lockfile = os.path.basename(self.abspath)
-        # start a lock
-        lock = drs_lock.Lock(self.params, lockfile)
-        # make locked read function
-        @drs_lock.synchronized(lock, self.params['PID'])
-        def locked_read():
-            # --------------------------------------------------------------
-            # try to open the master file
-            try:
-                # read the lines
-                with open(self.abspath, 'r') as f:
-                    lines = list(f.readlines())
-            except KeyboardInterrupt as e:
-                lock.reset()
-                raise e
-            except Exception as e:
-                # error message
-                eargs = [self.dbname, type(e), e, self.abspath, func_name]
-                emsg = TextEntry('01-001-00019', args=eargs)
-                WLOG(self.params, 'error', emsg)
-                lines = []
-            # --------------------------------------------------------------
-            # make dict storage to append to
-            rstorage, storage = OrderedDict(), OrderedDict()
-            for col in ['rkey', 'rtime', 'rfile']:
-                rstorage[col] = []
-            for col in self.colnames:
-                storage[col] = []
-            # --------------------------------------------------------------
-            # clean up database and add to storage
-            for l_it, line in enumerate(lines):
-                # ignore blank lines or lines starting with '#'
-                if len(line) == 0:
-                    continue
-                if line == '\n':
-                    continue
-                if line.strip()[0] == '#':
-                    continue
-                # split line to reveal values
-                values = line.split()
-                # make sure values has correct length and cause error if not
-                if len(values) != len(self.colnames):
-                    eargs = [self.dbname, l_it, line,
-                             ', '.join(self.colnames), self.abspath, func_name]
-                    emsg = TextEntry('00-002-00005', args=eargs)
-                    WLOG(self.params, 'error', emsg)
-                # append rkey and rfile to rstorage
-                rstorage['rkey'].append(values[self.key_pos])
-                rstorage['rfile'].append(values[self.time_pos])
-                # convert time to astropy time and append to rstorage
-                try:
-                    rtime = Time(float(values[self.time_pos]), format='unix')
-                except Exception as e:
-                    # log error
-                    eargs = [self.dbname, l_it, line, type(e), str(e),
-                             self.abspath, func_name]
-                    emsg = TextEntry('00-002-00007', args=eargs)
-                    WLOG(self.params, 'error', emsg)
-                    rtime = None
-                rstorage['rtime'].append(rtime)
-                # append all values to storage
-                for col_it, col in enumerate(self.colnames):
-                    storage[col].append(values[col_it])
-            # make full tables
-            self.rdata, self.data = Table(), Table()
-            # read dict into tables
-            for col in storage.keys():
-                self.data[col] = np.array(storage[col])
-            # create required table in good format
-            for col in rstorage.keys():
-                self.rdata[col] = np.array(rstorage[col])
-            # finally get a list of unique keys
-            self.unique_keys = np.unique(self.rdata['rkey'])
-        # ------------------------------------------------------------------
-        # try to run locked read function
+        # set function
+        func_name = display_func(self.params, 'set_path', __NAME__,
+                                 self.classname)
+        # ---------------------------------------------------------------------
+        # deal with directory
+        # ---------------------------------------------------------------------
+        # deal with no directory name
+        if dirname is None:
+            asset_dir = str(self.params['DRS_DATA_ASSETS'])
+            database_dir = str(self.params['DATABASE_DIR'])
+            dirname = Path(asset_dir).joinpath(database_dir)
+        # deal with dir name being a parameter key (multiple depths allowed)
+        while dirname in self.params:
+            dirname = self.params[dirname]
+        # deal with dirname still being a parameter
+        # noinspection PyBroadException
         try:
-            locked_read()
-        except KeyboardInterrupt as e:
-            lock.reset()
-            raise e
-        except Exception as e:
-            # reset lock
-            lock.reset()
-            raise e
+            dirname = Path(dirname)
+        except Exception as _:
+            # log error: Directory {0} invalid for database: {1}
+            eargs = [dirname, self.name, func_name]
+            WLOG(self.params, 'error', TextEntry('00-002-00016', args=eargs))
+            return
+        if not dirname.exists():
+            # log error: Directory {0} does not exist (database = {1})
+            eargs = [dirname, self.name, func_name]
+            WLOG(self.params, 'error', TextEntry('00-002-00017', args=eargs))
+            return
+        # ---------------------------------------------------------------------
+        # add filename
+        # ---------------------------------------------------------------------
+        # deal with no filename set
+        if filename is None:
+            filename = self.name + '.db'
+        # deal with filename being a parameter key (multiple depths allowed)
+        while filename in self.params:
+            filename = self.params[filename]
+        # add to dirname
+        abspath = dirname.joinpath(filename)
+        if not abspath.exists() and check:
+            # log error: Directory {0} does not exist (database = {1})
+            eargs = [abspath, self.name, func_name]
+            WLOG(self.params, 'error', TextEntry('00-002-00018', args=eargs))
+            return
+        # set path
+        self.path = abspath
 
-    def write(self):
-        pass
-
-    def get_entry(self, entryname, mode=None, usetime=None, n_entries=1,
-                  time_fmt='iso', required=True):
+    def load_db(self, check: bool = False):
         """
-        Get a database entry for key='entryname'
+        Load the database class and connect to SQL database
 
-        if mode = 'older' then only uses database entries older than 'usetime'
+        :param check: if True will reload the database even if already defined
+                      else if we Database.database is set this function does
+                      nothing
 
-        selects n_entries that are closest in time to 'usetime'
-
-        time format must be valid astropy.time.Time format i.e.
-        'jd', 'mjd', 'decimalyear', 'unix', 'cxcsec', 'gps', 'plot_date',
-        'datetime', 'iso', 'isot', 'yday', 'datetime64', 'fits', 'byear',
-        'jyear', 'byear_str', 'jyear_str'
-        default is 'iso'
-
-        :param entryname:
-        :param mode:
-        :param usetime:
-        :param n_entries:
-        :param time_fmt:
-        :param required:
         :return:
         """
-        # set function name
-        func_name = display_func(self.params, 'get_entry', __NAME__, 'Database')
-        # check that we have data
-        self.check_read()
-        # convert usetime to astropy.time
-        if isinstance(usetime, Time):
-            pass
-        elif usetime is not None:
-            usetime = Time(usetime, format=time_fmt)
-        # get unique keys in database
-        ukeys = np.unique(self.rdata['rkey'])
-        # mask by key
-        mask1 = self.rdata['rkey'] == entryname
-        # if we have no rows we must report it
-        if (np.sum(mask1) == 0) and not required:
-            return Table()
-        elif np.sum(mask1) == 0:
-            eargs = [self.dbname, entryname, ', '.join(ukeys), self.abspath,
-                     func_name]
-            WLOG(self.params, 'error', TextEntry('00-002-00015', args=eargs))
-            entries, r_entries = None, None
-        else:
-            entries = self.data[mask1]
-            r_entries = self.rdata[mask1]
-        # if mode is None then we just want all data from this entry
-        if mode in [None, 'None', '', 'ALL']:
-            # sort by time
-            timesort = np.argsort(r_entries['rtime'])
-            # return the first n_entries (after timesorting)
-            if isinstance(n_entries, str):
-                return entries[timesort]
-            elif isinstance(n_entries, int):
-                return entries[timesort][:n_entries]
-            else:
-                return entries
-        # if mode is not None and time_used is None we have a problem
-        elif (mode is not None) and (usetime is None):
-            eargs = [mode, self.dbname, func_name]
-            WLOG(self.params, 'error', TextEntry('00-002-00008', args=eargs))
-            mask2 = None
-        # if mode is not None we need to deal with finding the correct entry
-        elif mode == 'older':
-            # only keep those older than usetime
-            mask2 = np.array(r_entries['rtime']) < usetime
-            # master entries are exempt from this time constraint
-            #   don't do this for database that does not have a master column
-            if 'master' in entries.colnames:
-                mask2 |= np.array(entries['master']).astype(bool)
-            # if we have no rows we must report it
-            if (np.sum(mask2) == 0) and not required:
-                return Table()
-            # return error if we found None
-            elif np.sum(mask2) == 0:
-                eargs = [self.dbname, entryname, usetime.iso,
-                         self.abspath, func_name]
-                WLOG(self.params, 'error',
-                     TextEntry('00-002-00006', args=eargs))
-                entries, r_entries = None, None
-            else:
-                entries = self.data[mask1]
-                r_entries = self.rdata[mask1]
-        else:
-            mask2 = np.ones_like(r_entries['rtime'], dtype=bool)
-        # if we have reached here we have a mask and must find the closest
-        #    'n_entries'
-        entries = entries[mask2]
-        r_entries = r_entries[mask2]
-        # sort remaining by time
-        timesort = np.argsort(abs(Time(r_entries['rtime']) - usetime))
-        # return the first n_entries (after timesorting)
-        if isinstance(n_entries, str):
-            return entries[timesort]
-        elif isinstance(n_entries, int):
-            return entries[timesort][:n_entries]
-        else:
-            eargs = [n_entries, type(n_entries), func_name]
-            WLOG(self.params, 'error', TextEntry('00-002-00013', args=eargs))
-
-
-# =============================================================================
-# Define functions
-# =============================================================================
-def add_file(params, outfile, night=None, copy_files=True, log=True):
-    # set function name
-    func_name = display_func(params, 'add_file', __NAME__)
-    # ------------------------------------------------------------------
-    # get properties from outfile
-    inpath = outfile.filename
-    infile = outfile.basename
-    # ------------------------------------------------------------------
-    # get database name (if it exists)
-    dbname = _get_dbname(params, outfile)
-    # ------------------------------------------------------------------
-    # get database key (if it exists)
-    dbkey = get_dbkey(params, outfile)
-    # ------------------------------------------------------------------
-    # deal with database input being set to False
-    if 'DATABASE' in params['INPUTS']:
-        if not params['INPUTS']['DATABASE']:
-            # Log that we are not adding file due to user input
-            wargs = [dbkey, outfile.filename]
-            WLOG(params, 'info', TextEntry('40-001-00024', args=wargs))
-            # return here
+        # set function
+        _ = display_func(self.params, 'load_db', __NAME__, self.classname)
+        # if we already have database do nothing
+        if (self.database is not None) and (not check):
             return
-    # ------------------------------------------------------------------
-    # test database name
-    outpath = _get_outpath(params, dbname, outfile)
-    # ------------------------------------------------------------------
-    # construct outpath
-    abs_outpath = os.path.join(outpath, infile)
-    # ------------------------------------------------------------------
-    # first copy file to database folder
-    if copy_files:
-        _copy_db_file(params, dbname, inpath, abs_outpath, log=True)
-    # ------------------------------------------------------------------
-    # update database with key
-    if dbname.lower() == 'telluric':
+        # load database only if path is set
+        if self.path is not None:
+            # log that we are loading database
+            margs = [self.name, self.path]
+            WLOG(self.params, 'info', TextEntry('40-006-00005', args=margs))
+            # load database
+            self.database = drs_db.Database(self.path)
+
+    def __str__(self):
+        """
+        Return the string representation of the class
+        :return:
+        """
+        # set function
+        _ = display_func(self.params, '__str__', __NAME__, self.classname)
+        # return string representation
+        return '{0}[{1}]'.format(self.classname, self.path)
+
+    def __repr__(self):
+        """
+        Return the string representation of the class
+        :return:
+        """
+        # set function
+        _ = display_func(self.params, '__repr__', __NAME__, self.classname)
+        # return string representation
+        return self.__str__()
+
+
+# =============================================================================
+# Define specific file databases
+# =============================================================================
+class CalibrationDatabase(DatabaseManager):
+    def __init__(self, params: ParamDict, check: bool = True):
+        """
+        Constructor of the Calibration Database class
+
+        :param params: ParamDict, parameter dictionary of constants
+        :param check: bool, if True makes sure database file exists (otherwise
+                      assumes it is)
+
+        :return: None
+        """
+        # save class name
+        self.classname = 'CalibrationDatabaseManager'
+        # set function
+        _ = display_func(params, '__init__', __NAME__, self.classname)
+        # construct super class
+        DatabaseManager.__init__(self, params)
+        # set name
+        self.name = 'calibration'
+        # set path
+        self.set_path('CALIB_DBFILE_PATH', 'CALIB_DB_NAME', check=check)
+        # set database directory
+        self.filedir = Path(str(self.params['DRS_CALIB_DB']))
+
+    def add_calib_file(self, drsfile, verbose: bool = True,
+                       copy_files=True):
+        """
+        Add DrsFile to the calibration database
+
+        :param drsfile: DrsFile, the DrsFile to add
+        :param verbose: bool, if True logs progress
+        :param copy_files: bool, if True copies file to self.filedir
+
+        :return: None
+        """
+        # set function
+        _ = display_func(self.params, 'add_calib_file', __NAME__,
+                         self.classname)
+        # deal with no database
+        if self.database is None:
+            self.load_db()
+        # ------------------------------------------------------------------
+        # get header and hdict
+        hdict, header = _get_hdict(self.params, self.name, drsfile)
+        # ------------------------------------------------------------------
+        # get file key
+        dbkey = _get_dbkey(self.params, drsfile, self.name)
+        # check dbname
+        _get_dbname(self.params, drsfile, self.name)
+        # get fiber
+        fiber = _get_hkey(self.params, 'KW_FIBER', hdict, header)
+        # get super definition
+        is_super = _get_is_super(self.params)
+        # get time
+        header_time = _get_time(self.params, self.name, header, hdict)
+        # ------------------------------------------------------------------
+        # deal with database input being set to False
+        if 'DATABASE' in self.params['INPUTS']:
+            if not self.params['INPUTS']['DATABASE']:
+                # Log that we are not adding file due to user input
+                wargs = [dbkey, drsfile.filename]
+                WLOG(self.params, 'info', TextEntry('40-001-00024', args=wargs))
+                # return here
+                return
+        # ------------------------------------------------------------------
+        # copy file to database directory
+        if copy_files:
+            _copy_db_file(self.params, drsfile, self.filedir, self.name,
+                          verbose=verbose)
+        # ------------------------------------------------------------------
+        # get entries in correct format
+        key = str(dbkey).strip()
+        is_super = is_super
+        fiber = str(fiber)
+        filename = str(drsfile.basename).strip()
+        human_time = str(header_time.iso)
+        unix_time = str(header_time.unix).strip()
+        used = 1
+        # ------------------------------------------------------------------
+        # add entry to database
+        values = [key, fiber, is_super, filename, human_time, unix_time, used]
+        self.database.add_row(values, 'MAIN', commit=True)
+
+    def get_calib_entry(self, columns: str, key: str,
+                        fiber: Union[str, None] = None,
+                        filetime: Union[Time, None] = None,
+                        timemode: str = 'older',
+                        nentries: Union[int, str] = '*'
+                        ) -> Union[None, list, tuple, np.ndarray, pd.DataFrame]:
+        """
+        Get an entry from the calibration database
+
+        :param columns: str, pushed to SQL (i.e. list columns or '*' for all)
+        :param key: str, KEY=="key" condition
+        :param fiber: str or None, if set FIBER=="fiber"
+        :param filetime: astropy.Time, if Not None the point in time to order
+                         the files by
+        :param timemode: str, the way in which to select which calibration to
+                         use (either 'older' 'closest' or 'newer'
+        :param nentries: int or str, the number of entries to return
+                         only valid string is '*' for all entries
+
+        :return: the entries of columns, if nentries = 1 returns either that
+                 entry (as a tuple) or None, if len(columns) = 1, returns
+                 a np.ndarray, else returns a pandas table
+        """
+        # set function
+        _ = display_func(self.params, 'get_calib_entry', __NAME__,
+                         self.classname)
+        # set up kwargs from database query
+        sql = dict()
+        # set up sql kwargs
+        sql['sort_by'] = None
+        sql['sort_descending'] = True
+        # condition for key
+        sql['condition'] = 'KEY == "{0}"'.format(key)
+        # condition for used
+        sql['condition'] += ' AND USED == 1'
+        # condition for fiber
+        if fiber is not None:
+            sql['condition'] += ' AND FIBER == "{0}"'.format(fiber)
+        # sql for time mode
+        if timemode == 'older' and filetime is not None:
+            # condition:
+            #       UNIXTIME - FILETIME < 0
+            # sort by:
+            #       ABS(UNIXTIME - FILETIME)
+            sql['condition'] += ' AND UNIXTIME - {0} < 0'.format(filetime.unix)
+            sql['sort_by'] = 'abs(UNIXTIME - {0})'.format(filetime.unix)
+            sql['sort_descending'] = False
+        elif timemode == 'newer' and filetime is not None:
+            # condition:
+            #       UNIXTIME - FILETIME > 0
+            # sort by:
+            #       ABS(UNIXTIME - FILETIME)
+            sql['condition'] += ' AND UNIXTIME - {0} > 0'.format(filetime.unix)
+            sql['sort_by'] = 'abs(UNIXTIME - {0})'.format(filetime.unix)
+            sql['sort_descending'] = False
+        elif filetime is not None:
+            # sort by:
+            #       ABS(UNIXTIME - FILETIME)
+            sql['sort_by'] = 'abs(UNIXTIME - {0})'.format(filetime.unix)
+            sql['sort_descending'] = False
+        else:
+            # sort by: UNIXTIME
+            sql['sort_by'] = 'UNIXTIME'
+            sql['sort_descending'] = True
+
+        # add the number of entries to get
+        if isinstance(nentries, int):
+            sql['max_rows'] = nentries
+        # if we have one entry just get the tuple back
+        if nentries == 1:
+            # do sql query
+            entries = self.database.get(columns, 'MAIN', **sql)
+            # return filename
+            if len(entries) == 1:
+                return entries[0][0]
+            else:
+                return None
+
+        # deal with having the possibility of more than one column
+        colnames = self.database.colnames(columns)
+        # if we have one column return a list
+        if len(colnames) == 1:
+            # return array for ease
+            sql['return_array'] = True
+            # do sql query
+            entries = self.database.get(columns, 'MAIN', **sql)
+            # return one list
+            if len(entries) == 0:
+                return []
+            else:
+                return entries[:, 0]
+        # else return a pandas table
+        else:
+            # return as pandas table
+            sql['return_pandas'] = True
+            # do sql query
+            entries = self.database.get(columns, 'MAIN', **sql)
+            # return pandas table
+            return entries
+
+    def get_calib_file(self, key: str, drsfile=None, header=None, hdict=None,
+                       filetime: Union[None, Time] = None,
+                       timemode: Union[str, None] = None,
+                       nentries: Union[str, int] = 1,
+                       required: bool = True,
+                       no_times: bool = False,
+                       fiber: Union[str, None] = None
+                       ) -> Union[None, Path, List[Path]]:
+        """
+        Handles getting a filename from calibration database (from filename,
+        user input, or key in SQL database
+
+        if filename is set or userinputkey in params['INPUTS'] sql database
+        is not used
+
+        for file time precedence is as follows:
+            filetime >> hdict >> header >> drsfile
+
+        :param key: str, the calibration key to look for in sql database
+        :param drsfile: if set get time from drsfile header/hdict
+                        (unless filetime set)
+        :param header: if set get time from header (unless filetime set)
+        :param hdict: if set get time from hdict (unless filetime set)
+        :param filetime: Astropy Time or None - if set do not need
+                         drsfile/header/hdict
+        :param timemode: None to use default or 'older' for only files older
+                         that time in header/hdict/drsfile
+        :param nentries: int/str if using the sql database sets max number of
+                         entries to return
+        :param required: bool, if True will cause an exception when no entries
+                         found
+        :param no_times: bool, if True does not use times to choose correct
+                         files
+        :param fiber: str or None, if set sets the fiber to use - if no fiber
+                      required do not set
+        :return:
+        """
+        # set function
+        func_name = display_func(self.params, 'get_calib_file', __NAME__,
+                                 self.classname)
+        # deal with no database
+        if self.database is None:
+            self.load_db()
+        # ---------------------------------------------------------------------
+        # else we get it from database
+        # ---------------------------------------------------------------------
+        if no_times or header is None:
+            filetime = None
+        elif filetime is None:
+            # need to get hdict/header
+            hdict, header = _get_hdict(self.params, self.name, drsfile, hdict,
+                                       header)
+            # need to get filetime
+            filetime = _get_time(self.params, self.name, hdict, header)
+        # ---------------------------------------------------------------------
+        # deal with default time mode
+        if timemode is None:
+            # get default mode from params
+            timemode = self.params['CALIB_DB_MATCH']
+            if timemode not in ['closest', 'older', 'newer']:
+                # log error: Time mode invalid for Calibration database.
+                eargs = [timemode, ' or '.join(['closest', 'older', 'newer'])]
+                emsg = TextEntry('00-002-00021', args=eargs)
+                WLOG(self.params, 'error', emsg)
+        # ---------------------------------------------------------------------
+        # do sql query
+        # ---------------------------------------------------------------------
+        # get calibration database entries --> FILENAME
+        #   if nentries = 1 : str or None
+        #   if nentries > 1 : 1d numpy array
+        filenames = self.get_calib_entry('FILENAME', key, fiber, filetime,
+                                         timemode, nentries)
+        # ---------------------------------------------------------------------
+        # return absolute paths
+        # ---------------------------------------------------------------------
+        # deal with no filenames found and not required
+        if (filenames is None or len(filenames) == 0) and not required:
+            return None
+        # deal with no filenames found elsewise --> error
+        if filenames is None or len(filenames) == 0:
+            # get unique set of keys
+            keys = np.unique(self.database.get('KEY', return_array=True))
+            # get file description
+            if drsfile is not None:
+                if no_times:
+                    infile = '{0} [NoTime]'.format(drsfile.filename)
+                else:
+                    infile = '{0} [Time={1}]'.format(drsfile.filename,
+                                                     filetime.iso)
+            else:
+                if no_times:
+                    infile = 'File[NoTime]'
+                else:
+                    infile = 'File[Time={0}]'.format(filetime.iso)
+            # log error: No entries found in {0} database for key='{1}
+            eargs = [self.name, key, ', '.join(keys), infile, func_name]
+            WLOG(self.params, 'error', TextEntry('00-002-00015', args=eargs))
+        # make all files absolute paths
+        if isinstance(filenames, str):
+            return Path(self.filedir).joinpath(filenames).absolute()
+        # else loop around them (assume they are iterable)
+        else:
+            # set output storage
+            outfilenames = []
+            # loop around filenames
+            for filename in filenames:
+                outfilename = Path(self.filedir).joinpath(filename).absolute()
+                # append to storage
+                outfilenames.append(outfilename)
+            # return outfilenames
+            return outfilenames
+
+
+class TelluricDatabase(DatabaseManager):
+    def __init__(self, params: ParamDict, check: bool = True):
+        """
+        Constructor of the Telluric Database class
+
+        :param params: ParamDict, parameter dictionary of constants
+        :param check: bool, if True makes sure database file exists (otherwise
+                      assumes it is)
+
+        :return: None
+        """
+        # save class name
+        self.classname = 'TelluricDatabaseManager'
+        # set function
+        _ = display_func(params, '__init__', __NAME__, self.classname)
+        # construct super class
+        DatabaseManager.__init__(self, params)
+        # set name
+        self.name = 'telluric'
+        # set path
+        self.set_path('TELLU_DBFILE_PATH', 'TELLU_DB_NAME', check=check)
+        # set database directory
+        self.filedir = Path(str(self.params['DRS_TELLU_DB']))
+
+    def add_tellu_file(self, drsfile: DrsInputFile, verbose: bool = True,
+                       copy_files: bool = True,
+                       objname: Union[str, None] = None,
+                       airmass: Union[float, str, None] = None,
+                       tau_water: Union[float, str, None] = None,
+                       tau_others: Union[float, str, None] = None):
+        """
+        Add DrsFile to the calibration database
+
+        :param drsfile: DrsFile, the DrsFile to add
+        :param verbose: bool, if True logs progress
+        :param copy_files: bool, if True copies file to self.filedir
+        :param objname: str or None, the object name if None uses object name
+                        from drsfile.header
+        :param airmass: float or str or None, if flaot is the airmass value
+                        if str then should be 'None' to show no value wanted
+                        if None then uses airmass from drsfile.header
+        :param tau_water:  float or str or None, if flaot is the tau_water value
+                           if str then should be 'None' to show no value wanted
+                           if None then uses tau_water from drsfile.header
+        :param tau_others: float or str or None, if flaot is the tau_others
+                           value if str then should be 'None' to show no value
+                           wanted if None then uses tau_others from
+                           drsfile.header
+
+        :return: None - adds row to the database (and copies file if
+                        copy_files=True)
+        """
+        # set function
+        _ = display_func(self.params, 'add_tellu_file', __NAME__,
+                         self.classname)
+        # deal with no database
+        if self.database is None:
+            self.load_db()
+        # ------------------------------------------------------------------
+        # get header and hdict
+        hdict, header = _get_hdict(self.params, self.name, drsfile)
+        # ------------------------------------------------------------------
+        # get file key
+        dbkey = _get_dbkey(self.params, drsfile, self.name)
+        # check dbname
+        _get_dbname(self.params, drsfile, self.name)
+        # get fiber
+        fiber = _get_hkey(self.params, 'KW_FIBER', hdict, header)
+        # get super definition
+        is_super = _get_is_super(self.params)
+        # get time
+        header_time = _get_time(self.params, self.name, header, hdict)
         # get object name
-        if hasattr(outfile, 'get_hkey'):
-            objname = outfile.get_hkey('KW_OBJNAME', dtype=str)
+        if objname is None:
+            objname = _get_hkey(self.params, 'KW_OBJNAME', hdict, header)
+        # get airmass
+        if airmass is None:
+            airmass = _get_hkey(self.params, 'KW_AIRMASS', hdict, header,
+                                dtype=float)
+        # get tau_water
+        if tau_water is None:
+            tau_water = _get_hkey(self.params, 'KW_TELLUP_EXPO_WATER', hdict,
+                                  header, dtype=float)
+        # get tau_others
+        if tau_others is None:
+            tau_others = _get_hkey(self.params, 'KW_TELLUP_EXPO_OTHERS', hdict,
+                                   header, dtype=float)
+        # ------------------------------------------------------------------
+        # deal with database input being set to False
+        if 'DATABASE' in self.params['INPUTS']:
+            if not self.params['INPUTS']['DATABASE']:
+                # Log that we are not adding file due to user input
+                wargs = [dbkey, drsfile.filename]
+                WLOG(self.params, 'info', TextEntry('40-001-00024', args=wargs))
+                # return here
+                return
+        # ------------------------------------------------------------------
+        # copy file to database directory
+        if copy_files:
+            _copy_db_file(self.params, drsfile, self.filedir, self.name,
+                          verbose=verbose)
+        # ------------------------------------------------------------------
+        # get entries in correct format
+        key = str(dbkey).strip()
+        is_super = is_super
+        fiber = str(fiber)
+        filename = str(drsfile.basename).strip()
+        human_time = str(header_time.iso)
+        unix_time = str(header_time.unix).strip()
+        used = 1
+        # deal with no tau_water/tau_other being None (should be float)
+        # if tau_water is None:
+        #     tau_water = 'None'
+        # if tau_others is None:
+        #     tau_others = 'None'
+        # ------------------------------------------------------------------
+        # add entry to database
+        values = [key, fiber, is_super, filename, human_time, unix_time,
+                  objname, airmass, tau_water, tau_others, used]
+        self.database.add_row(values, 'MAIN', commit=True)
+
+    def get_tellu_entry(self, columns: str, key: str,
+                        fiber: Union[str, None] = None,
+                        filetime: Union[Time, None] = None,
+                        timemode: str = 'older',
+                        nentries: Union[int, str] = '*',
+                        objname: Union[str, None] = None,
+                        tau_water: Union[Tuple[float, float], None] = None,
+                        tau_others: Union[Tuple[float, float], None] = None,
+                        ) -> Union[None, list, tuple, np.ndarray, pd.DataFrame]:
+        """
+        Get an entry from the calibration database
+
+        :param columns: str, pushed to SQL (i.e. list columns or '*' for all)
+        :param key: str, KEY=="key" condition
+        :param fiber: str or None, if set FIBER=="fiber"
+        :param filetime: astropy.Time, if Not None the point in time to order
+                         the files by
+        :param timemode: str, the way in which to select which telluric to
+                         use (either 'older' 'closest' or 'newer')
+                         based on filetime as the "zero point" time
+        :param nentries: int or str, the number of entries to return
+                         only valid string is '*' for all entries
+        :param objname: str or None, if set OBJECT=="fiber"
+        :param tau_water: tuple or None, if set sets the lower and upper
+                          bounds for tau water i.e.
+                          TAU_WATER > tau_water[0]
+                          TAU_WATER < tau_water[1]
+        :param tau_others: tuple or None, if set sets the lower and upper bounds
+                           for tau others  i.e.
+                           TAU_OTHERS > tau_others[0]
+                           TAU_OTHERS < tau_others[1]
+        :return: the entries of columns, if nentries = 1 returns either that
+                 entry (as a tuple) or None, if len(columns) = 1, returns
+                 a np.ndarray, else returns a pandas table
+        """
+        # set function
+        _ = display_func(self.params, 'get_tellu_entry', __NAME__,
+                         self.classname)
+        # set up kwargs from database query
+        sql = dict()
+        # set up sql kwargs
+        sql['sort_by'] = None
+        sql['sort_descending'] = True
+        # condition for key
+        sql['condition'] = 'KEY == "{0}"'.format(key)
+        # condition for used
+        sql['condition'] += ' AND USED == 1'
+        # condition for fiber
+        if fiber is not None:
+            sql['condition'] += ' AND FIBER == "{0}"'.format(fiber)
+        # condition for objname
+        if objname is not None:
+            sql['condition'] += ' AND OBJECT == "{0}"'.format(objname)
+
+        # condition for tau_water
+        if tau_water is not None and len(tau_water) == 2:
+            sql['condition'] += 'AND TAU_WATER > {0}'.format(tau_water[0])
+            sql['condition'] += 'AND TAU_WATER < {0}'.format(tau_water[1])
+
+        # condition for tau_other
+        if tau_others is not None and len(tau_others) == 2:
+            sql['condition'] += 'AND TAU_OTHERS > {0}'.format(tau_others[0])
+            sql['condition'] += 'AND TAU_OTHERS < {0}'.format(tau_others[1])
+
+        # sql for time mode
+        if timemode == 'older' and filetime is not None:
+            # condition:
+            #       UNIXTIME - FILETIME < 0
+            # sort by:
+            #       ABS(UNIXTIME - FILETIME)
+            sql['condition'] += ' AND UNIXTIME - {0} < 0'.format(filetime.unix)
+            sql['sort_by'] = 'abs(UNIXTIME - {0})'.format(filetime.unix)
+            sql['sort_descending'] = False
+        elif timemode == 'newer' and filetime is not None:
+            # condition:
+            #       UNIXTIME - FILETIME > 0
+            # sort by:
+            #       ABS(UNIXTIME - FILETIME)
+            sql['condition'] += ' AND UNIXTIME - {0} > 0'.format(filetime.unix)
+            sql['sort_by'] = 'abs(UNIXTIME - {0})'.format(filetime.unix)
+            sql['sort_descending'] = False
+        elif filetime is not None:
+            # sort by:
+            #       ABS(UNIXTIME - FILETIME)
+            sql['sort_by'] = 'abs(UNIXTIME - {0})'.format(filetime.unix)
+            sql['sort_descending'] = False
         else:
-            objname = 'None'
-        # update telluric database
-        update_telludb(params, dbname, dbkey, outfile, night, objname, log)
-    elif dbname.lower() == 'calibration':
-        # update calibration database
-        update_calibdb(params, dbname, dbkey, outfile, night, log)
+            # sort by: UNIXTIME
+            sql['sort_by'] = 'UNIXTIME'
+            sql['sort_descending'] = True
+        # add the number of entries to get
+        if isinstance(nentries, int):
+            sql['max_rows'] = nentries
+        # if we have one entry just get the tuple back
+        if nentries == 1:
+            # do sql query
+            entries = self.database.get(columns, 'MAIN', **sql)
+            # return filename
+            if len(entries) == 1:
+                return entries[0][0]
+            else:
+                return None
+        # deal with having the possibility of more than one column
+        colnames = self.database.colnames(columns)
+        # if we have one column return a list
+        if len(colnames) == 1:
+            # return array for ease
+            sql['return_array'] = True
+            # do sql query
+            entries = self.database.get(columns, 'MAIN', **sql)
+            # return one list
+            if len(entries) == 0:
+                return []
+            else:
+                return entries[:, 0]
+        # else return a pandas table
+        else:
+            # return as pandas table
+            sql['return_pandas'] = True
+            # do sql query
+            entries = self.database.get(columns, 'MAIN', **sql)
+            # return pandas table
+            return entries
 
+    def get_tellu_file(self, key: str, drsfile=None, header=None, hdict=None,
+                       filetime: Union[None, Time] = None,
+                       timemode: Union[str, None] = None,
+                       nentries: Union[str, int] = 1,
+                       required: bool = True,
+                       no_times: bool = False,
+                       objname: Union[str, None] = None,
+                       tau_water: Union[Tuple[float, float], None] = None,
+                       tau_others: Union[Tuple[float, float], None] = None,
+                       fiber: Union[str, None] = None
+                       ) -> Union[None, Path, List[Path]]:
+        """
+        Handles getting a filename from telluric database (from filename,
+        user input, or key in SQL database
 
-def get_header_time(params, database, header):
-    # set function name
-    func_name = display_func(params, 'get_header_time', __NAME__)
-    # get time from header
-    return _get_time(params, database.dbname, header=header)
+        if filename is set or userinputkey in params['INPUTS'] sql database
+        is not used
+
+        for file time precedence is as follows:
+            filetime >> hdict >> header >> drsfile
+
+        :param key: str, the calibration key to look for in sql database
+        :param drsfile: if set get time from drsfile header/hdict
+                        (unless filetime set)
+        :param header: if set get time from header (unless filetime set)
+        :param hdict: if set get time from hdict (unless filetime set)
+        :param filetime: Astropy Time or None - if set do not need
+                         drsfile/header/hdict
+        :param timemode: None to use default or 'older' for only files older
+                         that time in header/hdict/drsfile
+        :param nentries: int/str if using the sql database sets max number of
+                         entries to return
+        :param required: bool, if True will cause an exception when no entries
+                         found
+        :param no_times: bool, if True does not use times to choose correct
+                         files
+        :param objname: str or None, if set filters by object name
+
+        :param tau_water: tuple or None, filters the lower and upper
+                          bounds for tau water i.e.
+                          TAU_WATER > tau_water[0]
+                          TAU_WATER < tau_water[1]
+        :param tau_others: tuple or None, filters the lower and upper bounds
+                           for tau others  i.e.
+                           TAU_OTHERS > tau_others[0]
+                           TAU_OTHERS < tau_others[1]
+
+        :param fiber: str or None, if set sets the fiber to use - if no fiber
+                      required do not set
+        :return:
+        """
+        # set function
+        func_name = display_func(self.params, 'get_calib_file', __NAME__,
+                                 self.classname)
+        # deal with no database
+        if self.database is None:
+            self.load_db()
+        # ---------------------------------------------------------------------
+        # else we get it from database
+        # ---------------------------------------------------------------------
+        if no_times or header is None:
+            filetime = None
+        elif filetime is None:
+            # need to get hdict/header
+            hdict, header = _get_hdict(self.params, self.name, drsfile, hdict,
+                                       header)
+            # need to get filetime
+            filetime = _get_time(self.params, self.name, hdict, header)
+        # ---------------------------------------------------------------------
+        # deal with default time mode
+        if timemode is None:
+            # get default mode from params
+            timemode = self.params['TELLU_DB_MATCH']
+            if timemode not in ['closest', 'older', 'newer']:
+                # log error: Time mode invalid for Calibration database.
+                eargs = [timemode, ' or '.join(['closest', 'older', 'newer'])]
+                emsg = TextEntry('00-002-00021', args=eargs)
+                WLOG(self.params, 'error', emsg)
+        # ---------------------------------------------------------------------
+        # do sql query
+        # ---------------------------------------------------------------------
+        # get calibration database entries --> FILENAME
+        #   if nentries = 1 : str or None
+        #   if nentries > 1 : 1d numpy array
+        filenames = self.get_tellu_entry('FILENAME', key, fiber, filetime,
+                                         timemode, nentries, objname,
+                                         tau_water, tau_others)
+        # deal with filename being pandas dataframe (i.e.
+
+        # ---------------------------------------------------------------------
+        # return absolute paths
+        # ---------------------------------------------------------------------
+        # deal with no filenames found and not required
+        if (filenames is None or len(filenames) == 0) and not required:
+            return None
+        # deal with no filenames found elsewise --> error
+        if filenames is None or len(filenames) == 0:
+            # get unique set of keys
+            keys = np.unique(self.database.get('KEY', return_array=True))
+            # get file description
+            if drsfile is not None:
+                if no_times:
+                    infile = '{0} [NoTime]'.format(drsfile.filename)
+                else:
+                    infile = '{0} [Time={1}]'.format(drsfile.filename,
+                                                     filetime.iso)
+            else:
+                if no_times:
+                    infile = 'File[NoTime]'
+                else:
+                    infile = 'File[Time={0}]'.format(filetime.iso)
+            # log error: No entries found in {0} database for key='{1}
+            eargs = [self.name, key, ', '.join(keys), infile, func_name]
+            WLOG(self.params, 'error', TextEntry('00-002-00015', args=eargs))
+        # make all files absolute paths
+        if isinstance(filenames, str):
+            return Path(self.filedir).joinpath(filenames).absolute()
+        # else loop around them (assume they are iterable)
+        else:
+            # set output storage
+            outfilenames = []
+            # loop around filenames
+            for filename in filenames:
+                outfilename = Path(self.filedir).joinpath(filename).absolute()
+                # append to storage
+                outfilenames.append(outfilename)
+            # return outfilenames
+            return outfilenames
 
 
 # =============================================================================
-# Define database get functions
+# Define specific file functions (for use in specific file databases above)
 # =============================================================================
-def get_key_from_db(params, key, database, header, n_ent=1, required=True,
-                    mode=None, **kwargs):
+def _get_dbkey(params: ParamDict, drsfile: DrsFileTypes, dbmname: str) -> str:
     """
+    Get the dbkey attribute from a drsfile
 
-    :param params:
-    :param key:
-    :param database:
-    :param header:
-    :param n_ent:
-    :param required:
-    :param mode: should be None, 'TELLU_DB_MATCH', 'CALIB_DB_MATCH', 'DB_MATCH'
-                 or 'ALL'
-    :param kwargs:
-    :return:
+    :param params: ParamDict, parameter dictionary of constants
+    :param drsfile: DrsFile instance used to get the dbkey
+    :param dbmname: str, the name of the database
+
+    :return: str, the dbkey
     """
-    # set function name
-    func_name = display_func(params, 'get_key_from_db', __NAME__)
-    # ----------------------------------------------------------------------
-    # deal with no mode set (assume from calibDB)
-    if mode is None:
-        if database.dbname == 'telluric':
-            mode = pcheck(params, 'TELLU_DB_MATCH', 'mode', kwargs, func_name)
-        elif database.dbname == 'calibration':
-            mode = pcheck(params, 'CALIB_DB_MATCH', 'mode', kwargs, func_name)
-        else:
-            mode = pcheck(params, 'DB_MATCH', 'mode', kwargs, func_name)
-    # debug print mode using
-    dargs = [mode, func_name]
-    WLOG(params, 'debug', TextEntry('90-002-00002', args=dargs))
-    # ----------------------------------------------------------------------
-    # get time from header
-    if mode != 'ALL':
-        header_time = _get_time(params, database.dbname, header=header)
+    # set function
+    func_name = display_func(params, '_get_dbkey', __NAME__)
+    # get dbname from drsfile
+    if hasattr(drsfile, 'dbkey') and hasattr(drsfile, 'get_dbkey'):
+        return drsfile.get_dbkey()
     else:
-        header_time = None
-    # get the correct entry from database
-    gkwargs = dict(mode=mode, usetime=header_time, n_entries=n_ent,
-                   required=required)
-    # return the database entries (in astropy.table format)
-    return database.get_entry(key, **gkwargs)
-
-
-def get_full_database(params, dbname):
-    # set function name
-    func_name = display_func(params, 'get_full_database', __NAME__)
-    # get databse short name
-    dbshort = _get_dbshort(params, dbname)
-    # check for calibDB in params
-    if dbshort in params:
-        return params[dbshort]
-    # get all lines from calibration database
-    else:
-        database = Database(params, dbname)
-        database.read_database()
-        return database
-
-
-def get_db_abspath(params, filename=None, where='guess'):
-    # set function name
-    func_name = display_func(params, 'get_db_abspath', __NAME__)
-    # ------------------------------------------------------------------
-    # get the calibration path and telluric path
-    cal_path = os.path.join(params['DRS_CALIB_DB'], filename)
-    tel_path = os.path.join(params['DRS_TELLU_DB'], filename)
-    # ------------------------------------------------------------------
-    # deal with where file is located
-    if where == 'calibration':
-        abspath = cal_path
-    elif where == 'telluric':
-        abspath = tel_path
-    elif where == 'guess':
-        # check full path
-        if os.path.exists(filename):
-            abspath = str(filename)
-        # check cal path
-        elif os.path.exists(cal_path):
-            abspath = cal_path
-        # check tellu path
-        elif os.path.exists(tel_path):
-            abspath = tel_path
-        else:
-            # raise error that defined filename does not exist
-            eargs = ['\n\t\t'.join([filename, cal_path, tel_path]), func_name]
-            WLOG(params, 'error', TextEntry('00-001-00036', args=eargs))
-            abspath = None
-    else:
-        # raise error that 'where' was not valid
-        eargs = [' or '.join(['calibration', 'telluric', 'guess']), func_name]
-        WLOG(params, 'error', TextEntry('00-001-00037', args=eargs))
-        abspath = None
-    # return the absolute path
-    return abspath
-
-
-def get_db_file(params, abspath, ext=0, fmt='fits', kind='image',
-                get_image=True, get_header=False):
-    # set function name
-    func_name = display_func(params, 'get_db_file', __NAME__)
-
-    # don't lock if we aren't getting image or header
-    if not get_image and not get_header:
-        return None, None
-
-    # ------------------------------------------------------------------
-    # define a synchoronized lock for indexing (so multiple instances do not
-    #  run at the same time)
-    lockfile = os.path.basename(abspath)
-    # start a lock
-    lock = drs_lock.Lock(params, lockfile)
-    # ------------------------------------------------------------------
-    # make locked read function
-    @drs_lock.synchronized(lock, params['PID'])
-    def locked_db():
-        # ------------------------------------------------------------------
-        # deal with npy files
-        if abspath.endswith('.npy'):
-            image = drs_path.numpy_load(abspath)
-            return image, None
-        # ------------------------------------------------------------------
-        # get db fits file
-        if (not get_image) or (not abspath.endswith('.fits')):
-            image = None
-        elif kind == 'image':
-            image = drs_fits.readfits(params, abspath, ext=ext)
-        elif kind == 'table':
-            image = drs_table.read_table(params, abspath, fmt=fmt)
-        else:
-            # raise error is kind is incorrect
-            eargs = [' or '.join(['image', 'table']), func_name]
-            WLOG(params, 'error', TextEntry('00-001-00038', args=eargs))
-            image = None
-        # ------------------------------------------------------------------
-        # get header if required (and a fits file)
-        if get_header and abspath.endswith('.fits'):
-            header = drs_fits.read_header(params, abspath, ext=ext)
-        else:
-            header = None
-        # return the image and header
-        return image, header
-    # ------------------------------------------------------------------
-    # try to run locked read function
-    try:
-        return locked_db()
-    except KeyboardInterrupt as e:
-        lock.reset()
-        raise e
-    except Exception as e:
-        # reset lock
-        lock.reset()
-        raise e
-
-
-# =============================================================================
-# Define calibration database functions
-# =============================================================================
-# TODO: Redo to use Database class
-def update_calibdb(params, dbname, dbkey, outfile, night=None, log=True):
-    # set function name
-    func_name = display_func(params, 'update_calibdb', __NAME__)
-    # deal with no night name
-    if night is None:
-        night = pcheck(params, 'NIGHTNAME', func=func_name)
-    if night == '' or night is None:
-        night = 'None'
-    # get whether recipe is master
-    is_master = params['IS_MASTER']
-    # ----------------------------------------------------------------------
-    # get the hdict
-    hdict, header = _get_hdict(params, dbname, outfile)
-    # ----------------------------------------------------------------------
-    # get time from header
-    header_time = _get_time(params, dbname, header=header, hdict=hdict)
-    # ----------------------------------------------------------------------
-    # get properties for database
-    key = str(dbkey).strip()
-    nightname = str(night).strip()
-    filename = str(outfile.basename).strip()
-    human_time = str(header_time.iso).replace(' ', '_').strip()
-    unix_time = str(header_time.unix).strip()
-    # get master key
-    if is_master:
-        master = '1'
-    else:
-        master = '0'
-    # ----------------------------------------------------------------------
-    # push into list
-    largs = [key, master, nightname, filename, human_time, unix_time]
-    # construct the line
-    line = '\n{0} {1} {2} {3} {4} {5}'.format(*largs)
-    # ----------------------------------------------------------------------
-    # write to file
-    _write_line_to_database(params, key, dbname, outfile, line, log)
-
-
-# =============================================================================
-# Define telluric database functions
-# =============================================================================
-# TODO: Redo to use Database class
-def update_telludb(params, dbname, dbkey, outfile, night=None, objname=None,
-                   log=True):
-    # set function name
-    func_name = display_func(params, 'update_telludb', __NAME__)
-    # deal with no night name
-    if night is None:
-        night = drs_log.find_param(params, 'NIGHTNAME', func=func_name)
-    if night == '' or night is None:
-        night = 'None'
-    # deal with no object name
-    if objname is None:
-        objname = 'Unknown'
-    # ----------------------------------------------------------------------
-    # get the hdict
-    hdict, header = _get_hdict(params, dbname, outfile)
-    # ----------------------------------------------------------------------
-    # get time from header
-    header_time = _get_time(params, dbname, header=header, hdict=hdict)
-    # ----------------------------------------------------------------------
-    # get properties for database
-    key = str(dbkey).strip()
-    nightname = str(night).strip()
-    filename = str(outfile.basename).strip()
-    human_time = str(header_time.iso).replace(' ', '_').strip()
-    unix_time = str(header_time.unix).strip()
-    # ----------------------------------------------------------------------
-    # push into list
-    largs = [key, nightname, filename, human_time, unix_time, objname]
-    # construct the line
-    line = '\n{0} {1} {2} {3} {4} {5}'.format(*largs)
-    # ----------------------------------------------------------------------
-    # write to file
-    _write_line_to_database(params, key, dbname, outfile, line, log)
-
-
-# =============================================================================
-# Define worker functions
-# =============================================================================
-def get_dbkey(params, outfile):
-    # set function name
-    func_name = display_func(params, 'get_dbkey', __NAME__)
-    # get database key (if it exists)
-    if hasattr(outfile, 'dbkey'):
-        dbkey = outfile.get_dbkey()
-    else:
-        eargs = [outfile.name, func_name]
+        eargs = [drsfile.name, dbmname, func_name]
         WLOG(params, 'error', TextEntry('00-008-00012', args=eargs))
-        dbkey = ''
-    # return dbkey
-    return dbkey
+        return 'None'
 
 
-def _get_dbname(params, outfile):
-    # set function name
+def _get_dbname(params: ParamDict, drsfile: DrsFileTypes, dbmname: str) -> bool:
+    """
+    Check the dbname attribute from a drsfile matches the database type
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param drsfile: DrsInputFile (fits or npy) instance to get dbname from
+    :param dbmname: str, the name of the database
+
+    :return: bool, True if passed (raises exception otherwise)
+    """
+    # set function
     func_name = display_func(params, '_get_dbname', __NAME__)
-    # get database names
-    dbnames = ['telluric', 'calibration']
-    # deal with each database name
-    if hasattr(outfile, 'dbname'):
-        dbname = outfile.dbname.capitalize()
+    # get dbname from drsfile
+    if hasattr(drsfile, 'dbname'):
+        dbname = drsfile.dbname.upper()
+        # test db name against this database
+        if dbname != dbmname.upper():
+            eargs = [drsfile.name, dbname, dbmname.upper(), drsfile.filename,
+                     func_name]
+            WLOG(params, 'error', TextEntry('00-002-00019', args=eargs))
+            return False
     else:
-        eargs = [outfile.name, ', '.join(dbnames), func_name]
-        WLOG(params, 'error', TextEntry('00-002-00012', args=eargs))
-        dbname = None
-    return dbname
+        eargs = [drsfile.name, dbmname, func_name]
+        WLOG(params, 'error', TextEntry('00-008-00012', args=eargs))
+        return False
+    # if we are here return True --> success
+    return True
 
 
-def _get_dbshort(params, dbname):
-    # set function name
-    func_name = display_func(params, '_get_dbshort', __NAME__)
-    # get database names
-    dbnames = ['telluric', 'calibration']
-    # deal with each database name
-    if dbname == 'calibration':
-        dbshort = 'calibdb'
-    elif dbname == 'telluric':
-        dbshort = 'telludb'
+def _get_hkey(params: ParamDict, pkey: str,
+              header: Union[FitsHeader, DrsHeader, None],
+              hdict: Union[DrsHeader, None], dtype: Type = str) -> Any:
+    """
+    Get the value for a header key "pkey (if present in hdict, then in header)
+    else if not present return None
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param pkey: str, the key in the headers to check
+    :param header: astropy.io.fits header or drs_fits.Header to check for pkey
+    :param hdict: drs_fits.Header to check for pkey (takes precendence over
+                  header
+    :param dtype: type the type to force return value to
+
+    :return: Any, the value for pkey (None if not found)
+    """
+    # set function
+    func_name = display_func(params, '_get_hkey', __NAME__)
+    # gey key from params
+    key = params[pkey][0]
+    # set fiber to None
+    value = None
+    # get fiber from hdict
+    if hdict is not None:
+        if key in hdict:
+            value = hdict[key]
+    # get fiber from header if not in hdict
+    if header is not None and value is None:
+        if key in header:
+            value = header[key]
+    # deal with dtype
+    if value is not None:
+        try:
+            value = dtype(value)
+        except Exception as e:
+            eargs = [type(e), str(e), func_name]
+            WLOG(params, 'error', TextEntry('00-000-00002', args=eargs))
+    # return fiber
+    return value
+
+
+def _get_is_super(params: ParamDict) -> int:
+    """
+    Find out whether file entry is from a super set or not
+
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: 1 if code is super else returns 0
+    """
+    # get master setting from params
+    is_super = params['IS_MASTER']
+    # change bool to 1 or 0
+    # get master key
+    if is_super:
+        is_super = 1
     else:
-        eargs = [' or '.join(dbnames), func_name]
-        WLOG(params, 'error', TextEntry('00-002-00001', args=eargs))
-        dbshort = None
-    return dbshort
+        is_super = 0
+    # return is super value
+    return is_super
 
 
-def _get_hdict(params, dbname, outfile):
+def _copy_db_file(params: ParamDict, drsfile: DrsFileTypes,
+                  outpath: Union[str, Path], dbmname: str,
+                  verbose: bool = True):
+    """
+    Copy a database file from drsfile.filename to outpath
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param drsfile: DrsInputFile (fits or npy) instance to get .filename from
+    :param outpath: str or Path, the output directory to copy the file to
+    :param dbmname: str, the database name
+    :param verbose: bool, if True log that we are copying files
+
+    :return: None
+    """
+    # set function
+    func_name = display_func(params, '_copy_db_file', __NAME__)
+    # construct in path
+    inpath = drsfile.filename
+    # construct out path
+    outpath = Path(outpath).joinpath(drsfile.basename)
+    # skip if inpath and outpath are the same
+    if str(inpath) == str(outpath):
+        return
+    # copy
+    try:
+        # log if verbose
+        if verbose:
+            margs = [dbmname, outpath]
+            WLOG(params, '', TextEntry('40-006-00004', args=margs))
+        # copy file using shutil (should be thread safe)
+        shutil.copyfile(inpath, outpath)
+    except Exception as e:
+        # log exception:
+        eargs = [dbmname, inpath, outpath, type(e), e, func_name]
+        WLOG(params, 'error', TextEntry('00-002-00014', args=eargs))
+
+
+HeaderType = Union[DrsHeader, FitsHeader, None]
+
+
+def _get_hdict(params: ParamDict, dbname: str, drsfile: DrsFileTypes = None,
+               hdict: HeaderType = None,
+               header: HeaderType = None) -> Tuple[HeaderType, HeaderType]:
+    """
+    Get the hdict and header (either from inputs or drsfile)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param dbname: str, the database name
+    :param drsfile: DrsInputFile (fits or npy) instance to get the hdict/header
+                    from (if hdict and header are both None)
+    :param header: astropy.io.fits header or drs_fits.Header to check for pkey
+    :param hdict: drs_fits.Header to check for pkey (takes precendence over
+                  header
+
+    :return: hdict (None if not found) and header (None if not found)
+    """
     # set function name
     func_name = display_func(params, '_get_hdict', __NAME__)
+    # deal with having hdict input
+    if hdict is not None:
+        return hdict, None
+    # deal with having header input
+    elif header is not None:
+        return None, header
     # get hdict
-    if hasattr(outfile, 'hdict') and len(list(outfile.hdict.keys())) != 0:
-        hdict = outfile.hdict
+    if hasattr(drsfile, 'hdict') and len(list(drsfile.hdict.keys())) != 0:
+        hdict = drsfile.hdict
         header = None
-    elif hasattr(outfile, 'header') and len(list(outfile.header.keys())) != 0:
+    elif (hasattr(drsfile, 'header') and
+          len(list(drsfile.get_header().keys())) != 0):
         hdict = None
-        header = outfile.header
+        header = drsfile.get_header()
     else:
-        eargs = [dbname, outfile.name, func_name]
+        eargs = [dbname, drsfile.name, func_name]
         WLOG(params, 'error', TextEntry('00-001-00027', args=eargs))
         hdict, header = None, None
     return hdict, header
 
 
-def _get_outpath(params, dbname, outfile=None):
-    # set function name
-    func_name = display_func(params, '_get_outpath', __NAME__)
-    # test database name
-    if dbname.lower() == 'telluric':
-        outpath = params['DRS_TELLU_DB']
-    elif dbname.lower() == 'calibration':
-        outpath = params['DRS_CALIB_DB']
-    elif outfile is None:
-        eargs = ['calibration, telluric', func_name]
-        WLOG(params, 'error', TextEntry('00-002-00001', args=eargs))
-        outpath = ''
-    else:
-        eargs = [outfile.name, outfile.dbname, 'calibration, telluric',
-                 func_name]
-        WLOG(params, 'error', TextEntry('00-002-00011', args=eargs))
-        outpath = ''
-    return outpath
+def _get_time(params: ParamDict, dbname: str,
+              hdict: HeaderType = None, header: HeaderType = None,
+              kind: Union[str, None] = None) -> Union[Time, str, float]:
+    """
+    Get the time from the header/hdict and return in format "kind"
 
-
-def _get_database_file(params, dbname, outfile=None):
-    # set function name
-    func_name = display_func(params, '_get_database_file', __NAME__)
-    # test database name
-    if dbname.lower() == 'telluric':
-        outpath = params['TELLU_DB_NAME']
-    elif dbname.lower() == 'calibration':
-        outpath = params['CALIB_DB_NAME']
-    elif outfile is None:
-        eargs = ['calibration, telluric', func_name]
-        WLOG(params, 'error', TextEntry('00-002-00001', args=eargs))
-        outpath = ''
-    else:
-        eargs = [outfile.name, outfile.dbname, 'calibration, telluric',
-                 func_name]
-        WLOG(params, 'error', TextEntry('00-002-00011', args=eargs))
-        outpath = ''
-    return outpath
-
-
-def _copy_db_file(params, dbname, inpath, outpath, log=True):
-    # set function name
-    func_name = display_func(params, '_copy_file', __NAME__)
-    # remove file if already present
-    if inpath == outpath:
-        return 0
-    # -------------------------------------------------------------------------
-    # define a synchoronized lock for indexing (so multiple instances do not
-    #  run at the same time)
-    lockfile = os.path.basename(inpath)
-    # start a lock
-    lock = drs_lock.Lock(params, lockfile)
-    # make locked copy function
-    @drs_lock.synchronized(lock, params['PID'])
-    def locked_copy():
-        # noinspection PyExceptClausesOrder
-        try:
-            shutil.copyfile(inpath, outpath)
-        except IOError as e:
-            # log and raise error
-            eargs = [dbname, inpath, outpath, type(e), e, func_name]
-            WLOG(params, 'error', TextEntry('00-002-00014', args=eargs))
-        except OSError as e:
-            wargs = [dbname, outpath, type(e), e, func_name]
-            WLOG(params, 'warning', TextEntry('10-001-00007', args=wargs))
-    # -------------------------------------------------------------------------
-    # try to run locked copy function
-    try:
-        locked_copy()
-    except KeyboardInterrupt as e:
-        lock.reset()
-        raise e
-    except Exception as e:
-        # reset lock
-        lock.reset()
-        raise e
-    # -------------------------------------------------------------------------
-    # check that file is copied
-    if os.path.exists(outpath):
-        if log:
-            wargs = [dbname, outpath]
-            WLOG(params, '', TextEntry('40-006-00004', args=wargs))
-    else:
-        eargs = [dbname, outpath, func_name]
-        WLOG(params, 'error', TextEntry('00-008-00021', args=eargs))
-
-
-def _get_time(params, dbname, header=None, hdict=None, kind=None):
+    :param params: ParamDict, parameter dictionary of constants
+    :param dbname: str, the database name
+    :param header: astropy.io.fits header or drs_fits.Header to check for pkey
+    :param hdict: drs_fits.Header to check for pkey (takes precendence over
+                  header
+    :param kind: str
+    :return:
+    """
     # set function name
     func_name = display_func(params, '_get_time', __NAME__)
     # ----------------------------------------------------------------------
@@ -782,142 +1082,83 @@ def _get_time(params, dbname, header=None, hdict=None, kind=None):
         WLOG(params, 'error', TextEntry('00-001-00039', args=eargs))
 
 
-def _read_lines_from_database(params, dbname):
-    # set function name
-    func_name = display_func(params, '_read_lines_from_database', __NAME__)
-    # get outpath
-    outpath = _get_outpath(params, dbname)
-    # get file name
-    db_file = _get_database_file(params, dbname)
-    # construct absolute path
-    abspath = os.path.join(outpath, db_file)
-    # ----------------------------------------------------------------------
-    # define a synchoronized lock for indexing (so multiple instances do not
-    #  run at the same time)
-    lockfile = os.path.basename(abspath)
-    # start a lock
-    lock = drs_lock.Lock(params, lockfile)
-    # make locked readlines function
-    @drs_lock.synchronized(lock, params['PID'])
-    def locked_readlines():
-        # ------------------------------------------------------------------
-        # try to open the master file
-        try:
-            # read the lines
-            with open(abspath, 'r') as f:
-                lines = list(f.readlines())
-        except Exception as e:
-            # error message
-            eargs = [dbname, type(e), e, abspath, func_name]
-            WLOG(params, 'error', TextEntry('01-001-00019', args=eargs))
-            lines = []
-        # ------------------------------------------------------------------
-        # database storage
-        database = OrderedDict()
-        # clean up database
-        for l_it, line in enumerate(lines):
-            # ignore blank lines or lines starting with '#'
-            if len(line) == 0:
-                continue
-            if line == '\n':
-                continue
-            if line.strip()[0] == '#':
-                continue
-            # get elements from database
-            try:
-                # need to get key. Must be first entry in line
-                #     (separated by spaces)
-                key = line.split()[0]
-                # check if key already in database
-                if key in database:
-                    # noinspection PyTypeChecker
-                    database[key].append([l_it] + line.split()[1:])
-                else:
-                    # noinspection PyTypeChecker
-                    database[key] = [[l_it] + line.split()[1:]]
-            except ValueError:
-                # error message
-                eargs = [dbname, abspath, func_name]
-                WLOG(params, 'error', TextEntry('09-002-00002', args=eargs))
-        # ------------------------------------------------------------------
-        # Need to check if lists are empty after loop
-        if len(database) == 0:
-            # error message
-            eargs = [dbname, abspath, func_name]
-            WLOG(params, 'error', TextEntry('09-002-00003', args=eargs))
-        # --------------------------------------------------------------
-        # return database
-        return database
+# =============================================================================
+# Define other databases
+# =============================================================================
+class IndexDatabase(DatabaseManager):
+    def __init__(self, params: ParamDict, check: bool = True):
+        """
+        Constructor of the Index Database class
 
-    # -------------------------------------------------------------------------
-    # try to run locked makedirs
-    try:
-        database = locked_readlines()
-    except KeyboardInterrupt as e:
-        lock.reset()
-        raise e
-    except Exception as e:
-        # reset lock
-        lock.reset()
-        raise e
-    # -------------------------------------------------------------------------
-    # return database
-    return database
+        :param params: ParamDict, parameter dictionary of constants
+        :param check: bool, if True makes sure database file exists (otherwise
+                      assumes it is)
+
+        :return: None
+        """
+        # save class name
+        self.classname = 'IndexDatabaseManager'
+        # set function
+        _ = display_func(params, '__init__', __NAME__, self.classname)
+        # construct super class
+        DatabaseManager.__init__(self, params)
+        # set name
+        self.name = 'index'
+        # set path
+        self.set_path(None, 'TELLU_DB_NAME', check=check)
 
 
-def _write_line_to_database(params, key, dbname, outfile, line, log=True):
-    # set function name
-    func_name = display_func(params, '_write_line_to_database', __NAME__)
-    # get outpath
-    outpath = _get_outpath(params, dbname, outfile)
-    # get file name
-    db_file = _get_database_file(params, dbname, outfile)
-    # construct absolute path
-    abspath = os.path.join(outpath, db_file)
-    # -------------------------------------------------------------------------
-    # define a synchoronized lock for indexing (so multiple instances do not
-    #  run at the same time)
-    lockfile = os.path.basename(abspath)
-    # start a lock
-    lock = drs_lock.Lock(params, lockfile)
-    # make locked writelines function
-    @drs_lock.synchronized(lock, params['PID'])
-    def locked_writelines():
-        # ------------------------------------------------------------------
-        # try to open the master file
-        try:
-            # write the lines
-            with open(abspath, 'a') as f:
-                f.write(line)
-            # print progress
-            wargs = [dbname, key]
-            if log:
-                WLOG(params, 'info', TextEntry('40-006-00001', args=wargs))
-        except Exception as e:
-            # error message
-            eargs = [dbname, key, type(e), e, abspath, func_name]
-            WLOG(params, 'error', TextEntry('01-001-00018', args=eargs))
-    # ----------------------------------------------------------------------
-    # try to run locked makedirs
-    try:
-        locked_writelines()
-    except KeyboardInterrupt as e:
-        lock.reset()
-        raise e
-    except Exception as e:
-        # reset lock
-        lock.reset()
-        raise e
+class LogDatabase(DatabaseManager):
+    def __init__(self, params: ParamDict, check: bool = True):
+        """
+        Constructor of the Log Database class
+
+        :param params: ParamDict, parameter dictionary of constants
+        :param check: bool, if True makes sure database file exists (otherwise
+                      assumes it is)
+
+        :return: None
+        """
+        # save class name
+        self.classname = 'LogDatabaseManager'
+        # set function
+        _ = display_func(params, '__init__', __NAME__, self.classname)
+        # construct super class
+        DatabaseManager.__init__(self, params)
+        # set name
+        self.name = 'log'
+        # set path
+        self.set_path(None, 'LOG_DB_NAME', check=check)
+
+
+class ObjectDatabase(DatabaseManager):
+    def __init__(self, params: ParamDict, check: bool = True):
+        """
+        Constructor of the Object Database class
+
+        :param params: ParamDict, parameter dictionary of constants
+        :param check: bool, if True makes sure database file exists (otherwise
+                      assumes it is)
+
+        :return: None
+        """
+        # save class name
+        self.classname = 'ObjectDatabaseManager'
+        # set function
+        _ = display_func(params, '__init__', __NAME__, self.classname)
+        # construct super class
+        DatabaseManager.__init__(self, params)
+        # set name
+        self.name = 'object'
+        # set path
+        self.set_path(None, 'OBJECT_DB_NAME', check=check)
 
 
 # =============================================================================
 # Start of code
 # =============================================================================
-# Main code here
 if __name__ == "__main__":
-    # ----------------------------------------------------------------------
-    # print 'Hello World!'
-    print("Hello World!")
+    print('Hello World')
 
 # =============================================================================
 # End of code

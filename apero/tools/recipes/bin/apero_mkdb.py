@@ -19,7 +19,7 @@ from apero.core import constants
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
-from apero.core.utils import drs_database2 as drs_database
+from apero.core.utils import drs_database
 from apero.io import drs_fits
 from apero.tools.module.database import create_databases
 

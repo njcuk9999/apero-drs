@@ -14,7 +14,7 @@ from apero import lang
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
-from apero.core.utils import drs_database2 as drs_database
+from apero.core.utils import drs_database
 from apero.science.extract import other as extother
 from apero.science.extract import general as extgen
 
