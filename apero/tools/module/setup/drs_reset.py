@@ -20,7 +20,7 @@ from apero import lang
 from apero.io import drs_lock
 from apero.io import drs_path
 from apero.core.utils import drs_data
-from apero.tools.module.database import create_databases
+from apero.tools.module.database import manage_databases
 
 # =============================================================================
 # Define variables
@@ -123,7 +123,7 @@ def reset_calibdb(params, log=True):
     :return:
     """
     # get database paths
-    databases = create_databases.list_databases(params)
+    databases = manage_databases.list_databases(params)
     # load pseudo constants
     pconst = constants.pload(params['INSTRUMENT'])
     # name the database
@@ -135,7 +135,7 @@ def reset_calibdb(params, log=True):
     # reset files
     reset_dbdir(params, name, calib_dir, reset_path, log=log)
     # create calibration database
-    create_databases.create_calibration_database(params, pconst, databases)
+    manage_databases.create_calibration_database(params, pconst, databases)
 
 
 def reset_telludb(params, log=True):
@@ -146,7 +146,7 @@ def reset_telludb(params, log=True):
     :return:
     """
     # get database paths
-    databases = create_databases.list_databases(params)
+    databases = manage_databases.list_databases(params)
     # load pseudo constants
     pconst = constants.pload(params['INSTRUMENT'])
     # name the database
@@ -158,7 +158,7 @@ def reset_telludb(params, log=True):
     # reset files
     reset_dbdir(params, name, tellu_dir, reset_path, log=log)
     # create telluric database
-    create_databases.create_telluric_database(pconst, databases)
+    manage_databases.create_telluric_database(pconst, databases)
 
 
 def reset_dbdir(params, name, db_dir, reset_path, log=True,
@@ -189,11 +189,8 @@ def copy_default_db(params, name, db_dir, reset_path, log=True):
         eargs = [name, reset_path]
         WLOG(params, 'error', TextEntry('00-502-00001', args=eargs))
     # -------------------------------------------------------------------------
-    # define needed files:
-    files = np.sort(os.listdir(reset_path))
-    # -------------------------------------------------------------------------
     # copy required calibDB files to DRS_CALIB_DB path
-    drs_path.copytree(reset_path, db_dir)
+    drs_path.copytree(reset_path, db_dir, log=log)
 
 def reset_log(params, log=True):
     # log progress
@@ -232,7 +229,7 @@ def reset_run(params, log=True):
 def reset_assets(params, log=True):
     name = 'assets'
     # get database paths
-    databases = create_databases.list_databases(params)
+    databases = manage_databases.list_databases(params)
     # load pseudo constants
     pconst = constants.pload(params['INSTRUMENT'])
     # TODO: deal with getting online
@@ -246,15 +243,15 @@ def reset_assets(params, log=True):
     reset_dbdir(params, name, asset_path, abs_reset_path, log=log,
                 empty_first=False, relative_path='MODULE')
     # create index database
-    create_databases.create_index_database(pconst, databases)
+    manage_databases.create_index_database(pconst, databases)
     # create log database
-    create_databases.create_log_database(pconst, databases)
+    manage_databases.create_log_database(pconst, databases)
     # create object database
-    create_databases.create_object_database(params, pconst, databases)
+    manage_databases.create_object_database(params, pconst, databases)
     # create params database
-    create_databases.create_params_database(pconst, databases)
+    manage_databases.create_params_database(pconst, databases)
     # create language database
-    create_databases.create_lang_database(pconst, databases)
+    manage_databases.create_lang_database(pconst, databases)
 
 
 def reset_log_fits(params, log=True):
