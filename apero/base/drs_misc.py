@@ -9,6 +9,7 @@ Created on 2020-08-2020-08-21 19:17
 """
 import numpy as np
 import os
+from pathlib import Path
 import random
 import string
 import time
@@ -353,7 +354,7 @@ def _get_prev_count(params: Any, previous: str) -> int:
     return n_elements
 
 
-def get_uncommon_path(path1: str, path2: str) -> str:
+def get_uncommon_path(path1: Union[Path, str], path2: Union[Path, str]) -> str:
     """
     Get the uncommon path of "path1" compared to "path2"
 
@@ -371,7 +372,7 @@ def get_uncommon_path(path1: str, path2: str) -> str:
     # set function name (cannot break here --> no access to params)
     _ = display_func(None, 'get_uncommon_path', __NAME__)
     # may need to switch paths if len(path2) > len(path1)
-    if len(path2) > len(path1):
+    if len(str(path2)) > len(str(path1)):
         _path1 = str(path2)
         _path2 = str(path1)
     else:
@@ -384,7 +385,6 @@ def get_uncommon_path(path1: str, path2: str) -> str:
     common = os.path.commonpath([_path2, _path1]) + os.sep
     # return the non-common part of the path
     return _path1.split(common)[-1]
-
 
 
 def unix_char_code() -> Tuple[float, str, str]:
@@ -412,7 +412,6 @@ def unix_char_code() -> Tuple[float, str, str]:
     # generate random four characters to make sure pid is unique
     rval = ''.join(np.random.choice(list(CHARS), size=4))
     return unixtime, humantime, rval
-
 
 
 # =============================================================================
