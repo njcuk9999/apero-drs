@@ -25,7 +25,9 @@ from apero.base import drs_base_classes as base_class
 from apero.base import drs_exceptions
 from apero.base import drs_text
 from apero.core.core import drs_log
-from apero.core.utils import drs_recipe, drs_startup
+from apero.core.utils import drs_recipe
+from apero.core.utils import drs_startup
+from apero.core.utils import drs_utils
 from apero import lang
 from apero.core import constants
 from apero import plotting
@@ -688,7 +690,6 @@ def skip_remove_non_required_args(runstrings, runobj):
     return np.unique(new_runstrings)
 
 
-
 def fix_run_file(runfile):
     # only do this if we have a runfile
     if os.path.exists(runfile):
@@ -815,13 +816,13 @@ def reset_files(params):
             drs_reset.reset_log_fits(params)
 
 
-def generate_run_list(params, table, runtable, skiptable):
+def generate_run_list(params, indexdbm, runtable, skiptable):
     # print progress: generating run list
     WLOG(params, 'info', TextEntry('40-503-00011'))
     # need to update table object names to match preprocessing
     #   table can be None if coming from e.g fit_tellu_db
-    if table is not None:
-        table = _update_table_objnames(params, table)
+    if indexdbm is not None:
+        drs_utils.update_objnames(indexdbm)
     # get recipe defintions module (for this instrument)
     recipemod = _get_recipe_module(params)
     # get all values (upper case) using map function
