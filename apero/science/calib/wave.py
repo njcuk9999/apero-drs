@@ -25,7 +25,7 @@ from apero.core import math as mp
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_data
 from apero.core.utils import drs_startup
-from apero.core.utils import drs_database2 as drs_database
+from apero.core.utils import drs_database
 from apero.io import drs_table
 from apero.io import drs_image
 from apero.science import velocity

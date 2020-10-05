@@ -19,7 +19,6 @@ from apero.core import math as mp
 from apero import lang
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_startup
-from apero.core.utils import drs_database
 from apero.io import drs_fits
 from apero.io import drs_path
 from apero.io import drs_image
@@ -532,32 +531,6 @@ def dark_summary(recipe, it, params, dadead_full, med_full, dadead_blue,
     recipe.plot.add_stat('KW_DARK_CUT', value=params['DARK_CUTLIMIT'])
     # construct summary
     recipe.plot.summary_document(it, qc_params)
-
-
-# =============================================================================
-# Define worker functions
-# =============================================================================
-def get_dark_master_file(params, header):
-    func_name = __NAME__ + '.get_dark_file()'
-    # get loco file instance
-    darkinst = drs_startup.get_file_definition('DARKM', params['INSTRUMENT'],
-                                               kind='red')
-    # get calibration key
-    darkkey = darkinst.get_dbkey()
-    # get calibDB
-    cdb = drs_database.get_full_database(params, 'calibration')
-    # get filename col
-    filecol, timecol = cdb.file_col, cdb.time_col
-    # get the dark entries
-    darkentries = drs_database.get_key_from_db(params, darkkey, cdb, header,
-                                               n_ent=1, required=True)
-    # -------------------------------------------------------------------------
-    # try to read 'DARKM' from cdb
-    darkfilename = darkentries[filecol][0]
-    darkfile = os.path.join(params['DRS_CALIB_DB'], darkfilename)
-
-    # return use_file and use_type
-    return darkfile, darkkey
 
 
 # =============================================================================

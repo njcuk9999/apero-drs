@@ -28,6 +28,8 @@ __date__ = base.__date__
 __release__ = base.__release__
 # get astropy time
 Time = base.AstropyTime
+# timeout parameter in seconds
+TIMEOUT = 20.0
 
 
 # =============================================================================
@@ -116,7 +118,7 @@ class Database:
         self.path = path
         # try to connect the the SQL3 database
         try:
-            self._conn_ = sqlite3.connect(self.path)
+            self._conn_ = sqlite3.connect(self.path, timeout=TIMEOUT)
         except Exception as e:
             raise DatabaseError(message=str(e), errorobj=e, path=self.path,
                                 func_name=func_name)
