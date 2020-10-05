@@ -4617,6 +4617,7 @@ def find_files(params: ParamDict, recipe: Any = None,
         return valid_files[sortmask]
 
 
+# TODO: NOT USED?
 def find_raw_files(params: ParamDict, recipe: Any,
                    nightcol: Union[str, None] = None,
                    absfilecol: Union[str, None] = None,
@@ -5058,6 +5059,7 @@ GetFilesType = Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray,
                      Dict[str, np.ndarray]]
 
 
+# TODO: NOT USED?
 def _get_files(params: ParamDict, recipe: Any, path: str, rpath: str,
                absfilecol: Union[str, None] = None,
                modifiedcol: Union[str, None] = None,
