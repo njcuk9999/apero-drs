@@ -9,6 +9,7 @@ Created on 2019-05-15 at 12:24
 
 @author: cook
 """
+import copy
 import numpy as np
 from astropy import constants as cc
 from astropy import units as uu
@@ -281,8 +282,70 @@ def linear_minimization(vector: np.ndarray, sample: np.ndarray,
     return amp_out, recon_out
 
 
+class NanSpline:
+    def __init__(self, emsg: str, x: Union[np.ndarray, None] = None,
+                 y: Union[np.ndarray, None] = None, **kwargs):
+        """
+        This is used in place of scipy.interpolateInterpolatedUnivariateSpline
+        (Any spline following this will return all NaNs)
+
+        :param emsg: str, the error that means we have to use the NanSpline
+        """
+        self.emsg = str(emsg)
+        self.x = copy.deepcopy(x)
+        self.y = copy.deepcopy(y)
+        self.kwargs = copy.deepcopy(kwargs)
+
+    def __repr__(self) -> str:
+        """
+        String representation of the class
+
+        :return: string representation
+        """
+        return 'NanSpline: \n' + self.emsg
+
+    def __str__(self) -> str:
+        """
+        String representation of the class
+
+        :return: string representation
+        """
+        return self.__repr__()
+
+    def __call__(self, x: np.ndarray, nu: int = 0,
+                 ext: Union[int, None] = None) -> np.ndarray:
+        """
+        Return a vector of NaNs (this means the spline failed due to
+        less points
+
+        This is used in place of scipy.interpolateInterpolatedUnivariateSpline
+
+        Parameters
+        ----------
+        x : array_like
+            A 1-D array of points at which to return the value of the smoothed
+            spline or its derivatives. Note: x can be unordered but the
+            evaluation is more efficient if x is (partially) ordered.
+        nu  : int
+            The order of derivative of the spline to compute.
+        ext : int
+            Controls the value returned for elements of ``x`` not in the
+            interval defined by the knot sequence.
+
+            * if ext=0 or 'extrapolate', return the extrapolated value.
+            * if ext=1 or 'zeros', return 0
+            * if ext=2 or 'raise', raise a ValueError
+            * if ext=3 or 'const', return the boundary value.
+
+            The default value is 0, passed from the initialization of
+            UnivariateSpline.
+
+        """
+        return np.repeat(np.nan, len(x))
+
+
 def iuv_spline(x: np.ndarray, y: np.ndarray, **kwargs
-               ) -> InterpolatedUnivariateSpline:
+               ) -> Union[InterpolatedUnivariateSpline, NanSpline]:
     """
     Do an Interpolated Univariate Spline taking into account NaNs (with masks)
 
@@ -296,25 +359,35 @@ def iuv_spline(x: np.ndarray, y: np.ndarray, **kwargs
     """
     # set function name
     _ = display_func(None, 'iuv_spline', __NAME__)
+    # copy x and y
+    x, y = np.array(x), np.array(y)
+    # find all NaN values
+    nanmask = ~np.isfinite(y)
     # deal with dimensions error (on k)
     #   otherwise get   dfitpack.error: (m>k) failed for hidden m
     if kwargs.get('k', None) is not None:
-        if len(x) < (kwargs['k'] + 1):
+        # deal with to few parameters in x
+        if len(x[~nanmask]) < (kwargs['k'] + 1):
             # raise exception if len(x) is bad
             emsg = ('IUV Spline len(x) < k+1 '
                     '\n\tk={0}\n\tlen(x) = {1}'
                     '\n\tx={2}\n\ty={3}')
             eargs = [kwargs['k'], len(x), str(x)[:70], str(y)[:70]]
-            raise DrsMathException(emsg.format(*eargs))
-    # copy x and y
-    x, y = np.array(x), np.array(y)
-    # find all NaN values
-    nanmask = ~np.isfinite(y)
+            # return a nan spline
+            return NanSpline(emsg.format(*eargs), x=x, y=y, **kwargs)
+        if len(y[~nanmask]) < (kwargs['k'] + 1):
+            # raise exception if len(x) is bad
+            emsg = ('IUV Spline len(y) < k+1 '
+                    '\n\tk={0}\n\tlen(y) = {1}'
+                    '\n\tx={2}\n\ty={3}')
+            eargs = [kwargs['k'], len(y), str(x)[:70], str(y)[:70]]
+            # return a nan spline
+            return NanSpline(emsg.format(*eargs), x=x, y=y, **kwargs)
 
     if np.sum(~nanmask) < 2:
-        y = np.zeros_like(x)
-    elif np.sum(nanmask) == 0:
-        pass
+        y = np.repeat(np.nan, len(x))
+    elif np.sum(~nanmask) == 0:
+        y = np.repeat(np.nan, len(x))
     else:
         # replace all NaN's with linear interpolation
         badspline = InterpolatedUnivariateSpline(x[~nanmask], y[~nanmask],
