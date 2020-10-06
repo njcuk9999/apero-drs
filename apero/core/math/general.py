@@ -324,7 +324,7 @@ def iuv_spline(x, y, **kwargs):
     #   otherwise get   dfitpack.error: (m>k) failed for hidden m
     if kwargs.get('k', None) is not None:
         # deal with to few parameters in x
-        if len(x[nanmask]) < (kwargs['k'] + 1):
+        if len(x[~nanmask]) < (kwargs['k'] + 1):
             # raise exception if len(x) is bad
             emsg = ('IUV Spline len(x) < k+1 '
                     '\n\tk={0}\n\tlen(x) = {1}'
@@ -332,7 +332,7 @@ def iuv_spline(x, y, **kwargs):
             eargs = [kwargs['k'], len(x), str(x)[:70], str(y)[:70]]
             # return a nan spline
             return NanSpline(emsg.format(*eargs), x=x, y=y, **kwargs)
-        if len(y[nanmask]) < (kwargs['k'] + 1):
+        if len(y[~nanmask]) < (kwargs['k'] + 1):
             # raise exception if len(x) is bad
             emsg = ('IUV Spline len(y) < k+1 '
                     '\n\tk={0}\n\tlen(y) = {1}'
@@ -343,7 +343,7 @@ def iuv_spline(x, y, **kwargs):
 
     if np.sum(~nanmask) < 2:
         y = np.repeat(np.nan, len(x))
-    elif np.sum(nanmask) == 0:
+    elif np.sum(~nanmask) == 0:
         y = np.repeat(np.nan, len(x))
     else:
         # replace all NaN's with linear interpolation
