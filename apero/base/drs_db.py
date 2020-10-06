@@ -207,8 +207,10 @@ class Database:
         except Exception as e:
             # close cursor
             cursor.close()
+            # error message
+            emsg = str(e) + '\n\texectute(cmd): {0}'.format(command)
             # raise exception
-            raise DatabaseError(message=str(e), errorobj=e, path=self.path,
+            raise DatabaseError(message=emsg, errorobj=e, path=self.path,
                                 func_name=func_name)
 
         # print output of sql command if verbose
