@@ -331,7 +331,7 @@ def iuv_spline(x, y, **kwargs):
                     '\n\tx={2}\n\ty={3}')
             eargs = [kwargs['k'], len(x), str(x)[:70], str(y)[:70]]
             # return a nan spline
-            return NanSpline(emsg.format(eargs), x=x, y=y, **kwargs)
+            return NanSpline(emsg.format(*eargs), x=x, y=y, **kwargs)
         if len(y[nanmask]) < (kwargs['k'] + 1):
             # raise exception if len(x) is bad
             emsg = ('IUV Spline len(y) < k+1 '
@@ -339,7 +339,7 @@ def iuv_spline(x, y, **kwargs):
                     '\n\tx={2}\n\ty={3}')
             eargs = [kwargs['k'], len(y), str(x)[:70], str(y)[:70]]
             # return a nan spline
-            return NanSpline(emsg.format(eargs), x=x, y=y, **kwargs)
+            return NanSpline(emsg.format(*eargs), x=x, y=y, **kwargs)
 
     if np.sum(~nanmask) < 2:
         y = np.repeat(np.nan, len(x))
