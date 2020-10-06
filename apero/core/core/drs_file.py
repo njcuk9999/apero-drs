@@ -118,7 +118,7 @@ class DrsInputFile:
                  is_combined: Union[bool, None] = None,
                  combined_list: Union[list, None] = None,
                  s1d: Union[list, None] = None,
-                 **kwargs):
+                 hkeys: Union[Dict[str, str], None] = None):
         """
         Create a DRS Input File object
 
@@ -183,7 +183,7 @@ class DrsInputFile:
         :param s1d: list, a list of s1d images attached to this file instance
                           (for use with extraction file
                            instances) [not used in DrsInputFile]
-        :param kwargs: passed to required header keys (i.e. must be a DRS
+        :param hkeys:  passed to required header keys (i.e. must be a DRS
                        Header key reference -- "KW_HEADERKEY")
                        [not used in DrsInputFile]
 
@@ -247,7 +247,8 @@ class DrsInputFile:
         self.is_combined = is_combined
         self.combined_list = combined_list
         self.s1d = s1d
-
+        # just set hkeys
+        self.header_keys = hkeys
         # allow instance to be associated with a filename
         self.set_filename(filename)
 
@@ -390,7 +391,7 @@ class DrsInputFile:
                 is_combined: Union[bool, None] = None,
                 combined_list: Union[list, None] = None,
                 s1d: Union[list, None] = None,
-                **kwargs):
+                hkeys: Union[Dict[str, str], None] = None):
         """
         Create a new copy of DRS Input File object - unset parameters come
         from current instance of Drs Input File
@@ -456,7 +457,7 @@ class DrsInputFile:
         :param s1d: list, a list of s1d images attached to this file instance
                           (for use with extraction file
                            instances) [not used in DrsInputFile]
-        :param kwargs: passed to required header keys (i.e. must be a DRS
+        :param hkeys: passed to required header keys (i.e. must be a DRS
                        Header key reference -- "KW_HEADERKEY")
                        [not used in DrsInputFile]
 
@@ -471,7 +472,7 @@ class DrsInputFile:
                             directory, data, header, fileset, filesetnames,
                             outfunc, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
-                            is_combined, combined_list, s1d, **kwargs)
+                            is_combined, combined_list, s1d, hkeys)
 
     def check_params(self, func):
         """
@@ -590,7 +591,7 @@ class DrsInputFile:
                   is_combined: Union[bool, None] = None,
                   combined_list: Union[list, None] = None,
                   s1d: Union[list, None] = None,
-                  **kwargs):
+                  hkeys: Union[Dict[str, str], None] = None):
         """
         Copy most keys from drsfile (other arguments override attributes coming
         from drfile (or self)
@@ -657,7 +658,7 @@ class DrsInputFile:
         :param s1d: list, a list of s1d images attached to this file instance
                           (for use with extraction file
                            instances) [not used in DrsInputFile]
-        :param kwargs: passed to required header keys (i.e. must be a DRS
+        :param hkeys: passed to required header keys (i.e. must be a DRS
                        Header key reference -- "KW_HEADERKEY")
                        [not used in DrsInputFile]
         """
@@ -670,7 +671,7 @@ class DrsInputFile:
                             directory, data, header, fileset, filesetnames,
                             outfunc, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
-                            is_combined, combined_list, s1d, **kwargs)
+                            is_combined, combined_list, s1d, hkeys)
 
     def completecopy(self, drsfile,
                      name: Union[str, None] = None,
@@ -705,7 +706,7 @@ class DrsInputFile:
                      is_combined: Union[bool, None] = None,
                      combined_list: Union[list, None] = None,
                      s1d: Union[list, None] = None,
-                     **kwargs):
+                     hkeys: Union[Dict[str, str], None] = None):
         """
         Copy all keys from drsfile (unless other arguments set - these override
         copy from drsfile)
@@ -772,7 +773,7 @@ class DrsInputFile:
         :param s1d: list, a list of s1d images attached to this file instance
                           (for use with extraction file
                            instances) [not used in DrsInputFile]
-        :param kwargs: passed to required header keys (i.e. must be a DRS
+        :param hkeys: passed to required header keys (i.e. must be a DRS
                        Header key reference -- "KW_HEADERKEY")
                        [not used in DrsInputFile]
         """
@@ -785,7 +786,7 @@ class DrsInputFile:
                             directory, data, header, fileset, filesetnames,
                             outfunc, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
-                            is_combined, combined_list, s1d, **kwargs)
+                            is_combined, combined_list, s1d, hkeys)
 
     # -------------------------------------------------------------------------
     # file checking
@@ -1176,7 +1177,8 @@ class DrsFitsFile(DrsInputFile):
                  dtype: Union[type, None] = None,
                  is_combined: Union[bool, None] = False,
                  combined_list: Union[list, None] = None,
-                 s1d: Union[list, None] = None, **kwargs):
+                 s1d: Union[list, None] = None,
+                 hkeys: Union[Dict[str, str], None] = None):
         """
         Create a DRS Input File object
 
@@ -1237,8 +1239,8 @@ class DrsFitsFile(DrsInputFile):
         :param s1d: list, a list of s1d images attached to this file instance
                     (for use with extraction file instances)
 
-        :param kwargs: passed to required header keys (i.e. must be a DRS
-                       Header key reference -- "KW_HEADERKEY")
+        :param hkeys: passed to required header keys (i.e. must be a DRS
+                      Header key reference -- "KW_HEADERKEY")
 
         - Parent class for Drs Fits File object (DrsFitsFile)
         """
@@ -1255,7 +1257,7 @@ class DrsFitsFile(DrsInputFile):
                               fileset, filesetnames, outfunc, inext, dbname,
                               dbkey, rkeys, numfiles, shape, hdict,
                               output_dict, datatype, dtype, is_combined,
-                              combined_list, s1d, **kwargs)
+                              combined_list, s1d, hkeys)
         # if ext in kwargs then we have a file extension to check
         self.filetype = filetype
         # set the input extension type
@@ -1289,7 +1291,7 @@ class DrsFitsFile(DrsInputFile):
         #   the get_header_keys method (kwargs is passed to allow setting
         #   individual keys when drs fits instance is constructed)
         if len(self.required_header_keys) == 0:
-            self.get_header_keys(kwargs)
+            self.get_header_keys(hkeys)
         # get the fits data array (or set it to None)
         self.data = data
         # get the fits header (or set it to None)
@@ -1379,7 +1381,7 @@ class DrsFitsFile(DrsInputFile):
         # return the string output
         return self.string_output()
 
-    def get_header_keys(self, kwargs: dict):
+    def get_header_keys(self, hkeys: Union[Dict[str, str], None]):
         """
         The rest of the kwargs from dictionary, search for keys starting with
         "KW_" and push them into required_header_keys (these are used to
@@ -1394,10 +1396,13 @@ class DrsFitsFile(DrsInputFile):
         # set function name
         _ = display_func(self.params, 'get_header_keys', __NAME__,
                          self.class_name)
+        # deal with no hkeys
+        if hkeys is None:
+            hkeys = dict()
         # add values to the header
-        for kwarg in kwargs:
-            if 'KW_' in kwarg.upper():
-                self.required_header_keys[kwarg] = kwargs[kwarg]
+        for hkey in hkeys:
+            if 'KW_' in hkey.upper():
+                self.required_header_keys[hkey] = hkeys[hkey]
 
     def newcopy(self, name: Union[str, None] = None,
                 filetype: Union[str, None] = None,
@@ -1431,7 +1436,7 @@ class DrsFitsFile(DrsInputFile):
                 is_combined: Union[bool, None] = None,
                 combined_list: Union[list, None] = None,
                 s1d: Union[list, None] = None,
-                **kwargs):
+                hkeys: Union[Dict[str, str], None] = None):
         """
         Create a new copy of DRS Input File object - unset parameters come
         from current instance of Drs Input File
@@ -1497,7 +1502,7 @@ class DrsFitsFile(DrsInputFile):
         :param s1d: list, a list of s1d images attached to this file instance
                           (for use with extraction file
                            instances) [not used in DrsInputFile]
-        :param kwargs: passed to required header keys (i.e. must be a DRS
+        :param hkeys: passed to required header keys (i.e. must be a DRS
                        Header key reference -- "KW_HEADERKEY")
                        [not used in DrsInputFile]
 
@@ -1512,7 +1517,7 @@ class DrsFitsFile(DrsInputFile):
                             directory, data, header, fileset, filesetnames,
                             outfunc, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
-                            is_combined, combined_list, s1d, **kwargs)
+                            is_combined, combined_list, s1d, hkeys)
 
     def string_output(self) -> str:
         """
@@ -1579,7 +1584,7 @@ class DrsFitsFile(DrsInputFile):
                   is_combined: Union[bool, None] = None,
                   combined_list: Union[list, None] = None,
                   s1d: Union[list, None] = None,
-                  **kwargs):
+                  hkeys: Union[Dict[str, str], None] = None):
         """
         Copy most keys from drsfile (other arguments override attributes coming
         from drfile (or self)
@@ -1662,7 +1667,7 @@ class DrsFitsFile(DrsInputFile):
                             directory, data, header, fileset, filesetnames,
                             outfunc, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
-                            is_combined, combined_list, s1d, **kwargs)
+                            is_combined, combined_list, s1d, hkeys)
 
     def completecopy(self, drsfile,
                      name: Union[str, None] = None,
@@ -1697,7 +1702,7 @@ class DrsFitsFile(DrsInputFile):
                      is_combined: Union[bool, None] = None,
                      combined_list: Union[list, None] = None,
                      s1d: Union[list, None] = None,
-                     **kwargs):
+                     hkeys: Union[Dict[str, str], None] = None):
         """
         Copy all keys from drsfile (unless other arguments set - these override
         copy from drsfile)
@@ -1777,7 +1782,7 @@ class DrsFitsFile(DrsInputFile):
                             directory, data, header, fileset, filesetnames,
                             outfunc, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
-                            is_combined, combined_list, s1d, **kwargs)
+                            is_combined, combined_list, s1d, hkeys)
 
     # -------------------------------------------------------------------------
     # file checking
@@ -1901,6 +1906,10 @@ class DrsFitsFile(DrsInputFile):
         self.check_params(func_name)
         # get parameters
         params = self.params
+        pconst = constants.pload(self.params['INSTRUMENT'])
+        # get the list of allowed required header keys
+        allowed_keys = pconst.FILEDEF_HEADER_KEYS()
+        # get the required header keys
         rkeys = self.required_header_keys
         # -----------------------------------------------------------------
         # deal with no argument name
@@ -1909,6 +1918,11 @@ class DrsFitsFile(DrsInputFile):
         # -----------------------------------------------------------------
         # Check that required keys are in header
         for drskey in rkeys:
+            # check we are allowed to use this key (by instrument definition)
+            if drskey not in allowed_keys:
+                eargs = [self.name, drskey, 'FILEDEF_HEADER_KEYS()',
+                         ','.join(allowed_keys), func_name]
+                WLOG(params, 'error', TextEntry('00-006-00022', args=eargs))
             # check whether header key is in param dict (i.e. from a
             #    keywordstore) or whether we have to use the key as is
             if drskey in params:
@@ -1997,7 +2011,8 @@ class DrsFitsFile(DrsInputFile):
             # check that key is in header
             if key not in header:
                 ekwargs = dict(level='error', key=key, filename=filename)
-                raise DrsHeaderError('Key not found', **ekwargs)
+                emsg = 'Key "{0}" not found'
+                raise DrsHeaderError(emsg.format(key), **ekwargs)
             # get value and required value
             value = header[key].strip()
             rvalue = rkeys[drskey].strip()
@@ -4157,7 +4172,7 @@ class DrsNpyFile(DrsInputFile):
                 is_combined: Union[bool, None] = None,
                 combined_list: Union[list, None] = None,
                 s1d: Union[list, None] = None,
-                **kwargs):
+                hkeys: Union[Dict[str, str], None] = None):
         """
         Create a new copy of DRS Npy File object - unset parameters come
         from current instance of Drs Input File
@@ -4214,7 +4229,7 @@ class DrsNpyFile(DrsInputFile):
                             directory, data, header, fileset, filesetnames,
                             outfunc, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
-                            is_combined, combined_list, s1d, **kwargs)
+                            is_combined, combined_list, s1d, hkeys)
 
     def completecopy(self, drsfile: 'DrsNpyFile',
                      name: Union[str, None] = None,
@@ -4249,7 +4264,7 @@ class DrsNpyFile(DrsInputFile):
                      is_combined: Union[bool, None] = None,
                      combined_list: Union[list, None] = None,
                      s1d: Union[list, None] = None,
-                     **kwargs):
+                     hkeys: Union[Dict[str, str], None] = None):
         """
         Copy all keys from drsfile (unless other arguments set - these override
         copy from drsfile)
@@ -4308,7 +4323,7 @@ class DrsNpyFile(DrsInputFile):
                             directory, data, header, fileset, filesetnames,
                             outfunc, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
-                            is_combined, combined_list, s1d, **kwargs)
+                            is_combined, combined_list, s1d, hkeys)
 
     # -------------------------------------------------------------------------
     # database methods
@@ -5438,7 +5453,7 @@ def _copydrsfile(drsfileclass, instance1: DrsInputFile,
                  is_combined: Union[bool, None] = None,
                  combined_list: Union[list, None] = None,
                  s1d: Union[list, None] = None,
-                 **kwargs):
+                 hkeys: Union[Dict[str, str], None] = None):
     """
     Master copier of file instance
     instance1 = self normally
@@ -5641,10 +5656,13 @@ def _copydrsfile(drsfileclass, instance1: DrsInputFile,
     # set s1d
     if s1d is None:
         s1d = instance2.s1d
-    # copy kwargs keys (from required header keys)
+    # copy file specific header keys (from required header keys)
+    new_hkeys = dict()
     for key in instance1.required_header_keys:
-        if key not in kwargs:
-            kwargs[key] = instance1.required_header_keys[key]
+        if key not in hkeys:
+            new_hkeys[key] = str(instance1.required_header_keys[key])
+        else:
+            new_hkeys[key] = str(hkeys[key])
     # return new instance
     return drsfileclass(name, filetype, suffix, remove_insuffix, prefix,
                         fibers, fiber, params, filename, intype, path,
@@ -5652,7 +5670,7 @@ def _copydrsfile(drsfileclass, instance1: DrsInputFile,
                         fileset, filesetnames, outfunc, inext, dbname,
                         dbkey, rkeys, numfiles, shape, hdict,
                         output_dict, datatype, dtype, is_combined,
-                        combined_list, s1d, **kwargs)
+                        combined_list, s1d, new_hkeys)
 
 # =============================================================================
 # End of code
