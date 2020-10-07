@@ -257,6 +257,43 @@ class PseudoConstants:
         # return object name
         return objectname
 
+    def DRS_DPRTYPE(self, params: Any, recipe: Any, header: Any,
+                    filename: str) -> str:
+        """
+        Get the dprtype for a specific header
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param recipe: DrsRecipe instance (used to get file mod) - used to
+                       get correct header keys to check dprtype
+        :param header: fits.Header or drs_fits.Header - the header with
+                       header keys to id file
+        :param filename: str, the filename name header belongs to (for error
+                         logging)
+        :return: the dprtype - the database type in each fiber (e.g. {AB}_{C}
+                 or DARK_DARK)
+        """
+        # cannot get dprtye without instrument
+        _ = params, recipe, header, filename
+        # return dprtype
+        return 'None'
+
+    def DRS_MIDMJD(self, params: Any, header: Any, filename: str) -> Any:
+        """
+        Get the midmjd for a specific header
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param header: fits.Header or drs_fits.Header - the header with
+                       header keys to id file
+        :param filename: str, the filename name header belongs to (for error
+                         logging)
+
+        :return: float the
+        """
+        # cannot get mid mjd without header definitions
+        _ = params, header, filename
+        # return NOIne
+        return 'None'
+
     # =========================================================================
     # INDEXING SETTINGS
     # =========================================================================
@@ -336,8 +373,22 @@ class PseudoConstants:
         """
         keys = []
         ctypes = []
+        # check that filedef keys are present
+        for fkey in self.FILEDEF_HEADER_KEYS():
+            if fkey not in keys:
+                emsg = __NAME__ + '.INDEX_HEADER_KEYS() missing key "{0}"'
+                raise AttributeError(emsg.format(fkey))
         # return index header keys
         return keys, ctypes
+
+    def FILEDEF_HEADER_KEYS(self) -> List[str]:
+        """
+        Define the keys allowed to be used in file definitions
+
+        :return: list of keys
+        """
+        keys = []
+        return keys
 
     # =========================================================================
     # DISPLAY/LOGGING SETTINGS
@@ -966,8 +1017,8 @@ class PseudoConstants:
         hkeys, htypes = self.INDEX_HEADER_KEYS()
         # set columns
         columns = ['PATH', 'DIRECTORY', 'FILENAME', 'KIND',
-                   'LAST_MODIFIED', 'RUNSTRING'] + hkeys + ['USED']
-        ctypes = [str, str, str, str, float, str] + htypes + [int]
+                   'LAST_MODIFIED', 'RUNSTRING'] + hkeys + ['USED, RAWFIX']
+        ctypes = [str, str, str, str, float, str] + htypes + [int, int]
         return columns, ctypes
 
     # noinspection PyPep8Naming

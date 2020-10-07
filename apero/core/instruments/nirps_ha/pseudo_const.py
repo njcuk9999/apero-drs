@@ -9,15 +9,14 @@ Created on 2019-01-18 at 14:44
 
 @author: cook
 """
-import importlib
 import numpy as np
 from pathlib import Path
-from types import ModuleType
 from typing import Any, List, Tuple, Union
 
 from apero.base import base
 from apero.base import drs_base_classes as base_class
 from apero.base import drs_misc
+from apero.base import drs_text
 from apero.base import drs_exceptions
 from apero.core import constants
 from apero.core.instruments.default import pseudo_const
@@ -214,35 +213,24 @@ class PseudoConstants(DefaultConstants):
         """
         # set function name
         _ = display_func(params, 'HEADER_FIXES', __NAME__, self.class_name)
-        # get keys from params
-        kwobjname = params['KW_OBJNAME'][0]
-        kwtrgtype = params['KW_TARGET_TYPE'][0]
-        kwmidobstime = params['KW_MID_OBS_TIME'][0]
-        kwdprtype = params['KW_DPRTYPE'][0]
         # ------------------------------------------------------------------
         # Deal with cleaning object name
         # ------------------------------------------------------------------
-        if kwobjname not in header:
-            header, hdict = clean_obj_name(params, header, hdict,
-                                           filename=filename)
+        header, hdict = clean_obj_name(params, header, hdict, filename=filename)
         # ------------------------------------------------------------------
         # Deal with TRG_TYPE
         # ------------------------------------------------------------------
-        if kwtrgtype not in header:
-            header, hdict = get_trg_type(params, header, hdict,
-                                         filename=filename)
+        header, hdict = get_trg_type(params, header, hdict, filename=filename)
         # ------------------------------------------------------------------
         # Deal with MIDMJD
         # ------------------------------------------------------------------
-        if kwmidobstime not in header:
-            header, hdict = get_mid_obs_time(params, header, hdict,
-                                             filename=filename)
+        header, hdict = get_mid_obs_time(params, header, hdict,
+                                         filename=filename)
         # ------------------------------------------------------------------
         # Deal with dprtype
         # ------------------------------------------------------------------
-        if kwdprtype not in header:
-            header, hdict = get_dprtype(params, recipe, header, hdict,
-                                        filename=filename)
+        header, hdict = get_dprtype(params, recipe, header, hdict,
+                                    filename=filename)
         # ------------------------------------------------------------------
         # Return header
         # ------------------------------------------------------------------
@@ -585,6 +573,11 @@ def clean_obj_name(params: ParamDict = None, header: Any = None,
         # get keys from params
         kwrawobjname = params['KW_OBJECTNAME'][0]
         kwobjname = params['KW_OBJNAME'][0]
+        # deal with output key already in header
+        if header is not None:
+            if kwobjname in header:
+                if not drs_text.null_text(header[kwobjname], ['None', '']):
+                    return header, hdict
         # get raw object name
         if kwrawobjname not in header:
             raise DrsHeaderError('Key not found', level='error',
@@ -632,6 +625,11 @@ def get_trg_type(params: ParamDict, header: Any, hdict: Any,
     kwobstype = params['KW_OBSTYPE'][0]
     kwtrgtype = params['KW_TARGET_TYPE'][0]
     kwtrgcomment = params['KW_TARGET_TYPE'][2]
+    # deal with output key already in header
+    if header is not None:
+        if kwtrgtype in header:
+            if not drs_text.null_text(header[kwtrgtype], ['None', '']):
+                return header, hdict
     # get objname
     if kwobjname not in header:
         raise DrsHeaderError('Key not found', level='error', key=kwobjname,
@@ -678,11 +676,18 @@ def get_mid_obs_time(params: ParamDict, header: Any, hdict: Any,
     kwmidcomment = params['KW_MID_OBS_TIME'][2]
     kwmidmethod = params['KW_MID_OBSTIME_METHOD'][0]
     methodcomment = params['KW_MID_OBSTIME_METHOD'][2]
-
     timefmt = params.instances['KW_MID_OBS_TIME'].datatype
     timetype = params.instances['KW_MID_OBS_TIME'].dataformat
     exp_timekey = params['KW_EXPTIME'][0]
     exp_timeunit = params.instances['KW_EXPTIME'].unit
+    # deal with output key already in header
+    if header is not None:
+        if kwmidobstime in header:
+            if not drs_text.null_text(header[kwmidobstime], ['None', '']):
+                return header, hdict
+    # deal with no hdict
+    if hdict is None:
+        hdict = dict()
     # get exptime
     if exp_timekey not in header:
         raise DrsHeaderError('Key not found', level='error', key=exp_timekey,
@@ -740,13 +745,15 @@ def get_header_end_time(params: ParamDict, header: Any,
     # set function name
     _ = display_func(params, 'get_header_end_time', __NAME__)
     # get acqtime
-    time_key = params['KW_MJDEND'][0]
-    timefmt = params.instances['KW_MJDEND'].datatype
-    timetype = params.instances['KW_MJDEND'].dataformat
+    time_key = params['KW_ACQTIME'][0]
+    timefmt = params.instances['KW_ACQTIME'].datatype
+    timetype = params.instances['KW_ACQTIME'].dataformat
+
     # get time key from header
     if time_key not in header:
-        raise DrsHeaderError('Key not found', level='error', key=time_key,
-                             filename=filename)
+        emsg = 'Key "{0}" not found in header \n\t Filename = {1}'
+        raise DrsHeaderError(emsg.format(time_key, filename), level='error',
+                             key=time_key, filename=filename)
     rawtime = header[time_key]
     # ----------------------------------------------------------------------
     # get astropy time
@@ -773,6 +780,14 @@ def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
     # set key
     kwdprtype = params['KW_DPRTYPE'][0]
     kwdprcomment = params['KW_DPRTYPE'][1]
+    # deal with output key already in header
+    if header is not None:
+        if kwdprtype in header:
+            if not drs_text.null_text(header[kwdprtype], ['None', '']):
+                return header, hdict
+    # deal with no hdict
+    if hdict is None:
+        hdict = dict()
     # get the drs files and raw_prefix
     drsfiles = recipe.filemod.get().raw_file.fileset
     raw_prefix = recipe.filemod.get().raw_prefix
@@ -799,7 +814,6 @@ def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
     hdict[kwdprtype] = (dprtype, kwdprcomment)
     # return header
     return header, hdict
-
 
 # =============================================================================
 # End of code
