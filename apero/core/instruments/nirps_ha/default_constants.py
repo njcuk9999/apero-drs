@@ -2245,7 +2245,7 @@ REPROCESS_RUN_KEY.value = 'ID'
 
 # Define the night name column name for raw file table
 REPROCESS_NIGHTCOL = REPROCESS_NIGHTCOL.copy(__NAME__)
-REPROCESS_NIGHTCOL.value = '__NIGHTNAME'
+REPROCESS_NIGHTCOL.value = 'DIRECTORY'
 
 # Define the pi name column name for raw file table
 REPROCESS_PINAMECOL = REPROCESS_PINAMECOL.copy(__NAME__)
@@ -2253,11 +2253,11 @@ REPROCESS_PINAMECOL.value = 'KW_PI_NAME'
 
 # Define the absolute file column name for raw file table
 REPROCESS_ABSFILECOL = REPROCESS_ABSFILECOL.copy(__NAME__)
-REPROCESS_ABSFILECOL.value = '__ABSFILE'
+REPROCESS_ABSFILECOL.value = 'PATH'
 
 # Define the modified file column name for raw file table
 REPROCESS_MODIFIEDCOL = REPROCESS_MODIFIEDCOL.copy(__NAME__)
-REPROCESS_MODIFIEDCOL.value = '__MODIFIED'
+REPROCESS_MODIFIEDCOL.value = 'LAST_MODIFIED'
 
 # Define the sort column (from header keywords) for raw file table
 REPROCESS_SORTCOL_HDRKEY = REPROCESS_SORTCOL_HDRKEY.copy(__NAME__)
