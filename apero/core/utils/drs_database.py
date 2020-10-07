@@ -18,13 +18,11 @@ from apero.base import base
 from apero.base import drs_misc
 from apero.base import drs_db
 from apero.base import drs_exceptions
-from apero.base import drs_text
 from apero import lang
 from apero.core import constants
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.io import drs_fits
-
 
 # =============================================================================
 # Define variables
@@ -62,7 +60,6 @@ pcheck = constants.PCheck(wlog=WLOG)
 OBJNAMECOLS = ['KW_OBJNAME']
 
 
-
 # =============================================================================
 # Define classes
 # =============================================================================
@@ -73,7 +70,6 @@ class DatabaseManager:
     # define attribute types
     path: Union[Path, str, None]
     database: Union[drs_db.Database, None]
-
 
     def __init__(self, params: ParamDict, check: bool = False):
         """
@@ -1419,7 +1415,6 @@ class IndexDatabase(DatabaseManager):
             # add to database
             self.add_entry(directory, basename, kind, hkeys=hkeys)
 
-
     def update_header_fix(self, recipe):
         # set function name
         func_name = display_func(self.params, 'update_objname', __NAME__,
@@ -1437,7 +1432,7 @@ class IndexDatabase(DatabaseManager):
         # need to loop around each row
         for row in tqdm(range(len(table))):
             # do not re-fix is rawfix is 1
-            #if table['RAWFIX'].iloc[row] == 1:
+            # if table['RAWFIX'].iloc[row] == 1:
             #    continue
             # get new header to push keys into
             header = drs_fits.Header()
@@ -1606,7 +1601,7 @@ def _get_files(path: Union[Path, str], kind: str,
     # deal with no subdirs
     if subdirs is None:
         # get all files in path
-        allfiles =  list(path.glob('*{0}'.format(suffix)))
+        allfiles = list(path.glob('*{0}'.format(suffix)))
     # -------------------------------------------------------------------------
     # else we have subdirs
     else:
@@ -1688,16 +1683,6 @@ class ObjectDatabase(DatabaseManager):
 # =============================================================================
 if __name__ == "__main__":
     print('Hello World')
-
-    # test
-    from apero.core.utils.drs_recipe import DrsRecipe
-    params = constants.load('SPIROU')
-    pconst = constants.pload('SPIROU')
-    recipe = DrsRecipe('SPIROU', None, filemod=pconst.FILEMOD(), params=params)
-
-    database = IndexDatabase(params)
-    database.load_db()
-    database.update_header_fix(recipe)
 
 # =============================================================================
 # End of code
