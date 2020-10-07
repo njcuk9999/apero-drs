@@ -219,6 +219,81 @@ class Database:
         # return the sql result
         return result
 
+    def count(self, table: Union[None, str] = None,
+              condition: Union[None, str] = None):
+        """
+        Counts the number of rows in table. If condition is set
+        counts just these rows
+
+        :param table: A str which specifies which table within the database to
+                   retrieve data from.  If there is only one table to pick
+                   from, this may be left as None to use it automatically.
+        :param condition: Filter results using a SQL conditions string
+                       -- see examples, and possibly this
+                       useful tutorial:
+                           https://www.sqlitetutorial.net/sqlite-where/.
+                       If None, no results will be filtered out.
+
+        :return:
+        """
+        # set function name
+        func_name = __NAME__ + '.Database.get()'
+        # infer table name
+        table = self._infer_table_(table)
+        # construct basic command SELECT {COLUMNS} FROM {TABLE}
+        command = "SELECT COUNT(*) FROM {}".format(table)
+        # add WHERE statement if condition is set
+        if condition is not None:
+            # make sure condition is a string
+            if not isinstance(condition, str):
+                emsg = 'get condition must be a string (for WHERE)'
+                raise DatabaseError(emsg, path=self.path, func_name=func_name)
+            command += " WHERE {} ".format(condition)
+        # execute result
+        result = self.execute(command)[0][0]
+        # return result
+        return int(result)
+
+    def unique(self, column: str = '*', table: Union[None, str] = None,
+               condition: Union[None, str] = None) -> np.ndarray:
+        """
+        Get the unique values for a column (with condition if set)
+
+        :param columns: a string containing the comma-separated columns to
+             retrieve from the database.  You may also apply basic
+             math functions and aggregators to the columns
+             ( see examples below).
+             "*" retrieves all available columns.
+        :param table: A str which specifies which table within the database to
+                   retrieve data from.  If there is only one table to pick
+                   from, this may be left as None to use it automatically.
+        :param condition: Filter results using a SQL conditions string
+                       -- see examples, and possibly this
+                       useful tutorial:
+                           https://www.sqlitetutorial.net/sqlite-where/.
+                       If None, no results will be filtered out.
+
+        :return:
+        """
+        # set function name
+        func_name = __NAME__ + '.Database.get()'
+        # infer table name
+        table = self._infer_table_(table)
+        # construct basic command SELECT {COLUMNS} FROM {TABLE}
+        command = "SELECT DISTINCT {0} FROM {1}".format(column, table)
+        # add WHERE statement if condition is set
+        if condition is not None:
+            # make sure condition is a string
+            if not isinstance(condition, str):
+                emsg = 'get condition must be a string (for WHERE)'
+                raise DatabaseError(emsg, path=self.path, func_name=func_name)
+            command += " WHERE {} ".format(condition)
+        # execute result
+        result = self.execute(command)
+        # return unique result
+        return np.unique(result)
+
+
     def get(self, columns: str = '*', table: Union[None, str] = None,
             condition: Union[None, str] = None,
             sort_by: Union[None, str] = None,
