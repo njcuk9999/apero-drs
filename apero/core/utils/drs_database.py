@@ -1617,11 +1617,11 @@ def _get_files(path: Union[Path, str], kind: str,
     for filename in allfiles:
         # include files
         if incfiles is not None and len(incfiles) > 0:
-            if filename not in incfiles:
+            if str(filename) not in incfiles:
                 continue
         # exclude files
         if excfiles is not None:
-            if filename in excfiles:
+            if str(filename) in excfiles:
                 continue
         # add file to valid file list
         valid_files.append(filename.absolute())
