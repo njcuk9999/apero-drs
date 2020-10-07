@@ -3891,7 +3891,7 @@ class DrsNpyFile(DrsInputFile):
                  is_combined: Union[bool, None] = None,
                  combined_list: Union[list, None] = None,
                  s1d: Union[list, None] = None,
-                 **kwargs):
+                 hkeys: Union[Dict[str, str], None] = None):
         """
         Create a DRS Npy File Input object
 
@@ -3936,7 +3936,7 @@ class DrsNpyFile(DrsInputFile):
         :param is_combined: NOT USED FOR NPY FILE CLASS
         :param combined_list: NOT USED FOR NPY FILE CLASS
         :param s1d: NOT USED FOR NPY FILE CLASS
-        :param kwargs: NOT USED FOR NPY FILE CLASS
+        :param hkeys: NOT USED FOR NPY FILE CLASS
         """
         # set class name
         self.class_name = 'DrsNpyFile'
@@ -3951,7 +3951,7 @@ class DrsNpyFile(DrsInputFile):
                               fileset, filesetnames, outfunc, inext, dbname,
                               dbkey, rkeys, numfiles, shape, hdict,
                               output_dict, datatype, dtype, is_combined,
-                              combined_list, s1d, **kwargs)
+                              combined_list, s1d, hkeys)
         # these keys are not set in DrsInputFile
         self.inext = inext
         # get tag
@@ -5658,11 +5658,12 @@ def _copydrsfile(drsfileclass, instance1: DrsInputFile,
         s1d = instance2.s1d
     # copy file specific header keys (from required header keys)
     new_hkeys = dict()
-    for key in instance1.required_header_keys:
-        if key not in hkeys:
-            new_hkeys[key] = str(instance1.required_header_keys[key])
-        else:
-            new_hkeys[key] = str(hkeys[key])
+    if hkeys is not None:
+        for key in instance1.required_header_keys:
+            if key not in hkeys:
+                new_hkeys[key] = str(instance1.required_header_keys[key])
+            else:
+                new_hkeys[key] = str(hkeys[key])
     # return new instance
     return drsfileclass(name, filetype, suffix, remove_insuffix, prefix,
                         fibers, fiber, params, filename, intype, path,
