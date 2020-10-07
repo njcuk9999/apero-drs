@@ -62,11 +62,15 @@ HelpText = lang.core.drs_lang_text.HelpDict
 # =============================================================================
 # Define functions
 # =============================================================================
+# complex typing for update_index_db
+FileType = Union[List[Path], Path, List[str], str, None]
+
+
 def update_index_db(params: ParamDict, kind: str,
                     whitelist: Union[List[str], None],
                     blacklist: Union[List[str], None],
-                    filename: Union[List[Path], Path, List[str], str, None],
-                    suffix: str = ''):
+                    filename: FileType = None,
+                    suffix: str = '') -> IndexDatabase:
     # deal with white list and black list
     if not drs_text.null_text(whitelist, ['None', 'All', '']):
        include_dirs = list(whitelist)
@@ -77,7 +81,7 @@ def update_index_db(params: ParamDict, kind: str,
     else:
         exclude_dirs = None
     # load the index database
-    indexdbm = drs_database.IndexDatabase(params)
+    indexdbm = IndexDatabase(params)
     indexdbm.load_db()
     # get white
     # update index database with raw files
@@ -86,7 +90,6 @@ def update_index_db(params: ParamDict, kind: str,
                             filename=filename, suffix=suffix)
     # return the database
     return indexdbm
-
 
 
 # =============================================================================
