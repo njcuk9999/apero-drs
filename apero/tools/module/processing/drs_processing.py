@@ -27,7 +27,7 @@ from apero.base import drs_text
 from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
-from apero.core.utils import drs_utils
+from apero.core.utils import drs_database
 from apero import lang
 from apero.core import constants
 from apero import plotting
@@ -56,7 +56,8 @@ TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
-
+# get database
+IndexDatabase = drs_database.IndexDatabase
 # Run keys
 RUN_KEYS = dict()
 RUN_KEYS['RUN_NAME'] = 'Run Unknown'
@@ -359,7 +360,7 @@ def run_process(params, recipe, module, *gargs, terminate=False, **gkwargs):
     # generate run table (dictionary from reprocessing)
     runtable = generate_run_table(params, module, *gargs, **gkwargs)
     # Generate run list
-    rlist = generate_run_list(params, None, runtable, None)
+    rlist = generate_run_list(params, recipe, None, runtable, None)
     # Process run list
     outlist, has_errors = process_run_list(params, recipe, rlist)
     # display errors
@@ -816,13 +817,13 @@ def reset_files(params):
             drs_reset.reset_log_fits(params)
 
 
-def generate_run_list(params, indexdbm, runtable, skiptable):
+def generate_run_list(params, recipe, indexdbm: IndexDatabase, runtable,
+                      skiptable):
     # print progress: generating run list
     WLOG(params, 'info', TextEntry('40-503-00011'))
     # need to update table object names to match preprocessing
     #   table can be None if coming from e.g fit_tellu_db
-    if indexdbm is not None:
-        drs_utils.update_objnames(indexdbm)
+
     # get recipe defintions module (for this instrument)
     recipemod = _get_recipe_module(params)
     # get all values (upper case) using map function
