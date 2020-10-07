@@ -30,7 +30,7 @@ __release__ = base.__release__
 #     'datetime', 'iso', 'isot', 'yday', 'datetime64', 'fits', 'byear',
 #     'jyear', 'byear_str', 'jyear_str'
 KW_ACQTIME = KW_ACQTIME.copy(__NAME__)
-KW_ACQTIME.set(key='MJDATE', datatype='mjd', dataformat=float,
+KW_ACQTIME.set(key='MJDEND', datatype='mjd', dataformat=float,
                comment='Modified Julian Date at start of observation')
 
 # define the MJ end date HEADER key
@@ -215,6 +215,7 @@ KW_DPRTYPE = KW_DPRTYPE.copy(__NAME__)
 KW_DPRTYPE.set(key='DPRTYPE', comment='The type of file (from pre-process)')
 
 # Define the mid exposure time
+# Note: must change INDEX_HEADER_KEYS data type definition if changing this
 KW_MID_OBS_TIME = KW_MID_OBS_TIME.copy(__NAME__)
 KW_MID_OBS_TIME.set(key='MJDMID', comment='Mid Observation time [mjd]',
                     datatype='mjd', dataformat=float)
