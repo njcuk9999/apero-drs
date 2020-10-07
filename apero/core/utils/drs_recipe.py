@@ -68,6 +68,10 @@ SPECIAL_LIST_KEYS = ['SCIENCE_TARGETS', 'TELLURIC_TARGETS']
 # Define Recipe Classes
 # =============================================================================
 class DrsRecipe(object):
+    # define typing for attributes
+    filemod: base_class.ImportModule
+
+
     def __init__(self, instrument: str = 'None',
                  name: Union[str, None] = None,
                  filemod: Union[base_class.ImportModule, None] = None,
@@ -101,9 +105,11 @@ class DrsRecipe(object):
         # else name is correct
         else:
             self.name = str(name)
+        # get pconst
+        self.pconst = constants.pload(self.instrument)
         # set drs file module related to this recipe
         if filemod is None:
-            self.filemod = None
+            self.filemod = self.pconst.FILEMOD()
         else:
             self.filemod = filemod.copy()
         # get drs parameters (will be loaded later)
@@ -178,8 +184,13 @@ class DrsRecipe(object):
         # set function name
         _ = display_func(self.params, '__getstate__', __NAME__,
                          self.class_name)
+        # exclude keys
+        exclude = ['pconst', 'filemod']
         # set state to __dict__
-        state = dict(self.__dict__)
+        state = dict()
+        for key, item in self.__dict__:
+            if key not in exclude:
+                state[key] = item
         # return dictionary state
         return state
 
@@ -195,6 +206,10 @@ class DrsRecipe(object):
                          self.class_name)
         # update dict with state
         self.__dict__.update(state)
+        # get pconst
+        self.pconst = constants.pload(self.instrument)
+        # set drs file module related to this recipe
+        self.filemod = self.pconst.FILEMOD()
 
     def __str__(self) -> str:
         """
