@@ -858,7 +858,7 @@ def generate_run_list(params, indexdbm: IndexDatabase, runtable,
             WLOG(params, '', TextEntry('40-503-00009', args=[sequence[0]]))
             # generate new runs for sequence
             newruns = _generate_run_from_sequence(params, sequence,
-                                                  IndexDatabase)
+                                                  indexdbm)
             # update runtable with sequence generation
             runtable, rlist = update_run_table(sequence, runtable, newruns,
                                                rlist)
@@ -1498,13 +1498,8 @@ def _check_for_sequences(rvalues, mod):
         return sequencelist
 
 
-def _generate_run_from_sequence(params, sequence, indexdb, **kwargs):
+def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
     func_name = __NAME__ + '.generate_run_from_sequence()'
-    # get parameters from params/kwargs
-    night_col = pcheck(params, 'REPROCESS_NIGHTCOL', 'night_col', kwargs,
-                       func_name)
-    piname_col = pcheck(params, 'REPROCESS_PINAMECOL', 'piname_col', kwargs,
-                        func_name)
     # get all telluric stars
     tstars = telluric.get_whitelist(params)
     # get all other stars
@@ -1551,10 +1546,8 @@ def _generate_run_from_sequence(params, sequence, indexdb, **kwargs):
 
         # set up an sql condition that will get more complex as we go down
         condition = 'KIND=="raw"'
-
-
         # ------------------------------------------------------------------
-        # deal with black and white lists
+        # deal with black lists
         # ------------------------------------------------------------------
         # black list
         if not drs_text.null_text(params['BNIGHTNAMES'], ['', 'All', 'None']):
@@ -1568,7 +1561,7 @@ def _generate_run_from_sequence(params, sequence, indexdb, **kwargs):
             wargs = [' ,'.join(blacklist_nights)]
             WLOG(params, '', TextEntry('40-503-00026', args=wargs))
             # get length of database at this point
-            idb_len = indexdb.database.count(condition)
+            idb_len = indexdb.database.count(condition=condition)
             # deal with empty database (after conditions)
             if idb_len == 0:
                 WLOG(params, 'warning', TextEntry('10-503-00006'))
@@ -1579,7 +1572,8 @@ def _generate_run_from_sequence(params, sequence, indexdb, **kwargs):
                 else:
                     sys.exit()
         # ------------------------------------------------------------------
-        # white list
+        # deal with white list
+        # ------------------------------------------------------------------
         if not drs_text.null_text(params['WNIGHTNAMES'], ['', 'All', 'None']):
             # get white list from params
             whitelist_nights = params.listp('WNIGHTNAMES', dtype=str)
@@ -1596,7 +1590,7 @@ def _generate_run_from_sequence(params, sequence, indexdb, **kwargs):
             wargs = [' ,'.join(whitelist_nights)]
             WLOG(params, '', TextEntry('40-503-00027', args=wargs))
             # get length of database at this point
-            idb_len = indexdb.database.count(condition)
+            idb_len = indexdb.database.count(condition=condition)
             # deal with empty database (after conditions)
             if idb_len == 0:
                 WLOG(params, 'warning', TextEntry('10-503-00007'))
@@ -1607,7 +1601,8 @@ def _generate_run_from_sequence(params, sequence, indexdb, **kwargs):
                 else:
                     sys.exit()
         # ------------------------------------------------------------------
-        # pi name list
+        # deal with pi name filter
+        # ------------------------------------------------------------------
         if not drs_text.null_text(params['PI_NAMES'], ['', 'All', 'None']):
             # get pi name list from params
             pi_names = params.listp('PI_NAMES', dtype=str)
@@ -1624,7 +1619,7 @@ def _generate_run_from_sequence(params, sequence, indexdb, **kwargs):
             wargs = [' ,'.join(pi_names)]
             WLOG(params, '', TextEntry('40-503-00029', args=wargs))
             # get length of database at this point
-            idb_len = indexdb.database.count(condition)
+            idb_len = indexdb.database.count(condition=condition)
             # deal with empty database (after conditions)
             if idb_len == 0:
                 WLOG(params, 'warning', TextEntry('10-503-00015'))
@@ -1634,11 +1629,11 @@ def _generate_run_from_sequence(params, sequence, indexdb, **kwargs):
                     continue
                 else:
                     sys.exit()
-
         # ------------------------------------------------------------------
-        # deal with a night name
+        # deal with directory filter (master night and nigtname filter)
         # ------------------------------------------------------------------
-        # deal with nightname
+        # master night
+        # ------------------------------------------------------------------
         if srecipe.master:
             # get master nightnames
             nightname = params['MASTER_NIGHT']
@@ -1658,6 +1653,8 @@ def _generate_run_from_sequence(params, sequence, indexdb, **kwargs):
             # mask table by nightname
             condition += ' AND DIRECTORY=="{0}"'.format(nightname)
         # ------------------------------------------------------------------
+        # deal with setting 1 night
+        # ------------------------------------------------------------------
         if not drs_text.null_text(params['NIGHTNAME'], ['', 'All', 'None']):
             # get nightnames
             nightname = params['NIGHTNAME']
@@ -1667,7 +1664,7 @@ def _generate_run_from_sequence(params, sequence, indexdb, **kwargs):
             nightname = 'all'
         # ------------------------------------------------------------------
         # get length of database at this point
-        idb_len = indexdb.database.count(condition)
+        idb_len = indexdb.database.count(condition=condition)
         # deal with empty database (after conditions)
         if idb_len == 0:
             wargs = [nightname]
@@ -1678,14 +1675,16 @@ def _generate_run_from_sequence(params, sequence, indexdb, **kwargs):
                 continue
             else:
                 sys.exit()
-        # filer out engineering
+        # ------------------------------------------------------------------
+        # filer out engineering directories
+        # ------------------------------------------------------------------
         if not params['ENGINEERING']:
             # get sub condition for engineering nights
             subcondition = _remove_engineering(params, indexdb, condition)
             # add to conditions
             condition += subcondition
             # get length of database at this point
-            idb_len = indexdb.database.count(condition)
+            idb_len = indexdb.database.count(condition=condition)
             # deal with empty database (after conditions)
             if idb_len == 0:
                 WLOG(params, 'warning', TextEntry('10-503-00016', args=wargs))
@@ -1696,15 +1695,19 @@ def _generate_run_from_sequence(params, sequence, indexdb, **kwargs):
                 else:
                     sys.exit()
         # ------------------------------------------------------------------
-        # deal with filters
+        # deal with filters defined in recipe
+        # ------------------------------------------------------------------
         filters = _get_filters(params, srecipe)
         # get fiber filter
         allowedfibers = srecipe.allowedfibers
         # ------------------------------------------------------------------
         # get runs for this recipe
-        sruns = generate_runs(srecipe, indexdb, condition=condition,
+        # ------------------------------------------------------------------
+        sruns = generate_runs(params, srecipe, indexdb, condition=condition,
                               filters=filters,
                               allowedfibers=allowedfibers)
+        # ------------------------------------------------------------------
+        # deal with trigger and no runs left to do
         # ------------------------------------------------------------------
         # if we are in trigger mode we need to stop when we have no
         #   sruns for recipe
@@ -1714,7 +1717,8 @@ def _generate_run_from_sequence(params, sequence, indexdb, **kwargs):
             WLOG(params, 'info', TextEntry('40-503-00028', args=wargs))
             # stop processing recipes
             break
-
+        # ------------------------------------------------------------------
+        # append runs to output list
         # ------------------------------------------------------------------
         # append runs to new runs list
         for srun in sruns:
@@ -1723,7 +1727,8 @@ def _generate_run_from_sequence(params, sequence, indexdb, **kwargs):
     return newruns
 
 
-def generate_runs(params, recipe, indexdb: Any, condition: str,
+def generate_runs(params: ParamDict, recipe: DrsRecipe,
+                  indexdb: IndexDatabase, condition: str,
                   filters: Union[Dict[str, Any], None] = None,
                   allowedfibers: Union[List[str], str, None] = None
                   ) -> List[str]:
@@ -1732,8 +1737,11 @@ def generate_runs(params, recipe, indexdb: Any, condition: str,
     filters for this DrsRecipe (i.e. use args/keywords from recipe
     definition)
 
-    :param table: astropy.table - the raw file table (with keys from
-                  OUTPUT_FILE_HEADER_KEYS)
+    :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: DrsRecipe instance, the recipe this run is associated with
+    :param indexdb: index database instance, the file database to use to
+                    generate runs
+    :param condition: str, the condition to apply to the database
     :param filters: None or dict - dictionary of filters where keys are
                     KW_XXX names (in params) and values are the values to
                     test in the header(s)
@@ -1745,18 +1753,19 @@ def generate_runs(params, recipe, indexdb: Any, condition: str,
     """
     # set function name
     _ = display_func(params, 'generate_runs', __NAME__)
-    # need to find files in table that match each argument
+    # need to find files in index database that match each argument
     #    filedict is a dictionary of arguments each for
     #    each drsfile (if filelogic=exclusive)
     #       i.e. filedict[argname][drsfile]
     #    else all drsfiles go to 'all'
     #       i.e. filedict[argname]['all']
-    argdict = find_run_files(params, recipe, table, recipe.args,
+    argdict = find_run_files(params, recipe, indexdb, condition, recipe.args,
                              filters=filters, allowedfibers=allowedfibers)
     # same for keyword args but this time we need to check only if
     #   keyword is required, else skip (don't add optionals)
-    kwargdict = find_run_files(params, recipe, table, recipe.kwargs,
-                               filters=filters, allowedfibers=allowedfibers,
+    kwargdict = find_run_files(params, recipe, indexdb, condition,
+                               recipe.kwargs, filters=filters,
+                               allowedfibers=allowedfibers,
                                check_required=True)
     # now we have the file lists we need to group files and match where
     #   there are more than one argument, we then add in the other
@@ -2156,10 +2165,10 @@ ArgDictType = Union[Dict[str, Table], OrderedDict, None]
 
 
 def find_run_files(params: ParamDict, recipe: DrsRecipe,
-                   table: Table, args: Dict[str, DrsArgument],
+                   indexdb: IndexDatabase, condition: str,
+                   args: Dict[str, DrsArgument],
                    filters: Union[Dict[str, Any], None] = None,
                    allowedfibers: Union[List[str], str, None] = None,
-                   absfile_col: Union[str, None] = None,
                    check_required: bool = False) -> Dict[str, ArgDictType]:
     """
     Given a specifc recipe and args (args or kwargs) use the other arguments
@@ -2170,8 +2179,9 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
     :param params: ParamDict, parameter dictionary of constants
     :param recipe: DrsRecipe, the recipe for which to find files (uses some
                    properties (i.e. extras and master) already set previously
-    :param table: astropy.table.Table - the full table (must contain all
-                  filter keys as columns
+    :param indexdb: index database instance, the file database to use to
+                    generate runs
+    :param condition: str, the condition to apply to the database
     :param args: dict, either args or kwargs - the DrsRecipe.args or
                  DrsRecipe.kwargs to use - produces a table for each key in
                  this dict
@@ -2193,13 +2203,13 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
     func_name = display_func(params, 'find_run_files', __NAME__)
     # storage for valid files for each argument
     filedict = OrderedDict()
-    # get constants from params
-    absfile_col = pcheck(params, 'REPROCESS_ABSFILECOL', func=func_name,
-                         override=absfile_col)
-    # get raw filenames from table
-    files = table[absfile_col]
+    # copy condition
+    master_condtion = str(condition)
+    # get valid database column names
+    index_colnames = indexdb.database.colnames('*')
     # debug log the number of files found
-    dargs = [func_name, len(files)]
+    idb_len = indexdb.database.count(condition=condition)
+    dargs = [func_name, idb_len]
     WLOG(params, 'debug', TextEntry('90-503-00011', args=dargs))
     # loop around arguments
     for argname in args:
@@ -2235,10 +2245,13 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
         if drsfiles is None:
             continue
         # ------------------------------------------------------------------
-        # mask table by filters (if filters in table)
-        filtermask = np.ones(len(table), dtype=bool)
+        # copy the condition string for this argument
+        argcondition = str(master_condtion)
+        # loop around filters
         for tfilter in filters:
-            if tfilter in table.colnames:
+            # check if filter is valid
+            if tfilter in index_colnames:
+                # -------------------------------------------------------------
                 # deal with filter values being list/str
                 if isinstance(filters[tfilter], str):
                     testvalues = [filters[tfilter]]
@@ -2246,32 +2259,39 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
                     testvalues = filters[tfilter]
                 else:
                     continue
-                # create a test mask
-                testmask = np.zeros(len(table), dtype=bool)
+                # -------------------------------------------------------------
+                # have multiple values to test --> store these
+                sub_cond = []
                 # loop around test values with OR (could be any value)
                 for testvalue in testvalues:
                     # check if value is string
                     if isinstance(testvalue, str):
-                        values = np.char.array(table[tfilter])
-                        values = values.strip().upper()
                         testvalue = testvalue.strip().upper()
-                    else:
-                        values = np.array(table[tfilter])
 
-                    # criteria 1: value == testvalue
-                    vcond1 = values == testvalue
-                    # criteria 2: value in [None, 'None', '']
-                    vcond2 = np.in1d(values, [None, 'None', ''])
-                    # check mask
-                    testmask |= (vcond1 | vcond2)
-                # add filter to filter mask with AND (must have all filters)
-                filtermask &= testmask
+                    # construct sub condition based on this filter
+                    sargs = [tfilter, testvalue, tfilter]
+                    sub_cond += ['({0}=="{1}" OR {2}=="None")'.format(*sargs)]
+                # create  full sub condition (with OR)
+                subcondition = ' OR '.join(sub_cond)
+                # -------------------------------------------------------------
+                # add filter to argument condition
+                argcondition += ' AND ({0})'.format(subcondition)
+        # ------------------------------------------------------------------
+        # TODO: maybe we can do this later?
+        # lets apply the filters here
+        dataframe = indexdb.get_entries('*', condition=argcondition)
+        absfilenames = np.array(dataframe['PATH']).astype(str)
+
+        # ------------------------------------------------------------------
+        # Now we need to get the files and assign
+        #     - infile
+        #     - outfile
+        #  and deal with exclusivity
         # ------------------------------------------------------------------
         # loop around drs files
         for drsfile in drsfiles:
-            # copy table
-            ftable = Table(table[filtermask])
-            ffiles = np.array(files)[filtermask]
+            # copy dataframe into table
+            ftable = Table.from_pandas(dataframe)
             # set params for drsfile
             drsfile.params = params
             # debug log: the file being tested
@@ -2288,9 +2308,9 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
             valid_outfiles = []
             valid_num = 0
             # loop around files
-            for f_it, filename in enumerate(ffiles):
+            for f_it, filename in enumerate(absfilenames):
                 # print statement
-                pargs = [drsfile.name, f_it + 1, len(ffiles)]
+                pargs = [drsfile.name, f_it + 1, len(absfilenames)]
                 pmsg = '\t\tProcessing {0} file {1}/{2}'.format(*pargs)
                 drs_log.Printer(None, None, pmsg)
                 # get infile instance (i.e. raw or pp file) and assign the
@@ -2361,7 +2381,8 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
 def group_run_files(params: ParamDict, recipe: DrsRecipe,
                     argdict: Dict[str, ArgDictType],
                     kwargdict: Dict[str, ArgDictType],
-                    nightcol: Union[str, None] = None) -> List[Dict[str, Any]]:
+                    night_col: Union[str, None] = None,
+                    ) -> List[Dict[str, Any]]:
     """
     Take the arg and kwarg dictionary of tables (argdict and kwargdict) and
     force them into groups (based on sequence number and number in sequence)
@@ -2382,10 +2403,8 @@ def group_run_files(params: ParamDict, recipe: DrsRecipe,
                     files each - top level key is an optional argument for this
                     recipe and sub-dict key is a DrsFitsFile instance i.e.:
                     kwargdict[argument][drsfile] = Table
-    :param nightcol: str or None, if set overrides the
-                     params['REPROCESS_NIGHTCOL'] value (which sets the column
-                     in the index database that has the night sub directory
-                     information
+    :param night_col: str or None, if set overrides params['REPROCESS_NIGHTCOL']
+
     :return: a list of dictionaries, each dictionary is a different run.
              each 'run' is a dictionary of arguments each with the values that
              specific argument should have
@@ -2394,7 +2413,7 @@ def group_run_files(params: ParamDict, recipe: DrsRecipe,
     func_name = display_func(params, 'group_run_files', __NAME__)
     # get parameters from params
     night_col = pcheck(params, 'REPROCESS_NIGHTCOL', func=func_name,
-                       override=nightcol)
+                       override=night_col)
     # flag for having no file arguments
     has_file_args = False
     # ----------------------------------------------------------------------
