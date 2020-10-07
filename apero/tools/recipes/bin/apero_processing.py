@@ -128,15 +128,13 @@ def __main__(recipe, params):
     WLOG(params, '', 'Updating database with header fixes')
     indexdbm.update_header_fix(recipe)
 
-    # TODO: GOT TO HERE WITH INDEX DATABASE UPDATE
-
     # find all previous runs
     skiptable = drs_processing.generate_skip_table(params)
 
     # ----------------------------------------------------------------------
     # Generate run list
     # ----------------------------------------------------------------------
-    rlist = drs_processing.generate_run_list(params, recipe, indexdbm, runtable,
+    rlist = drs_processing.generate_run_list(params, indexdbm, runtable,
                                              skiptable)
 
     # ----------------------------------------------------------------------
