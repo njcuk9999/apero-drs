@@ -12,6 +12,7 @@ import pandas as pd
 from pathlib import Path
 import shutil
 from typing import Any, Dict, List, Tuple, Type, Union
+from tqdm import tqdm
 
 from apero.base import base
 from apero.base import drs_misc
@@ -55,6 +56,8 @@ TextEntry = lang.core.drs_lang_text.TextEntry
 # define drs files
 DrsFileTypes = Union[drs_file.DrsInputFile, drs_file.DrsFitsFile,
                      drs_file.DrsNpyFile]
+# alias pcheck
+pcheck = constants.PCheck(wlog=WLOG)
 # get list of obj name cols
 OBJNAMECOLS = ['KW_OBJNAME']
 
@@ -67,6 +70,10 @@ class DatabaseManager:
     """
     Apero Database Manager class (basically abstract)
     """
+    # define attribute types
+    path: Union[Path, str, None]
+    database: Union[drs_db.Database, None]
+
 
     def __init__(self, params: ParamDict, check: bool = False):
         """
@@ -1117,7 +1124,8 @@ class IndexDatabase(DatabaseManager):
         self.set_path(None, 'INDEX_DB_NAME', check=check)
 
     def add_entry(self, directory: str, filename: Union[Path, str], kind: str,
-                  hkeys: Dict[str, str]):
+                  runstring: Union[str, None] = None,
+                  hkeys: Union[Dict[str, str], None] = None):
         """
         Add an entry to the index database
 
@@ -1140,20 +1148,36 @@ class IndexDatabase(DatabaseManager):
         # set function
         func_name = display_func(self.params, 'add_entry', __NAME__,
                                  self.classname)
+        # deal with no database loaded
+        if self.database is None:
+            eargs = [self.name, func_name]
+            WLOG(self.params, 'error', TextEntry('00-002-00024', args=eargs))
         # deal with filename/basename/path
         filename, basename, path = _deal_with_filename(self.params, self.name,
                                                        kind, directory,
                                                        filename, func=func_name)
         # set used to 1
         used = 1
+        # this is a flag to test whether raw data has been fixed (so we don't
+        #   do it again when not required)
+        if kind == 'raw':
+            rawfix = 0
+        else:
+            rawfix = 1
         # ------------------------------------------------------------------
         # get last modified time for file (need absolute path)
         last_modified = filename.stat().st_mtime
+        # get run string
+        if runstring is None:
+            runstring = 'None'
         # ------------------------------------------------------------------
         # get allowed header keys
         rkeys, rtypes = self.pconst.INDEX_HEADER_KEYS()
         # store values in correct order for database.add_row
         hvalues = []
+        # deal with no hkeys
+        if hkeys is None:
+            hkeys = dict()
         # loop around allowed header keys and check for them in headers
         #  keys - if not there set to 'None'
         for h_it, hkey in enumerate(rkeys):
@@ -1183,7 +1207,7 @@ class IndexDatabase(DatabaseManager):
         if currentpath is not None and currentpath == path:
             # add new entry to database
             values = [path, directory, basename, kind, last_modified]
-            values += hvalues + [used]
+            values += hvalues + [used, rawfix]
             # set up condition
             condition = 'FILENAME == "{0}"'.format(filename)
             condition += ' AND DIRECTORY == "{0}"'.format(directory)
@@ -1193,82 +1217,10 @@ class IndexDatabase(DatabaseManager):
                               commit=True)
         else:
             # add new entry to database
-            values = [path, directory, basename, kind, last_modified]
-            values += hvalues + [used]
+            values = [str(path), str(directory), str(basename), str(kind),
+                      float(last_modified), str(runstring)]
+            values += hvalues + [used, rawfix]
             self.database.add_row(values, 'MAIN', commit=True)
-
-
-    def update_entries(self, kind,
-                       include_directories: Union[List[str], None],
-                       exclude_directories: Union[List[str], None],
-                       filename: Union[List[Path], Path, List[str], str, None],
-                       suffix: str = ''):
-        """
-        Update the index database for files of 'kind', deal with including
-        and excluding directories for files with 'suffix'
-
-        :param kind: str, either 'raw', 'red', 'tmp', 'calib', 'tellu', 'asset'
-                     this determines the path of the file i.e.
-                     path/directory/filename (unless filename is an absolute
-                     path) - note in this case directory should still be
-                     filled correctly (for database)
-        :param include_directories: list of strings or None, if set only
-                                    include these directories to update
-                                    index database
-        :param exclude_directories: list of strings or None, if set exclude
-                                    these directories from being updated
-                                    in the index database
-        :param filename: str, Path, list of strs/Paths or None, if set we only
-                         include this filename or these filenames
-        :param suffix: str, the suffix (i.e. extension of filenames) - filters
-                       to only set these files
-
-        :return: None - updates the index database
-        """
-        # get the path for kind
-        path = _deal_with_filename(self.params, self.name, kind, None, None)
-        # ---------------------------------------------------------------------
-        # deal with a predefined file list (or single file)
-        if filename is not None:
-            if isinstance(filename, (str, Path)):
-                include_files = [filename]
-            else:
-                include_files = filename
-        else:
-            include_files = []
-        # ---------------------------------------------------------------------
-        # deal with files we don't need (already have)
-        exclude_files = self.get_entries('PATH', kind=kind)
-        # ---------------------------------------------------------------------
-        # locate all files within path
-        reqfiles = _get_files(path, kind, include_directories,
-                              exclude_directories, include_files,
-                              exclude_files, suffix)
-        # ---------------------------------------------------------------------
-        # get a list of keys
-        rkeys, rtypes = self.pconst.INDEX_HEADER_KEYS()
-        # ---------------------------------------------------------------------
-        # add required files to the database
-        for reqfile in reqfiles:
-            # set directory
-            uncommonpath = drs_misc.get_uncommon_path(path, reqfile)
-            # get the directory name
-            directory = Path(uncommonpath).name
-            # get the basename
-            basename = reqfile.name
-            # get header keys
-            hkeys = dict()
-            # load missing files
-            if str(reqfile).endswith('.fits'):
-                # load header
-                header = drs_fits.read_header(self.params, str(reqfile))
-                # loop around required keys
-                for rkey in rkeys:
-                    drs_key = self.params[rkey][0]
-                    if drs_key in header:
-                        hkeys[rkey] = header[drs_key]
-            # add to database
-            self.add_entry(directory, basename, kind, hkeys)
 
     def get_entries(self, columns: str = '*',
                     directory: Union[str, None] = None,
@@ -1300,6 +1252,10 @@ class IndexDatabase(DatabaseManager):
         # set function
         func_name = display_func(self.params, 'get_entries', __NAME__,
                                  self.classname)
+        # deal with no database loaded
+        if self.database is None:
+            eargs = [self.name, func_name]
+            WLOG(self.params, 'error', TextEntry('00-002-00024', args=eargs))
         # ------------------------------------------------------------------
         # set up kwargs from database query
         sql = dict()
@@ -1380,32 +1336,136 @@ class IndexDatabase(DatabaseManager):
             # return pandas table
             return entries
 
-    def update_objname(self):
+    # complex typing for filename(s) in update_entries
+    FileTypes = Union[List[Union[Path, str]], Path, str, None]
 
+    def update_entries(self, kind,
+                       include_directories: Union[List[str], None] = None,
+                       exclude_directories: Union[List[str], None] = None,
+                       filename: FileTypes = None, suffix: str = ''):
+        """
+        Update the index database for files of 'kind', deal with including
+        and excluding directories for files with 'suffix'
+
+        :param kind: str, either 'raw', 'red', 'tmp', 'calib', 'tellu', 'asset'
+                     this determines the path of the file i.e.
+                     path/directory/filename (unless filename is an absolute
+                     path) - note in this case directory should still be
+                     filled correctly (for database)
+        :param include_directories: list of strings or None, if set only
+                                    include these directories to update
+                                    index database
+        :param exclude_directories: list of strings or None, if set exclude
+                                    these directories from being updated
+                                    in the index database
+        :param filename: str, Path, list of strs/Paths or None, if set we only
+                         include this filename or these filenames
+        :param suffix: str, the suffix (i.e. extension of filenames) - filters
+                       to only set these files
+
+        :return: None - updates the index database
+        """
+        # set function
+        func_name = display_func(self.params, 'update_entries', __NAME__,
+                                 self.classname)
+        # deal with no database loaded
+        if self.database is None:
+            eargs = [self.name, func_name]
+            WLOG(self.params, 'error', TextEntry('00-002-00024', args=eargs))
+        # get the path for kind
+        path = _deal_with_filename(self.params, self.name, kind, None, None)
+        # ---------------------------------------------------------------------
+        # deal with a predefined file list (or single file)
+        if filename is not None:
+            if isinstance(filename, (str, Path)):
+                include_files = [filename]
+            else:
+                include_files = filename
+        else:
+            include_files = []
+        # ---------------------------------------------------------------------
+        # deal with files we don't need (already have)
+        exclude_files = self.get_entries('PATH', kind=kind)
+        # ---------------------------------------------------------------------
+        # locate all files within path
+        reqfiles = _get_files(path, kind, include_directories,
+                              exclude_directories, include_files,
+                              exclude_files, suffix)
+        # ---------------------------------------------------------------------
+        # get a list of keys
+        rkeys, rtypes = self.pconst.INDEX_HEADER_KEYS()
+        # ---------------------------------------------------------------------
+        # add required files to the database
+        for reqfile in tqdm(reqfiles):
+            # set directory
+            uncommonpath = drs_misc.get_uncommon_path(path, reqfile)
+            # get the directory name
+            directory = Path(uncommonpath).parent
+            # get the basename
+            basename = Path(uncommonpath).name
+            # get header keys
+            hkeys = dict()
+            # load missing files
+            if str(reqfile).endswith('.fits'):
+                # load header
+                header = drs_fits.read_header(self.params, str(reqfile))
+                # loop around required keys
+                for rkey in rkeys:
+                    # get drs key
+                    drs_key = self.params[rkey][0]
+
+                    if drs_key in header:
+                        hkeys[rkey] = header[drs_key]
+            # add to database
+            self.add_entry(directory, basename, kind, hkeys=hkeys)
+
+
+    def update_header_fix(self, recipe):
+        # set function name
+        func_name = display_func(self.params, 'update_objname', __NAME__,
+                                 self.classname)
+        # deal with no database loaded
+        if self.database is None:
+            eargs = [self.name, func_name]
+            WLOG(self.params, 'error', TextEntry('00-002-00024', args=eargs))
+        # get allowed header keys
+        rkeys, rtypes = self.pconst.INDEX_HEADER_KEYS()
         # get columns
-        colnames = self.database.colnames('*')
-
-        # loop around columns
-        for objcol in OBJNAMECOLS:
-
-            if objcol in colnames:
-                # get object names
-                objnames = self.get_entries(objcol)
-                # fixed objnames
-                fixed_objnames = []
-                # loop around object names
-                for objname in objnames:
-                    # do not include null text
-                    if not drs_text.null_text(objname, ['None']):
-                        # fix object
-                        fixed_objnames.append(self.pconst.DRS_OBJ_NAME(objname))
-                    else:
-                        fixed_objnames.append(objname)
-                # update object names
-                # TODO: PROBLEM THIS DOES NOT WORK!!!!
-                self.database.set(objcol, [fixed_objnames], table='MAIN',
-                                  commit=True)
-
+        columns = ['PATH', 'RAWFIX'] + rkeys
+        # get data for columns
+        table = self.get_entries(', '.join(columns), kind='raw')
+        # need to loop around each row
+        for row in tqdm(range(len(table))):
+            # do not re-fix is rawfix is 1
+            #if table['RAWFIX'].iloc[row] == 1:
+            #    continue
+            # get new header to push keys into
+            header = drs_fits.Header()
+            # add keys to header
+            for rkey in rkeys:
+                # get drs key
+                drs_key = self.params[rkey][0]
+                # get value from table for rkey
+                value = table[rkey].iloc[row]
+                # populate header
+                header[drs_key] = value
+            # fix header (with new keys in)
+            header, _ = drs_file.fix_header(self.params, recipe, header=header)
+            # condition is that full path is the same
+            condition = 'PATH=="{0}"'.format(table['PATH'].iloc[row])
+            # get values
+            values = [table['PATH'].iloc[row], 1]
+            # add header keys in rkeys
+            for rkey in rkeys:
+                # get drs key
+                drs_key = self.params[rkey][0]
+                # get value from table for rkey
+                if drs_key in header:
+                    values.append(header[drs_key])
+                else:
+                    values.append('None')
+            # update this row (should only be one row based on condition)
+            self.database.set(columns, values, condition=condition)
 
 
 def _deal_with_filename(params: ParamDict, name: str, kind: str,
@@ -1490,10 +1550,10 @@ def _deal_with_filename(params: ParamDict, name: str, kind: str,
 
 
 def _get_files(path: Union[Path, str], kind: str,
-               incdirs: Union[List[Union[str, Path], None]] = None,
-               excdirs: Union[List[Union[str, Path], None]] = None,
-               incfiles: Union[List[Union[str, Path], None]] = None,
-               excfiles: Union[List[Union[str, Path], None]] = None,
+               incdirs: Union[List[Union[str, Path]], None] = None,
+               excdirs: Union[List[Union[str, Path]], None] = None,
+               incfiles: Union[List[Union[str, Path]], None] = None,
+               excfiles: Union[List[Union[str, Path]], None] = None,
                suffix: str = '') -> List[Path]:
     """
     Get files in 'path'. If kind in ['raw' 'tmp' 'red'] then look through
@@ -1516,7 +1576,7 @@ def _get_files(path: Union[Path, str], kind: str,
     :return: list of paths, the file list (absolute file list) as Path instances
     """
     # fix path as string
-    if isinstance(path, Path):
+    if isinstance(path, str):
         path = Path(path)
     # only use sub-directories for the following kinds
     if kind in ['raw', 'tmp', 'red']:
@@ -1561,7 +1621,7 @@ def _get_files(path: Union[Path, str], kind: str,
     # filter files
     for filename in allfiles:
         # include files
-        if incfiles is not None:
+        if incfiles is not None and len(incfiles) > 0:
             if filename not in incfiles:
                 continue
         # exclude files
@@ -1628,6 +1688,16 @@ class ObjectDatabase(DatabaseManager):
 # =============================================================================
 if __name__ == "__main__":
     print('Hello World')
+
+    # test
+    from apero.core.utils.drs_recipe import DrsRecipe
+    params = constants.load('SPIROU')
+    pconst = constants.pload('SPIROU')
+    recipe = DrsRecipe('SPIROU', None, filemod=pconst.FILEMOD(), params=params)
+
+    database = IndexDatabase(params)
+    database.load_db()
+    database.update_header_fix(recipe)
 
 # =============================================================================
 # End of code
