@@ -259,7 +259,7 @@ class Database:
         """
         Get the unique values for a column (with condition if set)
 
-        :param columns: a string containing the comma-separated columns to
+        :param column: a string containing the comma-separated columns to
              retrieve from the database.  You may also apply basic
              math functions and aggregators to the columns
              ( see examples below).
@@ -292,7 +292,6 @@ class Database:
         result = self.execute(command)
         # return unique result
         return np.unique(result)
-
 
     def get(self, columns: str = '*', table: Union[None, str] = None,
             condition: Union[None, str] = None,
