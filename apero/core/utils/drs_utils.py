@@ -7,23 +7,14 @@ Created on 2020-10-2020-10-05 17:43
 
 @author: cook
 """
-from astropy.table import Table
-from astropy import version as av
-from collections import OrderedDict
-from copy import deepcopy
-import numpy as np
-import os
 from pathlib import Path
-from typing import Any, Dict, List, Union, Tuple, Type
-import warnings
-
+from typing import List, Union
 
 from apero.base import base
-from apero.base import drs_exceptions
 from apero.base import drs_text
 from apero.core.core import drs_log
 from apero.core import constants
-from apero.core.utils import drs_database
+from apero.core.core import drs_database
 from apero import lang
 from apero.io import drs_fits
 
