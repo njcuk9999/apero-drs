@@ -849,48 +849,6 @@ class RecipeLog:
         if write:
             self.write_logfile(params)
 
-    def set_inputs(self, params: ParamDict, rargs: Dict[str, Any],
-                   rkwargs: Dict[str, Any], rskwargs: Dict[str, Any]):
-        """
-        Set the recipes input arguments (rargs), input keyword arguments
-        (rkwargs) and special keyword arguments (rskwargs) - usually from
-        recipe.args, recipe.kwargs, recipe.rskwargs
-
-        :param params: ParamDict, the constants parameter dictionary
-        :param rargs: OrderedDict, the dictionary containing the arguments,
-                      arguments should be drs_argument.DrsArgument instances
-        :param rkwargs:OrderedDict, the dictionary containing the keyword
-                       arguments, keyword arguments should be
-                       drs_argument.DrsArgument instances
-        :param rskwargs:OrderedDict, the dictionary containing the special
-                        keyword arguments, special keyword arguments should be
-                        drs_argument.DrsArgument instances
-        :return:
-        """
-        # set function name
-        _ = drs_misc.display_func(None, 'set_inputs', __NAME__,
-                                  self.class_name)
-        # deal with not having inputs
-        if 'INPUTS' not in params:
-            return
-        # get inputs
-        inputs = params['INPUTS']
-        # start run string
-        if self.name.endswith('.py'):
-            self.runstring = '{0} '.format(self.name)
-        else:
-            self.runstring = '{0}.py '.format(self.name)
-        # ------------------------------------------------------------------
-        # deal with arguments
-        self.args = self._input_str(inputs, rargs, kind='arg')
-        # ------------------------------------------------------------------
-        # deal with kwargs
-        self.kwargs = self._input_str(inputs, rkwargs, kind='kwargs')
-        # ------------------------------------------------------------------
-        # deal with special kwargs
-        self.skwargs = self._input_str(inputs, rskwargs, kind='skwargs')
-        # strip the runstring
-        self.runstring.strip()
 
     def set_lock_func(self, func: Any):
         """
@@ -1069,81 +1027,6 @@ class RecipeLog:
         #   the _writer function
         else:
             self.lfunc(params, self.lockfile, self._writer)
-
-    def _input_str(self, inputs: Union[ParamDict, dict],
-                   argdict: Dict[str, Any], kind: str = 'arg') -> str:
-        """
-        From the user inputs add an entry for all args in argdict
-
-        :param inputs: dictionary of arguments from the user (normally from
-                       param['INPUTS']
-        :param argdict: dictionary of arguments from the recipe defintion
-                        arguments should be drs_argument.DrsArgument instances
-        :param kind: str, either 'arg', 'kwarg', or 'skwarg' - changes how
-                     the input string is made kwarg and skwarg have the
-                     --{name}=value and arg is just {name}=value
-        :return: str, the recreated input string as would be typed by the user
-        """
-        # set function name
-        _ = drs_misc.display_func(None, '_input_str', __NAME__, self.class_name)
-        # setup input str
-        inputstr = ''
-        # deal with kind
-        if kind == 'arg':
-            prefix = ''
-        else:
-            prefix = '--'
-        # deal with arguments
-        for argname in argdict:
-            # get arg
-            arg = argdict[argname]
-            # strip prefix (may or may not have one)
-            argname = argname.strip(prefix)
-            # get input arg
-            iarg = inputs[argname.strip(prefix)]
-            # add prefix (add prefix whether it had one or not)
-            argname = prefix + argname
-            # deal with file arguments
-            if arg.dtype in ['file', 'files']:
-                if not isinstance(iarg, list):
-                    continue
-                # get string and drsfile
-                strfiles = iarg[0]
-                drsfiles = iarg[1]
-                # deal with having string (force to list)
-                if isinstance(strfiles, str):
-                    strfiles = [strfiles]
-                    drsfiles = [drsfiles]
-
-                # add argname to run string
-                if kind != 'arg':
-                    self.runstring += '{0} '.format(argname)
-                # loop around fiels and add them
-                for f_it in range(len(strfiles)):
-                    # add to list
-                    fargs = [argname, f_it, strfiles[f_it], drsfiles[f_it].name]
-                    inputstr += '{0}[1]={2} [{3}] || '.format(*fargs)
-                    # add to run string
-                    if strfiles[f_it] in ['None', None, '']:
-                        continue
-                    else:
-                        basefile = os.path.basename(strfiles[f_it])
-                        self.runstring += '{0} '.format(basefile)
-            else:
-                inputstr += '{0}={1} || '.format(argname, iarg)
-                # skip Nones
-                if iarg in ['None', None, '']:
-                    continue
-                # add to run string
-                if isinstance(iarg, str):
-                    iarg = os.path.basename(iarg)
-                if kind != 'arg':
-                    self.runstring += '{0}={1} '.format(argname, iarg)
-                else:
-                    self.runstring += '{0} '.format(iarg)
-
-        # return the input string
-        return inputstr.strip().strip('||').strip()
 
     # private methods
     def _get_write_dir(self) -> str:

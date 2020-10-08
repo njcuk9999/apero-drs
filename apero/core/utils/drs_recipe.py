@@ -13,6 +13,7 @@ import argparse
 from collections import OrderedDict
 import copy
 import numpy as np
+from pathlib import Path
 import sys
 from typing import Any, Dict, List, Type, Union
 
@@ -68,7 +69,6 @@ SPECIAL_LIST_KEYS = ['SCIENCE_TARGETS', 'TELLURIC_TARGETS']
 class DrsRecipe(object):
     # define typing for attributes
     filemod: base_class.ImportModule
-
 
     def __init__(self, instrument: str = 'None',
                  name: Union[str, None] = None,
@@ -132,9 +132,10 @@ class DrsRecipe(object):
         # import module as ImportClass (pickle-able)
         self.module = self._import_module()
         # output directory
-        self.outputdir = 'reduced'
+        self.outputdir = 'red'
         # input directory
         self.inputdir = 'tmp'
+        self.runstring = None
         # input type (RAW/REDUCED)
         self.inputtype = 'raw'
         # whether to force input/outputdir
@@ -146,6 +147,10 @@ class DrsRecipe(object):
         self.args = OrderedDict()
         self.kwargs = OrderedDict()
         self.specialargs = OrderedDict()
+        # args for logging
+        self.largs = ''
+        self.lkwargs = ''
+        self.lskwargs = ''
         # list of strings of extra arguments to add / overwrite set values
         self.extras = OrderedDict()
         # define arg list
@@ -267,7 +272,7 @@ class DrsRecipe(object):
         self.params['INPUTS'] = ParamDict()
         self.params.set_sources(['INPUTS'], func_name)
 
-    def recipe_setup(self, fkwargs: Union[dict, None] = None,
+    def recipe_setup(self, indexdb, fkwargs: Union[dict, None] = None,
                      inargs: Union[list, None] = None
                      ) -> Union[Dict[str, Any], None]:
         """
@@ -291,7 +296,8 @@ class DrsRecipe(object):
         # set up storage for arguments
         fmt_class = argparse.RawDescriptionHelpFormatter
         desc, epilog = self.description, self.epilog
-        parser = DrsArgumentParser(recipe=self, description=desc, epilog=epilog,
+        parser = DrsArgumentParser(recipe=self, indexdb=indexdb,
+                                   description=desc, epilog=epilog,
                                    formatter_class=fmt_class,
                                    usage=self._drs_usage())
         # get the drs params from recipe
@@ -669,6 +675,43 @@ class DrsRecipe(object):
             # check if kwarg is the drs_file.DrsInputFile (only add these)
             if isinstance(kwargs[kwarg], DrsInputFile):
                 self.outputs[kwarg] = kwargs[kwarg]
+
+    def set_inputs(self):
+        """
+        Set the recipes input arguments (rargs), input keyword arguments
+        (rkwargs) and special keyword arguments (rskwargs) - usually from
+        recipe.args, recipe.kwargs, recipe.rskwargs
+
+        :return:
+        """
+        # set function name
+        _ = drs_misc.display_func(None, 'set_inputs', __NAME__,
+                                  self.class_name)
+        # deal with not having inputs
+        if 'INPUTS' not in self.params:
+            return
+        # get inputs
+        inputs = self.params['INPUTS']
+        # get args/kwargs/skwargs
+        rargs = self.args
+        rkwargs = self.kwargs
+        rskwargs = self.specialargs
+        # start run string
+        if self.name.endswith('.py'):
+            self.runstring = '{0} '.format(self.name)
+        else:
+            self.runstring = '{0}.py '.format(self.name)
+        # ------------------------------------------------------------------
+        # deal with arguments
+        self.largs = self._input_str(inputs, rargs, kind='arg')
+        # ------------------------------------------------------------------
+        # deal with kwargs
+        self.lkwargs = self._input_str(inputs, rkwargs, kind='kwargs')
+        # ------------------------------------------------------------------
+        # deal with special kwargs
+        self.lskwargs = self._input_str(inputs, rskwargs, kind='skwargs')
+        # strip the runstring
+        self.runstring.strip()
 
     def set_debug_plots(self, *args: str):
         """
@@ -1273,6 +1316,80 @@ class DrsRecipe(object):
         usage = '{0}.py {1} [{2}]'.format(*uargs)
         return usage
 
+    def _input_str(self, inputs: Union[ParamDict, dict],
+                   argdict: Dict[str, Any], kind: str = 'arg') -> str:
+        """
+        From the user inputs add an entry for all args in argdict
+
+        :param inputs: dictionary of arguments from the user (normally from
+                       param['INPUTS']
+        :param argdict: dictionary of arguments from the recipe defintion
+                        arguments should be drs_argument.DrsArgument instances
+        :param kind: str, either 'arg', 'kwarg', or 'skwarg' - changes how
+                     the input string is made kwarg and skwarg have the
+                     --{name}=value and arg is just {name}=value
+        :return: str, the recreated input string as would be typed by the user
+        """
+        # set function name
+        _ = drs_misc.display_func(None, '_input_str', __NAME__, self.class_name)
+        # setup input str
+        inputstr = ''
+        # deal with kind
+        if kind == 'arg':
+            prefix = ''
+        else:
+            prefix = '--'
+        # deal with arguments
+        for argname in argdict:
+            # get arg
+            arg = argdict[argname]
+            # strip prefix (may or may not have one)
+            argname = argname.strip(prefix)
+            # get input arg
+            iarg = inputs[argname.strip(prefix)]
+            # add prefix (add prefix whether it had one or not)
+            argname = prefix + argname
+            # deal with file arguments
+            if arg.dtype in ['file', 'files']:
+                if not isinstance(iarg, list):
+                    continue
+                # get string and drsfile
+                strfiles = iarg[0]
+                drsfiles = iarg[1]
+                # deal with having string (force to list)
+                if isinstance(strfiles, str):
+                    strfiles = [strfiles]
+                    drsfiles = [drsfiles]
+
+                # add argname to run string
+                if kind != 'arg':
+                    self.runstring += '{0} '.format(argname)
+                # loop around fiels and add them
+                for f_it in range(len(strfiles)):
+                    # add to list
+                    fargs = [argname, f_it, strfiles[f_it], drsfiles[f_it].name]
+                    inputstr += '{0}[1]={2} [{3}] || '.format(*fargs)
+                    # add to run string
+                    if strfiles[f_it] in ['None', None, '']:
+                        continue
+                    else:
+                        basefile = Path(strfiles[f_it]).name
+                        self.runstring += '{0} '.format(basefile)
+            else:
+                inputstr += '{0}={1} || '.format(argname, iarg)
+                # skip Nones
+                if iarg in ['None', None, '']:
+                    continue
+                # add to run string
+                if isinstance(iarg, str):
+                    iarg = Path(iarg).name
+                if kind != 'arg':
+                    self.runstring += '{0}={1} '.format(argname, iarg)
+                else:
+                    self.runstring += '{0} '.format(iarg)
+
+        # return the input string
+        return inputstr.strip().strip('||').strip()
 
 class DrsRunSequence:
     def __init__(self, name: str, instrument: str = 'None'):
