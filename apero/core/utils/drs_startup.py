@@ -12,11 +12,8 @@ Created on 2019-01-19 at 13:37
 from collections import OrderedDict
 import numpy as np
 import os
-import random
 from signal import signal, SIGINT
-import string
 import sys
-import time
 import traceback
 from typing import Any, Dict, List, Tuple, Union
 
@@ -32,6 +29,7 @@ from apero.core.core import drs_argument
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
+from apero.core.core import drs_database
 from apero.io import drs_table
 from apero.io import drs_path
 from apero.io import drs_lock
@@ -182,8 +180,10 @@ def setup(name: str = 'None', instrument: str = 'None',
     # display loading message
     TLOG(recipe.params, '', 'Loading Arguments. Please wait...')
     # -------------------------------------------------------------------------
+    # load index database manager
+    indexdb = drs_database.IndexDatabase(recipe.params)
     # interface between "recipe", "fkwargs" and command line (via argparse)
-    recipe.recipe_setup(fkwargs)
+    recipe.recipe_setup(indexdb, fkwargs)
     # -------------------------------------------------------------------------
     # deal with options from input_parameters
     recipe.option_manager()
@@ -214,23 +214,29 @@ def setup(name: str = 'None', instrument: str = 'None',
         recipe = _set_force_dirs(recipe, fkwargs)
         # do not need to display if we have special keywords
         quiet = _quiet_keys_present(recipe, quiet, fkwargs)
-        # -------------------------------------------------------------------------
+        # ---------------------------------------------------------------------
         # display
         if not quiet:
             # display title
             _display_drs_title(recipe.params, printonly=True)
-        # -------------------------------------------------------------------------
+        # ---------------------------------------------------------------------
         # display loading message
         TLOG(recipe.params, '', 'Loading Arguments. Please wait...')
-        # -------------------------------------------------------------------------
+        # ---------------------------------------------------------------------
+        # load index database manager
+        indexdb = drs_database.IndexDatabase(recipe.params)
         # interface between "recipe", "fkwargs" and command line (via argparse)
-        recipe.recipe_setup(fkwargs)
-        # -------------------------------------------------------------------------
+        recipe.recipe_setup(indexdb, fkwargs)
+        # ---------------------------------------------------------------------
         # deal with options from input_parameters
         recipe.option_manager()
-        # -------------------------------------------------------------------------
+        # ---------------------------------------------------------------------
         # clear loading message
         TLOG(recipe.params, '', '')
+    # -------------------------------------------------------------------------
+    # create runstring and log args/kwargs/skwargs (must be done after
+    #    option_manager)
+    recipe.set_inputs()
     # -------------------------------------------------------------------------
     # display
     if not quiet:
@@ -319,8 +325,10 @@ def setup(name: str = 'None', instrument: str = 'None',
         logfile = drs_log.get_logfilepath(WLOG, params)
         recipe.log.set_log_file(logfile)
         # add user input parameters to log
-        recipe.log.set_inputs(params, recipe.args, recipe.kwargs,
-                              recipe.specialargs)
+        recipe.log.runstring = recipe.runstring
+        recipe.log.args = recipe.largs
+        recipe.log.kwargs = recipe.lkwargs
+        recipe.log.kwargs = recipe.lskwargs
         # set lock function (lock file is NIGHTNAME + _log
         recipe.log.set_lock_func(drs_lock.locker)
         # write recipe log
@@ -464,8 +472,8 @@ def return_locals(params: ParamDict, ll: Dict[str, Any]) -> Dict[str, Any]:
     return ll
 
 
-def end_main(params: ParamDict, llmain: Dict[str, Any], recipe: DrsRecipe,
-             success: bool, outputs: str = 'reduced',
+def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
+             recipe: DrsRecipe, success: bool, outputs: str = 'red',
              end: bool = True, quiet: bool = False,
              keys: Union[List[str], None] = None) -> Dict[str, Any]:
     """
@@ -483,7 +491,7 @@ def end_main(params: ParamDict, llmain: Dict[str, Any], recipe: DrsRecipe,
         - 'None'  (for no outputs)
         - 'raw'
         - 'tmp'
-        - 'reduced'
+        - 'red'
     :param end: bool, if we should run full end routines
     :param quiet: bool, if we should not print out standard output
     :param keys: list of string, any variable in main function can be named here
@@ -511,10 +519,7 @@ def end_main(params: ParamDict, llmain: Dict[str, Any], recipe: DrsRecipe,
     if llmain is not None:
         if 'params' in llmain:
             params = llmain['params']
-    # get pconstants
-    pconstant = constants.pload(params['INSTRUMENT'])
-    # construct a lock file name
-    opath = pconstant.INDEX_LOCK_FILENAME(params)
+
     # -------------------------------------------------------------------------
     # get quiet from inputs
     if 'QUIET' in params['INPUTS']:
@@ -524,46 +529,36 @@ def end_main(params: ParamDict, llmain: Dict[str, Any], recipe: DrsRecipe,
             quiet = False
     # -------------------------------------------------------------------------
     if outputs not in [None, 'None', '']:
-        # define a synchoronized lock for indexing (so multiple instances
-        #  do not run at the same time)
-        lockfile = os.path.basename(opath)
-        # start a lock
-        lock = drs_lock.Lock(params, lockfile)
-
-        # make locked indexing function
-        @drs_lock.synchronized(lock, params['PID'])
-        def locked_indexing():
-            # Must now deal with errors and make sure we close the lock file
-            try:
-                if outputs == 'pp':
-                    # index outputs to pp dir
-                    _index_pp(params, recipe)
-                elif outputs == 'reduced':
-                    # index outputs to reduced dir
-                    _index_outputs(params, recipe)
-            # Must close lock file
-            except drs_exceptions.LogExit as e_:
-                # log error
-                eargs = [type(e_), e_.errormessage, func_name]
-                WLOG(params, 'error', TextEntry('00-000-00002', args=eargs))
-            except Exception as e_:
-                # log error
-                eargs = [type(e_), e_, func_name]
-                WLOG(params, 'error', TextEntry('00-000-00002', args=eargs))
-
-        # -------------------------------------------------------------------------
-        # index if we have outputs
-        if (outputs is not None) and (outputs != 'None') and success:
-            # this is where we run the function
-            try:
-                locked_indexing()
-            except KeyboardInterrupt as e:
-                lock.reset()
-                raise e
-            except Exception as e:
-                lock.reset()
-                # re-raise error
-                raise e
+        # load index database
+        indexdb = drs_database.IndexDatabase(params)
+        indexdb.load_db()
+        # get pconstants
+        pconst = constants.pload(params['INSTRUMENT'])
+        # load index header keys
+        rkeys, rtypes = pconst.INDEX_HEADER_KEYS()
+        # loop around output_files
+        for okey in recipe.output_files:
+            # get output dict for okey
+            output = recipe.output_files[okey]
+            # get parmaeters for add entry
+            fullpath = str(output['PATH'])
+            directory = str(output['DIRECTORY'])
+            filename = str(output['FILENAME'])
+            kind = str(output['KIND'])
+            runstring = str(output['RUNSTRING'])
+            used = int(output['USED'])
+            rawfix = int(output['RAWFIX'])
+            # store header keys
+            hkeys = dict()
+            # loop around required index database header keys
+            for rkey in rkeys:
+                if rkey in output:
+                    hkeys[rkey] = output[rkey]
+                else:
+                    hkeys[rkey] = 'None'
+            # finally add to database
+            indexdb.add_entry(directory, filename, kind, runstring, hkeys,
+                              fullpath, used, rawfix)
     # -------------------------------------------------------------------------
     # log end message
     if end:
