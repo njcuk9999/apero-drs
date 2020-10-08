@@ -941,7 +941,8 @@ class DrsInputFile:
         _ = check
         _ = copy
 
-    def write_file(self):
+    def write_file(self, kind: str,
+                   runstring: Union[str, None] = None):
         """
         Does nothing - abstract at this point - cannot write a generic file
 
@@ -950,6 +951,7 @@ class DrsInputFile:
         # set function name
         _ = display_func(self.params, 'write_file', __NAME__, self.class_name)
         # do nothing else (no current write option for generic input files)
+        _ = kind, runstring
 
     # -------------------------------------------------------------------------
     # user functions
@@ -2654,12 +2656,17 @@ class DrsFitsFile(DrsInputFile):
             else:
                 self.header[key] = (self.hdict[key], self.hdict.comments[key])
 
-    def write_file(self):
+    def write_file(self, kind: str,
+                   runstring: Union[str, None] = None):
         """
         Write a single Table/numpy array to disk useing DrsFitsFile.data,
         DrsFitsfile.header to write to DrsFitsFile.filename
 
         also used to update output_dictionary for index database
+
+        :param kind: str, the kind of file (raw, tmp, red)
+        :param runstring: str or None, if set sets the input run string that
+                          can be used to re-run the recipe to get this output
 
         :return: None
         """
@@ -2678,12 +2685,13 @@ class DrsFitsFile(DrsInputFile):
                            self.datatype, self.dtype, func=func_name)
         # ---------------------------------------------------------------------
         # write output dictionary
-        self.output_dictionary()
+        self.output_dictionary(kind, runstring)
 
-    def write_multi(self, data_list: List[Union[Table, np.ndarray]],
+    def write_multi(self, kind: str, data_list: List[Union[Table, np.ndarray]],
                     header_list: Union[List[drs_fits.Header], None] = None,
                     datatype_list: Union[List[str], None] = None,
-                    dtype_list: Union[List[Union[Type, None]], None] = None):
+                    dtype_list: Union[List[Union[Type, None]], None] = None,
+                    runstring: Union[str, None] = None):
         """
         Write a set of Tables/numpy arrays to disk useing DrsFitsFile.data,
         DrsFitsfile.header to write to DrsFitsFile.filename
@@ -2693,6 +2701,7 @@ class DrsFitsFile(DrsInputFile):
 
         also used to update output_dictionary for index database
 
+        :param kind: str, the kind of file (raw, tmp, red)
         :param data_list: list of numpy arrays or astropy Tables - MUST NOT
                           INCLUDE first entry (set by DrsFitsFile.data)
                           if all are numpy arrays do not need to set
@@ -2708,6 +2717,9 @@ class DrsFitsFile(DrsInputFile):
                            to this data type (only works for numpy arrays)
                            set individual elements to None if you don't want
                            to force data type for that entry
+        :param runstring: str or None, if set sets the input run string that
+                          can be used to re-run the recipe to get this output
+
         :return: None
         """
         # set function name
@@ -2751,7 +2763,7 @@ class DrsFitsFile(DrsInputFile):
                            datatype_list, dtype_list, func=func_name)
         # ---------------------------------------------------------------------
         # write output dictionary
-        self.output_dictionary()
+        self.output_dictionary(kind, runstring)
 
     def get_fiber(self, header: Union[drs_fits.Header, None] = None
                   ) -> Union[str, None]:
@@ -2788,7 +2800,7 @@ class DrsFitsFile(DrsInputFile):
         # if we still don't have fiber then return None
         return None
 
-    def output_dictionary(self):
+    def output_dictionary(self, kind: str, runstring: Union[str, None] = None):
         """
         Generate the output dictionary (for use while writing)
         Uses OUTPUT_FILE_HEADER_KEYS and DrsFile.hdict to generate an
@@ -2804,24 +2816,53 @@ class DrsFitsFile(DrsInputFile):
         # check that params is set
         self.check_params(func_name)
         params = self.params
-        pconstant = constants.pload(params['INSTRUMENT'])
-        # get output dictionary
-        output_hdr_keys = pconstant.OUTPUT_FILE_HEADER_KEYS()
+        pconst = constants.pload(params['INSTRUMENT'])
+        # get required keys for index database
+        hkeys, htypes = pconst.INDEX_HEADER_KEYS()
+        # deal with absolute path of file
+        self.output_dict['PATH'] = str(self.filename)
+        # deal with night name of file
+        self.output_dict['DIRECTORY'] = str(self.params['NIGHTNAME'])
+        # deal with basename of file
+        self.output_dict['FILENAME'] = str(self.basename)
+        # deal with kind
+        self.output_dict['KIND'] = str(kind)
+        # deal with last modified time for file
+        self.output_dict['LAST_MODIFIED'] = Path(self.filename).lstat().st_mtime
+        # deal with the run string (string that can be used to re-run the
+        #     recipe to reproduce this file)
+        if runstring is None:
+            self.output_dict['RUNSTRING'] = 'None'
+        else:
+            self.output_dict['RUNSTRING'] = str(runstring)
+        # add whether this row should be used be default (always 1)
+        self.output_dict['USED'] = 1
+        # add the raw fix (all files here should be raw fixed)
+        self.output_dict['RAWFIX'] = 1
+
         # loop around the keys and find them in hdict (or add null character if
         #     not found)
-        for key in output_hdr_keys:
+        for it, key in enumerate(hkeys):
             # deal with header key stores
             if key in params:
                 dkey = params[key][0]
             else:
                 dkey = str(key)
-
+            # get dtype
+            dtype = htypes[it]
+            # add key if in hdict (priority)
             if dkey in self.hdict:
-                self.output_dict[key] = str(self.hdict[dkey])
+                try:
+                    self.output_dict[key] = dtype(self.hdict[dkey])
+                except Exception as _:
+                    self.output_dict[key] = 'None'
             elif dkey in self.header:
-                self.output_dict[key] = str(self.header[dkey])
+                try:
+                    self.output_dict[key] = dtype(self.header[dkey])
+                except Exception as _:
+                    self.output_dict[key] = 'None'
             else:
-                self.output_dict[key] = '--'
+                self.output_dict[key] = 'None'
 
     def combine(self, infiles: List['DrsFitsFile'], math: str = 'sum',
                 same_type: bool = True,
@@ -4094,7 +4135,7 @@ class DrsNpyFile(DrsInputFile):
         else:
             return self.data
 
-    def write_file(self):
+    def write_file(self, kind: str, runstring: Union[str, None] = None):
         """
         Write a npy file (using np.save)
 
@@ -4121,6 +4162,9 @@ class DrsNpyFile(DrsInputFile):
         else:
             eargs = [self.filename, func_name]
             WLOG(params, 'error', TextEntry('00-008-00014', args=eargs))
+        # write output dictionary
+        self.output_dictionary(kind, runstring)
+
 
     def string_output(self) -> str:
         """
@@ -4324,6 +4368,54 @@ class DrsNpyFile(DrsInputFile):
                             outfunc, inext, dbname, dbkey, rkeys, numfiles,
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, s1d, hkeys)
+
+    def output_dictionary(self, kind: str, runstring: Union[str, None] = None):
+        """
+        Generate the output dictionary (for use while writing)
+        Uses OUTPUT_FILE_HEADER_KEYS and DrsFile.hdict to generate an
+        output dictionary for this file (for use in indexing)
+
+        Requires DrsFile.filename and DrsFile.params to be set
+
+        :return None:
+        """
+        # set function name
+        func_name = display_func(self.params, 'output_dictionary', __NAME__,
+                                 self.class_name)
+        # check that params is set
+        self.check_params(func_name)
+        params = self.params
+        pconst = constants.pload(params['INSTRUMENT'])
+        # get required keys for index database
+        hkeys, htypes = pconst.INDEX_HEADER_KEYS()
+        # deal with absolute path of file
+        self.output_dict['PATH'] = str(self.filename)
+        # deal with night name of file
+        self.output_dict['DIRECTORY'] = str(self.params['NIGHTNAME'])
+        # deal with basename of file
+        self.output_dict['FILENAME'] = str(self.basename)
+        # deal with kind
+        if kind in ['red', 'reduc', 'reduced']:
+            self.output_dict['KIND'] = 'red'
+        else:
+            self.output_dict['KIND'] = str(kind)
+        # deal with last modified time for file
+        self.output_dict['LAST_MODIFIED'] = Path(self.filename).lstat().st_mtime
+        # deal with the run string (string that can be used to re-run the
+        #     recipe to reproduce this file)
+        if runstring is None:
+            self.output_dict['RUNSTRING'] = 'None'
+        else:
+            self.output_dict['RUNSTRING'] = str(runstring)
+        # add whether this row should be used be default (always 1)
+        self.output_dict['USED'] = 1
+        # add the raw fix (all files here should be raw fixed)
+        self.output_dict['RAWFIX'] = 1
+        # loop around the keys and find them in hdict (or add null character if
+        #     not found)
+        for it, key in enumerate(hkeys):
+            # no header for npy files
+            self.output_dict[key] = 'None'
 
     # -------------------------------------------------------------------------
     # database methods
@@ -4781,7 +4873,7 @@ def combine(params: ParamDict, recipe: Any,
     outfile.numfiles = len(infiles)
     # write to disk
     WLOG(params, '', TextEntry('40-001-00025', args=[outfile.filename]))
-    outfile.write_file()
+    outfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(outfile)
     # return combined infile
@@ -4930,7 +5022,7 @@ def id_drs_file(params: ParamDict, recipe: Any,
             WLOG(params, 'debug', TextEntry('90-010-00001', args=dargs))
             # --------------------------------------------------------------
             # copy info from given_drsfile into drsfile
-            file_in = drsfile.copyother(file_set, recipe=recipe)
+            file_in = drsfile.copyother(file_set, params=params)
             # --------------------------------------------------------------
             # load the header for this kind
             # noinspection PyBroadException
