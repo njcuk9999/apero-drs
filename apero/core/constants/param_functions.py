@@ -863,6 +863,8 @@ class ParamDict(base_class.CaseInsensitiveDict):
             # log error: parameter not found in parameter dict (via listp)
             raise DrsCodedException('00-003-00030', targs=[key], level='error',
                                     func_name=func_name)
+        if item is None:
+            return []
         # convert string
         if key in self.keys() and isinstance(item, str):
             return _map_listparameter(str(item), separator=separator,
@@ -904,6 +906,8 @@ class ParamDict(base_class.CaseInsensitiveDict):
             # log error message: parameter not found in param dict (via dictp)
             raise DrsCodedException('00-003-00031', targs=[key], level='error',
                                     func_name=func_name)
+        if item is None:
+            return dict()
         # convert string
         if isinstance(item, str):
             return _map_dictparameter(str(item), dtype=dtype)
