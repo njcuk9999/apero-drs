@@ -157,6 +157,10 @@ listing.set_kwarg(name='--nightname', dtype=str, default='',
 listing.set_kwarg(name='--kind', dtype=str, default='raw',
                   options=['raw', 'tmp', 'red'],
                   helpstr=Help['LISTING_HELP_KIND'])
+listing.set_kwarg(name='--bnightnames', dtype=str, default='None',
+                  helpstr=Help['PROCESS_BNIGHTNAMES_HELP'])
+listing.set_kwarg(name='--wnightnames', dtype=str, default='None',
+                  helpstr=Help['PROCESS_WNIGHTNAMES_HELP'])
 
 # -----------------------------------------------------------------------------
 # apero_log_stats.py
