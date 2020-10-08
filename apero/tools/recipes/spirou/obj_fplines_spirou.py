@@ -14,7 +14,7 @@ from apero import lang
 from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
-from apero.core.utils import drs_database
+from apero.core.core import drs_database
 from apero.science.calib import wave
 from apero.science import extract
 from apero.tools.module.testing import drs_dev
@@ -50,9 +50,9 @@ get_ext_fplines = drs_dev.TmpRecipe()
 get_ext_fplines.name = __NAME__
 get_ext_fplines.shortname = 'GETFPL'
 get_ext_fplines.instrument = __INSTRUMENT__
-get_ext_fplines.outputdir = 'reduced'
-get_ext_fplines.inputdir = 'reduced'
-get_ext_fplines.inputtype = 'reduced'
+get_ext_fplines.outputdir = 'red'
+get_ext_fplines.inputdir = 'red'
+get_ext_fplines.inputtype = 'red'
 get_ext_fplines.extension = 'fits'
 get_ext_fplines.description = 'Produces an FPLINES file for an e2ds/e2dsff file'
 get_ext_fplines.kind = 'misc'

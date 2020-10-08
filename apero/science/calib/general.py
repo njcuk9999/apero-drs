@@ -10,21 +10,17 @@ Created on 2019-06-27 at 10:48
 from astropy.table import Table
 import numpy as np
 from typing import List, Union, Tuple
-from pathlib import Path
 import warnings
 
 from apero.base import base
-from apero.base import drs_text
 from apero import lang
 from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
-from apero.core.utils import drs_database
+from apero.core.core import drs_database
 from apero.core.utils import drs_data
 from apero.io import drs_fits
 from apero.io import drs_image
-from apero.io import drs_path
-from apero.io import drs_table
 
 from apero.science.calib import dark
 from apero.science.calib import badpix

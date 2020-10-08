@@ -13,7 +13,7 @@ import pandas as pd
 from apero.base import base
 from apero.base import drs_db
 from apero.core import constants
-from apero.core.utils import drs_database
+from apero.core.core import drs_database
 
 # =============================================================================
 # Define variables

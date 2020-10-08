@@ -14,7 +14,7 @@ from apero import lang
 from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.core.utils import drs_startup
-from apero.core.utils import drs_database
+from apero.core.core import drs_database
 from apero.io import drs_image
 from apero.science.extract import other as extractother
 
@@ -156,7 +156,8 @@ def __main__(recipe, params):
             wargs = [thermal_files[fiber].filename]
             WLOG(params, '', TextEntry('40-016-00022', args=wargs))
             # write thermal files
-            thermal_files[fiber].write_file()
+            thermal_files[fiber].write_file(kind=recipe.outputdir,
+                                            runstring=recipe.runstring)
 
         # ------------------------------------------------------------------
         # Update the calibration database

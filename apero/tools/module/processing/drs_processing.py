@@ -37,7 +37,7 @@ from apero.core.core import drs_log
 from apero.core.core import drs_argument
 from apero.core.utils import drs_recipe
 from apero.core.utils import drs_startup
-from apero.core.utils import drs_database
+from apero.core.core import drs_database
 from apero import lang
 from apero.core import constants
 from apero import plotting
@@ -115,10 +115,11 @@ SKIP_REMOVE_ARGS = ['--skip', '--program', '--debug', '--plot', '--master']
 # Define classes
 # =============================================================================
 class Run:
-    def __init__(self, params, runstring,
+    def __init__(self, params, indexdb: IndexDatabase, runstring,
                  mod: Union[base_class.ImportModule, None] = None,
                  priority=0, inrecipe=None):
         self.params = params
+        self.indexdb = indexdb
         self.pconst = constants.pload(params['INSTRUMENT'])
         self.runstring = runstring
         self.priority = priority
@@ -225,7 +226,7 @@ class Run:
             self.kind = 0
         elif self.recipe.inputdir == 'tmp':
             self.kind = 1
-        elif self.recipe.inputdir == 'reduced':
+        elif self.recipe.inputdir == 'red':
             self.kind = 2
         else:
             emsg1 = ('RunList Error: Recipe = "{0}" invalid'
@@ -260,7 +261,7 @@ class Run:
         # get the master setting
         self.master = self.recipe.master
         # run parser with arguments
-        self.kwargs = self.recipe.recipe_setup(inargs=self.args)
+        self.kwargs = self.recipe.recipe_setup(self.indexdb, inargs=self.args)
         # add argument to set program name
         pargs = [self.recipe.shortname, int(self.priority)]
         self.kwargs['program'] = '{0}[{1:05d}]'.format(*pargs)
@@ -379,7 +380,7 @@ def run_process(params, recipe, module, *gargs, terminate=False, **gkwargs):
     # Generate run list
     rlist = generate_run_list(params, recipe, None, runtable, None)
     # Process run list
-    outlist, has_errors = process_run_list(params, recipe, rlist)
+    outlist, has_errors, _ = process_run_list(params, recipe, rlist)
     # display errors
     if has_errors:
         # terminate here
@@ -865,10 +866,13 @@ def generate_run_list(params, indexdbm: IndexDatabase, runtable,
     # all runtable elements should now be in recipe list
     _check_runtable(params, runtable, recipemod)
     # return Run instances for each runtable element
-    return generate_ids(params, runtable, recipemod, skiptable, rlist)
+    return generate_ids(params, indexdbm, runtable, recipemod, skiptable,
+                        rlist)
 
 
 def process_run_list(params, recipe, runlist, group=None):
+    # start a timer
+    process_start = time.time()
     # get number of cores
     cores = _get_cores(params)
     # pipe to correct module
@@ -883,6 +887,8 @@ def process_run_list(params, recipe, runlist, group=None):
         # run as multiple processes
         rdict = _multi_process(params, recipe, runlist, cores=cores,
                                groupname=group)
+    # end a timer
+    process_end = time.time()
 
     # remove lock files
     drs_lock.reset_lock_dir(params)
@@ -899,13 +905,20 @@ def process_run_list(params, recipe, runlist, group=None):
         if len(odict[key]['ERROR']) != 0:
             errors = True
 
+    # calculate process time
+    process_time = process_end - process_start
+
     # return the output array (dictionary with priority as key)
     #    values is a parameter dictionary consisting of
     #        RECIPE, NIGHT_NAME, ARGS, ERROR, WARNING, OUTPUTS
-    return odict, errors
+    return odict, errors, process_time
 
 
-def display_timing(params, outlist):
+def display_timing(params, outlist, ptime):
+
+    # get number of cores
+    cores = _get_cores(params)
+    # display the timings
     WLOG(params, '', '')
     WLOG(params, '', params['DRS_HEADER'])
     WLOG(params, '', 'Timings:')
@@ -927,9 +940,14 @@ def display_timing(params, outlist):
             WLOG(params, '', '')
             # add to total time
             tot_time += outlist[key]['TIMING']
+
+    # calculate the speed up factor
+    speed_up = tot_time / ptime
     # add total time
     WLOG(params, '', params['DRS_HEADER'])
     WLOG(params, 'info', TextEntry('40-503-00025', args=[tot_time]))
+    WLOG(params, 'info', TextEntry('40-503-00033', args=[ptime]))
+    WLOG(params, 'info', TextEntry('40-503-00034', args=[speed_up, cores]))
     WLOG(params, '', params['DRS_HEADER'])
     WLOG(params, '', '')
 
@@ -1112,7 +1130,8 @@ def generate_run_table(params, recipe, *args, **kwargs):
 # =============================================================================
 # Define "from id" functions
 # =============================================================================
-def generate_ids(params, runtable, mod, skiptable, rlist=None, **kwargs):
+def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
+                 **kwargs):
     func_name = __NAME__ + '.generate_ids()'
     # get keys from params
     run_key = pcheck(params, 'REPROCESS_RUN_KEY', 'run_key', kwargs, func_name)
@@ -1150,8 +1169,8 @@ def generate_ids(params, runtable, mod, skiptable, rlist=None, **kwargs):
         WLOG(params, '', params['DRS_HEADER'])
         WLOG(params, '', TextEntry('40-503-00013', args=[run_item]))
         # create run object
-        run_object = Run(params, run_item, mod=mod, priority=keylist[it],
-                         inrecipe=input_recipe)
+        run_object = Run(params, indexdb, run_item, mod=mod,
+                         priority=keylist[it], inrecipe=input_recipe)
         # deal with input recipe
         if input_recipe is None:
             input_recipe = run_object.recipe

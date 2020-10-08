@@ -16,7 +16,7 @@ from apero import lang
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
-from apero.core.utils import drs_database
+from apero.core.core import drs_database
 from apero.science import preprocessing as pp
 from apero.io import drs_image
 from apero.core.instruments.spirou import file_definitions
@@ -255,7 +255,7 @@ def __main__(recipe, params):
         WLOG(params, '', TextEntry('40-010-00009', args=wargs))
         # ------------------------------------------------------------------
         # writefits image to file
-        outfile.write_file()
+        outfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(outfile)
         # index this file

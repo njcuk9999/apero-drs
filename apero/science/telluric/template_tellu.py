@@ -627,7 +627,8 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # log that we are saving s1d table
     WLOG(params, '', TextEntry('40-019-00029', args=[template_file.filename]))
     # write multi
-    template_file.write_multi(data_list=[bigtable], datatype_list=['table'])
+    template_file.write_multi(data_list=[bigtable], datatype_list=['table'],
+                              kind=recipe.outputdir, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(template_file)
 
@@ -647,7 +648,8 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # log that we are saving s1d table
     WLOG(params, '', TextEntry('40-019-00030', args=[bigcubefile.filename]))
     # write multi
-    bigcubefile.write_multi(data_list=[bigtable], datatype_list=['table'])
+    bigcubefile.write_multi(data_list=[bigtable], datatype_list=['table'],
+                            kind=recipe.outputdir, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(bigcubefile)
 
@@ -667,7 +669,8 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # log that we are saving s1d table
     WLOG(params, '', TextEntry('40-019-00031', args=[bigcubefile0.filename]))
     # write multi
-    bigcubefile0.write_multi(data_list=[bigtable], datatype_list=['table'])
+    bigcubefile0.write_multi(data_list=[bigtable], datatype_list=['table'],
+                             kind=recipe.outputdir, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(bigcubefile0)
 
@@ -731,7 +734,8 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     # log that we are saving s1d table
     WLOG(params, '', TextEntry('40-019-00036', args=[template_file.filename]))
     # write multi
-    template_file.write_multi(data_list=[bigtable], datatype_list=['table'])
+    template_file.write_multi(data_list=[bigtable], datatype_list=['table'],
+                              kind=recipe.outputdir, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(template_file)
 
@@ -751,7 +755,8 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     # log that we are saving s1d table
     WLOG(params, '', TextEntry('40-019-00037', args=[bigcubefile.filename]))
     # write multi
-    bigcubefile.write_multi(data_list=[bigtable], datatype_list=['table'])
+    bigcubefile.write_multi(data_list=[bigtable], datatype_list=['table'],
+                            kind=recipe.outputdir, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(bigcubefile)
 
