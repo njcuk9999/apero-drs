@@ -27,6 +27,7 @@ from apero.core import constants
 from apero import lang
 from apero.core.core import drs_log
 from apero.core.core import drs_file
+from apero.core.core import drs_database
 
 # =============================================================================
 # Define variables
@@ -48,6 +49,8 @@ COLOR = drs_misc.Colors()
 ParamDict = constants.ParamDict
 # get DrsInputFile (for typing)
 DrsInputFile = drs_file.DrsInputFile
+# get index database
+IndexDatabase = drs_database.IndexDatabase
 # get the config error
 ConfigError = drs_exceptions.ConfigError
 ArgumentError = drs_exceptions.ArgumentError
@@ -69,7 +72,7 @@ class DrsArgumentParser(argparse.ArgumentParser):
     # argparse.ArgumentParser cannot be pickled
     #   so cannot pickle DrsArgumentParser either
 
-    def __init__(self, recipe: Any, **kwargs):
+    def __init__(self, recipe: Any, indexdb: IndexDatabase, **kwargs):
         """
         Construct the Drs Argument parser
 
@@ -80,6 +83,7 @@ class DrsArgumentParser(argparse.ArgumentParser):
         _ = display_func(None, '__init__', __NAME__, 'DRSArgumentParser')
         # define the recipe
         self.recipe = recipe
+        self.indexdb = indexdb
         # get the recipes parameter dictionary
         params = self.recipe.params
         # get the text dictionary
@@ -358,6 +362,7 @@ class _CheckDirectory(DrsAction):
         _ = display_func(None, '__init__', __NAME__, self.class_name)
         # set the recipe and parser to None
         self.recipe = None
+        self.indexdb = None
         # force super initialisation
         DrsAction.__init__(self, *args, **kwargs)
 
@@ -419,27 +424,12 @@ class _CheckDirectory(DrsAction):
         # find out whether to force input directory
         force = self.recipe.force_dirs[0]
         # check whether we have a valid directory
-        out = valid_directory(params, argname, value, force=force,
-                              forced_dir=self.recipe.inputdir)
-        cond, directory, emsgs = out
+        directory = valid_directory(params, self.indexdb, argname, value,
+                                    kind=self.recipe.outputdir, force=force,
+                                    forced_dir=self.recipe.inputdir)
         # if we have found directory return directory
-        if cond:
-            return directory
-        else:
-            # get input dir
-            # noinspection PyProtectedMember
-            input_dir = self.recipe.get_input_dir()
-            # get listing message
-            lmsgs = _print_list_msg(self.recipe, input_dir, dircond=True,
-                                    return_string=True)
-            # combine emsgs and lmsgs
-            wmsgs = []
-            for it in range(len(emsgs.keys)):
-                wmsgs += [textdict[emsgs.keys[it]].format(*emsgs.args[it])]
-            for lmsg in lmsgs:
-                wmsgs += ['\n' + lmsg]
-            # log messages
-            WLOG(params, 'error', wmsgs)
+        return directory
+
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
@@ -458,6 +448,7 @@ class _CheckDirectory(DrsAction):
         """
         # get drs parameters
         self.recipe = parser.recipe
+        self.indexdb = parser.indexdb
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.params, '__call__', __NAME__,
                          self.class_name)
@@ -3060,74 +3051,148 @@ def get_output_dir(params: ParamDict, directory: Union[str, None] = None,
 
 
 # define complex typing for valid directory return
-ValidDirType = Tuple[bool, Union[str, None], Union[TextEntry, str, None]]
+# ValidDirType = Tuple[bool, Union[str, None], Union[TextEntry, str, None]]
 
+# TODO: Got to here
 
-def valid_directory(params: ParamDict, argname: str, directory: Any,
+def valid_directory(params: ParamDict, indexdb: IndexDatabase,
+                    argname: str, directory: Any, kind: str,
                     force: bool = False,
-                    forced_dir: Union[str, None] = None) -> ValidDirType:
+                    forced_dir: Union[str, None] = None) -> str:
     """
     Find out whether we have a valid directory
 
     :param params: ParamDict, the parameter dictionary of constants
+    :param indexdb: IndexDatabase, the index database instance
     :param argname: str, the argumnet name "directory" came from (for error
                     logging)
     :param directory: Any, the value to test whether it is a valid directory)
-    :param input_dir_func: Function, the input directory function (must return
-                           a string)
+    :param kind: str, either raw, tmp, red (where the directory should be
+                 located unless force is True)
     :param force: bool, if True forces the input directory (via input_dir_func)
+    :param forced_dir: if set this is the forced directory to use
 
     :return: tuple: 1. whether directory is valid, 2. the full directory path
              (if passed) or None if failed, 3. the reason for failure (or None
              if passed)
     """
-    # get input directory
-    input_dir = os.path.realpath(get_input_dir(params, force=force,
-                                               forced_dir=forced_dir))
-    # ---------------------------------------------------------------------
-    # Make sure directory is a string
-    if type(directory) not in [str, np.str_]:
+    # set function name
+    func_name = display_func(params, 'valid_directory', __NAME__)
+
+    # -------------------------------------------------------------------------
+    # 1. check directory is a valid string
+    # -------------------------------------------------------------------------
+    try:
+        directory = str(directory)
+    except Exception as _:
         eargs = [argname, directory, type(directory)]
-        emsg = TextEntry('09-001-00003', args=eargs)
-        return False, None, emsg
-    # ---------------------------------------------------------------------
-    # step 1: check if directory is full absolute path
-    if os.path.exists(directory):
-        # log that we found the path (debug mode)
-        dmsg = TextEntry('90-001-00001', args=[argname, directory])
-        dmsg += TextEntry('')
-        WLOG(params, 'debug', dmsg, wrap=False)
-        # get the absolute path
-        abspath = os.path.abspath(directory)
-        # check whether abspath is consistent with input dir from recipe
-        #    definitions (this can happen e.g. if in reduced instead of tmp)
-        if not abspath.startswith(input_dir):
-            # log that directory found not consistent with input path
-            dargs = [input_dir]
-            WLOG(params, 'debug', TextEntry('90-001-00035', args=dargs))
-            pass
-        else:
-            return True, os.path.abspath(directory), None
-    # ---------------------------------------------------------------------
-    # step 2: check if directory is in input directory
-    input_dir = get_input_dir(params, force=force, forced_dir=forced_dir)
-    test_path = os.path.join(input_dir, directory)
-    if os.path.exists(test_path):
-        dmsg = TextEntry('90-001-00017', args=[argname, directory])
-        dmsg += TextEntry('')
-        WLOG(params, 'debug', dmsg, wrap=False)
-        return True, os.path.abspath(test_path), None
-    # ---------------------------------------------------------------------
-    # else deal with errors
-    eargs = [argname, directory, test_path]
-    emsg = TextEntry('09-001-00004', args=eargs)
-    # ---------------------------------------------------------------------
-    # return False (directory did not pass), no string, and the reason for the
-    #  failure
-    return False, None, emsg
+        WLOG(params, 'error', TextEntry('09-001-00003', args=eargs))
+
+    # clean up
+    directory = directory.strip()
+    # -------------------------------------------------------------------------
+    # 2. check for directory in database
+    # -------------------------------------------------------------------------
+    # deal with instrument == 'None'
+    if indexdb.instrument == 'None':
+        eargs = [argname, indexdb.name, func_name]
+        WLOG(params, 'error', TextEntry('09-001-00032', args=eargs))
+    elif indexdb.database is None:
+        # try to load database
+        indexdb.load_db()
+    # set up condition
+    condition = 'KIND=="{0}"'.format(kind)
+    # load directory names
+    directories = indexdb.database.unique('DIRECTORY', condition=condition)
+    # return if found
+    if directory in directories:
+        return directory
+    # -------------------------------------------------------------------------
+    # 3. update database (maybe we missed the directory)
+    # -------------------------------------------------------------------------
+    # deal with a forced path
+    if not force:
+        forced_dir = None
+    # update database with entries
+    indexdb.update_entries(kind=kind, force_dir=forced_dir)
+    # load directory names
+    directories = indexdb.database.unique('DIRECTORY', condition=condition)
+    # return if found
+    if directory in directories:
+        return directory
+    # -------------------------------------------------------------------------
+    # 4. directory is not correct - raise error
+    # -------------------------------------------------------------------------
+    abspath, _, _ = indexdb.deal_with_filename(kind=kind, force_dir=forced_dir)
+    eargs = [argname, directory, str(abspath)]
+    WLOG(params, 'error', TextEntry('09-001-00004', args=eargs))
+
+# def valid_directory1(params: ParamDict, argname: str, directory: Any,
+#                      force: bool = False,
+#                      forced_dir: Union[str, None] = None) -> ValidDirType:
+#     """
+#     Find out whether we have a valid directory
+#
+#     :param params: ParamDict, the parameter dictionary of constants
+#     :param argname: str, the argumnet name "directory" came from (for error
+#                     logging)
+#     :param directory: Any, the value to test whether it is a valid directory)
+#     :param input_dir_func: Function, the input directory function (must return
+#                            a string)
+#     :param force: bool, if True forces the input directory (via input_dir_func)
+#
+#     :return: tuple: 1. whether directory is valid, 2. the full directory path
+#              (if passed) or None if failed, 3. the reason for failure (or None
+#              if passed)
+#     """
+#     # get input directory
+#     input_dir = os.path.realpath(get_input_dir(params, force=force,
+#                                                forced_dir=forced_dir))
+#     # ---------------------------------------------------------------------
+#     # Make sure directory is a string
+#     if type(directory) not in [str, np.str_]:
+#         eargs = [argname, directory, type(directory)]
+#         emsg = TextEntry('09-001-00003', args=eargs)
+#         return False, None, emsg
+#     # ---------------------------------------------------------------------
+#     # step 1: check if directory is full absolute path
+#     if os.path.exists(directory):
+#         # log that we found the path (debug mode)
+#         dmsg = TextEntry('90-001-00001', args=[argname, directory])
+#         dmsg += TextEntry('')
+#         WLOG(params, 'debug', dmsg, wrap=False)
+#         # get the absolute path
+#         abspath = os.path.abspath(directory)
+#         # check whether abspath is consistent with input dir from recipe
+#         #    definitions (this can happen e.g. if in reduced instead of tmp)
+#         if not abspath.startswith(input_dir):
+#             # log that directory found not consistent with input path
+#             dargs = [input_dir]
+#             WLOG(params, 'debug', TextEntry('90-001-00035', args=dargs))
+#             pass
+#         else:
+#             return True, os.path.abspath(directory), None
+#     # ---------------------------------------------------------------------
+#     # step 2: check if directory is in input directory
+#     input_dir = get_input_dir(params, force=force, forced_dir=forced_dir)
+#     test_path = os.path.join(input_dir, directory)
+#     if os.path.exists(test_path):
+#         dmsg = TextEntry('90-001-00017', args=[argname, directory])
+#         dmsg += TextEntry('')
+#         WLOG(params, 'debug', dmsg, wrap=False)
+#         return True, os.path.abspath(test_path), None
+#     # ---------------------------------------------------------------------
+#     # else deal with errors
+#     eargs = [argname, directory, test_path]
+#     emsg = TextEntry('09-001-00004', args=eargs)
+#     # ---------------------------------------------------------------------
+#     # return False (directory did not pass), no string, and the reason for the
+#     #  failure
+#     return False, None, emsg
 
 
 # define complex return for valid_file
+
 ValidFileType = Tuple[bool, Union[List[str], None],
                       Union[List[DrsInputFile], None], Union[TextEntry, None]]
 
