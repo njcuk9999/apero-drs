@@ -157,9 +157,9 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
         _remove_absonpy_files(params, params['DRS_TELLU_DB'], 'tellu_save1_')
         # write to npy file
         abso_npy.data = abso
-        abso_npy.write_file()
+        abso_npy.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
         abso1_npy.data = abso1
-        abso1_npy.write_file()
+        abso1_npy.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
     # ----------------------------------------------------------------------
     # use abso1 (water/others exponent) to create a mask for abso
     # ----------------------------------------------------------------------
@@ -1030,7 +1030,8 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     # log that we are saving rotated image
     WLOG(params, '', TextEntry('40-019-00023', args=[corrfile.filename]))
     # write image to file
-    corrfile.write_multi(data_list=[trans_table], datatype_list=['table'])
+    corrfile.write_multi(data_list=[trans_table], datatype_list=['table'],
+                         kind=recipe.outputdir, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(corrfile)
     # ------------------------------------------------------------------
@@ -1060,7 +1061,7 @@ def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
     wargs = ['wave', sc1dwfile.filename]
     WLOG(params, '', TextEntry('40-019-00024', args=wargs))
     # write image to file
-    sc1dwfile.write_file()
+    sc1dwfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(sc1dwfile)
     # ------------------------------------------------------------------
@@ -1083,7 +1084,7 @@ def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
     wargs = ['velocity', sc1dvfile.filename]
     WLOG(params, '', TextEntry('40-019-00024', args=wargs))
     # write image to file
-    sc1dvfile.write_file()
+    sc1dvfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(sc1dvfile)
 
@@ -1105,7 +1106,7 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     # log that we are saving recon e2ds file
     WLOG(params, '', TextEntry('40-019-00025', args=[reconfile.filename]))
     # write image to file
-    reconfile.write_file()
+    reconfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(reconfile)
     # ------------------------------------------------------------------
@@ -1128,7 +1129,7 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     wargs = ['wave', rc1dwfile.filename]
     WLOG(params, '', TextEntry('40-019-00026', args=wargs))
     # write image to file
-    rc1dwfile.write_file()
+    rc1dwfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(rc1dwfile)
     # ------------------------------------------------------------------
@@ -1151,7 +1152,7 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     wargs = ['velocity', rc1dvfile.filename]
     WLOG(params, '', TextEntry('40-019-00026', args=wargs))
     # write image to file
-    rc1dvfile.write_file()
+    rc1dvfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(rc1dvfile)
     # ------------------------------------------------------------------

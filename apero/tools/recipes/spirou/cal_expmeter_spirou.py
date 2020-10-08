@@ -19,7 +19,7 @@ from apero.core import math as mp
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
-from apero.core.utils import drs_database
+from apero.core.core import drs_database
 from apero.science.calib import shape
 from apero.science.calib import wave
 from apero.science import telluric
@@ -54,7 +54,7 @@ exposuremeter = drs_dev.TmpRecipe()
 exposuremeter.name = __NAME__
 exposuremeter.shortname = 'EXPMTR'
 exposuremeter.instrument = __INSTRUMENT__
-exposuremeter.outputdir = 'reduced'
+exposuremeter.outputdir = 'red'
 exposuremeter.inputdir = 'tmp'
 exposuremeter.inputtype = 'tmp'
 exposuremeter.extension = 'fits'
@@ -338,7 +338,7 @@ def __main__(recipe, params):
     out_pp_file.data = maskpp
     # save to file
     WLOG(params, '', 'Saving pp file: {0}'.format(out_pp_file.filename))
-    out_pp_file.write_file()
+    out_pp_file.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
 
     # ----------------------------------------------------------------------
     # write raw out file
@@ -358,7 +358,7 @@ def __main__(recipe, params):
     out_raw_file.data = np.array(maskraw).astype(int)
     # save to file
     WLOG(params, '', 'Saving raw file: {0}'.format(out_raw_file.filename))
-    out_raw_file.write_file()
+    out_raw_file.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
 
     # ----------------------------------------------------------------------
     # End of main code

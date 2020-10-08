@@ -17,7 +17,7 @@ from pandastable import dialogs
 from apero.base import base
 from apero.core import constants
 from apero.base import drs_db
-from apero.tools.module.database import create_databases
+from apero.tools.module.database import manage_databases
 
 # =============================================================================
 # Define variables
@@ -116,40 +116,40 @@ class DatabaseTable(Table):
         :return:
         """
         defaultactions = {
-                        "Copy" : lambda: self.copy(rows, cols),
-                        "Undo" : lambda: self.undo(),
-                        #"Paste" : lambda: self.paste(rows, cols),
-                        "Fill Down" : lambda: self.fillDown(rows, cols),
-                        #"Fill Right" : lambda: self.fillAcross(cols, rows),
-                        "Add Row(s)" : lambda: self.addRows(),
-                        #"Delete Row(s)" : lambda: self.deleteRow(),
-                        "Add Column(s)" : lambda: self.addColumn(),
-                        "Delete Column(s)" : lambda: self.deleteColumn(),
-                        "Clear Data" : lambda: self.deleteCells(rows, cols),
-                        "Select All" : self.selectAll,
-                        #"Auto Fit Columns" : self.autoResizeColumns,
-                        "Table Info" : self.showInfo,
-                        "Set Color" : self.setRowColors,
-                        "Show as Text" : self.showasText,
-                        "Filter Rows" : self.queryBar,
-                        "New": self.new,
-                        "Open": self.load,
-                        "Save": self.save,
-                        "Save As": self.saveAs,
-                        "Import Text/CSV": lambda: self.importCSV(dialog=True),
-                        "Export": self.doExport,
-                        "Plot Selected" : self.plotSelected,
-                        "Hide plot" : self.hidePlot,
-                        "Show plot" : self.showPlot,
-                        "Preferences" : self.showPreferences,
-                        "Table to Text" : self.showasText,
-                        "Clean Data" : self.cleanData,
-                        "Clear Formatting" : self.clearFormatting,
-                        "Undo Last Change": self.undo,
-                        "Copy Table": self.copyTable,
-                        "Find/Replace": self.findText}
+            "Copy": lambda: self.copy(rows, cols),
+            "Undo": lambda: self.undo(),
+            # "Paste" : lambda: self.paste(rows, cols),
+            "Fill Down": lambda: self.fillDown(rows, cols),
+            # "Fill Right" : lambda: self.fillAcross(cols, rows),
+            "Add Row(s)": lambda: self.addRows(),
+            # "Delete Row(s)" : lambda: self.deleteRow(),
+            "Add Column(s)": lambda: self.addColumn(),
+            "Delete Column(s)": lambda: self.deleteColumn(),
+            "Clear Data": lambda: self.deleteCells(rows, cols),
+            "Select All": self.selectAll,
+            # "Auto Fit Columns" : self.autoResizeColumns,
+            "Table Info": self.showInfo,
+            "Set Color": self.setRowColors,
+            "Show as Text": self.showasText,
+            "Filter Rows": self.queryBar,
+            "New": self.new,
+            "Open": self.load,
+            "Save": self.save,
+            "Save As": self.saveAs,
+            "Import Text/CSV": lambda: self.importCSV(dialog=True),
+            "Export": self.doExport,
+            "Plot Selected": self.plotSelected,
+            "Hide plot": self.hidePlot,
+            "Show plot": self.showPlot,
+            "Preferences": self.showPreferences,
+            "Table to Text": self.showasText,
+            "Clean Data": self.cleanData,
+            "Clear Formatting": self.clearFormatting,
+            "Undo Last Change": self.undo,
+            "Copy Table": self.copyTable,
+            "Find/Replace": self.findText}
 
-        main = ["Copy", "Undo", "Fill Down", #"Fill Right",
+        main = ["Copy", "Undo", "Fill Down",  # "Fill Right",
                 "Clear Data", "Set Color"]
         general = ["Select All", "Filter Rows",
                    "Show as Text", "Table Info", "Preferences"]
@@ -159,29 +159,37 @@ class DatabaseTable(Table):
             functions = self.columnactions[fieldtype]
             for f in list(functions.keys()):
                 func = getattr(self, functions[f])
-                popupmenu.add_command(label=f, command= lambda : func(row,col))
+                popupmenu.add_command(label=f, command=lambda: func(row, col))
             return
 
-        popupmenu = tk.Menu(self, tearoff = 0)
-        def popupFocusOut(event):
+        popupmenu = tk.Menu(self, tearoff=0)
+
+        def popupFocusOut(_event):
+            _ = _event
             popupmenu.unpost()
 
-        if outside == None:
-            #if outside table, just show general items
+        if outside is None:
+            # if outside table, just show general items
             row = self.get_row_clicked(event)
             col = self.get_col_clicked(event)
             coltype = self.model.getColumnType(col)
+
             def add_defaultcommands():
                 """now add general actions for all cells"""
-                for action in main:
-                    if action == 'Fill Down' and (rows == None or len(rows) <= 1):
+                for _action in main:
+                    cond1 = action == 'Fill Down'
+                    cond2 = (rows is None or len(rows) <= 1)
+                    cond3 = action == 'Fill Right'
+                    cond4 = (cols is None or len(cols) <= 1)
+                    if cond1 and cond2:
                         continue
-                    if action == 'Fill Right' and (cols == None or len(cols) <= 1):
+                    if cond3 and cond4:
                         continue
                     if action == 'Undo' and self.prevdf is None:
                         continue
                     else:
-                        popupmenu.add_command(label=action, command=defaultactions[action])
+                        popupmenu.add_command(label=action,
+                                              command=defaultactions[action])
                 return
 
             if coltype in self.columnactions:
@@ -205,6 +213,7 @@ class DatabaseTable(Table):
         """Callback for cell entry"""
         super().handleCellEntry(row, col)
         self.table_changed = True
+
 
 class DatabaseExplorer(tk.Frame):
 
@@ -231,6 +240,13 @@ class DatabaseExplorer(tk.Frame):
         self.main.title('APERO Database Explorer')
         # deal with window closes
         self.main.protocol('WM_DELETE_WINDOW', self.on_exit)
+        # define frames and tk objects
+        self.selector_frame = None
+        self.database_option = None
+        self.table_frame = None
+        self.table = None
+        self.menubar = None
+        self.askq = messagebox.askquestion
         # deal with changes to any table
         self.table_change = False
         # make database selector frame
@@ -285,6 +301,8 @@ class DatabaseExplorer(tk.Frame):
         self.table.show()
 
     def change_table(self, *args, reload=False):
+        # do not use args
+        _ = args
         # do not ask if no changes were made
         if self.table.table_changed:
             self.table_change = True
@@ -361,53 +379,53 @@ class DatabaseExplorer(tk.Frame):
 
         # modified from Table.core populMenu
         defaultactions = {
-                        "Undo" : lambda: self.table.undo(),
-                        #"Fill Right" : lambda: self.fillAcross(cols, rows),
-                        "Add Row(s)" : lambda: self.table.addRows(),
-                        #"Delete Row(s)" : lambda: self.deleteRow(),
-                        "Add Column(s)" : lambda: self.table.addColumn(),
-                        "Delete Column(s)" : lambda: self.table.deleteColumn(),
-                        "Select All" : self.table.selectAll,
-                        #"Auto Fit Columns" : self.autoResizeColumns,
-                        "Table Info" : self.table.showInfo,
-                        "Set Color" : self.table.setRowColors,
-                        "Show as Text" : self.table.showasText,
-                        "Filter Rows" : self.table.queryBar,
-                        "New": self.table.new,
-                        "Open": self.table.load,
-                        "Save": self.table.save,
-                        "Save As": self.table.saveAs,
-                        "Import Text/CSV": lambda: self.table.importCSV(dialog=True),
-                        "Export": self.table.doExport,
-                        "Plot Selected" : self.table.plotSelected,
-                        "Hide plot" : self.table.hidePlot,
-                        "Show plot" : self.table.showPlot,
-                        "Preferences" : self.table.showPreferences,
-                        "Table to Text" : self.table.showasText,
-                        "Clean Data" : self.table.cleanData,
-                        "Clear Formatting" : self.table.clearFormatting,
-                        "Undo Last Change": self.table.undo,
-                        "Copy Table": self.table.copyTable,
-                        "Find/Replace": self.table.findText,
-                        "Refresh from Database": self.refresh_database,
-                        "Save to Database": self.update_database}
+            "Undo": lambda: self.table.undo(),
+            # "Fill Right" : lambda: self.fillAcross(cols, rows),
+            "Add Row(s)": lambda: self.table.addRows(),
+            # "Delete Row(s)" : lambda: self.deleteRow(),
+            "Add Column(s)": lambda: self.table.addColumn(),
+            "Delete Column(s)": lambda: self.table.deleteColumn(),
+            "Select All": self.table.selectAll,
+            # "Auto Fit Columns" : self.autoResizeColumns,
+            "Table Info": self.table.showInfo,
+            "Set Color": self.table.setRowColors,
+            "Show as Text": self.table.showasText,
+            "Filter Rows": self.table.queryBar,
+            "New": self.table.new,
+            "Open": self.table.load,
+            "Save": self.table.save,
+            "Save As": self.table.saveAs,
+            "Import Text/CSV": lambda: self.table.importCSV(dialog=True),
+            "Export": self.table.doExport,
+            "Plot Selected": self.table.plotSelected,
+            "Hide plot": self.table.hidePlot,
+            "Show plot": self.table.showPlot,
+            "Preferences": self.table.showPreferences,
+            "Table to Text": self.table.showasText,
+            "Clean Data": self.table.cleanData,
+            "Clear Formatting": self.table.clearFormatting,
+            "Undo Last Change": self.table.undo,
+            "Copy Table": self.table.copyTable,
+            "Find/Replace": self.table.findText,
+            "Refresh from Database": self.refresh_database,
+            "Save to Database": self.update_database}
 
-        filecommands = ['Open','Import Text/CSV','Save','Save As','Export',
+        filecommands = ['Open', 'Import Text/CSV', 'Save', 'Save As', 'Export',
                         'Preferences']
-        editcommands = ['Undo Last Change','Copy Table','Find/Replace',
+        editcommands = ['Undo Last Change', 'Copy Table', 'Find/Replace',
                         'Filter Rows', 'Add Row(s)', 'Add Column(s)',
                         'Select All']
-        plotcommands = ['Plot Selected','Hide plot','Show plot']
+        # plotcommands = ['Plot Selected', 'Hide plot', 'Show plot']
         tablecommands = ['Refresh from Database', 'Save to Database',
-                         'Table to Text','Clean Data', 'Clear Formatting',
+                         'Table to Text', 'Clean Data', 'Clear Formatting',
                          'Table Info']
 
         # top level menu bar
         self.menubar = tk.Menu(self.main)
 
         def createSubMenu(parent, label, commands):
-            menu = tk.Menu(parent, tearoff = 0)
-            self.menubar.add_cascade(label=label,menu=menu)
+            menu = tk.Menu(parent, tearoff=0)
+            self.menubar.add_cascade(label=label, menu=menu)
             for action in commands:
                 menu.add_command(label=action, command=defaultactions[action])
             return menu
@@ -423,7 +441,7 @@ class DatabaseExplorer(tk.Frame):
         title = 'Update ALL SQL database(s)?'
         message = ('Are you sure you want to commit changes '
                    'to database (This is permanent)?')
-        msgbox = messagebox.askquestion(title, message, icon='warning')
+        msgbox = self.askq(title, message, icon='warning')
         # return a bool
         if msgbox == 'yes':
             return True
@@ -435,7 +453,7 @@ class DatabaseExplorer(tk.Frame):
         title = 'Refresh ALL SQL database(s)?'
         message = ('There are unsaved changes are you sure you want to refresh '
                    'all databases (This is permanent)?')
-        msgbox = messagebox.askquestion(title, message, icon='warning')
+        msgbox = self.askq(title, message, icon='warning')
         # return a bool
         if msgbox == 'yes':
             return True
@@ -449,7 +467,7 @@ class DatabaseExplorer(tk.Frame):
             title = 'Exit without updating database?'
             message = ('Are you sure you want to exit without committing '
                        'changes to the SQL database?')
-            msgbox = messagebox.askquestion(title, message, icon='warning')
+            msgbox = self.askq(title, message, icon='warning')
             # only exit if yes
             if msgbox == 'yes':
                 self.main.destroy()
@@ -464,18 +482,18 @@ if __name__ == "__main__":
 
     # get params
     # TODO: get instrument from args
-    params = constants.load('SPIROU')
+    _params = constants.load('SPIROU')
     # TODO: remove - for tests only
-    params.set('CALIB_DB_NAME', value='calib.db')
-    params.set('TELLU_DB_NAME', value='tellu.db')
+    _params.set('CALIB_DB_NAME', value='calib.db')
+    _params.set('TELLU_DB_NAME', value='tellu.db')
     # get database paths
-    paths = create_databases.list_databases(params)
+    _paths = manage_databases.list_databases(_params)
     # push into database holder
-    databases = dict()
-    for key in paths:
-        databases[key] = DatabaseHolder(key, path=paths[key])
+    _databases = dict()
+    for _key in _paths:
+        _databases[_key] = DatabaseHolder(_key, path=_paths[_key])
     # construct app
-    app = DatabaseExplorer(databases=databases)
+    app = DatabaseExplorer(databases=_databases)
     # launch the app
     app.mainloop()
 

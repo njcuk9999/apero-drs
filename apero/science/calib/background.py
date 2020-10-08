@@ -336,7 +336,8 @@ def debug_file(recipe, params, infile, dlist):
     # print progress: saving file
     WLOG(params, '', TextEntry('40-013-00025', args=debug_back.filename))
     # write multiple to file
-    debug_back.write_multi(data_list=dlist[1:])
+    debug_back.write_multi(kind=recipe.outputdir, data_list=dlist[1:],
+                           runstring=recipe.runstring)
 
 
 # =============================================================================

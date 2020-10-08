@@ -24,7 +24,7 @@ from apero import lang
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_data
 from apero.core.utils import drs_startup
-from apero.core.utils import drs_database
+from apero.core.core import drs_database
 from apero.io import drs_path
 from apero.io import drs_fits
 from apero.science.calib import shape
@@ -165,7 +165,8 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
             wargs = [orderpsfile.filename]
             WLOG(params, '', TextEntry('40-013-00024', args=wargs))
             # save for use later (as .npy)
-            orderpsfile.write_file()
+            orderpsfile.write_file(kind=recipe.outputdir,
+                                   runstring=recipe.runstring)
         # store in storage dictionary
         orderprofiles[fiber] = orderp
         orderprofilefiles[fiber] = orderpfilename
@@ -1310,7 +1311,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     wargs = [e2dsfile.filename]
     WLOG(params, '', TextEntry('40-016-00005', args=wargs))
     # write image to file
-    e2dsfile.write_file()
+    e2dsfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsfile)
     # ----------------------------------------------------------------------
@@ -1334,7 +1335,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     wargs = [e2dsfffile.filename]
     WLOG(params, '', TextEntry('40-016-00006', args=wargs))
     # write image to file
-    e2dsfffile.write_file()
+    e2dsfffile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsfffile)
     # ----------------------------------------------------------------------
@@ -1356,7 +1357,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     wargs = [e2dsllfile.filename]
     WLOG(params, '', TextEntry('40-016-00007', args=wargs))
     # write image to file
-    e2dsllfile.write_file()
+    e2dsllfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsllfile)
     # ----------------------------------------------------------------------
@@ -1382,7 +1383,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     wargs = ['wave', s1dwfile.filename]
     WLOG(params, '', TextEntry('40-016-00010', args=wargs))
     # write image to file
-    s1dwfile.write_file()
+    s1dwfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(s1dwfile)
     # ----------------------------------------------------------------------
@@ -1408,7 +1409,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     wargs = ['velocity', s1dvfile.filename]
     WLOG(params, '', TextEntry('40-016-00010', args=wargs))
     # write image to file
-    s1dvfile.write_file()
+    s1dvfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(s1dvfile)
     # ----------------------------------------------------------------------
@@ -1502,7 +1503,7 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     wargs = [e2dsfile.filename]
     WLOG(params, '', TextEntry('40-016-00005', args=wargs))
     # write image to file
-    e2dsfile.write_file()
+    e2dsfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsfile)
     # ----------------------------------------------------------------------
@@ -1526,7 +1527,7 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     wargs = [e2dsfffile.filename]
     WLOG(params, '', TextEntry('40-016-00006', args=wargs))
     # write image to file
-    e2dsfffile.write_file()
+    e2dsfffile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsfffile)
     # ----------------------------------------------------------------------
@@ -1689,7 +1690,7 @@ def write_leak_master(params, recipe, rawfiles, medcubes, qc_params, props):
         wargs = [fiber, outfile.filename]
         WLOG(params, '', TextEntry('40-016-00025', args=wargs))
         # write image to file
-        outfile.write_file()
+        outfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(outfile)
         # update med cubes (as it was shallow copied this is just for sanity
@@ -1733,7 +1734,8 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
             wargs = [fiber, extname, extfile.filename]
             WLOG(params, '', TextEntry('40-016-00030', args=wargs))
             # write image to file
-            extfile.write_file()
+            extfile.write_file(kind=recipe.outputdir,
+                               runstring=recipe.runstring)
             # add back to outputs (used for s1d)
             outputs[fiber][extname] = extfile
             # add to output files (for indexing)
@@ -1773,7 +1775,7 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
         wargs = [fiber, 'wave', s1dwfile.filename]
         WLOG(params, '', TextEntry('40-016-00031', args=wargs))
         # write image to file
-        s1dwfile.write_file()
+        s1dwfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(s1dwfile)
         # ------------------------------------------------------------------
@@ -1794,7 +1796,7 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
         wargs = [fiber, 'velocity', s1dvfile.filename]
         WLOG(params, '', TextEntry('40-016-00031', args=wargs))
         # write image to file
-        s1dvfile.write_file()
+        s1dvfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(s1dvfile)
         # ------------------------------------------------------------------

@@ -48,9 +48,9 @@ cal_update_berv = drs_dev.TmpRecipe()
 cal_update_berv.name = __NAME__
 cal_update_berv.shortname = 'UBERV'
 cal_update_berv.instrument = __INSTRUMENT__
-cal_update_berv.outputdir = 'reduced'
-cal_update_berv.inputdir = 'reduced'
-cal_update_berv.inputtype = 'reduced'
+cal_update_berv.outputdir = 'red'
+cal_update_berv.inputdir = 'red'
+cal_update_berv.inputtype = 'red'
 cal_update_berv.extension = 'fits'
 cal_update_berv.description = 'Updates all BERV parameters'
 cal_update_berv.kind = 'misc'
@@ -262,7 +262,8 @@ def __main__(recipe, params):
                                        allkeys=True)
             extract.add_berv_keys(params, infile1, bprops)
             # write data to file
-            infile1.write_file()
+            infile1.write_file(kind=recipe.outputdir,
+                               runstring=recipe.runstring)
 
     # ----------------------------------------------------------------------
     # End of main code

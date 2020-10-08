@@ -1396,7 +1396,8 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     wargs = [fiber, ccf_file.filename]
     WLOG(params, '', TextEntry('40-020-00006', args=wargs))
     # write multi
-    ccf_file.write_multi(data_list=[table2], datatype_list=['table'])
+    ccf_file.write_multi(data_list=[table2], datatype_list=['table'],
+                         kind=recipe.outputdir, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(ccf_file)
 

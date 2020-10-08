@@ -19,9 +19,8 @@ from apero.core import constants
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
-from apero.core.utils import drs_database
-from apero.io import drs_fits
-from apero.tools.module.database import create_databases
+from apero.core.core import drs_database
+from apero.tools.module.database import manage_databases
 
 # =============================================================================
 # Define variables
@@ -117,18 +116,18 @@ def __main__(recipe, params):
         file_set_name = None
     # ----------------------------------------------------------------------
     # get a list of all database paths
-    db_list = create_databases.list_databases(params)
+    db_list = manage_databases.list_databases(params)
     # backup database
     dbmanager.database.backup()
     # reset database
     if db_type == 'calibration':
         # reset database
-        create_databases.create_calibration_database(params, pconst, db_list)
+        manage_databases.create_calibration_database(params, pconst, db_list)
         # reload the calibration database
         dbmanager = drs_database.CalibrationDatabase(params)
         dbmanager.load_db()
     elif db_type == 'telluric':
-        create_databases.create_telluric_database(pconst, db_list)
+        manage_databases.create_telluric_database(pconst, db_list)
         # reload the telluric database
         dbmanager = drs_database.CalibrationDatabase(params)
         dbmanager.load_db()

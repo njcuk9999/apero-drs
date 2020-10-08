@@ -25,7 +25,7 @@ from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_data
-from apero.core.utils import drs_database
+from apero.core.core import drs_database
 from apero.io import drs_path
 from apero.io import drs_fits
 from apero.io import drs_image
@@ -1411,7 +1411,8 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     # log that we are saving dxmap to file
     WLOG(params, '', TextEntry('40-014-00026', args=[outfile1.filename]))
     # write image to file
-    outfile1.write_multi(data_list=[fp_table])
+    outfile1.write_multi(data_list=[fp_table], kind=recipe.outputdir,
+                         runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(outfile1)
     # ----------------------------------------------------------------------
@@ -1430,7 +1431,8 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     # log that we are saving dymap to file
     WLOG(params, '', TextEntry('40-014-00027', args=[outfile2.filename]))
     # write image to file
-    outfile2.write_multi(data_list=[fp_table])
+    outfile2.write_multi(data_list=[fp_table], kind=recipe.outputdir,
+                         runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(outfile2)
     # ----------------------------------------------------------------------
@@ -1449,7 +1451,8 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     # log that we are saving master_fp to file
     WLOG(params, '', TextEntry('40-014-00028', args=[outfile3.filename]))
     # write image to file
-    outfile3.write_multi(data_list=[fp_table])
+    outfile3.write_multi(data_list=[fp_table], kind=recipe.outputdir,
+                         runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(outfile3)
     # ----------------------------------------------------------------------
@@ -1466,7 +1469,8 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         debugfile0.copy_hdict(outfile1)
         debugfile0.add_hkey('KW_OUTPUT', value=debugfile0.name)
         debugfile0.data = dxmap0
-        debugfile0.write_multi(data_list=[fp_table])
+        debugfile0.write_multi(data_list=[fp_table], kind=recipe.outputdir,
+                               runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(debugfile0)
         # ------------------------------------------------------------------
@@ -1478,7 +1482,8 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         debugfile1.copy_hdict(outfile1)
         debugfile1.add_hkey('KW_OUTPUT', value=debugfile1.name)
         debugfile1.data = fpimage
-        debugfile1.write_multi(data_list=[fp_table])
+        debugfile1.write_multi(data_list=[fp_table], kind=recipe.outputdir,
+                               runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(debugfile1)
         # out file
@@ -1487,7 +1492,8 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         debugfile2.copy_hdict(outfile1)
         debugfile2.add_hkey('KW_OUTPUT', value=debugfile2.name)
         debugfile2.data = fpimage2
-        debugfile2.write_multi(data_list=[fp_table])
+        debugfile2.write_multi(data_list=[fp_table], kind=recipe.outputdir,
+                               runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(debugfile2)
         # ------------------------------------------------------------------
@@ -1519,7 +1525,8 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
             debugfile3.add_qckeys(qc_params)
             # add data
             debugfile3.data = hcimage
-            debugfile3.write_multi(data_list=[fp_table])
+            debugfile3.write_multi(data_list=[fp_table], kind=recipe.outputdir,
+                                   runstring=recipe.runstring)
             # add to output files (for indexing)
             recipe.add_output_file(debugfile3)
             if 'SHAPE_OUT_HC_FILE' in recipe.outputs:
@@ -1530,7 +1537,9 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
                 debugfile4.copy_hdict(debugfile3)
                 debugfile4.add_hkey('KW_OUTPUT', value=debugfile4.name)
                 debugfile4.data = hcimage2
-                debugfile4.write_multi(data_list=[fp_table])
+                debugfile4.write_multi(data_list=[fp_table],
+                                       kind=recipe.outputdir,
+                                       runstring=recipe.runstring)
                 # add to output files (for indexing)
                 recipe.add_output_file(debugfile4)
     # return output files (not debugs)
@@ -1690,7 +1699,7 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
     # log that we are saving dxmap to file
     WLOG(params, '', TextEntry('40-014-00037', args=[outfile.filename]))
     # write image to file
-    outfile.write_file()
+    outfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(outfile)
     # ----------------------------------------------------------------------
@@ -1706,7 +1715,7 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
         debugfile1.copy_hdict(outfile)
         debugfile1.add_hkey('KW_OUTPUT', value=debugfile1.name)
         debugfile1.data = image
-        debugfile1.write_file()
+        debugfile1.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(debugfile1)
         # out file
@@ -1716,7 +1725,7 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
         debugfile2.copy_hdict(outfile)
         debugfile2.add_hkey('KW_OUTPUT', value=debugfile2.name)
         debugfile2.data = image2
-        debugfile2.write_file()
+        debugfile2.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(debugfile2)
     # return outfile

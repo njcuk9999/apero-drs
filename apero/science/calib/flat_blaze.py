@@ -19,7 +19,7 @@ from apero import lang
 from apero.core import math as mp
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_startup
-from apero.core.utils import drs_database
+from apero.core.core import drs_database
 from apero.science.calib import general
 
 # =============================================================================
@@ -413,7 +413,7 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     WLOG(params, '',
          TextEntry('40-015-00003', args=[blazefile.filename]))
     # write image to file
-    blazefile.write_file()
+    blazefile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(blazefile)
     # --------------------------------------------------------------
@@ -435,7 +435,7 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     WLOG(params, '',
          TextEntry('40-015-00004', args=[flatfile.filename]))
     # write image to file
-    flatfile.write_file()
+    flatfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(flatfile)
     # --------------------------------------------------------------
@@ -457,7 +457,7 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     WLOG(params, '',
          TextEntry('40-015-00005', args=[e2dsllfile.filename]))
     # write image to file
-    e2dsllfile.write_file()
+    e2dsllfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsllfile)
     # return out file

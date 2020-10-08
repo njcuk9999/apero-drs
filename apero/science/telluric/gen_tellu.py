@@ -25,7 +25,7 @@ from apero import lang
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_data
-from apero.core.utils import drs_database
+from apero.core.core import drs_database
 from apero.io import drs_fits
 from apero.science.calib import flat_blaze
 
@@ -514,7 +514,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     orders = orders.ravel()[flatkeep]
     # ----------------------------------------------------------------------
     # load tapas in correct format
-    spl_others, spl_water = load_tapas_spl(params, header, database=database)
+    spl_others, spl_water = load_tapas_spl(params, recipe, header,
+                                           database=database)
     # ----------------------------------------------------------------------
     # load the snr from e2ds file
     snr = infile.get_hkey_1d('KW_EXT_SNR', nbo, dtype=float)
@@ -530,7 +531,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         qc_pass[0] = 0
         qc_params = [qc_names, qc_values, qc_logic, qc_pass]
         # return qc_exit_tellu_preclean
-        return qc_exit_tellu_preclean(params, image_e2ds, infile,
+        return qc_exit_tellu_preclean(params, recipe, image_e2ds, infile,
                                       wave_e2ds, qc_params, sky_model,
                                       database=database)
     else:
@@ -841,7 +842,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
 
         qc_params = [qc_names, qc_values, qc_logic, qc_pass]
         # return qc_exit_tellu_preclean
-        return qc_exit_tellu_preclean(params, image_e2ds, infile,
+        return qc_exit_tellu_preclean(params, recipe, image_e2ds, infile,
                                       wave_e2ds, qc_params, sky_model,
                                       database=database)
     # ----------------------------------------------------------------------
@@ -1106,7 +1107,7 @@ def get_abso_expo(params, wavemap, expo_others, expo_water, spl_others,
     return out_vector
 
 
-def qc_exit_tellu_preclean(params, image, infile, wavemap,
+def qc_exit_tellu_preclean(params, recipe, image, infile, wavemap,
                            qc_params, sky_model, database=None, **kwargs):
     """
     Provides an exit point for tellu_preclean via a quality control failure
@@ -1174,7 +1175,8 @@ def qc_exit_tellu_preclean(params, image, infile, wavemap,
     hdr_airmass = infile.get_hkey('KW_AIRMASS', dtype=float)
     # ----------------------------------------------------------------------
     # load tapas in correct format
-    spl_others, spl_water = load_tapas_spl(params, header, database=database)
+    spl_others, spl_water = load_tapas_spl(params, recipe, header,
+                                           database=database)
     # ----------------------------------------------------------------------
     # force expo values
     expo_others = float(hdr_airmass)
@@ -1364,7 +1366,8 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
     WLOG(params, '', TextEntry('40-019-00044', args=[tpclfile.filename]))
     # write to file
     tpclfile.data = dimages[0]
-    tpclfile.write_multi(data_list=dimages[1:])
+    tpclfile.write_multi(data_list=dimages[1:], kind=recipe.outputdir,
+                         runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(tpclfile)
     # ----------------------------------------------------------------------
@@ -1953,7 +1956,8 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, database=None,
         wargs = [out_tellu_conv.filename]
         WLOG(params, '', TextEntry('40-019-00002', args=wargs))
         # save
-        out_tellu_conv.write_file()
+        out_tellu_conv.write_file(kind=recipe.outputdir,
+                                  runstring=recipe.runstring)
         # ------------------------------------------------------------------
         # Move to telluDB and update telluDB
         # ------------------------------------------------------------------
@@ -1987,7 +1991,7 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, database=None,
     return tapas_props
 
 
-def load_tapas_spl(params, header, database=None):
+def load_tapas_spl(params, recipe, header, database=None):
     # get file definition
     tellu_tapas = drs_startup.get_file_definition('TELLU_TAPAS',
                                                   params['INSTRUMENT'],
@@ -2036,7 +2040,8 @@ def load_tapas_spl(params, header, database=None):
         WLOG(params, '', TextEntry('40-019-00047', args=[args]))
         # save to disk
         out_tellu_tapas.data = tmp_tapas
-        out_tellu_tapas.write_file()
+        out_tellu_tapas.write_file(kind=recipe.outputdir,
+                                   runstring=recipe.runstring)
         # ------------------------------------------------------------------
         # Move to telluDB and update telluDB
         # ------------------------------------------------------------------

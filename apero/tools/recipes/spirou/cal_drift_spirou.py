@@ -17,7 +17,7 @@ from apero.core import constants
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
-from apero.core.utils import drs_database
+from apero.core.core import drs_database
 from apero.io import drs_table
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave
@@ -54,9 +54,9 @@ cal_drift = drs_dev.TmpRecipe()
 cal_drift.name = __NAME__
 cal_drift.shortname = 'DRIFT'
 cal_drift.instrument = __INSTRUMENT__
-cal_drift.outputdir = 'reduced'
-cal_drift.inputdir = 'reduced'
-cal_drift.inputtype = 'reduced'
+cal_drift.outputdir = 'red'
+cal_drift.inputdir = 'red'
+cal_drift.inputtype = 'red'
 cal_drift.extension = 'fits'
 cal_drift.description = 'Calculates the drift in a set of FP_FP files'
 cal_drift.kind = 'misc'
@@ -215,7 +215,7 @@ def __main__(recipe, params):
                     emsg = 'Night = "{0}" is not a valid reduced sub-directory'
                     WLOG(params, 'error', emsg.format(night))
             # find files for this night (or None)
-            files = drs_file.find_files(params, recipe, kind='reduced',
+            files = drs_file.find_files(params, recipe, kind='red',
                                         night=night,
                                         filters=dict(KW_DPRTYPE=dprtype,
                                                      KW_OUTPUT=filetype,
