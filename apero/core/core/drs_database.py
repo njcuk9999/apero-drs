@@ -6,6 +6,10 @@ CODE DESCRIPTION HERE
 Created on 2020-08-2020-08-18 15:15
 
 @author: cook
+
+## import rules
+
+only from core.core, core.math, core.constants, apero.lang, apero.base
 """
 import numpy as np
 import pandas as pd
@@ -69,7 +73,7 @@ class DatabaseManager:
     """
     # define attribute types
     path: Union[Path, str, None]
-    database: Union[drs_db.Database, None]
+    database: drs_db.Database
 
     def __init__(self, params: ParamDict, check: bool = False):
         """
@@ -85,8 +89,9 @@ class DatabaseManager:
         _ = display_func(params, '__init__', __NAME__, self.classname)
         # save params for use throughout
         self.params = params
+        self.instrument = params['INSTRUMENT']
         # get pconst (for use throughout)
-        self.pconst = constants.pload(params['INSTRUMENT'])
+        self.pconst = constants.pload(self.instrument)
         # set name
         self.name = 'DatabaseManager'
         # check does nothing
@@ -110,6 +115,10 @@ class DatabaseManager:
         # set function
         func_name = display_func(self.params, 'set_path', __NAME__,
                                  self.classname)
+
+        # deal with no instrument (i.e. no database)
+        if self.instrument == 'None':
+            return
         # ---------------------------------------------------------------------
         # deal with directory
         # ---------------------------------------------------------------------
@@ -168,6 +177,9 @@ class DatabaseManager:
         _ = display_func(self.params, 'load_db', __NAME__, self.classname)
         # if we already have database do nothing
         if (self.database is not None) and (not check):
+            return
+        # deal with no instrument
+        if self.instrument == 'None':
             return
         # load database only if path is set
         if self.path is not None:
@@ -242,6 +254,9 @@ class CalibrationDatabase(DatabaseManager):
         # deal with no database
         if self.database is None:
             self.load_db()
+        # deal with no instrument
+        if self.instrument == 'None':
+            return
         # ------------------------------------------------------------------
         # get header and hdict
         hdict, header = _get_hdict(self.params, self.name, drsfile)
@@ -310,6 +325,9 @@ class CalibrationDatabase(DatabaseManager):
         # set function
         _ = display_func(self.params, 'get_calib_entry', __NAME__,
                          self.classname)
+        # deal with no instrument set
+        if self.instrument == 'None':
+            return None
         # set up kwargs from database query
         sql = dict()
         # set up sql kwargs
@@ -424,6 +442,9 @@ class CalibrationDatabase(DatabaseManager):
         # set function
         func_name = display_func(self.params, 'get_calib_file', __NAME__,
                                  self.classname)
+        # deal with no instrument set
+        if self.instrument == 'None':
+            return None
         # deal with no database
         if self.database is None:
             self.load_db()
@@ -552,6 +573,9 @@ class TelluricDatabase(DatabaseManager):
         # set function
         _ = display_func(self.params, 'add_tellu_file', __NAME__,
                          self.classname)
+        # deal with no instrument set
+        if self.instrument == 'None':
+            return
         # deal with no database
         if self.database is None:
             self.load_db()
@@ -656,6 +680,9 @@ class TelluricDatabase(DatabaseManager):
         # set function
         _ = display_func(self.params, 'get_tellu_entry', __NAME__,
                          self.classname)
+        # deal with no instrument set
+        if self.instrument == 'None':
+            return None
         # set up kwargs from database query
         sql = dict()
         # set up sql kwargs
@@ -796,6 +823,9 @@ class TelluricDatabase(DatabaseManager):
         # set function
         func_name = display_func(self.params, 'get_calib_file', __NAME__,
                                  self.classname)
+        # deal with no instrument set
+        if self.instrument == 'None':
+            return None
         # deal with no database
         if self.database is None:
             self.load_db()
@@ -1098,6 +1128,8 @@ def _get_time(params: ParamDict, dbname: str,
 # Define index databases
 # =============================================================================
 class IndexDatabase(DatabaseManager):
+    database: drs_db.Database
+
     def __init__(self, params: ParamDict, check: bool = True):
         """
         Constructor of the Index Database class
@@ -1121,7 +1153,11 @@ class IndexDatabase(DatabaseManager):
 
     def add_entry(self, directory: str, filename: Union[Path, str], kind: str,
                   runstring: Union[str, None] = None,
-                  hkeys: Union[Dict[str, str], None] = None):
+                  hkeys: Union[Dict[str, str], None] = None,
+                  fullpath: Union[Path, str, None] = None,
+                  used: Union[int, None] = None,
+                  rawfix: Union[int, None] = None,
+                  force_dir: Union[str, None] = None):
         """
         Add an entry to the index database
 
@@ -1139,27 +1175,41 @@ class IndexDatabase(DatabaseManager):
                             of header keys is index - add any that are set to
                             here (see pseudo_constants.INDEX_HEADER_KEYS)
                             any that are not set here are set to 'None'
+
+        :param fullpath: str or None, if set means there is already a 'path'
+                         parameter
+        :param used: int or None, if set overrides the default "used" parameter
+        :param rawfix: int or None, if set overrides the default "rawfix"
+                       parameter
+        :param force_dir: str or None, if set overrides our "kind" path
+
         :return: None - adds entry to index database
         """
         # set function
         func_name = display_func(self.params, 'add_entry', __NAME__,
                                  self.classname)
+        # deal with no instrument set
+        if self.instrument == 'None':
+            return None
         # deal with no database loaded
         if self.database is None:
-            eargs = [self.name, func_name]
-            WLOG(self.params, 'error', TextEntry('00-002-00024', args=eargs))
+            self.load_db()
         # deal with filename/basename/path
-        filename, basename, path = _deal_with_filename(self.params, self.name,
-                                                       kind, directory,
-                                                       filename, func=func_name)
+        out = self.deal_with_filename(kind, directory, filename,
+                                      fullpath=fullpath, func=func_name,
+                                      force_dir=force_dir)
+        filename, basename, path = out
+
         # set used to 1
-        used = 1
+        if used is None:
+            used = 1
         # this is a flag to test whether raw data has been fixed (so we don't
         #   do it again when not required)
-        if kind == 'raw':
-            rawfix = 0
-        else:
-            rawfix = 1
+        if rawfix is not None:
+            if kind == 'raw':
+                rawfix = 0
+            else:
+                rawfix = 1
         # ------------------------------------------------------------------
         # get last modified time for file (need absolute path)
         last_modified = filename.stat().st_mtime
@@ -1248,10 +1298,12 @@ class IndexDatabase(DatabaseManager):
         # set function
         func_name = display_func(self.params, 'get_entries', __NAME__,
                                  self.classname)
+        # deal with no instrument set
+        if self.instrument == 'None':
+            return None
         # deal with no database loaded
         if self.database is None:
-            eargs = [self.name, func_name]
-            WLOG(self.params, 'error', TextEntry('00-002-00024', args=eargs))
+            self.load_db()
         # ------------------------------------------------------------------
         # set up kwargs from database query
         sql = dict()
@@ -1338,7 +1390,8 @@ class IndexDatabase(DatabaseManager):
     def update_entries(self, kind,
                        include_directories: Union[List[str], None] = None,
                        exclude_directories: Union[List[str], None] = None,
-                       filename: FileTypes = None, suffix: str = ''):
+                       filename: FileTypes = None, suffix: str = '',
+                       force_dir: Union[str, None] = None):
         """
         Update the index database for files of 'kind', deal with including
         and excluding directories for files with 'suffix'
@@ -1358,18 +1411,21 @@ class IndexDatabase(DatabaseManager):
                          include this filename or these filenames
         :param suffix: str, the suffix (i.e. extension of filenames) - filters
                        to only set these files
+        :param force_dir: str or None, if set overrides our "kind" path
 
         :return: None - updates the index database
         """
         # set function
         func_name = display_func(self.params, 'update_entries', __NAME__,
                                  self.classname)
+        # deal with no instrument set
+        if self.instrument == 'None':
+            return None
         # deal with no database loaded
         if self.database is None:
-            eargs = [self.name, func_name]
-            WLOG(self.params, 'error', TextEntry('00-002-00024', args=eargs))
+            self.load_db()
         # get the path for kind
-        path = _deal_with_filename(self.params, self.name, kind, None, None)
+        path = self.deal_with_filename(kind, None, None, force_dir=force_dir)
         # ---------------------------------------------------------------------
         # deal with a predefined file list (or single file)
         if filename is not None:
@@ -1419,10 +1475,12 @@ class IndexDatabase(DatabaseManager):
         # set function name
         func_name = display_func(self.params, 'update_objname', __NAME__,
                                  self.classname)
+        # deal with no instrument set
+        if self.instrument == 'None':
+            return None
         # deal with no database loaded
         if self.database is None:
-            eargs = [self.name, func_name]
-            WLOG(self.params, 'error', TextEntry('00-002-00024', args=eargs))
+            self.load_db()
         # get allowed header keys
         rkeys, rtypes = self.pconst.INDEX_HEADER_KEYS()
         # get columns
@@ -1463,9 +1521,48 @@ class IndexDatabase(DatabaseManager):
             self.database.set(columns, values, condition=condition)
 
 
+    def deal_with_filename(self, kind: str, directory: Union[str, None] = None,
+                           filename: Union[str, None] = None,
+                           fullpath: Union[str, None] = None,
+                           force_dir: Union[str, None] = None,
+                           func: Union[str, None] = None
+                           ) -> Union[str, Tuple[Path, str, str]]:
+        """
+        Wrapper around _deal_with_filename
+
+        Takes a filename (either str or Path) and a kind and directory and
+        checks that file exists and returns basename/filename/path in correct
+        format for database
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param name: str, the name of the database used in
+        :param kind: str, either 'raw', 'red', 'tmp', 'calib', 'tellu', 'asset'
+                 this determines the path of the file i.e.
+                 path/directory/filename (unless filename is an absolute
+                 path) - note in this case directory should still be
+                 filled correctly (for database)
+        :param directory: str, the sub-directory name (under the raw/reduced/
+                          tmp directory)
+        :param filename: str or Path, the filename to add (can be absolute file
+                         or basename, but must exist on disk)
+        :param fullpath: str or None, if set overrides all other path getting
+                         and is used for return
+        :param force_dir: str or None, if set overrides our "kind" path
+        :param func: str, the function name where this func was called
+                     (for error logging)
+        :return: if directory and filename are None returns just the path
+                 (based on kind, else returns a tuple, 1. the filename (Path),
+                 2. the basename and the path
+        """
+        return _deal_with_filename(self.params, self.name, kind, directory,
+                                   filename, fullpath, force_dir, func)
+
+
 def _deal_with_filename(params: ParamDict, name: str, kind: str,
                         directory: Union[str, None] = None,
                         filename: Union[str, None] = None,
+                        fullpath: Union[str, None] = None,
+                        force_dir: Union[str, None] = None,
                         func: Union[str, None] = None
                         ) -> Union[str, Tuple[Path, str, str]]:
     """
@@ -1475,15 +1572,18 @@ def _deal_with_filename(params: ParamDict, name: str, kind: str,
 
     :param params: ParamDict, the parameter dictionary of constants
     :param name: str, the name of the database used in
+    :param kind: str, either 'raw', 'red', 'tmp', 'calib', 'tellu', 'asset'
+             this determines the path of the file i.e.
+             path/directory/filename (unless filename is an absolute
+             path) - note in this case directory should still be
+             filled correctly (for database)
     :param directory: str, the sub-directory name (under the raw/reduced/
                       tmp directory)
     :param filename: str or Path, the filename to add (can be absolute file
                      or basename, but must exist on disk)
-    :param kind: str, either 'raw', 'red', 'tmp', 'calib', 'tellu', 'asset'
-                 this determines the path of the file i.e.
-                 path/directory/filename (unless filename is an absolute
-                 path) - note in this case directory should still be
-                 filled correctly (for database)
+    :param fullpath: str or None, if set overrides all other path getting and
+                     is used for return
+    :param force_dir: str or None, if set overrides our "kind" path
     :param func: str, the function name where this func was called (for error
                  logging)
     :return: if directory and filename are None returns just the path (based on
@@ -1496,9 +1596,12 @@ def _deal_with_filename(params: ParamDict, name: str, kind: str,
         func_name = display_func(params, '_deal_with_filename', __NAME__)
     else:
         func_name = str(func)
+
     # ------------------------------------------------------------------
     # deal with kind
-    if kind == 'raw':
+    if force_dir is not None:
+        path = str(force_dir)
+    elif kind == 'raw':
         path = params['DRS_DATA_RAW']
     elif kind == 'red':
         path = params['DRS_DATA_REDUC']
@@ -1516,6 +1619,13 @@ def _deal_with_filename(params: ParamDict, name: str, kind: str,
         WLOG(params, 'error', TextEntry('00-002-00022', args=eargs))
         raise DrsCodedException('00-002-00022', targs=eargs,
                                 func_name=func_name)
+    # deal with having full path
+    if fullpath is not None:
+        if isinstance(fullpath, str):
+            fullpath = Path(fullpath)
+        # return forced paths (from path input)
+        return fullpath, fullpath.name, path
+
     # deal with no directory and/or no filename (just want the path)
     if directory is None or filename is None:
         return path
