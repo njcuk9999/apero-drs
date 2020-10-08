@@ -14,8 +14,11 @@ Import rules:
     only from core.core.drs_log, core.io, core.math, core.constants,
     apero.lang, apero.base
 
-    not from core.io.drs_table, core.io.drs_fits
-
+    do not import from core.io.drs_table
+    do not import from core.io.drs_fits
+    do not import from core.core.drs_file
+    do not import from core.core.drs_argument
+    do not import from core.core.drs_database
 """
 import numpy as np
 import os

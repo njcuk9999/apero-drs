@@ -10,6 +10,10 @@ Created on 2019-03-21 at 14:28
 Import rules:
     only from core.core.drs_log, core.io, core.math, core.constants,
     apero.lang, apero.base
+
+    do not import from core.core.drs_file
+    do not import from core.core.drs_argument
+    do not import from core.core.drs_database
 """
 import numpy as np
 import warnings
