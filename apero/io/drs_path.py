@@ -14,6 +14,9 @@ Import rules:
     apero.lang, apero.base
 
     do not import from core.io.drs_image
+    do not import from core.core.drs_file
+    do not import from core.core.drs_argument
+    do not import from core.core.drs_database
 """
 import numpy as np
 from astropy import units as uu

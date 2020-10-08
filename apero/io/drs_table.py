@@ -12,6 +12,10 @@ Created on 2019-01-21 at 09:33
 Import rules:
     only from core.core.drs_log, core.io, core.math, core.constants,
     apero.lang, apero.base
+
+    do not import from core.core.drs_file
+    do not import from core.core.drs_argument
+    do not import from core.core.drs_database
 """
 from astropy.table import Column, Table, vstack
 from astropy.table import TableMergeError
