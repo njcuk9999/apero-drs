@@ -835,8 +835,8 @@ class DrsRecipe(object):
         # make sure if force is True we use it
         force = self.force_dirs[0] or force
         # return alised call
-        return drs_argument.get_input_dir(self.params, directory, force,
-                                          forced_dir=self.inputdir)
+        return drs_file.get_input_dir(self.params, directory, force,
+                                      forced_dir=self.inputdir)
 
     def get_output_dir(self, directory: Union[str, None] = None,
                        force: bool = False) -> Union[str, None]:
@@ -861,8 +861,8 @@ class DrsRecipe(object):
         # make sure if force is True we use it
         force = self.force_dirs[0] or force
         # return alised call
-        return drs_argument.get_output_dir(self.params, directory, force,
-                                           forced_dir=self.outputdir)
+        return drs_file.get_output_dir(self.params, directory, force,
+                                       forced_dir=self.outputdir)
 
     def copy(self, recipe: 'DrsRecipe'):
         """
