@@ -5158,6 +5158,113 @@ def get_mid_obs_time(params: ParamDict,
         WLOG(params, 'error', TextEntry('00-001-00030', args=eargs))
 
 
+def get_dir(params: ParamDict, dir_string: str, kind: str = 'input') -> str:
+    """
+    Get the directory based on "dir_string" (either RAW, TMP, REDUCED)
+    obtained via params
+
+    Note if dir_string is full path we do not use path from params
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param dir_string: str, either 'RAW', 'TMP' or 'REDUCED' (case insensitive)
+    :param kind: str, type of dir for logging (either 'input' or 'output')
+
+    :return: str, the directory path
+    """
+    # check if path has been set to an absolute path (that exists)
+    if os.path.exists(os.path.abspath(dir_string)):
+        return os.path.abspath(dir_string)
+    # get the input directory from recipe.inputdir keyword
+    if dir_string.upper() == 'RAW':
+        dirpath = params['DRS_DATA_RAW']
+    elif dir_string.upper() == 'TMP':
+        dirpath = params['DRS_DATA_WORKING']
+    elif dir_string.upper() == 'RED':
+        dirpath = params['DRS_DATA_REDUC']
+    # if not found produce error
+    else:
+        emsg = TextEntry('00-007-00002', args=[kind, dir_string])
+        WLOG(params, 'error', emsg)
+        dirpath = None
+    return dirpath
+
+
+def get_input_dir(params: ParamDict, directory: Union[str, None] = None,
+                  force: bool = False,
+                  forced_dir: Union[str, None] = str) -> Union[str, None]:
+    """
+    Get the input directory for this recipe based on what was set in
+    initialisation (construction)
+
+    :param params: the Parameter dictionary of constants
+    :param directory: None or string - force the input dir (if it exists)
+    :param force: bool if True allows force setting
+    :param forced_dir: str, if set if the forced dir value to get (can be
+                       a full path or 'RAW', 'TMP', 'REDUCED'
+
+    if RAW uses DRS_DATA_RAW from drs_params
+    if TMP uses DRS_DATA_WORKING from drs_params
+    if REDUCED uses DRS_DATA_REDUC from drs_params
+
+    :return input_dir: string, the input directory
+    """
+    # set function name
+    func_name = display_func(params, 'get_input_dir', __NAME__)
+    # deal with manual override of input dir
+    if force and (directory is not None) and (os.path.exists(directory)):
+        return directory
+    # deal with no forced dir set
+    if forced_dir is None:
+        # raise error
+        eargs = ['input', func_name]
+        WLOG(params, 'error', TextEntry('00-006-00020', args=eargs))
+    # deal with absolute path existing
+    if force and os.path.exists(os.path.abspath(forced_dir)):
+        return os.path.abspath(forced_dir)
+    # check if "input_dir" is in namespace
+    input_dir_pick = forced_dir.upper()
+    # return input_dir
+    return get_dir(params, input_dir_pick, kind='input')
+
+
+def get_output_dir(params: ParamDict, directory: Union[str, None] = None,
+                   force: bool = False,
+                   forced_dir: Union[str, None] = str) -> Union[str, None]:
+    """
+    Get the input directory for this recipe based on what was set in
+    initialisation (construction)
+
+    :param params: the Parameter dictionary of constants
+    :param directory: None or string - force the output dir (if it exists)
+    :param force: bool if True allows force setting
+    :param forced_dir: str, if set if the forced dir value to get (can be
+                       a full path or 'RAW', 'TMP', 'REDUCED'
+
+    if RAW uses DRS_DATA_RAW from drs_params
+    if TMP uses DRS_DATA_WORKING from drs_params
+    if REDUCED uses DRS_DATA_REDUC from drs_params
+
+    :return input_dir: string, the input directory
+    """
+    # set function name
+    func_name = display_func(params, 'get_output_dir', __NAME__)
+    # deal with manual override of input dir
+    if force and (directory is not None) and (os.path.exists(directory)):
+        return directory
+    # deal with no forced dir set
+    if forced_dir is None:
+        # raise error
+        eargs = ['output', func_name]
+        WLOG(params, 'error', TextEntry('00-006-00020', args=eargs))
+    # deal with absolute path existing
+    if force and os.path.exists(os.path.abspath(forced_dir)):
+        return os.path.abspath(forced_dir)
+    # check if "input_dir" is in namespace
+    output_dir_pick = forced_dir.upper()
+    # return input_dir
+    return get_dir(params, output_dir_pick, kind='output')
+
+
 # =============================================================================
 # Worker functions
 # =============================================================================
