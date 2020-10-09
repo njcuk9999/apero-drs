@@ -220,7 +220,7 @@ class Database:
         return result
 
     def count(self, table: Union[None, str] = None,
-              condition: Union[None, str] = None):
+              condition: Union[None, str] = None) -> int:
         """
         Counts the number of rows in table. If condition is set
         counts just these rows
