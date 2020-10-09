@@ -73,7 +73,7 @@ class DatabaseManager:
     """
     # define attribute types
     path: Union[Path, str, None]
-    database: drs_db.Database
+    database: Union[drs_db.Database, None]
 
     def __init__(self, params: ParamDict, check: bool = False):
         """
@@ -98,7 +98,7 @@ class DatabaseManager:
         _ = check
         # set path
         self.path = None
-        # set database
+        # set unloaded database
         self.database = None
 
     def set_path(self, dirname: Union[str, None] = None,
@@ -1128,7 +1128,6 @@ def _get_time(params: ParamDict, dbname: str,
 # Define index databases
 # =============================================================================
 class IndexDatabase(DatabaseManager):
-    database: drs_db.Database
 
     def __init__(self, params: ParamDict, check: bool = True):
         """
@@ -1150,6 +1149,8 @@ class IndexDatabase(DatabaseManager):
         self.name = 'index'
         # set path
         self.set_path(None, 'INDEX_DB_NAME', check=check)
+        # store whether an update has been done
+        self.update_entries_params = []
 
     def add_entry(self, directory: str, filename: Union[Path, str], kind: str,
                   runstring: Union[str, None] = None,
@@ -1391,7 +1392,8 @@ class IndexDatabase(DatabaseManager):
                        include_directories: Union[List[str], None] = None,
                        exclude_directories: Union[List[str], None] = None,
                        filename: FileTypes = None, suffix: str = '',
-                       force_dir: Union[str, None] = None):
+                       force_dir: Union[str, None] = None,
+                       force_update: bool = False):
         """
         Update the index database for files of 'kind', deal with including
         and excluding directories for files with 'suffix'
@@ -1421,6 +1423,20 @@ class IndexDatabase(DatabaseManager):
         # deal with no instrument set
         if self.instrument == 'None':
             return None
+        # ---------------------------------------------------------------------
+        # deal with database already being up-to-date
+        # store whether an update has been done
+        if not force_update:
+            # if the exact same inputs have been used we can skip update
+            #   (Again unless "force_update" was used)
+            cond = self._update_params(kind=kind,
+                                       include_directories=include_directories,
+                                       exclude_directories=exclude_directories,
+                                       filename=filename, force_dir=force_dir)
+            # if we are not updating return here
+            if not cond:
+                return None
+        # ---------------------------------------------------------------------
         # deal with no database loaded
         if self.database is None:
             self.load_db()
@@ -1447,6 +1463,12 @@ class IndexDatabase(DatabaseManager):
         # get a list of keys
         rkeys, rtypes = self.pconst.INDEX_HEADER_KEYS()
         # ---------------------------------------------------------------------
+        # deal with no files
+        if len(reqfiles) == 0:
+            # set condition that we have updated
+            self.has_update_entries = True
+            # return
+            return
         # add required files to the database
         for reqfile in tqdm(reqfiles):
             # set directory
@@ -1470,6 +1492,7 @@ class IndexDatabase(DatabaseManager):
                         hkeys[rkey] = header[drs_key]
             # add to database
             self.add_entry(directory, basename, kind, hkeys=hkeys)
+
 
     def update_header_fix(self, recipe):
         # set function name
@@ -1557,6 +1580,41 @@ class IndexDatabase(DatabaseManager):
         return _deal_with_filename(self.params, self.name, kind, directory,
                                    filename, fullpath, force_dir, func)
 
+    def _update_params(self, **kwargs) -> bool:
+        """
+        Update the parameters for update_entries (so we don't update twice)
+
+        :param kwargs: list of arguments for update_entries
+
+        :return: bool, True if we should update, False otherwise
+        """
+        # assume we want to update
+        update = True
+        # loop around entries
+        for entry in self.update_entries_params:
+            # if we don't want to update break
+            if not update:
+                break
+            # set condition whether this entry matches kwargs
+            match_entry = True
+            # loop around entry
+            for key in entry:
+                # only update if key is in kwargs
+                if key in kwargs:
+                    # only update if key matches entry
+                    if kwargs[key] == entry[key]:
+                        match_entry &= True
+                    else:
+                        match_entry &= False
+            # if we have found a match we do not want to update
+            if match_entry:
+                update = False
+        # now add this setup for next time
+        if update:
+            self.update_entries_params.append(kwargs)
+        # return whether to update or not
+        return update
+
 
 def _deal_with_filename(params: ParamDict, name: str, kind: str,
                         directory: Union[str, None] = None,
@@ -1596,29 +1654,12 @@ def _deal_with_filename(params: ParamDict, name: str, kind: str,
         func_name = display_func(params, '_deal_with_filename', __NAME__)
     else:
         func_name = str(func)
-
     # ------------------------------------------------------------------
     # deal with kind
     if force_dir is not None:
-        path = str(force_dir)
-    elif kind == 'raw':
-        path = params['DRS_DATA_RAW']
-    elif kind == 'red':
-        path = params['DRS_DATA_REDUC']
-    elif kind == 'tmp':
-        path = params['DRS_DATA_WORKING']
-    elif kind == 'calib':
-        path = params['DRS_CALIB_DB']
-    elif kind == 'tellu':
-        path = params['DRS_TELLU_DB']
-    elif kind == 'asset':
-        path = params['DRS_DATA_ASSETS']
+        path = drs_file.get_dir(params, force_dir, kind='database (forced)')
     else:
-        eargs = [name, kind, 'raw, red, tmp, calib, tellu, asset',
-                 func_name]
-        WLOG(params, 'error', TextEntry('00-002-00022', args=eargs))
-        raise DrsCodedException('00-002-00022', targs=eargs,
-                                func_name=func_name)
+        path = drs_file.get_dir(params, kind.upper(), kind='database')
     # deal with having full path
     if fullpath is not None:
         if isinstance(fullpath, str):
