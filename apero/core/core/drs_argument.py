@@ -28,6 +28,8 @@ from apero import lang
 from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.core.core import drs_database
+from apero.io import drs_fits
+
 
 # =============================================================================
 # Define variables
@@ -62,6 +64,10 @@ HelpText = lang.core.drs_lang_text.HelpDict
 # define display strings for types
 STRTYPE = base.STRTYPE
 NUMBER_TYPES = base.NUMBER_TYPES
+
+# define complex typing for file return
+ValidFileType = Tuple[List[Union[Any, str]],
+                      List[Union[DrsInputFile, None]]]
 
 
 # =============================================================================
@@ -361,8 +367,8 @@ class _CheckDirectory(DrsAction):
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(None, '__init__', __NAME__, self.class_name)
         # set the recipe and parser to None
-        self.recipe = None
-        self.indexdb = None
+        self.recipe = kwargs.get('recipe', None)
+        self.indexdb = kwargs.get('indexdb', None)
         # force super initialisation
         DrsAction.__init__(self, *args, **kwargs)
 
@@ -416,7 +422,6 @@ class _CheckDirectory(DrsAction):
         argname = self.dest
         # get the params from recipe
         params = self.recipe.params
-        textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
         # debug checking output
         if params['DRS_DEBUG'] > 0:
             print('')
@@ -425,7 +430,7 @@ class _CheckDirectory(DrsAction):
         force = self.recipe.force_dirs[0]
         # check whether we have a valid directory
         directory = valid_directory(params, self.indexdb, argname, value,
-                                    kind=self.recipe.outputdir, force=force,
+                                    kind=self.recipe.inputdir, force=force,
                                     forced_dir=self.recipe.inputdir)
         # if we have found directory return directory
         return directory
@@ -477,6 +482,7 @@ class _CheckFiles(DrsAction):
         _ = display_func(None, '__init__', __NAME__, self.class_name)
         # get the recipe, namespace and directory (if not added set to None)
         self.recipe = kwargs.get('recipe', None)
+        self.indexdb = kwargs.get('indexdb', None)
         self.namespace = kwargs.get('namespace', None)
         self.directory = kwargs.get('directory', None)
         self.parser = None
@@ -517,18 +523,12 @@ class _CheckFiles(DrsAction):
         """
         return '_CheckFiles[DrsAction]'
 
-    def _check_files(self, value: Any,
-                     current_typelist: Union[None, List[Any]] = None,
-                     current_filelist: Union[None, List[str]] = None
-                     ) -> Tuple[List[str], List[Any]]:
+    def _check_files(self, value: Any) -> ValidFileType:
         """
         Check the values of the files are valid - raise exception if not
         valid, else return the value
 
-        :param value: Any, the value to test whether valid for directory
-        argument
-        :param current_typelist: list of DrsFile types or None
-        :param current_filelist: list of string file paths or None
+        :param value: Any, the value to test whether a valid file/files
 
         :return: the valid filename and its DrsFile instance
                  (raises exception if invalid)
@@ -538,14 +538,16 @@ class _CheckFiles(DrsAction):
         _ = display_func(self.recipe.params, '_check_files', __NAME__,
                          self.class_name)
         # ---------------------------------------------------------------------
+        # deal with single string -> list of strings
+        if isinstance(value, str):
+            values = [value]
+        # else push into a list of strings
+        else:
+            values = list(map(lambda x: str(x), value))
+        # ---------------------------------------------------------------------
         # deal with no check
         if not self.recipe.input_validation:
-            # if we have string return it in list form and one None
-            if isinstance(value, str):
-                return [value], [None]
-            # if we have a list return it and a set of Nones
-            else:
-                return value, [None] * len(value)
+            return values, [None] * len(values)
         # ---------------------------------------------------------------------
         # check if "directory" is in namespace
         if self.directory is not None:
@@ -563,20 +565,21 @@ class _CheckFiles(DrsAction):
         rkwargs = self.recipe.kwargs
         force_input_dir = self.recipe.force_dirs[0]
         input_dir = self.recipe.inputdir
-        # check if files are valid
-        out = valid_files(params, argname, value, self.recipe.name,
-                          rargs, rkwargs, directory,
-                          alltypelist=current_typelist,
-                          allfilelist=current_filelist,
-                          force=force_input_dir, forced_dir=input_dir)
-        cond, files, types, emsgs = out
+        # ---------------------------------------------------------------------
+        # storage of files and types
+        files, types = [], []
+        # loop around files
+        for _value in values:
+            # get the filename if valid (else crash)
+            out = valid_file(params, self.indexdb, input_dir, argname, _value,
+                              rargs, rkwargs, directory, types, force_input_dir,
+                              input_dir)
+            # append to storage
+            files += out[0]
+            types += out[1]
         # if they are return files
-        if cond:
-            return files, types
-        # else deal with errors
-        else:
-            # log messages
-            WLOG(params, 'error', emsgs, wrap=False)
+        return files, types
+
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
@@ -597,6 +600,7 @@ class _CheckFiles(DrsAction):
         """
         # get drs parameters
         self.recipe = parser.recipe
+        self.indexdb = parser.indexdb
         self.parser = parser
         # set function name (cannot break here --> no access to inputs)
         _ = display_func(self.recipe.params, '__call__', __NAME__,
@@ -608,23 +612,8 @@ class _CheckFiles(DrsAction):
         skip = parser._has_special()
         if skip:
             return 0
-        # if we have a string value just check this one file but make it a
-        #  one element list
-        elif isinstance(values, str):
-            filelist, typelist = self._check_files([values], [], [])
-            files, types = filelist, typelist
-        # else we have a vector of files check all of them
-        elif type(values) in [list, np.ndarray]:
-            files, types = [], []
-            for value in values:
-                filelist, typelist = self._check_files(value, types, files)
-                files += filelist
-                types += typelist
-        # else just try to make if a one element list and check this list of
-        #  files for validity
-        else:
-            filelist, typelist = self._check_files([values], [], [])
-            files, types = filelist, typelist
+        # check values and return a list of files and file types
+        files, types = self._check_files(values)
         # Add the attribute
         setattr(namespace, self.dest, [files, types])
 
@@ -2943,118 +2932,6 @@ class DrsArgument(object):
 # =============================================================================
 # Check functions
 # =============================================================================
-def get_dir(params: ParamDict, dir_string: str, kind: str = 'input') -> str:
-    """
-    Get the directory based on "dir_string" (either RAW, TMP, REDUCED)
-    obtained via params
-
-    Note if dir_string is full path we do not use path from params
-
-    :param params: ParamDict, parameter dictionary of constants
-    :param dir_string: str, either 'RAW', 'TMP' or 'REDUCED' (case insensitive)
-    :param kind: str, type of dir for logging (either 'input' or 'output')
-
-    :return: str, the directory path
-    """
-    # check if path has been set to an absolute path (that exists)
-    if os.path.exists(os.path.abspath(dir_string)):
-        return os.path.abspath(dir_string)
-    # get the input directory from recipe.inputdir keyword
-    if dir_string.upper() == 'RAW':
-        dirpath = params['DRS_DATA_RAW']
-    elif dir_string.upper() == 'TMP':
-        dirpath = params['DRS_DATA_WORKING']
-    elif dir_string.upper() == 'REDUCED':
-        dirpath = params['DRS_DATA_REDUC']
-    # if not found produce error
-    else:
-        emsg = TextEntry('00-007-00002', args=[kind, dir_string])
-        WLOG(params, 'error', emsg)
-        dirpath = None
-    return dirpath
-
-
-def get_input_dir(params: ParamDict, directory: Union[str, None] = None,
-                  force: bool = False,
-                  forced_dir: Union[str, None] = str) -> Union[str, None]:
-    """
-    Get the input directory for this recipe based on what was set in
-    initialisation (construction)
-
-    :param params: the Parameter dictionary of constants
-    :param directory: None or string - force the input dir (if it exists)
-    :param force: bool if True allows force setting
-    :param forced_dir: str, if set if the forced dir value to get (can be
-                       a full path or 'RAW', 'TMP', 'REDUCED'
-
-    if RAW uses DRS_DATA_RAW from drs_params
-    if TMP uses DRS_DATA_WORKING from drs_params
-    if REDUCED uses DRS_DATA_REDUC from drs_params
-
-    :return input_dir: string, the input directory
-    """
-    # set function name
-    func_name = display_func(params, 'get_input_dir', __NAME__)
-    # deal with manual override of input dir
-    if force and (directory is not None) and (os.path.exists(directory)):
-        return directory
-    # deal with no forced dir set
-    if forced_dir is None:
-        # raise error
-        eargs = ['input', func_name]
-        WLOG(params, 'error', TextEntry('00-006-00020', args=eargs))
-    # deal with absolute path existing
-    if force and os.path.exists(os.path.abspath(forced_dir)):
-        return os.path.abspath(forced_dir)
-    # check if "input_dir" is in namespace
-    input_dir_pick = forced_dir.upper()
-    # return input_dir
-    return get_dir(params, input_dir_pick, kind='input')
-
-
-def get_output_dir(params: ParamDict, directory: Union[str, None] = None,
-                   force: bool = False,
-                   forced_dir: Union[str, None] = str) -> Union[str, None]:
-    """
-    Get the input directory for this recipe based on what was set in
-    initialisation (construction)
-
-    :param params: the Parameter dictionary of constants
-    :param directory: None or string - force the output dir (if it exists)
-    :param force: bool if True allows force setting
-    :param forced_dir: str, if set if the forced dir value to get (can be
-                       a full path or 'RAW', 'TMP', 'REDUCED'
-
-    if RAW uses DRS_DATA_RAW from drs_params
-    if TMP uses DRS_DATA_WORKING from drs_params
-    if REDUCED uses DRS_DATA_REDUC from drs_params
-
-    :return input_dir: string, the input directory
-    """
-    # set function name
-    func_name = display_func(params, 'get_output_dir', __NAME__)
-    # deal with manual override of input dir
-    if force and (directory is not None) and (os.path.exists(directory)):
-        return directory
-    # deal with no forced dir set
-    if forced_dir is None:
-        # raise error
-        eargs = ['output', func_name]
-        WLOG(params, 'error', TextEntry('00-006-00020', args=eargs))
-    # deal with absolute path existing
-    if force and os.path.exists(os.path.abspath(forced_dir)):
-        return os.path.abspath(forced_dir)
-    # check if "input_dir" is in namespace
-    output_dir_pick = forced_dir.upper()
-    # return input_dir
-    return get_dir(params, output_dir_pick, kind='output')
-
-
-# define complex typing for valid directory return
-# ValidDirType = Tuple[bool, Union[str, None], Union[TextEntry, str, None]]
-
-# TODO: Got to here
-
 def valid_directory(params: ParamDict, indexdb: IndexDatabase,
                     argname: str, directory: Any, kind: str,
                     force: bool = False,
@@ -3079,6 +2956,11 @@ def valid_directory(params: ParamDict, indexdb: IndexDatabase,
     # set function name
     func_name = display_func(params, 'valid_directory', __NAME__)
 
+    # get input directory
+    input_dir = drs_file.get_input_dir(params, force=force,
+                                       forced_dir=forced_dir)
+    input_dir = os.path.realpath(input_dir)
+
     # -------------------------------------------------------------------------
     # 1. check directory is a valid string
     # -------------------------------------------------------------------------
@@ -3090,8 +2972,9 @@ def valid_directory(params: ParamDict, indexdb: IndexDatabase,
 
     # clean up
     directory = directory.strip()
+
     # -------------------------------------------------------------------------
-    # 2. check for directory in database
+    # deal with database
     # -------------------------------------------------------------------------
     # deal with instrument == 'None'
     if indexdb.instrument == 'None':
@@ -3100,26 +2983,30 @@ def valid_directory(params: ParamDict, indexdb: IndexDatabase,
     elif indexdb.database is None:
         # try to load database
         indexdb.load_db()
+    # update database with entries
+    indexdb.update_entries(kind=kind, force_dir=forced_dir)
     # set up condition
     condition = 'KIND=="{0}"'.format(kind)
     # load directory names
     directories = indexdb.database.unique('DIRECTORY', condition=condition)
+
+    # -------------------------------------------------------------------------
+    # 2. check for directory in database
+    # -------------------------------------------------------------------------
     # return if found
     if directory in directories:
-        return directory
+        # need full path of directory
+        return os.path.realpath(os.path.join(input_dir, directory))
     # -------------------------------------------------------------------------
     # 3. update database (maybe we missed the directory)
     # -------------------------------------------------------------------------
     # deal with a forced path
     if not force:
         forced_dir = None
-    # update database with entries
-    indexdb.update_entries(kind=kind, force_dir=forced_dir)
-    # load directory names
-    directories = indexdb.database.unique('DIRECTORY', condition=condition)
     # return if found
     if directory in directories:
-        return directory
+        # need full path of directory
+        return os.path.realpath(os.path.join(input_dir, directory))
     # -------------------------------------------------------------------------
     # 4. directory is not correct - raise error
     # -------------------------------------------------------------------------
@@ -3127,83 +3014,234 @@ def valid_directory(params: ParamDict, indexdb: IndexDatabase,
     eargs = [argname, directory, str(abspath)]
     WLOG(params, 'error', TextEntry('09-001-00004', args=eargs))
 
-# def valid_directory1(params: ParamDict, argname: str, directory: Any,
-#                      force: bool = False,
-#                      forced_dir: Union[str, None] = None) -> ValidDirType:
-#     """
-#     Find out whether we have a valid directory
-#
-#     :param params: ParamDict, the parameter dictionary of constants
-#     :param argname: str, the argumnet name "directory" came from (for error
-#                     logging)
-#     :param directory: Any, the value to test whether it is a valid directory)
-#     :param input_dir_func: Function, the input directory function (must return
-#                            a string)
-#     :param force: bool, if True forces the input directory (via input_dir_func)
-#
-#     :return: tuple: 1. whether directory is valid, 2. the full directory path
-#              (if passed) or None if failed, 3. the reason for failure (or None
-#              if passed)
-#     """
-#     # get input directory
-#     input_dir = os.path.realpath(get_input_dir(params, force=force,
-#                                                forced_dir=forced_dir))
-#     # ---------------------------------------------------------------------
-#     # Make sure directory is a string
-#     if type(directory) not in [str, np.str_]:
-#         eargs = [argname, directory, type(directory)]
-#         emsg = TextEntry('09-001-00003', args=eargs)
-#         return False, None, emsg
-#     # ---------------------------------------------------------------------
-#     # step 1: check if directory is full absolute path
-#     if os.path.exists(directory):
-#         # log that we found the path (debug mode)
-#         dmsg = TextEntry('90-001-00001', args=[argname, directory])
-#         dmsg += TextEntry('')
-#         WLOG(params, 'debug', dmsg, wrap=False)
-#         # get the absolute path
-#         abspath = os.path.abspath(directory)
-#         # check whether abspath is consistent with input dir from recipe
-#         #    definitions (this can happen e.g. if in reduced instead of tmp)
-#         if not abspath.startswith(input_dir):
-#             # log that directory found not consistent with input path
-#             dargs = [input_dir]
-#             WLOG(params, 'debug', TextEntry('90-001-00035', args=dargs))
-#             pass
-#         else:
-#             return True, os.path.abspath(directory), None
-#     # ---------------------------------------------------------------------
-#     # step 2: check if directory is in input directory
-#     input_dir = get_input_dir(params, force=force, forced_dir=forced_dir)
-#     test_path = os.path.join(input_dir, directory)
-#     if os.path.exists(test_path):
-#         dmsg = TextEntry('90-001-00017', args=[argname, directory])
-#         dmsg += TextEntry('')
-#         WLOG(params, 'debug', dmsg, wrap=False)
-#         return True, os.path.abspath(test_path), None
-#     # ---------------------------------------------------------------------
-#     # else deal with errors
-#     eargs = [argname, directory, test_path]
-#     emsg = TextEntry('09-001-00004', args=eargs)
-#     # ---------------------------------------------------------------------
-#     # return False (directory did not pass), no string, and the reason for the
-#     #  failure
-#     return False, None, emsg
 
-
-# define complex return for valid_file
-
-ValidFileType = Tuple[bool, Union[List[str], None],
-                      Union[List[DrsInputFile], None], Union[TextEntry, None]]
-
-
-def valid_file(params: ParamDict, argname: str, filename: str,
-               recipename: str, rargs: Dict[str, DrsArgument],
-               rkwargs: Dict[str, DrsArgument], directory=None,
-               alltypelist: Union[List[DrsInputFile], None] = None,
-               allfilelist: Union[List[str], None] = None,
-               force: bool = False,
+def valid_file(params: ParamDict, indexdb: IndexDatabase, kind: str,
+               argname: str, filename: str, rargs: Dict[str, DrsArgument],
+               rkwargs: Dict[str, DrsArgument], directory,
+               types: List[DrsInputFile], force: bool = False,
                forced_dir: Union[str, None] = None) -> ValidFileType:
+    """
+    Test for whether a file is valid
+
+    :param params: ParamDict - parameter dictionary of constants
+    :param indexdb: IndexDatabase instance, the index database
+    :param kind: str, the input directory kind: 'raw', 'tmp', 'red'
+    :param argname: str, the name of the argument we are testing
+    :param filename: string, the filename to test
+    :param rargs: dictionary of DrsArguments - the positional arguments
+    :param rkwargs: dictionary of DrsArguments - the optional arguments
+    :param directory: str, the directory for this recipe run
+    :param files:
+    :param types: List[DrsInputFile] - the drs file types for all files
+                  currently found
+    :param force: bool, if True used force_dir for input directory
+    :param forced_dir: str, forced directory to use if force = True
+    """
+    # set function name
+    func_name = display_func(params, '_valid_file', __NAME__)
+    # get the argument that we are checking the file of
+    arg = _get_arg(rargs, rkwargs, argname)
+    drsfiles = arg.files
+    # get the drs logic
+    drs_logic = arg.filelogic
+    # deal with arg.path set
+    directory = _check_arg_path(params, arg, directory)
+    # ---------------------------------------------------------------------
+    # Step 1: Check filename is a valid string
+    # ---------------------------------------------------------------------
+    try:
+        filename = str(filename)
+    except Exception as _:
+        eargs = [argname, filename, type(filename)]
+        WLOG(params, 'error', TextEntry('09-001-00005', args=eargs))
+    # clean up
+    filename = filename.strip()
+    # -------------------------------------------------------------------------
+    # deal with database
+    # -------------------------------------------------------------------------
+    # deal with instrument == 'None'
+    if indexdb.instrument == 'None':
+        eargs = [argname, indexdb.name, func_name]
+        WLOG(params, 'error', TextEntry('09-001-00032', args=eargs))
+    elif indexdb.database is None:
+        # try to load database
+        indexdb.load_db()
+    # update database with entries
+    indexdb.update_entries(kind=kind, force_dir=forced_dir)
+    # set up condition
+    condition = 'KIND=="{0}"'.format(kind)
+    condition += ' AND DIRECTORY=="{0}"'.format(os.path.basename(directory))
+    # deal with wildcards
+    if '*' in filename:
+        # make filename sql-like
+        filename = filename.replace('*', '%')
+        # make a path cond
+        pathcond = 'PATH LIKE "{0}"'
+    else:
+        # make a path cond
+        pathcond = 'PATH == "{0}"'
+    # ---------------------------------------------------------------------
+    # Step 2: Check whether filename itself is in database
+    # ---------------------------------------------------------------------
+    # check for filename in paths
+    condition1 = condition + ' AND ' + pathcond.format(filename)
+    # count number of paths that meet this condition
+    if indexdb.database.count(condition=condition1) > 0:
+        # now check fits keys (or pass if not fits)
+        filenames, filetypes = _check_fits_keys(params, drsfiles, indexdb,
+                                                condition1, argname, directory,
+                                                force, forced_dir)
+        # now check drs logic [if exclusive must be same file type]
+        _check_file_logic(params, argname, drs_logic, filetypes, types)
+        # return filename and filetype
+        return filenames, filetypes
+
+    # ---------------------------------------------------------------------
+    # Step 3: Check whether directory + filename is in database
+    # ---------------------------------------------------------------------
+    # get absolute path
+    abspath = os.path.join(directory, filename)
+    # check for filename in paths
+    condition1 = condition + 'AND ' + pathcond.format(abspath)
+    # count number of paths that meet this condition
+    if indexdb.database.count(condition=condition1) > 0:
+        # now check fits keys (or pass if not fits)
+        filenames, filetypes = _check_fits_keys(params, drsfiles, indexdb,
+                                                condition1, argname, directory,
+                                                force, forced_dir)
+        # now check drs logic [if exclusive must be same file type]
+        _check_file_logic(params, argname, drs_logic, filetypes, types)
+        # return filename and filetype
+        return filenames, filetypes
+
+    # ---------------------------------------------------------------------
+    # Step 4: Filename is invalid
+    # ---------------------------------------------------------------------
+    # if we have reached this point we cannot file filename
+    eargs = [argname, filename, abspath]
+    WLOG(params, 'error', TextEntry('09-001-00005', args=eargs))
+
+
+def _check_fits_keys(params: ParamDict, drsfiles: List[DrsInputFile],
+                     indexdb: IndexDatabase, condition: str,
+                     argname: str, directory: str,
+                     force: bool = False,
+                     forced_dir: Union[str, None] = None
+                     ) -> Tuple[List[str], List[DrsInputFile]]:
+    """
+
+    :param params:
+    :param drsfiles:
+    :param indexdb:
+    :param condition:
+    :param force:
+    :param forced_dir:
+    :return:
+    """
+    # set function name
+    func_name = display_func(params, '_check_fits_keys', __NAME__)
+    # get data for this condition (must be greater than 0)
+    table = indexdb.get_entries('*', condition=condition)
+    # storage for output
+    files, types = [], []
+    # loop around rows in table
+    for row in range(len(table)):
+        # store that row is valid
+        row_valid = False
+        # ---------------------------------------------------------------------
+        # create fake header from table
+        header = drs_fits.Header()
+        for key in table.keys():
+            if 'KW_' not in key:
+                continue
+            if key in params:
+                drs_key = params[key][0]
+            else:
+                drs_key = str(key)
+            # push into temporary header
+            header[drs_key] = table[key].iloc[row]
+        # ---------------------------------------------------------------------
+        # get filename
+        filename_it = table['PATH'].iloc[row]
+        # ---------------------------------------------------------------------
+        # find file in possible file types
+        # ---------------------------------------------------------------------
+        # no error to start with
+        error = None
+        # loop around file types
+        for drsfile in drsfiles:
+            # if in debug mode print progres
+            dargs = [drsfile.name, os.path.basename(filename_it)]
+            WLOG(params, 'debug', TextEntry('90-001-00008', args=dargs),
+                 wrap=False)
+            # -------------------------------------------------------------
+            # make instance of the DrsFile
+            inputdir = drs_file.get_input_dir(params, force=force,
+                                              forced_dir=forced_dir)
+            # create an instance of this drs_file with the filename set
+            file_in = drsfile.newcopy(filename=filename_it, params=params)
+            file_in.get_header()
+            # set the directory
+            file_in.directory = drs_misc.get_uncommon_path(directory, inputdir)
+            # -------------------------------------------------------------
+            # Step 1: Check extension
+            # -------------------------------------------------------------
+            # check the extension
+            valid, error = file_in.has_correct_extension(argname=argname)
+            if not valid:
+                continue
+            # -------------------------------------------------------------
+            # Step 2: Check file header has required keys
+            # -------------------------------------------------------------
+            valid, error = file_in.hkeys_exist(header=header, argname=argname)
+            if not valid:
+                continue
+            # -------------------------------------------------------------
+            # Step 3: Check file header has correct required keys
+            # -------------------------------------------------------------
+            valid, error = file_in.has_correct_hkeys(header=header,
+                                                     argname=argname)
+            if not valid:
+                continue
+            # -------------------------------------------------------------
+            # Step 4: if valid save for later
+            # -------------------------------------------------------------
+            if valid:
+                # get the header
+                file_in.get_header()
+                # add to lists
+                files.append(file_in.filename)
+                types.append(file_in)
+                # flag that row is valid
+                row_valid = True
+                # now stop looping through drs files
+                break
+        # if at the end of all drsfiles this row is not valid print the error
+        if not row_valid and error is not None:
+            WLOG(params, 'error', error)
+    # finally return the list of files
+    return files, types
+
+
+def _check_file_logic(params, argname, logic, filetypes, types):
+    if logic == 'exclusive':
+        # loop around newly identified files
+        for filetype in filetypes:
+            # all files in types should be correct so we just need to
+            #   check the name of each of our new ones against the last
+            #   file in types
+            if filetype.name != types.name[-1]:
+                # raise error if not
+                eargs = [argname, filetype.name, types.name[-1]]
+                WLOG(params, 'error', TextEntry('09-001-00008', args=eargs))
+
+
+def valid_file1(params: ParamDict, indexdb: IndexDatabase, kind: str,
+                argname: str, filename: str, rargs: Dict[str, DrsArgument],
+                rkwargs: Dict[str, DrsArgument], directory=None,
+                alltypelist: Union[List[DrsInputFile], None] = None,
+                force: bool = False,
+                forced_dir: Union[str, None] = None) -> ValidFileType:
     """
     Test for whether a file is valid
 
@@ -3226,8 +3264,6 @@ def valid_file(params: ParamDict, argname: str, filename: str,
     # deal with no current typelist (alltypelist=None)
     if alltypelist is None:
         alltypelist = []
-    if allfilelist is None:
-        allfilelist = []
     # get the argument that we are checking the file of
     arg = _get_arg(rargs, rkwargs, argname)
     drsfiles = arg.files
@@ -3246,12 +3282,12 @@ def valid_file(params: ParamDict, argname: str, filename: str,
                                force=force, forced_dir=forced_dir)
     valid, files, error = out
     if not valid:
-        return False, None, None, error
+        return [], []
     # perform file/directory check
     out = _check_if_directory(argname, files)
     valid, files, error = out
     if not valid:
-        return False, None, None, error
+        return [], []
     # ---------------------------------------------------------------------
     # The next steps are different depending on the DRS file and
     # we may have multiple files
@@ -3283,7 +3319,8 @@ def valid_file(params: ParamDict, argname: str, filename: str,
                  wrap=False)
             # -------------------------------------------------------------
             # make instance of the DrsFile
-            inputdir = get_input_dir(params, force=force, forced_dir=forced_dir)
+            inputdir = drs_file.get_input_dir(params, force=force,
+                                              forced_dir=forced_dir)
             # create an instance of this drs_file with the filename set
             file_in = drsfile.newcopy(filename=filename_it, params=params)
             file_in.get_header()
@@ -3308,7 +3345,7 @@ def valid_file(params: ParamDict, argname: str, filename: str,
             # -------------------------------------------------------------
             # only check if file correct
             if valid1 and valid2a and valid2b:
-                exargs = [params, argname, drsfile, recipename, drs_logic,
+                exargs = [params, argname, drsfile, 'test', drs_logic,
                           out_types, alltypelist]
                 valid3, error3 = _check_file_exclusivity(*exargs)
             else:
@@ -3350,12 +3387,6 @@ def valid_file(params: ParamDict, argname: str, filename: str,
             eargs = [os.path.abspath(filename_it)]
             errors += '\n' + TextEntry('09-001-00024', args=eargs)
             break
-    # must append all files checked
-    allfiles = allfilelist + checked_files
-    if len(allfiles) > 1:
-        errors += '\n' + TextEntry('40-001-00019')
-        for filename_it in allfiles:
-            errors += TextEntry('\n\t\t{0}'.format(filename_it))
     # ---------------------------------------------------------------------
     # clean up errors (do not repeat same lines)
     cleaned_errors = TextEntry(None)
@@ -3366,69 +3397,17 @@ def valid_file(params: ParamDict, argname: str, filename: str,
     # deal with return types:
     # a. if we don't have the right number of files then we failed
     if len(out_files) != len(files):
-        return False, None, None, cleaned_errors
+        return None, None
     # b. if we did but expect an error returned return True with an error
     else:
-        return True, out_files, out_types, TextEntry(None)
-
-
-def valid_files(params: ParamDict, argname: str, files: Union[List[str], str],
-                recipename: str, rargs: Dict[str, DrsArgument],
-                rkwargs: Dict[str, DrsArgument], directory=None,
-                alltypelist: Union[List[DrsInputFile], None] = None,
-                allfilelist: Union[List[str], None] = None,
-                force: bool = False,
-                forced_dir: Union[str, None] = None) -> ValidFileType:
-    """
-
-    :param params:
-    :param argname:
-    :param files:
-    :param recipename:
-    :param rargs:
-    :param rkwargs:
-    :param directory:
-    :param alltypelist:
-    :param allfilelist:
-    :param force:
-    :param forced_dir:
-    :return:
-    """
-    # deal with no current typelist (alltypelist=None)
-    if alltypelist is None:
-        alltypelist = []
-    # deal with no current filelist (allfilelist=None)
-    if allfilelist is None:
-        allfilelist = []
-    # deal with non-lists
-    if isinstance(files, str):
-        files = [files]
-    elif type(files) not in [list, np.ndarray]:
-        files = [files]
-    # loop around files
-    all_files = []
-    all_types = []
-    for filename in files:
-        # check single file
-        out = valid_file(params, argname, filename, recipename, rargs, rkwargs,
-                         directory, alltypelist=alltypelist,
-                         allfilelist=allfilelist, force=force,
-                         forced_dir=forced_dir)
-        file_valid, filelist, typelist, error = out
-        # if single file is not valid return the error (and False)
-        if not file_valid:
-            return False, None, None, error
-        # else we append filelist to all_files
-        else:
-            all_files += filelist
-            all_types += typelist
-    # if we are at this point everything passed and file is valid
-    return True, all_files, all_types, None
+        return out_files, out_types
 
 
 # =============================================================================
 # Worker functions
 # =============================================================================
+
+
 def _get_version_info(params: ParamDict, green: str = '',
                       end: str = '') -> List[str]:
     """
@@ -3798,7 +3777,8 @@ def _check_file_location(params: ParamDict, argname: str,
         input_dir = str(directory)
     else:
         # noinspection PyProtectedMember
-        input_dir = get_input_dir(params, force=force, forced_dir=forced_dir)
+        input_dir = drs_file.get_input_dir(params, force=force,
+                                           forced_dir=forced_dir)
     # -------------------------------------------------------------------------
     # Step 1: check "filename" as full link to file (including wildcards)
     # -------------------------------------------------------------------------
@@ -3892,8 +3872,7 @@ def _check_file_location(params: ParamDict, argname: str,
 
 
 def _check_if_directory(argname: str, files: List[str]
-                        ) -> Tuple[bool, Union[List[str], None],
-                                   Union[TextEntry, None]]:
+                        ) -> Tuple[bool, Union[List[str], None], Union[TextEntry, None]]:
     """
     Simple check to see if each file in files is a directory and then
     checks if file in files is a file with os.path.isfile
