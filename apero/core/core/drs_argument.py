@@ -3224,13 +3224,18 @@ def _check_fits_keys(params: ParamDict, drsfiles: List[DrsInputFile],
 
 
 def _check_file_logic(params, argname, logic, filetypes, types):
+
+    # deal with types being an empty list
+    if len(types) == 0:
+        return
+    # else check exclusive logic
     if logic == 'exclusive':
         # loop around newly identified files
         for filetype in filetypes:
             # all files in types should be correct so we just need to
             #   check the name of each of our new ones against the last
             #   file in types
-            if filetype.name != types.name[-1]:
+            if filetype.name != types[-1].name:
                 # raise error if not
                 eargs = [argname, filetype.name, types.name[-1]]
                 WLOG(params, 'error', TextEntry('09-001-00008', args=eargs))
