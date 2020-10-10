@@ -4518,6 +4518,8 @@ def combine(params: ParamDict, recipe: Any,
         infile.read_file()
     # make new infile using math
     outfile = infiles[0].combine(infiles[1:], math, same_type, path=abspath)
+    # update params in outfile
+    outfile.params = params
     # update the number of files
     outfile.numfiles = len(infiles)
     # write to disk
