@@ -85,9 +85,8 @@ def update_index_db(params: ParamDict, kind: str,
     return indexdbm
 
 
-
 def find_files(params: ParamDict, kind: str, filters: Dict[str, str],
-               columns='PATH') -> Union[np.ndarray, pd.dataframe]:
+               columns='PATH') -> Union[np.ndarray, pd.DataFrame]:
     # update database
     indexdbm = update_index_db(params, kind=kind)
     # get columns
