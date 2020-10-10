@@ -7,8 +7,10 @@ Created on 2020-10-2020-10-05 17:43
 
 @author: cook
 """
+import numpy as np
+import pandas as pd
 from pathlib import Path
-from typing import List, Union
+from typing import Dict, List, Union
 
 from apero.base import base
 from apero.base import drs_text
@@ -58,8 +60,8 @@ FileType = Union[List[Path], Path, List[str], str, None]
 
 
 def update_index_db(params: ParamDict, kind: str,
-                    whitelist: Union[List[str], None],
-                    blacklist: Union[List[str], None],
+                    whitelist: Union[List[str], None] = None,
+                    blacklist: Union[List[str], None] = None,
                     filename: FileType = None,
                     suffix: str = '') -> IndexDatabase:
     # deal with white list and black list
@@ -81,6 +83,23 @@ def update_index_db(params: ParamDict, kind: str,
                             filename=filename, suffix=suffix)
     # return the database
     return indexdbm
+
+
+
+def find_files(params: ParamDict, kind: str, filters: Dict[str, str],
+               columns='PATH') -> Union[np.ndarray, pd.dataframe]:
+    # update database
+    indexdbm = update_index_db(params, kind=kind)
+    # get columns
+    colnames = indexdbm.database.colnames('*')
+    # get file list using filters
+    condition = 'KIND=="{0}"'.format(kind)
+    # loop around filters
+    for filter in filters:
+        if filter in colnames:
+            condition += ' AND {0}=="{1}"'.format(filter, filters[filter])
+    # get columns for this condition
+    return indexdbm.get_entries(columns, kind=kind, condition=condition)
 
 
 # =============================================================================
