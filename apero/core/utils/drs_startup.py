@@ -181,7 +181,7 @@ def setup(name: str = 'None', instrument: str = 'None',
     TLOG(recipe.params, '', 'Loading Arguments. Please wait...')
     # -------------------------------------------------------------------------
     # load index database manager
-    indexdb = drs_database.IndexDatabase(recipe.params)
+    indexdb = drs_database.IndexDatabase(recipe.params, check=False)
     # interface between "recipe", "fkwargs" and command line (via argparse)
     recipe.recipe_setup(indexdb, fkwargs)
     # -------------------------------------------------------------------------
@@ -223,8 +223,8 @@ def setup(name: str = 'None', instrument: str = 'None',
         # display loading message
         TLOG(recipe.params, '', 'Loading Arguments. Please wait...')
         # ---------------------------------------------------------------------
-        # load index database manager
-        indexdb = drs_database.IndexDatabase(recipe.params)
+        # re-load index database manager
+        indexdb = drs_database.IndexDatabase(recipe.params, check=False)
         # interface between "recipe", "fkwargs" and command line (via argparse)
         recipe.recipe_setup(indexdb, fkwargs)
         # ---------------------------------------------------------------------
