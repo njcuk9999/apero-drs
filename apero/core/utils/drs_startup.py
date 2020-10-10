@@ -1536,12 +1536,14 @@ def _update_input_params(params, args):
             # we only need to update file arguments
             if arg.dtype not in ['file', 'files']:
                 continue
-            # get params file instances (DrsInputFile)
-            pargs = params['INPUTS'][argname][1]
-            # loop around file instances and update params witha copy
-            for parg in pargs:
-                # update params
-                parg.params = params.copy()
+            # only update for Drs input file instances
+            if isinstance(arg, DrsInputFile):
+                # get params file instances (DrsInputFile)
+                pargs = params['INPUTS'][argname][1]
+                # loop around file instances and update params witha copy
+                for parg in pargs:
+                    # update params
+                    pargs[parg].params = params.copy()
 
 
 def _assign_pid() -> Tuple[str, str]:
