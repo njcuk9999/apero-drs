@@ -21,8 +21,6 @@ get_nightnames = general.get_nightnames
 
 get_outputs = general.get_outputs
 
-remove_index_files = general.remove_index_files
-
 
 # =============================================================================
 # End of code

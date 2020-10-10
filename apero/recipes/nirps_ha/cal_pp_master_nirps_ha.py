@@ -14,8 +14,10 @@ from apero.base import base
 from apero import lang
 from apero.core.core import drs_log
 from apero.core.core import drs_file
-from apero.core.utils import drs_startup
 from apero.core.core import drs_database
+from apero.core.utils import drs_startup
+from apero.core.utils import drs_utils
+
 from apero.core.instruments.spirou import file_definitions
 from apero.science import preprocessing
 
@@ -125,9 +127,9 @@ def __main__(recipe, params):
             WLOG(params, 'error', TextEntry('09-010-00001', args=eargs))
         # ------------------------------------------------------------------
         # get all "filetype" filenames
-        files = drs_file.find_files(params, recipe, kind='raw',
-                                    night=params['NIGHTNAME'],
-                                    filters=dict(KW_DPRTYPE=filetype))
+        files = drs_utils.find_files(params, kind='raw',
+                                    filters=dict(KW_DPRTYPE=filetype,
+                                                 DIRECTORY=params['NIGHTNAME']))
         # create infiles
         for filename in files:
             infile = rawfile.newcopy(filename=filename, params=params)

@@ -11,10 +11,10 @@ Created on 2020-03-02 at 17:26
 """
 from apero.base import base
 from apero import lang
-from apero.core.core import drs_file
+from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
-from apero.core.core import drs_database
+from apero.core.utils import drs_utils
 from apero.science.extract import other as extother
 from apero.science.extract import general as extgen
 
@@ -121,9 +121,9 @@ def __main__(recipe, params):
             WLOG(params, 'error', TextEntry('09-010-00001', args=eargs))
         # ------------------------------------------------------------------
         # get all "filetype" filenames
-        files = drs_file.find_files(params, recipe, kind='tmp',
-                                    night=params['NIGHTNAME'],
-                                    filters=dict(KW_DPRTYPE=filetype))
+        files = drs_utils.find_files(params, kind='tmp',
+                                    filters=dict(KW_DPRTYPE=filetype,
+                                                 DIRECTORY=params['NIGHTNAME']))
         # create infiles
         for filename in files:
             infile = darkfpfile.newcopy(filename=filename, params=params)

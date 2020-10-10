@@ -15,11 +15,12 @@ import os
 from apero.base import base
 from apero import lang
 from apero.core import constants
-from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
+from apero.core.utils import drs_utils
 from apero.science import extract
 from apero.tools.module.testing import drs_dev
+
 
 # =============================================================================
 # Define variables
@@ -155,11 +156,11 @@ def __main__(recipe, params):
         fkwargs = dict()
         fkwargs['KW_OUTPUT'] = intype
         fkwargs['KW_DPRTYPE'] = filetype
+        fkwargs['KW_FIBER'] = fiber
         if skip_objects is not None:
             fkwargs['KW_OBJNAME'] = skip_objects
         WLOG(params, '', 'Finding files...')
-        filenames1 = drs_file.find_files(params, recipe, kind='red',
-                                         fiber=fiber, filters=fkwargs)
+        filenames1 = drs_utils.find_files(params, kind='red', filters=fkwargs)
         # group files
         for filename in filenames1:
             odocode = os.path.basename(filename).split('_pp')[0]

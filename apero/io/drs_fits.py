@@ -625,7 +625,7 @@ ListHeader = Union[List[Union[Header, fits.Header]], Header, fits.Header]
 def writefits(params: ParamDict, filename: str,
               data: ListImageTable, header: ListHeader,
               datatype: Union[List[str], str] = 'image',
-              dtype: Union[List[str], str, None] = None,
+              dtype: Union[List[str], List[None], str, None] = None,
               func: Union[str, None] = None):
     """
     Write a fits file (wrapper around locked function _write_fits) either
