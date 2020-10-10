@@ -105,6 +105,60 @@ DRS_PDFLATEX_PATH.value = '/usr/bin/pdflatex'
 # =============================================================================
 # DATABASE SETTINGS
 # =============================================================================
+# Define database directory (relative to assets directory)
+DATABASE_DIR = DATABASE_DIR.copy(__NAME__)
+DATABASE_DIR.value = 'databases/'
+
+# Define calibration database, database file path (default is to get it from
+#    DRS_CALIB_BD value)
+CALIB_DBFILE_PATH = CALIB_DBFILE_PATH.copy(__NAME__)
+CALIB_DBFILE_PATH.value = 'DRS_CALIB_DB'
+
+# Define calibration database name
+CALIB_DB_NAME = CALIB_DB_NAME.copy(__NAME__)
+CALIB_DB_NAME.value = 'calib.db'
+
+# Define reset file for calibration database
+CALIB_DB_RESET = CALIB_DB_RESET.copy(__NAME__)
+CALIB_DB_RESET.value = 'reset.calib.csv'
+
+# Define telluric database, database file path (default is to get it from
+#    DRS_TELLU_DB value)
+TELLU_DBFILE_PATH = TELLU_DBFILE_PATH.copy(__NAME__)
+TELLU_DBFILE_PATH.value = 'DRS_TELLU_DB'
+
+# Define telluric database name
+TELLU_DB_NAME = TELLU_DB_NAME.copy(__NAME__)
+TELLU_DB_NAME.value = 'tellu.db'
+
+# Define index database name
+INDEX_DB_NAME = INDEX_DB_NAME.copy(__NAME__)
+INDEX_DB_NAME.value = 'index.db'
+
+# Define language database name
+LANG_DB_NAME = LANG_DB_NAME.copy(__NAME__)
+LANG_DB_NAME.value = 'lang.db'
+
+# Define the log database name
+LOG_DB_NAME = LOG_DB_NAME.copy(__NAME__)
+LOG_DB_NAME.value = 'log.db'
+
+# Define the object database name
+OBJECT_DB_NAME = OBJECT_DB_NAME.copy(__NAME__)
+OBJECT_DB_NAME.value = 'object.db'
+
+# Define reset file for object database
+OBJECT_DB_RESET = OBJECT_DB_RESET.copy(__NAME__)
+OBJECT_DB_RESET.value = 'reset.object.csv'
+
+# Define the param database name
+PARAM_DB_NAME = PARAM_DB_NAME.copy(__NAME__)
+PARAM_DB_NAME.value = 'param.db'
+
+
+# =============================================================================
+# OLD DATABASE SETTINGS
+# =============================================================================
 #   the maximum wait time for calibration database file to be in use (locked)
 #       after which an error is raised (in seconds)
 DB_MAX_WAIT = DB_MAX_WAIT.copy(__NAME__)
@@ -114,21 +168,23 @@ DB_MAX_WAIT.value = 600
 LOCKOPEN_MAX_WAIT = LOCKOPEN_MAX_WAIT.copy(__NAME__)
 LOCKOPEN_MAX_WAIT.value = 600
 
-# the telluric database name
-TELLU_DB_NAME = TELLU_DB_NAME.copy(__NAME__)
-TELLU_DB_NAME.value = 'master_tellu_NIRPS_HA.txt'
-
-# the calibration database name
-CALIB_DB_NAME = CALIB_DB_NAME.copy(__NAME__)
-CALIB_DB_NAME.value = 'master_calib_NIRPS_HA.txt'
+# # the telluric database name
+# TELLU_DB_NAME = TELLU_DB_NAME.copy(__NAME__)
+# TELLU_DB_NAME.value = 'master_tellu_SPIROU.txt'
+#
+# # the calibration database name
+# CALIB_DB_NAME = CALIB_DB_NAME.copy(__NAME__)
+# CALIB_DB_NAME.value = 'master_calib_SPIROU.txt'
 
 #   Define the match type for calibDB files
-#         match = 'older'  when more than one file for each key will
-#                          select the newest file that is OLDER than
-#                          time in fitsfilename
-#         match = 'closest'  when more than on efile for each key will
-#                            select the file that is closest to time in
-#                            fitsfilename
+#         match = 'older'  only select calibration files that are older in
+#                          time than input file (and then base it on which is
+#                          closest in time)
+#         match = 'newer'  only select calibration files that are newer in
+#                          time than input file (and then base it on which is
+#                          closest in time)
+#         match = 'closest'  calibration file selection based on which is
+#                            closest in time to the input file
 #    if two files match with keys and time the key lower in the
 #         calibDB file will be used
 CALIB_DB_MATCH = CALIB_DB_MATCH.copy(__NAME__)
@@ -207,6 +263,7 @@ DRS_RESET_TELLUDB_PATH.value = 'reset/telludb/'
 # for run files (within assets directory)
 DRS_RESET_RUN_PATH = DRS_RESET_RUN_PATH.copy(__NAME__)
 DRS_RESET_RUN_PATH.value = 'reset/runs/'
+
 
 # =============================================================================
 #  End of configuration file
