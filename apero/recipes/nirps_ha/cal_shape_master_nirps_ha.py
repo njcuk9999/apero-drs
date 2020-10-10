@@ -14,10 +14,11 @@ import numpy as np
 from apero.base import base
 from apero import lang
 from apero.core import constants
+from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.core.utils import drs_startup
-from apero.core.core import drs_database
+from apero.core.utils import drs_utils
 from apero.io import drs_table
 from apero.science.calib import general
 from apero.science.calib import localisation
@@ -142,8 +143,8 @@ def __main__(recipe, params):
             emsg += '\n\t - "{0}"'.format(allowedtype)
         WLOG(params, 'error', emsg)
     # get all "filetype" filenames
-    filenames = drs_file.find_files(params, recipe, kind='tmp',
-                                    filters=dict(KW_DPRTYPE=filetype))
+    filenames = drs_utils.find_files(params, kind='tmp',
+                                     filters=dict(KW_DPRTYPE=filetype))
     # convert to numpy array
     filenames = np.array(filenames)
 

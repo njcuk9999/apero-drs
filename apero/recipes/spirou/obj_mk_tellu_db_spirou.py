@@ -16,14 +16,14 @@ from apero.base import base
 from apero.base import drs_text
 from apero import lang
 from apero.core import constants
-from apero.core.core import drs_file
 from apero.core.core import drs_log
+from apero.core.instruments.spirou import recipe_definitions as rd
 from apero.core.utils import drs_startup
+from apero.core.utils import drs_utils
 from apero.io import drs_path
 from apero.science import telluric
 from apero.tools.module.processing import drs_processing
 
-from apero.core.instruments.spirou import recipe_definitions as rd
 
 # =============================================================================
 # Define variables
@@ -118,9 +118,10 @@ def __main__(recipe, params):
     objnames = list(objnames)
     # ----------------------------------------------------------------------
     # get objects that match this object name
-    tellu_stars = drs_file.find_files(params, recipe, kind='red', fiber=fiber,
-                                      filters=dict(KW_OBJNAME=objnames,
-                                                   KW_OUTPUT=filetype))
+    tellu_stars = drs_utils.find_files(params, kind='red',
+                                       filters=dict(KW_OBJNAME=objnames,
+                                                    KW_OUTPUT=filetype,
+                                                    KW_FIBER=fiber))
     # ----------------------------------------------------------------------
     # get night names for each object
     night_names, tellu_basenames = [], []

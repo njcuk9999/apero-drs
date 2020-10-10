@@ -25,6 +25,7 @@ from apero import lang
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_data
+from apero.core.utils import drs_utils
 from apero.core.core import drs_database
 from apero.io import drs_fits
 from apero.science.calib import flat_blaze
@@ -186,10 +187,14 @@ def get_non_tellu_objs(params: ParamDict, recipe, fiber, filetype=None,
         fkwargs['KW_OUTPUT'] = filetype
     if dprtypes is not None:
         fkwargs['KW_DPRTYPE'] = dprtypes
-    # # find files
-    out = drs_file.find_files(params, recipe, kind='red', return_table=True,
-                              fiber=fiber, filters=fkwargs)
-    obj_filenames, obj_table = out
+    if fiber is not None:
+        fkwargs['KW_FIBER'] = fiber
+    # find files (and return pandas dataframe of all columns
+    dataframe = drs_utils.find_files(params, kind='red', filters=fkwargs,
+                                     columns='*')
+    # convert data frame to table
+    obj_table = Table.from_pandas(dataframe)
+    obj_filenames = obj_table['PATH']
     # filter out telluric stars
     obj_stars, obj_names = [], []
     # loop around object table and only keep non-telluric stars

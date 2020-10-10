@@ -35,7 +35,6 @@ from apero import lang
 from apero.base import drs_text
 from apero.io import drs_fits
 from apero.io import drs_path
-from apero.io import drs_table
 
 
 # =============================================================================
@@ -1390,8 +1389,8 @@ class DrsFitsFile(DrsInputFile):
         identify which keys in a header are required for a fits file to be this
         file instance kind
 
-        :param kwargs: dict, a dictionary where the values are header key values
-                       to id this file instance (compared to a fits header)
+        :param hkeys: dict, a dictionary where the values are header key values
+                      to id this file instance (compared to a fits header)
 
         :return: None
         """
@@ -1653,7 +1652,7 @@ class DrsFitsFile(DrsInputFile):
         :param s1d: list, a list of s1d images attached to this file instance
                           (for use with extraction file
                            instances) [not used in DrsInputFile]
-        :param kwargs: passed to required header keys (i.e. must be a DRS
+        :param hkeys: passed to required header keys (i.e. must be a DRS
                        Header key reference -- "KW_HEADERKEY")
                        [not used in DrsInputFile]
         """
@@ -1771,7 +1770,7 @@ class DrsFitsFile(DrsInputFile):
         :param s1d: list, a list of s1d images attached to this file instance
                           (for use with extraction file
                            instances) [not used in DrsInputFile]
-        :param kwargs: passed to required header keys (i.e. must be a DRS
+        :param hkeys: passed to required header keys (i.e. must be a DRS
                        Header key reference -- "KW_HEADERKEY")
                        [not used in DrsInputFile]
         """
@@ -2852,11 +2851,13 @@ class DrsFitsFile(DrsInputFile):
             dtype = htypes[it]
             # add key if in hdict (priority)
             if dkey in self.hdict:
+                # noinspection PyBroadException
                 try:
                     self.output_dict[key] = dtype(self.hdict[dkey])
                 except Exception as _:
                     self.output_dict[key] = 'None'
             elif dkey in self.header:
+                # noinspection PyBroadException
                 try:
                     self.output_dict[key] = dtype(self.header[dkey])
                 except Exception as _:
@@ -4165,7 +4166,6 @@ class DrsNpyFile(DrsInputFile):
         # write output dictionary
         self.output_dictionary(kind, runstring)
 
-
     def string_output(self) -> str:
         """
         String output for DrsFitsFile. If fiber is not None this also
@@ -4262,7 +4262,7 @@ class DrsNpyFile(DrsInputFile):
         :param is_combined: NOT USED FOR NPY FILE CLASS
         :param combined_list: NOT USED FOR NPY FILE CLASS
         :param s1d: NOT USED FOR NPY FILE CLASS
-        :param kwargs: NOT USED FOR NPY FILE CLASS
+        :param hkeys: NOT USED FOR NPY FILE CLASS
         """
         # set function name
         _ = display_func(self.params, 'newcopy', __NAME__, self.class_name)
@@ -4356,7 +4356,7 @@ class DrsNpyFile(DrsInputFile):
         :param is_combined: NOT USED FOR NPY FILE CLASS
         :param combined_list: NOT USED FOR NPY FILE CLASS
         :param s1d: NOT USED FOR NPY FILE CLASS
-        :param kwargs: NOT USED FOR NPY FILE CLASS
+        :param hkeys: NOT USED FOR NPY FILE CLASS
         """
         # set function name
         _ = display_func(self.params, 'completecopy', __NAME__, self.class_name)
@@ -4440,357 +4440,6 @@ class DrsNpyFile(DrsInputFile):
         # return dbkey
         return self.dbkey
 
-
-# =============================================================================
-# Define search functions
-# =============================================================================
-def get_index_files(params: ParamDict, path: Union[str, None] = None,
-                    required: bool = True, night: Union[str, None] = None
-                    ) -> np.ndarray:
-    """
-    Get index files in path (or sub-directory of path)
-        if path is "None" params['INPATH'] is used
-
-    :param params: ParamDict, the parameter dictionary of constants
-    :param path: str, the path to check for filetypes (must have index files
-                 in this path or sub directories of this path)
-                 if path is "None" params['INPATH'] is used
-    :param required: bool, if True generates an error when None found
-    :param night: str or None, if set filters index files by night
-
-    :type params: ParamDict
-    :type path: str
-    :type required: bool
-    :type night: str
-
-    :return: the absolute paths to all index files under path (array of strings)
-    :rtype: np.array
-    """
-    # set function name
-    func_name = display_func(params, 'get_index_files', __NAME__)
-    # deal with no path set
-    if path is None:
-        path = params['INPATH']
-    # storage of index files
-    index_files = []
-    # walk through path and find index files
-    for root, dirs, files in os.walk(path, followlinks=True):
-        # skip nights if required
-        if night is not None:
-            if not root.strip(os.sep).endswith(night):
-                continue
-        for filename in files:
-            if filename == params['DRS_INDEX_FILE']:
-                index_files.append(os.path.join(root, filename))
-    # log number of index files found
-    if len(index_files) > 0:
-        WLOG(params, '', TextEntry('40-004-00003', args=[len(index_files)]))
-    elif required:
-        eargs = [path, func_name]
-        WLOG(params, 'error', TextEntry('01-001-00021', args=eargs))
-    # return the index files
-    return np.sort(index_files)
-
-
-def find_files(params: ParamDict, recipe: Any = None,
-               kind: Union[str, None] = None,
-               path=None, logic: str = 'and', fiber: Union[str, None] = None,
-               return_table: bool = False, night: Union[str, None] = None,
-               filters: Union[Dict[str, Any], None] = None,
-               rawindexfile: Union[str, None] = None
-               ) -> Union[Tuple[np.ndarray, Table], np.ndarray]:
-    """
-    Find files of type 'kind' that match a set of filters (if filters set) else
-    return all files of that 'kind'
-
-    If path is set will use this path to look for index files
-
-    If kind is set to 'raw' uses DRS_DATA_RAW path, if kind is set to 'tmp'
-    uses DRS_DATA_WORKING path, if kind is set to 'red' uses DRS_DATA_REDUC
-    else uses params['INPATH']
-
-    The logic defines how kwargs are added.
-    kwargs must be in index file (column names) or in params as header keyword
-    stores (i.e. KW_DPRTYPE = [HEADER key, HEADER value, HEADER comment]
-
-    i.e.
-
-    find_files(params, kind='tmp', filters=dict(KW_DPRTYPE='FP_FP'))
-    --> will return all files in the working directory with DPRTYPE = 'FP_FP'
-
-    find_files(params, kind='red',
-               filters=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK'],
-                            KW_OUTPUT='EXT_E2DS'))
-    --> will return all files in reduced directory with:
-          DPRTYPE = OBJ_FP or OBJ_DARK   and DRSOUTID
-
-    :param params: ParamDict, the parameter dictionary of constants
-    :param recipe: DrsRecipe, used when finding raw files (can be None elsewise)
-    :param kind: str, the kind of file must be either 'raw', 'red' or 'tmp' or
-                 None - if None 'path' or params['INPATH'] must be set
-    :param path: str, the path to the index files
-    :param logic: str, either 'and' or 'or' - how filters are combined
-                  i.e. (FILTER1 AND FILTER2)  or (FILTER1 OR FILTER2)
-                  note if values in filters are lists these are always combined
-                  with OR statements
-
-    :param fiber: str or None - if set means files must have an associated fiber
-    :param return_table: bool, if True return masked index table with only those
-                         files agreeing with filters
-    :param night: str or None, if set filters the returns by the night name
-                  directory
-    :param filters: dict or None, if set contains key value pairs to filter the
-                    returns by i.e.
-                    filters=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK'],
-                                 KW_OUTPUT='EXT_E2DS'))
-                    will return all files in reduced directory with:
-                        DPRTYPE = OBJ_FP or OBJ_DARK   and DRSOUTID
-    :param rawindexfile: str, override the deafult raw index file name,
-                         default set by params['REPROCESS_RAWINDEXFILE'],
-                         only used it kind=='raw'
-
-    :return: if return_table is true, returns a tuple of the filelist (np.array)
-             and the index database filtered for all filters, if return_table is
-             false, only returns the filters list of files (np.array)
-    """
-    # set function name
-    func_name = display_func(params, 'find_files', __NAME__)
-    # ----------------------------------------------------------------------
-    # get pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
-    # get the index file col name
-    filecol = params['DRS_INDEX_FILENAME']
-    nightcol = params['REPROCESS_NIGHTCOL']
-    timecol = 'KW_MID_OBS_TIME'
-    # deal with no filters
-    if filters is None:
-        filters = dict()
-    # ----------------------------------------------------------------------
-    # deal with setting path
-    if path is not None:
-        path = str(path)
-        columns = None
-        index_files = None
-        index_dir = None
-    elif kind == 'raw':
-        # get index table (generate if needed)
-        indextable, index_dir = find_raw_files(params, recipe)
-        # construct index file path for raw
-        raw_index_file = pcheck(params, 'REPROCESS_RAWINDEXFILE',
-                                func=func_name, override=rawindexfile)
-        mpath = os.path.join(params['DRS_DATA_RUN'], raw_index_file)
-        # set the columns from table
-        columns = indextable.colnames
-        # set index files
-        index_files = [mpath]
-    elif kind == 'tmp':
-        path = params['DRS_DATA_WORKING']
-        columns = pconst.OUTPUT_FILE_HEADER_KEYS()
-        index_files = None
-        index_dir = None
-    elif kind == 'red':
-        path = params['DRS_DATA_REDUC']
-        columns = pconst.OUTPUT_FILE_HEADER_KEYS()
-        index_files = None
-        index_dir = None
-    else:
-        path = params['INPATH']
-        columns = None
-        index_files = None
-        index_dir = None
-    # ----------------------------------------------------------------------
-    # deal with making sure all kwargs are in columns (if columns defined)
-    if columns is not None:
-        for fkey in filters:
-            # if dkey not in columns report error
-            if fkey not in columns:
-                # log and raise error
-                eargs = [fkey, path, func_name]
-                WLOG(params, 'error', TextEntry('00-004-00001', args=eargs))
-    # ----------------------------------------------------------------------
-    # get index files
-    if index_files is None:
-        index_files = get_index_files(params, path, night=night)
-    # ----------------------------------------------------------------------
-    # valid files storage
-    valid_files = []
-    table_list = []
-    time_list = []
-    # filters added string
-    fstring = ''
-    # ----------------------------------------------------------------------
-    # loop through index files
-    for index_file in index_files:
-        # read index file
-        index = drs_table.read_fits_table(params, index_file)
-        # get directory
-        if index_dir is None:
-            dirname = os.path.dirname(index_file)
-        else:
-            dirname = index_dir
-        # ------------------------------------------------------------------
-        # overall masks
-        mask = np.ones(len(index), dtype=bool)
-        # filters added string
-        fstring = ''
-        # ------------------------------------------------------------------
-        # filter via kwargs
-        for fkey in filters:
-            # --------------------------------------------------------------
-            # if dkey is not found in index file then report error
-            if fkey not in index.colnames:
-                # report error
-                eargs = [fkey, index_file, func_name]
-                WLOG(params, 'error', TextEntry('00-004-00002', args=eargs))
-            # --------------------------------------------------------------
-            # deal with list of args
-            if isinstance(filters[fkey], list):
-                # get new mask
-                mask0 = np.zeros_like(mask)
-                # loop around kwargs[kwarg] values (has to be logic==or here)
-                for value in filters[fkey]:
-                    mask0 |= (index[fkey] == value.strip())
-            else:
-                mask0 = (index[fkey] == filters[fkey])
-            # --------------------------------------------------------------
-            # mask by filter
-            if logic == 'or':
-                mask |= mask0
-            else:
-                mask &= mask0
-            # --------------------------------------------------------------
-            # add to fstring
-            fstring += '\n\t{0}=\'{1}\''.format(fkey, filters[fkey])
-        # ------------------------------------------------------------------
-        # get files for those that remain
-        masked_files = index[filecol][mask]
-        if index_dir is None:
-            nightnames = np.array(mask).astype(int)
-        else:
-            nightnames = index[nightcol][mask]
-        # ------------------------------------------------------------------
-        masked_index = index[mask]
-        # new mask for index files
-        mask1 = np.zeros(len(masked_files), dtype=bool)
-        # check that files exist
-        # loop around masked files
-        for row, filename in enumerate(masked_files):
-            # deal with requiring night name
-            if index_dir is None:
-                nightname = ''
-            else:
-                nightname = nightnames[row]
-            # --------------------------------------------------------------
-            # deal with fiber
-            if fiber is not None:
-                # two conditions for not having fiber in name
-                cond1 = '_{0}.'.format(fiber) not in filename
-                cond2 = '_{0}_'.format(fiber) not in filename
-                # if both conditions are True then skip
-                if cond1 and cond2:
-                    continue
-            # get time value
-            timeval = float(masked_index[timecol][row])
-            # construct absolute path
-            absfilename = os.path.join(dirname, nightname, filename)
-            # check that file exists
-            if not os.path.exists(absfilename):
-                continue
-            # deal with returning index
-            mask1[row] = True
-            # append to storage
-            if absfilename not in valid_files:
-                valid_files.append(absfilename)
-                time_list.append(timeval)
-        # ------------------------------------------------------------------
-        # append to table list
-        if return_table:
-            table_list.append(masked_index[mask1])
-    # ----------------------------------------------------------------------
-    # log found
-    wargs = [len(valid_files), fstring]
-    WLOG(params, '', TextEntry('40-004-00004', args=wargs))
-    # ----------------------------------------------------------------------
-    # define sort mask (sort by time column)
-    sortmask = np.argsort(time_list)
-    # make sure valid_files is a numpy array
-    valid_files = np.array(valid_files)
-    # deal with table list
-    if return_table:
-        indextable = drs_table.vstack_cols(params, table_list)
-        return valid_files[sortmask], indextable[sortmask]
-    else:
-        # return full list
-        return valid_files[sortmask]
-
-
-# TODO: NOT USED?
-def find_raw_files(params: ParamDict, recipe: Any,
-                   nightcol: Union[str, None] = None,
-                   absfilecol: Union[str, None] = None,
-                   modifiedcol: Union[str, None] = None,
-                   sort_col: Union[str, None] = None,
-                   rawindexfile: Union[str, None] = None,
-                   itablefilecol: Union[str, None] = None
-                   ) -> Tuple[Table, str]:
-    """
-    Generate a list of all raw files (get raw files first from a pre-generated
-    list of raw files and update by looking in the raw directory)
-
-    :param params: ParamDict, parameter dictionary of constants
-    :param recipe: DrsRecipe, the recipe associated with the call to this file
-    :param nightcol: str or None, if set overrides params['REPROCESS_NIGHTCOL']
-    :param absfilecol: str or None, if set overrides
-                       params['REPROCESS_ABSFILECOL']
-    :param modifiedcol: str or None, if set overrides
-                        params['REPROCESS_MODIFIEDCOL']
-    :param sort_col: str or None, if set overrides
-                     params['REPROCESS_SORTCOL_HDRKEY']
-    :param rawindexfile: str or None, if set overrides
-                         params['REPROCESS_RAWINDEXFILE']
-    :param itablefilecol: str or None, if set overrides
-                          params['DRS_INDEX_FILENAME']
-
-    :return: tuple, 1. the raw file table, 2. str, the raw file path
-    """
-    # set function name
-    func_name = display_func(params, 'find_raw_files', __NAME__)
-    # get properties from params
-    night_col = pcheck(params, 'REPROCESS_NIGHTCOL', func=func_name,
-                       override=nightcol)
-    absfile_col = pcheck(params, 'REPROCESS_ABSFILECOL', func=func_name,
-                         override=absfilecol)
-    modified_col = pcheck(params, 'REPROCESS_MODIFIEDCOL', func=func_name,
-                          override=modifiedcol)
-    sortcol = pcheck(params, 'REPROCESS_SORTCOL_HDRKEY', func=func_name,
-                     override=sort_col)
-    raw_index_file = pcheck(params, 'REPROCESS_RAWINDEXFILE', func=func_name,
-                            override=rawindexfile)
-    itable_filecol = pcheck(params, 'DRS_INDEX_FILENAME', func=func_name,
-                            override=itablefilecol)
-    # get path
-    path, rpath = _get_path_and_check(params, 'DRS_DATA_RAW')
-    # print progress
-    WLOG(params, 'info', TextEntry('40-503-00010'))
-    # get files
-    gfout = _get_files(params, recipe, path, rpath)
-    nightnames, filelist, basenames, mod_times, mkwargs = gfout
-    # construct a table
-    mastertable = Table()
-    mastertable[night_col] = nightnames
-    mastertable[itable_filecol] = basenames
-    mastertable[absfile_col] = filelist
-    mastertable[modified_col] = mod_times
-    for kwarg in mkwargs:
-        mastertable[kwarg] = mkwargs[kwarg]
-    # sort by sortcol
-    sortmask = np.argsort(mastertable[sortcol])
-    mastertable = mastertable[sortmask]
-    # save master table
-    mpath = os.path.join(params['DRS_DATA_RUN'], raw_index_file)
-    mastertable.write(mpath, overwrite=True)
-    # return the file list
-    return mastertable, rpath
 
 # =============================================================================
 # User DrsFile functions
@@ -5268,253 +4917,6 @@ def get_output_dir(params: ParamDict, directory: Union[str, None] = None,
 # =============================================================================
 # Worker functions
 # =============================================================================
-# complex typing from _get_files
-GetFilesType = Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray,
-                     Dict[str, np.ndarray]]
-
-
-# TODO: NOT USED?
-def _get_files(params: ParamDict, recipe: Any, path: str, rpath: str,
-               absfilecol: Union[str, None] = None,
-               modifiedcol: Union[str, None] = None,
-               rawindexfile: Union[str, None] = None) -> GetFilesType:
-    """
-    Look for raw files - first in a table (rawindexfile) and then on disk
-    at 'path'
-
-    :param params: ParamDict, the parameter dictionary of constants
-    :param recipe: DrsRecipe, the recipe associated with this call
-    :param path: str, the path of the raw table file
-    :param rpath: str, the bas epath of the raw table (without subdir)
-    :param absfilecol: str or None, if set overrides
-                       params['REPROCESS_ABSFILECOL']
-    :param modifiedcol: str or None, if set overrides
-                        params['REPROCESS_MODIFIEDCOL']
-    :param rawindexfile: str or None, if set overrides
-    params['REPROCESS_RAWINDEXFILE']
-
-    :return: tuple, 1. np.array of night names (sub-directories), 2. np.array
-             of raw filenames (absolute), 3. np.array of raw filenames
-             (basenames) 4. np.array of last modified times 5. dictionary of
-             header keys required for rawindexfile (each key has a value which
-             is a np.array equal in length to the number of raw files
-    """
-    # set function name
-    func_name = display_func(params, '_get_files', __NAME__)
-    # get properties from params
-    absfile_col = pcheck(params, 'REPROCESS_ABSFILECOL', func=func_name,
-                         override=absfilecol)
-    modified_col = pcheck(params, 'REPROCESS_MODIFIEDCOL', func=func_name,
-                          override=modifiedcol)
-    raw_index_file = pcheck(params, 'REPROCESS_RAWINDEXFILE', func=func_name,
-                            override=rawindexfile)
-    # get the file filter (should be None unless we want specific files)
-    filefilter = params.get('FILENAME', None)
-    if filefilter is not None:
-        filefilter = list(params['FILENAME'])
-    # ----------------------------------------------------------------------
-    # get the pseudo constant object
-    pconst = constants.pload(params['INSTRUMENT'])
-    # ----------------------------------------------------------------------
-    # get header keys
-    headerkeys = pconst.OUTPUT_FILE_HEADER_KEYS()
-    # get raw valid files
-    raw_valid = pconst.VALID_RAW_FILES()
-    # ----------------------------------------------------------------------
-    # storage list
-    filelist, basenames, nightnames, mod_times = [], [], [], []
-    blist = []
-    # load raw index
-    rawindexfile = os.path.join(params['DRS_DATA_RUN'], raw_index_file)
-    if os.path.exists(rawindexfile):
-        rawindex = drs_table.read_table(params, rawindexfile, fmt='fits')
-    else:
-        rawindex = None
-    # ----------------------------------------------------------------------
-    # populate the storage dictionary
-    okwargs = dict()
-    for key in headerkeys:
-        okwargs[key] = []
-    # ----------------------------------------------------------------------
-    # deal with white/black list for nights
-    wnightnames = None
-    if 'WNIGHTNAMES' in params:
-        if not drs_text.null_text(params['WNIGHTNAMES'], ['None', 'All', '']):
-            wnightnames = params.listp('WNIGHTNAMES', dtype=str)
-    bnightnames = None
-    if 'BNIGHTNAMES' in params:
-        if not drs_text.null_text(params['BNIGHTNAMES'], ['None', 'All', '']):
-            bnightnames = params.listp('BNIGHTNAMES', dtype=str)
-    # ----------------------------------------------------------------------
-    # get files (walk through path)
-    for root, dirs, files in os.walk(path, followlinks=True):
-        # loop around files in this root directory
-        for filename in files:
-            # --------------------------------------------------------------
-            if filefilter is not None:
-                if os.path.basename(filename) not in filefilter:
-                    continue
-            # --------------------------------------------------------------
-            # get night name
-            ucpath = drs_path.get_uncommon_path(rpath, root)
-            if ucpath is None:
-                eargs = [path, rpath, func_name]
-                WLOG(params, 'error', TextEntry('00-503-00003', args=eargs))
-            # --------------------------------------------------------------
-            # make sure file is valid
-            isvalid = False
-            for suffix in raw_valid:
-                if filename.endswith(suffix):
-                    isvalid = True
-            # --------------------------------------------------------------
-            # do not scan empty ucpath
-            if len(ucpath) == 0:
-                continue
-            # --------------------------------------------------------------
-            # deal with blacklist/whitelist
-            if not drs_text.null_text(bnightnames, ['None', 'All', '']):
-                if ucpath in bnightnames:
-                    # only print path if not already in blist
-                    if ucpath not in blist:
-                        # log blacklisted
-                        margs = [ucpath]
-                        WLOG(params, '', TextEntry('40-503-00031', args=margs))
-                        # add to blist for printouts
-                        blist.append(ucpath)
-                    # skip this night
-                    continue
-            if not drs_text.null_text(wnightnames, ['None', 'All', '']):
-                if ucpath not in wnightnames:
-                    # skip this night
-                    continue
-                # elif we haven't seen this night before log statement
-                elif ucpath not in nightnames:
-                    # log: whitelisted
-                    margs = [ucpath]
-                    WLOG(params, '', TextEntry('40-503-00030', args=margs))
-            # --------------------------------------------------------------
-            # log the night directory
-            if (ucpath not in nightnames) and (ucpath != rpath):
-                # log: scnannming directory
-                margs = [ucpath]
-                WLOG(params, '', TextEntry('40-503-00003', args=margs))
-            # --------------------------------------------------------------
-            # get absolute path
-            abspath = os.path.join(root, filename)
-            modified = os.path.getmtime(abspath)
-            # --------------------------------------------------------------
-            # if not valid skip
-            if not isvalid:
-                continue
-            # --------------------------------------------------------------
-            # else append to list
-            else:
-                nightnames.append(ucpath)
-                filelist.append(abspath)
-                basenames.append(filename)
-                mod_times.append(modified)
-            # --------------------------------------------------------------
-            # see if file in raw index and has correct modified date
-            if rawindex is not None:
-                # find file
-                rowmask = (rawindex[absfile_col] == abspath)
-                # find match date
-                rowmask &= modified == rawindex[modified_col]
-                # only continue if both conditions found
-                if np.sum(rowmask) > 0:
-                    # locate file
-                    row = np.where(rowmask)[0][0]
-                    # if both conditions met load from raw fits file
-                    for key in headerkeys:
-                        okwargs[key].append(rawindex[key][row])
-                    # file was found
-                    rfound = True
-                else:
-                    rfound = False
-            else:
-                rfound = False
-            # --------------------------------------------------------------
-            # deal with header
-            if filename.endswith('.fits') and not rfound:
-                # read the header
-                header = drs_fits.read_header(params, abspath)
-                # fix the headers
-                try:
-                    header, _ = fix_header(params, recipe, header=header,
-                                           raise_exception=True)
-                except drs_exceptions.DrsHeaderError as e:
-                    # log warning message
-                    eargs = [e.key, abspath]
-                    emsg = TextEntry('10-001-00008', args=eargs)
-                    WLOG(params, 'warning', emsg)
-                    # remove from lists
-                    nightnames.pop()
-                    filelist.pop()
-                    basenames.pop()
-                    mod_times.pop()
-                    # continue to next file
-                    continue
-
-                # loop around header keys
-                for key in headerkeys:
-                    rkey = params[key][0]
-                    # deal with no key set
-                    if len(rkey) == 0:
-                        okwargs[key].append('')
-                    # deal with key in header
-                    elif rkey in header:
-                        okwargs[key].append(header[rkey])
-                    # else be blank (like no key set)
-                    else:
-                        okwargs[key].append('')
-    # ----------------------------------------------------------------------
-    # sort by filename
-    sortmask = np.argsort(filelist)
-    filelist = np.array(filelist)[sortmask]
-    nightnames = np.array(nightnames)[sortmask]
-    basenames = np.array(basenames)[sortmask]
-    mod_times = np.array(mod_times)[sortmask]
-    # need to sort kwargs
-    for key in okwargs:
-        okwargs[key] = np.array(okwargs[key])[sortmask]
-    # ----------------------------------------------------------------------
-    # return filelist
-    return nightnames, filelist, basenames, mod_times, okwargs
-
-
-def _get_path_and_check(params: ParamDict, key: str) -> Tuple[str, str]:
-    """
-    Get path from params (using key) i.e. params[key]
-    and add nightname (if in params) i.e. params['NIGHTNAME']
-    and finally check whether path if valid
-
-    :param params: ParamDict, parameter dictionary of constants
-    :param key: str, the key in 'params' to get base path from
-
-    :return: tuple, 1. the full path with nightname if used, 2. the base path
-             (i.e. from params[key])
-    """
-    # set function name
-    _ = display_func(params, '_get_path_and_check', __NAME__)
-    # check key in params
-    if key not in params:
-        WLOG(params, 'error', '{0} not found in params'.format(key))
-    # get top level path to search
-    rpath = params[key]
-    # deal with not having nightname
-    if 'NIGHTNAME' not in params:
-        path = str(rpath)
-    elif params['NIGHTNAME'] not in ['', 'None', None]:
-        path = os.path.join(rpath, params['NIGHTNAME'])
-    else:
-        path = str(rpath)
-    # check if path exists
-    if not os.path.exists(path):
-        WLOG(params, 'error', 'Path {0} does not exist'.format(path))
-    else:
-        return path, rpath
-
-
 def test_for_formatting(key: str, number: Union[int, float]) -> str:
     """
     Specific test of a string that may either be:
@@ -5724,7 +5126,7 @@ def _copydrsfile(drsfileclass, instance1: DrsInputFile,
     :param s1d: list, a list of s1d images attached to this file instance
                       (for use with extraction file
                        instances) [not used in DrsInputFile]
-    :param kwargs: passed to required header keys (i.e. must be a DRS
+    :param hkeys: passed to required header keys (i.e. must be a DRS
                    Header key reference -- "KW_HEADERKEY")
                    [not used in DrsInputFile]
 

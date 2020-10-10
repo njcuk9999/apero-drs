@@ -44,17 +44,6 @@ TextDict = lang.core.drs_lang_text.TextDict
 # =============================================================================
 # Define functions
 # =============================================================================
-def remove_index_files(params, path):
-    # find all index files
-    index_files = drs_file.get_index_files(params, path, required=False)
-    # remove all index files
-    for index_file in index_files:
-        # log progress
-        WLOG(params, '', TextEntry('40-504-00001', args=[index_file]))
-        # remove index file
-        os.remove(index_file)
-
-
 def get_all_files(params, path):
     # storage of files
     fits_files = []

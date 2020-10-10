@@ -14,15 +14,16 @@ from apero.base import base
 from apero.base import drs_text
 from apero import lang
 from apero.core import constants
-from apero.core.core import drs_file
+from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
-from apero.core.core import drs_database
+from apero.core.utils import drs_utils
 from apero.io import drs_table
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave
 from apero.science import velocity
 from apero.tools.module.testing import drs_dev
+
 
 # =============================================================================
 # Define variables
@@ -215,11 +216,9 @@ def __main__(recipe, params):
                     emsg = 'Night = "{0}" is not a valid reduced sub-directory'
                     WLOG(params, 'error', emsg.format(night))
             # find files for this night (or None)
-            files = drs_file.find_files(params, recipe, kind='red',
-                                        night=night,
-                                        filters=dict(KW_DPRTYPE=dprtype,
-                                                     KW_OUTPUT=filetype,
-                                                     KW_FIBER=fiber))
+            filters = dict(KW_DPRTYPE=dprtype, KW_OUTPUT=filetype,
+                           KW_FIBER=fiber, DIRECTORY=night)
+            files = drs_utils.find_files(params, kind='red', filters=filters)
             # append to list of files
             filenames += list(files)
         # convert to numpy array
