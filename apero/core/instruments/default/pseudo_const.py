@@ -1017,7 +1017,7 @@ class PseudoConstants:
         hkeys, htypes = self.INDEX_HEADER_KEYS()
         # set columns
         columns = ['PATH', 'DIRECTORY', 'FILENAME', 'KIND',
-                   'LAST_MODIFIED', 'RUNSTRING'] + hkeys + ['USED, RAWFIX']
+                   'LAST_MODIFIED', 'RUNSTRING'] + hkeys + ['USED', 'RAWFIX']
         ctypes = [str, str, str, str, float, str] + htypes + [int, int]
         return columns, ctypes
 
