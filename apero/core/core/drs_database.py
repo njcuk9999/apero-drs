@@ -139,7 +139,8 @@ class DatabaseManager:
             eargs = [dirname, self.name, func_name]
             WLOG(self.params, 'error', TextEntry('00-002-00016', args=eargs))
             return
-        if not dirname.exists():
+        # check for directory
+        if not dirname.exists() and check:
             # log error: Directory {0} does not exist (database = {1})
             eargs = [dirname, self.name, func_name]
             WLOG(self.params, 'error', TextEntry('00-002-00017', args=eargs))
@@ -1251,7 +1252,7 @@ class IndexDatabase(DatabaseManager):
                                        filename=basename, nentries=1)
         # ------------------------------------------------------------------
         # deal with updating entry
-        if currentpath is not None and currentpath == path:
+        if currentpath is not None and str(currentpath) == str(path):
             # add new entry to database
             values = [path, directory, basename, kind, last_modified]
             values += hvalues + [used, rawfix]
