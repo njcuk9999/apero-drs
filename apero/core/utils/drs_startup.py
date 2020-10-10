@@ -301,6 +301,10 @@ def setup(name: str = 'None', instrument: str = 'None',
     recipe.params = params.copy()
     WLOG.pin = params.copy()
     # -------------------------------------------------------------------------
+    # need to update files with new params
+    _update_input_params(params, recipe.args)
+    _update_input_params(params, recipe.kwargs)
+    # -------------------------------------------------------------------------
     # push display into log (before was print only)
     if not quiet:
         # display title
@@ -1522,6 +1526,24 @@ def _find_ipython() -> bool:
 # =============================================================================
 # Worker functions
 # =============================================================================
+def _update_input_params(params, args):
+    # loop around arguments
+    for argname in args:
+        # if argument isn't in params['INPUTS'] we don't need to worry about it
+        if argname in params['INPUTS']:
+            # get arg instance from args
+            arg = args[argname]
+            # we only need to update file arguments
+            if arg.dtype not in ['file', 'files']:
+                continue
+            # get params file instances (DrsInputFile)
+            pargs = params['INPUTS'][argname][1]
+            # loop around file instances and update params witha copy
+            for parg in pargs:
+                # update params
+                parg.params = params.copy()
+
+
 def _assign_pid() -> Tuple[str, str]:
     """
     Assign a process id based on the time now and return it and the
