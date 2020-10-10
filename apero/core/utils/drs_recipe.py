@@ -1574,6 +1574,8 @@ class DrsRunSequence:
             frecipe = DrsRecipe(self.instrument)
             # copy from given recipe
             frecipe.copy(add['recipe'])
+            # set params
+            frecipe.params = params
             # set filemod and recipemod
             frecipe.filemod = filemod
             frecipe.recipemod = recipemod
