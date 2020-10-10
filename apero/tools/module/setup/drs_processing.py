@@ -354,7 +354,7 @@ def run_process(params, recipe, module, *gargs, terminate=False, **gkwargs):
     # Generate run list
     rlist = generate_run_list(params, None, runtable, None)
     # Process run list
-    outlist, has_errors = process_run_list(params, recipe, rlist)
+    outlist, has_errors, _ = process_run_list(params, recipe, rlist)
     # display errors
     if has_errors:
         # terminate here
@@ -839,6 +839,8 @@ def generate_run_list(params, table, runtable, skiptable):
 
 
 def process_run_list(params, recipe, runlist, group=None):
+    # start a timer
+    process_start = time.time()
     # get number of cores
     cores = _get_cores(params)
     # pipe to correct module
@@ -853,7 +855,8 @@ def process_run_list(params, recipe, runlist, group=None):
         # run as multiple processes
         rdict = _multi_process(params, recipe, runlist, cores=cores,
                                groupname=group)
-
+    # end a timer
+    process_end = time.time()
     # remove lock files
     drs_lock.reset_lock_dir(params)
 
@@ -869,13 +872,20 @@ def process_run_list(params, recipe, runlist, group=None):
         if len(odict[key]['ERROR']) != 0:
             errors = True
 
+    # calculate process time
+    process_time = process_end - process_start
+
     # return the output array (dictionary with priority as key)
     #    values is a parameter dictionary consisting of
     #        RECIPE, NIGHT_NAME, ARGS, ERROR, WARNING, OUTPUTS
-    return odict, errors
+    return odict, errors, process_time
 
 
-def display_timing(params, outlist):
+def display_timing(params, outlist, ptime):
+
+    # get number of cores
+    cores = _get_cores(params)
+    # display the timings
     WLOG(params, '', '')
     WLOG(params, '', params['DRS_HEADER'])
     WLOG(params, '', 'Timings:')
@@ -897,9 +907,14 @@ def display_timing(params, outlist):
             WLOG(params, '', '')
             # add to total time
             tot_time += outlist[key]['TIMING']
+
+    # calculate the speed up factor
+    speed_up = tot_time / ptime
     # add total time
     WLOG(params, '', params['DRS_HEADER'])
     WLOG(params, 'info', TextEntry('40-503-00025', args=[tot_time]))
+    WLOG(params, 'info', TextEntry('40-503-00033', args=[ptime]))
+    WLOG(params, 'info', TextEntry('40-503-00034', args=[speed_up, cores]))
     WLOG(params, '', params['DRS_HEADER'])
     WLOG(params, '', '')
 
