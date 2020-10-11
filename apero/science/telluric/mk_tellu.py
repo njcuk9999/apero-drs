@@ -433,7 +433,7 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     # log that we are saving rotated image
     WLOG(params, '', TextEntry('40-019-00011', args=[transfile.filename]))
     # write image to file
-    transfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
+    transfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(transfile)
     # ------------------------------------------------------------------

@@ -254,7 +254,7 @@ def __main__(recipe, params):
         WLOG(params, '', TextEntry('40-010-00009', args=wargs))
         # ------------------------------------------------------------------
         # writefits image to file
-        outfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
+        outfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(outfile)
         # index this file

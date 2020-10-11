@@ -222,11 +222,11 @@ class Run:
         # make sure recipe does not have .py on the end
         self.recipename = _remove_py(self.recipename)
         # get recipe type (raw/tmp/reduced)
-        if self.recipe.inputdir == 'raw':
+        if self.recipe.inputtype == 'raw':
             self.kind = 0
-        elif self.recipe.inputdir == 'tmp':
+        elif self.recipe.inputtype == 'tmp':
             self.kind = 1
-        elif self.recipe.inputdir == 'red':
+        elif self.recipe.inputtype == 'red':
             self.kind = 2
         else:
             emsg1 = ('RunList Error: Recipe = "{0}" invalid'
@@ -1323,16 +1323,8 @@ def _get_paths(params, runobj, directory):
     nightname = runobj.args[int(directory.pos) + 1]
     # ----------------------------------------------------------------------
     # get the input directory
-    if recipe.inputdir == 'raw':
-        inpath = os.path.join(params['DRS_DATA_RAW'], nightname)
-    elif recipe.inputdir == 'tmp':
-        inpath = os.path.join(params['DRS_DATA_WORKING'], nightname)
-    elif recipe.inputdir.startswith('red'):
-        inpath = os.path.join(params['DRS_DATA_REDUC'], nightname)
-    else:
-        eargs = [recipe.name, recipe.outputdir, func_name]
-        WLOG(params, 'error', TextEntry('09-503-00007', args=eargs))
-        inpath = None
+    inpath = recipe.get_input_dir()
+    inpath = os.path.join(inpath, nightname)
     # ----------------------------------------------------------------------
     # check that path exist
     if not os.path.exists(inpath):
@@ -1344,16 +1336,8 @@ def _get_paths(params, runobj, directory):
             WLOG(params, 'error', TextEntry('09-503-00008', args=eargs))
     # ----------------------------------------------------------------------
     # get the output directory
-    if recipe.outputdir == 'raw':
-        outpath = os.path.join(params['DRS_DATA_RAW'], nightname)
-    elif recipe.outputdir == 'tmp':
-        outpath = os.path.join(params['DRS_DATA_WORKING'], nightname)
-    elif recipe.outputdir.startswith('red'):
-        outpath = os.path.join(params['DRS_DATA_REDUC'], nightname)
-    else:
-        eargs = [recipe.name, recipe.outputdir, func_name]
-        WLOG(params, 'error', TextEntry('09-503-00005', args=eargs))
-        outpath = None
+    outpath = recipe.get_output_dir()
+    outpath = os.path.join(outpath, nightname)
     # ----------------------------------------------------------------------
     # check that path exist
     if not os.path.exists(outpath):

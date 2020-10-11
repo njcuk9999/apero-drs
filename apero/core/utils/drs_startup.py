@@ -260,8 +260,8 @@ def setup(name: str = 'None', instrument: str = 'None',
     params = recipe.params.copy()
     # -------------------------------------------------------------------------
     # deal with setting night name, inputdir and outputdir
-    params['INPATH'] = recipe.get_input_dir(force=recipe.force_dirs[0])
-    params['OUTPATH'] = recipe.get_output_dir(force=recipe.force_dirs[0])
+    params['INPATH'] = recipe.get_input_dir()
+    params['OUTPATH'] = recipe.get_output_dir()
     if 'DIRECTORY' in params['INPUTS']:
         gargs = [params['INPATH'], params['INPUTS']['DIRECTORY']]
         params['NIGHTNAME'] = drs_path.get_uncommon_path(*gargs)
@@ -1927,7 +1927,6 @@ def _set_force_dirs(recipe: DrsRecipe,
             indir = os.path.abspath(indir)
         # set the input dir
         recipe.inputdir = indir
-        recipe.force_dirs[0] = True
     # ----------------------------------------------------------------------
     # set debug key
     dirkey = '--force_outdir'
@@ -1970,7 +1969,6 @@ def _set_force_dirs(recipe: DrsRecipe,
             outdir = os.path.abspath(outdir)
         # set the input dir
         recipe.outputdir = outdir
-        recipe.force_dirs[1] = True
     # ----------------------------------------------------------------------
     # return recipe
     return recipe

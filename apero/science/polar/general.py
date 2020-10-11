@@ -519,7 +519,7 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
     # log that we are saving pol file
     WLOG(params, '', TextEntry('40-021-00005', args=[polfile.filename]))
     # write image to file
-    polfile.write_multi(data_list=[pprops['POLERR']], kind=recipe.outputdir,
+    polfile.write_multi(data_list=[pprops['POLERR']], kind=recipe.outputtype,
                         runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(polfile)
@@ -540,7 +540,7 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
     # log that we are saving null1 file
     WLOG(params, '', TextEntry('40-021-00006', args=[null1file.filename]))
     # write image to file
-    null1file.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
+    null1file.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(null1file)
 
@@ -560,7 +560,7 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
     # log that we are saving null1 file
     WLOG(params, '', TextEntry('40-021-00007', args=[null2file.filename]))
     # write image to file
-    null2file.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
+    null2file.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(null2file)
 
@@ -583,7 +583,7 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
     WLOG(params, '', TextEntry('40-021-00008', args=[stokesfile.filename]))
     # write image to file
     stokesfile.write_multi(data_list=[pprops['STOKESIERR']],
-                           kind=recipe.outputdir, runstring=recipe.runstring)
+                           kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)STOKES_I
     recipe.add_output_file(stokesfile)
 
@@ -607,7 +607,7 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
         wargs = [s1dkey, s1dfile.filename]
         WLOG(params, '', TextEntry('40-021-00010', args=wargs))
         # write image to file
-        s1dfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
+        s1dfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(s1dfile)
 
@@ -687,7 +687,7 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
         # log that we are saving lsd file
         WLOG(params, '', TextEntry('40-021-00009', args=[lsd_file.filename]))
         # write image to file
-        lsd_file.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
+        lsd_file.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(lsd_file)
 

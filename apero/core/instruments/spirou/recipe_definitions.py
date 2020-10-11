@@ -138,10 +138,8 @@ recipes = []
 #    recipe = drs_recipe()  [DEFINED ABOVE]
 #
 #    recipe.name            the full name of the python script file
-#    recipe.outputdir       the output directory [raw/tmp/reduced]
-#    recipe.inputdir        the input directory [raw/tmp/reduced]
-#    recipe.inputtype       the extension to look for and add for files
-#                           (i.e. "fits")
+#    recipe.inputtype        the input directory [raw/tmp/reduced]
+#    recipe.outputtype       the output directory [raw/tmp/reduced]
 #    recipe.description     the description (for help file)
 #
 #    arguments:
@@ -169,49 +167,14 @@ pp_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 out_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 
 # -----------------------------------------------------------------------------
-# test.py
-# -----------------------------------------------------------------------------
-test = DrsRecipe(__INSTRUMENT__)
-test.name = 'test_recipe.py'
-test.instrument = __INSTRUMENT__
-test.outputdir = 'tmp'
-test.inputdir = 'tmp'
-test.inputtype = 'pp'
-test.extension = 'fits'
-test.description = Help['TEST_DESC']
-test.epilog = Help['TEST_EXAMPLE']
-test.kind = 'test'
-test.set_arg(pos=0, **directory)
-test.set_kwarg(name='--filelist1', dtype='files', default=[],
-               files=[files.pp_dark_dark_int, files.pp_flat_flat],
-               filelogic='inclusive',
-               helpstr=Help['TEST_FILELIST1_HELP'], required=True)
-test.set_kwarg(name='--filelist2', dtype='files', default=[],
-               files=[files.pp_fp_fp], helpstr=Help['TEST_FILELIST2_HELP'],
-               required=True)
-test.set_kwarg(**plot)
-test.set_kwarg(**add_db)
-test.set_kwarg(**dobad)
-test.set_kwarg(**badfile)
-test.set_kwarg(default=False, **combine)
-test.set_kwarg(**dodark)
-test.set_kwarg(**darkfile)
-test.set_kwarg(**flipimage)
-test.set_kwarg(**fluxunits)
-test.set_kwarg(**resize)
-# add to recipe
-recipes.append(test)
-
-# -----------------------------------------------------------------------------
 # cal_preprocess_spirou
 # -----------------------------------------------------------------------------
 cal_pp = DrsRecipe(__INSTRUMENT__)
 cal_pp.name = 'cal_preprocess_spirou.py'
 cal_pp.shortname = 'PP'
 cal_pp.instrument = __INSTRUMENT__
-cal_pp.outputdir = 'tmp'
-cal_pp.inputdir = 'raw'
 cal_pp.inputtype = 'raw'
+cal_pp.outputtype = 'tmp'
 cal_pp.extension = 'fits'
 cal_pp.description = Help['PREPROCESS_DESC']
 cal_pp.epilog = Help['PREPROCESS_EXAMPLE']
@@ -232,9 +195,8 @@ cal_badpix = DrsRecipe(__INSTRUMENT__)
 cal_badpix.name = 'cal_badpix_spirou.py'
 cal_badpix.shortname = 'BAD'
 cal_badpix.instrument = __INSTRUMENT__
-cal_badpix.outputdir = 'red'
-cal_badpix.inputdir = 'tmp'
-cal_badpix.inputtype = 'pp'
+cal_badpix.inputtype = 'tmp'
+cal_badpix.outputtype = 'red'
 cal_badpix.extension = 'fits'
 cal_badpix.description = Help['BADPIX_DESC']
 cal_badpix.epilog = Help['BADPIX_EXAMPLE']
@@ -267,9 +229,8 @@ cal_dark = DrsRecipe(__INSTRUMENT__)
 cal_dark.name = 'cal_dark_spirou.py'
 cal_dark.shortname = 'DARK'
 cal_dark.instrument = __INSTRUMENT__
-cal_dark.outputdir = 'red'
-cal_dark.inputdir = 'tmp'
-cal_dark.intputtype = 'pp'
+cal_dark.intputtype = 'tmp'
+cal_dark.outputtype = 'red'
 cal_dark.extension = 'fits'
 cal_dark.description = Help['DARK_DESC']
 cal_dark.epilog = Help['DARK_EXAMPLE']
@@ -299,9 +260,8 @@ cal_dark_master.name = 'cal_dark_master_spirou.py'
 cal_dark_master.shortname = 'DARKM'
 cal_dark_master.master = True
 cal_dark_master.instrument = __INSTRUMENT__
-cal_dark_master.outputdir = 'red'
-cal_dark_master.inputdir = 'tmp'
-cal_dark_master.intputtype = 'pp'
+cal_dark_master.intputtype = 'tmp'
+cal_dark_master.outputtype = 'red'
 cal_dark_master.extension = 'fits'
 cal_dark_master.description = Help['DARK_MASTER_DESC']
 cal_dark_master.epilog = Help['DARK_MASTER_EXAMPLE']
@@ -322,9 +282,8 @@ cal_loc = DrsRecipe(__INSTRUMENT__)
 cal_loc.name = 'cal_loc_spirou.py'
 cal_loc.shortname = 'LOC'
 cal_loc.instrument = __INSTRUMENT__
-cal_loc.outputdir = 'red'
-cal_loc.inputdir = 'tmp'
-cal_loc.inputtype = 'pp'
+cal_loc.inputtype = 'tmp'
+cal_loc.outputtype = 'red'
 cal_loc.extension = 'fits'
 cal_loc.description = Help['LOC_DESC']
 cal_loc.epilog = Help['LOC_EXAMPLE']
@@ -365,9 +324,8 @@ cal_shape_master.name = 'cal_shape_master_spirou.py'
 cal_shape_master.shortname = 'SHAPEM'
 cal_shape_master.master = True
 cal_shape_master.instrument = __INSTRUMENT__
-cal_shape_master.outputdir = 'red'
-cal_shape_master.inputdir = 'tmp'
-cal_shape_master.inputtype = 'pp'
+cal_shape_master.inputtype = 'tmp'
+cal_shape_master.outputtype = 'red'
 cal_shape_master.extension = 'fits'
 cal_shape_master.description = Help['SHAPE_DESC']
 cal_shape_master.epilog = Help['SHAPEMASTER_EXAMPLE']
@@ -418,9 +376,8 @@ cal_shape = DrsRecipe(__INSTRUMENT__)
 cal_shape.name = 'cal_shape_spirou.py'
 cal_shape.shortname = 'SHAPE'
 cal_shape.instrument = __INSTRUMENT__
-cal_shape.outputdir = 'red'
-cal_shape.inputdir = 'tmp'
-cal_shape.inputtype = 'pp'
+cal_shape.inputtype = 'tmp'
+cal_shape.outputtype = 'red'
 cal_shape.extension = 'fits'
 cal_shape.description = Help['SHAPE_DESC']
 cal_shape.epilog = Help['SHAPE_EXAMPLE']
@@ -458,9 +415,8 @@ cal_ff = DrsRecipe(__INSTRUMENT__)
 cal_ff.name = 'cal_flat_spirou.py'
 cal_ff.shortname = 'FF'
 cal_ff.instrument = __INSTRUMENT__
-cal_ff.outputdir = 'red'
-cal_ff.inputdir = 'tmp'
-cal_ff.inputtype = 'pp'
+cal_ff.inputtype = 'tmp'
+cal_ff.outputtype = 'red'
 cal_ff.extension = 'fits'
 cal_ff.description = Help['FLAT_DESC']
 cal_ff.epilog = Help['FLAT_EXAMPLE']
@@ -504,9 +460,8 @@ cal_thermal = DrsRecipe(__INSTRUMENT__)
 cal_thermal.name = 'cal_thermal_spirou.py'
 cal_thermal.shortname = 'THERM'
 cal_thermal.instrument = __INSTRUMENT__
-cal_thermal.outputdir = 'red'
-cal_thermal.inputdir = 'tmp'
-cal_thermal.inputtype = 'pp'
+cal_thermal.inputtype = 'tmp'
+cal_thermal.outputtype = 'red'
 cal_thermal.extension = 'fits'
 cal_thermal.description = Help['EXTRACT_DESC']
 cal_thermal.epilog = Help['EXTRACT_EXAMPLE']
@@ -554,9 +509,8 @@ cal_leak_master.name = 'cal_leak_master_spirou.py'
 cal_leak_master.shortname = 'LEAKM'
 cal_leak_master.master = True
 cal_leak_master.instrument = __INSTRUMENT__
-cal_leak_master.outputdir = 'red'
-cal_leak_master.inputdir = 'tmp'
-cal_leak_master.intputtype = 'pp'
+cal_leak_master.intputtype = 'tmp'
+cal_leak_master.outputtype = 'red'
 cal_leak_master.extension = 'fits'
 cal_leak_master.description = Help['LEAKM_DESC']
 cal_leak_master.epilog = Help['LEAKM_EXAMPLE']
@@ -578,9 +532,8 @@ cal_leak = DrsRecipe(__INSTRUMENT__)
 cal_leak.name = 'cal_leak_spirou.py'
 cal_leak.shortname = 'LEAK'
 cal_leak.instrument = __INSTRUMENT__
-cal_leak.outputdir = 'red'
-cal_leak.inputdir = 'red'
 cal_leak.intputtype = 'red'
+cal_leak.outputtype = 'red'
 cal_leak.extension = 'fits'
 cal_leak.description = Help['LEAK_DESC']
 cal_leak.epilog = Help['LEAK_EXAMPLE']
@@ -610,9 +563,8 @@ cal_extract = DrsRecipe(__INSTRUMENT__)
 cal_extract.name = 'cal_extract_spirou.py'
 cal_extract.shortname = 'EXT'
 cal_extract.instrument = __INSTRUMENT__
-cal_extract.outputdir = 'red'
-cal_extract.inputdir = 'tmp'
-cal_extract.inputtype = 'pp'
+cal_extract.inputtype = 'tmp'
+cal_extract.outputtype = 'red'
 cal_extract.extension = 'fits'
 cal_extract.description = Help['EXTRACT_DESC']
 cal_extract.epilog = Help['EXTRACT_EXAMPLE']
@@ -677,9 +629,8 @@ cal_wave_master = DrsRecipe(__INSTRUMENT__)
 cal_wave_master.name = 'cal_wave_master_spirou.py'
 cal_wave_master.shortname = 'WAVEM'
 cal_wave_master.instrument = __INSTRUMENT__
-cal_wave_master.outputdir = 'red'
-cal_wave_master.inputdir = 'tmp'
-cal_wave_master.inputtype = 'pp'
+cal_wave_master.inputtype = 'tmp'
+cal_wave_master.outputtype = 'red'
 cal_wave_master.extension = 'fits'
 cal_wave_master.description = Help['WAVE_DESC']
 cal_wave_master.epilog = Help['WAVE_EXAMPLE']
@@ -762,9 +713,8 @@ cal_wave_night = DrsRecipe(__INSTRUMENT__)
 cal_wave_night.name = 'cal_wave_night_spirou.py'
 cal_wave_night.shortname = 'WAVE'
 cal_wave_night.instrument = __INSTRUMENT__
-cal_wave_night.outputdir = 'red'
-cal_wave_night.inputdir = 'tmp'
-cal_wave_night.inputtype = 'pp'
+cal_wave_night.inputtype = 'tmp'
+cal_wave_night.outputtype = 'red'
 cal_wave_night.extension = 'fits'
 cal_wave_night.description = Help['WAVE_DESC']
 cal_wave_night.epilog = Help['WAVE_EXAMPLE']
@@ -838,9 +788,8 @@ cal_ccf = DrsRecipe(__INSTRUMENT__)
 cal_ccf.name = 'cal_ccf_spirou.py'
 cal_ccf.shortname = 'CCF'
 cal_ccf.instrument = __INSTRUMENT__
-cal_ccf.outputdir = 'red'
-cal_ccf.inputdir = 'red'
 cal_ccf.inputtype = 'red'
+cal_ccf.outputtype = 'red'
 cal_ccf.extension = 'fits'
 cal_ccf.description = Help['CCF_DESC']
 cal_ccf.epilog = Help['CCF_EXAMPLE']
@@ -877,9 +826,8 @@ obj_mk_tellu = DrsRecipe(__INSTRUMENT__)
 obj_mk_tellu.name = 'obj_mk_tellu_spirou.py'
 obj_mk_tellu.shortname = 'MKTELL'
 obj_mk_tellu.instrument = __INSTRUMENT__
-obj_mk_tellu.outputdir = 'red'
-obj_mk_tellu.inputdir = 'red'
 obj_mk_tellu.inputtype = 'red'
+obj_mk_tellu.outputtype = 'red'
 obj_mk_tellu.extension = 'fits'
 obj_mk_tellu.description = Help['MKTELL_DESC']
 obj_mk_tellu.epilog = Help['MKTELL_EXAMPLE']
@@ -916,9 +864,8 @@ obj_mk_tellu_db.name = 'obj_mk_tellu_db_spirou.py'
 obj_mk_tellu_db.shortname = 'MKTELLDB'
 obj_mk_tellu_db.master = False
 obj_mk_tellu_db.instrument = __INSTRUMENT__
-obj_mk_tellu_db.outputdir = 'red'
-obj_mk_tellu_db.inputdir = 'red'
 obj_mk_tellu_db.inputtype = 'red'
+obj_mk_tellu_db.outputtype = 'red'
 obj_mk_tellu_db.extension = 'fits'
 obj_mk_tellu_db.kind = 'recipe'
 obj_mk_tellu_db.description = Help['MKTELLDB_DESC']
@@ -951,9 +898,8 @@ obj_fit_tellu = DrsRecipe(__INSTRUMENT__)
 obj_fit_tellu.name = 'obj_fit_tellu_spirou.py'
 obj_fit_tellu.shortname = 'FTELLU'
 obj_fit_tellu.instrument = __INSTRUMENT__
-obj_fit_tellu.outputdir = 'red'
-obj_fit_tellu.inputdir = 'red'
 obj_fit_tellu.inputtype = 'red'
+obj_fit_tellu.outputtype = 'red'
 obj_fit_tellu.extension = 'fits'
 obj_fit_tellu.description = Help['FTELLU_DESC']
 obj_fit_tellu.epilog = Help['FTELLU_EXAMPLE']
@@ -1000,9 +946,8 @@ obj_fit_tellu_db.name = 'obj_fit_tellu_db_spirou.py'
 obj_fit_tellu_db.shortname = 'FTELLDB'
 obj_fit_tellu_db.master = False
 obj_fit_tellu_db.instrument = __INSTRUMENT__
-obj_fit_tellu_db.outputdir = 'red'
-obj_fit_tellu_db.inputdir = 'red'
 obj_fit_tellu_db.inputtype = 'red'
+obj_fit_tellu_db.outputtype = 'red'
 obj_fit_tellu_db.extension = 'fits'
 obj_fit_tellu_db.description = Help['FTELLUDB_DESC']
 obj_fit_tellu_db.epilog = Help['FTELLUDB_EXAMPLE']
@@ -1038,9 +983,8 @@ obj_mk_template = DrsRecipe(__INSTRUMENT__)
 obj_mk_template.name = 'obj_mk_template_spirou.py'
 obj_mk_template.shortname = 'MKTEMP'
 obj_mk_template.instrument = __INSTRUMENT__
-obj_mk_template.outputdir = 'red'
-obj_mk_template.inputdir = 'red'
 obj_mk_template.inputtype = 'red'
+obj_mk_template.outputtype = 'red'
 obj_mk_template.extension = 'fits'
 obj_mk_template.description = Help['MKTEMP_DESC']
 obj_mk_template.epilog = Help['MKTEMP_EXAMPLE']
@@ -1076,9 +1020,8 @@ recipes.append(obj_mk_template)
 # polar.name = 'polar_spirou.py'
 # polar.shortname = 'POLAR'
 # polar.instrument = __INSTRUMENT__
-# polar.outputdir = 'red'
-# polar.inputdir = 'red'
 # polar.inputtype = 'red'
+# polar.outputtype = 'red'
 # polar.extension = 'fits'
 # polar.description = ''
 # polar.epilog = ''
@@ -1109,9 +1052,8 @@ pol_spirou = DrsRecipe(__INSTRUMENT__)
 pol_spirou.name = 'pol_spirou.py'
 pol_spirou.shortname = 'POLAR'
 pol_spirou.instrument = __INSTRUMENT__
-pol_spirou.outputdir = 'red'
-pol_spirou.inputdir = 'red'
 pol_spirou.inputtype = 'red'
+pol_spirou.outputtype = 'red'
 pol_spirou.extension = 'fits'
 pol_spirou.description = Help['FTELLU_DESC']
 pol_spirou.epilog = Help['FTELLU_EXAMPLE']
@@ -1152,9 +1094,8 @@ pol_spirou_new = DrsRecipe(__INSTRUMENT__)
 pol_spirou_new.name = 'pol_spirou_new.py'
 pol_spirou_new.shortname = 'POLAR'
 pol_spirou_new.instrument = __INSTRUMENT__
-pol_spirou_new.outputdir = 'red'
-pol_spirou_new.inputdir = 'red'
 pol_spirou_new.inputtype = 'red'
+pol_spirou_new.outputtype = 'red'
 pol_spirou_new.extension = 'fits'
 pol_spirou_new.description = Help['FTELLU_DESC']
 pol_spirou_new.epilog = Help['FTELLU_EXAMPLE']
@@ -1217,9 +1158,8 @@ obj_spec = DrsRecipe(__INSTRUMENT__)
 obj_spec.name = 'obj_spec_spirou.py'
 obj_spec.shortname = 'OBJ_SPEC'
 obj_spec.instrument = __INSTRUMENT__
-obj_spec.outputdir = 'red'
-obj_spec.inputdir = 'tmp'
 obj_spec.inputtype = 'red'
+obj_spec.outputtype = 'red'
 obj_spec.extension = 'fits'
 obj_spec.description = ''
 obj_spec.epilog = ''

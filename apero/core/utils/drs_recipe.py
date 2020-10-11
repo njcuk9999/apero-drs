@@ -131,15 +131,15 @@ class DrsRecipe(object):
         self.recipemod = None
         # import module as ImportClass (pickle-able)
         self.module = self._import_module()
-        # output directory
-        self.outputdir = 'red'
-        # input directory
-        self.inputdir = 'tmp'
-        self.runstring = None
-        # input type (RAW/REDUCED)
+        # input/output directory
+        self.inputdir = None
+        self.outputdir = None
+        # input type ('raw', 'tmp', 'red') - used to get path when input/
+        #    outputdir is None (default way to get these paths)
         self.inputtype = 'raw'
-        # whether to force input/outputdir
-        self.force_dirs = [False, False]
+        self.outputtype = 'red'
+        # run string (i.e. {recipe} arg1 arg2 --kwarg1 --kwarg2)
+        self.runstring = None
         # recipe description/epilog
         self.description = 'No description defined'
         self.epilog = ''
@@ -812,8 +812,7 @@ class DrsRecipe(object):
             emsg = TextEntry('00-000-00004', args=eargs)
             WLOG(self.params, 'error', emsg)
 
-    def get_input_dir(self, directory: Union[str, None] = None,
-                      force: bool = False) -> Union[str, None]:
+    def get_input_dir(self) -> str:
         """
         Alias to drs_argument.get_input_dir
 
@@ -832,14 +831,11 @@ class DrsRecipe(object):
         # set function name
         _ = display_func(self.params, 'get_input_dir', __NAME__,
                          self.class_name)
-        # make sure if force is True we use it
-        force = self.force_dirs[0] or force
-        # return alised call
-        return drs_file.get_input_dir(self.params, directory, force,
-                                      forced_dir=self.inputdir)
+        # return input directory
+        return drs_file.get_dir(self.params, self.inputtype, self.inputdir,
+                                kind='input')
 
-    def get_output_dir(self, directory: Union[str, None] = None,
-                       force: bool = False) -> Union[str, None]:
+    def get_output_dir(self) -> str:
         """
         Alias to drs_argument.get_output_dir
 
@@ -858,11 +854,9 @@ class DrsRecipe(object):
         # set function name
         _ = display_func(self.params, 'get_output_dir', __NAME__,
                          self.class_name)
-        # make sure if force is True we use it
-        force = self.force_dirs[0] or force
-        # return alised call
-        return drs_file.get_output_dir(self.params, directory, force,
-                                       forced_dir=self.outputdir)
+        # return input directory
+        return drs_file.get_dir(self.params, self.outputtype, self.outputdir,
+                                kind='output')
 
     def copy(self, recipe: 'DrsRecipe'):
         """
@@ -892,13 +886,13 @@ class DrsRecipe(object):
         # import module
         self.module = self.module
         # output directory
-        self.outputdir = str(recipe.outputdir)
+        self.outputdir = copy.deepcopy(recipe.outputdir)
         # input directory
-        self.inputdir = str(recipe.inputdir)
-        # whether to force input/outputdir
-        self.force_dirs = [False, False]
-        # input type (RAW/REDUCED)
+        self.inputdir = copy.deepcopy(recipe.inputdir)
+        # input type (raw/tmp/red)
         self.inputtype = str(recipe.inputtype)
+        # output type (raw/tmp/red)
+        self.outputtype = str(recipe.outputtype)
         # recipe description/epilog
         self.description = recipe.description
         self.epilog = recipe.epilog
