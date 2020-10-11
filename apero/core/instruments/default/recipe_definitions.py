@@ -56,10 +56,8 @@ recipes = [changelog, explorer, go_recipe, processing, listing, logstats,
 #    recipe = drs_recipe()  [DEFINED ABOVE]
 #
 #    recipe.name            the full name of the python script file
-#    recipe.outputdir       the output directory [raw/tmp/reduced]
-#    recipe.inputdir        the input directory [raw/tmp/reduced]
-#    recipe.inputtype       the extension to look for and add for files
-#                           (i.e. "fits")
+#    recipe.inputtype        the input directory [raw/tmp/reduced]
+#    recipe.outputtype       the output directory [raw/tmp/reduced]
 #    recipe.description     the description (for help file)
 #
 #    arguments:

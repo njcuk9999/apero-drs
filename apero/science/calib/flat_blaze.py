@@ -413,7 +413,7 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     WLOG(params, '',
          TextEntry('40-015-00003', args=[blazefile.filename]))
     # write image to file
-    blazefile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
+    blazefile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(blazefile)
     # --------------------------------------------------------------
@@ -435,7 +435,7 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     WLOG(params, '',
          TextEntry('40-015-00004', args=[flatfile.filename]))
     # write image to file
-    flatfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
+    flatfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(flatfile)
     # --------------------------------------------------------------
@@ -457,7 +457,7 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     WLOG(params, '',
          TextEntry('40-015-00005', args=[e2dsllfile.filename]))
     # write image to file
-    e2dsllfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
+    e2dsllfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsllfile)
     # return out file

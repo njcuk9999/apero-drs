@@ -1254,7 +1254,8 @@ class IndexDatabase(DatabaseManager):
         # deal with updating entry
         if currentpath is not None and str(currentpath) == str(path):
             # add new entry to database
-            values = [path, directory, basename, kind, last_modified]
+            values = [str(path), str(directory), str(basename), str(kind),
+                      float(last_modified), str(runstring)]
             values += hvalues + [used, rawfix]
             # set up condition
             condition = 'FILENAME == "{0}"'.format(filename)
@@ -1658,9 +1659,10 @@ def _deal_with_filename(params: ParamDict, name: str, kind: str,
     # ------------------------------------------------------------------
     # deal with kind
     if force_dir is not None:
-        path = drs_file.get_dir(params, force_dir, kind='database (forced)')
+        path = drs_file.get_dir(params, kind, force_dir,
+                                kind='database (forced)')
     else:
-        path = drs_file.get_dir(params, kind.upper(), kind='database')
+        path = drs_file.get_dir(params, kind, None, kind='database')
     # deal with having full path
     if fullpath is not None:
         if isinstance(fullpath, str):
@@ -1767,6 +1769,9 @@ def _get_files(path: Union[Path, str], kind: str,
     valid_files = []
     # filter files
     for filename in allfiles:
+        # do not include directories
+        if not filename.is_file():
+            continue
         # include files
         if incfiles is not None and len(incfiles) > 0:
             if str(filename) not in incfiles:

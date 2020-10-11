@@ -1371,7 +1371,7 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
     WLOG(params, '', TextEntry('40-019-00044', args=[tpclfile.filename]))
     # write to file
     tpclfile.data = dimages[0]
-    tpclfile.write_multi(data_list=dimages[1:], kind=recipe.outputdir,
+    tpclfile.write_multi(data_list=dimages[1:], kind=recipe.outputtype,
                          runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(tpclfile)
@@ -1961,7 +1961,7 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, database=None,
         wargs = [out_tellu_conv.filename]
         WLOG(params, '', TextEntry('40-019-00002', args=wargs))
         # save
-        out_tellu_conv.write_file(kind=recipe.outputdir,
+        out_tellu_conv.write_file(kind=recipe.outputtype,
                                   runstring=recipe.runstring)
         # ------------------------------------------------------------------
         # Move to telluDB and update telluDB
@@ -2045,7 +2045,7 @@ def load_tapas_spl(params, recipe, header, database=None):
         WLOG(params, '', TextEntry('40-019-00047', args=[args]))
         # save to disk
         out_tellu_tapas.data = tmp_tapas
-        out_tellu_tapas.write_file(kind=recipe.outputdir,
+        out_tellu_tapas.write_file(kind=recipe.outputtype,
                                    runstring=recipe.runstring)
         # ------------------------------------------------------------------
         # Move to telluDB and update telluDB

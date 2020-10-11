@@ -59,9 +59,8 @@ c_hotpix = drs_dev.TmpRecipe()
 c_hotpix.name = __NAME__
 c_hotpix.shortname = 'CRT_HTPX'
 c_hotpix.instrument = __INSTRUMENT__
-c_hotpix.outputdir = 'red'
-c_hotpix.inputdir = 'raw'
 c_hotpix.inputtype = 'raw'
+c_hotpix.outputtype = 'red'
 c_hotpix.extension = 'fits'
 c_hotpix.description = ('Create the hotpix table for an instrument (required '
                         'for preprocessing)')

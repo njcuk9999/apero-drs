@@ -947,7 +947,7 @@ def write_master_lines(params, recipe, hce2ds, fpe2ds, hclines, fplines,
     wargs = [fiber, hcfile.filename]
     WLOG(params, '', TextEntry('40-017-00039', args=wargs))
     # write image to file
-    hcfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
+    hcfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(hcfile)
     # ------------------------------------------------------------------
@@ -971,7 +971,7 @@ def write_master_lines(params, recipe, hce2ds, fpe2ds, hclines, fplines,
     wargs = [fiber, fpfile.filename]
     WLOG(params, '', TextEntry('40-017-00039', args=wargs))
     # write image to file
-    fpfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
+    fpfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(fpfile)
     # ------------------------------------------------------------------
@@ -1873,7 +1873,7 @@ def hc_write_wavesolution(params, recipe, llprops, infile, fiber, combine,
     wargs = [fiber, wavefile.filename]
     WLOG(params, '', TextEntry('40-017-00019', args=wargs))
     # write image to file
-    wavefile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
+    wavefile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(wavefile)
     # ------------------------------------------------------------------
@@ -1908,7 +1908,7 @@ def hc_write_resmap(params, recipe, llprops, infile, wavefile, fiber):
     WLOG(params, '', TextEntry('40-017-00020', args=wargs))
     # write image to file
     resfile.write_multi(data_list=datalist, header_list=headerlist,
-                        kind=recipe.outputdir, runstring=recipe.runstring)
+                        kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(resfile)
 
@@ -2014,7 +2014,7 @@ def hc_write_wavesol_master(params, recipe, llprops, infile, fiber, combine,
     wargs = [fiber, wavefile.filename]
     WLOG(params, '', TextEntry('40-017-00019', args=wargs))
     # write image to file
-    wavefile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
+    wavefile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(wavefile)
     # ------------------------------------------------------------------
@@ -2048,7 +2048,7 @@ def hc_write_resmap_master(params, recipe, llprops, infile, wavefile, fiber):
     WLOG(params, '', TextEntry('40-017-00020', args=wargs))
     # write image to file
     resfile.write_multi(data_list=datalist, header_list=headerlist,
-                        kind=recipe.outputdir, runstring=recipe.runstring)
+                        kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(resfile)
 
@@ -5161,7 +5161,7 @@ def fp_write_wavesolution(params, recipe, llprops, hcfile, fpfile,
     wargs = [fiber, wavefile.filename]
     WLOG(params, '', TextEntry('40-017-00037', args=wargs))
     # write image to file
-    wavefile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
+    wavefile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(wavefile)
     # ------------------------------------------------------------------
@@ -5413,7 +5413,7 @@ def fp_write_wavesol_master(params, recipe, llprops, hcfile, fpfile, fiber,
     wargs = [fiber, wavefile.filename]
     WLOG(params, '', TextEntry('40-017-00037', args=wargs))
     # write image to file
-    wavefile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
+    wavefile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(wavefile)
     # ------------------------------------------------------------------
@@ -6138,7 +6138,7 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
     wargs = [fiber, wavefile.filename]
     WLOG(params, '', TextEntry('40-017-00037', args=wargs))
     # write image to file
-    wavefile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
+    wavefile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(wavefile)
     # ------------------------------------------------------------------
@@ -6161,7 +6161,7 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
     wargs = [fiber, hclfile.filename]
     WLOG(params, '', TextEntry('40-017-00039', args=wargs))
     # write image to file
-    hclfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
+    hclfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(hclfile)
     # ------------------------------------------------------------------
@@ -6194,7 +6194,7 @@ def write_fplines(params, recipe, rfpl, infile, hfile, fiber, kind=None):
     wargs = [fiber, fplfile.filename]
     WLOG(params, '', TextEntry('40-017-00039', args=wargs))
     # write image to file
-    fplfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
+    fplfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(fplfile)
 
@@ -6243,7 +6243,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # update the e2ds file
     e2ds_file.read_file()
     e2ds_file = add_wave_keys(params, e2ds_file, wprops)
-    e2ds_file.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
+    e2ds_file.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2ds_file)
     # ----------------------------------------------------------------------
@@ -6253,7 +6253,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # update the e2ds file
     e2dsff_file.read_file()
     e2dsff_file = add_wave_keys(params, e2dsff_file, wprops)
-    e2dsff_file.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
+    e2dsff_file.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsff_file)
     # ----------------------------------------------------------------------
@@ -6263,7 +6263,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # update the e2ds file
     e2dsll_file.read_file()
     e2dsll_file = add_wave_keys(params, e2dsll_file, wprops)
-    e2dsll_file.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
+    e2dsll_file.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsll_file)
     # ----------------------------------------------------------------------
@@ -6301,7 +6301,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     wargs = [s1dw_file.name, s1dw_file.filename]
     WLOG(params, '', TextEntry('40-017-00038', args=wargs))
     # write image to file
-    s1dw_file.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
+    s1dw_file.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(s1dw_file)
     # ----------------------------------------------------------------------
@@ -6322,7 +6322,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     wargs = [s1dv_file.name, s1dv_file.filename]
     WLOG(params, '', TextEntry('40-017-00038', args=wargs))
     # write image to file
-    s1dv_file.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
+    s1dv_file.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(s1dv_file)
 
