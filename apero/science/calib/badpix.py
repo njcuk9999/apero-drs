@@ -388,7 +388,7 @@ def write_files(params, recipe, flatfile, darkfile, backmap, combine,
     # log that we are saving rotated image
     WLOG(params, '', TextEntry('40-012-00013', args=[badpixfile.filename]))
     # write image to file
-    badpixfile.write_file(kind=recipe.outputdir, runstring=recipe.runstring)
+    badpixfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(badpixfile)
     # ----------------------------------------------------------------------
