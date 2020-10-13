@@ -133,11 +133,9 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     cargs = [params, recipe, dark_table]
     master_dark, reffile = dark.construct_master_dark(*cargs)
-    # get reference file night name
-    nightname = drs_path.get_nightname(params, reffile.filename)
     # Have to update nightname while locked for all param dicts (do not copy)
     #     Note: do not use 'uparamdicts' unless you know what you are doing.
-    ukwargs = dict(key='NIGHTNAME', value=nightname, source=mainname)
+    ukwargs = dict(key='NIGHTNAME', value='other', source=mainname)
     constants.uparamdicts(params, recipe.params, WLOG.pin, **ukwargs)
 
     # ------------------------------------------------------------------
