@@ -253,7 +253,28 @@ def extract_files(params, recipe, infile, outfile, always_extract,
                 kwargs['DRS_GROUP'] = groupname
         # ------------------------------------------------------------------
         # pipe into cal_extract
-        llout = extrecipe.main(**kwargs)
+        try:
+            llout = extrecipe.main(**kwargs)
+        except Exception as e:
+            llout = dict()
+            llout['params'] = dict()
+            llout['params']['LOGGER_ERROR'] = [['', str(e)]]
+            llout['params']['LOGGER_ERROR'] = [[]]
+            llout['success'] = False
+            llout['passed'] = False
+        # pipe errors and warnings
+        for error in llout['params']['LOGGER_ERROR']:
+            # error should show it was from extraction recipe
+            errormsg = '[FROM {0}] '.format(extrecipe.name.upper())
+            errormsg += error[1]
+            # append to logger error storage for this PID
+            WLOG.logger_storage(params, 'error', ttime=error[0], mess=errormsg)
+        for warn in llout['params']['LOGGER_WARNING']:
+            # warning should show it was from extraction recipe
+            warnmsg = '[FROM {0}] '.format(extrecipe.name.upper())
+            warnmsg += warn[1]
+            # append to logger warning storage for this PID
+            WLOG.logger_storage(params, 'warning', ttime=warn[0], mess=warnmsg)
         # check success
         if not llout['success']:
             eargs = [recipe.name, func_name]
