@@ -2987,22 +2987,21 @@ def valid_directory(params: ParamDict, indexdb: IndexDatabase,
     # -------------------------------------------------------------------------
     # 2. check for directory in database
     # -------------------------------------------------------------------------
+    # may need to remove input_path from directory
+    if input_dir in directory:
+        # remove input dir from directory
+        directory = directory.split(input_dir)[-1]
+        # remove os separator from directory (at start)
+        while directory.startswith(os.sep):
+            directory = directory[len(os.sep):]
+
     # return if found
     if directory in directories:
         # need full path of directory
         return os.path.realpath(os.path.join(input_dir, directory))
+
     # -------------------------------------------------------------------------
-    # 3. update database (maybe we missed the directory)
-    # -------------------------------------------------------------------------
-    # deal with a forced path
-    if not force:
-        forced_dir = None
-    # return if found
-    if directory in directories:
-        # need full path of directory
-        return os.path.realpath(os.path.join(input_dir, directory))
-    # -------------------------------------------------------------------------
-    # 4. directory is not correct - raise error
+    # 3. directory is not correct - raise error
     # -------------------------------------------------------------------------
     abspath = indexdb.deal_with_filename(kind=kind, force_dir=forced_dir)
     eargs = [argname, directory, str(abspath)]
@@ -3126,7 +3125,6 @@ def _check_fits_keys(params: ParamDict, drsfiles: List[DrsInputFile],
     :param drsfiles:
     :param indexdb:
     :param condition:
-    :param force:
     :param forced_dir:
     :return:
     """
