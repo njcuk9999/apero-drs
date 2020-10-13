@@ -4833,7 +4833,7 @@ def get_dir(params: ParamDict, dirkind: str, dirpath: Union[str, None] = None,
     elif dirkind.upper() == 'RED':
         dirpath = params['DRS_DATA_REDUC']
     elif dirkind.upper() == 'ASSET':
-        dirpath = params['DRS_CALIB_DB']
+        dirpath = params['DRS_DATA_ASSETS']
     elif dirkind.upper() == 'CALIB':
         dirpath = params['DRS_CALIB_DB']
     elif dirkind.upper() == 'TELLU':
