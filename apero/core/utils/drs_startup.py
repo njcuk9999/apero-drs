@@ -1600,7 +1600,7 @@ def find_recipe(name: str = 'None', instrument: str = 'None',
         empty = drs_recipe.DrsRecipe(name='Empty', instrument=instrument)
         return empty, None
     # else we have a name and an instrument
-    if mod.get() is None:
+    if mod is None or mod.get() is None:
         margs = [instrument, ['recipe_definitions.py'], ipath, CORE_PATH]
         modules = constants.getmodnames(*margs, return_paths=False)
         # load module
@@ -1927,6 +1927,9 @@ def _set_force_dirs(recipe: DrsRecipe,
             indir = os.path.abspath(indir)
         # set the input dir
         recipe.inputdir = indir
+        # set the input type
+        recipe.inputtype = _determine_dirtype(recipe.params, recipe.inputtype,
+                                              recipe.inputdir)
     # ----------------------------------------------------------------------
     # set debug key
     dirkey = '--force_outdir'
@@ -1969,9 +1972,41 @@ def _set_force_dirs(recipe: DrsRecipe,
             outdir = os.path.abspath(outdir)
         # set the input dir
         recipe.outputdir = outdir
+        # set the input type
+        recipe.outputtype = _determine_dirtype(recipe.params, recipe.outputtype,
+                                               recipe.outputdir)
     # ----------------------------------------------------------------------
     # return recipe
     return recipe
+
+
+def _determine_dirtype(params: ParamDict, dirtype: str,
+                       directory: Union[str, None]) -> str:
+    # if we have no directory we cannot guess
+    if directory is None:
+        return dirtype
+    # check directory against raw directory
+    if directory == params['DRS_DATA_RAW']:
+        return 'raw'
+    # check directory against tmp directory
+    if directory == params['DRS_DATA_WORKING']:
+        return 'tmp'
+    # check directory against reduced directory
+    if directory == params['DRS_DATA_REDUC']:
+        return 'red'
+    # check directory against asset directory
+    if directory == params['DRS_DATA_ASSETS']:
+        return 'asset'
+    # check directory against calib directory
+    if directory == params['DRS_CALIB_DB']:
+        return 'calib'
+    # check directory against tellu directory
+    if directory == params['DRS_TELLU_DB']:
+        return 'tellu'
+    # if we have reached this point we cannot guess - so we have to return
+    # the type that was set in setup - any custom paths must be of this
+    # kind
+    return dirtype
 
 
 def _sort_version(messages: Union[TextEntry, str, None] = None
