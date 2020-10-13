@@ -12,6 +12,7 @@ import importlib
 import numpy as np
 import sys
 import os
+import yaml
 import shutil
 import readline
 import glob
@@ -379,23 +380,15 @@ def check_path_arg(name, value: Union[str, Path]):
     return promptuser, value
 
 
-def user_interface(params, args):
+def user_interface(params, args, lang):
     # set function name
     func_name = __NAME__ + '.user_interface()'
     # get default from params
     package = params['DRS_PACKAGE']
     # get available instruments
     drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
-
-    # deal with instrument from args
-    if args.instrument is not None:
-        drs_instruments = [args.instrument]
-        one_instrument = True
-    else:
-        one_instrument = False
-
     # storage of answers
-    all_params = dict()
+    all_params = ParamDict()
     # title
     cprint(printheader(), 'm')
     cprint('Installation for {0}'.format(package), 'm')
@@ -423,228 +416,228 @@ def user_interface(params, args):
         userconfig = ask(message1, 'path', default=default_upath)
     # add user config to all_params
     all_params['USERCONFIG'] = userconfig
+
     # ------------------------------------------------------------------
-    for instrument in drs_instruments:
-        # ------------------------------------------------------------------
-        cprint('\n' + printheader(), 'm')
-        cprint('Settings for {0}'.format(instrument), 'm')
-        cprint(printheader(), 'm')
-        # ------------------------------------------------------------------
-        # set up blank dictionary
-        iparams = ParamDict()
-        # ------------------------------------------------------------------
-        # Step 2: Ask for instruments to install
-        # ------------------------------------------------------------------
-        # if one_instrument we know user already wants to install so dont' ask
-        if not one_instrument:
-            install = ask('Install {0}?'.format(instrument), dtype='YN')
-            if not install:
-                continue
-            cprint(printheader(), 'g')
-        # ------------------------------------------------------------------
-        # set user config
-        uconfig = Path(userconfig).joinpath(instrument.lower())
-        iparams['USERCONFIG'] = uconfig
-        iparams.set_source('USERCONFIG', func_name)
-        # make instrument user config directory
-        if not uconfig.exists():
-            uconfig.mkdir()
-        # ------------------------------------------------------------------
-        # check data path
-        promptuser, datadir = check_path_arg('datadir', args.datadir)
+    # Step 2: Ask for instrument (from valid instruments)
+    # ------------------------------------------------------------------
+    prompt_inst = 'Choose instrument to install '
+    inst_options, prompt_options = [], []
+    # loop around instruments
+    for it, instrument in enumerate(drs_instruments):
+        inst_options += [it + 1]
+        prompt_options += ['{0}. {1}'.format(it + 1, instrument)]
+    # ask user
+    inst_number = ask(prompt_inst, options=inst_options, dtype='int',
+                      optiondesc=prompt_options)
+    # update instrument based on inst_number
+    instrument = drs_instruments[inst_number - 1]
+    # set instrument in all params
+    all_params['INSTRUMENT'] = instrument
+    all_params.set_source('INSTRUMENT', func_name)
+    # TODO: set language
+    all_params['LANGUAGE'] = lang
+    all_params.set_source('LANGUAGE', lang)
+    # ------------------------------------------------------------------
+    cprint('\n' + printheader(), 'm')
+    cprint('Settings for {0}'.format(instrument), 'm')
+    cprint(printheader(), 'm')
+    # ------------------------------------------------------------------
+    # set user config
+    uconfig = Path(userconfig)
+    all_params['USERCONFIG'] = uconfig
+    all_params.set_source('USERCONFIG', func_name)
+    # make instrument user config directory
+    if not uconfig.exists():
+        uconfig.mkdir()
+    # ------------------------------------------------------------------
+    # check data path
+    promptuser, datadir = check_path_arg('datadir', args.datadir)
 
-        # check for data paths in args
-        data_prompts, data_values = dict(), dict()
-        data_promptuser = False
-        for path in DATA_ARGS:
-            if not promptuser:
-                value = None
-                promptuser1 = False
-            else:
-                value = getattr(args, DATA_ARGS[path])
-                promptuser1, value = check_path_arg(path, value)
-                data_prompts[path] = promptuser1
-            data_values[path] = value
-            data_promptuser |= promptuser1
-
-        # ------------------------------------------------------------------
-        # Step 3: Ask for data paths
-        # ------------------------------------------------------------------
-
-        if promptuser and data_promptuser:
-            advanced = ask(message2, dtype='YN')
-            cprint(printheader(), 'g')
+    # check for data paths in args
+    data_prompts, data_values = dict(), dict()
+    data_promptuser = False
+    for path in DATA_ARGS:
+        if not promptuser:
+            value = None
+            promptuser1 = False
         else:
-            advanced = False
-        # ------------------------------------------------------------------
-        # if advanced then loop through all options
-        if advanced:
-            # loop around paths
-            for path in DATA_PATHS:
-                # get arg value
-                promptuser = data_prompts[path]
-                argvalue = data_values[path]
-                if promptuser:
-                    # get question and default
-                    question, default = DATA_PATHS[path]
-                    defaultpath = default_dpath.joinpath(default)
-                    # ask question and assign path
-                    iparams[path] = ask(question, 'path', default=defaultpath)
-                    iparams.set_source(path, __NAME__)
-                    cprint(printheader(), 'g')
-                else:
-                    iparams[path] = argvalue
-                    iparams.set_source(path, 'command line')
-        # ------------------------------------------------------------------
-        elif data_promptuser:
-            create = False
-            directory = Path(default_dpath)
-            # loop until we have an answer
-            while not create:
-                directory = ask('Data directory', 'path',
-                                default=default_dpath)
-                # ask to create directory
-                pathquestion = 'Path "{0}" does not exist. Create?'
+            value = getattr(args, DATA_ARGS[path])
+            promptuser1, value = check_path_arg(path, value)
+            data_prompts[path] = promptuser1
+        data_values[path] = value
+        data_promptuser |= promptuser1
 
-                if not directory.exists():
-                    create = ask(pathquestion.format(directory), dtype='YN')
-                    if create:
-                        os.makedirs(directory)
-                        mkdir = '\n\t - Making directory "{0}"'
-                        cprint(mkdir.format(directory), 'g')
-                else:
-                    create = True
-            # loop around paths and create them
-            for path in DATA_PATHS:
-                # get questions and default
+    # ------------------------------------------------------------------
+    # Step 3: Ask for data paths
+    # ------------------------------------------------------------------
+
+    if promptuser and data_promptuser:
+        advanced = ask(message2, dtype='YN')
+        cprint(printheader(), 'g')
+    else:
+        advanced = False
+    # ------------------------------------------------------------------
+    # if advanced then loop through all options
+    if advanced:
+        # loop around paths
+        for path in DATA_PATHS:
+            # get arg value
+            promptuser = data_prompts[path]
+            argvalue = data_values[path]
+            if promptuser:
+                # get question and default
                 question, default = DATA_PATHS[path]
-                # assign path
-                dpath = directory.joinpath(default)
-                iparams[path] = dpath
-                iparams.set_source(path, __NAME__)
-                # check whether path exists
-                if not dpath.exists():
-                    os.makedirs(dpath)
+                defaultpath = default_dpath.joinpath(default)
+                # ask question and assign path
+                all_params[path] = ask(question, 'path', default=defaultpath)
+                all_params.set_source(path, __NAME__)
+                cprint(printheader(), 'g')
+            else:
+                all_params[path] = argvalue
+                all_params.set_source(path, 'command line')
+    # ------------------------------------------------------------------
+    elif data_promptuser:
+        create = False
+        directory = Path(default_dpath)
+        # loop until we have an answer
+        while not create:
+            directory = ask('Data directory', 'path',
+                            default=default_dpath)
+            # ask to create directory
+            pathquestion = 'Path "{0}" does not exist. Create?'
+
+            if not directory.exists():
+                create = ask(pathquestion.format(directory), dtype='YN')
+                if create:
+                    os.makedirs(directory)
                     mkdir = '\n\t - Making directory "{0}"'
-                    cprint(mkdir.format(iparams[path]), 'g')
-            cprint(printheader(), 'g')
-
-        else:
-            for path in DATA_PATHS:
-                # get questions and default
-                question, default = DATA_PATHS[path]
-                value = data_values[path]
-                if value is None and datadir is not None:
-                    iparams[path] = datadir.joinpath(default)
-                    iparams.set_source(path, 'command line + default')
-                    pargs = [path, iparams[path]]
-                    cprint('\t - {0} set from datadir ({1})'.format(*pargs))
-                else:
-                    # assign path
-                    iparams[path] = value
-                    iparams.set_source(path, 'command line')
-
-        # ------------------------------------------------------------------
-        # Step 4: Ask for plot mode
-        # ------------------------------------------------------------------
-        # find value in args
-        if args.plotmode is None:
-
-            plot = ask('Plot mode required', dtype='int', options=[0, 1, 2],
-                       optiondesc=['0: No plotting',
-                                   '1: Plots display at end of code',
-                                   '2: Plots display immediately and '
-                                   'pause code'],
-                       default=0)
-            iparams['DRS_PLOT'] = plot
-            iparams.set_source('DRS_PLOT', __NAME__)
-            # add header line
-            cprint(printheader(), 'g')
-        else:
-            cprint('\t - DRS_PLOT set from cmd ({0})'.format(args.plotmode))
-            iparams['DRS_PLOT'] = args.plotmode
-            iparams.set_source('DRS_PLOT', 'command line')
-
-        # ------------------------------------------------------------------
-        # Step 5: Ask whether we want a clean install
-        # ------------------------------------------------------------------
-        if args.clean is None:
-            iparams['CLEAN_INSTALL'] = ask(message3, dtype='YN')
-            iparams.set_source('CLEAN_INSTALL', func_name)
-        else:
-            cprint('\t - CLEAN set from cmd ({0})'.format(args.clean))
-            iparams['CLEAN_INSTALL'] = eval(args.clean)
-            iparams.set_source('CLEAN_INSTALL', 'command line')
-
-        # ------------------------------------------------------------------
-        # Step 6: Check for programs
-        # ------------------------------------------------------------------
-        if args.ds9path is None or args.pdfpath is None:
-            # set the values of ds9path and pdfpath initial to None
-            ds9path, pdfpath = None, None
-            # ------------------------------------------------------------------
-            # ds9 path
-            # ------------------------------------------------------------------
-            # add header line
-            cprint(printheader(), 'g')
-            cprint('Recommended external programs (optional)')
-            # check command line args
-            if args.ds9path is not None:
-                if args.ds9path == 'None':
-                    promptuser, ds9path = False, None
-
-                else:
-                    promptuser, ds9path = check_path_arg('ds9dir', args.datadir)
-            # get ds9
-            if 'DRS_DS9_PATH' in all_params:
-                ds9path = all_params['DRS_DS9_PATH']
-            elif ds9path is None:
-                ds9path = shutil.which('ds9')
-            # deal with no ds9 path found
-            if ds9path is None and promptuser:
-                iparams['DRS_DS9_PATH'] = ask(message5, dtype='path',
-                                              default='None', required=False)
-                iparams.set_source('DRS_DS9_PATH', 'user')
+                    cprint(mkdir.format(directory), 'g')
             else:
-                iparams['DRS_DS9_PATH'] = ds9path
-                iparams.set_source('DRS_DS9_PATH', func_name)
-                cprint('\n\t - Found ds9', 'g')
-            # add it/update all_params
+                create = True
+        # loop around paths and create them
+        for path in DATA_PATHS:
+            # get questions and default
+            question, default = DATA_PATHS[path]
+            # assign path
+            dpath = directory.joinpath(default)
+            all_params[path] = dpath
+            all_params.set_source(path, __NAME__)
+            # check whether path exists
+            if not dpath.exists():
+                os.makedirs(dpath)
+                mkdir = '\n\t - Making directory "{0}"'
+                cprint(mkdir.format(all_params[path]), 'g')
+        cprint(printheader(), 'g')
+
+    else:
+        for path in DATA_PATHS:
+            # get questions and default
+            question, default = DATA_PATHS[path]
+            value = data_values[path]
+            if value is None and datadir is not None:
+                all_params[path] = datadir.joinpath(default)
+                all_params.set_source(path, 'command line + default')
+                pargs = [path, all_params[path]]
+                cprint('\t - {0} set from datadir ({1})'.format(*pargs))
+            else:
+                # assign path
+                all_params[path] = value
+                all_params.set_source(path, 'command line')
+
+    # ------------------------------------------------------------------
+    # Step 4: Ask for plot mode
+    # ------------------------------------------------------------------
+    # find value in args
+    if args.plotmode is None:
+
+        plot = ask('Plot mode required', dtype='int', options=[0, 1, 2],
+                   optiondesc=['0: No plotting',
+                               '1: Plots display at end of code',
+                               '2: Plots display immediately and '
+                               'pause code'],
+                   default=0)
+        all_params['DRS_PLOT'] = plot
+        all_params.set_source('DRS_PLOT', __NAME__)
+        # add header line
+        cprint(printheader(), 'g')
+    else:
+        cprint('\t - DRS_PLOT set from cmd ({0})'.format(args.plotmode))
+        all_params['DRS_PLOT'] = args.plotmode
+        all_params.set_source('DRS_PLOT', 'command line')
+
+    # ------------------------------------------------------------------
+    # Step 5: Ask whether we want a clean install
+    # ------------------------------------------------------------------
+    if args.clean is None:
+        all_params['CLEAN_INSTALL'] = ask(message3, dtype='YN')
+        all_params.set_source('CLEAN_INSTALL', func_name)
+    else:
+        cprint('\t - CLEAN set from cmd ({0})'.format(args.clean))
+        all_params['CLEAN_INSTALL'] = eval(args.clean)
+        all_params.set_source('CLEAN_INSTALL', 'command line')
+
+    # ------------------------------------------------------------------
+    # Step 6: Check for programs
+    # ------------------------------------------------------------------
+    if args.ds9path is None or args.pdfpath is None:
+        # set the values of ds9path and pdfpath initial to None
+        ds9path, pdfpath = None, None
+        # ------------------------------------------------------------------
+        # ds9 path
+        # ------------------------------------------------------------------
+        # add header line
+        cprint(printheader(), 'g')
+        cprint('Recommended external programs (optional)')
+        # check command line args
+        if args.ds9path is not None:
+            if args.ds9path == 'None':
+                promptuser, ds9path = False, None
+
+            else:
+                promptuser, ds9path = check_path_arg('ds9dir', args.datadir)
+        # get ds9
+        if 'DRS_DS9_PATH' in all_params:
+            ds9path = all_params['DRS_DS9_PATH']
+        elif ds9path is None:
+            ds9path = shutil.which('ds9')
+        # deal with no ds9 path found
+        if ds9path is None and promptuser:
+            all_params['DRS_DS9_PATH'] = ask(message5, dtype='path',
+                                          default='None', required=False)
+            all_params.set_source('DRS_DS9_PATH', 'user')
+        else:
             all_params['DRS_DS9_PATH'] = ds9path
-            # ------------------------------------------------------------------
-            # pdf latex path
-            # ------------------------------------------------------------------
-            # check command line args
-            if args.pdfpath is not None:
-                if args.pdfpath == 'None':
-                    promptuser, pdfpath = False, args.pdfpath
+            all_params.set_source('DRS_DS9_PATH', func_name)
+            cprint('\n\t - Found ds9', 'g')
+        # ------------------------------------------------------------------
+        # pdf latex path
+        # ------------------------------------------------------------------
+        # check command line args
+        if args.pdfpath is not None:
+            if args.pdfpath == 'None':
+                promptuser, pdfpath = False, args.pdfpath
 
-                else:
-                    promptuser, pdfpath = check_path_arg('pdfdir', args.pdfpath)
-            # get pdflatex
-            if 'DRS_PDFLATEX_PATH' in all_params:
-                pdfpath = all_params['DRS_PDFLATEX_PATH']
-            elif pdfpath is None:
-                pdfpath = shutil.which('pdflatex')
-            # deal with no ds9 path found
-            if pdfpath is None and promptuser:
-                iparams['DRS_PDFLATEX_PATH'] = ask(message6, dtype='path',
-                                                   default='None',
-                                                   required=False)
-                iparams.set_source('DRS_PDFLATEX_PATH', 'user')
             else:
-                iparams['DRS_PDFLATEX_PATH'] = pdfpath
-                iparams.set_source('DRS_PDFLATEX_PATH', func_name)
-                cprint('\n\t - Found pdflatex', 'g')
-            # add it/update all_params
-            all_params['DRS_PDFLATEX_PATH'] = pdfpath
+                promptuser, pdfpath = check_path_arg('pdfdir', args.pdfpath)
+        # get pdflatex
+        if 'DRS_PDFLATEX_PATH' in all_params:
+            pdfpath = all_params['DRS_PDFLATEX_PATH']
+        elif pdfpath is None:
+            pdfpath = shutil.which('pdflatex')
+        # deal with no ds9 path found
+        if pdfpath is None and promptuser:
+            all_params['DRS_PDFLATEX_PATH'] = ask(message6, dtype='path',
+                                               default='None',
+                                               required=False)
+            all_params.set_source('DRS_PDFLATEX_PATH', 'user')
         else:
-            cprint('\t - DS9PATH set from cmd ({0})'.format(args.ds9path))
-            cprint('\t - PDFPATH set from cmd ({0})'.format(args.pdfpath))
-        # ------------------------------------------------------------------
-        # add iparams to all params
-        all_params[instrument] = iparams
-        # ------------------------------------------------------------------
+            all_params['DRS_PDFLATEX_PATH'] = pdfpath
+            all_params.set_source('DRS_PDFLATEX_PATH', func_name)
+            cprint('\n\t - Found pdflatex', 'g')
+    else:
+        cprint('\t - DS9PATH set from cmd ({0})'.format(args.ds9path))
+        cprint('\t - PDFPATH set from cmd ({0})'.format(args.pdfpath))
+    # ------------------------------------------------------------------
     cprint(printheader(), 'm')
     # ----------------------------------------------------------------------
     # return all parameters
@@ -680,13 +673,6 @@ def bin_paths(params, all_params):
         out_tools = out_tool_path.joinpath(directory.name)
         # append out tool paths to drs out tools
         all_params['DRS_OUT_TOOLS'].append(out_tools)
-    # loop through instruments
-    for instrument in drs_instruments:
-        # only deal with instrument user wants to set up
-        if instrument not in list(all_params.keys()):
-            continue
-        # add drs root to all_params
-        all_params[instrument]['DRS_ROOT'] = root
     # return the updated all params
     return all_params
 
@@ -700,57 +686,40 @@ def create_configs(params, all_params):
     userconfig = all_params['USERCONFIG']
     # get dev mode
     devmode = all_params['DEVMODE']
-    # loop around instruments
-    for instrument in drs_instruments:
-        if instrument in all_params:
-            # load params for instrument
-            iparams = constants.load(instrument.upper(), from_file=False,
-                                     cache=False)
-            # load params for all_params
-            aparams = all_params[instrument]
-            uargs = [iparams, instrument, devmode]
-            config_lines, const_lines = create_ufiles(*uargs)
-            # get user path
-            upath = userconfig.joinpath(instrument.lower())
-            # write / update config and const
-            uconfig = ufile_write(aparams, config_lines, upath, UCONFIG,
-                                  'config')
-            uconst = ufile_write(aparams, const_lines, upath, UCONST,
-                                 'constant')
-            # store filenames in iparams
-            all_params[instrument]['CONFIGFILES'] = [uconfig, uconst]
-            all_params[instrument].set_source('CONFIGFILES', func_name)
+    # create install config
+    create_yamls(all_params)
+    # create user config
+    config_lines, const_lines = create_ufiles(params, devmode)
+    # write / update config and const
+    uconfig = ufile_write(params, config_lines, userconfig, UCONFIG,
+                          'config')
+    uconst = ufile_write(params, const_lines, userconfig, UCONST,
+                         'constant')
+    # store filenames in iparams
+    all_params['CONFIGFILES'] = [uconfig, uconst]
+    all_params.set_source('CONFIGFILES', func_name)
     # return all_params
     return all_params
 
 
 def update_configs(params, all_params):
-    # get available instruments
-    drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
-    # loop around instruments
-    for instrument in drs_instruments:
-        # only deal with instrument user wants to set up
-        if instrument not in list(all_params.keys()):
-            continue
-        # get iparams
-        iparams = all_params[instrument]
-        # loop around config files
-        for filename in iparams['CONFIGFILES']:
-            # get the current config values
-            fkeys, fvalues = constants.get_constants_from_file(filename)
-            fdict = dict(zip(fkeys, fvalues))
-            # loop around keys
-            for key in fkeys:
-                # test if key is new
-                if (key in iparams) and (str(iparams[key]) != fdict[key]):
-                    # update value
-                    fdict[key] = iparams[key]
-            # now update config file
-            try:
-                constants.update_file(filename, fdict)
-            except ConfigError as e:
-                emsg = 'Cannot update file. Error was as follows: \n\t{0}'
-                print(emsg.format(e))
+    # loop around config files
+    for filename in all_params['CONFIGFILES']:
+        # get the current config values
+        fkeys, fvalues = constants.get_constants_from_file(filename)
+        fdict = dict(zip(fkeys, fvalues))
+        # loop around keys
+        for key in fkeys:
+            # test if key is new
+            if (key in all_params) and (str(all_params[key]) != fdict[key]):
+                # update value
+                fdict[key] = all_params[key]
+        # now update config file
+        try:
+            constants.update_file(filename, fdict)
+        except ConfigError as e:
+            emsg = 'Cannot update file. Error was as follows: \n\t{0}'
+            print(emsg.format(e))
     return all_params
 
 
@@ -1082,7 +1051,56 @@ def reset_paths_empty(params, all_params, instrument=None):
 # =============================================================================
 # create user files functions
 # =============================================================================
-def create_ufiles(params, instrument, devmode):
+def create_yamls(allparams):
+    # get config directory
+    userconfig = Path(allparams['USERCONFIG'])
+    # -------------------------------------------------------------------------
+    # create install yaml
+    # -------------------------------------------------------------------------
+    # get save path
+    install_path = userconfig.joinpath(base.INSTALL_YAML)
+    # populate dictionary
+    install_dict = dict()
+    install_dict['DRS_UCONFIG'] = str(userconfig)
+    install_dict['INSTRUMENT'] = allparams['INSTRUMENT']
+    install_dict['LANGUAGE'] = allparams['LANGUAGE']
+    # save file
+    with open(install_path, 'w') as ifile:
+        yaml.dump(install_dict, ifile)
+    # -------------------------------------------------------------------------
+    # create database yaml
+    # -------------------------------------------------------------------------
+    # get save path
+    database_path = userconfig.joinpath(base.DATABASE_YAML)
+    # populate dictionary
+    database_dict = dict()
+    # sql lite settings
+    database_dict['USE_SQLITE3'] = True
+    sqlite3 = dict()
+    sqlite3['CALIB_PATH'] = 'DRS_CALIB_DB'
+    sqlite3['TELLU_PATH'] = 'DRS_TELLU_DB'
+    sqlite3['INDEX_PATH'] = 'DRS_DATA_ASSETS'
+    sqlite3['LANG_PATH'] = 'DRS_DATA_ASSETS'
+    sqlite3['OBJ_PATH'] = 'DRS_DATA_ASSETS'
+    sqlite3['PARAMS_PATH'] = 'DRS_DATA_ASSETS'
+    database_dict['SQLITE3'] = sqlite3
+    # mysql settings
+    database_dict['USE_MYSQL'] = False
+    mysql = dict()
+    mysql['USERNAME'] = 'None'
+    mysql['PASSWORD'] = 'None'
+    mysql['CALIB_PATH'] = 'DRS_CALIB_DB'
+    mysql['TELLU_PATH'] = 'DRS_TELLU_DB'
+    mysql['INDEX_PATH'] = 'DRS_DATA_ASSETS'
+    mysql['LANG_PATH'] = 'DRS_DATA_ASSETS'
+    mysql['OBJ_PATH'] = 'DRS_DATA_ASSETS'
+    # mysql['PARAMS_PATH'] = 'DRS_DATA_ASSETS'
+    database_dict['MYSQL'] = mysql
+    # save file
+    with open(database_path, 'w') as ifile:
+        yaml.dump(database_dict, ifile)
+
+def create_ufiles(params, devmode):
     # storage of parameters of different types
     config = OrderedDict()
     const = OrderedDict()
@@ -1161,11 +1179,11 @@ def create_ufiles(params, instrument, devmode):
                 const[group] = [[instance, params[param]]]
     # ------------------------------------------------------------------
     # create config file
-    config_lines = create_ufile(instrument, 'config', config, config_groups,
-                                devmode)
+    config_lines = create_ufile(params['INSTRUMENT'], 'config', config,
+                                config_groups, devmode)
     # create const file
-    const_lines = create_ufile(instrument, 'constant', const, const_groups,
-                               devmode)
+    const_lines = create_ufile(params['INSTRUMENT'], 'constant', const,
+                               const_groups, devmode)
     # ------------------------------------------------------------------
     return config_lines, const_lines
 
@@ -1275,15 +1293,6 @@ def ufile_write(aparams, lines, upath: Path, ufile, kind):
 def update(params, args):
     # set function name
     func_name = __NAME__ + '.update()'
-    # get debug mode
-    if args.debug is None:
-        debug = False
-    elif args.debug in [True, 'True', 1, '1']:
-        debug = True
-    else:
-        debug = False
-    # get available instruments
-    drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
     # get config path
     config_env = params['DRS_USERENV']
     # check for config environment set
@@ -1297,53 +1306,49 @@ def update(params, args):
         config_path = Path(config_path)
     # ----------------------------------------------------------------------
     # find all installed instruments
-    instruments = []
-    files = np.sort(os.listdir(config_path))
-    # loop through filenames
-    for filename in files:
-        # get abspath
-        abspath = config_path.joinpath(filename)
-        # check if valid instrument
-        if abspath.is_dir() and filename.upper() in drs_instruments:
-            instruments.append(filename.upper())
+
+    # TODO THIS COMES FROM YAML
+
+    instrument = ''
+    language = ''
     # ----------------------------------------------------------------------
     # set up dictionary
-    all_params = dict()
-     # loop around instruments
-    for instrument in instruments:
-        # ------------------------------------------------------------------
-        # set up instrument storage
-        istorage = ParamDict()
-        # add user config
-        all_params['USERCONFIG'] = config_path
-        istorage['USERCONFIG'] = config_path
-        istorage.set_source('USERCONFIG', func_name)
-        # load params for instrument
-        iparams = constants.load(instrument.upper(), cache=False)
-        # ------------------------------------------------------------------
-        # loop around data paths
-        for datapath in DATA_PATHS.keys():
-            # get data paths
-            istorage[datapath] = Path(iparams[datapath])
-            istorage.set_source(datapath, iparams.sources[datapath])
-        # ------------------------------------------------------------------
-        # add clean install
-        if args.clean in ['True', True, '1', 1]:
-            istorage['CLEAN_INSTALL'] = True
-            istorage.set_source('CLEAN_INSTALL', 'sys.argv')
-        else:
-            istorage['CLEAN_INSTALL'] = False
-            istorage.set_source('CLEAN_INSTALL', func_name)
-        # add ds9
-        istorage['DRS_DS9_PATH'] = Path(iparams['DRS_DS9_PATH'])
-        istorage.set_source('DRS_DS9_PATH', iparams.sources['DRS_DS9_PATH'])
-        # add pdflatex
-        istorage['DRS_PDFLATEX_PATH'] = Path(iparams['DRS_PDFLATEX_PATH'])
-        istorage.set_source('DRS_PDFLATEX_PATH',
-                            iparams.sources['DRS_PDFLATEX_PATH'])
-        # ------------------------------------------------------------------
-        # add to all_params
-        all_params[instrument] = istorage
+    all_params = ParamDict()
+    # ------------------------------------------------------------------
+    # add user config
+    all_params['USERCONFIG'] = config_path
+    all_params.set_source('USERCONFIG', func_name)
+
+    # set instrument in all params
+    all_params['INSTRUMENT'] = instrument
+    all_params.set_source('INSTRUMENT', func_name)
+    all_params['LANGUAGE'] = language
+    all_params.set_source('LANGUAGE', language)
+
+    # load params for instrument
+    iparams = constants.load(instrument.upper(), cache=False)
+    # ------------------------------------------------------------------
+    # loop around data paths
+    for datapath in DATA_PATHS.keys():
+        # get data paths
+        all_params[datapath] = Path(iparams[datapath])
+        all_params.set_source(datapath, iparams.sources[datapath])
+    # ------------------------------------------------------------------
+    # add clean install
+    if args.clean in ['True', True, '1', 1]:
+        all_params['CLEAN_INSTALL'] = True
+        all_params.set_source('CLEAN_INSTALL', 'sys.argv')
+    else:
+        all_params['CLEAN_INSTALL'] = False
+        all_params.set_source('CLEAN_INSTALL', func_name)
+    # add ds9
+    all_params['DRS_DS9_PATH'] = Path(iparams['DRS_DS9_PATH'])
+    all_params.set_source('DRS_DS9_PATH', iparams.sources['DRS_DS9_PATH'])
+    # add pdflatex
+    all_params['DRS_PDFLATEX_PATH'] = Path(iparams['DRS_PDFLATEX_PATH'])
+    all_params.set_source('DRS_PDFLATEX_PATH',
+                         iparams.sources['DRS_PDFLATEX_PATH'])
+    # ------------------------------------------------------------------
     # return all params
     return all_params
 

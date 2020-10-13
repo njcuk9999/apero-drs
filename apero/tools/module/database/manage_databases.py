@@ -118,6 +118,9 @@ def create_calibration_database(params, pconst, databases) -> Database:
     :param pconst:
     :return:
     """
+    # load database yaml file
+
+
     # get parameters from params
 
     asset_dir = params['DRS_DATA_ASSETS']

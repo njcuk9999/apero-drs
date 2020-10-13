@@ -24,6 +24,9 @@ from pathlib import Path
 # =============================================================================
 # define the drs name (and module name)
 DRS_PATH = 'apero'
+# LANGUAGE
+# TODO: allow as argument (This will then change all text)
+LANGUAGE = 'ENG'
 # define the place where the constant recipes are
 CONSTANTS_PATH = 'core.constants'
 # define the place where the installation recipes are
@@ -82,8 +85,6 @@ def get_args():
                         help='The name for this specific installation'
                              '(Allows the creation of multiple profiles with'
                              ' different settings)')
-    parser.add_argument('--debug', action='store', dest='debug',
-                        help='Run installer in debug mode')
 
     # add setup args
     parser.add_argument('--root', action='store', dest='root',
@@ -375,130 +376,48 @@ def tab_input(message, root=None):
     return uinput
 
 
-def check_install(drs_path: Path, args):
-    # print check
-    print('Locating {0} install...'.format(DRS_PATH))
-    # get debug mode
-    if args.debug is None:
-        debug = False
-    elif args.debug in [True, 'True', 1, '1']:
-        debug = True
+def check_install():
+    # start with file definition
+    start = Path(__file__)
+    # get apero working directory
+    drs_path = start.parent.parent
+    # make aboslute
+    drs_path = drs_path.absolute()
+    # try to import to raise exception
+    try:
+        # add drs path to sys
+        sys.path.append(str(drs_path))
+        _ = importlib.import_module(DRS_PATH)
+    except Exception as _:
+        path = drs_path.joinpath(DRS_PATH)
+        raise ImportError('Unable to find {0}'.format(path))
+    # construct module names
+    constants_mod = '{0}.{1}'.format(DRS_PATH, CONSTANTS_PATH)
+    install_mod = '{0}.{1}'.format(DRS_PATH, INSTALL_PATH)
+    # try to import the modules
+    try:
+        constants = importlib.import_module(constants_mod)
+    except Exception as e:
+        # raise error
+        raise ImportError('Cannot import {0}'.format(constants_mod))
+    try:
+        install = importlib.import_module(install_mod)
+    except Exception as e:
+        # raise error
+        raise ImportError('Cannot import {0}'.format(install_mod))
+
+    # add apero to the PYTHONPATH
+    if 'PYTHONPATH' in os.environ:
+        oldpath = os.environ['PYTHONPATH']
+        os.environ['PYTHONPATH'] = str(drs_path) + os.pathsep + oldpath
+
     else:
-        debug = False
-    # set import condition to True
-    cond = True
-    # set top level to root
-    root = Path(Path().absolute().root)
-    # loop until we can import modules
-    while cond:
-        # set search to False
-        found = False
-        # debug print out
-        if debug:
-            print('='*50)
-            print('DEBUG MODE ACTIVATED')
-            print('='*50)
-            print('ROOT: "{0}"'.format(root))
-            print('CWD: "{0}"'.format(Path.cwd()))
-            if 'PYTHONPATH' in os.environ:
-                print('PYTHONPATH: \n\t"{0}"'.format(os.environ['PYTHONPATH']))
-            else:
-                print('PYTHON PATH UNSET')
-            print('SYS.PATH:')
-            for path in sys.path:
-                print('\t{0}'.format(path))
-            print('=' * 50)
-        # path to try
-        try_path = Path(drs_path)
-        tries = 0
-        # loop around until found or we break
-        while not found:
-            # get the absolute path of try path
-            abs_try_path = try_path.absolute()
-            sys.path.append(str(abs_try_path))
-            # print debug statement
-            if debug:
-                print('\tAdding {0} to sys.path'.format(abs_try_path))
-            # try to import the drs
-            try:
-                if debug:
-                    print('\tTry {0}: {1}'.format(tries + 1, abs_try_path))
-                else:
-                    print('\tTry: {0}'.format(abs_try_path))
-                _ = importlib.import_module(str(drs_path))
-                # if we have reached this import stage found is True
-                found = True
-                # print that we have found module
-                print('Found "{0}" in {1}'.format(drs_path, abs_try_path))
-            except Exception as e:
-                # debug print error
-                if debug:
-                    print('\tError {0}: {1}'.format(type(e), str(e)))
-
-                cond1 = abs_try_path == root.joinpath(drs_path)
-                cond2 = abs_try_path == try_path
-                cond3 = tries > 10
-                cond4 = abs_try_path == root
-                # if we have reached root then break
-                if cond1 or cond2 or cond3 or cond4:
-                    break
-                # try up a level
-                try_path = try_path.parent
-                # remove this path as it failed to find drs
-                sys.path.remove(str(abs_try_path))
-            # iterate tries
-            tries += 1
-
-        # deal with not being found
-        if not found:
-            ask_for_install_path(drs_path, debug)
-            # restart while loop
-            continue
-        # construct module names
-        constants_mod = '{0}.{1}'.format(drs_path, CONSTANTS_PATH)
-        install_mod = '{0}.{1}'.format(drs_path, INSTALL_PATH)
-        # try to import the modules
-        try:
-            print('Loading {0}'.format(constants_mod))
-            constants = importlib.import_module(constants_mod)
-        except Exception as e:
-            # debug print error
-            if debug:
-                print('\tError {0}: {1}'.format(type(e), str(e)))
-            # ask for install path again
-            ask_for_install_path(drs_path, debug)
-            # restart while loop
-            continue
-        try:
-            print('Loading {0}'.format(install_mod))
-            install = importlib.import_module(install_mod)
-        except Exception as e:
-            # debug print error
-            if debug:
-                print('\tError {0}: {1}'.format(type(e), str(e)))
-            # ask for install path again
-            ask_for_install_path(drs_path, debug)
-            # restart while loop
-            continue
-
-        # add apero to the PYTHONPATH
-        if 'PYTHONPATH' in os.environ:
-            oldpath = os.environ['PYTHONPATH']
-            os.environ['PYTHONPATH'] = str(drs_path) + os.pathsep + oldpath
-            # debug print out
-            if debug:
-                print('Adding "{0}" to PYTHONPATH'.format(drs_path))
-
-        else:
-            os.environ['PYTHONPATH'] = str(drs_path)
-            # debug print out
-            if debug:
-                print('Setting PYTHONPATH = "{0}"'.format(drs_path))
+        os.environ['PYTHONPATH'] = str(drs_path)
         # add to active path
         os.sys.path = [str(drs_path)] + os.sys.path
 
-        # if we have reached this point we can break out of the while loop
-        return constants, install
+    # if we have reached this point we can break out of the while loop
+    return constants, install
 
 
 def ask_for_install_path(drs_path: Path, debug):
@@ -546,7 +465,7 @@ if __name__ == '__main__':
     # catch Ctrl+C
     signal.signal(signal.SIGINT, catch_sigint)
     # get install paths
-    constants, install = check_install(drs_path, args)
+    constants, install = check_install()
 
     # ----------------------------------------------------------------------
     # start up
@@ -563,7 +482,7 @@ if __name__ == '__main__':
         sys.exit()
     # get parameters from user input
     elif not args.update:
-        allparams = install.user_interface(params, args)
+        allparams = install.user_interface(params, args, LANGUAGE)
     else:
         allparams = install.update(params, args)
     # add dev mode to allparams
@@ -572,6 +491,8 @@ if __name__ == '__main__':
     allparams['PROFILENAME'] = args.name
     # add clean warn
     allparams['CLEANWARN'] = args.cleanwarn
+    # reload params
+    params = constants.load(allparams['INSTRUMENT'], from_file=False)
 
     # ----------------------------------------------------------------------
     # End of user setup

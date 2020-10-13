@@ -34,6 +34,9 @@ SIMPLE_STYPES = ['int', 'float', 'str', 'bool', 'list']
 # define valid characters
 VALID_CHARS = list(string.ascii_letters) + list(string.digits)
 VALID_CHARS += list(string.punctuation) + list(string.whitespace)
+# Define yaml files
+INSTALL_YAML = 'install.yaml'
+DATABASE_YAML = 'database.yaml'
 # Define relative path to 'const' sub-package
 CONST_PATH = './core/instruments/'
 CORE_PATH = './core/instruments/default/'
