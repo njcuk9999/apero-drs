@@ -379,6 +379,8 @@ def tab_input(message, root=None):
 def check_install():
     # start with file definition
     start = Path(__file__)
+    # TODO: remove print statement
+    print(start)
     # get apero working directory
     drs_path = start.parent.parent
     # make aboslute
