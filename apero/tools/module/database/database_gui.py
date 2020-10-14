@@ -15,9 +15,10 @@ from pandastable import Table, TableModel, applyStyle
 from pandastable import dialogs
 
 from apero.base import base
-from apero.core import constants
 from apero.base import drs_db
+from apero.core import constants
 from apero.tools.module.database import manage_databases
+
 
 # =============================================================================
 # Define variables
@@ -479,13 +480,8 @@ class DatabaseExplorer(tk.Frame):
 # Start of code
 # =============================================================================
 if __name__ == "__main__":
-
-    # get params
-    # TODO: get instrument from args
-    _params = constants.load('SPIROU')
-    # TODO: remove - for tests only
-    _params.set('CALIB_DB_NAME', value='calib.db')
-    _params.set('TELLU_DB_NAME', value='tellu.db')
+    # get parameters
+    _params = constants.load(base.IPARAMS['INSTRUMENT'])
     # get database paths
     _paths = manage_databases.list_databases(_params)
     # push into database holder
