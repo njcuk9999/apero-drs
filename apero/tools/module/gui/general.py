@@ -142,7 +142,7 @@ class Page2(StartPage):
         settings_dict = dict()
         settings_dict['uconfig'] = dict(name='uconfig',
                                       kind='browse',
-                                      keyword='DRS_UCONFIG',
+                                      keyword=base.USER_ENV,
                                       default='~',
                                       comment='User config path',
                                       initialdir='~')
