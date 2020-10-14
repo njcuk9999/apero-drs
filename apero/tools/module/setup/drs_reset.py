@@ -249,7 +249,7 @@ def reset_assets(params, log=True):
     # create object database
     manage_databases.create_object_database(params, pconst, databases)
     # create params database
-    manage_databases.create_params_database(pconst, databases)
+    # manage_databases.create_params_database(pconst, databases)
     # create language database
     manage_databases.create_lang_database(pconst, databases)
 

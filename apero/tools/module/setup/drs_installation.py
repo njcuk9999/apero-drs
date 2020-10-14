@@ -12,7 +12,6 @@ import importlib
 import numpy as np
 import sys
 import os
-import yaml
 import shutil
 import readline
 import glob
@@ -62,7 +61,7 @@ OUT_TOOLPATH = Path('..').joinpath('tools')
 IN_BINPATH = Path('.').joinpath('recipes', '{0}', '')
 IN_TOOLPATH = Path('..').joinpath('apero', 'tools', 'recipes')
 
-ENV_CONFIG = 'DRS_UCONFIG'
+ENV_CONFIG = base.USER_ENV
 SETUP_PATH = Path('.').joinpath('tools', 'resources', 'setup')
 
 VALIDATE_CODE = Path('bin').joinpath('apero_validate.py')
@@ -650,8 +649,6 @@ def user_interface(params, args, lang):
 def bin_paths(params, all_params):
     # get package
     package = params['DRS_PACKAGE']
-    # get available instruments
-    drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
     # get root path
     root = Path(drs_break.get_relative_folder(package, ''))
     # get out bin path
@@ -680,14 +677,12 @@ def bin_paths(params, all_params):
 def create_configs(params, all_params):
     # set function name
     func_name = __NAME__ + '.create_configs()'
-    # get available instruments
-    drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
     # get config directory
     userconfig = all_params['USERCONFIG']
     # get dev mode
     devmode = all_params['DEVMODE']
     # create install config
-    create_yamls(all_params)
+    base.create_yamls(all_params)
     # create user config
     config_lines, const_lines = create_ufiles(params, devmode)
     # write / update config and const
@@ -724,8 +719,6 @@ def update_configs(params, all_params):
 
 
 def create_shell_scripts(params, all_params):
-    # get available instruments
-    drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
     # ----------------------------------------------------------------------
     # get package
     package = params['DRS_PACKAGE']
@@ -809,17 +802,17 @@ def create_shell_scripts(params, all_params):
             # add to new lines
             out_lines.append(out_line)
         # ------------------------------------------------------------------
+        # get instrument
+        instrument = all_params['INSTRUMENT']
         # add instrument tests
-        for instrument in drs_instruments:
-            out_lines.append('\n')
-            if instrument in all_params:
-                # run the validation script (just to print splash)
-                comment = ('# run the validation script for {0}'
-                           ''.format(instrument))
-                command = 'python {0} {1}'.format(valid_path, instrument)
-                # add to out lines
-                out_lines.append(comment + '\n')
-                out_lines.append(command + '\n')
+        out_lines.append('\n')
+        # run the validation script (just to print splash)
+        comment = ('# run the validation script for {0}'
+                   ''.format(instrument))
+        command = 'python {0} {1}'.format(valid_path, instrument)
+        # add to out lines
+        out_lines.append(comment + '\n')
+        out_lines.append(command + '\n')
         # ------------------------------------------------------------------
         # write the lines
         with open(outpath, 'w') as f:
@@ -829,8 +822,6 @@ def create_shell_scripts(params, all_params):
 
 
 def clean_install(params, all_params):
-    # get available instruments
-    drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
     # get package
     package = params['DRS_PACKAGE']
     # get clean warning
@@ -845,33 +836,28 @@ def clean_install(params, all_params):
     # append tool path
     sys.path.append(str(in_tool_path.joinpath('bin')))
     toolmod = importlib.import_module(RESET_CODE)
-    # loop around instruments
-    for instrument in drs_instruments:
-        # skip is we are not installing instrument
-        if instrument not in all_params:
-            continue
-        # check if all directories are empty
-        cond1 = not reset_paths_empty(params, all_params, instrument)
-        cond2 = not all_params[instrument]['CLEAN_INSTALL']
-        # check if user wants a clean install
-        if cond1 and cond2:
-            continue
-        # if we are forcing clean install let the user know
-        if not cond1:
-            cprint('\t - Empty directory found -- forcing clean install.', 'y')
-        # log that we are performing clean install
-        cprint('\t - Performing clean installation', 'm')
-        # add to environment
-        add_paths(all_params)
-        # construct reset command
-        toolmod.main(instrument=instrument, quiet=True, warn=cleanwarn)
+    # get instrument
+    instrument = all_params['INSTRUMENT']
+    # check if all directories are empty
+    cond1 = not reset_paths_empty(params, all_params, instrument)
+    cond2 = not all_params['CLEAN_INSTALL']
+    # check if user wants a clean install
+    if cond1 and cond2:
+        return all_params
+    # if we are forcing clean install let the user know
+    if not cond1:
+        cprint('\t - Empty directory found -- forcing clean install.', 'y')
+    # log that we are performing clean install
+    cprint('\t - Performing clean installation', 'm')
+    # add to environment
+    add_paths(all_params)
+    # construct reset command
+    toolmod.main(instrument=instrument, quiet=True, warn=cleanwarn)
     # return all params
     return all_params
 
 
 def create_symlinks(params, all_params):
-    # get available instruments
-    drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
     # get package
     package = params['DRS_PACKAGE']
     # get out paths
@@ -879,26 +865,20 @@ def create_symlinks(params, all_params):
     out_tool_path = all_params['DRS_OUT_TOOL_PATH']
     # get tools save location
     in_tool_path = Path(drs_break.get_relative_folder(package, IN_TOOLPATH))
-
     # ------------------------------------------------------------------
     # Copy bin files (for each instrument)
     # ------------------------------------------------------------------
     # log which directory we are populating
     cprint('\n\t Populating {0} directory\n'.format(out_bin_path), 'm')
-
-    # loop around instruments
-    for instrument in drs_instruments:
-        # skip is we are not installing instrument
-        if instrument not in all_params:
-            continue
-
-        # find recipe folder for this instrument
-        recipe_raw = Path(str(IN_BINPATH).format(instrument.lower()))
-        recipe_dir = Path(drs_break.get_relative_folder(package, recipe_raw))
-        # define suffix
-        suffix = '*_{0}.py'.format(instrument.lower())
-        # create sym links
-        _create_link(recipe_dir, suffix, out_bin_path)
+    # get instrument name
+    instrument = all_params['INSTRUMENT']
+    # find recipe folder for this instrument
+    recipe_raw = Path(str(IN_BINPATH).format(instrument.lower()))
+    recipe_dir = Path(drs_break.get_relative_folder(package, recipe_raw))
+    # define suffix
+    suffix = '*_{0}.py'.format(instrument.lower())
+    # create sym links
+    _create_link(recipe_dir, suffix, out_bin_path)
 
     # ------------------------------------------------------------------
     # Copy tools (do not copy tools directories for instruments not being
@@ -909,8 +889,7 @@ def create_symlinks(params, all_params):
 
     for directory in dirs:
         # do not copy tools for instruments we are not installing
-        if directory.name.upper() in drs_instruments:
-            if directory.name.upper() not in all_params:
+        if directory.name.upper() != instrument:
                 continue
 
         # construct this directories absolute path
@@ -1025,25 +1004,15 @@ def print_options(params, all_params):
 
 
 def reset_paths_empty(params, all_params, instrument=None):
-
     if instrument is None:
-        instruments = params['DRS_INSTRUMENTS']
-    else:
-        instruments = [instrument]
-    # loop around instruments
-    for instrument in instruments:
-        # skip if we are not installing instrument
-        if instrument not in all_params:
-            continue
-        # get instrument params
-        iparams = all_params[instrument]
-        # look for paths
-        for path in RESET_PATHS:
-            # get instrument path
-            ipath = iparams[path]
-            # check for empty
-            if len(os.listdir(ipath)) == 0:
-                return True
+        instrument = all_params['INSTRUMENT']
+    # look for paths
+    for path in RESET_PATHS:
+        # get instrument path
+        ipath = all_params[path]
+        # check for empty
+        if len(os.listdir(ipath)) == 0:
+            return True
     # if we have got here return False --> none are empty
     return False
 
@@ -1051,55 +1020,6 @@ def reset_paths_empty(params, all_params, instrument=None):
 # =============================================================================
 # create user files functions
 # =============================================================================
-def create_yamls(allparams):
-    # get config directory
-    userconfig = Path(allparams['USERCONFIG'])
-    # -------------------------------------------------------------------------
-    # create install yaml
-    # -------------------------------------------------------------------------
-    # get save path
-    install_path = userconfig.joinpath(base.INSTALL_YAML)
-    # populate dictionary
-    install_dict = dict()
-    install_dict['DRS_UCONFIG'] = str(userconfig)
-    install_dict['INSTRUMENT'] = allparams['INSTRUMENT']
-    install_dict['LANGUAGE'] = allparams['LANGUAGE']
-    # save file
-    with open(install_path, 'w') as ifile:
-        yaml.dump(install_dict, ifile)
-    # -------------------------------------------------------------------------
-    # create database yaml
-    # -------------------------------------------------------------------------
-    # get save path
-    database_path = userconfig.joinpath(base.DATABASE_YAML)
-    # populate dictionary
-    database_dict = dict()
-    # sql lite settings
-    database_dict['USE_SQLITE3'] = True
-    sqlite3 = dict()
-    sqlite3['CALIB_PATH'] = 'DRS_CALIB_DB'
-    sqlite3['TELLU_PATH'] = 'DRS_TELLU_DB'
-    sqlite3['INDEX_PATH'] = 'DRS_DATA_ASSETS'
-    sqlite3['LANG_PATH'] = 'DRS_DATA_ASSETS'
-    sqlite3['OBJ_PATH'] = 'DRS_DATA_ASSETS'
-    sqlite3['PARAMS_PATH'] = 'DRS_DATA_ASSETS'
-    database_dict['SQLITE3'] = sqlite3
-    # mysql settings
-    database_dict['USE_MYSQL'] = False
-    mysql = dict()
-    mysql['USERNAME'] = 'None'
-    mysql['PASSWORD'] = 'None'
-    mysql['CALIB_PATH'] = 'DRS_CALIB_DB'
-    mysql['TELLU_PATH'] = 'DRS_TELLU_DB'
-    mysql['INDEX_PATH'] = 'DRS_DATA_ASSETS'
-    mysql['LANG_PATH'] = 'DRS_DATA_ASSETS'
-    mysql['OBJ_PATH'] = 'DRS_DATA_ASSETS'
-    # mysql['PARAMS_PATH'] = 'DRS_DATA_ASSETS'
-    database_dict['MYSQL'] = mysql
-    # save file
-    with open(database_path, 'w') as ifile:
-        yaml.dump(database_dict, ifile)
-
 def create_ufiles(params, devmode):
     # storage of parameters of different types
     config = OrderedDict()
