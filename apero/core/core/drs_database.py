@@ -1834,6 +1834,37 @@ class LogDatabase(DatabaseManager):
         # set path
         self.set_path(kind='LOG', check=check)
 
+    # TODO: finish this
+    def add_entries(self, recipe: Union[str, None] = None,
+                    rkind: Union[str, None] = None,
+                    pid: Union[str, None] = None,
+                    htime: Union[str, None] = None,
+                    unixtime: Union[float, None] = None,
+                    group: Union[str, None] = None,
+                    level: Union[int, None] = None,
+                    sublevel: Union[int, None] = None,
+                    levelcrit: Union[str, None] = None,
+                    inpath: Union[str, None] = None,
+                    outpath: Union[str, None] = None,
+                    directory: Union[str, None] = None,
+                    logfile: Union[str, None] = None,
+                    plotdir: Union[str, None] = None,
+                    runstring: Union[str, None] = None,
+                    args: Union[str, None] = None,
+                    kwargs: Union[str, None] = None,
+                    skwargs: Union[str, None] = None,
+                    started: Union[bool, None] = None,
+                    passed_all_qc: Union[bool, None] = None,
+                    qc_string: Union[str, None] = None,
+                    qc_names: Union[str, None] = None,
+                    qc_values: Union[str, None] = None,
+                    qc_logic: Union[str, None] = None,
+                    qc_pass: Union[bool, None] = None,
+                    errors: Union[bool, None] = None,
+                    ended: Union[bool, None] = None,
+                    used: Union[int, None] = None):
+        pass
+
 
 class ObjectDatabase(DatabaseManager):
     def __init__(self, params: ParamDict, check: bool = True):
