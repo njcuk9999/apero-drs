@@ -109,73 +109,6 @@ DRS_PDFLATEX_PATH.value = '/usr/bin/pdflatex'
 DATABASE_DIR = DATABASE_DIR.copy(__NAME__)
 DATABASE_DIR.value = 'databases/'
 
-# Define calibration database, database file path (default is to get it from
-#    DRS_CALIB_BD value)
-CALIB_DBFILE_PATH = CALIB_DBFILE_PATH.copy(__NAME__)
-CALIB_DBFILE_PATH.value = 'DRS_CALIB_DB'
-
-# Define calibration database name
-CALIB_DB_NAME = CALIB_DB_NAME.copy(__NAME__)
-CALIB_DB_NAME.value = 'calib.db'
-
-# Define reset file for calibration database
-CALIB_DB_RESET = CALIB_DB_RESET.copy(__NAME__)
-CALIB_DB_RESET.value = 'reset.calib.csv'
-
-# Define telluric database, database file path (default is to get it from
-#    DRS_TELLU_DB value)
-TELLU_DBFILE_PATH = TELLU_DBFILE_PATH.copy(__NAME__)
-TELLU_DBFILE_PATH.value = 'DRS_TELLU_DB'
-
-# Define telluric database name
-TELLU_DB_NAME = TELLU_DB_NAME.copy(__NAME__)
-TELLU_DB_NAME.value = 'tellu.db'
-
-# Define index database name
-INDEX_DB_NAME = INDEX_DB_NAME.copy(__NAME__)
-INDEX_DB_NAME.value = 'index.db'
-
-# Define language database name
-LANG_DB_NAME = LANG_DB_NAME.copy(__NAME__)
-LANG_DB_NAME.value = 'lang.db'
-
-# Define the log database name
-LOG_DB_NAME = LOG_DB_NAME.copy(__NAME__)
-LOG_DB_NAME.value = 'log.db'
-
-# Define the object database name
-OBJECT_DB_NAME = OBJECT_DB_NAME.copy(__NAME__)
-OBJECT_DB_NAME.value = 'object.db'
-
-# Define reset file for object database
-OBJECT_DB_RESET = OBJECT_DB_RESET.copy(__NAME__)
-OBJECT_DB_RESET.value = 'reset.object.csv'
-
-# Define the param database name
-PARAM_DB_NAME = PARAM_DB_NAME.copy(__NAME__)
-PARAM_DB_NAME.value = 'param.db'
-
-
-# =============================================================================
-# OLD DATABASE SETTINGS
-# =============================================================================
-#   the maximum wait time for calibration database file to be in use (locked)
-#       after which an error is raised (in seconds)
-DB_MAX_WAIT = DB_MAX_WAIT.copy(__NAME__)
-DB_MAX_WAIT.value = 600
-
-# file max wait
-LOCKOPEN_MAX_WAIT = LOCKOPEN_MAX_WAIT.copy(__NAME__)
-LOCKOPEN_MAX_WAIT.value = 600
-
-# # the telluric database name
-# TELLU_DB_NAME = TELLU_DB_NAME.copy(__NAME__)
-# TELLU_DB_NAME.value = 'master_tellu_SPIROU.txt'
-#
-# # the calibration database name
-# CALIB_DB_NAME = CALIB_DB_NAME.copy(__NAME__)
-# CALIB_DB_NAME.value = 'master_calib_SPIROU.txt'
-
 #   Define the match type for calibDB files
 #         match = 'older'  only select calibration files that are older in
 #                          time than input file (and then base it on which is
@@ -190,19 +123,6 @@ LOCKOPEN_MAX_WAIT.value = 600
 CALIB_DB_MATCH = CALIB_DB_MATCH.copy(__NAME__)
 CALIB_DB_MATCH.value = 'closest'
 
-# define the calibration database columns
-CALIB_DB_COLS = CALIB_DB_COLS.copy(__NAME__)
-CALIB_DB_COLS.value = 'key, master, nightname, filename, humantime, unixtime'
-# define the calibration database key column
-CALIB_DB_KEY_COL = CALIB_DB_KEY_COL.copy(__NAME__)
-CALIB_DB_KEY_COL.value = 'key'
-# define the calibration database time column
-CALIB_DB_TIME_COL = CALIB_DB_TIME_COL.copy(__NAME__)
-CALIB_DB_TIME_COL.value = 'unixtime'
-# define the calibration database filename column
-CALIB_DB_FILE_COL = CALIB_DB_FILE_COL.copy(__NAME__)
-CALIB_DB_FILE_COL.value = 'filename'
-
 #   Define the match type for calibDB files
 #         match = 'older'  when more than one file for each key will
 #                          select the newest file that is OLDER than
@@ -214,20 +134,6 @@ CALIB_DB_FILE_COL.value = 'filename'
 #         calibDB file will be used
 TELLU_DB_MATCH = TELLU_DB_MATCH.copy(__NAME__)
 TELLU_DB_MATCH.value = 'closest'
-
-# define the telluric database columns (must contain "key")
-TELLU_DB_COLS = TELLU_DB_COLS.copy(__NAME__)
-TELLU_DB_COLS.value = 'key, nightname, filename, humantime, unixtime, objname'
-# define the telluric database key column
-TELLU_DB_KEY_COL = TELLU_DB_KEY_COL.copy(__NAME__)
-TELLU_DB_KEY_COL.value = 'key'
-# define the telluric database time column
-TELLU_DB_TIME_COL = TELLU_DB_TIME_COL.copy(__NAME__)
-TELLU_DB_TIME_COL.value = 'unixtime'
-# define the telluric database filename column
-TELLU_DB_FILE_COL = TELLU_DB_FILE_COL.copy(__NAME__)
-TELLU_DB_FILE_COL.value = 'filename'
-
 
 # =============================================================================
 # DRS INTERNAL PATHS

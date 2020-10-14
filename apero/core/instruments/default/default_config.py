@@ -31,16 +31,7 @@ __all__ = [  # global settings
     # DRS INDEXING SETTINGS
     'DRS_INDEX_FILE', 'DRS_INDEX_FILENAME',
     # DATABASE SETTINGS
-    'DATABASE_DIR', 'CALIB_DB_NAME', 'TELLU_DB_NAME', 'INDEX_DB_NAME',
-    'LANG_DB_NAME', 'LOG_DB_NAME', 'PARAM_DB_NAME', 'OBJECT_DB_NAME',
-    'CALIB_DB_RESET', 'OBJECT_DB_RESET', 'CALIB_DBFILE_PATH',
-    'TELLU_DBFILE_PATH',
-    # OLD DATABASE SETTINGS
-    'DB_MAX_WAIT', 'DB_MATCH', 'LOCKOPEN_MAX_WAIT',
-    'CALIB_DB_MATCH', 'CALIB_DB_COLS',
-    'CALIB_DB_KEY_COL', 'CALIB_DB_TIME_COL', 'CALIB_DB_FILE_COL',
-    'TELLU_DB_MATCH', 'TELLU_DB_COLS', 'TELLU_DB_KEY_COL', 'TELLU_DB_TIME_COL',
-    'TELLU_DB_FILE_COL',
+    'DATABASE_DIR', 'CALIB_DB_MATCH', 'TELLU_DB_MATCH',
     # DISPLAY/LOGGING SETTINGS
     'DRS_PRINT_LEVEL', 'DRS_LOG_LEVEL', 'DRS_COLOURED_LOG', 'DRS_THEME',
     'DRS_MAX_IO_DISPLAY_LIMIT', 'DRS_HEADER', 'DRS_LOG_CAUGHT_WARNINGS',
@@ -204,7 +195,7 @@ DRS_PACKAGE = Const('DRS_PACKAGE', value=__PACKAGE__, dtype=str,
                     source=__NAME__, group=cgroup)
 
 #   User-config environmental variable
-DRS_USERENV = Const('DRS_USERENV', value='DRS_UCONFIG', dtype=str,
+DRS_USERENV = Const('DRS_USERENV', value=base.USER_ENV, dtype=str,
                     source=__NAME__, group=cgroup)
 
 #   User-defined program name (overwrite logging program)
@@ -342,84 +333,6 @@ cgroup = 'DATABASE SETTINGS'
 DATABASE_DIR = Const('DATABASE_DIR', dtype=str, value='databases/',
                      source=__NAME__, group=cgroup)
 
-# Define calibration database, database file path (default is to get it from
-#    DRS_CALIB_BD value)
-CALIB_DBFILE_PATH = Const('CALIB_DBFILE_PATH', dtype=str, value='DRS_CALIB_DB',
-                          source=__NAME__, group=cgroup)
-
-# the calibration database name
-CALIB_DB_NAME = Const('CALIB_DB_NAME', dtype=str, source=__NAME__,
-                      value='calib.db', group=cgroup)
-
-# Define calibration database name
-CALIB_DB_RESET = Const('CALIB_DB_RESET', dtype=str, source=__NAME__,
-                       value='reset.calib.csv', group=cgroup)
-
-# Define telluric database, database file path (default is to get it from
-#    DRS_TELLU_DB value)
-TELLU_DBFILE_PATH = Const('TELLU_DBFILE_PATH', dtype=str, value='DRS_TELLU_DB',
-                          source=__NAME__, group=cgroup)
-
-# the telluric database name
-TELLU_DB_NAME = Const('TELLU_DB_NAME', dtype=str, source=__NAME__,
-                      value='tellu.db', group=cgroup)
-
-# Define index database name
-INDEX_DB_NAME = Const('INDEX_DB_NAME', dtype=str, source=__NAME__,
-                      value='index.db', group=cgroup)
-
-# Define language database name
-LANG_DB_NAME = Const('LANG_DB_NAME', dtype=str, source=__NAME__,
-                     value='lang.db', group=cgroup)
-
-# Define the log database name
-LOG_DB_NAME = Const('LOG_DB_NAME', dtype=str, source=__NAME__,
-                    value='log.db', group=cgroup)
-
-# Define the object database name
-OBJECT_DB_NAME = Const('OBJECT_DB_NAME', dtype=str, source=__NAME__,
-                       value='object.db', group=cgroup)
-
-# Define reset file for object database
-OBJECT_DB_RESET = Const('OBJECT_DB_RESET', dtype=str, source=__NAME__,
-                        value='reset.object.csv', group=cgroup)
-
-# Define the param database name
-PARAM_DB_NAME = Const('PARAM_DB_NAME', dtype=str, source=__NAME__,
-                      value='param.db', group=cgroup)
-
-# =============================================================================
-# OLD DATABASE SETTINGS
-# =============================================================================
-#   the maximum wait time for calibration database file to be in use (locked)
-#       after which an error is raised (in seconds)
-DB_MAX_WAIT = Const('DB_MAX_WAIT', dtype=int, value=600, minimum=1,
-                    source=__NAME__, group=cgroup)
-
-#   Define the match type for database files
-#         match = 'older'  when more than one file for each key will
-#                          select the newest file that is OLDER than
-#                          time in fitsfilename
-#         match = 'closest'  when more than on efile for each key will
-#                            select the file that is closest to time in
-#                            fitsfilename
-#    if two files match with keys and time the key lower in the
-#         calibDB file will be used
-DB_MATCH = Const('DB_MATCH', dtype=str, source=__NAME__,
-                 value='closest', group=cgroup)
-
-# file max wait
-LOCKOPEN_MAX_WAIT = Const('LOCKOPEN_MAX_WAIT', dtype=int, value=600, minimum=1,
-                          source=__NAME__, group=cgroup)
-
-# # the telluric database name
-# TELLU_DB_NAME = Const('TELLU_DB_NAME', dtype=str, source=__NAME__,
-#                       value='master_tellu.txt', group=cgroup)
-#
-# # the calibration database name
-# CALIB_DB_NAME = Const('CALIB_DB_NAME', dtype=str, source=__NAME__,
-#                       value='master_calib.txt', group=cgroup)
-
 #   Define the match type for calibDB files
 #         match = 'older'  when more than one file for each key will
 #                          select the newest file that is OLDER than
@@ -433,18 +346,6 @@ CALIB_DB_MATCH = Const('CALIB_DB_MATCH', dtype=str, source=__NAME__,
                        value='closest', options=['closest', 'newer', 'older'],
                        group=cgroup)
 
-# define the calibration database columns
-CALIB_DB_COLS = Const('CALIB_DB_COLS', dtype=str, source=__NAME__, group=cgroup)
-# define the calibration database key column
-CALIB_DB_KEY_COL = Const('CALIB_DB_KEY_COL', dtype=str, source=__NAME__,
-                         group=cgroup)
-# define the calibration database time column
-CALIB_DB_TIME_COL = Const('CALIB_DB_TIME_COL', dtype=str, source=__NAME__,
-                          group=cgroup)
-# define the calibration database filename column
-CALIB_DB_FILE_COL = Const('CALIB_DB_FILE_COL', dtype=str, source=__NAME__,
-                          group=cgroup)
-
 #   Define the match type for telluDB files
 #         match = 'older'  when more than one file for each key will
 #                          select the newest file that is OLDER than
@@ -456,19 +357,6 @@ CALIB_DB_FILE_COL = Const('CALIB_DB_FILE_COL', dtype=str, source=__NAME__,
 #         calibDB file will be used
 TELLU_DB_MATCH = Const('TELLU_DB_MATCH', dtype=str, source=__NAME__,
                        value='closest', group=cgroup)
-
-# define the telluric database columns (must contain "key")
-TELLU_DB_COLS = Const('TELLU_DB_COLS', dtype=str, source=__NAME__,
-                      group=cgroup)
-# define the telluric database key column
-TELLU_DB_KEY_COL = Const('TELLU_DB_KEY_COL', dtype=str, source=__NAME__,
-                         group=cgroup)
-# define the telluric database time column
-TELLU_DB_TIME_COL = Const('TELLU_DB_TIME_COL', dtype=str, source=__NAME__,
-                          group=cgroup)
-# define the telluric database filename column
-TELLU_DB_FILE_COL = Const('TELLU_DB_FILE_COL', dtype=str, source=__NAME__,
-                          group=cgroup)
 
 # =============================================================================
 # DISPLAY/LOGGING SETTINGS
