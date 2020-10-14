@@ -22,6 +22,7 @@ from apero.base import base
 from apero.base import drs_misc
 from apero.base import drs_db
 from apero.base import drs_exceptions
+from apero.base import drs_text
 from apero import lang
 from apero.core import constants
 from apero.core.core import drs_file
@@ -94,6 +95,10 @@ class DatabaseManager:
         self.pconst = constants.pload(self.instrument)
         # set name
         self.name = 'DatabaseManager'
+        # set parameters
+        self.dbpath = None
+        self.dbname = None
+        self.dbreset = None
         # check does nothing
         _ = check
         # set path
@@ -101,9 +106,7 @@ class DatabaseManager:
         # set unloaded database
         self.database = None
 
-    def set_path(self, dirname: Union[str, None] = None,
-                 filename: Union[str, None] = None,
-                 check: bool = True):
+    def set_path(self, kind: str, check: bool = True):
         """
         Set the path for the database
 
@@ -119,14 +122,13 @@ class DatabaseManager:
         # deal with no instrument (i.e. no database)
         if self.instrument == 'None':
             return
+        # load database settings
+        self.database_settings(kind=kind)
         # ---------------------------------------------------------------------
         # deal with directory
         # ---------------------------------------------------------------------
-        # deal with no directory name
-        if dirname is None:
-            asset_dir = str(self.params['DRS_DATA_ASSETS'])
-            database_dir = str(self.params['DATABASE_DIR'])
-            dirname = Path(asset_dir).joinpath(database_dir)
+        # get directory name
+        dirname = str(self.dbpath)
         # deal with dir name being a parameter key (multiple depths allowed)
         while dirname in self.params:
             dirname = self.params[dirname]
@@ -148,9 +150,8 @@ class DatabaseManager:
         # ---------------------------------------------------------------------
         # add filename
         # ---------------------------------------------------------------------
-        # deal with no filename set
-        if filename is None:
-            filename = self.name + '.db'
+        # get directory name
+        filename = str(self.dbname)
         # deal with filename being a parameter key (multiple depths allowed)
         while filename in self.params:
             filename = self.params[filename]
@@ -210,6 +211,28 @@ class DatabaseManager:
         # return string representation
         return self.__str__()
 
+    def database_settings(self, kind: str):
+        # load database yaml file
+        ddict = base.DPARAMS
+        # ----------------------------------------------------------------------
+        # SQLITE3 settings
+        # ----------------------------------------------------------------------
+        if ddict['USE_SQLITE3']:
+            # force kind to upper
+            kind = kind.upper()
+            # kind must be one of the following
+            if kind not in ['CALIB', 'TELLU', 'INDEX', 'LOG', 'OBJECT', 'LANG']:
+                raise ValueError('kind=={0} invalid'.format(kind))
+            # set name/path/reset based on ddict
+            self.dbname = ddict['SQLITE3'][kind]['NAME']
+            self.dbpath = ddict['SQLITE3'][kind]['PATH']
+            if drs_text.null_text(ddict['SQLITE3'][kind]['RESET'], ['None']):
+                self.dbreset = None
+            else:
+                self.dbreset = ddict['SQLITE3'][kind]['RESET']
+        else:
+            NotImplemented('MySQL not implemented yet')
+
 
 # =============================================================================
 # Define specific file databases
@@ -234,7 +257,7 @@ class CalibrationDatabase(DatabaseManager):
         # set name
         self.name = 'calibration'
         # set path
-        self.set_path('CALIB_DBFILE_PATH', 'CALIB_DB_NAME', check=check)
+        self.set_path(kind='CALIB', check=check)
         # set database directory
         self.filedir = Path(str(self.params['DRS_CALIB_DB']))
 
@@ -539,7 +562,7 @@ class TelluricDatabase(DatabaseManager):
         # set name
         self.name = 'telluric'
         # set path
-        self.set_path('TELLU_DBFILE_PATH', 'TELLU_DB_NAME', check=check)
+        self.set_path(kind='TELLU', check=check)
         # set database directory
         self.filedir = Path(str(self.params['DRS_TELLU_DB']))
 
@@ -1149,7 +1172,7 @@ class IndexDatabase(DatabaseManager):
         # set name
         self.name = 'index'
         # set path
-        self.set_path(None, 'INDEX_DB_NAME', check=check)
+        self.set_path(kind='INDEX', check=check)
         # store whether an update has been done
         self.update_entries_params = []
 
@@ -1809,7 +1832,7 @@ class LogDatabase(DatabaseManager):
         # set name
         self.name = 'log'
         # set path
-        self.set_path(None, 'LOG_DB_NAME', check=check)
+        self.set_path(kind='LOG', check=check)
 
 
 class ObjectDatabase(DatabaseManager):
@@ -1832,7 +1855,30 @@ class ObjectDatabase(DatabaseManager):
         # set name
         self.name = 'object'
         # set path
-        self.set_path(None, 'OBJECT_DB_NAME', check=check)
+        self.set_path(kind='OBJECT', check=check)
+
+
+class LanguageDatabase(DatabaseManager):
+    def __init__(self, params: ParamDict, check: bool = True):
+        """
+        Constructor of the Object Database class
+
+        :param params: ParamDict, parameter dictionary of constants
+        :param check: bool, if True makes sure database file exists (otherwise
+                      assumes it is)
+
+        :return: None
+        """
+        # save class name
+        self.classname = 'LanguageDatabaseManager'
+        # set function
+        _ = display_func(params, '__init__', __NAME__, self.classname)
+        # construct super class
+        DatabaseManager.__init__(self, params)
+        # set name
+        self.name = 'language'
+        # set path
+        self.set_path(kind='LANG', check=check)
 
 
 # =============================================================================
