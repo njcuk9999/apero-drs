@@ -9,9 +9,14 @@ Created on 2020-08-2020-08-21 19:43
 @author: cook
 """
 from astropy.time import Time, TimeDelta
-import numpy as np
-import string
 from collections import OrderedDict
+import numpy as np
+import os
+from pathlib import Path
+import string
+from typing import Any
+import yaml
+
 
 # =============================================================================
 # Define variables
@@ -37,6 +42,7 @@ VALID_CHARS += list(string.punctuation) + list(string.whitespace)
 # Define yaml files
 INSTALL_YAML = 'install.yaml'
 DATABASE_YAML = 'database.yaml'
+USER_ENV = 'DRS_UCONFIG'
 # Define relative path to 'const' sub-package
 CONST_PATH = './core/instruments/'
 CORE_PATH = './core/instruments/default/'
@@ -89,6 +95,189 @@ COLOURS['UNDERLINE'] = '\033[4m'
 # =============================================================================
 # Define functions
 # =============================================================================
+def load_database_yaml() -> dict:
+    # check for environmental variable
+    if USER_ENV in os.environ:
+        # get path
+        path = os.environ[USER_ENV]
+        # add filename
+        path = os.path.join(path, DATABASE_YAML)
+        # load yaml file
+        return load_yaml(path)
+    # else raise except (cannot come from database)
+    else:
+        emsg = 'Core Error: {0} must be set (please run setup script)'
+        raise EnvironmentError(emsg.format(USER_ENV))
+
+
+def load_install_yaml():
+    # check for environmental variable
+    if USER_ENV in os.environ:
+        # get path
+        path = os.environ[USER_ENV]
+        # add filename
+        path = os.path.join(path, INSTALL_YAML)
+        # load yaml file
+        return load_yaml(path)
+    # else raise except (cannot come from database)
+    else:
+        emsg = 'Core Error: {0} must be set (please run setup script)'
+        raise EnvironmentError(emsg.format(USER_ENV))
+
+
+def load_yaml(filename: str) -> dict:
+    """
+    Load a yaml file as a dictionary
+
+    :param filename: str, the filename (absolute path) of the yaml file
+
+    :returns: dictionary dict, the dictionary loaded from yaml file
+    """
+    with open(filename, 'r') as yfile:
+        dictionary = yaml.load(yfile, Loader=yaml.FullLoader)
+    return dictionary
+
+
+def write_yaml(dictionary: dict, filename: str):
+    """
+    Write a yaml file from a dictionary
+
+    :param dictionary: dict, the dictionary to write
+    :param filename: str, the filename (absolute path) of the yaml file
+
+    :return: None - writes yaml file 'filename'
+    """
+    # save file
+    with open(filename, 'w') as yfile:
+        yaml.dump(dictionary, yfile)
+
+
+def create_yamls(allparams: Any):
+    """
+    Create the yaml files from allparams
+
+    :param allparams: ParamDict, the parameter dictionary of installation
+
+    :return: None - writes install.yaml and database.yaml
+    """
+    # get config directory
+    userconfig = Path(allparams['USERCONFIG'])
+    # -------------------------------------------------------------------------
+    # create install yaml
+    # -------------------------------------------------------------------------
+    # get save path
+    install_path = userconfig.joinpath(INSTALL_YAML)
+    # populate dictionary
+    install_dict = dict()
+    install_dict['DRS_UCONFIG'] = str(userconfig)
+    install_dict['INSTRUMENT'] = allparams['INSTRUMENT']
+    install_dict['LANGUAGE'] = allparams['LANGUAGE']
+    # write database
+    write_yaml(install_dict, install_path)
+    # -------------------------------------------------------------------------
+    # create database yaml
+    # -------------------------------------------------------------------------
+    # get save path
+    database_path = userconfig.joinpath(DATABASE_YAML)
+    # populate dictionary
+    database_dict = dict()
+    # -------------------------------------------------------------------------
+    #  SQLITE SETTINGS
+    # -------------------------------------------------------------------------
+    # sql lite settings
+    database_dict['USE_SQLITE3'] = True
+    sqlite3 = dict()
+    # add calib database
+    calibdb = dict()
+    calibdb['PATH'] = 'DRS_CALIB_DB'
+    calibdb['NAME'] = 'calib.db'
+    calibdb['RESET'] = 'reset.calib.csv'
+    sqlite3['CALIB'] = calibdb
+    # add tellu database
+    telludb = dict()
+    telludb['PATH'] = 'DRS_TELLU_DB'
+    telludb['NAME'] = 'tellu.db'
+    telludb['RESET'] = 'None'
+    sqlite3['TELLU'] = telludb
+    # add index database
+    indexdb = dict()
+    indexdb['PATH'] = 'DRS_DATA_ASSETS'
+    indexdb['NAME'] = 'index.db'
+    indexdb['RESET'] = 'None'
+    sqlite3['INDEX'] = indexdb
+    # add log database
+    logdb = dict()
+    logdb['PATH'] = 'DRS_DATA_ASSETS'
+    logdb['NAME'] = 'log.db'
+    logdb['RESET'] = 'None'
+    sqlite3['LOG'] = logdb
+    # add object database
+    objectdb = dict()
+    objectdb['PATH'] = 'DRS_DATA_ASSETS'
+    objectdb['NAME'] = 'object.db'
+    objectdb['RESET'] = 'reset.object.csv'
+    sqlite3['OBJECT'] = objectdb
+    # add language database
+    langdb = dict()
+    langdb['PATH'] = 'DRS_DATA_ASSETS'
+    langdb['NAME'] = 'lang.db'
+    langdb['RESET'] = 'None'
+    sqlite3['LANG'] = langdb
+    # add sqlite database to database_dict
+    database_dict['SQLITE3'] = sqlite3
+    # -------------------------------------------------------------------------
+    #  MYSQL SETTINGS
+    # -------------------------------------------------------------------------
+    # mysql settings
+    database_dict['USE_MYSQL'] = False
+    mysql = dict()
+    # add calib database
+    calibdb = dict()
+    calibdb['PATH'] = 'DRS_CALIB_DB'
+    calibdb['NAME'] = 'calib.db'
+    calibdb['RESET'] = 'reset.calib.csv'
+    mysql['CALIB'] = calibdb
+    # add tellu database
+    telludb = dict()
+    telludb['PATH'] = 'DRS_TELLU_DB'
+    telludb['NAME'] = 'tellu.db'
+    telludb['RESET'] = 'None'
+    mysql['TELLU'] = telludb
+    # add index database
+    indexdb = dict()
+    indexdb['PATH'] = 'DRS_DATA_ASSETS'
+    indexdb['NAME'] = 'index.db'
+    indexdb['RESET'] = 'None'
+    mysql['INDEX'] = indexdb
+    # add log database
+    logdb = dict()
+    logdb['PATH'] = 'DRS_DATA_ASSETS'
+    logdb['NAME'] = 'log.db'
+    logdb['RESET'] = 'None'
+    mysql['LOG'] = logdb
+    # add object database
+    objectdb = dict()
+    objectdb['PATH'] = 'DRS_DATA_ASSETS'
+    objectdb['NAME'] = 'object.db'
+    objectdb['RESET'] = 'reset.object.csv'
+    mysql['OBJECT'] = objectdb
+    # add language database
+    langdb = dict()
+    langdb['PATH'] = 'DRS_DATA_ASSETS'
+    langdb['NAME'] = 'lang.db'
+    langdb['RESET'] = 'None'
+    mysql['LANG'] = langdb
+    # mysql['PARAMS_PATH'] = 'DRS_DATA_ASSETS'
+    database_dict['MYSQL'] = mysql
+    # write database
+    write_yaml(database_dict, database_path)
+
+
+# =============================================================================
+# Define functions
+# =============================================================================
+DPARAMS = load_database_yaml()
+IPARAMS = load_install_yaml()
 
 
 # =============================================================================
