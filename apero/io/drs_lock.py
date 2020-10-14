@@ -52,7 +52,8 @@ WLOG = drs_log.wlog
 TextEntry = lang.core.drs_lang_text.TextEntry
 TextDict = lang.core.drs_lang_text.TextDict
 HelpText = lang.core.drs_lang_text.HelpDict
-
+# define max wait
+MAX_WAIT = 100
 
 # =============================================================================
 # Define functions
@@ -101,7 +102,7 @@ class Lock:
             eargs = [type(error), error, self.lockpath, func_name]
             WLOG(params, 'error', TextEntry('00-503-00016', args=eargs))
         # ------------------------------------------------------------------
-        self.maxwait = params.get('DB_MAX_WAIT', 100)
+        self.maxwait = MAX_WAIT
         self.path = os.path.join(self.lockpath, self.lockname)
         self.queue = []
         # make the lock directory
