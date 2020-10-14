@@ -683,6 +683,9 @@ def create_configs(params, all_params):
     devmode = all_params['DEVMODE']
     # create install config
     base.create_yamls(all_params)
+    # reload dictionaries connected to yaml files
+    base.IPARAMS = base.load_install_yaml()
+    base.DPARAMS = base.load_database_yaml()
     # create user config
     config_lines, const_lines = create_ufiles(params, devmode)
     # write / update config and const
