@@ -475,7 +475,7 @@ class Database:
         self.execute(command)
         # commit changes to the database (if requested)
         if commit:
-            self._commit()
+            self.commit()
 
     def add_row(self, values: List[object], table: Union[None, str] = None,
                 columns: Union[str, List[str]] = "*",
@@ -512,7 +512,7 @@ class Database:
         self.execute(command)
         # if commit is request commit changes to SQL database
         if commit:
-            self._commit()
+            self.commit()
 
     def add_from_pandas(self, df: pd.DataFrame, table: Union[str, None] = None,
                         if_exists: str = 'append', index: bool = False,
@@ -551,7 +551,41 @@ class Database:
                                 func_name=func_name)
         # commit change to database if requested
         if commit:
-            self._commit()
+            self.commit()
+
+
+    def delete_rows(self, table: Union[None, str] = None,
+                    condition: Union[str, None] = None,
+                    commit: bool = True):
+        """
+        Delete a row from the table
+
+        :param table: A str which specifies which table within the database
+                      to retrieve data from.  If there is only one table to
+                      pick from, this may be left as None to use it
+                      automatically
+        :param condition: An SQL condition string to identify the rows to be
+                          modified.  This may be set to None to apply the
+                          modification to all rows.
+        :param commit: boolean, if True will commit changes to sql database
+
+        :return: None removes row(s) from table
+        """
+        # set function name
+        _ = __NAME__ + '.Database.add_row()'
+        # infer table name
+        table = self._infer_table_(table)
+        # deal with no condition
+        if condition is None:
+            return
+        # construct the command
+        command = "DELETE FROM {} WHERE {}".format(table, condition)
+        # execute the sql command
+        self.execute(command)
+        # if commit is request commit changes to SQL database
+        if commit:
+            self.commit()
+
 
     # table methods
     def add_table(self, name: str, field_names: List[str],
@@ -642,7 +676,7 @@ class Database:
         """
         _ = __NAME__ + '.Database.rename_table()'
         self.execute("ALTER TABLE {} RENAME TO {}".format(old_name, new_name))
-        self._commit()
+        self.commit()
 
     # admin methods
     def backup(self):
@@ -739,7 +773,7 @@ class Database:
         for _table in _tables:
             self.tables.append(_table[0])
 
-    def _commit(self):
+    def commit(self):
         """
         Commit to the SQL database
         :return:

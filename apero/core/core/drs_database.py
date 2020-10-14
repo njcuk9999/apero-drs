@@ -1182,7 +1182,7 @@ class IndexDatabase(DatabaseManager):
                   fullpath: Union[Path, str, None] = None,
                   used: Union[int, None] = None,
                   rawfix: Union[int, None] = None,
-                  force_dir: Union[str, None] = None):
+                  force_dir: Union[str, None] = None, commit: bool = True):
         """
         Add an entry to the index database
 
@@ -1286,13 +1286,13 @@ class IndexDatabase(DatabaseManager):
             condition += ' AND PATH == "{0}"'.format(path)
             # update row in database
             self.database.set('*', values, condition=condition, table='MAIN',
-                              commit=True)
+                              commit=commit)
         else:
             # add new entry to database
             values = [str(path), str(directory), str(basename), str(kind),
                       float(last_modified), str(runstring)]
             values += hvalues + [used, rawfix]
-            self.database.add_row(values, 'MAIN', commit=True)
+            self.database.add_row(values, 'MAIN', commit=commit)
 
     def get_entries(self, columns: str = '*',
                     directory: Union[str, None] = None,
@@ -1516,7 +1516,9 @@ class IndexDatabase(DatabaseManager):
                     if drs_key in header:
                         hkeys[rkey] = header[drs_key]
             # add to database
-            self.add_entry(directory, basename, kind, hkeys=hkeys)
+            self.add_entry(directory, basename, kind, hkeys=hkeys, commit=False)
+        # finally commit all entries
+        self.database.commit()
 
 
     def update_header_fix(self, recipe):
@@ -1834,6 +1836,18 @@ class LogDatabase(DatabaseManager):
         # set path
         self.set_path(kind='LOG', check=check)
 
+
+    def remove_pids(self, pid: str):
+        """
+        Remove rows with this pid
+        :param pid:
+        :return:
+        """
+        # set up condition
+        condition = 'PID=="{0}"'.format(pid)
+        # delete rows that match this criteria
+        self.database.delete_rows('MAIN', condition=condition)
+
     # TODO: finish this
     def add_entries(self, recipe: Union[str, None] = None,
                     rkind: Union[str, None] = None,
@@ -1862,8 +1876,66 @@ class LogDatabase(DatabaseManager):
                     qc_pass: Union[bool, None] = None,
                     errors: Union[bool, None] = None,
                     ended: Union[bool, None] = None,
-                    used: Union[int, None] = None):
-        pass
+                    used: Union[int, None] = None,
+                    commit: bool = True):
+        """
+        Add a log entry to database
+
+        :param recipe:
+        :param rkind:
+        :param pid:
+        :param htime:
+        :param unixtime:
+        :param group:
+        :param level:
+        :param sublevel:
+        :param levelcrit:
+        :param inpath:
+        :param outpath:
+        :param directory:
+        :param logfile:
+        :param plotdir:
+        :param runstring:
+        :param args:
+        :param kwargs:
+        :param skwargs:
+        :param started:
+        :param passed_all_qc:
+        :param qc_string:
+        :param qc_names:
+        :param qc_values:
+        :param qc_logic:
+        :param qc_pass:
+        :param errors:
+        :param ended:
+        :param used:
+        :return:
+        """
+        # get correct order
+        keys = [recipe, rkind, pid, htime, unixtime, group, level, sublevel,
+                levelcrit, inpath, outpath, directory, logfile, plotdir,
+                runstring, args, kwargs, skwargs, started, passed_all_qc,
+                qc_string, qc_names, qc_values, qc_logic, qc_pass, errors,
+                ended, used]
+        # get column names and column datatypes
+        colnames, coltypes = self.pconst.LOG_DB_COLUMNS()
+        # storage of values
+        values = []
+        # loop around values
+        for it in range(len(keys)):
+            # deal with unset key
+            if drs_text.null_text(keys[it], ['None', '']):
+                values.append('None')
+            else:
+                try:
+                    # get data type
+                    dtype = coltypes[it]
+                    # append forcing data type
+                    values.append(dtype(keys[it]))
+                except Exception as _:
+                    values.append('None')
+        # add row to database
+        self.database.add_row(values, 'MAIN', commit=commit)
 
 
 class ObjectDatabase(DatabaseManager):
