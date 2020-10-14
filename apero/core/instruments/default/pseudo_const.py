@@ -1037,7 +1037,7 @@ class PseudoConstants:
                    'KWARGS', 'SKWARGS', 'STARTED', 'PASSED_ALL_QC',
                    'QC_STRING', 'QC_NAMES', 'QC_VALUES', 'QC_LOGIC', 'QC_PASS',
                    'ERRORS', 'ENDED', 'USED']
-        ctypes = [str, str, str, str, str, str, int, int, str, str, str,
+        ctypes = [str, str, str, str, float, str, int, int, str, str, str,
                   str, str, str, str, str, str, str, int, int, str, str, str,
                   str, str, str, int, int]
         return columns, ctypes
