@@ -276,9 +276,12 @@ def create_yamls(allparams: Any):
 # =============================================================================
 # Define functions
 # =============================================================================
-DPARAMS = load_database_yaml()
-IPARAMS = load_install_yaml()
-
+try:
+    DPARAMS = load_database_yaml()
+    IPARAMS = load_install_yaml()
+except Exception as _:
+    DPARAMS = dict()
+    IPARAMS = dict()
 
 # =============================================================================
 # Start of code
