@@ -861,6 +861,8 @@ def clean_install(params, all_params):
 
 
 def create_symlinks(params, all_params):
+    # get available instruments
+    drs_instruments = np.char.array(params['DRS_INSTRUMENTS']).upper()
     # get package
     package = params['DRS_PACKAGE']
     # get out paths
@@ -892,7 +894,10 @@ def create_symlinks(params, all_params):
 
     for directory in dirs:
         # do not copy tools for instruments we are not installing
-        if directory.name.upper() != instrument:
+        # note dirs also has other directories so first need to check
+        # we are talking about an instrument directory
+        if directory.name.upper() in drs_instruments:
+            if directory.name.upper() != instrument:
                 continue
 
         # construct this directories absolute path
