@@ -491,6 +491,8 @@ if __name__ == '__main__':
     allparams['PROFILENAME'] = args.name
     # add clean warn
     allparams['CLEANWARN'] = args.cleanwarn
+    # add environmental variable DRS_UCONFIG
+    os.environ['DRS_UCONFIG'] = allparams['USERCONFIG']
     # reload params
     params = constants.load(allparams['INSTRUMENT'], from_file=False)
 
