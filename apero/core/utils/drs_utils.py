@@ -405,9 +405,45 @@ class RecipeLog:
         # set function name
         _ = drs_misc.display_func(None, 'write_logfile', __NAME__,
                                   self.class_name)
-        # write
-        # TODO: Finish this
-        LogDatabase.add_entries()
+        # ---------------------------------------------------------------------
+        # remove all entries with this pid
+        self.logdbm.remove_pids(self.pid)
+        # ---------------------------------------------------------------------
+        # add instances
+        instances = [self] + self.set
+        # loop around instances
+        for inst in instances:
+            # get utime
+            utime = float(Time(inst.htime).unix)
+
+            # add entries
+            self.logdbm.add_entries(recipe=inst.name, rkind=inst.kind,
+                                    pid=inst.pid, htime=inst.htime,
+                                    unixtime=utime, group=inst.group,
+                                    level=inst.level,
+                                    sublevel=inst.level_iteration,
+                                    levelcrit=inst.level_criteria,
+                                    inpath=inst.inputdir,
+                                    outpath=inst.outputdir,
+                                    directory=inst.directory,
+                                    logfile=inst.log_file,
+                                    plotdir=inst.plot_dir,
+                                    runstring=inst.runstring,
+                                    args=inst.args,
+                                    kwargs=inst.kwargs,
+                                    skwargs=inst.skwargs,
+                                    started=inst.started,
+                                    passed_all_qc=inst.passed_qc,
+                                    qc_string=inst.qc_string,
+                                    qc_names=inst.qc_name,
+                                    qc_values=inst.qc_value,
+                                    qc_logic=inst.qc_logic,
+                                    qc_pass=inst.qc_pass,
+                                    errors=inst.errors,
+                                    ended=inst.ended, used=1, commit=False)
+        # finally commit these changes
+        self.logdbm.database.commit()
+
 
     def _make_row(self) -> OrderedDict:
         """
