@@ -1287,7 +1287,7 @@ def load_config(instrument: str = 'None',
     # save sources to params
     params = _save_config_params(params)
     # cache these params
-    if cache:
+    if cache and from_file:
         CONFIG_CACHE[instrument] = params.copy()
     # return the parameter dictionary
     return params
@@ -1570,14 +1570,8 @@ def _get_file_names(params: ParamDict,
         return []
     # get user environmental path
     user_env = params['DRS_USERENV']
-    # get user default path (if environmental path unset)
-    user_dpath = params['DRS_USER_DEFAULT']
-    # get the package name
-    drs_package = __PACKAGE__
-    # change user_dpath to a absolute path
-    user_dpath = drs_break.get_relative_folder(drs_package, user_dpath)
     # deal with no user environment and no default path
-    if user_env is None and user_dpath is None:
+    if user_env is None:
         return []
     # set empty directory
     directory = None
@@ -1593,35 +1587,8 @@ def _get_file_names(params: ParamDict,
             # set directory
             directory = path
     # -------------------------------------------------------------------------
-    # if directory is not empty then we need to get instrument specific files
-    # -------------------------------------------------------------------------
-    if directory is not None:
-        # look for sub-directories (and if not found directory set to None so
-        #   that we check the user default path)
-        source = 'environmental variables ({0})'.format(user_env)
-        subdir = _get_subdir(directory, instrument, source=source)
-        if subdir is None:
-            directory = None
-    # -------------------------------------------------------------------------
-    # User default path
-    # -------------------------------------------------------------------------
-    # check default path exists
-    if directory is None:
-        # check the directory linked exists
-        if os.path.exists(user_dpath):
-            # set directory
-            directory = user_dpath
     # if directory is still empty return empty list
     if directory is None:
-        return []
-    # -------------------------------------------------------------------------
-    # if directory is not empty then we need to get instrument specific files
-    # -------------------------------------------------------------------------
-    # look for sub-directories (This time if not found we have none and should
-    #    return an empty set of files
-    source = 'default user config file ({0})'.format(user_dpath)
-    subdir = _get_subdir(directory, instrument, source=source)
-    if subdir is None:
         return []
     # -------------------------------------------------------------------------
     # look for user configurations within instrument sub-folder
@@ -1629,51 +1596,18 @@ def _get_file_names(params: ParamDict,
     files = []
     for script in USCRIPTS:
         # construct path
-        path = os.path.join(directory, subdir, script)
+        path = os.path.join(directory, script)
         # check that it exists
         if os.path.exists(path):
             files.append(path)
     # deal with no files found
     if len(files) == 0:
-        wmsg1 = ('User config defined but instrument "{0}" directory '
+        wmsg1 = ('User config defined but directory="{0}" '
                  'has no configurations files')
         wmsg2 = '\tValid config files: {0}'.format(','.join(USCRIPTS))
-        ConfigWarning([wmsg1.format(instrument), wmsg2])
+        ConfigWarning([wmsg1.format(directory), wmsg2])
     # return files
     return files
-
-
-def _get_subdir(directory: str, instrument: str, source: str) -> str:
-    """
-    Get the instrument sub-directory
-
-    :param directory: str the directory to look for instrument directory in
-    :param instrument: str, the instrument to check
-    :param source: str, where the directory string was obtained
-    :return: the instrument string, if valid
-    """
-    # set function name (cannot break here --> no access to inputs)
-    _ = display_func(None, 'catch_sigint', __NAME__)
-    # get display text
-    textentry = constant_functions.DisplayText()
-    # set the sub directory to None initially
-    subdir = None
-    # loop around items in the directory
-    for filename in np.sort(os.listdir(directory)):
-        # check that the absolute path is a directory
-        cond1 = os.path.isdir(os.path.join(directory, filename))
-        # check that item (directory) is named the same as the instrument
-        cond2 = filename.lower() == instrument.lower()
-        # if both conditions true set the sub directory as this item
-        if cond1 and cond2:
-            subdir = filename
-    # deal with instrument sub-folder not found
-    if subdir is None and instrument != 'None':
-        # raise a config warning that directory not found
-        wargs = [source, instrument.lower(), directory]
-        ConfigWarning(textentry('10-002-00001', args=wargs))
-    # return the subdir
-    return subdir
 
 
 def _load_from_module(modules: List[str], quiet: bool = False) -> ModLoads:
