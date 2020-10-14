@@ -12,6 +12,7 @@ import pandas as pd
 
 from apero.base import base
 from apero.base import drs_db
+from apero.base import drs_misc
 from apero.core import constants
 from apero.core.core import drs_database
 
@@ -35,50 +36,30 @@ Database = drs_db.Database
 def list_databases(params):
     # set up storage
     databases = dict()
-    # get parameters from params
-    asset_dir = params['DRS_DATA_ASSETS']
-    params_dir = params['DATABASE_DIR']
-    params_file = params['LOG_DB_NAME']
-    lang_dir = params['DATABASE_DIR']
-    lang_file = params['LANG_DB_NAME']
-
-    # construct paths for native databases (don't come from managers)
-    params_abspath = os.path.join(asset_dir, params_dir, params_file)
-    lang_abspath = os.path.join(asset_dir, lang_dir, lang_file)
-
     # get databases from managers (later databases)
     calibdbm = drs_database.CalibrationDatabase(params, check=False)
     telludbm = drs_database.TelluricDatabase(params, check=False)
     indexdbm = drs_database.IndexDatabase(params, check=False)
     logdbm = drs_database.LogDatabase(params, check=False)
     objectdbm = drs_database.ObjectDatabase(params, check=False)
-
+    landdbm = drs_database.LanguageDatabase(params, check=False)
     # add to storage
-    databases['calib'] = calibdbm.path
-    databases['tellu'] = telludbm.path
-    databases['index'] = indexdbm.path
-    databases['log'] = logdbm.path
-    databases['object'] = objectdbm.path
-    databases['params'] = params_abspath
-    databases['lang'] = lang_abspath
+    databases['calib'] = calibdbm
+    databases['tellu'] = telludbm
+    databases['index'] = indexdbm
+    databases['log'] = logdbm
+    databases['object'] = objectdbm
+    databases['lang'] = landdbm
     # return the databases
     return databases
 
 
-
 def install_databases(params, skip=None):
-
     # deal with skip
     if skip is None:
         skip = []
-
-    # TODO: remove - for tests only
-    params.set('CALIB_DB_NAME', value='calib.db')
-    params.set('TELLU_DB_NAME', value='tellu.db')
-
     # get database paths
     databases = list_databases(params)
-
     # load pseudo constants
     pconst = constants.pload(params['INSTRUMENT'])
     # -------------------------------------------------------------------------
@@ -102,9 +83,9 @@ def install_databases(params, skip=None):
     if 'object' not in skip:
         objectdb = create_object_database(params, pconst, databases)
     # -------------------------------------------------------------------------
-    # create params database
-    if 'params' not in skip:
-        paramsdb = create_params_database(pconst, databases)
+    # # create params database
+    # if 'params' not in skip:
+    #     paramsdb = create_params_database(pconst, databases)
     # -------------------------------------------------------------------------
     # create language database
     if 'lang' not in skip:
@@ -118,22 +99,17 @@ def create_calibration_database(params, pconst, databases) -> Database:
     :param pconst:
     :return:
     """
-    # load database yaml file
-
-
     # get parameters from params
-
     asset_dir = params['DRS_DATA_ASSETS']
     reset_path = params['DATABASE_DIR']
-    reset_file = params['CALIB_DB_RESET']
     # get columns and ctypes from pconst
     columns, ctypes = pconst.CALIBRATION_DB_COLUMNS()
     # -------------------------------------------------------------------------
     # construct directory
-    calib_abspath = databases['calib']
+    calibdbm = databases['calib']
     # -------------------------------------------------------------------------
     # make database
-    calibdb = Database(calib_abspath)
+    calibdb = Database(calibdbm.path)
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if 'MAIN' in calibdb.tables:
@@ -142,7 +118,7 @@ def create_calibration_database(params, pconst, databases) -> Database:
     calibdb.add_table('MAIN', columns, ctypes)
     # ---------------------------------------------------------------------
     # construct reset file
-    reset_abspath = os.path.join(asset_dir, reset_path, reset_file)
+    reset_abspath = os.path.join(asset_dir, reset_path, calibdbm.dbreset)
     # get rows from reset file
     reset_entries = pd.read_csv(reset_abspath, skipinitialspace=True)
     # add rows from reset text file
@@ -162,10 +138,10 @@ def create_telluric_database(pconst, databases) -> Database:
     columns, ctypes = pconst.TELLURIC_DB_COLUMNS()
     # -------------------------------------------------------------------------
     # construct directory
-    tellu_abspath = databases['tellu']
+    telludbm = databases['tellu']
     # -------------------------------------------------------------------------
     # make database
-    telludb = Database(tellu_abspath)
+    telludb = Database(telludbm.path)
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if 'MAIN' in telludb.tables:
@@ -187,10 +163,10 @@ def create_index_database(pconst, databases) -> Database:
     columns, ctypes = pconst.INDEX_DB_COLUMNS()
     # -------------------------------------------------------------------------
     # construct directory
-    index_abspath = databases['index']
+    indexdbm = databases['index']
     # -------------------------------------------------------------------------
     # make database
-    indexdb = Database(index_abspath)
+    indexdb = Database(indexdbm.path)
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if 'MAIN' in indexdb.tables:
@@ -212,10 +188,10 @@ def create_log_database(pconst, databases) -> Database:
     columns, ctypes = pconst.TELLURIC_DB_COLUMNS()
     # -------------------------------------------------------------------------
     # construct directory
-    log_abspath = databases['log']
+    logdbm = databases['log']
     # -------------------------------------------------------------------------
     # make database
-    logdb = Database(log_abspath)
+    logdb = Database(logdbm.path)
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if 'MAIN' in logdb.tables:
@@ -236,15 +212,14 @@ def create_object_database(params, pconst, databases) -> Database:
     # get parameters from params
     asset_dir = params['DRS_DATA_ASSETS']
     reset_path = params['DATABASE_DIR']
-    reset_file = params['OBJECT_DB_RESET']
     # get columns and ctypes from pconst
     columns, ctypes = pconst.OBJECT_DB_COLUMNS()
     # -------------------------------------------------------------------------
     # construct directory
-    object_abspath = databases['object']
+    objectdbm = databases['object']
     # -------------------------------------------------------------------------
     # make database
-    objectdb = Database(object_abspath)
+    objectdb = Database(objectdbm.path)
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if 'MAIN' in objectdb.tables:
@@ -253,7 +228,7 @@ def create_object_database(params, pconst, databases) -> Database:
     objectdb.add_table('MAIN', columns, ctypes)
     # ---------------------------------------------------------------------
     # construct reset file
-    reset_abspath = os.path.join(asset_dir, reset_path, reset_file)
+    reset_abspath = os.path.join(asset_dir, reset_path, objectdbm.dbreset)
     # get rows from reset file
     reset_entries = pd.read_csv(reset_abspath, skipinitialspace=True)
     # add rows from reset text file
@@ -262,28 +237,28 @@ def create_object_database(params, pconst, databases) -> Database:
     return objectdb
 
 
-def create_params_database(pconst, databases) -> Database:
-    """
-    Setup for the index database
-    :param params:
-    :param pconst:
-    :return:
-    """
-    # get columns and ctypes from pconst
-    columns, ctypes = pconst.PARAMS_DB_COLUMNS()
-    # -------------------------------------------------------------------------
-    # construct directory
-    params_abspath = databases['params']
-    # -------------------------------------------------------------------------
-    # make database
-    paramsdb = Database(params_abspath)
-    # -------------------------------------------------------------------------
-    if 'MAIN' in paramsdb.tables:
-        paramsdb.delete_table('MAIN')
-    # add main table
-    paramsdb.add_table('MAIN', columns, ctypes)
-    # -------------------------------------------------------------------------
-    return paramsdb
+# def create_params_database(pconst, databases) -> Database:
+#     """
+#     Setup for the index database
+#     :param params:
+#     :param pconst:
+#     :return:
+#     """
+#     # get columns and ctypes from pconst
+#     columns, ctypes = pconst.PARAMS_DB_COLUMNS()
+#     # -------------------------------------------------------------------------
+#     # construct directory
+#     params_abspath = databases['params']
+#     # -------------------------------------------------------------------------
+#     # make database
+#     paramsdb = Database(params_abspath)
+#     # -------------------------------------------------------------------------
+#     if 'MAIN' in paramsdb.tables:
+#         paramsdb.delete_table('MAIN')
+#     # add main table
+#     paramsdb.add_table('MAIN', columns, ctypes)
+#     # -------------------------------------------------------------------------
+#     return paramsdb
 
 
 def create_lang_database(pconst, databases) -> Database:
@@ -297,10 +272,10 @@ def create_lang_database(pconst, databases) -> Database:
     columns, ctypes = pconst.LANG_DB_COLUMNS()
     # -------------------------------------------------------------------------
     # construct directory
-    lang_abspath = databases['params']
+    langdbm = databases['lang']
     # -------------------------------------------------------------------------
     # make database
-    langdb = Database(lang_abspath)
+    langdb = Database(langdbm.path)
     # -------------------------------------------------------------------------
     if 'MAIN' in langdb.tables:
         langdb.delete_table('MAIN')
