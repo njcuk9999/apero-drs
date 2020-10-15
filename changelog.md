@@ -2,6 +2,56 @@ Changelog
 =========
 
 
+0.6.132 (2020-10-15)
+--------------------
+- Apero.science.telluric.gen_tellu.py - preclean filepath should be from
+  telluric database directory (Issue #651) [Neil Cook]
+- Apero.data.spirou.reset.runs - reformat run.ini files (more logical
+  order) [Neil Cook]
+- Update polar code - Issue #648. [Neil Cook]
+- Update language database. [Neil Cook]
+- Add .run to .gitignore. [Neil Cook]
+- Apero_processing.py - add ptime. [Neil Cook]
+- Apero.core.math.general.py - correct math for iuv_spline nanmask -->
+  ~nanmask. [Neil Cook]
+- Apero.core.math.general.py - deal with too many NaNs in spline -
+  correct eargs. [Neil Cook]
+- Apero.core.math.general.py - deal with too many NaNs in spline. [Neil
+  Cook]
+- Apero.science.telluric.gen_tellu.py - correct what goes into the
+  headers for TQCCL and TQCCP (was qc_values --> qc_logic,qc_pass) [Neil
+  Cook]
+- Apero.core.instruments.spirou.recipe_definitions.py - EXTOBJ -->
+  EXTTELL. [Neil Cook]
+- Merge branch 'developer' into working. [Neil Cook]
+- Merge branch 'master' into developer. [Neil Cook]
+- Merge branch 'master' into working. [Neil Cook]
+- Update README.md. [Neil Cook]
+
+  update processing tables in README.md
+- Update README.md. [Neil Cook]
+
+  update readme.md pp_seq_opt
+- Merge pull request #645 from njcuk9999/developer. [Neil Cook]
+
+  Developer --> master v0.6.131
+- Update requirements_current.txt. [Neil Cook]
+
+  security dependency requires update
+- Merge pull request #642 from njcuk9999/developer. [Neil Cook]
+
+  Developer - Master
+- Update processing tables in README.md. [Neil Cook]
+- Merge remote-tracking branch 'origin/developer' into developer. [Neil
+  Cook]
+- Update drs_database.py. [Neil Cook]
+
+  removed chmod to 644
+- Apero.tools.module.processing.drs_processing.py - send_email should be
+  False not 'False' [Neil Cook]
+- Update date/version/changelog/docs/update notes/read me. [Neil Cook]
+
+
 0.6.131 (2020-09-10)
 --------------------
 - Apero.recipes.spirou.pol_spirou.py - hack from Issue #639 re: linear

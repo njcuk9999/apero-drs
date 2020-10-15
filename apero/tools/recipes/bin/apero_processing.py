@@ -133,13 +133,13 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Process run list
     # ----------------------------------------------------------------------
-    outlist, has_errors = drs_processing.process_run_list(params, recipe, rlist,
-                                                          group=groupname)
+    out = drs_processing.process_run_list(params, recipe, rlist, groupname)
+    outlist, has_errors, ptime = out
 
     # ----------------------------------------------------------------------
     # Print timing
     # ----------------------------------------------------------------------
-    drs_processing.display_timing(params, outlist)
+    drs_processing.display_timing(params, outlist, ptime)
 
     # ----------------------------------------------------------------------
     # Print out any errors
