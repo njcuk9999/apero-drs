@@ -1435,6 +1435,13 @@ def read_tellu_preclean(params, recipe, infile, fiber, database=None):
     # see if file is in database
     if tpclfile.basename not in pclean_basenames:
         return None
+    # else we need the location of the file
+    else:
+        # find the first occurance of this basename in the list
+        pos = np.where(tpclfile.basename == np.array(pclean_basenames))[0][0]
+        # use this to set the absolute path of the filename (as this file
+        #  must be from the telluric database)
+        tpclfile.set_filename(pclean_filenames[pos])
     # ----------------------------------------------------------------------
     # log progress
     # log: Reading pre-cleaned file from: {0}
