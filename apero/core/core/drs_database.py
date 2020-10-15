@@ -1848,7 +1848,6 @@ class LogDatabase(DatabaseManager):
         # delete rows that match this criteria
         self.database.delete_rows('MAIN', condition=condition)
 
-    # TODO: finish this
     def add_entries(self, recipe: Union[str, None] = None,
                     rkind: Union[str, None] = None,
                     pid: Union[str, None] = None,
@@ -1867,49 +1866,64 @@ class LogDatabase(DatabaseManager):
                     args: Union[str, None] = None,
                     kwargs: Union[str, None] = None,
                     skwargs: Union[str, None] = None,
-                    started: Union[bool, None] = None,
-                    passed_all_qc: Union[bool, None] = None,
+                    started: Union[bool, int, None] = None,
+                    passed_all_qc: Union[bool, int, None] = None,
                     qc_string: Union[str, None] = None,
                     qc_names: Union[str, None] = None,
                     qc_values: Union[str, None] = None,
                     qc_logic: Union[str, None] = None,
-                    qc_pass: Union[bool, None] = None,
-                    errors: Union[bool, None] = None,
-                    ended: Union[bool, None] = None,
+                    qc_pass: Union[str, None] = None,
+                    errors: Union[str, None] = None,
+                    ended: Union[bool, int, None] = None,
                     used: Union[int, None] = None,
                     commit: bool = True):
         """
         Add a log entry to database
 
-        :param recipe:
-        :param rkind:
-        :param pid:
-        :param htime:
-        :param unixtime:
-        :param group:
-        :param level:
-        :param sublevel:
-        :param levelcrit:
-        :param inpath:
-        :param outpath:
-        :param directory:
-        :param logfile:
-        :param plotdir:
-        :param runstring:
-        :param args:
-        :param kwargs:
-        :param skwargs:
-        :param started:
-        :param passed_all_qc:
-        :param qc_string:
-        :param qc_names:
-        :param qc_values:
-        :param qc_logic:
-        :param qc_pass:
-        :param errors:
-        :param ended:
-        :param used:
-        :return:
+        :param recipe: str, the recipe name
+        :param rkind: str, the recipe kind ('recipe', 'tool', 'processing')
+        :param pid: str, the unique process identifier for this run
+        :param htime: str, the human time (related to pid creation)
+        :param unixtime: float, the unix time (related to pid creation)
+        :param group: str, the group name (used for processing)
+        :param level: int, which level this entry is related to
+        :param sublevel: int, which element in the level this entry relates to
+        :param levelcrit: str, the criteria describing this entries (i.e.
+                          level and sublevel)
+        :param inpath: str, the input directory used for this recipe run
+        :param outpath: str, the output directory used for this recipe run
+        :param directory: str, the directory that set for this recipe run
+        :param logfile: str, where the log file is saved for this recipe run
+        :param plotdir: str, where the plot files are saved for this recipe run
+        :param runstring: str, the command that can be used to re-run this
+                          recipe run
+        :param args: str, the positional arguments (named) used for this
+                     recipe run - divided by ||
+        :param kwargs: str, the optional arguments (named) used for this
+                       recipe run - divided by ||
+        :param skwargs: str, the special arguments (named) used for this
+                        recipe run - divided by ||
+        :param started: bool or int, whether a recipe run was started (should
+                        always be 1 or True)
+        :param passed_all_qc: bool or int, whether all qc passed on this run
+        :param qc_string: str, qc parameter string (in full) for each qc
+                          - divided by ||
+        :param qc_names: str, the qc names for each qc - divided by ||
+        :param qc_values: str, the qc value (calculated) for each qc
+                          - divided by ||
+        :param qc_logic: str, the qc logic (i.e.  {name} < {limit}) for each
+                         qc - divided by ||
+        :param qc_pass: str, whether each qc passed or failed, 1 for pass 0 for
+                        fail - divided by ||
+        :param errors: str, errors found and passed to this entry - divided by
+                       ||
+        :param ended: bool or int, whether a recipe run ended - 1 for ended
+                      0 if did not end (default)
+        :param used: int, if entry should be used - always 1 for use internally
+        :param commit: bool, if True commit, if False need to commit later
+                       (i.e. commit a batch of executions)
+
+        :return: None - updates database
         """
         # get correct order
         keys = [recipe, rkind, pid, htime, unixtime, group, level, sublevel,
