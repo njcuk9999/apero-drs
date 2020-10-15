@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 import sqlite3
+import time
 from typing import Any, Union, List
 
 from apero.base import base
@@ -30,7 +31,7 @@ __release__ = base.__release__
 Time = base.AstropyTime
 # timeout parameter in seconds
 TIMEOUT = 20.0
-
+MAXWAIT = 1000
 
 # =============================================================================
 # Define classes
@@ -199,9 +200,7 @@ class Database:
         cursor = self._conn_.cursor()
         # try to execute SQL command
         try:
-            cursor.execute(command)
-            result = cursor.fetchall()
-            # close cursor
+            result = self._exectue(cursor, command)
             cursor.close()
         # catch all errors and pipe to database error
         except Exception as e:
@@ -218,6 +217,36 @@ class Database:
             print("SQL OUTPUT:", result)
         # return the sql result
         return result
+
+    def _exectue(self, cursor: sqlite3.Cursor, command: str):
+        """
+        Dummy function to try to catch database locked errors
+        (up to a max wait time)
+
+        :param cursor: sqlite cursor (self._conn_.cursor())
+        :param command: str, The SQL command to be run.
+        :return:
+        """
+        # start a counter
+        time_count = 0
+        # while counter is less than maximum wait time
+        while time_count < MAXWAIT:
+            try:
+                cursor.execute(command)
+                result = cursor.fetchall()
+                return result
+            # catch operational error
+            except sqlite3.OperationalError as e:
+                # catch the operational error: database is locked
+                if 'database is locked' in str(e):
+                    time_count += 1
+                    # sleep 1 second before trying to execute command against
+                    time.sleep(1)
+                else:
+                    raise e
+        # if we get to this point raise operational error
+        emsg = 'database locked for > {0} s'.format(MAXWAIT)
+        raise sqlite3.OperationalError(emsg)
 
     def count(self, table: Union[None, str] = None,
               condition: Union[None, str] = None) -> int:
