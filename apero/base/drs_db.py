@@ -755,7 +755,8 @@ class Database:
         cursor = self._conn_.cursor()
         # try to execute SQL command
         try:
-            cursor.execute(command)
+            # try to execute SQL command
+            _ = self._exectue(cursor, command)
             # get columns
             colnames = list(map(lambda x: x[0], cursor.description))
             # close cursors
