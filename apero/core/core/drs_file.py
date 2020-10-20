@@ -2827,7 +2827,13 @@ class DrsFitsFile(DrsInputFile):
         # deal with kind
         self.output_dict['KIND'] = str(kind)
         # deal with last modified time for file
-        self.output_dict['LAST_MODIFIED'] = Path(self.filename).lstat().st_mtime
+        if Path(self.filename).exists():
+            last_mod = Path(self.filename).lstat().st_mtime
+            used = 1
+        else:
+            last_mod = np.nan
+            used = 0
+        self.output_dict['LAST_MODIFIED'] = last_mod
         # deal with the run string (string that can be used to re-run the
         #     recipe to reproduce this file)
         if runstring is None:
@@ -2835,7 +2841,7 @@ class DrsFitsFile(DrsInputFile):
         else:
             self.output_dict['RUNSTRING'] = str(runstring)
         # add whether this row should be used be default (always 1)
-        self.output_dict['USED'] = 1
+        self.output_dict['USED'] = used
         # add the raw fix (all files here should be raw fixed)
         self.output_dict['RAWFIX'] = 1
 
