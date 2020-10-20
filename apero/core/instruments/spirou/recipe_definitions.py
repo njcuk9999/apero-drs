@@ -1333,10 +1333,6 @@ limited_seq.add(cal_leak, name='LEAKOBJ',
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
                              KW_DPRTYPE=['OBJ_FP']))
 
-# telluric recipes
-limited_seq.add(obj_mk_tellu_db, arguments=dict(cores='CORES'))
-limited_seq.add(obj_fit_tellu_db, arguments=dict(cores='CORES'))
-
 # other telluric recipes
 limited_seq.add(obj_mk_tellu, name='MKTELLU1',
                 files=[files.out_ext_e2dsff], fiber='AB',
