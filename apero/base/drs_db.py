@@ -200,7 +200,7 @@ class Database:
         cursor = self._conn_.cursor()
         # try to execute SQL command
         try:
-            result = self._exectue(cursor, command)
+            result = self._execute(cursor, command)
             cursor.close()
         # catch all errors and pipe to database error
         except Exception as e:
@@ -218,7 +218,7 @@ class Database:
         # return the sql result
         return result
 
-    def _exectue(self, cursor: sqlite3.Cursor, command: str):
+    def _execute(self, cursor: sqlite3.Cursor, command: str):
         """
         Dummy function to try to catch database locked errors
         (up to a max wait time)
@@ -756,7 +756,7 @@ class Database:
         # try to execute SQL command
         try:
             # try to execute SQL command
-            _ = self._exectue(cursor, command)
+            _ = self._execute(cursor, command)
             # get columns
             colnames = list(map(lambda x: x[0], cursor.description))
             # close cursors
