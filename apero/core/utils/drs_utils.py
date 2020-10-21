@@ -7,10 +7,6 @@ Created on 2020-10-2020-10-05 17:43
 
 @author: cook
 
-# import rules
-
-- do not import from apero.core.utils.drs_startup
-
 """
 from astropy.table import Table
 from collections import OrderedDict
@@ -87,6 +83,7 @@ class RecipeLog:
         _ = drs_misc.display_func(None, '__init__', __NAME__, self.class_name)
         # get a database instance
         self.logdbm = LogDatabase(params)
+        self.logdbm.load_db()
         # get the recipe name
         self.name = str(name)
         # the kind of recipe ("recipe", "tool", "processing") from recipe.kind
