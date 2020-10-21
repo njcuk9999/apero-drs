@@ -29,6 +29,7 @@ from apero.core.core import drs_argument
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_recipe
+from apero.core.utils import drs_utils
 from apero.core.core import drs_database
 from apero.io import drs_table
 from apero.io import drs_path
@@ -324,17 +325,17 @@ def setup(name: str = 'None', instrument: str = 'None',
     cond1 = not drs_text.null_text(instrument, ['None', ''])
     cond2 = params['DRS_RECIPE_KIND'] == 'recipe'
     if cond1 and cond2:
-        recipe.log = drs_log.RecipeLog(recipe.name, params, logger=WLOG)
+        recipe.log = drs_utils.RecipeLog(recipe.name, params, logger=WLOG)
         # add log file to log (only used to save where the log is)
-        logfile = drs_log.get_logfilepath(WLOG, params)
-        recipe.log.set_log_file(logfile)
+        # logfile = drs_log.get_logfilepath(WLOG, params)
+        # recipe.log.set_log_file(logfile)
         # add user input parameters to log
         recipe.log.runstring = recipe.runstring
         recipe.log.args = recipe.largs
         recipe.log.kwargs = recipe.lkwargs
         recipe.log.kwargs = recipe.lskwargs
         # set lock function (lock file is NIGHTNAME + _log
-        recipe.log.set_lock_func(drs_lock.locker)
+        # recipe.log.set_lock_func(drs_lock.locker)
         # write recipe log
         recipe.log.write_logfile(params)
     # -------------------------------------------------------------------------
