@@ -13,6 +13,7 @@ from tkinter import messagebox
 import pandas as pd
 from pandastable import Table, TableModel, applyStyle
 from pandastable import dialogs
+from pathlib import Path
 
 from apero.base import base
 from apero.base import drs_db
@@ -482,8 +483,12 @@ class DatabaseExplorer(tk.Frame):
 if __name__ == "__main__":
     # get parameters
     _params = constants.load(base.IPARAMS['INSTRUMENT'])
-    # get database paths
-    _paths = manage_databases.list_databases(_params)
+    # get databases
+    _dbs = manage_databases.list_databases(_params)
+    # get paths
+    _paths = dict()
+    for key in _dbs:
+        _paths[key] = Path(_dbs[key].path)
     # push into database holder
     _databases = dict()
     for _key in _paths:
