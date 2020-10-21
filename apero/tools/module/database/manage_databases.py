@@ -185,7 +185,7 @@ def create_log_database(pconst, databases) -> Database:
     :return:
     """
     # get columns and ctypes from pconst
-    columns, ctypes = pconst.TELLURIC_DB_COLUMNS()
+    columns, ctypes = pconst.LOG_DB_COLUMNS()
     # -------------------------------------------------------------------------
     # construct directory
     logdbm = databases['log']
