@@ -1031,10 +1031,10 @@ class PseudoConstants:
         _ = display_func(None, 'LOG_DB_COLUMNS', __NAME__,
                          self.class_name)
         # set columns
-        columns = ['RECIPE', 'RKIND', 'PID', 'HUMANTIME', 'UNIXTIME', 'GROUP',
-                   'LEVEL', 'SUBLEVEL', 'LEVELCRIT', 'INPATH', 'OUTPATH',
-                   'DIRECTORY', 'LOGFILE', 'PLOTDIR', 'RUNSTRING', 'ARGS',
-                   'KWARGS', 'SKWARGS', 'STARTED', 'PASSED_ALL_QC',
+        columns = ['RECIPE', 'RKIND', 'PID', 'HUMANTIME', 'UNIXTIME',
+                   'GROUPNAME', 'LEVEL', 'SUBLEVEL', 'LEVELCRIT', 'INPATH',
+                   'OUTPATH', 'DIRECTORY', 'LOGFILE', 'PLOTDIR', 'RUNSTRING',
+                   'ARGS', 'KWARGS', 'SKWARGS', 'STARTED', 'PASSED_ALL_QC',
                    'QC_STRING', 'QC_NAMES', 'QC_VALUES', 'QC_LOGIC', 'QC_PASS',
                    'ERRORS', 'ENDED', 'USED']
         ctypes = [str, str, str, str, float, str, int, int, str, str, str,
