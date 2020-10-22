@@ -992,6 +992,10 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
     nbo, nbpix = image.shape
     # create a rv ccf range
     rv_ccf = np.arange(rvmin, rvmax, ccfstep)
+
+    # normalise mask_weights
+    mask_weights = mask_weights / np.nanmean(np.abs(mask_weights))
+
     # storage of the ccf
     ccf_all = []
     ccf_noise_all = []
@@ -1119,8 +1123,6 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         # apply masks to centers and weights
         omask_centers = omask_centers[keep]
         omask_weights = omask_weights[keep]
-        # normalise omask weights by
-        omask_weights = omask_weights / np.nanmean(omask_weights)
 
         # Number of photons at line centers for 1 CCF step
         sweights = spline_weight(omask_centers)
