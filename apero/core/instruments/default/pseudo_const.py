@@ -1053,9 +1053,10 @@ class PseudoConstants:
                          self.class_name)
         # set columns
         columns = ['OBJNAME', 'GAIAID', 'RA', 'DEC', 'PMRA', 'PMDE', 'PLX',
-                   'RV', 'GMAG', 'BPMAG', 'RPMAG', 'EPOCH', 'TEFF', 'USED']
+                   'RV', 'GMAG', 'BPMAG', 'RPMAG', 'EPOCH', 'TEFF', 'ALIASES',
+                   'USED']
         ctypes = [str, str, float, float, float, float, float, float, float,
-                  float, float, float, float, int]
+                  float, float, float, float, str, int]
         return columns, ctypes
 
     # noinspection PyPep8Naming
