@@ -354,6 +354,8 @@ class CalibrationDatabase(DatabaseManager):
             return None
         # set up kwargs from database query
         sql = dict()
+        # deal with having the possibility of more than one column
+        colnames = self.database.colnames(columns)
         # set up sql kwargs
         sql['sort_by'] = None
         sql['sort_descending'] = True
@@ -400,12 +402,12 @@ class CalibrationDatabase(DatabaseManager):
             entries = self.database.get(columns, 'MAIN', **sql)
             # return filename
             if len(entries) == 1:
-                return entries[0][0]
+                if len(colnames) == 1:
+                    return entries[0][0]
+                else:
+                    return entries[0]
             else:
                 return None
-
-        # deal with having the possibility of more than one column
-        colnames = self.database.colnames(columns)
         # if we have one column return a list
         if len(colnames) == 1:
             # return array for ease
@@ -707,6 +709,8 @@ class TelluricDatabase(DatabaseManager):
         # deal with no instrument set
         if self.instrument == 'None':
             return None
+        # deal with having the possibility of more than one column
+        colnames = self.database.colnames(columns)
         # set up kwargs from database query
         sql = dict()
         # set up sql kwargs
@@ -768,11 +772,13 @@ class TelluricDatabase(DatabaseManager):
             entries = self.database.get(columns, 'MAIN', **sql)
             # return filename
             if len(entries) == 1:
-                return entries[0][0]
+                if len(colnames) == 1:
+                    return entries[0][0]
+                else:
+                    return entries[0]
             else:
                 return None
-        # deal with having the possibility of more than one column
-        colnames = self.database.colnames(columns)
+
         # if we have one column return a list
         if len(colnames) == 1:
             # return array for ease
@@ -1330,6 +1336,8 @@ class IndexDatabase(DatabaseManager):
         # deal with no database loaded
         if self.database is None:
             self.load_db()
+        # deal with having the possibility of more than one column
+        colnames = self.database.colnames(columns)
         # ------------------------------------------------------------------
         # set up kwargs from database query
         sql = dict()
@@ -1384,7 +1392,10 @@ class IndexDatabase(DatabaseManager):
             entries = self.database.get(columns, 'MAIN', **sql)
             # return filename
             if len(entries) == 1:
-                return entries[0][0]
+                if len(colnames) == 1:
+                    return entries[0][0]
+                else:
+                    return entries[0]
             else:
                 return None
         # ------------------------------------------------------------------
@@ -1973,6 +1984,142 @@ class ObjectDatabase(DatabaseManager):
         self.name = 'object'
         # set path
         self.set_path(kind='OBJECT', check=check)
+
+    def get_entries(self, columns: str = '*',
+                    nentries: Union[int, None] = None,
+                    condition: Union[str, None] = None,
+                    ) -> Union[None, list, tuple, np.ndarray, pd.DataFrame]:
+        """
+        Get an entry from the object database (can set columns to return, or
+        filter by specific columns)
+
+        :param columns: str, the columns to return ('*' for all)
+        :param directory: str or None, if set filters results by directory name
+        :param filename: str or None, if set filters results by filename
+        :param kind: str or None, if set filters results by kind
+        :param hkeys: dict or None, if set is a dictionary of strings
+                            where each string is one of the index database
+                            header keys (see pseudo_constants.INDEX_HEADER_KEYS)
+        :param nentries: int or None, if set limits the number of entries to get
+                         back - sorted newest to oldest
+        :param condition: str or None, if set the SQL query to add
+
+        :return: the entries of columns, if nentries = 1 returns either that
+                 entry (as a tuple) or None, if len(columns) = 1, returns
+                 a np.ndarray, else returns a pandas table
+        """
+        # set function
+        _ = display_func(self.params, 'get_entries', __NAME__, self.classname)
+        # deal with no instrument set
+        if self.instrument == 'None':
+            return None
+        # deal with no database loaded
+        if self.database is None:
+            self.load_db()
+        # deal with having the possibility of more than one column
+        colnames = self.database.colnames(columns)
+        # ------------------------------------------------------------------
+        # set up kwargs from database query
+        sql = dict()
+        # set up sql kwargs
+        sql['sort_by'] = None
+        sql['sort_descending'] = True
+        # sort by last modified
+        sql['sort_by'] = 'GAIAID'
+        # condition for used
+        sql['condition'] = 'USED == 1'
+        # ------------------------------------------------------------------
+        if condition is not None:
+            sql['condition'] += ' AND {0}'.format(condition)
+        # ------------------------------------------------------------------
+        # add the number of entries to get
+        if isinstance(nentries, int):
+            sql['max_rows'] = nentries
+        # if we have one entry just get the tuple back
+        if nentries == 1:
+            # do sql query
+            entries = self.database.get(columns, 'MAIN', **sql)
+            # return filename
+            if len(entries) == 1:
+                if len(colnames) == 1:
+                    return entries[0][0]
+                else:
+                    return entries[0]
+            else:
+                return None
+        # ------------------------------------------------------------------
+        # if we have one column return a list
+        if len(colnames) == 1:
+            # return array for ease
+            sql['return_array'] = True
+            # do sql query
+            entries = self.database.get(columns, 'MAIN', **sql)
+            # return one list
+            if len(entries) == 0:
+                return []
+            else:
+                return entries[:, 0]
+        # else return a pandas table
+        else:
+            # return as pandas table
+            sql['return_pandas'] = True
+            # do sql query
+            entries = self.database.get(columns, 'MAIN', **sql)
+            # return pandas table
+            return entries
+
+    def add_entry(self,
+                  objname: str, gaia_id: str, ra: float, dec: float,
+                  pmra: Union[float, None] = None,
+                  pmde: Union[float, None] = None,
+                  plx: Union[float, None] = None,
+                  rv: Union[float, None] = None,
+                  gmag: Union[float, None] = None,
+                  bpmag: Union[float, None] = None,
+                  rpmag: Union[float, None] = None,
+                  epoch: Union[float, None] = None,
+                  teff: Union[float, None] = None,
+                  aliases: Union[List[str], str, None] = None,
+                  commit: bool = True):
+        """
+        Add an object to the object database
+
+        :param objname: str, the primary object name (SIMBAD name)
+        :param gaia_id: str, the Gaia ID (from Gaia DR2)
+        :param ra: float, the Gaia right ascension of an object (in degrees)
+        :param dec: float, the Gaia declination of an object (in degrees)
+        :param pmra: float, the Gaia proper motion in RA (in mas/yr)
+        :param pmde: float, the Gaia proper motion in Dec (in mas/yr)
+        :param plx: float, the Gaia parallax in mas
+        :param rv: float, the RV in km/s
+        :param gmag: float, the Gaia G magnitude
+        :param bpmag: float, the Gaia BP magnitude
+        :param rpmag: float, the Gaia RP magniutde
+        :param epoch: float, the Gaia epoch (2015.5)
+        :param teff: float, the temperature in K
+        :param aliases: list of strings or string, any other names this
+                        target can have
+        :param commit: bool, if True commit, if False need to commit later
+                       (i.e. commit a batch of executions)
+
+        :return: None - updates database
+        """
+        # deal with values
+        values = [objname, gaia_id, ra, dec, pmra, pmde, plx, rv, gmag,
+                  bpmag, rpmag, epoch, teff]
+        # deal with null values
+        for it, value in enumerate(values):
+            if value is None:
+                values[it] = 'None'
+        # deal with aliases
+        if isinstance(aliases, str):
+            values.append(aliases)
+        elif isinstance(aliases, list):
+            values.append(','.join(aliases))
+        else:
+            values.append('None')
+        # add row to database
+        self.database.add_row(values, 'MAIN', commit=commit)
 
 
 class LanguageDatabase(DatabaseManager):
