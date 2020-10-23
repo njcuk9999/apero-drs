@@ -1823,7 +1823,7 @@ def _get_files(path: Union[Path, str], kind: str,
 
 
 # =============================================================================
-# Define other databases
+# Define Log database
 # =============================================================================
 class LogDatabase(DatabaseManager):
     def __init__(self, params: ParamDict, check: bool = True):
@@ -1846,7 +1846,6 @@ class LogDatabase(DatabaseManager):
         self.name = 'log'
         # set path
         self.set_path(kind='LOG', check=check)
-
 
     def remove_pids(self, pid: str):
         """
@@ -1936,11 +1935,14 @@ class LogDatabase(DatabaseManager):
 
         :return: None - updates database
         """
+
+        # need to clean error to put into database
+        clean_error = _clean_error(errors)
         # get correct order
         keys = [recipe, rkind, pid, htime, unixtime, group, level, sublevel,
                 levelcrit, inpath, outpath, directory, logfile, plotdir,
                 runstring, args, kwargs, skwargs, started, passed_all_qc,
-                qc_string, qc_names, qc_values, qc_logic, qc_pass, errors,
+                qc_string, qc_names, qc_values, qc_logic, qc_pass, clean_error,
                 ended, used]
         # get column names and column datatypes
         colnames, coltypes = self.pconst.LOG_DB_COLUMNS()
@@ -1963,6 +1965,141 @@ class LogDatabase(DatabaseManager):
         self.database.add_row(values, 'MAIN', commit=commit)
 
 
+    def get_entries(self, columns: str = '*',
+                    wdirs: Union[List[str], None] = None,
+                    bdirs: Union[List[str], None] = None,
+                    nentries: Union[int, None] = None,
+                    condition: Union[str, None] = None,
+                    ) -> Union[None, list, tuple, np.ndarray, pd.DataFrame]:
+        """
+        Get an entry from the index database (can set columns to return, or
+        filter by specific columns)
+
+        :param columns: str, the columns to return ('*' for all)
+        :param directory: str or None, if set filters results by directory name
+        :param filename: str or None, if set filters results by filename
+        :param kind: str or None, if set filters results by kind
+        :param hkeys: dict or None, if set is a dictionary of strings
+                            where each string is one of the index database
+                            header keys (see pseudo_constants.INDEX_HEADER_KEYS)
+        :param nentries: int or None, if set limits the number of entries to get
+                         back - sorted newest to oldest
+        :param condition: str or None, if set the SQL query to add
+
+        :return: the entries of columns, if nentries = 1 returns either that
+                 entry (as a tuple) or None, if len(columns) = 1, returns
+                 a np.ndarray, else returns a pandas table
+        """
+        # set function
+        func_name = display_func(self.params, 'get_entries', __NAME__,
+                                 self.classname)
+        # deal with no instrument set
+        if self.instrument == 'None':
+            return None
+        # deal with no database loaded
+        if self.database is None:
+            self.load_db()
+        # deal with having the possibility of more than one column
+        colnames = self.database.colnames(columns)
+        # ------------------------------------------------------------------
+        # set up kwargs from database query
+        sql = dict()
+        # set up sql kwargs
+        sql['sort_by'] = None
+        sql['sort_descending'] = True
+        # sort by last modified
+        sql['sort_by'] = 'UNIXTIME'
+        # condition for used
+        sql['condition'] = 'USED == 1'
+        # ------------------------------------------------------------------
+        if condition is not None:
+            sql['condition'] += ' AND {0}'.format(condition)
+        # ------------------------------------------------------------------
+        # deal with whitelist directory set
+        if wdirs is not None:
+            # define a subcondition
+            subconditions = []
+            # loop around white listed nights and only keep these
+            for directory in wdirs:
+                # add subcondition
+                subcondition = 'DIRECTORY=="{0}"'.format(directory)
+                subconditions.append(subcondition)
+            # add to conditions
+            condition += ' AND ({0})'.format(' OR '.join(subconditions))
+        # ------------------------------------------------------------------
+        # deal with blacklist directory set
+        if bdirs is not None:
+            for directory in bdirs:
+                # add to condition
+                condition += ' AND (DIRECTORY!="{0}")'.format(directory)
+        # ------------------------------------------------------------------
+        # add the number of entries to get
+        if isinstance(nentries, int):
+            sql['max_rows'] = nentries
+        # if we have one entry just get the tuple back
+        if nentries == 1:
+            # do sql query
+            entries = self.database.get(columns, 'MAIN', **sql)
+            # return filename
+            if len(entries) == 1:
+                if len(colnames) == 1:
+                    return entries[0][0]
+                else:
+                    return entries[0]
+            else:
+                return None
+        # ------------------------------------------------------------------
+        # deal with having the possibility of more than one column
+        colnames = self.database.colnames(columns)
+        # if we have one column return a list
+        if len(colnames) == 1:
+            # return array for ease
+            sql['return_array'] = True
+            # do sql query
+            entries = self.database.get(columns, 'MAIN', **sql)
+            # return one list
+            if len(entries) == 0:
+                return []
+            else:
+                return entries[:, 0]
+        # else return a pandas table
+        else:
+            # return as pandas table
+            sql['return_pandas'] = True
+            # do sql query
+            entries = self.database.get(columns, 'MAIN', **sql)
+            # return pandas table
+            return entries
+
+
+def _clean_error(errors: Union[str, None]) -> Union[str, None]:
+    """
+    Clean the error string so it can go in the database
+
+    :param errors: str, the error string to clean
+
+    :return: str, cleaned error string
+    """
+    if errors is None:
+        return errors
+    # else we push everything else to a string
+    if not isinstance(errors, str):
+        errors = str(errors)
+    # define some bad characters
+    bad_chars = ['\n', '\t', r'\\', r'>', r'<', '"', "'"]
+    # loop around bad characters and remove them
+    for bad_char in bad_chars:
+        errors = errors.replace(bad_char, ' ')
+    # remove double spaces
+    while '  ' in errors:
+        errors = errors.replace('  ', ' ')
+    # return the clean string
+    return errors
+
+
+# =============================================================================
+# Define other databases
+# =============================================================================
 class ObjectDatabase(DatabaseManager):
     def __init__(self, params: ParamDict, check: bool = True):
         """
@@ -2080,7 +2217,7 @@ class ObjectDatabase(DatabaseManager):
                   epoch: Union[float, None] = None,
                   teff: Union[float, None] = None,
                   aliases: Union[List[str], str, None] = None,
-                  commit: bool = True):
+                  used: int = 1, commit: bool = True):
         """
         Add an object to the object database
 
@@ -2115,9 +2252,11 @@ class ObjectDatabase(DatabaseManager):
         if isinstance(aliases, str):
             values.append(aliases)
         elif isinstance(aliases, list):
-            values.append(','.join(aliases))
+            values.append('|'.join(aliases))
         else:
             values.append('None')
+        # add used
+        values.append(used)
         # add row to database
         self.database.add_row(values, 'MAIN', commit=commit)
 
