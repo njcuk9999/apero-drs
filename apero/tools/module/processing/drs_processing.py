@@ -374,11 +374,12 @@ class Run:
 # =============================================================================
 # Define user functions
 # =============================================================================
-def run_process(params, recipe, module, *gargs, terminate=False, **gkwargs):
+def run_process(params: ParamDict, recipe: DrsRecipe, indexdbm: IndexDatabase,
+                module: Any, *gargs, terminate=False, **gkwargs):
     # generate run table (dictionary from reprocessing)
-    runtable = generate_run_table(params, module, *gargs, **gkwargs)
+    runtable = generate_run_table(params, recipe, *gargs, **gkwargs)
     # Generate run list
-    rlist = generate_run_list(params, recipe, None, runtable, None)
+    rlist = generate_run_list(params, indexdbm, runtable, None)
     # Process run list
     outlist, has_errors, _ = process_run_list(params, recipe, rlist)
     # display errors
@@ -583,57 +584,31 @@ def generate_skip_table(params):
     """
     # log process
     WLOG(params, '', TextEntry('90-503-00017'))
-    # get parameters from params
-    logfitsfile = params['DRS_LOG_FITS_NAME']
-    tmpdir = params['DRS_DATA_WORKING']
-    reddir = params['DRS_DATA_REDUC']
-
-    # storage log files
-    logfiles = []
-    # search tmp path for log files
-    for root, dirs, files in os.walk(tmpdir):
-        for filename in files:
-            if filename == logfitsfile:
-                logfiles.append(os.path.join(root, filename))
-    # search reduced path for log files
-    for root, dirs, files in os.walk(reddir):
-        for filename in files:
-            if filename == logfitsfile:
-                logfiles.append(os.path.join(root, filename))
-
-    # sort log files by name and only keep unique ones (shouldn't happen)
-    logfiles = np.unique(logfiles)
-    logfiles = np.sort(logfiles)
-    # storage for recipe args
-    recipes, arguments = [], []
-    # loop around log files and
-    for logfile in logfiles:
-        # load table
-        try:
-            # load log table
-            logtable = Table.read(logfile, format='fits')
-            # debug printout
-            dargs = [len(logtable), logfile]
-            WLOG(params, 'debug', TextEntry('90-503-00019', args=dargs))
-            # only keep those that finished
-            ended = logtable['ENDED']
-            logtable = logtable[ended]
-            # log debug: number that ended
-            dargs = [len(logtable)]
-            WLOG(params, 'debug', TextEntry('90-503-00020', args=dargs))
-            # append to storage
-            recipes += list(logtable['RECIPE'])
-            # get run string
-            runstrings = list(logtable['RUNSTRING'])
-            # loop around runstrings
-            for runstring in runstrings:
-                # clean run string
-                clean_runstring = skip_clean_arguments(runstring)
-                # append only clean arguments
-                arguments.append(clean_runstring)
-        except:
-            continue
-
+    # load log database
+    logdbm = drs_database.LogDatabase(params)
+    logdbm.load_db()
+    # deal with white list for directories
+    if drs_text.null_text(params['WNIGHTNAMES'], ['', 'All', 'None']):
+        whitelist = None
+    else:
+        whitelist = params['WNIGHTNAMES']
+    # deal with black list for directories
+    if drs_text.null_text(params['BNIGHTNAMES'], ['', 'All', 'None']):
+        blacklist = None
+    else:
+        blacklist = params['BNIGHTNAMES']
+    # get runstrings
+    table = logdbm.get_entries('RECIPE, RUNSTRING', wdirs=whitelist,
+                               bdirs=blacklist)
+    recipes = np.array(table['RECIPE'])
+    runstrings = np.array(table['RUNSTRING'])
+    arguments = []
+    # loop around runstrings
+    for runstring in runstrings:
+        # clean run string
+        clean_runstring = skip_clean_arguments(runstring)
+        # append only clean arguments
+        arguments.append(clean_runstring)
     # deal with nothing to skip
     if len(recipes) == 0:
         return None
