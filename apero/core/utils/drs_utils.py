@@ -519,7 +519,9 @@ def update_index_db(params: ParamDict, kind: str,
                     whitelist: Union[List[str], None] = None,
                     blacklist: Union[List[str], None] = None,
                     filename: FileType = None,
-                    suffix: str = '') -> IndexDatabase:
+                    suffix: str = '',
+                    indexdbm: Union[IndexDatabase, None] = None
+                    ) -> IndexDatabase:
     # deal with white list and black list
     if not drs_text.null_text(whitelist, ['None', 'All', '']):
         include_dirs = list(whitelist)
@@ -530,7 +532,8 @@ def update_index_db(params: ParamDict, kind: str,
     else:
         exclude_dirs = None
     # load the index database
-    indexdbm = IndexDatabase(params)
+    if indexdbm is None:
+        indexdbm = IndexDatabase(params)
     indexdbm.load_db()
     # get white
     # update index database with raw files
@@ -542,17 +545,27 @@ def update_index_db(params: ParamDict, kind: str,
 
 
 def find_files(params: ParamDict, kind: str, filters: Dict[str, str],
-               columns='PATH') -> Union[np.ndarray, pd.DataFrame]:
+               columns='PATH', indexdbm: Union[IndexDatabase, None] = None
+               ) -> Union[np.ndarray, pd.DataFrame]:
     # update database
-    indexdbm = update_index_db(params, kind=kind)
+    indexdbm = update_index_db(params, kind=kind, indexdbm=indexdbm)
     # get columns
     colnames = indexdbm.database.colnames('*')
     # get file list using filters
     condition = 'KIND=="{0}"'.format(kind)
     # loop around filters
-    for _filter in filters:
-        if _filter in colnames:
-            condition += ' AND {0}=="{1}"'.format(_filter, filters[_filter])
+    for fkey in filters:
+        if fkey in colnames:
+            _filters = filters[fkey]
+            # make sure filter is a list
+            if isinstance(_filters, str):
+                _filters = [_filters]
+            # loop around filter elements and combine with "OR"
+            subconditions = []
+            for _filter in _filters:
+                subconditions.append('{0}=="{1}"'.format(fkey, _filter))
+            # add subconditions to condition
+            condition += ' AND ({0})'.format(' OR '.join(subconditions))
     # get columns for this condition
     return indexdbm.get_entries(columns, kind=kind, condition=condition)
 
