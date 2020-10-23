@@ -17,6 +17,7 @@ from apero.base import drs_text
 from apero import lang
 from apero.core import constants
 from apero.core.core import drs_log
+from apero.core.core import drs_database
 from apero.core.instruments.spirou import recipe_definitions as rd
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
@@ -117,11 +118,16 @@ def __main__(recipe, params):
     objnames = telluric.get_whitelist(params)
     objnames = list(objnames)
     # ----------------------------------------------------------------------
+    # load index database
+    indexdbm = drs_database.IndexDatabase(params)
+    indexdbm.load_db()
+    # ----------------------------------------------------------------------
     # get objects that match this object name
     tellu_stars = drs_utils.find_files(params, kind='red',
                                        filters=dict(KW_OBJNAME=objnames,
                                                     KW_OUTPUT=filetype,
-                                                    KW_FIBER=fiber))
+                                                    KW_FIBER=fiber),
+                                       indexdbm=indexdbm)
     # ----------------------------------------------------------------------
     # get night names for each object
     night_names, tellu_basenames = [], []
@@ -145,7 +151,7 @@ def __main__(recipe, params):
     gkwargs['--program'] = 'DBMKTELLU1'
     gkwargs['terminate'] = False
     # run obj_mk_template
-    outlist = drs_processing.run_process(params, recipe, obj_mk_tellu,
+    outlist = drs_processing.run_process(params, recipe, indexdbm, obj_mk_tellu,
                                          *gargs, **gkwargs)
     # add to global list
     goutlist = drs_processing.combine_outlist('DBMKTELLU1', goutlist, outlist)
