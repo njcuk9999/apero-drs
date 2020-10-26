@@ -563,6 +563,9 @@ def find_files(params: ParamDict, kind: str, filters: Dict[str, str],
             # loop around filter elements and combine with "OR"
             subconditions = []
             for _filter in _filters:
+                # make sure filter is stripped
+                _filter = _filter.strip()
+                # add to subconditions
                 subconditions.append('{0}=="{1}"'.format(fkey, _filter))
             # add subconditions to condition
             condition += ' AND ({0})'.format(' OR '.join(subconditions))
