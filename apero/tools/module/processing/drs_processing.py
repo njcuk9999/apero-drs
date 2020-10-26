@@ -377,7 +377,7 @@ class Run:
 def run_process(params: ParamDict, recipe: DrsRecipe, indexdbm: IndexDatabase,
                 module: Any, *gargs, terminate=False, **gkwargs):
     # generate run table (dictionary from reprocessing)
-    runtable = generate_run_table(params, recipe, *gargs, **gkwargs)
+    runtable = generate_run_table(params, module, *gargs, **gkwargs)
     # Generate run list
     rlist = generate_run_list(params, indexdbm, runtable, None)
     # Process run list
