@@ -165,8 +165,8 @@ def __main__(recipe, params):
     gkwargs['--program'] = 'DBFTELLU'
     gkwargs['terminate'] = False
     # run obj_fit_tellu
-    outlist = drs_processing.run_process(params, recipe, obj_fit_tellu,
-                                         *gargs, **gkwargs)
+    outlist = drs_processing.run_process(params, recipe, indexdbm,
+                                         obj_fit_tellu,  *gargs, **gkwargs)
     # add to global list
     goutlist = drs_processing.combine_outlist('DBFTELLU', goutlist, outlist)
 
@@ -179,8 +179,8 @@ def __main__(recipe, params):
     gkwargs['--program'] = 'DBMKTEMP'
     gkwargs['terminate'] = False
     # run obj_mk_template
-    outlist = drs_processing.run_process(params, recipe, obj_mk_template,
-                                         *gargs, **gkwargs)
+    outlist = drs_processing.run_process(params, recipe, indexdbm,
+                                         obj_mk_template, *gargs, **gkwargs)
     # add to global list
     goutlist = drs_processing.combine_outlist('DBMKTEMP', goutlist, outlist)
 
@@ -193,7 +193,7 @@ def __main__(recipe, params):
     gkwargs['--program'] = 'DBMKTELLU2'
     gkwargs['terminate'] = False
     # run obj_mk_template
-    outlist = drs_processing.run_process(params, recipe, obj_mk_tellu,
+    outlist = drs_processing.run_process(params, recipe, indexdbm, obj_mk_tellu,
                                          *gargs, **gkwargs)
     # add to global list
     goutlist = drs_processing.combine_outlist('DBMKTELLU2', goutlist, outlist)

@@ -16,6 +16,7 @@ from apero.base import base
 from apero import lang
 from apero.core import constants
 from apero.core.core import drs_log
+from apero.core.core import drs_database
 from apero.core.utils import drs_startup
 from apero.io import drs_path
 from apero.io import drs_image
@@ -114,7 +115,10 @@ def __main__(recipe, params):
     params.set('STOP_AT_EXCEPTION', True)
     params.set('TEST_RUN', False)
     params.set('CORES', params['INPUTS']['CORES'])
-
+    # ----------------------------------------------------------------------
+    # load index database
+    indexdbm = drs_database.IndexDatabase(params)
+    indexdbm.load_db()
     # ----------------------------------------------------------------------
     # get night names for each object
     night_names, pp_basenames = [], []
@@ -140,7 +144,7 @@ def __main__(recipe, params):
     gkwargs['--plot'] = drs_plot
     gkwargs['--program'] = 'EXTRACT'
     # run extraction
-    outlist = drs_processing.run_process(params, recipe, CAL_EXTRACT,
+    outlist = drs_processing.run_process(params, recipe, indexdbm, CAL_EXTRACT,
                                          *gargs, **gkwargs)
     # add to global list
     goutlist = drs_processing.combine_outlist('EXTRACT', goutlist, outlist)
