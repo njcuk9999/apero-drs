@@ -45,6 +45,7 @@ ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
 # get calibration database
 TelluDatabase = drs_database.TelluricDatabase
+IndexDatabase = drs_database.IndexDatabase
 # Get function string
 display_func = drs_log.display_func
 # Get Logging function
@@ -159,7 +160,8 @@ def normalise_by_pblaze(params, image, header, fiber, **kwargs):
 
 
 def get_non_tellu_objs(params: ParamDict, recipe, fiber, filetype=None,
-                       dprtypes=None, robjnames: List[str] = None):
+                       dprtypes=None, robjnames: List[str] = None,
+                       indexdbm: Union[IndexDatabase, None] = None):
     """
     Get the objects of "filetype" and that are not telluric objects
     :param params: ParamDict - the parameter dictionary of constants
@@ -178,9 +180,11 @@ def get_non_tellu_objs(params: ParamDict, recipe, fiber, filetype=None,
     # deal with filetype being string
     if isinstance(filetype, str):
         filetype = filetype.split(',')
+        filetype = np.char.array(filetype).strip()
     # deal with dprtypes being string
     if isinstance(dprtypes, str):
         dprtypes = dprtypes.split(',')
+        dprtypes = np.char.array(dprtypes).strip()
     # construct kwargs
     fkwargs = dict()
     if filetype is not None:
@@ -191,7 +195,7 @@ def get_non_tellu_objs(params: ParamDict, recipe, fiber, filetype=None,
         fkwargs['KW_FIBER'] = fiber
     # find files (and return pandas dataframe of all columns
     dataframe = drs_utils.find_files(params, kind='red', filters=fkwargs,
-                                     columns='*')
+                                     columns='*', indexdbm=indexdbm)
     # convert data frame to table
     obj_table = Table.from_pandas(dataframe)
     obj_filenames = obj_table['PATH']
