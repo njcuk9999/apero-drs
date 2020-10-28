@@ -7,14 +7,18 @@ Created on 2020-08-2020-08-18 17:13
 
 @author: cook
 """
+import numpy as np
 import os
 import pandas as pd
+from typing import Dict, List, Union
 
 from apero.base import base
 from apero.base import drs_db
-from apero.base import drs_misc
 from apero.core import constants
+from apero.core.instruments.default import pseudo_const
 from apero.core.core import drs_database
+from apero.core.utils import drs_data
+from apero.science.preprocessing import gen_pp
 
 # =============================================================================
 # Define variables
@@ -28,12 +32,16 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get database definition
 Database = drs_db.Database
+DatabaseM = drs_database.DatabaseManager
+# Get ParamDict
+ParamDict = constants.ParamDict
+PseudoConst = pseudo_const.PseudoConstants
 
 
 # =============================================================================
 # Define functions
 # =============================================================================
-def list_databases(params):
+def list_databases(params: ParamDict) -> Dict[str, DatabaseM]:
     # set up storage
     databases = dict()
     # get databases from managers (later databases)
@@ -54,7 +62,7 @@ def list_databases(params):
     return databases
 
 
-def install_databases(params, skip=None):
+def install_databases(params: ParamDict, skip: Union[List[str], None] = None):
     # deal with skip
     if skip is None:
         skip = []
@@ -65,23 +73,23 @@ def install_databases(params, skip=None):
     # -------------------------------------------------------------------------
     # create calibration database
     if 'calib' not in skip:
-        calibdb = create_calibration_database(params, pconst, databases)
+        _ = create_calibration_database(params, pconst, databases)
     # -------------------------------------------------------------------------
     # create telluric database
     if 'tellu' not in skip:
-        telludb = create_telluric_database(pconst, databases)
+        _ = create_telluric_database(pconst, databases)
     # -------------------------------------------------------------------------
     # create index database
     if 'index' not in skip:
-        indexdb = create_index_database(pconst, databases)
+        _ = create_index_database(pconst, databases)
     # -------------------------------------------------------------------------
     # create log database
     if 'log' not in skip:
-        logdb = create_log_database(pconst, databases)
+        _ = create_log_database(pconst, databases)
     # -------------------------------------------------------------------------
     # create object database
     if 'object' not in skip:
-        objectdb = create_object_database(params, pconst, databases)
+        _ = create_object_database(params, pconst, databases)
     # -------------------------------------------------------------------------
     # # create params database
     # if 'params' not in skip:
@@ -89,15 +97,19 @@ def install_databases(params, skip=None):
     # -------------------------------------------------------------------------
     # create language database
     if 'lang' not in skip:
-        langdb = create_lang_database(pconst, databases)
+        _ = create_lang_database(pconst, databases)
 
 
-def create_calibration_database(params, pconst, databases) -> Database:
+def create_calibration_database(params: ParamDict, pconst: PseudoConst,
+                                databases: Dict[str, DatabaseM]) -> Database:
     """
     Setup for the calibration database
-    :param params:
-    :param pconst:
-    :return:
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param pconst: Pseudo constants
+    :param databases: dictionary of database managers
+
+    :returns: database - the telluric database
     """
     # get parameters from params
     asset_dir = params['DRS_DATA_ASSETS']
@@ -127,12 +139,15 @@ def create_calibration_database(params, pconst, databases) -> Database:
     return calibdb
 
 
-def create_telluric_database(pconst, databases) -> Database:
+def create_telluric_database(pconst: PseudoConst,
+                             databases: Dict[str, DatabaseM]) -> Database:
     """
     Setup for the telluric database
-    :param params:
-    :param pconst:
-    :return:
+
+    :param pconst: Pseudo constants
+    :param databases: dictionary of database managers
+
+    :returns: database - the telluric database
     """
     # get columns and ctypes from pconst
     columns, ctypes = pconst.TELLURIC_DB_COLUMNS()
@@ -152,12 +167,15 @@ def create_telluric_database(pconst, databases) -> Database:
     return telludb
 
 
-def create_index_database(pconst, databases) -> Database:
+def create_index_database(pconst: PseudoConst,
+                          databases: Dict[str, DatabaseM]) -> Database:
     """
     Setup for the index database
-    :param params:
-    :param pconst:
-    :return:
+
+    :param pconst: Pseudo constants
+    :param databases: dictionary of database managers
+
+    :returns: database - the telluric database
     """
     # get columns and ctypes from pconst
     columns, ctypes = pconst.INDEX_DB_COLUMNS()
@@ -177,12 +195,15 @@ def create_index_database(pconst, databases) -> Database:
     return indexdb
 
 
-def create_log_database(pconst, databases) -> Database:
+def create_log_database(pconst: PseudoConst,
+                        databases: Dict[str, DatabaseM]) -> Database:
     """
     Setup for the index database
-    :param params:
-    :param pconst:
-    :return:
+
+    :param pconst: Pseudo constants
+    :param databases: dictionary of database managers
+
+    :returns: database - the telluric database
     """
     # get columns and ctypes from pconst
     columns, ctypes = pconst.LOG_DB_COLUMNS()
@@ -202,12 +223,16 @@ def create_log_database(pconst, databases) -> Database:
     return logdb
 
 
-def create_object_database(params, pconst, databases) -> Database:
+def create_object_database(params: ParamDict, pconst: PseudoConst,
+                           databases: Dict[str, DatabaseM]) -> Database:
     """
     Setup for the calibration database
-    :param params:
-    :param pconst:
-    :return:
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param pconst: Pseudo constants
+    :param databases: dictionary of database managers
+
+    :returns: database - the telluric database
     """
     # get parameters from params
     asset_dir = params['DRS_DATA_ASSETS']
@@ -237,6 +262,44 @@ def create_object_database(params, pconst, databases) -> Database:
     return objectdb
 
 
+def make_object_reset(params: ParamDict):
+    """
+    This makes the reset file starting with the googlesheet
+    (must clean the current database)
+
+    :param params: ParamDict, parameter dictionary of constants
+
+    :return: None - makes reset.obj.csv
+    """
+    # get parameters from params
+    rel_path = os.path.join(params['DRS_RESET_ASSETS_PATH'],
+                            params['INSTRUMENT'].lower())
+    asset_dir = drs_data.construct_path(params, '', rel_path)
+    reset_path = params['DATABASE_DIR']
+    # get pconst
+    pconst = constants.pload(params['INSTRUMENT'])
+    # need to load database
+    objdbm = drs_database.ObjectDatabase(params)
+    # remove table if it already exists
+    if 'MAIN' in objdbm.database.tables:
+        objdbm.database.delete_table('MAIN')
+    # get columns and ctypes from pconst
+    columns, ctypes = pconst.OBJECT_DB_COLUMNS()
+    # add main table
+    objdbm.database.add_table('MAIN', columns, ctypes)
+    # get google sheets
+    gtable = gen_pp.get_google_sheet(params['OBJ_LIST_GOOGLE_SHEET_URL'],
+                                     params['OBJ_LIST_GOOGLE_SHEET_WNUM'])
+    objnames = list(np.unique(gtable['OBJNAME']))
+    # resolve targets
+    gen_pp.resolve_targets(params, objnames, database=objdbm)
+    # get table
+    table = objdbm.get_entries('*')
+    # write to csv file
+    table.to_csv(os.path.join(asset_dir, reset_path, objdbm.dbreset),
+                 index=False)
+
+
 # def create_params_database(pconst, databases) -> Database:
 #     """
 #     Setup for the index database
@@ -261,12 +324,15 @@ def create_object_database(params, pconst, databases) -> Database:
 #     return paramsdb
 
 
-def create_lang_database(pconst, databases) -> Database:
+def create_lang_database(pconst: PseudoConst,
+                         databases: Dict[str, DatabaseM]) -> Database:
     """
     Setup for the index database
-    :param params:
-    :param pconst:
-    :return:
+
+    :param pconst: Pseudo constants
+    :param databases: dictionary of database managers
+
+    :returns: database - the telluric database
     """
     # get columns and ctypes from pconst
     columns, ctypes = pconst.LANG_DB_COLUMNS()
@@ -290,9 +356,13 @@ def create_lang_database(pconst, databases) -> Database:
 # =============================================================================
 if __name__ == "__main__":
     # test with spirou
-    params = constants.load('SPIROU')
+    _params = constants.load('SPIROU')
+
+    # We need to make the object reset
+    make_object_reset(_params)
+
     # install database
-    install_databases(params)
+    install_databases(_params)
 
 # =============================================================================
 # End of code
