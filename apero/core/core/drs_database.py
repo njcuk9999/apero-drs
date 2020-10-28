@@ -2205,45 +2205,62 @@ class ObjectDatabase(DatabaseManager):
             # return pandas table
             return entries
 
-    def add_entry(self,
-                  objname: str, gaia_id: str, ra: float, dec: float,
-                  pmra: Union[float, None] = None,
-                  pmde: Union[float, None] = None,
-                  plx: Union[float, None] = None,
-                  rv: Union[float, None] = None,
-                  gmag: Union[float, None] = None,
-                  bpmag: Union[float, None] = None,
-                  rpmag: Union[float, None] = None,
-                  epoch: Union[float, None] = None,
-                  teff: Union[float, None] = None,
+    def add_entry(self, objname: str, objname_s: str,
+                  gaia_id: str, gaia_id_s: str,
+                  ra: float, ra_s: str, dec: float, dec_s: str,
+                  pmra: Union[float, None] = None, pmra_s: str = 'None',
+                  pmde: Union[float, None] = None, pmde_s: str ='None',
+                  plx: Union[float, None] = None, plx_s: str = 'None',
+                  rv: Union[float, None] = None, rv_s: str = 'None',
+                  gmag: Union[float, None] = None, gmag_s: str = 'None',
+                  bpmag: Union[float, None] = None, bpmag_s: str = 'None',
+                  rpmag: Union[float, None] = None, rpmag_s: str = 'None',
+                  epoch: Union[float, None] = None, epoch_s: str = 'None',
+                  teff: Union[float, None] = None, teff_s: str = 'None',
                   aliases: Union[List[str], str, None] = None,
-                  used: int = 1, commit: bool = True):
+                  aliases_s: str = 'None', used: int = 1, commit: bool = True):
         """
         Add an object to the object database
 
         :param objname: str, the primary object name (SIMBAD name)
+        :param objname_s: str, source of objname
         :param gaia_id: str, the Gaia ID (from Gaia DR2)
+        :param gaia_id: str, source of Gaia ID
         :param ra: float, the Gaia right ascension of an object (in degrees)
+        :param ra_s: str, source of ra
         :param dec: float, the Gaia declination of an object (in degrees)
+        :param dec_s: str, source of dec
         :param pmra: float, the Gaia proper motion in RA (in mas/yr)
+        :param pmra_s: str, source of pmra
         :param pmde: float, the Gaia proper motion in Dec (in mas/yr)
+        :param pmde_s: str, source of pmde
         :param plx: float, the Gaia parallax in mas
+        :param plx_s: str, source of plx
         :param rv: float, the RV in km/s
+        :param rv_s: str, source of rv
         :param gmag: float, the Gaia G magnitude
+        :param gmag_s: str, source of gmag
         :param bpmag: float, the Gaia BP magnitude
+        :param bpmag_s: str, the source of bpmag
         :param rpmag: float, the Gaia RP magniutde
+        :param rpmag_s: str, the source of rpmag
         :param epoch: float, the Gaia epoch (2015.5)
+        :param epoch_s: str, the source of epoch
         :param teff: float, the temperature in K
+        :param teff_s: str, the source of Teff
         :param aliases: list of strings or string, any other names this
                         target can have
+        :param aliases_s: str, the source of aliases
         :param commit: bool, if True commit, if False need to commit later
                        (i.e. commit a batch of executions)
 
         :return: None - updates database
         """
         # deal with values
-        values = [objname, gaia_id, ra, dec, pmra, pmde, plx, rv, gmag,
-                  bpmag, rpmag, epoch, teff]
+        values = [objname, objname_s, gaia_id, gaia_id_s, ra, ra_s, dec, dec_s,
+                  pmra, pmra_s, pmde, pmde_s, plx, plx_s, rv, rv_s, gmag,
+                  gmag_s, bpmag, bpmag_s, rpmag, rpmag_s, epoch, epoch_s,
+                  teff, teff_s]
         # deal with null values
         for it, value in enumerate(values):
             if value is None:
@@ -2251,14 +2268,27 @@ class ObjectDatabase(DatabaseManager):
         # deal with aliases
         if isinstance(aliases, str):
             values.append(aliases)
+            values.append(aliases_s)
         elif isinstance(aliases, list):
             values.append('|'.join(aliases))
+            values.append(aliases_s)
         else:
             values.append('None')
+            values.append(aliases_s)
         # add used
         values.append(used)
-        # add row to database
-        self.database.add_row(values, 'MAIN', commit=commit)
+        # need to see if we already have gaia id
+        condition = 'GAIAID=="{0}"'.format(gaia_id)
+        gaiaids = self.database.unique('GAIAID', condition=condition)
+        # ------------------------------------------------------------------
+        # deal with updating entry
+        if (gaiaids is not None) and (len(gaiaids) > 0):
+            # update row in database
+            self.database.set('*', values, condition=condition, table='MAIN',
+                              commit=commit)
+        # else add row to database (as new row)
+        else:
+            self.database.add_row(values, 'MAIN', commit=commit)
 
 
 class LanguageDatabase(DatabaseManager):
