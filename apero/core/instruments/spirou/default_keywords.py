@@ -115,11 +115,11 @@ KW_PI_NAME.set(key='PI_NAME', comment='The PI of the program')
 # -----------------------------------------------------------------------------
 # define the observation ra HEADER key
 KW_OBJRA = KW_OBJRA.copy(__NAME__)
-KW_OBJRA.set(key='OBJRA', unit=uu.hourangle, comment='Target right ascension')
+KW_OBJRA.set(key='RA_DEG', unit=uu.deg, comment='Target right ascension')
 
 # define the observation dec HEADER key
 KW_OBJDEC = KW_OBJDEC.copy(__NAME__)
-KW_OBJDEC.set(key='OBJDEC', unit=uu.deg, comment='Target declination ')
+KW_OBJDEC.set(key='DEC_DEG', unit=uu.deg, comment='Target declination ')
 
 # define the observation name
 KW_OBJECTNAME = KW_OBJECTNAME.copy(__NAME__)
