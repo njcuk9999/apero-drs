@@ -280,6 +280,7 @@ def make_object_reset(params: ParamDict):
     pconst = constants.pload(params['INSTRUMENT'])
     # need to load database
     objdbm = drs_database.ObjectDatabase(params)
+    objdbm.load_db()
     # remove table if it already exists
     if 'MAIN' in objdbm.database.tables:
         objdbm.database.delete_table('MAIN')
