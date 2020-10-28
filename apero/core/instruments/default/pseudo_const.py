@@ -1052,11 +1052,16 @@ class PseudoConstants:
         _ = display_func(None, 'OBJECT_DB_COLUMNS', __NAME__,
                          self.class_name)
         # set columns
-        columns = ['OBJNAME', 'GAIAID', 'RA', 'DEC', 'PMRA', 'PMDE', 'PLX',
-                   'RV', 'GMAG', 'BPMAG', 'RPMAG', 'EPOCH', 'TEFF', 'ALIASES',
-                   'USED']
-        ctypes = [str, str, float, float, float, float, float, float, float,
-                  float, float, float, float, str, int]
+        columns = ['OBJNAME', 'OBJNAME_SOURCE', 'GAIAID', 'GAIAID_SOURCE',
+                   'RA', 'RA_SOURCE', 'DEC', 'DEC_SOURCE', 'PMRA',
+                   'PMRA_SOURCE', 'PMDE', 'PMDE_SOURCE', 'PLX', 'PLX_SOURCE',
+                   'RV', 'RV_SOURCE', 'GMAG', 'GMAG_SOURCE', 'BPMAG',
+                   'BPMAG_SOURCE', 'RPMAG', 'RPMAG_SOURCE', 'EPOCH',
+                   'EPOCH_SOURCE', 'TEFF', 'TEFF_SOURCE', 'ALIASES',
+                   'ALIASES_SOURCE', 'USED']
+        ctypes = [str, str, str, str, float, str, float, str, float, str,
+                  float, str, float, str, float, str, float, str,
+                  float, str, float, str, float, str, float, str, str, str, int]
         return columns, ctypes
 
     # noinspection PyPep8Naming
