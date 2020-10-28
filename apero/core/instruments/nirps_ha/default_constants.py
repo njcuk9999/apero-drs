@@ -110,34 +110,6 @@ CAVITY_1M_FILE.value = 'cavity_length_m_fit.dat'
 CAVITY_LL_FILE = CAVITY_LL_FILE.copy(__NAME__)
 CAVITY_LL_FILE.value = 'cavity_length_ll_fit.dat'
 
-# Define the object list file name
-OBJ_LIST_FILE = OBJ_LIST_FILE.copy(__NAME__)
-OBJ_LIST_FILE.value = 'object_query_list.fits'
-
-# Define the object query list format
-OBJ_LIST_FILE_FMT = OBJ_LIST_FILE_FMT.copy(__NAME__)
-OBJ_LIST_FILE_FMT.value = 'fits'
-
-# Define the radius for crossmatching objects (in both lookup table and query)
-OBJ_LIST_CROSS_MATCH_RADIUS = OBJ_LIST_CROSS_MATCH_RADIUS.copy(__NAME__)
-OBJ_LIST_CROSS_MATCH_RADIUS.value = 60.0
-
-# Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
-OBJ_LIST_GAIA_URL = OBJ_LIST_GAIA_URL.copy(__NAME__)
-OBJ_LIST_GAIA_URL.value = 'https://gea.esac.esa.int/tap-server/tap'
-
-# Define the gaia magnitude cut (rp mag) to use in the gaia query
-OBJ_LIST_GAIA_MAG_CUT = OBJ_LIST_GAIA_MAG_CUT.copy(__NAME__)
-OBJ_LIST_GAIA_MAG_CUT.value = 15.0
-
-# Define the gaia epoch to use in the gaia query
-OBJ_LIST_GAIA_EPOCH = OBJ_LIST_GAIA_EPOCH.copy(__NAME__)
-OBJ_LIST_GAIA_EPOCH.value = 2015.5
-
-# Define the gaia parallax limit for using gaia point
-OBJ_LIST_GAIA_PLX_LIM = OBJ_LIST_GAIA_PLX_LIM.copy(__NAME__)
-OBJ_LIST_GAIA_PLX_LIM.value = 5
-
 # define the check FP percentile level
 CALIB_CHECK_FP_PERCENTILE = CALIB_CHECK_FP_PERCENTILE.copy(__NAME__)
 CALIB_CHECK_FP_PERCENTILE.value = 95
@@ -149,6 +121,58 @@ CALIB_CHECK_FP_THRES.value = 100
 # define the check FP center image size [px]
 CALIB_CHECK_FP_CENT_SIZE = CALIB_CHECK_FP_CENT_SIZE.copy(__NAME__)
 CALIB_CHECK_FP_CENT_SIZE.value = 100
+
+# Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
+OBJ_LIST_GAIA_URL = OBJ_LIST_GAIA_URL.copy(__NAME__)
+OBJ_LIST_GAIA_URL.value = 'https://gea.esac.esa.int/tap-server/tap'
+
+# Define the google sheet to use for crossmatch
+OBJ_LIST_GOOGLE_SHEET_URL = OBJ_LIST_GOOGLE_SHEET_URL.copy(__NAME__)
+OBJ_LIST_GOOGLE_SHEET_URL.value = '1jwlux8AJjBMMVrbg6LszJIpFJrk6alhbT5HA7BiAHD8'
+
+# Define the google sheet workbook number
+OBJ_LIST_GOOGLE_SHEET_WNUM = OBJ_LIST_GOOGLE_SHEET_WNUM.copy(__NAME__)
+OBJ_LIST_GOOGLE_SHEET_WNUM.value = 0
+
+# Define whether to resolve from local database (via drs_database / drs_db)
+OBJ_LIST_RESOLVE_FROM_DATABASE = OBJ_LIST_RESOLVE_FROM_DATABASE.copy(__NAME__)
+OBJ_LIST_RESOLVE_FROM_DATABASE.value = True
+
+# Define whether to resolve from gaia id (via TapPlus to Gaia) if False
+#    ra/dec/pmra/pmde/plx will always come from header
+OBJ_LIST_RESOLVE_FROM_GAIAID = OBJ_LIST_RESOLVE_FROM_GAIAID.copy(__NAME__)
+OBJ_LIST_RESOLVE_FROM_GAIAID.value = True
+
+# Define whether to get Gaia ID / Teff / RV from google sheets if False
+#    will try to resolve if gaia ID given otherwise will use ra/dec if
+#    OBJ_LIST_RESOLVE_FROM_COORDS = True else will default to header values
+OBJ_LIST_RESOLVE_FROM_GLIST = OBJ_LIST_RESOLVE_FROM_GLIST.copy(__NAME__)
+OBJ_LIST_RESOLVE_FROM_GLIST.value = True
+
+# Define whether to get Gaia ID from header RA and Dec (basically if all other
+#    option fails) - WARNING - this is a crossmatch so may lead to a bad
+#    identification of the gaia id - not recommended
+OBJ_LIST_RESOLVE_FROM_COORDS = OBJ_LIST_RESOLVE_FROM_COORDS.copy(__NAME__)
+OBJ_LIST_RESOLVE_FROM_COORDS.value = False
+
+# Define the gaia epoch to use in the gaia query
+OBJ_LIST_GAIA_EPOCH = OBJ_LIST_GAIA_EPOCH.copy(__NAME__)
+OBJ_LIST_GAIA_EPOCH.value = 2015.5
+
+# Define the radius for crossmatching objects (in both lookup table and query)
+#    measured in arc sec (only used if OBJ_LIST_RESOLVE_FROM_COORDS = True)
+OBJ_LIST_CROSS_MATCH_RADIUS = OBJ_LIST_CROSS_MATCH_RADIUS.copy(__NAME__)
+OBJ_LIST_CROSS_MATCH_RADIUS.value = 180.0
+
+# Define the gaia parallax limit for using gaia point meansure in mas
+#    (only used if OBJ_LIST_RESOLVE_FROM_COORDS = True)
+OBJ_LIST_GAIA_PLX_LIM = OBJ_LIST_GAIA_PLX_LIM.copy(__NAME__)
+OBJ_LIST_GAIA_PLX_LIM.value = 0.5
+
+# Define the gaia magnitude cut (rp mag) to use in the gaia query
+#    (only used if OBJ_LIST_RESOLVE_FROM_COORDS = True)
+OBJ_LIST_GAIA_MAG_CUT = OBJ_LIST_GAIA_MAG_CUT.copy(__NAME__)
+OBJ_LIST_GAIA_MAG_CUT.value = 15.0
 
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS
