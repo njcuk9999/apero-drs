@@ -26,10 +26,14 @@ __all__ = [
     'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_BLUE_LOW',
     'IMAGE_PIXEL_SIZE', 'FWHM_PIXEL_LSF',
     # general calib constants
-    'CAVITY_1M_FILE', 'CAVITY_LL_FILE', 'OBJ_LIST_FILE', 'OBJ_LIST_FILE_FMT',
-    'OBJ_LIST_CROSS_MATCH_RADIUS', 'OBJ_LIST_GAIA_URL', 'OBJ_LIST_SIMBAD_URL',
-    'OBJ_LIST_GAIA_MAG_CUT', 'OBJ_LIST_GAIA_EPOCH', 'OBJ_LIST_GAIA_PLX_LIM',
-    'CALIB_CHECK_FP_PERCENTILE', 'CALIB_CHECK_FP_THRES', 'CALIB_CHECK_FP_CENT_SIZE',
+    'CAVITY_1M_FILE', 'CAVITY_LL_FILE', 'OBJ_LIST_GAIA_URL',
+    'CALIB_CHECK_FP_PERCENTILE', 'CALIB_CHECK_FP_THRES',
+    'CALIB_CHECK_FP_CENT_SIZE',
+    'OBJ_LIST_GOOGLE_SHEET_URL', 'OBJ_LIST_GOOGLE_SHEET_WNUM',
+    'OBJ_LIST_RESOLVE_FROM_DATABASE', 'OBJ_LIST_RESOLVE_FROM_GAIAID',
+    'OBJ_LIST_RESOLVE_FROM_GLIST', 'OBJ_LIST_RESOLVE_FROM_COORDS',
+    'OBJ_LIST_GAIA_EPOCH', 'OBJ_LIST_GAIA_PLX_LIM', 'OBJ_LIST_GAIA_MAG_CUT',
+    'OBJ_LIST_CROSS_MATCH_RADIUS',
     # qc constants
     'QC_DARK_TIME', 'QC_MAX_DEAD', 'DARK_QMIN', 'DARK_QMAX',
     'QC_MAX_DARK', 'QC_LOC_MAXFIT_REMOVED_CTR',
@@ -405,42 +409,6 @@ CAVITY_1M_FILE = Const('CAVITY_1M_FILE', value=None, dtype=str, source=__NAME__,
 CAVITY_LL_FILE = Const('CAVITY_LL_FILE', value=None, dtype=str, source=__NAME__,
                        group=cgroup)
 
-# Define the object list file name
-OBJ_LIST_FILE = Const('OBJ_LIST_FILE', value=None, dtype=str, source=__NAME__,
-                      group=cgroup)
-
-# Define the object query list format
-OBJ_LIST_FILE_FMT = Const('OBJ_LIST_FILE_FMT', value=None, dtype=str,
-                          source=__NAME__, group=cgroup)
-
-# Define the radius for crossmatching objects (in both lookup table and query)
-#   in arcseconds
-OBJ_LIST_CROSS_MATCH_RADIUS = Const('OBJ_LIST_CROSS_MATCH_RADIUS', value=None,
-                                    dtype=float, source=__NAME__, minimum=0.0,
-                                    group=cgroup)
-
-# Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
-OBJ_LIST_GAIA_URL = Const('OBJ_LIST_GAIA_URL', value=None, dtype=str,
-                          source=__NAME__, group=cgroup)
-
-# Define the TAP SIMBAD URL (for use in crossmatching OBJNAME via astroquery)
-OBJ_LIST_SIMBAD_URL = Const('OBJ_LIST_SIMBAD_URL', value=None, dtype=str,
-                            source=__NAME__, group=cgroup)
-
-# Define the gaia magnitude cut to use in the gaia query
-OBJ_LIST_GAIA_MAG_CUT = Const('OBJ_LIST_GAIA_MAG_CUT', value=None, dtype=float,
-                              source=__NAME__, minimum=10.0, maximum=25.0,
-                              group=cgroup)
-
-# Define the gaia epoch to use in the gaia query
-OBJ_LIST_GAIA_EPOCH = Const('OBJ_LIST_GAIA_EPOCH', value=None, dtype=float,
-                            source=__NAME__, minimum=2000.0, maximum=2100.0,
-                            group=cgroup)
-
-# Define the gaia parallax limit for using gaia point
-OBJ_LIST_GAIA_PLX_LIM = Const('OBJ_LIST_GAIA_PLX_LIM', value=None, dtype=float,
-                              source=__NAME__, minimum=0.0, group=cgroup)
-
 # define the check FP percentile level
 CALIB_CHECK_FP_PERCENTILE = Const('CALIB_CHECK_FP_PERCENTILE', value=None,
                                   dtype=int, minimum=0, source=__NAME__,
@@ -455,6 +423,65 @@ CALIB_CHECK_FP_THRES = Const('CALIB_CHECK_FP_THRES', value=None,
 CALIB_CHECK_FP_CENT_SIZE = Const('CALIB_CHECK_FP_CENT_SIZE', value=None,
                                  dtype=int, minimum=0, source=__NAME__,
                                  group=cgroup)
+
+# Define the TAP Gaia URL (for use in crossmatching to Gaia via astroquery)
+OBJ_LIST_GAIA_URL = Const('OBJ_LIST_GAIA_URL', value=None, dtype=str,
+                          source=__NAME__, group=cgroup)
+
+# Define the google sheet to use for crossmatch
+OBJ_LIST_GOOGLE_SHEET_URL = Const('OBJ_LIST_GOOGLE_SHEET_URL', value=None,
+                                  dtype=str, source=__NAME__, group=cgroup)
+
+# Define the google sheet workbook number
+OBJ_LIST_GOOGLE_SHEET_WNUM = Const('OBJ_LIST_GOOGLE_SHEET_WNUM', value=0,
+                                   dtype=int, source=__NAME__, group=cgroup,
+                                   minimum=0)
+
+# Define whether to resolve from local database (via drs_database / drs_db)
+OBJ_LIST_RESOLVE_FROM_DATABASE = Const('OBJ_LIST_RESOLVE_FROM_DATABASE',
+                                       value=None, dtype=bool, source=__NAME__,
+                                       group=cgroup)
+
+# Define whether to resolve from gaia id (via TapPlus to Gaia) if False
+#    ra/dec/pmra/pmde/plx will always come from header
+OBJ_LIST_RESOLVE_FROM_GAIAID = Const('OBJ_LIST_RESOLVE_FROM_GAIAID',
+                                     value=None, dtype=bool, source=__NAME__,
+                                     group=cgroup)
+
+# Define whether to get Gaia ID / Teff / RV from google sheets if False
+#    will try to resolve if gaia ID given otherwise will use ra/dec if
+#    OBJ_LIST_RESOLVE_FROM_COORDS = True else will default to header values
+OBJ_LIST_RESOLVE_FROM_GLIST = Const('OBJ_LIST_RESOLVE_FROM_GLIST',
+                                    value=None, dtype=bool, source=__NAME__,
+                                    group=cgroup)
+
+# Define whether to get Gaia ID from header RA and Dec (basically if all other
+#    option fails) - WARNING - this is a crossmatch so may lead to a bad
+#    identification of the gaia id - not recommended
+OBJ_LIST_RESOLVE_FROM_COORDS = Const('OBJ_LIST_RESOLVE_FROM_COORDS',
+                                     value=None, dtype=bool, source=__NAME__,
+                                     group=cgroup)
+
+# Define the gaia epoch to use in the gaia query
+OBJ_LIST_GAIA_EPOCH = Const('OBJ_LIST_GAIA_EPOCH', value=None, dtype=float,
+                            source=__NAME__, minimum=2000.0, maximum=2100.0,
+                            group=cgroup)
+
+# Define the radius for crossmatching objects (in both lookup table and query)
+#   in arcseconds
+OBJ_LIST_CROSS_MATCH_RADIUS = Const('OBJ_LIST_CROSS_MATCH_RADIUS', value=None,
+                                    dtype=float, source=__NAME__, minimum=0.0,
+                                    group=cgroup)
+
+# Define the gaia parallax limit for using gaia point
+OBJ_LIST_GAIA_PLX_LIM = Const('OBJ_LIST_GAIA_PLX_LIM', value=None, dtype=float,
+                              source=__NAME__, minimum=0.0, group=cgroup)
+
+# Define the gaia magnitude cut to use in the gaia query
+OBJ_LIST_GAIA_MAG_CUT = Const('OBJ_LIST_GAIA_MAG_CUT', value=None, dtype=float,
+                              source=__NAME__, minimum=10.0, maximum=25.0,
+                              group=cgroup)
+
 
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS
