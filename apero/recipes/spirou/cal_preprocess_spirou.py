@@ -16,7 +16,7 @@ from apero import lang
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
-from apero.science import preprocessing as pp
+from apero.science import preprocessing as prep
 from apero.io import drs_image
 from apero.core.instruments.spirou import file_definitions
 
@@ -86,7 +86,7 @@ def __main__(recipe, params):
     # Main Code
     # ----------------------------------------------------------------------
     # Get hot pixels for corruption check
-    hotpixels = pp.get_hot_pixels(params)
+    hotpixels = prep.get_hot_pixels(params)
     # get skip parmaeter
     skip = params['SKIP_DONE_PP']
 
@@ -119,7 +119,13 @@ def __main__(recipe, params):
         # identification of file drs type
         # ------------------------------------------------------------------
         # identify this iterations file type
-        cond, infile = pp.drs_infile_id(params, recipe, file_instance)
+        cond, infile = prep.drs_infile_id(params, recipe, file_instance)
+
+        # ------------------------------------------------------------------
+        # For OBJECT files we need to resolve object
+        # ------------------------------------------------------------------
+        # TODO: fill this in using gen_pp.resolve_target
+
         # ------------------------------------------------------------------
         # if it wasn't found skip this file, if it was print a message
         if cond:
@@ -137,7 +143,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # get the output drs file
         oargs = [params, recipe, infile, recipe.outputs['PP_FILE'], RAW_PREFIX]
-        found, outfile = pp.drs_outfile_id(*oargs)
+        found, outfile = prep.drs_outfile_id(*oargs)
         # construct out filename
         outfile.construct_filename(infile=infile)
         # if we didn't find the output file we should log this error
@@ -159,7 +165,7 @@ def __main__(recipe, params):
         # do this iteratively as if there is a shift need to re-workout QC
         for iteration in range(2):
             # get pass condition
-            cout = pp.test_for_corrupt_files(params, image, hotpixels)
+            cout = prep.test_for_corrupt_files(params, image, hotpixels)
             snr_hotpix, rms_list = cout[0], cout[1]
             shiftdx, shiftdy = cout[2], cout[3]
             # use dx/dy to shift the image back to where the engineering flat
@@ -173,7 +179,7 @@ def __main__(recipe, params):
                 image = np.roll(image, [shiftdx], axis=1)
             # work out QC here
             qargs = [snr_hotpix, infile, rms_list]
-            qc_params, passed = pp.quality_control(params, *qargs, log=False)
+            qc_params, passed = prep.quality_control(params, *qargs, log=False)
             # if passed break
             if passed:
                 break
@@ -183,7 +189,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # re-calculate qc
         qargs = [snr_hotpix, infile, rms_list]
-        qc_params, passed = pp.quality_control(params, *qargs, log=True)
+        qc_params, passed = prep.quality_control(params, *qargs, log=True)
         # update recipe log
         log1.add_qc(params, qc_params, passed)
         if not passed:
@@ -197,15 +203,15 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # correct for the top and bottom reference pixels
         WLOG(params, '', TextEntry('40-010-00003'))
-        image = pp.correct_top_bottom(params, image)
+        image = prep.correct_top_bottom(params, image)
 
         # correct by a median filter from the dark amplifiers
         WLOG(params, '', TextEntry('40-010-00004'))
-        image = pp.median_filter_dark_amps(params, image)
+        image = prep.median_filter_dark_amps(params, image)
 
         # correct for the 1/f noise
         WLOG(params, '', TextEntry('40-010-00005'))
-        image = pp.median_one_over_f_noise(params, image)
+        image = prep.median_one_over_f_noise(params, image)
 
         # ------------------------------------------------------------------
         # calculate mid observation time
