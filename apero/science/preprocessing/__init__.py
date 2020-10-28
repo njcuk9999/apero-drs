@@ -10,7 +10,7 @@ Version 0.0.1
 """
 from apero.science.preprocessing import identification
 from apero.science.preprocessing import detector
-from apero.science.preprocessing import general
+from apero.science.preprocessing import gen_pp
 
 __all__ = []
 
@@ -35,7 +35,7 @@ nirps_correction = detector.nirps_correction
 
 test_for_corrupt_files = detector.test_for_corrupt_files
 
-quality_control = general.quality_control
+quality_control = gen_pp.quality_control
 
 # =============================================================================
 # End of code
