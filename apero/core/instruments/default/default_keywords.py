@@ -15,6 +15,14 @@ __all__ = [  # input keys
     'KW_TARGET_TYPE', 'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP',
     'KW_HUMIDITY', 'KW_GAIA_ID', 'KW_INPUTRV', 'KW_OBJ_TEMP',
     'KW_SATURATE', 'KW_FRMTIME', 'KW_OBJECTNAME',
+    # object resolution keys
+    'KW_DRS_OBJNAME', 'KW_DRS_OBJNAME_S', 'KW_DRS_GAIAID', 'KW_DRS_GAIAID_S',
+    'KW_DRS_RA', 'KW_DRS_RA_S', 'KW_DRS_DEC', 'KW_DRS_DEC_S',
+    'KW_DRS_PMRA', 'KW_DRS_PMRA_S', 'KW_DRS_PMDE', 'KW_DRS_PMDE_S',
+    'KW_DRS_PLX', 'KW_DRS_PLX_S', 'KW_DRS_RV', 'KW_DRS_RV_S',
+    'KW_DRS_GMAG', 'KW_DRS_GMAG_S', 'KW_DRS_BPMAG', 'KW_DRS_BPMAG_S',
+    'KW_DRS_RPMAG', 'KW_DRS_RPMAG_S', 'KW_DRS_EPOCH', 'KW_DRS_EPOCH_S',
+    'KW_DRS_TEFF', 'KW_DRS_TEFF_S',
     # general output keys
     'KW_VERSION', 'KW_PPVERSION', 'KW_DPRTYPE', 'KW_PID',
     'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3',
@@ -285,6 +293,88 @@ KW_INPUTRV = Keyword('KW_RV', key='', dtype=float, source=__NAME__)
 
 # define the object temperature HEADER key
 KW_OBJ_TEMP = Keyword('KW_OBJ_TEMP', key='', dtype=float, source=__NAME__)
+
+# -----------------------------------------------------------------------------
+# Object resolution keys
+# -----------------------------------------------------------------------------
+# the object name to be used by the drs (after preprocessing)
+KW_DRS_OBJNAME = Keyword('KW_DRS_OBJNAME', key='', dtype=str, source=__NAME__)
+
+# the source of the object name used by the drs
+KW_DRS_OBJNAME_S = Keyword('KW_DRS_OBJNAME_S', key='', dtype=str,
+                           source=__NAME__)
+
+# the gaia id to be used by the drs (after preprocessing)
+KW_DRS_GAIAID = Keyword('KW_DRS_GAIAID', key='', dtype=str, source=__NAME__)
+
+# the source of the gaia id to be used by the drs (after preprocessing)
+KW_DRS_GAIAID_S = Keyword('KW_DRS_GAIAID_S', key='', dtype=str, source=__NAME__)
+
+# the right ascension to be used by the drs (after preprocessing)
+KW_DRS_RA = Keyword('KW_DRS_RA', key='', dtype=float, source=__NAME__)
+
+# the source of the ra to be used by the drs (after preprocessing)
+KW_DRS_RA_S = Keyword('KW_DRS_RA_S', key='', dtype=str, source=__NAME__)
+
+# the declination to be used by the drs (after preprocessing)
+KW_DRS_DEC = Keyword('KW_DRS_DEC', key='', dtype=float, source=__NAME__)
+
+# the source of the dec to be used by the drs (after preprocessing)
+KW_DRS_DEC_S = Keyword('KW_DRS_DEC_S', key='', dtype=str, source=__NAME__)
+
+# the proper motion in ra to be used by the drs (after preprocessing)
+KW_DRS_PMRA = Keyword('KW_DRS_PMRA', key='', dtype=float, source=__NAME__)
+
+# the source of the pmra used by the drs (afer prepreocessing)
+KW_DRS_PMRA_S = Keyword('KW_DRS_PMRA_S', key='', dtype=str, source=__NAME__)
+
+# the proper motion in dec to be used by the drs (after preprocessing)
+KW_DRS_PMDE = Keyword('KW_DRS_PMDE', key='', dtype=float, source=__NAME__)
+
+# the source of the pmde used by the drs (after preprocessing)
+KW_DRS_PMDE_S = Keyword('KW_DRS_PMDE_S', key='', dtype=str, source=__NAME__)
+
+# the parallax to be used by the drs (after preprocessing)
+KW_DRS_PLX = Keyword('KW_DRS_PLX', key='', dtype=float, source=__NAME__)
+
+# the source of the parallax used by the drs (after preprocessing)
+KW_DRS_PLX_S = Keyword('KW_DRS_PLX_S', key='', dtype=str, source=__NAME__)
+
+# the radial velocity to be used by the drs (after preprocessing)
+KW_DRS_RV = Keyword('KW_DRS_RV', key='', dtype=float, source=__NAME__)
+
+# the source of the radial velocity used by the drs (after preprocessing)
+KW_DRS_RV_S = Keyword('KW_DRS_RV_S', key='', dtype=str, source=__NAME__)
+
+# the Gaia G magnitude to be used by the drs (after preprocessing)
+KW_DRS_GMAG = Keyword('KW_DRS_GMAG', key='', dtype=float, source=__NAME__)
+
+# the source of the gmag used by the drs (after preprocessing)
+KW_DRS_GMAG_S = Keyword('KW_DRS_GMAG_S', key='', dtype=str, source=__NAME__)
+
+# the Gaia BP magnitude to be used by the drs (after preprocessing)
+KW_DRS_BPMAG = Keyword('KW_DRS_BPMAG', key='', dtype=float, source=__NAME__)
+
+# the source of the bpmag used by the drs (after preprocessing)
+KW_DRS_BPMAG_S = Keyword('KW_DRS_BPMAG_S', key='', dtype=str, source=__NAME__)
+
+# the Gaia RP magnitude to be used by the drs (after preprocessing)
+KW_DRS_RPMAG = Keyword('KW_DRS_RPMAG', key='', dtype=float, source=__NAME__)
+
+# the source of the rpmag used by the drs (after preprocessing)
+KW_DRS_RPMAG_S = Keyword('KW_DRS_RPMAG_S', key='', dtype=str, source=__NAME__)
+
+# the epoch to be used by the drs (after preprocessing)
+KW_DRS_EPOCH = Keyword('KW_DRS_EPOCH', key='', dtype=float, source=__NAME__)
+
+# the source of the epoch used by the drs (after preprocessing)
+KW_DRS_EPOCH_S = Keyword('KW_DRS_EPOCH_S', key='', dtype=str, source=__NAME__)
+
+# the effective temperature to be used by the drs (after preprocessing)
+KW_DRS_TEFF = Keyword('KW_DRS_TEFF', key='', dtype=float, source=__NAME__)
+
+# the source of teff used by the drs (after preprocessing)
+KW_DRS_TEFF_S = Keyword('KW_DRS_TEFF_S', key='', dtype=str, source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define general keywords
