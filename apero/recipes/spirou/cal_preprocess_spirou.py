@@ -13,6 +13,7 @@ import os
 
 from apero.base import base
 from apero import lang
+from apero.core import constants
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
@@ -89,7 +90,8 @@ def __main__(recipe, params):
     hotpixels = prep.get_hot_pixels(params)
     # get skip parmaeter
     skip = params['SKIP_DONE_PP']
-
+    # get pseudo constants
+    pconst = constants.pload(params['INSTRUMENT'])
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------
@@ -122,10 +124,10 @@ def __main__(recipe, params):
         cond, infile = prep.drs_infile_id(params, recipe, file_instance)
 
         # ------------------------------------------------------------------
-        # For OBJECT files we need to resolve object
+        # For OBJECT files we need to resolve object and update header
         # ------------------------------------------------------------------
-        # TODO: fill this in using gen_pp.resolve_target
-
+        infile.header = prep.resolve_target(params, pconst,
+                                            header=infile.header)
         # ------------------------------------------------------------------
         # if it wasn't found skip this file, if it was print a message
         if cond:
