@@ -37,6 +37,8 @@ test_for_corrupt_files = detector.test_for_corrupt_files
 
 quality_control = gen_pp.quality_control
 
+resolve_target = gen_pp.resolve_target
+
 # =============================================================================
 # End of code
 # =============================================================================
