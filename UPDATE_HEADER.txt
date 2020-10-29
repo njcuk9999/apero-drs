@@ -1,0 +1,37 @@
+# Version 0.7.000 - header key changes
+
+
+
+New header keys
+
+
+- HIERARCH DRS RES OBJN_S          // Source of objname used by the DRS ||
+- HIERARCH DRS RES GAIAID_S        // Source of the gaiaid used by the DRS ||
+- HIERARCH DRS RES RA_S            // Source of the ra used by the DRS ||
+- HIERARCH DRS RES DEC_S           // Source of the dec used by the DRS ||
+- HIERARCH DRS RES PMRA_S          // Source of the pmra used by the DRS ||
+- HIERARCH DRS RES PMDE_S          // Source of the pmde used by the DRS ||
+- HIERARCH DRS RES PLX_S           // Source of the plx used by the DRS ||
+- HIERARCH DRS RES RV_S            // Source of the rv used by the DRS ||
+- HIERARCH DRS RES GMAG_S          // Source of the gmag used by the DRS ||
+- HIERARCH DRS RES BPMAG_S         // Source of the bpmag used by the DRS ||
+- HIERARCH DRS RES RPMAG_S         // Source of the rpmag used by the DRS ||
+- HIERARCH DRS RES EPOCH           // The Epoch used by the DRS ||
+- HIERARCH DRS RES EPOCH_S         // Source of the epoch used by the DRS ||
+- HIERARCH DRS RES TEFF            // The Teff [K] used by the DRS ||
+- HIERARCH DRS RES TEFF_S          // Source of the Teffused by the DRS ||
+
+
+Updated header keys
+
+- HIERARCH DRS RES OBJN            // objname to be used by the DRS || DRSOBJN, BC_OBJNM
+- HIERARCH DRS RES GAIAID          // Gaia id to be used by the DRS || BC_GAIAID
+- HIERARCH DRS RES RA              // The ra [in deg] used by the DRS || BC_RA
+- HIERARCH DRS RES DEC             // The dec [in deg] used by the DRS || BC_DEC
+- HIERARCH DRS RES PMRA            // The pmra [mas/yr] used by the DRS  || BC_PMRA
+- HIERARCH DRS RES PMDE            // The pmde [mas/yr] used by the DRS || BC_PMDE
+- HIERARCH DRS RES PLX             // The parallax [mas] used by the DRS || BC_PLX
+- HIERARCH DRS RES RV              // The RV [km/s] used by the DRS || BC_RV
+- HIERARCH DRS RES GMAG            // The Gaia G mag used by the DRS || BC_GMAG
+- HIERARCH DRS RES BPMAG           // The Gaia BP mag used by the DRS || BC_BPMAG
+- HIERARCH DRS RES RPMAG           // The Gaia RP mag used by the DRS || BC_RPMAG
