@@ -63,6 +63,8 @@ DrsFileTypes = Union[drs_file.DrsInputFile, drs_file.DrsFitsFile,
 pcheck = constants.PCheck(wlog=WLOG)
 # get list of obj name cols
 OBJNAMECOLS = ['KW_OBJNAME']
+# gaia col name
+GAIA_COL_NAME = 'GAIADR2ID'
 
 
 # =============================================================================
@@ -2162,7 +2164,7 @@ class ObjectDatabase(DatabaseManager):
         sql['sort_by'] = None
         sql['sort_descending'] = True
         # sort by last modified
-        sql['sort_by'] = 'GAIAID'
+        sql['sort_by'] = GAIA_COL_NAME
         # condition for used
         sql['condition'] = 'USED == 1'
         # ------------------------------------------------------------------
@@ -2278,8 +2280,8 @@ class ObjectDatabase(DatabaseManager):
         # add used
         values.append(used)
         # need to see if we already have gaia id
-        condition = 'GAIAID=="{0}"'.format(gaia_id)
-        gaiaids = self.database.unique('GAIAID', condition=condition)
+        condition = '{0}=="{1}"'.format(GAIA_COL_NAME, gaia_id)
+        gaiaids = self.database.unique(GAIA_COL_NAME, condition=condition)
         # ------------------------------------------------------------------
         # deal with updating entry
         if (gaiaids is not None) and (len(gaiaids) > 0):
