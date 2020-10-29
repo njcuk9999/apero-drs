@@ -27,7 +27,6 @@ from apero import lang
 from apero.core.core import drs_log
 from apero.io import drs_fits
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -65,6 +64,8 @@ GOOGLE_BASE_URL = ('https://docs.google.com/spreadsheets/d/{}/gviz/'
                    'tq?tqx=out:csv&sheet={}')
 # unit aliases
 masyr = uu.mas / uu.yr
+# gaia col name
+GAIA_COL_NAME = 'GAIADR2ID'
 
 
 # =============================================================================
@@ -145,6 +146,36 @@ class AstroObject(object):
         self.aliases = []
         self.aliases_source = 'None'
         self.used = 0
+        # other properties
+        self.update_database = True
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # what to exclude from state
+        exclude = ['database']
+        # need a dictionary for pickle
+        state = dict()
+        for key, item in self.__dict__:
+            if key not in exclude:
+                state[key] = item
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+        # add in the database manually
+        self.database = ObjectDatabase(self.params)
+        self.database.load_db()
 
     def __str__(self):
         return self.__repr__()
@@ -232,7 +263,7 @@ class AstroObject(object):
         # deal with no input_gaiaid
         if self.input_gaiaid is not None:
             # condition condition
-            condition = 'GAIAID=="{0}"'.format(self.input_gaiaid)
+            condition = '{0}=="{1}"'.format(GAIA_COL_NAME, self.input_gaiaid)
             # get the entries for this condition
             entries = self.database.get_entries('*', condition=condition)
             # set source
@@ -251,7 +282,7 @@ class AstroObject(object):
         # fill out required information if available
         self.objname = str(entries['OBJNAME'].iloc[0])
         self.objname_source = 'database'
-        self.gaia_id = str(entries['GAIAID'].iloc[0])
+        self.gaia_id = str(entries[GAIA_COL_NAME].iloc[0])
         self.gaia_id_source = source
         self.ra = float(entries['RA'].iloc[0])
         self.ra_source = source
@@ -299,6 +330,8 @@ class AstroObject(object):
             self.aliases_source = source
         # set used
         self.used = 1
+        # we no not need to update database - if it was found in the database
+        self.update_database = False
 
     def _resolve_from_names(self) -> Tuple[Union[pd.DataFrame, None], str]:
         """
@@ -310,9 +343,10 @@ class AstroObject(object):
         if self.input_objname is None:
             return None, 'None'
         # get aliases from database
-        gaia_table = self.database.get_entries('GAIAID, OBJNAME, ALIASES')
+        cols = '{0}, OBJNAME, ALIASES'.format(GAIA_COL_NAME)
+        gaia_table = self.database.get_entries(cols)
         # extract required columns
-        gaia_id = gaia_table['GAIAID']
+        gaia_id = gaia_table[GAIA_COL_NAME]
         objnames = gaia_table['OBJNAME']
         alias_sets = gaia_table['ALIASES']
 
@@ -325,7 +359,7 @@ class AstroObject(object):
             # compare to input_objname
             if cobjname == self.input_objname:
                 # condition condition
-                condition = 'GAIAID=="{0}"'.format(gaia_id[row])
+                condition = '{0}=="{1}"'.format(GAIA_COL_NAME, gaia_id[row])
                 # set source
                 source = 'database-objname'
                 # return the entries for this gaia id
@@ -349,7 +383,7 @@ class AstroObject(object):
                 # compare to input_objname
                 if calias == self.input_objname:
                     # condition condition
-                    condition = 'GAIAID=="{0}"'.format(gaia_id[row])
+                    condition = '{0}=="{1}"'.format(GAIA_COL_NAME, gaia_id[row])
                     # set source
                     source = 'database-aliases'
                     # return the entries for this gaia id
@@ -436,7 +470,7 @@ class AstroObject(object):
                              self.gsheet_wnum)
         # set some properties from gtable
         if gtable is not None:
-            self.input_gaiaid = gtable['GAIAID']
+            self.input_gaiaid = gtable[GAIA_COL_NAME]
         #  try (again) gaia id against gaia query (only if gaia_id is still
         #  None)
         if self.input_gaiaid is not None:
@@ -593,6 +627,9 @@ class AstroObject(object):
         self.used = 1
 
     def write_obj(self, database: ObjectDatabase, commit: bool = True):
+        # do not update if we found via database
+        if not self.update_database:
+            return
         # write to database
         database.add_entry(objname=self.objname, objname_s=self.objname_source,
                            gaia_id=self.gaia_id, gaia_id_s=self.gaia_id_source,
@@ -610,7 +647,7 @@ class AstroObject(object):
                            aliases=self.aliases, aliases_s=self.aliases_source,
                            commit=commit)
 
-    def write_table(self, outdict):
+    def write_table(self, outdict: dict):
         """
         Proxy write function (used to write to dictionary --> Table)
         Only for debugging!
@@ -618,7 +655,7 @@ class AstroObject(object):
         :param outdict:
         :return:
         """
-        columns = ['OBJNAME', 'OBJNAME_SOURCE', 'GAIAID', 'GAIAID_SOURCE',
+        columns = ['OBJNAME', 'OBJNAME_SOURCE', GAIA_COL_NAME, 'GAIAID_SOURCE',
                    'RA', 'RA_SOURCE', 'DEC', 'DEC_SOURCE', 'PMRA',
                    'PMRA_SOURCE', 'PMDE', 'PMDE_SOURCE', 'PLX', 'PLX_SOURCE',
                    'RV', 'RV_SOURCE', 'GMAG', 'GMAG_SOURCE', 'BPMAG',
@@ -653,12 +690,65 @@ class AstroObject(object):
         # return outdict
         return outdict
 
+    def update_header(self, params, header: drs_fits.Header) -> drs_fits.Header:
+        """
+        Update the header with these values
+
+        :param header: drs_fits.Header - the fits header to update
+
+        :return: drs_fits.Header - the updated header
+        """
+        # make sure header is a drs_fits.Header
+        if not isinstance(header, drs_fits.Header):
+            header = drs_fits.Header(header)
+        # add object name and source
+        header.set_key(params, 'KW_DRS_OBJNAME', value=self.objname)
+        header.set_key(params, 'KW_DRS_OBJNAME_S', value=self.objname_source)
+        # add gaia id and source
+        header.set_key(params, 'KW_DRS_GAIAID', value=self.gaia_id)
+        header.set_key(params, 'KW_DRS_GAIAID_S', value=self.gaia_id_source)
+        # add the ra and source
+        header.set_key(params, 'KW_DRS_RA', value=self.ra)
+        header.set_key(params, 'KW_DRS_RA_S', value=self.ra_source)
+        # add the dec and source
+        header.set_key(params, 'KW_DRS_DEC', value=self.dec)
+        header.set_key(params, 'KW_DRS_DEC_S', value=self.dec_source)
+        # add the pmra
+        header.set_key(params, 'KW_DRS_PMRA', value=self.pmra)
+        header.set_key(params, 'KW_DRS_PMRA_S', value=self.pmra_source)
+        # add the pmde
+        header.set_key(params, 'KW_DRS_PMDE', value=self.pmde)
+        header.set_key(params, 'KW_DRS_PMDE_S', value=self.pmde_source)
+        # add the plx
+        header.set_key(params, 'KW_DRS_PLX', value=self.plx)
+        header.set_key(params, 'KW_DRS_PLX_S', value=self.plx_source)
+        # add the rv
+        header.set_key(params, 'KW_DRS_RV', value=self.rv)
+        header.set_key(params, 'KW_DRS_RV_S', value=self.rv_source)
+        # add the gmag
+        header.set_key(params, 'KW_DRS_GMAG', value=self.gmag)
+        header.set_key(params, 'KW_DRS_GMAG_S', value=self.gmag_source)
+        # add the bpmag
+        header.set_key(params, 'KW_DRS_BPMAG', value=self.bpmag)
+        header.set_key(params, 'KW_DRS_BPMAG_S', value=self.bpmag_source)
+        # add the rpmag
+        header.set_key(params, 'KW_DRS_RPMAG', value=self.rpmag)
+        header.set_key(params, 'KW_DRS_RPMAG_S', value=self.rpmag_source)
+        # add the epoch
+        header.set_key(params, 'KW_DRS_EPOCH', value=self.epoch)
+        header.set_key(params, 'KW_DRS_EPOCH_S', value=self.epoch_source)
+        # add the teff
+        header.set_key(params, 'KW_DRS_TEFF', value=self.teff)
+        header.set_key(params, 'KW_DRS_TEFF_S', value=self.teff_source)
+        # return updated header
+        return header
+
 
 def resolve_target(params: ParamDict, pconst,
                    objname: Union[str, None] = None,
                    database: Union[ObjectDatabase, None] = None,
                    header: Union[drs_fits.Header, None] = None,
-                   commit: bool = True):
+                   commit: bool = True) -> Union[drs_fits.Header, None]:
     """
     Resolve a list of object names via gaia ids (from GoogleSheet/Gaia/Simbad
     crossmatch)
@@ -687,7 +777,7 @@ def resolve_target(params: ParamDict, pconst,
     # deal with parameters from header vs not from header
     if header is not None:
         # get objname
-        objname = header[params['KW_OBJNAME']]
+        objname = header[params['KW_OBJNAME'][0]]
         # set gaia id
         gaia_id = header.get(params['KW_GAIA_ID'][0], None)
         # set ra [in degrees]
@@ -738,6 +828,11 @@ def resolve_target(params: ParamDict, pconst,
     astro_obj.get_simbad_aliases()
     # write to database
     astro_obj.write_obj(database, commit=commit)
+    # update header
+    if header is not None:
+        return astro_obj.update_header(params, header)
+    else:
+        return None
 
 
 def resolve_targets(params: ParamDict, objnames: Union[str, List[str]],
@@ -842,7 +937,6 @@ def query_simbad_id(params: ParamDict, obj_id: str) -> Union[Table, None]:
 
 
 def query_glist(objname: str, sheet_id: str, worksheet: int = 0):
-
     # get the google sheet
     gtable = get_google_sheet(sheet_id, worksheet)
 
@@ -962,8 +1056,8 @@ def best_gaia_entry(ra: float, dec: float, mjd: float, entries: Table,
     # get entries as numpy arrays (with units)
     ra_arr = np.array(entries['ra']) * uu.deg
     dec_arr = np.array(entries['dec']) * uu.deg
-    pmra_arr = np.array(entries['pmra']) * uu.mas/uu.yr
-    pmde_arr = np.array(entries['pmde']) * uu.mas/uu.yr
+    pmra_arr = np.array(entries['pmra']) * uu.mas / uu.yr
+    pmde_arr = np.array(entries['pmde']) * uu.mas / uu.yr
     plx_arr = np.array(entries['plx']) * uu.mas
     # propagate all entries ra and dec to mjd
     coords0 = SkyCoord(ra_arr, dec_arr,
@@ -1022,6 +1116,7 @@ def format_sql_query(query: str, url: Union[str, None] = None,
     str_query = str_query.replace('OR', '\nOR\n\t')
     # return the newly formatted string
     return str_query
+
 
 # =============================================================================
 # Define other functions
@@ -1107,7 +1202,6 @@ if __name__ == "__main__":
 
     # resolve targets
     resolve_targets(_params, _objnames, database=_objdbm)
-
 
 # =============================================================================
 # End of code
