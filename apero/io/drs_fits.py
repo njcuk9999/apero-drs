@@ -187,6 +187,26 @@ class Header(fits.Header):
         else:
             return super().__contains__(key)
 
+    def set_key(self, params: ParamDict, key: str , value: Any):
+        """
+        Set a key (maybe from params with a keywordstore)
+
+        :param params: ParamDict, parameter dictionary of constants
+        :param key: str, either key or key in params for keywordsotre
+        :param value: Any, the value to put into the header
+
+        :return: None - sets the key or params[key][0]
+        """
+        # deal with key in params
+        if key in params:
+            drs_key, _, drs_comment = params[key]
+            drs_value = (value, drs_comment)
+        else:
+            drs_key = str(key)
+            drs_value = value
+        # set item as normal
+        self.__setitem__(drs_key, drs_value)
+
     def copy(self, strip: bool = False) -> 'Header':
         """
         Copy an entire header (including temp items)
@@ -292,6 +312,8 @@ class Header(fits.Header):
         # else return original value
         else:
             return value
+
+
 
 
 # =============================================================================
