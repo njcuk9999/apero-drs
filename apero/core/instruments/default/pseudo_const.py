@@ -1052,7 +1052,7 @@ class PseudoConstants:
         _ = display_func(None, 'OBJECT_DB_COLUMNS', __NAME__,
                          self.class_name)
         # set columns
-        columns = ['OBJNAME', 'OBJNAME_SOURCE', 'GAIAID', 'GAIAID_SOURCE',
+        columns = ['OBJNAME', 'OBJNAME_SOURCE', 'GAIADR2ID', 'GAIAID_SOURCE',
                    'RA', 'RA_SOURCE', 'DEC', 'DEC_SOURCE', 'PMRA',
                    'PMRA_SOURCE', 'PMDE', 'PMDE_SOURCE', 'PLX', 'PLX_SOURCE',
                    'RV', 'RV_SOURCE', 'GMAG', 'GMAG_SOURCE', 'BPMAG',
