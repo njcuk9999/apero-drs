@@ -166,7 +166,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Get barycentric corrections (BERV)
         # ------------------------------------------------------------------
-        bprops = extract.get_berv(params, infile, dprtype=dprtype)
+        bprops = extract.get_berv(params, infile)
         # ------------------------------------------------------------------
         # load wavelength solution for this fiber
         wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
