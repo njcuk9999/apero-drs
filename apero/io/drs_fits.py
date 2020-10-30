@@ -149,17 +149,26 @@ class Header(fits.Header):
             # assume it is a tuple (key, id) - therefore we check key[0]
             if key[0].startswith('@@@'):
                 tmpkey = self.__get_temp_key(key[0])
-                return self.__temp_items.__getitem__(tmpkey)
+                value = self.__temp_items.__getitem__(tmpkey)
+                return self.__nan_check(value, dtype=float)
             else:
-                return super().__getitem__(key)
+                value = super().__getitem__(key)
+                return self.__nan_check(value, dtype=float)
         elif not isinstance(key, str):
-            return super().__getitem__(key)
+            value = super().__getitem__(key)
+            return self.__nan_check(value, dtype=float)
         # if key starts with @@@ get it from the temporary items storage
         if key.startswith('@@@'):
-            return self.__temp_items.__getitem__(self.__get_temp_key(key))
+            value = self.__temp_items.__getitem__(self.__get_temp_key(key))
+            return self.__nan_check(value, dtype=float)
         # else get it from the normal storage location (in super)
         else:
-            return super().__getitem__(key)
+            value = super().__getitem__(key)
+            return self.__nan_check(value, dtype=float)
+
+    def get(self, key, default=None):
+        value = super().get(key, default)
+        return self.__nan_check(value, dtype=float)
 
     def __contains__(self, key: str) -> bool:
         """
@@ -288,7 +297,7 @@ class Header(fits.Header):
             return key
 
     @staticmethod
-    def __nan_check(value) -> Any:
+    def __nan_check(value, dtype=None) -> Any:
         """
         Check for NaNs/Infs in value (cannot be used in astropy.io.header)
 
@@ -297,6 +306,16 @@ class Header(fits.Header):
         :return: if NaN or INF found replaces with string, else just returns
                  the original value
         """
+        if isinstance(value, str):
+            if value.upper() == 'NAN' and dtype == float:
+                return np.nan
+            if value.upper() == 'INF' and dtype == float:
+                return np.inf
+            if value.upper() == '-INF' and dtype == float:
+                return -np.inf
+        # if we expect a float don't continue (used for get not set)
+        if dtype == float:
+            return value
         # check for NaNs
         if isinstance(value, float) and np.isnan(value):
             return 'NaN'
