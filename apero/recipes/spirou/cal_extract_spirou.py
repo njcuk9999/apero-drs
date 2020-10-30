@@ -192,7 +192,7 @@ def __main__(recipe, params):
         # Calculate Barycentric correction
         # ------------------------------------------------------------------
         if not quicklook:
-            bprops = extract.get_berv(params, infile, header, props)
+            bprops = extract.get_berv(params, infile, header)
         else:
             bprops = None
 

@@ -228,7 +228,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # Get barycentric corrections (BERV)
         # ------------------------------------------------------------------
-        bprops = extract.get_berv(params, infile, dprtype=dprtype)
+        bprops = extract.get_berv(params, infile)
         # ------------------------------------------------------------------
         # Load transmission files
         # ------------------------------------------------------------------
