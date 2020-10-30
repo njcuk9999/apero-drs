@@ -147,8 +147,7 @@ class PolarObj:
         self.mjdend = self.mjd + (self.exptime / 2)
         self.dprtype = self.infile.get_hkey('KW_DPRTYPE', dtype=str)
         # get berv properties
-        bprops = extract.get_berv(self.params, self.infile,
-                                  dprtype=self.dprtype)
+        bprops = extract.get_berv(self.params, self.infile)
         # store berv properties
         self.berv = bprops['USE_BERV']
         self.bjd = bprops['USE_BJD']
@@ -523,8 +522,7 @@ class PolarObjOut(PolarObj):
         self.mjdend = self.mjd + (self.exptime / 2)
         self.dprtype = self.header1[self.params['KW_DPRTYPE'][0]]
         # get berv properties
-        bprops = extract.get_berv(self.params, header=self.header1,
-                                  dprtype=self.dprtype)
+        bprops = extract.get_berv(self.params, header=self.header1)
         # store berv properties
         self.berv = bprops['USE_BERV']
         self.bjd = bprops['USE_BJD']

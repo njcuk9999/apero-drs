@@ -168,7 +168,7 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
         # ------------------------------------------------------------------
         # Get barycentric corrections (BERV)
         # ------------------------------------------------------------------
-        bprops = extract.get_berv(params, infile, dprtype=dprtype, log=False)
+        bprops = extract.get_berv(params, infile, log=False)
         # get berv from bprops
         berv = bprops['USE_BERV']
         # deal with bad berv (nan or None)
@@ -418,7 +418,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
         # ------------------------------------------------------------------
         # Get barycentric corrections (BERV)
         # ------------------------------------------------------------------
-        bprops = extract.get_berv(params, infile, dprtype=dprtype, log=False)
+        bprops = extract.get_berv(params, infile, log=False)
         # get berv from bprops
         berv = bprops['USE_BERV']
         # deal with bad berv (nan or None)

@@ -88,7 +88,7 @@ class PolarObj:
         self.mjdend = self.infile.get_hkey('KW_ACQTIME', dtype=float)
         self.dprtype = self.infile.get_hkey('KW_DPRTYPE', dtype=str)
         # get berv properties
-        bprops = extract.get_berv(params, self.infile, dprtype=self.dprtype)
+        bprops = extract.get_berv(params, self.infile)
         # store berv properties
         self.berv = bprops['USE_BERV']
         self.bjd = bprops['USE_BJD']
