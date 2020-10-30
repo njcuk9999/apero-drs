@@ -229,7 +229,7 @@ def __main__(recipe, params):
         # --------------------------------------------------------------
         props = ParamDict()
         props['DPRTYPE'] = infile.get_hkey('KW_DPRTYPE', dtype=float)
-        bprops = extract.get_berv(params, infile, header, props,
+        bprops = extract.get_berv(params, infile, header,
                                   warn=True, force=True)
         args = [infile.basename, bprops['USE_BERV']]
         # print that we have update the BERV measurement
