@@ -358,6 +358,8 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     # ------------------------------------------------------------------------
     # Now deal with using wavefile
     # -------------------------------------------------------------------------
+    # wavefile must have params set
+    wavefile.params = params
     # extract keys from header
     nbo = wavefile.get_hkey('KW_WAVE_NBO', dtype=int)
     deg = wavefile.get_hkey('KW_WAVE_DEG', dtype=int)
