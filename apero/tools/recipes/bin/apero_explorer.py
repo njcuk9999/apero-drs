@@ -9,10 +9,14 @@ Created on 2019-07-26 at 09:39
 
 @author: cook
 """
+from pathlib import Path
+
 from apero.base import base
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
-from apero.tools.module.listing import file_explorer
+
+from apero.tools.module.database import manage_databases
+from apero.tools.module.database import database_gui
 
 # =============================================================================
 # Define variables
@@ -37,7 +41,7 @@ ALLOWED_PATHS = ['DRS_DATA_WORKING', 'DRS_DATA_REDUC']
 # =============================================================================
 # Define functions
 # =============================================================================
-def main(instrument=None, **kwargs):
+def main(**kwargs):
     """
     Main function for apero_explorer.py
 
@@ -52,7 +56,7 @@ def main(instrument=None, **kwargs):
     :rtype: dict
     """
     # assign function calls (must add positional)
-    fkwargs = dict(instrument=instrument, **kwargs)
+    fkwargs = dict(**kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
     recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs,
@@ -81,16 +85,24 @@ def __main__(recipe, params):
     :rtype: dict
     """
     # get instrument
-    instrument = params['INPUTS']['INSTRUMENT']
-    # Log that we are running indexing
-    WLOG(params, '', 'Indexing files at {0}'.format(params[ALLOWED_PATHS[0]]))
-    # load data
-    datastore = file_explorer.LoadData(instrument, recipe, params)
-    # Log that we are running indexing
-    WLOG(params, '', 'Running file explorer application')
-    # Main code here
-    app = file_explorer.App(datastore=datastore)
-    app.geometry("1024x768")
+    instrument = str(recipe.instrument)
+
+    # get databases
+    dbs = manage_databases.list_databases(params)
+    # get paths
+    paths = dict()
+    for key in dbs:
+        paths[key] = Path(dbs[key].path)
+    # push into database holder
+    databases = dict()
+    for key in paths:
+        databases[key] = database_gui.DatabaseHolder(params, key,
+                                                     path=paths[key])
+    # construct app
+    app = database_gui.DatabaseExplorer(databases=databases)
+    # set icon?
+    app.set_icon()
+    # launch the app
     app.mainloop()
 
     # ----------------------------------------------------------------------

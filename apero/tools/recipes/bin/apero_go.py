@@ -42,7 +42,7 @@ TextDict = lang.core.drs_lang_text.TextDict
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(instrument=None, **kwargs):
+def main(**kwargs):
     """
     Main function for apero_listing.py
 
@@ -58,17 +58,10 @@ def main(instrument=None, **kwargs):
     """
     # get args from sys.argv
     args = sys.argv
-    # make sure we have an instrument argument
-    if len(args) < 2:
-        print('Error: Must define an instrument')
-    # deal with instrument from call
-    if instrument is None:
-        instrument = args[1]
+    # get instrument from iparams
+    instrument = base.IPARAMS['INSTRUMENT']
     # get parameters for this instrument
-    import time
-    start = time.time()
     params = constants.load(instrument)
-    end = time.time()
     # add inputs
     params['INPUTS'] = dict()
     for it, arg in enumerate(args[1:]):
