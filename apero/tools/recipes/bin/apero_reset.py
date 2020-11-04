@@ -165,14 +165,6 @@ def __main__(recipe, params):
         drs_reset.reset_run(params)
     else:
         WLOG(params, '', 'Not resetting run files.')
-    # ----------------------------------------------------------------------
-    # plot folder
-    if warn:
-        reset8 = drs_reset.reset_confirmation(params, 'log_fits')
-    if reset8:
-        drs_reset.reset_log_fits(params)
-    else:
-        WLOG(params, '', 'Not resetting log.fits files.')
 
     # ----------------------------------------------------------------------
     # End of main code
