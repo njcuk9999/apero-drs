@@ -142,6 +142,19 @@ def setup(name: str = 'None', instrument: str = 'None',
         recipemod = rmod
     # find recipe
     recipe, recipemod = find_recipe(name, instrument, mod=recipemod)
+    # -------------------------------------------------------------------------
+    # check that instrument is valid (i.e. input instrument is None or matches
+    #    base.IPARAMS)
+    if 'INSTRUMENT' in base.IPARAMS:
+        if not drs_text.null_text(instrument, ['None']):
+            if instrument != base.IPARAMS['INSTRUMENT']:
+                emsg = 'Cannot use {0} for instrument {1}'
+                eargs = [name, base.IPARAMS['INSTRUMENT']]
+                WLOG(None, 'error', emsg.format(*eargs))
+        else:
+            # update recipe instrument
+            recipe.instrument = str(base.IPARAMS['INSTRUMENT'])
+    # -------------------------------------------------------------------------
     # set file module and recipe module
     recipe.filemod = filemod.copy()
     recipe.recipemod = recipemod
@@ -195,45 +208,45 @@ def setup(name: str = 'None', instrument: str = 'None',
     TLOG(recipe.params, '', '')
     # -------------------------------------------------------------------------
     # need to deal with instrument set in input arguments
-    if 'INSTRUMENT' in recipe.params['INPUTS']:
-        # set instrumet
-        instrument = recipe.params['INPUTS']['INSTRUMENT']
-        # update the instrument
-        recipe.instrument = instrument
-        # quietly load DRS parameters (for setup)
-        recipe.get_drs_params(quiet=True, pid=pid, date_now=htime)
-        # update filemod and recipemod
-        pconst = constants.pload(recipe.instrument)
-        recipe.filemod = pconst.FILEMOD()
-        recipe.recipemod = pconst.RECIPEMOD()
-        # set DRS_GROUP
-        recipe.params.set('DRS_GROUP', drsgroup, source=func_name)
-        recipe.params.set('DRS_RECIPE_KIND', recipe.kind, source=func_name)
-        # need to set debug mode now
-        recipe = _set_debug_from_input(recipe, fkwargs)
-        # need to see if we are forcing directories
-        recipe = _set_force_dirs(recipe, fkwargs)
-        # do not need to display if we have special keywords
-        quiet = _quiet_keys_present(recipe, quiet, fkwargs)
-        # ---------------------------------------------------------------------
-        # display
-        if not quiet:
-            # display title
-            _display_drs_title(recipe.params, printonly=True)
-        # ---------------------------------------------------------------------
-        # display loading message
-        TLOG(recipe.params, '', 'Loading Arguments. Please wait...')
-        # ---------------------------------------------------------------------
-        # re-load index database manager
-        indexdb = drs_database.IndexDatabase(recipe.params, check=False)
-        # interface between "recipe", "fkwargs" and command line (via argparse)
-        recipe.recipe_setup(indexdb, fkwargs)
-        # ---------------------------------------------------------------------
-        # deal with options from input_parameters
-        recipe.option_manager()
-        # ---------------------------------------------------------------------
-        # clear loading message
-        TLOG(recipe.params, '', '')
+    # if 'INSTRUMENT' in recipe.params['INPUTS']:
+    #     # set instrumet
+    #     instrument = recipe.params['INPUTS']['INSTRUMENT']
+    #     # update the instrument
+    #     recipe.instrument = instrument
+    #     # quietly load DRS parameters (for setup)
+    #     recipe.get_drs_params(quiet=True, pid=pid, date_now=htime)
+    #     # update filemod and recipemod
+    #     pconst = constants.pload(recipe.instrument)
+    #     recipe.filemod = pconst.FILEMOD()
+    #     recipe.recipemod = pconst.RECIPEMOD()
+    #     # set DRS_GROUP
+    #     recipe.params.set('DRS_GROUP', drsgroup, source=func_name)
+    #     recipe.params.set('DRS_RECIPE_KIND', recipe.kind, source=func_name)
+    #     # need to set debug mode now
+    #     recipe = _set_debug_from_input(recipe, fkwargs)
+    #     # need to see if we are forcing directories
+    #     recipe = _set_force_dirs(recipe, fkwargs)
+    #     # do not need to display if we have special keywords
+    #     quiet = _quiet_keys_present(recipe, quiet, fkwargs)
+    #     # ---------------------------------------------------------------------
+    #     # display
+    #     if not quiet:
+    #         # display title
+    #         _display_drs_title(recipe.params, printonly=True)
+    #     # ---------------------------------------------------------------------
+    #     # display loading message
+    #     TLOG(recipe.params, '', 'Loading Arguments. Please wait...')
+    #     # ---------------------------------------------------------------------
+    #     # re-load index database manager
+    #     indexdb = drs_database.IndexDatabase(recipe.params, check=False)
+    #     # interface between "recipe", "fkwargs" and command line (via argparse)
+    #     recipe.recipe_setup(indexdb, fkwargs)
+    #     # ---------------------------------------------------------------------
+    #     # deal with options from input_parameters
+    #     recipe.option_manager()
+    #     # ---------------------------------------------------------------------
+    #     # clear loading message
+    #     TLOG(recipe.params, '', '')
     # -------------------------------------------------------------------------
     # create runstring and log args/kwargs/skwargs (must be done after
     #    option_manager)
