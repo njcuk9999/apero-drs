@@ -98,7 +98,6 @@ RUN_KEYS['RESET_TELLU'] = False
 RUN_KEYS['RESET_LOG'] = False
 RUN_KEYS['RESET_PLOT'] = False
 RUN_KEYS['RESET_RUN'] = False
-RUN_KEYS['RESET_LOGFITS'] = False
 RUN_KEYS['TELLURIC_TARGETS'] = None
 RUN_KEYS['SCIENCE_TARGETS'] = None
 # storage for reporting removed engineering directories
@@ -804,10 +803,6 @@ def reset_files(params):
                                              params['DRS_DATA_RUN'])
         if reset:
             drs_reset.reset_run(params)
-    if params['RESET_LOGFITS']:
-        reset = drs_reset.reset_confirmation(params, 'log_fits')
-        if reset:
-            drs_reset.reset_log_fits(params)
 
 
 def generate_run_list(params, indexdbm: IndexDatabase, runtable,

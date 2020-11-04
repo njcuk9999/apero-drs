@@ -254,28 +254,6 @@ def reset_assets(params, log=True):
     manage_databases.create_lang_database(pconst, databases)
 
 
-def reset_log_fits(params, log=True):
-    # need to find the log.fits files
-    logfiles = []
-    #   in the tmp folder
-    path = params['DRS_DATA_WORKING']
-    for root, dirs, files in os.walk(path, followlinks=True):
-        for filename in files:
-            if os.path.basename(filename) == params['DRS_LOG_FITS_NAME']:
-                logfiles.append(os.path.join(root, filename))
-    #   in the red folder
-    path = params['DRS_DATA_REDUC']
-    for root, dirs, files in os.walk(path, followlinks=True):
-        for filename in files:
-            if os.path.basename(filename) == params['DRS_LOG_FITS_NAME']:
-                logfiles.append(os.path.join(root, filename))
-    # remove these files
-    for logfile in logfiles:
-        if log:
-            WLOG(params, '', TextEntry('40-502-00004', args=[logfile]))
-        os.remove(logfile)
-
-
 def remove_all(params, path, log=True, skipfiles=None):
     # get the text dict
     textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
