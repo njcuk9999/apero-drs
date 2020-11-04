@@ -115,9 +115,6 @@ explorer.name = 'apero_explorer.py'
 explorer.instrument = __INSTRUMENT__
 explorer.description = Help['EXPLORER_DESCRIPTION']
 explorer.kind = 'tool'
-explorer.set_arg(pos=0, name='instrument', dtype='options',
-                 helpstr=Help['EXPLORER_INST_HEPL'],
-                 options=Constants['DRS_INSTRUMENTS'])
 
 # -----------------------------------------------------------------------------
 # apero_changelog.py
@@ -127,9 +124,6 @@ go_recipe.name = 'apero_go.py'
 go_recipe.instrument = __INSTRUMENT__
 go_recipe.description = 'Recipe to go to directories defined by APERO'
 go_recipe.kind = 'tool'
-go_recipe.set_arg(pos=0, name='instrument', dtype='options',
-                  helpstr='The instrument to use',
-                  options=Constants['DRS_INSTRUMENTS'])
 # TODO: Add help
 go_recipe.set_kwarg(name='--data', default=False, dtype='switch')
 go_recipe.set_kwarg(name='--raw', default=False, dtype='switch')
@@ -147,9 +141,6 @@ listing.name = 'apero_listing.py'
 listing.instrument = __INSTRUMENT__
 listing.description = Help['LISTING_DESC']
 listing.kind = 'tool'
-listing.set_arg(pos=0, name='instrument', dtype='options',
-                helpstr=Help['LISTING_HELP_INSTRUMENT'],
-                options=Constants['DRS_INSTRUMENTS'])
 listing.set_kwarg(name='--nightname', dtype=str, default='',
                   helpstr=Help['LISTING_HELP_NIGHTNAME'])
 listing.set_kwarg(name='--kind', dtype=str, default='raw',
@@ -169,9 +160,6 @@ logstats.description = Help['LOGSTAT_DESC']
 logstats.kind = 'tool'
 logstats.set_debug_plots('LOGSTATS_BAR')
 logstats.set_summary_plots()
-logstats.set_arg(pos=0, name='instrument', dtype='options',
-                 helpstr=Help['LOGSTAT_HELP_INSTRUMENT'],
-                 options=Constants['DRS_INSTRUMENTS'])
 logstats.set_kwarg(name='--nightname', dtype=str, default='',
                    helpstr=Help['LOGSTAT_HELP_NIGHTNAME'])
 logstats.set_kwarg(name='--kind', dtype=str, default='red',
@@ -207,9 +195,6 @@ remake_db.name = 'apero_mkdb.py'
 remake_db.instrument = __INSTRUMENT__
 remake_db.description = Help['REMAKE_DESC']
 remake_db.kind = 'tool'
-remake_db.set_arg(pos=0, name='instrument', dtype='options',
-                  helpstr=Help['REMAKE_HELP_INSTRUMENT'],
-                  options=Constants['DRS_INSTRUMENTS'])
 remake_db.set_kwarg(name='--kind', dtype='options',
                     options=['calibration', 'telluric'],
                     default_ref='REMAKE_DATABASE_DEFAULT',
@@ -222,9 +207,6 @@ processing.name = 'apero_processing.py'
 processing.instrument = __INSTRUMENT__
 processing.description = Help['PROCESS_DESCRIPTION']
 processing.kind = 'processing'
-processing.set_arg(pos=0, name='instrument', dtype='options',
-                   helpstr=Help['PROCESS_INST_HELP'],
-                   options=Constants['DRS_INSTRUMENTS'])
 processing.set_arg(pos=1, name='runfile', dtype=str,
                    helpstr=Help['PROCESS_RUNFILE_HELP'])
 processing.set_kwarg(name='--nightname', dtype=str, default='None',
@@ -258,9 +240,6 @@ reset.name = 'apero_reset.py'
 reset.instrument = __INSTRUMENT__
 reset.description = Help['RESET_DESCRIPTION']
 reset.kind = 'tool'
-reset.set_arg(pos=0, name='instrument', dtype='options',
-              helpstr=Help['RESET_INST_HELP'],
-              options=Constants['DRS_INSTRUMENTS'])
 reset.set_kwarg(name='--log', dtype='bool', default=True,
                 helpstr=Help['RESET_LOG_HELP'])
 reset.set_kwarg(name='--warn', dtype='bool', default=True,
@@ -273,6 +252,4 @@ validate.name = 'apero_validate.py'
 validate.instrument = __INSTRUMENT__
 validate.description = Help['VALIDATE_DESCRIPTION']
 validate.kind = 'tool'
-validate.set_arg(pos=0, name='instrument', dtype='options',
-                 helpstr=Help['VALIDATE_INST_HELP'],
-                 options=Constants['DRS_INSTRUMENTS'])
+
