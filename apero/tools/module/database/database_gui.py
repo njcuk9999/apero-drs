@@ -8,15 +8,18 @@ Created on 2020-08-2020-08-18 11:25
 @author: cook
 """
 import numpy as np
-import tkinter as tk
-from tkinter import messagebox
+import os
 import pandas as pd
 from pandastable import Table, TableModel, applyStyle
 from pandastable import dialogs
 from pathlib import Path
+import tkinter as tk
+from tkinter import messagebox
 
 from apero.base import base
+from apero.base import drs_break
 from apero.base import drs_db
+from apero.base import drs_text
 from apero.core import constants
 from apero.tools.module.database import manage_databases
 
@@ -52,9 +55,10 @@ DATABASE2['USE'] = np.ones_like(DATABASE2['X']).astype(bool)
 # Define classes
 # =============================================================================
 class DatabaseHolder:
-    def __init__(self, name, path=None, df=None):
+    def __init__(self, params, name, path=None, df=None):
         self.name = name
         self.path = path
+        self.params = params
         self.df = df
         self.empty = False
         self.changed = False
@@ -102,11 +106,61 @@ class DatabaseHolder:
         # print we are saving database
         print('Saving database {0}'.format(self.name))
 
+    def is_openable(self, rows, cols, datamodel):
+        """
+        Check whether we can open the file in this cell
+
+        :param rows: list of integers - must be length=1 to open file
+        :param cols: list of integers - must be length=1 to open file
+        :param datamodel: a data frame (taken from the data model)
+        :return:
+        """
+        # only check if len rows and columns is 1
+        if len(rows) != 1 or len(cols) != 1:
+            return False, None
+        # get value
+        value = datamodel.iloc[0, 0]
+        # test for string
+        if not isinstance(value, str):
+            return False, None
+        # test for fits
+        if value.endswith('.fits'):
+            # deal with different databases
+            if self.name == 'calib':
+                path = Path(self.params['DRS_CALIB_DB']).joinpath(value)
+            elif self.name == 'tellu':
+                path = Path(self.params['DRS_TELLU_DB']).joinpath(value)
+            elif self.name == 'index':
+                path = Path(value)
+            else:
+                return False, None
+            if path.exists():
+                return True, [path, 'fits']
+            else:
+                return False, None
+        #
+        else:
+            return False, None
+
+    def load_file(self, rows, cols, datamodel):
+        # double check we have a fits file
+        cond, out = self.is_openable(rows, cols, datamodel)
+        # deal with not being a openable file
+        if not cond or out is None:
+            return
+        # get outputs
+        path, kind = out
+        # open fits file
+        if kind == 'fits':
+            # open ds9
+            open_ds9(self.params, path)
+
 
 class DatabaseTable(Table):
-    def __init__(self, parent=None, **kwargs):
+    def __init__(self, parent=None, database_holder: DatabaseHolder=None,
+                 **kwargs):
         Table.__init__(self, parent, **kwargs)
-        self.table_changed = False
+        self.db_hold = database_holder
 
     def popupMenu(self, event, rows=None, cols=None, outside=None):
         """
@@ -117,6 +171,8 @@ class DatabaseTable(Table):
         :param outside:
         :return:
         """
+        datamodel = self.getSelectedDataFrame()
+
         defaultactions = {
             "Copy": lambda: self.copy(rows, cols),
             "Undo": lambda: self.undo(),
@@ -136,6 +192,7 @@ class DatabaseTable(Table):
             "Filter Rows": self.queryBar,
             "New": self.new,
             "Open": self.load,
+            "Open File": lambda: self.db_hold.load_file(rows, cols, datamodel),
             "Save": self.save,
             "Save As": self.saveAs,
             "Import Text/CSV": lambda: self.importCSV(dialog=True),
@@ -151,18 +208,8 @@ class DatabaseTable(Table):
             "Copy Table": self.copyTable,
             "Find/Replace": self.findText}
 
-        main = ["Copy", "Undo", "Fill Down",  # "Fill Right",
-                "Clear Data", "Set Color"]
-        general = ["Select All", "Filter Rows",
-                   "Show as Text", "Table Info", "Preferences"]
-
-        def add_commands(fieldtype):
-            """Add commands to popup menu for column type and specific cell"""
-            functions = self.columnactions[fieldtype]
-            for f in list(functions.keys()):
-                func = getattr(self, functions[f])
-                popupmenu.add_command(label=f, command=lambda: func(row, col))
-            return
+        main = ["Copy", "Undo", "Open File"]
+        general = ["Select All", "Filter Rows"]
 
         popupmenu = tk.Menu(self, tearoff=0)
 
@@ -176,30 +223,35 @@ class DatabaseTable(Table):
             col = self.get_col_clicked(event)
             coltype = self.model.getColumnType(col)
 
-            def add_defaultcommands():
-                """now add general actions for all cells"""
-                for _action in main:
-                    cond1 = action == 'Fill Down'
-                    cond2 = (rows is None or len(rows) <= 1)
-                    cond3 = action == 'Fill Right'
-                    cond4 = (cols is None or len(cols) <= 1)
-                    if cond1 and cond2:
-                        continue
-                    if cond3 and cond4:
-                        continue
-                    if action == 'Undo' and self.prevdf is None:
-                        continue
-                    else:
-                        popupmenu.add_command(label=action,
-                                              command=defaultactions[action])
-                return
-
+            # add column actions
             if coltype in self.columnactions:
-                add_commands(coltype)
-            add_defaultcommands()
+                functions = self.columnactions[coltype]
+                for f in list(functions.keys()):
+                    func = getattr(self, functions[f])
+                    popupmenu.add_command(label=f, command=lambda: func(row, col))
 
-        for action in general:
-            popupmenu.add_command(label=action, command=defaultactions[action])
+            # add default commands
+            for _action in main:
+                cond1 = _action == 'Fill Down'
+                cond2 = (rows is None or len(rows) <= 1)
+                cond3 = _action == 'Fill Right'
+                cond4 = (cols is None or len(cols) <= 1)
+                cond5, _ = self.db_hold.is_openable(rows, cols, datamodel)
+                if cond1 and cond2:
+                    continue
+                if cond3 and cond4:
+                    continue
+                if _action == 'Open File' and not cond5:
+                    continue
+                if _action == 'Undo' and self.prevdf is None:
+                    continue
+                else:
+                    popupmenu.add_command(label=_action,
+                                          command=defaultactions[_action])
+        # add general commands
+        for _action in general:
+            popupmenu.add_command(label=_action,
+                                  command=defaultactions[_action])
 
         popupmenu.bind("<FocusOut>", popupFocusOut)
         popupmenu.focus_set()
@@ -214,13 +266,14 @@ class DatabaseTable(Table):
     def handleCellEntry(self, row, col):
         """Callback for cell entry"""
         super().handleCellEntry(row, col)
-        self.table_changed = True
+        self.prevdf = self.model.df.copy()
+
 
 
 class DatabaseExplorer(tk.Frame):
 
     def __init__(self, parent=None, databases=None):
-
+        self._titletxt = 'APERO Database Explorer'
         # deal with database
         if databases is None:
             database1 = DatabaseHolder('DATABASE1', df=DATABASE1)
@@ -239,7 +292,7 @@ class DatabaseExplorer(tk.Frame):
         # set default window size
         self.main.geometry('1024x512+512+256')
         # set title
-        self.main.title('APERO Database Explorer')
+        self.main.title(self._titletxt)
         # deal with window closes
         self.main.protocol('WM_DELETE_WINDOW', self.on_exit)
         # define frames and tk objects
@@ -266,7 +319,7 @@ class DatabaseExplorer(tk.Frame):
         # load new database
         databasehldr.load_dataframe()
         # remake the new dataframe
-        self.make_table(databasehldr.df)
+        self.make_table(databasehldr)
         # make menu
         self.menu()
         # cannot make menu until table defined
@@ -289,8 +342,8 @@ class DatabaseExplorer(tk.Frame):
         # deal with a change in value
         self.database_option.trace('w', self.change_table)
 
-    def make_table(self, dataframe):
-        self.current_dataframe = dataframe
+    def make_table(self, database_holder):
+        self.current_dataframe = database_holder.df
         self.has_data = True
         self.table_frame = tk.Frame(self.main)
         self.table_frame.pack(fill=tk.BOTH, expand=1)
@@ -298,7 +351,7 @@ class DatabaseExplorer(tk.Frame):
             self.current_dataframe = EMPTY_DATABASE
             self.has_data = False
         kwargs = dict(dataframe=self.current_dataframe, showtoolbar=False,
-                      showstatusbar=True)
+                      showstatusbar=True, database_holder=database_holder)
         self.table = DatabaseTable(self.table_frame, **kwargs)
         self.table.show()
 
@@ -306,7 +359,7 @@ class DatabaseExplorer(tk.Frame):
         # do not use args
         _ = args
         # do not ask if no changes were made
-        if self.table.table_changed:
+        if self.table.prevdf is not None:
             self.table_change = True
             # need to make sure the previous table has been marked as changed
             self.databases[self.current_database_name].changed = True
@@ -323,14 +376,20 @@ class DatabaseExplorer(tk.Frame):
         self.current_database_name = databasehldr.name
         # destroy frame
         self.table_frame.destroy()
+        self.table.close()
         # load new database
         databasehldr.load_dataframe()
         # remake the new dataframe
-        self.make_table(databasehldr.df)
+        self.make_table(databasehldr)
+        # remake the menu bar
+        self.menubar.destroy()
+        self.menu()
+        # cannot make menu until table defined
+        self.main.config(menu=self.menubar)
 
     def update_database(self):
         # update table_change
-        if self.table.table_changed:
+        if self.table.prevdf is not None:
             self.table_change = True
             # need to make sure the previous table has been marked as changed
             self.databases[self.current_database_name].changed = True
@@ -365,7 +424,7 @@ class DatabaseExplorer(tk.Frame):
 
     def refresh_database(self):
         # see if we really want to refresh
-        if self.table.table_changed or self.table_change:
+        if self.table.prevdf is not None or self.table_change:
             refresh = self.refresh_warning()
         else:
             refresh = True
@@ -412,8 +471,7 @@ class DatabaseExplorer(tk.Frame):
             "Refresh from Database": self.refresh_database,
             "Save to Database": self.update_database}
 
-        filecommands = ['Open', 'Import Text/CSV', 'Save', 'Save As', 'Export',
-                        'Preferences']
+        filecommands = ['Open', 'Import Text/CSV', 'Save', 'Save As', 'Export']
         editcommands = ['Undo Last Change', 'Copy Table', 'Find/Replace',
                         'Filter Rows', 'Add Row(s)', 'Add Column(s)',
                         'Select All']
@@ -428,8 +486,8 @@ class DatabaseExplorer(tk.Frame):
         def createSubMenu(parent, label, commands):
             menu = tk.Menu(parent, tearoff=0)
             self.menubar.add_cascade(label=label, menu=menu)
-            for action in commands:
-                menu.add_command(label=action, command=defaultactions[action])
+            for _action in commands:
+                menu.add_command(label=_action, command=defaultactions[_action])
             return menu
 
         # create sub menus
@@ -476,6 +534,42 @@ class DatabaseExplorer(tk.Frame):
         else:
             self.main.destroy()
 
+    def set_icon(self):
+        # first database
+        databasehldr = self.databases[list(self.databases.keys())[0]]
+        # get pacakge name
+        package = databasehldr.params['DRS_PACKAGE']
+        # construct relative path
+        relpath = 'tools/resources/images/spirou_logo.png'
+        # get abspath
+        abspath = drs_break.get_relative_folder(package, relpath)
+        # load image
+        imgicon = tk.PhotoImage(file=abspath)
+        # set icon
+        self.master.tk.call('wm', 'iconphoto', self.master._w, imgicon)
+
+
+# =============================================================================
+# Define worker functions
+# =============================================================================
+def open_ds9(params, path):
+    # try to find ds9 path
+    if 'DRS_DS9_PATH' in params:
+        ds9_path = params['DRS_DS9_PATH']
+    else:
+        ds9_path = 'ds9'
+    if drs_text.null_text(ds9_path, ['None', '']):
+        ds9_path = 'ds9'
+    # construct command
+    command = '{0} {1} &'.format(ds9_path, os.path.abspath(path))
+    # run command
+    try:
+        os.system(command)
+    except Exception as e:
+        print('Cannot run command:')
+        print('\t{0}'.format(command))
+        print('\tError {0}: {1}'.format(type(e), e))
+
 
 # =============================================================================
 # Start of code
@@ -492,7 +586,7 @@ if __name__ == "__main__":
     # push into database holder
     _databases = dict()
     for _key in _paths:
-        _databases[_key] = DatabaseHolder(_key, path=_paths[_key])
+        _databases[_key] = DatabaseHolder(_params, _key, path=_paths[_key])
     # construct app
     app = DatabaseExplorer(databases=_databases)
     # launch the app
