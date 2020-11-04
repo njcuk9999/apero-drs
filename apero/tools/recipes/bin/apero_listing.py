@@ -47,7 +47,7 @@ TextDict = lang.core.drs_lang_text.TextDict
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(instrument=None, **kwargs):
+def main(**kwargs):
     """
     Main function for apero_listing.py
 
@@ -62,7 +62,7 @@ def main(instrument=None, **kwargs):
     :rtype: dict
     """
     # assign function calls (must add positional)
-    fkwargs = dict(instrument=instrument, **kwargs)
+    fkwargs = dict(**kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
     recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)

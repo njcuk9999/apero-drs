@@ -49,7 +49,7 @@ MASTER_PREFIX = 'MASTER_'
 #     2) fkwargs         (i.e. fkwargs=dict(arg1=arg1, arg2=arg2, **kwargs)
 #     3) config_main  outputs value   (i.e. None, pp, reduced)
 # Everything else is controlled from recipe_definition
-def main(instrument=None, **kwargs):
+def main(**kwargs):
     """
     Main function for apero_mkdb.py
 
@@ -64,10 +64,10 @@ def main(instrument=None, **kwargs):
     :rtype: dict
     """
     # assign function calls (must add positional)
-    fkwargs = dict(instrument=instrument, **kwargs)
+    fkwargs = dict(**kwargs)
     # ----------------------------------------------------------------------
     # deal with command line inputs / function call inputs
-    recipe, params = drs_startup.setup(__NAME__, instrument, fkwargs)
+    recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs)
     # solid debug mode option
     if kwargs.get('DEBUG0000', False):
         return recipe, params
@@ -158,12 +158,12 @@ def __main__(recipe, params):
         wargs = [it + 1, len(db_files), os.path.basename(db_file)]
         WLOG(params, 'info', TextEntry('40-505-00001', args=wargs))
         # ------------------------------------------------------------------
-        if not hasattr(filemod, file_set_name):
-            eargs = [name, file_set_name, filemod, mainname]
+        if not hasattr(filemod.get(), file_set_name):
+            eargs = [name, file_set_name, filemod.get(), mainname]
             WLOG(params, 'error', TextEntry('00-505-00001', args=eargs))
             file_set = None
         else:
-            file_set = getattr(filemod, file_set_name)
+            file_set = getattr(filemod.get(), file_set_name)
         # ------------------------------------------------------------------
         # skip default master files
         if os.path.basename(db_file).startswith(MASTER_PREFIX):
