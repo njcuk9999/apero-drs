@@ -714,8 +714,10 @@ class Database:
 
         :return:
         """
+        # construct backup path
+        backup_path = str(self.path).replace('.db', 'backup.db')
         # make backup database
-        backup_conn = sqlite3.connect(self.path.replace('.db', 'backup.db'))
+        backup_conn = sqlite3.connect(backup_path)
         # copy main into backup database
         with backup_conn:
             self._conn_.backup(backup_conn)
