@@ -812,7 +812,7 @@ def create_shell_scripts(params, all_params):
         # run the validation script (just to print splash)
         comment = ('# run the validation script for {0}'
                    ''.format(instrument))
-        command = 'python {0} {1}'.format(valid_path, instrument)
+        command = 'python {0}'.format(valid_path)
         # add to out lines
         out_lines.append(comment + '\n')
         out_lines.append(command + '\n')
@@ -855,7 +855,7 @@ def clean_install(params, all_params):
     # add to environment
     add_paths(all_params)
     # construct reset command
-    toolmod.main(instrument=instrument, quiet=True, warn=cleanwarn)
+    toolmod.main(quiet=True, warn=cleanwarn)
     # return all params
     return all_params
 
