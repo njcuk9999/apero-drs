@@ -1190,8 +1190,8 @@ if __name__ == "__main__":
 
     # for now delete database
     _columns, _ctypes = _pconst.OBJECT_DB_COLUMNS()
-    _objdbm.database.delete_table('MAIN')
-    _objdbm.database.add_table('MAIN', _columns, _ctypes)
+    _objdbm.database.delete_table('OBJECT')
+    _objdbm.database.add_table('OBJECT', _columns, _ctypes)
     _objdbm.load_db()
     _outdict = dict()
 
