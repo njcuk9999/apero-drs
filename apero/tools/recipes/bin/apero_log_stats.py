@@ -9,9 +9,12 @@ Created on 2019-07-26 at 09:39
 
 @author: cook
 """
+from astropy.table import Table
+
 from apero.base import base
 from apero import lang
 from apero.core.core import drs_log
+from apero.core.core import drs_database
 from apero.core.utils import drs_startup
 from apero.tools.module.testing import drs_log_stats as logstats
 
@@ -107,44 +110,13 @@ def __main__(recipe, params):
     recipe.plot.set_location(0)
 
     # ----------------------------------------------------------------------
-    # Get log files
+    # Open log database
     # ----------------------------------------------------------------------
-    # get log files
-    logfiles, nightnames = logstats.get_log_files(params, recipe, path,
-                                                  nightname)
-    # ----------------------------------------------------------------------
-    # Open log files
-    # ----------------------------------------------------------------------
-    mastertable = logstats.make_log_table(params, logfiles, nightnames,
-                                          recipename, since, before)
-
-    # deal with saving master table
-    logstats.save_master(params, mastertable, path, recipename, makemaster)
-
-    # ----------------------------------------------------------------------
-    # print master stats
-    # ----------------------------------------------------------------------
-    # Deal with printing stats
-    if mastertable is None:
-        if recipename is not None:
-            # TODO: Add to language database
-            wargs = [recipename]
-            wmsg = 'No entries found for recipe="{0}"'
-            WLOG(params, 'warning', wmsg.format(*wargs))
-        else:
-            # TODO: Add to language database
-            WLOG(params, 'warning', 'No entries found.')
-    else:
-        if recipename is not None:
-            # TODO: Add to language database
-            wmsg = '{0} entries found for recipe="{1}"'
-            wargs = [len(mastertable), recipename]
-            WLOG(params, '', wmsg.format(*wargs))
-        else:
-            # TODO: Add to language database
-            wmsg = '{0} entries found.'
-            wargs = [len(mastertable)]
-            WLOG(params, '', wmsg.format(*wargs))
+    logdbm = drs_database.LogDatabase(params)
+    # get all entries
+    master_dataframe = logdbm.get_entries('*')
+    # convert dataframe to astropy table
+    mastertable = Table.from_pandas(master_dataframe)
 
     # ----------------------------------------------------------------------
     # print stats
