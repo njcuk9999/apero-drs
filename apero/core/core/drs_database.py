@@ -97,6 +97,7 @@ class DatabaseManager:
         self.pconst = constants.pload(self.instrument)
         # set name
         self.name = 'DatabaseManager'
+        self.kind = 'None'
         # set parameters
         self.dbpath = None
         self.dbname = None
@@ -191,7 +192,7 @@ class DatabaseManager:
             margs = [self.name, self.path]
             WLOG(self.params, 'info', TextEntry('40-006-00005', args=margs))
             # load database
-            self.database = drs_db.Database(self.path)
+            self.database = drs_db.database_wrapper(self.kind)
 
     def __str__(self):
         """
@@ -258,8 +259,9 @@ class CalibrationDatabase(DatabaseManager):
         DatabaseManager.__init__(self, params)
         # set name
         self.name = 'calibration'
+        self.kind = 'CALIB'
         # set path
-        self.set_path(kind='CALIB', check=check)
+        self.set_path(kind=self.kind, check=check)
         # set database directory
         self.filedir = Path(str(self.params['DRS_CALIB_DB']))
 
@@ -323,7 +325,7 @@ class CalibrationDatabase(DatabaseManager):
         # ------------------------------------------------------------------
         # add entry to database
         values = [key, fiber, is_super, filename, human_time, unix_time, used]
-        self.database.add_row(values, 'MAIN', commit=True)
+        self.database.add_row(values,  self.kind, commit=True)
 
     def get_calib_entry(self, columns: str, key: str,
                         fiber: Union[str, None] = None,
@@ -401,7 +403,7 @@ class CalibrationDatabase(DatabaseManager):
         # if we have one entry just get the tuple back
         if nentries == 1:
             # do sql query
-            entries = self.database.get(columns, 'MAIN', **sql)
+            entries = self.database.get(columns, self.kind, **sql)
             # return filename
             if len(entries) == 1:
                 if len(colnames) == 1:
@@ -415,7 +417,7 @@ class CalibrationDatabase(DatabaseManager):
             # return array for ease
             sql['return_array'] = True
             # do sql query
-            entries = self.database.get(columns, 'MAIN', **sql)
+            entries = self.database.get(columns, self.kind, **sql)
             # return one list
             if len(entries) == 0:
                 return []
@@ -426,7 +428,7 @@ class CalibrationDatabase(DatabaseManager):
             # return as pandas table
             sql['return_pandas'] = True
             # do sql query
-            entries = self.database.get(columns, 'MAIN', **sql)
+            entries = self.database.get(columns, self.kind, **sql)
             # return pandas table
             return entries
 
@@ -565,8 +567,9 @@ class TelluricDatabase(DatabaseManager):
         DatabaseManager.__init__(self, params)
         # set name
         self.name = 'telluric'
+        self.kind = 'TELLU'
         # set path
-        self.set_path(kind='TELLU', check=check)
+        self.set_path(kind=self.kind, check=check)
         # set database directory
         self.filedir = Path(str(self.params['DRS_TELLU_DB']))
 
@@ -668,7 +671,7 @@ class TelluricDatabase(DatabaseManager):
         # add entry to database
         values = [key, fiber, is_super, filename, human_time, unix_time,
                   objname, airmass, tau_water, tau_others, used]
-        self.database.add_row(values, 'MAIN', commit=True)
+        self.database.add_row(values, self.kind, commit=True)
 
     def get_tellu_entry(self, columns: str, key: str,
                         fiber: Union[str, None] = None,
@@ -771,7 +774,7 @@ class TelluricDatabase(DatabaseManager):
         # if we have one entry just get the tuple back
         if nentries == 1:
             # do sql query
-            entries = self.database.get(columns, 'MAIN', **sql)
+            entries = self.database.get(columns, self.kind, **sql)
             # return filename
             if len(entries) == 1:
                 if len(colnames) == 1:
@@ -786,7 +789,7 @@ class TelluricDatabase(DatabaseManager):
             # return array for ease
             sql['return_array'] = True
             # do sql query
-            entries = self.database.get(columns, 'MAIN', **sql)
+            entries = self.database.get(columns, self.kind, **sql)
             # return one list
             if len(entries) == 0:
                 return []
@@ -797,7 +800,7 @@ class TelluricDatabase(DatabaseManager):
             # return as pandas table
             sql['return_pandas'] = True
             # do sql query
-            entries = self.database.get(columns, 'MAIN', **sql)
+            entries = self.database.get(columns, self.kind, **sql)
             # return pandas table
             return entries
 
@@ -1179,8 +1182,9 @@ class IndexDatabase(DatabaseManager):
         DatabaseManager.__init__(self, params)
         # set name
         self.name = 'index'
+        self.kind = 'INDEX'
         # set path
-        self.set_path(kind='INDEX', check=check)
+        self.set_path(kind=self.kind, check=check)
         # store whether an update has been done
         self.update_entries_params = []
 
@@ -1293,14 +1297,14 @@ class IndexDatabase(DatabaseManager):
             condition += ' AND DIRECTORY == "{0}"'.format(directory)
             condition += ' AND PATH == "{0}"'.format(path)
             # update row in database
-            self.database.set('*', values, condition=condition, table='MAIN',
+            self.database.set('*', values, condition=condition, table=self.kind,
                               commit=commit)
         else:
             # add new entry to database
             values = [str(path), str(directory), str(basename), str(kind),
                       float(last_modified), str(runstring)]
             values += hvalues + [used, rawfix]
-            self.database.add_row(values, 'MAIN', commit=commit)
+            self.database.add_row(values, self.kind, commit=commit)
 
     def get_entries(self, columns: str = '*',
                     directory: Union[str, None] = None,
@@ -1391,7 +1395,7 @@ class IndexDatabase(DatabaseManager):
         # if we have one entry just get the tuple back
         if nentries == 1:
             # do sql query
-            entries = self.database.get(columns, 'MAIN', **sql)
+            entries = self.database.get(columns, self.kind, **sql)
             # return filename
             if len(entries) == 1:
                 if len(colnames) == 1:
@@ -1408,7 +1412,7 @@ class IndexDatabase(DatabaseManager):
             # return array for ease
             sql['return_array'] = True
             # do sql query
-            entries = self.database.get(columns, 'MAIN', **sql)
+            entries = self.database.get(columns, self.kind, **sql)
             # return one list
             if len(entries) == 0:
                 return []
@@ -1419,7 +1423,7 @@ class IndexDatabase(DatabaseManager):
             # return as pandas table
             sql['return_pandas'] = True
             # do sql query
-            entries = self.database.get(columns, 'MAIN', **sql)
+            entries = self.database.get(columns, self.kind, **sql)
             # return pandas table
             return entries
 
@@ -1846,8 +1850,9 @@ class LogDatabase(DatabaseManager):
         DatabaseManager.__init__(self, params)
         # set name
         self.name = 'log'
+        self.kind = 'LOG'
         # set path
-        self.set_path(kind='LOG', check=check)
+        self.set_path(kind=self.kind, check=check)
 
     def remove_pids(self, pid: str):
         """
@@ -1858,7 +1863,7 @@ class LogDatabase(DatabaseManager):
         # set up condition
         condition = 'PID=="{0}"'.format(pid)
         # delete rows that match this criteria
-        self.database.delete_rows('MAIN', condition=condition)
+        self.database.delete_rows(self.kind, condition=condition)
 
     def add_entries(self, recipe: Union[str, None] = None,
                     rkind: Union[str, None] = None,
@@ -1964,7 +1969,7 @@ class LogDatabase(DatabaseManager):
                 except Exception as _:
                     values.append('None')
         # add row to database
-        self.database.add_row(values, 'MAIN', commit=commit)
+        self.database.add_row(values, self.kind, commit=commit)
 
 
     def get_entries(self, columns: str = '*',
@@ -2041,7 +2046,7 @@ class LogDatabase(DatabaseManager):
         # if we have one entry just get the tuple back
         if nentries == 1:
             # do sql query
-            entries = self.database.get(columns, 'MAIN', **sql)
+            entries = self.database.get(columns, self.kind, **sql)
             # return filename
             if len(entries) == 1:
                 if len(colnames) == 1:
@@ -2058,7 +2063,7 @@ class LogDatabase(DatabaseManager):
             # return array for ease
             sql['return_array'] = True
             # do sql query
-            entries = self.database.get(columns, 'MAIN', **sql)
+            entries = self.database.get(columns, self.kind, **sql)
             # return one list
             if len(entries) == 0:
                 return []
@@ -2069,7 +2074,7 @@ class LogDatabase(DatabaseManager):
             # return as pandas table
             sql['return_pandas'] = True
             # do sql query
-            entries = self.database.get(columns, 'MAIN', **sql)
+            entries = self.database.get(columns, self.kind, **sql)
             # return pandas table
             return entries
 
@@ -2121,8 +2126,9 @@ class ObjectDatabase(DatabaseManager):
         DatabaseManager.__init__(self, params)
         # set name
         self.name = 'object'
+        self.kind = 'OBJECT'
         # set path
-        self.set_path(kind='OBJECT', check=check)
+        self.set_path(kind=self.kind, check=check)
 
     def get_entries(self, columns: str = '*',
                     nentries: Union[int, None] = None,
@@ -2177,7 +2183,7 @@ class ObjectDatabase(DatabaseManager):
         # if we have one entry just get the tuple back
         if nentries == 1:
             # do sql query
-            entries = self.database.get(columns, 'MAIN', **sql)
+            entries = self.database.get(columns, self.kind, **sql)
             # return filename
             if len(entries) == 1:
                 if len(colnames) == 1:
@@ -2192,7 +2198,7 @@ class ObjectDatabase(DatabaseManager):
             # return array for ease
             sql['return_array'] = True
             # do sql query
-            entries = self.database.get(columns, 'MAIN', **sql)
+            entries = self.database.get(columns, self.kind, **sql)
             # return one list
             if len(entries) == 0:
                 return []
@@ -2203,7 +2209,7 @@ class ObjectDatabase(DatabaseManager):
             # return as pandas table
             sql['return_pandas'] = True
             # do sql query
-            entries = self.database.get(columns, 'MAIN', **sql)
+            entries = self.database.get(columns, self.kind, **sql)
             # return pandas table
             return entries
 
@@ -2286,11 +2292,11 @@ class ObjectDatabase(DatabaseManager):
         # deal with updating entry
         if (gaiaids is not None) and (len(gaiaids) > 0):
             # update row in database
-            self.database.set('*', values, condition=condition, table='MAIN',
+            self.database.set('*', values, condition=condition, table=self.kind,
                               commit=commit)
         # else add row to database (as new row)
         else:
-            self.database.add_row(values, 'MAIN', commit=commit)
+            self.database.add_row(values, self.kind, commit=commit)
 
 
 class LanguageDatabase(DatabaseManager):
@@ -2312,8 +2318,9 @@ class LanguageDatabase(DatabaseManager):
         DatabaseManager.__init__(self, params)
         # set name
         self.name = 'language'
+        self.kind = 'LANG'
         # set path
-        self.set_path(kind='LANG', check=check)
+        self.set_path(kind=self.kind, check=check)
 
 
 # =============================================================================
