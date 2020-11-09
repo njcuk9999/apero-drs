@@ -17,6 +17,12 @@ from typing import Any, Union, List
 
 from apero.base import base
 
+# try to import mysql
+try:
+    import mysql.connector as mysql
+except Exception as e:
+    mysql = None
+
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -90,41 +96,25 @@ class DatabaseError(DatabaseException):
         return emsg.format(self.message, self.path, self.func_name)
 
 
-# def database_wrapper(path, verbose):
-#
-#     os.enivon['DRS_UCONFIG']
-#
-#     if os.enivon['DRS_DB_MODE'] == 'sqlite3':
-#         return Database(path, verbose)
-#     else:
-#         return Database1(path, verbose)
-
-
 class Database:
-    # A wrapper for an SQLite database.
-    def __init__(self, path: str, verbose: bool = False):
-        """
-        Create an object for reading and writing to a SQLite database.
+    """
+    Create an object for reading and writing to a database.
+    This should be abstracted for use with different database types
+    sqlite or MySQL
 
-        :param path: the location on disk of the database.
-                     This may be :memory: to create a temporary in-memory
-                     database which will not be saved when the program closes.
-        """
-        func_name = __NAME__ + 'Database.__init__()'
+    :param path: the location on disk of the database.
+                 This may be :memory: to create a temporary in-memory
+                 database which will not be saved when the program closes.
+    """
+    def __init__(self, *args, verbose: bool = False, **kwargs):
         # store whether we want to print steps
         self._verbose_ = verbose
         # storage for tables
         self.tables = []
         # storage for database path
-        self.path = path
-        # try to connect the the SQL3 database
-        try:
-            self._conn_ = sqlite3.connect(self.path, timeout=TIMEOUT)
-        except Exception as e:
-            raise DatabaseError(message=str(e), errorobj=e, path=self.path,
-                                func_name=func_name)
-        # update table list
-        self._update_table_list_()
+        self.path = None
+        # have the conn
+        self._conn_ = None
 
     def __getstate__(self) -> dict:
         """
@@ -169,14 +159,14 @@ class Database:
     def __str__(self):
         """
         Standard string return
-        :return: 
+        :return:
         """
         return 'Database[{0}]'.format(self.path)
 
     def __repr__(self):
         """
         Standard string representation
-        :return: 
+        :return:
         """
         return self.__str__()
 
@@ -227,26 +217,9 @@ class Database:
         :param command: str, The SQL command to be run.
         :return:
         """
-        # start a counter
-        time_count = 0
-        # while counter is less than maximum wait time
-        while time_count < MAXWAIT:
-            try:
-                cursor.execute(command)
-                result = cursor.fetchall()
-                return result
-            # catch operational error
-            except sqlite3.OperationalError as e:
-                # catch the operational error: database is locked
-                if 'database is locked' in str(e):
-                    time_count += 1
-                    # sleep 1 second before trying to execute command against
-                    time.sleep(1)
-                else:
-                    raise e
-        # if we get to this point raise operational error
-        emsg = 'database locked for > {0} s'.format(MAXWAIT)
-        raise sqlite3.OperationalError(emsg)
+        cursor.execute(command)
+        result = cursor.fetchall()
+        return result
 
     def count(self, table: Union[None, str] = None,
               condition: Union[None, str] = None) -> int:
@@ -615,7 +588,6 @@ class Database:
         if commit:
             self.commit()
 
-
     # table methods
     def add_table(self, name: str, field_names: List[str],
                   field_types: List[Union[str, type]]):
@@ -858,6 +830,143 @@ class Database:
                                 func_name=func_name)
         # return dataframe
         return df
+
+
+class SQLiteDatabase(Database):
+    # A wrapper for an SQLite database.
+    def __init__(self, path: str, verbose: bool = False):
+        """
+        Create an object for reading and writing to a SQLite database.
+
+        :param path: the location on disk of the database.
+                     This may be :memory: to create a temporary in-memory
+                     database which will not be saved when the program closes.
+        """
+        # set function name
+        func_name = __NAME__ + 'SQLiteDatabase.__init__()'
+        # call to super class
+        super().__init__(verbose=verbose)
+        # storage for database path
+        self.host = None
+        self.user = None
+        self.path = path
+        # try to connect the the SQL3 database
+        try:
+            self._conn_ = sqlite3.connect(self.path, timeout=TIMEOUT)
+        except Exception as e:
+            raise DatabaseError(message=str(e), errorobj=e, path=self.path,
+                                func_name=func_name)
+        # update table list
+        self._update_table_list_()
+
+    def __str__(self):
+        """
+        Standard string return
+        :return: 
+        """
+        return 'SQLiteDatabase[{0}]'.format(self.path)
+
+    def _execute(self, cursor: sqlite3.Cursor, command: str):
+        """
+        Dummy function to try to catch database locked errors
+        (up to a max wait time)
+
+        :param cursor: sqlite cursor (self._conn_.cursor())
+        :param command: str, The SQL command to be run.
+        :return:
+        """
+        # start a counter
+        time_count = 0
+        # while counter is less than maximum wait time
+        while time_count < MAXWAIT:
+            try:
+                cursor.execute(command)
+                result = cursor.fetchall()
+                return result
+            # catch operational error
+            except sqlite3.OperationalError as e:
+                # catch the operational error: database is locked
+                if 'database is locked' in str(e):
+                    time_count += 1
+                    # sleep 1 second before trying to execute command against
+                    time.sleep(1)
+                else:
+                    raise e
+        # if we get to this point raise operational error
+        emsg = 'database locked for > {0} s'.format(MAXWAIT)
+        raise sqlite3.OperationalError(emsg)
+
+
+class MySQLDatabase(Database):
+    # A wrapper for an SQLite database.
+    def __init__(self, host: str, user: str, passwd: str,
+                 verbose: bool = False):
+        """
+        Create an object for reading and writing to a SQLite database.
+
+        :param path: the location on disk of the database.
+                     This may be :memory: to create a temporary in-memory
+                     database which will not be saved when the program closes.
+        """
+        # set function name
+        func_name = __NAME__ + 'MySQLDatabase.__init__()'
+        # deal with mysql not being imported
+        if mysql is None:
+            emsg = ('Cannot import mysql.connector '
+                    '\n\t Please install with "pip install '
+                    'mysql-connector-python')
+            raise DatabaseError(message=emsg, errorobj=ImportError(emsg),
+                                path=self.path, func_name=func_name)
+        # call to super class
+        super().__init__(verbose=verbose)
+        # storage for database path
+        self.host = host
+        self.user = user
+        self.path = '{0}@{1}'.format(self.user, self.host)
+        # try to connect the the SQL3 database
+        try:
+            self._conn_ = mysql.connect(host=self.host, user=self.user,
+                                        passwd=passwd)
+        except Exception as e:
+            raise DatabaseError(message=str(e), errorobj=e, path=self.path,
+                                func_name=func_name)
+        # update table list
+        self._update_table_list_()
+
+    def __str__(self):
+        """
+        Standard string return
+        :return:
+        """
+        return 'MySQLDatabase[{0}]'.format(self.path)
+
+
+# =============================================================================
+# Define functions
+# =============================================================================
+def database_wrapper(kind: str, verbose: bool = False) -> Database:
+    # get database parameters
+    dparams = base.DPARAMS
+    # if we are using mysql database
+    if dparams['USE_MYSQL']:
+        # get mysql params
+        sparams = dparams['MYSQL']
+        # return the MySQLDatabase instance
+        return MySQLDatabase(host=sparams['HOST'],
+                             user=sparams['USER'],
+                             passwd=sparams['PASSWD'],
+                             verbose=verbose)
+    # else default to sqlite3
+    else:
+        sparams = dparams['SQLITE3']
+        # get the path
+        if kind in sparams:
+            path = sparams[kind]['PATH']
+        else:
+            emsg = 'Database kind "{0}" invalid'.format(kind)
+            raise DatabaseError(emsg)
+        # return the SQLiteDatabase instance
+        return SQLiteDatabase(path, verbose)
 
 
 def _decode_value(value: Any) -> str:
