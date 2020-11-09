@@ -121,20 +121,20 @@ def create_calibration_database(params: ParamDict, pconst: PseudoConst,
     calibdbm = databases['calib']
     # -------------------------------------------------------------------------
     # make database
-    calibdb = Database(calibdbm.path)
+    calibdb = drs_db.database_wrapper(calibdbm.kind)
     # -------------------------------------------------------------------------
     # remove table if it already exists
-    if 'MAIN' in calibdb.tables:
-        calibdb.delete_table('MAIN')
+    if calibdbm.kind in calibdb.tables:
+        calibdb.delete_table(calibdbm.kind)
     # add main table
-    calibdb.add_table('MAIN', columns, ctypes)
+    calibdb.add_table(calibdbm.kind, columns, ctypes)
     # ---------------------------------------------------------------------
     # construct reset file
     reset_abspath = os.path.join(asset_dir, reset_path, calibdbm.dbreset)
     # get rows from reset file
     reset_entries = pd.read_csv(reset_abspath, skipinitialspace=True)
     # add rows from reset text file
-    calibdb.add_from_pandas(reset_entries, 'MAIN')
+    calibdb.add_from_pandas(reset_entries, calibdbm.kind)
     # -------------------------------------------------------------------------
     return calibdb
 
@@ -156,13 +156,13 @@ def create_telluric_database(pconst: PseudoConst,
     telludbm = databases['tellu']
     # -------------------------------------------------------------------------
     # make database
-    telludb = Database(telludbm.path)
+    telludb = drs_db.database_wrapper(telludbm.kind)
     # -------------------------------------------------------------------------
     # remove table if it already exists
-    if 'MAIN' in telludb.tables:
-        telludb.delete_table('MAIN')
+    if telludbm.kind in telludb.tables:
+        telludb.delete_table(telludbm.kind)
     # add main table
-    telludb.add_table('MAIN', columns, ctypes)
+    telludb.add_table(telludbm.kind, columns, ctypes)
     # -------------------------------------------------------------------------
     return telludb
 
@@ -184,13 +184,13 @@ def create_index_database(pconst: PseudoConst,
     indexdbm = databases['index']
     # -------------------------------------------------------------------------
     # make database
-    indexdb = Database(indexdbm.path)
+    indexdb = drs_db.database_wrapper(indexdbm.kind)
     # -------------------------------------------------------------------------
     # remove table if it already exists
-    if 'MAIN' in indexdb.tables:
-        indexdb.delete_table('MAIN')
+    if indexdbm.kind in indexdb.tables:
+        indexdb.delete_table(indexdbm.kind)
     # add main table
-    indexdb.add_table('MAIN', columns, ctypes)
+    indexdb.add_table(indexdbm.kind, columns, ctypes)
     # -------------------------------------------------------------------------
     return indexdb
 
@@ -212,13 +212,13 @@ def create_log_database(pconst: PseudoConst,
     logdbm = databases['log']
     # -------------------------------------------------------------------------
     # make database
-    logdb = Database(logdbm.path)
+    logdb = drs_db.database_wrapper(logdbm.kind)
     # -------------------------------------------------------------------------
     # remove table if it already exists
-    if 'MAIN' in logdb.tables:
-        logdb.delete_table('MAIN')
+    if logdbm.kind in logdb.tables:
+        logdb.delete_table(logdbm.kind)
     # add main table
-    logdb.add_table('MAIN', columns, ctypes)
+    logdb.add_table(logdbm.kind, columns, ctypes)
     # -------------------------------------------------------------------------
     return logdb
 
@@ -244,20 +244,20 @@ def create_object_database(params: ParamDict, pconst: PseudoConst,
     objectdbm = databases['object']
     # -------------------------------------------------------------------------
     # make database
-    objectdb = Database(objectdbm.path)
+    objectdb = drs_db.database_wrapper(objectdbm.kind)
     # -------------------------------------------------------------------------
     # remove table if it already exists
-    if 'MAIN' in objectdb.tables:
-        objectdb.delete_table('MAIN')
+    if objectdbm.kind in objectdb.tables:
+        objectdb.delete_table(objectdbm.kind)
     # add main table
-    objectdb.add_table('MAIN', columns, ctypes)
+    objectdb.add_table(objectdbm.kind, columns, ctypes)
     # ---------------------------------------------------------------------
     # construct reset file
     reset_abspath = os.path.join(asset_dir, reset_path, objectdbm.dbreset)
     # get rows from reset file
     reset_entries = pd.read_csv(reset_abspath, skipinitialspace=True)
     # add rows from reset text file
-    objectdb.add_from_pandas(reset_entries, 'MAIN')
+    objectdb.add_from_pandas(reset_entries, objectdbm.kind)
     # -------------------------------------------------------------------------
     return objectdb
 
@@ -282,12 +282,12 @@ def make_object_reset(params: ParamDict):
     objdbm = drs_database.ObjectDatabase(params)
     objdbm.load_db()
     # remove table if it already exists
-    if 'MAIN' in objdbm.database.tables:
-        objdbm.database.delete_table('MAIN')
+    if 'OBJECT' in objdbm.database.tables:
+        objdbm.database.delete_table('OBJECT')
     # get columns and ctypes from pconst
     columns, ctypes = pconst.OBJECT_DB_COLUMNS()
     # add main table
-    objdbm.database.add_table('MAIN', columns, ctypes)
+    objdbm.database.add_table('OBJECT', columns, ctypes)
     # get google sheets
     gtable = gen_pp.get_google_sheet(params['OBJ_LIST_GOOGLE_SHEET_URL'],
                                      params['OBJ_LIST_GOOGLE_SHEET_WNUM'])
@@ -317,10 +317,10 @@ def make_object_reset(params: ParamDict):
 #     # make database
 #     paramsdb = Database(params_abspath)
 #     # -------------------------------------------------------------------------
-#     if 'MAIN' in paramsdb.tables:
-#         paramsdb.delete_table('MAIN')
+#     if 'PARAM' in paramsdb.tables:
+#         paramsdb.delete_table('PARAM')
 #     # add main table
-#     paramsdb.add_table('MAIN', columns, ctypes)
+#     paramsdb.add_table('PARAM', columns, ctypes)
 #     # -------------------------------------------------------------------------
 #     return paramsdb
 
@@ -342,12 +342,12 @@ def create_lang_database(pconst: PseudoConst,
     langdbm = databases['lang']
     # -------------------------------------------------------------------------
     # make database
-    langdb = Database(langdbm.path)
+    langdb = drs_db.database_wrapper(langdbm.kind)
     # -------------------------------------------------------------------------
-    if 'MAIN' in langdb.tables:
-        langdb.delete_table('MAIN')
+    if langdbm.kind in langdb.tables:
+        langdb.delete_table(langdbm.kind)
     # add main table
-    langdb.add_table('MAIN', columns, ctypes)
+    langdb.add_table(langdbm.kind, columns, ctypes)
     # -------------------------------------------------------------------------
     return langdb
 

@@ -89,15 +89,12 @@ def __main__(recipe, params):
 
     # get databases
     dbs = manage_databases.list_databases(params)
-    # get paths
-    paths = dict()
-    for key in dbs:
-        paths[key] = Path(dbs[key].path)
     # push into database holder
     databases = dict()
-    for key in paths:
-        databases[key] = database_gui.DatabaseHolder(params, key,
-                                                     path=paths[key])
+    for key in dbs:
+        databases[key] = database_gui.DatabaseHolder(params, name=key,
+                                                     kind=dbs[key].kind,
+                                                     path=Path(dbs[key].path))
     # construct app
     app = database_gui.DatabaseExplorer(databases=databases)
     # set icon?
