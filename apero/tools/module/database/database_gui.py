@@ -55,8 +55,9 @@ DATABASE2['USE'] = np.ones_like(DATABASE2['X']).astype(bool)
 # Define classes
 # =============================================================================
 class DatabaseHolder:
-    def __init__(self, params, name, path=None, df=None):
+    def __init__(self, params, name, kind, path=None, df=None):
         self.name = name
+        self.kind = kind
         self.path = path
         self.params = params
         self.df = df
@@ -79,10 +80,11 @@ class DatabaseHolder:
                 self.empty = True
         elif str(self.path).endswith('.db'):
             # start database
-            database = Database(self.path)
+            database = drs_db.database_wrapper(self.kind)
             # try to get database (as a pandas table)
             try:
-                dataframe = database.get('*', table='MAIN', return_pandas=True)
+                dataframe = database.get('*', table=self.kind,
+                                         return_pandas=True)
             except drs_db.DatabaseError as _:
                 dataframe = []
             if len(dataframe) == 0:
@@ -99,7 +101,7 @@ class DatabaseHolder:
         if df is None:
             return
         # start database
-        database = Database(self.path)
+        database = drs_db.database_wrapper(self.kind)
         # push dataframe to replace SQL table
         database.add_from_pandas(df, if_exists='replace', index=False,
                                  commit=True)
@@ -269,15 +271,14 @@ class DatabaseTable(Table):
         self.prevdf = self.model.df.copy()
 
 
-
 class DatabaseExplorer(tk.Frame):
 
     def __init__(self, parent=None, databases=None):
         self._titletxt = 'APERO Database Explorer'
         # deal with database
         if databases is None:
-            database1 = DatabaseHolder('DATABASE1', df=DATABASE1)
-            database2 = DatabaseHolder('DATABASE2', df=DATABASE2)
+            database1 = DatabaseHolder(None, 'DATABASE1', 'None', df=DATABASE1)
+            database2 = DatabaseHolder(None, 'DATABASE2', 'None', df=DATABASE2)
             self.databases = dict()
             self.databases[database1.name] = database1
             self.databases[database2.name] = database2
@@ -579,14 +580,11 @@ if __name__ == "__main__":
     _params = constants.load(base.IPARAMS['INSTRUMENT'])
     # get databases
     _dbs = manage_databases.list_databases(_params)
-    # get paths
-    _paths = dict()
-    for key in _dbs:
-        _paths[key] = Path(_dbs[key].path)
     # push into database holder
     _databases = dict()
-    for _key in _paths:
-        _databases[_key] = DatabaseHolder(_params, _key, path=_paths[_key])
+    for _key in _dbs:
+        _databases[_key] = DatabaseHolder(_params, _key, _dbs[_key].kind,
+                                          path=Path(_dbs[_key].path))
     # construct app
     app = DatabaseExplorer(databases=_databases)
     # launch the app
