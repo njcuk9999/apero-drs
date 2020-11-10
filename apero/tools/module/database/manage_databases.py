@@ -121,7 +121,7 @@ def create_calibration_database(params: ParamDict, pconst: PseudoConst,
     calibdbm = databases['calib']
     # -------------------------------------------------------------------------
     # make database
-    calibdb = drs_db.database_wrapper(calibdbm.kind)
+    calibdb = drs_db.database_wrapper(calibdbm.kind, calibdbm.path)
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if calibdbm.kind in calibdb.tables:
@@ -156,7 +156,7 @@ def create_telluric_database(pconst: PseudoConst,
     telludbm = databases['tellu']
     # -------------------------------------------------------------------------
     # make database
-    telludb = drs_db.database_wrapper(telludbm.kind)
+    telludb = drs_db.database_wrapper(telludbm.kind, telludbm.path)
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if telludbm.kind in telludb.tables:
@@ -184,7 +184,7 @@ def create_index_database(pconst: PseudoConst,
     indexdbm = databases['index']
     # -------------------------------------------------------------------------
     # make database
-    indexdb = drs_db.database_wrapper(indexdbm.kind)
+    indexdb = drs_db.database_wrapper(indexdbm.kind, indexdbm.path)
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if indexdbm.kind in indexdb.tables:
@@ -212,7 +212,7 @@ def create_log_database(pconst: PseudoConst,
     logdbm = databases['log']
     # -------------------------------------------------------------------------
     # make database
-    logdb = drs_db.database_wrapper(logdbm.kind)
+    logdb = drs_db.database_wrapper(logdbm.kind, logdbm.path)
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if logdbm.kind in logdb.tables:
@@ -244,7 +244,7 @@ def create_object_database(params: ParamDict, pconst: PseudoConst,
     objectdbm = databases['object']
     # -------------------------------------------------------------------------
     # make database
-    objectdb = drs_db.database_wrapper(objectdbm.kind)
+    objectdb = drs_db.database_wrapper(objectdbm.kind, objectdbm.path)
     # -------------------------------------------------------------------------
     # remove table if it already exists
     if objectdbm.kind in objectdb.tables:
@@ -342,7 +342,7 @@ def create_lang_database(pconst: PseudoConst,
     langdbm = databases['lang']
     # -------------------------------------------------------------------------
     # make database
-    langdb = drs_db.database_wrapper(langdbm.kind)
+    langdb = drs_db.database_wrapper(langdbm.kind, langdbm.path)
     # -------------------------------------------------------------------------
     if langdbm.kind in langdb.tables:
         langdb.delete_table(langdbm.kind)
