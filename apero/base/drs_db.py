@@ -18,9 +18,10 @@ from typing import Any, Union, List
 from apero.base import base
 
 # try to import mysql
+# noinspection PyBroadException
 try:
     import mysql.connector as mysql
-except Exception as e:
+except Exception as _:
     mysql = None
 
 # =============================================================================
@@ -38,6 +39,7 @@ Time = base.AstropyTime
 # timeout parameter in seconds
 TIMEOUT = 20.0
 MAXWAIT = 1000
+
 
 # =============================================================================
 # Define classes
@@ -432,7 +434,8 @@ class Database:
         """
         # set function name
         func_name = __NAME__ + '.Database.set()'
-
+        # infer table name
+        table = self._infer_table_(table)
         # deal with columns = '*'
         if columns == '*':
             columns = self.colnames('*', table=table)
@@ -443,8 +446,6 @@ class Database:
             columns = [columns]
             if not isinstance(values, list):
                 values = [values]
-        # infer table name
-        table = self._infer_table_(table)
         # storage for set string
         set_str = []
         # make sure columns and values have the same length
@@ -555,7 +556,6 @@ class Database:
         if commit:
             self.commit()
 
-
     def delete_rows(self, table: Union[None, str] = None,
                     condition: Union[str, None] = None,
                     commit: bool = True):
@@ -608,6 +608,8 @@ class Database:
                         [str, float, "REAL"])
         """
         func_name = __NAME__ + '.Database.add_table()'
+        # fix table name
+        name = _table_proxy(name)
         # translator between python types and SQL types
         translator = {str: "TEXT", int: "INTEGER", float: "REAL"}
         # storage for fields
@@ -657,6 +659,8 @@ class Database:
                      See Database.tables for a list of eligible tables.
         """
         func_name = __NAME__ + '.Database.delete_table()'
+        # fix table name
+        name = _table_proxy(name)
         # make sure table is a string
         if not isinstance(name, str):
             emsg = 'table "name" must be a string'
@@ -675,7 +679,12 @@ class Database:
         :param new_name: The new name of the table. This must not be already
                          taken or an SQL keyword.
         """
+        # set function name
         _ = __NAME__ + '.Database.rename_table()'
+        # fix table names
+        old_name = _table_proxy(old_name)
+        new_name = _table_proxy(new_name)
+        # execute a change in table name
         self.execute("ALTER TABLE {} RENAME TO {}".format(old_name, new_name))
         self.commit()
 
@@ -754,12 +763,15 @@ class Database:
                       (only if we have one table)
         :return:
         """
+        # fix table names
+        table = _table_proxy(table)
+        # deal with no table
         if table is None:
             if len(self.tables) != 1:
                 emsg = ('The are multiple tables in the database. You must '
                         'pick one -- table cannot be None')
                 raise DatabaseError(message=emsg, path=self.path)
-            return self.tables[0]
+            return _table_proxy(self.tables[0])
         return table
 
     def _update_table_list_(self):
@@ -775,7 +787,13 @@ class Database:
         #  names from these (and update self.tables)
         self.tables = []
         for _table in _tables:
-            self.tables.append(_table[0])
+            # remove _TABLE suffix
+            if _table[0].endswith('_TABLE'):
+                tablename = _table[0][:-6]
+            else:
+                tablename = _table[0]
+            # append table name
+            self.tables.append(tablename)
 
     def commit(self):
         """
@@ -904,9 +922,11 @@ class MySQLDatabase(Database):
         """
         Create an object for reading and writing to a SQLite database.
 
-        :param path: the location on disk of the database.
-                     This may be :memory: to create a temporary in-memory
-                     database which will not be saved when the program closes.
+        :param host: str, the mysql host name (user@host)
+        :param user: str, the mysql user name (user@host)
+        :param passwd: str, the password for user@host mysql connection
+        :param verbose: bool, whether to verbosely print out database
+                        functionality
         """
         # set function name
         func_name = __NAME__ + 'MySQLDatabase.__init__()'
@@ -944,9 +964,12 @@ class MySQLDatabase(Database):
 # =============================================================================
 # Define functions
 # =============================================================================
-def database_wrapper(kind: str, verbose: bool = False) -> Database:
+def database_wrapper(kind: str, path: Union[Path, str, None],
+                     verbose: bool = False) -> Database:
     # get database parameters
     dparams = base.DPARAMS
+    # make sure kind is upper case
+    kind = kind.upper()
     # if we are using mysql database
     if dparams['USE_MYSQL']:
         # get mysql params
@@ -960,9 +983,7 @@ def database_wrapper(kind: str, verbose: bool = False) -> Database:
     else:
         sparams = dparams['SQLITE3']
         # get the path
-        if kind in sparams:
-            path = sparams[kind]['PATH']
-        else:
+        if kind not in sparams:
             emsg = 'Database kind "{0}" invalid'.format(kind)
             raise DatabaseError(emsg)
         # return the SQLiteDatabase instance
@@ -999,6 +1020,24 @@ def _decode_value(value: Any) -> str:
     # else push it in as a string
     else:
         return '"{0}"'.format(value)
+
+
+def _table_proxy(table: Union[str, None]) -> Union[str, None]:
+    """
+    Make sure table name is not sql keyword
+
+    :param table: str, the table name
+
+    :return: str, the updated table name
+    """
+    if table == 'MAIN':
+        return 'MAIN'
+    if table is None:
+        return None
+    if '_TABLE' not in table:
+        return table + '_TABLE'
+    else:
+        return table
 
 
 # =============================================================================
