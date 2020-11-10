@@ -98,7 +98,10 @@ class DatabaseManager:
         # set name
         self.name = 'DatabaseManager'
         self.kind = 'None'
+        self.dbtype = None
         # set parameters
+        self.dbhost = None
+        self.dbuser = None
         self.dbpath = None
         self.dbname = None
         self.dbreset = None
@@ -113,8 +116,7 @@ class DatabaseManager:
         """
         Set the path for the database
 
-        :param dirname: str, either a valid Path or parameter in params
-        :param filename: str, the filename or parameter in params
+        :param kind: str, the kind of datatable
         :param check: bool, if True the filename has to exist
         :return:
         """
@@ -127,46 +129,59 @@ class DatabaseManager:
             return
         # load database settings
         self.database_settings(kind=kind)
+
         # ---------------------------------------------------------------------
-        # deal with directory
+        # deal with path for SQLITE3
         # ---------------------------------------------------------------------
-        # get directory name
-        dirname = str(self.dbpath)
-        # deal with dir name being a parameter key (multiple depths allowed)
-        while dirname in self.params:
-            dirname = self.params[dirname]
-        # deal with dirname still being a parameter
-        # noinspection PyBroadException
-        try:
-            dirname = Path(dirname)
-        except Exception as _:
-            # log error: Directory {0} invalid for database: {1}
-            eargs = [dirname, self.name, func_name]
-            WLOG(self.params, 'error', TextEntry('00-002-00016', args=eargs))
-            return
-        # check for directory
-        if not dirname.exists() and check:
-            # log error: Directory {0} does not exist (database = {1})
-            eargs = [dirname, self.name, func_name]
-            WLOG(self.params, 'error', TextEntry('00-002-00017', args=eargs))
-            return
+        if self.dbtype == 'SQLITE3':
+            # get directory name
+            dirname = str(self.dbpath)
+            # deal with dir name being a parameter key (multiple depths allowed)
+            while dirname in self.params:
+                dirname = self.params[dirname]
+            # deal with dirname still being a parameter
+            # noinspection PyBroadException
+            try:
+                dirname = Path(dirname)
+            except Exception as _:
+                # log error: Directory {0} invalid for database: {1}
+                eargs = [dirname, self.name, func_name]
+                emsg = TextEntry('00-002-00016', args=eargs)
+                WLOG(self.params, 'error', emsg)
+                return
+            # check for directory
+            if not dirname.exists() and check:
+                # log error: Directory {0} does not exist (database = {1})
+                eargs = [dirname, self.name, func_name]
+                emsg = TextEntry('00-002-00017', args=eargs)
+                WLOG(self.params, 'error', emsg)
+                return
+            # -----------------------------------------------------------------
+            # add filename
+            # -----------------------------------------------------------------
+            # get directory name
+            filename = str(self.dbname)
+            # deal with filename being a parameter key (multiple depths allowed)
+            while filename in self.params:
+                filename = self.params[filename]
+            # add to dirname
+            abspath = dirname.joinpath(filename)
+            if not abspath.exists() and check:
+                # log error: Directory {0} does not exist (database = {1})
+                eargs = [abspath, self.name, func_name]
+                emsg = TextEntry('00-002-00018', args=eargs)
+                WLOG(self.params, 'error', emsg)
+                return
+            # set path
+            self.path = abspath
         # ---------------------------------------------------------------------
-        # add filename
+        # deal with path for MySQL (only for printing)
         # ---------------------------------------------------------------------
-        # get directory name
-        filename = str(self.dbname)
-        # deal with filename being a parameter key (multiple depths allowed)
-        while filename in self.params:
-            filename = self.params[filename]
-        # add to dirname
-        abspath = dirname.joinpath(filename)
-        if not abspath.exists() and check:
-            # log error: Directory {0} does not exist (database = {1})
-            eargs = [abspath, self.name, func_name]
-            WLOG(self.params, 'error', TextEntry('00-002-00018', args=eargs))
-            return
-        # set path
-        self.path = abspath
+        elif self.dbtype == 'MYSQL':
+            self.path = '{0}@{1}'.format(self.dbuser, self.dbhost)
+        else:
+            emsg = 'Database type "{0}" invalid'
+            WLOG(self.params, 'error', emsg.format(self.dbtype))
 
     def load_db(self, check: bool = False):
         """
@@ -186,13 +201,11 @@ class DatabaseManager:
         # deal with no instrument
         if self.instrument == 'None':
             return
-        # load database only if path is set
-        if self.path is not None:
-            # log that we are loading database
-            margs = [self.name, self.path]
-            WLOG(self.params, 'info', TextEntry('40-006-00005', args=margs))
-            # load database
-            self.database = drs_db.database_wrapper(self.kind)
+        # log that we are loading database
+        margs = [self.name, self.path]
+        WLOG(self.params, 'info', TextEntry('40-006-00005', args=margs))
+        # load database
+        self.database = drs_db.database_wrapper(self.kind, self.path)
 
     def __str__(self):
         """
@@ -217,24 +230,25 @@ class DatabaseManager:
     def database_settings(self, kind: str):
         # load database yaml file
         ddict = base.DPARAMS
-        # ----------------------------------------------------------------------
-        # SQLITE3 settings
-        # ----------------------------------------------------------------------
-        if ddict['USE_SQLITE3']:
-            # force kind to upper
-            kind = kind.upper()
-            # kind must be one of the following
-            if kind not in ['CALIB', 'TELLU', 'INDEX', 'LOG', 'OBJECT', 'LANG']:
-                raise ValueError('kind=={0} invalid'.format(kind))
-            # set name/path/reset based on ddict
-            self.dbname = ddict['SQLITE3'][kind]['NAME']
-            self.dbpath = ddict['SQLITE3'][kind]['PATH']
-            if drs_text.null_text(ddict['SQLITE3'][kind]['RESET'], ['None']):
-                self.dbreset = None
-            else:
-                self.dbreset = ddict['SQLITE3'][kind]['RESET']
+        # get correct sub-dictionary
+        if ddict['USE_MYSQL']:
+            sdict = ddict['MYSQL']
+            self.dbtype = 'MYSQL'
+            self.dbhost = sdict['HOST']
+            self.dbuser = sdict['USER']
         else:
-            NotImplemented('MySQL not implemented yet')
+            sdict = ddict['SQLITE3']
+            self.dbtype = 'SQLITE3'
+        # kind must be one of the following
+        if kind not in ['CALIB', 'TELLU', 'INDEX', 'LOG', 'OBJECT', 'LANG']:
+            raise ValueError('kind=={0} invalid'.format(kind))
+        # set name/path/reset based on ddict
+        self.dbname = sdict[kind]['NAME']
+        self.dbpath = sdict[kind]['PATH']
+        if drs_text.null_text(sdict[kind]['RESET'], ['None']):
+            self.dbreset = None
+        else:
+            self.dbreset = sdict[kind]['RESET']
 
 
 # =============================================================================
@@ -325,7 +339,7 @@ class CalibrationDatabase(DatabaseManager):
         # ------------------------------------------------------------------
         # add entry to database
         values = [key, fiber, is_super, filename, human_time, unix_time, used]
-        self.database.add_row(values,  self.kind, commit=True)
+        self.database.add_row(values, self.kind, commit=True)
 
     def get_calib_entry(self, columns: str, key: str,
                         fiber: Union[str, None] = None,
@@ -361,6 +375,7 @@ class CalibrationDatabase(DatabaseManager):
         # deal with having the possibility of more than one column
         colnames = self.database.colnames(columns)
         # set up sql kwargs
+        sql['table'] = self.kind
         sql['sort_by'] = None
         sql['sort_descending'] = True
         # condition for key
@@ -719,6 +734,7 @@ class TelluricDatabase(DatabaseManager):
         # set up kwargs from database query
         sql = dict()
         # set up sql kwargs
+        sql['table'] = self.kind
         sql['sort_by'] = None
         sql['sort_descending'] = True
         # condition for key
@@ -1207,7 +1223,8 @@ class IndexDatabase(DatabaseManager):
                      path/directory/filename (unless filename is an absolute
                      path) - note in this case directory should still be
                      filled correctly (for database)
-
+        :param runstring: str, the command line arg representation of this
+                          indexs recipe run
         :param hkeys: dictionary of strings, for each instrument a set
                             of header keys is index - add any that are set to
                             here (see pseudo_constants.INDEX_HEADER_KEYS)
@@ -1219,6 +1236,7 @@ class IndexDatabase(DatabaseManager):
         :param rawfix: int or None, if set overrides the default "rawfix"
                        parameter
         :param force_dir: str or None, if set overrides our "kind" path
+        :param commit: bool, if True commitrs
 
         :return: None - adds entry to index database
         """
@@ -1265,6 +1283,7 @@ class IndexDatabase(DatabaseManager):
         #  keys - if not there set to 'None'
         for h_it, hkey in enumerate(rkeys):
             if hkey in hkeys:
+                # noinspection PyBroadException
                 try:
                     # get data type
                     dtype = rtypes[h_it]
@@ -1343,11 +1362,12 @@ class IndexDatabase(DatabaseManager):
         if self.database is None:
             self.load_db()
         # deal with having the possibility of more than one column
-        colnames = self.database.colnames(columns)
+        colnames = self.database.colnames(columns, table=self.kind)
         # ------------------------------------------------------------------
         # set up kwargs from database query
         sql = dict()
         # set up sql kwargs
+        sql['table'] = self.kind
         sql['sort_by'] = None
         sql['sort_descending'] = True
         # sort by last modified
@@ -1377,13 +1397,14 @@ class IndexDatabase(DatabaseManager):
 
             for h_it, hkey in enumerate(rkeys):
                 if hkey in hkeys:
+                    # noinspection PyBroadException
                     try:
                         # get data type
                         dtype = rtypes[h_it]
                         # try to case and add to condition
                         hargs = [hkey, dtype(hkeys[hkey])]
                         sql['condition'] += ' AND {0} == "{1}"'.format(*hargs)
-                    except Exception as e:
+                    except Exception as _:
                         wargs = [self.name, hkey, hkeys[hkey],
                                  rtypes[h_it], func_name]
                         wmsg = TextEntry('10-002-00003', args=wargs)
@@ -1395,7 +1416,7 @@ class IndexDatabase(DatabaseManager):
         # if we have one entry just get the tuple back
         if nentries == 1:
             # do sql query
-            entries = self.database.get(columns, self.kind, **sql)
+            entries = self.database.get(columns, **sql)
             # return filename
             if len(entries) == 1:
                 if len(colnames) == 1:
@@ -1406,13 +1427,13 @@ class IndexDatabase(DatabaseManager):
                 return None
         # ------------------------------------------------------------------
         # deal with having the possibility of more than one column
-        colnames = self.database.colnames(columns)
+        colnames = self.database.colnames(columns, table=self.kind)
         # if we have one column return a list
         if len(colnames) == 1:
             # return array for ease
             sql['return_array'] = True
             # do sql query
-            entries = self.database.get(columns, self.kind, **sql)
+            entries = self.database.get(columns, **sql)
             # return one list
             if len(entries) == 0:
                 return []
@@ -1423,7 +1444,7 @@ class IndexDatabase(DatabaseManager):
             # return as pandas table
             sql['return_pandas'] = True
             # do sql query
-            entries = self.database.get(columns, self.kind, **sql)
+            entries = self.database.get(columns, **sql)
             # return pandas table
             return entries
 
@@ -1456,12 +1477,14 @@ class IndexDatabase(DatabaseManager):
         :param suffix: str, the suffix (i.e. extension of filenames) - filters
                        to only set these files
         :param force_dir: str or None, if set overrides our "kind" path
+        :param force_update: bool, if True forces the update even if database
+                             thinks it is up-to-date
 
         :return: None - updates the index database
         """
         # set function
-        func_name = display_func(self.params, 'update_entries', __NAME__,
-                                 self.classname)
+        _ = display_func(self.params, 'update_entries', __NAME__,
+                         self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
             return None
@@ -1507,8 +1530,6 @@ class IndexDatabase(DatabaseManager):
         # ---------------------------------------------------------------------
         # deal with no files
         if len(reqfiles) == 0:
-            # set condition that we have updated
-            self.has_update_entries = True
             # return
             return
         # add required files to the database
@@ -1537,11 +1558,10 @@ class IndexDatabase(DatabaseManager):
         # finally commit all entries
         self.database.commit()
 
-
     def update_header_fix(self, recipe):
         # set function name
-        func_name = display_func(self.params, 'update_objname', __NAME__,
-                                 self.classname)
+        _ = display_func(self.params, 'update_objname', __NAME__,
+                         self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
             return None
@@ -1587,7 +1607,6 @@ class IndexDatabase(DatabaseManager):
             # update this row (should only be one row based on condition)
             self.database.set(columns, values, condition=condition)
 
-
     def deal_with_filename(self, kind: str, directory: Union[str, None] = None,
                            filename: Union[str, None] = None,
                            fullpath: Union[str, None] = None,
@@ -1601,8 +1620,6 @@ class IndexDatabase(DatabaseManager):
         checks that file exists and returns basename/filename/path in correct
         format for database
 
-        :param params: ParamDict, the parameter dictionary of constants
-        :param name: str, the name of the database used in
         :param kind: str, either 'raw', 'red', 'tmp', 'calib', 'tellu', 'asset'
                  this determines the path of the file i.e.
                  path/directory/filename (unless filename is an absolute
@@ -1961,6 +1978,7 @@ class LogDatabase(DatabaseManager):
             if drs_text.null_text(keys[it], ['None', '']):
                 values.append('None')
             else:
+                # noinspection PyBroadException
                 try:
                     # get data type
                     dtype = coltypes[it]
@@ -1970,7 +1988,6 @@ class LogDatabase(DatabaseManager):
                     values.append('None')
         # add row to database
         self.database.add_row(values, self.kind, commit=commit)
-
 
     def get_entries(self, columns: str = '*',
                     wdirs: Union[List[str], None] = None,
@@ -1983,12 +2000,8 @@ class LogDatabase(DatabaseManager):
         filter by specific columns)
 
         :param columns: str, the columns to return ('*' for all)
-        :param directory: str or None, if set filters results by directory name
-        :param filename: str or None, if set filters results by filename
-        :param kind: str or None, if set filters results by kind
-        :param hkeys: dict or None, if set is a dictionary of strings
-                            where each string is one of the index database
-                            header keys (see pseudo_constants.INDEX_HEADER_KEYS)
+        :param wdirs: list of strings - if set a list of allowed directories
+        :param bdirs: list of strings - if set a list of disallowed directories
         :param nentries: int or None, if set limits the number of entries to get
                          back - sorted newest to oldest
         :param condition: str or None, if set the SQL query to add
@@ -1998,8 +2011,7 @@ class LogDatabase(DatabaseManager):
                  a np.ndarray, else returns a pandas table
         """
         # set function
-        func_name = display_func(self.params, 'get_entries', __NAME__,
-                                 self.classname)
+        _ = display_func(self.params, 'get_entries', __NAME__, self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
             return None
@@ -2012,6 +2024,7 @@ class LogDatabase(DatabaseManager):
         # set up kwargs from database query
         sql = dict()
         # set up sql kwargs
+        sql['table'] = self.kind
         sql['sort_by'] = None
         sql['sort_descending'] = True
         # sort by last modified
@@ -2046,7 +2059,7 @@ class LogDatabase(DatabaseManager):
         # if we have one entry just get the tuple back
         if nentries == 1:
             # do sql query
-            entries = self.database.get(columns, self.kind, **sql)
+            entries = self.database.get(columns, **sql)
             # return filename
             if len(entries) == 1:
                 if len(colnames) == 1:
@@ -2063,7 +2076,7 @@ class LogDatabase(DatabaseManager):
             # return array for ease
             sql['return_array'] = True
             # do sql query
-            entries = self.database.get(columns, self.kind, **sql)
+            entries = self.database.get(columns, **sql)
             # return one list
             if len(entries) == 0:
                 return []
@@ -2074,7 +2087,7 @@ class LogDatabase(DatabaseManager):
             # return as pandas table
             sql['return_pandas'] = True
             # do sql query
-            entries = self.database.get(columns, self.kind, **sql)
+            entries = self.database.get(columns, **sql)
             # return pandas table
             return entries
 
@@ -2139,12 +2152,6 @@ class ObjectDatabase(DatabaseManager):
         filter by specific columns)
 
         :param columns: str, the columns to return ('*' for all)
-        :param directory: str or None, if set filters results by directory name
-        :param filename: str or None, if set filters results by filename
-        :param kind: str or None, if set filters results by kind
-        :param hkeys: dict or None, if set is a dictionary of strings
-                            where each string is one of the index database
-                            header keys (see pseudo_constants.INDEX_HEADER_KEYS)
         :param nentries: int or None, if set limits the number of entries to get
                          back - sorted newest to oldest
         :param condition: str or None, if set the SQL query to add
@@ -2167,6 +2174,7 @@ class ObjectDatabase(DatabaseManager):
         # set up kwargs from database query
         sql = dict()
         # set up sql kwargs
+        sql['table'] = self.kind
         sql['sort_by'] = None
         sql['sort_descending'] = True
         # sort by last modified
@@ -2183,7 +2191,7 @@ class ObjectDatabase(DatabaseManager):
         # if we have one entry just get the tuple back
         if nentries == 1:
             # do sql query
-            entries = self.database.get(columns, self.kind, **sql)
+            entries = self.database.get(columns, **sql)
             # return filename
             if len(entries) == 1:
                 if len(colnames) == 1:
@@ -2198,7 +2206,7 @@ class ObjectDatabase(DatabaseManager):
             # return array for ease
             sql['return_array'] = True
             # do sql query
-            entries = self.database.get(columns, self.kind, **sql)
+            entries = self.database.get(columns, **sql)
             # return one list
             if len(entries) == 0:
                 return []
@@ -2209,7 +2217,7 @@ class ObjectDatabase(DatabaseManager):
             # return as pandas table
             sql['return_pandas'] = True
             # do sql query
-            entries = self.database.get(columns, self.kind, **sql)
+            entries = self.database.get(columns, **sql)
             # return pandas table
             return entries
 
@@ -2217,7 +2225,7 @@ class ObjectDatabase(DatabaseManager):
                   gaia_id: str, gaia_id_s: str,
                   ra: float, ra_s: str, dec: float, dec_s: str,
                   pmra: Union[float, None] = None, pmra_s: str = 'None',
-                  pmde: Union[float, None] = None, pmde_s: str ='None',
+                  pmde: Union[float, None] = None, pmde_s: str = 'None',
                   plx: Union[float, None] = None, plx_s: str = 'None',
                   rv: Union[float, None] = None, rv_s: str = 'None',
                   gmag: Union[float, None] = None, gmag_s: str = 'None',
@@ -2233,7 +2241,7 @@ class ObjectDatabase(DatabaseManager):
         :param objname: str, the primary object name (SIMBAD name)
         :param objname_s: str, source of objname
         :param gaia_id: str, the Gaia ID (from Gaia DR2)
-        :param gaia_id: str, source of Gaia ID
+        :param gaia_id_s: str, source of Gaia ID
         :param ra: float, the Gaia right ascension of an object (in degrees)
         :param ra_s: str, source of ra
         :param dec: float, the Gaia declination of an object (in degrees)
@@ -2259,6 +2267,7 @@ class ObjectDatabase(DatabaseManager):
         :param aliases: list of strings or string, any other names this
                         target can have
         :param aliases_s: str, the source of aliases
+        :param used: int, whether to use entries or not (normally ste manually)
         :param commit: bool, if True commit, if False need to commit later
                        (i.e. commit a batch of executions)
 
