@@ -80,7 +80,7 @@ class DatabaseHolder:
                 self.empty = True
         elif str(self.path).endswith('.db'):
             # start database
-            database = drs_db.database_wrapper(self.kind)
+            database = drs_db.database_wrapper(self.kind, self.path)
             # try to get database (as a pandas table)
             try:
                 dataframe = database.get('*', table=self.kind,
@@ -101,7 +101,7 @@ class DatabaseHolder:
         if df is None:
             return
         # start database
-        database = drs_db.database_wrapper(self.kind)
+        database = drs_db.database_wrapper(self.kind, self.path)
         # push dataframe to replace SQL table
         database.add_from_pandas(df, if_exists='replace', index=False,
                                  commit=True)
