@@ -64,8 +64,18 @@ GOOGLE_BASE_URL = ('https://docs.google.com/spreadsheets/d/{}/gviz/'
                    'tq?tqx=out:csv&sheet={}')
 # unit aliases
 masyr = uu.mas / uu.yr
-# gaia col name
-GAIA_COL_NAME = 'GAIADR2ID'
+# gaia col name in google sheet
+GL_GAIA_COL_NAME = 'GAIADR2ID'
+# object col name in google sheet
+GL_OBJ_COL_NAME = 'OBJECT'
+# alias col name in google sheet
+GL_ALIAS_COL_NAME = 'ALIASES'
+# rv col name in google sheet
+GL_RV_COL_NAME = 'RV'
+GL_RVREF_COL_NAME = 'RV_REF'
+# teff col name in google sheet
+GL_TEFF_COL_NAME = 'TEFF'
+GL_TEFFREF_COL_NAME = 'TEFF_REF'
 
 
 # =============================================================================
@@ -263,7 +273,7 @@ class AstroObject(object):
         # deal with no input_gaiaid
         if self.input_gaiaid is not None:
             # condition condition
-            condition = '{0}=="{1}"'.format(GAIA_COL_NAME, self.input_gaiaid)
+            condition = '{0}=="{1}"'.format('GAIADR2ID', self.input_gaiaid)
             # get the entries for this condition
             entries = self.database.get_entries('*', condition=condition)
             # set source
@@ -282,7 +292,7 @@ class AstroObject(object):
         # fill out required information if available
         self.objname = str(entries['OBJNAME'].iloc[0])
         self.objname_source = 'database'
-        self.gaia_id = str(entries[GAIA_COL_NAME].iloc[0])
+        self.gaia_id = str(entries['GAIADR2ID'].iloc[0])
         self.gaia_id_source = source
         self.ra = float(entries['RA'].iloc[0])
         self.ra_source = source
@@ -343,10 +353,10 @@ class AstroObject(object):
         if self.input_objname is None:
             return None, 'None'
         # get aliases from database
-        cols = '{0}, OBJNAME, ALIASES'.format(GAIA_COL_NAME)
+        cols = 'GAIADR2ID, OBJNAME, ALIASES'
         gaia_table = self.database.get_entries(cols)
         # extract required columns
-        gaia_id = gaia_table[GAIA_COL_NAME]
+        gaia_id = gaia_table['GAIADR2ID']
         objnames = gaia_table['OBJNAME']
         alias_sets = gaia_table['ALIASES']
 
@@ -359,7 +369,7 @@ class AstroObject(object):
             # compare to input_objname
             if cobjname == self.input_objname:
                 # condition condition
-                condition = '{0}=="{1}"'.format(GAIA_COL_NAME, gaia_id[row])
+                condition = '{0}=="{1}"'.format('GAIADR2ID', gaia_id[row])
                 # set source
                 source = 'database-objname'
                 # return the entries for this gaia id
@@ -383,7 +393,7 @@ class AstroObject(object):
                 # compare to input_objname
                 if calias == self.input_objname:
                     # condition condition
-                    condition = '{0}=="{1}"'.format(GAIA_COL_NAME, gaia_id[row])
+                    condition = '{0}=="{1}"'.format('GAIADR2ID', gaia_id[row])
                     # set source
                     source = 'database-aliases'
                     # return the entries for this gaia id
@@ -470,7 +480,7 @@ class AstroObject(object):
                              self.gsheet_wnum)
         # set some properties from gtable
         if gtable is not None:
-            self.input_gaiaid = gtable[GAIA_COL_NAME]
+            self.input_gaiaid = gtable[GL_GAIA_COL_NAME]
         #  try (again) gaia id against gaia query (only if gaia_id is still
         #  None)
         if self.input_gaiaid is not None:
@@ -479,14 +489,17 @@ class AstroObject(object):
 
         # overwrite RV and Teff (if set in gtable)
         if gtable is not None:
+            # set aliases
+            if not is_null(gtable[GL_ALIAS_COL_NAME]):
+                self.aliases = gtable[GL_ALIAS_COL_NAME].split('|')
             # add RV if not None
-            if not is_null(gtable['RV']):
-                self.rv = gtable['RV']
-                self.rv_source = gtable['RV_REF']
+            if not is_null(gtable[GL_RV_COL_NAME]):
+                self.rv = gtable[GL_RV_COL_NAME]
+                self.rv_source = gtable[GL_RVREF_COL_NAME]
             # add Teff if not None
-            if not is_null(gtable['TEFF']):
-                self.teff = gtable['TEFF']
-                self.teff_source = gtable['TEFF_REF']
+            if not is_null(gtable[GL_TEFF_COL_NAME]):
+                self.teff = gtable[GL_TEFF_COL_NAME]
+                self.teff_source = gtable[GL_TEFFREF_COL_NAME]
 
     def _resolve_from_coords(self, mjd=None):
         """
@@ -655,7 +668,8 @@ class AstroObject(object):
         :param outdict:
         :return:
         """
-        columns = ['OBJNAME', 'OBJNAME_SOURCE', GAIA_COL_NAME, 'GAIAID_SOURCE',
+        columns = ['OBJNAME', 'OBJNAME_SOURCE', GAIA_COL_NAME,
+                   'GAIAID_SOURCE',
                    'RA', 'RA_SOURCE', 'DEC', 'DEC_SOURCE', 'PMRA',
                    'PMRA_SOURCE', 'PMDE', 'PMDE_SOURCE', 'PLX', 'PLX_SOURCE',
                    'RV', 'RV_SOURCE', 'GMAG', 'GMAG_SOURCE', 'BPMAG',
@@ -951,9 +965,9 @@ def query_glist(objname: str, sheet_id: str, worksheet: int = 0):
     # loop around rows and look for aliases
     for row in range(len(gtable)):
         # set aliases as the objname
-        aliases = [gtable['OBJNAME'][row]]
+        aliases = [gtable[GL_OBJ_COL_NAME][row]]
         # get the aliases for this row
-        aliases += gtable['ALIASES'][row].split('|')
+        aliases += gtable[GL_ALIAS_COL_NAME][row].split('|')
         # search for object name
         position = crossmatch_name(objname, aliases)
         # break if we have found a match
@@ -1198,7 +1212,7 @@ if __name__ == "__main__":
     # get a list of object names from glist
     _gtable = get_google_sheet(_params['OBJ_LIST_GOOGLE_SHEET_URL'],
                                _params['OBJ_LIST_GOOGLE_SHEET_WNUM'])
-    _objnames = list(np.unique(_gtable['OBJNAME']))
+    _objnames = list(np.unique(_gtable[OBJ_COL_NAME]))
 
     # resolve targets
     resolve_targets(_params, _objnames, database=_objdbm)
