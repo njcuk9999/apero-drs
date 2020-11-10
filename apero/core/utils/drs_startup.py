@@ -152,8 +152,19 @@ def setup(name: str = 'None', instrument: str = 'None',
                 eargs = [name, base.IPARAMS['INSTRUMENT']]
                 WLOG(None, 'error', emsg.format(*eargs))
         else:
+            # update instrument
+            instrument = str(base.IPARAMS['INSTRUMENT'])
             # update recipe instrument
-            recipe.instrument = str(base.IPARAMS['INSTRUMENT'])
+            recipe.instrument = str(instrument)
+            # need to update filemod and recipe mod
+            pconst = constants.pload(instrument)
+            # update filemod
+            filemod = pconst.FILEMOD()
+            # deal with rmod coming from call
+            if rmod is None:
+                recipemod = pconst.RECIPEMOD()
+            else:
+                recipemod = rmod
     # -------------------------------------------------------------------------
     # set file module and recipe module
     recipe.filemod = filemod.copy()
