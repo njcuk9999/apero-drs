@@ -192,6 +192,153 @@ def check_coeffs(params, recipe, image, coeffs, fiber, kind=None):
     return new_coeffs
 
 
+def check_coeffs_nirps(params: ParamDict, recipe, image: np.ndarray,
+                       cent_coeffs: np.ndarray, wid_coeffs: np.ndarray,
+                       fiber: str, **kwargs):
+    """
+    Function to check whether we have missed any orders and add them back
+    if we have (based on other orders and the step between orders)
+
+    :param params:
+    :param image:
+    :param coeffs:
+    :return:
+    """
+    # set function name
+    func_name = display_func(params, 'check_coeffs_nirps', __NAME__)
+    # TODO: this is temporary - move to constants is permanent
+    params.set('LOC_COEFF_SIGCLIP', value=5)
+    params.set('LOC_COEFFSIG_DEG', value=5)
+    params.set('LOC_DROP_BLUE_ORDERS', value=2)
+    params.set('LOC_DROP_RED_ORDERS', value=0)
+    # get fiber params
+    pconst = constants.pload(params['INSTRUMENT'])
+    fiberparams = pconst.FIBER_SETTINGS(params, fiber)
+    # get the sigma clipping cut off value
+    nsigclip = params['LOC_COEFF_SIGCLIP']
+    coeffdeg = params['LOC_COEFFSIG_DEG']
+    drop_blue = int(params['LOC_DROP_BLUE_ORDERS'])
+    drop_red = int(params['LOC_DROP_RED_ORDERS'])
+    max_num_orders = pcheck(params, 'FIBER_MAX_NUM_ORDERS', 'max_num_orders',
+                            kwargs, func=func_name, paramdict=fiberparams)
+    # get the shapes
+    nbypix, nbxpix = image.shape
+    nbo, nccoeffs = cent_coeffs.shape
+    _, nwcoeffs = wid_coeffs.shape
+    # define the x pixel positions
+    xpix = np.arange(nbxpix)
+    # -------------------------------------------------------------------------
+    # identify centers of all orders (based on current coefficients)
+    centers = []
+    for ordernum in range(nbo):
+        centers.append(np.polyval(cent_coeffs[ordernum][::-1], nbxpix // 2))
+    # -------------------------------------------------------------------------
+    # find the indices of each order by extrapolating the neighbour's positions
+    indices = np.arange(nbo)
+    for ordernum in range(1, nbo - 1):
+        # get the previous step
+        diff_before = centers[ordernum] - centers[ordernum - 1]
+        step_prev = diff_before / (indices[ordernum] - ordernum[ordernum - 1])
+        # get the integer steps
+        diff_after = centers[ordernum + 1] - centers[ordernum]
+        nstep = np.round(diff_after / step_prev).astype(int)
+        # add the next index
+        indices[ordernum + 1] = indices[ordernum] + nstep
+    # -------------------------------------------------------------------------
+    # new shape of the coefficient matrix
+    new_cen_coeffs = np.zeros([np.max(indices) + 1, nccoeffs]) + np.nan
+    new_wid_coeffs = np.zeros([np.max(indices) + 1, nwcoeffs]) + np.nan
+    new_nbo = new_cen_coeffs.shape
+    # fill known orders
+    new_cen_coeffs[indices, :] = cent_coeffs
+    new_wid_coeffs[indices, :] = wid_coeffs
+    # find position of each order from coefficients
+    ordermap = np.zeros([nbypix, np.max(indices) + 1]) + np.nan
+    widthmap = np.zeros([nbypix, np.max(indices) + 1]) + np.nan
+    # construct an order map that will be fitted
+    # loop around orders
+    for ordernum in range(new_nbo):
+        # calculate y positions (centers)
+        cypix = np.polyval(new_cen_coeffs[ordernum, ::-1], xpix)
+        # push into order map
+        ordermap[:, ordernum] = cypix
+        # calcaulte y positions (width)
+        wypix = np.polyval(new_wid_coeffs[ordernum, ::-1], xpix)
+        # push into width map
+        widthmap[:, ordernum] = wypix
+    # -------------------------------------------------------------------------
+    # remove bad values (out of bounds)
+    ordermap[ordermap < 0] = np.nan
+    ordermap[ordermap > nbypix] = np.nan
+    # -------------------------------------------------------------------------
+    # clean-up the order map
+    for y_it in range(nbypix):
+        orders = np.arange(new_nbo)
+        # polyfit across the orders (in y direction for centers)
+        cfit, mask = mp.robust_polyfit(orders, ordermap[y_it, :], coeffdeg,
+                                       nsigclip)
+        # re-fit the coefficients and push into ordermap
+        ordermap[y_it, :] = np.polyval(cfit, orders)
+        # polyfit across the orders (in y direction for widths)
+        wfit, mask = mp.robust_polyfit(orders, widthmap[y_it, :], coeffdeg,
+                                       nsigclip)
+        # re-fit the coefficients and push into ordermap
+        widthmap[y_it, :] = np.polyval(wfit, orders)
+    # -------------------------------------------------------------------------
+    # re-fit the localisation polynomials
+    for ordernum in range(new_nbo):
+        # work out the new polynomials for this order (for centers)
+        ocen_coeffs = np.polyfit(xpix, ordermap[:, ordernum], nccoeffs)
+        # must flip these backwards
+        new_cen_coeffs[ordernum, :] = ocen_coeffs[::-1]
+        # work out the new polynomials for this order (for widths)
+        owid_coeffs = np.polyfit(xpix, widthmap[:, ordernum], nwcoeffs)
+        # must flip these backwards
+        new_wid_coeffs[ordernum, :] = owid_coeffs[::-1]
+    # -------------------------------------------------------------------------
+    # deal with dropping orders
+    nbo = new_cen_coeffs.shape[0]
+    # must check that we have the required number of orders
+    if nbo != max_num_orders:
+        # can only fix this currently by dropping blue/red orders
+        if nbo - drop_blue - drop_red == max_num_orders:
+            # deal with final orders (reddest orders)
+            if drop_red < 1:
+                drop_red = None
+            else:
+                drop_red = -1 * int(drop_red)
+            # cut down coeffs
+            new_cen_coeffs = new_cen_coeffs[drop_blue: drop_red]
+            new_wid_coeffs = new_wid_coeffs[drop_blue: drop_red]
+    else:
+        # cause error
+        emsg = ('Wrong number of orders. Found: {0} Expected: {1}\n\t'
+                'Tried to drop {2} blue order(s) and {3} red order(s)')
+        eargs = [nbo, max_num_orders, drop_blue, drop_red]
+        WLOG(params, 'error', emsg.format(*eargs))
+    # re-calculate number of orders
+    nbo = new_cen_coeffs.shape[0]
+    # ----------------------------------------------------------------------
+    # make arrays for plotting
+    cypix2, cypix1 = np.zeros(nbo, nbxpix), np.zeros(nbo, nbxpix)
+    good_arr = np.ones(nbo, nbxpix).astype(bool)
+    wypix2, wypix1 = np.zeros(nbo, nbxpix), np.zeros(nbo, nbxpix)
+    # loop around orders and fill in values
+    for ordernum in range(nbo):
+        cypix2[ordernum] = np.polyval(new_cen_coeffs[ordernum], xpix)
+        cypix1[ordernum] = np.polyval(cent_coeffs[ordernum], xpix)
+        wypix2[ordernum] = np.polyval(new_wid_coeffs[ordernum], xpix)
+        wypix1[ordernum] = np.polyval(wid_coeffs[ordernum], xpix)
+    # plot of the coeffs
+    recipe.plot('LOC_CHECK_COEFFS', ypix=cypix2, ypix0=cypix1,
+                xpix=xpix, good=good_arr, kind='center', image=image)
+    recipe.plot('LOC_CHECK_COEFFS', ypix=wypix2, ypix0=wypix1,
+                xpix=xpix, good=good_arr, kind='width', image=image)
+    # -------------------------------------------------------------------------
+    # return new centers and widths
+    return new_cen_coeffs, new_wid_coeffs
+
+
 def find_and_fit_localisation(params, recipe, image, sigdet, fiber, **kwargs):
     func_name = __NAME__ + '.find_and_fit_localisation()'
 
