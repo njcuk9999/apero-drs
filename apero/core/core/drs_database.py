@@ -339,7 +339,7 @@ class CalibrationDatabase(DatabaseManager):
         # ------------------------------------------------------------------
         # add entry to database
         values = [key, fiber, is_super, filename, human_time, unix_time, used]
-        self.database.add_row(values, self.kind, commit=True)
+        self.database.add_row(values, table='MAIN', commit=True)
 
     def get_calib_entry(self, columns: str, key: str,
                         fiber: Union[str, None] = None,
@@ -373,9 +373,8 @@ class CalibrationDatabase(DatabaseManager):
         # set up kwargs from database query
         sql = dict()
         # deal with having the possibility of more than one column
-        colnames = self.database.colnames(columns)
+        colnames = self.database.colnames(columns, table='MAIN')
         # set up sql kwargs
-        sql['table'] = self.kind
         sql['sort_by'] = None
         sql['sort_descending'] = True
         # condition for key
@@ -418,7 +417,7 @@ class CalibrationDatabase(DatabaseManager):
         # if we have one entry just get the tuple back
         if nentries == 1:
             # do sql query
-            entries = self.database.get(columns, self.kind, **sql)
+            entries = self.database.get(columns, table='MAIN', **sql)
             # return filename
             if len(entries) == 1:
                 if len(colnames) == 1:
@@ -432,7 +431,7 @@ class CalibrationDatabase(DatabaseManager):
             # return array for ease
             sql['return_array'] = True
             # do sql query
-            entries = self.database.get(columns, self.kind, **sql)
+            entries = self.database.get(columns, table='MAIN', **sql)
             # return one list
             if len(entries) == 0:
                 return []
@@ -443,7 +442,7 @@ class CalibrationDatabase(DatabaseManager):
             # return as pandas table
             sql['return_pandas'] = True
             # do sql query
-            entries = self.database.get(columns, self.kind, **sql)
+            entries = self.database.get(columns, table='MAIN', **sql)
             # return pandas table
             return entries
 
@@ -531,7 +530,7 @@ class CalibrationDatabase(DatabaseManager):
         # deal with no filenames found elsewise --> error
         if filenames is None or len(filenames) == 0:
             # get unique set of keys
-            keys = np.unique(self.database.get('KEY', return_array=True))
+            keys = self.database.unique('KEY', table='MAIN')
             # get file description
             if drsfile is not None:
                 if no_times:
@@ -686,7 +685,7 @@ class TelluricDatabase(DatabaseManager):
         # add entry to database
         values = [key, fiber, is_super, filename, human_time, unix_time,
                   objname, airmass, tau_water, tau_others, used]
-        self.database.add_row(values, self.kind, commit=True)
+        self.database.add_row(values, table='MAIN', commit=True)
 
     def get_tellu_entry(self, columns: str, key: str,
                         fiber: Union[str, None] = None,
@@ -730,11 +729,10 @@ class TelluricDatabase(DatabaseManager):
         if self.instrument == 'None':
             return None
         # deal with having the possibility of more than one column
-        colnames = self.database.colnames(columns)
+        colnames = self.database.colnames(columns, table='MAIN')
         # set up kwargs from database query
         sql = dict()
         # set up sql kwargs
-        sql['table'] = self.kind
         sql['sort_by'] = None
         sql['sort_descending'] = True
         # condition for key
@@ -790,7 +788,7 @@ class TelluricDatabase(DatabaseManager):
         # if we have one entry just get the tuple back
         if nentries == 1:
             # do sql query
-            entries = self.database.get(columns, self.kind, **sql)
+            entries = self.database.get(columns, table='MAIN', **sql)
             # return filename
             if len(entries) == 1:
                 if len(colnames) == 1:
@@ -805,7 +803,7 @@ class TelluricDatabase(DatabaseManager):
             # return array for ease
             sql['return_array'] = True
             # do sql query
-            entries = self.database.get(columns, self.kind, **sql)
+            entries = self.database.get(columns, table='MAIN', **sql)
             # return one list
             if len(entries) == 0:
                 return []
@@ -816,7 +814,7 @@ class TelluricDatabase(DatabaseManager):
             # return as pandas table
             sql['return_pandas'] = True
             # do sql query
-            entries = self.database.get(columns, self.kind, **sql)
+            entries = self.database.get(columns, table='MAIN', **sql)
             # return pandas table
             return entries
 
@@ -921,7 +919,7 @@ class TelluricDatabase(DatabaseManager):
         # deal with no filenames found elsewise --> error
         if filenames is None or len(filenames) == 0:
             # get unique set of keys
-            keys = np.unique(self.database.get('KEY', return_array=True))
+            keys = self.database.unique('KEY', table='MAIN')
             # get file description
             if drsfile is not None:
                 if no_times:
@@ -1316,14 +1314,14 @@ class IndexDatabase(DatabaseManager):
             condition += ' AND DIRECTORY == "{0}"'.format(directory)
             condition += ' AND PATH == "{0}"'.format(path)
             # update row in database
-            self.database.set('*', values, condition=condition, table=self.kind,
+            self.database.set('*', values, condition=condition, table='MAIN',
                               commit=commit)
         else:
             # add new entry to database
             values = [str(path), str(directory), str(basename), str(kind),
                       float(last_modified), str(runstring)]
             values += hvalues + [used, rawfix]
-            self.database.add_row(values, self.kind, commit=commit)
+            self.database.add_row(values, table='MAIN', commit=commit)
 
     def get_entries(self, columns: str = '*',
                     directory: Union[str, None] = None,
@@ -1362,12 +1360,11 @@ class IndexDatabase(DatabaseManager):
         if self.database is None:
             self.load_db()
         # deal with having the possibility of more than one column
-        colnames = self.database.colnames(columns, table=self.kind)
+        colnames = self.database.colnames(columns, table='MAIN')
         # ------------------------------------------------------------------
         # set up kwargs from database query
         sql = dict()
         # set up sql kwargs
-        sql['table'] = self.kind
         sql['sort_by'] = None
         sql['sort_descending'] = True
         # sort by last modified
@@ -1416,7 +1413,7 @@ class IndexDatabase(DatabaseManager):
         # if we have one entry just get the tuple back
         if nentries == 1:
             # do sql query
-            entries = self.database.get(columns, **sql)
+            entries = self.database.get(columns, table='MAIN', **sql)
             # return filename
             if len(entries) == 1:
                 if len(colnames) == 1:
@@ -1427,13 +1424,13 @@ class IndexDatabase(DatabaseManager):
                 return None
         # ------------------------------------------------------------------
         # deal with having the possibility of more than one column
-        colnames = self.database.colnames(columns, table=self.kind)
+        colnames = self.database.colnames(columns, table='MAIN')
         # if we have one column return a list
         if len(colnames) == 1:
             # return array for ease
             sql['return_array'] = True
             # do sql query
-            entries = self.database.get(columns, **sql)
+            entries = self.database.get(columns, table='MAIN', **sql)
             # return one list
             if len(entries) == 0:
                 return []
@@ -1444,7 +1441,7 @@ class IndexDatabase(DatabaseManager):
             # return as pandas table
             sql['return_pandas'] = True
             # do sql query
-            entries = self.database.get(columns, **sql)
+            entries = self.database.get(columns, table='MAIN', **sql)
             # return pandas table
             return entries
 
@@ -1605,7 +1602,8 @@ class IndexDatabase(DatabaseManager):
                 else:
                     values.append('None')
             # update this row (should only be one row based on condition)
-            self.database.set(columns, values, condition=condition)
+            self.database.set(columns, values, condition=condition,
+                              table='MAIN')
 
     def deal_with_filename(self, kind: str, directory: Union[str, None] = None,
                            filename: Union[str, None] = None,
@@ -1880,7 +1878,7 @@ class LogDatabase(DatabaseManager):
         # set up condition
         condition = 'PID=="{0}"'.format(pid)
         # delete rows that match this criteria
-        self.database.delete_rows(self.kind, condition=condition)
+        self.database.delete_rows(table='MAIN', condition=condition)
 
     def add_entries(self, recipe: Union[str, None] = None,
                     rkind: Union[str, None] = None,
@@ -1987,7 +1985,7 @@ class LogDatabase(DatabaseManager):
                 except Exception as _:
                     values.append('None')
         # add row to database
-        self.database.add_row(values, self.kind, commit=commit)
+        self.database.add_row(values, table='MAIN', commit=commit)
 
     def get_entries(self, columns: str = '*',
                     wdirs: Union[List[str], None] = None,
@@ -2019,12 +2017,11 @@ class LogDatabase(DatabaseManager):
         if self.database is None:
             self.load_db()
         # deal with having the possibility of more than one column
-        colnames = self.database.colnames(columns)
+        colnames = self.database.colnames(columns, table='MAIN')
         # ------------------------------------------------------------------
         # set up kwargs from database query
         sql = dict()
         # set up sql kwargs
-        sql['table'] = self.kind
         sql['sort_by'] = None
         sql['sort_descending'] = True
         # sort by last modified
@@ -2059,7 +2056,7 @@ class LogDatabase(DatabaseManager):
         # if we have one entry just get the tuple back
         if nentries == 1:
             # do sql query
-            entries = self.database.get(columns, **sql)
+            entries = self.database.get(columns, table='MAIN', **sql)
             # return filename
             if len(entries) == 1:
                 if len(colnames) == 1:
@@ -2070,13 +2067,13 @@ class LogDatabase(DatabaseManager):
                 return None
         # ------------------------------------------------------------------
         # deal with having the possibility of more than one column
-        colnames = self.database.colnames(columns)
+        colnames = self.database.colnames(columns, table='MAIN')
         # if we have one column return a list
         if len(colnames) == 1:
             # return array for ease
             sql['return_array'] = True
             # do sql query
-            entries = self.database.get(columns, **sql)
+            entries = self.database.get(columns, table='MAIN', **sql)
             # return one list
             if len(entries) == 0:
                 return []
@@ -2087,7 +2084,7 @@ class LogDatabase(DatabaseManager):
             # return as pandas table
             sql['return_pandas'] = True
             # do sql query
-            entries = self.database.get(columns, **sql)
+            entries = self.database.get(columns, table='MAIN', **sql)
             # return pandas table
             return entries
 
@@ -2169,12 +2166,11 @@ class ObjectDatabase(DatabaseManager):
         if self.database is None:
             self.load_db()
         # deal with having the possibility of more than one column
-        colnames = self.database.colnames(columns)
+        colnames = self.database.colnames(columns, table='MAIN')
         # ------------------------------------------------------------------
         # set up kwargs from database query
         sql = dict()
         # set up sql kwargs
-        sql['table'] = self.kind
         sql['sort_by'] = None
         sql['sort_descending'] = True
         # sort by last modified
@@ -2191,7 +2187,7 @@ class ObjectDatabase(DatabaseManager):
         # if we have one entry just get the tuple back
         if nentries == 1:
             # do sql query
-            entries = self.database.get(columns, **sql)
+            entries = self.database.get(columns, table='MAIN', **sql)
             # return filename
             if len(entries) == 1:
                 if len(colnames) == 1:
@@ -2206,7 +2202,7 @@ class ObjectDatabase(DatabaseManager):
             # return array for ease
             sql['return_array'] = True
             # do sql query
-            entries = self.database.get(columns, **sql)
+            entries = self.database.get(columns, table='MAIN', **sql)
             # return one list
             if len(entries) == 0:
                 return []
@@ -2217,7 +2213,7 @@ class ObjectDatabase(DatabaseManager):
             # return as pandas table
             sql['return_pandas'] = True
             # do sql query
-            entries = self.database.get(columns, **sql)
+            entries = self.database.get(columns, table='MAIN', **sql)
             # return pandas table
             return entries
 
@@ -2296,16 +2292,17 @@ class ObjectDatabase(DatabaseManager):
         values.append(used)
         # need to see if we already have gaia id
         condition = '{0}=="{1}"'.format(GAIA_COL_NAME, gaia_id)
-        gaiaids = self.database.unique(GAIA_COL_NAME, condition=condition)
+        gaiaids = self.database.unique(GAIA_COL_NAME, condition=condition,
+                                       table='MAIN')
         # ------------------------------------------------------------------
         # deal with updating entry
         if (gaiaids is not None) and (len(gaiaids) > 0):
             # update row in database
-            self.database.set('*', values, condition=condition, table=self.kind,
+            self.database.set('*', values, condition=condition, table='MAIN',
                               commit=commit)
         # else add row to database (as new row)
         else:
-            self.database.add_row(values, self.kind, commit=commit)
+            self.database.add_row(values, table='MAIN', commit=commit)
 
 
 class LanguageDatabase(DatabaseManager):

@@ -173,7 +173,7 @@ class Database:
         return self.__str__()
 
     # get / set / execute / add methods
-    def execute(self, command: str) -> Any:
+    def execute(self, command: str, fetch: bool) -> Any:
         """
         Directly execute an SQL command on the database and return
         any results.
@@ -192,7 +192,7 @@ class Database:
         cursor = self._conn_.cursor()
         # try to execute SQL command
         try:
-            result = self._execute(cursor, command)
+            result = self._execute(cursor, command, fetch=fetch)
             cursor.close()
         # catch all errors and pipe to database error
         except Exception as e:
@@ -210,7 +210,8 @@ class Database:
         # return the sql result
         return result
 
-    def _execute(self, cursor: sqlite3.Cursor, command: str):
+    def _execute(self, cursor: sqlite3.Cursor, command: str,
+                 fetch: bool = True):
         """
         Dummy function to try to catch database locked errors
         (up to a max wait time)
@@ -220,7 +221,11 @@ class Database:
         :return:
         """
         cursor.execute(command)
-        result = cursor.fetchall()
+        if fetch:
+            result = cursor.fetchall()
+        else:
+            result = None
+        # return result
         return result
 
     def count(self, table: Union[None, str] = None,
@@ -254,7 +259,7 @@ class Database:
                 raise DatabaseError(emsg, path=self.path, func_name=func_name)
             command += " WHERE {} ".format(condition)
         # execute result
-        result = self.execute(command)[0][0]
+        result = self.execute(command, fetch=True)[0][0]
         # return result
         return int(result)
 
@@ -293,7 +298,7 @@ class Database:
                 raise DatabaseError(emsg, path=self.path, func_name=func_name)
             command += " WHERE {} ".format(condition)
         # execute result
-        result = self.execute(command)
+        result = self.execute(command, fetch=True)
         # return unique result
         return np.unique(result)
 
@@ -390,7 +395,7 @@ class Database:
             return self._to_pandas(command)
         # else we execute natively
         else:
-            result = self.execute(command)
+            result = self.execute(command, fetch=True)
             # if numpy array requested return it as one
             if return_array:
                 return np.asarray(result)
@@ -475,7 +480,7 @@ class Database:
             # add to command
             command += " WHERE {}".format(condition)
         # execute sql command
-        self.execute(command)
+        self.execute(command, fetch=False)
         # commit changes to the database (if requested)
         if commit:
             self.commit()
@@ -512,7 +517,7 @@ class Database:
         cargs = [table, columns, ', '.join(_values)]
         command = "INSERT INTO {}{} VALUES({})".format(*cargs)
         # execute the sql command
-        self.execute(command)
+        self.execute(command, fetch=False)
         # if commit is request commit changes to SQL database
         if commit:
             self.commit()
@@ -583,7 +588,7 @@ class Database:
         # construct the command
         command = "DELETE FROM {} WHERE {}".format(table, condition)
         # execute the sql command
-        self.execute(command)
+        self.execute(command, fetch=False)
         # if commit is request commit changes to SQL database
         if commit:
             self.commit()
@@ -608,8 +613,6 @@ class Database:
                         [str, float, "REAL"])
         """
         func_name = __NAME__ + '.Database.add_table()'
-        # fix table name
-        name = _table_proxy(name)
         # translator between python types and SQL types
         translator = {str: "TEXT", int: "INTEGER", float: "REAL"}
         # storage for fields
@@ -646,7 +649,7 @@ class Database:
         cargs = [name, ", ".join(fields)]
         command = "CREATE TABLE IF NOT EXISTS {}({});".format(*cargs)
         # execute command
-        self.execute(command)
+        self.execute(command, fetch=False)
         # update the table list and commit
         self._update_table_list_()
 
@@ -659,14 +662,12 @@ class Database:
                      See Database.tables for a list of eligible tables.
         """
         func_name = __NAME__ + '.Database.delete_table()'
-        # fix table name
-        name = _table_proxy(name)
         # make sure table is a string
         if not isinstance(name, str):
             emsg = 'table "name" must be a string'
             raise DatabaseError(emsg, path=self.path, func_name=func_name)
         # execute a sql drop table
-        self.execute("DROP TABLE {}".format(name))
+        self.execute("DROP TABLE {}".format(name), fetch=False)
         # update the table list and commit
         self._update_table_list_()
 
@@ -681,11 +682,9 @@ class Database:
         """
         # set function name
         _ = __NAME__ + '.Database.rename_table()'
-        # fix table names
-        old_name = _table_proxy(old_name)
-        new_name = _table_proxy(new_name)
         # execute a change in table name
-        self.execute("ALTER TABLE {} RENAME TO {}".format(old_name, new_name))
+        self.execute("ALTER TABLE {} RENAME TO {}".format(old_name, new_name),
+                     fetch=False)
         self.commit()
 
     # admin methods
@@ -695,27 +694,24 @@ class Database:
 
         :return:
         """
-        # construct backup path
-        backup_path = str(self.path).replace('.db', 'backup.db')
-        # make backup database
-        backup_conn = sqlite3.connect(backup_path)
-        # copy main into backup database
-        with backup_conn:
-            self._conn_.backup(backup_conn)
+        emsg = ('Please abstract method with SQLiteDatabase or MySQLDatabase')
+        NotImplemented(emsg)
 
     def lock(self):
         """
         Lock the database (until unlock or a commit is done)
         :return:
         """
-        self.execute('BEGIN EXCLUSIVE;')
+        emsg = ('Please abstract method with SQLiteDatabase or MySQLDatabase')
+        NotImplemented(emsg)
 
     def unlock(self):
         """
         Unlock the database (when a lock was done)
         :return:
         """
-        self.execute('COMMIT;')
+        emsg = ('Please abstract method with SQLiteDatabase or MySQLDatabase')
+        NotImplemented(emsg)
 
     # other methods
     def colnames(self, columns: str,
@@ -739,7 +735,7 @@ class Database:
         # try to execute SQL command
         try:
             # try to execute SQL command
-            _ = self._execute(cursor, command)
+            self._execute(cursor, command, fetch=True)
             # get columns
             colnames = list(map(lambda x: x[0], cursor.description))
             # close cursors
@@ -763,15 +759,13 @@ class Database:
                       (only if we have one table)
         :return:
         """
-        # fix table names
-        table = _table_proxy(table)
         # deal with no table
         if table is None:
             if len(self.tables) != 1:
                 emsg = ('The are multiple tables in the database. You must '
                         'pick one -- table cannot be None')
                 raise DatabaseError(message=emsg, path=self.path)
-            return _table_proxy(self.tables[0])
+            return self.tables[0]
         return table
 
     def _update_table_list_(self):
@@ -779,21 +773,8 @@ class Database:
         Reads the database for tables and updates the class members
         accordingly.
         """
-        # Get the new list of tables
-        command = 'SELECT name from sqlite_master where type= "table"'
-        # execute command
-        _tables = self.execute(command)
-        # the table names are the first entry in each row so get the table
-        #  names from these (and update self.tables)
-        self.tables = []
-        for _table in _tables:
-            # remove _TABLE suffix
-            if _table[0].endswith('_TABLE'):
-                tablename = _table[0][:-6]
-            else:
-                tablename = _table[0]
-            # append table name
-            self.tables.append(tablename)
+        emsg = ('Please abstract method with SQLiteDatabase or MySQLDatabase')
+        NotImplemented(emsg)
 
     def commit(self):
         """
@@ -884,7 +865,8 @@ class SQLiteDatabase(Database):
         """
         return 'SQLiteDatabase[{0}]'.format(self.path)
 
-    def _execute(self, cursor: sqlite3.Cursor, command: str):
+    def _execute(self, cursor: sqlite3.Cursor, command: str,
+                 fetch: bool = True):
         """
         Dummy function to try to catch database locked errors
         (up to a max wait time)
@@ -899,8 +881,11 @@ class SQLiteDatabase(Database):
         while time_count < MAXWAIT:
             try:
                 cursor.execute(command)
-                result = cursor.fetchall()
-                return result
+                if fetch:
+                    result = cursor.fetchall()
+                    return result
+                else:
+                    return None
             # catch operational error
             except sqlite3.OperationalError as e:
                 # catch the operational error: database is locked
@@ -914,17 +899,63 @@ class SQLiteDatabase(Database):
         emsg = 'database locked for > {0} s'.format(MAXWAIT)
         raise sqlite3.OperationalError(emsg)
 
+    # admin methods
+    def backup(self):
+        """
+        Back up the database
+
+        :return:
+        """
+        # construct backup path
+        backup_path = str(self.path).replace('.db', 'backup.db')
+        # make backup database
+        backup_conn = sqlite3.connect(backup_path)
+        # copy main into backup database
+        with backup_conn:
+            self._conn_.backup(backup_conn)
+
+    def lock(self):
+        """
+        Lock the database (until unlock or a commit is done)
+        :return:
+        """
+        self.execute('BEGIN EXCLUSIVE;', fetch=False)
+
+    def unlock(self):
+        """
+        Unlock the database (when a lock was done)
+        :return:
+        """
+        self.execute('COMMIT;', fetch=False)
+
+    def _update_table_list_(self):
+        """
+        Reads the database for tables and updates the class members
+        accordingly.
+        """
+        # Get the new list of tables
+        command = 'SELECT name from sqlite_master where type= "table"'
+        # execute command
+        _tables = self.execute(command, fetch=True)
+        # the table names are the first entry in each row so get the table
+        #  names from these (and update self.tables)
+        self.tables = []
+        for _table in _tables:
+            # append table name
+            self.tables.append(_table[0])
+
 
 class MySQLDatabase(Database):
     # A wrapper for an SQLite database.
     def __init__(self, host: str, user: str, passwd: str,
-                 verbose: bool = False):
+                 database: str, verbose: bool = False):
         """
         Create an object for reading and writing to a SQLite database.
 
         :param host: str, the mysql host name (user@host)
         :param user: str, the mysql user name (user@host)
         :param passwd: str, the password for user@host mysql connection
+        :param database: str, the database to connect to
         :param verbose: bool, whether to verbosely print out database
                         functionality
         """
@@ -937,6 +968,10 @@ class MySQLDatabase(Database):
                     'mysql-connector-python')
             raise DatabaseError(message=emsg, errorobj=ImportError(emsg),
                                 path=self.path, func_name=func_name)
+        # make sure database has _DB on the end (to avoid conflicts with SQL)
+        database = _proxy_database(database)
+        # deal with database for sql
+        self.add_database(host, user, passwd, database)
         # call to super class
         super().__init__(verbose=verbose)
         # storage for database path
@@ -946,7 +981,7 @@ class MySQLDatabase(Database):
         # try to connect the the SQL3 database
         try:
             self._conn_ = mysql.connect(host=self.host, user=self.user,
-                                        passwd=passwd)
+                                        passwd=passwd, database=database)
         except Exception as e:
             raise DatabaseError(message=str(e), errorobj=e, path=self.path,
                                 func_name=func_name)
@@ -959,6 +994,44 @@ class MySQLDatabase(Database):
         :return:
         """
         return 'MySQLDatabase[{0}]'.format(self.path)
+
+    def add_database(self, host: str, user: str, passwd: str, database: str):
+        # create a temporary connection to mysql
+        tmpconn = mysql.connect(host=host, user=user, passwd=passwd)
+        # get the cursor
+        cursor = tmpconn.cursor()
+        # Get the new list of tables
+        command = 'SHOW DATABASES'
+        # execute command
+        cursor.execute(command)
+        _databases = cursor.fetchall()
+        # the table names are the first entry in each row so get the table
+        #  names from these (and update self.tables)
+        databases = []
+        for _database in _databases:
+            # append table name
+            databases.append(_database[0])
+        # check for database in databases (and add it if not there)
+        if database not in databases:
+            cursor.execute('CREATE DATABASE {0}'.format(database))
+        # close the cursor
+        cursor.close()
+
+    def _update_table_list_(self):
+        """
+        Reads the database for tables and updates the class members
+        accordingly.
+        """
+        # Get the new list of tables
+        command = 'SHOW TABLES'
+        # execute command
+        _tables = self.execute(command, fetch=True)
+        # the table names are the first entry in each row so get the table
+        #  names from these (and update self.tables)
+        self.tables = []
+        for _table in _tables:
+            # append table name
+            self.tables.append(_table[0])
 
 
 # =============================================================================
@@ -978,6 +1051,7 @@ def database_wrapper(kind: str, path: Union[Path, str, None],
         return MySQLDatabase(host=sparams['HOST'],
                              user=sparams['USER'],
                              passwd=sparams['PASSWD'],
+                             database=kind,
                              verbose=verbose)
     # else default to sqlite3
     else:
@@ -1022,23 +1096,11 @@ def _decode_value(value: Any) -> str:
         return '"{0}"'.format(value)
 
 
-def _table_proxy(table: Union[str, None]) -> Union[str, None]:
-    """
-    Make sure table name is not sql keyword
-
-    :param table: str, the table name
-
-    :return: str, the updated table name
-    """
-    if table == 'MAIN':
-        return 'MAIN'
-    if table is None:
-        return None
-    if '_TABLE' not in table:
-        return table + '_TABLE'
+def _proxy_database(database: str) -> str:
+    if not database.endswith('_DB'):
+        return database + '_DB'
     else:
-        return table
-
+        return database
 
 # =============================================================================
 # Start of code
