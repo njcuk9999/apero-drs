@@ -83,7 +83,7 @@ class DatabaseHolder:
             database = drs_db.database_wrapper(self.kind, self.path)
             # try to get database (as a pandas table)
             try:
-                dataframe = database.get('*', table=self.kind,
+                dataframe = database.get('*', table='MAIN',
                                          return_pandas=True)
             except drs_db.DatabaseError as _:
                 dataframe = []
