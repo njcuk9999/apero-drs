@@ -67,7 +67,8 @@ HelpText = lang.core.drs_lang_text.HelpDict
 class RecipeLog:
 
     def __init__(self, name: str, params: ParamDict, level: int = 0,
-                 logger: Union[None, drs_log.Logger] = None):
+                 logger: Union[None, drs_log.Logger] = None,
+                 database: Union[LogDatabase, None] = None):
         """
         Constructor for the recipe log
 
@@ -82,8 +83,11 @@ class RecipeLog:
         # set function name
         _ = drs_misc.display_func(None, '__init__', __NAME__, self.class_name)
         # get a database instance
-        self.logdbm = LogDatabase(params)
-        self.logdbm.load_db()
+        if isinstance(database, LogDatabase):
+            self.logdbm = database
+        else:
+            self.logdbm = LogDatabase(params)
+            self.logdbm.load_db()
         # get the recipe name
         self.name = str(name)
         # the kind of recipe ("recipe", "tool", "processing") from recipe.kind
@@ -270,7 +274,8 @@ class RecipeLog:
         # get new level
         level = self.level + 1
         # create new log
-        newlog = RecipeLog(self.name, params, level=level, logger=self.wlog)
+        newlog = RecipeLog(self.name, params, level=level, logger=self.wlog,
+                           database=self.logdbm)
         # copy from parent
         newlog.copy(self)
         # record level criteria
