@@ -996,6 +996,17 @@ class MySQLDatabase(Database):
         return 'MySQLDatabase[{0}]'.format(self.path)
 
     def add_database(self, host: str, user: str, passwd: str, database: str):
+        """
+        Check for 'database' in the MySQL Database construct and if not add
+        'database' to MySQL
+
+        :param host: str, the mysql host name (user@host)
+        :param user: str, the mysql user name (user@host)
+        :param passwd: str, the password for user@host mysql connection
+        :param database: str, the database to connect to
+
+        :return: None, either adds database or does nothing
+        """
         # create a temporary connection to mysql
         tmpconn = mysql.connect(host=host, user=user, passwd=passwd)
         # get the cursor
@@ -1039,6 +1050,18 @@ class MySQLDatabase(Database):
 # =============================================================================
 def database_wrapper(kind: str, path: Union[Path, str, None],
                      verbose: bool = False) -> Database:
+    """
+    Database wrapper - takes the database parameter yaml file
+    Either uses MySQL or SQLite3
+
+    :param kind: str, the kind of database (CALIB/TELLU/INDEX/LANG/OBJECT)
+    :param path: str or Path, for SQLite3 this is the path to the database file
+                 for MySQL this is just user@host
+    :param verbose: bool - if True the database prints out debug messages
+                    verbosely
+
+    :return: Database instance (either SQLiteDatabase or MySQLDatabase)
+    """
     # get database parameters
     dparams = base.DPARAMS
     # make sure kind is upper case
@@ -1070,9 +1093,8 @@ def _decode_value(value: Any) -> str:
 
     :param value: Any value to convert to string
 
-    :return:
+    :return: str, the decoded string value
     """
-
     # deal with value being types (decode to string)
     if isinstance(value, bytes):
         return value.decode('utf=8')
@@ -1096,7 +1118,38 @@ def _decode_value(value: Any) -> str:
         return '"{0}"'.format(value)
 
 
+def _encode_value(value: str) -> Union[str, None, float]:
+    """
+    Convert an sql string into a python variable
+
+    :param value: str, the sql value
+
+    :return: str, None or float - depending on the sql string 'value'
+    """
+    # return None
+    if value == 'None':
+        return None
+    # return not a number
+    if value == 'NAN':
+        return np.nan
+    # return negative infinity
+    if value == '-INF':
+        return -1 * np.inf
+    # return infinity
+    if value == 'INF':
+        return np.inf
+    # else return value
+    return value
+
+
 def _proxy_database(database: str) -> str:
+    """
+    Make sure databases have the suffix _DB (to avoid conflicts with SQL names)
+
+    :param database: str, input database name
+
+    :return: str,  the output database name (with _DB if not present)
+    """
     if not database.endswith('_DB'):
         return database + '_DB'
     else:
