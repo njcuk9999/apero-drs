@@ -13,7 +13,7 @@ import pandas as pd
 from pathlib import Path
 import sqlite3
 import time
-from typing import Any, Union, List
+from typing import Any, Union, List, Type
 
 from apero.base import base
 
@@ -522,45 +522,6 @@ class Database:
         if commit:
             self.commit()
 
-    def add_from_pandas(self, df: pd.DataFrame, table: Union[str, None] = None,
-                        if_exists: str = 'append', index: bool = False,
-                        commit: bool = True):
-        """
-        Use pandas to add rows to database
-
-        :param df: pandas dataframe, the pandas dataframe to add to the database
-        :param table: A str which specifies which table within the database
-                      to retrieve data from.  If there is only one table to
-                      pick from, this may be left as None to use it
-                      automatically.
-        :param if_exists: how to behave if the table already exists in database
-                          valid responses are 'fail', 'replace' or 'append'
-                          * fail: Raise a ValueError.
-                          * replace: Drop the table before inserting new values.
-                          * append: Insert new values to the existing table.
-        :param index: whether to include an index column in database
-        :param commit: whether to commit changes to SQL database after adding
-                       (or wait to another commit event)
-        :return:
-        """
-        # set function name
-        func_name = __NAME__ + '.Database.add_from_pandas()'
-        # infer table name
-        table = self._infer_table_(table)
-        # check if_exists criteria
-        if if_exists not in ['fail', 'replace', 'append']:
-            emsg = 'if_exists must be either "fail", "replace" or "append"'
-            raise DatabaseError(emsg, path=self.path, func_name=func_name)
-        # try to add pandas dataframe to table
-        try:
-            df.to_sql(table, self._conn_, if_exists=if_exists, index=index)
-        except Exception as e:
-            raise DatabaseError(str(e), path=self.path, errorobj=e,
-                                func_name=func_name)
-        # commit change to database if requested
-        if commit:
-            self.commit()
-
     def delete_rows(self, table: Union[None, str] = None,
                     condition: Union[str, None] = None,
                     commit: bool = True):
@@ -811,24 +772,38 @@ class Database:
         # return astropy table
         return table
 
-    def _to_pandas(self, command: str) -> pd.DataFrame:
+    def add_from_pandas(self, df: pd.DataFrame, table: Union[str, None] = None,
+                        if_exists: str = 'append', index: bool = False,
+                        commit: bool = True):
+        """
+        Use pandas to add rows to database
+
+        :param df: pandas dataframe, the pandas dataframe to add to the database
+        :param table: A str which specifies which table within the database
+                      to retrieve data from.  If there is only one table to
+                      pick from, this may be left as None to use it
+                      automatically.
+        :param if_exists: how to behave if the table already exists in database
+                          valid responses are 'fail', 'replace' or 'append'
+                          * fail: Raise a ValueError.
+                          * replace: Drop the table before inserting new values.
+                          * append: Insert new values to the existing table.
+        :param index: whether to include an index column in database
+        :param commit: whether to commit changes to SQL database after adding
+                       (or wait to another commit event)
+        :return:
+        """
+        emsg = ('Please abstract method with SQLiteDatabase or MySQLDatabase')
+        NotImplemented(emsg)
+
+    def _to_pandas(self, command: str) -> Any:
         """
         Use pandas to get sql command
         :param command:
         :return:
         """
-        # set function name
-        func_name = __NAME__ + '.Database._to_pandas()'
-        # try to read sql using pandas
-        try:
-            df = pd.read_sql(command, self._conn_)
-        except Exception as e:
-            emsg = 'Could not read SQL command as pandas table'
-            emsg += '\n\tCommand = {0}'.format(command)
-            raise DatabaseError(emsg, path=self.path, errorobj=e,
-                                func_name=func_name)
-        # return dataframe
-        return df
+        emsg = ('Please abstract method with SQLiteDatabase or MySQLDatabase')
+        NotImplemented(emsg)
 
 
 class SQLiteDatabase(Database):
@@ -849,6 +824,8 @@ class SQLiteDatabase(Database):
         self.host = None
         self.user = None
         self.path = path
+        self.passwd = None
+        self.dbname = None
         # try to connect the the SQL3 database
         try:
             self._conn_ = sqlite3.connect(self.path, timeout=TIMEOUT)
@@ -898,6 +875,64 @@ class SQLiteDatabase(Database):
         # if we get to this point raise operational error
         emsg = 'database locked for > {0} s'.format(MAXWAIT)
         raise sqlite3.OperationalError(emsg)
+
+    def add_from_pandas(self, df: pd.DataFrame, table: Union[str, None] = None,
+                        if_exists: str = 'append', index: bool = False,
+                        commit: bool = True):
+        """
+        Use pandas to add rows to database
+
+        :param df: pandas dataframe, the pandas dataframe to add to the database
+        :param table: A str which specifies which table within the database
+                      to retrieve data from.  If there is only one table to
+                      pick from, this may be left as None to use it
+                      automatically.
+        :param if_exists: how to behave if the table already exists in database
+                          valid responses are 'fail', 'replace' or 'append'
+                          * fail: Raise a ValueError.
+                          * replace: Drop the table before inserting new values.
+                          * append: Insert new values to the existing table.
+        :param index: whether to include an index column in database
+        :param commit: whether to commit changes to SQL database after adding
+                       (or wait to another commit event)
+        :return:
+        """
+        # set function name
+        func_name = __NAME__ + '.Database.add_from_pandas()'
+        # infer table name
+        table = self._infer_table_(table)
+        # check if_exists criteria
+        if if_exists not in ['fail', 'replace', 'append']:
+            emsg = 'if_exists must be either "fail", "replace" or "append"'
+            raise DatabaseError(emsg, path=self.path, func_name=func_name)
+        # try to add pandas dataframe to table
+        try:
+            df.to_sql(table, self._conn_, if_exists=if_exists, index=index)
+        except Exception as e:
+            raise DatabaseError(str(e), path=self.path, errorobj=e,
+                                func_name=func_name)
+        # commit change to database if requested
+        if commit:
+            self.commit()
+
+    def _to_pandas(self, command: str) -> pd.DataFrame:
+        """
+        Use pandas to get sql command
+        :param command:
+        :return:
+        """
+        # set function name
+        func_name = __NAME__ + '.Database._to_pandas()'
+        # try to read sql using pandas
+        try:
+            df = pd.read_sql(command, self._conn_)
+        except Exception as e:
+            emsg = 'Could not read SQL command as pandas table'
+            emsg += '\n\tCommand = {0}'.format(command)
+            raise DatabaseError(emsg, path=self.path, errorobj=e,
+                                func_name=func_name)
+        # return dataframe
+        return df
 
     # admin methods
     def backup(self):
@@ -978,6 +1013,8 @@ class MySQLDatabase(Database):
         self.host = host
         self.user = user
         self.path = '{0}@{1}'.format(self.user, self.host)
+        self.passwd = passwd
+        self.dbname = database
         # try to connect the the SQL3 database
         try:
             self._conn_ = mysql.connect(host=self.host, user=self.user,
@@ -1027,6 +1064,75 @@ class MySQLDatabase(Database):
             cursor.execute('CREATE DATABASE {0}'.format(database))
         # close the cursor
         cursor.close()
+
+    def add_from_pandas(self, df: pd.DataFrame, table: Union[str, None] = None,
+                        if_exists: str = 'append', index: bool = False,
+                        commit: bool = True):
+        """
+        Use pandas to add rows to database
+
+        :param df: pandas dataframe, the pandas dataframe to add to the database
+        :param table: A str which specifies which table within the database
+                      to retrieve data from.  If there is only one table to
+                      pick from, this may be left as None to use it
+                      automatically.
+        :param if_exists: how to behave if the table already exists in database
+                          valid responses are 'fail', 'replace' or 'append'
+                          * fail: Raise a ValueError.
+                          * replace: Drop the table before inserting new values.
+                          * append: Insert new values to the existing table.
+        :param index: whether to include an index column in database
+        :param commit: whether to commit changes to SQL database after adding
+                       (or wait to another commit event)
+        :return:
+        """
+        # set function name
+        func_name = __NAME__ + '.Database.add_from_pandas()'
+        # infer table name
+        table = self._infer_table_(table)
+        # need a sqlalchmy connection here
+        import sqlalchemy
+        dpath = 'mysql+mysqlconnector://{0}:{1}@{2}/{3}'
+        dargs = [self.user, self.passwd, self.host, self.dbname]
+        dconn = sqlalchemy.create_engine(dpath.format(*dargs))
+        # check if_exists criteria
+        if if_exists not in ['fail', 'replace', 'append']:
+            emsg = 'if_exists must be either "fail", "replace" or "append"'
+            raise DatabaseError(emsg, path=self.path, func_name=func_name)
+        # try to add pandas dataframe to table
+        try:
+            df.to_sql(table, dconn, if_exists=if_exists, index=index)
+        except Exception as e:
+            raise DatabaseError(str(e), path=self.path, errorobj=e,
+                                func_name=func_name)
+
+        # commit change to database if requested
+        if commit:
+            self.commit()
+
+    def _to_pandas(self, command: str) -> pd.DataFrame:
+        """
+        Use pandas to get sql command
+        :param command:
+        :return:
+        """
+        # need a sqlalchmy connection here
+        import sqlalchemy
+        dpath = 'mysql+mysqlconnector://{0}:{1}@{2}/{3}'
+        dargs = [self.user, self.passwd, self.host, self.dbname]
+        dconn = sqlalchemy.create_engine(dpath.format(*dargs))
+        # set function name
+        func_name = __NAME__ + '.Database._to_pandas()'
+        # try to read sql using pandas
+        try:
+            df = pd.read_sql(command, con=dconn)
+        except Exception as e:
+            emsg = 'Could not read SQL command as pandas table'
+            emsg += '\n\tCommand = {0}'.format(command)
+            raise DatabaseError(emsg, path=self.path, errorobj=e,
+                                func_name=func_name)
+        # return dataframe
+        return df
 
     def _update_table_list_(self):
         """
@@ -1095,21 +1201,26 @@ def _decode_value(value: Any) -> str:
 
     :return: str, the decoded string value
     """
+    # Convert None to NULL
+    if value == 'None':
+        return 'NULL'
+    if value == '"NULL"' or value == "'NULL'":
+        return 'NULL'
     # deal with value being types (decode to string)
     if isinstance(value, bytes):
         return value.decode('utf=8')
     # deal with value being None
     elif value is None:
-        return '"None"'
+        return 'NULL'
     # deal with nan
     elif isinstance(value, float) and np.isnan(value):
-        return '"NAN"'
+        return 'NULL'
     # deal with inf
     elif isinstance(value, float) and np.isinf(value):
         if np.isneginf(value):
-            return '"-INF"'
+            return 'NULL'
         else:
-            return '"INF"'
+            return 'NULL'
     # if it is not a string already just pipe it to string
     elif not isinstance(value, str):
         return str(value)
@@ -1118,7 +1229,7 @@ def _decode_value(value: Any) -> str:
         return '"{0}"'.format(value)
 
 
-def _encode_value(value: str) -> Union[str, None, float]:
+def _encode_value(value: str, dtype: Type) -> Union[str, None, float]:
     """
     Convert an sql string into a python variable
 
@@ -1127,17 +1238,11 @@ def _encode_value(value: str) -> Union[str, None, float]:
     :return: str, None or float - depending on the sql string 'value'
     """
     # return None
-    if value == 'None':
+    if dtype is None and value == 'NULL':
         return None
     # return not a number
-    if value == 'NAN':
+    if dtype is float and value == 'NULL':
         return np.nan
-    # return negative infinity
-    if value == '-INF':
-        return -1 * np.inf
-    # return infinity
-    if value == 'INF':
-        return np.inf
     # else return value
     return value
 
