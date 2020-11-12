@@ -198,7 +198,7 @@ def get_non_tellu_objs(params: ParamDict, recipe, fiber, filetype=None,
                                      columns='*', indexdbm=indexdbm)
     # convert data frame to table
     obj_table = Table.from_pandas(dataframe)
-    obj_filenames = obj_table['PATH']
+    obj_filenames = obj_table['ABSPATH']
     # filter out telluric stars
     obj_stars, obj_names = [], []
     # loop around object table and only keep non-telluric stars

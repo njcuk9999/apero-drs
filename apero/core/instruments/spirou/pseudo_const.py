@@ -672,7 +672,7 @@ class PseudoConstants(DefaultConstants):
         # get header keys
         hkeys, htypes = self.INDEX_HEADER_KEYS()
         # set columns
-        columns = ['PATH', 'DIRECTORY', 'FILENAME', 'KIND',
+        columns = ['ABSPATH', 'DIRNAME', 'FILENAME', 'KIND',
                    'LAST_MODIFIED', 'RUNSTRING'] + hkeys + ['USED', 'RAWFIX']
         ctypes = [str, str, str, str, float, str] + htypes + [int, int]
         return columns, ctypes

@@ -970,7 +970,7 @@ class PseudoConstants:
         _ = display_func(None, 'CALIBRATION_DB_COLUMNS', __NAME__,
                          self.class_name)
         # set columns
-        columns = ['KEY', 'FIBER', 'SUPER', 'FILENAME', 'HUMANTIME',
+        columns = ['KEYNAME', 'FIBER', 'SUPERCAL', 'FILENAME', 'HUMANTIME',
                    'UNIXTIME', 'USED']
         ctypes = [str, str, int, str, str, float, int]
         return columns, ctypes
@@ -985,7 +985,7 @@ class PseudoConstants:
         _ = display_func(None, 'TELLURIC_DB_COLUMNS', __NAME__,
                          self.class_name)
         # set columns
-        columns = ['KEY', 'FIBER', 'SUPER', 'FILENAME', 'HUMANTIME',
+        columns = ['KEYNAME', 'FIBER', 'SUPERCAL', 'FILENAME', 'HUMANTIME',
                    'UNIXTIME', 'OBJECT', 'AIRMASS', 'TAU_WATER', 'TAU_OTHERS',
                    'USED']
         ctypes = [str, str, int, str, str, float, str, float, float, float, int]
@@ -1016,7 +1016,7 @@ class PseudoConstants:
         # get header keys
         hkeys, htypes = self.INDEX_HEADER_KEYS()
         # set columns
-        columns = ['PATH', 'DIRECTORY', 'FILENAME', 'KIND',
+        columns = ['ABSPATH', 'DIRNAME', 'FILENAME', 'KIND',
                    'LAST_MODIFIED', 'RUNSTRING'] + hkeys + ['USED', 'RAWFIX']
         ctypes = [str, str, str, str, float, str] + htypes + [int, int]
         return columns, ctypes
@@ -1033,10 +1033,10 @@ class PseudoConstants:
         # set columns
         columns = ['RECIPE', 'RKIND', 'PID', 'HUMANTIME', 'UNIXTIME',
                    'GROUPNAME', 'LEVEL', 'SUBLEVEL', 'LEVELCRIT', 'INPATH',
-                   'OUTPATH', 'DIRECTORY', 'LOGFILE', 'PLOTDIR', 'RUNSTRING',
+                   'OUTPATH', 'DIRNAME', 'LOGFILE', 'PLOTDIR', 'RUNSTRING',
                    'ARGS', 'KWARGS', 'SKWARGS', 'STARTED', 'PASSED_ALL_QC',
                    'QC_STRING', 'QC_NAMES', 'QC_VALUES', 'QC_LOGIC', 'QC_PASS',
-                   'ERRORS', 'ENDED', 'USED']
+                   'ERRORMSGS', 'ENDED', 'USED']
         ctypes = [str, str, str, str, float, str, int, int, str, str, str,
                   str, str, str, str, str, str, str, int, int, str, str, str,
                   str, str, str, int, int]
@@ -1053,7 +1053,7 @@ class PseudoConstants:
                          self.class_name)
         # set columns
         columns = ['OBJNAME', 'OBJNAME_SOURCE', 'GAIADR2ID', 'GAIAID_SOURCE',
-                   'RA', 'RA_SOURCE', 'DEC', 'DEC_SOURCE', 'PMRA',
+                   'RA_DEG', 'RA_SOURCE', 'DEC_DEG', 'DEC_SOURCE', 'PMRA',
                    'PMRA_SOURCE', 'PMDE', 'PMDE_SOURCE', 'PLX', 'PLX_SOURCE',
                    'RV', 'RV_SOURCE', 'GMAG', 'GMAG_SOURCE', 'BPMAG',
                    'BPMAG_SOURCE', 'RPMAG', 'RPMAG_SOURCE', 'EPOCH',
@@ -1074,7 +1074,8 @@ class PseudoConstants:
         _ = display_func(None, 'PARAMS_DB_COLUMNS', __NAME__,
                          self.class_name)
         # set columns
-        columns = ['KEY', 'VALUE', 'DTYPE', 'SOURCE', 'LAST_MODIFIED', 'USED']
+        columns = ['KEYNAME', 'KEYVALUE', 'DTYPE', 'SOURCE', 'LAST_MODIFIED',
+                   'USED']
         ctypes = [str, str, str, str, float, int]
         return columns, ctypes
 
@@ -1088,9 +1089,10 @@ class PseudoConstants:
         _ = display_func(None, 'LANG_DB_COLUMNS', __NAME__,
                          self.class_name)
         # set columns
-        columns = ['KEY', 'KIND', 'COMMENT', 'ARGUMENTS'] + base.LANGUAGES
+        columns = ['KEYNAME', 'KIND', 'KEYDESC', 'ARGUMENTS'] + base.LANGUAGES
         ctypes = [str, str, str, str] + [str] * len(base.LANGUAGES)
         return columns, ctypes
+
 
 # =============================================================================
 # End of code

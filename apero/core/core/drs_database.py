@@ -351,8 +351,8 @@ class CalibrationDatabase(DatabaseManager):
         Get an entry from the calibration database
 
         :param columns: str, pushed to SQL (i.e. list columns or '*' for all)
-        :param key: str, KEY=="key" condition
-        :param fiber: str or None, if set FIBER=="fiber"
+        :param key: str, KEY="key" condition
+        :param fiber: str or None, if set FIBER="fiber"
         :param filetime: astropy.Time, if Not None the point in time to order
                          the files by
         :param timemode: str, the way in which to select which calibration to
@@ -378,12 +378,12 @@ class CalibrationDatabase(DatabaseManager):
         sql['sort_by'] = None
         sql['sort_descending'] = True
         # condition for key
-        sql['condition'] = 'KEY == "{0}"'.format(key)
+        sql['condition'] = 'KEYNAME = "{0}"'.format(key)
         # condition for used
-        sql['condition'] += ' AND USED == 1'
+        sql['condition'] += ' AND USED = 1'
         # condition for fiber
         if fiber is not None:
-            sql['condition'] += ' AND FIBER == "{0}"'.format(fiber)
+            sql['condition'] += ' AND FIBER = "{0}"'.format(fiber)
         # sql for time mode
         if timemode == 'older' and filetime is not None:
             # condition:
@@ -530,7 +530,7 @@ class CalibrationDatabase(DatabaseManager):
         # deal with no filenames found elsewise --> error
         if filenames is None or len(filenames) == 0:
             # get unique set of keys
-            keys = self.database.unique('KEY', table='MAIN')
+            keys = self.database.unique('KEYNAME', table='MAIN')
             # get file description
             if drsfile is not None:
                 if no_times:
@@ -700,8 +700,8 @@ class TelluricDatabase(DatabaseManager):
         Get an entry from the calibration database
 
         :param columns: str, pushed to SQL (i.e. list columns or '*' for all)
-        :param key: str, KEY=="key" condition
-        :param fiber: str or None, if set FIBER=="fiber"
+        :param key: str, KEY="key" condition
+        :param fiber: str or None, if set FIBER="fiber"
         :param filetime: astropy.Time, if Not None the point in time to order
                          the files by
         :param timemode: str, the way in which to select which telluric to
@@ -709,7 +709,7 @@ class TelluricDatabase(DatabaseManager):
                          based on filetime as the "zero point" time
         :param nentries: int or str, the number of entries to return
                          only valid string is '*' for all entries
-        :param objname: str or None, if set OBJECT=="fiber"
+        :param objname: str or None, if set OBJECT="fiber"
         :param tau_water: tuple or None, if set sets the lower and upper
                           bounds for tau water i.e.
                           TAU_WATER > tau_water[0]
@@ -736,15 +736,15 @@ class TelluricDatabase(DatabaseManager):
         sql['sort_by'] = None
         sql['sort_descending'] = True
         # condition for key
-        sql['condition'] = 'KEY == "{0}"'.format(key)
+        sql['condition'] = 'KEYNAME = "{0}"'.format(key)
         # condition for used
-        sql['condition'] += ' AND USED == 1'
+        sql['condition'] += ' AND USED = 1'
         # condition for fiber
         if fiber is not None:
-            sql['condition'] += ' AND FIBER == "{0}"'.format(fiber)
+            sql['condition'] += ' AND FIBER = "{0}"'.format(fiber)
         # condition for objname
         if objname is not None:
-            sql['condition'] += ' AND OBJECT == "{0}"'.format(objname)
+            sql['condition'] += ' AND OBJECT = "{0}"'.format(objname)
 
         # condition for tau_water
         if tau_water is not None and len(tau_water) == 2:
@@ -919,7 +919,7 @@ class TelluricDatabase(DatabaseManager):
         # deal with no filenames found elsewise --> error
         if filenames is None or len(filenames) == 0:
             # get unique set of keys
-            keys = self.database.unique('KEY', table='MAIN')
+            keys = self.database.unique('KEYNAME', table='MAIN')
             # get file description
             if drsfile is not None:
                 if no_times:
@@ -1300,7 +1300,7 @@ class IndexDatabase(DatabaseManager):
         path = Path(path).joinpath(directory, filename)
         # ------------------------------------------------------------------
         # get current list of paths for
-        currentpath = self.get_entries('PATH', directory=directory,
+        currentpath = self.get_entries('ABSPATH', directory=directory,
                                        filename=basename, nentries=1)
         # ------------------------------------------------------------------
         # deal with updating entry
@@ -1310,9 +1310,9 @@ class IndexDatabase(DatabaseManager):
                       float(last_modified), str(runstring)]
             values += hvalues + [used, rawfix]
             # set up condition
-            condition = 'FILENAME == "{0}"'.format(filename)
-            condition += ' AND DIRECTORY == "{0}"'.format(directory)
-            condition += ' AND PATH == "{0}"'.format(path)
+            condition = 'FILENAME = "{0}"'.format(filename)
+            condition += ' AND DIRNAME = "{0}"'.format(directory)
+            condition += ' AND ABSPATH = "{0}"'.format(path)
             # update row in database
             self.database.set('*', values, condition=condition, table='MAIN',
                               commit=commit)
@@ -1370,22 +1370,22 @@ class IndexDatabase(DatabaseManager):
         # sort by last modified
         sql['sort_by'] = 'LAST_MODIFIED'
         # condition for used
-        sql['condition'] = 'USED == 1'
+        sql['condition'] = 'USED = 1'
         # ------------------------------------------------------------------
         if condition is not None:
             sql['condition'] += ' AND {0}'.format(condition)
         # ------------------------------------------------------------------
         # deal with kind set
         if kind is not None:
-            sql['condition'] += ' AND KIND == "{0}"'.format(kind)
+            sql['condition'] += ' AND KIND = "{0}"'.format(kind)
         # ------------------------------------------------------------------
         # deal with directory set
         if directory is not None:
-            sql['condition'] += ' AND DIRECTORY == "{0}"'.format(directory)
+            sql['condition'] += ' AND DIRNAME = "{0}"'.format(directory)
         # ------------------------------------------------------------------
         # deal with filename set
         if filename is not None:
-            sql['condition'] += ' AND FILENAME == "{0}"'.format(filename)
+            sql['condition'] += ' AND FILENAME = "{0}"'.format(filename)
         # ------------------------------------------------------------------
         # get allowed header keys
         rkeys, rtypes = self.pconst.INDEX_HEADER_KEYS()
@@ -1400,7 +1400,7 @@ class IndexDatabase(DatabaseManager):
                         dtype = rtypes[h_it]
                         # try to case and add to condition
                         hargs = [hkey, dtype(hkeys[hkey])]
-                        sql['condition'] += ' AND {0} == "{1}"'.format(*hargs)
+                        sql['condition'] += ' AND {0} = "{1}"'.format(*hargs)
                     except Exception as _:
                         wargs = [self.name, hkey, hkeys[hkey],
                                  rtypes[h_it], func_name]
@@ -1515,7 +1515,7 @@ class IndexDatabase(DatabaseManager):
             include_files = []
         # ---------------------------------------------------------------------
         # deal with files we don't need (already have)
-        exclude_files = self.get_entries('PATH', kind=kind)
+        exclude_files = self.get_entries('ABSPATH', kind=kind)
         # ---------------------------------------------------------------------
         # locate all files within path
         reqfiles = _get_files(path, kind, include_directories,
@@ -1568,7 +1568,7 @@ class IndexDatabase(DatabaseManager):
         # get allowed header keys
         rkeys, rtypes = self.pconst.INDEX_HEADER_KEYS()
         # get columns
-        columns = ['PATH', 'RAWFIX'] + rkeys
+        columns = ['ABSPATH', 'RAWFIX'] + rkeys
         # get data for columns
         table = self.get_entries(', '.join(columns), kind='raw')
         # need to loop around each row
@@ -1589,9 +1589,9 @@ class IndexDatabase(DatabaseManager):
             # fix header (with new keys in)
             header, _ = drs_file.fix_header(self.params, recipe, header=header)
             # condition is that full path is the same
-            condition = 'PATH=="{0}"'.format(table['PATH'].iloc[row])
+            condition = 'ABSPATH="{0}"'.format(table['ABSPATH'].iloc[row])
             # get values
-            values = [table['PATH'].iloc[row], 1]
+            values = [table['ABSPATH'].iloc[row], 1]
             # add header keys in rkeys
             for rkey in rkeys:
                 # get drs key
@@ -1876,7 +1876,7 @@ class LogDatabase(DatabaseManager):
         :return:
         """
         # set up condition
-        condition = 'PID=="{0}"'.format(pid)
+        condition = 'PID="{0}"'.format(pid)
         # delete rows that match this criteria
         self.database.delete_rows(table='MAIN', condition=condition)
 
@@ -2027,7 +2027,7 @@ class LogDatabase(DatabaseManager):
         # sort by last modified
         sql['sort_by'] = 'UNIXTIME'
         # condition for used
-        sql['condition'] = 'USED == 1'
+        sql['condition'] = 'USED = 1'
         # ------------------------------------------------------------------
         if condition is not None:
             sql['condition'] += ' AND {0}'.format(condition)
@@ -2039,7 +2039,7 @@ class LogDatabase(DatabaseManager):
             # loop around white listed nights and only keep these
             for directory in wdirs:
                 # add subcondition
-                subcondition = 'DIRECTORY=="{0}"'.format(directory)
+                subcondition = 'DIRNAME="{0}"'.format(directory)
                 subconditions.append(subcondition)
             # add to conditions
             condition += ' AND ({0})'.format(' OR '.join(subconditions))
@@ -2048,7 +2048,7 @@ class LogDatabase(DatabaseManager):
         if bdirs is not None:
             for directory in bdirs:
                 # add to condition
-                condition += ' AND (DIRECTORY!="{0}")'.format(directory)
+                condition += ' AND (DIRNAME!="{0}")'.format(directory)
         # ------------------------------------------------------------------
         # add the number of entries to get
         if isinstance(nentries, int):
@@ -2176,7 +2176,7 @@ class ObjectDatabase(DatabaseManager):
         # sort by last modified
         sql['sort_by'] = GAIA_COL_NAME
         # condition for used
-        sql['condition'] = 'USED == 1'
+        sql['condition'] = 'USED = 1'
         # ------------------------------------------------------------------
         if condition is not None:
             sql['condition'] += ' AND {0}'.format(condition)
@@ -2291,7 +2291,7 @@ class ObjectDatabase(DatabaseManager):
         # add used
         values.append(used)
         # need to see if we already have gaia id
-        condition = '{0}=="{1}"'.format(GAIA_COL_NAME, gaia_id)
+        condition = '{0}="{1}"'.format(GAIA_COL_NAME, gaia_id)
         gaiaids = self.database.unique(GAIA_COL_NAME, condition=condition,
                                        table='MAIN')
         # ------------------------------------------------------------------
