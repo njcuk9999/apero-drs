@@ -705,22 +705,23 @@ def writefits(params: ParamDict, filename: str,
 
     # ------------------------------------------------------------------
     # make locked read function
-    @drs_lock.synchronized(lock, params['PID'])
-    def locked_write():
-        return _write_fits(params, filename, data, header, datatype, dtype,
-                           func)
-
+    # @drs_lock.synchronized(lock, params['PID'])
+    # def locked_write():
+    #     return _write_fits(params, filename, data, header, datatype, dtype,
+    #                        func)
+    return _write_fits(params, filename, data, header, datatype, dtype,
+                       func)
     # ------------------------------------------------------------------
     # try to run locked read function
-    try:
-        locked_write()
-    except KeyboardInterrupt as e:
-        lock.reset()
-        raise e
-    except Exception as e:
-        # reset lock
-        lock.reset()
-        raise e
+    # try:
+    #     locked_write()
+    # except KeyboardInterrupt as e:
+    #     lock.reset()
+    #     raise e
+    # except Exception as e:
+    #     # reset lock
+    #     lock.reset()
+    #     raise e
 
 
 def _write_fits(params: ParamDict, filename: str,

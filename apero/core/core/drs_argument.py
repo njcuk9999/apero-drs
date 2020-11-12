@@ -2980,9 +2980,9 @@ def valid_directory(params: ParamDict, indexdb: IndexDatabase,
     # update database with entries
     indexdb.update_entries(kind=kind, force_dir=forced_dir)
     # set up condition
-    condition = 'KIND=="{0}"'.format(kind)
+    condition = 'KIND="{0}"'.format(kind)
     # load directory names
-    directories = indexdb.database.unique('DIRECTORY', condition=condition)
+    directories = indexdb.database.unique('DIRNAME', condition=condition)
 
     # -------------------------------------------------------------------------
     # 2. check for directory in database
@@ -3061,17 +3061,17 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase, kind: str,
     # update database with entries
     indexdb.update_entries(kind=kind, force_dir=forced_dir)
     # set up condition
-    condition = 'KIND=="{0}"'.format(kind)
-    condition += ' AND DIRECTORY=="{0}"'.format(os.path.basename(directory))
+    condition = 'KIND="{0}"'.format(kind)
+    condition += ' AND DIRNAME="{0}"'.format(os.path.basename(directory))
     # deal with wildcards
     if '*' in filename:
         # make filename sql-like
         filename = filename.replace('*', '%')
         # make a path cond
-        pathcond = 'PATH LIKE "{0}"'
+        pathcond = 'ABSPATH LIKE "{0}"'
     else:
         # make a path cond
-        pathcond = 'PATH == "{0}"'
+        pathcond = 'ABSPATH="{0}"'
     # ---------------------------------------------------------------------
     # Step 2: Check whether filename itself is in database
     # ---------------------------------------------------------------------
@@ -3152,7 +3152,7 @@ def _check_fits_keys(params: ParamDict, drsfiles: List[DrsInputFile],
             header[drs_key] = table[key].iloc[row]
         # ---------------------------------------------------------------------
         # get filename
-        filename_it = table['PATH'].iloc[row]
+        filename_it = table['ABSPATH'].iloc[row]
         # make instance of the DrsFile
         input_dir = drs_file.get_dir(params, kind, dirpath=forced_dir)
         # ---------------------------------------------------------------------

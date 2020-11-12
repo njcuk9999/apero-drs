@@ -570,8 +570,8 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
             # get output dict for okey
             output = recipe.output_files[okey]
             # get parmaeters for add entry
-            fullpath = str(output['PATH'])
-            directory = str(output['DIRECTORY'])
+            fullpath = str(output['ABSPATH'])
+            directory = str(output['DIRNAME'])
             filename = str(output['FILENAME'])
             kind = str(output['KIND'])
             runstring = str(output['RUNSTRING'])
@@ -584,7 +584,7 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
                 if rkey in output:
                     hkeys[rkey] = output[rkey]
                 else:
-                    hkeys[rkey] = 'None'
+                    hkeys[rkey] = 'NULL'
             # finally add to database
             indexdb.add_entry(directory, filename, kind, runstring, hkeys,
                               fullpath, used, rawfix)

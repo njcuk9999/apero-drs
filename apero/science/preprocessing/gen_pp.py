@@ -273,7 +273,7 @@ class AstroObject(object):
         # deal with no input_gaiaid
         if self.input_gaiaid is not None:
             # condition condition
-            condition = '{0}=="{1}"'.format('GAIADR2ID', self.input_gaiaid)
+            condition = '{0}="{1}"'.format('GAIADR2ID', self.input_gaiaid)
             # get the entries for this condition
             entries = self.database.get_entries('*', condition=condition)
             # set source
@@ -294,9 +294,9 @@ class AstroObject(object):
         self.objname_source = 'database'
         self.gaia_id = str(entries['GAIADR2ID'].iloc[0])
         self.gaia_id_source = source
-        self.ra = float(entries['RA'].iloc[0])
+        self.ra = float(entries['RA_DEG'].iloc[0])
         self.ra_source = source
-        self.dec = float(entries['DEC'].iloc[0])
+        self.dec = float(entries['DEC_DEG'].iloc[0])
         self.dec_source = source
         # assign pmra
         if not drs_text.null_text(entries['PMRA'].iloc[0], ['None']):
@@ -369,7 +369,7 @@ class AstroObject(object):
             # compare to input_objname
             if cobjname == self.input_objname:
                 # condition condition
-                condition = '{0}=="{1}"'.format('GAIADR2ID', gaia_id[row])
+                condition = '{0}="{1}"'.format('GAIADR2ID', gaia_id[row])
                 # set source
                 source = 'database-objname'
                 # return the entries for this gaia id
@@ -393,7 +393,7 @@ class AstroObject(object):
                 # compare to input_objname
                 if calias == self.input_objname:
                     # condition condition
-                    condition = '{0}=="{1}"'.format('GAIADR2ID', gaia_id[row])
+                    condition = '{0}="{1}"'.format('GAIADR2ID', gaia_id[row])
                     # set source
                     source = 'database-aliases'
                     # return the entries for this gaia id
@@ -668,9 +668,9 @@ class AstroObject(object):
         :param outdict:
         :return:
         """
-        columns = ['OBJNAME', 'OBJNAME_SOURCE', GAIA_COL_NAME,
+        columns = ['OBJNAME', 'OBJNAME_SOURCE', GL_GAIA_COL_NAME,
                    'GAIAID_SOURCE',
-                   'RA', 'RA_SOURCE', 'DEC', 'DEC_SOURCE', 'PMRA',
+                   'RA_DEG', 'RA_SOURCE', 'DEC_DEG', 'DEC_SOURCE', 'PMRA',
                    'PMRA_SOURCE', 'PMDE', 'PMDE_SOURCE', 'PLX', 'PLX_SOURCE',
                    'RV', 'RV_SOURCE', 'GMAG', 'GMAG_SOURCE', 'BPMAG',
                    'BPMAG_SOURCE', 'RPMAG', 'RPMAG_SOURCE', 'EPOCH',
@@ -1212,7 +1212,7 @@ if __name__ == "__main__":
     # get a list of object names from glist
     _gtable = get_google_sheet(_params['OBJ_LIST_GOOGLE_SHEET_URL'],
                                _params['OBJ_LIST_GOOGLE_SHEET_WNUM'])
-    _objnames = list(np.unique(_gtable[OBJ_COL_NAME]))
+    _objnames = list(np.unique(_gtable[GL_OBJ_COL_NAME]))
 
     # resolve targets
     resolve_targets(_params, _objnames, database=_objdbm)

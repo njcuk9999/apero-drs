@@ -1518,7 +1518,7 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
             continue
 
         # set up an sql condition that will get more complex as we go down
-        condition = 'KIND=="raw"'
+        condition = 'KIND="raw"'
         # ------------------------------------------------------------------
         # deal with black lists
         # ------------------------------------------------------------------
@@ -1555,7 +1555,7 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
             # loop around white listed nights and set them to False
             for whitelist_night in whitelist_nights:
                 # add subcondition
-                subcondition = 'DIRECTORY=="{0}"'.format(whitelist_night)
+                subcondition = 'DIRNAME="{0}"'.format(whitelist_night)
                 subconditions.append(subcondition)
             # add to conditions
             condition += ' AND ({0})'.format(' OR '.join(subconditions))
@@ -1584,7 +1584,7 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
             # loop around pi names and set them to False
             for pi_name in pi_names:
                 # add subcondition
-                subcondition = 'KW_PI_NAME=="{0}"'.format(pi_name)
+                subcondition = 'KW_PI_NAME="{0}"'.format(pi_name)
                 subconditions.append(subcondition)
             # add to conditions
             condition += ' AND ({0})'.format(' OR '.join(subconditions))
@@ -1611,8 +1611,7 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
             # get master nightnames
             nightname = params['MASTER_NIGHT']
             # get nightnames
-            nightnames = indexdb.database.unique('DIRECTORY',
-                                                 condition=condition)
+            nightnames = indexdb.database.unique('DIRNAME', condition=condition)
             # check if master night name is valid (in table)
             if nightname not in nightnames:
                 wargs = [nightname]
@@ -1624,7 +1623,7 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
                 else:
                     sys.exit()
             # mask table by nightname
-            condition += ' AND DIRECTORY=="{0}"'.format(nightname)
+            condition += ' AND DIRNAME="{0}"'.format(nightname)
         # ------------------------------------------------------------------
         # deal with setting 1 night
         # ------------------------------------------------------------------
@@ -1632,7 +1631,7 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
             # get nightnames
             nightname = params['NIGHTNAME']
             # mask table by nightname
-            condition += ' AND DIRECTORY=="{0}"'.format(nightname)
+            condition += ' AND DIRNAME="{0}"'.format(nightname)
         else:
             nightname = 'all'
         # ------------------------------------------------------------------
@@ -2243,7 +2242,7 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
 
                     # construct sub condition based on this filter
                     sargs = [tfilter, testvalue, tfilter]
-                    sub_cond += ['({0}=="{1}" OR {2}=="None")'.format(*sargs)]
+                    sub_cond += ['({0}="{1}" OR {2}="None")'.format(*sargs)]
                 # create  full sub condition (with OR)
                 subcondition = ' OR '.join(sub_cond)
                 # -------------------------------------------------------------
@@ -2253,7 +2252,7 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
         # TODO: maybe we can do this later?
         # lets apply the filters here
         dataframe = indexdb.get_entries('*', condition=argcondition)
-        absfilenames = np.array(dataframe['PATH']).astype(str)
+        absfilenames = np.array(dataframe['ABSPATH']).astype(str)
 
         # ------------------------------------------------------------------
         # Now we need to get the files and assign
@@ -2650,8 +2649,8 @@ def _get_non_telluric_stars(params, indexdb: IndexDatabase,
         tstars = []
     # define the conditions for objects
     dprtypes = ['OBJ_FP', 'OBJ_DARK']
-    condition = '(KW_DPRTYPE=="{0}" OR KW_DPRTYPE=="{1}")'.format(*dprtypes)
-    condition += ' AND KW_OBSTYPE=="OBJECT"'
+    condition = '(KW_DPRTYPE="{0}" OR KW_DPRTYPE="{1}")'.format(*dprtypes)
+    condition += ' AND KW_OBSTYPE="OBJECT"'
     # get columns from index database
     raw_objects = indexdb.get_entries(OBJNAMECOL, kind='raw',
                                       condition=condition)
@@ -3010,9 +3009,9 @@ def _remove_engineering(params, indexdb, condition):
         return ''
 
     # get nightnames
-    itable = indexdb.get_entries('DIRECTORY, KW_OBSTYPE', condition=condition)
+    itable = indexdb.get_entries('DIRNAME, KW_OBSTYPE', condition=condition)
     # get nightnames and obstypes
-    nightnames = itable['DIRECTORY']
+    nightnames = itable['DIRNAME']
     obstypes = itable['KW_OBSTYPE']
     # get unique nights
     u_nights = np.unique(nightnames)

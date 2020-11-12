@@ -460,13 +460,13 @@ class RecipeLog:
         row['KIND'] = self.kind
         row['PID'] = self.pid
         row['HTIME'] = self.htime
-        row['GROUP'] = self.group
+        row['GROUPNAME'] = self.group
         row['LEVEL'] = self.level
         row['SUBLEVEL'] = self.level_iteration
         row['LEVEL_CRIT'] = self.level_criteria
         row['INPATH'] = self.inputdir
         row['OUTPATH'] = self.outputdir
-        row['DIRECTORY'] = self.directory
+        row['DIRNAME'] = self.directory
         row['LOGFILE'] = self.log_file
         row['PLOTDIR'] = self.plot_dir
         row['RUNSTRING'] = self.runstring
@@ -485,7 +485,7 @@ class RecipeLog:
         row['QC_LOGIC'] = self.qc_logic.strip().strip('||').strip()
         row['QC_PASS'] = self.qc_pass.strip().strip('||').strip()
         # add errors
-        row['ERRORS'] = self.errors
+        row['ERRORMSGS'] = self.errors
         # add whether recipe ended
         row['ENDED'] = self.ended
         # return row
@@ -550,14 +550,14 @@ def update_index_db(params: ParamDict, kind: str,
 
 
 def find_files(params: ParamDict, kind: str, filters: Dict[str, str],
-               columns='PATH', indexdbm: Union[IndexDatabase, None] = None
+               columns='ABSPATH', indexdbm: Union[IndexDatabase, None] = None
                ) -> Union[np.ndarray, pd.DataFrame]:
     # update database
     indexdbm = update_index_db(params, kind=kind, indexdbm=indexdbm)
     # get columns
     colnames = indexdbm.database.colnames('*')
     # get file list using filters
-    condition = 'KIND=="{0}"'.format(kind)
+    condition = 'KIND="{0}"'.format(kind)
     # loop around filters
     for fkey in filters:
         if fkey in colnames:
@@ -571,7 +571,7 @@ def find_files(params: ParamDict, kind: str, filters: Dict[str, str],
                 # make sure filter is stripped
                 _filter = _filter.strip()
                 # add to subconditions
-                subconditions.append('{0}=="{1}"'.format(fkey, _filter))
+                subconditions.append('{0}="{1}"'.format(fkey, _filter))
             # add subconditions to condition
             condition += ' AND ({0})'.format(' OR '.join(subconditions))
     # get columns for this condition

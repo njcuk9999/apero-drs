@@ -78,7 +78,7 @@ class DatabaseHolder:
             if len(self.df) == 0:
                 self.df = None
                 self.empty = True
-        elif str(self.path).endswith('.db'):
+        else:
             # start database
             database = drs_db.database_wrapper(self.kind, self.path)
             # try to get database (as a pandas table)

@@ -2819,9 +2819,9 @@ class DrsFitsFile(DrsInputFile):
         # get required keys for index database
         hkeys, htypes = pconst.INDEX_HEADER_KEYS()
         # deal with absolute path of file
-        self.output_dict['PATH'] = str(self.filename)
+        self.output_dict['ABSPATH'] = str(self.filename)
         # deal with night name of file
-        self.output_dict['DIRECTORY'] = str(self.params['NIGHTNAME'])
+        self.output_dict['DIRNAME'] = str(self.params['NIGHTNAME'])
         # deal with basename of file
         self.output_dict['FILENAME'] = str(self.basename)
         # deal with kind
@@ -4395,9 +4395,9 @@ class DrsNpyFile(DrsInputFile):
         # get required keys for index database
         hkeys, htypes = pconst.INDEX_HEADER_KEYS()
         # deal with absolute path of file
-        self.output_dict['PATH'] = str(self.filename)
+        self.output_dict['ABSPATH'] = str(self.filename)
         # deal with night name of file
-        self.output_dict['DIRECTORY'] = str(self.params['NIGHTNAME'])
+        self.output_dict['DIRNAME'] = str(self.params['NIGHTNAME'])
         # deal with basename of file
         self.output_dict['FILENAME'] = str(self.basename)
         # deal with kind
