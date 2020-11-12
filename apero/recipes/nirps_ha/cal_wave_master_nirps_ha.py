@@ -386,12 +386,14 @@ def __main__(recipe, params):
                 # update the e2ds and s1d files for hc
                 newhce2ds = wave.update_extract_files(params, recipe,
                                                       hc_e2ds_file, wprops,
-                                                      EXTRACT_NAME, fiber)
+                                                      EXTRACT_NAME, fiber,
+                                                      calibdbm=calibdbm)
                 # update the e2ds and s1d files for fp
                 #  we returrn the fp e2ds file as it has an updated header
                 newfpe2ds = wave.update_extract_files(params, recipe,
                                                       fp_e2ds_file, wprops,
-                                                      EXTRACT_NAME, fiber)
+                                                      EXTRACT_NAME, fiber,
+                                                      calibdbm=calibdbm)
             # else just get the e2ds file from the current fp file
             else:
                 newfpe2ds = fp_e2ds_file

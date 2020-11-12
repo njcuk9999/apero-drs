@@ -6102,6 +6102,8 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
     # add dates
     wavefile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
     wavefile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    wavefile.add_hkey('KW_PID', value=params['PID'])
     # add output tag
     wavefile.add_hkey('KW_OUTPUT', value=wavefile.name)
     wavefile.add_hkey('KW_FIBER', value=fiber)
@@ -6205,7 +6207,7 @@ def write_fplines(params, recipe, rfpl, infile, hfile, fiber, kind=None):
 # Define wave update functions
 # =============================================================================
 def update_extract_files(params, recipe, extract_file, wprops, extname,
-                         fiber):
+                         fiber, calibdbm):
     # ----------------------------------------------------------------------
     # find the extraction recipe
     extrecipe, _ = drs_startup.find_recipe(extname, params['INSTRUMENT'],
@@ -6244,6 +6246,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     WLOG(params, '', TextEntry('40-017-00038', args=wargs))
     # update the e2ds file
     e2ds_file.read_file()
+    e2ds_file.read_header()
     e2ds_file = add_wave_keys(params, e2ds_file, wprops)
     e2ds_file.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -6273,7 +6276,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # ----------------------------------------------------------------------
     # load the blaze file for this fiber
     blaze_file, blaze = flat_blaze.get_blaze(params, e2dsff_file.get_header(),
-                                             fiber)
+                                             fiber, database=calibdbm)
     # calculate s1d file
     sargs = [wprops['WAVEMAP'], e2dsff_file.get_data(), blaze]
     swprops = extract.e2ds_to_s1d(params, recipe, *sargs, wgrid='wave',
@@ -6290,6 +6293,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # ----------------------------------------------------------------------
     # copy header from e2dsll file
     s1dw_file.copy_hdict(e2ds_file)
+    s1dw_file.copy_header(e2ds_file)
     # set output key
     s1dw_file.add_hkey('KW_OUTPUT', value=s1dw_file.name)
     # add new header keys
@@ -6311,6 +6315,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # ----------------------------------------------------------------------
     # copy header from e2dsll file
     s1dv_file.copy_hdict(e2ds_file)
+    s1dv_file.copy_header(e2ds_file)
     # add new header keys
     s1dv_file = extract.add_s1d_keys(s1dv_file, svprops)
     # set output key
