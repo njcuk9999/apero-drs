@@ -12,8 +12,9 @@ Created on 2019-07-26 at 09:40
 import sys
 
 from apero.base import base
-from apero.lang.core import port_database
-
+from apero.base import drs_db
+from apero.lang.core import drs_lang
+from apero.tools.module.database import manage_databases
 
 # =============================================================================
 # Define variables
@@ -73,12 +74,23 @@ def main():
     args = sys.argv
     # Help
     if '--help' in args or '-h' in args:
+        # print the help message
         print(HELP_MESSAGE.format(DRS_PATH))
+        # return None
         return
 
     # if we are updating database then run
     if '--update' in args or '--upgrade' in args:
-        port_database.main()
+        # make the reset files
+        drs_lang.make_reset_csvs()
+        # make the databases list (but only language database)
+        print('Creating Language Database')
+        databases = dict()
+        landdbm = drs_db.LanguageDatabase(check=False)
+        databases['lang'] = landdbm
+        # create the database
+        manage_databases.create_lang_database(databases)
+        # return None
         return
     else:
         print('No option selected. See --help for options')
