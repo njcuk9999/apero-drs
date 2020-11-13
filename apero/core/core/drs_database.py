@@ -92,7 +92,7 @@ class DatabaseManager:
         _ = display_func(params, '__init__', __NAME__, self.classname)
         # save params for use throughout
         self.params = params
-        self.instrument = params['INSTRUMENT']
+        self.instrument = base.IPARAMS['INSTRUMENT']
         # get pconst (for use throughout)
         self.pconst = constants.pload(self.instrument)
         # set name
@@ -2303,30 +2303,6 @@ class ObjectDatabase(DatabaseManager):
         # else add row to database (as new row)
         else:
             self.database.add_row(values, table='MAIN', commit=commit)
-
-
-class LanguageDatabase(DatabaseManager):
-    def __init__(self, params: ParamDict, check: bool = True):
-        """
-        Constructor of the Object Database class
-
-        :param params: ParamDict, parameter dictionary of constants
-        :param check: bool, if True makes sure database file exists (otherwise
-                      assumes it is)
-
-        :return: None
-        """
-        # save class name
-        self.classname = 'LanguageDatabaseManager'
-        # set function
-        _ = display_func(params, '__init__', __NAME__, self.classname)
-        # construct super class
-        DatabaseManager.__init__(self, params)
-        # set name
-        self.name = 'language'
-        self.kind = 'LANG'
-        # set path
-        self.set_path(kind=self.kind, check=check)
 
 
 # =============================================================================
