@@ -212,7 +212,7 @@ ALLOW_BREAKPOINTS = Const('ALLOW_BREAKPOINTS', value=False, dtype=bool,
 # Currently installed instruments
 # TODO: This needs to be updated with new instruments
 DRS_INSTRUMENTS = Const('DRS_INSTRUMENTS',
-                        value=['SPIROU', 'NIRPS_HA', 'None'],
+                        value=base.INSTRUMENTS,
                         dtype=list, source=__NAME__, group=cgroup)
 
 # The group this target is set as (set in drs_setup)
