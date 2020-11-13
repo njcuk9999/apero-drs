@@ -16,6 +16,7 @@ import pkg_resources
 from typing import Any, Union
 
 from apero.base import base
+from apero.base import drs_base
 from apero.base import drs_exceptions
 
 # =============================================================================
@@ -28,10 +29,6 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
-# get exception
-DrsCodedException = drs_exceptions.DrsCodedException
-# relative folder cache
-REL_CACHE = dict()
 # define current path
 CURRENT_PATH = os.getcwd()
 
@@ -90,50 +87,11 @@ def get_relative_folder(package: Union[None, str],
     :return data: string, the absolute path and filename of the default config
                   file
     """
-    global REL_CACHE
-    # set function name (cannot break here --> no access to inputs)
+    # set function name
     func_name = str(__NAME__) + '.get_relative_folder()'
-    # TODO: update to pathlib.Path
-    if isinstance(folder, Path):
-        folder = str(folder)
-    # deal with no package
-    if package is None:
-        package = __PACKAGE__
-    # ----------------------------------------------------------------------
-    # check relative folder cache
-    if package in REL_CACHE and folder in REL_CACHE[package]:
-        return REL_CACHE[package][folder]
-    # ----------------------------------------------------------------------
-    # get the package.__init__ file path
-    try:
-        init = pkg_resources.resource_filename(package, '__init__.py')
-    except ImportError:
-        eargs = [package, func_name]
-        raise DrsCodedException('00-008-00001', targs=eargs, level='error')
-    # Get the config_folder from relative path
-    current = os.getcwd()
-    # get directory name of folder
-    dirname = os.path.dirname(init)
-    # change to directory in init
-    os.chdir(dirname)
-    # get the absolute path of the folder
-    data_folder = os.path.abspath(folder)
-    # change back to working dir
-    os.chdir(current)
-    # test that folder exists
-    if not os.path.exists(data_folder):
-        # raise exception
-        eargs = [os.path.basename(data_folder), os.path.dirname(data_folder)]
-        raise DrsCodedException('00-003-00005', targs=eargs, level='error')
-    # ----------------------------------------------------------------------
-    # update REL_CACHE
-    if package not in REL_CACHE:
-        REL_CACHE[package] = dict()
-    # update entry
-    REL_CACHE[folder] = data_folder
-    # ----------------------------------------------------------------------
-    # return the absolute data_folder path
-    return data_folder
+    # try base function
+    return drs_base.base_func(drs_base.base_get_relative_folder, func_name,
+                              package, folder)
 
 
 # =============================================================================
