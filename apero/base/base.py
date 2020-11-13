@@ -29,33 +29,52 @@ __author__ = ['N. Cook', 'E. Artigau', 'F. Bouchy', 'M. Hobson', 'C. Moutou',
 __date__ = '2020-08-21'
 __release__ = 'alpha pre-release'
 # do this once per drs import
-# TODO: first time Time.now is done it takes a very long time
+# TODO: first time Time.now is done it takes a long time - get it done now
 __now__ = Time.now()
 AstropyTime = Time
 AstropyTimeDelta = TimeDelta
+
+# Define yaml files
+INSTALL_YAML = 'install.yaml'
+DATABASE_YAML = 'database.yaml'
+USER_ENV = 'DRS_UCONFIG'
+
+# Define instruments
+INSTRUMENTS = ['SPIROU', 'NIRPS_HA', 'None']
+# -----------------------------------------------------------------------------
+# constants/parameter settings
+# -----------------------------------------------------------------------------
+CONST_PATH = './core/instruments/'
+CORE_PATH = './core/instruments/default/'
+PDB_RC_FILE = './data/core/pdbrc_full'
+PDB_RC_FILENAME = '.pdbrc'
+SCRIPTS = ['default_config.py', 'default_constants.py', 'default_keywords.py']
+USCRIPTS = ['user_config.ini', 'user_constants.ini', 'user_keywords.ini']
+PSEUDO_CONST_FILE = 'pseudo_const.py'
+PSEUDO_CONST_CLASS = 'PseudoConstants'
+# -----------------------------------------------------------------------------
+# language settings
+# -----------------------------------------------------------------------------
+DEFAULT_LANG = 'ENG'
+LANGUAGES = ['ENG', 'FR']
+LANG_DEFAULT_PATH = './lang/databases/'
+LANG_INSTRUMNET_PATH = './lang/databases/'
+LANG_BACKUP_PATH = './lang/backup/'
+LANG_XLS_FILE = 'language.xls'
+LANG_DB_FILE = 'lang.db'
+LANG_DB_RESET = 'reset.lang.csv'
+LANG_DB_RESET_INST = 'reset.lang.{0}.csv'
+LANG_COLS = ['KEYNAME', 'KIND', 'KEYDESC', 'ARGUMENTS'] + LANGUAGES
+LANG_CTYPES = [str, str, str, str] + [str] * len(LANGUAGES)
+# -----------------------------------------------------------------------------
+# types definitions
+# -----------------------------------------------------------------------------
 # Define simple types allowed for constants
 SIMPLE_TYPES = [int, float, str, bool, list]
 SIMPLE_STYPES = ['int', 'float', 'str', 'bool', 'list']
 # define valid characters
 VALID_CHARS = list(string.ascii_letters) + list(string.digits)
 VALID_CHARS += list(string.punctuation) + list(string.whitespace)
-# Define yaml files
-INSTALL_YAML = 'install.yaml'
-DATABASE_YAML = 'database.yaml'
-USER_ENV = 'DRS_UCONFIG'
-# Define relative path to 'const' sub-package
-CONST_PATH = './core/instruments/'
-CORE_PATH = './core/instruments/default/'
-PDB_RC_FILE = './data/core/pdbrc_full'
-PDB_RC_FILENAME = '.pdbrc'
-LANG_DEFAULT_PATH = './lang/databases/'
-LANG_INSTRUMNET_PATH = './lang/databases/'
-LANG_BACKUP_PATH = './lang/backup/'
-# Define config/constant/keyword scripts to open
-SCRIPTS = ['default_config.py', 'default_constants.py', 'default_keywords.py']
-USCRIPTS = ['user_config.ini', 'user_constants.ini', 'user_keywords.ini']
-PSEUDO_CONST_FILE = 'pseudo_const.py'
-PSEUDO_CONST_CLASS = 'PseudoConstants'
 # define display strings for types
 STRTYPE = OrderedDict()
 STRTYPE[int] = 'int'
@@ -66,9 +85,9 @@ STRTYPE[list] = 'list'
 STRTYPE[np.ndarray] = 'np.ndarray'
 # define types that we can do min and max on
 NUMBER_TYPES = [int, float]
-# default language
-DEFAULT_LANG = 'ENG'
-LANGUAGES = ['ENG', 'FR']
+# -----------------------------------------------------------------------------
+# display settings
+# -----------------------------------------------------------------------------
 # define colours (should not be used if we have access to drs_misc)
 COLOURS = dict()
 COLOURS['BLACK1'] = '\033[90;1m'
