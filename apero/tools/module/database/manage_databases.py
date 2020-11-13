@@ -33,6 +33,7 @@ __release__ = base.__release__
 # Get database definition
 Database = drs_db.Database
 DatabaseM = drs_database.DatabaseManager
+BaseDatabaseM = drs_db.BaseDatabaseManager
 # Get ParamDict
 ParamDict = constants.ParamDict
 PseudoConst = pseudo_const.PseudoConstants
@@ -50,7 +51,7 @@ def list_databases(params: ParamDict) -> Dict[str, DatabaseM]:
     indexdbm = drs_database.IndexDatabase(params, check=False)
     logdbm = drs_database.LogDatabase(params, check=False)
     objectdbm = drs_database.ObjectDatabase(params, check=False)
-    landdbm = drs_database.LanguageDatabase(params, check=False)
+    landdbm = drs_db.LanguageDatabase(check=False)
     # add to storage
     databases['calib'] = calibdbm
     databases['tellu'] = telludbm
@@ -97,7 +98,7 @@ def install_databases(params: ParamDict, skip: Union[List[str], None] = None):
     # -------------------------------------------------------------------------
     # create language database
     if 'lang' not in skip:
-        _ = create_lang_database(pconst, databases)
+        _ = create_lang_database(databases)
 
 
 def create_calibration_database(params: ParamDict, pconst: PseudoConst,
@@ -325,8 +326,8 @@ def make_object_reset(params: ParamDict):
 #     return paramsdb
 
 
-def create_lang_database(pconst: PseudoConst,
-                         databases: Dict[str, DatabaseM]) -> Database:
+def create_lang_database(databases: Dict[str, Union[DatabaseM, BaseDatabaseM]]
+                         ) -> Database:
     """
     Setup for the index database
 
@@ -335,19 +336,57 @@ def create_lang_database(pconst: PseudoConst,
 
     :returns: database - the telluric database
     """
-    # get columns and ctypes from pconst
-    columns, ctypes = pconst.LANG_DB_COLUMNS()
     # -------------------------------------------------------------------------
     # construct directory
     langdbm = databases['lang']
+    assert isinstance(langdbm, drs_db.LanguageDatabase)
     # -------------------------------------------------------------------------
     # make database
     langdb = drs_db.database_wrapper(langdbm.kind, langdbm.path)
+    columns = langdbm.columns
+    ctypes = langdbm.ctypes
     # -------------------------------------------------------------------------
     if 'MAIN' in langdb.tables:
         langdb.delete_table('MAIN')
     # add main table
     langdb.add_table('MAIN', columns, ctypes)
+    # ---------------------------------------------------------------------
+    # add rows from reset text file for default file
+    # ---------------------------------------------------------------------
+    # get rows from reset file
+    reset_entries0 = pd.read_csv(langdbm.resetfile, skipinitialspace=True)
+    # remove entries with KEYNAME == nan
+    mask0 = np.array(reset_entries0['KEYNAME']).astype(str) == 'nan'
+    # add rows from reset text file
+    langdb.add_from_pandas(reset_entries0[~mask0], table='MAIN')
+    # ---------------------------------------------------------------------
+    # add rows from reset text file for instrument file
+    # ---------------------------------------------------------------------
+    # get rows from instrument file
+    reset_entries1 = pd.read_csv(langdbm.instruement_resetfile,
+                                 skipinitialspace=True)
+    # remove entries with KEYNAME == nan
+    mask1 = np.array(reset_entries1['KEYNAME']).astype(str) == 'nan'
+    reset_entries1 = reset_entries1[~mask1]
+    # reload database into landgm
+    langdbm.load_db(check=False)
+    # need to loop around rows and add them one by one for instrument
+    for row in range(len(reset_entries1)):
+        # get row data
+        rowdata = reset_entries1.iloc[row]
+        # fill values
+        entry = dict()
+        entry['key'] = rowdata['KEYNAME']
+        entry['kind'] = rowdata['KIND']
+        entry['comment'] = rowdata['KEYDESC']
+        entry['arguments'] = rowdata['ARGUMENTS']
+        entry['textdict'] = dict()
+        for language in base.LANGUAGES:
+            entry['textdict'][language] = rowdata[language]
+        # add entry
+        langdbm.add_entry(commit=False, **entry)
+    # commit
+    langdbm.database.commit()
     # -------------------------------------------------------------------------
     return langdb
 
