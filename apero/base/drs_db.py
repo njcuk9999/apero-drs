@@ -6,6 +6,13 @@ CODE DESCRIPTION HERE
 Created on 2020-08-2020-08-21 18:13
 
 @author: cook
+
+# import rules
+
+only from:
+    - apero.base.base
+    - apero.base.drs_base
+
 """
 from astropy.table import Table
 import numpy as np
@@ -16,8 +23,7 @@ import time
 from typing import Any, Dict, List, Type, Union
 
 from apero.base import base
-from apero.base import drs_break
-from apero.base import drs_text
+from apero.base import drs_base
 
 # try to import mysql
 # noinspection PyBroadException
@@ -51,7 +57,7 @@ class DatabaseException(Exception):
 
 
 class DatabaseError(DatabaseException):
-    def __init__(self, message: Union[str, None] = None, 
+    def __init__(self, message: Union[str, None] = None,
                  errorobj: Any = None, path: Union[str, Path] = None,
                  func_name: Union[str, None] = None):
         """
@@ -110,6 +116,7 @@ class Database:
                  This may be :memory: to create a temporary in-memory
                  database which will not be saved when the program closes.
     """
+
     def __init__(self, *args, verbose: bool = False, **kwargs):
         # store whether we want to print steps
         self._verbose_ = verbose
@@ -1407,12 +1414,16 @@ class LanguageDatabase(BaseDatabaseManager):
         self.set_path(self.databasefile, check=check)
 
     def path_definitions(self):
+        # set function
+        func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
+                                           'path_definitions')
         # get the package name
         package = base.__PACKAGE__
         # get the relative path for the database
         lang_path = base.LANG_DEFAULT_PATH
         # get the absolute path for the language database
-        abs_lang_path = drs_break.get_relative_folder(package, lang_path)
+        abs_lang_path = drs_base.base_func(drs_base.base_get_relative_folder,
+                                           func_name, package, lang_path)
         abs_lang_path = Path(abs_lang_path)
         # set absolute path
         self.databasefile = abs_lang_path.joinpath(base.LANG_DB_FILE)
@@ -1468,7 +1479,9 @@ class LanguageDatabase(BaseDatabaseManager):
         func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
                                            'add_entry')
         # deal with bad key
-        if drs_text.null_text(key, ['None', 'NULL', '']):
+        cond1 = drs_base.base_func(drs_base.base_null_text, func_name, key,
+                                   ['None', 'NULL', ''])
+        if cond1:
             return
         # check kind
         if kind not in ['HELP', 'TEXT', 'ERROR', 'WARNING', 'INFO', 'ALL',
@@ -1492,7 +1505,10 @@ class LanguageDatabase(BaseDatabaseManager):
                     # replace all " with ' (to avoid conflicts)
                     dbtext = dbtext.replace('"', "'")
                     # if text is null --> NULL
-                    if drs_text.null_text(dbtext, ['None', 'NULL', '']):
+                    cond2 = drs_base.base_func(drs_base.base_null_text,
+                                               func_name, dbtext,
+                                               ['None', 'NULL', ''])
+                    if cond2:
                         values += ['NULL']
                     else:
                         values += ['{0}'.format(dbtext)]
@@ -1522,6 +1538,9 @@ class LanguageDatabase(BaseDatabaseManager):
         :param language: str, the language to use
         :return:
         """
+        # set function
+        func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
+                                           'get_dict')
         # get all rows
         df = self.database.get('*', return_pandas=True)
         # set up storage
@@ -1533,12 +1552,19 @@ class LanguageDatabase(BaseDatabaseManager):
             # get text
             if language not in rowdata:
                 rowtext = rowdata[base.DEFAULT_LANG]
-            elif drs_text.null_text(rowdata[language], ['None', 'Null', '']):
-                rowtext = rowdata[base.DEFAULT_LANG]
+
             else:
-                rowtext = rowdata[language]
+                cond1 = drs_base.base_func(drs_base.base_null_text,
+                                           func_name, rowdata[language],
+                                           ['None', 'NULL', ''])
+                if cond1:
+                    rowtext = rowdata[base.DEFAULT_LANG]
+                else:
+                    rowtext = rowdata[language]
             # if we still have a null entry do not add this row to storage
-            if drs_text.null_text(rowtext, ['None', 'Null', '']):
+            cond2 = drs_base.base_func(drs_base.base_null_text, func_name,
+                                       rowtext, ['None', 'NULL', ''])
+            if cond2:
                 continue
             # encode rowtext with escape chars
             rowtext = rowtext.replace(r'\n', '\n')

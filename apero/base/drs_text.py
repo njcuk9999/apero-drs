@@ -13,8 +13,9 @@ from typing import Any, Union, List
 import warnings
 
 from apero.base import base
+from apero.base import drs_base
 from apero.base import drs_exceptions
-
+from apero.lang.core import drs_lang
 
 # =============================================================================
 # Define variables
@@ -26,6 +27,9 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
+# get language dictionary
+LANG_DICT = drs_lang.langdict
+
 # get exceptions
 DrsCodedException = drs_exceptions.DrsCodedException
 
@@ -168,8 +172,10 @@ def read_lines(filename: Union[str, Path], comments: str = '#',
     #    up where we have access to drs_log.wlog)
     except Exception as e:
         eargs = [filename, type(e), e, func_name]
-        raise DrsCodedException(codeid='01-001-00024', targs=eargs,
-                                level='error', func_name=func_name)
+        ecode = '01-001-00024'
+        emsg = LANG_DICT[ecode]
+        return drs_base.base_error(ecode, emsg, 'error', eargs,
+                                   func_name)
     # valid lines
     raw = []
     # loop around lines
@@ -188,15 +194,19 @@ def read_lines(filename: Union[str, Path], comments: str = '#',
                 key, value = line.split(delimiter)
             except ValueError as _:
                 eargs = [filename, l_it + 1, line, delimiter, func_name]
-                raise DrsCodedException(codeid='01-001-00025', targs=eargs,
-                                        level='error', func_name=func_name)
+                ecode = '01-001-00025'
+                emsg = LANG_DICT[ecode]
+                return drs_base.base_error(ecode, emsg, 'error', eargs,
+                                           func_name)
             # append to raw list
             raw.append([key, value])
     # check that raw has entries
     if len(raw) == 0:
         eargs = [filename]
-        raise DrsCodedException(codeid='01-001-00026', targs=eargs,
-                                level='error', func_name=func_name)
+        ecode = '01-001-00026'
+        emsg = LANG_DICT[ecode]
+        return drs_base.base_error(ecode, emsg, 'error', eargs, func_name)
+
     # return raw
     return np.array(raw)
 
@@ -392,17 +402,11 @@ def null_text(variable: Any, nulls: Union[None, List[str]] = None) -> bool:
     :return: True if value is a null value or False otherwise (or if variable
               is not str or None)
     """
-    # if variable is None return True
-    if variable is None:
-        return True
-    # if variable is in nulls (and nulls is set) return True
-    if isinstance(variable, str):
-        if nulls is not None:
-            for null in nulls:
-                if variable.upper() == null.upper():
-                    return True
-    # else in all other cases return False
-    return False
+    # set function name
+    func_name = __NAME__ + '.null_text()'
+    # try base function
+    return drs_base.base_func(drs_base.base_null_text, func_name,
+                              variable, nulls)
 
 
 def true_text(variable: Any) -> bool:
