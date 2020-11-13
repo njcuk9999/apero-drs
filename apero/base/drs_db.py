@@ -13,9 +13,11 @@ import pandas as pd
 from pathlib import Path
 import sqlite3
 import time
-from typing import Any, Union, List, Type
+from typing import Any, Dict, List, Type, Union
 
 from apero.base import base
+from apero.base import drs_break
+from apero.base import drs_text
 
 # try to import mysql
 # noinspection PyBroadException
@@ -1259,6 +1261,293 @@ def _proxy_database(database: str) -> str:
         return database + '_DB'
     else:
         return database
+
+
+# =============================================================================
+# Define base databases
+# =============================================================================
+class BaseDatabaseManager():
+    def __init__(self, check: bool = True):
+        """
+        Constructor of the Base Database Manager class
+
+        :param check: bool, if True makes sure database file exists (otherwise
+                      assumes it is)
+
+        :return: None
+        """
+        # save class name
+        self.classname = 'DatabaseManager'
+        # set function
+        _ = '{0}.{1}.{2}()'.format(__NAME__, self.classname, '__init__')
+        # set instrument name
+        self.instrument = base.IPARAMS['INSTRUMENT']
+        # set name
+        self.name = None
+        self.kind = None
+        self.dbtype = None
+        # set parameters
+        self.dbhost = None
+        self.dbuser = None
+        self.dbpath = None
+        self.dbname = None
+        self.dbreset = None
+        # set empty database
+        self.database = None
+        # check is not used in base class
+        _ = check
+        # set path
+        self.path = None
+
+    def __str__(self):
+        """
+        Return the string representation of the class
+        :return:
+        """
+        # set function
+        _ = '{0}.{1}.{2}()'.format(__NAME__, self.classname, '__str__')
+        # return string representation
+        return '{0}[{1}]'.format(self.classname, self.path)
+
+    def __repr__(self):
+        """
+        Return the string representation of the class
+        :return:
+        """
+        # set function
+        _ = '{0}.{1}.{2}()'.format(__NAME__, self.classname, '__repr__')
+        # return string representation
+        return self.__str__()
+
+    def set_path(self, path: Union[Path, str], check: bool = True):
+        # set function
+        func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname, '__init__')
+        # deal with no instrument (i.e. no database)
+        if self.instrument == 'None':
+            return
+        # load database settings
+        self.database_settings()
+        # ---------------------------------------------------------------------
+        # deal with path for SQLITE3
+        # ---------------------------------------------------------------------
+        if self.dbtype == 'SQLITE3':
+            # check that path exists
+            if not path.exists() and check:
+                # log error: Directory {0} does not exist (database = {1})
+                eargs = [path, self.name, func_name]
+                emsg = ('Path {0} does not exist for database {1} '
+                        '\n\t Function = {2}')
+                raise DatabaseException(emsg.format(*eargs))
+            # set path
+            self.path = path
+        # ---------------------------------------------------------------------
+        # deal with path for MySQL (only for printing)
+        # ---------------------------------------------------------------------
+        elif self.dbtype == 'MYSQL':
+            self.path = '{0}@{1}'.format(self.dbuser, self.dbhost)
+        else:
+            emsg = 'Database type "{0}" invalid'
+            raise DatabaseException(emsg.format(self.dbtype))
+
+    def load_db(self, check: bool = False):
+
+        # set function
+        _ = '{0}.{1}.{2}()'.format(__NAME__, self.classname, 'load_db')
+        # if we already have database do nothing
+        if (self.database is not None) and (not check):
+            return
+        # load database
+        self.database = database_wrapper(self.kind, self.path)
+
+    def database_settings(self):
+        # set function
+        _ = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
+                                   'database_settings')
+        # load database yaml file
+        ddict = base.DPARAMS
+        # get correct sub-dictionary
+        if ddict['USE_MYSQL']:
+            sdict = ddict['MYSQL']
+            self.dbtype = 'MYSQL'
+            self.dbhost = sdict['HOST']
+            self.dbuser = sdict['USER']
+        else:
+            self.dbtype = 'SQLITE3'
+
+
+class LanguageDatabase(BaseDatabaseManager):
+    def __init__(self, check: bool = True):
+        """
+        Constructor of the Language Database class
+
+        :param check: bool, if True makes sure database file exists (otherwise
+                      assumes it is)
+
+        :return: None
+        """
+        # call super class
+        super().__init__(check)
+        # save class name
+        self.classname = 'LanguageDatabaseManager'
+        # set function
+        _ = '{0}.{1}.{2}()'.format(__NAME__, self.classname, '__init__')
+        # set instrument name
+        self.instrument = base.IPARAMS['INSTRUMENT']
+        # set name
+        self.name = 'language'
+        self.kind = 'LANG'
+        self.columns = base.LANG_COLS
+        self.ctypes = base.LANG_CTYPES
+        # other paths
+        self.databasefile = ''
+        self.resetfile = ''
+        self.instruement_resetfile = ''
+        self.path_definitions()
+        # set path
+        self.set_path(self.databasefile, check=check)
+
+    def path_definitions(self):
+        # get the package name
+        package = base.__PACKAGE__
+        # get the relative path for the database
+        lang_path = base.LANG_DEFAULT_PATH
+        # get the absolute path for the language database
+        abs_lang_path = drs_break.get_relative_folder(package, lang_path)
+        abs_lang_path = Path(abs_lang_path)
+        # set absolute path
+        self.databasefile = abs_lang_path.joinpath(base.LANG_DB_FILE)
+        self.resetfile = abs_lang_path.joinpath(base.LANG_DB_RESET)
+        instrument_reset = base.LANG_DB_RESET_INST.format(self.instrument)
+        self.instruement_resetfile = abs_lang_path.joinpath(instrument_reset)
+
+    def get_entry(self, columns: str, key: str):
+        # set function
+        _ = '{0}.{1}.{2}()'.format(__NAME__, self.classname, '__init__')
+        # deal with no instrument set
+        if self.instrument == 'None':
+            return None
+        # deal with having the possibility of more than one column
+        colnames = self.database.colnames(columns, table='MAIN')
+        # set up kwargs from database query
+        sql = dict()
+        # set up sql kwargs
+        sql['sort_by'] = None
+        sql['sort_descending'] = True
+        # condition for key
+        sql['condition'] = 'KEYNAME = "{0}"'.format(key)
+        # return only 1 row
+        sql['max_rows'] = 1
+        # do sql query
+        entries = self.database.get(columns, table='MAIN', **sql)
+        # return filename
+        if len(entries) == 1:
+            if len(colnames) == 1:
+                return entries[0][0]
+            else:
+                return entries[0]
+        else:
+            return None
+
+    def add_entry(self, key: str, kind: str, comment: str,
+                  arguments: Union[str, None] = None,
+                  textdict: Union[Dict[str, str], None] = None,
+                  commit: bool = True):
+        """
+        Add a language entry
+
+        :param key: str, the key name for the language entry
+        :param kind: str, the language entry tag (HELP, TEXT, ERROR, WARNING,
+                     INFO, ALL, GRAPH, DEBUG)
+        :param comment: a description of this key (in english)
+        :param arguments: None or argument
+        :param textdict:
+        :param commit:
+        :return:
+        """
+        # set function
+        func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
+                                           'add_entry')
+        # deal with bad key
+        if drs_text.null_text(key, ['None', 'NULL', '']):
+            return
+        # check kind
+        if kind not in ['HELP', 'TEXT', 'ERROR', 'WARNING', 'INFO', 'ALL',
+                        'GRAPH', 'DEBUG']:
+            emsg = ('Kind = {0} not valid for Language database\n\t'
+                    'Function = {1}')
+            raise DatabaseException(emsg.format(kind, func_name))
+        # check arguments
+        if arguments is None:
+            arguments = 'NULL'
+        # ---------------------------------------------------------------------
+        # construct values
+        values = [key, kind, comment, arguments]
+        # ---------------------------------------------------------------------
+        # add languages
+        if textdict is not None:
+            for language in base.LANGUAGES:
+                if language in textdict:
+                    # get text for this language
+                    dbtext = str(textdict[language])
+                    # replace all " with ' (to avoid conflicts)
+                    dbtext = dbtext.replace('"', "'")
+                    # if text is null --> NULL
+                    if drs_text.null_text(dbtext, ['None', 'NULL', '']):
+                        values += ['NULL']
+                    else:
+                        values += ['{0}'.format(dbtext)]
+                else:
+                    values += ['NULL']
+        else:
+            values += ['NULL'] * len(base.LANGUAGES)
+        # ---------------------------------------------------------------------
+        # get unique keys
+        ukeys = self.database.unique('KEYNAME', table='MAIN')
+        # if we have the key update the row
+        if key in ukeys:
+            # set condition
+            condition = 'KEYNAME="{0}"'.format(key)
+            # update row in database
+            self.database.set('*', values, condition=condition, table='MAIN',
+                              commit=commit)
+        # if we don't have the key add a new row
+        else:
+            self.database.add_row(values, table='MAIN', commit=commit)
+
+    def get_dict(self, language: str) -> dict:
+        """
+        Get a dictionary representation of the database (only use if never
+        writing to the database in a run)
+
+        :param language: str, the language to use
+        :return:
+        """
+        # get all rows
+        df = self.database.get('*', return_pandas=True)
+        # set up storage
+        storage = dict()
+        # loop around dataframe rows
+        for row in range(len(df)):
+            # get data for row
+            rowdata = df.iloc[row]
+            # get text
+            if language not in rowdata:
+                rowtext = rowdata[base.DEFAULT_LANG]
+            elif drs_text.null_text(rowdata[language], ['None', 'Null', '']):
+                rowtext = rowdata[base.DEFAULT_LANG]
+            else:
+                rowtext = rowdata[language]
+            # if we still have a null entry do not add this row to storage
+            if drs_text.null_text(rowtext, ['None', 'Null', '']):
+                continue
+            # encode rowtext with escape chars
+            rowtext = rowtext.replace(r'\n', '\n')
+            rowtext = rowtext.replace(r'\t', '\t')
+            # push to storage
+            storage[rowdata['KEYNAME']] = rowtext
+        # return dictionary storage
+        return storage
+
 
 # =============================================================================
 # Start of code
