@@ -1079,20 +1079,6 @@ class PseudoConstants:
         ctypes = [str, str, str, str, float, int]
         return columns, ctypes
 
-    # noinspection PyPep8Naming
-    def LANG_DB_COLUMNS(self) -> Tuple[List[str], List[type]]:
-        """
-        Define the columns use in the language database
-        :return:
-        """
-        # set function name
-        _ = display_func(None, 'LANG_DB_COLUMNS', __NAME__,
-                         self.class_name)
-        # set columns
-        columns = ['KEYNAME', 'KIND', 'KEYDESC', 'ARGUMENTS'] + base.LANGUAGES
-        ctypes = [str, str, str, str] + [str] * len(base.LANGUAGES)
-        return columns, ctypes
-
 
 # =============================================================================
 # End of code
