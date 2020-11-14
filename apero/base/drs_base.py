@@ -20,7 +20,7 @@ Import rules:
 import os
 from pathlib import Path
 import pkg_resources
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Union
 
 from apero.base import base
 
@@ -55,12 +55,46 @@ BETEXT['00-002-00025'] = ("Key '{0}' does not exist in language database. "
 BETEXT['00-002-00026'] = ("Cannot open file = '{0}' \n\t Error was {1}: {2} "
                           "\n\t Function = {3}")
 BETEXT['00-002-00027'] = "Cannot find database file {0} in directory {1}"
+BETEXT['00-002-00028'] = "Database Error: {0}"
+BETEXT['00-002-00029'] = "\n\tDatabase path: {0}"
+BETEXT['00-002-00030'] = "\n\tFunction = {0}"
+BETEXT['00-002-00031'] = "Get condition must be a string (for WHERE)"
+BETEXT['00-002-00032'] = "{0}: {1} \n\t Command: {2}"
+BETEXT['00-002-00033'] = "Get max_rows must be an integer (for LIMIT)"
+BETEXT['00-002-00034'] = "The column list must be same length as the value list"
+BETEXT['00-002-00035'] = "The column to set must be a string"
+BETEXT['00-002-00036'] = "field_names and field_types must be the same length"
+BETEXT['00-002-00037'] = "field_names must be strings"
+BETEXT['00-002-00038'] = "field_types must be string or [int/float/str]"
+BETEXT['00-002-00039'] = "table 'name' must be a string"
+BETEXT['00-002-00040'] = "{0}: {1} \n\t Command: {2} \n\t Function: {3}"
+BETEXT['00-002-00041'] = ("The are multiple tables in the database. You must "
+                          "pick one -- table cannot be None")
+BETEXT['00-002-00042'] = ("Cannot convert command to astropy table \n\t"
+                          "{0}: {1}")
+BETEXT['00-002-00043'] = "{0}: {1} \n\t Command: {2} \n\t Function: {3}"
+BETEXT['00-002-00044'] = ("Cannot import mysql.connector \n\t Please install"
+                          " with 'pip install mysql-connector-python'")
+BETEXT['00-002-00045'] = "{0}: {1} \n\t Command: {2} \n\t Function: {3}"
+BETEXT['00-002-00046'] = ("'if_exists' must be either 'fail', 'replace' "
+                          "or 'append'")
+BETEXT['00-002-00047'] = "Pandas.to_sql {0}: {1} \n\tFunction = {2}"
+BETEXT['00-002-00048'] = ('Could not read SQL command as pandas table '
+                          '\n\tCommand = {0} \n\t Function = {1}')
+BETEXT['00-002-00049'] = "Database kind '{0}' is invalid"
 
 # code 00-003
 BETEXT['00-003-00005'] = "Folder '{0}' does not exist in {1}"
 
 # code 00-008
 BETEXT['00-008-00001'] = "Package name = '{0}' is invalid (function = {1})"
+
+# code 40-001
+BETEXT['40-001-00026'] = "Loading database from file='{0}'"
+BETEXT['40-001-00027'] = "Analyzing sheet '{0}'"
+BETEXT['40-001-00028'] = "Saving reset file = '{0}'"
+BETEXT['40-001-00029'] = "Backing up database to '{0}'"
+BETEXT['40-001-00030'] = "Removing file {0}"
 
 
 # =============================================================================
@@ -124,7 +158,6 @@ class DrsBaseError(DrsBaseException):
         return self.__repr__()
 
 
-
 # =============================================================================
 # Define core base functions
 # =============================================================================
@@ -142,20 +175,28 @@ def base_func(func, _func, *args, **kwargs):
         return func(*args, **kwargs)
     except DrsBaseError as drserror:
         base_error(drserror.code, drserror.message, 'error',
-                   drserror.arguments, _func)
+                   drserror.arguments)
 
 
 def base_printer(codeid: str, message: str, level: str,
                  args: Union[str, list, None] = None,
-                 func_name: Union[str, None] = None) -> str:
+                 exceptionname: Union[str, None] = None):
     """
-    Produce the string representation of a codeid error
+    Produce the base printout in form
+
+    TIME - CHAR | PROGRAM | TYPE[CODE] Message
+
+    where CHAR is *, !, ''
+    where PROGRAM can be overwritten with exceptionname
+    where TYPE is ERROR, WARNING, ''
+    where CODE is codeid
 
     :param codeid: str, the code from the language database
+    :param message: str, the message to print
     :param level: str, if set sets the level for logging
     :param args: None/list/str: if set is the args to pass to TextEntry
-    :param func_name:  str or None, if set is the function name where
-                       exception occured
+    :param exceptionname: str - if set overrides the program name
+
     :return:
     """
     red = base.COLOURS['RED1']
@@ -168,42 +209,70 @@ def base_printer(codeid: str, message: str, level: str,
     # define core format
     corefmt = '{0} - {1}| {2} | {3} '
     # start off with the exception name and code id
+    # -------------------------------------------------------------------------
     if level == 'error':
-        strcode = 'CODE[{0}]'.format(codeid)
-        msg = red + corefmt.format(htime, '*', 'DrsBaseError', strcode)
-        msg += red + '\n\tMessage: {0}'.format(message) + end
-        # if we have a level add it as a new line to the message
-        msg += yellow + '\n\tLevel: {0}'.format(level) + end
-        # if we have args add them one by one as new lines to the message
-        if args is not None:
-            # if it is a list of args add them one by one
-            if isinstance(args, list):
-                for it, arg in enumerate(args):
-                    msg += green + '\n\t\tArg[{0}] '.format(it) + end
-                    msg += str(arg)
-            # else assume we have a string
-            else:
-                msg += green + '\n\t\tArgs: ' + end + '{0}'.format(args)
-        # add function name where error occurred too (if set)
-        if func_name is not None:
-            msg += green + '\n\t\tFunction: ' + end + '{0}'.format(func_name)
+        # set colour
+        colour = red
+        # set program
+        if exceptionname is None:
+            program = 'DrsBaseError'
+        else:
+            program = exceptionname
+        # set level
+        strlevel = 'ERROR[{0}] '.format(codeid)
+        charlevel = '*'
+    # -------------------------------------------------------------------------
     elif level == 'warning':
-        strcode = 'CODE[{0}]'.format(codeid)
-        msg = yellow + corefmt.format(htime, '!', 'DrsBaseWarning', strcode)
-        msg += yellow + '\n\tMessage: {0}'.format(message) + end
+        # set colour
+        colour = yellow
+        # set program
+        if exceptionname is None:
+            program = 'DrsBaseWarning'
+        else:
+            program = exceptionname
+        # set level
+        strlevel = 'WARNING[{0}] '.format(codeid)
+        charlevel = '!'
+    # -------------------------------------------------------------------------
     else:
-        msg = green + corefmt.format(htime, '', '', message) + end
-    # return the error message
+        # set colour
+        colour = green
+        # set program
+        if exceptionname is None:
+            program = ''
+        else:
+            program = exceptionname
+        # set level
+        strlevel = ''
+        charlevel = ''
+    # -------------------------------------------------------------------------
+    # deal with args
+    if args is not None:
+        if isinstance(args, str):
+            args = [args]
+        message = message.format(*args)
+    # -------------------------------------------------------------------------
+    # construct string
+    margs = [htime, charlevel, program, strlevel + message]
+    msg = colour + corefmt.format(*margs) + end
+    # -------------------------------------------------------------------------
+    # print the message
+    print(msg)
+    # return the message
     return msg
 
 
 def base_error(codeid: str, message: str, level: str,
                args: Union[str, list, None] = None,
-               func_name: Union[str, None] = None) -> Any:
+               exceptionname: Union[str, None] = None,
+               exception: Any = None) -> Any:
     # print error message
-    base_printer(codeid, message, level, args, func_name)
+    msg = base_printer(codeid, message, level, args, exceptionname)
     # raise exception
-    os._exit(0)
+    if exception is not None:
+        raise exception(msg)
+    else:
+        os._exit(0)
 
 
 # =============================================================================
@@ -294,7 +363,6 @@ def base_null_text(variable: Any, nulls: Union[None, List[str]] = None) -> bool:
                     return True
     # else in all other cases return False
     return False
-
 
 
 # =============================================================================
