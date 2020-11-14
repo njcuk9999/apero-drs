@@ -27,9 +27,6 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
-# get language dictionary
-LANG_DICT = drs_lang.langdict
-
 # get exceptions
 DrsCodedException = drs_exceptions.DrsCodedException
 
@@ -173,9 +170,8 @@ def read_lines(filename: Union[str, Path], comments: str = '#',
     except Exception as e:
         eargs = [filename, type(e), e, func_name]
         ecode = '01-001-00024'
-        emsg = LANG_DICT[ecode]
-        return drs_base.base_error(ecode, emsg, 'error', eargs,
-                                   func_name)
+        emsg = drs_lang.textentry[ecode]
+        return drs_base.base_error(ecode, emsg, 'error', eargs)
     # valid lines
     raw = []
     # loop around lines
@@ -195,17 +191,16 @@ def read_lines(filename: Union[str, Path], comments: str = '#',
             except ValueError as _:
                 eargs = [filename, l_it + 1, line, delimiter, func_name]
                 ecode = '01-001-00025'
-                emsg = LANG_DICT[ecode]
-                return drs_base.base_error(ecode, emsg, 'error', eargs,
-                                           func_name)
+                emsg = drs_lang.textentry[ecode]
+                return drs_base.base_error(ecode, emsg, 'error', eargs)
             # append to raw list
             raw.append([key, value])
     # check that raw has entries
     if len(raw) == 0:
         eargs = [filename]
         ecode = '01-001-00026'
-        emsg = LANG_DICT[ecode]
-        return drs_base.base_error(ecode, emsg, 'error', eargs, func_name)
+        emsg = drs_lang.textentry(ecode)
+        return drs_base.base_error(ecode, emsg, 'error', eargs)
 
     # return raw
     return np.array(raw)

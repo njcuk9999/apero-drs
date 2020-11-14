@@ -98,11 +98,11 @@ class DatabaseError(DatabaseException):
         Standard __str__ return (used in raising as Exception)
         :return:
         """
-        emsg = 'DatabaseError: {0}'
+        emsg = drs_base.BETEXT['00-002-00028']
         if self.path is not None:
-            emsg += '\n\t Database path = {1}'
+            emsg += drs_base.BETEXT['00-002-00029']
         if self.func_name is not None:
-            emsg += '\n\t Function = {2}'
+            emsg += drs_base.BETEXT['00-002-00030']
         return emsg.format(self.message, self.path, self.func_name)
 
 
@@ -118,6 +118,8 @@ class Database:
     """
 
     def __init__(self, *args, verbose: bool = False, **kwargs):
+        # set class name
+        self.classname = 'Database'
         # store whether we want to print steps
         self._verbose_ = verbose
         # storage for tables
@@ -133,7 +135,7 @@ class Database:
         :return:
         """
         # what to exclude from state
-        exclude = ['_conn_', '_cursor_']
+        exclude = ['_conn_']
         # need a dictionary for pickle
         state = dict()
         for key, item in self.__dict__:
@@ -150,22 +152,11 @@ class Database:
         :return:
         """
         # set function name
-        func_name = __NAME__ + 'Database.__setstate__()'
+        _ = __NAME__ + 'Database.__setstate__()'
         # update dict with state
         self.__dict__.update(state)
-        # need to reset _conn_ and _cursor_ manually
-        # try to connect the the SQL3 database
-        try:
-            self._conn_ = sqlite3.connect(self.path)
-        except Exception as e:
-            raise DatabaseError(message=str(e), errorobj=e, path=self.path,
-                                func_name=func_name)
-        # try to get the SQL3 connection cursor
-        try:
-            self._cursor_ = self._conn_.cursor()
-        except Exception as e:
-            raise DatabaseError(message=str(e), errorobj=e, path=self.path,
-                                func_name=func_name)
+        # need to reset _conn_
+        self._conn = None
 
     def __str__(self):
         """
@@ -188,6 +179,7 @@ class Database:
         any results.
 
         :param command: str, The SQL command to be run.
+        :param fetch: bool, if True there is a result to fetch
 
         :returns: The outputs of the command, if any, as a list.
         """
@@ -207,11 +199,15 @@ class Database:
         except Exception as e:
             # close cursor
             cursor.close()
-            # error message
-            emsg = str(e) + '\n\texectute(cmd): {0}'.format(command)
-            # raise exception
-            raise DatabaseError(message=emsg, errorobj=e, path=self.path,
-                                func_name=func_name)
+            # log error: Error Type: Error message \n\t Command:
+            ecode = '00-002-00032'
+            emsg = drs_base.BETEXT[ecode]
+            eargs = [type(e), str(e), command]
+            exception = DatabaseError(message=emsg.format(eargs), errorobj=e,
+                                      path=self.path, func_name=func_name)
+            return drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                       exceptionname='DatabaseError',
+                                       exception=exception)
 
         # print output of sql command if verbose
         if self._verbose_:
@@ -264,8 +260,15 @@ class Database:
         if condition is not None:
             # make sure condition is a string
             if not isinstance(condition, str):
-                emsg = 'get condition must be a string (for WHERE)'
-                raise DatabaseError(emsg, path=self.path, func_name=func_name)
+                # log error: Get condition must be a string (for WHERE)
+                ecode = '00-002-00031'
+                emsg = drs_base.BETEXT[ecode]
+                exception = DatabaseError(emsg, path=self.path,
+                                          func_name=func_name)
+                return drs_base.base_error(ecode, emsg, 'error',
+                                           exceptionname='DatabaseError',
+                                           exception=exception)
+
             command += " WHERE {} ".format(condition)
         # execute result
         result = self.execute(command, fetch=True)[0][0]
@@ -303,8 +306,14 @@ class Database:
         if condition is not None:
             # make sure condition is a string
             if not isinstance(condition, str):
-                emsg = 'get condition must be a string (for WHERE)'
-                raise DatabaseError(emsg, path=self.path, func_name=func_name)
+                # log error: Get condition must be a string (for WHERE)
+                ecode = '00-002-00031'
+                emsg = drs_base.BETEXT[ecode]
+                exception = DatabaseError(emsg, path=self.path,
+                                          func_name=func_name)
+                return drs_base.base_error(ecode, emsg, 'error',
+                                           exceptionname='DatabaseError',
+                                           exception=exception)
             command += " WHERE {} ".format(condition)
         # execute result
         result = self.execute(command, fetch=True)
@@ -379,8 +388,14 @@ class Database:
         if condition is not None:
             # make sure condition is a string
             if not isinstance(condition, str):
-                emsg = 'get condition must be a string (for WHERE)'
-                raise DatabaseError(emsg, path=self.path, func_name=func_name)
+                # log error: Get condition must be a string (for WHERE)
+                ecode = '00-002-00031'
+                emsg = drs_base.BETEXT[ecode]
+                exception = DatabaseError(emsg, path=self.path,
+                                          func_name=func_name)
+                return drs_base.base_error(ecode, emsg, 'error',
+                                           exceptionname='DatabaseError',
+                                           exception=exception)
             command += " WHERE {} ".format(condition)
         # add ORDER BY if sort_by is set
         if sort_by is not None:
@@ -394,8 +409,14 @@ class Database:
         if max_rows is not None:
             # make sure max_rows is an integer
             if not isinstance(max_rows, int):
-                emsg = 'get max_rows must be an integer (for LIMIT)'
-                raise DatabaseError(emsg, path=self.path, func_name=func_name)
+                # log error: Get max_rows must be an integer (for LIMIT)
+                ecode = '00-002-00033'
+                emsg = drs_base.BETEXT[ecode]
+                exception = DatabaseError(emsg, path=self.path,
+                                          func_name=func_name)
+                return drs_base.base_error(ecode, emsg, 'error',
+                                           exceptionname='DatabaseError',
+                                           exception=exception)
             # add LIMIT command
             command += " LIMIT {}".format(max_rows)
         # if a pandas table is requested use the _to_pandas method to
@@ -464,8 +485,14 @@ class Database:
         set_str = []
         # make sure columns and values have the same length
         if len(columns) != len(values):
-            emsg = 'The column list must be same length as value list'
-            raise DatabaseError(emsg, path=self.path, func_name=func_name)
+            # log error: The column list must be same length as the value list
+            ecode = '00-002-00034'
+            emsg = drs_base.BETEXT[ecode]
+            exception = DatabaseError(emsg, path=self.path,
+                                      func_name=func_name)
+            return drs_base.base_error(ecode, emsg, 'error',
+                                       exceptionname='DatabaseError',
+                                       exception=exception)
         # loop around the rows
         for it in range(len(columns)):
             # get this rows column/value
@@ -473,8 +500,14 @@ class Database:
             value = values[it]
             # column must be a string
             if not isinstance(column, str):
-                emsg = 'The column to set must be a string'
-                raise DatabaseError(emsg, path=self.path, func_name=func_name)
+                # log error: The column to set must be a string
+                ecode = '00-002-00035'
+                emsg = drs_base.BETEXT[ecode]
+                exception = DatabaseError(emsg, path=self.path,
+                                          func_name=func_name)
+                return drs_base.base_error(ecode, emsg, 'error',
+                                           exceptionname='DatabaseError',
+                                           exception=exception)
             # deal with value
             set_str.append('{0} = {1}'.format(column, _decode_value(value)))
 
@@ -484,8 +517,14 @@ class Database:
         if condition is not None:
             # make sure condition is a string
             if not isinstance(condition, str):
-                emsg = 'get condition must be a string (for WHERE)'
-                raise DatabaseError(emsg, path=self.path, func_name=func_name)
+                # log error: Get condition must be a string (for WHERE)
+                ecode = '00-002-00031'
+                emsg = drs_base.BETEXT[ecode]
+                exception = DatabaseError(emsg, path=self.path,
+                                          func_name=func_name)
+                return drs_base.base_error(ecode, emsg, 'error',
+                                           exceptionname='DatabaseError',
+                                           exception=exception)
             # add to command
             command += " WHERE {}".format(condition)
         # execute sql command
@@ -589,30 +628,54 @@ class Database:
         fields = []
         # make sure field_names and field_types are the same size
         if len(field_names) != len(field_types):
-            emsg = 'field_names and field_types must be the same length'
-            raise DatabaseError(emsg, path=self.path, func_name=func_name)
+            # log error: field_names and field_types must be the same length
+            ecode = '00-002-00036'
+            emsg = drs_base.BETEXT[ecode]
+            exception = DatabaseError(emsg, path=self.path,
+                                      func_name=func_name)
+            return drs_base.base_error(ecode, emsg, 'error',
+                                       exceptionname='DatabaseError',
+                                       exception=exception)
+
         # loop around fields
         for it in range(len(field_names)):
             # get this iterations values
             fname, ftype = field_names[it], field_types[it]
             # make sure names are strings
             if not isinstance(fname, str):
-                emsg = 'field_names must be strings'
-                raise DatabaseError(emsg, path=self.path, func_name=func_name)
+                # log error: field_names must be strings
+                ecode = '00-002-00037'
+                emsg = drs_base.BETEXT[ecode]
+                exception = DatabaseError(emsg, path=self.path,
+                                          func_name=func_name)
+                return drs_base.base_error(ecode, emsg, 'error',
+                                           exceptionname='DatabaseError',
+                                           exception=exception)
             # deal with type
             if isinstance(ftype, type):
                 # deal with wrong type
                 if ftype not in translator:
-                    emsg = 'field_types must be string or [int/float/str]'
-                    raise DatabaseError(emsg, path=self.path,
-                                        func_name=func_name)
+                    # log error: field_types must be string or [int/float/str]
+                    ecode = '00-002-00038'
+                    emsg = drs_base.BETEXT[ecode]
+                    exception = DatabaseError(emsg, path=self.path,
+                                              func_name=func_name)
+                    return drs_base.base_error(ecode, emsg, 'error',
+                                               exceptionname='DatabaseError',
+                                               exception=exception)
                 # set as sql type
                 # noinspection PyTypeChecker
                 ftype = translator[ftype]
             # else we must have a string --> so break if not
             elif not isinstance(ftype, str):
-                emsg = 'field_types must be string or [int/float/str]'
-                raise DatabaseError(emsg, path=self.path, func_name=func_name)
+                # log error:field_types must be string or [int/float/str]
+                ecode = '00-002-00038'
+                emsg = drs_base.BETEXT[ecode]
+                exception = DatabaseError(emsg, path=self.path,
+                                          func_name=func_name)
+                return drs_base.base_error(ecode, emsg, 'error',
+                                           exceptionname='DatabaseError',
+                                           exception=exception)
             # set type
             fields.append('{0} {1}'.format(fname, ftype))
         # now create sql command
@@ -634,8 +697,14 @@ class Database:
         func_name = __NAME__ + '.Database.delete_table()'
         # make sure table is a string
         if not isinstance(name, str):
-            emsg = 'table "name" must be a string'
-            raise DatabaseError(emsg, path=self.path, func_name=func_name)
+            # log error: table 'name' must be a string
+            ecode = '00-002-00039'
+            emsg = drs_base.BETEXT[ecode]
+            exception = DatabaseError(emsg, path=self.path,
+                                      func_name=func_name)
+            return drs_base.base_error(ecode, emsg, 'error',
+                                       exceptionname='DatabaseError',
+                                       exception=exception)
         # execute a sql drop table
         self.execute("DROP TABLE {}".format(name), fetch=False)
         # update the table list and commit
@@ -664,7 +733,7 @@ class Database:
 
         :return:
         """
-        emsg = ('Please abstract method with SQLiteDatabase or MySQLDatabase')
+        emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
         NotImplemented(emsg)
 
     def lock(self):
@@ -672,7 +741,7 @@ class Database:
         Lock the database (until unlock or a commit is done)
         :return:
         """
-        emsg = ('Please abstract method with SQLiteDatabase or MySQLDatabase')
+        emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
         NotImplemented(emsg)
 
     def unlock(self):
@@ -680,7 +749,7 @@ class Database:
         Unlock the database (when a lock was done)
         :return:
         """
-        emsg = ('Please abstract method with SQLiteDatabase or MySQLDatabase')
+        emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
         NotImplemented(emsg)
 
     # other methods
@@ -714,9 +783,15 @@ class Database:
         except Exception as e:
             # close cursor
             cursor.close()
-            # raise exception
-            raise DatabaseError(message=str(e), errorobj=e, path=self.path,
-                                func_name=func_name)
+            # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
+            ecode = '00-002-00040'
+            emsg = drs_base.BETEXT[ecode]
+            eargs = [type(e), str(e)]
+            exception = DatabaseError(emsg.format(*eargs), path=self.path,
+                                      func_name=func_name)
+            return drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                       exceptionname='DatabaseError',
+                                       exception=exception)
         # return a list of columns
         return colnames
 
@@ -729,12 +804,20 @@ class Database:
                       (only if we have one table)
         :return:
         """
+        # set function name
+        func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
+                                           '_infer_table_')
         # deal with no table
         if table is None:
             if len(self.tables) != 1:
-                emsg = ('The are multiple tables in the database. You must '
-                        'pick one -- table cannot be None')
-                raise DatabaseError(message=emsg, path=self.path)
+                # log error: pick one -- table cannot be None
+                ecode = '00-002-00041'
+                emsg = drs_base.BETEXT[ecode]
+                exception = DatabaseError(emsg, path=self.path,
+                                          func_name=func_name)
+                return drs_base.base_error(ecode, emsg, 'error',
+                                           exceptionname='DatabaseError',
+                                           exception=exception)
             return self.tables[0]
         return table
 
@@ -743,7 +826,7 @@ class Database:
         Reads the database for tables and updates the class members
         accordingly.
         """
-        emsg = ('Please abstract method with SQLiteDatabase or MySQLDatabase')
+        emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
         NotImplemented(emsg)
 
     def commit(self):
@@ -771,13 +854,18 @@ class Database:
         # set up table
         table = Table()
         for it, col in enumerate(columns):
+            # noinspection PyBroadException
             try:
                 table[col] = list(map(lambda x: x[it], result))
-            except Exception as e:
-                emsg = 'Cannot convert command to astropy table'
-                emsg += '\n\t{0}: {1}'.format(type(e), e)
-                raise DatabaseError(emsg, path=self.path, errorobj=e,
-                                    func_name=func_name)
+            except Exception as _:
+                # log error: Cannot convert command to astropy table
+                ecode = '00-002-00042'
+                emsg = drs_base.BETEXT[ecode]
+                exception = DatabaseError(emsg, path=self.path,
+                                          func_name=func_name)
+                return drs_base.base_error(ecode, emsg, 'error',
+                                           exceptionname='DatabaseError',
+                                           exception=exception)
         # return astropy table
         return table
 
@@ -802,7 +890,7 @@ class Database:
                        (or wait to another commit event)
         :return:
         """
-        emsg = ('Please abstract method with SQLiteDatabase or MySQLDatabase')
+        emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
         NotImplemented(emsg)
 
     def _to_pandas(self, command: str) -> Any:
@@ -811,7 +899,7 @@ class Database:
         :param command:
         :return:
         """
-        emsg = ('Please abstract method with SQLiteDatabase or MySQLDatabase')
+        emsg = 'Please abstract method with SQLiteDatabase or MySQLDatabase'
         NotImplemented(emsg)
 
 
@@ -839,8 +927,15 @@ class SQLiteDatabase(Database):
         try:
             self._conn_ = sqlite3.connect(self.path, timeout=TIMEOUT)
         except Exception as e:
-            raise DatabaseError(message=str(e), errorobj=e, path=self.path,
-                                func_name=func_name)
+            # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
+            ecode = '00-002-00043'
+            emsg = drs_base.BETEXT[ecode]
+            eargs = [type(e), str(e), func_name]
+            exception = DatabaseError(emsg.format(*eargs), path=self.path,
+                                      func_name=func_name)
+            drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                exceptionname='DatabaseError',
+                                exception=exception)
         # update table list
         self._update_table_list_()
 
@@ -850,6 +945,48 @@ class SQLiteDatabase(Database):
         :return: 
         """
         return 'SQLiteDatabase[{0}]'.format(self.path)
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # what to exclude from state
+        exclude = ['_conn_']
+        # need a dictionary for pickle
+        state = dict()
+        for key, item in self.__dict__:
+            if key not in exclude:
+                state[key] = item
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # set function name
+        func_name = __NAME__ + 'Database.__setstate__()'
+        # update dict with state
+        self.__dict__.update(state)
+        # try to connect the the SQL3 database
+        try:
+            self._conn_ = sqlite3.connect(self.path, timeout=TIMEOUT)
+        except Exception as e:
+            # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
+            ecode = '00-002-00043'
+            emsg = drs_base.BETEXT[ecode]
+            eargs = [type(e), str(e), func_name]
+            exception = DatabaseError(emsg.format(*eargs), path=self.path,
+                                      func_name=func_name)
+            drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                exceptionname='DatabaseError',
+                                exception=exception)
+        # update table list
+        self._update_table_list_()
 
     def _execute(self, cursor: sqlite3.Cursor, command: str,
                  fetch: bool = True):
@@ -912,14 +1049,27 @@ class SQLiteDatabase(Database):
         table = self._infer_table_(table)
         # check if_exists criteria
         if if_exists not in ['fail', 'replace', 'append']:
-            emsg = 'if_exists must be either "fail", "replace" or "append"'
-            raise DatabaseError(emsg, path=self.path, func_name=func_name)
+            # log error: Pandas.to_sql
+            ecode = '00-002-00047'
+            emsg = drs_base.BETEXT[ecode]
+            exception = DatabaseError(emsg, path=self.path,
+                                      func_name=func_name)
+            return drs_base.base_error(ecode, emsg, 'error',
+                                       exceptionname='DatabaseError',
+                                       exception=exception)
         # try to add pandas dataframe to table
         try:
             df.to_sql(table, self._conn_, if_exists=if_exists, index=index)
         except Exception as e:
-            raise DatabaseError(str(e), path=self.path, errorobj=e,
-                                func_name=func_name)
+            # log error: Pandas.to_sql
+            ecode = '00-002-00047'
+            emsg = drs_base.BETEXT[ecode]
+            eargs = [type(e), str(e), func_name]
+            exception = DatabaseError(emsg.format(*eargs), path=self.path,
+                                      func_name=func_name)
+            return drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                       exceptionname='DatabaseError',
+                                       exception=exception)
         # commit change to database if requested
         if commit:
             self.commit()
@@ -933,13 +1083,19 @@ class SQLiteDatabase(Database):
         # set function name
         func_name = __NAME__ + '.Database._to_pandas()'
         # try to read sql using pandas
+        # noinspection PyBroadException
         try:
             df = pd.read_sql(command, self._conn_)
-        except Exception as e:
-            emsg = 'Could not read SQL command as pandas table'
-            emsg += '\n\tCommand = {0}'.format(command)
-            raise DatabaseError(emsg, path=self.path, errorobj=e,
-                                func_name=func_name)
+        except Exception as _:
+            # log error: Could not read SQL command as pandas table
+            ecode = '00-002-00048'
+            emsg = drs_base.BETEXT[ecode]
+            eargs = [command, func_name]
+            exception = DatabaseError(emsg.format(*eargs), path=self.path,
+                                      func_name=func_name)
+            return drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                       exceptionname='DatabaseError',
+                                       exception=exception)
         # return dataframe
         return df
 
@@ -1007,30 +1163,40 @@ class MySQLDatabase(Database):
         func_name = __NAME__ + 'MySQLDatabase.__init__()'
         # deal with mysql not being imported
         if mysql is None:
-            emsg = ('Cannot import mysql.connector '
-                    '\n\t Please install with "pip install '
-                    'mysql-connector-python')
-            raise DatabaseError(message=emsg, errorobj=ImportError(emsg),
-                                path=self.path, func_name=func_name)
+            # log error: Cannot import mysql.connector
+            ecode = '00-002-00044'
+            emsg = drs_base.BETEXT[ecode]
+            exception = DatabaseError(emsg, path=self.path,
+                                      func_name=func_name)
+            drs_base.base_error(ecode, emsg, 'error',
+                                exceptionname='DatabaseError',
+                                exception=exception)
         # make sure database has _DB on the end (to avoid conflicts with SQL)
         database = _proxy_database(database)
-        # deal with database for sql
-        self.add_database(host, user, passwd, database)
-        # call to super class
-        super().__init__(verbose=verbose)
         # storage for database path
         self.host = host
         self.user = user
         self.path = '{0}@{1}'.format(self.user, self.host)
         self.passwd = passwd
         self.dbname = database
+        # deal with database for sql
+        self.add_database()
+        # call to super class
+        super().__init__(verbose=verbose)
         # try to connect the the SQL3 database
         try:
             self._conn_ = mysql.connect(host=self.host, user=self.user,
                                         passwd=passwd, database=database)
         except Exception as e:
-            raise DatabaseError(message=str(e), errorobj=e, path=self.path,
-                                func_name=func_name)
+            # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
+            ecode = '00-002-00045'
+            emsg = drs_base.BETEXT[ecode]
+            eargs = [type(e), str(e), func_name]
+            exception = DatabaseError(emsg.format(*eargs), path=self.path,
+                                      func_name=func_name)
+            drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                exceptionname='DatabaseError',
+                                exception=exception)
         # update table list
         self._update_table_list_()
 
@@ -1041,20 +1207,60 @@ class MySQLDatabase(Database):
         """
         return 'MySQLDatabase[{0}]'.format(self.path)
 
-    def add_database(self, host: str, user: str, passwd: str, database: str):
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # what to exclude from state
+        exclude = ['_conn_']
+        # need a dictionary for pickle
+        state = dict()
+        for key, item in self.__dict__:
+            if key not in exclude:
+                state[key] = item
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # set function name
+        func_name = __NAME__ + 'Database.__setstate__()'
+        # update dict with state
+        self.__dict__.update(state)
+        # try to connect the the SQL3 database
+        try:
+            self._conn_ = mysql.connect(host=self.host, user=self.user,
+                                        passwd=self.passwd,
+                                        database=self.dbname)
+        except Exception as e:
+            # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
+            ecode = '00-002-00045'
+            emsg = drs_base.BETEXT[ecode]
+            eargs = [type(e), str(e), func_name]
+            exception = DatabaseError(emsg.format(*eargs), path=self.path,
+                                      func_name=func_name)
+            drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                exceptionname='DatabaseError',
+                                exception=exception)
+        # update table list
+        self._update_table_list_()
+
+    def add_database(self):
         """
         Check for 'database' in the MySQL Database construct and if not add
         'database' to MySQL
 
-        :param host: str, the mysql host name (user@host)
-        :param user: str, the mysql user name (user@host)
-        :param passwd: str, the password for user@host mysql connection
-        :param database: str, the database to connect to
-
         :return: None, either adds database or does nothing
         """
         # create a temporary connection to mysql
-        tmpconn = mysql.connect(host=host, user=user, passwd=passwd)
+        tmpconn = mysql.connect(host=self.host, user=self.user,
+                                passwd=self.passwd)
         # get the cursor
         cursor = tmpconn.cursor()
         # Get the new list of tables
@@ -1069,8 +1275,8 @@ class MySQLDatabase(Database):
             # append table name
             databases.append(_database[0])
         # check for database in databases (and add it if not there)
-        if database not in databases:
-            cursor.execute('CREATE DATABASE {0}'.format(database))
+        if self.dbname not in databases:
+            cursor.execute('CREATE DATABASE {0}'.format(self.dbname))
         # close the cursor
         cursor.close()
 
@@ -1106,14 +1312,27 @@ class MySQLDatabase(Database):
         dconn = sqlalchemy.create_engine(dpath.format(*dargs))
         # check if_exists criteria
         if if_exists not in ['fail', 'replace', 'append']:
-            emsg = 'if_exists must be either "fail", "replace" or "append"'
-            raise DatabaseError(emsg, path=self.path, func_name=func_name)
+            # log error: Pandas.to_sql
+            ecode = '00-002-00047'
+            emsg = drs_base.BETEXT[ecode]
+            exception = DatabaseError(emsg, path=self.path,
+                                      func_name=func_name)
+            return drs_base.base_error(ecode, emsg, 'error',
+                                       exceptionname='DatabaseError',
+                                       exception=exception)
         # try to add pandas dataframe to table
         try:
             df.to_sql(table, dconn, if_exists=if_exists, index=index)
         except Exception as e:
-            raise DatabaseError(str(e), path=self.path, errorobj=e,
-                                func_name=func_name)
+            # log error: Pandas.to_sql
+            ecode = '00-002-00047'
+            emsg = drs_base.BETEXT[ecode]
+            eargs = [type(e), str(e), func_name]
+            exception = DatabaseError(emsg.format(*eargs), path=self.path,
+                                      func_name=func_name)
+            return drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                       exceptionname='DatabaseError',
+                                       exception=exception)
 
         # commit change to database if requested
         if commit:
@@ -1133,13 +1352,19 @@ class MySQLDatabase(Database):
         # set function name
         func_name = __NAME__ + '.Database._to_pandas()'
         # try to read sql using pandas
+        # noinspection PyBroadException
         try:
             df = pd.read_sql(command, con=dconn)
-        except Exception as e:
-            emsg = 'Could not read SQL command as pandas table'
-            emsg += '\n\tCommand = {0}'.format(command)
-            raise DatabaseError(emsg, path=self.path, errorobj=e,
-                                func_name=func_name)
+        except Exception as _:
+            # log error: Could not read SQL command as pandas table
+            ecode = '00-002-00048'
+            emsg = drs_base.BETEXT[ecode]
+            eargs = [command, func_name]
+            exception = DatabaseError(emsg.format(*eargs), path=self.path,
+                                      func_name=func_name)
+            return drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                       exceptionname='DatabaseError',
+                                       exception=exception)
         # return dataframe
         return df
 
@@ -1177,6 +1402,8 @@ def database_wrapper(kind: str, path: Union[Path, str, None],
 
     :return: Database instance (either SQLiteDatabase or MySQLDatabase)
     """
+    # set function name
+    func_name = __NAME__ + '.database_wrapper()'
     # get database parameters
     dparams = base.DPARAMS
     # make sure kind is upper case
@@ -1196,8 +1423,15 @@ def database_wrapper(kind: str, path: Union[Path, str, None],
         sparams = dparams['SQLITE3']
         # get the path
         if kind not in sparams:
-            emsg = 'Database kind "{0}" invalid'.format(kind)
-            raise DatabaseError(emsg)
+            # log error: Database kind '{0}' is invalid
+            ecode = '00-002-00049'
+            emsg = drs_base.BETEXT[ecode]
+            eargs = [kind]
+            exception = DatabaseError(emsg.format(*eargs), path=path,
+                                      func_name=func_name)
+            return drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                       exceptionname='DatabaseError',
+                                       exception=exception)
         # return the SQLiteDatabase instance
         return SQLiteDatabase(path, verbose)
 
@@ -1273,7 +1507,7 @@ def _proxy_database(database: str) -> str:
 # =============================================================================
 # Define base databases
 # =============================================================================
-class BaseDatabaseManager():
+class BaseDatabaseManager:
     def __init__(self, check: bool = True):
         """
         Constructor of the Base Database Manager class

@@ -58,19 +58,21 @@ def textentry(key: str, args: Union[List[Any], str, None] = None,
     """
     Get text from a database
 
+    This is the only function that can use langdict and expect it to be
+    populated
+
     :param key:
     :param args:
     :param kwargs:
     :return:
     """
     # set function name
-    func_name = __NAME__ + '.textentry()'
+    _ = __NAME__ + '.textentry()'
     # deal with no entries
     if key not in langdict:
         eargs = [key, ','.join(args), str(kwargs)]
         ecode = '00-002-00025'
-        return drs_base.base_error(ecode, langdict[ecode], 'error', args=eargs,
-                                   func_name=func_name)
+        return drs_base.base_error(ecode, langdict[ecode], 'error', args=eargs)
     else:
         message = langdict[key]
     # deal with args
@@ -95,9 +97,12 @@ def read_xls(xls_file: str) -> pd.io.excel.ExcelFile:
 
     :return: a pandas representation of the excel file
     """
-    # report progress
-    emsg = 'Loading database from file="{0}"'.format(xls_file)
-    drs_base.base_printer('', emsg, '')
+    # set function name
+    _ = __NAME__ + '.read_xls()'
+    # report progress: Loading database from file
+    wcode = '40-001-00026'
+    wmsg = drs_base.BETEXT[wcode]
+    drs_base.base_printer(wcode, wmsg, '', args=[xls_file])
     try:
         xls = pd.ExcelFile(xls_file)
     except Exception as e:
@@ -145,9 +150,10 @@ def convert_csv(xls: pd.io.excel.ExcelFile, out_dir: str):
 
     # get sheets
     for it, sheet in enumerate(sheet_names):
-        # print progress
-        wmsg = 'Analying sheet "{0}"'.format(sheet)
-        drs_base.base_printer('', wmsg, '')
+        # print progress: Analyzing sheet
+        wcode = '40-001-00027'
+        wmsg = drs_base.BETEXT[wcode]
+        drs_base.base_printer(wcode, wmsg, '', args=[sheet])
         # skip other sheets
         if sheet not in xls.sheet_names:
             continue
@@ -163,9 +169,10 @@ def convert_csv(xls: pd.io.excel.ExcelFile, out_dir: str):
         df = dataframes[instrument]
         # get reset path
         rpath = os.path.join(out_dir, reset_paths[instrument])
-        # write path to log
-        wmsg = 'Saving reset file = {0}'.format(rpath)
-        drs_base.base_printer('', wmsg, '')
+        # write path to log: Saving reset file
+        wcode = '40-001-00028'
+        wmsg = drs_base.BETEXT
+        drs_base.base_printer(wcode, wmsg, '', args=[rpath])
         # save to csv
         df.to_csv(rpath, sep=',', quoting=2, index=False)
 
@@ -188,9 +195,10 @@ def make_reset_csvs():
         eargs = [DATABASE_FILE, database_path]
         return drs_base.base_error(ecode, emsg, 'error', args=eargs)
     # ----------------------------------------------------------------------
-    # create a backup of the database
-    wmsg = 'Backing up database to {0}'.format(babspath)
-    drs_base.base_printer('', wmsg, '')
+    # create a backup of the database: Backing up database
+    wcode = '40-001-00029'
+    wmsg = drs_base.BETEXT[wcode]
+    drs_base.base_printer(wcode, wmsg, '', args=[babspath])
     shutil.copy(dabspath, babspath)
     # ----------------------------------------------------------------------
     #  first get contents of database directory
@@ -202,8 +210,10 @@ def make_reset_csvs():
         if os.path.isdir(abspath):
             continue
         if filename != DATABASE_FILE:
-            wmsg = 'Removing file {0}'.format(filename)
-            drs_base.base_printer('', wmsg, '')
+            # log message: Removing file
+            wcode = '40-001-00030'
+            wmsg = drs_base.BETEXT
+            drs_base.base_printer(wcode, wmsg, '', args=[filename])
             os.remove(abspath)
     # ----------------------------------------------------------------------
     # read the database file
