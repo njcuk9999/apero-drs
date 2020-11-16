@@ -33,7 +33,7 @@ ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
 DrsRecipe = drs_recipe.DrsRecipe
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
+textentry = lang.textentry
 
 
 # =============================================================================
@@ -89,7 +89,7 @@ def drs_outfile_id(params, recipe, infile, drsfileset, prefix=None):
     # check we have entries
     if len(drsfileset.fileset) == 0:
         eargs = [drsfileset.name, func_name]
-        WLOG(params, 'error', TextEntry('00-010-00001', args=eargs))
+        WLOG(params, 'error', textentry('00-010-00001', args=eargs))
     # get the associated files with this generic drs file
     fileset = list(drsfileset.fileset)
     strfileset = list(map(lambda x: str(x.name), fileset))
@@ -115,7 +115,7 @@ def drs_outfile_id(params, recipe, infile, drsfileset, prefix=None):
     # deal with not being found
     if kind is None:
         eargs = [inname, '\n\t'.join(strfileset), func_name]
-        WLOG(params, 'error', TextEntry('00-010-00006', args=eargs))
+        WLOG(params, 'error', textentry('00-010-00006', args=eargs))
 
     # set the recipe if found
     if found:

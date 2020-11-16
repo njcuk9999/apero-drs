@@ -35,7 +35,7 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
+textentry = lang.textentry
 # Raw prefix
 RAW_PREFIX = file_definitions.raw_prefix
 
@@ -128,10 +128,10 @@ def __main__(recipe, params):
         # if it wasn't found skip this file, if it was print a message
         if cond:
             eargs = [infile.name]
-            WLOG(params, 'info', TextEntry('40-010-00001', args=eargs))
+            WLOG(params, 'info', textentry('40-010-00001', args=eargs))
         else:
             eargs = [infile.filename]
-            WLOG(params, 'info', TextEntry('40-010-00002', args=eargs))
+            WLOG(params, 'info', textentry('40-010-00002', args=eargs))
             continue
         # get data from file instance
         image = infile.get_data(copy=True)
@@ -146,11 +146,11 @@ def __main__(recipe, params):
         # if we didn't find the output file we should log this error
         if not found:
             eargs = [outfile.name]
-            WLOG(params, 'error', TextEntry('00-010-00003', args=eargs))
+            WLOG(params, 'error', textentry('00-010-00003', args=eargs))
         if skip:
             if os.path.exists(outfile.filename):
                 wargs = [infile.filename]
-                WLOG(params, 'info', TextEntry('40-010-00012', args=wargs))
+                WLOG(params, 'info', textentry('40-010-00012', args=wargs))
                 continue
 
         # ----------------------------------------------------------------------
@@ -169,7 +169,7 @@ def __main__(recipe, params):
             #    is located
             if shiftdx != 0 or shiftdy != 0:
                 # log process
-                wmsg = TextEntry('40-010-00013', args=[shiftdx, shiftdy])
+                wmsg = textentry('40-010-00013', args=[shiftdx, shiftdy])
                 WLOG(params, '', wmsg)
                 # shift image
                 image = np.roll(image, [shiftdy], axis=0)
@@ -199,11 +199,11 @@ def __main__(recipe, params):
         # correct image
         # ------------------------------------------------------------------
         # correct for the top and bottom reference pixels
-        WLOG(params, '', TextEntry('40-010-00003'))
+        WLOG(params, '', textentry('40-010-00003'))
         image = pp.correct_top_bottom(params, image)
 
         # correct by a median filter from the dark amplifiers
-        WLOG(params, '', TextEntry('40-010-00016'))
+        WLOG(params, '', textentry('40-010-00016'))
         image, pfile = pp.nirps_correction(params, image,
                                            header=infile.get_header(),
                                            database=calibdbm)
@@ -252,7 +252,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # log that we are saving rotated image
         wargs = [outfile.filename]
-        WLOG(params, '', TextEntry('40-010-00009', args=wargs))
+        WLOG(params, '', textentry('40-010-00009', args=wargs))
         # ------------------------------------------------------------------
         # writefits image to file
         outfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)

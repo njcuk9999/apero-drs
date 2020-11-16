@@ -41,10 +41,6 @@ Colors = drs_misc.Colors()
 # get param dict
 ParamDict = constants.ParamDict
 # get the Drs Exceptions
-DRSError = drs_exceptions.DrsError
-DRSWarning = drs_exceptions.DrsWarning
-TextError = drs_exceptions.TextError
-TextWarning = drs_exceptions.TextWarning
 ConfigError = drs_exceptions.ConfigError
 ConfigWarning = drs_exceptions.ConfigWarning
 # -----------------------------------------------------------------------------

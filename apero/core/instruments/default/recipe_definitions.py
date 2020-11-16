@@ -16,15 +16,15 @@ __release__ = base.__release__
 # Get constants
 Constants = param_functions.load_config(__INSTRUMENT__)
 # Get Help
-Help = lang.core.drs_lang_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
+textentry = lang.textentry
 
 # =============================================================================
 # Commonly used arguments
 # =============================================================================
 directory = dict(name='directory', dtype='directory',
-                 helpstr=Help['DIRECTORY_HELP'])
+                 helpstr=textentry('DIRECTORY_HELP'))
 # -----------------------------------------------------------------------------
-plot = dict(name='--plot', dtype=int, helpstr=Help['PLOT_HELP'],
+plot = dict(name='--plot', dtype=int, helpstr=textentry('PLOT_HELP'),
             default_ref='DRS_PLOT', minimum=0, maximum=2)
 
 # =============================================================================
@@ -89,10 +89,10 @@ out_recipe = drs_recipe(__INSTRUMENT__)
 # -----------------------------------------------------------------------------
 changelog.name = 'apero_changelog.py'
 changelog.instrument = __INSTRUMENT__
-changelog.description = Help['CHANGELOG_DESCRIPTION']
+changelog.description = textentry('CHANGELOG_DESCRIPTION')
 changelog.kind = 'tool'
 changelog.set_arg(pos=0, name='preview', dtype='bool',
-                  helpstr=Help['PREVIEW_HELP'])
+                  helpstr=textentry('PREVIEW_HELP'))
 
 # -----------------------------------------------------------------------------
 # apero_documentation.py
@@ -113,7 +113,7 @@ remake_doc.set_kwarg(name='--upload', dtype='bool', default=False,
 
 explorer.name = 'apero_explorer.py'
 explorer.instrument = __INSTRUMENT__
-explorer.description = Help['EXPLORER_DESCRIPTION']
+explorer.description = textentry('EXPLORER_DESCRIPTION')
 explorer.kind = 'tool'
 
 # -----------------------------------------------------------------------------
@@ -139,32 +139,32 @@ go_recipe.set_kwarg(name='--plot', default=False, dtype='switch')
 # -----------------------------------------------------------------------------
 listing.name = 'apero_listing.py'
 listing.instrument = __INSTRUMENT__
-listing.description = Help['LISTING_DESC']
+listing.description = textentry('LISTING_DESC')
 listing.kind = 'tool'
 listing.set_kwarg(name='--nightname', dtype=str, default='',
-                  helpstr=Help['LISTING_HELP_NIGHTNAME'])
+                  helpstr=textentry('LISTING_HELP_NIGHTNAME'))
 listing.set_kwarg(name='--kind', dtype=str, default='raw',
                   options=['raw', 'tmp', 'red'],
-                  helpstr=Help['LISTING_HELP_KIND'])
+                  helpstr=textentry('LISTING_HELP_KIND'))
 listing.set_kwarg(name='--bnightnames', dtype=str, default='None',
-                  helpstr=Help['PROCESS_BNIGHTNAMES_HELP'])
+                  helpstr=textentry('PROCESS_BNIGHTNAMES_HELP'))
 listing.set_kwarg(name='--wnightnames', dtype=str, default='None',
-                  helpstr=Help['PROCESS_WNIGHTNAMES_HELP'])
+                  helpstr=textentry('PROCESS_WNIGHTNAMES_HELP'))
 
 # -----------------------------------------------------------------------------
 # apero_log_stats.py
 # -----------------------------------------------------------------------------
 logstats.name = 'apero_log_stats.py'
 logstats.instrument = __INSTRUMENT__
-logstats.description = Help['LOGSTAT_DESC']
+logstats.description = textentry('LOGSTAT_DESC')
 logstats.kind = 'tool'
 logstats.set_debug_plots('LOGSTATS_BAR')
 logstats.set_summary_plots()
 logstats.set_kwarg(name='--nightname', dtype=str, default='',
-                   helpstr=Help['LOGSTAT_HELP_NIGHTNAME'])
+                   helpstr=textentry('LOGSTAT_HELP_NIGHTNAME'))
 logstats.set_kwarg(name='--kind', dtype=str, default='red',
                    options=['tmp', 'red'],
-                   helpstr=Help['LOGSTAT_HELP_KIND'])
+                   helpstr=textentry('LOGSTAT_HELP_KIND'))
 # TODO: add help string
 logstats.set_kwarg(name='--recipe', dtype=str, default='None',
                    helpstr='Define a recipe name (the full python name) to'
@@ -193,44 +193,44 @@ logstats.set_kwarg(**plot)
 # -----------------------------------------------------------------------------
 remake_db.name = 'apero_mkdb.py'
 remake_db.instrument = __INSTRUMENT__
-remake_db.description = Help['REMAKE_DESC']
+remake_db.description = textentry('REMAKE_DESC')
 remake_db.kind = 'tool'
 remake_db.set_kwarg(name='--kind', dtype='options',
                     options=['calibration', 'telluric'],
                     default_ref='REMAKE_DATABASE_DEFAULT',
-                    helpstr=Help['REMAKE_HELP_KIND'], default='calibration')
+                    helpstr=textentry('REMAKE_HELP_KIND'), default='calibration')
 
 # -----------------------------------------------------------------------------
 # apero_processing.py
 # -----------------------------------------------------------------------------
 processing.name = 'apero_processing.py'
 processing.instrument = __INSTRUMENT__
-processing.description = Help['PROCESS_DESCRIPTION']
+processing.description = textentry('PROCESS_DESCRIPTION')
 processing.kind = 'processing'
 processing.set_arg(pos=1, name='runfile', dtype=str,
-                   helpstr=Help['PROCESS_RUNFILE_HELP'])
+                   helpstr=textentry('PROCESS_RUNFILE_HELP'))
 processing.set_kwarg(name='--nightname', dtype=str, default='None',
-                     helpstr=Help['PROCESS_NIGHTNAME_HELP'])
+                     helpstr=textentry('PROCESS_NIGHTNAME_HELP'))
 processing.set_kwarg(name='--filename', dtype=str, default='None',
-                     helpstr=Help['PROCESS_FILENAME_HELP'])
+                     helpstr=textentry('PROCESS_FILENAME_HELP'))
 processing.set_kwarg(name='--bnightnames', dtype=str, default='None',
-                     helpstr=Help['PROCESS_BNIGHTNAMES_HELP'])
+                     helpstr=textentry('PROCESS_BNIGHTNAMES_HELP'))
 processing.set_kwarg(name='--wnightnames', dtype=str, default='None',
-                     helpstr=Help['PROCESS_WNIGHTNAMES_HELP'])
+                     helpstr=textentry('PROCESS_WNIGHTNAMES_HELP'))
 processing.set_kwarg(name='--cores', dtype=str, default='None',
-                     helpstr=Help['PROCESS_CORES_HELP'])
+                     helpstr=textentry('PROCESS_CORES_HELP'))
 processing.set_kwarg(name='--test', dtype=str, default='None',
                      options=['True', 'False', '1', '0', 'None'],
-                     helpstr=Help['PROCESS_TEST_HELP'])
+                     helpstr=textentry('PROCESS_TEST_HELP'))
 processing.set_kwarg(name='--trigger', dtype='bool', default=False,
-                     helpstr=Help['PROCESS_TRIGGER_HELP'])
+                     helpstr=textentry('PROCESS_TRIGGER_HELP'))
 
 # -----------------------------------------------------------------------------
 # apero_requirements-check.py
 # -----------------------------------------------------------------------------
 req_check.name = 'apero_dependencies.py'
 req_check.instrument = __INSTRUMENT__
-req_check.description = Help['DEPENDENCIES_DESCRIPTION']
+req_check.description = textentry('DEPENDENCIES_DESCRIPTION')
 req_check.kind = 'tool'
 
 # -----------------------------------------------------------------------------
@@ -238,18 +238,18 @@ req_check.kind = 'tool'
 # -----------------------------------------------------------------------------
 reset.name = 'apero_reset.py'
 reset.instrument = __INSTRUMENT__
-reset.description = Help['RESET_DESCRIPTION']
+reset.description = textentry('RESET_DESCRIPTION')
 reset.kind = 'tool'
 reset.set_kwarg(name='--log', dtype='bool', default=True,
-                helpstr=Help['RESET_LOG_HELP'])
+                helpstr=textentry('RESET_LOG_HELP'))
 reset.set_kwarg(name='--warn', dtype='bool', default=True,
-                helpstr=Help['RESET_WARN_HELP'])
+                helpstr=textentry('RESET_WARN_HELP'))
 
 # -----------------------------------------------------------------------------
 # apero_validate.py
 # -----------------------------------------------------------------------------
 validate.name = 'apero_validate.py'
 validate.instrument = __INSTRUMENT__
-validate.description = Help['VALIDATE_DESCRIPTION']
+validate.description = textentry('VALIDATE_DESCRIPTION')
 validate.kind = 'tool'
 

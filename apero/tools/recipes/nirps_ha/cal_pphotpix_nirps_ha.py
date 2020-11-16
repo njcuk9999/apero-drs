@@ -40,10 +40,7 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
-Help = lang.core.drs_lang_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
-
+textentry = lang.textentry
 # whether this is a debug run (produces mask image)
 DEBUG = False
 # define relative output path
@@ -66,7 +63,7 @@ c_hotpix.description = ('Create the hotpix table for an instrument (required '
                         'for preprocessing)')
 c_hotpix.kind = 'misc'
 c_hotpix.set_arg(pos=0, name='directory', dtype='directory',
-                 helpstr=Help['DIRECTORY_HELP'])
+                 helpstr=textentry('DIRECTORY_HELP'))
 c_hotpix.set_arg(pos=1, name='darkfile', dtype='file',
                  helpstr='[STRING] The night name (directory name)',
                  files=[FMOD.files.raw_dark_dark_int,

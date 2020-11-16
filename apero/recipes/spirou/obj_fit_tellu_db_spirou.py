@@ -14,7 +14,6 @@ from collections import OrderedDict
 
 from apero.base import base
 from apero.base import drs_text
-from apero import lang
 from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.core import drs_database
@@ -22,7 +21,6 @@ from apero.core.utils import drs_startup
 from apero.io import drs_path
 from apero.science import telluric
 from apero.tools.module.processing import drs_processing
-
 from apero.core.instruments.spirou import recipe_definitions as rd
 
 # =============================================================================
@@ -39,9 +37,6 @@ __release__ = base.__release__
 ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
-# Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
 # get recipes
 obj_mk_tellu = rd.obj_mk_tellu
 obj_fit_tellu = rd.obj_fit_tellu

@@ -42,8 +42,7 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 # master crossmatch query
@@ -140,7 +139,7 @@ def get_params(params, _props, gaiaid=None, objname=None, ra=None, dec=None,
             if np.isnan(_props[unsetvalue]):
                 # debug log message
                 dargs = [unsetvalue, func_name]
-                WLOG(params, 'debug', TextEntry('90-016-00001', args=dargs))
+                WLOG(params, 'debug', textentry('90-016-00001', args=dargs))
                 # set to zero
                 _props[unsetvalue] = 0.0
         # ----------------------------------------------------------------------
@@ -183,7 +182,7 @@ def updatelookuptable(params, lookuptable, lookuptablename, row):
         table.write(lookuptablename, overwrite=True)
     except Exception as e:
         eargs = [lookuptablename, type(e), e, func_name]
-        WLOG(params, 'error', TextEntry('00-016-00022', args=eargs))
+        WLOG(params, 'error', textentry('00-016-00022', args=eargs))
 
 
 def inlookuptable(params, table, gaiaid=None, objname=None, ra=None, dec=None,
@@ -274,7 +273,7 @@ def inlookuptable(params, table, gaiaid=None, objname=None, ra=None, dec=None,
                 intable, row = False, None
         except Exception as e:
             wargs = [ra, dec, radius, type(e), e, func_name]
-            WLOG(params, 'warning', TextEntry('10-016-00006', args=wargs))
+            WLOG(params, 'warning', textentry('10-016-00006', args=wargs))
             intable, row = False
     # ------------------------------------------------------------------
     # return
@@ -321,7 +320,7 @@ def query_gaia(params, gaiaid=None, objname=None, ra=None, dec=None,
 
     except Exception as e:
         eargs = [type(e), str(e), func_name]
-        WLOG(params, 'warning', TextEntry('10-016-00009', args=eargs))
+        WLOG(params, 'warning', textentry('10-016-00009', args=eargs))
         return None, True
     # ------------------------------------------------------------------
     # create TAP query based on gaia id
@@ -332,17 +331,17 @@ def query_gaia(params, gaiaid=None, objname=None, ra=None, dec=None,
         query = QUERY_MASTER.format(QCOLS, QSOURCE, where)
         # push in gaia id
         query = query.format(id=gaiaid)
-        WLOG(params, '', TextEntry('40-016-00015', args=['gaiaid']))
+        WLOG(params, '', textentry('40-016-00015', args=['gaiaid']))
     # ------------------------------------------------------------------
     # create TAP query based on objname
     if (objname is not None) and (query is None):
-        WLOG(params, '', TextEntry('40-016-00015', args=['objname']))
+        WLOG(params, '', textentry('40-016-00015', args=['objname']))
         ra, dec = query_simbad(params, objname)
     # ------------------------------------------------------------------
     # create TAP query based on ra and dec
     if (ra is not None) and (dec is not None) and (query is None):
         # log progres
-        WLOG(params, '', TextEntry('40-016-00015', args=['ra/dec']))
+        WLOG(params, '', textentry('40-016-00015', args=['ra/dec']))
         # mag cut
         qwhere4 = QWHERE4.format(mag_cut)
         # parallax cut
@@ -357,7 +356,7 @@ def query_gaia(params, gaiaid=None, objname=None, ra=None, dec=None,
     # ------------------------------------------------------------------
     # deal with no query
     if query is None:
-        WLOG(params, 'warning', TextEntry('10-016-00007', args=[func_name]))
+        WLOG(params, 'warning', textentry('10-016-00007', args=[func_name]))
         return None, True
     # ------------------------------------------------------------------
     # try running gaia query
@@ -371,14 +370,14 @@ def query_gaia(params, gaiaid=None, objname=None, ra=None, dec=None,
             table = job.get_results()
     except Exception as e:
         wargs = [url, query, type(e), e, func_name]
-        WLOG(params, 'warning', TextEntry('10-016-00008', args=wargs))
+        WLOG(params, 'warning', textentry('10-016-00008', args=wargs))
         # return No row and True to fail
         return None, True
     # ------------------------------------------------------------------
     # if we have no entries we did not find object
     if len(table) == 0:
         # warn that no rows were found
-        WLOG(params, 'warning', TextEntry('10-016-00011', args=[func_name]))
+        WLOG(params, 'warning', textentry('10-016-00011', args=[func_name]))
         # return No row and True to fail
         return None, True
     # ------------------------------------------------------------------
@@ -416,7 +415,7 @@ def query_gaia(params, gaiaid=None, objname=None, ra=None, dec=None,
                 return None, True
         except Exception as e:
             wargs = [ra, dec, radius, type(e), e, func_name]
-            WLOG(params, 'warning', TextEntry('10-016-00010', args=wargs))
+            WLOG(params, 'warning', textentry('10-016-00010', args=wargs))
             # return no row and True to Fail
             return None, True
 
@@ -433,7 +432,7 @@ def query_simbad(params, object_name):
         # get results
         with warnings.catch_warnings(record=True) as _:
             # log that we are querying simbad
-            WLOG(params, '', TextEntry(''))
+            WLOG(params, '', textentry(''))
             # wait 1 seconds (avoid IP being banned)
             time.sleep(1)
             # query simbad
@@ -443,7 +442,7 @@ def query_simbad(params, object_name):
         if results is None:
             # log that we have no results for object name from simbad
             wargs = [object_name]
-            WLOG(params, 'warning', TextEntry('10-016-00015', args=[wargs]))
+            WLOG(params, 'warning', textentry('10-016-00015', args=[wargs]))
             # return unset ra/dec
             return None, None
         # ------------------------------------------------------------------
@@ -454,7 +453,7 @@ def query_simbad(params, object_name):
         else:
             # log that we have no RA column for object name
             wargs = [object_name, ', '.join(results.colnames)]
-            WLOG(params, 'warning', TextEntry('10-016-00016', args=wargs))
+            WLOG(params, 'warning', textentry('10-016-00016', args=wargs))
             # return unset ra/dec
             return None, None
         # ------------------------------------------------------------------
@@ -465,7 +464,7 @@ def query_simbad(params, object_name):
         else:
             # log that we have no DEC column for object name
             wargs = [object_name, ', '.join(results.colnames)]
-            WLOG(params, 'warning', TextEntry('10-016-00017', args=wargs))
+            WLOG(params, 'warning', textentry('10-016-00017', args=wargs))
             # return unset ra/dec
             return None, None
         # ------------------------------------------------------------------
@@ -476,7 +475,7 @@ def query_simbad(params, object_name):
             else:
                 # log that we have not ra unit
                 wargs = [object_name, str(ra_unit)]
-                WLOG(params, 'warning', TextEntry('10-016-00018', args=wargs))
+                WLOG(params, 'warning', textentry('10-016-00018', args=wargs))
                 # return unset ra/dec
                 return None, None
         # ------------------------------------------------------------------
@@ -487,7 +486,7 @@ def query_simbad(params, object_name):
             else:
                 # log that we have not ra unit
                 wargs = [object_name, str(dec_unit)]
-                WLOG(params, 'warning', TextEntry('10-016-00019', args=wargs))
+                WLOG(params, 'warning', textentry('10-016-00019', args=wargs))
                 # return unset ra/dec
                 return None, None
         # ------------------------------------------------------------------
@@ -499,7 +498,7 @@ def query_simbad(params, object_name):
     except Exception as e:
         # log that there was an error with astroquery
         wargs = [object_name, type(e), str(e)]
-        WLOG(params, 'warning', TextEntry('10-016-00020', args=wargs))
+        WLOG(params, 'warning', textentry('10-016-00020', args=wargs))
         # return unset ra/dec
         return None, None
 

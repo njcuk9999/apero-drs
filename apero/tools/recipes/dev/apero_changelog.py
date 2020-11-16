@@ -34,8 +34,7 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # --------------------------------------------------------------------------
 CLOGFILENAME = '../changelog.md'
 VERSIONFILE = '../version.txt'
@@ -99,15 +98,13 @@ def __main__(recipe, params):
     versionfile = drs_break.get_relative_folder(package, VERSIONFILE)
     # get const file path
     constfile = drs_break.get_relative_folder(package, CONSTFILE)
-    # get the text dictionary
-    textdict = TextDict('None', params['LANGUAGE'])
     # ----------------------------------------------------------------------
     # if in preview mode tell user
     if params['INPUTS']['PREVIEW']:
-        WLOG(params, 'info', TextEntry('40-501-00008'))
+        WLOG(params, 'info', textentry('40-501-00008'))
     # ----------------------------------------------------------------------
     # read and ask for new version
-    WLOG(params, '', TextEntry('40-501-00009'))
+    WLOG(params, '', textentry('40-501-00009'))
     # set new version
     version = drs_changelog.ask_for_new_version(params)
     # add tag of version
@@ -127,7 +124,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # create new changelog
     # log that we are updating the change log
-    WLOG(params, '', TextEntry('40-501-00010'))
+    WLOG(params, '', textentry('40-501-00010'))
     # if not in preview mode modify the changelog directly
     if not params['INPUTS']['PREVIEW']:
         drs_changelog.git_change_log(filename)
@@ -143,7 +140,7 @@ def __main__(recipe, params):
     # if we are in preview mode should we keep these changes and update version
     if params['INPUTS']['PREVIEW']:
         # ask whether to keep changes
-        uinput = input(textdict['40-501-00011'] + ' [Y]es [N]o:\t')
+        uinput = input(textentry('40-501-00011') + ' [Y]es [N]o:\t')
         # if we want to keep the changes apply changes from above
         if 'Y' in uinput.upper():
             # redo tagging

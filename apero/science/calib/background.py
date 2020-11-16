@@ -38,8 +38,7 @@ DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 
@@ -134,7 +133,7 @@ def correct_local_background(params, image, **kwargs):
     wy_ker = pcheck(params, 'BKGR_KER_WY', 'wy_ker', kwargs, func_name)
     sig_ker = pcheck(params, 'BKGR_KER_SIG', 'sig_ker', kwargs, func_name)
     # log process
-    WLOG(params, '', TextEntry('40-012-00010'))
+    WLOG(params, '', textentry('40-012-00010'))
 
     # Remove NaNs from image
     image1 = mp.nanpad(image)
@@ -224,7 +223,7 @@ def correction(recipe, params, infile, image, bkgrdfile, return_map=False,
         image1 = image - local_background_correction
         # ------------------------------------------------------------------
         # log process
-        WLOG(params, '', TextEntry('40-012-00009', args=[bkgrdfile]))
+        WLOG(params, '', textentry('40-012-00009', args=[bkgrdfile]))
         # ------------------------------------------------------------------
         # get bad pixel file
         bkgrdimage = drs_fits.readfits(params, bkgrdfile)
@@ -334,7 +333,7 @@ def debug_file(recipe, params, infile, dlist):
     # add primage data to debug_back file
     debug_back.data = dlist[0]
     # print progress: saving file
-    WLOG(params, '', TextEntry('40-013-00025', args=debug_back.filename))
+    WLOG(params, '', textentry('40-013-00025', args=debug_back.filename))
     # write multiple to file
     debug_back.write_multi(kind=recipe.outputtype, data_list=dlist[1:],
                            runstring=recipe.runstring)

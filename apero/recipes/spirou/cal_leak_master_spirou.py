@@ -32,8 +32,7 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # define extraction code to use
 EXTRACT_NAME = 'cal_extract_spirou.py'
 
@@ -105,7 +104,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # check whether filetype is in allowed types
         if filetype not in allowedtypes:
-            emsg = TextEntry('01-001-00020', args=[filetype, mainname])
+            emsg = textentry('01-001-00020', args=[filetype, mainname])
             for allowedtype in allowedtypes:
                 emsg += '\n\t - "{0}"'.format(allowedtype)
             WLOG(params, 'error', emsg)
@@ -118,7 +117,7 @@ def __main__(recipe, params):
         # deal with defintion not found
         if darkfpfile is None:
             eargs = [filetype, recipe.name, mainname]
-            WLOG(params, 'error', TextEntry('09-010-00001', args=eargs))
+            WLOG(params, 'error', textentry('09-010-00001', args=eargs))
         # ------------------------------------------------------------------
         # get all "filetype" filenames
         files = drs_utils.find_files(params, kind='tmp',
@@ -137,7 +136,7 @@ def __main__(recipe, params):
     if num_files == 0:
         # log that no dark fp were found for this night
         wargs = [params['NIGHTNAME']]
-        WLOG(params, 'warning', TextEntry('10-016-00025', args=wargs))
+        WLOG(params, 'warning', textentry('10-016-00025', args=wargs))
         # update recipe log file
         recipe.log.end(params)
         # End of main code
@@ -173,7 +172,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # print progress
         wargs = [', '.join(darkfp_extnames)]
-        WLOG(params, '', TextEntry('40-016-00024', args=wargs))
+        WLOG(params, '', textentry('40-016-00024', args=wargs))
         # correct dark fp
         cout = extgen.correct_master_dark_fp(params, darkfp_extfiles)
         dark_fp_extcorr, cprops = cout

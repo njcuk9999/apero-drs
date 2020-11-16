@@ -39,8 +39,7 @@ WLOG = drs_log.wlog
 # Get function string
 display_func = drs_log.display_func
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 
@@ -121,7 +120,7 @@ def validate_polar_files(params, infiles, **kwargs):
     if len(valid_fibers) != min_files // 2:
         eargs = ['({0})'.format(','.join(valid_fibers)), 'POLAR_VALID_FIBERS',
                  func_name]
-        WLOG(params, 'error', TextEntry('00-021-00001', args=eargs))
+        WLOG(params, 'error', textentry('00-021-00001', args=eargs))
     # ----------------------------------------------------------------------
     # get the number of infiles
     num_files = len(infiles)
@@ -144,7 +143,7 @@ def validate_polar_files(params, infiles, **kwargs):
         # ------------------------------------------------------------------
         # log file addition
         wargs = [infile.basename, fiber, stoke, exp, seq, seqtot]
-        WLOG(params, '', TextEntry('40-021-00001', args=wargs))
+        WLOG(params, '', textentry('40-021-00001', args=wargs))
         # ------------------------------------------------------------------
         # get polar object for each
         pobj = PolarObj(params, infile=infile, fiber=fiber, exposure=exp,
@@ -163,16 +162,16 @@ def validate_polar_files(params, infiles, **kwargs):
     # deal with having no files
     if len(pobjects) == 0:
         eargs = ['\n\t'.join(basenames)]
-        WLOG(params, 'error', TextEntry('09-021-00001', args=eargs))
+        WLOG(params, 'error', textentry('09-021-00001', args=eargs))
     # deal with having less than minimum number of required files
     if len(pobjects) < 4:
         eargs = [4, '\n\t'.join(basenames)]
-        WLOG(params, 'error', TextEntry('09-021-00002', args=eargs))
+        WLOG(params, 'error', textentry('09-021-00002', args=eargs))
     # ----------------------------------------------------------------------
     # make sure we do not have multiple stokes parameters
     if len(np.unique(stokes)) != 1:
         eargs = [', '.join(np.unique(stokes))]
-        WLOG(params, 'error', TextEntry('09-021-00003', args=eargs))
+        WLOG(params, 'error', textentry('09-021-00003', args=eargs))
     # ----------------------------------------------------------------------
     # find number of A and B files
     num_a = np.sum(np.array(fibers) == valid_fibers[0])
@@ -184,7 +183,7 @@ def validate_polar_files(params, infiles, **kwargs):
             kind = min_files
         else:
             eargs = [valid_fibers[0], valid_fibers[1], num_a, num_b, min_files]
-            WLOG(params, 'error', TextEntry('09-021-00004', args=eargs))
+            WLOG(params, 'error', textentry('09-021-00004', args=eargs))
             kind = None
     elif len(fibers) == min_files:
         # make sure number of A and B files is correct length
@@ -193,12 +192,12 @@ def validate_polar_files(params, infiles, **kwargs):
         else:
             eargs = [valid_fibers[0], valid_fibers[1], num_a, num_b,
                      min_files // 2]
-            WLOG(params, 'error', TextEntry('09-021-00004', args=eargs))
+            WLOG(params, 'error', textentry('09-021-00004', args=eargs))
             kind = None
     else:
         eargs = [valid_fibers[0], valid_fibers[1],
                  ' or '.join([str(min_files * 2), str(min_files)])]
-        WLOG(params, 'error', TextEntry('09-021-00005', args=eargs))
+        WLOG(params, 'error', textentry('09-021-00005', args=eargs))
         kind = None
     # ----------------------------------------------------------------------
     # set the output parameters
@@ -224,7 +223,7 @@ def calculate_polarimetry(params, pobjs, props, **kwargs):
     # if method is not a string then break here
     if not isinstance(method, str):
         eargs = [method]
-        WLOG(params, 'error', TextEntry('09-021-00006', args=eargs))
+        WLOG(params, 'error', textentry('09-021-00006', args=eargs))
     # decide which method to use
     if method.lower() == 'difference':
         return polar_diff_method(params, pobjs, props)
@@ -232,7 +231,7 @@ def calculate_polarimetry(params, pobjs, props, **kwargs):
         return polar_ratio_method(params, pobjs, props)
     else:
         eargs = [method]
-        WLOG(params, 'error', TextEntry('09-021-00007', args=eargs))
+        WLOG(params, 'error', textentry('09-021-00007', args=eargs))
         return 0
 
 
@@ -256,7 +255,7 @@ def calculate_stokes_i(params, pobjs, pprops):
     # set the function
     func_name = display_func(params, 'calculate_stokes_i', __NAME__)
     # log start of polarimetry calculations
-    WLOG(params, '', TextEntry('40-021-00003'))
+    WLOG(params, '', textentry('40-021-00003'))
     # get parameters from props
     nexp = pprops['NEXPOSURES']
     # get the first file for reference
@@ -420,10 +419,10 @@ def quality_control(params):
     # finally log the failed messages and set QC = 1 if we pass the
     #     quality control QC = 0 if we fail quality control
     if passed:
-        WLOG(params, 'info', TextEntry('40-005-10001'))
+        WLOG(params, 'info', textentry('40-005-10001'))
     else:
         for farg in fail_msg:
-            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+            WLOG(params, 'warning', textentry('40-005-10002') + farg)
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
     # return qc_params
@@ -517,7 +516,7 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
     polfile.data = pprops['POL']
     # ----------------------------------------------------------------------
     # log that we are saving pol file
-    WLOG(params, '', TextEntry('40-021-00005', args=[polfile.filename]))
+    WLOG(params, '', textentry('40-021-00005', args=[polfile.filename]))
     # write image to file
     polfile.write_multi(data_list=[pprops['POLERR']], kind=recipe.outputtype,
                         runstring=recipe.runstring)
@@ -538,7 +537,7 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
     # set data
     null1file.data = pprops['NULL1']
     # log that we are saving null1 file
-    WLOG(params, '', TextEntry('40-021-00006', args=[null1file.filename]))
+    WLOG(params, '', textentry('40-021-00006', args=[null1file.filename]))
     # write image to file
     null1file.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -558,7 +557,7 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
     # set data
     null2file.data = pprops['NULL2']
     # log that we are saving null1 file
-    WLOG(params, '', TextEntry('40-021-00007', args=[null2file.filename]))
+    WLOG(params, '', textentry('40-021-00007', args=[null2file.filename]))
     # write image to file
     null2file.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -580,7 +579,7 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
     # set data
     stokesfile.data = pprops['STOKESI']
     # log that we are saving pol file
-    WLOG(params, '', TextEntry('40-021-00008', args=[stokesfile.filename]))
+    WLOG(params, '', textentry('40-021-00008', args=[stokesfile.filename]))
     # write image to file
     stokesfile.write_multi(data_list=[pprops['STOKESIERR']],
                            kind=recipe.outputtype, runstring=recipe.runstring)
@@ -605,7 +604,7 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
         s1dfile.datatype = 'table'
         # log that we are saving s1d table
         wargs = [s1dkey, s1dfile.filename]
-        WLOG(params, '', TextEntry('40-021-00010', args=wargs))
+        WLOG(params, '', textentry('40-021-00010', args=wargs))
         # write image to file
         s1dfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
         # add to output files (for indexing)
@@ -685,7 +684,7 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
         # update the data type
         lsd_file.datatype = 'table'
         # log that we are saving lsd file
-        WLOG(params, '', TextEntry('40-021-00009', args=[lsd_file.filename]))
+        WLOG(params, '', textentry('40-021-00009', args=[lsd_file.filename]))
         # write image to file
         lsd_file.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
         # add to output files (for indexing)
@@ -810,7 +809,7 @@ def valid_polar_file(params, infile, **kwargs):
     # deal with bad file
     if cmmtseq in [None, '', 'None']:
         eargs = [params['KW_CMMTSEQ'][0], infile.filename]
-        WLOG(params, 'warning', TextEntry('10-021-00004', args=eargs))
+        WLOG(params, 'warning', textentry('10-021-00004', args=eargs))
         return None, None, None, None, fiber, False
     # ----------------------------------------------------------------------
     # split to string by white spaces
@@ -825,7 +824,7 @@ def valid_polar_file(params, infile, **kwargs):
         exposure = int(exposure)
     except ValueError:
         eargs = [params['KW_CMMTSEQ'][0], cmmtseq]
-        WLOG(params, 'warning', TextEntry('10-021-00001', args=eargs))
+        WLOG(params, 'warning', textentry('10-021-00001', args=eargs))
         valid = False
     # ----------------------------------------------------------------------
     # get the sequence number
@@ -834,7 +833,7 @@ def valid_polar_file(params, infile, **kwargs):
         sequence = int(sequence)
     except ValueError:
         eargs = [params['KW_CMMTSEQ'][0], cmmtseq]
-        WLOG(params, 'warning', TextEntry('10-021-00002', args=eargs))
+        WLOG(params, 'warning', textentry('10-021-00002', args=eargs))
         valid = False
     # ----------------------------------------------------------------------
     # get the total number of sequences
@@ -843,19 +842,19 @@ def valid_polar_file(params, infile, **kwargs):
         total = int(total)
     except ValueError:
         eargs = [params['KW_CMMTSEQ'][0], cmmtseq]
-        WLOG(params, 'warning', TextEntry('10-021-00003', args=eargs))
+        WLOG(params, 'warning', textentry('10-021-00003', args=eargs))
         valid = False
     # ----------------------------------------------------------------------
     # deal with fiber type
     if fiber not in valid_fibers:
         eargs = [fiber, ', '.join(valid_fibers), infile.filename]
-        WLOG(params, 'warning', TextEntry('10-021-00005', args=eargs))
+        WLOG(params, 'warning', textentry('10-021-00005', args=eargs))
         valid = False
     # ----------------------------------------------------------------------
     # deal with stokes parameters - check parameter is valid
     if stoke_parameter not in valid_stokes:
         eargs = [stoke_parameter, ', '.join(valid_stokes), infile.filename]
-        WLOG(params, 'warning', TextEntry('10-021-00006', args=eargs))
+        WLOG(params, 'warning', textentry('10-021-00006', args=eargs))
         valid = False
     # ----------------------------------------------------------------------
     # return extracted parameters
@@ -885,7 +884,7 @@ def polar_diff_method(params, pobjs, props):
     # set function name
     func_name = display_func(params, 'polar_diff_method', __NAME__)
     # log start of polarimetry calculations
-    WLOG(params, '', TextEntry('40-021-00002', args=['difference']))
+    WLOG(params, '', textentry('40-021-00002', args=['difference']))
     # get parameters from props
     nexp = props['NEXPOSURES']
     # get the first file for reference
@@ -988,7 +987,7 @@ def polar_diff_method(params, pobjs, props):
     else:
         # Log that the number of exposures is not sufficient
         eargs = [nexp, func_name]
-        WLOG(params, 'error', TextEntry('09-021-00008', args=eargs))
+        WLOG(params, 'error', textentry('09-021-00008', args=eargs))
     # ---------------------------------------------------------------------
     # populate the polar properties
     pprops = props.copy()
@@ -1025,7 +1024,7 @@ def polar_ratio_method(params, pobjs, props):
     # set function name
     func_name = display_func(params, 'polar_ratio_method', __NAME__)
     # log start of polarimetry calculations
-    WLOG(params, '', TextEntry('40-021-00002', args=['difference']))
+    WLOG(params, '', textentry('40-021-00002', args=['difference']))
     # get parameters from props
     nexp = props['NEXPOSURES']
     # get the first file for reference
@@ -1168,7 +1167,7 @@ def polar_ratio_method(params, pobjs, props):
     else:
         # Log that the number of exposures is not sufficient
         eargs = [nexp, func_name]
-        WLOG(params, 'error', TextEntry('09-021-00008', args=eargs))
+        WLOG(params, 'error', textentry('09-021-00008', args=eargs))
     # ---------------------------------------------------------------------
     # populate the polar properties
     pprops = props.copy()

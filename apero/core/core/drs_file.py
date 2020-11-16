@@ -61,9 +61,7 @@ ParamDict = constants.ParamDict
 Header = drs_fits.Header
 FitsHeader = drs_fits.fits.Header
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
-HelpText = lang.core.drs_lang_text.HelpDict
+textentry = lang.textentry
 # get exceptions
 DrsHeaderError = drs_exceptions.DrsHeaderError
 DrsCodedException = drs_exceptions.DrsCodedException
@@ -325,7 +323,7 @@ class DrsInputFile:
         if self.filename is None:
             func = self.__repr__()
             eargs = [func, func + '.set_filename()']
-            self.__error__(TextEntry('00-001-00002', args=eargs))
+            self.__error__(textentry('00-001-00002', args=eargs))
 
     def file_exists(self) -> bool:
         """
@@ -489,12 +487,12 @@ class DrsInputFile:
         if self.params is None:
             func = self.__repr__()
             eargs = [func, self.filename, func_name]
-            self.__error__(TextEntry('00-001-00003', args=eargs))
+            self.__error__(textentry('00-001-00003', args=eargs))
 
-    def __error__(self, messages: Union[TextEntry, str]):
+    def __error__(self, messages: str):
         """
         Raise an Logger message (level = error)
-        :param messages: TextEntry or string of the messages to add
+        :param messages: string of the messages to add
         :return: None
         """
         # set function name
@@ -502,10 +500,10 @@ class DrsInputFile:
         # run the log method: error mode
         self.__log__(messages, 'error')
 
-    def __warning__(self, messages: Union[TextEntry, str]):
+    def __warning__(self, messages: str):
         """
         Log a Logger message (level = warning)
-        :param messages: TextEntry or string of the messages to add
+        :param messages:  string of the messages to add
         :return: None
         """
         # set function name
@@ -513,10 +511,10 @@ class DrsInputFile:
         # run the log method: warning mode
         self.__log__(messages, 'warning')
 
-    def __message__(self, messages: Union[TextEntry, str]):
+    def __message__(self, messages: str):
         """
         Log a Logger message (level = '')
-        :param messages: TextEntry or string of the messages to add
+        :param messages:  string of the messages to add
         :return:
         """
         # set function name
@@ -524,10 +522,10 @@ class DrsInputFile:
         # print and log via wlogger
         WLOG(self.params, '', messages)
 
-    def __log__(self, messages: Union[TextEntry, str], kind: str):
+    def __log__(self, messages: str, kind: str):
         """
         Generate a logger message for level = kind
-        :param messages: TextEntry or string of the messages to add
+        :param messages: string of the messages to add
         :param kind: str, level of the log message
         :return:
         """
@@ -535,7 +533,7 @@ class DrsInputFile:
         _ = display_func(self.params, '__log__', __NAME__, self.class_name)
         # format initial error message
         m0args = [kind.capitalize(), self.__repr__()]
-        message0 = TextEntry('{0}: {1}'.format(*m0args))
+        message0 = textentry('{0}: {1}'.format(*m0args))
         # append initial error message to messages
         messages = message0 + messages
         # print and log via wlogger
@@ -791,7 +789,7 @@ class DrsInputFile:
     # file checking
     # -------------------------------------------------------------------------
     def check_another_file(self, input_file: Union['DrsInputFile']
-                           ) -> Tuple[bool, Union[TextEntry, str, dict, None]]:
+                           ) -> Tuple[bool, Union[str, dict, None]]:
         """
         Checks that another file is consistent with this file type
 
@@ -816,7 +814,7 @@ class DrsInputFile:
         # if 1, 2 and 3 pass return True
         return True, None
 
-    def check_file(self) -> Tuple[bool, Union[TextEntry, str, dict, None]]:
+    def check_file(self) -> Tuple[bool, Union[str, dict, None]]:
         """
         Checks that this file is correct
 
@@ -842,7 +840,7 @@ class DrsInputFile:
     def has_correct_extension(self, filename: Union[str, None] = None,
                               filetype: Union[str, None] = None,
                               argname: Union[str, None] = None
-                              ) -> Tuple[bool, Union[str, TextEntry, None]]:
+                              ) -> Tuple[bool, Union[str, None]]:
         """
         Placeholder - cannot check header for DrsInputFile
 
@@ -1009,7 +1007,7 @@ class DrsInputFile:
             except DrsCodedException as e:
                 level = e.get('level', 'error')
                 eargs = e.get('targs', None)
-                WLOG(params, level, TextEntry(e.codeid, args=eargs))
+                WLOG(params, level, textentry(e.codeid, args=eargs))
                 abspath = None
 
             self.filename = abspath
@@ -1017,7 +1015,7 @@ class DrsInputFile:
         # else raise an error
         else:
             eargs = [self.__repr__(), func_name]
-            WLOG(params, 'error', TextEntry('00-008-00004', args=eargs))
+            WLOG(params, 'error', textentry('00-008-00004', args=eargs))
         # check that we are allowed to use infile (if set)
         if infile is not None and check:
             if self.intype is not None:
@@ -1027,7 +1025,7 @@ class DrsInputFile:
                 # see if infile is in reqfiles
                 if infile.name not in reqfiles:
                     eargs = [infile.name, reqstr, self.filename, func_name]
-                    WLOG(params, 'error', TextEntry('00-008-00017', args=eargs))
+                    WLOG(params, 'error', textentry('00-008-00017', args=eargs))
 
     def generate_reqfiles(self) -> List[str]:
         """
@@ -1788,7 +1786,7 @@ class DrsFitsFile(DrsInputFile):
     # -------------------------------------------------------------------------
     # file checking
     # -------------------------------------------------------------------------
-    def check_file(self) -> Tuple[bool, Union[TextEntry, dict, str, None]]:
+    def check_file(self) -> Tuple[bool, Union[dict, str, None]]:
         """
         Checks that this file is correct
 
@@ -1816,7 +1814,7 @@ class DrsFitsFile(DrsInputFile):
     def has_correct_extension(self, filename: Union[str, None] = None,
                               filetype: Union[str, None] = None,
                               argname: Union[str, None] = None
-                              ) -> Tuple[bool, Union[str, TextEntry, None]]:
+                              ) -> Tuple[bool, Union[str, None]]:
         """
         Check whether the filetype (file extension) is correct
 
@@ -1844,7 +1842,7 @@ class DrsFitsFile(DrsInputFile):
         # -----------------------------------------------------------------
         # deal with no argument name
         if argname is None:
-            argname = TextEntry('40-001-00018')
+            argname = textentry('40-001-00018')
         # -----------------------------------------------------------------
         # check params has been set
         self.check_params(func_name)
@@ -1853,29 +1851,29 @@ class DrsFitsFile(DrsInputFile):
         # -----------------------------------------------------------------
         # check extension
         if filetype is None:
-            msg = TextEntry('09-000-00003', args=[basename])
+            msg = textentry('09-000-00003', args=[basename])
             cond = True
         elif filename.endswith(filetype):
-            msg = TextEntry('09-000-00004', args=[basename, filetype])
+            msg = textentry('09-000-00004', args=[basename, filetype])
             cond = True
         else:
-            msg = TextEntry('09-000-00005', args=[basename, filetype])
+            msg = textentry('09-000-00005', args=[basename, filetype])
             cond = False
         # if valid return True and no error
         if cond:
             dargs = [argname, os.path.basename(filename)]
-            WLOG(params, 'debug', TextEntry('90-001-00009', args=dargs),
+            WLOG(params, 'debug', textentry('90-001-00009', args=dargs),
                  wrap=False)
             return True, msg
         # if False generate error and return it
         else:
-            emsg = TextEntry('09-001-00006', args=[argname, filetype])
+            emsg = textentry('09-001-00006', args=[argname, filetype])
             return False, emsg
 
     def hkeys_exist(self, header: Union[drs_fits.Header, None] = None,
                     filename: Union[str, None] = None,
                     argname: Union[str, None] = None
-                    ) -> Tuple[bool, Union[str, TextEntry, None]]:
+                    ) -> Tuple[bool, Union[str, None]]:
         """
         Check whether the header keys exist in the header
 
@@ -1915,7 +1913,7 @@ class DrsFitsFile(DrsInputFile):
         # -----------------------------------------------------------------
         # deal with no argument name
         if argname is None:
-            argname = TextEntry('40-001-00018')
+            argname = textentry('40-001-00018')
         # -----------------------------------------------------------------
         # Check that required keys are in header
         for drskey in rkeys:
@@ -1923,7 +1921,7 @@ class DrsFitsFile(DrsInputFile):
             if drskey not in allowed_keys:
                 eargs = [self.name, drskey, 'FILEDEF_HEADER_KEYS()',
                          ','.join(allowed_keys), func_name]
-                WLOG(params, 'error', TextEntry('00-006-00022', args=eargs))
+                WLOG(params, 'error', textentry('00-006-00022', args=eargs))
             # check whether header key is in param dict (i.e. from a
             #    keywordstore) or whether we have to use the key as is
             if drskey in params:
@@ -1935,16 +1933,16 @@ class DrsFitsFile(DrsInputFile):
             # deal with empty key
             if (key is None) or key == '':
                 eargs = [key, drskey, source]
-                WLOG(params, 'error', TextEntry('00-006-00011', args=eargs))
+                WLOG(params, 'error', textentry('00-006-00011', args=eargs))
             # check if key is in header
             if key not in header:
                 eargs = [argname, key]
-                emsg = TextEntry('09-001-00007', args=eargs)
+                emsg = textentry('09-001-00007', args=eargs)
                 WLOG(params, 'debug', emsg)
                 return False, emsg
             else:
                 dargs = [argname, key, basename]
-                WLOG(params, 'debug', TextEntry('90-001-00010', args=dargs),
+                WLOG(params, 'debug', textentry('90-001-00010', args=dargs),
                      wrap=False)
         # if we have got to this point return True (success) and no error
         #   messages
@@ -1994,7 +1992,7 @@ class DrsFitsFile(DrsInputFile):
         # -----------------------------------------------------------------
         # deal with no argument name
         if argname is None:
-            argname = TextEntry('40-001-00018')
+            argname = textentry('40-001-00018')
         # -----------------------------------------------------------------
         # search for correct value for each header key
         found = True
@@ -2021,13 +2019,13 @@ class DrsFitsFile(DrsInputFile):
             if rvalue != value:
                 dargs = [argname, key, rvalue]
                 if log:
-                    WLOG(params, 'debug', TextEntry('90-001-00011', args=dargs),
+                    WLOG(params, 'debug', textentry('90-001-00011', args=dargs),
                          wrap=False)
                 found = False
             else:
                 dargs = [argname, key, rvalue]
                 if log:
-                    WLOG(params, 'debug', TextEntry('90-001-00012', args=dargs),
+                    WLOG(params, 'debug', textentry('90-001-00012', args=dargs),
                          wrap=False)
             # store info
             errors[key] = (found, argname, rvalue, value)
@@ -2217,11 +2215,11 @@ class DrsFitsFile(DrsInputFile):
                 except DrsCodedException as e:
                     level = e.get('level', 'error')
                     eargs = e.get('targs', None)
-                    WLOG(params, level, TextEntry(e.codeid, args=eargs))
+                    WLOG(params, level, textentry(e.codeid, args=eargs))
                     outfilename = None
             else:
                 eargs = [self.name, recipename, func_name]
-                WLOG(params, 'error', TextEntry('09-503-00009', args=eargs))
+                WLOG(params, 'error', textentry('09-503-00009', args=eargs))
                 outfilename = None
         # ------------------------------------------------------------------
         # assume file is valid
@@ -2236,7 +2234,7 @@ class DrsFitsFile(DrsInputFile):
             valid = False
             # debug log that extension was incorrect
             dargs = [self.filetype, filename]
-            WLOG(params, 'debug', TextEntry('90-008-00004', args=dargs))
+            WLOG(params, 'debug', textentry('90-008-00004', args=dargs))
         # ------------------------------------------------------------------
         # check suffix (after extension removed)
         if (self.suffix is not None) and valid:
@@ -2246,7 +2244,7 @@ class DrsFitsFile(DrsInputFile):
                     valid = False
                     # debug log that extension was incorrect
                     dargs = [self.suffix, filename]
-                    WLOG(params, 'debug', TextEntry('90-008-00005', args=dargs))
+                    WLOG(params, 'debug', textentry('90-008-00005', args=dargs))
             # ------------------------------------------------------------------
             # if we have fibers then file should end with one of them and
             # the suffix
@@ -2261,7 +2259,7 @@ class DrsFitsFile(DrsInputFile):
                 # if valid1 is False debug log that fibers were not found
                 if not valid1:
                     dargs = [', '.join(fibers), filename]
-                    WLOG(params, 'debug', TextEntry('90-008-00006', args=dargs))
+                    WLOG(params, 'debug', textentry('90-008-00006', args=dargs))
                 # put valid1 back into valid
                 valid &= valid1
         # ------------------------------------------------------------------
@@ -2326,14 +2324,14 @@ class DrsFitsFile(DrsInputFile):
                 # modify valid value
                 valid &= valid1
                 dargs = [key, valid, filedict['OUT'], rvalues]
-                WLOG(params, 'debug', TextEntry('90-008-00003', args=dargs))
+                WLOG(params, 'debug', textentry('90-008-00003', args=dargs))
                 # if we haven't found a key the we can stop here
                 if not valid:
                     return False
             else:
                 # Log that key was not found
                 dargs = [key, filedict['OUT'], ', '.join(list(filedict.keys()))]
-                WLOG(params, 'debug', TextEntry('90-008-00002', args=dargs))
+                WLOG(params, 'debug', textentry('90-008-00002', args=dargs))
         # return valid
         return valid
 
@@ -2504,7 +2502,7 @@ class DrsFitsFile(DrsInputFile):
                 # raise exception
                 func = self.__repr__()
                 eargs = [func, func + '.read_file()']
-                self.__error__(TextEntry('00-001-00004', args=eargs))
+                self.__error__(textentry('00-001-00004', args=eargs))
                 return 0
             else:
                 return 1
@@ -2518,7 +2516,7 @@ class DrsFitsFile(DrsInputFile):
                 # raise exception
                 func = self.__repr__()
                 eargs = [func, func + '.read_file()']
-                self.__error__(TextEntry('00-001-00004', args=eargs))
+                self.__error__(textentry('00-001-00004', args=eargs))
                 return 0
             else:
                 return 1
@@ -2916,7 +2914,7 @@ class DrsFitsFile(DrsInputFile):
             # check that infile matches in name to self
             if (self.name != infile.name) and same_type:
                 eargs = [func_name]
-                WLOG(params, 'error', TextEntry('00-001-00021', args=eargs))
+                WLOG(params, 'error', textentry('00-001-00021', args=eargs))
             # add to cube
             datacube.append(infile.data)
             basenames.append(infile.basename)
@@ -2926,7 +2924,7 @@ class DrsFitsFile(DrsInputFile):
         # deal with math
         # --------------------------------------------------------------------
         # log what we are doing
-        WLOG(params, '', TextEntry('40-999-00004', args=[math]))
+        WLOG(params, '', textentry('40-999-00004', args=[math]))
         # if we want to sum the data
         if math in ['sum', 'add', '+']:
             with warnings.catch_warnings(record=True) as _:
@@ -2954,7 +2952,7 @@ class DrsFitsFile(DrsInputFile):
         # else we have an error in math
         else:
             eargs = [math, ', '.join(available_math), func_name]
-            WLOG(params, 'error', TextEntry('00-001-00042', args=eargs))
+            WLOG(params, 'error', textentry('00-001-00042', args=eargs))
 
         # --------------------------------------------------------------------
         # Need to setup a new filename
@@ -3030,10 +3028,10 @@ class DrsFitsFile(DrsInputFile):
                 else:
                     if key == drskey:
                         eargs = [drskey, self.filename, func_name]
-                        emsg = TextEntry('09-000-00006', args=eargs)
+                        emsg = textentry('09-000-00006', args=eargs)
                     else:
                         eargs = [drskey, self.filename, key, func_name]
-                        emsg = TextEntry('09-000-00006', args=eargs)
+                        emsg = textentry('09-000-00006', args=eargs)
                     self.__error__(emsg)
                     value = None
         # deal with booleans
@@ -3091,7 +3089,7 @@ class DrsFitsFile(DrsInputFile):
         try:
             keys = list(keys)
         except TypeError:
-            self.__error__(TextEntry('00-001-00005', args=[func_name]))
+            self.__error__(textentry('00-001-00005', args=[func_name]))
         # if defaults is None --> list of Nones else make sure defaults
         #    is a list
         if defaults is None:
@@ -3100,9 +3098,9 @@ class DrsFitsFile(DrsInputFile):
             try:
                 defaults = list(defaults)
                 if len(defaults) != len(keys):
-                    self.__error__(TextEntry('00-001-00006', args=[func_name]))
+                    self.__error__(textentry('00-001-00006', args=[func_name]))
             except TypeError:
-                self.__error__(TextEntry('00-001-00007', args=[func_name]))
+                self.__error__(textentry('00-001-00007', args=[func_name]))
         # loop around keys and look up each key
         values = []
         for k_it, key in enumerate(keys):
@@ -3160,7 +3158,7 @@ class DrsFitsFile(DrsInputFile):
             # deal with no wild card values found
             if wildvalues is None:
                 eargs = [wildkey, dim1, self.basename, func_name]
-                self.__error__(TextEntry('09-000-00008', args=eargs))
+                self.__error__(textentry('09-000-00008', args=eargs))
             # else get the length of dim1
             else:
                 dim1 = len(wildvalues)
@@ -3177,7 +3175,7 @@ class DrsFitsFile(DrsInputFile):
                 values.append(dtype(self.header[keyname]))
             except KeyError:
                 eargs = [keyname, dim1, self.basename, func_name]
-                self.__error__(TextEntry('09-000-00008', args=eargs))
+                self.__error__(textentry('09-000-00008', args=eargs))
                 values = None
         # return values
         return np.array(values)
@@ -3221,7 +3219,7 @@ class DrsFitsFile(DrsInputFile):
                 except KeyError:
                     eargs = [keyname, drskey, dim1, dim2, self.basename,
                              func_name]
-                    self.__error__(TextEntry('09-000-00009', args=eargs))
+                    self.__error__(textentry('09-000-00009', args=eargs))
         # return values
         return values
 
@@ -3256,7 +3254,7 @@ class DrsFitsFile(DrsInputFile):
             source = 'input'
         # debug log message
         dargs = [key, drskey, source]
-        WLOG(drs_params, 'debug', TextEntry('90-008-00001', args=dargs))
+        WLOG(drs_params, 'debug', textentry('90-008-00001', args=dargs))
         # return drskey
         return drskey
 
@@ -3479,7 +3477,7 @@ class DrsFitsFile(DrsInputFile):
                 kwstore = list(key)
             else:
                 eargs = [key, func_name]
-                self.__error__(TextEntry('00-001-00008', args=eargs))
+                self.__error__(textentry('00-001-00008', args=eargs))
                 kwstore = None
         else:
             kwstore = [keyword, value, comment]
@@ -3533,23 +3531,23 @@ class DrsFitsFile(DrsInputFile):
                                  self.class_name)
         # deal with no keywordstore
         if (kwstores is None) and (keys is None or comments is None):
-            self.__error__(TextEntry('00-001-00009', args=[func_name]))
+            self.__error__(textentry('00-001-00009', args=[func_name]))
         # deal with kwstores set
         if kwstores is not None:
             # make sure kwstores is a list of list
             if not isinstance(kwstores, list):
-                self.__error__(TextEntry('00-001-00010', args=[func_name]))
+                self.__error__(textentry('00-001-00010', args=[func_name]))
             # loop around entries
             for k_it, kwstore in enumerate(kwstores):
                 self.add_hkey(keyword=kwstore, value=values[k_it])
         # else we assume keys and comments
         else:
             if not isinstance(keys, list):
-                self.__error__(TextEntry('00-001-00011', args=[func_name]))
+                self.__error__(textentry('00-001-00011', args=[func_name]))
             if not isinstance(comments, list):
-                self.__error__(TextEntry('00-001-00012', args=[func_name]))
+                self.__error__(textentry('00-001-00012', args=[func_name]))
             if len(keys) != len(comments):
-                self.__error__(TextEntry('00-001-00013', args=[func_name]))
+                self.__error__(textentry('00-001-00013', args=[func_name]))
             # loop around entries
             for k_it in range(len(keys)):
                 self.add_hkey(key=keys[k_it], value=values[k_it],
@@ -3592,7 +3590,7 @@ class DrsFitsFile(DrsInputFile):
                                  self.class_name)
         # deal with no keywordstore
         if (key is None) and (keyword is None or comment is None):
-            self.__error__(TextEntry('00-001-00014', args=[func_name]))
+            self.__error__(textentry('00-001-00014', args=[func_name]))
         # deal with no dim1name
         if dim1name is None:
             dim1name = 'dim1'
@@ -3607,7 +3605,7 @@ class DrsFitsFile(DrsInputFile):
                 kwstore = list(key)
             else:
                 eargs = [key, func_name]
-                self.__error__(TextEntry('00-001-00008', args=eargs))
+                self.__error__(textentry('00-001-00008', args=eargs))
                 kwstore = None
         else:
             kwstore = [keyword, None, comment]
@@ -3700,7 +3698,7 @@ class DrsFitsFile(DrsInputFile):
                 kwstore = list(key)
             else:
                 eargs = [key, func_name]
-                self.__error__(TextEntry('00-001-00008', args=eargs))
+                self.__error__(textentry('00-001-00008', args=eargs))
                 kwstore = None
         else:
             kwstore = [keyword, None, comment]
@@ -3775,7 +3773,7 @@ class DrsFitsFile(DrsInputFile):
         for length in lengths:
             if lengths[0] != length:
                 eargs = [', '.join(strlengths), func_name]
-                WLOG(params, 'error', TextEntry('00-001-00019', args=eargs))
+                WLOG(params, 'error', textentry('00-001-00019', args=eargs))
         # loop around values and add to hdict
         for it in range(lengths[0]):
             # loop around qc parameters
@@ -3855,7 +3853,7 @@ class DrsFitsFile(DrsInputFile):
             key, dvalue, comment = kwstore
         except Exception as _:
             eargs = [kwstore, func_name]
-            self.__error__(TextEntry('00-001-00016', args=eargs))
+            self.__error__(textentry('00-001-00016', args=eargs))
             key, dvalue, comment = None, None, None
         # return values
         return key, dvalue, comment
@@ -4078,10 +4076,10 @@ class DrsNpyFile(DrsInputFile):
                 self.data = drs_path.numpy_load(self.filename)
             except Exception as e:
                 eargs = [type(e), e, self.filename, func_name]
-                WLOG(params, 'error', TextEntry('00-008-00018', args=eargs))
+                WLOG(params, 'error', textentry('00-008-00018', args=eargs))
         # cause error if file name is not set
         else:
-            WLOG(params, 'error', TextEntry('00-008-00013', args=[func_name]))
+            WLOG(params, 'error', textentry('00-008-00013', args=[func_name]))
 
     def check_read(self, header_only: bool = False, data_only: bool = False,
                    load: bool = True):
@@ -4111,7 +4109,7 @@ class DrsNpyFile(DrsInputFile):
                 # raise exception
                 func = self.__repr__()
                 eargs = [func, func + '.read_file()']
-                self.__error__(TextEntry('00-001-00004', args=eargs))
+                self.__error__(textentry('00-001-00004', args=eargs))
                 return 0
             else:
                 return 1
@@ -4158,17 +4156,17 @@ class DrsNpyFile(DrsInputFile):
         params = self.params
         # if filename is not set raise error
         if self.filename is None:
-            WLOG(params, 'error', TextEntry('00-008-00013', args=[func_name]))
+            WLOG(params, 'error', textentry('00-008-00013', args=[func_name]))
         if self.data is not None:
             try:
                 # save to file
                 np.save(self.filename, self.data)
             except Exception as e:
                 eargs = [type(e), e, self.filename, func_name]
-                WLOG(params, 'error', TextEntry('00-008-00015', args=eargs))
+                WLOG(params, 'error', textentry('00-008-00015', args=eargs))
         else:
             eargs = [self.filename, func_name]
-            WLOG(params, 'error', TextEntry('00-008-00014', args=eargs))
+            WLOG(params, 'error', textentry('00-008-00014', args=eargs))
         # write output dictionary
         self.output_dictionary(kind, runstring)
 
@@ -4497,7 +4495,7 @@ def combine(params: ParamDict, recipe: Any,
         return infiles
     # make sure infiles is a list
     if not isinstance(infiles, list):
-        WLOG(params, 'error', TextEntry('00-001-00020', args=[func_name]))
+        WLOG(params, 'error', textentry('00-001-00020', args=[func_name]))
     # if we have only one file (or none) skip combine
     if len(infiles) == 1:
         return infiles[0]
@@ -4508,13 +4506,13 @@ def combine(params: ParamDict, recipe: Any,
         for it, infile in enumerate(infiles):
             if infile.name != infiles[0].name:
                 eargs = [infiles[0].name, it, infile.name, func_name]
-                WLOG(params, 'error', TextEntry('00-001-00021', args=eargs))
+                WLOG(params, 'error', textentry('00-001-00021', args=eargs))
 
     # get output path from params
     outpath = str(params['OUTPATH'])
     # check if outpath is set
     if outpath is None:
-        WLOG(params, 'error', TextEntry('01-001-00023', args=[func_name]))
+        WLOG(params, 'error', textentry('01-001-00023', args=[func_name]))
         return None
     # get the absolute path (for combined output)
     if params['NIGHTNAME'] is None:
@@ -4533,7 +4531,7 @@ def combine(params: ParamDict, recipe: Any,
     # update the number of files
     outfile.numfiles = len(infiles)
     # write to disk
-    WLOG(params, '', TextEntry('40-001-00025', args=[outfile.filename]))
+    WLOG(params, '', textentry('40-001-00025', args=[outfile.filename]))
     outfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(outfile)
@@ -4588,7 +4586,7 @@ def fix_header(params: ParamDict, recipe: Any,
             raise e
         else:
             eargs = [e.key, e.filename]
-            WLOG(params, 'error', TextEntry('01-001-00027', args=eargs))
+            WLOG(params, 'error', textentry('01-001-00027', args=eargs))
     # if the input was an infile return the infile back
     if has_infile:
         # return the updated infile
@@ -4680,7 +4678,7 @@ def id_drs_file(params: ParamDict, recipe: Any,
             # --------------------------------------------------------------
             # debug
             dargs = [str(drsfile)]
-            WLOG(params, 'debug', TextEntry('90-010-00001', args=dargs))
+            WLOG(params, 'debug', textentry('90-010-00001', args=dargs))
             # --------------------------------------------------------------
             # copy info from given_drsfile into drsfile
             file_in = drsfile.copyother(file_set, params=params)
@@ -4745,7 +4743,7 @@ def id_drs_file(params: ParamDict, recipe: Any,
             argstr += '\t{0}: {1}\n'.format(key, value)
 
         eargs = [' '.join(names), file_set.filename, argstr, func_name]
-        WLOG(params, 'error', TextEntry('00-010-00001', args=eargs))
+        WLOG(params, 'error', textentry('00-010-00001', args=eargs))
     # ----------------------------------------------------------------------
     # return found and the drsfile instance
     if len(kinds) == 0:
@@ -4792,7 +4790,7 @@ def get_mid_obs_time(params: ParamDict,
     # deal with header still being None
     if header is None:
         eargs = [func_name]
-        WLOG(params, 'error', TextEntry('00-001-00051', args=eargs))
+        WLOG(params, 'error', textentry('00-001-00051', args=eargs))
     # get raw value from header
     rawtime = header[outkey]
     # get time object
@@ -4816,7 +4814,7 @@ def get_mid_obs_time(params: ParamDict,
     else:
         kinds = ['None', 'human', 'iso', 'unix', 'mjd', 'jd', 'decimalyear']
         eargs = [dbname, ' or '.join(kinds), out_fmt, func_name]
-        WLOG(params, 'error', TextEntry('00-001-00030', args=eargs))
+        WLOG(params, 'error', textentry('00-001-00030', args=eargs))
 
 
 def get_dir(params: ParamDict, dirkind: str, dirpath: Union[str, None] = None,
@@ -4853,7 +4851,7 @@ def get_dir(params: ParamDict, dirkind: str, dirpath: Union[str, None] = None,
         dirpath = params['DRS_TELLU_DB']
     # if not found produce error
     else:
-        emsg = TextEntry('00-007-00002', args=[kind, dirpath])
+        emsg = textentry('00-007-00002', args=[kind, dirpath])
         WLOG(params, 'error', emsg)
         dirpath = None
     return os.path.realpath(os.path.abspath(dirpath))

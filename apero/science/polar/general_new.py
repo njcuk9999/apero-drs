@@ -47,8 +47,7 @@ WLOG = drs_log.wlog
 # Get function string
 display_func = drs_log.display_func
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 # define output keys
@@ -761,7 +760,7 @@ def validate_polar_files(params, recipe, infiles, **kwargs):
         # ------------------------------------------------------------------
         # log file addition
         wargs = [infile.basename, fiber, stoke, exp, seq, seqtot]
-        WLOG(params, '', TextEntry('40-021-00001', args=wargs))
+        WLOG(params, '', textentry('40-021-00001', args=wargs))
         # ------------------------------------------------------------------
         # get polar object for each
         pobj = PolarObj(params, recipe, infile=infile, fiber=fiber,
@@ -817,7 +816,7 @@ def calculate_polarimetry(params, pobjs, props, **kwargs):
     # if method is not a string then break here
     if not isinstance(method, str):
         eargs = [method]
-        WLOG(params, 'error', TextEntry('09-021-00006', args=eargs))
+        WLOG(params, 'error', textentry('09-021-00006', args=eargs))
     # decide which method to use
     if method.lower() == 'difference':
         return polar_diff_method(params, pobjs, props)
@@ -825,7 +824,7 @@ def calculate_polarimetry(params, pobjs, props, **kwargs):
         return polar_ratio_method(params, pobjs, props)
     else:
         eargs = [method]
-        WLOG(params, 'error', TextEntry('09-021-00007', args=eargs))
+        WLOG(params, 'error', textentry('09-021-00007', args=eargs))
         return 0
 
 
@@ -849,7 +848,7 @@ def calculate_stokes_i(params, pobjs, pprops, **kwargs):
     # set the function
     func_name = display_func(params, 'calculate_stokes_i', __NAME__)
     # log start of polarimetry calculations
-    WLOG(params, '', TextEntry('40-021-00003'))
+    WLOG(params, '', textentry('40-021-00003'))
     # get parameters from params
     interpolate_flux = pcheck(params, 'POLAR_INTERPOLATE_FLUX',
                               'interpolate_flux', kwargs, func_name)
@@ -1436,7 +1435,7 @@ def valid_polar_file(params, infile, **kwargs):
     # deal with bad file
     if cmmtseq in [None, '', 'None']:
         eargs = [params['KW_CMMTSEQ'][0], infile.filename]
-        WLOG(params, 'warning', TextEntry('10-021-00004', args=eargs))
+        WLOG(params, 'warning', textentry('10-021-00004', args=eargs))
         return None, None, None, None, fiber, False
     # ----------------------------------------------------------------------
     # split to string by white spaces
@@ -1451,7 +1450,7 @@ def valid_polar_file(params, infile, **kwargs):
         exposure = int(exposure)
     except ValueError:
         eargs = [params['KW_CMMTSEQ'][0], cmmtseq]
-        WLOG(params, 'warning', TextEntry('10-021-00001', args=eargs))
+        WLOG(params, 'warning', textentry('10-021-00001', args=eargs))
         valid = False
     # ----------------------------------------------------------------------
     # get the sequence number
@@ -1460,7 +1459,7 @@ def valid_polar_file(params, infile, **kwargs):
         sequence = int(sequence)
     except ValueError:
         eargs = [params['KW_CMMTSEQ'][0], cmmtseq]
-        WLOG(params, 'warning', TextEntry('10-021-00002', args=eargs))
+        WLOG(params, 'warning', textentry('10-021-00002', args=eargs))
         valid = False
     # ----------------------------------------------------------------------
     # get the total number of sequences
@@ -1469,19 +1468,19 @@ def valid_polar_file(params, infile, **kwargs):
         total = int(total)
     except ValueError:
         eargs = [params['KW_CMMTSEQ'][0], cmmtseq]
-        WLOG(params, 'warning', TextEntry('10-021-00003', args=eargs))
+        WLOG(params, 'warning', textentry('10-021-00003', args=eargs))
         valid = False
     # ----------------------------------------------------------------------
     # deal with fiber type
     if fiber not in valid_fibers:
         eargs = [fiber, ', '.join(valid_fibers), infile.filename]
-        WLOG(params, 'warning', TextEntry('10-021-00005', args=eargs))
+        WLOG(params, 'warning', textentry('10-021-00005', args=eargs))
         valid = False
     # ----------------------------------------------------------------------
     # deal with stokes parameters - check parameter is valid
     if stoke_parameter not in valid_stokes:
         eargs = [stoke_parameter, ', '.join(valid_stokes), infile.filename]
-        WLOG(params, 'warning', TextEntry('10-021-00006', args=eargs))
+        WLOG(params, 'warning', textentry('10-021-00006', args=eargs))
         valid = False
     # ----------------------------------------------------------------------
     # return extracted parameters
@@ -1601,7 +1600,7 @@ def polar_diff_method(params, pobjs, props, **kwargs):
     # set function name
     func_name = display_func(params, 'polar_diff_method', __NAME__)
     # log start of polarimetry calculations
-    WLOG(params, '', TextEntry('40-021-00002', args=['difference']))
+    WLOG(params, '', textentry('40-021-00002', args=['difference']))
     # get parameters from params
     interpolate_flux = pcheck(params, 'POLAR_INTERPOLATE_FLUX',
                               'interpolate_flux', kwargs, func_name)
@@ -1715,7 +1714,7 @@ def polar_diff_method(params, pobjs, props, **kwargs):
     else:
         # Log that the number of exposures is not sufficient
         eargs = [nexp, func_name]
-        WLOG(params, 'error', TextEntry('09-021-00008', args=eargs))
+        WLOG(params, 'error', textentry('09-021-00008', args=eargs))
     # ---------------------------------------------------------------------
     # populate the polar properties
     pprops = props.copy()
@@ -1753,7 +1752,7 @@ def polar_ratio_method(params, pobjs, props, **kwargs):
     # set function name
     func_name = display_func(params, 'polar_ratio_method', __NAME__)
     # log start of polarimetry calculations
-    WLOG(params, '', TextEntry('40-021-00002', args=['difference']))
+    WLOG(params, '', textentry('40-021-00002', args=['difference']))
     # get parameters from params
     interpolate_flux = pcheck(params, 'POLAR_INTERPOLATE_FLUX',
                               'interpolate_flux', kwargs, func_name)
@@ -1907,7 +1906,7 @@ def polar_ratio_method(params, pobjs, props, **kwargs):
     else:
         # Log that the number of exposures is not sufficient
         eargs = [nexp, func_name]
-        WLOG(params, 'error', TextEntry('09-021-00008', args=eargs))
+        WLOG(params, 'error', textentry('09-021-00008', args=eargs))
     # ---------------------------------------------------------------------
     # populate the polar properties
     pprops = props.copy()

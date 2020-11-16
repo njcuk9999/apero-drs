@@ -37,8 +37,7 @@ DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 
@@ -80,7 +79,7 @@ def normalise_median_flat(params, image, method='new', **kwargs):
     """
     func_name = __NAME__ + '.normalise_median_flat()'
     # log that we are normalising the flat
-    WLOG(params, '', TextEntry('40-012-00001'))
+    WLOG(params, '', textentry('40-012-00001'))
 
     # get used percentile
     percentile = pcheck(params, 'BADPIX_NORM_PERCENTILE', 'percentile', kwargs,
@@ -146,7 +145,7 @@ def locate_bad_pixels(params, fimage, fmed, dimage, **kwargs):
     """
     func_name = __NAME__ + '.locate_bad_pixels()'
     # log that we are looking for bad pixels
-    WLOG(params, '', TextEntry('40-012-00005'))
+    WLOG(params, '', textentry('40-012-00005'))
     # -------------------------------------------------------------------------
     # wmed: We construct a "simili" flat by taking the running median of the
     # flag in the x dimension over a boxcar width of wmed (suggested
@@ -182,7 +181,7 @@ def locate_bad_pixels(params, fimage, fmed, dimage, **kwargs):
     # complain if the flat image and dark image do not have the same dimensions
     if dimage.shape != fimage.shape:
         eargs = [fimage.shape, dimage.shape, func_name]
-        WLOG(params, 'error', TextEntry('09-012-00002', args=eargs))
+        WLOG(params, 'error', textentry('09-012-00002', args=eargs))
     # -------------------------------------------------------------------------
     # as there may be a small level of scattered light and thermal
     # background in the dark  we subtract the running median to look
@@ -219,7 +218,7 @@ def locate_bad_pixels(params, fimage, fmed, dimage, **kwargs):
                     (np.sum(~valid_dark) / np.array(valid_dark).size) * 100,
                     (np.sum(~valid_flat) / np.array(valid_flat).size) * 100,
                     (np.sum(badpix_map) / np.array(badpix_map).size) * 100]
-    WLOG(params, '', TextEntry('40-012-00006', args=badpix_stats))
+    WLOG(params, '', textentry('40-012-00006', args=badpix_stats))
     # -------------------------------------------------------------------------
     # return bad pixel map
     return badpix_map, badpix_stats
@@ -245,7 +244,7 @@ def locate_bad_pixels_full(params, image, **kwargs):
     """
     func_name = __NAME__ + '.locate_bad_pixels_full()'
     # log that we are looking for bad pixels
-    WLOG(params, '', TextEntry('40-012-00002'))
+    WLOG(params, '', textentry('40-012-00002'))
     # get parameters from params/kwargs
     threshold = pcheck(params, 'BADPIX_FULL_THRESHOLD', 'threshold', kwargs,
                        func_name)
@@ -255,13 +254,13 @@ def locate_bad_pixels_full(params, image, **kwargs):
     # check if the shape of the image and the full flat match
     if image.shape != mdata.shape:
         eargs = [mdata.shape, image.shape, func_name]
-        WLOG(params, 'error', TextEntry('09-012-00001', args=eargs))
+        WLOG(params, 'error', textentry('09-012-00001', args=eargs))
     # apply threshold
     mask = np.abs(mp.rot8(mdata, rotnum) - 1) > threshold
     # -------------------------------------------------------------------------
     # log results
     badpix_stats = (np.sum(mask) / np.array(mask).size) * 100
-    WLOG(params, '', TextEntry('40-012-00004', args=[badpix_stats]))
+    WLOG(params, '', textentry('40-012-00004', args=[badpix_stats]))
     # return mask
     return mask, badpix_stats
 
@@ -304,7 +303,7 @@ def correction(params, image, badpixfile, return_map=False):
     # else put NaNs into the image
     else:
         # log that we are setting background pixels to NaN
-        WLOG(params, '', TextEntry('40-012-00008', args=[badpixfile]))
+        WLOG(params, '', textentry('40-012-00008', args=[badpixfile]))
         # correct image (set bad pixels to zero)
         corrected_image = np.array(image)
         corrected_image[mask] = np.nan
@@ -329,11 +328,11 @@ def quality_control(params):
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
-        WLOG(params, 'info', TextEntry('40-005-10001'))
+        WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
-            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+            WLOG(params, 'warning', textentry('40-005-10002') + farg)
         passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
@@ -386,7 +385,7 @@ def write_files(params, recipe, flatfile, darkfile, backmap, combine,
     badpixfile.data = bad_pixel_map1
     # ------------------------------------------------------------------
     # log that we are saving rotated image
-    WLOG(params, '', TextEntry('40-012-00013', args=[badpixfile.filename]))
+    WLOG(params, '', textentry('40-012-00013', args=[badpixfile.filename]))
     # write image to file
     badpixfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -408,7 +407,7 @@ def write_files(params, recipe, flatfile, darkfile, backmap, combine,
     backmapfile.data = backmap
     # ------------------------------------------------------------------
     # log that we are saving rotated image
-    WLOG(params, '', TextEntry('40-012-00014', args=[backmapfile.filename]))
+    WLOG(params, '', textentry('40-012-00014', args=[backmapfile.filename]))
     # write image to file
     backmapfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)

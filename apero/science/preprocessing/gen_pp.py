@@ -42,7 +42,7 @@ Time = base.Time
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
+textentry = lang.textentry
 # Get database
 ObjectDatabase = drs_database.ObjectDatabase
 # get param dict
@@ -896,7 +896,7 @@ def query_gaia(params: ParamDict, url: str,
 
     except Exception as e:
         eargs = [type(e), str(e), func_name]
-        WLOG(params, 'warning', TextEntry('10-016-00009', args=eargs))
+        WLOG(params, 'warning', textentry('10-016-00009', args=eargs))
         return None
     # ------------------------------------------------------------------
     # try running gaia query
@@ -914,7 +914,7 @@ def query_gaia(params: ParamDict, url: str,
             table = job.get_results()
     except Exception as e:
         wargs = [url, query, type(e), e, func_name]
-        WLOG(params, 'warning', TextEntry('10-016-00008', args=wargs))
+        WLOG(params, 'warning', textentry('10-016-00008', args=wargs))
         # return No row and True to fail
         return None
     # ------------------------------------------------------------------
@@ -945,7 +945,7 @@ def query_simbad_id(params: ParamDict, obj_id: str) -> Union[Table, None]:
     except Exception as e:
         # log that there was an error with astroquery
         wargs = [obj_id, type(e), str(e)]
-        WLOG(params, 'warning', TextEntry('10-016-00020', args=wargs))
+        WLOG(params, 'warning', textentry('10-016-00020', args=wargs))
         # return unset ra/dec
         return None
 
@@ -1140,14 +1140,14 @@ def quality_control(params, snr_hotpix, infile, rms_list, log=True):
     fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
     # ----------------------------------------------------------------------
     # print out SNR hotpix value
-    WLOG(params, '', TextEntry('40-010-00006', args=[snr_hotpix]))
+    WLOG(params, '', textentry('40-010-00006', args=[snr_hotpix]))
     # get snr_threshold
     snr_threshold = params['PP_CORRUPT_SNR_HOTPIX']
     # deal with printing corruption message
     if snr_hotpix < snr_threshold:
         # add failed message to fail message list
         fargs = [snr_hotpix, snr_threshold, infile.filename]
-        fail_msg.append(TextEntry('40-010-00007', args=fargs))
+        fail_msg.append(textentry('40-010-00007', args=fargs))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -1162,7 +1162,7 @@ def quality_control(params, snr_hotpix, infile, rms_list, log=True):
     if mp.nanmax(rms_list) > rms_threshold:
         # add failed message to fail message list
         fargs = [mp.nanmax(rms_list), rms_threshold, infile.filename]
-        fail_msg.append(TextEntry('40-010-00008', args=fargs))
+        fail_msg.append(textentry('40-010-00008', args=fargs))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -1175,12 +1175,12 @@ def quality_control(params, snr_hotpix, infile, rms_list, log=True):
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
         if log:
-            WLOG(params, 'info', TextEntry('40-005-10001'))
+            WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         if log:
             for farg in fail_msg:
-                WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+                WLOG(params, 'warning', textentry('40-005-10002') + farg)
         passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]

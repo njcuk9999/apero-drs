@@ -34,8 +34,7 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # define extraction code to use
 EXTRACT_NAME = 'cal_extract_spirou.py'
 
@@ -147,7 +146,7 @@ def __main__(recipe, params):
         if dprtype not in allowed_filetypes:
             # print warning
             wargs = [dprtype, ', '.join(allowed_filetypes), infile.filename]
-            WLOG(params, 'warning', TextEntry('10-016-00021', args=wargs))
+            WLOG(params, 'warning', textentry('10-016-00021', args=wargs))
             # update recipe log file
             log1.end(params)
             # continue to next file
@@ -161,7 +160,7 @@ def __main__(recipe, params):
         if fiber not in sci_fibers:
             # print warning
             wargs = [fiber, ', '.join(sci_fibers), infile.filename]
-            WLOG(params, 'warning', TextEntry('10-016-00022', args=wargs))
+            WLOG(params, 'warning', textentry('10-016-00022', args=wargs))
             # update recipe log file
             log1.end(params)
             # continue to next file
@@ -175,7 +174,7 @@ def __main__(recipe, params):
             if leakcorr in ['True', True, 1, '1']:
                 # print warning
                 wargs = [infile.filename]
-                WLOG(params, 'warning', TextEntry('10-016-00023', args=wargs))
+                WLOG(params, 'warning', textentry('10-016-00023', args=wargs))
                 # update recipe log file
                 log1.end(params)
                 # continue to next file

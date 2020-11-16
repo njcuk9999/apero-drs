@@ -10,13 +10,11 @@ Created on 2019-01-17 at 14:09
 @author: cook
 """
 from astropy import units as uu
-import importlib
 import numpy as np
 import os
 from pathlib import Path
 import sys
 import traceback
-from types import ModuleType
 from typing import Any, List, Tuple, Union
 
 from apero.base import base
@@ -24,7 +22,7 @@ from apero.base import drs_base_classes as base_class
 from apero.base import drs_exceptions
 from apero.base import drs_misc
 from apero.base import drs_text
-
+from apero import lang
 
 # =============================================================================
 # Define variables
@@ -39,23 +37,18 @@ __date__ = base.__date__
 __release__ = base.__release__
 
 # get the Drs Exceptions
-DRSError = drs_exceptions.DrsError
 DRSWarning = drs_exceptions.DrsWarning
-TextError = drs_exceptions.TextError
-TextWarning = drs_exceptions.TextWarning
 ConfigError = drs_exceptions.ConfigError
 ConfigWarning = drs_exceptions.ConfigWarning
 DrsCodedException = drs_exceptions.DrsCodedException
-# get the logger
-BLOG = drs_exceptions.basiclogger
+# get the text entry
+textentry = lang.textentry
 # get simple types
 SIMPLE_TYPES = base.SIMPLE_TYPES
 SIMPLE_STYPES = base.SIMPLE_STYPES
 VALID_CHARS = base.VALID_CHARS
 # get display function
 display_func = drs_misc.display_func
-# get the display text function
-DisplayText = drs_text.DisplayText
 
 
 # =============================================================================
@@ -254,8 +247,6 @@ class Const:
         """
         # set function name
         func_name = display_func(None, 'copy', __NAME__, self.class_name)
-        # get display text
-        textentry = DisplayText()
         # check that source is valid
         if source is None:
             raise ConfigError(textentry('00-003-00007', args=[func_name]),
@@ -675,8 +666,6 @@ class Keyword(Const):
         """
         # set function name
         func_name = display_func(None, 'copy', __NAME__, self.class_name)
-        # get display text
-        textentry = DisplayText()
         # check that source is valid
         if source is None:
             raise ConfigError(textentry('00-003-00008', args=[func_name]),
@@ -754,7 +743,6 @@ class CKCaseINSDict(base_class.CaseInsensitiveDict):
         return self.__str__()
 
 
-
 # =============================================================================
 # Define complex type returns
 # =============================================================================
@@ -830,8 +818,6 @@ def import_module(func: str, modulepath: str, full: bool = False,
         func_name = display_func(None, 'import_module', __NAME__)
     else:
         func_name = str(func)
-    # get display text
-    textentry = DisplayText()
     # deal with getting module
     if full:
         modfile = modulepath
@@ -939,8 +925,6 @@ def update_file(filename: str, dictionary: dict):
     """
     # set function name (cannot break here --> no access to inputs)
     func_name = str(__NAME__) + '.update_file()'
-    # get display text
-    textentry = DisplayText()
     # open file
     try:
         # read the lines
@@ -1005,8 +989,6 @@ def _test_dtype(name: str, invalue: Any, dtype: Union[str, type],
     """
     # set function name (cannot break here --> no access to inputs)
     func_name = str(__NAME__) + '._test_dtype()'
-    # get display text
-    textentry = DisplayText()
     # if we don't have a value (i.e. it is None) don't test
     if invalue is None:
         return None
@@ -1076,8 +1058,6 @@ def _validate_value(name: str, dtype: Union[str, type, None],
     """
     # set function name (cannot break here --> no access to inputs)
     func_name = str(__NAME__) + '._validate_value()'
-    # get display text
-    textentry = DisplayText()
     # deal with no source
     if source is None:
         source = 'Unknown ({0})'.format(func_name)
@@ -1174,8 +1154,6 @@ def _validate_text_file(filename: Union[str, Path],
     """
     # set function name (cannot break here --> no access to inputs)
     func_name = str(__NAME__) + '._validate_text_file()'
-    # get display text
-    textentry = DisplayText()
     # read the lines
     with open(filename, 'r') as f:
         lines = f.readlines()

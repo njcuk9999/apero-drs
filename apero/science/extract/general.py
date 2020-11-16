@@ -50,8 +50,7 @@ DrsNpyFile = drs_file.DrsNpyFile
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 # -----------------------------------------------------------------------------
@@ -100,7 +99,7 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
     # loop around fibers
     for fiber in fibertypes:
         # log progress (straightening orderp)
-        WLOG(params, 'info', TextEntry('40-016-00003', args=[fiber]))
+        WLOG(params, 'info', textentry('40-016-00003', args=[fiber]))
         # ------------------------------------------------------------------
         # get the order profile filename
         filename = filenames[fiber]
@@ -127,12 +126,12 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
             if isinstance(orderpsfile, DrsNpyFile):
                 # log progress (read file)
                 wargs = [orderpsfile.filename]
-                WLOG(params, '', TextEntry('40-013-00023', args=wargs))
+                WLOG(params, '', textentry('40-013-00023', args=wargs))
                 # read npy file
                 orderpsfile.read_file()
             else:
                 eargs = [orderpsfile.__str__(), func_name]
-                WLOG(params, 'error', TextEntry('00-016-00023', args=eargs))
+                WLOG(params, 'error', textentry('00-016-00023', args=eargs))
             # push data into orderp
             orderp = orderpsfile.get_data()
             orderpfilename = orderpsfile.filename
@@ -163,7 +162,7 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
             orderpsfile.data = orderp
             # log progress (saving to file)
             wargs = [orderpsfile.filename]
-            WLOG(params, '', TextEntry('40-013-00024', args=wargs))
+            WLOG(params, '', textentry('40-013-00024', args=wargs))
             # save for use later (as .npy)
             orderpsfile.write_file(kind=recipe.outputtype,
                                    runstring=recipe.runstring)
@@ -267,20 +266,20 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
     if fibertype in corrtype1:
         # log progress: doing thermal correction
         wargs = [fibertype, 1]
-        WLOG(params, 'info', TextEntry('40-016-00012', args=wargs))
+        WLOG(params, 'info', textentry('40-016-00012', args=wargs))
         # do thermal correction
         e2ds = tcorrect1(params, recipe, e2ds, **tkwargs)
         e2dsff = tcorrect1(params, recipe, e2dsff, flat=flat, **tkwargs)
     elif fibertype in corrtype2:
         # log progress: doing thermal correction
         wargs = [fibertype, 1]
-        WLOG(params, 'info', TextEntry('40-016-00012', args=wargs))
+        WLOG(params, 'info', textentry('40-016-00012', args=wargs))
         # do thermal correction
         e2ds = tcorrect2(params, recipe, e2ds, **tkwargs)
         e2dsff = tcorrect2(params, recipe, e2dsff, flat=flat, **tkwargs)
     else:
         # log that we are not correcting thermal
-        WLOG(params, 'info', TextEntry('40-016-00013', args=[fibertype]))
+        WLOG(params, 'info', textentry('40-016-00013', args=[fibertype]))
         thermalfile = 'None'
     # ----------------------------------------------------------------------
     # add / update eprops
@@ -315,7 +314,7 @@ def get_thermal(params, header, fiber, kind, filename=None,
                    inheader=header, database=calibdbm, fiber=fiber)
     thermal, thdr, thermal_file = general.load_calib_file(params, **ckwargs)
     # log which fpmaster file we are using
-    WLOG(params, '', TextEntry('40-016-00027', args=[thermal_file]))
+    WLOG(params, '', textentry('40-016-00027', args=[thermal_file]))
     # return the master image
     return thermal_file, thermal
 
@@ -492,7 +491,7 @@ def correct_master_dark_fp(params, extractdict, **kwargs):
     # check for reference fiber in extract dict
     if ref_fiber not in extractdict:
         eargs = [ref_fiber, ', '.join(extractdict.keys()), func_name]
-        WLOG(params, 'error', TextEntry('00-016-00024', args=eargs))
+        WLOG(params, 'error', textentry('00-016-00024', args=eargs))
     # get the reference file
     reffile = extractdict[ref_fiber]
     # get dprtype
@@ -503,7 +502,7 @@ def correct_master_dark_fp(params, extractdict, **kwargs):
     if refdpr != 'FP':
         # log and raise error
         eargs = [ref_fiber, dprtype, func_name]
-        WLOG(params, 'error', TextEntry('00-016-00025', args=eargs))
+        WLOG(params, 'error', textentry('00-016-00025', args=eargs))
 
     # get the data for the reference image
     refimage = reffile.get_data(copy=True)
@@ -538,7 +537,7 @@ def correct_master_dark_fp(params, extractdict, **kwargs):
         # check that science fiber is in extraction dictionary
         if sci_fiber not in extractdict:
             eargs = [sci_fiber, ', '.join(extractdict.keys()), func_name]
-            WLOG(params, 'error', TextEntry('00-016-00026', args=eargs))
+            WLOG(params, 'error', textentry('00-016-00026', args=eargs))
         # get the science image
         scifile = extractdict[sci_fiber]
         # get the data for the reference image
@@ -675,7 +674,7 @@ def correct_dark_fp(params, extractdict, database=None, **kwargs):
             # log warning that ref FP ratio is spurious
             wargs = [order_num, ratio, approx_ratio, ratio / approx_ratio,
                      1 - bad_ratio, 1 + bad_ratio]
-            WLOG(params, 'warning', TextEntry('10-016-00024', args=wargs))
+            WLOG(params, 'warning', textentry('10-016-00024', args=wargs))
             # set the ratio to the approx ratio
             ratio = float(approx_ratio)
             # set the ratio method
@@ -702,7 +701,7 @@ def correct_dark_fp(params, extractdict, database=None, **kwargs):
         for extfiletype in leak2dext:
             # log progress
             wargs = [fiber, extfiletype]
-            WLOG(params, 'info', TextEntry('40-016-00029', args=wargs))
+            WLOG(params, 'info', textentry('40-016-00029', args=wargs))
             # get extfile
             extfile = extractdict[fiber][extfiletype]
             # get the extraction image
@@ -829,7 +828,7 @@ def get_leak_master(params, header, fiber, kind, filename=None,
     leak, _, leak_file = general.load_calib_file(params, **ckwargs)
     # ------------------------------------------------------------------------
     # log which fpmaster file we are using
-    WLOG(params, '', TextEntry('40-016-00028', args=[leak_file]))
+    WLOG(params, '', textentry('40-016-00028', args=[leak_file]))
     # return the master image
     return leak_file, leak
 
@@ -932,7 +931,7 @@ def save_uncorrected_ext_fp(params, extractdict):
             # check that file exists - if it doesn't generate exception
             if not os.path.exists(extfile.filename):
                 eargs = [fiber, extname, extfile.filename]
-                WLOG(params, 'error', TextEntry('00-016-00027', args=eargs))
+                WLOG(params, 'error', textentry('00-016-00027', args=eargs))
             # --------------------------------------------------------------
             # check we want to save uncorrected
             if not params['LEAK_SAVE_UNCORRECTED']:
@@ -966,13 +965,13 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
     # deal with fiber being the reference fiber
     if fiber != rfiber:
         # Skipping FPLINES (Fiber = {0})'
-        WLOG(params, 'debug', TextEntry('90-016-00003', args=[fiber]))
+        WLOG(params, 'debug', textentry('90-016-00003', args=[fiber]))
         return None
     # ----------------------------------------------------------------------
     # deal with allowed dprtypes
     if dprtype not in allowtypes:
         # Skipping FPLINES (DPRTYPE = {0})
-        WLOG(params, 'debug', TextEntry('90-016-000034', args=[dprtype]))
+        WLOG(params, 'debug', textentry('90-016-000034', args=[dprtype]))
         return None
     # ----------------------------------------------------------------------
     # get master hc lines and fp lines from calibDB
@@ -1015,7 +1014,7 @@ def e2ds_to_s1d(params, recipe, wavemap, e2ds, blaze, fiber=None, wgrid='wave',
     nord, npix = e2ds.shape
 
     # log progress: calculating s1d (wavegrid)
-    WLOG(params, '', TextEntry('40-016-00009', args=[wgrid]))
+    WLOG(params, '', textentry('40-016-00009', args=[wgrid]))
 
     # -------------------------------------------------------------------------
     # Decide on output wavelength grid
@@ -1197,11 +1196,11 @@ def qc_extraction(params, eprops):
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
-        WLOG(params, 'info', TextEntry('40-005-10001'))
+        WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
-            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+            WLOG(params, 'warning', textentry('40-005-10002') + farg)
         passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
@@ -1309,7 +1308,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # ----------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [e2dsfile.filename]
-    WLOG(params, '', TextEntry('40-016-00005', args=wargs))
+    WLOG(params, '', textentry('40-016-00005', args=wargs))
     # write image to file
     e2dsfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -1333,7 +1332,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # ----------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [e2dsfffile.filename]
-    WLOG(params, '', TextEntry('40-016-00006', args=wargs))
+    WLOG(params, '', textentry('40-016-00006', args=wargs))
     # write image to file
     e2dsfffile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -1355,7 +1354,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # ----------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [e2dsllfile.filename]
-    WLOG(params, '', TextEntry('40-016-00007', args=wargs))
+    WLOG(params, '', textentry('40-016-00007', args=wargs))
     # write image to file
     e2dsllfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -1381,7 +1380,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # ----------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = ['wave', s1dwfile.filename]
-    WLOG(params, '', TextEntry('40-016-00010', args=wargs))
+    WLOG(params, '', textentry('40-016-00010', args=wargs))
     # write image to file
     s1dwfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -1407,7 +1406,7 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     # ----------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = ['velocity', s1dvfile.filename]
-    WLOG(params, '', TextEntry('40-016-00010', args=wargs))
+    WLOG(params, '', textentry('40-016-00010', args=wargs))
     # write image to file
     s1dvfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -1501,7 +1500,7 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     # ----------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [e2dsfile.filename]
-    WLOG(params, '', TextEntry('40-016-00005', args=wargs))
+    WLOG(params, '', textentry('40-016-00005', args=wargs))
     # write image to file
     e2dsfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -1525,7 +1524,7 @@ def write_extraction_files_ql(params, recipe, infile, rawfiles, combine, fiber,
     # ----------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [e2dsfffile.filename]
-    WLOG(params, '', TextEntry('40-016-00006', args=wargs))
+    WLOG(params, '', textentry('40-016-00006', args=wargs))
     # write image to file
     e2dsfffile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -1581,7 +1580,7 @@ def qc_leak_master(params, medcubes):
     # loop around fibers
     for fiber in medcubes:
         # log that we are doing qc for a specific fiber
-        WLOG(params, 'info', TextEntry('40-016-00026', args=[fiber]))
+        WLOG(params, 'info', textentry('40-016-00026', args=[fiber]))
         # set passed variable and fail message list
         fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
         # textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
@@ -1594,11 +1593,11 @@ def qc_leak_master(params, medcubes):
         # finally log the failed messages and set QC = 1 if we pass the
         # quality control QC = 0 if we fail quality control
         if np.sum(qc_pass) == len(qc_pass):
-            WLOG(params, 'info', TextEntry('40-005-10001'))
+            WLOG(params, 'info', textentry('40-005-10001'))
             passed_fiber = 1
         else:
             for farg in fail_msg:
-                WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+                WLOG(params, 'warning', textentry('40-005-10002') + farg)
             passed_fiber = 0
         # store in qc_params
         qc_params_fiber = [qc_names, qc_values, qc_logic, qc_pass]
@@ -1623,7 +1622,7 @@ def qc_leak(params, props, **kwargs):
     # loop around fibers
     for fiber in outputs:
         # log that we are doing qc for a specific fiber
-        WLOG(params, 'info', TextEntry('40-016-00026', args=[fiber]))
+        WLOG(params, 'info', textentry('40-016-00026', args=[fiber]))
         # set passed variable and fail message list
         fail_msg = []
         # textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
@@ -1638,11 +1637,11 @@ def qc_leak(params, props, **kwargs):
         # finally log the failed messages and set QC = 1 if we pass the
         # quality control QC = 0 if we fail quality control
         if np.sum(qc_pass) == len(qc_pass):
-            WLOG(params, 'info', TextEntry('40-005-10001'))
+            WLOG(params, 'info', textentry('40-005-10001'))
             passed_fiber = 1
         else:
             for farg in fail_msg:
-                WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+                WLOG(params, 'warning', textentry('40-005-10002') + farg)
             passed_fiber = 0
         # store in qc_params
         qc_params_fiber = [qc_names, qc_values, qc_logic, qc_pass]
@@ -1688,7 +1687,7 @@ def write_leak_master(params, recipe, rawfiles, medcubes, qc_params, props):
             outfile.add_hkey('KW_LEAK_KERSIZE', value=props['LEAKM_KERSIZE'])
         # log that we are saving rotated image
         wargs = [fiber, outfile.filename]
-        WLOG(params, '', TextEntry('40-016-00025', args=wargs))
+        WLOG(params, '', textentry('40-016-00025', args=wargs))
         # write image to file
         outfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
         # add to output files (for indexing)
@@ -1732,7 +1731,7 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
             extfile.add_qckeys(qc_params[fiber])
             # log that we are saving file
             wargs = [fiber, extname, extfile.filename]
-            WLOG(params, '', TextEntry('40-016-00030', args=wargs))
+            WLOG(params, '', textentry('40-016-00030', args=wargs))
             # write image to file
             extfile.write_file(kind=recipe.outputtype,
                                runstring=recipe.runstring)
@@ -1773,7 +1772,7 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
         # ------------------------------------------------------------------
         # log that we are saving rotated image
         wargs = [fiber, 'wave', s1dwfile.filename]
-        WLOG(params, '', TextEntry('40-016-00031', args=wargs))
+        WLOG(params, '', textentry('40-016-00031', args=wargs))
         # write image to file
         s1dwfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
         # add to output files (for indexing)
@@ -1794,7 +1793,7 @@ def write_leak(params, recipe, inputs, props, qc_params, **kwargs):
         # ------------------------------------------------------------------
         # log that we are saving rotated image
         wargs = [fiber, 'velocity', s1dvfile.filename]
-        WLOG(params, '', TextEntry('40-016-00031', args=wargs))
+        WLOG(params, '', textentry('40-016-00031', args=wargs))
         # write image to file
         s1dvfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
         # add to output files (for indexing)

@@ -69,8 +69,7 @@ DrsRecipeException = drs_recipe.DrsRecipeException
 # get drs argument
 DrsArgument = drs_argument.DrsArgument
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 # get database
@@ -211,7 +210,7 @@ class Run:
         # deal with an empty recipe return
         if recipe.name == 'Empty':
             eargs = [self.recipename]
-            WLOG(None, 'error', TextEntry('00-007-00001', args=eargs))
+            WLOG(None, 'error', textentry('00-007-00001', args=eargs))
         # else return
         return recipe, mod
 
@@ -298,7 +297,7 @@ class Run:
         # check whether input directory exists
         if not os.path.exists(input_dir):
             wargs = [input_dir]
-            WLOG(params, 'warning', TextEntry('10-503-00008', args=wargs))
+            WLOG(params, 'warning', textentry('10-503-00008', args=wargs))
             return False
         # ------------------------------------------------------------------
         # if we have a directory add it to the input dir
@@ -307,7 +306,7 @@ class Run:
             # check whether directory exists (if present)
             if not os.path.exists(input_dir):
                 wargs = [self.kwargs['directory'], input_dir]
-                WLOG(params, 'warning', TextEntry('10-503-00009', args=wargs))
+                WLOG(params, 'warning', textentry('10-503-00009', args=wargs))
                 return False
         # ------------------------------------------------------------------
         # loop around positional arguments
@@ -331,7 +330,7 @@ class Run:
                     if not os.path.exists(abspath):
                         # log warning
                         wargs = [argname, abspath]
-                        wmsg = TextEntry('10-503-00010', args=wargs)
+                        wmsg = textentry('10-503-00010', args=wargs)
                         WLOG(params, 'warning', wmsg)
                         return False
         # ------------------------------------------------------------------
@@ -356,7 +355,7 @@ class Run:
                     if not os.path.exists(abspath):
                         # log warning
                         wargs = [kwargname, abspath]
-                        wmsg = TextEntry('10-503-00010', args=wargs)
+                        wmsg = textentry('10-503-00010', args=wargs)
                         WLOG(params, 'warning', wmsg)
                         return False
         # ------------------------------------------------------------------
@@ -387,10 +386,10 @@ def run_process(params: ParamDict, recipe: DrsRecipe, indexdbm: IndexDatabase,
         if terminate:
             display_errors(params, outlist)
             eargs = [module.name, recipe.name]
-            WLOG(params, 'error', TextEntry('00-001-00043', args=eargs))
+            WLOG(params, 'error', textentry('00-001-00043', args=eargs))
         else:
             eargs = [module.name, recipe.name]
-            WLOG(params, 'warning', TextEntry('00-001-00043', args=eargs))
+            WLOG(params, 'warning', textentry('00-001-00043', args=eargs))
     # return outlist
     return outlist
 
@@ -419,7 +418,7 @@ def read_runfile(params, runfile, **kwargs):
         runfile = os.path.join(run_dir, runfile)
         # check that it exists
         if not os.path.exists(runfile):
-            WLOG(params, 'error', TextEntry('09-503-00002', args=[runfile]))
+            WLOG(params, 'error', textentry('09-503-00002', args=[runfile]))
     # ----------------------------------------------------------------------
     # try to fix file
     fix_run_file(runfile)
@@ -431,7 +430,7 @@ def read_runfile(params, runfile, **kwargs):
     except Exception as e:
         # log error
         eargs = [runfile, type(e), e, func_name]
-        WLOG(params, 'error', TextEntry('09-503-00003', args=eargs))
+        WLOG(params, 'error', textentry('09-503-00003', args=eargs))
         keys, values = [], []
     # ----------------------------------------------------------------------
     # table storage
@@ -453,13 +452,13 @@ def read_runfile(params, runfile, **kwargs):
                 runid = int(key.replace(run_key, ''))
             except Exception as e:
                 eargs = [key, value, run_key, type(e), e, func_name]
-                WLOG(params, 'error', TextEntry('09-503-00004', args=eargs))
+                WLOG(params, 'error', textentry('09-503-00004', args=eargs))
                 runid = None
             # check if we already have this column
             if runid in runtable:
                 wargs = [runid, keytable[runid], runtable[runid],
                          keys[it], values[it][:40] + '...']
-                WLOG(params, 'warning', TextEntry('10-503-00001', args=wargs))
+                WLOG(params, 'warning', textentry('10-503-00001', args=wargs))
             # add to table
             runtable[runid] = value
             keytable[runid] = key
@@ -475,7 +474,7 @@ def read_runfile(params, runfile, **kwargs):
             # log if we are overwriting value
             if (key in params):
                 wargs = [key, params[key], value]
-                WLOG(params, 'warning', TextEntry('10-503-00002', args=wargs))
+                WLOG(params, 'warning', textentry('10-503-00002', args=wargs))
             # add to params
             params[key] = value
             params.set_source(key, func_name)
@@ -485,7 +484,7 @@ def read_runfile(params, runfile, **kwargs):
         if key not in params:
             # warning that we are using default settings
             wargs = [key, RUN_KEYS[key]]
-            WLOG(params, 'warning', TextEntry('10-503-00005', args=wargs))
+            WLOG(params, 'warning', textentry('10-503-00005', args=wargs))
             # push keys to params
             params[key] = RUN_KEYS[key]
             params.set_source(key, __NAME__ + '.RUN_KEYS')
@@ -564,7 +563,7 @@ def read_runfile(params, runfile, **kwargs):
         # if trigger if defined night name must be as well
         if params['NIGHTNAME'] is None and params['TRIGGER_RUN']:
             # cause an error if nightname not set
-            WLOG(params, 'error', TextEntry('09-503-00010'))
+            WLOG(params, 'error', textentry('09-503-00010'))
     # ----------------------------------------------------------------------
     # relock params
     params.lock()
@@ -582,7 +581,7 @@ def generate_skip_table(params):
     :return:
     """
     # log process
-    WLOG(params, '', TextEntry('90-503-00017'))
+    WLOG(params, '', textentry('90-503-00017'))
     # load log database
     logdbm = drs_database.LogDatabase(params)
     logdbm.load_db()
@@ -616,7 +615,7 @@ def generate_skip_table(params):
     skip_table['RECIPE'] = recipes
     skip_table['RUNSTRING'] = arguments
     # log number of runs found
-    WLOG(params, '', TextEntry('90-503-00018', args=[len(skip_table)]))
+    WLOG(params, '', textentry('90-503-00018', args=[len(skip_table)]))
     # return skip table
     return skip_table
 
@@ -718,12 +717,12 @@ def send_email(params, kind):
         import yagmail
         yag = yagmail.SMTP(params['EMAIL_ADDRESS'])
     except ImportError:
-        WLOG(params, 'error', TextEntry('00-503-00001'))
+        WLOG(params, 'error', textentry('00-503-00001'))
         yagmail = None
         yag = yagmail
     except Exception as e:
         eargs = [type(e), e, func_name]
-        WLOG(params, 'error', TextEntry('00-503-00002', args=eargs))
+        WLOG(params, 'error', textentry('00-503-00002', args=eargs))
         yagmail = None
         yag = yagmail
     # ----------------------------------------------------------------------
@@ -808,7 +807,7 @@ def reset_files(params):
 def generate_run_list(params, indexdbm: IndexDatabase, runtable,
                       skiptable):
     # print progress: generating run list
-    WLOG(params, 'info', TextEntry('40-503-00011'))
+    WLOG(params, 'info', textentry('40-503-00011'))
     # need to update table object names to match preprocessing
     #   table can be None if coming from e.g fit_tellu_db
 
@@ -826,7 +825,7 @@ def generate_run_list(params, indexdbm: IndexDatabase, runtable,
         # loop around sequences
         for sequence in sequencelist:
             # log progress
-            WLOG(params, '', TextEntry('40-503-00009', args=[sequence[0]]))
+            WLOG(params, '', textentry('40-503-00009', args=[sequence[0]]))
             # generate new runs for sequence
             newruns = _generate_run_from_sequence(params, sequence,
                                                   indexdbm)
@@ -848,12 +847,12 @@ def process_run_list(params, recipe, runlist, group=None):
     # pipe to correct module
     if cores == 1:
         # log process: Running with 1 core
-        WLOG(params, 'info', TextEntry('40-503-00016'))
+        WLOG(params, 'info', textentry('40-503-00016'))
         # run as linear process
         rdict = _linear_process(params, recipe, runlist, group=group)
     else:
         # log process: Running with N cores
-        WLOG(params, 'info', TextEntry('40-503-00017', args=[cores]))
+        WLOG(params, 'info', textentry('40-503-00017', args=[cores]))
         # run as multiple processes
         rdict = _multi_process(params, recipe, runlist, cores=cores,
                                groupname=group)
@@ -904,7 +903,7 @@ def display_timing(params, outlist, ptime):
         cond2 = outlist[key]['TIMING'] is not None
         if cond1 and cond2:
             wargs = [key, outlist[key]['TIMING']]
-            WLOG(params, '', TextEntry('40-503-00020', args=wargs))
+            WLOG(params, '', textentry('40-503-00020', args=wargs))
             WLOG(params, '', '\t\t{0}'.format(outlist[key]['RUNSTRING']),
                  wrap=False)
             WLOG(params, '', '')
@@ -915,9 +914,9 @@ def display_timing(params, outlist, ptime):
     speed_up = tot_time / ptime
     # add total time
     WLOG(params, '', params['DRS_HEADER'])
-    WLOG(params, 'info', TextEntry('40-503-00025', args=[tot_time]))
-    WLOG(params, 'info', TextEntry('40-503-00033', args=[ptime]))
-    WLOG(params, 'info', TextEntry('40-503-00034', args=[speed_up, cores]))
+    WLOG(params, 'info', textentry('40-503-00025', args=[tot_time]))
+    WLOG(params, 'info', textentry('40-503-00033', args=[ptime]))
+    WLOG(params, 'info', textentry('40-503-00034', args=[speed_up, cores]))
     WLOG(params, '', params['DRS_HEADER'])
     WLOG(params, '', '')
 
@@ -936,7 +935,7 @@ def display_errors(params, outlist):
         if len(outlist[key]['ERROR']) > 0:
             WLOG(params, '', '', colour='red')
             WLOG(params, '', params['DRS_HEADER'], colour='red')
-            WLOG(params, 'warning', TextEntry('40-503-00019', args=[key]),
+            WLOG(params, 'warning', textentry('40-503-00019', args=[key]),
                  colour='red', wrap=False)
             WLOG(params, 'warning', '\t{0}'.format(outlist[key]['RUNSTRING']),
                  colour='red', wrap=False)
@@ -983,7 +982,7 @@ def save_stats(params, outlist):
             os.mkdir(save_dir)
         except Exception as e:
             eargs = [save_dir, type(e), e, func_name]
-            WLOG(params, 'warning', TextEntry('10-503-00011', args=eargs))
+            WLOG(params, 'warning', textentry('10-503-00011', args=eargs))
             return
     # get log file name
     log_abs_file = drs_log.get_logfilepath(WLOG, params)
@@ -1032,7 +1031,7 @@ def save_stats(params, outlist):
         drs_table.write_table(params, out_fits_table, out_fits_path)
     except Exception as e:
         eargs = [out_fits_path, type(e), e, func_name]
-        WLOG(params, 'warning', TextEntry('10-503-00012', args=eargs))
+        WLOG(params, 'warning', textentry('10-503-00012', args=eargs))
 
     # make txt table
     try:
@@ -1041,7 +1040,7 @@ def save_stats(params, outlist):
                 f.write(value + '\n')
     except Exception as e:
         eargs = [out_txt_path, type(e), e, func_name]
-        WLOG(params, 'warning', TextEntry('10-503-00012', args=eargs))
+        WLOG(params, 'warning', textentry('10-503-00012', args=eargs))
 
 
 def generate_run_table(params, recipe, *args, **kwargs):
@@ -1057,7 +1056,7 @@ def generate_run_table(params, recipe, *args, **kwargs):
                 length = len(arg)
             elif len(arg) != length:
                 eargs = ['Arg {0}'.format(it), length, func_name]
-                WLOG(params, 'error', TextEntry('00-503-00010', args=eargs))
+                WLOG(params, 'error', textentry('00-503-00010', args=eargs))
     # loop around keyword arguments and identify list of arguments
     for kwarg in kwargs:
         # if we have a list it needs to be the same length as all other list
@@ -1069,7 +1068,7 @@ def generate_run_table(params, recipe, *args, **kwargs):
                 # log error we need all lists to have the same number of
                 #    elements
                 eargs = [kwarg, length, func_name]
-                WLOG(params, 'error', TextEntry('00-503-00010', args=eargs))
+                WLOG(params, 'error', textentry('00-503-00010', args=eargs))
     # length could still be None should be 1
     if length is None:
         length = 1
@@ -1124,7 +1123,7 @@ def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
     # store skip previous runstrings (so it is not recalculated every time)
     skip_storage = dict()
     # log progress: Validating ids
-    WLOG(params, 'info', TextEntry('40-503-00015', args=[len(runlist)]))
+    WLOG(params, 'info', textentry('40-503-00015', args=[len(runlist)]))
     # iterate through and make run objects
     run_objects = []
     for it, run_item in enumerate(runlist):
@@ -1135,9 +1134,9 @@ def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
         # log process: validating run
         wargs = [runid, it + 1, len(runlist)]
         WLOG(params, '', params['DRS_HEADER'])
-        WLOG(params, '', TextEntry('40-503-00004', args=wargs))
+        WLOG(params, '', textentry('40-503-00004', args=wargs))
         WLOG(params, '', params['DRS_HEADER'])
-        WLOG(params, '', TextEntry('40-503-00013', args=[run_item]))
+        WLOG(params, '', textentry('40-503-00013', args=[run_item]))
         # create run object
         run_object = Run(params, indexdb, run_item, mod=mod,
                          priority=keylist[it], inrecipe=input_recipe)
@@ -1161,14 +1160,14 @@ def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
         if not skip:
             # log that we have validated run
             wargs = [runid]
-            WLOG(params, '', TextEntry('40-503-00005', args=wargs))
+            WLOG(params, '', textentry('40-503-00005', args=wargs))
             # append to run_objects
             run_objects.append(run_object)
         # else log that we are skipping
         else:
             # log that we have skipped run
             wargs = [runid, reason]
-            WLOG(params, '', TextEntry('40-503-00006', args=wargs),
+            WLOG(params, '', textentry('40-503-00006', args=wargs),
                  colour='yellow')
     # return run objects
     return run_objects
@@ -1219,14 +1218,14 @@ def skip_run_object(params, runobj, skiptable, textdict, skip_storage):
         else:
             # debug log
             dargs = [runobj.skipname]
-            WLOG(params, 'debug', TextEntry('90-503-00004', args=dargs))
+            WLOG(params, 'debug', textentry('90-503-00004', args=dargs))
             # return False and no reason
             return False, None
     # ----------------------------------------------------------------------
     else:
         # debug log
         dargs = [runobj.skipname]
-        WLOG(params, '', TextEntry('90-503-00005', args=dargs))
+        WLOG(params, '', textentry('90-503-00005', args=dargs))
         # return False and no reason
         return False, '{0} not present'.format(runobj.skipname)
 
@@ -1241,7 +1240,7 @@ def skip_run_object_old(params, runobj):
 
     # debug log giving info on name/runname/skipname
     dargs = [recipe.name, recipe.shortname, runobj.runname, runobj.skipname]
-    WLOG(params, 'debug', TextEntry('90-503-00010', args=dargs))
+    WLOG(params, 'debug', textentry('90-503-00010', args=dargs))
     # ----------------------------------------------------------------------
     # check if the user wants to run this runobj (in run list)
     if runobj.runname in params:
@@ -1255,7 +1254,7 @@ def skip_run_object_old(params, runobj):
         if runobj.master:
             # debug log
             dargs = [runobj.skipname]
-            WLOG(params, 'debug', TextEntry('90-503-00003', args=dargs))
+            WLOG(params, 'debug', textentry('90-503-00003', args=dargs))
             # return False and no reason
             return False, None
         # else if user wants to skip
@@ -1264,7 +1263,7 @@ def skip_run_object_old(params, runobj):
             if 'skip' in recipe.kwargs:
                 if '--skip' in runstring:
                     # debug log
-                    WLOG(params, 'debug', TextEntry('90-503-00007'))
+                    WLOG(params, 'debug', textentry('90-503-00007'))
                     return False, None
 
             # look for fits files in args
@@ -1272,14 +1271,14 @@ def skip_run_object_old(params, runobj):
         else:
             # debug log
             dargs = [runobj.skipname]
-            WLOG(params, 'debug', TextEntry('90-503-00004', args=dargs))
+            WLOG(params, 'debug', textentry('90-503-00004', args=dargs))
             # return False and no reason
             return False, None
     # ----------------------------------------------------------------------
     else:
         # debug log
         dargs = [runobj.skipname]
-        WLOG(params, 'debug', TextEntry('90-503-00005', args=dargs))
+        WLOG(params, 'debug', textentry('90-503-00005', args=dargs))
         # return False and no reason
         return False, None
 
@@ -1303,7 +1302,7 @@ def _get_paths(params, runobj, directory):
         except Exception as e:
             eargs = [recipe.name, runobj.runstring, inpath, type(e), e,
                      func_name]
-            WLOG(params, 'error', TextEntry('09-503-00008', args=eargs))
+            WLOG(params, 'error', textentry('09-503-00008', args=eargs))
     # ----------------------------------------------------------------------
     # get the output directory
     outpath = recipe.get_output_dir()
@@ -1316,7 +1315,7 @@ def _get_paths(params, runobj, directory):
         except Exception as e:
             eargs = [recipe.name, runobj.runstring, outpath, type(e), e,
                      func_name]
-            WLOG(params, 'error', TextEntry('09-503-00006', args=eargs))
+            WLOG(params, 'error', textentry('09-503-00006', args=eargs))
     # ----------------------------------------------------------------------
     # return inpath and outpath
     return inpath, outpath, nightname
@@ -1338,7 +1337,7 @@ def _check_for_files(params, runobj):
     # ----------------------------------------------------------------------
     # if we don't have a directory argument we skip this test
     if 'directory' not in args and 'directory' not in kwargs:
-        WLOG(params, 'debug', TextEntry('90-503-00002'))
+        WLOG(params, 'debug', textentry('90-503-00002'))
         return False, None
     elif 'directory' in args:
         directory = args['directory']
@@ -1423,7 +1422,7 @@ def _check_for_files(params, runobj):
     # ----------------------------------------------------------------------
     # debug print
     for outfile in outfiles:
-        WLOG(params, 'debug', TextEntry('90-503-00001', args=[outfile]))
+        WLOG(params, 'debug', textentry('90-503-00001', args=[outfile]))
     # ----------------------------------------------------------------------
     # if all tests are passed return False
     return False, None
@@ -1495,12 +1494,12 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
         if runname in params:
             if not params[runname]:
                 wargs = [srecipe.name, srecipe.shortname]
-                WLOG(params, '', TextEntry('40-503-00021', args=wargs),
+                WLOG(params, '', textentry('40-503-00021', args=wargs),
                      colour='yellow')
                 continue
         # print progress
         wargs = [srecipe.name, srecipe.shortname]
-        WLOG(params, '', TextEntry('40-503-00012', args=wargs))
+        WLOG(params, '', textentry('40-503-00012', args=wargs))
         # add file and recipe mod if not set
         if srecipe.recipemod is None:
             srecipe.recipemod = recipemod.copy()
@@ -1532,12 +1531,12 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
                 condition += ' AND (DIRECTORY!="{0}")'.format(blacklist_night)
             # log blacklist
             wargs = [' ,'.join(blacklist_nights)]
-            WLOG(params, '', TextEntry('40-503-00026', args=wargs))
+            WLOG(params, '', textentry('40-503-00026', args=wargs))
             # get length of database at this point
             idb_len = indexdb.database.count(condition=condition)
             # deal with empty database (after conditions)
             if idb_len == 0:
-                WLOG(params, 'warning', TextEntry('10-503-00006'))
+                WLOG(params, 'warning', textentry('10-503-00006'))
                 # get response for how to continue (skip or exit)
                 response = prompt(params)
                 if response:
@@ -1561,12 +1560,12 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
             condition += ' AND ({0})'.format(' OR '.join(subconditions))
             # log blacklist
             wargs = [' ,'.join(whitelist_nights)]
-            WLOG(params, '', TextEntry('40-503-00027', args=wargs))
+            WLOG(params, '', textentry('40-503-00027', args=wargs))
             # get length of database at this point
             idb_len = indexdb.database.count(condition=condition)
             # deal with empty database (after conditions)
             if idb_len == 0:
-                WLOG(params, 'warning', TextEntry('10-503-00007'))
+                WLOG(params, 'warning', textentry('10-503-00007'))
                 # get response for how to continue (skip or exit)
                 response = prompt(params)
                 if response:
@@ -1590,12 +1589,12 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
             condition += ' AND ({0})'.format(' OR '.join(subconditions))
             # log blacklist
             wargs = [' ,'.join(pi_names)]
-            WLOG(params, '', TextEntry('40-503-00029', args=wargs))
+            WLOG(params, '', textentry('40-503-00029', args=wargs))
             # get length of database at this point
             idb_len = indexdb.database.count(condition=condition)
             # deal with empty database (after conditions)
             if idb_len == 0:
-                WLOG(params, 'warning', TextEntry('10-503-00015'))
+                WLOG(params, 'warning', textentry('10-503-00015'))
                 # get response for how to continue (skip or exit)
                 response = prompt(params)
                 if response:
@@ -1615,7 +1614,7 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
             # check if master night name is valid (in table)
             if nightname not in nightnames:
                 wargs = [nightname]
-                WLOG(params, 'warning', TextEntry('10-503-00004', args=wargs))
+                WLOG(params, 'warning', textentry('10-503-00004', args=wargs))
                 # get response for how to continue (skip or exit)
                 response = prompt(params)
                 if response:
@@ -1640,7 +1639,7 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
         # deal with empty database (after conditions)
         if idb_len == 0:
             wargs = [nightname]
-            WLOG(params, 'warning', TextEntry('10-503-00003', args=wargs))
+            WLOG(params, 'warning', textentry('10-503-00003', args=wargs))
             # get response for how to continue (skip or exit)
             response = prompt(params)
             if response:
@@ -1659,7 +1658,7 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
             idb_len = indexdb.database.count(condition=condition)
             # deal with empty database (after conditions)
             if idb_len == 0:
-                WLOG(params, 'warning', TextEntry('10-503-00016', args=wargs))
+                WLOG(params, 'warning', textentry('10-503-00016', args=wargs))
                 # get response for how to continue (skip or exit)
                 response = prompt(params)
                 if response:
@@ -1686,7 +1685,7 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
         if params['INPUTS']['TRIGGER'] and len(sruns) == 0:
             # display message that we stopped here as no files were found
             wargs = [srecipe.name]
-            WLOG(params, 'info', TextEntry('40-503-00028', args=wargs))
+            WLOG(params, 'info', textentry('40-503-00028', args=wargs))
             # stop processing recipes
             break
         # ------------------------------------------------------------------
@@ -2046,7 +2045,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
         if stop_at_exception and not finished:
             if event is not None:
                 wargs = [run_item.recipename]
-                WLOG(params, 'debug', TextEntry('90-503-00008', args=wargs))
+                WLOG(params, 'debug', textentry('90-503-00008', args=wargs))
                 event.set()
         # ------------------------------------------------------------------
         # append to return dict
@@ -2182,7 +2181,7 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
     # debug log the number of files found
     idb_len = indexdb.database.count(condition=condition)
     dargs = [func_name, idb_len]
-    WLOG(params, 'debug', TextEntry('90-503-00011', args=dargs))
+    WLOG(params, 'debug', textentry('90-503-00011', args=dargs))
     # loop around arguments
     for argname in args:
         # get arg instance
@@ -2210,7 +2209,7 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
         # add sub-dictionary for each drs file
         filedict[argname] = OrderedDict()
         # debug log: the argument being scanned
-        WLOG(params, 'debug', TextEntry('90-503-00012', args=[argname]))
+        WLOG(params, 'debug', textentry('90-503-00012', args=[argname]))
         # get drs file instances
         drsfiles = arg.files
         # if files are None continue
@@ -2268,7 +2267,7 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
             drsfile.params = params
             # debug log: the file being tested
             dargs = [drsfile.name]
-            WLOG(params, 'debug', TextEntry('90-503-00013', args=dargs))
+            WLOG(params, 'debug', textentry('90-503-00013', args=dargs))
             # define storage (if not already defined)
             cond1 = drsfile.name not in filedict[argname]
             if cond1 and (arg.filelogic == 'exclusive'):
@@ -2299,7 +2298,7 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
                     valid_infiles.append(None)
                     valid_outfiles.append(None)
             # debug log the number of valid files
-            WLOG(params, 'debug', TextEntry('90-503-00014', args=[valid_num]))
+            WLOG(params, 'debug', textentry('90-503-00014', args=[valid_num]))
             # add outfiles to table
             ftable['OUT'] = valid_outfiles
             # for the valid files we can now check infile headers
@@ -2643,7 +2642,7 @@ def _get_non_telluric_stars(params, indexdb: IndexDatabase,
     :return:
     """
     # add to debug log
-    WLOG(params, 'debug', TextEntry('90-503-00015'))
+    WLOG(params, 'debug', textentry('90-503-00015'))
     # deal with no tstars
     if drs_text.null_text(tstars, ['None', '']):
         tstars = []
@@ -2671,7 +2670,7 @@ def _get_non_telluric_stars(params, indexdb: IndexDatabase,
         if objname not in tstars:
             other_objects.append(objname)
     # add to debug log
-    WLOG(params, 'debug', TextEntry('90-503-00016', args=[len(other_objects)]))
+    WLOG(params, 'debug', textentry('90-503-00016', args=[len(other_objects)]))
     # return other objects
     return list(np.sort(other_objects))
 
@@ -2698,7 +2697,7 @@ def _update_table_objnames(params, table):
 def _get_recipe_module(params, **kwargs):
     func_name = __NAME__ + '.get_recipe_module()'
     # log progress: loading recipe module files
-    WLOG(params, '', TextEntry('40-503-00014'))
+    WLOG(params, '', textentry('40-503-00014'))
     # get parameters from params/kwargs
     instrument = pcheck(params, 'INSTRUMENT', 'instrument', kwargs, func_name)
     instrument_path = pcheck(params, 'DRS_MOD_INSTRUMENT_CONFIG',
@@ -2740,7 +2739,7 @@ def _check_runtable(params, runtable, recipemod):
         if program not in recipelist:
             # log error
             eargs = [program, params['INSTRUMENT'], func_name]
-            WLOG(params, 'error', TextEntry('00-503-00011', args=eargs))
+            WLOG(params, 'error', textentry('00-503-00011', args=eargs))
 
 
 def _get_filters(params, srecipe):
@@ -2796,7 +2795,7 @@ def _get_filters(params, srecipe):
         else:
             # log error
             eargs = [key, value, srecipe.name, func_name]
-            WLOG(params, 'error', TextEntry('00-503-00017', args=eargs))
+            WLOG(params, 'error', textentry('00-503-00017', args=eargs))
     # return filters
     return filters
 
@@ -2821,11 +2820,11 @@ def _get_cores(params):
                 cores = int(cores)
             except ValueError as e:
                 eargs = [params['CORES'], type(e), e]
-                WLOG(params, 'error', TextEntry('00-503-00013', args=eargs))
+                WLOG(params, 'error', textentry('00-503-00013', args=eargs))
                 cores = 1
             except Exception as e:
                 eargs = [type(e), e]
-                WLOG(params, 'error', TextEntry('00-503-00014', args=eargs))
+                WLOG(params, 'error', textentry('00-503-00014', args=eargs))
                 cores = 1
             # update the value in params
             params.set('CORES', value=cores, source='USER INPUT')
@@ -2836,11 +2835,11 @@ def _get_cores(params):
             cores = int(params['CORES'])
         except ValueError as e:
             eargs = [params['CORES'], type(e), e]
-            WLOG(params, 'error', TextEntry('00-503-00006', args=eargs))
+            WLOG(params, 'error', textentry('00-503-00006', args=eargs))
             cores = 1
         except Exception as e:
             eargs = [type(e), e]
-            WLOG(params, 'error', TextEntry('00-503-00007', args=eargs))
+            WLOG(params, 'error', textentry('00-503-00007', args=eargs))
             cores = 1
     else:
         cores = 1
@@ -2848,10 +2847,10 @@ def _get_cores(params):
     cpus = multiprocessing.cpu_count()
     # check that cores is valid
     if cores < 1:
-        WLOG(params, 'error', TextEntry('00-503-00008', args=[cores]))
+        WLOG(params, 'error', textentry('00-503-00008', args=[cores]))
     if cores >= cpus:
         eargs = [cpus, cores]
-        WLOG(params, 'error', TextEntry('00-503-00009', args=eargs))
+        WLOG(params, 'error', textentry('00-503-00009', args=eargs))
     # return number of cores
     return cores
 
@@ -2862,7 +2861,7 @@ def _group_progress(params, g_it, grouplist, groupname):
     # log
     WLOG(params, 'info', '', colour='magenta')
     WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
-    WLOG(params, 'info', TextEntry('40-503-00018', args=wargs),
+    WLOG(params, 'info', textentry('40-503-00018', args=wargs),
          colour='magenta')
     WLOG(params, 'info', params['DRS_HEADER'], colour='magenta')
     WLOG(params, 'info', '', colour='magenta')
@@ -3033,7 +3032,7 @@ def _remove_engineering(params, indexdb, condition):
             # add to global variable
             if night not in REMOVE_ENG_NIGHTS:
                 # log message
-                WLOG(params, 'warning', TextEntry('10-503-00014', args=[night]))
+                WLOG(params, 'warning', textentry('10-503-00014', args=[night]))
                 # add to remove eng nights (so log message not produced again)
                 REMOVE_ENG_NIGHTS.append(night)
     # return condition

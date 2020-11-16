@@ -39,8 +39,7 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 
 
 # =============================================================================
@@ -141,10 +140,10 @@ def __main__(recipe, params):
         if skip:
             if 'DPRTYPE' in skip_conditions[0]:
                 wargs = skip_conditions[1]
-                WLOG(params, 'warning', TextEntry('10-016-00012', args=wargs))
+                WLOG(params, 'warning', textentry('10-016-00012', args=wargs))
             if 'OBJNAME' in skip_conditions[0]:
                 wargs = skip_conditions[2]
-                WLOG(params, 'warning', TextEntry('10-016-00013', args=wargs))
+                WLOG(params, 'warning', textentry('10-016-00013', args=wargs))
             # write log here
             log1.write_logfile(params)
             # skip this file
@@ -182,7 +181,7 @@ def __main__(recipe, params):
         # Apply shape transformations
         # ------------------------------------------------------------------
         # log progress (straightening orderp)
-        WLOG(params, 'info', TextEntry('40-016-00004'))
+        WLOG(params, 'info', textentry('40-016-00004'))
         # straighten image
         image2 = shape.ea_transform(params, image, shapelocal, dxmap=shapex,
                                     dymap=shapey)
@@ -203,7 +202,7 @@ def __main__(recipe, params):
             # ------------------------------------------------------------------
             # log process: processing fiber
             wargs = [fiber, ', '.join(fibertypes)]
-            WLOG(params, 'info', TextEntry('40-016-00014', args=wargs))
+            WLOG(params, 'info', textentry('40-016-00014', args=wargs))
             # --------------------------------------------------------------
             # load wavelength solution for this fiber
             wprops = wave.get_wavesolution(params, recipe, header, fiber=fiber,
@@ -232,7 +231,7 @@ def __main__(recipe, params):
             orderpfile = orderpfiles[fiber]
             # --------------------------------------------------------------
             # log progress: extracting image
-            WLOG(params, 'info', TextEntry('40-016-00011'))
+            WLOG(params, 'info', textentry('40-016-00011'))
             # extract spectrum
             eprops = extract.extract2d(params, image2, orderp, lcoeffs2, nframes,
                                        props, inflat=flat, inblaze=blaze,

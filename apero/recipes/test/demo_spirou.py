@@ -34,8 +34,7 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # -----------------------------------------------------------------------------
 # TODO: move recipe definition to instrument set up when testing is finished
 # set up recipe definitions (overwrites default one)
@@ -175,16 +174,16 @@ def __main__(recipe, params):
         # examples of these codes are as follows:
         wargs = ['SPIROU']
         WLOG(params, 'info', 'Text Entry examples:')
-        WLOG(params, '', TextEntry('40-005-00001', args=wargs))
+        WLOG(params, '', textentry('40-005-00001', args=wargs))
         # same as running the following:
         wmsg = 'Listing for: {0}'
         WLOG(params, '', wmsg.format(*wargs))
 
         # but if the user specified french:
         demo.change_lang(params, 'FR')  # only for demo purposes DO NOT USE
-        WLOG(params, '', TextEntry('00-000-99999'))
+        WLOG(params, '', textentry('00-000-99999'))
         demo.change_lang(params, 'ENG')  # only for demo purposes DO NOT USE
-        WLOG(params, '', TextEntry('00-000-99999'))
+        WLOG(params, '', textentry('00-000-99999'))
 
         # print gap
         print('\n\n\n')

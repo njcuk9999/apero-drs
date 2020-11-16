@@ -40,8 +40,7 @@ DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 
@@ -83,15 +82,14 @@ def measure_dark(params, image, entry_key, **kwargs):
     hrangelow = pcheck(params, 'HISTO_RANGE_LOW', 'hlow', kwargs, func_name)
     hrangehigh = pcheck(params, 'HISTO_RANGE_HIGH', 'hhigh', kwargs, func_name)
     # get the textdict
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
-    image_name = textdict[entry_key]
+    image_name = textentry(entry_key)
     # make sure image is a numpy array
     # noinspection PyBroadException
     try:
         image = np.array(image)
     except Exception as e:
         eargs = [type(e), e, func_name]
-        WLOG(params, 'error', TextEntry('00-001-00026', args=eargs))
+        WLOG(params, 'error', textentry('00-001-00026', args=eargs))
     # flatten the image
     fimage = image.flat
     # get the finite (non-NaN) mask
@@ -109,7 +107,7 @@ def measure_dark(params, image, entry_key, **kwargs):
     dadead = imax * 100 / np.product(image.shape)
     # log the dark statistics
     wargs = [image_name, dadead, med, dark_qmin, dark_qmax, qmin, qmax]
-    WLOG(params, 'info', TextEntry('40-011-00002', args=wargs))
+    WLOG(params, 'info', textentry('40-011-00002', args=wargs))
     # return the parameter dictionary with new values
     return np.array(histo), float(med), float(dadead)
 
@@ -135,7 +133,7 @@ def measure_dark_badpix(params, image, nanmask, **kwargs):
         baddark /= np.product(image.shape)
     # log the fraction of bad dark pixels
     wargs = [darkcutlimit, baddark]
-    WLOG(params, 'info', TextEntry('40-011-00006', args=wargs))
+    WLOG(params, 'info', textentry('40-011-00006', args=wargs))
     # define mask for values above cut limit or NaN
     with warnings.catch_warnings(record=True) as w:
         datacutmask = ~((image > darkcutlimit) | nanmask)
@@ -145,7 +143,7 @@ def measure_dark_badpix(params, image, nanmask, **kwargs):
     dadeadall = n_bad_pix * 100 / np.product(image.shape)
     # log fraction of dead pixels + dark > cut
     wargs = [darkcutlimit, dadeadall]
-    WLOG(params, 'info', TextEntry('40-011-00007', args=wargs))
+    WLOG(params, 'info', textentry('40-011-00007', args=wargs))
     # return dadeadall
     return baddark, dadeadall
 
@@ -155,7 +153,7 @@ def correction(params, image, nfiles, darkfile, return_dark=False):
     Corrects "image" for "dark" using calibDB file (header must contain
     value of p['ACQTIME_KEY'] as a keyword)
 
-    :param p: parameter dictionary, ParamDict containing constants
+    :param params: parameter dictionary, ParamDict containing constants
     :param image: numpy array (2D), the image
     :param nfiles: int, number of files that created image (need to
                    multiply by this to get the total dark)
@@ -173,7 +171,7 @@ def correction(params, image, nfiles, darkfile, return_dark=False):
     darkimage, dhdr = drs_fits.readfits(params, darkfile, gethdr=True)
     # Read dark file
     wargs = ['DARK_FILE', darkfile]
-    WLOG(params, '', TextEntry('40-011-00011', args=wargs))
+    WLOG(params, '', textentry('40-011-00011', args=wargs))
     corrected_image = image - (darkimage * nfiles)
     # -------------------------------------------------------------------------
     # finally return datac
@@ -197,7 +195,7 @@ def construct_dark_table(params, filenames, **kwargs):
     basenames, nightnames, dprtypes = [], [], []
     dark_wt_temp, dark_cass_temp, dark_humidity = [], [], []
     # log that we are reading all dark files
-    WLOG(params, '', TextEntry('40-011-10001'))
+    WLOG(params, '', textentry('40-011-10001'))
     # loop through file headers
     for it in range(len(filenames)):
         # get the basename from filenames
@@ -231,7 +229,7 @@ def construct_dark_table(params, filenames, **kwargs):
     # match files by date
     # ----------------------------------------------------------------------
     # log progress
-    WLOG(params, '', TextEntry('40-011-10002', args=[time_thres]))
+    WLOG(params, '', textentry('40-011-10002', args=[time_thres]))
     # match files by time
     matched_id = drs_path.group_files_by_time(params, np.array(dark_time),
                                               time_thres)
@@ -270,7 +268,7 @@ def construct_master_dark(params, recipe, dark_table, **kwargs):
     # Read individual files and sum groups
     # -------------------------------------------------------------------------
     # log process
-    WLOG(params, 'info', TextEntry('40-011-10003'))
+    WLOG(params, 'info', textentry('40-011-10003'))
     # Find all unique groups
     u_groups = np.unique(matched_id)
     # storage of group dark files (for large image median)
@@ -280,7 +278,7 @@ def construct_master_dark(params, recipe, dark_table, **kwargs):
     for g_it, group_num in enumerate(u_groups):
         # log progress group g_it + 1 of len(u_groups)
         wargs = [g_it + 1, len(u_groups)]
-        WLOG(params, '', TextEntry('40-011-10004', args=wargs))
+        WLOG(params, '', textentry('40-011-10004', args=wargs))
         # find all files for this group
         dark_ids = filenames[matched_id == group_num]
         # load this groups files into a cube
@@ -332,7 +330,6 @@ def construct_master_dark(params, recipe, dark_table, **kwargs):
 def master_qc(params):
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # no quality control currently
     qc_values.append('None')
     qc_names.append('None')
@@ -342,11 +339,11 @@ def master_qc(params):
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
-        WLOG(params, 'info', TextEntry('40-005-10001'))
+        WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
-            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+            WLOG(params, 'warning', textentry('40-005-10002') + farg)
         passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
@@ -379,7 +376,7 @@ def write_master_files(params, recipe, reffile, master_dark, dark_table,
     # copy data
     outfile.data = master_dark
     # log that we are saving master dark to file
-    WLOG(params, '', TextEntry('40-011-10006', args=[outfile.filename]))
+    WLOG(params, '', textentry('40-011-10006', args=[outfile.filename]))
     # write data and header list to file
     outfile.write_multi(kind=recipe.outputtype, data_list=[dark_table],
                         runstring=recipe.runstring)
@@ -402,13 +399,12 @@ def master_summary(recipe, params, qc_params, dark_table):
 def dark_qc(params, med_full, dadeadall, baddark):
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # ------------------------------------------------------------------
     # check that med < qc_max_darklevel
     if med_full > params['QC_MAX_DARKLEVEL']:
         # add failed message to fail message list
         fargs = [med_full, params['QC_MAX_DARKLEVEL']]
-        fail_msg.append(textdict['40-011-00008'].format(*fargs))
+        fail_msg.append(textentry('40-011-00008', args=fargs))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -421,7 +417,7 @@ def dark_qc(params, med_full, dadeadall, baddark):
     if dadeadall > params['QC_MAX_DEAD']:
         # add failed message to fail message list
         fargs = [dadeadall, params['QC_MAX_DEAD']]
-        fail_msg.append(textdict['40-011-00009'].format(*fargs))
+        fail_msg.append(textentry('40-011-00009', args=fargs))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -433,7 +429,7 @@ def dark_qc(params, med_full, dadeadall, baddark):
     # checl that the precentage of dark pixels < qc_max_dark
     if baddark > params['QC_MAX_DARK']:
         fargs = [params['DARK_CUTLIMIT'], baddark, params['QC_MAX_DARK']]
-        fail_msg.append(textdict['40-011-00010'].format(*fargs))
+        fail_msg.append(textentry('40-011-00010', args=fargs))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -445,11 +441,11 @@ def dark_qc(params, med_full, dadeadall, baddark):
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
-        WLOG(params, 'info', TextEntry('40-005-10001'))
+        WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
-            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+            WLOG(params, 'warning', textentry('40-005-10002') + farg)
         passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
@@ -509,7 +505,7 @@ def dark_write_files(params, recipe, dprtype, infile, combine, rawfiles,
     outfile.data = image0c
     # ------------------------------------------------------------------
     # log that we are saving rotated image
-    WLOG(params, '', TextEntry('40-011-00012', args=[outfile.filename]))
+    WLOG(params, '', textentry('40-011-00012', args=[outfile.filename]))
     # write image to file
     outfile.write_file()
     # add to output files (for indexing)

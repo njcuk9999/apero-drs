@@ -49,9 +49,7 @@ display_func = drs_log.display_func
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
-HelpText = lang.core.drs_lang_text.HelpDict
+textentry = lang.textentry
 # define max wait
 MAX_WAIT = 100
 
@@ -100,7 +98,7 @@ class Lock:
         # if we had an error and got to 10 tries then cause an error
         if error is not None and it == 10:
             eargs = [type(error), error, self.lockpath, func_name]
-            WLOG(params, 'error', TextEntry('00-503-00016', args=eargs))
+            WLOG(params, 'error', textentry('00-503-00016', args=eargs))
         # ------------------------------------------------------------------
         self.maxwait = MAX_WAIT
         self.path = os.path.join(self.lockpath, self.lockname)
@@ -148,7 +146,7 @@ class Lock:
                     # log that lock has been activated
                     wargs = [self.path]
                     WLOG(self.params, 'debug',
-                         TextEntry('40-101-00001', args=wargs))
+                         textentry('40-101-00001', args=wargs))
                     break
                 except Exception as _:
                     # whatever the problem sleep for a second
@@ -158,7 +156,7 @@ class Lock:
                     # update user every 10 seconds file is locked
                     if (timer % 100 == 0) and (timer != 0):
                         # Warn that lock is waiting due to making the lock dir
-                        wmsg = TextEntry('10-101-00001', args=[self.lockname])
+                        wmsg = textentry('10-101-00001', args=[self.lockname])
                         WLOG(self.params, 'warning', wmsg)
             # if path does exist just skip
             else:
@@ -206,7 +204,7 @@ class Lock:
                         abspath = os.path.join(self.path, filename)
                         wargs = [self.lockname, abspath]
                         # warn that lock is waiting due to making the lock file
-                        wmsg = TextEntry('10-101-00002', args=wargs)
+                        wmsg = textentry('10-101-00002', args=wargs)
                         WLOG(self.params, 'warning', wmsg)
             # if path does exist just skip
             else:
@@ -289,7 +287,7 @@ class Lock:
                         if attempt >= 10:
                             # log warning for error
                             eargs = [abspath, type(e), str(e)]
-                            emsg = TextEntry('10-101-00007', args=eargs)
+                            emsg = textentry('10-101-00007', args=eargs)
                             WLOG(self.params, 'warning', emsg)
                             break
                         else:
@@ -330,7 +328,7 @@ class Lock:
         # log progress: lock file added to queue
         filename = name + '.lock'
         abspath = os.path.join(self.path, filename)
-        WLOG(self.params, 'debug', TextEntry('40-101-00002', args=[abspath]))
+        WLOG(self.params, 'debug', textentry('40-101-00002', args=[abspath]))
         # add unique name to queue
         self.__makelockfile(name)
         # put in just to see if we are appending too quickly
@@ -362,7 +360,7 @@ class Lock:
             # log that lock file is unlocked
             abspath = os.path.join(self.path, filename)
             WLOG(self.params, 'debug',
-                 TextEntry('40-101-00003', args=[abspath]))
+                 textentry('40-101-00003', args=[abspath]))
             return True, None
         # else we return False (and ask whether it is my turn later)
         else:
@@ -382,7 +380,7 @@ class Lock:
         # log that lock file has been removed from the queue
         filename = name + '.lock'
         abspath = os.path.join(self.path, filename)
-        WLOG(self.params, 'debug', TextEntry('40-101-00004', args=[abspath]))
+        WLOG(self.params, 'debug', textentry('40-101-00004', args=[abspath]))
         # once we are finished with a lock we remove it from the queue
         self.__remove_file(name)
 
@@ -395,7 +393,7 @@ class Lock:
         # set function
         _ = display_func(self.params, 'reset', __NAME__, self.classname)
         # log that lock is deactivated
-        WLOG(self.params, 'debug', TextEntry('40-101-00005', args=[self.path]))
+        WLOG(self.params, 'debug', textentry('40-101-00005', args=[self.path]))
         # get the raw list
         if os.path.exists(self.path):
             rawlist = np.sort(os.listdir(self.path))
@@ -415,7 +413,7 @@ class Lock:
                 except Exception as e:
                     # log warning for error
                     eargs = [abspath, type(e), str(e)]
-                    emsg = TextEntry('10-101-00006', args=eargs)
+                    emsg = textentry('10-101-00006', args=eargs)
                     WLOG(self.params, 'warning', emsg)
         # now remove directory (if possible)
         if os.path.exists(self.path):
@@ -427,7 +425,7 @@ class Lock:
                 except Exception as e:
                     # log warning for error
                     eargs = [self.path, type(e), str(e)]
-                    emsg = TextEntry('10-101-00005', args=eargs)
+                    emsg = textentry('10-101-00005', args=eargs)
                     WLOG(self.params, 'warning', emsg)
 
 
@@ -505,14 +503,14 @@ def synchronized(lock: Lock, name: str):
                 if (timer % 60 == 0) and (timer != 0):
                     # log that we are waiting in a queue
                     wargs = [lock.path, name, timer]
-                    wmsg = TextEntry('10-101-00003', args=wargs)
+                    wmsg = textentry('10-101-00003', args=wargs)
                     WLOG(lock.params, 'warning', wmsg)
                 # find whether it is this name's turn
                 cond, error = lock.myturn(name)
                 if error is not None:
                     # log that we are waiting in a queue and error generated
                     wargs = [lock.path, name, error, timer]
-                    wmsg = TextEntry('10-101-00004', args=wargs)
+                    wmsg = textentry('10-101-00004', args=wargs)
                     WLOG(lock.params, 'warning', wmsg)
                 # increase timer
                 timer += 1

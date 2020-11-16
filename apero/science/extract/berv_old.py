@@ -47,8 +47,7 @@ DrsCodedException = drs_exceptions.DrsCodedException
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 
@@ -106,7 +105,7 @@ def get_berv(params, infile=None, header=None, props=None, log=True,
     func_name = __NAME__ + '.get_berv()'
     # log progress
     if log:
-        WLOG(params, 'info', TextEntry('40-016-00017'))
+        WLOG(params, 'info', textentry('40-016-00017'))
     # get parameters from params and kwargs
     dprtype = pcheck(params, 'DPRTYPE', 'dprtype', kwargs, func_name,
                      paramdict=props)
@@ -117,12 +116,12 @@ def get_berv(params, infile=None, header=None, props=None, log=True,
     # do not try to calculate berv for specific DPRTYPES
     if (dprtype not in dprtypes):
         # log that we are skipping due to dprtype
-        WLOG(params, '', TextEntry('40-016-00018', args=[dprtype]))
+        WLOG(params, '', textentry('40-016-00018', args=[dprtype]))
         # all entries returns are empty
         return assign_properties(params, use=False)
     if kind == 'None':
         # log that we are skipping due to user
-        WLOG(params, '', TextEntry('40-016-00019'))
+        WLOG(params, '', textentry('40-016-00019'))
         # all entries returns are empty
         return assign_properties(params, use=False)
     # ----------------------------------------------------------------------
@@ -134,7 +133,7 @@ def get_berv(params, infile=None, header=None, props=None, log=True,
     # if we have berv already then just return these
     if bprops is not None:
         # log that we are skipping due to user
-        WLOG(params, '', TextEntry('40-016-00020'))
+        WLOG(params, '', textentry('40-016-00020'))
         # return entries
         return assign_properties(params, **bprops)
     # ----------------------------------------------------------------------
@@ -147,7 +146,7 @@ def get_berv(params, infile=None, header=None, props=None, log=True,
     # ----------------------------------------------------------------------
     # debug final parameters to use
     # log: Final berv input parameters:
-    WLOG(params, 'debug', TextEntry('90-016-00002'))
+    WLOG(params, 'debug', textentry('90-016-00002'))
     for key in bprops:
         bstrval = str(bprops[key])[:50]
         WLOG(params, 'debug', '\t{0:20s}{1}'.format(key, bstrval))
@@ -253,7 +252,7 @@ def use_barycorrpy(params, times, iteration=0, **kwargs):
             import barycorrpy
     except Exception as _:
         wargs = [estimate, func_name]
-        WLOG(params, 'warning', TextEntry('10-016-00003', args=wargs))
+        WLOG(params, 'warning', textentry('10-016-00003', args=wargs))
         raise BaryCorrpyException(tdict['10-016-00003'].format(*wargs))
     # must lock here (barcorrpy is not parallisable yet)
     lpath = params['DRS_DATA_REDUC']
@@ -275,7 +274,7 @@ def use_barycorrpy(params, times, iteration=0, **kwargs):
         except Exception as e:
             # log error
             wargs = [type(e), str(e), estimate, func_name]
-            WLOG(params, 'warning', TextEntry('10-016-00004', args=wargs))
+            WLOG(params, 'warning', textentry('10-016-00004', args=wargs))
             raise BaryCorrpyException(tdict['10-016-00004'].format(*wargs))
         # return the bervs and bjds
         bervs = out1[0] / 1000.0
@@ -300,7 +299,7 @@ def use_pyasl(params, times, quiet=False, **kwargs):
     estimate = pcheck(params, 'EXT_BERV_EST_ACC', 'berv_est', kwargs, func_name)
     # print warning that we are using estimate
     if not quiet:
-        WLOG(params, 'warning', TextEntry('10-016-00005', args=[estimate]))
+        WLOG(params, 'warning', textentry('10-016-00005', args=[estimate]))
     # convert kwargs to paramdict (just to be able to use capitals/non-capitals)
     kwargs = ParamDict(kwargs)
     # get args
@@ -320,7 +319,7 @@ def use_pyasl(params, times, quiet=False, **kwargs):
             bjds.append(bjd)
         except Exception as e:
             wargs = [jdtime, type(e), e, func_name]
-            WLOG(params, 'error', TextEntry('00-016-00017', args=wargs))
+            WLOG(params, 'error', textentry('00-016-00017', args=wargs))
     # convert lists to numpy arrays and return
     return np.array(bervs), np.array(bjds)
 
@@ -445,7 +444,7 @@ def assign_properties(params, props=None, use=True, **kwargs):
     # Case 2: pyasl used
     elif not cond or (source == 'pyasl'):
         # log warning that we are using an estimate
-        WLOG(params, 'warning', TextEntry('10-016-00014', args=[estimate]))
+        WLOG(params, 'warning', textentry('10-016-00014', args=[estimate]))
         # set parameters
         oprops['USE_BERV'] = oprops['BERV_EST']
         oprops['USE_BJD'] = oprops['BJD_EST']
@@ -539,7 +538,7 @@ def get_inputs(params):
         # find key in params
         if (inkey not in params) and (default is None):
             eargs = [inkey, key, func_name]
-            WLOG(params, 'error', TextEntry('00-016-00020', args=eargs))
+            WLOG(params, 'error', textentry('00-016-00020', args=eargs))
             units, datatype = None, None
         elif (inkey not in params) and (default is not None):
             datatype, units = None, None
@@ -608,13 +607,13 @@ def get_header_input_props(params, gprops, rparams, inputs, infile, header,
     try:
         gprops.set_instance('ra', coords.ra)
     except DrsCodedException as e:
-        WLOG(params, 'error', TextEntry(e.codeid, args=e.targs))
+        WLOG(params, 'error', textentry(e.codeid, args=e.targs))
     gprops['dec'] = coords.dec.value
     gprops.set_source('dec', source_name.format(func_name, s_dec))
     try:
         gprops.set_instance('dec', coords.dec)
     except DrsCodedException as e:
-        WLOG(params, 'error', TextEntry(e.codeid, args=e.targs))
+        WLOG(params, 'error', textentry(e.codeid, args=e.targs))
     # ----------------------------------------------------------------------
     # deal with gaia id and objname
     gprops['gaiaid'], s_id = get_raw_param(params, 'gaiaid', inputs['gaiaid'],
@@ -649,7 +648,7 @@ def get_header_input_props(params, gprops, rparams, inputs, infile, header,
                 unitvalue = float(rawvalue) * inparam.unit
             except Exception as e:
                 eargs = [param, rawvalue, inparam.unit, type(e), e, func_name]
-                WLOG(params, 'error', TextEntry('00-016-00012', args=eargs))
+                WLOG(params, 'error', textentry('00-016-00012', args=eargs))
                 unitvalue = None
             # convert
             try:
@@ -657,7 +656,7 @@ def get_header_input_props(params, gprops, rparams, inputs, infile, header,
             except Exception as e:
                 eargs = [param, rawvalue, inparam.unit, rparam.unit,
                          type(e), e, func_name]
-                WLOG(params, 'error', TextEntry('00-016-00015', args=eargs))
+                WLOG(params, 'error', textentry('00-016-00015', args=eargs))
                 value = None
         # ------------------------------------------------------------------
         # case 2: have datatype
@@ -670,7 +669,7 @@ def get_header_input_props(params, gprops, rparams, inputs, infile, header,
                 except Exception as e:
                     eargs = [param, rawvalue, inparam.datatype, type(e), e,
                              func_name]
-                    WLOG(params, 'error', TextEntry('00-016-00013', args=eargs))
+                    WLOG(params, 'error', textentry('00-016-00013', args=eargs))
                     unitvalue = None
                 # convert:
                 try:
@@ -678,7 +677,7 @@ def get_header_input_props(params, gprops, rparams, inputs, infile, header,
                 except Exception as e:
                     eargs = [param, rawvalue, inparam.datatype, rparam.datatype,
                              type(e), e, func_name]
-                    WLOG(params, 'error', TextEntry('00-016-00016', args=eargs))
+                    WLOG(params, 'error', textentry('00-016-00016', args=eargs))
                     value = None
             # case 2b: is another datatype
             else:
@@ -687,7 +686,7 @@ def get_header_input_props(params, gprops, rparams, inputs, infile, header,
                 except Exception as e:
                     eargs = [param, rawvalue, inparam.datatype, type(e), e,
                              func_name]
-                    WLOG(params, 'error', TextEntry('00-016-00014', args=eargs))
+                    WLOG(params, 'error', textentry('00-016-00014', args=eargs))
                     value = None
         # ------------------------------------------------------------------
         # case 3: keep as string
@@ -704,7 +703,7 @@ def get_header_input_props(params, gprops, rparams, inputs, infile, header,
         try:
             gprops.set_instance(param, inputs[param])
         except DrsCodedException as e:
-            WLOG(params, 'error', TextEntry(e.codeid, args=e.targs))
+            WLOG(params, 'error', textentry(e.codeid, args=e.targs))
     # set the input source
     gprops['INPUTSOURCE'] = 'header'
     gprops.set_source('INPUTSOURCE', func_name)
@@ -753,7 +752,7 @@ def get_input_props_gaia(params, gprops, **kwargs):
                                              hdr_objname=hdr_objname)
         # deal with failure
         if not fail:
-            WLOG(params, '', TextEntry('40-016-00016', args=['gaiaid']))
+            WLOG(params, '', textentry('40-016-00016', args=['gaiaid']))
             return pprops
     # -----------------------------------------------------------------------
     # case 2: we have objname
@@ -764,7 +763,7 @@ def get_input_props_gaia(params, gprops, **kwargs):
                                              hdr_objname=hdr_objname)
         # deal with failure
         if not fail:
-            WLOG(params, '', TextEntry('40-016-00016', args=['objname']))
+            WLOG(params, '', textentry('40-016-00016', args=['objname']))
             return pprops
     # -----------------------------------------------------------------------
     # case 3: use ra and dec
@@ -773,10 +772,10 @@ def get_input_props_gaia(params, gprops, **kwargs):
                                          hdr_objname=hdr_objname)
     # deal with failure
     if not fail:
-        WLOG(params, '', TextEntry('40-016-00016', args=['ra/dec']))
+        WLOG(params, '', textentry('40-016-00016', args=['ra/dec']))
         return pprops
     else:
-        WLOG(params, '', TextEntry('40-016-00016', args=['header']))
+        WLOG(params, '', textentry('40-016-00016', args=['header']))
         # return gprops
         return gprops
 
@@ -826,7 +825,7 @@ def get_raw_param(params, param, inparam, infile, header, props, kwargs):
         if inparam.pkey is not None:
             strparam += ' (pkey={0})'.format(inparam.pkey)
         eargs = [strparam, func_name]
-        WLOG(params, 'error', TextEntry('00-016-00011', args=eargs))
+        WLOG(params, 'error', textentry('00-016-00011', args=eargs))
     return rawvalue, source
 
 
@@ -839,7 +838,7 @@ def get_times(params, bprops, infile, header):
     elif header is not None:
         pass
     else:
-        WLOG(params, 'error', TextEntry('00-016-00019', args=[func_name]))
+        WLOG(params, 'error', textentry('00-016-00019', args=[func_name]))
     # ---------------------------------------------------------------------
     # get obs_time
     obstime, method = drs_file.get_mid_obs_time(params, header)

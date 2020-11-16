@@ -62,17 +62,9 @@ DrsInputFile = drs_file.DrsInputFile
 # Get function string
 display_func = drs_log.display_func
 # get the Drs Exceptions
-DrsError = drs_exceptions.DrsError
-DrsWarning = drs_exceptions.DrsWarning
-TextError = drs_exceptions.TextError
-TextWarning = drs_exceptions.TextWarning
-ConfigError = drs_exceptions.ConfigError
-ConfigWarning = drs_exceptions.ConfigWarning
+DrsCodedException = drs_exceptions.DrsCodedException
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
-HelpEntry = lang.core.drs_lang_text.HelpEntry
-HelpText = lang.core.drs_lang_text.HelpDict
+textentry = lang.textentry
 # recipe control path
 INSTRUMENT_PATH = base.CONST_PATH
 CORE_PATH = base.CORE_PATH
@@ -314,7 +306,7 @@ def setup(name: str = 'None', instrument: str = 'None',
     if 'DATA_DICT' in fkwargs:
         # log process: data being passed from call
         iargs = [', '.join(list(fkwargs['DATA_DICT'].keys()))]
-        WLOG(params, 'info', TextEntry('40-001-00021', args=iargs))
+        WLOG(params, 'info', textentry('40-001-00021', args=iargs))
         # push into params
         params['DATA_DICT'] = fkwargs['DATA_DICT']
     else:
@@ -451,8 +443,8 @@ def run(func: Any, recipe: DrsRecipe,
             # on LogExit was not a success
             success = False
             # construct the error with a trace back
-            emsg = TextEntry('01-010-00001', args=[type(e)])
-            emsg += '\n\n' + TextEntry(string_trackback)
+            emsg = textentry('01-010-00001', args=[type(e)])
+            emsg += '\n\n' + textentry(string_trackback)
             WLOG(params, 'error', emsg, raise_exception=False, wrap=False)
             # save params to llmain
             llmain = dict(e=e, tb=string_trackback, params=params,
@@ -468,8 +460,8 @@ def run(func: Any, recipe: DrsRecipe,
             # on LogExit was not a success
             success = False
             # construct the error with a trace back
-            emsg = TextEntry('01-010-00001', args=[type(e)])
-            emsg += '\n\n' + TextEntry(string_trackback)
+            emsg = textentry('01-010-00001', args=[type(e)])
+            emsg += '\n\n' + textentry(string_trackback)
             WLOG(params, 'error', emsg, raise_exception=False, wrap=False)
             # save params to llmain
             llmain = dict(e=e, tb=string_trackback, params=params,
@@ -594,12 +586,12 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
         if success and (not quiet):
             iargs = [str(params['RECIPE'])]
             WLOG(params, 'info', params['DRS_HEADER'])
-            WLOG(params, 'info', TextEntry('40-003-00001', args=iargs))
+            WLOG(params, 'info', textentry('40-003-00001', args=iargs))
             WLOG(params, 'info', params['DRS_HEADER'])
         elif not quiet:
             wargs = [str(params['RECIPE'])]
             WLOG(params, 'info', params['DRS_HEADER'], colour='red')
-            WLOG(params, 'warning', TextEntry('40-003-00005', args=wargs),
+            WLOG(params, 'warning', textentry('40-003-00005', args=wargs),
                  colour='red')
             WLOG(params, 'info', params['DRS_HEADER'], colour='red')
         # ---------------------------------------------------------------------
@@ -698,7 +690,7 @@ def get_file_definition(name: str, instrument: str, kind: str = 'raw',
     if name == 'None' or name is None:
         if required:
             eargs = [name, 'unknown', func_name]
-            WLOG(None, 'error', TextEntry('00-008-00011', args=eargs))
+            WLOG(None, 'error', textentry('00-008-00011', args=eargs))
         return None
     # deal with fiber (needs removing)
     if fiber is not None:
@@ -735,7 +727,7 @@ def get_file_definition(name: str, instrument: str, kind: str = 'raw',
         return None
     elif len(found_files) == 0:
         eargs = [name, modules[0], func_name]
-        WLOG(None, 'error', TextEntry('00-008-00011', args=eargs))
+        WLOG(None, 'error', textentry('00-008-00011', args=eargs))
 
     if return_all:
         return found_files
@@ -782,7 +774,7 @@ def copy_kwargs(params: ParamDict, recipe: Union[DrsRecipe, None] = None,
     func_name = display_func(params, 'copy_kwargs', __NAME__)
     # deal with no recipe
     if recipe is None and recipename is None:
-        WLOG(params, 'error', TextEntry('00-001-00040', args=func_name))
+        WLOG(params, 'error', textentry('00-001-00040', args=func_name))
     elif recipe is None:
         recipe, _ = find_recipe(recipename, params['INSTRUMENT'], recipemod)
     # get inputs for
@@ -849,7 +841,7 @@ def file_processing_update(params: ParamDict, it: int, num_files: int):
     # log
     WLOG(params, '', params['DRS_HEADER'])
     eargs = [it + 1, num_files]
-    WLOG(params, '', TextEntry('40-001-00020', args=eargs))
+    WLOG(params, '', textentry('40-001-00020', args=eargs))
     WLOG(params, '', params['DRS_HEADER'])
 
 
@@ -867,7 +859,7 @@ def fiber_processing_update(params: ParamDict, fiber: str):
     _ = display_func(params, 'fiber_processing_update', __NAME__)
     # log
     WLOG(params, '', params['DRS_HEADER'])
-    WLOG(params, '', TextEntry('40-001-00022', args=[fiber]))
+    WLOG(params, '', textentry('40-001-00022', args=[fiber]))
     WLOG(params, '', params['DRS_HEADER'])
 
 
@@ -1144,29 +1136,29 @@ def _display_initial_parameterisation(params: ParamDict,
     # set function name
     _ = display_func(params, '_display_initial_parameterisation', __NAME__)
     # Add initial parameterisation
-    wmsgs = TextEntry('\n\tDRS_DATA_RAW: {DRS_DATA_RAW}'.format(**params))
-    wmsgs += TextEntry('\n\tDRS_DATA_REDUC: {DRS_DATA_REDUC}'.format(**params))
-    wmsgs += TextEntry('\n\tDRS_DATA_WORKING: {DRS_DATA_WORKING}'
+    wmsgs = textentry('\n\tDRS_DATA_RAW: {DRS_DATA_RAW}'.format(**params))
+    wmsgs += textentry('\n\tDRS_DATA_REDUC: {DRS_DATA_REDUC}'.format(**params))
+    wmsgs += textentry('\n\tDRS_DATA_WORKING: {DRS_DATA_WORKING}'
                        ''.format(**params))
-    wmsgs += TextEntry('\n\tDRS_CALIB_DB: {DRS_CALIB_DB}'.format(**params))
-    wmsgs += TextEntry('\n\tDRS_TELLU_DB: {DRS_TELLU_DB}'.format(**params))
-    wmsgs += TextEntry('\n\tDRS_DATA_ASSETS: {DRS_DATA_ASSETS}'
+    wmsgs += textentry('\n\tDRS_CALIB_DB: {DRS_CALIB_DB}'.format(**params))
+    wmsgs += textentry('\n\tDRS_TELLU_DB: {DRS_TELLU_DB}'.format(**params))
+    wmsgs += textentry('\n\tDRS_DATA_ASSETS: {DRS_DATA_ASSETS}'
                        .format(**params))
-    wmsgs += TextEntry('\n\tDRS_DATA_MSG: {DRS_DATA_MSG}'.format(**params))
-    wmsgs += TextEntry('\n\tDRS_DATA_RUN: {DRS_DATA_RUN}'.format(**params))
-    wmsgs += TextEntry('\n\tDRS_DATA_PLOT: {DRS_DATA_PLOT}'.format(**params))
+    wmsgs += textentry('\n\tDRS_DATA_MSG: {DRS_DATA_MSG}'.format(**params))
+    wmsgs += textentry('\n\tDRS_DATA_RUN: {DRS_DATA_RUN}'.format(**params))
+    wmsgs += textentry('\n\tDRS_DATA_PLOT: {DRS_DATA_PLOT}'.format(**params))
     # add config sources
     for source in np.sort(params['DRS_CONFIG']):
-        wmsgs += TextEntry('\n\tDRS_CONFIG: {0}'.format(source))
+        wmsgs += textentry('\n\tDRS_CONFIG: {0}'.format(source))
     # add others
-    wmsgs += TextEntry('\n\tPRINT_LEVEL: {DRS_PRINT_LEVEL}'.format(**params))
-    wmsgs += TextEntry('\n\tLOG_LEVEL: {DRS_LOG_LEVEL}'.format(**params))
-    wmsgs += TextEntry('\n\tDRS_PLOT: {DRS_PLOT}'.format(**params))
+    wmsgs += textentry('\n\tPRINT_LEVEL: {DRS_PRINT_LEVEL}'.format(**params))
+    wmsgs += textentry('\n\tLOG_LEVEL: {DRS_LOG_LEVEL}'.format(**params))
+    wmsgs += textentry('\n\tDRS_PLOT: {DRS_PLOT}'.format(**params))
     if params['DRS_DEBUG'] > 0:
         wargs = ['DRS_DEBUG', params['DRS_DEBUG']]
-        wmsgs += '\n' + TextEntry('40-001-00009', args=wargs)
+        wmsgs += '\n' + textentry('40-001-00009', args=wargs)
     # log to screen and file
-    WLOG(params, 'info', TextEntry('40-001-00006'), printonly=printonly,
+    WLOG(params, 'info', textentry('40-001-00006'), printonly=printonly,
          logonly=logonly)
     WLOG(params, 'info', wmsgs, wrap=False, printonly=printonly,
          logonly=logonly)
@@ -1176,7 +1168,7 @@ def _display_initial_parameterisation(params: ParamDict,
 
 def _display_system_info(params: ParamDict, logonly: bool = True,
                          return_message: bool = False
-                         ) -> Union[TextEntry, str, None]:
+                         ) -> Union[str, None]:
     """
     Display system information via the WLOG command
 
@@ -1197,19 +1189,19 @@ def _display_system_info(params: ParamDict, logonly: bool = True,
     # set function name
     _ = display_func(params, '_display_system_info', __NAME__)
     # noinspection PyListCreation
-    messages = ' ' + TextEntry('40-001-00010')
-    messages += '\n' + TextEntry(params['DRS_HEADER'])
+    messages = ' ' + textentry('40-001-00010')
+    messages += '\n' + textentry(params['DRS_HEADER'])
     # add version /python dist keys
     messages = _sort_version(messages)
     # add os keys
-    messages += '\n' + TextEntry('40-001-00011', args=[sys.executable])
-    messages += '\n' + TextEntry('40-001-00012', args=[sys.platform])
+    messages += '\n' + textentry('40-001-00011', args=[sys.executable])
+    messages += '\n' + textentry('40-001-00012', args=[sys.platform])
     # add arguments (from sys.argv)
     for it, arg in enumerate(sys.argv):
         arg_msg = '\t Arg {0} = \'{1}\''.format(it + 1, arg)
-        messages += '\n' + TextEntry(arg_msg)
+        messages += '\n' + textentry(arg_msg)
     # add ending header
-    messages += '\n' + TextEntry(params['DRS_HEADER'])
+    messages += '\n' + textentry(params['DRS_HEADER'])
     if return_message:
         return messages
     else:
@@ -1273,11 +1265,11 @@ def _display_run_time_arguments(recipe, fkwargs=None, printonly=False,
     # -------------------------------------------------------------------------
     # log to screen and log file
     if len(log_strings) > 0:
-        WLOG(params, 'info', TextEntry('40-001-00017'), printonly=printonly,
+        WLOG(params, 'info', textentry('40-001-00017'), printonly=printonly,
              logonly=logonly)
-        WLOG(params, 'info', TextEntry(log_strings), wrap=False,
+        WLOG(params, 'info', textentry(log_strings), wrap=False,
              printonly=printonly, logonly=logonly)
-        WLOG(params, '', TextEntry(params['DRS_HEADER']), printonly=printonly,
+        WLOG(params, '', textentry(params['DRS_HEADER']), printonly=printonly,
              logonly=logonly)
 
 
@@ -1308,7 +1300,7 @@ def _index_pp(params: ParamDict, recipe: DrsRecipe):
     outputs = recipe.output_files
     # check that outputs is not empty
     if len(outputs) == 0:
-        WLOG(params, '', TextEntry('40-004-00001'))
+        WLOG(params, '', textentry('40-004-00001'))
         return
     # get the index columns
     icolumns = pconstant.OUTPUT_FILE_HEADER_KEYS()
@@ -1351,7 +1343,7 @@ def _index_outputs(params: ParamDict, recipe: DrsRecipe):
     outputs = recipe.output_files
     # check that outputs is not empty
     if len(outputs) == 0:
-        WLOG(params, '', TextEntry('40-004-00001'))
+        WLOG(params, '', textentry('40-004-00001'))
         return
     # get the index columns
     icolumns = pconstant.OUTPUT_FILE_HEADER_KEYS()
@@ -1391,7 +1383,7 @@ def indexing(params: ParamDict, outputs: Dict[str, Dict[str, Any]],
     _ = display_func(params, 'indexing', __NAME__)
     # ------------------------------------------------------------------------
     # log indexing
-    WLOG(params, '', TextEntry('40-004-00002', args=[abspath]))
+    WLOG(params, '', textentry('40-004-00002', args=[abspath]))
     # construct a dictionary from outputs and icolumns
     istore = OrderedDict()
     # get output path
@@ -1442,7 +1434,7 @@ def indexing(params: ParamDict, outputs: Dict[str, Dict[str, Any]],
         for key in icolumns:
             if key not in list(idict.keys()):
                 wargs = [key, 'off_listing recipe']
-                wmsg = TextEntry('10-004-00001', args=wargs)
+                wmsg = textentry('10-004-00001', args=wargs)
                 WLOG(params, 'warning', wmsg)
         # loop around rows in idict
         for row in range(len(idict['FILENAME'])):
@@ -1648,7 +1640,7 @@ def find_recipe(name: str = 'None', instrument: str = 'None',
     if found_recipe is None:
         # may not have access to this
         try:
-            WLOG(None, 'error', TextEntry('00-007-00001', args=[name]))
+            WLOG(None, 'error', textentry('00-007-00001', args=[name]))
         except Exception as _:
             emsg = textentry('00-007-00001', args=[name])
             raise ConfigError(emsg, level='error')
@@ -1922,7 +1914,7 @@ def _set_force_dirs(recipe: DrsRecipe,
                 indir = arg.split('=')[-1]
                 # Setting {0}={1} from sys.argv[{2}] ({3})
                 dargs = ['recipe.inputdir', indir, dirkey, '=']
-                dmsg = TextEntry('90-008-00013', args=dargs)
+                dmsg = textentry('90-008-00013', args=dargs)
                 WLOG(recipe.params, 'debug', dmsg)
             else:
                 pos = it
@@ -1934,7 +1926,7 @@ def _set_force_dirs(recipe: DrsRecipe,
         indir = sys.argv[pos + 1]
         # Setting {0}={1} from sys.argv[{2}] ({3})
         dargs = ['recipe.inputdir', indir, dirkey, 'white-space']
-        dmsg = TextEntry('90-008-00013', args=dargs)
+        dmsg = textentry('90-008-00013', args=dargs)
         WLOG(recipe.params, 'debug', dmsg)
 
     # check fkwargs
@@ -1943,7 +1935,7 @@ def _set_force_dirs(recipe: DrsRecipe,
             indir = fkwargs[kwarg]
             # Setting {0}={1} from fkwargs[{2}]
             dargs = ['recipe.inputdir', indir, kwarg]
-            dmsg = TextEntry('90-008-00014', args=dargs)
+            dmsg = textentry('90-008-00014', args=dargs)
             WLOG(recipe.params, 'debug', dmsg)
 
     # set recipe.inputdir
@@ -1969,7 +1961,7 @@ def _set_force_dirs(recipe: DrsRecipe,
                 outdir = arg.split('=')[-1]
                 # Setting {0}={1} from sys.argv[{2}] ({3})
                 dargs = ['recipe.outputdir', indir, dirkey, '=']
-                dmsg = TextEntry('90-008-00013', args=dargs)
+                dmsg = textentry('90-008-00013', args=dargs)
                 WLOG(recipe.params, 'debug', dmsg)
             else:
                 pos = it
@@ -1981,7 +1973,7 @@ def _set_force_dirs(recipe: DrsRecipe,
         outdir = sys.argv[pos + 1]
         # Setting {0}={1} from sys.argv[{2}] ({3})
         dargs = ['recipe.outputdir', indir, dirkey, 'white-space']
-        dmsg = TextEntry('90-008-00013', args=dargs)
+        dmsg = textentry('90-008-00013', args=dargs)
         WLOG(recipe.params, 'debug', dmsg)
     # check fkwargs
     for kwarg in fkwargs:
@@ -1989,7 +1981,7 @@ def _set_force_dirs(recipe: DrsRecipe,
             outdir = fkwargs[kwarg]
             # Setting {0}={1} from fkwargs[{2}]
             dargs = ['recipe.outputdir', indir, kwarg]
-            dmsg = TextEntry('90-008-00014', args=dargs)
+            dmsg = textentry('90-008-00014', args=dargs)
             WLOG(recipe.params, 'debug', dmsg)
     # set recipe.outputdir
     if outdir is not None:
@@ -2034,16 +2026,15 @@ def _determine_dirtype(params: ParamDict, dirtype: str,
     return dirtype
 
 
-def _sort_version(messages: Union[TextEntry, str, None] = None
-                  ) -> Union[TextEntry, List[str]]:
+def _sort_version(messages: Union[str, None] = None) -> Union[List[str]]:
     """
     Obtain and sort version info
 
-    :param messages: list of strings, TextEntry or None, if defined is a
+    :param messages: list of strings or None, if defined is a
                      list of messages that version_info is added to, else new
                      list of strings is created
 
-    :return messages: TextEntry list of strings updated or created
+    :return messages: list of strings updated or created
                       (if messages is None)
     """
     # set function name
@@ -2059,26 +2050,26 @@ def _sort_version(messages: Union[TextEntry, str, None] = None
     version = '{0}.{1}.{2}'.format(major, minor, micro)
 
     # add version info to messages
-    messages += '\n' + TextEntry('40-001-00013', args=[version])
+    messages += '\n' + textentry('40-001-00013', args=[version])
 
     # add distribution if possible
     try:
         build = sys.version.split('|')[1].strip()
-        messages += '\n' + TextEntry('40-001-00014', args=[build])
+        messages += '\n' + textentry('40-001-00014', args=[build])
     except IndexError:
         pass
 
     # add date information if possible
     try:
         date = sys.version.split('(')[1].split(')')[0].strip()
-        messages += '\n' + TextEntry('40-001-00015', args=[date])
+        messages += '\n' + textentry('40-001-00015', args=[date])
     except IndexError:
         pass
 
     # add Other info information if possible
     try:
         other = sys.version.split('[')[1].split(']')[0].strip()
-        messages += '\n' + TextEntry('40-001-00016', args=[other])
+        messages += '\n' + textentry('40-001-00016', args=[other])
     except IndexError:
         pass
 
@@ -2120,15 +2111,15 @@ def _make_dirs(params: ParamDict, path: str):
         if os.path.exists(path):
             return
         # log making directory
-        WLOG(params, '', TextEntry('40-001-00023', args=[path]))
+        WLOG(params, '', textentry('40-001-00023', args=[path]))
         # make directory
         try:
             os.makedirs(path)
         except Exception as e_:
             # log error
             string_trackback = traceback.format_exc()
-            emsg = TextEntry('01-000-00001', args=[path, type(e_)])
-            emsg += '\n\n' + TextEntry(string_trackback)
+            emsg = textentry('01-000-00001', args=[path, type(e_)])
+            emsg += '\n\n' + textentry(string_trackback)
             WLOG(params, 'error', emsg, raise_exception=False, wrap=False)
 
     # -------------------------------------------------------------------------

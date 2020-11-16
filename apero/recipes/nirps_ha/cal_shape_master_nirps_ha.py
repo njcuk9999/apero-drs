@@ -38,8 +38,7 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 
@@ -127,7 +126,7 @@ def __main__(recipe, params):
     # Correction of fp file
     # ------------------------------------------------------------------
     # log process
-    WLOG(params, 'info', TextEntry('40-014-00001'))
+    WLOG(params, 'info', textentry('40-014-00001'))
     # calibrate file
     fpprops, fpimage = general.calibrate_ppfile(params, recipe, fpfile,
                                                 correctback=False)
@@ -138,7 +137,7 @@ def __main__(recipe, params):
     # check file type
     filetype = fpprops['DPRTYPE']
     if filetype not in params.listp('ALLOWED_FP_TYPES', dtype=str):
-        emsg = TextEntry('01-001-00020', args=[filetype, mainname])
+        emsg = textentry('01-001-00020', args=[filetype, mainname])
         for allowedtype in params.listp('ALLOWED_FP_TYPES', dtype=str):
             emsg += '\n\t - "{0}"'.format(allowedtype)
         WLOG(params, 'error', emsg)
@@ -184,7 +183,7 @@ def __main__(recipe, params):
         master_fp, fp_table = shape.construct_master_fp(*cargs)
         # log process (master construction complete + number of groups added)
         # wargs = [len(fpcube)]
-        # WLOG(params, 'info', TextEntry('40-014-00011', args=wargs))
+        # WLOG(params, 'info', textentry('40-014-00011', args=wargs))
         # sum the cube to make fp data
         # master_fp = np.sum(fpcube, axis=0)
 
@@ -211,7 +210,7 @@ def __main__(recipe, params):
     # Need to straighten the hc data and fp data for debug
     # ----------------------------------------------------------------------
     # log progress (applying transforms)
-    WLOG(params, '', TextEntry('40-014-00025'))
+    WLOG(params, '', textentry('40-014-00025'))
     # apply the dxmap and dymap
     fpimage2 = shape.ea_transform(params, fpimage, dxmap=dxmap, dymap=dymap)
 

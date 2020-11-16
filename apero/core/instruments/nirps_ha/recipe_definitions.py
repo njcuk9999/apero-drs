@@ -18,7 +18,7 @@ __release__ = base.__release__
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get Help
-Help = lang.core.drs_lang_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
+textentry = lang.textentry
 # import file definitions in import module class
 sf = base_class.ImportModule('nirps_ha.file_definitions',
                              'apero.core.instruments.nirps_ha.file_definitions',
@@ -28,101 +28,103 @@ sf = base_class.ImportModule('nirps_ha.file_definitions',
 # Commonly used arguments
 # =============================================================================
 directory = dict(name='directory', dtype='directory',
-                 helpstr=Help['DIRECTORY_HELP'])
+                 helpstr=textentry('DIRECTORY_HELP'))
 
 # =============================================================================
 # Option definitions
 # =============================================================================
 add_db = dict(name='--database', dtype='bool', default=True,
-              helpstr=Help['ADD_CAL_HELP'])
+              helpstr=textentry('ADD_CAL_HELP'))
 # -----------------------------------------------------------------------------
 dobad = dict(name='--badcorr', dtype='bool', default=True,
-             helpstr=Help['DOBAD_HELP'])
+             helpstr=textentry('DOBAD_HELP'))
 
 # -----------------------------------------------------------------------------
 backsub = dict(name='--backsub', dtype='bool', default=True,
-               helpstr=Help['BACKSUB_HELP'], default_ref='option_backsub')
+               helpstr=textentry('BACKSUB_HELP'), default_ref='option_backsub')
 # -----------------------------------------------------------------------------
 # Must set default per recipe!!
 combine = dict(name='--combine', dtype='bool',
-               helpstr=Help['COMBINE_HELP'], default_ref='INPUT_COMBINE_IMAGES')
+               helpstr=textentry('COMBINE_HELP'),
+               default_ref='INPUT_COMBINE_IMAGES')
 # -----------------------------------------------------------------------------
 dodark = dict(name='--darkcorr', dtype='bool', default=True,
-              helpstr=Help['DODARK_HELP'])
+              helpstr=textentry('DODARK_HELP'))
 # -----------------------------------------------------------------------------
 fiber = dict(name='--fiber', dtype='options', default='ALL',
-             helpstr=Help['EXTFIBER_HELP'],
+             helpstr=textentry('EXTFIBER_HELP'),
              options=['ALL', 'AB', 'A', 'B', 'C'],
              default_ref='INPUT_FLIP_IMAGE')
 # -----------------------------------------------------------------------------
 flipimage = dict(name='--flipimage', dtype='options', default='both',
-                 helpstr=Help['FLIPIMAGE_HELP'],
+                 helpstr=textentry('FLIPIMAGE_HELP'),
                  options=['None', 'x', 'y', 'both'])
 # -----------------------------------------------------------------------------
 fluxunits = dict(name='--fluxunits', dtype='options', default='e-',
-                 helpstr=Help['FLUXUNITS_HELP'], options=['ADU/s', 'e-'])
+                 helpstr=textentry('FLUXUNITS_HELP'), options=['ADU/s', 'e-'])
 # -----------------------------------------------------------------------------
-plot = dict(name='--plot', dtype=int, helpstr=Help['PLOT_HELP'],
+plot = dict(name='--plot', dtype=int, helpstr=textentry('PLOT_HELP'),
             default_ref='DRS_PLOT', minimum=-1, maximum=2)
 # -----------------------------------------------------------------------------
 resize = dict(name='--resize', dtype='bool', default=True,
-              helpstr=Help['RESIZE_HELP'], default_ref='INPUT_RESIZE_IMAGE')
+              helpstr=textentry('RESIZE_HELP'),
+              default_ref='INPUT_RESIZE_IMAGE')
 # -----------------------------------------------------------------------------
 objname = dict(name='--objname', dtype=str, default='None',
-               helpstr=Help['OBJNAME_HELP'])
+               helpstr=textentry('OBJNAME_HELP'))
 # -----------------------------------------------------------------------------
 dprtype = dict(name='--dprtype', dtype=str, default='None',
-               helpstr=Help['DPRTYPE_HELP'])
+               helpstr=textentry('DPRTYPE_HELP'))
 
 # =============================================================================
 # File option definitions
 # =============================================================================
 backfile = dict(name='--backfile', dtype='file', default='None',
-                files=[files.out_backmap], helpstr=Help['BACKFILE_HELP'])
+                files=[files.out_backmap], helpstr=textentry('BACKFILE_HELP'))
 # -----------------------------------------------------------------------------
 badfile = dict(name='--badpixfile', dtype='file', default='None',
-               files=[files.out_badpix], helpstr=Help['BADFILE_HELP'])
+               files=[files.out_badpix], helpstr=textentry('BADFILE_HELP'))
 # -----------------------------------------------------------------------------
 blazefile = dict(name='--blazefile', dtype='file', default='None',
-                 files=[files.out_ff_blaze], helpstr=Help['BLAZEFILE_HELP'])
+                 files=[files.out_ff_blaze], helpstr=textentry('BLAZEFILE_HELP'))
 # -----------------------------------------------------------------------------
 darkfile = dict(name='--darkfile', dtype='file', default='None',
-                files=[files.out_dark_master], helpstr=Help['DARKFILE_HELP'])
+                files=[files.out_dark_master], helpstr=textentry('DARKFILE_HELP'))
 # -----------------------------------------------------------------------------
 flatfile = dict(name='--flatfile', dtype='file', default='None',
-                files=[files.out_ff_flat], helpstr=Help['FLATFILE_HELP'])
+                files=[files.out_ff_flat], helpstr=textentry('FLATFILE_HELP'))
 # -----------------------------------------------------------------------------
 fpmaster = dict(name='--fpmaster', dtype='file', default='None',
                 files=[files.out_shape_fpmaster],
-                helpstr=Help['FPMASTERFILE_HELP'])
+                helpstr=textentry('FPMASTERFILE_HELP'))
 # -----------------------------------------------------------------------------
 locofile = dict(name='--locofile', dtype='file', default='None',
-                files=[files.out_loc_loco], helpstr=Help['LOCOFILE_HELP'])
+                files=[files.out_loc_loco], helpstr=textentry('LOCOFILE_HELP'))
 # -----------------------------------------------------------------------------
 orderpfile = dict(name='--orderpfile', dtype='file', default='None',
-                  files=[files.out_loc_orderp], helpstr=Help['ORDERPFILE_HELP'])
+                  files=[files.out_loc_orderp], helpstr=textentry('ORDERPFILE_HELP'))
 # -----------------------------------------------------------------------------
 shapexfile = dict(name='--shapex', dtype='file', default='None',
                   files=[files.out_shape_dxmap],
-                  helpstr=Help['SHAPEXFILE_HELP'])
+                  helpstr=textentry('SHAPEXFILE_HELP'))
 # -----------------------------------------------------------------------------
 shapeyfile = dict(name='--shapey', dtype='file', default='None',
                   files=[files.out_shape_dymap],
-                  helpstr=Help['SHAPEYFILE_HELP'])
+                  helpstr=textentry('SHAPEYFILE_HELP'))
 # -----------------------------------------------------------------------------
 shapelfile = dict(name='--shapel', dtype='file', default='None',
                   files=[files.out_shape_local],
-                  helpstr=Help['SHAPELFILE_HELP'])
+                  helpstr=textentry('SHAPELFILE_HELP'))
 # -----------------------------------------------------------------------------
 thermalfile = dict(name='--thermalfile', dtype='file', default='None',
                    files=[files.out_thermal_e2ds_int,
                           files.out_thermal_e2ds_tel],
-                   helpstr=Help['THERMALFILE_HELP'])
+                   helpstr=textentry('THERMALFILE_HELP'))
 # -----------------------------------------------------------------------------
 wavefile = dict(name='--wavefile', dtype='file', default='None',
                 files=[files.out_wave_hc, files.out_wave_fp,
                        files.out_wave_master],
-                helpstr=Help['WAVEFILE_HELP'])
+                helpstr=textentry('WAVEFILE_HELP'))
 
 # =============================================================================
 # Setup for recipes
@@ -176,16 +178,16 @@ test.instrument = __INSTRUMENT__
 test.inputtype = 'tmp'
 test.outputtype = 'tmp'
 test.extension = 'fits'
-test.description = Help['TEST_DESC']
-test.epilog = Help['TEST_EXAMPLE']
+test.description = textentry('TEST_DESC')
+test.epilog = textentry('TEST_EXAMPLE')
 test.kind = 'test'
 test.set_arg(pos=0, **directory)
 test.set_kwarg(name='--filelist1', dtype='files', default=[],
                files=[files.pp_dark_dark_int, files.pp_flat_flat],
                filelogic='inclusive',
-               helpstr=Help['TEST_FILELIST1_HELP'], required=True)
+               helpstr=textentry('TEST_FILELIST1_HELP'), required=True)
 test.set_kwarg(name='--filelist2', dtype='files', default=[],
-               files=[files.pp_fp_fp], helpstr=Help['TEST_FILELIST2_HELP'],
+               files=[files.pp_fp_fp], helpstr=textentry('TEST_FILELIST2_HELP'),
                required=True)
 test.set_kwarg(**plot)
 test.set_kwarg(**add_db)
@@ -210,13 +212,13 @@ cal_pp_master.instrument = __INSTRUMENT__
 cal_pp_master.inputtype = 'raw'
 cal_pp_master.outputtype = 'red'
 cal_pp_master.extension = 'fits'
-cal_pp_master.description = Help['PPMASTER_DESC']
-cal_pp_master.epilog = Help['PPMASTER_EXAMPLE']
+cal_pp_master.description = textentry('PPMASTER_DESC')
+cal_pp_master.epilog = textentry('PPMASTER_EXAMPLE')
 cal_pp_master.kind = 'recipe'
 cal_pp_master.set_outputs(PP_MASTER=files.out_pp_master)
 cal_pp_master.set_arg(pos=0, **directory)
 cal_pp_master.set_kwarg(name='--filetype', dtype=str, default='FLAT_FLAT',
-                        helpstr=Help['PPMASTER_FILETYPE_HELP'])
+                        helpstr=textentry('PPMASTER_FILETYPE_HELP'))
 # add to recipe
 recipes.append(cal_pp_master)
 
@@ -230,15 +232,15 @@ cal_pp.instrument = __INSTRUMENT__
 cal_pp.inputtype = 'raw'
 cal_pp.outputtype = 'tmp'
 cal_pp.extension = 'fits'
-cal_pp.description = Help['PREPROCESS_DESC']
-cal_pp.epilog = Help['PREPROCESS_EXAMPLE']
+cal_pp.description = textentry('PREPROCESS_DESC')
+cal_pp.epilog = textentry('PREPROCESS_EXAMPLE')
 cal_pp.kind = 'recipe'
 cal_pp.set_outputs(PP_FILE=files.pp_file)
 cal_pp.set_arg(pos=0, **directory)
 cal_pp.set_arg(name='files', dtype='files', pos='1+', files=[files.raw_file],
-               helpstr=Help['PREPROCESS_UFILES_HELP'], limit=1)
+               helpstr=textentry('PREPROCESS_UFILES_HELP'), limit=1)
 cal_pp.set_kwarg(name='--skip', dtype='bool', default=False,
-                 helpstr=Help['PPSKIP_HELP'], default_ref='SKIP_DONE_PP')
+                 helpstr=textentry('PPSKIP_HELP'), default_ref='SKIP_DONE_PP')
 # add to recipe
 recipes.append(cal_pp)
 
@@ -252,8 +254,8 @@ cal_badpix.instrument = __INSTRUMENT__
 cal_badpix.inputtype = 'tmp'
 cal_badpix.outputtype = 'red'
 cal_badpix.extension = 'fits'
-cal_badpix.description = Help['BADPIX_DESC']
-cal_badpix.epilog = Help['BADPIX_EXAMPLE']
+cal_badpix.description = textentry('BADPIX_DESC')
+cal_badpix.epilog = textentry('BADPIX_EXAMPLE')
 cal_badpix.kind = 'recipe'
 cal_badpix.set_outputs(BADPIX=files.out_badpix, BACKMAP=files.out_backmap)
 cal_badpix.set_debug_plots('BADPIX_MAP')
@@ -262,11 +264,11 @@ cal_badpix.set_arg(pos=0, **directory)
 cal_badpix.set_kwarg(name='--flatfiles', dtype='files',
                      files=[files.pp_flat_flat],
                      filelogic='exclusive', required=True,
-                     helpstr=Help['BADPIX_FLATFILE_HELP'], default=[])
+                     helpstr=textentry('BADPIX_FLATFILE_HELP'), default=[])
 cal_badpix.set_kwarg(name='--darkfiles', dtype='files',
                      files=[files.pp_dark_dark_tel, files.pp_dark_dark_int],
                      filelogic='exclusive', required=True,
-                     helpstr=Help['BADPIX_DARKFILE_HELP'], default=[])
+                     helpstr=textentry('BADPIX_DARKFILE_HELP'), default=[])
 cal_badpix.set_kwarg(**add_db)
 cal_badpix.set_kwarg(default=True, **combine)
 cal_badpix.set_kwarg(**flipimage)
@@ -286,8 +288,8 @@ cal_dark.instrument = __INSTRUMENT__
 cal_dark.inputtype = 'tmp'
 cal_dark.outputtype = 'red'
 cal_dark.extension = 'fits'
-cal_dark.description = Help['DARK_DESC']
-cal_dark.epilog = Help['DARK_EXAMPLE']
+cal_dark.description = textentry('DARK_DESC')
+cal_dark.epilog = textentry('DARK_EXAMPLE')
 cal_dark.kind = 'recipe'
 cal_dark.set_outputs(DARK_INT_FILE=files.out_dark_int,
                      DARK_TEL_FIEL=files.out_dark_tel,
@@ -299,7 +301,7 @@ cal_dark.set_arg(name='files', dtype='files',
                  files=[files.pp_dark_dark_int, files.pp_dark_dark_tel,
                         files.pp_dark_dark_sky],
                  pos='1+', filelogic='exclusive',
-                 helpstr=Help['FILES_HELP'] + Help['DARK_FILES_HELP'])
+                 helpstr=textentry('FILES_HELP') + textentry('DARK_FILES_HELP'))
 cal_dark.set_kwarg(**add_db)
 cal_dark.set_kwarg(default=True, **combine)
 cal_dark.set_kwarg(**plot)
@@ -317,13 +319,13 @@ cal_dark_master.instrument = __INSTRUMENT__
 cal_dark_master.inputtype = 'tmp'
 cal_dark_master.outputtype = 'red'
 cal_dark_master.extension = 'fits'
-cal_dark_master.description = Help['DARK_MASTER_DESC']
-cal_dark_master.epilog = Help['DARK_MASTER_EXAMPLE']
+cal_dark_master.description = textentry('DARK_MASTER_DESC')
+cal_dark_master.epilog = textentry('DARK_MASTER_EXAMPLE')
 cal_dark_master.kind = 'recipe'
 cal_dark_master.set_outputs(DARK_MASTER_FILE=files.out_dark_master)
 cal_dark_master.set_kwarg(name='--filetype', dtype=str,
                           default='DARK_DARK_TEL, DARK_DARK_INT',
-                          helpstr=Help['DARK_MASTER_FILETYPE'])
+                          helpstr=textentry('DARK_MASTER_FILETYPE'))
 cal_dark_master.set_kwarg(**add_db)
 cal_dark_master.set_kwarg(**plot)
 # add to recipe
@@ -339,8 +341,8 @@ cal_loc.instrument = __INSTRUMENT__
 cal_loc.inputtype = 'tmp'
 cal_loc.outputtype = 'red'
 cal_loc.extension = 'fits'
-cal_loc.description = Help['LOC_DESC']
-cal_loc.epilog = Help['LOC_EXAMPLE']
+cal_loc.description = textentry('LOC_DESC')
+cal_loc.epilog = textentry('LOC_EXAMPLE')
 cal_loc.kind = 'recipe'
 cal_loc.set_outputs(ORDERP_FILE=files.out_loc_orderp,
                     LOCO_FILE=files.out_loc_loco,
@@ -355,7 +357,7 @@ cal_loc.set_summary_plots('SUM_LOC_IM_THRES', 'SUM_LOC_IM_CORNER')
 cal_loc.set_arg(pos=0, **directory)
 cal_loc.set_arg(name='files', dtype='files', filelogic='exclusive',
                 files=[files.pp_dark_flat, files.pp_flat_dark], pos='1+',
-                helpstr=Help['FILES_HELP'] + Help['LOC_FILES_HELP'])
+                helpstr=textentry('FILES_HELP') + textentry('LOC_FILES_HELP'))
 cal_loc.set_kwarg(**add_db)
 cal_loc.set_kwarg(**badfile)
 cal_loc.set_kwarg(**dobad)
@@ -381,8 +383,8 @@ cal_shape_master.instrument = __INSTRUMENT__
 cal_shape_master.inputtype = 'tmp'
 cal_shape_master.outputtype = 'red'
 cal_shape_master.extension = 'fits'
-cal_shape_master.description = Help['SHAPE_DESC']
-cal_shape_master.epilog = Help['SHAPEMASTER_EXAMPLE']
+cal_shape_master.description = textentry('SHAPE_DESC')
+cal_shape_master.epilog = textentry('SHAPEMASTER_EXAMPLE')
 cal_shape_master.kind = 'recipe'
 cal_shape_master.set_outputs(FPMASTER_FILE=files.out_shape_fpmaster,
                              DXMAP_FILE=files.out_shape_dxmap,
@@ -398,7 +400,7 @@ cal_shape_master.set_arg(pos=0, **directory)
 cal_shape_master.set_kwarg(name='--fpfiles', dtype='files',
                            files=[files.pp_fp_fp],
                            filelogic='exclusive', required=True,
-                           helpstr=Help['SHAPE_FPFILES_HELP'], default=[])
+                           helpstr=textentry('SHAPE_FPFILES_HELP'), default=[])
 cal_shape_master.set_kwarg(**add_db)
 cal_shape_master.set_kwarg(**badfile)
 cal_shape_master.set_kwarg(**dobad)
@@ -413,7 +415,7 @@ cal_shape_master.set_kwarg(**plot)
 cal_shape_master.set_kwarg(**resize)
 cal_shape_master.set_kwarg(name='--fpmaster', dtype='files',
                            files=[files.out_shape_fpmaster], default='None',
-                           helpstr=Help['SHAPE_FPMASTER_HELP'])
+                           helpstr=textentry('SHAPE_FPMASTER_HELP'))
 # add to recipe
 recipes.append(cal_shape_master)
 
@@ -427,8 +429,8 @@ cal_shape.instrument = __INSTRUMENT__
 cal_shape.inputtype = 'tmp'
 cal_shape.outputtype = 'red'
 cal_shape.extension = 'fits'
-cal_shape.description = Help['SHAPE_DESC']
-cal_shape.epilog = Help['SHAPE_EXAMPLE']
+cal_shape.description = textentry('SHAPE_DESC')
+cal_shape.epilog = textentry('SHAPE_EXAMPLE')
 cal_shape.kind = 'recipe'
 cal_shape.set_outputs(LOCAL_SHAPE_FILE=files.out_shape_local,
                       SHAPEL_IN_FP_FILE=files.out_shapel_debug_ifp,
@@ -438,7 +440,7 @@ cal_shape.set_debug_plots('SHAPEL_ZOOM_SHIFT', 'SHAPE_LINEAR_TPARAMS')
 cal_shape.set_summary_plots('SUM_SHAPEL_ZOOM_SHIFT')
 cal_shape.set_arg(pos=0, **directory)
 cal_shape.set_arg(name='files', dtype='files', files=[files.pp_fp_fp], pos='1+',
-                  helpstr=Help['SHAPE_FPFILES_HELP'])
+                  helpstr=textentry('SHAPE_FPFILES_HELP'))
 cal_shape.set_kwarg(**add_db)
 cal_shape.set_kwarg(**badfile)
 cal_shape.set_kwarg(**dobad)
@@ -466,8 +468,8 @@ cal_ff.instrument = __INSTRUMENT__
 cal_ff.inputtype = 'tmp'
 cal_ff.outputtype = 'red'
 cal_ff.extension = 'fits'
-cal_ff.description = Help['FLAT_DESC']
-cal_ff.epilog = Help['FLAT_EXAMPLE']
+cal_ff.description = textentry('FLAT_DESC')
+cal_ff.epilog = textentry('FLAT_EXAMPLE')
 cal_ff.kind = 'recipe'
 cal_ff.set_outputs(FLAT_FILE=files.out_ff_flat,
                    BLAZE_FILE=files.out_ff_blaze,
@@ -480,7 +482,7 @@ cal_ff.set_summary_plots('SUM_FLAT_ORDER_FIT_EDGES', 'SUM_FLAT_BLAZE_ORDER')
 cal_ff.set_arg(pos=0, **directory)
 cal_ff.set_arg(name='files', dtype='files', filelogic='exclusive',
                files=[files.pp_flat_flat], pos='1+',
-               helpstr=Help['FILES_HELP'] + Help['FLAT_FILES_HELP'])
+               helpstr=textentry('FILES_HELP') + textentry('FLAT_FILES_HELP'))
 cal_ff.set_kwarg(**add_db)
 cal_ff.set_kwarg(**badfile)
 cal_ff.set_kwarg(**dobad)
@@ -511,8 +513,8 @@ cal_thermal.instrument = __INSTRUMENT__
 cal_thermal.inputtype = 'tmp'
 cal_thermal.outputtype = 'red'
 cal_thermal.extension = 'fits'
-cal_thermal.description = Help['EXTRACT_DESC']
-cal_thermal.epilog = Help['EXTRACT_EXAMPLE']
+cal_thermal.description = textentry('EXTRACT_DESC')
+cal_thermal.epilog = textentry('EXTRACT_EXAMPLE')
 cal_thermal.kind = 'recipe'
 # TODO: Need to add out_thermal_e2ds_sky
 cal_thermal.set_outputs(THERMAL_E2DS_FILE=files.out_ext_e2dsff,
@@ -523,7 +525,7 @@ cal_thermal.set_arg(pos=0, **directory)
 cal_thermal.set_arg(name='files', dtype='files', pos='1+',
                     files=[files.pp_dark_dark_int, files.pp_dark_dark_tel],
                     filelogic='exclusive',
-                    helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
+                    helpstr=textentry('FILES_HELP') + textentry('EXTRACT_FILES_HELP'),
                     limit=1)
 cal_thermal.set_kwarg(**add_db)
 cal_thermal.set_kwarg(**badfile)
@@ -560,14 +562,14 @@ cal_leak_master.instrument = __INSTRUMENT__
 cal_leak_master.inputtype = 'tmp'
 cal_leak_master.outouttype = 'red'
 cal_leak_master.extension = 'fits'
-cal_leak_master.description = Help['LEAKM_DESC']
-cal_leak_master.epilog = Help['LEAKM_EXAMPLE']
+cal_leak_master.description = textentry('LEAKM_DESC')
+cal_leak_master.epilog = textentry('LEAKM_EXAMPLE')
 cal_leak_master.kind = 'recipe'
 cal_leak_master.set_outputs(LEAK_E2DS_FILE=files.out_ext_e2dsff,
                             LEAK_MASTER=files.out_leak_master)
 cal_leak_master.set_arg(pos=0, **directory)
 cal_leak_master.set_kwarg(name='--filetype', dtype=str, default='DARK_FP',
-                          helpstr=Help['LEAKM_HELP_FILETYPE'])
+                          helpstr=textentry('LEAKM_HELP_FILETYPE'))
 cal_leak_master.set_kwarg(**add_db)
 cal_leak_master.set_kwarg(**plot)
 # add to recipe
@@ -583,8 +585,8 @@ cal_leak.instrument = __INSTRUMENT__
 cal_leak.inputtype = 'red'
 cal_leak.outputtype = 'red'
 cal_leak.extension = 'fits'
-cal_leak.description = Help['LEAK_DESC']
-cal_leak.epilog = Help['LEAK_EXAMPLE']
+cal_leak.description = textentry('LEAK_DESC')
+cal_leak.epilog = textentry('LEAK_EXAMPLE')
 cal_leak.kind = 'recipe'
 cal_leak.set_outputs(E2DS_FILE=files.out_ext_e2ds,
                      E2DSFF_FILE=files.out_ext_e2dsff,
@@ -594,13 +596,13 @@ cal_leak.set_outputs(E2DS_FILE=files.out_ext_e2ds,
 cal_leak.set_arg(pos=0, **directory)
 cal_leak.set_arg(name='files', dtype='files', pos='1+',
                  files=[files.out_ext_e2dsff],
-                 helpstr=Help['FILES_HELP'] + Help['LEAK_FILES_HELP'],
+                 helpstr=textentry('FILES_HELP') + textentry('LEAK_FILES_HELP'),
                  limit=1)
 cal_leak.set_kwarg(**add_db)
 cal_leak.set_kwarg(**plot)
 cal_leak.set_kwarg(name='--leakfile', dtype='file', default='None',
                    files=[files.out_leak_master],
-                   helpstr=Help['LEAK_LEAKFILE_HELP'])
+                   helpstr=textentry('LEAK_LEAKFILE_HELP'))
 # add to recipe
 recipes.append(cal_leak)
 
@@ -614,8 +616,8 @@ cal_extract.instrument = __INSTRUMENT__
 cal_extract.inputtype = 'tmp'
 cal_extract.outputtype = 'red'
 cal_extract.extension = 'fits'
-cal_extract.description = Help['EXTRACT_DESC']
-cal_extract.epilog = Help['EXTRACT_EXAMPLE']
+cal_extract.description = textentry('EXTRACT_DESC')
+cal_extract.epilog = textentry('EXTRACT_EXAMPLE')
 cal_extract.kind = 'recipe'
 cal_extract.set_outputs(E2DS_FILE=files.out_ext_e2ds,
                         E2DSFF_FILE=files.out_ext_e2dsff,
@@ -635,7 +637,7 @@ cal_extract.set_summary_plots('SUM_FLAT_ORDER_FIT_EDGES',
 cal_extract.set_arg(pos=0, **directory)
 cal_extract.set_arg(name='files', dtype='files', pos='1+',
                     files=[files.pp_file],
-                    helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
+                    helpstr=textentry('FILES_HELP') + textentry('EXTRACT_FILES_HELP'),
                     limit=1)
 cal_extract.set_kwarg(**badfile)
 cal_extract.set_kwarg(**dobad)
@@ -658,7 +660,7 @@ cal_extract.set_kwarg(**shapexfile)
 cal_extract.set_kwarg(**shapeyfile)
 cal_extract.set_kwarg(**shapelfile)
 cal_extract.set_kwarg(name='--thermal', dtype='bool', default=True,
-                      helpstr=Help['THERMAL_HELP'],
+                      helpstr=textentry('THERMAL_HELP'),
                       default_ref='THERMAL_CORRECT')
 cal_extract.set_kwarg(**thermalfile)
 cal_extract.set_kwarg(**wavefile)
@@ -675,8 +677,8 @@ cal_wave_master.instrument = __INSTRUMENT__
 cal_wave_master.inputtype = 'tmp'
 cal_wave_master.outputtype = 'red'
 cal_wave_master.extension = 'fits'
-cal_wave_master.description = Help['WAVE_DESC']
-cal_wave_master.epilog = Help['WAVE_EXAMPLE']
+cal_wave_master.description = textentry('WAVE_DESC')
+cal_wave_master.epilog = textentry('WAVE_EXAMPLE')
 cal_wave_master.kind = 'recipe'
 cal_wave_master.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
                             WAVE_HCLL=files.out_wave_hcline,
@@ -713,11 +715,11 @@ cal_wave_master.set_arg(pos=0, **directory)
 cal_wave_master.set_kwarg(name='--hcfiles', dtype='files',
                           files=[files.pp_hc1_hc1],
                           filelogic='exclusive', required=True,
-                          helpstr=Help['WAVE_HCFILES_HELP'], default=[])
+                          helpstr=textentry('WAVE_HCFILES_HELP'), default=[])
 cal_wave_master.set_kwarg(name='--fpfiles', dtype='files',
                           files=[files.pp_fp_fp],
                           filelogic='exclusive', required=True,
-                          helpstr=Help['WAVE_FPFILES_HELP'], default=[])
+                          helpstr=textentry('WAVE_FPFILES_HELP'), default=[])
 cal_wave_master.set_kwarg(**add_db)
 cal_wave_master.set_kwarg(**badfile)
 cal_wave_master.set_kwarg(**dobad)
@@ -741,10 +743,10 @@ cal_wave_master.set_kwarg(name='--forceext', dtype='bool',
                           default_ref='WAVE_ALWAYS_EXTRACT',
                           helpstr='WAVE_EXTRACT_HELP')
 cal_wave_master.set_kwarg(name='--hcmode', dtype='options',
-                          helpstr=Help['HCMODE_HELP'], options=['0'],
+                          helpstr=textentry('HCMODE_HELP'), options=['0'],
                           default_ref='WAVE_MODE_HC')
 cal_wave_master.set_kwarg(name='--fpmode', dtype='options',
-                          helpstr=Help['FPMODE_HELP'], options=['0', '1'],
+                          helpstr=textentry('FPMODE_HELP'), options=['0', '1'],
                           default_ref='WAVE_MODE_FP')
 # add to recipe
 recipes.append(cal_wave_master)
@@ -759,8 +761,8 @@ cal_wave_night.instrument = __INSTRUMENT__
 cal_wave_night.inputtype = 'tmp'
 cal_wave_night.outputtype = 'red'
 cal_wave_night.extension = 'fits'
-cal_wave_night.description = Help['WAVE_DESC']
-cal_wave_night.epilog = Help['WAVE_EXAMPLE']
+cal_wave_night.description = textentry('WAVE_DESC')
+cal_wave_night.epilog = textentry('WAVE_EXAMPLE')
 cal_wave_night.kind = 'recipe'
 cal_wave_night.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
                            WAVEMAP_NIGHT=files.out_wave_night,
@@ -778,11 +780,11 @@ cal_wave_night.set_arg(pos=0, **directory)
 cal_wave_night.set_kwarg(name='--hcfiles', dtype='files',
                          files=[files.pp_hc1_hc1],
                          filelogic='exclusive', required=True,
-                         helpstr=Help['WAVE_HCFILES_HELP'], default=[])
+                         helpstr=textentry('WAVE_HCFILES_HELP'), default=[])
 cal_wave_night.set_kwarg(name='--fpfiles', dtype='files',
                          files=[files.pp_fp_fp],
                          filelogic='exclusive', required=True,
-                         helpstr=Help['WAVE_FPFILES_HELP'], default=[])
+                         helpstr=textentry('WAVE_FPFILES_HELP'), default=[])
 cal_wave_night.set_kwarg(**add_db)
 cal_wave_night.set_kwarg(**badfile)
 cal_wave_night.set_kwarg(**dobad)
@@ -834,8 +836,8 @@ cal_ccf.instrument = __INSTRUMENT__
 cal_ccf.inputtype = 'red'
 cal_ccf.outputtype = 'red'
 cal_ccf.extension = 'fits'
-cal_ccf.description = Help['CCF_DESC']
-cal_ccf.epilog = Help['CCF_EXAMPLE']
+cal_ccf.description = textentry('CCF_DESC')
+cal_ccf.epilog = textentry('CCF_EXAMPLE')
 cal_ccf.kind = 'recipe'
 cal_ccf.set_outputs(CCF_RV=files.out_ccf_fits)
 cal_ccf.set_debug_plots('CCF_RV_FIT', 'CCF_RV_FIT_LOOP', 'CCF_SWAVE_REF',
@@ -845,17 +847,17 @@ cal_ccf.set_arg(pos=0, **directory)
 cal_ccf.set_arg(name='files', dtype='files', pos='1+',
                 files=[files.out_ext_e2ds, files.out_ext_e2dsff,
                        files.out_tellu_obj], filelogic='exclusive',
-                helpstr=Help['FILES_HELP'] + Help['CCF_FILES_HELP'],
+                helpstr=textentry('FILES_HELP') + textentry('CCF_FILES_HELP'),
                 limit=1)
 cal_ccf.set_kwarg(name='--mask', dtype='file', default_ref='CCF_DEFAULT_MASK',
-                  helpstr=Help['CCF_MASK_HELP'],
+                  helpstr=textentry('CCF_MASK_HELP'),
                   files=files.other_ccf_mask_file)
 cal_ccf.set_kwarg(name='--rv', dtype=float, default_ref='CCF_NO_RV_VAL',
-                  helpstr=Help['CCF_RV_HELP'])
+                  helpstr=textentry('CCF_RV_HELP'))
 cal_ccf.set_kwarg(name='--width', dtype=float, default_ref='CCF_DEFAULT_WIDTH',
-                  helpstr=Help['CCF_WIDTH_HELP'])
+                  helpstr=textentry('CCF_WIDTH_HELP'))
 cal_ccf.set_kwarg(name='--step', dtype=float, default_ref='CCF_DEFAULT_STEP',
-                  helpstr=Help['CCF_STEP_HELP'])
+                  helpstr=textentry('CCF_STEP_HELP'))
 cal_ccf.set_kwarg(**add_db)
 cal_ccf.set_kwarg(**blazefile)
 cal_ccf.set_kwarg(**plot)
@@ -872,8 +874,8 @@ obj_mk_tellu.instrument = __INSTRUMENT__
 obj_mk_tellu.inputtype = 'red'
 obj_mk_tellu.outputtype = 'red'
 obj_mk_tellu.extension = 'fits'
-obj_mk_tellu.description = Help['MKTELL_DESC']
-obj_mk_tellu.epilog = Help['MKTELL_EXAMPLE']
+obj_mk_tellu.description = textentry('MKTELL_DESC')
+obj_mk_tellu.epilog = textentry('MKTELL_EXAMPLE')
 obj_mk_tellu.kind = 'recipe'
 obj_mk_tellu.set_outputs(TELLU_CONV=files.out_tellu_conv,
                          TELLU_TRANS=files.out_tellu_trans,
@@ -886,7 +888,7 @@ obj_mk_tellu.set_arg(pos=0, **directory)
 obj_mk_tellu.set_arg(name='files', dtype='files', pos='1+',
                      files=[files.out_ext_e2ds, files.out_ext_e2dsff],
                      filelogic='exclusive',
-                     helpstr=Help['FILES_HELP'] + Help['MKTELL_FILES_HELP'],
+                     helpstr=textentry('FILES_HELP') + textentry('MKTELL_FILES_HELP'),
                      limit=1)
 obj_mk_tellu.set_kwarg(**add_db)
 obj_mk_tellu.set_kwarg(**blazefile)
@@ -911,22 +913,22 @@ obj_mk_tellu_db.inputtype = 'red'
 obj_mk_tellu_db.outputtype = 'red'
 obj_mk_tellu_db.extension = 'fits'
 obj_mk_tellu_db.kind = 'recipe'
-obj_mk_tellu_db.description = Help['MKTELLDB_DESC']
-obj_mk_tellu_db.epilog = Help['MKTELLDB_EXAMPLE']
+obj_mk_tellu_db.description = textentry('MKTELLDB_DESC')
+obj_mk_tellu_db.epilog = textentry('MKTELLDB_EXAMPLE')
 obj_mk_tellu_db.set_outputs()
 obj_mk_tellu_db.set_kwarg(name='--cores', dtype=int, default=1,
-                          helpstr=Help['MKTELLDB_CORES'])
+                          helpstr=textentry('MKTELLDB_CORES'))
 obj_mk_tellu_db.set_kwarg(name='--filetype', dtype=str,
                           default_ref='TELLURIC_FILETYPE',
-                          helpstr=Help['MKTELLDB_FILETYPE'],
+                          helpstr=textentry('MKTELLDB_FILETYPE'),
                           options=['EXT_E2DS', 'EXT_E2DS_FF'])
 obj_mk_tellu_db.set_kwarg(name='--fiber', dtype=str,
                           default_ref='TELLURIC_FIBER_TYPE',
-                          helpstr=Help['MKTELLDB_FIBER'],
+                          helpstr=textentry('MKTELLDB_FIBER'),
                           options=['AB', 'A', 'B', 'C'])
 obj_mk_tellu_db.set_kwarg(name='--test', dtype=str, default='None',
                           options=['True', 'False', '1', '0', 'None'],
-                          helpstr=Help['PROCESS_TEST_HELP'])
+                          helpstr=textentry('PROCESS_TEST_HELP'))
 obj_mk_tellu_db.set_kwarg(**add_db)
 obj_mk_tellu_db.set_kwarg(**blazefile)
 obj_mk_tellu_db.set_kwarg(**plot)
@@ -944,8 +946,8 @@ obj_fit_tellu.instrument = __INSTRUMENT__
 obj_fit_tellu.inputtype = 'red'
 obj_fit_tellu.outputtype = 'red'
 obj_fit_tellu.extension = 'fits'
-obj_fit_tellu.description = Help['FTELLU_DESC']
-obj_fit_tellu.epilog = Help['FTELLU_EXAMPLE']
+obj_fit_tellu.description = textentry('FTELLU_DESC')
+obj_fit_tellu.epilog = textentry('FTELLU_EXAMPLE')
 obj_fit_tellu.kind = 'recipe'
 obj_fit_tellu.set_outputs(ABSO_NPY=files.out_tellu_abso_npy,
                           ABSO1_NPY=files.out_tellu_abso1_npy,
@@ -968,7 +970,7 @@ obj_fit_tellu.set_arg(pos=0, **directory)
 obj_fit_tellu.set_arg(name='files', dtype='files', pos='1+',
                       files=[files.out_ext_e2ds, files.out_ext_e2dsff],
                       filelogic='exclusive',
-                      helpstr=Help['FILES_HELP'] + Help['FTELLU_FILES_HELP'],
+                      helpstr=textentry('FILES_HELP') + textentry('FTELLU_FILES_HELP'),
                       limit=1)
 # TODO: Add to language DB
 obj_fit_tellu.set_kwarg(name='--use_template', dtype='bool', default=True,
@@ -992,26 +994,26 @@ obj_fit_tellu_db.instrument = __INSTRUMENT__
 obj_fit_tellu_db.inputtype = 'red'
 obj_fit_tellu_db.outputtype = 'red'
 obj_fit_tellu_db.extension = 'fits'
-obj_fit_tellu_db.description = Help['FTELLUDB_DESC']
-obj_fit_tellu_db.epilog = Help['FTELLUDB_EXAMPLE']
+obj_fit_tellu_db.description = textentry('FTELLUDB_DESC')
+obj_fit_tellu_db.epilog = textentry('FTELLUDB_EXAMPLE')
 obj_fit_tellu_db.kind = 'recipe'
 obj_fit_tellu_db.set_outputs()
 obj_fit_tellu_db.set_kwarg(name='--cores', dtype=int, default=1,
-                           helpstr=Help['FTELLUDB_CORES'])
+                           helpstr=textentry('FTELLUDB_CORES'))
 obj_fit_tellu_db.set_kwarg(name='--filetype', dtype=str,
                            default_ref='TELLURIC_FILETYPE',
-                           helpstr=Help['FTELLUDB_FILETYPE'])
+                           helpstr=textentry('FTELLUDB_FILETYPE'))
 obj_fit_tellu_db.set_kwarg(name='--fiber', dtype=str,
                            default_ref='TELLURIC_FIBER_TYPE',
-                           helpstr=Help['FTELLUDB_FIBER'])
+                           helpstr=textentry('FTELLUDB_FIBER'))
 obj_fit_tellu_db.set_kwarg(name='--objname', dtype=str, default='None',
-                           helpstr=Help['FTELLUDB_OBJNAME'])
+                           helpstr=textentry('FTELLUDB_OBJNAME'))
 obj_fit_tellu_db.set_kwarg(name='--dprtype', dtype=str,
                            default_ref='TELLU_ALLOWED_DPRTYPES',
-                           helpstr=Help['FTELLUDB_DPRTYPES'])
+                           helpstr=textentry('FTELLUDB_DPRTYPES'))
 obj_fit_tellu_db.set_kwarg(name='--test', dtype=str, default='None',
                            options=['True', 'False', '1', '0', 'None'],
-                           helpstr=Help['PROCESS_TEST_HELP'])
+                           helpstr=textentry('PROCESS_TEST_HELP'))
 obj_fit_tellu_db.set_kwarg(**add_db)
 obj_fit_tellu_db.set_kwarg(**add_db)
 obj_fit_tellu_db.set_kwarg(**plot)
@@ -1029,8 +1031,8 @@ obj_mk_template.instrument = __INSTRUMENT__
 obj_mk_template.inputtype = 'red'
 obj_mk_template.outputtype = 'red'
 obj_mk_template.extension = 'fits'
-obj_mk_template.description = Help['MKTEMP_DESC']
-obj_mk_template.epilog = Help['MKTEMP_EXAMPLE']
+obj_mk_template.description = textentry('MKTEMP_DESC')
+obj_mk_template.epilog = textentry('MKTEMP_EXAMPLE')
 obj_mk_template.kind = 'recipe'
 obj_mk_template.set_outputs(TELLU_TEMP=files.out_tellu_template,
                             TELLU_BIGCUBE=files.out_tellu_bigcube,
@@ -1040,14 +1042,14 @@ obj_mk_template.set_outputs(TELLU_TEMP=files.out_tellu_template,
 obj_mk_template.set_debug_plots('EXTRACT_S1D')
 obj_mk_template.set_summary_plots('SUM_EXTRACT_S1D')
 obj_mk_template.set_arg(name='objname', pos=0, dtype=str,
-                        helpstr=Help['MKTEMP_OBJNAME_HELP'])
+                        helpstr=textentry('MKTEMP_OBJNAME_HELP'))
 obj_mk_template.set_kwarg(name='--filetype', dtype=str,
                           default_ref='MKTEMPLATE_FILETYPE',
-                          helpstr=Help['MKTEMP_FILETYPE'],
+                          helpstr=textentry('MKTEMP_FILETYPE'),
                           options=['EXT_E2DS', 'EXT_E2DS_FF'])
 obj_mk_template.set_kwarg(name='--fiber', dtype=str,
                           default_ref='MKTEMPLATE_FIBER_TYPE',
-                          helpstr=Help['MKTEMP_FIBER'],
+                          helpstr=textentry('MKTEMP_FIBER'),
                           options=['AB', 'A', 'B', 'C'])
 obj_mk_template.set_kwarg(**add_db)
 obj_mk_template.set_kwarg(**blazefile)
@@ -1072,7 +1074,7 @@ obj_spec.kind = 'recipe'
 obj_spec.set_arg(pos=0, **directory)
 obj_spec.set_arg(name='files', dtype='files', pos='1+',
                  files=[files.pp_file],
-                 helpstr=Help['FILES_HELP'] + Help['EXTRACT_FILES_HELP'],
+                 helpstr=textentry('FILES_HELP') + textentry('EXTRACT_FILES_HELP'),
                  limit=1)
 obj_spec.set_kwarg(**plot)
 obj_spec.set_kwarg(name='--cores', dtype=int, default=1,

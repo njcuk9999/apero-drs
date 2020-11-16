@@ -28,7 +28,7 @@ from apero.base import drs_db
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'apero.lang.drs_lang_db.py'
+__NAME__ = 'apero.lang.drs_lang.py'
 __PACKAGE__ = base.__PACKAGE__
 __INSTRUMENT__ = 'None'
 __version__ = base.__version__
@@ -53,6 +53,58 @@ DATABASE_FILE = base.LANG_XLS_FILE
 # =============================================================================
 # Define classes
 # =============================================================================
+class Text(str):
+    """
+    Special text container (so we can store text entry key)
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+        self.tkey = None
+        self.tvalue = None
+        self.targs = []
+        self.tkwargs = dict()
+        self.t_short = ''
+
+    def set_text_props(self, key: str, value: str,
+                       args: Union[List[Any], str, None] = None,
+                       kwargs: Union[Dict[str, Any], None] = None):
+        self.tkey = str(key)
+        self.tvalue = str(value)
+        if isinstance(args, str):
+            self.targs = [args]
+        else:
+            self.targs = list(args)
+        self.tkwargs = dict(kwargs)
+
+    def get_text(self, report: bool = False,
+                 reportlevel: Union[str, None] = None):
+        # ---------------------------------------------------------------------
+        # deal with report level character
+        if isinstance(reportlevel, str):
+            reportlevel = reportlevel[0].upper()
+        else:
+            reportlevel = self.t_short
+        # ---------------------------------------------------------------------
+        # deal with no args
+        if self.targs is None and self.tkwargs is None:
+            message = self.tvalue
+        elif self.tkwargs is None:
+            message = self.tvalue.format(*self.targs)
+        elif self.targs is None:
+            message = self.tvalue.format(**self.tkwargs)
+        else:
+            message = self.tvalue.format(*self.targs, **self.tkwargs)
+        # ---------------------------------------------------------------------
+        vargs = [reportlevel, self.tkey, message]
+        # deal with report
+        if report:
+            valuestr = '{0}[{1}]: {2}'.format(*vargs)
+        else:
+            valuestr = '{2}'.format(*vargs)
+        # ---------------------------------------------------------------------
+        return valuestr
+
+
 def textentry(key: str, args: Union[List[Any], str, None] = None,
               kwargs: Union[Dict[str, Any], None] = None):
     """
@@ -70,14 +122,15 @@ def textentry(key: str, args: Union[List[Any], str, None] = None,
     _ = __NAME__ + '.textentry()'
     # deal with no entries
     if key not in langdict:
-        eargs = [key, ','.join(args), str(kwargs)]
-        ecode = '00-002-00025'
-        return drs_base.base_error(ecode, langdict[ecode], 'error', args=eargs)
+        message = key
     else:
         message = langdict[key]
     # deal with args
     if isinstance(args, str):
         args = [args]
+    # create Text class for message
+    msg_obj = Text(message)
+    msg_obj.set_text_props(key, message, args, kwargs)
     # deal with no args
     if args is None and kwargs is None:
         return message

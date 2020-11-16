@@ -50,8 +50,7 @@ DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 # Speed of light
@@ -115,7 +114,7 @@ def get_masterwave_filename(params, fiber, database=None):
     # if we still have None we have a problem
     if filename is None:
         eargs = [', '.join(keys), func_name]
-        WLOG(params, 'error', TextEntry('09-017-00007', args=eargs))
+        WLOG(params, 'error', textentry('09-017-00007', args=eargs))
     # return the last valid wave entry
     return filename
 
@@ -224,7 +223,7 @@ def get_wave_solution_from_inheader(params, recipe, infile, header, usefiber):
             filetype = header[dprtypekey]
             # log error
             eargs = [outputkey, dprtypekey, filetype, func_name]
-            WLOG(params, 'error', TextEntry('00-017-00008', args=eargs))
+            WLOG(params, 'error', textentry('00-017-00008', args=eargs))
             kind = None
         # get wave file instance
         wavefile = drs_startup.get_file_definition(filetype,
@@ -315,14 +314,14 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     if infile is not None:
         if not isinstance(infile, drs_file.DrsFitsFile):
             eargs = [type(infile), func_name]
-            WLOG(params, 'error', TextEntry('00-017-00001', args=eargs))
+            WLOG(params, 'error', textentry('00-017-00001', args=eargs))
     # ------------------------------------------------------------------------
     # deal with no header but an infile
     if header is None and infile is not None:
         header = infile.get_header()
     # we need a header unless master is True
     if not master and header is None:
-        WLOG(params, 'error', TextEntry('00-017-00009', args=[func_name]))
+        WLOG(params, 'error', textentry('00-017-00009', args=[func_name]))
     # ------------------------------------------------------------------------
     # Get in wave file
     # ------------------------------------------------------------------------
@@ -354,7 +353,7 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     # Log progress
     # -------------------------------------------------------------------------
     wargs = [wavesource, wavefile.filename]
-    WLOG(params, '', TextEntry('40-017-00036', args=wargs))
+    WLOG(params, '', textentry('40-017-00036', args=wargs))
     # ------------------------------------------------------------------------
     # Now deal with using wavefile
     # -------------------------------------------------------------------------
@@ -464,13 +463,13 @@ def get_wavelines(params, recipe, fiber, header=None, infile=None,
         calibdbm = database
     # ------------------------------------------------------------------------
     # log progress
-    WLOG(params, '', TextEntry('40-017-00040'))
+    WLOG(params, '', textentry('40-017-00040'))
     # ------------------------------------------------------------------------
     # check infile is instance of DrsFitsFile
     if infile is not None:
         if not isinstance(infile, drs_file.DrsFitsFile):
             eargs = [type(infile), func_name]
-            WLOG(params, 'error', TextEntry('00-017-00001', args=eargs))
+            WLOG(params, 'error', textentry('00-017-00001', args=eargs))
     # ------------------------------------------------------------------------
     # deal with no header but an infile
     if header is None and infile is not None:
@@ -479,7 +478,7 @@ def get_wavelines(params, recipe, fiber, header=None, infile=None,
     if header is None:
         # log error: header not defined.
         eargs = [func_name]
-        WLOG(params, 'error', TextEntry('00-017-00009', args=eargs))
+        WLOG(params, 'error', textentry('00-017-00009', args=eargs))
     # ------------------------------------------------------------------------
     # get file definitions (wave solution FP and wave solution HC)
     out_wave_fp = drs_startup.get_file_definition('WAVE_FPLIST_MASTER',
@@ -571,12 +570,12 @@ def check_wave_consistency(params, props, **kwargs):
     # check dimensions
     if required_deg == deg:
         # log that fit degrees match
-        WLOG(params, '', TextEntry('40-017-00002', args=[deg]))
+        WLOG(params, '', textentry('40-017-00002', args=[deg]))
     # if not correct remap coefficients
     else:
         # log that fit degrees don't match
         wargs = [deg, required_deg]
-        WLOG(params, 'warning', TextEntry('10-017-00003', args=wargs))
+        WLOG(params, 'warning', textentry('10-017-00003', args=wargs))
         # setup output storage
         output_coeffs = np.zeros([nbo, required_deg + 1])
         output_map = np.zeros_like(props['WAVEMAP'])
@@ -664,7 +663,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
     # ----------------------------------------------------------------------
     elif fibtype in hcfibtypes:
         # print progress Running get ref lines for HC
-        WLOG(params, 'info', TextEntry('40-017-00049'))
+        WLOG(params, 'info', textentry('40-017-00049'))
         # load the line list
         wavell, ampll = drs_data.load_linelist(params)
         # storage for outputs
@@ -710,7 +709,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
     # ----------------------------------------------------------------------
     elif fibtype in fpfibtypes:
         # print progress Running get ref lines for FP
-        WLOG(params, 'info', TextEntry('40-017-00050'))
+        WLOG(params, 'info', textentry('40-017-00050'))
         # ------------------------------------------------------------------
         # deal with getting cavity poly
         if cavity_poly is not None:
@@ -795,7 +794,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
         # log error and break
         eargs = [e2dsfile.name, dprtype, fiber, func_name, hcfibtypes,
                  fpfibtypes]
-        WLOG(params, 'error', TextEntry('00-017-00012', args=eargs))
+        WLOG(params, 'error', textentry('00-017-00012', args=eargs))
         list_waves = []
         list_orders = []
         list_pixels = []
@@ -836,7 +835,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
             # Need to check that index is in bounds
             if (np.min(index) < 0) or (np.max(index) >= nbpix):
                 eargs = [order_num, it, index, xpixi, wfit, func_name]
-                WLOG(params, 'warning', TextEntry('09-017-00005', args=eargs))
+                WLOG(params, 'warning', textentry('09-017-00005', args=eargs))
                 continue
             # get the flux value in this peak
             ypix = sorder[index]
@@ -844,7 +843,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
             #    catching before an exception happens in fit_gauss_with_slope)
             if len(ypix) < 5:
                 eargs = [order_num, it, index, ypix]
-                WLOG(params, 'warning', TextEntry('09-017-00006', args=eargs))
+                WLOG(params, 'warning', textentry('09-017-00006', args=eargs))
                 continue
             # --------------------------------------------------------------
             # only continue if we have some finite values
@@ -887,7 +886,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
         # log progress: Order {0}/{1} Fiber {2} Valid lines: {3}/{4} (type={5})
         eargs = [order_num, nbo - 1, fiber, valid_lines, len(order_waves),
                  fibtype]
-        WLOG(params, '', TextEntry('40-017-00051', args=eargs))
+        WLOG(params, '', textentry('40-017-00051', args=eargs))
 
     # lines that are not at a high enough SNR are flagged as NaN
     # we do NOT remove these lines as we want all tables to have
@@ -947,7 +946,7 @@ def write_master_lines(params, recipe, hce2ds, fpe2ds, hclines, fplines,
     # ------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [fiber, hcfile.filename]
-    WLOG(params, '', TextEntry('40-017-00039', args=wargs))
+    WLOG(params, '', textentry('40-017-00039', args=wargs))
     # write image to file
     hcfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -971,7 +970,7 @@ def write_master_lines(params, recipe, hce2ds, fpe2ds, hclines, fplines,
     # ------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [fiber, fpfile.filename]
-    WLOG(params, '', TextEntry('40-017-00039', args=wargs))
+    WLOG(params, '', textentry('40-017-00039', args=wargs))
     # write image to file
     fpfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -1002,7 +1001,7 @@ def update_wavelength_measured(params, reftable, wavemap, kind):
     for key in keys:
         if key not in reftable.colnames:
             eargs = [key, kind, func_name]
-            WLOG(params, 'error', TextEntry('00-017-00011', args=eargs))
+            WLOG(params, 'error', textentry('00-017-00011', args=eargs))
             return None
     # get columns from table
     orders = reftable['ORDER']
@@ -1039,7 +1038,7 @@ def hc_wavesol(params, recipe, iprops, e2dsfile, blaze, fiber, **kwargs):
     except ValueError:
         pass
     # log the mode which is being used
-    WLOG(params, 'info', TextEntry('40-017-00014', args=[wave_mode_hc]))
+    WLOG(params, 'info', textentry('40-017-00014', args=[wave_mode_hc]))
 
     # ----------------------------------------------------------------------
     # Read UNe solution
@@ -1059,7 +1058,7 @@ def hc_wavesol(params, recipe, iprops, e2dsfile, blaze, fiber, **kwargs):
                                 wavell, ampll)
     else:
         # log that mode is not currently supported
-        WLOG(params, 'error', TextEntry('09-017-00001', args=[wave_mode_hc]))
+        WLOG(params, 'error', textentry('09-017-00001', args=[wave_mode_hc]))
         llprops = None
     # ----------------------------------------------------------------------
     # add mode to llprops
@@ -1194,7 +1193,7 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
         # ------------------------------------------------------------------
         # log progress
         wargs = [wave_mode_fp, 'Bauer 2015']
-        WLOG(params, 'info', TextEntry('40-017-00021', args=wargs))
+        WLOG(params, 'info', textentry('40-017-00021', args=wargs))
         # calculate wave solution
         llprops = fp_wavesol_bauer(params, recipe, llprops, fpe2dsfile, blaze,
                                    fiber)
@@ -1204,13 +1203,13 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
         # ------------------------------------------------------------------
         # log progress
         wargs = [wave_mode_fp, 'Lovis Method']
-        WLOG(params, 'info', TextEntry('40-017-00021', args=wargs))
+        WLOG(params, 'info', textentry('40-017-00021', args=wargs))
         # calculate wave solution
         llprops = fp_wavesol_lovis(params, recipe, llprops, fpe2dsfile,
                                    hce2dsfile, blaze, fiber)
     else:
         # log that mode is not currently supported
-        WLOG(params, 'error', TextEntry('09-017-00003', args=[wave_mode_fp]))
+        WLOG(params, 'error', textentry('09-017-00003', args=[wave_mode_fp]))
         llprops = None
 
     # ----------------------------------------------------------------------
@@ -1305,7 +1304,7 @@ def fp_wavesol_bauer(params, recipe, llprops, fpe2dsfile, blaze, fiber,
 
     # Log the file we are using
     wargs = [fpe2dsfile.filename]
-    WLOG(params, '', TextEntry('40-017-00022', args=wargs))
+    WLOG(params, '', textentry('40-017-00022', args=wargs))
     # ------------------------------------------------------------------
     # Find the fp lines and measure the cavity width dependency
     # ------------------------------------------------------------------
@@ -1410,7 +1409,7 @@ def fp_wavesol_lovis(params, recipe, llprops, fpe2dsfile, hce2dsfile,
 
     # Log the file we are using
     wargs = [fpe2dsfile.filename]
-    WLOG(params, '', TextEntry('40-017-00022', args=wargs))
+    WLOG(params, '', textentry('40-017-00022', args=wargs))
 
     # ------------------------------------------------------------------
     # Find FP lines
@@ -1511,7 +1510,7 @@ def fp_wavesol_lovis(params, recipe, llprops, fpe2dsfile, hce2dsfile,
     # deal with n_plot_init being out of bounds
     if n_plot_init >= n_fin:
         wargs = [n_plot_init, n_fin, 'WAVE_FP_MULTI_ORDER']
-        WLOG(params, 'warning', TextEntry('10-017-00012', args=wargs))
+        WLOG(params, 'warning', textentry('10-017-00012', args=wargs))
     else:
         recipe.plot('WAVE_FP_MULTI_ORDER', hc_ll=hc_ll_test, hc_ord=hc_ord_test,
                     hcdata=hce2dsfile.get_data(), wave=llprops['LL_OUT_2'],
@@ -1637,7 +1636,7 @@ def fit_wavemap_cav_iteratively(params, recipe, inwavemap, e2dsfile,
                 dv_lines = diffwavemap / wave_ref[good] * speed_of_light_ms
                 # log message: Order: median abs dev for order m/s
                 wargs = [order_num, np.nanmedian(np.abs(dv_lines))]
-                WLOG(params, '', TextEntry('40-017-00041', args=wargs))
+                WLOG(params, '', textentry('40-017-00041', args=wargs))
             # update the wave map
             wavemap[order_num] = np.polyval(wcoeffs_arr[order_num],
                                             np.arange(nbpix))
@@ -1737,10 +1736,10 @@ def hc_quality_control(params, hcprops):
     # finally log the failed messages and set QC = 1 if we pass the
     #     quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
-        WLOG(params, 'info', TextEntry('40-005-10001'))
+        WLOG(params, 'info', textentry('40-005-10001'))
     else:
         for farg in fail_msg:
-            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+            WLOG(params, 'warning', textentry('40-005-10002') + farg)
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
     # return qc_params
@@ -1773,7 +1772,7 @@ def hc_log_global_stats(params, hcprops, e2dsfile, fiber):
     # log global hc stats
     wargs = [fiber, final_mean_hc * 1000.0, np.sqrt(final_var_hc) * 1000.0,
              total_lines_hc, 1000.0 * np.sqrt(final_var_hc / total_lines_hc)]
-    WLOG(params, 'info', TextEntry('40-017-00018', args=wargs))
+    WLOG(params, 'info', textentry('40-017-00018', args=wargs))
 
 
 # TODO: remove if we are using master/night recipes
@@ -1873,7 +1872,7 @@ def hc_write_wavesolution(params, recipe, llprops, infile, fiber, combine,
     # ------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [fiber, wavefile.filename]
-    WLOG(params, '', TextEntry('40-017-00019', args=wargs))
+    WLOG(params, '', textentry('40-017-00019', args=wargs))
     # write image to file
     wavefile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -1907,7 +1906,7 @@ def hc_write_resmap(params, recipe, llprops, infile, wavefile, fiber):
     # ------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [fiber, resfile.filename]
-    WLOG(params, '', TextEntry('40-017-00020', args=wargs))
+    WLOG(params, '', textentry('40-017-00020', args=wargs))
     # write image to file
     resfile.write_multi(data_list=datalist, header_list=headerlist,
                         kind=recipe.outputtype, runstring=recipe.runstring)
@@ -2014,7 +2013,7 @@ def hc_write_wavesol_master(params, recipe, llprops, infile, fiber, combine,
     # ------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [fiber, wavefile.filename]
-    WLOG(params, '', TextEntry('40-017-00019', args=wargs))
+    WLOG(params, '', textentry('40-017-00019', args=wargs))
     # write image to file
     wavefile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -2047,7 +2046,7 @@ def hc_write_resmap_master(params, recipe, llprops, infile, wavefile, fiber):
     # ------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [fiber, resfile.filename]
-    WLOG(params, '', TextEntry('40-017-00020', args=wargs))
+    WLOG(params, '', textentry('40-017-00020', args=wargs))
     # write image to file
     resfile.write_multi(data_list=datalist, header_list=headerlist,
                         kind=recipe.outputtype, runstring=recipe.runstring)
@@ -2072,7 +2071,7 @@ def generate_shifted_wave_map(params, props, **kwargs):
     # print a warning if pixel_shift is not 0
     if pixel_shift_slope != 0 or pixel_shift_inter != 0:
         wargs = [pixel_shift_slope, pixel_shift_inter]
-        WLOG(params, 'warning', TextEntry('10-017-00004', args=wargs))
+        WLOG(params, 'warning', textentry('10-017-00004', args=wargs))
     else:
         return props
     # generate wave map with shift
@@ -2123,7 +2122,7 @@ def find_hc_gauss_peaks(params, recipe, iprops, e2dsfile, fiber, **kwargs):
     # get dimensions from image
     nbo, nbpix = e2dsfile.get_data().shape
     # print process
-    WLOG(params, '', TextEntry('40-017-00003'))
+    WLOG(params, '', textentry('40-017-00003'))
     # get initial line list
     llprops, exists = load_hc_init_linelist(params, recipe, e2dsfile, fiber)
     # if we dont have line list need to generate it
@@ -2137,7 +2136,7 @@ def find_hc_gauss_peaks(params, recipe, iprops, e2dsfile, fiber, **kwargs):
         for order_num in range(nbo):
             # print progress for user: processing order N of M
             wargs = [order_num, nbo - 1]
-            WLOG(params, '', TextEntry('40-017-00004', args=wargs))
+            WLOG(params, '', textentry('40-017-00004', args=wargs))
             # set number of peaks found
             npeaks = 0
             # extract this orders spectrum
@@ -2219,7 +2218,7 @@ def find_hc_gauss_peaks(params, recipe, iprops, e2dsfile, fiber, **kwargs):
                         llprops['XPIX_INI'].append(xpix)
                         llprops['GFIT_INI'].append(gfit)
             # display the number of peaks found
-            WLOG(params, '', TextEntry('40-017-00005', args=[npeaks]))
+            WLOG(params, '', textentry('40-017-00005', args=[npeaks]))
         # ------------------------------------------------------------------
         # construct column names/values
         columnnames, columnvalues = llprops['HCLLCOLUMNS'], []
@@ -2229,7 +2228,7 @@ def find_hc_gauss_peaks(params, recipe, iprops, e2dsfile, fiber, **kwargs):
         ini_table = drs_table.make_table(params, columnnames, columnvalues)
         # log that we are saving hc line-list to file
         wargs = [llprops['HCLLBASENAME']]
-        WLOG(params, '', TextEntry('40-017-00006', args=wargs))
+        WLOG(params, '', textentry('40-017-00006', args=wargs))
         # save the table to file
         drs_table.write_table(params, ini_table, llprops['HCLLFILENAME'],
                               fmt=filefmt)
@@ -2423,7 +2422,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
     for sol_iteration in range(n_iterations):
         # log that we are fitting triplet N of M
         wargs = [sol_iteration + 1, n_iterations]
-        WLOG(params, 'info', TextEntry('40-017-00007', args=wargs))
+        WLOG(params, 'info', textentry('40-017-00007', args=wargs))
         # get coefficients
         xgau = np.array(llprops['XGAU_INI'])
         orders = np.array(llprops['ORD_INI'])
@@ -2568,7 +2567,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
                     best_coeffs = np.array(coeffs)
             # Log the total number of valid lines found
             wargs = [order_num, bestn, mp.nansum(good_all)]
-            WLOG(params, '', TextEntry('40-017-00008', args=wargs))
+            WLOG(params, '', textentry('40-017-00008', args=wargs))
             # if we have the minimum number of lines check that we satisfy
             #   the cut_fit_threshold for all good lines and reject outliers
             if bestn >= min_num_lines:
@@ -2620,7 +2619,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
         if mp.nansum(good) < min_tot_num_lines:
             # log error that we have insufficient lines found
             eargs = [mp.nansum(good), min_tot_num_lines, func_name]
-            WLOG(params, 'error', TextEntry('00-017-00003', args=eargs))
+            WLOG(params, 'error', textentry('00-017-00003', args=eargs))
 
         # ------------------------------------------------------------------
         # Linear model slice generation
@@ -2754,7 +2753,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
             # Log stats RMS/SIG/N
             sig1 = sig * 1000 / np.sqrt(len(wave_catalog))
             wargs = [sigma_it, sig, sig1, len(wave_catalog)]
-            WLOG(params, '', TextEntry('40-017-00009', args=wargs))
+            WLOG(params, '', textentry('40-017-00009', args=wargs))
             sigma_it += 1
         # ------------------------------------------------------------------
         # Plot wave catalogue all lines and brightest lines
@@ -2777,7 +2776,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
             if mp.nansum(order_mask) == 0:
                 # log that no values were found
                 wargs = [order_num]
-                WLOG(params, 'warning', TextEntry('10-017-00005', args=wargs))
+                WLOG(params, 'warning', textentry('10-017-00005', args=wargs))
 
             # poly_wave_map[order_num] =
             # loop around order fit continuum to propagate new coefficients
@@ -2907,7 +2906,7 @@ def generate_resolution_map(params, recipe, llprops, e2dsfile, **kwargs):
     nbo, nbpix = hc_sp.shape
 
     # log progress
-    WLOG(params, '', TextEntry('40-017-00010'))
+    WLOG(params, '', textentry('40-017-00010'))
 
     # storage of resolution map
     resolution_map = np.zeros(resmap_size)
@@ -3005,7 +3004,7 @@ def generate_resolution_map(params, recipe, llprops, e2dsfile, **kwargs):
                 except Exception as e:
                     # log error: Resolution map curve_fit error
                     eargs = [type(e), e, func_name]
-                    WLOG(params, 'error', TextEntry('09-017-00002', args=eargs))
+                    WLOG(params, 'error', textentry('09-017-00002', args=eargs))
                 # calculate residuals for full line list
                 res = all_lines - mp.gauss_fit_s(all_dvs, *popt)
                 # calculate RMS of residuals
@@ -3030,7 +3029,7 @@ def generate_resolution_map(params, recipe, llprops, e2dsfile, **kwargs):
             wargs = [order_num, order_num + bin_order, mp.nansum(mask), xpos,
                      resolution,
                      resolution1]
-            WLOG(params, '', TextEntry('40-017-00011', args=wargs))
+            WLOG(params, '', textentry('40-017-00011', args=wargs))
         # store criteria. All lines are kept for reference
         map_dvs.append(order_dvs)
         map_lines.append(order_lines)
@@ -3058,7 +3057,7 @@ def generate_resolution_map(params, recipe, llprops, e2dsfile, **kwargs):
     # print stats
     wargs = [mp.nanmean(resolution_map), mp.nanmedian(resolution_map),
              mp.nanstd(resolution_map)]
-    WLOG(params, '', TextEntry('40-017-00012', args=wargs))
+    WLOG(params, '', textentry('40-017-00012', args=wargs))
 
     # map line profile map
     recipe.plot('WAVE_HC_RESMAP', params=params, resmap_size=resmap_size,
@@ -3376,27 +3375,27 @@ def calculate_littrow_sol(params, llprops, echelle_order, wavell, infile,
         wargs = ['WAVE_LITTROW_ORDER_INIT_{0}'.format(1),
                  params['WAVE_LITTROW_ORDER_INIT_{0}'.format(1)],
                  "WAVE_LITTROW_REMOVE_ORDERS", func_name]
-        WLOG(params, 'error', TextEntry('00-017-00004', args=wargs))
+        WLOG(params, 'error', textentry('00-017-00004', args=wargs))
     # ----------------------------------------------------------------------
     # test if n_order_init is in remove_orders
     if n_order_final in remove_orders:
         wargs = ['WAVE_LITTROW_ORDER_FINAL_{0}'.format(1),
                  params['WAVE_LITTROW_ORDER_FINAL_{0}'.format(1)],
                  "WAVE_LITTROW_REMOVE_ORDERS", func_name]
-        WLOG(params, 'error', TextEntry('00-017-00004', args=wargs))
+        WLOG(params, 'error', textentry('00-017-00004', args=wargs))
     # ----------------------------------------------------------------------
     # check that all remove orders exist
     for remove_order in remove_orders:
         if remove_order not in np.arange(n_order_final):
             wargs = [remove_order, 'WAVE_LITTROW_REMOVE_ORDERS', n_order_init,
                      n_order_final, func_name]
-            WLOG(params, 'error', TextEntry('00-017-00005', args=wargs))
+            WLOG(params, 'error', textentry('00-017-00005', args=wargs))
     # ----------------------------------------------------------------------
     # check to make sure we have some orders left
     if len(np.unique(remove_orders)) == n_order_final - n_order_start:
         # log littrow error
         eargs = ['WAVE_LITTROW_REMOVE_ORDERS', func_name]
-        WLOG(params, 'error', TextEntry('00-017-00006', args=eargs))
+        WLOG(params, 'error', textentry('00-017-00006', args=eargs))
     # ----------------------------------------------------------------------
     # deal with removing orders (via weighting stats)
     rmask = np.ones(num_orders, dtype=bool)
@@ -3482,7 +3481,7 @@ def calculate_littrow_sol(params, llprops, echelle_order, wavell, infile,
             # log: littrow check at X={0} mean/rms/min/max/frac
             eargs = [x_cut_point, mean * 1000, rms * 1000, mindev * 1000,
                      maxdev * 1000, mindev / rms, maxdev / rms]
-            WLOG(params, '', TextEntry('40-017-00013', args=eargs))
+            WLOG(params, '', textentry('40-017-00013', args=eargs))
 
     # add constants
     llprops['LITTROW_REMOVE_ORDERS'] = remove_orders
@@ -3766,7 +3765,7 @@ def add_fpline_calc_cwid(params, llprops, fpe2dsfile, blaze, dopd0, fit_deg,
                     mpeak = mpeak + m_offset_c
                     # print note for dev if different
                     wargs = [order_num, m_match - m_init]
-                    WLOG(params, 'debug', TextEntry('90-017-00001', args=wargs))
+                    WLOG(params, 'debug', textentry('90-017-00001', args=wargs))
                     # recalculate observed effective cavity width
                     dopd_t = mpeak * llpos / 2
                     # store new m and d
@@ -3774,7 +3773,7 @@ def add_fpline_calc_cwid(params, llprops, fpe2dsfile, blaze, dopd0, fit_deg,
             else:
                 # log that no overlap for order
                 wargs = [order_num]
-                WLOG(params, 'warning', TextEntry('10-017-00008', args=wargs))
+                WLOG(params, 'warning', textentry('10-017-00008', args=wargs))
                 # save previous mpeak calculated
                 m_init = mpeak[cm_ind]
                 m_test = mpeak[cm_ind]
@@ -3797,7 +3796,7 @@ def add_fpline_calc_cwid(params, llprops, fpe2dsfile, blaze, dopd0, fit_deg,
                     # print note for dev if different
                     # print note for dev if different
                     wargs = [order_num, mpeak[cm_ind] - m_init]
-                    WLOG(params, 'debug', TextEntry('90-017-00001', args=wargs))
+                    WLOG(params, 'debug', textentry('90-017-00001', args=wargs))
                     # recalculate observed effective cavity width
                     dopd_t = mpeak * llpos / 2
                     # store new m and d
@@ -4027,7 +4026,7 @@ def fit_1d_solution(params, llprops, wavell, start, end, fiber, errx_min,
             # check that we have points
             if mp.nansum(goodmask) == 0:
                 eargs = [order_num, max_ll_fit_rms]
-                WLOG(params, 'error', TextEntry('00-017-00007', args=eargs))
+                WLOG(params, 'error', textentry('00-017-00007', args=eargs))
             else:
                 lines = lines[goodmask]
                 x_fit = x_fit[goodmask]
@@ -4038,7 +4037,7 @@ def fit_1d_solution(params, llprops, wavell, start, end, fiber, errx_min,
                  wavell[order_num][0], wavell[order_num][-1],
                  wmean * 1000, np.sqrt(var) * 1000, len(iter0),
                  len(details[0][1]), len(details[-1][1])]
-        WLOG(params, '', TextEntry('40-017-00023', args=wargs))
+        WLOG(params, '', textentry('40-017-00023', args=wargs))
         # ---------------------------------------------------------------------
         # append to all storage
         # ---------------------------------------------------------------------
@@ -4078,7 +4077,7 @@ def fit_1d_solution(params, llprops, wavell, start, end, fiber, errx_min,
     total_lines = mp.nansum(final_iter[:, 2])
     wargs = [fiber, final_mean * 1000.0, np.sqrt(final_var) * 1000.0,
              total_lines, 1000.0 * np.sqrt(final_var / total_lines)]
-    WLOG(params, 'info', TextEntry('40-017-00024', args=wargs))
+    WLOG(params, 'info', textentry('40-017-00024', args=wargs))
     # save outputs to loc
     llprops['X_MEAN_{0}'.format(iteration)] = final_mean
     llprops['X_VAR_{0}'.format(iteration)] = final_var
@@ -4144,7 +4143,7 @@ def fit_1d_solution(params, llprops, wavell, start, end, fiber, errx_min,
     total_lines = mp.nansum(iter0[:, 2])
     wargs = [final_mean * 1000.0, np.sqrt(final_var) * 1000.0,
              1000.0 * np.sqrt(final_var / total_lines)]
-    WLOG(params, '', TextEntry('40-017-00025', args=wargs))
+    WLOG(params, '', textentry('40-017-00025', args=wargs))
     # ------------------------------------------------------------------
     # save outputs to loc
     llprops['LL_MEAN_{0}'.format(iteration)] = final_mean
@@ -4188,7 +4187,7 @@ def fit_1d_solution(params, llprops, wavell, start, end, fiber, errx_min,
     llprops.set_sources(keys, func_name)
     # log mean pixel scale at center
     wargs = [fiber, meanpixscale]
-    WLOG(params, 'info', TextEntry('40-017-00026', args=wargs))
+    WLOG(params, 'info', textentry('40-017-00026', args=wargs))
     # ------------------------------------------------------------------
     return llprops
 
@@ -4335,7 +4334,7 @@ def fit_1d_solution_sigclip(params, llprops, fiber, n_init, n_fin,
     # log the global stats
     wargs = [fiber, final_mean * 1000.0, np.sqrt(final_var) * 1000.0,
              total_lines, 1000.0 * np.sqrt(final_var / total_lines)]
-    WLOG(params, 'info', TextEntry('40-017-00024', args=wargs))
+    WLOG(params, 'info', textentry('40-017-00024', args=wargs))
     # save final (sig-clipped) arrays to loc
     llprops['FP_ORD_CL'] = np.array(np.concatenate(fp_ord_clip).ravel())
     llprops['FP_LLIN_CL'] = np.array(np.concatenate(fp_ll_in_clip).ravel())
@@ -4407,7 +4406,7 @@ def no_overlap_match_calc(params, ord_num, fp_ll_ord, fp_ll_ord_prev,
     ll_diff_prev = fp_ll_ord_prev[1:] - fp_ll_ord_prev[:-1]
 
     # print warning re no overlap
-    WLOG(params, 'warning', TextEntry('10-017-00009', args=[ord_num]))
+    WLOG(params, 'warning', textentry('10-017-00009', args=[ord_num]))
     # masks to keep only difference between no-gap lines for current order
     mask_ll_diff = ll_diff > (lldif_min * mp.nanmedian(ll_diff))
     mask_ll_diff &= ll_diff < (lldif_max * mp.nanmedian(ll_diff))
@@ -4429,7 +4428,7 @@ def no_overlap_match_calc(params, ord_num, fp_ll_ord, fp_ll_ord_prev,
     if not m_end_1 == m_end_2:
         # log that we are missing line estimate miss-match
         wargs = [m_end_1, m_end_2, ll_diff_fin, ll_diff_init]
-        WLOG(params, 'warning', TextEntry('10-017-00010', args=wargs))
+        WLOG(params, 'warning', textentry('10-017-00010', args=wargs))
     # calculate m_end, absolute peak number for last line of the order
     m_end = int(m_ord_prev[0]) + m_end_1
     # define array of absolute peak numbers for the order
@@ -4735,7 +4734,7 @@ def get_d_for_each_hcline(params, recipe, llprops, fp_order, fp_xx, m_vec,
 
     # log absolute peak number span
     wargs = [round(m_d[0]), round(m_d[-1])]
-    WLOG(params, '', TextEntry('40-017-00027', args=wargs))
+    WLOG(params, '', textentry('40-017-00027', args=wargs))
 
     return one_m_d, d_arr, hc_ll_test, hc_ord_test
 
@@ -4752,7 +4751,7 @@ def fit_1m_vs_d(params, recipe, one_m_d, d_arr, hc_ll_test, update_cavity,
     # check for exists (will be None if either file doesn't exist)
     if fit_1m_d is None:
         # log that we are going to update cavity files as files do not exist
-        WLOG(params, 'warning', TextEntry('10-017-00011'))
+        WLOG(params, 'warning', textentry('10-017-00011'))
         # set update_cavity to True
         update_cavity = True
 
@@ -4782,7 +4781,7 @@ def fit_1m_vs_d(params, recipe, one_m_d, d_arr, hc_ll_test, update_cavity,
         # achromatic cavity length change.
         achromatic_cc = mp.nanmedian(residual)
         # log achromatic cavity length change
-        WLOG(params, '', TextEntry('40-017-00042', args=[achromatic_cc]))
+        WLOG(params, '', textentry('40-017-00042', args=[achromatic_cc]))
         # update the coeffs with mean shift
         fit_ll_d[-1] += achromatic_cc
 
@@ -4877,7 +4876,7 @@ def fit_wavesol_from_fppeaks(params, llprops, fp_ll, fiber, n_init, n_fin,
     # else break
     else:
         eargs = [fp_llfit_mode, func_name]
-        WLOG(params, 'error', TextEntry('09-017-00004', args=eargs))
+        WLOG(params, 'error', textentry('09-017-00004', args=eargs))
 
     return llprops
 
@@ -5070,10 +5069,10 @@ def fp_quality_control(params, fpprops, qc_params, rvprops, **kwargs):
     # finally log the failed messages and set QC = 1 if we pass the
     #     quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
-        WLOG(params, 'info', TextEntry('40-005-10001'))
+        WLOG(params, 'info', textentry('40-005-10001'))
     else:
         for farg in fail_msg:
-            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+            WLOG(params, 'warning', textentry('40-005-10002') + farg)
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
     # return qc_params
@@ -5161,7 +5160,7 @@ def fp_write_wavesolution(params, recipe, llprops, hcfile, fpfile,
     # ------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [fiber, wavefile.filename]
-    WLOG(params, '', TextEntry('40-017-00037', args=wargs))
+    WLOG(params, '', textentry('40-017-00037', args=wargs))
     # write image to file
     wavefile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -5208,7 +5207,7 @@ def fp_write_results_table(params, recipe, llprops, hcfile, fiber):
                                  columnformats)
     # ------------------------------------------------------------------
     # log saving of file
-    WLOG(params, '', TextEntry('40-017-00034', args=[wavefile.filename]))
+    WLOG(params, '', textentry('40-017-00034', args=[wavefile.filename]))
     # merge table
     drs_table.merge_table(params, table, wavefile.filename, fmt='ascii.rst')
 
@@ -5245,7 +5244,7 @@ def fp_write_linelist_table(params, recipe, llprops, hcfile, fiber):
                                  columnformats)
     # ------------------------------------------------------------------
     # log saving of file
-    WLOG(params, '', TextEntry('40-017-00035', args=[wavefile.filename]))
+    WLOG(params, '', textentry('40-017-00035', args=[wavefile.filename]))
     # merge table
     drs_table.write_table(params, table, wavefile.filename, fmt='ascii.rst')
 
@@ -5413,7 +5412,7 @@ def fp_write_wavesol_master(params, recipe, llprops, hcfile, fpfile, fiber,
     # ------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [fiber, wavefile.filename]
-    WLOG(params, '', TextEntry('40-017-00037', args=wargs))
+    WLOG(params, '', textentry('40-017-00037', args=wargs))
     # write image to file
     wavefile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -5459,7 +5458,7 @@ def fpm_write_results_table(params, recipe, llprops, hcfile, fiber):
                                  columnformats)
     # ------------------------------------------------------------------
     # log saving of file
-    WLOG(params, '', TextEntry('40-017-00034', args=[wavefile.filename]))
+    WLOG(params, '', textentry('40-017-00034', args=[wavefile.filename]))
     # merge table
     drs_table.merge_table(params, table, wavefile.filename, fmt='ascii.rst')
 
@@ -5495,7 +5494,7 @@ def fpm_write_linelist_table(params, recipe, llprops, hcfile, fiber):
                                  columnformats)
     # ------------------------------------------------------------------
     # log saving of file
-    WLOG(params, '', TextEntry('40-017-00035', args=[wavefile.filename]))
+    WLOG(params, '', textentry('40-017-00035', args=[wavefile.filename]))
     # merge table
     drs_table.write_table(params, table, wavefile.filename, fmt='ascii.rst')
 
@@ -5578,7 +5577,7 @@ def process_other_fibers(params, recipe, mprops, mfpl, fp_outputs):
     for fiber in fiber_types:
         # log that we are processing fiber
         wargs = [fiber, master_fiber]
-        WLOG(params, 'info', TextEntry('40-017-00043', args=wargs))
+        WLOG(params, 'info', textentry('40-017-00043', args=wargs))
         # skip the master file
         if fiber == master_fiber:
             continue
@@ -5746,7 +5745,7 @@ def update_smart_fp_mask(params, **kwargs):
     except Exception as e:
         # log error
         eargs = [mask_units, type(e), e, func_name]
-        WLOG(params, 'error', TextEntry('09-020-00002', args=eargs))
+        WLOG(params, 'error', textentry('09-020-00002', args=eargs))
         return
     # add units
     wave_fp_peak = wave_fp_peak * unit
@@ -5765,7 +5764,7 @@ def update_smart_fp_mask(params, **kwargs):
     # make table
     table = drs_table.make_table(params, columnnames, columnvalues)
     # print that we are saving smart fp header
-    WLOG(params, '', TextEntry('40-017-00053', args=outfile))
+    WLOG(params, '', textentry('40-017-00053', args=outfile))
     # write smart mask table to file
     drs_table.write_table(params, table, outfile, fmt='ascii.fast_no_header')
 
@@ -5811,7 +5810,7 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, mwave,
     # Update the wavelength of lines with the master solution
     # ----------------------------------------------------------------------
     # log progress: Updating measured wavelength (master)
-    WLOG(params, 'info', TextEntry('40-017-00044'))
+    WLOG(params, 'info', textentry('40-017-00044'))
     # update wavelength measured in line list table
     mhcl = update_wavelength_measured(params, mhcl, mwave, kind='HC')
     mfpl = update_wavelength_measured(params, mfpl, mwave, kind='FP')
@@ -5820,7 +5819,7 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, mwave,
     # Construct night line list
     # ----------------------------------------------------------------------
     # log progress Constructing night list list (night)'
-    WLOG(params, 'info', TextEntry('40-017-00045'))
+    WLOG(params, 'info', textentry('40-017-00045'))
     # generate the hc reference lines
     hcargs = dict(e2dsfile=hce2ds, wavemap=mwave, hclines=mhcl)
     rhcl = get_master_lines(params, recipe, **hcargs)
@@ -5835,7 +5834,7 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, mwave,
     # Iterative loop to update wavelength
     # ----------------------------------------------------------------------
     # log progress Updating measured wavelength (night)
-    WLOG(params, '', TextEntry('40-017-00046'))
+    WLOG(params, '', textentry('40-017-00046'))
     # update wavelength measured in line list table
     rhcl = update_wavelength_measured(params, rhcl, rwave, kind='HC')
     rfpl = update_wavelength_measured(params, rfpl, rwave, kind='FP')
@@ -5845,7 +5844,7 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, mwave,
     for iteration in range(niterations1):
         # log progress Night wave fit iteration i of j
         wargs = [iteration + 1, 1, 'HC']
-        WLOG(params, '', TextEntry('40-017-00047', args=wargs))
+        WLOG(params, '', textentry('40-017-00047', args=wargs))
         # ------------------------------------------------------------------
         # get the pixel difference between ref and measured
         pixdiff = rhcl['PIXEL_REF'] - rhcl['PIXEL_MEAS']
@@ -5863,7 +5862,7 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, mwave,
         rhcl = rhcl[madmask]
         # log how many lines we kept
         wargs = [np.sum(madmask), len(madmask)]
-        WLOG(params, '', TextEntry('40-017-00048', args=wargs))
+        WLOG(params, '', textentry('40-017-00048', args=wargs))
     # ----------------------------------------------------------------------
     # plot mad plot
     recipe.plot('WAVENIGHT_ITERPLOT', waverefs=waverefs, pixdiffs=pixdiffs,
@@ -5881,7 +5880,7 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, mwave,
     for iteration in range(niterations2):
         # log progress Night wave fit iteration i of j
         wargs = [iteration + 1, 1, 'FP']
-        WLOG(params, '', TextEntry('40-017-00047', args=wargs))
+        WLOG(params, '', textentry('40-017-00047', args=wargs))
         # loop around order num
         for order_num in range(nbo):
             # get this orders mask
@@ -5894,7 +5893,7 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, mwave,
             # update the wave solution with these values
             rwave[order_num] = np.polyval(fit, xpix)
         # log progress Updating measured wavelength (night)
-        WLOG(params, '', TextEntry('40-017-00046'))
+        WLOG(params, '', textentry('40-017-00046'))
         # update wavelength measured in line list table
         rhcl = update_wavelength_measured(params, rhcl, rwave, kind='HC')
         rfpl = update_wavelength_measured(params, rfpl, rwave, kind='FP')
@@ -5908,7 +5907,7 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, mwave,
             # log the change in d_cavity
             wargs = [d_cavity * speed_of_light_ms,
                      dd_cavity * speed_of_light_ms]
-            WLOG(params, '', TextEntry('40-017-00052', args=wargs))
+            WLOG(params, '', textentry('40-017-00052', args=wargs))
 
     # ----------------------------------------------------------------------
     # plot for wave night hist plot
@@ -6065,10 +6064,10 @@ def night_quality_control(params, nprops):
     # finally log the failed messages and set QC = 1 if we pass the
     #     quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
-        WLOG(params, 'info', TextEntry('40-005-10001'))
+        WLOG(params, 'info', textentry('40-005-10001'))
     else:
         for farg in fail_msg:
-            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+            WLOG(params, 'warning', textentry('40-005-10002') + farg)
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
     return qc_params, passed
@@ -6140,7 +6139,7 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
     # ----------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [fiber, wavefile.filename]
-    WLOG(params, '', TextEntry('40-017-00037', args=wargs))
+    WLOG(params, '', textentry('40-017-00037', args=wargs))
     # write image to file
     wavefile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -6163,7 +6162,7 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
     # ------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [fiber, hclfile.filename]
-    WLOG(params, '', TextEntry('40-017-00039', args=wargs))
+    WLOG(params, '', textentry('40-017-00039', args=wargs))
     # write image to file
     hclfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -6196,7 +6195,7 @@ def write_fplines(params, recipe, rfpl, infile, hfile, fiber, kind=None):
     # ------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [fiber, fplfile.filename]
-    WLOG(params, '', TextEntry('40-017-00039', args=wargs))
+    WLOG(params, '', textentry('40-017-00039', args=wargs))
     # write image to file
     fplfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -6243,7 +6242,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # ----------------------------------------------------------------------
     # log that we are updating the file with wave params
     wargs = [e2ds_file.name, e2ds_file.filename]
-    WLOG(params, '', TextEntry('40-017-00038', args=wargs))
+    WLOG(params, '', textentry('40-017-00038', args=wargs))
     # update the e2ds file
     e2ds_file.read_file()
     e2ds_file.read_header()
@@ -6254,7 +6253,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # ----------------------------------------------------------------------
     # log that we are updating the file with wave params
     wargs = [e2dsff_file.name, e2dsff_file.filename]
-    WLOG(params, '', TextEntry('40-017-00038', args=wargs))
+    WLOG(params, '', textentry('40-017-00038', args=wargs))
     # update the e2ds file
     e2dsff_file.read_file()
     e2dsff_file = add_wave_keys(params, e2dsff_file, wprops)
@@ -6264,7 +6263,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # ----------------------------------------------------------------------
     # log that we are updating the file with wave params
     wargs = [e2dsll_file.name, e2dsll_file.filename]
-    WLOG(params, '', TextEntry('40-017-00038', args=wargs))
+    WLOG(params, '', textentry('40-017-00038', args=wargs))
     # update the e2ds file
     e2dsll_file.read_file()
     e2dsll_file = add_wave_keys(params, e2dsll_file, wprops)
@@ -6305,7 +6304,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # ----------------------------------------------------------------------
     # log that we are updating the file with wave params
     wargs = [s1dw_file.name, s1dw_file.filename]
-    WLOG(params, '', TextEntry('40-017-00038', args=wargs))
+    WLOG(params, '', textentry('40-017-00038', args=wargs))
     # write image to file
     s1dw_file.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -6327,7 +6326,7 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # ----------------------------------------------------------------------
     # log that we are updating the file with wave params
     wargs = [s1dv_file.name, s1dv_file.filename]
-    WLOG(params, '', TextEntry('40-017-00038', args=wargs))
+    WLOG(params, '', textentry('40-017-00038', args=wargs))
     # write image to file
     s1dv_file.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)

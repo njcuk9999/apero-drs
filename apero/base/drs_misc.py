@@ -16,6 +16,7 @@ import time
 from typing import Any, Union, Tuple
 
 from apero.base import base
+from apero import lang
 from apero.base import drs_break
 from apero.base import drs_exceptions
 
@@ -34,6 +35,8 @@ __release__ = base.__release__
 Time = base.Time
 # get all chars
 CHARS = string.ascii_uppercase + string.digits
+# get textentry
+textentry = lang.textentry
 
 
 # =============================================================================
@@ -180,7 +183,7 @@ class Colors:
 def display_func(params: Any = None, name: Union[str, None] = None,
                  program: Union[str, None] = None,
                  class_name: Union[str, None] = None,
-                 wlog: Any = None, textentry: Any = None) -> str:
+                 wlog: Any = None) -> str:
     """
     Start of function setup. Returns a properly constructed string
     representation of where the function is.
@@ -247,11 +250,7 @@ def display_func(params: Any = None, name: Union[str, None] = None,
                 if funcname.endswith(breakfunc):
                     # log we are breaking due to break function
                     wargs = [breakfunc]
-                    if textentry is None:
-                        bargs = ['10-005-00004', 'warning', wargs, func_name]
-                        msg = drs_exceptions.base_printer(*bargs)
-                    else:
-                        msg = textentry('10-005-00004', args=wargs)
+                    msg = textentry('10-005-00004', args=wargs)
                     wlog(params, 'warning', msg)
                     drs_break.break_point(params, allow=True, level=3)
     # ----------------------------------------------------------------------

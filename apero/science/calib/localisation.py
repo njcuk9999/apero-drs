@@ -41,8 +41,7 @@ WLOG = drs_log.wlog
 # Get function string
 display_func = drs_log.display_func
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 
@@ -74,7 +73,7 @@ def calculate_order_profile(params, image, **kwargs):
     size = pcheck(params, 'LOC_ORDERP_BOX_SIZE', 'size', kwargs, func_name)
     # -------------------------------------------------------------------------
     # log that we are creating order profile
-    WLOG(params, '', TextEntry('40-013-00001'))
+    WLOG(params, '', textentry('40-013-00001'))
     # -------------------------------------------------------------------------
     # copy the original image
     newimage = np.zeros_like(image)
@@ -147,7 +146,7 @@ def check_coeffs(params, recipe, image, coeffs, fiber, kind=None):
     # we loop through fiber A and B and sanitize y position independently
     for mod in range(int(nbo // num_fibers)):
         # log progress
-        WLOG(params, '', TextEntry('40-013-00026', args=[mod]))
+        WLOG(params, '', textentry('40-013-00026', args=[mod]))
         # index of Nth diffraction order
         index = np.arange(nbo)
         # keep either fiber A or B using modulo
@@ -266,8 +265,8 @@ def find_and_fit_localisation(params, recipe, image, sigdet, fiber, **kwargs):
     # (goodback and ycc are between 0 and 1)
     mean_backgrd = np.mean(goodback) * 100
     # Log the maximum signal and the mean background
-    WLOG(params, 'info', TextEntry('40-013-00003', args=[max_signal]))
-    WLOG(params, 'info', TextEntry('40-013-00004', args=[mean_backgrd]))
+    WLOG(params, 'info', textentry('40-013-00003', args=[max_signal]))
+    WLOG(params, 'info', textentry('40-013-00004', args=[mean_backgrd]))
     # plot y, miny and maxy
     recipe.plot('LOC_MINMAX_CENTS', y=y, miny=miny, maxy=maxy)
 
@@ -276,7 +275,7 @@ def find_and_fit_localisation(params, recipe, image, sigdet, fiber, **kwargs):
     #         estimation
     # ----------------------------------------------------------------------
     # log progress
-    WLOG(params, '', TextEntry('40-013-00005'))
+    WLOG(params, '', textentry('40-013-00005'))
     # plot the minimum of ycc and back_thres
     recipe.plot('LOC_MIN_CENTS_THRES', centers=ycc, threshold=back_thres)
     # find the central positions of the orders in the central
@@ -290,7 +289,7 @@ def find_and_fit_localisation(params, recipe, image, sigdet, fiber, **kwargs):
     norm_num_orders = int(num_orders / num_fibers)
     # log the number of orders than have been detected
     wargs = [fiber, norm_num_orders, num_fibers]
-    WLOG(params, 'info', TextEntry('40-013-00006', args=wargs))
+    WLOG(params, 'info', textentry('40-013-00006', args=wargs))
     # ----------------------------------------------------------------------
     # Step 3: Search for order center and profile on specific columns
     # ----------------------------------------------------------------------
@@ -421,7 +420,7 @@ def find_and_fit_localisation(params, recipe, image, sigdet, fiber, **kwargs):
             # Log order number and fit at central pixel and width and rms
             wargs = [rorder_num, cf_data['cfitval'], wf_data['cfitval'],
                      cf_data['rms']]
-            WLOG(params, '', TextEntry('40-013-00007', args=wargs))
+            WLOG(params, '', textentry('40-013-00007', args=wargs))
             # --------------------------------------------------------------
             # sigma fit params for center
             sigfargs = [params, recipe, xpix, cent_y, cf_data, cent_poly_deg,
@@ -457,19 +456,19 @@ def find_and_fit_localisation(params, recipe, image, sigdet, fiber, **kwargs):
             rorder_num += 1
         # else log that the order is unusable
         else:
-            WLOG(params, '', TextEntry('40-013-00010'))
+            WLOG(params, '', textentry('40-013-00010'))
     # plot finding orders plot
     recipe.plot('LOC_FINDING_ORDERS', plotdict=dvars, plimits=plimits)
     # ----------------------------------------------------------------------
     # Log that the order geometry has been measured
     wargs = [fiber, rorder_num]
-    WLOG(params, 'info', TextEntry('40-013-00011', args=wargs))
+    WLOG(params, 'info', textentry('40-013-00011', args=wargs))
     # get the mean rms values
     mean_rms_cent = mp.nansum(cent_rms[:rorder_num]) * 1000 / rorder_num
     mean_rms_wid = mp.nansum(wid_rms[:rorder_num]) * 1000 / rorder_num
     # Log mean rms values
-    WLOG(params, 'info', TextEntry('40-013-00012', args=[mean_rms_cent]))
-    WLOG(params, 'info', TextEntry('40-013-00013', args=[mean_rms_wid]))
+    WLOG(params, 'info', textentry('40-013-00012', args=[mean_rms_cent]))
+    WLOG(params, 'info', textentry('40-013-00013', args=[mean_rms_wid]))
     # ----------------------------------------------------------------------
     # return
     outputs = [cent_0, cent_coeffs, cent_rms, cent_max_ptp, cent_frac_ptp,
@@ -702,11 +701,11 @@ def loc_quality_control(params, fiber, cent_max_rmpts, wid_max_rmpts,
     # finally log the failed messages and set QC = 1 if we pass the
     #    quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
-        WLOG(params, 'info', TextEntry('40-005-10001'))
+        WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
-            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+            WLOG(params, 'warning', textentry('40-005-10002') + farg)
         passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
@@ -764,7 +763,7 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     # copy data
     orderpfile.data = order_profile
     # log that we are saving rotated image
-    WLOG(params, '', TextEntry('40-013-00002', args=[orderpfile.filename]))
+    WLOG(params, '', textentry('40-013-00002', args=[orderpfile.filename]))
     # write image to file
     orderpfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -816,7 +815,7 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     loco1file.data = center_fits
     # ------------------------------------------------------------------
     # log that we are saving rotated image
-    WLOG(params, '', TextEntry('40-013-00019', args=[loco1file.filename]))
+    WLOG(params, '', textentry('40-013-00019', args=[loco1file.filename]))
     # write image to file
     loco1file.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -838,7 +837,7 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     loco2file.data = width_fits
     # ------------------------------------------------------------------
     # log that we are saving rotated image
-    WLOG(params, '', TextEntry('40-013-00020', args=[loco2file.filename]))
+    WLOG(params, '', textentry('40-013-00020', args=[loco2file.filename]))
     # write image to file
     loco2file.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -866,7 +865,7 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
         # --------------------------------------------------------------
         # log that we are saving rotated image
         wargs = [loco3file.filename]
-        WLOG(params, '', TextEntry('40-013-00021', args=wargs))
+        WLOG(params, '', textentry('40-013-00021', args=wargs))
         # write image to file
         loco3file.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
         # add to output files (for indexing)
@@ -1074,7 +1073,7 @@ def initial_order_fit(params, x, y, f_order, ccol, kind):
     func_name = __NAME__ + '.initial_order_fit()'
     # deal with kind
     if kind not in ['center', 'fwhm']:
-        WLOG(params, 'error', TextEntry('00-013-00002', args=[kind, func_name]))
+        WLOG(params, 'error', textentry('00-013-00002', args=[kind, func_name]))
     # -------------------------------------------------------------------------
     # calculate fit - coefficients, fit y params, residuals, absolute residuals,
     #                 rms and max_ptp
@@ -1158,7 +1157,7 @@ def sigmaclip_order_fit(params, recipe, x, y, fitdata, f_order, max_rmpts,
     func_name = __NAME__ + '.sigmaclip_order_fit()'
     # deal with kind
     if kind not in ['center', 'fwhm']:
-        WLOG(params, 'error', TextEntry('00-013-00003', args=[kind, func_name]))
+        WLOG(params, 'error', textentry('00-013-00003', args=[kind, func_name]))
     # extract constants from fitdata
     acoeffs = fitdata['a']
     fit = fitdata['fit']
@@ -1192,7 +1191,7 @@ def sigmaclip_order_fit(params, recipe, x, y, fitdata, f_order, max_rmpts,
     while cond:
         # Log that we are clipping the fit
         wargs = [kind, ptpfrackind, rms, max_ptp, max_ptp_frac]
-        WLOG(params, '', TextEntry('40-013-00008', args=wargs))
+        WLOG(params, '', textentry('40-013-00008', args=wargs))
         # add residuals to loc
         recipe.plot('LOC_FIT_RESIDUALS', x=x, y=res, xo=xo, rnum=rnum,
                     kind=kind)
@@ -1221,7 +1220,7 @@ def sigmaclip_order_fit(params, recipe, x, y, fitdata, f_order, max_rmpts,
         wmask = wmask[wmask]
     else:
         wargs = [kind2, ptpfrackind, rms, max_ptp, max_ptp_frac, int(max_rmpts)]
-        WLOG(params, '', TextEntry('40-013-00009', args=wargs))
+        WLOG(params, '', textentry('40-013-00009', args=wargs))
 
     # return fit data
     fitdata = dict(a=acoeffs, fit=fit, res=res, abs_res=abs_res, rms=rms,

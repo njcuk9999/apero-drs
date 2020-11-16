@@ -43,11 +43,9 @@ WLOG = drs_log.wlog
 # Get ParamDict
 ParamDict = constants.ParamDict
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # get exceptions
 DrsCodedException = drs_exceptions.DrsCodedException
-LoadException = drs_exceptions.LoadException
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 # get display func
@@ -130,15 +128,15 @@ def load_linelist(params: ParamDict,
         table = load_table_file(params, absfilename, fmt=tablefmt,
                                 colnames=tablecols, datastart=int(tablestart),
                                 func_name=func_name)
-        WLOG(params, '', TextEntry('40-017-00001', args=absfilename))
+        WLOG(params, '', textentry('40-017-00001', args=absfilename))
         # push columns into numpy arrays and force to floats
         ll = np.array(table[wavecol], dtype=float)
         amp = np.array(table[ampcol], dtype=float)
         # return wavelength and amplitude columns
         return ll, amp
-    except LoadException:
+    except DrsCodedException:
         eargs = [filename, os.path.join(assetdir, relfolder)]
-        WLOG(params, 'error', TextEntry('00-017-00002', args=eargs))
+        WLOG(params, 'error', textentry('00-017-00002', args=eargs))
 
 
 def load_cavity_files(params: ParamDict,
@@ -272,13 +270,10 @@ def load_full_flat_badpix(params: ParamDict,
     if return_filename:
         return absfilename
     # return image
-    try:
-        image = load_fits_file(params, absfilename, func_name)
-        WLOG(params, '', TextEntry('40-012-00003', args=absfilename))
-        return image
-    except LoadException:
-        eargs = [filename, os.path.join(assetdir, relfolder), func_name]
-        WLOG(params, 'error', TextEntry('00-012-00001', args=eargs))
+    image = load_fits_file(params, absfilename, func_name)
+    WLOG(params, '', textentry('40-012-00003', args=absfilename))
+    return image
+
 
 
 def load_hotpix(params: ParamDict,
@@ -323,14 +318,11 @@ def load_hotpix(params: ParamDict,
     if return_filename:
         return absfilename
     # return table
-    try:
-        table = load_table_file(params, absfilename, fmt=fmt,
-                                datastart=datastart, func_name=func_name)
-        WLOG(params, '', TextEntry('40-010-00011', args=absfilename))
-        return table
-    except LoadException:
-        eargs = [filename, os.path.join(assetdir, relfolder)]
-        WLOG(params, 'error', TextEntry('00-010-00002', args=eargs))
+    table = load_table_file(params, absfilename, fmt=fmt,
+                            datastart=datastart, func_name=func_name)
+    WLOG(params, '', textentry('40-010-00011', args=absfilename))
+    return table
+
 
 
 def load_tapas(params: ParamDict,
@@ -375,14 +367,10 @@ def load_tapas(params: ParamDict,
     if return_filename:
         return absfilename
     # return image
-    try:
-        table = load_table_file(params, absfilename, fmt=fmt,
-                                func_name=func_name)
-        WLOG(params, '', TextEntry('40-999-00002', args=absfilename))
-        return table, absfilename
-    except LoadException:
-        eargs = [filename, os.path.join(assetdir, relfolder)]
-        WLOG(params, 'error', TextEntry('00-010-00004', args=eargs))
+    table = load_table_file(params, absfilename, fmt=fmt,
+                            func_name=func_name)
+    WLOG(params, '', textentry('40-999-00002', args=absfilename))
+    return table, absfilename
 
 
 def load_object_list(params: ParamDict,
@@ -427,14 +415,11 @@ def load_object_list(params: ParamDict,
     if return_filename:
         return absfilename
     # return image
-    try:
-        table = load_table_file(params, absfilename, fmt=fmt,
-                                func_name=func_name)
-        WLOG(params, '', TextEntry('40-999-00003', args=absfilename))
-        return table
-    except LoadException:
-        eargs = [filename, os.path.join(assetdir, relfolder)]
-        WLOG(params, 'error', TextEntry('00-010-00005', args=eargs))
+    table = load_table_file(params, absfilename, fmt=fmt,
+                            func_name=func_name)
+    WLOG(params, '', textentry('40-999-00003', args=absfilename))
+    return table
+
 
 
 def load_ccf_mask(params: ParamDict,
@@ -480,15 +465,12 @@ def load_ccf_mask(params: ParamDict,
     if return_filename:
         return absfilename
     # return image
-    try:
-        table = load_table_file(params, absfilename, fmt=fmt,
-                                colnames=['ll_mask_s', 'll_mask_e', 'w_mask'],
-                                func_name=func_name)
-        WLOG(params, '', TextEntry('40-020-00002', args=absfilename))
-        return table, absfilename
-    except LoadException:
-        eargs = [filename, os.path.join(assetdir, relfolder)]
-        WLOG(params, 'error', TextEntry('00-020-00002', args=eargs))
+    table = load_table_file(params, absfilename, fmt=fmt,
+                            colnames=['ll_mask_s', 'll_mask_e', 'w_mask'],
+                            func_name=func_name)
+    WLOG(params, '', textentry('40-020-00002', args=absfilename))
+    return table, absfilename
+
 
 
 def load_sp_mask_lsd(params: ParamDict, temperature: float,
@@ -555,7 +537,7 @@ def load_sp_mask_lsd(params: ParamDict, temperature: float,
             except Exception as e:
                 # log error
                 eargs = [filename, type(e), e]
-                WLOG(params, 'error', TextEntry('09-021-00009', args=eargs))
+                WLOG(params, 'error', textentry('09-021-00009', args=eargs))
         # ------------------------------------------------------------------
         # now we have the temperatures find the closest to the input
         #     temperature
@@ -575,17 +557,12 @@ def load_sp_mask_lsd(params: ParamDict, temperature: float,
     # define table column names
     colnames = ['wavec', 'znum', 'depth', 'excpotf', 'lande', 'flagf']
     # ----------------------------------------------------------------------
-    # return image
-    try:
-        # file currently must be an ascii file and must start on line 1
-        table = load_table_file(params, absfilename, fmt='ascii', datastart=1,
-                                func_name=func_name, colnames=colnames)
-        WLOG(params, '', TextEntry('40-020-00002', args=absfilename))
-        return table, absfilename
+    # file currently must be an ascii file and must start on line 1
+    table = load_table_file(params, absfilename, fmt='ascii', datastart=1,
+                            func_name=func_name, colnames=colnames)
+    WLOG(params, '', textentry('40-020-00002', args=absfilename))
+    return table, absfilename
 
-    except LoadException:
-        eargs = [filename, os.path.join(assetdir, relfolder)]
-        WLOG(params, 'error', TextEntry('00-020-00002', args=eargs))
 
 
 def load_order_mask(params: ParamDict,
@@ -630,23 +607,20 @@ def load_order_mask(params: ParamDict,
         return absfilename
     # ----------------------------------------------------------------------
     # return image
-    try:
-        # file currently must be an ascii file and must start on line 1
-        table = load_table_file(params, absfilename, fmt='ascii',
-                                datastart=1, func_name=func_name,
-                                colnames=['order', 'lower', 'upper'])
-        WLOG(params, '', TextEntry('40-020-00002', args=absfilename))
-        return table, absfilename
-    except LoadException:
-        eargs = [filename, os.path.join(assetdir, relfolder)]
-        WLOG(params, 'error', TextEntry('00-020-00002', args=eargs))
+    # file currently must be an ascii file and must start on line 1
+    table = load_table_file(params, absfilename, fmt='ascii',
+                            datastart=1, func_name=func_name,
+                            colnames=['order', 'lower', 'upper'])
+    WLOG(params, '', textentry('40-020-00002', args=absfilename))
+    return table, absfilename
+
 
 
 # =============================================================================
 # database data functions
 # =============================================================================
 # define complex return type for et_file_from_inputs
-FileInputType = Union[# if return_source = False
+FileInputType = Union[  # if return_source = False
                       Union[Path, str, None],
                       # if return_source = True
                       Tuple[Union[Path, str, None], Union[str, None]]]
@@ -655,16 +629,19 @@ FileInputType = Union[# if return_source = False
 def get_file_from_inputs(params: ParamDict, dbmname: str,
                          userinputkey: Union[str, None] = None,
                          default: Union[Path, str, None] = None,
-                         return_source: bool =False) -> FileInputType:
+                         return_source: bool = False) -> FileInputType:
     """
     Get a file from the params['INPUTS'] user input param dict
 
     :param params: ParamDict, the parameter dictionary of constants
+    :param dbmname: the name of the database
     :param userinputkey: str or None, if set looks for argument from user
                          input (i.e. from command line and stored in
                          params['INPUTS']
     :param default: if userinputkey is None - this is the default value of the
                     path
+    :param return_source: bool, if True returns the source name as well as the
+                          filename
 
     :return: if return_source = False: returns the filename from inputs
              (either a path, str or None if not set)
@@ -705,7 +682,7 @@ def get_file_from_inputs(params: ParamDict, dbmname: str,
         # log error: Database {0} - file was defined in {1} but path
         #            does not exist.
         eargs = [dbmname, strsource, func_name]
-        WLOG(params, 'error', TextEntry('00-002-00020', args=eargs))
+        WLOG(params, 'error', textentry('00-002-00020', args=eargs))
     else:
         if return_source:
             return value, source
@@ -756,7 +733,7 @@ def read_db_file(params: ParamDict, abspath: Union[str, Path],
     else:
         # raise error is kind is incorrect
         eargs = [' or '.join(['image', 'table']), func_name]
-        WLOG(params, 'error', TextEntry('00-001-00038', args=eargs))
+        WLOG(params, 'error', textentry('00-001-00038', args=eargs))
         image = None
     # ------------------------------------------------------------------
     # get header if required (and a fits file)
@@ -788,11 +765,9 @@ def load_fits_file(params: ParamDict, filename: str,
         func_name = display_func(params, 'load_fits_file', __NAME__)
     # check that filepath exists and log an error if it was not found
     if not os.path.exists(filename):
-        # load text dict
-        textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
         # generate error
         eargs = [filename, func_name]
-        raise LoadException(textdict['01-001-00022'].format(*eargs))
+        raise DrsCodedException('01-001-00022', 'error', targs=eargs)
     # read image
     image = drs_fits.readfits(params, filename)
     # return image
@@ -822,11 +797,9 @@ def load_table_file(params: ParamDict, filename: str,
         func_name = display_func(params, 'load_table_file', __NAME__)
     # check that filepath exists and log an error if it was not found
     if not os.path.exists(filename):
-        # load text dict
-        textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
         # raise exception
         eargs = [filename, func_name]
-        raise LoadException(textdict['01-001-00022'].format(*eargs))
+        raise DrsCodedException('01-001-00022', 'error', targs=eargs)
     # read table
     table = drs_table.read_table(params, filename, fmt=fmt,
                                  colnames=colnames, data_start=datastart)
@@ -854,17 +827,15 @@ def load_text_file(params: ParamDict, filename: str,
         func_name = display_func(params, 'load_text_file', __NAME__)
     # check that filepath exists and log an error if it was not found
     if not os.path.exists(filename):
-        # load text dict
-        textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
         eargs = [filename, func_name]
-        raise LoadException(textdict['01-001-00022'].format(*eargs))
+        raise DrsCodedException('01-001-00022', 'error', targs=eargs)
     # load text as list
     try:
         textlist = drs_text.load_text_file(filename, '#', ' ')
     except DrsCodedException as e:
         elevel = e.get('level', 'error')
         eargs = e.get('targs', None)
-        WLOG(params, elevel, TextEntry(e.codeid, args=eargs))
+        WLOG(params, elevel, textentry(e.codeid, args=eargs))
         textlist = None
     # deal with change list to numpy array
     textlist = np.array(textlist).astype(dtype)
@@ -892,7 +863,7 @@ def save_text_file(params: ParamDict, filename: str, array: np.ndarray,
     except DrsCodedException as e:
         elevel = e.get('level', 'error')
         eargs = e.get('targs', None)
-        WLOG(params, elevel, TextEntry(e.codeid, args=eargs))
+        WLOG(params, elevel, textentry(e.codeid, args=eargs))
 
 
 def construct_path(params: ParamDict, filename: Union[str, None] = None,

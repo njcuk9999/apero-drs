@@ -39,8 +39,7 @@ __release__ = base.__release__
 WLOG = drs_log.wlog
 ParamDict = constants.ParamDict
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # define extraction code to use
 EXTRACT_NAME = 'cal_extract_spirou.py'
 
@@ -145,7 +144,7 @@ def __main__(recipe, params):
     if fpfiles is not None:
         if len(hcfiles) != len(fpfiles):
             wargs = [len(hcfiles), len(fpfiles)]
-            WLOG(params, 'error', TextEntry('10-017-00002', args=wargs))
+            WLOG(params, 'error', textentry('10-017-00002', args=wargs))
     # get the number of files
     num_files = len(hcfiles)
     # get the fiber types from a list parameter (or from inputs)
@@ -245,7 +244,7 @@ def __main__(recipe, params):
         log_hc.end(params)
         # if not passed end here
         if not passed:
-            WLOG(params, 'error', TextEntry('10-017-00006'))
+            WLOG(params, 'error', textentry('10-017-00006'))
             return 0
         # ==================================================================
         # FP WAVE SOLUTION MASTER FIBER

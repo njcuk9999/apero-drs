@@ -50,8 +50,7 @@ DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 
@@ -65,7 +64,7 @@ def construct_fp_table(params, filenames):
     basenames, nightnames = [], []
     valid_files = []
     # log that we are reading all dark files
-    WLOG(params, '', TextEntry('40-014-00003'))
+    WLOG(params, '', textentry('40-014-00003'))
     # loop through file headers
     for it in range(len(filenames)):
         # get the basename from filenames
@@ -124,7 +123,7 @@ def construct_fp_table(params, filenames):
 #     # match files by date
 #     # ----------------------------------------------------------------------
 #     # log progress
-#     WLOG(params, '', TextEntry('40-014-00004', args=[time_thres]))
+#     WLOG(params, '', textentry('40-014-00004', args=[time_thres]))
 #     # match files by time
 #     matched_id = drs_path.group_files_by_time(params, fp_times, time_thres)
 #
@@ -132,7 +131,7 @@ def construct_fp_table(params, filenames):
 #     # Read individual files and sum groups
 #     # ----------------------------------------------------------------------
 #     # log process
-#     WLOG(params, '', TextEntry('40-014-00005'))
+#     WLOG(params, '', textentry('40-014-00005'))
 #     # Find all unique groups
 #     u_groups = np.unique(matched_id)
 #     # storage of dark cube
@@ -143,7 +142,7 @@ def construct_fp_table(params, filenames):
 #     for g_it, group_num in enumerate(u_groups):
 #         # log progress
 #         wargs = [g_it + 1, len(u_groups)]
-#         WLOG(params, 'info', TextEntry('40-014-00006', args=wargs))
+#         WLOG(params, 'info', textentry('40-014-00006', args=wargs))
 #         # find all files for this group
 #         fp_ids = filenames[matched_id == group_num]
 #         indices = np.arange(len(filenames))[matched_id == group_num]
@@ -160,7 +159,7 @@ def construct_fp_table(params, filenames):
 #             for f_it, filename in enumerate(fp_ids):
 #                 # log reading of data
 #                 wargs = [os.path.basename(filename), f_it + 1, len(fp_ids)]
-#                 WLOG(params, 'info', TextEntry('40-014-00007', args=wargs))
+#                 WLOG(params, 'info', textentry('40-014-00007', args=wargs))
 #                 # construct new infile instance
 #                 fpfile_it = file_inst.newcopy(filename=filename, recipe=recipe)
 #                 fpfile_it.read_file()
@@ -172,7 +171,7 @@ def construct_fp_table(params, filenames):
 #             # convert to numpy array
 #             cube = np.array(cube)
 #             # log process
-#             WLOG(params, '', TextEntry('40-014-00008', args=[len(fp_ids)]))
+#             WLOG(params, '', textentry('40-014-00008', args=[len(fp_ids)]))
 #             # median fp cube
 #             with warnings.catch_warnings(record=True) as _:
 #                 groupfp = mp.nanmedian(cube, axis=0)
@@ -201,13 +200,13 @@ def construct_fp_table(params, filenames):
 #             if transforms is None:
 #                 # log that image quality too poor
 #                 wargs = [g_it + 1]
-#                 WLOG(params, 'warning', TextEntry('10-014-00001', args=wargs))
+#                 WLOG(params, 'warning', textentry('10-014-00001', args=wargs))
 #                 # skip adding to group
 #                 continue
 #             if (xres > qc_res) or (yres > qc_res):
 #                 # log that xres and yres too larger
 #                 wargs = [xres, yres, qc_res]
-#                 WLOG(params, 'warning', TextEntry('10-014-00002', args=wargs))
+#                 WLOG(params, 'warning', textentry('10-014-00002', args=wargs))
 #                 # skip adding to group
 #                 continue
 #             # perform a final transform on the group
@@ -227,7 +226,7 @@ def construct_fp_table(params, filenames):
 #             table_mask[indices] = True
 #         else:
 #             eargs = [g_it + 1, min_num]
-#             WLOG(params, '', TextEntry('40-014-00015', args=eargs))
+#             WLOG(params, '', textentry('40-014-00015', args=eargs))
 #     # ----------------------------------------------------------------------
 #     # convert fp cube to array
 #     fp_cube = np.array(fp_cube)
@@ -269,14 +268,14 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
     # match files by date
     # ----------------------------------------------------------------------
     # log progress
-    WLOG(params, '', TextEntry('40-014-00004', args=[time_thres]))
+    WLOG(params, '', textentry('40-014-00004', args=[time_thres]))
     # match files by time
     matched_id = drs_path.group_files_by_time(params, fp_times, time_thres)
     # ----------------------------------------------------------------------
     # Read individual files and sum groups
     # ----------------------------------------------------------------------
     # log process
-    WLOG(params, '', TextEntry('40-014-00005'))
+    WLOG(params, '', textentry('40-014-00005'))
     # Find all unique groups
     u_groups = np.unique(matched_id)
     # storage of dark cube
@@ -290,7 +289,7 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
     for g_it, group_num in enumerate(u_groups):
         # log progress
         wargs = [g_it + 1, len(u_groups)]
-        WLOG(params, 'info', TextEntry('40-014-00006', args=wargs))
+        WLOG(params, 'info', textentry('40-014-00006', args=wargs))
         # find all files for this group
         fp_ids = filenames[matched_id == group_num]
         indices = np.arange(len(filenames))[matched_id == group_num]
@@ -331,13 +330,13 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
             if transforms is None:
                 # log that image quality too poor
                 wargs = [g_it + 1]
-                WLOG(params, 'warning', TextEntry('10-014-00001', args=wargs))
+                WLOG(params, 'warning', textentry('10-014-00001', args=wargs))
                 # skip adding to group
                 continue
             if (xres > qc_res) or (yres > qc_res):
                 # log that xres and yres too larger
                 wargs = [xres, yres, qc_res]
-                WLOG(params, 'warning', TextEntry('10-014-00002', args=wargs))
+                WLOG(params, 'warning', textentry('10-014-00002', args=wargs))
                 # skip adding to group
                 continue
             # perform a final transform on the group
@@ -363,7 +362,7 @@ def construct_master_fp(params, recipe, dprtype, fp_table, image_ref, **kwargs):
             table_mask[indices] = True
         else:
             eargs = [g_it + 1, min_num]
-            WLOG(params, '', TextEntry('40-014-00015', args=eargs))
+            WLOG(params, '', textentry('40-014-00015', args=eargs))
     # ----------------------------------------------------------------------
     # produce the large median (write ribbons to disk to save space)
     with warnings.catch_warnings(record=True) as _:
@@ -410,7 +409,7 @@ def get_linear_transform_params(params, recipe, image1, image2, **kwargs):
     if image2.shape != image1.shape:
         # log that the shapes are inconsistent
         eargs = [image1.shape, image2.shape, func_name]
-        WLOG(params, 'error', TextEntry('00-014-00001', args=eargs))
+        WLOG(params, 'error', textentry('00-014-00001', args=eargs))
     # linear transform vector
     # with dx0,dy0,A,B,C,D
     # we start assuming that there is no shift in x or y
@@ -421,13 +420,13 @@ def get_linear_transform_params(params, recipe, image1, image2, **kwargs):
     # copy image2
     image3 = np.array(image2)
     # print out initial conditions of linear transform vector
-    WLOG(params, 'info', TextEntry('40-014-00009'))
+    WLOG(params, 'info', textentry('40-014-00009'))
     # set up arguments
     ltv = np.array(lin_transform_vect)
     wargs1 = [dim2, (ltv[2] - 1) * dim2, ltv[3] * dim2]
     wargs2 = [dim2, ltv[4] * dim2, (ltv[5] - 1) * dim2]
     # add to output
-    wmsg = TextEntry('')
+    wmsg = textentry('')
     wmsg += '\tdx={0:.6f} dy={1:.6f}'.format(*ltv)
     wmsg += '\n\t{0}(A-1)={1:.6f}\t{0}B={2:.6f}'.format(*wargs1)
     wmsg += '\n\t{0}C={1:.6f}\t{0}(D-1)={2:.6f}'.format(*wargs2)
@@ -439,7 +438,7 @@ def get_linear_transform_params(params, recipe, image1, image2, **kwargs):
     for n_it in range(niterations):
         # log progress
         wargs = [n_it + 1, niterations]
-        WLOG(params, '', TextEntry('40-014-00010', args=wargs))
+        WLOG(params, '', textentry('40-014-00010', args=wargs))
         # transform image2 if we have some transforms (initial we don't)
         if n_it > 0:
             image3 = ea_transform(params, image2, lin_transform_vect)
@@ -536,7 +535,7 @@ def get_linear_transform_params(params, recipe, image1, image2, **kwargs):
         wargs1 = [dim2, (ltv[2] - 1) * dim2, ltv[3] * dim2]
         wargs2 = [dim2, ltv[3] * dim2, (ltv[5] - 1) * dim2]
         # add to output
-        wmsg = TextEntry('')
+        wmsg = textentry('')
         wmsg += '\tdx={0:.6f} dy={1:.6f}'.format(*ltv)
         wmsg += '\n\t{0}(A-1)={1:.6f}\t{0}B={2:.6f}'.format(*wargs1)
         wmsg += '\n\t{0}C={1:.6f}\t{0}(D-1)={2:.6f}'.format(*wargs2)
@@ -589,17 +588,17 @@ def ea_transform(params, image, lin_transform_vect=None,
     dymapstr = int(dymap is not None)
     transstr = int(lin_transform_vect is not None)
     wargs = [dxmapstr, dymapstr, transstr]
-    WLOG(params, '', TextEntry('40-014-00041', args=wargs))
+    WLOG(params, '', textentry('40-014-00041', args=wargs))
 
     # check size of dx and dy map
     if dxmap is not None:
         if dxmap.shape != image.shape:
             eargs = [dxmap.shape, image.shape, func_name]
-            WLOG(params, 'error', TextEntry('00-014-00002', args=eargs))
+            WLOG(params, 'error', textentry('00-014-00002', args=eargs))
     if dymap is not None:
         if dymap.shape != image.shape:
             eargs = [dymap.shape, image.shape, func_name]
-            WLOG(params, 'error', TextEntry('00-014-00003', args=eargs))
+            WLOG(params, 'error', textentry('00-014-00003', args=eargs))
     # deal with no linear transform required (just a dxmap or dymap shift)
     if lin_transform_vect is None:
         lin_transform_vect = np.array([0.0, 0.0, 1.0, 0.0, 0.0, 1.0])
@@ -765,7 +764,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
             # --------------------------------------------------------------
             # Log progress banana iteration {0} of {1} order {2} of {3}
             wargs = [banana_num + 1, nbanana, order_num + 1, nbo]
-            WLOG(params, '', TextEntry('40-014-00016', args=wargs))
+            WLOG(params, '', textentry('40-014-00016', args=wargs))
             # --------------------------------------------------------------
             # defining a ribbon that will contain the straightened order
             ribbon_hc = np.zeros([width, dim2])
@@ -821,7 +820,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
             slopes = (np.arange(9) * sfactor) + range_slopes[0]
             # log the range slope exploration
             wargs = [range_slopes_deg[0], range_slopes_deg[1]]
-            WLOG(params, '', TextEntry('40-014-00017', args=wargs))
+            WLOG(params, '', textentry('40-014-00017', args=wargs))
             # -------------------------------------------------------------
             # the domain is sliced into a number of sections, then we
             # find the tilt that maximizes the RV content
@@ -909,7 +908,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
             s_xpix = dim2 // 2
             s_ypix = np.rad2deg(np.arctan(np.polyval(coeffs, s_xpix)))
             wargs = [s_xpix, s_ypix]
-            WLOG(params, '', TextEntry('40-014-00018', args=wargs))
+            WLOG(params, '', textentry('40-014-00018', args=wargs))
             # get slope for full range
             slope_all_ord[order_num] = np.polyval(coeffs, np.arange(dim2))
             # -------------------------------------------------------------
@@ -1039,7 +1038,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
             # -------------------------------------------------------------
             # log process (updating big dx map)
             wargs = [order_num + 1, nbo]
-            WLOG(params, '', TextEntry('40-014-00021', args=wargs))
+            WLOG(params, '', textentry('40-014-00021', args=wargs))
             # -------------------------------------------------------------
             # spline everything onto the master DX map
             #    ext=3 forces that out-of-range values are set to boundary
@@ -1070,7 +1069,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
 
             # log start and end points along slice
             wargs = [start_good_ccor, end_good_ccor]
-            WLOG(params, '', TextEntry('40-014-00022', args=wargs))
+            WLOG(params, '', textentry('40-014-00022', args=wargs))
 
             # -------------------------------------------------------------
             # for all field positions along the order, we determine the
@@ -1210,7 +1209,7 @@ def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
     # loop around fiber
     for fiber in fibers:
         # log progress
-        WLOG(params, '', TextEntry('40-014-00024', args=[fiber]))
+        WLOG(params, '', textentry('40-014-00024', args=[fiber]))
         # get coefficients
         lprops = localisation.get_coefficients(params, recipe, fpheader,
                                                fiber=fiber, merge=True)
@@ -1232,7 +1231,7 @@ def calculate_dymap(params, recipe, fpimage, fpheader, **kwargs):
     # column, and apply a spline to straighten the order.
     y0 = np.zeros((nbo * nfibers, dim2))
     # log progress
-    WLOG(params, '', TextEntry('40-014-00023'))
+    WLOG(params, '', textentry('40-014-00023'))
     # set a master dy map
     master_dymap = np.zeros_like(fpimage)
     # loop around orders and get polynomial values for fibers A, B and C
@@ -1280,7 +1279,7 @@ def get_master_fp(params, header, filename=None, database=None):
     fpmaster, _, fpmaster_file = cout
     # ----------------------------------------------------------------------
     # log which fpmaster file we are using
-    WLOG(params, '', TextEntry('40-014-00030', args=[fpmaster_file]))
+    WLOG(params, '', textentry('40-014-00030', args=[fpmaster_file]))
     # return the master image
     return fpmaster_file, fpmaster
 
@@ -1305,7 +1304,7 @@ def get_shapex(params, header, filename=None, database=None):
     dxmap, fhdr, shapex_file = cout
     # ------------------------------------------------------------------------
     # log which fpmaster file we are using
-    WLOG(params, '', TextEntry('40-014-00031', args=[shapex_file]))
+    WLOG(params, '', textentry('40-014-00031', args=[shapex_file]))
     # return the master image
     return shapex_file, dxmap
 
@@ -1330,7 +1329,7 @@ def get_shapey(params, header, filename=None, database=None):
     dymap, fhdr, shapey_file = cout
     # ------------------------------------------------------------------------
     # log which fpmaster file we are using
-    WLOG(params, '', TextEntry('40-014-00032', args=[shapey_file]))
+    WLOG(params, '', textentry('40-014-00032', args=[shapey_file]))
     # return the master image
     return shapey_file, dymap
 
@@ -1356,7 +1355,7 @@ def get_shapelocal(params, header, filename=None, database=None):
     shapel, fhdr, shapel_file = cout
     # ------------------------------------------------------------------------
     # log which fpmaster file we are using
-    WLOG(params, '', TextEntry('40-014-00039', args=[shapel_file]))
+    WLOG(params, '', textentry('40-014-00039', args=[shapel_file]))
     # return the master image
     return shapel_file, shapel
 
@@ -1409,7 +1408,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     outfile1.data = dxmap
     # ------------------------------------------------------------------
     # log that we are saving dxmap to file
-    WLOG(params, '', TextEntry('40-014-00026', args=[outfile1.filename]))
+    WLOG(params, '', textentry('40-014-00026', args=[outfile1.filename]))
     # write image to file
     outfile1.write_multi(data_list=[fp_table], kind=recipe.outputtype,
                          runstring=recipe.runstring)
@@ -1429,7 +1428,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     # copy data
     outfile2.data = dymap
     # log that we are saving dymap to file
-    WLOG(params, '', TextEntry('40-014-00027', args=[outfile2.filename]))
+    WLOG(params, '', textentry('40-014-00027', args=[outfile2.filename]))
     # write image to file
     outfile2.write_multi(data_list=[fp_table], kind=recipe.outputtype,
                          runstring=recipe.runstring)
@@ -1449,7 +1448,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     # copy data
     outfile3.data = master_fp
     # log that we are saving master_fp to file
-    WLOG(params, '', TextEntry('40-014-00028', args=[outfile3.filename]))
+    WLOG(params, '', textentry('40-014-00028', args=[outfile3.filename]))
     # write image to file
     outfile3.write_multi(data_list=[fp_table], kind=recipe.outputtype,
                          runstring=recipe.runstring)
@@ -1460,7 +1459,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     # ----------------------------------------------------------------------
     if params['SHAPE_DEBUG_OUTPUTS']:
         # log progress (writing debug outputs)
-        WLOG(params, '', TextEntry('40-014-00029'))
+        WLOG(params, '', textentry('40-014-00029'))
         # ------------------------------------------------------------------
         # deal with the unstraighted dxmap
         # ------------------------------------------------------------------
@@ -1581,11 +1580,11 @@ def shape_master_qc(params, dxrms=None, **kwargs):
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
-        WLOG(params, 'info', TextEntry('40-005-10001'))
+        WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
-            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+            WLOG(params, 'warning', textentry('40-005-10002') + farg)
         passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
@@ -1644,11 +1643,11 @@ def shape_local_qc(params, transform, xres, yres):
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
-        WLOG(params, 'info', TextEntry('40-005-10001'))
+        WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
-            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+            WLOG(params, 'warning', textentry('40-005-10002') + farg)
         passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
@@ -1697,7 +1696,7 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
     outfile.data = [transform]
     # ------------------------------------------------------------------
     # log that we are saving dxmap to file
-    WLOG(params, '', TextEntry('40-014-00037', args=[outfile.filename]))
+    WLOG(params, '', textentry('40-014-00037', args=[outfile.filename]))
     # write image to file
     outfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -1707,7 +1706,7 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
     # ----------------------------------------------------------------------
     if params['SHAPE_DEBUG_OUTPUTS']:
         # log progress (writing debug outputs)
-        WLOG(params, '', TextEntry('40-014-00029'))
+        WLOG(params, '', textentry('40-014-00029'))
         # in file
         shapel_in_fp_file = recipe.outputs['SHAPEL_IN_FP_FILE']
         debugfile1 = shapel_in_fp_file.newcopy(params=params)
@@ -2068,7 +2067,7 @@ def get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata, poly_wave_ref,
         good = (xpos_predict > 0) & (xpos_predict < dim2)
         # doing this for order where there are no UNe lines
         if np.sum(good) == 0:
-            WLOG(params, 'warning', TextEntry('40-014-00040', args=[order_num]))
+            WLOG(params, 'warning', textentry('40-014-00040', args=[order_num]))
             best_zp = fp_peak0_est - fpindex[0]
             break
         # mask
@@ -2087,7 +2086,7 @@ def get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata, poly_wave_ref,
     # -------------------------------------------------------------------------
     # log the predicted vs measured FP peak
     wargs = [fp_peak0_est, fpindex[best_zp]]
-    WLOG(params, '', TextEntry('40-014-00019', args=wargs))
+    WLOG(params, '', textentry('40-014-00019', args=wargs))
     # -------------------------------------------------------------------------
     # we find teh actual wavelength of our IDed peaks
     wave_xpeak2 = wave_fp[best_zp - ipeak]
@@ -2151,7 +2150,7 @@ def get_offset_sp(params, sp_fp, sp_hc, order_num, hcdata, poly_wave_ref,
     num_fp_cent = np.polyval(cent_fit, dim2 // 2)
     # log the statistics
     wargs = [std_dev, absdev, errpix_med, std_corr, corr_med, num_fp_cent]
-    WLOG(params, '', TextEntry('40-014-00020', args=wargs))
+    WLOG(params, '', textentry('40-014-00020', args=wargs))
     # -------------------------------------------------------------------------
     # return loc
     return corr_err_xpix, xpeak2, peakval2, ewval2, err_pix, good

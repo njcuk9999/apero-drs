@@ -53,7 +53,7 @@ display_func = drs_log.display_func
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
+textentry = lang.textentry
 
 # -----------------------------------------------------------------------------
 # define list of integers
@@ -105,24 +105,24 @@ def make_table(params: ParamDict, columns: List[str],
     # make sure we have as many columns as we do values
     if lcol != len(values):
         eargs = [lcol, len(values), func_name]
-        WLOG(params, 'error', TextEntry('01-002-00001', args=eargs))
+        WLOG(params, 'error', textentry('01-002-00001', args=eargs))
     # make sure if we have formats we have as many as columns
     if formats is not None:
         if lcol != len(formats):
             eargs = [lcol, len(formats), func_name]
-            WLOG(params, 'error', TextEntry('01-002-00002', args=eargs))
+            WLOG(params, 'error', textentry('01-002-00002', args=eargs))
     else:
         formats = [None] * len(columns)
     # make sure if we have units we have as many as columns
     if units is not None:
         if lcol != len(units):
             eargs = [lcol, len(units), func_name]
-            WLOG(params, 'error', TextEntry('01-002-00003', args=eargs))
+            WLOG(params, 'error', textentry('01-002-00003', args=eargs))
     # make sure that the values in values are the same length
     lval1 = len(values[0])
     for value in values:
         if len(value) != lval1:
-            WLOG(params, 'error', TextEntry('01-002-00004', args=[func_name]))
+            WLOG(params, 'error', textentry('01-002-00004', args=[func_name]))
     # now construct the table
     for c_it, col in enumerate(columns):
         # get value for this iteration
@@ -135,7 +135,7 @@ def make_table(params: ParamDict, columns: List[str],
                 table[col].format = formats[c_it]
             else:
                 eargs = [formats[c_it], col, func_name]
-                WLOG(params, 'error', TextEntry('01-002-00005', args=eargs))
+                WLOG(params, 'error', textentry('01-002-00005', args=eargs))
         # if we have units set the unit
         if units is not None:
             table[col].unit = units[c_it]
@@ -188,13 +188,13 @@ def write_table(params: ParamDict, table: Table, filename: str,
     # check that format in format_table
     if fmt not in ftable['Format']:
         eargs = [fmt, func_name]
-        WLOG(params, 'error', TextEntry('01-002-00006', args=eargs))
+        WLOG(params, 'error', textentry('01-002-00006', args=eargs))
     # else check that we can read file
     else:
         pos = np.where(ftable['Format'] == fmt)[0][0]
         if not ftable['write?'][pos]:
             eargs = [fmt, func_name]
-            WLOG(params, 'error', TextEntry('01-002-00007', args=eargs))
+            WLOG(params, 'error', textentry('01-002-00007', args=eargs))
     # ----------------------------------------------------------------------
     # define a synchoronized lock for indexing (so multiple instances do not
     #  run at the same time)
@@ -212,7 +212,7 @@ def write_table(params: ParamDict, table: Table, filename: str,
         except Exception as exception:
             # log error
             _eargs = [type(exception), exception, func_name]
-            WLOG(params, 'error', TextEntry('01-002-00008', args=_eargs))
+            WLOG(params, 'error', textentry('01-002-00008', args=_eargs))
 
         if (fmt == 'fits') and (header is not None):
             # reload fits data
@@ -227,7 +227,7 @@ def write_table(params: ParamDict, table: Table, filename: str,
             except Exception as exception:
                 # log error
                 _eargs = [type(exception), exception, func_name]
-                WLOG(params, 'error', TextEntry('01-002-00009', args=_eargs))
+                WLOG(params, 'error', textentry('01-002-00009', args=_eargs))
     # -------------------------------------------------------------------------
     # try to run locked makedirs
     try:
@@ -279,7 +279,7 @@ def merge_table(params: ParamDict, table: Table, filename: str,
             new_table = vstack([old_table, table])
         except TableMergeError as e:
             eargs = [filename, type(e), e, func_name]
-            WLOG(params, 'error', TextEntry('01-002-00010', args=eargs))
+            WLOG(params, 'error', textentry('01-002-00010', args=eargs))
             new_table = None
         # write new table
         write_table(params, new_table, filename, fmt)
@@ -327,18 +327,18 @@ def read_table(params: ParamDict, filename: str, fmt: str,
     # check that format in format_table
     if fmt not in ftable['Format']:
         eargs = [fmt, func_name]
-        WLOG(params, 'error', TextEntry('01-002-00006', args=eargs))
+        WLOG(params, 'error', textentry('01-002-00006', args=eargs))
     # else check that we can read file
     else:
         pos = np.where(ftable['Format'] == fmt)[0][0]
         if not ftable['read?'][pos]:
             eargs = [fmt, func_name]
-            WLOG(params, 'error', TextEntry('01-002-00008', args=eargs))
+            WLOG(params, 'error', textentry('01-002-00008', args=eargs))
 
     # check that filename exists
     if not os.path.exists(filename):
         eargs = [filename, func_name]
-        WLOG(params, 'error', TextEntry('01-002-00011', args=eargs))
+        WLOG(params, 'error', textentry('01-002-00011', args=eargs))
 
     # remove data_start for fits files
     if (fmt in ['fits']) and ('data_start' in kwargs):
@@ -349,14 +349,14 @@ def read_table(params: ParamDict, filename: str, fmt: str,
         table = Table.read(filename, format=fmt, **kwargs)
     except Exception as e:
         eargs = [type(e), e, filename, func_name]
-        WLOG(params, 'error', TextEntry('01-002-00012', args=eargs))
+        WLOG(params, 'error', textentry('01-002-00012', args=eargs))
         table = None
 
     # if we have colnames rename the columns
     if colnames is not None:
         if len(colnames) != len(table.colnames):
             eargs = [len(colnames), len(table.colnames), filename, func_name]
-            WLOG(params, 'error', TextEntry('01-002-00013', args=eargs))
+            WLOG(params, 'error', textentry('01-002-00013', args=eargs))
         # rename old names to new names
         oldcols = table.colnames
         for c_it, col in enumerate(colnames):
@@ -447,7 +447,7 @@ def read_fits_table(params: ParamDict, filename: str,
     # check that filename exists
     if not os.path.exists(filename):
         eargs = [filename, func_name]
-        WLOG(params, 'error', TextEntry('01-002-00014', args=eargs))
+        WLOG(params, 'error', textentry('01-002-00014', args=eargs))
     # read data
     try:
         astropy_table = Table.read(filename)
@@ -458,7 +458,7 @@ def read_fits_table(params: ParamDict, filename: str,
     except Exception as e:
         # display error
         eargs = [filename, type(e), e, func_name]
-        WLOG(params, 'error', TextEntry('01-002-00015', args=eargs))
+        WLOG(params, 'error', textentry('01-002-00015', args=eargs))
         astropy_table = None
     # return dict if return_dict is True
     if return_dict:
@@ -497,7 +497,7 @@ def write_fits_table(params: ParamDict, astropy_table: Table,
     # check directory exists
     if not os.path.exists(dir_name):
         eargs = [dir_name, func_name]
-        WLOG(params, 'error', TextEntry('01-002-00016', args=eargs))
+        WLOG(params, 'error', textentry('01-002-00016', args=eargs))
     # get backup file name
     backup_file = output_filename.replace('.fits', '.fits.back')
     # deal with file already existing
@@ -510,7 +510,7 @@ def write_fits_table(params: ParamDict, astropy_table: Table,
         except Exception as e:
             # log error
             eargs = [output_filename, type(e), e, func_name]
-            WLOG(params, 'error', TextEntry('01-002-00023', args=eargs))
+            WLOG(params, 'error', textentry('01-002-00023', args=eargs))
     # write data
     try:
         # write file
@@ -529,7 +529,7 @@ def write_fits_table(params: ParamDict, astropy_table: Table,
             shutil.copy(backup_file, output_filename)
         # log error
         eargs = [output_filename, type(e), e, func_name]
-        WLOG(params, 'error', TextEntry('01-002-00017', args=eargs))
+        WLOG(params, 'error', textentry('01-002-00017', args=eargs))
 
 
 def deal_with_missing_end_card(params: ParamDict, filename: str,
@@ -577,20 +577,20 @@ def deal_with_missing_end_card(params: ParamDict, filename: str,
         ext = 1
     else:
         eargs = [filename, type(exception), exception, func_name]
-        WLOG(params, 'error', TextEntry('01-002-00018', args=eargs))
+        WLOG(params, 'error', textentry('01-002-00018', args=eargs))
         data = None
     # test that we have columns and names
     if not hasattr(data, 'columns'):
         eargs = [filename, type(exception), exception, func_name]
-        WLOG(params, 'error', TextEntry('01-002-00019', args=eargs))
+        WLOG(params, 'error', textentry('01-002-00019', args=eargs))
         data = None
     if not hasattr(data.columns, 'names'):
         eargs = [filename, type(exception), exception, func_name]
-        WLOG(params, 'error', TextEntry('01-002-00020', args=eargs))
+        WLOG(params, 'error', textentry('01-002-00020', args=eargs))
         data = None
     # print warning
     wargs = [type(exception), exception, ext, filename, func_name]
-    WLOG(params, 'warning', TextEntry('10-001-00006', args=wargs))
+    WLOG(params, 'warning', textentry('10-001-00006', args=wargs))
     # convert data to astropy table
     astropy_table = Table()
     for col in data.columns.names:
@@ -755,14 +755,14 @@ def prep_merge(params: ParamDict, filename: str, table: Table,
         # check for column name
         if col not in table.colnames:
             eargs = [col, filename, func_name]
-            WLOG(params, 'error', TextEntry('01-002-00021', args=eargs))
+            WLOG(params, 'error', textentry('01-002-00021', args=eargs))
         # check format
         if table[col].dtype != pformat:
             try:
                 newtable[col] = np.array(table[col]).astype(pformat)
             except Exception as e:
                 eargs = [col, filename, type(e), e, func_name]
-                WLOG(params, 'error', TextEntry('01-002-00022', args=eargs))
+                WLOG(params, 'error', textentry('01-002-00022', args=eargs))
         else:
             newtable[col] = table[col]
     # return prepped table

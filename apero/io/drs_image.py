@@ -45,7 +45,7 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 # Get function string
@@ -129,7 +129,7 @@ def resize(params: ParamDict, image: np.ndarray,
             x = np.arange(xhigh + 1, xlow + 1)[::-1]
         elif xlow == xhigh:
             eargs = ['xlow', 'xhigh', xlow, func_name]
-            WLOG(params, 'error', TextEntry('00-001-00023', args=eargs))
+            WLOG(params, 'error', textentry('00-001-00023', args=eargs))
         else:
             x = np.arange(xlow, xhigh)
         # deal with ylow > yhigh
@@ -137,7 +137,7 @@ def resize(params: ParamDict, image: np.ndarray,
             y = np.arange(yhigh + 1, ylow + 1)[::-1]
         elif ylow == yhigh:
             eargs = ['ylow', 'yhigh', xlow, func_name]
-            WLOG(params, 'error', TextEntry('00-001-00023', args=eargs))
+            WLOG(params, 'error', textentry('00-001-00023', args=eargs))
         else:
             y = np.arange(ylow, yhigh)
     # construct the new image (if one can't raise error)
@@ -145,12 +145,12 @@ def resize(params: ParamDict, image: np.ndarray,
         newimage = np.take(np.take(image, x, axis=1), y, axis=0)
     except Exception as e:
         eargs = [xlow, xhigh, ylow, yhigh, type(e), e, func_name]
-        WLOG(params, 'error', TextEntry('00-001-00024', args=eargs))
+        WLOG(params, 'error', textentry('00-001-00024', args=eargs))
         newimage = None
     # return error if we removed all pixels
     if newimage.shape[0] == 0 or newimage.shape[1] == 0:
         eargs = [xlow, xhigh, ylow, yhigh, func_name]
-        WLOG(params, 'error', TextEntry('00-001-00025', args=eargs))
+        WLOG(params, 'error', textentry('00-001-00025', args=eargs))
         newimage = None
 
     # return new image
@@ -174,7 +174,7 @@ def flip_image(params: ParamDict, image: np.ndarray, fliprows: bool = True,
     # raise error if image is not 2D
     if len(image.shape) < 2:
         eargs = [image.shape, func_name]
-        WLOG(params, 'error', TextEntry('09-002-00001', args=eargs))
+        WLOG(params, 'error', textentry('09-002-00001', args=eargs))
     # flip both dimensions
     if fliprows and flipcols:
         return image[::-1, ::-1]
@@ -427,7 +427,7 @@ def get_fiber_types(params: ParamDict,
         return [fiber]
     else:
         eargs = [fiber, ', '.join(validfibertypes), func_name]
-        WLOG(params, 'error', TextEntry('09-001-00030', args=eargs))
+        WLOG(params, 'error', textentry('09-001-00030', args=eargs))
 
 
 def npy_filelist(params: ParamDict, name: str, index: int,
@@ -594,7 +594,7 @@ def large_image_combine(params: ParamDict, files: List[str],
     else:
         # fmt="{0}" is incorrect
         eargs = [fmt, 'fits, npy', func_name]
-        WLOG(params, 'error', TextEntry('00-001-00044', args=eargs))
+        WLOG(params, 'error', textentry('00-001-00044', args=eargs))
         image0 = None
     # ----------------------------------------------------------------------
     # deal with only having 1 file
@@ -619,7 +619,7 @@ def large_image_combine(params: ParamDict, files: List[str],
         # log message so we know how far through we are
         # Processing file {0} / {1}
         wargs = [f_it + 1, numfiles]
-        WLOG(params, '', TextEntry('40-000-00012', args=wargs))
+        WLOG(params, '', textentry('40-000-00012', args=wargs))
         # ------------------------------------------------------------------
         # load file
         if fmt == 'fits':
@@ -629,7 +629,7 @@ def large_image_combine(params: ParamDict, files: List[str],
         else:
             # fmt="{0}" is incorrect
             eargs = [fmt, 'fits, npy', func_name]
-            WLOG(params, 'error', TextEntry('00-001-00044', args=eargs))
+            WLOG(params, 'error', textentry('00-001-00044', args=eargs))
             image = None
         # get the shape of the image
         dim1, dim2 = np.array(image.shape).astype(int)
@@ -642,7 +642,7 @@ def large_image_combine(params: ParamDict, files: List[str],
             # Files are not the same shape
             eargs = [mdim1, mdim2, f_it, dim1, dim2, files[0], files[1],
                      func_name]
-            WLOG(params, 'error', TextEntry('00-001-00045', args=eargs))
+            WLOG(params, 'error', textentry('00-001-00045', args=eargs))
         # ------------------------------------------------------------------
         # extract and save ribbons
         for b_it in range(len(bins) - 1):
@@ -653,7 +653,7 @@ def large_image_combine(params: ParamDict, files: List[str],
             ribbon_path = os.path.join(subfilepath, ribbon_name)
             # save ribbon to file
             # log: Saving file: {0}
-            WLOG(params, '', TextEntry('40-000-00013', args=[ribbon_path]))
+            WLOG(params, '', textentry('40-000-00013', args=[ribbon_path]))
             np.save(ribbon_path, ribbon)
             # delete ribbon
             del ribbon
@@ -667,7 +667,7 @@ def large_image_combine(params: ParamDict, files: List[str],
         # log message so we know how far through we are
         # Combining ribbon {0} / {1}
         wargs = [b_it + 1, len(bins)]
-        WLOG(params, '', TextEntry('40-000-00014', args=wargs))
+        WLOG(params, '', textentry('40-000-00014', args=wargs))
         # store box
         box = []
         # ------------------------------------------------------------------
@@ -679,11 +679,11 @@ def large_image_combine(params: ParamDict, files: List[str],
             ribbon_path = os.path.join(subfilepath, ribbon_name)
             # load ribbon
             # log: Loading file: {0}
-            WLOG(params, '', TextEntry('40-000-00015', args=[ribbon_path]))
+            WLOG(params, '', textentry('40-000-00015', args=[ribbon_path]))
             ribbon = np.load(ribbon_path)
             # delete this ribbon from disk
             # log: Removing file: {0}
-            WLOG(params, '', TextEntry('40-000-00016', args=[ribbon_path]))
+            WLOG(params, '', textentry('40-000-00016', args=[ribbon_path]))
             os.remove(ribbon_path)
             # append to box
             box.append(np.array(ribbon))

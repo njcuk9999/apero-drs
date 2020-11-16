@@ -28,8 +28,6 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
-# Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
 # get exceptions
 DrsCodedException = drs_exceptions.DrsCodedException
 # get parameter dictionary

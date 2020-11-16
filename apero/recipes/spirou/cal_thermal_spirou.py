@@ -32,8 +32,7 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # define extraction code to use
 EXTRACT_NAME = 'cal_extract_spirou.py'
 
@@ -154,7 +153,7 @@ def __main__(recipe, params):
         for fiber in fiber_types:
             # log that we are writing thermal files to file
             wargs = [thermal_files[fiber].filename]
-            WLOG(params, '', TextEntry('40-016-00022', args=wargs))
+            WLOG(params, '', textentry('40-016-00022', args=wargs))
             # write thermal files
             thermal_files[fiber].write_file(kind=recipe.outputtype,
                                             runstring=recipe.runstring)

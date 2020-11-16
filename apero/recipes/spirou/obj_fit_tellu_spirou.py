@@ -56,8 +56,7 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 
 
 # =============================================================================
@@ -167,7 +166,7 @@ def __main__(recipe, params):
             allowed_dprtypes = ', '.join(params.listp('TELLU_ALLOWED_DPRTYPES'))
             # log that we are skipping
             wargs = [dprtype, recipe.name, allowed_dprtypes, infile.basename]
-            WLOG(params, 'warning', TextEntry('10-019-00001', args=wargs))
+            WLOG(params, 'warning', textentry('10-019-00001', args=wargs))
             # end log correctly
             log1.end(params)
             # continue
@@ -182,7 +181,7 @@ def __main__(recipe, params):
         if objname in blacklist:
             # log that we are skipping
             wargs = [infile.basename, params['KW_OBJNAME'][0], objname]
-            WLOG(params, 'warning', TextEntry('10-019-00002', args=wargs))
+            WLOG(params, 'warning', textentry('10-019-00002', args=wargs))
             # end log correctly
             log1.end(params)
             # continue
@@ -190,7 +189,7 @@ def __main__(recipe, params):
         else:
             # log that file is validated
             args = [objname, dprtype]
-            WLOG(params, 'info', TextEntry('40-019-00048', args=args))
+            WLOG(params, 'info', textentry('40-019-00048', args=args))
         # ------------------------------------------------------------------
         # get fiber from infile
         fiber = infile.get_fiber(header=header)
@@ -331,7 +330,7 @@ def __main__(recipe, params):
         for sfiber in sfibers:
             # print that we are correcting other fibers
             # log: Correcting fiber {0}
-            WLOG(params, 'info', TextEntry('40-019-00049', args=[sfiber]))
+            WLOG(params, 'info', textentry('40-019-00049', args=[sfiber]))
             # skip master fiber
             if sfiber == fiber:
                 continue
