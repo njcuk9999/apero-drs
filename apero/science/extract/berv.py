@@ -47,8 +47,7 @@ DrsCodedException = drs_exceptions.DrsCodedException
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 
@@ -91,7 +90,7 @@ def get_berv(params: ParamDict, infile: Union[DrsFitsFile, None] = None,
     func_name = __NAME__ + '.get_berv()'
     # log progress
     if log:
-        WLOG(params, 'info', TextEntry('40-016-00017'))
+        WLOG(params, 'info', textentry('40-016-00017'))
     # get parameters from params and kwargs
     dprtypes = pcheck(params, 'EXT_ALLOWED_BERV_DPRTYPES', func=func_name,
                       mapf='list', dtype=str, override=dprtypes)
@@ -115,14 +114,14 @@ def get_berv(params: ParamDict, infile: Union[DrsFitsFile, None] = None,
     # do not try to calculate berv for specific DPRTYPES
     if (bprops['DPRTYPE'] not in dprtypes):
         # log that we are skipping due to dprtype
-        WLOG(params, '', TextEntry('40-016-00018', args=[bprops['DPRTYPE']]))
+        WLOG(params, '', textentry('40-016-00018', args=[bprops['DPRTYPE']]))
         # all entries returns are empty
         bprops = assign_use_berv(bprops, use=False)
         # return bprops
         return bprops
     if kind not in ['pyasl', 'barycorrpy']:
         # log that we are skipping due to user
-        WLOG(params, '', TextEntry('40-016-00019'))
+        WLOG(params, '', textentry('40-016-00019'))
         # all entries returns are empty
         return assign_use_berv(params, use=False)
     # -------------------------------------------------------------------------
@@ -456,7 +455,7 @@ def use_barycorrpy(params: ParamDict, times: np.ndarray, props: ParamDict,
             import barycorrpy
     except Exception as _:
         wargs = [estimate, func_name]
-        WLOG(params, 'warning', TextEntry('10-016-00003', args=wargs))
+        WLOG(params, 'warning', textentry('10-016-00003', args=wargs))
         raise BaryCorrpyException(tdict['10-016-00003'].format(*wargs))
     # must lock here (barcorrpy is not parallisable yet)
     lpath = params['DRS_DATA_REDUC']
@@ -478,7 +477,7 @@ def use_barycorrpy(params: ParamDict, times: np.ndarray, props: ParamDict,
         except Exception as e:
             # log error
             wargs = [type(e), str(e), estimate, func_name]
-            WLOG(params, 'warning', TextEntry('10-016-00004', args=wargs))
+            WLOG(params, 'warning', textentry('10-016-00004', args=wargs))
             raise BaryCorrpyException(tdict['10-016-00004'].format(*wargs))
         # return the bervs and bjds
         bervs = out1[0] / 1000.0
@@ -520,7 +519,7 @@ def use_pyasl(params: ParamDict, times: Union[np.ndarray, list],
                       override=berv_est)
     # print warning that we are using estimate
     if not quiet:
-        WLOG(params, 'warning', TextEntry('10-016-00005', args=[estimate]))
+        WLOG(params, 'warning', textentry('10-016-00005', args=[estimate]))
     # get args
     bkwargs = dict(ra2000=props['DRS_RA'], dec2000=props['DRS_DEC'],
                    obs_long=props['DRS_LONG'], obs_lat=props['DRS_LAT'],
@@ -538,7 +537,7 @@ def use_pyasl(params: ParamDict, times: Union[np.ndarray, list],
             bjds.append(bjd)
         except Exception as e:
             wargs = [jdtime, type(e), e, func_name]
-            WLOG(params, 'error', TextEntry('00-016-00017', args=wargs))
+            WLOG(params, 'error', textentry('00-016-00017', args=wargs))
     # convert lists to numpy arrays and return
     return np.array(bervs), np.array(bjds)
 

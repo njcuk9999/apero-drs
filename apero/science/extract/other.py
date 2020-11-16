@@ -34,8 +34,7 @@ DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 
@@ -73,7 +72,7 @@ def extract_thermal_files(params, recipe, extname, thermalfile, **kwargs):
         thoutinst = recipe.outputs['THERMALT_FILE']
     else:
         eargs = [dprtype, func_name]
-        WLOG(params, 'error', TextEntry('40-016-00022', args=eargs))
+        WLOG(params, 'error', textentry('40-016-00022', args=eargs))
         thoutinst = None
 
     # ----------------------------------------------------------------------
@@ -278,20 +277,20 @@ def extract_files(params, recipe, infile, outfile, always_extract,
         # check success
         if not llout['success']:
             eargs = [recipe.name, func_name]
-            WLOG(params, 'error', TextEntry('09-016-00002', args=eargs))
+            WLOG(params, 'error', textentry('09-016-00002', args=eargs))
         # get qc
         passed = llout['passed']
         # deal with hc failure
         if not passed:
             # log error: extraction of file failed
             eargs = [kind, infile.basename, func_name]
-            WLOG(params, 'error', TextEntry('09-016-00003', args=eargs))
+            WLOG(params, 'error', textentry('09-016-00003', args=eargs))
 
         # loop around fibers
         for fiber in fiber_types:
             # log that we are reading file
             wargs = [e2ds_files[fiber]]
-            WLOG(params, '', TextEntry('40-016-00023', args=wargs))
+            WLOG(params, '', textentry('40-016-00023', args=wargs))
             # construct output key
             outkey = '{0}_{1}'.format(extract_type, fiber)
             # copy file to dictionary
@@ -304,7 +303,7 @@ def extract_files(params, recipe, infile, outfile, always_extract,
             outfile = e2ds_files[fiber]
             # log that we are reading file
             wargs = [outfile.filename]
-            WLOG(params, '', TextEntry('40-016-00021', args=wargs))
+            WLOG(params, '', textentry('40-016-00021', args=wargs))
             # read file header and push into outputs
             outfile.read_file()
             # copy file to dictionary

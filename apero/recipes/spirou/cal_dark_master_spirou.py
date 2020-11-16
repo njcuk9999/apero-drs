@@ -35,8 +35,7 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 
 
 # =============================================================================
@@ -106,7 +105,7 @@ def __main__(recipe, params):
     # check file type
     for filetype in filetypes:
         if filetype not in allowedtypes:
-            emsg = TextEntry('01-001-00020', args=[filetype, mainname])
+            emsg = textentry('01-001-00020', args=[filetype, mainname])
             for allowedtype in allowedtypes:
                 emsg += '\n\t - "{0}"'.format(allowedtype)
             WLOG(params, 'error', emsg)
@@ -121,7 +120,7 @@ def __main__(recipe, params):
     # deal with no files found
     if len(filenames) == 0:
         eargs = [params['INPATH']]
-        WLOG(params, 'error', TextEntry('09-011-00005', args=eargs))
+        WLOG(params, 'error', textentry('09-011-00005', args=eargs))
 
     # ----------------------------------------------------------------------
     # Get all dark file properties

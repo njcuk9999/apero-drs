@@ -55,7 +55,7 @@ FitsHeader = drs_file.FitsHeader
 # get file types
 DrsInputFile = drs_file.DrsInputFile
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
+textentry = lang.textentry
 # define drs files
 DrsFileTypes = Union[drs_file.DrsInputFile, drs_file.DrsFitsFile,
                      drs_file.DrsNpyFile]
@@ -146,14 +146,14 @@ class DatabaseManager:
             except Exception as _:
                 # log error: Directory {0} invalid for database: {1}
                 eargs = [dirname, self.name, func_name]
-                emsg = TextEntry('00-002-00016', args=eargs)
+                emsg = textentry('00-002-00016', args=eargs)
                 WLOG(self.params, 'error', emsg)
                 return
             # check for directory
             if not dirname.exists() and check:
                 # log error: Directory {0} does not exist (database = {1})
                 eargs = [dirname, self.name, func_name]
-                emsg = TextEntry('00-002-00017', args=eargs)
+                emsg = textentry('00-002-00017', args=eargs)
                 WLOG(self.params, 'error', emsg)
                 return
             # -----------------------------------------------------------------
@@ -169,7 +169,7 @@ class DatabaseManager:
             if not abspath.exists() and check:
                 # log error: Directory {0} does not exist (database = {1})
                 eargs = [abspath, self.name, func_name]
-                emsg = TextEntry('00-002-00018', args=eargs)
+                emsg = textentry('00-002-00018', args=eargs)
                 WLOG(self.params, 'error', emsg)
                 return
             # set path
@@ -203,7 +203,7 @@ class DatabaseManager:
             return
         # log that we are loading database
         margs = [self.name, self.path]
-        WLOG(self.params, 'info', TextEntry('40-006-00005', args=margs))
+        WLOG(self.params, 'info', textentry('40-006-00005', args=margs))
         # load database
         self.database = drs_db.database_wrapper(self.kind, self.path)
 
@@ -319,7 +319,7 @@ class CalibrationDatabase(DatabaseManager):
             if not self.params['INPUTS']['DATABASE']:
                 # Log that we are not adding file due to user input
                 wargs = [dbkey, drsfile.filename]
-                WLOG(self.params, 'info', TextEntry('40-001-00024', args=wargs))
+                WLOG(self.params, 'info', textentry('40-001-00024', args=wargs))
                 # return here
                 return
         # ------------------------------------------------------------------
@@ -511,7 +511,7 @@ class CalibrationDatabase(DatabaseManager):
             if timemode not in ['closest', 'older', 'newer']:
                 # log error: Time mode invalid for Calibration database.
                 eargs = [timemode, ' or '.join(['closest', 'older', 'newer'])]
-                emsg = TextEntry('00-002-00021', args=eargs)
+                emsg = textentry('00-002-00021', args=eargs)
                 WLOG(self.params, 'error', emsg)
         # ---------------------------------------------------------------------
         # do sql query
@@ -545,7 +545,7 @@ class CalibrationDatabase(DatabaseManager):
                     infile = 'File[Time={0}]'.format(filetime.iso)
             # log error: No entries found in {0} database for key='{1}
             eargs = [self.name, key, ', '.join(keys), infile, func_name]
-            WLOG(self.params, 'error', TextEntry('00-002-00015', args=eargs))
+            WLOG(self.params, 'error', textentry('00-002-00015', args=eargs))
         # make all files absolute paths
         if isinstance(filenames, str):
             return Path(self.filedir).joinpath(filenames).absolute()
@@ -659,7 +659,7 @@ class TelluricDatabase(DatabaseManager):
             if not self.params['INPUTS']['DATABASE']:
                 # Log that we are not adding file due to user input
                 wargs = [dbkey, drsfile.filename]
-                WLOG(self.params, 'info', TextEntry('40-001-00024', args=wargs))
+                WLOG(self.params, 'info', textentry('40-001-00024', args=wargs))
                 # return here
                 return
         # ------------------------------------------------------------------
@@ -897,7 +897,7 @@ class TelluricDatabase(DatabaseManager):
             if timemode not in ['closest', 'older', 'newer']:
                 # log error: Time mode invalid for Calibration database.
                 eargs = [timemode, ' or '.join(['closest', 'older', 'newer'])]
-                emsg = TextEntry('00-002-00021', args=eargs)
+                emsg = textentry('00-002-00021', args=eargs)
                 WLOG(self.params, 'error', emsg)
         # ---------------------------------------------------------------------
         # do sql query
@@ -934,7 +934,7 @@ class TelluricDatabase(DatabaseManager):
                     infile = 'File[Time={0}]'.format(filetime.iso)
             # log error: No entries found in {0} database for key='{1}
             eargs = [self.name, key, ', '.join(keys), infile, func_name]
-            WLOG(self.params, 'error', TextEntry('00-002-00015', args=eargs))
+            WLOG(self.params, 'error', textentry('00-002-00015', args=eargs))
         # make all files absolute paths
         if isinstance(filenames, str):
             return Path(self.filedir).joinpath(filenames).absolute()
@@ -971,7 +971,7 @@ def _get_dbkey(params: ParamDict, drsfile: DrsFileTypes, dbmname: str) -> str:
         return drsfile.get_dbkey()
     else:
         eargs = [drsfile.name, dbmname, func_name]
-        WLOG(params, 'error', TextEntry('00-008-00012', args=eargs))
+        WLOG(params, 'error', textentry('00-008-00012', args=eargs))
         return 'None'
 
 
@@ -994,11 +994,11 @@ def _get_dbname(params: ParamDict, drsfile: DrsFileTypes, dbmname: str) -> bool:
         if dbname != dbmname.upper():
             eargs = [drsfile.name, dbname, dbmname.upper(), drsfile.filename,
                      func_name]
-            WLOG(params, 'error', TextEntry('00-002-00019', args=eargs))
+            WLOG(params, 'error', textentry('00-002-00019', args=eargs))
             return False
     else:
         eargs = [drsfile.name, dbmname, func_name]
-        WLOG(params, 'error', TextEntry('00-008-00012', args=eargs))
+        WLOG(params, 'error', textentry('00-008-00012', args=eargs))
         return False
     # if we are here return True --> success
     return True
@@ -1040,7 +1040,7 @@ def _get_hkey(params: ParamDict, pkey: str,
             value = dtype(value)
         except Exception as e:
             eargs = [type(e), str(e), func_name]
-            WLOG(params, 'error', TextEntry('00-000-00002', args=eargs))
+            WLOG(params, 'error', textentry('00-000-00002', args=eargs))
     # return fiber
     return value
 
@@ -1093,13 +1093,13 @@ def _copy_db_file(params: ParamDict, drsfile: DrsFileTypes,
         # log if verbose
         if verbose:
             margs = [dbmname, outpath]
-            WLOG(params, '', TextEntry('40-006-00004', args=margs))
+            WLOG(params, '', textentry('40-006-00004', args=margs))
         # copy file using shutil (should be thread safe)
         shutil.copyfile(inpath, outpath)
     except Exception as e:
         # log exception:
         eargs = [dbmname, inpath, outpath, type(e), e, func_name]
-        WLOG(params, 'error', TextEntry('00-002-00014', args=eargs))
+        WLOG(params, 'error', textentry('00-002-00014', args=eargs))
 
 
 HeaderType = Union[DrsHeader, FitsHeader, None]
@@ -1139,7 +1139,7 @@ def _get_hdict(params: ParamDict, dbname: str, drsfile: DrsFileTypes = None,
         header = drsfile.get_header()
     else:
         eargs = [dbname, drsfile.name, func_name]
-        WLOG(params, 'error', TextEntry('00-001-00027', args=eargs))
+        WLOG(params, 'error', textentry('00-001-00027', args=eargs))
         hdict, header = None, None
     return hdict, header
 
@@ -1170,7 +1170,7 @@ def _get_time(params: ParamDict, dbname: str,
         return t
     else:
         eargs = [dbname, func_name]
-        WLOG(params, 'error', TextEntry('00-001-00039', args=eargs))
+        WLOG(params, 'error', textentry('00-001-00039', args=eargs))
 
 
 # =============================================================================
@@ -1290,7 +1290,7 @@ class IndexDatabase(DatabaseManager):
                 except Exception as _:
                     wargs = [self.name, hkey, hkeys[hkey],
                              rtypes[h_it], func_name]
-                    wmsg = TextEntry('10-002-00003', args=wargs)
+                    wmsg = textentry('10-002-00003', args=wargs)
                     WLOG(self.params, 'warning', wmsg)
                     hvalues.append('None')
             else:
@@ -1404,7 +1404,7 @@ class IndexDatabase(DatabaseManager):
                     except Exception as _:
                         wargs = [self.name, hkey, hkeys[hkey],
                                  rtypes[h_it], func_name]
-                        wmsg = TextEntry('10-002-00003', args=wargs)
+                        wmsg = textentry('10-002-00003', args=wargs)
                         WLOG(self.params, 'warning', wmsg)
         # ------------------------------------------------------------------
         # add the number of entries to get
@@ -1744,7 +1744,7 @@ def _deal_with_filename(params: ParamDict, name: str, kind: str,
             filename = filename.absolute()
         else:
             eargs = [name, filename, func_name]
-            emsg = TextEntry('00-002-00023', args=eargs)
+            emsg = textentry('00-002-00023', args=eargs)
             WLOG(params, 'error', emsg)
             raise DrsCodedException('00-002-00023', targs=eargs,
                                     func_name=func_name)

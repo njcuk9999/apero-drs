@@ -43,8 +43,7 @@ display_func = drs_log.display_func
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 
@@ -69,7 +68,7 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
     # get the objname
     objname = reffile.get_hkey('KW_OBJNAME', dtype=str)
     # log that we are constructing the cubes
-    WLOG(params, 'info', TextEntry('40-019-00027'))
+    WLOG(params, 'info', textentry('40-019-00027'))
     # ----------------------------------------------------------------------
     # Compile a median SNR for rejection of bad files
     # ----------------------------------------------------------------------
@@ -149,14 +148,14 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
         # log progress
         wargs = [reffile.name, it + 1, len(vfilenames)]
         WLOG(params, '', params['DRS_HEADER'])
-        WLOG(params, '', TextEntry('40-019-00028', args=wargs))
+        WLOG(params, '', textentry('40-019-00028', args=wargs))
         WLOG(params, '', params['DRS_HEADER'])
         # ------------------------------------------------------------------
         # load the data for this iteration
         # ------------------------------------------------------------------
         # log progres: reading file: {0}
         wargs = [infile.filename]
-        WLOG(params, '', TextEntry('40-019-00033', args=wargs))
+        WLOG(params, '', textentry('40-019-00033', args=wargs))
         # read data
         infile.read_file()
         # get image and set up shifted image
@@ -174,7 +173,7 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
         # deal with bad berv (nan or None)
         if berv in [np.nan, None] or not isinstance(berv, (int, float)):
             eargs = [berv, func_name]
-            WLOG(params, 'error', TextEntry('09-016-00004', args=eargs))
+            WLOG(params, 'error', textentry('09-016-00004', args=eargs))
         # ------------------------------------------------------------------
         # load wavelength solution for this fiber
         # ------------------------------------------------------------------
@@ -219,7 +218,7 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
         if it in bad_snr_objects:
             # log skipping
             wargs = [it + 1, len(vfilenames), snr_order, snr_all[it], snr_thres]
-            WLOG(params, 'warning', TextEntry('10-019-00006', args=wargs))
+            WLOG(params, 'warning', textentry('10-019-00006', args=wargs))
             # skip
             continue
 
@@ -252,7 +251,7 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
     # deal with having no files
     if len(b_cols['RowNum']) == 0:
         # log that no files were found
-        WLOG(params, 'warning', TextEntry('10-019-00007', args=[objname]))
+        WLOG(params, 'warning', textentry('10-019-00007', args=[objname]))
         # set big_cube_med to None
         median = None
     else:
@@ -262,7 +261,7 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
         for iteration in range(e2ds_iterations):
             wargs = [iteration + 1, e2ds_iterations]
             # print which iteration we are on
-            WLOG(params, '', TextEntry('40-019-00034', args=wargs))
+            WLOG(params, '', textentry('40-019-00034', args=wargs))
             # loop each order
             for order_num in range(reffile.shape[0]):
                 # loop through files and normalise by cube median
@@ -312,7 +311,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
                            kwargs, func_name)
 
     # log that we are constructing the cubes
-    WLOG(params, 'info', TextEntry('40-019-00027'))
+    WLOG(params, 'info', textentry('40-019-00027'))
 
     # read first file as reference
     reffile.set_filename(filenames[0])
@@ -396,14 +395,14 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
         # log progress
         wargs = [reffile.name, it + 1, len(vfilenames)]
         WLOG(params, '', params['DRS_HEADER'])
-        WLOG(params, '', TextEntry('40-019-00028', args=wargs))
+        WLOG(params, '', textentry('40-019-00028', args=wargs))
         WLOG(params, '', params['DRS_HEADER'])
         # ------------------------------------------------------------------
         # load the data for this iteration
         # ------------------------------------------------------------------
         # log progres: reading file: {0}
         wargs = [infile.filename]
-        WLOG(params, '', TextEntry('40-019-00033', args=wargs))
+        WLOG(params, '', textentry('40-019-00033', args=wargs))
         # read data
         infile.read_file()
         # get image and set up shifted image
@@ -424,7 +423,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
         # deal with bad berv (nan or None)
         if berv in [np.nan, None] or not isinstance(berv, (int, float)):
             eargs = [berv, func_name]
-            WLOG(params, 'error', TextEntry('09-016-00004', args=eargs))
+            WLOG(params, 'error', textentry('09-016-00004', args=eargs))
         # ------------------------------------------------------------------
         # append to table lists
         # ------------------------------------------------------------------
@@ -460,7 +459,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
         if it in bad_snr_objects:
             # log skipping
             wargs = [it + 1, len(vfilenames), snr_order, snr_all[it], snr_thres]
-            WLOG(params, 'warning', TextEntry('10-019-00006', args=wargs))
+            WLOG(params, 'warning', textentry('10-019-00006', args=wargs))
             # skip
             continue
         # ------------------------------------------------------------------
@@ -494,7 +493,7 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
     for iteration in range(s1d_iterations):
         wargs = [iteration + 1, s1d_iterations]
         # print which iteration we are on
-        WLOG(params, '', TextEntry('40-019-00035', args=wargs))
+        WLOG(params, '', textentry('40-019-00035', args=wargs))
         # loop through files and normalise by cube median
         for it in range(len(vfilenames)):
             # get the new ratio
@@ -549,11 +548,11 @@ def mk_template_qc(params):
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
-        WLOG(params, 'info', TextEntry('40-005-10001'))
+        WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
-            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+            WLOG(params, 'warning', textentry('40-005-10002') + farg)
         passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
@@ -625,7 +624,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # set data
     template_file.data = cprops['MEDIAN']
     # log that we are saving s1d table
-    WLOG(params, '', TextEntry('40-019-00029', args=[template_file.filename]))
+    WLOG(params, '', textentry('40-019-00029', args=[template_file.filename]))
     # write multi
     template_file.write_multi(data_list=[bigtable], datatype_list=['table'],
                               kind=recipe.outputtype,
@@ -647,7 +646,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # set data
     bigcubefile.data = cprops['BIG_CUBE']
     # log that we are saving s1d table
-    WLOG(params, '', TextEntry('40-019-00030', args=[bigcubefile.filename]))
+    WLOG(params, '', textentry('40-019-00030', args=[bigcubefile.filename]))
     # write multi
     bigcubefile.write_multi(data_list=[bigtable], datatype_list=['table'],
                             kind=recipe.outputtype, runstring=recipe.runstring)
@@ -668,7 +667,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # set data
     bigcubefile0.data = cprops['BIG_CUBE0']
     # log that we are saving s1d table
-    WLOG(params, '', TextEntry('40-019-00031', args=[bigcubefile0.filename]))
+    WLOG(params, '', textentry('40-019-00031', args=[bigcubefile0.filename]))
     # write multi
     bigcubefile0.write_multi(data_list=[bigtable], datatype_list=['table'],
                              kind=recipe.outputtype, runstring=recipe.runstring)
@@ -733,7 +732,7 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     # set data
     template_file.data = s1dtable
     # log that we are saving s1d table
-    WLOG(params, '', TextEntry('40-019-00036', args=[template_file.filename]))
+    WLOG(params, '', textentry('40-019-00036', args=[template_file.filename]))
     # write multi
     template_file.write_multi(data_list=[bigtable], datatype_list=['table'],
                               kind=recipe.outputtype,
@@ -755,7 +754,7 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     # set data
     bigcubefile.data = props['S1D_BIG_CUBE']
     # log that we are saving s1d table
-    WLOG(params, '', TextEntry('40-019-00037', args=[bigcubefile.filename]))
+    WLOG(params, '', textentry('40-019-00037', args=[bigcubefile.filename]))
     # write multi
     bigcubefile.write_multi(data_list=[bigtable], datatype_list=['table'],
                             kind=recipe.outputtype, runstring=recipe.runstring)

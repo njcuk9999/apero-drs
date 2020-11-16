@@ -38,9 +38,6 @@ __release__ = base.__release__
 ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
-# Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
 # get recipes
 CAL_EXTRACT = rd.cal_extract
 MK_TELLU = rd.obj_mk_tellu

@@ -57,8 +57,7 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 
 
 # =============================================================================
@@ -144,7 +143,7 @@ def __main__(recipe, params):
     # deal with no files being present
     if len(object_filenames) == 0:
         wargs = [objname, filetype]
-        WLOG(params, 'warning', TextEntry('10-019-00005', args=wargs))
+        WLOG(params, 'warning', textentry('10-019-00005', args=wargs))
         # dummy pass of qc --> pass
         qc_params = [['None'], ['None'], ['None'], [1]]
         # update recipe log
@@ -206,7 +205,7 @@ def __main__(recipe, params):
     # get objects that match this object name
     for s1d_filetype in infile.s1d:
         # log progress
-        WLOG(params, 'info', TextEntry('40-019-00038', args=[s1d_filetype]))
+        WLOG(params, 'info', textentry('40-019-00038', args=[s1d_filetype]))
         # Get filetype definition
         dkwargs = dict(instrument=params['INSTRUMENT'], kind='red')
         s1d_inst = drs_startup.get_file_definition(s1d_filetype, **dkwargs)

@@ -44,8 +44,7 @@ CalibDatabase = drs_database.CalibrationDatabase
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 # get display func
@@ -79,7 +78,7 @@ def check_files(params, infile):
     # ----------------------------------------------------------------------
     # log checking file info
     wargs = [dprtype, objname]
-    WLOG(params, 'info', TextEntry('40-016-00032', args=wargs))
+    WLOG(params, 'info', textentry('40-016-00032', args=wargs))
     # ----------------------------------------------------------------------
     # storage of outputs
     skip = False
@@ -169,7 +168,7 @@ def calibrate_ppfile(params, recipe, infile, database=None, **kwargs):
     nfiles = infile.numfiles
 
     # log that we are calibrating a file
-    WLOG(params, 'info', TextEntry('40-014-00038', args=[infile.filename]))
+    WLOG(params, 'info', textentry('40-014-00038', args=[infile.filename]))
 
     # ----------------------------------------------------------------------
     # image 0 remove pixels that are out of bounds
@@ -227,7 +226,7 @@ def calibrate_ppfile(params, recipe, infile, database=None, **kwargs):
         image2 = drs_image.resize(params, image2, **sargs)
         # print that image has been resize
         wargs = [dprtype, image1.shape, image2.shape]
-        WLOG(params, '', TextEntry('40-014-00013', args=wargs))
+        WLOG(params, '', textentry('40-014-00013', args=wargs))
 
     # ----------------------------------------------------------------------
     # image 3 is corrected for bad pixels
@@ -261,7 +260,7 @@ def calibrate_ppfile(params, recipe, infile, database=None, **kwargs):
     # ----------------------------------------------------------------------
     if n_percentile is not None:
         # log that we are normalising
-        WLOG(params, '', TextEntry('40-014-00014', args=[n_percentile]))
+        WLOG(params, '', textentry('40-014-00014', args=[n_percentile]))
         # normalise by nanpercentile
         image4 = image4 / np.nanpercentile(image4, n_percentile)
 
@@ -270,7 +269,7 @@ def calibrate_ppfile(params, recipe, infile, database=None, **kwargs):
     # ----------------------------------------------------------------------
     if cleanhotpix:
         # log progress
-        WLOG(params, '', TextEntry('40-014-00012'))
+        WLOG(params, '', textentry('40-014-00012'))
         # load the bad pix file
         badpfile = load_calib_file(params, badkey, header, filename=badpixfile,
                                    userinputkey='BADPIXFILE', database=calibdbm,
@@ -575,11 +574,11 @@ def check_fp_files(params, fpfiles):
         else:
             # log a warning that file removed
             wargs = [fpfile.filename]
-            WLOG(params, 'warning', TextEntry('10-001-00009', args=wargs))
+            WLOG(params, 'warning', textentry('10-001-00009', args=wargs))
     # deal with having no files left
     if len(newfpfiles) == 0:
         # log: No FP files passed 2D quality control. \n\t Function = {0}
-        WLOG(params, 'error', TextEntry('09-000-00010', args=[func_name]))
+        WLOG(params, 'error', textentry('09-000-00010', args=[func_name]))
     # return new fp files
     return newfpfiles
 

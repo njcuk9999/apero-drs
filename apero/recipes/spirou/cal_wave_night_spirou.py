@@ -39,8 +39,7 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # define extraction code to use
 EXTRACT_NAME = 'cal_extract_spirou.py'
 
@@ -143,7 +142,7 @@ def __main__(recipe, params):
     # warn user if lengths differ
     if len(hcfiles) != len(fpfiles):
         wargs = [len(hcfiles), len(fpfiles)]
-        WLOG(params, 'error', TextEntry('10-017-00002', args=wargs))
+        WLOG(params, 'error', textentry('10-017-00002', args=wargs))
     # get the number of files
     num_files = len(hcfiles)
     # get the fiber types from a list parameter (or from inputs)

@@ -35,7 +35,7 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
+textentry = lang.textentry
 # Define master prefix
 MASTER_PREFIX = 'MASTER_'
 
@@ -109,7 +109,7 @@ def __main__(recipe, params):
         dbmanager.load_db()
     else:
         eargs = [db_type]
-        WLOG(params, 'error', TextEntry('09-505-00001', args=[db_type]))
+        WLOG(params, 'error', textentry('09-505-00001', args=[db_type]))
         dbmanager = None
         db_path = None
         name = None
@@ -156,11 +156,11 @@ def __main__(recipe, params):
     for it, db_file in enumerate(db_files):
         # log progress
         wargs = [it + 1, len(db_files), os.path.basename(db_file)]
-        WLOG(params, 'info', TextEntry('40-505-00001', args=wargs))
+        WLOG(params, 'info', textentry('40-505-00001', args=wargs))
         # ------------------------------------------------------------------
         if not hasattr(filemod.get(), file_set_name):
             eargs = [name, file_set_name, filemod.get(), mainname]
-            WLOG(params, 'error', TextEntry('00-505-00001', args=eargs))
+            WLOG(params, 'error', textentry('00-505-00001', args=eargs))
             file_set = None
         else:
             file_set = getattr(filemod.get(), file_set_name)
@@ -169,7 +169,7 @@ def __main__(recipe, params):
         if os.path.basename(db_file).startswith(MASTER_PREFIX):
             # log skipping
             wargs = [MASTER_PREFIX]
-            WLOG(params, 'info', TextEntry('40-505-00003', args=wargs))
+            WLOG(params, 'info', textentry('40-505-00003', args=wargs))
             # skip
             continue
         # ------------------------------------------------------------------
@@ -184,7 +184,7 @@ def __main__(recipe, params):
         # append to cdb_data
         if found:
             # log that we found i
-            WLOG(params, '', TextEntry('40-505-00002', args=[kind]))
+            WLOG(params, '', textentry('40-505-00002', args=[kind]))
             # --------------------------------------------------------------
             # add the files back to the database
             if db_type == 'calibration':
@@ -197,7 +197,7 @@ def __main__(recipe, params):
         del kind, db_out_file
 
     # print note about masters
-    WLOG(params, 'info', TextEntry('40-505-00004'))
+    WLOG(params, 'info', textentry('40-505-00004'))
     _ = input('\t')
 
     # ----------------------------------------------------------------------

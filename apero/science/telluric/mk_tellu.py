@@ -36,8 +36,7 @@ display_func = drs_log.display_func
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 
@@ -65,7 +64,7 @@ def calculate_tellu_res_absorption(params, recipe, image, template,
     # deal with bad berv (nan or None)
     if berv in [np.nan, None] or not isinstance(berv, (int, float)):
         eargs = [berv, func_name]
-        WLOG(params, 'error', TextEntry('09-016-00004', args=eargs))
+        WLOG(params, 'error', textentry('09-016-00004', args=eargs))
     # get airmass from header
     airmass = header[params['KW_AIRMASS'][0]]
     # get master wave map
@@ -299,11 +298,11 @@ def mk_tellu_quality_control(params, tprops, infile, tpreprops, **kwargs):
     # finally log the failed messages and set QC = 1 if we pass the
     #     quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
-        WLOG(params, 'info', TextEntry('40-005-10001'))
+        WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
-            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+            WLOG(params, 'warning', textentry('40-005-10002') + farg)
         passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
@@ -431,7 +430,7 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     transfile.data = tprops['TRANMISSION_MAP']
     # ------------------------------------------------------------------
     # log that we are saving rotated image
-    WLOG(params, '', TextEntry('40-019-00011', args=[transfile.filename]))
+    WLOG(params, '', textentry('40-019-00011', args=[transfile.filename]))
     # write image to file
     transfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)

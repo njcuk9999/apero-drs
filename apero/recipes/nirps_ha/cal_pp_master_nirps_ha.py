@@ -35,7 +35,7 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
+textentry = lang.textentry
 # Raw prefix
 RAW_PREFIX = file_definitions.raw_prefix
 
@@ -110,7 +110,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # check whether filetype is in allowed types
         if filetype not in allowedtypes:
-            emsg = TextEntry('01-001-00020', args=[filetype, mainname])
+            emsg = textentry('01-001-00020', args=[filetype, mainname])
             for allowedtype in allowedtypes:
                 emsg += '\n\t - "{0}"'.format(allowedtype)
             WLOG(params, 'error', emsg)
@@ -124,7 +124,7 @@ def __main__(recipe, params):
         # deal with defintion not found
         if rawfile is None:
             eargs = [filetype, recipe.name, mainname]
-            WLOG(params, 'error', TextEntry('09-010-00001', args=eargs))
+            WLOG(params, 'error', textentry('09-010-00001', args=eargs))
         # ------------------------------------------------------------------
         # get all "filetype" filenames
         files = drs_utils.find_files(params, kind='raw',
@@ -161,7 +161,7 @@ def __main__(recipe, params):
         infile = drs_file.fix_header(params, recipe, infile)
         # ------------------------------------------------------------------
         # print progress
-        WLOG(params, '', TextEntry('40-010-00014', args=[infile.name]))
+        WLOG(params, '', textentry('40-010-00014', args=[infile.name]))
         # make order mask
         mask, props = preprocessing.nirps_order_mask(params, infile.get_data())
         # convert to integers
@@ -191,7 +191,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # log that we are saving rotated image
         wargs = [outfile.filename]
-        WLOG(params, '', TextEntry('40-010-00015', args=wargs))
+        WLOG(params, '', textentry('40-010-00015', args=wargs))
         # write image to file
         outfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
         # add to output files (for indexing)

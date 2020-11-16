@@ -41,12 +41,8 @@ __release__ = base.__release__
 ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
-# Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
-
-INSTRUMENTS = ['SPIROU', 'NIRPS']
-
+# get instrument names
+INSTRUMENTS = base.INSTRUMENTS
 
 
 # =============================================================================

@@ -16,7 +16,6 @@ import copy
 import numpy as np
 import os
 import shutil
-import sys
 from typing import Any, List, Tuple, Type, Union
 from pathlib import Path
 
@@ -44,15 +43,9 @@ __release__ = base.__release__
 # get the Drs Exceptions
 ArgumentError = drs_exceptions.ArgumentError
 ArgumentWarning = drs_exceptions.ArgumentWarning
-DRSError = drs_exceptions.DrsError
-DRSWarning = drs_exceptions.DrsWarning
-TextError = drs_exceptions.TextError
-TextWarning = drs_exceptions.TextWarning
 ConfigError = drs_exceptions.ConfigError
 ConfigWarning = drs_exceptions.ConfigWarning
 DrsCodedException = drs_exceptions.DrsCodedException
-# get the logger
-BLOG = drs_exceptions.basiclogger
 # relative folder cache
 REL_CACHE = dict()
 CONFIG_CACHE = dict()
@@ -69,10 +62,7 @@ USCRIPTS = base.USCRIPTS
 PSEUDO_CONST_FILE = base.PSEUDO_CONST_FILE
 PSEUDO_CONST_CLASS = base.PSEUDO_CONST_CLASS
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
-HelpEntry = lang.core.drs_lang_text.HelpEntry
-HelpText = lang.core.drs_lang_text.HelpDict
+textentry = lang.textentry
 # get display func
 display_func = drs_misc.display_func
 
@@ -81,9 +71,8 @@ display_func = drs_misc.display_func
 # =============================================================================
 Const, Keyword = constant_functions.Const, constant_functions.Keyword
 
-Exceptions = Union[ArgumentError, ArgumentWarning, DRSError, DRSWarning,
-                   TextError, TextWarning, ConfigError, ConfigWarning,
-                   DrsCodedException]
+Exceptions = Union[ArgumentError, ArgumentWarning,
+                   ConfigError, ConfigWarning, DrsCodedException]
 
 ModLoads = Tuple[List[str], List[Any], List[str], List[Union[Const, Keyword]]]
 
@@ -1156,7 +1145,7 @@ class PCheck:
         # deal with key being None
         if key is None and name is None:
             if wlog is not None:
-                wlog(params, 'error', TextEntry('00-003-00004'))
+                wlog(params, 'error', textentry('00-003-00004'))
             else:
                 raise DrsCodedException('00-003-00004', level='error',
                                         func_name=func_name)
@@ -1196,7 +1185,7 @@ class PCheck:
         elif not_in_paramdict and not_in_rkwargs:
             eargs = [key, func]
             if wlog is not None:
-                wlog(params, 'error', TextEntry('00-003-00001', args=eargs))
+                wlog(params, 'error', textentry('00-003-00001', args=eargs))
             else:
                 raise DrsCodedException('00-003-00001', level='error',
                                         targs=eargs, func_name=func_name)
@@ -1456,8 +1445,8 @@ def print_error(error: Exceptions):
     Print an exceptions message/level etc
 
     Exceptions allowed are:
-                   ArgumentError, ArgumentWarning, DRSError, DRSWarning,
-                   TextError, TextWarning, ConfigError, ConfigWarning,
+                   ArgumentError, ArgumentWarning,
+                   ConfigError, ConfigWarning,
                    drs_exceptions.DrsCodedException
 
     :param error: one of the drs_exceptions classes

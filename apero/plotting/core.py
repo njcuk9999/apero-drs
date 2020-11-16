@@ -43,8 +43,7 @@ display_func = drs_log.display_func
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 # get plotting definitions
@@ -167,16 +166,16 @@ class Plotter:
         if self.recipe is None:
             self.location = './'
         elif self.location is None:
-            WLOG(self.params, 'error', TextEntry('00-100-00003'))
+            WLOG(self.params, 'error', textentry('00-100-00003'))
         # ------------------------------------------------------------------
         # deal with no plot needed
         if self.plotoption == -1:
-            WLOG(self.params, 'debug', TextEntry('09-100-00002'))
+            WLOG(self.params, 'debug', textentry('09-100-00002'))
             return 0
         # ------------------------------------------------------------------
         # deal with no plot needed
         if (self.plotoption == 0) and (name in self.debug_graphs):
-            WLOG(self.params, 'debug', TextEntry('09-100-00002'))
+            WLOG(self.params, 'debug', textentry('09-100-00002'))
             return 0
         # ------------------------------------------------------------------
         # add fiber to keyword arguments
@@ -196,7 +195,7 @@ class Plotter:
                 pass
             # if it is check whether it is set to False
             elif not self.plot_switches[name]:
-                dmsg = TextEntry('09-100-00003', args=[name.upper()])
+                dmsg = textentry('09-100-00003', args=[name.upper()])
                 WLOG(self.params, 'debug', dmsg)
                 # if it is check whether it is set to False
                 return 0
@@ -213,17 +212,17 @@ class Plotter:
         # must be in plot lists (unless recipe is not defined)
         if self.recipe is None:
             # log: plotting debug plot
-            WLOG(self.params, '', TextEntry('40-100-00007', args=[name]))
+            WLOG(self.params, '', textentry('40-100-00007', args=[name]))
         elif name in self.recipe.debug_plots:
             # log: plotting debug plot
-            WLOG(self.params, '', TextEntry('40-100-00002', args=[name]))
+            WLOG(self.params, '', textentry('40-100-00002', args=[name]))
         elif name in self.recipe.summary_plots:
             # log: plotting summary plot
-            WLOG(self.params, '', TextEntry('40-100-00003', args=[name]))
+            WLOG(self.params, '', textentry('40-100-00003', args=[name]))
         else:
             # else log an error
             eargs = [name, self.recipe.name]
-            WLOG(self.params, 'error', TextEntry('00-100-00002', args=eargs))
+            WLOG(self.params, 'error', textentry('00-100-00002', args=eargs))
         # ------------------------------------------------------------------
         # new instance of the plot object
         plot_inst = plot_obj.copy()
@@ -398,9 +397,9 @@ class Plotter:
             return
         # deal with closing loop plots
         if loop:
-            WLOG(self.params, 'info', TextEntry('40-100-00006'), printonly=True)
+            WLOG(self.params, 'info', textentry('40-100-00006'), printonly=True)
         # log message asking to close plots
-        WLOG(self.params, 'info', TextEntry('40-003-00003'), printonly=True)
+        WLOG(self.params, 'info', textentry('40-003-00003'), printonly=True)
         # deal with python 2 / python 3 input method
         if sys.version_info.major < 3:
             # note python 3 wont find this!
@@ -468,7 +467,7 @@ class Plotter:
             if self.params['SUMMARY_LATEX_PDF']:
                 try:
                     # log progress
-                    WLOG(self.params, 'info', TextEntry('40-100-00004'))
+                    WLOG(self.params, 'info', textentry('40-100-00004'))
                     # latex document
                     latexdoc = self.summary_latex(qc_params, stats, warnings)
                 except Exception as e:
@@ -477,14 +476,14 @@ class Plotter:
                         raise e
                     # log error as warning
                     wargs = [type(e), e, func_name]
-                    WLOG(self.params, 'warning', TextEntry('10-100-01001',
+                    WLOG(self.params, 'warning', textentry('10-100-01001',
                                                            args=wargs))
         # ------------------------------------------------------------------
         # summary html
         # ------------------------------------------------------------------
         try:
             # log progress
-            WLOG(self.params, 'info', TextEntry('40-100-00005'))
+            WLOG(self.params, 'info', textentry('40-100-00005'))
             # latex document
             htmldoc = self.summary_html(qc_params, stats, warnings)
         except Exception as e:
@@ -493,7 +492,7 @@ class Plotter:
                 raise e
             # log error as warning
             wargs = [type(e), e, func_name]
-            WLOG(self.params, 'warning', TextEntry('10-100-01002', args=wargs))
+            WLOG(self.params, 'warning', textentry('10-100-01002', args=wargs))
             # set latex doc to None
             htmldoc = None
         # ------------------------------------------------------------------
@@ -570,12 +569,12 @@ class Plotter:
                                   ['None', '']):
             doc.compile(logfile.replace('.log', '.latex'))
         else:
-            WLOG(self.params, '', TextEntry('40-100-00008'))
+            WLOG(self.params, '', textentry('40-100-00008'))
             return doc
         # check that pdf was created
         if not os.path.exists(doc.pdffilename):
             wargs = [doc.pdffilename]
-            WLOG(self.params, 'warning', TextEntry('10-100-01003', args=wargs))
+            WLOG(self.params, 'warning', textentry('10-100-01003', args=wargs))
         # return the doc
         return doc
 
@@ -927,7 +926,7 @@ class Plotter:
             # log error: Plotter error: graph name was not found in plotting
             #            definitions
             eargs = [name, func_name]
-            WLOG(self.params, 'error', TextEntry('00-100-00001', args=eargs))
+            WLOG(self.params, 'error', textentry('00-100-00001', args=eargs))
 
     def _get_plot_names(self):
         """
@@ -1008,11 +1007,11 @@ class Plotter:
         self.backend = matplotlib.get_backend()
         # debug log which backend used
         dargs = [self.backend]
-        WLOG(self.params, 'debug', TextEntry('09-100-00001', args=dargs))
+        WLOG(self.params, 'debug', textentry('09-100-00001', args=dargs))
         # ------------------------------------------------------------------
         # deal with still having MacOSX backend
         if self.backend == 'MacOSX':
-            WLOG(self.params, 'error', TextEntry('09-100-00001'))
+            WLOG(self.params, 'error', textentry('09-100-00001'))
 
 
 # =============================================================================

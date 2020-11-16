@@ -35,8 +35,7 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 
 
 # =============================================================================
@@ -123,7 +122,7 @@ def __main__(recipe, params):
     # warn user if lengths differ
     if len(flatfiles) != len(darkfiles):
         wargs = [len(flatfiles), len(darkfiles)]
-        WLOG(params, 'error', TextEntry('10-012-00001', args=wargs))
+        WLOG(params, 'error', textentry('10-012-00001', args=wargs))
         # get the number of files
         num_files = mp.nanmin([len(flatfiles), len(darkfiles)])
     else:
@@ -169,7 +168,7 @@ def __main__(recipe, params):
         # total number of bad pixels
         btotal = (mp.nansum(bad_pixel_map) / bad_pixel_map.size) * 100
         # log result
-        WLOG(params, '', TextEntry('40-012-00007', args=[btotal]))
+        WLOG(params, '', textentry('40-012-00007', args=[btotal]))
 
         # ------------------------------------------------------------------
         # Plots

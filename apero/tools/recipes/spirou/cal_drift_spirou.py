@@ -42,9 +42,7 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
-Help = lang.core.drs_lang_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
+textentry = lang.textentry
 # -----------------------------------------------------------------------------
 # set up recipe definitions (overwrites default one)
 RMOD = drs_dev.RecipeDefinition(instrument=__INSTRUMENT__)
@@ -180,7 +178,7 @@ def __main__(recipe, params):
         if not drs_text.null_text(params['INPUTS']['dprtype'], ['None', '']):
             dprtype = params['INPUTS']['dprtype']
     if dprtype not in params.listp('ALLOWED_FP_TYPES', dtype=str):
-        emsg = TextEntry('01-001-00020', args=[dprtype, mainname])
+        emsg = textentry('01-001-00020', args=[dprtype, mainname])
         for allowedtype in params.listp('ALLOWED_FP_TYPES', dtype=str):
             emsg += '\n\t - "{0}"'.format(allowedtype)
         WLOG(params, 'error', emsg)

@@ -36,10 +36,8 @@ Constants = constants.load(__INSTRUMENT__)
 ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
-# Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
-Help = lang.core.drs_lang_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
+# get text entry
+textentry = lang.textentry
 # -----------------------------------------------------------------------------
 # set up recipe definitions (overwrites default one)
 RMOD = drs_dev.RecipeDefinition(instrument=__INSTRUMENT__)
@@ -59,7 +57,7 @@ get_ext_fplines.set_arg(pos=0, **RMOD.mod.directory)
 get_ext_fplines.set_arg(name='files', dtype='files', pos='1+',
                         files=[FMOD.files.out_ext_e2ds,
                                FMOD.files.out_ext_e2dsff],
-                        helpstr=(Help['FILES_HELP'] +
+                        helpstr=(textentry('FILES_HELP') +
                                  'Currently allowed types: E2DS, E2DSFF'))
 get_ext_fplines.set_outputs(EXT_FPLINES=FMOD.files.out_ext_fplines)
 # add recipe to recipe definition

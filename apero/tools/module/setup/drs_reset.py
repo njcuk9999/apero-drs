@@ -9,7 +9,6 @@ Created on 2019-05-07 at 15:22
 
 @author: cook
 """
-import numpy as np
 import os
 import sys
 
@@ -35,8 +34,7 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # debug mode (test)
 DEBUG = False
 
@@ -61,14 +59,11 @@ def reset_confirmation(params, name, directory=None):
         if empty:
             return True
     # ----------------------------------------------------------------------
-    # get the text dict
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
-    # ----------------------------------------------------------------------
     # Ask if user wants to reset
     if name == 'log_fits':
-        WLOG(params, '', TextEntry('40-502-00011'), colour='yellow')
+        WLOG(params, '', textentry('40-502-00011'), colour='yellow')
     else:
-        WLOG(params, '', TextEntry('40-502-00001', args=[name]),
+        WLOG(params, '', textentry('40-502-00001', args=[name]),
              colour='yellow')
     if directory is not None:
         WLOG(params, '', '\t({0})'.format(directory), colour='yellow')
@@ -78,9 +73,9 @@ def reset_confirmation(params, name, directory=None):
     # user input
     if sys.version_info.major < 3:
         # noinspection PyUnresolvedReferences
-        uinput = raw_input(textdict['40-502-00002'].format(name))
+        uinput = raw_input(textentry('40-502-00002', args=name))
     else:
-        uinput = input(textdict['40-502-00002'].format(name))
+        uinput = input(textentry('40-502-00002', args=name))
     # line break
     print('\n')
     # ----------------------------------------------------------------------
@@ -93,7 +88,7 @@ def reset_confirmation(params, name, directory=None):
 
 def reset_tmp_folders(params, log=True):
     # log progress
-    WLOG(params, '', TextEntry('40-502-00003', args=['tmp']))
+    WLOG(params, '', textentry('40-502-00003', args=['tmp']))
     # remove files from reduced folder
     tmp_dir = params['DRS_DATA_WORKING']
     # loop around files and folders in calib_dir
@@ -105,7 +100,7 @@ def reset_tmp_folders(params, log=True):
 
 def reset_reduced_folders(params, log=True):
     # log progress
-    WLOG(params, '', TextEntry('40-502-00003', args=['reduced']))
+    WLOG(params, '', textentry('40-502-00003', args=['reduced']))
     # remove files from reduced folder
     red_dir = params['DRS_DATA_REDUC']
     # loop around files and folders in calib_dir
@@ -164,7 +159,7 @@ def reset_telludb(params, log=True):
 def reset_dbdir(params, name, db_dir, reset_path, log=True,
                 empty_first=True, relative_path=None):
     # log progress
-    WLOG(params, '', TextEntry('40-502-00003', args=[name]))
+    WLOG(params, '', textentry('40-502-00003', args=[name]))
     # loop around files and folders in calib_dir
     if empty_first:
         remove_all(params, db_dir, log)
@@ -187,14 +182,15 @@ def copy_default_db(params, name, db_dir, reset_path, log=True):
     # check that absfolder exists
     if not os.path.exists(reset_path):
         eargs = [name, reset_path]
-        WLOG(params, 'error', TextEntry('00-502-00001', args=eargs))
+        WLOG(params, 'error', textentry('00-502-00001', args=eargs))
     # -------------------------------------------------------------------------
     # copy required calibDB files to DRS_CALIB_DB path
     drs_path.copytree(reset_path, db_dir, log=log)
 
+
 def reset_log(params, log=True):
     # log progress
-    WLOG(params, '', TextEntry('40-502-00003', args=['log']))
+    WLOG(params, '', textentry('40-502-00003', args=['log']))
     # remove files from reduced folder
     log_dir = params['DRS_DATA_MSG']
     # get current log file (must be skipped)
@@ -208,7 +204,7 @@ def reset_log(params, log=True):
 
 def reset_plot(params, log=True):
     # log progress
-    WLOG(params, '', TextEntry('40-502-00003', args=['plot']))
+    WLOG(params, '', textentry('40-502-00003', args=['plot']))
     # remove files from reduced folder
     plot_dir = params['DRS_DATA_PLOT']
     # loop around files and folders in reduced dir
@@ -251,31 +247,29 @@ def reset_assets(params, log=True):
     # create params database
     # manage_databases.create_params_database(pconst, databases)
     # create language database
-    manage_databases.create_lang_database(pconst, databases)
+    manage_databases.create_lang_database(databases)
 
 
 def remove_all(params, path, log=True, skipfiles=None):
-    # get the text dict
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # deal with no skipfiles being defined
     if skipfiles is None:
         skipfiles = []
     # Check that directory exists
     if not os.path.exists(path):
         # display error and ask to create directory
-        WLOG(params, 'warning', TextEntry('40-502-00005', args=[path]))
+        WLOG(params, 'warning', textentry('40-502-00005', args=[path]))
         # user input
         if sys.version_info.major < 3:
             # noinspection PyUnresolvedReferences
-            uinput = raw_input(textdict['40-502-00006'].format(path))
+            uinput = raw_input(textentry('40-502-00006', args=path))
         else:
-            uinput = input(textdict['40-502-00006'].format(path))
+            uinput = input(textentry('40-502-00006', args=path))
         # check user input
         if 'Y' in uinput.upper():
             # make directories
             os.makedirs(path)
         else:
-            WLOG(params, 'error', TextEntry('00-502-00002', args=[path]))
+            WLOG(params, 'error', textentry('00-502-00002', args=[path]))
     # loop around files and folders in calib_dir
     allfiles = []
     for root, dirs, files in os.walk(path, followlinks=True):
@@ -291,9 +285,11 @@ def remove_all(params, path, log=True, skipfiles=None):
 def remove_files(params, path, log=True, skipfiles=None):
     """
     Remove a file or add files to list_of_files
+
+    :param params: ParamDict, the parameter dictionary of constants
     :param path: string, the path to remove (file or directory)
-    :param list_of_files: list of strings, list of files
     :param log: bool, if True logs the removal of files
+    :param skipfiles:
 
     :return list_of_files: returns the list of files removes (if it was a
             directory this adds the files to the list)
@@ -306,7 +302,7 @@ def remove_files(params, path, log=True, skipfiles=None):
         return
     # log removal
     if log:
-        WLOG(params, '', TextEntry('40-502-00004', args=[path]))
+        WLOG(params, '', textentry('40-502-00004', args=[path]))
     # if in debug mode just log
     if DEBUG:
         WLOG(params, '', '\t\tRemoved {0}'.format(path))

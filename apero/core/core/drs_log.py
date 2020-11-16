@@ -24,7 +24,7 @@ import os
 from pathlib import Path
 import sys
 from time import sleep
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, List, Tuple, Union
 
 from apero.base import base
 from apero.base import drs_exceptions
@@ -49,18 +49,10 @@ __release__ = base.__release__
 # Get the parameter dictionary
 ParamDict = constants.ParamDict
 # Get the Config error
-DrsError = drs_exceptions.DrsError
 DrsWarning = drs_exceptions.DrsWarning
-TextError = drs_exceptions.TextError
-TextWarning = drs_exceptions.TextWarning
-ConfigError = drs_exceptions.ConfigError
-ConfigWarning = drs_exceptions.ConfigWarning
 DrsCodedException = drs_exceptions.DrsCodedException
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
-HelpEntry = lang.core.drs_lang_text.HelpEntry
-HelpText = lang.core.drs_lang_text.HelpDict
+textentry = lang.textentry
 # get the default language
 DEFAULT_LANGUAGE = lang.core.drs_lang_text.DEFAULT_LANGUAGE
 # Get the Color dict
@@ -98,10 +90,6 @@ class Logger:
             self.instrument = 'None'
         # load additional resources based on instrument/language
         self.pconstant = constants.pload(self.instrument)
-        self.textdict = TextDict(self.instrument, self.language)
-        self.helptext = HelpText(self.instrument, self.language)
-        self.d_textdict = TextDict(self.instrument, DEFAULT_LANGUAGE)
-        self.d_helptext = HelpText(self.instrument, DEFAULT_LANGUAGE)
         # ---------------------------------------------------------------------
         # save output parameter dictionary for saving to file
         self.pout = ParamDict()
@@ -139,10 +127,6 @@ class Logger:
         self.__dict__.update(state)
         # read attributes not in state
         self.pconstant = constants.pload(self.instrument)
-        self.textdict = TextDict(self.instrument, self.language)
-        self.helptext = HelpText(self.instrument, self.language)
-        self.d_textdict = TextDict(self.instrument, DEFAULT_LANGUAGE)
-        self.d_helptext = HelpText(self.instrument, DEFAULT_LANGUAGE)
 
     def __str__(self) -> str:
         """
@@ -159,7 +143,7 @@ class Logger:
         return self.__str__()
 
     def __call__(self, params: ParamDict = None, key: str = '',
-                 message: Union[str, None, TextEntry, HelpEntry] = None,
+                 message: Union[str, None] = None,
                  printonly: bool = False,
                  logonly: bool = False, wrap: bool = True,
                  option: str = None, colour: str = None,
@@ -220,21 +204,17 @@ class Logger:
         # get character length
         char_len = self.pconstant.CHARACTER_LOG_LENGTH()
         # ---------------------------------------------------------------------
-        # deal with message format (convert to TextEntry)
+        # deal with message format (convert to lang.Text)
         if message is None:
-            msg_obj = TextEntry('Unknown')
+            msg_obj = textentry('Unknown')
         elif type(message) is str:
-            msg_obj = TextEntry(message)
+            msg_obj = textentry(message)
         elif type(message) is list:
-            msg_obj = TextEntry(message[0])
+            msg_obj = textentry(message[0])
             for msg in message[1:]:
-                msg_obj += TextEntry(msg)
-        elif type(message) is TextEntry:
-            msg_obj = message
-        elif type(message) is HelpEntry:
-            msg_obj = message.convert(TextEntry)
+                msg_obj += textentry(msg)
         else:
-            msg_obj = TextEntry('00-005-00001', args=[message])
+            msg_obj = textentry('00-005-00001', args=[message])
             key = 'error'
         # ---------------------------------------------------------------------
         # deal with no p and pid
@@ -282,19 +262,19 @@ class Logger:
         # check that key is valid
         if key not in self.pconstant.LOG_TRIG_KEYS():
             eargs = [key, 'LOG_TRIG_KEYS()']
-            msg_obj += TextEntry('00-005-00002', args=eargs)
+            msg_obj += textentry('00-005-00002', args=eargs)
             key = 'error'
         if key not in self.pconstant.WRITE_LEVEL():
             eargs = [key, 'WRITE_LEVEL()']
-            msg_obj += TextEntry('00-005-00003', args=eargs)
+            msg_obj += textentry('00-005-00003', args=eargs)
             key = 'error'
         if key not in self.pconstant.COLOUREDLEVELS():
             eargs = [key, 'COLOUREDLEVELS()']
-            msg_obj += TextEntry('00-005-00004', args=eargs)
+            msg_obj += textentry('00-005-00004', args=eargs)
             key = 'error'
         if key not in self.pconstant.REPORT_KEYS():
             eargs = [key, 'REPORT_KEYS()']
-            msg_obj += TextEntry('00-005-00005', args=eargs)
+            msg_obj += textentry('00-005-00005', args=eargs)
             key = 'error'
         # loop around message (now all are lists)
         errors = []
@@ -308,14 +288,12 @@ class Logger:
         if debug >= params['DEBUG_MODE_TEXTNAME_PRINT']:
             report = True
         # get messages
-        if type(message) is HelpEntry:
-            raw_message1 = msg_obj.get(self.helptext, report=report,
-                                       reportlevel=key)
+        if isinstance(msg_obj, lang.Text):
+            raw_messages1 = msg_obj.get_text(report=report, reportlevel=key)
         else:
-            raw_message1 = msg_obj.get(self.textdict, report=report,
-                                       reportlevel=key)
+            raw_messages1 = str(msg_obj)
         # split by '\n'
-        raw_messages1 = raw_message1.split('\n')
+        raw_messages1 = raw_messages1.split('\n')
         # ---------------------------------------------------------------------
         # deal with printing
         # ---------------------------------------------------------------------
@@ -363,14 +341,12 @@ class Logger:
         code = self.pconstant.LOG_TRIG_KEYS().get(key, ' ')
         # report = self.pconstant.REPORT_KEYS().get(key, False)
         # get messages
-        if type(message) is HelpEntry:
-            raw_message2 = msg_obj.get(self.d_helptext, report=True,
-                                       reportlevel=key)
+        if isinstance(msg_obj, lang.Text):
+            raw_messages2 = msg_obj.get_text(report=True, reportlevel=key)
         else:
-            raw_message2 = msg_obj.get(self.d_textdict, report=True,
-                                       reportlevel=key)
+            raw_messages2 = str(msg_obj)
         # split by '\n'
-        raw_messages2 = raw_message2.split('\n')
+        raw_messages2 = raw_messages2.split('\n')
         # ---------------------------------------------------------------------
         # deal with logging (in default language)
         # ---------------------------------------------------------------------
@@ -455,9 +431,6 @@ class Logger:
             self.language = paramdict['LANGUAGE']
             # update pconstant
             self.pconstant = constants.pload(self.instrument)
-            # updatetext
-            self.textdict = TextDict(self.instrument, self.language)
-            self.helptext = HelpText(self.instrument, self.language)
 
     def output_param_dict(self, paramdict: ParamDict,
                           new: bool = False) -> ParamDict:
@@ -849,7 +822,6 @@ class RecipeLog:
         if write:
             self.write_logfile(params)
 
-
     def set_lock_func(self, func: Any):
         """
         Set the lock function apero.io.drs_lock.locker
@@ -1056,7 +1028,7 @@ class RecipeLog:
             except Exception as _:
                 # RecipeLogError: Cannot make path {0} for recipe log.'
                 eargs = [path]
-                emsg = TextEntry('00-005-00014', args=eargs)
+                emsg = textentry('00-005-00014', args=eargs)
                 if self.wlog is not None:
                     self.wlog(self.params, 'error', emsg)
         # ------------------------------------------------------------------
@@ -1145,14 +1117,14 @@ class RecipeLog:
             try:
                 # RecipeLog: Reading file
                 dargs = [writepath]
-                dmsg = TextEntry('90-008-00012', args=dargs)
+                dmsg = textentry('90-008-00012', args=dargs)
                 if self.wlog is not None:
                     self.wlog(self.params, 'debug', dmsg)
                 table = Table.read(writepath, format='fits')
             except Exception as e:
                 # RecipeLogError: Cannot read file
                 eargs = [writepath, type(e), str(e)]
-                emsg = TextEntry('00-005-00016', args=eargs)
+                emsg = textentry('00-005-00016', args=eargs)
                 if self.wlog is not None:
                     self.wlog(self.params, 'error', emsg)
                     return
@@ -1213,14 +1185,14 @@ class RecipeLog:
             # debug log
             if self.wlog is not None:
                 dargs = [writepath]
-                dmsg = TextEntry('90-008-00011', args=dargs)
+                dmsg = textentry('90-008-00011', args=dargs)
                 self.wlog(self.params, 'debug', dmsg)
             mastertable.write(writepath, format='fits', overwrite=True)
         except Exception as e:
             # RecipeLogError: Cannot write file {0}
             if self.wlog is not None:
                 eargs = [writepath, type(e), str(e)]
-                emsg = TextEntry('00-005-00015', args=eargs)
+                emsg = textentry('00-005-00015', args=eargs)
                 self.wlog(self.params, 'error', emsg)
 
 
@@ -1269,7 +1241,7 @@ def printlogandcmd(logobj: Logger, params: ParamDict,
     elif type(list):
         message = list(message)
     else:
-        message = [logobj.textdict['00-005-00005'].format(message)]
+        message = [textentry('00-005-00005', args=message)]
         key = 'error'
     for mess in message:
         code = logobj.pconstant.LOG_TRIG_KEYS().get(key, ' ')
@@ -1309,8 +1281,6 @@ def debug_start(logobj: Logger, params: ParamDict,
         # noinspection PyPep8
         def raw_input(x):
             return str(input(x))
-    # get text
-    text = logobj.textdict
     # get colour
     clevels = logobj.pconstant.COLOUREDLEVELS()
     addcolour = params.get('DRS_COLOURED_LOG', True)
@@ -1323,11 +1293,11 @@ def debug_start(logobj: Logger, params: ParamDict,
     # ask to run debugger
     # noinspection PyBroadException
     try:
-        print(cc + text['00-005-00006'] + nocol)
+        print(cc + textentry('00-005-00006') + nocol)
         # noinspection PyUnboundLocalVariable
-        uinput = raw_input(cc + text['00-005-00007'] + '\t' + nocol)
+        uinput = raw_input(cc + textentry('00-005-00007') + '\t' + nocol)
         if '1' in uinput.upper():
-            print(cc + text['00-005-00008'] + nocol)
+            print(cc + textentry('00-005-00008') + nocol)
 
             # noinspection PyBroadException
             try:
@@ -1345,12 +1315,12 @@ def debug_start(logobj: Logger, params: ParamDict,
             if raise_exception:
                 logobj.pconstant.EXIT(params)()
         elif '2' in uinput.upper():
-            print(cc + text['00-005-00009'] + nocol)
+            print(cc + textentry('00-005-00009') + nocol)
 
             import pdb
             pdb.set_trace()
 
-            print(cc + text['00-005-00010'] + nocol)
+            print(cc + textentry('00-005-00010') + nocol)
             if raise_exception:
                 logobj.pconstant.EXIT(params)()
         elif raise_exception:
@@ -1389,11 +1359,10 @@ def display_func(params: Union[ParamDict, None] = None,
         raise DrsCodedException('00-001-00050', targs=eargs, level='error',
                                 func_name=func_name)
     # run the display function
-    return drs_misc.display_func(params, name, program, class_name, wlog=wlog,
-                                 textentry=TextEntry)
+    return drs_misc.display_func(params, name, program, class_name, wlog=wlog)
 
 
-def warninglogger(params: ParamDict, warnlist: Union[list, str],
+def warninglogger(params: ParamDict, warnlist: Any,
                   funcname: Union[str, None] = None):
     """
     Warning logger - takes "w" - a list of caught warnings and pipes them on
@@ -1416,7 +1385,6 @@ def warninglogger(params: ParamDict, warnlist: Union[list, str],
                      function/module warning was generated in)
     :return:
     """
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # get pconstant
     pconstant = constants.pload(params['INSTRUMENT'])
     log_warnings = pconstant.LOG_CAUGHT_WARNINGS()
@@ -1437,12 +1405,12 @@ def warninglogger(params: ParamDict, warnlist: Union[list, str],
                          warnitem.message]
             # log message
             key = '10-005-00001'
-            wmsg = textdict[key].format(*wargs)
+            wmsg = textentry(key, args=wargs)
             # if we have already display this warning don't again
             if wmsg in displayed_warnings:
                 continue
             else:
-                wlog(params, 'warning', TextEntry(key, args=wargs))
+                wlog(params, 'warning', wmsg)
                 displayed_warnings.append(wmsg)
 
 
@@ -1450,7 +1418,7 @@ def get_logfilepath(logobj: Logger, params: ParamDict,
                     use_group: bool = True) -> str:
     """
     Construct the log file path and filename (normally from "DRS_DATA_MSG"
-    generates an ConfigError exception.
+    generates an DrsCodedException exception.
 
     "DRS_DATA_MSG" is defined in "config.py"
 
@@ -1511,16 +1479,16 @@ def correct_level(logobj: Logger, key: str, level: str):
     try:
         outlevel = logobj.pconstant.WRITE_LEVEL()[level]
     except KeyError:
-        emsg = TextEntry('00-005-00011', args=[level, func_name])
-        raise ConfigError(errorobj=[emsg, logobj.textdict])
-
+        eargs = [level, func_name]
+        raise DrsCodedException('00-005-00011', 'error', targs=eargs,
+                                func_name=func_name)
     # get numeric value for this level
     try:
         thislevel = logobj.pconstant.WRITE_LEVEL()[key]
     except KeyError:
-        emsg = TextEntry('00-005-00012', args=[key, func_name])
-        raise ConfigError(errorobj=[emsg, logobj.textdict])
-
+        eargs = [key, func_name]
+        raise DrsCodedException('00-005-00012', 'error', targs=eargs,
+                                func_name=func_name)
     # return whether we are printing or not
     return thislevel >= outlevel
 
@@ -1594,8 +1562,9 @@ def printcolour(logobj: Logger, params: ParamDict, key: str = 'all',
     nocol = Color.ENDC
     # make sure key is in clevels
     if (key not in clevels) and addcolour:
-        emsg = TextEntry('00-005-00012', args=[level, func_name])
-        raise ConfigError(errorobj=[emsg, logobj.textdict])
+        eargs = [level, func_name]
+        raise DrsCodedException('00-005-00012', 'error', eargs,
+                                func_name=func_name)
 
     # if this level is greater than or equal to out level then print to stdout
     if correct_level(logobj, key, level) and (key in clevels) and addcolour:
@@ -1710,8 +1679,8 @@ def writelog(logobj: Logger, params: ParamDict, message: str, key: str,
                 f.write(message + '\n')
         except Exception as e:
             eargs = [logfilepath, type(e), e, func_name]
-            emsg = TextEntry('01-001-00011', args=eargs)
-            raise ConfigError(errorobj=[emsg, logobj.textdict])
+            raise DrsCodedException('01-001-00011', 'error', eargs,
+                                    func_name=func_name)
     else:
         # try to open the logfile
         try:
@@ -1727,8 +1696,8 @@ def writelog(logobj: Logger, params: ParamDict, message: str, key: str,
         # If we cannot write to log file then print to stdout
         except Exception as e:
             eargs = [logfilepath, type(e), e, func_name]
-            emsg = TextEntry('01-001-00011', args=eargs)
-            raise ConfigError(errorobj=[emsg, logobj.textdict])
+            raise DrsCodedException('01-001-00011', 'error', eargs,
+                                    func_name=func_name)
 
 
 def _clean_message(message: str) -> str:

@@ -33,11 +33,6 @@ __release__ = base.__release__
 ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
-# Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
-HelpEntry = lang.core.drs_lang_text.HelpEntry
-HelpText = lang.core.drs_lang_text.HelpDict
 # get DrsRecipe
 DrsRecipe = drs_recipe.DrsRecipe
 DrsFitsFile = drs_file.DrsFitsFile
@@ -48,6 +43,8 @@ INSTRUMENT_PATH = base.CONST_PATH
 CORE_PATH = base.CORE_PATH
 PDB_RC_FILE = base.PDB_RC_FILE
 CURRENT_PATH = ''
+
+
 # -----------------------------------------------------------------------------
 
 # =============================================================================
@@ -59,7 +56,7 @@ class TmpRecipe(DrsRecipe):
         super().__init__(instrument, name, filemod)
 
 
-class RecipeDefinition():
+class RecipeDefinition:
     def __init__(self, instrument='None'):
         self.instrument = instrument
         self.recipes = []
@@ -114,7 +111,7 @@ class TmpNpyFile(DrsFitsFile):
         super().__init__(name, **kwargs)
 
 
-class FileDefinition():
+class FileDefinition:
     def __init__(self, instrument='None'):
         self.instrument = instrument
         self.files = None
@@ -139,10 +136,12 @@ class FileDefinition():
         self.files = mod
         self.out = mod.out
 
+
 class Demo:
     """
     Holder of demonstration functions (to keep demo clean)
     """
+
     def __init__(self, params=None):
         # get parameters
         if params is None:
@@ -157,7 +156,7 @@ class Demo:
         if isinstance(sys.argv, list):
             args = list(sys.argv)
         else:
-            args = sys.argv.split()
+            args = str(sys.argv).split()
         # if we don't have the required arguments add them
         if len(args) < 2:
             sys.argv = ['demo', '1']
@@ -170,8 +169,6 @@ class Demo:
         return drs_break.get_relative_folder(self.package, relpath)
 
     def change_lang(self, params, language):
-        # get instrument
-        instrument = self.params['INSTRUMENT']
         # update the language
         self.params.set('LANGUAGE', language)
         params.set('LANGUAGE', language)
@@ -179,10 +176,6 @@ class Demo:
     def test_data(self, params):
         # TODO: get test data from data/spirou/demo
         pass
-
-
-
-
 
 
 # =============================================================================

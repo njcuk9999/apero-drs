@@ -35,8 +35,7 @@ DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry= lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 
@@ -103,7 +102,7 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
     # check that orderp is same dimensions as image
     if simage.shape != orderp.shape:
         eargs = [simage.shape, orderp.shape]
-        WLOG(params, 'error', TextEntry('00-016-00006', args=eargs))
+        WLOG(params, 'error', textentry('00-016-00006', args=eargs))
     # ----------------------------------------------------------------------
     # deal with start order being None
     if start_order is None:
@@ -140,7 +139,7 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
             # --------------------------------------------------------------
             # log that we skipped this order
             wargs = [order_num]
-            WLOG(params, 'warning', TextEntry('10-016-00001', args=wargs))
+            WLOG(params, 'warning', textentry('10-016-00001', args=wargs))
         # ------------------------------------------------------------------
         # else extract order by order
         else:
@@ -165,7 +164,7 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
                 e2dsi, flati, blazei, rmsi = fout
                 # log process (for fiber # and order # S/N = , FF rms = )
                 wargs = [fiber, order_num, snri, rmsi]
-                WLOG(params, '', TextEntry('40-015-00001', args=wargs))
+                WLOG(params, '', textentry('40-015-00001', args=wargs))
             # --------------------------------------------------------------
             # else just set to NaNs and log SNR/cosmics
             else:
@@ -176,10 +175,10 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
                 # log process (for fiber # and order # S/N = , cosmics = )
                 if cosmic:
                     wargs = [fiber, order_num, snri, cpti]
-                    WLOG(params, '', TextEntry('40-016-00001', args=wargs))
+                    WLOG(params, '', textentry('40-016-00001', args=wargs))
                 else:
                     wargs = [fiber, order_num, snri]
-                    WLOG(params, '', TextEntry('40-016-00002', args=wargs))
+                    WLOG(params, '', textentry('40-016-00002', args=wargs))
         # ------------------------------------------------------------------
         # Check saturation limit
         # ------------------------------------------------------------------
@@ -189,7 +188,7 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
         if fluxval_i > sat_level:
             # log message (SATURATION LEVEL REACHED)
             wargs = [fiber, order_num, fluxval_i, sat_level]
-            WLOG(params, 'warning', TextEntry('10-016-00002', args=wargs))
+            WLOG(params, 'warning', textentry('10-016-00002', args=wargs))
         # ------------------------------------------------------------------
         # append to arrays
         e2ds[order_num] = e2dsi
@@ -445,20 +444,20 @@ def _valid_orders(params, start_order, end_order, skip_orders=None):
         start_order = int(start_order)
     except Exception as e:
         eargs = [start_order, type(e), e, func_name]
-        WLOG(params, 'error', TextEntry('00-016-00001', args=eargs))
+        WLOG(params, 'error', textentry('00-016-00001', args=eargs))
     try:
         end_order = int(end_order)
     except Exception as e:
         eargs = [end_order, type(e), e, func_name]
-        WLOG(params, 'error', TextEntry('00-016-00002', args=eargs))
+        WLOG(params, 'error', textentry('00-016-00002', args=eargs))
     # start order must be zero or greater
     if start_order < 0:
         eargs = [start_order, func_name]
-        WLOG(params, 'error', TextEntry('00-016-00003', args=eargs))
+        WLOG(params, 'error', textentry('00-016-00003', args=eargs))
     # check that start order is less than end order
     if start_order > end_order:
         eargs = [start_order, end_order, func_name]
-        WLOG(params, 'error', TextEntry('00-016-00004', args=eargs))
+        WLOG(params, 'error', textentry('00-016-00004', args=eargs))
     # deal with skip orders
     if not isinstance(skip_orders, list):
         skip_orders = []
@@ -467,7 +466,7 @@ def _valid_orders(params, start_order, end_order, skip_orders=None):
             skip_orders = np.array(skip_orders).astype(float).astype(int)
         except Exception as e:
             eargs = [skip_orders, type(e), e, func_name]
-            WLOG(params, 'error', TextEntry('00-016-00005', args=eargs))
+            WLOG(params, 'error', textentry('00-016-00005', args=eargs))
     # define storage
     valid_orders = []
     # loop around orders
@@ -485,22 +484,22 @@ def _get_range(params, rangedict, fiber, keys):
 
     if not isinstance(rangedict, dict):
         eargs = [keys[0], keys[1], func_name]
-        WLOG(params, 'error', TextEntry('00-016-00007', arg=eargs))
+        WLOG(params, 'error', textentry('00-016-00007', arg=eargs))
     # deal with fiber not being in range dictionary
     if fiber not in rangedict:
         # log that range1 had invalid fiber type
         eargs = [fiber, rangedict, keys[0], keys[1], func_name]
-        WLOG(params, 'error', TextEntry('00-016-00008', args=eargs))
+        WLOG(params, 'error', textentry('00-016-00008', args=eargs))
     else:
         try:
             # return range value
             return float(rangedict[fiber])
         except ValueError as _:
             eargs = [fiber, rangedict, keys[0], keys[1], func_name]
-            WLOG(params, 'error', TextEntry('00-016-00009', args=eargs))
+            WLOG(params, 'error', textentry('00-016-00009', args=eargs))
         except Exception as e:
             eargs = [fiber, rangedict, type(e), e, keys[0], keys[1], func_name]
-            WLOG(params, 'error', TextEntry('00-016-00010', args=eargs))
+            WLOG(params, 'error', textentry('00-016-00010', args=eargs))
 
 
 # =============================================================================

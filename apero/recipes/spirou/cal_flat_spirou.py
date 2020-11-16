@@ -35,10 +35,7 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
-# Define the output files
-
+textentry = lang.textentry
 
 
 # =============================================================================
@@ -163,7 +160,7 @@ def __main__(recipe, params):
         # Apply shape transformations
         # ------------------------------------------------------------------
         # log progress (straightening orderp)
-        WLOG(params, 'info', TextEntry('40-016-00004'))
+        WLOG(params, 'info', textentry('40-016-00004'))
         # straighten image
         image2 = shape.ea_transform(params, image, shapelocal, dxmap=shapex,
                                     dymap=shapey)

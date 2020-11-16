@@ -43,8 +43,7 @@ display_func = drs_log.display_func
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 # Speed of light
@@ -209,12 +208,12 @@ def measure_fp_peaks(params, props, limit, normpercent):
             # --------------------------------------------------------------
         # log how many FPs were found and how many rejected
         wargs = [order_num, ipeak, nreject]
-        WLOG(params, '', TextEntry('40-018-00001', args=wargs))
+        WLOG(params, '', textentry('40-018-00001', args=wargs))
         # ------------------------------------------------------------------
         # print warnings
         for key in list(warn_dict.keys()):
             wargs = [warn_dict[key], key]
-            WLOG(params, 'warning', TextEntry('00-018-00001', args=wargs))
+            WLOG(params, 'warning', textentry('00-018-00001', args=wargs))
         # ------------------------------------------------------------------
         # add values to all storage (and sort by xpeak)
         indsort = np.argsort(xpeak)
@@ -244,7 +243,7 @@ def measure_fp_peaks(params, props, limit, normpercent):
 
     # Log the total number of FP lines found
     wargs = [len(props['XPEAK'])]
-    WLOG(params, 'info', TextEntry('40-018-00002', args=wargs))
+    WLOG(params, 'info', textentry('40-018-00002', args=wargs))
 
     # return the property parameter dictionary
     return props
@@ -420,11 +419,11 @@ def remove_wide_peaks(params, props, cutwidth):
 
     # log number of lines removed for suspicious width
     wargs = [mp.nansum(~mask)]
-    WLOG(params, 'info', TextEntry('40-018-00003', args=wargs))
+    WLOG(params, 'info', textentry('40-018-00003', args=wargs))
 
     # log number of lines removed as double-fitted
     wargs = [len(props['XPEAK_OLD']) - len(props['XPEAK'])]
-    WLOG(params, 'info', TextEntry('40-018-00004', args=wargs))
+    WLOG(params, 'info', textentry('40-018-00004', args=wargs))
 
     # return props
     return props
@@ -455,7 +454,7 @@ def get_ccf_mask(params, filename, mask_width, mask_units='nm'):
     except Exception as e:
         # log error
         eargs = [mask_units, type(e), e, func_name]
-        WLOG(params, 'error', TextEntry('09-020-00002', args=eargs))
+        WLOG(params, 'error', textentry('09-020-00002', args=eargs))
         return None, None, None
     # add units
     ll_mask_d = ll_mask_d * unit
@@ -531,7 +530,7 @@ def remove_telluric_domain(params, recipe, infile, fiber, **kwargs):
     # check that e2ds file exists
     if not os.path.exists(e2dsabsfilename):
         eargs = [infile.filename, ext_type, e2dsabsfilename]
-        WLOG(params, 'error', TextEntry('09-020-00003', args=eargs))
+        WLOG(params, 'error', textentry('09-020-00003', args=eargs))
     # get infile
     e2dsinst = drs_startup.get_file_definition(ext_type, params['INSTRUMENT'],
                                                kind='red')
@@ -548,7 +547,7 @@ def remove_telluric_domain(params, recipe, infile, fiber, **kwargs):
     # check recon file exists
     if not os.path.exists(reconfile.filename):
         eargs = [infile.filename, reconfile.name, e2dsfile.filename]
-        WLOG(params, 'error', TextEntry('09-020-00003', args=eargs))
+        WLOG(params, 'error', textentry('09-020-00003', args=eargs))
     # read recon file
     reconfile.read_file()
     # find all places below threshold
@@ -576,7 +575,7 @@ def fill_e2ds_nans(params, image, **kwargs):
     kernel = np.exp(-0.5 * (xker ** 2))
     kernel /= np.sum(kernel)
     # log that NaNs were found
-    WLOG(params, 'warning', TextEntry('10-020-00002'))
+    WLOG(params, 'warning', textentry('10-020-00002'))
     # copy original image
     image2 = np.array(image)
     # loop around orders
@@ -624,7 +623,7 @@ def locate_reference_file(params, recipe, infile):
     if ppfile.suffix != '_pp':
         # log that we could not locate reference file for file
         eargs = [infile.name, ppfile.name, infile.filename, func_name]
-        WLOG(params, 'error', TextEntry('00-020-00003', args=eargs))
+        WLOG(params, 'error', textentry('00-020-00003', args=eargs))
     # make a new copy of this instance
     outfile = instance.newcopy(params=params, fiber=reffiber)
     # construct filename
@@ -680,11 +679,11 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
         # set target rv to zero if we don't have a value
         if targetrv is None:
             wargs = [params['KW_INPUTRV'][0], infile.filename]
-            WLOG(params, 'warning', TextEntry('09-020-00006', args=wargs))
+            WLOG(params, 'warning', textentry('09-020-00006', args=wargs))
             targetrv = 0.0
         elif np.abs(targetrv) > null_targetrv:
             wargs = [params['KW_INPUTRV'][0], null_targetrv, infile.filename]
-            WLOG(params, 'warning', TextEntry('09-020-00007', args=wargs))
+            WLOG(params, 'warning', textentry('09-020-00007', args=wargs))
             targetrv = 0.0
     # ----------------------------------------------------------------------
     # need to deal with mask coming from inputs
@@ -701,7 +700,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     # ----------------------------------------------------------------------
     if ccfstep > (ccfwidth / maxwsr):
         eargs = [ccfwidth, ccfstep, maxwsr, func_name]
-        WLOG(params, 'error', TextEntry('09-020-00005', args=eargs))
+        WLOG(params, 'error', textentry('09-020-00005', args=eargs))
 
     # ----------------------------------------------------------------------
     # Check we are using correct fiber
@@ -711,7 +710,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     if fiber != sfiber:
         # log that the science fiber was not correct
         eargs = [fiber, sfiber, infile.name, infile.filename]
-        WLOG(params, 'error', TextEntry('09-020-00001', args=eargs))
+        WLOG(params, 'error', textentry('09-020-00001', args=eargs))
 
     # ----------------------------------------------------------------------
     # Compute photon noise uncertainty for reference file
@@ -723,7 +722,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     dvrmsref, wmeanref, wmeanrefo = delta_v_rms_2d(**dkwargs)
     # log the estimated RV uncertainty
     wargs = [fiber, wmeanref]
-    WLOG(params, 'info', TextEntry('40-020-00003', args=wargs))
+    WLOG(params, 'info', textentry('40-020-00003', args=wargs))
     # ----------------------------------------------------------------------
     # Do the CCF calculations
     # ----------------------------------------------------------------------
@@ -772,7 +771,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     # ----------------------------------------------------------------------
     # log the stats
     wargs = [ccf_contrast, float(mean_ccf_coeffs[1]), rv_noise, ccf_fwhm]
-    WLOG(params, 'info', TextEntry('40-020-00004', args=wargs))
+    WLOG(params, 'info', textentry('40-020-00004', args=wargs))
     # ----------------------------------------------------------------------
     # add to output array
     props['TOT_SPEC_RMS'] = wmeanref
@@ -871,7 +870,7 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
 
     # log the estimated RV uncertainty
     wargs = [fiber, wmeanref]
-    WLOG(params, 'info', TextEntry('40-017-00028', args=wargs))
+    WLOG(params, 'info', textentry('40-017-00028', args=wargs))
     # ----------------------------------------------------------------------
     # Do the CCF calculations
     # ----------------------------------------------------------------------
@@ -907,7 +906,7 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     # ----------------------------------------------------------------------
     # log the stats
     wargs = [ccf_contrast, float(mean_ccf_coeffs[1]), rv_noise, ccf_fwhm]
-    WLOG(params, 'info', TextEntry('40-020-00004', args=wargs))
+    WLOG(params, 'info', textentry('40-020-00004', args=wargs))
     # ----------------------------------------------------------------------
     # add to output array
     props['TOT_SPEC_RMS'] = wmeanref
@@ -1002,7 +1001,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
     # loop around the orders
     for order_num in range(nbo):
         # log the process
-        WLOG(params, '', TextEntry('40-020-00005', args=[fiber, order_num]))
+        WLOG(params, '', textentry('40-020-00005', args=[fiber, order_num]))
         # ------------------------------------------------------------------
         # get this orders values
         wa_ord = np.array(wavemap[order_num])
@@ -1041,7 +1040,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         if np.sum(mask_wave_mask) == 0:
             # log all NaN
             wargs = [order_num, min_ord_wav, max_ord_wav]
-            WLOG(params, 'warning', TextEntry('10-020-00006', args=wargs))
+            WLOG(params, 'warning', textentry('10-020-00006', args=wargs))
             # set all values to NaN
             ccf_all.append(np.repeat(np.nan, len(rv_ccf)))
             ccf_all_fit.append(np.repeat(np.nan, len(rv_ccf)))
@@ -1056,7 +1055,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         if np.sum(nanmask) == nbpix:
             # log all NaN
             wargs = [order_num]
-            WLOG(params, 'warning', TextEntry('10-020-00004', args=wargs))
+            WLOG(params, 'warning', textentry('10-020-00004', args=wargs))
             # set all values to NaN
             ccf_all.append(np.repeat(np.nan, len(rv_ccf)))
             ccf_all_fit.append(np.repeat(np.nan, len(rv_ccf)))
@@ -1103,7 +1102,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         if np.sum(keep) == 0:
             # log all NaN
             wargs = [order_num]
-            WLOG(params, 'warning', TextEntry('10-020-00007', args=wargs))
+            WLOG(params, 'warning', textentry('10-020-00007', args=wargs))
             # set all values to NaN
             ccf_all.append(np.repeat(np.nan, len(rv_ccf)))
             ccf_all_fit.append(np.repeat(np.nan, len(rv_ccf)))
@@ -1130,7 +1129,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         # we can't calculate wnoise for negative values --> set to inf
         if (wsum <= 0) or (wsum2 <= 0):
             wargs = [order_num]
-            WLOG(params, 'warning', TextEntry('10-020-00008', args=wargs))
+            WLOG(params, 'warning', textentry('10-020-00008', args=wargs))
             wsum, wnoise = 0.0, np.inf
         else:
             wnoise = np.sqrt(wsum2)
@@ -1154,7 +1153,7 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         if np.sum(np.isnan(ccf_ord)) > 0:
             # log all NaN
             wargs = [order_num]
-            WLOG(params, 'warning', TextEntry('10-020-00005', args=wargs))
+            WLOG(params, 'warning', textentry('10-020-00005', args=wargs))
             # set all values to NaN
             ccf_all.append(np.repeat(np.nan, len(rv_ccf)))
             ccf_all_fit.append(np.repeat(np.nan, len(rv_ccf)))
@@ -1240,13 +1239,13 @@ def fit_ccf(params, order_num, rv, ccf, fit_type):
     # deal with inconsistent lengths
     if len(rv) != len(ccf):
         eargs = [len(rv), len(ccf), func_name]
-        WLOG(params, 'error', TextEntry('00-020-00001', args=eargs))
+        WLOG(params, 'error', textentry('00-020-00001', args=eargs))
 
     # deal with all nans
     if np.sum(np.isnan(ccf)) == len(ccf):
         # log warning about all NaN ccf
         wargs = [order_num]
-        WLOG(params, 'warning', TextEntry('10-020-00001', args=wargs))
+        WLOG(params, 'warning', textentry('10-020-00001', args=wargs))
         # return NaNs
         result = np.zeros(4) * np.nan
         ccf_fit = np.zeros_like(ccf) * np.nan
@@ -1394,7 +1393,7 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     # ----------------------------------------------------------------------
     # log that we are saving rotated image
     wargs = [fiber, ccf_file.filename]
-    WLOG(params, '', TextEntry('40-020-00006', args=wargs))
+    WLOG(params, '', textentry('40-020-00006', args=wargs))
     # write multi
     ccf_file.write_multi(data_list=[table2], datatype_list=['table'],
                          kind=recipe.outputtype, runstring=recipe.runstring)

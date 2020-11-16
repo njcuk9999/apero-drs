@@ -56,7 +56,7 @@ pcheck = constants.PCheck(wlog=WLOG)
 # Get function string
 display_func = drs_log.display_func
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
+textentry = lang.textentry
 # TODO: This should be changed for astropy -> 2.0.1
 # bug that hdu.scale has bug before version 2.0.1
 if av.major < 2 or (av.major == 2 and av.minor < 1):
@@ -391,10 +391,10 @@ def readfits(params: ParamDict, filename: Union[str, Path],
         dirname = os.path.dirname(filename)
         if not os.path.exists(dirname):
             eargs = [dirname, os.path.basename(filename), func_name]
-            WLOG(params, 'error', TextEntry('01-001-00013', args=eargs))
+            WLOG(params, 'error', textentry('01-001-00013', args=eargs))
         else:
             eargs = [os.path.basename(filename), dirname, func_name]
-            WLOG(params, 'error', TextEntry('01-001-00012', args=eargs))
+            WLOG(params, 'error', textentry('01-001-00012', args=eargs))
     # -------------------------------------------------------------------------
     # deal with obtaining data
     if fmt == 'fits-image':
@@ -409,7 +409,7 @@ def readfits(params: ParamDict, filename: Union[str, Path],
     else:
         cfmts = ', '.join(allowed_formats)
         eargs = [filename, fmt, cfmts, func_name]
-        WLOG(params, 'error', TextEntry('00-008-00019', args=eargs))
+        WLOG(params, 'error', textentry('00-008-00019', args=eargs))
         data, header = None, None
     # -------------------------------------------------------------------------
     # deal with copying
@@ -450,7 +450,7 @@ def read_header(params: ParamDict, filename: str, ext: int = 0,
     except Exception as e:
         if log:
             eargs = [os.path.basename(filename), ext, type(e), e, func_name]
-            WLOG(params, 'error', TextEntry('01-001-00010', args=eargs))
+            WLOG(params, 'error', textentry('01-001-00010', args=eargs))
             header = None
         else:
             raise e
@@ -485,14 +485,14 @@ def _read_fitsmulti(params: ParamDict, filename: str, getdata: bool,
         hdulist = fits.open(filename)
     except Exception as e:
         eargs = [filename, type(e), e, func_name]
-        WLOG(params, 'error', TextEntry('01-001-00006', args=eargs))
+        WLOG(params, 'error', textentry('01-001-00006', args=eargs))
         hdulist = None
     # -------------------------------------------------------------------------
     # get the number of fits files in filename
     try:
         n_ext = len(hdulist)
     except Exception as e:
-        WLOG(params, 'warning', TextEntry('10-001-00005', args=[type(e), e]))
+        WLOG(params, 'warning', textentry('10-001-00005', args=[type(e), e]))
         n_ext = None
     # deal with unknown number of extensions
     if n_ext is None:
@@ -509,7 +509,7 @@ def _read_fitsmulti(params: ParamDict, filename: str, getdata: bool,
                 if log:
                     eargs = [os.path.basename(filename), it, type(e), e,
                              func_name]
-                    WLOG(params, 'error', TextEntry('01-001-00008', args=eargs))
+                    WLOG(params, 'error', textentry('01-001-00008', args=eargs))
                 else:
                     raise e
             # append data
@@ -522,7 +522,7 @@ def _read_fitsmulti(params: ParamDict, filename: str, getdata: bool,
                 if log:
                     eargs = [os.path.basename(filename), it, type(e), e,
                              func_name]
-                    WLOG(params, 'error', TextEntry('01-001-00007', args=eargs))
+                    WLOG(params, 'error', textentry('01-001-00007', args=eargs))
                 else:
                     raise e
         data = list(dataarr)
@@ -567,8 +567,8 @@ def _read_fitsimage(params: ParamDict, filename: str, getdata: bool,
         except Exception as e:
             if log:
                 string_trackback = traceback.format_exc()
-                emsg = TextEntry('01-001-00014', args=[filename, ext, type(e)])
-                emsg += '\n\n' + TextEntry(string_trackback)
+                emsg = textentry('01-001-00014', args=[filename, ext, type(e)])
+                emsg += '\n\n' + textentry(string_trackback)
                 WLOG(params, 'error', emsg)
                 data = None
             else:
@@ -583,8 +583,8 @@ def _read_fitsimage(params: ParamDict, filename: str, getdata: bool,
         except Exception as e:
             if log:
                 string_trackback = traceback.format_exc()
-                emsg = TextEntry('01-001-00015', args=[filename, ext, type(e)])
-                emsg += '\n\n' + TextEntry(string_trackback)
+                emsg = textentry('01-001-00015', args=[filename, ext, type(e)])
+                emsg += '\n\n' + textentry(string_trackback)
                 WLOG(params, 'error', emsg)
                 header = None
             else:
@@ -626,8 +626,8 @@ def _read_fitstable(params: ParamDict, filename: str, getdata: bool,
         except Exception as e:
             if log:
                 string_trackback = traceback.format_exc()
-                emsg = TextEntry('01-001-00016', args=[filename, ext, type(e)])
-                emsg += '\n\n' + TextEntry(string_trackback)
+                emsg = textentry('01-001-00016', args=[filename, ext, type(e)])
+                emsg += '\n\n' + textentry(string_trackback)
                 WLOG(params, 'error', emsg)
                 data = None
             else:
@@ -642,8 +642,8 @@ def _read_fitstable(params: ParamDict, filename: str, getdata: bool,
         except Exception as e:
             if log:
                 string_trackback = traceback.format_exc()
-                emsg = TextEntry('01-001-00017', args=[filename, ext, type(e)])
-                emsg += '\n\n' + TextEntry(string_trackback)
+                emsg = textentry('01-001-00017', args=[filename, ext, type(e)])
+                emsg += '\n\n' + textentry(string_trackback)
                 WLOG(params, 'error', emsg)
                 header = None
             else:
@@ -768,7 +768,7 @@ def _write_fits(params: ParamDict, filename: str,
             os.remove(filename)
         except Exception as e:
             eargs = [os.path.basename(filename), type(e), e, func_name]
-            WLOG(params, 'error', TextEntry('01-001-00003', args=eargs))
+            WLOG(params, 'error', textentry('01-001-00003', args=eargs))
     # ----------------------------------------------------------------------
     # make sure we are dealing with lists of data and headers
     if not isinstance(data, list):
@@ -790,16 +790,16 @@ def _write_fits(params: ParamDict, filename: str,
     # header must be same length as data
     if len(data) != len(header):
         eargs = [filename, len(data), len(header), func_name]
-        WLOG(params, 'error', TextEntry('00-013-00004', args=eargs))
+        WLOG(params, 'error', textentry('00-013-00004', args=eargs))
     # datatype must be same length as data
     if len(data) != len(datatype):
         eargs = [filename, len(data), len(datatype), func_name]
-        WLOG(params, 'error', TextEntry('00-013-00005', args=eargs))
+        WLOG(params, 'error', textentry('00-013-00005', args=eargs))
     # if dtype is not None must be same length as data
     if dtype is not None:
         if len(data) != len(dtype):
             eargs = [filename, len(data), len(dtype), func_name]
-            WLOG(params, 'error', TextEntry('00-013-00006', args=eargs))
+            WLOG(params, 'error', textentry('00-013-00006', args=eargs))
     # ----------------------------------------------------------------------
     # create the multi HDU list
     # try to create primary HDU first
@@ -849,7 +849,7 @@ def _write_fits(params: ParamDict, filename: str,
     hdulist = fits.HDUList(hdus)
     # except Exception as e:
     #     eargs = [type(e), e, func_name]
-    #     WLOG(params, 'error', TextEntry('01-001-00004', args=eargs))
+    #     WLOG(params, 'error', textentry('01-001-00004', args=eargs))
     #     hdulist = None
     # ---------------------------------------------------------------------
     # write to file
@@ -859,7 +859,7 @@ def _write_fits(params: ParamDict, filename: str,
             hdulist.close()
         except Exception as e:
             eargs = [os.path.basename(filename), type(e), e, func_name]
-            WLOG(params, 'error', TextEntry('01-001-00005', args=eargs))
+            WLOG(params, 'error', textentry('01-001-00005', args=eargs))
     # ---------------------------------------------------------------------
     # ignore truncated comment warning since spirou images have some poorly
     #   formatted header cards
@@ -916,7 +916,7 @@ def deal_with_bad_header(params: ParamDict, hdu: fits.HDUList,
     # print message
     if len(datastore) > 0:
         dargs = [it - 1, filename]
-        WLOG(params, 'warning', TextEntry('10-001-00001', args=dargs))
+        WLOG(params, 'warning', textentry('10-001-00001', args=dargs))
     # find the first one that contains equal shaped array
     valid = []
     for d_it in range(len(datastore)):
@@ -924,7 +924,7 @@ def deal_with_bad_header(params: ParamDict, hdu: fits.HDUList,
             valid.append(d_it)
     # if valid is empty we have a problem
     if len(valid) == 0:
-        WLOG(params, 'error', TextEntry('01-001-00001', args=[filename]))
+        WLOG(params, 'error', textentry('01-001-00001', args=[filename]))
     # return valid data
     return datastore, headerstore
 

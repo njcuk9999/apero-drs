@@ -32,8 +32,7 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # --------------------------------------------------------------------------
 DOC_DIR = '../documentation/working'
 OUT_DIR = '../documentation/output'
@@ -75,15 +74,15 @@ def compile_docs(params):
         # clean build
         # ------------------------------------------------------------------
         # Cleaning build directories
-        WLOG(params, '', TextEntry('40-506-00001'))
+        WLOG(params, '', textentry('40-506-00001'))
         os.system('make clean')
         # ------------------------------------------------------------------
         # build html
         # ------------------------------------------------------------------
         # Compiling HTML
-        WLOG(params, '', TextEntry('40-506-00002'))
+        WLOG(params, '', textentry('40-506-00002'))
         # Running make html
-        WLOG(params, '', TextEntry('40-506-00003'))
+        WLOG(params, '', textentry('40-506-00003'))
         # make html using sphinx
         os.system('make html')
         # construct html directory
@@ -92,9 +91,9 @@ def compile_docs(params):
         # build latex
         # ------------------------------------------------------------------
         # Compling Latex
-        WLOG(params, '', TextEntry('40-506-00004'))
+        WLOG(params, '', textentry('40-506-00004'))
         # Running make latexpdf
-        WLOG(params, '', TextEntry('40-506-00005'))
+        WLOG(params, '', textentry('40-506-00005'))
         # make latex using sphinx
         os.system('make latexpdf')
         # construct latex directory
@@ -103,7 +102,7 @@ def compile_docs(params):
         if pdflatex not in ['None', None, '']:
             # change to latex dir
             # Running pdflatex
-            WLOG(params, '', TextEntry('40-506-00006'))
+            WLOG(params, '', textentry('40-506-00006'))
             os.chdir(latex_dir)
             # run pdflatex twice (to build table of contents and cross-links)
             os.system('{0} {1}'.format(pdflatex, LATEX_FILE))
@@ -114,19 +113,19 @@ def compile_docs(params):
         # ------------------------------------------------------------------
         # clear out the output directory
         # Removing content of {0}
-        WLOG(params, '', TextEntry('40-506-00007', args=[out_dir]))
+        WLOG(params, '', textentry('40-506-00007', args=[out_dir]))
         os.system('rm -rf {0}/*'.format(out_dir))
         # ------------------------------------------------------------------
         # copy all files from the html folder
         # Copying html files
-        WLOG(params, '', TextEntry('40-506-00008'))
+        WLOG(params, '', textentry('40-506-00008'))
         os.system('rm -rf {0}/*'.format(out_dir))
         # copy
         drs_path.copytree(html_dir, out_dir)
         # ------------------------------------------------------------------
         # copy pdf (latex) file
         # Copying pdf
-        WLOG(params, '', TextEntry('40-506-00009'))
+        WLOG(params, '', textentry('40-506-00009'))
         # construct input/output pdf path
         inpdf = os.path.join(latex_dir, PDF_FILE)
         outpdf = os.path.join(out_dir, PDF_FILE)

@@ -32,8 +32,7 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 
@@ -149,7 +148,7 @@ def __main__(recipe, params):
         # Get transform parameters (transform image onto fpmaster)
         # ----------------------------------------------------------------------
         # log progress
-        WLOG(params, '', TextEntry('40-014-00033'))
+        WLOG(params, '', textentry('40-014-00033'))
         # transform
         targs = [params, recipe, masterfp_image, image]
         transform, xres, yres = shape.get_linear_transform_params(*targs)

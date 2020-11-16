@@ -38,8 +38,7 @@ DrsFitsFile = drs_file.DrsFitsFile
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 
@@ -106,7 +105,7 @@ def calculate_blaze_flat(e2ds, flux, blaze_cut, blaze_deg):
 
 
 def calculate_blaze_flat_sinc(params, e2ds_ini, peak_cut, nsigfit, badpercentile,
-                              order_num, fiber, niter=2,):
+                              order_num, fiber, niter=2, ):
     # get function name
     func_name = __NAME__ + '.calculate_blaze_flat_sinc()'
     # ----------------------------------------------------------------------
@@ -114,7 +113,7 @@ def calculate_blaze_flat_sinc(params, e2ds_ini, peak_cut, nsigfit, badpercentile
     xpix = np.arange(len(e2ds_ini))
     # ------------------------------------------------------------------
 
-    e2ds = mp.medfilt_1d(e2ds_ini,15)
+    e2ds = mp.medfilt_1d(e2ds_ini, 15)
 
     # region over which we will fit
     keep = np.isfinite(e2ds)
@@ -156,25 +155,25 @@ def calculate_blaze_flat_sinc(params, e2ds_ini, peak_cut, nsigfit, badpercentile
     # bounds = [(thres * 0.5, 0.0, 0.0, -np.inf, -np.inf, -1e-2),
     #           (thres * 1.5, np.inf, np.max(xpix), np.inf, np.inf, 1e-2)]
     # pass without DC and SLOPE
-    bounds = [ (0, 0.0, 0.0, -np.inf, -1e-20, -np.inf),
-               (thres * 1.5, np.inf, np.max(xpix), np.inf, 1e-20, np.inf)]
+    bounds = [(0, 0.0, 0.0, -np.inf, -1e-20, -np.inf),
+              (thres * 1.5, np.inf, np.max(xpix), np.inf, 1e-20, np.inf)]
     # set a counter
     n_it = -1
     # ------------------------------------------------------------------
     # try to fit and if there is a failure catch it
     try:
         # we optimize over pixels that are not NaN
-        #popt0, pcov0 = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=fit_guess,
+        # popt0, pcov0 = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=fit_guess,
         #                         method='dogbox', bounds=bounds)
         # set the first guess for the full fit to the fit without slope and
         #   quadratic terms
-        #fit_guess = popt0
+        # fit_guess = popt0
         # set the quad, cube and slope to zero (pass without DC and SLOPE)
-        #fit_guess[[3, 4, 5]] = 0.0
+        # fit_guess[[3, 4, 5]] = 0.0
 
         # we optimize over pixels that are not NaN (this time with no bounds)
         popt, pcov = curve_fit(mp.sinc, xpix[keep], e2ds[keep], p0=fit_guess,
-                               bounds = bounds)
+                               bounds=bounds)
         # ------------------------------------------------------------------
         # set the model to zeros at first
         blaze = mp.sinc(xpix, popt[0], popt[1], popt[2], popt[3], popt[4],
@@ -212,7 +211,7 @@ def calculate_blaze_flat_sinc(params, e2ds_ini, peak_cut, nsigfit, badpercentile
             strupper = strlist.format(*bounds[1])
             eargs = [order_num, fiber, n_it, strguess, strlower, strupper,
                      type(e), str(e), func_name]
-            WLOG(params, 'error', TextEntry('40-015-00009', args=eargs))
+            WLOG(params, 'error', textentry('40-015-00009', args=eargs))
             blaze = None
 
     # ----------------------------------------------------------------------
@@ -255,7 +254,7 @@ def get_flat(params, header, fiber, filename=None, quiet=False, database=None):
     # ------------------------------------------------------------------------
     # log which fpmaster file we are using
     if not quiet:
-        WLOG(params, '', TextEntry('40-015-00006', args=[flat_file]))
+        WLOG(params, '', textentry('40-015-00006', args=[flat_file]))
     # return the master image
     return flat_file, flat
 
@@ -281,7 +280,7 @@ def get_blaze(params, header, fiber, filename=None, database=None):
     blaze, _, blaze_file = cout
     # ------------------------------------------------------------------------
     # log which fpmaster file we are using
-    WLOG(params, '', TextEntry('40-015-00007', args=[blaze_file]))
+    WLOG(params, '', textentry('40-015-00007', args=[blaze_file]))
     # return the master image
     return blaze_file, blaze
 
@@ -293,7 +292,6 @@ def flat_blaze_qc(params, eprops, fiber):
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names = [], [], [],
     qc_logic, qc_pass = [], []
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # --------------------------------------------------------------
     # check that rms values in required orders are below threshold
 
@@ -307,7 +305,7 @@ def flat_blaze_qc(params, eprops, fiber):
     if max_rms > params['QC_FF_MAX_RMS']:
         # add failed message to fail message list
         fargs = [fiber, max_rms, params['QC_FF_MAX_RMS']]
-        fail_msg.append(textdict['40-015-00008'].format(*fargs))
+        fail_msg.append(textentry('40-015-00008', args=fargs))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -319,11 +317,11 @@ def flat_blaze_qc(params, eprops, fiber):
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
-        WLOG(params, 'info', TextEntry('40-005-10001'))
+        WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
-            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+            WLOG(params, 'warning', textentry('40-005-10002') + farg)
         passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
@@ -411,7 +409,7 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     # --------------------------------------------------------------
     # log that we are saving rotated image
     WLOG(params, '',
-         TextEntry('40-015-00003', args=[blazefile.filename]))
+         textentry('40-015-00003', args=[blazefile.filename]))
     # write image to file
     blazefile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -433,7 +431,7 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     # --------------------------------------------------------------
     # log that we are saving rotated image
     WLOG(params, '',
-         TextEntry('40-015-00004', args=[flatfile.filename]))
+         textentry('40-015-00004', args=[flatfile.filename]))
     # write image to file
     flatfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -455,7 +453,7 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     # --------------------------------------------------------------
     # log that we are saving rotated image
     WLOG(params, '',
-         TextEntry('40-015-00005', args=[e2dsllfile.filename]))
+         textentry('40-015-00005', args=[e2dsllfile.filename]))
     # write image to file
     e2dsllfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)

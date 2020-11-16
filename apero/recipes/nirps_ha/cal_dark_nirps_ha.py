@@ -34,8 +34,7 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 
 
 # =============================================================================
@@ -174,7 +173,7 @@ def __main__(recipe, params):
         # Dark Measurement
         # ------------------------------------------------------------------
         # Log that we are doing dark measurement
-        WLOG(params, '', TextEntry('40-011-00001'))
+        WLOG(params, '', textentry('40-011-00001'))
         # measure dark for whole frame
         out1 = dark.measure_dark(params, image, '40-011-00003')
         hist_full, med_full, dadead_full = out1

@@ -37,8 +37,7 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 
 
 # =============================================================================
@@ -56,7 +55,7 @@ def get_all_files(params, path):
             continue
         # log the night directory
         if ucpath != path:
-            WLOG(params, '', TextEntry('40-503-00003', args=[ucpath]))
+            WLOG(params, '', textentry('40-503-00003', args=[ucpath]))
         # loop around files id dir
         for filename in files:
             if filename.endswith('.fits'):
@@ -85,7 +84,7 @@ def get_nightnames(params, path):
 
 def get_outputs(params, files):
     # log progress: Reading headers for indexing
-    WLOG(params, 'info', TextEntry('40-504-00003'))
+    WLOG(params, 'info', textentry('40-504-00003'))
     # get pseudo constants
     pconst = constants.pload(params['INSTRUMENT'])
     # get output dictionary
@@ -98,7 +97,7 @@ def get_outputs(params, files):
         basename = os.path.basename(filename)
         # log progress
         wargs = [it + 1, len(files)]
-        WLOG(params, '', TextEntry('40-504-00004', args=wargs))
+        WLOG(params, '', textentry('40-504-00004', args=wargs))
         # add header dict
         output_dict[basename] = dict()
         # deal with some files needing extension 1

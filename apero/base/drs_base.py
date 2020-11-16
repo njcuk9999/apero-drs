@@ -180,7 +180,8 @@ def base_func(func, _func, *args, **kwargs):
 
 def base_printer(codeid: str, message: str, level: str,
                  args: Union[str, list, None] = None,
-                 exceptionname: Union[str, None] = None):
+                 exceptionname: Union[str, None] = None,
+                 printstatement: bool = True):
     """
     Produce the base printout in form
 
@@ -257,7 +258,8 @@ def base_printer(codeid: str, message: str, level: str,
     msg = colour + corefmt.format(*margs) + end
     # -------------------------------------------------------------------------
     # print the message
-    print(msg)
+    if printstatement:
+        print(msg)
     # return the message
     return msg
 

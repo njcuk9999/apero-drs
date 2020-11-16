@@ -43,9 +43,7 @@ ParamDict = constants.ParamDict
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
-Help = lang.core.drs_lang_text.HelpDict(__INSTRUMENT__, Constants['LANGUAGE'])
+textentry = lang.textentry
 # -----------------------------------------------------------------------------
 # set up recipe definitions (overwrites default one)
 RMOD = drs_dev.RecipeDefinition(instrument=__INSTRUMENT__)
@@ -60,7 +58,7 @@ exposuremeter.extension = 'fits'
 exposuremeter.description = 'Produces an exposuremeter map'
 exposuremeter.kind = 'misc'
 exposuremeter.set_arg(pos=0, name='directory', dtype='directory',
-                      helpstr=Help['DIRECTORY_HELP'])
+                      helpstr=textentry('DIRECTORY_HELP'))
 
 # add recipe to recipe definition
 RMOD.add(exposuremeter)

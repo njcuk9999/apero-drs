@@ -12,7 +12,6 @@ Created on 2019-02-04 at 16:40
 import argparse
 from collections import OrderedDict
 import copy
-import glob
 import numpy as np
 import os
 import sys
@@ -20,6 +19,7 @@ from typing import Any, IO, Dict, List, Tuple, Type, Union
 
 from apero.base import base
 from apero.base import drs_break
+from apero.base import drs_db
 from apero.base import drs_exceptions
 from apero.base import drs_misc
 from apero.base import drs_text
@@ -29,7 +29,6 @@ from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.core.core import drs_database
 from apero.io import drs_fits
-
 
 # =============================================================================
 # Define variables
@@ -58,9 +57,7 @@ ConfigError = drs_exceptions.ConfigError
 ArgumentError = drs_exceptions.ArgumentError
 DrsCodedException = drs_exceptions.DrsCodedException
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
-HelpText = lang.core.drs_lang_text.HelpDict
+textentry = lang.textentry
 # define display strings for types
 STRTYPE = base.STRTYPE
 NUMBER_TYPES = base.NUMBER_TYPES
@@ -77,7 +74,6 @@ ValidFileType = Tuple[List[Union[Any, str]],
 class DrsArgumentParser(argparse.ArgumentParser):
     # argparse.ArgumentParser cannot be pickled
     #   so cannot pickle DrsArgumentParser either
-
     def __init__(self, recipe: Any, indexdb: IndexDatabase, **kwargs):
         """
         Construct the Drs Argument parser
@@ -90,12 +86,6 @@ class DrsArgumentParser(argparse.ArgumentParser):
         # define the recipe
         self.recipe = recipe
         self.indexdb = indexdb
-        # get the recipes parameter dictionary
-        params = self.recipe.params
-        # get the text dictionary
-        self.textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
-        # get the help dictionary
-        self.helptext = HelpText(params['INSTRUMENT'], params['LANGUAGE'])
         # set up the arguments
         self.args = None
         # set up the sys.argv storage
@@ -139,7 +129,7 @@ class DrsArgumentParser(argparse.ArgumentParser):
         args, argv = self.parse_known_args(self.args, namespace)
         # deal with argv being set
         if argv:
-            self.error(self.textdict['09-001-00002'].format(' '.join(argv)))
+            self.error(textentry('09-001-00002', args=[' '.join(argv)]))
         return args
 
     def error(self, message: str):
@@ -160,7 +150,7 @@ class DrsArgumentParser(argparse.ArgumentParser):
         params = self.recipe.params
         # log message
         emsg_args = [message, program]
-        emsg_obj = TextEntry('09-001-00001', args=emsg_args)
+        emsg_obj = textentry('09-001-00001', args=emsg_args)
         WLOG(params, 'error', emsg_obj)
 
     def _print_message(self, message: str, file: Union[None, IO] = None):
@@ -189,7 +179,7 @@ class DrsArgumentParser(argparse.ArgumentParser):
         # Manually print error message (with help text)
         print()
         print(green + params['DRS_HEADER'] + end)
-        helptitletext = self.textdict['40-002-00001'].format(program)
+        helptitletext = textentry('40-002-00001', args=[program])
         print(green + ' ' + helptitletext + end)
         print(green + params['DRS_HEADER'] + end)
         imsgs = _get_version_info(self.recipe.params, green, end)
@@ -209,7 +199,7 @@ class DrsArgumentParser(argparse.ArgumentParser):
         _ = display_func(self.recipe.params, 'format_usage', __NAME__,
                          'DRSArgumentParser')
         # noinspection PyProtectedMember
-        return_string = (' ' + self.helptext['USAGE_TEXT'] + ' ' +
+        return_string = (' ' + textentry('USAGE_TEXT') + ' ' +
                          self.recipe._drs_usage())
         # return messages
         return return_string
@@ -227,14 +217,14 @@ class DrsArgumentParser(argparse.ArgumentParser):
         # empty help message at intialization
         hmsgs = []
         # noinspection PyProtectedMember
-        hmsgs += [' ' + self.helptext['USAGE_TEXT'] + ' ' +
+        hmsgs += [' ' + textentry('USAGE_TEXT') + ' ' +
                   self.recipe._drs_usage()]
         # add description
         if self.recipe.description is not None:
             # add header line
             hmsgs += ['', self.recipe.params['DRS_HEADER']]
             # add description title
-            hmsgs += [' ' + self.helptext['DESCRIPTION_TEXT']]
+            hmsgs += [' ' + textentry('DESCRIPTION_TEXT')]
             # add header line
             hmsgs += [self.recipe.params['DRS_HEADER'], '']
             # add description text
@@ -242,30 +232,30 @@ class DrsArgumentParser(argparse.ArgumentParser):
             # add header line
             hmsgs += [self.recipe.params['DRS_HEADER']]
         # deal with required (positional) arguments
-        hmsgs += ['', self.textdict['40-002-00002'], '']
+        hmsgs += ['', textentry('40-002-00002'), '']
         # loop around each required (positional) arguments
         for arg in self.recipe.required_args:
             # add to help message list
             hmsgs.append(_help_format(arg.names, arg.helpstr, arg.options))
         # deal with optional arguments
-        hmsgs += ['', '', self.textdict['40-002-00003'], '']
+        hmsgs += ['', '', textentry('40-002-00003'), '']
         # loop around each optional argument
         for arg in self.recipe.optional_args:
             # add to help message list
             hmsgs.append(_help_format(arg.names, arg.helpstr, arg.options))
         # deal with special arguments
-        hmsgs += ['', '', self.textdict['40-002-00004'], '']
+        hmsgs += ['', '', textentry('40-002-00004'), '']
         # loop around each special argument
         for arg in self.recipe.special_args:
             # add to help mesasge list
             hmsgs.append(_help_format(arg.names, arg.helpstr, arg.options))
         # add help
-        helpstr = self.textdict['40-002-00005']
+        helpstr = textentry('40-002-00005')
         hmsgs.append(_help_format(['--help', '-h'], helpstr))
         # add epilog
         if self.recipe.epilog is not None:
             hmsgs += ['', self.recipe.params['DRS_HEADER']]
-            hmsgs += [' ' + self.helptext['EXAMPLES_TEXT']]
+            hmsgs += [' ' + textentry('EXAMPLES_TEXT')]
             hmsgs += [self.recipe.params['DRS_HEADER'], '']
             hmsgs += [' ' + self.recipe.epilog]
             hmsgs += [self.recipe.params['DRS_HEADER']]
@@ -425,14 +415,13 @@ class _CheckDirectory(DrsAction):
         # debug checking output
         if params['DRS_DEBUG'] > 0:
             print('')
-        WLOG(params, 'debug', TextEntry('90-001-00018', args=[argname]))
+        WLOG(params, 'debug', textentry('90-001-00018', args=[argname]))
         # check whether we have a valid directory
         directory = valid_directory(params, self.indexdb, argname, value,
                                     kind=self.recipe.inputtype,
                                     forced_dir=self.recipe.inputdir)
         # if we have found directory return directory
         return directory
-
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
@@ -557,7 +546,7 @@ class _CheckFiles(DrsAction):
         # get the params from recipe
         params = self.recipe.params
         # debug checking output
-        WLOG(params, 'debug', TextEntry('90-001-00019', args=[argname]))
+        WLOG(params, 'debug', textentry('90-001-00019', args=[argname]))
         # get recipe args and kwargs
         rargs = self.recipe.args
         rkwargs = self.recipe.kwargs
@@ -570,13 +559,12 @@ class _CheckFiles(DrsAction):
         for _value in values:
             # get the filename if valid (else crash)
             out = valid_file(params, self.indexdb, input_type, argname, _value,
-                              rargs, rkwargs, directory, types, input_dir)
+                             rargs, rkwargs, directory, types, input_dir)
             # append to storage
             files += out[0]
             types += out[1]
         # if they are return files
         return files, types
-
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
@@ -688,26 +676,26 @@ class _CheckBool(DrsAction):
         # get the argument name
         argname = self.dest
         # debug progress
-        WLOG(params, 'debug', TextEntry('90-001-00020', args=[argname]),
+        WLOG(params, 'debug', textentry('90-001-00020', args=[argname]),
              wrap=False)
         # conditions
         if str(value).lower() in ['yes', 'true', 't', 'y', '1']:
             # debug print
             dargs = [argname, value, 'True']
-            dmsg = TextEntry('90-001-00021', args=dargs)
-            dmsg += TextEntry('')
+            dmsg = textentry('90-001-00021', args=dargs)
+            dmsg += ''
             WLOG(params, 'debug', dmsg, wrap=False)
             return True
         elif str(value).lower() in ['no', 'false', 'f', 'n', '0']:
             # debug print
             dargs = [argname, value, 'False']
-            dmsg = TextEntry('90-001-00021', args=dargs)
-            dmsg += TextEntry('')
+            dmsg = textentry('90-001-00021', args=dargs)
+            dmsg += ''
             WLOG(params, 'debug', dmsg, wrap=False)
             return False
         else:
             eargs = [self.dest, value]
-            WLOG(params, 'error', TextEntry('09-001-00013', args=eargs))
+            WLOG(params, 'error', textentry('09-001-00013', args=eargs))
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
@@ -815,7 +803,7 @@ class _CheckType(DrsAction):
         # check if passed as a list
         if (self.nargs == 1) and (type(value) is list):
             if len(value) == 0:
-                emsg = TextEntry('09-001-00016', args=[self.dest])
+                emsg = textentry('09-001-00016', args=[self.dest])
                 WLOG(params, 'error', emsg)
             else:
                 return self._eval_type(value[0])
@@ -826,12 +814,12 @@ class _CheckType(DrsAction):
                 values.append(self._eval_type(values[it]))
             if len(values) < len(value):
                 eargs = [self.dest, self.nargs, len(value)]
-                WLOG(params, 'error', TextEntry('09-001-00017', args=eargs))
+                WLOG(params, 'error', textentry('09-001-00017', args=eargs))
             return values
         # else
         else:
             eargs = [self.dest, self.nargs, type(value), value]
-            WLOG(params, 'error', TextEntry('09-001-00018', args=eargs))
+            WLOG(params, 'error', textentry('09-001-00018', args=eargs))
 
     def _eval_type(self, value: Any) -> Any:
         """
@@ -851,9 +839,9 @@ class _CheckType(DrsAction):
         try:
             return self.type(value)
         except ValueError as _:
-            WLOG(params, 'error', TextEntry('09-001-00014', args=eargs))
+            WLOG(params, 'error', textentry('09-001-00014', args=eargs))
         except TypeError as _:
-            WLOG(params, 'error', TextEntry('09-001-00015', args=eargs))
+            WLOG(params, 'error', textentry('09-001-00015', args=eargs))
 
     def _check_limits(self, values: Any) -> Union[List[Any], Any]:
         """
@@ -886,7 +874,7 @@ class _CheckType(DrsAction):
             arg = self.recipe.special_args[argname]
         else:
             eargs = [argname, func_name]
-            WLOG(params, 'error', TextEntry('00-006-00011', args=eargs))
+            WLOG(params, 'error', textentry('00-006-00011', args=eargs))
             arg = None
         # ---------------------------------------------------------------------
         # skip this step if minimum/maximum are both None
@@ -910,13 +898,13 @@ class _CheckType(DrsAction):
                 minimum = arg.dtype(minimum)
             except ValueError as e:
                 eargs = [argname, 'minimum', minimum, type(e), e]
-                WLOG(params, 'error', TextEntry('00-006-00012', args=eargs))
+                WLOG(params, 'error', textentry('00-006-00012', args=eargs))
         if maximum is not None:
             try:
                 maximum = arg.dtype(maximum)
             except ValueError as e:
                 eargs = [argname, 'maximum', maximum, type(e), e]
-                WLOG(params, 'error', TextEntry('00-006-00012', args=eargs))
+                WLOG(params, 'error', textentry('00-006-00012', args=eargs))
         # ---------------------------------------------------------------------
         # loop round files and check values
         for value in values:
@@ -924,19 +912,19 @@ class _CheckType(DrsAction):
             if minimum is not None and maximum is not None:
                 if (value < minimum) or (value > maximum):
                     eargs = [argname, value, minimum, maximum]
-                    emsg = TextEntry('09-001-00029', args=eargs)
+                    emsg = textentry('09-001-00029', args=eargs)
                     WLOG(params, 'error', emsg)
             # deal with case where just minimum is checked
             elif minimum is not None:
                 if value < minimum:
                     eargs = [argname, value, minimum]
-                    emsg = TextEntry('09-001-00027', args=eargs)
+                    emsg = textentry('09-001-00027', args=eargs)
                     WLOG(params, 'error', emsg)
             # deal with case where just maximum is checked
             elif maximum is not None:
                 if value > maximum:
                     eargs = [argname, value, maximum]
-                    emsg = TextEntry('09-001-00028', args=eargs)
+                    emsg = textentry('09-001-00028', args=eargs)
                     WLOG(params, 'error', emsg)
         # ---------------------------------------------------------------------
         # return (based on whether it is a list or not)
@@ -1050,7 +1038,7 @@ class _CheckOptions(DrsAction):
             return value
         else:
             eargs = [self.dest, ' or '.join(self.choices), value]
-            WLOG(params, 'error', TextEntry('09-001-00019', args=eargs))
+            WLOG(params, 'error', textentry('09-001-00019', args=eargs))
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
@@ -1213,6 +1201,7 @@ class _MakeAllListing(DrsAction):
     :param args: arguments passed to argparse.Action.__init__
     :param kwargs: keyword arguments passed to argparse.Action.__init__
     """
+
     def __init__(self, *args, **kwargs):
         # set class name
         self.class_name = '_MakeAllListing'
@@ -1399,10 +1388,10 @@ class _ActivateDebug(DrsAction):
             # return value
             return value
         except drs_exceptions.DrsCodedException as e:
-            WLOG(params, 'error', TextEntry(e.codeid, args=e.targs))
+            WLOG(params, 'error', textentry(e.codeid, args=e.targs))
         except Exception as _:
             eargs = [self.dest, values]
-            WLOG(params, 'error', TextEntry('09-001-00020', args=eargs))
+            WLOG(params, 'error', textentry('09-001-00020', args=eargs))
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
@@ -1507,7 +1496,7 @@ class _ForceInputDir(DrsAction):
             return value
         except Exception as _:
             eargs = [self.dest, values]
-            WLOG(params, 'error', TextEntry('09-001-00020', args=eargs))
+            WLOG(params, 'error', textentry('09-001-00020', args=eargs))
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
@@ -1613,7 +1602,7 @@ class _ForceOutputDir(DrsAction):
             return value
         except Exception as _:
             eargs = [self.dest, values]
-            WLOG(params, 'error', TextEntry('09-001-00020', args=eargs))
+            WLOG(params, 'error', textentry('09-001-00020', args=eargs))
 
     def __call__(self, parser: DrsArgumentParser,
                  namespace: argparse.Namespace, values: Any,
@@ -1929,7 +1918,7 @@ class _SetProgram(DrsAction):
         else:
             strvalue = str(values)
         # debug message: setting program to: "strvalue"
-        dmsg = TextEntry('90-001-00031', args=[strvalue])
+        dmsg = textentry('90-001-00031', args=[strvalue])
         WLOG(self.recipe.params, 'debug', dmsg)
         # set DRS_DEBUG (must use the self version)
         self.recipe.params['DRS_USER_PROGRAM'] = strvalue
@@ -2021,7 +2010,7 @@ class _SetIPythonReturn(DrsAction):
         func_name = display_func(self.recipe.params, '_set_return',
                                  __NAME__, self.class_name)
         # debug message: setting program to: "strvalue"
-        dmsg = TextEntry('90-001-00032')
+        dmsg = textentry('90-001-00032')
         WLOG(self.recipe.params, 'debug', dmsg)
         # set DRS_DEBUG (must use the self version)
         self.recipe.params['IPYTHON_RETURN'] = True
@@ -2113,7 +2102,7 @@ class _Breakpoints(DrsAction):
         func_name = display_func(self.recipe.params, '_set_return',
                                  __NAME__, self.class_name)
         # debug message: setting program to: "strvalue"
-        dmsg = TextEntry('90-001-00033')
+        dmsg = textentry('90-001-00033')
         WLOG(self.recipe.params, 'debug', dmsg)
         # set DRS_DEBUG (must use the self version)
         self.recipe.params['ALLOW_BREAKPOINTS'] = True
@@ -2393,7 +2382,7 @@ class _SetQuiet(DrsAction):
         _ = display_func(self.recipe.params, '_set_return', __NAME__,
                          self.class_name)
         # debug message: setting program to: "strvalue"
-        dmsg = TextEntry('90-001-00034')
+        dmsg = textentry('90-001-00034')
         WLOG(self.recipe.params, 'debug', dmsg)
         # return strvalue
         return True
@@ -2550,29 +2539,23 @@ class DrsArgument(object):
             self.kind = kind
             # check argname
             if self.argname.startswith('-'):
-                # Get text for default language/instrument
-                text = TextDict('None', 'None')
                 # get entry to log error
-                ee = TextEntry('00-006-00015', args=[self.argname])
-                self.exception(None, errorobj=[ee, text])
+                ee = textentry('00-006-00015', args=[self.argname])
+                self.exception(None, errorstr=[ee])
         elif kind == 'kwarg':
             self.kind = kind
             # check argname
             if not self.argname.startswith('-'):
-                # Get text for default language/instrument
-                text = TextDict('None', 'None')
                 # get entry to log error
-                ee = TextEntry('00-006-00016', args=[self.argname])
-                self.exception(None, errorobj=[ee, text])
+                ee = textentry('00-006-00016', args=[self.argname])
+                self.exception(None, errorstr=[ee])
         elif kind == 'special':
             self.kind = kind
             # check argname
             if not self.argname.startswith('-'):
-                # Get text for default language/instrument
-                text = TextDict('None', 'None')
                 # get entry to log error
-                ee = TextEntry('00-006-00017', args=[self.argname])
-                self.exception(None, errorobj=[ee, text])
+                ee = textentry('00-006-00017', args=[self.argname])
+                self.exception(None, errorstr=[ee])
         else:
             self.kind = kind
             emsg = '"kind" must be "arg" or "kwarg" or "special"'
@@ -2634,20 +2617,16 @@ class DrsArgument(object):
         # get file logic
         self.filelogic = filelogic
         if self.filelogic not in ['inclusive', 'exclusive']:
-            # Get text for default language/instrument
-            text = TextDict('None', 'None')
             # get entry to log error
-            ee = TextEntry('00-006-00008', args=[self.filelogic])
-            self.exception(None, errorobj=[ee, text])
+            ee = textentry('00-006-00008', args=[self.filelogic])
+            self.exception(None, errorstr=[ee])
         # deal with no default/default_ref for kwarg
         if kind == 'kwarg':
             # get entry
             if (default is None) and (default_ref is None):
-                # Get text for default language/instrument
-                text = TextDict('None', 'None')
                 # get entry to log error
-                ee = TextEntry('00-006-00009', args=self.filelogic)
-                self.exception(None, errorobj=[ee, text])
+                ee = textentry('00-006-00009', args=self.filelogic)
+                self.exception(None, errorstr=[ee])
         # get default
         self.default = default
         # get default_ref
@@ -2731,13 +2710,11 @@ class DrsArgument(object):
             self.dtype = str
         # make sure dtype is valid
         if self.dtype not in self.allowed_dtypes:
-            # Get text for default language/instrument
-            text = TextDict('None', 'None')
             # make error
             a_dtypes_str = ['"{0}"'.format(i) for i in self.allowed_dtypes]
             eargs = [' or '.join(a_dtypes_str), self.dtype]
-            ee = TextEntry('00-006-00010', args=eargs)
-            self.exception(None, errorobj=[ee, text])
+            ee = textentry('00-006-00010', args=eargs)
+            self.exception(None, errorstr=[ee])
         # deal with dtype
         if self.dtype == 'files':
             self.props['action'] = _CheckFiles
@@ -2890,14 +2867,14 @@ class DrsArgument(object):
         self.props = copy.deepcopy(argument.props)
         self.value = copy.deepcopy(argument.value)
 
-    def exception(self, message: Union[str, None] = None,
-                  errorobj: Any = None):
+    def exception(self, message: Union[List[str], str, None] = None,
+                  errorstr: Union[List[str], str, None] = None):
         """
         Internal exception generator --> raises an Argument Error with
         message including a logging code for debug purposes
 
         :param message: str, the error message to print
-        :param errorobj: an error exception instance
+        :param errorstr: an error exception instance
         :return: None
         :raises: drs_exceptions.ArgumentError
         """
@@ -2917,13 +2894,12 @@ class DrsArgument(object):
             log_opt = 'X[{0}] '.format(self.name)
         # if we have an error object then raise an argument error with
         #   the error object
-        if errorobj is not None:
-            errorobj[0] = log_opt + errorobj[0]
-            raise ArgumentError(errorobj=errorobj)
+        if errorstr is not None:
+            errorstr = log_opt + errorstr
+            raise ArgumentError(errorobj=errorstr)
         # else raise the argument error with just the message
         else:
             raise ArgumentError(message)
-
 
 
 # =============================================================================
@@ -2962,7 +2938,7 @@ def valid_directory(params: ParamDict, indexdb: IndexDatabase,
         directory = str(directory)
     except Exception as _:
         eargs = [argname, directory, type(directory)]
-        WLOG(params, 'error', TextEntry('09-001-00003', args=eargs))
+        WLOG(params, 'error', textentry('09-001-00003', args=eargs))
 
     # clean up
     directory = directory.strip()
@@ -2973,12 +2949,14 @@ def valid_directory(params: ParamDict, indexdb: IndexDatabase,
     # deal with instrument == 'None'
     if indexdb.instrument == 'None':
         eargs = [argname, indexdb.name, func_name]
-        WLOG(params, 'error', TextEntry('09-001-00032', args=eargs))
+        WLOG(params, 'error', textentry('09-001-00032', args=eargs))
     elif indexdb.database is None:
         # try to load database
         indexdb.load_db()
     # update database with entries
     indexdb.update_entries(kind=kind, force_dir=forced_dir)
+    # assert database is in indexdb
+    assert isinstance(indexdb.database, drs_db.Database)
     # set up condition
     condition = 'KIND="{0}"'.format(kind)
     # load directory names
@@ -3005,7 +2983,7 @@ def valid_directory(params: ParamDict, indexdb: IndexDatabase,
     # -------------------------------------------------------------------------
     abspath = indexdb.deal_with_filename(kind=kind, force_dir=forced_dir)
     eargs = [argname, directory, str(abspath)]
-    WLOG(params, 'error', TextEntry('09-001-00004', args=eargs))
+    WLOG(params, 'error', textentry('09-001-00004', args=eargs))
 
 
 def valid_file(params: ParamDict, indexdb: IndexDatabase, kind: str,
@@ -3045,7 +3023,7 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase, kind: str,
         filename = str(filename)
     except Exception as _:
         eargs = [argname, filename, type(filename)]
-        WLOG(params, 'error', TextEntry('09-001-00005', args=eargs))
+        WLOG(params, 'error', textentry('09-001-00005', args=eargs))
     # clean up
     filename = filename.strip()
     # -------------------------------------------------------------------------
@@ -3054,12 +3032,14 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase, kind: str,
     # deal with instrument == 'None'
     if indexdb.instrument == 'None':
         eargs = [argname, indexdb.name, func_name]
-        WLOG(params, 'error', TextEntry('09-001-00032', args=eargs))
+        WLOG(params, 'error', textentry('09-001-00032', args=eargs))
     elif indexdb.database is None:
         # try to load database
         indexdb.load_db()
     # update database with entries
     indexdb.update_entries(kind=kind, force_dir=forced_dir)
+    # assert database is in indexdb
+    assert isinstance(indexdb.database, drs_db.Database)
     # set up condition
     condition = 'KIND="{0}"'.format(kind)
     condition += ' AND DIRNAME="{0}"'.format(os.path.basename(directory))
@@ -3111,7 +3091,7 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase, kind: str,
     # ---------------------------------------------------------------------
     # if we have reached this point we cannot file filename
     eargs = [argname, filename, abspath]
-    WLOG(params, 'error', TextEntry('09-001-00005', args=eargs))
+    WLOG(params, 'error', textentry('09-001-00005', args=eargs))
 
 
 def _check_fits_keys(params: ParamDict, drsfiles: List[DrsInputFile],
@@ -3129,7 +3109,7 @@ def _check_fits_keys(params: ParamDict, drsfiles: List[DrsInputFile],
     :return:
     """
     # set function name
-    func_name = display_func(params, '_check_fits_keys', __NAME__)
+    _ = display_func(params, '_check_fits_keys', __NAME__)
     # get data for this condition (must be greater than 0)
     table = indexdb.get_entries('*', condition=condition)
     # storage for output
@@ -3164,7 +3144,7 @@ def _check_fits_keys(params: ParamDict, drsfiles: List[DrsInputFile],
         for drsfile in drsfiles:
             # if in debug mode print progres
             dargs = [drsfile.name, os.path.basename(filename_it)]
-            WLOG(params, 'debug', TextEntry('90-001-00008', args=dargs),
+            WLOG(params, 'debug', textentry('90-001-00008', args=dargs),
                  wrap=False)
             # -------------------------------------------------------------
             # create an instance of this drs_file with the filename set
@@ -3213,7 +3193,6 @@ def _check_fits_keys(params: ParamDict, drsfiles: List[DrsInputFile],
 
 
 def _check_file_logic(params, argname, logic, filetypes, types):
-
     # deal with types being an empty list
     if len(types) == 0:
         return
@@ -3227,7 +3206,7 @@ def _check_file_logic(params, argname, logic, filetypes, types):
             if filetype.name != types[-1].name:
                 # raise error if not
                 eargs = [argname, filetype.name, types.name[-1]]
-                WLOG(params, 'error', TextEntry('09-001-00008', args=eargs))
+                WLOG(params, 'error', textentry('09-001-00008', args=eargs))
 
 
 # =============================================================================
@@ -3257,15 +3236,13 @@ def _get_version_info(params: ParamDict, green: str = '',
         version = str(params['DRS_VERSION'])
     else:
         version = __version__
-
     # get text strings
-    text = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
-    namestr = text['40-001-00001']
-    versionstr = text['40-001-00002']
-    authorstr = text['40-001-00003']
+    namestr = textentry('40-001-00001')
+    versionstr = textentry('40-001-00002')
+    authorstr = textentry('40-001-00003')
     authors = ', '.join(__author__)
-    datestr = text['40-001-00004']
-    releasestr = text['40-001-00005']
+    datestr = textentry('40-001-00004')
+    releasestr = textentry('40-001-00005')
     # construct version info string
     imsgs = [green + '\t{0}: {1}'.format(namestr, name),
              green + '\t{0}: {1}'.format(versionstr, version) + end,
@@ -3350,9 +3327,6 @@ def _print_list_msg(recipe: Any, fulldir: str, dircond: bool = False,
     params = recipe.params
     # set function name
     _ = display_func(params, '_print_list_msg', __NAME__)
-    # get text
-    text = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
-    helptext = HelpText(params['INSTRUMENT'], params['LANGUAGE'])
     # get limit
     mlimit = params['DRS_MAX_IO_DISPLAY_LIMIT']
     # generate a file list
@@ -3381,21 +3355,21 @@ def _print_list_msg(recipe: Any, fulldir: str, dircond: bool = False,
         if kwarg.dtype in ['file', 'files'] and kwarg.required:
             fileargs.append(kwargname)
     # get the arguments to format "wmsg"
-    ortext = helptext['OR_TEXT']
+    ortext = textentry('OR_TEXT')
     wargs = [mlimit, fulldir, (' {0} '.format(ortext)).join(fileargs)]
     # deal with different usages (before directory defined and after)
     #   and with/without limit reached
     wmsgs = []
     if limitreached:
         if dircond:
-            wmsgs.append(text['40-005-00002'].format(*wargs))
+            wmsgs.append(textentry('40-005-00002', args=wargs))
         else:
-            wmsgs.append(text['40-005-00003'].format(*wargs))
+            wmsgs.append(textentry('40-005-00003', args=wargs))
     else:
         if dircond:
-            wmsgs.append(text['40-005-00004'].format(*wargs))
+            wmsgs.append(textentry('40-005-00004', args=wargs))
         else:
-            wmsgs.append(text['40-005-00005'].format(*wargs))
+            wmsgs.append(textentry('40-005-00005', args=wargs))
     # loop around files and add to list
     for filename in filelist:
         wmsgs.append('\t' + filename)
@@ -3406,7 +3380,8 @@ def _print_list_msg(recipe: Any, fulldir: str, dircond: bool = False,
     # print info
     if not return_string:
         pmsgs.append(green + params['DRS_HEADER'] + end)
-        pmsgs.append(green + ' ' + text['40-005-00001'].format(program) + end)
+        pmsgs.append(green + ' ' + textentry('40-005-00001', args=[program])
+                     + end)
         pmsgs.append(green + params['DRS_HEADER'] + end)
     #     imsgs = _get_version_info(params, green, end)
     #     pmsgs += imsgs
@@ -3513,8 +3488,6 @@ def _get_arg(rargs: Dict[str, DrsArgument],
     find argument in the DrsRecipes keyword argument dictionary or it not found
     at all return None
 
-    :param recipe: DrsRecipe instance
-
     :params rargs: dictionary of positional arguments (from recipe.args)
     :params rkwargs: dictionary of optional arguments (from recipe.kwargs)
     :param argname: string, the argument/keyword argument to look for
@@ -3567,7 +3540,7 @@ def _check_arg_path(params: ParamDict, arg: DrsArgument,
     if not os.path.exists(path):
         # log that arg path was wrong
         eargs = [arg.name, arg.path, func_name]
-        WLOG(params, 'error', TextEntry('00-006-00018', args=eargs))
+        WLOG(params, 'error', textentry('00-006-00018', args=eargs))
     else:
         return path
 
@@ -3575,13 +3548,12 @@ def _check_arg_path(params: ParamDict, arg: DrsArgument,
 # =============================================================================
 # Make functions
 # =============================================================================
-def make_listing(params: ParamDict, htext: HelpText) -> OrderedDict:
+def make_listing(params: ParamDict) -> OrderedDict:
     """
     Make a custom special argument: Sets whether to display listing files
     up to DRS_MAX_IO_DISPLAY_LIMIT in number.
 
     :param params: ParamDict, Parameter Dictionary of constants
-    :param htext: HelpText, the help text instance (text from lang database)
 
     :return: an ordered dictionary with argument parameters
     :rtype: OrderedDict
@@ -3601,17 +3573,16 @@ def make_listing(params: ParamDict, htext: HelpText) -> OrderedDict:
     # set the number of argument to expect
     props['nargs'] = 0
     # set the help message
-    props['help'] = htext['LISTING_HELP'].format(limit)
+    props['help'] = textentry('LISTING_HELP', args=limit)
     # return the argument dictionary
     return props
 
 
-def make_alllisting(params: ParamDict, htext: HelpText) -> OrderedDict:
+def make_alllisting(params: ParamDict) -> OrderedDict:
     """
     Make a custom special argument: Sets whether to display all listing files
 
     :param params: ParamDict, Parameter Dictionary of constants
-    :param htext: HelpText, the help text instance (text from lang database)
 
     :return: an ordered dictionary with argument parameters
     :rtype: OrderedDict
@@ -3629,17 +3600,16 @@ def make_alllisting(params: ParamDict, htext: HelpText) -> OrderedDict:
     # set the number of argument to expect
     props['nargs'] = 0
     # set the help message
-    props['help'] = htext['ALLLISTING_HELP']
+    props['help'] = textentry('ALLLISTING_HELP')
     # return the argument dictionary
     return props
 
 
-def make_debug(params: ParamDict, htext: HelpText) -> OrderedDict:
+def make_debug(params: ParamDict) -> OrderedDict:
     """
     Make a custom special argument: Sets which debug mode to be in
 
     :param params: ParamDict, Parameter Dictionary of constants
-    :param htext: HelpText, the help text instance (text from lang database)
 
     :return: an ordered dictionary with argument parameters
     :rtype: OrderedDict
@@ -3657,17 +3627,16 @@ def make_debug(params: ParamDict, htext: HelpText) -> OrderedDict:
     # set the number of argument to expect
     props['nargs'] = '?'
     # set the help message
-    props['help'] = htext['DEBUG_HELP']
+    props['help'] = textentry('DEBUG_HELP')
     # return the argument dictionary
     return props
 
 
-def set_inputdir(params: ParamDict, htext: HelpText) -> OrderedDict:
+def set_inputdir(params: ParamDict) -> OrderedDict:
     """
     Make a custom special argument: Sets input directory
 
     :param params: ParamDict, Parameter Dictionary of constants
-    :param htext: HelpText, the help text instance (text from lang database)
 
     :return: an ordered dictionary with argument parameters
     :rtype: OrderedDict
@@ -3685,17 +3654,16 @@ def set_inputdir(params: ParamDict, htext: HelpText) -> OrderedDict:
     # set the number of argument to expect
     props['nargs'] = 1
     # set the help message
-    props['help'] = htext['SET_INPUT_DIR_HELP']
+    props['help'] = textentry('SET_INPUT_DIR_HELP')
     # return the argument dictionary
     return props
 
 
-def set_outputdir(params: ParamDict, htext: HelpText) -> OrderedDict:
+def set_outputdir(params: ParamDict) -> OrderedDict:
     """
     Make a custom special argument: Sets output directory
 
     :param params: ParamDict, Parameter Dictionary of constants
-    :param htext: HelpText, the help text instance (text from lang database)
 
     :return: an ordered dictionary with argument parameters
     :rtype: OrderedDict
@@ -3713,17 +3681,16 @@ def set_outputdir(params: ParamDict, htext: HelpText) -> OrderedDict:
     # set the number of argument to expect
     props['nargs'] = 1
     # set the help message
-    props['help'] = htext['SET_OUTPUT_DIR_HELP']
+    props['help'] = textentry('SET_OUTPUT_DIR_HELP')
     # return the argument dictionary
     return props
 
 
-def make_version(params: ParamDict, htext: HelpText) -> OrderedDict:
+def make_version(params: ParamDict) -> OrderedDict:
     """
     Make a custom special argument: Whether to display drs version information
 
     :param params: ParamDict, Parameter Dictionary of constants
-    :param htext: HelpText, the help text instance (text from lang database)
 
     :return: an ordered dictionary with argument parameters
     :rtype: OrderedDict
@@ -3741,17 +3708,16 @@ def make_version(params: ParamDict, htext: HelpText) -> OrderedDict:
     # set the number of argument to expect
     props['nargs'] = 0
     # set the help message
-    props['help'] = htext['VERSION_HELP']
+    props['help'] = textentry('VERSION_HELP')
     # return the argument dictionary
     return props
 
 
-def make_info(params: ParamDict, htext: HelpText) -> OrderedDict:
+def make_info(params: ParamDict) -> OrderedDict:
     """
     Make a custom special argument: Whether to display recipe information
 
     :param params: ParamDict, Parameter Dictionary of constants
-    :param htext: HelpText, the help text instance (text from lang database)
 
     :return: an ordered dictionary with argument parameters
     :rtype: OrderedDict
@@ -3769,17 +3735,16 @@ def make_info(params: ParamDict, htext: HelpText) -> OrderedDict:
     # set the number of argument to expect
     props['nargs'] = 0
     # set the help message
-    props['help'] = htext['INFO_HELP']
+    props['help'] = textentry('INFO_HELP')
     # return the argument dictionary
     return props
 
 
-def set_program(params: ParamDict, htext: HelpText) -> OrderedDict:
+def set_program(params: ParamDict) -> OrderedDict:
     """
     Make a custom special argument: Set the program name
 
     :param params: ParamDict, Parameter Dictionary of constants
-    :param htext: HelpText, the help text instance (text from lang database)
 
     :return: an ordered dictionary with argument parameters
     :rtype: OrderedDict
@@ -3797,18 +3762,17 @@ def set_program(params: ParamDict, htext: HelpText) -> OrderedDict:
     # set the number of argument to expect
     props['nargs'] = 1
     # set the help message
-    props['help'] = htext['SET_PROGRAM_HELP']
+    props['help'] = textentry('SET_PROGRAM_HELP')
     # return the argument dictionary
     return props
 
 
-def set_ipython_return(params: ParamDict, htext: HelpText) -> OrderedDict:
+def set_ipython_return(params: ParamDict) -> OrderedDict:
     """
     Make a custom special argument: Set the use of ipython return after
     script ends
 
     :param params: ParamDict, Parameter Dictionary of constants
-    :param htext: HelpText, the help text instance (text from lang database)
 
     :return: an ordered dictionary with argument parameters
     :rtype: OrderedDict
@@ -3826,17 +3790,16 @@ def set_ipython_return(params: ParamDict, htext: HelpText) -> OrderedDict:
     # set the number of argument to expect
     props['nargs'] = 0
     # set the help message
-    props['help'] = htext['SET_IPYTHON_RETURN_HELP']
+    props['help'] = textentry('SET_IPYTHON_RETURN_HELP')
     # return the argument dictionary
     return props
 
 
-def breakpoints(params: ParamDict, htext: HelpText) -> OrderedDict:
+def breakpoints(params: ParamDict) -> OrderedDict:
     """
     Make a custom special argument: Set the use of break_point
 
     :param params: ParamDict, Parameter Dictionary of constants
-    :param htext: HelpText, the help text instance (text from lang database)
 
     :return: an ordered dictionary with argument parameters
     :rtype: OrderedDict
@@ -3854,17 +3817,16 @@ def breakpoints(params: ParamDict, htext: HelpText) -> OrderedDict:
     # set the number of argument to expect
     props['nargs'] = 0
     # set the help message
-    props['help'] = htext['BREAKPOINTS_HELP']
+    props['help'] = textentry('BREAKPOINTS_HELP')
     # return the argument dictionary
     return props
 
 
-def is_master(params: ParamDict, htext: HelpText) -> OrderedDict:
+def is_master(params: ParamDict) -> OrderedDict:
     """
     Make a custom special argument: Set the use of break_point
 
     :param params: ParamDict, Parameter Dictionary of constants
-    :param htext: HelpText, the help text instance (text from lang database)
 
     :return: an ordered dictionary with argument parameters
     :rtype: OrderedDict
@@ -3882,17 +3844,16 @@ def is_master(params: ParamDict, htext: HelpText) -> OrderedDict:
     # set the number of argument to expect
     props['nargs'] = 1
     # set the help message
-    props['help'] = htext['IS_MASTER_HELP']
+    props['help'] = textentry('IS_MASTER_HELP')
     # return the argument dictionary
     return props
 
 
-def make_breakfunc(params: ParamDict, htext: HelpText) -> OrderedDict:
+def make_breakfunc(params: ParamDict) -> OrderedDict:
     """
     Make a custom special argument: Set a break function
 
     :param params: ParamDict, Parameter Dictionary of constants
-    :param htext: HelpText, the help text instance (text from lang database)
 
     :return: an ordered dictionary with argument parameters
     :rtype: OrderedDict
@@ -3910,17 +3871,16 @@ def make_breakfunc(params: ParamDict, htext: HelpText) -> OrderedDict:
     # set the number of argument to expect
     props['nargs'] = 1
     # set the help message
-    props['help'] = htext['BREAKFUNC_HELP']
+    props['help'] = textentry('BREAKFUNC_HELP')
     # return the argument dictionary
     return props
 
 
-def set_quiet(params: ParamDict, htext: HelpText) -> OrderedDict:
+def set_quiet(params: ParamDict) -> OrderedDict:
     """
     Make a custom special argument: Set the quiet mode
 
     :param params: ParamDict, Parameter Dictionary of constants
-    :param htext: HelpText, the help text instance (text from lang database)
 
     :return: an ordered dictionary with argument parameters
     :rtype: OrderedDict
@@ -3938,10 +3898,9 @@ def set_quiet(params: ParamDict, htext: HelpText) -> OrderedDict:
     # set the number of argument to expect
     props['nargs'] = 0
     # set the help message
-    props['help'] = htext['QUIET_HELP']
+    props['help'] = textentry('QUIET_HELP')
     # return the argument dictionary
     return props
-
 
 # =============================================================================
 # End of code

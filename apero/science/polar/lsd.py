@@ -40,8 +40,7 @@ WLOG = drs_log.wlog
 # Get function string
 display_func = drs_log.display_func
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 # Speed of light
@@ -109,7 +108,7 @@ def lsd_analysis_wrapper(params, pobjects, pprops, wprops, **kwargs):
     lprops = ParamDict()
     # ----------------------------------------------------------------------
     # log progress
-    WLOG(params, '', TextEntry('40-021-00004'))
+    WLOG(params, '', textentry('40-021-00004'))
     # ----------------------------------------------------------------------
     # deal with not running lsd
     if not do_lsd:
@@ -155,7 +154,7 @@ def lsd_analysis_wrapper(params, pobjects, pprops, wprops, **kwargs):
     # deal with no temperature
     if temperature is None and lsdmask is None:
         eargs = [pobj.filename, params['KW_OBJTEMP'][0], func_name]
-        WLOG(params, 'warning', TextEntry('09-021-00008', args=eargs))
+        WLOG(params, 'warning', textentry('09-021-00008', args=eargs))
         # return outputs
         oargs = [lprops, func_name, False, wl_lower, wl_upper, min_depth,
                  vinit, vfinal, normalize, nbinsize1, noverlap1, nsigclip1,

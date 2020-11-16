@@ -44,8 +44,7 @@ display_func = drs_log.display_func
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 
@@ -85,7 +84,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
         # log and raise error: not enough tranmission maps to run pca analysis
         wargs = [trans_key, len(transfiles), npc, 'FTELLU_NUM_PRINCIPLE_COMP',
                  func_name]
-        WLOG(params, 'error', TextEntry('09-019-00003', args=wargs))
+        WLOG(params, 'error', textentry('09-019-00003', args=wargs))
     # ----------------------------------------------------------------------
     # check whether we can use pre-saved absorption map and create it by
     #     loading trans files if pre-saved abso map does not exist
@@ -109,14 +108,14 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
         abso1 = drs_path.numpy_load(abso1_npy.filename)
         # log that we have loaded abso from file
         wargs = [abso_npy.filename]
-        WLOG(params, '', TextEntry('40-019-00012', args=wargs))
+        WLOG(params, '', textentry('40-019-00012', args=wargs))
         # set abso source
         abso_source = '[file] ' + abso_npy.basename
         transfiles_used = list(transfiles)
     except Exception as e:
         # debug print out: cannot load abso file
         dargs = [abso_npy, type(e), e]
-        WLOG(params, 'debug', TextEntry('90-019-00001', args=dargs))
+        WLOG(params, 'debug', textentry('90-019-00001', args=dargs))
         # set up storage for the absorption
         abso = np.zeros([len(transfiles), np.product(image.shape)])
         abso1 = np.zeros([len(transfiles), 2])
@@ -131,15 +130,15 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
             if np.sum(np.isnan(transimage)) == np.product(transimage):
                 # log that we are removing a trans file
                 wargs = [transfiles[it]]
-                WLOG(params, '', TextEntry('40-019-00014', args=wargs))
+                WLOG(params, '', textentry('40-019-00014', args=wargs))
             # make sure we have required header key for expo_water
             elif params['KW_TELLUP_EXPO_WATER'][0] not in transhdr:
                 wargs = [params['KW_TELLUP_EXPO_WATER'][0], transfiles[it]]
-                WLOG(params, '', TextEntry('40-019-00050', args=wargs))
+                WLOG(params, '', textentry('40-019-00050', args=wargs))
             # make sure we have required header key for expo_others
             elif params['KW_TELLUP_EXPO_OTHERS'][0] not in transhdr:
                 wargs = [params['KW_TELLUP_EXPO_OTHERS'][0], transfiles[it]]
-                WLOG(params, '', TextEntry('40-019-00050', args=wargs))
+                WLOG(params, '', textentry('40-019-00050', args=wargs))
             else:
                 # push data into abso array
                 abso[it, :] = transimage.reshape(np.product(image.shape))
@@ -151,7 +150,7 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
         # set abso source
         abso_source = '[database] trans_file'
         # log that we are saving the abso to file
-        WLOG(params, '', TextEntry('40-019-00013', args=[abso_npy.filename]))
+        WLOG(params, '', textentry('40-019-00013', args=[abso_npy.filename]))
         # remove all other abso npy files
         _remove_absonpy_files(params, params['DRS_TELLU_DB'], 'tellu_save_')
         _remove_absonpy_files(params, params['DRS_TELLU_DB'], 'tellu_save1_')
@@ -199,12 +198,12 @@ def gen_abso_pca_calc(params, recipe, image, transfiles, fiber, mprops,
 
     # log fraction of valid (non NaN) pixels
     fraction = mp.nansum(keep) / len(keep)
-    WLOG(params, '', TextEntry('40-019-00015', args=[fraction]))
+    WLOG(params, '', textentry('40-019-00015', args=[fraction]))
     # log fraction of valid pixels > 1 - (1/e)
     with warnings.catch_warnings(record=True) as _:
         keep &= mp.nanmin(log_abso, axis=0) > -1
     fraction = mp.nansum(keep) / len(keep)
-    WLOG(params, '', TextEntry('40-019-00016', args=[fraction]))
+    WLOG(params, '', textentry('40-019-00016', args=[fraction]))
     # ----------------------------------------------------------------------
     # Perform PCA analysis on the log of the telluric absorption map
     # ----------------------------------------------------------------------
@@ -287,7 +286,7 @@ def shift_all_to_frame(params, recipe, image, template, bprops, mprops, wprops,
     # deal with bad berv (nan or None)
     if dv in [np.nan, None] or not isinstance(dv, (int, float)):
         eargs = [dv, func_name]
-        WLOG(params, 'error', TextEntry('09-016-00004', args=eargs))
+        WLOG(params, 'error', textentry('09-016-00004', args=eargs))
     # Get the master wavemap from master wave props
     masterwavemap = mprops['WAVEMAP']
     masterwavefile = os.path.basename(mprops['WAVEFILE'])
@@ -310,7 +309,7 @@ def shift_all_to_frame(params, recipe, image, template, bprops, mprops, wprops,
     # ------------------------------------------------------------------
     if template is not None:
         # Log that we are shifting the template
-        WLOG(params, '', TextEntry('40-019-00017'))
+        WLOG(params, '', textentry('40-019-00017'))
         # set up storage for template
         template2 = np.zeros(np.product(image.shape))
         ydim, xdim = image.shape
@@ -339,7 +338,7 @@ def shift_all_to_frame(params, recipe, image, template, bprops, mprops, wprops,
         # ------------------------------------------------------------------
         # log the shifting of PCA components
         wargs = [masterwavefile, wavefile]
-        WLOG(params, '', TextEntry('40-019-00021', args=wargs))
+        WLOG(params, '', textentry('40-019-00021', args=wargs))
         # shift template
         shift_temp = gen_tellu.wave_to_wave(params, template2, masterwavemap,
                                             wavemap, reshape=True)
@@ -359,7 +358,7 @@ def shift_all_to_frame(params, recipe, image, template, bprops, mprops, wprops,
     # ------------------------------------------------------------------
     # log the shifting of PCA components
     wargs = [masterwavefile, wavefile]
-    WLOG(params, '', TextEntry('40-019-00018', args=wargs))
+    WLOG(params, '', textentry('40-019-00018', args=wargs))
     # shift pca components (one by one)
     for comp in range(npc):
         shift_pc = gen_tellu.wave_to_wave(params, pc2[:, comp], masterwavemap,
@@ -374,7 +373,7 @@ def shift_all_to_frame(params, recipe, image, template, bprops, mprops, wprops,
     # ------------------------------------------------------------------
     # log the shifting of the tapas spectrum
     wargs = [masterwavefile, wavefile]
-    WLOG(params, '', TextEntry('40-019-00019', args=wargs))
+    WLOG(params, '', textentry('40-019-00019', args=wargs))
     # shift tapas species
     for row in range(len(tapas_all_species2)):
         stapas = gen_tellu.wave_to_wave(params, tapas_all_species[row],
@@ -497,7 +496,7 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
     for ite in range(fit_iterations):
         # log progress
         wargs = [ite + 1, fit_iterations]
-        WLOG(params, '', TextEntry('40-019-00020', args=wargs))
+        WLOG(params, '', textentry('40-019-00020', args=wargs))
         # ------------------------------------------------------------------
         # if we don't have a template construct one
         # ------------------------------------------------------------------
@@ -586,7 +585,7 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
 
         # log number of kept pixels
         wargs = [mp.nansum(keep)]
-        WLOG(params, '', TextEntry('40-019-00022', args=wargs))
+        WLOG(params, '', textentry('40-019-00022', args=wargs))
         # ------------------------------------------------------------------
         # calculate amplitudes and reconstructed spectrum
         # ------------------------------------------------------------------
@@ -822,11 +821,11 @@ def fit_tellu_quality_control(params, infile, tpreprops, **kwargs):
     # finally log the failed messages and set QC = 1 if we pass the
     #     quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):
-        WLOG(params, 'info', TextEntry('40-005-10001'))
+        WLOG(params, 'info', textentry('40-005-10001'))
         passed = 1
     else:
         for farg in fail_msg:
-            WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+            WLOG(params, 'warning', textentry('40-005-10002') + farg)
         passed = 0
     # store in qc_params
     qc_params = [qc_names, qc_values, qc_logic, qc_pass]
@@ -1028,7 +1027,7 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     corrfile.data = sp_out
     # ------------------------------------------------------------------
     # log that we are saving rotated image
-    WLOG(params, '', TextEntry('40-019-00023', args=[corrfile.filename]))
+    WLOG(params, '', textentry('40-019-00023', args=[corrfile.filename]))
     # write image to file
     corrfile.write_multi(data_list=[trans_table], datatype_list=['table'],
                          kind=recipe.outputtype, runstring=recipe.runstring)
@@ -1059,7 +1058,7 @@ def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
     sc1dwfile.datatype = 'table'
     # log that we are saving s1d table
     wargs = ['wave', sc1dwfile.filename]
-    WLOG(params, '', TextEntry('40-019-00024', args=wargs))
+    WLOG(params, '', textentry('40-019-00024', args=wargs))
     # write image to file
     sc1dwfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -1082,7 +1081,7 @@ def fit_tellu_write_corrected_s1d(params, recipe, infile, corrfile, fiber,
     sc1dvfile.datatype = 'table'
     # log that we are saving s1d table
     wargs = ['velocity', sc1dvfile.filename]
-    WLOG(params, '', TextEntry('40-019-00024', args=wargs))
+    WLOG(params, '', textentry('40-019-00024', args=wargs))
     # write image to file
     sc1dvfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -1104,7 +1103,7 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     # copy data
     reconfile.data = cprops['RECON_ABSO']
     # log that we are saving recon e2ds file
-    WLOG(params, '', TextEntry('40-019-00025', args=[reconfile.filename]))
+    WLOG(params, '', textentry('40-019-00025', args=[reconfile.filename]))
     # write image to file
     reconfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -1127,7 +1126,7 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     rc1dwfile.datatype = 'table'
     # log that we are saving s1d table
     wargs = ['wave', rc1dwfile.filename]
-    WLOG(params, '', TextEntry('40-019-00026', args=wargs))
+    WLOG(params, '', textentry('40-019-00026', args=wargs))
     # write image to file
     rc1dwfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -1150,7 +1149,7 @@ def fit_tellu_write_recon(params, recipe, infile, corrfile, fiber, cprops,
     rc1dvfile.datatype = 'table'
     # log that we are saving s1d table
     wargs = ['velocity', rc1dvfile.filename]
-    WLOG(params, '', TextEntry('40-019-00026', args=wargs))
+    WLOG(params, '', textentry('40-019-00026', args=wargs))
     # write image to file
     rc1dvfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -1175,7 +1174,7 @@ def _remove_absonpy_files(params, path, prefix):
             # create abspath
             abspath = os.path.join(path, filename)
             # debug log removal of other abso files
-            WLOG(params, 'debug', TextEntry('90-019-00002', args=[abspath]))
+            WLOG(params, 'debug', textentry('90-019-00002', args=[abspath]))
             # remove file
             try:
                 os.remove(abspath)

@@ -55,10 +55,6 @@ LogDatabase = drs_database.LogDatabase
 # get header classes from io.drs_fits
 Header = drs_fits.Header
 FitsHeader = drs_fits.fits.Header
-# Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
-HelpText = lang.core.drs_lang_text.HelpDict
 
 
 # =============================================================================

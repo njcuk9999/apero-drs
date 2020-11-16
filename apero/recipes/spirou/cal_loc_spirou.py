@@ -34,8 +34,7 @@ __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 
@@ -152,7 +151,7 @@ def __main__(recipe, params):
         else:
             eargs = [props['DPRTYPE'], recipe.name, 'FLAT_DARK or DARK_FLAT',
                      infile.basename]
-            WLOG(params, 'error', TextEntry('00-013-00001', args=eargs))
+            WLOG(params, 'error', textentry('00-013-00001', args=eargs))
             fiber = None
 
         # ------------------------------------------------------------------

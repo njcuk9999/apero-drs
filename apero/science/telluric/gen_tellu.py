@@ -51,8 +51,7 @@ display_func = drs_log.display_func
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
+textentry = lang.textentry
 # alias pcheck
 pcheck = constants.PCheck(wlog=WLOG)
 # Speed of light
@@ -276,7 +275,7 @@ def get_tellu_objs(params: ParamDict, key: str,
     # ----------------------------------------------------------------------
     # display how many files found
     margs = [len(absfilenames), key]
-    WLOG(params, '', TextEntry('40-019-00039', args=margs))
+    WLOG(params, '', textentry('40-019-00039', args=margs))
     return absfilenames
 
 
@@ -440,7 +439,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # ----------------------------------------------------------------------
     if not do_precleaning:
         # log progress
-        WLOG(params, '', TextEntry('10-019-00008'))
+        WLOG(params, '', textentry('10-019-00008'))
         # populate qc params
         qc_params = [qc_names, qc_values, qc_logic, qc_pass]
         # populate parameter dictionary
@@ -596,14 +595,14 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # set up a qc flag
     flag_qc = False
     # log progress
-    WLOG(params, '', TextEntry('40-019-00040'))
+    WLOG(params, '', textentry('40-019-00040'))
     # loop around until convergence or 20th iteration
     while (dexpo > dexpo_thres) and (iteration < max_iterations):
         # set up a qc flag
         flag_qc = False
         # log progress
         args = [iteration, dexpo, expo_water, expo_others, dv_abso * 1000]
-        WLOG(params, '', TextEntry('40-019-00041', args=args))
+        WLOG(params, '', textentry('40-019-00041', args=args))
         # get the absorption spectrum
         trans = get_abso_expo(params, wavemap, expo_others, expo_water,
                               spl_others, spl_water, ww=ker_width,
@@ -847,7 +846,7 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
         for qit in range(len(qc_pass)):
             if qc_pass[qit] == 0:
                 wargs = [qc_logic[qit], qc_names[qit], qc_values[qit]]
-                WLOG(params, 'warning', TextEntry('10-019-00010', args=wargs))
+                WLOG(params, 'warning', textentry('10-019-00010', args=wargs))
 
         qc_params = [qc_names, qc_values, qc_logic, qc_pass]
         # return qc_exit_tellu_preclean
@@ -967,7 +966,7 @@ def clean_ohline_pca(params, image, wavemap, **kwargs):
                       func_name)
     # ----------------------------------------------------------------------
     # log progress
-    WLOG(params, '', TextEntry('40-019-00042'))
+    WLOG(params, '', textentry('40-019-00042'))
     # ----------------------------------------------------------------------
     # get shape of the e2ds
     nbo, nbpix = image.shape
@@ -1372,7 +1371,7 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
                       value=props['TELLUP_WATER_BOUNDS'], mapf='list')
     # ----------------------------------------------------------------------
     # print progress
-    WLOG(params, '', TextEntry('40-019-00044', args=[tpclfile.filename]))
+    WLOG(params, '', textentry('40-019-00044', args=[tpclfile.filename]))
     # write to file
     tpclfile.data = dimages[0]
     tpclfile.write_multi(data_list=dimages[1:], kind=recipe.outputtype,
@@ -1449,7 +1448,7 @@ def read_tellu_preclean(params, recipe, infile, fiber, database=None):
     # ----------------------------------------------------------------------
     # log progress
     # log: Reading pre-cleaned file from: {0}
-    WLOG(params, '', TextEntry('40-019-00043', args=[tpclfile.filename]))
+    WLOG(params, '', textentry('40-019-00043', args=[tpclfile.filename]))
     # ----------------------------------------------------------------------
     # start a parameter dictionary
     props = ParamDict()
@@ -1853,7 +1852,7 @@ def load_templates(params: ParamDict,
     temp_key = out_temp.get_dbkey()
     # -------------------------------------------------------------------------
     # log status
-    WLOG(params, '', TextEntry('40-019-00045', args=[temp_key]))
+    WLOG(params, '', textentry('40-019-00045', args=[temp_key]))
     # load tellu file, header and abspaths
     temp_out = load_tellu_file(params, temp_key, header,
                                n_entries=1, required=False, fiber=fiber,
@@ -1864,12 +1863,12 @@ def load_templates(params: ParamDict,
     # deal with no files in database
     if temp_image is None:
         # log that we found no templates in database
-        WLOG(params, '', TextEntry('40-019-00003'))
+        WLOG(params, '', textentry('40-019-00003'))
         return None, None
     # -------------------------------------------------------------------------
     # log which template we are using
     wargs = [temp_filename]
-    WLOG(params, 'info', TextEntry('40-019-00005', args=wargs))
+    WLOG(params, 'info', textentry('40-019-00005', args=wargs))
     # only return most recent template
     return temp_image, temp_filename
 
@@ -1882,7 +1881,7 @@ def get_transmission_files(params, header, fiber, database=None):
     # get key
     trans_key = out_trans.get_dbkey()
     # log status
-    WLOG(params, '', TextEntry('40-019-00046', args=[trans_key]))
+    WLOG(params, '', textentry('40-019-00046', args=[trans_key]))
     # load tellu file, header and abspaths
     trans_filenames = load_tellu_file(params, trans_key, header, fiber=fiber,
                                       n_entries='*', get_image=False,
@@ -1945,7 +1944,7 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, database=None,
     if out_tellu_conv.filename in conv_paths:
         # log that we are loading tapas convolved file
         wargs = [out_tellu_conv.filename]
-        WLOG(params, '', TextEntry('40-019-00001', args=wargs))
+        WLOG(params, '', textentry('40-019-00001', args=wargs))
         # ------------------------------------------------------------------
         # Load the convolved TAPAS atmospheric transmission from file
         # ------------------------------------------------------------------
@@ -1970,7 +1969,7 @@ def load_conv_tapas(params, recipe, header, mprops, fiber, database=None,
         out_tellu_conv.data = tapas_all_species
         # log saving
         wargs = [out_tellu_conv.filename]
-        WLOG(params, '', TextEntry('40-019-00002', args=wargs))
+        WLOG(params, '', textentry('40-019-00002', args=wargs))
         # save
         out_tellu_conv.write_file(kind=recipe.outputtype,
                                   runstring=recipe.runstring)
@@ -2053,7 +2052,7 @@ def load_tapas_spl(params, recipe, header, database=None):
         # ------------------------------------------------------------------
         # log saving
         args = [out_tellu_tapas.filename]
-        WLOG(params, '', TextEntry('40-019-00047', args=[args]))
+        WLOG(params, '', textentry('40-019-00047', args=[args]))
         # save to disk
         out_tellu_tapas.data = tmp_tapas
         out_tellu_tapas.write_file(kind=recipe.outputtype,
@@ -2165,7 +2164,7 @@ def wave_to_wave(params, spectrum, wave1, wave2, reshape=False):
         except ValueError:
             # log that we cannot reshape spectrum
             eargs = [spectrum.shape, wave2.shape, func_name]
-            WLOG(params, 'error', TextEntry('09-019-00004', args=eargs))
+            WLOG(params, 'error', textentry('09-019-00004', args=eargs))
     # if they are the same
     if mp.nansum(wave1 != wave2) == 0:
         return spectrum

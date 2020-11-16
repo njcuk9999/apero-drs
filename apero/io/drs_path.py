@@ -54,7 +54,7 @@ DrsCodedException = drs_exceptions.DrsCodedException
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
+textentry= lang.textentry
 # -----------------------------------------------------------------------------
 
 
@@ -80,7 +80,7 @@ def get_relative_folder(params: ParamDict, package: str, folder: str) -> str:
     try:
         data_folder = drs_break.get_relative_folder(package, folder)
     except DrsCodedException as e:
-        WLOG(params, e.level, TextEntry(e.codeid, args=e.targs))
+        WLOG(params, e.level, textentry(e.codeid, args=e.targs))
         data_folder = None
     # return the absolute data_folder path
     return data_folder
@@ -176,17 +176,17 @@ def group_files_by_time(params: ParamDict, times: np.ndarray,
                 time_thres = (time_thres * time_unit).to(uu.day)
         except uu.UnitConversionError as e:
             eargs = [str(e), func_name]
-            WLOG(params, 'error', TextEntry('00-008-00008', args=eargs))
+            WLOG(params, 'error', textentry('00-008-00008', args=eargs))
         except Exception as e:
             eargs = [type(e), str(e), func_name]
-            WLOG(params, 'error', TextEntry('00-008-00009', args=eargs))
+            WLOG(params, 'error', textentry('00-008-00009', args=eargs))
     elif time_unit == 'hours':
         time_thres = time_thres / 24
     elif time_unit == 'days':
         pass
     else:
         eargs = [time_unit, func_name]
-        WLOG(params, 'error', TextEntry('00-008-00010', args=eargs))
+        WLOG(params, 'error', textentry('00-008-00010', args=eargs))
     # ID of matched multiplets of files
     matched_id = np.zeros_like(times, dtype=int)
     # loop until all files are matched with all other files taken within
@@ -253,7 +253,7 @@ def makedirs(params: ParamDict, path: str):
         # catch all exceptions and pipe to drs error
         except Exception as e:
             eargs = [path, type(e), e, func_name]
-            WLOG(params, 'error', TextEntry('01-010-00002', args=eargs))
+            WLOG(params, 'error', textentry('01-010-00002', args=eargs))
 
 
 def copytree(src: Union[str, Path], dst: Union[str, Path],
@@ -311,17 +311,17 @@ def copyfile(params: ParamDict, src: str, dst: str, log: bool = True):
         # if logging then log
         if log:
             wargs = [src, dst]
-            WLOG(params, '', TextEntry('40-000-00011', args=wargs))
+            WLOG(params, '', textentry('40-000-00011', args=wargs))
         # copy using shutil
         try:
             shutil.copy(src, dst)
         except Exception as e:
             eargs = [src, dst, type(e), e, func_name]
-            WLOG(params, '', TextEntry('00-004-00006', args=eargs))
+            WLOG(params, '', textentry('00-004-00006', args=eargs))
     # else raise exception
     else:
         eargs = [src, dst, func_name]
-        WLOG(params, 'error', TextEntry('00-004-00005', args=eargs))
+        WLOG(params, 'error', textentry('00-004-00005', args=eargs))
 
 
 def numpy_load(filename: str) -> Any:

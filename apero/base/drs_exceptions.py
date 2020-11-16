@@ -16,6 +16,8 @@ from pathlib import Path
 from typing import Any, List, Union
 
 from apero.base import base
+from apero.base import drs_base
+from apero import lang
 
 # =============================================================================
 # Define variables
@@ -38,168 +40,12 @@ USED_CONFIG_WARNINGS = []
 # =============================================================================
 # Define exception classes
 # =============================================================================
-class TextException(Exception):
-    """Raised when config file is incorrect"""
-    pass
-
-
-class TextError(TextException):
-    """
-    Custom Text Warning for passing to the log
-    """
-
-    def __init__(self, message: Union[str, None] = None,
-                 level: Union[str, None] = None,
-                 wlog: Any = None, kwargs: Union[None, dict] = None,
-                 errorobj: Any = None):
-        """
-        Constructor for ConfigError sets message to self.message and level to
-        self.level
-
-        if key is not None defined self.message reads "key [key] must be
-        defined in config file (located at [config_file]
-
-        if config_file is None then deafult config file is used in its place
-
-        :param message: list or string, the message to print in the error
-        :param level: string, level (for logging) must be key in TRIG key above
-                      default = all, error, warning, info or graph
-        :param wlog: None or pass a drs_log.wlog instance (to use logger)
-        :param kwargs: None or dict passed to basic logger
-        :param errorobj: instance of raised exception
-        """
-        # deal with errorobj
-        if errorobj is not None:
-            message = errorobj[0].get(errorobj[1], report=True)
-            message = message.split('\n')
-            level = 'error'
-        # deal with kwargs being None
-        if kwargs is None:
-            kwargs = dict()
-        # deal with message
-        if message is None:
-            self.message = 'Unknown'
-        elif type(message) == str:
-            self.message = message
-        else:
-            self.message = list(message)
-        # set logging level
-        if level is None:
-            self.level = 'error'
-        else:
-            self.level = level
-        # send to basic logger
-        basiclogger(message=self.message, level=self.level,  name='Text',
-                    force_exit=False, wlog=wlog, **kwargs)
-
-    def __getstate__(self) -> dict:
-        """
-        For when we have to pickle the class
-        :return:
-        """
-        # set state to __dict__
-        state = dict(self.__dict__)
-        # return dictionary state (for pickle)
-        return state
-
-    def __setstate__(self, state):
-        """
-        For when we have to unpickle the class
-
-        :param state: dictionary from pickle
-        :return:
-        """
-        # update dict with state
-        self.__dict__.update(state)
-
-    def __str__(self):
-        """
-        String representation used for raise Exception message printing
-        :return:
-        """
-        return _flatmessage(self.message)
-
-
-class TextWarning:
-    global USED_TEXT_WARNINGS
-
-    def __init__(self, message: Union[str, List[str], None] = None,
-                 level: Union[str, None] = None,
-                 wlog: Any = None, kwargs: Union[None, dict] = None,
-                 errorobj: Any = None):
-        """
-        Constructor for TextWarning sets message to self.message and level to
-        self.level
-
-        :param message: list or string, the message to print in the error
-        :param level: string, level (for logging) must be key in TRIG key above
-                      default = all, error, warning, info or graph
-        :param wlog: None or pass a drs_log.wlog instance (to use logger)
-        :param kwargs: None or dict passed to basic logger
-        :param errorobj: instance of raised exception
-        """
-        # deal with errorobj
-        if errorobj is not None:
-            message = errorobj[0].get(errorobj[1], report=True,
-                                      reportlevel='TextWarning')
-            message = message.split('\n')
-            level = 'warning'
-        # deal with kwargs being None
-        if kwargs is None:
-            kwargs = dict()
-        # deal with message
-        if message is None:
-            self.message = 'Unknown'
-        elif type(message) == str:
-            self.message = [message]
-        else:
-            self.message = list(message)
-        # set logging level
-        if level is None:
-            self.level = 'warning'
-        else:
-            self.level = level
-        # deal with a list message (for printing)
-        amessage = ''
-        for it, mess in enumerate(self.message):
-            if it > 0:
-                amessage += '\n\t\t{0}'.format(mess)
-            else:
-                amessage += mess
-        if amessage in USED_TEXT_WARNINGS:
-            pass
-        else:
-            USED_TEXT_WARNINGS.append(amessage)
-            # send to basic logger
-            basiclogger(message=self.message, level=self.level, name='Text',
-                        force_exit=False, wlog=wlog, **kwargs)
-
-    def __getstate__(self) -> dict:
-        """
-        For when we have to pickle the class
-        :return:
-        """
-        # set state to __dict__
-        state = dict(self.__dict__)
-        # return dictionary state (for pickle)
-        return state
-
-    def __setstate__(self, state):
-        """
-        For when we have to unpickle the class
-
-        :param state: dictionary from pickle
-        :return:
-        """
-        # update dict with state
-        self.__dict__.update(state)
-
-
 class DrsException(Exception):
     """Raised when config file is incorrect"""
     pass
 
 
+# TODO: Currently not used
 class DrsError(DrsException):
     """
     Custom Config Error for passing to the log
@@ -235,9 +81,9 @@ class DrsError(DrsException):
             kwargs = dict()
         # deal with message
         if message is None:
-            self.message = 'Unknown'
+            self.message = ['Unknown']
         elif type(message) == str:
-            self.message = message
+            self.message = [message]
         else:
             self.message = list(message)
         # set logging level
@@ -246,8 +92,8 @@ class DrsError(DrsException):
         else:
             self.level = level
         # send to basic logger
-        basiclogger(message=self.message, level=self.level,  name='DRS',
-                    force_exit=False, wlog=wlog, **kwargs)
+        for msg in self.message:
+            drs_base.base_printer('', msg, self.level, None, 'DrsError')
 
     def __getstate__(self) -> dict:
         """
@@ -270,7 +116,11 @@ class DrsError(DrsException):
         self.__dict__.update(state)
 
     def __str__(self):
-        return _flatmessage(self.message)
+        message = ''
+        for msg in self.message:
+            message += '\n' + drs_base.base_printer('', msg, self.level,
+                                                    None, 'DrsError')
+        return message
 
 
 class DrsHeaderError(DrsException):
@@ -448,7 +298,7 @@ class ConfigError(ConfigException):
     def __init__(self, message: Union[str, List[str], None] = None,
                  level: Union[str, None] = None,
                  wlog: Any = None, kwargs: Union[None, dict] = None,
-                 errorobj: Any = None):
+                 errorstr: Union[List[str], str] = None):
         """
         Constructor for ConfigError sets message to self.message and level to
         self.level
@@ -463,11 +313,19 @@ class ConfigError(ConfigException):
                       default = all, error, warning, info or graph
         :param wlog: None or pass a drs_log.wlog instance (to use logger)
         :param kwargs: None or dict passed to basic logger
-        :param errorobj: instance of raised exception
+        :param errrorstr: instance of raised exception
         """
-        # deal with errorobj
-        if errorobj is not None:
-            message = errorobj[0].get(errorobj[1], report=True)
+        # deal with errorstr instance
+        if errorstr is not None:
+            message = ''
+            if isinstance(errorstr, str):
+                errorstr = [errorstr]
+                for estr in errorstr:
+                    if isinstance(estr, lang.Text):
+                        message += estr.get_text(report=True,
+                                                 reportlevel='error')
+                    else:
+                        message += str(estr)
             message = message.split('\n')
             level = 'error'
         # deal with kwargs being None
@@ -486,6 +344,10 @@ class ConfigError(ConfigException):
         else:
             self.level = level
         # send to basic logger
+        msg = drs_base.base_printer(
+
+        raise DrsException(msg)
+
         basiclogger(message=self.message, level=self.level, name='Config',
                     force_exit=False, wlog=wlog, **kwargs)
 
@@ -886,8 +748,10 @@ class DrsCodedException(DrsException):
         The string representation of the error: used as message when raised
         :return:
         """
+        message = lang.textentry(self.codeid, self.targs)
         # return the base printer version string represntation
-        return base_printer(self.codeid, self.level, self.targs, self.func_name)
+        return drs_base.base_printer(self.codeid, message, self.level,
+                                     self.targs, self.func_name)
 
     def __repr__(self):
         """

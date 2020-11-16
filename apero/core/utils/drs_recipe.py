@@ -25,6 +25,8 @@ from apero.core import constants
 from apero import lang
 from apero.core.core import drs_log, drs_file
 from apero.core.core import drs_argument
+from apero.core.core import drs_database
+
 
 # =============================================================================
 # Define variables
@@ -50,9 +52,9 @@ DrsInputFile = drs_file.DrsInputFile
 ConfigError = constants.ConfigError
 ArgumentError = constants.ArgumentError
 # Get the text types
-TextEntry = lang.core.drs_lang_text.TextEntry
-TextDict = lang.core.drs_lang_text.TextDict
-HelpText = lang.core.drs_lang_text.HelpDict
+textentry = lang.textentry
+# get index database
+IndexDatabase = drs_database.IndexDatabase
 # -----------------------------------------------------------------------------
 # Get Classes from drs_argument
 DrsArgumentParser = drs_argument.DrsArgumentParser
@@ -158,8 +160,6 @@ class DrsRecipe(object):
         self.str_arg_list = None
         self.used_command = []
         self.drs_pconstant = None
-        self.textdict = None
-        self.helptext = None
         self.input_params = ParamDict()
         self.required_args = []
         self.optional_args = []
@@ -254,8 +254,6 @@ class DrsRecipe(object):
         # Get config parameters from primary file
         self.params = constants.load(self.instrument)
         self.drs_pconstant = constants.pload(self.instrument)
-        self.textdict = TextDict(self.instrument, self.params['LANGUAGE'])
-        self.helptext = HelpText(self.instrument, self.params['LANGUAGE'])
         # ---------------------------------------------------------------------
         # assign parameters from kwargs
         for kwarg in kwargs:
@@ -272,13 +270,15 @@ class DrsRecipe(object):
         self.params['INPUTS'] = ParamDict()
         self.params.set_sources(['INPUTS'], func_name)
 
-    def recipe_setup(self, indexdb, fkwargs: Union[dict, None] = None,
+    def recipe_setup(self, indexdb: IndexDatabase,
+                     fkwargs: Union[dict, None] = None,
                      inargs: Union[list, None] = None
                      ) -> Union[Dict[str, Any], None]:
         """
         Interface between "recipe", inputs to function ("fkwargs") and argparse
         parser (inputs from command line)
 
+        :param indexdb: IndexDatabase, index database instance
         :param fkwargs: dictionary, a dictionary where the keys match
                         arguments/keyword arguments in recipe (without -/--),
                         and the values are those to set in the output
@@ -339,14 +339,14 @@ class DrsRecipe(object):
         # test that sys.argv is a list
         if not isinstance(sys.argv, list):
             eargs = [sys.argv, type(sys.argv), func_name]
-            WLOG(drs_params, 'error', TextEntry('00-006-00013', args=eargs))
+            WLOG(drs_params, 'error', textentry('00-006-00013', args=eargs))
         # ---------------------------------------------------------------------
         # get params
         try:
             params = vars(parser.parse_args(args=self.str_arg_list))
         except Exception as e:
             eargs = [sys.argv, self.str_arg_list, type(e), e, func_name]
-            WLOG(drs_params, 'error', TextEntry('00-006-00014', args=eargs))
+            WLOG(drs_params, 'error', textentry('00-006-00014', args=eargs))
             params = None
         # ---------------------------------------------------------------------
         # record the inputs (either via self.str_arg_list or sys.argv)
@@ -396,7 +396,7 @@ class DrsRecipe(object):
             # check that kwarg is in input_parameters
             if kwarg.name not in input_parameters:
                 eargs = [kwarg.name, self.name]
-                emsg = self.textdict['00-006-00001'].format(*eargs)
+                emsg = textentry('00-006-00001', args=eargs)
                 kwarg.exception(emsg)
             # check that kwarg is None (should be None if we need to change it)
             if input_parameters[kwarg.name] is not None:
@@ -413,14 +413,14 @@ class DrsRecipe(object):
             # else check that we have default_ref
             elif kwarg.default_ref is None:
                 eargs = [kwarg.name, self.name]
-                emsg = self.textdict['00-006-00002'].format(*eargs)
+                emsg = textentry('00-006-00002', args=eargs)
                 kwarg.exception(emsg)
                 value, param_key = None, None
             # else check that default_ref is in drs_params (i.e. defined in a
             #   constant file)
             elif kwarg.default_ref not in params:
                 eargs = [kwarg.default_ref, kwarg.name, self.name]
-                emsg = self.textdict['00-006-00003'].format(*eargs)
+                emsg = textentry('00-006-00003', args=eargs)
                 kwarg.exception(emsg)
                 value, param_key = None, None
             # else we have all we need to reset the value
@@ -767,7 +767,7 @@ class DrsRecipe(object):
         else:
             # log that output file has no attribute 'output_dict'
             eargs = [outfile.name, func_name]
-            emsg = TextEntry('00-008-00016', args=eargs)
+            emsg = textentry('00-008-00016', args=eargs)
             WLOG(self.params, 'error', emsg)
 
     def main(self, **kwargs) -> Dict[str, Any]:
@@ -801,7 +801,7 @@ class DrsRecipe(object):
         # ------------------------------------------------------------------
         # else make an error
         if self.module is None:
-            emsg = TextEntry('00-000-00001', args=[self.name])
+            emsg = textentry('00-000-00001', args=[self.name])
             WLOG(self.params, 'error', emsg)
         # ------------------------------------------------------------------
         # run main via import module get method (gets import module)
@@ -809,7 +809,7 @@ class DrsRecipe(object):
             return self.module.get().main(**kwargs)
         else:
             eargs = [self.module.name, self.module.path, func_name]
-            emsg = TextEntry('00-000-00004', args=eargs)
+            emsg = textentry('00-000-00004', args=eargs)
             WLOG(self.params, 'error', emsg)
 
     def get_input_dir(self) -> str:
@@ -818,9 +818,6 @@ class DrsRecipe(object):
 
         Get the input directory for this recipe based on what was set in
         initialisation (construction)
-
-        :param directory: None or string - force the input dir (if it exists)
-        :param force: bool if True allows force setting
 
         if RAW uses DRS_DATA_RAW from drs_params
         if TMP uses DRS_DATA_WORKING from drs_params
@@ -841,9 +838,6 @@ class DrsRecipe(object):
 
         Get the input directory for this recipe based on what was set in
         initialisation (construction)
-
-        :param directory: None or string - force the output dir (if it exists)
-        :param force: bool if True allows force setting
 
         if RAW uses DRS_DATA_RAW from drs_params
         if TMP uses DRS_DATA_WORKING from drs_params
@@ -918,8 +912,6 @@ class DrsRecipe(object):
         # get drs parameters
         self.params = recipe.params.copy()
         self.drs_pconstant = recipe.drs_pconstant
-        self.textdict = self.textdict
-        self.helptext = self.helptext
         self.input_params = ParamDict(recipe.input_params)
         self.required_args = list(recipe.required_args)
         self.optional_args = list(recipe.optional_args)
@@ -1025,7 +1017,7 @@ class DrsRecipe(object):
             # else raise an error
             else:
                 eargs = [argname, value, func_name]
-                WLOG(params, 'error', TextEntry('00-503-00012', args=eargs))
+                WLOG(params, 'error', textentry('00-503-00012', args=eargs))
 
     # =========================================================================
     # Private Methods (Not to be used externally to drs_recipe.py)
@@ -1177,52 +1169,45 @@ class DrsRecipe(object):
         # set function name
         _ = display_func(self.params, '_make_specials', __NAME__,
                          self.class_name)
-        # get instrument and language
-        instrument = self.params['INSTRUMENT']
-        language = self.params['LANGUAGE']
-        # get the help text dictionary
-        htext = lang.core.drs_lang_text.HelpDict(instrument, language)
         # ---------------------------------------------------------------------
         # make debug functionality
-        self._make_special(drs_argument.make_debug, skip=False, htext=htext)
+        self._make_special(drs_argument.make_debug, skip=False)
         # ---------------------------------------------------------------------
         # make listing functionality
-        self._make_special(drs_argument.make_listing, skip=True, htext=htext)
+        self._make_special(drs_argument.make_listing, skip=True)
         # ---------------------------------------------------------------------
         # make listing all functionality
-        self._make_special(drs_argument.make_alllisting, skip=True, htext=htext)
+        self._make_special(drs_argument.make_alllisting, skip=True)
         # ---------------------------------------------------------------------
         # make version functionality
-        self._make_special(drs_argument.make_version, skip=True, htext=htext)
+        self._make_special(drs_argument.make_version, skip=True)
         # ---------------------------------------------------------------------
         # make info functionality
-        self._make_special(drs_argument.make_info, skip=True, htext=htext)
+        self._make_special(drs_argument.make_info, skip=True)
         # ---------------------------------------------------------------------
         # set program functionality
-        self._make_special(drs_argument.set_program, skip=False, htext=htext)
+        self._make_special(drs_argument.set_program, skip=False)
         # ---------------------------------------------------------------------
         # set ipython return functionality
-        self._make_special(drs_argument.set_ipython_return, skip=False,
-                           htext=htext)
+        self._make_special(drs_argument.set_ipython_return, skip=False)
         # ---------------------------------------------------------------------
         # set is_master functionality
-        self._make_special(drs_argument.is_master, skip=False, htext=htext)
+        self._make_special(drs_argument.is_master, skip=False)
         # ---------------------------------------------------------------------
         # set breakpoint functionality
-        self._make_special(drs_argument.breakpoints, skip=False, htext=htext)
+        self._make_special(drs_argument.breakpoints, skip=False)
         # ---------------------------------------------------------------------
         # set breakfunc functionality
-        self._make_special(drs_argument.make_breakfunc, skip=False, htext=htext)
+        self._make_special(drs_argument.make_breakfunc, skip=False)
         # ---------------------------------------------------------------------
         # set quiet functionality
-        self._make_special(drs_argument.set_quiet, skip=False, htext=htext)
+        self._make_special(drs_argument.set_quiet, skip=False)
         # ---------------------------------------------------------------------
         # force input and output directories
-        self._make_special(drs_argument.set_inputdir, skip=False, htext=htext)
-        self._make_special(drs_argument.set_outputdir, skip=False, htext=htext)
+        self._make_special(drs_argument.set_inputdir, skip=False)
+        self._make_special(drs_argument.set_outputdir, skip=False)
 
-    def _make_special(self, function: Any, skip: bool = False,
-                      htext: Union[HelpText, None] = None):
+    def _make_special(self, function: Any, skip: bool = False):
         """
         Make a special argument using a special DrsArgument method (function)
         to supplies the properties of this special argument
@@ -1231,8 +1216,6 @@ class DrsRecipe(object):
                          (i.e. DrsArgument.make_XXX)
         :param skip: bool, force the skip to be True - if skip is True does not
                      run the recipe just runs the function and then exits
-        :param htext: HelpText - the language database for help text (used
-                      to set help via the function call
 
         :return: None - updates DrsRecipe.specialargs
         """
@@ -1240,7 +1223,7 @@ class DrsRecipe(object):
         _ = display_func(self.params, '_make_special', __NAME__,
                          self.class_name)
         # make debug functionality
-        props = function(self.params, htext=htext)
+        props = function(self.params)
         name = props['name']
         try:
             spec = DrsArgument(name, kind='special', altnames=props['altnames'])
@@ -1304,9 +1287,9 @@ class DrsRecipe(object):
             pos_args.append(rarg.names[0])
         # deal with no positional arguments
         if len(pos_args) == 0:
-            pos_args = ['[{0}]'.format(self.helptext['POS_ARG_TEXT'])]
+            pos_args = ['[{0}]'.format(textentry('POS_ARG_TEXT'))]
         # define usage
-        uargs = [self.name, ' '.join(pos_args), self.helptext['OPTIONS_TEXT']]
+        uargs = [self.name, ' '.join(pos_args), textentry('OPTIONS_TEXT')]
         usage = '{0}.py {1} [{2}]'.format(*uargs)
         return usage
 
@@ -1384,6 +1367,7 @@ class DrsRecipe(object):
 
         # return the input string
         return inputstr.strip().strip('||').strip()
+
 
 class DrsRunSequence:
     def __init__(self, name: str, instrument: str = 'None'):

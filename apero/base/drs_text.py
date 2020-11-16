@@ -15,7 +15,7 @@ import warnings
 from apero.base import base
 from apero.base import drs_base
 from apero.base import drs_exceptions
-from apero.lang.core import drs_lang
+from apero import lang
 
 # =============================================================================
 # Define variables
@@ -29,92 +29,8 @@ __date__ = base.__date__
 __release__ = base.__release__
 # get exceptions
 DrsCodedException = drs_exceptions.DrsCodedException
-
-
-# =============================================================================
-# Define functions
-# =============================================================================
-class DisplayText:
-    """
-    Manually enter wlog TextEntries here -- will be in english only
-
-    This is used for when we cannot have access to the language database
-
-    In the future we will call the database here using drs_db
-    """
-
-    def __init__(self):
-        """
-        Constructs the manual language database (into `self.entries`)
-        """
-        # set function name (cannot break here --> no access to inputs)
-        _ = __NAME__ + '._DisplayText.__init__()'
-
-        self.language = base.DEFAULT_LANG
-        # TODO: make connection to language database
-
-    def __call__(self, key, args=None):
-        """
-        When constructed this call method acts like a TextEntry instance,
-        returning a string that can be used in WLOG and is formatted by
-        arguments `args`
-
-        :param key: str, the key code from the language database
-                    (i.e. 00-001-00001)
-        :param args: list of objects, if there is formating in entry this
-                     is how arguments are supplied i.e.
-                     `'LOG MESSAGE {0}: Message = {1}'.format(*args)`
-
-        :type key: str
-        :type args: list[objects]
-
-        :return: returns string
-        :rtype: str
-        """
-        # set function name (cannot break here --> no access to inputs)
-        _ = str(__NAME__) + '._DisplayText.__init__()'
-        # return the entry for key with the arguments used for formatting
-
-        # TODO: access code in database
-        msg = 'Text[{0}]'.format(key)
-        # add arguments if we have them
-        if args is not None:
-            # if it is a list of args add them one by one
-            if isinstance(args, list):
-                for it, arg in enumerate(args):
-                    msg += '\n\t Arg[{0}] = {1}'.format(it, arg)
-            # else assume we have a string
-            else:
-                msg += '\n\tArgs: {0}'.format(args)
-        # return the msg
-        return msg
-
-    def __getstate__(self) -> dict:
-        """
-        For when we have to pickle the class
-        :return:
-        """
-        # set state to __dict__
-        state = dict(self.__dict__)
-        # return dictionary state (for pickle)
-        return state
-
-    def __setstate__(self, state):
-        """
-        For when we have to unpickle the class
-
-        :param state: dictionary from pickle
-        :return:
-        """
-        # update dict with state
-        self.__dict__.update(state)
-
-    def __str__(self) -> str:
-        """
-        Return string represenation of Const class
-        :return:
-        """
-        return 'DisplayText[{0}]'.format(self.language)
+# get text entry
+textentry = lang.textentry
 
 
 # =============================================================================
@@ -170,7 +86,7 @@ def read_lines(filename: Union[str, Path], comments: str = '#',
     except Exception as e:
         eargs = [filename, type(e), e, func_name]
         ecode = '01-001-00024'
-        emsg = drs_lang.textentry[ecode]
+        emsg = textentry(ecode)
         return drs_base.base_error(ecode, emsg, 'error', eargs)
     # valid lines
     raw = []
@@ -191,7 +107,7 @@ def read_lines(filename: Union[str, Path], comments: str = '#',
             except ValueError as _:
                 eargs = [filename, l_it + 1, line, delimiter, func_name]
                 ecode = '01-001-00025'
-                emsg = drs_lang.textentry[ecode]
+                emsg = textentry(ecode)
                 return drs_base.base_error(ecode, emsg, 'error', eargs)
             # append to raw list
             raw.append([key, value])
@@ -199,7 +115,7 @@ def read_lines(filename: Union[str, Path], comments: str = '#',
     if len(raw) == 0:
         eargs = [filename]
         ecode = '01-001-00026'
-        emsg = drs_lang.textentry(ecode)
+        emsg = textentry(ecode)
         return drs_base.base_error(ecode, emsg, 'error', eargs)
 
     # return raw
