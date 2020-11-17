@@ -9,13 +9,18 @@ Created on 2019-01-24 at 16:33
 
 @author: cook
 
-Rules only import base.py from apero.base no other apero modules
+import rules
+
+only from
+- apero.base.*
+- apero.lang.*
 """
 from typing import Any, Union
 
+from apero import lang
 from apero.base import base
 from apero.base import drs_base
-from apero import lang
+
 
 # =============================================================================
 # Define variables

@@ -10,7 +10,13 @@ Created on 2017-10-11 at 10:59
 @author: cook
 
 Import rules:
-    only from core.math, core.constants, apero.lang, apero.base
+
+only from
+- apero.base.*
+- apero.core.core.drs_exceptions
+- apero.core.core.drs_misc
+- apero.core.core.drs_text
+- apero.core.math.*
 
     do not import from core.core.drs_argument
     do not import from core.core.drs_file
@@ -26,13 +32,14 @@ import sys
 from time import sleep
 from typing import Any, List, Tuple, Union
 
+from apero import lang
 from apero.base import base
+from apero.core import constants
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
-from apero.core import constants
-from apero import lang
 from apero.core.math import time
+
 
 # =============================================================================
 # Define variables
