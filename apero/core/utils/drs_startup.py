@@ -18,11 +18,11 @@ import traceback
 from typing import Any, Dict, List, Tuple, Union
 
 from apero.base import base
-from apero.base import drs_base_classes as base_class
-from apero.base import drs_break
-from apero.base import drs_exceptions
-from apero.base import drs_misc
-from apero.base import drs_text
+from apero.core.core import drs_base_classes as base_class
+from apero.core.core import drs_break
+from apero.core.core import drs_exceptions
+from apero.core.core import drs_misc
+from apero.core.core import drs_text
 from apero import lang
 from apero.core import constants
 from apero.core.core import drs_argument

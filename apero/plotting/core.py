@@ -17,7 +17,7 @@ import matplotlib
 from collections import OrderedDict
 
 from apero.base import base
-from apero.base import drs_text
+from apero.core.core import drs_text
 from apero import lang
 from apero.core import constants
 from apero.core.core import drs_log

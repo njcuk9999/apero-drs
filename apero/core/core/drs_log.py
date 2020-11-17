@@ -27,9 +27,9 @@ from time import sleep
 from typing import Any, List, Tuple, Union
 
 from apero.base import base
-from apero.base import drs_exceptions
-from apero.base import drs_misc
-from apero.base import drs_text
+from apero.core.core import drs_exceptions
+from apero.core.core import drs_misc
+from apero.core.core import drs_text
 from apero.core import constants
 from apero import lang
 from apero.core.math import time

@@ -10,7 +10,7 @@ Created on 2019-01-18 at 15:54
 @author: cook
 """
 from apero.base import base
-from apero.base import drs_misc
+from apero.core.core import drs_misc
 
 # =============================================================================
 # Define variables

@@ -17,8 +17,8 @@ from typing import Any, Union, Tuple
 
 from apero.base import base
 from apero import lang
-from apero.base import drs_break
-from apero.base import drs_exceptions
+from apero.core.core import drs_break
+from apero.core.core import drs_exceptions
 
 
 # =============================================================================

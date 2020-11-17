@@ -19,7 +19,7 @@ from typing import List, Tuple, Union
 import warnings
 
 from apero.base import base
-from apero.base import drs_text
+from apero.core.core import drs_text
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_database

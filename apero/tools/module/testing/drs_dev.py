@@ -12,7 +12,7 @@ Created on 2020-02-04 at 13:37
 import sys
 
 from apero.base import base
-from apero.base import drs_break
+from apero.core.core import drs_break
 from apero.core import constants
 from apero import lang
 from apero.core.core import drs_log, drs_file

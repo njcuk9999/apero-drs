@@ -8,22 +8,19 @@ Created on 2020-10-2020-10-05 17:43
 @author: cook
 
 """
-from astropy.table import Table
 from collections import OrderedDict
 import numpy as np
-import os
 import pandas as pd
 from pathlib import Path
 from typing import Any, Dict, List, Tuple, Union
 
 from apero.base import base
-from apero.base import drs_exceptions
-from apero.base import drs_misc
-from apero.base import drs_text
+from apero.core.core import drs_exceptions
+from apero.core.core import drs_misc
+from apero.core.core import drs_text
 from apero.core.core import drs_log
 from apero.core import constants
 from apero.core.core import drs_database
-from apero import lang
 from apero.io import drs_fits
 
 

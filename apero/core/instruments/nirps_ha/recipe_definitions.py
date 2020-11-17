@@ -1,5 +1,5 @@
 from apero.base import base
-from apero.base import drs_base_classes as base_class
+from apero.core.core import drs_base_classes as base_class
 from apero.core import constants
 from apero.core.utils import drs_recipe
 from apero import lang

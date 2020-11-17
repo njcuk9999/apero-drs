@@ -30,9 +30,9 @@ from multiprocessing import Pool, Process, Manager, Event
 from typing import Any, Dict, List, Tuple, Union
 
 from apero.base import base
-from apero.base import drs_base_classes as base_class
-from apero.base import drs_exceptions
-from apero.base import drs_text
+from apero.core.core import drs_base_classes as base_class
+from apero.core.core import drs_exceptions
+from apero.core.core import drs_text
 from apero.core.core import drs_log
 from apero.core.core import drs_argument
 from apero.core.utils import drs_recipe

@@ -20,8 +20,8 @@ from scipy import stats
 from typing import Tuple, Union
 
 from apero.base import base
-from apero.base import drs_misc
-from apero.base.drs_exceptions import DrsCodedException
+from apero.core.core import drs_misc
+from core.core.drs_exceptions import DrsCodedException
 from apero.core.math import fast
 
 
