@@ -10,10 +10,8 @@ Created on 2019-01-23 at 17:55
 @author: cook
 """
 from apero.lang.core import drs_lang
-import apero.lang.core.drs_lang_text
 
 __all__ = ['textentry']
-
 
 # Access the langudate database with a key and return string
 textentry = drs_lang.textentry

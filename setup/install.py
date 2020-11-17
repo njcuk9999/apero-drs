@@ -18,7 +18,6 @@ import signal
 import argparse
 from pathlib import Path
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -38,7 +37,7 @@ REQ_MODULES['matplotlib'] = [3, 1, 2], 'conda install matplotlib==3.1.2'
 REQ_MODULES['numpy'] = [1, 18, 1], 'conda install numpy==1.18.1'
 REQ_MODULES['pandas'] = [0, 25, 3], 'conda install pandas==0.25.3'
 REQ_MODULES['scipy'] = [1, 4, 1], 'conda install scipy==1.4.1'
-REQ_MODULES['yaml']  = [5, 3, 1], 'conda install pyyaml==5.3.1'
+REQ_MODULES['yaml'] = [5, 3, 1], 'conda install pyyaml==5.3.1'
 
 REC_MODULES = dict()
 REC_MODULES['astroquery'] = [0, 3, 10], 'pip install astroquery==0.3.10'
@@ -318,6 +317,7 @@ class PathCompleter(object):
     '''
     Copy of drs_installation.py.PathCompleter
     '''
+
     def __init__(self, root=None):
         self.root = root
         try:
@@ -466,6 +466,11 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, catch_sigint)
     # get install paths
     constants, install = check_install()
+    try:
+        from apero.tools.module.setup import drs_installation as install
+        from apero.core import constants
+    except Exception as _:
+        pass
 
     # ----------------------------------------------------------------------
     # start up
@@ -520,7 +525,7 @@ if __name__ == '__main__':
     # ----------------------------------------------------------------------
     # update config values from iparams
     install.cprint('\n- Updating config files', 'm')
-    allparams = install.update_configs(params, allparams)
+    allparams = install.update_configs(allparams)
     # ----------------------------------------------------------------------
     # create source files to add environmental variables
     install.cprint('\n- Creating shell script(s)', 'm')

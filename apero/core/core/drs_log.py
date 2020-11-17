@@ -49,8 +49,8 @@ __release__ = base.__release__
 # Get the parameter dictionary
 ParamDict = constants.ParamDict
 # Get the Config error
-DrsWarning = drs_exceptions.DrsWarning
 DrsCodedException = drs_exceptions.DrsCodedException
+DrsCodedWarning = drs_exceptions.DrsCodedWarning
 # Get the text types
 textentry = lang.textentry
 # get the default language
@@ -223,20 +223,18 @@ class Logger:
             params['PID'] = None
             params.set_source('PID', func_name)
             # Cannot add this to language pack - no p defined!
-            wmsg = 'Undefined PID not recommended (params is None)'
-            DrsWarning(wmsg, level='warning')
+            DrsCodedWarning('10-005-00005', 'warning', func_name=func_name)
         # deal with no PID
         if 'PID' not in params:
             params['PID'] = None
             # Cannot add this to language pack - no p defined!
-            wmsg = 'Undefined PID not recommended (PID is missing)'
-            DrsWarning(wmsg, level='warning')
+            DrsCodedWarning('10-005-00006', 'warning', func_name=func_name)
         # deal with no instrument
         if 'INSTRUMENT' not in params:
-            params['INSTRUMENT'] = None
+            params['INSTRUMENT'] = base.IPARAMS['INSTRUMENT']
         # deal with no language
         if 'LANGUAGE' not in params:
-            params['LANGUAGE'] = 'ENG'
+            params['LANGUAGE'] = base.IPARAMS['LANGUAGE']
         # update pin and pconstant from p (selects instrument)
         self.update_param_dict(params)
         # ---------------------------------------------------------------------
