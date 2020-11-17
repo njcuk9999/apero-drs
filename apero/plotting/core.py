@@ -86,9 +86,7 @@ class Plotter:
         self.stats = None
         self.qc_params = OrderedDict()
         self.warnings = None
-        # get the text dictionary
-        self.textdict = TextDict(self.params['INSTRUMENT'],
-                                 self.params['LANGUAGE'])
+        self.pid_dir = ''
         # ------------------------------------------------------------------
         # storage of debug plots
         self.debug_graphs = OrderedDict()
@@ -316,7 +314,7 @@ class Plotter:
             except Exception as _:
                 WLOG(self.params, 'error', 'Must be a list')
         # define message to give to user
-        message = self.textdict['40-100-00001'].format(len(looplist) - 1)
+        message = textentry('40-100-00001', args=[len(looplist) - 1])
         # start the iterator at zero
         it = 0
         first = True
@@ -418,23 +416,26 @@ class Plotter:
         therefore we must catch it.
 
         :param switch: bool, if True turn on interactive mode else turn it off
+        :param show: bool, if True show and close
         :type switch: bool
 
         :return: None
         """
         # if switch is True turn on interactive mode
         if switch:
+            # noinspection PyBroadException
             try:
                 self.plt.ion()
-            except:
+            except Exception as _:
                 pass
         # else we assume switch is False and turn off interactive mode
         #    note here we show and close plots in case anything was opened
         #    in interactive mode and is now stuck open
         else:
+            # noinspection PyBroadException
             try:
                 self.plt.ioff()
-            except:
+            except Exception as _:
                 if show:
                     self.plt.show()
                     self.plt.close()
@@ -510,7 +511,7 @@ class Plotter:
         pid = self.params['PID'].lower()
         # summary info
         sargs = [shortname, pid]
-        summary_title = self.textdict['40-100-01006'].format(*sargs)
+        summary_title = textentry('40-100-01006', args=sargs)
         summary_authors = ' '.join(__author__)
         # add start
         doc.preamble()
@@ -520,12 +521,12 @@ class Plotter:
         # display the arguments used
         doc.newline()
         argv = ' '.join(clean(self.used_command))
-        doc.add_text(self.textdict['40-100-01002'].format(argv))
+        doc.add_text(textentry('40-100-01002', args=argv))
         doc.newline()
         # add graph section
-        doc.section(self.textdict['40-100-01000'])
+        doc.section(textentry('40-100-01000'))
         # add graph section text
-        doc.add_text(self.textdict['40-100-01001'].format(shortname))
+        doc.add_text(textentry('40-100-01001', args=[shortname]))
         doc.newline()
         # display all graphs
         for g_it, key in enumerate(self.summary_graphs):
@@ -534,7 +535,7 @@ class Plotter:
             # get cleaned name
             cgname = clean(sgraph.name)
             # reference graph
-            doc.add_text(self.textdict['40-100-01007'].format(g_it + 1, cgname))
+            doc.add_text(textentry('40-100-01007', args=[g_it + 1, cgname]))
             doc.newline()
         # display all graphs
         for key in self.summary_graphs:
@@ -584,19 +585,19 @@ class Plotter:
         # get recipe short name
         shortname = clean(self.recipename)
         # add qc_param section
-        doc.section(self.textdict['40-100-01003'])
+        doc.section(textentry('40-100-01003'))
         # add qc_param table
         qc_table, qc_mask = qc_param_table(qc_params, self.qc_params)
         # deal with no qc_table
         if qc_table is None:
-            doc.add_text(self.textdict['40-100-01012'])
+            doc.add_text(textentry('40-100-01012'))
             return
         # else add qc section text
         else:
             # add qc_param text
-            doc.add_text(self.textdict['40-100-01004'].format(shortname))
+            doc.add_text(textentry('40-100-01004', args=[shortname]))
             # get qc_caption
-            qc_caption = self.textdict['40-100-01005'].format(shortname)
+            qc_caption = textentry('40-100-01005', args=[shortname])
         # deal with have fiber
         if 'Fiber' in qc_table.colnames:
             # get unique fiber values
@@ -619,11 +620,11 @@ class Plotter:
         # get recipe short name
         shortname = clean(self.recipename)
         # add qc_param section
-        doc.section(self.textdict['40-100-01008'])
+        doc.section(textentry('40-100-01008'))
         # add qc_param text
-        doc.add_text(self.textdict['40-100-01009'].format(shortname))
+        doc.add_text(textentry('40-100-01009', args=[shortname]))
         # get qc_caption
-        caption = self.textdict['40-100-01010'].format(shortname)
+        caption = textentry('40-100-01010', args=[shortname])
         # copy table
         stats_latex = Table(stats)
         # deal with have fiber
@@ -647,7 +648,7 @@ class Plotter:
         if self.warnings is None:
             return doc
         # set up section
-        doc.section(self.textdict['40-100-01011'])
+        doc.section(textentry('40-100-01011'))
         doc.newline()
         # deal with no warnings
         if len(self.warnings) == 0:
@@ -675,7 +676,7 @@ class Plotter:
         pid = self.params['PID'].lower()
         # summary info
         sargs = [shortname, pid]
-        summary_title = self.textdict['40-100-01006'].format(*sargs)
+        summary_title = textentry('40-100-01006', args=sargs)
         summary_authors = ' '.join(__author__)
         # add start
         doc.preamble()
@@ -684,12 +685,12 @@ class Plotter:
         # display the arguments used
         doc.newline()
         argv = ' '.join(self.used_command)
-        doc.add_text(self.textdict['40-100-01002'].format(argv))
+        doc.add_text(textentry('40-100-01002', args=[argv]))
         doc.newline()
         # add graph section
-        doc.section(self.textdict['40-100-01000'])
+        doc.section(textentry('40-100-01000'))
         # add graph section text
-        doc.add_text(self.textdict['40-100-01001'].format(shortname))
+        doc.add_text(textentry('40-100-01001', args=[shortname]))
         doc.newline()
         # display all graphs
         for g_it, key in enumerate(self.summary_graphs):
@@ -697,7 +698,7 @@ class Plotter:
             sgraph = self.summary_graphs[key]
             # reference graph
             targs = [g_it + 1, sgraph.description]
-            doc.add_text(self.textdict['40-100-01007'].format(*targs))
+            doc.add_text(textentry('40-100-01007', args=targs))
             doc.newline()
             # add graph with correct extension
             sbasename = os.path.basename(sgraph.filename) + '.png'
@@ -727,17 +728,17 @@ class Plotter:
         # get recipe short name
         shortname = self.recipename
         # add qc_param section
-        doc.section(self.textdict['40-100-01003'])
+        doc.section(textentry('40-100-01003'))
         # deal with no qc_table
         if qc_table is None:
-            doc.add_text(self.textdict['40-100-01012'])
+            doc.add_text(textentry('40-100-01012'))
             return
         # else add qc section text
         else:
             # add qc_param text
-            doc.add_text(self.textdict['40-100-01004'].format(shortname))
+            doc.add_text(textentry('40-100-01004', args=[shortname]))
             # get qc_caption
-            qc_caption = self.textdict['40-100-01005'].format(shortname)
+            qc_caption = textentry('40-100-01005', args=[shortname])
         # deal with have fiber
         if 'Fiber' in qc_table.colnames:
             # get unique fiber values
@@ -760,11 +761,11 @@ class Plotter:
         # get recipe short name
         shortname = self.recipename
         # add qc_param section
-        doc.section(self.textdict['40-100-01008'])
+        doc.section(textentry('40-100-01008'))
         # add qc_param text
-        doc.add_text(self.textdict['40-100-01009'].format(shortname))
+        doc.add_text(textentry('40-100-01009', args=[shortname]))
         # get qc_caption
-        caption = self.textdict['40-100-01010'].format(shortname)
+        caption = textentry('40-100-01010', args=[shortname])
         # copy table
         stats_html = Table(stats)
         # deal with have fiber
@@ -819,7 +820,7 @@ class Plotter:
         if self.warnings is None:
             return doc
         # set up section
-        doc.section(self.textdict['40-100-01011'])
+        doc.section(textentry('40-100-01011'))
         doc.newline()
         # deal with no warnings
         if len(self.warnings) == 0:
@@ -992,7 +993,7 @@ class Plotter:
         if cond1 and cond2:
             matplotlib.use('Agg')
             import matplotlib.pyplot as plt
-            from  mpl_toolkits import axes_grid1
+            from mpl_toolkits import axes_grid1
             self.plt = plt
             self.matplotlib = matplotlib
             self.axes_grid1 = axes_grid1
@@ -1100,7 +1101,6 @@ def main(params, graph_name, mode=2, **kwargs):
     plotter(graph_name, **kwargs)
 
 
-
 # =============================================================================
 # Start of code
 # =============================================================================
@@ -1110,6 +1110,7 @@ if __name__ == "__main__":
     __NAME__ = 'cal_dark_spirou.py'
     sys.argv = 'cal_dark_spirou.py 2018-09-24 2305769d_pp.fits'.split()
     from apero.recipes.spirou import cal_dark_spirou
+
     _recipe, _params = cal_dark_spirou.main(DEBUG0000=True)
 
     _recipe.debug_plots.append('TEST1')
@@ -1123,18 +1124,18 @@ if __name__ == "__main__":
     _params.set('PLOT_TEST1', value=True)
     _params.set('PLOT_TEST2', value=True)
     _params.set('PLOT_TEST3', value=True)
-    plotter = Plotter(_params, _recipe)
+    _plotter = Plotter(_params, _recipe)
     x = np.arange(-10, 10)
     y = x ** 2
-    plotter('TEST1', x=x, y=y, colour='red')
-    plotter('TEST2', x=x, y=y, colour='blue')
+    _plotter('TEST1', x=x, y=y, colour='red')
+    _plotter('TEST2', x=x, y=y, colour='blue')
 
     orders = np.arange(10)
     xarr, yarr = [], []
     for order_num in range(len(orders)):
         yarr.append(x ** order_num)
-        xarr.append(x + 10**order_num)
-    plotter('TEST3', ord=orders, x=xarr, y=yarr)
+        xarr.append(x + 10 ** order_num)
+    _plotter('TEST3', ord=orders, x=xarr, y=yarr)
 
     _qc_params = [['DARKAMP', 'LIGHTAMP'], [4, 10],
                   ['DARKAMP < 5', 'LIGHTAMP < 5'], [1, 0]]
@@ -1143,8 +1144,7 @@ if __name__ == "__main__":
     _stats['Name'] = ['TEST_VALUE_1', 'V2', 'VALUE3', 'TEST4']
     _stats['Value'] = [1, 0.1, 0.2, 100]
 
-    plotter.summary_document(_qc_params, _stats)
-
+    _plotter.summary_document(_qc_params, _stats)
 
 # =============================================================================
 # End of code

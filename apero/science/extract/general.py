@@ -1179,12 +1179,11 @@ def qc_extraction(params, eprops):
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names = [], [], [],
     qc_logic, qc_pass = [], []
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # --------------------------------------------------------------
     # if array is completely NaNs it shouldn't pass
     if np.sum(np.isfinite(eprops['E2DS'])) == 0:
         # add failed message to fail message list
-        fail_msg.append(textdict['40-016-00008'])
+        fail_msg.append(textentry('40-016-00008'))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -1583,7 +1582,6 @@ def qc_leak_master(params, medcubes):
         WLOG(params, 'info', textentry('40-016-00026', args=[fiber]))
         # set passed variable and fail message list
         fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
-        # textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
         # no quality control currently
         qc_values.append('None')
         qc_names.append('None')
@@ -1625,7 +1623,6 @@ def qc_leak(params, props, **kwargs):
         WLOG(params, 'info', textentry('40-016-00026', args=[fiber]))
         # set passed variable and fail message list
         fail_msg = []
-        # textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
         # ------------------------------------------------------------------
         # deal with old qc params
         # ------------------------------------------------------------------

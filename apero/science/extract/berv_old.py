@@ -214,9 +214,6 @@ def use_barycorrpy(params, times, iteration=0, **kwargs):
     leap_update = pcheck(params, 'EXT_BERV_LEAPUPDATE', 'leap_update', kwargs,
                          func_name)
     package = pcheck(params, 'DRS_PACKAGE', 'package', kwargs, func_name)
-    # get text dictionary
-    tdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
-
     # convert kwargs to paramdict (just to be able to use capitals/non-capitals)
     kwargs = ParamDict(kwargs)
     # make leap_dir an absolute path
@@ -253,7 +250,7 @@ def use_barycorrpy(params, times, iteration=0, **kwargs):
     except Exception as _:
         wargs = [estimate, func_name]
         WLOG(params, 'warning', textentry('10-016-00003', args=wargs))
-        raise BaryCorrpyException(tdict['10-016-00003'].format(*wargs))
+        raise BaryCorrpyException(textentry('10-016-00003', args=wargs))
     # must lock here (barcorrpy is not parallisable yet)
     lpath = params['DRS_DATA_REDUC']
     lfilename = os.path.join(lpath, 'barycorrpy')
@@ -275,7 +272,7 @@ def use_barycorrpy(params, times, iteration=0, **kwargs):
             # log error
             wargs = [type(e), str(e), estimate, func_name]
             WLOG(params, 'warning', textentry('10-016-00004', args=wargs))
-            raise BaryCorrpyException(tdict['10-016-00004'].format(*wargs))
+            raise BaryCorrpyException(textentry('10-016-00004', args=wargs))
         # return the bervs and bjds
         bervs = out1[0] / 1000.0
         bjds = out2[0]

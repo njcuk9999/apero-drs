@@ -780,8 +780,6 @@ def fit_tellu_quality_control(params, infile, tpreprops, **kwargs):
                        func_name)
     qc_snr_min = pcheck(params, 'FTELLU_QC_SNR_MIN', 'qc_snr_min', kwargs,
                         func_name)
-    # get the text dictionary
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # set passed variable and fail message list
     fail_msg = []
     qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
@@ -807,7 +805,7 @@ def fit_tellu_quality_control(params, infile, tpreprops, **kwargs):
     # check that SNR is high enough
     if snr[snr_order] < qc_snr_min:
         fargs = [snr_order, snr[snr_order], qc_snr_min]
-        fail_msg.append(textdict['40-019-00007'].format(*fargs))
+        fail_msg.append(textentry('40-019-00007', args=fargs))
         qc_pass.append(0)
     else:
         qc_pass.append(1)

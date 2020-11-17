@@ -1228,7 +1228,7 @@ def _display_run_time_arguments(recipe, fkwargs=None, printonly=False,
     # set function name
     _ = display_func(recipe.params, '_display_run_time_arguments', __NAME__)
     # storage for logging strings
-    log_strings = []
+    log_strings = ''
     # get parameters
     params = recipe.params
     # get special keys
@@ -1252,7 +1252,7 @@ def _display_run_time_arguments(recipe, fkwargs=None, printonly=False,
         if type(value) not in [list, np.ndarray]:
             # generate this arguments log string
             log_string = '\n\t--{0}: {1}'.format(argname, str(value))
-            log_strings.append(log_string)
+            log_strings += log_string
         # else we have a list
         else:
             # get value
@@ -1261,7 +1261,7 @@ def _display_run_time_arguments(recipe, fkwargs=None, printonly=False,
             for index, indexvalue in enumerate(indexvalues):
                 # add to log strings
                 largs = [argname, index, indexvalue]
-                log_strings.append('\n\t--{0}[{1}]: {2}'.format(*largs))
+                log_strings += '\n\t--{0}[{1}]: {2}'.format(*largs)
     # -------------------------------------------------------------------------
     # log to screen and log file
     if len(log_strings) > 0:
@@ -1604,8 +1604,6 @@ def find_recipe(name: str = 'None', instrument: str = 'None',
     """
     # set function name
     func_name = display_func(None, 'find_recipe', __NAME__)
-    # get text entry
-    textentry = constants.constant_functions.DisplayText()
     # deal with no instrument
     if instrument == 'None' or instrument is None:
         ipath = CORE_PATH
@@ -1639,16 +1637,15 @@ def find_recipe(name: str = 'None', instrument: str = 'None',
         return empty, None
     if found_recipe is None:
         # may not have access to this
+        # TODO: is this needed?
         try:
             WLOG(None, 'error', textentry('00-007-00001', args=[name]))
         except Exception as _:
-            emsg = textentry('00-007-00001', args=[name])
-            raise ConfigError(emsg, level='error')
-
+            raise DrsCodedException('00-007-00001', 'error', targs=[name],
+                                    func_name=func_name)
     # make a copy of found recipe to return
     copy_recipe = DrsRecipe()
     copy_recipe.copy(found_recipe)
-
     # return
     return copy_recipe, mod
 

@@ -208,7 +208,7 @@ def base_printer(codeid: str, message: str, level: str,
     atime = base.Time.now()
     htime = atime.iso.split(' ')[-1]
     # define core format
-    corefmt = '{0} - {1}| {2} | {3} '
+    corefmt = '{0}-{1}|{2}|{3}'
     # start off with the exception name and code id
     # -------------------------------------------------------------------------
     if level == 'error':

@@ -61,7 +61,7 @@ DrsCodedWarning = drs_exceptions.DrsCodedWarning
 # Get the text types
 textentry = lang.textentry
 # get the default language
-DEFAULT_LANGUAGE = lang.core.drs_lang_text.DEFAULT_LANGUAGE
+DEFAULT_LANGUAGE = base.DEFAULT_LANG
 # Get the Color dict
 Color = drs_misc.Colors()
 
@@ -214,9 +214,11 @@ class Logger:
         # deal with message format (convert to lang.Text)
         if message is None:
             msg_obj = textentry('Unknown')
-        elif type(message) is str:
+        elif isinstance(message, lang.Text):
+            msg_obj = message
+        elif isinstance(message, str):
             msg_obj = textentry(message)
-        elif type(message) is list:
+        elif isinstance(message, list):
             msg_obj = textentry(message[0])
             for msg in message[1:]:
                 msg_obj += textentry(msg)

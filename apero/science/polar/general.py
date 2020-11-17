@@ -406,7 +406,6 @@ def quality_control(params):
     # set passed variable and fail message list
     fail_msg = []
     qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
-    # textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # ----------------------------------------------------------------------
     # TODO: Need some quality control
     qc_values.append('None')

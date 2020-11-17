@@ -705,9 +705,6 @@ def fix_run_file(runfile):
 def send_email(params, kind):
     func_name = __NAME__ + '.send_email()'
     # ----------------------------------------------------------------------
-    # get text dict
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
-    # ----------------------------------------------------------------------
     # check whether send email
     if not params['SEND_EMAIL']:
         return 0
@@ -731,7 +728,7 @@ def send_email(params, kind):
         receiver = params['EMAIL_ADDRESS']
         iname = '{0}-DRS'.format(params['INSTRUMENT'])
         sargs = [iname, __NAME__, params['PID']]
-        subject = textdict['40-503-00001'].format(*sargs)
+        subject = textentry('40-503-00001', args=sargs)
         body = ''
         for logmsg in WLOG.pout['LOGGER_ALL']:
             body += '{0}\t{1}\n'.format(*logmsg)
@@ -741,7 +738,7 @@ def send_email(params, kind):
         receiver = params['EMAIL_ADDRESS']
         iname = '{0}-DRS'.format(params['INSTRUMENT'])
         sargs = [iname, __NAME__, params['PID']]
-        subject = textdict['40-503-00002'].format(*sargs)
+        subject = textentry('40-503-00002', args=sargs)
         body = ''
         for logmsg in params['LOGGER_FULL']:
             for log in logmsg:
@@ -1107,8 +1104,6 @@ def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
     # should just need to sort these
     numbers = np.array(list(runtable.keys()))
     commands = np.array(list(runtable.values()))
-    # create text dictionary
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # deal with unset rlist (recipe list)
     if rlist is not None:
         inrecipes = np.array(list(rlist.values()))
@@ -1144,7 +1139,7 @@ def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
         if input_recipe is None:
             input_recipe = run_object.recipe
         # deal with skip
-        skip, reason = skip_run_object(params, run_object, skiptable, textdict,
+        skip, reason = skip_run_object(params, run_object, skiptable,
                                        skip_storage)
         # deal with passing debug
         if params['DRS_DEBUG'] > 0:
@@ -1173,7 +1168,7 @@ def generate_ids(params, indexdb, runtable, mod, skiptable, rlist=None,
     return run_objects
 
 
-def skip_run_object(params, runobj, skiptable, textdict, skip_storage):
+def skip_run_object(params, runobj, skiptable, skip_storage):
     # get recipe and runstring
     recipe = runobj.recipe
     # ----------------------------------------------------------------------
@@ -1181,7 +1176,7 @@ def skip_run_object(params, runobj, skiptable, textdict, skip_storage):
     if runobj.runname in params:
         # if user has set the runname to False then we want to skip
         if not params[runobj.runname]:
-            return True, textdict['40-503-00007']
+            return True, textentry('40-503-00007')
     # ----------------------------------------------------------------------
     # deal with skip table being empty
     if skiptable is None:
@@ -1212,7 +1207,7 @@ def skip_run_object(params, runobj, skiptable, textdict, skip_storage):
             # TODO: problem with clean_runstring being a list??
             if clean_runstring in arguments:
                 # User set skip to 'True' and argument previously used
-                return True, textdict['40-503-00032']
+                return True, textentry('40-503-00032')
             else:
                 return False, None
         else:
@@ -1232,8 +1227,6 @@ def skip_run_object(params, runobj, skiptable, textdict, skip_storage):
 
 # TODO: remove later
 def skip_run_object_old(params, runobj):
-    # create text dictionary
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # get recipe and runstring
     recipe = runobj.recipe
     runstring = runobj.runstring
@@ -1246,7 +1239,7 @@ def skip_run_object_old(params, runobj):
     if runobj.runname in params:
         # if user has set the runname to False then we want to skip
         if not params[runobj.runname]:
-            return True, textdict['40-503-00007']
+            return True, textentry('40-503-00007')
     # ----------------------------------------------------------------------
     # check if the user wants to skip
     if runobj.skipname in params:
@@ -1323,8 +1316,6 @@ def _get_paths(params, runobj, directory):
 
 # TODO: no longer used?
 def _check_for_files(params, runobj):
-    # create text dictionary
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # get fits files from args
     files = []
     for arg in runobj.args:
@@ -1403,7 +1394,7 @@ def _check_for_files(params, runobj):
                     outfilename = outfile.filename
                     # if file is found return True
                     if os.path.exists(outfilename):
-                        reason = textdict['40-503-00008'].format(outfilename)
+                        reason = textentry('40-503-00008', args=[outfilename])
                         return True, reason
                     else:
                         outfiles.append(outfilename)
@@ -1415,7 +1406,7 @@ def _check_for_files(params, runobj):
                 outfilename = outfile.filename
                 # if file is found return True
                 if os.path.exists(outfilename):
-                    reason = textdict['40-503-00008'].format(outfilename)
+                    reason = textentry('40-503-00008', args=[outfilename])
                     return True, reason
                 else:
                     outfiles.append(outfilename)
@@ -1781,13 +1772,11 @@ def update_run_table(sequence, runtable, newruns, rlist=None):
 
 
 def prompt(params):
-    # get the text dictionary
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # prompt the user for response
-    uinput = input(textdict['40-503-00022'])
+    uinput = input(textentry(('40-503-00022')))
     # get the True/False responses
-    true = textdict['40-503-00023']
-    false = textdict['40-503-00024']
+    true = textentry('40-503-00023')
+    false = textentry('40-503-00024')
 
     if true.upper() in uinput.upper():
         return 1
@@ -1802,8 +1791,6 @@ def prompt(params):
 # =============================================================================
 def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                     cores=1, event=None, group=None):
-    # get textdict
-    textdict = TextDict(params['instrument'], params['LANGUAGE'])
     # deal with empty return_dict
     if return_dict is None:
         return_dict = dict()
@@ -1971,7 +1958,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
             # --------------------------------------------------------------
             # Manage expected errors
             except drs_exceptions.LogExit as e:
-                emsgs = [textdict['00-503-00005'].format(priority)]
+                emsgs = [textentry('00-503-00005', args=[priority])]
                 for emsg in e.errormessage.split('\n'):
                     emsgs.append('\n' + emsg)
                 WLOG(params, 'warning', emsgs)
@@ -1995,7 +1982,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                     string_traceback = traceback.format_exc()
                 except Exception as _:
                     string_traceback = ''
-                emsgs = [textdict['00-503-00004'].format(priority)]
+                emsgs = [textentry('00-503-00004', args=[priority])]
                 for emsg in str(e).split('\n'):
                     emsgs.append('\n' + emsg)
                 WLOG(params, 'warning', emsgs)
@@ -2018,7 +2005,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                     string_traceback = traceback.format_exc()
                 except Exception as _:
                     string_traceback = ''
-                emsgs = [textdict['00-503-00015'].format(priority)]
+                emsgs = [textentry('00-503-00015', args=[priority])]
                 for emsg in str(e).split('\n'):
                     emsgs.append('\n' + emsg)
                 WLOG(params, 'warning', emsgs)
