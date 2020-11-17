@@ -20,8 +20,8 @@ from pathlib import Path
 from typing import Union
 
 from apero.base import base
-from apero.base import drs_break
-from apero.base import drs_misc
+from apero.core.core import drs_break
+from apero.core.core import drs_misc
 from apero.core import constants
 
 # =============================================================================

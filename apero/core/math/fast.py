@@ -14,7 +14,7 @@ from scipy import signal
 from typing import Tuple, Union
 
 from apero.base import base
-from apero.base import drs_misc
+from apero.core.core import drs_misc
 
 # try to import bottleneck module
 # noinspection PyBroadException

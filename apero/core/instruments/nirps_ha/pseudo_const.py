@@ -14,10 +14,10 @@ from pathlib import Path
 from typing import Any, List, Tuple, Union
 
 from apero.base import base
-from apero.base import drs_base_classes as base_class
-from apero.base import drs_misc
-from apero.base import drs_text
-from apero.base import drs_exceptions
+from apero.core.core import drs_base_classes as base_class
+from apero.core.core import drs_misc
+from apero.core.core import drs_text
+from apero.core.core import drs_exceptions
 from apero.core import constants
 from apero.core.instruments.default import pseudo_const
 

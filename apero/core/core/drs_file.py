@@ -25,14 +25,14 @@ from typing import Any, Dict, List, Union, Tuple, Type
 import warnings
 
 from apero.base import base
-from apero.base import drs_exceptions
+from apero.core.core import drs_exceptions
 from apero.core.core import drs_log
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.instruments.default import output_filenames as outf
 from apero.core.instruments.default import pseudo_const
 from apero import lang
-from apero.base import drs_text
+from apero.core.core import drs_text
 from apero.io import drs_fits
 from apero.io import drs_path
 

@@ -14,7 +14,7 @@ import os
 from collections import OrderedDict
 
 from apero.base import base
-from apero.base import drs_break
+from apero.core.core import drs_break
 from apero import lang
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup

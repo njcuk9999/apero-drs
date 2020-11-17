@@ -18,9 +18,9 @@ import sys
 from typing import Any, Dict, List, Type, Union
 
 from apero.base import base
-from apero.base import drs_base_classes as base_class
-from apero.base import drs_misc
-from apero.base import drs_text
+from apero.core.core import drs_base_classes as base_class
+from apero.core.core import drs_misc
+from apero.core.core import drs_text
 from apero.core import constants
 from apero import lang
 from apero.core.core import drs_log, drs_file

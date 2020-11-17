@@ -13,7 +13,7 @@ import os
 import shutil
 
 from apero.base import base
-from apero.base import drs_break
+from apero.core.core import drs_break
 from apero import lang
 from apero.core.core import drs_log
 from apero.io import drs_path

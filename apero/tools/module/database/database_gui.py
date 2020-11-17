@@ -17,9 +17,9 @@ import tkinter as tk
 from tkinter import messagebox
 
 from apero.base import base
-from apero.base import drs_break
+from apero.core.core import drs_break
 from apero.base import drs_db
-from apero.base import drs_text
+from apero.core.core import drs_text
 from apero.core import constants
 from apero.tools.module.database import manage_databases
 

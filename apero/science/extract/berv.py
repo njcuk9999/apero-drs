@@ -14,7 +14,7 @@ from typing import List, Tuple, Union
 import warnings
 
 from apero.base import base
-from apero.base import drs_exceptions
+from apero.core.core import drs_exceptions
 from apero import lang
 from apero.core import constants
 from apero.core.core import drs_log

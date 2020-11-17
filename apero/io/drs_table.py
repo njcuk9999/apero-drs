@@ -28,7 +28,7 @@ import shutil
 from typing import List, Tuple, Type, Union
 
 from apero.base import base
-from apero.base import drs_text
+from apero.core.core import drs_text
 from apero.core import constants
 from apero import lang
 from apero.core.core import drs_log
