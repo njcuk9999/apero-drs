@@ -6,6 +6,14 @@ CODE DESCRIPTION HERE
 Created on 2020-08-2020-08-21 19:17
 
 @author: cook
+
+import rules
+
+only from
+- apero.base.*
+- apero.lang.*
+- apero.core.core.drs_break
+- apero.core.core.drs_exceptions
 """
 import numpy as np
 import os
@@ -15,8 +23,8 @@ import string
 import time
 from typing import Any, Union, Tuple
 
-from apero.base import base
 from apero import lang
+from apero.base import base
 from apero.core.core import drs_break
 from apero.core.core import drs_exceptions
 
@@ -208,10 +216,6 @@ def display_func(params: Any = None, name: Union[str, None] = None,
                        (i.e. class myclass   class_name = "myclass"
     :param wlog: None or drs_log.wlog logger - prints log messages to wlog or
                  if not set uses drs_exceptions.wlogbasic to print log message
-    :param textentry: None or TextEntry class - used to turn code ids into
-                      human-readable text messages - if not set uses
-                      drs_exceptions.base_printer to print the error message
-                      (as a raw text id)
     :returns: a properly constructed string representation of where the
               function is.
     """
@@ -289,11 +293,7 @@ def display_func(params: Any = None, name: Union[str, None] = None,
     # if we don't have a list then just print
     if params['DEBUG_FUNC_LIST'][-2] is None:
         # deal with textentry
-        if textentry is None:
-            bargs = ['90-000-00004', 'debug', [strfunc], func_name]
-            msg = drs_exceptions.base_printer(*bargs)
-        else:
-            msg = textentry('90-000-00004', args=[strfunc])
+        msg = textentry('90-000-00004', args=[strfunc])
         # log in func
         wlog(params, 'debug', msg, wrap=False)
     elif not same_entry:
@@ -302,18 +302,10 @@ def display_func(params: Any = None, name: Union[str, None] = None,
         # only log if count is greater than 1
         if previous_count > 1:
             # log how many of previous there were
-            if textentry is None:
-                bargs = ['90-000-00005', 'debug', [previous_count], func_name]
-                msg = drs_exceptions.base_printer(*bargs)
-            else:
-                msg = textentry('90-000-00005', args=[previous_count])
+            msg = textentry('90-000-00005', args=[previous_count])
             wlog(params, 'debug', msg)
         # log a debug
-        if textentry is None:
-            bargs = ['90-000-00004', 'debug', [strfunc], func_name]
-            msg = drs_exceptions.base_printer(*bargs)
-        else:
-            msg = textentry('90-000-00004', args=[strfunc])
+        msg = textentry('90-000-00004', args=[strfunc])
         # log in func
         wlog(params, 'debug', msg, wrap=False)
     # return func_name

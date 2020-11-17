@@ -6,6 +6,15 @@ Base classes (Most typed dictionaries) go in here
 Created on 2020-08-2020-08-31 16:07
 
 @author: cook
+
+import rules
+
+only from
+- apero.base.*
+- apero.lang.*
+- apero.core.core.drs_misc
+- apero.core.core.drs_text
+- apero.core.core.drs_exceptions
 """
 from collections import UserDict
 import importlib

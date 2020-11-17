@@ -8,6 +8,19 @@
 Created on 2019-02-04 at 16:40
 
 @author: cook
+
+import rules
+
+only from
+- apero.base.*
+- apero.core.core.drs_execptions
+- apero.core.core.drs_misc
+- apero.core.core.drs_text
+- apero.core.core.constants.*
+- apero.core.core.drs_log
+- apero.core.core.drs_file
+- apero.core.core.drs_database
+
 """
 import argparse
 from collections import OrderedDict
@@ -17,14 +30,14 @@ import os
 import sys
 from typing import Any, IO, Dict, List, Tuple, Type, Union
 
+from apero import lang
 from apero.base import base
-from apero.core.core import drs_break
 from apero.base import drs_db
+from apero.core import constants
+from apero.core.core import drs_break
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
-from apero.core import constants
-from apero import lang
 from apero.core.core import drs_log
 from apero.core.core import drs_file
 from apero.core.core import drs_database

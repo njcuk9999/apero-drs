@@ -8,11 +8,17 @@ Created on 2020-08-2020-08-24 10:36
 only import from apero.base.base and apero.base.drs_exceptions
 
 @author: cook
+
+import rules
+
+only from
+- apero.base.*
+- apero.lang.*
+- apero.core.core.drs_exceptions
 """
 import os
 import shutil
 from pathlib import Path
-import pkg_resources
 from typing import Any, Union
 
 from apero.base import base

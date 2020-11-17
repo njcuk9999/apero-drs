@@ -7,6 +7,11 @@ No functions in here please
 Created on 2020-08-2020-08-21 19:43
 
 @author: cook
+
+import rules:
+
+- no imports from apero
+
 """
 from astropy.time import Time, TimeDelta
 from collections import OrderedDict

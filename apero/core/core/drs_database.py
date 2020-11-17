@@ -7,9 +7,16 @@ Created on 2020-08-2020-08-18 15:15
 
 @author: cook
 
-## import rules
+import rules
 
-only from core.core, core.math, core.constants, apero.lang, apero.base
+only from
+- apero.base.*
+- apero.lang.*
+- apero.core.core.drs_misc
+- apero.core.core.drs_text
+- apero.core.core.drs_exceptions
+- apero.core.math.*
+- apero.io.drs_fits
 """
 import numpy as np
 import pandas as pd
@@ -18,13 +25,13 @@ import shutil
 from typing import Any, Dict, List, Tuple, Type, Union
 from tqdm import tqdm
 
+from apero import lang
 from apero.base import base
-from apero.core.core import drs_misc
 from apero.base import drs_db
+from apero.core import constants
+from apero.core.core import drs_misc
 from apero.core.core import drs_exceptions
 from apero.core.core import drs_text
-from apero import lang
-from apero.core import constants
 from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.io import drs_fits

@@ -6,16 +6,24 @@ Text and string manipulation functions here
 Created on 2019-08-12 at 17:23
 
 @author: cook
+
+import rules
+
+only from:
+- apero.base.*
+- apero.lang.*
+- apero.core.core.drs_exceptions
 """
 import numpy as np
 from pathlib import Path
 from typing import Any, Union, List
 import warnings
 
+from apero import lang
 from apero.base import base
 from apero.base import drs_base
 from apero.core.core import drs_exceptions
-from apero import lang
+
 
 # =============================================================================
 # Define variables

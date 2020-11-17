@@ -11,6 +11,14 @@ Created on 2019-01-19 at 12:03
 
 Import rules:
 
+- apero.base.*
+- apero.lang.*
+- apero.core.core.drs_misc
+- apero.core.core.drs_text
+- apero.core.core.drs_exceptions
+- apero.io.drs_fits
+- apero.math.*
+
     do not import from core.utils.drs_recipe
     do not import from core.core.drs_argument
 """
@@ -24,15 +32,15 @@ from pathlib import Path
 from typing import Any, Dict, List, Union, Tuple, Type
 import warnings
 
+from apero import lang
 from apero.base import base
-from apero.core.core import drs_exceptions
-from apero.core.core import drs_log
 from apero.core import constants
 from apero.core import math as mp
+from apero.core.core import drs_exceptions
+from apero.core.core import drs_log
+from apero.core.core import drs_text
 from apero.core.instruments.default import output_filenames as outf
 from apero.core.instruments.default import pseudo_const
-from apero import lang
-from apero.core.core import drs_text
 from apero.io import drs_fits
 from apero.io import drs_path
 
