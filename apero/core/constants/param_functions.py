@@ -41,11 +41,8 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get the Drs Exceptions
-ArgumentError = drs_exceptions.ArgumentError
-ArgumentWarning = drs_exceptions.ArgumentWarning
-ConfigError = drs_exceptions.ConfigError
-ConfigWarning = drs_exceptions.ConfigWarning
 DrsCodedException = drs_exceptions.DrsCodedException
+DrsCodedWarning = drs_exceptions.DrsCodedWarning
 # relative folder cache
 REL_CACHE = dict()
 CONFIG_CACHE = dict()
@@ -71,8 +68,7 @@ display_func = drs_misc.display_func
 # =============================================================================
 Const, Keyword = constant_functions.Const, constant_functions.Keyword
 
-Exceptions = Union[ArgumentError, ArgumentWarning,
-                   ConfigError, ConfigWarning, DrsCodedException]
+Exceptions = Union[DrsCodedException]
 
 ModLoads = Tuple[List[str], List[Any], List[str], List[Union[Const, Keyword]]]
 
@@ -109,8 +105,6 @@ class ParamDict(base_class.CaseInsensitiveDict):
         self.pfmt_ns = '\t{1:45s}'
         # whether the parameter dictionary is locked for editing
         self.locked = False
-        # get text entry from constants (manual database)
-        self.textentry = constant_functions.DisplayText()
         # run the super class (CaseInsensitiveDict <-- dict)
         super(ParamDict, self).__init__(*arg, **kw)
 
@@ -957,38 +951,38 @@ class ParamDict(base_class.CaseInsensitiveDict):
         _ = display_func(None, 'info', __NAME__, self.class_name)
         # deal with key not existing
         if key not in self.keys():
-            print(self.textentry('40-000-00001', args=[key]))
+            print(textentry('40-000-00001', args=[key]))
             return
         # print key title
-        print(self.textentry('40-000-00002', args=[key]))
+        print(textentry('40-000-00002', args=[key]))
         # print value stats
         value = self.__getitem__(key)
         # print the data type
-        print(self.textentry('40-000-00003', args=[type(value).__name__]))
+        print(textentry('40-000-00003', args=[type(value).__name__]))
         # deal with lists and numpy array
         if isinstance(value, (list, np.ndarray)):
             sargs = [key, list(value), None, self.pfmt_ns]
             wargs = [np.nanmin(value), np.nanmax(value),
                      np.sum(np.isnan(value)) > 0, _string_repr_list(*sargs)]
-            print(self.textentry('40-000-00004', args=wargs))
+            print(textentry('40-000-00004', args=wargs))
         # deal with dictionaries
         elif isinstance(value, (dict, OrderedDict, ParamDict)):
             strvalue = list(value.keys()).__repr__()[:40]
             sargs = [key + '[DICT]', strvalue, None]
             wargs = [len(list(value.keys())), self.pfmt_ns.format(*sargs)]
-            print(self.textentry('40-000-00005', args=wargs))
+            print(textentry('40-000-00005', args=wargs))
         # deal with everything else
         else:
             strvalue = str(value)[:40]
             sargs = [key + ':', strvalue, None]
             wargs = [self.pfmt_ns.format(*sargs)]
-            print(self.textentry('40-000-00006', args=wargs))
+            print(textentry('40-000-00006', args=wargs))
         # add source info
         if key in self.sources:
-            print(self.textentry('40-000-00007', args=[self.sources[key]]))
+            print(textentry('40-000-00007', args=[self.sources[key]]))
         # add instances info
         if key in self.instances:
-            print(self.textentry('40-000-00008', args=[self.instances[key]]))
+            print(textentry('40-000-00008', args=[self.instances[key]]))
 
     def history(self, key: str):
         """
@@ -1005,13 +999,13 @@ class ParamDict(base_class.CaseInsensitiveDict):
         # if history found then print it
         if key in self.source_history:
             # print title: History for key
-            print(self.textentry('40-000-00009', args=[key]))
+            print(textentry('40-000-00009', args=[key]))
             # loop around history and print row by row
             for it, entry in enumerate(self.source_history[key]):
                 print('{0}: {1}'.format(it + 1, entry))
         # else display that there was not history found
         else:
-            print(self.textentry('40-000-00010', args=[key]))
+            print(textentry('40-000-00010', args=[key]))
 
 
 class PCheck:
@@ -1440,14 +1434,9 @@ def get_module_names(instrument: str = 'None',
         return mods
 
 
-def print_error(error: Exceptions):
+def print_error(error: DrsCodedException):
     """
     Print an exceptions message/level etc
-
-    Exceptions allowed are:
-                   ArgumentError, ArgumentWarning,
-                   ConfigError, ConfigWarning,
-                   drs_exceptions.DrsCodedException
 
     :param error: one of the drs_exceptions classes
     :return:
@@ -1553,7 +1542,7 @@ def _get_file_names(params: ParamDict,
     :return: list of strings - the config /constant files found
     """
     # set function name (cannot break here --> no access to inputs)
-    _ = display_func(params, '_get_file_names', __NAME__)
+    func_name = display_func(params, '_get_file_names', __NAME__)
     # deal with no instrument
     if drs_text.null_text(instrument, ['None', '']):
         return []
@@ -1591,10 +1580,9 @@ def _get_file_names(params: ParamDict,
             files.append(path)
     # deal with no files found
     if len(files) == 0:
-        wmsg1 = ('User config defined but directory="{0}" '
-                 'has no configurations files')
-        wmsg2 = '\tValid config files: {0}'.format(','.join(USCRIPTS))
-        ConfigWarning([wmsg1.format(directory), wmsg2])
+        wargs = [directory, ','.join(USCRIPTS)]
+        DrsCodedWarning('00-003-00036', 'warning', targs=wargs,
+                        func_name=func_name)
     # return files
     return files
 
@@ -1651,9 +1639,7 @@ def _load_from_file(files: List[str], modules: List[str]) -> ModLoads:
              list of instances (either Const or Keyword instances)
     """
     # set function name (cannot break here --> no access to inputs)
-    _ = display_func(None, '_load_from_file', __NAME__)
-    # get text entry
-    textentry = constant_functions.DisplayText()
+    func_name = display_func(None, '_load_from_file', __NAME__)
     # -------------------------------------------------------------------------
     # load constants from file
     # -------------------------------------------------------------------------
@@ -1669,8 +1655,8 @@ def _load_from_file(files: List[str], modules: List[str]) -> ModLoads:
             if fkeyi in fkeys:
                 # log warning message
                 wargs = [fkeyi, filename, ','.join(set(fsources)), filename]
-                ConfigWarning(textentry('10-002-00002', args=wargs),
-                              level='warning')
+                DrsCodedWarning('10-002-00002', 'warning', targs=wargs,
+                                func_name=func_name)
             # append to list
             fkeys.append(fkeyi)
             fvalues.append(fvaluei)
@@ -1863,6 +1849,7 @@ def _map_dictparameter(value: str, dtype: Union[None, Type] = None) -> dict:
         eargs = [value, type(e), e, func_name]
         raise DrsCodedException('00-003-00003', targs=eargs, level='error',
                                 func_name=func_name)
+
 
 # =============================================================================
 # Start of code

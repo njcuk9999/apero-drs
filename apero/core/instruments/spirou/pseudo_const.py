@@ -38,8 +38,7 @@ ParamDict = constants.ParamDict
 # get default Constant class
 DefaultConstants = pseudo_const.PseudoConstants
 # get error
-ConfigError = drs_exceptions.ConfigError
-DrsHeaderError = drs_exceptions.DrsHeaderError
+DrsCodedException = drs_exceptions.DrsCodedException
 # get display func
 display_func = drs_misc.display_func
 
@@ -386,8 +385,9 @@ class PseudoConstants(DefaultConstants):
             key1 = '{0}_{1}'.format(key, fiber)
             # deal with key not existing
             if key1 not in params:
-                emsg = 'Fiber Constant Error. Instrument requires key = {0}'
-                ConfigError(emsg.format(key1), level='error')
+                eargs = [key1]
+                raise DrsCodedException('00-001-00052', 'error', targs=eargs,
+                                        func_name=func_name)
             # if key exists add it for this fiber
             else:
                 fiberparams[key] = params[key1]
@@ -699,7 +699,7 @@ def clean_obj_name(params: ParamDict = None, header: Any = None,
     :return: if objname set return str, else return the updated header and hdict
     """
     # set function name
-    _ = display_func(params, 'clean_obj_name', __NAME__)
+    func_name = display_func(params, 'clean_obj_name', __NAME__)
     # deal with no objname --> header mode
     if objname is None:
         return_header = True
@@ -713,8 +713,10 @@ def clean_obj_name(params: ParamDict = None, header: Any = None,
                     return header, hdict
         # get raw object name
         if kwrawobjname not in header:
-            raise DrsHeaderError('Key not found', level='error',
-                                 key=kwrawobjname, filename=filename)
+            eargs = [kwrawobjname, filename]
+            raise DrsCodedException('01-001-00027', 'error', targs=eargs,
+                                    func_name=func_name)
+
         rawobjname = header[kwrawobjname]
     # else just set up blank parameters
     else:
@@ -752,7 +754,7 @@ def get_trg_type(params: ParamDict, header: Any, hdict: Any,
     :return: the updated header and hdict
     """
     # set function name
-    _ = display_func(params, 'get_trg_type', __NAME__)
+    func_name = display_func(params, 'get_trg_type', __NAME__)
     # get keys from params
     kwobjname = params['KW_OBJNAME'][0]
     kwobstype = params['KW_OBSTYPE'][0]
@@ -765,13 +767,17 @@ def get_trg_type(params: ParamDict, header: Any, hdict: Any,
                 return header, hdict
     # get objname
     if kwobjname not in header:
-        raise DrsHeaderError('Key not found', level='error', key=kwobjname,
-                             filename=filename)
+        eargs = [kwobjname, filename]
+        raise DrsCodedException('01-001-00027', 'error', targs=eargs,
+                                func_name=func_name)
+
     objname = header[kwobjname]
     # get obstype
     if kwobstype not in header:
-        raise DrsHeaderError('Key not found', level='error', key=kwobstype,
-                             filename=filename)
+        eargs = [kwobstype, filename]
+        raise DrsCodedException('01-001-00027', 'error', targs=eargs,
+                                func_name=func_name)
+
     obstype = header[kwobstype]
     # deal with setting value
     if obstype != 'OBJECT':
@@ -803,7 +809,7 @@ def get_mid_obs_time(params: ParamDict, header: Any, hdict: Any,
     :return: the updated header and hdict
     """
     # set function name
-    _ = display_func(params, 'get_mid_obs_time', __NAME__)
+    func_name = display_func(params, 'get_mid_obs_time', __NAME__)
     # get keys from params
     kwmidobstime = params['KW_MID_OBS_TIME'][0]
     kwmidcomment = params['KW_MID_OBS_TIME'][2]
@@ -823,8 +829,9 @@ def get_mid_obs_time(params: ParamDict, header: Any, hdict: Any,
         hdict = dict()
     # get exptime
     if exp_timekey not in header:
-        raise DrsHeaderError('Key not found', level='error', key=exp_timekey,
-                             filename=filename)
+        eargs = [exp_timekey, filename]
+        raise DrsCodedException('01-001-00027', 'error', targs=eargs,
+                                func_name=func_name)
     exptime = timetype(header[exp_timekey])
     # -------------------------------------------------------------------
     # get header time
@@ -876,7 +883,7 @@ def get_header_end_time(params: ParamDict, header: Any,
     :return: astropy.Time instance for the header time
     """
     # set function name
-    _ = display_func(params, 'get_header_end_time', __NAME__)
+    func_name = display_func(params, 'get_header_end_time', __NAME__)
     # get acqtime
     time_key = params['KW_ACQTIME'][0]
     timefmt = params.instances['KW_ACQTIME'].datatype
@@ -884,9 +891,10 @@ def get_header_end_time(params: ParamDict, header: Any,
 
     # get time key from header
     if time_key not in header:
-        emsg = 'Key "{0}" not found in header \n\t Filename = {1}'
-        raise DrsHeaderError(emsg.format(time_key, filename), level='error',
-                             key=time_key, filename=filename)
+        eargs = [time_key, filename]
+        raise DrsCodedException('01-001-00027', 'error', targs=eargs,
+                                func_name=func_name)
+
     rawtime = header[time_key]
     # ----------------------------------------------------------------------
     # get astropy time

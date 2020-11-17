@@ -18,7 +18,7 @@ from scipy.interpolate import splrep, splev, UnivariateSpline, interp1d
 from scipy import stats, signal
 
 from apero.base import base
-from apero.base.drs_exceptions import DrsMathException
+from apero.base.drs_exceptions import DrsCodedException
 from apero.core import math as mp
 from apero import lang
 from apero.core import constants
@@ -27,7 +27,6 @@ from apero.core.utils import drs_startup
 from apero.science.calib import flat_blaze
 from apero.science.calib import wave
 from apero.science import extract
-
 
 # =============================================================================
 # Define variables
@@ -965,18 +964,18 @@ def calculate_continuum(params, pprops, **kwargs):
                           func_name)
     # iraf constants for stokes i
     siraf_fit_func = pcheck(params, 'POLAR_SIRAF_FIT_FUNC', 'siraf_fit_func',
-                           kwargs, func_name)
+                            kwargs, func_name)
     siraf_cont_order = pcheck(params, 'POLAR_SIRAF_CONT_ORD', 'siraf_cont_order',
-                             kwargs, func_name)
+                              kwargs, func_name)
     siraf_nit = pcheck(params, 'POLAR_SIRAF_NIT', 'siraf_nit', kwargs, func_name)
     siraf_rej_low = pcheck(params, 'POLAR_SIRAF_REJ_LOW', 'siraf_rej_low',
-                          kwargs, func_name)
+                           kwargs, func_name)
     siraf_rej_high = pcheck(params, 'POLAR_SIRAF_REJ_HIGH', 'siraf_rej_high',
-                           kwargs, func_name)
+                            kwargs, func_name)
     siraf_grow = pcheck(params, 'POLAR_SIRAF_GROW', 'siraf_grow',
-                       kwargs, func_name)
+                        kwargs, func_name)
     siraf_med_filt = pcheck(params, 'POLAR_SIRAF_MED_FILT', 'siraf_med_filt',
-                           kwargs, func_name)
+                            kwargs, func_name)
     siraf_plow = pcheck(params, 'POLAR_SIRAF_PER_LOW', 'siraf_plow', kwargs,
                         func_name)
     siraf_phigh = pcheck(params, 'POLAR_SIRAF_PER_HIGH', 'siraf_phigh', kwargs,
@@ -991,18 +990,18 @@ def calculate_continuum(params, pprops, **kwargs):
     pcont_poly_deg = pcheck(params, '', 'pcont_poly_deg', kwargs, func_name)
     # iraf constants for polarization
     piraf_fit_func = pcheck(params, 'POLAR_PIRAF_FIT_FUNC', 'piraf_fit_func',
-                           kwargs, func_name)
+                            kwargs, func_name)
     piraf_cont_order = pcheck(params, 'POLAR_PIRAF_CONT_ORD', 'piraf_cont_order',
-                             kwargs, func_name)
+                              kwargs, func_name)
     piraf_nit = pcheck(params, 'POLAR_PIRAF_NIT', 'piraf_nit', kwargs, func_name)
     piraf_rej_low = pcheck(params, 'POLAR_PIRAF_REJ_LOW', 'piraf_rej_low',
-                          kwargs, func_name)
+                           kwargs, func_name)
     piraf_rej_high = pcheck(params, 'POLAR_PIRAF_REJ_HIGH', 'piraf_rej_high',
-                           kwargs, func_name)
+                            kwargs, func_name)
     piraf_grow = pcheck(params, 'POLAR_PIRAF_GROW', 'piraf_grow',
-                       kwargs, func_name)
+                        kwargs, func_name)
     piraf_med_filt = pcheck(params, 'POLAR_PIRAF_MED_FILT', 'piraf_med_filt',
-                           kwargs, func_name)
+                            kwargs, func_name)
     piraf_plow = pcheck(params, 'POLAR_PIRAF_PER_LOW', 'piraf_plow', kwargs,
                         func_name)
     piraf_phigh = pcheck(params, 'POLAR_PIRAF_PER_HIGH', 'piraf_phigh', kwargs,
@@ -1039,11 +1038,11 @@ def calculate_continuum(params, pprops, **kwargs):
     # ---------------------------------------------------------------------
     if s_det_mode == 'MOVING_MEDIAN':
         contflux, xbin, ybin = continuum(flat_x, flat_stokes_i,
-                                        binsize=stokes_binsize,
-                                        overlap=stokes_overlap,
-                                        window=scont_window, mode=scont_mode,
-                                        use_linear_fit=scont_linfit,
-                                        excl_bands=pol_excl_bands)
+                                         binsize=stokes_binsize,
+                                         overlap=stokes_overlap,
+                                         window=scont_window, mode=scont_mode,
+                                         use_linear_fit=scont_linfit,
+                                         excl_bands=pol_excl_bands)
     elif s_det_mode == 'IRAF':
         contflux = fit_continuum(flat_x, flat_stokes_i,
                                  func=siraf_fit_func, order=siraf_cont_order,
@@ -1075,13 +1074,13 @@ def calculate_continuum(params, pprops, **kwargs):
         contpol, xbinpol, ybinpol = cpout
     elif p_det_mode == 'IRAF':
         contpol = fit_continuum(flat_x, flat_pol,
-                                 func=piraf_fit_func, order=piraf_cont_order,
-                                 nit=piraf_nit, rej_low=piraf_rej_low,
-                                 rej_high=piraf_rej_high, grow=piraf_grow,
-                                 med_filt=piraf_med_filt,
-                                 percentile_low=piraf_plow,
-                                 percentile_high=piraf_phigh,
-                                 min_points=piraf_min_pts, verbose=False)
+                                func=piraf_fit_func, order=piraf_cont_order,
+                                nit=piraf_nit, rej_low=piraf_rej_low,
+                                rej_high=piraf_rej_high, grow=piraf_grow,
+                                med_filt=piraf_med_filt,
+                                percentile_low=piraf_plow,
+                                percentile_high=piraf_phigh,
+                                min_points=piraf_min_pts, verbose=False)
         xbinpol, ybinpol = None, None
     else:
         emsg = 'Continuum detection (POL) mode = {0} invalid'
@@ -1947,6 +1946,8 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
         xbin,ybin: numpy arrays (1D) containing the bins used to interpolate
                    data for obtaining the continuum
     """
+    # set function name
+    func_name = display_func(None, 'continuum', __NAME__)
     # deal with no outx
     if outx is None:
         outx = x
@@ -2016,8 +2017,8 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
                     # save mean y of filtered data
                     ybin.append(np.mean(ytmp[nanmask][filtermask]))
                 else:
-                    emsg = 'Mode "{0}" is not recognised for continuum fit'
-                    raise DrsMathException(emsg.format(mode))
+                    raise DrsCodedException('00-009-10001', 'error',
+                                            targs=[mode], func_name=func_name)
 
     # ----------------------------------------------------------------------
     # Option to use a linearfit within a given window
@@ -2108,6 +2109,9 @@ def fit_continuum(wav, spec, func='polynomial', order=3, nit=5,
             * number of fit points
             * RMS residual
     """
+    # set function name
+    func_name = display_func(None, 'fit_continuum', __NAME__)
+
     mspec = np.ma.masked_array(spec, mask=np.zeros_like(spec))
     # mask 1st and last point: avoid error when no point is masked
     # [not in IRAF]
@@ -2137,7 +2141,9 @@ def fit_continuum(wav, spec, func='polynomial', order=3, nit=5,
         spl = splrep(wav[~mspec.mask], spec[~mspec.mask], k=3, t=knots)
         cont = splev(wav, spl)
     else:
-        raise DrsMathException('func="{0}" is invalid'.format(func))
+        eargs = [func, func_name]
+        raise DrsCodedException('00-021-00002', 'error', targs=eargs,
+                                func_name=func_name)
     # iteration loop: reject outliers and fit again
     if nit > 0:
         for it in range(nit):
@@ -2171,8 +2177,9 @@ def fit_continuum(wav, spec, func='polynomial', order=3, nit=5,
                 spl = splrep(wav[~mspec.mask], spec[~mspec.mask], k=3, t=knots)
                 cont = splev(wav, spl)
             else:
-                emsg = 'func="{0}" is invalid'
-                raise DrsMathException(emsg.format(func))
+                eargs = [func, func_name]
+                raise DrsCodedException('00-021-00002', 'error', targs=eargs,
+                                        func_name=func_name)
     # compute residual and rms
     res = fspec - cont
     sigm = np.std(res[~mspec.mask])
@@ -2213,7 +2220,8 @@ def continuum_polarization(x, y, binsize=200, overlap=100,
         xbin,ybin: numpy arrays (1D) containing the bins used to interpolate
                    data for obtaining the continuum
     """
-
+    # set function name
+    func_name = display_func(None, 'continuum_polarization', __NAME__)
     # set number of bins given the input array length and the bin size
     nbins = int(np.floor(len(x) / binsize)) + 1
 
@@ -2265,9 +2273,8 @@ def continuum_polarization(x, y, binsize=200, overlap=100,
                 # save mean y of filtered data
                 ybin.append(np.mean(ytmp[nanmask]))
             else:
-                emsg = 'Mode "{0}" is not recognised for continuum fit'
-                raise DrsMathException(emsg.format(mode))
-
+                raise DrsCodedException('00-009-10001', 'error',
+                                        targs=[mode], func_name=func_name)
         if i == nbins - 1:
             xbin.append(x[-1] + np.abs(x[-1] - x[-2]))
             # create mask to get rid of NaNs
@@ -2293,8 +2300,6 @@ def continuum_polarization(x, y, binsize=200, overlap=100,
 
     # return continuum polarization and x and y bins
     return cont, xbin, ybin
-
-
 
 
 # =============================================================================

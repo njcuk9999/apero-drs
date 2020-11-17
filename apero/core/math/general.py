@@ -21,7 +21,7 @@ from typing import Tuple, Union
 
 from apero.base import base
 from apero.base import drs_misc
-from apero.base.drs_exceptions import DrsMathException
+from apero.base.drs_exceptions import DrsCodedException
 from apero.core.math import fast
 
 
@@ -535,7 +535,7 @@ def sigfig(x: Union[list, np.ndarray, float, int], n: int
     :return: numpy array like x at significant figures
     """
     # set function name
-    _ = display_func(None, 'sigfig', __NAME__)
+    func_name = display_func(None, 'sigfig', __NAME__)
     # deal with differing formats of x (cast to numpy array)
     if isinstance(x, np.ndarray):
         xin = np.array(x)
@@ -547,7 +547,8 @@ def sigfig(x: Union[list, np.ndarray, float, int], n: int
         xin = np.array([x])
         dtype = type(x)
     else:
-        raise DrsMathException('x must be array/list/float/int')
+        raise DrsCodedException('00-009-10002', 'error',
+                                targs=[type(x)], func_name=func_name)
     # filter out zeros
     mask = (xin != 0) & (np.isfinite(xin))
     # get the power and factor
@@ -591,7 +592,7 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
                    data for obtaining the continuum
     """
     # set function name
-    _ = display_func(None, 'continuum', __NAME__)
+    func_name = display_func(None, 'continuum', __NAME__)
     # deal with no excl_bands
     if excl_bands is None:
         excl_bands = []
@@ -651,8 +652,9 @@ def continuum(x, y, binsize=200, overlap=100, sigmaclip=3.0, window=3,
                     # save mean y of filtered data
                     ybin.append(fast.nanmean(ytmp[nanmask][filtermask]))
                 else:
-                    emsg = 'Mode "{0}" is not recognised for continuum fit'
-                    raise DrsMathException(emsg.format(mode))
+                    raise DrsCodedException('00-009-10001', 'error',
+                                            targs=[mode], func_name=func_name)
+
     # ----------------------------------------------------------------------
     # Option to use a linearfit within a given window
     if use_linear_fit:
@@ -757,15 +759,17 @@ def medbin(image: np.ndarray, by: int, bx: int) -> np.ndarray:
     # TODO: Question: are "bx" and "by" the right way around?
     # set function name
     func_name = display_func(None, 'medbin', __NAME__)
-    # exception message
-    emsg = '{0}: {1} must be a factor of {2}'
     # get the shape of the image
     dim1, dim2 = image.shape
     # must have valid bx and by
     if dim1 % by != 0:
-        raise DrsMathException(emsg.format(func_name, 'by', dim1))
+        eargs = ['by', dim1, func_name]
+        raise DrsCodedException('00-009-10003', 'error', targs=eargs,
+                                func_name=func_name)
     if dim2 % bx != 0:
-        raise DrsMathException(emsg.format(func_name, 'bx', dim2))
+        eargs = ['bx', dim2, func_name]
+        raise DrsCodedException('00-009-10003', 'error', targs=eargs,
+                                func_name=func_name)
     # reshape the image
     array = image.reshape([by, dim1 // by, bx, dim2 // bx])
     # median in axis 1

@@ -53,8 +53,6 @@ DrsInputFile = drs_file.DrsInputFile
 # get index database
 IndexDatabase = drs_database.IndexDatabase
 # get the config error
-ConfigError = drs_exceptions.ConfigError
-ArgumentError = drs_exceptions.ArgumentError
 DrsCodedException = drs_exceptions.DrsCodedException
 # Get the text types
 textentry = lang.textentry
@@ -2867,8 +2865,10 @@ class DrsArgument(object):
         self.props = copy.deepcopy(argument.props)
         self.value = copy.deepcopy(argument.value)
 
-    def exception(self, message: Union[List[str], str, None] = None,
-                  errorstr: Union[List[str], str, None] = None):
+    ErrorStrType = Union[List[Union[lang.Text, str]], lang.Text, str, None]
+
+    def exception(self, message: Union[lang.Text, List[str], str, None] = None,
+                  errorstr: ErrorStrType = None):
         """
         Internal exception generator --> raises an Argument Error with
         message including a logging code for debug purposes
@@ -2879,7 +2879,7 @@ class DrsArgument(object):
         :raises: drs_exceptions.ArgumentError
         """
         # set function name (cannot break here --> no access to params)
-        _ = display_func(None, 'exception', __NAME__, 'DrsArgument')
+        func_name = display_func(None, 'exception', __NAME__, 'DrsArgument')
         # deal with required (positional) argument
         if self.kind == 'arg':
             log_opt = 'A[{0}] '.format(self.name)
@@ -2895,11 +2895,22 @@ class DrsArgument(object):
         # if we have an error object then raise an argument error with
         #   the error object
         if errorstr is not None:
-            errorstr = log_opt + errorstr
-            raise ArgumentError(errorobj=errorstr)
+            if isinstance(errorstr, (lang.Text, str)):
+                errorstr = [errorstr]
+            # add the log option to error output
+            errorout = log_opt
+            # add the error strings
+            for estr in errorstr:
+                if isinstance(estr, lang.Text):
+                    estr = estr.get_text(report=True)
+                errorout += estr
+
+            raise DrsCodedException('00-006-00023', 'error', targs=[errorout],
+                                    func_name=func_name)
         # else raise the argument error with just the message
         else:
-            raise ArgumentError(message)
+            raise DrsCodedException('00-006-00023', 'error', targs=[message],
+                                    func_name=func_name)
 
 
 # =============================================================================

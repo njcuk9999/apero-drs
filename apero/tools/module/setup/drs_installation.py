@@ -21,7 +21,6 @@ from typing import Union
 
 from apero.base import base
 from apero.base import drs_break
-from apero.base import drs_exceptions
 from apero.base import drs_misc
 from apero.core import constants
 
@@ -40,9 +39,6 @@ __release__ = base.__release__
 Colors = drs_misc.Colors()
 # get param dict
 ParamDict = constants.ParamDict
-# get the Drs Exceptions
-ConfigError = drs_exceptions.ConfigError
-ConfigWarning = drs_exceptions.ConfigWarning
 # -----------------------------------------------------------------------------
 HOME = Path('~').expanduser()
 DEFAULT_USER_PATH = HOME.joinpath('apero', 'default')
@@ -87,7 +83,6 @@ DATA_ARGS['DRS_DATA_PLOT'] = 'plotdir'
 DATA_ARGS['DRS_DATA_RUN'] = 'rundir'
 DATA_ARGS['DRS_DATA_ASSETS'] = 'assetsdir'
 DATA_ARGS['DRS_DATA_MSG'] = 'logdir'
-
 
 # Messages for user interface
 message1 = """
@@ -167,7 +162,6 @@ Please enter path to pdflatex or leave blank to skip
 
 """
 
-
 prompt1 = r"""
 
 # =======================
@@ -245,6 +239,7 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None,
             uinput = input(' >>\t')
         # deal with string ints, floats, logic
         if dtype in ['int', 'float', 'bool']:
+            # noinspection PyBroadException
             try:
                 basetype = eval(dtype)
                 uinput = basetype(uinput)
@@ -258,6 +253,7 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None,
                     continue
         # deal with int/float/logic
         if dtype in [int, float, bool, str]:
+            # noinspection PyBroadException
             try:
                 uinput = dtype(uinput)
                 check = False
@@ -285,9 +281,10 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None,
                 continue
             # --------------------------------------------------------------
             # try to create path
+            # noinspection PyBroadException
             try:
                 upath = Path(uinput)
-            except:
+            except Exception as _:
                 if not required:
                     cprint('Response must be a valid path or "None"', 'y')
                     check = True
@@ -309,6 +306,7 @@ def ask(question, dtype=None, options=None, optiondesc=None, default=None,
                 create = ask(pathquestion.format(uinput), dtype='YN')
                 if create:
                     if not upath.exists():
+                        # noinspection PyBroadException
                         try:
                             os.makedirs(upath)
                         except Exception as _:
@@ -598,7 +596,7 @@ def user_interface(params, args, lang):
         # deal with no ds9 path found
         if ds9path is None and promptuser:
             all_params['DRS_DS9_PATH'] = ask(message5, dtype='path',
-                                          default='None', required=False)
+                                             default='None', required=False)
             all_params.set_source('DRS_DS9_PATH', 'user')
         else:
             all_params['DRS_DS9_PATH'] = ds9path
@@ -622,8 +620,8 @@ def user_interface(params, args, lang):
         # deal with no ds9 path found
         if pdfpath is None and promptuser:
             all_params['DRS_PDFLATEX_PATH'] = ask(message6, dtype='path',
-                                               default='None',
-                                               required=False)
+                                                  default='None',
+                                                  required=False)
             all_params.set_source('DRS_PDFLATEX_PATH', 'user')
         else:
             all_params['DRS_PDFLATEX_PATH'] = pdfpath
@@ -696,7 +694,7 @@ def create_configs(params, all_params):
     return all_params
 
 
-def update_configs(params, all_params):
+def update_configs(all_params):
     # loop around config files
     for filename in all_params['CONFIGFILES']:
         # get the current config values
@@ -709,11 +707,8 @@ def update_configs(params, all_params):
                 # update value
                 fdict[key] = all_params[key]
         # now update config file
-        try:
-            constants.update_file(filename, fdict)
-        except ConfigError as e:
-            emsg = 'Cannot update file. Error was as follows: \n\t{0}'
-            print(emsg.format(e))
+        constants.update_file(filename, fdict)
+    # return all parameters
     return all_params
 
 
@@ -835,10 +830,8 @@ def clean_install(params, all_params):
     # append tool path
     sys.path.append(str(in_tool_path.joinpath('bin')))
     toolmod = importlib.import_module(RESET_CODE)
-    # get instrument
-    instrument = all_params['INSTRUMENT']
     # check if all directories are empty
-    cond1 = not reset_paths_empty(params, all_params, instrument)
+    cond1 = not reset_paths_empty(all_params)
     cond2 = not all_params['CLEAN_INSTALL']
     # check if user wants a clean install
     if cond1 and cond2:
@@ -932,9 +925,10 @@ def _create_link(recipe_dir: Path, suffix: Union[str, Path], new_dir: Path,
         # make symlink
         newpath.symlink_to(filename)
         # make executable
+        # noinspection PyBroadException
         try:
             newpath.chmod(0o777)
-        except:
+        except Exception as _:
             cprint('Error: Cannot chmod 777', 'r')
 
 
@@ -1007,9 +1001,7 @@ def print_options(params, all_params):
     cprint(message4.format(**text), 'g')
 
 
-def reset_paths_empty(params, all_params, instrument=None):
-    if instrument is None:
-        instrument = all_params['INSTRUMENT']
+def reset_paths_empty(all_params):
     # look for paths
     for path in RESET_PATHS:
         # get instrument path
@@ -1104,15 +1096,15 @@ def create_ufiles(params, devmode):
     # ------------------------------------------------------------------
     # create config file
     config_lines = create_ufile(params['INSTRUMENT'], 'config', config,
-                                config_groups, devmode)
+                                config_groups)
     # create const file
     const_lines = create_ufile(params['INSTRUMENT'], 'constant', const,
-                               const_groups, devmode)
+                               const_groups)
     # ------------------------------------------------------------------
     return config_lines, const_lines
 
 
-def create_ufile(instrument, kind, dictionary, grouplist, devmode):
+def create_ufile(instrument, kind, dictionary, grouplist):
     lines = []
     lines += user_header('{0} {1} file'.format(instrument, kind))
     # loop around groups
@@ -1135,12 +1127,11 @@ def create_ufile(instrument, kind, dictionary, grouplist, devmode):
 
 
 def user_header(title):
-    lines = []
-    lines.append('# {0}'.format('-' * 77))
-    lines.append('# ')
-    lines.append('#  {0}'.format(title))
-    lines.append('# ')
-    lines.append('# {0}'.format('-' * 77))
+    lines = ['# {0}'.format('-' * 77),
+             '# ',
+             '#  {0}'.format(title),
+             '# ',
+             '# {0}'.format('-' * 77)]
     return lines
 
 
@@ -1271,7 +1262,7 @@ def update(params, args):
     # add pdflatex
     all_params['DRS_PDFLATEX_PATH'] = Path(iparams['DRS_PDFLATEX_PATH'])
     all_params.set_source('DRS_PDFLATEX_PATH',
-                         iparams.sources['DRS_PDFLATEX_PATH'])
+                          iparams.sources['DRS_PDFLATEX_PATH'])
     # ------------------------------------------------------------------
     # return all params
     return all_params
@@ -1284,6 +1275,7 @@ class PathCompleter(object):
     """
     Copy of
     """
+
     def __init__(self, root=None):
         self.root = root
 
@@ -1292,7 +1284,7 @@ class PathCompleter(object):
         This is the tab completer for systems paths.
         Only tested on *nix systems
         """
-        line = readline.get_line_buffer().split()
+        _ = readline.get_line_buffer().split()
 
         # replace ~ with the user's home dir.
         # See https://docs.python.org/2/library/os.path.html
@@ -1333,7 +1325,6 @@ if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # print 'Hello World!'
     print("Hello World!")
-
 
 # =============================================================================
 # End of code

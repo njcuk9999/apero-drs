@@ -220,7 +220,7 @@ def base_printer(codeid: str, message: str, level: str,
         else:
             program = exceptionname
         # set level
-        strlevel = 'ERROR[{0}] '.format(codeid)
+        strlevel = 'E[{0}] '.format(codeid)
         charlevel = '*'
     # -------------------------------------------------------------------------
     elif level == 'warning':
@@ -232,7 +232,7 @@ def base_printer(codeid: str, message: str, level: str,
         else:
             program = exceptionname
         # set level
-        strlevel = 'WARNING[{0}] '.format(codeid)
+        strlevel = 'W[{0}] '.format(codeid)
         charlevel = '!'
     # -------------------------------------------------------------------------
     else:

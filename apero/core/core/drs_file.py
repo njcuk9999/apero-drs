@@ -63,7 +63,6 @@ FitsHeader = drs_fits.fits.Header
 # Get the text types
 textentry = lang.textentry
 # get exceptions
-DrsHeaderError = drs_exceptions.DrsHeaderError
 DrsCodedException = drs_exceptions.DrsCodedException
 # TODO: This should be changed for astropy -> 2.0.1
 # bug that hdu.scale has bug before version 2.0.1
@@ -4577,16 +4576,9 @@ def fix_header(params: ParamDict, recipe: Any,
     pconst = constants.pload(params['INSTRUMENT'])
     # use pseudo constant to apply any header fixes required (specific to
     #   a specific instrument) and update the header
-    try:
-        header, hdict = pconst.HEADER_FIXES(params=params, recipe=recipe,
-                                            header=header, hdict=hdict,
-                                            filename=filename)
-    except drs_exceptions.DrsHeaderError as e:
-        if raise_exception:
-            raise e
-        else:
-            eargs = [e.key, e.filename]
-            WLOG(params, 'error', textentry('01-001-00027', args=eargs))
+    header, hdict = pconst.HEADER_FIXES(params=params, recipe=recipe,
+                                        header=header, hdict=hdict,
+                                        filename=filename)
     # if the input was an infile return the infile back
     if has_infile:
         # return the updated infile

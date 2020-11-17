@@ -58,12 +58,32 @@ class Text(str):
     Special text container (so we can store text entry key)
     """
     def __init__(self, *args, **kwargs):
-        super().__init__()
+        super().__init__(*args, **kwargs)
         self.tkey = None
         self.tvalue = None
         self.targs = []
         self.tkwargs = dict()
         self.t_short = ''
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state (for pickle)
+        return state
+
+    def __setstate__(self, state):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
 
     def set_text_props(self, key: str, value: str,
                        args: Union[List[Any], str, None] = None,
@@ -88,9 +108,9 @@ class Text(str):
         # deal with no args
         if self.targs is None and self.tkwargs is None:
             message = self.tvalue
-        elif self.tkwargs is None:
+        elif self.tkwargs is None and self.targs is not None:
             message = self.tvalue.format(*self.targs)
-        elif self.targs is None:
+        elif self.targs is None and self.tkwargs is not None:
             message = self.tvalue.format(**self.tkwargs)
         else:
             message = self.tvalue.format(*self.targs, **self.tkwargs)

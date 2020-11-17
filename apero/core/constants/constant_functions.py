@@ -37,9 +37,6 @@ __date__ = base.__date__
 __release__ = base.__release__
 
 # get the Drs Exceptions
-DRSWarning = drs_exceptions.DrsWarning
-ConfigError = drs_exceptions.ConfigError
-ConfigWarning = drs_exceptions.ConfigWarning
 DrsCodedException = drs_exceptions.DrsCodedException
 # get the text entry
 textentry = lang.textentry
@@ -204,7 +201,7 @@ class Const:
                  else if unset returns True if value is valid. If not valid
                  exception is raised.
         :rtype: Union[bool, object]
-        :raises ConfigError: if value is not valid
+        :raises DrsCodedError: if value is not valid
         """
         # set function name
         _ = display_func(None, 'validate', __NAME__, self.class_name)
@@ -243,14 +240,15 @@ class Const:
         :type source: str
         :return: Const, a shallow copy of the constant
         :rtype: Const
-        :raises ConfigError: if source is None
+        :raises DrsCodedException: if source is None
         """
         # set function name
         func_name = display_func(None, 'copy', __NAME__, self.class_name)
         # check that source is valid
         if source is None:
-            raise ConfigError(textentry('00-003-00007', args=[func_name]),
-                              level='error')
+            raise DrsCodedException('00-003-00007', 'error', targs=[func_name],
+                                    func_name=func_name)
+
         # return new copy of Const
         return Const(self.name, self.value, self.dtype, self.dtypei,
                      self.options, self.maximum, self.minimum, source=source,
@@ -619,10 +617,10 @@ class Keyword(Const):
                  else if unset returns True if value is valid. If not valid
                  exception is raised.
         :rtype: Union[bool, object]
-        :raises ConfigError: if value is not valid
+        :raises DrsCodedException: if value is not valid
         """
         # set function name
-        _ = display_func(None, 'validate', __NAME__, self.class_name)
+        func_name = display_func(None, 'validate', __NAME__, self.class_name)
         # deal with no test value (use value set at module level)
         if test_value is None:
             value = self.value
@@ -641,8 +639,9 @@ class Keyword(Const):
             self.comment = ''
         # need a key
         if self.key is None:
-            emsg = 'Keyword "{0}" must have a key'
-            raise ConfigError(emsg.format(self.name), level='error')
+            raise DrsCodedException('00-003-00035', 'error', targs=[self.name],
+                                    func_name=func_name)
+
         # construct true value as keyword store
         true_value = [self.key, true_value, self.comment]
         # deal with storing
@@ -662,14 +661,14 @@ class Keyword(Const):
         :type source: str
         :return: Keyword, a shallow copy of the keyword
         :rtype: Keyword
-        :raises ConfigError: if source is None
+        :raises DrsCodedException: if source is None
         """
         # set function name
         func_name = display_func(None, 'copy', __NAME__, self.class_name)
         # check that source is valid
         if source is None:
-            raise ConfigError(textentry('00-003-00008', args=[func_name]),
-                              level='error')
+            raise DrsCodedException('00-003-00008', 'error', targs=[func_name],
+                                    func_name=func_name)
         # return new copy of Const
         return Keyword(self.name, self.key, self.value, self.dtype,
                        self.comment, self.options, self.maximum,
@@ -763,7 +762,7 @@ def generate_consts(modulepath: str) -> GenConsts:
 
     :return: the keys (Const/Keyword names) and their respective instances
     :rtype: tuple[list[str], list[Const, Keyword]]
-    :raises ConfigError: if module name is not valid
+    :raises DrsCodedException: if module name is not valid
     """
     # set function name
     func_name = display_func(None, 'generate_consts', __NAME__)
@@ -800,14 +799,15 @@ def import_module(func: str, modulepath: str, full: bool = False,
     :param func: str, the function where import_module was called
     :param modulepath: str, the
     :param full: bool, if True, assumes modulepath is the full path
-    :param quiet: bool, if True raises a ValueError instead of a ConfigError
+    :param quiet: bool, if True raises a ValueError instead of a
+                  DrsCodedException
 
     :type func: str
     :type modulepath: str
     :type full: bool
     :type quiet: bool
 
-    :raises: ConfigError - if module path is not valid (and quiet=False)
+    :raises: DrsCodedException - if module path is not valid (and quiet=False)
     :raises: ValueError - if module path is not valid (and quiet=True)
 
     :return: the imported module instance
@@ -850,8 +850,8 @@ def import_module(func: str, modulepath: str, full: bool = False,
         if quiet:
             raise ValueError(textentry('00-000-00003', args=eargs))
         else:
-            raise ConfigError(textentry('00-000-00003', args=eargs),
-                              level='error')
+            raise DrsCodedException('00-000-00003', 'error', targs=eargs,
+                                    func_name=func_name)
 
 
 def get_constants_from_file(filename: str) -> Tuple[List[str], List[str]]:
@@ -867,7 +867,7 @@ def get_constants_from_file(filename: str) -> Tuple[List[str], List[str]]:
     :return keys: list of strings, upper case strings for each variable
     :return values: list of strings, value of each key
 
-    :raises ConfigError: if there is a profile read constants from file
+    :raises DrsCodedException: if there is a profile read constants from file
     """
     # set function name (cannot break here --> no access to inputs)
     _ = display_func(None, 'get_constants_from_file', __NAME__)
@@ -921,7 +921,7 @@ def update_file(filename: str, dictionary: dict):
     :type filename: str
     :type dictionary: dict
     :return: None
-    :raises ConfigError: if we cannot read filename
+    :raises DrsCodedException: if we cannot read filename
     """
     # set function name (cannot break here --> no access to inputs)
     func_name = str(__NAME__) + '.update_file()'
@@ -932,8 +932,8 @@ def update_file(filename: str, dictionary: dict):
             lines = f.readlines()
     except Exception as e:
         eargs = [filename, func_name, type(e), e]
-        raise ConfigError(textentry('00-004-00003', args=eargs),
-                          level='error')
+        raise DrsCodedException('00-004-00003', 'error', targs=eargs,
+                                func_name=func_name)
     # convert lines to char array
     clines = np.char.array(lines).strip()
     # loop through keys in dictionary
@@ -958,8 +958,8 @@ def update_file(filename: str, dictionary: dict):
             f.writelines(lines)
     except Exception as e:
         eargs = [filename, func_name, type(e), e]
-        raise ConfigError(textentry('00-004-00004', args=eargs),
-                          level='error')
+        raise DrsCodedException('00-004-00004', 'error', targs=eargs,
+                                func_name=func_name)
 
 
 # =============================================================================
@@ -985,7 +985,7 @@ def _test_dtype(name: str, invalue: Any, dtype: Union[str, type],
     :return: returns the value in the input dtype (if valid) if invalid
              returns input value (unless quiet=True then exception raised)
     :rtype: Any
-    :raises ConfigError: if quiet=True and type invalid
+    :raises DrsCodedException: if quiet=True and type invalid
     """
     # set function name (cannot break here --> no access to inputs)
     func_name = str(__NAME__) + '._test_dtype()'
@@ -997,20 +997,20 @@ def _test_dtype(name: str, invalue: Any, dtype: Union[str, type],
         if not isinstance(invalue, str):
             if not quiet:
                 eargs = [name, type(invalue), invalue, source, func_name]
-                raise ConfigError(textentry('00-003-00009', args=eargs),
-                                  level='error')
+                raise DrsCodedException('00-003-00009', 'error', targs=eargs,
+                                        func_name=func_name)
         if not os.path.exists(invalue):
             if not quiet:
                 eargs = [name, invalue, func_name]
-                raise ConfigError(textentry('00-003-00010', args=eargs),
-                                  level='error')
+                raise DrsCodedException('00-003-00010', 'error', targs=eargs,
+                                        func_name=func_name)
         return str(invalue)
     # deal with casting a string into a list
     if (dtype is list) and isinstance(invalue, str):
         if not quiet:
             eargs = [name, invalue, source, func_name]
-            raise ConfigError(textentry('00-003-00011', args=eargs),
-                              level='error')
+            raise DrsCodedException('00-003-00011', 'error', targs=eargs,
+                                    func_name=func_name)
     # now try to cast value
     try:
         outvalue = dtype(invalue)
@@ -1018,8 +1018,8 @@ def _test_dtype(name: str, invalue: Any, dtype: Union[str, type],
         if not quiet:
             eargs = [name, dtype, invalue, type(invalue), type(e), e,
                      source, func_name]
-            raise ConfigError(textentry('00-003-00012', args=eargs),
-                              level='error')
+            raise DrsCodedException('00-003-00012', 'error', targs=eargs,
+                                    func_name='error')
         outvalue = invalue
     # return out value
     return outvalue
@@ -1054,7 +1054,7 @@ def _validate_value(name: str, dtype: Union[str, type, None],
     :return: returns the value in the input dtype and the source of that
              value
     :rtype: tuple[object, str]
-    :raises ConfigError: if quiet=True and type invalid
+    :raises DrsCodedException: if quiet=True and type invalid
     """
     # set function name (cannot break here --> no access to inputs)
     func_name = str(__NAME__) + '._validate_value()'
@@ -1066,20 +1066,20 @@ def _validate_value(name: str, dtype: Union[str, type, None],
     if dtype is None:
         if not quiet:
             eargs = [name, source, func_name]
-            raise ConfigError(textentry('00-003-00013', args=eargs),
-                              level='error')
+            raise DrsCodedException('00-003-00013', 'error', targs=eargs,
+                                    func_name=func_name)
     if (dtype not in SIMPLE_TYPES) and (dtype != 'path'):
         if not quiet:
             eargs = [name, ', '.join(SIMPLE_STYPES), source, func_name]
-            raise ConfigError(textentry('00-003-00014', args=eargs),
-                              level='error')
+            raise DrsCodedException('00-003-00014', 'error', targs=eargs,
+                                    func_name=func_name)
     # ---------------------------------------------------------------------
     # Check value is not None
     if value is None:
         if not quiet:
             eargs = [name, source, func_name]
-            raise ConfigError(textentry('00-003-00015', args=eargs),
-                              level='error')
+            raise DrsCodedException('00-003-00015', 'error', targs=eargs,
+                                    func_name=func_name)
     # ---------------------------------------------------------------------
     # check bools
     if dtype is bool:
@@ -1091,8 +1091,8 @@ def _validate_value(name: str, dtype: Union[str, type, None],
         if value not in [True, 1, False, 0]:
             if not quiet:
                 eargs = [name, value, source, func_name]
-                raise ConfigError(textentry('00-003-00016', args=eargs),
-                                  level='error')
+                raise DrsCodedException('00-003-00016', 'error', targs=eargs,
+                                        func_name=func_name)
     # ---------------------------------------------------------------------
     # Check if dtype is correct
     true_value = _test_dtype(name, value, dtype, source, quiet=quiet)
@@ -1112,8 +1112,8 @@ def _validate_value(name: str, dtype: Union[str, type, None],
                 stroptions = ['"{0}"'.format(opt) for opt in options]
                 eargs = [name, ', '.join(stroptions), true_value, source,
                          func_name]
-                raise ConfigError(textentry('00-003-00017', args=eargs),
-                                  level='error')
+                raise DrsCodedException('00-003-00017', 'error', targs=eargs,
+                                        func_name=func_name)
     # ---------------------------------------------------------------------
     # check limits if not a list or str or bool
     if dtype in [int, float]:
@@ -1121,14 +1121,14 @@ def _validate_value(name: str, dtype: Union[str, type, None],
             if true_value > maximum:
                 if not quiet:
                     eargs = [name, maximum, true_value, source, func_name]
-                    raise ConfigError(textentry('00-003-00018', args=eargs),
-                                      level='error')
+                    raise DrsCodedException('00-003-00018', 'error',
+                                            targs=eargs, func_name=func_name)
         if minimum is not None:
             if true_value < minimum:
                 if not quiet:
                     eargs = [name, minimum, true_value, source, func_name]
-                    raise ConfigError(textentry('00-003-00019', args=eargs),
-                                      level='error')
+                    raise DrsCodedException('00-003-00019', 'error',
+                                            targs=eargs, func_name=func_name)
     # return true value
     return true_value, source
 
@@ -1150,7 +1150,7 @@ def _validate_text_file(filename: Union[str, Path],
     :type comments: str
 
     :return None:
-    :raises ConfigError: If text file is invalid
+    :raises DrsCodedException: If text file is invalid
     """
     # set function name (cannot break here --> no access to inputs)
     func_name = str(__NAME__) + '._validate_text_file()'
@@ -1176,7 +1176,8 @@ def _validate_text_file(filename: Union[str, Path],
                 emsg += textentry('00-003-00021', args=[char, l_it + 1])
         # only raise an error if invalid is True (if we found bad characters)
         if invalid:
-            raise ConfigError(emsg, level='error')
+            raise DrsCodedException('00-003-00020', 'error', message=emsg,
+                                    func_name=func_name)
 
 
 # =============================================================================
