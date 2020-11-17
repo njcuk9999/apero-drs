@@ -171,10 +171,7 @@ class DrsCodedException(DrsException):
         The string representation of the error: used as message when raised
         :return:
         """
-        if self.message is not None:
-            message = str(self.message)
-        else:
-            message = str(lang.textentry(self.codeid, self.targs))
+        message = self.get_text()
         # return the base printer version string represntation
         return drs_base.base_printer(self.codeid, message, self.level,
                                      self.targs, self.func_name,
@@ -186,6 +183,13 @@ class DrsCodedException(DrsException):
         :return:
         """
         return self.__str__()
+
+    def get_text(self):
+        if self.message is not None:
+            message = str(self.message)
+        else:
+            message = str(lang.textentry(self.codeid, self.targs))
+        return message
 
     def get(self, key: str, default: Any):
         """

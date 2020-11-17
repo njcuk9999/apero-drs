@@ -21,7 +21,7 @@ from typing import Tuple, Union
 
 from apero.base import base
 from apero.core.core import drs_misc
-from core.core.drs_exceptions import DrsCodedException
+from apero.core.core.drs_exceptions import DrsCodedException
 from apero.core.math import fast
 
 

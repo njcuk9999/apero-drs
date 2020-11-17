@@ -424,8 +424,6 @@ def use_barycorrpy(params: ParamDict, times: np.ndarray, props: ParamDict,
     iersfile = pcheck(params, 'EXT_BERV_IERSFILE', func=func_name,
                       override=iersfile)
     package = pcheck(params, 'DRS_PACKAGE', func=func_name, override=package)
-    # get text dictionary
-    tdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # make barycorrpy directory an absolute path
     bc_dir = drs_path.get_relative_folder(params, package, bc_dir)
     # epoch must be in jd
@@ -456,7 +454,7 @@ def use_barycorrpy(params: ParamDict, times: np.ndarray, props: ParamDict,
     except Exception as _:
         wargs = [estimate, func_name]
         WLOG(params, 'warning', textentry('10-016-00003', args=wargs))
-        raise BaryCorrpyException(tdict['10-016-00003'].format(*wargs))
+        raise BaryCorrpyException(textentry('10-016-00003', args=wargs))
     # must lock here (barcorrpy is not parallisable yet)
     lpath = params['DRS_DATA_REDUC']
     lfilename = os.path.join(lpath, 'barycorrpy')
@@ -478,7 +476,7 @@ def use_barycorrpy(params: ParamDict, times: np.ndarray, props: ParamDict,
             # log error
             wargs = [type(e), str(e), estimate, func_name]
             WLOG(params, 'warning', textentry('10-016-00004', args=wargs))
-            raise BaryCorrpyException(tdict['10-016-00004'].format(*wargs))
+            raise BaryCorrpyException(textentry('10-016-00004', args=wargs))
         # return the bervs and bjds
         bervs = out1[0] / 1000.0
         bjds = out2[0]

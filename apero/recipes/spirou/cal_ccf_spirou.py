@@ -35,6 +35,8 @@ __date__ = base.__date__
 __release__ = base.__release__
 # get param dict
 ParamDict = constants.ParamDict
+# get text entry
+textentry = lang.textentry
 # Get Logging function
 WLOG = drs_log.wlog
 
@@ -142,7 +144,7 @@ def __main__(recipe, params):
             allowed_dprtypes = ', '.join(params.listp('CCF_ALLOWED_DPRTYPES'))
             # log that we are skipping
             wargs = [dprtype, recipe.name, allowed_dprtypes, infile.basename]
-            WLOG(params, 'warning', TextEntry('10-019-00001', args=wargs))
+            WLOG(params, 'warning', textentry('10-019-00001', args=wargs))
             # continue
             continue
         # flag whether calibration fiber is FP
@@ -158,7 +160,7 @@ def __main__(recipe, params):
         if fiber != sfiber:
             # log that the science fiber was not correct
             eargs = [fiber, sfiber, infile.name, infile.filename]
-            WLOG(params, 'error', TextEntry('09-020-00001', args=eargs))
+            WLOG(params, 'error', textentry('09-020-00001', args=eargs))
 
         # ------------------------------------------------------------------
         # Get barycentric corrections (BERV)
@@ -190,7 +192,7 @@ def __main__(recipe, params):
         # Compute CCF on science channel
         # ------------------------------------------------------------------
         # log progress: Computing CCF on fiber
-        WLOG(params, 'info', TextEntry('40-020-00007', args=[fiber]))
+        WLOG(params, 'info', textentry('40-020-00007', args=[fiber]))
         # compute ccf
         cargs = [infile, image, blaze, wprops['WAVEMAP'], bprops, fiber]
         rv_props1 = velocity.compute_ccf_science(params, recipe, *cargs)
@@ -215,11 +217,11 @@ def __main__(recipe, params):
                 # log warning
                 wargs = [wprops_r['WAVETIME'], wprops['WAVETIME'],
                          wprops_r['WAVEFILE'], wprops['WAVEFILE']]
-                WLOG(params, 'warning', TextEntry('10-020-00003', args=wargs))
+                WLOG(params, 'warning', textentry('10-020-00003', args=wargs))
                 # set the reference wave solution to the science wave solution
                 wprops_r = wprops
             # log progress: Computing CCF on fiber
-            WLOG(params, 'info', TextEntry('40-020-00007', args=[fiber]))
+            WLOG(params, 'info', textentry('40-020-00007', args=[fiber]))
             # --------------------------------------------------------------
             # Compute CCF on reference channel
             cargs = [infile_r, infile_r.get_data(), blaze, wprops_r['WAVEMAP'],
@@ -303,7 +305,6 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # set passed variable and fail message list
         fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
-        textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
         # no quality control currently
         qc_values.append('None')
         qc_names.append('None')
@@ -313,11 +314,11 @@ def __main__(recipe, params):
         # finally log the failed messages and set QC = 1 if we pass the
         # quality control QC = 0 if we fail quality control
         if np.sum(qc_pass) == len(qc_pass):
-            WLOG(params, 'info', TextEntry('40-005-10001'))
+            WLOG(params, 'info', textentry('40-005-10001'))
             passed = 1
         else:
             for farg in fail_msg:
-                WLOG(params, 'warning', TextEntry('40-005-10002') + farg)
+                WLOG(params, 'warning', textentry('40-005-10002') + farg)
             passed = 0
         # store in qc_params
         qc_params = [qc_names, qc_values, qc_logic, qc_pass]

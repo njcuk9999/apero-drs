@@ -31,6 +31,8 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# get text entry
+textentry = lang.textentry
 # -----------------------------------------------------------------------------
 # define line parameters
 VERSIONSTR_PREFIX = '__version__ = '
@@ -41,35 +43,39 @@ DATESTR = "__date__ = '{0}'"
 
 NUMBER_OF_CHANGELOG_ENTRIES_LATEX = 4
 
+# yes or no text in language
+YES_OR_NO = '{0} {1} {2}'.format(textentry('Q_YES'), textentry('OR_TEXT'),
+                                 textentry('Q_NO'))
+
+
 # =============================================================================
 # Define functions
 # =============================================================================
 def ask_for_new_version(params):
-
-    # get the text dictionary
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # log current version
-    print(textdict['40-501-00001'].format(__version__))
+    print(textentry('40-501-00001', args=[__version__]))
     # ask if we wish to change version
-    uinput1 = str(input(textdict['40-501-00002'] + ' [Y]es or [N]o:\t'))
+    uinput1 = str(input(textentry('40-501-00002') +
+                        ' {0}:\t'.format(YES_OR_NO)))
     # if yes change the version
     if 'Y' in uinput1.upper():
         cond = True
         uinput2a = ''
         while cond:
             # ask for new version
-            uinput2a = str(input(textdict['40-501-00003']))
+            uinput2a = str(input(textentry('40-501-00003')))
             # ask for new version again (must match)
-            uinput2b = str(input(textdict['40-501-00004']))
+            uinput2b = str(input(textentry('40-501-00004')))
             # if both versions don't match
             if uinput2a != uinput2b:
                 # print that versions don't match
-                print(textdict['40-501-00005'])
+                print(textentry('40-501-00005'))
             else:
                 # print the new version
-                print(textdict['40-501-00006'].format(uinput2a))
+                print(textentry('40-501-00006').format(uinput2a))
                 # ask if new version is correct
-                qinput3 = textdict['40-501-00007'] + ' [Y]es or [N]o:\t'
+                qinput3 = (textentry('40-501-00007') +
+                           ' {0}:\t'.format(YES_OR_NO))
                 uinput3 = str(input(qinput3))
                 if 'Y' in uinput3.upper():
                     cond = False

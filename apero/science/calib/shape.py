@@ -1549,7 +1549,6 @@ def shape_master_qc(params, dxrms=None, **kwargs):
     func_name = __NAME__ + '.shape_master_qc()'
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # get dxrms criteria
     dxrmscut = pcheck(params, 'SHAPE_MASTER_DX_RMS_QC', 'dxrmscut', kwargs,
                       func_name)
@@ -1568,7 +1567,7 @@ def shape_master_qc(params, dxrms=None, **kwargs):
             qcargs = [order_num, dxrms[order_num], dxrmscut]
             # check that rms is below required level
             if dxrms[order_num] > dxrmscut:
-                fail_msg.append(textdict['40-014-00042'].format(*qcargs))
+                fail_msg.append(textentry('40-014-00042', args=qcargs))
                 qc_pass.append(0)
             else:
                 qc_pass.append(1)
@@ -1607,11 +1606,10 @@ def write_shape_master_summary(recipe, params, fp_table, qc_params):
 def shape_local_qc(params, transform, xres, yres):
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # ------------------------------------------------------------------
     # check that transform is not None
     if transform is None:
-        fail_msg.append(textdict['40-014-00034'])
+        fail_msg.append(textentry('40-014-00034'))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -1623,7 +1621,7 @@ def shape_local_qc(params, transform, xres, yres):
     qc_res = params['SHAPE_QC_LTRANS_RES_THRES']
     # assess quality of x residuals
     if xres > qc_res:
-        fail_msg.append(textdict['40-014-00035'].format(xres, qc_res))
+        fail_msg.append(textentry('40-014-00035', args=[xres, qc_res]))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -1632,7 +1630,7 @@ def shape_local_qc(params, transform, xres, yres):
     qc_logic.append('XRES > {0}'.format(qc_res))
     # assess quality of x residuals
     if yres > qc_res:
-        fail_msg.append(textdict['40-014-00036'].format(yres, qc_res))
+        fail_msg.append(textentry('40-014-00036', args=[yres, qc_res]))
         qc_pass.append(0)
     else:
         qc_pass.append(1)

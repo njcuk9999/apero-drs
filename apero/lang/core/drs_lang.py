@@ -58,12 +58,13 @@ class Text(str):
     Special text container (so we can store text entry key)
     """
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        str.__init__(*args, **kwargs)
         self.tkey = None
-        self.tvalue = None
-        self.targs = []
-        self.tkwargs = dict()
+        self.tvalue = str(args[0])
+        self.targs = None
+        self.tkwargs = None
         self.t_short = ''
+        self.formatted = False
 
     def __getstate__(self) -> dict:
         """
@@ -85,19 +86,95 @@ class Text(str):
         # update dict with state
         self.__dict__.update(state)
 
-    def set_text_props(self, key: str, value: str,
+    def __add__(self, other: Union['Text', str]):
+        """
+        string-like addition (returning a Text instance)
+
+        Equivalent to x + y
+
+        :param other: Text or str, add 'other' (y) to end of self (x)
+
+        :return: combined string (x + y)   (self + other)
+        """
+        # must merge changes from other if Text instance
+        if isinstance(other, Text):
+            othertext = other.get_text()
+        else:
+            othertext = str(other)
+        # make new object
+        msg = Text(self.get_text() + othertext)
+        # set text properties
+        msg.set_text_props(self.tkey)
+        return msg
+
+    def __radd__(self, other: Union['Text', str]):
+        """
+        string-like addition (returning a Text instance)
+
+        Equivalent to y + x
+
+        :param other: Text or str, add 'other' (y) to start of self (x)
+
+        :return: combined string (y + x)   (other + self)
+        """
+        # must merge changes from other if Text instance
+        if isinstance(other, Text):
+            othertext = other.get_text()
+        else:
+            othertext = str(other)
+        # make new object
+        msg = Text(othertext + self.get_text())
+        # set text properties
+        msg.set_text_props(self.tkey)
+        return msg
+
+    def __mul__(self, other):
+        NotImplemented('Multiply in {0}.Text not implemented'.format(__NAME__))
+
+    def set_text_props(self, key: str,
                        args: Union[List[Any], str, None] = None,
                        kwargs: Union[Dict[str, Any], None] = None):
+        """
+        Add the text properties to the Text (done so init is like str)
+
+        :param key: str, the key (code id) for the language database
+        :param value: str, the text (unformatted)
+        :param args: if set a list of arguments to pass to the formatter
+                     i.e. value.format(*args)
+        :param kwargs: if set a dictionary of keyword arguments to pass to the
+                       formatter (i.e. value.format(**kwargs)
+        :return: None - updates tkey, tvalue, targs, tkwargs
+        """
         self.tkey = str(key)
-        self.tvalue = str(value)
-        if isinstance(args, str):
-            self.targs = [args]
-        else:
-            self.targs = list(args)
-        self.tkwargs = dict(kwargs)
+        # deal with arguments
+        if args is not None:
+            if isinstance(args, list):
+                self.targs = list(args)
+            else:
+                self.targs = [str(args)]
+        # deal with kwargs
+        if kwargs is not None:
+            self.tkwargs = dict(kwargs)
 
     def get_text(self, report: bool = False,
-                 reportlevel: Union[str, None] = None):
+                 reportlevel: Union[str, None] = None) -> str:
+        """
+        Return the full text (with reporting if requested) for this Text
+        instance - this is returned as a string instance
+
+        if report = True:
+            "X[##-###-#####]: msg.format(*self.targs, **self.tkwargs)"
+        else:
+            "msg.format(*self.targs, **self.tkwargs)"
+
+        :param report: bool, - if true reports the code id of this text entry
+                       in format X[##-###-#####] where X is the first
+                       character in reportlevel
+        :param reportlevel: str, single character describing the reporting
+                            i.e. E for Error, W for Warning etc
+
+        :return: string representation of the Text instance
+        """
         # ---------------------------------------------------------------------
         # deal with report level character
         if isinstance(reportlevel, str):
@@ -105,17 +182,10 @@ class Text(str):
         else:
             reportlevel = self.t_short
         # ---------------------------------------------------------------------
-        # deal with no args
-        if self.targs is None and self.tkwargs is None:
-            message = self.tvalue
-        elif self.tkwargs is None and self.targs is not None:
-            message = self.tvalue.format(*self.targs)
-        elif self.targs is None and self.tkwargs is not None:
-            message = self.tvalue.format(**self.tkwargs)
-        else:
-            message = self.tvalue.format(*self.targs, **self.tkwargs)
+        # make sure tvalue is up-to-date
+        self.get_formatting()
         # ---------------------------------------------------------------------
-        vargs = [reportlevel, self.tkey, message]
+        vargs = [reportlevel, self.tkey, self.tvalue]
         # deal with report
         if report:
             valuestr = '{0}[{1}]: {2}'.format(*vargs)
@@ -123,6 +193,39 @@ class Text(str):
             valuestr = '{2}'.format(*vargs)
         # ---------------------------------------------------------------------
         return valuestr
+
+    def get_formatting(self, force=False):
+        # don't bother if already formatted
+        if not force and self.formatted:
+            return
+        # set that we have formatted (so we don't do it again)
+        self.formatted = True
+        # ---------------------------------------------------------------------
+        # deal with no value
+        if self.tvalue is None:
+            value = str(self)
+        else:
+            value = self.tvalue
+        # ---------------------------------------------------------------------
+        # deal with no args
+        if self.targs is None and self.tkwargs is None:
+            self.tvalue = value
+        elif self.tkwargs is None and self.targs is not None:
+            self.tvalue = value.format(*self.targs)
+        elif self.targs is None and self.tkwargs is not None:
+            self.tvalue = value.format(**self.tkwargs)
+        else:
+            self.tvalue = value.format(*self.targs, **self.tkwargs)
+
+    def __repr__(self) -> str:
+        if not self.formatted:
+            self.get_formatting()
+        return str(self.tvalue)
+
+    def __str__(self) -> str:
+        if not self.formatted:
+            self.get_formatting()
+        return str(self.tvalue)
 
 
 def textentry(key: str, args: Union[List[Any], str, None] = None,
@@ -150,16 +253,9 @@ def textentry(key: str, args: Union[List[Any], str, None] = None,
         args = [args]
     # create Text class for message
     msg_obj = Text(message)
-    msg_obj.set_text_props(key, message, args, kwargs)
-    # deal with no args
-    if args is None and kwargs is None:
-        return message
-    elif kwargs is None:
-        return message.format(*args)
-    elif args is None:
-        return message.format(**kwargs)
-    else:
-        return message.format(*args, **kwargs)
+    msg_obj.set_text_props(key, args, kwargs)
+    # return msg_obj
+    return msg_obj
 
 
 def read_xls(xls_file: str) -> pd.io.excel.ExcelFile:
@@ -234,7 +330,7 @@ def convert_csv(xls: pd.io.excel.ExcelFile, out_dir: str):
         pdsheet = xls.parse(sheet)
         # add to correct dataframe
         dflist = [dataframes[instruments[it]], pdsheet]
-        dataframes[instruments[it]] = pd.concat(dflist)
+        dataframes[instruments[it]] = pd.concat(dflist, sort=True)
 
     # push dataframes into csv files for reset
     for instrument in dataframes:
@@ -244,7 +340,7 @@ def convert_csv(xls: pd.io.excel.ExcelFile, out_dir: str):
         rpath = os.path.join(out_dir, reset_paths[instrument])
         # write path to log: Saving reset file
         wcode = '40-001-00028'
-        wmsg = drs_base.BETEXT
+        wmsg = drs_base.BETEXT[wcode]
         drs_base.base_printer(wcode, wmsg, '', args=[rpath])
         # save to csv
         df.to_csv(rpath, sep=',', quoting=2, index=False)
@@ -285,7 +381,7 @@ def make_reset_csvs():
         if filename != DATABASE_FILE:
             # log message: Removing file
             wcode = '40-001-00030'
-            wmsg = drs_base.BETEXT
+            wmsg = drs_base.BETEXT[wcode]
             drs_base.base_printer(wcode, wmsg, '', args=[filename])
             os.remove(abspath)
     # ----------------------------------------------------------------------

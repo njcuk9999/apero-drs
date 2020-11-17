@@ -18,7 +18,7 @@ from scipy.interpolate import splrep, splev, UnivariateSpline, interp1d
 from scipy import stats, signal
 
 from apero.base import base
-from core.core.drs_exceptions import DrsCodedException
+from apero.core.core.drs_exceptions import DrsCodedException
 from apero.core import math as mp
 from apero import lang
 from apero.core import constants

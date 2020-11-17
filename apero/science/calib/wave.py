@@ -1683,14 +1683,13 @@ def hc_quality_control(params, hcprops):
     # set passed variable and fail message list
     fail_msg = []
     qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # --------------------------------------------------------------
     # quality control on sigma clip (sig1 > qc_hc_wave_sigma_max
     hc_wave_sigma = params['WAVE_HC_QC_SIGMA_MAX']
     # find if sigma is greater than limit
     if hcprops['SIG1'] > hc_wave_sigma:
         fargs = [hcprops['SIG1'], hc_wave_sigma]
-        fail_msg.append(textdict['40-017-00015'].format(*fargs))
+        fail_msg.append(textentry('40-017-00015', args=fargs))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -1704,7 +1703,7 @@ def hc_quality_control(params, hcprops):
     # get the differences
     wave_diff = hcprops['WAVE_MAP2'][1:] - hcprops['WAVE_MAP2'][:-1]
     if mp.nanmin(wave_diff) < 0:
-        fail_msg.append(textdict['40-017-00016'])
+        fail_msg.append(textentry('40-017-00016'))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -1725,7 +1724,7 @@ def hc_quality_control(params, hcprops):
         qc_pass.append(1)
         qc_values.append('None')
     else:
-        fail_msg.append(textdict['40-017-00017'])
+        fail_msg.append(textentry('40-017-00017'))
         qc_pass.append(0)
         badvalues = np.where(~ord_check)[0].astype(str)
         qc_values.append(','.join(list(badvalues)))
@@ -4970,13 +4969,12 @@ def fp_quality_control(params, fpprops, qc_params, rvprops, **kwargs):
     # set passed variable and fail message list
     fail_msg = []
     qc_names, qc_values, qc_logic, qc_pass = qc_params
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # --------------------------------------------------------------
     # check the difference between consecutive orders is always positive
     # get the differences
     wave_diff = fpprops['LL_FINAL'][1:] - fpprops['LL_FINAL'][:-1]
     if mp.nanmin(wave_diff) < 0:
-        fail_msg.append(textdict['40-017-00030'])
+        fail_msg.append(textentry('40-017-00030'))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -4988,7 +4986,7 @@ def fp_quality_control(params, fpprops, qc_params, rvprops, **kwargs):
     # check for infinites and NaNs in mean residuals from fit
     if ~np.isfinite(fpprops['X_MEAN_2']):
         # add failed message to the fail message list
-        fail_msg.append(textdict['40-017-00031'])
+        fail_msg.append(textentry('40-017-00031'))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -5016,7 +5014,7 @@ def fp_quality_control(params, fpprops, qc_params, rvprops, **kwargs):
         # check if sig littrow is above maximum
         if sig_littrow > rms_littrow_max:
             fargs = [x_cut_point, sig_littrow, rms_littrow_max]
-            fail_msg.append(textdict['40-017-00032'].format(*fargs))
+            fail_msg.append(textentry('40-017-00032', args=fargs))
             qc_pass.append(0)
         else:
             qc_pass.append(1)
@@ -5031,7 +5029,7 @@ def fp_quality_control(params, fpprops, qc_params, rvprops, **kwargs):
         if max_bounds > dev_littrow_max:
             fargs = [x_cut_point, min_littrow, max_littrow, dev_littrow_max,
                      min_littrow_ord, max_littrow_ord]
-            fail_msg.append(textdict['40-017-00033'].format(*fargs))
+            fail_msg.append(textentry('40-017-00033', args=fargs))
             qc_pass.append(0)
         else:
             qc_pass.append(1)
@@ -6019,7 +6017,6 @@ def night_quality_control(params, nprops):
     # set passed variable and fail message list
     fail_msg = []
     qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # --------------------------------------------------------------
     # get parameters from nprops
     wavemap = nprops['WAVEMAP']
@@ -6029,7 +6026,7 @@ def night_quality_control(params, nprops):
     # get the differences
     wave_diff = wavemap[1:] - wavemap[:-1]
     if mp.nanmin(wave_diff) < 0:
-        fail_msg.append(textdict['40-017-00030'])
+        fail_msg.append(textentry('40-017-00030'))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -6050,7 +6047,7 @@ def night_quality_control(params, nprops):
         qc_pass.append(1)
         qc_values.append('None')
     else:
-        fail_msg.append(textdict['40-017-00017'])
+        fail_msg.append(textentry('40-017-00017'))
         qc_pass.append(0)
         badvalues = np.where(~ord_check)[0].astype(str)
         qc_values.append(','.join(list(badvalues)))

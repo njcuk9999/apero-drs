@@ -109,7 +109,7 @@ def check_coeffs(params, recipe, image, coeffs, fiber, kind=None):
     and smoothing with a robust fit
 
     :param coeffs:
-    :param nsigclip:
+
     :return:
     """
     # get the sigma clipping cut off value
@@ -596,7 +596,6 @@ def loc_quality_control(params, fiber, cent_max_rmpts, wid_max_rmpts,
     func_name = display_func(params, 'localisation_quality_control', __NAME__)
     # set passed variable and fail message list
     fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
-    textdict = TextDict(params['INSTRUMENT'], params['LANGUAGE'])
     # get qc parameters
     max_removed_cent = pcheck(params, 'QC_LOC_MAXFIT_REMOVED_CTR',
                               func=func_name)
@@ -617,7 +616,7 @@ def loc_quality_control(params, fiber, cent_max_rmpts, wid_max_rmpts,
     if sum_cent_max_rmpts > max_removed_cent:
         # add failed message to fail message list
         fargs = [sum_cent_max_rmpts, max_removed_cent]
-        fail_msg.append(textdict['40-013-00014'].format(*fargs))
+        fail_msg.append(textentry('40-013-00014', args=fargs))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -633,7 +632,7 @@ def loc_quality_control(params, fiber, cent_max_rmpts, wid_max_rmpts,
     if sum_wid_max_rmpts > max_removed_wid:
         # add failed message to fail message list
         fargs = [sum_wid_max_rmpts, max_removed_wid]
-        fail_msg.append(textdict['40-013-00015'].format(*fargs))
+        fail_msg.append(textentry('40-013-00015', args=fargs))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -646,7 +645,7 @@ def loc_quality_control(params, fiber, cent_max_rmpts, wid_max_rmpts,
     if mean_rms_cent > rmsmax_cent:
         # add failed message to fail message list
         fargs = [mean_rms_cent, rmsmax_cent]
-        fail_msg.append(textdict['40-013-00016'].format(*fargs))
+        fail_msg.append(textentry('40-013-00016', args=fargs))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -658,7 +657,7 @@ def loc_quality_control(params, fiber, cent_max_rmpts, wid_max_rmpts,
     if mean_rms_wid > rmsmax_wid:
         # add failed message to fail message list
         fargs = [mean_rms_wid, rmsmax_wid]
-        fail_msg.append(textdict['40-013-00017'].format(*fargs))
+        fail_msg.append(textentry('40-013-00017', args=fargs))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -671,7 +670,7 @@ def loc_quality_control(params, fiber, cent_max_rmpts, wid_max_rmpts,
     if rorder_num != required_norders:
         # add failed message to fail message list
         fargs = [rorder_num, required_norders]
-        fail_msg.append(textdict['40-013-00018'].format(*fargs))
+        fail_msg.append(textentry('40-013-00018', args=fargs))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -689,7 +688,7 @@ def loc_quality_control(params, fiber, cent_max_rmpts, wid_max_rmpts,
     if negative_diff:
         # add failed message to fail message list
         fargs = [' ']
-        fail_msg.append(textdict['40-013-00027'].format(*fargs))
+        fail_msg.append(textentry('40-013-00027', *fargs))
         qc_pass.append(0)
     else:
         qc_pass.append(1)
@@ -1043,16 +1042,6 @@ def initial_order_fit(params, x, y, f_order, ccol, kind):
     sigo width values found in "FindOrderCtrs" or "find_order_centers" to do
     the fit
 
-    :param mask: numpy array (1D) of booleans, True where we have non-zero
-                 widths
-    :param onum: int, order iteration number (running number over all
-                 iterations)
-    :param kind: string, 'center' or 'fwhm', if 'center' then this fit is for
-                 the central positions, if 'fwhm' this fit is for the width of
-                 the orders
-    :param fig: plt.figure, the figure to plot initial fit on
-    :param frame: matplotlib axis i.e. plt.subplot(), the axis on which to plot
-                  the initial fit on (carries the plt.imshow(image))
     :return fitdata: dictionary, contains the fit data key value pairs for this
                      initial fit. keys are as follows:
 

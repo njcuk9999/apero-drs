@@ -17,12 +17,13 @@ from pathlib import Path
 import sys
 from typing import Any, Dict, List, Type, Union
 
+from apero import lang
 from apero.base import base
+from apero.core import constants
 from apero.core.core import drs_base_classes as base_class
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
-from apero.core import constants
-from apero import lang
+from apero.core.core import drs_exceptions
 from apero.core.core import drs_log, drs_file
 from apero.core.core import drs_argument
 from apero.core.core import drs_database
@@ -48,11 +49,10 @@ COLOR = drs_misc.Colors()
 ParamDict = constants.ParamDict
 # get the input file
 DrsInputFile = drs_file.DrsInputFile
-# get the config error
-ConfigError = constants.ConfigError
-ArgumentError = constants.ArgumentError
 # Get the text types
 textentry = lang.textentry
+# Get exceptions
+DrsCodedException = drs_exceptions.DrsCodedException
 # get index database
 IndexDatabase = drs_database.IndexDatabase
 # -----------------------------------------------------------------------------
@@ -543,7 +543,8 @@ class DrsRecipe(object):
                                    maximum=maximum, filelogic=filelogic,
                                    default=default, default_ref=default_ref,
                                    required=required, reprocess=reprocess)
-        except ArgumentError as _:
+        except DrsCodedException as e:
+            WLOG(None, 'error', e.get_text())
             sys.exit(0)
         # make arg parser properties
         argument.make_properties()
@@ -649,7 +650,8 @@ class DrsRecipe(object):
                                           default_ref=default_ref,
                                           required=required,
                                           reprocess=reprocess)
-        except ArgumentError as _:
+        except DrsCodedException as e:
+            WLOG(None, 'error', e.get_text())
             sys.exit(0)
         # make arg parser properties
         keywordargument.make_properties()
@@ -1227,7 +1229,8 @@ class DrsRecipe(object):
         name = props['name']
         try:
             spec = DrsArgument(name, kind='special', altnames=props['altnames'])
-        except ArgumentError:
+        except DrsCodedException as e:
+            WLOG(None, 'error', e.get_text())
             sys.exit(0)
         spec.assign_properties(props)
         spec.skip = skip
