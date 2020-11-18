@@ -84,15 +84,27 @@ DATA_ARGS['DRS_DATA_RUN'] = 'rundir'
 DATA_ARGS['DRS_DATA_ASSETS'] = 'assetsdir'
 DATA_ARGS['DRS_DATA_MSG'] = 'logdir'
 
+
 # Messages for user interface
+message0 = """
+APERO profile name:
+
+    This is the profile name to associate with this installation
+    Do not include spaces or wildcards (alpha-numeric only)
+    
+    Note you can create multiple profiles for different instruments
+    so the name should be logical and unique 
+
+"""
+
 message1 = """
 User config path: 
 
     This is the path where your user configuration will be saved.
     If it doesn't exist you will be prompted to create it. 
     
-    Note if creating multiple profiles (with --name) this should not be
-    the same directory for each profile (must be different).
+    Note the configuration files will be stored here under the "profile name"
+    sub-directory
 """
 
 message2 = """
@@ -388,18 +400,17 @@ def user_interface(params, args, lang):
     cprint(printheader(), 'm')
     print('\n')
     # ------------------------------------------------------------------
+    # Step 0: Ask for profile name (if not given)
+    # ------------------------------------------------------------------
     # deal with having a profile name
-    profilename = args.name
-    # set default user path
-    if profilename not in ['None', None, '']:
-        profilename = profilename.strip().replace(' ', '_').lower()
-        default_upath = str(DEFAULT_USER_PATH).replace('default', profilename)
-        default_dpath = str(DEFAULT_DATA_PATH).replace('default', profilename)
-        default_upath = Path(default_upath)
-        default_dpath = Path(default_dpath)
+    if args.name not in ['None', None, '']:
+        profilename = ask(message0, str, default='apero')
     else:
-        default_upath = Path(DEFAULT_USER_PATH)
-        default_dpath = Path(DEFAULT_DATA_PATH)
+        profilename = args.name
+    # update default paths
+    default_upath = Path(DEFAULT_USER_PATH)
+    default_dpath = Path(DEFAULT_DATA_PATH).joinpath(profilename)
+
     # ------------------------------------------------------------------
     # Step 1: Ask for user config path
     # ------------------------------------------------------------------
@@ -407,6 +418,8 @@ def user_interface(params, args, lang):
     # if we still need to get user config ask user to get it
     if promptuser:
         userconfig = ask(message1, 'path', default=default_upath)
+    # add profile name to userconfig
+    userconfig = userconfig.joinpath(profilename)
     # add user config to all_params
     all_params['USERCONFIG'] = userconfig
 
