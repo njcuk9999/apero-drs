@@ -407,6 +407,7 @@ def user_interface(params, args, lang):
     # deal with having a profile name
     if args.name in ['None', None, '']:
         profilename = ask(message0, str, default='apero')
+        args.name = profilename
     else:
         profilename = args.name
     # update default paths
@@ -649,7 +650,7 @@ def user_interface(params, args, lang):
     cprint(printheader(), 'm')
     # ----------------------------------------------------------------------
     # return all parameters
-    return all_params
+    return all_params, args
 
 
 # =============================================================================

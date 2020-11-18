@@ -487,7 +487,7 @@ if __name__ == '__main__':
         sys.exit()
     # get parameters from user input
     elif not args.update:
-        allparams = install.user_interface(params, args, LANGUAGE)
+        allparams, args = install.user_interface(params, args, LANGUAGE)
     else:
         allparams = install.update(params, args)
     # add dev mode to allparams
