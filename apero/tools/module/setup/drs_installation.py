@@ -105,6 +105,8 @@ User config path:
     
     Note the configuration files will be stored here under the "profile name"
     sub-directory
+    
+    Note please make sure directory is EMPTY.
 """
 
 message2 = """

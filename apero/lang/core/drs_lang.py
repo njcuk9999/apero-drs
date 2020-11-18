@@ -36,8 +36,8 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # get language from base
-LANG = base.IPARAMS['LANGUAGE']
 DEFAULT_LANG = base.DEFAULT_LANG
+LANG = base.IPARAMS.get('LANGUAGE', DEFAULT_LANG)
 # get and load the language database once
 try:
     langdbm = drs_db.LanguageDatabase()
