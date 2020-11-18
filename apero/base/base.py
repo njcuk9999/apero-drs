@@ -28,10 +28,10 @@ import yaml
 # =============================================================================
 __PACKAGE__ = 'apero'
 __INSTRUMENT__ = 'None'
-__version__ = '0.7.000'
+__version__ = '0.7.035'
 __author__ = ['N. Cook', 'E. Artigau', 'F. Bouchy', 'M. Hobson', 'C. Moutou',
               'I. Boisse', 'E. Martioli']
-__date__ = '2020-08-21'
+__date__ = '2020-11-18'
 __release__ = 'alpha pre-release'
 # do this once per drs import
 # TODO: first time Time.now is done it takes a long time - get it done now
