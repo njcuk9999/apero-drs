@@ -39,9 +39,13 @@ __release__ = base.__release__
 LANG = base.IPARAMS['LANGUAGE']
 DEFAULT_LANG = base.DEFAULT_LANG
 # get and load the language database once
-langdbm = drs_db.LanguageDatabase()
-langdbm.load_db()
-langdict = langdbm.get_dict(language=LANG)
+try:
+    langdbm = drs_db.LanguageDatabase()
+    langdbm.load_db()
+    langdict = langdbm.get_dict(language=LANG)
+# if we can't then we have no language database
+except drs_db.DatabaseException:
+    langdict = drs_db.LanguageDatabase.proxy()
 # define the database path relative to package
 DATABASE_PATH = base.LANG_DEFAULT_PATH
 # define the backup path relative to package
