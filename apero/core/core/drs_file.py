@@ -82,6 +82,8 @@ else:
 HCC = drs_fits.HeaderCommentCards
 # get default psuedo constants class
 PseudoConstants = pseudo_const.PseudoConstants
+# get numpy masked constant
+MaskedConstant = np.ma.core.MaskedConstant
 # -----------------------------------------------------------------------------
 # define complex typing
 QCParamList = Tuple[List[str], List[Any], List[str], List[int]]
@@ -2317,6 +2319,10 @@ class DrsFitsFile(DrsInputFile):
                     filedictvalue = filedict[key]
                     # deal with null values
                     if filedictvalue in [None, 'None', '']:
+                        valid1 |= True
+                        continue
+                    # deal with masked values
+                    if isinstance(filedictvalue, MaskedConstant):
                         valid1 |= True
                         continue
                     # make sure there are no white spaces and all upper case
