@@ -16,6 +16,7 @@ only from:
 """
 from astropy.table import Table
 import numpy as np
+import os
 import pandas as pd
 from pathlib import Path
 import sqlite3
@@ -1807,6 +1808,36 @@ class LanguageDatabase(BaseDatabaseManager):
             storage[rowdata['KEYNAME']] = rowtext
         # return dictionary storage
         return storage
+
+    @staticmethod
+    def proxy() -> dict:
+        """
+        If all else fails (i.e. if the language database has yet to be
+        installed - load the default reset file from reset csv files)
+
+        :return: dictionary of key, value language pairs (default language)
+        """
+        # try to load the reset file manually
+        try:
+            # get language path
+            rellangpath = base.LANG_DEFAULT_PATH
+            # get lang file
+            rellangfile = base.LANG_DB_RESET
+            # get default language
+            language = base.DEFAULT_LANG
+            # get relative path
+            relpath = os.path.join(rellangpath, rellangfile)
+            # absolute path
+            langfile = drs_base.base_get_relative_folder(__PACKAGE__, relpath)
+            # load language database
+            df = pd.read_csv(langfile)
+            # return dictionary
+            return dict(zip(df['KEYNAME'], df[language]))
+        # if we can't even do this then return an empty dictionary -
+        #  all outputs will be the keyname
+        except Exception as _:
+            return dict()
+
 
 
 # =============================================================================
