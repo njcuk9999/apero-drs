@@ -403,7 +403,7 @@ def user_interface(params, args, lang):
     # Step 0: Ask for profile name (if not given)
     # ------------------------------------------------------------------
     # deal with having a profile name
-    if args.name not in ['None', None, '']:
+    if args.name in ['None', None, '']:
         profilename = ask(message0, str, default='apero')
     else:
         profilename = args.name
