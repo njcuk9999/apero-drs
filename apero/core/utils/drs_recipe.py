@@ -1466,6 +1466,9 @@ class DrsRunSequence:
                  be used with this recipe (usually when a recipe has the
                  "files" positional argument
 
+        Note all filters apply to RAW files only - do not add filters for keys
+        that are created in the drs (with the exception of KW_DPRTYPE)
+
         :param recipe: DrsRecipe, a DrsRecipe instance to add to the sequence
         :param name: str, the short name to give the recipe (used to distinguish
                      two nearly identical DrsRecipe instances from each other)
@@ -1507,7 +1510,6 @@ class DrsRunSequence:
         add_set['fiber'] = fiber
         add_set['arguments'] = arguments
         add_set['filters'] = filters
-        add_set['files'] = files
         # deal with adding recipe arguments
         if rargs is None:
             rargs = dict()
@@ -1567,7 +1569,7 @@ class DrsRunSequence:
             if add['fiber'] is not None:
                 frecipe.allowedfibers = add['fiber']
             # add filters
-            frecipe = self.add_filters(frecipe, add['files'], add['filters'])
+            frecipe = self.add_filters(frecipe, infilters=add['filters'])
             # update file definitions
             frecipe = self.update_args(frecipe, arguments=add['arguments'],
                                        rargs=add['args'], rkwargs=add['kwargs'])
