@@ -1,0 +1,1668 @@
+commit e8c9c045e5c7b4c138fabd10bf68aa81fc04b617
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Nov 18 12:34:47 2020 -0500
+
+    apero.tools.module.processing.drs_processing.py - do not worry about nulls - all raw filters should be present in index database
+
+commit b60b382123f6b91fbd60b2d24ea08d33bfb5519c
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Nov 18 12:33:58 2020 -0500
+
+    apero.core.utils.drs_recipe.py - remove files from add_filters (should only be raw filters because we use raw files)
+
+commit cd120574179759a0a7af95a276d5e6ec48e81619
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Nov 18 12:32:57 2020 -0500
+
+    apero.core.core.drs_file.py - if column is masked don't filter by it
+
+commit 6ee87299af401d70b4d6596042b79e95b98c94d6
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Nov 17 15:32:59 2020 -0500
+
+    apero.* - correct problems with textentry
+
+commit 0a6de2e7470b57d4b0bd24358b61d4a0bdd3666b
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Nov 17 11:54:14 2020 -0500
+
+    apero.base.* apero.core.core.* - add/update import rules
+
+commit 3bcd7d13a136c2b962067885f38536f2871b5f58
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Nov 17 11:26:17 2020 -0500
+
+    apero.base.* - move none base modules to core.core
+
+commit d373cbefc9df88375777e424412624d4f8d79544
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Nov 17 10:58:33 2020 -0500
+
+    apero.base.drs_exceptions.py - reorganise exceptions
+
+commit b0abc9240d8a1534751e3267d0fc4808753366f4
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Nov 16 17:09:56 2020 -0500
+
+    apero.* - replace TextEntry with textentry
+
+commit b9e461c9e171d2261ba11318252bcff24170ff90
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Nov 13 20:44:26 2020 -0500
+
+    update language database
+
+commit 7ae17867992ef7ab62325b94b454f267f7064e80
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Nov 13 20:44:13 2020 -0500
+
+    apero.base.drs_base.py drs_db.py drs_text.py + lang.core.drs_lang.py - use BETEXT base_error and base_printer
+
+commit 9abf89e18c1b6483bd168fe3a14d08ec67eef69c
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Nov 13 18:03:47 2020 -0500
+
+    apero.core.instruments.default.pseudo_const.py - move LANG_DB_COLUMNS to base.py (same with INSTRUMENTS definition)
+
+commit 0d1f03e6aabb5853b72ea7169d92d62a4167353d
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Nov 13 18:03:05 2020 -0500
+
+    apero.tools.recipe.dev.apero_langdb.py - update for new language database
+
+commit 96ca28b271951d583bb5bd9ab6d7d436d0904f11
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Nov 13 18:02:17 2020 -0500
+
+    apero.tools.module.database.manaage_database.py - deal with change to language db functionality
+
+commit 75d4c77783123a0c429894226c64dfd0fa302c1c
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Nov 13 18:01:44 2020 -0500
+
+    update language database files
+
+commit 657c72d6cd3989924187105db9fa3a18443e2d4d
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Nov 13 18:01:32 2020 -0500
+
+    apero.core.core.drs_database.py - move language database stuff to drs_db.py
+
+commit a0260faf1b9bda9efe65eb00208ae253165eed52
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Nov 13 18:01:06 2020 -0500
+
+    apero.base.* - start moving around base functionality (for base lang/print/error integration) [UNFINISHED]
+
+commit 7666cfd0f66003d94322c2e924c8eeebff71e189
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Nov 13 17:59:41 2020 -0500
+
+    apero.base.drs_base.py - add place to add base base functions
+
+commit 6e5dc3b02c821683d2ebf9412fe8568ce22ed0c4
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Nov 13 15:59:21 2020 -0500
+
+    apero.base.drs_db.py - add BaseDatabaseManager and LanguageDatabase classes
+
+commit cf3f0f0e7481fd1d0680feb4434c16bdebc746e2
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Nov 13 15:58:48 2020 -0500
+
+    apero.base.base.py - add language variables to base and re-organise order of base constants
+
+commit ecba6068314e89cf5cf6201ba2ea0a7bbf4fd8f5
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Nov 12 17:29:39 2020 -0500
+
+    apero.core.core.drs_argument.py - change sql column names to not be reserved names and change X==Y -> X=Y
+
+commit f6ae42122a6d4e2ccad5dfc59afc5e073fb5040e
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Nov 12 17:28:38 2020 -0500
+
+    apero.base.drs_db.py - pandas functions have to be abstracted
+
+commit 59033fe3ce5714bf5b69a73a00bdfa8e9901c5f5
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Nov 11 19:58:30 2020 -0500
+
+    apero.recipes.*.cal_wave_* + apero.science.calib.wave.py - add calls to database and missing database keys
+
+commit 6e67e73e5aba33ad2dc997be7be9672d9a3817f6
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Nov 11 19:57:55 2020 -0500
+
+    apero.core.utils.drs_utils.py - allow log database from parent
+
+commit 22ab76719c3acc7b237c52fb68ef226621939afc
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Nov 11 19:57:29 2020 -0500
+
+    apero.base.drs_db.py - add doc strings to new functions
+
+commit 261e744cbe893ed20315e8ea8e8ef1596e5acb3f
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Nov 11 16:37:29 2020 -0500
+
+    apero.base.drs_db.py + apero.core.core.drs_database.py + apero.tools.module.database.database_gui.py + manage_databases.py - modify MySQL feature (after testing)
+
+commit be3d67ca3ecae234a0d456a007bf44596d3bdb03
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Nov 10 17:57:00 2020 -0500
+
+    apero.science.preprocessing.gen_pp.py - do not hard code googlesheet columns - now defined at top and separate from database col names
+
+commit 0b48bf7556ec77217b2f8ef1786417d1adb8e52e
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Nov 10 16:42:18 2020 -0500
+
+    apero.tools.module.database.database_gui.py + manage_databases.py - add path back to database_wrapper
+
+commit eddd7ea1838c2fef4d4e1009375db1152455735e
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Nov 10 16:40:28 2020 -0500
+
+    apero.core.utils.drs_startup.py - deal with reloading filemod and recipemod when instrument changes
+
+commit 15f7fccdbe61385300bfd4011c8cba1634472cbd
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Nov 10 16:40:06 2020 -0500
+
+    apero.core.core.drs_database.py - deal with sqlite3 vs mysql (with paths)
+
+commit 7949031eee6c5b35055f750fffe8fb5bc05c5eef
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Nov 10 16:39:41 2020 -0500
+
+    apero.base.drs_db.py - make sure all table names end with _TABLE (to avoid SQL commands)
+
+commit c0dc059f276ef37f486fc4e6fee14d32890fb103
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Nov 9 18:37:30 2020 -0500
+
+    apero.tools.module.database.manage_database.py  - replace calls to drs_db.Database with drs_db.database_wrapper and calls to 'MAIN' table with self.kind
+
+commit 4f05fdb31289d6c66c04cd9a33447dc552707cab
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Nov 9 18:37:15 2020 -0500
+
+    apero.tools.module.database.database_gui.py  - replace calls to drs_db.Database with drs_db.database_wrapper and calls to 'MAIN' table with self.kind
+
+commit 6e8f93416a0dbba66f317a2c0963544b97bf119d
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Nov 9 18:36:58 2020 -0500
+
+    apero.science.preprocessing.gen_pp.py - replace calls to drs_db.Database with drs_db.database_wrapper and calls to 'MAIN' table with self.kind
+
+commit 42e284a2f8a206c25e0ead18a703253f82a05640
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Nov 9 18:34:57 2020 -0500
+
+    apero.core.core.drs_database.py - replace calls to drs_db.Database with drs_db.database_wrapper and calls to 'MAIN' table with self.kind
+
+commit 3a0746a203078a1e0445aaf0f9fcc2b679f7a9bf
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Nov 9 18:34:12 2020 -0500
+
+    apero.base.drs_db.py - start implementing MySQL as an alternative to sqlite [UNFINISHED/UNTESTED]
+
+commit a8d109fd543650491691488cfb2d1f5a4c716478
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Nov 9 16:33:14 2020 -0500
+
+    apero.tools.recipes.bin.apero_log_stats.py - update to use from database
+
+commit 24fc546e6ff983c271e82adbca9d5194c5e00796
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Nov 4 18:48:28 2020 -0500
+
+    apero.tools.resources.images.spirou_logo.png - tmp icon for apero explorer app
+
+commit be8ee57ea7304fc25a576cd7b666b18a2b3b0b0d
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Nov 4 18:48:04 2020 -0500
+
+    apero.tooks.recipe.bin.* - remove instrument from arguments (now from DRS_UCONFIG install yaml)
+
+commit e990a907def994caf936f5b06d58c80efc1f314f
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Nov 4 18:47:26 2020 -0500
+
+    apero.tools.module.setup.drs_installation.py - deal with reset and validate codes no longer needing instrument
+
+commit 3a5d01754d4f4574784b4eb5523a59b5a26d3ac3
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Nov 4 18:46:53 2020 -0500
+
+    apero.tools.module.database.database_gui.py - add is_openable and load_file functions to database handler + add option if file is open to open it (in right click popup menu)
+
+commit 8966baf7b85fa2c4bdd15acce0ee56616a089e67
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Nov 4 18:45:59 2020 -0500
+
+    apero.core.utils.drs_startup.py - check that instrument is None or matches install.yaml (in DRS_UCONFIG)
+
+commit e7f003d9b3fd3777b63d15532ad1784043d8a9f2
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Nov 4 18:45:28 2020 -0500
+
+    apero.core.instruments.default.recipe_definitions.py - remove all instrument arguments (now get from DRS_UCONFIG install yaml)
+
+commit 98a161113b45096410e79c18b46e96ef0f047caf
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Nov 4 18:44:56 2020 -0500
+
+    apero.base.drs_db.py - fix backup replace path
+
+commit b2e74e1c211dcc0894684d92e24dacf6a46bff49
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Nov 4 11:39:50 2020 -0500
+
+    apero.tools.module.processing.drs_processing.py - remove RESET_LOGFITS
+
+commit 9c0387f36d9de7b0b3d578d3d6cccedc28e3a6f0
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Nov 4 11:38:57 2020 -0500
+
+    apero.data.*.reset.runs.* - remove references to reset_logfits - now a database
+
+commit 4290dec0b75796be1b2d708182fa68c21dc9eaba
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Nov 3 17:31:22 2020 -0500
+
+    apero.science.calib.wave.py - wavefile must have params
+
+commit 546acdc543f0d2da9441b8bd90b10a37e56d29a4
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Nov 2 16:11:35 2020 -0500
+
+    apero.science.extract.berv.py - correct typo DPRTPYE-->DPRTYPE
+
+commit 584f0dafe2e81b6f2f040860eb2c1714af01829f
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 30 17:41:55 2020 -0400
+
+    recipes - update get_berv parameters
+
+commit 7562bd0c5ba7e2a21234b74650199674eb978d16
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 30 17:41:32 2020 -0400
+
+    apero.science.extract.berv* - finish update to berv code (using
+
+commit 9ba8924e88473e80d5af1ff5849bdd2741289cbf
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 30 17:37:49 2020 -0400
+
+    apero.recipes.*cal_extract_* - update args for get_berv
+
+commit 0af2622bf9616c3292963b97a5d5f0223032c09c
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 30 17:37:01 2020 -0400
+
+    apero.io.drs_fits.py - make sure get function pushes NaN back to np.nan
+
+commit b681cf1b24836c76afec23f7baa87640d947bf95
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 29 17:42:21 2020 -0400
+
+    update update notes + add update header file
+
+commit 9c8cbb5eaa985c3c9e0d867ed3a0c9aaa6d14be1
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 29 17:41:56 2020 -0400
+
+    apero.science.prepreocessing.py - make AstroObject pickeable
+
+commit d4ab1c91ff950477b09dbb2ebe72fa6b6ec9d627
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 29 17:41:33 2020 -0400
+
+    apero.sciience.extract.berv2.py - redo berv code now object resolving done in preprocessing [UNFINISHED]
+
+commit a66dfb20b149c08952e1da2b6fe1521f3339cee2
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 29 17:38:59 2020 -0400
+
+    apero.recipes.spirou.cal_preprocess_spirou.py - add the resolve_target function to update header
+
+commit e467631ecf2f2cce12086abbb59e315ee52f5397
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 29 17:38:31 2020 -0400
+
+    apero.io.drs_fits.py - add a set_key function (for using a keywordstore)
+
+commit 8437f99c4e307f84d9677c776bed378b4d103fdf
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 29 17:38:08 2020 -0400
+
+    apero.data.database.reset.object.csv - update colnames
+
+commit e293123ce576a724f6aead613a2b5be675778103
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 29 17:37:04 2020 -0400
+
+    apero.core.instruments.*.deafult_keywords.py - add DRS_{RESOLVE} keywords
+
+commit 946acd04b93bba5732268bc99e79a0ed11827699
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 29 17:36:29 2020 -0400
+
+    apero-drs.apero.core.core.drs_database.py - cahnge "GAIAID" --> GAIA_COL_NAME
+
+commit f8bc249d7f19e221d8f0655b082053e72862b5f0
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 28 18:11:36 2020 -0400
+
+    apero.data.spirou.database.reset.object.csv - update object reset file (with new values)
+
+commit 5e19e4ec9246d88463ed6743b9e011751e748557
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 28 18:11:12 2020 -0400
+
+    apero.tools.module.database.manage_database.py - must load objdbm
+
+commit 7839d80baeb9d7376064870563b42fd27f6aa97b
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 28 18:05:49 2020 -0400
+
+    apero.tools.moduile.database.manage_database.py - update object database and add new way to reset object csv file
+
+commit 05d25b372185c041addd56af6163828333263a02
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 28 18:05:21 2020 -0400
+
+    apero.science.preprocessing.py - move general.py --> gen_pp.py
+
+commit 656dab5ade7581c8819e4e6385b8c0f462c59b9a
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 28 18:05:01 2020 -0400
+
+    apero.recipes.spirou.cal_preprocess - todo - resolve target
+
+commit 0d5a3305d1237d97b811b242c7d3ad6ee55c822a
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 28 18:02:37 2020 -0400
+
+    apero.core.instruments.spirou.default_keywords.py - update objra/objdec to ra_deg and dec_deg
+
+commit 4d04c87e08ea8bb89be68c423fda52b871cff9fe
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 28 18:02:10 2020 -0400
+
+    apero.core.instruments.default.pseudo_const.py - update columns for object database (sources)
+
+commit a68960598cb20668cb78fed7cba85fdd22e5b2c3
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 28 18:01:41 2020 -0400
+
+    apero.core.instruments.*.default_constants.py - update OBJ_LIST constants
+
+commit c21aa3ed1cd07f5918954705688e5b032008c326
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 28 18:01:19 2020 -0400
+
+    apero.core.core.drs_database.py - make sure obj database adds sources + use set (update row) when gaia id exists (do not add a new row)
+
+commit 5cb26bb1bab8e8e3b749e17dc0d6498896dd7eea
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Oct 26 16:23:12 2020 -0400
+
+    apero.tools.module.processing.drs_processing.py - run_process function - generate_run_table requires module not recipe (should be the recipe to run not the recipe it is called from)
+
+commit 739e177fa9b8b86bad6fae05095acb9f982839b6
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Oct 26 16:22:18 2020 -0400
+
+    apero.science.telluric.gen_tellu.py - update get_non_tellu_objs for use with index database
+
+commit c0214b3b3fc52d2788200ca658f40176e9483457
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Oct 26 16:21:42 2020 -0400
+
+    apero.recipes.spirou.obj_fit_tellu_db_spirou.py + obj_mk_tellu_db_spirou.py + obj_spec_spirou.py - updaet with database interface
+
+commit d08998761ab5465ebf554e483cee2f519992e832
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Oct 26 16:21:14 2020 -0400
+
+    apero.core.utils.drs_utils.py - make sure filters are stripped of leading/trailing white spaces
+
+commit 1f2fe6d4549cb2d3dc24f525c52bd0c26cc35da0
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 23 19:21:51 2020 -0400
+
+    apero.tools.module.processing.drs_processing.py - modify run_process to work with index database
+
+commit 23eb98d4f4a42c3f42995083fb283c38dfdcb868
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 23 19:21:17 2020 -0400
+
+    apero.recipes.spirou.obj_mk_tellu_db_spirou.py - start work to fix this [UNFINISHED]
+
+commit 9bee4e686bbaba3c22fecf268124e89a35434610
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 23 19:20:56 2020 -0400
+
+    apero.core.utils.drs_utils.py - allow update_index_db to take in a database (so we don't read many times), modify find_files to accept lists of filters
+
+commit 5a3976abacbdaa308ca4ceb6b07eb7643625c6c3
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 23 19:20:09 2020 -0400
+
+    apero.core.core.drs_database.py - add a get_entries method to LogDatabase (for skip table)
+
+commit ec87df8daed47005575b51806361d17696539280
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 22 19:13:28 2020 -0400
+
+    apero.core.instruments.default.pseudo_const.py - add aliases column from object database
+
+commit 29ae57437aad8495f8a2bef41d5d64a16a809d73
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 22 19:12:58 2020 -0400
+
+    apero.core.core.drs_database.py - add to object database functions
+
+commit 7fdcfbdaf6145f848766f35ba21cf4da81212184
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 21 18:06:07 2020 -0400
+
+    apero.tools.module.database.manage_databases.py - log database should use LOG_DB_COLUMNS from pconst
+
+commit ef90c504fb9cbcc0f8a6e4d3c6541e2c774cd138
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 21 18:05:42 2020 -0400
+
+    apero.core.utils.drs_utils.py - load database on creation
+
+commit b4c56558df5a414d5f6ba5370993d8091e9f1fce
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 21 18:05:25 2020 -0400
+
+    apero.core.utils.drs_startup.py - change drs_log.RecipeLog to drs_utils.RecipeLog
+
+commit a245c884628b77bb092549579f63a44db139185a
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 21 18:04:56 2020 -0400
+
+    apero.core.instruments.default.pseudo_const.py - group is sql keyword - use groupname
+
+commit 75202056d760e5216c0d89d7585d4e08ea38234d
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 21 16:44:38 2020 -0400
+
+    apero.tools.module.database.database_gui.py - list_database now returns classes - fix return and get paths
+
+commit 1df7ce311af215b33ff27cd9df02dc0717db8ffe
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 21 16:44:09 2020 -0400
+
+    apero.core.core.drs_file.py - remove_insuffix in args should be None not False (leave to default value unless set)
+
+commit 5222b8457e7899e1d6a3e0822319673bea4c593b
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 20 14:53:08 2020 -0400
+
+    apero.core.core.drs_file.py - catch bad files in last_modified
+
+commit 002f49efaf146b77049f79bf38e0db35f789bcb3
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 20 14:36:35 2020 -0400
+
+    apero.base.drs_db.py - exectue --> execute
+
+commit 6ffa940fa338a8f85cb186fe125e493533e18c34
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 20 11:21:13 2020 -0400
+
+    apero.core.instruments.spirou.recipe_definitions.py - remove obj_mk_tellu_db and obj_fit_tellu_db from limited_seq
+
+commit 69f7e55b569a25ac5bb371de20d44e43f71a2516
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 20 11:15:19 2020 -0400
+
+    apero.recipes.spirou.obj_fit_tellu_db_spirou.py - remove apero.io.drs_text (apero.base.drs_text)
+
+commit 8ab16c08f250420d835fefeda63f889fa3c0849f
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 20 11:14:35 2020 -0400
+
+    apero.core.core.drs_file.py - only add last_modified time if file exists - and set used = 0 if file doesn't exist (for some reason)
+
+commit 0ff34a5c46ed2b47106ff92856d79e9576c35a4c
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 20 11:03:36 2020 -0400
+
+    apero-base.drs_db.py - in colnames use self._execute (to catch the database lock)
+
+commit 3e1ad3c8fbc13f16f6ccc1171d1900c0e3085d53
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 15 17:06:46 2020 -0400
+
+    apero.core.core.drs_database.py - add_entries func add doc string
+
+commit 5296a00232957999042d41ffecae0a5fa3abc117
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 15 11:47:10 2020 -0400
+
+    apero.base.drs_db.py - try to deal with sqlite database is locked error (try again up to a max wait time)
+
+commit 76683567491db3bee5380a65e717acba6f1175f8
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 15 11:15:22 2020 -0400
+
+    apero.science.telluric.gen_tellu.py - preclean filepath should be from telluric database directory (Issue #651)
+
+commit e9163a40ebdc69df2a2654c45130b569fe12368e
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 15 09:45:00 2020 -0400
+
+    apero.science.polar.general.py - update polar recipe with bug from Issue #648
+
+commit f8c54977fd46dc75c224e919f602327399491264
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 14 15:43:11 2020 -0400
+
+    apero - continue adding log features
+
+commit 728b9fe96ce0d0bab397422feaf270e99bba2689
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 14 15:00:12 2020 -0400
+
+    apero.core.utils - start adding log database
+
+commit a6d46eb76f9a58116e53480e1bc045a156f04764
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 14 12:31:34 2020 -0400
+
+    apero.tools.module.setup.drs_installation.py - fix create_symlinks
+
+commit c354a0aa204b922b9c6061499d61e20a65c95457
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 14 12:14:36 2020 -0400
+
+    apero-drs.setup.install.py - os.environ[CARD] requires a str not a Path
+
+commit e0b61bae15bb95caa35de22e58b6e6bc3417ca20
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 14 12:13:26 2020 -0400
+
+    apero-drs.setup.install.py - must activate DRS_UCONFIG in environ
+
+commit b73e508098982af01eafa58b83dccb83172c7b77
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 14 11:58:53 2020 -0400
+
+    apero.base.base.py - need to reload iparams and dparams after creating yaml files
+
+commit a580ce7c2b1e8e4869404fc9592f269a8bcddd99
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 14 11:55:12 2020 -0400
+
+    apero.base.base.py - for installation we cannot have DPARAMS and IPARAMS
+
+commit f2238f4b9869fea8dad4d0ec2ca36ac9ce7afabe
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 14 11:52:54 2020 -0400
+
+    setup.install.py - have __file__ path absolute
+
+commit 922cd7f5ada0557f8d53116a4df5de3f7823c880
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 14 11:51:11 2020 -0400
+
+    setup.install.py - add print statement (For test)
+
+commit d1c484f2a7274a6aaf186f18eea239b555bd7819
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 14 11:50:46 2020 -0400
+
+    apero.tools.module.setup.drs_installation.py - DRS_DATA_RECUC: 'red'-->'reduced'
+
+commit 89e528a0ad5cab2e1bb4d94c3fea1422b2fd9b13
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 14 11:49:57 2020 -0400
+
+    udpate language database
+
+commit e7ddacf042aab6dceeb0fb457299c7ff257bf7ac
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 13 22:30:34 2020 -0400
+
+    apero.tools.module.setup.* - create yamls and update database creation
+
+commit 987b228b07dd669738e44eb7e2e9dad36be870ee
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 13 22:30:02 2020 -0400
+
+    apero-drs/config - remove redundant ini files
+
+commit 6b4adc8e22e8647c6a15fbf4af9fd1be9b00e5af
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 13 22:29:43 2020 -0400
+
+    apero.tools.module.gui.general.py - get DRS_UCONFIG from base
+
+commit 242b44afabb45167b04532ddf3f46f9adaefae10
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 13 22:29:23 2020 -0400
+
+    apero.tools.module.database - update paths to use database yaml file
+
+commit 34af09358843288b5b0d20f2643264fa0d8ce4c8
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 13 22:28:32 2020 -0400
+
+    apero.io.drs_lock.py - need max wait time (used to be database setting)
+
+commit a0412ec765b718848be0399931424d58eca2ae33
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 13 22:28:09 2020 -0400
+
+    apero.core.instruments.*.default_config.py - remove database settings (now in yaml)
+
+commit f43e6acd045bc98c8ed401bbde1ce45937109ad0
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 13 22:27:48 2020 -0400
+
+    apero.core.core.drs_database.py - change how set path works
+
+commit f3b6f4923815e4dc7fc566463c0be6905a09c0ea
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 13 22:27:26 2020 -0400
+
+    apero.core.constants.param_functions.py - only cache when from_file is True (otherwise don't ever read files)
+
+commit 5e6523ff69b36b128b1c7e53c8546c50de227193
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 13 22:26:29 2020 -0400
+
+    apero.base.py - add yaml reading functions here
+
+commit e88bad0943ef37257605e636dcb78309d80f950f
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 13 18:28:24 2020 -0400
+
+    apero-drs/* - work on yaml inputs for install + database
+
+commit c2e93ceba7ee606c82c7b81bf07a8b4f04a8842d
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 13 16:19:36 2020 -0400
+
+    apero.science.extract.other.py - deal with exceptions/errors from extrecipe better
+
+commit 3c6cd498c06c1eabe7173225275dc794dcac3c06
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 13 16:19:14 2020 -0400
+
+    apero.recipes.spirou.cal_dark_master_spirou.py - set nightname to 'other'
+
+commit f34c2915cc922bf19d2325da27159ab0b046c9fb
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 13 16:18:26 2020 -0400
+
+    apero.core.utils.drs_startup.py - test is mod is None (as well as mod instance None)
+
+commit f94119b6dfed67cce463fa41e804a9030c6ffaa1
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 13 16:17:52 2020 -0400
+
+    apero.core.instruments.*.recipe_definitions.py - typo intputtype --> inputtype
+
+commit 84878c33c1103adaa56ae9601014391e7ec73b8b
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 13 16:16:58 2020 -0400
+
+    apero.core.core.drs_file.py - typo DRS_CALIB_DB --> DRS_DATA_ASSETS
+
+commit 9ad4c268ed15eeb0c2e509efceececfb6308bb7a
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 13 16:16:36 2020 -0400
+
+    apero.core.core.drs_argument.py - deal with directory better
+
+commit 460ae475fe2bc8ba5e8c9b2fe39bbbbf06c89aea
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 13 11:54:17 2020 -0400
+
+    apero.data.spirou.reset.runs.*.ini - reorganise run.ini files
+
+commit 2a043d08a6b5d05dcb5b0e9027976de5b97c5c3b
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Sun Oct 11 17:02:51 2020 -0400
+
+    apero-drs.apero.science.calib.badpix.py - chaange recipe.outputdir to recipe.outputtype
+
+commit 21a31f6284246d532ee2139c207e61b2eafc2ce4
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Sun Oct 11 12:54:17 2020 -0400
+
+    sort out disambiguity between inputdir outputdir inputtype outputtype  (former should be None or Path, later should be 'raw', 'red', 'tmp', 'calib', 'asset' etc)
+
+commit a68e0acbeb2dd2830327289044c93f6afa6c5026
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Sat Oct 10 17:34:48 2020 -0400
+
+    apero.core.utils.drs_startup.py - parg --> pargs[parg] for settings params
+
+commit 0c62eeabe5052f66240c162111e2f248fbf7b052
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Sat Oct 10 17:34:25 2020 -0400
+
+    apero.core.core.drs_file.py - outfile must update params
+
+commit 69314fa1a107a776404362a9bcba5728168332ce
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Sat Oct 10 11:02:15 2020 -0400
+
+    apero.core.utils.drs_startup.py - need to update input files with params (after we have added to them)
+
+commit 49fc8e73549e9898c30cb23acd53f8ddc9dce30b
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Sat Oct 10 11:01:50 2020 -0400
+
+    apero.core.core.drs_database.py - need to not check dirname if check=False (in DatabaseManager.set_path)
+
+commit a7efbe6442231554443f8aa0216516bedddbaf06
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Sat Oct 10 11:01:17 2020 -0400
+
+    apero.core.core.drs_argument.py - need to deal with empty types in _check_file_logic
+
+commit 48ae593029ffdbca6f7bac27ddd52822e932e772
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 9 23:00:41 2020 -0400
+
+    add default calibdb/objectdb csv files for NIRPS
+
+commit bd021eb38dd5e896a6603df9d1cc06d2f9e60d08
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 9 22:58:59 2020 -0400
+
+    apero.core.utils.drs_utils.py - find_files correct typing pd.dataframe --> pd.DataFrame
+
+commit eb4c599fb7a7f1a07dd779953b54bc423de86967
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 9 22:58:29 2020 -0400
+
+    apero.core.utils.drs_startup.py - do not check path of index database here - sometimes we may not have it (only on reset?)
+
+commit 15ea71d297e52459bfca3238a4feab2c611bd95e
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 9 22:57:58 2020 -0400
+
+    update language database
+
+commit 9069c83a692cb45dd68124e11f5b590725e99495
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 9 22:57:46 2020 -0400
+
+    apero.core.utils.drs_recipe.py - frecipe must get params (it changed previously)
+
+commit 3b43653247f7ac9ffae30d76bdd8e143fbca95ff
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 9 22:57:17 2020 -0400
+
+    apero.core.instruments.nirps_ha.deafult_config.py - update some settings for database (c.f. spirou)
+
+commit bec79642bc3535d71a905e380596e4081d6c60fa
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 9 22:56:52 2020 -0400
+
+    apero.core.instruments.default.pseudo_const.py - correct columns for index_database columns
+
+commit 76ece407c7447786f7d8a97b93ee21c49d326240
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 9 22:56:17 2020 -0400
+
+    apero.core.core.drs_file.py - correct remove_insuffix default value should be None
+
+commit de6d2895d572c2a01c8fa71dedfba3afcd2d0dee
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 9 20:04:35 2020 -0400
+
+    apero.core.utils.drs_utils.py - write a new find_files function that uses the index database
+
+commit 3ef5cfcc2cd5ed70e2360cc554834bab46a79e4b
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 9 20:04:01 2020 -0400
+
+    move find_files to drs_utils.py
+
+commit a4f07434a39bb6ac20f4baaa3265da1dca0b4ac7
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 9 17:26:26 2020 -0400
+
+    apero.core.utils.drs_recipe.py - change location of get_output_dir and get_input_dir
+
+commit ed59380e2027974d160a896b27a2c1501d329e74
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 9 17:26:08 2020 -0400
+
+    apero.core.core.drs_file.py - move get_dir get_input_dir and get_output_dir here
+
+commit 8b760f284ed3d43e95547cadb4cbe4249d4bd9bb
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 9 17:25:33 2020 -0400
+
+    apero.core.core.drs_database.py - add _update_params so we only update database when new request comes in (unless forced)
+
+commit 739291593fe4b458af24f8ad7646c95a19135db8
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 9 17:24:57 2020 -0400
+
+    core.core.drs_argument.py - update check directory and check file to use indexdb instead of opening headers
+
+commit f72d22d20c2da64fe9fd4947b03576230951c677
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 9 17:24:15 2020 -0400
+
+    apero.base.drs_db.py - count should return an int
+
+commit ef54df2cd0f31cf4d0e95e3eafe354a76cf29031
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 8 18:18:50 2020 -0400
+
+    apero.tools.recipe.bin.apero_listing.py - update listing to update index database
+
+commit 83e2f3f5119ac46f2dc87bc0a544a4619e4c1ae2
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 8 18:18:26 2020 -0400
+
+    'reduced' --> 'red', from apero.core.core import drs_database
+
+commit edb95933fddddd349488e3b209f59fb82f3afc2a
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 8 18:17:02 2020 -0400
+
+    update language database
+
+commit 3d4c26c8fb604f850d80aa3e47606066b32fc8fe
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 8 18:16:49 2020 -0400
+
+    apero.io.* - sort out imports
+
+commit 7c42a22fd9ecec088fff60c5379e75d6db9111d4
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 8 18:15:54 2020 -0400
+
+    apero.core.util.drs_utils.py - sort out imports
+
+commit 84982b42d3723a430715e12921f769ccdb3eb78a
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 8 18:14:58 2020 -0400
+
+    apero.core.utils.drs_startup.py - get IndexDatabase (for recipe_setup)
+
+commit 74cedb151b7722607cf00b30c84e875f34ee91df
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 8 18:14:22 2020 -0400
+
+    apero.core.instruments.*.recipe_definitions.py - change 'reduced' to 'red'
+
+commit 4671c0eba94b93a27bb7ca911de43a1b867e313b
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 8 18:13:54 2020 -0400
+
+    apero.core.core.drs_log.py - move setup_inputs to drs_recipe.py
+
+commit 9470d3f5c65f9d663bf7880a477343772fc6bf41
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 8 18:12:03 2020 -0400
+
+    apero.core.core.drs_file.py - update write functions (add runstring and kind for index database)
+
+commit a76f0f9f2d5cad51a0aa3955c75a12be84c3438a
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 8 18:11:23 2020 -0400
+
+    apero.core.core.drs_database.py - deal with no instrument + move drs_database.py from core.utils.drs_database.py
+
+commit 8a6adf0fc14b642dc017814da3c1b1c11cca82b5
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 8 18:09:19 2020 -0400
+
+    apero.core.core.drs_argument.py - add IndexDatabase to Argument Checks (unfinished)
+
+commit 4d3279945122ac8192609fe9607f4ce03cfb9439
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 8 18:08:35 2020 -0400
+
+    core.constants.param_functions.py - deal with no value in listp and dictp
+
+commit 730b3fd3745ca8bc9479868fe99e1d1317294dce
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 8 18:07:49 2020 -0400
+
+    apero.base.drs_db.py - typo :param columns: --> :param column:
+
+commit c9e504b00fc971d40381a2312bd39e98b859a270
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 7 17:30:31 2020 -0400
+
+    update language database
+
+commit 7df37cc2efe94464934e460c6bf8884a824705d4
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 7 17:24:25 2020 -0400
+
+    apero.tools.module.processing.drs_processing.py - continue integrating index database
+
+commit a302ab60621ad2146aad7fcb8a17a223d8a3c06c
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 7 17:23:41 2020 -0400
+
+    apero.core.utils.drs_database.py - continue work integrating index database
+
+commit 5c2b67a94da2b5266c5a7b423f9fc910aee3ba6a
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 7 17:23:19 2020 -0400
+
+    apero.core.instruemnts.*.default_constants.py - change REPROCESS columns (for index database)
+
+commit 52d1229d6d8e670fc75312e52509262579889121
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 7 17:22:53 2020 -0400
+
+    apero.core.core.drs_file.py - change kwargs for hkeys in NpyFile
+
+commit b64c6a9c9a4d03744aa3e6e5a39daa3580b58c16
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 7 15:07:44 2020 -0400
+
+    apero.tools.recipe.bin.apero_processing.py - continue work integrating index database
+
+commit fe1eeceebce77989081bf2a3f98a2302cb8dac03
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 7 15:07:18 2020 -0400
+
+    apero.core.utils.drs_recipe.py + apero.tools.module.processing.drs_processing.py - move processing/reprocessing functionality to drs_processing
+
+commit 7251d61ce6ae8bc777056427dd8777cdc98e63f1
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 7 15:06:45 2020 -0400
+
+    apero.core.utils.drs_database.py - continue work on index database
+
+commit 862b5200409c30eea1795f1bf3ebfb49c012c9ca
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Oct 7 15:06:29 2020 -0400
+
+    apero.base.drs_db.py - add count and unique functions
+
+commit 2a083e9a5a1698798dbd7f61a74a2f3311810800
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 6 20:07:49 2020 -0400
+
+    apero.tools.module.processing.drs_processing.py + apero.recipes.bin.apero_processing.py - start update with IndexDatabase (unfinished)
+
+commit 918bc1bc512a7fa4c022e8aef17e0ed0c9b6d329
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 6 20:06:58 2020 -0400
+
+    apero.science.polar.general.py - change KW_ACQTIME to KW_MJDEND
+
+commit 5d69ccdae9a0352576c619ef29b1006cd418f981
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 6 20:06:39 2020 -0400
+
+    update language database
+
+commit 8535523558a4a5c489d271c2e75da66f0c1c17c8
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 6 20:06:29 2020 -0400
+
+    apero.core.utils.drs_utils.py - modify update_index_db
+
+commit 7c682373f4c9d09110f3a99871f90c31583d6a9d
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 6 20:06:07 2020 -0400
+
+    apero.core.utils.drs_recipe.py - deal with filemod better
+
+commit df62ce8d82546d03804538d4b426a79e0f23e131
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 6 20:03:49 2020 -0400
+
+    apero.core.utils.drs_database.py - continue working on IndexDatabaseManager
+
+commit bf38d4cffe53bdbf4907ffa88a33a5f00d7113b0
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 6 20:03:28 2020 -0400
+
+    apero.core.instruments.spirou.file_definitions.py - update drs_finput with hkeys (still need to do this for nirps)
+
+commit d7717a36215398ab6c42c72d50f63ac6727b183b
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 6 20:02:47 2020 -0400
+
+    apero.core.instruments.deafult_keywords.py - KW_ACQTIME --> MJDEND
+
+commit 77c151018eb23bac0e057d22f6424cb84b8ef8d2
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 6 20:02:12 2020 -0400
+
+    apero.core.instruments.*.pseudo_const.py - adjust pseudo const for index files
+
+commit d9889b53209ffb861e7040d884c61452aac3d552
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 6 19:59:18 2020 -0400
+
+    apero.core.core.drs_file.py - change kwargs to hkeys
+
+commit 34fc9892000b6b3c1afd95c61705b124e3d9eb2f
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 6 19:58:56 2020 -0400
+
+    apero.base.drs_db.py - add command to database error (on execute)
+
+commit 47513cfd55bf252377fef54ae5963e13aa816938
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Oct 6 17:43:41 2020 -0400
+
+    apero.core.math.general.py - add nan spline to account for iuv_spline going wrong (with NaNs len < k + 1)
+
+commit bceb6d70a67e0ccbbd016efdbe80443ad4df5d36
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Oct 5 18:38:56 2020 -0400
+
+    apero.tools.recipes.bin.apero_processing.py - start adding IndexDatabase functionality
+
+commit 58ca17c4c75e8f59ef1f2eb7de4b7435fa5fe9c1
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Oct 5 18:38:36 2020 -0400
+
+    apero.tools.module.setup.drs_reset.py - change create_databases-->manage_database
+
+commit 6b425fcef6fbcb43a1fac473511881a00288edd8
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Oct 5 18:38:11 2020 -0400
+
+    apero.tools.module.processing.drs_processing.py - start adding IndexDatabase functionality
+
+commit 12910357dbb0f7a1909c2b656b0b8c0e35326a01
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Oct 5 18:37:41 2020 -0400
+
+    apero.tools.module.database.manage_database.py - renamed from create_databases.py
+
+commit 2afcd078e155992bd11d52ee2e80190e70ac4949
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Oct 5 18:37:23 2020 -0400
+
+    update language database
+
+commit d33b93b12e7399c0f740ae457f49ad7af5324ac0
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Oct 5 18:36:46 2020 -0400
+
+    apero.io.drs_path.py - allow copytree to log
+
+commit b1fb0a2d92760284316ac948f308fc0763f39d54
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Oct 5 18:36:28 2020 -0400
+
+    apero.core.utils.py - add utils module for functions that must import from all other utils
+
+commit c4b282d63017cb04b9f9e51e5ff06a0e92924a2b
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Oct 5 18:35:50 2020 -0400
+
+    core.utils.drs_database.py - add features to IndexDatabaseManager
+
+commit 15eb73e51aaa73c72b4463c31cff4287d88e13dd
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Oct 5 18:35:27 2020 -0400
+
+    apero.core.instruments.*.pseudo_const.py - add INDEX_HEADER_KEYS and modify INDEX_DB_COLUMNS
+
+commit 07ef5fae4a2b3baa81c4c2ccc72a65dfc5512ce1
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Oct 5 18:34:44 2020 -0400
+
+    core.core.drs_file.py - tag some functions to be changed to database functions
+
+commit 5c76692004d0ec1e26fa9783ceb46c2354370649
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Oct 5 18:34:25 2020 -0400
+
+    apero.base.drs_misc.py - allow get_uncommon_paths to accept Path as well as string
+
+commit 716e7b81c317fb6cbb73e64fb4f618e67c7b1aca
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Oct 5 18:34:01 2020 -0400
+
+    apero.base.drs_db.py - add column names to set function
+
+commit f12daa961249ef3de85fbf992720ab58a53d523e
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Oct 5 11:04:31 2020 -0400
+
+    change drs_database2.py --> drs_database.py
+
+commit 001d4e1468777e79abed544868e1c6a6519f74a7
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 2 17:52:20 2020 -0400
+
+    apero.tools.module.setup.drs_reset.py - create databases after reseting files (otherwise databases are removed)
+
+commit f42febc4e615db3853f223b12a23788bdae02744
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 2 17:51:48 2020 -0400
+
+    apero.io.drs_image.py - unix_char_code moved from drs_startup to drs_misc
+
+commit 7061ddd89e7211957621b818fb5b3319f965e382
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 2 17:51:32 2020 -0400
+
+    apero.science.calib.dark.py - add out_fmt for get_mid_obs_time
+
+commit 4fe4534ae935d5327694fb20f1c6b65b20ae5098
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Oct 2 17:51:22 2020 -0400
+
+    apero.science.calib.shape.py - add out_fmt for get_mid_obs_time
+
+commit 1c895b00fc5642d113b5f78a11b6e6f5c238925c
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 1 19:19:40 2020 -0400
+
+    apero.science.telluric.gen_tellu.py -  get_non_tellu_objs add doc string
+
+commit 88eac3009d4df2fa40d6c2f296be3d694ba1c082
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 1 19:19:10 2020 -0400
+
+    apero.recipes.spirou.obj_mk_template_spirou.py - key is just filetype now (fiber separate) filetype_fiber --> filetype
+
+commit 645055af00f216f8ae2b147330bf132530ffbe77
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 1 19:18:13 2020 -0400
+
+    apero.core.utils.drs_database2.py - allow iarmass/tau_Water/tau_others to be string (to handle 'None')
+
+commit 996d40e92a9755d74a771d62c1ebd399aa773c75
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 1 18:57:44 2020 -0400
+
+    apero.science.telluric.fit_tellu.py - number of trans files should be one less than length (but mask <= instaed of <)
+
+commit 07a37aa5c2076420eef8ef95c5be40cf16375952
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 1 18:57:13 2020 -0400
+
+    apero.science.wave.py - fix file for out_wave_fp/out_wave_hc
+
+commit ec95fb51cf40f46396dfeb8199af91380106a686
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 1 18:56:41 2020 -0400
+
+    apero.recipes.spirou.obj_fit_tellu_spirou.py + obj_mk_template_spirou.py - add database=telludbm for tellu database functions
+
+commit 7853b9688433ea34cb7d865c2dee27c53da967b4
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 1 18:55:55 2020 -0400
+
+    apero.recipe.spirou.cal_dark_master_spirou.py - drs_fits --> drs_file import
+
+commit 514b4d866c4392f3d455c57e79232a8f65fcf221
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 1 18:55:29 2020 -0400
+
+    apero.core.instruments.spirou.recipe_definitions.py - EXTOBJ --> EXTTELL + continue update to new database system for tellurics
+
+commit 631ee85e8c30f7082a29a0e897cc9a272421b5fd
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 1 18:53:08 2020 -0400
+
+    apero.core.instruments.spirou.recipe_definitions.py - EXTOBJ --> EXTTELL
+
+commit fdbc2849cea8f69e1de8eefa905af66d19e9d4ec
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 1 18:52:41 2020 -0400
+
+    apero.core.instruments.spirou.file_definitions.py - TELLU_CONV should be of wavem_fp or wavem_hc drs file type
+
+commit 62856eab5e3380e2602c7bbe6c84cd6fbced890e
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 1 18:52:05 2020 -0400
+
+    apero.core.core.drs_file.py - add filename as arg to construct_filename (used for certain outfuncs)
+
+commit 1be5e8dcce7ffa7dd969df8a8f28899af2869c10
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Oct 1 18:51:32 2020 -0400
+
+    apero.base.drs_db.py - only open cursor when require and close it after to avoid locking
+
+commit e1f244b5b4a376b1baeaba989ef985b3587bf378
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Sep 30 19:56:32 2020 -0400
+
+    apero.science.telluric.gen_tellu.py - move database interface over from old text database to new sql database
+
+commit 0084fa2e9dac539638874e79ddd3330f60d78d7d
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Sep 30 19:56:02 2020 -0400
+
+    apero.recipes.spirou.obj_fit_tellu_spirou.py - add database inpout to telluric.tellu_preclean
+
+commit e87d0f50e4f850f394f6d525b5e12e902f276596
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Sep 30 19:55:05 2020 -0400
+
+    apero.io.drs_fits.py, io.drs_image.py, io.drs_lock.py, io.drs_path.py, io.drs_table.py - add import rules (to avoid circular imports)
+
+commit aa4daeda6bb1d500e0c6d7c9aa6f5f87fc45cfb7
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Sep 30 19:54:15 2020 -0400
+
+    apero.core.utils.drs_database2.py - update telluric database manager
+
+commit 546d232d15326aa9be349f86bb15934397106eae
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Sep 30 19:53:36 2020 -0400
+
+    apero.core.utils.drs_data.py - add npy file type
+
+commit ff952e9eb94670eec2eb1bc6a9c211b20344365c
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Sep 30 19:53:16 2020 -0400
+
+    apero.core.core.drs_file.py - reformat get_hkey
+
+commit 0b0ca03475d7ef66a0c176968e6997723fbca7ad
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Sep 30 19:52:42 2020 -0400
+
+    apero.base.drs_db.py - add colnames function and _decode_value function
+
+commit df5d19c8a7820554400d4ce607d22c7708929728
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Sep 30 17:05:15 2020 -0400
+
+    move DrsFits functions from apero.io.drs_fits to apero.core.core.drs_file (they should be with the class not IO functions) - functions moved: get_index_files, find_files, find_raw_files, combine, fix_header, id_drs_file, get_mid_obs_time, _get_files, _get_path_and_check,
+
+commit e5910c6e4bb67c8d3b21571295f2f8fcdb8d4312
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Sep 30 15:58:27 2020 -0400
+
+    update processing tables in README.md
+
+commit 89722da7b960dae39ab3461b429bc59fa059fdbf
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Sep 30 11:25:55 2020 -0400
+
+    update UPDATE_NOTES.txt (probably prematurely)
+
+commit f50a0a58c83707c1db0cdef2298691c0b72bbc41
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Sep 30 11:17:44 2020 -0400
+
+    update requirements (split into conda/pip for those installating using these lists)
+
+commit 39eb683f3bc4e7686b07114adc3eb4c86e7e4480
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Sep 30 11:12:53 2020 -0400
+
+    move apero-drs/misc to apero-utils repo
+
+commit b2c913740c6538315a768edbb2f9c14e190c8e8f
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Sep 29 18:01:05 2020 -0400
+
+    apero.io.drs_fits.py - need to deal with key == ''
+
+commit ee633d50a58219c0ba0ff13523acb1ab01716452
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Sep 28 18:56:22 2020 -0400
+
+    apero-drs.misc.tools.profiler.apero_profiler.py - add recipe profiler
+
+commit 81227b6dd8086dba1f14ef724c21b272c8d25b88
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Sep 25 11:56:31 2020 -0400
+
+    apero.io.drs_table.py - pickling/python typing/docstrings
+
+commit 957d67e1b2f771e44a9b196d0ec9159562314263
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Sep 25 11:55:58 2020 -0400
+
+    apero.io.drs_path.py - continue pickling/python typing/docstrings
+
+commit 8efda8dcb4824271d7c59c99f009a915d02d554f
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Sep 25 11:55:37 2020 -0400
+
+    apero.base.drs_text.py - move test_format here from drs_table.py
+
+commit 484fbc9b4114f2f7c21d0f7d9604e997bd6fa952
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Sep 24 09:39:47 2020 -0400
+
+    apero.io.drs_lock.py - make sure classes are pickle-able, add python typing and docstrings
+
+commit 0da2c59c91f310f9488bf284b9d587fb4f53fc5a
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Sep 23 19:11:08 2020 -0400
+
+    apero.io.drs_image.py drs_lock.py - continue pickling/typing/docstring
+
+commit 54d1aadffebe61134d1587e860ea0911f3c23d48
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Sep 23 19:10:21 2020 -0400
+
+    apero.core.instruments - fix pep8
+
+commit 0fb3afedcc83bd72abaa303fc7675e19c12822e8
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Sep 22 18:20:04 2020 -0400
+
+    drs_fits.find_files -- add filters arg (dict)
+
+commit 66173b45349d26035373b8241816b33167d00c03
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Sep 22 18:19:46 2020 -0400
+
+    apero.io.drs_fits.py - continue pickling/typing/docstring adding
+
+commit b7d4e8cbfee784840746d7e014b8f5da624f1086
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Sep 21 18:37:06 2020 -0400
+
+    apero.io.drs_fits.py - start pickling/python typing/doc string
+
+commit 4a13fb9c2981145fcfde4b60b1b4c80a6b82d802
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Sep 21 17:32:48 2020 -0400
+
+    misc.tools.copy_master_db.py - code to only copy master database
+
+commit fa2f9f4df6c6e08d6ad18cba524d929a1c46a4d5
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Sep 18 20:30:44 2020 -0400
+
+    setup.install.py - correct typo barycorrp=y --> barycorrpy
+
+commit b59c1b18fd540d85781f301ff775253c17fc7f5b
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Sep 18 20:30:21 2020 -0400
+
+    build documentation
+
+commit 6582160f151c293770ecebcb259d9e6804343884
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Sep 18 20:30:03 2020 -0400
+
+    apero.tools.module.documentation.drs_changelog.py - change how we produce changelog.rst
+
+commit e1ea6b9d685683662f2700318c8620e359e5b4ee
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Sep 18 20:29:37 2020 -0400
+
+    apero.science.extract.berv.py - remove func as input parameter
+
+commit 640e939ae80ae7e4b0cfe075820aaf9c9c9cc61a
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Sep 18 20:28:05 2020 -0400
+
+    apeor.core.utils.drs_startup.py - instrument = 'None' not just None
+
+commit 7f3fa17185a1b3678ab58e0ecc4edeb9adc7c7cf
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Sep 18 20:25:59 2020 -0400
+
+    apero.core.core.drs_file.py - copy output_dict + datatype + dtype from instance2
+
+commit c11e69884d92539223423acd3c389c98cab8afb3
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Sep 18 18:49:16 2020 -0400
+
+    build documentation
+
+commit 44a1bdb43e7978553619cda914ed58a39b5f2921
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Sep 18 15:40:27 2020 -0400
+
+    build documentation
+
+commit a8eebf55f55f68a388af4fd350f6369f841223a5
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Sep 18 13:25:09 2020 -0400
+
+    build documentation
+
+commit 0c8713a177922a40fb0e582d6b22766f80e97c50
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Sep 18 13:24:38 2020 -0400
+
+    add empty recipe documentation
+
+commit 47d6f8b1efec9ac46e4832d585ca5859e7792e21
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Sep 18 10:36:13 2020 -0400
+
+    apero.io.drs_fits.py - close the hdu and for now keep the image in primary hdu (remove later)
+
+commit 4a86957fd259c0f56c2249c40397cf2d5785834a
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Sep 18 10:34:50 2020 -0400
+
+    apero.core.utils.drs_database.py - remove chmod 644 for copying to databases
+
+commit 6ce29aa01b6d74612f3e4161501659b3b33299d8
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Sep 17 19:17:14 2020 -0400
+
+    apero.core.core.drs_file.py - deep copy header/hdict when copying file
+
+commit 7c6e708f03e0d2aa42f45d25dda39cb0de04e253
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Sep 16 19:52:26 2020 -0400
+
+    add .run to .gitignore
+
+commit 4e6b7b5d397eac8c035728f99931b75fa26d759c
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Sep 16 19:52:16 2020 -0400
+
+    apero.tools.module.processing.drs_processing.py - add TODO to see if we can see whats wrong (later)
+
+commit 08c61f2298ac4788dfcb9fa836359bb7aba11feb
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Sep 16 19:51:39 2020 -0400
+
+    apero.science.* - fix after debug run
+
+commit 1c22ab324016711e1b4358afb0587431f4143c93
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Sep 16 19:51:16 2020 -0400
+
+    apero.plotting.core.py - deal with no pdfpath set (skip commit)
+
+commit 8bd0f85c8ba3b405a73e396a7e922b998b2eb1e3
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Sep 16 19:50:55 2020 -0400
+
+    apero.core.recipes.*.* - update after debug run
+
+commit adcf262fcb199ba83dc1377b10e0112cddbfef53
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Sep 16 19:50:37 2020 -0400
+
+    update language database
+
+commit 27240fa53e5fb2d9a66edceb1da3e1fd4f23929a
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Sep 16 19:50:25 2020 -0400
+
+    apero.io.drs_fits.py - fix after debug run
+
+commit 8bd5c9af75d86b8c60967c8d66377822dffc826a
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Sep 16 19:50:07 2020 -0400
+
+    apero.core.math.fast.py - remove display_func from jit function
+
+commit 69edf95167c9d06773decbe7233631a42b3ae81c
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Sep 16 19:49:44 2020 -0400
+
+    apero.core.instruments.*.file_definitions.oy - update out_orderp_straight
+
+commit c2f4e64d34b06c48dc36dd905d7657cab4b0811a
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Sep 16 19:48:31 2020 -0400
+
+    apero.core.core.*.py - fix issues after debug run
+
+commit 2757405907097cfe8ce494fc11e1f9bec2604984
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Sep 16 17:54:06 2020 -0400
+
+    apero.core.constants.param_funtions.py - chagne ConfigError-->DrsCodedException
+
+commit 11beeaf6a9b769b59321051196390c6f3b87f7ac
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Sep 15 19:20:20 2020 -0400
+
+    apero.core.utils.drs_recipe.py - correction for typing/structural changes
+
+commit fb12c6668b3666fb407688d8914f89abd2d291c7
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Sep 15 19:19:58 2020 -0400
+
+    apero.io.drs_fits.py - drs_file must have params
+
+commit 141b9ad26c3107bb8976e1f98cc33b7754bfa679
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Sep 15 19:19:43 2020 -0400
+
+    apero.io.drs_path.py - update get_uncommon_path
+
+commit a3b461094a0db4f4583ba6bc5d9dac2074c13d81
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Sep 15 19:19:06 2020 -0400
+
+    apero - apero.core.drs_log --> apero.core.core.drs_log + instrument = None --> instrument = 'None'
+
+commit d241f156485ffb7098cc93a4ebe97995d1aaedbd
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Sep 15 19:18:19 2020 -0400
+
+    apero.core.instruments.*.output_filenames.py - generalize inputs
+
+commit 82702ea3f8634b75e05c1d437bd6c074ff9351d5
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Sep 15 19:17:30 2020 -0400
+
+    apero.core.core.drs_file.py - make changes to DrsInputFile.check_params
+
+commit 44739da346cdc8ba098cfc80980dec8614b515e6
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Sep 15 19:17:06 2020 -0400
+
+    apero.core.core.drs_argument.py - change recipe.drs_params --> recipe.params
+
+commit d21c5db74eb656f277fdbf33cea53d829c0c55c3
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Sep 15 19:16:45 2020 -0400
+
+    apero.core.constants.param_functions.py - instrument variable should be tested for null test None and 'None'
+
+commit d5459d04e7cd04002ecdf4c0db4c89b20db1d953
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Sep 15 17:52:37 2020 -0400
+
+    apero.base.drs_misc.py - fix drs_misc.get_uncommon_path (first path should be the longest)
+
+commit f70b085b03b9ce5072c5a011a824623f72f6fc2f
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Sep 15 17:52:04 2020 -0400
+
+    apero.base.drs_exceptions.py - Exit has not __init__
+
+commit 8e8a1d35498a35924af8d2a67b7811cae471a8c9
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Tue Sep 15 12:19:36 2020 -0400
+
+    apero.core.utils.drs_startup.py - add doc strings/python typing
+
+commit 0fcb0de2da1552939e639e0b149e711b87d9ba1a
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Mon Sep 14 18:06:08 2020 -0400
+
+    apero.core.utils.drs_recipe.py - continue typing/pickling/docstrings
+
+commit 597238ebfbac0e040d59fb4f0be18c27043d1f0d
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Fri Sep 11 16:33:57 2020 -0400
+
+    apero.tools.module.processing.drs_processing.py - send_email should be False not 'False'
+
+commit 42e8a535533c866d61ca013fb4d851180696504e
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Sep 10 17:48:45 2020 -0400
+
+    apero-drs.misc.tools.create_science_targets.py - add telluric targets (may want to upload these too)
+
+commit 24b43a22ce0639218236a7d796f767f1aa3ce8f2
+Merge: 0a07e438 258c6e89
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Sep 10 10:23:00 2020 -0400
+
+    Merge branch 'master' into v0.7.000-pre
+    
+    # Conflicts:
+    #       UPDATE_NOTES.txt
+    #       apero/core/instruments/default/default_config.py
+    #       apero/core/utils/drs_startup.py
+    #       apero/io/drs_fits.py
+    #       apero/recipes/spirou/pol_spirou.py
+    #       apero/science/telluric/gen_tellu.py
+    #       apero/tools/module/processing/drs_processing.py
+
+commit 258c6e89116b506940241f017254aea0e9af9501
+Merge: 731cd2eb 2cbf4e6b
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Sep 10 10:10:36 2020 -0400
+
+    Merge pull request #645 from njcuk9999/developer
+    
+    Developer --> master v0.6.131
+
+commit 2cbf4e6bc2d62288784ad4ab30fe8cabc77b577c
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Sep 10 10:09:30 2020 -0400
+
+    update date/version/changelog/docs/update notes/read me
+
+commit bb7273c804d2074f7aee0f9404619649fb2a7188
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Sep 10 09:54:56 2020 -0400
+
+    apero.recipes.spirou.pol_spirou.py - hack from Issue #639 re: linear algebra error
+
+commit a656913f8e90892679e8a5000fc1078c9767f908
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Sep 10 09:54:21 2020 -0400
+
+    identical?
+
+commit f4015f790fdd1aa14944136ffbb1aed081004b4a
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Thu Sep 10 09:53:49 2020 -0400
+
+    apero.core.core.drs_startup.py - format of splash update
+
+commit 0a07e4383f3111cbe8b806b28d3c6162fd96de2f
+Author: Neil Cook <neil.james.cook@gmail.com>
+Date:   Wed Sep 9 18:57:40 2020 -0400
+
+    apero - moved drs_file from apero.core.utils --> apero.core.core (used in drs_argument.py) - continue pickling/docstring/python-typing of apero.core.utils.drs_recipe
