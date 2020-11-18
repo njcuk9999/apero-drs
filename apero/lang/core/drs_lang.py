@@ -44,7 +44,7 @@ try:
     langdbm.load_db()
     langdict = langdbm.get_dict(language=LANG)
 # if we can't then we have no language database
-except drs_db.DatabaseException:
+except Exception as _:
     langdict = drs_db.LanguageDatabase.proxy()
 # define the database path relative to package
 DATABASE_PATH = base.LANG_DEFAULT_PATH

@@ -1634,7 +1634,7 @@ class LanguageDatabase(BaseDatabaseManager):
         # set function
         _ = '{0}.{1}.{2}()'.format(__NAME__, self.classname, '__init__')
         # set instrument name
-        self.instrument = base.IPARAMS['INSTRUMENT']
+        self.instrument = base.IPARAMS.get('INSTRUMENT', 'None')
         # set name
         self.name = 'language'
         self.kind = 'LANG'
