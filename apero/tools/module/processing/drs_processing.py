@@ -13,21 +13,17 @@ Created on 2019-08-06 at 11:57
 
 """
 from astropy.table import Table
+from collections import OrderedDict
 from copy import deepcopy
 import itertools
-
+import multiprocessing
+from multiprocessing import Pool, Process, Manager, Event
 import numpy as np
 import os
 import sys
-
 import time
-
-from collections import OrderedDict
-import multiprocessing
-from multiprocessing import Pool, Process, Manager, Event
-
-
 from typing import Any, Dict, List, Tuple, Union
+import warnings
 
 from apero.base import base
 from apero.core.core import drs_base_classes as base_class
@@ -2228,14 +2224,13 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
 
                     # construct sub condition based on this filter
                     sargs = [tfilter, testvalue, tfilter]
-                    sub_cond += ['({0}="{1}" OR {2}="None")'.format(*sargs)]
+                    sub_cond += ['({0}="{1}")'.format(*sargs)]
                 # create  full sub condition (with OR)
                 subcondition = ' OR '.join(sub_cond)
                 # -------------------------------------------------------------
                 # add filter to argument condition
                 argcondition += ' AND ({0})'.format(subcondition)
         # ------------------------------------------------------------------
-        # TODO: maybe we can do this later?
         # lets apply the filters here
         dataframe = indexdb.get_entries('*', condition=argcondition)
         absfilenames = np.array(dataframe['ABSPATH']).astype(str)
@@ -2331,7 +2326,8 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
             # get table list
             tablelist = filedict[argname][name]
             # deal with combining tablelist
-            outfiledict[argname][name] = vstack_cols(params, tablelist)
+            with warnings.catch_warnings(record=True) as _:
+                outfiledict[argname][name] = vstack_cols(params, tablelist)
     # return filedict
     return outfiledict
 
