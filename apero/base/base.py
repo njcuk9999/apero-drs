@@ -27,6 +27,7 @@ import yaml
 # Define variables
 # =============================================================================
 __PACKAGE__ = 'apero'
+__PATH__ = Path(__file__).parent.parent
 __INSTRUMENT__ = 'None'
 __version__ = '0.7.035'
 __author__ = ['N. Cook', 'E. Artigau', 'F. Bouchy', 'M. Hobson', 'C. Moutou',
@@ -57,6 +58,9 @@ SCRIPTS = ['default_config.py', 'default_constants.py', 'default_keywords.py']
 USCRIPTS = ['user_config.ini', 'user_constants.ini', 'user_keywords.ini']
 PSEUDO_CONST_FILE = 'pseudo_const.py'
 PSEUDO_CONST_CLASS = 'PseudoConstants'
+# absolute paths (from relative paths to here)
+RECOMM_USER = __PATH__.parent.joinpath('requirements_current.txt')
+RECOMM_DEV = __PATH__.parent.joinpath('requirements_developer.txt')
 # -----------------------------------------------------------------------------
 # language settings
 # -----------------------------------------------------------------------------
