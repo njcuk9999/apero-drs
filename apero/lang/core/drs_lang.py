@@ -191,7 +191,7 @@ class Text(str):
         # ---------------------------------------------------------------------
         vargs = [reportlevel, self.tkey, self.tvalue]
         # deal with report
-        if report:
+        if report and (self.tkey != self.tvalue):
             valuestr = '{0}[{1}]: {2}'.format(*vargs)
         else:
             valuestr = '{2}'.format(*vargs)
