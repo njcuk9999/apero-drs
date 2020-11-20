@@ -10,6 +10,7 @@ Created on 2019-01-19 at 13:37
 @author: cook
 """
 from collections import OrderedDict
+import importlib
 import numpy as np
 import os
 from signal import signal, SIGINT
@@ -1168,7 +1169,7 @@ def _display_initial_parameterisation(params: ParamDict,
 
 def _display_system_info(params: ParamDict, logonly: bool = True,
                          return_message: bool = False
-                         ) -> Union[str, None]:
+                         ) -> Union[textentry, str, None]:
     """
     Display system information via the WLOG command
 
@@ -1196,7 +1197,11 @@ def _display_system_info(params: ParamDict, logonly: bool = True,
     # add os keys
     messages += '\n' + textentry('40-001-00011', args=[sys.executable])
     messages += '\n' + textentry('40-001-00012', args=[sys.platform])
+
+    messages += textentry(_display_python_modules())
+
     # add arguments (from sys.argv)
+    messages += textentry('40-000-00018')
     for it, arg in enumerate(sys.argv):
         arg_msg = '\t Arg {0} = \'{1}\''.format(it + 1, arg)
         messages += '\n' + textentry(arg_msg)
@@ -1271,6 +1276,39 @@ def _display_run_time_arguments(recipe, fkwargs=None, printonly=False,
              printonly=printonly, logonly=logonly)
         WLOG(params, '', textentry(params['DRS_HEADER']), printonly=printonly,
              logonly=logonly)
+
+
+def _display_python_modules() -> str:
+    """
+    Print the current versions of the python modules (for logging only)
+    (from requirements_current.txt)
+
+    :return: string, a string representation of the python modules
+    """
+
+    # load user requirements
+    packages, versions = np.loadtxt(base.RECOMM_USER, dtype=str,
+                                    delimiter='==', unpack=True)
+    # storage
+    storage = textentry('40-000-00017')
+    # loop around packages and get versions
+    for p_it, package in enumerate(packages):
+        try:
+            mod = importlib.import_module(package)
+            # if we have version for module
+            if hasattr(mod, '__version__'):
+                # get current version
+                version = mod.__version__
+                # get required version
+                rversion = versions[p_it]
+                # add to string storage (for return)
+                pargs = [package, version, rversion]
+                storage += '\n\t{0}: {1}  (req: {2})'.format(*pargs)
+        except Exception as _:
+            continue
+
+    # return string
+    return storage
 
 
 # =============================================================================
@@ -2130,6 +2168,7 @@ def _make_dirs(params: ParamDict, path: str):
         # reset lock
         lock.reset()
         raise e
+
 
 # =============================================================================
 # End of code
