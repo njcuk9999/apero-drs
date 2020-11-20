@@ -392,7 +392,7 @@ def unix_char_code() -> Tuple[float, str, str]:
     np.random.seed(random.randint(1, 2 ** 30))
     # generate a random number (in case time is too similar)
     #  -- happens a lot in multiprocessing
-    rint = np.random.randint(1000, 9999, 1) / 1e7
+    rint = np.random.randint(1000, 9999, 1)[0] / 1e7
     # wait a fraction of time (between 1us and 1ms)
     time.sleep(rint)
     # get the time now from astropy
