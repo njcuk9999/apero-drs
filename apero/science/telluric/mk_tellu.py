@@ -367,14 +367,15 @@ def mk_tellu_write_trans_file(params, recipe, infile, rawfiles, fiber, combine,
     # ----------------------------------------------------------------------
     # add telluric constants used
     if tprops['TEMPLATE_FLAG']:
-        transfile.add_hkey('KW_MKTELL_TEMP_FILE', value=tprops['TEMPLATE_FILE'])
-
-
+        transfile.add_hkey('KW_MKTELL_TEMP_FILE', value=tprops['TEMP_FILE'])
+        transfile.add_hkey('KW_MKTELL_TEMPNUM', value=tprops['TEMP_NUM'])
+        transfile.add_hkey('KW_MKTELL_TEMPHASH', value=tprops['TEMP_HASH'])
+        transfile.add_hkey('KW_MKTELL_TEMPTIME', value=tprops['TEMP_TIME'])
     else:
         transfile.add_hkey('KW_MKTELL_TEMP_FILE', value='None')
-
-
-
+        transfile.add_hkey('KW_MKTELL_TEMPNUM', value=0)
+        transfile.add_hkey('KW_MKTELL_TEMPHASH', value='None')
+        transfile.add_hkey('KW_MKTELL_TEMPTIME', value='None')
     # add blaze parameters
     transfile.add_hkey('KW_MKTELL_BLAZE_PRCT', value=nprops['BLAZE_PERCENTILE'])
     transfile.add_hkey('KW_MKTELL_BLAZE_CUT', value=nprops['BLAZE_CUT_NORM'])

@@ -1573,6 +1573,10 @@ KW_MKTELL_TEMPNUM.set(key='MKTTEMPN', comment='mktellu template used for sed')
 KW_MKTELL_TEMPHASH = KW_MKTELL_TEMPHASH.copy(__NAME__)
 KW_MKTELL_TEMPHASH.set(key='MKTTEMPH', comment='mktellu template unique hash')
 
+# the time the template was generated
+KW_MKTELL_TEMPTIME = KW_MKTELL_TEMPTIME.copy(__NAME__)
+KW_MKTELL_TEMPTIME.set(key='MKTTEMPT', comment='mktellu template create time')
+
 # The blaze percentile used for mktellu calculation
 KW_MKTELL_BLAZE_PRCT = KW_MKTELL_BLAZE_PRCT.copy(__NAME__)
 KW_MKTELL_BLAZE_PRCT.set(key='MKTBPRCT', comment='mktellu blaze percentile')
@@ -1694,6 +1698,10 @@ KW_FTELLU_TEMPNUM.set(key='FTTTEMPN', comment='ftellu template used for sed')
 KW_FTELLU_TEMPHASH = KW_FTELLU_TEMPHASH.copy(__NAME__)
 KW_FTELLU_TEMPHASH.set(key='FTTTEMPH', comment='ftellu template unique hash')
 
+# the hash for the template generation (unique)
+KW_FTELLU_TEMPTIME = KW_FTELLU_TEMPTIME.copy(__NAME__)
+KW_FTELLU_TEMPTIME.set(key='FTTTEMPT', comment='ftellu template create time')
+
 # Telluric principle component amplitudes (for use with 1D list)
 KW_FTELLU_AMP_PC = KW_FTELLU_AMP_PC.copy(__NAME__)
 KW_FTELLU_AMP_PC.set(key='AMPPC{0:03d}',
@@ -1728,6 +1736,10 @@ KW_MKTEMP_NFILES.set(key='MTPNFILE', comment='mktemplate num files used')
 # store a unique hash for this template (based on file name etc)
 KW_MKTEMP_HASH = KW_MKTEMP_HASH.copy(__NAME__)
 KW_MKTEMP_HASH.set(key='MTP_HASH', comment='unique hash id for template')
+
+# store time template was created
+KW_MKTEMP_TIME = KW_MKTEMP_TIME.copy(__NAME__)
+KW_MKTEMP_TIME.set(key='MTP_TIME', comment='time the template was created')
 
 # the snr order used for quality control cut in make template calculation
 KW_MKTEMP_SNR_ORDER = KW_MKTEMP_SNR_ORDER.copy(__NAME__)
