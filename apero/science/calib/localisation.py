@@ -20,6 +20,7 @@ from apero.core import math as mp
 from apero.core.core import drs_log, drs_file
 from apero.core.utils import drs_startup
 from apero.core.core import drs_database
+from apero.io import drs_table
 from apero.science.calib import general
 
 
@@ -727,7 +728,26 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     rmsmax_wid = pcheck(params, 'QC_LOC_RMSMAX_WID', func=func_name)
     # this one comes from pseudo constants
     pconst = constants.pload(params['INSTRUMENT'])
-    fiberparams = pconst.FIBER_SETTINGS(params, fiber)
+    # ------------------------------------------------------------------
+    # Make cent coefficient table
+    # ------------------------------------------------------------------
+    cent_cols = ['ORDER']
+    cent_vals = [np.arange(cent_coeffs.shape[1])]
+    for c_it in range(cent_coeffs.shape[1]):
+        cent_cols.append('COEFFS_{0}'.format(c_it))
+        cent_vals.append(cent_coeffs[:, c_it])
+    cent_table = drs_table.make_table(params, columns=cent_cols,
+                                      values=cent_vals)
+    # ------------------------------------------------------------------
+    # Make width coefficient table
+    # ------------------------------------------------------------------
+    wid_cols = ['ORDER']
+    wid_vals = [np.arange(wid_coeffs.shape[1])]
+    for c_it in range(wid_coeffs.shape[1]):
+        wid_cols.append('COEFFS_{0}'.format(c_it))
+        wid_vals.append(wid_coeffs[:, c_it])
+    wid_table = drs_table.make_table(params, columns=wid_cols,
+                                     values=wid_vals)
     # ------------------------------------------------------------------
     # Write image order_profile to file
     # ------------------------------------------------------------------
@@ -816,7 +836,9 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     # log that we are saving rotated image
     WLOG(params, '', textentry('40-013-00019', args=[loco1file.filename]))
     # write image to file
-    loco1file.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+    loco1file.write_multi(data_list=[cent_table, wid_table],
+                          datatype_list=['table', 'table'],
+                          kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(loco1file)
     # ------------------------------------------------------------------
