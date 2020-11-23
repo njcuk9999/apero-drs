@@ -579,7 +579,7 @@ def mk_template_summary(recipe, params, cprops, qc_params):
 # =============================================================================
 # Write functions
 # =============================================================================
-def template_hash(string_text: str) -> str:
+def gen_template_hash(string_text: str) -> str:
     # need to encode string
     encoded = string_text.encode('utf')
     # we want a hash of 10 characters
@@ -606,7 +606,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # construct table
     bigtable = drs_table.make_table(params, columns=columns, values=values)
     # make a hash so this template is unique
-    template_hash = template_hash(','.join(cprops['BIG_COLS']['Filename']))
+    template_hash = gen_template_hash(','.join(cprops['BIG_COLS']['Filename']))
 
     # ------------------------------------------------------------------
     # write the template file (TELLU_TEMP)
