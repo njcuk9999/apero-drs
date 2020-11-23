@@ -239,7 +239,7 @@ def check_coeffs_nirps(params: ParamDict, recipe, image: np.ndarray,
     for ordernum in range(1, nbo - 1):
         # get the previous step
         diff_before = centers[ordernum] - centers[ordernum - 1]
-        step_prev = diff_before / (indices[ordernum] - ordernum[ordernum - 1])
+        step_prev = diff_before / (indices[ordernum] - indices[ordernum - 1])
         # get the integer steps
         diff_after = centers[ordernum + 1] - centers[ordernum]
         nstep = np.round(diff_after / step_prev).astype(int)
@@ -249,7 +249,7 @@ def check_coeffs_nirps(params: ParamDict, recipe, image: np.ndarray,
     # new shape of the coefficient matrix
     new_cen_coeffs = np.zeros([np.max(indices) + 1, nccoeffs]) + np.nan
     new_wid_coeffs = np.zeros([np.max(indices) + 1, nwcoeffs]) + np.nan
-    new_nbo = new_cen_coeffs.shape
+    new_nbo = new_cen_coeffs.shape[0]
     # fill known orders
     new_cen_coeffs[indices, :] = cent_coeffs
     new_wid_coeffs[indices, :] = wid_coeffs
@@ -269,8 +269,9 @@ def check_coeffs_nirps(params: ParamDict, recipe, image: np.ndarray,
         widthmap[:, ordernum] = wypix
     # -------------------------------------------------------------------------
     # remove bad values (out of bounds)
-    ordermap[ordermap < 0] = np.nan
-    ordermap[ordermap > nbypix] = np.nan
+    with warnings.catch_warnings(record=True) as _:
+        ordermap[ordermap < 0] = np.nan
+        ordermap[ordermap > nbypix] = np.nan
     # -------------------------------------------------------------------------
     # clean-up the order map
     for y_it in range(nbypix):
@@ -289,11 +290,11 @@ def check_coeffs_nirps(params: ParamDict, recipe, image: np.ndarray,
     # re-fit the localisation polynomials
     for ordernum in range(new_nbo):
         # work out the new polynomials for this order (for centers)
-        ocen_coeffs = np.polyfit(xpix, ordermap[:, ordernum], nccoeffs)
+        ocen_coeffs = np.polyfit(xpix, ordermap[:, ordernum], nccoeffs - 1)
         # must flip these backwards
         new_cen_coeffs[ordernum, :] = ocen_coeffs[::-1]
         # work out the new polynomials for this order (for widths)
-        owid_coeffs = np.polyfit(xpix, widthmap[:, ordernum], nwcoeffs)
+        owid_coeffs = np.polyfit(xpix, widthmap[:, ordernum], nwcoeffs - 1)
         # must flip these backwards
         new_wid_coeffs[ordernum, :] = owid_coeffs[::-1]
     # -------------------------------------------------------------------------
@@ -321,15 +322,15 @@ def check_coeffs_nirps(params: ParamDict, recipe, image: np.ndarray,
     nbo = new_cen_coeffs.shape[0]
     # ----------------------------------------------------------------------
     # make arrays for plotting
-    cypix2, cypix1 = np.zeros(nbo, nbxpix), np.zeros(nbo, nbxpix)
-    good_arr = np.ones(nbo, nbxpix).astype(bool)
-    wypix2, wypix1 = np.zeros(nbo, nbxpix), np.zeros(nbo, nbxpix)
+    cypix2, cypix1 = np.zeros([nbo, nbxpix]), np.zeros([nbo, nbxpix])
+    good_arr = np.ones([nbo, nbxpix]).astype(bool)
+    wypix2, wypix1 = np.zeros([nbo, nbxpix]), np.zeros([nbo, nbxpix])
     # loop around orders and fill in values
     for ordernum in range(nbo):
-        cypix2[ordernum] = np.polyval(new_cen_coeffs[ordernum], xpix)
-        cypix1[ordernum] = np.polyval(cent_coeffs[ordernum], xpix)
-        wypix2[ordernum] = np.polyval(new_wid_coeffs[ordernum], xpix)
-        wypix1[ordernum] = np.polyval(wid_coeffs[ordernum], xpix)
+        cypix2[ordernum] = np.polyval(new_cen_coeffs[ordernum][::-1], xpix)
+        cypix1[ordernum] = np.polyval(cent_coeffs[ordernum][::-1], xpix)
+        wypix2[ordernum] = np.polyval(new_wid_coeffs[ordernum][::-1], xpix)
+        wypix1[ordernum] = np.polyval(wid_coeffs[ordernum][::-1], xpix)
     # plot of the coeffs
     recipe.plot('LOC_CHECK_COEFFS', ypix=cypix2, ypix0=cypix1,
                 xpix=xpix, good=good_arr, kind='center', image=image)
