@@ -30,30 +30,12 @@ LANGUAGE = 'ENG'
 CONSTANTS_PATH = 'core.constants'
 # define the place where the installation recipes are
 INSTALL_PATH = 'tools.module.setup.drs_installation'
-# set modules required
-REQ_MODULES = dict()
-REQ_MODULES['astropy'] = [4, 0, 0], 'conda install astropy==4.0'
-REQ_MODULES['matplotlib'] = [3, 1, 2], 'conda install matplotlib==3.1.2'
-REQ_MODULES['numpy'] = [1, 18, 1], 'conda install numpy==1.18.1'
-REQ_MODULES['pandas'] = [0, 25, 3], 'conda install pandas==0.25.3'
-REQ_MODULES['scipy'] = [1, 4, 1], 'conda install scipy==1.4.1'
-REQ_MODULES['yaml'] = [5, 3, 1], 'conda install pyyaml==5.3.1'
+# Requirement files
+REQ_USER = 'requirements_current.txt'
+REQ_DEV = 'requirements_developer.txt'
 
-REC_MODULES = dict()
-REC_MODULES['astroquery'] = [0, 3, 10], 'pip install astroquery==0.3.10'
-REC_MODULES['barycorrpy'] = [0, 3, 1], 'pip install barycorrpy=0.3.1'
-REC_MODULES['bottleneck'] = [1, 3, 1], 'conda install bottleneck==1.3.1'
-REC_MODULES['numba'] = [0, 47, 0], 'conda install numba==0.47.0'
-REC_MODULES['PIL'] = [7, 0, 0], 'conda install Pillow==7.0.0'
-REC_MODULES['tqdm'] = [4, 42, 1], 'conda install tdqm==4.42.1'
-REC_MODULES['yagmail'] = [0, 11, 224], 'pip install yagmail==0.11.224'
-
-DEV_MODULES = dict()
-DEV_MODULES['gitchangelog'] = [3, 0, 4], 'pip install gitchangelog==3.0.4'
-DEV_MODULES['ipdb'] = None, 'conda install ipdb'
-DEV_MODULES['IPython'] = [7, 13, 0], 'conda install ipython==7.13.0'
-DEV_MODULES['sphinx'] = [2, 3, 1], 'conda install sphinx==2.3.1'
-DEV_MODULES['xlrd'] = [1, 2, 0], 'pip install xlrd==1.2.0'
+# modules that don't install like their name
+module_translation = dict(Pillow='PIL')
 
 
 # =============================================================================
@@ -188,69 +170,79 @@ def get_args():
     return args
 
 
+def load_requirements(filename) -> list:
+    """
+    Load requirements from file
+    :return:
+    """
+    # storage for list of modules
+    modules = []
+    # open requirements file
+    with open(filename, 'r') as rfile:
+        lines = rfile.readlines()
+    # get modules from lines in requirements file
+    for line in lines:
+        if len(line) == '':
+            continue
+        if line.startswith('#'):
+            continue
+        else:
+            modules.append(line)
+    # return modules
+    return modules
+
+
 def validate():
     # python version check
     if sys.version_info.major < 3:
         print('\tFatal Error: Python 2 is not supported')
         sys.exit()
+    # ------------------------------------------------------------------
+    # load requirement files
+    # ------------------------------------------------------------------
+    # get files
+    user_req_file = Path(__file__).parent.joinpath(REQ_USER)
+    dev_req_file = Path(__file__).parent.joinpath(REQ_DEV)
+    # get lists of modules
+    user_req = load_requirements(user_req_file)
+    dev_mode = [False] * len(user_req)
+    dev_req = load_requirements(dev_req_file)
+    dev_mode += [True] * len(dev_req)
+    modules = user_req + dev_req
+    # storage of checked modules
+    checked = []
     # log check
     print('Module check:')
     # ------------------------------------------------------------------
     # loop around required modules to check
     # ------------------------------------------------------------------
-    for module in REQ_MODULES:
-        # get required minimum version
-        rversionlist = REQ_MODULES[module][0]
-        suggested = REQ_MODULES[module][1]
+    for m_it, module in enumerate(modules):
+        # get module name
+        modname = module.split('==')[0]
+        modversion = module.split('==')[1].split('.')
+        suggested = 'pip install {0}'.format(module)
+        # deal with checked
+        if modname in checked:
+            continue
+        else:
+            checked.append(modname)
         # ------------------------------------------------------------------
         # test importing module
         try:
-            imod = importlib.import_module(module)
-        except:
-            print('\tFatal Error: {0} requires module {1} to be installed'
-                  '\n\t i.e {2}'.format(DRS_PATH, module, suggested))
-            sys.exit()
+            imod = importlib.import_module(modname)
+            # --------------------------------------------------------------
+            # check the version
+            check_version(module, imod, modversion, suggested,
+                          required=not dev_mode[m_it])
         # --------------------------------------------------------------
-        # check the version
-        check_version(module, imod, rversionlist, suggested, required=True)
-
-    # ------------------------------------------------------------------
-    # loop around recommended modules to check
-    # ------------------------------------------------------------------
-    for module in REC_MODULES:
-        # get required minimum version
-        rversionlist = REC_MODULES[module][0]
-        suggested = REC_MODULES[module][1]
-        # --------------------------------------------------------------
-        # test importing module
-        try:
-            imod = importlib.import_module(module)
-        except:
-            print('\t{0} recommends {1} to be installed'
-                  '\n\t i.e {2}'.format(DRS_PATH, module, suggested))
-            continue
-        # --------------------------------------------------------------
-        # check the version
-        check_version(module, imod, rversionlist, suggested, required=False)
-
-    # ------------------------------------------------------------------
-    # loop around devloper modules to check
-    # ------------------------------------------------------------------
-    for module in DEV_MODULES:
-        # get required minimum version
-        rversionlist = DEV_MODULES[module][0]
-        suggested = DEV_MODULES[module][1]
-        # --------------------------------------------------------------
-        # test importing module
-        try:
-            imod = importlib.import_module(module)
-        except:
-            print('\t{0} recommends {1} to be installed (dev only)'
-                  '\n\t i.e {2}'.format(DRS_PATH, module, suggested))
-            continue
-        # --------------------------------------------------------------
-        # check the version
-        check_version(module, imod, rversionlist, suggested, required=False)
+        except Exception as _:
+            if dev_mode[m_it]:
+                print('\t{0} recommends {1} to be installed (dev only)'
+                      '\n\t i.e {2}'.format(DRS_PATH, module, suggested))
+            else:
+                print('\tFatal Error: {0} requires module {1} to be installed'
+                      '\n\t i.e {2}'.format(DRS_PATH, module, suggested))
+                sys.exit()
 
 
 def check_version(module, imod, rversionlist, suggested, required=True):
