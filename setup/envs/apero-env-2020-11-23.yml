@@ -124,5 +124,3 @@ dependencies:
     - webencodings==0.5.1
     - xlrd==1.2.0
     - yagmail==0.14.245
-prefix: /scratch/bin/miniconda3/envs/apero-env-test
-
