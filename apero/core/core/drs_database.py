@@ -1299,9 +1299,9 @@ class IndexDatabase(DatabaseManager):
                              rtypes[h_it], func_name]
                     wmsg = textentry('10-002-00003', args=wargs)
                     WLOG(self.params, 'warning', wmsg)
-                    hvalues.append('None')
+                    hvalues.append('Null')
             else:
-                hvalues.append('None')
+                hvalues.append('Null')
         # ------------------------------------------------------------------
         # make absolute path
         path = Path(path).joinpath(directory, filename)
