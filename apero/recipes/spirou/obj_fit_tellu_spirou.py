@@ -238,7 +238,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         tout = telluric.load_templates(params, header, objname, fiber,
                                        database=telludbm)
-        template, template_file = tout
+        template, template_props = tout
         # ------------------------------------------------------------------
         # load the expected atmospheric transmission
         # ------------------------------------------------------------------
@@ -305,7 +305,7 @@ def __main__(recipe, params):
         # Save corrected E2DS to file
         # ------------------------------------------------------------------
         fargs = [infile, rawfiles, fiber, combine, nprops, wprops, pca_props,
-                 sprops, cprops, qc_params, template_file, tpreprops]
+                 sprops, cprops, qc_params, template_props, tpreprops]
         corrfile = telluric.fit_tellu_write_corrected(params, recipe, *fargs)
 
         # ------------------------------------------------------------------

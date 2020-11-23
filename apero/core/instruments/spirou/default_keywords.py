@@ -1565,6 +1565,14 @@ KW_TELLUP_WATER_BOUNDS.set(key='TLP_H2OB',
 KW_MKTELL_TEMP_FILE = KW_MKTELL_TEMP_FILE.copy(__NAME__)
 KW_MKTELL_TEMP_FILE.set(key='MKTTEMPF', comment='mktellu template file used')
 
+# the number of template files used
+KW_MKTELL_TEMPNUM = KW_MKTELL_TEMPNUM.copy(__NAME__)
+KW_MKTELL_TEMPNUM.set(key='MKTTEMPN', comment='mktellu template used for sed')
+
+# the hash for the template generation (unique)
+KW_MKTELL_TEMPHASH = KW_MKTELL_TEMPHASH.copy(__NAME__)
+KW_MKTELL_TEMPHASH.set(key='MKTTEMPH', comment='mktellu template unique hash')
+
 # The blaze percentile used for mktellu calculation
 KW_MKTELL_BLAZE_PRCT = KW_MKTELL_BLAZE_PRCT.copy(__NAME__)
 KW_MKTELL_BLAZE_PRCT.set(key='MKTBPRCT', comment='mktellu blaze percentile')
@@ -1678,6 +1686,14 @@ KW_FTELLU_RECON_LIM.set(key='FTTRCLIM',
 KW_FTELLU_TEMPLATE = KW_FTELLU_TEMPLATE.copy(__NAME__)
 KW_FTELLU_TEMPLATE.set(key='FTTTEMPL', comment='ftellu template used for sed')
 
+# the number of template files used
+KW_FTELLU_TEMPNUM = KW_FTELLU_TEMPNUM.copy(__NAME__)
+KW_FTELLU_TEMPNUM.set(key='FTTTEMPN', comment='ftellu template used for sed')
+
+# the hash for the template generation (unique)
+KW_FTELLU_TEMPHASH = KW_FTELLU_TEMPHASH.copy(__NAME__)
+KW_FTELLU_TEMPHASH.set(key='FTTTEMPH', comment='ftellu template unique hash')
+
 # Telluric principle component amplitudes (for use with 1D list)
 KW_FTELLU_AMP_PC = KW_FTELLU_AMP_PC.copy(__NAME__)
 KW_FTELLU_AMP_PC.set(key='AMPPC{0:03d}',
@@ -1705,6 +1721,14 @@ KW_FTELLU_TAU_REST.set(key='TAU_OTHE',
 # -----------------------------------------------------------------------------
 # Define make template variables
 # -----------------------------------------------------------------------------
+# store the number of files used to create template
+KW_MKTEMP_NFILES = KW_MKTEMP_NFILES.copy(__NAME__)
+KW_MKTEMP_NFILES.set(key='MTPNFILE', comment='mktemplate num files used')
+
+# store a unique hash for this template (based on file name etc)
+KW_MKTEMP_HASH = KW_MKTEMP_HASH.copy(__NAME__)
+KW_MKTEMP_HASH.set(key='MTP_HASH', comment='unique hash id for template')
+
 # the snr order used for quality control cut in make template calculation
 KW_MKTEMP_SNR_ORDER = KW_MKTEMP_SNR_ORDER.copy(__NAME__)
 KW_MKTEMP_SNR_ORDER.set(key='MTPSNROD', comment='mktemplate snr order used')

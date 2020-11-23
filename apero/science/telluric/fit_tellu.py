@@ -874,7 +874,7 @@ def fit_tellu_summary(recipe, it, params, qc_params, pca_props, sprops,
 # =============================================================================
 def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
                               nprops, wprops, pca_props, sprops, cprops,
-                              qc_params, tfile, tpreprops, **kwargs):
+                              qc_params, template_props, tpreprops, **kwargs):
     func_name = __NAME__ + '.fit_tellu_write_corrected()'
     # get parameters from params
     abso_prefix_kws = pcheck(params, 'KW_FTELLU_ABSO_PREFIX', 'abso_prefix_kws',
@@ -987,10 +987,17 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
                       value=tpreprops['TELLUP_WATER_BOUNDS'], mapf='list')
     # ----------------------------------------------------------------------
     # add template key (if we have template)
-    if tfile is None:
+    if template_props['TEMP_FILE'] is None:
         corrfile.add_hkey('KW_FTELLU_TEMPLATE', value='None')
+        corrfile.add_hkey('KW_FTELLU_TEMPNUM', value=0)
+        corrfile.add_hkey('KW_FTELLU_TEMPHASH', value='None')
     else:
-        corrfile.add_hkey('KW_FTELLU_TEMPLATE', value=os.path.basename(tfile))
+        corrfile.add_hkey('KW_FTELLU_TEMPLATE',
+                          value=os.path.basename(template_props['TEMP_FILE']))
+        corrfile.add_hkey('KW_FTELLU_TEMPNUM',
+                          value=template_props['TEMP_NUM'])
+        corrfile.add_hkey('KW_FTELLU_TEMPHASH',
+                          value=template_props['TEMP_HASH'])
     # ----------------------------------------------------------------------
     # add the amplitudes (and derivatives)
     if add_deriv_pc:

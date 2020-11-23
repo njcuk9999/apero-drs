@@ -243,11 +243,11 @@ def __main__(recipe, params):
         # Get template file (if available)
         # ------------------------------------------------------------------
         tout = telluric.load_templates(params, header, objname, fiber)
-        template, template_file = tout
+        template, template_props = tout
         # ------------------------------------------------------------------
         # Calculate telluric absorption
         # ------------------------------------------------------------------
-        cargs = [recipe, image1, template, template_file, header, mprops,
+        cargs = [recipe, image1, template, template_props, header, mprops,
                  wprops, bprops, tpreprops]
         tellu_props = telluric.calculate_tellu_res_absorption(params, *cargs)
         # ------------------------------------------------------------------
