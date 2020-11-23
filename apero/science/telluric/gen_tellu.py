@@ -1852,8 +1852,11 @@ def load_templates(params: ParamDict,
             temp_props = ParamDict()
             temp_props['TEMP_FILE'] = 'None'
             temp_props['TEMP_NUM'] = 0
+            temp_props['TEMP_HASH'] = 'None'
+            temp_props['TEMP_TIME'] = 'None'
             # set source
-            temp_props.set_sources(['TEMP_FILES', 'TEMP_NUM'], func_name)
+            tkeys = ['TEMP_FILE', 'TEMP_NUM', 'TEMP_HASH', 'TEMP_TIME']
+            temp_props.set_sources(tkeys, func_name)
             # return null entries
             return None, temp_props
     # -------------------------------------------------------------------------
@@ -1877,8 +1880,11 @@ def load_templates(params: ParamDict,
         temp_props = ParamDict()
         temp_props['TEMP_FILE'] = 'None'
         temp_props['TEMP_NUM'] = 0
+        temp_props['TEMP_HASH'] = 'None'
+        temp_props['TEMP_TIME'] = 'None'
         # set source
-        temp_props.set_sources(['TEMP_FILES', 'TEMP_NUM'], func_name)
+        tkeys = ['TEMP_FILE', 'TEMP_NUM', 'TEMP_HASH', 'TEMP_TIME']
+        temp_props.set_sources(tkeys, func_name)
         # return null entries
         return None, temp_props
     # -------------------------------------------------------------------------
@@ -1889,8 +1895,11 @@ def load_templates(params: ParamDict,
     temp_props = ParamDict()
     temp_props['TEMP_FILE'] = temp_filename
     temp_props['TEMP_NUM'] = temp_header[params['KW_MKTEMP_NFILES'][0]]
+    temp_props['TEMP_HASH'] = temp_header[params['KW_MKTEMP_HASH'][0]]
+    temp_props['TEMP_TIME'] = temp_header[params['KW_MKTEMP_TIME'][0]]
     # set source
-    temp_props.set_sources(['TEMP_FILES', 'TEMP_NUM'], func_name)
+    tkeys = ['TEMP_FILE', 'TEMP_NUM', 'TEMP_HASH', 'TEMP_TIME']
+    temp_props.set_sources(tkeys, func_name)
     # only return most recent template
     return temp_image, temp_filename
 

@@ -991,6 +991,7 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
         corrfile.add_hkey('KW_FTELLU_TEMPLATE', value='None')
         corrfile.add_hkey('KW_FTELLU_TEMPNUM', value=0)
         corrfile.add_hkey('KW_FTELLU_TEMPHASH', value='None')
+        corrfile.add_hkey('KW_FTELLU_TEMPTIME', value='None')
     else:
         corrfile.add_hkey('KW_FTELLU_TEMPLATE',
                           value=os.path.basename(template_props['TEMP_FILE']))
@@ -998,6 +999,8 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
                           value=template_props['TEMP_NUM'])
         corrfile.add_hkey('KW_FTELLU_TEMPHASH',
                           value=template_props['TEMP_HASH'])
+        corrfile.add_hkey('KW_FTELLU_TEMPTIME',
+                          value=template_props['TEMP_TIME'])
     # ----------------------------------------------------------------------
     # add the amplitudes (and derivatives)
     if add_deriv_pc:

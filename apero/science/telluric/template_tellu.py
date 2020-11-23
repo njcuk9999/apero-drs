@@ -635,6 +635,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # add constants
     template_file.add_hkey('KW_MKTEMP_NFILES', value=len(bigtable))
     template_file.add_hkey('KW_MKTEMP_HASH', value=template_hash)
+    template_file.add_hkey('KW_MKTEMP_TIME', value=params['DATE_NOW'])
     template_file.add_hkey('KW_MKTEMP_SNR_ORDER', value=cprops['QC_SNR_ORDER'])
     template_file.add_hkey('KW_MKTEMP_SNR_THRES', value=cprops['QC_SNR_THRES'])
     # set data

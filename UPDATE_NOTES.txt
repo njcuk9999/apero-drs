@@ -1,9 +1,8 @@
-# Update Note Summary - Version 0.7.000
+# Update Note Summary - Version 0.7.035
 
 Date: 2020-09-10
 
 ## Updates since Version 0.6.131
-
 
 - database
     - complete code change on how databases are handled. Currently supported
@@ -22,7 +21,6 @@ Date: 2020-09-10
       speed up how we handle jobs on multiple cores) - requires classes be
       pickle-able
 
-
 - object resolution
     - now done in preprocessing (was extraction)
     - googlesheet master list of Gaia ID / RV / Teff - human editable
@@ -30,6 +28,20 @@ Date: 2020-09-10
     - fall back to header (properly)
     - header keys for all parameters DRS will use (+ source) separate from
       input header keys
+
+- tellurics
+    - added header keys to template file:
+        - MTPNFILE: Number of files used to make template
+        - MTP_HASH: Unique hash for input template files
+        - MTP_TIME: Time template was created
+    - added header keys to mk_tellu files:
+        - MKTTEMPN: Number of files used to make template
+        - MKTTEMPH: Unique hash for input template files
+        - MKTTEMPT: Time template was created
+    - added header keys to fit_tellu files:
+        - FTTTEMPN: Number of files used to make template
+        - FTTTEMPH: Unique hash for input template files
+        - MKTTEMPT: Time template was created
 
 - general
     - all functions should be pickle-able and python typed and have doc strings

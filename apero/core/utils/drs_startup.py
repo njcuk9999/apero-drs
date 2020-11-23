@@ -575,9 +575,13 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
             # loop around required index database header keys
             for rkey in rkeys:
                 if rkey in output:
-                    hkeys[rkey] = output[rkey]
+                    # deal with null entries
+                    if drs_text.null_text(output[rkey], ['None', '', 'Null']):
+                        hkeys[rkey] = 'Null'
+                    else:
+                        hkeys[rkey] = output[rkey]
                 else:
-                    hkeys[rkey] = 'NULL'
+                    hkeys[rkey] = 'Null'
             # finally add to database
             indexdb.add_entry(directory, filename, kind, runstring, hkeys,
                               fullpath, used, rawfix)
