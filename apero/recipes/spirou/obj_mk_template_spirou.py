@@ -237,7 +237,8 @@ def __main__(recipe, params):
     props1d = None
     # write s1d cubes + median
     for it, s1d_props in enumerate(s1d_cubes):
-        sargs = [infile, s1d_props, infile.s1d[it], fiber, mprops, qc_params]
+        sargs = [infile, s1d_props, infile.s1d[it], fiber, mprops, qc_params,
+                 template_file]
         props1d = telluric.mk_1d_template_write(params, recipe, *sargs)
 
     # ----------------------------------------------------------------------

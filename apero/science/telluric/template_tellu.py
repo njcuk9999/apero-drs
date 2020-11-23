@@ -657,7 +657,8 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # construct the filename from file instance
     bigcubefile.construct_filename(infile=infile, suffix=suffix)
     # copy header from corrected e2ds file
-    bigcubefile.copy_hdict(bigcubefile)
+    bigcubefile.copy_hdict(template_file)
+    bigcubefile.copy_header(template_file)
     # add output tag
     bigcubefile.add_hkey('KW_OUTPUT', value=bigcubefile.name)
     # set data
@@ -678,7 +679,8 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # construct the filename from file instance
     bigcubefile0.construct_filename(infile=infile, suffix=suffix)
     # copy header from corrected e2ds file
-    bigcubefile0.copy_hdict(bigcubefile0)
+    bigcubefile0.copy_hdict(template_file)
+    bigcubefile0.copy_header(template_file)
     # add output tag
     bigcubefile0.add_hkey('KW_OUTPUT', value=bigcubefile0.name)
     # set data
@@ -696,7 +698,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
 
 
 def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
-                         wprops, qc_params):
+                         wprops, qc_params, template_2d_file):
     # get objname
     objname = infile.get_hkey('KW_OBJNAME', dtype=str)
     # construct suffix
@@ -730,6 +732,8 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     template_file.construct_filename(infile=infile, suffix=suffix)
     # copy keys from input file
     template_file.copy_original_keys(infile, exclude_groups='wave')
+    template_file.copy_hdict(template_2d_file)
+    template_file.copy_header(template_2d_file)
     # add wave keys
     template_file = wave.add_wave_keys(params, template_file, wprops)
     # add version
@@ -743,9 +747,6 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     template_file.add_hkey('KW_OUTPUT', value=template_file.name)
     # add qc parameters
     template_file.add_qckeys(qc_params)
-    # add constants
-    template_file.add_hkey('KW_MKTEMP_SNR_ORDER', value=props['QC_SNR_ORDER'])
-    template_file.add_hkey('KW_MKTEMP_SNR_THRES', value=props['QC_SNR_THRES'])
     # set data
     template_file.data = s1dtable
     # log that we are saving s1d table
@@ -765,7 +766,8 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     # construct the filename from file instance
     bigcubefile.construct_filename(infile=infile, suffix=suffix)
     # copy header from corrected e2ds file
-    bigcubefile.copy_hdict(bigcubefile)
+    bigcubefile.copy_hdict(template_file)
+    bigcubefile.copy_header(template_file)
     # add output tag
     bigcubefile.add_hkey('KW_OUTPUT', value=bigcubefile.name)
     # set data
