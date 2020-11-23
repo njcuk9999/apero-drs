@@ -1,5 +1,11 @@
 # conda environments
 
+
+Note in general these are for an exact copy of the tested environment,
+therefore the following steps will only work for a linux-64 bit machine.
+For other operating systems please refer to the requirements.txt
+
+
 # Use
 
 Install miniconda (recommended) or anaconda
