@@ -2866,20 +2866,24 @@ class DrsFitsFile(DrsInputFile):
                 dkey = str(key)
             # get dtype
             dtype = htypes[it]
+            # set found
+            found = False
             # add key if in hdict (priority)
             if dkey in self.hdict:
                 # noinspection PyBroadException
                 try:
                     self.output_dict[key] = dtype(self.hdict[dkey])
+                    found = True
                 except Exception as _:
                     self.output_dict[key] = 'None'
-            elif dkey in self.header:
+            if dkey in self.header and not found:
                 # noinspection PyBroadException
                 try:
                     self.output_dict[key] = dtype(self.header[dkey])
+                    found = True
                 except Exception as _:
                     self.output_dict[key] = 'None'
-            else:
+            if not found:
                 self.output_dict[key] = 'None'
 
     def combine(self, infiles: List['DrsFitsFile'], math: str = 'sum',
