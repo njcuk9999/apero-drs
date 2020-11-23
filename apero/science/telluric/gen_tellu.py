@@ -1827,7 +1827,7 @@ def load_templates(params: ParamDict,
                    objname: Union[str, None] = None,
                    fiber: Union[str, None] = None,
                    database: Union[TelluDatabase, None] = None
-                   ) -> Tuple[Union[np.ndarray, None], Union[str, None]]:
+                   ) -> Tuple[Union[np.ndarray, None], ParamDict]:
     """
     Load the most recent template from the telluric database for 'objname'
 
@@ -1838,6 +1838,8 @@ def load_templates(params: ParamDict,
     :param database:
     :return:
     """
+    # set function name
+    func_name = display_func(params, 'load_templates', __NAME__)
     # get file definition
     out_temp = drs_startup.get_file_definition('TELLU_TEMP',
                                                params['INSTRUMENT'],
@@ -1846,7 +1848,14 @@ def load_templates(params: ParamDict,
     # deal with user not using template
     if 'USE_TEMPLATE' in params['INPUTS']:
         if not params['INPUTS']['USE_TEMPLATE']:
-            return None, None
+            # store template properties
+            temp_props = ParamDict()
+            temp_props['TEMP_FILE'] = 'None'
+            temp_props['TEMP_NUM'] = 0
+            # set source
+            temp_props.set_sources(['TEMP_FILES', 'TEMP_NUM'], func_name)
+            # return null entries
+            return None, temp_props
     # -------------------------------------------------------------------------
     # get key
     temp_key = out_temp.get_dbkey()
@@ -1864,11 +1873,24 @@ def load_templates(params: ParamDict,
     if temp_image is None:
         # log that we found no templates in database
         WLOG(params, '', textentry('40-019-00003'))
-        return None, None
+        # store template properties
+        temp_props = ParamDict()
+        temp_props['TEMP_FILE'] = 'None'
+        temp_props['TEMP_NUM'] = 0
+        # set source
+        temp_props.set_sources(['TEMP_FILES', 'TEMP_NUM'], func_name)
+        # return null entries
+        return None, temp_props
     # -------------------------------------------------------------------------
     # log which template we are using
     wargs = [temp_filename]
     WLOG(params, 'info', textentry('40-019-00005', args=wargs))
+    # store template properties
+    temp_props = ParamDict()
+    temp_props['TEMP_FILE'] = temp_filename
+    temp_props['TEMP_NUM'] = temp_header[params['KW_MKTEMP_NFILES'][0]]
+    # set source
+    temp_props.set_sources(['TEMP_FILES', 'TEMP_NUM'], func_name)
     # only return most recent template
     return temp_image, temp_filename
 

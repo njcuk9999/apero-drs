@@ -8,6 +8,7 @@ Created on 2020-07-2020-07-15 17:58
 @author: cook
 """
 from astropy.table import Table
+from hashlib import blake2b
 import numpy as np
 import os
 from collections import OrderedDict
@@ -578,6 +579,17 @@ def mk_template_summary(recipe, params, cprops, qc_params):
 # =============================================================================
 # Write functions
 # =============================================================================
+def template_hash(string_text: str) -> str:
+    # need to encode string
+    encoded = string_text.encode('utf')
+    # we want a hash of 10 characters
+    digest = blake2b(encoded, digest_size=10)
+    # create hash
+    hash = digest.hexdigest()
+    # return hash
+    return str(hash)
+
+
 def mk_template_write(params, recipe, infile, cprops, filetype,
                       fiber, wprops, qc_params):
     # get objname
@@ -593,6 +605,8 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     values = list(cprops['BIG_COLS'].values())
     # construct table
     bigtable = drs_table.make_table(params, columns=columns, values=values)
+    # make a hash so this template is unique
+    template_hash = template_hash(','.join(cprops['BIG_COLS']['Filename']))
 
     # ------------------------------------------------------------------
     # write the template file (TELLU_TEMP)
@@ -619,6 +633,8 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # add qc parameters
     template_file.add_qckeys(qc_params)
     # add constants
+    template_file.add_hkey('KW_MKTEMP_NFILES', value=len(bigtable))
+    template_file.add_hkey('KW_MKTEMP_HASH', value=template_hash)
     template_file.add_hkey('KW_MKTEMP_SNR_ORDER', value=cprops['QC_SNR_ORDER'])
     template_file.add_hkey('KW_MKTEMP_SNR_THRES', value=cprops['QC_SNR_THRES'])
     # set data

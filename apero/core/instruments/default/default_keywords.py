@@ -124,7 +124,8 @@ __all__ = [  # input keys
     'KW_TELLUP_TRANS_SIGL', 'KW_TELLUP_FORCE_AIRMASS',
     'KW_TELLUP_OTHER_BOUNDS', 'KW_TELLUP_WATER_BOUNDS',
     # mktellu values
-    'KW_MKTELL_TEMP_FILE', 'KW_MKTELL_BLAZE_PRCT', 'KW_MKTELL_BLAZE_CUT',
+    'KW_MKTELL_TEMP_FILE', 'KW_MKTELL_TEMPNUM', 'KW_MKTELL_TEMPHASH',
+    'KW_MKTELL_BLAZE_PRCT', 'KW_MKTELL_BLAZE_CUT',
     'KW_MKTELL_DEF_CONV_WID',  'KW_MKTELL_TEMP_MEDFILT', 'KW_MKTELL_AIRMASS',
     'KW_MKTELL_WATER', 'KW_MKTELL_THRES_TFIT', 'KW_MKTELL_TRANS_FIT_UPPER_BAD',
     # fittellu values
@@ -135,9 +136,11 @@ __all__ = [  # input keys
     'KW_FTELLU_IM_PX_SIZE', 'KW_FTELLU_FIT_ITERS', 'KW_FTELLU_RECON_LIM',
     'KW_FTELLU_AMP_PC', 'KW_FTELLU_DVTELL1', 'KW_FTELLU_DVTELL2',
     'KW_FTELLU_TAU_H2O', 'KW_FTELLU_TAU_REST', 'KW_FTELLU_ABSO_PREFIX',
-    'KW_FTELLU_TEMPLATE', 'KW_FTELLU_NTRANS',
+    'KW_FTELLU_TEMPLATE', 'KW_FTELLU_TEMPNUM', 'KW_FTELLU_TEMPHASH',
+    'KW_FTELLU_NTRANS',
     # make template values
-    'KW_MKTEMP_SNR_ORDER', 'KW_MKTEMP_SNR_THRES',
+    'KW_MKTEMP_NFILES', 'KW_MKTEMP_HASH', 'KW_MKTEMP_SNR_ORDER',
+    'KW_MKTEMP_SNR_THRES',
     # ccf values
     'KW_CCF_MEAN_RV', 'KW_CCF_MEAN_CONSTRAST', 'KW_CCF_MEAN_FWHM',
     'KW_CCF_TOT_LINES', 'KW_CCF_MASK',
@@ -1212,6 +1215,14 @@ KW_TELLUP_WATER_BOUNDS = Keyword('KW_TELLUP_WATER_BOUNDS', key='',
 KW_MKTELL_TEMP_FILE = Keyword('KW_MKTELL_TEMP_FILE', key='', dtype=str,
                               source=__NAME__)
 
+# the number of template files used
+KW_MKTELL_TEMPNUM = Keyword('KW_MKTELL_TEMPNUM', key='', dtype=str,
+                              source=__NAME__)
+
+# the hash for the template generation (unique)
+KW_MKTELL_TEMPHASH = Keyword('KW_MKTELL_TEMPHASH', key='', dtype=str,
+                             source=__NAME__)
+
 # The blaze percentile used for mktellu calculation
 KW_MKTELL_BLAZE_PRCT = Keyword('KW_MKTELL_BLAZE_PRCT', key='', dtype=float,
                                source=__NAME__)
@@ -1306,6 +1317,14 @@ KW_FTELLU_RECON_LIM = Keyword('KW_FTELLU_RECON_LIM', key='', dtype=float,
 KW_FTELLU_TEMPLATE = Keyword('KW_FTELLU_TEMPLATE', key='', dtype=str,
                              source=__NAME__)
 
+# the number of template files used
+KW_FTELLU_TEMPNUM = Keyword('KW_FTELLU_TEMPNUM', key='', dtype=int,
+                            source=__NAME__)
+
+# the hash for the template generation (unique)
+KW_FTELLU_TEMPHASH = Keyword('KW_FTELLU_TEMPHASH', key='', dtype=str,
+                             source=__NAME__)
+
 # Telluric principle component amplitudes (for use with 1D list)
 KW_FTELLU_AMP_PC = Keyword('KW_FTELLU_AMP_PC', key='', dtype=float,
                            source=__NAME__)
@@ -1329,6 +1348,14 @@ KW_FTELLU_TAU_REST = Keyword('KW_FTELLU_TAU_REST', key='', dtype=float,
 # -----------------------------------------------------------------------------
 # Define make template variables
 # -----------------------------------------------------------------------------
+# store the number of files used to create template
+KW_MKTEMP_NFILES = Keyword('KW_MKTEMP_NFILES', key='', dtype=int,
+                           source=__NAME__)
+
+# store a unique hash for this template (based on file name etc)
+KW_MKTEMP_HASH = Keyword('KW_MKTEMP_HASH', key='', dtype=str,
+                         source=__NAME__)
+
 # the snr order used for quality control cut in make template calculation
 KW_MKTEMP_SNR_ORDER = Keyword('KW_MKTEMP_SNR_ORDER', key='', dtype=int,
                               source=__NAME__)
