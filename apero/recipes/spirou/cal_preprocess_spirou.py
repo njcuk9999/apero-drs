@@ -16,6 +16,7 @@ from apero import lang
 from apero.core import constants
 from apero.core.core import drs_file
 from apero.core.core import drs_log
+from apero.core.core import drs_database
 from apero.core.utils import drs_startup
 from apero.science import preprocessing as prep
 from apero.io import drs_image
@@ -38,6 +39,8 @@ WLOG = drs_log.wlog
 textentry = lang.textentry
 # Raw prefix
 RAW_PREFIX = file_definitions.raw_prefix
+# get the object database
+ObjectDatabase = drs_database.ObjectDatabase
 
 
 # =============================================================================
@@ -101,6 +104,8 @@ def __main__(recipe, params):
     num_files = len(params['INPUTS']['FILES'][1])
     # storage for output files
     output_names = []
+    # get object database
+    objdbm = ObjectDatabase(params)
 
     # loop around number of files
     for it in range(num_files):
@@ -127,7 +132,8 @@ def __main__(recipe, params):
         # For OBJECT files we need to resolve object and update header
         # ------------------------------------------------------------------
         infile.header = prep.resolve_target(params, pconst,
-                                            header=infile.header)
+                                            header=infile.header,
+                                            database=objdbm)
         # ------------------------------------------------------------------
         # if it wasn't found skip this file, if it was print a message
         if cond:
