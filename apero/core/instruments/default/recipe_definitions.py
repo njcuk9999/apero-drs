@@ -224,6 +224,10 @@ processing.set_kwarg(name='--test', dtype=str, default='None',
                      helpstr=textentry('PROCESS_TEST_HELP'))
 processing.set_kwarg(name='--trigger', dtype='bool', default=False,
                      helpstr=textentry('PROCESS_TRIGGER_HELP'))
+processing.set_kwarg(name='--science_targets', dtype=str, default='None',
+                     helpstr=textentry('PROCESS_SCI_TARGETS'))
+processing.set_kwarg(name='--telluric_targets', dtype=str, default='None',
+                     helpstr=textentry('PROCESS_TELLU_TARGETS'))
 
 # -----------------------------------------------------------------------------
 # apero_requirements-check.py
