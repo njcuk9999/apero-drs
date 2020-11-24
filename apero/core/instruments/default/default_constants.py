@@ -33,7 +33,8 @@ __all__ = [
     'OBJ_LIST_RESOLVE_FROM_DATABASE', 'OBJ_LIST_RESOLVE_FROM_GAIAID',
     'OBJ_LIST_RESOLVE_FROM_GLIST', 'OBJ_LIST_RESOLVE_FROM_COORDS',
     'OBJ_LIST_GAIA_EPOCH', 'OBJ_LIST_GAIA_PLX_LIM', 'OBJ_LIST_GAIA_MAG_CUT',
-    'OBJ_LIST_CROSS_MATCH_RADIUS',
+    'OBJ_LIST_CROSS_MATCH_RADIUS', 'ODOCODE_REJECT_GSHEET_ID',
+    'ODOCODE_REJECT_GSHEET_NUM',
     # qc constants
     'QC_DARK_TIME', 'QC_MAX_DEAD', 'DARK_QMIN', 'DARK_QMAX',
     'QC_MAX_DARK', 'QC_LOC_MAXFIT_REMOVED_CTR',
@@ -482,6 +483,14 @@ OBJ_LIST_GAIA_MAG_CUT = Const('OBJ_LIST_GAIA_MAG_CUT', value=None, dtype=float,
                               source=__NAME__, minimum=10.0, maximum=25.0,
                               group=cgroup)
 
+# Define the odometer code rejection google sheet id
+ODOCODE_REJECT_GSHEET_ID = Const('ODOCODE_REJECT_GSHEET_ID', value=None,
+                                 dtype=str, source=__NAME__, group=cgroup)
+
+# Define the odmeter code rejection google sheet workbook
+ODOCODE_REJECT_GSHEET_NUM = Const('ODOCODE_REJECT_GSHEET_NUM', value=int,
+                                  dtype=str, source=__NAME__, minimum=0,
+                                  group=cgroup)
 
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS
