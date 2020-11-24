@@ -491,6 +491,33 @@ def test_format(fmt: str) -> bool:
         return False
 
 
+def cull_leading_trailing(text: str, chars: Union[List[str], str]) -> str:
+    """
+    Remove leading and trailing charaters from text i.e.
+
+    text = '''This is some text'''
+    chars = ["'"]
+
+    returns: This is some text
+
+    :param text: str, the text to clean
+    :param chars: list of strings or string, the characters to remove from
+                  start/end
+    :return: str, the cleaned string
+    """
+    # make sure chars is a list of strings
+    if isinstance(chars, str):
+        chars = [chars]
+    # loop around each character and remove from start and end
+    for char in chars:
+        while text.startswith(char):
+            text = text[1:]
+        while text.endswith(char):
+            text = text[:-1]
+    # return cleaned string
+    return text
+
+
 # =============================================================================
 # Start of code
 # =============================================================================
