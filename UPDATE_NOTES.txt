@@ -20,6 +20,7 @@ Date: 2020-09-10
     - moving to use multiprocess.Pool instead of multiprocess.Process (should
       speed up how we handle jobs on multiple cores) - requires classes be
       pickle-able
+    - add --science_targets and --telluric_targest to argumnets of apero_processing
 
 - object resolution
     - now done in preprocessing (was extraction)
