@@ -39,8 +39,9 @@ from apero.core import constants
 from apero import plotting
 from apero.io import drs_table
 from apero.io import drs_lock
-from apero.tools.module.setup import drs_reset
+from apero.science.preprocessing import gen_pp
 from apero.science import telluric
+from apero.tools.module.setup import drs_reset
 
 
 # =============================================================================
@@ -84,6 +85,8 @@ RUN_KEYS['CORES'] = 1
 RUN_KEYS['STOP_AT_EXCEPTION'] = False
 RUN_KEYS['TEST_RUN'] = False
 RUN_KEYS['TRIGGER_RUN'] = False
+RUN_KEYS['USE_ODO_REJECTLIST'] = True
+RUN_KEYS['RECAL_TEMPALTES'] = False
 RUN_KEYS['ENGINEERING'] = False
 RUN_KEYS['RESET_ALLOWED'] = False
 RUN_KEYS['RESET_TMP'] = False
@@ -475,7 +478,7 @@ def read_runfile(params, runfile, **kwargs):
             params[key] = value
             params.set_source(key, func_name)
     # ----------------------------------------------------------------------
-    # push default values (incase we don't have values in run file
+    # push default values (in case we don't have values in run file
     for key in RUN_KEYS:
         if key not in params:
             # warning that we are using default settings
@@ -560,6 +563,28 @@ def read_runfile(params, runfile, **kwargs):
         if params['NIGHTNAME'] is None and params['TRIGGER_RUN']:
             # cause an error if nightname not set
             WLOG(params, 'error', textentry('09-503-00010'))
+    # ----------------------------------------------------------------------
+    if 'SCIENCE_TARGETS' in params['INPUTS']:
+        # get the value of science_targets
+        _science_targets = params['INPUTS']['SCIENCE_TARGETS']
+        # deal with non null value
+        if not drs_text.null_text(_science_targets, ['', 'None']):
+            # remove leading/trailing speechmarks
+            _science_targets = drs_text.cull_leading_trailing(_science_targets,
+                                                              ['"', "'"])
+            # set science targets
+            params['SCIENCE_TARGETS'] = _science_targets
+    # ----------------------------------------------------------------------
+    if 'TELLURIC_TARGETS' in params['INPUTS']:
+        # get the value of telluric targets
+        _tellu_targets = params['INPUTS']['TELLURIC_TARGETS']
+        # deal with non null value
+        if not drs_text.null_text(_tellu_targets, ['', 'None']):
+            # remove leading/trailing speechmarks
+            _tellu_targets = drs_text.cull_leading_trailing(_tellu_targets,
+                                                            ['"', "'"])
+            # set telluric targets
+            params['TELLURIC_TARGETS'] = _tellu_targets
     # ----------------------------------------------------------------------
     # relock params
     params.lock()
@@ -1589,7 +1614,32 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
                 else:
                     sys.exit()
         # ------------------------------------------------------------------
-        # deal with directory filter (master night and nigtname filter)
+        # Deal with odometer reject list
+        # ------------------------------------------------------------------
+        if not drs_text.null_text(params['USE_ODO_REJECTLIST'], ['', 'None']):
+            # get whether the user wants to use reject list
+            _use_odo_reject = params['USE_ODO_REJECTLIST']
+            # only use reject list if user wants to use it
+            if drs_text.true_text(_use_odo_reject):
+                # get the odometer reject list
+                odo_reject_list = gen_pp.get_reject_list(params)
+                # only continue if we have odocodes to reject
+                if len(odo_reject_list) > 0:
+                    # store sub-condition
+                    subs = []
+                    # add to global conditions
+                    for odocode in odo_reject_list:
+                        # get fkwargs
+                        fkwargs = dict(odocode=odocode)
+                        # build sub-condition
+                        subs += ['LIKE "{odocode}%.fits"'.format(**fkwargs)]
+                    # generate full subcondition
+                    subcondition = ' OR '.join(subs)
+                    # add to global condition (in reverse - we don't want these)
+                    condition += 'NOT ({0})'.format(subcondition)
+
+        # ------------------------------------------------------------------
+        # deal with directory filter (master night and nightname filter)
         # ------------------------------------------------------------------
         # master night
         # ------------------------------------------------------------------
@@ -1633,6 +1683,7 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
                 continue
             else:
                 sys.exit()
+
         # ------------------------------------------------------------------
         # filer out engineering directories
         # ------------------------------------------------------------------
