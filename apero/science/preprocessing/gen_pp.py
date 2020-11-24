@@ -41,6 +41,8 @@ __release__ = base.__release__
 Time = base.Time
 # Get Logging function
 WLOG = drs_log.wlog
+# Get function string
+display_func = drs_log.display_func
 # Get the text types
 textentry = lang.textentry
 # Get database
@@ -76,6 +78,10 @@ GL_RVREF_COL_NAME = 'RV_REF'
 # teff col name in google sheet
 GL_TEFF_COL_NAME = 'TEFF'
 GL_TEFFREF_COL_NAME = 'TEFF_REF'
+# Reject like google columns
+GL_R_ODO_COL = 'ODOMETER'
+GL_R_PP_COL = 'PP'
+GL_R_RV_COL = 'RV'
 
 
 # =============================================================================
@@ -1130,6 +1136,44 @@ def format_sql_query(query: str, url: Union[str, None] = None,
     str_query = str_query.replace('OR', '\nOR\n\t')
     # return the newly formatted string
     return str_query
+
+
+def get_reject_list(params: ParamDict,
+                    column: str = GL_R_PP_COL) -> np.ndarray:
+    """
+    Query the googlesheet for rejectiong odometer codes and return
+    an array of odometer codes to reject
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param column: str, the column to use for rejection (must be filled with
+                   "TRUE"/"FALSE")
+
+    :return: list of strings, the list of odometer codes for kind
+    """
+    # set function name
+    func_name = display_func(params, 'get_reject_list', __NAME__)
+    # get sheet id and worksheet number
+    sheet_id = params['ODOCODE_REJECT_GSHEET_ID']
+    workbook_id = params['ODOCODE_REJECT_GSHEET_NUM']
+    # get reject table
+    reject_table = get_google_sheet(sheet_id, workbook_id)
+    # convert masks to boolean
+    if GL_R_PP_COL in reject_table:
+        reject_table[GL_R_PP_COL] = reject_table[GL_R_PP_COL] == 'TRUE'
+    if GL_R_RV_COL in reject_table:
+        reject_table[GL_R_RV_COL] = reject_table[GL_R_RV_COL] == 'TRUE'
+    # deal with bad kind
+    if column not in reject_table:
+        # log error
+        eargs = [column, func_name]
+        WLOG(params, 'error', textentry('00-010-00008', args=eargs))
+        # return empty array if error does not exit
+        return np.array([])
+    else:
+        # get odocodes to be rejected
+        odocodes = np.array(reject_table[GL_R_ODO_COL][reject_table[column]])
+        # return rejection list
+        return odocodes
 
 
 # =============================================================================
