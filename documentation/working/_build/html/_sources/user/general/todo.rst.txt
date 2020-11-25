@@ -6,7 +6,7 @@ TODO
 ************************************************************************************
 
 This is the currently list of items that need to still be completed.
-Last updated: 2020-05-04 (NJC).
+Last updated: 2020-11-25 (NJC).
 
 .. note:: bullet points are not ordered
 
@@ -18,13 +18,34 @@ For all instruments / in general.
 
 High priority:
 
-* fix headers for having bad wave and loc keys (remove?) [NEEDS DISCUSSION]
+* calibration merge (drs processing)  [Neil]
+* polar code update  [Neil/Eder/Chris]
+* CCF weights adjustment (once Pia has results)  [Pia/Neil]
+* tellurics templates - minimum number of files for template creation [Neil]
+
+Medium priority:
+
+* database import/export (append/replace) [Neil]
+* filenmae from checksums [Neil]
+* bisector for CCF (new extension in CCF outputs?) [Etienne/Neil]
+* loc and wave coefficients to tables [Neil]
+* add option to set template for mk_tellu and fit_tellu [Neil]
+* proper SNR calculation [Etienne/???]
+* deal with all python warnings [Neil]
+* post processing (i.e. outputs like CADC/ESO)   [Neil/Chris]
+* DRS tests [Charles + Thomas]
+* test barycorrpy against pyasl and other BERV calculators (precision) [Thomas?]
+* apero_processing.py work with CANFAR [Neil/Chris + CANFAR collab]
 
 Low priority:
 
-* go through all summary plots and decide which plots, write figure captions, improve plots, write quality control description, decide which header keys to print
-* add all functions doc strings
-* write documentation
+* CCF masks from SpT/Teff (after masks are more mature)  [Etienne/Neil]
+* instead of copying assets download them (clean up github)   [Neil]
+* add doc strings/typing to all functions, descriptions to all constants, review all constant min/max/dtypes [Neil]
+* display func for all functions  [Neil]
+* add more debug printouts [Neil]
+* go through all summary plots and decide which plots, write figure captions, improve plots, write quality control description, decide which header keys to print [Charles/Thomas]
+* write documentation [Neil/Etienne/Charles/Thomas]
 
   * code to write constants/keywords
   * write doc strings
@@ -32,37 +53,17 @@ Low priority:
   * assign people to write constant descriptions
   * add authors to constants
 
-* newprofile.py outpaths for setup files are not correct (missing directory)
-* add more debug printouts
-* deal with all python warnings
-* display func for all functions
-* add doc strings to all functions, descriptions to all constants, review all constant min/max/dtypes
-* proper SNR calculation
-* add option to set template for mk_tellu and fit_tellu
-* add flag for parellel / non parellel mode - can disable locking then?
-* named break points
-* add trigger option to drs where processing script stops when it cannot get any further with current set of files
-* data separate download from DRS
-
-    * this includes copying this data to the user data directory for adding
-      things like custom masks etc - this could also be a solution to
-      where to put the `object_query_list.fits` file
-
 Later:
 
-* CCF wrapper for weighting?
-* persistence correction
-* add EA mask generation from templates
-* add EA template matching
-* uncertainty propagation
-
-* add `plot== 3` (all debug plots shown) and `plot==4` (all debug plots saved) modes
-* move `object_query_list.fits` to `calibDB`
-* co-production of e2ds and e2dsff still needed?
-* write  paper
-* setup instrument tool
-* Windows compatibility
-* add `cal_drift` recipe?
+* persistence correction [Olivia/Etienne/Neil]
+* add EA mask generation from templates [???]
+* add EA template matching [???]
+* uncertainty propagation [???]
+* add `plot== 3` (all debug plots shown) and `plot==4` (all debug plots saved) modes [Neil]
+* co-production of e2ds and e2dsff still needed? [???]
+* write  paper [Neil/Etienne]
+* setup instrument tool [Neil/Thomas/Charles]
+* Windows compatibility [Neil]
 
 
 =========================================
@@ -70,30 +71,25 @@ SPIRou specific
 =========================================
 High priority:
 
-* bisector for CCF (new extension in CCF outputs?)
-* object database (in preprocessing?)
-* polar code update
-* EA masks from templates
+* EA masks from templates [???]
 
 Low priority:
 
-* output files like CFHT (e.fits, p.fits, v.fits etc)
-* finish `obj_spec_spirou` and `obj_pol_spirou` [Do not use them now]
+* finish `obj_spec_spirou` and `obj_pol_spirou` (Do not use them now) [Neil]
 
 =========================================
 NIRPS specific
 =========================================
 High priority:
 
-* convert/adapt cal_preprocessing
-* convert/adapt cal_wave / cal_wave_master
+* convert/adapt cal_wave / cal_wave_master [Etienne/Neil]
 
 Low priority:
 
-* convert obj_mk_tellu
-* convert obj_fit_tellu
-* convert obj_mk_template
-* convert cal_ccf
+* convert obj_mk_tellu (should just be a direct convert) [Etienne/Neil]
+* convert obj_fit_tellu (should just be a direct convert) [Etienne/Neil]
+* convert obj_mk_template (should just be a direct convert) [Etienne/Neil]
+* convert cal_ccf (should just be a direct convert) [Etienne/Neil]
 
 Later:
 
