@@ -1649,11 +1649,11 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
                 # get fkwargs
                 fkwargs = dict(odocode=odocode)
                 # build sub-condition
-                subs += ['LIKE "{odocode}%.fits"'.format(**fkwargs)]
+                subs += ['FILENAME LIKE "{odocode}%.fits"'.format(**fkwargs)]
             # generate full subcondition
             subcondition = ' OR '.join(subs)
             # add to global condition (in reverse - we don't want these)
-            condition += 'NOT ({0})'.format(subcondition)
+            condition += ' AND NOT ({0})'.format(subcondition)
 
         # ------------------------------------------------------------------
         # Deal with recalculation of templates
@@ -1667,11 +1667,11 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
                 # add to global conditions
                 for objname in template_object_list:
                     # build sub-condition
-                    subs += ['OBJECT="{0}"'.format(objname)]
+                    subs += ['KW_OBJNAME="{0}"'.format(objname)]
                 # generate full subcondition
                 subcondition = ' OR '.join(subs)
                 # add to global condition (in reverse - we don't want these)
-                condition += 'NOT ({0})'.format(subcondition)
+                condition += ' AND NOT ({0})'.format(subcondition)
 
         # ------------------------------------------------------------------
         # deal with directory filter (master night and nightname filter)
@@ -2307,9 +2307,8 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
                     # check if value is string
                     if isinstance(testvalue, str):
                         testvalue = testvalue.strip().upper()
-
                     # construct sub condition based on this filter
-                    sargs = [tfilter, testvalue, tfilter]
+                    sargs = [tfilter, testvalue]
                     sub_cond += ['({0}="{1}")'.format(*sargs)]
                 # create  full sub condition (with OR)
                 subcondition = ' OR '.join(sub_cond)
@@ -3097,7 +3096,7 @@ def _remove_engineering(params, indexdb, condition):
         # if we find objects then keep all files from this night
         if np.sum(nightobjmask) == 0:
             # add to keep mask
-            reject_nights += ' AND DIRECTORY != "{0}"'.format(night)
+            reject_nights += ' AND DIRNAME != "{0}"'.format(night)
             # add to global variable
             if night not in REMOVE_ENG_NIGHTS:
                 # log message
