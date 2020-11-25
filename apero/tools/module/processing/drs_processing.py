@@ -86,7 +86,7 @@ RUN_KEYS['STOP_AT_EXCEPTION'] = False
 RUN_KEYS['TEST_RUN'] = False
 RUN_KEYS['TRIGGER_RUN'] = False
 RUN_KEYS['USE_ODO_REJECTLIST'] = True
-RUN_KEYS['RECAL_TEMPALTES'] = False
+RUN_KEYS['RECAL_TEMPLATES'] = False
 RUN_KEYS['ENGINEERING'] = False
 RUN_KEYS['RESET_ALLOWED'] = False
 RUN_KEYS['RESET_TMP'] = False
@@ -1484,10 +1484,34 @@ def _check_for_sequences(rvalues, mod):
 
 def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
     func_name = __NAME__ + '.generate_run_from_sequence()'
+    # -------------------------------------------------------------------------
+    # get telluric stars and non-telluric stars
+    # -------------------------------------------------------------------------
     # get all telluric stars
     tstars = telluric.get_whitelist(params)
     # get all other stars
     ostars = _get_non_telluric_stars(params, indexdb, tstars)
+    # -------------------------------------------------------------------------
+    # get odometer reject list (if required)
+    # -------------------------------------------------------------------------
+    # get whether the user wants to use reject list
+    _use_odo_reject = params['USE_ODO_REJECTLIST']
+    # get the odometer reject list
+    odo_reject_list = []
+    if not drs_text.null_text(_use_odo_reject, ['', 'None']):
+        if drs_text.true_text(_use_odo_reject):
+            odo_reject_list = gen_pp.get_reject_list(params)
+    # -------------------------------------------------------------------------
+    # get template list (if required)
+    # -------------------------------------------------------------------------
+    # get whether to recalculate templates
+    _recal_templates = params['RECAL_TEMPLATES']
+    # get a list of object names with templates
+    template_object_list = []
+    if not drs_text.null_text(_recal_templates, ['', 'None']):
+        if not drs_text.true_text(_recal_templates):
+            template_object_list = telluric.list_current_templates(params)
+    # -------------------------------------------------------------------------
     # get filemod and recipe mod
     pconst = constants.pload(params['INSTRUMENT'])
     filemod = pconst.FILEMOD()
@@ -1527,7 +1551,6 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
         # skip if table is empty
         if idb_len == 0:
             continue
-
         # set up an sql condition that will get more complex as we go down
         condition = 'KIND="raw"'
         # ------------------------------------------------------------------
@@ -1616,27 +1639,38 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
         # ------------------------------------------------------------------
         # Deal with odometer reject list
         # ------------------------------------------------------------------
-        if not drs_text.null_text(params['USE_ODO_REJECTLIST'], ['', 'None']):
-            # get whether the user wants to use reject list
-            _use_odo_reject = params['USE_ODO_REJECTLIST']
-            # only use reject list if user wants to use it
-            if drs_text.true_text(_use_odo_reject):
-                # get the odometer reject list
-                odo_reject_list = gen_pp.get_reject_list(params)
-                # only continue if we have odocodes to reject
-                if len(odo_reject_list) > 0:
-                    # store sub-condition
-                    subs = []
-                    # add to global conditions
-                    for odocode in odo_reject_list:
-                        # get fkwargs
-                        fkwargs = dict(odocode=odocode)
-                        # build sub-condition
-                        subs += ['LIKE "{odocode}%.fits"'.format(**fkwargs)]
-                    # generate full subcondition
-                    subcondition = ' OR '.join(subs)
-                    # add to global condition (in reverse - we don't want these)
-                    condition += 'NOT ({0})'.format(subcondition)
+        # only continue if we have odocodes to reject
+        if len(odo_reject_list) > 0:
+            # store sub-conditions
+            subs = []
+            # add to global conditions
+            for odocode in odo_reject_list:
+                # get fkwargs
+                fkwargs = dict(odocode=odocode)
+                # build sub-condition
+                subs += ['LIKE "{odocode}%.fits"'.format(**fkwargs)]
+            # generate full subcondition
+            subcondition = ' OR '.join(subs)
+            # add to global condition (in reverse - we don't want these)
+            condition += 'NOT ({0})'.format(subcondition)
+
+        # ------------------------------------------------------------------
+        # Deal with recalculation of templates
+        # ------------------------------------------------------------------
+        # only do this for recipes with flag "template_required"
+        if srecipe.template_required:
+            # only continue if we have objects with templates
+            if len(template_object_list) > 0:
+                # store sub-conditions
+                subs = []
+                # add to global conditions
+                for objname in template_object_list:
+                    # build sub-condition
+                    subs += ['OBJECT="{0}"'.format(objname)]
+                # generate full subcondition
+                subcondition = ' OR '.join(subs)
+                # add to global condition (in reverse - we don't want these)
+                condition += 'NOT ({0})'.format(subcondition)
 
         # ------------------------------------------------------------------
         # deal with directory filter (master night and nightname filter)

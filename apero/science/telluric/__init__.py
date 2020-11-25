@@ -49,6 +49,8 @@ get_tellu_objs = gen_tellu.get_tellu_objs
 
 get_whitelist = gen_tellu.get_whitelist
 
+list_current_templates = template_tellu.list_current_templates
+
 load_conv_tapas = gen_tellu.load_conv_tapas
 
 load_templates = gen_tellu.load_templates
