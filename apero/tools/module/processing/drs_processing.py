@@ -1517,7 +1517,8 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
     filemod = pconst.FILEMOD()
     recipemod = pconst.RECIPEMOD()
     # generate sequence
-    sequence[1].process_adds(params, tstars=list(tstars), ostars=list(ostars))
+    sequence[1].process_adds(params, tstars=list(tstars), ostars=list(ostars),
+                             template_stars=template_object_list)
     # get the sequence recipe list
     srecipelist = sequence[1].sequence
     # storage for new runs to add

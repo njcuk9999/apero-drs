@@ -948,7 +948,8 @@ class DrsRecipe(object):
     # =========================================================================
     def add_extra(self, arguments: Union[dict, None] = None,
                   tstars: Union[List[str], None] = None,
-                  ostars: Union[List[str], None] = None):
+                  ostars: Union[List[str], None] = None,
+                  template_stars: Union[List[str], None] = None):
         """
         Add extra arguments to this DrsRecipe instance
         i.e. from arguments (a dictionary of arguments where each key is the
@@ -1016,6 +1017,20 @@ class DrsRecipe(object):
                         # test for null text
                         if drs_text.null_text(value, ['None', 'All', '']):
                             value = ostars
+
+            # need to filter list with template objects (if required)
+            if self.template_required:
+                # only if argname is in special list keys
+                if arguments[argname] in SPECIAL_LIST_KEYS:
+                    # need a new list of objects
+                    objnames = list(value)
+                    # reset value list
+                    value = []
+                    # loop around objnames
+                    for objname in objnames:
+                        # we want to reject those in template stars
+                        if value not in template_stars:
+                            value.append(objname)
             # check for argument in args
             if argname in self.args:
                 self.extras[argname] = value
@@ -1535,7 +1550,8 @@ class DrsRunSequence:
 
     def process_adds(self, params: ParamDict,
                      tstars: Union[List[str], None] = None,
-                     ostars: Union[List[str], None] = None):
+                     ostars: Union[List[str], None] = None,
+                     template_stars: Union[List[str], None] = None):
         """
         Process the DrsRunSequence.adds list (that have been added/defined
         previous) - this actually creates copies of the recipes and modifies
@@ -1546,6 +1562,8 @@ class DrsRunSequence:
                        names)
         :param ostars: list of strings, the list of non-telluric stars (OBJECT
                        names)
+        :param template_stars: list of strings, the list of stars that
+                               currently have a template
 
         :return: None - updates DrsRunSequence.sequence
         """
@@ -1585,7 +1603,8 @@ class DrsRunSequence:
             frecipe = self.add_filters(frecipe, infilters=add['filters'])
             # update file definitions
             frecipe = self.update_args(frecipe, arguments=add['arguments'],
-                                       rargs=add['args'], rkwargs=add['kwargs'])
+                                       rargs=add['args'], rkwargs=add['kwargs'],
+                                       template_stars=template_stars)
             # update master
             if add['master'] is not None:
                 frecipe.master = add['master']
@@ -1650,8 +1669,8 @@ class DrsRunSequence:
     def update_args(self, frecipe: DrsRecipe,
                     arguments: Union[Dict[str, Any], None] = None,
                     rargs: Union[Dict[str, List[DrsInputFile]], None] = None,
-                    rkwargs: Union[Dict[str, List[DrsInputFile]], None] = None
-                    ) -> DrsRecipe:
+                    rkwargs: Union[Dict[str, List[DrsInputFile]], None] = None,
+                    template_stars: Union[List[str], None] = None) -> DrsRecipe:
         """
         Update the recipes arguments (usually based on 'arguments' from
         DrsRunSequence.adds) - these are copied from the reference copy of
@@ -1665,6 +1684,8 @@ class DrsRunSequence:
                       are the values to assign to each argument
         :param rkwargs: dictionary, keys are optional argument names, values
                         are the values to assign to each argument
+        :param template_stars: list of strings, the list of stars that
+                               currently have a template
 
         :return: DrsRecipe, the updated drs recipe
         """
@@ -1673,7 +1694,8 @@ class DrsRunSequence:
         # deal with arguments overwrite
         if arguments is not None:
             frecipe.add_extra(arguments, tstars=self.tstars,
-                              ostars=self.ostars)
+                              ostars=self.ostars,
+                              template_stars=template_stars)
         # ------------------------------------------------------------------
         # update args - loop around positional arguments
         if rargs is not None:
