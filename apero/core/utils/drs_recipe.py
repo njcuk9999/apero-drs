@@ -125,6 +125,9 @@ class DrsRecipe(object):
         self.filters = dict()
         self.master = False
         self.allowedfibers = None
+        # switch for RECAL_TEMPLATES
+        #    (should be False unless added in sequences)
+        self.template_required = False
         # shortname set to name initially
         self.shortname = str(self.name)
         # recipe kind (for logging)
@@ -875,6 +878,9 @@ class DrsRecipe(object):
         self.filters = dict(recipe.filters)
         self.master = bool(recipe.master)
         self.allowedfibers = copy.deepcopy(recipe.allowedfibers)
+        # switch for RECAL_TEMPLATES
+        #    (should be False unless added in sequences)
+        self.template_required = bool(recipe.template_required)
         # shortname
         self.shortname = str(recipe.shortname)
         # recipe kind (for logging)
@@ -1448,7 +1454,8 @@ class DrsRunSequence:
             filters: Union[Dict[str, Any], None] = None,
             files: Union[List[DrsInputFile], None] = None,
             rargs: Union[Dict[str, List[DrsInputFile]], None] = None,
-            rkwargs: Union[Dict[str, List[DrsInputFile]], None] = None):
+            rkwargs: Union[Dict[str, List[DrsInputFile]], None] = None,
+            template_required: bool = False):
         """
         Add a recipe to the sequence, can overwrite default recipe behaviour
         with the name (shortname), master, fiber keys and add more specialised
@@ -1497,6 +1504,8 @@ class DrsRunSequence:
                         where positional argument is of type 'files', values
                         are a list of DrsInputFiles - the files that this
                         argument is allowed to have
+        :param template_required: bool, if True means this recipe is turned
+                        off if RECAL_TEMPLATES is True (run.ini files)
 
         :return: None - updates DrsRunSequence.adds
         """
@@ -1510,6 +1519,7 @@ class DrsRunSequence:
         add_set['fiber'] = fiber
         add_set['arguments'] = arguments
         add_set['filters'] = filters
+        add_set['template_required'] = template_required
         # deal with adding recipe arguments
         if rargs is None:
             rargs = dict()
@@ -1568,6 +1578,9 @@ class DrsRunSequence:
             # set fiber
             if add['fiber'] is not None:
                 frecipe.allowedfibers = add['fiber']
+            # set template required
+            if drs_text.true_text(add['template_required']):
+                frecipe.template_required = True
             # add filters
             frecipe = self.add_filters(frecipe, infilters=add['filters'])
             # update file definitions
