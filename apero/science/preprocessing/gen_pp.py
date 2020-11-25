@@ -1158,12 +1158,12 @@ def get_reject_list(params: ParamDict,
     # get reject table
     reject_table = get_google_sheet(sheet_id, workbook_id)
     # convert masks to boolean
-    if GL_R_PP_COL in reject_table:
+    if GL_R_PP_COL in reject_table.colnames:
         reject_table[GL_R_PP_COL] = reject_table[GL_R_PP_COL] == 'TRUE'
-    if GL_R_RV_COL in reject_table:
+    if GL_R_RV_COL in reject_table.colnames:
         reject_table[GL_R_RV_COL] = reject_table[GL_R_RV_COL] == 'TRUE'
     # deal with bad kind
-    if column not in reject_table:
+    if column not in reject_table.colnames:
         # log error
         eargs = [column, func_name]
         WLOG(params, 'error', textentry('00-010-00008', args=eargs))
