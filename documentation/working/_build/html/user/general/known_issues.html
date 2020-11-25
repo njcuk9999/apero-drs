@@ -6,7 +6,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>Known Issues &#8212; APERO 0.6.131 documentation</title>
+    <title>Known Issues &#8212; APERO 0.7.035 documentation</title>
     <link rel="stylesheet" href="../../_static/bizstyle.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../_static/apero.css" />
@@ -100,7 +100,7 @@
         <li class="right" >
           <a href="using_apero_default.html" title="Using APERO"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.6.131 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.035 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../general_guide.html" accesskey="U">General User documentation</a> &#187;</li> 
       </ul>
     </div>
@@ -152,17 +152,27 @@
 Last updated: 2020-07-24 (NJC).</p>
 <div class="section" id="recipes">
 <h2>Recipes<a class="headerlink" href="#recipes" title="Permalink to this headline">¶</a></h2>
+<p>Recent:</p>
 <ul class="simple">
-<li><p>Locking of files means using &gt;5 cores slows down a lot (fix with database)</p></li>
+<li><p>FTELLU3 not working (2020-11-25) with RECAL_TEMPLATES</p></li>
+<li><p>tempaltes are not being created for all stars (SNR problem?)</p></li>
+</ul>
+<p>Long term:</p>
+<ul class="simple">
 <li><p>Weird residuals left in order_profile after dark_flat (loc)</p></li>
 <li><p>Calibrations switch over at different points from PM to AM calibrations (should really only use “older”)</p></li>
-<li><p>NIRPS breaks in shape</p></li>
+</ul>
+<p>Concerns:</p>
+<ul class="simple">
+<li><p>CFHT trigger not using apero_processing.py –&gt; will soon be incompatable (re: merging calibrations)</p></li>
+<li><p>CFHT trigger not using pid to get output filenames –&gt; checksum (will soon be incompatable)</p></li>
 </ul>
 </div>
 <div class="section" id="external">
 <h2>External<a class="headerlink" href="#external" title="Permalink to this headline">¶</a></h2>
+<p>Long term:</p>
 <ul class="simple">
-<li><p>can’t use barycorrpy –&gt; update astropy (version 4.0) and barycorrpy (version &gt;0.3))</p></li>
+<li><p>can’t use barycorrpy in parallel –&gt; update astropy (version 4.1) and barycorrpy (version &gt;0.3.1))</p></li>
 </ul>
 <p><a class="reference internal" href="#known-issues"><span class="std std-ref">Back to top</span></a></p>
 </div>
@@ -186,7 +196,7 @@ Last updated: 2020-07-24 (NJC).</p>
         <li class="right" >
           <a href="using_apero_default.html" title="Using APERO"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.6.131 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.035 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../general_guide.html" >General User documentation</a> &#187;</li> 
       </ul>
     </div>
