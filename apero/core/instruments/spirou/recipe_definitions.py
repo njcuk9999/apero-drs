@@ -1467,11 +1467,13 @@ tellu_seq.add(obj_mk_template, name='MKTELLU3',
               fiber='AB', files=[files.out_ext_e2dsff],
               arguments=dict(objname='TELLURIC_TARGETS'),
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
+                template_required=True)
 tellu_seq.add(obj_mk_tellu, name='MKTELLU4',
               fiber='AB', files=[files.out_ext_e2dsff],
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
+                template_required=True)
 
 # -----------------------------------------------------------------------------
 # science sequence (for trigger)
@@ -1495,11 +1497,13 @@ science_seq.add(obj_fit_tellu, name='FTELLU1',
 science_seq.add(obj_mk_template, name='FTELLU2', fiber='AB',
                 arguments=dict(objname='SCIENCE_TARGETS'),
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'], ))
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'], ),
+                template_required=True)
 science_seq.add(obj_fit_tellu, name='FTELLU3',
                 files=[files.out_ext_e2dsff], fiber='AB',
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
+                template_required=True)
 
 # ccf
 science_seq.add(cal_ccf, files=[files.out_tellu_obj], fiber='AB',
