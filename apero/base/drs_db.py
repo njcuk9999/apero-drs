@@ -204,7 +204,7 @@ class Database:
             ecode = '00-002-00032'
             emsg = drs_base.BETEXT[ecode]
             eargs = [type(e), str(e), command]
-            exception = DatabaseError(message=emsg.format(eargs), errorobj=e,
+            exception = DatabaseError(message=emsg.format(*eargs), errorobj=e,
                                       path=self.path, func_name=func_name)
             return drs_base.base_error(ecode, emsg, 'error', args=eargs,
                                        exceptionname='DatabaseError',
