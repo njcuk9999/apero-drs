@@ -194,7 +194,7 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     cargs = [object_filenames, infile, mprops, nprops, fiber]
     cprops = telluric.make_template_cubes(params, recipe, *cargs,
-                                          database=calibdbm)
+                                          calibdb=calibdbm)
     # deal with no good files
     if cprops['MEDIAN'] is None:
         return drs_startup.return_locals(params, locals())
