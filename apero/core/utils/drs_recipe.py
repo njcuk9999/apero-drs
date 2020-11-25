@@ -1029,7 +1029,7 @@ class DrsRecipe(object):
                     # loop around objnames
                     for objname in objnames:
                         # we want to reject those in template stars
-                        if value not in template_stars:
+                        if objname not in template_stars:
                             value.append(objname)
             # check for argument in args
             if argname in self.args:
