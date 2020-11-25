@@ -8,16 +8,19 @@ Created on 2020-07-2020-07-15 17:58
 @author: cook
 """
 from astropy.table import Table
+from collections import OrderedDict
 from hashlib import blake2b
 import numpy as np
 import os
-from collections import OrderedDict
+from typing import Union
 
+from apero import lang
 from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
-from apero import lang
-from apero.core.core import drs_log, drs_file
+from apero.core.core import drs_database
+from apero.core.core import drs_log
+from apero.core.core import drs_file
 from apero.io import drs_table
 from apero.science.calib import wave
 from apero.science import extract
@@ -39,6 +42,8 @@ Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 # get param dict
 ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
+# get database
+TelluricDatabase = drs_database.TelluricDatabase
 # Get function string
 display_func = drs_log.display_func
 # Get Logging function
@@ -53,7 +58,7 @@ pcheck = constants.PCheck(wlog=WLOG)
 # General functions
 # =============================================================================
 def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
-                        fiber, database=None, **kwargs):
+                        fiber, calibdb=None, **kwargs):
     # set function mame
     func_name = display_func(params, 'make_template_cubes', __NAME__)
     # get parameters from params/kwargs
@@ -179,7 +184,7 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
         # load wavelength solution for this fiber
         # ------------------------------------------------------------------
         wprops = wave.get_wavesolution(params, recipe, infile=infile,
-                                       fiber=fiber, database=database)
+                                       fiber=fiber, database=calibdb)
         # get wavemap
         wavemap = wprops['WAVEMAP']
         # ------------------------------------------------------------------
@@ -530,6 +535,29 @@ def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
     # ----------------------------------------------------------------------
     # return outputs
     return props
+
+
+def list_current_templates(params: ParamDict,
+                           telludb: Union[TelluricDatabase, None] = None
+                           ) -> np.array:
+    """
+    Get a list of current templates from the telluric database
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param telludb: None or telluric database (to save opening it more times
+                    than needed)
+
+    :return: list of current templates
+    """
+    # deal with no telluric database set up
+    if telludb is None:
+        telludb = TelluricDatabase(params)
+    # load database (if not loaded)
+    telludb.load_db()
+    # get a list of all templates
+    objnames = telludb.get_tellu_entry('OBJECT', key='TELLU_TEMP')
+    # return the unique set of object names
+    return np.unique(objnames)
 
 
 # =============================================================================
