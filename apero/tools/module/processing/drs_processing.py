@@ -844,7 +844,7 @@ def generate_run_list(params, indexdbm: IndexDatabase, runtable,
         # loop around sequences
         for sequence in sequencelist:
             # log progress
-            WLOG(params, '', textentry('40-503-00009', args=[sequence[0]]))
+            WLOG(params, 'info', textentry('40-503-00009', args=[sequence[0]]))
             # generate new runs for sequence
             newruns = _generate_run_from_sequence(params, sequence,
                                                   indexdbm)
@@ -1526,6 +1526,21 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
     # define the master conditions (that affect all recipes)
     master_condition = gen_global_condition(params, indexdb,
                                             odo_reject_list)
+    # ------------------------------------------------------------------
+    # check we have rows left
+    # ------------------------------------------------------------------
+    # get length of database at this point
+    idb_len = indexdb.database.count(condition=master_condition)
+    # deal with empty database (after conditions)
+    if idb_len == 0:
+        eargs = [master_condition, func_name]
+        WLOG(params, 'error', textentry('00-503-00018', args=eargs))
+        # get response for how to continue (skip or exit)
+        response = prompt(params)
+        if not response:
+            sys.exit()
+    # log that we are processing recipes
+    WLOG(params, 'info', textentry('40-503-00037', args=[idb_len]))
     # ------------------------------------------------------------------
     # loop around recipes in new list
     for srecipe in srecipelist:
