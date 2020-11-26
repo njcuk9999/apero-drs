@@ -84,7 +84,7 @@ def main():
         # make the reset files
         drs_lang.make_reset_csvs()
         # make the databases list (but only language database)
-        print('Creating Language Database')
+        print('Updating Language Database')
         databases = dict()
         landdbm = drs_db.LanguageDatabase(check=False)
         databases['lang'] = landdbm
@@ -92,6 +92,17 @@ def main():
         manage_databases.create_lang_database(databases)
         # return None
         return
+
+    # if we are just reloading just reload the language database
+    if '--reload' in args:
+        # make the databases list (but only language database)
+        print('Reloading Language Database')
+        databases = dict()
+        landdbm = drs_db.LanguageDatabase(check=False)
+        databases['lang'] = landdbm
+        # create the database
+        manage_databases.create_lang_database(databases)
+
     else:
         print('No option selected. See --help for options')
 
