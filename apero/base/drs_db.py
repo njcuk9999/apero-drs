@@ -73,6 +73,7 @@ class DatabaseError(DatabaseException):
         self.errorobj = errorobj
         self.path = path
         self.func_name = func_name
+        super(self).__init__(message)
 
     def __getstate__(self) -> dict:
         """
@@ -1164,8 +1165,11 @@ class MySQLDatabase(Database):
         :param verbose: bool, whether to verbosely print out database
                         functionality
         """
+        # set class name
+        self.classname = 'MySQLDatabase'
         # set function name
-        func_name = __NAME__ + 'MySQLDatabase.__init__()'
+        func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
+                                           '__init__()')
         # deal with mysql not being imported
         if mysql is None:
             # log error: Cannot import mysql.connector
@@ -1176,6 +1180,8 @@ class MySQLDatabase(Database):
             drs_base.base_error(ecode, emsg, 'error',
                                 exceptionname='DatabaseError',
                                 exception=exception)
+        # call to super class
+        super().__init__(verbose=verbose)
         # storage for database path
         self.host = host
         self.user = user
@@ -1185,8 +1191,6 @@ class MySQLDatabase(Database):
         self.tname = _proxy_table(tablename)
         # deal with database for sql
         self.add_database()
-        # call to super class
-        super().__init__(verbose=verbose)
         # try to connect the the SQL3 database
         try:
             self._conn_ = mysql.connect(host=self.host, user=self.user,
@@ -1521,6 +1525,7 @@ def _proxy_table(tablename: str) -> str:
         return tablename
     else:
         return tablename + '_DB'
+
 
 # =============================================================================
 # Define base databases

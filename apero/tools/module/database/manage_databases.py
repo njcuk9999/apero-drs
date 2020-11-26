@@ -302,30 +302,6 @@ def make_object_reset(params: ParamDict):
                  index=False)
 
 
-# def create_params_database(pconst, databases) -> Database:
-#     """
-#     Setup for the index database
-#     :param params:
-#     :param pconst:
-#     :return:
-#     """
-#     # get columns and ctypes from pconst
-#     columns, ctypes = pconst.PARAMS_DB_COLUMNS()
-#     # -------------------------------------------------------------------------
-#     # construct directory
-#     params_abspath = databases['params']
-#     # -------------------------------------------------------------------------
-#     # make database
-#     paramsdb = Database(params_abspath)
-#     # -------------------------------------------------------------------------
-#     if 'MAIN' in paramsdb.tables:
-#         paramsdb.delete_table('MAIN')
-#     # add main table
-#     paramsdb.add_table('MAIN', columns, ctypes)
-#     # -------------------------------------------------------------------------
-#     return paramsdb
-
-
 def create_lang_database(databases: Dict[str, Union[DatabaseM, BaseDatabaseM]]
                          ) -> Database:
     """
