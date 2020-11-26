@@ -1004,6 +1004,14 @@ class DrsRecipe(object):
                             value = np.char.strip(value)
                             # deal with object name cleaning
                             value = list(map(pconst.DRS_OBJ_NAME, value))
+                        # need to filter list by tstars and ostars
+                        # (if not in either list means they are not on disk)
+                        all_objs = list(ostars) + list(tstars)
+                        # we want to only keep objects that are in ostars and
+                        # tstars - not any other object names
+                        # note: ostars + tstars should include everything on
+                        # disk
+                        value = filter_values(value, all_objs, mode='keep')
                 # deal with telluric targets being None
                 if arguments[argname] == 'TELLURIC_TARGETS':
                     if isinstance(value, (type(None), str)):
@@ -1017,20 +1025,12 @@ class DrsRecipe(object):
                         # test for null text
                         if drs_text.null_text(value, ['None', 'All', '']):
                             value = ostars
-
             # need to filter list with template objects (if required)
             if self.template_required:
                 # only if argname is in special list keys
                 if arguments[argname] in SPECIAL_LIST_KEYS:
-                    # need a new list of objects
-                    objnames = list(value)
-                    # reset value list
-                    value = []
-                    # loop around objnames
-                    for objname in objnames:
-                        # we want to reject those in template stars
-                        if objname not in template_stars:
-                            value.append(objname)
+                    # we want to reject those in template stars
+                    value = filter_values(value, template_stars, mode='reject')
             # check for argument in args
             if argname in self.args:
                 self.extras[argname] = value
@@ -1775,6 +1775,36 @@ def make_default_recipe(params: ParamDict = None,
     """
     # return a 'blank' instance of the DrsRecipe
     return DrsRecipe(params=params, name=name)
+
+
+
+def filter_values(values: List[str], filter_list: List[str],
+                   mode: str ='keep') -> List[str]:
+    """
+    Filter a list by another list
+
+    :param values: list of strings, the values to filter
+    :param filter_list: list of strings, the filter (valid values)
+    :param mode: str, either 'keep' or 'reject', if 'keep' keeps only those
+                 'values' in filter_list, if 'reject' keeps only those values
+                 not in filter_list
+    :return: list of strings, the valid values
+    """
+    # reset value list
+    valid_values = []
+    # loop around objnames
+    for value in values:
+        # if mode = keep, we keep only those in filter list
+        if mode == 'keep':
+            # we want to reject those in filter_list
+            if value in filter_list:
+                valid_values.append(value)
+        else:
+            # we want to reject those in filter_list
+            if value not in filter_list:
+                valid_values.append(value)
+    # return values
+    return valid_values
 
 
 # =============================================================================
