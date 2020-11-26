@@ -271,10 +271,10 @@ def base_error(codeid: str, message: str, level: str,
                exceptionname: Union[str, None] = None,
                exception: Any = None) -> Any:
     # print error message
-    msg = base_printer(codeid, message, level, args, exceptionname)
+    base_printer(codeid, message, level, args, exceptionname)
     # raise exception
     if exception is not None:
-        raise exception(msg)
+        raise exception
     else:
         os._exit(0)
 
