@@ -26,7 +26,7 @@ High priority:
 Medium priority:
 
 * database import/export (append/replace) [Neil]
-* filenmae from checksums [Neil]
+* filename from checksums [Neil]
 * bisector for CCF (new extension in CCF outputs?) [Etienne/Neil]
 * loc and wave coefficients to tables [Neil]
 * add option to set template for mk_tellu and fit_tellu [Neil]
