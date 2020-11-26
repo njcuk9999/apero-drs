@@ -12,15 +12,18 @@ Date: 2020-09-10
         - file database (instead of index.fits files in each dir)
         - log database (instead of index.fits files in each dir)
         - object database (instead of object_query_list.fits)
-    - still to do
         - language database (instead of the language csv files)
-        - param database (to help load parameters faster?)
 
 - processing
     - moving to use multiprocess.Pool instead of multiprocess.Process (should
       speed up how we handle jobs on multiple cores) - requires classes be
       pickle-able
     - add --science_targets and --telluric_targest to argumnets of apero_processing
+    - added use of odometer code reject list (USE_ODO_REJECTLIST = True) and uses
+      blacklist for odometer codes with column PP
+    - added way to turn off recalculation of templates (RECAL_TEMPLATES = True/False)
+      when False and a template already exists does not run MKTELLU3, MKTELLU3,
+      FTELLU2, or FTELLU3
 
 - object resolution
     - now done in preprocessing (was extraction)
