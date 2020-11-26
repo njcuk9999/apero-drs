@@ -1581,8 +1581,8 @@ class IndexDatabase(DatabaseManager):
         # need to loop around each row
         for row in tqdm(range(len(table))):
             # do not re-fix is rawfix is 1
-            # if table['RAWFIX'].iloc[row] == 1:
-            #    continue
+            if table['RAWFIX'].iloc[row] == 1:
+               continue
             # get new header to push keys into
             header = drs_fits.Header()
             # add keys to header
