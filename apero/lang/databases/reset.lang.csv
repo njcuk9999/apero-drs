@@ -193,7 +193,7 @@
 "{0} = Error type; {1} = error message; {2} = function name","Pandas.to_sql {0}: {1} \n\tFunction = {2}","","Means that pandas.to_sql failed","00-002-00047","ERROR"
 "{0} = command used","Could not read SQL command as pandas table \n\tCommand = {0} \n\t Function = {1}","","Means that we could not read sql command","00-002-00048","ERROR"
 "{0} = database name","Database kind '{0}' is invalid","","Means the database name entered is invalid","00-002-00049","ERROR"
-"","","","","00-002-00050","ERROR"
+"{0} = database name; {1} = error type; {2} = error message","MySQL database = '{0}' could not be created. \n\t Error {1}: {2}","","Means that MySQL database could not be created","00-002-00050","ERROR"
 "","","","","",""
 "","","","","",""
 "","","","","",""
