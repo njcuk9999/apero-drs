@@ -129,6 +129,8 @@ class Database:
         self.path = None
         # have the conn
         self._conn_ = None
+        # have a main table name
+        self.tname = 'MAIN'
 
     def __getstate__(self) -> dict:
         """
@@ -924,6 +926,7 @@ class SQLiteDatabase(Database):
         self.path = path
         self.passwd = None
         self.dbname = None
+        self.tname = 'MAIN'
         # try to connect the the SQL3 database
         try:
             self._conn_ = sqlite3.connect(self.path, timeout=TIMEOUT)
@@ -1149,7 +1152,7 @@ class SQLiteDatabase(Database):
 class MySQLDatabase(Database):
     # A wrapper for an SQLite database.
     def __init__(self, host: str, user: str, passwd: str,
-                 database: str, verbose: bool = False):
+                 database: str, tablename: str, verbose: bool = False):
         """
         Create an object for reading and writing to a SQLite database.
 
@@ -1157,6 +1160,7 @@ class MySQLDatabase(Database):
         :param user: str, the mysql user name (user@host)
         :param passwd: str, the password for user@host mysql connection
         :param database: str, the database to connect to
+        :param tablename: str, the table name
         :param verbose: bool, whether to verbosely print out database
                         functionality
         """
@@ -1172,14 +1176,13 @@ class MySQLDatabase(Database):
             drs_base.base_error(ecode, emsg, 'error',
                                 exceptionname='DatabaseError',
                                 exception=exception)
-        # make sure database has _DB on the end (to avoid conflicts with SQL)
-        database = _proxy_database(database)
         # storage for database path
         self.host = host
         self.user = user
         self.path = '{0}@{1}'.format(self.user, self.host)
         self.passwd = passwd
         self.dbname = database
+        self.tname = _proxy_table(tablename)
         # deal with database for sql
         self.add_database()
         # call to super class
@@ -1259,6 +1262,9 @@ class MySQLDatabase(Database):
 
         :return: None, either adds database or does nothing
         """
+        # set function name
+        func_name = '{0}.{1}.{2}'.format(__NAME__, self.classname,
+                                         'add_database')
         # create a temporary connection to mysql
         tmpconn = mysql.connect(host=self.host, user=self.user,
                                 passwd=self.passwd)
@@ -1277,7 +1283,17 @@ class MySQLDatabase(Database):
             databases.append(_database[0])
         # check for database in databases (and add it if not there)
         if self.dbname not in databases:
-            cursor.execute('CREATE DATABASE {0}'.format(self.dbname))
+            try:
+                cursor.execute('CREATE DATABASE {0}'.format(self.dbname))
+            except Exception as e:
+                ecode = '00-002-00050'
+                emsg = drs_base.BETEXT[ecode]
+                eargs = [self.dbname, type(e), str(e)]
+                exception = DatabaseError(emsg.format(*eargs), path=self.path,
+                                          func_name=func_name)
+                drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                    exceptionname='DatabaseError',
+                                    exception=exception)
         # close the cursor
         cursor.close()
 
@@ -1413,11 +1429,14 @@ def database_wrapper(kind: str, path: Union[Path, str, None],
     if dparams['USE_MYSQL']:
         # get mysql params
         sparams = dparams['MYSQL']
+        # create table name
+        tablename = '{0}_{1}'.format(kind, sparams['PROFILE'])
         # return the MySQLDatabase instance
         return MySQLDatabase(host=sparams['HOST'],
                              user=sparams['USER'],
                              passwd=sparams['PASSWD'],
-                             database=kind,
+                             database=sparams['DATABASE'],
+                             tablename=tablename,
                              verbose=verbose)
     # else default to sqlite3
     else:
@@ -1491,19 +1510,17 @@ def _encode_value(value: str, dtype: Type) -> Union[str, None, float]:
     return value
 
 
-def _proxy_database(database: str) -> str:
+def _proxy_table(tablename: str) -> str:
     """
-    Make sure databases have the suffix _DB (to avoid conflicts with SQL names)
+    Define a tablename that avoid conflicts with SQL KEYWORDS
 
-    :param database: str, input database name
-
-    :return: str,  the output database name (with _DB if not present)
+    :param tablename: table name to change
+    :return:
     """
-    if not database.endswith('_DB'):
-        return database + '_DB'
+    if tablename.endswith('_DB'):
+        return tablename
     else:
-        return database
-
+        return tablename + '_DB'
 
 # =============================================================================
 # Define base databases
@@ -1613,6 +1630,7 @@ class BaseDatabaseManager:
             self.dbtype = 'MYSQL'
             self.dbhost = sdict['HOST']
             self.dbuser = sdict['USER']
+            self.dbname = sdict['DATABASE']
         else:
             self.dbtype = 'SQLITE3'
 
@@ -1673,7 +1691,7 @@ class LanguageDatabase(BaseDatabaseManager):
         if self.instrument == 'None':
             return None
         # deal with having the possibility of more than one column
-        colnames = self.database.colnames(columns, table='MAIN')
+        colnames = self.database.colnames(columns, table=self.database.tname)
         # set up kwargs from database query
         sql = dict()
         # set up sql kwargs
@@ -1684,7 +1702,7 @@ class LanguageDatabase(BaseDatabaseManager):
         # return only 1 row
         sql['max_rows'] = 1
         # do sql query
-        entries = self.database.get(columns, table='MAIN', **sql)
+        entries = self.database.get(columns, table=self.database.tname, **sql)
         # return filename
         if len(entries) == 1:
             if len(colnames) == 1:
@@ -1753,17 +1771,18 @@ class LanguageDatabase(BaseDatabaseManager):
             values += ['NULL'] * len(base.LANGUAGES)
         # ---------------------------------------------------------------------
         # get unique keys
-        ukeys = self.database.unique('KEYNAME', table='MAIN')
+        ukeys = self.database.unique('KEYNAME', table=self.database.tname)
         # if we have the key update the row
         if key in ukeys:
             # set condition
             condition = 'KEYNAME="{0}"'.format(key)
             # update row in database
-            self.database.set('*', values, condition=condition, table='MAIN',
-                              commit=commit)
+            self.database.set('*', values, condition=condition,
+                              table=self.database.tname, commit=commit)
         # if we don't have the key add a new row
         else:
-            self.database.add_row(values, table='MAIN', commit=commit)
+            self.database.add_row(values, table=self.database.tname,
+                                  commit=commit)
 
     def get_dict(self, language: str) -> dict:
         """
