@@ -1524,7 +1524,7 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
     # storage for new runs to add
     newruns = []
     # define the master conditions (that affect all recipes)
-    master_condition = gen_master_condition(params, indexdb,
+    master_condition = gen_global_condition(params, indexdb,
                                             odo_reject_list)
     # ------------------------------------------------------------------
     # loop around recipes in new list
@@ -1750,14 +1750,31 @@ def prompt(params):
         return 1
 
 
-def gen_master_condition(params: ParamDict, indexdb: IndexDatabase,
-                         odo_reject_list: List[str]):
+def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
+                         odo_reject_list: List[str]) -> str:
+    """
+    Generate the global conditions (based on run.ini) that will affect the
+    sql conditions on all recipes i.e.:
+    - filtering engineering nights
+    - filtering rejected nights
+    - filtering accepted nights
+    - filtering pi names
+    - filtering rejected odometer codes
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param indexdb: IndexDatabase instance, the index database instance
+    :param odo_reject_list: list or strings, the list of rejected odometer
+                            codes
+    :return: str, the sql global condition to apply to all recipes
+    """
     # set up an sql condition that will get more complex as we go down
     condition = 'KIND="raw"'
     # ------------------------------------------------------------------
     # filer out engineering directories
     # ------------------------------------------------------------------
     if not params['ENGINEERING']:
+        # log that we are checking engineering nights
+        WLOG(params, '', textentry('40-503-00035'))
         # get sub condition for engineering nights
         subcondition = _remove_engineering(params, indexdb, condition)
         # add to conditions
@@ -1813,7 +1830,7 @@ def gen_master_condition(params: ParamDict, indexdb: IndexDatabase,
             subconditions.append(subcondition)
         # add to conditions
         condition += ' AND ({0})'.format(' OR '.join(subconditions))
-        # log blacklist
+        # log whitelist
         wargs = [' ,'.join(whitelist_nights)]
         WLOG(params, '', textentry('40-503-00027', args=wargs))
         # get length of database at this point
@@ -1842,7 +1859,7 @@ def gen_master_condition(params: ParamDict, indexdb: IndexDatabase,
             subconditions.append(subcondition)
         # add to conditions
         condition += ' AND ({0})'.format(' OR '.join(subconditions))
-        # log blacklist
+        # log pi name
         wargs = [' ,'.join(pi_names)]
         WLOG(params, '', textentry('40-503-00029', args=wargs))
         # get length of database at this point
@@ -1861,6 +1878,8 @@ def gen_master_condition(params: ParamDict, indexdb: IndexDatabase,
     # ------------------------------------------------------------------
     # only continue if we have odocodes to reject
     if len(odo_reject_list) > 0:
+        # log progress
+        WLOG(params, '', textentry('40-503-00036'))
         # store sub-conditions
         subs = []
         # add to global conditions
@@ -1873,6 +1892,9 @@ def gen_master_condition(params: ParamDict, indexdb: IndexDatabase,
         subcondition = ' OR '.join(subs)
         # add to global condition (in reverse - we don't want these)
         condition += ' AND NOT ({0})'.format(subcondition)
+    # ------------------------------------------------------------------
+    # Return global condition
+    # ------------------------------------------------------------------
     # return the condition
     return condition
 
