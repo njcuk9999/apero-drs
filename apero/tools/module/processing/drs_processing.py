@@ -43,7 +43,6 @@ from apero.science.preprocessing import gen_pp
 from apero.science import telluric
 from apero.tools.module.setup import drs_reset
 
-
 # =============================================================================
 # Define variables
 # =============================================================================
@@ -195,7 +194,7 @@ class Run:
                         self.kwargs[kwargname] = self.kwargs[kwargname][0]
 
     def find_recipe(self, mod=None) -> Tuple[drs_recipe.DrsRecipe,
-                                       base_class.ImportModule]:
+                                             base_class.ImportModule]:
         """
 
         :param mod: Module
@@ -278,7 +277,6 @@ class Run:
         for kwarg in self.recipe.kwargs:
             if self.recipe.kwargs[kwarg].required:
                 self.required_args.append(kwarg)
-
 
     def prerun_test(self):
         """
@@ -471,9 +469,12 @@ def read_runfile(params, runfile, **kwargs):
             elif value.upper() == 'NONE':
                 value = None
             # log if we are overwriting value
-            if (key in params):
-                wargs = [key, params[key], value]
-                WLOG(params, 'warning', textentry('10-503-00002', args=wargs))
+            if key in params:
+                # only log if value was not null before
+                if not drs_text.null_text(params[key], ['None']):
+                    wargs = [key, params[key], value]
+                    wmsg = textentry('10-503-00002', args=wargs)
+                    WLOG(params, 'warning', wmsg)
             # add to params
             params[key] = value
             params.set_source(key, func_name)
@@ -902,7 +903,6 @@ def process_run_list(params, recipe, runlist, group=None):
 
 
 def display_timing(params, outlist, ptime):
-
     # get number of cores
     cores = _get_cores(params)
     # display the timings
@@ -1523,6 +1523,10 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
     srecipelist = sequence[1].sequence
     # storage for new runs to add
     newruns = []
+    # define the master conditions (that affect all recipes)
+    master_condition = gen_master_condition(params, indexdb,
+                                            odo_reject_list)
+    # ------------------------------------------------------------------
     # loop around recipes in new list
     for srecipe in srecipelist:
         # deal with skip
@@ -1544,117 +1548,16 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
             srecipe.filemod = filemod.copy()
         # add params to srecipe
         srecipe.params = params
+        # copy master condition
+        condition = str(master_condition)
         # ------------------------------------------------------------------
-        # copy table
+        # Deal with no rows in table
         # ------------------------------------------------------------------
         # get length of database at this point
-        idb_len = indexdb.database.count()
+        idb_len = indexdb.database.count(condition=condition)
         # skip if table is empty
         if idb_len == 0:
             continue
-        # set up an sql condition that will get more complex as we go down
-        condition = 'KIND="raw"'
-        # ------------------------------------------------------------------
-        # deal with black lists
-        # ------------------------------------------------------------------
-        # black list
-        if not drs_text.null_text(params['BNIGHTNAMES'], ['', 'All', 'None']):
-            # get black list from params
-            blacklist_nights = params.listp('BNIGHTNAMES', dtype=str)
-            # loop around blacklist
-            for blacklist_night in blacklist_nights:
-                # add to condition
-                condition += ' AND (DIRECTORY!="{0}")'.format(blacklist_night)
-            # log blacklist
-            wargs = [' ,'.join(blacklist_nights)]
-            WLOG(params, '', textentry('40-503-00026', args=wargs))
-            # get length of database at this point
-            idb_len = indexdb.database.count(condition=condition)
-            # deal with empty database (after conditions)
-            if idb_len == 0:
-                WLOG(params, 'warning', textentry('10-503-00006'))
-                # get response for how to continue (skip or exit)
-                response = prompt(params)
-                if response:
-                    continue
-                else:
-                    sys.exit()
-        # ------------------------------------------------------------------
-        # deal with white list
-        # ------------------------------------------------------------------
-        if not drs_text.null_text(params['WNIGHTNAMES'], ['', 'All', 'None']):
-            # get white list from params
-            whitelist_nights = params.listp('WNIGHTNAMES', dtype=str)
-            # define a subcondition
-            subconditions = []
-            # loop around white listed nights and set them to False
-            for whitelist_night in whitelist_nights:
-                # add subcondition
-                subcondition = 'DIRNAME="{0}"'.format(whitelist_night)
-                subconditions.append(subcondition)
-            # add to conditions
-            condition += ' AND ({0})'.format(' OR '.join(subconditions))
-            # log blacklist
-            wargs = [' ,'.join(whitelist_nights)]
-            WLOG(params, '', textentry('40-503-00027', args=wargs))
-            # get length of database at this point
-            idb_len = indexdb.database.count(condition=condition)
-            # deal with empty database (after conditions)
-            if idb_len == 0:
-                WLOG(params, 'warning', textentry('10-503-00007'))
-                # get response for how to continue (skip or exit)
-                response = prompt(params)
-                if response:
-                    continue
-                else:
-                    sys.exit()
-        # ------------------------------------------------------------------
-        # deal with pi name filter
-        # ------------------------------------------------------------------
-        if not drs_text.null_text(params['PI_NAMES'], ['', 'All', 'None']):
-            # get pi name list from params
-            pi_names = params.listp('PI_NAMES', dtype=str)
-            # define a subcondition
-            subconditions = []
-            # loop around pi names and set them to False
-            for pi_name in pi_names:
-                # add subcondition
-                subcondition = 'KW_PI_NAME="{0}"'.format(pi_name)
-                subconditions.append(subcondition)
-            # add to conditions
-            condition += ' AND ({0})'.format(' OR '.join(subconditions))
-            # log blacklist
-            wargs = [' ,'.join(pi_names)]
-            WLOG(params, '', textentry('40-503-00029', args=wargs))
-            # get length of database at this point
-            idb_len = indexdb.database.count(condition=condition)
-            # deal with empty database (after conditions)
-            if idb_len == 0:
-                WLOG(params, 'warning', textentry('10-503-00015'))
-                # get response for how to continue (skip or exit)
-                response = prompt(params)
-                if response:
-                    continue
-                else:
-                    sys.exit()
-        # ------------------------------------------------------------------
-        # Deal with odometer reject list
-        # ------------------------------------------------------------------
-        # only continue if we have odocodes to reject
-        if len(odo_reject_list) > 0:
-            # store sub-conditions
-            subs = []
-            # add to global conditions
-            for odocode in odo_reject_list:
-                # get fkwargs
-                fkwargs = dict(odocode=odocode)
-                # build sub-condition
-                subs += ['FILENAME LIKE "{odocode}%.fits"'.format(**fkwargs)]
-            # generate full subcondition
-            subcondition = ' OR '.join(subs)
-            # add to global condition (in reverse - we don't want these)
-            condition += ' AND NOT ({0})'.format(subcondition)
-
         # ------------------------------------------------------------------
         # Deal with recalculation of templates
         # ------------------------------------------------------------------
@@ -1672,9 +1575,8 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
                 subcondition = ' OR '.join(subs)
                 # add to global condition (in reverse - we don't want these)
                 condition += ' AND NOT ({0})'.format(subcondition)
-
         # ------------------------------------------------------------------
-        # deal with directory filter (master night and nightname filter)
+        # deal with directory filters (master night and nightname filter)
         # ------------------------------------------------------------------
         # master night
         # ------------------------------------------------------------------
@@ -1718,26 +1620,6 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
                 continue
             else:
                 sys.exit()
-
-        # ------------------------------------------------------------------
-        # filer out engineering directories
-        # ------------------------------------------------------------------
-        if not params['ENGINEERING']:
-            # get sub condition for engineering nights
-            subcondition = _remove_engineering(params, indexdb, condition)
-            # add to conditions
-            condition += subcondition
-            # get length of database at this point
-            idb_len = indexdb.database.count(condition=condition)
-            # deal with empty database (after conditions)
-            if idb_len == 0:
-                WLOG(params, 'warning', textentry('10-503-00016', args=wargs))
-                # get response for how to continue (skip or exit)
-                response = prompt(params)
-                if response:
-                    continue
-                else:
-                    sys.exit()
         # ------------------------------------------------------------------
         # deal with filters defined in recipe
         # ------------------------------------------------------------------
@@ -1866,6 +1748,133 @@ def prompt(params):
         return 0
     else:
         return 1
+
+
+def gen_master_condition(params: ParamDict, indexdb: IndexDatabase,
+                         odo_reject_list: List[str]):
+    # set up an sql condition that will get more complex as we go down
+    condition = 'KIND="raw"'
+    # ------------------------------------------------------------------
+    # filer out engineering directories
+    # ------------------------------------------------------------------
+    if not params['ENGINEERING']:
+        # get sub condition for engineering nights
+        subcondition = _remove_engineering(params, indexdb, condition)
+        # add to conditions
+        condition += subcondition
+        # get length of database at this point
+        idb_len = indexdb.database.count(condition=condition)
+        # deal with empty database (after conditions)
+        if idb_len == 0:
+            WLOG(params, 'warning', textentry('10-503-00016'))
+            # get response for how to continue (skip or exit)
+            response = prompt(params)
+            if response:
+                pass
+            else:
+                sys.exit()
+    # ------------------------------------------------------------------
+    # deal with black lists
+    # ------------------------------------------------------------------
+    # black list
+    if not drs_text.null_text(params['BNIGHTNAMES'], ['', 'All', 'None']):
+        # get black list from params
+        blacklist_nights = params.listp('BNIGHTNAMES', dtype=str)
+        # loop around blacklist
+        for blacklist_night in blacklist_nights:
+            # add to condition
+            condition += ' AND (DIRECTORY!="{0}")'.format(blacklist_night)
+        # log blacklist
+        wargs = [' ,'.join(blacklist_nights)]
+        WLOG(params, '', textentry('40-503-00026', args=wargs))
+        # get length of database at this point
+        idb_len = indexdb.database.count(condition=condition)
+        # deal with empty database (after conditions)
+        if idb_len == 0:
+            WLOG(params, 'warning', textentry('10-503-00006'))
+            # get response for how to continue (skip or exit)
+            response = prompt(params)
+            if response:
+                pass
+            else:
+                sys.exit()
+    # ------------------------------------------------------------------
+    # deal with white list
+    # ------------------------------------------------------------------
+    if not drs_text.null_text(params['WNIGHTNAMES'], ['', 'All', 'None']):
+        # get white list from params
+        whitelist_nights = params.listp('WNIGHTNAMES', dtype=str)
+        # define a subcondition
+        subconditions = []
+        # loop around white listed nights and set them to False
+        for whitelist_night in whitelist_nights:
+            # add subcondition
+            subcondition = 'DIRNAME="{0}"'.format(whitelist_night)
+            subconditions.append(subcondition)
+        # add to conditions
+        condition += ' AND ({0})'.format(' OR '.join(subconditions))
+        # log blacklist
+        wargs = [' ,'.join(whitelist_nights)]
+        WLOG(params, '', textentry('40-503-00027', args=wargs))
+        # get length of database at this point
+        idb_len = indexdb.database.count(condition=condition)
+        # deal with empty database (after conditions)
+        if idb_len == 0:
+            WLOG(params, 'warning', textentry('10-503-00007'))
+            # get response for how to continue (skip or exit)
+            response = prompt(params)
+            if response:
+                pass
+            else:
+                sys.exit()
+    # ------------------------------------------------------------------
+    # deal with pi name filter
+    # ------------------------------------------------------------------
+    if not drs_text.null_text(params['PI_NAMES'], ['', 'All', 'None']):
+        # get pi name list from params
+        pi_names = params.listp('PI_NAMES', dtype=str)
+        # define a subcondition
+        subconditions = []
+        # loop around pi names and set them to False
+        for pi_name in pi_names:
+            # add subcondition
+            subcondition = 'KW_PI_NAME="{0}"'.format(pi_name)
+            subconditions.append(subcondition)
+        # add to conditions
+        condition += ' AND ({0})'.format(' OR '.join(subconditions))
+        # log blacklist
+        wargs = [' ,'.join(pi_names)]
+        WLOG(params, '', textentry('40-503-00029', args=wargs))
+        # get length of database at this point
+        idb_len = indexdb.database.count(condition=condition)
+        # deal with empty database (after conditions)
+        if idb_len == 0:
+            WLOG(params, 'warning', textentry('10-503-00015'))
+            # get response for how to continue (skip or exit)
+            response = prompt(params)
+            if response:
+                pass
+            else:
+                sys.exit()
+    # ------------------------------------------------------------------
+    # Deal with odometer reject list
+    # ------------------------------------------------------------------
+    # only continue if we have odocodes to reject
+    if len(odo_reject_list) > 0:
+        # store sub-conditions
+        subs = []
+        # add to global conditions
+        for odocode in odo_reject_list:
+            # get fkwargs
+            fkwargs = dict(odocode=odocode)
+            # build sub-condition
+            subs += ['FILENAME LIKE "{odocode}%.fits"'.format(**fkwargs)]
+        # generate full subcondition
+        subcondition = ' OR '.join(subs)
+        # add to global condition (in reverse - we don't want these)
+        condition += ' AND NOT ({0})'.format(subcondition)
+    # return the condition
+    return condition
 
 
 # =============================================================================
@@ -2844,7 +2853,7 @@ def _get_filters(params, srecipe):
             # else assume we have a special list that is a string list
             #   (i.e. SCIENCE_TARGETS = "target1, target2, target3"
             elif isinstance(user_filter, str):
-                wlist =  _split_string_list(user_filter)
+                wlist = _split_string_list(user_filter)
                 # note we need to update this list to match
                 # the cleaning that is done in preprocessing
                 cwlist = list(map(pconst.DRS_OBJ_NAME, wlist))
@@ -3628,7 +3637,6 @@ def _match_group(params: ParamDict, argname: str,
     # ----------------------------------------------------------------------
     # return files for min position
     return list(table_s['OUT'][mask_s])
-
 
 
 # =============================================================================
