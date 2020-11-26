@@ -12,11 +12,6 @@ Last updated: 2020-07-24 (NJC).
 Recipes
 =======================================
 
-Recent:
-
-* FTELLU3 not working (2020-11-25) with RECAL_TEMPLATES
-* tempaltes are not being created for all stars (SNR problem?)
-
 Long term:
 
 * Weird residuals left in order_profile after dark_flat (loc)
