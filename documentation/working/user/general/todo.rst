@@ -96,6 +96,47 @@ Later:
 * T.B.D.
 
 
+
+=========================================
+APERO utils and analysis
+=========================================
+
+This is a list of tasks mainly from `here <http://github.com/njcuk9999/apero-utils/projects/2>`_
+Last updated: 2020-11-25 (NJC).
+
+High priority:
+
+* Preprocessing Recipe test 1 [Charles/Thomas]
+* Dark Master recipe test 1 [Charles/Thomas]
+* Bad Pixel Corretion Recipe test 1 [Charles/Thomas]
+* Localisation Recipe test 1 [Charles/Thomas]
+* Shape Master Recipe test 1 [Charles/Thomas]
+* Shape (per night) Recipe test 1 [Charles/Thomas]
+* Flat/Blaze Correction test 1 [Charles/Thomas]
+* Thermal Correction Recipe test 1 [Charles/Thomas]
+* Master leak correction Recipe test 1 [Charles/Thomas]
+* Master wavelength solution Recipe test 1 [Charles/Thomas]
+* Nightly wavelength solution Recipe test 1 [Charles/Thomas]
+* Extraction Recipe test 1 [Charles/Thomas]
+* Extraction Recipe test 2 [Charles/Thomas]
+* Leak correction Recipe test 1 [Charles/Thomas]
+* Make Telluric Recipe test 1 [Charles/Thomas]
+* Fit Telluric Recipe test 1 [Charles/Thomas]
+* Make Template Recipe test 1 [Charles/Thomas]
+* CCF Recipe test 1 [Charles/Thomas]
+
+Lower priority:
+
+* Check consistency of README/documentation/wiki for recipes
+* BERV comparison
+* Telluric templates
+* PCA Components
+* Timing stats
+* Summary plot review / update (html/interactive)
+
+
+
+
 .. only:: html
 
   :ref:`Back to top <todo>`
