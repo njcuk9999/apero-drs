@@ -858,6 +858,10 @@ cal_ccf.set_kwarg(name='--width', dtype=float, default_ref='CCF_DEFAULT_WIDTH',
                   helpstr=textentry('CCF_WIDTH_HELP'))
 cal_ccf.set_kwarg(name='--step', dtype=float, default_ref='CCF_DEFAULT_STEP',
                   helpstr=textentry('CCF_STEP_HELP'))
+cal_ccf.set_kwarg(name='--masknormmode', dtype=str,
+                  default_ref='CCF_MASK_NORMALIZATION',
+                  options=['None', 'all', 'order'],
+                  helpstr=textentry('CCF_MASK_NORM_HELP'))
 cal_ccf.set_kwarg(**add_db)
 cal_ccf.set_kwarg(**blazefile)
 cal_ccf.set_kwarg(**plot)

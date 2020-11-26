@@ -694,7 +694,12 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
         ccfmask = params['INPUTS']['MASK']
     # get the berv
     berv = bprops['USE_BERV']
-
+    # ----------------------------------------------------------------------
+    # need to get ccf normalization mode
+    if 'MASKNORMMODE' in params['INPUTS']:
+        ccfnormmode = params['INPUTS']['MASKNORMMODE']
+    else:
+        ccfnormmode = params['CCF_MASK_NORMALIZATION']
     # ----------------------------------------------------------------------
     # Need some sanity checking on width and step
     # ----------------------------------------------------------------------
@@ -734,7 +739,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     # calculate the CCF
     props = ccf_calculation(params, image, blaze, wavemap, berv, targetrv,
                             ccfwidth, ccfstep, ll_mask_ctr, w_mask,
-                            fit_type, fiber)
+                            fit_type, fiber, ccfnormmode)
     # ----------------------------------------------------------------------
     # Reference plots
     # ----------------------------------------------------------------------
@@ -855,6 +860,7 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
                         func_name)
     image_pixel_size = pcheck(params, 'IMAGE_PIXEL_SIZE', 'image_pixel_size',
                               kwargs, func_name)
+    ccfnormmode = params['CCF_MASK_NORMALIZATION']
     # set the berv to zero (fp have no berv)
     berv = 0
     # the fit type must be set to 1 (for emission lines)
@@ -881,7 +887,7 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     # calculate the CCF
     props = ccf_calculation(params, image, blaze, wavemap, berv, targetrv,
                             ccfwidth, ccfstep, ll_mask_ctr, w_mask, fit_type,
-                            fiber)
+                            fiber, ccfnormmode)
     # ----------------------------------------------------------------------
     # Calculate the mean CCF
     # ----------------------------------------------------------------------
@@ -972,7 +978,7 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
 
 def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
                     ccfstep, mask_centers, mask_weights, fit_type, fiber,
-                    **kwargs):
+                    ccfnormmode, **kwargs):
     # set function name
     func_name = display_func(params, 'calculate_ccf', __NAME__)
     # get properties from params
@@ -997,6 +1003,10 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
     ccf_lines = []
     ccf_all_snr = []
     ccf_norm_all = []
+    # ----------------------------------------------------------------------
+    # switch normalization across all weights
+    if ccfnormmode.upper() == 'ALL':
+        mask_weights = mask_weights / np.nanmean(np.abs(mask_weights))
     # ----------------------------------------------------------------------
     # loop around the orders
     for order_num in range(nbo):
@@ -1116,9 +1126,9 @@ def ccf_calculation(params, image, blaze, wavemap, berv, targetrv, ccfwidth,
         # apply masks to centers and weights
         omask_centers = omask_centers[keep]
         omask_weights = omask_weights[keep]
-        # normalise omask weights by
-        omask_weights = omask_weights / np.nanmean(omask_weights)
-
+        # normalise omask weights by order (if required)
+        if ccfnormmode.upper() == 'ORDER':
+            omask_weights = omask_weights / np.nanmean(omask_weights)
         # Number of photons at line centers for 1 CCF step
         sweights = spline_weight(omask_centers)
         nphot = spline_sp(omask_centers) * sweights / ccfstep

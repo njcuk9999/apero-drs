@@ -170,7 +170,7 @@ __all__ = [
     'WAVE_CCF_SMART_MASK_WIDTH', 'WAVE_CCF_SMART_MASK_MINLAM',
     'WAVE_CCF_SMART_MASK_MAXLAM', 'WAVE_CCF_SMART_MASK_TRIAL_NMIN',
     'WAVE_CCF_SMART_MASK_TRIAL_NMAX', 'WAVE_CCF_SMART_MASK_DWAVE_THRES',
-    'WAVE_CCF_RV_THRES_QC',
+    'WAVE_CCF_RV_THRES_QC', 'WAVE_CCF_MASK_NORMALIZATION',
     # wave master reference constants
     'WAVEREF_NSIG_MIN', 'WAVEREF_EDGE_WMAX', 'WAVEREF_HC_BOXSIZE',
     'WAVEREF_HC_FIBTYPES', 'WAVEREF_FP_FIBTYPES', 'WAVEREF_FITDEG',
@@ -220,7 +220,7 @@ __all__ = [
     'CCF_FILL_NAN_KERN_RES', 'CCF_DET_NOISE', 'CCF_FIT_TYPE',
     'CCF_NOISE_SIGDET', 'CCF_NOISE_BOXSIZE', 'CCF_NOISE_THRES',
     'CCF_MAX_CCF_WID_STEP_RATIO', 'CCF_BLAZE_NORM_PERCENTILE',
-    'CCF_OBJRV_NULL_VAL',
+    'CCF_OBJRV_NULL_VAL', 'CCF_MASK_NORMALIZATION',
     # polar constants
     'POLAR_VALID_FIBERS', 'POLAR_VALID_STOKES', 'POLAR_METHOD',
     'POLAR_CONT_TELLMASK_LOWER',
@@ -1893,6 +1893,15 @@ WAVE_CCF_DETNOISE = Const('WAVE_CCF_DETNOISE', value=None, dtype=float,
 WAVE_CCF_MASK = Const('WAVE_CCF_MASK', value=None, dtype=str, source=__NAME__,
                       group=cgroup)
 
+# Define the default CCF MASK normalisation mode for FP CCF
+#   options are:
+#     'None'         for no normalization
+#     'all'          for normalization across all orders
+#     'order'        for normalization for each order
+WAVE_CCF_MASK_NORMALIZATION = Const('WAVE_CCF_MASK_NORMALIZATION', value=None,
+                                    dtype=str, options=['None', 'all', 'order'],
+                                    source=__NAME__, group=cgroup)
+
 # Define the wavelength units for the mask for the FP CCF
 WAVE_CCF_MASK_UNITS = Const('WAVE_CCF_MASK_UNITS', value=None, dtype=str,
                             source=__NAME__, group=cgroup)
@@ -2433,6 +2442,15 @@ CCF_DEFAULT_MASK = Const('CCF_DEFAULT_MASK', value=None, dtype=str,
                          source=__NAME__, user=True, active=False,
                          group=cgroup,
                          description='Define the default CCF MASK to use')
+
+# Define the default CCF MASK normalisation mode
+#   options are:
+#     'None'         for no normalization
+#     'all'          for normalization across all orders
+#     'order'        for normalization for each order
+CCF_MASK_NORMALIZATION = Const('CCF_MASK_NORMALIZATION', value=None,
+                               dtype=str, options=['None', 'all', 'order'],
+                               source=__NAME__, group=cgroup)
 
 # Define the wavelength units for the mask
 CCF_MASK_UNITS = Const('CCF_MASK_UNITS', value=None, dtype=str,

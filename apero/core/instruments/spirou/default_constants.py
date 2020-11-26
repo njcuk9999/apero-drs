@@ -1471,6 +1471,14 @@ WAVE_CCF_MASK = WAVE_CCF_MASK.copy(__NAME__)
 # WAVE_CCF_MASK.value = 'fp.mas'
 WAVE_CCF_MASK.value = 'smart_fp_mask.mas'
 
+# Define the default CCF MASK normalisation mode for FP CCF
+#   options are:
+#     'None'         for no normalization
+#     'all'          for normalization across all orders
+#     'order'        for normalization for each order
+WAVE_CCF_MASK_NORMALIZATION = WAVE_CCF_MASK_NORMALIZATION.copy(__NAME__)
+WAVE_CCF_MASK_NORMALIZATION.value = 'order'
+
 # Define the wavelength units for the mask for the FP CCF
 WAVE_CCF_MASK_UNITS = WAVE_CCF_MASK_UNITS.copy(__NAME__)
 WAVE_CCF_MASK_UNITS.value = 'nm'
@@ -1932,6 +1940,14 @@ CCF_MASK_PATH.value = 'ccf_masks/'
 # Define the default CCF MASK to use
 CCF_DEFAULT_MASK = CCF_DEFAULT_MASK.copy(__NAME__)
 CCF_DEFAULT_MASK.value = 'masque_sept18_andres_trans50.mas'
+
+# Define the default CCF MASK normalisation mode
+#   options are:
+#     'None'         for no normalization
+#     'all'          for normalization across all orders
+#     'order'        for normalization for each order
+CCF_MASK_NORMALIZATION = CCF_MASK_NORMALIZATION.copy(__NAME__)
+CCF_MASK_NORMALIZATION.value = 'order'
 
 # Define the wavelength units for the mask
 CCF_MASK_UNITS = CCF_MASK_UNITS.copy(__NAME__)
