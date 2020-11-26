@@ -125,17 +125,17 @@ def create_calibration_database(params: ParamDict, pconst: PseudoConst,
     calibdb = drs_db.database_wrapper(calibdbm.kind, calibdbm.path)
     # -------------------------------------------------------------------------
     # remove table if it already exists
-    if 'MAIN' in calibdb.tables:
-        calibdb.delete_table('MAIN')
+    if calibdb.tname in calibdb.tables:
+        calibdb.delete_table(calibdb.tname)
     # add main table
-    calibdb.add_table('MAIN', columns, ctypes)
+    calibdb.add_table(calibdb.tname, columns, ctypes)
     # ---------------------------------------------------------------------
     # construct reset file
     reset_abspath = os.path.join(asset_dir, reset_path, calibdbm.dbreset)
     # get rows from reset file
     reset_entries = pd.read_csv(reset_abspath, skipinitialspace=True)
     # add rows from reset text file
-    calibdb.add_from_pandas(reset_entries, table='MAIN')
+    calibdb.add_from_pandas(reset_entries, table=calibdb.tname)
     # -------------------------------------------------------------------------
     return calibdb
 
@@ -160,10 +160,10 @@ def create_telluric_database(pconst: PseudoConst,
     telludb = drs_db.database_wrapper(telludbm.kind, telludbm.path)
     # -------------------------------------------------------------------------
     # remove table if it already exists
-    if 'MAIN' in telludb.tables:
-        telludb.delete_table('MAIN')
+    if telludb.tname in telludb.tables:
+        telludb.delete_table(telludb.tname)
     # add main table
-    telludb.add_table('MAIN', columns, ctypes)
+    telludb.add_table(telludb.tname, columns, ctypes)
     # -------------------------------------------------------------------------
     return telludb
 
@@ -188,10 +188,10 @@ def create_index_database(pconst: PseudoConst,
     indexdb = drs_db.database_wrapper(indexdbm.kind, indexdbm.path)
     # -------------------------------------------------------------------------
     # remove table if it already exists
-    if 'MAIN' in indexdb.tables:
-        indexdb.delete_table('MAIN')
+    if indexdb.tname in indexdb.tables:
+        indexdb.delete_table(indexdb.tname)
     # add main table
-    indexdb.add_table('MAIN', columns, ctypes)
+    indexdb.add_table(indexdb.tname, columns, ctypes)
     # -------------------------------------------------------------------------
     return indexdb
 
@@ -216,10 +216,10 @@ def create_log_database(pconst: PseudoConst,
     logdb = drs_db.database_wrapper(logdbm.kind, logdbm.path)
     # -------------------------------------------------------------------------
     # remove table if it already exists
-    if 'MAIN' in logdb.tables:
-        logdb.delete_table('MAIN')
+    if logdb.tname in logdb.tables:
+        logdb.delete_table(logdb.tname)
     # add main table
-    logdb.add_table('MAIN', columns, ctypes)
+    logdb.add_table(logdb.tname, columns, ctypes)
     # -------------------------------------------------------------------------
     return logdb
 
@@ -248,17 +248,17 @@ def create_object_database(params: ParamDict, pconst: PseudoConst,
     objectdb = drs_db.database_wrapper(objectdbm.kind, objectdbm.path)
     # -------------------------------------------------------------------------
     # remove table if it already exists
-    if 'MAIN' in objectdb.tables:
-        objectdb.delete_table('MAIN')
+    if objectdb.tname in objectdb.tables:
+        objectdb.delete_table(objectdb.tname)
     # add main table
-    objectdb.add_table('MAIN', columns, ctypes)
+    objectdb.add_table(objectdb.tname, columns, ctypes)
     # ---------------------------------------------------------------------
     # construct reset file
     reset_abspath = os.path.join(asset_dir, reset_path, objectdbm.dbreset)
     # get rows from reset file
     reset_entries = pd.read_csv(reset_abspath, skipinitialspace=True)
     # add rows from reset text file
-    objectdb.add_from_pandas(reset_entries, table='MAIN')
+    objectdb.add_from_pandas(reset_entries, table=objectdb.tname)
     # -------------------------------------------------------------------------
     return objectdb
 
@@ -283,12 +283,12 @@ def make_object_reset(params: ParamDict):
     objdbm = drs_database.ObjectDatabase(params)
     objdbm.load_db()
     # remove table if it already exists
-    if 'MAIN' in objdbm.database.tables:
-        objdbm.database.delete_table('MAIN')
+    if objdbm.database.tname in objdbm.database.tables:
+        objdbm.database.delete_table(objdbm.database.tname)
     # get columns and ctypes from pconst
     columns, ctypes = pconst.OBJECT_DB_COLUMNS()
     # add main table
-    objdbm.database.add_table('MAIN', columns, ctypes)
+    objdbm.database.add_table(objdbm.database.tname, columns, ctypes)
     # get google sheets
     gtable = gen_pp.get_google_sheet(params['OBJ_LIST_GOOGLE_SHEET_URL'],
                                      params['OBJ_LIST_GOOGLE_SHEET_WNUM'])
@@ -346,10 +346,10 @@ def create_lang_database(databases: Dict[str, Union[DatabaseM, BaseDatabaseM]]
     columns = langdbm.columns
     ctypes = langdbm.ctypes
     # -------------------------------------------------------------------------
-    if 'MAIN' in langdb.tables:
-        langdb.delete_table('MAIN')
+    if langdb.tname in langdb.tables:
+        langdb.delete_table(langdb.tname)
     # add main table
-    langdb.add_table('MAIN', columns, ctypes)
+    langdb.add_table(langdb.tname, columns, ctypes)
     # ---------------------------------------------------------------------
     # add rows from reset text file for default file
     # ---------------------------------------------------------------------
@@ -358,7 +358,7 @@ def create_lang_database(databases: Dict[str, Union[DatabaseM, BaseDatabaseM]]
     # remove entries with KEYNAME == nan
     mask0 = np.array(reset_entries0['KEYNAME']).astype(str) == 'nan'
     # add rows from reset text file
-    langdb.add_from_pandas(reset_entries0[~mask0], table='MAIN')
+    langdb.add_from_pandas(reset_entries0[~mask0], table=langdb.tname)
     # ---------------------------------------------------------------------
     # add rows from reset text file for instrument file
     # ---------------------------------------------------------------------

@@ -215,6 +215,12 @@ def create_yamls(allparams: Any):
     # sql lite settings
     database_dict['USE_SQLITE3'] = True
     sqlite3 = dict()
+    # add database settings
+    sqlite3['HOST'] = 'NULL'
+    sqlite3['USER'] = 'NULL'
+    sqlite3['PASSWD'] = 'NULL'
+    sqlite3['DATABASE'] = 'NULL'
+    sqlite3['PROFILE'] = 'NULL'
     # add calib database
     calibdb = dict()
     calibdb['PATH'] = 'DRS_CALIB_DB'
@@ -225,19 +231,19 @@ def create_yamls(allparams: Any):
     telludb = dict()
     telludb['PATH'] = 'DRS_TELLU_DB'
     telludb['NAME'] = 'tellu.db'
-    telludb['RESET'] = 'None'
+    telludb['RESET'] = 'NULL'
     sqlite3['TELLU'] = telludb
     # add index database
     indexdb = dict()
     indexdb['PATH'] = 'DRS_DATA_ASSETS'
     indexdb['NAME'] = 'index.db'
-    indexdb['RESET'] = 'None'
+    indexdb['RESET'] = 'NULL'
     sqlite3['INDEX'] = indexdb
     # add log database
     logdb = dict()
     logdb['PATH'] = 'DRS_DATA_ASSETS'
     logdb['NAME'] = 'log.db'
-    logdb['RESET'] = 'None'
+    logdb['RESET'] = 'NULL'
     sqlite3['LOG'] = logdb
     # add object database
     objectdb = dict()
@@ -249,7 +255,7 @@ def create_yamls(allparams: Any):
     langdb = dict()
     langdb['PATH'] = 'DRS_DATA_ASSETS'
     langdb['NAME'] = 'lang.db'
-    langdb['RESET'] = 'None'
+    langdb['RESET'] = 'NULL'
     sqlite3['LANG'] = langdb
     # add sqlite database to database_dict
     database_dict['SQLITE3'] = sqlite3
@@ -259,41 +265,47 @@ def create_yamls(allparams: Any):
     # mysql settings
     database_dict['USE_MYSQL'] = False
     mysql = dict()
+    # add database settings
+    mysql['HOST'] = 'localhost'
+    mysql['USER'] = 'None'
+    mysql['PASSWD'] = 'None'
+    mysql['DATABASE'] = 'None'
+    mysql['PROFILE'] = 'MAIN'
     # add calib database
     calibdb = dict()
-    calibdb['PATH'] = 'DRS_CALIB_DB'
-    calibdb['NAME'] = 'calib.db'
+    calibdb['PATH'] = 'NULL'
+    calibdb['NAME'] = 'NULL'
     calibdb['RESET'] = 'reset.calib.csv'
     mysql['CALIB'] = calibdb
     # add tellu database
     telludb = dict()
-    telludb['PATH'] = 'DRS_TELLU_DB'
-    telludb['NAME'] = 'tellu.db'
-    telludb['RESET'] = 'None'
+    telludb['PATH'] = 'NULL'
+    telludb['NAME'] = 'NULL'
+    telludb['RESET'] = 'NULL'
     mysql['TELLU'] = telludb
     # add index database
     indexdb = dict()
-    indexdb['PATH'] = 'DRS_DATA_ASSETS'
-    indexdb['NAME'] = 'index.db'
-    indexdb['RESET'] = 'None'
+    indexdb['PATH'] = 'NULL'
+    indexdb['NAME'] = 'NULL'
+    indexdb['RESET'] = 'NULL'
     mysql['INDEX'] = indexdb
     # add log database
     logdb = dict()
-    logdb['PATH'] = 'DRS_DATA_ASSETS'
-    logdb['NAME'] = 'log.db'
-    logdb['RESET'] = 'None'
+    logdb['PATH'] = 'NULL'
+    logdb['NAME'] = 'NULL'
+    logdb['RESET'] = 'NULL'
     mysql['LOG'] = logdb
     # add object database
     objectdb = dict()
-    objectdb['PATH'] = 'DRS_DATA_ASSETS'
-    objectdb['NAME'] = 'object.db'
+    objectdb['PATH'] = 'NULL'
+    objectdb['NAME'] = 'NULL'
     objectdb['RESET'] = 'reset.object.csv'
     mysql['OBJECT'] = objectdb
     # add language database
     langdb = dict()
-    langdb['PATH'] = 'DRS_DATA_ASSETS'
-    langdb['NAME'] = 'lang.db'
-    langdb['RESET'] = 'None'
+    langdb['PATH'] = 'NULL'
+    langdb['NAME'] = 'NULL'
+    langdb['RESET'] = 'NULL'
     mysql['LANG'] = langdb
     # mysql['PARAMS_PATH'] = 'DRS_DATA_ASSETS'
     database_dict['MYSQL'] = mysql

@@ -82,6 +82,8 @@ BETEXT['00-002-00047'] = "Pandas.to_sql {0}: {1} \n\tFunction = {2}"
 BETEXT['00-002-00048'] = ('Could not read SQL command as pandas table '
                           '\n\tCommand = {0} \n\t Function = {1}')
 BETEXT['00-002-00049'] = "Database kind '{0}' is invalid"
+BETEXT['00-002-00050'] = ("MySQL database = '{0}' could not be created. "
+                          "\n\t Error {1}: {2}")
 
 # code 00-003
 BETEXT['00-003-00005'] = "Folder '{0}' does not exist in {1}"
