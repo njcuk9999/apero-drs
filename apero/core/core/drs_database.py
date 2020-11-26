@@ -1578,6 +1578,9 @@ class IndexDatabase(DatabaseManager):
         columns = ['ABSPATH', 'RAWFIX'] + rkeys
         # get data for columns
         table = self.get_entries(', '.join(columns), kind='raw')
+        # if all rows have rawfix == 1 then just return now
+        if np.sum(table['RAWFIX']) == len(table):
+            return
         # need to loop around each row
         for row in tqdm(range(len(table))):
             # do not re-fix is rawfix is 1
