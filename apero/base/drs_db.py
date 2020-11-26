@@ -73,7 +73,8 @@ class DatabaseError(DatabaseException):
         self.errorobj = errorobj
         self.path = path
         self.func_name = func_name
-        super(self).__init__(message)
+        # call super class
+        super().__init__(message)
 
     def __getstate__(self) -> dict:
         """
@@ -1801,7 +1802,8 @@ class LanguageDatabase(BaseDatabaseManager):
         func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
                                            'get_dict')
         # get all rows
-        df = self.database.get('*', return_pandas=True)
+        df = self.database.get('*', table=self.database.tname,
+                               return_pandas=True)
         # set up storage
         storage = dict()
         # loop around dataframe rows
