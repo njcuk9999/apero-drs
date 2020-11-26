@@ -18,6 +18,8 @@ For all instruments / in general.
 
 High priority:
 
+* install database via install.py [Neil]
+* database import/export (append/replace) [Neil]
 * calibration merge (drs processing)  [Neil]
 * polar code update  [Neil/Eder/Chris]
 * CCF weights adjustment (once Pia has results)  [Pia/Neil]
@@ -25,7 +27,7 @@ High priority:
 
 Medium priority:
 
-* database import/export (append/replace) [Neil]
+* drs_base.BETEXT from langdb.csv (during lang --update --reload) [Neil]
 * filename from checksums [Neil]
 * bisector for CCF (new extension in CCF outputs?) [Etienne/Neil]
 * loc and wave coefficients to tables [Neil]

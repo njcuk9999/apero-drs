@@ -47,6 +47,11 @@ Date: 2020-09-10
         - FTTTEMPH: Unique hash for input template files
         - MKTTEMPT: Time template was created
 
+- ccf
+    - add in ccf mask normalization options 'all', 'order', 'None'
+      access via user_constants.py (CCF_MASK_NORMALIZATION) or
+      cal_ccf_spirou.py --masknormmode
+
 - general
     - all functions should be pickle-able and python typed and have doc strings
     - reorganisation of modulular structure - minimize circular importing
