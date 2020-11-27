@@ -1530,7 +1530,8 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
     # check we have rows left
     # ------------------------------------------------------------------
     # get length of database at this point
-    idb_len = indexdb.database.count(condition=master_condition)
+    idb_len = indexdb.database.count(indexdb.database.tname,
+                                     condition=master_condition)
     # deal with empty database (after conditions)
     if idb_len == 0:
         eargs = [master_condition, func_name]
@@ -1569,7 +1570,8 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
         # Deal with no rows in table
         # ------------------------------------------------------------------
         # get length of database at this point
-        idb_len = indexdb.database.count(condition=condition)
+        idb_len = indexdb.database.count(indexdb.database.tname,
+                                         condition=condition)
         # skip if table is empty
         if idb_len == 0:
             continue
@@ -1599,7 +1601,8 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
             # get master nightnames
             nightname = params['MASTER_NIGHT']
             # get nightnames
-            nightnames = indexdb.database.unique('DIRNAME', condition=condition)
+            nightnames = indexdb.database.unique('DIRNAME', condition=condition,
+                                                 table=indexdb.database.tname)
             # check if master night name is valid (in table)
             if nightname not in nightnames:
                 wargs = [nightname]
@@ -1624,7 +1627,8 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
             nightname = 'all'
         # ------------------------------------------------------------------
         # get length of database at this point
-        idb_len = indexdb.database.count(condition=condition)
+        idb_len = indexdb.database.count(indexdb.database.tname,
+                                         condition=condition)
         # deal with empty database (after conditions)
         if idb_len == 0:
             wargs = [nightname]
@@ -1795,7 +1799,8 @@ def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
         # add to conditions
         condition += subcondition
         # get length of database at this point
-        idb_len = indexdb.database.count(condition=condition)
+        idb_len = indexdb.database.count(indexdb.database.tname,
+                                         condition=condition)
         # deal with empty database (after conditions)
         if idb_len == 0:
             WLOG(params, 'warning', textentry('10-503-00016'))
@@ -1820,7 +1825,8 @@ def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
         wargs = [' ,'.join(blacklist_nights)]
         WLOG(params, '', textentry('40-503-00026', args=wargs))
         # get length of database at this point
-        idb_len = indexdb.database.count(condition=condition)
+        idb_len = indexdb.database.count(indexdb.database.tname,
+                                         condition=condition)
         # deal with empty database (after conditions)
         if idb_len == 0:
             WLOG(params, 'warning', textentry('10-503-00006'))
@@ -1849,7 +1855,8 @@ def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
         wargs = [' ,'.join(whitelist_nights)]
         WLOG(params, '', textentry('40-503-00027', args=wargs))
         # get length of database at this point
-        idb_len = indexdb.database.count(condition=condition)
+        idb_len = indexdb.database.count(indexdb.database.tname,
+                                         condition=condition)
         # deal with empty database (after conditions)
         if idb_len == 0:
             WLOG(params, 'warning', textentry('10-503-00007'))
@@ -1878,7 +1885,8 @@ def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
         wargs = [' ,'.join(pi_names)]
         WLOG(params, '', textentry('40-503-00029', args=wargs))
         # get length of database at this point
-        idb_len = indexdb.database.count(condition=condition)
+        idb_len = indexdb.database.count(indexdb.database.tname,
+                                         condition=condition)
         # deal with empty database (after conditions)
         if idb_len == 0:
             WLOG(params, 'warning', textentry('10-503-00015'))
@@ -2292,9 +2300,10 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
     # copy condition
     master_condtion = str(condition)
     # get valid database column names
-    index_colnames = indexdb.database.colnames('*')
+    index_colnames = indexdb.database.colnames('*', indexdb.database.tname)
     # debug log the number of files found
-    idb_len = indexdb.database.count(condition=condition)
+    idb_len = indexdb.database.count(indexdb.database.tname,
+                                     condition=condition)
     dargs = [func_name, idb_len]
     WLOG(params, 'debug', textentry('90-503-00011', args=dargs))
     # loop around arguments

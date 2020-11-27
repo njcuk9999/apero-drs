@@ -2984,7 +2984,8 @@ def valid_directory(params: ParamDict, indexdb: IndexDatabase,
     # set up condition
     condition = 'KIND="{0}"'.format(kind)
     # load directory names
-    directories = indexdb.database.unique('DIRNAME', condition=condition)
+    directories = indexdb.database.unique('DIRNAME', condition=condition,
+                                          table=indexdb.database.tname)
 
     # -------------------------------------------------------------------------
     # 2. check for directory in database
@@ -3082,7 +3083,7 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase, kind: str,
     # check for filename in paths
     condition1 = condition + ' AND ' + pathcond.format(filename)
     # count number of paths that meet this condition
-    if indexdb.database.count(condition=condition1) > 0:
+    if indexdb.database.count(indexdb.database.tname, condition=condition1) > 0:
         # now check fits keys (or pass if not fits)
         filenames, filetypes = _check_fits_keys(params, drsfiles, indexdb,
                                                 condition1, argname, kind,
@@ -3100,7 +3101,7 @@ def valid_file(params: ParamDict, indexdb: IndexDatabase, kind: str,
     # check for filename in paths
     condition1 = condition + 'AND ' + pathcond.format(abspath)
     # count number of paths that meet this condition
-    if indexdb.database.count(condition=condition1) > 0:
+    if indexdb.database.count(indexdb.database.tname, condition=condition1) > 0:
         # now check fits keys (or pass if not fits)
         filenames, filetypes = _check_fits_keys(params, drsfiles, indexdb,
                                                 condition1, argname, kind,

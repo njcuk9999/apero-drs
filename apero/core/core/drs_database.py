@@ -1271,7 +1271,7 @@ class IndexDatabase(DatabaseManager):
             used = 1
         # this is a flag to test whether raw data has been fixed (so we don't
         #   do it again when not required)
-        if rawfix is not None:
+        if rawfix is None:
             if kind == 'raw':
                 rawfix = 0
             else:
@@ -1305,9 +1305,9 @@ class IndexDatabase(DatabaseManager):
                              rtypes[h_it], func_name]
                     wmsg = textentry('10-002-00003', args=wargs)
                     WLOG(self.params, 'warning', wmsg)
-                    hvalues.append('Null')
+                    hvalues.append('NULL')
             else:
-                hvalues.append('Null')
+                hvalues.append('NULL')
         # ------------------------------------------------------------------
         # make absolute path
         path = Path(path).joinpath(directory, filename)
@@ -1327,7 +1327,7 @@ class IndexDatabase(DatabaseManager):
             condition += ' AND DIRNAME = "{0}"'.format(directory)
             condition += ' AND ABSPATH = "{0}"'.format(path)
             # update row in database
-            self.database.set('*', values, condition=condition,
+            self.database.set('*', values=values, condition=condition,
                               table=self.database.tname,
                               commit=commit)
         else:
@@ -1623,7 +1623,7 @@ class IndexDatabase(DatabaseManager):
                 else:
                     values.append('None')
             # update this row (should only be one row based on condition)
-            self.database.set(columns, values, condition=condition,
+            self.database.set(columns, values=values, condition=condition,
                               table=self.database.tname)
 
     def deal_with_filename(self, kind: str, directory: Union[str, None] = None,
@@ -2326,7 +2326,7 @@ class ObjectDatabase(DatabaseManager):
         # deal with updating entry
         if (gaiaids is not None) and (len(gaiaids) > 0):
             # update row in database
-            self.database.set('*', values, condition=condition,
+            self.database.set('*', values=values, condition=condition,
                               table=self.database.tname, commit=commit)
         # else add row to database (as new row)
         else:

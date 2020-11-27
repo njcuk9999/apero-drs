@@ -238,7 +238,7 @@ class Database:
         # return result
         return result
 
-    def count(self, table: Union[None, str] = None,
+    def count(self, table: Union[None, str],
               condition: Union[None, str] = None) -> int:
         """
         Counts the number of rows in table. If condition is set
@@ -280,7 +280,7 @@ class Database:
         # return result
         return int(result)
 
-    def unique(self, column: str = '*', table: Union[None, str] = None,
+    def unique(self, column: str, table: Union[None, str],
                condition: Union[None, str] = None) -> np.ndarray:
         """
         Get the unique values for a column (with condition if set)
@@ -325,7 +325,7 @@ class Database:
         # return unique result
         return np.unique(result)
 
-    def get(self, columns: str = '*', table: Union[None, str] = None,
+    def get(self, columns: str, table: Union[None, str],
             condition: Union[None, str] = None,
             sort_by: Union[None, str] = None,
             sort_descending: bool = True,
@@ -441,9 +441,9 @@ class Database:
             # else just return the result as is (a tuple)
             return result
 
-    def set(self, columns: Union[str, List[str]],
+    def set(self, columns: Union[str, List[str]], table: Union[str, None],
             values: Union[str, List[str]], condition: Union[str, None] = None,
-            table: Union[str, None] = None, commit: bool = True):
+            commit: bool = True):
         """
         Changes the data in existing rows.
 
@@ -538,7 +538,7 @@ class Database:
         if commit:
             self.commit()
 
-    def add_row(self, values: List[object], table: Union[None, str] = None,
+    def add_row(self, values: List[object], table: Union[None, str],
                 columns: Union[str, List[str]] = "*",
                 commit: bool = True):
         """
@@ -575,7 +575,7 @@ class Database:
         if commit:
             self.commit()
 
-    def delete_rows(self, table: Union[None, str] = None,
+    def delete_rows(self, table: Union[None, str],
                     condition: Union[str, None] = None,
                     commit: bool = True):
         """
@@ -758,8 +758,7 @@ class Database:
         NotImplemented(emsg)
 
     # other methods
-    def colnames(self, columns: str,
-                 table: Union[str, None] = None) -> List[str]:
+    def colnames(self, columns: str, table: Union[str, None]) -> List[str]:
         """
         Get the column names from table (i.e. deal with * or columns separated
         by commas)
@@ -845,7 +844,7 @@ class Database:
         # commit
         self._conn_.commit()
 
-    def _to_astropy_table(self, result) -> Table:
+    def _to_astropy_table(self, result, table=None) -> Table:
         """
         Convert result to astropy table
 
@@ -854,8 +853,11 @@ class Database:
         """
         # set function name
         func_name = __NAME__ + '.Database._to_astropy_table()'
+        # get table name
+        if table is None:
+            table = self.tname
         # get columns
-        columns = self.colnames('*')
+        columns = self.colnames('*', table=table)
         # set up table
         table = Table()
         for it, col in enumerate(columns):
@@ -874,7 +876,7 @@ class Database:
         # return astropy table
         return table
 
-    def add_from_pandas(self, df: pd.DataFrame, table: Union[str, None] = None,
+    def add_from_pandas(self, df: pd.DataFrame, table: Union[str, None],
                         if_exists: str = 'append', index: bool = False,
                         commit: bool = True):
         """
@@ -1028,7 +1030,7 @@ class SQLiteDatabase(Database):
         emsg = 'database locked for > {0} s'.format(MAXWAIT)
         raise sqlite3.OperationalError(emsg)
 
-    def add_from_pandas(self, df: pd.DataFrame, table: Union[str, None] = None,
+    def add_from_pandas(self, df: pd.DataFrame, table: Union[str, None],
                         if_exists: str = 'append', index: bool = False,
                         commit: bool = True):
         """
@@ -1302,7 +1304,7 @@ class MySQLDatabase(Database):
         # close the cursor
         cursor.close()
 
-    def add_from_pandas(self, df: pd.DataFrame, table: Union[str, None] = None,
+    def add_from_pandas(self, df: pd.DataFrame, table: Union[str, None],
                         if_exists: str = 'append', index: bool = False,
                         commit: bool = True):
         """
@@ -1470,10 +1472,13 @@ def _decode_value(value: Any) -> str:
     :return: str, the decoded string value
     """
     # Convert None to NULL
-    if value == 'None':
-        return 'NULL'
-    if value == '"NULL"' or value == "'NULL'":
-        return 'NULL'
+    if isinstance(value, str):
+        if value.upper() == 'NONE':
+            return 'NULL'
+        if value.upper() == '"NULL"' or value.upper() == "'NULL'":
+            return 'NULL'
+        if value.upper() == 'NULL':
+            return 'NULL'
     # deal with value being types (decode to string)
     if isinstance(value, bytes):
         return value.decode('utf=8')
