@@ -2135,6 +2135,7 @@ def find_hc_gauss_peaks(params, recipe, iprops, e2dsfile, fiber, **kwargs):
     WLOG(params, '', TextEntry('40-017-00003'))
     # get initial line list
     llprops, exists = load_hc_init_linelist(params, recipe, e2dsfile, fiber)
+
     # if we dont have line list need to generate it
     if not exists:
         # ------------------------------------------------------------------

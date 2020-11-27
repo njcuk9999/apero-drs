@@ -286,9 +286,25 @@ def check_coeffs_nirps(params: ParamDict, recipe, image: np.ndarray,
                                        nsigclip)
         # re-fit the coefficients and push into ordermap
         widthmap[y_it, :] = np.polyval(wfit, orders)
+
+    # -------------------------------------------------------------------------
+    ycut = 4040
+
+    # find the maximum position of each order
+    max_ord = np.max(ordermap,axis=0)
+    # only keep those orders below our y-threshold cut
+    order_mask = np.where(np.max(ordermap,axis=0)<ycut)[0][-max_num_orders:]
+    # re-shape ordermap and widthmap
+    ordermap = ordermap[:, order_mask]
+    widthmap = widthmap[:, order_mask]
+    # reset new_cen_coeffs and new_wid_coeffs
+    new_cen_coeffs = np.zeros([max_num_orders, nccoeffs])
+    new_wid_coeffs = np.zeros([max_num_orders, nwcoeffs])
+    # reset nbo
+    nbo = int(max_num_orders)
     # -------------------------------------------------------------------------
     # re-fit the localisation polynomials
-    for ordernum in range(new_nbo):
+    for ordernum in range(nbo):
         # work out the new polynomials for this order (for centers)
         ocen_coeffs = np.polyfit(xpix, ordermap[:, ordernum], nccoeffs - 1)
         # must flip these backwards
@@ -297,29 +313,6 @@ def check_coeffs_nirps(params: ParamDict, recipe, image: np.ndarray,
         owid_coeffs = np.polyfit(xpix, widthmap[:, ordernum], nwcoeffs - 1)
         # must flip these backwards
         new_wid_coeffs[ordernum, :] = owid_coeffs[::-1]
-    # -------------------------------------------------------------------------
-    # deal with dropping orders
-    nbo = new_cen_coeffs.shape[0]
-    # must check that we have the required number of orders
-    if nbo != max_num_orders:
-        # can only fix this currently by dropping blue/red orders
-        if nbo - drop_blue - drop_red == max_num_orders:
-            # deal with final orders (reddest orders)
-            if drop_red < 1:
-                drop_red = None
-            else:
-                drop_red = -1 * int(drop_red)
-            # cut down coeffs
-            new_cen_coeffs = new_cen_coeffs[drop_blue: drop_red]
-            new_wid_coeffs = new_wid_coeffs[drop_blue: drop_red]
-    else:
-        # cause error
-        emsg = ('Wrong number of orders. Found: {0} Expected: {1}\n\t'
-                'Tried to drop {2} blue order(s) and {3} red order(s)')
-        eargs = [nbo, max_num_orders, drop_blue, drop_red]
-        WLOG(params, 'error', emsg.format(*eargs))
-    # re-calculate number of orders
-    nbo = new_cen_coeffs.shape[0]
     # ----------------------------------------------------------------------
     # make arrays for plotting
     cypix2, cypix1 = np.zeros([nbo, nbxpix]), np.zeros([nbo, nbxpix])
@@ -912,7 +905,7 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     # Make cent coefficient table
     # ------------------------------------------------------------------
     cent_cols = ['ORDER']
-    cent_vals = [np.arange(cent_coeffs.shape[1])]
+    cent_vals = [np.arange(cent_coeffs.shape[0])]
     for c_it in range(cent_coeffs.shape[1]):
         cent_cols.append('COEFFS_{0}'.format(c_it))
         cent_vals.append(cent_coeffs[:, c_it])
@@ -922,7 +915,7 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     # Make width coefficient table
     # ------------------------------------------------------------------
     wid_cols = ['ORDER']
-    wid_vals = [np.arange(wid_coeffs.shape[1])]
+    wid_vals = [np.arange(wid_coeffs.shape[0])]
     for c_it in range(wid_coeffs.shape[1]):
         wid_cols.append('COEFFS_{0}'.format(c_it))
         wid_vals.append(wid_coeffs[:, c_it])

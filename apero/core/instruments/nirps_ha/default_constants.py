@@ -790,8 +790,9 @@ FF_RMS_SKIP_ORDERS = FF_RMS_SKIP_ORDERS.copy(__NAME__)
 FF_RMS_SKIP_ORDERS.value = '[0, 22, 23, 24, 25, 48]'
 
 #   Maximum allowed RMS of flat field
+# TODO: This needs to be changed back original value 0.10
 QC_FF_MAX_RMS = QC_FF_MAX_RMS.copy(__NAME__)
-QC_FF_MAX_RMS.value = 0.10
+QC_FF_MAX_RMS.value = 1.0
 
 # Define the order to plot in summary plots
 FF_PLOT_ORDER = FF_PLOT_ORDER.copy(__NAME__)
@@ -1135,9 +1136,9 @@ WAVE_HC_FITBOX_RMS_DEVMAX.value = 0.2
 
 # the e-width of the line expressed in pixels.
 WAVE_HC_FITBOX_EWMIN = WAVE_HC_FITBOX_EWMIN.copy(__NAME__)
-WAVE_HC_FITBOX_EWMIN.value = 0.7
+WAVE_HC_FITBOX_EWMIN.value = 1.0    #  0.7
 WAVE_HC_FITBOX_EWMAX = WAVE_HC_FITBOX_EWMAX.copy(__NAME__)
-WAVE_HC_FITBOX_EWMAX.value = 1.1
+WAVE_HC_FITBOX_EWMAX.value = 3.0    #  1.1
 
 # define the file type for saving the initial guess at the hc peak list
 WAVE_HCLL_FILE_FMT = WAVE_HCLL_FILE_FMT.copy(__NAME__)
