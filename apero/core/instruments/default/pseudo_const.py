@@ -868,6 +868,20 @@ class PseudoConstants:
         func_name = display_func(None, 'FIBER_KINDS', __NAME__, self.class_name)
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
+    def FIBER_LOC(self, fiber: str) -> Any:
+        """
+        Set the localisation fibers
+        AB --> A, B
+        C --> C
+
+        :param fiber:
+        :return:
+        """
+        _ = fiber
+        # set function name
+        func_name = display_func(None, 'FIBER_KINDS', __NAME__, self.class_name)
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+
     # noinspection PyPep8Naming
     def INDIVIDUAL_FIBERS(self):
         """
