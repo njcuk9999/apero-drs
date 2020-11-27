@@ -731,8 +731,16 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     # ------------------------------------------------------------------
     # Make cent coefficient table
     # ------------------------------------------------------------------
+    # get number of orders
+    nbo = cent_coeffs.shape[0]
+    fiberlist = pconst.FIBER_LOC(fiber=fiber)
+    # add order column
     cent_cols = ['ORDER']
-    cent_vals = [np.arange(cent_coeffs.shape[1])]
+    cent_vals = [np.repeat(np.arange(nbo // len(fiberlist)), len(fiberlist))]
+    # add fiber column
+    cent_cols += ['FIBER']
+    cent_vals.append(np.tile([fiberlist], nbo // len(fiberlist))[0])
+    # add coefficients columns
     for c_it in range(cent_coeffs.shape[1]):
         cent_cols.append('COEFFS_{0}'.format(c_it))
         cent_vals.append(cent_coeffs[:, c_it])
@@ -741,8 +749,13 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     # ------------------------------------------------------------------
     # Make width coefficient table
     # ------------------------------------------------------------------
+    # add order column
     wid_cols = ['ORDER']
-    wid_vals = [np.arange(wid_coeffs.shape[1])]
+    wid_vals = [np.repeat(np.arange(nbo // len(fiberlist)), len(fiberlist))]
+    # add fiber column
+    wid_cols += ['FIBER']
+    wid_vals.append(np.tile([fiberlist], nbo // len(fiberlist))[0])
+    # add coefficients columns
     for c_it in range(wid_coeffs.shape[1]):
         wid_cols.append('COEFFS_{0}'.format(c_it))
         wid_vals.append(wid_coeffs[:, c_it])
