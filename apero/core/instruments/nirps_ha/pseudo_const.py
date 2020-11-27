@@ -312,6 +312,20 @@ class PseudoConstants(DefaultConstants):
         # return science and reference fiber(s)
         return science, reference
 
+    def FIBER_LOC(self, fiber):
+        """
+        Set the localisation fibers
+        AB --> A, B
+        C --> C
+
+        :param fiber:
+        :return:
+        """
+        if fiber == 'A':
+            return ['A']
+        else:
+            return ['B']
+
     def INDIVIDUAL_FIBERS(self):
         # list the individual fiber names
         return ['A', 'B']

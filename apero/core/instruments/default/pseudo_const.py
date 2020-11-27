@@ -505,6 +505,20 @@ class PseudoConstants:
         func_name = 'FIBER_KINDS'
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
+    def FIBER_LOC(self, fiber):
+        """
+        Set the localisation fibers
+        AB --> A, B
+        C --> C
+
+        :param fiber:
+        :return:
+        """
+        _ = fiber
+        # set function name
+        func_name = 'FIBER_LOC'
+        raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
+
     def INDIVIDUAL_FIBERS(self):
         func_name = 'INDIVIDUAL_FIBERS'
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
