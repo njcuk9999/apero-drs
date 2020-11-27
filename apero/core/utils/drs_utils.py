@@ -548,7 +548,7 @@ def find_files(params: ParamDict, kind: str, filters: Dict[str, str],
     # update database
     indexdbm = update_index_db(params, kind=kind, indexdbm=indexdbm)
     # get columns
-    colnames = indexdbm.database.colnames('*')
+    colnames = indexdbm.database.colnames('*', table=indexdbm.database.tname)
     # get file list using filters
     condition = 'KIND="{0}"'.format(kind)
     # loop around filters
