@@ -1788,7 +1788,7 @@ class LanguageDatabase(BaseDatabaseManager):
             # set condition
             condition = 'KEYNAME="{0}"'.format(key)
             # update row in database
-            self.database.set('*', values, condition=condition,
+            self.database.set('*', values=values, condition=condition,
                               table=self.database.tname, commit=commit)
         # if we don't have the key add a new row
         else:
