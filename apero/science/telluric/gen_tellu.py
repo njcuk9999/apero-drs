@@ -1582,7 +1582,11 @@ LoadTelluFileReturn = Union[  # if return filename
     # if nentries > 1 + return source
     Tuple[List[Union[np.ndarray, None]],
           List[Union[drs_fits.Header, None]],
-          List[str], str]
+          List[str], str],
+    # if None + return source
+    Tuple[None, None, None, str],
+    # if None
+    Tuple[None, None, None]
 ]
 
 
@@ -1712,6 +1716,13 @@ def load_tellu_file(params: ParamDict, key: str,
             return filename, source
         else:
             return filename
+    # -------------------------------------------------------------------------
+    # deal with no file
+    if filename is None:
+        if return_source:
+            return None, None, None, 'None'
+        else:
+            return None, None, None
     # -------------------------------------------------------------------------
     # need to deal with a list of files
     if isinstance(filename, list):
@@ -1869,7 +1880,7 @@ def load_templates(params: ParamDict,
     temp_out = load_tellu_file(params, temp_key, header,
                                n_entries=1, required=False, fiber=fiber,
                                objname=objname, database=database,
-                               mode=None)
+                               mode=None, get_header=True)
     temp_image, temp_header, temp_filename = temp_out
     # -------------------------------------------------------------------------
     # deal with no files in database
@@ -1901,7 +1912,7 @@ def load_templates(params: ParamDict,
     tkeys = ['TEMP_FILE', 'TEMP_NUM', 'TEMP_HASH', 'TEMP_TIME']
     temp_props.set_sources(tkeys, func_name)
     # only return most recent template
-    return temp_image, temp_filename
+    return temp_image, temp_props
 
 
 def get_transmission_files(params, header, fiber, database=None):

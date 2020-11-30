@@ -12,7 +12,7 @@ from collections import OrderedDict
 from hashlib import blake2b
 import numpy as np
 import os
-from typing import Union
+from typing import Tuple, Union
 
 from apero import lang
 from apero.base import base
@@ -21,6 +21,7 @@ from apero.core import math as mp
 from apero.core.core import drs_database
 from apero.core.core import drs_log
 from apero.core.core import drs_file
+from apero.core.utils import drs_recipe
 from apero.io import drs_table
 from apero.science.calib import wave
 from apero.science import extract
@@ -42,7 +43,9 @@ Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 # get param dict
 ParamDict = constants.ParamDict
 DrsFitsFile = drs_file.DrsFitsFile
-# get database
+DrsRecipe = drs_recipe.DrsRecipe
+# get databases
+CalibrationDatabase = drs_database.CalibrationDatabase
 TelluricDatabase = drs_database.TelluricDatabase
 # Get function string
 display_func = drs_log.display_func
@@ -57,8 +60,12 @@ pcheck = constants.PCheck(wlog=WLOG)
 # =============================================================================
 # General functions
 # =============================================================================
-def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
-                        fiber, calibdb=None, **kwargs):
+def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
+                        filenames: Union[str, None], reffile: DrsFitsFile,
+                        mprops: ParamDict, nprops: ParamDict,
+                        fiber: str, qc_params: list,
+                        calibdb: Union[CalibrationDatabase, None] = None,
+                        **kwargs) -> ParamDict:
     # set function mame
     func_name = display_func(params, 'make_template_cubes', __NAME__)
     # get parameters from params/kwargs
@@ -69,6 +76,12 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
     e2ds_lowf_size = pcheck(params, 'MKTEMPLATE_E2DS_LOWF_SIZE',
                             's1d_lowf_size',
                             kwargs, func_name)
+    min_berv_cov = pcheck(params, 'MKTEMPLATE_BERVCOR_QCMIN', 'min_berv_cov',
+                          kwargs, func_name)
+    core_snr = pcheck(params, 'MKTEMPLATE_BERVCOV_CSNR', 'core_snr', kwargs,
+                      func_name)
+    resolution = pcheck(params, 'MKTEMPLATE_BERVCOV_RES', 'resolution', kwargs,
+                        func_name)
     # get master wave map
     mwavemap = mprops['WAVEMAP']
     # get the objname
@@ -128,7 +141,8 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
     # compile base columns
     b_cols = OrderedDict()
     b_cols['RowNum'], b_cols['Filename'], b_cols['OBJNAME'] = [], [], []
-    b_cols['BERV'], b_cols['SNR{0}'.format(snr_order)] = [], []
+    b_cols['BERV'], b_cols['BJD'], b_cols['BERVMAX'] = [], [], []
+    b_cols['SNR{0}'.format(snr_order)] = []
     b_cols['MidObsHuman'], b_cols['MidObsMJD'] = [], []
     b_cols['VERSION'], b_cols['Process_Date'], b_cols['DRS_Date'] = [], [], []
     b_cols['DARKFILE'], b_cols['BADFILE'], b_cols['BACKFILE'] = [], [], []
@@ -144,7 +158,9 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
     # create NaN filled storage
     big_cube = np.repeat([np.nan], flatsize).reshape(*dims)
     big_cube0 = np.repeat([np.nan], flatsize).reshape(*dims)
-
+    # set up qc params
+    qc_names, qc_values, qc_logic, qc_pass = qc_params
+    fail_msgs = []
     # ----------------------------------------------------------------------
     # Loop through input files
     # ----------------------------------------------------------------------
@@ -176,6 +192,8 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
         bprops = extract.get_berv(params, infile, log=False)
         # get berv from bprops
         berv = bprops['USE_BERV']
+        bjd = bprops['USE_BJD']
+        bervmax = bprops['USE_BERV_MAX']
         # deal with bad berv (nan or None)
         if berv in [np.nan, None] or not isinstance(berv, (int, float)):
             eargs = [berv, func_name]
@@ -199,6 +217,8 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
         b_cols['Filename'].append(infile.basename)
         b_cols['OBJNAME'].append(infile.get_hkey('KW_OBJNAME', dtype=str))
         b_cols['BERV'].append(berv)
+        b_cols['BJD'].append(bjd)
+        b_cols['BERVMAX'].append(bervmax)
         b_cols['SNR{0}'.format(snr_order)].append(snr_all[it])
         b_cols['MidObsHuman'].append(Time(midexps[it], format='mjd').iso)
         b_cols['MidObsMJD'].append(midexps[it])
@@ -251,15 +271,43 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
         big_cube[:, :, it] = simage
         # add the original data to big_cube0
         big_cube0[:, :, it] = image2
+
+    # ------------------------------------------------------------------
+    # Deal with BERV coverage
+    # ------------------------------------------------------------------
+    bcovargs = [b_cols['BERV'], b_cols['SNR{0}'.format(snr_order)],
+                core_snr, resolution, objname]
+    bcout = calculate_berv_coverage(params, recipe, *bcovargs)
+    berv_cov_table, berv_cov = bcout
+    # quality control on coverage
+    if berv_cov < min_berv_cov:
+        # deal with insufficient berv coverage
+        qc_names.append('BERV_COV')
+        qc_values.append(berv_cov)
+        qc_logic.append('BERV_COV < {0}'.format(min_berv_cov))
+        qc_pass.append(0)
+        fargs = [berv_cov, min_berv_cov]
+        fail_msgs.append(textentry('10-019-00010', args=fargs))
+    else:
+        qc_names.append('BERV_COV')
+        qc_values.append(berv_cov)
+        qc_logic.append('BERV_COV < {0}'.format(min_berv_cov))
+        qc_pass.append(1)
+
     # ------------------------------------------------------------------
     # Iterate until low frequency noise is gone
     # ------------------------------------------------------------------
     # deal with having no files
     if len(b_cols['RowNum']) == 0:
-        # log that no files were found
-        WLOG(params, 'warning', textentry('10-019-00007', args=[objname]))
         # set big_cube_med to None
         median = None
+        # deal with no median
+        qc_names.append('HAS_ROWS')
+        qc_values.append('False')
+        qc_logic.append('HAS_ROWS==False')
+        qc_pass.append(0)
+        fail_msgs.append(textentry('10-019-00007', args=[objname]))
+
     else:
         # calculate the median of the big cube
         median = mp.nanmedian(big_cube, axis=2)
@@ -283,6 +331,15 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
             # TODO: only accept pixels where we have a fraction of values
             #    finite (i.e. if <30 obs need 50%  if >30 need 30)
 
+        # deal with quality control (passed)
+        qc_names.append('HAS_ROWS')
+        qc_values.append('True')
+        qc_logic.append('HAS_ROWS==True')
+        qc_pass.append(1)
+
+    # ----------------------------------------------------------------------
+    # store in qc_params
+    qc_params = [qc_names, qc_values, qc_logic, qc_pass]
     # ----------------------------------------------------------------------
     # setup output parameter dictionary
     props = ParamDict()
@@ -295,9 +352,18 @@ def make_template_cubes(params, recipe, filenames, reffile, mprops, nprops,
     props['QC_SNR_THRES'] = snr_thres
     props['E2DS_ITERATIONS'] = e2ds_iterations
     props['E2DS_LOWF_SIZE'] = e2ds_lowf_size
+    props['BERV_COVERAGE_VAL'] = berv_cov
+    props['MIN_BERV_COVERAGE'] = min_berv_cov
+    props['BERV_COVERAGE_SNR'] = core_snr
+    props['BERV_COVERAGE_RES'] = resolution
+    props['BERV_COVERAGE_TABLE'] = berv_cov_table
+    props['QC_PARAMS'] = qc_params
+    props['FAIL_MSG'] = fail_msgs
     # set sources
     keys = ['BIG_CUBE', 'BIG_CUBE0', 'BIG_COLS', 'MEDIAN', 'QC_SNR_ORDER',
-            'QC_SNR_THRES', 'E2DS_ITERATIONS', 'E2DS_LOWF_SIZE']
+            'QC_SNR_THRES', 'E2DS_ITERATIONS', 'E2DS_LOWF_SIZE',
+            'BERV_COVERAGE_VAL', 'MIN_BERV_COVERAGE', 'BERV_COVERAGE_TABLE',
+            'QC_PARAMS']
     props.set_sources(keys, func_name)
     # ----------------------------------------------------------------------
     # return outputs
@@ -560,19 +626,79 @@ def list_current_templates(params: ParamDict,
     return np.unique(objnames)
 
 
+def calculate_berv_coverage(params: ParamDict, recipe: DrsRecipe,
+                            berv: np.ndarray, snr: np.ndarray,
+                            core_snr: float, resolution: float,
+                            objname: str) -> Tuple[Table, float]:
+    """
+    Calculate the BERV coverage using the individual BERV measurements and
+    the SNR
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param recipe: Recipe, DrsRecipe instance (the recipe using this function)
+    :param berv: numpy array, the BERVs for each observation
+    :param snr: numpy array, the SNR for each observation
+    :param core_snr: float, the core SNR for weighting observations
+    :param resolution: float, the rough resolution of the instrument in km/s
+    :param objname: str, the object name for this target
+
+    :return: tuple, 1. the table of berv coverage, 2. the berv coverage value
+             the higher the better
+    """
+    # make sure berv and snr are numpy arrays
+    berv = np.array(berv)
+    snr = np.array(snr)
+    # calculate a weight at a given SNR
+    #  SNR = 100 is equivalent to a weight of 0.5 at core of line
+    weight = (snr ** 2) / (core_snr ** 2)
+    # get the min and max BERV
+    minberv = mp.nanmin(berv)
+    maxberv = mp.nanmax(berv)
+    # limits include twice the resolution element
+    low = minberv - (2 * resolution)
+    high = maxberv + (2 * resolution)
+    # get the BERV velocity range [km/s]
+    velo_range = np.arange(low, high, 0.1)
+    # get the equivalent width (FWHM) of the resolution
+    ewid = resolution / mp.fwhm()
+    # work out the lack of coverage at each velocity bin
+    anticoverage = np.ones_like(velo_range)
+    # loop around all data we have
+    for row in range(len(snr)):
+        # get this data points difference between itself and all velocity points
+        diff = berv[row] - velo_range
+        # work out coverage using a gaussian at each velocity bin
+        gauss = np.exp(-0.5 * (diff ** 2) / (ewid ** 2))
+        # work out anticoverage
+        anticoverage = anticoverage * (1 - np.sqrt(gauss)) ** weight[row]
+    # calculate coverage
+    coverage = 1 - anticoverage
+    # calculate berv coverage (integral of coverage) in km/s
+    berv_cov = float(np.trapz(coverage, velo_range))
+    # log coverage
+    WLOG(params, 'info', textentry('40-019-00051', args=[berv_cov]))
+    # plot coverage for this object
+    recipe.plot('MKTEMP_BERV_COV', berv=velo_range, coverage=coverage,
+                objname=objname, total=berv_cov)
+    recipe.plot('SUM_MKTEMP_BERV_COV', berv=velo_range, coverage=coverage,
+                objname=objname, total=berv_cov)
+    # construct table
+    columns = ['BERV', 'ANTICOVERAGE', 'COVERAGE']
+    values = [velo_range, anticoverage, coverage]
+    table = drs_table.make_table(params, columns, values,
+                                 units=['km/s', None, None])
+    # return table
+    return table, berv_cov
+
+
 # =============================================================================
 # QC and summary functions
 # =============================================================================
-def mk_template_qc(params):
+def mk_template_qc(params, qc_params, fail_msg=None):
     # set passed variable and fail message list
-    fail_msg, qc_values, qc_names = [], [], [],
-    qc_logic, qc_pass = [], []
-
-    # add to qc header lists
-    qc_values.append('None')
-    qc_names.append('None')
-    qc_logic.append('None')
-    qc_pass.append(1)
+    if fail_msg is None:
+        fail_msg = []
+    qc_names, qc_values, qc_logic, qc_pass = qc_params
     # ----------------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
@@ -589,17 +715,23 @@ def mk_template_qc(params):
     return qc_params, passed
 
 
-def mk_template_summary(recipe, params, cprops, qc_params):
+def mk_template_summary(recipe, params, cprops, template_file, qc_params):
     # count number of files
     nfiles = len(cprops['BIG_COLS']['RowNum'])
+    temp_hash = template_file.get_key('KW_MKTEMP_HASH')
+    berv_cov = template_file.get_key('KW_MKTEMP_BERV_COV')
+    min_berv_cov = template_file.get_key('KW_MKTEMP_BERV_COV_MIN')
     # add stats
     recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
     recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
-
     recipe.plot.add_stat('KW_MKTEMP_SNR_ORDER', value=cprops['QC_SNR_ORDER'])
     recipe.plot.add_stat('KW_MKTEMP_SNR_THRES', value=cprops['QC_SNR_THRES'])
-    recipe.plot.add_stat('NTMASTER', value=nfiles,
-                         comment='Number files in template')
+    recipe.plot.add_stat('KW_MKTEMP_NFILES', value=nfiles,
+                         comment='Number of files')
+    recipe.plot.add_stat('KW_MKTEMP_HASH', value=temp_hash)
+    recipe.plot.add_stat('KW_MKTEMP_TIME', value=params['DATE_NOW'])
+    recipe.plot.add_stat('KW_MKTEMP_BERV_COV', value=berv_cov)
+    recipe.plot.add_stat('KW_MKTEMP_BERV_COV_MIN', value=min_berv_cov)
     # construct summary
     recipe.plot.summary_document(0, qc_params)
 
@@ -635,7 +767,8 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     bigtable = drs_table.make_table(params, columns=columns, values=values)
     # make a hash so this template is unique
     template_hash = gen_template_hash(','.join(cprops['BIG_COLS']['Filename']))
-
+    # get berv coverage table
+    berv_cov_table = cprops['BERV_COVERAGE_TABLE']
     # ------------------------------------------------------------------
     # write the template file (TELLU_TEMP)
     # ------------------------------------------------------------------
@@ -666,12 +799,22 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     template_file.add_hkey('KW_MKTEMP_TIME', value=params['DATE_NOW'])
     template_file.add_hkey('KW_MKTEMP_SNR_ORDER', value=cprops['QC_SNR_ORDER'])
     template_file.add_hkey('KW_MKTEMP_SNR_THRES', value=cprops['QC_SNR_THRES'])
+    template_file.add_hkey('KW_MKTEMP_BERV_COV',
+                           value=cprops['BERV_COVERAGE_VAL'])
+    template_file.add_hkey('KW_MKTEMP_BERV_COV_MIN',
+                           value=cprops['MIN_BERV_COVERAGE'])
+    template_file.add_hkey('KW_MKTEMP_BERV_COV_SNR',
+                           value=cprops['BERV_COVERAGE_SNR'])
+    template_file.add_hkey('KW_MKTEMP_BERV_COV_RES',
+                           value=cprops['BERV_COVERAGE_RES'])
+
     # set data
     template_file.data = cprops['MEDIAN']
     # log that we are saving s1d table
     WLOG(params, '', textentry('40-019-00029', args=[template_file.filename]))
     # write multi
-    template_file.write_multi(data_list=[bigtable], datatype_list=['table'],
+    template_file.write_multi(data_list=[bigtable, berv_cov_table],
+                              datatype_list=['table', 'table'],
                               kind=recipe.outputtype,
                               runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -694,7 +837,8 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # log that we are saving s1d table
     WLOG(params, '', textentry('40-019-00030', args=[bigcubefile.filename]))
     # write multi
-    bigcubefile.write_multi(data_list=[bigtable], datatype_list=['table'],
+    bigcubefile.write_multi(data_list=[bigtable, berv_cov_table],
+                            datatype_list=['table', 'table'],
                             kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(bigcubefile)
@@ -716,7 +860,8 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # log that we are saving s1d table
     WLOG(params, '', textentry('40-019-00031', args=[bigcubefile0.filename]))
     # write multi
-    bigcubefile0.write_multi(data_list=[bigtable], datatype_list=['table'],
+    bigcubefile0.write_multi(data_list=[bigtable, berv_cov_table],
+                             datatype_list=['table', 'table'],
                              kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(bigcubefile0)
