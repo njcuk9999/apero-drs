@@ -1930,6 +1930,19 @@ MKTEMPLATE_S1D_ITNUM.value = 5
 MKTEMPLATE_S1D_LOWF_SIZE = MKTEMPLATE_S1D_LOWF_SIZE.copy(__NAME__)
 MKTEMPLATE_S1D_LOWF_SIZE.value = 501
 
+# Define the minimum allowed berv coverage to construct a template
+#   in km/s  (default is double the resolution in km/s)
+MKTEMPLATE_BERVCOR_QCMIN = MKTEMPLATE_BERVCOR_QCMIN.copy(__NAME__)
+MKTEMPLATE_BERVCOR_QCMIN.value = 8.0
+
+# Define the core SNR in order to calculate required BERV coverage
+MKTEMPLATE_BERVCOV_CSNR = MKTEMPLATE_BERVCOV_CSNR.copy(__NAME__)
+MKTEMPLATE_BERVCOV_CSNR.value = 100.0
+
+# Defome the resolution in km/s for calculating BERV coverage
+MKTEMPLATE_BERVCOV_RES = MKTEMPLATE_BERVCOV_RES.copy(__NAME__)
+MKTEMPLATE_BERVCOV_RES.value = 4.0
+
 # =============================================================================
 # CALIBRATION: CCF SETTINGS
 # =============================================================================
@@ -2407,6 +2420,10 @@ PLOT_FTELLU_RECON_ABSO1.value = True
 # turn on the fit tellu reconstructed absorption debug plot (single order)
 PLOT_FTELLU_RECON_ABSO2 = PLOT_FTELLU_RECON_ABSO2.copy(__NAME__)
 PLOT_FTELLU_RECON_ABSO2.value = True
+
+# turn on the berv coverage debug plot
+PLOT_MKTEMP_BERV_COV = PLOT_MKTEMP_BERV_COV.copy(__NAME__)
+PLOT_MKTEMP_BERV_COV.value = True
 
 # turn on the ccf rv fit debug plot (in a loop around orders)
 PLOT_CCF_RV_FIT_LOOP = PLOT_CCF_RV_FIT_LOOP.copy(__NAME__)

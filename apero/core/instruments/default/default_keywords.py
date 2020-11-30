@@ -150,7 +150,8 @@ __all__ = [  # input keys
     'KW_CCF_RV_SIMU_FP', 'KW_CCF_RV_DRIFT', 'KW_CCF_RV_OBJ',
     'KW_CCF_RV_CORR', 'KW_CCF_RV_WAVEFILE', 'KW_CCF_RV_WAVETIME',
     'KW_CCF_RV_TIMEDIFF', 'KW_CCF_RV_WAVESRCE', 'KW_CCF_DVRMS_SP',
-    'KW_CCF_DVRMS_CC',
+    'KW_CCF_DVRMS_CC', 'KW_MKTEMP_BERV_COV', 'KW_MKTEMP_BERV_COV_MIN',
+    'KW_MKTEMP_BERV_COV_SNR', 'KW_MKTEMP_BERV_COV_RES',
     # polar values
     'KW_POL_STOKES', 'KW_POL_NEXP', 'KW_POL_METHOD', 'KW_POL_FILES',
     'KW_POL_EXPS', 'KW_POL_MJDS', 'KW_POL_MJDENDS', 'KW_POL_BJDS',
@@ -1375,6 +1376,22 @@ KW_MKTEMP_SNR_ORDER = Keyword('KW_MKTEMP_SNR_ORDER', key='', dtype=int,
 # the snr threshold used for quality control cut in make template calculation
 KW_MKTEMP_SNR_THRES = Keyword('KW_MKTEMP_SNR_THRES', key='', dtype=float,
                               source=__NAME__)
+
+# the berv coverage calculated for this template calculation
+KW_MKTEMP_BERV_COV = Keyword('KW_MKTEMP_BERV_COV', key='', dtype=float,
+                             source=__NAME__)
+
+# the minimum berv coverage allowed for this template calculation
+KW_MKTEMP_BERV_COV_MIN = Keyword('KW_MKTEMP_BERV_COV_MIN', key='', dtype=float,
+                                 source=__NAME__)
+
+# the core snr used for this template calculation
+KW_MKTEMP_BERV_COV_SNR = Keyword('KW_MKTEMP_BERV_COV_SNR', key='', dtype=float,
+                                 source=__NAME__)
+
+# the resolution used for this template calculation
+KW_MKTEMP_BERV_COV_RES = Keyword('KW_MKTEMP_BERV_COV_RES', key='', dtype=float,
+                                 source=__NAME__)
 
 # -----------------------------------------------------------------------------
 # Define ccf variables
