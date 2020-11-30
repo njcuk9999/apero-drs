@@ -27,13 +27,13 @@ Created on 2019-09-05 at 14:58
 
 @author: cook
 """
+import numpy as np
 import os
 
 from apero.base import base
 from apero import lang
 from apero.core import constants
 from apero.core.core import drs_database
-from apero.core.core import drs_file
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
@@ -139,19 +139,21 @@ def __main__(recipe, params):
         object_filenames = telluric.get_tellu_objs(params, filetype,
                                                    objnames=[objname],
                                                    database=telludbm)
-
+    # ----------------------------------------------------------------------
     # deal with no files being present
     if len(object_filenames) == 0:
         wargs = [objname, filetype]
         WLOG(params, 'warning', textentry('10-019-00005', args=wargs))
-        # dummy pass of qc --> pass
-        qc_params = [['None'], ['None'], ['None'], [1]]
+        # no object files --> qc failure
+        qc_params = [['HAS_OBJ'], ['False'], ['HAS_OBJ==False'], [0]]
         # update recipe log
         recipe.log.add_qc(params, qc_params, True)
         # update recipe log file
         recipe.log.end(params)
         # end this run
         return drs_startup.return_locals(params, locals())
+    else:
+        qc_params = [['HAS_OBJ'], ['True'], ['HAS_OBJ==False'], [1]]
     # ----------------------------------------------------------------------
     # Get filetype definition
     infiletype = drs_startup.get_file_definition(filetype, params['INSTRUMENT'],
@@ -192,11 +194,19 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Make data cubes
     # ----------------------------------------------------------------------
-    cargs = [object_filenames, infile, mprops, nprops, fiber]
+    cargs = [object_filenames, infile, mprops, nprops, fiber, qc_params]
     cprops = telluric.make_template_cubes(params, recipe, *cargs,
                                           calibdb=calibdbm)
-    # deal with no good files
-    if cprops['MEDIAN'] is None:
+    # ----------------------------------------------------------------------
+    # deal with QC params failure (do not continue)
+    if not np.all(cprops['QC_PARAMS'][3]):
+        # print qc failure
+        telluric.mk_template_qc(params, qc_params, cprops['FAIL_MSG'])
+        # update recipe log
+        recipe.log.add_qc(params, cprops['QC_PARAMS'] , True)
+        # update recipe log file
+        recipe.log.end(params)
+        # end here
         return drs_startup.return_locals(params, locals())
     # ----------------------------------------------------------------------
     # Make s1d cubes
@@ -222,9 +232,9 @@ def __main__(recipe, params):
         s1d_cubes.append(s1d_props)
 
     # ----------------------------------------------------------------------
-    # Quality control
+    # print/log quality control (all assigned previously)
     # ----------------------------------------------------------------------
-    qc_params, passed = telluric.mk_template_qc(params)
+    qc_params, passed = telluric.mk_template_qc(params, qc_params)
     # update recipe log
     recipe.log.add_qc(params, qc_params, passed)
 
@@ -260,7 +270,8 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Construct summary document
     # ----------------------------------------------------------------------
-    telluric.mk_template_summary(recipe, params, cprops, qc_params)
+    telluric.mk_template_summary(recipe, params, cprops, template_file,
+                                 qc_params)
 
     # ------------------------------------------------------------------
     # update recipe log file

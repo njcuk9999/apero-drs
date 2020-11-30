@@ -164,13 +164,14 @@ def calculate_tellu_res_absorption(params, recipe, image, template,
     tprops['TEMPLATE'] = template
     tprops['TEMPLATE_FLAG'] = template_flag
     tprops['TRANMISSION_MAP'] = transmission_map
-    tprops['TEMPLATE_FILE'] = template_props['TEMP_FILE']
-    tprops['TEMPLATE_NUM'] = template_props['TEMP_NUM']
-    tprops['TEMPLATE_HASH'] = template_props['TEMP_HASH']
+    tprops['TEMP_FILE'] = template_props['TEMP_FILE']
+    tprops['TEMP_NUM'] = template_props['TEMP_NUM']
+    tprops['TEMP_HASH'] = template_props['TEMP_HASH']
+    tprops['TEMP_TIME'] = template_props['TEMP_TIME']
     # set sources
     keys = ['PASSED', 'RECOV_AIRMASS', 'RECOV_WATER', 'IMAGE_OUT', 'SED_OUT',
             'TEMPLATE', 'TEMPLATE_FLAG', 'TRANMISSION_MAP', 'AIRMASS',
-            'TEMPLATE_FILE', 'TEMPLATE_NUM', 'TEMPLATE_HASH']
+            'TEMP_FILE', 'TEMP_NUM', 'TEMP_HASH']
     tprops.set_sources(keys, func_name)
     # add constants
     tprops['DEFAULT_CWIDTH'] = default_conv_width

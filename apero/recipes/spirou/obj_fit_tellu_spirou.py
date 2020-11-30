@@ -336,7 +336,7 @@ def __main__(recipe, params):
                 continue
             # else correct/create s1d/ and save
             coargs = [sfiber, infile, cprops, rawfiles, combine, pca_props,
-                      sprops, qc_params, template_file, tpreprops]
+                      sprops, qc_params, template_props, tpreprops]
             telluric.correct_other_science(params, recipe, *coargs,
                                            database=calibdbm)
 

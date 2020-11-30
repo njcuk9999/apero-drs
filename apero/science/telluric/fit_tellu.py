@@ -716,7 +716,7 @@ def calc_recon_and_correct(params, recipe, image, wprops, pca_props, sprops,
 
 def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
                           combine, pca_props, sprops, qc_params,
-                          template_file, tpreprops, database=None):
+                          template_props, tpreprops, database=None):
     # get the header
     header = infile.get_header()
     # ------------------------------------------------------------------
@@ -760,7 +760,7 @@ def correct_other_science(params, recipe, fiber, infile, cprops, rawfiles,
     # Save corrected E2DS to file
     # ------------------------------------------------------------------
     fargs = [fiber_infile, rawfiles, fiber, combine, nprops, wprops,
-             pca_props, sprops, cprops, qc_params, template_file, tpreprops]
+             pca_props, sprops, cprops, qc_params, template_props, tpreprops]
     fkwargs = dict(CORRECTED_SP=scorr)
     corrfile = fit_tellu_write_corrected(params, recipe, *fargs, **fkwargs)
     # ------------------------------------------------------------------
