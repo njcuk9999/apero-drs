@@ -6,7 +6,7 @@ TODO
 ************************************************************************************
 
 This is the currently list of items that need to still be completed.
-Last updated: 2020-11-25 (NJC).
+Last updated: 2020-11-30 (NJC).
 
 .. note:: bullet points are not ordered
 
@@ -108,6 +108,7 @@ Last updated: 2020-11-25 (NJC).
 
 High priority:
 
+* object alias gaia/2mass list [Thomas]
 * Preprocessing Recipe test 1 [Charles/Thomas]
 * Dark Master recipe test 1 [Charles/Thomas]
 * Bad Pixel Corretion Recipe test 1 [Charles/Thomas]
