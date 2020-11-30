@@ -1749,6 +1749,24 @@ KW_MKTEMP_SNR_ORDER.set(key='MTPSNROD', comment='mktemplate snr order used')
 KW_MKTEMP_SNR_THRES = KW_MKTEMP_SNR_THRES.copy(__NAME__)
 KW_MKTEMP_SNR_THRES.set(key='MTPSNRTH', comment='mktemplate snr threshold used')
 
+# the berv coverage calculated for this template calculation
+KW_MKTEMP_BERV_COV = KW_MKTEMP_BERV_COV.copy(__NAME__)
+KW_MKTEMP_BERV_COV.set('MTPBCOV', comment='mktemplate berv coverage km/s')
+
+# the minimum berv coverage allowed for this template calculation
+KW_MKTEMP_BERV_COV_MIN = KW_MKTEMP_BERV_COV_MIN.copy(__NAME__)
+KW_MKTEMP_BERV_COV_MIN.set('MTPBCMIN',
+                           comment='mktemplate min berv coverage used km/s')
+
+# the core snr used for this template calculation
+KW_MKTEMP_BERV_COV_SNR = KW_MKTEMP_BERV_COV_SNR.copy(__NAME__)
+KW_MKTEMP_BERV_COV_SNR.set('MTPBCSNR', comment='mktemplate berv cov snr used')
+
+# the resolution used for this template calculation
+KW_MKTEMP_BERV_COV_RES = KW_MKTEMP_BERV_COV_RES.copy(__NAME__)
+KW_MKTEMP_BERV_COV_RES.set('MTPBCRES',
+                           comment='mktemplate berv cov resolution used')
+
 # -----------------------------------------------------------------------------
 # Define ccf variables
 # -----------------------------------------------------------------------------

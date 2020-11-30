@@ -1919,6 +1919,20 @@ MKTEMPLATE_S1D_ITNUM.value = 5
 MKTEMPLATE_S1D_LOWF_SIZE = MKTEMPLATE_S1D_LOWF_SIZE.copy(__NAME__)
 MKTEMPLATE_S1D_LOWF_SIZE.value = 501
 
+# Define the minimum allowed berv coverage to construct a template
+#   in km/s  (default is double the resolution in km/s)
+MKTEMPLATE_BERVCOR_QCMIN = MKTEMPLATE_BERVCOR_QCMIN.copy(__NAME__)
+MKTEMPLATE_BERVCOR_QCMIN.value = 6.0
+
+# Define the core SNR in order to calculate required BERV coverage
+MKTEMPLATE_BERVCOV_CSNR = MKTEMPLATE_BERVCOV_CSNR.copy(__NAME__)
+MKTEMPLATE_BERVCOV_CSNR.value = 100.0
+
+# Defome the resolution in km/s for calculating BERV coverage
+MKTEMPLATE_BERVCOV_RES = MKTEMPLATE_BERVCOV_RES.copy(__NAME__)
+MKTEMPLATE_BERVCOV_RES.value = 3.0
+
+
 # =============================================================================
 # CALIBRATION: CCF SETTINGS
 # =============================================================================

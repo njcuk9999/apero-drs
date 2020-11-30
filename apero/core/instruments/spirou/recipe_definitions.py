@@ -1007,8 +1007,8 @@ obj_mk_template.set_outputs(TELLU_TEMP=files.out_tellu_template,
                             TELLU_BIGCUBE0=files.out_tellu_bigcube0,
                             TELLU_TEMP_S1D=files.out_tellu_s1d_template,
                             TELLU_BIGCUBE_S1D=files.out_tellu_s1d_bigcube)
-obj_mk_template.set_debug_plots('EXTRACT_S1D')
-obj_mk_template.set_summary_plots('SUM_EXTRACT_S1D')
+obj_mk_template.set_debug_plots('EXTRACT_S1D', 'MKTEMP_BERV_COV')
+obj_mk_template.set_summary_plots('SUM_EXTRACT_S1D', 'SUM_MKTEMP_BERV_COV')
 obj_mk_template.set_arg(name='objname', pos=0, dtype=str,
                         helpstr=textentry('MKTEMP_OBJNAME_HELP'))
 obj_mk_template.set_kwarg(name='--filetype', dtype=str,
