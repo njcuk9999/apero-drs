@@ -3235,6 +3235,33 @@ def plot_ftellu_recon_abso(plotter, graph, kwargs):
         plotter.plotend(graph)
 
 
+def plot_mktemp_berv_cov(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    berv = kwargs['berv']
+    coverage = kwargs['coverage']
+    objname = kwargs['objname']
+    total = kwargs['total']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+    # plot
+    frame.plot(berv, coverage * 100)
+    title = 'BERV Coverage for {0} ({1:.2f} km/s)'.format(objname, total)
+    frame.set(xlabel='BERV [km/s]', ylabel='Coverage [%]', title=title)
+    # ------------------------------------------------------------------
+    # update filename (adding order_num to end)
+    suffix = 'objname{0}'.format(objname)
+    graph.set_filename(plotter.params, plotter.location, suffix=suffix)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
 # telluric pre clean graph instances
 tellup_wave_trans = Graph('TELLUP_WAVE_TRANS', kind='debug',
                           func=plot_tellup_wave_trans)
@@ -3280,13 +3307,21 @@ sum_desc = 'Results from the telluric fit'
 sum_ftellu_recon_abso = Graph('SUM_FTELLU_RECON_ABSO', kind='summary',
                               func=plot_ftellu_recon_abso, figsize=(16, 10),
                               dpi=150, description=sum_desc)
+
+mktemp_berv_cov = Graph('MKTEMP_BERV_COV', kind='debug',
+                        func=plot_mktemp_berv_cov)
+sum_desc = 'Template coverage'
+sum_mktemp_berv_cov = Graph('SUM_MKTEMP_BERV_COV', kind='summary',
+                            func=plot_mktemp_berv_cov, figsize=(16, 10),
+                            dpi=150, description=sum_desc)
 # add to definitions
 definitions += [mktellu_wave_flux1, mktellu_wave_flux2, sum_mktellu_wave_flux,
                 ftellu_pca_comp1, ftellu_pca_comp2, ftellu_recon_spline1,
                 ftellu_recon_spline2, ftellu_wave_shift1, ftellu_wave_shift2,
                 ftellu_recon_abso1, ftellu_recon_abso2, sum_ftellu_recon_abso,
                 tellup_wave_trans, sum_tellup_wave_trans,
-                tellup_abso_spec, sum_tellup_abso_spec]
+                tellup_abso_spec, sum_tellup_abso_spec, mktemp_berv_cov,
+                sum_mktemp_berv_cov]
 
 
 # =============================================================================
