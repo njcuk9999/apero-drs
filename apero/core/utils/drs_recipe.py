@@ -152,6 +152,7 @@ class DrsRecipe(object):
         self.args = OrderedDict()
         self.kwargs = OrderedDict()
         self.specialargs = OrderedDict()
+        self.group_func = None
         # args for logging
         self.largs = ''
         self.lkwargs = ''
@@ -912,6 +913,8 @@ class DrsRecipe(object):
             self.specialargs[sargname].copy(recipe.specialargs[sargname])
         for arg in recipe.extras:
             self.extras[arg] = recipe.extras[arg]
+        # cannot copy group function
+        self.group_func = recipe.group_func
         # define arg list
         self.arg_list = list(recipe.arg_list)
         # get string arg list (may be None)
