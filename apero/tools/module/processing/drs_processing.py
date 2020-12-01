@@ -617,6 +617,9 @@ def generate_skip_table(params):
         blacklist = None
     else:
         blacklist = params['BNIGHTNAMES']
+    # deal with nightname set (take precedences over white list)
+    if not drs_text.null_text(params['NIGHTNAME'], ['', 'None', 'All']):
+        whitelist = [params['NIGHTNAME']]
     # get runstrings
     table = logdbm.get_entries('RECIPE, RUNSTRING', wdirs=whitelist,
                                bdirs=blacklist)
@@ -2177,7 +2180,7 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
     return return_dict
 
 
-def _multi_process(params, recipe, runlist, cores, groupname=None):
+def _multi_process1(params, recipe, runlist, cores, groupname=None):
     # first try to group tasks
     grouplist, groupnames = _group_tasks1(runlist, cores)
     # start process manager
@@ -2218,7 +2221,7 @@ def _multi_process(params, recipe, runlist, cores, groupname=None):
 
 
 # TODO: remove or replace _multi_process
-def _multi_process1(params, recipe, runlist, cores, groupname=None):
+def _multi_process(params, recipe, runlist, cores, groupname=None):
     # first try to group tasks (now just by recipe)
     grouplist, groupnames = _group_tasks2(runlist, cores)
     # start process manager
