@@ -4,6 +4,7 @@ from apero.core import constants
 from apero.core.utils import drs_recipe
 from apero import lang
 from apero.core.instruments.spirou import file_definitions as files
+from apero.core.instruments.default import grouping
 
 # =============================================================================
 # Define variables
@@ -190,6 +191,7 @@ cal_pp.set_arg(name='files', dtype='files', pos='1+', files=[files.raw_file],
                helpstr=textentry('PREPROCESS_UFILES_HELP'), limit=1)
 cal_pp.set_kwarg(name='--skip', dtype='bool', default=False,
                  helpstr=textentry('PPSKIP_HELP'), default_ref='SKIP_DONE_PP')
+cal_pp.group_func = grouping.group_individually
 # add to recipe
 recipes.append(cal_pp)
 
@@ -224,6 +226,7 @@ cal_badpix.set_kwarg(**flipimage)
 cal_badpix.set_kwarg(**fluxunits)
 cal_badpix.set_kwarg(**plot)
 cal_badpix.set_kwarg(**resize)
+cal_badpix.group_func = grouping.group_by_dirname
 # add to recipe
 recipes.append(cal_badpix)
 
@@ -254,6 +257,7 @@ cal_dark.set_arg(name='files', dtype='files',
 cal_dark.set_kwarg(**add_db)
 cal_dark.set_kwarg(default=True, **combine)
 cal_dark.set_kwarg(**plot)
+cal_dark.group_func = grouping.group_by_dirname
 # add to recipe
 recipes.append(cal_dark)
 
@@ -277,6 +281,7 @@ cal_dark_master.set_kwarg(name='--filetype', dtype=str,
                           helpstr=textentry('DARK_MASTER_FILETYPE'))
 cal_dark_master.set_kwarg(**add_db)
 cal_dark_master.set_kwarg(**plot)
+cal_dark_master.group_func = grouping.no_group
 # add to recipe
 recipes.append(cal_dark_master)
 
@@ -318,6 +323,7 @@ cal_loc.set_kwarg(**flipimage)
 cal_loc.set_kwarg(**fluxunits)
 cal_loc.set_kwarg(**plot)
 cal_loc.set_kwarg(**resize)
+cal_loc.group_func = grouping.group_by_dirname
 # add to recipe
 recipes.append(cal_loc)
 
@@ -371,6 +377,7 @@ cal_shape_master.set_kwarg(**resize)
 cal_shape_master.set_kwarg(name='--fpmaster', dtype='files',
                            files=[files.out_shape_fpmaster], default='None',
                            helpstr=textentry('SHAPE_FPMASTER_HELP'))
+cal_shape_master.group_func = grouping.group_by_dirname
 # add to recipe
 recipes.append(cal_shape_master)
 
@@ -410,6 +417,7 @@ cal_shape.set_kwarg(**plot)
 cal_shape.set_kwarg(**resize)
 cal_shape.set_kwarg(**shapexfile)
 cal_shape.set_kwarg(**shapeyfile)
+cal_shape.group_func = grouping.group_by_dirname
 # add to recipe
 recipes.append(cal_shape)
 
@@ -455,6 +463,7 @@ cal_ff.set_kwarg(**resize)
 cal_ff.set_kwarg(**shapexfile)
 cal_ff.set_kwarg(**shapeyfile)
 cal_ff.set_kwarg(**shapelfile)
+cal_ff.group_func = grouping.group_by_dirname
 # add to recipe
 recipes.append(cal_ff)
 
@@ -504,6 +513,7 @@ cal_thermal.set_kwarg(**wavefile)
 cal_thermal.set_kwarg(name='--forceext', dtype='bool', default=False,
                       default_ref='THERMAL_ALWAYS_EXTRACT',
                       helpstr='THERMAL_EXTRACT_HELP')
+cal_thermal.group_func = grouping.group_by_dirname
 # add to recipe
 recipes.append(cal_thermal)
 
@@ -528,6 +538,7 @@ cal_leak_master.set_kwarg(name='--filetype', dtype=str, default='DARK_FP',
                           helpstr=textentry('LEAKM_HELP_FILETYPE'))
 cal_leak_master.set_kwarg(**add_db)
 cal_leak_master.set_kwarg(**plot)
+cal_leak_master.group_func = grouping.group_by_dirname
 # add to recipe
 recipes.append(cal_leak_master)
 
@@ -559,6 +570,7 @@ cal_leak.set_kwarg(**plot)
 cal_leak.set_kwarg(name='--leakfile', dtype='file', default='None',
                    files=[files.out_leak_master],
                    helpstr=textentry('LEAK_LEAKFILE_HELP'))
+cal_leak.group_func = grouping.group_individually
 # add to recipe
 recipes.append(cal_leak)
 
@@ -626,6 +638,7 @@ cal_extract.set_kwarg(name='--thermal', dtype='bool', default=True,
                       default_ref='THERMAL_CORRECT')
 cal_extract.set_kwarg(**thermalfile)
 cal_extract.set_kwarg(**wavefile)
+cal_extract.group_func = grouping.group_individually
 # add to recipe
 recipes.append(cal_extract)
 
@@ -710,6 +723,7 @@ cal_wave_master.set_kwarg(name='--hcmode', dtype='options',
 cal_wave_master.set_kwarg(name='--fpmode', dtype='options',
                           helpstr=textentry('FPMODE_HELP'), options=['0', '1'],
                           default_ref='WAVE_MODE_FP')
+cal_wave_master.group_func = grouping.group_by_dirname
 # add to recipe
 recipes.append(cal_wave_master)
 
@@ -769,24 +783,9 @@ cal_wave_night.set_kwarg(**wavefile)
 cal_wave_night.set_kwarg(name='--forceext', dtype='bool',
                          default_ref='WAVE_ALWAYS_EXTRACT',
                          helpstr='WAVE_EXTRACT_HELP')
+cal_wave_night.group_func = grouping.group_by_dirname
 # add to recipe
 recipes.append(cal_wave_night)
-
-# -----------------------------------------------------------------------------
-# cal_DRIFT_E2DS_spirou
-# -----------------------------------------------------------------------------
-cal_drift1 = DrsRecipe(__INSTRUMENT__)
-cal_drift1.name = 'cal_DRIFT_E2DS_spirou.py'
-# add to recipe
-recipes.append(cal_drift1)
-
-# -----------------------------------------------------------------------------
-# cal_DRIFTPEAK_E2DS_spirou
-# -----------------------------------------------------------------------------
-cal_drift2 = DrsRecipe(__INSTRUMENT__)
-cal_drift2.name = 'cal_DRIFTPEAK_E2DS_spirou.py'
-# add to recipe
-recipes.append(cal_drift2)
 
 # -----------------------------------------------------------------------------
 # cal_CCF_E2DS_spirou
@@ -824,6 +823,7 @@ cal_ccf.set_kwarg(name='--masknormmode', dtype=str,
                   default_ref='CCF_MASK_NORMALIZATION',
                   options=['None', 'all', 'order'],
                   helpstr=textentry('CCF_MASK_NORM_HELP'))
+cal_ccf.group_func = grouping.group_individually
 cal_ccf.set_kwarg(**add_db)
 cal_ccf.set_kwarg(**blazefile)
 cal_ccf.set_kwarg(**plot)
@@ -865,6 +865,7 @@ obj_mk_tellu.set_kwarg(**wavefile)
 obj_mk_tellu.set_kwarg(name='--use_template', dtype='bool', default=True,
                        helpstr='Whether to use the template provided from '
                                'the telluric database')
+obj_mk_tellu.group_func = grouping.group_individually
 # add to recipe
 recipes.append(obj_mk_tellu)
 
@@ -900,6 +901,7 @@ obj_mk_tellu_db.set_kwarg(**add_db)
 obj_mk_tellu_db.set_kwarg(**blazefile)
 obj_mk_tellu_db.set_kwarg(**plot)
 obj_mk_tellu_db.set_kwarg(**wavefile)
+obj_mk_tellu_db.group_func = grouping.no_group
 # add to recipe
 recipes.append(obj_mk_tellu_db)
 
@@ -948,6 +950,7 @@ obj_fit_tellu.set_kwarg(**add_db)
 obj_fit_tellu.set_kwarg(**blazefile)
 obj_fit_tellu.set_kwarg(**plot)
 obj_fit_tellu.set_kwarg(**wavefile)
+obj_fit_tellu.group_func = grouping.group_individually
 # add to recipe
 recipes.append(obj_fit_tellu)
 
@@ -986,6 +989,7 @@ obj_fit_tellu_db.set_kwarg(**add_db)
 obj_fit_tellu_db.set_kwarg(**add_db)
 obj_fit_tellu_db.set_kwarg(**plot)
 obj_fit_tellu_db.set_kwarg(**wavefile)
+obj_fit_tellu_db.group_func = grouping.no_group
 # add to recipe
 recipes.append(obj_fit_tellu_db)
 
@@ -1023,6 +1027,7 @@ obj_mk_template.set_kwarg(**add_db)
 obj_mk_template.set_kwarg(**blazefile)
 obj_mk_template.set_kwarg(**plot)
 obj_mk_template.set_kwarg(**wavefile)
+obj_mk_template.group_func = grouping.no_group
 # add to recipe
 recipes.append(obj_mk_template)
 
@@ -1098,6 +1103,8 @@ pol_spirou.set_arg(name='files', dtype='files', pos='1+',
 pol_spirou.set_kwarg(**blazefile)
 pol_spirou.set_kwarg(**plot)
 pol_spirou.set_kwarg(**wavefile)
+# TODO: Will need custom group function
+pol_spirou.group_func = None
 # add to recipe
 recipes.append(pol_spirou)
 
@@ -1132,7 +1139,6 @@ pol_spirou_new.set_debug_plots('POLAR_CONTINUUM', 'POLAR_RESULTS',
                                'EXTRACT_S1D', 'EXTRACT_S1D_WEIGHT')
 pol_spirou_new.set_summary_plots('SUM_EXTRACT_S1D')
 pol_spirou_new.set_arg(pos=0, **directory)
-
 pol_spirou_new.set_kwarg(name='--exp1', altnames=['-1'], dtype='file',
                          files=[files.out_ext_e2dsff, files.out_tellu_obj],
                          filelogic='exclusive', required=True,
@@ -1162,6 +1168,8 @@ pol_spirou_new.set_kwarg(name='--lsd', altnames=['-L'], dtype='bool',
 pol_spirou_new.set_kwarg(**blazefile)
 pol_spirou_new.set_kwarg(**plot)
 pol_spirou_new.set_kwarg(**wavefile)
+# TODO: Will need custom group function
+pol_spirou_new.group_func = None
 # add to recipe
 recipes.append(pol_spirou_new)
 
@@ -1187,6 +1195,7 @@ obj_spec.set_arg(name='files', dtype='files', pos='1+',
 obj_spec.set_kwarg(**plot)
 obj_spec.set_kwarg(name='--cores', dtype=int, default=1,
                    helpstr='')
+obj_spec.group_func = grouping.group_individually
 # add to recipe
 recipes.append(obj_spec)
 
