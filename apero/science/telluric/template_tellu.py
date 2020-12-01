@@ -718,9 +718,9 @@ def mk_template_qc(params, qc_params, fail_msg=None):
 def mk_template_summary(recipe, params, cprops, template_file, qc_params):
     # count number of files
     nfiles = len(cprops['BIG_COLS']['RowNum'])
-    temp_hash = template_file.get_key('KW_MKTEMP_HASH')
-    berv_cov = template_file.get_key('KW_MKTEMP_BERV_COV')
-    min_berv_cov = template_file.get_key('KW_MKTEMP_BERV_COV_MIN')
+    temp_hash = template_file.get_hkey('KW_MKTEMP_HASH')
+    berv_cov = template_file.get_hkey('KW_MKTEMP_BERV_COV')
+    min_berv_cov = template_file.get_hkey('KW_MKTEMP_BERV_COV_MIN')
     # add stats
     recipe.plot.add_stat('KW_VERSION', value=params['DRS_VERSION'])
     recipe.plot.add_stat('KW_DRS_DATE', value=params['DRS_DATE'])
