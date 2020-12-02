@@ -153,6 +153,7 @@ class DrsRecipe(object):
         self.kwargs = OrderedDict()
         self.specialargs = OrderedDict()
         self.group_func = None
+        self.group_column = None
         # args for logging
         self.largs = ''
         self.lkwargs = ''
@@ -195,7 +196,7 @@ class DrsRecipe(object):
         exclude = ['pconst', 'filemod']
         # set state to __dict__
         state = dict()
-        for key, item in self.__dict__:
+        for key, item in self.__dict__.items():
             if key not in exclude:
                 state[key] = item
         # return dictionary state
@@ -915,6 +916,7 @@ class DrsRecipe(object):
             self.extras[arg] = recipe.extras[arg]
         # cannot copy group function
         self.group_func = recipe.group_func
+        self.group_column = recipe.group_column
         # define arg list
         self.arg_list = list(recipe.arg_list)
         # get string arg list (may be None)

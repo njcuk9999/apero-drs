@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Tuple, Union
 
 from apero.base import base
 from apero.core.core import drs_argument
+from apero.core.core import drs_log
 
 
 # =============================================================================
@@ -38,9 +39,16 @@ RunType = List[Dict[str, Any]]
 # Define functions
 # =============================================================================
 class RunInstance:
-    def __init__(self, args, kwargs):
-        self.args = args
-        self.kwargs = kwargs
+    def __init__(self, rargs, rkwargs):
+        """
+        Storage for individual runs where we eventually turn these into a
+        dictionary instance
+
+    :param rargs: the dictionary of positional DrsArguments for this recipe
+    :param rkwargs: the dictionary of optional DrsArguments for this recipe
+        """
+        self.args = rargs
+        self.kwargs = rkwargs
         self.dictionary = dict()
         self.group_column = None
         self.group = None
@@ -53,18 +61,32 @@ class RunInstance:
         return new_instance
 
 
-def find_file_args(args: Dict[str, DrsArgument],
-                   kwargs: Dict[str, DrsArgument],
+def find_file_args(rargs: Dict[str, DrsArgument],
+                   rkwargs: Dict[str, DrsArgument],
                    argdict: Dict[str, ArgDictType],
                    kwargdict: Dict[str, ArgDictType]
                    ) -> Tuple[List[str], List[str], Dict[str, Any]]:
+    """
+    Find the file arguments and non file arguments in positional args (rargs)
+    and optional args (rkwargs)
+
+    :param rargs: the dictionary of positional DrsArguments for this recipe
+    :param rkwargs: the dictionary of optional DrsArguments for this recipe
+    :param argdict: the dictionary of tables raw files on disk that match the
+                    criteria for positional arguments (one key per arg)
+    :param kwargdict: the dictionary of tables raw files on disk that match the
+                      criteria for optional arguments (one key per arg)
+
+    :return:
+    """
+
     # storage list
     file_args = []
     non_file_args = []
     # first loop around arguments
     for argname in argdict:
         # test for file argument
-        if args[argname].dtype not in ['file', 'files']:
+        if rargs[argname].dtype not in ['file', 'files']:
             non_file_args.append(argname)
         else:
             # deal with no file entries for this argument
@@ -77,7 +99,7 @@ def find_file_args(args: Dict[str, DrsArgument],
     # then loop around keyword arguments
     for kwargname in kwargdict:
         # deal with other parameters (not 'files' or 'file')
-        if kwargs[kwargname].dtype not in ['file', 'files']:
+        if rkwargs[kwargname].dtype not in ['file', 'files']:
             non_file_args.append(kwargname)
         else:
             # deal with no file entries for this argument
@@ -99,9 +121,8 @@ def find_file_args(args: Dict[str, DrsArgument],
     return file_args, non_file_args, alldict
 
 
-
-def get_argposorder(args: Dict[str, DrsArgument],
-                    kwargs: Dict[str, DrsArgument],
+def get_argposorder(rargs: Dict[str, DrsArgument],
+                    rkwargs: Dict[str, DrsArgument],
                     argdict: Dict[str, ArgDictType],
                     kwargdict: Dict[str, ArgDictType]):
     """
@@ -115,7 +136,8 @@ def get_argposorder(args: Dict[str, DrsArgument],
     for optional arguments they are added to the end in whichever order they
     come
 
-    :param recipe: DrsRecipe, the recipe instance these arguments belong to
+    :param rargs: the dictionary of positional DrsArguments for this recipe
+    :param rkwargs: the dictionary of optional DrsArguments for this recipe
     :param argdict: dictionary of values for each of the positional arguments
                    (each key is a positional argument name, each value is the
                     value that argument should have i.e.
@@ -142,12 +164,12 @@ def get_argposorder(args: Dict[str, DrsArgument],
     # iterator for non-positional variables
     it = 0
     # loop around args
-    for argname in args.keys():
+    for argname in rargs.keys():
         # must be in rundict keys
         if argname not in argdict.keys():
             continue
         # get arg
-        arg = args[argname]
+        arg = rargs[argname]
         # deal with non-required arguments when argdict has no values
         #    these are allowed only if arg.reprocess is True
         #    we skip adding to runorder
@@ -162,12 +184,12 @@ def get_argposorder(args: Dict[str, DrsArgument],
             runorder[1000 + it] = argname
             it += 1
     # loop around args
-    for kwargname in kwargs.keys():
+    for kwargname in rkwargs.keys():
         # must be in rundict keys
         if kwargname not in kwargdict.keys():
             continue
         # get arg
-        kwarg = kwargs[kwargname]
+        kwarg = rkwargs[kwargname]
         # deal with non-required arguments when argdict has no values
         #    these are allowed only if arg.reprocess is True
         #    we skip adding to runorder
@@ -195,9 +217,12 @@ def get_non_file_args(non_file_args: List[str],
     Deal with non file arguments (and the fact they can be lists so need
     combinations of those parameters)
 
-    :param non_file_args:
-    :param alldict:
-    :param run_instances:
+    :param non_file_args: list of strings, list of the names of the non-file
+                          arguments
+    :param alldict: dictionary of all arguments + all possible values for
+                    each argument
+    :param run_instances: list of RunInstance instances - the semi-filed run
+                          instances (only filled currently with file args)
     :return:
     """
 
@@ -219,6 +244,8 @@ def get_non_file_args(non_file_args: List[str],
         combinations = list(itertools.product(*pvalues))
     else:
         combinations = [None]
+    # count number of runs
+    run_count = 0
     # loop around combinations
     for run_inst in run_instances:
         # loop around all combinations required
@@ -241,6 +268,11 @@ def get_non_file_args(non_file_args: List[str],
                     value = alldict[argname]
                 # add value to dictionary
                 run_inst2.dictionary[argname] = value
+            # print statement
+            pmsg = '\t\tProcessing II run {0}'.format(run_count)
+            drs_log.Printer(None, None, pmsg)
+            # add to run count
+            run_count += 1
             # add new instance to runs
             new_run_instances.append(run_inst2)
     # return new_run_instances

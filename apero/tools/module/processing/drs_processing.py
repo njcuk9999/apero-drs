@@ -1655,6 +1655,11 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
                               filters=filters,
                               allowedfibers=allowedfibers)
         # ------------------------------------------------------------------
+        # print how many runs we are adding
+        # ------------------------------------------------------------------
+        # TODO: move to language database
+        WLOG(params, '', '\t\tAdded {0} runs'.format(len(sruns)))
+        # ------------------------------------------------------------------
         # deal with trigger and no runs left to do
         # ------------------------------------------------------------------
         # if we are in trigger mode we need to stop when we have no
@@ -1718,7 +1723,7 @@ def generate_runs(params: ParamDict, recipe: DrsRecipe,
     # now we have the file lists we need to group files and match where
     #   there are more than one argument, we then add in the other
     #   arguments and construct the runs
-    runargs = group_run_files(params, recipe, argdict, kwargdict)
+    runargs = group_run_files2(params, recipe, argdict, kwargdict)
     # now we have the runargs we can convert to a runlist
     runlist = convert_to_command(params, recipe, runargs)
     # clear printer
@@ -2655,6 +2660,41 @@ def group_run_files(params: ParamDict, recipe: DrsRecipe,
     else:
         # return runs
         return runs
+
+
+def group_run_files2(params: ParamDict, recipe: DrsRecipe,
+                     argdict: Dict[str, ArgDictType],
+                     kwargdict: Dict[str, ArgDictType]) -> List[Dict[str, Any]]:
+    """
+    Group run files (using group_function)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe instance, the recipe this group is for
+    :param argdict: the dictionary of tables raw files on disk that match the
+                    criteria for positional arguments (one key per arg)
+    :param kwargdict: the dictionary of tables raw files on disk that match the
+                      criteria for optional arguments (one key per arg)
+
+    :return:
+    """
+    # get grouping function
+    group_function = recipe.group_func
+    # get grouping column
+    group_column = recipe.group_column
+    if group_column in params:
+        group_column = params[group_column]
+    # if we have a group function used it
+    if group_function is not None:
+        # use the group function to generate runs
+        return group_function(recipe.args, recipe.kwargs,
+                              argdict, kwargdict,
+                              group_column=group_column)
+    # if we don't have one give warning
+    else:
+        # TODO: move to language database
+        wmsg = '\tNo runs produced for {0} - No group function given'
+        WLOG(params, 'warning', wmsg.format(recipe.shortname))
+        return []
 
 
 def convert_to_command(params: ParamDict, recipe: DrsRecipe,
