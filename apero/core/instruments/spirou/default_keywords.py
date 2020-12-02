@@ -29,12 +29,14 @@ __release__ = base.__release__
 #     'jyear', 'byear_str', 'jyear_str'
 KW_ACQTIME = KW_ACQTIME.copy(__NAME__)
 KW_ACQTIME.set(key='MJDEND', datatype='mjd', dataformat=float,
-               comment='Modified Julian Date at start of observation')
+               comment='Modified Julian Date at start of observation',
+               combine_method='maximum')
 
 # define the MJ end date HEADER key
 KW_MJDEND = KW_MJDEND.copy(__NAME__)
 KW_MJDEND.set(key='MJDEND', datatype='mjd', dataformat=float,
-              comment='Modified Julian Date at end of observation')
+              comment='Modified Julian Date at end of observation',
+              combine_method='maximum')
 
 # define the observation date HEADER key
 KW_DATE_OBS = KW_DATE_OBS.copy(__NAME__)
@@ -46,15 +48,18 @@ KW_UTC_OBS.set(key='UTC-OBS', comment='Time at start of observation (UTC)')
 
 # define the read noise HEADER key a.k.a sigdet (used to get value only)
 KW_RDNOISE = KW_RDNOISE.copy(__NAME__)
-KW_RDNOISE.set(key='RDNOISE', comment='Read noise (electrons)')
+KW_RDNOISE.set(key='RDNOISE', comment='Read noise (electrons)',
+               combine_method='flux')
 
 # define the gain HEADER key (used to get value only)
 KW_GAIN = KW_GAIN.copy(__NAME__)
-KW_GAIN.set(key='GAIN', comment='Amplifier gain (electrons/ADU)')
+KW_GAIN.set(key='GAIN', comment='Amplifier gain (electrons/ADU)',
+            combine_method='mean')
 
 # define the saturation limit HEADER key
 KW_SATURATE = KW_SATURATE.copy(__NAME__)
-KW_SATURATE.set(key='SATURATE', comment='Saturation value (ADU) ')
+KW_SATURATE.set(key='SATURATE', comment='Saturation value (ADU) ',
+                combine_method='mean')
 
 # define the frame time HEADER key
 KW_FRMTIME = KW_FRMTIME.copy(__NAME__)
@@ -62,7 +67,8 @@ KW_FRMTIME.set(key='FRMTIME', comment='[sec] Frame time, cadence of IR reads')
 
 # define the exposure time HEADER key (used to get value only)
 KW_EXPTIME = KW_EXPTIME.copy(__NAME__)
-KW_EXPTIME.set(key='EXPTIME', unit=uu.s, comment='[sec] Integration time')
+KW_EXPTIME.set(key='EXPTIME', unit=uu.s, comment='[sec] Integration time',
+               combine_method='sum')
 
 # define the observation type HEADER key
 KW_OBSTYPE = KW_OBSTYPE.copy(__NAME__)
@@ -98,11 +104,13 @@ KW_CMMTSEQ.set(key='CMMTSEQ')
 # define the exposure number within sequence HEADER key
 KW_CMPLTEXP = KW_CMPLTEXP.copy(__NAME__)
 KW_CMPLTEXP.set(key='CMPLTEXP',
-                comment='Exposure number within the exposure sequence ')
+                comment='Exposure number within the exposure sequence ',
+                combine_method='1')
 
 # define the total number of exposures HEADER key
 KW_NEXP = KW_NEXP.copy(__NAME__)
-KW_NEXP.set(key='NEXP', comment='Total number of exposures within the sequence')
+KW_NEXP.set(key='NEXP', comment='Total number of exposures within the sequence',
+            combine_method='1')
 
 # define the pi name HEADER key
 KW_PI_NAME = KW_PI_NAME.copy(__NAME__)
@@ -375,7 +383,8 @@ KW_DPRTYPE.set(key='DPRTYPE', comment='The type of file (from pre-process)')
 # Note: must change INDEX_HEADER_KEYS data type definition if changing this
 KW_MID_OBS_TIME = KW_MID_OBS_TIME.copy(__NAME__)
 KW_MID_OBS_TIME.set(key='MJDMID', comment='Mid Observation time [mjd]',
-                    datatype='mjd', dataformat=float)
+                    datatype='mjd', dataformat=float,
+                    combine_method='mean')
 
 # Define the method by which the MJD was calculated
 KW_MID_OBSTIME_METHOD = KW_MID_OBSTIME_METHOD.copy(__NAME__)
