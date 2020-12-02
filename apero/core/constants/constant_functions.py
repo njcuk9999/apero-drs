@@ -58,6 +58,9 @@ class Const:
     e.g. stores information to read and check config/constant file constants
 
     """
+    # set class name
+    class_name = 'Const'
+
     def __init__(self, name: str, value: Any = None,
                  dtype: Union[None, str, type] = None,
                  dtypei: Union[None, str, type] = None,
@@ -100,8 +103,6 @@ class Const:
 
         :returns: None (constructor)
         """
-        # set class name
-        self.class_name = 'Const'
         # set function name
         func_name = display_func(None, '__init__', __NAME__, self.class_name)
         # set the name of the constant
@@ -359,6 +360,8 @@ class Keyword(Const):
         key  value // comment
 
     """
+    # set class name
+    class_name = 'Keyword'
 
     def __init__(self, name: str, key: Union[str, None] = None,
                  value: Any = None, dtype: Union[None, str, type] = None,
@@ -372,7 +375,8 @@ class Keyword(Const):
                  dataformat: Union[str, None] = None,
                  group: Union[str, None] = None,
                  author: Union[str, List[str], None] = None,
-                 parent: Union[str, None] = None):
+                 parent: Union[str, None] = None,
+                 combine_method: Union[str, None] = None):
         """
         Construct the keyword instance
 
@@ -412,11 +416,11 @@ class Keyword(Const):
         :type group: str
         :type author: str
         :type parent: Union[Const,Keyword]
+        :param combine_method: str, the method used to combine this keyword
+                               when combining two or more files
 
         :returns: None (constructor)
         """
-        # set class name
-        self.class_name = 'Keyword'
         # set function name
         func_name = display_func(None, '__init__', __NAME__, self.class_name)
         # set the name
@@ -456,6 +460,8 @@ class Keyword(Const):
         # set the parent of this keyword (if a constant/keyword is related to
         #   or comes from another constant/keyword)
         self.parent = parent
+        # set the combine method
+        self.combine_method = combine_method
 
     def __getstate__(self) -> dict:
         """
@@ -496,7 +502,8 @@ class Keyword(Const):
             dataformat: Union[str, None] = None,
             group: Union[str, None] = None,
             author: Union[str, List[str], None] = None,
-            parent: Union[str, None] = None):
+            parent: Union[str, None] = None,
+            combine_method: Union[str, None] = None):
         """
         Set attributes of the Keyword instance
 
@@ -518,6 +525,8 @@ class Keyword(Const):
         :param author: str, the author of this constant (i.e. who to contact)
         :param parent: Const, the parent of this constant (if a constant is
                        related to or comes from another constant)
+        :param combine_method: str, the method used to combine this keyword
+                               when combining two or more files
 
         :type key: str
         :type value: object
@@ -534,6 +543,7 @@ class Keyword(Const):
         :type group: str
         :type author: str
         :type parent: Union[Const,Keyword]
+        :type combine_method: str
 
         :returns: None
         """
@@ -587,6 +597,9 @@ class Keyword(Const):
         #   comes from another constant)
         if parent is not None:
             self.parent = parent
+        # set the combine method for this keyword
+        if combine_method is not None:
+            self.combine_method = combine_method
 
     def validate(self, test_value: Any = None, quiet: bool = False,
                  source: Union[str, None] = None) -> Union[bool, Any]:
@@ -675,7 +688,8 @@ class Keyword(Const):
                        self.minimum, source=source, unit=self.unit,
                        default=self.default, datatype=self.datatype,
                        dataformat=self.dataformat, group=self.group,
-                       author=self.author, parent=self.parent)
+                       author=self.author, parent=self.parent,
+                       combine_method=self.combine_method)
 
 
 class CKCaseINSDict(base_class.CaseInsensitiveDict):
