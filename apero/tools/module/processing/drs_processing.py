@@ -1933,8 +1933,8 @@ def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
 # =============================================================================
 # Define processing functions
 # =============================================================================
-def _linear_process(params, recipe, runlist, return_dict=None, number=0,
-                    cores=1, event=None, group=None):
+def _linear_process(params, runlist, return_dict=None, number=0,
+                    cores=1, event=None, group=None, recipe=None):
     # deal with empty return_dict
     if return_dict is None:
         return_dict = dict()
@@ -2045,8 +2045,10 @@ def _linear_process(params, recipe, runlist, return_dict=None, number=0,
                 ll_item = modulemain(**kwargs)
                 # ----------------------------------------------------------
                 # close all plotting
-                plotter = plotting.Plotter(params, recipe)
-                plotter.closeall()
+                # TODO: deal with a way to close plots without recipe
+                if recipe is not None:
+                    plotter = plotting.Plotter(params, recipe)
+                    plotter.closeall()
                 # keep only some parameters
                 llparams = ll_item['params']
                 llrecipe = ll_item['recipe']
@@ -2249,7 +2251,7 @@ def _multi_process(params, recipe, runlist, cores, groupname=None):
         params_per_process = []
         # populate params for each sub group
         for r_it, runlist_group in enumerate(group):
-            args = [params, recipe, runlist_group, return_dict, r_it + 1,
+            args = [params, [runlist_group], return_dict, r_it + 1,
                     cores, event, groupname]
             params_per_process.append(args)
         # start parellel jobs
