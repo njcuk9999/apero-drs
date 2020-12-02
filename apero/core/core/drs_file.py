@@ -70,6 +70,8 @@ Header = drs_fits.Header
 FitsHeader = drs_fits.fits.Header
 # Get the text types
 textentry = lang.textentry
+# get Keyword instance
+Keyword = constants.constant_functions.Keyword
 # get exceptions
 DrsCodedException = drs_exceptions.DrsCodedException
 # TODO: This should be changed for astropy -> 2.0.1
@@ -2018,9 +2020,9 @@ class DrsFitsFile(DrsInputFile):
                 key = drskey
             # check that key is in header
             if key not in header:
-                ekwargs = dict(level='error', key=key, filename=filename)
-                emsg = 'Key "{0}" not found'
-                raise DrsHeaderError(emsg.format(key), **ekwargs)
+                eargs = [key]
+                emsg = 'Required header key "{0}" not found'
+                WLOG(params, 'error', emsg.format(*eargs))
             # get value and required value
             value = header[key].strip()
             rvalue = rkeys[drskey].strip()
@@ -2888,7 +2890,7 @@ class DrsFitsFile(DrsInputFile):
 
     def combine(self, infiles: List['DrsFitsFile'], math: str = 'sum',
                 same_type: bool = True,
-                path: Union[str, None] = None) -> 'DrsFitsFile':
+                path: Union[str, None] = None) -> Tuple['DrsFitsFile', Table]:
         """
         Combine a set of DrsFitsFiles into a single file using the "math"
         operation (i.e. sum, mean, median etc)
@@ -2903,7 +2905,8 @@ class DrsFitsFile(DrsInputFile):
         :param path: None or str, update the path for the output combined
                      DrsFitsFile (added to new filename)
 
-        :return: a new DrsFitsFile instance of the combined file
+        :return: a tuple, 1. new DrsFitsFile instance of the combined file,
+                 2. the combined table
         """
         # set function name
         func_name = display_func(self.params, 'combine', __NAME__,
@@ -2923,6 +2926,7 @@ class DrsFitsFile(DrsInputFile):
         # --------------------------------------------------------------------
         # cube
         datacube = [data]
+        headers = [self.header]
         basenames = [self.basename]
         # combine data into cube
         for infile in infiles:
@@ -2935,6 +2939,7 @@ class DrsFitsFile(DrsInputFile):
             # add to cube
             datacube.append(infile.data)
             basenames.append(infile.basename)
+            headers.append(infile.header)
         # make datacube an numpy array
         datacube = np.array(datacube)
         # --------------------------------------------------------------------
@@ -2982,19 +2987,30 @@ class DrsFitsFile(DrsInputFile):
         if path is None:
             path = self.path
         filename = os.path.join(path, basename)
+
+        # --------------------------------------------------------------------
+        # Need to create new header and combine header table
+        # --------------------------------------------------------------------
+        chout = combine_headers(params, headers, basenames, math)
+        self.header, self.hdict, combinetable = chout
+
         # --------------------------------------------------------------------
         # construct keys for new DrsFitsFile
         # --------------------------------------------------------------------
-        return DrsFitsFile(self.name, self.filetype, self.suffix,
-                           self.remove_insuffix, self.prefix, self.fibers,
-                           self.fiber, self.params,
-                           filename, self.intype, path, basename, self.inputdir,
-                           self.directory, data, self.header, self.fileset, 
-                           self.filesetnames, self.outfunc, self.inext, 
-                           self.dbname, self.dbkey, self.required_header_keys, 
-                           self.numfiles, data.shape, self.hdict, 
-                           self.output_dict, self.datatype, self.dtype,
-                           True, list(basenames), self.s1d)
+        newinfile = DrsFitsFile(self.name, self.filetype, self.suffix,
+                                self.remove_insuffix, self.prefix, self.fibers,
+                                self.fiber, self.params, filename, self.intype,
+                                path, basename, self.inputdir, self.directory,
+                                data, self.header, self.fileset,
+                                self.filesetnames, self.outfunc, self.inext,
+                                self.dbname, self.dbkey,
+                                self.required_header_keys, self.numfiles,
+                                data.shape, self.hdict, self.output_dict,
+                                self.datatype, self.dtype, True,
+                                list(basenames), self.s1d)
+
+        # return newinfile and table
+        return newinfile, combinetable
 
     # -------------------------------------------------------------------------
     # fits file header methods
@@ -4542,18 +4558,195 @@ def combine(params: ParamDict, recipe: Any,
     for infile in infiles:
         infile.read_file()
     # make new infile using math
-    outfile = infiles[0].combine(infiles[1:], math, same_type, path=abspath)
+    outfile, outtable = infiles[0].combine(infiles[1:], math, same_type,
+                                           path=abspath)
     # update params in outfile
     outfile.params = params
     # update the number of files
     outfile.numfiles = len(infiles)
     # write to disk
     WLOG(params, '', textentry('40-001-00025', args=[outfile.filename]))
-    outfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+    outfile.write_multi(data_list=[outtable], datatype_list=['table'],
+                        kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(outfile)
     # return combined infile
     return outfile
+
+
+def combine_headers(params: ParamDict, headers: List[Header],
+                     names: List[str], math: str):
+    """
+    Takes a list of headers and combines them in the proper fashion (for the
+    output combined file)
+
+    Any keys that do not change are kept in main header
+    Any keys that are flagged with combine_methods are combined
+
+    All other keys (that change) are added to a combined_table
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param headers: list of headers - the headers to combine
+    :param names: list of strings, the names of the header files
+    :param math: str, the math mode to combine image (used for certain
+                 combine_methods)
+    :return:
+    """
+
+    # -------------------------------------------------------------------------
+    # step 1. fine header keys that need combining
+    # -------------------------------------------------------------------------
+    ckeys, cmethods = [], []
+    # need to get keywords with combine methods
+    for key in params:
+        # get parameter
+        param = params.instances[key]
+        # test for Keyword instance
+        if not isinstance(param, Keyword):
+            continue
+        # test for combine method
+        if param.combine_method is not None:
+            ckeys.append(params[key][0])
+            cmethods.append(param.combine_method)
+
+    # -------------------------------------------------------------------------
+    # step 2. identify all header keys across all files
+    # -------------------------------------------------------------------------
+    # identify unique keys in all headers
+    all_header_keys = []
+    all_comments = []
+    # loop around headers
+    for header in headers:
+        # loop around keys in this header
+        for key in header:
+            if key not in all_header_keys:
+                all_header_keys.append(key)
+                all_comments.append(header.comments[key])
+    # -------------------------------------------------------------------------
+    # step 3: get all header keys and see which are identical
+    # -------------------------------------------------------------------------
+    # storage of all keys
+    all_dict = dict()
+    table_keys, table_comments, constant_keys = [], [], []
+    # loop around unique header keys
+    for k_it, key in enumerate(all_header_keys):
+        # storage of values
+        values = []
+        # loop around headers
+        for h_it, header in enumerate(headers):
+            if key in header:
+                values.append(header[key])
+            else:
+                values.append(None)
+        # if keys are identified as being combined add them to table_keys
+        if key in ckeys:
+            table_keys.append(key)
+            table_comments.append(all_comments[k_it])
+        # identify if values are all the same
+        if len(set(values)) == 1:
+            constant_keys.append(key)
+        else:
+            table_keys.append(key)
+            table_comments.append(all_comments[k_it])
+        # add values to all_dict
+        all_dict[key] = values
+    # -------------------------------------------------------------------------
+    # step 4: for those keys that have been flagged as needing combining
+    #         combine them with the combine_method
+    # -------------------------------------------------------------------------
+    # storage of new header dictionary
+    new_header_dict = dict()
+    # loop around keys that need combining
+    for c_it, ckey in enumerate(ckeys):
+        # skip if not in header (for some reason)
+        if ckey not in all_dict:
+            continue
+        # combine values
+        new_header_dict[ckey] = combine_hkey(all_dict[ckey], cmethods[c_it],
+                                             math)
+    # -------------------------------------------------------------------------
+    # step 5: add keys that are constant
+    # -------------------------------------------------------------------------
+    # add keys that don't change
+    for ckey in constant_keys:
+        # skip if already present (i.e. they have been combined)
+        if ckey in new_header_dict:
+            continue
+        # add keys to new header dict
+        new_header_dict[ckey] = all_dict[ckey][0]
+    # -------------------------------------------------------------------------
+    # step 6: make a table from header keys that change
+    # -------------------------------------------------------------------------
+    table_dict = dict()
+    for row in range(len(headers)):
+        table_dict[names[row]] = []
+        for ckey in table_keys:
+            table_dict[names[row]].append(all_dict[ckey][row])
+    # convert to a table
+    combine_table = Table()
+    # add the keys as the first column
+    combine_table['KEYS'] = table_keys
+    # add the columns
+    for col in table_dict:
+        combine_table[col] = np.array(table_dict[col])
+    # add the comments
+    combine_table['COMMENTS'] = table_comments
+    # -------------------------------------------------------------------------
+    # step 7: make new hdict and header
+    # -------------------------------------------------------------------------
+    new_hdict = Header()
+    # loop around all keys in the correct order
+    for k_it, key in enumerate(all_header_keys):
+        # only add keys that are in new_header_dict
+        if key in new_header_dict:
+            # add the value and the comment
+            new_hdict[key] = (new_header_dict[key], all_comments[k_it])
+    # copy into the new header
+    new_header = new_hdict.copy()
+    # -------------------------------------------------------------------------
+    # step 8: return header/hdict/table
+    # -------------------------------------------------------------------------
+    return new_header, new_hdict, combine_table
+
+
+def combine_hkey(values: List[Any], method: str, math) -> Any:
+    """
+    Combine header keys using method given in Keyword setup
+
+    :param values: a list of values to combine with given method
+    :param method: str, the method to combine
+
+    :return: Any, single value of the combined type or None if not combinable
+    """
+    try:
+        if method in ['mean', 'average']:
+            return mp.nanmean(values)
+        if method in ['sum', 'add']:
+            return mp.nansum(values)
+        if method in ['minimum', 'min']:
+            return mp.nanmin(values)
+        if method in ['maximum', 'max']:
+            return mp.nanmax(values)
+        # flux correction has to use the math from combining the image
+        if method == 'flux':
+            # if we want to sum the data
+            if math in ['sum', 'add', '+', 'average', 'mean']:
+                return mp.nansum(values) * np.sqrt(len(values))
+            elif math in ['average', 'mean']:
+                return mp.nanmean(values) / np.sqrt(len(values))
+            # elif if median
+            elif math in ['median', 'med']:
+                return mp.nanmedian(values) / np.sqrt(len(values))
+            else:
+                return None
+        # if method is in None --> return None
+        if method in [None, 'None', '']:
+            return None
+        # if we get to this point return the method as the value
+        return method
+    # if for any reason this fails return None
+    except Exception as _:
+        return None
 
 
 def fix_header(params: ParamDict, recipe: Any,
