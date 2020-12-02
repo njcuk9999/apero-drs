@@ -21,6 +21,8 @@ High priority:
 * install database via install.py [Neil]
 * database import/export (append/replace) [Neil]
 * calibration merge (drs processing)  [Neil]
+    * processing seq needs printout
+    * need to modify header of combined files (update time other keys etc)
 * polar code update  [Neil/Eder/Chris]
 * CCF weights adjustment (once Pia has results)  [Pia/Neil]
 * tellurics templates - minimum number of files for template creation [Neil]
