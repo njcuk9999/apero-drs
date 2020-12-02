@@ -71,6 +71,8 @@ SPECIAL_LIST_KEYS = ['SCIENCE_TARGETS', 'TELLURIC_TARGETS']
 class DrsRecipe(object):
     # define typing for attributes
     filemod: base_class.ImportModule
+    # set class name
+    class_name = 'DrsRecipe'
 
     def __init__(self, instrument: str = 'None',
                  name: Union[str, None] = None,
@@ -88,8 +90,6 @@ class DrsRecipe(object):
 
         :returns: None
         """
-        # set class name
-        self.class_name = 'DrsRecipe'
         # set function name (cannot
         _ = display_func(None, '__init__', __NAME__, self.class_name)
         # get instrument
@@ -190,8 +190,7 @@ class DrsRecipe(object):
         :return:
         """
         # set function name
-        _ = display_func(self.params, '__getstate__', __NAME__,
-                         self.class_name)
+        _ = display_func(None, '__getstate__', __NAME__, self.class_name)
         # exclude keys
         exclude = ['pconst', 'filemod']
         # set state to __dict__
@@ -210,8 +209,7 @@ class DrsRecipe(object):
         :return:
         """
         # set function name
-        _ = display_func(self.params, '__setstate__', __NAME__,
-                         self.class_name)
+        _ = display_func(None, '__setstate__', __NAME__, self.class_name)
         # update dict with state
         self.__dict__.update(state)
         # get pconst
@@ -1399,6 +1397,9 @@ class DrsRecipe(object):
 
 
 class DrsRunSequence:
+    # set class name
+    class_name = 'DrsRunSequence'
+
     def __init__(self, name: str, instrument: str = 'None'):
         """
         Construct a Drs Run Sequence (used in processing a set of recipes)
@@ -1406,8 +1407,6 @@ class DrsRunSequence:
         :param name: str, name of sequence
         :param instrument: str, the instrument this sequence belongs to
         """
-        # set class name
-        self.class_name = 'DrsRunSequence'
         # set function name
         _ = display_func(None, '__init__', __NAME__, self.class_name)
         # set the name of the sequence
@@ -1598,6 +1597,9 @@ class DrsRunSequence:
             # update short name
             if add['name'] is not None:
                 frecipe.shortname = add['name']
+            # print out
+            wargs = [frecipe.shortname]
+            WLOG(params, '', textentry('40-503-00038', args=wargs))
             # set fiber
             if add['fiber'] is not None:
                 frecipe.allowedfibers = add['fiber']
