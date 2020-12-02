@@ -117,7 +117,7 @@ class Logger:
                    'd_helptext']
         # need a dictionary for pickle
         state = dict()
-        for key, item in self.__dict__:
+        for key, item in self.__dict__.items():
             if key not in exclude:
                 state[key] = item
         # return dictionary state
