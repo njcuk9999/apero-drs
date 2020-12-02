@@ -496,7 +496,7 @@ class _CheckFiles(DrsAction):
         exclude = ['parser']
         # need a dictionary for pickle
         state = dict()
-        for key, item in self.__dict__:
+        for key, item in self.__dict__.items():
             if key not in exclude:
                 state[key] = item
         # return dictionary state
@@ -1117,7 +1117,7 @@ class _MakeListing(DrsAction):
         exclude = ['parser']
         # need a dictionary for pickle
         state = dict()
-        for key, item in self.__dict__:
+        for key, item in self.__dict__.items():
             if key not in exclude:
                 state[key] = item
         # return dictionary state
@@ -1236,7 +1236,7 @@ class _MakeAllListing(DrsAction):
         exclude = ['parser']
         # need a dictionary for pickle
         state = dict()
-        for key, item in self.__dict__:
+        for key, item in self.__dict__.items():
             if key not in exclude:
                 state[key] = item
         # return dictionary state

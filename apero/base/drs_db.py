@@ -143,7 +143,7 @@ class Database:
         exclude = ['_conn_']
         # need a dictionary for pickle
         state = dict()
-        for key, item in self.__dict__:
+        for key, item in self.__dict__.items():
             if key not in exclude:
                 state[key] = item
         # return dictionary state
@@ -963,7 +963,7 @@ class SQLiteDatabase(Database):
         exclude = ['_conn_']
         # need a dictionary for pickle
         state = dict()
-        for key, item in self.__dict__:
+        for key, item in self.__dict__.items():
             if key not in exclude:
                 state[key] = item
         # return dictionary state
@@ -1227,7 +1227,7 @@ class MySQLDatabase(Database):
         exclude = ['_conn_']
         # need a dictionary for pickle
         state = dict()
-        for key, item in self.__dict__:
+        for key, item in self.__dict__.items():
             if key not in exclude:
                 state[key] = item
         # return dictionary state
