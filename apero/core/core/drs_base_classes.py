@@ -51,6 +51,8 @@ class CaseInsensitiveDict(UserDict):
     # Note we inherit from UserDict and not dict due to problems with pickle
     #  UserDict allows __setstate__ and __getstate__ to work as expected
     #  not true for dict
+    # set class name
+    class_name = 'CaseInsensitiveDict'
 
     def __init__(self, *arg, **kw):
         """
@@ -58,8 +60,6 @@ class CaseInsensitiveDict(UserDict):
         :param arg: arguments passed to dict
         :param kw: keyword arguments passed to dict
         """
-        # set class name
-        self.class_name = 'CaseInsensitiveDict'
         # set function name
         _ = display_func(None, '__init__', __NAME__, self.class_name)
         # super from dict
@@ -405,6 +405,10 @@ class ListDict(UserDict):
 
 
 class ImportModule:
+    # set class name
+    class_name = 'ImportModule'
+
+
     def __init__(self, name: str, path: str, mod: Any = None):
         """
         Constructor of the import module class - this is how we can keep
@@ -413,8 +417,6 @@ class ImportModule:
         :param name: str, the name of the module to be imported
         :param path: str, the path to the module
         """
-        # set class name
-        self.class_name = 'ImportModule'
         # set function name
         _ = display_func(None, '__init__', __NAME__, self.class_name)
         # set the name of the module to be imported
