@@ -1532,7 +1532,7 @@
 "None","Calculating which nights have no object files","","prints that we are checking engineering nights","40-503-00035","ALL"
 "None","Adding condition for rejected odometer codes","","prints that we are adding odometer code check","40-503-00036","ALL"
 "{0} = number of raw data entries","processing recipes for {0} raw data entries","","prints that we are processing recipes for N rows of raw data","40-503-00037","ALL"
-"","","","","40-503-00038","ALL"
+"{0} = recipe short name","\tAdding recipe {0} to sequence","","prints that we are adding recipe to sequence","40-503-00038","ALL"
 "","","","","40-503-00039","ALL"
 "","","","","",""
 "","","","","",""
