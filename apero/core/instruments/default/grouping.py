@@ -28,6 +28,7 @@ import numpy as np
 from typing import Any, Dict, List, Union
 
 from apero.core.core import drs_argument
+from apero.core.core import drs_log
 from apero.tools.module.processing import drs_grouping_functions as drsgf
 
 
@@ -44,16 +45,28 @@ RunType = List[Dict[str, Any]]
 # =============================================================================
 # Define default functions
 # =============================================================================
-def no_group(args: Dict[str, DrsArgument],
-             kwargs: Dict[str, DrsArgument],
+def no_group(rargs: Dict[str, DrsArgument],
+             rkwargs: Dict[str, DrsArgument],
              argdict: Dict[str, ArgDictType],
-             kwargdict: Dict[str, ArgDictType]) -> RunType:
+             kwargdict: Dict[str, ArgDictType],
+             **kwargs) -> RunType:
+    """
+
+    :param rargs:
+    :param rkwargs:
+    :param argdict:
+    :param kwargdict:
+    :param kwargs:
+    :return:
+    """
+    # group column
+    group_column = kwargs.get('group_column', None)
     # define runs
     run_instances = []
     # ----------------------------------------------------------------------
     # first we need to find the file arguments
     # ----------------------------------------------------------------------
-    fout = drsgf.find_file_args(args, kwargs, argdict, kwargdict)
+    fout = drsgf.find_file_args(rargs, rkwargs, argdict, kwargdict)
     file_args, non_file_args, alldict = fout
     # define the first file_arg columns
     if len(file_args) != 0:
@@ -61,16 +74,18 @@ def no_group(args: Dict[str, DrsArgument],
     # ----------------------------------------------------------------------
     # Now figure out the order these arguments should be added
     # ----------------------------------------------------------------------
-    arg_order = drsgf.get_argposorder(args, kwargs, argdict, kwargdict)
+    arg_order = drsgf.get_argposorder(rargs, rkwargs, argdict, kwargdict)
 
     # ----------------------------------------------------------------------
     # Make a run instance
     # ----------------------------------------------------------------------
-    run_inst = drsgf.RunInstance(args, kwargs)
-    run_inst.group_column = None
+    run_inst = drsgf.RunInstance(rargs, rkwargs)
+    run_inst.group_column = group_column
     run_inst.group = None
     run_instances.append(run_inst)
-
+    # print statement
+    pmsg = '\t\tProcessing I run {0}'.format(0)
+    drs_log.Printer(None, None, pmsg)
     # ----------------------------------------------------------------------
     # deal with non-file arguments
     # ----------------------------------------------------------------------
@@ -93,18 +108,19 @@ def no_group(args: Dict[str, DrsArgument],
     return runs
 
 
-def group_individually(args: Dict[str, DrsArgument],
-                       kwargs: Dict[str, DrsArgument],
+def group_individually(rargs: Dict[str, DrsArgument],
+                       rkwargs: Dict[str, DrsArgument],
                        argdict: Dict[str, ArgDictType],
-                       kwargdict: Dict[str, ArgDictType]) -> RunType:
+                       kwargdict: Dict[str, ArgDictType],
+                       **kwargs) -> RunType:
     """
     Individually group files (with 1 file argument and multiple kinds)
 
     - for this to work there can only be one file argument among args and kwargs
       otherwise one has to use another way to group files
 
-    :param args: the dictionary of positional DrsArguments for this recipe
-    :param kwargs: the dictionary of optional DrsArguments for this recipe
+    :param rargs: the dictionary of positional DrsArguments for this recipe
+    :param rkwargs: the dictionary of optional DrsArguments for this recipe
     :param argdict: the dictionary of tables raw files on disk that match the
                     criteria for positional arguments (one key per arg)
     :param kwargdict: the dictionary of tables raw files on disk that match the
@@ -112,12 +128,14 @@ def group_individually(args: Dict[str, DrsArgument],
     :return: the run list - where each entry is a dictionary containing the
              arguments to send for each individual run
     """
+    # group column
+    group_column = kwargs.get('group_column', None)
     # define runs
     run_instances = []
     # ----------------------------------------------------------------------
     # first we need to find the file arguments
     # ----------------------------------------------------------------------
-    fout = drsgf.find_file_args(args, kwargs, argdict, kwargdict)
+    fout = drsgf.find_file_args(rargs, rkwargs, argdict, kwargdict)
     file_args, non_file_args, alldict = fout
     # define the first file_arg columns
     if len(file_args) != 1:
@@ -127,25 +145,38 @@ def group_individually(args: Dict[str, DrsArgument],
     # ----------------------------------------------------------------------
     # Now figure out the order these arguments should be added
     # ----------------------------------------------------------------------
-    arg_order = drsgf.get_argposorder(args, kwargs, argdict, kwargdict)
+    arg_order = drsgf.get_argposorder(rargs, rkwargs, argdict, kwargdict)
     # ----------------------------------------------------------------------
     # add all kinds to run instances (for each colname)
     # ----------------------------------------------------------------------
     # get the drs files in file arg 0
     kinds = alldict[first_arg].keys()
+    # count number of runs
+    run_count = 0
     # need to loop around drsfiles in file arg 1
     for kind in kinds:
         # get arg 0 table
         table0 = alldict[first_arg][kind]
+        # deal with no table
+        if table0 is None:
+            continue
+        # deal with no table
+        if len(table0) == 0:
+            continue
         # loop around these unique entries and add to groups
         for row in range(len(table0)):
             # need to create a run instance here
-            run_inst = drsgf.RunInstance(args, kwargs)
+            run_inst = drsgf.RunInstance(rargs, rkwargs)
             # set group identifier
-            run_inst.group_column = 'individual'
-            run_inst.group = row
+            run_inst.group_column = group_column
+            run_inst.group = str(table0[group_column][row])
             # in each dictionary we will have arguments
             run_inst.dictionary[first_arg] = [table0['OUT'][row]]
+            # print statement
+            pmsg = '\t\tProcessing I run {0}'.format(run_count)
+            drs_log.Printer(None, None, pmsg)
+            # add to run count
+            run_count += 1
             # add run_instance to list
             run_instances.append(run_inst)
     # ----------------------------------------------------------------------
@@ -170,16 +201,17 @@ def group_individually(args: Dict[str, DrsArgument],
     return runs
 
 
-def dir_group_1_arg_n_kinds(args: Dict[str, DrsArgument],
-                            kwargs: Dict[str, DrsArgument],
+def dir_group_1_arg_n_kinds(rargs: Dict[str, DrsArgument],
+                            rkwargs: Dict[str, DrsArgument],
                             argdict: Dict[str, ArgDictType],
-                            kwargdict: Dict[str, ArgDictType]) -> RunType:
+                            kwargdict: Dict[str, ArgDictType],
+                            **kwargs) -> RunType:
     """
     Group by column "DIRNAME" when we have one file argument and multiple
     drsfile kinds for that file argument
 
-    :param args: the dictionary of positional DrsArguments for this recipe
-    :param kwargs: the dictionary of optional DrsArguments for this recipe
+    :param rargs: the dictionary of positional DrsArguments for this recipe
+    :param rkwargs: the dictionary of optional DrsArguments for this recipe
     :param argdict: the dictionary of tables raw files on disk that match the
                     criteria for positional arguments (one key per arg)
     :param kwargdict: the dictionary of tables raw files on disk that match the
@@ -187,14 +219,16 @@ def dir_group_1_arg_n_kinds(args: Dict[str, DrsArgument],
     :return: the run list - where each entry is a dictionary containing the
              arguments to send for each individual run
     """
+    # kwargs not used for this function
+    _ = kwargs
     # define runs
     run_instances = []
-    # define directory column name
-    columnname = 'DIRNAME'
+    # group column
+    group_column = kwargs.get('group_column', None)
     # ----------------------------------------------------------------------
     # first we need to find the file arguments
     # ----------------------------------------------------------------------
-    fout = drsgf.find_file_args(args, kwargs, argdict, kwargdict)
+    fout = drsgf.find_file_args(rargs, rkwargs, argdict, kwargdict)
     file_args, non_file_args, alldict = fout
     # define the first file_arg columns
     if len(file_args) != 1:
@@ -204,29 +238,42 @@ def dir_group_1_arg_n_kinds(args: Dict[str, DrsArgument],
     # ----------------------------------------------------------------------
     # Now figure out the order these arguments should be added
     # ----------------------------------------------------------------------
-    arg_order = drsgf.get_argposorder(args, kwargs, argdict, kwargdict)
+    arg_order = drsgf.get_argposorder(rargs, rkwargs, argdict, kwargdict)
     # ----------------------------------------------------------------------
     # add all kinds to run instances (for each colname)
     # ----------------------------------------------------------------------
     # get the drs files in file arg 0
     kinds = alldict[first_arg].keys()
+    # count number of runs
+    run_count = 0
     # need to loop around drsfiles in file arg 1
     for kind in kinds:
         # get arg 0 table
         table0 = alldict[first_arg][kind]
+        # deal with no table
+        if table0 is None:
+            continue
+        # deal with no table
+        if len(table0) == 0:
+            continue
         # get unique column entries
-        unique_entries = np.unique(table0[columnname])
+        unique_entries = np.unique(table0[group_column])
         # loop around these unique entries and add to groups
         for entry in unique_entries:
             # need to create a run instance here
-            run_inst = drsgf.RunInstance(args, kwargs)
+            run_inst = drsgf.RunInstance(rargs, rkwargs)
             # set group identifier
-            run_inst.group_column = columnname
+            run_inst.group_column = group_column
             run_inst.group = entry
             # create a list of all out files
-            colmask = table0[columnname] == entry
+            colmask = table0[group_column] == entry
             # in each dictionary we will have arguments
             run_inst.dictionary[first_arg] = list(table0['OUT'][colmask])
+            # print statement
+            pmsg = '\t\tProcessing I run {0}'.format(run_count)
+            drs_log.Printer(None, None, pmsg)
+            # add to run count
+            run_count += 1
             # add run_instance to list
             run_instances.append(run_inst)
     # ----------------------------------------------------------------------
@@ -251,16 +298,17 @@ def dir_group_1_arg_n_kinds(args: Dict[str, DrsArgument],
     return runs
 
 
-def dir_group_n_args_1_kind(args: Dict[str, DrsArgument],
-                            kwargs: Dict[str, DrsArgument],
+def dir_group_n_args_1_kind(rargs: Dict[str, DrsArgument],
+                            rkwargs: Dict[str, DrsArgument],
                             argdict: Dict[str, ArgDictType],
-                            kwargdict: Dict[str, ArgDictType]) -> RunType:
+                            kwargdict: Dict[str, ArgDictType],
+                            **kwargs) -> RunType:
     """
     Group by column "DIRNAME" when we have multipe file argument and one
     drsfile kind for each file argument
 
-    :param args: the dictionary of positional DrsArguments for this recipe
-    :param kwargs: the dictionary of optional DrsArguments for this recipe
+    :param rargs: the dictionary of positional DrsArguments for this recipe
+    :param rkwargs: the dictionary of optional DrsArguments for this recipe
     :param argdict: the dictionary of tables raw files on disk that match the
                     criteria for positional arguments (one key per arg)
     :param kwargdict: the dictionary of tables raw files on disk that match the
@@ -268,14 +316,16 @@ def dir_group_n_args_1_kind(args: Dict[str, DrsArgument],
     :return: the run list - where each entry is a dictionary containing the
              arguments to send for each individual run
     """
+    # kwargs not used for this function
+    _ = kwargs
     # define runs
     run_instances = []
-    # define directory column name
-    columnname = 'DIRNAME'
+    # group column
+    group_column = kwargs.get('group_column', None)
     # ----------------------------------------------------------------------
     # first we need to find the file arguments
     # ----------------------------------------------------------------------
-    fout = drsgf.find_file_args(args, kwargs, argdict, kwargdict)
+    fout = drsgf.find_file_args(rargs, rkwargs, argdict, kwargdict)
     file_args, non_file_args, alldict = fout
     # define the first file_arg columns
     if len(file_args) == 0:
@@ -285,7 +335,7 @@ def dir_group_n_args_1_kind(args: Dict[str, DrsArgument],
     # ----------------------------------------------------------------------
     # Now figure out the order these arguments should be added
     # ----------------------------------------------------------------------
-    arg_order = drsgf.get_argposorder(args, kwargs, argdict, kwargdict)
+    arg_order = drsgf.get_argposorder(rargs, rkwargs, argdict, kwargdict)
     # ----------------------------------------------------------------------
     # for first argument
     # ----------------------------------------------------------------------
@@ -293,19 +343,32 @@ def dir_group_n_args_1_kind(args: Dict[str, DrsArgument],
     kind = alldict[first_arg].keys()[0]
     # get arg 0 table
     table0 = alldict[first_arg][kind]
+    # deal with no table
+    if table0 is None:
+        return []
+    # deal with no table
+    if len(table0) == 0:
+        return []
     # get unique column entries
-    unique_entries = np.unique(table0[columnname])
+    unique_entries = np.unique(table0[group_column])
+    # count number of runs
+    run_count = 0
     # loop around these unique entries and add to groups
     for entry in unique_entries:
         # need to create a run instance here
-        run_inst = drsgf.RunInstance(args, kwargs)
+        run_inst = drsgf.RunInstance(rargs, rkwargs)
         # set group identifier
-        run_inst.group_column = columnname
+        run_inst.group_column = group_column
         run_inst.group = entry
         # create a list of all out files
-        colmask = table0[columnname] == entry
+        colmask = table0[group_column] == entry
         # in each dictionary we will have arguments
         run_inst.dictionary[first_arg] = list(table0['OUT'][colmask])
+        # print statement
+        pmsg = '\t\tProcessing I run {0}'.format(run_count)
+        drs_log.Printer(None, None, pmsg)
+        # add to run count
+        run_count += 1
         # add run_instance to list
         run_instances.append(run_inst)
     # ----------------------------------------------------------------------
@@ -319,7 +382,7 @@ def dir_group_n_args_1_kind(args: Dict[str, DrsArgument],
         # loop around runs
         for run_inst in run_instances:
             # create a list of all out files
-            colmask = table1[columnname] == run_inst.group
+            colmask = table1[group_column] == run_inst.group
             # in each dictionary we will have arguments
             run_inst.dictionary[argname] = list(table1['OUT'][colmask])
     # ----------------------------------------------------------------------
@@ -344,17 +407,17 @@ def dir_group_n_args_1_kind(args: Dict[str, DrsArgument],
     return runs
 
 
-def group_by_dirname(args: Dict[str, DrsArgument],
-                     kwargs: Dict[str, DrsArgument],
+def group_by_dirname(rargs: Dict[str, DrsArgument],
+                     rkwargs: Dict[str, DrsArgument],
                      argdict: Dict[str, ArgDictType],
                      kwargdict: Dict[str, ArgDictType],
-                     dirname: Union[str, None] = None) -> RunType:
+                     **kwargs) -> RunType:
     """
     Group by column "DIRNAME" when we have multipe file argument and multiple
     drsfile kinds for each file argument
 
-    :param args: the dictionary of positional DrsArguments for this recipe
-    :param kwargs: the dictionary of optional DrsArguments for this recipe
+    :param rargs: the dictionary of positional DrsArguments for this recipe
+    :param rkwargs: the dictionary of optional DrsArguments for this recipe
     :param argdict: the dictionary of tables raw files on disk that match the
                     criteria for positional arguments (one key per arg)
     :param kwargdict: the dictionary of tables raw files on disk that match the
@@ -364,12 +427,12 @@ def group_by_dirname(args: Dict[str, DrsArgument],
     """
     # define runs
     run_instances = []
-    # define directory column name
-    columnname = 'DIRNAME'
+    # group column
+    group_column = kwargs.get('group_column', None)
     # ----------------------------------------------------------------------
     # first we need to find the file arguments
     # ----------------------------------------------------------------------
-    fout = drsgf.find_file_args(args, kwargs, argdict, kwargdict)
+    fout = drsgf.find_file_args(rargs, rkwargs, argdict, kwargdict)
     file_args, non_file_args, alldict = fout
     # define the first file_arg columns
     if len(file_args) == 0:
@@ -379,7 +442,7 @@ def group_by_dirname(args: Dict[str, DrsArgument],
     # ----------------------------------------------------------------------
     # Now figure out the order these arguments should be added
     # ----------------------------------------------------------------------
-    arg_order = drsgf.get_argposorder(args, kwargs, argdict, kwargdict)
+    arg_order = drsgf.get_argposorder(rargs, rkwargs, argdict, kwargdict)
     # ----------------------------------------------------------------------
     # get kind combinations
     # ----------------------------------------------------------------------
@@ -396,29 +459,44 @@ def group_by_dirname(args: Dict[str, DrsArgument],
     #    - loop around each argument
     #    - fill in run instance
     # ----------------------------------------------------------------------
+    run_count = 0
     # loop around arguments
     for f_it, fargs in enumerate(kinds):
         # get arg 0 table
         table0 = alldict[first_arg][fargs[0]]
+        # deal with no table
+        if table0 is None:
+            continue
+        # deal with no table
+        if len(table0) == 0:
+            continue
         # get unique column entries
-        unique_entries = np.unique(table0[columnname])
+        unique_entries = np.unique(table0[group_column])
         # loop around these unique entries and add to groups
         for entry in unique_entries:
             # valid
             valid = True
             # need to create a run instance here
-            run_inst = drsgf.RunInstance(args, kwargs)
+            run_inst = drsgf.RunInstance(rargs, rkwargs)
             # loop around arguments
             for k_it, farg in enumerate(fargs):
                 # get the argument name
                 argname = file_args[k_it]
                 # get this arguments table
                 table1 = alldict[argname][farg]
+                # deal with no table
+                if table1 is None:
+                    valid = False
+                    continue
+                # deal with no table
+                if len(table1) == 0:
+                    valid = False
+                    continue
                 # set group identifier
-                run_inst.group_column = columnname
+                run_inst.group_column = group_column
                 run_inst.group = entry
                 # create a list of all out files
-                colmask = table1[columnname] == entry
+                colmask = table1[group_column] == entry
                 # get list of filenames
                 filenames = list(table1['OUT'][colmask])
                 # check we have entries
@@ -428,6 +506,12 @@ def group_by_dirname(args: Dict[str, DrsArgument],
                 run_inst.dictionary[argname] = filenames
             # add to run instances
             if valid:
+                # print statement
+                pmsg = '\t\tProcessing I run {0}'.format(run_count)
+                drs_log.Printer(None, None, pmsg)
+                # add to run count
+                run_count += 1
+                # add to run_instances
                 run_instances.append(run_inst)
 
     # ----------------------------------------------------------------------

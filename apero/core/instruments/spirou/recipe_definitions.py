@@ -192,6 +192,7 @@ cal_pp.set_arg(name='files', dtype='files', pos='1+', files=[files.raw_file],
 cal_pp.set_kwarg(name='--skip', dtype='bool', default=False,
                  helpstr=textentry('PPSKIP_HELP'), default_ref='SKIP_DONE_PP')
 cal_pp.group_func = grouping.group_individually
+cal_pp.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(cal_pp)
 
@@ -227,6 +228,7 @@ cal_badpix.set_kwarg(**fluxunits)
 cal_badpix.set_kwarg(**plot)
 cal_badpix.set_kwarg(**resize)
 cal_badpix.group_func = grouping.group_by_dirname
+cal_badpix.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(cal_badpix)
 
@@ -258,6 +260,7 @@ cal_dark.set_kwarg(**add_db)
 cal_dark.set_kwarg(default=True, **combine)
 cal_dark.set_kwarg(**plot)
 cal_dark.group_func = grouping.group_by_dirname
+cal_dark.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(cal_dark)
 
@@ -282,6 +285,7 @@ cal_dark_master.set_kwarg(name='--filetype', dtype=str,
 cal_dark_master.set_kwarg(**add_db)
 cal_dark_master.set_kwarg(**plot)
 cal_dark_master.group_func = grouping.no_group
+cal_dark_master.group_column = None
 # add to recipe
 recipes.append(cal_dark_master)
 
@@ -324,6 +328,7 @@ cal_loc.set_kwarg(**fluxunits)
 cal_loc.set_kwarg(**plot)
 cal_loc.set_kwarg(**resize)
 cal_loc.group_func = grouping.group_by_dirname
+cal_loc.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(cal_loc)
 
@@ -378,6 +383,7 @@ cal_shape_master.set_kwarg(name='--fpmaster', dtype='files',
                            files=[files.out_shape_fpmaster], default='None',
                            helpstr=textentry('SHAPE_FPMASTER_HELP'))
 cal_shape_master.group_func = grouping.group_by_dirname
+cal_shape_master.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(cal_shape_master)
 
@@ -418,6 +424,7 @@ cal_shape.set_kwarg(**resize)
 cal_shape.set_kwarg(**shapexfile)
 cal_shape.set_kwarg(**shapeyfile)
 cal_shape.group_func = grouping.group_by_dirname
+cal_shape.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(cal_shape)
 
@@ -464,6 +471,7 @@ cal_ff.set_kwarg(**shapexfile)
 cal_ff.set_kwarg(**shapeyfile)
 cal_ff.set_kwarg(**shapelfile)
 cal_ff.group_func = grouping.group_by_dirname
+cal_ff.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(cal_ff)
 
@@ -514,6 +522,7 @@ cal_thermal.set_kwarg(name='--forceext', dtype='bool', default=False,
                       default_ref='THERMAL_ALWAYS_EXTRACT',
                       helpstr='THERMAL_EXTRACT_HELP')
 cal_thermal.group_func = grouping.group_by_dirname
+cal_thermal.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(cal_thermal)
 
@@ -538,7 +547,8 @@ cal_leak_master.set_kwarg(name='--filetype', dtype=str, default='DARK_FP',
                           helpstr=textentry('LEAKM_HELP_FILETYPE'))
 cal_leak_master.set_kwarg(**add_db)
 cal_leak_master.set_kwarg(**plot)
-cal_leak_master.group_func = grouping.group_by_dirname
+cal_leak_master.group_func = grouping.no_group
+cal_leak_master.group_column = None
 # add to recipe
 recipes.append(cal_leak_master)
 
@@ -571,6 +581,7 @@ cal_leak.set_kwarg(name='--leakfile', dtype='file', default='None',
                    files=[files.out_leak_master],
                    helpstr=textentry('LEAK_LEAKFILE_HELP'))
 cal_leak.group_func = grouping.group_individually
+cal_leak.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(cal_leak)
 
@@ -639,6 +650,7 @@ cal_extract.set_kwarg(name='--thermal', dtype='bool', default=True,
 cal_extract.set_kwarg(**thermalfile)
 cal_extract.set_kwarg(**wavefile)
 cal_extract.group_func = grouping.group_individually
+cal_extract.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(cal_extract)
 
@@ -724,6 +736,7 @@ cal_wave_master.set_kwarg(name='--fpmode', dtype='options',
                           helpstr=textentry('FPMODE_HELP'), options=['0', '1'],
                           default_ref='WAVE_MODE_FP')
 cal_wave_master.group_func = grouping.group_by_dirname
+cal_wave_master.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(cal_wave_master)
 
@@ -784,6 +797,7 @@ cal_wave_night.set_kwarg(name='--forceext', dtype='bool',
                          default_ref='WAVE_ALWAYS_EXTRACT',
                          helpstr='WAVE_EXTRACT_HELP')
 cal_wave_night.group_func = grouping.group_by_dirname
+cal_wave_night.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(cal_wave_night)
 
@@ -823,10 +837,11 @@ cal_ccf.set_kwarg(name='--masknormmode', dtype=str,
                   default_ref='CCF_MASK_NORMALIZATION',
                   options=['None', 'all', 'order'],
                   helpstr=textentry('CCF_MASK_NORM_HELP'))
-cal_ccf.group_func = grouping.group_individually
 cal_ccf.set_kwarg(**add_db)
 cal_ccf.set_kwarg(**blazefile)
 cal_ccf.set_kwarg(**plot)
+cal_ccf.group_func = grouping.group_individually
+cal_ccf.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(cal_ccf)
 
@@ -866,6 +881,7 @@ obj_mk_tellu.set_kwarg(name='--use_template', dtype='bool', default=True,
                        helpstr='Whether to use the template provided from '
                                'the telluric database')
 obj_mk_tellu.group_func = grouping.group_individually
+obj_mk_tellu.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(obj_mk_tellu)
 
@@ -902,6 +918,7 @@ obj_mk_tellu_db.set_kwarg(**blazefile)
 obj_mk_tellu_db.set_kwarg(**plot)
 obj_mk_tellu_db.set_kwarg(**wavefile)
 obj_mk_tellu_db.group_func = grouping.no_group
+obj_mk_tellu_db.group_column = None
 # add to recipe
 recipes.append(obj_mk_tellu_db)
 
@@ -951,6 +968,7 @@ obj_fit_tellu.set_kwarg(**blazefile)
 obj_fit_tellu.set_kwarg(**plot)
 obj_fit_tellu.set_kwarg(**wavefile)
 obj_fit_tellu.group_func = grouping.group_individually
+obj_fit_tellu.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(obj_fit_tellu)
 
@@ -990,6 +1008,7 @@ obj_fit_tellu_db.set_kwarg(**add_db)
 obj_fit_tellu_db.set_kwarg(**plot)
 obj_fit_tellu_db.set_kwarg(**wavefile)
 obj_fit_tellu_db.group_func = grouping.no_group
+obj_fit_tellu_db.group_column = None
 # add to recipe
 recipes.append(obj_fit_tellu_db)
 
@@ -1028,6 +1047,7 @@ obj_mk_template.set_kwarg(**blazefile)
 obj_mk_template.set_kwarg(**plot)
 obj_mk_template.set_kwarg(**wavefile)
 obj_mk_template.group_func = grouping.no_group
+obj_mk_template.group_column = None
 # add to recipe
 recipes.append(obj_mk_template)
 
@@ -1105,6 +1125,7 @@ pol_spirou.set_kwarg(**plot)
 pol_spirou.set_kwarg(**wavefile)
 # TODO: Will need custom group function
 pol_spirou.group_func = None
+pol_spirou.group_column = None
 # add to recipe
 recipes.append(pol_spirou)
 
@@ -1170,6 +1191,7 @@ pol_spirou_new.set_kwarg(**plot)
 pol_spirou_new.set_kwarg(**wavefile)
 # TODO: Will need custom group function
 pol_spirou_new.group_func = None
+pol_spirou_new.group_column = None
 # add to recipe
 recipes.append(pol_spirou_new)
 
@@ -1196,6 +1218,7 @@ obj_spec.set_kwarg(**plot)
 obj_spec.set_kwarg(name='--cores', dtype=int, default=1,
                    helpstr='')
 obj_spec.group_func = grouping.group_individually
+obj_spec.group_column = grouping.group_individually
 # add to recipe
 recipes.append(obj_spec)
 
