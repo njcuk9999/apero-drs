@@ -48,14 +48,16 @@ display_func = drs_misc.display_func
 # Define Constants class (pseudo constants)
 # =============================================================================
 class PseudoConstants(DefaultConstants):
+    # set class name
+    class_name = 'PsuedoConstants'
+
+
     def __init__(self, instrument: Union[str, None] = None):
         """
         Pseudo Constants constructor
 
         :param instrument: str, the drs instrument name
         """
-        # set class name
-        self.class_name = 'PsuedoConstants'
         # set function name
         _ = display_func(None, '__init__', __NAME__, self.class_name)
         # set instrument name
