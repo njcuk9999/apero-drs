@@ -20,6 +20,7 @@ Import rules:
 """
 import numpy as np
 from astropy.io import fits
+from astropy.io.fits.verify import VerifyWarning
 from astropy.table import Table
 from astropy import version as av
 import os
@@ -67,6 +68,8 @@ else:
 AnySimple = Union[int, float, str, bool]
 # get header comment cards
 HeaderCommentCards = fits.header._HeaderCommentaryCards
+# filter verify warnings
+warnings.filterwarnings('ignore', category=VerifyWarning)
 
 
 # =============================================================================
@@ -118,10 +121,15 @@ class Header(fits.Header):
             else:
                 # check for NaN values (and convert -- cannot put directly in)
                 nan_filtered = self.__nan_check(item)
+                # deal with long keys
+                if len(key[0]) > 8 and not key[0].startswith('HIERARCH'):
+                    dkey = 'HIERARCH ' + key[0]
+                else:
+                    dkey = str(key[0])
                 # do the super __setitem__ on nan filtered item
-                super().__setitem__(key, nan_filtered)
+                super().__setitem__(dkey, nan_filtered)
         # if key starts with @@@ add to temp items (without @@@)
-        if key.startswith('@@@'):
+        elif key.startswith('@@@') or key.startswith('HIERARCH @@@'):
             # use the __get_temp_key method to strip key
             self.__temp_items.__setitem__(self.__get_temp_key(key), item)
         # do not add empty keys
@@ -129,10 +137,15 @@ class Header(fits.Header):
             pass
         # else add normal keys
         else:
+            # deal with long keys
+            if len(key) > 8 and not key.startswith('HIERARCH'):
+                dkey = 'HIERARCH ' + key
+            else:
+                dkey = str(key)
             # check for NaN values (and convert -- cannot put directly in)
             nan_filtered = self.__nan_check(item)
             # do the super __setitem__ on nan filtered item
-            super().__setitem__(key, nan_filtered)
+            super().__setitem__(dkey, nan_filtered)
 
     def __getitem__(self, key: str) -> Union[AnySimple, dict]:
         """
