@@ -105,6 +105,8 @@ SPECIAL_LIST_KEYS = drs_recipe.SPECIAL_LIST_KEYS
 OBJNAMECOL = 'KW_OBJNAME'
 # list of arguments to remove from skip check
 SKIP_REMOVE_ARGS = ['--skip', '--program', '--debug', '--plot', '--master']
+# keep a global copy of plt
+PLT_MOD = None
 
 
 # =============================================================================
@@ -871,12 +873,12 @@ def process_run_list(params, recipe, runlist, group=None):
         # log process: Running with 1 core
         WLOG(params, 'info', textentry('40-503-00016'))
         # run as linear process
-        rdict = _linear_process(params, recipe, runlist, group=group)
+        rdict = _linear_process(params, runlist, group=group)
     else:
         # log process: Running with N cores
         WLOG(params, 'info', textentry('40-503-00017', args=[cores]))
         # run as multiple processes
-        rdict = _multi_process(params, recipe, runlist, cores=cores,
+        rdict = _multi_process(params, runlist, cores=cores,
                                groupname=group)
     # end a timer
     process_end = time.time()
@@ -1934,7 +1936,7 @@ def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
 # Define processing functions
 # =============================================================================
 def _linear_process(params, runlist, return_dict=None, number=0,
-                    cores=1, event=None, group=None, recipe=None):
+                    cores=1, event=None, group=None):
     # deal with empty return_dict
     if return_dict is None:
         return_dict = dict()
@@ -2045,10 +2047,9 @@ def _linear_process(params, runlist, return_dict=None, number=0,
                 ll_item = modulemain(**kwargs)
                 # ----------------------------------------------------------
                 # close all plotting
-                # TODO: deal with a way to close plots without recipe
-                if recipe is not None:
-                    plotter = plotting.Plotter(params, recipe)
-                    plotter.closeall()
+                # plotter = plotting.Plotter(params, recipe)
+                # plotter.closeall()
+                close_all_plots()
                 # keep only some parameters
                 llparams = ll_item['params']
                 llrecipe = ll_item['recipe']
@@ -2187,7 +2188,7 @@ def _linear_process(params, runlist, return_dict=None, number=0,
     return return_dict
 
 
-def _multi_process1(params, recipe, runlist, cores, groupname=None):
+def _multi_process1(params, runlist, cores, groupname=None):
     # first try to group tasks
     grouplist, groupnames = _group_tasks1(runlist, cores)
     # start process manager
@@ -2211,7 +2212,7 @@ def _multi_process1(params, recipe, runlist, cores, groupname=None):
         #    - there are "number of cores" number of these subgroups
         for r_it, runlist_group in enumerate(group):
             # get args
-            args = [params, recipe, runlist_group, return_dict, r_it + 1,
+            args = [params, runlist_group, return_dict, r_it + 1,
                     cores, event, groupname]
             # get parallel process
             process = Process(target=_linear_process, args=args)
@@ -2228,7 +2229,7 @@ def _multi_process1(params, recipe, runlist, cores, groupname=None):
 
 
 # TODO: remove or replace _multi_process
-def _multi_process(params, recipe, runlist, cores, groupname=None):
+def _multi_process(params, runlist, cores, groupname=None):
     # first try to group tasks (now just by recipe)
     grouplist, groupnames = _group_tasks2(runlist, cores)
     # start process manager
@@ -2259,6 +2260,24 @@ def _multi_process(params, recipe, runlist, cores, groupname=None):
         pool.starmap(_linear_process, params_per_process)
     # return return_dict
     return dict(return_dict)
+
+
+def close_all_plots():
+    """
+    Close all plots (by importing matplotlib)
+
+    :return:
+    """
+    global PLT_MOD
+    if PLT_MOD is not None:
+        PLT_MOD.close('all')
+        return
+    else:
+        from apero.plotting.core import import_matplotlib
+        out = import_matplotlib()
+        plt = out[0]
+        plt.close('all')
+        PLT_MOD = plt
 
 
 # =============================================================================
