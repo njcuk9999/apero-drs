@@ -886,24 +886,10 @@ class Plotter:
 
         :return: None
         """
-        global PLT_MOD
-        global MPL_MOD
-        # fix for MacOSX plots freezing
-        gui_env = ['Qt5Agg', 'Qt4Agg', 'GTKAgg', 'TKAgg', 'WXAgg', 'Agg']
-        for gui in gui_env:
-            # noinspection PyBroadException
-            try:
-                matplotlib.use(gui, warn=False, force=True)
-                import matplotlib.pyplot as plt
-                from mpl_toolkits import axes_grid1
-                self.plt = plt
-                self.matplotlib = matplotlib
-                self.axes_grid1 = axes_grid1
-                PLT_MOD = plt
-                MPL_MOD = axes_grid1
-                break
-            except Exception as _:
-                continue
+        out = import_matplotlib()
+        self.plt = out[0]
+        self.matplotlib = out[1]
+        self.axes_grid1 = out[2]
 
     # ------------------------------------------------------------------
     # internal methods
@@ -1018,6 +1004,25 @@ class Plotter:
 # =============================================================================
 # Define  functions
 # =============================================================================
+def import_matplotlib():
+    global PLT_MOD
+    global MPL_MOD
+    # fix for MacOSX plots freezing
+    gui_env = ['Qt5Agg', 'Qt4Agg', 'GTKAgg', 'TKAgg', 'WXAgg', 'Agg']
+    for gui in gui_env:
+        # noinspection PyBroadException
+        try:
+            matplotlib.use(gui, warn=False, force=True)
+            import matplotlib.pyplot as plt
+            from mpl_toolkits import axes_grid1
+            PLT_MOD = plt
+            MPL_MOD = axes_grid1
+            return plt, matplotlib, axes_grid1
+        except Exception as _:
+            continue
+
+
+
 def qc_param_table(qc_params, qc_param_dict):
     # deal with no qc_params
     if qc_params is None:
