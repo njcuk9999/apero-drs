@@ -3005,6 +3005,9 @@ def generate_resolution_map(params, recipe, llprops, e2dsfile, **kwargs):
 
             # fit the merged line profile and do some sigma-clipping
             while maxdev > max_dev_thres:
+                # deal with no good data
+                if np.sum(keep) == 0:
+                    break
                 # fit with a guassian with a slope
                 fargs = dict(x=all_dvs[keep], y=all_lines[keep],
                              guess=init_guess)
