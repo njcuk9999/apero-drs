@@ -17,7 +17,8 @@ from collections import OrderedDict
 from copy import deepcopy
 import itertools
 import multiprocessing
-from multiprocessing import Pool, Process, Manager, Event
+from multiprocessing import get_context, set_start_method
+from multiprocessing import Process, Manager, Event
 import numpy as np
 import os
 import sys
@@ -107,6 +108,8 @@ OBJNAMECOL = 'KW_OBJNAME'
 SKIP_REMOVE_ARGS = ['--skip', '--program', '--debug', '--plot', '--master']
 # keep a global copy of plt
 PLT_MOD = None
+# set the global multiprocessing start method
+set_start_method('spawn', force=True)
 
 
 # =============================================================================
@@ -2256,8 +2259,8 @@ def _multi_process(params, runlist, cores, groupname=None):
                     cores, event, groupname]
             params_per_process.append(args)
         # start parellel jobs
-        pool = Pool(cores)
-        pool.starmap(_linear_process, params_per_process)
+        with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
+            pool.starmap(_linear_process, params_per_process)
     # return return_dict
     return dict(return_dict)
 
