@@ -1173,6 +1173,8 @@ class MySQLDatabase(Database):
         # set function name
         func_name = '{0}.{1}.{2}()'.format(__NAME__, self.classname,
                                            '__init__()')
+        # set path
+        self.path = '{0}@{1}'.format(self.user, self.host)
         # deal with mysql not being imported
         if mysql is None:
             # log error: Cannot import mysql.connector
@@ -1188,7 +1190,6 @@ class MySQLDatabase(Database):
         # storage for database path
         self.host = host
         self.user = user
-        self.path = '{0}@{1}'.format(self.user, self.host)
         self.passwd = passwd
         self.dbname = database
         self.tname = _proxy_table(tablename)
