@@ -1193,6 +1193,8 @@ class MySQLDatabase(Database):
         self.passwd = passwd
         self.dbname = database
         self.tname = _proxy_table(tablename)
+        # re-set path after call to super
+        self.path = '{0}@{1}'.format(self.user, self.host)
         # deal with database for sql
         self.add_database()
         # try to connect the the SQL3 database
