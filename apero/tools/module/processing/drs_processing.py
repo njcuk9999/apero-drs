@@ -1938,8 +1938,8 @@ def gen_global_condition(params: ParamDict, indexdb: IndexDatabase,
 # =============================================================================
 # Define processing functions
 # =============================================================================
-def _linear_process(params, runlist, return_dict=None, number=0,
-                    cores=1, event=None, group=None):
+def _linear_process(params, runlist, number=0, cores=1, event=None,
+                    group=None, return_dict=None, ):
     # deal with empty return_dict
     if return_dict is None:
         return_dict = dict()
@@ -2191,7 +2191,7 @@ def _linear_process(params, runlist, return_dict=None, number=0,
     return return_dict
 
 
-def _multi_process1(params, runlist, cores, groupname=None):
+def _multi_process(params, runlist, cores, groupname=None):
     # first try to group tasks
     grouplist, groupnames = _group_tasks1(runlist, cores)
     # start process manager
@@ -2215,8 +2215,8 @@ def _multi_process1(params, runlist, cores, groupname=None):
         #    - there are "number of cores" number of these subgroups
         for r_it, runlist_group in enumerate(group):
             # get args
-            args = [params, runlist_group, return_dict, r_it + 1,
-                    cores, event, groupname]
+            args = [params, runlist_group, r_it + 1,
+                    cores, event, groupname, return_dict]
             # get parallel process
             process = Process(target=_linear_process, args=args)
             process.start()
@@ -2232,13 +2232,14 @@ def _multi_process1(params, runlist, cores, groupname=None):
 
 
 # TODO: remove or replace _multi_process
-def _multi_process(params, runlist, cores, groupname=None):
+# TODO:    - currently freezes after first group?
+def _multi_process1(params, runlist, cores, groupname=None):
     # first try to group tasks (now just by recipe)
     grouplist, groupnames = _group_tasks2(runlist, cores)
     # start process manager
-    manager = Manager()
-    event = manager.Event()
-    return_dict = manager.dict()
+    # manager = Manager()
+    event = None
+    return_dict = dict()
     # loop around groups
     #   - each group is a unique recipe
     for g_it, groupnum in enumerate(grouplist):
@@ -2247,7 +2248,7 @@ def _multi_process(params, runlist, cores, groupname=None):
         # log progress
         _group_progress(params, g_it, grouplist, groupnames[groupnum])
         # skip groups if event is set
-        if event.is_set():
+        if event is not None and event.is_set():
             # TODO: Add to language db
             WLOG(params, 'warning', '\tSkipping group')
             continue
@@ -2255,12 +2256,17 @@ def _multi_process(params, runlist, cores, groupname=None):
         params_per_process = []
         # populate params for each sub group
         for r_it, runlist_group in enumerate(group):
-            args = [params, [runlist_group], return_dict, r_it + 1,
+            args = [params, [runlist_group], r_it + 1,
                     cores, event, groupname]
             params_per_process.append(args)
         # start parellel jobs
         with get_context('spawn').Pool(cores, maxtasksperchild=1) as pool:
-            pool.starmap(_linear_process, params_per_process)
+            results = pool.starmap(_linear_process, params_per_process)
+        # fudge back into return dictionary
+        for row in range(len(results)):
+            for key in results[row]:
+                return_dict[key] = results[row][key]
+
     # return return_dict
     return dict(return_dict)
 
