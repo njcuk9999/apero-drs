@@ -346,8 +346,15 @@ def convert_csv(xls: pd.io.excel.ExcelFile, out_dir: str):
         wcode = '40-001-00028'
         wmsg = drs_base.BETEXT[wcode]
         drs_base.base_printer(wcode, wmsg, '', args=[rpath])
+        # remove non utf-8 characters
+        for column in df.columns:
+            # change encoding
+            values = df[column].str.encode('ascii', 'ignore')
+            values = values.str.decode('ascii')
+            # add back to columns
+            df[column] = values
         # save to csv
-        df.to_csv(rpath, sep=',', quoting=2, index=False, encoding='utf-8-sig')
+        df.to_csv(rpath, sep=',', quoting=2, index=False, encoding='utf-8')
 
 
 def make_reset_csvs():
