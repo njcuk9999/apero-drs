@@ -71,14 +71,14 @@ raw_file.addset(raw_dark_dark)
 # raw_file.addset(raw_dark_dark_tel)
 
 # sky observation (sky dark)
-# TODO: This is a guess
 raw_dark_dark_sky = drs_finput('RAW_DARK_DARK_SKY',
-                               KW_RAW_DPRTYPE='SKY,DARK',
+                               KW_RAW_DPRTYPE=['EFF,SKY,SKY', 'FLUX,STD,SKY'],
                                filetype='.fits', suffix='', inext='.fits',
                                outfunc=out.blank)
 raw_file.addset(raw_dark_dark_sky)
 
 # sky observations (with fp)
+# TODO: Not defined
 raw_dark_fp_sky = drs_finput('RAW_DARK_FP_SKY',
                              KW_RAW_DPRTYPE='SKY,FP',
                              filetype='.fits', suffix='', inext='.fits',
@@ -162,25 +162,22 @@ raw_file.addset(raw_led_led)
 
 # -----------------------------------------------------------------------------
 # raw object files
-# TODO: This is a guess
 raw_obj_dark = drs_finput('RAW_OBJ_DARK',
-                          KW_RAW_DPRTYPE='SCIENCE,STAR,DARK',
+                          KW_RAW_DPRTYPE='OBJECT,STAR,DARK',
                           outfunc=out.blank,
                           KW_TARGET_TYPE='TARGET',
                           filetype='.fits', suffix='', inext='.fits')
 raw_file.addset(raw_obj_dark)
 
-# TODO: This is a guess
 raw_obj_fp = drs_finput('RAW_OBJ_FP',
-                        KW_RAW_DPRTYPE='SCIENCE,STAR,FP',
+                        KW_RAW_DPRTYPE='OBJECT,STAR,FP',
                         outfunc=out.blank,
                         KW_TARGET_TYPE='TARGET',
                         filetype='.fits', suffix='', inext='.fits')
 raw_file.addset(raw_obj_fp)
 
-# TODO: This is a guess
 raw_obj_hc1 = drs_finput('RAW_OBJ_HCONE',
-                         KW_RAW_DPRTYPE='SCIENCE,STAR,UN1',
+                         KW_RAW_DPRTYPE='OBJECT,STAR,UN1',
                          outfunc=out.blank,
                          KW_TARGET_TYPE='TARGET',
                          filetype='.fits', suffix='', inext='.fits')
