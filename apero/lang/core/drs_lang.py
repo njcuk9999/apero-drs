@@ -347,7 +347,7 @@ def convert_csv(xls: pd.io.excel.ExcelFile, out_dir: str):
         wmsg = drs_base.BETEXT[wcode]
         drs_base.base_printer(wcode, wmsg, '', args=[rpath])
         # save to csv
-        df.to_csv(rpath, sep=',', quoting=2, index=False)
+        df.to_csv(rpath, sep=',', quoting=2, index=False, encoding='utf-8')
 
 
 def make_reset_csvs():
