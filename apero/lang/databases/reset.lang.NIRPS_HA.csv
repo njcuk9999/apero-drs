@@ -1,4 +1,4 @@
-"ARGUMENTS","ENG","FR","KEYDESC","KEYNAME","KIND","Unnamed: 6"
+﻿"ARGUMENTS","ENG","FR","KEYDESC","KEYNAME","KIND","Unnamed: 6"
 "None","This is the SPIROU description message","None","","DRS_DESCRIPTION","HELP","None"
 "None","[BOOLEAN] Whether to do background subtraction","[BOOLEAN] S'il faut faire une soustraction de fond ","","BACKSUB_HELP","HELP",""
 "None","[STRING] Define a custom file to use for bad pixel correction. Checks for an absolute path and then checks 'directory'","[STRING] Définissez un fichier personnalisé à utiliser pour corriger les pixels défectueux. Vérifie un chemin absolu puis vérifie 'répertoire' ","","BADFILE_HELP","HELP",""

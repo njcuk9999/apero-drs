@@ -1,4 +1,4 @@
-"ARGUMENTS","ENG","FR","KEYDESC","KEYNAME","KIND"
+﻿"ARGUMENTS","ENG","FR","KEYDESC","KEYNAME","KIND"
 "None","[BOOLEAN] Whether to add outputs to calibration database","[BOOLEAN] S'il faut ajouter des sorties à la base de données d'étalonnage ","","ADD_CAL_HELP","HELP"
 "None","Lists ALL the night name directories in the input directory if used without a 'directory' argument or lists the files in the given 'directory' (if defined)","Répertorie TOUS les répertoires de noms de nuit du répertoire d'entrée s'il est utilisé sans l'argument 'directory' ou répertorie les fichiers du 'répertoire' donné (si défini)","","ALLLISTING_HELP","HELP"
 "None","Given a function name will break when this function is found (only if function contains display_func)","","","BREAKFUNC_HELP","HELP"
