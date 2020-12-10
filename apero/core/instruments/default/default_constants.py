@@ -66,7 +66,7 @@ __all__ = [
     'LOC_SAT_THRES', 'LOC_SAVE_SUPERIMP_FILE', 'LOC_BKGRD_THRESHOLD',
     'LOC_ORDER_CURVE_DROP', 'LOC_PLOT_CORNER_XZOOM1', 'LOC_PLOT_CORNER_XZOOM2',
     'LOC_PLOT_CORNER_YZOOM1', 'LOC_PLOT_CORNER_YZOOM2', 'LOC_COEFF_SIGCLIP',
-    'LOC_COEFFSIG_DEG',
+    'LOC_COEFFSIG_DEG', 'LOC_MAX_YPIX_VALUE',
     # shape constants
     'ALLOWED_FP_TYPES', 'FP_MASTER_MATCH_TIME',
     'FP_MASTER_PERCENT_THRES', 'SHAPE_QC_LTRANS_RES_THRES',
@@ -795,6 +795,10 @@ LOC_COEFF_SIGCLIP = Const('LOC_COEFF_SIGCLIP', value=None, dtype=float,
 #  Defines the fit degree to fit in the coefficient cleaning
 LOC_COEFFSIG_DEG = Const('LOC_COEFFSIG_DEG', value=None, dtype=int,
                          source=__NAME__, minimum=1, group=cgroup)
+
+#  Define the maximum value allowed in the localisation (cuts bluest orders)
+LOC_MAX_YPIX_VALUE = Const('LOC_MAX_YPIX_VALUE', value=None, dtype=int,
+                           source=__NAME__, minimum=0, group=cgroup)
 
 # Order of polynomial to fit for widths
 LOC_WIDTH_POLY_DEG = Const('LOC_WIDTH_POLY_DEG', value=None, dtype=int,

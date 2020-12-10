@@ -417,7 +417,7 @@ LOC_START_ROW_OFFSET.value = 0
 
 #   Definition of the central column for use in localisation
 LOC_CENTRAL_COLUMN = LOC_CENTRAL_COLUMN.copy(__NAME__)
-LOC_CENTRAL_COLUMN.value = 2400
+LOC_CENTRAL_COLUMN.value = 2000
 
 #   Half spacing between orders
 LOC_HALF_ORDER_SPACING = LOC_HALF_ORDER_SPACING.copy(__NAME__)
@@ -489,11 +489,15 @@ LOC_ORDER_CURVE_DROP.value = 2.0
 
 # set the sigma clipping cut off value for cleaning coefficients
 LOC_COEFF_SIGCLIP = LOC_COEFF_SIGCLIP.copy(__NAME__)
-LOC_COEFF_SIGCLIP.value = 7
+LOC_COEFF_SIGCLIP.value = 5
 
 #  Defines the fit degree to fit in the coefficient cleaning
 LOC_COEFFSIG_DEG = LOC_COEFFSIG_DEG.copy(__NAME__)
-LOC_COEFFSIG_DEG.value = 7
+LOC_COEFFSIG_DEG.value = 5
+
+#  Define the maximum value allowed in the localisation (cuts bluest orders)
+LOC_MAX_YPIX_VALUE = LOC_MAX_YPIX_VALUE.copy(__NAME__)
+LOC_MAX_YPIX_VALUE.value = 4040
 
 #   Saturation threshold for localisation
 LOC_SAT_THRES = LOC_SAT_THRES.copy(__NAME__)
