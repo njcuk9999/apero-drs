@@ -887,9 +887,10 @@ class Plotter:
         :return: None
         """
         out = import_matplotlib()
-        self.plt = out[0]
-        self.matplotlib = out[1]
-        self.axes_grid1 = out[2]
+        if out is not None:
+            self.plt = out[0]
+            self.matplotlib = out[1]
+            self.axes_grid1 = out[2]
 
     # ------------------------------------------------------------------
     # internal methods
@@ -1020,7 +1021,7 @@ def import_matplotlib():
             return plt, matplotlib, axes_grid1
         except Exception as _:
             continue
-
+    return None
 
 
 def qc_param_table(qc_params, qc_param_dict):
