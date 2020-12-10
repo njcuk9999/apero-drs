@@ -18,7 +18,6 @@ For all instruments / in general.
 
 Immediate small:
 
-* apero_reset log entry asks to reset self
 * loc central position at 2500 for spirou why?
 
 High priority:
