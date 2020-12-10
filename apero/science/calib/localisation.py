@@ -207,19 +207,13 @@ def check_coeffs_nirps(params: ParamDict, recipe, image: np.ndarray,
     """
     # set function name
     func_name = display_func(params, 'check_coeffs_nirps', __NAME__)
-    # TODO: this is temporary - move to constants is permanent
-    params.set('LOC_COEFF_SIGCLIP', value=5)
-    params.set('LOC_COEFFSIG_DEG', value=5)
-    params.set('LOC_DROP_BLUE_ORDERS', value=2)
-    params.set('LOC_DROP_RED_ORDERS', value=0)
     # get fiber params
     pconst = constants.pload(params['INSTRUMENT'])
     fiberparams = pconst.FIBER_SETTINGS(params, fiber)
     # get the sigma clipping cut off value
     nsigclip = params['LOC_COEFF_SIGCLIP']
     coeffdeg = params['LOC_COEFFSIG_DEG']
-    drop_blue = int(params['LOC_DROP_BLUE_ORDERS'])
-    drop_red = int(params['LOC_DROP_RED_ORDERS'])
+    ycut = params['LOC_MAX_YPIX_VALUE']
     max_num_orders = pcheck(params, 'FIBER_MAX_NUM_ORDERS', 'max_num_orders',
                             kwargs, func=func_name, paramdict=fiberparams)
     # get the shapes
@@ -288,10 +282,6 @@ def check_coeffs_nirps(params: ParamDict, recipe, image: np.ndarray,
         widthmap[y_it, :] = np.polyval(wfit, orders)
 
     # -------------------------------------------------------------------------
-    ycut = 4040
-
-    # find the maximum position of each order
-    max_ord = np.max(ordermap,axis=0)
     # only keep those orders below our y-threshold cut
     order_mask = np.where(np.max(ordermap,axis=0)<ycut)[0][-max_num_orders:]
     # re-shape ordermap and widthmap
@@ -391,7 +381,7 @@ def find_and_fit_localisation(params, recipe, image, sigdet, fiber, **kwargs):
     # ----------------------------------------------------------------------
     # clip the data - start with the ic_offset row and only
     # deal with the central column column=ic_cent_col
-    y = image[row_offset:, central_col]
+    y = np.nanmedian(image[row_offset:, central_col-10:central_col+10], axis=1)
     # measure min max of box smoothed central col
     miny, maxy = mp.measure_box_min_max(y, horder_size)
     max_signal = np.nanpercentile(y, 95)
@@ -405,15 +395,15 @@ def find_and_fit_localisation(params, recipe, image, sigdet, fiber, **kwargs):
     # get the normalised minimum values for those rows above threshold
     #   i.e. good background measurements
     normed_miny = miny / diff_maxmin
-    goodback = np.compress(ycc > back_thres, normed_miny)
+    # find all y positions above the background threshold
+    goodmask = ycc > back_thres
     # measure the mean good background as a percentage
-    # (goodback and ycc are between 0 and 1)
-    mean_backgrd = np.mean(goodback) * 100
+    mean_backgrd = np.mean(normed_miny[goodmask]) * 100
     # Log the maximum signal and the mean background
     WLOG(params, 'info', TextEntry('40-013-00003', args=[max_signal]))
     WLOG(params, 'info', TextEntry('40-013-00004', args=[mean_backgrd]))
     # plot y, miny and maxy
-    recipe.plot('LOC_MINMAX_CENTS', y=y, miny=miny, maxy=maxy)
+    recipe.plot('LOC_MINMAX_CENTS', y=y, mask=goodmask, miny=miny, maxy=maxy)
 
     # ----------------------------------------------------------------------
     # Step 2: Search for order center on the central column - quick
