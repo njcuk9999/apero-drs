@@ -28,6 +28,8 @@ __date__ = base.__date__
 __release__ = base.__release__
 # Get Logging function
 WLOG = drs_log.wlog
+# Get the text types
+textentry = lang.textentry
 
 
 # =============================================================================
@@ -88,11 +90,11 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Perform resets
     # ----------------------------------------------------------------------
-    reset0 = True
-    reset1, reset2, reset3 = True, True, True
-    reset4, reset5, reset6 = True, True, True
-    reset7, reset8 = True, True
+    reset0, reset1, reset2, reset3 = True, True, True, True
+    reset4, reset5, reset6, reset7, reset8 = True, True, True, True, True
     # ----------------------------------------------------------------------
+    # progress
+    drs_reset.reset_title(params, 'Assets')
     # assets folder
     if warn:
         reset0 = drs_reset.reset_confirmation(params, 'Assets',
@@ -100,8 +102,10 @@ def __main__(recipe, params):
     if reset0:
         drs_reset.reset_assets(params)
     else:
-        WLOG(params, '', 'Not resetting assets.')
+        WLOG(params, '', textentry('40-502-00013', args=['Assets']))
     # ----------------------------------------------------------------------
+    # progress
+    drs_reset.reset_title(params, 'Tmp')
     # tmp folder
     if warn:
         reset1 = drs_reset.reset_confirmation(params, 'Working',
@@ -109,8 +113,10 @@ def __main__(recipe, params):
     if reset1:
         drs_reset.reset_tmp_folders(params, log)
     else:
-        WLOG(params, '', 'Not resetting tmp folders.')
+        WLOG(params, '', textentry('40-502-00013', args=['Tmp']))
     # ----------------------------------------------------------------------
+    # progress
+    drs_reset.reset_title(params, 'Reduced')
     # reduced folder
     if warn:
         reset2 = drs_reset.reset_confirmation(params, 'Reduced',
@@ -118,8 +124,10 @@ def __main__(recipe, params):
     if reset2:
         drs_reset.reset_reduced_folders(params, log)
     else:
-        WLOG(params, '', 'Not resetting reduced folders.')
+        WLOG(params, '', textentry('40-502-00013', args=['Reduced']))
     # ----------------------------------------------------------------------
+    # progress
+    drs_reset.reset_title(params, 'Calibration')
     # calibration folder
     if warn:
         reset3 = drs_reset.reset_confirmation(params, 'Calibration',
@@ -127,8 +135,10 @@ def __main__(recipe, params):
     if reset3:
         drs_reset.reset_calibdb(params, log)
     else:
-        WLOG(params, '', 'Not resetting CalibDB files.')
+        WLOG(params, '', '\tNot resetting CalibDB files.')
     # ----------------------------------------------------------------------
+    # progress
+    drs_reset.reset_title(params, 'Telluric')
     # telluric folder
     if warn:
         reset4 = drs_reset.reset_confirmation(params, 'Telluric',
@@ -136,15 +146,25 @@ def __main__(recipe, params):
     if reset4:
         drs_reset.reset_telludb(params, log)
     else:
-        WLOG(params, '', 'Not resetting TelluDB files.')
+        WLOG(params, '', textentry('40-502-00013', args=['Telluric']))
     # ----------------------------------------------------------------------
+    # progress
+    drs_reset.reset_title(params, 'Log')
     # log folder
     if warn:
+        # deal with files to skip
+        exclude_files = []
+        exclude_files.append(drs_log.get_logfilepath(WLOG, params))
         reset5 = drs_reset.reset_confirmation(params, 'Log',
-                                              params['DRS_DATA_MSG'])
+                                              params['DRS_DATA_MSG'],
+                                              exclude_files=exclude_files)
     if reset5:
-        drs_reset.reset_log(params)
+        drs_reset.reset_log(params, exclude_files)
+    else:
+        WLOG(params, '', textentry('40-502-00013', args=['Log']))
     # ----------------------------------------------------------------------
+    # progress
+    drs_reset.reset_title(params, 'Plot')
     # plot folder
     if warn:
         reset6 = drs_reset.reset_confirmation(params, 'Plotting',
@@ -152,8 +172,10 @@ def __main__(recipe, params):
     if reset6:
         drs_reset.reset_plot(params)
     else:
-        WLOG(params, '', 'Not resetting Log files.')
+        WLOG(params, '', textentry('40-502-00013', args=['Plot']))
     # ----------------------------------------------------------------------
+    # progress
+    drs_reset.reset_title(params, 'Run')
     # plot folder
     if warn:
         reset7 = drs_reset.reset_confirmation(params, 'Run',
@@ -161,7 +183,7 @@ def __main__(recipe, params):
     if reset7:
         drs_reset.reset_run(params)
     else:
-        WLOG(params, '', 'Not resetting run files.')
+        WLOG(params, '', textentry('40-502-00013', args=['Run']))
 
     # ----------------------------------------------------------------------
     # End of main code

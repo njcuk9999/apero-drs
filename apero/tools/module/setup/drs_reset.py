@@ -9,6 +9,7 @@ Created on 2019-05-07 at 15:22
 
 @author: cook
 """
+import glob
 import os
 import sys
 
@@ -42,29 +43,51 @@ DEBUG = False
 # =============================================================================
 # Define functions
 # =============================================================================
-def is_empty(directory):
+def is_empty(directory, exclude_files=None):
     if os.path.exists(directory):
-        files = os.listdir(directory)
-        if len(files) == 0:
+        # get a raw list of files
+        rawfiles = glob.glob(os.path.join(directory, '**'), recursive=True)
+        # deal with excluded files
+        if exclude_files is not None:
+            files = []
+            for rawfile in rawfiles:
+                if rawfile not in exclude_files:
+                    files.append(rawfile)
+        else:
+            files = list(rawfiles)
+        # exclude directories
+        files1 = []
+        for file1 in files:
+            if not os.path.isdir(file1):
+                files1.append(file1)
+        if len(files1) == 0:
             return True
+
     return False
 
 
-def reset_confirmation(params, name, directory=None):
+def reset_title(params, name):
+    # blank lines
+    print()
+    print()
+    WLOG(params, 'info', '='*50)
+    WLOG(params, 'info', textentry('40-502-00012', args=[name]))
+    WLOG(params, 'info', '='*50)
+
+
+def reset_confirmation(params, name, directory=None,
+                       exclude_files=None):
     # ----------------------------------------------------------------------
     if directory is not None:
         # test if empty
-        empty = is_empty(directory)
-        WLOG(params, '', 'Empty directory found.')
+        empty = is_empty(directory, exclude_files)
         if empty:
+            WLOG(params, '', textentry('40-502-00011'))
             return True
     # ----------------------------------------------------------------------
     # Ask if user wants to reset
-    if name == 'log_fits':
-        WLOG(params, '', textentry('40-502-00011'), colour='yellow')
-    else:
-        WLOG(params, '', textentry('40-502-00001', args=[name]),
-             colour='yellow')
+    WLOG(params, '', textentry('40-502-00001', args=[name]),
+         colour='yellow')
     if directory is not None:
         WLOG(params, '', '\t({0})'.format(directory), colour='yellow')
     # ----------------------------------------------------------------------
@@ -172,10 +195,10 @@ def reset_dbdir(params, name, db_dir, reset_path, log=True,
     else:
         reset_path = os.path.abspath(reset_path)
     # copy default data back
-    copy_default_db(params, name, db_dir, reset_path, log)
+    copy_default_db(params, name, db_dir, reset_path)
 
 
-def copy_default_db(params, name, db_dir, reset_path, log=True):
+def copy_default_db(params, name, db_dir, reset_path):
     # -------------------------------------------------------------------------
     # get reset directory location
     # -------------------------------------------------------------------------
@@ -185,18 +208,24 @@ def copy_default_db(params, name, db_dir, reset_path, log=True):
         WLOG(params, 'error', textentry('00-502-00001', args=eargs))
     # -------------------------------------------------------------------------
     # copy required calibDB files to DRS_CALIB_DB path
-    drs_path.copytree(reset_path, db_dir, log=log)
+    drs_path.copytree(reset_path, db_dir)
 
 
-def reset_log(params, log=True):
+def reset_log(params, exclude_files=None, log=True):
     # log progress
     WLOG(params, '', textentry('40-502-00003', args=['log']))
     # remove files from reduced folder
     log_dir = params['DRS_DATA_MSG']
     # get current log file (must be skipped)
     current_logfile = drs_log.get_logfilepath(WLOG, params)
+    # deal with no exclude files
+    if exclude_files is None:
+        exclude_files = []
+    # deal with current log file not in exclude files
+    if current_logfile not in exclude_files:
+        exclude_files.append(current_logfile)
     # loop around files and folders in reduced dir
-    remove_all(params, log_dir, skipfiles=[current_logfile], log=log)
+    remove_all(params, log_dir, skipfiles=exclude_files, log=log)
     # remake path
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)

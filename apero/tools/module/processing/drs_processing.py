@@ -37,7 +37,6 @@ from apero.core.utils import drs_startup
 from apero.core.core import drs_database
 from apero import lang
 from apero.core import constants
-from apero import plotting
 from apero.io import drs_table
 from apero.io import drs_lock
 from apero.science.preprocessing import gen_pp
@@ -792,41 +791,87 @@ def reset_files(params):
     """
     if not params['RESET_ALLOWED']:
         return 0
+    # ----------------------------------------------------------------------
+    # progress
+    drs_reset.reset_title(params, 'Working')
+    # check if we need to reset directory
     if params['RESET_TMP']:
         reset = drs_reset.reset_confirmation(params, 'Working',
                                              params['DRS_DATA_WORKING'])
+        # reset directory using reset module
         if reset:
             drs_reset.reset_tmp_folders(params, log=True)
+        # print that we are not resetting directory
+        else:
+            WLOG(params, '', textentry('40-502-00013', args=['Tmp']))
+    # ----------------------------------------------------------------------
+    # progress
+    drs_reset.reset_title(params, 'Reduced')
+    # check if we need to reset directory
     if params['RESET_REDUCED']:
         reset = drs_reset.reset_confirmation(params, 'Reduced',
                                              params['DRS_DATA_REDUC'])
+        # reset directory using reset module
         if reset:
             drs_reset.reset_reduced_folders(params, log=True)
+        # print that we are not resetting directory
+        else:
+            WLOG(params, '', textentry('40-502-00013', args=['Reduced']))
+    # ----------------------------------------------------------------------
+    # progress
+    drs_reset.reset_title(params, 'Calibration')
+    # check if we need to reset directory
     if params['RESET_CALIB']:
         reset = drs_reset.reset_confirmation(params, 'Calibration',
                                              params['DRS_CALIB_DB'])
+        # reset directory using reset module
         if reset:
             drs_reset.reset_calibdb(params, log=True)
+        # print that we are not resetting directory
+        else:
+            WLOG(params, '', textentry('40-502-00013', args=['Calibration']))
+    # ----------------------------------------------------------------------
+    # progress
+    drs_reset.reset_title(params, 'Telluric')
+    # check if we need to reset directory
     if params['RESET_TELLU']:
         reset = drs_reset.reset_confirmation(params, 'Telluric',
                                              params['DRS_TELLU_DB'])
+        # reset directory using reset module
         if reset:
             drs_reset.reset_telludb(params, log=True)
+        # print that we are not resetting directory
+        else:
+            WLOG(params, '', textentry('40-502-00013', args=['Telluric']))
+    # ----------------------------------------------------------------------
+    # progress
+    drs_reset.reset_title(params, 'Log')
+    # check if we need to reset directory
     if params['RESET_LOG']:
+        # deal with files to skip
+        exclude_files = []
+        exclude_files.append(drs_log.get_logfilepath(WLOG, params))
         reset = drs_reset.reset_confirmation(params, 'Log',
                                              params['DRS_DATA_MSG'])
+        # reset directory using reset module
         if reset:
-            drs_reset.reset_log(params)
+            drs_reset.reset_log(params, exclude_files)
+        # print that we are not resetting directory
+        else:
+            WLOG(params, '', textentry('40-502-00013', args=['Log']))
+    # ----------------------------------------------------------------------
+    # progress
+    drs_reset.reset_title(params, 'Plot')
+    # check if we need to reset directory
     if params['RESET_PLOT']:
         reset = drs_reset.reset_confirmation(params, 'Plotting',
                                              params['DRS_DATA_PLOT'])
+        # reset directory using reset module
         if reset:
             drs_reset.reset_plot(params)
-    if params['RESET_RUN']:
-        reset = drs_reset.reset_confirmation(params, 'Run',
-                                             params['DRS_DATA_RUN'])
-        if reset:
-            drs_reset.reset_run(params)
+        # print that we are not resetting directory
+        else:
+            WLOG(params, '', textentry('40-502-00013', args=['Plot']))
 
 
 def generate_run_list(params, indexdbm: IndexDatabase, runtable,

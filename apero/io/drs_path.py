@@ -256,8 +256,7 @@ def makedirs(params: ParamDict, path: str):
             WLOG(params, 'error', textentry('01-010-00002', args=eargs))
 
 
-def copytree(src: Union[str, Path], dst: Union[str, Path],
-             log: bool = False):
+def copytree(src: Union[str, Path], dst: Union[str, Path]):
     """
     Copy a file/directory tree - from path 'src' to 'dst'
 
@@ -277,8 +276,6 @@ def copytree(src: Union[str, Path], dst: Union[str, Path],
         for directory in dirs:
             dirpath = Path(outroot).joinpath(directory)
             if not dirpath.exists():
-                if log:
-                    print('\tMaking dir {0}'.format(dirpath))
                 os.mkdir(dirpath)
 
         # deal with files
@@ -286,9 +283,6 @@ def copytree(src: Union[str, Path], dst: Union[str, Path],
             # get input file path
             infile = Path(root).joinpath(filename)
             outfile = Path(outroot).joinpath(filename)
-            # log
-            if log:
-                print('\tCopying {0} to {1}'.format(infile, outfile))
             # copy file
             shutil.copy(str(infile), str(outfile))
 
