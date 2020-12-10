@@ -72,7 +72,7 @@ raw_file.addset(raw_dark_dark)
 
 # sky observation (sky dark)
 raw_dark_dark_sky = drs_finput('RAW_DARK_DARK_SKY',
-                               KW_RAW_DPRTYPE=['EFF,SKY,SKY', 'FLUX,STD,SKY'],
+                               KW_RAW_DPRTYPE='EFF,SKY,SKY',
                                filetype='.fits', suffix='', inext='.fits',
                                outfunc=out.blank)
 raw_file.addset(raw_dark_dark_sky)
