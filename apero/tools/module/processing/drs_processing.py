@@ -2709,6 +2709,11 @@ def group_run_files2(params: ParamDict, recipe: DrsRecipe,
     """
     # get grouping function
     group_function = recipe.group_func
+    # deal with master
+    if recipe.master:
+        master = params['MASTER_NIGHT']
+    else:
+        master = None
     # get grouping column
     group_column = recipe.group_column
     if group_column in params:
@@ -2718,7 +2723,8 @@ def group_run_files2(params: ParamDict, recipe: DrsRecipe,
         # use the group function to generate runs
         return group_function(recipe.args, recipe.kwargs,
                               argdict, kwargdict,
-                              group_column=group_column)
+                              group_column=group_column,
+                              master=master)
     # if we don't have one give warning
     else:
         # TODO: move to language database
