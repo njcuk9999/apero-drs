@@ -108,8 +108,6 @@ OBJNAMECOL = 'KW_OBJNAME'
 SKIP_REMOVE_ARGS = ['--skip', '--program', '--debug', '--plot', '--master']
 # keep a global copy of plt
 PLT_MOD = None
-# set the global multiprocessing start method
-set_start_method('spawn', force=True)
 
 
 # =============================================================================
@@ -2237,8 +2235,8 @@ def _multi_process1(params, runlist, cores, groupname=None):
     # first try to group tasks (now just by recipe)
     grouplist, groupnames = _group_tasks2(runlist, cores)
     # start process manager
-    # manager = Manager()
-    event = None
+    manager = Manager()
+    event = manager.Event()
     return_dict = dict()
     # loop around groups
     #   - each group is a unique recipe
@@ -2284,9 +2282,10 @@ def close_all_plots():
     else:
         from apero.plotting.core import import_matplotlib
         out = import_matplotlib()
-        plt = out[0]
-        plt.close('all')
-        PLT_MOD = plt
+        if out is not None:
+            plt = out[0]
+            plt.close('all')
+            PLT_MOD = plt
 
 
 # =============================================================================
