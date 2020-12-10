@@ -1795,6 +1795,7 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
     # ----------------------------------------------------------------------
     # brute force approach
     runs = []
+    run_score = []
     # ----------------------------------------------------------------------
     # deal with no file found (only if we expect to have files)
     if has_file_args:
@@ -1837,6 +1838,7 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
                             masternight=recipe.master)
         # finally add new_run to runs
         runs += new_runs
+        run_score += [[0] * len(new_runs)]
     else:
         arg0, drsfiles0 = fout
         # ----------------------------------------------------------------------
@@ -1882,9 +1884,21 @@ def group_run_files(params, recipe, argdict, kwargdict, **kwargs):
                     continue
                 # finally add new_run to runs
                 runs += new_runs
+                # rank the importance by number of files (for master run)
+                new_run_score = []
+                for new_run in new_runs:
+                    new_run_score.append(len(new_run[arg0]))
+                run_score += [new_run_score]
     # deal with master (should only be 1)
     if recipe.master:
-        return [runs[0]]
+        # find the group with the highest score
+        pos, score = 0, 0
+        # loop round and rank runs (score the position of the highest ranking)
+        for r_it, rscore in enumerate(run_score):
+            if sum(rscore) > score:
+                pos, score = r_it, sum(rscore)
+        # return highest ranking score
+        return [runs[pos]]
     else:
         # return runs
         return runs
