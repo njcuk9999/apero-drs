@@ -110,6 +110,7 @@
   <h3><a href="../../../index.html">Table of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Preprocessing Recipe</a><ul>
+<li><a class="reference internal" href="#schematic">Schematic</a></li>
 <li><a class="reference internal" href="#run">Run</a></li>
 <li><a class="reference internal" href="#optional-arguments">Optional Arguments</a></li>
 <li><a class="reference internal" href="#output-dir">Output Dir:</a></li>
@@ -152,7 +153,29 @@
             
   <div class="section" id="preprocessing-recipe">
 <span id="recipes-spirou-preprocessing"></span><h1>Preprocessing Recipe<a class="headerlink" href="#preprocessing-recipe" title="Permalink to this headline">¶</a></h1>
-<p>Cleans file of detector effects.</p>
+<p>Cleans file of detector effects, fixes headers and produces ‘pre-processed’
+files.</p>
+<p>The inputs to this code are SPIRou RAMP files (i.e. {odometer code}.fits
+e.g. 1234567o.fits, 1234568a.fits, 1234569c.fits</p>
+<p>The first step in preprocessing is to fix the header. Details of this are
+provided <a class="reference internal" href="../../science/preprocessing.html#science-preprocessing-header-fixes"><span class="std std-ref">here</span></a>.</p>
+<p>After the header is fixed for APERO use the raw file is checked to be of
+known type. The identification of raw files can be read about
+<a class="reference internal" href="../../science/preprocessing.html#science-preprocessing-file-identification"><span class="std std-ref">here</span></a>.</p>
+<p>If we are dealing with an astrophysical object observation (OBJ_DARK or OBJ_FP)
+we must make sure the object name / gaia id are identified as being valid by APERO.
+Read about this <a class="reference internal" href="../../science/preprocessing.html#science-preprocessing-object-finding"><span class="std std-ref">here</span></a></p>
+<p>Next we test for corrupted files.</p>
+<p>Then we correct for top/bottom pixels.</p>
+<p>Then we median filter using the unilliminated amplifiers.</p>
+<p>Then we correct the 1/f noise and apply it to the image.</p>
+<p>Our final step is to rotate the image into the standard APERO
+<a class="reference internal" href="../../../misc/glossary.html#term-pre-processing-coordinate-system"><span class="xref std std-term">pre-processing-coordinate-system</span></a>.</p>
+<p>We then save the image with the “{odometer code}_pp.fits” suffix.</p>
+<div class="section" id="schematic">
+<h2>Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
+<img alt="../../../_images/cal_preproces_spirou_schematic.jpg" src="../../../_images/cal_preproces_spirou_schematic.jpg" />
+</div>
 <div class="section" id="run">
 <h2>Run<a class="headerlink" href="#run" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cal_preprocess_spirou.py <span class="o">[</span>DIRECTORY<span class="o">]</span> <span class="o">[</span>RAW_FILES<span class="o">]</span>

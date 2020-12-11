@@ -1,0 +1,191 @@
+
+
+
+<!doctype html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Preprocessing functionality &#8212; APERO 0.7.035 documentation</title>
+    <link rel="stylesheet" href="../../_static/bizstyle.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/apero.css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script type="text/javascript" src="../../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
+          rel='stylesheet' type='text/css' />
+    <link rel="stylesheet" href="_static/images/fonta/css/font-awesome.min.css">
+
+
+
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <!--[if lt IE 9]>
+    <script type="text/javascript" src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+    <style type="text/css">
+      table.right { float: left; margin-left: 20px; }
+      table.right td { border: 1px solid #ccc; }
+      
+    </style>
+    <script>
+      // intelligent scrolling of the sidebar content
+      $(window).scroll(function() {
+        var sb = $('.sphinxsidebarwrapper');
+        var win = $(window);
+        var sbh = sb.height();
+        var offset = $('.sphinxsidebar').position()['top'];
+        var wintop = win.scrollTop();
+        var winbot = wintop + win.innerHeight();
+        var curtop = sb.position()['top'];
+        var curbot = curtop + sbh;
+        // does sidebar fit in window?
+        if (sbh < win.innerHeight()) {
+          // yes: easy case -- always keep at the top
+          sb.css('top', $u.min([$u.max([0, wintop - offset - 10]),
+                                $(document).height() - sbh - 200]));
+        } else {
+          // no: only scroll if top/bottom edge of sidebar is at
+          // top/bottom edge of window
+          if (curtop > wintop && curbot > winbot) {
+            sb.css('top', $u.max([wintop - offset - 10, 0]));
+          } else if (curtop < wintop && curbot < winbot) {
+            sb.css('top', $u.min([winbot - sbh - offset - 20,
+                                  $(document).height() - sbh - 200]));
+          }
+        }
+      });
+    </script>
+
+  </head><body>
+<div class="pageheader">
+
+  <ul>
+    <li><a title="Home" href="../../index.html">
+        <i class="fa fa-home fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="install" href="../general/installation.html">
+        <i class="fa fa-cog fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="github" href="https://github.com/njcuk9999/apero-drs">
+        <i class="fa fa-git-square fa-3x" aria-hidden="true"></i></a></li>
+    <li><a title="download pdf" href="../../apero-docs.pdf">
+        <i class="fa fa-download fa-3x" aria-hidden="true"></i></a></li>
+  </ul>
+    <div>
+    <a href="../../index.html">
+      <img src="../../_static/images/apero_logo.png" alt="APERO" />
+    </a>
+    <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A PipelinE to Reduce Observations
+    </div>
+
+</div>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.035 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Preprocessing functionality</a><ul>
+<li><a class="reference internal" href="#raw-file-header-fixing">Raw file header fixing</a></li>
+<li><a class="reference internal" href="#raw-file-identification">Raw file identification</a></li>
+<li><a class="reference internal" href="#gaia-id-and-object-finding">Gaia ID and object finding</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/user/science/preprocessing.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="preprocessing-functionality">
+<span id="science-preprocessing"></span><h1>Preprocessing functionality<a class="headerlink" href="#preprocessing-functionality" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="raw-file-header-fixing">
+<span id="science-preprocessing-header-fixes"></span><h2>Raw file header fixing<a class="headerlink" href="#raw-file-header-fixing" title="Permalink to this headline">¶</a></h2>
+<p>The header fixes are controlled via <code class="xref py py-meth docutils literal notranslate"><span class="pre">apero.core.core.drs_file.fix_header()</span></code>
+which in turn uses the <a class="reference internal" href="../../misc/glossary.html#term-pseudoconst"><span class="xref std std-term">PseudoConst</span></a> method <code class="xref py py-meth docutils literal notranslate"><span class="pre">HEADER_FIXES()</span></code>.
+This is defined for each instrument
+(e.g. <code class="xref py py-meth docutils literal notranslate"><span class="pre">apero.core.instruments.spirou.pseduo_const.HEADER_FIXES()</span></code>)</p>
+<p>For SPIRou the current header fixes are as follows:</p>
+<ul class="simple">
+<li><p>clean object name (via <code class="xref py py-meth docutils literal notranslate"><span class="pre">apero.core.instruments.spirou.pseduo_const.clean_obj_name()</span></code>)</p></li>
+<li><p>get target type (via <code class="xref py py-meth docutils literal notranslate"><span class="pre">apero.core.instruments.spirou.pseduo_const.get_trg_type()</span></code>)</p></li>
+<li><p>get mid observation time (via <code class="xref py py-meth docutils literal notranslate"><span class="pre">apero.core.instruments.spirou.pseduo_const.get_mid_obs_time()</span></code>)</p></li>
+<li><p>get the raw data type (via <code class="xref py py-meth docutils literal notranslate"><span class="pre">apero.core.instruments.spirou.pseduo_const.get_dprtype()</span></code>)</p></li>
+</ul>
+</div>
+<div class="section" id="raw-file-identification">
+<span id="science-preprocessing-file-identification"></span><h2>Raw file identification<a class="headerlink" href="#raw-file-identification" title="Permalink to this headline">¶</a></h2>
+<p>This takes a given input file and checks it against the instrument <a class="reference internal" href="../../misc/glossary.html#term-file-definitions"><span class="xref std std-term">file-definitions</span></a>.
+The <a class="reference internal" href="../../misc/glossary.html#term-file-definitions"><span class="xref std std-term">file-definitions</span></a> give all the criteria by which an input file can be
+matched as a specific drs file type.</p>
+<p>This is done via <code class="xref py py-meth docutils literal notranslate"><span class="pre">apero.science.preprocessing.identification.drs_infile_id()</span></code>
+which in turn calls <code class="xref py py-meth docutils literal notranslate"><span class="pre">apero.core.core.drs_file.id_drs_file()</span></code> and returns
+a tuple - whether the file was found in the instruments definition and the
+drs file type (<a class="reference internal" href="../../misc/glossary.html#term-drsinputfile"><span class="xref std std-term">DrsInputFile</span></a> instance)</p>
+</div>
+<div class="section" id="gaia-id-and-object-finding">
+<span id="science-preprocessing-object-finding"></span><h2>Gaia ID and object finding<a class="headerlink" href="#gaia-id-and-object-finding" title="Permalink to this headline">¶</a></h2>
+<p>We assume the header either has a Gaia ID column (defined by the <a class="reference internal" href="../../misc/glossary.html#term-kw-gaia-id"><span class="xref std std-term">KW_GAIA_ID</span></a> keyword)
+or a valid object name (defined by the <a class="reference internal" href="../../misc/glossary.html#term-kw-objectname"><span class="xref std std-term">KW_OBJECTNAME</span></a> keyword).</p>
+<blockquote>
+<div><p><a class="reference internal" href="../spirou.html#spirou-main"><span class="std std-ref">Back to top</span></a></p>
+</div></blockquote>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">APERO 0.7.035 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2019, Neil Cook.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.3.1.
+    </div>
+  </body>
+</html>

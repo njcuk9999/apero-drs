@@ -130,7 +130,7 @@
     
 
 \title{APERO Documentation}
-\date{Nov 30, 2020}
+\date{Dec 11, 2020}
 \release{0.7.035}
 \author{Neil Cook}
 \newcommand{\sphinxlogo}{\sphinxincludegraphics{apero_logo.png}\par}
@@ -691,22 +691,41 @@ bullet points are not ordered
 \label{\detokenize{user/general/todo:apero}}
 For all instruments / in general.
 
+Immediate small:
+\begin{itemize}
+\item {} 
+loc central position at 2500 for spirou why?
+
+\end{itemize}
+
 High priority:
 \begin{itemize}
 \item {} 
 install database via install.py {[}Neil{]}
 
+\item {} \begin{description}
+\item[{database import/export (append/replace) {[}Neil{]}}] \leavevmode\begin{itemize}
 \item {} 
-database import/export (append/replace) {[}Neil{]}
+object database \sphinxhyphen{} when do we update from google sheet?
 
 \item {} 
-calibration merge (drs processing)  {[}Neil{]}
+option in run.ini? every apero\_processing?
+
+\end{itemize}
+
+\end{description}
+
+\item {} \begin{description}
+\item[{calibration merge (drs processing)  {[}Neil{]}}] \leavevmode\begin{itemize}
+\item {} 
+filter calibrations \sphinxhyphen{} need metric to only keep good 2D images {[}Etienne/Neil{]}
+
+\end{itemize}
+
+\end{description}
 
 \item {} 
 polar code update  {[}Neil/Eder/Chris{]}
-
-\item {} 
-CCF weights adjustment (once Pia has results)  {[}Pia/Neil{]}
 
 \item {} 
 tellurics templates \sphinxhyphen{} minimum number of files for template creation {[}Neil{]}
@@ -722,16 +741,10 @@ drs\_base.BETEXT from langdb.csv (during lang \textendash{}update \textendash{}r
 filename from checksums {[}Neil{]}
 
 \item {} 
-bisector for CCF (new extension in CCF outputs?) {[}Etienne/Neil{]}
-
-\item {} 
 loc and wave coefficients to tables {[}Neil{]}
 
 \item {} 
 add option to set template for mk\_tellu and fit\_tellu {[}Neil{]}
-
-\item {} 
-proper SNR calculation {[}Etienne/???{]}
 
 \item {} 
 deal with all python warnings {[}Neil{]}
@@ -742,16 +755,22 @@ post processing (i.e. outputs like CADC/ESO)   {[}Neil/Chris{]}
 \item {} 
 DRS tests {[}Charles + Thomas{]}
 
+\end{itemize}
+
+Low priority:
+\begin{itemize}
+\item {} 
+bisector for CCF (new extension in CCF outputs?) {[}Etienne/Neil{]}
+
+\item {} 
+proper SNR calculation {[}Etienne/???{]}
+
 \item {} 
 test barycorrpy against pyasl and other BERV calculators (precision) {[}Thomas?{]}
 
 \item {} 
 apero\_processing.py work with CANFAR {[}Neil/Chris + CANFAR collab{]}
 
-\end{itemize}
-
-Low priority:
-\begin{itemize}
 \item {} 
 CCF masks from SpT/Teff (after masks are more mature)  {[}Etienne/Neil{]}
 
@@ -995,7 +1014,40 @@ processing tools) see {\hyperref[\detokenize{user/general/using_apero_default:us
 
 \subsubsection{Preprocessing Recipe}
 \label{\detokenize{user/spirou/recipes/preprocessing:preprocessing-recipe}}\label{\detokenize{user/spirou/recipes/preprocessing:recipes-spirou-preprocessing}}\label{\detokenize{user/spirou/recipes/preprocessing::doc}}
-Cleans file of detector effects.
+Cleans file of detector effects, fixes headers and produces ‘pre\sphinxhyphen{}processed’
+files.
+
+The inputs to this code are SPIRou RAMP files (i.e. \{odometer code\}.fits
+e.g. 1234567o.fits, 1234568a.fits, 1234569c.fits
+
+The first step in preprocessing is to fix the header. Details of this are
+provided \DUrole{xref,std,std-ref}{here}.
+
+After the header is fixed for APERO use the raw file is checked to be of
+known type. The identification of raw files can be read about
+\DUrole{xref,std,std-ref}{here}.
+
+If we are dealing with an astrophysical object observation (OBJ\_DARK or OBJ\_FP)
+we must make sure the object name / gaia id are identified as being valid by APERO.
+Read about this \DUrole{xref,std,std-ref}{here}
+
+Next we test for corrupted files.
+
+Then we correct for top/bottom pixels.
+
+Then we median filter using the unilliminated amplifiers.
+
+Then we correct the 1/f noise and apply it to the image.
+
+Our final step is to rotate the image into the standard APERO
+{\hyperref[\detokenize{misc/glossary:term-pre-processing-coordinate-system}]{\sphinxtermref{\DUrole{xref,std,std-term}{pre\sphinxhyphen{}processing\sphinxhyphen{}coordinate\sphinxhyphen{}system}}}}.
+
+We then save the image with the “\{odometer code\}\_pp.fits” suffix.
+
+
+\paragraph{Schematic}
+\label{\detokenize{user/spirou/recipes/preprocessing:schematic}}
+\noindent\sphinxincludegraphics{{cal_preproces_spirou_schematic}.jpg}
 
 
 \paragraph{Run}
@@ -1491,6 +1543,11 @@ None
 \label{\detokenize{user/spirou/recipes/wave_master:master-wavelength-solution-recipe}}\label{\detokenize{user/spirou/recipes/wave_master:recipes-spirou-wave-master}}\label{\detokenize{user/spirou/recipes/wave_master::doc}}
 Creates a wavelength solution and measures drifts (via CCF) of the FP relative
 to the FP master
+
+
+\paragraph{Schematic}
+\label{\detokenize{user/spirou/recipes/wave_master:schematic}}
+\noindent\sphinxincludegraphics[width=2048\sphinxpxdimen]{{cal_wave_master_spirou_schematic}.jpg}
 
 
 \paragraph{Run}
@@ -2529,8 +2586,15 @@ pip install barycorrpy \PYGZhy{}\PYGZhy{}ignore\PYGZhy{}installed
 \end{sphinxadmonition}
 
 
+\section{Glossary}
+\label{\detokenize{misc/glossary:glossary}}\label{\detokenize{misc/glossary:id1}}\label{\detokenize{misc/glossary::doc}}
+
 \section{Constants}
-\label{\detokenize{misc/glossary:constants}}\label{\detokenize{misc/glossary:glossary-constants}}\label{\detokenize{misc/glossary:glossary}}\label{\detokenize{misc/glossary::doc}}\begin{description}
+\label{\detokenize{misc/glossary:constants}}\label{\detokenize{misc/glossary:glossary-constants}}
+These are usually defined in the instruments \sphinxcode{\sphinxupquote{default\_config.py}} and
+\sphinxcode{\sphinxupquote{default\_constants.py}} scripts and are overwritten in the \sphinxcode{\sphinxupquote{user\_config.ini}} and
+:file\textasciigrave{}user\_constant.ini\textasciigrave{} files.
+\begin{description}
 \item[{DRS\_ROOT\index{DRS\_ROOT@\spxentry{DRS\_ROOT}|spxpagem}\phantomsection\label{\detokenize{misc/glossary:term-drs-root}}}] \leavevmode\begin{itemize}
 \item {} 
 This is the path where apero\sphinxhyphen{}drs was installed (via github)
@@ -2574,8 +2638,66 @@ Each profile contains an instrument directory for each instrument. These contain
 \end{description}
 
 
-\section{Glossary}
-\label{\detokenize{misc/glossary:glossary-main}}\label{\detokenize{misc/glossary:id1}}\begin{description}
+\section{Keywords}
+\label{\detokenize{misc/glossary:keywords}}
+These are usually defined in the instruments \sphinxcode{\sphinxupquote{default\_keywords.py}} script.
+These keywords control what keys are read from fits headers and also what
+keys and comments are saved to fits headers.
+\begin{description}
+\item[{KW\_GAIA\_ID\index{KW\_GAIA\_ID@\spxentry{KW\_GAIA\_ID}|spxpagem}\phantomsection\label{\detokenize{misc/glossary:term-kw-gaia-id}}}] \leavevmode\begin{itemize}
+\item {} 
+This is the gaia id key from the header
+
+\item {} 
+The header value should contain a valid gaia id
+
+\item {} 
+This key is used to cross\sphinxhyphen{}match with the object database and with
+gaia online database to get position and velocity data precise enough
+for a good BERV correction
+
+\item {} 
+If key is missing or invalid the BERV calculation defers to the header
+values for position and velocity (may be less precise).
+
+\end{itemize}
+
+\item[{KW\_OBJECTNAME\index{KW\_OBJECTNAME@\spxentry{KW\_OBJECTNAME}|spxpagem}\phantomsection\label{\detokenize{misc/glossary:term-kw-objectname}}}] \leavevmode\begin{itemize}
+\item {} 
+This is the object name used from the header
+
+\item {} 
+This is the unmodified value from the fits file creation
+
+\item {} 
+It is cleaned and then added to a new header key ({\hyperref[\detokenize{misc/glossary:term-kw-objname}]{\sphinxtermref{\DUrole{xref,std,std-term}{KW\_OBJNAME}}}})
+
+\end{itemize}
+
+\item[{KW\_OBJNAME\index{KW\_OBJNAME@\spxentry{KW\_OBJNAME}|spxpagem}\phantomsection\label{\detokenize{misc/glossary:term-kw-objname}}}] \leavevmode\begin{itemize}
+\item {} 
+This is the cleaned object name \sphinxhyphen{} suitable for use throughout APERO.
+
+\item {} 
+Currently it is cleaned using and instruments {\hyperref[\detokenize{misc/glossary:term-pseudoconst}]{\sphinxtermref{\DUrole{xref,std,std-term}{PseudoConst}}}} cleaning function
+e.g. \sphinxcode{\sphinxupquote{apero.core.instruments.spirou.pseudo\_const.clean\_obj\_name()}}
+
+\end{itemize}
+
+\end{description}
+
+
+\section{General}
+\label{\detokenize{misc/glossary:general}}\label{\detokenize{misc/glossary:glossary-main}}\begin{description}
+\item[{DrsInputFile\index{DrsInputFile@\spxentry{DrsInputFile}|spxpagem}\phantomsection\label{\detokenize{misc/glossary:term-drsinputfile}}}] \leavevmode\begin{itemize}
+\item {} 
+This is a class controlling how files are defined \sphinxhyphen{} it comes in three
+flavors \sphinxhyphen{} a generic file type (\sphinxcode{\sphinxupquote{apero.core.core.drs\_file.DrsInputFile()}}),
+a fits file type (\sphinxcode{\sphinxupquote{apero.core.core.drs\_file.DrsFitsFile()}}) and a
+temporary numpy file type (\sphinxcode{\sphinxupquote{apero.core.core.drs\_file.DrsNPYFile()}})
+
+\end{itemize}
+
 \item[{ds9\index{ds9@\spxentry{ds9}|spxpagem}\phantomsection\label{\detokenize{misc/glossary:term-ds9}}}] \leavevmode\begin{itemize}
 \item {} 
 An astronomical imaging and data visualization application
@@ -2585,12 +2707,52 @@ see \sphinxhref{http://ds9.si.edu/site/Home.html}{ds9.si.edu}
 
 \end{itemize}
 
+\item[{file\sphinxhyphen{}definitions\index{file\sphinxhyphen{}definitions@\spxentry{file\sphinxhyphen{}definitions}|spxpagem}\phantomsection\label{\detokenize{misc/glossary:term-file-definitions}}}] \leavevmode\begin{itemize}
+\item {} 
+This is an instrument specific python script that defines all the
+file types for use with this instrument (raw, preprocessed, output).
+
+\item {} 
+Each file definition is a {\hyperref[\detokenize{misc/glossary:term-drsinputfile}]{\sphinxtermref{\DUrole{xref,std,std-term}{DrsInputFile}}}} instance
+
+\end{itemize}
+
 \item[{pdflatex\index{pdflatex@\spxentry{pdflatex}|spxpagem}\phantomsection\label{\detokenize{misc/glossary:term-pdflatex}}}] \leavevmode\begin{itemize}
 \item {} 
 The pdf latex compiler
 
 \item {} 
 see \sphinxhref{https://www.latex-project.org/get/}{www.latex\sphinxhyphen{}project.org}
+
+\end{itemize}
+
+\item[{pre\sphinxhyphen{}processing\sphinxhyphen{}coordinate\sphinxhyphen{}system\index{pre\sphinxhyphen{}processing\sphinxhyphen{}coordinate\sphinxhyphen{}system@\spxentry{pre\sphinxhyphen{}processing\sphinxhyphen{}coordinate\sphinxhyphen{}system}|spxpagem}\phantomsection\label{\detokenize{misc/glossary:term-pre-processing-coordinate-system}}}] \leavevmode\begin{itemize}
+\item {} 
+This is the standard coordinate system for pre\sphinxhyphen{}processed images
+
+\item {} 
+It consists of the bluest wavelength at the top right and the reddest
+order in the bottom left
+
+\end{itemize}
+
+\item[{PseudoConst\index{PseudoConst@\spxentry{PseudoConst}|spxpagem}\phantomsection\label{\detokenize{misc/glossary:term-pseudoconst}}}] \leavevmode\begin{itemize}
+\item {} 
+This is an instrument specific class that has functions that cannot be
+simply defined by an integer, float or string
+
+\item {} 
+Sometimes pseudo constant methods require input and are hence dynamic
+
+\item {} 
+They are located in the instrument directory
+e.g. \sphinxcode{\sphinxupquote{apero.core.instruments.spirou.psuedo\_const()}}
+
+\item {} 
+There is also a default psuedo constant class which all instruments
+inherit from \sphinxhyphen{} if no instrument is defined, or a method is not defined
+for a specific instrument it will default to this method \sphinxhyphen{} this is stored
+in \sphinxcode{\sphinxupquote{apero.core.instruments.default.psuedo\_const()}}
 
 \end{itemize}
 

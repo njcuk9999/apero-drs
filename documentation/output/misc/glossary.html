@@ -6,7 +6,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>Constants &#8212; APERO 0.7.035 documentation</title>
+    <title>Glossary &#8212; APERO 0.7.035 documentation</title>
     <link rel="stylesheet" href="../_static/bizstyle.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../_static/apero.css" />
@@ -107,8 +107,10 @@
         <div class="sphinxsidebarwrapper">
   <h3><a href="../index.html">Table of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Constants</a></li>
-<li><a class="reference internal" href="#glossary-main">Glossary</a></li>
+<li><a class="reference internal" href="#">Glossary</a></li>
+<li><a class="reference internal" href="#constants">Constants</a></li>
+<li><a class="reference internal" href="#keywords">Keywords</a></li>
+<li><a class="reference internal" href="#general">General</a></li>
 </ul>
 
   <h4>Previous topic</h4>
@@ -142,8 +144,14 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="constants">
-<span id="glossary-constants"></span><span id="glossary"></span><h1>Constants<a class="headerlink" href="#constants" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="glossary">
+<span id="id1"></span><h1>Glossary<a class="headerlink" href="#glossary" title="Permalink to this headline">¶</a></h1>
+</div>
+<div class="section" id="constants">
+<span id="glossary-constants"></span><h1>Constants<a class="headerlink" href="#constants" title="Permalink to this headline">¶</a></h1>
+<p>These are usually defined in the instruments <code class="file docutils literal notranslate"><span class="pre">default_config.py</span></code> and
+<code class="file docutils literal notranslate"><span class="pre">default_constants.py</span></code> scripts and are overwritten in the <code class="file docutils literal notranslate"><span class="pre">user_config.ini</span></code> and
+:file`user_constant.ini` files.</p>
 <dl class="glossary simple">
 <dt id="term-drs-root">DRS_ROOT</dt><dd><ul class="simple">
 <li><p>This is the path where apero-drs was installed (via github)</p></li>
@@ -169,17 +177,78 @@ SPIROU</p></li>
 </dd>
 </dl>
 </div>
-<div class="section" id="glossary-main">
-<span id="id1"></span><h1>Glossary<a class="headerlink" href="#glossary-main" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="keywords">
+<h1>Keywords<a class="headerlink" href="#keywords" title="Permalink to this headline">¶</a></h1>
+<p>These are usually defined in the instruments <code class="file docutils literal notranslate"><span class="pre">default_keywords.py</span></code> script.
+These keywords control what keys are read from fits headers and also what
+keys and comments are saved to fits headers.</p>
 <dl class="glossary simple">
+<dt id="term-kw-gaia-id">KW_GAIA_ID</dt><dd><ul class="simple">
+<li><p>This is the gaia id key from the header</p></li>
+<li><p>The header value should contain a valid gaia id</p></li>
+<li><p>This key is used to cross-match with the object database and with
+gaia online database to get position and velocity data precise enough
+for a good BERV correction</p></li>
+<li><p>If key is missing or invalid the BERV calculation defers to the header
+values for position and velocity (may be less precise).</p></li>
+</ul>
+</dd>
+<dt id="term-kw-objectname">KW_OBJECTNAME</dt><dd><ul class="simple">
+<li><p>This is the object name used from the header</p></li>
+<li><p>This is the unmodified value from the fits file creation</p></li>
+<li><p>It is cleaned and then added to a new header key (<a class="reference internal" href="#term-kw-objname"><span class="xref std std-term">KW_OBJNAME</span></a>)</p></li>
+</ul>
+</dd>
+<dt id="term-kw-objname">KW_OBJNAME</dt><dd><ul class="simple">
+<li><p>This is the cleaned object name - suitable for use throughout APERO.</p></li>
+<li><p>Currently it is cleaned using and instruments <a class="reference internal" href="#term-pseudoconst"><span class="xref std std-term">PseudoConst</span></a> cleaning function
+e.g. <code class="xref py py-meth docutils literal notranslate"><span class="pre">apero.core.instruments.spirou.pseudo_const.clean_obj_name()</span></code></p></li>
+</ul>
+</dd>
+</dl>
+</div>
+<div class="section" id="general">
+<span id="glossary-main"></span><h1>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h1>
+<dl class="glossary simple">
+<dt id="term-drsinputfile">DrsInputFile</dt><dd><ul class="simple">
+<li><p>This is a class controlling how files are defined - it comes in three
+flavors - a generic file type (<code class="xref py py-meth docutils literal notranslate"><span class="pre">apero.core.core.drs_file.DrsInputFile()</span></code>),
+a fits file type (<code class="xref py py-meth docutils literal notranslate"><span class="pre">apero.core.core.drs_file.DrsFitsFile()</span></code>) and a
+temporary numpy file type (<code class="xref py py-meth docutils literal notranslate"><span class="pre">apero.core.core.drs_file.DrsNPYFile()</span></code>)</p></li>
+</ul>
+</dd>
 <dt id="term-ds9">ds9</dt><dd><ul class="simple">
 <li><p>An astronomical imaging and data visualization application</p></li>
 <li><p>see <a class="reference external" href="http://ds9.si.edu/site/Home.html">ds9.si.edu</a></p></li>
 </ul>
 </dd>
+<dt id="term-file-definitions">file-definitions</dt><dd><ul class="simple">
+<li><p>This is an instrument specific python script that defines all the
+file types for use with this instrument (raw, preprocessed, output).</p></li>
+<li><p>Each file definition is a <a class="reference internal" href="#term-drsinputfile"><span class="xref std std-term">DrsInputFile</span></a> instance</p></li>
+</ul>
+</dd>
 <dt id="term-pdflatex">pdflatex</dt><dd><ul class="simple">
 <li><p>The pdf latex compiler</p></li>
 <li><p>see <a class="reference external" href="https://www.latex-project.org/get/">www.latex-project.org</a></p></li>
+</ul>
+</dd>
+<dt id="term-pre-processing-coordinate-system">pre-processing-coordinate-system</dt><dd><ul class="simple">
+<li><p>This is the standard coordinate system for pre-processed images</p></li>
+<li><p>It consists of the bluest wavelength at the top right and the reddest
+order in the bottom left</p></li>
+</ul>
+</dd>
+<dt id="term-pseudoconst">PseudoConst</dt><dd><ul class="simple">
+<li><p>This is an instrument specific class that has functions that cannot be
+simply defined by an integer, float or string</p></li>
+<li><p>Sometimes pseudo constant methods require input and are hence dynamic</p></li>
+<li><p>They are located in the instrument directory
+e.g. <code class="xref py py-meth docutils literal notranslate"><span class="pre">apero.core.instruments.spirou.psuedo_const()</span></code></p></li>
+<li><p>There is also a default psuedo constant class which all instruments
+inherit from - if no instrument is defined, or a method is not defined
+for a specific instrument it will default to this method - this is stored
+in <code class="xref py py-meth docutils literal notranslate"><span class="pre">apero.core.instruments.default.psuedo_const()</span></code></p></li>
 </ul>
 </dd>
 </dl>
