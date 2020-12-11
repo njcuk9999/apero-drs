@@ -439,8 +439,9 @@ LOC_START_ROW_OFFSET = LOC_START_ROW_OFFSET.copy(__NAME__)
 LOC_START_ROW_OFFSET.value = 0
 
 #   Definition of the central column for use in localisation
+# TODO: Why was this set to 2500?
 LOC_CENTRAL_COLUMN = LOC_CENTRAL_COLUMN.copy(__NAME__)
-LOC_CENTRAL_COLUMN.value = 2500
+LOC_CENTRAL_COLUMN.value = 2044     # 2500
 
 #   Half spacing between orders
 LOC_HALF_ORDER_SPACING = LOC_HALF_ORDER_SPACING.copy(__NAME__)
