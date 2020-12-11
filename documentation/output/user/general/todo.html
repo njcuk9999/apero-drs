@@ -159,31 +159,47 @@ Last updated: 2020-11-30 (NJC).</p>
 <div class="section" id="apero">
 <h2>APERO<a class="headerlink" href="#apero" title="Permalink to this headline">¶</a></h2>
 <p>For all instruments / in general.</p>
+<p>Immediate small:</p>
+<ul class="simple">
+<li><p>loc central position at 2500 for spirou why?</p></li>
+</ul>
 <p>High priority:</p>
 <ul class="simple">
 <li><p>install database via install.py [Neil]</p></li>
-<li><p>database import/export (append/replace) [Neil]</p></li>
-<li><p>calibration merge (drs processing)  [Neil]</p></li>
+<li><dl class="simple">
+<dt>database import/export (append/replace) [Neil]</dt><dd><ul>
+<li><p>object database - when do we update from google sheet?</p></li>
+<li><p>option in run.ini? every apero_processing?</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>calibration merge (drs processing)  [Neil]</dt><dd><ul>
+<li><p>filter calibrations - need metric to only keep good 2D images [Etienne/Neil]</p></li>
+</ul>
+</dd>
+</dl>
+</li>
 <li><p>polar code update  [Neil/Eder/Chris]</p></li>
-<li><p>CCF weights adjustment (once Pia has results)  [Pia/Neil]</p></li>
 <li><p>tellurics templates - minimum number of files for template creation [Neil]</p></li>
 </ul>
 <p>Medium priority:</p>
 <ul class="simple">
 <li><p>drs_base.BETEXT from langdb.csv (during lang –update –reload) [Neil]</p></li>
 <li><p>filename from checksums [Neil]</p></li>
-<li><p>bisector for CCF (new extension in CCF outputs?) [Etienne/Neil]</p></li>
 <li><p>loc and wave coefficients to tables [Neil]</p></li>
 <li><p>add option to set template for mk_tellu and fit_tellu [Neil]</p></li>
-<li><p>proper SNR calculation [Etienne/???]</p></li>
 <li><p>deal with all python warnings [Neil]</p></li>
 <li><p>post processing (i.e. outputs like CADC/ESO)   [Neil/Chris]</p></li>
 <li><p>DRS tests [Charles + Thomas]</p></li>
-<li><p>test barycorrpy against pyasl and other BERV calculators (precision) [Thomas?]</p></li>
-<li><p>apero_processing.py work with CANFAR [Neil/Chris + CANFAR collab]</p></li>
 </ul>
 <p>Low priority:</p>
 <ul class="simple">
+<li><p>bisector for CCF (new extension in CCF outputs?) [Etienne/Neil]</p></li>
+<li><p>proper SNR calculation [Etienne/???]</p></li>
+<li><p>test barycorrpy against pyasl and other BERV calculators (precision) [Thomas?]</p></li>
+<li><p>apero_processing.py work with CANFAR [Neil/Chris + CANFAR collab]</p></li>
 <li><p>CCF masks from SpT/Teff (after masks are more mature)  [Etienne/Neil]</p></li>
 <li><p>instead of copying assets download them (clean up github)   [Neil]</p></li>
 <li><p>add doc strings/typing to all functions, descriptions to all constants, review all constant min/max/dtypes [Neil]</p></li>

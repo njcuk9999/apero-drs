@@ -16,31 +16,37 @@ APERO
 
 For all instruments / in general.
 
+Immediate small:
+
+* loc central position at 2500 for spirou why?
+
 High priority:
 
 * install database via install.py [Neil]
 * database import/export (append/replace) [Neil]
+    * object database - when do we update from google sheet?
+    * option in run.ini? every apero_processing?
 * calibration merge (drs processing)  [Neil]
+    * filter calibrations - need metric to only keep good 2D images [Etienne/Neil]
 * polar code update  [Neil/Eder/Chris]
-* CCF weights adjustment (once Pia has results)  [Pia/Neil]
 * tellurics templates - minimum number of files for template creation [Neil]
 
 Medium priority:
 
 * drs_base.BETEXT from langdb.csv (during lang --update --reload) [Neil]
 * filename from checksums [Neil]
-* bisector for CCF (new extension in CCF outputs?) [Etienne/Neil]
 * loc and wave coefficients to tables [Neil]
 * add option to set template for mk_tellu and fit_tellu [Neil]
-* proper SNR calculation [Etienne/???]
 * deal with all python warnings [Neil]
 * post processing (i.e. outputs like CADC/ESO)   [Neil/Chris]
 * DRS tests [Charles + Thomas]
-* test barycorrpy against pyasl and other BERV calculators (precision) [Thomas?]
-* apero_processing.py work with CANFAR [Neil/Chris + CANFAR collab]
 
 Low priority:
 
+* bisector for CCF (new extension in CCF outputs?) [Etienne/Neil]
+* proper SNR calculation [Etienne/???]
+* test barycorrpy against pyasl and other BERV calculators (precision) [Thomas?]
+* apero_processing.py work with CANFAR [Neil/Chris + CANFAR collab]
 * CCF masks from SpT/Teff (after masks are more mature)  [Etienne/Neil]
 * instead of copying assets download them (clean up github)   [Neil]
 * add doc strings/typing to all functions, descriptions to all constants, review all constant min/max/dtypes [Neil]

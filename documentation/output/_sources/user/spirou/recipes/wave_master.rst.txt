@@ -8,6 +8,13 @@ Creates a wavelength solution and measures drifts (via CCF) of the FP relative
 to the FP master
 
 ===========================================
+Schematic
+===========================================
+
+.. image:: ../../../_static/yed/spirou/cal_wave_master_spirou_schematic.jpg
+    :width: 2048
+
+===========================================
 Run
 ===========================================
 
