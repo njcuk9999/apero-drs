@@ -8,6 +8,13 @@ Bad Pixel Correction Recipe
 Creates a bad pixel mask for identifying and deal with bad pixels.
 
 ===========================================
+Schematic
+===========================================
+
+.. image:: ../../../_static/yed/spirou/cal_badpix_spirou_schematic.jpg
+
+
+===========================================
 Run
 ===========================================
 

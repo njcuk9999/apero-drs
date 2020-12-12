@@ -110,6 +110,7 @@
   <h3><a href="../../../index.html">Table of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Bad Pixel Correction Recipe</a><ul>
+<li><a class="reference internal" href="#schematic">Schematic</a></li>
 <li><a class="reference internal" href="#run">Run</a></li>
 <li><a class="reference internal" href="#optional-arguments">Optional Arguments</a></li>
 <li><a class="reference internal" href="#output-dir">Output Dir</a></li>
@@ -154,6 +155,10 @@
   <div class="section" id="bad-pixel-correction-recipe">
 <span id="recipes-spirou-bad-pixels"></span><h1>Bad Pixel Correction Recipe<a class="headerlink" href="#bad-pixel-correction-recipe" title="Permalink to this headline">¶</a></h1>
 <p>Creates a bad pixel mask for identifying and deal with bad pixels.</p>
+<div class="section" id="schematic">
+<h2>Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
+<img alt="../../../_images/cal_badpix_spirou_schematic.jpg" src="../../../_images/cal_badpix_spirou_schematic.jpg" />
+</div>
 <div class="section" id="run">
 <h2>Run<a class="headerlink" href="#run" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cal_badpix_spirou.py <span class="o">[</span>DIRECTORY<span class="o">]</span> -flatfiles <span class="o">[</span>FLAT_FLAT<span class="o">]</span> -darkfiles <span class="o">[</span>DARK_DARK_TEL<span class="o">]</span>
