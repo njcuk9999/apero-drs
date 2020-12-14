@@ -2319,14 +2319,21 @@ class ObjectDatabase(DatabaseManager):
         # add used
         values.append(used)
         # need to see if we already have gaia id
-        condition = '{0}="{1}"'.format(GAIA_COL_NAME, gaia_id)
-        gaiaids = self.database.unique(GAIA_COL_NAME, condition=condition,
+        condition1 = '{0}="{1}"'.format(GAIA_COL_NAME, gaia_id)
+        gaiaids = self.database.unique(GAIA_COL_NAME, condition=condition1,
                                        table=self.database.tname)
+        condition2 = '{0}="{1}"'.format('KW_OBJNAME', objname)
+        objnames = self.database.unique('KW_OBJNAME', condition=condition2)
         # ------------------------------------------------------------------
         # deal with updating entry
         if (gaiaids is not None) and (len(gaiaids) > 0):
             # update row in database
-            self.database.set('*', values=values, condition=condition,
+            self.database.set('*', values=values, condition=condition1,
+                              table=self.database.tname, commit=commit)
+        # else we update based on object name
+        elif (objnames is not None) and (len(objnames) > 0):
+            # update row in database
+            self.database.set('*', values=values, condition=condition2,
                               table=self.database.tname, commit=commit)
         # else add row to database (as new row)
         else:

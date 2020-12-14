@@ -12,10 +12,10 @@ __all__ = [
     # general
     'DATA_ENGINEERING', 'CALIB_DB_FORCE_WAVESOL', 'DATA_CORE',
     # preprocessing constants
-    'PP_HOTPIX_BOXSIZE', 'PP_CORRUPT_HOT_THRES', 'PP_NUM_DARK_AMP',
-    'PP_HOTPIX_FILE', 'PP_TOTAL_AMP_NUM', 'PP_CORRUPT_MED_SIZE',
-    'PP_NUM_REF_TOP', 'PP_NUM_REF_BOTTOM', 'PP_RMS_PERCENTILE',
-    'PP_LOWEST_RMS_PERCENTILE', 'PP_CORRUPT_SNR_HOTPIX',
+    'PP_OBJ_DPRTYPES', 'PP_HOTPIX_BOXSIZE', 'PP_CORRUPT_HOT_THRES',
+    'PP_NUM_DARK_AMP', 'PP_HOTPIX_FILE', 'PP_TOTAL_AMP_NUM',
+    'PP_CORRUPT_MED_SIZE', 'PP_NUM_REF_TOP', 'PP_NUM_REF_BOTTOM',
+    'PP_RMS_PERCENTILE', 'PP_LOWEST_RMS_PERCENTILE', 'PP_CORRUPT_SNR_HOTPIX',
     'PP_CORRUPT_RMS_THRES', 'RAW_TO_PP_ROTATION', 'PP_DARK_MED_BINNUM',
     'SKIP_DONE_PP', 'ALLOWED_PPM_TYPES', 'PPM_MASK_NSIG', 'PP_MEDAMP_BINSIZE',
     # image constants
@@ -545,6 +545,10 @@ FIBER_SET_NUM_FIBERS_C = Const('FIBER_SET_NUM_FIBERS_C', value=None,
 # PRE-PROCESSSING SETTINGS
 # =============================================================================
 cgroup = 'PRE-PROCESSING SETTINGS'
+# Define object dpr types
+PP_OBJ_DPRTYPES = Const('PP_OBJ_DPRTYPES', value=None, dtype=str,
+                        source=__NAME__, group=cgroup)
+
 # Defines the box size surrounding hot pixels to use
 PP_HOTPIX_BOXSIZE = Const('PP_HOTPIX_BOXSIZE', value=None, dtype=int,
                           minimum=1, source=__NAME__, group=cgroup)
