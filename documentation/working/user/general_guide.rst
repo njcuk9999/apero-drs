@@ -14,6 +14,7 @@ This section provides a general guide to using APERO.
    general/using_apero_default.rst
    general/known_issues.rst
    general/todo.rst
+   deep.rst
    general/tools_default.rst
 
 --------------------------------------------------------------------------------

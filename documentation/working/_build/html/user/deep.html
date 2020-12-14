@@ -6,7 +6,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>General User documentation &#8212; APERO 0.7.035 documentation</title>
+    <title>APERO in depth &#8212; APERO 0.7.035 documentation</title>
     <link rel="stylesheet" href="../_static/bizstyle.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../_static/apero.css" />
@@ -19,8 +19,8 @@
     <script type="text/javascript" src="../_static/bizstyle.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Installation" href="general/installation.html" />
-    <link rel="prev" title="APERO Documentation" href="../index.html" />
+    <link rel="next" title="Preprocessing functionality" href="science/preprocessing.html" />
+    <link rel="prev" title="TODO" href="general/todo.html" />
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:300,400,700'
           rel='stylesheet' type='text/css' />
     <link rel="stylesheet" href="_static/images/fonta/css/font-awesome.min.css">
@@ -95,26 +95,42 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="general/installation.html" title="Installation"
+          <a href="science/preprocessing.html" title="Preprocessing functionality"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="../index.html" title="APERO Documentation"
+          <a href="general/todo.html" title="TODO"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">APERO 0.7.035 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">APERO 0.7.035 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="general_guide.html" accesskey="U">General User documentation</a> &#187;</li> 
       </ul>
     </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">APERO in depth</a><ul>
+<li><a class="reference internal" href="#the-base-module">The base module</a></li>
+<li><a class="reference internal" href="#the-core-module">The core module</a></li>
+<li><a class="reference internal" href="#the-io-module">The io module</a></li>
+<li><a class="reference internal" href="#the-language-module">The language module</a></li>
+<li><a class="reference internal" href="#the-plotting-module">The plotting module</a></li>
+<li><a class="reference internal" href="#the-recipe-module">The Recipe module</a></li>
+<li><a class="reference internal" href="#the-science-module">The science module</a></li>
+<li><a class="reference internal" href="#the-tools-module">The tools module</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
-  <p class="topless"><a href="../index.html"
-                        title="previous chapter">APERO Documentation</a></p>
+  <p class="topless"><a href="general/todo.html"
+                        title="previous chapter">TODO</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="general/installation.html"
-                        title="next chapter">Installation</a></p>
+  <p class="topless"><a href="science/preprocessing.html"
+                        title="next chapter">Preprocessing functionality</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="../_sources/user/general_guide.rst.txt"
+      <li><a href="../_sources/user/deep.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
@@ -136,57 +152,62 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="general-user-documentation">
-<span id="general-guide"></span><h1>General User documentation<a class="headerlink" href="#general-user-documentation" title="Permalink to this headline">¶</a></h1>
-<p>This section provides a general guide to using APERO.</p>
+  <div class="section" id="apero-in-depth">
+<span id="deep"></span><h1>APERO in depth<a class="headerlink" href="#apero-in-depth" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="the-base-module">
+<h2>The base module<a class="headerlink" href="#the-base-module" title="Permalink to this headline">¶</a></h2>
+<p>The base module contains very basic functionality and is kept at a bare
+minimum, in general sub-modules and scripts in here cannot use other APERO
+functionality (hence the less functionality in here the better).</p>
+</div>
+<div class="section" id="the-core-module">
+<h2>The core module<a class="headerlink" href="#the-core-module" title="Permalink to this headline">¶</a></h2>
+<p>This is where the core functionality is stored. In general all core functionality
+should be instrument independent, however there is a separate sub-module specifically
+for instrument dependent code (and default settings).</p>
+</div>
+<div class="section" id="the-io-module">
+<h2>The io module<a class="headerlink" href="#the-io-module" title="Permalink to this headline">¶</a></h2>
+<p>This is the input/output module. In general these should not use any functionality
+from APERO and instead are modules that have independent pieces of code or use
+other python modules related to the input and output of files (reading, writing etc.).</p>
+</div>
+<div class="section" id="the-language-module">
+<h2>The language module<a class="headerlink" href="#the-language-module" title="Permalink to this headline">¶</a></h2>
+<p>This module has all the functionality referring to the language database (except
+the database itself which is a base module). The language functionality refers to
+the use of the print codes and relating them to a specific language - i.e. no user
+text should be written into the codes instead should be referred to via codes to
+text in the langauge database.</p>
+</div>
+<div class="section" id="the-plotting-module">
+<h2>The plotting module<a class="headerlink" href="#the-plotting-module" title="Permalink to this headline">¶</a></h2>
+<p>All plotting functionality should be located in here and called from any recipe
+when required. In theory no plotting code should be located elsewhere in APERO.</p>
+</div>
+<div class="section" id="the-recipe-module">
+<h2>The Recipe module<a class="headerlink" href="#the-recipe-module" title="Permalink to this headline">¶</a></h2>
+<p>This is where the recipes for each instrument are stored.</p>
+</div>
+<div class="section" id="the-science-module">
+<h2>The science module<a class="headerlink" href="#the-science-module" title="Permalink to this headline">¶</a></h2>
+<p>The science module contains all functionality related to astrophysics
+algorithms. It is divided into sub-modules as follows: calibration
+functionality (“calib”), extraction functionality (“extract”), polarimetry
+functionality (“polar”), pre-processing functionality (“preprocessing”),
+atmospheric correction functionality (“telluric”) and radial velocity
+functionality (“velocity”).</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="general/installation.html">Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="general/installation.html#prerequisites">Prerequisites</a></li>
-<li class="toctree-l2"><a class="reference internal" href="general/installation.html#download-from-github">Download from GitHub</a></li>
-<li class="toctree-l2"><a class="reference internal" href="general/installation.html#setup">Setup</a></li>
-<li class="toctree-l2"><a class="reference internal" href="general/installation.html#activating-the-apero-profile">Activating the APERO profile</a></li>
-<li class="toctree-l2"><a class="reference internal" href="general/installation.html#updating-from-github">Updating from github</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="general/using_apero_default.html">Using APERO</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="general/using_apero_default.html#activating-the-apero-profile">Activating the APERO profile</a></li>
-<li class="toctree-l2"><a class="reference internal" href="general/using_apero_default.html#running-recipes-indvidiually">Running recipes indvidiually</a></li>
-<li class="toctree-l2"><a class="reference internal" href="general/using_apero_default.html#using-the-processing-script">Using the processing script</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="general/known_issues.html">Known Issues</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="general/known_issues.html#recipes">Recipes</a></li>
-<li class="toctree-l2"><a class="reference internal" href="general/known_issues.html#external">External</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="general/todo.html">TODO</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="general/todo.html#apero">APERO</a></li>
-<li class="toctree-l2"><a class="reference internal" href="general/todo.html#spirou-specific">SPIRou specific</a></li>
-<li class="toctree-l2"><a class="reference internal" href="general/todo.html#nirps-specific">NIRPS specific</a></li>
-<li class="toctree-l2"><a class="reference internal" href="general/todo.html#apero-utils-and-analysis">APERO utils and analysis</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="deep.html">APERO in depth</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="deep.html#the-base-module">The base module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="deep.html#the-core-module">The core module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="deep.html#the-io-module">The io module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="deep.html#the-language-module">The language module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="deep.html#the-plotting-module">The plotting module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="deep.html#the-recipe-module">The Recipe module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="deep.html#the-science-module">The science module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="deep.html#the-tools-module">The tools module</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="general/tools_default.html">General Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="science/preprocessing.html">Preprocessing functionality</a></li>
 </ul>
 </div>
-<hr class="docutils" />
-<p>For instrument specific guide see:</p>
-<ul class="simple">
-<li><p><a class="reference internal" href="spirou.html#spirou-main"><span class="std std-ref">SPIROU</span></a></p></li>
-</ul>
-<p><a class="reference internal" href="#general-guide"><span class="std std-ref">Back to top</span></a></p>
+</div>
+<div class="section" id="the-tools-module">
+<h2>The tools module<a class="headerlink" href="#the-tools-module" title="Permalink to this headline">¶</a></h2>
+<p>This is where the tools are stored - their recipes and the sub-module
+functionality to use them.</p>
+</div>
 </div>
 
 
@@ -202,12 +223,13 @@
           <a href="../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="general/installation.html" title="Installation"
+          <a href="science/preprocessing.html" title="Preprocessing functionality"
              >next</a> |</li>
         <li class="right" >
-          <a href="../index.html" title="APERO Documentation"
+          <a href="general/todo.html" title="TODO"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../index.html">APERO 0.7.035 documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="../index.html">APERO 0.7.035 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="general_guide.html" >General User documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
