@@ -131,9 +131,13 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # For OBJECT files we need to resolve object and update header
         # ------------------------------------------------------------------
-        infile.header = prep.resolve_target(params, pconst,
-                                            header=infile.header,
-                                            database=objdbm)
+        obj_dprtypes = params.listp('PP_OBJ_DPRTYPES', dtype=str)
+        # only resolve targets that are objects
+        if infile.get_hkey('KW_DPRTYPE') in obj_dprtypes:
+            # get object based on object name and gaia id
+            infile.header = prep.resolve_target(params, pconst,
+                                                header=infile.header,
+                                                database=objdbm)
         # ------------------------------------------------------------------
         # if it wasn't found skip this file, if it was print a message
         if cond:

@@ -206,6 +206,10 @@ FIBER_SET_NUM_FIBERS_B.value = 1
 # =============================================================================
 # PRE-PROCESSSING SETTINGS
 # =============================================================================
+# Define object dpr types
+PP_OBJ_DPRTYPES = PP_OBJ_DPRTYPES.copy(__NAME__)
+PP_OBJ_DPRTYPES.value = 'OBJ_DARK, OBJ_FP'
+
 # Defines the box size surrounding hot pixels to use
 PP_HOTPIX_BOXSIZE = PP_HOTPIX_BOXSIZE.copy(__NAME__)
 PP_HOTPIX_BOXSIZE.value = 5
