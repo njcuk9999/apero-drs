@@ -130,7 +130,7 @@
     
 
 \title{APERO Documentation}
-\date{Dec 11, 2020}
+\date{Dec 14, 2020}
 \release{0.7.035}
 \author{Neil Cook}
 \newcommand{\sphinxlogo}{\sphinxincludegraphics{apero_logo.png}\par}
@@ -693,8 +693,20 @@ For all instruments / in general.
 
 Immediate small:
 \begin{itemize}
+\item {} \begin{description}
+\item[{filter calibrations}] \leavevmode\begin{itemize}
 \item {} 
-loc central position at 2500 for spirou why?
+we are combining all for a night id bad ones and remove
+
+\item {} 
+error if not enough \sphinxhyphen{} define minimum number of calibrations required
+
+\end{itemize}
+
+\end{description}
+
+\item {} 
+when do we update object database from googlesheet?
 
 \end{itemize}
 
@@ -982,6 +994,115 @@ Summary plot review / update (html/interactive)
 \end{itemize}
 
 
+\subsection{APERO in depth}
+\label{\detokenize{user/deep:apero-in-depth}}\label{\detokenize{user/deep:deep}}\label{\detokenize{user/deep::doc}}
+
+\subsubsection{The base module}
+\label{\detokenize{user/deep:the-base-module}}
+The base module contains very basic functionality and is kept at a bare
+minimum, in general sub\sphinxhyphen{}modules and scripts in here cannot use other APERO
+functionality (hence the less functionality in here the better).
+
+
+\subsubsection{The core module}
+\label{\detokenize{user/deep:the-core-module}}
+This is where the core functionality is stored. In general all core functionality
+should be instrument independent, however there is a separate sub\sphinxhyphen{}module specifically
+for instrument dependent code (and default settings).
+
+
+\subsubsection{The io module}
+\label{\detokenize{user/deep:the-io-module}}
+This is the input/output module. In general these should not use any functionality
+from APERO and instead are modules that have independent pieces of code or use
+other python modules related to the input and output of files (reading, writing etc.).
+
+
+\subsubsection{The language module}
+\label{\detokenize{user/deep:the-language-module}}
+This module has all the functionality referring to the language database (except
+the database itself which is a base module). The language functionality refers to
+the use of the print codes and relating them to a specific language \sphinxhyphen{} i.e. no user
+text should be written into the codes instead should be referred to via codes to
+text in the langauge database.
+
+
+\subsubsection{The plotting module}
+\label{\detokenize{user/deep:the-plotting-module}}
+All plotting functionality should be located in here and called from any recipe
+when required. In theory no plotting code should be located elsewhere in APERO.
+
+
+\subsubsection{The Recipe module}
+\label{\detokenize{user/deep:the-recipe-module}}
+This is where the recipes for each instrument are stored.
+
+
+\subsubsection{The science module}
+\label{\detokenize{user/deep:the-science-module}}
+The science module contains all functionality related to astrophysics
+algorithms. It is divided into sub\sphinxhyphen{}modules as follows: calibration
+functionality (“calib”), extraction functionality (“extract”), polarimetry
+functionality (“polar”), pre\sphinxhyphen{}processing functionality (“preprocessing”),
+atmospheric correction functionality (“telluric”) and radial velocity
+functionality (“velocity”).
+
+
+\paragraph{Preprocessing functionality}
+\label{\detokenize{user/science/preprocessing:preprocessing-functionality}}\label{\detokenize{user/science/preprocessing:science-preprocessing}}\label{\detokenize{user/science/preprocessing::doc}}
+
+\subparagraph{Raw file header fixing}
+\label{\detokenize{user/science/preprocessing:raw-file-header-fixing}}\label{\detokenize{user/science/preprocessing:science-preprocessing-header-fixes}}
+The header fixes are controlled via \sphinxcode{\sphinxupquote{apero.core.core.drs\_file.fix\_header()}}
+which in turn uses the {\hyperref[\detokenize{misc/glossary:term-pseudoconst}]{\sphinxtermref{\DUrole{xref,std,std-term}{PseudoConst}}}} method \sphinxcode{\sphinxupquote{HEADER\_FIXES()}}.
+This is defined for each instrument
+(e.g. \sphinxcode{\sphinxupquote{apero.core.instruments.spirou.pseduo\_const.HEADER\_FIXES()}})
+
+For SPIRou the current header fixes are as follows:
+\begin{itemize}
+\item {} 
+clean object name (via \sphinxcode{\sphinxupquote{apero.core.instruments.spirou.pseduo\_const.clean\_obj\_name()}})
+
+\item {} 
+get target type (via \sphinxcode{\sphinxupquote{apero.core.instruments.spirou.pseduo\_const.get\_trg\_type()}})
+
+\item {} 
+get mid observation time (via \sphinxcode{\sphinxupquote{apero.core.instruments.spirou.pseduo\_const.get\_mid\_obs\_time()}})
+
+\item {} 
+get the raw data type (via \sphinxcode{\sphinxupquote{apero.core.instruments.spirou.pseduo\_const.get\_dprtype()}})
+
+\end{itemize}
+
+
+\subparagraph{Raw file identification}
+\label{\detokenize{user/science/preprocessing:raw-file-identification}}\label{\detokenize{user/science/preprocessing:science-preprocessing-file-identification}}
+This takes a given input file and checks it against the instrument {\hyperref[\detokenize{misc/glossary:term-file-definitions}]{\sphinxtermref{\DUrole{xref,std,std-term}{file\sphinxhyphen{}definitions}}}}.
+The {\hyperref[\detokenize{misc/glossary:term-file-definitions}]{\sphinxtermref{\DUrole{xref,std,std-term}{file\sphinxhyphen{}definitions}}}} give all the criteria by which an input file can be
+matched as a specific drs file type.
+
+This is done via \sphinxcode{\sphinxupquote{apero.science.preprocessing.identification.drs\_infile\_id()}}
+which in turn calls \sphinxcode{\sphinxupquote{apero.core.core.drs\_file.id\_drs\_file()}} and returns
+a tuple \sphinxhyphen{} whether the file was found in the instruments definition and the
+drs file type ({\hyperref[\detokenize{misc/glossary:term-drsinputfile}]{\sphinxtermref{\DUrole{xref,std,std-term}{DrsInputFile}}}} instance)
+
+
+\subparagraph{Gaia ID and object finding}
+\label{\detokenize{user/science/preprocessing:gaia-id-and-object-finding}}\label{\detokenize{user/science/preprocessing:science-preprocessing-object-finding}}
+We assume the header either has a Gaia ID column (defined by the {\hyperref[\detokenize{misc/glossary:term-kw-gaia-id}]{\sphinxtermref{\DUrole{xref,std,std-term}{KW\_GAIA\_ID}}}} keyword)
+or a valid object name (defined by the {\hyperref[\detokenize{misc/glossary:term-kw-objectname}]{\sphinxtermref{\DUrole{xref,std,std-term}{KW\_OBJECTNAME}}}} keyword).
+\begin{quote}
+
+{\hyperref[\detokenize{user/spirou:spirou-main}]{\sphinxcrossref{\DUrole{std,std-ref}{Back to top}}}}
+\end{quote}
+
+
+\subsubsection{The tools module}
+\label{\detokenize{user/deep:the-tools-module}}
+This is where the tools are stored \sphinxhyphen{} their recipes and the sub\sphinxhyphen{}module
+functionality to use them.
+
+
 \subsection{General Tools}
 \label{\detokenize{user/general/tools_default:general-tools}}\label{\detokenize{user/general/tools_default:tools-default}}\label{\detokenize{user/general/tools_default::doc}}
 
@@ -1021,15 +1142,15 @@ The inputs to this code are SPIRou RAMP files (i.e. \{odometer code\}.fits
 e.g. 1234567o.fits, 1234568a.fits, 1234569c.fits
 
 The first step in preprocessing is to fix the header. Details of this are
-provided \DUrole{xref,std,std-ref}{here}.
+provided {\hyperref[\detokenize{user/science/preprocessing:science-preprocessing-header-fixes}]{\sphinxcrossref{\DUrole{std,std-ref}{here}}}}.
 
 After the header is fixed for APERO use the raw file is checked to be of
 known type. The identification of raw files can be read about
-\DUrole{xref,std,std-ref}{here}.
+{\hyperref[\detokenize{user/science/preprocessing:science-preprocessing-file-identification}]{\sphinxcrossref{\DUrole{std,std-ref}{here}}}}.
 
 If we are dealing with an astrophysical object observation (OBJ\_DARK or OBJ\_FP)
 we must make sure the object name / gaia id are identified as being valid by APERO.
-Read about this \DUrole{xref,std,std-ref}{here}
+Read about this {\hyperref[\detokenize{user/science/preprocessing:science-preprocessing-object-finding}]{\sphinxcrossref{\DUrole{std,std-ref}{here}}}}
 
 Next we test for corrupted files.
 

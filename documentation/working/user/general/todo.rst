@@ -18,7 +18,11 @@ For all instruments / in general.
 
 Immediate small:
 
-* loc central position at 2500 for spirou why?
+* filter calibrations
+    * we are combining all for a night id bad ones and remove
+    * error if not enough - define minimum number of calibrations required
+
+* when do we update object database from googlesheet?
 
 High priority:
 
