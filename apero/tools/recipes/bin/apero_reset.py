@@ -150,11 +150,11 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # progress
     drs_reset.reset_title(params, 'Log')
+    # deal with files to skip
+    exclude_files = []
+    exclude_files.append(drs_log.get_logfilepath(WLOG, params))
     # log folder
     if warn:
-        # deal with files to skip
-        exclude_files = []
-        exclude_files.append(drs_log.get_logfilepath(WLOG, params))
         reset5 = drs_reset.reset_confirmation(params, 'Log',
                                               params['DRS_DATA_MSG'],
                                               exclude_files=exclude_files)
