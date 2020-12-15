@@ -410,6 +410,8 @@ def user_interface(params, args, lang):
         args.name = profilename
     else:
         profilename = args.name
+    # add name
+    all_params['PROFILENAME'] = args.name
     # update default paths
     default_upath = Path(DEFAULT_USER_PATH)
     default_dpath = Path(DEFAULT_DATA_PATH).joinpath(profilename)
@@ -446,6 +448,20 @@ def user_interface(params, args, lang):
     # TODO: set language
     all_params['LANGUAGE'] = lang
     all_params.set_source('LANGUAGE', lang)
+    # ------------------------------------------------------------------
+    # Database settings
+    prompt_db = 'Choose a database mode'
+    options_db = ['1. sqlite (recommended for single machine use) '
+                  '- no setup required',
+                  '\n\t2. mysql (required for multiple machine use)'
+                  ' - setup required']
+    # ask which mode the user wants for databases
+    db_type = ask(prompt_db, options=[1, 2], dtype='int', optiondesc=options_db)
+    # add the database settings (and ask user if required
+    if db_type == 2:
+        all_params = get_mysql_settings(all_params)
+    else:
+        all_params = get_sqlite_settings(all_params)
     # ------------------------------------------------------------------
     cprint('\n' + printheader(), 'm')
     cprint('Settings for {0}'.format(instrument), 'm')
@@ -652,6 +668,91 @@ def user_interface(params, args, lang):
     # return all parameters
     return all_params, args
 
+
+
+def get_mysql_settings(all_params: ParamDict) -> ParamDict:
+    """
+    Ask the user for the MySQL settings
+
+    :param all_params: dict, the user all parameter dictionary
+
+    :return: dict, the updated all parameter dictionary
+    """
+    # start a dictionary for database
+    all_params['SQLITE'] = dict()
+    all_params['MYSQL'] = dict()
+    # only sqlite setting
+    all_params['SQLITE']['USE_SQLITE3'] = False
+    all_params['MYSQL']['USE_MYSQL'] = True
+    # ----------------------------------------------------------------------
+    # Set up statement
+    prompt_db_1 = ('For MySQL you must define some parameters, '
+                   'these will take the form:'
+                   '\n\t>> mysql -h {HOSTNAME} -n {USERNAME} -p {PASSWORD}'
+                   '\n\t - Note the password will be stored as plain text.'
+                   '\n\nYou will also need a database name (within mysql) '
+                   '\n\t- if it does not exist we will attempt to create it '
+                   '(but may not have permissions to do so)'
+                   '\nYou may also link the database to a specific apero profile'
+                   '\n\tby default this is the profile name you set up here'
+                   '\n\thowever you may want to link this database to another '
+                   'apero profile')
+    # ask question
+    cprint(prompt_db_1, 'g')
+    # ----------------------------------------------------------------------
+    # ask for the host name
+    response = ask('Enter database {HOSTNAME}:', dtype=str)
+    # only add response if not None
+    if response not in ['None', '', None]:
+        all_params['MYSQL']['HOST'] = response
+    # ----------------------------------------------------------------------
+    # ask for the username
+    response = ask('Enter database {USERNAME}:', dtype=str)
+    # only add response if not None
+    if response not in ['None', '', None]:
+        all_params['MYSQL']['USER'] = response
+    # ----------------------------------------------------------------------
+    # ask for the password
+    response = ask('Enter database {PASSWD}:', dtype=str)
+    # only add response if not None
+    if response not in ['None', '', None]:
+        all_params['MYSQL']['PASSWD'] = response
+    # ----------------------------------------------------------------------
+    # ask for the database name
+    response = ask('Enter mysql database name', dtype=str)
+    # only add response if not None
+    if response not in ['None', '', None]:
+        all_params['MYSQL']['DATABASE'] = response
+    # ----------------------------------------------------------------------
+    # ask for the database name
+    db_question = 'Enter APERO profile to use (leave blank for default/current)'
+    response = ask(db_question, dtype=str)
+    # only add response if not None
+    if response not in ['None', '', None]:
+        all_params['MYSQL']['PROFILE'] = response
+    else:
+        all_params['MYSQL']['PROFILE'] = all_params['PROFILENAME']
+    # ----------------------------------------------------------------------
+    return all_params
+
+
+def get_sqlite_settings(all_params: ParamDict) -> ParamDict:
+    """
+    Set the SQLITE settings (all default - no user input)
+    Here in case in future we need to ask user for settings
+
+    :param all_params: dict, the user all parameter dictionary
+
+    :return: dict, the updated all parameter dictionary
+    """
+    # start a dictionary for database
+    all_params['SQLITE'] = dict()
+    all_params['MYSQL'] = dict()
+    # only mysql setting
+    all_params['SQLITE']['USE_SQLITE3'] = True
+    all_params['MYSQL']['USE_MYSQL'] = False
+    # ----------------------------------------------------------------------
+    return all_params
 
 # =============================================================================
 # Define installation functions
@@ -861,6 +962,10 @@ def clean_install(params, all_params):
     add_paths(all_params)
     # construct reset command
     toolmod.main(quiet=True, warn=cleanwarn)
+
+
+
+
     # return all params
     return all_params
 
@@ -1237,11 +1342,8 @@ def update(params, args):
         config_path = Path(config_path)
     # ----------------------------------------------------------------------
     # find all installed instruments
-
-    # TODO THIS COMES FROM YAML
-
-    instrument = ''
-    language = ''
+    instrument = base.IPARAMS['INSTRUMENT']
+    language = base.IPARAMS['LANGUAGE']
     # ----------------------------------------------------------------------
     # set up dictionary
     all_params = ParamDict()
@@ -1280,9 +1382,91 @@ def update(params, args):
     all_params.set_source('DRS_PDFLATEX_PATH',
                           iparams.sources['DRS_PDFLATEX_PATH'])
     # ------------------------------------------------------------------
+    # add the current database
+    all_params = update_db_settings(all_params)
+    # ------------------------------------------------------------------
     # return all params
     return all_params
 
+
+def update_db_settings(aparams):
+    # read the database settings for current profile
+    dparams = base.DPARAMS
+    # ------------------------------------------------------------------
+    # set the sqlite settings
+    # ------------------------------------------------------------------
+    aparams['SQLITE'] = dict()
+    # add whether we are using the sqlite3 database
+    aparams['SQLITE']['USE_SQLITE3'] = dparams['USE_SQLITE3']
+    # add database settings
+    aparams['SQLITE']['HOST'] = dparams['SQLITE3']['HOST']
+    aparams['SQLITE']['USER'] = dparams['SQLITE3']['USER']
+    aparams['SQLITE']['PASSWD'] = dparams['SQLITE3']['PASSWD']
+    aparams['SQLITE']['DATABASE'] = dparams['SQLITE3']['DATABASE']
+    aparams['SQLITE']['PROFILE'] = dparams['SQLITE3']['PROFILE']
+    # add calib database
+    aparams['SQLITE']['CALIB_PATH'] = dparams['SQLITE3']['CALIB']['PATH']
+    aparams['SQLITE']['CALIB_NAME'] = dparams['SQLITE3']['CALIB']['NAME']
+    aparams['SQLITE']['CALIB_RESET'] = dparams['SQLITE3']['CALIB']['RESET']
+    # add tellu database
+    aparams['SQLITE']['TELLU_PATH'] = dparams['SQLITE3']['TELLU']['PATH']
+    aparams['SQLITE']['TELLU_NAME'] = dparams['SQLITE3']['TELLU']['NAME']
+    aparams['SQLITE']['TELLU_RESET'] = dparams['SQLITE3']['TELLU']['RESET']
+    # add index database
+    aparams['SQLITE']['IDX_PATH'] = dparams['SQLITE3']['INDEX']['PATH']
+    aparams['SQLITE']['IDX_NAME'] = dparams['SQLITE3']['INDEX']['NAME']
+    aparams['SQLITE']['IDX_RESET'] = dparams['SQLITE3']['INDEX']['RESET']
+    # add log database
+    aparams['SQLITE']['LOG_PATH'] = dparams['SQLITE3']['LOG']['PATH']
+    aparams['SQLITE']['LOG_NAME'] = dparams['SQLITE3']['LOG']['NAME']
+    aparams['SQLITE']['LOG_RESET'] = dparams['SQLITE3']['LOG']['RESET']
+    # add object database
+    aparams['SQLITE']['OBJ_PATH'] = dparams['SQLITE3']['OBJECT']['PATH']
+    aparams['SQLITE']['OBJ_NAME'] = dparams['SQLITE3']['OBJECT']['NAME']
+    aparams['SQLITE']['OBJ_RESET'] = dparams['SQLITE3']['OBJECT']['RESET']
+    # add language database
+    aparams['SQLITE']['LANG_PATH'] = dparams['SQLITE3']['LANG']['PATH']
+    aparams['SQLITE']['LANG_NAME'] = dparams['SQLITE3']['LANG']['NAME']
+    aparams['SQLITE']['LANG_RESET'] = dparams['SQLITE3']['LANG']['RESET']
+    # ------------------------------------------------------------------
+    # MySQL Settings
+    # ------------------------------------------------------------------
+    aparams['MYSQL'] = dict()
+    # add whether we are using the sqlite3 database
+    aparams['MYSQL']['USE_MYSQL'] = dparams['USE_MYSQL']
+    # add database settings
+    aparams['MYSQL']['HOST'] = dparams['MYSQL']['HOST']
+    aparams['MYSQL']['USER'] = dparams['MYSQL']['USER']
+    aparams['MYSQL']['PASSWD'] = dparams['MYSQL']['PASSWD']
+    aparams['MYSQL']['DATABASE'] = dparams['MYSQL']['DATABASE']
+    aparams['MYSQL']['PROFILE'] = dparams['MYSQL']['PROFILE']
+    # add calib database
+    aparams['MYSQL']['CALIB_PATH'] = dparams['MYSQL']['CALIB']['PATH']
+    aparams['MYSQL']['CALIB_NAME'] = dparams['MYSQL']['CALIB']['NAME']
+    aparams['MYSQL']['CALIB_RESET'] = dparams['MYSQL']['CALIB']['RESET']
+    # add tellu database
+    aparams['MYSQL']['TELLU_PATH'] = dparams['MYSQL']['TELLU']['PATH']
+    aparams['MYSQL']['TELLU_NAME'] = dparams['MYSQL']['TELLU']['NAME']
+    aparams['MYSQL']['TELLU_RESET'] = dparams['MYSQL']['TELLU']['RESET']
+    # add index database
+    aparams['MYSQL']['IDX_PATH'] = dparams['MYSQL']['INDEX']['PATH']
+    aparams['MYSQL']['IDX_NAME'] = dparams['MYSQL']['INDEX']['NAME']
+    aparams['MYSQL']['IDX_RESET'] = dparams['MYSQL']['INDEX']['RESET']
+    # add log database
+    aparams['MYSQL']['LOG_PATH'] = dparams['MYSQL']['LOG']['PATH']
+    aparams['MYSQL']['LOG_NAME'] = dparams['MYSQL']['LOG']['NAME']
+    aparams['MYSQL']['LOG_RESET'] = dparams['MYSQL']['LOG']['RESET']
+    # add object database
+    aparams['MYSQL']['OBJ_PATH'] = dparams['MYSQL']['OBJECT']['PATH']
+    aparams['MYSQL']['OBJ_NAME'] = dparams['MYSQL']['OBJECT']['NAME']
+    aparams['MYSQL']['OBJ_RESET'] = dparams['MYSQL']['OBJECT']['RESET']
+    # add language database
+    aparams['MYSQL']['LANG_PATH'] = dparams['MYSQL']['LANG']['PATH']
+    aparams['MYSQL']['LANG_NAME'] = dparams['MYSQL']['LANG']['NAME']
+    aparams['MYSQL']['LANG_RESET'] = dparams['MYSQL']['LANG']['RESET']
+    # ------------------------------------------------------------------
+    # return the update all_params (now with the SQLITE and MYSQL dictionaries)
+    return aparams
 
 # =============================================================================
 # Define functions
