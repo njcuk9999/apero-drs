@@ -35,7 +35,7 @@ REQ_USER = 'requirements_current.txt'
 REQ_DEV = 'requirements_developer.txt'
 
 # modules that don't install like their name
-module_translation = dict(Pillow='PIL')
+module_translation = dict(Pillow='PIL', pyyaml='yaml')
 
 
 # =============================================================================
@@ -200,9 +200,10 @@ def validate():
     # ------------------------------------------------------------------
     # load requirement files
     # ------------------------------------------------------------------
+    filepath = os.path.abspath(__file__)
     # get files
-    user_req_file = Path(__file__).parent.joinpath(REQ_USER)
-    dev_req_file = Path(__file__).parent.joinpath(REQ_DEV)
+    user_req_file = Path(filepath).parent.parent.joinpath(REQ_USER)
+    dev_req_file = Path(filepath).parent.parent.joinpath(REQ_DEV)
     # get lists of modules
     user_req = load_requirements(user_req_file)
     dev_mode = [False] * len(user_req)
@@ -217,10 +218,15 @@ def validate():
     # loop around required modules to check
     # ------------------------------------------------------------------
     for m_it, module in enumerate(modules):
+        # remove end of lines
+        module = module.replace('\n', '')
         # get module name
         modname = module.split('==')[0]
         modversion = module.split('==')[1].split('.')
         suggested = 'pip install {0}'.format(module)
+        # deal with modules with different import name
+        if modname in module_translation:
+            modname = module_translation[modname]
         # deal with checked
         if modname in checked:
             continue
@@ -259,6 +265,11 @@ def check_version(module, imod, rversionlist, suggested, required=True):
         version = getattr(imod, '__version__').split('.')
         # loop around rversion list
         for v_it, rversion in enumerate(rversionlist):
+            # convert rversion to int
+            try:
+                rversion = int(rversion)
+            except:
+                break
             # if we don't have a level this deep break
             if len(version) < (v_it - 1):
                 break
