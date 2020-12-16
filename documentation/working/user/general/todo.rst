@@ -32,7 +32,7 @@ High priority:
 * calibration merge (drs processing)  [Neil]
     * filter calibrations - need metric to only keep good 2D images [Etienne/Neil]
 * polar code update  [Neil/Eder/Chris]
-* tellurics templates - minimum number of files for template creation [Neil]
+
 
 Medium priority:
 

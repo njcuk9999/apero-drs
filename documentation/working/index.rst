@@ -49,7 +49,8 @@ Other
 
 .. toctree::
    :maxdepth: 1
+   :titlesonly:
 
    misc/pythoninstallation.rst
    misc/glossary.rst
-   misc/changelog.rst
+   misc/updates.rst
