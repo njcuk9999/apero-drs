@@ -162,38 +162,20 @@ Last updated: 2020-11-30 (NJC).</p>
 <p>Immediate small:</p>
 <ul class="simple">
 <li><dl class="simple">
-<dt>filter calibrations</dt><dd><ul>
+<dt>filter calibrations [Etienne/Neil]</dt><dd><ul>
 <li><p>we are combining all for a night id bad ones and remove</p></li>
 <li><p>error if not enough - define minimum number of calibrations required</p></li>
 </ul>
 </dd>
 </dl>
 </li>
-<li><p>when do we update object database from googlesheet?</p></li>
 </ul>
 <p>High priority:</p>
 <ul class="simple">
-<li><dl class="simple">
-<dt>database import/export (append/replace) [Neil]</dt><dd><ul>
-<li><p>object database - when do we update from google sheet?</p></li>
-<li><p>option in run.ini? every apero_processing?</p></li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>calibration merge (drs processing)  [Neil]</dt><dd><ul>
-<li><p>filter calibrations - need metric to only keep good 2D images [Etienne/Neil]</p></li>
-</ul>
-</dd>
-</dl>
-</li>
 <li><p>polar code update  [Neil/Eder/Chris]</p></li>
-<li><p>tellurics templates - minimum number of files for template creation [Neil]</p></li>
 </ul>
 <p>Medium priority:</p>
 <ul class="simple">
-<li><p>drs_base.BETEXT from langdb.csv (during lang –update –reload) [Neil]</p></li>
 <li><p>filename from checksums [Neil]</p></li>
 <li><p>loc and wave coefficients to tables [Neil]</p></li>
 <li><p>add option to set template for mk_tellu and fit_tellu [Neil]</p></li>
@@ -212,6 +194,7 @@ Last updated: 2020-11-30 (NJC).</p>
 <li><p>add doc strings/typing to all functions, descriptions to all constants, review all constant min/max/dtypes [Neil]</p></li>
 <li><p>display func for all functions  [Neil]</p></li>
 <li><p>add more debug printouts [Neil]</p></li>
+<li><p>apero_langdb.py - integrate with error/warning finding (tools.module.error.find_error.py)</p></li>
 <li><p>go through all summary plots and decide which plots, write figure captions, improve plots, write quality control description, decide which header keys to print [Charles/Thomas]</p></li>
 <li><p>write documentation [Neil/Etienne/Charles/Thomas]</p>
 <ul>

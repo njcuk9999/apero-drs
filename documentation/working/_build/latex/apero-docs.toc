@@ -31,19 +31,19 @@
 \contentsline {subsubsection}{\numberline {1.1.5.3}The io module}{10}{subsubsection.1.1.5.3}%
 \contentsline {subsubsection}{\numberline {1.1.5.4}The language module}{10}{subsubsection.1.1.5.4}%
 \contentsline {subsubsection}{\numberline {1.1.5.5}The plotting module}{10}{subsubsection.1.1.5.5}%
-\contentsline {subsubsection}{\numberline {1.1.5.6}The Recipe module}{11}{subsubsection.1.1.5.6}%
+\contentsline {subsubsection}{\numberline {1.1.5.6}The Recipe module}{10}{subsubsection.1.1.5.6}%
 \contentsline {subsubsection}{\numberline {1.1.5.7}The science module}{11}{subsubsection.1.1.5.7}%
 \contentsline {paragraph}{Preprocessing functionality}{11}{paragraph*.8}%
 \contentsline {subparagraph}{Raw file header fixing}{11}{subparagraph*.9}%
 \contentsline {subparagraph}{Raw file identification}{11}{subparagraph*.10}%
 \contentsline {subparagraph}{Gaia ID and object finding}{11}{subparagraph*.11}%
-\contentsline {subsubsection}{\numberline {1.1.5.8}The tools module}{11}{subsubsection.1.1.5.8}%
+\contentsline {subsubsection}{\numberline {1.1.5.8}The tools module}{12}{subsubsection.1.1.5.8}%
 \contentsline {subsection}{\numberline {1.1.6}General Tools}{12}{subsection.1.1.6}%
 \contentsline {section}{\numberline {1.2}SPIRou documentation}{12}{section.1.2}%
 \contentsline {subsection}{\numberline {1.2.1}Using APERO with SPIRou}{12}{subsection.1.2.1}%
 \contentsline {subsection}{\numberline {1.2.2}SPIRou Recipes}{12}{subsection.1.2.2}%
 \contentsline {subsubsection}{\numberline {1.2.2.1}Preprocessing Recipe}{12}{subsubsection.1.2.2.1}%
-\contentsline {paragraph}{Schematic}{12}{paragraph*.12}%
+\contentsline {paragraph}{Schematic}{13}{paragraph*.12}%
 \contentsline {paragraph}{Run}{13}{paragraph*.13}%
 \contentsline {paragraph}{Optional Arguments}{13}{paragraph*.14}%
 \contentsline {paragraph}{Output Dir:}{13}{paragraph*.15}%
@@ -52,7 +52,7 @@
 \contentsline {subsubsection}{\numberline {1.2.2.2}Dark Master Recipe}{13}{subsubsection.1.2.2.2}%
 \contentsline {paragraph}{Schematic}{13}{paragraph*.18}%
 \contentsline {paragraph}{Run}{13}{paragraph*.19}%
-\contentsline {paragraph}{Optional Arguments}{13}{paragraph*.20}%
+\contentsline {paragraph}{Optional Arguments}{14}{paragraph*.20}%
 \contentsline {paragraph}{Output Dir}{14}{paragraph*.21}%
 \contentsline {paragraph}{Calibration database entry}{14}{paragraph*.22}%
 \contentsline {paragraph}{Output files}{14}{paragraph*.23}%
@@ -61,7 +61,7 @@
 \contentsline {subsubsection}{\numberline {1.2.2.3}Bad Pixel Correction Recipe}{14}{subsubsection.1.2.2.3}%
 \contentsline {paragraph}{Schematic}{14}{paragraph*.26}%
 \contentsline {paragraph}{Run}{14}{paragraph*.27}%
-\contentsline {paragraph}{Optional Arguments}{14}{paragraph*.28}%
+\contentsline {paragraph}{Optional Arguments}{15}{paragraph*.28}%
 \contentsline {paragraph}{Output Dir}{15}{paragraph*.29}%
 \contentsline {paragraph}{Calibration database entry}{15}{paragraph*.30}%
 \contentsline {paragraph}{Output files}{15}{paragraph*.31}%
@@ -69,21 +69,21 @@
 \contentsline {subsubsection}{\numberline {1.2.2.4}Localisation Recipe}{15}{subsubsection.1.2.2.4}%
 \contentsline {paragraph}{Run}{15}{paragraph*.33}%
 \contentsline {paragraph}{Optional Arguments}{15}{paragraph*.34}%
-\contentsline {paragraph}{Output Dir}{15}{paragraph*.35}%
+\contentsline {paragraph}{Output Dir}{16}{paragraph*.35}%
 \contentsline {paragraph}{Calibration database entry}{16}{paragraph*.36}%
 \contentsline {paragraph}{Output files}{16}{paragraph*.37}%
 \contentsline {paragraph}{Plots}{16}{paragraph*.38}%
 \contentsline {subsubsection}{\numberline {1.2.2.5}Shape Master Recipe}{16}{subsubsection.1.2.2.5}%
 \contentsline {paragraph}{Run}{16}{paragraph*.39}%
 \contentsline {paragraph}{Optional Arguments}{16}{paragraph*.40}%
-\contentsline {paragraph}{Output Dir}{16}{paragraph*.41}%
+\contentsline {paragraph}{Output Dir}{17}{paragraph*.41}%
 \contentsline {paragraph}{Calibration database entry}{17}{paragraph*.42}%
 \contentsline {paragraph}{Output files}{17}{paragraph*.43}%
 \contentsline {paragraph}{Plots}{17}{paragraph*.44}%
 \contentsline {subsubsection}{\numberline {1.2.2.6}Shape (per night) Recipe}{17}{subsubsection.1.2.2.6}%
 \contentsline {paragraph}{Run}{17}{paragraph*.45}%
 \contentsline {paragraph}{Optional Arguments}{17}{paragraph*.46}%
-\contentsline {paragraph}{Output Dir}{17}{paragraph*.47}%
+\contentsline {paragraph}{Output Dir}{18}{paragraph*.47}%
 \contentsline {paragraph}{Calibration database entry}{18}{paragraph*.48}%
 \contentsline {paragraph}{Output files}{18}{paragraph*.49}%
 \contentsline {paragraph}{Plots}{18}{paragraph*.50}%
@@ -91,14 +91,14 @@
 \contentsline {paragraph}{Run}{18}{paragraph*.51}%
 \contentsline {paragraph}{Optional Arguments}{18}{paragraph*.52}%
 \contentsline {paragraph}{Output Dir}{18}{paragraph*.53}%
-\contentsline {paragraph}{Calibration database entry}{18}{paragraph*.54}%
+\contentsline {paragraph}{Calibration database entry}{19}{paragraph*.54}%
 \contentsline {paragraph}{Output files}{19}{paragraph*.55}%
 \contentsline {paragraph}{Plots}{19}{paragraph*.56}%
 \contentsline {subsubsection}{\numberline {1.2.2.8}Thermal Correction Recipe}{19}{subsubsection.1.2.2.8}%
 \contentsline {paragraph}{Run}{19}{paragraph*.57}%
 \contentsline {paragraph}{Optional Arguments}{19}{paragraph*.58}%
 \contentsline {paragraph}{Output Dir}{19}{paragraph*.59}%
-\contentsline {paragraph}{Calibration database entry}{19}{paragraph*.60}%
+\contentsline {paragraph}{Calibration database entry}{20}{paragraph*.60}%
 \contentsline {paragraph}{Output files}{20}{paragraph*.61}%
 \contentsline {paragraph}{Plots}{20}{paragraph*.62}%
 \contentsline {subsubsection}{\numberline {1.2.2.9}Master leak correction recipe}{20}{subsubsection.1.2.2.9}%
@@ -106,7 +106,7 @@
 \contentsline {paragraph}{Optional Arguments}{20}{paragraph*.64}%
 \contentsline {paragraph}{Output Dir}{20}{paragraph*.65}%
 \contentsline {paragraph}{Calibration database entry}{20}{paragraph*.66}%
-\contentsline {paragraph}{Output files}{20}{paragraph*.67}%
+\contentsline {paragraph}{Output files}{21}{paragraph*.67}%
 \contentsline {paragraph}{Plots}{21}{paragraph*.68}%
 \contentsline {subsubsection}{\numberline {1.2.2.10}Master wavelength solution Recipe}{21}{subsubsection.1.2.2.10}%
 \contentsline {paragraph}{Schematic}{21}{paragraph*.69}%
@@ -114,12 +114,12 @@
 \contentsline {paragraph}{Optional Arguments}{21}{paragraph*.71}%
 \contentsline {paragraph}{Output Dir}{21}{paragraph*.72}%
 \contentsline {paragraph}{Calibration database entry}{21}{paragraph*.73}%
-\contentsline {paragraph}{Output files}{21}{paragraph*.74}%
+\contentsline {paragraph}{Output files}{22}{paragraph*.74}%
 \contentsline {paragraph}{Plots}{22}{paragraph*.75}%
 \contentsline {subsubsection}{\numberline {1.2.2.11}Nightly wavelength solution Recipe}{22}{subsubsection.1.2.2.11}%
 \contentsline {paragraph}{Run}{22}{paragraph*.76}%
 \contentsline {paragraph}{Optional Arguments}{22}{paragraph*.77}%
-\contentsline {paragraph}{Output Dir}{22}{paragraph*.78}%
+\contentsline {paragraph}{Output Dir}{23}{paragraph*.78}%
 \contentsline {paragraph}{Calibration database entry}{23}{paragraph*.79}%
 \contentsline {paragraph}{Output files}{23}{paragraph*.80}%
 \contentsline {paragraph}{Plots}{23}{paragraph*.81}%
@@ -198,12 +198,12 @@
 \contentsline {subsubsection}{\numberline {2.6.1.2}0.7.052 (2020\sphinxhyphen {}12\sphinxhyphen {}14)}{37}{subsubsection.2.6.1.2}%
 \contentsline {subsubsection}{\numberline {2.6.1.3}0.7.051 (2020\sphinxhyphen {}12\sphinxhyphen {}12)}{37}{subsubsection.2.6.1.3}%
 \contentsline {subsubsection}{\numberline {2.6.1.4}0.7.050 (2020\sphinxhyphen {}12\sphinxhyphen {}10)}{37}{subsubsection.2.6.1.4}%
-\contentsline {subsubsection}{\numberline {2.6.1.5}0.7.048 (2020\sphinxhyphen {}12\sphinxhyphen {}10)}{37}{subsubsection.2.6.1.5}%
+\contentsline {subsubsection}{\numberline {2.6.1.5}0.7.048 (2020\sphinxhyphen {}12\sphinxhyphen {}10)}{38}{subsubsection.2.6.1.5}%
 \contentsline {subsubsection}{\numberline {2.6.1.6}0.7.047 (2020\sphinxhyphen {}12\sphinxhyphen {}07)}{38}{subsubsection.2.6.1.6}%
 \contentsline {subsubsection}{\numberline {2.6.1.7}0.7.046 (2020\sphinxhyphen {}12\sphinxhyphen {}04)}{38}{subsubsection.2.6.1.7}%
 \contentsline {subsubsection}{\numberline {2.6.1.8}0.7.045 (2020\sphinxhyphen {}12\sphinxhyphen {}02)}{38}{subsubsection.2.6.1.8}%
 \contentsline {subsubsection}{\numberline {2.6.1.9}0.7.044 (2020\sphinxhyphen {}12\sphinxhyphen {}01)}{38}{subsubsection.2.6.1.9}%
-\contentsline {subsubsection}{\numberline {2.6.1.10}0.7.043 (2020\sphinxhyphen {}11\sphinxhyphen {}30)}{38}{subsubsection.2.6.1.10}%
+\contentsline {subsubsection}{\numberline {2.6.1.10}0.7.043 (2020\sphinxhyphen {}11\sphinxhyphen {}30)}{39}{subsubsection.2.6.1.10}%
 \contentsline {subsubsection}{\numberline {2.6.1.11}0.7.042 (2020\sphinxhyphen {}11\sphinxhyphen {}27)}{39}{subsubsection.2.6.1.11}%
 \contentsline {subsubsection}{\numberline {2.6.1.12}0.7.041 (2020\sphinxhyphen {}11\sphinxhyphen {}26)}{39}{subsubsection.2.6.1.12}%
 \contentsline {subsubsection}{\numberline {2.6.1.13}0.7.040 (2020\sphinxhyphen {}11\sphinxhyphen {}25)}{39}{subsubsection.2.6.1.13}%
@@ -814,8 +814,8 @@
 \contentsline {subsubsection}{\numberline {2.6.1.618}0.2.0097 (2018\sphinxhyphen {}04\sphinxhyphen {}25)}{232}{subsubsection.2.6.1.618}%
 \contentsline {subsubsection}{\numberline {2.6.1.619}0.2.006 (2018\sphinxhyphen {}04\sphinxhyphen {}23)}{233}{subsubsection.2.6.1.619}%
 \contentsline {subsubsection}{\numberline {2.6.1.620}0.2.005 (2018\sphinxhyphen {}04\sphinxhyphen {}20)}{233}{subsubsection.2.6.1.620}%
-\contentsline {paragraph}{Fix}{233}{paragraph*.135}%
-\contentsline {paragraph}{Other}{234}{paragraph*.136}%
+\contentsline {paragraph}{Fix}{233}{paragraph*.139}%
+\contentsline {paragraph}{Other}{234}{paragraph*.140}%
 \contentsline {subsubsection}{\numberline {2.6.1.621}0.2.004 (2018\sphinxhyphen {}04\sphinxhyphen {}19)}{234}{subsubsection.2.6.1.621}%
 \contentsline {subsubsection}{\numberline {2.6.1.622}0.2.003 (2018\sphinxhyphen {}04\sphinxhyphen {}18)}{234}{subsubsection.2.6.1.622}%
 \contentsline {subsubsection}{\numberline {2.6.1.623}0.2.001 (2018\sphinxhyphen {}04\sphinxhyphen {}17)}{234}{subsubsection.2.6.1.623}%

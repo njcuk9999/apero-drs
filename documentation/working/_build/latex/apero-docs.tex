@@ -694,7 +694,7 @@ For all instruments / in general.
 Immediate small:
 \begin{itemize}
 \item {} \begin{description}
-\item[{filter calibrations}] \leavevmode\begin{itemize}
+\item[{filter calibrations {[}Etienne/Neil{]}}] \leavevmode\begin{itemize}
 \item {} 
 we are combining all for a night id bad ones and remove
 
@@ -705,47 +705,17 @@ error if not enough \sphinxhyphen{} define minimum number of calibrations requir
 
 \end{description}
 
-\item {} 
-when do we update object database from googlesheet?
-
 \end{itemize}
 
 High priority:
 \begin{itemize}
-\item {} \begin{description}
-\item[{database import/export (append/replace) {[}Neil{]}}] \leavevmode\begin{itemize}
-\item {} 
-object database \sphinxhyphen{} when do we update from google sheet?
-
-\item {} 
-option in run.ini? every apero\_processing?
-
-\end{itemize}
-
-\end{description}
-
-\item {} \begin{description}
-\item[{calibration merge (drs processing)  {[}Neil{]}}] \leavevmode\begin{itemize}
-\item {} 
-filter calibrations \sphinxhyphen{} need metric to only keep good 2D images {[}Etienne/Neil{]}
-
-\end{itemize}
-
-\end{description}
-
 \item {} 
 polar code update  {[}Neil/Eder/Chris{]}
-
-\item {} 
-tellurics templates \sphinxhyphen{} minimum number of files for template creation {[}Neil{]}
 
 \end{itemize}
 
 Medium priority:
 \begin{itemize}
-\item {} 
-drs\_base.BETEXT from langdb.csv (during lang \textendash{}update \textendash{}reload) {[}Neil{]}
-
 \item {} 
 filename from checksums {[}Neil{]}
 
@@ -794,6 +764,9 @@ display func for all functions  {[}Neil{]}
 
 \item {} 
 add more debug printouts {[}Neil{]}
+
+\item {} 
+apero\_langdb.py \sphinxhyphen{} integrate with error/warning finding (tools.module.error.find\_error.py)
 
 \item {} 
 go through all summary plots and decide which plots, write figure captions, improve plots, write quality control description, decide which header keys to print {[}Charles/Thomas{]}
@@ -1088,6 +1061,49 @@ drs file type ({\hyperref[\detokenize{misc/glossary:term-drsinputfile}]{\sphinxt
 \label{\detokenize{user/science/preprocessing:gaia-id-and-object-finding}}\label{\detokenize{user/science/preprocessing:science-preprocessing-object-finding}}
 We assume the header either has a Gaia ID column (defined by the {\hyperref[\detokenize{misc/glossary:term-kw-gaia-id}]{\sphinxtermref{\DUrole{xref,std,std-term}{KW\_GAIA\_ID}}}} keyword)
 or a valid object name (defined by the {\hyperref[\detokenize{misc/glossary:term-kw-objectname}]{\sphinxtermref{\DUrole{xref,std,std-term}{KW\_OBJECTNAME}}}} keyword).
+
+We then attempt to resolve parameters in the following order
+\begin{enumerate}
+\sphinxsetlistlabels{\arabic}{enumi}{enumii}{}{.}%
+\item {} \begin{description}
+\item[{If {\hyperref[\detokenize{misc/glossary:term-obj-list-resolve-from-database}]{\sphinxtermref{\DUrole{xref,std,std-term}{OBJ\_LIST\_RESOLVE\_FROM\_DATABASE}}}} From a local database}] \leavevmode\begin{enumerate}
+\sphinxsetlistlabels{\alph}{enumii}{enumiii}{}{.}%
+\item {} 
+based on Gaia ID
+
+\item {} 
+if Gaia ID is not found based on object name (from a list of aliases)
+
+\end{enumerate}
+
+\end{description}
+
+\item {} 
+If {\hyperref[\detokenize{misc/glossary:term-obj-list-resolve-from-coords}]{\sphinxtermref{\DUrole{xref,std,std-term}{OBJ\_LIST\_RESOLVE\_FROM\_COORDS}}}} and if object was not found in local database but we have a Gaia ID then we
+get the Gaia parameters from the online Gaia catalog \sphinxhyphen{} if an object if found
+the local database is updated.
+
+\item {} 
+If {\hyperref[\detokenize{misc/glossary:term-obj-list-resolve-from-glist}]{\sphinxtermref{\DUrole{xref,std,std-term}{OBJ\_LIST\_RESOLVE\_FROM\_GLIST}}}} and if we did not have a Gaia id
+we then use a google sheet of known objects to match object names and Gaia
+ids (we can also add extra aliases here). If a Gaia ID/object name
+combination is found we then cross\sphinxhyphen{}match against the online Gaia catalog to
+get the Gaia parameters and again update the local database.
+
+\item {} 
+If {\hyperref[\detokenize{misc/glossary:term-obj-list-resolve-from-coords}]{\sphinxtermref{\DUrole{xref,std,std-term}{OBJ\_LIST\_RESOLVE\_FROM\_COORDS}}}} is True we then use the coordinates
+from the file header to cross\sphinxhyphen{}match with Gaia directly and again the local
+database is updated.
+
+\item {} 
+If the Gaia id is still unknown we default to the astrophysical parameters
+in the header.
+
+\end{enumerate}
+
+Note that the local object database should be updated before doing a full
+reprocessing and updating at any other time (other than adding new objects as above)
+may lead to inconsistent data sets.
 \begin{quote}
 
 {\hyperref[\detokenize{user/spirou:spirou-main}]{\sphinxcrossref{\DUrole{std,std-ref}{Back to top}}}}
@@ -2748,6 +2764,33 @@ This is the instrument used at a specific telescope. Some settings are instrumen
 \item {} 
 Currently supported instruments are::
 SPIROU
+
+\end{itemize}
+
+\item[{OBJ\_LIST\_RESOLVE\_FROM\_DATABASE\index{OBJ\_LIST\_RESOLVE\_FROM\_DATABASE@\spxentry{OBJ\_LIST\_RESOLVE\_FROM\_DATABASE}|spxpagem}\phantomsection\label{\detokenize{misc/glossary:term-obj-list-resolve-from-database}}}] \leavevmode\begin{itemize}
+\item {} 
+Switch (True/False) whether to resolve targets from local database
+
+\end{itemize}
+
+\item[{OBJ\_LIST\_RESOLVE\_FROM\_GAIAID\index{OBJ\_LIST\_RESOLVE\_FROM\_GAIAID@\spxentry{OBJ\_LIST\_RESOLVE\_FROM\_GAIAID}|spxpagem}\phantomsection\label{\detokenize{misc/glossary:term-obj-list-resolve-from-gaiaid}}}] \leavevmode\begin{itemize}
+\item {} 
+Switch (True/False) whether to resolve targets from Gaia ID if False
+astrophysical parameters always come from the header
+
+\end{itemize}
+
+\item[{OBJ\_LIST\_RESOLVE\_FROM\_GLIST\index{OBJ\_LIST\_RESOLVE\_FROM\_GLIST@\spxentry{OBJ\_LIST\_RESOLVE\_FROM\_GLIST}|spxpagem}\phantomsection\label{\detokenize{misc/glossary:term-obj-list-resolve-from-glist}}}] \leavevmode\begin{itemize}
+\item {} 
+Switch (True/False) whether to get Gaia ID / Teff/ RV from googlesheets
+if not found in the local database
+
+\end{itemize}
+
+\item[{OBJ\_LIST\_RESOLVE\_FROM\_COORDS\index{OBJ\_LIST\_RESOLVE\_FROM\_COORDS@\spxentry{OBJ\_LIST\_RESOLVE\_FROM\_COORDS}|spxpagem}\phantomsection\label{\detokenize{misc/glossary:term-obj-list-resolve-from-coords}}}] \leavevmode\begin{itemize}
+\item {} 
+Switch (True/False) whether to get Gaia ID from RA / Dec coordinates
+(This is not generally recommended as there can be mismatches)
 
 \end{itemize}
 

@@ -31,6 +31,22 @@ These are usually defined in the instruments :file:`default_config.py` and
     * Currently supported instruments are::
       SPIROU
 
+  OBJ_LIST_RESOLVE_FROM_DATABASE
+    * Switch (True/False) whether to resolve targets from local database
+
+  OBJ_LIST_RESOLVE_FROM_GAIAID
+    * Switch (True/False) whether to resolve targets from Gaia ID if False
+      astrophysical parameters always come from the header
+
+  OBJ_LIST_RESOLVE_FROM_GLIST
+    * Switch (True/False) whether to get Gaia ID / Teff/ RV from googlesheets
+      if not found in the local database
+
+  OBJ_LIST_RESOLVE_FROM_COORDS
+    * Switch (True/False) whether to get Gaia ID from RA / Dec coordinates
+      (This is not generally recommended as there can be mismatches)
+
+
   PROFILE
 
     * This is a short descriptive name given to a specific set of installation configurations

@@ -53,10 +53,10 @@ or a valid object name (defined by the :term:`KW_OBJECTNAME` keyword).
 
 We then attempt to resolve parameters in the following order
 
-1. From a local database
+1. If :term:`OBJ_LIST_RESOLVE_FROM_DATABASE` From a local database
     a. based on Gaia ID
     b. if Gaia ID is not found based on object name (from a list of aliases)
-2. If object was not found in local database but we have a Gaia ID then we
+2. If :term:`OBJ_LIST_RESOLVE_FROM_COORDS` and if object was not found in local database but we have a Gaia ID then we
    get the Gaia parameters from the online Gaia catalog - if an object if found
    the local database is updated.
 3. If :term:`OBJ_LIST_RESOLVE_FROM_GLIST` and if we did not have a Gaia id
@@ -67,7 +67,7 @@ We then attempt to resolve parameters in the following order
 4. If :term:`OBJ_LIST_RESOLVE_FROM_COORDS` is True we then use the coordinates
    from the file header to cross-match with Gaia directly and again the local
    database is updated.
-4. If the Gaia id is still unknown we default to the astrophysical parameters
+5. If the Gaia id is still unknown we default to the astrophysical parameters
    in the header.
 
 Note that the local object database should be updated before doing a full
