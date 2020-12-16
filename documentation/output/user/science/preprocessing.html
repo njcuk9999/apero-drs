@@ -178,6 +178,33 @@ drs file type (<a class="reference internal" href="../../misc/glossary.html#term
 <span id="science-preprocessing-object-finding"></span><h2>Gaia ID and object finding<a class="headerlink" href="#gaia-id-and-object-finding" title="Permalink to this headline">¶</a></h2>
 <p>We assume the header either has a Gaia ID column (defined by the <a class="reference internal" href="../../misc/glossary.html#term-kw-gaia-id"><span class="xref std std-term">KW_GAIA_ID</span></a> keyword)
 or a valid object name (defined by the <a class="reference internal" href="../../misc/glossary.html#term-kw-objectname"><span class="xref std std-term">KW_OBJECTNAME</span></a> keyword).</p>
+<p>We then attempt to resolve parameters in the following order</p>
+<ol class="arabic simple">
+<li><dl class="simple">
+<dt>If <a class="reference internal" href="../../misc/glossary.html#term-obj-list-resolve-from-database"><span class="xref std std-term">OBJ_LIST_RESOLVE_FROM_DATABASE</span></a> From a local database</dt><dd><ol class="loweralpha simple">
+<li><p>based on Gaia ID</p></li>
+<li><p>if Gaia ID is not found based on object name (from a list of aliases)</p></li>
+</ol>
+</dd>
+</dl>
+</li>
+<li><p>If <a class="reference internal" href="../../misc/glossary.html#term-obj-list-resolve-from-coords"><span class="xref std std-term">OBJ_LIST_RESOLVE_FROM_COORDS</span></a> and if object was not found in local database but we have a Gaia ID then we
+get the Gaia parameters from the online Gaia catalog - if an object if found
+the local database is updated.</p></li>
+<li><p>If <a class="reference internal" href="../../misc/glossary.html#term-obj-list-resolve-from-glist"><span class="xref std std-term">OBJ_LIST_RESOLVE_FROM_GLIST</span></a> and if we did not have a Gaia id
+we then use a google sheet of known objects to match object names and Gaia
+ids (we can also add extra aliases here). If a Gaia ID/object name
+combination is found we then cross-match against the online Gaia catalog to
+get the Gaia parameters and again update the local database.</p></li>
+<li><p>If <a class="reference internal" href="../../misc/glossary.html#term-obj-list-resolve-from-coords"><span class="xref std std-term">OBJ_LIST_RESOLVE_FROM_COORDS</span></a> is True we then use the coordinates
+from the file header to cross-match with Gaia directly and again the local
+database is updated.</p></li>
+<li><p>If the Gaia id is still unknown we default to the astrophysical parameters
+in the header.</p></li>
+</ol>
+<p>Note that the local object database should be updated before doing a full
+reprocessing and updating at any other time (other than adding new objects as above)
+may lead to inconsistent data sets.</p>
 <blockquote>
 <div><p><a class="reference internal" href="../spirou.html#spirou-main"><span class="std std-ref">Back to top</span></a></p>
 </div></blockquote>
