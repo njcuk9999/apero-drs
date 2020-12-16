@@ -47,6 +47,7 @@ Low priority:
 * add doc strings/typing to all functions, descriptions to all constants, review all constant min/max/dtypes [Neil]
 * display func for all functions  [Neil]
 * add more debug printouts [Neil]
+* apero_langdb.py - integrate with error/warning finding (tools.module.error.find_error.py)
 * go through all summary plots and decide which plots, write figure captions, improve plots, write quality control description, decide which header keys to print [Charles/Thomas]
 * write documentation [Neil/Etienne/Charles/Thomas]
 
