@@ -49,10 +49,10 @@ try:
     if langdbm.database.tname in langdbm.database.tables:
         langdict = langdbm.get_dict(language=LANG)
     else:
-        langdict = drs_db.LanguageDatabase.proxy()
+        langdict = drs_base.lang_db_proxy()
 # if we can't then we have no language database
 except Exception as _:
-    langdict = drs_db.LanguageDatabase.proxy()
+    langdict = drs_base.lang_db_proxy()
 # define the database path relative to package
 DATABASE_PATH = base.LANG_DEFAULT_PATH
 # define the backup path relative to package
