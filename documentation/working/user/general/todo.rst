@@ -18,25 +18,17 @@ For all instruments / in general.
 
 Immediate small:
 
-* filter calibrations
+* filter calibrations [Etienne/Neil]
     * we are combining all for a night id bad ones and remove
     * error if not enough - define minimum number of calibrations required
 
-* when do we update object database from googlesheet?
-
 High priority:
 
-* database import/export (append/replace) [Neil]
-    * object database - when do we update from google sheet?
-    * option in run.ini? every apero_processing?
-* calibration merge (drs processing)  [Neil]
-    * filter calibrations - need metric to only keep good 2D images [Etienne/Neil]
 * polar code update  [Neil/Eder/Chris]
 
 
 Medium priority:
 
-* drs_base.BETEXT from langdb.csv (during lang --update --reload) [Neil]
 * filename from checksums [Neil]
 * loc and wave coefficients to tables [Neil]
 * add option to set template for mk_tellu and fit_tellu [Neil]
