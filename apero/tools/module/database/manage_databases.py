@@ -17,7 +17,9 @@ from apero.base import drs_db
 from apero.core import constants
 from apero.core.instruments.default import pseudo_const
 from apero.core.core import drs_database
+from apero.core.core import drs_log
 from apero.core.utils import drs_data
+from apero import lang
 from apero.science.preprocessing import gen_pp
 
 # =============================================================================
@@ -37,6 +39,10 @@ BaseDatabaseM = drs_db.BaseDatabaseManager
 # Get ParamDict
 ParamDict = constants.ParamDict
 PseudoConst = pseudo_const.PseudoConstants
+# Get Logging function
+WLOG = drs_log.wlog
+# get textentry
+textentry = lang.textentry
 
 
 # =============================================================================
@@ -365,6 +371,123 @@ def create_lang_database(databases: Dict[str, Union[DatabaseM, BaseDatabaseM]]
     langdbm.database.commit()
     # -------------------------------------------------------------------------
     return langdb
+
+
+def export_database(params: ParamDict, database_name: str,
+                    outfilename: str):
+    """
+    Exports a given database "database_name" to "outfilename" (csv file)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param database_name: str, the database name (calib, tellu, index, log,
+                          object, lang)
+    :param outfilename: str, the output filepath for the csv file
+
+    :return: None, writes outfilename
+    """
+    # ----------------------------------------------------------------------
+    # get database list
+    databases = list_databases(params)
+    # ----------------------------------------------------------------------
+    # make sure database_name is lower case
+    database_name = database_name.lower()
+    # -------------------------------------------------------------------
+    # deal with calibration database
+    if database_name in base.DATABASE_NAMES:
+        db = databases[database_name]
+    # else log error
+    else:
+        # log error: Argument Error: EXPORTDB must be
+        eargs = [' or '.join(base.DATABASE_NAMES)]
+        WLOG(params, 'error', textentry('09-506-00001', args=eargs))
+        db = None
+    # -------------------------------------------------------------------
+    # load database
+    db.load_db()
+    # -------------------------------------------------------------------
+    # deal with no database
+    if db.database is None:
+        # log error: Database Error: Cannot load "{0}" database
+        eargs = [database_name]
+        WLOG(params, 'error', textentry('09-506-00002', args=eargs))
+    # -------------------------------------------------------------------
+    # get all rows as a pandas data frame
+    df = db.database.get('*', table=db.database.tname, return_pandas=True)
+    # -------------------------------------------------------------------
+    # print that we are saving csv file
+    WLOG(params, '', textentry('40-507-00001', args=[outfilename]))
+    # save to csv file
+    df.to_csv(outfilename)
+
+
+def import_database(params: ParamDict, database_name: str,
+                    infilename: str, joinmode: str = 'replace'):
+    """
+    Imports a given csv file "infilename" to database "database_name"
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param database_name: str, the database name (calib, tellu, index, log,
+                          object, lang)
+    :param infilename: str, the input filepath for the csv file
+    :param joinmode: str, the way to join current database and input fiile
+                     - if 'replace' then current database is deleted first,
+                     - if 'append' adds the infile to bottom of current database
+
+    :return: None, writes to database
+    """
+    # ----------------------------------------------------------------------
+    # get database list
+    databases = list_databases(params)
+    # ----------------------------------------------------------------------
+    # make sure database_name is lower case
+    database_name = database_name.lower()
+    # -------------------------------------------------------------------
+    # deal with joinmode
+    if joinmode not in ['append', 'replace']:
+        # log error: Join mode = "{0}" is invalid. Must be either "append"
+        #            or "replace"
+        WLOG(params, 'error', textentry('09-506-00004', args=[joinmode]))
+    # -------------------------------------------------------------------
+    # deal with calibration database
+    if database_name in base.DATABASE_NAMES:
+        db = databases[database_name]
+    # else log error
+    else:
+        # log error Argument Error: EXPORTDB must be {0}
+        eargs = [' or '.join(base.DATABASE_NAMES)]
+        WLOG(params, 'error', textentry('09-506-00003', args=eargs))
+        db = None
+    # -------------------------------------------------------------------
+    # load database
+    # -------------------------------------------------------------------
+    db.load_db()
+    # deal with no database
+    if db.database is None:
+        # get a list of all other database
+        other_databases = list(base.DATABASE_NAMES).remove(database_name)
+        # install database
+        install_databases(params, skip=other_databases)
+        # load database
+        db.load_db()
+    # -------------------------------------------------------------------
+    # load csv file
+    # -------------------------------------------------------------------
+    # print that we are saving csv file
+    WLOG(params, '', textentry('40-507-00002', args=[infilename]))
+    # load csv file into pandas table
+    df = pd.read_csv(infilename)
+    # -------------------------------------------------------------------
+    # Push into database
+    # -------------------------------------------------------------------
+    # print log
+    if joinmode == 'replace':
+        wmsg = textentry('40-507-00003')
+    else:
+        wmsg = textentry('40-507-00004')
+    # log
+    WLOG(params, '', wmsg)
+    # add pandas table to database
+    db.database.add_from_pandas(df, db.database.tname, if_exists=joinmode)
 
 
 # =============================================================================

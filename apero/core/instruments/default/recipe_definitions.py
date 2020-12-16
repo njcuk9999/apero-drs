@@ -35,6 +35,7 @@ drs_recipe = drs_recipe.DrsRecipe
 # Below one must define all recipes and put into the "recipes" list
 changelog = drs_recipe(__INSTRUMENT__)
 explorer = drs_recipe(__INSTRUMENT__)
+database_mgr = drs_recipe(__INSTRUMENT__)
 go_recipe = drs_recipe(__INSTRUMENT__)
 listing = drs_recipe(__INSTRUMENT__)
 logstats = drs_recipe(__INSTRUMENT__)
@@ -46,8 +47,9 @@ reset = drs_recipe(__INSTRUMENT__)
 validate = drs_recipe(__INSTRUMENT__)
 
 # push into a list
-recipes = [changelog, explorer, go_recipe, processing, listing, logstats,
-           remake_db, remake_doc, req_check, reset, validate]
+recipes = [changelog, database_mgr, explorer, go_recipe,
+           processing, listing, logstats, remake_db, remake_doc,
+           req_check, reset, validate]
 
 # =============================================================================
 # Recipe definitions
@@ -93,6 +95,30 @@ changelog.description = textentry('CHANGELOG_DESCRIPTION')
 changelog.kind = 'tool'
 changelog.set_arg(pos=0, name='preview', dtype='bool',
                   helpstr=textentry('PREVIEW_HELP'))
+
+# -----------------------------------------------------------------------------
+# apero_database.py
+# -----------------------------------------------------------------------------
+database_mgr.name = 'apero_database.py'
+database_mgr.instrument = __INSTRUMENT__
+database_mgr.description = 'APERO database manager'
+database_mgr.kind = 'tool'
+database_mgr.set_kwarg(name='--csv', dtype=str, default='None',
+                       helpstr='Path to csv file. For --importdb this is the'
+                               'csv file you wish to add. For --exportdb this'
+                               'is the csv file that will be saved.')
+database_mgr.set_kwarg(name='--exportdb', dtype=str, default='None',
+                       options=base.DATABASE_NAMES,
+                       helpstr='Export a database to a csv file')
+database_mgr.set_kwarg(name='--importdb', dtype=str, default='None',
+                       options=base.DATABASE_NAMES,
+                       helpstr='Import a csv file into a database')
+database_mgr.set_kwarg(name='--join', dtype=str, default='replace',
+                       options=['replace', 'append'],
+                       helpstr='How to add the csv file to database:'
+                               ' append adds all lines to the end of current database, '
+                               ' replace removes all previous lines from database.'
+                               ' Default is "replace"')
 
 # -----------------------------------------------------------------------------
 # apero_documentation.py
