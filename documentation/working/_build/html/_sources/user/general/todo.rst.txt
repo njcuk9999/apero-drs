@@ -26,7 +26,6 @@ Immediate small:
 
 High priority:
 
-* install database via install.py [Neil]
 * database import/export (append/replace) [Neil]
     * object database - when do we update from google sheet?
     * option in run.ini? every apero_processing?

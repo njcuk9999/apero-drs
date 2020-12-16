@@ -13,6 +13,7 @@ Date: 2020-09-10
         - log database (instead of index.fits files in each dir)
         - object database (instead of object_query_list.fits)
         - language database (instead of the language csv files)
+    - add database options to instllation process
 
 - processing
     - moving to use multiprocess.Pool instead of multiprocess.Process (should

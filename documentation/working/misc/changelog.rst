@@ -2,6 +2,290 @@ Changelog
 =========
 
 
+0.7.053 (2020-12-15)
+--------------------
+- `Apero-drs.setup.install.py` - update requirements path and weird import
+  modules (not equal to module name) [Neil Cook]
+- Correct requirements. [Neil Cook]
+- Update todo list. [Neil Cook]
+- `Apero.tools.recipe.bin.apero_reset.py` - must work out files to exclude
+  before warn statement. [Neil Cook]
+- `Apero.tools.module.setup.drs_instllation.py` - add database
+  installation steps. [Neil Cook]
+- `Apero.lang.core.drs_lang.py` - need to check whether language database
+  has a table yet (and don't try getting it if it doesn't exist yet)
+  [Neil Cook]
+- `Apero.base.base.py` - try getting all parameters from allparams (if we
+  are updating an installation these all will be filled, if installing
+  for first time some will be filled) [Neil Cook]
+
+
+0.7.052 (2020-12-14)
+--------------------
+- Update documentation. [Neil Cook]
+- Only resolve objects for `OBJ_FP` and `OBJ_DARK` + do not add multiple
+  rows for `KW_OBJNAME`. [Neil Cook]
+
+
+0.7.051 (2020-12-12)
+--------------------
+- Continue updating documentation. [Neil Cook]
+- `Core.instrument.spirou.default_constants.py` - change central column to
+  2044 (was 2500 - why?) [Neil Cook]
+- Update documentation. [Neil Cook]
+
+
+0.7.050 (2020-12-10)
+--------------------
+- Update todo list. [Neil Cook]
+- `Apero_reset.py` + `apero_processing.py` - do not warn if reset log file
+  is present (and skip it) [Neil Cook]
+- Update language database. [Neil Cook]
+- Apero.documentation.working.user.general.todo.rst - update todo list.
+  [Neil Cook]
+- `Apero.plotting.core.py` - deal with plt = None. [Neil Cook]
+- `Apero.tools.moduile.processing.drs_processing.py` - deal with no plt
+  import. [Neil Cook]
+
+
+0.7.048 (2020-12-10)
+--------------------
+- `Apero.core.instruments.default.grouping.py` +
+  `apero.tools.module.processing.drs_processing.py` - add master value to
+  set directory name. [Neil Cook]
+- Apero.lang - force the encoding (remove bad characters) [Neil Cook]
+- Apero.lang - update reset files. [Neil Cook]
+- `Apero.tools.module.processing.drs_processing.py` - revert to Process
+  (Pool is not working) [Neil Cook]
+- `Apero.lang.core.drs_lang.py` - make sure reset csv files are utf-8
+  encoded. [Neil Cook]
+
+
+0.7.047 (2020-12-07)
+--------------------
+- `Apero-drs.apero.base.drs_db.py` - user and host must come from
+  arguments. [Neil Cook]
+- `Apero-drs.apero.base.drs_db.py` - must reset path after call to super.
+  [Neil Cook]
+- `Apero-drs.apero.base.drs_db.py` - path must be set before we check
+  mysql. [Neil Cook]
+- `Apero.tools.module.processing.drs_processing.py` - try fixing freezing
+  Pool. [Neil Cook]
+
+
+0.7.046 (2020-12-04)
+--------------------
+- `Apero.data.nirps_ha.calibdb.MASTER_WAVE_NIRPS_HA.fits` - update default
+  wave solution. [Neil Cook]
+- `Apero.tools.module.processing.drs_processing.py` - import matplotlib to
+  close plots. [Neil Cook]
+- `Apero.plotting.core.py` - move import for matplotlib to separate
+  function `(import_matplotlib)` [Neil Cook]
+- `Apero.data.nirps_ha.reset.calibdb` - Add Etiennes new `MASTER_WAVE` file
+  for NIRPS. [Neil Cook]
+- `Apero.io.drs_fits.py` - deal with HIERARCH keys and keys longer than 8
+  characters better. [Neil Cook]
+- `Apero.tools.module.processing.drs_processing.py` - deal with not using
+  recipe. [Neil Cook]
+
+
+0.7.045 (2020-12-02)
+--------------------
+- Update language database. [Neil Cook]
+- `Apero.core.utils.drs_recipe.py` - move `class_name` outside `__init__`
+  [Neil Cook]
+- `Apero.core.instruments.default_keywords.py` - add `combine_method` for
+  keywords that require it. [Neil Cook]
+- `Apero.core.instrument.*.pseudo_const.py` - add `class_name`. [Neil Cook]
+- `Apero.core.core.drs_file.py` - update combine to include updating the
+  headers. [Neil Cook]
+- `Apero.core.core.drs_base_classes.py` - move `class_names` outside
+  `__init__` [Neil Cook]
+- `Apero.core.constants.constant_functions.py` - add `combine_method` to
+  Keyword Class. [Neil Cook]
+- Update todo list. [Neil Cook]
+- `Apero.core.instruments.default.grouping.py` - continue work on
+  grouping. [Neil Cook]
+- For key, item in `self.__dict__` --> for key, item in
+  `self.__dict__.items()` [Neil Cook]
+
+
+0.7.044 (2020-12-01)
+--------------------
+- `Apero.tools.module.processing.drs_processing.py` - for skip add
+  nightname to whitelist. [Neil Cook]
+- `Apero.science.telluric.template_tellu.py` - typo `get_key` --> `get_hkey`.
+  [Neil Cook]
+- `Apero.core.utils.drs_recipe.py` - add a `group_func` storage in recipe
+  instance. [Neil Cook]
+- `Apero.core.instruments.spirou.recipe_definitions.py` - add group funcs
+  for all functions to be used in `apero_processing`. [Neil Cook]
+- `Apero.tools.module.processing.drs_grouping_functions.py` +
+  `apero.core.instruments.default.grouping.py` - add grouping functions -
+  so `apero_processing` can use custom functions to group files/args for
+  processing. [Neil Cook]
+
+
+0.7.043 (2020-11-30)
+--------------------
+- Update todo/update/docs. [Neil Cook]
+- Apero.science.telluric - add berv coverage to template construction.
+  [Neil Cook]
+- Add `plot_mktemp_berv_cov` to `plot_functions.py`. [Neil Cook]
+- Update language database. [Neil Cook]
+- `Apero.core.instruments.*.default_constants.py` `default_keywords.py` -
+  add berv correction keywords/constants. [Neil Cook]
+
+
+0.7.042 (2020-11-27)
+--------------------
+- `Apero.base.drs_db.py` - correct typo values--> values=values. [Neil
+  Cook]
+- `Core.instruments.*.pseudo_const.py` - add `FIBER_LOC`. [Neil Cook]
+- `Apero.science.calib.localisation.py` - update cent/wid coefficient
+  tables. [Neil Cook]
+- `Apero.base.drs_db.py` - force table to be set. [Neil Cook]
+
+
+0.7.041 (2020-11-26)
+--------------------
+- `Apero.base.drs_base.py` - do not call exception - raise exception.
+  [Neil Cook]
+- `Apero.base.drs_db.py` - correct self.database.get to include table.
+  [Neil Cook]
+- Update todo list + documentation. [Neil Cook]
+- Update language database. [Neil Cook]
+- `Apero.tools.module.database.manage_database.py` - must do a super call
+  in Database Exception + set self.tname after super (MySqlDatabasE)
+  [Neil Cook]
+- `Apero.base.drs_db.py` - remove reference to 'MAIN' (replace with
+  database.tname) - so mysql can write to different tables - make sql
+  tname be `{kind}_{profile}` from database.yaml. [Neil Cook]
+- `Apero.apero.instruments.spirou.recipe_defintions.py` - add masknormmode
+  option. [Neil Cook]
+- `Apero.science.velocity.general.py` - add in ccf mask norm options.
+  [Neil Cook]
+- Update documentation. [Neil Cook]
+- Update update notes + todo. [Neil Cook]
+- `Apero.core.core.drs_database.py` - if all rows have rawfix=1 don't do
+  loop. [Neil Cook]
+- `Apero.core.core.drs_database.py` - do not fix header if rawfix == 1.
+  [Neil Cook]
+- `Apero.tools.module.processing.drs_processing.py` - add some print
+  statements about progress + update language database. [Neil Cook]
+- `Apero.tools.recipes.dev.apero_langdb.py` - add reload option (to reload
+  the database from reset files but not regenerate reset files) [Neil
+  Cook]
+- Update language database. [Neil Cook]
+- `Apero.tools.module.processing.drs_processing.py` - format global
+  condition better. [Neil Cook]
+- `Apero.tools.module.processing.drs_processing.py` - only show
+  overwriting value if original value was not null (None) + move all
+  conditional filters that are not recipe specific outside the recipe
+  loop. [Neil Cook]
+- `Apero.core.utils.drs_recipe.py` - filter objects in `SCIENCE_TARGETS` and
+  `TELLURIC_TARGETS` by tstars+ostars (i.e. all on disk) [Neil Cook]
+
+
+0.7.040 (2020-11-25)
+--------------------
+- Update documentation. [Neil Cook]
+- `Apero.core.utils.drs_recipe.py` - correct typo value --> objname. [Neil
+  Cook]
+- Merge remote-tracking branch 'origin/v0.7.000-pre' into v0.7.000-pre.
+  [Neil Cook]
+- `Apero.tools.processing.drs_processing.py` - correct SQL logic for
+  conditions. [Neil Cook]
+- `Apero.core.utils.drs_recipe.py` +
+  `tools.module.processing.drs_processing.py` - add template stars to
+  `process_adds/add_extra/update_args`. [Neil Cook]
+- `Apero.base.drs_db.py` - correct arg for error (DatabaseError) [Neil
+  Cook]
+- `Apero.core.instruments.spirou.recipe_definitions.py` - add
+  `teplate_required` to `tellu_seq` and `science_seq`. [Neil Cook]
+- `Apero.science.preprocessing.gen_pp.py` - have to search colnames of
+  table. [Neil Cook]
+- `Apero.tools.module.processing.py` - deal with `RECAL_TEMPLATE` = False
+  and rejecting objnames with templates. [Neil Cook]
+- `Apero.science.telluric.template_tellu.py` - add `list_current_templates`
+  function. [Neil Cook]
+- `Apero.core.utils.drs_recipe.py` - add `template_required` flag (to be
+  added in sequences) [Neil Cook]
+- `Apero.core.instruments.spirou.py` - add `template_required` to MKTELLU3,4
+  FTELLU2,3. [Neil Cook]
+- `Apero.data.*.reset.runs` - correct typo: `RECAL_TEMPALTES` -->
+  `RECAL_TEMPLATES`. [Neil Cook]
+
+
+0.7.039 (2020-11-24)
+--------------------
+- Update language database. [Neil Cook]
+- `Apero.tools.module.processing.drs_processing.py` - add code to set
+  `science_targets` and `telluric_targets` from command line args + add
+  rejecting via odometer codes. [Neil Cook]
+- `Apero.core.instruments.*.default_constants.py` - add
+  `ODOCODE_REJECT_GSHEET_ID` and `ODOCODE_REJECT_GSHEET_NUM` to constants.
+  [Neil Cook]
+- `Apero.science.preprocessing.gen_pp.py` - add getting the rejection list
+  from googlesheet. [Neil Cook]
+- `Apero.data.*.reset.runs.*run.ini` - add `USE_ODO_REJECTLIST` and
+  `RECAL_TEMPLATES` to run.ini files. [Neil Cook]
+- `Apero.core.instruments.default.recipe_definitions.py` - add
+  `--science_targets` and `--telluric_targest` to argumnets of
+  `apero_processing`. [Neil Cook]
+- `Apero.core.core.drs_text.py` - add `cull_leading_trailing` function.
+  [Neil Cook]
+
+
+0.7.038 (2020-11-23)
+--------------------
+- `Apero.recipes.spirou.obj_mk_template_spirou.py` +
+  `science.telluric.tempalte_tellu.py` - deal with copying hdict/header
+  better. [Neil Cook]
+- `Apero.core.core.drs_file.py` - try to populate `output_dict` (for index
+  database) differently. [Neil Cook]
+- Apero - telluric - add TEMPLATE TIME to `mk_tellu` / `fit_tellu` products.
+  [Neil Cook]
+- `Apero.science.telluric.template_tellu.py` - add a
+  `generate_template_hash` function. [Neil Cook]
+- `Apero.*` - telluric - add number of files and template hash for better
+  id of template. [Neil Cook]
+- `Apero.recipes.spirou.cal_preprocess_spirou.py` - add object database
+  outside for loop. [Neil Cook]
+- Add first test of a setup.py. [Neil Cook]
+- Update requirements/environments. [Neil Cook]
+- Update environments to use mostly pip - astropy 4.1. [Neil Cook]
+- `Apero.science.calib.localisation.py` - add coefficients as tables in
+  the fits files. [Neil Cook]
+
+
+0.7.037 (2020-11-20)
+--------------------
+- `Apero.lang.core.drs_lang.py` - only report when tkey is not tvalue
+  (otherwise we get duplication) [Neil Cook]
+- Update language database. [Neil Cook]
+- `Apero.core.utils.drs_startup.py` - add python modules being used to
+  log. [Neil Cook]
+- `Apero.base.base.py` - add `RECOMM_USER` and `RECOMM_DEV`. [Neil Cook]
+- Update `requirements_developer.txt` and rint must be a single number
+  (not array) [Neil Cook]
+
+
+0.7.036 (2020-11-18)
+--------------------
+- Update installation. [Neil Cook]
+- Update installation. [Neil Cook]
+- Update installation. [Neil Cook]
+- Update installation. [Neil Cook]
+- Update installation. [Neil Cook]
+- `Apero.lang.core.drs_lang.py` - deal with no language database and
+  return proxy to language database. [Neil Cook]
+- `Apero.base.drs_db.py` - add a proxy language database (for when we
+  don't have access to the database) [Neil Cook]
+- Update changelog/version/date/documentation/language database. [Neil
+  Cook]
+
+
 0.7.035 (2020-11-18)
 --------------------
 - `Apero.tools.module.processing.drs_processing.py` - do not worry about
