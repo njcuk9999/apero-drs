@@ -11,8 +11,13 @@ to the FP master
 Schematic
 ===========================================
 
-.. image:: ../../../_static/yed/spirou/cal_wave_master_spirou_schematic.jpg
-    :width: 2048
+.. only:: html
+
+    .. image:: ../../../_static/yed/spirou/cal_wave_master_spirou_schematic.jpg
+
+.. only:: latex
+
+    This section can only currently be viewed in the html documentation.
 
 ===========================================
 Run

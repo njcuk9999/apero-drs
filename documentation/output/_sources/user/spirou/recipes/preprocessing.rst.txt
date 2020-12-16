@@ -38,8 +38,15 @@ We then save the image with the "{odometer code}_pp.fits" suffix.
 Schematic
 ===========================================
 
-.. image:: ../../../_static/yed/spirou/cal_preproces_spirou_schematic.jpg
+.. only:: html
 
+    .. image:: ../../../_static/yed/spirou/cal_preproces_spirou_schematic.jpg
+        :width: 100%
+        :align: center
+
+.. only:: latex
+
+    This section can only currently be viewed in the html documentation.
 
 ===========================================
 Run

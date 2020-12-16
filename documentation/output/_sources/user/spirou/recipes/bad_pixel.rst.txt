@@ -11,8 +11,13 @@ Creates a bad pixel mask for identifying and deal with bad pixels.
 Schematic
 ===========================================
 
-.. image:: ../../../_static/yed/spirou/cal_badpix_spirou_schematic.jpg
+.. only:: html
 
+    .. image:: ../../../_static/yed/spirou/cal_badpix_spirou_schematic.jpg
+
+.. only:: latex
+
+    This section can only currently be viewed in the html documentation.
 
 ===========================================
 Run

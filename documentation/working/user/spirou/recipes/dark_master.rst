@@ -10,8 +10,13 @@ Collects all dark files and creates a master dark image to use for correction.
 Schematic
 ===========================================
 
-.. image:: ../../../_static/yed/spirou/cal_dark_master_spirou_schematic.jpg
+.. only:: html
 
+    .. image:: ../../../_static/yed/spirou/cal_dark_master_spirou_schematic.jpg
+
+.. only:: latex
+
+    This section can only currently be viewed in the html documentation.
 
 ===========================================
 Run
