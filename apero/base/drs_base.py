@@ -18,6 +18,7 @@ Import rules:
 
 """
 import os
+import pandas as pd
 from pathlib import Path
 import pkg_resources
 from typing import Any, List, Union
@@ -37,6 +38,60 @@ __release__ = base.__release__
 # relative folder cache
 REL_CACHE = dict()
 
+
+# =============================================================================
+# Define other functions - do not any apero functions in these
+# =============================================================================
+def lang_db_proxy() -> dict:
+    """
+    If all else fails (i.e. if the language database has yet to be
+    installed - load the default reset file from reset csv files)
+
+    :return: dictionary of key, value language pairs (default language)
+    """
+    # try to load the reset file manually
+    # noinspection PyBroadException
+    try:
+        # get language path
+        rellangpath = base.LANG_DEFAULT_PATH
+        # get lang file
+        rellangfile = base.LANG_DB_RESET
+        # get default language
+        if 'LANGUAGE' in base.IPARAMS:
+            language = base.IPARAMS['LANGUAGE']
+        else:
+            language = base.DEFAULT_LANG
+        # get relative path
+        relpath = os.path.join(rellangpath, rellangfile)
+        # get aboslute path
+        langfile = _rel_folder(__PACKAGE__, relpath)
+        # load language database
+        df = pd.read_csv(langfile)
+        # return dictionary
+        return dict(zip(df['KEYNAME'], df[language]))
+    # if we can't even do this then return an empty dictionary -
+    #  all outputs will be the keyname
+    except Exception as _:
+        return dict()
+
+
+def _rel_folder(package, folder):
+    # change to this files location
+    init = pkg_resources.resource_filename(package, '__init__.py')
+    # Get the config_folder from relative path
+    current = os.getcwd()
+    # get directory name of folder
+    dirname = os.path.dirname(init)
+    # change to directory in init
+    os.chdir(dirname)
+    # get the absolute path of the folder
+    absfolder = os.path.abspath(folder)
+    # change back to current dir
+    os.chdir(current)
+    # return the absfolder
+    return absfolder
+
+
 # =============================================================================
 # DrsBaseError text - only for where we do not have access to
 #     apero.lang.coredrs_lang  this includes
@@ -44,59 +99,8 @@ REL_CACHE = dict()
 #           - apero.base.drs_db
 #           - apero.lang.core.drs_lang
 # =============================================================================
-# This text should also be in the language database
-BETEXT = dict()
-BETEXT['KEYERROR'] = ("Base Error Code = {0} not in DrsBaseError dictionary"
-                      "\n\t{1}")
-
-# code 00-002
-BETEXT['00-002-00025'] = ("Key '{0}' does not exist in language database. "
-                          "\n\t args: {1} \n\t kwargs: {2}")
-BETEXT['00-002-00026'] = ("Cannot open file = '{0}' \n\t Error was {1}: {2} "
-                          "\n\t Function = {3}")
-BETEXT['00-002-00027'] = "Cannot find database file {0} in directory {1}"
-BETEXT['00-002-00028'] = "Database Error: {0}"
-BETEXT['00-002-00029'] = "\n\tDatabase path: {0}"
-BETEXT['00-002-00030'] = "\n\tFunction = {0}"
-BETEXT['00-002-00031'] = "Get condition must be a string (for WHERE)"
-BETEXT['00-002-00032'] = "{0}: {1} \n\t Command: {2}"
-BETEXT['00-002-00033'] = "Get max_rows must be an integer (for LIMIT)"
-BETEXT['00-002-00034'] = "The column list must be same length as the value list"
-BETEXT['00-002-00035'] = "The column to set must be a string"
-BETEXT['00-002-00036'] = "field_names and field_types must be the same length"
-BETEXT['00-002-00037'] = "field_names must be strings"
-BETEXT['00-002-00038'] = "field_types must be string or [int/float/str]"
-BETEXT['00-002-00039'] = "table 'name' must be a string"
-BETEXT['00-002-00040'] = "{0}: {1} \n\t Command: {2} \n\t Function: {3}"
-BETEXT['00-002-00041'] = ("The are multiple tables in the database. You must "
-                          "pick one -- table cannot be None")
-BETEXT['00-002-00042'] = ("Cannot convert command to astropy table \n\t"
-                          "{0}: {1}")
-BETEXT['00-002-00043'] = "{0}: {1} \n\t Command: {2} \n\t Function: {3}"
-BETEXT['00-002-00044'] = ("Cannot import mysql.connector \n\t Please install"
-                          " with 'pip install mysql-connector-python'")
-BETEXT['00-002-00045'] = "{0}: {1} \n\t Command: {2} \n\t Function: {3}"
-BETEXT['00-002-00046'] = ("'if_exists' must be either 'fail', 'replace' "
-                          "or 'append'")
-BETEXT['00-002-00047'] = "Pandas.to_sql {0}: {1} \n\tFunction = {2}"
-BETEXT['00-002-00048'] = ('Could not read SQL command as pandas table '
-                          '\n\tCommand = {0} \n\t Function = {1}')
-BETEXT['00-002-00049'] = "Database kind '{0}' is invalid"
-BETEXT['00-002-00050'] = ("MySQL database = '{0}' could not be created. "
-                          "\n\t Error {1}: {2}")
-
-# code 00-003
-BETEXT['00-003-00005'] = "Folder '{0}' does not exist in {1}"
-
-# code 00-008
-BETEXT['00-008-00001'] = "Package name = '{0}' is invalid (function = {1})"
-
-# code 40-001
-BETEXT['40-001-00026'] = "Loading database from file='{0}'"
-BETEXT['40-001-00027'] = "Analyzing sheet '{0}'"
-BETEXT['40-001-00028'] = "Saving reset file = '{0}'"
-BETEXT['40-001-00029'] = "Backing up database to '{0}'"
-BETEXT['40-001-00030'] = "Removing file {0}"
+# Get the language database from the csv file in the default language
+BETEXT = lang_db_proxy()
 
 
 # =============================================================================
@@ -183,7 +187,7 @@ def base_func(func, _func, *args, **kwargs):
 def base_printer(codeid: str, message: str, level: str,
                  args: Union[str, list, None] = None,
                  exceptionname: Union[str, None] = None,
-                 printstatement: bool = True):
+                 printstatement: bool = True) -> str:
     """
     Produce the base printout in form
 
@@ -199,8 +203,10 @@ def base_printer(codeid: str, message: str, level: str,
     :param level: str, if set sets the level for logging
     :param args: None/list/str: if set is the args to pass to TextEntry
     :param exceptionname: str - if set overrides the program name
+    :param printstatement: bool - if True prints the statement else just returns
+                           it
 
-    :return:
+    :return: str, the base printed message
     """
     red = base.COLOURS['RED1']
     yellow = base.COLOURS['YELLOW1']
@@ -313,20 +319,10 @@ def base_get_relative_folder(package: Union[None, str],
     # ----------------------------------------------------------------------
     # get the package.__init__ file path
     try:
-        init = pkg_resources.resource_filename(package, '__init__.py')
+        data_folder = _rel_folder(package, folder)
     except ImportError:
         eargs = [package, func_name]
         raise DrsBaseError('00-008-00001', arguments=eargs)
-    # Get the config_folder from relative path
-    current = os.getcwd()
-    # get directory name of folder
-    dirname = os.path.dirname(init)
-    # change to directory in init
-    os.chdir(dirname)
-    # get the absolute path of the folder
-    data_folder = os.path.abspath(folder)
-    # change back to working dir
-    os.chdir(current)
     # test that folder exists
     if not os.path.exists(data_folder):
         # raise exception
