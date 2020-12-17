@@ -1215,6 +1215,27 @@ def quality_control(params, snr_hotpix, infile, rms_list, log=True):
     qc_names.append('max(rms_list)')
     qc_logic.append('max(rms_list) > {0:.4e}'.format(rms_threshold))
     # ----------------------------------------------------------------------
+    # check required exposure time
+    exptime_frac = params['PP_BAD_EXPTIME_FRACTION']
+    # get required exposure time
+    required_exptime = infile.get_hkey('KW_EXPREQ')
+    # get exposure time
+    actual_exptime = infile.get_hkey('KW_EXPTIME')
+    # calculate minimum required exposure time
+    min_req_exptime = required_exptime * exptime_frac
+    # check if actual exptime is good
+    if actual_exptime < min_req_exptime:
+        # add failed message
+        fargs = [actual_exptime, min_req_exptime]
+        fail_msg.append(textentry('40-010-00017', args=fargs))
+        qc_pass.append(0)
+    else:
+        qc_pass.append(1)
+    # add to qc header lists
+    qc_values.append(actual_exptime)
+    qc_names.append('EXPTIME')
+    qc_logic.append('EXPTIME < {0:.4e}'.format(min_req_exptime))
+    # ----------------------------------------------------------------------
     # finally log the failed messages and set QC = 1 if we pass the
     # quality control QC = 0 if we fail quality control
     if np.sum(qc_pass) == len(qc_pass):

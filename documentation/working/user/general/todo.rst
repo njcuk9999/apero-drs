@@ -21,7 +21,6 @@ Immediate small:
 * filter calibrations [Etienne/Neil]
     * we are combining all for a night id bad ones and remove
     * error if not enough - define minimum number of calibrations required
-
 * Add an update object database mode to apero_database.py?
   or add to run.ini and use via apero_processing?
 
@@ -36,7 +35,9 @@ Medium priority:
 * loc and wave coefficients to tables [Neil]
 * add option to set template for mk_tellu and fit_tellu [Neil]
 * deal with all python warnings [Neil]
+* add NIPRS changes to 0.7 branch
 * post processing (i.e. outputs like CADC/ESO)   [Neil/Chris]
+    * option to remove all reduced / tmp files (not calib/tellu)
 * DRS tests [Charles + Thomas]
 
 Low priority:

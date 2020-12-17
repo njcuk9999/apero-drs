@@ -18,6 +18,7 @@ __all__ = [
     'PP_RMS_PERCENTILE', 'PP_LOWEST_RMS_PERCENTILE', 'PP_CORRUPT_SNR_HOTPIX',
     'PP_CORRUPT_RMS_THRES', 'RAW_TO_PP_ROTATION', 'PP_DARK_MED_BINNUM',
     'SKIP_DONE_PP', 'ALLOWED_PPM_TYPES', 'PPM_MASK_NSIG', 'PP_MEDAMP_BINSIZE',
+    'PP_BAD_EXPTIME_FRACTION',
     # image constants
     'FIBER_TYPES', 'IMAGE_X_FULL', 'IMAGE_Y_FULL',
     'INPUT_COMBINE_IMAGES', 'INPUT_FLIP_IMAGE', 'INPUT_RESIZE_IMAGE',
@@ -556,6 +557,11 @@ PP_HOTPIX_BOXSIZE = Const('PP_HOTPIX_BOXSIZE', value=None, dtype=int,
 # Defines the size around badpixels that is considered part of the bad pixel
 PP_CORRUPT_MED_SIZE = Const('PP_CORRUPT_MED_SIZE', value=None, dtype=int,
                             minimum=1, source=__NAME__, group=cgroup)
+
+# Define the fraction of the required exposure time that is required for a
+#   valid observation
+PP_BAD_EXPTIME_FRACTION = Const('PP_CORRUPT_MED_SIZE', value=None, dtype=float,
+                                minimum=0, source=__NAME__, group=cgroup)
 
 # Defines the threshold in sigma that selects hot pixels
 PP_CORRUPT_HOT_THRES = Const('PP_CORRUPT_HOT_THRES', value=None, dtype=int,

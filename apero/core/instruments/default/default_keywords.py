@@ -9,7 +9,7 @@ from apero.core.constants import constant_functions
 __all__ = [  # input keys
     'KW_ACQTIME', 'KW_OBJRA', 'KW_OBJDEC', 'KW_OBJNAME', 'KW_OBJEQUIN',
     'KW_OBJRAPM', 'KW_OBJDECPM', 'KW_RDNOISE', 'KW_GAIN', 'KW_EXPTIME',
-    'KW_UTC_OBS', 'KW_EXPTIME_UNITS', 'KW_OBSTYPE', 'KW_CCAS',
+    'KW_UTC_OBS', 'KW_EXPTIME_UNITS', 'KW_OBSTYPE', 'KW_CCAS', 'KW_EXPREQ',
     'KW_CREF', 'KW_CDEN', 'KW_CMMTSEQ', 'KW_AIRMASS', 'KW_MJDEND',
     'KW_CMPLTEXP', 'KW_NEXP', 'KW_PI_NAME', 'KW_PLX', 'KW_CALIBWH',
     'KW_TARGET_TYPE', 'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP',
@@ -218,6 +218,9 @@ KW_EXPTIME = Keyword('KW_EXPTIME', key='', dtype=float, source=__NAME__)
 KW_EXPTIME_UNITS = Const('KW_EXPTIME_UNITS', value='s', dtype=str,
                          options=['s', 'min', 'hr', 'day'],
                          source=__NAME__)
+
+# define the required exposure time HEADER key (used to get value only)
+KW_EXPREQ = Keyword('KW_EXPREQ', key='', dtype=float, source=__NAME__)
 
 # define the observation type HEADER key
 KW_OBSTYPE = Keyword('KW_OBSTYPE', key='', dtype=str, source=__NAME__)
