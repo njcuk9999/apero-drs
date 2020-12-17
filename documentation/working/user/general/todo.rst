@@ -22,6 +22,9 @@ Immediate small:
     * we are combining all for a night id bad ones and remove
     * error if not enough - define minimum number of calibrations required
 
+* Add an update object database mode to apero_database.py?
+  or add to run.ini and use via apero_processing?
+
 High priority:
 
 * polar code update  [Neil/Eder/Chris]

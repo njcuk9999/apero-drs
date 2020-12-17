@@ -6,6 +6,9 @@ Localisation Recipe
 
 Finds the orders on the image.
 
+Needs to be run twice - once with FLAT_DARK files (to create the localisation
+for fiber AB) and once with DARK_FLAT (to create the localisation for fiber C).
+
 ===========================================
 Run
 ===========================================
@@ -49,10 +52,10 @@ Output files
 
 .. code-block:: bash
 
-    {ODOMETER_CODE}_pp_order_profile_C.fits  \\ order profile file (3100x4088)
-    {ODOMETER_CODE}_pp_loco_C.fits           \\ localisation centers map file (49x4088)
-    {ODOMETER_CODE}_pp_fwhm-order_C.fits     \\ localisation widths map file (49x4088)
-    {ODOMETER_CODE}_pp_with-order_C.fits     \\ localisation superposition file (3100x4088)
+    {ODOMETER_CODE}_pp_order_profile_{FIBER}.fits  \\ order profile file (3100x4088)
+    {ODOMETER_CODE}_pp_loco_{FIBER}.fits           \\ localisation centers map file (49x4088)
+    {ODOMETER_CODE}_pp_fwhm-order_{FIBER}.fits     \\ localisation widths map file (49x4088)
+    {ODOMETER_CODE}_pp_with-order_{FIBER}.fits     \\ localisation superposition file (3100x4088)
     DEBUG_{ODOMETER_CODE}_pp_background.fits \\ debug background file (7x3100x4088)
 
 

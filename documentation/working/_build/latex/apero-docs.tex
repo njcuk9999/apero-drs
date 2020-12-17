@@ -130,7 +130,7 @@
     
 
 \title{APERO Documentation}
-\date{Dec 16, 2020}
+\date{Dec 17, 2020}
 \release{0.7.053}
 \author{Neil Cook}
 \newcommand{\sphinxlogo}{\sphinxincludegraphics{apero_logo.png}\par}
@@ -1341,6 +1341,9 @@ BADPIX\PYGZus{}MAP
 \label{\detokenize{user/spirou/recipes/localisation:localisation-recipe}}\label{\detokenize{user/spirou/recipes/localisation:recipes-spirou-localisation}}\label{\detokenize{user/spirou/recipes/localisation::doc}}
 Finds the orders on the image.
 
+Needs to be run twice \sphinxhyphen{} once with FLAT\_DARK files (to create the localisation
+for fiber AB) and once with DARK\_FLAT (to create the localisation for fiber C).
+
 
 \paragraph{Run}
 \label{\detokenize{user/spirou/recipes/localisation:run}}
@@ -1378,10 +1381,10 @@ LOC\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}NIGHT\PY
 \paragraph{Output files}
 \label{\detokenize{user/spirou/recipes/localisation:output-files}}
 \begin{sphinxVerbatim}[commandchars=\\\{\}]
-\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}order\PYGZus{}profile\PYGZus{}C.fits  \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} order profile file \PYG{o}{(}3100x4088\PYG{o}{)}
-\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}loco\PYGZus{}C.fits           \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} localisation centers map file \PYG{o}{(}49x4088\PYG{o}{)}
-\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}fwhm\PYGZhy{}order\PYGZus{}C.fits     \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} localisation widths map file \PYG{o}{(}49x4088\PYG{o}{)}
-\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}with\PYGZhy{}order\PYGZus{}C.fits     \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} localisation superposition file \PYG{o}{(}3100x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}order\PYGZus{}profile\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits  \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} order profile file \PYG{o}{(}3100x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}loco\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits           \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} localisation centers map file \PYG{o}{(}49x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}fwhm\PYGZhy{}order\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits     \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} localisation widths map file \PYG{o}{(}49x4088\PYG{o}{)}
+\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}with\PYGZhy{}order\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits     \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} localisation superposition file \PYG{o}{(}3100x4088\PYG{o}{)}
 DEBUG\PYGZus{}\PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}background.fits \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} debug background file \PYG{o}{(}7x3100x4088\PYG{o}{)}
 \end{sphinxVerbatim}
 
