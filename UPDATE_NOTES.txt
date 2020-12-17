@@ -29,6 +29,10 @@ Date: 2020-09-10
     - rewrote file/argument grouping function, now able to have a custom
       function to group files/arguments (recipe.group_func)
 
+- preprocessing
+    - add QC to reject exptimes less than 10% required exptime
+      (change using PP_BAD_EXPTIME_FRACTION)
+
 - object resolution
     - now done in preprocessing (was extraction)
     - googlesheet master list of Gaia ID / RV / Teff - human editable
