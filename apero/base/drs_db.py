@@ -564,8 +564,13 @@ class Database:
         if columns == '*':
             columns = ''
         # if not join them (COLUMN1, COLUMN2, COLUMN3)
+        elif isinstance(columns, list):
+            columns = '(' + ', '.join(columns) + ')'
         else:
-            columns = "(" + ", ".join(columns) + ")"
+            if not columns.startswith('('):
+                columns = '(' + columns
+            if not columns.endswith(')'):
+                columns = columns + ')'
         # construct the command
         cargs = [table, columns, ', '.join(_values)]
         command = "INSERT INTO {}{} VALUES({})".format(*cargs)

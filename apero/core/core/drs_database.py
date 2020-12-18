@@ -2318,28 +2318,34 @@ class ObjectDatabase(DatabaseManager):
             values.append(aliases_s)
         # add used
         values.append(used)
+        # add row
+        self.set_row(gaia_id, objname, '*', values, commit)
+
+    def set_row(self, gaia_id: str, objname: str,
+                columns: Union[str, List[str]], values: list,
+                commit: bool = True):
         # need to see if we already have gaia id
         condition1 = '{0}="{1}"'.format(GAIA_COL_NAME, gaia_id)
         gaiaids = self.database.unique(GAIA_COL_NAME, condition=condition1,
                                        table=self.database.tname)
-        condition2 = '{0}="{1}"'.format('KW_OBJNAME', objname)
-        objnames = self.database.unique('KW_OBJNAME', condition=condition2)
+        condition2 = '{0}="{1}"'.format('OBJNAME', objname)
+        objnames = self.database.unique('OBJNAME', condition=condition2,
+                                        table=self.database.tname)
         # ------------------------------------------------------------------
         # deal with updating entry
         if (gaiaids is not None) and (len(gaiaids) > 0):
             # update row in database
-            self.database.set('*', values=values, condition=condition1,
+            self.database.set(columns, values=values, condition=condition1,
                               table=self.database.tname, commit=commit)
         # else we update based on object name
         elif (objnames is not None) and (len(objnames) > 0):
             # update row in database
-            self.database.set('*', values=values, condition=condition2,
+            self.database.set(columns, values=values, condition=condition2,
                               table=self.database.tname, commit=commit)
         # else add row to database (as new row)
         else:
             self.database.add_row(values, table=self.database.tname,
-                                  commit=commit)
-
+                                  columns=columns, commit=commit)
 
 # =============================================================================
 # Start of code

@@ -12,12 +12,11 @@ Created on 2019-07-26 at 09:47
 import sys
 
 from apero.base import base
-from apero import lang
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_utils
 from apero.tools.module.processing import drs_processing
-
+from apero.tools.module.database import manage_databases
 
 # =============================================================================
 # Define variables
@@ -125,6 +124,12 @@ def __main__(recipe, params):
 
     # find all previous runs
     skiptable = drs_processing.generate_skip_table(params)
+
+    # ----------------------------------------------------------------------
+    # Update the object database (recommended only for full reprocessing)
+    # ----------------------------------------------------------------------
+    if params['UPDATE_OBJ_DATABASE']:
+        manage_databases.update_object_database(params)
 
     # ----------------------------------------------------------------------
     # Generate run list

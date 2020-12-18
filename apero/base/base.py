@@ -61,9 +61,9 @@ PSEUDO_CONST_CLASS = 'PseudoConstants'
 # absolute paths (from relative paths to here)
 RECOMM_USER = __PATH__.parent.joinpath('requirements_current.txt')
 RECOMM_DEV = __PATH__.parent.joinpath('requirements_developer.txt')
+# -----------------------------------------------------------------------------
 # databases
 DATABASE_NAMES = ['calib', 'tellu', 'index', 'log', 'object', 'lang']
-
 # -----------------------------------------------------------------------------
 # language settings
 # -----------------------------------------------------------------------------

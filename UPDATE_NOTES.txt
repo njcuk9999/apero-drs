@@ -28,6 +28,8 @@ Date: 2020-09-10
       FTELLU2, or FTELLU3
     - rewrote file/argument grouping function, now able to have a custom
       function to group files/arguments (recipe.group_func)
+    - added a UPDATE_OBJECT_DB into run.ini files - if True will update the local
+      object database with the information from the object googlesheet
 
 - preprocessing
     - add QC to reject exptimes less than 10% required exptime

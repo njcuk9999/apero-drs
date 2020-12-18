@@ -289,6 +289,36 @@ SKIP_DONE_PP = SKIP_DONE_PP.copy(__NAME__)
 SKIP_DONE_PP.value = False
 
 # =============================================================================
+# CALIBRATION: OBJECT DATABASE SETTINGS
+# =============================================================================
+# gaia col name in google sheet
+GL_GAIA_COL_NAME = GL_GAIA_COL_NAME.copy(__NAME__)
+GL_GAIA_COL_NAME.value = 'GAIADR2ID'
+# object col name in google sheet
+GL_OBJ_COL_NAME = GL_OBJ_COL_NAME.copy(__NAME__)
+GL_OBJ_COL_NAME.value = 'OBJECT'
+# alias col name in google sheet
+GL_ALIAS_COL_NAME = GL_ALIAS_COL_NAME.copy(__NAME__)
+GL_ALIAS_COL_NAME.value = 'ALIASES'
+# rv col name in google sheet
+GL_RV_COL_NAME = GL_RV_COL_NAME.copy(__NAME__)
+GL_RV_COL_NAME.value = 'RV'
+GL_RVREF_COL_NAME = GL_RVREF_COL_NAME.copy(__NAME__)
+GL_RVREF_COL_NAME.value = 'RV_REF'
+# teff col name in google sheet
+GL_TEFF_COL_NAME = GL_TEFF_COL_NAME.copy(__NAME__)
+GL_TEFF_COL_NAME.value = 'TEFF'
+GL_TEFFREF_COL_NAME = GL_TEFFREF_COL_NAME.copy(__NAME__)
+GL_TEFFREF_COL_NAME.value = 'TEFF_REF'
+# Reject like google columns
+GL_R_ODO_COL = GL_R_ODO_COL.copy(__NAME__)
+GL_R_ODO_COL.value = 'ODOMETER'
+GL_R_PP_COL = GL_R_PP_COL.copy(__NAME__)
+GL_R_PP_COL.value = 'PP'
+GL_R_RV_COL = GL_R_RV_COL.copy(__NAME__)
+GL_R_RV_COL.value = 'RV'
+
+# =============================================================================
 # CALIBRATION: DARK SETTINGS
 # =============================================================================
 #   Min dark exposure time

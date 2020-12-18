@@ -19,6 +19,10 @@ __all__ = [
     'PP_CORRUPT_RMS_THRES', 'RAW_TO_PP_ROTATION', 'PP_DARK_MED_BINNUM',
     'SKIP_DONE_PP', 'ALLOWED_PPM_TYPES', 'PPM_MASK_NSIG', 'PP_MEDAMP_BINSIZE',
     'PP_BAD_EXPTIME_FRACTION',
+    # object database settings
+    'GL_GAIA_COL_NAME', 'GL_OBJ_COL_NAME', 'GL_ALIAS_COL_NAME',
+    'GL_RV_COL_NAME', 'GL_RVREF_COL_NAME', 'GL_TEFF_COL_NAME',
+    'GL_TEFFREF_COL_NAME', 'GL_R_ODO_COL', 'GL_R_PP_COL', 'GL_R_RV_COL',
     # image constants
     'FIBER_TYPES', 'IMAGE_X_FULL', 'IMAGE_Y_FULL',
     'INPUT_COMBINE_IMAGES', 'INPUT_FLIP_IMAGE', 'INPUT_RESIZE_IMAGE',
@@ -637,6 +641,36 @@ PP_MEDAMP_BINSIZE = Const('PP_MEDAMP_BINSIZE', value=None, dtype=int,
                                       'smaller than the order footprint on the '
                                       'array as it would lead to a set of NaNs '
                                       'in the downsized image')
+
+# =============================================================================
+# CALIBRATION: OBJECT DATABASE SETTINGS
+# =============================================================================
+# gaia col name in google sheet
+GL_GAIA_COL_NAME = Const('GL_GAIA_COL_NAME', value=None, dtype=str,
+                         source=__NAME__, group=cgroup)
+# object col name in google sheet
+GL_OBJ_COL_NAME = Const('GL_OBJ_COL_NAME', value=None, dtype=str,
+                        source=__NAME__, group=cgroup)
+# alias col name in google sheet
+GL_ALIAS_COL_NAME = Const('GL_ALIAS_COL_NAME', value=None, dtype=str,
+                          source=__NAME__, group=cgroup)
+# rv col name in google sheet
+GL_RV_COL_NAME = Const('GL_RV_COL_NAME', value=None, dtype=str,
+                       source=__NAME__, group=cgroup)
+GL_RVREF_COL_NAME = Const('GL_RVREF_COL_NAME', value=None, dtype=str,
+                          source=__NAME__, group=cgroup)
+# teff col name in google sheet
+GL_TEFF_COL_NAME = Const('GL_TEFF_COL_NAME', value=None, dtype=str,
+                         source=__NAME__, group=cgroup)
+GL_TEFFREF_COL_NAME = Const('GL_TEFFREF_COL_NAME', value=None, dtype=str,
+                            source=__NAME__, group=cgroup)
+# Reject like google columns
+GL_R_ODO_COL = Const('GL_R_ODO_COL', value=None, dtype=str,
+                     source=__NAME__, group=cgroup)
+GL_R_PP_COL = Const('GL_R_PP_COL', value=None, dtype=str,
+                    source=__NAME__, group=cgroup)
+GL_R_RV_COL = Const('GL_R_RV_COL', value=None, dtype=str,
+                    source=__NAME__, group=cgroup)
 
 # =============================================================================
 # CALIBRATION: DARK SETTINGS
@@ -2441,8 +2475,8 @@ MKTEMPLATE_BERVCOR_QCMIN = Const('MKTEMPLATE_BERVCOR_QCMIN', value=None,
 
 # Define the core SNR in order to calculate required BERV coverage
 MKTEMPLATE_BERVCOV_CSNR = Const('MKTEMPLATE_BERVCOV_CSNR', value=None,
-                                 dtype=float, source=__NAME__, minimum=0.0,
-                                 group=cgroup)
+                                dtype=float, source=__NAME__, minimum=0.0,
+                                group=cgroup)
 
 # Defome the resolution in km/s for calculating BERV coverage
 MKTEMPLATE_BERVCOV_RES = Const('MKTEMPLATE_BERVCOV_RES', value=None,
@@ -3137,10 +3171,10 @@ PLOT_FTELLU_RECON_ABSO2 = Const('PLOT_FTELLU_RECON_ABSO12', value=False,
 
 # turn on the berv coverage debug plot
 PLOT_MKTEMP_BERV_COV = Const('PLOT_MKTEMP_BERV_COV', value=False,
-                                dtype=bool, source=__NAME__, user=True,
-                                active=False, group=cgroup,
-                                description='turn on the berv coverage '
-                                            'debug plot')
+                             dtype=bool, source=__NAME__, user=True,
+                             active=False, group=cgroup,
+                             description='turn on the berv coverage '
+                                         'debug plot')
 
 # turn on the ccf rv fit debug plot (in a loop around orders)
 PLOT_CCF_RV_FIT_LOOP = Const('PLOT_CCF_RV_FIT_LOOP', value=False,

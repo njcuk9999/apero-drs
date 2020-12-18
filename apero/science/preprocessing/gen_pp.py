@@ -66,22 +66,6 @@ GOOGLE_BASE_URL = ('https://docs.google.com/spreadsheets/d/{}/gviz/'
                    'tq?tqx=out:csv&sheet={}')
 # unit aliases
 masyr = uu.mas / uu.yr
-# gaia col name in google sheet
-GL_GAIA_COL_NAME = 'GAIADR2ID'
-# object col name in google sheet
-GL_OBJ_COL_NAME = 'OBJECT'
-# alias col name in google sheet
-GL_ALIAS_COL_NAME = 'ALIASES'
-# rv col name in google sheet
-GL_RV_COL_NAME = 'RV'
-GL_RVREF_COL_NAME = 'RV_REF'
-# teff col name in google sheet
-GL_TEFF_COL_NAME = 'TEFF'
-GL_TEFFREF_COL_NAME = 'TEFF_REF'
-# Reject like google columns
-GL_R_ODO_COL = 'ODOMETER'
-GL_R_PP_COL = 'PP'
-GL_R_RV_COL = 'RV'
 
 
 # =============================================================================
@@ -164,6 +148,23 @@ class AstroObject(object):
         self.used = 0
         # other properties
         self.update_database = True
+        # get google columns
+        # gaia col name in google sheet
+        self.gl_gaia_colname = params['GL_GAIA_COL_NAME']
+        # object col name in google sheet
+        self.gl_obj_colname = params['GL_OBJ_COL_NAME']
+        # alias col name in google sheet
+        self.gl_alias_colname = params['GL_ALIAS_COL_NAME']
+        # rv col name in google sheet
+        self.gl_rv_colname = params['GL_RV_COL_NAME']
+        self.gl_rvref_colname = params['GL_RVREF_COL_NAME']
+        # teff col name in google sheet
+        self.gl_teff_colname = params['GL_TEFF_COL_NAME']
+        self.gl_teffref_colname = params['GL_TEFFREF_COL_NAME']
+        # Reject like google columns
+        self.gl_r_odo_col = params['GL_R_ODO_COL']
+        self.gl_r_pp_col = params['GL_R_PP_COL']
+        self.gl_r_rv_col = params['GL_R_RV_COL']
 
     def __getstate__(self) -> dict:
         """
@@ -483,10 +484,11 @@ class AstroObject(object):
         """
         # try to get gaia id from google sheets
         gtable = query_glist(self.input_objname, self.gsheet_url,
-                             self.gsheet_wnum)
+                             self.gsheet_wnum, self.gl_gaia_colname,
+                             self.gl_alias_colname)
         # set some properties from gtable
         if gtable is not None:
-            self.input_gaiaid = gtable[GL_GAIA_COL_NAME]
+            self.input_gaiaid = gtable[self.gl_gaia_colname]
         #  try (again) gaia id against gaia query (only if gaia_id is still
         #  None)
         if self.input_gaiaid is not None:
@@ -496,16 +498,16 @@ class AstroObject(object):
         # overwrite RV and Teff (if set in gtable)
         if gtable is not None:
             # set aliases
-            if not is_null(gtable[GL_ALIAS_COL_NAME]):
-                self.aliases = gtable[GL_ALIAS_COL_NAME].split('|')
+            if not is_null(gtable[self.gl_alias_colname]):
+                self.aliases = gtable[self.gl_alias_colname].split('|')
             # add RV if not None
-            if not is_null(gtable[GL_RV_COL_NAME]):
-                self.rv = gtable[GL_RV_COL_NAME]
-                self.rv_source = gtable[GL_RVREF_COL_NAME]
+            if not is_null(gtable[self.gl_rv_colname ]):
+                self.rv = gtable[self.gl_rv_colname ]
+                self.rv_source = gtable[self.gl_rvref_colname]
             # add Teff if not None
-            if not is_null(gtable[GL_TEFF_COL_NAME]):
-                self.teff = gtable[GL_TEFF_COL_NAME]
-                self.teff_source = gtable[GL_TEFFREF_COL_NAME]
+            if not is_null(gtable[self.gl_teff_colname]):
+                self.teff = gtable[self.gl_teff_colname]
+                self.teff_source = gtable[self.gl_teffref_colname]
 
     def _resolve_from_coords(self, mjd=None):
         """
@@ -674,7 +676,7 @@ class AstroObject(object):
         :param outdict:
         :return:
         """
-        columns = ['OBJNAME', 'OBJNAME_SOURCE', GL_GAIA_COL_NAME,
+        columns = ['OBJNAME', 'OBJNAME_SOURCE', self.gl_gaia_colname,
                    'GAIAID_SOURCE',
                    'RA_DEG', 'RA_SOURCE', 'DEC_DEG', 'DEC_SOURCE', 'PMRA',
                    'PMRA_SOURCE', 'PMDE', 'PMDE_SOURCE', 'PLX', 'PLX_SOURCE',
@@ -956,7 +958,9 @@ def query_simbad_id(params: ParamDict, obj_id: str) -> Union[Table, None]:
         return None
 
 
-def query_glist(objname: str, sheet_id: str, worksheet: int = 0):
+def query_glist(objname: str, sheet_id: str, worksheet: int = 0,
+                gl_obj_col_name: str = 'OBJNAME',
+                gl_alias_col_name: str = 'ALIASES'):
     # get the google sheet
     gtable = get_google_sheet(sheet_id, worksheet)
 
@@ -971,9 +975,9 @@ def query_glist(objname: str, sheet_id: str, worksheet: int = 0):
     # loop around rows and look for aliases
     for row in range(len(gtable)):
         # set aliases as the objname
-        aliases = [gtable[GL_OBJ_COL_NAME][row]]
+        aliases = [gtable[gl_obj_col_name][row]]
         # get the aliases for this row
-        aliases += gtable[GL_ALIAS_COL_NAME][row].split('|')
+        aliases += gtable[gl_alias_col_name][row].split('|')
         # search for object name
         position = crossmatch_name(objname, aliases)
         # break if we have found a match
@@ -1138,8 +1142,7 @@ def format_sql_query(query: str, url: Union[str, None] = None,
     return str_query
 
 
-def get_reject_list(params: ParamDict,
-                    column: str = GL_R_PP_COL) -> np.ndarray:
+def get_reject_list(params: ParamDict, column: str = 'PP') -> np.ndarray:
     """
     Query the googlesheet for rejectiong odometer codes and return
     an array of odometer codes to reject
@@ -1155,13 +1158,17 @@ def get_reject_list(params: ParamDict,
     # get sheet id and worksheet number
     sheet_id = params['ODOCODE_REJECT_GSHEET_ID']
     workbook_id = params['ODOCODE_REJECT_GSHEET_NUM']
+    # get column names
+    ppcol = params['GL_R_PP_COL']
+    rvcol = params['GL_R_RV_COL']
+    odocol = params['GL_R_ODO_COL']
     # get reject table
     reject_table = get_google_sheet(sheet_id, workbook_id)
     # convert masks to boolean
-    if GL_R_PP_COL in reject_table.colnames:
-        reject_table[GL_R_PP_COL] = reject_table[GL_R_PP_COL] == 'TRUE'
-    if GL_R_RV_COL in reject_table.colnames:
-        reject_table[GL_R_RV_COL] = reject_table[GL_R_RV_COL] == 'TRUE'
+    if ppcol in reject_table.colnames:
+        reject_table[ppcol] = reject_table[ppcol] == 'TRUE'
+    if rvcol in reject_table.colnames:
+        reject_table[rvcol] = reject_table[rvcol] == 'TRUE'
     # deal with bad kind
     if column not in reject_table.colnames:
         # log error
@@ -1171,7 +1178,7 @@ def get_reject_list(params: ParamDict,
         return np.array([])
     else:
         # get odocodes to be rejected
-        odocodes = np.array(reject_table[GL_R_ODO_COL][reject_table[column]])
+        odocodes = np.array(reject_table[odocol][reject_table[column]])
         # return rejection list
         return odocodes
 
