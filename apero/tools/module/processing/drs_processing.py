@@ -80,6 +80,7 @@ RUN_KEYS['BNIGHTNAMES'] = None
 RUN_KEYS['WNIGHTNAMES'] = None
 RUN_KEYS['PI_NAMES'] = None
 RUN_KEYS['MASTER_NIGHT'] = None
+RUN_KEYS['UPDATE_OBJ_DATABASE'] = False
 RUN_KEYS['CORES'] = 1
 RUN_KEYS['STOP_AT_EXCEPTION'] = False
 RUN_KEYS['TEST_RUN'] = False
@@ -567,6 +568,7 @@ def read_runfile(params, runfile, **kwargs):
             # cause an error if nightname not set
             WLOG(params, 'error', textentry('09-503-00010'))
     # ----------------------------------------------------------------------
+    # switch for setting science targets (from user inputs)
     if 'SCIENCE_TARGETS' in params['INPUTS']:
         # get the value of science_targets
         _science_targets = params['INPUTS']['SCIENCE_TARGETS']
@@ -578,6 +580,7 @@ def read_runfile(params, runfile, **kwargs):
             # set science targets
             params['SCIENCE_TARGETS'] = _science_targets
     # ----------------------------------------------------------------------
+    # switch for setting telluric target list (from user inputs)
     if 'TELLURIC_TARGETS' in params['INPUTS']:
         # get the value of telluric targets
         _tellu_targets = params['INPUTS']['TELLURIC_TARGETS']
@@ -588,6 +591,17 @@ def read_runfile(params, runfile, **kwargs):
                                                             ['"', "'"])
             # set telluric targets
             params['TELLURIC_TARGETS'] = _tellu_targets
+    # ----------------------------------------------------------------------
+    # switch whether we update object database (from user inputs)
+    if 'UPDATE_OBJDB' in params['INPUTS']:
+        # get the value of update obj database from inputs
+        _update_objdb = params['INPUTS']['UPDATE_OBJDB']
+        # deal with non null values only
+        if not drs_text.null_text(_update_objdb, ['', 'None']):
+            # get True/False
+            _update_objdb = drs_text.true_text(_update_objdb)
+            # set value
+            params['UPDATE_OBJ_DATABASE'] = _update_objdb
     # ----------------------------------------------------------------------
     # relock params
     params.lock()
@@ -3096,7 +3110,7 @@ def _get_cores(params):
         WLOG(params, 'error', textentry('00-503-00008', args=[cores]))
     if cores >= cpus:
         eargs = [cpus, cores]
-        WLOG(params, 'error', textentry('00-503-00009', args=eargs))
+        WLOG(params, 'warning', textentry('00-503-00009', args=eargs))
     # return number of cores
     return cores
 

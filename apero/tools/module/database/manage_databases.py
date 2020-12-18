@@ -11,6 +11,7 @@ import numpy as np
 import os
 import pandas as pd
 from typing import Dict, List, Union
+from tqdm import tqdm
 
 from apero.base import base
 from apero.base import drs_db
@@ -306,6 +307,92 @@ def make_object_reset(params: ParamDict):
     # write to csv file
     table.to_csv(os.path.join(asset_dir, reset_path, objdbm.dbreset),
                  index=False)
+
+
+def update_object_database(params: ParamDict):
+    """
+    Update the local object database - note this overwrites all entries in the
+    local database - i.e. we assume the google sheet is more correct
+    however it does leave entries that are not in the google sheet in the
+    local object database
+
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: None, updates local object database
+    """
+    # print that we are updating object database
+    WLOG(params, 'info', textentry('40-503-00039'))
+    # gaia col name in google sheet
+    gl_gaia_colname = params['GL_GAIA_COL_NAME']
+    # object col name in google sheet
+    gl_obj_colname = params['GL_OBJ_COL_NAME']
+    # need to load database
+    objdbm = drs_database.ObjectDatabase(params)
+    objdbm.load_db()
+    # get database columns
+    db_cols = list(objdbm.database.colnames('*', objdbm.database.tname))
+    # get google sheets
+    gtable = gen_pp.get_google_sheet(params['OBJ_LIST_GOOGLE_SHEET_URL'],
+                                     params['OBJ_LIST_GOOGLE_SHEET_WNUM'])
+    # get columns
+    google_cols = list(gtable.colnames)
+    # update rows in gtable
+    for row in tqdm(range(len(gtable))):
+        # get object name and gaia id
+        objname = gtable[gl_obj_colname][row]
+        gaiaid = gtable[gl_gaia_colname][row]
+        # log progress ( as debug )
+        WLOG(params, 'debug', textentry('40-503-00040', args=[objname, gaiaid]))
+        # add columns and values to list for set_row
+        ucols = []
+        uvals = []
+        # add other columns
+        for gcol in google_cols:
+            # deal with object name column
+            if gcol == gl_obj_colname:
+                # check for null object name
+                if gen_pp.is_null(objname):
+                    uobjname = 'NULL'
+                else:
+                    uobjname = str(objname)
+                # add object values
+                ucols += ['OBJNAME', 'OBJNAME_SOURCE']
+                uvals += [uobjname, 'update-id-gsheet']
+                # continue with loop
+                continue
+            # deal with gaia id column
+            if gcol == gl_gaia_colname:
+                # check for null object name
+                if gen_pp.is_null(objname):
+                    ugaiaid = 'NULL'
+                else:
+                    ugaiaid = str(gaiaid)
+                # add gaia id
+                ucols += ['GAIADR2ID', 'GAIAID_SOURCE']
+                uvals += [ugaiaid, 'update-id-gsheet']
+                # continue with loop
+                continue
+            # skip columns not in the database
+            if gcol not in db_cols:
+                continue
+            # add columns
+            ucols.append(gcol)
+            # must deal with masked values in the googlesheet
+            if not gen_pp.is_null(gtable[row][gcol]):
+                uvals.append(gtable[row][gcol])
+            else:
+                uvals.append('NULL')
+            # add source
+            if '{0}_SOURCE'.format(gcol) in db_cols:
+                ucols.append('{0}_SOURCE'.format(gcol))
+                uvals.append('update-id-gsheet')
+        # add used column
+        ucols.append('USED')
+        uvals.append(1)
+        # add to database (update row or add new row)
+        objdbm.set_row(gaiaid, objname, ucols, uvals, commit=False)
+    # finally commit all rows to database
+    objdbm.database.commit()
 
 
 def create_lang_database(databases: Dict[str, Union[DatabaseM, BaseDatabaseM]]

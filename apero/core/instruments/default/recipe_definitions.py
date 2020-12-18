@@ -254,6 +254,8 @@ processing.set_kwarg(name='--science_targets', dtype=str, default='None',
                      helpstr=textentry('PROCESS_SCI_TARGETS'))
 processing.set_kwarg(name='--telluric_targets', dtype=str, default='None',
                      helpstr=textentry('PROCESS_TELLU_TARGETS'))
+processing.set_kwarg(name='--update_objdb', dtype=str, default='None',
+                     helpstr=textentry('PROCESS_UPDATE_OBJDB'))
 
 # -----------------------------------------------------------------------------
 # apero_requirements-check.py
