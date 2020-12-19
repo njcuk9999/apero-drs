@@ -33,7 +33,9 @@ Medium priority:
 * loc and wave coefficients to tables [Neil]
 * add option to set template for mk_tellu and fit_tellu [Neil]
 * deal with all python warnings [Neil]
+* add NIPRS changes to 0.7 branch
 * post processing (i.e. outputs like CADC/ESO)   [Neil/Chris]
+    * option to remove all reduced / tmp files (not calib/tellu)
 * DRS tests [Charles + Thomas]
 
 Low priority:

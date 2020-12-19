@@ -130,7 +130,7 @@
     
 
 \title{APERO Documentation}
-\date{Dec 17, 2020}
+\date{Dec 19, 2020}
 \release{0.7.053}
 \author{Neil Cook}
 \newcommand{\sphinxlogo}{\sphinxincludegraphics{apero_logo.png}\par}
@@ -729,7 +729,16 @@ add option to set template for mk\_tellu and fit\_tellu {[}Neil{]}
 deal with all python warnings {[}Neil{]}
 
 \item {} 
-post processing (i.e. outputs like CADC/ESO)   {[}Neil/Chris{]}
+add NIPRS changes to 0.7 branch
+
+\item {} \begin{description}
+\item[{post processing (i.e. outputs like CADC/ESO)   {[}Neil/Chris{]}}] \leavevmode\begin{itemize}
+\item {} 
+option to remove all reduced / tmp files (not calib/tellu)
+
+\end{itemize}
+
+\end{description}
 
 \item {} 
 DRS tests {[}Charles + Thomas{]}
@@ -1019,6 +1028,16 @@ functionality (“velocity”).
 
 
 \paragraph{Preprocessing functionality}
+\label{\detokenize{user/science/calib:preprocessing-functionality}}\label{\detokenize{user/science/calib:science-calib}}\label{\detokenize{user/science/calib::doc}}
+
+\subparagraph{Calibrating pre\sphinxhyphen{}processed files}
+\label{\detokenize{user/science/calib:calibrating-pre-processed-files}}\label{\detokenize{user/science/calib:science-calib-calibrate-pp-files}}\begin{quote}
+
+{\hyperref[\detokenize{user/spirou:spirou-main}]{\sphinxcrossref{\DUrole{std,std-ref}{Back to top}}}}
+\end{quote}
+
+
+\paragraph{Preprocessing functionality}
 \label{\detokenize{user/science/preprocessing:preprocessing-functionality}}\label{\detokenize{user/science/preprocessing:science-preprocessing}}\label{\detokenize{user/science/preprocessing::doc}}
 
 \subparagraph{Raw file header fixing}
@@ -1224,6 +1243,19 @@ None
 \label{\detokenize{user/spirou/recipes/dark_master:dark-master-recipe}}\label{\detokenize{user/spirou/recipes/dark_master:recipes-spirou-dark-master}}\label{\detokenize{user/spirou/recipes/dark_master::doc}}
 Collects all dark files and creates a master dark image to use for correction.
 
+First step is to locate all pre\sphinxhyphen{}processed DARK\_DARK files. Thus one needs to
+run {\hyperref[\detokenize{user/spirou/recipes/preprocessing:recipes-spirou-preprocessing}]{\sphinxcrossref{\DUrole{std,std-ref}{preprocessing}}}} on all DARK\_DARK files
+before running the dark master recipe.
+
+Next a table of key header values from the DARK\_DARK headers is constructed and
+a master dark is made by combining all valid DARK frames (using a median \sphinxhyphen{} in
+such a way that we do not have too many DARK\_DARK files open at once).
+
+Then quality control is done (currently there are no quality control for the
+master dark \sphinxhyphen{} just the individual darks).
+
+Then the master dark file is saved to disk and added to the calibration database.
+
 
 \paragraph{Schematic}
 \label{\detokenize{user/spirou/recipes/dark_master:schematic}}
@@ -1282,6 +1314,22 @@ Does not require a master night choice \sphinxhyphen{} finds darks from all prep
 \subsubsection{Bad Pixel Correction Recipe}
 \label{\detokenize{user/spirou/recipes/bad_pixel:bad-pixel-correction-recipe}}\label{\detokenize{user/spirou/recipes/bad_pixel:recipes-spirou-bad-pixels}}\label{\detokenize{user/spirou/recipes/bad_pixel::doc}}
 Creates a bad pixel mask for identifying and deal with bad pixels.
+
+This recipe takes a set of FLAT\_FLAT files and a set of DARK\_DARK files.
+
+The first step is to combine the FLAT\_FLAT files into a single file and
+combine the DARK\_DARK files into a single file.
+
+We then locate bad pixels on the combined FLAT\_FLAT and DARK\_DARK and also
+locate bad pixels on a full engineering flat.
+
+After bad pixels are found we flip and resize the image.
+
+The background map is then calculated and quality control assess the data
+quality.
+
+Bad pixel files are then written to disk and if quality control passed they
+are written to the calibration database.
 
 
 \paragraph{Schematic}
@@ -1344,6 +1392,27 @@ Finds the orders on the image.
 Needs to be run twice \sphinxhyphen{} once with FLAT\_DARK files (to create the localisation
 for fiber AB) and once with DARK\_FLAT (to create the localisation for fiber C).
 
+The first step is to combine the FLAT\_DARK (or DARK\_FLAT) into a single file.
+These files are then {\hyperref[\detokenize{user/science/calib:science-calib-calibrate-pp-files}]{\sphinxcrossref{\DUrole{std,std-ref}{calibrated}}}}.
+
+After calibration we then calculate the order profile (used for optimal extraction)
+and then find the orders \sphinxhyphen{} by first selecting a set of rows around the central
+column and fitting peaks to locate the order centers. For each order we then
+find the center in steps towards the left and right of the detector. Polynomials
+are then fit to each order for the position centers and the width of each order.
+
+The polynomial coefficients are then checked and continuity is forced between the
+orders. Once a final set of polynomial coefficients is calculated (for both
+position centers and width) for each order the localisation map is constructed.
+
+After quality control the localisation files are written and if the data passed
+the quality control files are added to the calibration database.
+
+
+\paragraph{Schematic}
+\label{\detokenize{user/spirou/recipes/localisation:schematic}}
+This section can only currently be viewed in the html documentation.
+
 
 \paragraph{Run}
 \label{\detokenize{user/spirou/recipes/localisation:run}}
@@ -1372,6 +1441,9 @@ DRS\PYGZus{}DATA\PYGZus{}REDUC   \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} default \PYG{l
 
 \paragraph{Calibration database entry}
 \label{\detokenize{user/spirou/recipes/localisation:calibration-database-entry}}
+Note using FLAT\_DARK inputs gives FIBER = AB,
+using DARK\_FLAT inputs gives FIBER = C
+
 \begin{sphinxVerbatim}[commandchars=\\\{\}]
 ORDER\PYGZus{}PROFILE\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}NIGHT\PYGZus{}NAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}FILENAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}HUMAN DATE\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}UNIX DATE\PYG{o}{\PYGZcb{}}
 LOC\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}NIGHT\PYGZus{}NAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}FILENAME\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}HUMAN DATE\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}UNIX DATE\PYG{o}{\PYGZcb{}}
@@ -1380,6 +1452,9 @@ LOC\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}NIGHT\PY
 
 \paragraph{Output files}
 \label{\detokenize{user/spirou/recipes/localisation:output-files}}
+Note using FLAT\_DARK inputs gives FIBER = AB,
+using DARK\_FLAT inputs gives FIBER = C
+
 \begin{sphinxVerbatim}[commandchars=\\\{\}]
 \PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}order\PYGZus{}profile\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits  \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} order profile file \PYG{o}{(}3100x4088\PYG{o}{)}
 \PYG{o}{\PYGZob{}}ODOMETER\PYGZus{}CODE\PYG{o}{\PYGZcb{}}\PYGZus{}pp\PYGZus{}loco\PYGZus{}\PYG{o}{\PYGZob{}}FIBER\PYG{o}{\PYGZcb{}}.fits           \PYG{l+s+se}{\PYGZbs{}\PYGZbs{}} localisation centers map file \PYG{o}{(}49x4088\PYG{o}{)}

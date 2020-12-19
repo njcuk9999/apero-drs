@@ -155,6 +155,16 @@
   <div class="section" id="bad-pixel-correction-recipe">
 <span id="recipes-spirou-bad-pixels"></span><h1>Bad Pixel Correction Recipe<a class="headerlink" href="#bad-pixel-correction-recipe" title="Permalink to this headline">¶</a></h1>
 <p>Creates a bad pixel mask for identifying and deal with bad pixels.</p>
+<p>This recipe takes a set of FLAT_FLAT files and a set of DARK_DARK files.</p>
+<p>The first step is to combine the FLAT_FLAT files into a single file and
+combine the DARK_DARK files into a single file.</p>
+<p>We then locate bad pixels on the combined FLAT_FLAT and DARK_DARK and also
+locate bad pixels on a full engineering flat.</p>
+<p>After bad pixels are found we flip and resize the image.</p>
+<p>The background map is then calculated and quality control assess the data
+quality.</p>
+<p>Bad pixel files are then written to disk and if quality control passed they
+are written to the calibration database.</p>
 <div class="section" id="schematic">
 <h2>Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
 <img alt="../../../_images/cal_badpix_spirou_schematic.jpg" src="../../../_images/cal_badpix_spirou_schematic.jpg" />

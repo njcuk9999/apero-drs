@@ -156,6 +156,15 @@
   <div class="section" id="dark-master-recipe">
 <span id="recipes-spirou-dark-master"></span><h1>Dark Master Recipe<a class="headerlink" href="#dark-master-recipe" title="Permalink to this headline">¶</a></h1>
 <p>Collects all dark files and creates a master dark image to use for correction.</p>
+<p>First step is to locate all pre-processed DARK_DARK files. Thus one needs to
+run <a class="reference internal" href="preprocessing.html#recipes-spirou-preprocessing"><span class="std std-ref">preprocessing</span></a> on all DARK_DARK files
+before running the dark master recipe.</p>
+<p>Next a table of key header values from the DARK_DARK headers is constructed and
+a master dark is made by combining all valid DARK frames (using a median - in
+such a way that we do not have too many DARK_DARK files open at once).</p>
+<p>Then quality control is done (currently there are no quality control for the
+master dark - just the individual darks).</p>
+<p>Then the master dark file is saved to disk and added to the calibration database.</p>
 <div class="section" id="schematic">
 <h2>Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
 <img alt="../../../_images/cal_dark_master_spirou_schematic.jpg" src="../../../_images/cal_dark_master_spirou_schematic.jpg" />
