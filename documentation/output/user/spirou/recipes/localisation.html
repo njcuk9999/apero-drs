@@ -110,6 +110,7 @@
   <h3><a href="../../../index.html">Table of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Localisation Recipe</a><ul>
+<li><a class="reference internal" href="#schematic">Schematic</a></li>
 <li><a class="reference internal" href="#run">Run</a></li>
 <li><a class="reference internal" href="#optional-arguments">Optional Arguments</a></li>
 <li><a class="reference internal" href="#output-dir">Output Dir</a></li>
@@ -156,6 +157,22 @@
 <p>Finds the orders on the image.</p>
 <p>Needs to be run twice - once with FLAT_DARK files (to create the localisation
 for fiber AB) and once with DARK_FLAT (to create the localisation for fiber C).</p>
+<p>The first step is to combine the FLAT_DARK (or DARK_FLAT) into a single file.
+These files are then <a class="reference internal" href="../../science/calib.html#science-calib-calibrate-pp-files"><span class="std std-ref">calibrated</span></a>.</p>
+<p>After calibration we then calculate the order profile (used for optimal extraction)
+and then find the orders - by first selecting a set of rows around the central
+column and fitting peaks to locate the order centers. For each order we then
+find the center in steps towards the left and right of the detector. Polynomials
+are then fit to each order for the position centers and the width of each order.</p>
+<p>The polynomial coefficients are then checked and continuity is forced between the
+orders. Once a final set of polynomial coefficients is calculated (for both
+position centers and width) for each order the localisation map is constructed.</p>
+<p>After quality control the localisation files are written and if the data passed
+the quality control files are added to the calibration database.</p>
+<div class="section" id="schematic">
+<h2>Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
+<img alt="../../../_images/cal_loc_spirou_schematic.jpg" src="../../../_images/cal_loc_spirou_schematic.jpg" />
+</div>
 <div class="section" id="run">
 <h2>Run<a class="headerlink" href="#run" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cal_loc_spirou.py <span class="o">[</span>DIRECTORY<span class="o">]</span> <span class="o">[</span>FLAT_DARK<span class="o">]</span>
@@ -180,6 +197,8 @@ cal_loc_spirou.py <span class="o">[</span>DIRECTORY<span class="o">]</span> <spa
 </div>
 <div class="section" id="calibration-database-entry">
 <h2>Calibration database entry<a class="headerlink" href="#calibration-database-entry" title="Permalink to this headline">¶</a></h2>
+<p>Note using FLAT_DARK inputs gives FIBER = AB,
+using DARK_FLAT inputs gives FIBER = C</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ORDER_PROFILE_<span class="o">{</span>FIBER<span class="o">}</span> <span class="o">{</span>NIGHT_NAME<span class="o">}</span> <span class="o">{</span>FILENAME<span class="o">}</span> <span class="o">{</span>HUMAN DATE<span class="o">}</span> <span class="o">{</span>UNIX DATE<span class="o">}</span>
 LOC_<span class="o">{</span>FIBER<span class="o">}</span> <span class="o">{</span>NIGHT_NAME<span class="o">}</span> <span class="o">{</span>FILENAME<span class="o">}</span> <span class="o">{</span>HUMAN DATE<span class="o">}</span> <span class="o">{</span>UNIX DATE<span class="o">}</span>
 </pre></div>
@@ -187,6 +206,8 @@ LOC_<span class="o">{</span>FIBER<span class="o">}</span> <span class="o">{</spa
 </div>
 <div class="section" id="output-files">
 <h2>Output files<a class="headerlink" href="#output-files" title="Permalink to this headline">¶</a></h2>
+<p>Note using FLAT_DARK inputs gives FIBER = AB,
+using DARK_FLAT inputs gives FIBER = C</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">{</span>ODOMETER_CODE<span class="o">}</span>_pp_order_profile_<span class="o">{</span>FIBER<span class="o">}</span>.fits  <span class="se">\\</span> order profile file <span class="o">(</span>3100x4088<span class="o">)</span>
 <span class="o">{</span>ODOMETER_CODE<span class="o">}</span>_pp_loco_<span class="o">{</span>FIBER<span class="o">}</span>.fits           <span class="se">\\</span> localisation centers map file <span class="o">(</span>49x4088<span class="o">)</span>
 <span class="o">{</span>ODOMETER_CODE<span class="o">}</span>_pp_fwhm-order_<span class="o">{</span>FIBER<span class="o">}</span>.fits     <span class="se">\\</span> localisation widths map file <span class="o">(</span>49x4088<span class="o">)</span>

@@ -6,6 +6,20 @@ Dark Master Recipe
 
 Collects all dark files and creates a master dark image to use for correction.
 
+
+First step is to locate all pre-processed DARK_DARK files. Thus one needs to
+run :ref:`preprocessing <recipes_spirou_preprocessing>` on all DARK_DARK files
+before running the dark master recipe.
+
+Next a table of key header values from the DARK_DARK headers is constructed and
+a master dark is made by combining all valid DARK frames (using a median - in
+such a way that we do not have too many DARK_DARK files open at once).
+
+Then quality control is done (currently there are no quality control for the
+master dark - just the individual darks).
+
+Then the master dark file is saved to disk and added to the calibration database.
+
 ===========================================
 Schematic
 ===========================================

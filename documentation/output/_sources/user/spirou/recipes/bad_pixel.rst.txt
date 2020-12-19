@@ -7,6 +7,23 @@ Bad Pixel Correction Recipe
 
 Creates a bad pixel mask for identifying and deal with bad pixels.
 
+This recipe takes a set of FLAT_FLAT files and a set of DARK_DARK files.
+
+The first step is to combine the FLAT_FLAT files into a single file and
+combine the DARK_DARK files into a single file.
+
+We then locate bad pixels on the combined FLAT_FLAT and DARK_DARK and also
+locate bad pixels on a full engineering flat.
+
+After bad pixels are found we flip and resize the image.
+
+The background map is then calculated and quality control assess the data
+quality.
+
+Bad pixel files are then written to disk and if quality control passed they
+are written to the calibration database.
+
+
 ===========================================
 Schematic
 ===========================================

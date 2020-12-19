@@ -66,7 +66,9 @@ functionality ("velocity").
 .. toctree::
    :maxdepth: 1
 
+   science/calib.rst
    science/preprocessing.rst
+
 
 
 ===========================================
