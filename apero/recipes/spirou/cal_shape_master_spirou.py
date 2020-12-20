@@ -224,8 +224,30 @@ def __main__(recipe, params):
         fargs = [max_dxmap_info[0], max_dxmap_info[1], max_dxmap_std,
                  max_dxmap_info[2]]
         WLOG(params, 'warning', textentry('10-014-00003', args=fargs))
+        # quality control
+        qc_values = [max_dxmap_std]
+        qc_names= ['max_dxmap_std']
+        qc_logic= ['max_dxmap_std > {0:.5f}'.format(max_dxmap_info[2])]
+        qc_pass= [0]
+        # store in qc_params
+        qc_params = [qc_names, qc_values, qc_logic, qc_pass]
+        # update recipe log
+        recipe.log.add_qc(params, qc_params, False)
+        # ------------------------------------------------------------------
+        # update recipe log file
+        # ------------------------------------------------------------------
+        recipe.log.end(params)
+
         # return a copy of locally defined variables in the memory
         return drs_startup.return_locals(params, locals())
+    else:
+        # no quality control currently
+        qc_values = [max_dxmap_std]
+        qc_names= ['max_dxmap_std']
+        qc_logic= ['max_dxmap_std > {0:.5f}'.format(max_dxmap_info[2])]
+        qc_pass= [1]
+        # store in qc_params
+        qc_params = [qc_names, qc_values, qc_logic, qc_pass]
 
     # ----------------------------------------------------------------------
     # Calculate dy shape map
@@ -252,7 +274,7 @@ def __main__(recipe, params):
     # ------------------------------------------------------------------
     # Quality control
     # ------------------------------------------------------------------
-    qc_params, passed = shape.shape_master_qc(params, dxrms)
+    qc_params, passed = shape.shape_master_qc(params, dxrms, qc_params)
     # update recipe log
     recipe.log.add_qc(params, qc_params, passed)
 
