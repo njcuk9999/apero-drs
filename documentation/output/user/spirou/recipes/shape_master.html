@@ -110,6 +110,7 @@
   <h3><a href="../../../index.html">Table of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Shape Master Recipe</a><ul>
+<li><a class="reference internal" href="#schematic">Schematic</a></li>
 <li><a class="reference internal" href="#run">Run</a></li>
 <li><a class="reference internal" href="#optional-arguments">Optional Arguments</a></li>
 <li><a class="reference internal" href="#output-dir">Output Dir</a></li>
@@ -156,6 +157,39 @@
 <p>Creates a master FP image from all FPs processed. Uses this to work out the
 required shifts due to the FP master image, slicer pupil geometry and the
 bending of the orders (found in localisation).</p>
+<p>The shape master requires a ‘reference’ pre-processed HC_HC file and FP_FP file.
+These are normally a set of HC_HC files and FP_FP files from one single night
+(i.e. the master night).</p>
+<p>The first step is to check that the FP files are valid (details
+<a class="reference internal" href="../../science/calib.html#science-calib-check-fp"><span class="std std-ref">here</span></a>).</p>
+<p>After this the reference HC_HC files and reference FP_FP files are combined.
+We then get the localisation cofficients (from the calibration database)
+and look for a wave solution (either from the calibration database - from a
+previous solution - or if that does not exist from the default master
+wave solution).</p>
+<p>We then calibration the combined reference HC_HC and combined reference FP_FP
+using the <a class="reference internal" href="../../science/calib.html#science-calib-calibrate-pp-files"><span class="std std-ref">pre-processing calibration function</span></a>.</p>
+<p>Next we find all FP_FP files that have currently been pre-processed - this
+means all FP_FP files from all nights (or as many as possible) should have
+been preprocessed by this point.</p>
+<p>If the user defiend a master fp (via –fpmaster) we load this master FP otherwise
+we load all FP_FP file headers and generate a table of key header parameters and
+then construct the master FP (using a median - in such a way that we do not have
+too many FP_FP files open at once).</p>
+<p>Once the master FP map is loaded (or generated) we calculate the dx shift map
+(correction due to the slicer profile and tilt) and calculate the dy shift map
+(due to the arching of the orders). There is also a check at this point that
+the dx map was generated correction - if not the recipe ends (QC failure).</p>
+<p>After calculating the dx shift map and dy shift map we then have to shift
+the dx shift map by the dy shift map (so that all dx shifts are applied after
+a dy shift). We then transform the combined reference HC_HC and combined reference
+FP_FP files using the dx shift map and dy shift map.</p>
+<p>After quality control the shape master files are then written to disk and if the
+data passed the quality control files are added to the calibration database.</p>
+<div class="section" id="schematic">
+<h2>Schematic<a class="headerlink" href="#schematic" title="Permalink to this headline">¶</a></h2>
+<img alt="../../../_images/cal_shape_master_spirou_schematic.jpg" src="../../../_images/cal_shape_master_spirou_schematic.jpg" />
+</div>
 <div class="section" id="run">
 <h2>Run<a class="headerlink" href="#run" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cal_shape_master_spirou.py <span class="o">[</span>DIRECTORY<span class="o">]</span> -hcfiles <span class="o">[</span>HCONE_HCONE<span class="o">]</span> -fpfiles <span class="o">[</span>FP_FP<span class="o">]</span>

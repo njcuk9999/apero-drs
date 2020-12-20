@@ -1545,10 +1545,15 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     return outfile1, outfile2, outfile3
 
 
-def shape_master_qc(params, dxrms=None, **kwargs):
+def shape_master_qc(params, dxrms=None, qc_params=None, **kwargs):
     func_name = __NAME__ + '.shape_master_qc()'
     # set passed variable and fail message list
-    fail_msg, qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
+    fail_msg = []
+    # deal with having qc parameters already
+    if qc_params is not None:
+        qc_names, qc_values, qc_logic, qc_pass = qc_params
+    else:
+        qc_values, qc_names, qc_logic, qc_pass = [], [], [], [], []
     # get dxrms criteria
     dxrmscut = pcheck(params, 'SHAPE_MASTER_DX_RMS_QC', 'dxrmscut', kwargs,
                       func_name)

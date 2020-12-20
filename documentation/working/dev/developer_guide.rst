@@ -9,14 +9,30 @@ Below is a guide for those developing APERO for the current set of instruments
 and for future instruments.
 
 
-.. _dev_main_quicklinks:
+.. _dev_main_tools:
 
 ------------------------------
-Quick add links
+Developer tools
 ------------------------------
 
 .. toctree::
-  :maxdepth: 2
+  :maxdepth: 1
+  :caption: Contents:
+
+  tools/apero_changelog.rst
+  tools/apero_dependencies.rst
+  tools/apero_documentation.rst
+  tools/apero_langdb.rst
+
+
+.. _dev_main_quicklinks:
+
+------------------------------
+Quick add developer tutorials
+------------------------------
+
+.. toctree::
+  :maxdepth: 1
   :caption: Contents:
   
   adding_new_constant.rst
