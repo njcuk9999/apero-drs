@@ -332,8 +332,10 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # get a new copy of the out file
     out_pp_file = exp_pp_file.newcopy(recipe=recipe)
+    # set custom suffix
+    suffix = '{0}_{1}'.format(exp_pp_file.suffix, ''.join(fibers))
     # construct filename
-    out_pp_file.construct_filename(params, infile=ref_infile)
+    out_pp_file.construct_filename(params, infile=ref_infile, suffix=suffix)
     # copy header from ref file
     out_pp_file.copy_original_keys(ref_infile)
     # add header keys
@@ -352,8 +354,10 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # get a new copy of the out file
     out_raw_file = exp_raw_file.newcopy(recipe=recipe)
+    # set custom suffix
+    suffix = '{0}_{1}'.format(exp_raw_file.suffix, ''.join(fibers))
     # construct filename
-    out_raw_file.construct_filename(params, infile=ref_infile)
+    out_raw_file.construct_filename(params, infile=ref_infile, suffix=suffix)
     # copy header from ref file
     out_raw_file.copy_original_keys(ref_infile)
     # add header keys
