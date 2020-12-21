@@ -22,6 +22,14 @@ Immediate small:
     * we are combining all for a night id bad ones and remove
     * error if not enough - define minimum number of calibrations required
 
+* obj database
+    * flag in header for data from objdb or header
+    * deal with being offline revert to header
+
+* databases
+    * IndexDB: runstring not adding?
+
+
 High priority:
 
 * polar code update  [Neil/Eder/Chris]
