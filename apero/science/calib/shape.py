@@ -1717,7 +1717,8 @@ def write_shape_local_files(params, recipe, infile, combine, rawfiles, props,
         debugfile1.copy_hdict(outfile)
         debugfile1.add_hkey('KW_OUTPUT', value=debugfile1.name)
         debugfile1.data = image
-        debugfile1.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+        debugfile1.write_file(kind=recipe.outputtype,
+                              runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(debugfile1)
         # out file
