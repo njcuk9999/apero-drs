@@ -344,13 +344,13 @@ def setup(name: str = 'None', instrument: str = 'None',
     if cond1 and cond2:
         recipe.log = drs_utils.RecipeLog(recipe.name, params, logger=WLOG)
         # add log file to log (only used to save where the log is)
-        # logfile = drs_log.get_logfilepath(WLOG, params)
-        # recipe.log.set_log_file(logfile)
+        logfile = drs_log.get_logfilepath(WLOG, params)
+        recipe.log.set_log_file(logfile)
         # add user input parameters to log
         recipe.log.runstring = recipe.runstring
         recipe.log.args = recipe.largs
         recipe.log.kwargs = recipe.lkwargs
-        recipe.log.kwargs = recipe.lskwargs
+        recipe.log.skwargs = recipe.lskwargs
         # set lock function (lock file is NIGHTNAME + _log
         # recipe.log.set_lock_func(drs_lock.locker)
         # write recipe log
