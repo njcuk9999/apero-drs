@@ -624,8 +624,7 @@ def loc_quality_control(params, fiber, cent_max_rmpts, wid_max_rmpts,
     # add to qc header lists
     qc_values.append(sum_cent_max_rmpts)
     qc_names.append('sum(MAX_RMPTS_POS)')
-    qc_logic.append('sum(MAX_RMPTS_POS) < {0:.2f}'
-                    ''.format(sum_cent_max_rmpts))
+    qc_logic.append('sum(MAX_RMPTS_POS) < {0:.2f}'.format(max_removed_cent))
     # ----------------------------------------------------------------------
     # check that  max number of points rejected in width fit is below
     #   threshold
@@ -640,8 +639,7 @@ def loc_quality_control(params, fiber, cent_max_rmpts, wid_max_rmpts,
     # add to qc header lists
     qc_values.append(sum_wid_max_rmpts)
     qc_names.append('sum(MAX_RMPTS_WID)')
-    qc_logic.append('sum(MAX_RMPTS_WID) < {0:.2f}'
-                    ''.format(sum_wid_max_rmpts))
+    qc_logic.append('sum(MAX_RMPTS_WID) < {0:.2f}'.format(max_removed_wid))
     # ------------------------------------------------------------------
     if mean_rms_cent > rmsmax_cent:
         # add failed message to fail message list
