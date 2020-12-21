@@ -59,6 +59,8 @@ exposuremeter.description = 'Produces an exposuremeter map'
 exposuremeter.kind = 'misc'
 exposuremeter.set_arg(pos=0, name='directory', dtype='directory',
                       helpstr=textentry('DIRECTORY_HELP'))
+exposuremeter.set_kwarg(name='--fibers', dtype=str, default='None',
+                        helpstr='Choose the fibers to populate in the mask')
 
 # add recipe to recipe definition
 RMOD.add(exposuremeter)
@@ -143,8 +145,23 @@ def __main__(recipe, params):
     # load the calibration database
     calibdbm = drs_database.CalibrationDatabase(params)
     calibdbm.load_db()
+    # ----------------------------------------------------------------------
+    # get all allowed fibers
+    allowed_fibers = pconst.INDIVIDUAL_FIBERS()
     # get fibers
-    fibers = pconst.INDIVIDUAL_FIBERS()
+    if params['INPUTS']['FIBERS'] not in ['None', '']:
+        fibers = params['INPUTS'].listp('FIBERS', dtype=str)
+        # check that all fibers are valid
+        for fiber in fibers:
+            if fiber not in allowed_fibers:
+                # log error message
+                emsg = ('--fibers FIBER="{0}" is not a valid fiber'
+                        '\n\t Valid fibers are {1}')
+                eargs = [fiber, ' or '.join(allowed_fibers)]
+                WLOG(params, 'error', emsg.format(*eargs))
+    # else set fibers to all allowed fibers
+    else:
+        fibers = allowed_fibers
 
     # ----------------------------------------------------------------------
     # Get the wave image
@@ -322,8 +339,10 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # get a new copy of the out file
     out_pp_file = exp_pp_file.newcopy(params=params)
+    # custom suffix
+    suffix = '{0}_{1}'.format(exp_pp_file.suffix, ''.join(fibers))
     # construct filename
-    out_pp_file.construct_filename(infile=ref_infile)
+    out_pp_file.construct_filename(infile=ref_infile, suffix=suffix)
     # copy header from ref file
     out_pp_file.copy_original_keys(ref_infile)
     # add header keys
@@ -342,8 +361,10 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # get a new copy of the out file
     out_raw_file = exp_raw_file.newcopy(params=params)
+    # custom suffix
+    suffix = '{0}_{1}'.format(exp_raw_file.suffix, ''.join(fibers))
     # construct filename
-    out_raw_file.construct_filename(infile=ref_infile)
+    out_raw_file.construct_filename(infile=ref_infile, suffix=suffix)
     # copy header from ref file
     out_raw_file.copy_original_keys(ref_infile)
     # add header keys
