@@ -1445,7 +1445,6 @@ def unix_char_code():
     return unixtime, humantime, rval
 
 
-
 def find_recipe(name='None', instrument='None', mod=None):
     """
     Finds a given recipe in the instruments definitions
