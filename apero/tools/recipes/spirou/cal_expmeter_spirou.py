@@ -59,6 +59,8 @@ exposuremeter.description = 'Produces an exposuremeter map'
 exposuremeter.kind = 'misc'
 exposuremeter.set_arg(pos=0, name='directory', dtype='directory',
                       helpstr=Help['DIRECTORY_HELP'])
+exposuremeter.set_kwarg(name='--fibers', dtype=str, default='None',
+                        helpstr='Choose the fibers to populate in the mask')
 
 # add recipe to recipe definition
 RMOD.add(exposuremeter)
@@ -139,16 +141,30 @@ def __main__(recipe, params):
     filetype = 'WAVE_NIGHT'
     # get pseudo constants
     pconst = constants.pload(params['INSTRUMENT'])
+    # ----------------------------------------------------------------------
+    # get all allowed fibers
+    allowed_fibers = pconst.INDIVIDUAL_FIBERS()
     # get fibers
-    fibers = pconst.INDIVIDUAL_FIBERS()
-
+    if params['INPUTS']['FIBERS'] not in ['None', '']:
+        fibers = params['INPUTS'].listp('FIBERS', dtype=str)
+        # check that all fibers are valid
+        for fiber in fibers:
+            if fiber not in allowed_fibers:
+                # log error message
+                emsg = ('--fibers FIBER="{0}" is not a valid fiber'
+                        '\n\t Valid fibers are {1}')
+                eargs = [fiber, ' or '.join(allowed_fibers)]
+                WLOG(params, 'error', emsg.format(*eargs))
+    # else set fibers to all allowed fibers
+    else:
+        fibers = allowed_fibers
     # ----------------------------------------------------------------------
     # Get the wave image
     # ----------------------------------------------------------------------
     # storage for wave images
     wave_images = dict()
     wave_infiles = dict()
-
+    # ----------------------------------------------------------------------
     # log progress
     WLOG(params, '', 'Gettings wave files')
     # loop around fibers
