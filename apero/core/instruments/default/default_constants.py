@@ -564,8 +564,9 @@ PP_CORRUPT_MED_SIZE = Const('PP_CORRUPT_MED_SIZE', value=None, dtype=int,
 
 # Define the fraction of the required exposure time that is required for a
 #   valid observation
-PP_BAD_EXPTIME_FRACTION = Const('PP_CORRUPT_MED_SIZE', value=None, dtype=float,
-                                minimum=0, source=__NAME__, group=cgroup)
+PP_BAD_EXPTIME_FRACTION = Const('PP_BAD_EXPTIME_FRACTION', value=None,
+                                dtype=float, minimum=0, source=__NAME__,
+                                group=cgroup)
 
 # Defines the threshold in sigma that selects hot pixels
 PP_CORRUPT_HOT_THRES = Const('PP_CORRUPT_HOT_THRES', value=None, dtype=int,
