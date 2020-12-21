@@ -394,7 +394,7 @@ def unix_char_code() -> Tuple[float, str, str]:
     #  -- happens a lot in multiprocessing
     rint = np.random.randint(1000, 9999, 1)[0] / 1e7
     # wait a fraction of time (between 1us and 1ms)
-    time.sleep(rint)
+    time.sleep(float(rint))
     # get the time now from astropy
     timenow = Time.now()
     # get unix and human time from astropy time now
