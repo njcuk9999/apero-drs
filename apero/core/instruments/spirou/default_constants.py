@@ -237,7 +237,8 @@ PP_CORRUPT_MED_SIZE.value = 2
 
 # Define the fraction of the required exposure time that is required for a
 #   valid observation
-PP_BAD_EXPTIME_FRACTION = 0.10
+PP_BAD_EXPTIME_FRACTION = PP_BAD_EXPTIME_FRACTION.copy(__NAME__)
+PP_BAD_EXPTIME_FRACTION.value = 0.10
 
 # Defines the threshold in sigma that selects hot pixels
 PP_CORRUPT_HOT_THRES = PP_CORRUPT_HOT_THRES.copy(__NAME__)
