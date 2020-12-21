@@ -113,10 +113,10 @@ class RecipeLog:
             self.directory = str(params['NIGHTNAME'])
         # set the log file name (just used to save log directory)
         #  for log table entry
-        self.log_file = 'None'
+        self.log_file = 'Not Set'
         # set the plot file name (just used to save the plot directory) for
         #   log table entry
-        self.plot_dir = 'None'
+        self.plot_dir = 'Not Set'
         # set the inputs
         self.args = ''
         self.kwargs = ''
