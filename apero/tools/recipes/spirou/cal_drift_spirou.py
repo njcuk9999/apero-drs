@@ -174,9 +174,9 @@ def __main__(recipe, params):
     if 'dprtype' in params['INPUTS']:
         if not drs_text.null_text(params['INPUTS']['dprtype'], ['None', '']):
             dprtype = params['INPUTS']['dprtype']
-    if dprtype not in params.listp('ALLOWED_FP_TYPES', dtype=str):
+    if dprtype not in params.listp('DRIFT_DPRTYPES', dtype=str):
         emsg = TextEntry('01-001-00020', args=[dprtype, mainname])
-        for allowedtype in params.listp('ALLOWED_FP_TYPES', dtype=str):
+        for allowedtype in params.listp('DRIFT_DPRTYPES', dtype=str):
             emsg += '\n\t - "{0}"'.format(allowedtype)
         WLOG(params, 'error', emsg)
     # ------------------------------------------------------------------------
@@ -195,6 +195,14 @@ def __main__(recipe, params):
         pargs = [fiber, fb_it + 1, len(fibers)]
         WLOG(params, 'info', 'Processing fiber {0} ({1} of {2})'.format(*pargs))
         WLOG(params, 'info', params['DRS_HEADER'])
+        # get this fibers dprtype
+        fiberdpr = pconst.FIBER_DPR_POS(dprtype, fiber)
+        # skip if dprtype in this fiber does not match FP
+        if fiberdpr != params['DRIFT_DPR_FIBER_TYPE']:
+            emsg = 'Skipping fiber {0}={1} (Not of type "{1}")'
+            eargs = [fiber, fiberdpr, params['DRIFT_DPR_FIBER_TYPE']]
+            WLOG(params, 'warning', emsg.format(*eargs))
+
         # ---------------------------------------------------------------------
         # Get all FP_FP e2ds files
         # ---------------------------------------------------------------------
