@@ -1,8 +1,8 @@
-# Update Note Summary - Version 0.7.035
+# Update Note Summary - Version 0.7.053
 
-Date: 2020-09-10
+Date: 2020-12-21
 
-## Updates since Version 0.6.131
+## Updates since Version 0.6.132
 
 - database
     - complete code change on how databases are handled. Currently supported
@@ -72,3 +72,8 @@ Date: 2020-09-10
     - all functions should be pickle-able and python typed and have doc strings
     - reorganisation of modulular structure - minimize circular importing
       minimize when certain modules are imported/not imported
+
+- cal_drift
+    - added support for OBJ_FP and DARK_FP files (controlled via DRIFT_DPRTYPES
+      in the user_constants.ini file)
+    - now deals with non-FP fibers - will skip these entries

@@ -22,11 +22,6 @@ Immediate small:
     * we are combining all for a night id bad ones and remove
     * error if not enough - define minimum number of calibrations required
 
-* obj database
-    * flag in header for data from objdb or header
-    * deal with being offline revert to header
-    * remove multiple __ from clean name
-
 * databases
     * IndexDB: runstring not adding?
     * apero_explorer save not working?
