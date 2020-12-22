@@ -103,7 +103,8 @@ class DatabaseHolder:
         # start database
         database = drs_db.database_wrapper(self.kind, self.path)
         # push dataframe to replace SQL table
-        database.add_from_pandas(df, if_exists='replace', index=False,
+        database.add_from_pandas(df, table=self.kind,
+                                 if_exists='replace', index=False,
                                  commit=True)
         # print we are saving database
         print('Saving database {0}'.format(self.name))
