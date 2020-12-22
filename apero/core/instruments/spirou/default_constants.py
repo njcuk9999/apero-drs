@@ -2443,6 +2443,15 @@ EXPMETER_MAX_LAMBDA.value = 1823.1
 EXPMETER_TELLU_THRES = EXPMETER_TELLU_THRES.copy(__NAME__)
 EXPMETER_TELLU_THRES.value = 0.95
 
+# Define the types of file allowed for drift measurement
+DRIFT_DPRTYPES = DRIFT_DPRTYPES.copy(__NAME__)
+DRIFT_DPRTYPES.value = 'FP_FP, OBJ_FP, DARK_FP'
+
+# Define the fiber dprtype allowed for drift measurement (only FP)
+DRIFT_DPR_FIBER_TYPE = DRIFT_DPR_FIBER_TYPE.copy(__NAME__)
+DRIFT_DPR_FIBER_TYPE.value = 'FP'
+
+
 # =============================================================================
 #  End of configuration file
 # =============================================================================
