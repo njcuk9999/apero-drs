@@ -213,23 +213,47 @@ class AstroObject(object):
         # 1. try gaia id and objname against database
         # ---------------------------------------------------------------------
         if self.resolve_from_database:
-            self._resolve_from_database()
+            try:
+                self._resolve_from_database()
+            except Exception as e:
+                # log warning
+                wargs = [type(e), str(e)]
+                wmsg = textentry('10-010-00001', args=wargs)
+                WLOG(self.params, 'warning', wmsg)
         # ---------------------------------------------------------------------
         # 2. try gaia id against gaia query (only if gaia_id is still None)
         # ---------------------------------------------------------------------
         if (self.gaia_id is None) and self.resolve_from_gaia_id:
-            self._resolve_from_gaia_id()
+            try:
+                self._resolve_from_gaia_id()
+            except Exception as e:
+                # log warning
+                wargs = [type(e), str(e)]
+                wmsg = textentry('10-010-00002', args=wargs)
+                WLOG(self.params, 'warning', wmsg)
         # ---------------------------------------------------------------------
         # 3. try to get gaia id from google sheet of gaia id (with object name)
         # ---------------------------------------------------------------------
         if (self.gaia_id is None) and self.resolve_from_glist:
-            self._resolve_from_glist()
+            try:
+                self._resolve_from_glist()
+            except Exception as e:
+                # log warning
+                wargs = [type(e), str(e)]
+                wmsg = textentry('10-010-00003', args=wargs)
+                WLOG(self.params, 'warning', wmsg)
         # ---------------------------------------------------------------------
         # 4. use ra + dec to get gaia id (only if gaia_id is still None)
         # ---------------------------------------------------------------------
         if (self.gaia_id is None) and self.resolve_from_coords:
             if mjd is not None:
-                self._resolve_from_coords(mjd)
+                try:
+                    self._resolve_from_coords(mjd)
+                except Exception as e:
+                    # log warning
+                    wargs = [type(e), str(e)]
+                    wmsg = textentry('10-010-00004', args=wargs)
+                    WLOG(self.params, 'warning', wmsg)
         # ---------------------------------------------------------------------
         # Finally fill in any missing parameters from inputs/defaults
         # ---------------------------------------------------------------------
