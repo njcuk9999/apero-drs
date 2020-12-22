@@ -1142,7 +1142,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
                         dxmap = None
                         max_dxmap_std = dxmap_std
                         max_dxmap_info = [order_num, ix, std_qc]
-                        # return dxmap, max_dxmap_std, max_dxmap_info, None
+                        return dxmap, max_dxmap_std, max_dxmap_info, None
         # -----------------------------------------------------------------
         # plot all order angle_offset plot (in loop)
         pkwargs = dict(slope_deg=[slope_deg_arr_i], slope=[slope_arr_i],
@@ -1178,7 +1178,7 @@ def calculate_dxmap(params, recipe, hcdata, fpdata, wprops, lprops, **kwargs):
     master_dxmap[order_overlap != 0] = 0.0
     # save qc
     max_dxmap_std = mp.nanmax(dxmap_stds)
-    max_dxmap_info = [None, None]
+    max_dxmap_info = [None, None, std_qc]
     # ---------------------------------------------------------------------
     # calculate rms for dx-ddx (last iteration)
     dxrms = []
