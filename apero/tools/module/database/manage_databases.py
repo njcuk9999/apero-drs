@@ -320,6 +320,8 @@ def update_object_database(params: ParamDict):
 
     :return: None, updates local object database
     """
+    # get psuedo constants
+    pconst = constants.pload(params['INSTRUMENT'])
     # print that we are updating object database
     WLOG(params, 'info', textentry('40-503-00039'))
     # gaia col name in google sheet
@@ -329,68 +331,27 @@ def update_object_database(params: ParamDict):
     # need to load database
     objdbm = drs_database.ObjectDatabase(params)
     objdbm.load_db()
-    # get database columns
-    db_cols = list(objdbm.database.colnames('*', objdbm.database.tname))
     # get google sheets
     gtable = gen_pp.get_google_sheet(params['OBJ_LIST_GOOGLE_SHEET_URL'],
                                      params['OBJ_LIST_GOOGLE_SHEET_WNUM'])
-    # get columns
-    google_cols = list(gtable.colnames)
     # update rows in gtable
     for row in tqdm(range(len(gtable))):
         # get object name and gaia id
         objname = gtable[gl_obj_colname][row]
         gaiaid = gtable[gl_gaia_colname][row]
+        # clean up object name
+        cobjname = pconst.DRS_OBJ_NAME(objname)
         # log progress ( as debug )
         WLOG(params, 'debug', textentry('40-503-00040', args=[objname, gaiaid]))
-        # add columns and values to list for set_row
-        ucols = []
-        uvals = []
-        # add other columns
-        for gcol in google_cols:
-            # deal with object name column
-            if gcol == gl_obj_colname:
-                # check for null object name
-                if gen_pp.is_null(objname):
-                    uobjname = 'NULL'
-                else:
-                    uobjname = str(objname)
-                # add object values
-                ucols += ['OBJNAME', 'OBJNAME_SOURCE']
-                uvals += [uobjname, 'update-id-gsheet']
-                # continue with loop
-                continue
-            # deal with gaia id column
-            if gcol == gl_gaia_colname:
-                # check for null object name
-                if gen_pp.is_null(objname):
-                    ugaiaid = 'NULL'
-                else:
-                    ugaiaid = str(gaiaid)
-                # add gaia id
-                ucols += ['GAIADR2ID', 'GAIAID_SOURCE']
-                uvals += [ugaiaid, 'update-id-gsheet']
-                # continue with loop
-                continue
-            # skip columns not in the database
-            if gcol not in db_cols:
-                continue
-            # add columns
-            ucols.append(gcol)
-            # must deal with masked values in the googlesheet
-            if not gen_pp.is_null(gtable[row][gcol]):
-                uvals.append(gtable[row][gcol])
-            else:
-                uvals.append('NULL')
-            # add source
-            if '{0}_SOURCE'.format(gcol) in db_cols:
-                ucols.append('{0}_SOURCE'.format(gcol))
-                uvals.append('update-id-gsheet')
-        # add used column
-        ucols.append('USED')
-        uvals.append(1)
-        # add to database (update row or add new row)
-        objdbm.set_row(gaiaid, objname, ucols, uvals, commit=False)
+        # get astro object (current settings)
+        astro_obj = gen_pp.AstroObject(params, pconst, gaiaid, np.nan, np.nan,
+                                       objdbm, cobjname, np.nan, np.nan, np.nan,
+                                       np.nan, np.nan)
+        # resolve target (with current properties)
+        astro_obj.update_target(gtable)
+        # write to database
+        if astro_obj.gaia_id is not None:
+            astro_obj.write_obj(objdbm, commit=False)
     # finally commit all rows to database
     objdbm.database.commit()
 
