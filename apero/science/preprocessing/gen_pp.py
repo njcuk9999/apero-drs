@@ -235,6 +235,75 @@ class AstroObject(object):
         # ---------------------------------------------------------------------
         self._use_inputs()
 
+    def update_target(self, gtable: Table = None):
+        """
+        Update astro_obj based on an input table
+
+        Some times we will need to update the local database when there are
+        updates to the googlesheet - thus we use the astro_obj to first
+        resolve the object in the database
+
+        :param gtable:
+        :return:
+        """
+        # deal with database not loaded
+        self.database.load_db()
+        # resolve target from database
+        self._resolve_from_database()
+        # force update
+        self.update_database = True
+        # ---------------------------------------------------------------------
+        # update parameters in gtable (if given)
+        if gtable is not None:
+            # push table to cache
+            url = GOOGLE_BASE_URL.format(self.gsheet_url, self.gsheet_wnum)
+            GOOGLE_TABLES[url] = gtable
+        # ---------------------------------------------------------------------
+        # get row that matches entry
+        rtable = query_glist(self.input_objname, self.gsheet_url,
+                             self.gsheet_wnum, self.gl_obj_colname,
+                             self.gl_alias_colname, self.pconst)
+        # ---------------------------------------------------------------------
+        # check to see if gaia id has changed
+        if rtable is not None:
+            # if we do not have gaia id at this point then stop
+            if is_null(rtable[self.gl_gaia_colname]):
+                self.gaia_id = None
+                return
+            # if gaia id has changed need to re-get gaia properties
+            if self.input_gaiaid != rtable[self.gl_gaia_colname]:
+                self._resolve_from_gaia_id()
+            # it may be that object is not found in database --> set gaia id from
+            #   rtable
+            if self.input_gaiaid is None:
+                self.input_gaiaid = rtable[self.gl_gaia_colname]
+        # ---------------------------------------------------------------------
+        #  only get gaia properties if we don't have them (ra is missing)
+        if np.isnan(self.ra):
+            self._resolve_from_gaia_id()
+            self.gaia_id_source = 'gaia-query-id-gsheet'
+        # ---------------------------------------------------------------------
+        # overwrite RV and Teff (if set in gtable)
+        if rtable is not None:
+            # set source for update
+            self.objname_source = 'update-id-gsheet'
+            self.gaia_id_source = 'update-id-gsheet'
+            # clean object name
+            if not is_null(rtable[self.gl_obj_colname]):
+                objname = rtable[self.gl_obj_colname]
+                self.objname = self.pconst.DRS_OBJ_NAME(objname)
+            # set aliases
+            if not is_null(rtable[self.gl_alias_colname]):
+                self.aliases = rtable[self.gl_alias_colname].split('|')
+            # add RV if not None
+            if not is_null(rtable[self.gl_rv_colname ]):
+                self.rv = rtable[self.gl_rv_colname ]
+                self.rv_source = rtable[self.gl_rvref_colname]
+            # add Teff if not None
+            if not is_null(rtable[self.gl_teff_colname]):
+                self.teff = rtable[self.gl_teff_colname]
+                self.teff_source = rtable[self.gl_teffref_colname]
+
     def get_simbad_aliases(self):
         """
         Get simbad aliases
@@ -301,48 +370,50 @@ class AstroObject(object):
         self.objname_source = 'database'
         self.gaia_id = str(entries['GAIADR2ID'].iloc[0])
         self.gaia_id_source = source
-        self.ra = float(entries['RA_DEG'].iloc[0])
-        self.ra_source = source
-        self.dec = float(entries['DEC_DEG'].iloc[0])
-        self.dec_source = source
+        if not is_null(entries['RA_DEG'].iloc[0]):
+            self.ra = float(entries['RA_DEG'].iloc[0])
+            self.ra_source = source
+        if not is_null(entries['DEC_DEG'].iloc[0]):
+            self.dec = float(entries['DEC_DEG'].iloc[0])
+            self.dec_source = source
         # assign pmra
-        if not drs_text.null_text(entries['PMRA'].iloc[0], ['None']):
+        if not is_null(entries['PMRA'].iloc[0]):
             self.pmra = float(entries['PMRA'].iloc[0])
             self.pmra_source = source
         # assign pmde
-        if not drs_text.null_text(entries['PMDE'].iloc[0], ['None']):
+        if not is_null(entries['PMDE'].iloc[0]):
             self.pmde = float(entries['PMDE'].iloc[0])
             self.pmde_source = source
         # assign pmde
-        if not drs_text.null_text(entries['PLX'].iloc[0], ['None']):
+        if not is_null(entries['PLX'].iloc[0]):
             self.plx = float(entries['PLX'].iloc[0])
             self.plx_source = source
         # assign rv
-        if not drs_text.null_text(entries['RV'].iloc[0], ['None']):
+        if not is_null(entries['RV'].iloc[0]):
             self.rv = float(entries['RV'].iloc[0])
             self.rv_source = source
         # assign gmag
-        if not drs_text.null_text(entries['GMAG'].iloc[0], ['None']):
+        if not is_null(entries['GMAG'].iloc[0]):
             self.gmag = float(entries['GMAG'].iloc[0])
             self.gmag_source = source
         # assign bpmag
-        if not drs_text.null_text(entries['BPMAG'].iloc[0], ['None']):
+        if not is_null(entries['BPMAG'].iloc[0]):
             self.bpmag = float(entries['BPMAG'].iloc[0])
             self.bpmag_source = source
         # assign rpmag
-        if not drs_text.null_text(entries['RPMAG'].iloc[0], ['None']):
+        if not is_null(entries['RPMAG'].iloc[0]):
             self.rpmag = float(entries['RPMAG'].iloc[0])
             self.rpmag_source = source
         # assign epoch
-        if not drs_text.null_text(entries['EPOCH'].iloc[0], ['None']):
+        if not is_null(entries['EPOCH'].iloc[0]):
             self.epoch = float(entries['EPOCH'].iloc[0])
             self.epoch_source = source
         # assign teff
-        if not drs_text.null_text(entries['TEFF'].iloc[0], ['None']):
+        if not is_null(entries['TEFF'].iloc[0]):
             self.teff = float(entries['TEFF'].iloc[0])
             self.teff_source = source
         # assign aliases
-        if not drs_text.null_text(entries['ALIASES'].iloc[0], ['None']):
+        if not is_null(entries['ALIASES'].iloc[0]):
             self.aliases = str(entries['ALIASES'].iloc[0]).split('|')
             self.aliases_source = source
         # set used
@@ -484,8 +555,8 @@ class AstroObject(object):
         """
         # try to get gaia id from google sheets
         gtable = query_glist(self.input_objname, self.gsheet_url,
-                             self.gsheet_wnum, self.gl_gaia_colname,
-                             self.gl_alias_colname)
+                             self.gsheet_wnum, self.gl_obj_colname,
+                             self.gl_alias_colname, self.pconst)
         # set some properties from gtable
         if gtable is not None:
             self.input_gaiaid = gtable[self.gl_gaia_colname]
@@ -497,6 +568,10 @@ class AstroObject(object):
 
         # overwrite RV and Teff (if set in gtable)
         if gtable is not None:
+            # clean object name
+            if not is_null(gtable[self.gl_obj_colname]):
+                objname = gtable[self.gl_obj_colname]
+                self.objname = self.pconst.DRS_OBJ_NAME(objname)
             # set aliases
             if not is_null(gtable[self.gl_alias_colname]):
                 self.aliases = gtable[self.gl_alias_colname].split('|')
@@ -960,10 +1035,10 @@ def query_simbad_id(params: ParamDict, obj_id: str) -> Union[Table, None]:
 
 def query_glist(objname: str, sheet_id: str, worksheet: int = 0,
                 gl_obj_col_name: str = 'OBJNAME',
-                gl_alias_col_name: str = 'ALIASES'):
+                gl_alias_col_name: str = 'ALIASES',
+                pconst = None):
     # get the google sheet
     gtable = get_google_sheet(sheet_id, worksheet)
-
     # deal with empty table
     if gtable is None:
         return None
@@ -978,6 +1053,9 @@ def query_glist(objname: str, sheet_id: str, worksheet: int = 0,
         aliases = [gtable[gl_obj_col_name][row]]
         # get the aliases for this row
         aliases += gtable[gl_alias_col_name][row].split('|')
+        # clean the aliases
+        if pconst is not None:
+            aliases = list(map(pconst.DRS_OBJ_NAME, aliases))
         # search for object name
         position = crossmatch_name(objname, aliases)
         # break if we have found a match
