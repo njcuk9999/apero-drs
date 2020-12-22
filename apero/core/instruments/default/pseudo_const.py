@@ -254,6 +254,9 @@ class PseudoConstants:
         objectname = rawobjname.strip()
         objectname = objectname.replace(' ', '_')
         objectname = objectname.upper()
+        # deal with multiple underscores in a row
+        while '__' in objectname:
+            objectname = objectname.replace('__', '_')
         # return object name
         return objectname
 

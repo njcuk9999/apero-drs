@@ -610,6 +610,9 @@ def clean_obj_name(params: ParamDict = None, header: Any = None,
     objectname = rawobjname.strip()
     objectname = objectname.replace(' ', '_')
     objectname = objectname.upper()
+    # deal with multiple underscores in a row
+    while '__' in objectname:
+        objectname = objectname.replace('__', '_')
     # deal with returning header
     if return_header:
         # add it to the header with new keyword
