@@ -74,7 +74,7 @@ cal_drift.set_kwarg(name='--nights', dtype=str, default='None', nargs=1,
 RMOD.add(cal_drift)
 # -----------------------------------------------------------------------------
 # the output filename (must contain fiber parameter)
-OUTPUT_FILENAME = 'cal_drift_{0}.fits'
+OUTPUT_FILENAME = 'cal_drift_{0}_{1}.fits'
 # define the default file type
 DEFAULT_DPRTYPE = 'FP_FP'
 DEFAULT_FILETYPE = 'EXT_E2DS_FF'
@@ -293,7 +293,7 @@ def __main__(recipe, params):
         # ---------------------------------------------------------------------
         # construct filename
         cargs = [params['DRS_DATA_REDUC'], params['NIGHTNAME'],
-                 OUTPUT_FILENAME.format(fiber)]
+                 OUTPUT_FILENAME.format(dprtype, fiber)]
         out_filename = os.path.join(*cargs)
         # log that we are saving file
         WLOG(params, '', 'Writing file: {0}'.format(out_filename))
