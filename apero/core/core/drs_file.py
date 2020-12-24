@@ -26,6 +26,7 @@ from astropy.table import Table
 from astropy import version as av
 from collections import OrderedDict
 from copy import deepcopy
+from hashlib import blake2b
 import numpy as np
 import os
 from pathlib import Path
@@ -2977,17 +2978,18 @@ class DrsFitsFile(DrsInputFile):
             WLOG(params, 'error', textentry('00-001-00042', args=eargs))
 
         # --------------------------------------------------------------------
-        # Need to setup a new filename
+        # Need to setup a new filename - based on all input files
+        #   - this essentially is a checksum
         # --------------------------------------------------------------------
-        # get common prefix
-        prefix = drs_text.common_text(basenames, 'prefix')
-        suffix = drs_text.common_text(basenames, 'suffix')
-        basename = drs_text.combine_uncommon_text(basenames, prefix, suffix)
+        # generate a hash based on basename
+        checksum = generate_arg_checksum(basenames, 5)
+        # add the checksum + the suffix + the file extension
+        basename = checksum + self.suffix + self.inext
         # update path and filename
         if path is None:
             path = self.path
+        # set the filename to the path + basename
         filename = os.path.join(path, basename)
-
         # --------------------------------------------------------------------
         # Need to create new header and combine header table
         # --------------------------------------------------------------------
@@ -3008,6 +3010,8 @@ class DrsFitsFile(DrsInputFile):
                                 data.shape, self.hdict, self.output_dict,
                                 self.datatype, self.dtype, True,
                                 list(basenames), self.s1d)
+
+
 
         # return newinfile and table
         return newinfile, combinetable
@@ -5063,6 +5067,33 @@ def get_dir(params: ParamDict, dirkind: str, dirpath: Union[str, None] = None,
 # =============================================================================
 # Worker functions
 # =============================================================================
+def generate_arg_checksum(source: Union[List[str], str],
+                          ndigits: int = 10) -> str:
+    """
+    Take a list of strings or a string and generate a unique hash from
+    them
+
+    :param source: list of strings or string - the string to generate the hash
+                   from
+    :param ndigits: int, the size of the hash (in characters) default is 10
+
+    :return: str, the hash
+    """
+    # set function name
+    _ = display_func(None, 'generate_arg_checksum', __NAME__)
+    # flatten list into string
+    if isinstance(source, list):
+        source = ' '.join(source)
+    # need to encode string
+    encoded = source.encode('utf')
+    # we want a hash of 10 characters
+    digest = blake2b(encoded, digest_size=ndigits)
+    # create hash
+    hash = digest.hexdigest()
+    # return hash
+    return str(hash)
+
+
 def test_for_formatting(key: str, number: Union[int, float]) -> str:
     """
     Specific test of a string that may either be:
