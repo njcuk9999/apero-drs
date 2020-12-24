@@ -571,6 +571,20 @@ class CalibrationDatabase(DatabaseManager):
             # return outfilenames
             return outfilenames
 
+    def remove_entries(self, condition):
+        # set function
+        _ = display_func(self.params, 'remove_entries', __NAME__,
+                         self.classname)
+        # deal with no instrument set
+        if self.instrument == 'None':
+            return None
+        # deal with no database loaded
+        if self.database is None:
+            self.load_db()
+        # remove entries
+        self.database.delete_rows(table=self.database.tname,
+                                  condition=condition)
+
 
 class TelluricDatabase(DatabaseManager):
     def __init__(self, params: ParamDict, check: bool = True):
@@ -963,6 +977,20 @@ class TelluricDatabase(DatabaseManager):
             # return outfilenames
             return outfilenames
 
+    def remove_entries(self, condition):
+        # set function
+        _ = display_func(self.params, 'remove_entries', __NAME__,
+                         self.classname)
+        # deal with no instrument set
+        if self.instrument == 'None':
+            return None
+        # deal with no database loaded
+        if self.database is None:
+            self.load_db()
+        # remove entries
+        self.database.delete_rows(table=self.database.tname,
+                                  condition=condition)
+
 
 # =============================================================================
 # Define specific file functions (for use in specific file databases above)
@@ -1337,6 +1365,20 @@ class IndexDatabase(DatabaseManager):
             values += hvalues + [used, rawfix]
             self.database.add_row(values, table=self.database.tname,
                                   commit=commit)
+
+    def remove_entries(self, condition):
+        # set function
+        _ = display_func(self.params, 'remove_entries', __NAME__,
+                         self.classname)
+        # deal with no instrument set
+        if self.instrument == 'None':
+            return None
+        # deal with no database loaded
+        if self.database is None:
+            self.load_db()
+        # remove entries
+        self.database.delete_rows(table=self.database.tname,
+                                  condition=condition)
 
     def get_entries(self, columns: str = '*',
                     directory: Union[str, None] = None,
@@ -1903,7 +1945,9 @@ class LogDatabase(DatabaseManager):
                                   condition=condition)
 
     def add_entries(self, recipe: Union[str, None] = None,
+                    sname: Union[str, None] = None,
                     rkind: Union[str, None] = None,
+                    rtype: Union[str, None] = None,
                     pid: Union[str, None] = None,
                     htime: Union[str, None] = None,
                     unixtime: Union[float, None] = None,
@@ -1983,11 +2027,11 @@ class LogDatabase(DatabaseManager):
         # need to clean error to put into database
         clean_error = _clean_error(errors)
         # get correct order
-        keys = [recipe, rkind, pid, htime, unixtime, group, level, sublevel,
-                levelcrit, inpath, outpath, directory, logfile, plotdir,
-                runstring, args, kwargs, skwargs, started, passed_all_qc,
-                qc_string, qc_names, qc_values, qc_logic, qc_pass, clean_error,
-                ended, used]
+        keys = [recipe, sname, rkind, rtype, pid, htime, unixtime, group,
+                level, sublevel, levelcrit, inpath, outpath, directory,
+                logfile, plotdir, runstring, args, kwargs, skwargs, started,
+                passed_all_qc, qc_string, qc_names, qc_values, qc_logic,
+                qc_pass, clean_error, ended, used]
         # get column names and column datatypes
         colnames, coltypes = self.pconst.LOG_DB_COLUMNS()
         # storage of values
@@ -2112,6 +2156,20 @@ class LogDatabase(DatabaseManager):
                                         **sql)
             # return pandas table
             return entries
+
+    def remove_entries(self, condition):
+        # set function
+        _ = display_func(self.params, 'remove_entries', __NAME__,
+                         self.classname)
+        # deal with no instrument set
+        if self.instrument == 'None':
+            return None
+        # deal with no database loaded
+        if self.database is None:
+            self.load_db()
+        # remove entries
+        self.database.delete_rows(table=self.database.tname,
+                                  condition=condition)
 
 
 def _clean_error(errors: Union[str, None]) -> Union[str, None]:
