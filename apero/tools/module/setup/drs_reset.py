@@ -16,6 +16,7 @@ import sys
 from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_log
+from apero.core.core import drs_database
 from apero import lang
 from apero.io import drs_lock
 from apero.io import drs_path
@@ -119,6 +120,27 @@ def reset_tmp_folders(params, log=True):
     # remake path
     if not os.path.exists(tmp_dir):
         os.makedirs(tmp_dir)
+    # -------------------------------------------------------------------------
+    # remove entries from index database
+    # -------------------------------------------------------------------------
+    # get index database
+    indexdb = drs_database.IndexDatabase(params)
+    # load index database
+    indexdb.load_db()
+    # set up condition
+    condition = 'KIND="tmp"'
+    # remove entries
+    indexdb.remove_entries(condition=condition)
+    # -------------------------------------------------------------------------
+    # remove entries from log database
+    # -------------------------------------------------------------------------
+    logdb = drs_database.LogDatabase(params)
+    # load index database
+    logdb.load_db()
+    # set up condition
+    condition = 'RTYPE="tmp"'
+    # remove entries
+    logdb.remove_entries(condition=condition)
 
 
 def reset_reduced_folders(params, log=True):
@@ -131,6 +153,27 @@ def reset_reduced_folders(params, log=True):
     # remake path
     if not os.path.exists(red_dir):
         os.makedirs(red_dir)
+    # -------------------------------------------------------------------------
+    # remove entries from index database
+    # -------------------------------------------------------------------------
+    # get index database
+    indexdb = drs_database.IndexDatabase(params)
+    # load index database
+    indexdb.load_db()
+    # set up condition
+    condition = 'KIND="red"'
+    # remove entries
+    indexdb.remove_entries(condition=condition)
+    # -------------------------------------------------------------------------
+    # remove entries from log database
+    # -------------------------------------------------------------------------
+    logdb = drs_database.LogDatabase(params)
+    # load index database
+    logdb.load_db()
+    # set up condition
+    condition = 'RTYPE="red"'
+    # remove entries
+    logdb.remove_entries(condition=condition)
 
 
 def reset_calibdb(params, log=True):
@@ -154,6 +197,16 @@ def reset_calibdb(params, log=True):
     reset_dbdir(params, name, calib_dir, reset_path, log=log)
     # create calibration database
     manage_databases.create_calibration_database(params, pconst, databases)
+    # -------------------------------------------------------------------------
+    # remove entries from calibration database
+    # -------------------------------------------------------------------------
+    calibdb = drs_database.CalibrationDatabase(params)
+    # load index database
+    calibdb.load_db()
+    # set up condition
+    condition = 'UNIXTIME != 0'
+    # remove entries
+    calibdb.remove_entries(condition=condition)
 
 
 def reset_telludb(params, log=True):
@@ -177,6 +230,16 @@ def reset_telludb(params, log=True):
     reset_dbdir(params, name, tellu_dir, reset_path, log=log)
     # create telluric database
     manage_databases.create_telluric_database(pconst, databases)
+    # -------------------------------------------------------------------------
+    # remove entries from telluric database
+    # -------------------------------------------------------------------------
+    telludb = drs_database.TelluricDatabase(params)
+    # load index database
+    telludb.load_db()
+    # set up condition
+    condition = 'UNIXTIME != 0'
+    # remove entries
+    telludb.remove_entries(condition=condition)
 
 
 def reset_dbdir(params, name, db_dir, reset_path, log=True,
