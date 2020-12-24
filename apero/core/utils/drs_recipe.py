@@ -717,6 +717,13 @@ class DrsRecipe(object):
         self.lskwargs = self._input_str(inputs, rskwargs, kind='skwargs')
         # strip the runstring
         self.runstring.strip()
+        # ------------------------------------------------------------------
+        # if shortname is set override default
+        if 'SHORTNAME' in inputs:
+            # only if short name is not None
+            if not drs_text.null_text(inputs['SHORTNAME'], ['None', '']):
+                # override short name
+                self.shortname = str(inputs['SHORTNAME'])
 
     def set_debug_plots(self, *args: str):
         """
@@ -1213,6 +1220,9 @@ class DrsRecipe(object):
         # ---------------------------------------------------------------------
         # set program functionality
         self._make_special(drs_argument.set_program, skip=False)
+        # ---------------------------------------------------------------------
+        # set shortname functionality
+        self._make_special(drs_argument.set_shortname, skip=False)
         # ---------------------------------------------------------------------
         # set ipython return functionality
         self._make_special(drs_argument.set_ipython_return, skip=False)
