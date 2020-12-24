@@ -43,6 +43,22 @@ Date: 2020-12-21
     - header keys for all parameters DRS will use (+ source) separate from
       input header keys
 
+- calibrations
+    - now deal with combining files better
+        - combine header keys (MJDEND, RDNOISE, GAIN, SATURATE, EXPTIME,
+          NEXP, MJDMID) properly (rules set in default_keywords.py)
+    - filename is now a checksum based on input files (cannot be composite of
+      any one file as may be different combination of files leading to same
+      filename --> confusion of outputs)
+
+- localisation
+    - added new fits table extensions - the central position coefficients and
+      width coefficients (as tables of order vs coefficient)
+
+- wave solution
+    - added new fits table extension - the wave coefficients (as a table of
+      order vs coefficient)
+
 - tellurics
     - added header keys to template file:
         - MTPNFILE: Number of files used to make template

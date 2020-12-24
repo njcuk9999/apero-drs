@@ -23,7 +23,6 @@ Immediate small:
     * error if not enough - define minimum number of calibrations required
 
 * databases
-    * IndexDB: runstring not adding?
     * apero_explorer save not working?
 
 High priority:
@@ -34,7 +33,6 @@ High priority:
 Medium priority:
 
 * filename from checksums [Neil]
-* loc and wave coefficients to tables [Neil]
 * add option to set template for mk_tellu and fit_tellu [Neil]
 * deal with all python warnings [Neil]
 * add NIPRS changes to 0.7 branch
