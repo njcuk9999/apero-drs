@@ -105,7 +105,7 @@ SPECIAL_LIST_KEYS = drs_recipe.SPECIAL_LIST_KEYS
 # get list of obj name cols
 OBJNAMECOL = 'KW_OBJNAME'
 # list of arguments to remove from skip check
-SKIP_REMOVE_ARGS = ['--skip', '--program', '--debug', '--plot', '--master']
+SKIP_REMOVE_ARGS = ['--skip', '--program', '--debug', '--plot', '--shortname']
 # keep a global copy of plt
 PLT_MOD = None
 
@@ -263,7 +263,10 @@ class Run:
         self.kwargs = self.recipe.recipe_setup(self.indexdb, inargs=self.args)
         # add argument to set program name
         pargs = [self.recipe.shortname, int(self.priority)]
+        # add argument --program
         self.kwargs['program'] = '{0}[{1:05d}]'.format(*pargs)
+        # add argument --shortname
+        self.kwargs['shortname'] = str(self.recipe.shortname)
         # deal with file arguments in kwargs (returned from recipe_setup as
         #    [filenames, file instances]
         self.filename_args()
@@ -636,9 +639,11 @@ def generate_skip_table(params):
     # deal with nightname set (take precedences over white list)
     if not drs_text.null_text(params['NIGHTNAME'], ['', 'None', 'All']):
         whitelist = [params['NIGHTNAME']]
+    # need to remove those that didn't end
+    condition = 'ENDED = 1'
     # get runstrings
     table = logdbm.get_entries('RECIPE, RUNSTRING', wdirs=whitelist,
-                               bdirs=blacklist)
+                               bdirs=blacklist, condition=condition)
     recipes = np.array(table['RECIPE'])
     runstrings = np.array(table['RUNSTRING'])
     arguments = []
@@ -647,7 +652,7 @@ def generate_skip_table(params):
         # clean run string
         clean_runstring = skip_clean_arguments(runstring)
         # append only clean arguments
-        arguments.append(clean_runstring)
+        arguments.append(clean_runstring.strip())
     # deal with nothing to skip
     if len(recipes) == 0:
         return None
