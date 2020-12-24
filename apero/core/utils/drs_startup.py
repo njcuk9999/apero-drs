@@ -342,10 +342,12 @@ def setup(name: str = 'None', instrument: str = 'None',
     cond1 = not drs_text.null_text(instrument, ['None', ''])
     cond2 = params['DRS_RECIPE_KIND'] == 'recipe'
     if cond1 and cond2:
-        recipe.log = drs_utils.RecipeLog(recipe.name, params, logger=WLOG)
+        recipe.log = drs_utils.RecipeLog(recipe.name, recipe.shortname,
+                                         params, logger=WLOG)
         # add log file to log (only used to save where the log is)
         logfile = drs_log.get_logfilepath(WLOG, params)
         recipe.log.set_log_file(logfile)
+        recipe.log.rtype = str(recipe.outputtype)
         # add user input parameters to log
         recipe.log.runstring = recipe.runstring
         recipe.log.args = recipe.largs
