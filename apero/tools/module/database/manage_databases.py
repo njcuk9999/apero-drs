@@ -299,7 +299,7 @@ def make_object_reset(params: ParamDict):
     # get google sheets
     gtable = gen_pp.get_google_sheet(params['OBJ_LIST_GOOGLE_SHEET_URL'],
                                      params['OBJ_LIST_GOOGLE_SHEET_WNUM'])
-    objnames = list(np.unique(gtable['OBJNAME']))
+    objnames = list(np.unique(gtable['OBJECT']))
     # resolve targets
     gen_pp.resolve_targets(params, objnames, database=objdbm)
     # get table
