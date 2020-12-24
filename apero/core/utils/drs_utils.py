@@ -59,7 +59,7 @@ FitsHeader = drs_fits.fits.Header
 # =============================================================================
 class RecipeLog:
 
-    def __init__(self, name: str, params: ParamDict, level: int = 0,
+    def __init__(self, name: str, sname: str, params: ParamDict, level: int = 0,
                  logger: Union[None, drs_log.Logger] = None,
                  database: Union[LogDatabase, None] = None):
         """
@@ -83,8 +83,10 @@ class RecipeLog:
             self.logdbm.load_db()
         # get the recipe name
         self.name = str(name)
+        self.sname = str(sname)
         # the kind of recipe ("recipe", "tool", "processing") from recipe.kind
         self.kind = str(params['DRS_RECIPE_KIND'])
+        self.rtype = 'None'
         # the default logging absolute path
         self.defaultpath = str(params['DRS_DATA_MSG_FULL'])
         # the log fits file name (log.fits)
@@ -185,7 +187,9 @@ class RecipeLog:
         _ = drs_misc.display_func(None, 'copy', __NAME__, self.class_name)
         # copy parameters
         self.name = str(rlog.name)
+        self.sname = str(rlog.sname)
         self.kind = str(rlog.kind)
+        self.rtype = str(rlog.rtype)
         self.pid = str(rlog.pid)
         self.htime = str(rlog.htime)
         self.utime = str(rlog.utime)
@@ -267,8 +271,8 @@ class RecipeLog:
         # get new level
         level = self.level + 1
         # create new log
-        newlog = RecipeLog(self.name, params, level=level, logger=self.wlog,
-                           database=self.logdbm)
+        newlog = RecipeLog(self.name, self.sname, params, level=level,
+                           logger=self.wlog, database=self.logdbm)
         # copy from parent
         newlog.copy(self)
         # record level criteria
@@ -412,7 +416,8 @@ class RecipeLog:
             utime = float(Time(inst.htime).unix)
 
             # add entries
-            self.logdbm.add_entries(recipe=inst.name, rkind=inst.kind,
+            self.logdbm.add_entries(recipe=inst.name, sname=inst.sname,
+                                    rkind=inst.kind, rtype=inst.rtype,
                                     pid=inst.pid, htime=inst.htime,
                                     unixtime=utime, group=inst.group,
                                     level=inst.level,
@@ -451,6 +456,7 @@ class RecipeLog:
         row = OrderedDict()
         row['RECIPE'] = self.name
         row['KIND'] = self.kind
+        row['RTYPE'] = self.rtype
         row['PID'] = self.pid
         row['HTIME'] = self.htime
         row['GROUPNAME'] = self.group
