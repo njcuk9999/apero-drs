@@ -987,10 +987,20 @@ class PseudoConstants:
         _ = display_func(None, 'CALIBRATION_DB_COLUMNS', __NAME__,
                          self.class_name)
         # set columns
-        columns = ['KEYNAME', 'FIBER', 'SUPERCAL', 'FILENAME', 'HUMANTIME',
-                   'UNIXTIME', 'USED']
-        ctypes = [str, str, int, str, str, float, int]
+        calib_columns = dict()
+        calib_columns['KEYNAME'] = str
+        calib_columns['FIBER'] = str
+        calib_columns['SUPERCAL'] = str
+        calib_columns['FILENAME'] = str
+        calib_columns['HUMANTIME'] = str
+        calib_columns['UNIXTIME'] = float
+        calib_columns['USED'] = int
+        # get break down
+        columns = list(calib_columns.keys())
+        ctypes = list(calib_columns.values())
+        # return columns and ctypes
         return columns, ctypes
+
 
     # noinspection PyPep8Naming
     def TELLURIC_DB_COLUMNS(self) -> Tuple[List[str], List[type]]:
@@ -1002,10 +1012,22 @@ class PseudoConstants:
         _ = display_func(None, 'TELLURIC_DB_COLUMNS', __NAME__,
                          self.class_name)
         # set columns
-        columns = ['KEYNAME', 'FIBER', 'SUPERCAL', 'FILENAME', 'HUMANTIME',
-                   'UNIXTIME', 'OBJECT', 'AIRMASS', 'TAU_WATER', 'TAU_OTHERS',
-                   'USED']
-        ctypes = [str, str, int, str, str, float, str, float, float, float, int]
+        tellu_columns = dict()
+        tellu_columns['KEYNAME'] = str
+        tellu_columns['FIBER'] = str
+        tellu_columns['SUPERCAL'] = int
+        tellu_columns['FILENAME'] = str
+        tellu_columns['HUMANTIME'] = str
+        tellu_columns['UNIXTIME'] = float
+        tellu_columns['OBJECT'] = str
+        tellu_columns['AIRMASS'] = float
+        tellu_columns['TAU_WATER'] = float
+        tellu_columns['TAU_OTHERS'] = float
+        tellu_columns['USED'] = int
+        # get break down
+        columns = list(tellu_columns.keys())
+        ctypes = list(tellu_columns.values())
+        # return columns and ctypes
         return columns, ctypes
 
     # noinspection PyPep8Naming
@@ -1033,9 +1055,23 @@ class PseudoConstants:
         # get header keys
         hkeys, htypes = self.INDEX_HEADER_KEYS()
         # set columns
-        columns = ['ABSPATH', 'DIRNAME', 'FILENAME', 'KIND',
-                   'LAST_MODIFIED', 'RUNSTRING'] + hkeys + ['USED', 'RAWFIX']
-        ctypes = [str, str, str, str, float, str] + htypes + [int, int]
+        index_columns = dict()
+        index_columns['ABSPATH'] = str
+        index_columns['DIRNAME'] = str
+        index_columns['FILENAME'] = str
+        index_columns['KIND'] = str
+        index_columns['LAST_MODIFIED'] = float
+        index_columns['RUNSTRING'] = str
+        # split names and types and add header keys
+        columns = list(index_columns.keys()) + hkeys
+        ctypes = list(index_columns.values()) + htypes
+        # add extra columns
+        extra_columns = dict()
+        extra_columns['USED'] = int
+        extra_columns['RAWFIX'] = int
+        columns += list(extra_columns.keys())
+        ctypes += list(extra_columns.values())
+        # return columns and column types
         return columns, ctypes
 
     # noinspection PyPep8Naming
@@ -1047,16 +1083,42 @@ class PseudoConstants:
         # set function name
         _ = display_func(None, 'LOG_DB_COLUMNS', __NAME__,
                          self.class_name)
-        # set columns
-        columns = ['RECIPE', 'RKIND', 'PID', 'HUMANTIME', 'UNIXTIME',
-                   'GROUPNAME', 'LEVEL', 'SUBLEVEL', 'LEVELCRIT', 'INPATH',
-                   'OUTPATH', 'DIRNAME', 'LOGFILE', 'PLOTDIR', 'RUNSTRING',
-                   'ARGS', 'KWARGS', 'SKWARGS', 'STARTED', 'PASSED_ALL_QC',
-                   'QC_STRING', 'QC_NAMES', 'QC_VALUES', 'QC_LOGIC', 'QC_PASS',
-                   'ERRORMSGS', 'ENDED', 'USED']
-        ctypes = [str, str, str, str, float, str, int, int, str, str, str,
-                  str, str, str, str, str, str, str, int, int, str, str, str,
-                  str, str, str, int, int]
+        # set columns (dictionary form for clarity
+        log_columns = dict()
+        log_columns['RECIPE'] = str
+        log_columns['SHORTNAME'] = str
+        log_columns['RKIND'] = str
+        log_columns['RTYPE'] = str
+        log_columns['PID'] = str
+        log_columns['HUMANTIME'] = str
+        log_columns['UNIXTIME'] = float
+        log_columns['GROUPNAME'] = str
+        log_columns['LEVEL'] = int
+        log_columns['SUBLEVEL'] = int
+        log_columns['LEVELCRIT'] = str
+        log_columns['INPATH'] = str
+        log_columns['OUTPATH'] = str
+        log_columns['DIRNAME'] = str
+        log_columns['LOGFILE'] = str
+        log_columns['PLOTDIR'] = str
+        log_columns['RUNSTRING'] = str
+        log_columns['ARGS'] = str
+        log_columns['KWARGS'] = str
+        log_columns['SKWARGS'] = str
+        log_columns['STARTED'] = int
+        log_columns['PASSED_ALL_QC'] = int
+        log_columns['QC_STRING'] = str
+        log_columns['QC_NAMES'] = str
+        log_columns['QC_VALUES'] = str
+        log_columns['QC_LOGIC'] = str
+        log_columns['QC_PASS'] = str
+        log_columns['ERRORMSGS'] = str
+        log_columns['ENDED'] = int
+        log_columns['USED'] = int
+        # get break down
+        columns = list(log_columns.keys())
+        ctypes = list(log_columns.values())
+        # return columns and ctypes
         return columns, ctypes
 
     # noinspection PyPep8Naming
@@ -1069,31 +1131,40 @@ class PseudoConstants:
         _ = display_func(None, 'OBJECT_DB_COLUMNS', __NAME__,
                          self.class_name)
         # set columns
-        columns = ['OBJNAME', 'OBJNAME_SOURCE', 'GAIADR2ID', 'GAIAID_SOURCE',
-                   'RA_DEG', 'RA_SOURCE', 'DEC_DEG', 'DEC_SOURCE', 'PMRA',
-                   'PMRA_SOURCE', 'PMDE', 'PMDE_SOURCE', 'PLX', 'PLX_SOURCE',
-                   'RV', 'RV_SOURCE', 'GMAG', 'GMAG_SOURCE', 'BPMAG',
-                   'BPMAG_SOURCE', 'RPMAG', 'RPMAG_SOURCE', 'EPOCH',
-                   'EPOCH_SOURCE', 'TEFF', 'TEFF_SOURCE', 'ALIASES',
-                   'ALIASES_SOURCE', 'USED']
-        ctypes = [str, str, str, str, float, str, float, str, float, str,
-                  float, str, float, str, float, str, float, str,
-                  float, str, float, str, float, str, float, str, str, str, int]
-        return columns, ctypes
-
-    # noinspection PyPep8Naming
-    def PARAMS_DB_COLUMNS(self) -> Tuple[List[str], List[type]]:
-        """
-        Define the columns use in the parameter database
-        :return: list of columns (Strings)
-        """
-        # set function name
-        _ = display_func(None, 'PARAMS_DB_COLUMNS', __NAME__,
-                         self.class_name)
-        # set columns
-        columns = ['KEYNAME', 'KEYVALUE', 'DTYPE', 'SOURCE', 'LAST_MODIFIED',
-                   'USED']
-        ctypes = [str, str, str, str, float, int]
+        obj_columns = dict()
+        obj_columns['OBJNAME'] = str
+        obj_columns['OBJNAME_SOURCE'] = str
+        obj_columns['GAIADR2ID'] = str
+        obj_columns['GAIAID_SOURCE'] = str
+        obj_columns['RA_DEG'] = float
+        obj_columns['RA_SOURCE'] = str
+        obj_columns['DEC_DEG'] = float
+        obj_columns['DEC_SOURCE'] = str
+        obj_columns['PMRA'] = float
+        obj_columns['PMRA_SOURCE'] = str
+        obj_columns['PMDE'] = float
+        obj_columns['PMDE_SOURCE'] = str
+        obj_columns['PLX'] = float
+        obj_columns['PLX_SOURCE'] = str
+        obj_columns['RV'] = float
+        obj_columns['RV_SOURCE'] = str
+        obj_columns['GMAG'] = float
+        obj_columns['GMAG_SOURCE'] = str
+        obj_columns['BPMAG'] = float
+        obj_columns['BPMAG_SOURCE'] = str
+        obj_columns['RPMAG'] = float
+        obj_columns['RPMAG_SOURCE'] = str
+        obj_columns['EPOCH'] = float
+        obj_columns['EPOCH_SOURCE'] = str
+        obj_columns['TEFF'] = float
+        obj_columns['TEFF_SOURCE'] = str
+        obj_columns['ALIASES'] = str
+        obj_columns['ALIASES_SOURCE'] = str
+        obj_columns['USED'] = int
+        # get break down
+        columns = list(obj_columns.keys())
+        ctypes = list(obj_columns.values())
+        # return columns and ctypes
         return columns, ctypes
 
 
