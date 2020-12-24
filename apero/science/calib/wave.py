@@ -5340,6 +5340,20 @@ def fp_write_wavesol_master(params, recipe, llprops, hcfile, fpfile, fiber,
     wprops['WAVESOURCE'] = '{0} [{1}]'.format(*sargs)
     wprops['WFP_FILE'] = wavefile.basename
     # ------------------------------------------------------------------
+    # Make wave coefficient table
+    # ------------------------------------------------------------------
+    # get number of orders
+    nbo = wprops['COEFFS'].shape[0]
+    # add order column
+    wave_cols = ['ORDER']
+    wave_vals = [np.arange(nbo)]
+    # add coefficients columns
+    for w_it in range(wprops['COEFFS'].shape[1]):
+        wave_cols.append('COEFFS_{0}'.format(w_it))
+        wave_vals.append(wprops['COEFFS'][:, w_it])
+    wave_table = drs_table.make_table(params, columns=wave_cols,
+                                      values=wave_vals)
+    # ------------------------------------------------------------------
     # copy keys from hcwavefile
     wavefile.copy_hdict(hcwavefile)
     # set output key
@@ -5412,7 +5426,8 @@ def fp_write_wavesol_master(params, recipe, llprops, hcfile, fpfile, fiber,
     wargs = [fiber, wavefile.filename]
     WLOG(params, '', textentry('40-017-00037', args=wargs))
     # write image to file
-    wavefile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+    wavefile.write_multi(data_list=[wave_table], datatype_list=['table'],
+                         kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(wavefile)
     # ------------------------------------------------------------------
@@ -6085,6 +6100,20 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
     sargs = [recipe.name, params['DRS_VERSION']]
     nprops['WAVESOURCE'] = '{0} [{1}]'.format(*sargs)
     nprops['WFP_FILE'] = wavefile.basename
+    # ------------------------------------------------------------------
+    # Make wave coefficient table
+    # ------------------------------------------------------------------
+    # get number of orders
+    nbo = nprops['COEFFS'].shape[0]
+    # add order column
+    wave_cols = ['ORDER']
+    wave_vals = [np.arange(nbo)]
+    # add coefficients columns
+    for w_it in range(nprops['COEFFS'].shape[1]):
+        wave_cols.append('COEFFS_{0}'.format(w_it))
+        wave_vals.append(nprops['COEFFS'][:, w_it])
+    wave_table = drs_table.make_table(params, columns=wave_cols,
+                                      values=wave_vals)
     # ----------------------------------------------------------------------
     # define header keys for output file
     # copy keys from input file
@@ -6138,7 +6167,8 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
     wargs = [fiber, wavefile.filename]
     WLOG(params, '', textentry('40-017-00037', args=wargs))
     # write image to file
-    wavefile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+    wavefile.write_multi(data_list=[wave_table], dtype_list=['table'],
+                         kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(wavefile)
     # ------------------------------------------------------------------
