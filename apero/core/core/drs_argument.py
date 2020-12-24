@@ -1967,6 +1967,109 @@ class _SetProgram(DrsAction):
         setattr(namespace, self.dest, value)
 
 
+class _SetShortName(DrsAction):
+    def __init__(self, *args, **kwargs):
+        """
+        Construct the Set Program action (for setting the drs program from an
+        argument)
+
+        :param args: arguments passed to argparse.Action.__init__
+        :param kwargs: keyword arguments passed to argparse.Action.__init__
+        """
+        # set class name
+        self.class_name = '_SetShortName'
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
+        # define recipe as None (overwritten in __call__)
+        self.recipe = None
+        # force super initialisation
+        DrsAction.__init__(self, *args, **kwargs)
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        String representation of this class
+        :return:
+        """
+        return '_SetShortName[DrsAction]'
+
+    def _set_shortname(self, values: Any) -> str:
+        """
+        Set the program name from the values (if we can convert to a string)
+        elsewise raise an error
+
+        :param values: Any, the value to set the program name to
+        :return: str, the string representation of values (for program name)
+        :raises: drs_exceptions.LogExit
+        """
+        # set function name (cannot break here --> no access to inputs)
+        func_name = display_func(self.recipe.params, '_set_shortname',
+                                 __NAME__, self.class_name)
+        # deal with difference datatypes for values
+        if isinstance(values, list):
+            strvalue = values[0]
+        elif isinstance(values, np.ndarray):
+            strvalue = values[0]
+        else:
+            strvalue = str(values)
+        # debug message: setting program to: "strvalue"
+        dmsg = textentry('90-001-00031', args=[strvalue])
+        WLOG(self.recipe.params, 'debug', dmsg)
+        # set DRS_DEBUG (must use the self version)
+        if not drs_text.null_text(strvalue):
+            self.recipe.shortname = str(strvalue)
+        # return strvalue
+        return strvalue
+
+    def __call__(self, parser: DrsArgumentParser,
+                 namespace: argparse.Namespace, values: Any,
+                 option_string: Any = None):
+        """
+        Call the action _SetProgram() - sets the drs program name
+        to value if valid else raises exception
+
+        :param parser: DrsArgumentParser instance
+        :param namespace: argparse.Namespace instance
+        :param values: Any, the values to check boolean argument
+        :param option_string: None in most cases but used to get options
+                              for testing the value if required
+        :return: None
+        :raises: drs_exceptions.LogExit
+        """
+        # get recipe from parser
+        self.recipe = parser.recipe
+        # set function name (cannot break here --> no access to inputs)
+        _ = display_func(self.recipe.params, '__call__', __NAME__,
+                         self.class_name)
+        # check for help
+        # noinspection PyProtectedMember
+        parser._has_special()
+        # display version
+        value = self._set_shortname(values)
+        # Add the attribute
+        setattr(namespace, self.dest, value)
+
+
+
 class _SetIPythonReturn(DrsAction):
     def __init__(self, *args, **kwargs):
         """
@@ -3790,6 +3893,35 @@ def set_program(params: ParamDict) -> OrderedDict:
     props['help'] = textentry('SET_PROGRAM_HELP')
     # return the argument dictionary
     return props
+
+
+def set_shortname(params: ParamDict) -> OrderedDict:
+    """
+    Make a custom special argument: Set a custom short name for the recipe
+    only really used for apero_processing
+
+    :param params: ParamDict, Parameter Dictionary of constants
+
+    :return: an ordered dictionary with argument parameters
+    :rtype: OrderedDict
+    """
+    # set function name
+    _ = display_func(params, 'set_program', __NAME__)
+    # set up an output storage dictionary
+    props = OrderedDict()
+    # set the argument name
+    props['name'] = '--shortname'
+    # set any argument alternative names
+    props['altnames'] = ['--short']
+    # set the argument action function
+    props['action'] = _SetShortName
+    # set the number of argument to expect
+    props['nargs'] = 1
+    # set the help message
+    props['help'] = textentry('SET_SHORTNAME_HELP')
+    # return the argument dictionary
+    return props
+
 
 
 def set_ipython_return(params: ParamDict) -> OrderedDict:
