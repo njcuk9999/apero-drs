@@ -16,6 +16,8 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
+# Define instrument alias
+INSTRUMENT_ALIAS = 'spirou'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get Help
@@ -46,7 +48,7 @@ backsub = dict(name='--backsub', dtype='bool', default=True,
 # -----------------------------------------------------------------------------
 # Must set default per recipe!!
 combine = dict(name='--combine', dtype='bool',
-               helpstr=textentry('COMBINE_HELP'), 
+               helpstr=textentry('COMBINE_HELP'),
                default_ref='INPUT_COMBINE_IMAGES')
 # -----------------------------------------------------------------------------
 dodark = dict(name='--darkcorr', dtype='bool', default=True,
@@ -68,7 +70,7 @@ plot = dict(name='--plot', dtype=int, helpstr=textentry('PLOT_HELP'),
             default_ref='DRS_PLOT', minimum=-1, maximum=2)
 # -----------------------------------------------------------------------------
 resize = dict(name='--resize', dtype='bool', default=True,
-              helpstr=textentry('RESIZE_HELP'), 
+              helpstr=textentry('RESIZE_HELP'),
               default_ref='INPUT_RESIZE_IMAGE')
 # -----------------------------------------------------------------------------
 objname = dict(name='--objname', dtype=str, default='None',
@@ -173,10 +175,10 @@ pp_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 out_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 
 # -----------------------------------------------------------------------------
-# cal_preprocess_spirou
+# cal_preprocess
 # -----------------------------------------------------------------------------
 cal_pp = DrsRecipe(__INSTRUMENT__)
-cal_pp.name = 'cal_preprocess_spirou.py'
+cal_pp.name = 'cal_preprocess_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_pp.shortname = 'PP'
 cal_pp.instrument = __INSTRUMENT__
 cal_pp.inputtype = 'raw'
@@ -197,10 +199,10 @@ cal_pp.group_column = 'REPROCESS_NIGHTCOL'
 recipes.append(cal_pp)
 
 # -----------------------------------------------------------------------------
-# cal_badpix_spirou
+# cal_badpix
 # -----------------------------------------------------------------------------
 cal_badpix = DrsRecipe(__INSTRUMENT__)
-cal_badpix.name = 'cal_badpix_spirou.py'
+cal_badpix.name = 'cal_badpix_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_badpix.shortname = 'BAD'
 cal_badpix.instrument = __INSTRUMENT__
 cal_badpix.inputtype = 'tmp'
@@ -233,10 +235,10 @@ cal_badpix.group_column = 'REPROCESS_NIGHTCOL'
 recipes.append(cal_badpix)
 
 # -----------------------------------------------------------------------------
-# cal_dark_spirou
+# cal_dark
 # -----------------------------------------------------------------------------
 cal_dark = DrsRecipe(__INSTRUMENT__)
-cal_dark.name = 'cal_dark_spirou.py'
+cal_dark.name = 'cal_dark_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_dark.shortname = 'DARK'
 cal_dark.instrument = __INSTRUMENT__
 cal_dark.inputtype = 'tmp'
@@ -265,10 +267,10 @@ cal_dark.group_column = 'REPROCESS_NIGHTCOL'
 recipes.append(cal_dark)
 
 # -----------------------------------------------------------------------------
-# cal_dark_master_spirou
+# cal_dark_master
 # -----------------------------------------------------------------------------
 cal_dark_master = DrsRecipe(__INSTRUMENT__)
-cal_dark_master.name = 'cal_dark_master_spirou.py'
+cal_dark_master.name = 'cal_dark_master_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_dark_master.shortname = 'DARKM'
 cal_dark_master.master = True
 cal_dark_master.instrument = __INSTRUMENT__
@@ -290,10 +292,10 @@ cal_dark_master.group_column = None
 recipes.append(cal_dark_master)
 
 # -----------------------------------------------------------------------------
-# cal_loc_RAW_spirou
+# cal_loc
 # -----------------------------------------------------------------------------
 cal_loc = DrsRecipe(__INSTRUMENT__)
-cal_loc.name = 'cal_loc_spirou.py'
+cal_loc.name = 'cal_loc_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_loc.shortname = 'LOC'
 cal_loc.instrument = __INSTRUMENT__
 cal_loc.inputtype = 'tmp'
@@ -333,10 +335,10 @@ cal_loc.group_column = 'REPROCESS_NIGHTCOL'
 recipes.append(cal_loc)
 
 # -----------------------------------------------------------------------------
-# cal_shape_master_spirou
+# cal_shape_master
 # -----------------------------------------------------------------------------
 cal_shape_master = DrsRecipe(__INSTRUMENT__)
-cal_shape_master.name = 'cal_shape_master_spirou.py'
+cal_shape_master.name = 'cal_shape_master_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_shape_master.shortname = 'SHAPEM'
 cal_shape_master.master = True
 cal_shape_master.instrument = __INSTRUMENT__
@@ -388,10 +390,10 @@ cal_shape_master.group_column = 'REPROCESS_NIGHTCOL'
 recipes.append(cal_shape_master)
 
 # -----------------------------------------------------------------------------
-# cal_SHAPE_spirou
+# cal_shape
 # -----------------------------------------------------------------------------
 cal_shape = DrsRecipe(__INSTRUMENT__)
-cal_shape.name = 'cal_shape_spirou.py'
+cal_shape.name = 'cal_shape_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_shape.shortname = 'SHAPE'
 cal_shape.instrument = __INSTRUMENT__
 cal_shape.inputtype = 'tmp'
@@ -429,10 +431,10 @@ cal_shape.group_column = 'REPROCESS_NIGHTCOL'
 recipes.append(cal_shape)
 
 # -----------------------------------------------------------------------------
-# cal_FF_RAW_spirou
+# cal_ff
 # -----------------------------------------------------------------------------
 cal_ff = DrsRecipe(__INSTRUMENT__)
-cal_ff.name = 'cal_flat_spirou.py'
+cal_ff.name = 'cal_flat_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_ff.shortname = 'FF'
 cal_ff.instrument = __INSTRUMENT__
 cal_ff.inputtype = 'tmp'
@@ -476,10 +478,10 @@ cal_ff.group_column = 'REPROCESS_NIGHTCOL'
 recipes.append(cal_ff)
 
 # -----------------------------------------------------------------------------
-# cal_thermal_spirou
+# cal_thermal
 # -----------------------------------------------------------------------------
 cal_thermal = DrsRecipe(__INSTRUMENT__)
-cal_thermal.name = 'cal_thermal_spirou.py'
+cal_thermal.name = 'cal_thermal_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_thermal.shortname = 'THERM'
 cal_thermal.instrument = __INSTRUMENT__
 cal_thermal.inputtype = 'tmp'
@@ -527,10 +529,10 @@ cal_thermal.group_column = 'REPROCESS_NIGHTCOL'
 recipes.append(cal_thermal)
 
 # -----------------------------------------------------------------------------
-# cal_leak_master_spirou
+# cal_leak_master
 # -----------------------------------------------------------------------------
 cal_leak_master = DrsRecipe(__INSTRUMENT__)
-cal_leak_master.name = 'cal_leak_master_spirou.py'
+cal_leak_master.name = 'cal_leak_master_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_leak_master.shortname = 'LEAKM'
 cal_leak_master.master = True
 cal_leak_master.instrument = __INSTRUMENT__
@@ -553,10 +555,10 @@ cal_leak_master.group_column = None
 recipes.append(cal_leak_master)
 
 # -----------------------------------------------------------------------------
-# cal_leak_spirou
+# cal_leak
 # -----------------------------------------------------------------------------
 cal_leak = DrsRecipe(__INSTRUMENT__)
-cal_leak.name = 'cal_leak_spirou.py'
+cal_leak.name = 'cal_leak_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_leak.shortname = 'LEAK'
 cal_leak.instrument = __INSTRUMENT__
 cal_leak.inputtype = 'red'
@@ -586,10 +588,10 @@ cal_leak.group_column = 'REPROCESS_NIGHTCOL'
 recipes.append(cal_leak)
 
 # -----------------------------------------------------------------------------
-# cal_extract_spirou
+# cal_extract
 # -----------------------------------------------------------------------------
 cal_extract = DrsRecipe(__INSTRUMENT__)
-cal_extract.name = 'cal_extract_spirou.py'
+cal_extract.name = 'cal_extract_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_extract.shortname = 'EXT'
 cal_extract.instrument = __INSTRUMENT__
 cal_extract.inputtype = 'tmp'
@@ -658,7 +660,7 @@ recipes.append(cal_extract)
 # cal_wave_master
 # -----------------------------------------------------------------------------
 cal_wave_master = DrsRecipe(__INSTRUMENT__)
-cal_wave_master.name = 'cal_wave_master_spirou.py'
+cal_wave_master.name = 'cal_wave_master_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_wave_master.shortname = 'WAVEM'
 cal_wave_master.instrument = __INSTRUMENT__
 cal_wave_master.inputtype = 'tmp'
@@ -741,10 +743,10 @@ cal_wave_master.group_column = 'REPROCESS_NIGHTCOL'
 recipes.append(cal_wave_master)
 
 # -----------------------------------------------------------------------------
-# cal_wave_night_spirou
+# cal_wave_night
 # -----------------------------------------------------------------------------
 cal_wave_night = DrsRecipe(__INSTRUMENT__)
-cal_wave_night.name = 'cal_wave_night_spirou.py'
+cal_wave_night.name = 'cal_wave_night_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_wave_night.shortname = 'WAVE'
 cal_wave_night.instrument = __INSTRUMENT__
 cal_wave_night.inputtype = 'tmp'
@@ -802,10 +804,10 @@ cal_wave_night.group_column = 'REPROCESS_NIGHTCOL'
 recipes.append(cal_wave_night)
 
 # -----------------------------------------------------------------------------
-# cal_CCF_E2DS_spirou
+# cal_ccf
 # -----------------------------------------------------------------------------
 cal_ccf = DrsRecipe(__INSTRUMENT__)
-cal_ccf.name = 'cal_ccf_spirou.py'
+cal_ccf.name = 'cal_ccf_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_ccf.shortname = 'CCF'
 cal_ccf.instrument = __INSTRUMENT__
 cal_ccf.inputtype = 'red'
@@ -846,10 +848,10 @@ cal_ccf.group_column = 'REPROCESS_NIGHTCOL'
 recipes.append(cal_ccf)
 
 # -----------------------------------------------------------------------------
-# obj_mk_tellu_spirou
+# obj_mk_tellu
 # -----------------------------------------------------------------------------
 obj_mk_tellu = DrsRecipe(__INSTRUMENT__)
-obj_mk_tellu.name = 'obj_mk_tellu_spirou.py'
+obj_mk_tellu.name = 'obj_mk_tellu_{0}.py'.format(INSTRUMENT_ALIAS)
 obj_mk_tellu.shortname = 'MKTELL'
 obj_mk_tellu.instrument = __INSTRUMENT__
 obj_mk_tellu.inputtype = 'red'
@@ -876,20 +878,21 @@ obj_mk_tellu.set_kwarg(**add_db)
 obj_mk_tellu.set_kwarg(**blazefile)
 obj_mk_tellu.set_kwarg(**plot)
 obj_mk_tellu.set_kwarg(**wavefile)
-# TODO: Add to language DB
 obj_mk_tellu.set_kwarg(name='--use_template', dtype='bool', default=True,
-                       helpstr='Whether to use the template provided from '
-                               'the telluric database')
+                       helpstr=textentry('USE_TEMP_HELP'))
+obj_mk_tellu.set_kwarg(name='--template', dtype='file', default='None',
+                       files=[files.out_tellu_template],
+                       helpstr=textentry('TEMPLATE_FILE_HELP'))
 obj_mk_tellu.group_func = grouping.group_individually
 obj_mk_tellu.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(obj_mk_tellu)
 
 # -----------------------------------------------------------------------------
-# obj_mk_tellu_db_spirou
+# obj_mk_tellu_db
 # -----------------------------------------------------------------------------
 obj_mk_tellu_db = DrsRecipe(__INSTRUMENT__)
-obj_mk_tellu_db.name = 'obj_mk_tellu_db_spirou.py'
+obj_mk_tellu_db.name = 'obj_mk_tellu_db_{0}.py'.format(INSTRUMENT_ALIAS)
 obj_mk_tellu_db.shortname = 'MKTELLDB'
 obj_mk_tellu_db.master = False
 obj_mk_tellu_db.instrument = __INSTRUMENT__
@@ -923,10 +926,10 @@ obj_mk_tellu_db.group_column = None
 recipes.append(obj_mk_tellu_db)
 
 # -----------------------------------------------------------------------------
-# obj_fit_tellu_spirou
+# obj_fit_tellu
 # -----------------------------------------------------------------------------
 obj_fit_tellu = DrsRecipe(__INSTRUMENT__)
-obj_fit_tellu.name = 'obj_fit_tellu_spirou.py'
+obj_fit_tellu.name = 'obj_fit_tellu_{0}.py'.format(INSTRUMENT_ALIAS)
 obj_fit_tellu.shortname = 'FTELLU'
 obj_fit_tellu.instrument = __INSTRUMENT__
 obj_fit_tellu.inputtype = 'red'
@@ -959,10 +962,11 @@ obj_fit_tellu.set_arg(name='files', dtype='files', pos='1+',
                       helpstr=(textentry('FILES_HELP')
                                + textentry('FTELLU_FILES_HELP')),
                       limit=1)
-# TODO: Add to language DB
 obj_fit_tellu.set_kwarg(name='--use_template', dtype='bool', default=True,
-                        helpstr='Whether to use the template provided from '
-                                'the telluric database')
+                        helpstr=textentry('USE_TEMP_HELP'))
+obj_fit_tellu.set_kwarg(name='--template', dtype='file', default='None',
+                        files=[files.out_tellu_template],
+                        helpstr=textentry('TEMPLATE_FILE_HELP'))
 obj_fit_tellu.set_kwarg(**add_db)
 obj_fit_tellu.set_kwarg(**blazefile)
 obj_fit_tellu.set_kwarg(**plot)
@@ -973,10 +977,10 @@ obj_fit_tellu.group_column = 'REPROCESS_NIGHTCOL'
 recipes.append(obj_fit_tellu)
 
 # -----------------------------------------------------------------------------
-# obj_fit_tellu_db_spirou
+# obj_fit_tellu_db
 # -----------------------------------------------------------------------------
 obj_fit_tellu_db = DrsRecipe(__INSTRUMENT__)
-obj_fit_tellu_db.name = 'obj_fit_tellu_db_spirou.py'
+obj_fit_tellu_db.name = 'obj_fit_tellu_db_{0}.py'.format(INSTRUMENT_ALIAS)
 obj_fit_tellu_db.shortname = 'FTELLDB'
 obj_fit_tellu_db.master = False
 obj_fit_tellu_db.instrument = __INSTRUMENT__
@@ -1013,10 +1017,10 @@ obj_fit_tellu_db.group_column = None
 recipes.append(obj_fit_tellu_db)
 
 # -----------------------------------------------------------------------------
-# obj_mk_template_spirou
+# obj_mk_template
 # -----------------------------------------------------------------------------
 obj_mk_template = DrsRecipe(__INSTRUMENT__)
-obj_mk_template.name = 'obj_mk_template_spirou.py'
+obj_mk_template.name = 'obj_mk_template_{0}.py'.format(INSTRUMENT_ALIAS)
 obj_mk_template.shortname = 'MKTEMP'
 obj_mk_template.instrument = __INSTRUMENT__
 obj_mk_template.inputtype = 'red'
@@ -1084,10 +1088,10 @@ recipes.append(obj_mk_template)
 
 
 # -----------------------------------------------------------------------------
-# pol_spirou
+# pol
 # -----------------------------------------------------------------------------
 pol_spirou = DrsRecipe(__INSTRUMENT__)
-pol_spirou.name = 'pol_spirou.py'
+pol_spirou.name = 'pol_{0}.py'.format(INSTRUMENT_ALIAS)
 pol_spirou.shortname = 'POLAR'
 pol_spirou.instrument = __INSTRUMENT__
 pol_spirou.inputtype = 'red'
@@ -1130,10 +1134,10 @@ pol_spirou.group_column = None
 recipes.append(pol_spirou)
 
 # -----------------------------------------------------------------------------
-# pol_spirou_new
+# pol_new
 # -----------------------------------------------------------------------------
 pol_spirou_new = DrsRecipe(__INSTRUMENT__)
-pol_spirou_new.name = 'pol_spirou_new.py'
+pol_spirou_new.name = 'pol_{0}_new.py'.format(INSTRUMENT_ALIAS)
 pol_spirou_new.shortname = 'POLAR'
 pol_spirou_new.instrument = __INSTRUMENT__
 pol_spirou_new.inputtype = 'red'
@@ -1196,10 +1200,10 @@ pol_spirou_new.group_column = None
 recipes.append(pol_spirou_new)
 
 # -----------------------------------------------------------------------------
-# obj_spec_spirou
+# obj_spec
 # -----------------------------------------------------------------------------
 obj_spec = DrsRecipe(__INSTRUMENT__)
-obj_spec.name = 'obj_spec_spirou.py'
+obj_spec.name = 'obj_spec_{0}.py'.format(INSTRUMENT_ALIAS)
 obj_spec.shortname = 'OBJ_SPEC'
 obj_spec.instrument = __INSTRUMENT__
 obj_spec.inputtype = 'red'
@@ -1224,24 +1228,6 @@ recipes.append(obj_spec)
 
 # -----------------------------------------------------------------------------
 # obj_pol_spirou
-# -----------------------------------------------------------------------------
-
-# -----------------------------------------------------------------------------
-# cal_exposure_meter
-# -----------------------------------------------------------------------------
-
-# -----------------------------------------------------------------------------
-# cal_wave_mapper
-# -----------------------------------------------------------------------------
-
-
-# -----------------------------------------------------------------------------
-# visu_RAW_spirou
-# -----------------------------------------------------------------------------
-
-
-# -----------------------------------------------------------------------------
-# visu_E2DS_spirou
 # -----------------------------------------------------------------------------
 
 

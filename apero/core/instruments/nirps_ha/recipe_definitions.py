@@ -4,6 +4,7 @@ from apero.core import constants
 from apero.core.utils import drs_recipe
 from apero import lang
 from apero.core.instruments.nirps_ha import file_definitions as files
+from apero.core.instruments.default import grouping
 
 # =============================================================================
 # Define variables
@@ -15,6 +16,8 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
+# Define instrument alias
+INSTRUMENT_ALIAS = 'nirps_ha'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
 # Get Help
@@ -86,10 +89,12 @@ badfile = dict(name='--badpixfile', dtype='file', default='None',
                files=[files.out_badpix], helpstr=textentry('BADFILE_HELP'))
 # -----------------------------------------------------------------------------
 blazefile = dict(name='--blazefile', dtype='file', default='None',
-                 files=[files.out_ff_blaze], helpstr=textentry('BLAZEFILE_HELP'))
+                 files=[files.out_ff_blaze],
+                 helpstr=textentry('BLAZEFILE_HELP'))
 # -----------------------------------------------------------------------------
 darkfile = dict(name='--darkfile', dtype='file', default='None',
-                files=[files.out_dark_master], helpstr=textentry('DARKFILE_HELP'))
+                files=[files.out_dark_master],
+                helpstr=textentry('DARKFILE_HELP'))
 # -----------------------------------------------------------------------------
 flatfile = dict(name='--flatfile', dtype='file', default='None',
                 files=[files.out_ff_flat], helpstr=textentry('FLATFILE_HELP'))
@@ -102,7 +107,8 @@ locofile = dict(name='--locofile', dtype='file', default='None',
                 files=[files.out_loc_loco], helpstr=textentry('LOCOFILE_HELP'))
 # -----------------------------------------------------------------------------
 orderpfile = dict(name='--orderpfile', dtype='file', default='None',
-                  files=[files.out_loc_orderp], helpstr=textentry('ORDERPFILE_HELP'))
+                  files=[files.out_loc_orderp],
+                  helpstr=textentry('ORDERPFILE_HELP'))
 # -----------------------------------------------------------------------------
 shapexfile = dict(name='--shapex', dtype='file', default='None',
                   files=[files.out_shape_dxmap],
@@ -142,7 +148,6 @@ recipes = []
 #    recipe.name            the full name of the python script file
 #    recipe.inputtype        the input directory [raw/tmp/reduced]
 #    recipe.outputtype       the output directory [raw/tmp/reduced]
-#
 #    recipe.description     the description (for help file)
 #
 #    arguments:
@@ -170,43 +175,10 @@ pp_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 out_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 
 # -----------------------------------------------------------------------------
-# test.py
-# -----------------------------------------------------------------------------
-test = DrsRecipe(__INSTRUMENT__)
-test.name = 'test_recipe.py'
-test.instrument = __INSTRUMENT__
-test.inputtype = 'tmp'
-test.outputtype = 'tmp'
-test.extension = 'fits'
-test.description = textentry('TEST_DESC')
-test.epilog = textentry('TEST_EXAMPLE')
-test.kind = 'test'
-test.set_arg(pos=0, **directory)
-test.set_kwarg(name='--filelist1', dtype='files', default=[],
-               files=[files.pp_dark_dark_int, files.pp_flat_flat],
-               filelogic='inclusive',
-               helpstr=textentry('TEST_FILELIST1_HELP'), required=True)
-test.set_kwarg(name='--filelist2', dtype='files', default=[],
-               files=[files.pp_fp_fp], helpstr=textentry('TEST_FILELIST2_HELP'),
-               required=True)
-test.set_kwarg(**plot)
-test.set_kwarg(**add_db)
-test.set_kwarg(**dobad)
-test.set_kwarg(**badfile)
-test.set_kwarg(default=False, **combine)
-test.set_kwarg(**dodark)
-test.set_kwarg(**darkfile)
-test.set_kwarg(**flipimage)
-test.set_kwarg(**fluxunits)
-test.set_kwarg(**resize)
-# add to recipe
-recipes.append(test)
-
-# -----------------------------------------------------------------------------
 # cal_pp_master_nirps_ha
 # -----------------------------------------------------------------------------
 cal_pp_master = DrsRecipe(__INSTRUMENT__)
-cal_pp_master.name = 'cal_pp_master_nirps_ha.py'
+cal_pp_master.name = 'cal_pp_master_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_pp_master.shortname = 'PPM'
 cal_pp_master.instrument = __INSTRUMENT__
 cal_pp_master.inputtype = 'raw'
@@ -223,10 +195,10 @@ cal_pp_master.set_kwarg(name='--filetype', dtype=str, default='FLAT_FLAT',
 recipes.append(cal_pp_master)
 
 # -----------------------------------------------------------------------------
-# cal_preprocess_nirps_ha
+# cal_preprocess
 # -----------------------------------------------------------------------------
 cal_pp = DrsRecipe(__INSTRUMENT__)
-cal_pp.name = 'cal_preprocess_nirps_ha.py'
+cal_pp.name = 'cal_preprocess_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_pp.shortname = 'PP'
 cal_pp.instrument = __INSTRUMENT__
 cal_pp.inputtype = 'raw'
@@ -241,14 +213,16 @@ cal_pp.set_arg(name='files', dtype='files', pos='1+', files=[files.raw_file],
                helpstr=textentry('PREPROCESS_UFILES_HELP'), limit=1)
 cal_pp.set_kwarg(name='--skip', dtype='bool', default=False,
                  helpstr=textentry('PPSKIP_HELP'), default_ref='SKIP_DONE_PP')
+cal_pp.group_func = grouping.group_individually
+cal_pp.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(cal_pp)
 
 # -----------------------------------------------------------------------------
-# cal_badpix_nirps_ha
+# cal_badpix
 # -----------------------------------------------------------------------------
 cal_badpix = DrsRecipe(__INSTRUMENT__)
-cal_badpix.name = 'cal_badpix_nirps_ha.py'
+cal_badpix.name = 'cal_badpix_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_badpix.shortname = 'BAD'
 cal_badpix.instrument = __INSTRUMENT__
 cal_badpix.inputtype = 'tmp'
@@ -275,14 +249,16 @@ cal_badpix.set_kwarg(**flipimage)
 cal_badpix.set_kwarg(**fluxunits)
 cal_badpix.set_kwarg(**plot)
 cal_badpix.set_kwarg(**resize)
+cal_badpix.group_func = grouping.group_by_dirname
+cal_badpix.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(cal_badpix)
 
 # -----------------------------------------------------------------------------
-# cal_dark_nirps_ha
+# cal_dark
 # -----------------------------------------------------------------------------
 cal_dark = DrsRecipe(__INSTRUMENT__)
-cal_dark.name = 'cal_dark_nirps_ha.py'
+cal_dark.name = 'cal_dark_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_dark.shortname = 'DARK'
 cal_dark.instrument = __INSTRUMENT__
 cal_dark.inputtype = 'tmp'
@@ -305,14 +281,16 @@ cal_dark.set_arg(name='files', dtype='files',
 cal_dark.set_kwarg(**add_db)
 cal_dark.set_kwarg(default=True, **combine)
 cal_dark.set_kwarg(**plot)
+cal_dark.group_func = grouping.group_by_dirname
+cal_dark.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(cal_dark)
 
 # -----------------------------------------------------------------------------
-# cal_dark_master_nirps_ha
+# cal_dark_master
 # -----------------------------------------------------------------------------
 cal_dark_master = DrsRecipe(__INSTRUMENT__)
-cal_dark_master.name = 'cal_dark_master_nirps_ha.py'
+cal_dark_master.name = 'cal_dark_master_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_dark_master.shortname = 'DARKM'
 cal_dark_master.master = True
 cal_dark_master.instrument = __INSTRUMENT__
@@ -328,14 +306,16 @@ cal_dark_master.set_kwarg(name='--filetype', dtype=str,
                           helpstr=textentry('DARK_MASTER_FILETYPE'))
 cal_dark_master.set_kwarg(**add_db)
 cal_dark_master.set_kwarg(**plot)
+cal_dark_master.group_func = grouping.no_group
+cal_dark_master.group_column = None
 # add to recipe
 recipes.append(cal_dark_master)
 
 # -----------------------------------------------------------------------------
-# cal_loc_RAW_nirps_ha
+# cal_loc
 # -----------------------------------------------------------------------------
 cal_loc = DrsRecipe(__INSTRUMENT__)
-cal_loc.name = 'cal_loc_nirps_ha.py'
+cal_loc.name = 'cal_loc_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_loc.shortname = 'LOC'
 cal_loc.instrument = __INSTRUMENT__
 cal_loc.inputtype = 'tmp'
@@ -369,14 +349,16 @@ cal_loc.set_kwarg(**flipimage)
 cal_loc.set_kwarg(**fluxunits)
 cal_loc.set_kwarg(**plot)
 cal_loc.set_kwarg(**resize)
+cal_loc.group_func = grouping.group_by_dirname
+cal_loc.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(cal_loc)
 
 # -----------------------------------------------------------------------------
-# cal_shape_master_nirps_ha
+# cal_shape_master
 # -----------------------------------------------------------------------------
 cal_shape_master = DrsRecipe(__INSTRUMENT__)
-cal_shape_master.name = 'cal_shape_master_nirps_ha.py'
+cal_shape_master.name = 'cal_shape_master_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_shape_master.shortname = 'SHAPEM'
 cal_shape_master.master = True
 cal_shape_master.instrument = __INSTRUMENT__
@@ -416,14 +398,16 @@ cal_shape_master.set_kwarg(**resize)
 cal_shape_master.set_kwarg(name='--fpmaster', dtype='files',
                            files=[files.out_shape_fpmaster], default='None',
                            helpstr=textentry('SHAPE_FPMASTER_HELP'))
+cal_shape_master.group_func = grouping.group_by_dirname
+cal_shape_master.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(cal_shape_master)
 
 # -----------------------------------------------------------------------------
-# cal_SHAPE_nirps_ha
+# cal_shape
 # -----------------------------------------------------------------------------
 cal_shape = DrsRecipe(__INSTRUMENT__)
-cal_shape.name = 'cal_shape_nirps_ha.py'
+cal_shape.name = 'cal_shape_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_shape.shortname = 'SHAPE'
 cal_shape.instrument = __INSTRUMENT__
 cal_shape.inputtype = 'tmp'
@@ -455,14 +439,16 @@ cal_shape.set_kwarg(**plot)
 cal_shape.set_kwarg(**resize)
 cal_shape.set_kwarg(**shapexfile)
 cal_shape.set_kwarg(**shapeyfile)
+cal_shape.group_func = grouping.group_by_dirname
+cal_shape.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(cal_shape)
 
 # -----------------------------------------------------------------------------
-# cal_FF_RAW_nirps_ha
+# cal_ff
 # -----------------------------------------------------------------------------
 cal_ff = DrsRecipe(__INSTRUMENT__)
-cal_ff.name = 'cal_flat_nirps_ha.py'
+cal_ff.name = 'cal_flat_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_ff.shortname = 'FF'
 cal_ff.instrument = __INSTRUMENT__
 cal_ff.inputtype = 'tmp'
@@ -500,14 +486,16 @@ cal_ff.set_kwarg(**resize)
 cal_ff.set_kwarg(**shapexfile)
 cal_ff.set_kwarg(**shapeyfile)
 cal_ff.set_kwarg(**shapelfile)
+cal_ff.group_func = grouping.group_by_dirname
+cal_ff.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(cal_ff)
 
 # -----------------------------------------------------------------------------
-# cal_thermal_nirps_ha
+# cal_thermal
 # -----------------------------------------------------------------------------
 cal_thermal = DrsRecipe(__INSTRUMENT__)
-cal_thermal.name = 'cal_thermal_nirps_ha.py'
+cal_thermal.name = 'cal_thermal_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_thermal.shortname = 'THERM'
 cal_thermal.instrument = __INSTRUMENT__
 cal_thermal.inputtype = 'tmp'
@@ -525,7 +513,8 @@ cal_thermal.set_arg(pos=0, **directory)
 cal_thermal.set_arg(name='files', dtype='files', pos='1+',
                     files=[files.pp_dark_dark_int, files.pp_dark_dark_tel],
                     filelogic='exclusive',
-                    helpstr=textentry('FILES_HELP') + textentry('EXTRACT_FILES_HELP'),
+                    helpstr=(textentry('FILES_HELP') +
+                             textentry('EXTRACT_FILES_HELP')),
                     limit=1)
 cal_thermal.set_kwarg(**add_db)
 cal_thermal.set_kwarg(**badfile)
@@ -545,22 +534,24 @@ cal_thermal.set_kwarg(**shapexfile)
 cal_thermal.set_kwarg(**shapeyfile)
 cal_thermal.set_kwarg(**shapelfile)
 cal_thermal.set_kwarg(**wavefile)
-cal_thermal.set_kwarg(name='--forceext', dtype='bool',
+cal_thermal.set_kwarg(name='--forceext', dtype='bool', default=False,
                       default_ref='THERMAL_ALWAYS_EXTRACT',
                       helpstr='THERMAL_EXTRACT_HELP')
+cal_thermal.group_func = grouping.group_by_dirname
+cal_thermal.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(cal_thermal)
 
 # -----------------------------------------------------------------------------
-# cal_leak_master_nirps_ha
+# cal_leak_master
 # -----------------------------------------------------------------------------
 cal_leak_master = DrsRecipe(__INSTRUMENT__)
-cal_leak_master.name = 'cal_leak_master_nirps_ha.py'
+cal_leak_master.name = 'cal_leak_master_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_leak_master.shortname = 'LEAKM'
 cal_leak_master.master = True
 cal_leak_master.instrument = __INSTRUMENT__
 cal_leak_master.inputtype = 'tmp'
-cal_leak_master.outouttype = 'red'
+cal_leak_master.outputtype = 'red'
 cal_leak_master.extension = 'fits'
 cal_leak_master.description = textentry('LEAKM_DESC')
 cal_leak_master.epilog = textentry('LEAKM_EXAMPLE')
@@ -572,14 +563,16 @@ cal_leak_master.set_kwarg(name='--filetype', dtype=str, default='DARK_FP',
                           helpstr=textentry('LEAKM_HELP_FILETYPE'))
 cal_leak_master.set_kwarg(**add_db)
 cal_leak_master.set_kwarg(**plot)
+cal_leak_master.group_func = grouping.no_group
+cal_leak_master.group_column = None
 # add to recipe
 recipes.append(cal_leak_master)
 
 # -----------------------------------------------------------------------------
-# cal_leak_mnirps_ha
+# cal_leak
 # -----------------------------------------------------------------------------
 cal_leak = DrsRecipe(__INSTRUMENT__)
-cal_leak.name = 'cal_leak_nirps_ha.py'
+cal_leak.name = 'cal_leak_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_leak.shortname = 'LEAK'
 cal_leak.instrument = __INSTRUMENT__
 cal_leak.inputtype = 'red'
@@ -603,14 +596,16 @@ cal_leak.set_kwarg(**plot)
 cal_leak.set_kwarg(name='--leakfile', dtype='file', default='None',
                    files=[files.out_leak_master],
                    helpstr=textentry('LEAK_LEAKFILE_HELP'))
+cal_leak.group_func = grouping.group_individually
+cal_leak.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(cal_leak)
 
 # -----------------------------------------------------------------------------
-# cal_extract_nirps_ha
+# cal_extract
 # -----------------------------------------------------------------------------
 cal_extract = DrsRecipe(__INSTRUMENT__)
-cal_extract.name = 'cal_extract_nirps_ha.py'
+cal_extract.name = 'cal_extract_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_extract.shortname = 'EXT'
 cal_extract.instrument = __INSTRUMENT__
 cal_extract.inputtype = 'tmp'
@@ -626,7 +621,9 @@ cal_extract.set_outputs(E2DS_FILE=files.out_ext_e2ds,
                         S1D_V_FILE=files.out_ext_s1d_v,
                         ORDERP_SFILE=files.out_orderp_straight,
                         DEBUG_BACK=files.debug_back,
-                        EXT_FPLINES=files.out_ext_fplines)
+                        EXT_FPLINES=files.out_ext_fplines,
+                        Q2DS_FILE=files.out_ql_e2ds,
+                        Q2DSFF_FILE=files.out_ql_e2dsff)
 cal_extract.set_debug_plots('FLAT_ORDER_FIT_EDGES1', 'FLAT_ORDER_FIT_EDGES2',
                             'FLAT_BLAZE_ORDER1', 'FLAT_BLAZE_ORDER2',
                             'THERMAL_BACKGROUND', 'EXTRACT_SPECTRAL_ORDER1',
@@ -637,8 +634,12 @@ cal_extract.set_summary_plots('SUM_FLAT_ORDER_FIT_EDGES',
 cal_extract.set_arg(pos=0, **directory)
 cal_extract.set_arg(name='files', dtype='files', pos='1+',
                     files=[files.pp_file],
-                    helpstr=textentry('FILES_HELP') + textentry('EXTRACT_FILES_HELP'),
+                    helpstr=(textentry('FILES_HELP') +
+                             textentry('EXTRACT_FILES_HELP')),
                     limit=1)
+cal_extract.set_kwarg(name='--quicklook', dtype='bool', default=False,
+                      helpstr=textentry('QUICK_LOOK_EXT_HELP'),
+                      default_ref='EXT_QUICK_LOOK')
 cal_extract.set_kwarg(**badfile)
 cal_extract.set_kwarg(**dobad)
 cal_extract.set_kwarg(**backsub)
@@ -664,6 +665,8 @@ cal_extract.set_kwarg(name='--thermal', dtype='bool', default=True,
                       default_ref='THERMAL_CORRECT')
 cal_extract.set_kwarg(**thermalfile)
 cal_extract.set_kwarg(**wavefile)
+cal_extract.group_func = grouping.group_individually
+cal_extract.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(cal_extract)
 
@@ -671,7 +674,7 @@ recipes.append(cal_extract)
 # cal_wave_master
 # -----------------------------------------------------------------------------
 cal_wave_master = DrsRecipe(__INSTRUMENT__)
-cal_wave_master.name = 'cal_wave_master_nirps_ha.py'
+cal_wave_master.name = 'cal_wave_master_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_wave_master.shortname = 'WAVEM'
 cal_wave_master.instrument = __INSTRUMENT__
 cal_wave_master.inputtype = 'tmp'
@@ -748,14 +751,16 @@ cal_wave_master.set_kwarg(name='--hcmode', dtype='options',
 cal_wave_master.set_kwarg(name='--fpmode', dtype='options',
                           helpstr=textentry('FPMODE_HELP'), options=['0', '1'],
                           default_ref='WAVE_MODE_FP')
+cal_wave_master.group_func = grouping.group_by_dirname
+cal_wave_master.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(cal_wave_master)
 
 # -----------------------------------------------------------------------------
-# cal_wave_night_nirps_ha
+# cal_wave_night
 # -----------------------------------------------------------------------------
 cal_wave_night = DrsRecipe(__INSTRUMENT__)
-cal_wave_night.name = 'cal_wave_night_nirps_ha.py'
+cal_wave_night.name = 'cal_wave_night_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_wave_night.shortname = 'WAVE'
 cal_wave_night.instrument = __INSTRUMENT__
 cal_wave_night.inputtype = 'tmp'
@@ -807,30 +812,16 @@ cal_wave_night.set_kwarg(**wavefile)
 cal_wave_night.set_kwarg(name='--forceext', dtype='bool',
                          default_ref='WAVE_ALWAYS_EXTRACT',
                          helpstr='WAVE_EXTRACT_HELP')
+cal_wave_night.group_func = grouping.group_by_dirname
+cal_wave_night.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(cal_wave_night)
 
 # -----------------------------------------------------------------------------
-# cal_DRIFT_E2DS_nirps_ha
-# -----------------------------------------------------------------------------
-cal_drift1 = DrsRecipe(__INSTRUMENT__)
-cal_drift1.name = 'cal_DRIFT_E2DS_nirps_ha.py'
-# add to recipe
-recipes.append(cal_drift1)
-
-# -----------------------------------------------------------------------------
-# cal_DRIFTPEAK_E2DS_nirps_ha
-# -----------------------------------------------------------------------------
-cal_drift2 = DrsRecipe(__INSTRUMENT__)
-cal_drift2.name = 'cal_DRIFTPEAK_E2DS_nirps_ha.py'
-# add to recipe
-recipes.append(cal_drift2)
-
-# -----------------------------------------------------------------------------
-# cal_CCF_E2DS_nirps_ha
+# cal_ccf
 # -----------------------------------------------------------------------------
 cal_ccf = DrsRecipe(__INSTRUMENT__)
-cal_ccf.name = 'cal_ccf_nirps_ha.py'
+cal_ccf.name = 'cal_ccf_{0}.py'.format(INSTRUMENT_ALIAS)
 cal_ccf.shortname = 'CCF'
 cal_ccf.instrument = __INSTRUMENT__
 cal_ccf.inputtype = 'red'
@@ -865,14 +856,16 @@ cal_ccf.set_kwarg(name='--masknormmode', dtype=str,
 cal_ccf.set_kwarg(**add_db)
 cal_ccf.set_kwarg(**blazefile)
 cal_ccf.set_kwarg(**plot)
+cal_ccf.group_func = grouping.group_individually
+cal_ccf.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(cal_ccf)
 
 # -----------------------------------------------------------------------------
-# obj_mk_tellu_nirps_ha
+# obj_mk_tellu
 # -----------------------------------------------------------------------------
 obj_mk_tellu = DrsRecipe(__INSTRUMENT__)
-obj_mk_tellu.name = 'obj_mk_tellu_nirps_ha.py'
+obj_mk_tellu.name = 'obj_mk_tellu_{0}.py'.format(INSTRUMENT_ALIAS)
 obj_mk_tellu.shortname = 'MKTELL'
 obj_mk_tellu.instrument = __INSTRUMENT__
 obj_mk_tellu.inputtype = 'red'
@@ -892,24 +885,28 @@ obj_mk_tellu.set_arg(pos=0, **directory)
 obj_mk_tellu.set_arg(name='files', dtype='files', pos='1+',
                      files=[files.out_ext_e2ds, files.out_ext_e2dsff],
                      filelogic='exclusive',
-                     helpstr=textentry('FILES_HELP') + textentry('MKTELL_FILES_HELP'),
+                     helpstr=(textentry('FILES_HELP') +
+                              textentry('MKTELL_FILES_HELP')),
                      limit=1)
 obj_mk_tellu.set_kwarg(**add_db)
 obj_mk_tellu.set_kwarg(**blazefile)
 obj_mk_tellu.set_kwarg(**plot)
 obj_mk_tellu.set_kwarg(**wavefile)
-# TODO: Add to language DB
 obj_mk_tellu.set_kwarg(name='--use_template', dtype='bool', default=True,
-                       helpstr='Whether to use the template provided from '
-                               'the telluric database')
+                       helpstr=textentry('USE_TEMP_HELP'))
+obj_mk_tellu.set_kwarg(name='--template', dtype='file', default='None',
+                       files=[files.out_tellu_template],
+                       helpstr=textentry('TEMPLATE_FILE_HELP'))
+obj_mk_tellu.group_func = grouping.group_individually
+obj_mk_tellu.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(obj_mk_tellu)
 
 # -----------------------------------------------------------------------------
-# obj_mk_tellu_db_nirps_ha
+# obj_mk_tellu_db
 # -----------------------------------------------------------------------------
 obj_mk_tellu_db = DrsRecipe(__INSTRUMENT__)
-obj_mk_tellu_db.name = 'obj_mk_tellu_db_nirps_ha.py'
+obj_mk_tellu_db.name = 'obj_mk_tellu_db_{0}.py'.format(INSTRUMENT_ALIAS)
 obj_mk_tellu_db.shortname = 'MKTELLDB'
 obj_mk_tellu_db.master = False
 obj_mk_tellu_db.instrument = __INSTRUMENT__
@@ -937,14 +934,16 @@ obj_mk_tellu_db.set_kwarg(**add_db)
 obj_mk_tellu_db.set_kwarg(**blazefile)
 obj_mk_tellu_db.set_kwarg(**plot)
 obj_mk_tellu_db.set_kwarg(**wavefile)
+obj_mk_tellu_db.group_func = grouping.no_group
+obj_mk_tellu_db.group_column = None
 # add to recipe
 recipes.append(obj_mk_tellu_db)
 
 # -----------------------------------------------------------------------------
-# obj_fit_tellu_nirps_ha
+# obj_fit_tellu
 # -----------------------------------------------------------------------------
 obj_fit_tellu = DrsRecipe(__INSTRUMENT__)
-obj_fit_tellu.name = 'obj_fit_tellu_nirps_ha.py'
+obj_fit_tellu.name = 'obj_fit_tellu_{0}.py'.format(INSTRUMENT_ALIAS)
 obj_fit_tellu.shortname = 'FTELLU'
 obj_fit_tellu.instrument = __INSTRUMENT__
 obj_fit_tellu.inputtype = 'red'
@@ -974,24 +973,28 @@ obj_fit_tellu.set_arg(pos=0, **directory)
 obj_fit_tellu.set_arg(name='files', dtype='files', pos='1+',
                       files=[files.out_ext_e2ds, files.out_ext_e2dsff],
                       filelogic='exclusive',
-                      helpstr=textentry('FILES_HELP') + textentry('FTELLU_FILES_HELP'),
+                      helpstr=(textentry('FILES_HELP')
+                               + textentry('FTELLU_FILES_HELP')),
                       limit=1)
-# TODO: Add to language DB
 obj_fit_tellu.set_kwarg(name='--use_template', dtype='bool', default=True,
-                        helpstr='Whether to use the template provided from '
-                                'the telluric database')
+                        helpstr=textentry('USE_TEMP_HELP'))
+obj_fit_tellu.set_kwarg(name='--template', dtype='file', default='None',
+                        files=[files.out_tellu_template],
+                        helpstr=textentry('TEMPLATE_FILE_HELP'))
 obj_fit_tellu.set_kwarg(**add_db)
 obj_fit_tellu.set_kwarg(**blazefile)
 obj_fit_tellu.set_kwarg(**plot)
 obj_fit_tellu.set_kwarg(**wavefile)
+obj_fit_tellu.group_func = grouping.group_individually
+obj_fit_tellu.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(obj_fit_tellu)
 
 # -----------------------------------------------------------------------------
-# obj_fit_tellu_db_nirps_ha
+# obj_fit_tellu_db
 # -----------------------------------------------------------------------------
 obj_fit_tellu_db = DrsRecipe(__INSTRUMENT__)
-obj_fit_tellu_db.name = 'obj_fit_tellu_db_nirps_ha.py'
+obj_fit_tellu_db.name = 'obj_fit_tellu_db_{0}.py'.format(INSTRUMENT_ALIAS)
 obj_fit_tellu_db.shortname = 'FTELLDB'
 obj_fit_tellu_db.master = False
 obj_fit_tellu_db.instrument = __INSTRUMENT__
@@ -1022,14 +1025,16 @@ obj_fit_tellu_db.set_kwarg(**add_db)
 obj_fit_tellu_db.set_kwarg(**add_db)
 obj_fit_tellu_db.set_kwarg(**plot)
 obj_fit_tellu_db.set_kwarg(**wavefile)
+obj_fit_tellu_db.group_func = grouping.no_group
+obj_fit_tellu_db.group_column = None
 # add to recipe
 recipes.append(obj_fit_tellu_db)
 
 # -----------------------------------------------------------------------------
-# obj_mk_template_nirps_ha
+# obj_mk_template
 # -----------------------------------------------------------------------------
 obj_mk_template = DrsRecipe(__INSTRUMENT__)
-obj_mk_template.name = 'obj_mk_template_nirps_ha.py'
+obj_mk_template.name = 'obj_mk_template_{0}.py'.format(INSTRUMENT_ALIAS)
 obj_mk_template.shortname = 'MKTEMP'
 obj_mk_template.instrument = __INSTRUMENT__
 obj_mk_template.inputtype = 'red'
@@ -1043,8 +1048,8 @@ obj_mk_template.set_outputs(TELLU_TEMP=files.out_tellu_template,
                             TELLU_BIGCUBE0=files.out_tellu_bigcube0,
                             TELLU_TEMP_S1D=files.out_tellu_s1d_template,
                             TELLU_BIGCUBE_S1D=files.out_tellu_s1d_bigcube)
-obj_mk_template.set_debug_plots('EXTRACT_S1D')
-obj_mk_template.set_summary_plots('SUM_EXTRACT_S1D')
+obj_mk_template.set_debug_plots('EXTRACT_S1D', 'MKTEMP_BERV_COV')
+obj_mk_template.set_summary_plots('SUM_EXTRACT_S1D', 'SUM_MKTEMP_BERV_COV')
 obj_mk_template.set_arg(name='objname', pos=0, dtype=str,
                         helpstr=textentry('MKTEMP_OBJNAME_HELP'))
 obj_mk_template.set_kwarg(name='--filetype', dtype=str,
@@ -1059,14 +1064,16 @@ obj_mk_template.set_kwarg(**add_db)
 obj_mk_template.set_kwarg(**blazefile)
 obj_mk_template.set_kwarg(**plot)
 obj_mk_template.set_kwarg(**wavefile)
+obj_mk_template.group_func = grouping.no_group
+obj_mk_template.group_column = None
 # add to recipe
 recipes.append(obj_mk_template)
 
 # -----------------------------------------------------------------------------
-# obj_spec_nirps_ha
+# obj_spec
 # -----------------------------------------------------------------------------
 obj_spec = DrsRecipe(__INSTRUMENT__)
-obj_spec.name = 'obj_spec_nirps_ha.py'
+obj_spec.name = 'obj_spec_{0}.py'.format(INSTRUMENT_ALIAS)
 obj_spec.shortname = 'OBJ_SPEC'
 obj_spec.instrument = __INSTRUMENT__
 obj_spec.inputtype = 'red'
@@ -1078,11 +1085,14 @@ obj_spec.kind = 'recipe'
 obj_spec.set_arg(pos=0, **directory)
 obj_spec.set_arg(name='files', dtype='files', pos='1+',
                  files=[files.pp_file],
-                 helpstr=textentry('FILES_HELP') + textentry('EXTRACT_FILES_HELP'),
+                 helpstr=(textentry('FILES_HELP')
+                          + textentry('EXTRACT_FILES_HELP')),
                  limit=1)
 obj_spec.set_kwarg(**plot)
 obj_spec.set_kwarg(name='--cores', dtype=int, default=1,
                    helpstr='')
+obj_spec.group_func = grouping.group_individually
+obj_spec.group_column = grouping.group_individually
 # add to recipe
 recipes.append(obj_spec)
 
@@ -1232,46 +1242,46 @@ limited_seq.add(cal_leak, name='LEAKOBJ',
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
                              KW_DPRTYPE=['OBJ_FP']))
 
-# # telluric recipes
-# limited_seq.add(obj_mk_tellu_db, arguments=dict(cores='CORES'))
-# limited_seq.add(obj_fit_tellu_db, arguments=dict(cores='CORES'))
-#
-# # other telluric recipes
-# limited_seq.add(obj_mk_tellu, name='MKTELLU1',
-#                 files=[files.out_ext_e2dsff], fiber='AB',
-#                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-#                              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
-# limited_seq.add(obj_fit_tellu, name='MKTELLU2',
-#                 files=[files.out_ext_e2dsff], fiber='AB',
-#                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-#                              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
-# limited_seq.add(obj_mk_template, name='MKTELLU3',
-#                 fiber='AB',
-#                 arguments=dict(objname='TELLURIC_TARGETS'),
-#                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-#                              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
-# limited_seq.add(obj_mk_tellu, name='MKTELLU4',
-#                 files=[files.out_ext_e2dsff], fiber='AB',
-#                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-#                              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
-# limited_seq.add(obj_fit_tellu, name='FTELLU1',
-#                 files=[files.out_ext_e2dsff], fiber='AB',
-#                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-#                              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
-# limited_seq.add(obj_mk_template, name='FTELLU2',
-#                 fiber='AB',
-#                 arguments=dict(objname='SCIENCE_TARGETS'),
-#                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-#                              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
-# limited_seq.add(obj_fit_tellu, name='FTELLU3',
-#                 files=[files.out_ext_e2dsff], fiber='AB',
-#                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-#                              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
-#
-# # ccf
-# limited_seq.add(cal_ccf, files=[files.out_tellu_obj], fiber='AB',
-#                 filters=dict(KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
-#                              KW_OBJNAME='SCIENCE_TARGETS'))
+# other telluric recipes
+limited_seq.add(obj_mk_tellu, name='MKTELLU1',
+                files=[files.out_ext_e2dsff], fiber='AB',
+                filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+limited_seq.add(obj_fit_tellu, name='MKTELLU2',
+                files=[files.out_ext_e2dsff], fiber='AB',
+                filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+limited_seq.add(obj_mk_template, name='MKTELLU3',
+                fiber='AB',
+                arguments=dict(objname='TELLURIC_TARGETS'),
+                filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
+                template_required=True)
+limited_seq.add(obj_mk_tellu, name='MKTELLU4',
+                files=[files.out_ext_e2dsff], fiber='AB',
+                filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
+                template_required=True)
+limited_seq.add(obj_fit_tellu, name='FTELLU1',
+                files=[files.out_ext_e2dsff], fiber='AB',
+                filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+limited_seq.add(obj_mk_template, name='FTELLU2',
+                fiber='AB',
+                arguments=dict(objname='SCIENCE_TARGETS'),
+                filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
+                template_required=True)
+limited_seq.add(obj_fit_tellu, name='FTELLU3',
+                files=[files.out_ext_e2dsff], fiber='AB',
+                filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
+                template_required=True)
+
+# ccf
+limited_seq.add(cal_ccf, files=[files.out_tellu_obj], fiber='AB',
+                filters=dict(KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
+                             KW_OBJNAME='SCIENCE_TARGETS'))
 
 # -----------------------------------------------------------------------------
 # pp sequence (for trigger)
@@ -1327,33 +1337,37 @@ calib_seq.add(cal_wave_night)
 # -----------------------------------------------------------------------------
 tellu_seq = drs_recipe.DrsRunSequence('tellu_seq', __INSTRUMENT__)
 # extract science
-tellu_seq.add(cal_extract, name='EXTOBJ',
+tellu_seq.add(cal_extract, name='EXTTELL',
               files=[files.pp_obj_dark, files.pp_obj_fp],
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                            KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
 # correct leakage for any telluric targets that are OBJ_FP
 tellu_seq.add(cal_leak, name='LEAKTELL',
-              files=[files.out_ext_e2dsff], fiber='A',
+              files=[files.out_ext_e2dsff], fiber='AB',
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                            KW_DPRTYPE=['OBJ_FP']))
 # other telluric recipes
 tellu_seq.add(obj_mk_tellu, name='MKTELLU1',
-              files=[files.out_ext_e2dsff], fiber='A',
+              files=[files.out_ext_e2dsff], fiber='AB',
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                            KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+
 tellu_seq.add(obj_fit_tellu, name='MKTELLU2',
-              files=[files.out_ext_e2dsff], fiber='A',
+              files=[files.out_ext_e2dsff], fiber='AB',
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
                            KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+
 tellu_seq.add(obj_mk_template, name='MKTELLU3',
-              fiber='A', files=[files.out_ext_e2dsff],
+              fiber='AB', files=[files.out_ext_e2dsff],
               arguments=dict(objname='TELLURIC_TARGETS'),
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
+                template_required=True)
 tellu_seq.add(obj_mk_tellu, name='MKTELLU4',
-              fiber='A', files=[files.out_ext_e2dsff],
+              fiber='AB', files=[files.out_ext_e2dsff],
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
+                template_required=True)
 
 # -----------------------------------------------------------------------------
 # science sequence (for trigger)
@@ -1373,14 +1387,18 @@ science_seq.add(obj_fit_tellu, name='FTELLU1',
                 files=[files.out_ext_e2dsff], fiber='A',
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
                              KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+
 science_seq.add(obj_mk_template, name='FTELLU2', fiber='A',
                 arguments=dict(objname='SCIENCE_TARGETS'),
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'], ))
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'], ),
+                template_required=True)
 science_seq.add(obj_fit_tellu, name='FTELLU3',
                 files=[files.out_ext_e2dsff], fiber='A',
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
+                template_required=True)
+
 # ccf
 science_seq.add(cal_ccf, files=[files.out_tellu_obj], fiber='A',
                 filters=dict(KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
