@@ -22,6 +22,12 @@ __release__ = base.__release__
 # -----------------------------------------------------------------------------
 # Required header keys (main fits file)
 # -----------------------------------------------------------------------------
+# Define the header key that uniquely identifies the file
+#     (i.e. an odometer code)
+KW_IDENTIFIER = KW_IDENTIFIER.copy(__NAME__)
+KW_IDENTIFIER.set(key='FILENAME',
+                  comment='filename anticipated by fitspipe server')
+
 # define the HEADER key for acquisition time
 #     Note datatype must be a astropy.Time.format
 #     'jd', 'mjd', 'decimalyear', 'unix', 'cxcsec', 'gps', 'plot_date',
