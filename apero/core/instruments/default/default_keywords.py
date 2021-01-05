@@ -14,7 +14,7 @@ __all__ = [  # input keys
     'KW_CMPLTEXP', 'KW_NEXP', 'KW_PI_NAME', 'KW_PLX', 'KW_CALIBWH',
     'KW_TARGET_TYPE', 'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP',
     'KW_HUMIDITY', 'KW_GAIA_ID', 'KW_INPUTRV', 'KW_OBJ_TEMP',
-    'KW_SATURATE', 'KW_FRMTIME', 'KW_OBJECTNAME',
+    'KW_SATURATE', 'KW_FRMTIME', 'KW_OBJECTNAME', 'KW_IDENTIFIER',
     # object resolution keys
     'KW_DRS_OBJNAME', 'KW_DRS_OBJNAME_S', 'KW_DRS_GAIAID', 'KW_DRS_GAIAID_S',
     'KW_DRS_RA', 'KW_DRS_RA_S', 'KW_DRS_DEC', 'KW_DRS_DEC_S',
@@ -188,6 +188,10 @@ Keyword = constant_functions.Keyword
 # -----------------------------------------------------------------------------
 # Required header keys (general)
 # -----------------------------------------------------------------------------
+# Define the header key that uniquely identifies the file
+#     (i.e. an odometer code)
+KW_IDENTIFIER = Keyword('KW_IDENTIFIER', key='', value=None, source=__NAME__)
+
 # define the HEADER key for acquisition time
 #     Note must set the date format in KW_ACQTIME_FMT
 KW_ACQTIME = Keyword('KW_ACQTIME', key='', value=None, source=__NAME__)
