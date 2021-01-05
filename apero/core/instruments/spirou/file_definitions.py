@@ -34,6 +34,7 @@ __release__ = base.__release__
 drs_input = drs_file.DrsInputFile
 drs_finput = drs_file.DrsFitsFile
 drs_ninput = drs_file.DrsNpyFile
+drs_oinput = drs_file.DrsOutFile
 
 # =============================================================================
 # Raw Files
@@ -1230,11 +1231,195 @@ out_stokesi_s1dv = drs_finput('S1DV_STOKESI',
                               intype=[out_ext_e2dsff, out_tellu_obj],
                               outfunc=out.general_file)
 
+out_file.addset(out_pol_deg)
+out_file.addset(out_pol_stokesi)
+out_file.addset(out_pol_null1)
+out_file.addset(out_pol_null2)
+out_file.addset(out_pol_lsd)
+out_file.addset(out_pol_s1dw)
+out_file.addset(out_pol_s1dv)
+out_file.addset(out_null1_s1dw)
+out_file.addset(out_null1_s1dv)
+out_file.addset(out_null2_s1dw)
+out_file.addset(out_null2_s1dv)
+out_file.addset(out_stokesi_s1dw)
+out_file.addset(out_stokesi_s1dv)
+
+# =============================================================================
+# Post processed Files
+# =============================================================================
+# generic post processed file
+post_file = drs_oinput('DRS_POST', filetype='.fits', suffix='',
+                       outfunc=out.post_file)
+
+# -----------------------------------------------------------------------------
+# post processed 2D extraction file
+# -----------------------------------------------------------------------------
+post_e_file = drs_oinput('DRS_POST_E', filetype='.fits', suffix='e.fits',
+                         outfunc=out.post_file, inext='o_pp.fits')
+# add extensions
+post_e_file.add_ext('PP', pp_file, pos=0, header_only=True,
+                    hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
+post_e_file.add_ext('EXT_AB', out_ext_e2dsff, pos=1, fiber='AB',
+                    link='PP', hlink='KW_IDENTIFIER')
+post_e_file.add_ext('EXT_A', out_ext_e2dsff, pos=2, fiber='A',
+                    link='EXT_AB', hlink='KW_IDENTIFIER')
+post_e_file.add_ext('EXT_B', out_ext_e2dsff, pos=3, fiber='B',
+                    link='EXT_AB', hlink='KW_IDENTIFIER')
+post_e_file.add_ext('EXT_C', out_ext_e2dsff, pos=4, fiber='C',
+                    link='EXT_AB', hlink='KW_IDENTIFIER')
+post_e_file.add_ext('WAVE_AB', out_wavem_fp, pos=5, fiber='AB',
+                    link='EXT_AB', hlink='KW_CDBWAVE')
+post_e_file.add_ext('WAVE_A', out_wavem_fp, pos=6, fiber='A',
+                    link='EXT_A', hlink='KW_CDBWAVE')
+post_e_file.add_ext('WAVE_B', out_wavem_fp, pos=7, fiber='B',
+                    link='EXT_B', hlink='KW_CDBWAVE')
+post_e_file.add_ext('WAVE_C', out_wavem_fp, pos=8, fiber='C',
+                    link='EXT_C', hlink='KW_CDBWAVE')
+post_e_file.add_ext('BLAZE_AB', out_ff_blaze, pos=9, fiber='AB',
+                    link='EXT_AB', hlink='KW_CDBBLAZE')
+post_e_file.add_ext('BLAZE_A', out_ff_blaze, pos=10, fiber='A',
+                    link='EXT_A', hlink='KW_CDBBLAZE')
+post_e_file.add_ext('BLAZE_B', out_ff_blaze, pos=11, fiber='B',
+                    link='EXT_B', hlink='KW_CDBBLAZE')
+post_e_file.add_ext('BLAZE_C', out_ff_blaze, pos=12, fiber='C',
+                    link='EXT_C', hlink='KW_CDBBLAZE')
+# add to post processed file set
+post_file.addset(post_e_file)
+
+# -----------------------------------------------------------------------------
+# post processed 1D extraction file
+# -----------------------------------------------------------------------------
+post_s_file = drs_oinput('DRS_POST_S', filetype='.fits', suffix='s.fits',
+                         outfunc=out.post_file, inext='o_pp.fits')
+post_s_file.add_ext('PP', pp_file, pos=0, header_only=True,
+                    hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
+# s1d w is a composite table
+post_s_file.add_ext('S1D_W', 'table', pos=1,
+                    link='PP', hlink='KW_IDENTIFIER')
+# add s1d w columns (all linked via PP file)
+post_s_file.add_column('S1D_W', out_ext_s1d_w,
+                       incol='wavelength', outcol='Wave', fiber='AB',
+                       units='nm')
+post_s_file.add_column('S1D_W', out_ext_s1d_w,
+                       incol='flux', outcol='FluxAB', fiber='AB',
+                       units='Relative Flux')
+post_s_file.add_column('S1D_W', out_ext_s1d_w,
+                       incol='eflux', outcol='FluxErrAB', fiber='AB',
+                       units='Relative Flux')
+post_s_file.add_column('S1D_W', out_ext_s1d_w,
+                       incol='flux', outcol='FluxA', fiber='A',
+                       units='Relative Flux')
+post_s_file.add_column('S1D_W', out_ext_s1d_w,
+                       incol='eflux', outcol='FluxErrA', fiber='A',
+                       units='Relative Flux')
+post_s_file.add_column('S1D_W', out_ext_s1d_w,
+                       incol='flux', outcol='FluxB', fiber='B',
+                       units='Relative Flux')
+post_s_file.add_column('S1D_W', out_ext_s1d_w,
+                       incol='eflux', outcol='FluxErrB', fiber='B',
+                       units='Relative Flux')
+post_s_file.add_column('S1D_W', out_ext_s1d_w,
+                       incol='flux', outcol='FluxC', fiber='C',
+                       units='Relative Flux')
+post_s_file.add_column('S1D_W', out_ext_s1d_w,
+                       incol='eflux', outcol='FluxErrC', fiber='C',
+                       units='Relative Flux')
+post_s_file.add_column('S1D_W', out_tellu_sc1d_w,
+                       incol='flux', outcol='FluxABTelluCorrected', fiber='AB',
+                       units='Relative Flux', required=False)
+post_s_file.add_column('S1D_W', out_tellu_sc1d_w,
+                       incol='eflux', outcol='FluxErrABTelluCorrected',
+                       fiber='AB', units='Relative Flux', required=False)
+# s1d w is a composite table
+post_s_file.add_ext('S1D_V', 'table', pos=2,
+                    link='PP', hlink='KW_IDENTIFIER')
+# add s1d w columns (all linked via PP file)
+post_s_file.add_column('S1D_V', out_ext_s1d_v,
+                       incol='wavelength', outcol='Wave', fiber='AB',
+                       units='nm')
+post_s_file.add_column('S1D_V', out_ext_s1d_v,
+                       incol='flux', outcol='FluxAB', fiber='AB',
+                       units='Relative Flux')
+post_s_file.add_column('S1D_V', out_ext_s1d_v,
+                       incol='eflux', outcol='FluxErrAB', fiber='AB',
+                       units='Relative Flux')
+post_s_file.add_column('S1D_V', out_ext_s1d_v,
+                       incol='flux', outcol='FluxA', fiber='A',
+                       units='Relative Flux')
+post_s_file.add_column('S1D_V', out_ext_s1d_v,
+                       incol='eflux', outcol='FluxErrA', fiber='A',
+                       units='Relative Flux')
+post_s_file.add_column('S1D_V', out_ext_s1d_v,
+                       incol='flux', outcol='FluxB', fiber='B',
+                       units='Relative Flux')
+post_s_file.add_column('S1D_V', out_ext_s1d_v,
+                       incol='eflux', outcol='FluxErrB', fiber='B',
+                       units='Relative Flux')
+post_s_file.add_column('S1D_V', out_ext_s1d_v,
+                       incol='flux', outcol='FluxC', fiber='C',
+                       units='Relative Flux')
+post_s_file.add_column('S1D_V', out_ext_s1d_v,
+                       incol='eflux', outcol='FluxErrC', fiber='C',
+                       units='Relative Flux')
+post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
+                       incol='flux', outcol='FluxABTelluCorrected', fiber='AB',
+                       units='Relative Flux', required=False)
+post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
+                       incol='eflux', outcol='FluxErrABTelluCorrected',
+                       fiber='AB', units='Relative Flux', required=False)
+# add to post processed file set
+post_file.addset(post_s_file)
+
+
+# -----------------------------------------------------------------------------
+# post processed telluric file
+# -----------------------------------------------------------------------------
+post_t_file = drs_oinput('DRS_POST_T', filetype='.fits', suffix='t.fits',
+                         outfunc=out.post_file)
+# add extensions
+post_t_file.add_ext('PP', pp_file, pos=0, header_only=True,
+                    hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
+post_t_file.add_ext('TELLU_AB', out_tellu_obj, pos=1, fiber='AB',
+                    link='PP', hlink='KW_IDENTIFIER')
+post_t_file.add_ext('WAVE_AB', out_wavem_fp, pos=2, fiber='AB',
+                    link='EXT_AB', hlink='KW_CDBWAVE')
+post_t_file.add_ext('BLAZE_AB', out_ff_blaze, pos=3, fiber='AB',
+                    link='EXT_AB', hlink='KW_CDBBLAZE')
+post_t_file.add_ext('RECON_AB', out_tellu_recon, pos=4, fiber='AB',
+                    link='EXT_AB', hlink='KW_IDENTIFIER')
+# add to post processed file set
+post_file.addset(post_t_file)
+
+# -----------------------------------------------------------------------------
+# post processed velocity file
+# -----------------------------------------------------------------------------
+post_v_file = drs_oinput('DRS_POST_V', filetype='.fits', suffix='v.fits',
+                         outfunc=out.post_file)
+post_v_file.add_ext('PP', pp_file, pos=0, header_only=True,
+                    hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
+post_v_file.add_ext('VEL', out_ccf_fits, pos=1, fiber='AB',
+                    link='PP', hlink='KW_IDENTIFIER')
+# add to post processed file set
+post_file.addset(post_v_file)
+
+# -----------------------------------------------------------------------------
+# post processed polar file
+# -----------------------------------------------------------------------------
+post_p_file = drs_oinput('DRS_POST_P', filetype='.fits', suffix='p.fits',
+                         outfunc=out.post_file)
+
+# TODO: Add these extensions
+
+# add to post processed file set
+post_file.addset(post_p_file)
+
 
 # =============================================================================
 # Other Files
 # =============================================================================
 other_ccf_mask_file = drs_input('CCF_MASK', filetype='.mas')
+
 
 # =============================================================================
 # End of code
