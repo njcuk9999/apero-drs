@@ -74,6 +74,8 @@
 "None","Telluric recipe to correct science spectra using transmission maps and pca fit.","","","FTELLU_DESC","HELP"
 "None","obj_fit_tellu_spirou.py [NIGHT_NAME] [OBJ_DARK E2DSFF AB] \n obj_fit_tellu_spirou.py [NIGHT_NAME] [OBJ_FP E2DSFF AB]","","","FTELLU_EXAMPLE","HELP"
 "None","Currently  allowed types: E2DS, E2DSFF","","","FTELLU_FILES_HELP","HELP"
+"None","Whether to use the template provided from the telluric database","","","USE_TEMP_HELP","HELP"
+"None","Filename of the custom template to use (instead of from telluric database)","","","TEMPLATE_FILE_HELP","HELP"
 "None","Telluric recipe to create template spectra (median of many observations) of the same object. Used to provide a better SED of stars in obj_mk_tellu and obj_fit_tellu. Note only needs to be run once for each science / hot star target.","","","MKTEMP_DESC","HELP"
 "None","obj_mk_template_spirou.py [OBJNAME] \n obj_mk_template_spirou.py Gl699","","","MKTEMP_EXAMPLE","HELP"
 "None","[STRING] The object name to process","","","MKTEMP_OBJNAME_HELP","HELP"

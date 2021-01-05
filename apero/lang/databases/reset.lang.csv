@@ -691,7 +691,7 @@
 "{0} = database key name; {1} = tapas convolved filename; {2} = function name","Telluric database does not have valid {0} key. \n\t Required file name = {1} \n\t Function = {2}","","Means that obj_fit_tellu could not load tapas convolve file for current master wave solution","09-019-00002","ERROR"
 "{0} = transmission map database key; {1} = number of maps; {2} = number of principle components; {3} = principle component key; {4} = function name","Not enough transmission maps ({0}) in database to run PCA analysis \n\t Number of maps = {1}  number of principle components = {2} \n\t Add more maps or reduced number of principle components ({3}). \n\t Function = {4}","","Means that there were not enough transmission maps to run pca analysis (number of maps < number of principle components)","09-019-00003","ERROR"
 "{0} = shape of spectrum (image); {1} = shape of wave map; {2} = function name","Spectrum (shape = {0}) cannot be reshaped to match wave solution (shape = {1}) \n\t Function = {2}","","Means that spectrum has incorrect shape compared to wave solution map","09-019-00004","ERROR"
-"","","","","09-019-00005","ERROR"
+"{0} = basename; {1} = guess filename","User defined template file (--template) does not exist. \n\t Tried: {0} \n\t Tried: {1}","","Means that user template file does not exist","09-019-00005","ERROR"
 "","","","","",""
 "","","","","",""
 "","","","","",""
