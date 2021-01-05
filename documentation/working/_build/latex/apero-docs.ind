@@ -1,0 +1,42 @@
+\begin{sphinxtheindex}
+\let\bigletter\sphinxstyleindexlettergroup
+\let\spxpagem \sphinxstyleindexpagemain
+\let\spxentry \sphinxstyleindexentry
+\let\spxextra \sphinxstyleindexextra
+
+  \bigletter D
+  \item \spxentry {DRS\_ROOT}, \hyperindexformat{\spxpagem}{50}
+  \item \spxentry {DRS\_UCONFIG}, \hyperindexformat{\spxpagem}{50}
+  \item \spxentry {DrsInputFile}, \hyperindexformat{\spxpagem}{51}
+  \item \spxentry {ds9}, \hyperindexformat{\spxpagem}{51}
+
+  \indexspace
+  \bigletter F
+  \item \spxentry {file\sphinxhyphen {}definitions}, \hyperindexformat{\spxpagem}{51}
+
+  \indexspace
+  \bigletter I
+  \item \spxentry {INSTRUMENT}, \hyperindexformat{\spxpagem}{50}
+
+  \indexspace
+  \bigletter K
+  \item \spxentry {KW\_GAIA\_ID}, \hyperindexformat{\spxpagem}{51}
+  \item \spxentry {KW\_OBJECTNAME}, \hyperindexformat{\spxpagem}{51}
+  \item \spxentry {KW\_OBJNAME}, \hyperindexformat{\spxpagem}{51}
+
+  \indexspace
+  \bigletter O
+  \item \spxentry {OBJ\_LIST\_RESOLVE\_FROM\_COORDS}, \hyperindexformat{\spxpagem}{51}
+  \item \spxentry {OBJ\_LIST\_RESOLVE\_FROM\_DATABASE}, \hyperindexformat{\spxpagem}{50}
+  \item \spxentry {OBJ\_LIST\_RESOLVE\_FROM\_GAIAID}, \hyperindexformat{\spxpagem}{50}
+  \item \spxentry {OBJ\_LIST\_RESOLVE\_FROM\_GLIST}, \hyperindexformat{\spxpagem}{51}
+
+  \indexspace
+  \bigletter P
+  \item \spxentry {pdflatex}, \hyperindexformat{\spxpagem}{51}
+  \item \spxentry {pre\sphinxhyphen {}processing\sphinxhyphen {}coordinate\sphinxhyphen {}system}, 
+		\hyperindexformat{\spxpagem}{51}
+  \item \spxentry {PROFILE}, \hyperindexformat{\spxpagem}{51}
+  \item \spxentry {PseudoConst}, \hyperindexformat{\spxpagem}{51}
+
+\end{sphinxtheindex}

@@ -8,6 +8,18 @@ Extracts out flat images in order to measure the blaze and produced blaze
 correction and flat correction images.
 
 ===========================================
+Schematic
+===========================================
+
+.. only:: html
+
+    .. image:: ../../../_static/yed/spirou/cal_flat_spirou_schematic.jpg
+
+.. only:: latex
+
+    This section can only currently be viewed in the html documentation.
+
+===========================================
 Run
 ===========================================
 

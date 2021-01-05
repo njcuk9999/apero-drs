@@ -32,7 +32,6 @@ High priority:
 
 Medium priority:
 
-* filename from checksums [Neil]
 * add option to set template for mk_tellu and fit_tellu [Neil]
 * deal with all python warnings [Neil]
 * add NIPRS changes to 0.7 branch
