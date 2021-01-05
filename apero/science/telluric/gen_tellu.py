@@ -22,7 +22,9 @@ from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
 from apero import lang
-from apero.core.core import drs_log, drs_file
+from apero.core.core import drs_log
+from apero.core.core import drs_file
+from apero.core.core import drs_text
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_data
 from apero.core.utils import drs_utils
@@ -1871,6 +1873,28 @@ def load_templates(params: ParamDict,
             # return null entries
             return None, temp_props
     # -------------------------------------------------------------------------
+    # set template filename to None
+    template_filename = None
+    # deal with user defining a template
+    if 'TEMPLATE' in params['INPUTS']:
+        if not drs_text.null_text(params['INPUTS']['TEMPLATE']):
+            # set template filename
+            template_filename = params['INPUTS']['TEMPLATE']
+            # if template filename does not exist check in the telluric database
+            if os.path.exists(template_filename):
+                # get template path
+                template_path = params['DRS_TELLU_DB']
+                # add to template filename
+                template_filename = os.path.join(template_path,
+                                                 template_filename)
+                # check if file exists
+                if not os.path.exists(template_filename):
+                    # log error
+                    eargs = [os.path.basename(template_filename),
+                             template_filename]
+                    WLOG(params, 'error', textentry('09-019-00005', args=eargs))
+
+    # -------------------------------------------------------------------------
     # get key
     temp_key = out_temp.get_dbkey()
     # -------------------------------------------------------------------------
@@ -1878,9 +1902,9 @@ def load_templates(params: ParamDict,
     WLOG(params, '', textentry('40-019-00045', args=[temp_key]))
     # load tellu file, header and abspaths
     temp_out = load_tellu_file(params, temp_key, header,
-                               n_entries=1, required=False, fiber=fiber,
-                               objname=objname, database=database,
-                               mode=None, get_header=True)
+                               filename=template_filename, n_entries=1,
+                               required=False, fiber=fiber, objname=objname,
+                               database=database, mode=None, get_header=True)
     temp_image, temp_header, temp_filename = temp_out
     # -------------------------------------------------------------------------
     # deal with no files in database
