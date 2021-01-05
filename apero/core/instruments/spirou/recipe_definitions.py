@@ -172,7 +172,6 @@ recipes = []
 # -----------------------------------------------------------------------------
 raw_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 pp_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
-out_recipe = DrsRecipe(__INSTRUMENT__, filemod=sf)
 
 # -----------------------------------------------------------------------------
 # cal_preprocess
@@ -1229,6 +1228,26 @@ recipes.append(obj_spec)
 # -----------------------------------------------------------------------------
 # obj_pol_spirou
 # -----------------------------------------------------------------------------
+
+# -----------------------------------------------------------------------------
+# out
+# -----------------------------------------------------------------------------
+out_recipe = DrsRecipe(__INSTRUMENT__)
+out_recipe.name = 'out_{0}.py'.format(INSTRUMENT_ALIAS)
+out_recipe.shortname = 'OUT'
+out_recipe.instrument = __INSTRUMENT__
+out_recipe.inputtype = 'red'
+out_recipe.outputtype = 'out'
+out_recipe.extension = 'fits'
+out_recipe.description = textentry('OUT_DESC_HELP')
+out_recipe.epilog = ''
+out_recipe.kind = 'recipe'
+obj_spec.set_kwarg(name='--clear', dtype=bool, default=False,
+                   helpstr='')
+out_recipe.group_func = grouping.no_group
+out_recipe.group_column = grouping.no_group
+# add to recipe
+recipes.append(out_recipe)
 
 
 # =============================================================================
