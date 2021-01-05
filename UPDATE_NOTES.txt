@@ -78,6 +78,9 @@ Date: 2020-12-21
     - added a berv coverage metric which adds a QC to the template creation
       whereby a template is not constructed if BERV coverage is too low (stops
       templates being constructed from too few observations)
+    - can now define a template to use for obj_mk_tellu and obj_fit_tellu codes
+      use the argument --template (can either be a path to a file or a filename
+      in the telluric database directory)
 
 - ccf
     - add in ccf mask normalization options 'all', 'order', 'None'
