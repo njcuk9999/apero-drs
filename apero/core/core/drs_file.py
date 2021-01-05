@@ -2983,6 +2983,8 @@ class DrsFitsFile(DrsInputFile):
         # --------------------------------------------------------------------
         # generate a hash based on basename
         checksum = generate_arg_checksum(basenames, 5)
+        # make sure checksum is capitalized
+        checksum = checksum.upper()
         # add the checksum + the suffix + the file extension
         basename = checksum + self.suffix + self.inext
         # update path and filename
