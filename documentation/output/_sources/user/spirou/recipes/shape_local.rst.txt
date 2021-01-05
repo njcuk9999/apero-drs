@@ -9,6 +9,18 @@ these transformations to shift the image to the master fp frame, unbend images
 and shift to correct for slicer pupil geometry.
 
 ===========================================
+Schematic
+===========================================
+
+.. only:: html
+
+    .. image:: ../../../_static/yed/spirou/cal_shape_spirou_schematic.jpg
+
+.. only:: latex
+
+    This section can only currently be viewed in the html documentation.
+
+===========================================
 Run
 ===========================================
 
