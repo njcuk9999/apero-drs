@@ -111,6 +111,7 @@
 "None","[STRING] optional, the leak master file to use","","","LEAK_LEAKFILE_HELP","HELP",""
 "None","Whether to use the template provided from the telluric database","","","USE_TEMP_HELP","HELP",""
 "None","Filename of the custom template to use (instead of from telluric database)","","","TEMPLATE_FILE_HELP","HELP",""
+"None","Post processing of reduced files into the final outputs","","","OUT_DESC_HELP","HELP",""
 "None","This is the NIRPS error message","None","None","","ERROR",""
 "None","Dev Error: General Error","","Dev Error","00-000-00000","ERROR",""
 "","","","","","",""

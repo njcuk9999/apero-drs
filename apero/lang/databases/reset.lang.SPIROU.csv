@@ -108,6 +108,7 @@
 "None","cal_leak_spirou.py [NIGHT_NAME] [OBJ_FP E2DSFF AB] \n cal_leak_spirou 2018-08-05 ","","","LEAK_EXAMPLE","HELP"
 "None","Current accepts EXT_E2DSFF OBJ_FP files","","","LEAK_FILES_HELP","HELP"
 "None","[STRING] optional, the leak master file to use","","","LEAK_LEAKFILE_HELP","HELP"
+"None","Post processing of reduced files into the final outputs","","","OUT_DESC_HELP","HELP"
 "None","This is the SPIROU error message","None","None","","ERROR"
 "None","Dev Error: General Error","","Dev Error","00-000-00000","ERROR"
 "","","","","",""
