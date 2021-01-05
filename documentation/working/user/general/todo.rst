@@ -22,17 +22,12 @@ Immediate small:
     * we are combining all for a night id bad ones and remove
     * error if not enough - define minimum number of calibrations required
 
-* databases
-    * apero_explorer save not working?
-
 High priority:
 
 * polar code update  [Neil/Eder/Chris]
 
-
 Medium priority:
 
-* add option to set template for mk_tellu and fit_tellu [Neil]
 * deal with all python warnings [Neil]
 * add NIPRS changes to 0.7 branch
 * post processing (i.e. outputs like CADC/ESO)   [Neil/Chris]
