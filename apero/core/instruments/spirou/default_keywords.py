@@ -786,7 +786,7 @@ KW_BERV_POS_SOURCE.set(key='BC_PSRCE', comment='Source of BERV star params')
 
 # the Gaia G mag (if present) for the gaia query
 KW_BERV_GAIA_GMAG = KW_BERV_GAIA_GMAG.copy(__NAME__)
-KW_BERV_GAIA_GMAG.set(key='The G', comment='Gaia G mag for BERV calc.')
+KW_BERV_GAIA_GMAG.set(key='BC_GMAG', comment='Gaia G mag for BERV calc.')
 
 # the Gaia BP mag (if present) for the gaia query
 KW_BERV_GAIA_BPMAG = KW_BERV_GAIA_BPMAG.copy(__NAME__)

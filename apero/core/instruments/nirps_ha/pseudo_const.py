@@ -11,16 +11,15 @@ Created on 2019-01-18 at 14:44
 """
 import numpy as np
 from pathlib import Path
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Tuple, Type, Union
 
 from apero.base import base
 from apero.core.core import drs_base_classes as base_class
 from apero.core.core import drs_misc
 from apero.core.core import drs_text
-from apero.core.core import drs_exceptions
 from apero.core import constants
 from apero.core.instruments.default import pseudo_const
-
+from apero.core.core import drs_exceptions
 
 # =============================================================================
 # Define variables
@@ -32,7 +31,7 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
-# Get Astropy Time and Time Delta
+# get Time / TimeDelta
 Time, TimeDelta = base.AstropyTime, base.AstropyTimeDelta
 # Get Parmeter Dictionary class
 ParamDict = constants.ParamDict
@@ -50,7 +49,6 @@ display_func = drs_misc.display_func
 class PseudoConstants(DefaultConstants):
     # set class name
     class_name = 'PsuedoConstants'
-
 
     def __init__(self, instrument: Union[str, None] = None):
         """
@@ -189,7 +187,7 @@ class PseudoConstants(DefaultConstants):
         # return keys
         return forbidden_keys
 
-    def HEADER_FIXES(self, params: Any, recipe: Any, header: Any,
+    def HEADER_FIXES(self, params: ParamDict, recipe: Any, header: Any,
                      hdict: Any, filename: str) -> Any:
         """
         For NIRPS_HA the following keys may or may not be present (older data
@@ -250,6 +248,89 @@ class PseudoConstants(DefaultConstants):
         # clean object name
         return clean_obj_name(objname=objname)
 
+    def DRS_DPRTYPE(self, params: ParamDict, recipe: Any, header: Any,
+                    filename: Union[Path, str]) -> str:
+        """
+        Get the dprtype for a specific header
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param recipe: DrsRecipe instance (used to get file mod) - used to
+                       get correct header keys to check dprtype
+        :param header: fits.Header or drs_fits.Header - the header with
+                       header keys to id file
+        :param filename: str, the filename name header belongs to (for error
+                         logging)
+        :return: the dprtype - the database type in each fiber (e.g. {AB}_{C}
+                 or DARK_DARK)
+        """
+        # get correct header
+        header, _ = get_dprtype(params, recipe, header, None, filename)
+        # return dprtype
+        return str(header[params['KW_DPRTYPE'][0]])
+
+    def DRS_MIDMJD(self, params: ParamDict, header: Any,
+                   filename: Union[Path, str]) -> float:
+        """
+        Get the midmjd for a specific header
+
+        :param params: ParamDict, the parameter dictionary of constants
+        :param header: fits.Header or drs_fits.Header - the header with
+                       header keys to id file
+        :param filename: str, the filename name header belongs to (for error
+                         logging)
+
+        :return: float the
+        """
+
+        header, _ = get_mid_obs_time(params, header, None, filename)
+        return float(header[params['KW_MID_OBS_TIME']])
+
+    # =========================================================================
+    # INDEXING SETTINGS
+    # =========================================================================
+    def INDEX_HEADER_KEYS(self) -> Tuple[List[str], List[Type]]:
+        """
+        Which header keys should we have in the index database.
+
+        Only keys where you have to read many files to get these should be
+        added - if you access file by file do not need header key to be here.
+
+        Note all keys accessed by file_defintions must be in this list at the
+        very least!
+
+        Must overwrite for each instrument
+
+        :return:
+        """
+        keys = ['KW_DATE_OBS', 'KW_UTC_OBS', 'KW_ACQTIME', 'KW_TARGET_TYPE',
+                'KW_MID_OBS_TIME', 'KW_OBJECTNAME', 'KW_OBJNAME', 'KW_OBSTYPE',
+                'KW_EXPTIME', 'KW_CCAS', 'KW_CREF', 'KW_CDEN', 'KW_CALIBWH',
+                'KW_DPRTYPE', 'KW_OUTPUT', 'KW_CMPLTEXP', 'KW_NEXP',
+                'KW_VERSION', 'KW_PPVERSION', 'KW_PI_NAME', 'KW_PID',
+                'KW_FIBER']
+        ctypes = [str, str, float, str, float, str, str, str, float, str, str,
+                  float, str, str, str, int, int, str, str, str, str, str]
+
+        # check that filedef keys are present
+        for fkey in self.FILEDEF_HEADER_KEYS():
+            if fkey not in keys:
+                emsg = __NAME__ + '.INDEX_HEADER_KEYS() missing key "{0}"'
+                raise AttributeError(emsg.format(fkey))
+        # return index header keys
+        return keys, ctypes
+
+    def FILEDEF_HEADER_KEYS(self) -> List[str]:
+        """
+        Define the keys allowed to be used in file definitions
+
+        :return: list of keys
+        """
+        keys = ['KW_TARGET_TYPE', 'KW_OBJECTNAME', 'KW_OBSTYPE',
+                'KW_CCAS', 'KW_CREF', 'KW_CALIBWH',
+                'KW_DPRTYPE', 'KW_OUTPUT']
+        return keys
+
+
     # =========================================================================
     # DISPLAY/LOGGING SETTINGS
     # =========================================================================
@@ -282,7 +363,7 @@ class PseudoConstants(DefaultConstants):
     # =========================================================================
     # FIBER SETTINGS
     # =========================================================================
-    def FIBER_SETTINGS(self, params, fiber):
+    def FIBER_SETTINGS(self, params: ParamDict, fiber: str) -> ParamDict:
         """
         Get the fiber settings for localisation setup for a specific fiber
         (keys must be stored in params as a set of parameters with all fibers
@@ -335,12 +416,12 @@ class PseudoConstants(DefaultConstants):
 
     def FIBER_WAVE_TYPES(self, fiber: str) -> str:
         """
-        For wave only AB and C loco files exist thus need to
-        use AB for AB or A or B fibers and use C for the C fiber
-        note only having AB and C files
+        The fiber localisation types to use (i.e. some fiber types should use
+        another fiber for localisation e.g. SPIRou A or B --> AB
 
-        :param fiber:
-        :return:
+        :param fiber: str, the input fiber
+
+        :return: str, the fiber to use for input fiber
         """
         # set function name
         _ = display_func(None, 'FIBER_WAVE_TYPES', __NAME__, self.class_name)
@@ -490,6 +571,7 @@ class PseudoConstants(DefaultConstants):
         """
         # set function name
         _ = display_func(None, 'BERV_INKEYS', __NAME__, self.class_name)
+        # set up storage
         #     [in_key, out_key, kind, default]
         inputs = base_class.ListDict()
         inputs['gaiaid'] = ['KW_GAIA_ID', 'KW_BERVGAIA_ID', 'header', 'None']
@@ -517,7 +599,6 @@ class PseudoConstants(DefaultConstants):
                                   'header', np.nan]
         inputs['gaia_plx_lim'] = ['KW_BERV_GAIA_PLXLIM', 'KW_BERV_GAIA_PLXLIM',
                                   'header', np.nan]
-
         # return inputs
         return inputs
 
@@ -559,6 +640,40 @@ class PseudoConstants(DefaultConstants):
                                       'KW_BERV_OBSTIME_METHOD', 'header', str]
         # return outputs
         return outputs
+
+    # =========================================================================
+    # DATABASE SETTINGS
+    # =========================================================================
+    # noinspection PyPep8Naming
+    def INDEX_DB_COLUMNS(self) -> Tuple[List[str], List[type]]:
+        """
+        Define the columns used in the index database
+
+        Currently defined columns
+            - PATH: the path under which files are stored (based on KIND)
+            - DIRECTORY: the sub-directory in PATH which files are stored
+            - FILENAME: the name of the file (basename)
+            - KIND: either raw/tmp/red/calib/tellu/asset
+            - LAST_MODIFIED: float, the last modified time of this file
+                             (for sorting)
+            - RUNSTRING: the arguments entered to make this file
+                         (used for checksum)
+            - {HKEYS}: see INDEX_HEADER_KEYS()
+            - USED: int, whether entry should be used or ignored
+            - RAW: int, whether raw data has been fixed for the header
+
+        :return: list of columns (strings)
+        """
+        # set function name
+        _ = display_func(None, 'INDEX_DB_COLUMNS', __NAME__,
+                         self.class_name)
+        # get header keys
+        hkeys, htypes = self.INDEX_HEADER_KEYS()
+        # set columns
+        columns = ['ABSPATH', 'DIRNAME', 'FILENAME', 'KIND',
+                   'LAST_MODIFIED', 'RUNSTRING'] + hkeys + ['USED', 'RAWFIX']
+        ctypes = [str, str, str, str, float, str] + htypes + [int, int]
+        return columns, ctypes
 
 
 # =============================================================================
@@ -718,7 +833,6 @@ def get_mid_obs_time(params: ParamDict, header: Any, hdict: Any,
         eargs = [exp_timekey, filename]
         raise DrsCodedException('01-001-00027', 'error', targs=eargs,
                                 func_name=func_name)
-
     exptime = timetype(header[exp_timekey])
     # -------------------------------------------------------------------
     # get header time

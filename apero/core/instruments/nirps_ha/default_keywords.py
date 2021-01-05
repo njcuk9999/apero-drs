@@ -28,13 +28,15 @@ __release__ = base.__release__
 #     'datetime', 'iso', 'isot', 'yday', 'datetime64', 'fits', 'byear',
 #     'jyear', 'byear_str', 'jyear_str'
 KW_ACQTIME = KW_ACQTIME.copy(__NAME__)
-KW_ACQTIME.set(key='MJDATE', datatype='mjd', dataformat=float,
-               comment='Modified Julian Date at start of observation')
+KW_ACQTIME.set(key='MJDEND', datatype='mjd', dataformat=float,
+               comment='Modified Julian Date at start of observation',
+               combine_method='maximum')
 
 # define the MJ end date HEADER key
 KW_MJDEND = KW_MJDEND.copy(__NAME__)
 KW_MJDEND.set(key='MJDEND', datatype='mjd', dataformat=float,
-              comment='Modified Julian Date at end of observation')
+              comment='Modified Julian Date at end of observation',
+              combine_method='maximum')
 
 # define the observation date HEADER key
 KW_DATE_OBS = KW_DATE_OBS.copy(__NAME__)
@@ -46,15 +48,18 @@ KW_UTC_OBS.set(key='UTC-OBS', comment='Time at start of observation (UTC)')
 
 # define the read noise HEADER key a.k.a sigdet (used to get value only)
 KW_RDNOISE = KW_RDNOISE.copy(__NAME__)
-KW_RDNOISE.set(key='RDNOISE', comment='Read noise (electrons)')
+KW_RDNOISE.set(key='RDNOISE', comment='Read noise (electrons)',
+               combine_method='flux')
 
 # define the gain HEADER key (used to get value only)
 KW_GAIN = KW_GAIN.copy(__NAME__)
-KW_GAIN.set(key='GAIN', comment='Amplifier gain (electrons/ADU)')
+KW_GAIN.set(key='GAIN', comment='Amplifier gain (electrons/ADU)',
+            combine_method='mean')
 
 # define the saturation limit HEADER key
 KW_SATURATE = KW_SATURATE.copy(__NAME__)
-KW_SATURATE.set(key='SATURATE', comment='Saturation value (ADU) ')
+KW_SATURATE.set(key='SATURATE', comment='Saturation value (ADU) ',
+                combine_method='mean')
 
 # define the frame time HEADER key
 KW_FRMTIME = KW_FRMTIME.copy(__NAME__)
@@ -62,7 +67,8 @@ KW_FRMTIME.set(key='FRMTIME', comment='[sec] Frame time, cadence of IR reads')
 
 # define the exposure time HEADER key (used to get value only)
 KW_EXPTIME = KW_EXPTIME.copy(__NAME__)
-KW_EXPTIME.set(key='EXPTIME', unit=uu.s, comment='[sec] Integration time')
+KW_EXPTIME.set(key='EXPTIME', unit=uu.s, comment='[sec] Integration time',
+               combine_method='sum')
 
 # define the required exposure time HEADER key (used to get value only)
 KW_EXPREQ = KW_EXPREQ.copy(__NAME__)
@@ -104,11 +110,13 @@ KW_CMMTSEQ.set(key='CMMTSEQ')
 # define the exposure number within sequence HEADER key
 KW_CMPLTEXP = KW_CMPLTEXP.copy(__NAME__)
 KW_CMPLTEXP.set(key='CMPLTEXP',
-                comment='Exposure number within the exposure sequence ')
+                comment='Exposure number within the exposure sequence ',
+                combine_method='1')
 
 # define the total number of exposures HEADER key
 KW_NEXP = KW_NEXP.copy(__NAME__)
-KW_NEXP.set(key='NEXP', comment='Total number of exposures within the sequence')
+KW_NEXP.set(key='NEXP', comment='Total number of exposures within the sequence',
+            combine_method='1')
 
 # define the pi name HEADER key
 KW_PI_NAME = KW_PI_NAME.copy(__NAME__)
@@ -119,11 +127,11 @@ KW_PI_NAME.set(key='PI_NAME', comment='The PI of the program')
 # -----------------------------------------------------------------------------
 # define the observation ra HEADER key
 KW_OBJRA = KW_OBJRA.copy(__NAME__)
-KW_OBJRA.set(key='OBJRA', unit=uu.hourangle, comment='Target right ascension')
+KW_OBJRA.set(key='RA_DEG', unit=uu.deg, comment='Target right ascension')
 
 # define the observation dec HEADER key
 KW_OBJDEC = KW_OBJDEC.copy(__NAME__)
-KW_OBJDEC.set(key='OBJDEC', unit=uu.deg, comment='Target declination ')
+KW_OBJDEC.set(key='DEC_DEG', unit=uu.deg, comment='Target declination ')
 
 # define the observation name
 KW_OBJECTNAME = KW_OBJECTNAME.copy(__NAME__)
@@ -163,10 +171,6 @@ KW_HUMIDITY = KW_HUMIDITY.copy(__NAME__)
 KW_HUMIDITY.set(key='RELHUMID',
                 comment='87 relative humidity, weather tower % ')
 
-# define the object temperature HEADER key
-KW_OBJ_TEMP = KW_OBJ_TEMP.copy(__NAME__)
-KW_OBJ_TEMP.set(key='OBJTEMP', unit=uu.K)
-
 # -----------------------------------------------------------------------------
 # Wanted header keys (related to science object)
 # -----------------------------------------------------------------------------
@@ -181,6 +185,169 @@ KW_PLX.set(key='OBJPLX', unit=uu.mas)
 # define the rv HEADER key
 KW_INPUTRV = KW_INPUTRV.copy(__NAME__)
 KW_INPUTRV.set(key='OBJRV', unit=uu.km / uu.s)
+
+# define the object temperature HEADER key
+KW_OBJ_TEMP = KW_OBJ_TEMP.copy(__NAME__)
+KW_OBJ_TEMP.set(key='OBJTEMP', unit=uu.K)
+
+# -----------------------------------------------------------------------------
+# Object resolution keys
+# -----------------------------------------------------------------------------
+# the object name to be used by the drs (after preprocessing)
+KW_DRS_OBJNAME = KW_DRS_OBJNAME.copy(__NAME__)
+KW_DRS_OBJNAME.set(key='HIERARCH DRS RES OBJN',
+                   comment='objname to be used by the DRS',
+                   group='resolve')
+
+# the source of the object name used by the drs
+KW_DRS_OBJNAME_S = KW_DRS_OBJNAME_S.copy(__NAME__)
+KW_DRS_OBJNAME_S.set(key='HIERARCH DRS RES OBJN_S',
+                     comment='Source of objname used by the DRS',
+                     group='resolve')
+
+# the gaia id to be used by the drs (after preprocessing)
+KW_DRS_GAIAID = KW_DRS_GAIAID.copy(__NAME__)
+KW_DRS_GAIAID.set(key='HIERARCH DRS RES GAIADR2',
+                  comment='Gaia id to be used by the DRS',
+                  group='resolve')
+
+# the source of the gaia id to be used by the drs (after preprocessing)
+KW_DRS_GAIAID_S = KW_DRS_GAIAID_S.copy(__NAME__)
+KW_DRS_GAIAID_S.set(key='HIERARCH DRS RES GAIADR2_S',
+                    comment='Source of the gaiaid used by the DRS',
+                    group='resolve')
+
+# the right ascension to be used by the drs (after preprocessing)
+KW_DRS_RA = KW_DRS_RA.copy(__NAME__)
+KW_DRS_RA.set(key='HIERARCH DRS RES RA', unit=uu.deg,
+              comment='The RA [in deg] used by the DRS',
+              group='resolve')
+
+# the source of the ra to be used by the drs (after preprocessing)
+KW_DRS_RA_S = KW_DRS_RA_S.copy(__NAME__)
+KW_DRS_RA_S.set(key='HIERARCH DRS RES RA_S',
+                comment='Source of the ra used by the DRS',
+                group='resolve')
+
+# the declination to be used by the drs (after preprocessing)
+KW_DRS_DEC = KW_DRS_DEC.copy(__NAME__)
+KW_DRS_DEC.set(key='HIERARCH DRS RES DEC', unit=uu.deg,
+               comment='The dec [in deg] used by the DRS',
+               group='resolve')
+
+# the source of the dec to be used by the drs (after preprocessing)
+KW_DRS_DEC_S = KW_DRS_DEC_S.copy(__NAME__)
+KW_DRS_DEC_S.set(key='HIERARCH DRS RES DEC_S',
+                 comment='Source of the dec used by the DRS',
+                 group='resolve')
+
+# the proper motion in ra to be used by the drs (after preprocessing)
+KW_DRS_PMRA = KW_DRS_PMRA.copy(__NAME__)
+KW_DRS_PMRA.set(key='HIERARCH DRS RES PMRA', unit=uu.mas / uu.yr,
+                comment='The pmra [mas/yr] used by the DRS',
+                group='resolve')
+
+# the source of the pmra used by the drs (afer prepreocessing)
+KW_DRS_PMRA_S = KW_DRS_PMRA_S.copy(__NAME__)
+KW_DRS_PMRA_S.set(key='HIERARCH DRS RES PMRA_S',
+                  comment='Source of the pmra used by the DRS',
+                  group='resolve')
+
+# the proper motion in dec to be used by the drs (after preprocessing)
+KW_DRS_PMDE = KW_DRS_PMDE.copy(__NAME__)
+KW_DRS_PMDE.set(key='HIERARCH DRS RES PMDE', unit=uu.mas / uu.yr,
+                comment='The pmdec [mas/yr] used by the DRS',
+                group='resolve')
+
+# the source of the pmde used by the drs (after preprocessing)
+KW_DRS_PMDE_S = KW_DRS_PMDE_S.copy(__NAME__)
+KW_DRS_PMDE_S.set(key='HIERARCH DRS RES PMDE_S',
+                  comment='Source of the pmde used by the DRS',
+                  group='resolve')
+
+# the parallax to be used by the drs (after preprocessing)
+KW_DRS_PLX = KW_DRS_PLX.copy(__NAME__)
+KW_DRS_PLX.set(key='HIERARCH DRS RES PLX', unit=uu.mas,
+               comment='The parallax [mas] used by the DRS',
+               group='resolve')
+
+# the source of the parallax used by the drs (after preprocessing)
+KW_DRS_PLX_S = KW_DRS_PLX_S.copy(__NAME__)
+KW_DRS_PLX_S.set(key='HIERARCH DRS RES PLX_S',
+                 comment='Source of the plx used by the DRS',
+                 group='resolve')
+
+# the radial velocity to be used by the drs (after preprocessing)
+KW_DRS_RV = KW_DRS_RV.copy(__NAME__)
+KW_DRS_RV.set(key='HIERARCH DRS RES RV', unit=uu.km / uu.s,
+              comment='The RV [km/s] used by the DRS',
+              group='resolve')
+
+# the source of the radial velocity used by the drs (after preprocessing)
+KW_DRS_RV_S = KW_DRS_RV_S.copy(__NAME__)
+KW_DRS_RV_S.set(key='HIERARCH DRS RES RV_S',
+                comment='Source of the rv used by the DRS',
+                group='resolve')
+
+# the Gaia G magnitude to be used by the drs (after preprocessing)
+KW_DRS_GMAG = KW_DRS_GMAG.copy(__NAME__)
+KW_DRS_GMAG.set(key='HIERARCH DRS RES GMAG',
+                comment='The Gaia G mag used by the DRS',
+                group='resolve')
+
+# the source of the gmag used by the drs (after preprocessing)
+KW_DRS_GMAG_S = KW_DRS_GMAG_S.copy(__NAME__)
+KW_DRS_GMAG_S.set(key='HIERARCH DRS RES GMAG_S',
+                  comment='Source of the gmag used by the DRS',
+                  group='resolve')
+
+# the Gaia BP magnitude to be used by the drs (after preprocessing)
+KW_DRS_BPMAG = KW_DRS_BPMAG.copy(__NAME__)
+KW_DRS_BPMAG.set(key='HIERARCH DRS RES BPMAG',
+                 comment='The Gaia BP mag used by the DRS',
+                 group='resolve')
+
+# the source of the bpmag used by the drs (after preprocessing)
+KW_DRS_BPMAG_S = KW_DRS_BPMAG_S.copy(__NAME__)
+KW_DRS_BPMAG_S.set(key='HIERARCH DRS RES BPMAG_S',
+                   comment='Source of the bpmag used by the DRS',
+                   group='resolve')
+
+# the Gaia RP magnitude to be used by the drs (after preprocessing)
+KW_DRS_RPMAG = KW_DRS_RPMAG.copy(__NAME__)
+KW_DRS_RPMAG.set(key='HIERARCH DRS RES RPMAG',
+                 comment='The Gaia RP mag used by the DRS',
+                 group='resolve')
+
+# the source of the rpmag used by the drs (after preprocessing)
+KW_DRS_RPMAG_S = KW_DRS_RPMAG_S.copy(__NAME__)
+KW_DRS_RPMAG_S.set(key='HIERARCH DRS RES RPMAG_S',
+                   comment='Source of the rpmag used by the DRS',
+                   group='resolve')
+
+# the epoch to be used by the drs (after preprocessing)
+KW_DRS_EPOCH = KW_DRS_EPOCH.copy(__NAME__)
+KW_DRS_EPOCH.set(key='HIERARCH DRS RES EPOCH', unit=uu.yr,
+                 comment='The Epoch used by the DRS',
+                 group='resolve')
+
+# the source of the epoch used by the drs (after preprocessing)
+KW_DRS_EPOCH_S = KW_DRS_EPOCH_S.copy(__NAME__)
+KW_DRS_EPOCH_S.set(key='HIERARCH DRS RES EPOCH_S',
+                   comment='Source of the epoch used by the DRS',
+                   group='resolve')
+
+# the effective temperature to be used by the drs (after preprocessing)
+KW_DRS_TEFF = KW_DRS_TEFF.copy(__NAME__)
+KW_DRS_TEFF.set(key='HIERARCH DRS RES TEFF', unit=uu.K,
+                comment='The Teff [K] used by the DRS',
+                group='resolve')
+
+# the source of teff used by the drs (after preprocessing)
+KW_DRS_TEFF_S = KW_DRS_TEFF_S.copy(__NAME__)
+KW_DRS_TEFF_S.set(key='HIERARCH DRS RES TEFF_S',
+                  comment='Source of the Teff used by the DRS',
+                  group='resolve')
 
 # -----------------------------------------------------------------------------
 # Define general keywords
@@ -219,9 +386,11 @@ KW_DPRTYPE = KW_DPRTYPE.copy(__NAME__)
 KW_DPRTYPE.set(key='DPRTYPE', comment='The type of file (from pre-process)')
 
 # Define the mid exposure time
+# Note: must change INDEX_HEADER_KEYS data type definition if changing this
 KW_MID_OBS_TIME = KW_MID_OBS_TIME.copy(__NAME__)
 KW_MID_OBS_TIME.set(key='MJDMID', comment='Mid Observation time [mjd]',
-                    datatype='mjd', dataformat=float)
+                    datatype='mjd', dataformat=float,
+                    combine_method='mean')
 
 # Define the method by which the MJD was calculated
 KW_MID_OBSTIME_METHOD = KW_MID_OBSTIME_METHOD.copy(__NAME__)
@@ -1419,6 +1588,18 @@ KW_TELLUP_WATER_BOUNDS.set(key='TLP_H2OB',
 KW_MKTELL_TEMP_FILE = KW_MKTELL_TEMP_FILE.copy(__NAME__)
 KW_MKTELL_TEMP_FILE.set(key='MKTTEMPF', comment='mktellu template file used')
 
+# the number of template files used
+KW_MKTELL_TEMPNUM = KW_MKTELL_TEMPNUM.copy(__NAME__)
+KW_MKTELL_TEMPNUM.set(key='MKTTEMPN', comment='mktellu template used for sed')
+
+# the hash for the template generation (unique)
+KW_MKTELL_TEMPHASH = KW_MKTELL_TEMPHASH.copy(__NAME__)
+KW_MKTELL_TEMPHASH.set(key='MKTTEMPH', comment='mktellu template unique hash')
+
+# the time the template was generated
+KW_MKTELL_TEMPTIME = KW_MKTELL_TEMPTIME.copy(__NAME__)
+KW_MKTELL_TEMPTIME.set(key='MKTTEMPT', comment='mktellu template create time')
+
 # The blaze percentile used for mktellu calculation
 KW_MKTELL_BLAZE_PRCT = KW_MKTELL_BLAZE_PRCT.copy(__NAME__)
 KW_MKTELL_BLAZE_PRCT.set(key='MKTBPRCT', comment='mktellu blaze percentile')
@@ -1532,6 +1713,18 @@ KW_FTELLU_RECON_LIM.set(key='FTTRCLIM',
 KW_FTELLU_TEMPLATE = KW_FTELLU_TEMPLATE.copy(__NAME__)
 KW_FTELLU_TEMPLATE.set(key='FTTTEMPL', comment='ftellu template used for sed')
 
+# the number of template files used
+KW_FTELLU_TEMPNUM = KW_FTELLU_TEMPNUM.copy(__NAME__)
+KW_FTELLU_TEMPNUM.set(key='FTTTEMPN', comment='ftellu template used for sed')
+
+# the hash for the template generation (unique)
+KW_FTELLU_TEMPHASH = KW_FTELLU_TEMPHASH.copy(__NAME__)
+KW_FTELLU_TEMPHASH.set(key='FTTTEMPH', comment='ftellu template unique hash')
+
+# the hash for the template generation (unique)
+KW_FTELLU_TEMPTIME = KW_FTELLU_TEMPTIME.copy(__NAME__)
+KW_FTELLU_TEMPTIME.set(key='FTTTEMPT', comment='ftellu template create time')
+
 # Telluric principle component amplitudes (for use with 1D list)
 KW_FTELLU_AMP_PC = KW_FTELLU_AMP_PC.copy(__NAME__)
 KW_FTELLU_AMP_PC.set(key='AMPPC{0:03d}',
@@ -1559,6 +1752,18 @@ KW_FTELLU_TAU_REST.set(key='TAU_OTHE',
 # -----------------------------------------------------------------------------
 # Define make template variables
 # -----------------------------------------------------------------------------
+# store the number of files used to create template
+KW_MKTEMP_NFILES = KW_MKTEMP_NFILES.copy(__NAME__)
+KW_MKTEMP_NFILES.set(key='MTPNFILE', comment='mktemplate num files used')
+
+# store a unique hash for this template (based on file name etc)
+KW_MKTEMP_HASH = KW_MKTEMP_HASH.copy(__NAME__)
+KW_MKTEMP_HASH.set(key='MTP_HASH', comment='unique hash id for template')
+
+# store time template was created
+KW_MKTEMP_TIME = KW_MKTEMP_TIME.copy(__NAME__)
+KW_MKTEMP_TIME.set(key='MTP_TIME', comment='time the template was created')
+
 # the snr order used for quality control cut in make template calculation
 KW_MKTEMP_SNR_ORDER = KW_MKTEMP_SNR_ORDER.copy(__NAME__)
 KW_MKTEMP_SNR_ORDER.set(key='MTPSNROD', comment='mktemplate snr order used')
@@ -1566,6 +1771,24 @@ KW_MKTEMP_SNR_ORDER.set(key='MTPSNROD', comment='mktemplate snr order used')
 # the snr threshold used for quality control cut in make template calculation
 KW_MKTEMP_SNR_THRES = KW_MKTEMP_SNR_THRES.copy(__NAME__)
 KW_MKTEMP_SNR_THRES.set(key='MTPSNRTH', comment='mktemplate snr threshold used')
+
+# the berv coverage calculated for this template calculation
+KW_MKTEMP_BERV_COV = KW_MKTEMP_BERV_COV.copy(__NAME__)
+KW_MKTEMP_BERV_COV.set('MTPBCOV', comment='mktemplate berv coverage km/s')
+
+# the minimum berv coverage allowed for this template calculation
+KW_MKTEMP_BERV_COV_MIN = KW_MKTEMP_BERV_COV_MIN.copy(__NAME__)
+KW_MKTEMP_BERV_COV_MIN.set('MTPBCMIN',
+                           comment='mktemplate min berv coverage used km/s')
+
+# the core snr used for this template calculation
+KW_MKTEMP_BERV_COV_SNR = KW_MKTEMP_BERV_COV_SNR.copy(__NAME__)
+KW_MKTEMP_BERV_COV_SNR.set('MTPBCSNR', comment='mktemplate berv cov snr used')
+
+# the resolution used for this template calculation
+KW_MKTEMP_BERV_COV_RES = KW_MKTEMP_BERV_COV_RES.copy(__NAME__)
+KW_MKTEMP_BERV_COV_RES.set('MTPBCRES',
+                           comment='mktemplate berv cov resolution used')
 
 # -----------------------------------------------------------------------------
 # Define ccf variables
