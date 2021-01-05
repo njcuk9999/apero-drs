@@ -174,6 +174,14 @@ OBJ_LIST_GAIA_PLX_LIM.value = 0.5
 OBJ_LIST_GAIA_MAG_CUT = OBJ_LIST_GAIA_MAG_CUT.copy(__NAME__)
 OBJ_LIST_GAIA_MAG_CUT.value = 15.0
 
+# Define the odometer code rejection google sheet id
+ODOCODE_REJECT_GSHEET_ID = ODOCODE_REJECT_GSHEET_ID.copy(__NAME__)
+ODOCODE_REJECT_GSHEET_ID.value = '1gvMp1nHmEcKCUpxsTxkx-5m115mLuQIGHhxJCyVoZCM'
+
+# Define the odmeter code rejection google sheet workbook
+ODOCODE_REJECT_GSHEET_NUM = ODOCODE_REJECT_GSHEET_NUM.copy(__NAME__)
+ODOCODE_REJECT_GSHEET_NUM.value = 0
+
 # =============================================================================
 # CALIBRATION: FIBER SETTINGS
 # =============================================================================
@@ -476,7 +484,7 @@ LOC_START_ROW_OFFSET.value = 0
 
 #   Definition of the central column for use in localisation
 LOC_CENTRAL_COLUMN = LOC_CENTRAL_COLUMN.copy(__NAME__)
-LOC_CENTRAL_COLUMN.value = 2400
+LOC_CENTRAL_COLUMN.value = 2044     # 2500
 
 #   Half spacing between orders
 LOC_HALF_ORDER_SPACING = LOC_HALF_ORDER_SPACING.copy(__NAME__)
@@ -1507,6 +1515,14 @@ WAVE_CCF_MASK = WAVE_CCF_MASK.copy(__NAME__)
 # WAVE_CCF_MASK.value = 'fp.mas'
 WAVE_CCF_MASK.value = 'smart_fp_mask.mas'
 
+# Define the default CCF MASK normalisation mode for FP CCF
+#   options are:
+#     'None'         for no normalization
+#     'all'          for normalization across all orders
+#     'order'        for normalization for each order
+WAVE_CCF_MASK_NORMALIZATION = WAVE_CCF_MASK_NORMALIZATION.copy(__NAME__)
+WAVE_CCF_MASK_NORMALIZATION.value = 'order'
+
 # Define the wavelength units for the mask for the FP CCF
 WAVE_CCF_MASK_UNITS = WAVE_CCF_MASK_UNITS.copy(__NAME__)
 WAVE_CCF_MASK_UNITS.value = 'nm'
@@ -1982,6 +1998,14 @@ CCF_MASK_PATH.value = 'ccf_masks/'
 CCF_DEFAULT_MASK = CCF_DEFAULT_MASK.copy(__NAME__)
 CCF_DEFAULT_MASK.value = 'masque_sept18_andres_trans50.mas'
 
+# Define the default CCF MASK normalisation mode
+#   options are:
+#     'None'         for no normalization
+#     'all'          for normalization across all orders
+#     'order'        for normalization for each order
+CCF_MASK_NORMALIZATION = CCF_MASK_NORMALIZATION.copy(__NAME__)
+CCF_MASK_NORMALIZATION.value = 'order'
+
 # Define the wavelength units for the mask
 CCF_MASK_UNITS = CCF_MASK_UNITS.copy(__NAME__)
 CCF_MASK_UNITS.value = 'nm'
@@ -2256,6 +2280,14 @@ PLOT_WAVENIGHT_ITERPLOT.value = True
 PLOT_WAVENIGHT_HISTPLOT = PLOT_WAVENIGHT_HISTPLOT.copy(__NAME__)
 PLOT_WAVENIGHT_HISTPLOT.value = True
 
+# turn on the telluric pre-cleaning ccf debug plot
+PLOT_TELLUP_WAVE_TRANS = PLOT_TELLUP_WAVE_TRANS.copy(__NAME__)
+PLOT_TELLUP_WAVE_TRANS.value = True
+
+# turn on the telluric pre-cleaning result debug plot
+PLOT_TELLUP_ABSO_SPEC = PLOT_TELLUP_ABSO_SPEC.copy(__NAME__)
+PLOT_TELLUP_ABSO_SPEC.value = True
+
 # turn on the make tellu wave flux debug plot (in loop)
 PLOT_MKTELLU_WAVE_FLUX1 = PLOT_MKTELLU_WAVE_FLUX1.copy(__NAME__)
 PLOT_MKTELLU_WAVE_FLUX1.value = False
@@ -2290,11 +2322,15 @@ PLOT_FTELLU_WAVE_SHIFT2.value = True
 
 # turn on the fit tellu reconstructed absorption debug plot (in loop)
 PLOT_FTELLU_RECON_ABSO1 = PLOT_FTELLU_RECON_ABSO1.copy(__NAME__)
-PLOT_FTELLU_RECON_ABSO1.value = False
+PLOT_FTELLU_RECON_ABSO1.value = True
 
 # turn on the fit tellu reconstructed absorption debug plot (single order)
 PLOT_FTELLU_RECON_ABSO2 = PLOT_FTELLU_RECON_ABSO2.copy(__NAME__)
 PLOT_FTELLU_RECON_ABSO2.value = True
+
+# turn on the berv coverage debug plot
+PLOT_MKTEMP_BERV_COV = PLOT_MKTEMP_BERV_COV.copy(__NAME__)
+PLOT_MKTEMP_BERV_COV.value = True
 
 # turn on the ccf rv fit debug plot (in a loop around orders)
 PLOT_CCF_RV_FIT_LOOP = PLOT_CCF_RV_FIT_LOOP.copy(__NAME__)

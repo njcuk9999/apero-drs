@@ -193,7 +193,6 @@ class PseudoConstants(DefaultConstants):
         For SPIRou the following keys may or may not be present (older data
         may need these adding):
 
-
         KW_TARGET_TYPE:   if KW_OBSTYPE=="OBJECT"
                                     TRG_TYPE = "SKY" if a sky observation
                                     TRG_TYPE = "TARGET" if not a sky
@@ -556,7 +555,7 @@ class PseudoConstants(DefaultConstants):
         else:
             return ['C']
 
-    def INDIVIDUAL_FIBERS(self):
+    def INDIVIDUAL_FIBERS(self) -> List[str]:
         """
         List the individual fiber names
 
@@ -973,7 +972,6 @@ def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
     hdict[kwdprtype] = (dprtype, kwdprcomment)
     # return header
     return header, hdict
-
 
 # =============================================================================
 # End of code
