@@ -1230,33 +1230,6 @@ out_stokesi_s1dv = drs_finput('S1DV_STOKESI',
                               intype=[out_ext_e2dsff, out_tellu_obj],
                               outfunc=out.general_file)
 
-# -----------------------------------------------------------------------------
-# exposure map
-# TODO: fill in definitions
-# raw_em_spe = drs_finput('EM_SPE', KW_OUTPUT='EM_TELL_SPEC_RAW')
-# raw_em_wave = drs_finput('EM_WAVE', KW_OUTPUT='EM_WAVEMAP_RAW')
-# raw_em_mask = drs_finput('EM_MASK', KW_OUTPUT='EM_MASK_RAW')
-# pp_em_spe = drs_finput('EM_SPE', KW_OUTPUT='EM_TELL_SPEC_PP')
-# pp_em_wave = drs_finput('EM_WAVE', KW_OUTPUT='EM_WAVEMAP_PP')
-# pp_em_mask = drs_finput('EM_MASK', KW_OUTPUT='EM_MASK_PP')
-# out_em_spe = drs_finput('EM_SPE', KW_OUTPUT='EM_TELL_SPEC_DRS')
-# out_em_wave = drs_finput('EM_WAVE', KW_OUTPUT='EM_WAVEMAP_DRS')
-# out_em_mask = drs_finput('EM_MASK', KW_OUTPUT='EM_MASK_DRS')
-# -----------------------------------------------------------------------------
-# wave map
-# TODO: fill in definitions
-# raw_backmap_spe = drs_finput('WAVE_MAP_SPE',
-#                              KW_OUTPUT='EM_WAVEMAP_SPE_RAW')
-# raw_backmap_spe0 = drs_finput('WAVE_MAP_SPE0',
-#                               KW_OUTPUT='EM_WAVEMAP_SPE0_RAW')
-# pp_backmap_spe = drs_finput('WAVE_MAP_SPE',
-#                             KW_OUTPUT='EM_WAVEMAP_SPE_PP')
-# pp_backmap_spe0 = drs_finput('WAVE_MAP_SPE0',
-#                              KW_OUTPUT='EM_WAVEMAP_SPE0_PP')
-# out_backmap_spe = drs_finput('WAVE_MAP_SPE',
-#                              KW_OUTPUT='EM_WAVEMAP_SPE_DRS')
-# out_backmap_spe0 = drs_finput('WAVE_MAP_SPE0',
-#                               KW_OUTPUT='EM_WAVEMAP_SPE0_DRS')
 
 # =============================================================================
 # Other Files
