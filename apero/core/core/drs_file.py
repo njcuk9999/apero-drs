@@ -4488,6 +4488,143 @@ class DrsNpyFile(DrsInputFile):
         return self.dbkey
 
 
+class DrsOutFileExtension:
+    def __init__(self, name: str, drsfile: DrsFitsFile, pos: int,
+                 fiber: Union[str, None] = None,
+                 hkeys: Union[dict, None] = None,
+                 link: Union[list, str, None] = None,
+                 hlink: Union[str, None] = None,
+                 header_only: bool = False,
+                 data_only: bool = False):
+        """
+        Properties for an extension of a POST PROCESS file
+
+        :param name: str, the name of this extension
+        :param drsfile: DrsFitsFile, a fits file to add
+        :param pos: position within the fits file
+        :param fiber: str or None, if set defines the fiber to use
+        :param link: str, if set this must be a previously defined extension
+                     name
+        :param hlink: str, the header key from link extension to use for
+                      filename for this extension
+        :param header_only: bool, if True only adds the header (not the data)
+        :param data_only: bool, if True only adds the data (not the header)
+
+        :return:
+        """
+        self.name = name
+        self.drsfile = drsfile
+        self.pos = pos
+        self.fiber = fiber
+        self.hkeys = hkeys
+        self.link = link
+        self.hlink = hlink
+        self.header_only = header_only
+        self.data_only = data_only
+        # table parameters
+        self.table_drsfiles = []
+        self.table_in_colnames = []
+        self.table_out_colnames = []
+        self.table_units = []
+        self.table_fibers = []
+        self.table_required = []
+
+    def add_table_column(self, drsfile: DrsFitsFile,
+                  incol: str, outcol: str, fiber: Union[str, None],
+                  units: Union[str, None], required: bool = True):
+        """
+        Add a table column to an extension
+
+        :param drsfile: drs fits file instance - must be a fits bin table
+        :param incol: str, the input column name
+        :param outcol: str, the output column name
+        :param fiber: str or None, if set set the fiber name
+        :param required: bool, if False column is not required
+
+        :return:
+        """
+        self.table_drsfiles.append(drsfile)
+        self.table_in_colnames.append(incol)
+        self.table_out_colnames.append(outcol)
+        self.table_units.append(units)
+        self.table_fibers.append(fiber)
+        self.table_required.append(required)
+
+
+class DrsOutFile(DrsInputFile):
+
+    def __init__(self, name, filetype, suffix, outfunc=None,
+                 inext=None):
+
+        # set class name
+        self.class_name = 'DrsOutFile'
+        # set function name
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
+        # define a name
+        self.name = name
+        # get super init
+        DrsInputFile.__init__(self, name, filetype, suffix, outfunc=outfunc,
+                              inext=inext)
+        # store extensions
+        self.extensions = dict()
+
+    def add_ext(self, name, drsfile: Union[DrsFitsFile, str], pos: int,
+                fiber: Union[str, None] = None,
+                hkeys: Union[dict, None] = None,
+                link: Union[list, str, None] = None,
+                hlink: Union[str, None] = None,
+                header_only: bool = False,
+                data_only: bool = False):
+        """
+        Add a fits extension
+
+        First extension is the primary one and all others must be linked to
+        this primary one
+
+        :param name: str, the name of this extension
+        :param drsfile: DrsFitsFile, a fits file to add
+        :param pos: position within the fits file
+        :param fiber: str or None, if set defines the fiber to use
+        :param link: str, if set this must be a previously defined extension
+                     name
+        :param hlink: str, the header key from link extension to use for
+                      filename for this extension
+        :param header_only: bool, if True only adds the header (not the data)
+        :param data_only: bool, if True only adds the data (not the header)
+
+        :return:
+        """
+        self.extensions[name] = DrsOutFileExtension(name, drsfile, pos, fiber,
+                                                    hkeys, link, hlink,
+                                                    header_only, data_only)
+
+    def add_column(self, extname: str, drsfile: DrsFitsFile,
+                   incol: str, outcol: str, fiber: Union[str, None],
+                   units: Union[str, None], required: bool = True):
+        """
+        If an extension is a table add a column from a table fits file
+
+        :param extname: str, the extension name
+        :param drsfile: drs fits file instance - must be a fits bin table
+        :param incol: str, the input column name
+        :param outcol: str, the output column name
+        :param fiber: str or None, if set set the fiber name
+        :param required: bool, if False column is not required
+
+        :return:
+        """
+        # get extension
+        extension = self.extensions[extname]
+        # check extension is a DrsOutFileExtension
+        if isinstance(extension, DrsOutFileExtension):
+            # check for drsfile == table
+            if extension.drsfile != 'table':
+                raise ValueError('Extension is not a table')
+            # add the table
+            extension.add_table_column(drsfile, incol, outcol, fiber, units,
+                                       required)
+
+
 # =============================================================================
 # User DrsFile functions
 # =============================================================================
