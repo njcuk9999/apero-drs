@@ -9,9 +9,10 @@ from apero.core.constants import constant_functions
 __all__ = [  # global settings
     'DRS_PLOT', 'DRS_DEBUG',
     # path settings
-    'DRS_ROOT', 'DRS_DATA_RAW', 'DRS_DATA_REDUC', 'DRS_CALIB_DB',
-    'DRS_TELLU_DB', 'DRS_DATA_MSG', 'DRS_DATA_WORKING', 'DRS_DATA_RUN',
-    'DRS_DS9_PATH', 'DRS_PDFLATEX_PATH', 'DRS_DATA_MSG_FULL', 'DRS_DATA_ASSETS',
+    'DRS_ROOT', 'DRS_DATA_RAW', 'DRS_DATA_REDUC', 'DRS_DATA_OUT',
+    'DRS_CALIB_DB', 'DRS_TELLU_DB', 'DRS_DATA_MSG', 'DRS_DATA_WORKING',
+    'DRS_DATA_RUN', 'DRS_DS9_PATH', 'DRS_PDFLATEX_PATH', 'DRS_DATA_MSG_FULL',
+    'DRS_DATA_ASSETS',
     # General properites
     'DRS_VERSION', 'AUTHORS', 'DRS_RELEASE', 'DRS_DATE', 'LANGUAGE',
     # Instrument/Observatory Constants
@@ -105,6 +106,13 @@ DRS_DATA_REDUC = Const('DRS_DATA_REDUC', dtype='path', source=__NAME__,
                        active=True, group=cgroup, value='./apero-data/reduced',
                        description='Define the directory that the reduced data '
                                    'should be saved to/read from')
+
+#   Define the directory that the post processed data should be saved to
+DRS_DATA_OUT = Const('DRS_DATA_OUT', dtype='path', source=__NAME__,
+                     user=True, active=True, group=cgroup,
+                     value='./apero-data/out',
+                     description='Define the directory that the post processed'
+                                 ' data should be saved to')
 
 #   Define the directory that the calibration files should be saved to/read from
 DRS_CALIB_DB = Const('DRS_CALIB_DB', dtype='path', source=__NAME__, user=True,

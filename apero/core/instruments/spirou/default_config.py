@@ -65,6 +65,10 @@ DRS_DATA_RAW.value = '/drs/spirou/data/raw/'
 DRS_DATA_REDUC = DRS_DATA_REDUC.copy(__NAME__)
 DRS_DATA_REDUC.value = '/drs/spirou/data/reduced'
 
+#   Define the directory that the post processed data should be saved to
+DRS_DATA_OUT = DRS_DATA_OUT.copy(__NAME__)
+DRS_DATA_OUT.value = '/drs/spirou/data/out'
+
 #   Define the directory that the calibration files should be saved to/read from
 DRS_CALIB_DB = DRS_CALIB_DB.copy(__NAME__)
 DRS_CALIB_DB.value = '/drs/spirou/data/calibDB'
