@@ -17,7 +17,7 @@ import readline
 import glob
 from collections import OrderedDict
 from pathlib import Path
-from typing import Union
+from typing import Any, Union
 
 from apero.base import base
 from apero.core.core import drs_break
@@ -64,6 +64,7 @@ DATA_PATHS = dict()
 DATA_PATHS['DRS_DATA_RAW'] = ['Raw data directory', 'raw']
 DATA_PATHS['DRS_DATA_WORKING'] = ['Temporary data directory', 'tmp']
 DATA_PATHS['DRS_DATA_REDUC'] = ['Reduced data directory', 'reduced']
+DATA_PATHS['DRS_DATA_OUT'] = ['Post process directory', 'out']
 DATA_PATHS['DRS_CALIB_DB'] = ['Calibration DB data directory', 'calibDB']
 DATA_PATHS['DRS_TELLU_DB'] = ['Telluric DB data directory', 'telluDB']
 DATA_PATHS['DRS_DATA_PLOT'] = ['Plotting directory', 'plot']
@@ -77,6 +78,7 @@ DATA_ARGS = dict()
 DATA_ARGS['DRS_DATA_RAW'] = 'rawdir'
 DATA_ARGS['DRS_DATA_WORKING'] = 'tmpdir'
 DATA_ARGS['DRS_DATA_REDUC'] = 'reddir'
+DATA_ARGS['DRS_DATA_OUT'] = 'outdir'
 DATA_ARGS['DRS_CALIB_DB'] = 'calibdir'
 DATA_ARGS['DRS_TELLU_DB'] = 'telludir'
 DATA_ARGS['DRS_DATA_PLOT'] = 'plotdir'
@@ -456,10 +458,24 @@ def user_interface(params, args, lang):
                   '\n\t2. mysql (required for multiple machine use)'
                   ' - setup required']
     # ask which mode the user wants for databases
-    db_type = ask(prompt_db, options=[1, 2], dtype='int', optiondesc=options_db)
+    db_type = None
+    if hasattr('database_mode', args):
+        if args.database_mode is not None:
+            # force to str
+            database_mode = str(args.database_mode).upper()
+            # check for mysql
+            if database_mode in ['2', 'MYSQL']:
+                db_type = 2
+            # check for sql
+            elif database_mode == '1' or 'SQL' in database_mode:
+                db_type = 1
+    # if db_type is still None prompt the user
+    if db_type is None:
+        db_type = ask(prompt_db, options=[1, 2], dtype='int',
+                      optiondesc=options_db)
     # add the database settings (and ask user if required
     if db_type == 2:
-        all_params = get_mysql_settings(all_params)
+        all_params = get_mysql_settings(all_params, args)
     else:
         all_params = get_sqlite_settings(all_params)
     # ------------------------------------------------------------------
@@ -670,11 +686,12 @@ def user_interface(params, args, lang):
 
 
 
-def get_mysql_settings(all_params: ParamDict) -> ParamDict:
+def get_mysql_settings(all_params: ParamDict, args: Any) -> ParamDict:
     """
     Ask the user for the MySQL settings
 
     :param all_params: dict, the user all parameter dictionary
+    :param args: args from argparse parser
 
     :return: dict, the updated all parameter dictionary
     """
@@ -684,6 +701,37 @@ def get_mysql_settings(all_params: ParamDict) -> ParamDict:
     # only sqlite setting
     all_params['SQLITE']['USE_SQLITE3'] = False
     all_params['MYSQL']['USE_MYSQL'] = True
+
+    # ----------------------------------------------------------------------
+    # set values to None
+    host, username, password, name, profile = None, None, None, None, None
+    # check for parameters in args
+    # check host
+    if hasattr(args, 'database_host'):
+        if args.database_host is not None:
+            host = str(args.database_host)
+    # check username
+    if hasattr(args, 'database_user'):
+        if args.database_user is not None:
+            username = str(args.database_user)
+    # check password
+    if hasattr(args, 'database_pass'):
+        if args.database_pass is not None:
+            password = str(args.database_pass)
+    # check database name
+    if hasattr(args, 'database_name'):
+        if args.database_name is not None:
+            name = str(args.database_name)
+    # check apero profile
+    if hasattr(args, 'database_pro'):
+        if args.database_pro is not None:
+            profile = str(args.database_pro)
+    # check if any are still None
+    prompt_user = False
+    if host is None or username is None or password is None:
+        prompt_user = True
+    if name is None or profile is None:
+        prompt_user = True
     # ----------------------------------------------------------------------
     # Set up statement
     prompt_db_1 = ('For MySQL you must define some parameters, '
@@ -697,36 +745,57 @@ def get_mysql_settings(all_params: ParamDict) -> ParamDict:
                    '\n\tby default this is the profile name you set up here'
                    '\n\thowever you may want to link this database to another '
                    'apero profile')
-    # ask question
-    cprint(prompt_db_1, 'g')
+    # ask question (if we are prompting user for any option)
+    if prompt_user:
+        cprint(prompt_db_1, 'g')
     # ----------------------------------------------------------------------
     # ask for the host name
-    response = ask('Enter database {HOSTNAME}:', dtype=str)
+    if host is not None:
+        response = str(host)
+    # if not set from command line ask user for value
+    else:
+        response = ask('Enter database {HOSTNAME}:', dtype=str)
     # only add response if not None
     if response not in ['None', '', None]:
         all_params['MYSQL']['HOST'] = response
     # ----------------------------------------------------------------------
     # ask for the username
-    response = ask('Enter database {USERNAME}:', dtype=str)
+    if username is not None:
+        response = str(username)
+    # if not set from command line ask user for value
+    else:
+        response = ask('Enter database {USERNAME}:', dtype=str)
     # only add response if not None
     if response not in ['None', '', None]:
         all_params['MYSQL']['USER'] = response
     # ----------------------------------------------------------------------
     # ask for the password
-    response = ask('Enter database {PASSWD}:', dtype=str)
+    if password is not None:
+        response = str(password)
+    # if not set from command line ask user for value
+    else:
+        response = ask('Enter database {PASSWD}:', dtype=str)
     # only add response if not None
     if response not in ['None', '', None]:
         all_params['MYSQL']['PASSWD'] = response
     # ----------------------------------------------------------------------
     # ask for the database name
-    response = ask('Enter mysql database name', dtype=str)
+    if name is not None:
+        response = str(name)
+    # if not set from command line ask user for value
+    else:
+        response = ask('Enter mysql database name', dtype=str)
     # only add response if not None
     if response not in ['None', '', None]:
         all_params['MYSQL']['DATABASE'] = response
     # ----------------------------------------------------------------------
     # ask for the database name
     db_question = 'Enter APERO profile to use (leave blank for default/current)'
-    response = ask(db_question, dtype=str)
+    if profile is not None:
+        response = str(profile)
+    # if not set from command line ask user for value
+    else:
+        response = ask(db_question, dtype=str)
     # only add response if not None
     if response not in ['None', '', None]:
         all_params['MYSQL']['PROFILE'] = response
