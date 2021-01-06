@@ -1256,7 +1256,7 @@ post_file = drs_oinput('DRS_POST', filetype='.fits', suffix='',
 # post processed 2D extraction file
 # -----------------------------------------------------------------------------
 post_e_file = drs_oinput('DRS_POST_E', filetype='.fits', suffix='e.fits',
-                         outfunc=out.post_file, inext='o_pp.fits')
+                         outfunc=out.post_file, inext='o')
 # add extensions
 post_e_file.add_ext('PP', pp_file, pos=0, header_only=True,
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
@@ -1291,7 +1291,7 @@ post_file.addset(post_e_file)
 # post processed 1D extraction file
 # -----------------------------------------------------------------------------
 post_s_file = drs_oinput('DRS_POST_S', filetype='.fits', suffix='s.fits',
-                         outfunc=out.post_file, inext='o_pp.fits')
+                         outfunc=out.post_file, inext='o')
 post_s_file.add_ext('PP', pp_file, pos=0, header_only=True,
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
 # s1d w is a composite table
@@ -1376,7 +1376,7 @@ post_file.addset(post_s_file)
 # post processed telluric file
 # -----------------------------------------------------------------------------
 post_t_file = drs_oinput('DRS_POST_T', filetype='.fits', suffix='t.fits',
-                         outfunc=out.post_file)
+                         outfunc=out.post_file, inext='o')
 # add extensions
 post_t_file.add_ext('PP', pp_file, pos=0, header_only=True,
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
@@ -1395,7 +1395,7 @@ post_file.addset(post_t_file)
 # post processed velocity file
 # -----------------------------------------------------------------------------
 post_v_file = drs_oinput('DRS_POST_V', filetype='.fits', suffix='v.fits',
-                         outfunc=out.post_file)
+                         outfunc=out.post_file, inext='o')
 post_v_file.add_ext('PP', pp_file, pos=0, header_only=True,
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
 post_v_file.add_ext('VEL', out_ccf_fits, pos=1, fiber='AB',
@@ -1407,7 +1407,7 @@ post_file.addset(post_v_file)
 # post processed polar file
 # -----------------------------------------------------------------------------
 post_p_file = drs_oinput('DRS_POST_P', filetype='.fits', suffix='p.fits',
-                         outfunc=out.post_file)
+                         outfunc=out.post_file, inext='o')
 
 # TODO: Add these extensions
 
