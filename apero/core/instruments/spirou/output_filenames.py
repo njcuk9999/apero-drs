@@ -257,7 +257,8 @@ def set_file(params: ParamDict, infile: Any, outfile: Any,
                                      prefix, suffix, filename)
 
 
-def post_file(params: ParamDict, drsfile: Any, identifier: str) -> str:
+def post_file(params: ParamDict, drsfile: Any, identifier: str,
+              directory: str) -> str:
     """
     Generate a post processed filename
 
@@ -281,8 +282,10 @@ def post_file(params: ParamDict, drsfile: Any, identifier: str) -> str:
     # add output suffix
     filename = filename + drsfile.suffix
     # -------------------------------------------------------------------------
+    if directory is None:
+        directory = ''
     # add path to filename
-    filename = os.path.join(params['DRS_DATA_OUT'], filename)
+    filename = os.path.join(params['DRS_DATA_OUT'], directory, filename)
     # -------------------------------------------------------------------------
     # return filename
     return filename

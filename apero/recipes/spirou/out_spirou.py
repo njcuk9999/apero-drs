@@ -9,11 +9,16 @@ Created on 2019-05-13 at 11:04
 
 @author: cook
 """
+import numpy as np
+import os
+
 from apero.base import base
 from apero import lang
 from apero.core.core import drs_log
+from apero.core.core import drs_database
+from apero.core.core import drs_text
 from apero.core.utils import drs_startup
-
+from apero.core.instruments.spirou import file_definitions as fd
 
 # =============================================================================
 # Define variables
@@ -85,11 +90,114 @@ def __main__(recipe, params):
     # ----------------------------------------------------------------------
     # Main Code
     # ----------------------------------------------------------------------
+    # define main function name
     mainname = __NAME__ + '._main()'
+    # ---------------------------------------------------------------------
+    # get input parameters: clear
+    clear = False
+    if 'CLEAR' in params['INPUTS']:
+        clear = params['INPUTS']['CLEAR']
+    # get input parameters: overwrite
+    overwrite = False
+    if 'OVERWRITE' in params['INPUTS']:
+        overwrite = params['INPUTS']['OVERWRITE']
+    # get input parameters: night
+    night = None
+    if 'NIGHT' in params['INPUTS']:
+        night = params['INPUTS']['NIGHT']
+        if drs_text.null_text(night, ['None', '']):
+            night = None
+    # get input parameter: whitelist
+    wnightlist = None
+    if 'WNIGHTLIST' in params['INPUTS']:
+        wnightlist = params['INPUTS']['WNIGHTLIST']
+        if drs_text.null_text(wnightlist, ['None', '']):
+            wnightlist = None
+        else:
+            wnightlist = wnightlist.replace(' ', '').split(',')
+    # get input parameter: blacklist
+    bnightlist = None
+    if 'BNIGHTLIST' in params['INPUTS']:
+        bnightlist = params['INPUTS']['BNIGHTLIST']
+        if drs_text.null_text(bnightlist, ['None', '']):
+            bnightlist = None
+        else:
+            bnightlist = bnightlist.replace(' ', '').split(',')
+    # ---------------------------------------------------------------------
+    # add master condition based on night, wnightlist and bnightlist
+    # ---------------------------------------------------------------------
+    # deal with night
+    if night is not None:
+        mastercondition = 'DIRNAME={0}'.format(night)
+    # deal with white night list
+    elif wnightlist is not None:
+        # loop around all nights in wnightlist
+        subcondition = []
+        for wnight in wnightlist:
+            subcondition.append('DIRNAME="{0}"'.format(wnight))
+        # add to master condition
+        mastercondition = '({0})'.format(' OR '.join(subcondition))
+    # deal with black night list
+    elif bnightlist is not None:
+        # loop around all nights in bnightlist
+        subcondition = []
+        for bnight in bnightlist:
+            subcondition.append('DIRNAME!="{0}"'.format(bnight))
+        # add to master condition
+        mastercondition = '({0})'.format(' AND '.join(subcondition))
+    else:
+        mastercondition = None
 
+    # ---------------------------------------------------------------------
+    # load the index database
+    indexdbm = drs_database.IndexDatabase(params)
+    indexdbm.load_db()
+    # get the list of post files
+    post_files = fd.post_file.fileset
+    # loop around post files
+    for post_file in post_files:
+        # ---------------------------------------------------------------------
+        # make a copy of post_file that we can then fill
+        postfile = post_file.copy()
+        # ---------------------------------------------------------------------
+        # add params to post_file
+        postfile.params = params
+        # get the output filename function
+        outfunc = postfile.outfunc
+        # ---------------------------------------------------------------------
+        # add level to recipe log
+        log1 = recipe.log.add_level(params, 'POST_FILE', postfile.name)
+        # ---------------------------------------------------------------------
+        # find files for extension 0
+        table0 = postfile.find_files(0, indexdbm, mastercondition)
+        # ---------------------------------------------------------------------
+        # loop around all files in ext 0
+        for row in range(len(table0['ABSPATH'])):
+            # -----------------------------------------------------------------
+            # generate out file name
+            outfile = outfunc(params, postfile.extensions[0].drsfile,
+                              table0['KW_IDENTIFIER'][row],
+                              table0['DIRNAME'][row])
+            # skip existing files
+            if (not overwrite) and os.path.exists(outfile):
+                continue
+            # -----------------------------------------------------------------
+            # make a new copy of out file
+            filepostfile = postfile.copy()
+            # add output filename
+            filepostfile.out_filename = outfile
+            # add extension 0 file properties
+            filepostfile.extensions[0].set_infile(row, table0)
+            # load the extension 0 file
+            filepostfile.extensions[0].load_infile(params)
+            # -----------------------------------------------------------------
+            # link all other extensions
+            # TODO: Finish prcess links
+            filepostfile.process_links(params, indexdbm)
 
+            # TODO: Need to deal with 'table' when loading data/header
 
-
+            # TODO: Need to write file
 
 
     # ----------------------------------------------------------------------

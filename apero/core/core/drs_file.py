@@ -29,6 +29,7 @@ from copy import deepcopy
 from hashlib import blake2b
 import numpy as np
 import os
+import pandas as pd
 from pathlib import Path
 from typing import Any, Dict, List, Union, Tuple, Type
 import warnings
@@ -4489,8 +4490,12 @@ class DrsNpyFile(DrsInputFile):
 
 
 class DrsOutFileExtension:
+    # set class name
+    class_name: str = 'DrsOutFileExtension'
+
     def __init__(self, name: str, drsfile: DrsFitsFile, pos: int,
                  fiber: Union[str, None] = None,
+                 kind: Union[str, None] = None,
                  hkeys: Union[dict, None] = None,
                  link: Union[list, str, None] = None,
                  hlink: Union[str, None] = None,
@@ -4512,15 +4517,22 @@ class DrsOutFileExtension:
 
         :return:
         """
+        # set basic parameters
         self.name = name
         self.drsfile = drsfile
         self.pos = pos
         self.fiber = fiber
+        self.kind = kind
         self.hkeys = hkeys
         self.link = link
         self.hlink = hlink
         self.header_only = header_only
         self.data_only = data_only
+        # to be filled
+        self.filename = None
+        self.header = None
+        self.data = None
+        self.datatype = 'image'
         # table parameters
         self.table_drsfiles = []
         self.table_in_colnames = []
@@ -4528,6 +4540,48 @@ class DrsOutFileExtension:
         self.table_units = []
         self.table_fibers = []
         self.table_required = []
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        Defines the str(DrsInputFile) return for DrsInputFile
+        :return str: the string representation of DrsInputFile
+                     i.e. DrsInputFile[name]
+        """
+        # set function name
+        _ = display_func(None, '__str__', __NAME__, self.class_name)
+        # return the string representation of DrsInputFile
+        return '{0}[{1}]'.format(self.class_name, self.name)
+
+    def __repr__(self) -> str:
+        """
+        Defines the print(DrsInputFile) return for DrsInputFile
+        :return str: the string representation of DrsInputFile
+                     i.e. DrsInputFile[name]
+        """
+        # set function name
+        _ = display_func(None, '__repr__', __NAME__, self.class_name)
+        # return the string representation of DrsInputFile
+        return 'DrsOutExt[{0}]'.format(self.name)
 
     def add_table_column(self, drsfile: DrsFitsFile,
                   incol: str, outcol: str, fiber: Union[str, None],
@@ -4550,14 +4604,65 @@ class DrsOutFileExtension:
         self.table_fibers.append(fiber)
         self.table_required.append(required)
 
+    def copy(self):
+        # create new copy
+        new = DrsOutFileExtension(self.name, self.drsfile, self.pos,
+                                  self.fiber, self.kind, self.hkeys,
+                                  self.link, self.hlink, self.header_only,
+                                  self.data_only)
+        # table parameters
+        new.table_drsfiles = self.table_drsfiles
+        new.table_in_colnames = self.table_in_colnames
+        new.table_out_colnames = self.table_out_colnames
+        new.table_units = self.table_units
+        new.table_fibers = self.table_fibers
+        new.table_required = self.table_required
+        # return new copy
+        return new
+
+    def set_infile(self, row, table):
+        self.filename = table['ABSPATH'][row]
+        self.datatype = self.drsfile.datatype
+
+    def load_infile(self, params: ParamDict):
+        """
+        Load infile for this extension
+
+        :param params:
+        :return:
+        """
+        # ---------------------------------------------------------------------
+        # get data format
+        if self.datatype == 'image':
+            fmt = 'fits-image'
+        elif self.datatype == 'table':
+            fmt = 'fits-table'
+        # default to fits-image
+        else:
+            fmt = 'fits-image'
+        # ---------------------------------------------------------------------
+        # deal with data only / header only
+        if self.data_only:
+            self.data = drs_fits.readfits(params, self.filename, True, False,
+                                             fmt, copy=True)
+        elif self.header_only:
+            self.header = drs_fits.readfits(params, self.filename, False, True,
+                                             fmt, copy=True)
+        else:
+            # load data/header via readfits
+            data, header = drs_fits.readfits(params, self.filename, True, True,
+                                             fmt, copy=True)
+            # push data and header into
+            self.data = data
+            self.header = header
+
 
 class DrsOutFile(DrsInputFile):
+    # set class name
+    class_name: str = 'DrsOutFile'
 
     def __init__(self, name, filetype, suffix, outfunc=None,
                  inext=None):
-
-        # set class name
-        self.class_name = 'DrsOutFile'
         # set function name
         _ = display_func(None, '__init__', __NAME__, self.class_name)
         # define a name
@@ -4567,9 +4672,54 @@ class DrsOutFile(DrsInputFile):
                               inext=inext)
         # store extensions
         self.extensions = dict()
+        # specific data
+        self.out_filename = None
+
+    def __getstate__(self) -> dict:
+        """
+        For when we have to pickle the class
+        :return:
+        """
+        # set state to __dict__
+        state = dict(self.__dict__)
+        # return dictionary state
+        return state
+
+    def __setstate__(self, state: dict):
+        """
+        For when we have to unpickle the class
+
+        :param state: dictionary from pickle
+        :return:
+        """
+        # update dict with state
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        """
+        Defines the str(DrsInputFile) return for DrsInputFile
+        :return str: the string representation of DrsInputFile
+                     i.e. DrsInputFile[name]
+        """
+        # set function name
+        _ = display_func(self.params, '__str__', __NAME__, self.class_name)
+        # return the string representation of DrsInputFile
+        return '{0}[{1}]'.format(self.class_name, self.name)
+
+    def __repr__(self) -> str:
+        """
+        Defines the print(DrsInputFile) return for DrsInputFile
+        :return str: the string representation of DrsInputFile
+                     i.e. DrsInputFile[name]
+        """
+        # set function name
+        _ = display_func(self.params, '__repr__', __NAME__, self.class_name)
+        # return the string representation of DrsInputFile
+        return 'DrsOutFile[{0}]'.format(self.name)
 
     def add_ext(self, name, drsfile: Union[DrsFitsFile, str], pos: int,
                 fiber: Union[str, None] = None,
+                kind: Union[str, None] = None,
                 hkeys: Union[dict, None] = None,
                 link: Union[list, str, None] = None,
                 hlink: Union[str, None] = None,
@@ -4594,9 +4744,17 @@ class DrsOutFile(DrsInputFile):
 
         :return:
         """
-        self.extensions[name] = DrsOutFileExtension(name, drsfile, pos, fiber,
-                                                    hkeys, link, hlink,
-                                                    header_only, data_only)
+        # set function name
+        func_name = display_func(self.params, '__str__', __NAME__,
+                                 self.class_name)
+        # position must be an integer
+        if not isinstance(pos, int):
+            raise DrsCodedException('00-001-00053', level='error',
+                                    targs=[pos, func_name])
+
+        self.extensions[pos] = DrsOutFileExtension(name, drsfile, pos, fiber,
+                                                   kind, hkeys, link, hlink,
+                                                   header_only, data_only)
 
     def add_column(self, extname: str, drsfile: DrsFitsFile,
                    incol: str, outcol: str, fiber: Union[str, None],
@@ -4614,7 +4772,7 @@ class DrsOutFile(DrsInputFile):
         :return:
         """
         # get extension
-        extension = self.extensions[extname]
+        extension = self.extensions[self._pos_from_name(extname)]
         # check extension is a DrsOutFileExtension
         if isinstance(extension, DrsOutFileExtension):
             # check for drsfile == table
@@ -4623,6 +4781,188 @@ class DrsOutFile(DrsInputFile):
             # add the table
             extension.add_table_column(drsfile, incol, outcol, fiber, units,
                                        required)
+
+    def _pos_from_name(self, name):
+        # get positions
+        positions = list(self.extensions.keys())
+        # get DrsOutExtension instances
+        instances = list(self.extensions.values())
+        # get the names for each position
+        names = list(map(lambda x: x.name, instances))
+        # make a translation dictionary
+        translate = dict(zip(names, positions))
+        # return the position for this name
+        return translate[name]
+
+    def find_files(self, pos: int, indexdbm: Any,
+                   mastercond: Union[str, None]) -> pd.DataFrame:
+        """
+        Find files that match the extension parameters in the index database
+
+        :param pos: int, the position in the extension list
+        :param indexdbm: Index database, the index database
+        :param mastercond: str, the master condition
+
+        :return: pandas data frame containing the table of files
+        """
+        # get extension 0
+        extension = self.extensions[pos]
+        # get the index table for first extension
+        table0 = indexdbm.get_entries('*', kind=extension.kind,
+                                      hkeys=extension.hkeys,
+                                      condition=mastercond)
+        # TODO: identifier should be from indexdbm
+        basefiles = table0['FILENAME']
+        identifiers = list(map(lambda x: x.replace('_pp.fits', ''), basefiles))
+        table0['KW_IDENTIFIER'] = identifiers
+        # return table
+        return table0
+
+    def copy(self):
+        # set function name
+        _ = display_func(None, '__init__', __NAME__, self.class_name)
+        # get new copy of drs out file
+        new = DrsOutFile(self.name, self.filetype, self.suffix, self.outfunc,
+                         self.inext)
+        # copy extensions
+        for ext in self.extensions:
+            new.extensions[ext] = self.extensions[ext].copy()
+        # return new copy
+        return new
+
+    def has_header(self):
+        # assume no headers are loaded
+        value = np.zeros(len(self.extensions), dtype=bool)
+        names = []
+        # check for loaded headers
+        for it, pos in enumerate(self.extensions):
+            if self.extensions[pos].header is not None:
+                value[it] = True
+                names.append(self.extensions[pos].name)
+        # return value
+        return value, names
+
+    def process_links(self, params, indexdbm):
+
+        # get index columns
+        index_cols = indexdbm.database.colnames('*', indexdbm.database.tname)
+
+        # must have primary filename set
+        if self.extensions[0].filename is None:
+
+            emsg = 'Error cannot linnk infile not set for primary extension'
+
+            WLOG(params, 'error', emsg)
+
+        # get information about loaded files
+        has_hdr, valid_names = self.has_header()
+
+        # loop around extensions
+        for pos in self.extensions:
+            # get ext
+            ext = self.extensions[pos]
+            # cannot link primary extension
+            if pos == 0:
+                continue
+            # get extension name
+            name = ext.name
+            # -----------------------------------------------------------------
+            # get link position
+            if ext.link not in valid_names:
+                emsg = ('link={0} not valid for extension {1} ({2})'
+                        '\n\tValid link names: {3}')
+                eargs = [ext.link, pos, name, ', '.join(valid_names)]
+                WLOG(params, 'error', emsg.format(*eargs))
+                return
+            # -----------------------------------------------------------------
+            # get the link parameters
+            linkext = self.extensions[self._pos_from_name(ext.link)]
+            # need the linkext header
+            linkhdr = linkext.header
+            # get the hlink
+            hlink = ext.hlink
+            # -----------------------------------------------------------------
+            # need to check for hlink in params
+            if hlink not in params:
+                emsg = ('hlink={0} is not valid for link={1}. '
+                        '\n\tlink file = {2}')
+                eargs = [ext.hlink, ext.link, linkext.filename]
+                WLOG(params, 'error', emsg.format(*eargs))
+                return
+            # -----------------------------------------------------------------
+            # get the header key associated with hlink
+            hdrhlink = params[hlink][0]
+            # need to check for params[hlink] in header
+            if hdrhlink not in linkhdr:
+                emsg = ('hlink={0} is not valid for link={1}. '
+                        '\n\theader key "{2}" not found'
+                        '\n\tlink file = {3}')
+                eargs = [ext.hlink, ext.link, hdrhlink, linkext.filename]
+                WLOG(params, 'error', emsg.format(*eargs))
+                return
+            # -----------------------------------------------------------------
+            # use the hlink to get the link criteria
+            criteria = linkhdr[hdrhlink]
+            # we need to figure out whether we have a database criteria link
+            #   or whether the link will be a filename
+            if hlink in index_cols:
+                linkkind = str(hlink)
+            else:
+                linkkind = 'FILENAME'
+            # -----------------------------------------------------------------
+            # look for critera in index database (to get absolute path)
+            # and to filter by fiber
+            # -----------------------------------------------------------------
+            # add the hlink criteria
+            condition = '{0}="{1}"'.format(linkkind, criteria)
+            # add kind condition
+            condition += ' AND kind="{0}"'.format(ext.kind)
+            # add fiber condition (if present)
+            if ext.fiber is not None:
+                condition += ' AND KW_FIBER="{0}"'
+
+            # TODO: Got to here:
+            # TODO:   Need to add KW_IDENTIFIER to index database and rebuild
+            # TODO:   database
+            # TODO:   Need to add KW_IDENTIFIER to NIRPS_HA
+
+            # TODO: Need to use condition to filter index database
+            # TODO: Need to then get file name + open it
+            # TODO: Need to load data/header
+
+            # TODO: Need to deal with 'table' when loading data/header
+
+            # -----------------------------------------------------------------
+            # finally update the loaded files
+            has_hdr, valid_names = self.has_header()
+
+
+
+
+
+
+
+    def write_file(self, params):
+        # set function name
+        func_name = display_func(params, 'write_file', __NAME__,
+                                 self.class_name)
+        # construct data list
+        data_list = []
+        for ext in self.extensions:
+            data_list.append(self.extensions[ext].data)
+        # construct header list
+        header_list = []
+        for ext in self.extensions:
+            header_list.append(self.extensions[ext].header)
+        # construct data type list
+        datatype_list = []
+        for ext in self.extensions:
+            datatype_list.append(self.extensions[ext].datatype)
+        # writefits to file
+        drs_fits.writefits(params, self.out_filename, data_list, header_list,
+                           datatype_list, func=func_name)
+
+
 
 
 # =============================================================================
@@ -5195,6 +5535,8 @@ def get_dir(params: ParamDict, dirkind: str, dirpath: Union[str, None] = None,
         dirpath = params['DRS_CALIB_DB']
     elif dirkind.upper() == 'TELLU':
         dirpath = params['DRS_TELLU_DB']
+    elif dirkind.upper() == 'OUT':
+        dirpath = params['DRS_DATA_OUT']
     # if not found produce error
     else:
         emsg = textentry('00-007-00002', args=[kind, dirpath])

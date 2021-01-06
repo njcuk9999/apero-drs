@@ -1258,31 +1258,31 @@ post_file = drs_oinput('DRS_POST', filetype='.fits', suffix='',
 post_e_file = drs_oinput('DRS_POST_E', filetype='.fits', suffix='e.fits',
                          outfunc=out.post_file, inext='o')
 # add extensions
-post_e_file.add_ext('PP', pp_file, pos=0, header_only=True,
+post_e_file.add_ext('PP', pp_file, pos=0, header_only=True, kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
-post_e_file.add_ext('EXT_AB', out_ext_e2dsff, pos=1, fiber='AB',
+post_e_file.add_ext('EXT_AB', out_ext_e2dsff, pos=1, fiber='AB', kind='red',
                     link='PP', hlink='KW_IDENTIFIER')
-post_e_file.add_ext('EXT_A', out_ext_e2dsff, pos=2, fiber='A',
+post_e_file.add_ext('EXT_A', out_ext_e2dsff, pos=2, fiber='A', kind='red',
                     link='EXT_AB', hlink='KW_IDENTIFIER')
-post_e_file.add_ext('EXT_B', out_ext_e2dsff, pos=3, fiber='B',
+post_e_file.add_ext('EXT_B', out_ext_e2dsff, pos=3, fiber='B', kind='red',
                     link='EXT_AB', hlink='KW_IDENTIFIER')
-post_e_file.add_ext('EXT_C', out_ext_e2dsff, pos=4, fiber='C',
+post_e_file.add_ext('EXT_C', out_ext_e2dsff, pos=4, fiber='C', kind='red',
                     link='EXT_AB', hlink='KW_IDENTIFIER')
-post_e_file.add_ext('WAVE_AB', out_wavem_fp, pos=5, fiber='AB',
+post_e_file.add_ext('WAVE_AB', out_wavem_fp, pos=5, fiber='AB', kind='red',
                     link='EXT_AB', hlink='KW_CDBWAVE')
-post_e_file.add_ext('WAVE_A', out_wavem_fp, pos=6, fiber='A',
+post_e_file.add_ext('WAVE_A', out_wavem_fp, pos=6, fiber='A', kind='red',
                     link='EXT_A', hlink='KW_CDBWAVE')
-post_e_file.add_ext('WAVE_B', out_wavem_fp, pos=7, fiber='B',
+post_e_file.add_ext('WAVE_B', out_wavem_fp, pos=7, fiber='B', kind='red',
                     link='EXT_B', hlink='KW_CDBWAVE')
-post_e_file.add_ext('WAVE_C', out_wavem_fp, pos=8, fiber='C',
+post_e_file.add_ext('WAVE_C', out_wavem_fp, pos=8, fiber='C', kind='red',
                     link='EXT_C', hlink='KW_CDBWAVE')
-post_e_file.add_ext('BLAZE_AB', out_ff_blaze, pos=9, fiber='AB',
+post_e_file.add_ext('BLAZE_AB', out_ff_blaze, pos=9, fiber='AB', kind='red',
                     link='EXT_AB', hlink='KW_CDBBLAZE')
-post_e_file.add_ext('BLAZE_A', out_ff_blaze, pos=10, fiber='A',
+post_e_file.add_ext('BLAZE_A', out_ff_blaze, pos=10, fiber='A', kind='red',
                     link='EXT_A', hlink='KW_CDBBLAZE')
-post_e_file.add_ext('BLAZE_B', out_ff_blaze, pos=11, fiber='B',
+post_e_file.add_ext('BLAZE_B', out_ff_blaze, pos=11, fiber='B', kind='red',
                     link='EXT_B', hlink='KW_CDBBLAZE')
-post_e_file.add_ext('BLAZE_C', out_ff_blaze, pos=12, fiber='C',
+post_e_file.add_ext('BLAZE_C', out_ff_blaze, pos=12, fiber='C', kind='red',
                     link='EXT_C', hlink='KW_CDBBLAZE')
 # add to post processed file set
 post_file.addset(post_e_file)
@@ -1292,10 +1292,10 @@ post_file.addset(post_e_file)
 # -----------------------------------------------------------------------------
 post_s_file = drs_oinput('DRS_POST_S', filetype='.fits', suffix='s.fits',
                          outfunc=out.post_file, inext='o')
-post_s_file.add_ext('PP', pp_file, pos=0, header_only=True,
+post_s_file.add_ext('PP', pp_file, pos=0, header_only=True, kind='red',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
 # s1d w is a composite table
-post_s_file.add_ext('S1D_W', 'table', pos=1,
+post_s_file.add_ext('S1D_W', 'table', pos=1, kind='red',
                     link='PP', hlink='KW_IDENTIFIER')
 # add s1d w columns (all linked via PP file)
 post_s_file.add_column('S1D_W', out_ext_s1d_w,
@@ -1332,7 +1332,7 @@ post_s_file.add_column('S1D_W', out_tellu_sc1d_w,
                        incol='eflux', outcol='FluxErrABTelluCorrected',
                        fiber='AB', units='Relative Flux', required=False)
 # s1d w is a composite table
-post_s_file.add_ext('S1D_V', 'table', pos=2,
+post_s_file.add_ext('S1D_V', 'table', pos=2, kind='red',
                     link='PP', hlink='KW_IDENTIFIER')
 # add s1d w columns (all linked via PP file)
 post_s_file.add_column('S1D_V', out_ext_s1d_v,
@@ -1378,7 +1378,7 @@ post_file.addset(post_s_file)
 post_t_file = drs_oinput('DRS_POST_T', filetype='.fits', suffix='t.fits',
                          outfunc=out.post_file, inext='o')
 # add extensions
-post_t_file.add_ext('PP', pp_file, pos=0, header_only=True,
+post_t_file.add_ext('PP', pp_file, pos=0, header_only=True, kind='red',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
 post_t_file.add_ext('TELLU_AB', out_tellu_obj, pos=1, fiber='AB',
                     link='PP', hlink='KW_IDENTIFIER')
@@ -1396,7 +1396,7 @@ post_file.addset(post_t_file)
 # -----------------------------------------------------------------------------
 post_v_file = drs_oinput('DRS_POST_V', filetype='.fits', suffix='v.fits',
                          outfunc=out.post_file, inext='o')
-post_v_file.add_ext('PP', pp_file, pos=0, header_only=True,
+post_v_file.add_ext('PP', pp_file, pos=0, header_only=True, kind='red',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
 post_v_file.add_ext('VEL', out_ccf_fits, pos=1, fiber='AB',
                     link='PP', hlink='KW_IDENTIFIER')

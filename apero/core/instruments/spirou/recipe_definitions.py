@@ -1242,9 +1242,9 @@ out_recipe.extension = 'fits'
 out_recipe.description = textentry('OUT_DESC_HELP')
 out_recipe.epilog = ''
 out_recipe.kind = 'recipe'
-out_recipe.set_kwarg(name='--clear', dtype=bool, default=False,
+out_recipe.set_kwarg(name='--clear', dtype='switch', default=False,
                      helpstr='')
-out_recipe.set_kwarg(name='--overwrite', dtype=bool, default=False,
+out_recipe.set_kwarg(name='--overwrite', dtype='switch', default=False,
                      helpstr='')
 out_recipe.group_func = grouping.no_group
 out_recipe.group_column = grouping.no_group

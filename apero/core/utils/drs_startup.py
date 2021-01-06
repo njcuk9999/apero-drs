@@ -2161,8 +2161,7 @@ def _make_dirs(params: ParamDict, path: str):
             string_trackback = traceback.format_exc()
             emsg = textentry('01-000-00001', args=[path, type(e_)])
             emsg += '\n\n' + textentry(string_trackback)
-            WLOG(params, 'error', emsg, raise_exception=False, wrap=False)
-
+            WLOG(params, 'error', emsg, raise_exception=True, wrap=False)
     # -------------------------------------------------------------------------
     # try to run locked makedirs
     try:
