@@ -247,7 +247,7 @@ def set_file(params: ParamDict, infile: Any, outfile: Any,
     :return: the aboslute path to the file
     """
     # set function name
-    func_name = display_func(params, 'blank', __NAME__)
+    func_name = display_func(params, 'set_file', __NAME__)
     # set function name from args
     if func is not None:
         func_name = '{0} [{1}]'.format(func, func_name)
@@ -255,6 +255,37 @@ def set_file(params: ParamDict, infile: Any, outfile: Any,
     return output_filenames.set_file(params, infile, outfile, fiber,
                                      path, func_name, remove_insuffix,
                                      prefix, suffix, filename)
+
+
+def post_file(params: ParamDict, drsfile: Any, identifier: str) -> str:
+    """
+    Generate a post processed filename
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param drsfile: DrsOutFile instance, the drs out file associated with this
+                    post processed file
+    :param identifier: str, an identifier to the required output filename
+    :return:
+    """
+    # set function name
+    _ = display_func(params, 'post_file', __NAME__)
+    # -------------------------------------------------------------------------
+    # set filename to identifer
+    filename = str(identifier)
+    # -------------------------------------------------------------------------
+    # remove input suffix (extension) from identifier
+    if drsfile.inext is not None:
+        if filename.endswith(drsfile.inext):
+            filename = filename[:-len(drsfile.inext)]
+    # -------------------------------------------------------------------------
+    # add output suffix
+    filename = filename + drsfile.suffix
+    # -------------------------------------------------------------------------
+    # add path to filename
+    filename = os.path.join(params['DRS_DATA_OUT'], filename)
+    # -------------------------------------------------------------------------
+    # return filename
+    return filename
 
 
 # =============================================================================
