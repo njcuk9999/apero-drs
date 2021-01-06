@@ -67,7 +67,7 @@ def get_args():
                              '(Allows the creation of multiple profiles with'
                              ' different settings)')
 
-    # add setup args
+    # add directory args
     parser.add_argument('--root', action='store', dest='root',
                         help='The installation directory (if not given tries'
                              'to find the path and if not found prompts '
@@ -101,6 +101,12 @@ def get_args():
                              'each directory separately)')
     parser.add_argument('--reddir', action='store', dest='reddir',
                         help='The reduced directory where output files are '
+                             'stored.'
+                             '(if not given and --datadir not given prompts'
+                             'the user to input if user chooses to install '
+                             'each directory separately)')
+    parser.add_argument('--outdir', action='store', dest='outdir',
+                        help='The post process directory where output files are '
                              'stored.'
                              '(if not given and --datadir not given prompts'
                              'the user to input if user chooses to install '
@@ -142,29 +148,60 @@ def get_args():
                              '(if not given and --datadir not given prompts'
                              'the user to input if user chooses to install '
                              'each directory separately)')
+    # add plot mode argument
     parser.add_argument('--plotmode', action='store', dest='plotmode',
                         help='The plot mode. 0=Summary plots only '
                              '1=Plot at end of run 2=Plot at creation '
                              '(pauses code). If unset user is prompted for '
                              'choice.',
                         choices=['0', '1', '2'])
+    # add cleaning argument
     parser.add_argument('--clean', action='store', dest='clean',
                         help='Whether to run from clean directories - '
                              'RECOMMENDED - clears out old files and copies'
                              'over all required default data files. '
                              'If unset user is prompted for  choice.')
+    # add argument to skip cleaning check
     parser.add_argument('--clean_no_warning', action='store', dest='cleanwarn',
                         help='Whether to warn about cleaning populated '
                              'directories - WARNING if set to True will delete '
                              'all tmp/reduced/calibDB etc. data without prompt')
+    # add argument with ds9 path
     parser.add_argument('--ds9path', action='store', dest='ds9path',
                         help='Optionally set the ds9 path (used in some tools)')
+    # add argument with pdf latex path
     parser.add_argument('--pdflatexpath', action='store', dest='pdfpath',
                         help='Optionally set the pdf latex path (used to '
                              'produce summary plots. '
                              'If unset user is prompted for choice.'
                              'If still unset user will only have html summary'
                              'document not a pdf one.')
+    # add database mode argument
+    parser.add_argument('--database_mode', action='store', dest='database_mode',
+                        help='Database mode (1: sqlite, 2: mysql). '
+                             'If unset user is prompted for choice.',
+                        choices=[1, 2], type=int)
+    # add MySQL database arguements (database_mode = 2)
+    parser.add_argument('--database_host', action='store', dest='database_host',
+                        help='MySQL database hostname '
+                             '(Only required if --databasemode=2. '
+                             'If unset user is prompted for choice.')
+    parser.add_argument('--database_user', action='store', dest='database_user',
+                        help='MySQL database username '
+                             '(Only required if --databasemode=2. '
+                             'If unset user is prompted for choice.')
+    parser.add_argument('--database_pass', action='store', dest='database_pass',
+                        help='MySQL database password '
+                             '(Only required if --databasemode=2. '
+                             'If unset user is prompted for choice.')
+    parser.add_argument('--database_name', action='store', dest='database_name',
+                        help='MySQL database name '
+                             '(Only required if --databasemode=2. '
+                             'If unset user is prompted for choice.')
+    parser.add_argument('--database_pro', action='store', dest='database_pro',
+                        help='APERO profile used for MySQL database '
+                             '(Only required if --databasemode=2. '
+                             'If unset user is prompted for choice.')
     # parse arguments
     args = parser.parse_args()
     return args
