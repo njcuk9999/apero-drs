@@ -712,9 +712,9 @@ def writefits(params: ParamDict, filename: str,
     # ------------------------------------------------------------------
     # define a synchoronized lock for indexing (so multiple instances do not
     #  run at the same time)
-    lockfile = os.path.basename(filename)
-    # start a lock
-    lock = drs_lock.Lock(params, lockfile)
+    # lockfile = os.path.basename(filename)
+    # # start a lock
+    # lock = drs_lock.Lock(params, lockfile)
 
     # ------------------------------------------------------------------
     # make locked read function
@@ -827,7 +827,11 @@ def _write_fits(params: ParamDict, filename: str,
     #   else if table then primary HDU should be empty
     # TODO: need to fix this so hdu[0] is always empty
     # TODO:    --> start = 0 and no data[0] in PrimaryHDU
-    if datatype[0] == 'image':
+
+    if data[0] is None:
+        hdu0 = fits.PrimaryHDU(header=header0)
+        start = 1
+    elif datatype[0] == 'image':
         hdu0 = fits.PrimaryHDU(data[0], header=header0)
         start = 1
     else:

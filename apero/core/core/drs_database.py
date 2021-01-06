@@ -1456,8 +1456,8 @@ class IndexDatabase(DatabaseManager):
                         # get data type
                         dtype = rtypes[h_it]
                         # try to case and add to condition
-                        hargs = [hkey, dtype(hkeys[hkey])]
-                        sql['condition'] += ' AND {0} = "{1}"'.format(*hargs)
+                        condition = _hkey_condition(hkey, dtype, hkeys[hkey])
+                        sql['condition'] += condition
                     except Exception as _:
                         wargs = [self.name, hkey, hkeys[hkey],
                                  rtypes[h_it], func_name]
@@ -1904,6 +1904,31 @@ def _get_files(path: Union[Path, str], kind: str,
         valid_files.append(filename.absolute())
     # return valid files
     return valid_files
+
+
+def _hkey_condition(name, datatype, hkey):
+    """
+    Deal with generating a condition from a hkey (list or str)
+    """
+    # must deal with hkeys as lists
+    if isinstance(hkey, list):
+        # store sub-conditions
+        subconditions = []
+        # loop around elements in hkey
+        for sub_hkey in hkey:
+            # cast value into data type
+            value = datatype(sub_hkey)
+            # add to sub condition
+            subconditions.append('{0}="{1}"'.format(name, value))
+        # make full condition based on sub conditions
+        condition = 'AND ({0})'.format(' OR '.join(subconditions))
+        # return condition
+        return condition
+    else:
+        # cast value into data type
+        value = datatype(hkey)
+        # return condition
+        return ' AND {0}="{1}"'.format(name, value)
 
 
 # =============================================================================
