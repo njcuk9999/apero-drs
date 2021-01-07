@@ -1584,6 +1584,35 @@ class IndexDatabase(DatabaseManager):
         # ---------------------------------------------------------------------
         # get a list of keys
         rkeys, rtypes = self.pconst.INDEX_HEADER_KEYS()
+        ikeys, itypes = self.pconst.INDEX_DB_COLUMNS()
+        # ---------------------------------------------------------------------
+        # deal with database having wrong columns (if we have added / remove a
+        #  column and are updating because of this)
+        columns = self.database.colnames('*', self.database.tname)
+        # check if columns and rkeys agree
+        if len(columns) != len(ikeys):
+            # prompt user and warn
+            wmsg = 'Index database has wrong number of columns'
+            WLOG(self.params, 'warning', wmsg)
+            userinput = input('Reset database [Y]es or [N]o?\t')
+            # if yes delete table and recreate
+            if 'Y' in userinput.upper():
+                # remove table
+                self.database.delete_table(self.database.tname)
+                # add new empty table
+                self.database.add_table(self.database.tname, ikeys, itypes)
+                # reload database
+                self.load_db()
+                # update all entries for raw index entries
+                WLOG(self.params, 'info', 'Rebuilding raw index entries')
+                self.update_entries('raw', force_update=True)
+                # update all entries for tmp index entries
+                WLOG(self.params, 'info', 'Rebuilding tmp index entries')
+                self.update_entries('tmp', force_update=True)
+                # update all entries for reduced index entries
+                WLOG(self.params, 'info', 'Rebuilding reduced index entries')
+                self.update_entries('red', force_update=True)
+                return
         # ---------------------------------------------------------------------
         # deal with no files
         if len(reqfiles) == 0:
