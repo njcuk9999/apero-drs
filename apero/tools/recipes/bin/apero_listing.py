@@ -91,13 +91,17 @@ def __main__(recipe, params):
     # get the kidn from inputs
     kind = params['INPUTS']['KIND']
     # get the white list of nights from inputs
-    whitelist = params['INPUTS'].listp('WNIGHTNAMES')
+    whitelist = params['INPUTS']['WNIGHTNAMES']
     if drs_text.null_text(whitelist, ['None', '', 'All']):
         whitelist = None
+    else:
+        whitelist = params['INPUTS'].listp('WNIGHTNAMES')
     # get the black list of nights from inputs
-    blacklist = params['INPUTS'].listp('BNIGHTNAMES')
+    blacklist = params['INPUTS']['BNIGHTNAMES']
     if drs_text.null_text(blacklist, ['None', '', 'All']):
         blacklist = None
+    else:
+        blacklist = params['INPUTS'].listp('BNIGHTNAMES')
 
     # ----------------------------------------------------------------------
     # Deal with kind
