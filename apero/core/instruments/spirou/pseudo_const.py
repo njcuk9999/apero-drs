@@ -302,15 +302,34 @@ class PseudoConstants(DefaultConstants):
 
         :return:
         """
-        keys = ['KW_DATE_OBS', 'KW_UTC_OBS', 'KW_ACQTIME', 'KW_TARGET_TYPE',
-                'KW_MID_OBS_TIME', 'KW_OBJECTNAME', 'KW_OBJNAME', 'KW_OBSTYPE',
-                'KW_EXPTIME', 'KW_CCAS', 'KW_CREF', 'KW_CDEN', 'KW_CALIBWH',
-                'KW_DPRTYPE', 'KW_OUTPUT', 'KW_CMPLTEXP', 'KW_NEXP',
-                'KW_VERSION', 'KW_PPVERSION', 'KW_PI_NAME', 'KW_PID',
-                'KW_FIBER']
-        ctypes = [str, str, float, str, float, str, str, str, float, str, str,
-                  float, str, str, str, int, int, str, str, str, str, str]
-
+        # set keyts
+        index_keys = dict()
+        index_keys['KW_DATE_OBS'] = str
+        index_keys['KW_UTC_OBS'] = str
+        index_keys['KW_ACQTIME'] = float
+        index_keys['KW_TARGET_TYPE'] = str
+        index_keys['KW_MID_OBS_TIME'] = float
+        index_keys['KW_OBJECTNAME'] = str
+        index_keys['KW_OBJNAME'] = str
+        index_keys['KW_OBSTYPE'] =str
+        index_keys['KW_EXPTIME'] = float
+        index_keys['KW_CCAS'] = str
+        index_keys['KW_CREF'] = str
+        index_keys['KW_CDEN'] = float
+        index_keys['KW_CALIBWH'] = str
+        index_keys['KW_DPRTYPE'] = str
+        index_keys['KW_OUTPUT'] = str
+        index_keys['KW_CMPLTEXP'] = int
+        index_keys['KW_NEXP'] = int
+        index_keys['KW_VERSION'] = str
+        index_keys['KW_PPVERSION'] = str
+        index_keys['KW_PI_NAME'] = str
+        index_keys['KW_PID'] = str
+        index_keys['KW_FIBER'] = str
+        index_keys['KW_IDENTIFIER'] = str
+        # split names and types and add header keys
+        keys = list(index_keys.keys())
+        ctypes = list(index_keys.values())
         # check that filedef keys are present
         for fkey in self.FILEDEF_HEADER_KEYS():
             if fkey not in keys:
@@ -686,9 +705,23 @@ class PseudoConstants(DefaultConstants):
         # get header keys
         hkeys, htypes = self.INDEX_HEADER_KEYS()
         # set columns
-        columns = ['ABSPATH', 'DIRNAME', 'FILENAME', 'KIND',
-                   'LAST_MODIFIED', 'RUNSTRING'] + hkeys + ['USED', 'RAWFIX']
-        ctypes = [str, str, str, str, float, str] + htypes + [int, int]
+        index_columns = dict()
+        index_columns['ABSPATH'] = str
+        index_columns['DIRNAME'] = str
+        index_columns['FILENAME'] = str
+        index_columns['KIND'] = str
+        index_columns['LAST_MODIFIED'] = float
+        index_columns['RUNSTRING'] = str
+        # split names and types and add header keys
+        columns = list(index_columns.keys()) + hkeys
+        ctypes = list(index_columns.values()) + htypes
+        # add extra columns
+        extra_columns = dict()
+        extra_columns['USED'] = int
+        extra_columns['RAWFIX'] = int
+        columns += list(extra_columns.keys())
+        ctypes += list(extra_columns.values())
+        # return columns and column types
         return columns, ctypes
 
 
