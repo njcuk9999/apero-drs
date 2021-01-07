@@ -44,6 +44,7 @@ from apero.core.core import drs_text
 from apero.core.instruments.default import output_filenames as outf
 from apero.core.instruments.default import pseudo_const
 from apero.io import drs_fits
+from apero.io import drs_table
 from apero.io import drs_path
 
 
@@ -1156,6 +1157,58 @@ class DrsInputFile:
         self.fiber = fiber
         self.filename = os.path.join(currentpath, outfilename)
         self.basename = outfilename
+
+    def output_dictionary(self, kind: str, runstring: Union[str, None] = None):
+        """
+        Generate the output dictionary (for use while writing)
+        Uses OUTPUT_FILE_HEADER_KEYS and DrsFile.hdict to generate an
+        output dictionary for this file (for use in indexing)
+
+        Requires DrsFile.filename and DrsFile.params to be set
+
+        :return None:
+        """
+        # set function name
+        func_name = display_func(self.params, 'output_dictionary', __NAME__,
+                                 self.class_name)
+        # check that params is set
+        self.check_params(func_name)
+        params = self.params
+        pconst = constants.pload(params['INSTRUMENT'])
+        # get required keys for index database
+        hkeys, htypes = pconst.INDEX_HEADER_KEYS()
+        # deal with absolute path of file
+        self.output_dict['ABSPATH'] = str(self.filename)
+        # deal with night name of file
+        self.output_dict['DIRNAME'] = str(self.params['NIGHTNAME'])
+        # deal with basename of file
+        self.output_dict['FILENAME'] = str(self.basename)
+        # deal with kind
+        self.output_dict['KIND'] = str(kind)
+        # deal with last modified time for file
+        if Path(self.filename).exists():
+            last_mod = Path(self.filename).lstat().st_mtime
+            used = 1
+        else:
+            last_mod = np.nan
+            used = 0
+        self.output_dict['LAST_MODIFIED'] = last_mod
+        # deal with the run string (string that can be used to re-run the
+        #     recipe to reproduce this file)
+        if runstring is None:
+            self.output_dict['RUNSTRING'] = 'None'
+        else:
+            self.output_dict['RUNSTRING'] = str(runstring)
+        # add whether this row should be used be default (always 1)
+        #    if file does not exist we do set this to zero though (as a flag)
+        self.output_dict['USED'] = used
+        # add the raw fix (all files here should be raw fixed)
+        self.output_dict['RAWFIX'] = 1
+        # loop around the keys and find them in hdict (or add null character if
+        #     not found)
+        for it, key in enumerate(hkeys):
+            # no header for npy files
+            self.output_dict[key] = 'None'
 
 
 class DrsFitsFile(DrsInputFile):
@@ -4413,58 +4466,6 @@ class DrsNpyFile(DrsInputFile):
                             shape, hdict, output_dict, datatype, dtype,
                             is_combined, combined_list, s1d, hkeys)
 
-    def output_dictionary(self, kind: str, runstring: Union[str, None] = None):
-        """
-        Generate the output dictionary (for use while writing)
-        Uses OUTPUT_FILE_HEADER_KEYS and DrsFile.hdict to generate an
-        output dictionary for this file (for use in indexing)
-
-        Requires DrsFile.filename and DrsFile.params to be set
-
-        :return None:
-        """
-        # set function name
-        func_name = display_func(self.params, 'output_dictionary', __NAME__,
-                                 self.class_name)
-        # check that params is set
-        self.check_params(func_name)
-        params = self.params
-        pconst = constants.pload(params['INSTRUMENT'])
-        # get required keys for index database
-        hkeys, htypes = pconst.INDEX_HEADER_KEYS()
-        # deal with absolute path of file
-        self.output_dict['ABSPATH'] = str(self.filename)
-        # deal with night name of file
-        self.output_dict['DIRNAME'] = str(self.params['NIGHTNAME'])
-        # deal with basename of file
-        self.output_dict['FILENAME'] = str(self.basename)
-        # deal with kind
-        self.output_dict['KIND'] = str(kind)
-        # deal with last modified time for file
-        if Path(self.filename).exists():
-            last_mod = Path(self.filename).lstat().st_mtime
-            used = 1
-        else:
-            last_mod = np.nan
-            used = 0
-        self.output_dict['LAST_MODIFIED'] = last_mod
-        # deal with the run string (string that can be used to re-run the
-        #     recipe to reproduce this file)
-        if runstring is None:
-            self.output_dict['RUNSTRING'] = 'None'
-        else:
-            self.output_dict['RUNSTRING'] = str(runstring)
-        # add whether this row should be used be default (always 1)
-        #    if file does not exist we do set this to zero though (as a flag)
-        self.output_dict['USED'] = used
-        # add the raw fix (all files here should be raw fixed)
-        self.output_dict['RAWFIX'] = 1
-        # loop around the keys and find them in hdict (or add null character if
-        #     not found)
-        for it, key in enumerate(hkeys):
-            # no header for npy files
-            self.output_dict[key] = 'None'
-
     # -------------------------------------------------------------------------
     # database methods
     # -------------------------------------------------------------------------
@@ -4540,6 +4541,7 @@ class DrsOutFileExtension:
         self.table_units = []
         self.table_fibers = []
         self.table_required = []
+        self.table_kind = []
 
     def __getstate__(self) -> dict:
         """
@@ -4585,7 +4587,8 @@ class DrsOutFileExtension:
 
     def add_table_column(self, drsfile: DrsFitsFile,
                   incol: str, outcol: str, fiber: Union[str, None],
-                  units: Union[str, None], required: bool = True):
+                  units: Union[str, None], required: bool = True,
+                  kind: str = 'red'):
         """
         Add a table column to an extension
 
@@ -4594,6 +4597,7 @@ class DrsOutFileExtension:
         :param outcol: str, the output column name
         :param fiber: str or None, if set set the fiber name
         :param required: bool, if False column is not required
+        :param kind: str, the kind (raw/tmp/red/out)
 
         :return:
         """
@@ -4603,6 +4607,7 @@ class DrsOutFileExtension:
         self.table_units.append(units)
         self.table_fibers.append(fiber)
         self.table_required.append(required)
+        self.table_kind.append(kind)
 
     def copy(self):
         # create new copy
@@ -4617,12 +4622,17 @@ class DrsOutFileExtension:
         new.table_units = self.table_units
         new.table_fibers = self.table_fibers
         new.table_required = self.table_required
+        new.table_kind = self.table_kind
         # return new copy
         return new
 
     def set_infile(self, row, table):
         self.filename = table['ABSPATH'][row]
-        self.datatype = self.drsfile.datatype
+
+        if self.drsfile == 'table':
+            self.datatype = 'table'
+        else:
+            self.datatype = self.drsfile.datatype
 
     def load_infile(self, params: ParamDict):
         """
@@ -4656,6 +4666,137 @@ class DrsOutFileExtension:
             self.data = data
             self.header = header
 
+    def make_table(self, params: ParamDict, indexdbm: Any, linkkind: str,
+                   criteria: str):
+        """
+        Make a custom table for post files (using the info given when defined
+        via DrsOutFile.add_column)
+
+        :param params: ParamDict, parameter dictionary of constants
+        :param indexdbm: index database instance
+        :param linkkind: str, the link kind (column in index database)
+        :param criteria: str, the link criteria (value of column in index
+                         database)
+
+        :return: None, updates self.data and self.datatype
+        """
+        # get allowed header keys
+        pconst = constants.pload(params['INSTRUMENT'])
+        rkeys, rtypes = pconst.INDEX_HEADER_KEYS()
+        # define table column parameters
+        drsfiles = self.table_drsfiles
+        incolumns = self.table_in_colnames
+        outcolumns = self.table_out_colnames
+        units = self.table_units
+        fibers = self.table_fibers
+        col_required = self.table_required
+        kinds = self.table_kind
+        # ---------------------------------------------------------------------
+        # define storage for values
+        values = []
+        filenames = []
+        # define storage for open tables (key = filename) so we don't open them
+        #   more times than we need
+        tables = dict()
+        # ---------------------------------------------------------------------
+        # loop around columns and populate
+        for col in range(len(outcolumns)):
+            # -----------------------------------------------------------------
+            # add the hlink criteria
+            condition = '{0}="{1}"'.format(linkkind, criteria)
+            # set up index database condition
+            # add kind (raw/tmp/red/out)
+            condition += ' AND kind="{0}"'.format(kinds[col])
+            # -----------------------------------------------------------------
+            # get hkeys for this drsfile
+            hkeys = drsfiles[col].required_header_keys
+            # add hkeys from file
+            if hkeys is not None and isinstance(hkeys, dict):
+                # loop around each valid header key in index database
+                for h_it, hkey in enumerate(rkeys):
+                    # if we have the key in our header keys
+                    if hkey in hkeys:
+                        # get data type
+                        dtype = rtypes[h_it]
+                        # try to case and add to condition
+                        hargs = [hkey, dtype, hkeys[hkey]]
+                        # add to condition
+                        condition += index_hkey_condition(*hargs)
+            # add fiber
+            if not drs_text.null_text(fibers[col], ['None', '']):
+                condition += ' AND KW_FIBER="{0}"'.format(fibers[col])
+            # -----------------------------------------------------------------
+            # first get entries from index database
+            entries = indexdbm.get_entries('*', condition=condition)
+            # -----------------------------------------------------------------
+            # deal with no entries and column not required
+            if len(entries) == 0 and not col_required[col]:
+                continue
+            # deal with no entries and column required
+            elif len(entries) == 0:
+                emsg = ('Column file for EXT={0} ({1}) not found. '
+                        '\n\t Condition = {1}')
+                eargs = [self.pos, self.name, condition]
+                WLOG(params, 'error', emsg.format(*eargs))
+                continue
+            else:
+                # else take the first entry
+                filename = entries['ABSPATH'][0]
+                # append filenames
+                filenames.append(filename)
+            # -----------------------------------------------------------------
+            # check for filename in storage
+            if filename in tables:
+                table = tables[filename]
+            # if we haven't previously loaded table load it now
+            else:
+                # load table
+                table = drs_table.read_table(params, filename, fmt='fits')
+                # save to tables for caching
+                tables[filename] = table
+            # -----------------------------------------------------------------
+            # check for column in table
+            if incolumns[col] not in table.colnames:
+                emsg = ('Column for EXT={0} ({1}) not found. '
+                        '\n\t Filename = {2} \n\t Column name = {3}')
+                eargs = [self.pos, self.name, filename, incolumns[col]]
+                WLOG(params, 'error', emsg.format(*eargs))
+                continue
+            # -----------------------------------------------------------------
+            # get rows for this column
+            row_values = np.array(table[incolumns[col]])
+            # deal with wrong length
+            if len(values) > 0:
+                if len(values[0]) != len(row_values):
+                    emsg = ('Column for EXT={0} ({1}) wrong length. '
+                            '\n\t Filename = {2} \n\t Column name = {3}'
+                            '\n\t Column "{4}" length={5} (File: {6})',
+                            '\n\t Column "{7}" length={8} (File: {9})')
+                    eargs = [self.pos, self.name, filename, incolumns[col],
+                             incolumns[0], len(values[0]), filenames[0],
+                             incolumns[col], len(row_values), filenames[col]]
+                    WLOG(params, 'error', emsg.format(*eargs))
+                    continue
+            # -----------------------------------------------------------------
+            # load column into values
+            values.append(row_values)
+
+        # ---------------------------------------------------------------------
+        # print tables added
+        for filename in tables:
+            msg = '\t\tFile: {0}'
+            margs = [os.path.basename(filename)]
+            WLOG(params, '', msg.format(*margs), colour='magenta')
+        # ---------------------------------------------------------------------
+        # make out table
+        outtable = drs_table.make_table(params, outcolumns, values,
+                                        units=units)
+        # ---------------------------------------------------------------------
+        # load into data
+        self.data = outtable
+        self.datatype = 'table'
+        self.header = None
+
 
 class DrsOutFile(DrsInputFile):
     # set class name
@@ -4674,6 +4815,7 @@ class DrsOutFile(DrsInputFile):
         self.extensions = dict()
         # specific data
         self.out_filename = None
+        self.out_dirname = None
 
     def __getstate__(self) -> dict:
         """
@@ -4758,7 +4900,8 @@ class DrsOutFile(DrsInputFile):
 
     def add_column(self, extname: str, drsfile: DrsFitsFile,
                    incol: str, outcol: str, fiber: Union[str, None],
-                   units: Union[str, None], required: bool = True):
+                   units: Union[str, None] = None, required: bool = True,
+                   kind: str = 'red'):
         """
         If an extension is a table add a column from a table fits file
 
@@ -4768,6 +4911,7 @@ class DrsOutFile(DrsInputFile):
         :param outcol: str, the output column name
         :param fiber: str or None, if set set the fiber name
         :param required: bool, if False column is not required
+        :param kind: str, the kind (raw/tmp/red/out)
 
         :return:
         """
@@ -4780,7 +4924,7 @@ class DrsOutFile(DrsInputFile):
                 raise ValueError('Extension is not a table')
             # add the table
             extension.add_table_column(drsfile, incol, outcol, fiber, units,
-                                       required)
+                                       required, kind)
 
     def _pos_from_name(self, name):
         # get positions
@@ -4811,10 +4955,6 @@ class DrsOutFile(DrsInputFile):
         table0 = indexdbm.get_entries('*', kind=extension.kind,
                                       hkeys=extension.hkeys,
                                       condition=mastercond)
-        # TODO: identifier should be from indexdbm
-        basefiles = table0['FILENAME']
-        identifiers = list(map(lambda x: x.replace('_pp.fits', ''), basefiles))
-        table0['KW_IDENTIFIER'] = identifiers
         # return table
         return table0
 
@@ -4842,15 +4982,18 @@ class DrsOutFile(DrsInputFile):
         # return value
         return value, names
 
+
     def process_links(self, params, indexdbm):
 
         # get index columns
         index_cols = indexdbm.database.colnames('*', indexdbm.database.tname)
-
+        # get allowed header keys
+        pconst = constants.pload(params['INSTRUMENT'])
+        rkeys, rtypes = pconst.INDEX_HEADER_KEYS()
         # must have primary filename set
         if self.extensions[0].filename is None:
 
-            emsg = 'Error cannot linnk infile not set for primary extension'
+            emsg = 'Error cannot link infile not set for primary extension'
 
             WLOG(params, 'error', emsg)
 
@@ -4863,9 +5006,27 @@ class DrsOutFile(DrsInputFile):
             ext = self.extensions[pos]
             # cannot link primary extension
             if pos == 0:
+                # log progress
+                if ext.header_only:
+                    msg = '\tAdding EXT={0} ({1}) [Header only]'
+                else:
+                    msg = '\tAdding EXT={0} ({1})'
+                margs = [pos, ext.name]
+                WLOG(params, '', msg.format(*margs))
+                # add filename
+                msg = '\t\tFile: {0}'
+                margs = [os.path.basename(ext.filename)]
+                WLOG(params, '', msg.format(*margs), colour='magenta')
+                # skip to next extension
                 continue
+            # -----------------------------------------------------------------
             # get extension name
             name = ext.name
+            # get drsfile hkeys
+            if isinstance(ext.drsfile, str):
+                hkeys = None
+            else:
+                hkeys = ext.drsfile.required_header_keys
             # -----------------------------------------------------------------
             # get link position
             if ext.link not in valid_names:
@@ -4917,34 +5078,64 @@ class DrsOutFile(DrsInputFile):
             condition = '{0}="{1}"'.format(linkkind, criteria)
             # add kind condition
             condition += ' AND kind="{0}"'.format(ext.kind)
+            # add hkey conditions
+            if hkeys is not None and isinstance(hkeys, dict):
+                # loop around each valid header key in index database
+                for h_it, hkey in enumerate(rkeys):
+                    # if we have the key in our header keys
+                    if hkey in hkeys:
+                        # get data type
+                        dtype = rtypes[h_it]
+                        # try to case and add to condition
+                        hargs = [hkey, dtype, hkeys[hkey]]
+                        # add to condition
+                        condition += index_hkey_condition(*hargs)
             # add fiber condition (if present)
             if ext.fiber is not None:
-                condition += ' AND KW_FIBER="{0}"'
-
-            # TODO: Got to here:
-            # TODO:   Need to add KW_IDENTIFIER to index database and rebuild
-            # TODO:   database
-            # TODO:   Need to add KW_IDENTIFIER to NIRPS_HA
-
-            # TODO: Need to use condition to filter index database
-            # TODO: Need to then get file name + open it
-            # TODO: Need to load data/header
-
-            # TODO: Need to deal with 'table' when loading data/header
-
+                condition += ' AND KW_FIBER="{0}"'.format(ext.fiber)
+            # get entries
+            exttable = indexdbm.get_entries('*', condition=condition)
+            # deal with no entries
+            if len(exttable) == 0:
+                emsg = 'No entries for extension {0} ({1}) \n\t condition = {2}'
+                eargs = [pos, name, condition]
+                WLOG(params, 'error', emsg.format(*eargs))
+                return
+            # deal with drsfile as a custom table
+            if ext.drsfile == 'table':
+                # add extension file properties
+                ext.set_infile(0, exttable)
+                # log progress
+                msg = '\tAdding EXT={0} ({1}) [TABLE]'
+                margs = [pos, name]
+                WLOG(params, '', msg.format(*margs))
+                # make the table
+                ext.make_table(params, indexdbm, linkkind, criteria)
+            # else take the first entry
+            else:
+                # add extension file properties
+                ext.set_infile(0, exttable)
+                # load the extension file
+                ext.load_infile(params)
+                # log progress
+                if ext.header_only:
+                    msg = '\tAdding EXT={0} ({1}) [Header only]'
+                else:
+                    msg = '\tAdding EXT={0} ({1})'
+                margs = [pos, name]
+                WLOG(params, '', msg.format(*margs))
+                # add filename
+                msg = '\t\tFile: {0}'
+                margs = [os.path.basename(ext.filename)]
+                WLOG(params, '', msg.format(*margs), colour='magenta')
             # -----------------------------------------------------------------
             # finally update the loaded files
             has_hdr, valid_names = self.has_header()
 
 
-
-
-
-
-
-    def write_file(self, params):
+    def write_file(self, kind: str, runstring: Union[str, None] = None):
         # set function name
-        func_name = display_func(params, 'write_file', __NAME__,
+        func_name = display_func(self.params, 'write_file', __NAME__,
                                  self.class_name)
         # construct data list
         data_list = []
@@ -4958,11 +5149,15 @@ class DrsOutFile(DrsInputFile):
         datatype_list = []
         for ext in self.extensions:
             datatype_list.append(self.extensions[ext].datatype)
+
+        # must make sure dirname exists
+        if not os.path.exists(self.out_dirname):
+            os.makedirs(self.out_dirname)
         # writefits to file
-        drs_fits.writefits(params, self.out_filename, data_list, header_list,
-                           datatype_list, func=func_name)
-
-
+        drs_fits.writefits(self.params, self.out_filename, data_list,
+                           header_list, datatype_list, func=func_name)
+        # write output dictionary
+        self.output_dictionary(kind, runstring)
 
 
 # =============================================================================
@@ -5548,6 +5743,31 @@ def get_dir(params: ParamDict, dirkind: str, dirpath: Union[str, None] = None,
 # =============================================================================
 # Worker functions
 # =============================================================================
+def index_hkey_condition(name, datatype, hkey):
+    """
+    Deal with generating a condition from a hkey (list or str)
+    """
+    # must deal with hkeys as lists
+    if isinstance(hkey, list):
+        # store sub-conditions
+        subconditions = []
+        # loop around elements in hkey
+        for sub_hkey in hkey:
+            # cast value into data type
+            value = datatype(sub_hkey)
+            # add to sub condition
+            subconditions.append('{0}="{1}"'.format(name, value))
+        # make full condition based on sub conditions
+        condition = 'AND ({0})'.format(' OR '.join(subconditions))
+        # return condition
+        return condition
+    else:
+        # cast value into data type
+        value = datatype(hkey)
+        # return condition
+        return ' AND {0}="{1}"'.format(name, value)
+
+
 def generate_arg_checksum(source: Union[List[str], str],
                           ndigits: int = 10) -> str:
     """
