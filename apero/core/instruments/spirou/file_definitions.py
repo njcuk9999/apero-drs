@@ -1292,7 +1292,7 @@ post_file.addset(post_e_file)
 # -----------------------------------------------------------------------------
 post_s_file = drs_oinput('DRS_POST_S', filetype='.fits', suffix='s.fits',
                          outfunc=out.post_file, inext='o')
-post_s_file.add_ext('PP', pp_file, pos=0, header_only=True, kind='red',
+post_s_file.add_ext('PP', pp_file, pos=0, header_only=True, kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
 # s1d w is a composite table
 post_s_file.add_ext('S1D_W', 'table', pos=1, kind='red',
@@ -1300,74 +1300,76 @@ post_s_file.add_ext('S1D_W', 'table', pos=1, kind='red',
 # add s1d w columns (all linked via PP file)
 post_s_file.add_column('S1D_W', out_ext_s1d_w,
                        incol='wavelength', outcol='Wave', fiber='AB',
-                       units='nm')
+                       units='nm', kind='red')
 post_s_file.add_column('S1D_W', out_ext_s1d_w,
                        incol='flux', outcol='FluxAB', fiber='AB',
-                       units='Relative Flux')
+                       kind='red')
 post_s_file.add_column('S1D_W', out_ext_s1d_w,
                        incol='eflux', outcol='FluxErrAB', fiber='AB',
-                       units='Relative Flux')
+                       kind='red')
 post_s_file.add_column('S1D_W', out_ext_s1d_w,
                        incol='flux', outcol='FluxA', fiber='A',
-                       units='Relative Flux')
+                       kind='red')
 post_s_file.add_column('S1D_W', out_ext_s1d_w,
                        incol='eflux', outcol='FluxErrA', fiber='A',
-                       units='Relative Flux')
+                       kind='red')
 post_s_file.add_column('S1D_W', out_ext_s1d_w,
                        incol='flux', outcol='FluxB', fiber='B',
-                       units='Relative Flux')
+                       kind='red')
 post_s_file.add_column('S1D_W', out_ext_s1d_w,
                        incol='eflux', outcol='FluxErrB', fiber='B',
-                       units='Relative Flux')
+                       kind='red')
 post_s_file.add_column('S1D_W', out_ext_s1d_w,
                        incol='flux', outcol='FluxC', fiber='C',
-                       units='Relative Flux')
+                       kind='red')
 post_s_file.add_column('S1D_W', out_ext_s1d_w,
                        incol='eflux', outcol='FluxErrC', fiber='C',
-                       units='Relative Flux')
+                       kind='red')
 post_s_file.add_column('S1D_W', out_tellu_sc1d_w,
                        incol='flux', outcol='FluxABTelluCorrected', fiber='AB',
-                       units='Relative Flux', required=False)
+                       required=False, kind='red')
 post_s_file.add_column('S1D_W', out_tellu_sc1d_w,
                        incol='eflux', outcol='FluxErrABTelluCorrected',
-                       fiber='AB', units='Relative Flux', required=False)
+                       fiber='AB', required=False,
+                       kind='red')
 # s1d w is a composite table
 post_s_file.add_ext('S1D_V', 'table', pos=2, kind='red',
                     link='PP', hlink='KW_IDENTIFIER')
 # add s1d w columns (all linked via PP file)
 post_s_file.add_column('S1D_V', out_ext_s1d_v,
                        incol='wavelength', outcol='Wave', fiber='AB',
-                       units='nm')
+                       units='nm', kind='red')
 post_s_file.add_column('S1D_V', out_ext_s1d_v,
                        incol='flux', outcol='FluxAB', fiber='AB',
-                       units='Relative Flux')
+                       kind='red')
 post_s_file.add_column('S1D_V', out_ext_s1d_v,
                        incol='eflux', outcol='FluxErrAB', fiber='AB',
-                       units='Relative Flux')
+                       kind='red')
 post_s_file.add_column('S1D_V', out_ext_s1d_v,
                        incol='flux', outcol='FluxA', fiber='A',
-                       units='Relative Flux')
+                       kind='red')
 post_s_file.add_column('S1D_V', out_ext_s1d_v,
                        incol='eflux', outcol='FluxErrA', fiber='A',
-                       units='Relative Flux')
+                       kind='red')
 post_s_file.add_column('S1D_V', out_ext_s1d_v,
                        incol='flux', outcol='FluxB', fiber='B',
-                       units='Relative Flux')
+                       kind='red')
 post_s_file.add_column('S1D_V', out_ext_s1d_v,
                        incol='eflux', outcol='FluxErrB', fiber='B',
-                       units='Relative Flux')
+                       kind='red')
 post_s_file.add_column('S1D_V', out_ext_s1d_v,
                        incol='flux', outcol='FluxC', fiber='C',
-                       units='Relative Flux')
+                       kind='red')
 post_s_file.add_column('S1D_V', out_ext_s1d_v,
                        incol='eflux', outcol='FluxErrC', fiber='C',
-                       units='Relative Flux')
+                       kind='red')
 post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
                        incol='flux', outcol='FluxABTelluCorrected', fiber='AB',
-                       units='Relative Flux', required=False)
+                       required=False, kind='red')
 post_s_file.add_column('S1D_V', out_tellu_sc1d_v,
                        incol='eflux', outcol='FluxErrABTelluCorrected',
-                       fiber='AB', units='Relative Flux', required=False)
+                       fiber='AB', required=False,
+                       kind='red')
 # add to post processed file set
 post_file.addset(post_s_file)
 
@@ -1378,7 +1380,7 @@ post_file.addset(post_s_file)
 post_t_file = drs_oinput('DRS_POST_T', filetype='.fits', suffix='t.fits',
                          outfunc=out.post_file, inext='o')
 # add extensions
-post_t_file.add_ext('PP', pp_file, pos=0, header_only=True, kind='red',
+post_t_file.add_ext('PP', pp_file, pos=0, header_only=True, kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
 post_t_file.add_ext('TELLU_AB', out_tellu_obj, pos=1, fiber='AB',
                     link='PP', hlink='KW_IDENTIFIER')
@@ -1396,7 +1398,7 @@ post_file.addset(post_t_file)
 # -----------------------------------------------------------------------------
 post_v_file = drs_oinput('DRS_POST_V', filetype='.fits', suffix='v.fits',
                          outfunc=out.post_file, inext='o')
-post_v_file.add_ext('PP', pp_file, pos=0, header_only=True, kind='red',
+post_v_file.add_ext('PP', pp_file, pos=0, header_only=True, kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
 post_v_file.add_ext('VEL', out_ccf_fits, pos=1, fiber='AB',
                     link='PP', hlink='KW_IDENTIFIER')
@@ -1412,7 +1414,7 @@ post_p_file = drs_oinput('DRS_POST_P', filetype='.fits', suffix='p.fits',
 # TODO: Add these extensions
 
 # add to post processed file set
-post_file.addset(post_p_file)
+# post_file.addset(post_p_file)
 
 
 # =============================================================================
