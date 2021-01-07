@@ -10,13 +10,13 @@ Created on 2019-03-21 at 18:35
 @author: cook
 """
 import os
-from typing import Any, Union
+from typing import Any, Tuple, Union
 
 from apero.base import base
 from apero.core.core import drs_misc
 from apero.core.instruments.default import output_filenames
-from apero import lang
 from apero.core.constants import param_functions
+
 
 # =============================================================================
 # Define variables
@@ -258,7 +258,7 @@ def set_file(params: ParamDict, infile: Any, outfile: Any,
 
 
 def post_file(params: ParamDict, drsfile: Any, identifier: str,
-              directory: str) -> str:
+              directory: str) -> Tuple[str, str]:
     """
     Generate a post processed filename
 
@@ -284,11 +284,13 @@ def post_file(params: ParamDict, drsfile: Any, identifier: str,
     # -------------------------------------------------------------------------
     if directory is None:
         directory = ''
+    # construct path
+    path = os.path.join(params['DRS_DATA_OUT'], directory)
     # add path to filename
-    filename = os.path.join(params['DRS_DATA_OUT'], directory, filename)
+    filename = os.path.join(path, filename)
     # -------------------------------------------------------------------------
     # return filename
-    return filename
+    return filename, path
 
 
 # =============================================================================
