@@ -170,35 +170,49 @@ def __main__(recipe, params):
         # ---------------------------------------------------------------------
         # find files for extension 0
         table0 = postfile.find_files(0, indexdbm, mastercondition)
+        # get number of files
+        num_files = len(table0['ABSPATH'])
+        num_files = 1
         # ---------------------------------------------------------------------
         # loop around all files in ext 0
-        for row in range(len(table0['ABSPATH'])):
+        for row in range(num_files):
             # -----------------------------------------------------------------
             # generate out file name
-            outfile = outfunc(params, postfile.extensions[0].drsfile,
-                              table0['KW_IDENTIFIER'][row],
-                              table0['DIRNAME'][row])
+            outfile, outdir = outfunc(params, postfile,
+                                      table0['KW_IDENTIFIER'][row],
+                                      table0['DIRNAME'][row])
             # skip existing files
             if (not overwrite) and os.path.exists(outfile):
                 continue
             # -----------------------------------------------------------------
+            # log process
+            imsg = 'Processing {0} output file {1} of {2}: {3}'
+            iargs = [post_file.name, row + 1, num_files, outfile]
+            WLOG(params, 'info', params['DRS_HEADER'])
+            WLOG(params, 'info', imsg.format(*iargs))
+            WLOG(params, 'info', params['DRS_HEADER'])
+            # -----------------------------------------------------------------
             # make a new copy of out file
             filepostfile = postfile.copy()
+            # add params to filepostfile
+            filepostfile.params = params
             # add output filename
             filepostfile.out_filename = outfile
+            filepostfile.out_dirname = outdir
             # add extension 0 file properties
             filepostfile.extensions[0].set_infile(row, table0)
             # load the extension 0 file
             filepostfile.extensions[0].load_infile(params)
             # -----------------------------------------------------------------
             # link all other extensions
-            # TODO: Finish prcess links
             filepostfile.process_links(params, indexdbm)
-
-            # TODO: Need to deal with 'table' when loading data/header
-
-            # TODO: Need to write file
-
+            # update filename/basename and path
+            filepostfile.set_filename(filepostfile.out_filename)
+            # write file
+            msg = 'Writing to file: {0}'
+            margs = [filepostfile.filename]
+            WLOG(params, '', msg.format(*margs))
+            filepostfile.write_file(recipe.outputtype, recipe.runstring)
 
     # ----------------------------------------------------------------------
     # End of main code
