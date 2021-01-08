@@ -285,6 +285,8 @@ __all__ = [
     # debug plar plot settings
     'PLOT_POLAR_CONTINUUM', 'PLOT_POLAR_RESULTS', 'PLOT_POLAR_STOKES_I',
     'PLOT_POLAR_LSD',
+    # post processing settings
+    'POST_CLEAR_REDUCED', 'POST_OVERWRITE',
     # tool constants
     'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
@@ -3230,6 +3232,24 @@ PLOT_POLAR_LSD = Const('PLOT_POLAR_LSD', value=False,
                        dtype=bool, source=__NAME__, user=True, active=False,
                        group=cgroup,
                        description='turn on the polar lsd debug plot')
+
+
+# =============================================================================
+# POST PROCESS SETTINGS
+# =============================================================================
+# Define whether (by deafult) to clear reduced directory
+POST_CLEAR_REDUCED = Const('POST_CLEAR_REDUCED', value=False,
+                           dtype=bool, source=__NAME__, user=True, active=True,
+                           group=cgroup,
+                           description='Define whether (by deafult) to '
+                                       'clear reduced directory')
+
+# Define whether (by default) to overwrite post processed files
+POST_OVERWRITE = Const('POST_CLEAR_REDUCED', value=False,
+                       dtype=bool, source=__NAME__, user=True, active=True,
+                       group=cgroup,
+                       description='Define whether (by default) to '
+                                   'overwrite post processed files')
 
 # =============================================================================
 # TOOLS SETTINGS

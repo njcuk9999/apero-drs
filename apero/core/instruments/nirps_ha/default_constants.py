@@ -2349,6 +2349,17 @@ PLOT_CCF_PHOTON_UNCERT = PLOT_CCF_PHOTON_UNCERT.copy(__NAME__)
 PLOT_CCF_PHOTON_UNCERT.value = True
 
 # =============================================================================
+# POST PROCESS SETTINGS
+# =============================================================================
+# Define whether (by deafult) to clear reduced directory
+POST_CLEAR_REDUCED = POST_CLEAR_REDUCED.copy(__NAME__)
+POST_CLEAR_REDUCED.value = False
+
+# Define whether (by default) to overwrite post processed files
+POST_OVERWRITE = POST_OVERWRITE.copy(__NAME__)
+POST_OVERWRITE.value = False
+
+# =============================================================================
 # TOOLS SETTINGS
 # =============================================================================
 # Key for use in run files
