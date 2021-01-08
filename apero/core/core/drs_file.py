@@ -4802,8 +4802,21 @@ class DrsOutFile(DrsInputFile):
     # set class name
     class_name: str = 'DrsOutFile'
 
-    def __init__(self, name, filetype, suffix, outfunc=None,
-                 inext=None):
+    def __init__(self, name: str, filetype: str,
+                 suffix: Union[str, None] = None, outfunc=None,
+                 inext=None, required: bool = True):
+        """
+        Drs class for post-processed output files
+
+        :param name: str, a name for this out file
+        :param filetype: str, the file type (i.e. .fits) for this file
+        :param suffix: str, the output file suffix and extension
+        :param outfunc: function, the output file function
+        :param inext: str, any suffix/extension in the input filename to remove
+        :param required: bool, whether this file is require (i.e. generate
+                         error when we can't create it) if False skips on
+                         error
+        """
         # set function name
         _ = display_func(None, '__init__', __NAME__, self.class_name)
         # define a name
@@ -4816,6 +4829,7 @@ class DrsOutFile(DrsInputFile):
         # specific data
         self.out_filename = None
         self.out_dirname = None
+        self.out_required = required
 
     def __getstate__(self) -> dict:
         """
@@ -4967,6 +4981,8 @@ class DrsOutFile(DrsInputFile):
         # copy extensions
         for ext in self.extensions:
             new.extensions[ext] = self.extensions[ext].copy()
+        # copy whether required
+        new.out_required = bool(self.out_required)
         # return new copy
         return new
 
@@ -4983,7 +4999,17 @@ class DrsOutFile(DrsInputFile):
         return value, names
 
 
-    def process_links(self, params, indexdbm):
+    def process_links(self, params: ParamDict, indexdbm: Any,
+                      required: bool = True) -> bool:
+        """
+        Process the linked extensions
+
+        :param params: ParamDict, parameter dictionary of constants
+        :param indexdbm: Index Database instance
+        :param required: bool, whether file is required or not
+
+        :return: bool, whether we successfully linked all extensions
+        """
 
         # get index columns
         index_cols = indexdbm.database.colnames('*', indexdbm.database.tname)
@@ -5034,7 +5060,7 @@ class DrsOutFile(DrsInputFile):
                         '\n\tValid link names: {3}')
                 eargs = [ext.link, pos, name, ', '.join(valid_names)]
                 WLOG(params, 'error', emsg.format(*eargs))
-                return
+                return False
             # -----------------------------------------------------------------
             # get the link parameters
             linkext = self.extensions[self._pos_from_name(ext.link)]
@@ -5049,7 +5075,7 @@ class DrsOutFile(DrsInputFile):
                         '\n\tlink file = {2}')
                 eargs = [ext.hlink, ext.link, linkext.filename]
                 WLOG(params, 'error', emsg.format(*eargs))
-                return
+                return False
             # -----------------------------------------------------------------
             # get the header key associated with hlink
             hdrhlink = params[hlink][0]
@@ -5060,7 +5086,7 @@ class DrsOutFile(DrsInputFile):
                         '\n\tlink file = {3}')
                 eargs = [ext.hlink, ext.link, hdrhlink, linkext.filename]
                 WLOG(params, 'error', emsg.format(*eargs))
-                return
+                return False
             # -----------------------------------------------------------------
             # use the hlink to get the link criteria
             criteria = linkhdr[hdrhlink]
@@ -5095,12 +5121,18 @@ class DrsOutFile(DrsInputFile):
                 condition += ' AND KW_FIBER="{0}"'.format(ext.fiber)
             # get entries
             exttable = indexdbm.get_entries('*', condition=condition)
-            # deal with no entries
+            # deal with no entries and not required
+            if len(exttable) == 0 and not required:
+                msg = '\t\tFile not found for ext {0} ({1})'
+                margs = [pos, name]
+                WLOG(params, 'warning', msg.format(*margs))
+                return False
+            # deal with no entries and required
             if len(exttable) == 0:
                 emsg = 'No entries for extension {0} ({1}) \n\t condition = {2}'
                 eargs = [pos, name, condition]
                 WLOG(params, 'error', emsg.format(*eargs))
-                return
+                return False
             # deal with drsfile as a custom table
             if ext.drsfile == 'table':
                 # add extension file properties
@@ -5131,7 +5163,9 @@ class DrsOutFile(DrsInputFile):
             # -----------------------------------------------------------------
             # finally update the loaded files
             has_hdr, valid_names = self.has_header()
-
+        # ---------------------------------------------------------------------
+        # return that we linked successfully
+        return True
 
     def write_file(self, kind: str, runstring: Union[str, None] = None):
         # set function name
