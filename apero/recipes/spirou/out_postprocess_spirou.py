@@ -23,7 +23,7 @@ from apero.core.instruments.spirou import file_definitions as fd
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'out_spirou.py'
+__NAME__ = 'out_postprocess_spirou.py'
 __INSTRUMENT__ = 'SPIROU'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -172,7 +172,6 @@ def __main__(recipe, params):
         table0 = postfile.find_files(0, indexdbm, mastercondition)
         # get number of files
         num_files = len(table0['ABSPATH'])
-        num_files = 1
         # ---------------------------------------------------------------------
         # loop around all files in ext 0
         for row in range(num_files):
@@ -205,14 +204,18 @@ def __main__(recipe, params):
             filepostfile.extensions[0].load_infile(params)
             # -----------------------------------------------------------------
             # link all other extensions
-            filepostfile.process_links(params, indexdbm)
-            # update filename/basename and path
-            filepostfile.set_filename(filepostfile.out_filename)
-            # write file
-            msg = 'Writing to file: {0}'
-            margs = [filepostfile.filename]
-            WLOG(params, '', msg.format(*margs))
-            filepostfile.write_file(recipe.outputtype, recipe.runstring)
+            success = filepostfile.process_links(params, indexdbm,
+                                                 filepostfile.out_required)
+            if success:
+                # update filename/basename and path
+                filepostfile.set_filename(filepostfile.out_filename)
+                # write file
+                msg = 'Writing to file: {0}'
+                margs = [filepostfile.filename]
+                WLOG(params, '', msg.format(*margs))
+                filepostfile.write_file(recipe.outputtype, recipe.runstring)
+            else:
+                WLOG(params, 'warning', '\tSkipping - files not found')
 
     # ----------------------------------------------------------------------
     # End of main code
