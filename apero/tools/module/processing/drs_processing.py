@@ -2421,15 +2421,9 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
             continue
         # make sure we are only dealing with dtype=files
         if arg.dtype not in ['file', 'files']:
-            # deal with directory (special argument) - if we have a
-            #   master night use the master night as the directory name
-            if arg.dtype == 'directory' and recipe.master:
-                filedict[argname] = params['MASTER_NIGHT']
-            # else set the file dict value to the default value
-            # TODO: Need a better option for this!!
-            # TODO:   i.e. when we need values to be set from the header
-            else:
-                filedict[argname] = arg.default
+            # deal with any special non file arguments
+            filedict = add_non_file_args(params, recipe, argname, arg,
+                                         filedict)
             continue
         # add sub-dictionary for each drs file
         filedict[argname] = OrderedDict()
@@ -2571,6 +2565,79 @@ def find_run_files(params: ParamDict, recipe: DrsRecipe,
                 outfiledict[argname][name] = vstack_cols(params, tablelist)
     # return filedict
     return outfiledict
+
+
+def add_non_file_args(params: ParamDict, recipe: DrsRecipe,
+                      argname: str, arg: DrsArgument,
+                      filedict: OrderedDict) -> OrderedDict:
+    """
+    deal with any non file arguments that have to be treated in a special way
+
+    Currently this includes:
+
+    - directory (when recipe is a master) - muset set to master night
+    - wnightlist / wnightnames - must push through from processing
+    - bnightlist / bnightnmaes - must push through from processing
+    - night / nightname  - must push through from processing
+
+    - all other arguments user their default value
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param recipe: DrsRecipe, the input recipe this was called from
+    :param argname: str, the name of the argument we are dealing with
+    :param arg: DrsArgument, the argument instance we are dealing with
+    :param filedict: OrderedDict, the dictionary for storing all args/kwargs
+                     (table for files, constant otherwise)
+    :return: OrderedDict, the updated filedict
+    """
+    # deal with directory (special argument) - if we have a
+    #   master night use the master night as the directory name
+    if arg.dtype == 'directory' and recipe.master:
+        filedict[argname] = params['MASTER_NIGHT']
+    # -------------------------------------------------------------------------
+    # deal with wnightlist
+    if argname in ['wnightlist', 'wnightnames']:
+        if 'WNIGHTNAMES' in params['INPUTS']:
+            # get white night list as a string
+            wnightnames = params['INPUTS']['WNIGHTNAMES']
+            # test for null values
+            if not drs_text.null_text(wnightnames, ['None', 'All', '']):
+                # get white night list as a list
+                wnightnames = params['INPUTS'].listp('WNIGHTNAMES')
+                # add to file dict
+                filedict[argname] = wnightnames
+    # -------------------------------------------------------------------------
+    # deal with wnightlist
+    if argname in ['bnightlist', 'bnightnames']:
+        if 'BNIGHTNAMES' in params['INPUTS']:
+            # get black night list as a string
+            bnightnames = params['INPUTS']['BNIGHTNAMES']
+            # test for null values
+            if not drs_text.null_text(bnightnames, ['None', 'All', '']):
+                # get white night list as a list
+                bnightnames = params['INPUTS'].listp('BNIGHTNAMES')
+                # add to file dict
+                filedict[argname] = bnightnames
+    # -------------------------------------------------------------------------
+    # deal with nightname
+    if argname in ['night', 'nightname']:
+        if 'NIGHTNAME' in params['INPUTS']:
+            # get black night list as a string
+            nightname = params['INPUTS']['NIGHTNAME']
+            # test for null values
+            if not drs_text.null_text(nightname, ['None', 'All', '']):
+                # get white night list as a list
+                nightname = params['INPUTS'].listp('NIGHTNAME')
+                # add to file dict
+                filedict[argname] = nightname
+    # -------------------------------------------------------------------------
+    # else set the file dict value to the default value
+    # TODO: Need a better option for this!!
+    # TODO:   i.e. when we need values to be set from the header
+    elif not drs_text.null_text(arg.default, ['None', 'All', '']):
+        filedict[argname] = arg.default
+    # return the file dictionary
+    return filedict
 
 
 def group_run_files(params: ParamDict, recipe: DrsRecipe,
