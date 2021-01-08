@@ -96,3 +96,9 @@ Date: 2020-12-21
     - added support for OBJ_FP and DARK_FP files (controlled via DRIFT_DPRTYPES
       in the user_constants.ini file)
     - now deals with non-FP fibers - will skip these entries
+
+- out_postprocess
+    - added recipe to run at the end to convert reduced files into e.fits, t.fits
+      s.fits, p.fits, v.fits
+    - can clear reduced files using '--clear' (warning deletes all /reduced/ files)
+    - by default does not overwrite, use '--overwrite' to update old files

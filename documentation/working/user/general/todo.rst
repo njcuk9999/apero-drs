@@ -28,10 +28,7 @@ High priority:
 
 Medium priority:
 
-* deal with all python warnings [Neil]
 * add NIPRS changes to 0.7 branch
-* post processing (i.e. outputs like CADC/ESO)   [Neil/Chris]
-    * option to remove all reduced / tmp files (not calib/tellu)
 * DRS tests [Charles + Thomas]
 
 Low priority:
@@ -43,8 +40,6 @@ Low priority:
 * CCF masks from SpT/Teff (after masks are more mature)  [Etienne/Neil]
 * instead of copying assets download them (clean up github)   [Neil]
 * add doc strings/typing to all functions, descriptions to all constants, review all constant min/max/dtypes [Neil]
-* display func for all functions  [Neil]
-* add more debug printouts [Neil]
 * apero_langdb.py - integrate with error/warning finding (tools.module.error.find_error.py)
 * go through all summary plots and decide which plots, write figure captions, improve plots, write quality control description, decide which header keys to print [Charles/Thomas]
 * write documentation [Neil/Etienne/Charles/Thomas]
@@ -55,6 +50,18 @@ Low priority:
   * assign people to write constant descriptions
   * add authors to constants
 
+* write  paper [Neil/Etienne]
+
+Coding only tasks:
+
+* deal with all python warnings [Neil]
+* display func for all functions  [Neil]
+* add more debug printouts [Neil]
+* code to write full user_config/user_constants [Neil]
+* code to find unused functions/constants [Neil]
+* setup instrument tool [Neil/Thomas/Charles]
+* Windows compatibility [Neil]
+
 Later:
 
 * persistence correction [Olivia/Etienne/Neil]
@@ -63,9 +70,6 @@ Later:
 * uncertainty propagation [???]
 * add `plot== 3` (all debug plots shown) and `plot==4` (all debug plots saved) modes [Neil]
 * co-production of e2ds and e2dsff still needed? [???]
-* write  paper [Neil/Etienne]
-* setup instrument tool [Neil/Thomas/Charles]
-* Windows compatibility [Neil]
 
 
 =========================================
