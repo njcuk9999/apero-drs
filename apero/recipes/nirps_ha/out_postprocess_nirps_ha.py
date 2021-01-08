@@ -25,8 +25,8 @@ from apero.science.calib import background
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'out_spirou.py'
-__INSTRUMENT__ = 'SPIROU'
+__NAME__ = 'out_postprocess_nirps_ha.py'
+__INSTRUMENT__ = 'NIRPS_HA'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __author__ = base.__author__
