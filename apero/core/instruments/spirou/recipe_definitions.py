@@ -1233,8 +1233,8 @@ recipes.append(obj_spec)
 # out
 # -----------------------------------------------------------------------------
 out_recipe = DrsRecipe(__INSTRUMENT__)
-out_recipe.name = 'out_{0}.py'.format(INSTRUMENT_ALIAS)
-out_recipe.shortname = 'OUT'
+out_recipe.name = 'out_postprocess_{0}.py'.format(INSTRUMENT_ALIAS)
+out_recipe.shortname = 'POST'
 out_recipe.instrument = __INSTRUMENT__
 out_recipe.inputtype = 'red'
 out_recipe.outputtype = 'out'
@@ -1242,15 +1242,23 @@ out_recipe.extension = 'fits'
 out_recipe.description = textentry('OUT_DESC_HELP')
 out_recipe.epilog = ''
 out_recipe.kind = 'recipe'
-out_recipe.set_kwarg(name='--clear', dtype='switch', default=False,
-                     helpstr='')
-out_recipe.set_kwarg(name='--overwrite', dtype='switch', default=False,
-                     helpstr='')
+out_recipe.set_kwarg(name='--clear', dtype='switch',
+                     default_ref='POST_CLEAR_REDUCED',
+                     helpstr=textentry('OUT_CLEAR_HELP'))
+out_recipe.set_kwarg(name='--overwrite', dtype='switch',
+                     default_ref='POST_OVERWRITE',
+                     helpstr=textentry('OUT_OVERWRITE_HELP'))
+out_recipe.set_kwarg(name='--night', dtype=str, default='None',
+                     helpstr=textentry('OUT_NIGHT_HELP'), reprocess=True)
+out_recipe.set_kwarg(name='--wnightlist', dtype=str, default='None',
+                     helpstr=textentry('OUT_WNIGHTLIST_HELP'), reprocess=True)
+out_recipe.set_kwarg(name='--bnightlist', dtype=str, default='None',
+                     helpstr=textentry('OUT_BNIGHTLIST_HELP'), reprocess=True)
+
 out_recipe.group_func = grouping.no_group
 out_recipe.group_column = grouping.no_group
 # add to recipe
 recipes.append(out_recipe)
-
 
 # =============================================================================
 # Run order
@@ -1334,6 +1342,9 @@ full_seq.add(obj_fit_tellu, name='FTELLU',
 # ccf on all OBJ_DARK / OBJ_FP
 full_seq.add(cal_ccf, files=[files.out_tellu_obj], fiber='AB',
              filters=dict(KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+
+# post processing
+full_seq.add(out_recipe)
 
 # -----------------------------------------------------------------------------
 # limited sequence (master + nights)
@@ -1427,6 +1438,9 @@ limited_seq.add(obj_fit_tellu, name='FTELLU3',
 limited_seq.add(cal_ccf, files=[files.out_tellu_obj], fiber='AB',
                 filters=dict(KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
                              KW_OBJNAME='SCIENCE_TARGETS'))
+
+# post processing
+limited_seq.add(out_recipe)
 
 # -----------------------------------------------------------------------------
 # pp sequence (for trigger)
@@ -1552,6 +1566,8 @@ science_seq.add(obj_fit_tellu, name='FTELLU3',
 science_seq.add(cal_ccf, files=[files.out_tellu_obj], fiber='AB',
                 filters=dict(KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
                              KW_OBJNAME='SCIENCE_TARGETS'))
+# post processing
+science_seq.add(out_recipe)
 
 # -----------------------------------------------------------------------------
 # engineering sequences
