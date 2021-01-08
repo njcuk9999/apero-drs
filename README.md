@@ -386,6 +386,7 @@ Note: these default to True - set to False if not needed.
 | obj_fit_tellu_db                                                | FTELLDB    | 1       |
 | obj_fit_tellu        [OBJ_FP + OBJ_DARK; fiber=AB; every night] | FTELLU     | 1       |
 | cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night]              | CCF        |         |
+| out_postprocess [every night]                                   | POST       |         |
 
 ###### Comments
 
@@ -439,7 +440,7 @@ Note: these default to True - set to False if not needed.
 | obj_mk_template [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]   | FTELLU2    |
 | obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]     | FTELLU3    |
 | cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night; SCIENCE_TARGETS] | CCF        |
-
+| out_postprocess [every night]                                       | POST       |
 
 ##### 3. preprocessing runs
 
@@ -565,7 +566,7 @@ Note: these default to True - set to False if not needed.
 | obj_mk_template [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]   | FTELLU2    |
 | obj_fit_tellu [OBJ_DARK + OBJ_FP; every night; SCIENCE_TARGETS]     | FTELLU3    |
 | cal_ccf [OBJ_DARK + OBJ_FP; fiber=AB; every night; SCIENCE_TARGETS] | CCF        |
-
+| out_postprocess [every night]                                       | POST       |
 
 ##### 7. engineering sequences
 
