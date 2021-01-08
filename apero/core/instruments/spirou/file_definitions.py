@@ -1256,7 +1256,7 @@ post_file = drs_oinput('DRS_POST', filetype='.fits', suffix='',
 # post processed 2D extraction file
 # -----------------------------------------------------------------------------
 post_e_file = drs_oinput('DRS_POST_E', filetype='.fits', suffix='e.fits',
-                         outfunc=out.post_file, inext='o')
+                         outfunc=out.post_file, inext='o', required=False)
 # add extensions
 post_e_file.add_ext('PP', pp_file, pos=0, header_only=True, kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
@@ -1291,7 +1291,7 @@ post_file.addset(post_e_file)
 # post processed 1D extraction file
 # -----------------------------------------------------------------------------
 post_s_file = drs_oinput('DRS_POST_S', filetype='.fits', suffix='s.fits',
-                         outfunc=out.post_file, inext='o')
+                         outfunc=out.post_file, inext='o', required=False)
 post_s_file.add_ext('PP', pp_file, pos=0, header_only=True, kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
 # s1d w is a composite table
@@ -1378,18 +1378,18 @@ post_file.addset(post_s_file)
 # post processed telluric file
 # -----------------------------------------------------------------------------
 post_t_file = drs_oinput('DRS_POST_T', filetype='.fits', suffix='t.fits',
-                         outfunc=out.post_file, inext='o')
+                         outfunc=out.post_file, inext='o', required=False)
 # add extensions
 post_t_file.add_ext('PP', pp_file, pos=0, header_only=True, kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
 post_t_file.add_ext('TELLU_AB', out_tellu_obj, pos=1, fiber='AB',
-                    link='PP', hlink='KW_IDENTIFIER')
+                    link='PP', hlink='KW_IDENTIFIER', kind='red')
 post_t_file.add_ext('WAVE_AB', out_wavem_fp, pos=2, fiber='AB',
-                    link='EXT_AB', hlink='KW_CDBWAVE')
+                    link='TELLU_AB', hlink='KW_CDBWAVE', kind='red')
 post_t_file.add_ext('BLAZE_AB', out_ff_blaze, pos=3, fiber='AB',
-                    link='EXT_AB', hlink='KW_CDBBLAZE')
+                    link='TELLU_AB', hlink='KW_CDBBLAZE', kind='red')
 post_t_file.add_ext('RECON_AB', out_tellu_recon, pos=4, fiber='AB',
-                    link='EXT_AB', hlink='KW_IDENTIFIER')
+                    link='TELLU_AB', hlink='KW_IDENTIFIER', kind='red')
 # add to post processed file set
 post_file.addset(post_t_file)
 
@@ -1397,11 +1397,11 @@ post_file.addset(post_t_file)
 # post processed velocity file
 # -----------------------------------------------------------------------------
 post_v_file = drs_oinput('DRS_POST_V', filetype='.fits', suffix='v.fits',
-                         outfunc=out.post_file, inext='o')
+                         outfunc=out.post_file, inext='o', required=False)
 post_v_file.add_ext('PP', pp_file, pos=0, header_only=True, kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
 post_v_file.add_ext('VEL', out_ccf_fits, pos=1, fiber='AB',
-                    link='PP', hlink='KW_IDENTIFIER')
+                    link='PP', hlink='KW_IDENTIFIER', kind='red')
 # add to post processed file set
 post_file.addset(post_v_file)
 
@@ -1409,7 +1409,7 @@ post_file.addset(post_v_file)
 # post processed polar file
 # -----------------------------------------------------------------------------
 post_p_file = drs_oinput('DRS_POST_P', filetype='.fits', suffix='p.fits',
-                         outfunc=out.post_file, inext='o')
+                         outfunc=out.post_file, inext='o', required=False)
 
 # TODO: Add these extensions
 
