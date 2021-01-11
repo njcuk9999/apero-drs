@@ -31,6 +31,7 @@ import numpy as np
 import os
 import pandas as pd
 from pathlib import Path
+from scipy.stats import pearsonr
 from typing import Any, Dict, List, Union, Tuple, Type
 import warnings
 
@@ -2976,6 +2977,9 @@ class DrsFitsFile(DrsInputFile):
         params = self.params
         # check that data is read
         self.check_read()
+        # get combine metric types
+        combine_metric_1_types = params.listp('COMBINE_METRIC1_TYPES',
+                                              dtype=str)
         # set new data to this files data
         data = np.array(self.data)
         # --------------------------------------------------------------------
@@ -3002,10 +3006,8 @@ class DrsFitsFile(DrsInputFile):
         datacube0 = np.array(datacube0)
 
         # make a median of all files (for quality control only)
-        median0 = mp.nanmedian(datacube0)
-        # normalize by absolute (sqrt/square) nansum
-        median0 = median0 / np.sqrt(mp.nansum(median0 ** 2))
-
+        median0 = mp.nanmedian(datacube0, axis=0)
+        image1 = median0.ravel()
         # cube data (filter)
         datacube, headers = [], []
         basenames, basenames_used = [], []
@@ -3013,18 +3015,24 @@ class DrsFitsFile(DrsInputFile):
         reject_count = 0
         # loop around all files
         for row in range(len(datacube0)):
-            # normalize data by square
-            image = np.array(datacube0[row])
+            # get header and basename for this row
             header = headers0[row]
             basename = basenames0[row]
-            # normalize by aboslute (sqrt/square)
-            image = image / np.sqrt(mp.nansum(image ** 2))
-            # calculate the metric by which to grade input files
-            metric = mp.nansum(median0 * image)
+            # deal with metric 1
+            if self.get_hkey('KW_DPRTYPE') in combine_metric_1_types:
+                # compute metric 1
+                cout = combine_metric_1(params, row, image1, datacube0)
+                metric, metric_threshold, passed = cout
+            # else a proxy metric - passes test
+            else:
+                metric = np.nan
+                metric_threshold = np.nan
+                passed = True
             # store metric to header
             header['CMETRIC'] = metric
+            header['CTHRES'] = 'THRES {0} = {1}'.format(row, metric_threshold)
             # now for the quality control
-            if metric < params['COMBINE_THRESHOLD']:
+            if not passed:
                 # set header value (for table)
                 header['CPASS'] = 'FILE {0} = FAILED'.format(row)
                 # log warning
@@ -5339,6 +5347,37 @@ def combine(params: ParamDict, recipe: Any,
     recipe.add_output_file(outfile)
     # return combined infile
     return outfile
+
+
+def combine_metric_1(params: ParamDict, row: int, image1: np.ndarray,
+                     datacube0: np.ndarray) -> Tuple[float, float, bool]:
+    """
+    Simple pearson's R test on a row of the datacube (image) comparing it to
+    image1 (the median of the whole datacube)
+
+    For use with DARK_FLAT, FLAT_FLAT, FLAT_DARK, FP_FP only
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param row: int, the row of the datacube to use
+    :param image1: np.ndarray (2D), the median image of the data cube
+    :param datacube0: np.ndarray (3D), the data cube of images
+
+    :return: tuple, 1. The result of the Pearson R test (float),
+             2. The metric criteria used for pass/fail (float),
+             3. whether passed/failed (bool)
+    """
+    # normalize data by square
+    image_row = np.array(datacube0[row])
+    # calculate the metric by which to grade input files
+    image2 = image_row.ravel()
+    good = np.isfinite(image1) * np.isfinite(image2)
+    metric, _ = pearsonr(image1[good], image2[good])
+    # get metric threshold
+    metric_threshold = params['COMBINE_METRIC_THRESHOLD1']
+    # define whether metric passed
+    passed = metric > metric_threshold
+    # return metric, threshold and passed criteria
+    return metric, metric_threshold, passed
 
 
 def combine_headers(params: ParamDict, headers: List[Header],
