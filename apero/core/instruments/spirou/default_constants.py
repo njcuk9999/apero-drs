@@ -99,6 +99,11 @@ FWHM_PIXEL_LSF.value = 2.1
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
 # =============================================================================
+# Define the threshold under which a file should not be combined
+#  (metric is compared to the median of all files 1 = perfect, 0 = noise)
+COMBINE_THRESHOLD = COMBINE_THRESHOLD.copy(__NAME__)
+COMBINE_THRESHOLD.value = 0.9
+
 # Define the coefficients of the fit of 1/m vs d
 CAVITY_1M_FILE = CAVITY_1M_FILE.copy(__NAME__)
 CAVITY_1M_FILE.value = 'cavity_length_m_fit.dat'
