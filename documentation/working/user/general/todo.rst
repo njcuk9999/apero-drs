@@ -19,8 +19,11 @@ For all instruments / in general.
 Immediate small:
 
 * filter calibrations [Etienne/Neil]
-    * we are combining all for a night id bad ones and remove
+    * we are combining all for a night id bad ones and remove (completed for
+      DARK_FLAT, FLAT_FLAT, FLAT_DARK, FP_FP?
+    * What about DARK_DARK, DARK_FP, HC_HC etc [Question to Etienne]
     * error if not enough - define minimum number of calibrations required
+
 
 High priority:
 
