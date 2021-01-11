@@ -2980,9 +2980,9 @@ class DrsFitsFile(DrsInputFile):
         data = np.array(self.data)
         # --------------------------------------------------------------------
         # cube
-        datacube = [data]
-        headers = [self.header]
-        basenames = [self.basename]
+        datacube0 = [data]
+        headers0 = [self.header]
+        basenames0 = [self.basename]
         # combine data into cube
         for infile in infiles:
             # check data is read for infile
@@ -2992,9 +2992,64 @@ class DrsFitsFile(DrsInputFile):
                 eargs = [func_name]
                 WLOG(params, 'error', textentry('00-001-00021', args=eargs))
             # add to cube
-            datacube.append(infile.data)
-            basenames.append(infile.basename)
-            headers.append(infile.header)
+            datacube0.append(infile.data)
+            basenames0.append(infile.basename)
+            headers0.append(infile.header)
+        # --------------------------------------------------------------------
+        # Quality control on data
+        # --------------------------------------------------------------------
+        # make datacube an numpy array
+        datacube0 = np.array(datacube0)
+
+        # make a median of all files (for quality control only)
+        median0 = mp.nanmedian(datacube0)
+        # normalize by absolute (sqrt/square) nansum
+        median0 = median0 / np.sqrt(mp.nansum(median0 ** 2))
+
+        # cube data (filter)
+        datacube, headers = [], []
+        basenames, basenames_used = [], []
+        # store count of rejected files
+        reject_count = 0
+        # loop around all files
+        for row in range(len(datacube0)):
+            # normalize data by square
+            image = np.array(datacube0[row])
+            header = headers0[row]
+            basename = basenames0[row]
+            # normalize by aboslute (sqrt/square)
+            image = image / np.sqrt(mp.nansum(image ** 2))
+            # calculate the metric by which to grade input files
+            metric = mp.nansum(median0 * image)
+            # store metric to header
+            header['CMETRIC'] = metric
+            # now for the quality control
+            if metric < params['COMBINE_THRESHOLD']:
+                # set header value (for table)
+                header['CPASS'] = 'FILE {0} = FAILED'.format(row)
+                # log warning
+                wargs = [basename]
+                WLOG(params, 'warning', textentry('10-003-00001', args=wargs))
+                # add to reject count
+                reject_count += 1
+            else:
+                # set header value (for table)
+                header['CPASS'] = 'FILE {0} = PASSED'.format(row)
+                # add database (of good data only)
+                datacube.append(datacube0[row])
+                # add used basenames (for DrsFitsFile)
+                basenames_used.append(basename)
+            # add all headers (we want to keep all information)
+            headers.append(header)
+            # add all basenames (for when we combine headers)
+            basenames.append(basename)
+        # log how many files were rejected (if any)
+        if reject_count > 0:
+            wargs = [reject_count]
+            WLOG(params, 'warning', textentry('10-003-00002', args=wargs))
+        # --------------------------------------------------------------------
+        # make data cube
+        # --------------------------------------------------------------------
         # make datacube an numpy array
         datacube = np.array(datacube)
         # --------------------------------------------------------------------
