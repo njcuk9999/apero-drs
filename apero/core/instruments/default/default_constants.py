@@ -31,8 +31,8 @@ __all__ = [
     'IMAGE_Y_LOW', 'IMAGE_Y_HIGH', 'IMAGE_X_BLUE_LOW',
     'IMAGE_PIXEL_SIZE', 'FWHM_PIXEL_LSF',
     # general calib constants
-    'CAVITY_1M_FILE', 'CAVITY_LL_FILE', 'OBJ_LIST_GAIA_URL',
-    'CALIB_CHECK_FP_PERCENTILE', 'CALIB_CHECK_FP_THRES',
+    'COMBINE_THRESHOLD', 'CAVITY_1M_FILE', 'CAVITY_LL_FILE',
+    'OBJ_LIST_GAIA_URL', 'CALIB_CHECK_FP_PERCENTILE', 'CALIB_CHECK_FP_THRES',
     'CALIB_CHECK_FP_CENT_SIZE',
     'OBJ_LIST_GOOGLE_SHEET_URL', 'OBJ_LIST_GOOGLE_SHEET_WNUM',
     'OBJ_LIST_RESOLVE_FROM_DATABASE', 'OBJ_LIST_RESOLVE_FROM_GAIAID',
@@ -412,6 +412,12 @@ FWHM_PIXEL_LSF = Const('FWHM_PIXEL_LSF', value=None, dtype=float,
 # CALIBRATION: GENERAL SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION: GENERAL SETTINGS'
+
+# Define the threshold under which a file should not be combined
+#  (metric is compared to the median of all files 1 = perfect, 0 = noise)
+COMBINE_THRESHOLD =  Const('COMBINE_THRESHOLD', value=None, dtype=float,
+                           source=__NAME__, group=cgroup, minimum=0,
+                           maximum=1)
 
 # Define the coefficients of the fit of 1/m vs d
 CAVITY_1M_FILE = Const('CAVITY_1M_FILE', value=None, dtype=str, source=__NAME__,
