@@ -104,8 +104,12 @@ FWHM_PIXEL_LSF.value = 3.0
 # =============================================================================
 # Define the threshold under which a file should not be combined
 #  (metric is compared to the median of all files 1 = perfect, 0 = noise)
-COMBINE_THRESHOLD = COMBINE_THRESHOLD.copy(__NAME__)
-COMBINE_THRESHOLD.value = 0.9
+COMBINE_METRIC_THRESHOLD1 = COMBINE_METRIC_THRESHOLD1.copy(__NAME__)
+COMBINE_METRIC_THRESHOLD1.value = 0.99
+
+# Define the DPRTYPES allowed for the combine metric 1 comparison
+COMBINE_METRIC1_TYPES = COMBINE_METRIC1_TYPES.copy(__NAME__)
+COMBINE_METRIC1_TYPES.value = 'DARK_FLAT, FLAT_FLAT, FLAT_DARK, FP_FP'
 
 # Define the coefficients of the fit of 1/m vs d
 CAVITY_1M_FILE = CAVITY_1M_FILE.copy(__NAME__)
