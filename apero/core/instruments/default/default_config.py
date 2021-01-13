@@ -183,15 +183,15 @@ DRS_VERSION = Const('DRS_VERSION', value=__version__, dtype=str,
                     source=__NAME__, group=cgroup)
 
 # Authors
-AUTHORS = Const('AUTHOR', value=__author__,
+AUTHORS = Const('AUTHORS', value=__author__,
                 dtype=list, dtypei=str, source=__NAME__, group=cgroup)
 
 # Release version
-DRS_RELEASE = Const('RELEASE', value=__release__, dtype=str,
+DRS_RELEASE = Const('DRS_RELEASE', value=__release__, dtype=str,
                     source=__NAME__, group=cgroup)
 
 # Date
-DRS_DATE = Const('DATE', value=__date__, dtype=str, source=__NAME__,
+DRS_DATE = Const('DRS_DATE', value=__date__, dtype=str, source=__NAME__,
                  group=cgroup)
 
 # =============================================================================

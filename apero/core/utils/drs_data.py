@@ -339,7 +339,7 @@ def load_tapas(params: ParamDict,
     :param assetsdir: str, Define the assets directory -- overrides
                       params['DRS_DATA_ASSETS']
     :param directory: str, where the tapas file is stored (within assets
-                      directory) -- overrides params['TELLU_LIST_DIRECOTRY']
+                      directory) -- overrides params['TELLU_LIST_DIRECTORY']
     :param filename: str, the tapas file name
                      -- overrides params['TAPAS_FILE']
     :param func: str, the function name calling this function
@@ -357,7 +357,7 @@ def load_tapas(params: ParamDict,
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'DRS_DATA_ASSETS', func=func_name,
                       override=assetsdir)
-    relfolder = pcheck(params, 'TELLU_LIST_DIRECOTRY', func=func_name,
+    relfolder = pcheck(params, 'TELLU_LIST_DIRECTORY', func=func_name,
                        override=directory)
     filename = pcheck(params, 'TAPAS_FILE', func=func_name,
                       override=filename)
