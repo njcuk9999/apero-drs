@@ -50,6 +50,10 @@ Date: 2020-12-21
     - filename is now a checksum based on input files (cannot be composite of
       any one file as may be different combination of files leading to same
       filename --> confusion of outputs)
+    - calibrations are filter by a pearson R test against the median of all
+      files bound for combining (warning given when calibration is removed)
+      in the combine table CMETRIC, CTHRES and CPASS are given for all files
+      (passed and failed) to show criteria
 
 - localisation
     - added new fits table extensions - the central position coefficients and
