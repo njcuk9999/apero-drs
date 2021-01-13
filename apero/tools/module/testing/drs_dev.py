@@ -78,8 +78,8 @@ class RecipeDefinition:
         # load module
         mod = constants.import_module(func_name, modules[0], full=True)
         # add to recipes
-        self.recipes = mod.recipes
-        self.mod = mod
+        self.recipes = mod.get().recipes
+        self.mod = mod.get()
 
     def add(self, *args):
         """
@@ -133,8 +133,8 @@ class FileDefinition:
         # load module
         mod = constants.import_module(func_name, modules[0], full=True)
         # add to recipes
-        self.files = mod
-        self.out = mod.out
+        self.files = mod.get()
+        self.out = mod.get().out
 
 
 class Demo:
