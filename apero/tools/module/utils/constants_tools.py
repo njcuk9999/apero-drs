@@ -166,6 +166,16 @@ def deal_with_clean(params):
             # deal with key not found
             if start == -1:
                 WLOG(params, 'error', 'Key: "{0}" not found'.format(key))
+
+            # TODO: CHANGE THIS - not good
+
+            # TODO: format should be
+            #   # COMMENT LINES
+            #   desc = ('DESCRIPTION')
+            #   value = Const(value, ..., description=desc)
+
+            # TODO: then manually deal with lines that are too long
+
             # get description
             description = get_comment(start, const_string)
             # add the description to the end of the const_etnry
@@ -180,8 +190,6 @@ def deal_with_clean(params):
         # write to file
         with open(const_path, 'w') as const_file:
             const_file.write(const_string)
-
-
 
 
 def get_const(key: str, string: str,
