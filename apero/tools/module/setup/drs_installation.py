@@ -1206,7 +1206,7 @@ def reset_paths_empty(all_params):
 # =============================================================================
 # create user files functions
 # =============================================================================
-def create_ufiles(params, devmode):
+def create_ufiles(params, devmode, ask_user=True):
     # storage of parameters of different types
     config = OrderedDict()
     const = OrderedDict()
@@ -1257,10 +1257,15 @@ def create_ufiles(params, devmode):
         if devmode and user is False:
             # deal with first time seeing this group
             if group not in dev_groups:
-                cprint(printheader(), 'g')
                 umessage = ('DEV MODE: Add all constants in group "{0}" '
                             'to {1} file?')
-                output = ask(umessage.format(group, kind), dtype='YN')
+                # ask user for output
+                if ask_user:
+                    cprint(printheader(), 'g')
+                    output = ask(umessage.format(group, kind), dtype='YN')
+                else:
+                    output = True
+                # add to dev groups
                 dev_groups[group] = output
             # else skip if user has choosen that they don't want this group
             if not dev_groups[group]:
@@ -1294,7 +1299,7 @@ def create_ufiles(params, devmode):
     return config_lines, const_lines
 
 
-def create_ufile(instrument, kind, dictionary, grouplist):
+def create_ufile(instrument, kind, dictionary, grouplist, log=False):
     lines = []
     lines += user_header('{0} {1} file'.format(instrument, kind))
     # loop around groups
