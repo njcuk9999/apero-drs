@@ -1658,14 +1658,17 @@ def find_recipe(name: str = 'None', instrument: str = 'None',
     if name == 'None' or name is None:
         empty = drs_recipe.DrsRecipe(name='Empty', instrument=instrument)
         return empty, None
+    # deal with needing to get mod
+    if isinstance(mod, base_class.ImportModule):
+        mod = mod.get()
     # else we have a name and an instrument
-    if mod is None or mod.get() is None:
+    if mod is None:
         margs = [instrument, ['recipe_definitions.py'], ipath, CORE_PATH]
         modules = constants.getmodnames(*margs, return_paths=False)
         # load module
         mod = constants.import_module(func_name, modules[0], full=True)
     # get a list of all recipes from modules
-    all_recipes = mod.get().recipes
+    all_recipes = mod.recipes
     # try to locate this recipe
     found_recipe = None
     for recipe in all_recipes:
