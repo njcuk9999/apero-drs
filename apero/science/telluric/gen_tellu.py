@@ -72,7 +72,7 @@ def get_whitelist(params: ParamDict, **kwargs) -> List[str]:
     pconst = constants.pload(instrument=params['INSTRUMENT'])
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', kwargs, func_name)
-    relfolder = pcheck(params, 'TELLU_LIST_DIRECOTRY', 'directory', kwargs,
+    relfolder = pcheck(params, 'TELLU_LIST_DIRECTORY', 'directory', kwargs,
                        func_name)
     filename = pcheck(params, 'TELLU_WHITELIST_NAME', 'filename', kwargs,
                       func_name)
@@ -93,7 +93,7 @@ def get_blacklist(params, **kwargs):
     pconst = constants.pload(instrument=params['INSTRUMENT'])
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', kwargs, func_name)
-    relfolder = pcheck(params, 'TELLU_LIST_DIRECOTRY', 'directory', kwargs,
+    relfolder = pcheck(params, 'TELLU_LIST_DIRECTORY', 'directory', kwargs,
                        func_name)
     filename = pcheck(params, 'TELLU_BLACKLIST_NAME', 'filename', kwargs,
                       func_name)
@@ -284,7 +284,7 @@ def get_tellu_objs(params: ParamDict, key: str,
 def get_sp_linelists(params, **kwargs):
     func_name = __NAME__ + '.get_sp_linelists()'
     # get parameters from params/kwargs
-    relfolder = pcheck(params, 'TELLU_LIST_DIRECOTRY', 'directory', kwargs,
+    relfolder = pcheck(params, 'TELLU_LIST_DIRECTORY', 'directory', kwargs,
                        func_name)
     othersfile = pcheck(params, 'TELLUP_OTHERS_CCF_FILE', 'filename', kwargs,
                         func_name)
@@ -962,7 +962,7 @@ def clean_ohline_pca(params, image, wavemap, **kwargs):
     # ----------------------------------------------------------------------
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', kwargs, func_name)
-    relfolder = pcheck(params, 'TELLU_LIST_DIRECOTRY', 'directory', kwargs,
+    relfolder = pcheck(params, 'TELLU_LIST_DIRECTORY', 'directory', kwargs,
                        func_name)
     filename = pcheck(params, 'TELLUP_OHLINE_PCA_FILE', 'filename', kwargs,
                       func_name)

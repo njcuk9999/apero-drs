@@ -191,7 +191,7 @@ __all__ = [
     # # =============================================================================
     'TAPAS_FILE', 'TAPAS_FILE_FMT', 'TELLU_CUT_BLAZE_NORM',
     'TELLU_ALLOWED_DPRTYPES', 'TELLURIC_FILETYPE', 'TELLURIC_FIBER_TYPE',
-    'TELLU_LIST_DIRECOTRY', 'TELLU_WHITELIST_NAME', 'TELLU_BLACKLIST_NAME',
+    'TELLU_LIST_DIRECTORY', 'TELLU_WHITELIST_NAME', 'TELLU_BLACKLIST_NAME',
     # telluric pre-cleaning constants
     'TELLUP_DO_PRECLEANING', 'TELLUP_CCF_SCAN_RANGE', 'TELLUP_CLEAN_OH_LINES',
     'TELLUP_OHLINE_PCA_FILE', 'TELLUP_REMOVE_ORDS', 'TELLUP_SNR_MIN_THRES',
@@ -415,9 +415,9 @@ cgroup = 'CALIBRATION: GENERAL SETTINGS'
 
 # Define the threshold under which a file should not be combined
 #  (metric is compared to the median of all files 1 = perfect, 0 = noise)
-COMBINE_METRIC_THRESHOLD1 =  Const('COMBINE_METRIC_THRESHOLD1', value=None,
-                                   dtype=float, source=__NAME__, group=cgroup,
-                                   minimum=0, maximum=1)
+COMBINE_METRIC_THRESHOLD1 = Const('COMBINE_METRIC_THRESHOLD1', value=None,
+                                  dtype=float, source=__NAME__, group=cgroup,
+                                  minimum=0, maximum=1)
 
 # Define the DPRTYPES allowed for the combine metric 1 comparison
 COMBINE_METRIC1_TYPES = Const('COMBINE_METRIC1_TYPES', value=None, dtype=str,
@@ -2142,7 +2142,7 @@ TELLU_CUT_BLAZE_NORM = Const('TELLU_CUT_BLAZE_NORM', value=None, dtype=float,
                              source=__NAME__, group=cgroup)
 
 # Define telluric black/white list directory
-TELLU_LIST_DIRECOTRY = Const('TELLU_LIST_DIRECTORY', value=None, dtype=str,
+TELLU_LIST_DIRECTORY = Const('TELLU_LIST_DIRECTORY', value=None, dtype=str,
                              source=__NAME__, group=cgroup)
 
 # Define telluric white list name
@@ -3255,7 +3255,7 @@ POST_CLEAR_REDUCED = Const('POST_CLEAR_REDUCED', value=False,
                                        'clear reduced directory')
 
 # Define whether (by default) to overwrite post processed files
-POST_OVERWRITE = Const('POST_CLEAR_REDUCED', value=False,
+POST_OVERWRITE = Const('POST_OVERWRITE', value=False,
                        dtype=bool, source=__NAME__, user=True, active=True,
                        group=cgroup,
                        description='Define whether (by default) to '
