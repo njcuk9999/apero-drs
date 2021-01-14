@@ -51,7 +51,6 @@ Coding only tasks:
 * deal with all python warnings [Neil]
 * display func for all functions  [Neil]
 * add more debug printouts [Neil]
-* code to write full user_config/user_constants [Neil]
 * code to find unused functions/constants [Neil]
 * setup instrument tool [Neil/Thomas/Charles]
 * Windows compatibility [Neil]
