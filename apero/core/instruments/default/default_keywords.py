@@ -221,7 +221,9 @@ KW_EXPTIME = Keyword('KW_EXPTIME', key='', dtype=float, source=__NAME__)
 # This is the units for the exposure time
 KW_EXPTIME_UNITS = Const('KW_EXPTIME_UNITS', value='s', dtype=str,
                          options=['s', 'min', 'hr', 'day'],
-                         source=__NAME__)
+                         source=__NAME__, 
+                         description=('This is the units for the exposure '
+                                      'time'))
 
 # define the required exposure time HEADER key (used to get value only)
 KW_EXPREQ = Keyword('KW_EXPREQ', key='', dtype=float, source=__NAME__)
@@ -526,7 +528,8 @@ KW_BTOT = Keyword('KW_BTOT', key='', dtype=float, source=__NAME__)
 # Define localisation variables
 # -----------------------------------------------------------------------------
 # root for localisation header keys
-ROOT_DRS_LOC = Const('ROOT_DRS_LOC', value=None, dtype=str, source=__NAME__)
+ROOT_DRS_LOC = Const('ROOT_DRS_LOC', value=None, dtype=str, source=__NAME__,
+                     description='root for localisation header keys')
 # Mean background (as percentage)
 KW_LOC_BCKGRD = Keyword('KW_LOC_BCKGRD', key='', dtype=float, source=__NAME__)
 # Number of orders located
@@ -1225,7 +1228,7 @@ KW_MKTELL_TEMP_FILE = Keyword('KW_MKTELL_TEMP_FILE', key='', dtype=str,
 
 # the number of template files used
 KW_MKTELL_TEMPNUM = Keyword('KW_MKTELL_TEMPNUM', key='', dtype=str,
-                              source=__NAME__)
+                            source=__NAME__)
 
 # the hash for the template generation (unique)
 KW_MKTELL_TEMPHASH = Keyword('KW_MKTELL_TEMPHASH', key='', dtype=str,

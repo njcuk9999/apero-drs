@@ -134,7 +134,9 @@ DRS_DATA_MSG = Const('DRS_DATA_MSG', dtype='path', source=__NAME__, user=True,
 
 #   Define the full data message path (set after group name known)
 DRS_DATA_MSG_FULL = Const('DRS_DATA_MSG_FULL', dtype='path', source=__NAME__,
-                          user=False, group=cgroup, value=None)
+                          user=False, group=cgroup, value=None,
+                          description=('Define the full data message path '
+                                       '(set after group name known)'))
 
 #   Define the working directory
 DRS_DATA_WORKING = Const('DRS_DATA_WORKING', dtype='path', source=__NAME__,
@@ -180,19 +182,21 @@ DRS_PDFLATEX_PATH = Const('DRS_PDFLATEX_PATH', dtype=str, source=__NAME__,
 cgroup = 'INTERNAL: General properites'
 # Version
 DRS_VERSION = Const('DRS_VERSION', value=__version__, dtype=str,
-                    source=__NAME__, group=cgroup)
+                    source=__NAME__, group=cgroup, description='Version')
 
 # Authors
 AUTHORS = Const('AUTHORS', value=__author__,
-                dtype=list, dtypei=str, source=__NAME__, group=cgroup)
+                dtype=list, dtypei=str, source=__NAME__, group=cgroup,
+                description='Authors')
 
 # Release version
 DRS_RELEASE = Const('DRS_RELEASE', value=__release__, dtype=str,
-                    source=__NAME__, group=cgroup)
+                    source=__NAME__, group=cgroup,
+                    description='Release version')
 
 # Date
 DRS_DATE = Const('DRS_DATE', value=__date__, dtype=str, source=__NAME__,
-                 group=cgroup)
+                 group=cgroup, description='Date')
 
 # =============================================================================
 # DRS SETTINGS
@@ -200,40 +204,55 @@ DRS_DATE = Const('DRS_DATE', value=__date__, dtype=str, source=__NAME__,
 cgroup = 'INTERNAL: DRS SETTINGS'
 #   The top-level package name (i.e. import PACKAGE)
 DRS_PACKAGE = Const('DRS_PACKAGE', value=__PACKAGE__, dtype=str,
-                    source=__NAME__, group=cgroup)
+                    source=__NAME__, group=cgroup,
+                    description=('The top-level package name (i.e. '
+                                 'import PACKAGE)'))
 
 #   User-config environmental variable
 DRS_USERENV = Const('DRS_USERENV', value=base.USER_ENV, dtype=str,
-                    source=__NAME__, group=cgroup)
+                    source=__NAME__, group=cgroup,
+                    description='User-config environmental variable')
 
 #   User-defined program name (overwrite logging program)
 DRS_USER_PROGRAM = Const('DRS_USER_PROGRAM', value=None, dtype=str,
-                         source=__NAME__, group=cgroup)
+                         source=__NAME__, group=cgroup,
+                         description=('User-defined program name (overwrite '
+                                      'logging program)'))
 
 # whether to be in ipython return mode (always exits to ipdb via pdbrc)
 IPYTHON_RETURN = Const('IPYTHON_RETURN', value=False, dtype=bool,
-                       source=__NAME__, group=cgroup)
+                       source=__NAME__, group=cgroup,
+                       description=('whether to be in ipython return mode '
+                                    '(always exits to ipdb via pdbrc)'))
 # whether to allow break points
 ALLOW_BREAKPOINTS = Const('ALLOW_BREAKPOINTS', value=False, dtype=bool,
-                          source=__NAME__, group=cgroup)
+                          source=__NAME__, group=cgroup,
+                          description='whether to allow break points')
 
-# Currently installed instruments
+# Currently supported instruments
 # TODO: This needs to be updated with new instruments
 DRS_INSTRUMENTS = Const('DRS_INSTRUMENTS',
                         value=base.INSTRUMENTS,
-                        dtype=list, source=__NAME__, group=cgroup)
+                        dtype=list, source=__NAME__, group=cgroup,
+                        description='Currently supported instruments')
 
 # The group this target is set as (set in drs_setup)
 DRS_GROUP = Const('DRS_GROUP', value=None, dtype=str, source=__NAME__,
-                  group=cgroup)
+                  group=cgroup,
+                  description=('The group this target is set as '
+                               '(set in drs_setup)'))
 
 # The recipe kind that this parameter dictionary is associated with
 DRS_RECIPE_KIND = Const('DRS_RECIPE_KIND', value=None, dtype=str,
-                        source=__NAME__, group=cgroup)
+                        source=__NAME__, group=cgroup,
+                        description=('The recipe kind that this parameter '
+                                     'dictionary is associated with'))
 
 # Flag for master recipe associated with this param set
 IS_MASTER = Const('IS_MASTER', value=False, dtype=bool, source=__NAME__,
-                  group=cgroup)
+                  group=cgroup,
+                  description=('Flag for master recipe associated with '
+                               'this param set'))
 
 # =============================================================================
 # Instrument/Observatory Constants
@@ -241,14 +260,16 @@ IS_MASTER = Const('IS_MASTER', value=False, dtype=bool, source=__NAME__,
 cgroup = 'Instrument/Observatory Constants'
 # Instrument Name
 INSTRUMENT = Const('INSTRUMENT', value='None', dtype=str,
-                   options=DRS_INSTRUMENTS.value, source=__NAME__, group=cgroup)
+                   options=DRS_INSTRUMENTS.value, source=__NAME__, group=cgroup,
+                   description='Instrument Name')
 
 # Defines the longitude West is negative
 OBS_LONG = Const('OBS_LONG', value=None, dtype=float, source=__NAME__,
-                 group=cgroup)
+                 group=cgroup,
+                 description='Defines the longitude West is negative')
 #  Defines the latitude North (deg)
 OBS_LAT = Const('OBS_LAT', value=None, dtype=float, source=__NAME__,
-                group=cgroup)
+                group=cgroup, description='Defines the latitude North (deg)')
 #  Defines the CFHT altitude (m)
 OBS_ALT = Const('OBS_LAT', value=None, dtype=float, source=__NAME__,
                 group=cgroup)
@@ -260,65 +281,96 @@ cgroup = 'DRS INTERNAL PATHS'
 #   User-config default location (if environmental variable not set)
 #   this is relative to the package level
 DRS_USER_DEFAULT = Const('DRS_USER_DEFAULT', value='../config/', dtype=str,
-                         source=__NAME__, group=cgroup)
+                         source=__NAME__, group=cgroup,
+                         description=('User-config default location '
+                                      '(if environmental variable not set) '
+                                      'this is relative to the package level'))
 
 #   where to store internal data
 DRS_MOD_DATA_PATH = Const('DRS_MOD_DATA_PATH', value='./data/', dtype=str,
-                          source=__NAME__, group=cgroup)
+                          source=__NAME__, group=cgroup,
+                          description='where to store internal data')
 
 #   where instrument configuration files are stored (do not change here)
 DRS_MOD_INSTRUMENT_CONFIG = Const('DRS_MOD_INSTRUMENT_CONFIG', dtype=str,
                                   value=base.CONST_PATH,
-                                  source=__NAME__, group=cgroup)
+                                  source=__NAME__, group=cgroup,
+                                  description=('where instrument configuration '
+                                               'files are stored (do not '
+                                               'change here)'))
 
 #   where the core configuration files are stored (do not change here)
 DRS_MOD_CORE_CONFIG = Const('DRS_MOD_CORE_CONFIG', dtype=str,
                             value=base.CORE_PATH,
-                            source=__NAME__, group=cgroup)
+                            source=__NAME__, group=cgroup,
+                            description=('where the core configuration files '
+                                         'are stored (do not change here)'))
 
 # where the instrument recipes are stored
 DRS_INSTRUMENT_RECIPE_PATH = Const('DRS_INSTRUMENT_RECIPE_PATH', dtype=str,
-                                   value=None, source=__NAME__, group=cgroup)
+                                   value=None, source=__NAME__, group=cgroup,
+                                   description=('where the instrument recipes '
+                                                'are stored'))
 
 # where the default recipes are stored
 DRS_DEFAULT_RECIPE_PATH = Const('DRS_DEFAULT_RECIPE_PATH', dtype=str,
                                 value='./recipes/', source=__NAME__,
-                                group=cgroup)
+                                group=cgroup,
+                                description=('where the default recipes are '
+                                             'stored'))
 
 #  where the bad pixel data are stored (within assets directory)
 DRS_BADPIX_DATA = Const('DRS_BADPIX_DATA', dtype=str, source=__NAME__,
-                        group=cgroup)
+                        group=cgroup,
+                        description=('where the bad pixel data are stored '
+                                     '(within assets directory)'))
 
 # where the calibration data are stored (within assets directory)
 DRS_CALIB_DATA = Const('DRS_CALIB_DATA', dtype=str, source=__NAME__,
-                       group=cgroup)
+                       group=cgroup,
+                       description=('where the calibration data are stored '
+                                    '(within assets directory)'))
 
 # where the wave data are stored (within assets directory)
-DRS_WAVE_DATA = Const('DRS_WAVE_DATA', dtype=str, source=__NAME__, group=cgroup)
+DRS_WAVE_DATA = Const('DRS_WAVE_DATA', dtype=str, source=__NAME__, group=cgroup,
+                      description='where the wave data are stored (within assets directory)')
 
 # where the assets directory is (relative to apero module)
 # TODO: remove and replace with online link / user link
 DRS_RESET_ASSETS_PATH = Const('DRS_RESET_ASSETS_PATH', dtype=str,
-                              source=__NAME__, group=cgroup)
+                              source=__NAME__, group=cgroup,
+                              description=('where the assets directory is '
+                                           '(relative to apero module)'))
 
 # where the reset data are stored (within assets directory)
 # for calibDB (within assets directory)
 DRS_RESET_CALIBDB_PATH = Const('DRS_RESET_CALIBDB_PATH', dtype=str,
-                               source=__NAME__, group=cgroup)
+                               source=__NAME__, group=cgroup,
+                               description=('where the reset data are stored '
+                                            '(within assets directory) for '
+                                            'calibDB (within assets directory)'))
 # for telluDB (within assets directory)
 DRS_RESET_TELLUDB_PATH = Const('DRS_RESET_TELLUDB_PATH', dtype=str,
-                               source=__NAME__, group=cgroup)
+                               source=__NAME__, group=cgroup,
+                               description=('for telluDB (within assets '
+                                            'directory)'))
 # for run files (within assets directory)
 DRS_RESET_RUN_PATH = Const('DRS_RESET_RUN_PATH', dtype=str, source=__NAME__,
-                           group=cgroup)
+                           group=cgroup,
+                           description=('for run files (within assets '
+                                        'directory)'))
 
 # where the pdb rc file is (do not change - just here for use)
 DRS_PDB_RC_FILE = Const('DRS_PDB_RC_FILE', value=base.PDB_RC_FILE,
-                        dtype=str, source=__NAME__, group=cgroup)
+                        dtype=str, source=__NAME__, group=cgroup,
+                        description=('where the pdb rc file is (do not change '
+                                     '- just here for use)'))
 
 # what the pdb file should be called (do not change - just here for use)
 DRS_PDB_RC_FILENAME = Const('DRS_PDB_RC_FILENAME', value=base.PDB_RC_FILENAME,
-                            dtype=str, source=__NAME__, group=cgroup)
+                            dtype=str, source=__NAME__, group=cgroup,
+                            description=('what the pdb file should be called '
+                                         '(do not change - just here for use)'))
 
 # =============================================================================
 # DRS INDEXING SETTINGS
@@ -326,11 +378,15 @@ DRS_PDB_RC_FILENAME = Const('DRS_PDB_RC_FILENAME', value=base.PDB_RC_FILENAME,
 cgroup = 'DRS INDEXING SETTINGS'
 # Define the name of the index file (in each working/reduced directory)
 DRS_INDEX_FILE = Const('DRS_INDEX_FILE', dtype=str, value='index.fits',
-                       source=__NAME__, group=cgroup)
+                       source=__NAME__, group=cgroup,
+                       description=('Define the name of the index file (in '
+                                    'each working/reduced directory)'))
 
 # Define the filename column of the index file
 DRS_INDEX_FILENAME = Const('DRS_INDEX_FILENAME', dtype=str, value='FILENAME',
-                           source=__NAME__, group=cgroup)
+                           source=__NAME__, group=cgroup,
+                           description=('Define the filename column of '
+                                        'the index file'))
 
 # =============================================================================
 # DATABASE SETTINGS
@@ -339,7 +395,9 @@ cgroup = 'DATABASE SETTINGS'
 
 # Define database directory (relative to assets directory)
 DATABASE_DIR = Const('DATABASE_DIR', dtype=str, value='databases/',
-                     source=__NAME__, group=cgroup)
+                     source=__NAME__, group=cgroup,
+                     description=('Define database directory '
+                                  '(relative to assets directory)'))
 
 #   Define the match type for calibDB files
 #         match = 'older'  when more than one file for each key will
@@ -352,7 +410,17 @@ DATABASE_DIR = Const('DATABASE_DIR', dtype=str, value='databases/',
 #         calibDB file will be used
 CALIB_DB_MATCH = Const('CALIB_DB_MATCH', dtype=str, source=__NAME__,
                        value='closest', options=['closest', 'newer', 'older'],
-                       group=cgroup)
+                       group=cgroup,
+                       description=('Define the match type for calibDB files'
+                                    '\n\tmatch = older when more than one file '
+                                    'for each key will select the newest file '
+                                    'that is OLDER than time in fitsfilename '
+                                    '\n\tmatch = closest when more than on '
+                                    'efile for each key will select the file '
+                                    'that is closest to time in fitsfilename '
+                                    '\n\n\tif two files match with keys and '
+                                    'time the key lower in the calibDB file '
+                                    'will be used'))
 
 #   Define the match type for telluDB files
 #         match = 'older'  when more than one file for each key will
@@ -364,7 +432,18 @@ CALIB_DB_MATCH = Const('CALIB_DB_MATCH', dtype=str, source=__NAME__,
 #    if two files match with keys and time the key lower in the
 #         calibDB file will be used
 TELLU_DB_MATCH = Const('TELLU_DB_MATCH', dtype=str, source=__NAME__,
-                       value='closest', group=cgroup)
+                       value='closest', group=cgroup,
+                       description=('Define the match type for telluDB files '
+                                    '\n\tmatch = older when more than one '
+                                    'file for each key will select the newest '
+                                    'file that is OLDER than time in '
+                                    'fitsfilename '
+                                    '\n\tmatch = closest when more than on '
+                                    'efile for each key will select the file '
+                                    'that is closest to time in fitsfilename '
+                                    '\n\n\tif two files match with keys and '
+                                    'time the key lower in the calibDB file '
+                                    'will be used'))
 
 # =============================================================================
 # DISPLAY/LOGGING SETTINGS
@@ -377,7 +456,14 @@ cgroup = 'DISPLAY/LOGGING SETTINGS'
 #       'error' - to print only error events
 DRS_PRINT_LEVEL = Const('DRS_PRINT_LEVEL', value='all', dtype=str,
                         options=['all', 'info', 'warning', 'error'],
-                        source=__NAME__, group=cgroup)
+                        source=__NAME__, group=cgroup,
+                        description=('Level at which to print, values can be: '
+                                     '\n\tall - to print all events '
+                                     '\n\tinfo - to print info/warning/error '
+                                     'events '
+                                     '\n\twarning - to print warning/error '
+                                     'events '
+                                     '\n\terror - to print only error events'))
 
 #   Level at which to log in log file, values can be:
 #       'all' - to print all events
@@ -386,43 +472,69 @@ DRS_PRINT_LEVEL = Const('DRS_PRINT_LEVEL', value='all', dtype=str,
 #       'error' - to print only error events
 DRS_LOG_LEVEL = Const('DRS_LOG_LEVEL', value='all', dtype=str,
                       options=['all', 'info', 'warning', 'error'],
-                      source=__NAME__, group=cgroup)
+                      source=__NAME__, group=cgroup,
+                      description=('Level at which to log in log file, '
+                                   'values can be: '
+                                   '\n\tall - to print all events '
+                                   '\n\tinfo - to print info/warning/error '
+                                   'events '
+                                   '\n\twarning - to print warning/error events'
+                                   '\n\terror - to print only error events'))
 
 #   Coloured logging to standard output (console)
 DRS_COLOURED_LOG = Const('DRS_COLOURED_LOG', value=True, dtype=bool,
-                         source=__NAME__, group=cgroup)
+                         source=__NAME__, group=cgroup,
+                         description=('Coloured logging to standard output '
+                                      '(console)'))
 
 #   Theme (DARK or LIGHT)
 DRS_THEME = Const('DRS_THEME', value='DARK', dtype=str,
-                  options=['DARK', 'LIGHT'], source=__NAME__, group=cgroup)
+                  options=['DARK', 'LIGHT'], source=__NAME__, group=cgroup,
+                  description='Theme (DARK or LIGHT)')
 
 # Maximum display limit for files/directory when argument error raise
 DRS_MAX_IO_DISPLAY_LIMIT = Const('DRS_MAX_IO_DISPLAY_LIMIT', value=15,
-                                 dtype=int, source=__NAME__, group=cgroup)
+                                 dtype=int, source=__NAME__, group=cgroup,
+                                 description=('Maximum display limit for '
+                                              'files/directory when argument '
+                                              'error raise'))
 
 # DRS Header string
 DRS_HEADER = Const('DRS_HEADER', value=(' ' + '*' * 75), dtype=str,
-                   source=__NAME__, group=cgroup)
+                   source=__NAME__, group=cgroup,
+                   description='DRS Header string')
 
 # Defines a master switch, whether to report warnings that are caught in
 DRS_LOG_CAUGHT_WARNINGS = Const('DRS_LOG_CAUGHT_WARNINGS',
                                 value=True, dtype=bool, source=__NAME__,
-                                group=cgroup)
+                                group=cgroup,
+                                description=('Defines a master switch, '
+                                             'whether to report warnings '
+                                             'that are caught in'))
 
 # Defines how python exits, when an exit is required after logging, string
 #     input fed into spirouConst.EXIT()
 #     if 'sys' exits via sys.exit   - soft exit (ipython Exception)
 #     if 'os' exits via os._exit    - hard exit (complete exit)
 DRS_LOG_EXIT_TYPE = Const('DRS_LOG_EXIT_TYPE', value='sys', dtype=str,
-                          options=['os', 'sys'], source=__NAME__, group=cgroup)
+                          options=['os', 'sys'], source=__NAME__, group=cgroup,
+                          description=('Defines how python exits, when an '
+                                       'exit is required after logging, string '
+                                       'input fed into spirouConst.EXIT() '
+                                       '\n\tif sys exits via sys.exit '
+                                       '- soft exit (ipython Exception) '
+                                       '\n\tif os exits via os._exit - '
+                                       'hard exit (complete exit)'))
 
 # Defines the DRS log format
 DRS_LOG_FORMAT = Const('DRS_LOG_FORMAT', value='{0}-{1}|{2}|{3}',
-                       dtype=str, source=__NAME__, group=cgroup)
+                       dtype=str, source=__NAME__, group=cgroup,
+                       description='Defines the DRS log format')
 
 # Define the log fits file name
 DRS_LOG_FITS_NAME = Const('DRS_LOG_FITS_NAME', value='log.fits', dtype=str,
-                          source=__NAME__, group=cgroup)
+                          source=__NAME__, group=cgroup,
+                          description='Define the log fits file name')
 
 # =============================================================================
 # PLOT SETTINGS
@@ -431,33 +543,45 @@ cgroup = 'PLOT SETTINGS'
 # Set the default font family for all graphs
 #     (i.e. monospace) "None" for not set
 DRS_PLOT_FONT_FAMILY = Const('DRS_PLOT_FONT_FAMILY', value='None', dtype=str,
-                             source=__NAME__, group=cgroup)
+                             source=__NAME__, group=cgroup,
+                             description=('Set the default font family for all '
+                                          'graphs (i.e. monospace) "None" for not set'))
 
 # Set the default font weight for all graphs
 #     (i.e. bold/normal) "None" for not set
 DRS_PLOT_FONT_WEIGHT = Const('DRS_PLOT_FONT_WEIGHT', value='None', dtype=str,
-                             source=__NAME__, group=cgroup)
+                             source=__NAME__, group=cgroup,
+                             description=('Set the default font weight for all '
+                                          'graphs (i.e. bold/normal) "None" for not set'))
 
 # Set the default font size for all graphs (-1 for not set)
 DRS_PLOT_FONT_SIZE = Const('DRS_PLOT_FONT_SIZE', value=-1, dtype=int,
-                           source=__NAME__, group=cgroup)
+                           source=__NAME__, group=cgroup,
+                           description=('Set the default font size for all '
+                                        'graphs (-1 for not set)'))
 
 # Set the default plotting style
 #     (i.e. seaborn or dark_background) "None" for not set
 DRS_PLOT_STYLE = Const('DRS_PLOT_STYLE', value='None', dtype=str,
-                       source=__NAME__, group=cgroup)
+                       source=__NAME__, group=cgroup,
+                       description=('Set the default plotting style (i.e. '
+                                    'seaborn or dark_background) "None" '
+                                    'for not set'))
 
 # Set the plot file extension
 DRS_PLOT_EXT = Const('DRS_PLOT_EXT', value='pdf', dtype=str, source=__NAME__,
-                     group=cgroup)
+                     group=cgroup,
+                     description='Set the plot file extension')
 
 # Set the summary document extension
 DRS_SUMMARY_EXT = Const('DRS_SUMMARY_EXT', value='pdf', dtype=str,
-                        source=__NAME__, group=cgroup)
+                        source=__NAME__, group=cgroup,
+                        description='Set the summary document extension')
 
 # Set the summary document style
 DRS_SUMMARY_STYLE = Const('DRS_SUMMARY_STYLE', value='latex', dtype=str,
-                          source=__NAME__, group=cgroup)
+                          source=__NAME__, group=cgroup,
+                          description='Set the summary document style')
 
 # =============================================================================
 # DEBUG MODES
@@ -465,15 +589,21 @@ DRS_SUMMARY_STYLE = Const('DRS_SUMMARY_STYLE', value='latex', dtype=str,
 cgroup = 'DEBUG MODES'
 # The debug number to print debug log messages
 DEBUG_MODE_LOG_PRINT = Const('DEBUG_MODE_LOG_PRINT', value=10, dtype=int,
-                             source=__NAME__, group=cgroup)
+                             source=__NAME__, group=cgroup,
+                             description=('The debug number to print debug '
+                                          'log messages'))
 
 # The debug number to print text entry names on all messages
 DEBUG_MODE_TEXTNAME_PRINT = Const('DEBUG_MODE_TEXTNAME_PRINT', value=100,
-                                  dtype=int, source=__NAME__, group=cgroup)
+                                  dtype=int, source=__NAME__, group=cgroup,
+                                  description=('The debug number to print text '
+                                               'entry names on all messages'))
 
 # The debug number to print function definitions
 DEBUG_MODE_FUNC_PRINT = Const('DEBUG_MODE_FUNC_PRINT', value=200, dtype=int,
-                              source=__NAME__, group=cgroup)
+                              source=__NAME__, group=cgroup,
+                              description=('The debug number to print function '
+                                           'definitions'))
 
 # =============================================================================
 #  End of configuration file
