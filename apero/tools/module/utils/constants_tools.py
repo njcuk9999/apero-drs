@@ -7,10 +7,11 @@ Created on 2021-01-2021-01-13 15:56
 
 @author: cook
 """
+import numpy as np
 import os
 from pathlib import Path
 import shutil
-from typing import Tuple
+from typing import Tuple, Union
 
 from apero.base import base
 from apero import lang
@@ -45,7 +46,7 @@ display_func = drs_log.display_func
 
 
 # =============================================================================
-# Define functions
+# Define config generation functions
 # =============================================================================
 def deal_with_generate(params: ParamDict):
     """
@@ -100,6 +101,9 @@ def deal_with_generate(params: ParamDict):
     return True
 
 
+# =============================================================================
+# Cleaning constant python files functions
+# =============================================================================
 def deal_with_clean(params) -> bool:
     """
     Function to clean constants (use with causion)
@@ -312,6 +316,115 @@ def format_lines(entry, length=78):
         line = line.replace('description=(', new_chars + 'description=(')
     # return string
     return '\n'.join(lines[:-1] + [line])
+
+
+# =============================================================================
+# Create glossary functions
+# =============================================================================
+def create_glossary(params):
+    # set function name
+    func_name = display_func(params, 'create_glossary', __NAME__)
+    # set output filename
+    out_filename = 'glossary.txt'
+    # -------------------------------------------------------------------------
+    # Adding descriptions from comments
+    # -------------------------------------------------------------------------
+    # get a list of base config / constants scripts
+    const_dir = drs_break.get_relative_folder(__PACKAGE__, base.CORE_PATH)
+    # ---------------------------------------------------------------------
+    # store instances without descriptions
+    constants, keywords = dict(), dict()
+    # ---------------------------------------------------------------------
+    # loop around all types
+    for filename in base.SCRIPTS:
+        # log progress
+        WLOG(params, 'info', 'Processing file: {0}'.format(filename))
+        # get full path to script
+        const_path = os.path.join(const_dir, filename)
+        # load script as module
+        instances = cf.import_module(func_name, const_path).get()
+        # loop around instances
+        for key in instances.__dict__:
+            # get instance
+            instance = instances.__dict__[key]
+            # check that instance is a Constant or Keyword
+            if isinstance(instance, (cf.Const, cf.Keyword)):
+                # sort into keywords and constants
+                if isinstance(instance, cf.Keyword):
+                    keywords[instance.name] = instance
+                elif isinstance(instance, cf.Const):
+                    constants[instance.name] = instance
+    # ---------------------------------------------------------------------
+    # generate entry for glossary
+    glossary_text = ''
+    # add constants
+    glossary_text += '\n\nConstants (Autogen)\n======================\n'
+    glossary_text += '\n.. glossary::  \n\n'
+    # need to sort into alphabetical order
+    alpha_constants = np.sort(list(constants.keys()))
+    alpha_keywords = np.sort(list(keywords.keys()))
+    # loop around constants and add them as entries
+    for key in alpha_constants:
+        glossary_text += generate_entry(constants[key])
+    # add keywords
+    glossary_text += '\n\nKeywords (Autogen)\n======================\n'
+    glossary_text += '\n.. glossary::  \n\n'
+    # loop around keywords and add them as entries
+    for key in alpha_keywords:
+        glossary_text += generate_entry(keywords[key])
+    # ---------------------------------------------------------------------
+    # write to file (in current directory)
+    with open(out_filename, 'w') as glossary:
+        glossary.write(glossary_text)
+
+
+def generate_entry(instance: Union[cf.Const, cf.Keyword]) -> str:
+
+    # add blank line
+    entry = ''
+    # -------------------------------------------------------------------------
+    # add name
+    titleprefix = '\n\n  '
+    entry += titleprefix + '{0}'.format(instance.name)
+    entry += '\n'
+    # -------------------------------------------------------------------------
+    # define text prefix
+    textprefix = '\n    * '
+    # -------------------------------------------------------------------------
+    # add description
+    if instance.description is not None:
+        # clean description
+        description = instance.description
+        # remove tabs and new lines
+        description = description.replace('\n', '')
+        description = description.replace('\t', '')
+        # add to entry
+        entry += textprefix + 'Description: {0}'.format(description)
+    # -------------------------------------------------------------------------
+    # add dtype
+    if instance.dtype is not None:
+        # convert type to string
+        if instance.dtype in base.STRTYPE:
+            dtype = base.STRTYPE[instance.dtype]
+        else:
+            dtype = str(instance.dtype)
+        # add to entry
+        entry += textprefix + 'Type: {0}'.format(dtype)
+    # -------------------------------------------------------------------------
+    # add author
+    if instance.author is not None:
+        entry += textprefix + 'Author: {0}'.format(instance.author)
+    # -------------------------------------------------------------------------
+    # add minimum
+    if instance.minimum is not None:
+        entry += textprefix + 'Minimum: {0}'.format(instance.minimum)
+    # -------------------------------------------------------------------------
+    # add maximum
+    if instance.maximum is not None:
+        entry += textprefix + 'Maximum: {0}'.format(instance.maximum)
+    # -------------------------------------------------------------------------
+    # return entry
+    return entry
 
 
 # =============================================================================

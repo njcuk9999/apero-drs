@@ -60,6 +60,9 @@ apero_constants.set_kwarg(name='--generate', dtype=str, default='None',
 apero_constants.set_kwarg(name='--clean', dtype='switch', default=False,
                           helpstr='Clean APERO constants (not recommended)')
 
+apero_constants.set_kwarg(name='--glossary', dtype='switch', default=False,
+                          helpstr='Create entries for glossary')
+
 # add recipe to recipe definition
 RMOD.add(apero_constants)
 
@@ -138,6 +141,20 @@ def __main__(recipe, params):
             # do cleaning
             success = constants_tools.deal_with_clean(params)
             # if cleaning successful stop here
+            if success:
+                return drs_startup.return_locals(params, locals())
+
+    # -------------------------------------------------------------------------
+    # Create glossary functionality
+    # -------------------------------------------------------------------------
+    if 'GLOSSARY' in params['INPUTS']:
+        # get the glossary value
+        glossary = params['INPUTS']['GLOSSARY']
+        # check whether user wants to create glossary
+        if glossary:
+            # create glossary
+            success = constants_tools.create_glossary(params)
+            # if creation successful stop here
             if success:
                 return drs_startup.return_locals(params, locals())
 
