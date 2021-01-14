@@ -376,7 +376,8 @@ class Keyword(Const):
                  group: Union[str, None] = None,
                  author: Union[str, List[str], None] = None,
                  parent: Union[str, None] = None,
-                 combine_method: Union[str, None] = None):
+                 combine_method: Union[str, None] = None,
+                 description: Union[str, None] = None):
         """
         Construct the keyword instance
 
@@ -399,6 +400,10 @@ class Keyword(Const):
         :param author: str, the author of this constant (i.e. who to contact)
         :param parent: Const, the parent of this constant (if a constant is
                        related to or comes from another constant)
+        :param combine_method: str, the method to combine keyword (if we are
+                               combining images)
+        :param description: str or None, if set this is the description of the
+                            constants
 
         :type name: str
         :type key: str
@@ -435,8 +440,8 @@ class Keyword(Const):
         # Initialize the constant parameters (super)
         Const.__init__(self, name, value, dtype, None, options, maximum,
                        minimum, source, unit, default, datatype, dataformat,
-                       group, user=False, active=False, description='',
-                       author=author, parent=parent)
+                       group, user=False, active=False,
+                       description=description, author=author, parent=parent)
         # set the header key associated with this keyword (8 characters only)
         self.key = key
         # set the header comment associated with this keyword

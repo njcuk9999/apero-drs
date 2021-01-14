@@ -126,7 +126,7 @@ __all__ = [  # input keys
     # mktellu values
     'KW_MKTELL_TEMP_FILE', 'KW_MKTELL_TEMPNUM', 'KW_MKTELL_TEMPHASH',
     'KW_MKTELL_TEMPTIME', 'KW_MKTELL_BLAZE_PRCT', 'KW_MKTELL_BLAZE_CUT',
-    'KW_MKTELL_DEF_CONV_WID',  'KW_MKTELL_TEMP_MEDFILT', 'KW_MKTELL_AIRMASS',
+    'KW_MKTELL_DEF_CONV_WID', 'KW_MKTELL_TEMP_MEDFILT', 'KW_MKTELL_AIRMASS',
     'KW_MKTELL_WATER', 'KW_MKTELL_THRES_TFIT', 'KW_MKTELL_TRANS_FIT_UPPER_BAD',
     # fittellu values
     'KW_FTELLU_NPC', 'KW_FTELLU_ADD_DPC', 'KW_FTELLU_FIT_DPC',
@@ -190,339 +190,534 @@ Keyword = constant_functions.Keyword
 # -----------------------------------------------------------------------------
 # Define the header key that uniquely identifies the file
 #     (i.e. an odometer code)
-KW_IDENTIFIER = Keyword('KW_IDENTIFIER', key='', value=None, source=__NAME__)
+KW_IDENTIFIER = Keyword('KW_IDENTIFIER', key='', value=None, source=__NAME__,
+                        description=('Define the header key that uniquely '
+                                     'identifies the file (i.e. an odometer '
+                                     'code)'))
 
 # define the HEADER key for acquisition time
 #     Note must set the date format in KW_ACQTIME_FMT
-KW_ACQTIME = Keyword('KW_ACQTIME', key='', value=None, source=__NAME__)
+KW_ACQTIME = Keyword('KW_ACQTIME', key='', value=None, source=__NAME__,
+                     description=('define the HEADER key for acquisition time '
+                                  'Note must set the date format in '
+                                  'KW_ACQTIME_FMT'))
 
 # define the MJ end date HEADER key
-KW_MJDEND = Keyword('KW_MJEND', key='', value=None, source=__NAME__)
+KW_MJDEND = Keyword('KW_MJDEND', key='', value=None, source=__NAME__,
+                    description='define the MJ end date HEADER key')
 
 # define the observation date HEADER key
-KW_DATE_OBS = Keyword('KW_DATE_OBS', key='', dtype=float, source=__NAME__)
+KW_DATE_OBS = Keyword('KW_DATE_OBS', key='', dtype=float, source=__NAME__,
+                      description='define the observation date HEADER key')
 # define the observation time HEADER key
-KW_UTC_OBS = Keyword('KW_UTC_OBS', key='', dtype=float, source=__NAME__)
+KW_UTC_OBS = Keyword('KW_UTC_OBS', key='', dtype=float, source=__NAME__,
+                     description='define the observation time HEADER key')
 
 # define the read noise HEADER key a.k.a sigdet (used to get value only)
-KW_RDNOISE = Keyword('KW_RDNOISE', key='', dtype=float, source=__NAME__)
+KW_RDNOISE = Keyword('KW_RDNOISE', key='', dtype=float, source=__NAME__,
+                     description=('define the read noise HEADER key a.k.a '
+                                  'sigdet (used to get value only)'))
 
 # define the gain HEADER key (used to get value only)
-KW_GAIN = Keyword('KW_GAIN', key='', dtype=float, source=__NAME__)
+KW_GAIN = Keyword('KW_GAIN', key='', dtype=float, source=__NAME__,
+                  description=('define the gain HEADER key (used to get '
+                               'value only)'))
 
 # define the saturation limit HEADER key
-KW_SATURATE = Keyword('KW_SATURATE', key='', dtype=float, source=__NAME__)
+KW_SATURATE = Keyword('KW_SATURATE', key='', dtype=float, source=__NAME__,
+                      description='define the saturation limit HEADER key')
 
 # define the frame time HEADER key
-KW_FRMTIME = Keyword('KW_FRMTIME', key='', dtype=float, source=__NAME__)
+KW_FRMTIME = Keyword('KW_FRMTIME', key='', dtype=float, source=__NAME__,
+                     description='define the frame time HEADER key')
 
 # define the exposure time HEADER key (used to get value only)
-KW_EXPTIME = Keyword('KW_EXPTIME', key='', dtype=float, source=__NAME__)
+KW_EXPTIME = Keyword('KW_EXPTIME', key='', dtype=float, source=__NAME__,
+                     description=('define the exposure time HEADER key '
+                                  '(used to get value only)'))
 # This is the units for the exposure time
 KW_EXPTIME_UNITS = Const('KW_EXPTIME_UNITS', value='s', dtype=str,
                          options=['s', 'min', 'hr', 'day'],
-                         source=__NAME__, 
+                         source=__NAME__,
                          description=('This is the units for the exposure '
                                       'time'))
 
 # define the required exposure time HEADER key (used to get value only)
-KW_EXPREQ = Keyword('KW_EXPREQ', key='', dtype=float, source=__NAME__)
+KW_EXPREQ = Keyword('KW_EXPREQ', key='', dtype=float, source=__NAME__,
+                    description=('define the required exposure time HEADER '
+                                 'key (used to get value only)'))
 
 # define the observation type HEADER key
-KW_OBSTYPE = Keyword('KW_OBSTYPE', key='', dtype=str, source=__NAME__)
+KW_OBSTYPE = Keyword('KW_OBSTYPE', key='', dtype=str, source=__NAME__,
+                     description='define the observation type HEADER key')
 
 # define the science fiber type HEADER key
-KW_CCAS = Keyword('KW_CCAS', key='', dtype=str, source=__NAME__)
+KW_CCAS = Keyword('KW_CCAS', key='', dtype=str, source=__NAME__,
+                  description='define the science fiber type HEADER key')
 
 # define the reference fiber type HEADER key
-KW_CREF = Keyword('KW_CREF', key='', dtype=str, source=__NAME__)
+KW_CREF = Keyword('KW_CREF', key='', dtype=str, source=__NAME__,
+                  description='define the reference fiber type HEADER key')
 
 # define the calibration wheel position
-KW_CALIBWH = Keyword('KW_CALIBWH', key='', dtype=str, source=__NAME__)
+KW_CALIBWH = Keyword('KW_CALIBWH', key='', dtype=str, source=__NAME__,
+                     description='define the calibration wheel position')
 
 # define the target type (object/sky)
-KW_TARGET_TYPE = Keyword('KW_TARGET_TYPE', key='', dtype=str, source=__NAME__)
+KW_TARGET_TYPE = Keyword('KW_TARGET_TYPE', key='', dtype=str, source=__NAME__,
+                         description='define the target type (object/sky)')
 
 # define the density HEADER key
-KW_CDEN = Keyword('KW_CDEN', key='', dtype=str, source=__NAME__)
+KW_CDEN = Keyword('KW_CDEN', key='', dtype=str, source=__NAME__,
+                  description='define the density HEADER key')
 
 # define polarisation HEADER key
-KW_CMMTSEQ = Keyword('KW_CMMTSEQ', key='', dtype=str, source=__NAME__)
+KW_CMMTSEQ = Keyword('KW_CMMTSEQ', key='', dtype=str, source=__NAME__,
+                     description='define polarisation HEADER key')
 
 # define the exposure number within sequence HEADER key
-KW_CMPLTEXP = Keyword('KW_CMPLTEXP', key='', dtype=int, source=__NAME__)
+KW_CMPLTEXP = Keyword('KW_CMPLTEXP', key='', dtype=int, source=__NAME__,
+                      description=('define the exposure number within sequence '
+                                   'HEADER key'))
 
 # define the total number of exposures HEADER key
-KW_NEXP = Keyword('KW_NEXP', key='', dtype=int, source=__NAME__)
+KW_NEXP = Keyword('KW_NEXP', key='', dtype=int, source=__NAME__,
+                  description=('define the total number of exposures HEADER '
+                               'key'))
 
 # define the pi name HEADER key
-KW_PI_NAME = Keyword('KW_PI_NAME', key='', dtype=str, source=__NAME__)
+KW_PI_NAME = Keyword('KW_PI_NAME', key='', dtype=str, source=__NAME__,
+                     description='define the pi name HEADER key')
 
 # -----------------------------------------------------------------------------
 # Required header keys (related to science object)
 # -----------------------------------------------------------------------------
 # define the observation ra HEADER key
-KW_OBJRA = Keyword('KW_OBJRA', key='', dtype=float, source=__NAME__)
+KW_OBJRA = Keyword('KW_OBJRA', key='', dtype=float, source=__NAME__,
+                   description='define the observation ra HEADER key')
 
 # define the observation dec HEADER key
-KW_OBJDEC = Keyword('KW_OBJDE', key='', dtype=float, source=__NAME__)
+KW_OBJDEC = Keyword('KW_OBJDEC', key='', dtype=float, source=__NAME__,
+                    description='define the observation dec HEADER key')
 
 # define the observation name
-KW_OBJNAME = Keyword('KW_OBJNAME', key='', dtype=str, source=__NAME__)
+KW_OBJNAME = Keyword('KW_OBJNAME', key='', dtype=str, source=__NAME__,
+                     description='define the observation name')
 
 # define the raw observation name
-KW_OBJECTNAME = Keyword('KW_OBJECTNAME', key='', dtype=str, source=__NAME__)
+KW_OBJECTNAME = Keyword('KW_OBJECTNAME', key='', dtype=str, source=__NAME__,
+                        description='define the raw observation name')
 
 # define the gaia id
-KW_GAIA_ID = Keyword('KW_GAIAID', key='', dtype=str, source=__NAME__)
+KW_GAIA_ID = Keyword('KW_GAIA_ID', key='', dtype=str, source=__NAME__,
+                     description='define the gaia id')
 
 # define the observation equinox HEADER key
-KW_OBJEQUIN = Keyword('KW_OBJEQUIN', key='', dtype=float, source=__NAME__)
+KW_OBJEQUIN = Keyword('KW_OBJEQUIN', key='', dtype=float, source=__NAME__,
+                      description='define the observation equinox HEADER key')
 
 # define the observation proper motion in ra HEADER key
-KW_OBJRAPM = Keyword('KW_OBJRAPM', key='', dtype=float, source=__NAME__)
+KW_OBJRAPM = Keyword('KW_OBJRAPM', key='', dtype=float, source=__NAME__,
+                     description=('define the observation proper motion in ra '
+                                  'HEADER key'))
 
 # define the observation proper motion in dec HEADER key
-KW_OBJDECPM = Keyword('KW_OBJDECPM', key='', dtype=float, source=__NAME__)
+KW_OBJDECPM = Keyword('KW_OBJDECPM', key='', dtype=float, source=__NAME__,
+                      description=('define the observation proper motion in dec '
+                                   'HEADER key'))
 
 # define the airmass HEADER key
-KW_AIRMASS = Keyword('KW_AIRMASS', key='', dtype=float, source=__NAME__)
+KW_AIRMASS = Keyword('KW_AIRMASS', key='', dtype=float, source=__NAME__,
+                     description='define the airmass HEADER key')
 
 # define the weather tower temperature HEADER key
 KW_WEATHER_TOWER_TEMP = Keyword('KW_WEATHER_TOWER_TEMP', key='', dtype=float,
-                                source=__NAME__)
+                                source=__NAME__,
+                                description=('define the weather tower '
+                                             'temperature HEADER key'))
 
 # define the cassegrain temperature HEADER key
-KW_CASS_TEMP = Keyword('KW_CASS_TEMP', key='', dtype=float, source=__NAME__)
+KW_CASS_TEMP = Keyword('KW_CASS_TEMP', key='', dtype=float, source=__NAME__,
+                       description=('define the cassegrain temperature '
+                                    'HEADER key'))
 
 # define the humidity HEADER key
-KW_HUMIDITY = Keyword('KW_HUMIDITY', key='', dtype=float, source=__NAME__)
+KW_HUMIDITY = Keyword('KW_HUMIDITY', key='', dtype=float, source=__NAME__,
+                      description='define the humidity HEADER key')
 
 # define the parallax HEADER key
-KW_PLX = Keyword('KW_PLX', key='', dtype=float, source=__NAME__)
+KW_PLX = Keyword('KW_PLX', key='', dtype=float, source=__NAME__,
+                 description='define the parallax HEADER key')
 
 # define the rv HEADER key
-KW_INPUTRV = Keyword('KW_RV', key='', dtype=float, source=__NAME__)
+KW_INPUTRV = Keyword('KW_INPUTRV', key='', dtype=float, source=__NAME__,
+                     description='define the rv HEADER key')
 
 # define the object temperature HEADER key
-KW_OBJ_TEMP = Keyword('KW_OBJ_TEMP', key='', dtype=float, source=__NAME__)
+KW_OBJ_TEMP = Keyword('KW_OBJ_TEMP', key='', dtype=float, source=__NAME__,
+                      description='define the object temperature HEADER key')
 
 # -----------------------------------------------------------------------------
 # Object resolution keys
 # -----------------------------------------------------------------------------
 # the object name to be used by the drs (after preprocessing)
-KW_DRS_OBJNAME = Keyword('KW_DRS_OBJNAME', key='', dtype=str, source=__NAME__)
+KW_DRS_OBJNAME = Keyword('KW_DRS_OBJNAME', key='', dtype=str, source=__NAME__,
+                         description=('the object name to be used by the '
+                                      'drs (after preprocessing)'))
 
 # the source of the object name used by the drs
 KW_DRS_OBJNAME_S = Keyword('KW_DRS_OBJNAME_S', key='', dtype=str,
-                           source=__NAME__)
+                           source=__NAME__,
+                           description=('the source of the object name used '
+                                        'by the drs'))
 
 # the gaia id to be used by the drs (after preprocessing)
-KW_DRS_GAIAID = Keyword('KW_DRS_GAIAID', key='', dtype=str, source=__NAME__)
+KW_DRS_GAIAID = Keyword('KW_DRS_GAIAID', key='', dtype=str, source=__NAME__,
+                        description=('the gaia id to be used by the drs '
+                                     '(after preprocessing)'))
 
 # the source of the gaia id to be used by the drs (after preprocessing)
-KW_DRS_GAIAID_S = Keyword('KW_DRS_GAIAID_S', key='', dtype=str, source=__NAME__)
+KW_DRS_GAIAID_S = Keyword('KW_DRS_GAIAID_S', key='', dtype=str, source=__NAME__,
+                          description=('the source of the gaia id to be used '
+                                       'by the drs (after preprocessing)'))
 
 # the right ascension to be used by the drs (after preprocessing)
-KW_DRS_RA = Keyword('KW_DRS_RA', key='', dtype=float, source=__NAME__)
+KW_DRS_RA = Keyword('KW_DRS_RA', key='', dtype=float, source=__NAME__,
+                    description=('the right ascension to be used by the drs '
+                                 '(after preprocessing)'))
 
 # the source of the ra to be used by the drs (after preprocessing)
-KW_DRS_RA_S = Keyword('KW_DRS_RA_S', key='', dtype=str, source=__NAME__)
+KW_DRS_RA_S = Keyword('KW_DRS_RA_S', key='', dtype=str, source=__NAME__,
+                      description=('the source of the ra to be used by the drs '
+                                   '(after preprocessing)'))
 
 # the declination to be used by the drs (after preprocessing)
-KW_DRS_DEC = Keyword('KW_DRS_DEC', key='', dtype=float, source=__NAME__)
+KW_DRS_DEC = Keyword('KW_DRS_DEC', key='', dtype=float, source=__NAME__,
+                     description=('the declination to be used by the drs '
+                                  '(after preprocessing)'))
 
 # the source of the dec to be used by the drs (after preprocessing)
-KW_DRS_DEC_S = Keyword('KW_DRS_DEC_S', key='', dtype=str, source=__NAME__)
+KW_DRS_DEC_S = Keyword('KW_DRS_DEC_S', key='', dtype=str, source=__NAME__,
+                       description=('the source of the dec to be used by the '
+                                    'drs (after preprocessing)'))
 
 # the proper motion in ra to be used by the drs (after preprocessing)
-KW_DRS_PMRA = Keyword('KW_DRS_PMRA', key='', dtype=float, source=__NAME__)
+KW_DRS_PMRA = Keyword('KW_DRS_PMRA', key='', dtype=float, source=__NAME__,
+                      description=('the proper motion in ra to be used by the '
+                                   'drs (after preprocessing)'))
 
 # the source of the pmra used by the drs (afer prepreocessing)
-KW_DRS_PMRA_S = Keyword('KW_DRS_PMRA_S', key='', dtype=str, source=__NAME__)
+KW_DRS_PMRA_S = Keyword('KW_DRS_PMRA_S', key='', dtype=str, source=__NAME__,
+                        description=('the source of the pmra used by the drs '
+                                     '(afer prepreocessing)'))
 
 # the proper motion in dec to be used by the drs (after preprocessing)
-KW_DRS_PMDE = Keyword('KW_DRS_PMDE', key='', dtype=float, source=__NAME__)
+KW_DRS_PMDE = Keyword('KW_DRS_PMDE', key='', dtype=float, source=__NAME__,
+                      description=('the proper motion in dec to be used by the '
+                                   'drs (after preprocessing)'))
 
 # the source of the pmde used by the drs (after preprocessing)
-KW_DRS_PMDE_S = Keyword('KW_DRS_PMDE_S', key='', dtype=str, source=__NAME__)
+KW_DRS_PMDE_S = Keyword('KW_DRS_PMDE_S', key='', dtype=str, source=__NAME__,
+                        description=('the source of the pmde used by the drs '
+                                     '(after preprocessing)'))
 
 # the parallax to be used by the drs (after preprocessing)
-KW_DRS_PLX = Keyword('KW_DRS_PLX', key='', dtype=float, source=__NAME__)
+KW_DRS_PLX = Keyword('KW_DRS_PLX', key='', dtype=float, source=__NAME__,
+                     description=('the parallax to be used by the drs '
+                                  '(after preprocessing)'))
 
 # the source of the parallax used by the drs (after preprocessing)
-KW_DRS_PLX_S = Keyword('KW_DRS_PLX_S', key='', dtype=str, source=__NAME__)
+KW_DRS_PLX_S = Keyword('KW_DRS_PLX_S', key='', dtype=str, source=__NAME__,
+                       description=('the source of the parallax used by the '
+                                    'drs (after preprocessing)'))
 
 # the radial velocity to be used by the drs (after preprocessing)
-KW_DRS_RV = Keyword('KW_DRS_RV', key='', dtype=float, source=__NAME__)
+KW_DRS_RV = Keyword('KW_DRS_RV', key='', dtype=float, source=__NAME__,
+                    description=('the radial velocity to be used by the drs '
+                                 '(after preprocessing)'))
 
 # the source of the radial velocity used by the drs (after preprocessing)
-KW_DRS_RV_S = Keyword('KW_DRS_RV_S', key='', dtype=str, source=__NAME__)
+KW_DRS_RV_S = Keyword('KW_DRS_RV_S', key='', dtype=str, source=__NAME__,
+                      description=('the source of the radial velocity used by '
+                                   'the drs (after preprocessing)'))
 
 # the Gaia G magnitude to be used by the drs (after preprocessing)
-KW_DRS_GMAG = Keyword('KW_DRS_GMAG', key='', dtype=float, source=__NAME__)
+KW_DRS_GMAG = Keyword('KW_DRS_GMAG', key='', dtype=float, source=__NAME__,
+                      description=('the Gaia G magnitude to be used by the '
+                                   'drs (after preprocessing)'))
 
 # the source of the gmag used by the drs (after preprocessing)
-KW_DRS_GMAG_S = Keyword('KW_DRS_GMAG_S', key='', dtype=str, source=__NAME__)
+KW_DRS_GMAG_S = Keyword('KW_DRS_GMAG_S', key='', dtype=str, source=__NAME__,
+                        description=('the source of the gmag used by the drs '
+                                     '(after preprocessing)'))
 
 # the Gaia BP magnitude to be used by the drs (after preprocessing)
-KW_DRS_BPMAG = Keyword('KW_DRS_BPMAG', key='', dtype=float, source=__NAME__)
+KW_DRS_BPMAG = Keyword('KW_DRS_BPMAG', key='', dtype=float, source=__NAME__,
+                       description=('the Gaia BP magnitude to be used by the '
+                                    'drs (after preprocessing)'))
 
 # the source of the bpmag used by the drs (after preprocessing)
-KW_DRS_BPMAG_S = Keyword('KW_DRS_BPMAG_S', key='', dtype=str, source=__NAME__)
+KW_DRS_BPMAG_S = Keyword('KW_DRS_BPMAG_S', key='', dtype=str, source=__NAME__,
+                         description=('the source of the bpmag used by the '
+                                      'drs (after preprocessing)'))
 
 # the Gaia RP magnitude to be used by the drs (after preprocessing)
-KW_DRS_RPMAG = Keyword('KW_DRS_RPMAG', key='', dtype=float, source=__NAME__)
+KW_DRS_RPMAG = Keyword('KW_DRS_RPMAG', key='', dtype=float, source=__NAME__,
+                       description=('the Gaia RP magnitude to be used by the '
+                                    'drs (after preprocessing)'))
 
 # the source of the rpmag used by the drs (after preprocessing)
-KW_DRS_RPMAG_S = Keyword('KW_DRS_RPMAG_S', key='', dtype=str, source=__NAME__)
+KW_DRS_RPMAG_S = Keyword('KW_DRS_RPMAG_S', key='', dtype=str, source=__NAME__,
+                         description=('the source of the rpmag used by the drs '
+                                      '(after preprocessing)'))
 
 # the epoch to be used by the drs (after preprocessing)
-KW_DRS_EPOCH = Keyword('KW_DRS_EPOCH', key='', dtype=float, source=__NAME__)
+KW_DRS_EPOCH = Keyword('KW_DRS_EPOCH', key='', dtype=float, source=__NAME__,
+                       description=('the epoch to be used by the drs (after '
+                                    'preprocessing)'))
 
 # the source of the epoch used by the drs (after preprocessing)
-KW_DRS_EPOCH_S = Keyword('KW_DRS_EPOCH_S', key='', dtype=str, source=__NAME__)
+KW_DRS_EPOCH_S = Keyword('KW_DRS_EPOCH_S', key='', dtype=str, source=__NAME__,
+                         description=('the source of the epoch used by the drs '
+                                      '(after preprocessing)'))
 
 # the effective temperature to be used by the drs (after preprocessing)
-KW_DRS_TEFF = Keyword('KW_DRS_TEFF', key='', dtype=float, source=__NAME__)
+KW_DRS_TEFF = Keyword('KW_DRS_TEFF', key='', dtype=float, source=__NAME__,
+                      description=('the effective temperature to be used by '
+                                   'the drs (after preprocessing)'))
 
 # the source of teff used by the drs (after preprocessing)
-KW_DRS_TEFF_S = Keyword('KW_DRS_TEFF_S', key='', dtype=str, source=__NAME__)
+KW_DRS_TEFF_S = Keyword('KW_DRS_TEFF_S', key='', dtype=str, source=__NAME__,
+                        description=('the source of teff used by the drs '
+                                     '(after preprocessing)'))
 
 # -----------------------------------------------------------------------------
 # Define general keywords
 # -----------------------------------------------------------------------------
 # DRS version
-KW_VERSION = Keyword('KW_VERSION', key='', dtype=str, source=__NAME__)
-KW_PPVERSION = Keyword('KW_PPVERSION', key='', dtype=str, source=__NAME__)
+KW_VERSION = Keyword('KW_VERSION', key='', dtype=str, source=__NAME__,
+                     description='DRS version')
+
+# DRS preprocessing version
+KW_PPVERSION = Keyword('KW_PPVERSION', key='', dtype=str, source=__NAME__,
+                       description='DRS preprocessing version')
 
 # DRS process ID
-KW_PID = Keyword('KW_PID', key='', dtype=str, source=__NAME__)
+KW_PID = Keyword('KW_PID', key='', dtype=str, source=__NAME__,
+                 description='DRS process ID')
 
 # Processed date keyword
 KW_DRS_DATE_NOW = Keyword('KW_DRS_DATE_NOW', key='', dtype=str,
-                          source=__NAME__)
+                          source=__NAME__,
+                          description='Processed date keyword')
 
 # DRS version date keyword
-KW_DRS_DATE = Keyword('KW_DRS_DATE', key='', dtype=str, source=__NAME__)
+KW_DRS_DATE = Keyword('KW_DRS_DATE', key='', dtype=str, source=__NAME__,
+                      description='DRS version date keyword')
 
 # Define the key to get the data fits file type
-KW_DPRTYPE = Keyword('KW_DPRTYPE', key='', dtype=str, source=__NAME__)
+KW_DPRTYPE = Keyword('KW_DPRTYPE', key='', dtype=str, source=__NAME__,
+                     description=('Define the key to get the data fits '
+                                  'file type'))
 
 # Define the mid exposure time
-KW_MID_OBS_TIME = Keyword('KW_MID_OBS_TIME', key='', source=__NAME__)
+KW_MID_OBS_TIME = Keyword('KW_MID_OBS_TIME', key='', source=__NAME__,
+                          description='Define the mid exposure time')
 
 # Define the method by which the MJD was calculated
-KW_MID_OBSTIME_METHOD = Keyword('KW_MID_OBS_TIME_METHOD', key='', dtype=str,
-                                source=__NAME__)
+KW_MID_OBSTIME_METHOD = Keyword('KW_MID_OBSTIME_METHOD', key='', dtype=str,
+                                source=__NAME__,
+                                description=('Define the method by which the '
+                                             'MJD was calculated'))
 
 # -----------------------------------------------------------------------------
 # Define DRS input keywords
 # -----------------------------------------------------------------------------
 # input files
-KW_INFILE1 = Keyword('KW_INFILE1', key='', dtype=str, source=__NAME__)
-KW_INFILE2 = Keyword('KW_INFILE2', key='', dtype=str, source=__NAME__)
-KW_INFILE3 = Keyword('KW_INFILE3', key='', dtype=str, source=__NAME__)
+KW_INFILE1 = Keyword('KW_INFILE1', key='', dtype=str, source=__NAME__,
+                     description='input files')
+KW_INFILE2 = Keyword('KW_INFILE2', key='', dtype=str, source=__NAME__,
+                     description='input files')
+KW_INFILE3 = Keyword('KW_INFILE3', key='', dtype=str, source=__NAME__,
+                     description='input files')
 
 # -----------------------------------------------------------------------------
 # Define database input keywords
 # -----------------------------------------------------------------------------
-KW_CDBDARK = Keyword('KW_CDBDARK', key='', dtype=str, source=__NAME__)
-KW_CDBBAD = Keyword('KW_CDBBAD', key='', dtype=str, source=__NAME__)
-KW_CDBBACK = Keyword('KW_CDBBACK', key='', dtype=str, source=__NAME__)
-KW_CDBORDP = Keyword('KW_CDBORDP', key='', dtype=str, source=__NAME__)
-KW_CDBLOCO = Keyword('KW_CDBLOCO', key='', dtype=str, source=__NAME__)
-KW_CDBSHAPEL = Keyword('KW_CDBSHAPE', key='', dtype=str, source=__NAME__)
-KW_CDBSHAPEDY = Keyword('KW_CDBSHAPE', key='', dtype=str, source=__NAME__)
-KW_CDBSHAPEDX = Keyword('KW_CDBSHAPE', key='', dtype=str, source=__NAME__)
-KW_CDBFLAT = Keyword('KW_CDBFLAT', key='', dtype=str, source=__NAME__)
-KW_CDBBLAZE = Keyword('KW_CDBBLAZE', key='', dtype=str, source=__NAME__)
-KW_CDBWAVE = Keyword('KW_CDBWAVE', key='', dtype=str, source=__NAME__)
-KW_CDBTHERMAL = Keyword('KW_CDBTHERMAL', key='', dtype=str, source=__NAME__)
+# dark calibration file used
+KW_CDBDARK = Keyword('KW_CDBDARK', key='', dtype=str, source=__NAME__,
+                     description='dark calibration file used')
+# bad pixel calibration file used
+KW_CDBBAD = Keyword('KW_CDBBAD', key='', dtype=str, source=__NAME__,
+                    description='bad pixel calibration file used')
+# background calibration file used
+KW_CDBBACK = Keyword('KW_CDBBACK', key='', dtype=str, source=__NAME__,
+                     description='background calibration file used')
+# order profile calibration file used
+KW_CDBORDP = Keyword('KW_CDBORDP', key='', dtype=str, source=__NAME__,
+                     description='order profile calibration file used')
+# localisation calibration file used
+KW_CDBLOCO = Keyword('KW_CDBLOCO', key='', dtype=str, source=__NAME__,
+                     description='localisation calibration file used')
+# shape local calibration file used
+KW_CDBSHAPEL = Keyword('KW_CDBSHAPEL', key='', dtype=str, source=__NAME__,
+                       description='shape local calibration file used')
+# shape dy calibration file used
+KW_CDBSHAPEDY = Keyword('KW_CDBSHAPEDY', key='', dtype=str, source=__NAME__,
+                        description='shape dy calibration file used')
+# shape dx calibration file used
+KW_CDBSHAPEDX = Keyword('KW_CDBSHAPEDX', key='', dtype=str, source=__NAME__,
+                        description='shape dx calibration file used')
+# flat calibration file used
+KW_CDBFLAT = Keyword('KW_CDBFLAT', key='', dtype=str, source=__NAME__,
+                     description='flat calibration file used')
+# blaze calibration file used
+KW_CDBBLAZE = Keyword('KW_CDBBLAZE', key='', dtype=str, source=__NAME__,
+                      description='blaze calibration file used')
+# wave solution calibration file used
+KW_CDBWAVE = Keyword('KW_CDBWAVE', key='', dtype=str, source=__NAME__,
+                     description='wave solution calibration file used')
+# thermal calibration file used
+KW_CDBTHERMAL = Keyword('KW_CDBTHERMAL', key='', dtype=str, source=__NAME__,
+                        description='thermal calibration file used')
 
 # additional properties of calibration
-KW_C_FLIP = Keyword('KW_C_FLIP', key='', dtype=str, source=__NAME__)
-KW_C_CVRTE = Keyword('KW_C_CVRTE', key='', dtype=str, source=__NAME__)
-KW_C_RESIZE = Keyword('KW_C_RESIZE', key='', dtype=str, source=__NAME__)
-KW_C_FTYPE = Keyword('KW_C_FTYPE', key='', dtype=str, source=__NAME__)
+
+# whether the calibrations have been flipped
+KW_C_FLIP = Keyword('KW_C_FLIP', key='', dtype=str, source=__NAME__,
+                    description='whether the calibrations have been flipped')
+# whether the calibratoins have been converted to electrons
+KW_C_CVRTE = Keyword('KW_C_CVRTE', key='', dtype=str, source=__NAME__,
+                     description='whether the calibratoins have been converted '
+                                 'to electrons')
+# whether the calibrations have been resized
+KW_C_RESIZE = Keyword('KW_C_RESIZE', key='', dtype=str, source=__NAME__,
+                      description='whether the calibrations have been resized')
+# whether the calibrations have an ftype
+KW_C_FTYPE = Keyword('KW_C_FTYPE', key='', dtype=str, source=__NAME__,
+                     description='whether the calibrations have an ftype')
 # the fiber name
-KW_FIBER = Keyword('KW_FIBER', key='', dtype=str, source=__NAME__)
+KW_FIBER = Keyword('KW_FIBER', key='', dtype=str, source=__NAME__,
+                   description='the fiber name')
 
 # -----------------------------------------------------------------------------
 # Define DRS outputs keywords
 # -----------------------------------------------------------------------------
 # the output key for drs outputs
-KW_OUTPUT = Keyword('KW_OUTPUT', key='', dtype=str, source=__NAME__)
+KW_OUTPUT = Keyword('KW_OUTPUT', key='', dtype=str, source=__NAME__,
+                    description='the output key for drs outputs')
 
 # -----------------------------------------------------------------------------
 # Define qc variables
 # -----------------------------------------------------------------------------
-KW_DRS_QC = Keyword('KW_DRS_QC', key='', dtype=str, source=__NAME__)
-KW_DRS_QC_VAL = Keyword('KW_DRS_QC_VAL', key='', dtype=str, source=__NAME__)
-KW_DRS_QC_NAME = Keyword('KW_DRS_QC_NAME', key='', dtype=str, source=__NAME__)
-KW_DRS_QC_LOGIC = Keyword('KW_DRS_QC_LOGIC', key='', dtype=str, source=__NAME__)
-KW_DRS_QC_PASS = Keyword('KW_DRS_QC_PASS', key='', dtype=str, source=__NAME__)
+# the drs qc
+KW_DRS_QC = Keyword('KW_DRS_QC', key='', dtype=str, source=__NAME__,
+                    description='the drs qc ')
+# the value of the qc
+KW_DRS_QC_VAL = Keyword('KW_DRS_QC_VAL', key='', dtype=str, source=__NAME__,
+                        description='the value of the qc')
+# the name of the quality control parameter
+KW_DRS_QC_NAME = Keyword('KW_DRS_QC_NAME', key='', dtype=str, source=__NAME__,
+                         description='the name of the quality control '
+                                     'parameter')
+# the logic of the quality control parameter
+KW_DRS_QC_LOGIC = Keyword('KW_DRS_QC_LOGIC', key='', dtype=str, source=__NAME__,
+                          description='the logic of the quality control '
+                                      'parameter')
+# whether this quality control parameter passed
+KW_DRS_QC_PASS = Keyword('KW_DRS_QC_PASS', key='', dtype=str, source=__NAME__,
+                         description='whether this quality control parameter '
+                                     'passed')
 
 # -----------------------------------------------------------------------------
 # Define preprocessing variables
 # -----------------------------------------------------------------------------
 # The shift in pixels so that image is at same location as engineering flat
-KW_PPSHIFTX = Keyword('KW_PPSHIFTX', key='', dtype=float, source=__NAME__)
-KW_PPSHIFTY = Keyword('KW_PPSHIFTY', key='', dtype=float, source=__NAME__)
+KW_PPSHIFTX = Keyword('KW_PPSHIFTX', key='', dtype=float, source=__NAME__,
+                      description=('The shift in pixels so that image is at '
+                                   'same location as engineering flat'))
+KW_PPSHIFTY = Keyword('KW_PPSHIFTY', key='', dtype=float, source=__NAME__,
+                      description=('The shift in pixels so that image is at '
+                                   'same location as engineering flat'))
 
 # The number of sigma used to construct pp master mask
-KW_PPMSTR_NSIG = Keyword('KW_PPMSTR_NSIG', key='', dtype=float, source=__NAME__)
+KW_PPMSTR_NSIG = Keyword('KW_PPMSTR_NSIG', key='', dtype=float, source=__NAME__,
+                         description=('The number of sigma used to construct '
+                                      'pp master mask'))
 
 # Define the key to store the name of the pp master file used in pp (if used)
-KW_PPMSTR_FILE = Keyword('KW_PPMSTER_FILE', key='', dtype=str, source=__NAME__)
+KW_PPMSTR_FILE = Keyword('KW_PPMSTR_FILE', key='', dtype=str, source=__NAME__,
+                         description=('Define the key to store the name of the '
+                                      'pp master file used in pp (if used)'))
 
 # -----------------------------------------------------------------------------
 # Define cal_dark variables
 # -----------------------------------------------------------------------------
 # The fraction of dead pixels in the dark (in %)
-KW_DARK_DEAD = Keyword('DADEAD', key='', dtype=float, source=__NAME__)
+KW_DARK_DEAD = Keyword('KW_DARK_DEAD', key='', dtype=float, source=__NAME__,
+                       description=('The fraction of dead pixels in the dark '
+                                    '(in %)'))
 
 # The median dark level in ADU/s
-KW_DARK_MED = Keyword('KW_DARK_MED', key='', dtype=float, source=__NAME__)
+KW_DARK_MED = Keyword('KW_DARK_MED', key='', dtype=float, source=__NAME__,
+                      description='The median dark level in ADU/s')
 
 # The fraction of dead pixels in the blue part of the dark (in %)
-KW_DARK_B_DEAD = Keyword('KW_DARK_B_DEAD', key='', dtype=float, source=__NAME__)
+KW_DARK_B_DEAD = Keyword('KW_DARK_B_DEAD', key='', dtype=float, source=__NAME__,
+                         description=('The fraction of dead pixels in the blue '
+                                      'part of the dark (in %)'))
 
 # The median dark level in the blue part of the dark in ADU/s
-KW_DARK_B_MED = Keyword('KW_DARK_B_MED', key='', dtype=float, source=__NAME__)
+KW_DARK_B_MED = Keyword('KW_DARK_B_MED', key='', dtype=float, source=__NAME__,
+                        description=('The median dark level in the blue part '
+                                     'of the dark in ADU/s'))
 
 # The fraction of dead pixels in the red part of the dark (in %)
-KW_DARK_R_DEAD = Keyword('KW_DARK_R_DEAD', key='', dtype=float, source=__NAME__)
+KW_DARK_R_DEAD = Keyword('KW_DARK_R_DEAD', key='', dtype=float, source=__NAME__,
+                         description=('The fraction of dead pixels in the red '
+                                      'part of the dark (in %)'))
 
 # The median dark level in the red part of the dark in ADU/s
-KW_DARK_R_MED = Keyword('KW_DARK_R_MED', key='', dtype=float, source=__NAME__)
+KW_DARK_R_MED = Keyword('KW_DARK_R_MED', key='', dtype=float, source=__NAME__,
+                        description=('The median dark level in the red part of '
+                                     'the dark in ADU/s'))
 
 # The threshold of the dark level to retain in ADU
-KW_DARK_CUT = Keyword('KW_DARK_CUT', key='', dtype=float, source=__NAME__)
+KW_DARK_CUT = Keyword('KW_DARK_CUT', key='', dtype=float, source=__NAME__,
+                      description=('The threshold of the dark level to retain '
+                                   'in ADU'))
 
 # -----------------------------------------------------------------------------
 # Define cal_badpix variables
 # -----------------------------------------------------------------------------
 # fraction of hot pixels
-KW_BHOT = Keyword('KW_BHOT', key='', dtype=float, source=__NAME__)
+KW_BHOT = Keyword('KW_BHOT', key='', dtype=float, source=__NAME__,
+                  description='fraction of hot pixels')
 
 # fraction of bad pixels from flat
-KW_BBFLAT = Keyword('KW_BBFLAT', key='', dtype=float, source=__NAME__)
+KW_BBFLAT = Keyword('KW_BBFLAT', key='', dtype=float, source=__NAME__,
+                    description='fraction of bad pixels from flat')
 
 # fraction of non-finite pixels in dark
-KW_BNDARK = Keyword('KW_BNDARK', key='', dtype=float, source=__NAME__)
+KW_BNDARK = Keyword('KW_BNDARK', key='', dtype=float, source=__NAME__,
+                    description='fraction of non-finite pixels in dark')
 
 # fraction of non-finite pixels in flat
-KW_BNFLAT = Keyword('KW_BNFLAT', key='', dtype=float, source=__NAME__)
+KW_BNFLAT = Keyword('KW_BNFLAT', key='', dtype=float, source=__NAME__,
+                    description='fraction of non-finite pixels in flat')
 
 # fraction of bad pixels with all criteria
-KW_BBAD = Keyword('KW_BBAD', key='', dtype=float, source=__NAME__)
+KW_BBAD = Keyword('KW_BBAD', key='', dtype=float, source=__NAME__,
+                  description='fraction of bad pixels with all criteria')
 
 # fraction of un-illuminated pixels (from engineering flat)
-KW_BNILUM = Keyword('KW_BNILUM', key='', dtype=float, source=__NAME__)
+KW_BNILUM = Keyword('KW_BNILUM', key='', dtype=float, source=__NAME__,
+                    description=('fraction of un-illuminated pixels (from '
+                                 'engineering flat)'))
 
 # fraction of total bad pixels
-KW_BTOT = Keyword('KW_BTOT', key='', dtype=float, source=__NAME__)
+KW_BTOT = Keyword('KW_BTOT', key='', dtype=float, source=__NAME__,
+                  description='fraction of total bad pixels')
 
 # -----------------------------------------------------------------------------
 # Define localisation variables
@@ -531,1175 +726,1762 @@ KW_BTOT = Keyword('KW_BTOT', key='', dtype=float, source=__NAME__)
 ROOT_DRS_LOC = Const('ROOT_DRS_LOC', value=None, dtype=str, source=__NAME__,
                      description='root for localisation header keys')
 # Mean background (as percentage)
-KW_LOC_BCKGRD = Keyword('KW_LOC_BCKGRD', key='', dtype=float, source=__NAME__)
+KW_LOC_BCKGRD = Keyword('KW_LOC_BCKGRD', key='', dtype=float, source=__NAME__,
+                        description='Mean background (as percentage)')
 # Number of orders located
-KW_LOC_NBO = Keyword('KW_LOC_NBO', key='', dtype=int, source=__NAME__)
+KW_LOC_NBO = Keyword('KW_LOC_NBO', key='', dtype=int, source=__NAME__,
+                     description='Number of orders located')
 # fit degree for order centers
-KW_LOC_DEG_C = Keyword('KW_LOC_DEG_C', key='', dtype=int, source=__NAME__)
+KW_LOC_DEG_C = Keyword('KW_LOC_DEG_C', key='', dtype=int, source=__NAME__,
+                       description='fit degree for order centers')
 # fit degree for order widths
-KW_LOC_DEG_W = Keyword('KW_LOC_DEG_W', key='', dtype=int, source=__NAME__)
+KW_LOC_DEG_W = Keyword('KW_LOC_DEG_W', key='', dtype=int, source=__NAME__,
+                       description='fit degree for order widths')
 # Maximum flux in order
-KW_LOC_MAXFLX = Keyword('KW_LOC_MAXFLX', key='', dtype=float, source=__NAME__)
+KW_LOC_MAXFLX = Keyword('KW_LOC_MAXFLX', key='', dtype=float, source=__NAME__,
+                        description='Maximum flux in order')
 # Maximum number of removed points allowed for location fit
 KW_LOC_SMAXPTS_CTR = Keyword('KW_LOC_SMAXPTS_CTR', key='', dtype=int,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('Maximum number of removed points '
+                                          'allowed for location fit'))
 # Maximum number of removed points allowed for width fit
 KW_LOC_SMAXPTS_WID = Keyword('KW_LOC_SMAXPTS_WID', key='', dtype=int,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('Maximum number of removed points '
+                                          'allowed for width fit'))
 # Maximum rms allowed for location fit
-KW_LOC_RMS_CTR = Keyword('KW_LOC_RMS_CTR', key='', dtype=float, source=__NAME__)
+KW_LOC_RMS_CTR = Keyword('KW_LOC_RMS_CTR', key='', dtype=float, source=__NAME__,
+                         description='Maximum rms allowed for location fit')
 # Maximum rms allowed for width fit (formally KW_LOC_rms_fwhm)
-KW_LOC_RMS_WID = Keyword('KW_LOC_RMS_WID', key='', dtype=float, source=__NAME__)
+KW_LOC_RMS_WID = Keyword('KW_LOC_RMS_WID', key='', dtype=float, source=__NAME__,
+                         description=('Maximum rms allowed for width fit '
+                                      '(formally KW_LOC_rms_fwhm)'))
 # Coeff center order
 KW_LOC_CTR_COEFF = Keyword('KW_LOC_CTR_COEFF', key='', dtype=int,
-                           source=__NAME__)
+                           source=__NAME__,
+                           description='Coeff center order')
 # Coeff width order
 KW_LOC_WID_COEFF = Keyword('KW_LOC_WID_COEFF', key='', dtype=int,
-                           source=__NAME__)
+                           source=__NAME__, description='Coeff width order')
 
 # -----------------------------------------------------------------------------
 # Define shape variables
 # -----------------------------------------------------------------------------
 # Shape transform dx parameter
-KW_SHAPE_DX = Keyword('KW_SHAPE_DX', key='', dtype=float, source=__NAME__)
+KW_SHAPE_DX = Keyword('KW_SHAPE_DX', key='', dtype=float, source=__NAME__,
+                      description='Shape transform dx parameter')
 
 # Shape transform dy parameter
-KW_SHAPE_DY = Keyword('KW_SHAPE_DY', key='', dtype=float, source=__NAME__)
+KW_SHAPE_DY = Keyword('KW_SHAPE_DY', key='', dtype=float, source=__NAME__,
+                      description='Shape transform dy parameter')
 
 # Shape transform A parameter
-KW_SHAPE_A = Keyword('KW_SHAPE_A', key='', dtype=float, source=__NAME__)
+KW_SHAPE_A = Keyword('KW_SHAPE_A', key='', dtype=float, source=__NAME__,
+                     description='Shape transform A parameter')
 
 # Shape transform B parameter
-KW_SHAPE_B = Keyword('KW_SHAPE_B', key='', dtype=float, source=__NAME__)
+KW_SHAPE_B = Keyword('KW_SHAPE_B', key='', dtype=float, source=__NAME__,
+                     description='Shape transform B parameter')
 
 # Shape transform C parameter
-KW_SHAPE_C = Keyword('KW_SHAPE_C', key='', dtype=float, source=__NAME__)
+KW_SHAPE_C = Keyword('KW_SHAPE_C', key='', dtype=float, source=__NAME__,
+                     description='Shape transform C parameter')
 
 # Shape transform D parameter
-KW_SHAPE_D = Keyword('KW_SHAPE_D', key='', dtype=float, source=__NAME__)
+KW_SHAPE_D = Keyword('KW_SHAPE_D', key='', dtype=float, source=__NAME__,
+                     description='Shape transform D parameter')
 
 # -----------------------------------------------------------------------------
 # Define extraction variables
 # -----------------------------------------------------------------------------
 # The extraction type (only added for E2DS files in extraction)
-KW_EXT_TYPE = Keyword('KW_EXT_TYPE', key='', dtype=str, source=__NAME__)
+KW_EXT_TYPE = Keyword('KW_EXT_TYPE', key='', dtype=str, source=__NAME__,
+                      description=('The extraction type (only added for E2DS '
+                                   'files in extraction)'))
 
 # SNR calculated in extraction process (per order)
-KW_EXT_SNR = Keyword('KW_EXT_SNR', key='', dtype=float, source=__NAME__)
+KW_EXT_SNR = Keyword('KW_EXT_SNR', key='', dtype=float, source=__NAME__,
+                     description=('SNR calculated in extraction process '
+                                  '(per order)'))
 
 # the start order for extraction
-KW_EXT_START = Keyword('KW_EXT_START', key='', dtype=int, source=__NAME__)
+KW_EXT_START = Keyword('KW_EXT_START', key='', dtype=int, source=__NAME__,
+                       description='the start order for extraction')
 
 # the end order for extraction
-KW_EXT_END = Keyword('KW_EXT_END', key='', dtype=int, source=__NAME__)
+KW_EXT_END = Keyword('KW_EXT_END', key='', dtype=int, source=__NAME__,
+                     description='the end order for extraction')
 
 # the upper bound for extraction of order
-KW_EXT_RANGE1 = Keyword('KW_EXT_RANGE1', key='', dtype=int, source=__NAME__)
+KW_EXT_RANGE1 = Keyword('KW_EXT_RANGE1', key='', dtype=int, source=__NAME__,
+                        description='the upper bound for extraction of order')
 
 # the lower bound for extraction of order
-KW_EXT_RANGE2 = Keyword('KW_EXT_RANGE2', key='', dtype=int, source=__NAME__)
+KW_EXT_RANGE2 = Keyword('KW_EXT_RANGE2', key='', dtype=int, source=__NAME__,
+                        description='the lower bound for extraction of order')
 
 # whether cosmics where rejected
-KW_COSMIC = Keyword('KW_COSMIC', key='', dtype=int, source=__NAME__)
+KW_COSMIC = Keyword('KW_COSMIC', key='', dtype=int, source=__NAME__,
+                    description='whether cosmics where rejected')
 
 # the cosmic cut criteria
-KW_COSMIC_CUT = Keyword('KW_COSMIC_CUT', key='', dtype=float, source=__NAME__)
+KW_COSMIC_CUT = Keyword('KW_COSMIC_CUT', key='', dtype=float, source=__NAME__,
+                        description='the cosmic cut criteria')
 
 # the cosmic threshold used
 KW_COSMIC_THRES = Keyword('KW_COSMIC_THRES', key='', dtype=float,
-                          source=__NAME__)
+                          source=__NAME__,
+                          description='the cosmic threshold used')
 
 # the blaze with used
-KW_BLAZE_WID = Keyword('KW_BLAZE_WID', key='', dtype=float, source=__NAME__)
+KW_BLAZE_WID = Keyword('KW_BLAZE_WID', key='', dtype=float, source=__NAME__,
+                       description='the blaze with used')
 
 # the blaze cut used
-KW_BLAZE_CUT = Keyword('KW_BLAZE_CUT', key='', dtype=float, source=__NAME__)
+KW_BLAZE_CUT = Keyword('KW_BLAZE_CUT', key='', dtype=float, source=__NAME__,
+                       description='the blaze cut used')
 
 # the blaze degree used (to fit)
-KW_BLAZE_DEG = Keyword('KW_BLAZE_DEG', key='', dtype=int, source=__NAME__)
+KW_BLAZE_DEG = Keyword('KW_BLAZE_DEG', key='', dtype=int, source=__NAME__,
+                       description='the blaze degree used (to fit)')
 
 # The blaze sinc cut threshold used
-KW_BLAZE_SCUT = Keyword('KW_BLAZE_SCUT', key='', dtype=float, source=__NAME__)
+KW_BLAZE_SCUT = Keyword('KW_BLAZE_SCUT', key='', dtype=float, source=__NAME__,
+                        description='The blaze sinc cut threshold used')
 
 # The blaze sinc sigma clip (rejection threshold) used
 KW_BLAZE_SIGFIG = Keyword('KW_BLAZE_SIGFIG', key='', dtype=float,
-                          source=__NAME__)
+                          source=__NAME__,
+                          description=('The blaze sinc sigma clip (rejection '
+                                       'threshold) used'))
 
 # The blaze sinc bad percentile value used
 KW_BLAZE_BPRCNTL = Keyword('KW_BLAZE_BPRCNTL', key='', dtype=float,
-                           source=__NAME__)
+                           source=__NAME__,
+                           description=('The blaze sinc bad percentile '
+                                        'value used'))
 
 # The number of iterations used in the blaze sinc fit
-KW_BLAZE_NITER = Keyword('KW_BLAZE_NITER', key='', dtype=int, source=__NAME__)
+KW_BLAZE_NITER = Keyword('KW_BLAZE_NITER', key='', dtype=int, source=__NAME__,
+                         description=('The number of iterations used in the '
+                                      'blaze sinc fit'))
 
 # the saturation QC limit
-KW_SAT_QC = Keyword('KW_SAT_QC', key='', dtype=int, source=__NAME__)
+KW_SAT_QC = Keyword('KW_SAT_QC', key='', dtype=int, source=__NAME__,
+                    description='the saturation QC limit')
 
 # the max saturation level
-KW_SAT_LEVEL = Keyword('KW_SAT_LEVEL', key='', dtype=int, source=__NAME__)
+KW_SAT_LEVEL = Keyword('KW_SAT_LEVEL', key='', dtype=int, source=__NAME__,
+                       description='the max saturation level')
 
 # the wave starting point used for s1d
 KW_S1D_WAVESTART = Keyword('KW_S1D_WAVESTART', key='', dtype=float,
-                           source=__NAME__)
+                           source=__NAME__,
+                           description=('the wave starting point used for '
+                                        's1d'))
 
 # the wave end point used for s1d
-KW_S1D_WAVEEND = Keyword('KW_S1D_WAVEEND', key='', dtype=float, source=__NAME__)
+KW_S1D_WAVEEND = Keyword('KW_S1D_WAVEEND', key='', dtype=float, source=__NAME__,
+                         description='the wave end point used for s1d')
 
 # the wave grid kind used for s1d (wave or velocity)
-KW_S1D_KIND = Keyword('KW_S1D_KIND', key='', dtype=str, source=__NAME__)
+KW_S1D_KIND = Keyword('KW_S1D_KIND', key='', dtype=str, source=__NAME__,
+                      description=('the wave grid kind used for s1d (wave '
+                                   'or velocity)'))
 
 # the bin size for wave grid kind=wave
-KW_S1D_BWAVE = Keyword('KW_S1D_BWAVE', key='', dtype=float, source=__NAME__)
+KW_S1D_BWAVE = Keyword('KW_S1D_BWAVE', key='', dtype=float, source=__NAME__,
+                       description='the bin size for wave grid kind=wave')
 
 # the bin size for wave grid kind=velocity
-KW_S1D_BVELO = Keyword('KW_S1D_BVELO', key='', dtype=float, source=__NAME__)
+KW_S1D_BVELO = Keyword('KW_S1D_BVELO', key='', dtype=float, source=__NAME__,
+                       description='the bin size for wave grid kind=velocity')
 
 # the smooth size for the s1d
-KW_S1D_SMOOTH = Keyword('KW_S1D_SMOOTH', key='', dtype=float, source=__NAME__)
+KW_S1D_SMOOTH = Keyword('KW_S1D_SMOOTH', key='', dtype=float, source=__NAME__,
+                        description='the smooth size for the s1d')
 
 # the blaze threshold used for the s1d
-KW_S1D_BLAZET = Keyword('KW_S1D_BLAZET', key='', dtype=float, source=__NAME__)
+KW_S1D_BLAZET = Keyword('KW_S1D_BLAZET', key='', dtype=float, source=__NAME__,
+                        description='the blaze threshold used for the s1d')
 
 # the Right Ascension used to calculate the BERV
-KW_BERVRA = Keyword('KW_BERVRA', key='', dtype=float, source=__NAME__)
+KW_BERVRA = Keyword('KW_BERVRA', key='', dtype=float, source=__NAME__,
+                    description=('the Right Ascension used to calculate '
+                                 'the BERV'))
 
 # the Declination used to calculate the BERV
-KW_BERVDEC = Keyword('KW_BERVDEC', key='', dtype=float, source=__NAME__)
+KW_BERVDEC = Keyword('KW_BERVDEC', key='', dtype=float, source=__NAME__,
+                     description='the Declination used to calculate the BERV')
 
 # the Gaia ID used to identify KW_BERV_POS_SOURCE for BERV calculation
-KW_BERVGAIA_ID = Keyword('KW_BERVGAIA_ID', key='', dtype=str, source=__NAME__)
+KW_BERVGAIA_ID = Keyword('KW_BERVGAIA_ID', key='', dtype=str, source=__NAME__,
+                         description=('the Gaia ID used to identify '
+                                      'KW_BERV_POS_SOURCE for BERV calculation'))
 
 # the OBJNAME used to identify KW_BERV_POS_SOURCE for BERV calculation
-KW_BERVOBJNAME = Keyword('KW_BERVOBJNAME', key='', dtype=str, source=__NAME__)
+KW_BERVOBJNAME = Keyword('KW_BERVOBJNAME', key='', dtype=str, source=__NAME__,
+                         description=('the OBJNAME used to identify '
+                                      'KW_BERV_POS_SOURCE for BERV calculation'))
 
 # the epoch (jd) used to calculate the BERV
-KW_BERVEPOCH = Keyword('KW_BERVEPOCH', key='', dtype=float, source=__NAME__)
+KW_BERVEPOCH = Keyword('KW_BERVEPOCH', key='', dtype=float, source=__NAME__,
+                       description=('the epoch (jd) used to calculate '
+                                    'the BERV'))
 
 # the pmra [mas/yr] used to calculate the BERV
-KW_BERVPMRA = Keyword('KW_BERVPMRA', key='', dtype=float, source=__NAME__)
+KW_BERVPMRA = Keyword('KW_BERVPMRA', key='', dtype=float, source=__NAME__,
+                      description=('the pmra [mas/yr] used to calculate '
+                                   'the BERV'))
 
 # the pmde [mas/yr] used to calculate the BERV
-KW_BERVPMDE = Keyword('KW_BERVPMDE', key='', dtype=float, source=__NAME__)
+KW_BERVPMDE = Keyword('KW_BERVPMDE', key='', dtype=float, source=__NAME__,
+                      description=('the pmde [mas/yr] used to calculate '
+                                   'the BERV'))
 
 # the parallax [mas] used to calculate the BERV
-KW_BERVPLX = Keyword('KW_BERVPLX', key='', dtype=float, source=__NAME__)
+KW_BERVPLX = Keyword('KW_BERVPLX', key='', dtype=float, source=__NAME__,
+                     description=('the parallax [mas] used to calculate '
+                                  'the BERV'))
 
 # the rv [km/s] used to calculate the BERV
-KW_BERVRV = Keyword('KW_BERVR', key='', dtype=float, source=__NAME__)
+KW_BERVRV = Keyword('KW_BERVRV', key='', dtype=float, source=__NAME__,
+                    description='the rv [km/s] used to calculate the BERV')
 
 # the source of the BERV star parameters (header or gaia)
 KW_BERV_POS_SOURCE = Keyword('KW_BERV_POS_SOURCE', key='', dtype=str,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('the source of the BERV star '
+                                          'parameters (header or gaia)'))
 
 # the Gaia G mag (if present) for the gaia query
 KW_BERV_GAIA_GMAG = Keyword('KW_BERV_GAIA_GMAG', key='', dtype=float,
-                            source=__NAME__)
+                            source=__NAME__,
+                            description=('the Gaia G mag (if present) for '
+                                         'the gaia query'))
 
 # the Gaia BP mag (if present) for the gaia query
 KW_BERV_GAIA_BPMAG = Keyword('KW_BERV_GAIA_BPMAG', key='', dtype=float,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('the Gaia BP mag (if present) for '
+                                          'the gaia query'))
 
 # the Gaia RP mag (if present) for the gaia query
 KW_BERV_GAIA_RPMAG = Keyword('KW_BERV_GAIA_RPMAG', key='', dtype=float,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('the Gaia RP mag (if present) for '
+                                          'the gaia query'))
 
 # the Gaia G mag limit used for the gaia query
 KW_BERV_GAIA_MAGLIM = Keyword('KW_BERV_GAIA_MAGLIM', key='', dtype=float,
-                              source=__NAME__)
+                              source=__NAME__,
+                              description=('the Gaia G mag limit used for '
+                                           'the gaia query'))
 
 # the Gaia parallax limit used the gaia query
 KW_BERV_GAIA_PLXLIM = Keyword('KW_BERV_GAIA_PLXLIM', key='', dtype=float,
-                              source=__NAME__)
+                              source=__NAME__,
+                              description=('the Gaia parallax limit used the '
+                                           'gaia query'))
 
 # the observatory latitude used to calculate the BERV
-KW_BERVLAT = Keyword('KW_BERVLAT', key='', dtype=float, source=__NAME__)
+KW_BERVLAT = Keyword('KW_BERVLAT', key='', dtype=float, source=__NAME__,
+                     description=('the observatory latitude used to calculate '
+                                  'the BERV'))
 
 # the observatory longitude used to calculate the BERV
-KW_BERVLONG = Keyword('KW_BERVLONG', key='', dtype=float, source=__NAME__)
+KW_BERVLONG = Keyword('KW_BERVLONG', key='', dtype=float, source=__NAME__,
+                      description=('the observatory longitude used to '
+                                   'calculate the BERV'))
 
 # the observatory altitude used to calculate the BERV
-KW_BERVALT = Keyword('KW_BERVALT', key='', dtype=float, source=__NAME__)
+KW_BERVALT = Keyword('KW_BERVALT', key='', dtype=float, source=__NAME__,
+                     description=('the observatory altitude used to calculate '
+                                  'the BERV'))
 
 # the BERV calculated with KW_BERVSOURCE
-KW_BERV = Keyword('KW_BERV', key='', dtype=float, source=__NAME__)
+KW_BERV = Keyword('KW_BERV', key='', dtype=float, source=__NAME__,
+                  description='the BERV calculated with KW_BERVSOURCE')
 
 # the Barycenter Julian date calculate with KW_BERVSOURCE
-KW_BJD = Keyword('KW_BJD', key='', dtype=float, source=__NAME__)
+KW_BJD = Keyword('KW_BJD', key='', dtype=float, source=__NAME__,
+                 description=('the Barycenter Julian date calculate with '
+                              'KW_BERVSOURCE'))
 
 # the maximum BERV found across 1 year (with KW_BERVSOURCE)
-KW_BERVMAX = Keyword('KW_BERVMAX', key='', dtype=float, source=__NAME__)
+KW_BERVMAX = Keyword('KW_BERVMAX', key='', dtype=float, source=__NAME__,
+                     description=('the maximum BERV found across 1 year (with '
+                                  'KW_BERVSOURCE)'))
 
 # the derivative of the BERV (BERV at time + 1s - BERV)
-KW_DBERV = Keyword('KW_DBERV', key='', dtype=float, source=__NAME__)
+KW_DBERV = Keyword('KW_DBERV', key='', dtype=float, source=__NAME__,
+                   description=('the derivative of the BERV (BERV at time + '
+                                '1s - BERV)'))
 
 # the source of the calculated BERV parameters
-KW_BERVSOURCE = Keyword('KW_BERVSOURCE', key='', dtype=str, source=__NAME__)
+KW_BERVSOURCE = Keyword('KW_BERVSOURCE', key='', dtype=str, source=__NAME__,
+                        description=('the source of the calculated BERV '
+                                     'parameters'))
 
 # the BERV calculated with the estimate
-KW_BERV_EST = Keyword('KW_BERV_EST', key='', dtype=float, source=__NAME__)
+KW_BERV_EST = Keyword('KW_BERV_EST', key='', dtype=float, source=__NAME__,
+                      description='the BERV calculated with the estimate')
 
 # the Barycenter Julian date calculated with the estimate
-KW_BJD_EST = Keyword('KW_BJD_EST', key='', dtype=float, source=__NAME__)
+KW_BJD_EST = Keyword('KW_BJD_EST', key='', dtype=float, source=__NAME__,
+                     description=('the Barycenter Julian date calculated with '
+                                  'the estimate'))
 
 # the maximum BERV found across 1 year (calculated with estimate)
-KW_BERVMAX_EST = Keyword('KW_BERVMAX_EST', key='', dtype=float, source=__NAME__)
+KW_BERVMAX_EST = Keyword('KW_BERVMAX_EST', key='', dtype=float, source=__NAME__,
+                         description=('the maximum BERV found across 1 year '
+                                      '(calculated with estimate)'))
 
 # the derivative of the BERV (BERV at time + 1s - BERV) calculated with
 #     estimate
-KW_DBERV_EST = Keyword('KW_DBERV_EST', key='', dtype=float, source=__NAME__)
+KW_DBERV_EST = Keyword('KW_DBERV_EST', key='', dtype=float, source=__NAME__,
+                       description=('the derivative of the BERV (BERV at time'
+                                    ' + 1s - BERV) calculated with estimate'))
 
 # the actual jd time used to calculate the BERV
 KW_BERV_OBSTIME = Keyword('KW_BERV_OBSTIME', key='', dtype=float,
-                          source=__NAME__)
+                          source=__NAME__,
+                          description=('the actual jd time used to calculate '
+                                       'the BERV'))
 
 # the method used to obtain the berv obs time
 KW_BERV_OBSTIME_METHOD = Keyword('KW_BERV_OBSTIME_METHOD', key='', dtype=str,
-                                 source=__NAME__)
+                                 source=__NAME__,
+                                 description=('the method used to obtain the '
+                                              'berv obs time'))
 
 # -----------------------------------------------------------------------------
 # Define leakage variables
 # -----------------------------------------------------------------------------
 # Define whether leak correction has been done
-KW_LEAK_CORR = Keyword('KW_LEAK_CORR', key='', dtype=int, source=__NAME__)
+KW_LEAK_CORR = Keyword('KW_LEAK_CORR', key='', dtype=int, source=__NAME__,
+                       description=('Define whether leak correction has been '
+                                    'done'))
 
 # Define the background percentile used for correcting leakage
-KW_LEAK_BP_U = Keyword('KW_LEAK_BP_U', key='', dtype=float, source=__NAME__)
+KW_LEAK_BP_U = Keyword('KW_LEAK_BP_U', key='', dtype=float, source=__NAME__,
+                       description=('Define the background percentile used for '
+                                    'correcting leakage'))
 
 # Define the normalisation percentile used for correcting leakage
-KW_LEAK_NP_U = Keyword('KW_LEAK_NP_U', key='', dtype=float, source=__NAME__)
+KW_LEAK_NP_U = Keyword('KW_LEAK_NP_U', key='', dtype=float, source=__NAME__,
+                       description=('Define the normalisation percentile used '
+                                    'for correcting leakage'))
 
 # Define the e-width smoothing used for correcting leakage master
 KW_LEAK_WSMOOTH = Keyword('KW_LEAK_WSMOOTH', key='', dtype=float,
-                          source=__NAME__)
+                          source=__NAME__,
+                          description=('Define the e-width smoothing used for '
+                                       'correcting leakage master'))
 
 # Define the kernel size used for correcting leakage master
 KW_LEAK_KERSIZE = Keyword('KW_LEAK_KERSIZE', key='', dtype=float,
-                          source=__NAME__)
+                          source=__NAME__,
+                          description=('Define the kernel size used for '
+                                       'correcting leakage master'))
 
 # Define the lower bound percentile used for correcting leakage
-KW_LEAK_LP_U = Keyword('KW_LEAK_LP_U', key='', dtype=float, source=__NAME__)
+KW_LEAK_LP_U = Keyword('KW_LEAK_LP_U', key='', dtype=float, source=__NAME__,
+                       description=('Define the lower bound percentile used '
+                                    'for correcting leakage'))
 
 # Define the upper bound percentile used for correcting leakage
-KW_LEAK_UP_U = Keyword('KW_LEAK_UP_U', key='', dtype=float, source=__NAME__)
+KW_LEAK_UP_U = Keyword('KW_LEAK_UP_U', key='', dtype=float, source=__NAME__,
+                       description=('Define the upper bound percentile used '
+                                    'for correcting leakage'))
 
 # Define the bad ratio offset limit used for correcting leakage
-KW_LEAK_BADR_U = Keyword('KW_LEAK_BADR_U', key='', dtype=float, source=__NAME__)
+KW_LEAK_BADR_U = Keyword('KW_LEAK_BADR_U', key='', dtype=float, source=__NAME__,
+                         description=('Define the bad ratio offset limit used '
+                                      'for correcting leakage'))
 
 # -----------------------------------------------------------------------------
 # Define wave variables
 # -----------------------------------------------------------------------------
 # Number of orders in wave image
-KW_WAVE_NBO = Keyword('KW_WAVE_NBO', key='', dtype=int, source=__NAME__)
+KW_WAVE_NBO = Keyword('KW_WAVE_NBO', key='', dtype=int, source=__NAME__,
+                      description='Number of orders in wave image')
 
 # fit degree for wave solution
-KW_WAVE_DEG = Keyword('KW_WAVE_DEG', key='', dtype=int, source=__NAME__)
+KW_WAVE_DEG = Keyword('KW_WAVE_DEG', key='', dtype=int, source=__NAME__,
+                      description='fit degree for wave solution')
 
 # the wave file used
-KW_WAVEFILE = Keyword('KW_WAVEFILE', key='', dtype=str, source=__NAME__)
+KW_WAVEFILE = Keyword('KW_WAVEFILE', key='', dtype=str, source=__NAME__,
+                      description='the wave file used')
 
 # the wave file mid exptime [mjd]
-KW_WAVETIME = Keyword('KW_WAVETIME', key='', dtype=float, source=__NAME__)
+KW_WAVETIME = Keyword('KW_WAVETIME', key='', dtype=float, source=__NAME__,
+                      description='the wave file mid exptime [mjd]')
 
 # the wave source of the wave file used
-KW_WAVESOURCE = Keyword('KW_WAVESOURCE', key='', dtype=str, source=__NAME__)
+KW_WAVESOURCE = Keyword('KW_WAVESOURCE', key='', dtype=str, source=__NAME__,
+                        description='the wave source of the wave file used')
 
 # the wave coefficients
-KW_WAVECOEFFS = Keyword('KW_WAVECOEFFS', key='', dtype=float, source=__NAME__)
+KW_WAVECOEFFS = Keyword('KW_WAVECOEFFS', key='', dtype=float, source=__NAME__,
+                        description='the wave coefficients')
 
 # the initial wave file used for wave solution
-KW_INIT_WAVE = Keyword('KW_INIT_WAVE', key='', dtype=str, source=__NAME__)
+KW_INIT_WAVE = Keyword('KW_INIT_WAVE', key='', dtype=str, source=__NAME__,
+                       description=('the initial wave file used for wave '
+                                    'solution'))
 
 # -----------------------------------------------------------------------------
 # the fit degree for wave solution used
-KW_WAVE_FITDEG = Keyword('KW_WAVE_FITDEG', key='', dtype=int, source=__NAME__)
+KW_WAVE_FITDEG = Keyword('KW_WAVE_FITDEG', key='', dtype=int, source=__NAME__,
+                         description='the fit degree for wave solution used')
 
 # the mode used to calculate the hc wave solution
-KW_WAVE_MODE_HC = Keyword('KW_WAVE_MODE_HC', key='', dtype=str, source=__NAME__)
+KW_WAVE_MODE_HC = Keyword('KW_WAVE_MODE_HC', key='', dtype=str, source=__NAME__,
+                          description=('the mode used to calculate the hc '
+                                       'wave solution'))
 
 # the mode used to calculate the fp wave solution
-KW_WAVE_MODE_FP = Keyword('KW_WAVE_MODE_FP', key='', dtype=str, source=__NAME__)
+KW_WAVE_MODE_FP = Keyword('KW_WAVE_MODE_FP', key='', dtype=str, source=__NAME__,
+                          description=('the mode used to calculate the fp '
+                                       'wave solution'))
 
 # the echelle number of the first order used
 KW_WAVE_ECHELLE_START = Keyword('KW_WAVE_ECHELLE_START', key='', dtype=int,
-                                source=__NAME__)
+                                source=__NAME__,
+                                description=('the echelle number of the first '
+                                             'order used'))
 
 # the width of the box for fitting hc lines used
 KW_WAVE_HCG_WSIZE = Keyword('KW_WAVE_HCG_WSIZE', key='', dtype=int,
-                            source=__NAME__)
+                            source=__NAME__,
+                            description=('the width of the box for fitting hc '
+                                         'lines used'))
 
 # the sigma above local rms for fitting hc lines used
 KW_WAVE_HCG_SIGPEAK = Keyword('KW_WAVE_HCG_SIGPEAK', key='', dtype=float,
-                              source=__NAME__)
+                              source=__NAME__,
+                              description=('the sigma above local rms for '
+                                           'fitting hc lines used'))
 
 # the fit degree for the gaussian peak fitting used
 KW_WAVE_HCG_GFITMODE = Keyword('KW_WAVE_HCG_GFITMODE', key='', dtype=int,
-                               source=__NAME__)
+                               source=__NAME__,
+                               description=('the fit degree for the gaussian '
+                                            'peak fitting used'))
 
 # the min rms for gaussian peak fitting used
 KW_WAVE_HCG_FB_RMSMIN = Keyword('KW_WAVE_HCG_FB_RMSMIN', key='', dtype=float,
-                                source=__NAME__)
+                                source=__NAME__,
+                                description=('the min rms for gaussian peak '
+                                             'fitting used'))
 
 # the max rms for gaussian peak fitting used
 KW_WAVE_HCG_FB_RMSMAX = Keyword('KW_WAVE_HCG_FB_RMSMAX', key='', dtype=float,
-                                source=__NAME__)
+                                source=__NAME__,
+                                description=('the max rms for gaussian peak '
+                                             'fitting used'))
 
 # the min e-width of the line for gaussian peak fitting used
 KW_WAVE_HCG_EWMIN = Keyword('KW_WAVE_HCG_EWMIN', key='', dtype=float,
-                            source=__NAME__)
+                            source=__NAME__,
+                            description=('the min e-width of the line for '
+                                         'gaussian peak fitting used'))
 
 # the min e-width of the line for gaussian peak fitting used
 KW_WAVE_HCG_EWMAX = Keyword('KW_WAVE_HCG_EWMAX', key='', dtype=float,
-                            source=__NAME__)
+                            source=__NAME__,
+                            description=('the min e-width of the line for '
+                                         'gaussian peak fitting used'))
 
 # the filename for the HC line list generated
 KW_WAVE_HCLL_FILE = Keyword('KW_WAVE_HCLL_FILE', key='', dtype=str,
-                            source=__NAME__)
+                            source=__NAME__,
+                            description=('the filename for the HC line list '
+                                         'generated'))
 
 # the number of bright lines to used in triplet fit
 KW_WAVE_TRP_NBRIGHT = Keyword('KW_WAVE_TRP_NBRIGHT', key='', dtype=int,
-                              source=__NAME__)
+                              source=__NAME__,
+                              description=('the number of bright lines to used '
+                                           'in triplet fit'))
 
 # the number of iterations done in triplet fit
 KW_WAVE_TRP_NITER = Keyword('KW_WAVE_TRP_NITER', key='', dtype=float,
-                            source=__NAME__)
+                            source=__NAME__,
+                            description=('the number of iterations done in '
+                                         'triplet fit'))
 
 # the max distance between catalog line and initial guess line in triplet fit
 KW_WAVE_TRP_CATGDIST = Keyword('KW_WAVE_TRP_CATGDIST', key='', dtype=float,
-                               source=__NAME__)
+                               source=__NAME__,
+                               description=(
+                                   'the max distance between catalog line and '
+                                   'initial guess line in triplet fit'))
 
 # the fit degree for triplet fit
 KW_WAVE_TRP_FITDEG = Keyword('KW_WAVE_TRP_FITDEG', key='', dtype=int,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description='the fit degree for triplet fit')
 
 # the minimum number of lines required per order in triplet fit
 KW_WAVE_TRP_MIN_NLINES = Keyword('KW_WAVE_TRP_MIN_NLINES', key='', dtype=int,
-                                 source=__NAME__)
+                                 source=__NAME__,
+                                 description=('the minimum number of lines '
+                                              'required per order in triplet fit'))
 
 # the total number of lines required in triplet fit
 KW_WAVE_TRP_TOT_NLINES = Keyword('KW_WAVE_TRP_TOT_NLINES', key='', dtype=int,
-                                 source=__NAME__)
+                                 source=__NAME__,
+                                 description=('the total number of lines '
+                                              'required in triplet fit'))
 
 # the degree(s) of fit to ensure continuity in triplet fit
 KW_WAVE_TRP_ORDER_FITCONT = Keyword('KW_WAVE_TRP_ORDER_FITCONT', key='',
-                                    dtype=float, source=__NAME__)
+                                    dtype=float, source=__NAME__,
+                                    description=('the degree(s) of fit to '
+                                                 'ensure continuity in '
+                                                 'triplet fit'))
 
 # the iteration number for sigma clip in triplet fit
 KW_WAVE_TRP_SCLIPNUM = Keyword('KW_WAVE_TRP_SCLIPNUM', key='', dtype=float,
-                               source=__NAME__)
+                               source=__NAME__,
+                               description=('the iteration number for sigma '
+                                            'clip in triplet fit'))
 
 # the sigma clip threshold in triplet fit
 KW_WAVE_TRP_SCLIPTHRES = Keyword('KW_WAVE_TRP_SCLIPTHRES', key='', dtype=float,
-                                 source=__NAME__)
+                                 source=__NAME__,
+                                 description=('the sigma clip threshold in '
+                                              'triplet fit'))
 
 # the distance away in dv to reject order triplet in triplet fit
 KW_WAVE_TRP_DVCUTORD = Keyword('KW_WAVE_TRP_DVCUTORD', key='', dtype=float,
-                               source=__NAME__)
+                               source=__NAME__,
+                               description=('the distance away in dv to reject '
+                                            'order triplet in triplet fit'))
 
 # the distance away in dv to reject all triplet in triplet fit
 KW_WAVE_TRP_DVCUTALL = Keyword('KW_WAVE_TRP_DVCUTALL', key='', dtype=float,
-                               source=__NAME__)
+                               source=__NAME__,
+                               description=('the distance away in dv to reject '
+                                            'all triplet in triplet fit'))
 
 # the wave resolution map dimensions
 KW_WAVE_RES_MAPSIZE = Keyword('KW_WAVE_RES_MAPSIZE', key='', dtype=int,
-                              source=__NAME__)
+                              source=__NAME__,
+                              description=('the wave resolution map '
+                                           'dimensions'))
 
 # the width of the box for wave resolution map
 KW_WAVE_RES_WSIZE = Keyword('KW_WAVE_RES_WSIZE', key='', dtype=float,
-                            source=__NAME__)
+                            source=__NAME__,
+                            description=('the width of the box for wave '
+                                         'resolution map'))
 
 # the max deviation in rms allowed in wave resolution map
 KW_WAVE_RES_MAXDEVTHRES = Keyword('KW_WAVE_RES_MAXDEVTHRES', key='',
-                                  dtype=float, source=__NAME__)
+                                  dtype=float, source=__NAME__,
+                                  description=('the max deviation in rms '
+                                               'allowed in wave resolution map'))
 
 # the littrow start order used for HC
 KW_WAVE_LIT_START_1 = Keyword('KW_WAVE_LIT_START_1', key='', dtype=int,
-                              source=__NAME__)
+                              source=__NAME__,
+                              description=('the littrow start order used '
+                                           'for HC'))
 
 # the littrow end order used for HC
 KW_WAVE_LIT_END_1 = Keyword('KW_WAVE_LIT_END_1', key='', dtype=float,
-                            source=__NAME__)
+                            source=__NAME__,
+                            description='the littrow end order used for HC')
 
 # the orders removed from the littrow test
 KW_WAVE_LIT_RORDERS = Keyword('KW_WAVE_LIT_RORDERS', key='', dtype=float,
-                              source=__NAME__)
+                              source=__NAME__,
+                              description=('the orders removed from the '
+                                           'littrow test'))
 
 # the littrow order initial value used for HC
 KW_WAVE_LIT_ORDER_INIT_1 = Keyword('KW_WAVE_LIT_ORDER_INIT_1', key='',
-                                   dtype=int, source=__NAME__)
+                                   dtype=int, source=__NAME__,
+                                   description=('the littrow order initial '
+                                                'value used for HC'))
 
 # the littrow order start value used for HC
 KW_WAVE_LIT_ORDER_START_1 = Keyword('KW_WAVE_LIT_ORDER_START_1', key='',
-                                    dtype=int, source=__NAME__)
+                                    dtype=int, source=__NAME__,
+                                    description=('the littrow order start '
+                                                 'value used for HC'))
 
 # the littrow order end value used for HC
 KW_WAVE_LIT_ORDER_END_1 = Keyword('KW_WAVE_LIT_ORDER_END_1', key='',
-                                  dtype=int, source=__NAME__)
+                                  dtype=int, source=__NAME__,
+                                  description=('the littrow order end value '
+                                               'used for HC'))
 
 # the littrow x cut step value used for HC
 KW_WAVE_LITT_XCUTSTEP_1 = Keyword('KW_WAVE_LITT_XCUTSTEP_1', key='',
-                                  dtype=int, source=__NAME__)
+                                  dtype=int, source=__NAME__,
+                                  description=('the littrow x cut step value '
+                                               'used for HC'))
 
 # the littrow fit degree value used for HC
 KW_WAVE_LITT_FITDEG_1 = Keyword('KW_WAVE_LITT_FITDEG_1', key='', dtype=int,
-                                source=__NAME__)
+                                source=__NAME__,
+                                description=('the littrow fit degree value '
+                                             'used for HC'))
 
 # the littrow extrapolation fit degree value used for HC
 KW_WAVE_LITT_EXT_FITDEG_1 = Keyword('KW_WAVE_LITT_EXT_FITDEG_1', key='',
-                                    dtype=int, source=__NAME__)
+                                    dtype=int, source=__NAME__,
+                                    description=('the littrow extrapolation '
+                                                 'fit degree value used for HC'))
 
 # the littrow extrapolation start order value used for HC
 KW_WAVE_LITT_EXT_ORD_START_1 = Keyword('KW_WAVE_LITT_EXT_ORD_START_1', key='',
-                                       dtype=int, source=__NAME__)
+                                       dtype=int, source=__NAME__,
+                                       description=('the littrow extrapolation '
+                                                    'start order value used '
+                                                    'for HC'))
 
 # the first order used for FP wave sol improvement
 KW_WFP_ORD_START = Keyword('KW_WFP_ORD_START', key='', dtype=int,
-                           source=__NAME__)
+                           source=__NAME__,
+                           description=('the first order used for FP wave sol '
+                                        'improvement'))
 
 # the last order used for FP wave sol improvement
 KW_WFP_ORD_FINAL = Keyword('KW_WFP_ORD_FINAL', key='', dtype=int,
-                           source=__NAME__)
+                           source=__NAME__,
+                           description=('the last order used for FP wave sol '
+                                        'improvement'))
 
 # the blaze threshold used for FP wave sol improvement
 KW_WFP_BLZ_THRES = Keyword('KW_WFP_BLZ_THRES', key='', dtype=float,
-                           source=__NAME__)
+                           source=__NAME__,
+                           description=('the blaze threshold used for FP wave '
+                                        'sol improvement'))
 
 # the minimum fp peak pixel sep used for FP wave sol improvement
 KW_WFP_XDIFF_MIN = Keyword('KW_WFP_XDIFF_MIN', key='', dtype=float,
-                           source=__NAME__)
+                           source=__NAME__,
+                           description=('the minimum fp peak pixel sep used '
+                                        'for FP wave sol improvement'))
 
 # the maximum fp peak pixel sep used for FP wave sol improvement
 KW_WFP_XDIFF_MAX = Keyword('KW_WFP_XDIFF_MAX', key='', dtype=float,
-                           source=__NAME__)
+                           source=__NAME__,
+                           description=('the maximum fp peak pixel sep used '
+                                        'for FP wave sol improvement'))
 
 # the initial value of the FP effective cavity width used
-KW_WFP_DOPD0 = Keyword('KW_WFP_DOPD0', key='', dtype=float, source=__NAME__)
+KW_WFP_DOPD0 = Keyword('KW_WFP_DOPD0', key='', dtype=float, source=__NAME__,
+                       description=('the initial value of the FP effective '
+                                    'cavity width used'))
 
 # the  maximum fraction wavelength offset btwn xmatch fp peaks used
 KW_WFP_LL_OFFSET = Keyword('KW_WFP_LL_OFFSET', key='', dtype=float,
-                           source=__NAME__)
+                           source=__NAME__,
+                           description=('the maximum fraction wavelength '
+                                        'offset btwn xmatch fp peaks used'))
 
 # the max dv to keep hc lines used
-KW_WFP_DVMAX = Keyword('KW_WFP_DVMAX', key='', dtype=float, source=__NAME__)
+KW_WFP_DVMAX = Keyword('KW_WFP_DVMAX', key='', dtype=float, source=__NAME__,
+                       description='the max dv to keep hc lines used')
 
 # the used polynomial fit degree (to fit wave solution)
 KW_WFP_LLFITDEG = Keyword('KW_WFP_LLFITDEG', key='', dtype=int,
-                          source=__NAME__)
+                          source=__NAME__,
+                          description=('the used polynomial fit degree (to '
+                                       'fit wave solution)'))
 
 # whether the cavity file was updated
 KW_WFP_UPDATECAV = Keyword('KW_WFP_UPDATECAV', key='', dtype=int,
-                           source=__NAME__)
+                           source=__NAME__,
+                           description='whether the cavity file was updated')
 
 # the mode used to fit the FP cavity
 KW_WFP_FPCAV_MODE = Keyword('KW_WFP_FPCAV_MODE', key='', dtype=int,
-                            source=__NAME__)
+                            source=__NAME__,
+                            description='the mode used to fit the FP cavity')
 
 # the mode used to fit the wavelength
 KW_WFP_LLFIT_MODE = Keyword('KW_WFP_LLFIT_MODE', key='', dtype=int,
-                            source=__NAME__)
+                            source=__NAME__,
+                            description='the mode used to fit the wavelength')
 
 # the minimum instrumental error used
 KW_WFP_ERRX_MIN = Keyword('KW_WFP_ERRX_MIN', key='', dtype=float,
-                          source=__NAME__)
+                          source=__NAME__,
+                          description='the minimum instrumental error used')
 
 # the max rms for the wave sol sig clip
 KW_WFP_MAXLL_FIT_RMS = Keyword('KW_WFP_MAXLL_FIT_RMS', key='', dtype=float,
-                               source=__NAME__)
+                               source=__NAME__,
+                               description=('the max rms for the wave sol '
+                                            'sig clip'))
 
 # the echelle number used for the first order
 KW_WFP_T_ORD_START = Keyword('KW_WFP_T_ORD_START', key='', dtype=int,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('the echelle number used for the '
+                                          'first order'))
 
 # the weight below which fp lines are rejected
 KW_WFP_WEI_THRES = Keyword('KW_WFP_WEI_THRES', key='', dtype=float,
-                           source=__NAME__)
+                           source=__NAME__,
+                           description=('the weight below which fp lines are '
+                                        'rejected'))
 
 # the polynomial degree fit order used for fitting the fp cavity
 KW_WFP_CAVFIT_DEG = Keyword('KW_WFP_CAVFIT_DEG', key='', dtype=int,
-                            source=__NAME__)
+                            source=__NAME__,
+                            description=('the polynomial degree fit order '
+                                         'used for fitting the fp cavity'))
 
 # the largest jump in fp that was allowed
 KW_WFP_LARGE_JUMP = Keyword('KW_WFP_LARGE_JUMP', key='', dtype=float,
-                            source=__NAME__)
+                            source=__NAME__,
+                            description=('the largest jump in fp that was '
+                                         'allowed'))
 
 # the index to start crossmatching fps at
-KW_WFP_CM_INDX = Keyword('KW_WFP_CM_INDX', key='', dtype=float, source=__NAME__)
+KW_WFP_CM_INDX = Keyword('KW_WFP_CM_INDX', key='', dtype=float, source=__NAME__,
+                         description=('the index to start crossmatching '
+                                      'fps at'))
 
 # the FP widths used for each order (1D list)
-KW_WFP_WIDUSED = Keyword('KW_WFP_WIDUSED', key='', dtype=float, source=__NAME__)
+KW_WFP_WIDUSED = Keyword('KW_WFP_WIDUSED', key='', dtype=float, source=__NAME__,
+                         description=('the FP widths used for each order '
+                                      '(1D list)'))
 
 # the percentile to normalise the FP flux per order used
 KW_WFP_NPERCENT = Keyword('KW_WFP_NPERCENT', key='', dtype=float,
-                          source=__NAME__)
+                          source=__NAME__,
+                          description=('the percentile to normalise the FP '
+                                       'flux per order used'))
 
 # the normalised limited used to detect FP peaks
-KW_WFP_LIMIT = Keyword('KW_WFP_LIMIT', key='', dtype=float, source=__NAME__)
+KW_WFP_LIMIT = Keyword('KW_WFP_LIMIT', key='', dtype=float, source=__NAME__,
+                       description=('the normalised limited used to detect '
+                                    'FP peaks'))
 
 # the normalised cut width for large peaks used
 KW_WFP_CUTWIDTH = Keyword('KW_WFP_CUTWIDTH', key='', dtype=float,
-                          source=__NAME__)
+                          source=__NAME__,
+                          description=('the normalised cut width for large '
+                                       'peaks used'))
 
-# Wavelength solution for fiber C that is is source of the WFP keys
-KW_WFP_FILE = Keyword('KW_WFP_FILE', key='', dtype=str, source=__NAME__)
+# Wavelength solution for fiber C that is source of the WFP keys
+KW_WFP_FILE = Keyword('KW_WFP_FILE', key='', dtype=str, source=__NAME__,
+                      description=('Wavelength solution for fiber C that is '
+                                   'source of the WFP keys'))
 
 # drift of the FP file used for the wavelength solution
-KW_WFP_DRIFT = Keyword('KW_WFP_DRIFT', key='', dtype=float, source=__NAME__)
+KW_WFP_DRIFT = Keyword('KW_WFP_DRIFT', key='', dtype=float, source=__NAME__,
+                       description=('drift of the FP file used for the '
+                                    'wavelength solution'))
 
 # FWHM of the wave FP file CCF
-KW_WFP_FWHM = Keyword('KW_WFP_FWHM', key='', dtype=float, source=__NAME__)
+KW_WFP_FWHM = Keyword('KW_WFP_FWHM', key='', dtype=float, source=__NAME__,
+                      description='FWHM of the wave FP file CCF')
 
 # Contrast of the wave FP file CCF
 KW_WFP_CONTRAST = Keyword('KW_WFP_CONTRAST', key='', dtype=float,
-                          source=__NAME__)
+                          source=__NAME__,
+                          description='Contrast of the wave FP file CCF')
 
 # Mask for the wave FP file CCF
-KW_WFP_MASK = Keyword('KW_WFP_MASK', key='', dtype=float, source=__NAME__)
+KW_WFP_MASK = Keyword('KW_WFP_MASK', key='', dtype=float, source=__NAME__,
+                      description='Mask for the wave FP file CCF')
 
 # Number of lines for the wave FP file CCF
-KW_WFP_LINES = Keyword('KW_WFP_LINES', key='', dtype=float, source=__NAME__)
+KW_WFP_LINES = Keyword('KW_WFP_LINES', key='', dtype=float, source=__NAME__,
+                       description='Number of lines for the wave FP file CCF')
 
 # Target RV for the wave FP file CCF
-KW_WFP_TARG_RV = Keyword('KW_WFP_TARG_RV', key='', dtype=float, source=__NAME__)
+KW_WFP_TARG_RV = Keyword('KW_WFP_TARG_RV', key='', dtype=float, source=__NAME__,
+                         description='Target RV for the wave FP file CCF')
 
 # Width for the wave FP file CCF
-KW_WFP_WIDTH = Keyword('KW_WFP_WIDTH', key='', dtype=float, source=__NAME__)
+KW_WFP_WIDTH = Keyword('KW_WFP_WIDTH', key='', dtype=float, source=__NAME__,
+                       description='Width for the wave FP file CCF')
 
 # Step for the wave FP file CCF
-KW_WFP_STEP = Keyword('KW_WFP_STEP', key='', dtype=float, source=__NAME__)
+KW_WFP_STEP = Keyword('KW_WFP_STEP', key='', dtype=float, source=__NAME__,
+                      description='Step for the wave FP file CCF')
 
 # The sigdet used for FP file CCF
-KW_WFP_SIGDET = Keyword('KW_WFP_SIGDET', key='', dtype=float, source=__NAME__)
+KW_WFP_SIGDET = Keyword('KW_WFP_SIGDET', key='', dtype=float, source=__NAME__,
+                        description='The sigdet used for FP file CCF')
 
 # The boxsize used for FP file CCF
-KW_WFP_BOXSIZE = Keyword('KW_WFP_BOXSIZE', key='', dtype=int, source=__NAME__)
+KW_WFP_BOXSIZE = Keyword('KW_WFP_BOXSIZE', key='', dtype=int, source=__NAME__,
+                         description='The boxsize used for FP file CCF')
 
 # The max flux used for the FP file CCF
-KW_WFP_MAXFLUX = Keyword('KW_WFP_MAXFLUX', key='', dtype=float, source=__NAME__)
+KW_WFP_MAXFLUX = Keyword('KW_WFP_MAXFLUX', key='', dtype=float, source=__NAME__,
+                         description='The max flux used for the FP file CCF')
 
 # The det noise used for the FP file CCF
 KW_WFP_DETNOISE = Keyword('KW_WFP_DETNOISE', key='', dtype=float,
-                          source=__NAME__)
+                          source=__NAME__,
+                          description=('The det noise used for the '
+                                       'FP file CCF'))
 
 # the highest order used for the FP file CCF
-KW_WFP_NMAX = Keyword('KW_WFP_NMAX', key='', dtype=int, source=__NAME__)
+KW_WFP_NMAX = Keyword('KW_WFP_NMAX', key='', dtype=int, source=__NAME__,
+                      description=('the highest order used for the '
+                                   'FP file CCF'))
 
 # The weight of the CCF mask (if 1 force all weights equal) used for FP CCF
-KW_WFP_MASKMIN = Keyword('KW_WFP_MASKMIN', key='', dtype=float, source=__NAME__)
+KW_WFP_MASKMIN = Keyword('KW_WFP_MASKMIN', key='', dtype=float, source=__NAME__,
+                         description=('The weight of the CCF mask (if 1 '
+                                      'force all weights equal) used for '
+                                      'FP CCF'))
 
 # The width of the CCF mask template line (if 0 use natural) used for FP CCF
-KW_WFP_MASKWID = Keyword('KW_WFP_MASKWID', key='', dtype=float, source=__NAME__)
+KW_WFP_MASKWID = Keyword('KW_WFP_MASKWID', key='', dtype=float, source=__NAME__,
+                         description=('The width of the CCF mask template '
+                                      'line (if 0 use natural) used for FP CCF'))
 
 # The units of the input CCF mask (converted to nm in code)
 KW_WFP_MASKUNITS = Keyword('KW_WFP_MASKUNITS', key='', dtype=str,
-                           source=__NAME__)
+                           source=__NAME__,
+                           description=('The units of the input CCF mask '
+                                        '(converted to nm in code)'))
 
 # number of iterations for convergence used in wave night (hc)
-KW_WNT_NITER1 = Keyword('KW_WNT_NITER1', key='', dtype=int, source=__NAME__)
+KW_WNT_NITER1 = Keyword('KW_WNT_NITER1', key='', dtype=int, source=__NAME__,
+                        description=('number of iterations for convergence '
+                                     'used in wave night (hc)'))
 
 # number of iterations for convergence used in wave night (fp)
-KW_WNT_NITER2 = Keyword('KW_WNT_NITER2', key='', dtype=int, source=__NAME__)
+KW_WNT_NITER2 = Keyword('KW_WNT_NITER2', key='', dtype=int, source=__NAME__,
+                        description=('number of iterations for convergence '
+                                     'used in wave night (fp)'))
 
 # starting point for the cavity corrections used in wave night
-KW_WNT_DCAVITY = Keyword('KW_WNT_DCAVITY', key='', dtype=int, source=__NAME__)
+KW_WNT_DCAVITY = Keyword('KW_WNT_DCAVITY', key='', dtype=int, source=__NAME__,
+                         description=('starting point for the cavity '
+                                      'corrections used in wave night'))
 
 # source fiber for the cavity correction
-KW_WNT_DCAVSRCE = Keyword('KW_WNT_DCAVSRCE', key='', dtype=str, source=__NAME__)
+KW_WNT_DCAVSRCE = Keyword('KW_WNT_DCAVSRCE', key='', dtype=str, source=__NAME__,
+                          description=('source fiber for the cavity '
+                                       'correction'))
 
 # define the sigma clip value to remove bad hc lines used
 KW_WNT_HCSIGCLIP = Keyword('KW_WNT_HCSIGCLIP', key='', dtype=float,
-                           source=__NAME__)
+                           source=__NAME__,
+                           description=('define the sigma clip value to remove '
+                                        'bad hc lines used'))
 
 # median absolute deviation cut off used
 KW_WNT_MADLIMIT = Keyword('KW_WNT_MADLIMIT', key='', dtype=float,
-                          source=__NAME__)
+                          source=__NAME__,
+                          description=('median absolute deviation cut off '
+                                       'used'))
 
 # sigma clipping for the fit used in wave night
-KW_WNT_NSIG_FIT = Keyword('KW_WNT_NSIG_FIT', key='', dtype=int, source=__NAME__)
+KW_WNT_NSIG_FIT = Keyword('KW_WNT_NSIG_FIT', key='', dtype=int, source=__NAME__,
+                          description=('sigma clipping for the fit used '
+                                       'in wave night'))
 
 # -----------------------------------------------------------------------------
 # Define telluric preclean variables
 # -----------------------------------------------------------------------------
 # Define the exponent of water key from telluric preclean process
 KW_TELLUP_EXPO_WATER = Keyword('KW_TELLUP_EXPO_WATER', key='', dtype=float,
-                               source=__NAME__)
+                               source=__NAME__,
+                               description=('Define the exponent of water key '
+                                            'from telluric preclean process'))
 
 # Define the exponent of other species from telluric preclean process
 KW_TELLUP_EXPO_OTHERS = Keyword('KW_TELLUP_EXPO_OTHERS', key='', dtype=float,
-                                source=__NAME__)
+                                source=__NAME__,
+                                description=('Define the exponent of other '
+                                             'species from telluric preclean process'))
 
 # Define the velocity of water absorbers calculated in telluric preclean process
 KW_TELLUP_DV_WATER = Keyword('KW_TELLUP_DV_WATER', key='', dtype=float,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=(
+                                 'Define the velocity of water absorbers '
+                                 'calculated in telluric preclean process'))
 
 # Define the velocity of other species absorbers calculated in telluric
 #     preclean process
 KW_TELLUP_DV_OTHERS = Keyword('KW_TELLUP_DV_OTHERS', key='', dtype=float,
-                              source=__NAME__)
+                              source=__NAME__,
+                              description=(
+                                  'Define the velocity of other species '
+                                  'absorbers calculated in telluric preclean process'))
 
 # Define the ccf power of the water
 KW_TELLUP_CCFP_WATER = Keyword('KW_TELLUP_CCFP_WATER', key='', dtype=float,
-                               source=__NAME__)
+                               source=__NAME__,
+                               description=('Define the ccf power of the '
+                                            'water'))
 
 # Define the ccf power of the others
 KW_TELLUP_CCFP_OTHERS = Keyword('KW_TELLUP_CCFP_OTHERS', key='', dtype=float,
-                                source=__NAME__)
+                                source=__NAME__,
+                                description=('Define the ccf power of the '
+                                             'others'))
 
 # Define whether precleaning was done (tellu pre-cleaning)
 KW_TELLUP_DO_PRECLEAN = Keyword('KW_TELLUP_DO_PRECLEAN', key='', dtype=bool,
-                                source=__NAME__)
+                                source=__NAME__,
+                                description=('Define whether precleaning was '
+                                             'done (tellu pre-cleaning)'))
 
 # Define default water absorption used (tellu pre-cleaning)
 KW_TELLUP_DFLT_WATER = Keyword('KW_TELLUP_DFLT_WATER', key='', dtype=float,
-                               source=__NAME__)
+                               source=__NAME__,
+                               description=('Define default water absorption '
+                                            'used (tellu pre-cleaning)'))
 
 # Define ccf scan range that was used (tellu pre-cleaning)
 KW_TELLUP_CCF_SRANGE = Keyword('KW_TELLUP_CCF_SRANGE', key='', dtype=float,
-                               source=__NAME__)
+                               source=__NAME__,
+                               description=('Define ccf scan range that was '
+                                            'used (tellu pre-cleaning)'))
 
 # Define whether we cleaned OH lines
 KW_TELLUP_CLEAN_OHLINES = Keyword('KW_TELLUP_CCF_SRANGE', key='', dtype=float,
                                   source=__NAME__)
 
 # Define which orders were removed from tellu pre-cleaning
-KW_TELLUP_REMOVE_ORDS = Keyword('KW_TELLUP_REMOVE_ORDSv', key='', dtype=str,
-                                source=__NAME__)
+KW_TELLUP_REMOVE_ORDS = Keyword('KW_TELLUP_REMOVE_ORDS', key='', dtype=str,
+                                source=__NAME__,
+                                description=('Define which orders were removed '
+                                             'from tellu pre-cleaning'))
 
 # Define which min snr threshold was used for tellu pre-cleaning
 KW_TELLUP_SNR_MIN_THRES = Keyword('KW_TELLUP_SNR_MIN_THRES', key='',
-                                  dtype=float, source=__NAME__)
+                                  dtype=float, source=__NAME__,
+                                  description=('Define which min snr threshold '
+                                               'was used for tellu '
+                                               'pre-cleaning'))
 
 # Define dexpo convergence threshold used
 KW_TELLUP_DEXPO_CONV_THRES = Keyword('KW_TELLUP_DEXPO_CONV_THRES', key='',
-                                     dtype=float, source=__NAME__)
+                                     dtype=float, source=__NAME__,
+                                     description=('Define dexpo convergence '
+                                                  'threshold used'))
 
-# Define the maximum number of oterations used to get dexpo convergence
+# Define the maximum number of operations used to get dexpo convergence
 KW_TELLUP_DEXPO_MAX_ITR = Keyword('KW_TELLUP_DEXPO_MAX_ITR', key='',
-                                  dtype=int, source=__NAME__)
+                                  dtype=int, source=__NAME__,
+                                  description=('Define the maximum number of '
+                                               'operations used to get dexpo '
+                                               'convergence'))
 
 # Define the kernel threshold in abso_expo used in tellu pre-cleaning
 KW_TELLUP_ABSOEXPO_KTHRES = Keyword('KW_TELLUP_ABSOEXPO_KTHRES', key='',
-                                    dtype=int, source=__NAME__)
+                                    dtype=int, source=__NAME__,
+                                    description=('Define the kernel threshold '
+                                                 'in abso_expo used in tellu '
+                                                 'pre-cleaning'))
 
 # Define the wave start (same as s1d) in nm used
 KW_TELLUP_WAVE_START = Keyword('KW_TELLUP_WAVE_START', key='', dtype=float,
-                               source=__NAME__)
+                               source=__NAME__,
+                               description=('Define the wave start (same as '
+                                            's1d) in nm used'))
 
 # Define the wave end (same as s1d) in nm used
 KW_TELLUP_WAVE_END = Keyword('KW_TELLUP_WAVE_END', key='', dtype=float,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('Define the wave end (same as s1d) '
+                                          'in nm used'))
 
 # Define the dv wave grid (same as s1d) in km/s used
 KW_TELLUP_DVGRID = Keyword('KW_TELLUP_DVGRID', key='', dtype=float,
-                           source=__NAME__)
+                           source=__NAME__,
+                           description=('Define the dv wave grid (same as s1d) '
+                                        'in km/s used'))
 
 # Define the gauss width of the kernel used in abso_expo for tellu pre-cleaning
 KW_TELLUP_ABSOEXPO_KWID = Keyword('KW_TELLUP_ABSOEXPO_KWID', key='',
-                                  dtype=float, source=__NAME__)
+                                  dtype=float, source=__NAME__,
+                                  description=(
+                                      'Define the gauss width of the kernel '
+                                      'used in abso_expo for tellu '
+                                      'pre-cleaning'))
 
 # Define the gauss shape of the kernel used in abso_expo for tellu pre-cleaning
 KW_TELLUP_ABSOEXPO_KEXP = Keyword('KW_TELLUP_ABSOEXPO_KEXP', key='',
-                                  dtype=float, source=__NAME__)
+                                  dtype=float, source=__NAME__,
+                                  description=(
+                                      'Define the gauss shape of the kernel '
+                                      'used in abso_expo for tellu '
+                                      'pre-cleaning'))
 
 # Define the exponent of the transmission threshold used for tellu pre-cleaning
 KW_TELLUP_TRANS_THRES = Keyword('KW_TELLUP_TRANS_THRES', key='',
-                                dtype=float, source=__NAME__)
+                                dtype=float, source=__NAME__,
+                                description=(
+                                    'Define the exponent of the transmission '
+                                    'threshold used for tellu pre-cleaning'))
 
 # Define the threshold for discrepant tramission used for tellu pre-cleaning
 KW_TELLUP_TRANS_SIGL = Keyword('KW_TELLUP_TRANS_SIGL', key='',
-                               dtype=float, source=__NAME__)
+                               dtype=float, source=__NAME__,
+                               description=(
+                                   'Define the threshold for discrepant '
+                                   'tramission used for tellu pre-cleaning'))
 
 # Define the whether to force fit to header airmass used for tellu pre-cleaning
 KW_TELLUP_FORCE_AIRMASS = Keyword('KW_TELLUP_FORCE_AIRMASS', key='',
-                                  dtype=bool, source=__NAME__)
+                                  dtype=bool, source=__NAME__,
+                                  description=(
+                                      'Define the whether to force fit to '
+                                      'header airmass used for tellu '
+                                      'pre-cleaning'))
 
 # Define the bounds of the exponent of other species used for tellu pre-cleaning
 KW_TELLUP_OTHER_BOUNDS = Keyword('KW_TELLUP_OTHER_BOUNDS', key='',
-                                 dtype=str, source=__NAME__)
+                                 dtype=str, source=__NAME__,
+                                 description=(
+                                     'Define the bounds of the exponent of '
+                                     'other species used for tellu '
+                                     'pre-cleaning'))
 
 # Define the bounds of the exponent of water used for tellu pre-cleaning
 KW_TELLUP_WATER_BOUNDS = Keyword('KW_TELLUP_WATER_BOUNDS', key='',
-                                 dtype=str, source=__NAME__)
+                                 dtype=str, source=__NAME__,
+                                 description=('Define the bounds of the '
+                                              'exponent of water used for '
+                                              'tellu pre-cleaning'))
 
 # -----------------------------------------------------------------------------
 # Define make telluric variables
 # -----------------------------------------------------------------------------
 # The template file used for mktellu calculation
 KW_MKTELL_TEMP_FILE = Keyword('KW_MKTELL_TEMP_FILE', key='', dtype=str,
-                              source=__NAME__)
+                              source=__NAME__,
+                              description=('The template file used for '
+                                           'mktellu calculation'))
 
 # the number of template files used
 KW_MKTELL_TEMPNUM = Keyword('KW_MKTELL_TEMPNUM', key='', dtype=str,
-                            source=__NAME__)
+                            source=__NAME__,
+                            description='the number of template files used')
 
 # the hash for the template generation (unique)
 KW_MKTELL_TEMPHASH = Keyword('KW_MKTELL_TEMPHASH', key='', dtype=str,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('the hash for the template '
+                                          'generation (unique)'))
 
 # the time the template was generated
 KW_MKTELL_TEMPTIME = Keyword('KW_MKTELL_TEMPTIME', key='', dtype=str,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('the time the template was '
+                                          'generated'))
 
 # The blaze percentile used for mktellu calculation
 KW_MKTELL_BLAZE_PRCT = Keyword('KW_MKTELL_BLAZE_PRCT', key='', dtype=float,
-                               source=__NAME__)
+                               source=__NAME__,
+                               description=('The blaze percentile used for '
+                                            'mktellu calculation'))
 
 # The blaze normalization cut used for mktellu calculation
 KW_MKTELL_BLAZE_CUT = Keyword('KW_MKTELL_BLAZE_CUT', key='', dtype=float,
-                              source=__NAME__)
+                              source=__NAME__,
+                              description=('The blaze normalization cut used '
+                                           'for mktellu calculation'))
 
 # The default convolution width in pix used for mktellu calculation
 KW_MKTELL_DEF_CONV_WID = Keyword('KW_MKTELL_DEF_CONV_WID', key='', dtype=int,
-                                 source=__NAME__)
+                                 source=__NAME__,
+                                 description=('The default convolution width '
+                                              'in pix used for mktellu '
+                                              'calculation'))
 
 # The median filter width used for mktellu calculation
 KW_MKTELL_TEMP_MEDFILT = Keyword('KW_MKTELL_TEMP_MEDFILT', key='', dtype=float,
-                                 source=__NAME__)
+                                 source=__NAME__,
+                                 description=('The median filter width used '
+                                              'for mktellu calculation'))
 
 # The recovered airmass value calculated in mktellu calculation
 KW_MKTELL_AIRMASS = Keyword('KW_MKTELL_AIRMASS', key='', dtype=float,
-                            source=__NAME__)
+                            source=__NAME__,
+                            description=('The recovered airmass value '
+                                         'calculated in mktellu calculation'))
 
 # The recovered water optical depth calculated in mktellu calculation
 KW_MKTELL_WATER = Keyword('KW_MKTELL_WATER', key='', dtype=float,
-                          source=__NAME__)
+                          source=__NAME__,
+                          description=('The recovered water optical depth '
+                                       'calculated in mktellu calculation'))
 
 # The min transmission requirement used for mktellu/ftellu
 KW_MKTELL_THRES_TFIT = Keyword('KW_MKTELL_THRES_TFIT', key='', dtype=float,
-                               source=__NAME__)
+                               source=__NAME__,
+                               description=('The min transmission requirement '
+                                            'used for mktellu/ftellu'))
 
 # The upper limit for trans fit used in mktellu/ftellu
 KW_MKTELL_TRANS_FIT_UPPER_BAD = Keyword('KW_MKTELL_TRANS_FIT_UPPER_BAD',
-                                        key='', dtype=float, source=__NAME__)
+                                        key='', dtype=float, source=__NAME__,
+                                        description=('The upper limit for '
+                                                     'trans fit used in '
+                                                     'mktellu/ftellu'))
 
 # -----------------------------------------------------------------------------
 # Define fit telluric variables
 # -----------------------------------------------------------------------------
 # The number of principle components used
-KW_FTELLU_NPC = Keyword('KW_FTELLU_NPC', key='', dtype=int, source=__NAME__)
+KW_FTELLU_NPC = Keyword('KW_FTELLU_NPC', key='', dtype=int, source=__NAME__,
+                        description='The number of principle components used')
 
 # The number of trans files used in pc fit (closest in expo h20/others)
 KW_FTELLU_NTRANS = Keyword('KW_FTELLU_NTRANS', key='', dtype=int,
-                           source=__NAME__)
+                           source=__NAME__,
+                           description=('The number of trans files used in pc '
+                                        'fit (closest in expo h20/others)'))
 
 # whether we added first derivative to principal components
 KW_FTELLU_ADD_DPC = Keyword('KW_FTELLU_ADD_DPC', key='', dtype=bool,
-                            source=__NAME__)
+                            source=__NAME__,
+                            description=('whether we added first derivative to '
+                                         'principal components'))
 
 # whether we fitted the derivatives of the principal components
 KW_FTELLU_FIT_DPC = Keyword('KW_FTELLU_FIT_DPC', key='', dtype=bool,
-                            source=__NAME__)
+                            source=__NAME__,
+                            description=('whether we fitted the derivatives of '
+                                         'the principal components'))
 
 # The source of the loaded absorption (npy file or trans_file from database)
 KW_FTELLU_ABSO_SRC = Keyword('KW_FTELLU_ABSO_SRC', key='', dtype=str,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('The source of the loaded absorption '
+                                          '(npy file or trans_file from '
+                                          'database)'))
 
 # The prefix for molecular
 KW_FTELLU_ABSO_PREFIX = Keyword('KW_FTELLU_ABSO_PREFIX', key='', dtype=float,
-                                source=__NAME__)
+                                source=__NAME__,
+                                description='The prefix for molecular')
 
 # Number of good pixels requirement used
 KW_FTELLU_FIT_KEEP_NUM = Keyword('KW_FTELLU_FIT_KEEP_NUM', key='', dtype=int,
-                                 source=__NAME__)
+                                 source=__NAME__,
+                                 description=('Number of good pixels '
+                                              'requirement used'))
 
 # The minimum transmission used
 KW_FTELLU_FIT_MIN_TRANS = Keyword('KW_FTELLU_FIT_MIN_TRANS', key='',
-                                  dtype=float, source=__NAME__)
+                                  dtype=float, source=__NAME__,
+                                  description='The minimum transmission used')
 
 # The minimum wavelength used
 KW_FTELLU_LAMBDA_MIN = Keyword('KW_FTELLU_LAMBDA_MIN', key='', dtype=float,
-                               source=__NAME__)
+                               source=__NAME__,
+                               description='The minimum wavelength used')
 
 # The maximum wavelength used
 KW_FTELLU_LAMBDA_MAX = Keyword('KW_FTELLU_LAMBDA_MAX', key='', dtype=float,
-                               source=__NAME__)
+                               source=__NAME__,
+                               description='The maximum wavelength used')
 
 # The smoothing kernel size [km/s] used
 KW_FTELLU_KERN_VSINI = Keyword('KW_FTELLU_KERN_VSINI', key='', dtype=float,
-                               source=__NAME__)
+                               source=__NAME__,
+                               description=('The smoothing kernel size '
+                                            '[km/s] used'))
 
 # The image pixel size used
 KW_FTELLU_IM_PX_SIZE = Keyword('KW_FTELLU_IM_PX_SIZE', key='', dtype=float,
-                               source=__NAME__)
+                               source=__NAME__,
+                               description='The image pixel size used')
 
 # the number of iterations used to fit
 KW_FTELLU_FIT_ITERS = Keyword('KW_FTELLU_FIT_ITERS', key='', dtype=int,
-                              source=__NAME__)
+                              source=__NAME__,
+                              description=('the number of iterations used '
+                                           'to fit'))
 
 # the log limit in minimum absorption used
 KW_FTELLU_RECON_LIM = Keyword('KW_FTELLU_RECON_LIM', key='', dtype=float,
-                              source=__NAME__)
+                              source=__NAME__,
+                              description=('the log limit in minimum '
+                                           'absorption used'))
 
 # the template that was used (or None if not used)
 KW_FTELLU_TEMPLATE = Keyword('KW_FTELLU_TEMPLATE', key='', dtype=str,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('the template that was used (or '
+                                          'None if not used)'))
 
 # the number of template files used
 KW_FTELLU_TEMPNUM = Keyword('KW_FTELLU_TEMPNUM', key='', dtype=int,
-                            source=__NAME__)
+                            source=__NAME__,
+                            description='the number of template files used')
 
 # the hash for the template generation (unique)
 KW_FTELLU_TEMPHASH = Keyword('KW_FTELLU_TEMPHASH', key='', dtype=str,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('the hash for the template '
+                                          'generation (unique)'))
 
 # the hash for the template generation (unique)
 KW_FTELLU_TEMPTIME = Keyword('KW_FTELLU_TEMPTIME', key='', dtype=str,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('the hash for the template '
+                                          'generation (unique)'))
 
 # Telluric principle component amplitudes (for use with 1D list)
 KW_FTELLU_AMP_PC = Keyword('KW_FTELLU_AMP_PC', key='', dtype=float,
-                           source=__NAME__)
+                           source=__NAME__,
+                           description=('Telluric principle component '
+                                        'amplitudes (for use with 1D list)'))
 
 # Telluric principle component first derivative
 KW_FTELLU_DVTELL1 = Keyword('KW_FTELLU_DVTELL1', key='', dtype=float,
-                            source=__NAME__)
+                            source=__NAME__,
+                            description=('Telluric principle component '
+                                         'first derivative'))
 
 # Telluric principle component second derivative
 KW_FTELLU_DVTELL2 = Keyword('KW_FTELLU_DVTELL2', key='', dtype=float,
-                            source=__NAME__)
+                            source=__NAME__,
+                            description=('Telluric principle component '
+                                         'second derivative'))
 
 # Tau Water depth calculated in fit tellu
 KW_FTELLU_TAU_H2O = Keyword('KW_FTELLU_TAU_H2O', key='', dtype=float,
-                            source=__NAME__)
+                            source=__NAME__,
+                            description=('Tau Water depth calculated in '
+                                         'fit tellu'))
 
 # Tau Rest depth calculated in fit tellu
 KW_FTELLU_TAU_REST = Keyword('KW_FTELLU_TAU_REST', key='', dtype=float,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('Tau Rest depth calculated in '
+                                          'fit tellu'))
 
 # -----------------------------------------------------------------------------
 # Define make template variables
 # -----------------------------------------------------------------------------
 # store the number of files used to create template
 KW_MKTEMP_NFILES = Keyword('KW_MKTEMP_NFILES', key='', dtype=int,
-                           source=__NAME__)
+                           source=__NAME__,
+                           description=('store the number of files used to '
+                                        'create template'))
 
 # store a unique hash for this template (based on file name etc)
 KW_MKTEMP_HASH = Keyword('KW_MKTEMP_HASH', key='', dtype=str,
-                         source=__NAME__)
+                         source=__NAME__,
+                         description=('store a unique hash for this template '
+                                      '(based on file name etc)'))
 
 # store time template was created
 KW_MKTEMP_TIME = Keyword('KW_MKTEMP_TIME', key='', dtype=float,
-                         source=__NAME__)
+                         source=__NAME__,
+                         description='store time template was created')
 
 # the snr order used for quality control cut in make template calculation
 KW_MKTEMP_SNR_ORDER = Keyword('KW_MKTEMP_SNR_ORDER', key='', dtype=int,
-                              source=__NAME__)
+                              source=__NAME__,
+                              description=('the snr order used for quality '
+                                           'control cut in make template calculation'))
 
 # the snr threshold used for quality control cut in make template calculation
 KW_MKTEMP_SNR_THRES = Keyword('KW_MKTEMP_SNR_THRES', key='', dtype=float,
-                              source=__NAME__)
+                              source=__NAME__,
+                              description=(
+                                  'the snr threshold used for quality control '
+                                  'cut in make template calculation'))
 
 # the berv coverage calculated for this template calculation
 KW_MKTEMP_BERV_COV = Keyword('KW_MKTEMP_BERV_COV', key='', dtype=float,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('the berv coverage calculated for '
+                                          'this template calculation'))
 
 # the minimum berv coverage allowed for this template calculation
 KW_MKTEMP_BERV_COV_MIN = Keyword('KW_MKTEMP_BERV_COV_MIN', key='', dtype=float,
-                                 source=__NAME__)
+                                 source=__NAME__,
+                                 description=('the minimum berv coverage '
+                                              'allowed for this template '
+                                              'calculation'))
 
 # the core snr used for this template calculation
 KW_MKTEMP_BERV_COV_SNR = Keyword('KW_MKTEMP_BERV_COV_SNR', key='', dtype=float,
-                                 source=__NAME__)
+                                 source=__NAME__,
+                                 description=('the core snr used for this '
+                                              'template calculation'))
 
 # the resolution used for this template calculation
 KW_MKTEMP_BERV_COV_RES = Keyword('KW_MKTEMP_BERV_COV_RES', key='', dtype=float,
-                                 source=__NAME__)
+                                 source=__NAME__,
+                                 description=('the resolution used for this '
+                                              'template calculation'))
 
 # -----------------------------------------------------------------------------
 # Define ccf variables
 # -----------------------------------------------------------------------------
 # The mean rv calculated from the mean ccf
-KW_CCF_MEAN_RV = Keyword('KW_CCF_MEAN_RV', key='', dtype=float, source=__NAME__)
+KW_CCF_MEAN_RV = Keyword('KW_CCF_MEAN_RV', key='', dtype=float, source=__NAME__,
+                         description='The mean rv calculated from the mean ccf')
 
 # the mean constrast (depth of fit ccf) from the mean ccf
 KW_CCF_MEAN_CONSTRAST = Keyword('KW_CCF_MEAN_CONSTRAST', key='', dtype=float,
-                                source=__NAME__)
+                                source=__NAME__,
+                                description=('the mean constrast (depth of '
+                                             'fit ccf) from the mean ccf'))
 
 # the mean fwhm from the mean ccf
 KW_CCF_MEAN_FWHM = Keyword('KW_CCF_MEAN_FWHM', key='', dtype=float,
-                           source=__NAME__)
+                           source=__NAME__,
+                           description='the mean fwhm from the mean ccf')
 
 # the total number of mask lines used in all ccfs
 KW_CCF_TOT_LINES = Keyword('KW_CCF_TOT_LINES', key='', dtype=int,
-                           source=__NAME__)
+                           source=__NAME__,
+                           description=('the total number of mask lines '
+                                        'used in all ccfs'))
 
 # the ccf mask file used
-KW_CCF_MASK = Keyword('KW_CCF_MASK', key='', dtype=str, source=__NAME__)
+KW_CCF_MASK = Keyword('KW_CCF_MASK', key='', dtype=str, source=__NAME__,
+                      description='the ccf mask file used')
 
 # the ccf step used (in km/s)
-KW_CCF_STEP = Keyword('KW_CCF_STEP', key='', dtype=float, source=__NAME__)
+KW_CCF_STEP = Keyword('KW_CCF_STEP', key='', dtype=float, source=__NAME__,
+                      description='the ccf step used (in km/s)')
 
 # the width of the ccf used (in km/s)
-KW_CCF_WIDTH = Keyword('KW_CCF_WIDTH', key='', dtype=float, source=__NAME__)
+KW_CCF_WIDTH = Keyword('KW_CCF_WIDTH', key='', dtype=float, source=__NAME__,
+                       description='the width of the ccf used (in km/s)')
 
 # the central rv used (in km/s) rv elements run from rv +/- width in the ccf
 KW_CCF_TARGET_RV = Keyword('KW_CCF_TARGET_RV', key='', dtype=float,
-                           source=__NAME__)
+                           source=__NAME__,
+                           description=('the central rv used (in km/s) rv '
+                                        'elements run from rv +/- width in '
+                                        'the ccf'))
 
 # the read noise used in the photon noise uncertainty calculation in the ccf
-KW_CCF_SIGDET = Keyword('KW_CCF_SIGDET', key='', dtype=float, source=__NAME__)
+KW_CCF_SIGDET = Keyword('KW_CCF_SIGDET', key='', dtype=float, source=__NAME__,
+                        description=('the read noise used in the photon noise '
+                                     'uncertainty calculation in the ccf'))
 
 # the size in pixels around saturated pixels to regard as bad pixels used in
 #    the ccf photon noise calculation
-KW_CCF_BOXSIZE = Keyword('KW_CCF_BOXSIZE', key='', dtype=int, source=__NAME__)
+KW_CCF_BOXSIZE = Keyword('KW_CCF_BOXSIZE', key='', dtype=int, source=__NAME__,
+                         description=(
+                             'the size in pixels around saturated pixels to '
+                             'regard as bad pixels used in the ccf photon '
+                             'noise calculation'))
 
 # the upper limit for good pixels (above this are bad) used in the ccf photon
 #   noise calculation
-KW_CCF_MAXFLUX = Keyword('KW_CCF_MAXFLUX', key='', dtype=float, source=__NAME__)
+KW_CCF_MAXFLUX = Keyword('KW_CCF_MAXFLUX', key='', dtype=float, source=__NAME__,
+                         description=(
+                             'the upper limit for good pixels (above this are '
+                             'bad) used in the ccf photon noise calculation'))
 
 # The last order used in the mean CCF (from 0 to nmax are used)
-KW_CCF_NMAX = Keyword('KW_CCF_NMAX', key='', dtype=int, source=__NAME__)
+KW_CCF_NMAX = Keyword('KW_CCF_NMAX', key='', dtype=int, source=__NAME__,
+                      description=('The last order used in the mean CCF (from '
+                                   '0 to nmax are used)'))
 
 # the minimum weight of a line in the CCF MASK used
 KW_CCF_MASK_MIN = Keyword('KW_CCF_MASK_MIN', key='', dtype=float,
-                          source=__NAME__)
+                          source=__NAME__,
+                          description=('the minimum weight of a line in the '
+                                       'CCF MASK used'))
 
 # the mask width of lines in the CCF Mask used
 KW_CCF_MASK_WID = Keyword('KW_CCF_MASK_WID', key='', dtype=float,
-                          source=__NAME__)
+                          source=__NAME__,
+                          description=('the mask width of lines in the CCF '
+                                       'Mask used'))
 
 # the wavelength units used in the CCF Mask for line centers
 KW_CCF_MASK_UNITS = Keyword('KW_CCF_MASK_UNITS', key='', dtype=str,
-                            source=__NAME__)
+                            source=__NAME__,
+                            description=('the wavelength units used in the '
+                                         'CCF Mask for line centers'))
 
 # the dv rms calculated for spectrum [m/s]
 KW_CCF_DVRMS_SP = Keyword('KW_CCF_DVRMS_SP', key='', dtype=float,
-                          source=__NAME__)
+                          source=__NAME__,
+                          description=('the dv rms calculated for spectrum '
+                                       '[m/s]'))
 
 # the dev rms calculated during the CCF [m/s]
 KW_CCF_DVRMS_CC = Keyword('KW_CCF_DVRMS_CC', key='', dtype=float,
-                          source=__NAME__)
+                          source=__NAME__,
+                          description=('the dev rms calculated during the '
+                                       'CCF [m/s]'))
 
 # The radial velocity measured from the wave solution FP CCF
 KW_CCF_RV_WAVE_FP = Keyword('KW_CCF_RV_WAVE_FP', key='', dtype=float,
-                            source=__NAME__)
+                            source=__NAME__,
+                            description=('The radial velocity measured from '
+                                         'the wave solution FP CCF'))
 
 # The radial velocity measured from a simultaneous FP CCF
 #     (FP in reference channel)
 KW_CCF_RV_SIMU_FP = Keyword('KW_CCF_RV_SIMU_FP', key='', dtype=float,
-                            source=__NAME__)
+                            source=__NAME__,
+                            description=(
+                                'The radial velocity measured from a '
+                                'simultaneous FP CCF (FP in reference '
+                                'channel)'))
 
 # The radial velocity drift between wave sol FP and simultaneous FP (if present)
 #   if simulataneous FP not present this is just the wave solution FP CCF value
 KW_CCF_RV_DRIFT = Keyword('KW_CCF_RV_DRIFT', key='', dtype=float,
-                          source=__NAME__)
+                          source=__NAME__,
+                          description=(
+                              'The radial velocity drift between wave sol '
+                              'FP and simultaneous FP (if present) if '
+                              'simulataneous FP not present this is just the '
+                              'wave solution FP CCF value'))
 
 # The radial velocity measured from the object CCF against the CCF MASK
-KW_CCF_RV_OBJ = Keyword('KW_CCF_RV_OBJ', key='', dtype=float, source=__NAME__)
+KW_CCF_RV_OBJ = Keyword('KW_CCF_RV_OBJ', key='', dtype=float, source=__NAME__,
+                        description=('The radial velocity measured from the '
+                                     'object CCF against the CCF MASK'))
 
 # the corrected radial velocity of the object (taking into account the FP RVs)
-KW_CCF_RV_CORR = Keyword('KW_CCF_RV_CORR', key='', dtype=float, source=__NAME__)
+KW_CCF_RV_CORR = Keyword('KW_CCF_RV_CORR', key='', dtype=float, source=__NAME__,
+                         description=('the corrected radial velocity of the '
+                                      'object (taking into account the '
+                                      'FP RVs)'))
 
 # the wave file used for the rv (fiber specific)
 KW_CCF_RV_WAVEFILE = Keyword('KW_CCF_RV_WAVEFILE', key='', dtype=str,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('the wave file used for the rv '
+                                          '(fiber specific)'))
 
 # the wave file time used for the rv [mjd] (fiber specific)
 KW_CCF_RV_WAVETIME = Keyword('KW_CCF_RV_WAVETIME', key='', dtype=str,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('the wave file time used for the '
+                                          'rv [mjd] (fiber specific)'))
 
 # the time diff (in days) between wave file and file (fiber specific)
 KW_CCF_RV_TIMEDIFF = Keyword('KW_CCF_RV_TIMEDIFF', key='', dtype=str,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('the time diff (in days) between '
+                                          'wave file and file '
+                                          '(fiber specific)'))
 
 # the wave file source used for the rv reference fiber
 KW_CCF_RV_WAVESRCE = Keyword('KW_CCF_RV_WAVESRCE', key='', dtype=str,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('the wave file source used for '
+                                          'the rv reference fiber'))
 
 # -----------------------------------------------------------------------------
 # Define polar variables
 # -----------------------------------------------------------------------------
 
 # define the Stokes paremeter: Q, U, V, or I
-KW_POL_STOKES = Keyword('KW_POL_STOKES', key='', dtype=str, source=__NAME__)
+KW_POL_STOKES = Keyword('KW_POL_STOKES', key='', dtype=str, source=__NAME__,
+                        description=('define the Stokes paremeter: '
+                                     'Q, U, V, or I'))
 
 # define Number of exposures for polarimetry
-KW_POL_NEXP = Keyword('KW_POL_NEXP', key='', dtype=int, source=__NAME__)
+KW_POL_NEXP = Keyword('KW_POL_NEXP', key='', dtype=int, source=__NAME__,
+                      description=('define Number of exposures for '
+                                   'polarimetry'))
 
 # defines the Polarimetry method
-KW_POL_METHOD = Keyword('KW_POL_METHOD', key='', dtype=str, source=__NAME__)
+KW_POL_METHOD = Keyword('KW_POL_METHOD', key='', dtype=str, source=__NAME__,
+                        description='defines the Polarimetry method')
 
 # define the base file name exposure list
-KW_POL_FILES = Keyword('KW_POL_FILES', key='', dtype=str, source=__NAME__)
+KW_POL_FILES = Keyword('KW_POL_FILES', key='', dtype=str, source=__NAME__,
+                       description=('define the base file name exposure '
+                                    'list'))
 
 # define the exposure times of exposure list
-KW_POL_EXPS = Keyword('KW_POL_EXPS', key='', dtype=float, source=__NAME__)
+KW_POL_EXPS = Keyword('KW_POL_EXPS', key='', dtype=float, source=__NAME__,
+                      description=('define the exposure times of exposure '
+                                   'list'))
 
 # define the mjds at start for exposure list
-KW_POL_MJDS = Keyword('KW_POL_MJDS', key='', dtype=float, source=__NAME__)
+KW_POL_MJDS = Keyword('KW_POL_MJDS', key='', dtype=float, source=__NAME__,
+                      description=('define the mjds at start for exposure '
+                                   'list'))
 
 # define the mjdends at end for exposure list
-KW_POL_MJDENDS = Keyword('KW_POL_MJDENDS', key='', dtype=float, source=__NAME__)
+KW_POL_MJDENDS = Keyword('KW_POL_MJDENDS', key='', dtype=float, source=__NAME__,
+                         description=('define the mjdends at end for '
+                                      'exposure list'))
 
 # define the bjds for exposure list
-KW_POL_BJDS = Keyword('KW_POL_BJDS', key='', dtype=float, source=__NAME__)
+KW_POL_BJDS = Keyword('KW_POL_BJDS', key='', dtype=float, source=__NAME__,
+                      description='define the bjds for exposure list')
 
 # define the bervs for exposure list
-KW_POL_BERVS = Keyword('KW_POL_BERVS', key='', dtype=float, source=__NAME__)
+KW_POL_BERVS = Keyword('KW_POL_BERVS', key='', dtype=float, source=__NAME__,
+                       description='define the bervs for exposure list')
 
 # define the Total exposure time (sec)
-KW_POL_EXPTIME = Keyword('KW_POL_EXPTIME', key='', dtype=float, source=__NAME__)
+KW_POL_EXPTIME = Keyword('KW_POL_EXPTIME', key='', dtype=float, source=__NAME__,
+                         description='define the Total exposure time (sec)')
 
 # define the Elapsed time of observation (sec)
 KW_POL_ELAPTIME = Keyword('KW_POL_ELAPTIME', key='', dtype=float,
-                          source=__NAME__)
+                          source=__NAME__,
+                          description=('define the Elapsed time of '
+                                       'observation (sec)'))
 
 # define the MJD at center of observation
-KW_POL_MJDCEN = Keyword('KW_POL_MJDCEN', key='', dtype=float, source=__NAME__)
+KW_POL_MJDCEN = Keyword('KW_POL_MJDCEN', key='', dtype=float, source=__NAME__,
+                        description='define the MJD at center of observation')
 
 # define the BJD at center of observation
-KW_POL_BJDCEN = Keyword('KW_POL_BJDCEN', key='', dtype=float, source=__NAME__)
+KW_POL_BJDCEN = Keyword('KW_POL_BJDCEN', key='', dtype=float, source=__NAME__,
+                        description='define the BJD at center of observation')
 
 # define the BERV at center of observation
-KW_POL_BERVCEN = Keyword('KW_POL_BERVCEN', key='', dtype=float, source=__NAME__)
+KW_POL_BERVCEN = Keyword('KW_POL_BERVCEN', key='', dtype=float, source=__NAME__,
+                         description=('define the BERV at center of '
+                                      'observation'))
 
 # define the Mean BJD for polar sequence
-KW_POL_MEANBJD = Keyword('KW_POL_MEANBJD', key='', dtype=float, source=__NAME__)
+KW_POL_MEANBJD = Keyword('KW_POL_MEANBJD', key='', dtype=float, source=__NAME__,
+                         description=('define the Mean BJD for polar '
+                                      'sequence'))
 
 # define the minimum number of files used
 KW_USED_MIN_FILES = Keyword('KW_USED_MIN_FILES', key='', dtype=int,
-                            source=__NAME__)
+                            source=__NAME__,
+                            description=('define the minimum number of '
+                                         'files used'))
 
 # define all possible fibers for polarimetry used
 KW_USED_VALID_FIBERS = Keyword('KW_USED_VALID_FIBERS', key='', dtype=str,
-                               source=__NAME__)
+                               source=__NAME__,
+                               description=('define all possible fibers for '
+                                            'polarimetry used'))
 
 # define all possible stokes parameters used
 KW_USED_VALID_STOKES = Keyword('KW_USED_VALID_STOKES', key='', dtype=str,
-                               source=__NAME__)
+                               source=__NAME__,
+                               description=('define all possible stokes '
+                                            'parameters used'))
 
 # define the continuum bin size used
 KW_USED_CONT_BINSIZE = Keyword('KW_USED_CONT_BINSIZE', key='', dtype=int,
-                               source=__NAME__)
+                               source=__NAME__,
+                               description=('define the continuum bin size '
+                                            'used'))
 
 # define the continuum overlap used
 KW_USED_CONT_OVERLAP = Keyword('KW_USED_CONT_OVERLAP', key='', dtype=int,
-                               source=__NAME__)
+                               source=__NAME__,
+                               description=('define the continuum overlap '
+                                            'used'))
 
 # define the LSD mask filename
 KW_POLAR_LSD_MASK = Keyword('KW_POLAR_LSD_MASK', key='', dtype=str,
-                            source=__NAME__)
+                            source=__NAME__,
+                            description='define the LSD mask filename')
 
 # define the Radial velocity (km/s) from gaussian fit from polar lsd
 KW_POLAR_LSD_FIT_RV = Keyword('KW_POLAR_LSD_FIT_RV', key='', dtype=float,
-                              source=__NAME__)
+                              source=__NAME__,
+                              description=('define the Radial velocity (km/s) '
+                                           'from gaussian fit from polar lsd'))
 
 # define the Resolving power from gaussian fit from polar lsd
 KW_POLAR_LSD_FIT_RESOL = Keyword('KW_POLAR_LSD_FIT_RESOL', key='', dtype=float,
-                                 source=__NAME__)
+                                 source=__NAME__,
+                                 description=('define the Resolving power '
+                                              'from gaussian fit from polar '
+                                              'lsd'))
 
 # define the Mean polarization of data in LSD
 KW_POLAR_LSD_MEANPOL = Keyword('KW_POLAR_LSD_MEANPOL', key='', dtype=float,
-                               source=__NAME__)
+                               source=__NAME__,
+                               description=('define the Mean polarization of '
+                                            'data in LSD'))
 
 # define the Std dev polarization of data in LSD
 KW_POLAR_LSD_STDPOL = Keyword('KW_POLAR_LSD_STDPOL', key='', dtype=float,
-                              source=__NAME__)
+                              source=__NAME__,
+                              description=('define the Std dev polarization of '
+                                           'data in LSD'))
 
 # define the Median polarization of data in LSD
 KW_POLAR_LSD_MEDPOL = Keyword('KW_POLAR_LSD_MEDPOL', key='', dtype=float,
-                              source=__NAME__)
+                              source=__NAME__,
+                              description=('define the Median polarization of '
+                                           'data in LSD'))
 
 # define the Med abs dev polarization of data in LSD
 KW_POLAR_LSD_MEDABSDEV = Keyword('KW_POLAR_LSD_MEDABSDEV', key='', dtype=float,
-                                 source=__NAME__)
+                                 source=__NAME__,
+                                 description=('define the Med abs dev '
+                                              'polarization of data in LSD'))
 
 # define the mean of pol LSD profile
 KW_POLAR_LSD_MEANSVQU = Keyword('KW_POLAR_LSD_MEANSVQU', key='', dtype=float,
-                                source=__NAME__)
+                                source=__NAME__,
+                                description=('define the mean of pol LSD '
+                                             'profile'))
 
 # define the Std dev of pol LSD profile
 KW_POLAR_LSD_STDSVQU = Keyword('KW_POLAR_LSD_STDSVQU', key='', dtype=float,
-                               source=__NAME__)
+                               source=__NAME__,
+                               description=('define the Std dev of pol LSD '
+                                            'profile'))
 
 # define the Mean of null LSD profile
 KW_POLAR_LSD_MEANNULL = Keyword('KW_POLAR_LSD_MEANNULL', key='', dtype=float,
-                                source=__NAME__)
+                                source=__NAME__,
+                                description=('define the Mean of null LSD '
+                                             'profile'))
 
 # define the Std dev of null LSD profile
 KW_POLAR_LSD_STDNULL = Keyword('KW_POLAR_LSD_STDNULL', key='', dtype=float,
-                               source=__NAME__)
+                               source=__NAME__,
+                               description=('define the Std dev of null LSD '
+                                            'profile'))
 
 # define the lsd column: Velocities (km/s)
-KW_POL_LSD_COL1 = Keyword('KW_POL_LSD_COL1', key='', dtype=str, source=__NAME__)
+KW_POL_LSD_COL1 = Keyword('KW_POL_LSD_COL1', key='', dtype=str, source=__NAME__,
+                          description=('define the lsd column: Velocities '
+                                       '(km/s)'))
 
 # define the lsd column: Stokes I LSD profile
-KW_POL_LSD_COL2 = Keyword('KW_POL_LSD_COL2', key='', dtype=str, source=__NAME__)
+KW_POL_LSD_COL2 = Keyword('KW_POL_LSD_COL2', key='', dtype=str, source=__NAME__,
+                          description=('define the lsd column: Stokes I '
+                                       'LSD profile'))
 
 # define the lsd column: Gaussian fit to Stokes I LSD profile
-KW_POL_LSD_COL3 = Keyword('KW_POL_LSD_COL3', key='', dtype=str, source=__NAME__)
+KW_POL_LSD_COL3 = Keyword('KW_POL_LSD_COL3', key='', dtype=str, source=__NAME__,
+                          description=('define the lsd column: Gaussian fit '
+                                       'to Stokes I LSD profile'))
 
 # define the lsd column: Stokes V, U, or Q LSD profile
-KW_POL_LSD_COL4 = Keyword('KW_POL_LSD_COL4', key='', dtype=str, source=__NAME__)
+KW_POL_LSD_COL4 = Keyword('KW_POL_LSD_COL4', key='', dtype=str, source=__NAME__,
+                          description=('define the lsd column: Stokes V, U, '
+                                       'or Q LSD profile'))
 
 # define the lsd column: Null polarization LSD profile
-KW_POL_LSD_COL5 = Keyword('KW_POL_LSD_COL5', key='', dtype=str, source=__NAME__)
+KW_POL_LSD_COL5 = Keyword('KW_POL_LSD_COL5', key='', dtype=str, source=__NAME__,
+                          description=('define the lsd column: Null '
+                                       'polarization LSD profile'))
 
 # define the minimum line depth value used in LSD analysis
 KW_POLAR_LSD_MLDEPTH = Keyword('KW_POLAR_LSD_MLDEPTH', key='', dtype=float,
-                               source=__NAME__)
+                               source=__NAME__,
+                               description=('define the minimum line depth '
+                                            'value used in LSD analysis'))
 
 # Define initial velocity value used in LSD analysis
 KW_POLAR_LSD_VINIT = Keyword('KW_POLAR_LSD_VINIT', key='', dtype=float,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('Define initial velocity value '
+                                          'used in LSD analysis'))
 
 # Define final velocity value used in LSD analysis
 KW_POLAR_LSD_VFINAL = Keyword('KW_POLAR_LSD_VFINAL', key='', dtype=float,
-                              source=__NAME__)
+                              source=__NAME__,
+                              description=('Define final velocity value '
+                                           'used in LSD analysis'))
 
 # Define whether stokesI was normalised by continuum
 KW_POLAR_LSD_NORM = Keyword('KW_POLAR_LSD_NORM', key='', dtype=bool,
-                            source=__NAME__)
+                            source=__NAME__,
+                            description=('Define whether stokesI was '
+                                         'normalised by continuum'))
 
 # define the bin size used for norm continuum
 KW_POLAR_LSD_NBIN1 = Keyword('KW_POLAR_LSD_NBIN1', key='', dtype=int,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('define the bin size used for '
+                                          'norm continuum'))
 
 # define the overlap used for norm continuum
 KW_POLAR_LSD_NLAP1 = Keyword('KW_POLAR_LSD_NLAP1', key='', dtype=int,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('define the overlap used for norm '
+                                          'continuum'))
 
 # define the sig clip used for norm continuum
 KW_POLAR_LSD_NSIG1 = Keyword('KW_POLAR_LSD_NSIG1', key='', dtype=float,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('define the sig clip used for norm '
+                                          'continuum'))
 
 # define the window size used for norm continuum
 KW_POLAR_LSD_NWIN1 = Keyword('KW_POLAR_LSD_NWIN1', key='', dtype=int,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('define the window size used for '
+                                          'norm continuum'))
 
 # define the mode used for norm continuum
 KW_POLAR_LSD_NMODE1 = Keyword('KW_POLAR_LSD_NMODE1', key='', dtype=str,
-                              source=__NAME__)
+                              source=__NAME__,
+                              description=('define the mode used for norm '
+                                           'continuum'))
 
 # define whether a linear fit was used for norm continuum
 KW_POLAR_LSD_NLFIT1 = Keyword('KW_POLAR_LSD_NLFIT1', key='', dtype=bool,
-                              source=__NAME__)
+                              source=__NAME__,
+                              description=('define whether a linear fit was '
+                                           'used for norm continuum'))
 
 # define the Number of points for LSD profile
 KW_POLAR_LSD_NPOINTS = Keyword('KW_POLAR_LSD_NPOINTS', key='', dtype=int,
-                               source=__NAME__)
+                               source=__NAME__,
+                               description=('define the Number of points for '
+                                            'LSD profile'))
 
 # define the bin sized used in profile calc
 KW_POLAR_LSD_NBIN2 = Keyword('KW_POLAR_LSD_NBIN2', key='', dtype=int,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('define the bin sized used in '
+                                          'profile calc'))
 
 # define the overlap used in profile calc
 KW_POLAR_LSD_NLAP2 = Keyword('KW_POLAR_LSD_NLAP2', key='', dtype=int,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('define the overlap used in profile '
+                                          'calc'))
 
 # define the sigma clip used in profile calc
 KW_POLAR_LSD_NSIG2 = Keyword('KW_POLAR_LSD_NSIG2', key='', dtype=float,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('define the sigma clip used in '
+                                          'profile calc'))
 
 # define the window size used in profile calc
 KW_POLAR_LSD_NWIN2 = Keyword('KW_POLAR_LSD_NWIN2', key='', dtype=int,
-                             source=__NAME__)
+                             source=__NAME__,
+                             description=('define the window size used in '
+                                          'profile calc'))
 
 # define the mode used in profile calc
 KW_POLAR_LSD_NMODE2 = Keyword('KW_POLAR_LSD_NMODE2', key='', dtype=str,
-                              source=__NAME__)
+                              source=__NAME__,
+                              description=('define the mode used in profile '
+                                           'calc'))
 
 # define whether a linear fit was used in profile calc
 KW_POLAR_LSD_NLFIT2 = Keyword('KW_POLAR_LSD_NLFIT2', key='', dtype=bool,
-                              source=__NAME__)
+                              source=__NAME__,
+                              description=('define whether a linear fit was '
+                                           'used in profile calc'))
 
 # =============================================================================
 #  End of configuration file
