@@ -1402,6 +1402,18 @@ post_v_file.add_ext('PP', pp_file, pos=0, header_only=True, kind='tmp',
                     hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
 post_v_file.add_ext('VEL', out_ccf_fits, pos=1, fiber='AB',
                     link='PP', hlink='KW_IDENTIFIER', kind='red')
+
+# TODO: add add_hkey method
+# TODO: - these will add header keys from "inheader" to "outheader"
+#         and replace keys as necessary
+#  TODO: also need to remove some drs added keys from pp
+#  TODO: also need to remove some standard keys
+
+# TODO: for s1d need to add headers to extensions then deal with adding table
+#      columns to headers too
+# post_v_file.add_hkey('KW_VERSION', inheader='VEL', outheader='PP')
+# post_v_file.add_hkey('KW_DRS_DATE_NOW', inheader='VEL', outheader='PP')
+
 # add to post processed file set
 post_file.addset(post_v_file)
 
