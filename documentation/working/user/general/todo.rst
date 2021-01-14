@@ -44,7 +44,7 @@ Low priority:
   * assign people to write constant descriptions
   * add authors to constants
 
-* write  paper [Neil/Etienne]
+* write paper [Neil/Etienne]
 
 Coding only tasks:
 
@@ -61,7 +61,6 @@ Later:
 * add EA mask generation from templates [???]
 * add EA template matching [???]
 * uncertainty propagation [???]
-* add `plot== 3` (all debug plots shown) and `plot==4` (all debug plots saved) modes [Neil]
 * co-production of e2ds and e2dsff still needed? [???]
 
 
