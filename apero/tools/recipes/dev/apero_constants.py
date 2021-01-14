@@ -136,7 +136,7 @@ def __main__(recipe, params):
         # go clean
         if clean:
             # do cleaning
-            success = constants_tools.deal_with_clean(params, recipe)
+            success = constants_tools.deal_with_clean(params)
             # if cleaning successful stop here
             if success:
                 return drs_startup.return_locals(params, locals())

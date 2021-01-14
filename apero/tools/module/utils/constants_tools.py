@@ -100,7 +100,7 @@ def deal_with_generate(params: ParamDict):
     return True
 
 
-def deal_with_clean(params):
+def deal_with_clean(params) -> bool:
     """
     Function to clean constants (use with causion)
 
@@ -108,12 +108,18 @@ def deal_with_clean(params):
 
     2. flags constants that are not used [NOT IMPLEMENTED YET]
 
-    :param params:
-    :param recipe:
-    :return:
+    :param params: ParamDict, the parameter dictionary of constants
+
+    :return: bool, success - whether we cleaned constants (True/False)
     """
     # set function name
     func_name = display_func(params, 'deal_with_clean', __NAME__)
+    # warn user this could screw things up
+    WLOG(params, 'warning', 'Cleaning constants changes core python files')
+    uinput = input('Do you wish to continue? [Y]es or [N]o:\t')
+    # do not continue
+    if 'Y' not in uinput.upper():
+        return False
     # -------------------------------------------------------------------------
     # Adding descriptions from comments
     # -------------------------------------------------------------------------
@@ -165,7 +171,6 @@ def deal_with_clean(params):
             # deal with key not found
             if start == -1:
                 WLOG(params, 'error', 'Key: "{0}" not found'.format(key))
-
             # get description
             description = get_comment(start, const_string)
             # add the description to the end of the const_etnry
@@ -176,10 +181,13 @@ def deal_with_clean(params):
             # now find the const_entry and replace all instances with
             #   new_entry
             const_string = const_string.replace(const_entry, new_entry)
-
+        # ---------------------------------------------------------------------
         # write to file
         with open(const_path, 'w') as const_file:
             const_file.write(const_string)
+    # ---------------------------------------------------------------------
+    # if we have got to here return a success
+    return True
 
 
 def get_const(key: str, string: str,
