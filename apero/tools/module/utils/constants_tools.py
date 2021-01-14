@@ -144,7 +144,6 @@ def deal_with_clean(params):
                     kinds.append('Const')
                 else:
                     kinds.append('Keyword')
-
         # ---------------------------------------------------------------------
         # now we need to find and add the descriptions from the commands of
         #   the line(s) before
@@ -166,15 +165,6 @@ def deal_with_clean(params):
             # deal with key not found
             if start == -1:
                 WLOG(params, 'error', 'Key: "{0}" not found'.format(key))
-
-            # TODO: CHANGE THIS - not good
-
-            # TODO: format should be
-            #   # COMMENT LINES
-            #   desc = ('DESCRIPTION')
-            #   value = Const(value, ..., description=desc)
-
-            # TODO: then manually deal with lines that are too long
 
             # get description
             description = get_comment(start, const_string)
@@ -298,61 +288,20 @@ def format_lines(entry, length=78):
     lines = entry.split('\n')
     # get last line
     line = lines[-1]
-    # get out lines
-    out_lines = lines[:-1]
     # get any indentation
     tmpline = str(line)
     whitespace = 0
     while tmpline.startswith(' '):
         tmpline = tmpline[1:]
         whitespace += 1
-    # count how many times we have shortened it
-    count = 0
-    # loop until last line is short enough
-    while len(line) > length:
-        # deal with long line
-        if len(line) > length and count == 0:
-            # new line chars
-            new_chars = '\n' + ' ' * whitespace
-
-            rawline = line.replace('description=(', new_chars + 'description=(')
-            count += 1
-        # else we have to find the last word that will fit on our line of
-        #  length = "length"
-        elif len(line) > length:
-            # new line chars
-            new_chars = '\'\n' + ' ' * whitespace
-            new_chars += ' ' * 13 + '\''
-            # split the words
-            words = line.split(' ')
-            # loop around words until we hit the word that goes over the length
-            wordlen, wordnum, last_pos = 0, 0, 0
-            first_word = False
-            while wordlen < length and wordnum < len(words):
-                # get new word
-                word = words[wordnum]
-                # need to see if this is the first word
-                if len(word) > 0:
-                    first_word = True
-                # add to the total word length
-                wordlen += len(word) + 1
-                # add to the word iterator
-                wordnum += 1
-                # change the last word
-                if wordlen < length or first_word:
-                    last_pos = wordlen
-            # split at the last word
-            rawline = line[:last_pos] + new_chars + line[last_pos:]
-        else:
-            break
-        # split these into new lines
-        rawlines = rawline.split('\n')
-        # add all but the last to out lines
-        out_lines += rawlines[:-1]
-        # replace line with the last raw lines and go again around while loop
-        line = rawlines[-1]
+    # deal with long line
+    if len(line) > length:
+        # new line chars
+        new_chars = '\n' + ' ' * whitespace
+        # move description to a new line
+        line = line.replace('description=(', new_chars + 'description=(')
     # return string
-    return '\n'.join(out_lines + [line])
+    return '\n'.join(lines[:-1] + [line])
 
 
 # =============================================================================
