@@ -94,6 +94,7 @@ STRTYPE[float] = 'float'
 STRTYPE[str] = 'str'
 STRTYPE[complex] = 'complex'
 STRTYPE[list] = 'list'
+STRTYPE[bool] = 'bool'
 STRTYPE[np.ndarray] = 'np.ndarray'
 # define types that we can do min and max on
 NUMBER_TYPES = [int, float]
