@@ -91,11 +91,6 @@ Date: 2020-12-21
       access via user_constants.py (CCF_MASK_NORMALIZATION) or
       cal_ccf_spirou.py --masknormmode
 
-- general
-    - all functions should be pickle-able and python typed and have doc strings
-    - reorganisation of modulular structure - minimize circular importing
-      minimize when certain modules are imported/not imported
-
 - cal_drift
     - added support for OBJ_FP and DARK_FP files (controlled via DRIFT_DPRTYPES
       in the user_constants.ini file)
@@ -106,3 +101,12 @@ Date: 2020-12-21
       s.fits, p.fits, v.fits
     - can clear reduced files using '--clear' (warning deletes all /reduced/ files)
     - by default does not overwrite, use '--overwrite' to update old files
+
+- general/other/misc
+    - all functions should be pickle-able and python typed and have doc strings
+    - reorganisation of modulular structure - minimize circular importing
+      minimize when certain modules are imported/not imported
+    - tool to generate full user_config.ini / user_constants.ini (all constants)
+      use "apero_constants.py --generate=full"  or regenerate current file
+      (lost/corrupt?) with "apero_constants.py --generate=standard" or choose
+      which constant sections you want with "apero_constants.py --generate=choose"
