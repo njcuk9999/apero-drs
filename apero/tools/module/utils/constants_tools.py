@@ -144,12 +144,14 @@ def deal_with_clean(params) -> bool:
             # check that instance is a Constant or Keyword
             if isinstance(instance, (cf.Const, cf.Keyword)):
                 # if instance has no description flag it now
-                if instance.description is None:
+                if instance.description is None or instance.description == '':
                     no_desc.append(instance.name)
-                if isinstance(instance, cf.Const):
-                    kinds.append('Const')
                 else:
+                    continue
+                if isinstance(instance, cf.Keyword):
                     kinds.append('Keyword')
+                else:
+                    kinds.append('Const')
         # ---------------------------------------------------------------------
         # now we need to find and add the descriptions from the commands of
         #   the line(s) before
@@ -255,7 +257,7 @@ def get_comment(start: int, string: str) -> str:
     row = len(comment_lines) - 1
     while row > 0:
         # must break for headers
-        if lines[row].endswith('='):
+        if lines[row].endswith('==') or lines[row].endswith('--'):
             break
         # add the comment to the description (in reverse order)
         if comment_lines[row]:
