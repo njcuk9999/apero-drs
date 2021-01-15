@@ -163,6 +163,29 @@ class PseudoConstants:
         valid = ['.fits']
         return valid
 
+    def NON_CHECK_DUPLICATE_KEYS(self) -> List[str]:
+        """
+        Post process do not check these duplicate keys
+        """
+        # set function name
+        _ = display_func(None, 'NON_CHECK_DUPLICATE_KEYS', __NAME__,
+                         self.class_name)
+        # set forbidden keys
+        keys = ['SIMPLE', 'EXTEND', 'NEXTEND']
+        # return forbiiden keys
+        return keys
+
+    def FORBIDDEN_OUT_KEYS(self) -> List[str]:
+        """
+        Post process primary extension should not have these keys
+        """
+        # set function name
+        _ = display_func(None, 'FORBIDDEN_OUT_KEYS', __NAME__, self.class_name)
+        # set forbidden keys
+        forbidden_keys = []
+        # return forbiiden keys
+        return forbidden_keys
+
     # noinspection PyPep8Naming
     def FORBIDDEN_COPY_KEYS(self) -> List[str]:
         """

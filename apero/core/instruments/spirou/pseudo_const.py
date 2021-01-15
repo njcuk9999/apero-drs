@@ -168,6 +168,29 @@ class PseudoConstants(DefaultConstants):
         valid = ['a.fits', 'c.fits', 'd.fits', 'f.fits', 'o.fits']
         return valid
 
+    def NON_CHECK_DUPLICATE_KEYS(self) -> List[str]:
+        """
+        Post process do not check these duplicate keys
+        """
+        # set function name
+        _ = display_func(None, 'NON_CHECK_DUPLICATE_KEYS', __NAME__,
+                         self.class_name)
+        # set forbidden keys
+        keys = ['SIMPLE', 'EXTEND', 'NEXTEND']
+        # return forbiiden keys
+        return keys
+
+    def FORBIDDEN_OUT_KEYS(self) -> List[str]:
+        """
+        Post process primary extension should not have these keys
+        """
+        # set function name
+        _ = display_func(None, 'FORBIDDEN_OUT_KEYS', __NAME__, self.class_name)
+        # set forbidden keys
+        forbidden_keys = ['BITPIX', 'NAXIS', 'NAXIS1', 'NAXIS2']
+        # return forbiiden keys
+        return forbidden_keys
+
     # noinspection PyPep8Naming
     def FORBIDDEN_COPY_KEYS(self) -> List[str]:
         """
@@ -348,6 +371,8 @@ class PseudoConstants(DefaultConstants):
                 'KW_CCAS', 'KW_CREF', 'KW_CALIBWH',
                 'KW_DPRTYPE', 'KW_OUTPUT']
         return keys
+
+
 
 
     # =========================================================================
