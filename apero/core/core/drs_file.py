@@ -32,6 +32,7 @@ import os
 import pandas as pd
 from pathlib import Path
 from scipy.stats import pearsonr
+import textwrap
 from typing import Any, Dict, List, Union, Tuple, Type
 import warnings
 
@@ -4565,7 +4566,9 @@ class DrsOutFileExtension:
                  link: Union[list, str, None] = None,
                  hlink: Union[str, None] = None,
                  header_only: bool = False,
-                 data_only: bool = False):
+                 data_only: bool = False,
+                 remove_drs_hkeys: bool = False,
+                 remove_std_hkeys: bool = False):
         """
         Properties for an extension of a POST PROCESS file
 
@@ -4579,6 +4582,10 @@ class DrsOutFileExtension:
                       filename for this extension
         :param header_only: bool, if True only adds the header (not the data)
         :param data_only: bool, if True only adds the data (not the header)
+        :param remove_drs_hkeys: bool , if True removes drs header keys flagged
+                                 to be remove (else does not remove keys)
+        :param remove_std_hkeys: bool, if True removes a list of standard keys
+                                 from this extensions header
 
         :return:
         """
@@ -4593,6 +4600,8 @@ class DrsOutFileExtension:
         self.hlink = hlink
         self.header_only = header_only
         self.data_only = data_only
+        self.remove_drs_hkeys = remove_drs_hkeys
+        self.remove_std_hkeys = remove_std_hkeys
         # to be filled
         self.filename = None
         self.header = None
@@ -4678,7 +4687,8 @@ class DrsOutFileExtension:
         new = DrsOutFileExtension(self.name, self.drsfile, self.pos,
                                   self.fiber, self.kind, self.hkeys,
                                   self.link, self.hlink, self.header_only,
-                                  self.data_only)
+                                  self.data_only, self.remove_drs_hkeys,
+                                  self.remove_std_hkeys)
         # table parameters
         new.table_drsfiles = self.table_drsfiles
         new.table_in_colnames = self.table_in_colnames
@@ -4762,6 +4772,8 @@ class DrsOutFileExtension:
         # define storage for open tables (key = filename) so we don't open them
         #   more times than we need
         tables = dict()
+        # header
+        header = None
         # ---------------------------------------------------------------------
         # loop around columns and populate
         for col in range(len(outcolumns)):
@@ -4819,6 +4831,10 @@ class DrsOutFileExtension:
                 # save to tables for caching
                 tables[filename] = table
             # -----------------------------------------------------------------
+            # read header
+            if header is None:
+                header = drs_fits.read_header(params, filename)
+            # -----------------------------------------------------------------
             # check for column in table
             if incolumns[col] not in table.colnames:
                 emsg = ('Column for EXT={0} ({1}) not found. '
@@ -4844,7 +4860,6 @@ class DrsOutFileExtension:
             # -----------------------------------------------------------------
             # load column into values
             values.append(row_values)
-
         # ---------------------------------------------------------------------
         # print tables added
         for filename in tables:
@@ -4859,7 +4874,7 @@ class DrsOutFileExtension:
         # load into data
         self.data = outtable
         self.datatype = 'table'
-        self.header = None
+        self.header = header
 
 
 class DrsOutFile(DrsInputFile):
@@ -4890,6 +4905,7 @@ class DrsOutFile(DrsInputFile):
                               inext=inext)
         # store extensions
         self.extensions = dict()
+        self.header_add = dict()
         # specific data
         self.out_filename = None
         self.out_dirname = None
@@ -4938,13 +4954,13 @@ class DrsOutFile(DrsInputFile):
         return 'DrsOutFile[{0}]'.format(self.name)
 
     def add_ext(self, name, drsfile: Union[DrsFitsFile, str], pos: int,
-                fiber: Union[str, None] = None,
-                kind: Union[str, None] = None,
+                fiber: Union[str, None] = None, kind: Union[str, None] = None,
                 hkeys: Union[dict, None] = None,
                 link: Union[list, str, None] = None,
                 hlink: Union[str, None] = None,
-                header_only: bool = False,
-                data_only: bool = False):
+                header_only: bool = False, data_only: bool = False,
+                remove_drs_hkeys: bool = False,
+                remove_std_hkeys: bool = False):
         """
         Add a fits extension
 
@@ -4961,6 +4977,10 @@ class DrsOutFile(DrsInputFile):
                       filename for this extension
         :param header_only: bool, if True only adds the header (not the data)
         :param data_only: bool, if True only adds the data (not the header)
+        :param remove_drs_hkeys: bool , if True removes drs header keys flagged
+                                 to be remove (else does not remove keys)
+        :param remove_std_hkeys: bool, if True removes a list of standard keys
+                                 from this extensions header
 
         :return:
         """
@@ -4974,7 +4994,9 @@ class DrsOutFile(DrsInputFile):
 
         self.extensions[pos] = DrsOutFileExtension(name, drsfile, pos, fiber,
                                                    kind, hkeys, link, hlink,
-                                                   header_only, data_only)
+                                                   header_only, data_only,
+                                                   remove_drs_hkeys,
+                                                   remove_std_hkeys)
 
     def add_column(self, extname: str, drsfile: DrsFitsFile,
                    incol: str, outcol: str, fiber: Union[str, None],
@@ -5004,6 +5026,23 @@ class DrsOutFile(DrsInputFile):
             extension.add_table_column(drsfile, incol, outcol, fiber, units,
                                        required, kind)
 
+    def add_hkey(self, key: str, inheader: str, outheader: str):
+        """
+        Flag that we need to add/replace a header key from "inheader"
+        to "outheader" (both of these should be extension names added by
+        add_ext)
+
+        :param key: str, the header key to add (raw name or keyword store name
+                    in params)
+        :param inheader: str, the input extension (copy header key from this
+                         extensions header)
+        :param outheader: str, the output extension (copy header key to this
+                          extensions header)
+
+        :return:
+        """
+        self.header_add[key] = [inheader, outheader]
+
     def _pos_from_name(self, name):
         # get positions
         positions = list(self.extensions.keys())
@@ -5014,7 +5053,10 @@ class DrsOutFile(DrsInputFile):
         # make a translation dictionary
         translate = dict(zip(names, positions))
         # return the position for this name
-        return translate[name]
+        if name not in translate:
+            return None
+        else:
+            return translate[name]
 
     def find_files(self, pos: int, indexdbm: Any,
                    mastercond: Union[str, None]) -> pd.DataFrame:
@@ -5061,7 +5103,6 @@ class DrsOutFile(DrsInputFile):
                 names.append(self.extensions[pos].name)
         # return value
         return value, names
-
 
     def process_links(self, params: ParamDict, indexdbm: Any,
                       required: bool = True) -> bool:
@@ -5230,6 +5271,230 @@ class DrsOutFile(DrsInputFile):
         # ---------------------------------------------------------------------
         # return that we linked successfully
         return True
+
+    def process_header(self, params):
+        """
+        Process the headers now they are all present
+
+        :param params:
+        :return:
+        """
+        # get pconst
+        pconst = constants.pload(params['INSTRUMENT'])
+        # deal with removing drs keys
+        self._remove_drs_keys(params)
+        # deal with removing standard keys from primary header
+        self._remove_standard_keys(pconst)
+        # deal with adding keys from one header to another
+        self._add_header_keys(params)
+        # remove keys that are in primary and in extensions
+        self._remove_duplicate_keys(params, pconst)
+        # add extension names as comments
+        self._add_extensions_names_to_primary(params)
+
+    def _add_header_keys(self, params: ParamDict):
+        """
+        Add header keys from one extension to another
+
+        :param params ParamDict, the parameter dictionary of constants
+
+        :return:
+        """
+        # loop around all header keys
+        for key in self.header_add:
+            # get the in extension
+            inext = self.header_add[key][0]
+            outext = self.header_add[key][1]
+            inpos = self._pos_from_name(inext)
+            outpos = self._pos_from_name(outext)
+            # -----------------------------------------------------------------
+            # deal with header keys that are keyword stores in params
+            if key in params:
+                drs_key = params[key][0]
+            else:
+                drs_key = str(key)
+            # -----------------------------------------------------------------
+            # make sure we have the in/out extensions for this key
+            if inpos is None:
+                emsg = 'Cannot add hkey {0} (in extension {1} does not exist)'
+                eargs = [drs_key, inext]
+                WLOG(params, 'error', emsg.format(*eargs))
+            if outpos is None:
+                emsg = 'Cannot add hkey {0} (out extension {1} does not exist)'
+                eargs = [drs_key, inext]
+                WLOG(params, 'error', emsg.format(*eargs))
+            # -----------------------------------------------------------------
+            # make sure we have the in header for this key
+            if self.extensions[inpos].header is None:
+                emsg = 'Cannot add hkey {0} (in header {1} does not exist)'
+                eargs = [drs_key, inext]
+                WLOG(params, 'error', emsg.format(*eargs))
+                inheader = None
+            else:
+                inheader = self.extensions[inpos].header
+            # make sure we have the out header for this key
+            if self.extensions[outpos].header is None:
+                emsg = 'Cannot add hkey {0} (out header {1} does not exist)'
+                eargs = [drs_key, inext]
+                WLOG(params, 'error', emsg.format(*eargs))
+                outheader = None
+            else:
+                outheader = self.extensions[outpos].header
+            # -----------------------------------------------------------------
+            # get key from in header and push into out header
+            if drs_key not in inheader:
+                emsg = ('Cannot add hkey {0} (in header {1} does not have '
+                        'header key')
+                eargs = [drs_key, inext]
+                WLOG(params, 'error', emsg.format(*eargs))
+            # get value
+            value = inheader[drs_key]
+            comment = inheader.comments[drs_key]
+            # push into outheader
+            outheader[drs_key] = (value, comment)
+            # push it back into header
+            self.extensions[outpos].header = outheader
+
+    def _remove_drs_keys(self, params: ParamDict):
+        """
+        For each extension if remove_drs_keys is True we need to go through
+        and remove drs keys that are flagged for removal
+
+        :param params ParamDict, the parameter dictionary of constants
+
+        :return:
+        """
+        # get all Keyword parameters
+        keywords = []
+        # ---------------------------------------------------------------------
+        # loop around all param instances
+        for key in params.instances:
+            if isinstance(params.instances[key], Keyword):
+                # add all keyword instances to storage
+                keywords.append(params.instances[key])
+        # ---------------------------------------------------------------------
+        # get drs keys that are flagged for removal
+        remove_keys = []
+        # loop around all keyword instances
+        for key in keywords:
+            # get keyword
+            keyword = keywords[key]
+            # check post exclude key
+            if keyword.post_exclude:
+                # add just the keyword key name to storage
+                remove_keys.append(keyword.key)
+        # ---------------------------------------------------------------------
+        # loop around extensions
+        for pos in self.extensions:
+            # make sure extension has header
+            if self.extensions[pos].header is None:
+                continue
+            # get header
+            header = self.extensions[pos].header
+            # see if this extension is flagged for drs header key removal
+            if self.extensions[pos].remove_drs_hkeys:
+                # loop around remove keys
+                for key in remove_keys:
+                    # make sure key is in extension
+                    if key in header:
+                        # delete key
+                        del header[key]
+                # push header back to extension
+                self.extensions[pos].header = header
+
+    def _remove_standard_keys(self, pconst: PseudoConstants):
+        """
+        Remove standard keys from a header if extension was flagged as having
+        remove_std_hkeys
+
+        :param pconst: PsuedoConst, the instrument pseudo constants
+
+        :return:
+        """
+        # get standard keys from pconst
+        remove_keys = pconst.FORBIDDEN_OUT_KEYS()
+        # loop around each extension
+        for pos in self.extensions:
+            # make sure extension has header
+            if self.extensions[pos].header is None:
+                continue
+            # get header
+            header = self.extensions[pos].header
+            # see if this extension is flagged for drs header key removal
+            if self.extensions[pos].remove_std_hkeys:
+                # loop around remove keys
+                for key in remove_keys:
+                    # make sure key is in extension
+                    if key in header:
+                        # delete key
+                        del header[key]
+                # push header back to extension
+                self.extensions[pos].header = header
+
+    def _remove_duplicate_keys(self, params: ParamDict,
+                               pconst: PseudoConstants):
+        """
+        Remove keys that are both in primary and extension
+
+        :param params ParamDict, the parameter dictionary of constants
+        :param pconst: PsuedoConst, the instrument pseudo constants
+
+        :return:
+        """
+        # get keys not to check
+        skip_keys = pconst.NON_CHECK_DUPLICATE_KEYS()
+        # get primary extension
+        header0 = self.extensions[0]
+        # loop around extensions
+        for pos in self.extensions[1:]:
+            # get extension header
+            header = self.extensions[pos]
+            # deal with no header
+            if header is None:
+                continue
+            # loop around header0 and look for duplicates
+            for key in header0:
+                # skip some
+                if key in skip_keys:
+                    continue
+                # check if key is identical
+                if header.get(key) == header0[key]:
+                    # remove key
+                    del header[key]
+                # else give warning that a primary key changed value
+                #  (this shouldn't happen)
+                else:
+                    # log warning
+                    wmsg = ('Header key {0} expected in extension {1} ({2})'
+                            ' but value changed.')
+                    wargs = [key, pos, self.extensions[pos].name]
+                    WLOG(params, 'warning', wmsg.format(*wargs))
+
+    def _add_extensions_names_to_primary(self, params):
+        """
+        Add extensions as comments to primary header
+
+        :param params:
+        :return:
+        """
+        # get primary header
+        header = self.extensions[0].header
+        # get key to add comment near
+        hdrkey = params['POST_HDREXT_COMMENT_KEY']
+        # make comment
+        description = 'This file contains the following extensions: '
+        # get the names of all (non primary) extensions
+        names = []
+        for pos in self.extensions[1:]:
+            # TODO: This may not be .name but .commentname (from Chris)
+            names.append(self.extensions[pos].name)
+        # add extensions
+        description += ', '.join(names)
+        # add to header
+        for line in textwrap.wrap(description, 71):
+            header.insert(hdrkey, ('COMMENT', line))
+        # add header back to extensions
+        self.extensions[0].header = header
 
     def write_file(self, kind: str, runstring: Union[str, None] = None):
         # set function name
