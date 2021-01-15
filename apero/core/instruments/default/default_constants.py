@@ -284,7 +284,7 @@ __all__ = [
     'PLOT_POLAR_CONTINUUM', 'PLOT_POLAR_RESULTS', 'PLOT_POLAR_STOKES_I',
     'PLOT_POLAR_LSD',
     # post processing settings
-    'POST_CLEAR_REDUCED', 'POST_OVERWRITE',
+    'POST_CLEAR_REDUCED', 'POST_OVERWRITE', 'POST_HDREXT_COMMENT_KEY',
     # tool constants
     'REPROCESS_RUN_KEY', 'REPROCESS_NIGHTCOL', 'REPROCESS_ABSFILECOL',
     'REPROCESS_MODIFIEDCOL', 'REPROCESS_SORTCOL_HDRKEY',
@@ -4353,6 +4353,7 @@ PLOT_POLAR_LSD = Const('PLOT_POLAR_LSD', value=False,
 # =============================================================================
 # POST PROCESS SETTINGS
 # =============================================================================
+cgroup = 'POST PROCESS SETTINGS'
 # Define whether (by deafult) to clear reduced directory
 POST_CLEAR_REDUCED = Const('POST_CLEAR_REDUCED', value=False,
                            dtype=bool, source=__NAME__, user=True, active=True,
@@ -4366,6 +4367,13 @@ POST_OVERWRITE = Const('POST_OVERWRITE', value=False,
                        group=cgroup,
                        description='Define whether (by default) to '
                                    'overwrite post processed files')
+
+# Define the header keyword store to insert extension comment after
+POST_HDREXT_COMMENT_KEY = Const('POST_HDREXT_COMMENT_KEY', value=None,
+                                dtype=str, source=__NAME__, user=False,
+                                active=False, group=cgroup,
+                                description='Define the header keyword store '
+                                            'to insert extension comment after')
 
 # =============================================================================
 # TOOLS SETTINGS

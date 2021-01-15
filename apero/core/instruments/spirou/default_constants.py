@@ -2516,6 +2516,10 @@ POST_CLEAR_REDUCED.value = False
 POST_OVERWRITE = POST_OVERWRITE.copy(__NAME__)
 POST_OVERWRITE.value = False
 
+# Define the header keyword store to insert extension comment after
+POST_HDREXT_COMMENT_KEY = POST_HDREXT_COMMENT_KEY.copy(__NAME__)
+POST_HDREXT_COMMENT_KEY.value = 'KW_IDENTIFIER'
+
 # =============================================================================
 # TOOLS SETTINGS
 # =============================================================================
