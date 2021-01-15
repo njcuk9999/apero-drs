@@ -377,7 +377,8 @@ class Keyword(Const):
                  author: Union[str, List[str], None] = None,
                  parent: Union[str, None] = None,
                  combine_method: Union[str, None] = None,
-                 description: Union[str, None] = None):
+                 description: Union[str, None] = None,
+                 post_exclude: bool = False):
         """
         Construct the keyword instance
 
@@ -404,25 +405,8 @@ class Keyword(Const):
                                combining images)
         :param description: str or None, if set this is the description of the
                             constants
-
-        :type name: str
-        :type key: str
-        :type value: object
-        :type dtype: Union[str, type]
-        :type comment: str
-        :type options: list[object]
-        :type maximum: object
-        :type minimum: object
-        :type source: str
-        :type unit: uu.Unit
-        :type default: object
-        :type datatype: str
-        :type dataformat: str
-        :type group: str
-        :type author: str
-        :type parent: Union[Const,Keyword]
-        :param combine_method: str, the method used to combine this keyword
-                               when combining two or more files
+        :param post_exclude: bool, if True flags that keyword can be removed
+                             in post processing files
 
         :returns: None (constructor)
         """
@@ -467,6 +451,8 @@ class Keyword(Const):
         self.parent = parent
         # set the combine method
         self.combine_method = combine_method
+        # set the post processing exclude key flag
+        self.post_exclude = post_exclude
 
     def __getstate__(self) -> dict:
         """
@@ -508,7 +494,8 @@ class Keyword(Const):
             group: Union[str, None] = None,
             author: Union[str, List[str], None] = None,
             parent: Union[str, None] = None,
-            combine_method: Union[str, None] = None):
+            combine_method: Union[str, None] = None,
+            post_exclude: Union[bool, None] = None):
         """
         Set attributes of the Keyword instance
 
@@ -532,23 +519,6 @@ class Keyword(Const):
                        related to or comes from another constant)
         :param combine_method: str, the method used to combine this keyword
                                when combining two or more files
-
-        :type key: str
-        :type value: object
-        :type dtype: object
-        :type comment: str
-        :type options: list[object]
-        :type maximum: object
-        :type minimum: object
-        :type source: str
-        :type unit: uu.Unit
-        :type default: object
-        :type datatype: str
-        :type dataformat: str
-        :type group: str
-        :type author: str
-        :type parent: Union[Const,Keyword]
-        :type combine_method: str
 
         :returns: None
         """
@@ -605,6 +575,9 @@ class Keyword(Const):
         # set the combine method for this keyword
         if combine_method is not None:
             self.combine_method = combine_method
+        # set the post processing exclude key
+        if post_exclude is not None:
+            self.post_exclude = post_exclude
 
     def validate(self, test_value: Any = None, quiet: bool = False,
                  source: Union[str, None] = None) -> Union[bool, Any]:
@@ -694,7 +667,9 @@ class Keyword(Const):
                        default=self.default, datatype=self.datatype,
                        dataformat=self.dataformat, group=self.group,
                        author=self.author, parent=self.parent,
-                       combine_method=self.combine_method)
+                       combine_method=self.combine_method,
+                       description=self.description,
+                       post_exclude=self.post_exclude)
 
 
 class CKCaseINSDict(base_class.CaseInsensitiveDict):
