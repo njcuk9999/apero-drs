@@ -367,11 +367,13 @@ KW_PPVERSION.set(key='PVERSION', comment='DRS Pre-Processing version')
 
 # DRS process ID
 KW_PID = KW_PID.copy(__NAME__)
-KW_PID.set(key='DRSPID', comment='The process ID that outputted this file.')
+KW_PID.set(key='DRSPID', comment='The process ID that outputted this file.',
+           post_exclude=True)
 
 # Processed date keyword
 KW_DRS_DATE_NOW = KW_DRS_DATE_NOW.copy(__NAME__)
-KW_DRS_DATE_NOW.set(key='DRSPDATE', comment='DRS Processed date')
+KW_DRS_DATE_NOW.set(key='DRSPDATE', comment='DRS Processed date',
+                    post_exclude=True)
 
 # DRS version date keyword
 KW_DRS_DATE = KW_DRS_DATE.copy(__NAME__)
@@ -408,11 +410,14 @@ KW_MID_OBSTIME_METHOD.set(key='MJDMIDMD',
 # -----------------------------------------------------------------------------
 # input files
 KW_INFILE1 = KW_INFILE1.copy(__NAME__)
-KW_INFILE1.set(key='INF1{0:03d}', comment='Input file used to create output')
+KW_INFILE1.set(key='INF1{0:03d}', comment='Input file used to create output',
+               post_exclude=True)
 KW_INFILE2 = KW_INFILE2.copy(__NAME__)
-KW_INFILE2.set(key='INF2{0:03d}', comment='Input file used to create output')
+KW_INFILE2.set(key='INF2{0:03d}', comment='Input file used to create output',
+               post_exclude=True)
 KW_INFILE3 = KW_INFILE3.copy(__NAME__)
-KW_INFILE3.set(key='INF3{0:03d}', comment='Input file used to create output')
+KW_INFILE3.set(key='INF3{0:03d}', comment='Input file used to create output',
+               post_exclude=True)
 
 # -----------------------------------------------------------------------------
 # Define database input keywords
@@ -463,15 +468,20 @@ KW_OUTPUT.set(key='DRSOUTID', comment='DRS output identification code')
 # Define qc variables
 # -----------------------------------------------------------------------------
 KW_DRS_QC = KW_DRS_QC.copy(__NAME__)
-KW_DRS_QC.set(key='QCC_ALL', comment='All quality control passed')
+KW_DRS_QC.set(key='QCC_ALL', comment='All quality control passed',
+              post_exclude=True)
 KW_DRS_QC_VAL = KW_DRS_QC_VAL.copy(__NAME__)
-KW_DRS_QC_VAL.set(key='QCC{0:03d}V', comment='Quality control measured value')
+KW_DRS_QC_VAL.set(key='QCC{0:03d}V', comment='Quality control measured value',
+                  post_exclude=True)
 KW_DRS_QC_NAME = KW_DRS_QC_NAME.copy(__NAME__)
-KW_DRS_QC_NAME.set(key='QCC{0:03d}N', comment='Quality control parameter name')
+KW_DRS_QC_NAME.set(key='QCC{0:03d}N', comment='Quality control parameter name',
+                   post_exclude=True)
 KW_DRS_QC_LOGIC = KW_DRS_QC_LOGIC.copy(__NAME__)
-KW_DRS_QC_LOGIC.set(key='QCC{0:03d}L', comment='Quality control logic used')
+KW_DRS_QC_LOGIC.set(key='QCC{0:03d}L', comment='Quality control logic used',
+                    post_exclude=True)
 KW_DRS_QC_PASS = KW_DRS_QC_PASS.copy(__NAME__)
-KW_DRS_QC_PASS.set(key='QCC{0:03d}P', comment='Quality control param passed QC')
+KW_DRS_QC_PASS.set(key='QCC{0:03d}P', comment='Quality control param passed QC',
+                   post_exclude=True)
 
 # -----------------------------------------------------------------------------
 # Define preprocessing variables
