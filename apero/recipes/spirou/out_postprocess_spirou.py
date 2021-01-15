@@ -206,7 +206,10 @@ def __main__(recipe, params):
             # link all other extensions
             success = filepostfile.process_links(params, indexdbm,
                                                  filepostfile.out_required)
+            # deal with writing file
             if success:
+                # deal with processing headers
+                filepostfile.process_header(params)
                 # update filename/basename and path
                 filepostfile.set_filename(filepostfile.out_filename)
                 # write file
