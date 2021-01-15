@@ -1259,7 +1259,8 @@ post_e_file = drs_oinput('DRS_POST_E', filetype='.fits', suffix='e.fits',
                          outfunc=out.post_file, inext='o', required=False)
 # add extensions
 post_e_file.add_ext('PP', pp_file, pos=0, header_only=True, kind='tmp',
-                    hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
+                    hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']),
+                    remove_drs_hkeys=True, remove_std_hkeys=True)
 post_e_file.add_ext('EXT_AB', out_ext_e2dsff, pos=1, fiber='AB', kind='red',
                     link='PP', hlink='KW_IDENTIFIER')
 post_e_file.add_ext('EXT_A', out_ext_e2dsff, pos=2, fiber='A', kind='red',
@@ -1411,8 +1412,8 @@ post_v_file.add_ext('VEL', out_ccf_fits, pos=1, fiber='AB',
 
 # TODO: for s1d need to add headers to extensions then deal with adding table
 #      columns to headers too
-# post_v_file.add_hkey('KW_VERSION', inheader='VEL', outheader='PP')
-# post_v_file.add_hkey('KW_DRS_DATE_NOW', inheader='VEL', outheader='PP')
+post_v_file.add_hkey('KW_VERSION', inheader='VEL', outheader='PP')
+post_v_file.add_hkey('KW_DRS_DATE_NOW', inheader='VEL', outheader='PP')
 
 # add to post processed file set
 post_file.addset(post_v_file)
