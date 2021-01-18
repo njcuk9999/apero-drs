@@ -16,6 +16,11 @@ APERO
 
 For all instruments / in general.
 
+Current known Issues:
+
+* 0.6.132 log.fits flat get A,B,C,AB,A,B,C entries (PLOTDIR different)??
+
+
 High priority:
 
 * polar code update  [Neil/Eder/Chris]
@@ -81,6 +86,9 @@ NIRPS specific
 High priority:
 
 * convert/adapt cal_wave / cal_wave_master [Etienne/Neil]
+* push 0.6 code to 0.7 [Neil]
+* cut at Y=2880 norders=46
+    * problem with localisation (coefficient consistency) [Etienne/Neil]
 
 Low priority:
 
