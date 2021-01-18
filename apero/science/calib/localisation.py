@@ -265,8 +265,29 @@ def check_coeffs_nirps(params: ParamDict, recipe, image: np.ndarray,
     # -------------------------------------------------------------------------
     # remove bad values (out of bounds)
     with warnings.catch_warnings(record=True) as _:
+        # remove pixels that are off the bottom of the image
         ordermap[ordermap < 0] = np.nan
+        # remove pixels that are off the top of the image
         ordermap[ordermap > nbypix] = np.nan
+        # remove parts of the polyfit which curve the wrong way
+        ordermap[np.gradient(np.gradient(ordermap,axis=0),axis=0)>0] = np.nan
+    # fixing continuity of orders - remove discontinuities that arise from the
+    #   polynomial going out of bounds and back into bounds
+    for ordernum in range(new_nbo):
+        # find the NaN positions in the order map (left side of detector)
+        ppos1 = np.where(~np.isfinite(ordermap[:nbxpix//2, ordernum]))[0]
+        if len(ppos1) > 0:
+            # remove all pixels where the polyfit is not valid (from left
+            #   side of detector)
+            cut1 = np.max(ppos1)
+            ordermap[:cut1, ordernum] = np.nan
+        # find the NaN positions in the order map (right side of detector)
+        ppos2 = np.where(~np.isfinite(ordermap[nbxpix//2:, ordernum]))[0]
+        if len(ppos2) > 0:
+            # remove all pixels where the polyfit is not valid (from right
+            #   side of detector)
+            cut2 = np.min(ppos2)
+            ordermap[cut2 + nbxpix//2:, ordernum] = np.nan
     # -------------------------------------------------------------------------
     # clean-up the order map
     for y_it in range(nbypix):
@@ -304,7 +325,7 @@ def check_coeffs_nirps(params: ParamDict, recipe, image: np.ndarray,
         owid_coeffs = np.polyfit(ypix, widthmap[:, ordernum], nwcoeffs - 1)
         # must flip these backwards
         new_wid_coeffs[ordernum, :] = owid_coeffs[::-1]
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # make arrays for plotting
     cypix2, cypix1 = np.zeros([nbo, nbxpix]), np.zeros([nbo, nbxpix])
     good_arr = np.ones([nbo, nbxpix]).astype(bool)
