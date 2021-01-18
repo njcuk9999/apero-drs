@@ -495,7 +495,7 @@ LOC_COEFF_SIGCLIP.value = 5
 LOC_COEFFSIG_DEG = LOC_COEFFSIG_DEG.copy(__NAME__)
 LOC_COEFFSIG_DEG.value = 5
 
-#  Define the maximum value allowed in the localisation (cuts bluest orders)
+#  Define the maximum value allowed in the localisation (cuts reddest orders)
 LOC_MAX_YPIX_VALUE = LOC_MAX_YPIX_VALUE.copy(__NAME__)
 LOC_MAX_YPIX_VALUE.value = 4040
 

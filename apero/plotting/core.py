@@ -890,7 +890,7 @@ class Plotter:
         for gui in gui_env:
             # noinspection PyBroadException
             try:
-                matplotlib.use(gui, warn=False, force=True)
+                matplotlib.use(gui, force=True)
                 import matplotlib.pyplot as plt
                 from mpl_toolkits import axes_grid1
                 self.plt = plt
