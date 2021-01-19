@@ -19,6 +19,7 @@ For all instruments / in general.
 Current known Issues:
 
 * 0.6.132 log.fits flat get A,B,C,AB,A,B,C entries (PLOTDIR different)??
+    * 0.7 problem with log.fits entry no fiber
 
 
 High priority:
