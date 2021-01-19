@@ -2594,6 +2594,9 @@ def add_non_file_args(params: ParamDict, recipe: DrsRecipe,
     #   master night use the master night as the directory name
     if arg.dtype == 'directory' and recipe.master:
         filedict[argname] = params['MASTER_NIGHT']
+    # need to add directory and set it to None
+    elif arg.dtype == 'directory':
+        filedict[argname] = None
     # -------------------------------------------------------------------------
     # deal with wnightlist
     if argname in ['wnightlist', 'wnightnames']:
