@@ -199,6 +199,7 @@ class RecipeLog:
         self.inputdir = str(rlog.inputdir)
         self.outputdir = str(rlog.outputdir)
         self.log_file = str(rlog.log_file)
+        self.plot_dir = str(rlog.plot_dir)
         self.runstring = str(rlog.runstring)
         self.args = str(rlog.args)
         self.kwargs = str(rlog.kwargs)
@@ -283,7 +284,7 @@ class RecipeLog:
         self.set.append(newlog)
         # whether to write (update) recipe log file
         if write:
-            newlog.write_logfile(params)
+            self.write_logfile(params)
         # return newlog (for use)
         return newlog
 
@@ -408,8 +409,12 @@ class RecipeLog:
         # remove all entries with this pid
         self.logdbm.remove_pids(self.pid)
         # ---------------------------------------------------------------------
-        # add instances
-        instances = [self] + self.set
+        # add instances (if we have a set use the set otherwise just add
+        #    your self)
+        if len(self.set) == 0:
+            instances = [self]
+        else:
+            instances = self.set
         # loop around instances
         for inst in instances:
             # get utime
