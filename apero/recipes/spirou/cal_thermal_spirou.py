@@ -151,12 +151,25 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # loop around fiber types
         for fiber in fiber_types:
+            # get the thermal file
+            thermal_file = thermal_files[fiber]
             # log that we are writing thermal files to file
-            wargs = [thermal_files[fiber].filename]
+            wargs = [thermal_file.filename]
             WLOG(params, '', textentry('40-016-00022', args=wargs))
+            # Update keywords
+            # --------------------------------------------------------------
+            # add version
+            thermal_file.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+            # add dates
+            thermal_file.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+            # add process id
+            thermal_file.add_hkey('KW_PID', value=params['PID'])
+            # add output tag
+            thermal_file.add_hkey('KW_OUTPUT', value=thermal_file.name)
+            thermal_file.add_hkey('KW_FIBER', value=fiber)
             # write thermal files
-            thermal_files[fiber].write_file(kind=recipe.outputtype,
-                                            runstring=recipe.runstring)
+            thermal_file.write_file(kind=recipe.outputtype,
+                                    runstring=recipe.runstring)
 
         # ------------------------------------------------------------------
         # Update the calibration database
