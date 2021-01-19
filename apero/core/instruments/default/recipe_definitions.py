@@ -233,7 +233,7 @@ processing.name = 'apero_processing.py'
 processing.instrument = __INSTRUMENT__
 processing.description = textentry('PROCESS_DESCRIPTION')
 processing.kind = 'processing'
-processing.set_arg(pos=1, name='runfile', dtype=str,
+processing.set_arg(pos=0, name='runfile', dtype=str,
                    helpstr=textentry('PROCESS_RUNFILE_HELP'))
 processing.set_kwarg(name='--nightname', dtype=str, default='None',
                      helpstr=textentry('PROCESS_NIGHTNAME_HELP'))
