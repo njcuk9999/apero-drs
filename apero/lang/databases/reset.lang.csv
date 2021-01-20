@@ -141,7 +141,7 @@
 "{0} = function name","Either 'header' or 'infile' (DrsFitsFile) must be set to get mid observation time. \n\t Function = {0}","","Means that header and infile were not set in get_mid_obs_time","00-001-00051","ERROR"
 "{0} = key name","Fiber Constant Error. Instrument requires key = {0}","","Means that we are missing key from constants","00-001-00052","ERROR"
 "{0} = pos value; {1} = function name","DrsOutFile Error: pos must be an integer (value = {0) \n\t Function = {1}","","Means that pos was not an int when adding extension to DrsOutFile","00-001-00053","ERROR"
-"","","","","00-001-00054","ERROR"
+"{0} = stats","No good calibrations: \n{0}","","Means that no files were left after combine metric applied","00-001-00054","ERROR"
 "","","","","00-001-00055","ERROR"
 "","","","","00-001-00056","ERROR"
 "","","","","",""
