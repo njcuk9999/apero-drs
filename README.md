@@ -1117,7 +1117,7 @@ DRS_DATA_REDUC   \\ default: "reduced" directory
 ```
 ##### *Calibration database entry*:
 ```
-WAVE_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
+LEAKM_{FIBER} {NIGHT_NAME} {FILENAME} {HUMAN DATE} {UNIX DATE}
 ```
 ##### *Output files*: 
 ```
