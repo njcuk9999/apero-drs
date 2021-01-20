@@ -3057,6 +3057,21 @@ class DrsFitsFile(DrsInputFile):
         if reject_count > 0:
             wargs = [reject_count]
             WLOG(params, 'warning', textentry('10-003-00002', args=wargs))
+        # need to deal with no files left
+        if len(datacube) == 0:
+            # storage for stat message (pushed into error message)
+            stat_str = ''
+            # loop around all headers
+            for it in range(len(headers)):
+                # get arguments
+                sargs = [basenames[it], headers[it][params['KW_DPRTYPE'][0]],
+                         headers[it]['CMETRIC']]
+                # build stats message for this file
+                smsg = '\n\t{0} ({1}) METRIC={2}'
+                stat_str += smsg.format(*sargs)
+            # log error
+            WLOG(params, 'error', textentry('00-001-00054', args=stat_str))
+
         # --------------------------------------------------------------------
         # make data cube
         # --------------------------------------------------------------------
