@@ -3056,7 +3056,7 @@ def valid_directory(params: ParamDict, indexdb: IndexDatabase,
     func_name = display_func(params, 'valid_directory', __NAME__)
 
     # get input directory
-    input_dir = drs_file.get_dir(params, kind, dirpath=forced_dir)
+    input_dir, kind = drs_file.get_dir(params, kind, dirpath=forced_dir)
 
     # -------------------------------------------------------------------------
     # 1. check directory is a valid string
@@ -3262,7 +3262,7 @@ def _check_fits_keys(params: ParamDict, drsfiles: List[DrsInputFile],
         # get filename
         filename_it = table['ABSPATH'].iloc[row]
         # make instance of the DrsFile
-        input_dir = drs_file.get_dir(params, kind, dirpath=forced_dir)
+        input_dir, kind = drs_file.get_dir(params, kind, dirpath=forced_dir)
         # ---------------------------------------------------------------------
         # find file in possible file types
         # ---------------------------------------------------------------------
