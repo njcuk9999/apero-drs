@@ -1810,10 +1810,10 @@ def _deal_with_filename(params: ParamDict, name: str, kind: str,
     # ------------------------------------------------------------------
     # deal with kind
     if force_dir is not None:
-        path = drs_file.get_dir(params, kind, force_dir,
+        path, kind = drs_file.get_dir(params, kind, force_dir,
                                 kind='database (forced)')
     else:
-        path = drs_file.get_dir(params, kind, None, kind='database')
+        path, kind = drs_file.get_dir(params, kind, None, kind='database')
     # deal with having full path
     if fullpath is not None:
         if isinstance(fullpath, str):
