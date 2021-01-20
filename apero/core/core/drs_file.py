@@ -6093,7 +6093,7 @@ def get_mid_obs_time(params: ParamDict,
 
 
 def get_dir(params: ParamDict, dirkind: str, dirpath: Union[str, None] = None,
-            kind: str = 'input') -> str:
+            kind: str = 'input') -> Tuple[str, str]:
     """
     Get the directory based on "dir_string" (either RAW, TMP, REDUCED)
     obtained via params
@@ -6110,7 +6110,12 @@ def get_dir(params: ParamDict, dirkind: str, dirpath: Union[str, None] = None,
     if dirpath is not None:
         # check if path has been set to an absolute path (that exists)
         if os.path.exists(os.path.abspath(dirpath)):
-            return os.path.abspath(dirpath)
+            # get absolute path
+            path = os.path.abspath(dirpath)
+            # update kind
+            dirkind = determine_dirtype(params, dirkind, path)
+            # return path and kind
+            return path, dirkind
     # get the input directory from recipe.inputdir keyword
     if dirkind.upper() == 'RAW':
         dirpath = params['DRS_DATA_RAW']
@@ -6131,7 +6136,39 @@ def get_dir(params: ParamDict, dirkind: str, dirpath: Union[str, None] = None,
         emsg = textentry('00-007-00002', args=[kind, dirpath])
         WLOG(params, 'error', emsg)
         dirpath = None
-    return os.path.realpath(os.path.abspath(dirpath))
+    # return path and kind
+    return os.path.realpath(os.path.abspath(dirpath)), dirkind
+
+
+def determine_dirtype(params: ParamDict, dirtype: str,
+                       directory: Union[str, None]) -> str:
+    # if we have no directory we cannot guess
+    if directory is None:
+        return dirtype
+    # make sure directory is a real path (not symbolic link)
+    directory = os.path.realpath(directory)
+    # check directory against raw directory
+    if directory == os.path.realpath(params['DRS_DATA_RAW']):
+        return 'raw'
+    # check directory against tmp directory
+    if directory == os.path.realpath(params['DRS_DATA_WORKING']):
+        return 'tmp'
+    # check directory against reduced directory
+    if directory == os.path.realpath(params['DRS_DATA_REDUC']):
+        return 'red'
+    # check directory against asset directory
+    if directory == os.path.realpath(params['DRS_DATA_ASSETS']):
+        return 'asset'
+    # check directory against calib directory
+    if directory == os.path.realpath(params['DRS_CALIB_DB']):
+        return 'calib'
+    # check directory against tellu directory
+    if directory == os.path.realpath(params['DRS_TELLU_DB']):
+        return 'tellu'
+    # if we have reached this point we cannot guess - so we have to return
+    # the type that was set in setup - any custom paths must be of this
+    # kind
+    return dirtype
 
 
 # =============================================================================
