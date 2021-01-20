@@ -841,8 +841,9 @@ class DrsRecipe(object):
         _ = display_func(self.params, 'get_input_dir', __NAME__,
                          self.class_name)
         # return input directory
-        return drs_file.get_dir(self.params, self.inputtype, self.inputdir,
-                                kind='input')
+        path, _ = drs_file.get_dir(self.params, self.inputtype,
+                                      self.inputdir, kind='input')
+        return path
 
     def get_output_dir(self) -> str:
         """
@@ -861,8 +862,9 @@ class DrsRecipe(object):
         _ = display_func(self.params, 'get_output_dir', __NAME__,
                          self.class_name)
         # return input directory
-        return drs_file.get_dir(self.params, self.outputtype, self.outputdir,
-                                kind='output')
+        path, _ = drs_file.get_dir(self.params, self.outputtype, self.outputdir,
+                                   kind='output')
+        return path
 
     def copy(self, recipe: 'DrsRecipe'):
         """
