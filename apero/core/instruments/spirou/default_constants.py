@@ -106,7 +106,7 @@ COMBINE_METRIC_THRESHOLD1.value = 0.99
 
 # Define the DPRTYPES allowed for the combine metric 1 comparison
 COMBINE_METRIC1_TYPES = COMBINE_METRIC1_TYPES.copy(__NAME__)
-COMBINE_METRIC1_TYPES.value = 'DARK_FLAT, FLAT_FLAT, FLAT_DARK, FP_FP'
+COMBINE_METRIC1_TYPES.value = 'DARK_FLAT, FLAT_FLAT, FLAT_DARK, FP_FP, DARK_FP'
 
 # Define the coefficients of the fit of 1/m vs d
 CAVITY_1M_FILE = CAVITY_1M_FILE.copy(__NAME__)
