@@ -3021,15 +3021,15 @@ class DrsFitsFile(DrsInputFile):
             basename = basenames0[row]
             # deal with metric 1
             # TODO: Does this metric work for every type?
-            # if self.get_hkey('KW_DPRTYPE') in combine_metric_1_types:
-            # compute metric 1
-            cout = combine_metric_1(params, row, image1, datacube0)
-            metric, metric_threshold, passed = cout
+            if self.get_hkey('KW_DPRTYPE') in combine_metric_1_types:
+                # compute metric 1
+                cout = combine_metric_1(params, row, image1, datacube0)
+                metric, metric_threshold, passed = cout
             # else a proxy metric - passes test
-            # else:
-            #     metric = np.nan
-            #     metric_threshold = np.nan
-            #     passed = True
+            else:
+                metric = np.nan
+                metric_threshold = np.nan
+                passed = True
             # store metric to header
             header['CMETRIC'] = metric
             header['CTHRES'] = 'THRES {0} = {1}'.format(row, metric_threshold)
