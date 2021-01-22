@@ -993,8 +993,12 @@ def clean_ohline_pca(params, image, wavemap, **kwargs):
 
     # lead the PCs and transform to the night grid
     for ncomp in range(n_components):
+        # get spectrum + 1000 (as OH PCAS use 0 as a flag)
+        ohspec = ohpcas[:, :, ncomp] + 1000.0
         # shift the principle component from ohwave grid to input e2ds wave grid
-        ohpcshift = wave_to_wave(params, ohpcas[:, :, ncomp], ohwave, wavemap)
+        ohpcshift = wave_to_wave(params, ohspec, ohwave, wavemap)
+        # remove the + 1000 (so we still have the 0 flag)
+        ohpcshift = ohpcshift - 1000.0
         # push into ribbons
         ribbons_pcs[ncomp] = ohpcshift.ravel()
     # ----------------------------------------------------------------------
