@@ -16,10 +16,18 @@ APERO
 
 For all instruments / in general.
 
-Current known Issues:
+Current known Issues/ small immediate tasks:
 
-* 0.6.132 log.fits flat get A,B,C,AB,A,B,C entries (PLOTDIR different)??
-    * 0.7 problem with log.fits entry no fiber
+* 0.6.132 log.fits flat get A,B,C,AB,A,B,C entries (PLOTDIR different)?? not seen in 0.7
+* need to check databases exist when resseting tmp/red etc - may not exist and then crashes [Neil]
+* need to deal with installing mysql-connector-python and sqlalchemy [Neil]
+* processing - need to id polar files (distinguish from spectro files) [Neil/Chris]
+* file outputs - need to check all files [Neil]
+    * primary header only - other headers should be minimal [Neil]
+    * no image / table in primary extension (affects reading/writing) [Neil]
+* EA pre-processing code for cosmics [Etienne/Neil]
+* review comsic extraction code changes by EA [Etienne/Neil]
+* raw index should check last modified and update if new
 
 
 High priority:
