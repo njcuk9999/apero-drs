@@ -982,9 +982,12 @@ def clean_ohline_pca(params, image, wavemap, **kwargs):
     # lead the PCs and transform to the night grid
     for ncomp in range(n_components):
         # shift the principle component from ohwave grid to input e2ds wave grid
-        ohpcshift = wave_to_wave(params, ohpcas[:, :, ncomp], ohwave, wavemap)
+        # adding 1000 to avoid flag = 0
+        ohpcshift = wave_to_wave(params, ohpcas[:, :, ncomp] + 1000,
+                                 ohwave, wavemap)
         # push into ribbons
-        ribbons_pcs[ncomp] = ohpcshift.ravel()
+        # remove 1000 back to flag = 0
+        ribbons_pcs[ncomp] = ohpcshift.ravel() - 1000
     # ----------------------------------------------------------------------
     # output for the sky model
     sky_model = np.zeros_like(ribbon_e2ds)
