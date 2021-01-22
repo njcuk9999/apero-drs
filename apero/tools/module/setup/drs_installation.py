@@ -459,7 +459,7 @@ def user_interface(params, args, lang):
                   ' - setup required']
     # ask which mode the user wants for databases
     db_type = None
-    if hasattr('database_mode', args):
+    if hasattr(args, 'database_mode'):
         if args.database_mode is not None:
             # force to str
             database_mode = str(args.database_mode).upper()
