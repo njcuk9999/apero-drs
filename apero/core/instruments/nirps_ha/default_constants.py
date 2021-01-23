@@ -56,7 +56,6 @@ IMAGE_X_FULL.value = 4096
 IMAGE_Y_FULL = IMAGE_Y_FULL.copy(__NAME__)
 IMAGE_Y_FULL.value = 4096
 
-
 # Define the fibers
 FIBER_TYPES = FIBER_TYPES.copy(__NAME__)
 FIBER_TYPES.value = 'A, B'
@@ -82,7 +81,7 @@ IMAGE_X_HIGH.value = 4092
 IMAGE_Y_LOW = IMAGE_Y_LOW.copy(__NAME__)
 IMAGE_Y_LOW.value = 4
 IMAGE_Y_HIGH = IMAGE_Y_HIGH.copy(__NAME__)
-IMAGE_Y_HIGH.value = 4092
+IMAGE_Y_HIGH.value = 2088
 
 # Define the pixel size in km/s / pix
 #    also used for the median sampling size in tellu correction
@@ -172,8 +171,8 @@ FIBER_FIRST_ORDER_JUMP_B.value = 0
 FIBER_MAX_NUM_ORDERS_A = FIBER_MAX_NUM_ORDERS_A.copy(__NAME__)
 FIBER_MAX_NUM_ORDERS_B = FIBER_MAX_NUM_ORDERS_B.copy(__NAME__)
 # set values
-FIBER_MAX_NUM_ORDERS_A.value = 69
-FIBER_MAX_NUM_ORDERS_B.value = 69
+FIBER_MAX_NUM_ORDERS_A.value = 46
+FIBER_MAX_NUM_ORDERS_B.value = 46
 
 #   Number of fibers
 FIBER_SET_NUM_FIBERS_A = FIBER_SET_NUM_FIBERS_A.copy(__NAME__)
@@ -1099,7 +1098,7 @@ WAVE_PIXEL_SHIFT_SLOPE.value = 0.0  # 4.22131253e-04
 
 #  Defines echelle number of first extracted order
 WAVE_T_ORDER_START = WAVE_T_ORDER_START.copy(__NAME__)
-WAVE_T_ORDER_START.value = 79
+WAVE_T_ORDER_START.value = 152
 
 #  Defines order from which the solution is calculated (first order)
 WAVE_N_ORD_START = WAVE_N_ORD_START.copy(__NAME__)
@@ -1107,7 +1106,7 @@ WAVE_N_ORD_START.value = 0
 
 #  Defines order to which the solution is calculated (last order)
 WAVE_N_ORD_FINAL = WAVE_N_ORD_FINAL.copy(__NAME__)
-WAVE_N_ORD_FINAL.value = 47
+WAVE_N_ORD_FINAL.value = 45
 
 # =============================================================================
 # CALIBRATION: WAVE HC SETTINGS
@@ -1320,7 +1319,7 @@ WAVE_FP_DPRLIST.value = 'OBJ_FP'
 # =============================================================================
 #  Define the order to start the Littrow fit from for the HC wave solution
 WAVE_LITTROW_ORDER_INIT_1 = WAVE_LITTROW_ORDER_INIT_1.copy(__NAME__)
-WAVE_LITTROW_ORDER_INIT_1.value = 0
+WAVE_LITTROW_ORDER_INIT_1.value = 1
 
 #  Define the order to start the Littrow fit from for the FP wave solution
 # TODO: Note currently used
@@ -1329,12 +1328,12 @@ WAVE_LITTROW_ORDER_INIT_2.value = 1
 
 #  Define the order to end the Littrow fit at for the HC wave solution
 WAVE_LITTROW_ORDER_FINAL_1 = WAVE_LITTROW_ORDER_FINAL_1.copy(__NAME__)
-WAVE_LITTROW_ORDER_FINAL_1.value = 47
+WAVE_LITTROW_ORDER_FINAL_1.value = 46
 
 #  Define the order to end the Littrow fit at for the FP wave solution
 # TODO: Note currently used
 WAVE_LITTROW_ORDER_FINAL_2 = WAVE_LITTROW_ORDER_FINAL_2.copy(__NAME__)
-WAVE_LITTROW_ORDER_FINAL_2.value = 47
+WAVE_LITTROW_ORDER_FINAL_2.value = 46
 
 #  Define orders to ignore in Littrow fit (should be a string list separated
 #      by commas
