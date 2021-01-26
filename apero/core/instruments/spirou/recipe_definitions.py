@@ -863,7 +863,8 @@ obj_mk_tellu.set_outputs(TELLU_CONV=files.out_tellu_conv,
                          TELLU_TRANS=files.out_tellu_trans,
                          TELLU_PCLEAN=files.out_tellu_pclean)
 obj_mk_tellu.set_debug_plots('MKTELLU_WAVE_FLUX1', 'MKTELLU_WAVE_FLUX2',
-                             'TELLUP_WAVE_TRANS', 'TELLUP_ABSO_SPEC')
+                             'TELLUP_WAVE_TRANS', 'TELLUP_ABSO_SPEC',
+                             'TELLUP_CLEAN_OH')
 obj_mk_tellu.set_summary_plots('SUM_MKTELLU_WAVE_FLUX',
                                'SUM_TELLUP_WAVE_TRANS', 'SUM_TELLUP_ABSO_SPEC')
 obj_mk_tellu.set_arg(pos=0, **directory)
@@ -951,7 +952,8 @@ obj_fit_tellu.set_debug_plots('EXTRACT_S1D', 'EXTRACT_S1D_WEIGHT',
                               'FTELLU_RECON_SPLINE1', 'FTELLU_RECON_SPLINE2',
                               'FTELLU_WAVE_SHIFT1', 'FTELLU_WAVE_SHIFT2',
                               'FTELLU_RECON_ABSO1', 'FTELLU_RECON_ABSO2',
-                              'TELLUP_WAVE_TRANS', 'TELLUP_ABSO_SPEC')
+                              'TELLUP_WAVE_TRANS', 'TELLUP_ABSO_SPEC',
+                              'TELLUP_CLEAN_OH')
 obj_fit_tellu.set_summary_plots('SUM_EXTRACT_S1D', 'SUM_FTELLU_RECON_ABSO',
                                 'SUM_TELLUP_WAVE_TRANS', 'SUM_TELLUP_ABSO_SPEC')
 obj_fit_tellu.set_arg(pos=0, **directory)
@@ -1473,9 +1475,9 @@ master_seq.add(cal_shape_master, master=True)
 master_seq.add(cal_shape, name='SHAPELM', master=True)
 master_seq.add(cal_ff, name='FLATM', master=True)
 master_seq.add(cal_leak_master, master=True)
-master_seq.add(cal_thermal, name='THIM', files=[files.pp_dark_dark_int],
+master_seq.add(cal_thermal, name='THI_M', files=[files.pp_dark_dark_int],
                master=True)
-master_seq.add(cal_thermal, name='THTM', files=[files.pp_dark_dark_tel],
+master_seq.add(cal_thermal, name='THT_M', files=[files.pp_dark_dark_tel],
                master=True)
 master_seq.add(cal_wave_master, master=True,
                rkwargs=dict(hcfiles=[files.pp_hc1_hc1],
