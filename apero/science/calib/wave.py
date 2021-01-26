@@ -1932,6 +1932,8 @@ def hc_write_wavesol_master(params, recipe, llprops, infile, fiber, combine,
     # add dates
     wavefile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
     wavefile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    wavefile.add_hkey('KW_PID', value=params['PID'])
     # add output tag
     wavefile.add_hkey('KW_OUTPUT', value=wavefile.name)
     wavefile.add_hkey('KW_FIBER', value=fiber)
