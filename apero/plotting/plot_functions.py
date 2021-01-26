@@ -2852,6 +2852,41 @@ def plot_tellup_wave_trans(plotter, graph, kwargs):
     plotter.plotend(graph)
 
 
+def plot_tellup_clean_oh(plotter, graph, kwargs):
+    # ------------------------------------------------------------------
+    # start the plotting process
+    if not plotter.plotstart(graph):
+        return
+    # ------------------------------------------------------------------
+    # get the arguments from kwargs
+    wave = kwargs['wave'].ravel()
+    image = kwargs['image'].ravel()
+    skymodel0 = kwargs['skymodel0'].ravel()
+    skymodel = kwargs['skymodel'].ravel()
+    mask_limits = kwargs['mask_limits']
+    # ------------------------------------------------------------------
+    # set up plot
+    fig, frame = graph.set_figure(plotter, nrows=1, ncols=1)
+    # plot the image, image - skymodel (before), image - skymodel (after)
+    frame.plot(wave, image, label='input', color='orange',
+                alpha=0.3)
+    frame.plot(wave, image - skymodel0, label='PCA sky model', color='red',
+                alpha=0.9)
+    frame.plot(wave, image - skymodel, label='PCA+per-line', color='green',
+                alpha=0.9)
+    # ------------------------------------------------------------------
+    # get graph bounds
+    xmin, xmax, ymin, ymax = frame.axis()
+    # loop around mask limits and plot
+    for mask_limit in mask_limits:
+        frame.fill_between(mask_limit, ymin, ymax, color='0.5', alpha=0.5)
+    # add legend
+    frame.legend(loc=0)
+    # ------------------------------------------------------------------
+    # wrap up using plotter
+    plotter.plotend(graph)
+
+
 def plot_tellup_abso_spec(plotter, graph, kwargs):
     # ------------------------------------------------------------------
     # start the plotting process
@@ -3276,6 +3311,10 @@ sum_desc = 'Plot to the result of the telluric pre-cleaning'
 sum_tellup_abso_spec = Graph('SUM_TELLUP_ABSO_SPEC', kind='summary',
                              func=plot_tellup_abso_spec,
                              figsize=(16, 10), dpi=150, description=sum_desc)
+# telluric oh clean plot
+tellup_clean_oh = Graph('TELLUP_CLEAN_OH', kind='debug',
+                        func=plot_tellup_clean_oh)
+
 # make telluric graph instances
 mktellu_wave_flux1 = Graph('MKTELLU_WAVE_FLUX1', kind='debug',
                            func=plot_mktellu_wave_flux)
