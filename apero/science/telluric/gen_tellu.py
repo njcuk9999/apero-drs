@@ -432,8 +432,8 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     # ----------------------------------------------------------------------
     # remove OH lines if required
     if clean_ohlines:
-        image_e2ds, sky_model = clean_ohline_pca(params, image_e2ds_ini,
-                                                 wave_e2ds)
+        image_e2ds, sky_model = clean_ohline_pca(params, recipe,
+                                                 image_e2ds_ini, wave_e2ds)
     # else just copy the image and set the sky model to zeros
     else:
         image_e2ds = np.array(image_e2ds_ini)
@@ -956,27 +956,29 @@ def tellu_preclean(params, recipe, infile, wprops, fiber, rawfiles, combine,
     return props
 
 
-def clean_ohline_pca(params, image, wavemap, **kwargs):
+def clean_ohline_pca(params, recipe, image, wavemap, **kwargs):
     # load ohline principle components
     func_name = __NAME__ + '.clean_ohline_pca()'
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', kwargs, func_name)
     relfolder = pcheck(params, 'TELLU_LIST_DIRECTORY', 'directory', kwargs,
                        func_name)
     filename = pcheck(params, 'TELLUP_OHLINE_PCA_FILE', 'filename', kwargs,
                       func_name)
-    # ----------------------------------------------------------------------
+    nbright = pcheck(params, 'TELLUP_OHLINE_NBRIGHT', 'nbright', kwargs,
+                     func_name)
+    # -------------------------------------------------------------------------
     # log progress
     WLOG(params, '', textentry('40-019-00042'))
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # get shape of the e2ds
     nbo, nbpix = image.shape
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # load principle components data file
     ohfile = os.path.join(assetdir, relfolder, filename)
     ohpcdata = drs_data.load_fits_file(params, ohfile, func_name)
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # get the number of components
     n_components = ohpcdata.shape[1] - 1
     # get the ohline wave grid
@@ -1001,7 +1003,7 @@ def clean_ohline_pca(params, image, wavemap, **kwargs):
         ohpcshift = ohpcshift - 1000.0
         # push into ribbons
         ribbons_pcs[ncomp] = ohpcshift.ravel()
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # output for the sky model
     sky_model = np.zeros_like(ribbon_e2ds)
     # here we could have a loop, that's why the sky_model is within the
@@ -1012,16 +1014,78 @@ def clean_ohline_pca(params, image, wavemap, **kwargs):
     # linear minimisation of the ribbon's derivative to the science
     #     data derivative
     amps, model = mp.linear_minimization(vector, sample)
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
     # reconstruct the sky model with the amplitudes derived above
     for ncomp in range(n_components):
         sky_model += ribbons_pcs[ncomp] * amps[ncomp]
     # sky model cannot be negative
     with warnings.catch_warnings(record=True) as _:
         sky_model[sky_model < 0] = 0
+    # -------------------------------------------------------------------------
+    # e-width of the region over which we measure the residuals of brighter lines
+    # to adjust them
+    ew_weight = 2.5 * params['FWHM_PIXEL_PSF']
+    # region of which we will compute the weight falloff of a bright sky line
+    width = np.int(ew_weight * 4)
+    # sky amplitude correction
+    amp_sky = np.ones_like(sky_model)
+    # weight vector to have a seamless falloff of the sky weight
+    wrange = np.arange(-width + 0.5, width + 0.5)
+    weight = np.exp(-0.5 * wrange ** 2 / ew_weight ** 2)
+    # mask to know where we looked for a bright line
+    mask = np.zeros_like(ribbon_e2ds)
+    # keep a mask of what has actually been masked
+    # mask_plot = np.zeros_like(ribbon_e2ds) + np.nan
+    mask_limits = []
+    # number of masked lines
+    masked_lines = 0
+    # -------------------------------------------------------------------------
+    # loop around brightest OH lines
+    for it in range(len(nbright)):
+        # find brightest sky pixel that has not yet been looked at
+        imax = np.nanargmax(sky_model + mask)
+        # keep track of where we looked
+        mask[imax-width:imax+width] = np.nan
+        # segment of science spectrum minus current best guess of sky
+        tmp1 = (ribbon_e2ds - sky_model * amp_sky)[imax-width:imax+width]
+        # segment of sky sp
+        tmp2 = (sky_model * amp_sky)[imax-width:imax+width]
+        # work out the gradients
+        gtmp1 = np.gradient(tmp1)
+        gtmp2 = np.gradient(tmp2)
+        # find rms of derivative of science vs sky line
+        snr_line = (np.nanstd(gtmp2)/np.nanstd(gtmp1))
+        # if above 1 sigma, we adjust
+        if snr_line > 1:
+            # dot product of derivative vs science sp
+            part1 =mp.nansum(gtmp1 * gtmp2 * weight ** 2)
+            part2 = mp.nansum(gtmp2 ** 2 * weight ** 2)
+            amp = part1 / part2
+            # do not deal with absorption features (sky must be emission)
+            if amp < -1:
+                amp = 0
+            # modify the amplitude of the sky
+            amp_sky[imax - width:imax + width] *= (amp * weight + 1)
+            # mask_plot[imax-width:imax+width] = 0
+            # for plotting and the min and max area masked
+            mask_limits.append([imax-width, imax+width])
+            # add to the line count
+            masked_lines += 1
+    # -------------------------------------------------------------------------
+    # log how many lines were masked: OH Cleaning: Num of masked lines
+    WLOG(params, '', textentry('40-019-00052', args=[masked_lines]))
+    # store previous sky model
+    sky_model0 = np.array(sky_model)
+    # update sky model
+    sky_model *= amp_sky
     # push sky_model into correct shape
     sky_model = sky_model.reshape(nbo, nbpix)
-    # ----------------------------------------------------------------------
+    # -------------------------------------------------------------------------
+    # Plot the clean oh plot
+    recipe.plot('TELLUP_CLEAN_OH', wave=wavemap, image=image,
+                skymodel0=sky_model0, sky_model=sky_model,
+                mask_limits=mask_limits)
+    # -------------------------------------------------------------------------
     # return the cleaned image and sky model
     return image - sky_model, sky_model
 
