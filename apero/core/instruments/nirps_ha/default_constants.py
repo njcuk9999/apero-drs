@@ -1731,11 +1731,16 @@ TELLUP_CCF_SCAN_RANGE.value = 20
 TELLUP_CLEAN_OH_LINES = TELLUP_CLEAN_OH_LINES.copy(__NAME__)
 TELLUP_CLEAN_OH_LINES.value = True
 
+# Define the number of bright OH lines that will be individually adjusted
+#     in amplitude. Done only on lines that are at an SNR > 1
+TELLUP_OHLINE_NBRIGHT = TELLUP_OHLINE_NBRIGHT.copy(__NAME__)
+TELLUP_OHLINE_NBRIGHT.value = 300
+
 # define the OH line pca file
 TELLUP_OHLINE_PCA_FILE = TELLUP_OHLINE_PCA_FILE.copy(__NAME__)
 TELLUP_OHLINE_PCA_FILE.value = 'sky_PCs.fits'
 
-# define the orders not to use in pre-cleaning fit (due to theraml
+# define the orders not to use in pre-cleaning fit (due to thermal
 # background)
 TELLUP_REMOVE_ORDS = TELLUP_REMOVE_ORDS.copy(__NAME__)
 TELLUP_REMOVE_ORDS.value = '47, 48'
