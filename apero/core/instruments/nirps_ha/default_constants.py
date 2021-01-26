@@ -81,7 +81,7 @@ IMAGE_X_HIGH.value = 4092
 IMAGE_Y_LOW = IMAGE_Y_LOW.copy(__NAME__)
 IMAGE_Y_LOW.value = 4
 IMAGE_Y_HIGH = IMAGE_Y_HIGH.copy(__NAME__)
-IMAGE_Y_HIGH.value = 2088
+IMAGE_Y_HIGH.value = 2880
 
 # Define the pixel size in km/s / pix
 #    also used for the median sampling size in tellu correction
@@ -99,7 +99,6 @@ IMAGE_SATURATION.value = 60000
 # Define the frame time for an image
 IMAGE_FRAME_TIME = IMAGE_FRAME_TIME.copy(__NAME__)
 IMAGE_FRAME_TIME.value = 5.57192
-
 
 # =============================================================================
 # CALIBRATION: GENERAL SETTINGS
@@ -171,8 +170,8 @@ FIBER_FIRST_ORDER_JUMP_B.value = 0
 FIBER_MAX_NUM_ORDERS_A = FIBER_MAX_NUM_ORDERS_A.copy(__NAME__)
 FIBER_MAX_NUM_ORDERS_B = FIBER_MAX_NUM_ORDERS_B.copy(__NAME__)
 # set values
-FIBER_MAX_NUM_ORDERS_A.value = 46
-FIBER_MAX_NUM_ORDERS_B.value = 46
+FIBER_MAX_NUM_ORDERS_A.value = 41
+FIBER_MAX_NUM_ORDERS_B.value = 41
 
 #   Number of fibers
 FIBER_SET_NUM_FIBERS_A = FIBER_SET_NUM_FIBERS_A.copy(__NAME__)
@@ -412,7 +411,7 @@ LOC_ORDERP_BOX_SIZE.value = 5
 
 #   row number of image to start localisation processing at
 LOC_START_ROW_OFFSET = LOC_START_ROW_OFFSET.copy(__NAME__)
-LOC_START_ROW_OFFSET.value = 0
+LOC_START_ROW_OFFSET.value = 375
 
 #   Definition of the central column for use in localisation
 LOC_CENTRAL_COLUMN = LOC_CENTRAL_COLUMN.copy(__NAME__)
@@ -1098,7 +1097,7 @@ WAVE_PIXEL_SHIFT_SLOPE.value = 0.0  # 4.22131253e-04
 
 #  Defines echelle number of first extracted order
 WAVE_T_ORDER_START = WAVE_T_ORDER_START.copy(__NAME__)
-WAVE_T_ORDER_START.value = 152
+WAVE_T_ORDER_START.value = 147
 
 #  Defines order from which the solution is calculated (first order)
 WAVE_N_ORD_START = WAVE_N_ORD_START.copy(__NAME__)
@@ -1106,7 +1105,7 @@ WAVE_N_ORD_START.value = 0
 
 #  Defines order to which the solution is calculated (last order)
 WAVE_N_ORD_FINAL = WAVE_N_ORD_FINAL.copy(__NAME__)
-WAVE_N_ORD_FINAL.value = 45
+WAVE_N_ORD_FINAL.value = 41
 
 # =============================================================================
 # CALIBRATION: WAVE HC SETTINGS
@@ -1319,21 +1318,21 @@ WAVE_FP_DPRLIST.value = 'OBJ_FP'
 # =============================================================================
 #  Define the order to start the Littrow fit from for the HC wave solution
 WAVE_LITTROW_ORDER_INIT_1 = WAVE_LITTROW_ORDER_INIT_1.copy(__NAME__)
-WAVE_LITTROW_ORDER_INIT_1.value = 1
+WAVE_LITTROW_ORDER_INIT_1.value = 0
 
 #  Define the order to start the Littrow fit from for the FP wave solution
 # TODO: Note currently used
 WAVE_LITTROW_ORDER_INIT_2 = WAVE_LITTROW_ORDER_INIT_2.copy(__NAME__)
-WAVE_LITTROW_ORDER_INIT_2.value = 1
+WAVE_LITTROW_ORDER_INIT_2.value = 0
 
 #  Define the order to end the Littrow fit at for the HC wave solution
 WAVE_LITTROW_ORDER_FINAL_1 = WAVE_LITTROW_ORDER_FINAL_1.copy(__NAME__)
-WAVE_LITTROW_ORDER_FINAL_1.value = 46
+WAVE_LITTROW_ORDER_FINAL_1.value = 41
 
 #  Define the order to end the Littrow fit at for the FP wave solution
 # TODO: Note currently used
 WAVE_LITTROW_ORDER_FINAL_2 = WAVE_LITTROW_ORDER_FINAL_2.copy(__NAME__)
-WAVE_LITTROW_ORDER_FINAL_2.value = 46
+WAVE_LITTROW_ORDER_FINAL_2.value = 41
 
 #  Define orders to ignore in Littrow fit (should be a string list separated
 #      by commas
@@ -1413,7 +1412,7 @@ WAVE_FP_PEAK_LIM.value = 0.1
 
 #    Define peak to peak width that is too large (removed from FP peaks)
 WAVE_FP_P2P_WIDTH_CUT = WAVE_FP_P2P_WIDTH_CUT.copy(__NAME__)
-WAVE_FP_P2P_WIDTH_CUT.value = 15
+WAVE_FP_P2P_WIDTH_CUT.value = 30
 
 # =============================================================================
 # CALIBRATION: WAVE CCF SETTINGS
