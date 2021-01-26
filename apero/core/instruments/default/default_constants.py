@@ -197,7 +197,7 @@ __all__ = [
     'TELLUP_DEXPO_MAX_ITR', 'TELLUP_ABSO_EXPO_KTHRES',
     'TELLUP_ABSO_EXPO_KWID', 'TELLUP_ABSO_EXPO_KEXP', 'TELLUP_TRANS_THRES',
     'TELLUP_TRANS_SIGLIM', 'TELLUP_FORCE_AIRMASS', 'TELLUP_D_WATER_ABSO',
-    'TELLUP_OTHER_BOUNDS', 'TELLUP_WATER_BOUNDS',
+    'TELLUP_OTHER_BOUNDS', 'TELLUP_WATER_BOUNDS', 'TELLUP_OHLINE_NBRIGHT',
     # make telluric constants
     'MKTELLU_BLAZE_PERCENTILE', 'MKTELLU_CUT_BLAZE_NORM', 'TELLU_ABSORBERS',
     'MKTELLU_DEFAULT_CONV_WIDTH', 'MKTELLU_TEMP_MED_FILT',
@@ -1074,7 +1074,8 @@ LOC_MINPEAK_AMPLITUDE = Const('LOC_MINPEAK_AMPLITUDE', value=None, dtype=float,
 LOC_BKGRD_THRESHOLD = Const('LOC_BKGRD_THRESHOLD', value=None, dtype=float,
                             source=__NAME__, minimum=0.0, group=cgroup, 
                             description=('Normalised amplitude threshold to '
-                                         'accept pixels for background calculation'))
+                                         'accept pixels for background '
+                                         'calculation'))
 
 # Define the amount we drop from the centre of the order when
 #    previous order center is missed (in finding the position)
@@ -2815,8 +2816,9 @@ WAVE_CCF_SMART_MASK_TRIAL_NMAX = Const('WAVE_CCF_SMART_MASK_TRIAL_NMAX',
 
 # define the converges parameter for dwave in smart mask generation
 WAVE_CCF_SMART_MASK_DWAVE_THRES = Const('WAVE_CCF_SMART_MASK_TRIAL_NMAX',
-                                        value=None, dtype=float, source=__NAME__,
-                                        minimum=0, group=cgroup,
+                                        value=None, dtype=float,
+                                        source=__NAME__, minimum=0,
+                                        group=cgroup,
                                         description=('define the converges '
                                                      'parameter for dwave '
                                                      'in smart mask '
@@ -3013,24 +3015,34 @@ TELLUP_DO_PRECLEANING = Const('TELLUP_DO_PRECLEANING', value=None, dtype=bool,
 TELLUP_CCF_SCAN_RANGE = Const('TELLUP_CCF_SCAN_RANGE', value=None, dtype=float,
                               source=__NAME__, group=cgroup, minimum=0.0, 
                               description=('width in km/s for the ccf scan to '
-                                           'determine the abso in pre-cleaning'))
+                                           'determine the abso in '
+                                           'pre-cleaning'))
 
 # define whether to clean OH lines
 TELLUP_CLEAN_OH_LINES = Const('TELLUP_CLEAN_OH_LINES', value=None, dtype=bool,
                               source=__NAME__, group=cgroup,
                               description='define whether to clean OH lines')
 
+# Define the number of bright OH lines that will be individually adjusted
+#     in amplitude. Done only on lines that are at an SNR > 1
+TELLUP_OHLINE_NBRIGHT = Const('TELLUP_OHLINE_NBRIGHT', value=None, dtype=int,
+                              source=__NAME__, group=cgroup,
+                              description='Define the number of bright OH '
+                                          'lines that will be individually '
+                                          'adjusted in amplitude. Done only on '
+                                          'lines that are at an SNR > 1')
+
 # define the OH line pca file
 TELLUP_OHLINE_PCA_FILE = Const('TELLUP_OHLINE_PCA_FILE', value=None, dtype=str,
                                source=__NAME__, group=cgroup,
                                description='define the OH line pca file')
 
-# define the orders not to use in pre-cleaning fit (due to theraml
+# define the orders not to use in pre-cleaning fit (due to thermal
 # background)
 TELLUP_REMOVE_ORDS = Const('TELLUP_REMOVE_ORDS', value=None, dtype=str,
                            source=__NAME__, group=cgroup, 
                            description=('define the orders not to use in '
-                                        'pre-cleaning fit (due to theraml '
+                                        'pre-cleaning fit (due to thermal '
                                         'background)'))
 
 # define the minimum snr to accept orders for pre-cleaning fit
@@ -4214,6 +4226,13 @@ PLOT_TELLUP_ABSO_SPEC = Const('PLOT_TELLUP_ABSO_SPEC', value=False,
                               active=False, group=cgroup,
                               description='turn on the telluric pre-cleaning '
                                           'result debug plot')
+
+# turn on the telluric OH cleaning debug plot
+PLOT_TELLUP_CLEAN_OH = Const('PLOT_TELLUP_CLEAN_OH', value=False,
+                              dtype=bool, source=__NAME__, user=True,
+                              active=False, group=cgroup,
+                              description='turn on the telluric OH cleaning '
+                                          'debug plot')
 
 # turn on the make tellu wave flux debug plot (in loop)
 PLOT_MKTELLU_WAVE_FLUX1 = Const('PLOT_MKTELLU_WAVE_FLUX1', value=False,

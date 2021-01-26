@@ -397,7 +397,7 @@ ALLOWED_DARK_TYPES.value = 'DARK_DARK_TEL, DARK_DARK_INT'
 DARK_MASTER_MATCH_TIME = DARK_MASTER_MATCH_TIME.copy(__NAME__)
 DARK_MASTER_MATCH_TIME.value = 2
 
-#   median filter size for dark master
+#   median filter size for dark masterWHM
 DARK_MASTER_MED_SIZE = DARK_MASTER_MED_SIZE.copy(__NAME__)
 DARK_MASTER_MED_SIZE.value = 4
 
@@ -1727,11 +1727,16 @@ TELLUP_CCF_SCAN_RANGE.value = 20
 TELLUP_CLEAN_OH_LINES = TELLUP_CLEAN_OH_LINES.copy(__NAME__)
 TELLUP_CLEAN_OH_LINES.value = True
 
+# Define the number of bright OH lines that will be individually adjusted
+#     in amplitude. Done only on lines that are at an SNR > 1
+TELLUP_OHLINE_NBRIGHT = TELLUP_OHLINE_NBRIGHT.copy(__NAME__)
+TELLUP_OHLINE_NBRIGHT.value = 300
+
 # define the OH line pca file
 TELLUP_OHLINE_PCA_FILE = TELLUP_OHLINE_PCA_FILE.copy(__NAME__)
 TELLUP_OHLINE_PCA_FILE.value = 'sky_PCs.fits'
 
-# define the orders not to use in pre-cleaning fit (due to theraml
+# define the orders not to use in pre-cleaning fit (due to thermal
 # background)
 TELLUP_REMOVE_ORDS = TELLUP_REMOVE_ORDS.copy(__NAME__)
 TELLUP_REMOVE_ORDS.value = '47, 48'
@@ -2428,6 +2433,10 @@ PLOT_TELLUP_WAVE_TRANS.value = True
 # turn on the telluric pre-cleaning result debug plot
 PLOT_TELLUP_ABSO_SPEC = PLOT_TELLUP_ABSO_SPEC.copy(__NAME__)
 PLOT_TELLUP_ABSO_SPEC.value = True
+
+# turn on the telluric OH cleaning debug plot
+PLOT_TELLUP_CLEAN_OH = PLOT_TELLUP_CLEAN_OH.copy(__NAME__)
+PLOT_TELLUP_CLEAN_OH.value = True
 
 # turn on the make tellu wave flux debug plot (in loop)
 PLOT_MKTELLU_WAVE_FLUX1 = PLOT_MKTELLU_WAVE_FLUX1.copy(__NAME__)
