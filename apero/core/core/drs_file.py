@@ -2607,15 +2607,29 @@ class DrsFitsFile(DrsInputFile):
         # if we get here we are good - both data and read are loaded
         return 1
 
-    def get_data(self, copy: bool = False) -> Union[np.ndarray, Table, None]:
+    def get_data(self, copy: bool = False,
+                 extensions: Union[List[int], None] = None
+                 ) -> Union[np.ndarray, Table, list, None]:
         """
         return the data array
 
         :param copy: bool, if True deep copies the data
-        :return: the data (numpy array)
+        :param extensions: None or list of ints - if set load multiple
+                           extensions - in the order given
+        :return: the data (numpy array or Table) or list of data from each
+                 extension
         """
         # set function name
         _ = display_func(self.params, 'get_data', __NAME__, self.class_name)
+        # check whether extensions is populated
+        if extensions is not None:
+            # storage of incoming data
+            datalist = []
+            # loop around extensions
+            for extension in extensions:
+                datalist.append(self.read_data(ext=extension, copy=copy))
+            # return datalist
+            return datalist
         # check data exists
         if self.data is None:
             self.check_read(data_only=True)
@@ -4295,7 +4309,8 @@ class DrsNpyFile(DrsInputFile):
         # if we got here we are good - data has been read
         return 1
 
-    def get_data(self, copy: bool = False) -> Union[np.ndarray, Table, None]:
+    def get_data(self, copy: bool = False,
+                 extensions = None) -> Union[np.ndarray, Table, None]:
         """
         return the data array
 
@@ -4304,6 +4319,8 @@ class DrsNpyFile(DrsInputFile):
         """
         # set function name
         _ = display_func(self.params, 'get_data', __NAME__, self.class_name)
+        # we don't use extensions
+        _ = extensions
         # check data exists
         if self.data is None:
             self.check_read(data_only=True)
@@ -5391,9 +5408,7 @@ class DrsOutFile(DrsInputFile):
         # get drs keys that are flagged for removal
         remove_keys = []
         # loop around all keyword instances
-        for key in keywords:
-            # get keyword
-            keyword = keywords[key]
+        for keyword in keywords:
             # check post exclude key
             if keyword.post_exclude:
                 # add just the keyword key name to storage
@@ -5410,10 +5425,26 @@ class DrsOutFile(DrsInputFile):
             if self.extensions[pos].remove_drs_hkeys:
                 # loop around remove keys
                 for key in remove_keys:
-                    # make sure key is in extension
-                    if key in header:
-                        # delete key
-                        del header[key]
+                    # need to deal with format keys
+                    if '{' in key:
+                        key = key.split('{')[0] + '*'
+                    # get keys
+                    hkey = header.get(key, None)
+                    # need to deal with the return types of get here
+                    #    (str or None or header card)
+                    if isinstance(hkey, drs_fits.fits.Header):
+                        hkeys = list(hkey.keys())
+                    # if not a header instance we just add the key
+                    elif hkey is not None:
+                        hkeys = [key]
+                    # if none don't do anything
+                    else:
+                        hkeys = []
+                    # remove these keys (in a loop)
+                    for hkey in hkeys:
+                        if hkey in header:
+                            # delete key
+                            del header[key]
                 # push header back to extension
                 self.extensions[pos].header = header
 
@@ -5459,11 +5490,14 @@ class DrsOutFile(DrsInputFile):
         # get keys not to check
         skip_keys = pconst.NON_CHECK_DUPLICATE_KEYS()
         # get primary extension
-        header0 = self.extensions[0]
+        header0 = self.extensions[0].header
         # loop around extensions
-        for pos in self.extensions[1:]:
+        for pos in self.extensions:
+            # skip extension 0
+            if pos == 0:
+                continue
             # get extension header
-            header = self.extensions[pos]
+            header = self.extensions[pos].header
             # deal with no header
             if header is None:
                 continue
@@ -5496,12 +5530,20 @@ class DrsOutFile(DrsInputFile):
         header = self.extensions[0].header
         # get key to add comment near
         hdrkey = params['POST_HDREXT_COMMENT_KEY']
+        # if hdrkey is in params then we have a keyword store and need just to
+        #   get the keyword store name
+        if hdrkey in params:
+            hdrkey = params[hdrkey][0]
         # make comment
         description = 'This file contains the following extensions: '
         # get the names of all (non primary) extensions
         names = []
-        for pos in self.extensions[1:]:
+        for pos in self.extensions:
             # TODO: This may not be .name but .commentname (from Chris)
+            # do not add primary extension
+            if pos == 0:
+                continue
+            # add name to names
             names.append(self.extensions[pos].name)
         # add extensions
         description += ', '.join(names)
