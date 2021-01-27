@@ -148,7 +148,15 @@ def __main__(recipe, params):
             WLOG(params, 'info', textentry('40-010-00002', args=eargs))
             continue
         # get data from file instance
-        image = infile.get_data(copy=True)
+        datalist = infile.get_data(copy=True, extensions=[1, 2, 3, 4])
+        # get flux image from the data list
+        image = datalist[0]
+        # get intercept from the data list
+        intercept = datalist[1]
+        # get error on slope from the data list
+        errslope = datalist[2]
+        # get the pixel exposure time from the data list
+        inttime = datalist[3] * infile.get_hkey('KW_FRMTIME', dtype=float)
 
         # ------------------------------------------------------------------
         # Get out file and check skip
@@ -213,6 +221,11 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # correct image
         # ------------------------------------------------------------------
+        # correct cosmic rays
+        WLOG(params, '', textentry('40-010-00018'))
+        image = prep.correct_cosmics(params, image, intercept, errslope,
+                                     inttime)
+
         # correct for the top and bottom reference pixels
         WLOG(params, '', textentry('40-010-00003'))
         image = prep.correct_top_bottom(params, image)
