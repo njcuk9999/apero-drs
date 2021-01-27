@@ -1409,7 +1409,7 @@
 "{0} = fiber name","Correcting fiber {0}","","prints that we are telluric correcting fiber","40-019-00049","ALL"
 "{0} = key name; {1} = filename","Skipping trans file (Header does not contain '{0}') \n\t Filename = {1}","","prints that trans file is missing required header key","40-019-00050","ALL"
 "{0} = BERV coverage","Calculated BERV coverage: {0} km/s","","print that the berv coverage is this value","40-019-00051","ALL"
-"","","","","40-019-00052","ALL"
+"{0} = number of OH lines masked","OH Cleaning: Num of masked lines = {0}","","prints that we have masked this many oh lines in oh cleaning","40-019-00052","ALL"
 "","","","","",""
 "","","","","",""
 "","","","","",""
