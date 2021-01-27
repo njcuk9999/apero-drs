@@ -1791,6 +1791,11 @@ def hc_write_wavesolution(params, recipe, llprops, infile, fiber, combine,
     wavefile.copy_original_keys(infile)
     # add version
     wavefile.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add dates
+    wavefile.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    wavefile.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    wavefile.add_hkey('KW_PID', value=params['PID'])
     # add output tag
     wavefile.add_hkey('KW_OUTPUT', value=wavefile.name)
     wavefile.add_hkey('KW_FIBER', value=fiber)
@@ -6320,8 +6325,8 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # Store S1D_W in file
     # ----------------------------------------------------------------------
     # copy header from e2dsll file
-    s1dw_file.copy_hdict(e2ds_file)
     s1dw_file.copy_header(e2ds_file)
+    s1dw_file.copy_hdict(e2ds_file)
     # set output key
     s1dw_file.add_hkey('KW_OUTPUT', value=s1dw_file.name)
     # add new header keys
@@ -6342,8 +6347,8 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     # Store S1D_W in file
     # ----------------------------------------------------------------------
     # copy header from e2dsll file
-    s1dv_file.copy_hdict(e2ds_file)
     s1dv_file.copy_header(e2ds_file)
+    s1dv_file.copy_hdict(e2ds_file)
     # add new header keys
     s1dv_file = extract.add_s1d_keys(s1dv_file, svprops)
     # set output key
@@ -6360,7 +6365,6 @@ def update_extract_files(params, recipe, extract_file, wprops, extname,
     s1dv_file.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(s1dv_file)
-
     # return e2dsff file
     return e2dsff_file
 
