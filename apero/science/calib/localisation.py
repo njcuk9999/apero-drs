@@ -812,6 +812,11 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     loco1file.copy_original_keys(infile)
     # add version
     loco1file.add_hkey('KW_VERSION', value=params['DRS_VERSION'])
+    # add dates
+    loco1file.add_hkey('KW_DRS_DATE', value=params['DRS_DATE'])
+    loco1file.add_hkey('KW_DRS_DATE_NOW', value=params['DATE_NOW'])
+    # add process id
+    loco1file.add_hkey('KW_PID', value=params['PID'])
     # add output tag
     loco1file.add_hkey('KW_OUTPUT', value=loco1file.name)
     loco1file.add_hkey('KW_FIBER', value=fiber)
