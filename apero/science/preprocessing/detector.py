@@ -59,6 +59,12 @@ def get_hot_pixels(params):
     # return the hot pixel indices
     return [yhot, xhot]
 
+def correct_cosmics(params: ParamDict, image: np.ndarray,
+                    intercept: np.ndarray, errslope: np.ndarray,
+                    inttime: np.ndarray):
+    # TODO: finish this funcion with EA code
+    pass
+
 
 def ref_top_bottom(params, image):
     """
