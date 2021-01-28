@@ -223,8 +223,8 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # correct cosmic rays
         WLOG(params, '', textentry('40-010-00018'))
-        image = prep.correct_cosmics(params, image, intercept, errslope,
-                                     inttime)
+        image, cprops = prep.correct_cosmics(params, image, intercept,
+                                             errslope, inttime)
 
         # correct for the top and bottom reference pixels
         WLOG(params, '', textentry('40-010-00003'))
@@ -276,6 +276,10 @@ def __main__(recipe, params):
         # add mid observation time
         outfile.add_hkey('KW_MID_OBS_TIME', value=mid_obs_time.mjd)
         outfile.add_hkey('KW_MID_OBSTIME_METHOD', value=mid_obs_method)
+        # add the cosmic correction keys
+        outfile.add_hkey('KW_PPC_NBAD_INTE', value=cprops['NUM_BAD_INTERCEPT'])
+        outfile.add_hkey('KW_PPC_NBAD_SLOPE', value=cprops['NUM_BAD_SLOPE'])
+        outfile.add_hkey('KW_PPC_NBAD_BOTH', value=cprops['NUM_BAD_BOTH'])
         # ------------------------------------------------------------------
         # copy data
         outfile.data = image

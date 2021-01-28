@@ -134,7 +134,15 @@ def __main__(recipe, params):
             WLOG(params, 'info', textentry('40-010-00002', args=eargs))
             continue
         # get data from file instance
-        image = infile.get_data(copy=True)
+        datalist = infile.get_data(copy=True, extensions=[1, 2, 3, 4])
+        # get flux image from the data list
+        image = datalist[0]
+        # get intercept from the data list
+        intercept = datalist[1]
+        # get error on slope from the data list
+        errslope = datalist[2]
+        # get the pixel exposure time from the data list
+        inttime = datalist[3] * infile.get_hkey('KW_FRMTIME', dtype=float)
         # ------------------------------------------------------------------
         # Get out file and check skip
         # ------------------------------------------------------------------
@@ -198,6 +206,10 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # correct image
         # ------------------------------------------------------------------
+        # correct cosmic rays
+        WLOG(params, '', textentry('40-010-00018'))
+        image, cprops = pp.correct_cosmics(params, image, intercept,
+                                           errslope, inttime)
         # correct for the top and bottom reference pixels
         WLOG(params, '', textentry('40-010-00003'))
         image = pp.correct_top_bottom(params, image)
@@ -246,6 +258,10 @@ def __main__(recipe, params):
         # add mid observation time
         outfile.add_hkey('KW_MID_OBS_TIME', value=mid_obs_time.mjd)
         outfile.add_hkey('KW_MID_OBSTIME_METHOD', value=mid_obs_method)
+        # add the cosmic correction keys
+        outfile.add_hkey('KW_PPC_NBAD_INTE', value=cprops['NUM_BAD_INTERCEPT'])
+        outfile.add_hkey('KW_PPC_NBAD_SLOPE', value=cprops['NUM_BAD_SLOPE'])
+        outfile.add_hkey('KW_PPC_NBAD_BOTH', value=cprops['NUM_BAD_BOTH'])
         # ------------------------------------------------------------------
         # copy data
         outfile.data = image
