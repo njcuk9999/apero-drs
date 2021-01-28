@@ -235,6 +235,26 @@ PP_HOTPIX_BOXSIZE.value = 5
 PP_CORRUPT_MED_SIZE = PP_CORRUPT_MED_SIZE.copy(__NAME__)
 PP_CORRUPT_MED_SIZE.value = 2
 
+# super-pessimistic noise estimate. Includes uncorrected common noise
+PP_COSMIC_NOISE_ESTIMATE = PP_COSMIC_NOISE_ESTIMATE.copy(__NAME__)
+PP_COSMIC_NOISE_ESTIMATE.value = 30.0
+
+# define the cuts in sigma where we should look for cosmics (variance)
+PP_COSMIC_VARCUT1 = PP_COSMIC_VARCUT1.copy(__NAME__)
+PP_COSMIC_VARCUT1.value = 100.0
+PP_COSMIC_VARCUT2 = PP_COSMIC_VARCUT2.copy(__NAME__)
+PP_COSMIC_VARCUT2.value = 50.0
+
+# define the cuts in sigma where we should look for cosmics (intercept)
+PP_COSMIC_INTCUT1 = PP_COSMIC_INTCUT1.copy(__NAME__)
+PP_COSMIC_INTCUT1.value = 50.0
+PP_COSMIC_INTCUT2 = PP_COSMIC_INTCUT2.copy(__NAME__)
+PP_COSMIC_INTCUT2.value = 10.0
+
+# random box size [in pixels] to speed-up low-frequency band computation
+PP_COSMIC_BOXSIZE = PP_COSMIC_BOXSIZE.copy(__NAME__)
+PP_COSMIC_BOXSIZE.value = 64
+
 # Define the fraction of the required exposure time that is required for a
 #   valid observation
 PP_BAD_EXPTIME_FRACTION = PP_BAD_EXPTIME_FRACTION.copy(__NAME__)

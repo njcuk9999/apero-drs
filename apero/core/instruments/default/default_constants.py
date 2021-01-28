@@ -16,7 +16,9 @@ __all__ = [
     'PP_NUM_DARK_AMP', 'PP_HOTPIX_FILE', 'PP_TOTAL_AMP_NUM',
     'PP_CORRUPT_MED_SIZE', 'PP_NUM_REF_TOP', 'PP_NUM_REF_BOTTOM',
     'PP_RMS_PERCENTILE', 'PP_LOWEST_RMS_PERCENTILE', 'PP_CORRUPT_SNR_HOTPIX',
-    'PP_CORRUPT_RMS_THRES', 'RAW_TO_PP_ROTATION', 'PP_DARK_MED_BINNUM',
+    'PP_CORRUPT_RMS_THRES', 'PP_COSMIC_NOISE_ESTIMATE', 'PP_COSMIC_VARCUT1',
+    'PP_COSMIC_VARCUT2', 'PP_COSMIC_INTCUT1', 'PP_COSMIC_INTCUT2',
+    'PP_COSMIC_BOXSIZE', 'RAW_TO_PP_ROTATION', 'PP_DARK_MED_BINNUM',
     'SKIP_DONE_PP', 'ALLOWED_PPM_TYPES', 'PPM_MASK_NSIG', 'PP_MEDAMP_BINSIZE',
     'PP_BAD_EXPTIME_FRACTION',
     # object database settings
@@ -745,6 +747,45 @@ PP_CORRUPT_RMS_THRES = Const('PP_CORRUPT_RMS_THRES', value=None, dtype=float,
                              minimum=0.0, source=__NAME__, group=cgroup, 
                              description=('Defines the RMS threshold to also '
                                           'catch corrupt files'))
+
+# super-pessimistic noise estimate. Includes uncorrected common noise
+PP_COSMIC_NOISE_ESTIMATE = Const('PP_COSMIC_NOISE_ESTIMATE', value=None,
+                                 dtype=float, minimum=0.0, source=__NAME__,
+                                 group=cgroup,
+                                 description=('super-pessimistic noise '
+                                              'estimate. Includes uncorrected '
+                                              'common noise'))
+
+# define the cuts in sigma where we should look for cosmics (variance)
+PP_COSMIC_VARCUT1 = Const('PP_COSMIC_VARCUT1', value=None, dtype=float,
+                          minimum=0.0, source=__NAME__, group=cgroup,
+                          description=('define the cuts in sigma where we '
+                                       'should look for cosmics (variance)'))
+
+# define the cuts in sigma where we should look for cosmics (variance)
+PP_COSMIC_VARCUT2 = Const('PP_COSMIC_VARCUT2', value=None, dtype=float,
+                          minimum=0.0, source=__NAME__, group=cgroup,
+                          description=('define the cuts in sigma where we '
+                                       'should look for cosmics (variance)'))
+
+# define the cuts in sigma where we should look for cosmics (intercept)
+PP_COSMIC_INTCUT1 = Const('PP_COSMIC_INTCUT1', value=None, dtype=float,
+                          minimum=0.0, source=__NAME__, group=cgroup,
+                          description=('define the cuts in sigma where we '
+                                       'should look for cosmics (intercept)'))
+
+# define the cuts in sigma where we should look for cosmics (intercept)
+PP_COSMIC_INTCUT2 = Const('PP_COSMIC_INTCUT2', value=None, dtype=float,
+                          minimum=0.0, source=__NAME__, group=cgroup,
+                          description=('define the cuts in sigma where we '
+                                       'should look for cosmics (intercept)'))
+
+# random box size [in pixels] to speed-up low-frequency band computation
+PP_COSMIC_BOXSIZE = Const('PP_COSMIC_BOXSIZE', value=None, dtype=float,
+                          minimum=0.0, source=__NAME__, group=cgroup,
+                          description=('random box size [in pixels] to '
+                                       'speed-up low-frequency band '
+                                       'computation'))
 
 # Define whether to skip preprocessed files that have already be processed
 SKIP_DONE_PP = Const('SKIP_DONE_PP', value=None, dtype=bool,
