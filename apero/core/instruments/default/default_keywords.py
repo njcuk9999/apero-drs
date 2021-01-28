@@ -37,6 +37,7 @@ __all__ = [  # input keys
     'KW_CDBBLAZE', 'KW_CDBWAVE', 'KW_CDBTHERMAL',
     # preprocess keys
     'KW_PPSHIFTX', 'KW_PPSHIFTY', 'KW_PPMSTR_NSIG', 'KW_PPMSTR_FILE',
+    'KW_PPC_NBAD_INTE', 'KW_PPC_NBAD_SLOPE', 'KW_PPC_NBAD_BOTH',
     # dark keys
     'KW_DARK_DEAD', 'KW_DARK_MED', 'KW_DARK_B_DEAD',
     'KW_DARK_B_MED', 'KW_DARK_R_DEAD', 'KW_DARK_R_MED', 'KW_DARK_CUT',
@@ -639,6 +640,25 @@ KW_PPSHIFTX = Keyword('KW_PPSHIFTX', key='', dtype=float, source=__NAME__,
 KW_PPSHIFTY = Keyword('KW_PPSHIFTY', key='', dtype=float, source=__NAME__,
                       description=('The shift in pixels so that image is at '
                                    'same location as engineering flat'))
+
+# the number of bad pixels found via the intercept (cosmic ray rejection)
+KW_PPC_NBAD_INTE = Keyword('KW_PPC_NBAD_INTE', key='', dtype=int,
+                           source=__NAME__,
+                           description=('the number of bad pixels found via '
+                                        'the intercept (cosmic ray rejection)'))
+
+# the number of bad pixels found via the slope (cosmic ray rejection)
+KW_PPC_NBAD_SLOPE = Keyword('KW_PPC_NBAD_INTE', key='', dtype=int,
+                           source=__NAME__,
+                           description=('the number of bad pixels found via '
+                                        'the slope (cosmic ray rejection)'))
+
+# the number of bad pixels found with both intercept and slope (cosmic ray)
+KW_PPC_NBAD_BOTH = Keyword('KW_PPC_NBAD_INTE', key='', dtype=int,
+                           source=__NAME__,
+                           description=('the number of bad pixels found with '
+                                        'both intercept and slope (cosmic '
+                                        'ray)'))
 
 # The number of sigma used to construct pp master mask
 KW_PPMSTR_NSIG = Keyword('KW_PPMSTR_NSIG', key='', dtype=float, source=__NAME__,

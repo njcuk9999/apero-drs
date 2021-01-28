@@ -493,6 +493,18 @@ KW_PPSHIFTX.set(key='DETOFFDX', comment='Pixel offset in x from readout lag')
 KW_PPSHIFTY = KW_PPSHIFTY.copy(__NAME__)
 KW_PPSHIFTY.set(key='DETOFFDY', comment='Pixel offset in y from readout lag')
 
+# the number of bad pixels found via the intercept (cosmic ray rejection)
+KW_PPC_NBAD_INTE = KW_PPC_NBAD_INTE.copy(__NAME__)
+KW_PPC_NBAD_INTE.set('NBADINTE', comment='No. bad px intercept cosmic reject')
+
+# the number of bad pixels found via the slope (cosmic ray rejection)
+KW_PPC_NBAD_SLOPE = KW_PPC_NBAD_SLOPE.copy(__NAME__)
+KW_PPC_NBAD_SLOPE.set('NBADSLOP', comment='No. bad px slope cosmic reject')
+
+# the number of bad pixels found with both intercept and slope (cosmic ray)
+KW_PPC_NBAD_BOTH = KW_PPC_NBAD_BOTH.copy(__NAME__)
+KW_PPC_NBAD_BOTH.set('NBADBATH', comment='No. bad px both cosmic reject')
+
 # The number of sigma used to construct pp master mask
 KW_PPMSTR_NSIG = KW_PPMSTR_NSIG.copy(__NAME__)
 KW_PPMSTR_NSIG.set(key='PPMNSIG', comment='PP master mask nsig used')
