@@ -9,13 +9,16 @@ Created on 2019-03-05 16:37
 Version 0.0.1
 """
 import numpy as np
-import warnings
+from pathlib import Path
 from scipy import ndimage
+from typing import Tuple, Union
+import warnings
 
 from apero.base import base
 from apero.core import constants
 from apero.core import math as mp
 from apero.core.core import drs_log
+from apero.core.core import drs_misc
 from apero.core.utils import drs_startup
 from apero.core.utils import drs_data
 from apero.core.core import drs_database
@@ -35,12 +38,16 @@ __release__ = base.__release__
 WLOG = drs_log.wlog
 # get param dict
 ParamDict = constants.ParamDict
+# get display func
+display_func = drs_misc.display_func
+# get the calibration database
+CalibrationDatabase = drs_database.CalibrationDatabase
 
 
 # =============================================================================
 # Define spirou detector functions
 # =============================================================================
-def get_hot_pixels(params):
+def get_hot_pixels(params: ParamDict) -> Tuple[np.ndarray, np.ndarray]:
     """
     Get the positions of the hot pixels from a full flat image (engineering)
 
@@ -49,7 +56,7 @@ def get_hot_pixels(params):
     :type params: ParamDict
 
     :return: The hot pixesl locations in y and x
-    :rtype: tuple[np.ndarray, np.ndarray]
+    :rtype: list[np.ndarray, np.ndarray]
     """
     # get full badpixel file
     hotpix_table = drs_data.load_hotpix(params)
@@ -57,16 +64,117 @@ def get_hot_pixels(params):
     yhot = np.array(hotpix_table['ypix']).astype(int)
     xhot = np.array(hotpix_table['xpix']).astype(int)
     # return the hot pixel indices
-    return [yhot, xhot]
+    return yhot, xhot
+
 
 def correct_cosmics(params: ParamDict, image: np.ndarray,
                     intercept: np.ndarray, errslope: np.ndarray,
-                    inttime: np.ndarray):
-    # TODO: finish this funcion with EA code
-    pass
+                    inttime: np.ndarray) -> Tuple[np.ndarray, ParamDict]:
+    """
+    Locate and correct cosmic rays using the errorslope and the intercept
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param image: np.ndarray, the image to correct
+    :param intercept: np.ndarray, the intercept image
+    :param errslope: np.ndarray, the error slope image
+    :param inttime: np.ndarray, the integration time [s] image
+
+    :return: the corrected image
+    """
+    # set function name
+    func_name = display_func(params, 'correct_cosmics', __NAME__)
+    # get parameters from params
+    tamp = params['PP_TOTAL_AMP_NUM']
+    ntop = params['PP_NUM_REF_TOP']
+    nbottom = params['PP_NUM_REF_BOTTOM']
+    readout_noise = params['PP_COSMIC_NOISE_ESTIMATE']
+    variance_cut1 = params['PP_COSMIC_VARCUT1']
+    variance_cut2 = params['PP_COSMIC_VARCUT2']
+    intercept_cut1 = params['PP_COSMIC_INTCUT1']
+    intercept_cut2 = params['PP_COSMIC_INTCUT2']
+    intboxsize = params['PP_COSMIC_BOXSIZE']
+    # get the 1 sigma fraction (~68)
+    norm_frac = mp.normal_fraction(1) * 100
+    # get shape of image
+    nby, nbx = image.shape
+    # get the size of each amplifier
+    ampsize = nbx / tamp
+    # express image and slope in ADU not ADU/s
+    image2 = np.array(image) * inttime
+    errslope = np.arary(errslope) * inttime
+    # -------------------------------------------------------------------------
+    # using the error on the slope
+    # -------------------------------------------------------------------------
+    # express excursions as variance so we can subtract things
+    variance = errslope ** 2
+    # get a list of reference pixels
+    ref_pix = list(range(nbottom - 1)) + list(range(nby - ntop + 1, nby))
+    # loop around amplifiers and subtract median per-amplifier variance
+    for it in range(tamp):
+        # get start and end points of this amplifier
+        start, end = it * ampsize, it * ampsize + ampsize
+        # get the box of reference pixels for this amplifier
+        box = variance[ref_pix, start:end]
+        # subtract median per-amplifier variance
+        variance[:, start:end] = variance[:, start:end] - mp.nanmedian(box)
+    # set all negative pixels to 0 (just for the flagging)
+    image2[image2 < 0] = 0
+    # get the expected image value (with noise estimate added)
+    expected = image2 + readout_noise ** 2
+    # get the fractional number of sigmas away from expected value
+    nsig2 = variance / expected
+    # number of simga away from bulk of expected-to-observed variance
+    nsig2 = nsig2 / np.nanpercentile(np.abs(nsig2), norm_frac)
+    # mask the nsigma by the variance cuts
+    mask1 = np.array(nsig2 > variance_cut1)
+    mask2 = np.array(nsig2 > variance_cut2)
+    # mask of where variance is bad
+    mask_slope_variance = mp.xpand_mask(mask1, mask2)
+    # set bad pixels to NaN
+    image[mask_slope_variance] = np.nan
+    # -------------------------------------------------------------------------
+    # using the intercept
+    # -------------------------------------------------------------------------
+    # remove median per-column intercept
+    for it in range(nbx):
+        intercept[:, it] = intercept[:, it] - mp.nanmedian(intercept[:, it])
+    # remove per-region intercept - loop around the box sizes
+    for it in range(intboxsize):
+        for jt in range(intboxsize):
+            # work out ypix start and end
+            starty, endy = it * intboxsize, it * intboxsize + intboxsize
+            # work out xpix start and end
+            startx, endx = jt * intboxsize, jt * intboxsize + intboxsize
+            # work out median of intbox
+            intmed = mp.nanmedian(intercept[starty:endy, startx:endx])
+            # subtract off the intbox median
+            intercept[starty:endy, startx:endx] -= intmed
+    # normalize to 1-sigma
+    intercept = intercept / np.nanpercentile(np.abs(intercept, norm_frac))
+    # express as varuabce
+    nsig2 = intercept ** 2
+    # mask the nsigma by the variance cuts
+    mask1 = np.array(nsig2 > intercept_cut1)
+    mask2 = np.array(nsig2 > intercept_cut2)
+    # mask of where variance is bad
+    mask_intercept_deviation = mp.xpand_mask(mask1, mask2)
+    # set bad pixels to NaN
+    image[mask_intercept_deviation] = np.nan
+    # load in to param dict
+    props = ParamDict()
+    # calculate some stats
+    props['NUM_BAD_INTERCEPT'] = mp.nansum(mask_intercept_deviation)
+    props['NUM_BAD_SLOPE'] = mp.nansum(mask_slope_variance)
+    # get those with both
+    mask_both = mask_intercept_deviation & mask_slope_variance
+    props['NUM_BAD_BOTH'] = mp.nansum(mask_both)
+    # set source
+    props.set_all_sources(func_name)
+    # return the image and the properties
+    return image, props
 
 
-def ref_top_bottom(params, image):
+def ref_top_bottom(params: ParamDict, image: np.ndarray) -> np.ndarray:
     """
     Correction for the top and bottom reference pixels
 
@@ -111,7 +219,7 @@ def ref_top_bottom(params, image):
     return image
 
 
-def median_filter_dark_amp(params, image):
+def median_filter_dark_amp(params: ParamDict, image: np.ndarray) -> np.ndarray:
     """
     Use the dark amplifiers to produce a median pattern and apply this to the
     image
@@ -207,7 +315,7 @@ def median_filter_dark_amp(params, image):
     return image
 
 
-def median_one_over_f_noise(params, image):
+def median_one_over_f_noise(params: ParamDict, image: np.ndarray) -> np.ndarray:
     """
     Use the dark amplifiers to create a map of the 1/f (residual) noise and
     apply it to the image
@@ -253,7 +361,13 @@ def median_one_over_f_noise(params, image):
     return image
 
 
-def test_for_corrupt_files(params, image, hotpix):
+# Define complex return typing for tesT_for_corrupt_files
+CorrFileType = Tuple[float, Tuple[float, float, float, float], float, float]
+
+
+def test_for_corrupt_files(params: ParamDict, image: np.ndarray,
+                           hotpix: Tuple[np.ndarray, np.ndarray]
+                           ) -> CorrFileType:
     """
     Test for corrupted files by using the hotpix map and generate some
     quality control criteria (SNR_HOTPIX, RMS0, RMS1, RMS2, RMS3)
@@ -336,13 +450,29 @@ def test_for_corrupt_files(params, image, hotpix):
     # signal to noise = res / rms
     snr_hotpix = res[med_size, med_size] / rms
     # return test values
-    return snr_hotpix, [rms0, rms1, rms2, rms3], dx, dy
+    return snr_hotpix, (rms0, rms1, rms2, rms3), dx, dy
 
 
 # =============================================================================
 # Define nirps detector functions
 # =============================================================================
-def nirps_correction(params, image, mask=None, header=None, database=None):
+def nirps_correction(params: ParamDict, image: np.ndarray,
+                     mask: Union[np.ndarray, None] = None,
+                     header: Union[drs_fits.Header, None] = None,
+                     database: Union[CalibrationDatabase, None] = None
+                     ) -> Tuple[np.ndarray, str]:
+    """
+    Pre-processing correction for NIRPS
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param image: np.ndarray, the image to correct
+    :param mask: np.ndarray or None - if set a mask for the correction
+    :param header: fits.Header or None - if set the header for file
+    :param database: CalibrationDatabase or Nont - if set the loaded calibDB
+                     (if set to None is loaded inside the code)
+
+    :return: tuple, 1. the corrected image, 2. the mask filename
+    """
     # define the bin size for low level frequencies
     binsize = params['PP_MEDAMP_BINSIZE']
     # number of amplifiers in total
@@ -378,8 +508,21 @@ def nirps_correction(params, image, mask=None, header=None, database=None):
     return image, pfile
 
 
-def get_pp_mask(params, header, database=None):
-    _ = __NAME__ + '.get_pp_mask()'
+def get_pp_mask(params: ParamDict, header: drs_fits.Header,
+                database: Union[CalibrationDatabase, None] = None
+                ) -> Tuple[np.ndarray, Union[Path, str]]:
+    """
+    Locate and open the PP mask (for NIRPS)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param header: fits.Header - the header of the input file (to decide which
+                   mask to get from calibration database)
+    :param database: Calibration database or None - if set avoids reloading the
+                     calibration database
+
+    :return: tuple, 1. the loaded mask as a np.array, 2. the Path to the mask
+    """
+    _ = display_func(params, '.get_pp_mask', __NAME__)
     # get file instance
     ppmstr = drs_startup.get_file_definition('PPMSTR', params['INSTRUMENT'],
                                              kind='red')
@@ -403,7 +546,7 @@ def get_pp_mask(params, header, database=None):
     return mask, ppfile
 
 
-def med_amplifiers(image, namps):
+def med_amplifiers(image: np.ndarray, namps: int) -> np.ndarray:
     """
     Perform a median image over NAMPS amplifiers with a mirror
     odd/even symmetry.
@@ -412,13 +555,11 @@ def med_amplifiers(image, namps):
 
     We fold the image into a namps x dim2 x (namps/dim1) cube
 
-    :param image:
-    :param namps:
-    :return:
-    """
-    # TODO: Question: which way round is the detector right now compared to
-    # TODO: Question:    compared to the amplifiers?
+    :param image: np.array - the image to median over
+    :param namps: int, the number of amplifiers
 
+    :return: numpy array - the median corrected image
+    """
     # get image dimensions
     dim1, dim2 = image.shape
     # get number of pixels per amplifier
@@ -460,14 +601,16 @@ def med_amplifiers(image, namps):
     return image2
 
 
-def nirps_order_mask(params, mask_image):
+def nirps_order_mask(params: ParamDict,
+                     mask_image: np.ndarray) -> Tuple[np.ndarray, ParamDict]:
     """
     Calculate the mask used for removing the orders (preprocessing correction)
     for NIRPS
 
-    :param params:
-    :param mask_image:
-    :return:
+    :param params: ParamDict - the parameter dictionary of constants
+    :param mask_image: np.array, the image to be masked
+    :return: tuple, 1. the mask for the image, 2. ParamDict - statistics from
+             mask building
     """
     # set function name
     func_name = __NAME__ + '.nirps_order_mask()'
