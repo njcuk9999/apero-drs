@@ -489,9 +489,21 @@ KW_DRS_QC_PASS.set(key='QCC{0:03d}P', comment='Quality control param passed QC',
 # The shift in pixels so that image is at same location as engineering flat
 KW_PPSHIFTX = KW_PPSHIFTX.copy(__NAME__)
 KW_PPSHIFTX.set(key='DETOFFDX', comment='Pixel offset in x from readout lag')
-
+# The shift in pixels so that image is at same location as engineering flat
 KW_PPSHIFTY = KW_PPSHIFTY.copy(__NAME__)
 KW_PPSHIFTY.set(key='DETOFFDY', comment='Pixel offset in y from readout lag')
+
+# the number of bad pixels found via the intercept (cosmic ray rejection)
+KW_PPC_NBAD_INTE = KW_PPC_NBAD_INTE.copy(__NAME__)
+KW_PPC_NBAD_INTE.set('NBADINTE', comment='No. bad px intercept cosmic reject')
+
+# the number of bad pixels found via the slope (cosmic ray rejection)
+KW_PPC_NBAD_SLOPE = KW_PPC_NBAD_SLOPE.copy(__NAME__)
+KW_PPC_NBAD_SLOPE.set('NBADSLOP', comment='No. bad px slope cosmic reject')
+
+# the number of bad pixels found with both intercept and slope (cosmic ray)
+KW_PPC_NBAD_BOTH = KW_PPC_NBAD_BOTH.copy(__NAME__)
+KW_PPC_NBAD_BOTH.set('NBADBATH', comment='No. bad px both cosmic reject')
 
 # -----------------------------------------------------------------------------
 # Define cal_dark variables
