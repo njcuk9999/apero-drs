@@ -15,6 +15,7 @@ from astropy import constants as cc
 from astropy import units as uu
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy.interpolate import UnivariateSpline
+from scipy.ndimage.morphology import binary_dilation
 from scipy.special import erf
 from scipy import stats
 from typing import Tuple, Union
@@ -857,6 +858,26 @@ def lowpassfilter(input_vect: np.ndarray, width: int = 101) -> np.ndarray:
     lowpass = spline(np.arange(len(input_vect)))
     # return the low pass filtered input vector
     return lowpass
+
+
+def xpand_mask(mask1: np.ndarray, mask2: np.ndarray) -> np.ndarray:
+    """
+    find all pixels within mask2 that include a mask1 pixel
+
+    :param mask1: numpy 1D array of bool, the base mask
+    :param mask2: numpy 1D array of bool, the selection mask
+
+    :return: a mask of all pixels within mask2 that include a mask1 pixel
+    """
+    increment = 1
+    sum_prev = 0
+    # loop until increment is zero
+    while increment != 0:
+        mask1 = np.array((mask2) * (binary_dilation(mask1)))
+        increment = fast.nansum(mask1) - sum_prev
+        sum_prev = fast.nansum(mask1)
+    # return mask1
+    return mask1
 
 
 # =============================================================================
