@@ -5272,8 +5272,10 @@ class DrsOutFile(DrsInputFile):
                 return False
             # deal with drsfile as a custom table
             if ext.drsfile == 'table':
+                # use first row that has a runstring (if any)
+                extrow = decide_on_table_row(exttable)
                 # add extension file properties
-                ext.set_infile(0, exttable)
+                ext.set_infile(extrow, exttable)
                 # log progress
                 msg = '\tAdding EXT={0} ({1}) [TABLE]'
                 margs = [pos, name]
@@ -5282,8 +5284,10 @@ class DrsOutFile(DrsInputFile):
                 ext.make_table(params, indexdbm, linkkind, criteria)
             # else take the first entry
             else:
+                # use first row that has a runstring (if any)
+                extrow = decide_on_table_row(exttable)
                 # add extension file properties
-                ext.set_infile(0, exttable)
+                ext.set_infile(extrow, exttable)
                 # load the extension file
                 ext.load_infile(params)
                 # log progress
@@ -5320,7 +5324,8 @@ class DrsOutFile(DrsInputFile):
         # deal with adding keys from one header to another
         self._add_header_keys(params)
         # remove keys that are in primary and in extensions
-        self._remove_duplicate_keys(params, pconst)
+        # TODO: Add back in with a skip for certain files?
+        # self._remove_duplicate_keys(params, pconst)
         # add extension names as comments
         self._add_extensions_names_to_primary(params)
 
@@ -6281,6 +6286,35 @@ def generate_arg_checksum(source: Union[List[str], str],
     hash = digest.hexdigest()
     # return hash
     return str(hash)
+
+
+def decide_on_table_row(table: Union[Table, pd.DataFrame]) -> int:
+    """
+    If we have multiple rows and need one this is how we decide which one
+    currently we look for columns:
+        "RUNSTRING" - row returned is the first with a valid value
+
+    if none of the above columns are found we return 0
+
+    :param table: astropy.table.Table or pandas.DataFrame - the table to choose
+                  a row of
+
+    :return: int, the row of the table to use
+    """
+    # get columns
+    if isinstance(table, Table):
+        columns = list(table.colnames)
+    elif isinstance(table, pd.DataFrame):
+        columns = list(table.columns)
+    else:
+        columns = []
+    # base on runstring
+    if 'RUNSTRING' in columns:
+        for row in range(len(table)):
+            if table['RUNSTRING'][row] is not None:
+                return row
+    # if we have got to here we use the first row
+    return 0
 
 
 def test_for_formatting(key: str, number: Union[int, float]) -> str:
