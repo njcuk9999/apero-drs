@@ -1577,12 +1577,14 @@ class IndexDatabase(DatabaseManager):
             include_files = []
         # ---------------------------------------------------------------------
         # deal with files we don't need (already have)
-        exclude_files = self.get_entries('ABSPATH', kind=kind)
+        etable = self.get_entries('ABSPATH, LAST_MODIFIED', kind=kind)
+        exclude_files = etable['ABSPATH']
+        last_mod = etable['LAST_MODIFIED']
         # ---------------------------------------------------------------------
         # locate all files within path
         reqfiles = _get_files(path, kind, include_directories,
                               exclude_directories, include_files,
-                              exclude_files, suffix)
+                              exclude_files, suffix, last_mod)
         # ---------------------------------------------------------------------
         # get a list of keys
         rkeys, rtypes = self.pconst.INDEX_HEADER_KEYS()
@@ -1854,7 +1856,8 @@ def _get_files(path: Union[Path, str], kind: str,
                excdirs: Union[List[Union[str, Path]], None] = None,
                incfiles: Union[List[Union[str, Path]], None] = None,
                excfiles: Union[List[Union[str, Path]], None] = None,
-               suffix: str = '') -> List[Path]:
+               suffix: str = '',
+               last_modified: Union[List[float], None] = None) -> List[Path]:
     """
     Get files in 'path'. If kind in ['raw' 'tmp' 'red'] then look through
     subdirectories including 'incdirs' directories and excluding 'excdirs'
@@ -1872,6 +1875,11 @@ def _get_files(path: Union[Path, str], kind: str,
                      should be included in the returned file list
     :param suffix: str, the suffix which all files returns must have
                    (i.e. the extension)
+    :param last_modified: list of floats - the last modified times for the
+                          excfiles (if given, checks the last modified date
+                          and doesn't exclude files if last modified date is
+                          different from this list) - must be same length as
+                          excfiles
 
     :return: list of paths, the file list (absolute file list) as Path instances
     """
@@ -1930,7 +1938,18 @@ def _get_files(path: Union[Path, str], kind: str,
         # exclude files
         if excfiles is not None:
             if str(filename) in excfiles:
-                continue
+                if last_modified is not None:
+                    # get position in excfiles
+                    pos = np.where(excfiles == str(filename))[0][0]
+                    # get last modified time
+                    ftime = filename.stat().st_mtime
+                    # only continue if ftime is equal to the one given
+                    if ftime == last_modified[pos]:
+                        continue
+                # else if we do not have a last modified vector just skip
+                #    this file
+                else:
+                    continue
         # add file to valid file list
         valid_files.append(filename.absolute())
     # return valid files
