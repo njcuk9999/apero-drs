@@ -261,6 +261,14 @@ class Run:
         self.master = self.recipe.master
         # run parser with arguments
         self.kwargs = self.recipe.recipe_setup(self.indexdb, inargs=self.args)
+        # deal with arguments that should be user defined only
+        for kwarg in self.recipe.kwargs:
+            # argument must be in kwargs (after recipe setup)
+            if kwarg in self.kwargs:
+                # if dtype in these dtypes it is user only
+                if self.recipe.kwargs[kwarg].dtype in ['switch']:
+                    # remove keyword
+                    del self.kwargs[kwarg]
         # add argument to set program name
         pargs = [self.recipe.shortname, int(self.priority)]
         # add argument --program
@@ -281,6 +289,7 @@ class Run:
         self.get_night_name()
         # populate a list of reciped arguments
         for kwarg in self.recipe.kwargs:
+            # only add required arguments
             if self.recipe.kwargs[kwarg].required:
                 self.required_args.append(kwarg)
 
