@@ -34,6 +34,7 @@ Date: 2020-12-21
 - preprocessing
     - add QC to reject exptimes less than 10% required exptime
       (change using PP_BAD_EXPTIME_FRACTION)
+    - add cosmic ray locating/correction (using slope + intercept)
 
 - object resolution
     - now done in preprocessing (was extraction)
@@ -85,6 +86,9 @@ Date: 2020-12-21
     - can now define a template to use for obj_mk_tellu and obj_fit_tellu codes
       use the argument --template (can either be a path to a file or a filename
       in the telluric database directory)
+    - add additional code to find up to 300 brightest OH lines and correct
+      them better - using dot product of derivative vs science spectrum
+      (including the generation of new sky PCA components - supplied with APERO)
 
 - ccf
     - add in ccf mask normalization options 'all', 'order', 'None'
@@ -101,6 +105,7 @@ Date: 2020-12-21
       s.fits, p.fits, v.fits
     - can clear reduced files using '--clear' (warning deletes all /reduced/ files)
     - by default does not overwrite, use '--overwrite' to update old files
+    - added out_post_process to apero_processing.py
 
 - general/other/misc
     - all functions should be pickle-able and python typed and have doc strings
