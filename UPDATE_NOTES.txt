@@ -30,6 +30,8 @@ Date: 2020-12-21
       function to group files/arguments (recipe.group_func)
     - added a UPDATE_OBJECT_DB into run.ini files - if True will update the local
       object database with the information from the object googlesheet
+    - raw files are updated in index database if last modified time is inconsistent
+      (before only new files were added)
 
 - preprocessing
     - add QC to reject exptimes less than 10% required exptime
