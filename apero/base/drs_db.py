@@ -736,6 +736,17 @@ class Database:
                      fetch=False)
         self.commit()
 
+    def tname_in_db(self) -> bool:
+        """
+        Test for tname (table name) in the tables of this database
+
+        :return: bool, True if tname (table name) in database, else False
+        """
+        if self.tname in self.tables:
+            return True
+        else:
+            return False
+
     # admin methods
     def backup(self):
         """
