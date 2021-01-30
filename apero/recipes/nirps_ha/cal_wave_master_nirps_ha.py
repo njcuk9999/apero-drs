@@ -241,6 +241,12 @@ def __main__(recipe, params):
         if not passed:
             WLOG(params, 'error', TextEntry('10-017-00006'))
             return 0
+
+        # TODO: Test not using HC solution (use input initial guess)
+        WLOG(params, '', 'WARNING: NOT USING HC SOL', colour='red')
+        hcprops['LITTROW_EXTRAP_SOL_1'] = iwprops['WAVEMAP']
+        hcprops['POLY_WAVE_SOL'] = iwprops['COEFFS']
+
         # ==================================================================
         # FP WAVE SOLUTION MASTER FIBER
         # ==================================================================
