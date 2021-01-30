@@ -12,11 +12,13 @@ Created on 2019-05-07 at 15:22
 import glob
 import os
 import sys
+from typing import Dict, List, Union
 
 from apero.base import base
 from apero.core import constants
 from apero.core.core import drs_log
 from apero.core.core import drs_database
+from apero.core.instruments.default import pseudo_const
 from apero import lang
 from apero.io import drs_lock
 from apero.io import drs_path
@@ -33,6 +35,10 @@ __version__ = base.__version__
 __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
+# get param dict
+ParamDict = constants.ParamDict
+PseudoConst = pseudo_const.PseudoConstants
+DatabaseM = drs_database.DatabaseManager
 # Get Logging function
 WLOG = drs_log.wlog
 # Get the text types
@@ -44,7 +50,16 @@ DEBUG = False
 # =============================================================================
 # Define functions
 # =============================================================================
-def is_empty(directory, exclude_files=None):
+def is_empty(directory: str,
+             exclude_files: Union[List[str], None] = None) -> bool:
+    """
+    Find whether a directory is empty (exluding files is "exclude_files" is set)
+
+    :param directory: str, the directory to check
+    :param exclude_files: list or strings or None - the files to exlucde from
+                          a directory
+    :return: bool, True if empty or False otherwise
+    """
     if os.path.exists(directory):
         # get a raw list of files
         rawfiles = glob.glob(os.path.join(directory, '**'), recursive=True)
@@ -67,7 +82,15 @@ def is_empty(directory, exclude_files=None):
     return False
 
 
-def reset_title(params, name):
+def reset_title(params: ParamDict, name: str):
+    """
+    print / log the reset title
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param name: str, the name to add to the reset title
+
+    :return: None just prints / logs
+    """
     # blank lines
     print()
     print()
@@ -76,8 +99,19 @@ def reset_title(params, name):
     WLOG(params, 'info', '='*50)
 
 
-def reset_confirmation(params, name, directory=None,
-                       exclude_files=None):
+def reset_confirmation(params: ParamDict, name: str,
+                       directory: Union[str, None] = None,
+                       exclude_files: Union[List[str], None] = None) -> bool:
+    """
+    Ask the user to confirm they want to reset this "name"
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param name: str, the name of the reset parameter
+    :param directory: str or None - the directory we would reset
+    :param exclude_files: list of strings or None - if set the list of files
+                          to exclude
+    :return: bool, True if we should reset, False otherwise
+    """
     # ----------------------------------------------------------------------
     if directory is not None:
         # test if empty
@@ -110,7 +144,15 @@ def reset_confirmation(params, name, directory=None,
         return False
 
 
-def reset_tmp_folders(params, log=True):
+def reset_tmp_folders(params: ParamDict, log: bool = True):
+    """
+    Reset the "tmp" (preprocessed directories)
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param log: bool, if True logs the removal
+
+    :return: None - resets tmp (preprocessed) directory
+    """
     # log progress
     WLOG(params, '', textentry('40-502-00003', args=['tmp']))
     # remove files from reduced folder
@@ -127,6 +169,18 @@ def reset_tmp_folders(params, log=True):
     indexdb = drs_database.IndexDatabase(params)
     # load index database
     indexdb.load_db()
+    # check that table is in database
+    if not indexdb.database.tname_in_db():
+        # get database paths
+        databases = manage_databases.list_databases(params)
+        # load pseudo constants
+        pconst = constants.pload(params['INSTRUMENT'])
+        # create index database
+        manage_databases.create_index_database(pconst, databases)
+        # get index database
+        indexdb = drs_database.IndexDatabase(params)
+        # load index database
+        indexdb.load_db()
     # set up condition
     condition = 'KIND="tmp"'
     # remove entries
@@ -134,16 +188,37 @@ def reset_tmp_folders(params, log=True):
     # -------------------------------------------------------------------------
     # remove entries from log database
     # -------------------------------------------------------------------------
+    # get log database
     logdb = drs_database.LogDatabase(params)
     # load index database
     logdb.load_db()
+    # check that table is in database
+    if not logdb.database.tname_in_db():
+        # get database paths
+        databases = manage_databases.list_databases(params)
+        # load pseudo constants
+        pconst = constants.pload(params['INSTRUMENT'])
+        # create index database
+        manage_databases.create_log_database(pconst, databases)
+        # get log database
+        logdb = drs_database.LogDatabase(params)
+        # load index database
+        logdb.load_db()
     # set up condition
     condition = 'RTYPE="tmp"'
     # remove entries
     logdb.remove_entries(condition=condition)
 
 
-def reset_reduced_folders(params, log=True):
+def reset_reduced_folders(params: ParamDict, log: bool = True):
+    """
+    Resets the reduced directory
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param log: bool, if True logs the removal
+
+    :return: None - resets reduced directory
+    """
     # log progress
     WLOG(params, '', textentry('40-502-00003', args=['reduced']))
     # remove files from reduced folder
@@ -160,6 +235,18 @@ def reset_reduced_folders(params, log=True):
     indexdb = drs_database.IndexDatabase(params)
     # load index database
     indexdb.load_db()
+    # check that table is in database
+    if not indexdb.database.tname_in_db():
+        # get database paths
+        databases = manage_databases.list_databases(params)
+        # load pseudo constants
+        pconst = constants.pload(params['INSTRUMENT'])
+        # create index database
+        manage_databases.create_index_database(pconst, databases)
+        # get index database
+        indexdb = drs_database.IndexDatabase(params)
+        # load index database
+        indexdb.load_db()
     # set up condition
     condition = 'KIND="red"'
     # remove entries
@@ -167,21 +254,36 @@ def reset_reduced_folders(params, log=True):
     # -------------------------------------------------------------------------
     # remove entries from log database
     # -------------------------------------------------------------------------
+    # get log database
     logdb = drs_database.LogDatabase(params)
     # load index database
     logdb.load_db()
+    # check that table is in database
+    if not logdb.database.tname_in_db():
+        # get database paths
+        databases = manage_databases.list_databases(params)
+        # load pseudo constants
+        pconst = constants.pload(params['INSTRUMENT'])
+        # create index database
+        manage_databases.create_log_database(pconst, databases)
+        # get log database
+        logdb = drs_database.LogDatabase(params)
+        # load index database
+        logdb.load_db()
     # set up condition
     condition = 'RTYPE="red"'
     # remove entries
     logdb.remove_entries(condition=condition)
 
 
-def reset_calibdb(params, log=True):
+def reset_calibdb(params: ParamDict, log: bool = True):
     """
-    Wrapper for reset_dbdir - specifically for calibdb
-    :param params:
-    :param log:
-    :return:
+    Wrapper for reset_dbdir - specifically for calibDB
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param log: bool, if True logs the removal
+
+    :return: None - resets telluDB
     """
     # get database paths
     databases = manage_databases.list_databases(params)
@@ -209,12 +311,14 @@ def reset_calibdb(params, log=True):
     calibdb.remove_entries(condition=condition)
 
 
-def reset_telludb(params, log=True):
+def reset_telludb(params: ParamDict, log: bool = True):
     """
-    Wrapper for reset_dbdir - specifically for calibdb
-    :param params:
-    :param log:
-    :return:
+    Wrapper for reset_dbdir - specifically for telluDB
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param log: bool, if True logs the removal
+
+    :return: None - resets telluDB
     """
     # get database paths
     databases = manage_databases.list_databases(params)
@@ -242,8 +346,24 @@ def reset_telludb(params, log=True):
     telludb.remove_entries(condition=condition)
 
 
-def reset_dbdir(params, name, db_dir, reset_path, log=True,
-                empty_first=True, relative_path=None):
+def reset_dbdir(params: ParamDict, name: str, db_dir: str,
+                reset_path: str, log: bool = True,
+                empty_first: bool = True,
+                relative_path: Union[str, None] = None):
+    """
+    Resets a database file directory (i.e. calibDB or telluDB)
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param name: str, the name of the database file directory
+    :param db_dir: str, the database file directory path
+    :param reset_path: str, the reset path for file directory
+    :param log: bool, if True logs the removal
+    :param empty_first: bool, if True deletes contents first
+    :param relative_path: str or None if set this mean the reset path is inside
+                          the ASSETS directory
+
+    :return: None copys files to database file directory
+    """
     # log progress
     WLOG(params, '', textentry('40-502-00003', args=[name]))
     # loop around files and folders in calib_dir
@@ -261,7 +381,18 @@ def reset_dbdir(params, name, db_dir, reset_path, log=True,
     copy_default_db(params, name, db_dir, reset_path)
 
 
-def copy_default_db(params, name, db_dir, reset_path):
+def copy_default_db(params: ParamDict, name: str, db_dir: str,
+                    reset_path: str):
+    """
+    Copies reset files to a database file directory (i.e. calibDB or telluDB)
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param name: str, the name of the database file directory
+    :param db_dir: str, the database file directory path
+    :param reset_path: str, the reset path for file directory
+
+    :return: None - copied reset files into database file directory
+    """
     # -------------------------------------------------------------------------
     # get reset directory location
     # -------------------------------------------------------------------------
@@ -274,7 +405,18 @@ def copy_default_db(params, name, db_dir, reset_path):
     drs_path.copytree(reset_path, db_dir)
 
 
-def reset_log(params, exclude_files=None, log=True):
+def reset_log(params: ParamDict, exclude_files: Union[List[str], None] = None,
+              log: bool = True):
+    """
+    Resets the plot directory
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param exclude_files: list of strings or None, if set files to exclude from
+                          reset
+    :param log: boo, if True logs resetting
+
+    :return: None, resets log directory
+    """
     # log progress
     WLOG(params, '', textentry('40-502-00003', args=['log']))
     # remove files from reduced folder
@@ -294,7 +436,15 @@ def reset_log(params, exclude_files=None, log=True):
         os.makedirs(log_dir)
 
 
-def reset_plot(params, log=True):
+def reset_plot(params: ParamDict, log: bool = True):
+    """
+    Resets the plot directory
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param log: boo, if True logs resetting
+
+    :return: None, resets plot directory
+    """
     # log progress
     WLOG(params, '', textentry('40-502-00003', args=['plot']))
     # remove files from reduced folder
@@ -306,7 +456,15 @@ def reset_plot(params, log=True):
         os.makedirs(plot_dir)
 
 
-def reset_run(params, log=True):
+def reset_run(params: ParamDict, log: bool = True):
+    """
+    Resets the run directory (but does not empty first)
+
+    :param params: ParamDict, the parameter dictionary of constants
+    :param log: boo, if True logs resetting
+
+    :return: None, resets run directory
+    """
     name = 'run files'
     run_dir = params['DRS_DATA_RUN']
     reset_path = params['DRS_RESET_RUN_PATH']
@@ -314,7 +472,15 @@ def reset_run(params, log=True):
     reset_dbdir(params, name, run_dir, reset_path, log=log, empty_first=False)
 
 
-def reset_assets(params, log=True):
+def reset_assets(params: ParamDict, log: bool = True):
+    """
+    Reset the Assets directory (including re-creating databases)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param log: bool - if True logs process
+
+    :return: None - resets assets dir and databases
+    """
     name = 'assets'
     # get database paths
     databases = manage_databases.list_databases(params)
@@ -327,17 +493,15 @@ def reset_assets(params, log=True):
     # get reset_path from apero module dir
     abs_reset_path = drs_data.construct_path(params, '', reset_path)
 
-    # loop around files and folders in reduced dir
+    # loop around files and folders in assets dir
     reset_dbdir(params, name, asset_path, abs_reset_path, log=log,
                 empty_first=False, relative_path='MODULE')
-    # create index database
+    # create index databases
     manage_databases.create_index_database(pconst, databases)
     # create log database
     manage_databases.create_log_database(pconst, databases)
     # create object database
     manage_databases.create_object_database(params, pconst, databases)
-    # create params database
-    # manage_databases.create_params_database(pconst, databases)
     # create language database
     manage_databases.create_lang_database(databases)
 
