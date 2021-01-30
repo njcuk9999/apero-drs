@@ -11,6 +11,7 @@ Created on 2019-01-18 at 14:44
 """
 import numpy as np
 from pathlib import Path
+import string
 from typing import Any, List, Tuple, Type, Union
 
 from apero.base import base
@@ -41,7 +42,8 @@ DefaultConstants = pseudo_const.PseudoConstants
 DrsCodedException = drs_exceptions.DrsCodedException
 # get display func
 display_func = drs_misc.display_func
-
+# define bad characters for objects (alpha numeric + "_")
+BAD_OBJ_CHARS = [' '] + list(string.punctuation.replace('_', ''))
 
 # =============================================================================
 # Define Constants class (pseudo constants)
@@ -780,7 +782,8 @@ def clean_obj_name(params: ParamDict = None, header: Any = None,
         rawobjname = str(objname)
     # clean object name
     objectname = rawobjname.strip()
-    objectname = objectname.replace(' ', '_')
+    for bad_char in BAD_OBJ_CHARS:
+        objectname = objectname.replace(bad_char, '_')
     objectname = objectname.upper()
     # deal with multiple underscores in a row
     while '__' in objectname:
