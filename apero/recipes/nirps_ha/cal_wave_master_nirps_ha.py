@@ -285,7 +285,7 @@ def __main__(recipe, params):
         # ==================================================================
         # FP CCF COMPUTATION - need all fibers done one-by-one
         # ==================================================================
-        # must update the smart mask now cavity poynomial has been update
+        # must update the smart mask now cavity polynomial has been update
         #   (if it has been update else this just recomputes the mask)
         wave.update_smart_fp_mask(params)
 
