@@ -1109,6 +1109,7 @@
 "{0} = filename","Saving preprocessing master mask: {0}","","Prints that we are saving master mask","40-010-00015","ALL"
 "None","Correcting PP file (1/f and median)","","Prints that we are correcting pp files","40-010-00016","ALL"
 "{0} = actual exposure time; {1} = minimum required exposure time","Minimum exposure time not met \n\t Actual Exposure time: {0} \n\t Minimum required exposure time: {1}","","Prints that minimum exposure time not met","40-010-00017","ALL"
+"None","Correcting for cosmics","","Prints that we are correcting for cosmics","40-010-00018","ALL"
 "","","","","",""
 "None","\t","","Dark messages","40-011-00000","ALL"
 "None","Doing Dark measurement","","Prints that we are doing dark measurement","40-011-00001","ALL"
