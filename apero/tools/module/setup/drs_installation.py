@@ -13,6 +13,7 @@ import numpy as np
 import sys
 import os
 import shutil
+import string
 import readline
 import glob
 from collections import OrderedDict
@@ -39,6 +40,8 @@ __release__ = base.__release__
 Colors = drs_misc.Colors()
 # get param dict
 ParamDict = constants.ParamDict
+# define bad characters for profile name (alpha numeric + "_")
+BAD_CHARS = [' '] + list(string.punctuation.replace('_', ''))
 # -----------------------------------------------------------------------------
 HOME = Path('~').expanduser()
 DEFAULT_USER_PATH = HOME.joinpath('apero', 'default')
@@ -409,9 +412,15 @@ def user_interface(params, args, lang):
     # deal with having a profile name
     if args.name in ['None', None, '']:
         profilename = ask(message0, str, default='apero')
-        args.name = profilename
+        # clean profile name
+        profilename = clean_profile_name(profilename)
+        # update args.name
+        args.name = str(profilename)
     else:
-        profilename = args.name
+        # clean profile name
+        profilename = clean_profile_name(args.name)
+        # update args.name
+        args.name = str(profilename)
     # add name
     all_params['PROFILENAME'] = args.name
     # update default paths
@@ -822,6 +831,32 @@ def get_sqlite_settings(all_params: ParamDict) -> ParamDict:
     all_params['MYSQL']['USE_MYSQL'] = False
     # ----------------------------------------------------------------------
     return all_params
+
+
+def clean_profile_name(inname: str) -> str:
+    """
+    Remove any bad characters from profile name
+
+    :param name: str, the profile name to clean up
+
+    :return: str, the cleaned profile name
+    """
+    # copy inname
+    outname = str(inname.strip())
+    # replace bad characters with an underscore
+    for bad_char in BAD_CHARS:
+        outname = outname.replace(bad_char, '_')
+    # replace double underscores
+    while '__' in outname:
+        outname = outname.replace('__', '_')
+    # log that we changed the name (if we did)
+    if outname != inname:
+        pmsg = '\nWARNING: Bad profile name changed "{0}" --> "{1}"'
+        pargs = [inname, outname]
+        cprint(pmsg.format(*pargs), colour='yellow')
+    # return profile name
+    return outname
+
 
 # =============================================================================
 # Define installation functions
