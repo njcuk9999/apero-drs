@@ -98,10 +98,10 @@ def correct_cosmics(params: ParamDict, image: np.ndarray,
     # get shape of image
     nby, nbx = image.shape
     # get the size of each amplifier
-    ampsize = nbx / tamp
+    ampsize = int(nbx / tamp)
     # express image and slope in ADU not ADU/s
     image2 = np.array(image) * inttime
-    errslope = np.arary(errslope) * inttime
+    errslope = np.array(errslope) * inttime
     # -------------------------------------------------------------------------
     # using the error on the slope
     # -------------------------------------------------------------------------
@@ -109,6 +109,7 @@ def correct_cosmics(params: ParamDict, image: np.ndarray,
     variance = errslope ** 2
     # get a list of reference pixels
     ref_pix = list(range(nbottom - 1)) + list(range(nby - ntop + 1, nby))
+    ref_pix = np.array(ref_pix)
     # loop around amplifiers and subtract median per-amplifier variance
     for it in range(tamp):
         # get start and end points of this amplifier
@@ -126,10 +127,11 @@ def correct_cosmics(params: ParamDict, image: np.ndarray,
     # number of simga away from bulk of expected-to-observed variance
     nsig2 = nsig2 / np.nanpercentile(np.abs(nsig2), norm_frac)
     # mask the nsigma by the variance cuts
-    mask1 = np.array(nsig2 > variance_cut1)
-    mask2 = np.array(nsig2 > variance_cut2)
+    mask_slope_variance = np.array(nsig2 > variance_cut1)
+    # mask2 = np.array(nsig2 > variance_cut2)
     # mask of where variance is bad
-    mask_slope_variance = mp.xpand_mask(mask1, mask2)
+    # WLOG(params, '', '\tExpanding slope variance mask')
+    #mask_slope_variance = mp.xpand_mask(mask1, mask2)
     # set bad pixels to NaN
     image[mask_slope_variance] = np.nan
     # -------------------------------------------------------------------------
@@ -150,14 +152,15 @@ def correct_cosmics(params: ParamDict, image: np.ndarray,
             # subtract off the intbox median
             intercept[starty:endy, startx:endx] -= intmed
     # normalize to 1-sigma
-    intercept = intercept / np.nanpercentile(np.abs(intercept, norm_frac))
+    intercept = intercept / np.nanpercentile(np.abs(intercept), norm_frac)
     # express as varuabce
     nsig2 = intercept ** 2
     # mask the nsigma by the variance cuts
-    mask1 = np.array(nsig2 > intercept_cut1)
-    mask2 = np.array(nsig2 > intercept_cut2)
+    mask_intercept_deviation = np.array(nsig2 > intercept_cut1)
+    # mask2 = np.array(nsig2 > intercept_cut2)
     # mask of where variance is bad
-    mask_intercept_deviation = mp.xpand_mask(mask1, mask2)
+    # WLOG(params, '', '\tExpanding intercept deviation mask')
+    # mask_intercept_deviation = mp.xpand_mask(mask1, mask2)
     # set bad pixels to NaN
     image[mask_intercept_deviation] = np.nan
     # load in to param dict
