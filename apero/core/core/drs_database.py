@@ -1578,8 +1578,8 @@ class IndexDatabase(DatabaseManager):
         # ---------------------------------------------------------------------
         # deal with files we don't need (already have)
         etable = self.get_entries('ABSPATH, LAST_MODIFIED', kind=kind)
-        exclude_files = etable['ABSPATH']
-        last_mod = etable['LAST_MODIFIED']
+        exclude_files = np.array(etable['ABSPATH'])
+        last_mod = np.array(etable['LAST_MODIFIED'])
         # ---------------------------------------------------------------------
         # locate all files within path
         reqfiles = _get_files(path, kind, include_directories,
