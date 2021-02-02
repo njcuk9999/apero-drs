@@ -781,7 +781,7 @@ PP_COSMIC_INTCUT2 = Const('PP_COSMIC_INTCUT2', value=None, dtype=float,
                                        'should look for cosmics (intercept)'))
 
 # random box size [in pixels] to speed-up low-frequency band computation
-PP_COSMIC_BOXSIZE = Const('PP_COSMIC_BOXSIZE', value=None, dtype=float,
+PP_COSMIC_BOXSIZE = Const('PP_COSMIC_BOXSIZE', value=None, dtype=int,
                           minimum=0.0, source=__NAME__, group=cgroup,
                           description=('random box size [in pixels] to '
                                        'speed-up low-frequency band '
