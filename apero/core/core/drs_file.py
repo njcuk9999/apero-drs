@@ -2475,7 +2475,8 @@ class DrsFitsFile(DrsInputFile):
 
     # TODO: when we change to default ext=1 this needs updating
     def read_data(self, ext: int = 0, log: bool = True,
-                  copy: bool = False):
+                  copy: bool = False,
+                  return_data: bool = False) -> Union[None, np.ndarray, Table]:
         """
         Read an image from DrsFitsFile.filename into DrsFitsFile.data
 
@@ -2485,7 +2486,7 @@ class DrsFitsFile(DrsInputFile):
         :param copy: bool, if True copieds the data before setting it (allows
                      HDU to be closed when opening many files (slower but
                      safer)
-        :return: None
+        :return: None or [np.ndarray/Table] if return_data = True
         """
         # set function name
         _ = display_func(self.params, 'read_data', __NAME__, self.class_name)
@@ -2500,9 +2501,12 @@ class DrsFitsFile(DrsInputFile):
         # assign to object
         if copy:
             if self.datatype == 'table':
-                return Table(self.data)
+                data = Table(data)
             else:
-                return np.array(self.data)
+                data = np.array(data)
+        # deal with returning data over update self.data
+        if return_data:
+            return data
         else:
             self.data = data
         # set shape
@@ -2547,7 +2551,7 @@ class DrsFitsFile(DrsInputFile):
             self.fiber = self.get_hkey('KW_FIBER', dtype=str, required=False)
 
     def check_read(self, header_only: bool = False, data_only: bool = False,
-                   load: bool = True):
+                   load: bool = True) -> int:
         """
         Check whether data and header (from a fits file) have been read
         if load is True and they haven't been read them read them
@@ -2570,7 +2574,8 @@ class DrsFitsFile(DrsInputFile):
         if header_only:
             if self.header is None:
                 if load:
-                    return self.read_header()
+                    self.read_header()
+                    return 1
                 # raise exception
                 func = self.__repr__()
                 eargs = [func, func + '.read_file()']
@@ -2584,7 +2589,8 @@ class DrsFitsFile(DrsInputFile):
         if data_only:
             if self.data is None:
                 if load:
-                    return self.read_data()
+                    self.read_data()
+                    return 1
                 # raise exception
                 func = self.__repr__()
                 eargs = [func, func + '.read_file()']
@@ -2627,7 +2633,11 @@ class DrsFitsFile(DrsInputFile):
             datalist = []
             # loop around extensions
             for extension in extensions:
-                datalist.append(self.read_data(ext=extension, copy=copy))
+                # get this extensions data
+                data = self.read_data(ext=extension, copy=copy,
+                                      return_data=True)
+                # add to list
+                datalist.append(data)
             # return datalist
             return datalist
         # check data exists
