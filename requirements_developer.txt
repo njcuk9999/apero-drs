@@ -9,6 +9,7 @@ numpy==1.19.2
 pandas==1.1.4
 pandastable==0.12.2
 Pillow==8.0.1
+PyQt5==5.15.2
 pyyaml==5.3.1
 scipy==1.5.4
 tqdm==4.52.0
