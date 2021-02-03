@@ -1009,7 +1009,7 @@ def import_matplotlib():
     global PLT_MOD
     global MPL_MOD
     # fix for MacOSX plots freezing
-    gui_env = ['Qt5Agg', 'Qt4Agg', 'GTKAgg', 'TKAgg', 'WXAgg', 'Agg']
+    gui_env = ['Qt5Agg', 'GTKAgg', 'TKAgg', 'WXAgg', 'Agg']
     for gui in gui_env:
         # noinspection PyBroadException
         try:
