@@ -351,9 +351,7 @@ def update_object_database(params: ParamDict):
         astro_obj.update_target(gtable)
         # write to database
         if astro_obj.gaia_id is not None:
-            astro_obj.write_obj(objdbm, commit=False)
-    # finally commit all rows to database
-    objdbm.database.commit()
+            astro_obj.write_obj(objdbm, commit=True)
 
 
 def create_lang_database(databases: Dict[str, Union[DatabaseM, BaseDatabaseM]]
@@ -414,9 +412,7 @@ def create_lang_database(databases: Dict[str, Union[DatabaseM, BaseDatabaseM]]
         for language in base.LANGUAGES:
             entry['textdict'][language] = rowdata[language]
         # add entry
-        langdbm.add_entry(commit=False, **entry)
-    # commit
-    langdbm.database.commit()
+        langdbm.add_entry(commit=True, **entry)
     # -------------------------------------------------------------------------
     return langdb
 

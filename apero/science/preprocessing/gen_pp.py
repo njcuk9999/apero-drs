@@ -979,9 +979,7 @@ def resolve_targets(params: ParamDict, objnames: Union[str, List[str]],
         database.load_db()
     # loop around objects
     for objname in objnames:
-        resolve_target(params, pconst, objname, database, commit=False)
-    # commit to database after writing all rows
-    database.database.commit()
+        resolve_target(params, pconst, objname, database, commit=True)
 
 
 def query_gaia(params: ParamDict, url: str,
