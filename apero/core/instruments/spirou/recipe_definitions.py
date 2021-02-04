@@ -1335,11 +1335,40 @@ full_seq.add(cal_extract, name='EXTALL',
 full_seq.add(cal_leak, name='LEAKALL', files=[files.out_ext_e2dsff],
              fiber='AB', filters=dict(KW_DPRTYPE=['OBJ_FP']))
 # telluric recipes
-full_seq.add(obj_mk_tellu_db, arguments=dict(cores='CORES'))
-full_seq.add(obj_fit_tellu_db, arguments=dict(cores='CORES'))
-full_seq.add(obj_fit_tellu, name='FTELLU',
-             files=[files.out_ext_e2dsff], fiber='AB',
-             filters=dict(KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+full_seq.add(obj_mk_tellu, name='MKTELLU1',
+                files=[files.out_ext_e2dsff], fiber='AB',
+                filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+full_seq.add(obj_fit_tellu, name='MKTELLU2',
+                files=[files.out_ext_e2dsff], fiber='AB',
+                filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+full_seq.add(obj_mk_template, name='MKTELLU3',
+                fiber='AB',
+                arguments=dict(objname='TELLURIC_TARGETS'),
+                filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
+                template_required=True)
+full_seq.add(obj_mk_tellu, name='MKTELLU4',
+                files=[files.out_ext_e2dsff], fiber='AB',
+                filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
+                template_required=True)
+full_seq.add(obj_fit_tellu, name='FTELLU1',
+                files=[files.out_ext_e2dsff], fiber='AB',
+                filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+full_seq.add(obj_mk_template, name='FTELLU2',
+                fiber='AB',
+                arguments=dict(objname='SCIENCE_TARGETS'),
+                filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
+                template_required=True)
+full_seq.add(obj_fit_tellu, name='FTELLU3',
+                files=[files.out_ext_e2dsff], fiber='AB',
+                filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
+                template_required=True)
 
 # ccf on all OBJ_DARK / OBJ_FP
 full_seq.add(cal_ccf, files=[files.out_tellu_obj], fiber='AB',
