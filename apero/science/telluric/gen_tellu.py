@@ -1024,7 +1024,7 @@ def clean_ohline_pca(params, recipe, image, wavemap, **kwargs):
     # -------------------------------------------------------------------------
     # e-width of the region over which we measure the residuals of brighter lines
     # to adjust them
-    ew_weight = 2.5 * params['FWHM_PIXEL_PSF']
+    ew_weight = 2.5 * params['FWHM_PIXEL_LSF']
     # region of which we will compute the weight falloff of a bright sky line
     width = np.int(ew_weight * 4)
     # sky amplitude correction
@@ -1041,7 +1041,7 @@ def clean_ohline_pca(params, recipe, image, wavemap, **kwargs):
     masked_lines = 0
     # -------------------------------------------------------------------------
     # loop around brightest OH lines
-    for it in range(len(nbright)):
+    for it in range(nbright):
         # find brightest sky pixel that has not yet been looked at
         imax = np.nanargmax(sky_model + mask)
         # keep track of where we looked
