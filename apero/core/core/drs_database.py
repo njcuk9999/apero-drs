@@ -1579,7 +1579,12 @@ class IndexDatabase(DatabaseManager):
         # deal with files we don't need (already have)
         etable = self.get_entries('ABSPATH, LAST_MODIFIED', kind=kind)
         exclude_files = np.array(etable['ABSPATH'])
-        last_mod = np.array(etable['LAST_MODIFIED'])
+        # only check last modified for raw files (we assume that any other
+        #   file has been correctly updated by the drs)
+        if kind == 'raw':
+            last_mod = np.array(etable['LAST_MODIFIED'])
+        else:
+            last_mod = None
         # ---------------------------------------------------------------------
         # locate all files within path
         reqfiles = _get_files(path, kind, include_directories,
@@ -1644,9 +1649,7 @@ class IndexDatabase(DatabaseManager):
                     if drs_key in header:
                         hkeys[rkey] = header[drs_key]
             # add to database
-            self.add_entry(directory, basename, kind, hkeys=hkeys, commit=False)
-        # finally commit all entries
-        self.database.commit()
+            self.add_entry(directory, basename, kind, hkeys=hkeys, commit=True)
 
     def update_header_fix(self, recipe):
         # set function name
