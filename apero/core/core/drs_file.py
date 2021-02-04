@@ -4742,8 +4742,12 @@ class DrsOutFileExtension:
         # return new copy
         return new
 
-    def set_infile(self, row, table):
-        self.filename = table['ABSPATH'][row]
+    def set_infile(self, row=None, table=None, filename=None):
+
+        if filename is not None:
+            self.filename = filename
+        else:
+            self.filename = table['ABSPATH'][row]
 
         if self.drsfile == 'table':
             self.datatype = 'table'
