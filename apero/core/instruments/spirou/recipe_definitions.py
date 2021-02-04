@@ -1231,8 +1231,37 @@ recipes.append(obj_spec)
 # obj_pol_spirou
 # -----------------------------------------------------------------------------
 
+
 # -----------------------------------------------------------------------------
-# out
+# obj_postprocess
+# -----------------------------------------------------------------------------
+obj_pp_recipe = DrsRecipe(__INSTRUMENT__)
+obj_pp_recipe.name = 'obj_postprocess_{0}.py'.format(INSTRUMENT_ALIAS)
+obj_pp_recipe.shortname = 'OBJPOST'
+obj_pp_recipe.instrument = __INSTRUMENT__
+obj_pp_recipe.inputtype = 'red'
+obj_pp_recipe.outputtype = 'out'
+obj_pp_recipe.extension = 'fits'
+obj_pp_recipe.description = textentry('OUT_DESC_HELP')
+obj_pp_recipe.epilog = ''
+obj_pp_recipe.kind = 'recipe'
+obj_fit_tellu.set_arg(pos=0, **directory)
+obj_fit_tellu.set_arg(name='files', dtype='files', pos='1+',
+                      files=[files.pp_file],
+                      filelogic='exclusive',
+                      helpstr=(textentry('FILES_HELP')),
+                      limit=1)
+obj_pp_recipe.set_kwarg(name='--overwrite', dtype='switch',
+                     default_ref='POST_OVERWRITE',
+                     helpstr=textentry('OUT_OVERWRITE_HELP'))
+obj_pp_recipe.group_func = grouping.no_group
+obj_pp_recipe.group_column = grouping.no_group
+# add to recipe
+recipes.append(obj_pp_recipe)
+
+
+# -----------------------------------------------------------------------------
+# out_postprocess
 # -----------------------------------------------------------------------------
 out_recipe = DrsRecipe(__INSTRUMENT__)
 out_recipe.name = 'out_postprocess_{0}.py'.format(INSTRUMENT_ALIAS)
