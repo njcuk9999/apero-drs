@@ -445,10 +445,7 @@ class RecipeLog:
                                     qc_logic=inst.qc_logic,
                                     qc_pass=inst.qc_pass,
                                     errors=inst.errors,
-                                    ended=inst.ended, used=1, commit=False)
-        # finally commit these changes
-        self.logdbm.database.commit()
-
+                                    ended=inst.ended, used=1, commit=True)
 
     def _make_row(self) -> OrderedDict:
         """
