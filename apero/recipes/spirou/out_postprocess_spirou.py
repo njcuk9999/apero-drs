@@ -217,6 +217,13 @@ def __main__(recipe, params):
                 margs = [filepostfile.filename]
                 WLOG(params, '', msg.format(*margs))
                 filepostfile.write_file(recipe.outputtype, recipe.runstring)
+                # if user wants to clear - clear this data
+                if clear:
+                    for filename in filepostfile.clear_files:
+                        wmsg = 'Removing {0}'
+                        wargs = [filename]
+                        WLOG(params, 'warning', wmsg.format(*wargs))
+                        os.remove(filename)
             else:
                 WLOG(params, 'warning', '\tSkipping - files not found')
 

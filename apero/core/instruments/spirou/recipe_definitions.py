@@ -1239,21 +1239,24 @@ obj_pp_recipe = DrsRecipe(__INSTRUMENT__)
 obj_pp_recipe.name = 'obj_postprocess_{0}.py'.format(INSTRUMENT_ALIAS)
 obj_pp_recipe.shortname = 'OBJPOST'
 obj_pp_recipe.instrument = __INSTRUMENT__
-obj_pp_recipe.inputtype = 'red'
+obj_pp_recipe.inputtype = 'tmp'
 obj_pp_recipe.outputtype = 'out'
 obj_pp_recipe.extension = 'fits'
 obj_pp_recipe.description = textentry('OUT_DESC_HELP')
 obj_pp_recipe.epilog = ''
 obj_pp_recipe.kind = 'recipe'
-obj_fit_tellu.set_arg(pos=0, **directory)
-obj_fit_tellu.set_arg(name='files', dtype='files', pos='1+',
+obj_pp_recipe.set_arg(pos=0, **directory)
+obj_pp_recipe.set_arg(name='files', dtype='files', pos='1+',
                       files=[files.pp_file],
                       filelogic='exclusive',
                       helpstr=(textentry('FILES_HELP')),
                       limit=1)
 obj_pp_recipe.set_kwarg(name='--overwrite', dtype='switch',
-                     default_ref='POST_OVERWRITE',
-                     helpstr=textentry('OUT_OVERWRITE_HELP'))
+                        default_ref='POST_OVERWRITE',
+                        helpstr=textentry('OUT_OVERWRITE_HELP'))
+obj_pp_recipe.set_kwarg(name='--clear', dtype='switch',
+                        default_ref='POST_CLEAR_REDUCED',
+                        helpstr=textentry('OUT_CLEAR_HELP'))
 obj_pp_recipe.group_func = grouping.no_group
 obj_pp_recipe.group_column = grouping.no_group
 # add to recipe
@@ -1404,7 +1407,8 @@ full_seq.add(cal_ccf, files=[files.out_tellu_obj], fiber='AB',
              filters=dict(KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
 
 # post processing
-full_seq.add(out_recipe)
+full_seq.add(obj_pp_recipe, files=[files.pp_file],
+             filters=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
 
 # -----------------------------------------------------------------------------
 # limited sequence (master + nights)
@@ -1500,7 +1504,9 @@ limited_seq.add(cal_ccf, files=[files.out_tellu_obj], fiber='AB',
                              KW_OBJNAME='SCIENCE_TARGETS'))
 
 # post processing
-limited_seq.add(out_recipe)
+limited_seq.add(obj_pp_recipe, files=[files.pp_file],
+                filters=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK'],
+                             KW_OBJNAME='SCIENCE_TARGETS'))
 
 # -----------------------------------------------------------------------------
 # pp sequence (for trigger)
@@ -1627,7 +1633,9 @@ science_seq.add(cal_ccf, files=[files.out_tellu_obj], fiber='AB',
                 filters=dict(KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
                              KW_OBJNAME='SCIENCE_TARGETS'))
 # post processing
-science_seq.add(out_recipe)
+science_seq.add(obj_pp_recipe, files=[files.pp_file],
+                filters=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK'],
+                             KW_OBJNAME='SCIENCE_TARGETS'))
 
 # -----------------------------------------------------------------------------
 # engineering sequences
@@ -1640,6 +1648,7 @@ eng_seq.add(cal_extract, name='EXT_FPFP', files=[files.pp_fp_fp])
 eng_seq.add(cal_extract, name='EXT_DFP', files=[files.pp_dark_fp])
 eng_seq.add(cal_extract, name='EXT_SKY', files=[files.pp_dark_dark_sky])
 eng_seq.add(cal_extract, name='EXT_LFC', files=[files.pp_lfc_lfc])
+eng_seq.add(cal_extract, name='EXT_FPD', files=[files.pp_fp_dark])
 
 # -----------------------------------------------------------------------------
 # sequences list
