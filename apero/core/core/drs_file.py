@@ -4610,7 +4610,8 @@ class DrsOutFileExtension:
                  header_only: bool = False,
                  data_only: bool = False,
                  remove_drs_hkeys: bool = False,
-                 remove_std_hkeys: bool = False):
+                 remove_std_hkeys: bool = False,
+                 clear_file: bool = False):
         """
         Properties for an extension of a POST PROCESS file
 
@@ -4644,6 +4645,7 @@ class DrsOutFileExtension:
         self.data_only = data_only
         self.remove_drs_hkeys = remove_drs_hkeys
         self.remove_std_hkeys = remove_std_hkeys
+        self.clear_file = clear_file
         # to be filled
         self.filename = None
         self.header = None
@@ -4657,6 +4659,8 @@ class DrsOutFileExtension:
         self.table_fibers = []
         self.table_required = []
         self.table_kind = []
+        self.table_clears = []
+        self.table_clear_files = []
 
     def __getstate__(self) -> dict:
         """
@@ -4703,7 +4707,7 @@ class DrsOutFileExtension:
     def add_table_column(self, drsfile: DrsFitsFile,
                   incol: str, outcol: str, fiber: Union[str, None],
                   units: Union[str, None], required: bool = True,
-                  kind: str = 'red'):
+                  kind: str = 'red', clear_file: bool = False):
         """
         Add a table column to an extension
 
@@ -4723,6 +4727,7 @@ class DrsOutFileExtension:
         self.table_fibers.append(fiber)
         self.table_required.append(required)
         self.table_kind.append(kind)
+        self.table_clears.append(clear_file)
 
     def copy(self):
         # create new copy
@@ -4730,7 +4735,7 @@ class DrsOutFileExtension:
                                   self.fiber, self.kind, self.hkeys,
                                   self.link, self.hlink, self.header_only,
                                   self.data_only, self.remove_drs_hkeys,
-                                  self.remove_std_hkeys)
+                                  self.remove_std_hkeys, self.clear_file)
         # table parameters
         new.table_drsfiles = self.table_drsfiles
         new.table_in_colnames = self.table_in_colnames
@@ -4739,6 +4744,7 @@ class DrsOutFileExtension:
         new.table_fibers = self.table_fibers
         new.table_required = self.table_required
         new.table_kind = self.table_kind
+        new.table_clears = self.table_clears
         # return new copy
         return new
 
@@ -4811,10 +4817,12 @@ class DrsOutFileExtension:
         fibers = self.table_fibers
         col_required = self.table_required
         kinds = self.table_kind
+        all_clears = self.table_clears
         # ---------------------------------------------------------------------
         # define storage for values
         values = []
         filenames = []
+        clears = []
         # define storage for open tables (key = filename) so we don't open them
         #   more times than we need
         tables = dict()
@@ -4906,12 +4914,23 @@ class DrsOutFileExtension:
             # -----------------------------------------------------------------
             # load column into values
             values.append(row_values)
+            # save clear value for this col
+            clears.append(all_clears[col])
         # ---------------------------------------------------------------------
         # print tables added
         for filename in tables:
             msg = '\t\tFile: {0}'
             margs = [os.path.basename(filename)]
             WLOG(params, '', msg.format(*margs), colour='magenta')
+
+        # ---------------------------------------------------------------------
+        # deal with which files to clear
+        # loop around filenames
+        for col, filename in enumerate(filenames):
+            # only do this if this column was flagged to clear file
+            if clears[col]:
+                # add to list for clearing later
+                self.table_clear_files.append(filename)
         # ---------------------------------------------------------------------
         # make out table
         outtable = drs_table.make_table(params, outcolumns, values,
@@ -4956,6 +4975,8 @@ class DrsOutFile(DrsInputFile):
         self.out_filename = None
         self.out_dirname = None
         self.out_required = required
+        # store reduced files
+        self.clear_files = []
 
     def __getstate__(self) -> dict:
         """
@@ -5006,7 +5027,8 @@ class DrsOutFile(DrsInputFile):
                 hlink: Union[str, None] = None,
                 header_only: bool = False, data_only: bool = False,
                 remove_drs_hkeys: bool = False,
-                remove_std_hkeys: bool = False):
+                remove_std_hkeys: bool = False,
+                clear_file: bool = False):
         """
         Add a fits extension
 
@@ -5042,12 +5064,13 @@ class DrsOutFile(DrsInputFile):
                                                    kind, hkeys, link, hlink,
                                                    header_only, data_only,
                                                    remove_drs_hkeys,
-                                                   remove_std_hkeys)
+                                                   remove_std_hkeys,
+                                                   clear_file)
 
     def add_column(self, extname: str, drsfile: DrsFitsFile,
                    incol: str, outcol: str, fiber: Union[str, None],
                    units: Union[str, None] = None, required: bool = True,
-                   kind: str = 'red'):
+                   kind: str = 'red', clear_file: bool = False):
         """
         If an extension is a table add a column from a table fits file
 
@@ -5070,7 +5093,7 @@ class DrsOutFile(DrsInputFile):
                 raise ValueError('Extension is not a table')
             # add the table
             extension.add_table_column(drsfile, incol, outcol, fiber, units,
-                                       required, kind)
+                                       required, kind, clear_file)
 
     def add_hkey(self, key: str, inheader: str, outheader: str):
         """
@@ -5296,6 +5319,8 @@ class DrsOutFile(DrsInputFile):
                 WLOG(params, '', msg.format(*margs))
                 # make the table
                 ext.make_table(params, indexdbm, linkkind, criteria)
+                # deal with reduced data
+                self._add_to_clear_files(ext)
             # else take the first entry
             else:
                 # use first row that has a runstring (if any)
@@ -5304,6 +5329,8 @@ class DrsOutFile(DrsInputFile):
                 ext.set_infile(extrow, exttable)
                 # load the extension file
                 ext.load_infile(params)
+                # deal with reduced data
+                self._add_to_clear_files(ext)
                 # log progress
                 if ext.header_only:
                     msg = '\tAdding EXT={0} ({1}) [Header only]'
@@ -5538,7 +5565,7 @@ class DrsOutFile(DrsInputFile):
                     wargs = [key, pos, self.extensions[pos].name]
                     WLOG(params, 'warning', wmsg.format(*wargs))
 
-    def _add_extensions_names_to_primary(self, params):
+    def _add_extensions_names_to_primary(self, params: ParamDict):
         """
         Add extensions as comments to primary header
 
@@ -5571,6 +5598,32 @@ class DrsOutFile(DrsInputFile):
             header.insert(hdrkey, ('COMMENT', line))
         # add header back to extensions
         self.extensions[0].header = header
+
+    def _add_to_clear_files(self, ext: DrsOutFileExtension):
+        """
+        Check whether file is flagged to be cleaned and add it to the list
+        to remove (only removed at the end of the processes)
+
+        :param ext: DrsOutFileExtension - the extension instance
+
+        :return: None - updates self.reduced_files if required
+        """
+        # see if our filename startswith reduced_directory
+        if ext.clear_file:
+            # check that filename is not already in the list
+            if ext.filename not in self.clear_files:
+                if ext.filename is not None:
+                    # make sure filename does not contain sym links
+                    filename = os.path.realpath(ext.filename)
+                    # add to clear files
+                    self.clear_files.append(filename)
+        # deal with table column clear files
+        if len(ext.table_clear_files) > 0:
+            # loop around clear files
+            for filename in ext.table_clear_files:
+                # check that filename is not already in the list
+                if filename not in self.clear_files:
+                    self.clear_files.append(filename)
 
     def write_file(self, kind: str, runstring: Union[str, None] = None):
         # set function name

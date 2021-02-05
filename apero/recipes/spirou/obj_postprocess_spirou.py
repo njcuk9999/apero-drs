@@ -94,7 +94,9 @@ def __main__(recipe, params):
     # get files
     infile = params['INPUTS']['FILES'][1][0]
     # get whether we are overwriting files
-    overwrite = True
+    overwrite = params['INPUTS']['OVERWRITE']
+    # get whether we are to clean the reduced inputs
+    clear = params['INPUTS']['CLEAR']
     # ---------------------------------------------------------------------
     # load the index database
     indexdbm = drs_database.IndexDatabase(params)
@@ -157,6 +159,13 @@ def __main__(recipe, params):
             margs = [filepostfile.filename]
             WLOG(params, '', msg.format(*margs))
             filepostfile.write_file(recipe.outputtype, recipe.runstring)
+            # if user wants to clear - clear this data
+            if clear:
+                for filename in filepostfile.clear_files:
+                    wmsg = 'Removing {0}'
+                    wargs = [filename]
+                    WLOG(params, 'warning', wmsg.format(*wargs))
+                    os.remove(filename)
         else:
             WLOG(params, 'warning', '\tSkipping - files not found')
 
