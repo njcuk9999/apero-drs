@@ -9,14 +9,12 @@ Created on 2019-05-13 at 11:04
 
 @author: cook
 """
-import numpy as np
 import os
 
 from apero.base import base
 from apero import lang
 from apero.core.core import drs_log
 from apero.core.core import drs_database
-from apero.core.core import drs_text
 from apero.core.utils import drs_startup
 from apero.core.instruments.spirou import file_definitions as fd
 
