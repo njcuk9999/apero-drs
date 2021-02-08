@@ -7,7 +7,7 @@ matplotlib==3.3.3
 numba==0.51.2
 numpy==1.19.2
 pandas==1.1.4
-pandastable==0.12.2
+pandastable==0.12.2.post1
 Pillow==8.0.1
 PyQt5==5.15.2
 pyyaml==5.3.1

@@ -36,7 +36,7 @@ pip install numba==0.51.2
 pip install numpy==1.19.4
 pip install packaging==20.4
 pip install pandas==1.1.4
-pip install pandastable==0.12.2
+pip install pandastable==0.12.2.post1
 pip install parso==0.7.1
 pip install pexpect==4.8.0
 pip install pickleshare==0.7.5
