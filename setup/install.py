@@ -35,7 +35,10 @@ REQ_USER = 'requirements_current.txt'
 REQ_DEV = 'requirements_developer.txt'
 
 # modules that don't install like their name
-module_translation = dict(Pillow='PIL', pyyaml='yaml')
+module_translation = dict()
+module_translation['Pillow'] = 'PIL'
+module_translation['pyyaml'] = 'yaml'
+module_translation['mysql-connector-python'] = 'mysql.connector'
 
 
 # =============================================================================
@@ -219,7 +222,7 @@ def load_requirements(filename) -> list:
         lines = rfile.readlines()
     # get modules from lines in requirements file
     for line in lines:
-        if len(line) == '':
+        if len(line.strip()) == 0:
             continue
         if line.startswith('#'):
             continue
@@ -258,8 +261,14 @@ def validate():
         # remove end of lines
         module = module.replace('\n', '')
         # get module name
-        modname = module.split('==')[0]
-        modversion = module.split('==')[1].split('.')
+        try:
+            modname = module.split('==')[0]
+            modversion = module.split('==')[1].split('.')
+        except Exception as e:
+            emsgs = 'Module name "{0}" error {1}: {2}'
+            eargs = [module, type(e), str(e)]
+            raise IndexError(emsgs.format(*eargs))
+
         suggested = 'pip install {0}'.format(module)
         # deal with modules with different import name
         if modname in module_translation:
