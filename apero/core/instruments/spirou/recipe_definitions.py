@@ -1223,7 +1223,7 @@ obj_spec.set_kwarg(**plot)
 obj_spec.set_kwarg(name='--cores', dtype=int, default=1,
                    helpstr='')
 obj_spec.group_func = grouping.group_individually
-obj_spec.group_column = grouping.group_individually
+obj_spec.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(obj_spec)
 
@@ -1257,8 +1257,8 @@ obj_pp_recipe.set_kwarg(name='--overwrite', dtype='switch',
 obj_pp_recipe.set_kwarg(name='--clear', dtype='switch',
                         default_ref='POST_CLEAR_REDUCED',
                         helpstr=textentry('OUT_CLEAR_HELP'))
-obj_pp_recipe.group_func = grouping.no_group
-obj_pp_recipe.group_column = grouping.no_group
+obj_pp_recipe.group_func = grouping.group_individually
+obj_pp_recipe.group_column = 'REPROCESS_NIGHTCOL'
 # add to recipe
 recipes.append(obj_pp_recipe)
 
@@ -1290,7 +1290,7 @@ out_recipe.set_kwarg(name='--bnightlist', dtype=str, default='None',
                      helpstr=textentry('OUT_BNIGHTLIST_HELP'), reprocess=True)
 
 out_recipe.group_func = grouping.no_group
-out_recipe.group_column = grouping.no_group
+out_recipe.group_column = None
 # add to recipe
 recipes.append(out_recipe)
 
