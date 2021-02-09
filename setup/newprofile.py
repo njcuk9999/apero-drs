@@ -135,34 +135,37 @@ def copy_update(all_params):
     # find special files
     # ----------------------------------------------------------------------
     all_old_files = np.sort(list(old_uconfig.glob('*')))
-    old_directories = []
-    new_directories = []
     old_profile_name = ''
-    old_files = []
-    new_files = []
+    old_setup_files = []
+    new_setup_files = []
+    old_other_files = []
+    new_other_files = []
     # loop around these files
     for old_file in all_old_files:
-        # test for directory
-        if old_file.is_dir():
-            # append old directories
-            old_directories.append(old_file)
-            # get new directory name
-            new_directory = old_file.name
-            # append new directory
-            new_directories.append(new_path.joinpath(new_directory))
+        # set default old_file and new file
+        new_abspath = Path(new_path).joinpath(old_file.name)
+        # deal with setup files vs other files
+        setup_file = False
         # loop around suffices
         for suffix in SUFFICES:
             # check for suffix
             if str(old_file).endswith(suffix):
-                # append old file
-                old_files.append(old_file)
                 # get old file suffix
                 old_path = Path(str(old_file).split(suffix)[0])
                 old_profile_name = old_path.name
                 # construct new file
                 new_file = '{0}{1}'.format(profilename, suffix)
-                # append aboslute path
-                new_files.append(new_path.joinpath(new_file))
+                new_abspath = Path(new_path).joinpath(new_file)
+                setup_file = True
+                break
+        # add to setup files or other files
+        if setup_file:
+            old_setup_files.append(old_file)
+            new_setup_files.append(new_abspath)
+        else:
+            old_other_files.append(old_file)
+            new_other_files.append(new_abspath)
+
     # ----------------------------------------------------------------------
     # set old and new text dicts
     # ----------------------------------------------------------------------
@@ -172,19 +175,19 @@ def copy_update(all_params):
     # ----------------------------------------------------------------------
     # copy all to new path
     # ----------------------------------------------------------------------
-    # copy directories
-    for it in range(len(old_directories)):
+    # copy other files
+    for it in range(len(old_other_files)):
+        install.cprint('Copying file: {0}'.format(old_other_files[it]), 'g')
+        install.cprint('To: {0}'.format(new_other_files[it]), 'g')
         # make new top level dir
-        os.mkdir(new_directories[it])
-        # copy tree
-        drs_path.copytree(old_directories[it], new_directories[it])
-    # copy filesnew_directories
-    for it in range(len(old_files)):
+        shutil.copy(old_other_files[it], new_other_files[it])
+    # need to update setup files
+    for it in range(len(old_setup_files)):
 
-        install.cprint('Copying file: {0}'.format(old_files[it]), 'g')
-        install.cprint('To: {0}'.format(new_files[it]), 'g')
+        install.cprint('Copying file: {0}'.format(old_setup_files[it]), 'g')
+        install.cprint('To: {0}'.format(new_setup_files[it]), 'g')
         # read the lines
-        with old_files[it].open('r') as f:
+        with old_setup_files[it].open('r') as f:
             lines = f.readlines()
         # storage new line text
         newlines = []
@@ -201,7 +204,7 @@ def copy_update(all_params):
             # add line to newlines
             newlines.append(line)
         # write the lines
-        with new_files[it].open('w') as f:
+        with new_setup_files[it].open('w') as f:
             f.writelines(newlines)
 
 
@@ -234,11 +237,20 @@ if __name__ == '__main__':
     # display message
     install.print_options(params, allparams)
     # ----------------------------------------------------------------------
+    # log extra message for new profile
+    msg = ('\n\nIMPORTANT: This script copies all parameters for the currently '
+           'loaded APERO profile:\n\t{0}\n\n You must review and update all '
+           'files manually at the following path before running APERO:'
+           '\n\t{1}\n\nNote this includes creating new directories and running'
+           'apero_reset.py once all directories are added to the new config '
+           'files.')
+    margs = [allparams['OLD_USERCONFIG'], allparams['USERCONFIG']]
+    install.cprint(msg.format(*margs), 'y')
+    # ----------------------------------------------------------------------
     # log that installation is complete
     print('\n\n\n')
     install.cprint(install.printheader(), 'm')
     install.cprint('New profile setup complete', 'm')
     install.cprint(install.printheader(), 'm')
     print('\n')
-
 
