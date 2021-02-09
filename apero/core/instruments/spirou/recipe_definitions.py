@@ -1362,53 +1362,63 @@ full_seq.add(cal_thermal)
 full_seq.add(cal_wave_night)
 # extract all OBJ_DARK and OBJ_FP
 full_seq.add(cal_extract, name='EXTALL',
-             files=[files.pp_obj_dark, files.pp_obj_fp])
+             files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_polar_dark,
+                    files.pp_polar_fp])
 # correct leakage
 full_seq.add(cal_leak, name='LEAKALL', files=[files.out_ext_e2dsff],
-             fiber='AB', filters=dict(KW_DPRTYPE=['OBJ_FP']))
+             fiber='AB', filters=dict(KW_DPRTYPE=['OBJ_FP', 'POLAR_FP']))
 # telluric recipes
 full_seq.add(obj_mk_tellu, name='MKTELLU1',
                 files=[files.out_ext_e2dsff], fiber='AB',
                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
+                                         'POLAR_DARK']))
 full_seq.add(obj_fit_tellu, name='MKTELLU2',
                 files=[files.out_ext_e2dsff], fiber='AB',
                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
+                                         'POLAR_DARK']))
 full_seq.add(obj_mk_template, name='MKTELLU3',
                 fiber='AB',
                 arguments=dict(objname='TELLURIC_TARGETS'),
                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
+                                         'POLAR_DARK']),
                 template_required=True)
 full_seq.add(obj_mk_tellu, name='MKTELLU4',
                 files=[files.out_ext_e2dsff], fiber='AB',
                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
+                                         'POLAR_DARK']),
                 template_required=True)
 full_seq.add(obj_fit_tellu, name='FTELLU1',
                 files=[files.out_ext_e2dsff], fiber='AB',
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
+                                         'POLAR_DARK']))
 full_seq.add(obj_mk_template, name='FTELLU2',
                 fiber='AB',
                 arguments=dict(objname='SCIENCE_TARGETS'),
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
+                                         'POLAR_DARK']),
                 template_required=True)
 full_seq.add(obj_fit_tellu, name='FTELLU3',
                 files=[files.out_ext_e2dsff], fiber='AB',
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
+                                         'POLAR_DARK']),
                 template_required=True)
 
 # ccf on all OBJ_DARK / OBJ_FP
 full_seq.add(cal_ccf, files=[files.out_tellu_obj], fiber='AB',
-             filters=dict(KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+             filters=dict(KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_FP',
+                                         'POLAR_DARK']))
 
 # post processing
 full_seq.add(obj_pp_recipe, files=[files.pp_file],
-             filters=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
+             filters=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
+                                      'POLAR_DARK']))
 
 # -----------------------------------------------------------------------------
 # limited sequence (master + nights)
@@ -1442,70 +1452,81 @@ limited_seq.add(cal_thermal, files=[files.pp_dark_dark_tel])
 limited_seq.add(cal_wave_night)
 # extract tellurics
 limited_seq.add(cal_extract, name='EXTTELL',
-                files=[files.pp_obj_dark, files.pp_obj_fp],
+                files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_polar_fp,
+                       files.pp_polar_dark],
                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS'))
 
 # extract science
 limited_seq.add(cal_extract, name='EXTOBJ',
-                files=[files.pp_obj_dark, files.pp_obj_fp],
+                files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_polar_fp,
+                       files.pp_polar_dark],
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS'))
 
 # correct leakage for any telluric targets that are OBJ_FP
 limited_seq.add(cal_leak, name='LEAKTELL',
                 files=[files.out_ext_e2dsff], fiber='AB',
                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                             KW_DPRTYPE=['OBJ_FP']))
+                             KW_DPRTYPE=['OBJ_FP', 'POLAR_FP']))
 
 # correct leakage for any science targets that are OBJ_FP
 limited_seq.add(cal_leak, name='LEAKOBJ',
                 files=[files.out_ext_e2dsff], fiber='AB',
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_FP']))
+                             KW_DPRTYPE=['OBJ_FP', 'POLAR_FP']))
 
 # other telluric recipes
 limited_seq.add(obj_mk_tellu, name='MKTELLU1',
                 files=[files.out_ext_e2dsff], fiber='AB',
                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
+                                         'POLAR_FP']))
 limited_seq.add(obj_fit_tellu, name='MKTELLU2',
                 files=[files.out_ext_e2dsff], fiber='AB',
                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
+                                         'POLAR_FP']))
 limited_seq.add(obj_mk_template, name='MKTELLU3',
                 fiber='AB',
                 arguments=dict(objname='TELLURIC_TARGETS'),
                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
+                                         'POLAR_FP']),
                 template_required=True)
 limited_seq.add(obj_mk_tellu, name='MKTELLU4',
                 files=[files.out_ext_e2dsff], fiber='AB',
                 filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
+                                         'POLAR_FP']),
                 template_required=True)
 limited_seq.add(obj_fit_tellu, name='FTELLU1',
                 files=[files.out_ext_e2dsff], fiber='AB',
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
+                                         'POLAR_FP']))
 limited_seq.add(obj_mk_template, name='FTELLU2',
                 fiber='AB',
                 arguments=dict(objname='SCIENCE_TARGETS'),
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
+                                         'POLAR_FP']),
                 template_required=True)
 limited_seq.add(obj_fit_tellu, name='FTELLU3',
                 files=[files.out_ext_e2dsff], fiber='AB',
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
+                                         'POLAR_FP']),
                 template_required=True)
 
 # ccf
 limited_seq.add(cal_ccf, files=[files.out_tellu_obj], fiber='AB',
-                filters=dict(KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
+                filters=dict(KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
+                                         'POLAR_FP'],
                              KW_OBJNAME='SCIENCE_TARGETS'))
 
 # post processing
 limited_seq.add(obj_pp_recipe, files=[files.pp_file],
-                filters=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK'],
+                filters=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_DARK',
+                                         'POLAR_FP'],
                              KW_OBJNAME='SCIENCE_TARGETS'))
 
 # -----------------------------------------------------------------------------
@@ -1567,35 +1588,41 @@ calib_seq.add(cal_wave_night)
 tellu_seq = drs_recipe.DrsRunSequence('tellu_seq', __INSTRUMENT__)
 # extract science
 tellu_seq.add(cal_extract, name='EXTTELL',
-              files=[files.pp_obj_dark, files.pp_obj_fp],
+              files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_polar_dark,
+                     files.pp_polar_fp],
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                           KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
+                           KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_DARK',
+                                         'POLAR_FP']))
 # correct leakage for any telluric targets that are OBJ_FP
 tellu_seq.add(cal_leak, name='LEAKTELL',
               files=[files.out_ext_e2dsff], fiber='AB',
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                           KW_DPRTYPE=['OBJ_FP']))
+                           KW_DPRTYPE=['OBJ_FP', 'POLAR_FP']))
 # other telluric recipes
 tellu_seq.add(obj_mk_tellu, name='MKTELLU1',
               files=[files.out_ext_e2dsff], fiber='AB',
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
+                                       'POLAR_FP']))
 
 tellu_seq.add(obj_fit_tellu, name='MKTELLU2',
               files=[files.out_ext_e2dsff], fiber='AB',
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
+                                       'POLAR_FP']))
 
 tellu_seq.add(obj_mk_template, name='MKTELLU3',
               fiber='AB', files=[files.out_ext_e2dsff],
               arguments=dict(objname='TELLURIC_TARGETS'),
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
+                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
+                                       'POLAR_FP']),
                 template_required=True)
 tellu_seq.add(obj_mk_tellu, name='MKTELLU4',
               fiber='AB', files=[files.out_ext_e2dsff],
               filters=dict(KW_OBJNAME='TELLURIC_TARGETS',
-                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
+                           KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
+                                       'POLAR_FP']),
                 template_required=True)
 
 # -----------------------------------------------------------------------------
@@ -1604,37 +1631,44 @@ tellu_seq.add(obj_mk_tellu, name='MKTELLU4',
 science_seq = drs_recipe.DrsRunSequence('science_seq', __INSTRUMENT__)
 # extract science
 science_seq.add(cal_extract, name='EXTOBJ',
-                files=[files.pp_obj_dark, files.pp_obj_fp],
+                files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_polar_dark,
+                       files.pp_polar_fp],
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
+                             KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_DARK',
+                                         'POLAR_FP']))
 # correct leakage for any science targets that are OBJ_FP
 science_seq.add(cal_leak, name='LEAKOBJ',
                 files=[files.out_ext_e2dsff], fiber='AB',
-                filters=dict(KW_DPRTYPE=['OBJ_FP'],
+                filters=dict(KW_DPRTYPE=['OBJ_FP', 'POLAR_FP'],
                              KW_OBJNAME='SCIENCE_TARGETS'))
 science_seq.add(obj_fit_tellu, name='FTELLU1',
                 files=[files.out_ext_e2dsff], fiber='AB',
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']))
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
+                                         'POLAR_FP']))
 
 science_seq.add(obj_mk_template, name='FTELLU2', fiber='AB',
                 arguments=dict(objname='SCIENCE_TARGETS'),
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'], ),
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
+                                         'POLAR_FP']),
                 template_required=True)
 science_seq.add(obj_fit_tellu, name='FTELLU3',
                 files=[files.out_ext_e2dsff], fiber='AB',
                 filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
-                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP']),
+                             KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
+                                         'POLAR_FP']),
                 template_required=True)
 
 # ccf
 science_seq.add(cal_ccf, files=[files.out_tellu_obj], fiber='AB',
-                filters=dict(KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP'],
+                filters=dict(KW_DPRTYPE=['OBJ_DARK', 'OBJ_FP', 'POLAR_DARK',
+                                         'POLAR_FP'],
                              KW_OBJNAME='SCIENCE_TARGETS'))
 # post processing
 science_seq.add(obj_pp_recipe, files=[files.pp_file],
-                filters=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK'],
+                filters=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_DARK',
+                                         'POLAR_FP'],
                              KW_OBJNAME='SCIENCE_TARGETS'))
 
 # -----------------------------------------------------------------------------

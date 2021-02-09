@@ -177,6 +177,14 @@ KW_HUMIDITY = KW_HUMIDITY.copy(__NAME__)
 KW_HUMIDITY.set(key='RELHUMID',
                 comment='87 relative humidity, weather tower % ')
 
+# define the first polar sequence key
+KW_POLAR_KEY_1 = KW_POLAR_KEY_1.copy(__NAME__)
+KW_POLAR_KEY_1.set(key='SBRHB1_P')
+
+# define the second polar sequence key
+KW_POLAR_KEY_2 = KW_POLAR_KEY_2.copy(__NAME__)
+KW_POLAR_KEY_2.set(key='SBRHB2_P')
+
 # -----------------------------------------------------------------------------
 # Wanted header keys (related to science object)
 # -----------------------------------------------------------------------------
@@ -195,6 +203,7 @@ KW_INPUTRV.set(key='OBJRV', unit=uu.km / uu.s)
 # define the object temperature HEADER key
 KW_OBJ_TEMP = KW_OBJ_TEMP.copy(__NAME__)
 KW_OBJ_TEMP.set(key='OBJTEMP', unit=uu.K)
+
 
 # -----------------------------------------------------------------------------
 # Object resolution keys
@@ -392,6 +401,10 @@ KW_OBJNAME.set(key='DRSOBJN', comment='Target name')
 # Define the key to get the data fits file type
 KW_DPRTYPE = KW_DPRTYPE.copy(__NAME__)
 KW_DPRTYPE.set(key='DPRTYPE', comment='The type of file (from pre-process)')
+
+# Define the key to get the drs mode
+KW_DRS_MODE = KW_DRS_MODE.copy(__NAME__)
+KW_DRS_MODE.set(key='DRSMODE', comment='DRS Mode (Spectroscopy or Polar[N])')
 
 # Define the mid exposure time
 # Note: must change INDEX_HEADER_KEYS data type definition if changing this

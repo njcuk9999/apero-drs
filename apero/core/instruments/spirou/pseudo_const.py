@@ -251,6 +251,11 @@ class PseudoConstants(DefaultConstants):
         header, hdict = get_mid_obs_time(params, header, hdict,
                                          filename=filename)
         # ------------------------------------------------------------------
+        # Deal with drs mode
+        # ------------------------------------------------------------------
+        header, hdict = get_drs_mode(params, header, hdict,
+                                     filename=filename)
+        # ------------------------------------------------------------------
         # Deal with dprtype
         # ------------------------------------------------------------------
         header, hdict = get_dprtype(params, recipe, header, hdict,
@@ -342,7 +347,10 @@ class PseudoConstants(DefaultConstants):
         index_keys['KW_CREF'] = str
         index_keys['KW_CDEN'] = float
         index_keys['KW_CALIBWH'] = str
+        index_keys['KW_POLAR_KEY_1'] = str
+        index_keys['KW_POLAR_KEY_2'] = str
         index_keys['KW_DPRTYPE'] = str
+        index_keys['KW_DRS_MODE'] = str
         index_keys['KW_OUTPUT'] = str
         index_keys['KW_CMPLTEXP'] = int
         index_keys['KW_NEXP'] = int
@@ -371,7 +379,7 @@ class PseudoConstants(DefaultConstants):
         """
         keys = ['KW_TARGET_TYPE', 'KW_OBJECTNAME', 'KW_OBSTYPE',
                 'KW_CCAS', 'KW_CREF', 'KW_CALIBWH',
-                'KW_DPRTYPE', 'KW_OUTPUT']
+                'KW_DPRTYPE', 'KW_OUTPUT', 'KW_DRS_MODE']
         return keys
 
 
@@ -977,6 +985,63 @@ def get_header_end_time(params: ParamDict, header: Any,
     # ----------------------------------------------------------------------
     # get astropy time
     return Time(timetype(rawtime), format=timefmt)
+
+
+def get_drs_mode(params: ParamDict, header: Any, hdict: Any,
+                 filename: Union[str, None, Path] = None) -> Tuple[Any, Any]:
+    """
+    Assign the drs mode to the drs (for spirou based on the polar mode)
+
+    :param params: ParamDict, parameter dictionary of constants
+    :param header: drs_fits.Header or astropy.io.fits.Header, the header to
+                   check / update
+    :param hdict: drs_fits.Header the output header dictionary to update
+
+    # header keys used are ('SBRHB1_P','SBRHB2_P')
+        SPECTROSCOPY = ('P16', 'P16')
+        POLAR1 = ('P14', 'P16')
+        POLAR2 = ('P2', 'P16')
+        POLAR3 = ('P2', 'P4')
+        POLAR4 = ('P14', 'P4')
+
+    """
+    # get drs mode header keyword store
+    kw_drs_mode, _, kw_drs_mode_comment = params['KW_DRS_MODE']
+    kw_polar_key_1 = params['KW_POLAR_KEY_1'][0]
+    kw_polar_key_2 = params['KW_POLAR_KEY_2'][0]
+    # deal with no hdict
+    if hdict is None:
+        hdict = dict()
+    # get keys from current header
+    if kw_polar_key_1 not in header:
+        eargs = [kw_polar_key_1, filename]
+        raise ValueError('Key "{0}" not found. File={1}'.format(*eargs))
+    else:
+        polar_key1 = header[kw_polar_key_1]
+
+    if kw_polar_key_2 not in header:
+        eargs = [kw_polar_key_2, filename]
+        raise ValueError('Key "{0}" not found. File={1}'.format(*eargs))
+    else:
+        polar_key2 = header[kw_polar_key_2]
+    # define the drs mode
+    if polar_key1 == 'P16' and polar_key2 == 'P16':
+        drs_mode = 'SPECTROSCOPY'
+    elif polar_key1 == 'P14' and polar_key2 == 'P16':
+        drs_mode = 'POLAR'
+    elif polar_key1 == 'P2' and polar_key2 == 'P16':
+        drs_mode = 'POLAR'
+    elif polar_key1 == 'P2' and polar_key2 == 'P4':
+        drs_mode = 'POLAR'
+    elif polar_key1 == 'P14' and polar_key2 == 'P4':
+        drs_mode = 'POLAR'
+    else:
+        drs_mode = 'UNKNOWN'
+    # add header key
+    header[kw_drs_mode] = (drs_mode, kw_drs_mode_comment)
+    hdict[kw_drs_mode] = (drs_mode, kw_drs_mode_comment)
+    # return header
+    return header, hdict
 
 
 def get_dprtype(params: ParamDict, recipe: Any, header: Any, hdict: Any,
