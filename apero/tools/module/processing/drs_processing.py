@@ -16,9 +16,6 @@ from astropy.table import Table
 from collections import OrderedDict
 from copy import deepcopy
 import itertools
-import multiprocessing
-from multiprocessing import get_context, set_start_method
-from multiprocessing import Process, Manager, Event
 import numpy as np
 import os
 import sys
@@ -943,29 +940,35 @@ def process_run_list(params, recipe, runlist, group=None):
     # get number of cores
     cores = _get_cores(params)
     # pipe to correct module
+    # do not use parallelization
     if cores == 1:
         # log process: Running with 1 core
         WLOG(params, 'info', textentry('40-503-00016'))
         # run as linear process
         rdict = _linear_process(params, runlist, group=group)
+    # use pool to continue parallelization
+    elif params['REPROCESS_MP_TYPE'].lower() == 'pool':
+        # log process: Running with N cores
+        WLOG(params, 'info', textentry('40-503-00017', args=[cores]))
+        # run as multiple processes
+        rdict = _multi_process_pool(params, runlist, cores=cores,
+                                    groupname=group)
+    # use Process to continue parallelization
     else:
         # log process: Running with N cores
         WLOG(params, 'info', textentry('40-503-00017', args=[cores]))
         # run as multiple processes
-        rdict = _multi_process(params, runlist, cores=cores,
-                               groupname=group)
+        rdict = _multi_process_process(params, runlist, cores=cores,
+                                       groupname=group)
     # end a timer
     process_end = time.time()
-
     # remove lock files
     drs_lock.reset_lock_dir(params)
-
     # convert to dict
     odict = OrderedDict()
     keys = np.sort(np.array(list(rdict.keys())))
     for key in keys:
         odict[key] = dict(rdict[key])
-
     # see if we have any errors
     errors = False
     for key in keys:
@@ -2262,9 +2265,11 @@ def _linear_process(params, runlist, number=0, cores=1, event=None,
     return return_dict
 
 
-def _multi_process(params, runlist, cores, groupname=None):
+def _multi_process_process(params, runlist, cores, groupname=None):
     # first try to group tasks
     grouplist, groupnames = _group_tasks1(runlist, cores)
+    # import multiprocessing
+    from multiprocessing import Process, Manager, Event
     # start process manager
     manager = Manager()
     event = Event()
@@ -2302,15 +2307,22 @@ def _multi_process(params, runlist, cores, groupname=None):
     return dict(return_dict)
 
 
-# TODO: remove or replace _multi_process
-# TODO:    - currently freezes after first group?
-def _multi_process1(params, runlist, cores, groupname=None):
+def _multi_process_pool(params, runlist, cores, groupname=None):
     # first try to group tasks (now just by recipe)
     grouplist, groupnames = _group_tasks2(runlist, cores)
+    # deal with Pool specific imports
+    from multiprocessing import Manager
+    from multiprocessing import get_context
+    from multiprocessing import set_start_method
+    try:
+        set_start_method("spawn")
+    except RuntimeError:
+        pass
     # start process manager
     manager = Manager()
     event = manager.Event()
     return_dict = dict()
+
     # loop around groups
     #   - each group is a unique recipe
     for g_it, groupnum in enumerate(grouplist):
@@ -3188,7 +3200,7 @@ def _get_cores(params):
     else:
         cores = 1
     # get number of cores on machine
-    cpus = multiprocessing.cpu_count()
+    cpus = os.cpu_count()
     # check that cores is valid
     if cores < 1:
         WLOG(params, 'error', textentry('00-503-00008', args=[cores]))
