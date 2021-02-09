@@ -14,6 +14,7 @@ __all__ = [  # input keys
     'KW_CMPLTEXP', 'KW_NEXP', 'KW_PI_NAME', 'KW_PLX', 'KW_CALIBWH',
     'KW_TARGET_TYPE', 'KW_WEATHER_TOWER_TEMP', 'KW_CASS_TEMP',
     'KW_HUMIDITY', 'KW_GAIA_ID', 'KW_INPUTRV', 'KW_OBJ_TEMP',
+    'KW_POLAR_KEY_1', 'KW_POLAR_KEY_2',
     'KW_SATURATE', 'KW_FRMTIME', 'KW_OBJECTNAME', 'KW_IDENTIFIER',
     # object resolution keys
     'KW_DRS_OBJNAME', 'KW_DRS_OBJNAME_S', 'KW_DRS_GAIAID', 'KW_DRS_GAIAID_S',
@@ -24,8 +25,8 @@ __all__ = [  # input keys
     'KW_DRS_RPMAG', 'KW_DRS_RPMAG_S', 'KW_DRS_EPOCH', 'KW_DRS_EPOCH_S',
     'KW_DRS_TEFF', 'KW_DRS_TEFF_S',
     # general output keys
-    'KW_VERSION', 'KW_PPVERSION', 'KW_DPRTYPE', 'KW_PID',
-    'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3',
+    'KW_VERSION', 'KW_PPVERSION', 'KW_DPRTYPE', 'KW_PID', 'KW_DRS_MODE',
+    'KW_INFILE1', 'KW_INFILE2', 'KW_INFILE3', 'KW_DRS_MODE',
     'KW_DRS_QC', 'KW_DRS_QC_VAL', 'KW_DRS_QC_NAME', 'KW_DRS_QC_LOGIC',
     'KW_DRS_QC_PASS', 'KW_DATE_OBS', 'KW_OUTPUT',
     'KW_DRS_DATE', 'KW_C_FLIP', 'KW_C_CVRTE',
@@ -358,6 +359,14 @@ KW_INPUTRV = Keyword('KW_INPUTRV', key='', dtype=float, source=__NAME__,
 KW_OBJ_TEMP = Keyword('KW_OBJ_TEMP', key='', dtype=float, source=__NAME__,
                       description='define the object temperature HEADER key')
 
+# define the first polar sequence key
+KW_POLAR_KEY_1 = Keyword('KW_POLAR_KEY_1', key='', dtype=str, source=__NAME__,
+                         description='define the first polar sequence key')
+
+# define the second polar sequence key
+KW_POLAR_KEY_2 = Keyword('KW_POLAR_KEY_2', key='', dtype=str, source=__NAME__,
+                         description='define the first polar sequence key')
+
 # -----------------------------------------------------------------------------
 # Object resolution keys
 # -----------------------------------------------------------------------------
@@ -520,6 +529,10 @@ KW_DRS_DATE = Keyword('KW_DRS_DATE', key='', dtype=str, source=__NAME__,
 KW_DPRTYPE = Keyword('KW_DPRTYPE', key='', dtype=str, source=__NAME__,
                      description=('Define the key to get the data fits '
                                   'file type'))
+
+# Define the key to get the drs mode
+KW_DRS_MODE = Keyword('KW_DRS_MODE', key='', dtype=str, source=__NAME__,
+                      description='Define the key to get the drs mode')
 
 # Define the mid exposure time
 KW_MID_OBS_TIME = Keyword('KW_MID_OBS_TIME', key='', source=__NAME__,

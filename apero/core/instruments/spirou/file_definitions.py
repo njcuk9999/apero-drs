@@ -156,6 +156,7 @@ raw_file.addset(raw_lfc_fp)
 raw_obj_dark = drs_finput('RAW_OBJ_DARK', outfunc=out.blank,
                           hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_pk',
                                      KW_OBSTYPE='OBJECT',
+                                     KW_DRS_MODE='SPECTROSCOPY',
                                      KW_TARGET_TYPE='TARGET', ))
 raw_file.addset(raw_obj_dark)
 
@@ -163,6 +164,7 @@ raw_obj_fp = drs_finput('RAW_OBJ_FP', outfunc=out.blank, filetype='.fits',
                         suffix='', inext='.fits',
                         hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_fp',
                                    KW_OBSTYPE='OBJECT',
+                                   KW_DRS_MODE='SPECTROSCOPY',
                                    KW_TARGET_TYPE='TARGET'))
 raw_file.addset(raw_obj_fp)
 
@@ -179,6 +181,22 @@ raw_obj_hc2 = drs_finput('RAW_OBJ_HCTWO', outfunc=out.blank, filetype='.fits',
                                     KW_OBSTYPE='OBJECT',
                                     KW_TARGET_TYPE='TARGET'))
 raw_file.addset(raw_obj_hc2)
+
+# raw object files
+raw_polar_dark = drs_finput('RAW_POLAR_DARK', outfunc=out.blank,
+                          hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_pk',
+                                     KW_OBSTYPE='OBJECT',
+                                     KW_DRS_MODE='POLAR',
+                                     KW_TARGET_TYPE='TARGET', ))
+raw_file.addset(raw_polar_dark)
+
+raw_polar_fp = drs_finput('RAW_POLAR_FP', outfunc=out.blank, filetype='.fits',
+                        suffix='', inext='.fits',
+                        hkeys=dict(KW_CCAS='pos_pk', KW_CREF='pos_fp',
+                                   KW_OBSTYPE='OBJECT',
+                                   KW_DRS_MODE='POLAR',
+                                   KW_TARGET_TYPE='TARGET'))
+raw_file.addset(raw_polar_fp)
 
 # -----------------------------------------------------------------------------
 # raw comparison files
@@ -363,6 +381,17 @@ pp_obj_hc2 = drs_finput('OBJ_HC2', hkeys=dict(KW_DPRTYPE='OBJ_HCTWO'),
                         suffix='_pp', intype=raw_obj_hc2,
                         inext='.fits', outfunc=out.general_file)
 pp_file.addset(pp_obj_hc2)
+pp_polar_dark = drs_finput('POLAR_DARK', hkeys=dict(KW_DPRTYPE='POLAR_DARK'),
+                         filetype='.fits',
+                         suffix='_pp', intype=raw_polar_dark,
+                         inext='.fits', outfunc=out.general_file)
+pp_file.addset(pp_polar_dark)
+pp_polar_fp = drs_finput('POLAR_FP', hkeys=dict(KW_DPRTYPE='POLAR_FP'),
+                       filetype='.fits',
+                       suffix='_pp', intype=raw_polar_fp,
+                       inext='.fits', outfunc=out.general_file)
+pp_file.addset(pp_polar_fp)
+
 # -----------------------------------------------------------------------------
 #  comparison
 pp_dark_hc1 = drs_finput('DARK_HCONE', hkeys=dict(KW_DPRTYPE='DARK_HCONE'),
@@ -1259,7 +1288,8 @@ post_e_file = drs_oinput('DRS_POST_E', filetype='.fits', suffix='e.fits',
                          outfunc=out.post_file, inext='o', required=False)
 # add extensions
 post_e_file.add_ext('PP', pp_file, pos=0, header_only=True, kind='tmp',
-                    hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']),
+                    hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
+                                           'POLAR_DARK']),
                     remove_drs_hkeys=True, remove_std_hkeys=True)
 post_e_file.add_ext('EXT_AB', out_ext_e2dsff, pos=1, fiber='AB', kind='red',
                     link='PP', hlink='KW_IDENTIFIER', clear_file=True)
@@ -1297,7 +1327,8 @@ post_file.addset(post_e_file)
 post_s_file = drs_oinput('DRS_POST_S', filetype='.fits', suffix='s.fits',
                          outfunc=out.post_file, inext='o', required=False)
 post_s_file.add_ext('PP', pp_file, pos=0, header_only=True, kind='tmp',
-                    hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
+                    hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
+                                           'POLAR_DARK']))
 # s1d w is a composite table
 post_s_file.add_ext('S1D_W', 'table', pos=1, kind='red',
                     link='PP', hlink='KW_IDENTIFIER')
@@ -1388,7 +1419,8 @@ post_t_file = drs_oinput('DRS_POST_T', filetype='.fits', suffix='t.fits',
                          outfunc=out.post_file, inext='o', required=False)
 # add extensions
 post_t_file.add_ext('PP', pp_file, pos=0, header_only=True, kind='tmp',
-                    hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']))
+                    hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
+                                           'POLAR_DARK']))
 post_t_file.add_ext('TELLU_AB', out_tellu_obj, pos=1, fiber='AB',
                     link='PP', hlink='KW_IDENTIFIER', kind='red',
                     clear_file=True)
@@ -1413,7 +1445,8 @@ post_file.addset(post_t_file)
 post_v_file = drs_oinput('DRS_POST_V', filetype='.fits', suffix='v.fits',
                          outfunc=out.post_file, inext='o', required=False)
 post_v_file.add_ext('PP', pp_file, pos=0, header_only=True, kind='tmp',
-                    hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK']),
+                    hkeys=dict(KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_FP',
+                                           'POLAR_DARK']),
                     clear_file=True)
 post_v_file.add_ext('VEL', out_ccf_fits, pos=1, fiber='AB',
                     link='PP', hlink='KW_IDENTIFIER', kind='red',
