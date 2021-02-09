@@ -2552,6 +2552,10 @@ POST_HDREXT_COMMENT_KEY.value = 'KW_IDENTIFIER'
 # =============================================================================
 # TOOLS SETTINGS
 # =============================================================================
+# Define whether to use multiprocess Pool or Process
+REPROCESS_MP_TYPE = REPROCESS_MP_TYPE.copy(__NAME__)
+REPROCESS_MP_TYPE.value = 'process'
+
 # Key for use in run files
 REPROCESS_RUN_KEY = REPROCESS_RUN_KEY.copy(__NAME__)
 REPROCESS_RUN_KEY.value = 'ID'

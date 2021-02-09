@@ -293,7 +293,7 @@ __all__ = [
     'REPROCESS_RAWINDEXFILE', 'REPROCESS_SEQCOL', 'REPROCESS_TIMECOL',
     'SUMMARY_LATEX_PDF', 'EXPMETER_MIN_LAMBDA', 'EXPMETER_MAX_LAMBDA',
     'EXPMETER_TELLU_THRES', 'REPROCESS_PINAMECOL', 'DRIFT_DPRTYPES',
-    'DRIFT_DPR_FIBER_TYPE'
+    'DRIFT_DPR_FIBER_TYPE', 'REPROCESS_MP_TYPE',
 ]
 
 # set name
@@ -4439,6 +4439,15 @@ POST_HDREXT_COMMENT_KEY = Const('POST_HDREXT_COMMENT_KEY', value=None,
 # TOOLS SETTINGS
 # =============================================================================
 cgroup = 'TOOLS SETTING'
+
+# Define whether to use multiprocess Pool or Process
+REPROCESS_MP_TYPE = Const('REPROCESS_MP_TYPE', value=None, dtype=str,
+                          source=__NAME__, group=cgroup,
+                          user=True, active=True,
+                          options=['pool', 'process'],
+                          description='Define whether to use multiprocess '
+                                      '"pool" or "process"')
+
 # Key for use in run files
 REPROCESS_RUN_KEY = Const('REPROCESS_RUN_KEY', value=None, dtype=str,
                           source=__NAME__, group=cgroup,
