@@ -170,7 +170,8 @@ def __main__(recipe, params):
             # write thermal files
             thermal_file.write_file(kind=recipe.outputtype,
                                     runstring=recipe.runstring)
-
+            # add to output files (for indexing)
+            recipe.add_output_file(thermal_file)
         # ------------------------------------------------------------------
         # Update the calibration database
         # ------------------------------------------------------------------
