@@ -34,9 +34,20 @@ Date: 2020-12-21
       (before only new files were added)
 
 - preprocessing
+    - object resolution added to preprocessing (see object resolution section)
     - add QC to reject exptimes less than 10% required exptime
       (change using PP_BAD_EXPTIME_FRACTION)
     - add cosmic ray locating/correction (using slope + intercept)
+    - added header key DRS_MODE to distinguish between SPECTROSCOPY and POLAR files
+        - DRS_MODE = SPECTROSCOPY  for SBRHB1_P = P16 and SBRHB2_P = P16
+        - DRS_MODE = POLAR         for SBRHB1_P = P14 and SBRHB2_P = P16
+        - DRS_MODE = POLAR         for SBRHB1_P = P2  and SBRHB2_P = P16
+        - DRS_MODE = POLAR         for SBRHB1_P = P2  and SBRHB2_P = P4
+        - DRS_MODE = POLAR         for SBRHB1_P = P14 and SBRHB2_P = P4
+        - DRS_MODE = UNKNOWN  otherwise
+    - DRS_MODE also adds/updates DPRTYPES
+        - OBJ_FP, OBJ_DARK + DRS_MODE = SPECTROSCOPY --> OBJ_FP, OBJ_DARK
+        - OBJ_FP, OBJ_DARK + DRS_MODE = POLAR --> POLAR_FP, POLAR_DARK
 
 - object resolution
     - now done in preprocessing (was extraction)
@@ -117,3 +128,5 @@ Date: 2020-12-21
       use "apero_constants.py --generate=full"  or regenerate current file
       (lost/corrupt?) with "apero_constants.py --generate=standard" or choose
       which constant sections you want with "apero_constants.py --generate=choose"
+    - apero_langdb.py can now be used to locate apero language codes
+        - use apero_langdb.py --find
