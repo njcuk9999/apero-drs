@@ -13,21 +13,21 @@ import os
 import tkinter as tk
 from tkinter import font
 from tkinter import messagebox
-import webbrowser
 import re
 
 from apero.base import base
+from apero.base import drs_db
 from apero.core.core import drs_break
-from apero import lang
 from apero.core.core import drs_log
 from apero.core.utils import drs_startup
+from apero.tools.module.testing import drs_dev
 
 
 # =============================================================================
 # Define variables
 # =============================================================================
 __NAME__ = 'find_error.py'
-__INSTRUMENT__ = 'None'
+__INSTRUMENT__ = base.IPARAMS['INSTRUMENT']
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __author__ = base.__author__
@@ -38,13 +38,32 @@ WLOG = drs_log.wlog
 
 # -----------------------------------------------------------------------------
 # define the program name
-PROGRAM_NAME = 'Error locator'
-# define the current allowed instruments
-INSTRUMENTS = ['None', 'SPIROU', 'NIRPS']
+PROGRAM_NAME = 'APERO language Code Locator'
 # define the small, normal and large text size
 LARGE = 16
 NORMAL = 12
 SMALL = 10
+# define internal path to database explorer
+EXPLORER_PATH = os.path.join('tools', 'recipes', 'bin', 'apero_explorer.py')
+# -----------------------------------------------------------------------------
+# set up recipe definitions (overwrites default one)
+RMOD = drs_dev.RecipeDefinition(instrument=__INSTRUMENT__)
+# get file definitions for this instrument
+FMOD = drs_dev.FileDefinition(instrument=__INSTRUMENT__)
+# define a recipe for this tool
+find_error = drs_dev.TmpRecipe()
+find_error.name = __NAME__
+find_error.shortname = 'FIND_ERROR'
+find_error.instrument = __INSTRUMENT__
+find_error.inputtype = 'red'
+find_error.outputtype = 'red'
+find_error.extension = 'fits'
+find_error.description = 'GUI for locating APERO language codes'
+find_error.kind = 'misc'
+find_error.set_debug_plots()
+find_error.set_summary_plots()
+# add recipe to recipe definition
+RMOD.add(find_error)
 
 
 # =============================================================================
@@ -178,9 +197,6 @@ class Navbar:
         self.menubar = tk.Menu(master)
         # set title
         self.title = 'About {0}'.format(PROGRAM_NAME)
-        package = __PACKAGE__
-        default_path = lang.core.drs_lang_text.DEFAULT_PATH
-        self.dpath = drs_break.get_relative_folder(package, default_path)
         # add file menu
         self.filemenu = tk.Menu(self.menubar, tearoff=0)
         self.filemenu.add_command(label='Open database folder',
@@ -218,8 +234,9 @@ class Navbar:
 
         :return:
         """
-        # open path
-        webbrowser.open_new_tab(self.dpath)
+        root = self.master.datastore.drs_params['DRS_ROOT']
+        explorer = os.path.join(root, EXPLORER_PATH)
+        os.system('python {0}'.format(explorer))
 
 
 class Search:
@@ -235,6 +252,7 @@ class Search:
         :param appobj: tk.TK root app
         """
         self.frame = tk.Frame(parent)
+        self.master = parent
         self.entry = None
         self.button = None
         self.ilabel = None
@@ -277,19 +295,6 @@ class Search:
                                 font="-size {0}".format(LARGE))
         self.button.grid(row=0, column=1, padx=10, sticky=tk.W)
 
-        self.ilabel = tk.Label(frame, text='Instrument: ')
-        self.ilabel.grid(row=0, column=2, padx=10, sticky=tk.E)
-
-        # Create a Tkinter variable
-        self.tkvar = tk.StringVar(frame)
-
-        # Dictionary with options
-        choices = set(INSTRUMENTS)
-        self.tkvar.set(INSTRUMENTS[0])  # set the default option
-
-        self.popup_menu = tk.OptionMenu(frame, self.tkvar, *choices)
-        self.popup_menu.grid(row=0, column=3, sticky=tk.E)
-
     def execute_search(self, event=None):
         """
         Event: start a search (and destory the autocomplete tab)
@@ -311,10 +316,20 @@ class Search:
         self.update_tables(r1, r2)
         # set complete text
         if found:
-            self.titlebar.title0.set('Complete. Error text searched for: ')
+            # log message to console
+            wmsg = 'Complete. APERO code searched for:  {0}'
+            wargs = [search_text]
+            WLOG(self.dataobj.drs_params, '', wmsg.format(*wargs))
+            # log to application
+            self.titlebar.title0.set('Complete. APERO code searched for: ')
             self.titlebar.title1.set(search_text)
         else:
-            self.titlebar.title0.set('Cannot find Error: ')
+            # log message to console
+            wmsg = 'Cannot find APERO code: {0}'
+            wargs = [search_text]
+            WLOG(self.dataobj.drs_params, '', wmsg.format(*wargs))
+            # log to application
+            self.titlebar.title0.set('Cannot find APERO code: ')
             self.titlebar.title1.set(search_text)
 
     def search_for_entry(self, value):
@@ -682,29 +697,49 @@ class App(tk.Tk):
         self.grid_rowconfigure(2, weight=1)
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
-        # trace function to change dropdown
-        self.search.tkvar.trace('w', self.change_dropdown)
         # bindings
         self.bind_all('<Configure>', self.r2.table.on_frame_configure)
         self.bind_all('<Button-4>', self.r2.table.on_mouse_scroll)
         self.bind_all('<Button-5>', self.r2.table.on_mouse_scroll)
 
-    def change_dropdown(self, *args):
-        """
-        Trace Event: The controller for the change instrument drop down box
-        - updates the instrument value based on drop down box choice
-        :param args: not used
-        :return: None
-        """
-        self.instrument = self.search.tkvar.get()
-        # update the database with the new instrument name
-        self.datastore.update_database(self.instrument)
-
 
 # =============================================================================
 # Worker functions
 # =============================================================================
-def main(instrument=None):
+def main(**kwargs):
+    """
+    Main function for apero_explorer.py
+
+    :param instrument: str, the instrument name
+    :param kwargs: additional keyword arguments
+
+    :type instrument: str
+
+    :keyword debug: int, debug level (0 for None)
+
+    :returns: dictionary of the local space
+    :rtype: dict
+    """
+    # assign function calls (must add positional)
+    fkwargs = dict(**kwargs)
+    # ----------------------------------------------------------------------
+    # deal with command line inputs / function call inputs
+    recipe, params = drs_startup.setup(__NAME__, __INSTRUMENT__, fkwargs,
+                                       enable_plotter=False,
+                                       rmod=RMOD)
+    # solid debug mode option
+    if kwargs.get('DEBUG0000', False):
+        return recipe, params
+    # ----------------------------------------------------------------------
+    # run main bulk of code (catching all errors)
+    llmain, success = drs_startup.run(__main__, recipe, params)
+    # ----------------------------------------------------------------------
+    # End Message
+    # ----------------------------------------------------------------------
+    return drs_startup.end_main(params, llmain, recipe, success, outputs='None')
+
+
+def __main__(recipe, params):
     """
     Main function - takes the instrument name, index the databases and python
     script (in real time due to any changes in code) and then runs the
@@ -716,9 +751,7 @@ def main(instrument=None):
     :rtype: dict
     """
     # get datastore
-    datastore = LoadData(instrument=instrument)
-    # log running of app
-    params = datastore.drs_params
+    datastore = LoadData(params, instrument=recipe.instrument)
     WLOG(params, '', 'Running Error finding application')
     # Main code here
     app = App(datastore)
@@ -737,7 +770,7 @@ class LoadData:
     database)
     """
 
-    def __init__(self, instrument=None):
+    def __init__(self, params, instrument=None, language=None):
         """
         LoadData constructor - loads both database and lines
 
@@ -758,8 +791,12 @@ class LoadData:
         """
         # set instrument
         self.instrument = instrument
-
-        self.drs_params = None
+        # deal with language
+        if language is None:
+            language = base.DEFAULT_LANG
+        self.language = language
+        self.drs_params = params
+        # storage of outputs
         self.dict, self.source = None, None
         self.args, self.kinds, self.comments = None, None, None
         self.lines, self.files = None, None
@@ -775,9 +812,6 @@ class LoadData:
         :type instrument: str
         """
         self.instrument = instrument
-        # get parameters from apero
-        _, params = drs_startup.setup('None', instrument, quiet=True)
-        self.drs_params = params
         # get database
         dout = self.load_databases()
         self.dict, self.source, self.args, self.kinds, self.comments = dout
@@ -798,15 +832,29 @@ class LoadData:
         :return: a tuple of dictionaries
         :rtype: tuple[dict, dict, dict, dict, dict]
         """
-        # get filelist (from drs_text)
-        filelist = lang.core.drs_lang_text.ERROR_FILES + lang.core.drs_lang_text.HELP_FILES
-        # get dictionary files (full path)
-        dict_files = lang.core.drs_lang_text._get_dict_files(self.instrument, filelist)
-        # get value_dict, source_dict, arg_dict, kind_dict, comment_dict
-        out = lang.core.drs_lang_text._read_dict_files(dict_files,
-                                             self.drs_params['LANGUAGE'])
+        # get langudate database
+        langdbm = drs_db.LanguageDatabase()
+        # load database
+        langdbm.load_db()
+        # get language table name
+        tablename = langdbm.database.tname
+        # get pandas table
+        df = langdbm.database.get('*', tablename, return_pandas=True)
+        # storage
+        values = dict()
+        source = dict()
+        args = dict()
+        kinds = dict()
+        comments = dict()
+        # need to convert all to dictionary
+        for row, key in enumerate(df['KEYNAME']):
+            values[key] = df[self.language].iloc[row]
+            source[key] = '{0}+{1}'.format(str(langdbm), tablename)
+            args[key] = df['ARGUMENTS'].iloc[row]
+            kinds[key] = df['KIND'].iloc[row]
+            comments[key] = df['KEYDESC'].iloc[row]
         # return databases
-        return out
+        return values, source, args, kinds, comments
 
     def load_lines(self):
         """

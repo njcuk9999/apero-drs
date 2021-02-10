@@ -15,6 +15,7 @@ from apero.base import base
 from apero.base import drs_db
 from apero.lang.core import drs_lang
 from apero.tools.module.database import manage_databases
+from apero.tools.module.error import find_error
 
 # =============================================================================
 # Define variables
@@ -56,6 +57,8 @@ Arguments:
 
 --upgrade      (see --update)
 
+--find         displays the message locator gui
+
 --help, -h     show this help message and exit
 
  ***************************************************************************
@@ -78,6 +81,13 @@ def main():
         print(HELP_MESSAGE.format(DRS_PATH))
         # return None
         return
+
+    # link --find to the
+    if '--find' in args:
+        # need to reset sys.argv
+        sys.argv = ['apero_langdb.py']
+        # return results of find_error.main()
+        return find_error.main()
 
     # if we are updating database then run
     if '--update' in args or '--upgrade' in args:
@@ -114,7 +124,7 @@ def main():
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # run main function
-    main()
+    ll = main()
 
 # =============================================================================
 # End of code
