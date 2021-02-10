@@ -1355,7 +1355,9 @@ def write_extraction_files(params, recipe, infile, rawfiles, combine, fiber,
     wargs = [e2dsllfile.filename]
     WLOG(params, '', textentry('40-016-00007', args=wargs))
     # write image to file
-    e2dsllfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+    e2dsllfile.write_multi(data_list=[eprops['E2DSCC']],
+                           datatype_list=['image'], kind=recipe.outputtype,
+                           runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsllfile)
     # ----------------------------------------------------------------------

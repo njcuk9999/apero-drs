@@ -455,7 +455,9 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     WLOG(params, '',
          textentry('40-015-00005', args=[e2dsllfile.filename]))
     # write image to file
-    e2dsllfile.write_file(kind=recipe.outputtype, runstring=recipe.runstring)
+    e2dsllfile.write_multi(data_list=[eprops['E2DSCC']],
+                           datatype_list=['image'], kind=recipe.outputtype,
+                           runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsllfile)
     # return out file

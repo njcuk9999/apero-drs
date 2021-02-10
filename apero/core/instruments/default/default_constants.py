@@ -1887,8 +1887,9 @@ EXT_COSMIC_CORRETION = Const('EXT_COSMIC_CORRETION', value=None, dtype=bool,
 #  Define the percentage of flux above which we use to cut
 EXT_COSMIC_SIGCUT = Const('EXT_COSMIC_SIGCUT', value=None, dtype=float,
                           source=__NAME__, group=cgroup, 
-                          description=('Define the percentage of flux above '
-                                       'which we use to cut'))
+                          description=('Define the number of sigmas away from '
+                                       'the median flux which we use to cut '
+                                       'cosmic rays'))
 
 #  Defines the maximum number of iterations we use to check for cosmics
 #      (for each pixel)
