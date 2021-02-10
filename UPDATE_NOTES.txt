@@ -77,6 +77,10 @@ Date: 2020-12-21
     - added new fits table extension - the wave coefficients (as a table of
       order vs coefficient)
 
+- extraction
+    - modify cosmic rejection in extraction code (now use Etienne's sigma clip)
+    - LL file has new extension showing where cosmic rays were rejected
+
 - tellurics
     - added header keys to template file:
         - MTPNFILE: Number of files used to make template

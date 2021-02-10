@@ -114,7 +114,7 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
     # ----------------------------------------------------------------------
     # storage for all orders
     e2ds = np.zeros([nbo, dim2]) * np.nan
-    e2dsll = []
+    e2dsll, e2dscc = [], []
     cpt = np.repeat([np.nan], nbo)
     snr = np.repeat([np.nan], nbo)
     flat = np.zeros([nbo, dim2]) * np.nan
@@ -130,6 +130,7 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
             # set all values to NaN
             e2dsi = np.repeat([np.nan], dim2)
             e2dslli = np.zeros((int(range1+range2), dim2)) * np.nan
+            e2dscci = np.zeros((int(range1+range2), dim2)) * np.nan
             cpti = np.nan
             snri = np.nan
             fluxi = np.repeat([np.nan], dim2)
@@ -146,9 +147,9 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
             # get the coefficients for this order
             opos = pos[order_num]
             # extract 1D for this order
-            e2dsi, e2dslli, cpti = extraction(simage, orderp, opos, range1,
-                                              range2, sigdet, gain, cosmic,
-                                              cosmic_sigcut, cosmic_thres)
+            eout = extraction(simage, orderp, opos, range1, range2, gain,
+                              cosmic_sigcut)
+            e2dsi, e2dslli, cpti, e2dscci = eout
             # --------------------------------------------------------------
             # calculate the signal to noise ratio
             snri, fluxi = calculate_snr(e2dsi, blaze_size, range1, range2,
@@ -193,6 +194,7 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
         # append to arrays
         e2ds[order_num] = e2dsi
         e2dsll.append(e2dslli)
+        e2dscc.append(e2dscci)
         cpt[order_num] = cpti
         snr[order_num] = snri
         flat[order_num] = flati
@@ -204,6 +206,7 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
     props = ParamDict()
     props['E2DS'] = e2ds
     props['E2DSLL'] = np.vstack(e2dsll)
+    props['E2DSCC'] = np.vstack(e2dscc)
     props['SNR'] = snr
     props['N_COSMIC'] = cpt
     props['RMS'] = rms
@@ -243,7 +246,7 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
     props['BLAZE_NITER'] = blaze_niter
 
     # add source
-    keys = ['E2DS', 'E2DSFF', 'E2DSLL', 'SNR', 'N_COSMIC', 'RMS',
+    keys = ['E2DS', 'E2DSFF', 'E2DSLL', 'E2DSCC', 'SNR', 'N_COSMIC', 'RMS',
             'FLAT', 'BLAZE', 'FLUX_VAL', 'FIBER',
             'START_ORDER', 'END_ORDER', 'RANGE1', 'RANGE2', 'SKIP_ORDERS',
             'GAIN', 'SIGDET', 'COSMIC', 'COSMIC_SIGCUT', 'COSMIC_THRESHOLD',
@@ -254,8 +257,7 @@ def extraction_twod(params, simage, orderp, pos, nframes, props, kind=None,
     return props
 
 
-def extraction(simage, orderp, pos, r1, r2, sigdet, gain, cosmic=True,
-               cosmic_sigcut=0.25, cosmic_thres=5):
+def extraction(simage, orderp, pos, r1, r2, gain, cosmic_sigcut):
     """
     Extract order using tilt and weight (sigdet and badpix) and cosmic
     correction
@@ -307,6 +309,7 @@ def extraction(simage, orderp, pos, r1, r2, sigdet, gain, cosmic=True,
     mask = (j1s > 0) & (j2s < dim1)
     # create a slice image
     spelong = np.zeros((mp.nanmax(j2s - j1s) + 1, dim2), dtype=float)
+    coslong = np.zeros((mp.nanmax(j2s - j1s) + 1, dim2), dtype=float)
     # define the number of cosmics found
     cpt = 0
     # loop around each pixel along the order
@@ -328,41 +331,52 @@ def extraction(simage, orderp, pos, r1, r2, sigdet, gain, cosmic=True,
                 # TODO: URGENT: Must figure out what is going on here
                 # TODO:         case 0, 1 and 2 lead to "bands" of
                 # TODO:         flux (check the e2dsll files)
-                case = 3
-                if case == 0:
-                    raw_weights = np.where(sx > 0, 1, 1e-9)
-                    weights = raw_weights / ((sx * gain) + sigdet ** 2)
-                elif case == 1:
-                    # the weights should never be smaller than sigdet^2
-                    sigdets = np.repeat([sigdet ** 2], len(sx))
-                    noises = (sx * gain) + sigdet ** 2
-                    # find the weight for each pixel in sx
-                    raw_weights = mp.nanmax([noises, sigdets], axis=0)
-                    # weights is the inverse
-                    weights = 1.0 / raw_weights
-                elif case == 2:
-                    raw_weights = np.ones_like(sx)
-                    weights = raw_weights / ((sx * gain) + sigdet ** 2)
-                else:
-                    weights = np.ones_like(sx)
-                    weights[~np.isfinite(sx)] = np.nan
+                # case = 3
+                # if case == 0:
+                #     raw_weights = np.where(sx > 0, 1, 1e-9)
+                #     weights = raw_weights / ((sx * gain) + sigdet ** 2)
+                # elif case == 1:
+                #     # the weights should never be smaller than sigdet^2
+                #     sigdets = np.repeat([sigdet ** 2], len(sx))
+                #     noises = (sx * gain) + sigdet ** 2
+                #     # find the weight for each pixel in sx
+                #     raw_weights = mp.nanmax([noises, sigdets], axis=0)
+                #     # weights is the inverse
+                #     weights = 1.0 / raw_weights
+                # elif case == 2:
+                #     raw_weights = np.ones_like(sx)
+                #     weights = raw_weights / ((sx * gain) + sigdet ** 2)
+                # else:
+                #     weights = np.ones_like(sx)
+                #     weights[~np.isfinite(sx)] = np.nan
 
+                amp = mp.nanmedian(sx / fx)
+                # residuals
+                res = sx - fx / amp
+                # work out number of sigma away from the the median res
+                nsig = np.abs(res) / mp.nanmedian(np.abs(res))
+                # work out weights (0 or 1 based on number of sigma)
+                weights = nsig < cosmic_sigcut
+                # add to the number of rejected cosmics
+                cpt += np.sum(~weights)
+                # weights to floats
+                weights = np.array(weights).astype(float)
                 # set the value of this pixel to the weighted sum
                 spelong[:, ic] = (weights * sx * fx)
                 spe[ic] = mp.nansum(weights * sx * fx)
                 # normalise spe
                 spe[ic] = spe[ic] / mp.nansum(weights * fx ** 2)
                 spelong[:, ic] = spelong[:, ic] / mp.nansum(weights * fx ** 2)
-
+                coslong[:, ic] = weights
                 # Cosmic rays correction
-                if cosmic:
-                    spe, cpt = cosmic_correction(sx, spe, fx, ic, weights, cpt,
-                                                 cosmic_sigcut, cosmic_thres)
+                # if cosmic:
+                #     spe, cpt = cosmic_correction(sx, spe, fx, ic, weights, cpt,
+                #                                  cosmic_sigcut, cosmic_thres)
     # multiple spe by gain to convert to e-
     spe *= gain
     spelong *= gain
 
-    return spe, spelong, cpt
+    return spe, spelong, cpt, coslong
 
 
 def calculate_snr(e2ds, blaze_width, r1, r2, sigdet):

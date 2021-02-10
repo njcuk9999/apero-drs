@@ -994,9 +994,10 @@ EXT_SKIP_ORDERS.value = '[]'
 EXT_COSMIC_CORRETION = EXT_COSMIC_CORRETION.copy(__NAME__)
 EXT_COSMIC_CORRETION.value = True
 
-#    Define the percentage of flux above which we use to cut
+#    Define the number of sigmas away from the median flux which we use to
+#       cut cosmic rays
 EXT_COSMIC_SIGCUT = EXT_COSMIC_SIGCUT.copy(__NAME__)
-EXT_COSMIC_SIGCUT.value = 0.25
+EXT_COSMIC_SIGCUT.value = 10
 
 #    Defines the maximum number of iterations we use to check for cosmics
 #        (for each pixel)
