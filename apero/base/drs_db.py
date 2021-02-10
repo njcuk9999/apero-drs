@@ -15,6 +15,7 @@ only from:
 
 """
 from astropy.table import Table
+from contextlib import closing
 import numpy as np
 import os
 import pandas as pd
@@ -193,26 +194,23 @@ class Database:
         # print input if verbose
         if self._verbose_:
             print("SQL INPUT: ", command)
-
         # get cursor
-        cursor = self._conn_.cursor()
-        # try to execute SQL command
-        try:
-            result = self._execute(cursor, command, fetch=fetch)
-            cursor.close()
-        # catch all errors and pipe to database error
-        except Exception as e:
-            # close cursor
-            cursor.close()
-            # log error: Error Type: Error message \n\t Command:
-            ecode = '00-002-00032'
-            emsg = drs_base.BETEXT[ecode]
-            eargs = [type(e), str(e), command]
-            exception = DatabaseError(message=emsg.format(*eargs), errorobj=e,
-                                      path=self.path, func_name=func_name)
-            return drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                       exceptionname='DatabaseError',
-                                       exception=exception)
+        with closing(self._conn_.cursor()) as cursor:
+            # try to execute SQL command
+            try:
+                result = self._execute(cursor, command, fetch=fetch)
+            # catch all errors and pipe to database error
+            except Exception as e:
+                # log error: Error Type: Error message \n\t Command:
+                ecode = '00-002-00032'
+                emsg = drs_base.BETEXT[ecode]
+                eargs = [type(e), str(e), command]
+                exception = DatabaseError(message=emsg.format(*eargs),
+                                          errorobj=e,
+                                          path=self.path, func_name=func_name)
+                return drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                           exceptionname='DatabaseError',
+                                           exception=exception)
 
         # print output of sql command if verbose
         if self._verbose_:
@@ -790,28 +788,24 @@ class Database:
         # set up command
         command = "SELECT {} from {}".format(columns, table)
         # get cursor
-        cursor = self._conn_.cursor()
-        # try to execute SQL command
-        try:
+        with closing(self._conn_.cursor()) as cursor:
             # try to execute SQL command
-            self._execute(cursor, command, fetch=True)
-            # get columns
-            colnames = list(map(lambda x: x[0], cursor.description))
-            # close cursors
-            cursor.close()
-        # catch all errors and pipe to database error
-        except Exception as e:
-            # close cursor
-            cursor.close()
-            # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
-            ecode = '00-002-00040'
-            emsg = drs_base.BETEXT[ecode]
-            eargs = [type(e), str(e)]
-            exception = DatabaseError(emsg.format(*eargs), path=self.path,
-                                      func_name=func_name)
-            return drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                       exceptionname='DatabaseError',
-                                       exception=exception)
+            try:
+                # try to execute SQL command
+                self._execute(cursor, command, fetch=True)
+                # get columns
+                colnames = list(map(lambda x: x[0], cursor.description))
+            # catch all errors and pipe to database error
+            except Exception as e:
+                # log error: {0}: {1} \n\t Command: {2} \n\t Function: {3}
+                ecode = '00-002-00040'
+                emsg = drs_base.BETEXT[ecode]
+                eargs = [type(e), str(e)]
+                exception = DatabaseError(emsg.format(*eargs), path=self.path,
+                                          func_name=func_name)
+                return drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                           exceptionname='DatabaseError',
+                                           exception=exception)
         # return a list of columns
         return colnames
 
@@ -1295,33 +1289,33 @@ class MySQLDatabase(Database):
         tmpconn = mysql.connect(host=self.host, user=self.user,
                                 passwd=self.passwd)
         # get the cursor
-        cursor = tmpconn.cursor()
-        # Get the new list of tables
-        command = 'SHOW DATABASES'
-        # execute command
-        cursor.execute(command)
-        _databases = cursor.fetchall()
-        # the table names are the first entry in each row so get the table
-        #  names from these (and update self.tables)
-        databases = []
-        for _database in _databases:
-            # append table name
-            databases.append(_database[0])
-        # check for database in databases (and add it if not there)
-        if self.dbname not in databases:
-            try:
-                cursor.execute('CREATE DATABASE {0}'.format(self.dbname))
-            except Exception as e:
-                ecode = '00-002-00050'
-                emsg = drs_base.BETEXT[ecode]
-                eargs = [self.dbname, type(e), str(e)]
-                exception = DatabaseError(emsg.format(*eargs), path=self.path,
-                                          func_name=func_name)
-                drs_base.base_error(ecode, emsg, 'error', args=eargs,
-                                    exceptionname='DatabaseError',
-                                    exception=exception)
-        # close the cursor
-        cursor.close()
+        with closing(tmpconn.cursor()) as cursor:
+            # Get the new list of tables
+            command = 'SHOW DATABASES'
+            # execute command
+            cursor.execute(command)
+            _databases = cursor.fetchall()
+            # the table names are the first entry in each row so get the table
+            #  names from these (and update self.tables)
+            databases = []
+            for _database in _databases:
+                # append table name
+                databases.append(_database[0])
+            # check for database in databases (and add it if not there)
+            if self.dbname not in databases:
+                try:
+                    cursor.execute('CREATE DATABASE {0}'.format(self.dbname))
+                except Exception as e:
+                    ecode = '00-002-00050'
+                    emsg = drs_base.BETEXT[ecode]
+                    eargs = [self.dbname, type(e), str(e)]
+                    exception = DatabaseError(emsg.format(*eargs),
+                                              path=self.path,
+                                              func_name=func_name)
+                    drs_base.base_error(ecode, emsg, 'error', args=eargs,
+                                        exceptionname='DatabaseError',
+                                        exception=exception)
+
 
     def add_from_pandas(self, df: pd.DataFrame, table: Union[str, None],
                         if_exists: str = 'append', index: bool = False,
