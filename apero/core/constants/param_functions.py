@@ -1222,7 +1222,7 @@ def update_paramdicts(*args: List[ParamDict], key: str,
             arg.set(key, value=value, source=source, instance=instance)
 
 
-def load_config(instrument: Union[str, None],
+def load_config(instrument: Union[str, None] = None,
                 from_file: bool = True,
                 cache: bool = True) -> ParamDict:
     """
