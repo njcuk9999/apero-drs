@@ -1672,6 +1672,20 @@ science_seq.add(obj_pp_recipe, files=[files.pp_file],
                              KW_OBJNAME='SCIENCE_TARGETS'))
 
 # -----------------------------------------------------------------------------
+# science sequence (for trigger)
+# -----------------------------------------------------------------------------
+# TODO: TEST THIS
+quick_seq = drs_recipe.DrsRunSequence('quick_seq', __INSTRUMENT__)
+# extract science
+quick_seq.add(cal_extract, name='EXTOBJ',
+                files=[files.pp_obj_dark, files.pp_obj_fp, files.pp_polar_dark,
+                       files.pp_polar_fp],
+                fiber='AB', arguments=dict(quicklook=True),
+                filters=dict(KW_OBJNAME='SCIENCE_TARGETS',
+                             KW_DPRTYPE=['OBJ_FP', 'OBJ_DARK', 'POLAR_DARK',
+                                         'POLAR_FP']))
+
+# -----------------------------------------------------------------------------
 # engineering sequences
 # -----------------------------------------------------------------------------
 eng_seq = drs_recipe.DrsRunSequence('eng_seq', __INSTRUMENT__)
@@ -1688,4 +1702,4 @@ eng_seq.add(cal_extract, name='EXT_FPD', files=[files.pp_fp_dark])
 # sequences list
 # -----------------------------------------------------------------------------
 sequences = [pp_seq, pp_seq_opt, full_seq, limited_seq, master_seq, calib_seq,
-             tellu_seq, science_seq, eng_seq]
+             tellu_seq, science_seq, quick_seq, eng_seq]
