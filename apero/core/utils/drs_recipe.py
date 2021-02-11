@@ -106,7 +106,7 @@ class DrsRecipe(object):
         else:
             self.name = str(name)
         # get pconst
-        self.pconst = constants.pload(self.instrument)
+        self.pconst = constants.pload()
         # set drs file module related to this recipe
         if filemod is None:
             self.filemod = self.pconst.FILEMOD()
@@ -213,7 +213,7 @@ class DrsRecipe(object):
         # update dict with state
         self.__dict__.update(state)
         # get pconst
-        self.pconst = constants.pload(self.instrument)
+        self.pconst = constants.pload()
         # set drs file module related to this recipe
         self.filemod = self.pconst.FILEMOD()
 
@@ -994,7 +994,7 @@ class DrsRecipe(object):
         # get parameters
         params = self.params
         # load pseudo constants
-        pconst = constants.pload(instrument=params['INSTRUMENT'])
+        pconst = constants.pload()
         # loop around arguments
         for argname in arguments:
             # get value
@@ -1590,7 +1590,7 @@ class DrsRunSequence:
         # set other stars
         self.ostars = ostars
         # get filemod and recipe mod
-        pconst = constants.pload(self.instrument)
+        pconst = constants.pload()
         filemod = pconst.FILEMOD()
         recipemod = pconst.RECIPEMOD()
         # storage of sequences

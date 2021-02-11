@@ -69,7 +69,7 @@ speed_of_light = cc.c.to(uu.km / uu.s).value
 def get_whitelist(params: ParamDict, **kwargs) -> List[str]:
     func_name = __NAME__ + '.get_whitelist()'
     # get pseudo constants
-    pconst = constants.pload(instrument=params['INSTRUMENT'])
+    pconst = constants.pload()
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', kwargs, func_name)
     relfolder = pcheck(params, 'TELLU_LIST_DIRECTORY', 'directory', kwargs,
@@ -90,7 +90,7 @@ def get_whitelist(params: ParamDict, **kwargs) -> List[str]:
 def get_blacklist(params, **kwargs):
     func_name = __NAME__ + '.get_blacklist()'
     # get pseudo constants
-    pconst = constants.pload(instrument=params['INSTRUMENT'])
+    pconst = constants.pload()
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'DRS_DATA_ASSETS', 'assetsdir', kwargs, func_name)
     relfolder = pcheck(params, 'TELLU_LIST_DIRECTORY', 'directory', kwargs,
@@ -1674,7 +1674,8 @@ def load_tellu_file(params: ParamDict, key: str,
                     tau_water: Union[Tuple[float, float], None] = None,
                     tau_others: Union[Tuple[float, float], None] = None,
                     no_times: bool = False,
-                    required: bool = True, ext: int = 0, fmt: str = 'fits',
+                    required: bool = True, ext: Union[int, None] = None,
+                    fmt: str = 'fits',
                     kind: str = 'image') -> LoadTelluFileReturn:
     """
     Load one or many telluric files
@@ -1717,7 +1718,7 @@ def load_tellu_file(params: ParamDict, key: str,
                  files
     :param required: bool, whether we require an entry - will raise exception
                      if required=True and no entries found
-    :param ext: int, valid extension (zero by default) when kind='image'
+    :param ext: int, valid extension (None by default) when kind='image'
     :param fmt: str, astropy.table.Table valid format (when kind='table')
     :param kind: str, either 'image' for fits image or 'table' for table
 

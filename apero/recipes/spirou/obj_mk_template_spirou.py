@@ -115,7 +115,7 @@ def __main__(recipe, params):
     # get the object name
     objname = params['INPUTS']['OBJNAME']
     # need to convert object to drs object name
-    pconst = constants.pload(instrument=params['INSTRUMENT'])
+    pconst = constants.pload()
     objname = pconst.DRS_OBJ_NAME(objname)
 
     # get the filetype (this is overwritten from user inputs if defined)

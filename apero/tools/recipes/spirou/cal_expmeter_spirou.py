@@ -141,7 +141,7 @@ def __main__(recipe, params):
     # define file type
     filetype = 'WAVE_NIGHT'
     # get pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # load the calibration database
     calibdbm = drs_database.CalibrationDatabase(params)
     calibdbm.load_db()

@@ -86,7 +86,7 @@ def get_outputs(params, files):
     # log progress: Reading headers for indexing
     WLOG(params, 'info', textentry('40-504-00003'))
     # get pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # get output dictionary
     output_hdr_keys = pconst.OUTPUT_FILE_HEADER_KEYS()
     # storage of files

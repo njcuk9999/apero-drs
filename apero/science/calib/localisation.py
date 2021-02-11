@@ -118,7 +118,7 @@ def check_coeffs(params, recipe, image, coeffs, fiber, kind=None):
     coeffdeg = params['LOC_COEFFSIG_DEG']
     # ----------------------------------------------------------------------
     # get fiber params
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     fiberparams = pconst.FIBER_SETTINGS(params, fiber)
     max_num_orders = fiberparams['FIBER_MAX_NUM_ORDERS']
     set_num_fibers = fiberparams['FIBER_SET_NUM_FIBERS']
@@ -194,7 +194,7 @@ def find_and_fit_localisation(params, recipe, image, sigdet, fiber, **kwargs):
     func_name = __NAME__ + '.find_and_fit_localisation()'
 
     # get fiber params
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     fiberparams = pconst.FIBER_SETTINGS(params, fiber)
 
     # ----------------------------------------------------------------------
@@ -521,7 +521,7 @@ def image_superimp(image, coeffs):
 def get_coefficients(params, recipe, header, fiber, database=None, **kwargs):
     func_name = __NAME__ + '.get_coefficients()'
     # get pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # get parameters from params/kwargs
     merge = kwargs.get('merge', False)
     filename = kwargs.get('filename', None)
@@ -605,7 +605,7 @@ def loc_quality_control(params, fiber, cent_max_rmpts, wid_max_rmpts,
     rmsmax_cent = pcheck(params, 'QC_LOC_RMSMAX_CTR', func=func_name)
     rmsmax_wid = pcheck(params, 'QC_LOC_RMSMAX_WID', func=func_name)
     # this one comes from pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     fiberparams = pconst.FIBER_SETTINGS(params, fiber)
 
     required_norders = pcheck(params, 'FIBER_MAX_NUM_ORDERS', func=func_name,
@@ -725,7 +725,7 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     rmsmax_cent = pcheck(params, 'QC_LOC_RMSMAX_CTR', func=func_name)
     rmsmax_wid = pcheck(params, 'QC_LOC_RMSMAX_WID', func=func_name)
     # this one comes from pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # ------------------------------------------------------------------
     # Make cent coefficient table
     # ------------------------------------------------------------------

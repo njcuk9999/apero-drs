@@ -114,7 +114,7 @@ def __main__(recipe, params):
     # get the number of infiles
     num_files = len(infiles)
     # get this instruments science fibers and reference fiber
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # science fibers should be list of strings, reference fiber should be string
     sci_fibers, ref_fiber = pconst.FIBER_KINDS()
     # load the calibration database

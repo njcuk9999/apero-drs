@@ -1595,7 +1595,7 @@ def _generate_run_from_sequence(params, sequence, indexdb: IndexDatabase):
             template_object_list = telluric.list_current_templates(params)
     # -------------------------------------------------------------------------
     # get filemod and recipe mod
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     filemod = pconst.FILEMOD()
     recipemod = pconst.RECIPEMOD()
     # generate sequence
@@ -3040,7 +3040,7 @@ def _update_table_objnames(params, table):
     :return:
     """
     # get pseudo constants
-    pconst = constants.pload(instrument=params['INSTRUMENT'])
+    pconst = constants.pload()
     if OBJNAMECOL in table:
         # original objnames
         objnames = table[OBJNAMECOL]
@@ -3102,7 +3102,7 @@ def _get_filters(params, srecipe):
     # set up function name
     func_name = __NAME__ + '._get_filters()'
     # get pseudo constatns
-    pconst = constants.pload(instrument=params['INSTRUMENT'])
+    pconst = constants.pload()
     # set up filter storage
     filters = dict()
     # loop around recipe filters

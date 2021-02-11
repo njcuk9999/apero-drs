@@ -196,7 +196,7 @@ def __main__(recipe, params):
         # ------------------------------------------------------------------
         # load master wavelength solution for this fiber
         # get pseudo constants
-        pconst = constants.pload(params['INSTRUMENT'])
+        pconst = constants.pload()
         # deal with fibers that we don't have
         usefiber = pconst.FIBER_WAVE_TYPES(fiber)
         # ------------------------------------------------------------------
@@ -324,7 +324,7 @@ def __main__(recipe, params):
         # Correct other science fibers (using recon)
         # ------------------------------------------------------------------
         # get fibers
-        pconst = constants.pload(params['INSTRUMENT'])
+        pconst = constants.pload()
         sfibers, rfiber = pconst.FIBER_KINDS()
         # loop around fibers and correct/create s1d/save
         for sfiber in sfibers:

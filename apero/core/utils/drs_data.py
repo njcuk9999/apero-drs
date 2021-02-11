@@ -697,7 +697,8 @@ DBType = Tuple[Union[np.ndarray, None],
 
 def read_db_file(params: ParamDict, abspath: Union[str, Path],
                  get_image: bool, get_header: bool,
-                 kind: str, fmt: str, ext: int) -> DBType:
+                 kind: str, fmt: str,
+                 ext: Union[int, None] = None) -> DBType:
     """
     Read a database file (image or table)
 

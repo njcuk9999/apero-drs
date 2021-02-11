@@ -324,7 +324,7 @@ def use_pyasl(params, times, quiet=False, **kwargs):
 def add_berv_keys(params, infile, props):
 
     # get the pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # get input properties
     inputs = get_inputs(params)
     # get output properties
@@ -382,7 +382,7 @@ def assign_properties(params, props=None, use=True, **kwargs):
     """
     func_name = __NAME__ + '.assign_properties()'
     # get the pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # get estimate accuracy
     estimate = pcheck(params, 'EXT_BERV_EST_ACC', 'berv_est', kwargs, func_name)
     # get parameters from kwargs
@@ -469,7 +469,7 @@ def get_outputs(params, infile, header, props, kwargs):
     # define storage
     bprops = ParamDict()
     # get the pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     berv_keys = pconst.BERV_OUTKEYS()
     # loop around keys
     for key in berv_keys:
@@ -526,7 +526,7 @@ def get_inputs(params):
     # set up storage
     inputs = dict()
     # get the pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # get berv keys
     berv_keys = pconst.BERV_INKEYS()
     # loop around keys

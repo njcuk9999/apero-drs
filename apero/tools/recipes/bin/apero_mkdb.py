@@ -90,7 +90,7 @@ def __main__(recipe, params):
     db_type = params['INPUTS']['KIND']
     assetdir = params['DRS_DATA_ASSETS']
     # get the pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # ----------------------------------------------------------------------
     # get the settings for each type of database
     if db_type == 'calibration':

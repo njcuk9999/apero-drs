@@ -1176,7 +1176,7 @@ class DrsInputFile:
         # check that params is set
         self.check_params(func_name)
         params = self.params
-        pconst = constants.pload(params['INSTRUMENT'])
+        pconst = constants.pload()
         # get required keys for index database
         hkeys, htypes = pconst.INDEX_HEADER_KEYS()
         # deal with absolute path of file
@@ -1973,7 +1973,7 @@ class DrsFitsFile(DrsInputFile):
         self.check_params(func_name)
         # get parameters
         params = self.params
-        pconst = constants.pload(self.params['INSTRUMENT'])
+        pconst = constants.pload()
         # get the list of allowed required header keys
         allowed_keys = pconst.FILEDEF_HEADER_KEYS()
         # get the required header keys
@@ -2701,14 +2701,18 @@ class DrsFitsFile(DrsInputFile):
         self.check_filename()
         # get data format
         if ext is not None:
-            out = drs_fits.readfits(params, self.filename, getdata=True,
-                                    ext=ext, gethdr=True,
-                                    fmt='fits-image')
+            dout, hout = drs_fits.readfits(params, self.filename, getdata=True,
+                                           ext=ext, gethdr=True,
+                                           fmt='fits-image')
         else:
-            out = drs_fits.readfits(params, self.filename, getdata=True,
-                                    gethdr=True, fmt='fits-multi')
-        self.data = out[0][0]
-        self.header = drs_fits.Header.from_fits_header(out[1][0])
+            dout, hout = drs_fits.readfits(params, self.filename, getdata=True,
+                                           gethdr=True, fmt='fits-multi')
+        # need to deal with no data in primary (should be default)
+        if dout[0] is None:
+            self.data = dout[1]
+        else:
+            self.data = dout[0]
+        self.header = drs_fits.Header.from_fits_header(hout[0])
         # update fiber parameter from header
         if self.header is not None:
             self.fiber = self.get_hkey('KW_FIBER', dtype=str, required=False)
@@ -2909,7 +2913,7 @@ class DrsFitsFile(DrsInputFile):
         # check that params is set
         self.check_params(func_name)
         params = self.params
-        pconst = constants.pload(params['INSTRUMENT'])
+        pconst = constants.pload()
         # get required keys for index database
         hkeys, htypes = pconst.INDEX_HEADER_KEYS()
         # deal with absolute path of file
@@ -3551,7 +3555,7 @@ class DrsFitsFile(DrsInputFile):
         keyword_inst = constants.constant_functions.Keyword
         keyworddict = params.get_instanceof(keyword_inst, nameattr='key')
         # get pconstant
-        pconstant = constants.pload(params['INSTRUMENT'])
+        pconstant = constants.pload()
         
         # filter function
         def __keep_card(card: drs_fits.fits.header.Card) -> bool:
@@ -4807,7 +4811,7 @@ class DrsOutFileExtension:
         :return: None, updates self.data and self.datatype
         """
         # get allowed header keys
-        pconst = constants.pload(params['INSTRUMENT'])
+        pconst = constants.pload()
         rkeys, rtypes = pconst.INDEX_HEADER_KEYS()
         # define table column parameters
         drsfiles = self.table_drsfiles
@@ -5188,7 +5192,7 @@ class DrsOutFile(DrsInputFile):
         # get index columns
         index_cols = indexdbm.database.colnames('*', indexdbm.database.tname)
         # get allowed header keys
-        pconst = constants.pload(params['INSTRUMENT'])
+        pconst = constants.pload()
         rkeys, rtypes = pconst.INDEX_HEADER_KEYS()
         # must have primary filename set
         if self.extensions[0].filename is None:
@@ -5357,7 +5361,7 @@ class DrsOutFile(DrsInputFile):
         :return:
         """
         # get pconst
-        pconst = constants.pload(params['INSTRUMENT'])
+        pconst = constants.pload()
         # deal with removing drs keys
         self._remove_drs_keys(params)
         # deal with removing standard keys from primary header
@@ -5985,7 +5989,7 @@ def fix_header(params: ParamDict, recipe: Any,
         filename = None
 
     # load pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # use pseudo constant to apply any header fixes required (specific to
     #   a specific instrument) and update the header
     header, hdict = pconst.HEADER_FIXES(params=params, recipe=recipe,
