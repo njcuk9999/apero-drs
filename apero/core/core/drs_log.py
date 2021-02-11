@@ -70,7 +70,7 @@ Color = drs_misc.Colors()
 # Define classes
 # =============================================================================
 class Logger:
-    def __init__(self):
+    def __init__(self, paramdict: Union[ParamDict, None] = None):
         """
         Construct logger class - for all the printing to screen and to log file
         Normally used via the call and this class is only constructed once.
@@ -83,7 +83,10 @@ class Logger:
         _ = drs_misc.display_func(None, '__init__', __NAME__, self.class_name)
         # ---------------------------------------------------------------------
         # save the parameter dictionary for access to constants
-        self.pin = constants.load()
+        if paramdict is not None:
+            self.pin = paramdict
+        else:
+            self.pin = constants.load()
         self.language = base.IPARAMS['LANGUAGE']
         self.instrument = base.IPARAMS['INSTRUMENT']
         # load additional resources based on instrument/language
