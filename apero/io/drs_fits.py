@@ -687,6 +687,7 @@ ListHeader = Union[List[Union[Header, fits.Header]], Header, fits.Header]
 
 def writefits(params: ParamDict, filename: str,
               data: ListImageTable, header: ListHeader,
+              names: Union[str, List[str]],
               datatype: Union[List[str], str] = 'image',
               dtype: Union[List[str], List[None], str, None] = None,
               func: Union[str, None] = None):
@@ -705,6 +706,8 @@ def writefits(params: ParamDict, filename: str,
     :param header: list of Header/fits.Header instances or just a
                    Header/fits.Header instance - this is the header to be
                    written to the fits HDU (HDU[i].header)
+    :param names: str or list of strings, the names of each extension
+
     :param datatype: str or list of strings, the data type for each extension
                      - must be either 'image' (for a ImageHDU) or 'table'
                      (for a BinTableHDU)
@@ -731,7 +734,7 @@ def writefits(params: ParamDict, filename: str,
     # def locked_write():
     #     return _write_fits(params, filename, data, header, datatype, dtype,
     #                        func)
-    return _write_fits(params, filename, data, header, datatype, dtype,
+    return _write_fits(params, filename, data, header, names, datatype, dtype,
                        func)
     # ------------------------------------------------------------------
     # try to run locked read function
@@ -748,6 +751,7 @@ def writefits(params: ParamDict, filename: str,
 
 def _write_fits(params: ParamDict, filename: str,
                 data: ListImageTable, header: ListHeader,
+                names: Union[str, List[str]],
                 datatype: Union[List[str], str] = 'image',
                 dtype: Union[List[str], str, None] = None,
                 func: Union[str, None] = None):
@@ -804,10 +808,15 @@ def _write_fits(params: ParamDict, filename: str,
                 header = [header.copy()]
         else:
             header = [header]
+    # deal with data type
     if not isinstance(datatype, list):
         datatype = [datatype]
+    # deal with dtype
     if dtype is not None and not isinstance(dtype, list):
         dtype = [dtype]
+    # deal with names
+    if isinstance(names, str):
+        names = [names]
     # ----------------------------------------------------------------------
     # header must be same length as data
     if len(data) != len(header):
@@ -817,6 +826,10 @@ def _write_fits(params: ParamDict, filename: str,
     if len(data) != len(datatype):
         eargs = [filename, len(data), len(datatype), func_name]
         WLOG(params, 'error', textentry('00-013-00005', args=eargs))
+    # names must be same length as data
+    if len(names) != len(data):
+        eargs = [filename, len(data), len(names), func_name]
+        WLOG(params, 'error', textentry('00-013-00009', args=eargs))
     # if dtype is not None must be same length as data
     if dtype is not None:
         if len(data) != len(dtype):
@@ -859,14 +872,25 @@ def _write_fits(params: ParamDict, filename: str,
         else:
             continue
         # add to hdu list
-        if isinstance(header[it], Header):
-            if hasattr(header[it], 'to_fits_header'):
-                header_it = header[it].to_fits_header()
+        if len(header) > it + 1:
+            # only add if header is a fits header
+            if isinstance(header[it + 1], Header):
+                # deal with our custom headers
+                if hasattr(header[it + 1], 'to_fits_header'):
+                    header_it = header[it + 1].to_fits_header()
+                else:
+                    header_it = header[it + 1].copy()
+            # otherwise we shouldn't really set header
             else:
-                header_it = header[it].copy()
+                header_it = fits.Header()
+        # if we don't have a header don't set it
         else:
-            header_it = header[it]
+            header_it = fits.Header()
+        # must add the EXTNAME for all extensions
+        header_it['EXTNAME'] = names[it]
+        # set HDU_i
         hdu_i = fitstype(data[it], header=header_it)
+        # deal with dtype being set
         if dtype is not None and datatype[it] == 'image':
             if dtype[it] is not None:
                 hdu_i.scale(type=dtype[it], **SCALEARGS)

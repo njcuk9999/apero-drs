@@ -315,13 +315,13 @@ def debug_file(recipe, params, infile, dlist):
     # add output tag
     debug_back.add_hkey('KW_OUTPUT', value=debug_back.name)
     # add extention info
-    kws1 = ['EXTDESC1', 'Corrected', 'Extension 1 description']
-    kws2 = ['EXTDESC2', 'Original', 'Extension 2 description']
-    kws3 = ['EXTDESC3', 'Locally corrected', 'Extension 3 description']
-    kws4 = ['EXTDESC4', 'LC NaN filled', 'Extension 4 description']
-    kws5 = ['EXTDESC5', 'Local Background', 'Extension 5 description']
-    kws6 = ['EXTDESC6', 'Global Background', 'Extension 6 description']
-    kws7 = ['EXTDESC7', 'Global binned background', 'Extension 7 description']
+    kws1 = ['EXTDESC1', 'CORRECTED', 'Corrected image']
+    kws2 = ['EXTDESC2', 'ORIGINAL', 'Original image']
+    kws3 = ['EXTDESC3', 'LOCAL_CORR', 'Locally corrected image']
+    kws4 = ['EXTDESC4', 'LC_NAN_FILLED', 'Locally corrected NaN filled image']
+    kws5 = ['EXTDESC5', 'LC_BKGRD', 'Local Background image']
+    kws6 = ['EXTDESC6', 'GLOB_BKGRD', 'Global Background image']
+    kws7 = ['EXTDESC7', 'GLOB_BINNED', 'Global binned background image']
     # add to hdict
     debug_back.add_hkey(key=kws1)
     debug_back.add_hkey(key=kws2)
@@ -335,7 +335,11 @@ def debug_file(recipe, params, infile, dlist):
     # print progress: saving file
     WLOG(params, '', textentry('40-013-00025', args=debug_back.filename))
     # write multiple to file
-    debug_back.write_multi(kind=recipe.outputtype, data_list=dlist[1:],
+    debug_back.write_multi(kind=recipe.outputtype,
+                           name_list=['CORRECTED', 'ORIGINAL', 'LOCAL_CORR',
+                                      'LC_NAN_FILLED', 'LC_BKGRD', 'GLOB_BKGRD',
+                                      'GLOB_BINNED'],
+                           data_list=dlist[1:],
                            runstring=recipe.runstring)
 
 

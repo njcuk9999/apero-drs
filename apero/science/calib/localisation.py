@@ -853,6 +853,7 @@ def write_localisation_files(params, recipe, infile, image, rawfiles, combine,
     WLOG(params, '', textentry('40-013-00019', args=[loco1file.filename]))
     # write image to file
     loco1file.write_multi(data_list=[cent_table, wid_table],
+                          name_list=['CENT_TABLE', 'WIDTH_TABLE'],
                           datatype_list=['table', 'table'],
                           kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)

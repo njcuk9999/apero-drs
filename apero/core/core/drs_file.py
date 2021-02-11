@@ -2777,15 +2777,20 @@ class DrsFitsFile(DrsInputFile):
         self.check_filename()
         # copy keys from hdict into header
         self.update_header_with_hdict()
+        # ---------------------------------------------------------------------
+        # TODO: Question: can we name these whatever we like?
+        # set extension names
+        names = [self.name]
         # write to file
         drs_fits.writefits(params, self.filename, self.data, self.header,
-                           self.datatype, self.dtype, func=func_name)
+                           names, self.datatype, self.dtype, func=func_name)
         # ---------------------------------------------------------------------
         # write output dictionary
         self.output_dictionary(kind, runstring)
 
     def write_multi(self, kind: str, data_list: List[Union[Table, np.ndarray]],
                     header_list: Union[List[drs_fits.Header], None] = None,
+                    name_list: Union[List[str], None] = None,
                     datatype_list: Union[List[str], None] = None,
                     dtype_list: Union[List[Union[Type, None]], None] = None,
                     runstring: Union[str, None] = None):
@@ -2838,6 +2843,7 @@ class DrsFitsFile(DrsInputFile):
                     header_list.append(self.header.to_fits_header())
                 else:
                     header_list.append(None)
+        # ---------------------------------------------------------------------
         # deal with datatype_list being empty
         if datatype_list is None:
             datatype_list = []
@@ -2853,11 +2859,22 @@ class DrsFitsFile(DrsInputFile):
         # get data and header lists
         data_list = [self.data] + data_list
         header_list = [self.header] + header_list
+        # ---------------------------------------------------------------------
+        # deal with name list
+        if name_list is None:
+            names = [self.name] * len(data_list)
+        elif len(name_list) == len(data_list):
+            names = list(name_list)
+        elif len(name_list) == len(data_list) - 1:
+            names = [self.name, name_list]
+        else:
+            names = [self.name] * len(data_list)
+        # ---------------------------------------------------------------------
         datatype_list = [self.datatype] + datatype_list
         dtype_list = [self.dtype] + dtype_list
         # writefits to file
         drs_fits.writefits(params, self.filename, data_list, header_list,
-                           datatype_list, dtype_list, func=func_name)
+                           names, datatype_list, dtype_list, func=func_name)
         # ---------------------------------------------------------------------
         # write output dictionary
         self.output_dictionary(kind, runstring)
@@ -5645,13 +5662,16 @@ class DrsOutFile(DrsInputFile):
         datatype_list = []
         for ext in self.extensions:
             datatype_list.append(self.extensions[ext].datatype)
-
+        # names of extensions
+        names = []
+        for ext in self.extensions:
+            names.append(self.extensions[ext].name)
         # must make sure dirname exists
         if not os.path.exists(self.out_dirname):
             os.makedirs(self.out_dirname)
         # writefits to file
         drs_fits.writefits(self.params, self.out_filename, data_list,
-                           header_list, datatype_list, func=func_name)
+                           header_list, names, datatype_list, func=func_name)
         # write output dictionary
         self.output_dictionary(kind, runstring)
 
@@ -5741,6 +5761,7 @@ def combine(params: ParamDict, recipe: Any,
     # write to disk
     WLOG(params, '', textentry('40-001-00025', args=[outfile.filename]))
     outfile.write_multi(data_list=[outtable], datatype_list=['table'],
+                        name_list=['COMBINE_TABLE'],
                         kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(outfile)

@@ -815,6 +815,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # write multi
     template_file.write_multi(data_list=[bigtable, berv_cov_table],
                               datatype_list=['table', 'table'],
+                              name_list=['TEMPLATE_TABLE', 'BERV_TABLE'],
                               kind=recipe.outputtype,
                               runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -839,6 +840,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # write multi
     bigcubefile.write_multi(data_list=[bigtable, berv_cov_table],
                             datatype_list=['table', 'table'],
+                            name_list=['TEMPLATE_TABLE', 'BERV_TABLE'],
                             kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(bigcubefile)
@@ -862,6 +864,7 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # write multi
     bigcubefile0.write_multi(data_list=[bigtable, berv_cov_table],
                              datatype_list=['table', 'table'],
+                             name_list=['TEMPLATE_TABLE', 'BERV_TABLE'],
                              kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(bigcubefile0)
@@ -926,6 +929,7 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     WLOG(params, '', textentry('40-019-00036', args=[template_file.filename]))
     # write multi
     template_file.write_multi(data_list=[bigtable], datatype_list=['table'],
+                              name_list=['TEMPLATE_TABLE'],
                               kind=recipe.outputtype,
                               runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -949,6 +953,7 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     WLOG(params, '', textentry('40-019-00037', args=[bigcubefile.filename]))
     # write multi
     bigcubefile.write_multi(data_list=[bigtable], datatype_list=['table'],
+                            name_list=['TEMPLATE_TABLE'],
                             kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(bigcubefile)
