@@ -1367,8 +1367,8 @@ def quality_control(params, snr_hotpix, infile, rms_list, log=True):
 if __name__ == "__main__":
     # ----------------------------------------------------------------------
     # debug test for AstroObject class
-    _params = constants.load('SPIROU')
-    _pconst = constants.pload('SPIROU')
+    _params = constants.load()
+    _pconst = constants.pload()
 
     # load database
     _objdbm = ObjectDatabase(_params)

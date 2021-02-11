@@ -55,10 +55,8 @@ def main(**kwargs):
     """
     # get args from sys.argv
     args = sys.argv
-    # get instrument from iparams
-    instrument = base.IPARAMS['INSTRUMENT']
     # get parameters for this instrument
-    params = constants.load(instrument)
+    params = constants.load()
     # add inputs
     params['INPUTS'] = dict()
     for it, arg in enumerate(args[1:]):

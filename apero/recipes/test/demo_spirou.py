@@ -56,7 +56,7 @@ demo_recipe.set_kwarg(name='--text', dtype=str, default='None',
 # add recipe to recipe definition
 RMOD.add(demo_recipe)
 # demo functions (TODO: remove anywhere that is not a demo)
-demo = drs_dev.Demo(constants.load(__INSTRUMENT__))
+demo = drs_dev.Demo(constants.load())
 
 
 # =============================================================================

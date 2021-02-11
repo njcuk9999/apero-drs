@@ -37,7 +37,7 @@ __author__ = base.__author__
 __date__ = base.__date__
 __release__ = base.__release__
 # Get constants
-Constants = constants.load(__INSTRUMENT__)
+Constants = constants.load()
 # get param dict
 ParamDict = constants.ParamDict
 # Get Logging function

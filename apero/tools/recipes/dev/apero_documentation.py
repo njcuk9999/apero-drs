@@ -22,7 +22,7 @@ from apero.tools.module.documentation import drs_documentation
 __NAME__ = 'apero_documentation.py'
 __INSTRUMENT__ = 'None'
 # Get constants
-Constants = constants.load(__INSTRUMENT__)
+Constants = constants.load()
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
 __author__ = base.__author__

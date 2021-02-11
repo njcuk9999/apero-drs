@@ -145,7 +145,7 @@ def main():
     nbypix = 3100
     nbo = 49
     fibers = ['A', 'B', 'C']
-    params = constants.load('SPIROU')
+    params = constants.load()
     recipe = drs_recipe.make_default_recipe(params, name='test')
     ishape = (nbypix, nbxpix)
     eshape = (nbo, nbxpix)

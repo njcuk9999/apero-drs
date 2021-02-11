@@ -145,7 +145,7 @@ class Demo:
     def __init__(self, params=None):
         # get parameters
         if params is None:
-            self.params = constants.load('None')
+            self.params = constants.load()
         else:
             self.params = params
         # get package

@@ -15,12 +15,15 @@ Date: 2020-12-21
         - language database (instead of the language csv files)
     - add database options to installation process
     - added apero_database.py tool for importing/exporting data to/from database/csv
+    - added apero_explorer.py tool to look through import/export databases in a user
+      friendly way
 
 - processing
     - moving to use multiprocess.Pool instead of multiprocess.Process (should
       speed up how we handle jobs on multiple cores) - requires classes be
       pickle-able
-    - add --science_targets and --telluric_targest to argumnets of apero_processing
+    - can switch between Pool and Process with REPROCESS_MP_TYPE in the user config
+    - add --science_targets and --telluric_targest to arguments of apero_processing
     - added use of odometer code reject list (USE_ODO_REJECTLIST = True) and uses
       blacklist for odometer codes with column PP
     - added way to turn off recalculation of templates (RECAL_TEMPLATES = True/False)
@@ -113,8 +116,8 @@ Date: 2020-12-21
       cal_ccf_spirou.py --masknormmode
 
 - cal_drift
-    - added support for OBJ_FP and DARK_FP files (controlled via DRIFT_DPRTYPES
-      in the user_constants.ini file)
+    - added support for OBJ_FP, DARK_FP, POLAR_FP, FP_DARK files (controlled via
+      DRIFT_DPRTYPES in the user_constants.ini file)
     - now deals with non-FP fibers - will skip these entries
 
 - out_postprocess

@@ -255,8 +255,8 @@ class DrsRecipe(object):
         func_name = display_func(None, 'get_drs_params', __NAME__,
                                  self.class_name)
         # Get config parameters from primary file
-        self.params = constants.load(self.instrument)
-        self.drs_pconstant = constants.pload(self.instrument)
+        self.params = constants.load()
+        self.drs_pconstant = constants.pload()
         # ---------------------------------------------------------------------
         # assign parameters from kwargs
         for kwarg in kwargs:

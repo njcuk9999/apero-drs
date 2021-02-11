@@ -539,7 +539,7 @@ def import_database(params: ParamDict, database_name: str,
 # =============================================================================
 if __name__ == "__main__":
     # test with spirou
-    _params = constants.load('SPIROU')
+    _params = constants.load()
 
     # We need to make the object reset
     make_object_reset(_params)
