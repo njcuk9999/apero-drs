@@ -578,7 +578,7 @@ def open_ds9(params, path):
 # =============================================================================
 if __name__ == "__main__":
     # get parameters
-    _params = constants.load(base.IPARAMS['INSTRUMENT'])
+    _params = constants.load()
     # get databases
     _dbs = manage_databases.list_databases(_params)
     # push into database holder

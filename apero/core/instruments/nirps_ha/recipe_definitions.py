@@ -19,7 +19,7 @@ __release__ = base.__release__
 # Define instrument alias
 INSTRUMENT_ALIAS = 'nirps_ha'
 # Get constants
-Constants = constants.load(__INSTRUMENT__)
+Constants = constants.load()
 # Get Help
 textentry = lang.textentry
 # import file definitions in import module class

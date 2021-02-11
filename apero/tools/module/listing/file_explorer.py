@@ -809,8 +809,8 @@ class LoadData:
         self.lengths = OrderedDict()
         self.options = OrderedDict()
         # get parameters from apero
-        self.params = constants.load(self.instrument)
-        self.pconstant = constants.pload(self.instrument)
+        self.params = constants.load()
+        self.pconstant = constants.pload()
         # set path from parameters
         if (path is None) and (self.path is None):
             self.path = self.params[ALLOWED_PATHS[0]]

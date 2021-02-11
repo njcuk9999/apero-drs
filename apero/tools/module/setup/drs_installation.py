@@ -1468,7 +1468,7 @@ def update(params, args):
     all_params.set_source('LANGUAGE', language)
 
     # load params for instrument
-    iparams = constants.load(instrument.upper(), cache=False)
+    iparams = constants.load(cache=False)
     # ------------------------------------------------------------------
     # loop around data paths
     for datapath in DATA_PATHS.keys():

@@ -1222,7 +1222,7 @@ def update_paramdicts(*args: List[ParamDict], key: str,
             arg.set(key, value=value, source=source, instance=instance)
 
 
-def load_config(instrument: str = 'None',
+def load_config(instrument: Union[str, None],
                 from_file: bool = True,
                 cache: bool = True) -> ParamDict:
     """
@@ -1238,6 +1238,9 @@ def load_config(instrument: str = 'None',
     global CONFIG_CACHE
     # set function name (cannot break here --> no access to inputs)
     _ = display_func(None, 'load_config', __NAME__)
+    # deal with no instrument
+    if instrument is None:
+        instrument = base.IPARAMS['INSTRUMENT']
     # check config cache
     if instrument in CONFIG_CACHE and cache:
         return CONFIG_CACHE[instrument].copy()
@@ -1276,7 +1279,8 @@ def load_config(instrument: str = 'None',
     return params
 
 
-def load_pconfig(instrument: str = 'None') -> pseudo_const.PseudoConstants:
+def load_pconfig(instrument: Union[str, None] = None
+                 ) -> pseudo_const.PseudoConstants:
     """
     Load an instrument pseudo constants
 
@@ -1287,6 +1291,9 @@ def load_pconfig(instrument: str = 'None') -> pseudo_const.PseudoConstants:
     global PCONFIG_CACHE
     # set function name (cannot break here --> no access to inputs)
     func_name = display_func(None, 'load_pconfig', __NAME__)
+    # deal with no instrument
+    if instrument is None:
+        instrument = base.IPARAMS['INSTRUMENT']
     # check cache
     if instrument in PCONFIG_CACHE:
         return PCONFIG_CACHE[instrument]
