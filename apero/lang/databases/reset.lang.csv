@@ -377,7 +377,7 @@
 "{0} = filename; {1} = length of data list; {2} = length of header list; {3} = function name","Length of header={2} not consistent with length of data={1}\n\tFile={0}\n\tfunction={3}","","Means that header list and data list were different lengths in write function","00-013-00004","ERROR"
 "{0} = filename; {1} = length of data list; {2} = length of datatype list; {3} = function name","Length of datatype={2} not consistent with length of data={1}\n\tFile={0}\n\tfunction={3}","","Means that datatype list and data list were different lengths in write function","00-013-00005","ERROR"
 "{0} = filename; {1} = length of data list; {2} = length of dtype list; {3} = function name","Length of dtype={2} not consistent with length of data={1}\n\tFile={0}\n\tfunction={3}","","Means that dtype list and data list were different lengths in write function","00-013-00006","ERROR"
-"","","","","",""
+"{0} = filename; {1} = length of data list; {2} = length of dtype list; {3} = function name","Length of name={2} not constistent with length of data={1}\n\tFile={0}\n\tfunction={3}","","Means that extension names list and data list were different lengths in write function","00-013-00007","ERROR"
 "","","","","",""
 "None","","","Dev Error: shape/tilt error","00-014-00000","ERROR"
 "{0} = shape of image 1; {1} = shape of image 2; {2} = function name","Image 1 (shape={0}) not the same shape as image 2 (shape={1}). \n\t function = {2}","","Means that image1 and image2 were not the same size (in get linear transform parameters function)","00-014-00001","ERROR"
