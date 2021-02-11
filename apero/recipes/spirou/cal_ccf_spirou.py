@@ -155,7 +155,7 @@ def __main__(recipe, params):
         # ----------------------------------------------------------------------
         # Check we are using correct fiber
         # ----------------------------------------------------------------------
-        pconst = constants.pload(params['INSTRUMENT'])
+        pconst = constants.pload()
         sfiber, rfiber = pconst.FIBER_CCF()
         if fiber != sfiber:
             # log that the science fiber was not correct

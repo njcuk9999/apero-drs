@@ -56,7 +56,7 @@ display_func = drs_log.display_func
 # =============================================================================
 def check_files(params, infile):
     # get pseudo constants
-    pconst = constants.pload(instrument=params['INSTRUMENT'])
+    pconst = constants.pload()
     # get infile DPRTYPE and OBJNAME
     dprtype = infile.get_hkey('KW_DPRTYPE', dtype=str, required=False)
     objname = infile.get_hkey('KW_OBJNAME', dtype=str, required=False)
@@ -393,7 +393,8 @@ def load_calib_file(params: ParamDict, key: str,
                     return_filename: bool = False, return_source: bool = False,
                     mode: Union[str, None] = None,
                     n_entries: Union[int, str] = 1,
-                    required: bool = True, ext: int = 0, fmt: str = 'fits',
+                    required: bool = True, ext: Union[int, None] = None,
+                    fmt: str = 'fits',
                     kind: str = 'image') -> LoadCalibFileReturn:
     """
     Load one or many calibration files
@@ -425,7 +426,7 @@ def load_calib_file(params: ParamDict, key: str,
                       for all entries use '*'
     :param required: bool, whether we require an entry - will raise exception
                      if required=True and no entries found
-    :param ext: int, valid extension (zero by default) when kind='image'
+    :param ext: int, valid extension (unset by default) when kind='image'
     :param fmt: str, astropy.table.Table valid format (when kind='table')
     :param kind: str, either 'image' for fits image or 'table' for table
 

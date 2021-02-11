@@ -142,7 +142,7 @@ def order_profiles(params, recipe, infile, fibertypes, shapelocal, shapex,
             # get key
             key = opfile.get_dbkey()
             # get pseudo constants
-            pconst = constants.pload(params['INSTRUMENT'])
+            pconst = constants.pload()
             # get fiber to use for ORDERPFILE (i.e. AB,A,B --> AB  and C-->C)
             usefiber = pconst.FIBER_LOC_TYPES(fiber)
             # get the order profile filename
@@ -214,7 +214,7 @@ def thermal_correction(params, recipe, header, props=None, eprops=None,
                              kwargs, func_name)
     # ----------------------------------------------------------------------
     # get pconstant from p
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # ----------------------------------------------------------------------
     # get fiber dprtype
     fibertype = pconst.FIBER_DATA_TYPE(dprtype, fiber)
@@ -480,7 +480,7 @@ def correct_master_dark_fp(params, extractdict, **kwargs):
     ykernel = np.exp(-0.5 * (xkernel / w_smooth) ** 2)
 
     # get this instruments science fibers and reference fiber
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # science fibers should be list of strings, reference fiber should be string
     sci_fibers, ref_fiber = pconst.FIBER_KINDS()
     # output storage (dictionary of corrected extracted files)
@@ -604,7 +604,7 @@ def correct_dark_fp(params, extractdict, database=None, **kwargs):
     bpercents = [low_percentile, high_percentile]
     # ----------------------------------------------------------------------
     # get this instruments science fibers and reference fiber
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # science fibers should be list of strings, reference fiber should be string
     sci_fibers, ref_fiber = pconst.FIBER_KINDS()
     all_fibers = sci_fibers + [ref_fiber]
@@ -874,7 +874,7 @@ def get_extraction_files(params, recipe, infile, extname):
     leak2dext = params.listp('LEAK_2D_EXTRACT_FILES', dtype=str)
     leak1dext = params.listp('LEAK_1D_EXTRACT_FILES', dtype=str)
     # get this instruments science fibers and reference fiber
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # science fibers should be list of strings, reference fiber should be string
     sci_fibers, ref_fiber = pconst.FIBER_KINDS()
     all_fibers = sci_fibers + [ref_fiber]
@@ -959,7 +959,7 @@ def ref_fplines(params, recipe, e2dsfile, wavemap, fiber, database=None,
     # get dprtype
     dprtype = e2dsfile.get_hkey('KW_DPRTYPE', dtype=str)
     # get psuedo constants
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     sfibers, rfiber = pconst.FIBER_KINDS()
     # ----------------------------------------------------------------------
     # deal with fiber being the reference fiber

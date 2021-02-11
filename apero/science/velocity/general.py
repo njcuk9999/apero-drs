@@ -607,7 +607,7 @@ def locate_reference_file(params, recipe, infile):
     # TODO: fix how we get pp file
     pp_filename = infile.filename.split('_pp')[0] + '_pp.fits'
     # get pseudo const
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # get reference fiber
     _, reffiber = pconst.FIBER_KINDS()
     # deal with infile being telluric file (we do not have reference file
@@ -710,7 +710,7 @@ def compute_ccf_science(params, recipe, infile, image, blaze, wavemap, bprops,
     # ----------------------------------------------------------------------
     # Check we are using correct fiber
     # ----------------------------------------------------------------------
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     sfiber, rfiber = pconst.FIBER_CCF()
     if fiber != sfiber:
         # log that the science fiber was not correct

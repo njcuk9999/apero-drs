@@ -77,7 +77,7 @@ def install_databases(params: ParamDict, skip: Union[List[str], None] = None):
     # get database paths
     databases = list_databases(params)
     # load pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # -------------------------------------------------------------------------
     # create calibration database
     if 'calib' not in skip:
@@ -285,7 +285,7 @@ def make_object_reset(params: ParamDict):
     asset_dir = drs_data.construct_path(params, '', rel_path)
     reset_path = params['DATABASE_DIR']
     # get pconst
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # need to load database
     objdbm = drs_database.ObjectDatabase(params)
     objdbm.load_db()
@@ -321,7 +321,7 @@ def update_object_database(params: ParamDict):
     :return: None, updates local object database
     """
     # get psuedo constants
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # print that we are updating object database
     WLOG(params, 'info', textentry('40-503-00039'))
     # gaia col name in google sheet

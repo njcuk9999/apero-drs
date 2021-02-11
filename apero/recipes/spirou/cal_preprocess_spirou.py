@@ -94,7 +94,7 @@ def __main__(recipe, params):
     # get skip parmaeter
     skip = params['SKIP_DONE_PP']
     # get pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # ----------------------------------------------------------------------
     # Loop around input files
     # ----------------------------------------------------------------------

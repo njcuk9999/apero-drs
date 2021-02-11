@@ -174,7 +174,7 @@ def reset_tmp_folders(params: ParamDict, log: bool = True):
         # get database paths
         databases = manage_databases.list_databases(params)
         # load pseudo constants
-        pconst = constants.pload(params['INSTRUMENT'])
+        pconst = constants.pload()
         # create index database
         manage_databases.create_index_database(pconst, databases)
         # get index database
@@ -197,7 +197,7 @@ def reset_tmp_folders(params: ParamDict, log: bool = True):
         # get database paths
         databases = manage_databases.list_databases(params)
         # load pseudo constants
-        pconst = constants.pload(params['INSTRUMENT'])
+        pconst = constants.pload()
         # create index database
         manage_databases.create_log_database(pconst, databases)
         # get log database
@@ -240,7 +240,7 @@ def reset_reduced_folders(params: ParamDict, log: bool = True):
         # get database paths
         databases = manage_databases.list_databases(params)
         # load pseudo constants
-        pconst = constants.pload(params['INSTRUMENT'])
+        pconst = constants.pload()
         # create index database
         manage_databases.create_index_database(pconst, databases)
         # get index database
@@ -263,7 +263,7 @@ def reset_reduced_folders(params: ParamDict, log: bool = True):
         # get database paths
         databases = manage_databases.list_databases(params)
         # load pseudo constants
-        pconst = constants.pload(params['INSTRUMENT'])
+        pconst = constants.pload()
         # create index database
         manage_databases.create_log_database(pconst, databases)
         # get log database
@@ -288,7 +288,7 @@ def reset_calibdb(params: ParamDict, log: bool = True):
     # get database paths
     databases = manage_databases.list_databases(params)
     # load pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # name the database
     name = 'calibration database'
     # get the calibration database file directory
@@ -323,7 +323,7 @@ def reset_telludb(params: ParamDict, log: bool = True):
     # get database paths
     databases = manage_databases.list_databases(params)
     # load pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # name the database
     name = 'tellruic database'
     # get the telluric database file directory
@@ -485,7 +485,7 @@ def reset_assets(params: ParamDict, log: bool = True):
     # get database paths
     databases = manage_databases.list_databases(params)
     # load pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # TODO: deal with getting online
     asset_path = params['DRS_DATA_ASSETS']
     reset_path = os.path.join(params['DRS_RESET_ASSETS_PATH'],

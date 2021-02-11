@@ -133,7 +133,7 @@ def __main__(recipe, params):
     # set up plotting (no plotting before this)
     recipe.plot.set_location()
     # get pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # load the calibration database
     calibdbm = drs_database.CalibrationDatabase(params)
     calibdbm.load_db()

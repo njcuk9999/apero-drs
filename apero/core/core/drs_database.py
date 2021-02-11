@@ -101,7 +101,7 @@ class DatabaseManager:
         self.params = params
         self.instrument = base.IPARAMS['INSTRUMENT']
         # get pconst (for use throughout)
-        self.pconst = constants.pload(self.instrument)
+        self.pconst = constants.pload()
         # set name
         self.name = 'DatabaseManager'
         self.kind = 'None'

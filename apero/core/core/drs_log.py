@@ -87,7 +87,7 @@ class Logger:
         self.language = base.IPARAMS['LANGUAGE']
         self.instrument = base.IPARAMS['INSTRUMENT']
         # load additional resources based on instrument/language
-        self.pconstant = constants.pload(self.instrument)
+        self.pconstant = constants.pload()
         # ---------------------------------------------------------------------
         # save output parameter dictionary for saving to file
         self.pout = ParamDict()
@@ -124,7 +124,7 @@ class Logger:
         # update dict with state
         self.__dict__.update(state)
         # read attributes not in state
-        self.pconstant = constants.pload(self.instrument)
+        self.pconstant = constants.pload()
 
     def __str__(self) -> str:
         """
@@ -428,7 +428,7 @@ class Logger:
             # update language
             self.language = paramdict['LANGUAGE']
             # update pconstant
-            self.pconstant = constants.pload(self.instrument)
+            self.pconstant = constants.pload()
 
     def output_param_dict(self, paramdict: ParamDict,
                           new: bool = False) -> ParamDict:
@@ -1384,7 +1384,7 @@ def warninglogger(params: ParamDict, warnlist: Any,
     :return:
     """
     # get pconstant
-    pconstant = constants.pload(params['INSTRUMENT'])
+    pconstant = constants.pload()
     log_warnings = pconstant.LOG_CAUGHT_WARNINGS()
     # deal with warnlist as string
     if isinstance(warnlist, str):

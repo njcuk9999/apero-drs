@@ -126,7 +126,7 @@ def setup(name: str = 'None', instrument: str = 'None',
     # Clean WLOG
     WLOG.clean_log(pid)
     # get filemod and recipe mod
-    pconst = constants.pload(instrument)
+    pconst = constants.pload()
     filemod = pconst.FILEMOD()
     # deal with rmod coming from call
     if rmod is None:
@@ -150,7 +150,7 @@ def setup(name: str = 'None', instrument: str = 'None',
             # update recipe instrument
             recipe.instrument = str(instrument)
             # need to update filemod and recipe mod
-            pconst = constants.pload(instrument)
+            pconst = constants.pload()
             # update filemod
             filemod = pconst.FILEMOD()
             # deal with rmod coming from call
@@ -557,7 +557,7 @@ def end_main(params: ParamDict, llmain: Union[Dict[str, Any], None],
         indexdb = drs_database.IndexDatabase(params)
         indexdb.load_db()
         # get pconstants
-        pconst = constants.pload(params['INSTRUMENT'])
+        pconst = constants.pload()
         # load index header keys
         rkeys, rtypes = pconst.INDEX_HEADER_KEYS()
         # loop around output_files
@@ -1047,7 +1047,7 @@ def _display_logo(params: ParamDict):
     # get colours
     colors = COLOR
     # get pconstant
-    pconstant = constants.pload(params['INSTRUMENT'])
+    pconstant = constants.pload()
     # noinspection PyPep8
     logo = pconstant.LOGO()
     for line in logo:
@@ -1075,7 +1075,7 @@ def _display_ee(params: ParamDict):
     # get colours
     colors = COLOR
     # get pconstant
-    pconstant = constants.pload(params['INSTRUMENT'])
+    pconstant = constants.pload()
     # noinspection PyPep8
     logo = pconstant.SPLASH()
     for line in logo:
@@ -1333,7 +1333,7 @@ def _index_pp(params: ParamDict, recipe: DrsRecipe):
     # set function name
     _ = display_func(params, '_index_pp', __NAME__)
     # get pconstant from p
-    pconstant = constants.pload(params['INSTRUMENT'])
+    pconstant = constants.pload()
     # get index filename
     filename = pconstant.INDEX_OUTPUT_FILENAME()
     # get night name
@@ -1373,7 +1373,7 @@ def _index_outputs(params: ParamDict, recipe: DrsRecipe):
     # set function name
     _ = display_func(params, '_index_outputs', __NAME__)
     # get pconstant from p
-    pconstant = constants.pload(params['INSTRUMENT'])
+    pconstant = constants.pload()
     # get index filename
     filename = pconstant.INDEX_OUTPUT_FILENAME()
     # deal with outpath being unset

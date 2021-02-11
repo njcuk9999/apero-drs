@@ -79,7 +79,7 @@ def get_masterwave_filename(params, fiber, database=None):
     # set function name
     func_name = display_func(params, 'get_masterwave_filename', __NAME__)
     # get pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # deal with fibers that we don't have
     usefiber = pconst.FIBER_WAVE_TYPES(fiber)
     # ------------------------------------------------------------------------
@@ -298,7 +298,7 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
                    func_name)
     # ------------------------------------------------------------------------
     # get pseudo constants
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # deal with which fiber to use
     if kwargs.get('forcefiber', False):
         usefiber = str(fiber)
@@ -447,7 +447,7 @@ def get_wavelines(params, recipe, fiber, header=None, infile=None,
     # set up function name
     func_name = display_func(params, 'get_wavelines', __NAME__)
     # get psuedo constants
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # get parameters from params/kwargs
     hclinefile = kwargs.get('hclinefile', None)
     fplinefile = kwargs.get('fplinefile', None)
@@ -626,7 +626,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
 
     # ------------------------------------------------------------------
     # get psuedo constants
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # get the shape from the wavemap
     nbo, nbpix = wavemap.shape
     # get dprtype
@@ -5582,7 +5582,7 @@ def process_other_fibers(params, recipe, mprops, mfpl, fp_outputs):
     # get the fiber types from a list parameter (or from inputs)
     fiber_types = drs_image.get_fiber_types(params)
     # get psuedo constants
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # get wave master file (controller fiber)
     master_fiber = params['WAVE_MASTER_FIBER']
     plot_order = params['WAVE_FIBER_COMP_PLOT_ORD']
@@ -5817,7 +5817,7 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, mwave,
     pltbinl = pcheck(params, 'WAVENIGHT_PLT_BINL', 'pltbinl', kwargs, func_name)
     pltbinu = pcheck(params, 'WAVENIGHT_PLT_BINU', 'pltbinl', kwargs, func_name)
     # get pconst
-    pconst = constants.pload(params['INSTRUMENT'])
+    pconst = constants.pload()
     # deal with havint a input dcavity width
     if indcavity is not None:
         d_cavity = float(indcavity)

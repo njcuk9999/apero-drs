@@ -23,6 +23,7 @@ from astropy.io import fits
 from astropy.io.fits.verify import VerifyWarning
 from astropy.table import Table
 from astropy import version as av
+from copy import deepcopy
 import os
 from pathlib import Path
 import warnings
@@ -360,7 +361,7 @@ DataHdrType = Tuple[np.ndarray, fits.Header]
 def readfits(params: ParamDict, filename: Union[str, Path],
              getdata: bool = True, gethdr: bool = False,
              fmt: str = 'fits-image',
-             ext: int = 0, func: Union[str, None] = None,
+             ext: Union[int, None] = None, func: Union[str, None] = None,
              log: bool = True, copy: bool = False
              ) -> Union[DataHdrType, np.ndarray, fits.Header, None]:
     """
@@ -371,7 +372,8 @@ def readfits(params: ParamDict, filename: Union[str, Path],
     :param getdata: bool, whether to return data from "ext"
     :param gethdr: bool, whether to return header from "ext"
     :param fmt: str, format of data (either 'fits-image' or 'fits-table'
-    :param ext: int, the extension to open
+    :param ext: int, the extension to open (unset by default means it goes
+                to the first valid extension)
     :param func: str, function name of calling function (input function)
     :param log: bool, if True logs that we read file
     :param copy: bool, if True copies the HDU[i].data and/or HDU[i].header so
@@ -413,22 +415,29 @@ def readfits(params: ParamDict, filename: Union[str, Path],
     if fmt == 'fits-image':
         data, header = _read_fitsimage(params, filename, getdata, gethdr, ext,
                                        log=log)
+        # deal with copying
+        if copy:
+            data = np.array(data)
+            header = fits.Header(header)
     elif fmt == 'fits-table':
         data, header = _read_fitstable(params, filename, getdata, gethdr, ext,
                                        log=log)
+        # deal with copying
+        if copy:
+            data = Table(data)
+            header = fits.Header(header)
     elif fmt == 'fits-multi':
         data, header = _read_fitsmulti(params, filename, getdata, gethdr,
                                        log=log)
+        # deal with copying
+        if copy:
+            data = deepcopy(data)
+            header = deepcopy(header)
     else:
         cfmts = ', '.join(allowed_formats)
         eargs = [filename, fmt, cfmts, func_name]
         WLOG(params, 'error', textentry('00-008-00019', args=eargs))
         data, header = None, None
-    # -------------------------------------------------------------------------
-    # deal with copying
-    if copy:
-        data = np.array(data)
-        header = fits.Header(header)
     # -------------------------------------------------------------------------
     # deal with return
     if getdata and gethdr:
@@ -555,7 +564,7 @@ ImageFitsType = Tuple[Union[np.ndarray, None], Union[fits.Header, None]]
 
 
 def _read_fitsimage(params: ParamDict, filename: str, getdata: bool,
-                    gethdr: bool, ext: int = 0,
+                    gethdr: bool, ext: Union[int, None] = None,
                     log: bool = True) -> ImageFitsType:
     """
     Read a fits image in extension 'ext' for fits file 'filename'
@@ -614,7 +623,7 @@ TableFitsType = Tuple[Union[Table, None], Union[fits.Header, None]]
 
 
 def _read_fitstable(params: ParamDict, filename: str, getdata: bool,
-                    gethdr: bool, ext: int = 0,
+                    gethdr: bool, ext: Union[int, None] = None,
                     log: bool = True) -> TableFitsType:
     """
     Read a fits bin table in extension 'ext' for fits file 'filename'
@@ -823,26 +832,26 @@ def _write_fits(params: ParamDict, filename: str,
             header0 = header[0].copy()
     else:
         header0 = header[0]
-    # set up primary HDU (if data[0] == image then put this in the primary)
-    #   else if table then primary HDU should be empty
-    # TODO: need to fix this so hdu[0] is always empty
-    # TODO:    --> start = 0 and no data[0] in PrimaryHDU
-
-    if data[0] is None:
-        hdu0 = fits.PrimaryHDU(header=header0)
-        start = 1
-    elif datatype[0] == 'image':
-        hdu0 = fits.PrimaryHDU(data[0], header=header0)
-        start = 1
-    else:
-        hdu0 = fits.PrimaryHDU(header=header0)
-        start = 0
-
-    if dtype is not None:
-        hdu0.scale(type=dtype[0], **SCALEARGS)
-    # add all others afterwards
+    # set up primary HDU (header only)
+    hdu0 = fits.PrimaryHDU(header=header0)
+    # add primary to hdus
     hdus = [hdu0]
-    for it in range(start, len(data)):
+
+    # if data[0] is None:
+    #     hdu0 = fits.PrimaryHDU(header=header0)
+    #     start = 1
+    # elif datatype[0] == 'image':
+    #     hdu0 = fits.PrimaryHDU(data[0], header=header0)
+    #     start = 1
+    # else:
+    #     hdu0 = fits.PrimaryHDU(header=header0)
+    #     start = 0
+    #
+    # if dtype is not None:
+    #     hdu0.scale(type=dtype[0], **SCALEARGS)
+
+    # add all others afterwards
+    for it in range(len(data)):
         if datatype[it] == 'image':
             fitstype = fits.ImageHDU
         elif datatype[it] == 'table':
@@ -860,7 +869,7 @@ def _write_fits(params: ParamDict, filename: str,
         hdu_i = fitstype(data[it], header=header_it)
         if dtype is not None and datatype[it] == 'image':
             if dtype[it] is not None:
-                hdu_i.scale(type=dtype[it])
+                hdu_i.scale(type=dtype[it], **SCALEARGS)
         hdus.append(hdu_i)
     # convert to  HDU list
     hdulist = fits.HDUList(hdus)
