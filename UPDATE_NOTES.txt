@@ -137,3 +137,7 @@ Date: 2020-12-21
       which constant sections you want with "apero_constants.py --generate=choose"
     - apero_langdb.py can now be used to locate apero language codes
         - use apero_langdb.py --find
+    - all outputs now follow standard fits convensions with regards to:
+        - primary hdu empty and only with main header
+        - all other hdu headers are minimal / extension specific
+        - all extensions have names (EXTNAME)
