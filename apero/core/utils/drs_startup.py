@@ -126,7 +126,9 @@ def setup(name: str = 'None', instrument: str = 'None',
     # Clean WLOG
     WLOG.clean_log(pid)
     # get filemod and recipe mod
-    pconst = constants.pload()
+    #  must set instrument here as we could need 'None' (for some tools that
+    #  are above the instrument level)
+    pconst = constants.pload(instrument=instrument)
     filemod = pconst.FILEMOD()
     # deal with rmod coming from call
     if rmod is None:
