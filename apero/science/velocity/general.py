@@ -1406,6 +1406,7 @@ def write_ccf(params, recipe, infile, props, rawfiles, combine, qc_params,
     WLOG(params, '', textentry('40-020-00006', args=wargs))
     # write multi
     ccf_file.write_multi(data_list=[table2], datatype_list=['table'],
+                         name_list=['RV_TABLE', 'ORDER_TABLE'],
                          kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(ccf_file)

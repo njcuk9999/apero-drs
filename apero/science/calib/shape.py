@@ -1411,6 +1411,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     WLOG(params, '', textentry('40-014-00026', args=[outfile1.filename]))
     # write image to file
     outfile1.write_multi(data_list=[fp_table], kind=recipe.outputtype,
+                         name_list=['FP_TABLE'],
                          runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(outfile1)
@@ -1431,6 +1432,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     WLOG(params, '', textentry('40-014-00027', args=[outfile2.filename]))
     # write image to file
     outfile2.write_multi(data_list=[fp_table], kind=recipe.outputtype,
+                         name_list=['FP_TABLE'],
                          runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(outfile2)
@@ -1451,6 +1453,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
     WLOG(params, '', textentry('40-014-00028', args=[outfile3.filename]))
     # write image to file
     outfile3.write_multi(data_list=[fp_table], kind=recipe.outputtype,
+                         name_list=['FP_TABLE'],
                          runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(outfile3)
@@ -1469,6 +1472,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         debugfile0.add_hkey('KW_OUTPUT', value=debugfile0.name)
         debugfile0.data = dxmap0
         debugfile0.write_multi(data_list=[fp_table], kind=recipe.outputtype,
+                               name_list=['FP_TABLE'],
                                runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(debugfile0)
@@ -1482,6 +1486,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         debugfile1.add_hkey('KW_OUTPUT', value=debugfile1.name)
         debugfile1.data = fpimage
         debugfile1.write_multi(data_list=[fp_table], kind=recipe.outputtype,
+                               name_list=['FP_TABLE'],
                                runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(debugfile1)
@@ -1492,6 +1497,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
         debugfile2.add_hkey('KW_OUTPUT', value=debugfile2.name)
         debugfile2.data = fpimage2
         debugfile2.write_multi(data_list=[fp_table], kind=recipe.outputtype,
+                               name_list=['FP_TABLE'],
                                runstring=recipe.runstring)
         # add to output files (for indexing)
         recipe.add_output_file(debugfile2)
@@ -1525,6 +1531,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
             # add data
             debugfile3.data = hcimage
             debugfile3.write_multi(data_list=[fp_table], kind=recipe.outputtype,
+                                   name_list=['FP_TABLE'],
                                    runstring=recipe.runstring)
             # add to output files (for indexing)
             recipe.add_output_file(debugfile3)
@@ -1537,6 +1544,7 @@ def write_shape_master_files(params, recipe, fpfile, hcfile, rawfpfiles,
                 debugfile4.add_hkey('KW_OUTPUT', value=debugfile4.name)
                 debugfile4.data = hcimage2
                 debugfile4.write_multi(data_list=[fp_table],
+                                       name_list=['FP_TABLE'],
                                        kind=recipe.outputtype,
                                        runstring=recipe.runstring)
                 # add to output files (for indexing)

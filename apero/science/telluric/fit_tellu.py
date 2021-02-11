@@ -1038,6 +1038,7 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     WLOG(params, '', textentry('40-019-00023', args=[corrfile.filename]))
     # write image to file
     corrfile.write_multi(data_list=[trans_table], datatype_list=['table'],
+                         name_list=['TRANS_TABLE'],
                          kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(corrfile)

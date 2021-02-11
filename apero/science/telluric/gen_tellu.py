@@ -1361,10 +1361,12 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
     dimages = [props['CORRECTED_E2DS'], props['TRANS_MASK'].astype(float),
                props['ABSO_E2DS'], props['SKY_MODEL']]
     # add extention info
-    kws1 = ['EXTDESC1', 'Corrected', 'Extension 1 description']
-    kws2 = ['EXTDESC2', 'Trans Mask', 'Extension 2 description']
-    kws3 = ['EXTDESC3', 'ABSO E2DS', 'Extension 3 description']
-    kws4 = ['EXTDESC4', 'Sky model', 'Extension 4 description']
+    kws1 = ['EXTDESC1', 'CORRECTED', 'Corrected image']
+    kws2 = ['EXTDESC2', 'TRANS_MASK', 'Transmission mask image']
+    kws3 = ['EXTDESC3', 'ABSO_E2DS', 'Absorption e2ds image']
+    kws4 = ['EXTDESC4', 'SKY_MODEL', 'Sky model image']
+    # set names of extensions (for headers)
+    names = ['CORRECTED', 'TRANS_MASK', 'ABSO_E2DS', 'SKY_MODEL']
     # add to hdict
     tpclfile.add_hkey(key=kws1)
     tpclfile.add_hkey(key=kws2)
@@ -1445,7 +1447,7 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
     # write to file
     tpclfile.data = dimages[0]
     tpclfile.write_multi(data_list=dimages[1:], kind=recipe.outputtype,
-                         runstring=recipe.runstring)
+                         name_list=names, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(tpclfile)
     # ----------------------------------------------------------------------

@@ -518,6 +518,7 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
     WLOG(params, '', textentry('40-021-00005', args=[polfile.filename]))
     # write image to file
     polfile.write_multi(data_list=[pprops['POLERR']], kind=recipe.outputtype,
+                        name_list=['POL_ERR'],
                         runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(polfile)
@@ -581,6 +582,7 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
     WLOG(params, '', textentry('40-021-00008', args=[stokesfile.filename]))
     # write image to file
     stokesfile.write_multi(data_list=[pprops['STOKESIERR']],
+                           name_list=['STOKES_I_ERR'],
                            kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)STOKES_I
     recipe.add_output_file(stokesfile)

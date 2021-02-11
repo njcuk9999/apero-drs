@@ -1903,7 +1903,8 @@ def hc_write_resmap(params, recipe, llprops, infile, wavefile, fiber):
     # set output key
     resfile.add_hkey('KW_OUTPUT', value=resfile.name)
     # ------------------------------------------------------------------
-    datalist, headerlist = generate_res_files(params, llprops, resfile)
+    datalist, headerlist, namelist = generate_res_files(params, llprops,
+                                                        resfile)
     # ------------------------------------------------------------------
     # set data to an empty list
     resfile.data = []
@@ -1913,6 +1914,7 @@ def hc_write_resmap(params, recipe, llprops, infile, wavefile, fiber):
     WLOG(params, '', textentry('40-017-00020', args=wargs))
     # write image to file
     resfile.write_multi(data_list=datalist, header_list=headerlist,
+                        name_list=namelist,
                         kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(resfile)
@@ -2045,7 +2047,8 @@ def hc_write_resmap_master(params, recipe, llprops, infile, wavefile, fiber):
     # set output key
     resfile.add_hkey('KW_OUTPUT', value=resfile.name)
     # ------------------------------------------------------------------
-    datalist, headerlist = generate_res_files(params, llprops, resfile)
+    datalist, headerlist, namelist = generate_res_files(params, llprops,
+                                                        resfile)
     # ------------------------------------------------------------------
     # set data to an empty list
     resfile.data = []
@@ -2055,6 +2058,7 @@ def hc_write_resmap_master(params, recipe, llprops, infile, wavefile, fiber):
     WLOG(params, '', textentry('40-017-00020', args=wargs))
     # write image to file
     resfile.write_multi(data_list=datalist, header_list=headerlist,
+                        name_list=namelist,
                         kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(resfile)
@@ -3173,7 +3177,7 @@ def generate_res_files(params, llprops, outfile, **kwargs):
     order_range = np.arange(0, nbo, bin_order)
     x_range = np.arange(0, nbpix // bin_x)
     # loop around the order bins
-    resdata, hdicts = [], []
+    resdata, hdicts, names = [], [], []
     for order_num in order_range:
         # loop around the x position
         for xpos in x_range:
@@ -3216,6 +3220,9 @@ def generate_res_files(params, llprops, outfile, **kwargs):
             hdicts.append(tmpfile.hdict.to_fits_header())
             # push data into correct columns
             resdata.append(np.array(list(zip(all_dvs, all_lines))))
+            # add a name for the extension
+            nfmt = 'Order{0:02d}_{1:02d}_Region{2:02d}'
+            names.append(nfmt.format(*largs))
     # return data list and header list
     return resdata, hdicts
 
@@ -5434,6 +5441,7 @@ def fp_write_wavesol_master(params, recipe, llprops, hcfile, fpfile, fiber,
     WLOG(params, '', textentry('40-017-00037', args=wargs))
     # write image to file
     wavefile.write_multi(data_list=[wave_table], datatype_list=['table'],
+                         name_list=['COEFF_TABLE'],
                          kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(wavefile)
@@ -6175,6 +6183,7 @@ def night_write_wavesolution(params, recipe, nprops, hcfile, fpfile, fiber,
     WLOG(params, '', textentry('40-017-00037', args=wargs))
     # write image to file
     wavefile.write_multi(data_list=[wave_table], dtype_list=['table'],
+                         name_list=['COEFF_TABLE'],
                          kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(wavefile)
