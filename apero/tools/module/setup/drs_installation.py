@@ -107,11 +107,10 @@ User config path:
 
     This is the path where your user configuration will be saved.
     If it doesn't exist you will be prompted to create it. 
-    
-    Note the configuration files will be stored here under the "profile name"
-    sub-directory
-    
+        
     Note please make sure directory is EMPTY.
+    
+    Note the "profile name" sub-directory will be created under this path.
 """
 
 message2 = """
