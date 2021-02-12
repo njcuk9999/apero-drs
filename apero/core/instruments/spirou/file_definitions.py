@@ -1292,29 +1292,41 @@ post_e_file.add_ext('PP', pp_file, pos=0, header_only=True, kind='tmp',
                                            'POLAR_DARK']),
                     remove_drs_hkeys=True, remove_std_hkeys=True)
 post_e_file.add_ext('EXT_AB', out_ext_e2dsff, pos=1, fiber='AB', kind='red',
-                    link='PP', hlink='KW_IDENTIFIER', clear_file=True)
+                    link='PP', hlink='KW_IDENTIFIER', clear_file=True,
+                    tag='FluxAB')
 post_e_file.add_ext('EXT_A', out_ext_e2dsff, pos=2, fiber='A', kind='red',
-                    link='EXT_AB', hlink='KW_IDENTIFIER', clear_file=True)
+                    link='EXT_AB', hlink='KW_IDENTIFIER', clear_file=True,
+                    tag='FluxA')
 post_e_file.add_ext('EXT_B', out_ext_e2dsff, pos=3, fiber='B', kind='red',
-                    link='EXT_AB', hlink='KW_IDENTIFIER', clear_file=True)
+                    link='EXT_AB', hlink='KW_IDENTIFIER', clear_file=True,
+                    tag='FluxB')
 post_e_file.add_ext('EXT_C', out_ext_e2dsff, pos=4, fiber='C', kind='red',
-                    link='EXT_AB', hlink='KW_IDENTIFIER', clear_file=True)
+                    link='EXT_AB', hlink='KW_IDENTIFIER', clear_file=True,
+                    tag='FluxC')
 post_e_file.add_ext('WAVE_AB', out_wavem_fp, pos=5, fiber='AB', kind='red',
-                    link='EXT_AB', hlink='KW_CDBWAVE')
+                    link='EXT_AB', hlink='KW_CDBWAVE',
+                    tag='WaveAB')
 post_e_file.add_ext('WAVE_A', out_wavem_fp, pos=6, fiber='A', kind='red',
-                    link='EXT_A', hlink='KW_CDBWAVE')
+                    link='EXT_A', hlink='KW_CDBWAVE',
+                    tag='WaveA')
 post_e_file.add_ext('WAVE_B', out_wavem_fp, pos=7, fiber='B', kind='red',
-                    link='EXT_B', hlink='KW_CDBWAVE')
+                    link='EXT_B', hlink='KW_CDBWAVE',
+                    tag='WaveB')
 post_e_file.add_ext('WAVE_C', out_wavem_fp, pos=8, fiber='C', kind='red',
-                    link='EXT_C', hlink='KW_CDBWAVE')
+                    link='EXT_C', hlink='KW_CDBWAVE',
+                    tag='WaveC')
 post_e_file.add_ext('BLAZE_AB', out_ff_blaze, pos=9, fiber='AB', kind='red',
-                    link='EXT_AB', hlink='KW_CDBBLAZE')
+                    link='EXT_AB', hlink='KW_CDBBLAZE',
+                    tag='BlazeAB')
 post_e_file.add_ext('BLAZE_A', out_ff_blaze, pos=10, fiber='A', kind='red',
-                    link='EXT_A', hlink='KW_CDBBLAZE')
+                    link='EXT_A', hlink='KW_CDBBLAZE',
+                    tag='BlazeA')
 post_e_file.add_ext('BLAZE_B', out_ff_blaze, pos=11, fiber='B', kind='red',
-                    link='EXT_B', hlink='KW_CDBBLAZE')
+                    link='EXT_B', hlink='KW_CDBBLAZE',
+                    tag='BlazeB')
 post_e_file.add_ext('BLAZE_C', out_ff_blaze, pos=12, fiber='C', kind='red',
-                    link='EXT_C', hlink='KW_CDBBLAZE')
+                    link='EXT_C', hlink='KW_CDBBLAZE',
+                    tag='BlazeC')
 # move header keys
 post_e_file.add_hkey('KW_VERSION', inheader='VEL', outheader='PP')
 post_e_file.add_hkey('KW_DRS_DATE_NOW', inheader='VEL', outheader='PP')
@@ -1423,16 +1435,16 @@ post_t_file.add_ext('PP', pp_file, pos=0, header_only=True, kind='tmp',
                                            'POLAR_DARK']))
 post_t_file.add_ext('TELLU_AB', out_tellu_obj, pos=1, fiber='AB',
                     link='PP', hlink='KW_IDENTIFIER', kind='red',
-                    clear_file=True)
+                    clear_file=True, tag='FluxAB')
 post_t_file.add_ext('WAVE_AB', out_wavem_fp, pos=2, fiber='AB',
                     link='TELLU_AB', hlink='KW_CDBWAVE', kind='red',
-                    clear_file=True)
+                    clear_file=True, tag='WaveAB')
 post_t_file.add_ext('BLAZE_AB', out_ff_blaze, pos=3, fiber='AB',
                     link='TELLU_AB', hlink='KW_CDBBLAZE', kind='red',
-                    clear_file=True)
+                    clear_file=True, tag='BlazeAB')
 post_t_file.add_ext('RECON_AB', out_tellu_recon, pos=4, fiber='AB',
                     link='TELLU_AB', hlink='KW_IDENTIFIER', kind='red',
-                    clear_file=True)
+                    clear_file=True, tag='Recon')
 # move header keys
 post_t_file.add_hkey('KW_VERSION', inheader='VEL', outheader='PP')
 post_t_file.add_hkey('KW_DRS_DATE_NOW', inheader='VEL', outheader='PP')
@@ -1450,7 +1462,7 @@ post_v_file.add_ext('PP', pp_file, pos=0, header_only=True, kind='tmp',
                     clear_file=True)
 post_v_file.add_ext('VEL', out_ccf_fits, pos=1, fiber='AB',
                     link='PP', hlink='KW_IDENTIFIER', kind='red',
-                    clear_file=True)
+                    clear_file=True, tag='CCF')
 # move header keys
 post_v_file.add_hkey('KW_VERSION', inheader='VEL', outheader='PP')
 post_v_file.add_hkey('KW_DRS_DATE_NOW', inheader='VEL', outheader='PP')

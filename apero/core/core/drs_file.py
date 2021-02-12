@@ -2866,7 +2866,7 @@ class DrsFitsFile(DrsInputFile):
         elif len(name_list) == len(data_list):
             names = list(name_list)
         elif len(name_list) == len(data_list) - 1:
-            names = [self.name, name_list]
+            names = [self.name] + list(name_list)
         else:
             names = [self.name] * len(data_list)
         # ---------------------------------------------------------------------
@@ -4632,7 +4632,8 @@ class DrsOutFileExtension:
                  data_only: bool = False,
                  remove_drs_hkeys: bool = False,
                  remove_std_hkeys: bool = False,
-                 clear_file: bool = False):
+                 clear_file: bool = False,
+                 tag: Union[str, None] = None):
         """
         Properties for an extension of a POST PROCESS file
 
@@ -4650,6 +4651,10 @@ class DrsOutFileExtension:
                                  to be remove (else does not remove keys)
         :param remove_std_hkeys: bool, if True removes a list of standard keys
                                  from this extensions header
+        :param clear_file: bool, if True this extensions file should be marked
+                           for removal (if user adds --clear)
+        :param tag: str or None, if set this is the EXTNAME given to this
+                    extension in the output fits file (if None uses "name")
 
         :return:
         """
@@ -4667,6 +4672,7 @@ class DrsOutFileExtension:
         self.remove_drs_hkeys = remove_drs_hkeys
         self.remove_std_hkeys = remove_std_hkeys
         self.clear_file = clear_file
+        self.tag = tag
         # to be filled
         self.filename = None
         self.header = None
@@ -4751,21 +4757,36 @@ class DrsOutFileExtension:
         self.table_clears.append(clear_file)
 
     def copy(self):
+        """
+        Copies the extension to a new extension
+        """
+        # deep copy each parameter
+        kwargs = dict()
+        kwargs['name'] = deepcopy(self.name)
+        kwargs['drsfile'] = self.drsfile.newcopy()
+        kwargs['pos'] = int(self.pos)
+        kwargs['fiber'] = deepcopy(self.fiber)
+        kwargs['kind'] = deepcopy(self.kind)
+        kwargs['hkeys'] = deepcopy(self.hkeys)
+        kwargs['link'] = deepcopy(self.link)
+        kwargs['hlink'] = deepcopy(self.hlink)
+        kwargs['header_only'] = bool(self.header_only)
+        kwargs['data_only'] = bool(self.data_only)
+        kwargs['remove_drs_hkeys'] = bool(self.remove_drs_hkeys)
+        kwargs['remove_std_hkeys'] = bool(self.remove_std_hkeys)
+        kwargs['clear_file'] = bool(self.clear_file)
+        kwargs['tag'] = deepcopy(self.tag)
         # create new copy
-        new = DrsOutFileExtension(self.name, self.drsfile, self.pos,
-                                  self.fiber, self.kind, self.hkeys,
-                                  self.link, self.hlink, self.header_only,
-                                  self.data_only, self.remove_drs_hkeys,
-                                  self.remove_std_hkeys, self.clear_file)
+        new = DrsOutFileExtension(**kwargs)
         # table parameters
-        new.table_drsfiles = self.table_drsfiles
-        new.table_in_colnames = self.table_in_colnames
-        new.table_out_colnames = self.table_out_colnames
-        new.table_units = self.table_units
-        new.table_fibers = self.table_fibers
-        new.table_required = self.table_required
-        new.table_kind = self.table_kind
-        new.table_clears = self.table_clears
+        new.table_drsfiles = deepcopy(self.table_drsfiles)
+        new.table_in_colnames = deepcopy(self.table_in_colnames)
+        new.table_out_colnames = deepcopy(self.table_out_colnames)
+        new.table_units = deepcopy(self.table_units)
+        new.table_fibers = deepcopy(self.table_fibers)
+        new.table_required = deepcopy(self.table_required)
+        new.table_kind = deepcopy(self.table_kind)
+        new.table_clears = deepcopy(self.table_clears)
         # return new copy
         return new
 
@@ -5049,7 +5070,8 @@ class DrsOutFile(DrsInputFile):
                 header_only: bool = False, data_only: bool = False,
                 remove_drs_hkeys: bool = False,
                 remove_std_hkeys: bool = False,
-                clear_file: bool = False):
+                clear_file: bool = False,
+                tag: Union[str, None] = None):
         """
         Add a fits extension
 
@@ -5080,13 +5102,13 @@ class DrsOutFile(DrsInputFile):
         if not isinstance(pos, int):
             raise DrsCodedException('00-001-00053', level='error',
                                     targs=[pos, func_name])
-
+        # add new extension instance
         self.extensions[pos] = DrsOutFileExtension(name, drsfile, pos, fiber,
                                                    kind, hkeys, link, hlink,
                                                    header_only, data_only,
                                                    remove_drs_hkeys,
                                                    remove_std_hkeys,
-                                                   clear_file)
+                                                   clear_file, tag)
 
     def add_column(self, extname: str, drsfile: DrsFitsFile,
                    incol: str, outcol: str, fiber: Union[str, None],
@@ -5391,6 +5413,7 @@ class DrsOutFile(DrsInputFile):
         # add extension names as comments
         self._add_extensions_names_to_primary(params)
 
+
     def _add_header_keys(self, params: ParamDict):
         """
         Add header keys from one extension to another
@@ -5611,12 +5634,17 @@ class DrsOutFile(DrsInputFile):
             if pos == 0:
                 continue
             # add name to names
-            names.append(self.extensions[pos].name)
+            if self.extensions[pos].tag is not None:
+                names.append(self.extensions[pos].tag)
+            else:
+                names.append(self.extensions[pos].name)
         # add extensions
         description += ', '.join(names)
         # add to header
         for line in textwrap.wrap(description, 71):
             header.insert(hdrkey, ('COMMENT', line))
+        # finally add the number of extensions to the primary header
+        header['NEXT'] = len(self.extensions) - 1
         # add header back to extensions
         self.extensions[0].header = header
 
@@ -5665,7 +5693,10 @@ class DrsOutFile(DrsInputFile):
         # names of extensions
         names = []
         for ext in self.extensions:
-            names.append(self.extensions[ext].name)
+            if self.extensions[ext].tag is not None:
+                names.append(self.extensions[ext].tag)
+            else:
+                names.append(self.extensions[ext].name)
         # must make sure dirname exists
         if not os.path.exists(self.out_dirname):
             os.makedirs(self.out_dirname)
