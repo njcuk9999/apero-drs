@@ -12,11 +12,12 @@ Created on 2019-06-27 at 13:54
 from astropy.table import Table
 from astropy import constants as cc
 from astropy import units as uu
+import copy
 import itertools
 import numpy as np
 import os
+from typing import List, Tuple, Union
 import warnings
-import copy
 
 from apero.base import base
 from apero import lang
@@ -3157,9 +3158,10 @@ def all_line_storage(params, llprops, **kwargs):
     return llprops
 
 
+# complex typing for generate_res_files
 ResFile = Tuple[List[np.ndarray],
-                List[Union[drs_file.FitsHeader, drs_file.Header],
-                List[str]]]
+                List[Union[drs_file.FitsHeader, drs_file.Header]],
+                List[str]]
 
 
 def generate_res_files(params: ParamDict, llprops: ParamDict,
