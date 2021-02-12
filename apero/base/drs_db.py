@@ -1450,7 +1450,7 @@ def database_wrapper(kind: str, path: Union[Path, str, None],
         # get mysql params
         sparams = dparams['MYSQL']
         # create table name
-        tablename = '{0}_{1}'.format(kind, sparams['PROFILE'])
+        tablename = '{0}_{1}'.format(kind, sparams[kind]['PROFILE'])
         # return the MySQLDatabase instance
         return MySQLDatabase(host=sparams['HOST'],
                              user=sparams['USER'],

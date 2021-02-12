@@ -224,42 +224,47 @@ def create_yamls(allparams: Any):
     sqlite3['USER'] = allparams['SQLITE'].get('USER', 'NULL')
     sqlite3['PASSWD'] = allparams['SQLITE'].get('PASSWD', 'NULL')
     sqlite3['DATABASE'] = allparams['SQLITE'].get('DATABASE', 'NULL')
-    sqlite3['PROFILE'] = allparams['SQLITE'].get('PROFILE', 'NULL')
     # add calib database
     calibdb = dict()
     calibdb['PATH'] = allparams['SQLITE'].get('CALIB_PATH', 'DRS_CALIB_DB')
     calibdb['NAME'] = allparams['SQLITE'].get('CALIB_NAME', 'calib.db')
     calibdb['RESET'] = allparams['SQLITE'].get('CALIB_RESET', 'reset.calib.csv')
+    calibdb['PROFILE'] = allparams['SQLITE'].get('PROFILE', 'NULL')
     sqlite3['CALIB'] = calibdb
     # add tellu database
     telludb = dict()
     telludb['PATH'] = allparams['SQLITE'].get('TELLU_PATH', 'DRS_TELLU_DB')
     telludb['NAME'] = allparams['SQLITE'].get('TELLU_NAME', 'tellu.db')
     telludb['RESET'] = allparams['SQLITE'].get('TELLU_RESET', 'NULL')
+    telludb['PROFILE'] = allparams['SQLITE'].get('PROFILE', 'NULL')
     sqlite3['TELLU'] = telludb
     # add index database
     indexdb = dict()
     indexdb['PATH'] = allparams['SQLITE'].get('IDX_PATH', 'DRS_DATA_ASSETS')
     indexdb['NAME'] = allparams['SQLITE'].get('IDX_NAME', 'index.db')
     indexdb['RESET'] = allparams['SQLITE'].get('IDX_RESET', 'NULL')
+    indexdb['PROFILE'] = allparams['SQLITE'].get('PROFILE', 'NULL')
     sqlite3['INDEX'] = indexdb
     # add log database
     logdb = dict()
     logdb['PATH'] = allparams['SQLITE'].get('LOG_PATH', 'DRS_DATA_ASSETS')
     logdb['NAME'] = allparams['SQLITE'].get('LOG_NAME', 'log.db')
     logdb['RESET'] = allparams['SQLITE'].get('LOG_RESET', 'NULL')
+    logdb['PROFILE'] = allparams['SQLITE'].get('PROFILE', 'NULL')
     sqlite3['LOG'] = logdb
     # add object database
     objectdb = dict()
     objectdb['PATH'] = allparams['SQLITE'].get('OBJ_PATH', 'DRS_DATA_ASSETS')
     objectdb['NAME'] = allparams['SQLITE'].get('OBJ_NAME', 'object.db')
     objectdb['RESET'] = allparams['SQLITE'].get('OBJ_RESET', 'reset.object.csv')
+    objectdb['PROFILE'] = allparams['SQLITE'].get('PROFILE', 'NULL')
     sqlite3['OBJECT'] = objectdb
     # add language database
     langdb = dict()
     langdb['PATH'] = allparams['SQLITE'].get('LANG_PATH', 'DRS_DATA_ASSETS')
     langdb['NAME'] = allparams['SQLITE'].get('LANG_PATH', 'lang.db')
     langdb['RESET'] = allparams['SQLITE'].get('LANG_PATH', 'NULL')
+    langdb['PROFILE'] = allparams['SQLITE'].get('PROFILE', 'NULL')
     sqlite3['LANG'] = langdb
     # add sqlite database to database_dict
     database_dict['SQLITE3'] = sqlite3
@@ -274,42 +279,47 @@ def create_yamls(allparams: Any):
     mysql['USER'] = allparams['MYSQL'].get('USER', 'None')
     mysql['PASSWD'] = allparams['MYSQL'].get('PASSWD', 'None')
     mysql['DATABASE'] = allparams['MYSQL'].get('DATABASE', 'None')
-    mysql['PROFILE'] = allparams['MYSQL'].get('PROFILE', 'MAIN')
     # add calib database
     calibdb = dict()
     calibdb['PATH'] = allparams['MYSQL'].get('CALIB_PATH', 'NULL')
     calibdb['NAME'] = allparams['MYSQL'].get('CALIB_NAME', 'NULL')
     calibdb['RESET'] = allparams['MYSQL'].get('CALIB_RESET', 'reset.calib.csv')
+    calibdb['PROFILE'] = allparams['MYSQL'].get('PROFILE', 'MAIN')
     mysql['CALIB'] = calibdb
     # add tellu database
     telludb = dict()
     telludb['PATH'] = allparams['MYSQL'].get('TELLU_PATH', 'NULL')
     telludb['NAME'] = allparams['MYSQL'].get('TELLU_NAME', 'NULL')
     telludb['RESET'] = allparams['MYSQL'].get('TELLU_RESET', 'NULL')
+    telludb['PROFILE'] = allparams['MYSQL'].get('PROFILE', 'MAIN')
     mysql['TELLU'] = telludb
     # add index database
     indexdb = dict()
     indexdb['PATH'] = allparams['MYSQL'].get('IDX_PATH', 'NULL')
     indexdb['NAME'] = allparams['MYSQL'].get('IDX_NAME', 'NULL')
     indexdb['RESET'] = allparams['MYSQL'].get('IDX_RESET', 'NULL')
+    indexdb['PROFILE'] = allparams['MYSQL'].get('PROFILE', 'MAIN')
     mysql['INDEX'] = indexdb
     # add log database
     logdb = dict()
     logdb['PATH'] = allparams['MYSQL'].get('LOG_PATH', 'NULL')
     logdb['NAME'] = allparams['MYSQL'].get('LOG_NAME', 'NULL')
     logdb['RESET'] = allparams['MYSQL'].get('LOG_RESET', 'NULL')
+    logdb['PROFILE'] = allparams['MYSQL'].get('PROFILE', 'MAIN')
     mysql['LOG'] = logdb
     # add object database
     objectdb = dict()
     objectdb['PATH'] = allparams['MYSQL'].get('OBJ_PATH', 'NULL')
     objectdb['NAME'] = allparams['MYSQL'].get('OBJ_NAME', 'NULL')
     objectdb['RESET'] = allparams['MYSQL'].get('OBJ_RESET', 'reset.object.csv')
+    objectdb['PROFILE'] = allparams['MYSQL'].get('PROFILE', 'MAIN')
     mysql['OBJECT'] = objectdb
     # add language database
     langdb = dict()
     langdb['PATH'] = allparams['MYSQL'].get('LANG_PATH', 'DRS_DATA_ASSETS')
     langdb['NAME'] = allparams['MYSQL'].get('LANG_PATH', 'lang.db')
     langdb['RESET'] = allparams['MYSQL'].get('LANG_PATH', 'NULL')
+    langdb['PROFILE'] = allparams['MYSQL'].get('PROFILE', 'MAIN')
     mysql['LANG'] = langdb
     # mysql['PARAMS_PATH'] = 'DRS_DATA_ASSETS'
     database_dict['MYSQL'] = mysql
