@@ -3157,11 +3157,18 @@ def all_line_storage(params, llprops, **kwargs):
     return llprops
 
 
-def generate_res_files(params, llprops, outfile, **kwargs):
+ResFile = Tuple[List[np.ndarray],
+                List[Union[drs_file.FitsHeader, drs_file.Header],
+                List[str]]]
+
+
+def generate_res_files(params: ParamDict, llprops: ParamDict,
+                       outfile: DrsFitsFile,
+                       resmap_size: Union[int, None] = None) -> ResFile:
     func_name = __NAME__ + '.generate_res_files()'
-    # get constants from p
-    resmap_size = pcheck(params, 'WAVE_HC_RESMAP_SIZE', 'resmap_size',
-                         kwargs, func_name, mapf='list', dtype=int)
+    # get constants from params
+    resmap_size = pcheck(params, 'WAVE_HC_RESMAP_SIZE', func=func_name,
+                         mapf='list', dtype=int, override=resmap_size)
     # get data from loc
     map_dvs = np.array(llprops['RES_MAP_DVS'])
     map_lines = np.array(llprops['RES_MAP_LINES'])
@@ -3224,7 +3231,7 @@ def generate_res_files(params, llprops, outfile, **kwargs):
             nfmt = 'Order{0:02d}_{1:02d}_Region{2:02d}'
             names.append(nfmt.format(*largs))
     # return data list and header list
-    return resdata, hdicts
+    return resdata, hdicts, names
 
 
 # =============================================================================
