@@ -4763,7 +4763,10 @@ class DrsOutFileExtension:
         # deep copy each parameter
         kwargs = dict()
         kwargs['name'] = deepcopy(self.name)
-        kwargs['drsfile'] = self.drsfile.newcopy()
+        if isinstance(self.drsfile, DrsInputFile):
+            kwargs['drsfile'] = self.drsfile.newcopy()
+        else:
+            kwargs['drsfile'] = deepcopy(self.drsfile)
         kwargs['pos'] = int(self.pos)
         kwargs['fiber'] = deepcopy(self.fiber)
         kwargs['kind'] = deepcopy(self.kind)
@@ -4863,6 +4866,8 @@ class DrsOutFileExtension:
         # ---------------------------------------------------------------------
         # define storage for values
         values = []
+        use_cols = []
+        use_units = []
         filenames = []
         clears = []
         # define storage for open tables (key = filename) so we don't open them
@@ -4951,11 +4956,15 @@ class DrsOutFileExtension:
                     eargs = [self.pos, self.name, filename, incolumns[col],
                              incolumns[0], len(values[0]), filenames[0],
                              incolumns[col], len(row_values), filenames[col]]
-                    WLOG(params, 'error', emsg.format(*eargs))
+                    WLOG(params, 'error', str(emsg).format(*eargs))
                     continue
             # -----------------------------------------------------------------
             # load column into values
             values.append(row_values)
+            # save columns
+            use_cols.append(outcolumns[col])
+            # save units
+            use_units.append(units[col])
             # save clear value for this col
             clears.append(all_clears[col])
         # ---------------------------------------------------------------------
@@ -4975,8 +4984,8 @@ class DrsOutFileExtension:
                 self.table_clear_files.append(filename)
         # ---------------------------------------------------------------------
         # make out table
-        outtable = drs_table.make_table(params, outcolumns, values,
-                                        units=units)
+        outtable = drs_table.make_table(params, use_cols, values,
+                                        units=use_units)
         # ---------------------------------------------------------------------
         # load into data
         self.data = outtable
