@@ -1240,7 +1240,10 @@ def load_config(instrument: Union[str, None] = None,
     _ = display_func(None, 'load_config', __NAME__)
     # deal with no instrument
     if instrument is None:
-        instrument = base.IPARAMS['INSTRUMENT']
+        if 'INSTRUMENT' in base.IPARAMS:
+            instrument = base.IPARAMS['INSTRUMENT']
+        else:
+            instrument = 'None'
     # check config cache
     if instrument in CONFIG_CACHE and cache:
         return CONFIG_CACHE[instrument].copy()
