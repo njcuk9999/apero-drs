@@ -25,7 +25,7 @@ from apero.science import velocity
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'cal_wave_master_nirps_ha.py'
+__NAME__ = 'cal_wave_master_spirou.py'
 __INSTRUMENT__ = 'SPIROU'
 # Get constants
 Constants = constants.load(__INSTRUMENT__)
@@ -41,7 +41,7 @@ ParamDict = constants.ParamDict
 TextEntry = lang.drs_text.TextEntry
 TextDict = lang.drs_text.TextDict
 # define extraction code to use
-EXTRACT_NAME = 'cal_extract_nirps_ha.py'
+EXTRACT_NAME = 'cal_extract_spirou.py'
 
 
 # =============================================================================
