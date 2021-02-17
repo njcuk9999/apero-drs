@@ -2445,7 +2445,7 @@ EXPMETER_TELLU_THRES.value = 0.95
 
 # Define the types of file allowed for drift measurement
 DRIFT_DPRTYPES = DRIFT_DPRTYPES.copy(__NAME__)
-DRIFT_DPRTYPES.value = 'FP_FP, OBJ_FP, DARK_FP'
+DRIFT_DPRTYPES.value = 'FP_FP, OBJ_FP, DARK_FP, FP_DARK'
 
 # Define the fiber dprtype allowed for drift measurement (only FP)
 DRIFT_DPR_FIBER_TYPE = DRIFT_DPR_FIBER_TYPE.copy(__NAME__)
