@@ -208,11 +208,11 @@ def __main__(recipe, params):
         # ==================================================================
         # generate the hc reference lines
         hcargs = dict(e2dsfile=hc_e2ds_file, wavemap=iwprops['WAVEMAP'])
-        hclines = wave2.get_master_lines(params, recipe, **hcargs)
+        hclines = wave2.get_wave_lines(params, recipe, **hcargs)
         # generate the fp reference lines
         fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=iwprops['WAVEMAP'],
                       cavity_poly=None)
-        fplines = wave2.get_master_lines(params, recipe, **fpargs)
+        fplines = wave2.get_wave_lines(params, recipe, **fpargs)
 
         # ----------------------------------------------------------
         # Write master line references to file
@@ -220,8 +220,32 @@ def __main__(recipe, params):
         # ----------------------------------------------------------
         wmargs = [hc_e2ds_file, fp_e2ds_file, hclines, fplines,
                   master_fiber, combine, rawhcfiles, rawfpfiles]
-        out = wave2.write_master_lines(params, recipe, *wmargs)
+        out = wave2.write_wave_lines(params, recipe, *wmargs)
         hclinefile, fplinefile = out
+
+        # ----------------------------------------------------------
+        # Calculate the wave solution for master fiber
+        # ----------------------------------------------------------
+        # master fiber + master wave setup
+        fit_cavity = True
+        fit_achromatic = True
+        # calculate wave solution
+        wprops = wave2.calc_wave_sol(params, hclines, fplines, fit_cavity,
+                                     fit_achromatic)
+
+        # TODO: regenerate wave lines for master fiber
+
+        # TODO: calculate wave solution for other fibers
+
+        # TODO: regenerate wave lines for other fibers
+
+        # TODO: calculate smart mask for fp ccf
+
+        # TODO: calculate resolution map
+
+        # TODO: calculate CCF on FP
+
+        # TODO: save files
 
     # ----------------------------------------------------------------------
     # End of main code
