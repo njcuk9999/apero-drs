@@ -133,6 +133,31 @@ __all__ = [
     'THERMAL_THRES_TAPAS', 'THERMAL_ENVELOPE_PERCENTILE',
     'THERMAL_PLOT_START_ORDER',
     # wave general constants
+    'WAVE_MASTER_FIBER', 'WAVE_GUESS_CAVITY_WIDTH', 'WAVE_WAVESOL_FIT_DEGREE',
+    'WAVE_CAVITY_FIT_DEGREE', 'WAVE_NSIG_CUT', 'WAVE_MIN_HC_LINES',
+    'WAVE_MAX_FP_COUNT_OFFSET', 'WAVE_FP_COUNT_OFFSET_ITRS',
+    'WAVE_CAVITY_FIT_ITRS1', 'WAVE_ORDER_OFFSET_ITRS',
+    'WAVE_MAX_ORDER_BULK_OFFSET', 'WAVE_CAVITY_CHANGE_ERR_THRES',
+    'WAVE_CAVITY_FIT_ITRS2', 'WAVE_HC_VEL_ODD_RATIO', 'WAVE_FWAVESOL_ITRS',
+    'WAVE_FIBER_COMP_PLOT_ORD',
+    # wave master reference constants
+    'WAVEREF_NSIG_MIN', 'WAVEREF_EDGE_WMAX', 'WAVEREF_HC_BOXSIZE',
+    'WAVEREF_HC_FIBTYPES', 'WAVEREF_FP_FIBTYPES', 'WAVEREF_FITDEG',
+    'WAVEREF_FP_NLOW', 'WAVEREF_FP_NHIGH', 'WAVEREF_FP_POLYINV',
+    # wave ccf constants
+    'WAVE_CCF_NOISE_SIGDET', 'WAVE_CCF_NOISE_BOXSIZE', 'WAVE_CCF_NOISE_THRES',
+    'WAVE_CCF_STEP', 'WAVE_CCF_WIDTH', 'WAVE_CCF_TARGET_RV',
+    'WAVE_CCF_DETNOISE', 'WAVE_CCF_MASK', 'WAVE_CCF_MASK_UNITS',
+    'WAVE_CCF_MASK_PATH', 'WAVE_CCF_MASK_FMT', 'WAVE_CCF_MASK_MIN_WEIGHT',
+    'WAVE_CCF_MASK_WIDTH', 'WAVE_CCF_N_ORD_MAX', 'WAVE_CCF_UPDATE_MASK',
+    'WAVE_CCF_SMART_MASK_WIDTH', 'WAVE_CCF_SMART_MASK_MINLAM',
+    'WAVE_CCF_SMART_MASK_MAXLAM', 'WAVE_CCF_SMART_MASK_TRIAL_NMIN',
+    'WAVE_CCF_SMART_MASK_TRIAL_NMAX', 'WAVE_CCF_SMART_MASK_DWAVE_THRES',
+    'WAVE_CCF_RV_THRES_QC', 'WAVE_CCF_MASK_NORMALIZATION',
+
+
+    # TODO: sort out these constants
+    # wave general constants
     'WAVE_MASTER_FIBER', 'WAVE_LINELIST_FILE', 'WAVE_LINELIST_FMT',
     'WAVE_LINELIST_AMPCOL', 'WAVE_LINELIST_COLS', 'WAVE_LINELIST_START',
     'WAVE_LINELIST_WAVECOL', 'WAVE_ALWAYS_EXTRACT', 'WAVE_EXTRACT_TYPE',
@@ -168,21 +193,6 @@ __all__ = [
     'WAVE_FP_LLFIT_MODE', 'WAVE_FP_LLDIF_MIN', 'WAVE_FP_LLDIF_MAX',
     'WAVE_FP_SIGCLIP', 'WAVE_FP_PLOT_MULTI_INIT', 'WAVE_FP_PLOT_MULTI_NBO',
     'WAVE_FP_DPRLIST',
-    # wave ccf constants
-    'WAVE_CCF_NOISE_SIGDET', 'WAVE_CCF_NOISE_BOXSIZE', 'WAVE_CCF_NOISE_THRES',
-    'WAVE_CCF_STEP', 'WAVE_CCF_WIDTH', 'WAVE_CCF_TARGET_RV',
-    'WAVE_CCF_DETNOISE', 'WAVE_CCF_MASK', 'WAVE_CCF_MASK_UNITS',
-    'WAVE_CCF_MASK_PATH', 'WAVE_CCF_MASK_FMT', 'WAVE_CCF_MASK_MIN_WEIGHT',
-    'WAVE_CCF_MASK_WIDTH', 'WAVE_CCF_N_ORD_MAX', 'WAVE_CCF_UPDATE_MASK',
-    'WAVE_CCF_SMART_MASK_WIDTH', 'WAVE_CCF_SMART_MASK_MINLAM',
-    'WAVE_CCF_SMART_MASK_MAXLAM', 'WAVE_CCF_SMART_MASK_TRIAL_NMIN',
-    'WAVE_CCF_SMART_MASK_TRIAL_NMAX', 'WAVE_CCF_SMART_MASK_DWAVE_THRES',
-    'WAVE_CCF_RV_THRES_QC', 'WAVE_CCF_MASK_NORMALIZATION',
-    # wave master reference constants
-    'WAVEREF_NSIG_MIN', 'WAVEREF_EDGE_WMAX', 'WAVEREF_HC_BOXSIZE',
-    'WAVEREF_HC_FIBTYPES', 'WAVEREF_FP_FIBTYPES', 'WAVEREF_FITDEG',
-    'WAVEREF_FP_NLOW', 'WAVEREF_FP_NHIGH', 'WAVEREF_FP_POLYINV',
-    'WAVE_FIBER_COMP_PLOT_ORD',
     # wave night constants
     'WAVE_NIGHT_NITERATIONS1', 'WAVE_NIGHT_NITERATIONS2', 'WAVE_NIGHT_DCAVITY',
     'WAVE_NIGHT_HC_SIGCLIP', 'WAVE_NIGHT_MED_ABS_DEV',
@@ -261,6 +271,10 @@ __all__ = [
     'PLOT_EXTRACT_SPECTRAL_ORDER1', 'PLOT_EXTRACT_SPECTRAL_ORDER2',
     'PLOT_EXTRACT_S1D', 'PLOT_EXTRACT_S1D_WEIGHT',
     # debug wave plot settings
+    'PLOT_WAVE_FIBER_COMPARISON', 'PLOT_WAVE_FIBER_COMP',
+    'PLOT_WAVE_WL_CAV', 'PLOT_WAVE_HC_DIFF_HIST', 'PLOT_WAVEREF_EXPECTED',
+
+    # debug wave plot settings
     'PLOT_WAVE_HC_GUESS', 'PLOT_WAVE_HC_TFIT_GRID',
     'PLOT_WAVE_HC_BRIGHTEST_LINES', 'PLOT_WAVE_HC_RESMAP',
     'PLOT_WAVE_LITTROW_CHECK1', 'PLOT_WAVE_LITTROW_EXTRAP1',
@@ -269,8 +283,7 @@ __all__ = [
     'PLOT_WAVE_FP_WAVE_RES', 'PLOT_WAVE_FP_M_X_RES', 'PLOT_WAVE_FP_LL_DIFF',
     'PLOT_WAVE_FP_IPT_CWID_1MHC', 'PLOT_WAVE_FP_IPT_CWID_LLHC',
     'PLOT_WAVE_FP_MULTI_ORDER', 'PLOT_WAVE_FP_SINGLE_ORDER',
-    'PLOT_WAVEREF_EXPECTED', 'PLOT_WAVENIGHT_ITERPLOT',
-    'PLOT_WAVENIGHT_HISTPLOT', 'PLOT_WAVE_FIBER_COMPARISON',
+    'PLOT_WAVENIGHT_ITERPLOT', 'PLOT_WAVENIGHT_HISTPLOT',
     # debug telluric plot settings
     'PLOT_TELLUP_WAVE_TRANS', 'PLOT_TELLUP_ABSO_SPEC',
     'PLOT_MKTELLU_WAVE_FLUX1', 'PLOT_MKTELLU_WAVE_FLUX2',
@@ -2106,15 +2119,379 @@ THERMAL_PLOT_START_ORDER = Const('THERMAL_PLOT_START_ORDER', value=None,
                                               'thermal debug plot'))
 
 # =============================================================================
-# CALIBRATION: WAVE GENERAL SETTINGS
+# CALIBRATION: WAVE EA GENERAL SETTINGS
 # =============================================================================
 cgroup = 'CALIBRATION: WAVE GENERAL SETTING'
 
 # Define wave master fiber (controller fiber)
 WAVE_MASTER_FIBER = Const('WAVE_MASTER_FIBER', value=None, dtype=str,
-                          source=__NAME__, group=cgroup, 
-                          description=('Define wave master fiber (controller '
-                                       'fiber)'))
+                          source=__NAME__, group=cgroup,
+                          description='Define wave master fiber (controller '
+                                      'fiber)')
+
+# Define the initial value of FP effective cavity width 2xd in nm
+WAVE_GUESS_CAVITY_WIDTH = Const('WAVE_GUESS_CAVITY_WIDTH', value=None,
+                                dtype=float, minimum=0,
+                                source=__NAME__, group=cgroup,
+                                description='Define the initial value of FP '
+                                            'effective cavity width 2xd in nm')
+
+# Define the wave solution polynomial fit degree
+WAVE_WAVESOL_FIT_DEGREE = Const('WAVE_WAVESOL_FIT_DEGREE', value=None,
+                                dtype=int, source=__NAME__, group=cgroup,
+                                minimum=0, maximum=20,
+                                description='Define the wave solution '
+                                            'polynomial fit degree')
+
+# Define the cavity fit polynomial fit degree for wave solution
+#   Note default: 9 for spirou  3 for NIRPS
+WAVE_CAVITY_FIT_DEGREE = Const('WAVE_CAVITY_FIT_DEGREE', value=None,
+                               dtype=int, source=__NAME__, group=cgroup,
+                               minimum=0, maximum=20,
+                               description='Define the cavity fit polynomial '
+                                           'fit degree for wave solution')
+
+# Define the number of sigmas to use in wave sol robust fits
+WAVE_NSIG_CUT = Const('WAVE_NSIG_CUT', value=None, dtype=int, source=__NAME__,
+                      group=cgroup, minimum=0, maximum=20,
+                      description='Define the number of sigmas to use in wave '
+                                  'sol robust fits')
+
+# Define the minimum number of HC lines in an order to try to find
+#   absolute numbering
+WAVE_MIN_HC_LINES = Const('WAVE_NSIG_CUT', value=None, dtype=int,
+                          source=__NAME__, group=cgroup, minimum=1,
+                          description='Define the minimum number of HC lines '
+                                      'in an order to try to find absolute '
+                                      'numbering')
+
+# Define the maximum offset in FP peaks to explore when FP peak counting
+WAVE_MAX_FP_COUNT_OFFSET = Const('WAVE_MAX_FP_COUNT_OFFSET', value=None,
+                                 dtype=int, source=__NAME__, group=cgroup,
+                                 minimum=1,
+                                 description='Define the maximum offset in FP '
+                                             'peaks to explore when FP peak '
+                                             'counting')
+
+# Define the number of iterations required to converge the FP peak counting
+#   offset loop
+WAVE_FP_COUNT_OFFSET_ITRS = Const('WAVE_FP_COUNT_OFFSET_ITRS', value=None,
+                                  dtype=int, source=__NAME__, group=cgroup,
+                                  minimum=1,
+                                  description='Define the number of iterations '
+                                              'required to converge the FP '
+                                              'peak counting offset loop')
+
+# Define the number of iterations required to converge on a cavity fit
+#  (first time this is done)
+WAVE_CAVITY_FIT_ITRS1 = Const('WAVE_CAVITY_FIT_ITRS1', value=None,
+                              dtype=int, source=__NAME__, group=cgroup,
+                              minimum=1,
+                              description='Define the number of iterations '
+                                          'required to converge on a cavity '
+                                          'fit (first time this is done)')
+
+# Define the number of iterations required to check order offset
+WAVE_ORDER_OFFSET_ITRS = Const('WAVE_ORDER_OFFSET_ITRS', value=None,
+                               dtype=int, source=__NAME__, group=cgroup,
+                               minimum=1,
+                               description='Define the number of iterations '
+                                           'required to check order offset')
+
+# Define the maximum bulk offset of lines in a order can have
+WAVE_MAX_ORDER_BULK_OFFSET = Const('WAVE_MAX_ORDER_BULK_OFFSET', value=None,
+                                   dtype=int, source=__NAME__, group=cgroup,
+                                   minimum=1,
+                                   description='Define the maximum bulk '
+                                               'offset of lines in a order '
+                                               'can have')
+
+# Define the required precision that the cavity width change must converge
+#   to (will be a fraction of the error)
+WAVE_CAVITY_CHANGE_ERR_THRES = Const('WAVE_CAVITY_CHANGE_ERR_THRES', value=None,
+                                     dtype=float, source=__NAME__, group=cgroup,
+                                     minimum=0,
+                                     description='Define the required precision'
+                                                 ' that the cavity width change'
+                                                 ' must converge  to (will be '
+                                                 'a fraction of the error)')
+
+# Define the number of iterations required to converge on a cavity fit
+#  (second time this is done)
+WAVE_CAVITY_FIT_ITRS2 = Const('WAVE_CAVITY_FIT_ITRS2', value=None,
+                              dtype=int, source=__NAME__, group=cgroup,
+                              minimum=1,
+                              description='Define the number of iterations '
+                                          'required to converge on a cavity '
+                                          'fit (second time this is done)')
+
+# Define the odd ratio that is used in generating the weighted mean
+WAVE_HC_VEL_ODD_RATIO = Const('WAVE_HC_VEL_ODD_RATIO', value=None,
+                              dtype=float, source=__NAME__, group=cgroup,
+                              minimum=0,
+                              description='Define the odd ratio that is used '
+                                          'in generating the weighted mean')
+
+# Define the number of iterations required to do the final fplines
+#   wave solution
+WAVE_FWAVESOL_ITRS = Const('WAVE_FWAVESOL_ITRS', value=None,
+                           dtype=int, source=__NAME__, group=cgroup,
+                           minimum=0,
+                           description='Define the number of iterations '
+                                       'required to do the final fplines '
+                                       'wave solution')
+
+# define the wave fiber comparison plot order number
+WAVE_FIBER_COMP_PLOT_ORD = Const('WAVE_FIBER_COMP_PLOT_ORD', value=None,
+                                 dtype=int, source=__NAME__, minimum=0,
+                                 group=cgroup,
+                                 description=('define the wave fiber '
+                                              'comparison plot order number'))
+
+# =============================================================================
+# CALIBRATION: WAVE LINES REFERENCE SETTINGS
+# =============================================================================
+cgroup = 'CALIBRATION: WAVE LINES REFERENCE SETTINGS'
+# min SNR to consider the line
+WAVEREF_NSIG_MIN = Const('WAVEREF_NSIG_MIN', value=None, dtype=int,
+                         source=__NAME__, minimum=0, group=cgroup,
+                         description='min SNR to consider the line')
+
+# minimum distance to the edge of the array to consider a line
+WAVEREF_EDGE_WMAX = Const('WAVEREF_EDGE_WMAX', value=None, dtype=int,
+                          source=__NAME__, minimum=0, group=cgroup,
+                          description=('minimum distance to the edge of the '
+                                       'array to consider a line'))
+
+# value in pixel (+/-) for the box size around each HC line to perform fit
+WAVEREF_HC_BOXSIZE = Const('WAVEREF_HC_BOXSIZE', value=None, dtype=int,
+                           source=__NAME__, minimum=0, group=cgroup,
+                           description=('value in pixel (+/-) for the box size '
+                                        'around each HC line to perform fit'))
+
+# get valid hc dprtypes (string list separated by commas)
+WAVEREF_HC_FIBTYPES = Const('WAVEREF_HC_FIBTYPES', value=None, dtype=str,
+                            source=__NAME__, group=cgroup,
+                            description=('get valid hc dprtypes (string list '
+                                         'separated by commas)'))
+
+# get valid fp dprtypes (string list separated by commas)
+WAVEREF_FP_FIBTYPES = Const('WAVEREF_HC_FIBTYPES', value=None, dtype=str,
+                            source=__NAME__, group=cgroup)
+
+# get the degree to fix master wavelength to in hc mode
+WAVEREF_FITDEG = Const('WAVEREF_FITDEG', value=None, dtype=int,
+                       source=__NAME__, minimum=1, group=cgroup,
+                       description=('get the degree to fix master wavelength '
+                                    'to in hc mode'))
+
+# define the lowest N for fp peaks
+WAVEREF_FP_NLOW = Const('WAVEREF_FP_NLOW', value=None, dtype=int,
+                        source=__NAME__, minimum=0, group=cgroup,
+                        description='define the lowest N for fp peaks')
+
+# define the highest N for fp peaks
+WAVEREF_FP_NHIGH = Const('WAVEREF_FP_NHIGH', value=None, dtype=int,
+                         source=__NAME__, minimum=1, group=cgroup,
+                         description='define the highest N for fp peaks')
+
+# define the number of iterations required to do the Fp polynomial inversion
+WAVEREF_FP_POLYINV = Const('WAVEREF_FP_POLYINV', value=None, dtype=int,
+                           source=__NAME__, minimum=1, group=cgroup,
+                           description=('define the number of iterations '
+                                        'required to do the Fp polynomial '
+                                        'inversion'))
+
+# =============================================================================
+# CALIBRATION: WAVE CCF SETTINGS
+# =============================================================================
+cgroup = 'CALIBRATION: WAVE CCF SETTINGS'
+#   The value of the noise for wave dv rms calculation
+#       snr = flux/sqrt(flux + noise^2)
+WAVE_CCF_NOISE_SIGDET = Const('WAVE_CCF_NOISE_SIGDET', value=None, dtype=float,
+                              source=__NAME__, minimum=0.0, group=cgroup,
+
+                              description=('The value of the noise for wave '
+                                           'dv rms calculation '
+                                           '\n\tsnr = flux/sqrt(flux + '
+                                           'noise^2)'))
+
+#   The size around a saturated pixel to flag as unusable for wave dv rms
+#      calculation
+WAVE_CCF_NOISE_BOXSIZE = Const('WAVE_CCF_NOISE_BOXSIZE', value=None, dtype=int,
+                               source=__NAME__, minimum=0.0, group=cgroup,
+                               description=('The size around a saturated pixel '
+                                            'to flag as unusable for wave dv '
+                                            'rms calculation'))
+
+#   The maximum flux for a good (unsaturated) pixel for wave dv rms calculation
+WAVE_CCF_NOISE_THRES = Const('WAVE_CCF_NOISE_THRES', value=None, dtype=float,
+                             source=__NAME__, minimum=0.0, group=cgroup,
+                             description=('The maximum flux for a good '
+                                          '(unsaturated) pixel for wave dv '
+                                          'rms calculation'))
+
+#   The CCF step size to use for the FP CCF
+WAVE_CCF_STEP = Const('WAVE_CCF_STEP', value=None, dtype=float, source=__NAME__,
+                      minimum=0.0, group=cgroup,
+                      description='The CCF step size to use for the FP CCF')
+
+#   The CCF width size to use for the FP CCF
+WAVE_CCF_WIDTH = Const('WAVE_CCF_WIDTH', value=None, dtype=float,
+                       source=__NAME__, minimum=0.0, group=cgroup,
+                       description='The CCF width size to use for the FP CCF')
+
+#   The target RV (CCF center) to use for the FP CCF
+WAVE_CCF_TARGET_RV = Const('WAVE_CCF_TARGET_RV', value=None, dtype=float,
+                           source=__NAME__, minimum=0.0, group=cgroup,
+                           description=('The target RV (CCF center) to use for '
+                                        'the FP CCF'))
+
+#  The detector noise to use for the FP CCF
+WAVE_CCF_DETNOISE = Const('WAVE_CCF_DETNOISE', value=None, dtype=float,
+                          source=__NAME__, minimum=0.0, group=cgroup,
+                          description=('The detector noise to use for the '
+                                       'FP CCF'))
+
+#  The filename of the CCF Mask to use for the FP CCF
+WAVE_CCF_MASK = Const('WAVE_CCF_MASK', value=None, dtype=str, source=__NAME__,
+                      group=cgroup,
+                      description=('The filename of the CCF Mask to use for '
+                                   'the FP CCF'))
+
+# Define the default CCF MASK normalisation mode for FP CCF
+#   options are:
+#     'None'         for no normalization
+#     'all'          for normalization across all orders
+#     'order'        for normalization for each order
+WAVE_CCF_MASK_NORMALIZATION = Const('WAVE_CCF_MASK_NORMALIZATION', value=None,
+                                    dtype=str, options=['None', 'all', 'order'],
+                                    source=__NAME__, group=cgroup,
+                                    description=('Define the default CCF MASK '
+                                                 'normalisation mode for FP CCF '
+                                                 '\noptions are: '
+                                                 '\n\tNone for no normalization '
+                                                 '\n\tall for normalization '
+                                                 'across all orders'
+                                                 '\n\torder for normalization '
+                                                 'for each order'))
+
+# Define the wavelength units for the mask for the FP CCF
+WAVE_CCF_MASK_UNITS = Const('WAVE_CCF_MASK_UNITS', value=None, dtype=str,
+                            source=__NAME__, group=cgroup,
+                            description=('Define the wavelength units for '
+                                         'the mask for the FP CCF'))
+
+# Define the ccf mask path the FP CCF
+WAVE_CCF_MASK_PATH = Const('WAVE_CCF_MASK_PATH', value=None, dtype=str,
+                           source=__NAME__, group=cgroup,
+
+                           description='Define the ccf mask path the FP CCF')
+
+# Define the CCF mask format (must be an astropy.table format)
+WAVE_CCF_MASK_FMT = Const('WAVE_CCF_MASK_FMT', value=None, dtype=str,
+                          source=__NAME__, group=cgroup,
+                          description=('Define the CCF mask format (must be an '
+                                       'astropy.table format)'))
+
+#  Define the weight of the CCF mask (if 1 force all weights equal)
+WAVE_CCF_MASK_MIN_WEIGHT = Const('WAVE_CCF_MASK_MIN_WEIGHT', value=None,
+                                 dtype=float, source=__NAME__, group=cgroup,
+                                 description=('Define the weight of the CCF '
+                                              'mask (if 1 force all weights '
+                                              'equal)'))
+
+#  Define the width of the template line (if 0 use natural)
+WAVE_CCF_MASK_WIDTH = Const('WAVE_CCF_MASK_WIDTH', value=None, dtype=float,
+                            source=__NAME__, group=cgroup,
+                            description=('Define the width of the template '
+                                         'line (if 0 use natural)'))
+
+#  Define the number of orders (from zero to ccf_num_orders_max) to use
+#      to calculate the FP CCF
+WAVE_CCF_N_ORD_MAX = Const('WAVE_CCF_N_ORD_MAX', value=None, dtype=int,
+                           source=__NAME__, minimum=1, group=cgroup,
+                           description=('Define the number of orders (from '
+                                        'zero to ccf_num_orders_max) to use '
+                                        'to calculate the FP CCF'))
+
+#  Define whether to regenerate the fp mask (WAVE_CCF_MASK) when we
+#      update the cavity width in the master wave solution recipe
+WAVE_CCF_UPDATE_MASK = Const('WAVE_CCF_UPDATE_MASK', value=None, dtype=bool,
+                             source=__NAME__, group=cgroup,
+                             description=('Define whether to regenerate the '
+                                          'fp mask (WAVE_CCF_MASK) when we '
+                                          'update the cavity width in the '
+                                          'master wave solution recipe'))
+
+# define the width of the lines in the smart mask [km/s]
+WAVE_CCF_SMART_MASK_WIDTH = Const('WAVE_CCF_SMART_MASK_WIDTH', value=None,
+                                  dtype=float, source=__NAME__,
+                                  minimum=0, group=cgroup,
+                                  description=('define the width of the lines '
+                                               'in the smart mask [km/s]'))
+
+# define the minimum wavelength for the smart mask [nm]
+WAVE_CCF_SMART_MASK_MINLAM = Const('WAVE_CCF_SMART_MASK_MINLAM', value=None,
+                                   dtype=float, source=__NAME__,
+                                   minimum=0, group=cgroup,
+                                   description=('define the minimum wavelength '
+                                                'for the smart mask [nm]'))
+
+# define the maximum wavelength for the smart mask [nm]
+WAVE_CCF_SMART_MASK_MAXLAM = Const('WAVE_CCF_SMART_MASK_MAXLAM', value=None,
+                                   dtype=float, source=__NAME__,
+                                   minimum=0, group=cgroup,
+                                   description=('define the maximum wavelength '
+                                                'for the smart mask [nm]'))
+
+# define a trial minimum FP N value (should be lower than true
+#     minimum FP N value)
+WAVE_CCF_SMART_MASK_TRIAL_NMIN = Const('WAVE_CCF_SMART_MASK_TRIAL_NMIN',
+                                       value=None, dtype=int, source=__NAME__,
+                                       minimum=0, group=cgroup,
+                                       description='define a trial minimum FP '
+                                                   'N value (should be lower '
+                                                   'than true minimum FP N '
+                                                   'value)')
+
+# define a trial maximum FP N value (should be higher than true
+#     maximum FP N value)
+WAVE_CCF_SMART_MASK_TRIAL_NMAX = Const('WAVE_CCF_SMART_MASK_TRIAL_NMAX',
+                                       value=None, dtype=int, source=__NAME__,
+                                       minimum=0, group=cgroup,
+                                       description=('define a trial maximum FP '
+                                                    'N value (should be higher '
+                                                    'than true maximum FP N '
+                                                    'value)'))
+
+# define the converges parameter for dwave in smart mask generation
+WAVE_CCF_SMART_MASK_DWAVE_THRES = Const('WAVE_CCF_SMART_MASK_TRIAL_NMAX',
+                                        value=None, dtype=float,
+                                        source=__NAME__, minimum=0,
+                                        group=cgroup,
+                                        description=('define the converges '
+                                                     'parameter for dwave '
+                                                     'in smart mask '
+                                                     'generation'))
+
+# define the quality control threshold from RV of CCF FP between master
+#    fiber and other fibers, above this limit fails QC [m/s]
+WAVE_CCF_RV_THRES_QC = Const('WAVE_CCF_RV_THRES_QC', value=None, dtype=float,
+                             source=__NAME__, minimum=0, group=cgroup,
+                             description=('define the quality control '
+                                          'threshold from RV of CCF FP between '
+                                          'master fiber and other fibers, '
+                                          'above this limit fails QC [m/s]'))
+
+
+
+# TODO: Sort out wave constants below here
+# =============================================================================
+# CALIBRATION: WAVE GENERAL SETTINGS
+# =============================================================================
+cgroup = 'CALIBRATION: WAVE GENERAL SETTING'
+
 
 # Define the line list file (located in the DRS_WAVE_DATA directory)
 WAVE_LINELIST_FILE = Const('WAVE_LINELIST_FILE', value=None, dtype=str,
@@ -2692,249 +3069,6 @@ WAVE_FP_DPRLIST = Const('WAVE_FP_DPRLIST', value=None, dtype=str,
                         source=__NAME__, group=cgroup, 
                         description=('define the dprtype for generating '
                                      'FPLINES (string list)'))
-
-# =============================================================================
-# CALIBRATION: WAVE CCF SETTINGS
-# =============================================================================
-cgroup = 'CALIBRATION: WAVE CCF SETTINGS'
-#   The value of the noise for wave dv rms calculation
-#       snr = flux/sqrt(flux + noise^2)
-WAVE_CCF_NOISE_SIGDET = Const('WAVE_CCF_NOISE_SIGDET', value=None, dtype=float,
-                              source=__NAME__, minimum=0.0, group=cgroup, 
-                              
-                              description=('The value of the noise for wave '
-                                           'dv rms calculation '
-                                           '\n\tsnr = flux/sqrt(flux + '
-                                           'noise^2)'))
-
-#   The size around a saturated pixel to flag as unusable for wave dv rms
-#      calculation
-WAVE_CCF_NOISE_BOXSIZE = Const('WAVE_CCF_NOISE_BOXSIZE', value=None, dtype=int,
-                               source=__NAME__, minimum=0.0, group=cgroup,
-                               description=('The size around a saturated pixel '
-                                            'to flag as unusable for wave dv '
-                                            'rms calculation'))
-
-#   The maximum flux for a good (unsaturated) pixel for wave dv rms calculation
-WAVE_CCF_NOISE_THRES = Const('WAVE_CCF_NOISE_THRES', value=None, dtype=float,
-                             source=__NAME__, minimum=0.0, group=cgroup,
-                             description=('The maximum flux for a good '
-                                          '(unsaturated) pixel for wave dv '
-                                          'rms calculation'))
-
-#   The CCF step size to use for the FP CCF
-WAVE_CCF_STEP = Const('WAVE_CCF_STEP', value=None, dtype=float, source=__NAME__,
-                      minimum=0.0, group=cgroup,
-                      description='The CCF step size to use for the FP CCF')
-
-#   The CCF width size to use for the FP CCF
-WAVE_CCF_WIDTH = Const('WAVE_CCF_WIDTH', value=None, dtype=float,
-                       source=__NAME__, minimum=0.0, group=cgroup,
-                       description='The CCF width size to use for the FP CCF')
-
-#   The target RV (CCF center) to use for the FP CCF
-WAVE_CCF_TARGET_RV = Const('WAVE_CCF_TARGET_RV', value=None, dtype=float,
-                           source=__NAME__, minimum=0.0, group=cgroup, 
-                           description=('The target RV (CCF center) to use for '
-                                        'the FP CCF'))
-
-#  The detector noise to use for the FP CCF
-WAVE_CCF_DETNOISE = Const('WAVE_CCF_DETNOISE', value=None, dtype=float,
-                          source=__NAME__, minimum=0.0, group=cgroup, 
-                          description=('The detector noise to use for the '
-                                       'FP CCF'))
-
-#  The filename of the CCF Mask to use for the FP CCF
-WAVE_CCF_MASK = Const('WAVE_CCF_MASK', value=None, dtype=str, source=__NAME__,
-                      group=cgroup, 
-                      description=('The filename of the CCF Mask to use for '
-                                   'the FP CCF'))
-
-# Define the default CCF MASK normalisation mode for FP CCF
-#   options are:
-#     'None'         for no normalization
-#     'all'          for normalization across all orders
-#     'order'        for normalization for each order
-WAVE_CCF_MASK_NORMALIZATION = Const('WAVE_CCF_MASK_NORMALIZATION', value=None,
-                                    dtype=str, options=['None', 'all', 'order'],
-                                    source=__NAME__, group=cgroup,
-                                    description=('Define the default CCF MASK '
-                                                 'normalisation mode for FP CCF '
-                                                 '\noptions are: '
-                                                 '\n\tNone for no normalization '
-                                                 '\n\tall for normalization '
-                                                 'across all orders'
-                                                 '\n\torder for normalization '
-                                                 'for each order'))
-
-# Define the wavelength units for the mask for the FP CCF
-WAVE_CCF_MASK_UNITS = Const('WAVE_CCF_MASK_UNITS', value=None, dtype=str,
-                            source=__NAME__, group=cgroup, 
-                            description=('Define the wavelength units for '
-                                         'the mask for the FP CCF'))
-
-# Define the ccf mask path the FP CCF
-WAVE_CCF_MASK_PATH = Const('WAVE_CCF_MASK_PATH', value=None, dtype=str,
-                           source=__NAME__, group=cgroup,
-
-                           description='Define the ccf mask path the FP CCF')
-
-# Define the CCF mask format (must be an astropy.table format)
-WAVE_CCF_MASK_FMT = Const('WAVE_CCF_MASK_FMT', value=None, dtype=str,
-                          source=__NAME__, group=cgroup,
-                          description=('Define the CCF mask format (must be an '
-                                       'astropy.table format)'))
-
-#  Define the weight of the CCF mask (if 1 force all weights equal)
-WAVE_CCF_MASK_MIN_WEIGHT = Const('WAVE_CCF_MASK_MIN_WEIGHT', value=None,
-                                 dtype=float, source=__NAME__, group=cgroup,
-                                 description=('Define the weight of the CCF '
-                                              'mask (if 1 force all weights '
-                                              'equal)'))
-
-#  Define the width of the template line (if 0 use natural)
-WAVE_CCF_MASK_WIDTH = Const('WAVE_CCF_MASK_WIDTH', value=None, dtype=float,
-                            source=__NAME__, group=cgroup,
-                            description=('Define the width of the template '
-                                         'line (if 0 use natural)'))
-
-#  Define the number of orders (from zero to ccf_num_orders_max) to use
-#      to calculate the FP CCF
-WAVE_CCF_N_ORD_MAX = Const('WAVE_CCF_N_ORD_MAX', value=None, dtype=int,
-                           source=__NAME__, minimum=1, group=cgroup,
-                           description=('Define the number of orders (from '
-                                        'zero to ccf_num_orders_max) to use '
-                                        'to calculate the FP CCF'))
-
-#  Define whether to regenerate the fp mask (WAVE_CCF_MASK) when we
-#      update the cavity width in the master wave solution recipe
-WAVE_CCF_UPDATE_MASK = Const('WAVE_CCF_UPDATE_MASK', value=None, dtype=bool,
-                             source=__NAME__, group=cgroup, 
-                             description=('Define whether to regenerate the '
-                                          'fp mask (WAVE_CCF_MASK) when we '
-                                          'update the cavity width in the '
-                                          'master wave solution recipe'))
-
-# define the width of the lines in the smart mask [km/s]
-WAVE_CCF_SMART_MASK_WIDTH = Const('WAVE_CCF_SMART_MASK_WIDTH', value=None,
-                                  dtype=float, source=__NAME__,
-                                  minimum=0, group=cgroup, 
-                                  description=('define the width of the lines '
-                                               'in the smart mask [km/s]'))
-
-# define the minimum wavelength for the smart mask [nm]
-WAVE_CCF_SMART_MASK_MINLAM = Const('WAVE_CCF_SMART_MASK_MINLAM', value=None,
-                                   dtype=float, source=__NAME__,
-                                   minimum=0, group=cgroup, 
-                                   description=('define the minimum wavelength '
-                                                'for the smart mask [nm]'))
-
-# define the maximum wavelength for the smart mask [nm]
-WAVE_CCF_SMART_MASK_MAXLAM = Const('WAVE_CCF_SMART_MASK_MAXLAM', value=None,
-                                   dtype=float, source=__NAME__,
-                                   minimum=0, group=cgroup, 
-                                   description=('define the maximum wavelength '
-                                                'for the smart mask [nm]'))
-
-# define a trial minimum FP N value (should be lower than true
-#     minimum FP N value)
-WAVE_CCF_SMART_MASK_TRIAL_NMIN = Const('WAVE_CCF_SMART_MASK_TRIAL_NMIN',
-                                       value=None, dtype=int, source=__NAME__,
-                                       minimum=0, group=cgroup,
-                                       description='define a trial minimum FP '
-                                                   'N value (should be lower '
-                                                   'than true minimum FP N '
-                                                   'value)')
-
-# define a trial maximum FP N value (should be higher than true
-#     maximum FP N value)
-WAVE_CCF_SMART_MASK_TRIAL_NMAX = Const('WAVE_CCF_SMART_MASK_TRIAL_NMAX',
-                                       value=None, dtype=int, source=__NAME__,
-                                       minimum=0, group=cgroup,
-                                       description=('define a trial maximum FP '
-                                                    'N value (should be higher '
-                                                    'than true maximum FP N '
-                                                    'value)'))
-
-# define the converges parameter for dwave in smart mask generation
-WAVE_CCF_SMART_MASK_DWAVE_THRES = Const('WAVE_CCF_SMART_MASK_TRIAL_NMAX',
-                                        value=None, dtype=float,
-                                        source=__NAME__, minimum=0,
-                                        group=cgroup,
-                                        description=('define the converges '
-                                                     'parameter for dwave '
-                                                     'in smart mask '
-                                                     'generation'))
-
-# define the quality control threshold from RV of CCF FP between master
-#    fiber and other fibers, above this limit fails QC [m/s]
-WAVE_CCF_RV_THRES_QC = Const('WAVE_CCF_RV_THRES_QC', value=None, dtype=float,
-                             source=__NAME__, minimum=0, group=cgroup, 
-                             description=('define the quality control '
-                                          'threshold from RV of CCF FP between '
-                                          'master fiber and other fibers, '
-                                          'above this limit fails QC [m/s]'))
-
-# =============================================================================
-# CALIBRATION: WAVE MASTER REFERENCE SETTINGS
-# =============================================================================
-cgroup = 'CALIBRATION: WAVE MASTER REFERENCE SETTINGS'
-# min SNR to consider the line
-WAVEREF_NSIG_MIN = Const('WAVEREF_NSIG_MIN', value=None, dtype=int,
-                         source=__NAME__, minimum=0, group=cgroup,
-                         description='min SNR to consider the line')
-
-# minimum distance to the edge of the array to consider a line
-WAVEREF_EDGE_WMAX = Const('WAVEREF_EDGE_WMAX', value=None, dtype=int,
-                          source=__NAME__, minimum=0, group=cgroup, 
-                          description=('minimum distance to the edge of the '
-                                       'array to consider a line'))
-
-# value in pixel (+/-) for the box size around each HC line to perform fit
-WAVEREF_HC_BOXSIZE = Const('WAVEREF_HC_BOXSIZE', value=None, dtype=int,
-                           source=__NAME__, minimum=0, group=cgroup, 
-                           description=('value in pixel (+/-) for the box size '
-                                        'around each HC line to perform fit'))
-
-# get valid hc dprtypes (string list separated by commas)
-WAVEREF_HC_FIBTYPES = Const('WAVEREF_HC_FIBTYPES', value=None, dtype=str,
-                            source=__NAME__, group=cgroup,
-                            description=('get valid hc dprtypes (string list '
-                                         'separated by commas)'))
-
-# get valid fp dprtypes (string list separated by commas)
-WAVEREF_FP_FIBTYPES = Const('WAVEREF_HC_FIBTYPES', value=None, dtype=str,
-                            source=__NAME__, group=cgroup)
-
-# get the degree to fix master wavelength to in hc mode
-WAVEREF_FITDEG = Const('WAVEREF_FITDEG', value=None, dtype=int,
-                       source=__NAME__, minimum=1, group=cgroup, 
-                       description=('get the degree to fix master wavelength '
-                                    'to in hc mode'))
-
-# define the lowest N for fp peaks
-WAVEREF_FP_NLOW = Const('WAVEREF_FP_NLOW', value=None, dtype=int,
-                        source=__NAME__, minimum=0, group=cgroup,
-                        description='define the lowest N for fp peaks')
-
-# define the highest N for fp peaks
-WAVEREF_FP_NHIGH = Const('WAVEREF_FP_NHIGH', value=None, dtype=int,
-                         source=__NAME__, minimum=1, group=cgroup,
-                         description='define the highest N for fp peaks')
-
-# define the number of iterations required to do the Fp polynomial inversion
-WAVEREF_FP_POLYINV = Const('WAVEREF_FP_POLYINV', value=None, dtype=int,
-                           source=__NAME__, minimum=1, group=cgroup, 
-                           description=('define the number of iterations '
-                                        'required to do the Fp polynomial '
-                                        'inversion'))
-
-# define the wave fiber comparison plot order number
-WAVE_FIBER_COMP_PLOT_ORD = Const('WAVE_FIBER_COMP_PLOT_ORD', value=None,
-                                 dtype=int, source=__NAME__, minimum=0,
-                                 group=cgroup, 
-                                 description=('define the wave fiber '
-                                              'comparison plot order number'))
 
 # =============================================================================
 # CALIBRATION: WAVE NIGHT SETTINGS
@@ -4102,6 +4236,36 @@ PLOT_EXTRACT_S1D_WEIGHT = Const('PLOT_EXTRACT_S1D_WEIGHT', value=False,
                                 description='turn on the extraction 1d spectrum'
                                             ' weight (before/after) debug plot')
 
+
+# turn on the wave line fiber comparison plot
+PLOT_WAVE_FIBER_COMPARISON = Const('PLOT_WAVE_FIBER_COMPARISON', value=False,
+                                   dtype=bool, source=__NAME__, user=True,
+                                   active=False, group=cgroup,
+                                   description='turn on the wave line fiber '
+                                               'comparison plot')
+
+# turn on the wave line fiber comparison plot
+PLOT_WAVE_FIBER_COMP = Const('PLOT_WAVE_FIBER_COMP', value=False,
+                             dtype=bool, source=__NAME__, user=True,
+                             active=False, group=cgroup,
+                             description='turn on the wave line fiber '
+                                         'comp plot')
+
+# turn on the wave length vs cavity width plot
+PLOT_WAVE_WL_CAV = Const('PLOT_WAVE_WL_CAV_PLOT', value=False,
+                         dtype=bool, source=__NAME__, user=True,
+                         active=False, group=cgroup,
+                         description='turn on the wave length vs cavity '
+                                     'width plot')
+
+# turn on the wave diff HC histograms plot
+PLOT_WAVE_HC_DIFF_HIST = Const('PLOT_WAVE_HC_DIFF_HIST', value=False,
+                         dtype=bool, source=__NAME__, user=True,
+                         active=False, group=cgroup,
+                         description='turn on the wave diff HC histograms plot')
+
+# TODO: WAVE plots need sorting
+
 # turn on the wave solution hc guess debug plot (in loop)
 PLOT_WAVE_HC_GUESS = Const('PLOT_WAVE_HC_GUESS', value=False,
                            dtype=bool, source=__NAME__, user=True, active=False,
@@ -4233,13 +4397,6 @@ PLOT_WAVEREF_EXPECTED = Const('PLOT_WAVEREF_EXPECTED', value=False,
                               description='turn on the wave lines hc/fp '
                                           'expected vs measured debug plot'
                                           '(will plot once for hc once for fp)')
-
-# turn on the wave line fiber comparison plot
-PLOT_WAVE_FIBER_COMPARISON = Const('PLOT_WAVE_FIBER_COMPARISON', value=False,
-                                   dtype=bool, source=__NAME__, user=True,
-                                   active=False, group=cgroup,
-                                   description='turn on the wave line fiber '
-                                               'comparison plot')
 
 # turn on the wave per night iteration debug plot
 PLOT_WAVENIGHT_ITERPLOT = Const('PLOT_WAVENIGHT_ITERPLOT', value=False,

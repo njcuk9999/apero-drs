@@ -357,12 +357,17 @@ def medfilt_1d(a: Union[list, np.ndarray],
 # must catch if we do not have the jit decorator and define our own
 if not HAS_NUMBA:
     def jit(**options):
+        # don't use options but they are required to match jit definition
+        _ = options
+
+        # define decorator
         def decorator(func):
+            # define wrapper
             def wrapper(*args, **kwargs):
                 return func(*args, **kwargs)
-
+            # return wrapper
             return wrapper
-
+        # return decorator
         return decorator
 
 
@@ -450,6 +455,51 @@ def lin_mini(vector: np.ndarray, sample: np.ndarray, mm: np.ndarray,
             for i in range(sz_sample[1]):
                 recon += amps[i] * sample[:, i]
         return amps, recon
+
+
+# Set "nopython" mode for best performance, equivalent to @nji
+@jit(nopython=True)
+def odd_ratio_mean(value: np.ndarray, error: np.ndarray,
+                   odd_ratio: float = 1e-4, nmax: int = 10):
+    """
+    Provide values and corresponding errors and compute a weighted mean
+
+    :param value: np.array (1D), value array
+    :param error: np.array (1D), uncertainties for value array
+    :param odd_ratio: float, the probability that the point is bad
+    :param nmax: int, number of iterations to pass through
+    :return:
+    """
+    # deal with NaNs in value or error
+    keep = np.isfinite(value) & np.isfinite(error)
+    # deal with no finite values
+    if np.sum(keep) == 0:
+        return np.nan, np.nan
+    # remove NaNs from arrays
+    value, error = value[keep], error[keep]
+    # take a first guess at the mean (the median)
+    guess = np.median(value)
+    # work out some values to speed up loop
+    error2 = error ** 2
+    # just if nmax == 0
+    odd_good = 1
+    # loop around until we do all required iterations
+    for _ in range(nmax):
+        # model points as gaussian
+        fit = np.exp(-0.5 * ((value - guess)**2 / error2))
+        # find the probability that a point is bad
+        odd_bad = odd_ratio / (fit + odd_ratio)
+        # find the probability that a point is good
+        odd_good = 1 - odd_bad
+        # calculate the weights based on the probability of being good
+        weights = odd_good / error2
+        # update the guess based on the weights
+        # TODO: Question: can there be NaNs here?
+        guess = np.sum(value * weights) / np.sum(weights)
+    # work out the bulk error
+    bulk_error = np.sqrt(1 / np.nansum(odd_good / error2))
+    # return the guess and bulk error
+    return guess, bulk_error
 
 
 # =============================================================================

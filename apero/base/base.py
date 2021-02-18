@@ -39,6 +39,10 @@ __release__ = 'alpha pre-release'
 __now__ = Time.now()
 AstropyTime = Time
 AstropyTimeDelta = TimeDelta
+# List of author names
+AUTHORS = dict()
+AUTHORS['NJC'] = 'Neil James Cook'
+AUTHORS['EA'] = 'Etienne Artigau'
 
 # Define yaml files
 INSTALL_YAML = 'install.yaml'

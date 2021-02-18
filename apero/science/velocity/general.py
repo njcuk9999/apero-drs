@@ -858,9 +858,9 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
                         func_name)
     mask_units = pcheck(params, 'WAVE_CCF_MASK_UNITS', 'mask_units', kwargs,
                         func_name)
-    image_pixel_size = pcheck(params, 'IMAGE_PIXEL_SIZE', 'image_pixel_size',
-                              kwargs, func_name)
     ccfnormmode = params['CCF_MASK_NORMALIZATION']
+    # we do not use infile
+    _ = infile
     # set the berv to zero (fp have no berv)
     berv = 0
     # the fit type must be set to 1 (for emission lines)
@@ -897,9 +897,6 @@ def compute_ccf_fp(params, recipe, infile, image, blaze, wavemap, fiber,
     # get the fit for the normalized average ccf
     mean_ccf_coeffs, mean_ccf_fit = fit_ccf(params, 'mean', props['RV_CCF'],
                                             mean_ccf, fit_type=fit_type)
-    # get the max cpp
-    # TODO: How do we calculate max_cpp and what is it? Do we need it?
-    # max_cpp = mp.nansum(props['CCF_MAX']) / mp.nansum(props['PIX_PASSED_ALL'])
     # get the RV value from the normalised average ccf fit center location
     ccf_rv = float(mean_ccf_coeffs[1])
     # get the contrast (ccf fit amplitude)
