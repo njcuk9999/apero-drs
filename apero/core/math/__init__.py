@@ -23,6 +23,8 @@ calculate_polyvals = general.calculate_polyvals
 
 ea_airy_function = general.ea_airy_function
 
+estimate_sigma = general.estimate_sigma
+
 fit_gauss_with_slope = gauss.fit_gauss_with_slope
 
 fit2dpoly = general.fit2dpoly
@@ -101,7 +103,6 @@ sinc = general.sinc
 
 sigfig = general.sigfig
 
-estimate_sigma = general.estimate_sigma
 
 # =============================================================================
 # End of code
