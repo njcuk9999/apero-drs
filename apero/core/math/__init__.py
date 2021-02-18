@@ -23,6 +23,8 @@ calculate_polyvals = general.calculate_polyvals
 
 ea_airy_function = general.ea_airy_function
 
+estimate_sigma = general.estimate_sigma
+
 fit_gauss_with_slope = gauss.fit_gauss_with_slope
 
 fit2dpoly = general.fit2dpoly
@@ -61,6 +63,8 @@ medbin = general.medbin
 
 medfilt_1d = fast.medfilt_1d
 
+median = fast.median
+
 nanargmax = fast.nanargmax
 
 nanargmin = fast.nanargmin
@@ -83,7 +87,7 @@ nansum = fast.nansum
 
 normal_fraction = general.normal_fraction
 
-median = fast.median
+odd_ratio_mean = fast.odd_ratio_mean
 
 linear_minimization = general.linear_minimization
 

@@ -742,6 +742,71 @@ cal_wave_master.group_column = 'REPROCESS_NIGHTCOL'
 recipes.append(cal_wave_master)
 
 # -----------------------------------------------------------------------------
+# cal_wave_master_ea
+# -----------------------------------------------------------------------------
+cal_wave_master_ea = DrsRecipe(__INSTRUMENT__)
+cal_wave_master_ea.name = 'cal_wave_master_ea_{0}.py'.format(INSTRUMENT_ALIAS)
+cal_wave_master_ea.shortname = 'WAVEMEA'
+cal_wave_master_ea.instrument = __INSTRUMENT__
+cal_wave_master_ea.inputtype = 'tmp'
+cal_wave_master_ea.outputtype = 'red'
+cal_wave_master_ea.extension = 'fits'
+cal_wave_master_ea.description = textentry('WAVE_DESC')
+cal_wave_master_ea.epilog = textentry('WAVE_EXAMPLE')
+cal_wave_master_ea.kind = 'recipe'
+cal_wave_master_ea.set_outputs(WAVE_E2DS=files.out_ext_e2dsff,
+                               WAVESOL_MASTER=files.out_wavem_fp,
+                               WAVEM_CAVITY=files.out_wavem_cavity,
+                               WAVEM_HCLIST=files.out_wave_hclist_master,
+                               WAVEM_FPLIST=files.out_wave_fplist_master,
+                               CCF_RV=files.out_ccf_fits)
+cal_wave_master_ea.set_debug_plots('WAVE_WL_CAV', 'WAVE_FIBER_COMPARISON',
+                                   'WAVE_FIBER_COMP', 'WAVE_HC_DIFF_HIST',
+                                   'WAVEREF_EXPECTED', 'EXTRACT_S1D',
+                                   'EXTRACT_S1D_WEIGHT',
+                                   'CCF_RV_FIT', 'CCF_RV_FIT_LOOP')
+cal_wave_master_ea.set_summary_plots('SUM_WAVE_FIBER_COMP')
+cal_wave_master_ea.set_arg(pos=0, **directory)
+cal_wave_master_ea.set_kwarg(name='--hcfiles', dtype='files',
+                            files=[files.pp_hc1_hc1],
+                            filelogic='exclusive', required=True,
+                            helpstr=textentry('WAVE_HCFILES_HELP'), default=[])
+cal_wave_master_ea.set_kwarg(name='--fpfiles', dtype='files',
+                            files=[files.pp_fp_fp],
+                            filelogic='exclusive', required=True,
+                            helpstr=textentry('WAVE_FPFILES_HELP'), default=[])
+cal_wave_master_ea.set_kwarg(**add_db)
+cal_wave_master_ea.set_kwarg(**badfile)
+cal_wave_master_ea.set_kwarg(**dobad)
+cal_wave_master_ea.set_kwarg(**backsub)
+cal_wave_master_ea.set_kwarg(**blazefile)
+cal_wave_master_ea.set_kwarg(default=True, **combine)
+cal_wave_master_ea.set_kwarg(**darkfile)
+cal_wave_master_ea.set_kwarg(**dodark)
+cal_wave_master_ea.set_kwarg(**fiber)
+cal_wave_master_ea.set_kwarg(**flipimage)
+cal_wave_master_ea.set_kwarg(**fluxunits)
+cal_wave_master_ea.set_kwarg(**locofile)
+cal_wave_master_ea.set_kwarg(**orderpfile)
+cal_wave_master_ea.set_kwarg(**plot)
+cal_wave_master_ea.set_kwarg(**resize)
+cal_wave_master_ea.set_kwarg(**shapexfile)
+cal_wave_master_ea.set_kwarg(**shapeyfile)
+cal_wave_master_ea.set_kwarg(**shapelfile)
+cal_wave_master_ea.set_kwarg(**wavefile)
+cal_wave_master_ea.set_kwarg(name='--forceext', dtype='bool',
+                          default_ref='WAVE_ALWAYS_EXTRACT',
+                          helpstr='WAVE_EXTRACT_HELP')
+# TODO: move helpstr to language database
+cal_wave_master_ea.set_kwarg(name='--cavityfile', dtype='file', default='None',
+                            files=[files.out_wavem_cavity],
+                            helpstr='Wave cavity file')
+cal_wave_master_ea.group_func = grouping.group_by_dirname
+cal_wave_master_ea.group_column = 'REPROCESS_NIGHTCOL'
+# add to recipe
+recipes.append(cal_wave_master_ea)
+
+# -----------------------------------------------------------------------------
 # cal_wave_night
 # -----------------------------------------------------------------------------
 cal_wave_night = DrsRecipe(__INSTRUMENT__)

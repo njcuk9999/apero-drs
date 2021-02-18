@@ -356,7 +356,8 @@ def add_calibs_to_header(outfile, props):
 
 
 # for: load_calib_file
-LoadCalibFileReturn = Union[# if return filename
+LoadCalibFileReturn = Union[None,
+                            # if return filename
                             str,
                             # if return_filename + return_source
                             Tuple[str, str],
@@ -492,6 +493,9 @@ def load_calib_file(params: ParamDict, key: str,
             return filename, source
         else:
             return filename
+    # deal with not return filename
+    elif filename is None and not required:
+        return None
     # -------------------------------------------------------------------------
     # need to deal with a list of files
     if isinstance(filename, list):
