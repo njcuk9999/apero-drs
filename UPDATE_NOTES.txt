@@ -77,6 +77,8 @@ Date: 2020-12-21
       width coefficients (as tables of order vs coefficient)
 
 - wave solution
+    - complete re-coding of wave solution - same idea reorganised
+    - no hc solution - just a single wave solution per order
     - added new fits table extension - the wave coefficients (as a table of
       order vs coefficient)
 
