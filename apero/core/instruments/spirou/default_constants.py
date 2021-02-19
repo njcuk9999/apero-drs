@@ -1268,7 +1268,7 @@ WAVEREF_FP_NHIGH = WAVEREF_FP_NHIGH.copy(__NAME__)
 WAVEREF_FP_NHIGH.value = 30000
 WAVEREF_FP_NHIGH.author = base.AUTHORS['EA']
 
-# define the number of iterations required to do the Fp polynomial inversion
+# define the number of iterations required to do the FP polynomial inversion
 WAVEREF_FP_POLYINV = WAVEREF_FP_POLYINV.copy(__NAME__)
 WAVEREF_FP_POLYINV.value = 4
 WAVEREF_FP_POLYINV.author = base.AUTHORS['EA']

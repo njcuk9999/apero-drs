@@ -2295,11 +2295,11 @@ WAVEREF_FP_NHIGH = Const('WAVEREF_FP_NHIGH', value=None, dtype=int,
                          source=__NAME__, minimum=1, group=cgroup,
                          description='define the highest N for fp peaks')
 
-# define the number of iterations required to do the Fp polynomial inversion
+# define the number of iterations required to do the FP polynomial inversion
 WAVEREF_FP_POLYINV = Const('WAVEREF_FP_POLYINV', value=None, dtype=int,
                            source=__NAME__, minimum=1, group=cgroup,
                            description=('define the number of iterations '
-                                        'required to do the Fp polynomial '
+                                        'required to do the FP polynomial '
                                         'inversion'))
 
 # =============================================================================

@@ -28,7 +28,7 @@ from apero.science import velocity
 # =============================================================================
 # Define variables
 # =============================================================================
-__NAME__ = 'cal_wave_master_spirou.py'
+__NAME__ = 'cal_wave_master_ea_spirou.py'
 __INSTRUMENT__ = 'SPIROU'
 __PACKAGE__ = base.__PACKAGE__
 __version__ = base.__version__
@@ -215,6 +215,7 @@ def __main__(recipe, params):
         wprops = iwprops
         # set cavity solution to None initially
         wprops['CAVITY'] = None
+        wprops.set_source('CAVITY', mainname)
         # TODO: Note in night solution we will load cavity file
         #  cavity = wave2.get_cavity_file(params, recipe, infile=fp_e2ds_file)
 
