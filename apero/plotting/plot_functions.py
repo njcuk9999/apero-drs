@@ -1781,6 +1781,8 @@ def plot_wave_wl_vs_cavity(plotter, graph, kwargs):
     # start the plotting process
     if not plotter.plotstart(graph):
         return
+    # get plt
+    plt = plotter.plt
     # ------------------------------------------------------------------
     # get the arguments from kwargs
     cavity = kwargs['cavity']
@@ -1793,15 +1795,14 @@ def plot_wave_wl_vs_cavity(plotter, graph, kwargs):
     res = fp_cavity2 - np.polyval(cavity, kwargs['fp_wave_ref_2'])
     # ------------------------------------------------------------------
     # set up plot
-    fig, frames = graph.set_figure(plotter, nrows=1, ncols=2,
-                                   sharex=True)
+    fig, frames = graph.set_figure(plotter, nrows=2, ncols=1, sharex=True)
     # ------------------------------------------------------------------
     # plot the fp vs cavity (before)
     frames[0].plot(fp_wave_meas1, fp_cavity1, color='r', marker='.',
-                   linestyle='None', alpha=0.4)
+                   linestyle='None', alpha=0.4, label='before')
     # plot the fp vs cavity (after)
     frames[0].plot(fp_wave_meas2, fp_cavity2, color='g', marker='.',
-                   linestyle='None', alpha=0.4)
+                   linestyle='None', alpha=0.4, label='after')
     # plot the residuals
     frames[1].plot(fp_wave_meas2, res, color='k', marker='.',
                    linestyle='None', alpha=0.5)
@@ -1809,9 +1810,10 @@ def plot_wave_wl_vs_cavity(plotter, graph, kwargs):
     # add legend
     frames[0].legend(loc=0)
     # add labels
-    frames[0].set(xlabel='Wavelength [nm]', ylabel='Cavity length [nm]',
-                  title='Comparison between guess and final cavity length fit')
+    frames[0].set(xlabel='Wavelength [nm]', ylabel='Cavity length [nm]')
     frames[1].set(xlabel='Wavelength [nm]', ylabel='Cavity length [nm]')
+
+    plt.suptitle('Comparison between guess and final cavity length fit')
     # ------------------------------------------------------------------
     # wrap up using plotter
     plotter.plotend(graph)

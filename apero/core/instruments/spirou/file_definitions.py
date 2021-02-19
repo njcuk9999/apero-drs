@@ -791,14 +791,14 @@ calib_file.addset(out_leak_master)
 # wave files (master) ea
 # -----------------------------------------------------------------------------
 # wave solution using hc + fp
-out_wavem_fp = drs_finput('WAVESOL_MASTER',
-                          hkeys=dict(KW_OUTPUT='WAVESOL_MASTER'),
-                          fibers=['AB', 'A', 'B', 'C'],
-                          filetype='.fits',
-                          intype=[out_ext_e2ds, out_ext_e2dsff],
-                          suffix='_wavesol_master_',
-                          dbname='calibration', dbkey='WAVESOL_MASTER',
-                          outfunc=out.calib_file)
+out_wavem_sol = drs_finput('WAVESOL_MASTER',
+                           hkeys=dict(KW_OUTPUT='WAVESOL_MASTER'),
+                           fibers=['AB', 'A', 'B', 'C'],
+                           filetype='.fits',
+                           intype=[out_ext_e2ds, out_ext_e2dsff],
+                           suffix='_wavesol_master_',
+                           dbname='calibration', dbkey='WAVESOL_MASTER',
+                           outfunc=out.calib_file)
 
 # hc line file from master
 out_wave_hclist_master = drs_finput('WAVE_HCLIST_MASTER',
@@ -840,12 +840,12 @@ out_wave_master = drs_finput('WAVEM_D', hkeys=dict(KW_OUTPUT='WAVEM_SOL'),
                              outfunc=out.calib_file)
 
 # add wave outputs to output fileset
-out_file.addset(out_wavem_fp)
+out_file.addset(out_wavem_sol)
 out_file.addset(out_wave_hclist_master)
 out_file.addset(out_wave_fplist_master)
 out_file.addset(out_wavem_cavity)
 out_file.addset(out_wave_master)
-calib_file.addset(out_wavem_fp)
+calib_file.addset(out_wavem_sol)
 calib_file.addset(out_wave_hclist_master)
 calib_file.addset(out_wave_fplist_master)
 calib_file.addset(out_wavem_cavity)
@@ -854,6 +854,17 @@ calib_file.addset(out_wave_master)
 # -----------------------------------------------------------------------------
 # wave files (master) old
 # -----------------------------------------------------------------------------
+# old wave fp
+out_wavem_fp = drs_finput('WAVEM_FP',
+                          hkeys=dict(KW_OUTPUT='WAVEM_FP'),
+                          fibers=['AB', 'A', 'B', 'C'],
+                          filetype='.fits',
+                          intype=[out_ext_e2ds, out_ext_e2dsff],
+                          suffix='_wavem_fp',
+                          dbname='calibration', dbkey='WAVESOL_MASTER',
+                          outfunc=out.calib_file)
+
+
 # wave solution using hc only
 out_wavem_hc = drs_finput('WAVEM_HC', hkeys=dict(KW_OUTPUT='WAVEM_HC'),
                           fibers=['AB', 'A', 'B', 'C'],
@@ -894,10 +905,12 @@ out_wavem_ll_table = drs_input('WAVE_FPLLTABL',
 
 
 # add wave outputs to output fileset
+out_file.addset(out_wavem_fp)
 out_file.addset(out_wavem_hc)
 out_file.addset(out_wavem_hcres)
 out_file.addset(out_wavem_res_table)
 out_file.addset(out_wavem_ll_table)
+calib_file.addset(out_wavem_fp)
 calib_file.addset(out_wavem_hc)
 
 # -----------------------------------------------------------------------------
