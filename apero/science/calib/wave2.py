@@ -1208,7 +1208,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
                                   cavity_fit_degree, nsig_cut)
     # -------------------------------------------------------------------------
     # save some information for plotting later
-    fp_peak_num_2 = np.array(fpl_pix_meas)
+    fp_peak_num_2 = np.array(fpl_peak_num)
     fp_wave_meas_2 = np.array(fpl_wave_meas)
     fp_wave_ref_2 = np.array(fpl_wave_ref)
     # -------------------------------------------------------------------------
@@ -1238,13 +1238,33 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     #    zero velocity error.
 
     # loop until
-    while mean2error > cavity_change_err_thres:
+    # TODO: PROBLEM: This currently diverges
+    #	 Mean HC position  -0.20+-0.89 m/s
+    #	 Mean HC position  -0.42+-0.89 m/s
+    #	 Mean HC position  -0.89+-0.89 m/s
+    #	 Mean HC position  -1.90+-0.89 m/s
+    #	 Mean HC position  -4.04+-0.88 m/s
+    #	 Mean HC position  -8.61+-0.89 m/s
+    #	 Mean HC position -18.30+-0.88 m/s
+    #	 Mean HC position -38.84+-0.95 m/s
+    #	 Mean HC position -79.57+-1.17 m/s
+    #	 Mean HC position -148.08+-1.68 m/s
+    #	 Mean HC position -236.02+-2.41 m/s
+    #	 Mean HC position -333.31+-3.24 m/s
+    #	 Mean HC position -435.13+-4.15 m/s
+    #	 Mean HC position -538.93+-5.09 m/s
+    #	 Mean HC position -643.93+-6.04 m/s
+    #	 Mean HC position -749.71+-7.01 m/s
+    #	 Mean HC position -855.97+-7.97 m/s
+    #	 Mean HC position -962.71+-8.92 m/s
+    #	 Mean HC position -1069.99+-9.90 m/s
+    #	 Mean HC position -1177.40+-10.89 m/s
+    count = 0
+    while mean2error > cavity_change_err_thres and count < 20:
         # get the proper cavity length from the cavity polynomial
         for _ in range(cavity_fit_iterations2):
-            # get width
-            tmp = fpl_wave_ref / fpl_peak_num
             # update wave ref based on the fit
-            fpl_wave_ref = np.polyval(cavity, tmp)
+            fpl_wave_ref = np.polyval(cavity, fpl_wave_ref) / fpl_peak_num
         # ---------------------------------------------------------------------
         # get the wavelength solution for the order and the HC line position
         #     that it implies. The diff between the HC position found here and
@@ -1257,19 +1277,17 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             good_hc = hcl_order == order_num
             # get the fplines for this order
             ordfp_pix_meas = fpl_pix_meas[good_fp]
-            ordfp_wave_ref = fpl_peak_num[good_fp]
+            ordfp_wave_ref = fpl_wave_ref[good_fp]
             # mask the hclines
             ordhc_pix_meas = hcl_pix_meas[good_hc]
             # get wave fit
             wave_fit, _ = mp.robust_polyfit(ordfp_pix_meas, ordfp_wave_ref,
                                             wavesol_fit_degree, nsig_cut)
             # update wave measure from this fit
-            ordfp_wave_meas = np.polyval(wave_fit, ordfp_pix_meas)
-            fpl_wave_meas[good_fp] = ordfp_wave_meas
+            fpl_wave_meas[good_fp] = np.polyval(wave_fit, ordfp_pix_meas)
             # if we have some HC lines update these too
             if np.sum(good_hc) > 0:
-                ordhc_wave_meas = np.polyval(wave_fit, ordhc_pix_meas)
-                hcl_wave_meas[good_fp] = ordhc_wave_meas
+                hcl_wave_meas[good_hc] = np.polyval(wave_fit, ordhc_pix_meas)
         # ---------------------------------------------------------------------
         # in velocity, diff between measured and catalog HC line positions
         res = hcl_wave_meas / hcl_wave_ref
@@ -1294,9 +1312,11 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
             mean2error = 0.0
         # ---------------------------------------------------------------------
         # TODO: move to language database
-        msg = 'Mean HC position {0:6.2f}+-{1:.2f} m/s'
-        margs = [mean_hc_vel, err_hc_vel]
+        msg = 'Iteration {0}: Mean HC position {1:6.2f}+-{2:.2f} m/s'
+        margs = [count + 1, mean_hc_vel, err_hc_vel]
         WLOG(params, '', msg.format(*margs))
+
+        count += 1
     # -------------------------------------------------------------------------
     # TODO: move to language database
     msg = 'Change in cavity length {0:6.2f} nm'
