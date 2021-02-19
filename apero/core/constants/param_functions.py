@@ -99,6 +99,8 @@ class ParamDict(base_class.CaseInsensitiveDict):
         self.source_history = base_class.ListCaseINSDict()
         # storage for the Const/Keyword instances
         self.instances = constant_functions.CKCaseINSDict()
+        # storage for used constants (get or set)
+        self.used = []
         # the print format
         self.pfmt = '\t{0:30s}{1:45s} # {2}'
         # the print format for list items
@@ -142,6 +144,9 @@ class ParamDict(base_class.CaseInsensitiveDict):
         """
         # set function name
         func_name = display_func(None, '__getitem__', __NAME__, self.class_name)
+        # store:
+        if key in self.keys() and key not in self.used:
+            self.used.append(key)
         # try to get item from super
         try:
             return super(ParamDict, self).__getitem__(key)
@@ -699,7 +704,7 @@ class ParamDict(base_class.CaseInsensitiveDict):
         # return keys
         return return_keys
 
-    def copy(self) -> 'ParamDict':
+    def copy(self, used=False) -> 'ParamDict':
         """
         Copy a parameter dictionary (deep copy parameters)
 
@@ -717,7 +722,7 @@ class ParamDict(base_class.CaseInsensitiveDict):
             value = values[k_it]
             # try to deep copy parameter
             if isinstance(value, ParamDict):
-                pp[key] = value.copy()
+                pp[key] = value.copy(used)
             else:
                 # noinspection PyBroadException
                 try:
