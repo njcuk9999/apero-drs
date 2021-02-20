@@ -100,7 +100,7 @@ class ParamDict(base_class.CaseInsensitiveDict):
         # storage for the Const/Keyword instances
         self.instances = constant_functions.CKCaseINSDict()
         # storage for used constants (get or set)
-        self.used = []
+        self.used = base_class.CaseInsensitiveDict()
         # the print format
         self.pfmt = '\t{0:30s}{1:45s} # {2}'
         # the print format for list items
@@ -145,8 +145,11 @@ class ParamDict(base_class.CaseInsensitiveDict):
         # set function name
         func_name = display_func(None, '__getitem__', __NAME__, self.class_name)
         # store:
-        if key in self.keys() and key not in self.used:
-            self.used.append(key)
+        if key in self.keys():
+            if key not in self.used:
+                self.used[key] = 0
+            else:
+                self.used[key] += 1
         # try to get item from super
         try:
             return super(ParamDict, self).__getitem__(key)
@@ -249,7 +252,8 @@ class ParamDict(base_class.CaseInsensitiveDict):
 
     def set(self, key: str, value: Any,
             source: Union[None, str] = None,
-            instance: Union[None, Const, Keyword] = None):
+            instance: Union[None, Const, Keyword] = None,
+            record_use: bool = True):
         """
         Set an item even if params is locked
 
@@ -257,6 +261,7 @@ class ParamDict(base_class.CaseInsensitiveDict):
         :param value: object, the value of the key to set
         :param source: str, the source of the value/key to set
         :param instance: object, the instance of the value/key to set
+        :param record_use: bool, if True record use (in self.used)
 
         :type key: str
         :type source: str
@@ -266,6 +271,12 @@ class ParamDict(base_class.CaseInsensitiveDict):
         """
         # set function name
         _ = display_func(None, 'set', __NAME__, self.class_name)
+        # update used
+        if key in self.keys() and used:
+            if key not in self.used:
+                self.used[key] = 0
+            else:
+                self.used[key] += 1
         # if we dont have the key in sources set it regardless
         if key not in self.sources:
             self.sources[key] = source
@@ -704,7 +715,7 @@ class ParamDict(base_class.CaseInsensitiveDict):
         # return keys
         return return_keys
 
-    def copy(self, used=False) -> 'ParamDict':
+    def copy(self) -> 'ParamDict':
         """
         Copy a parameter dictionary (deep copy parameters)
 
@@ -722,7 +733,7 @@ class ParamDict(base_class.CaseInsensitiveDict):
             value = values[k_it]
             # try to deep copy parameter
             if isinstance(value, ParamDict):
-                pp[key] = value.copy(used)
+                pp[key] = value.copy()
             else:
                 # noinspection PyBroadException
                 try:
@@ -744,6 +755,9 @@ class ParamDict(base_class.CaseInsensitiveDict):
                 pp.set_instance(key, self.instances[key])
             else:
                 pp.set_instance(key, None)
+            # copy used (but take off the one above for accessing it here)
+            if key in self.used:
+                pp.used[key] = int(self.used[key]) - 1
         # return new param dict filled
         return pp
 
@@ -778,8 +792,9 @@ class ParamDict(base_class.CaseInsensitiveDict):
                 kinst = paramdict.instances[key]
             else:
                 kinst = None
-            # add to self
-            self.set(key, paramdict[key], ksource, kinst)
+            # add to self (but don't record this as a use)
+            self.set(key, paramdict[key], ksource, kinst,
+                     record_use=False)
 
     def _string_print(self) -> str:
         """
