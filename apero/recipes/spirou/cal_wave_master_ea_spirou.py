@@ -231,6 +231,18 @@ def __main__(recipe, params):
             fpargs = dict(e2dsfile=fp_e2ds_file, wavemap=wprops['WAVEMAP'],
                           cavity_poly=wprops['CAVITY'], iteration=iteration + 1)
             fplines = wave2.calc_wave_lines(params, recipe, **fpargs)
+
+            # -----------------------------------------------------------------
+            # TODO: Remove after testing: Save the hclines and fplines from
+            #       first calculation
+            # Write master line references to file
+            #   master fiber hclines and fplines for all fibers!
+            # -----------------------------------------------------------------
+            wmargs = [hc_e2ds_file, fp_e2ds_file, hclines, fplines,
+                      master_fiber, combine, rawhcfiles, rawfpfiles]
+            _ = wave2.write_wave_lines(params, recipe, *wmargs,
+                                       kind='BEFORE')
+
             # -----------------------------------------------------------------
             # Calculate the wave solution for master fiber
             # master fiber + master wave setup

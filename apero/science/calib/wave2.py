@@ -1783,7 +1783,9 @@ def add_wave_keys(params, infile, props):
 def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
                      hce2ds: DrsFitsFile, fpe2ds: DrsFitsFile,
                      wavefile: DrsFitsFile, hclines: Table,
-                     fplines: Table, fiber: str):
+                     fplines: Table, fiber: str,
+                     #TODO: REMOVE LATER
+                     kind=None):
     """
     Write the HC and FP lines table to file
 
@@ -1843,6 +1845,13 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
     # log that we are saving rotated image
     wargs = [fiber, fpfile.filename]
     WLOG(params, '', textentry('40-017-00039', args=wargs))
+
+    # TODO: remove later
+    if kind is not None:
+        path = fpfile.filename.split(fpfile.basename)[0]
+        fpfile.basename = '{0}_{1}'.format(kind, fpfile.basename)
+        fpfile.filename = os.path.join(path, fpfile.basename)
+
     # write image to file
     fpfile.write_file()
     # add to output files (for indexing)
