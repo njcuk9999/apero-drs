@@ -25,8 +25,6 @@ from typing import Any, Union, Tuple
 
 from apero import lang
 from apero.base import base
-from apero.core.core import drs_break
-from apero.core.core import drs_exceptions
 
 
 # =============================================================================
@@ -188,10 +186,9 @@ class Colors:
         return start + message + self.endc
 
 
-def display_func(params: Any = None, name: Union[str, None] = None,
+def display_func(name: Union[str, None] = None,
                  program: Union[str, None] = None,
-                 class_name: Union[str, None] = None,
-                 wlog: Any = None) -> str:
+                 class_name: Union[str, None] = None) -> str:
     """
     Start of function setup. Returns a properly constructed string
     representation of where the function is.
@@ -205,8 +202,6 @@ def display_func(params: Any = None, name: Union[str, None] = None,
     "name" matched the breakfunc - will add a break point at the start of
     function where display_func was used
 
-    :param params: None or ParamDict (containing "INPUTS" for breakfunc/
-                   breakpoint)
     :param name: str or None - if set is the name of the function
                  (i.e. def myfunction   name = "myfunction")
                  if unset, set to "Unknown"
@@ -214,16 +209,10 @@ def display_func(params: Any = None, name: Union[str, None] = None,
                     in, if unset not added to the output string
     :param class_name: str or None, the class name, if unset not added
                        (i.e. class myclass   class_name = "myclass"
-    :param wlog: None or drs_log.wlog logger - prints log messages to wlog or
-                 if not set uses drs_exceptions.wlogbasic to print log message
+
     :returns: a properly constructed string representation of where the
               function is.
     """
-    # set function name (cannot break here --> no access to inputs)
-    func_name = str(__NAME__) + '.display_func()'
-    # deal with no wlog defined
-    if wlog is None:
-        wlog = drs_exceptions.wlogbasic
     # start the string function
     strfunc = ''
     # deal with no file name
@@ -241,74 +230,7 @@ def display_func(params: Any = None, name: Union[str, None] = None,
     if not strfunc.endswith('()'):
         strfunc += '()'
     # ----------------------------------------------------------------------
-    # deal with adding a break point
-    if params is not None:
-        if 'INPUTS' in params and 'BREAKFUNC' in params['INPUTS']:
-            # get break function
-            breakfunc = params['INPUTS']['BREAKFUNC']
-            # only deal with break function if it is set
-            if breakfunc not in [None, 'None', '']:
-                # get function name (without ending)
-                funcname = strfunc.replace('()', '')
-                # if function name endwith break function then we break here
-                if funcname.endswith(breakfunc):
-                    # log we are breaking due to break function
-                    wargs = [breakfunc]
-                    msg = textentry('10-005-00004', args=wargs)
-                    wlog(params, 'warning', msg)
-                    drs_break.break_point(params, allow=True, level=3)
-    # ----------------------------------------------------------------------
-    # deal with no params (do not log)
-    if params is None:
-        return strfunc
-    # deal with no debug mode
-    if 'DRS_DEBUG' not in params or 'DEBUG_MODE_FUNC_PRINT' not in params:
-        return strfunc
-    # deal with debug level too low (just return here)
-    if params['DRS_DEBUG'] < params['DEBUG_MODE_FUNC_PRINT']:
-        return strfunc
-    # ----------------------------------------------------------------------
-    # below here just for debug mode func print
-    # ----------------------------------------------------------------------
-    # add the string function to param dict
-    if 'DEBUG_FUNC_LIST' not in params:
-        params.set('DEBUG_FUNC_LIST', value=[None], source=func_name)
-    if 'DEBUG_FUNC_DICT' not in params:
-        params.set('DEBUG_FUNC_DICT', value=dict(), source=func_name)
-    # append to list
-    params['DEBUG_FUNC_LIST'].append(strfunc)
-    # update debug dictionary
-    if strfunc in params['DEBUG_FUNC_DICT']:
-        params['DEBUG_FUNC_DICT'][strfunc] += 1
-    else:
-        params['DEBUG_FUNC_DICT'][strfunc] = 1
-    # get count
-    count = params['DEBUG_FUNC_DICT'][strfunc]
-    # find previous entry
-    previous = params['DEBUG_FUNC_LIST'][-2]
-    # find out whether we have the same entry
-    same_entry = previous == strfunc
-    # add count
-    strfunc += ' (N={0})'.format(count)
-    # if we don't have a list then just print
-    if params['DEBUG_FUNC_LIST'][-2] is None:
-        # deal with textentry
-        msg = textentry('90-000-00004', args=[strfunc])
-        # log in func
-        wlog(params, 'debug', msg, wrap=False)
-    elif not same_entry:
-        # get previous set of counts
-        previous_count = _get_prev_count(params, previous)
-        # only log if count is greater than 1
-        if previous_count > 1:
-            # log how many of previous there were
-            msg = textentry('90-000-00005', args=[previous_count])
-            wlog(params, 'debug', msg)
-        # log a debug
-        msg = textentry('90-000-00004', args=[strfunc])
-        # log in func
-        wlog(params, 'debug', msg, wrap=False)
-    # return func_name
+    # return formatted function name
     return strfunc
 
 
@@ -327,7 +249,7 @@ def _get_prev_count(params: Any, previous: str) -> int:
     :return: number of times function occurs in DEBUG_FUNC_LIST
     """
     # set function name (cannot break here --> no access to inputs)
-    _ = display_func(None, '._get_prev_count()', __NAME__)
+    _ = display_func('._get_prev_count()', __NAME__)
     # deal with no params
     if params is None:
         return 0
@@ -361,7 +283,7 @@ def get_uncommon_path(path1: Union[Path, str], path2: Union[Path, str]) -> str:
     :return uncommon_path: string, the uncommon path between path1 and path2
     """
     # set function name (cannot break here --> no access to params)
-    _ = display_func(None, 'get_uncommon_path', __NAME__)
+    _ = display_func('get_uncommon_path', __NAME__)
     # may need to switch paths if len(path2) > len(path1)
     if len(str(path2)) > len(str(path1)):
         _path1 = str(path2)
@@ -387,7 +309,7 @@ def unix_char_code() -> Tuple[float, str, str]:
              set of 4 characters
     """
     # set function name
-    _ = display_func(None, 'unix_char_code', __NAME__)
+    _ = display_func('unix_char_code', __NAME__)
     # we need a random seed
     np.random.seed(random.randint(1, 2 ** 30))
     # generate a random number (in case time is too similar)

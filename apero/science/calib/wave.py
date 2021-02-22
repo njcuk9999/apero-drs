@@ -78,7 +78,7 @@ def get_masterwave_filename(params, fiber, database=None):
     :return:
     """
     # set function name
-    func_name = display_func(params, 'get_masterwave_filename', __NAME__)
+    func_name = display_func('get_masterwave_filename', __NAME__)
     # get pseudo constants
     pconst = constants.pload()
     # deal with fibers that we don't have
@@ -204,7 +204,7 @@ def get_wave_solution_from_wavefile(params, recipe, usefiber, inwavefile,
 
 def get_wave_solution_from_inheader(params, recipe, infile, header, usefiber):
     # set function
-    func_name = display_func(params, 'get_wave_solution_from_inheader',
+    func_name = display_func('get_wave_solution_from_inheader',
                              __NAME__)
     # ------------------------------------------------------------------------
     # type 1: just from header
@@ -292,7 +292,7 @@ def get_wavesolution(params, recipe, header=None, infile=None, fiber=None,
     :return:
     """
     # set function name
-    func_name = display_func(params, 'get_wavesolution', __NAME__)
+    func_name = display_func('get_wavesolution', __NAME__)
     # get parameters from params/kwargs
     inwavefile = kwargs.get('filename', None)
     force = pcheck(params, 'CALIB_DB_FORCE_WAVESOL', 'force', kwargs,
@@ -446,7 +446,7 @@ def get_wavemap_from_coeffs(wave_coeffs, nbo, nbx):
 def get_wavelines(params, recipe, fiber, header=None, infile=None,
                   database=None, **kwargs):
     # set up function name
-    func_name = display_func(params, 'get_wavelines', __NAME__)
+    func_name = display_func('get_wavelines', __NAME__)
     # get psuedo constants
     pconst = constants.pload()
     # get parameters from params/kwargs
@@ -529,7 +529,7 @@ def get_wavelines(params, recipe, fiber, header=None, infile=None,
 
 def add_wave_keys(params, infile, props):
     # set function name
-    _ = display_func(params, 'add_wave_keys', __NAME__)
+    _ = display_func('add_wave_keys', __NAME__)
     # add wave parameters
     infile.add_hkey('KW_WAVEFILE', value=props['WAVEFILE'])
     infile.add_hkey('KW_WAVETIME', value=props['WAVETIME'])
@@ -560,7 +560,7 @@ def add_wave_keys(params, infile, props):
 
 
 def check_wave_consistency(params, props, **kwargs):
-    func_name = display_func(params, 'check_wave_consistency', __NAME__)
+    func_name = display_func('check_wave_consistency', __NAME__)
     # get constants from params/kwargs
     required_deg = pcheck(params, 'WAVE_FIT_DEGREE', 'num_coeffs', kwargs,
                           func_name)
@@ -606,7 +606,7 @@ def check_wave_consistency(params, props, **kwargs):
 def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
                      hclines=None, fplines=None, **kwargs):
     # set the function name
-    func_name = display_func(params, 'get_master_lines', __NAME__)
+    func_name = display_func('get_master_lines', __NAME__)
     # get parameters from params and kwargs
     nsig_min = pcheck(params, 'WAVEREF_NSIG_MIN', 'nsig_min', kwargs, func_name)
     wmax = pcheck(params, 'WAVEREF_EDGE_WMAX', 'wmax', kwargs, func_name)
@@ -927,7 +927,7 @@ def get_master_lines(params, recipe, e2dsfile, wavemap, cavity_poly=None,
 def write_master_lines(params, recipe, hce2ds, fpe2ds, hclines, fplines,
                        fpwavefile, fiber):
     # set function name
-    _ = display_func(params, 'write_master_lines', __NAME__)
+    _ = display_func('write_master_lines', __NAME__)
     # ------------------------------------------------------------------
     # write hc lines
     # ------------------------------------------------------------------
@@ -996,7 +996,7 @@ def update_wavelength_measured(params, reftable, wavemap, kind):
     :return:
     """
     # set function name
-    func_name = display_func(params, 'update_wavelength_measured', __NAME__)
+    func_name = display_func('update_wavelength_measured', __NAME__)
     # check columns for table
     keys = ['ORDER', 'PIXEL_MEAS', 'WAVE_MEAS']
     for key in keys:
@@ -1030,7 +1030,7 @@ def update_wavelength_measured(params, reftable, wavemap, kind):
 # =============================================================================
 def hc_wavesol(params, recipe, iprops, e2dsfile, blaze, fiber, **kwargs):
     # set function name
-    func_name = display_func(params, 'hc_wavesol', __NAME__)
+    func_name = display_func('hc_wavesol', __NAME__)
     # get parameters from params / kwargs
     wave_mode_hc = pcheck(params, 'WAVE_MODE_HC', 'wave_mode_hc', kwargs,
                           func_name)
@@ -1143,7 +1143,7 @@ def hc_wavesol(params, recipe, iprops, e2dsfile, blaze, fiber, **kwargs):
 
 def hc_wavesol_ea(params, recipe, iprops, e2dsfile, fiber, wavell, ampll):
     # set function name
-    _ = display_func(params, 'hc_wavesol_ea', __NAME__)
+    _ = display_func('hc_wavesol_ea', __NAME__)
     # ------------------------------------------------------------------
     # Find Gaussian Peaks in HC spectrum
     # ------------------------------------------------------------------
@@ -1170,7 +1170,7 @@ def hc_wavesol_ea(params, recipe, iprops, e2dsfile, fiber, wavell, ampll):
 def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
                blaze, fiber, **kwargs):
     # set function name
-    func_name = display_func(params, 'fp_wavesol', __NAME__)
+    func_name = display_func('fp_wavesol', __NAME__)
     # get parameters from params / kwargs
     wave_mode_fp = pcheck(params, 'WAVE_MODE_FP', 'wave_mode_fp', kwargs,
                           func_name)
@@ -1284,7 +1284,7 @@ def fp_wavesol(params, recipe, hce2dsfile, fpe2dsfile, hcprops, wprops,
 def fp_wavesol_bauer(params, recipe, llprops, fpe2dsfile, blaze, fiber,
                      **kwargs):
     # set function name
-    func_name = display_func(params, 'fp_wavesol_bauer', __NAME__)
+    func_name = display_func('fp_wavesol_bauer', __NAME__)
     # get parameters from params/kwargs
     start = pcheck(params, 'WAVE_N_ORD_START')
     end = pcheck(params, 'WAVE_N_ORD_FINAL')
@@ -1378,7 +1378,7 @@ def fp_wavesol_bauer(params, recipe, llprops, fpe2dsfile, blaze, fiber,
 def fp_wavesol_lovis(params, recipe, llprops, fpe2dsfile, hce2dsfile,
                      blaze, fiber, **kwargs):
     # set function name
-    func_name = display_func(params, 'fp_wavesol_lovis', __NAME__)
+    func_name = display_func('fp_wavesol_lovis', __NAME__)
     # get parameters from params/kwargs
     n_init = pcheck(params, 'WAVE_N_ORD_START', 'n_init', kwargs, func_name)
     n_fin = pcheck(params, 'WAVE_N_ORD_FINAL', 'n_fin', kwargs, func_name)
@@ -1569,7 +1569,7 @@ def fp_wavesol_lovis(params, recipe, llprops, fpe2dsfile, hce2dsfile,
 def fit_wavemap_cav_iteratively(params, recipe, inwavemap, e2dsfile,
                                 cavity_poly):
     # set function name
-    display_func(params, __NAME__, 'fit_wavemap_cav_iteratively')
+    display_func(__NAME__, 'fit_wavemap_cav_iteratively')
     # get parameters from params and/or kwargs
     n_iterations = 5
     fit_deg = params['WAVE_FIT_DEGREE']
@@ -1680,7 +1680,7 @@ def fit_wavemap_cav_iteratively(params, recipe, inwavemap, e2dsfile,
 # =============================================================================
 def hc_quality_control(params, hcprops):
     # set function name
-    _ = display_func(params, 'hc_quality_control', __NAME__)
+    _ = display_func('hc_quality_control', __NAME__)
     # set passed variable and fail message list
     fail_msg = []
     qc_values, qc_names, qc_logic, qc_pass = [], [], [], []
@@ -1748,7 +1748,7 @@ def hc_quality_control(params, hcprops):
 
 def hc_log_global_stats(params, hcprops, e2dsfile, fiber):
     # set function name
-    _ = display_func(params, 'hc_log_global_stats', __NAME__)
+    _ = display_func('hc_log_global_stats', __NAME__)
     # calculate catalog-fit residuals in km/s
     res_hc = []
     sumres_hc = 0.0
@@ -1779,7 +1779,7 @@ def hc_log_global_stats(params, hcprops, e2dsfile, fiber):
 def hc_write_wavesolution(params, recipe, llprops, infile, fiber, combine,
                           rawhcfiles, qc_params, iwprops, wprops):
     # set function name
-    _ = display_func(params, 'hc_write_wavesolution', __NAME__)
+    _ = display_func('hc_write_wavesolution', __NAME__)
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     wavefile = recipe.outputs['WAVE_HCMAP'].newcopy(params=params,
@@ -1890,7 +1890,7 @@ def hc_write_wavesolution(params, recipe, llprops, infile, fiber, combine,
 # TODO: remove if we are using master/night recipes
 def hc_write_resmap(params, recipe, llprops, infile, wavefile, fiber):
     # set function name
-    _ = display_func(params, 'hc_write_resmap', __NAME__)
+    _ = display_func('hc_write_resmap', __NAME__)
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     resfile = recipe.outputs['WAVE_HCRES'].newcopy(params=params,
@@ -1913,6 +1913,11 @@ def hc_write_resmap(params, recipe, llprops, infile, wavefile, fiber):
     # log that we are saving rotated image
     wargs = [fiber, resfile.filename]
     WLOG(params, '', textentry('40-017-00020', args=wargs))
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        datalist += [params.snapshot_table()]
+        namelist += ['PARAM_TABLE']
+        headerlist += [None]
     # write image to file
     resfile.write_multi(data_list=datalist, header_list=headerlist,
                         name_list=namelist,
@@ -1924,7 +1929,7 @@ def hc_write_resmap(params, recipe, llprops, infile, wavefile, fiber):
 def hc_write_wavesol_master(params, recipe, llprops, infile, fiber, combine,
                             rawhcfiles, qc_params, iwprops, wprops):
     # set function name
-    _ = display_func(params, 'hc_write_wavesol_master', __NAME__)
+    _ = display_func('hc_write_wavesol_master', __NAME__)
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     wavefile = recipe.outputs['WAVEM_HCMAP'].newcopy(params=params,
@@ -2034,7 +2039,7 @@ def hc_write_wavesol_master(params, recipe, llprops, infile, fiber, combine,
 
 def hc_write_resmap_master(params, recipe, llprops, infile, wavefile, fiber):
     # set function name
-    _ = display_func(params, 'hc_write_resmap_master', __NAME__)
+    _ = display_func('hc_write_resmap_master', __NAME__)
     # ------------------------------------------------------------------
     # get copy of instance of wave file (WAVE_HCMAP)
     resfile = recipe.outputs['WAVEM_HCRES'].newcopy(params=params,
@@ -2057,6 +2062,11 @@ def hc_write_resmap_master(params, recipe, llprops, infile, wavefile, fiber):
     # log that we are saving rotated image
     wargs = [fiber, resfile.filename]
     WLOG(params, '', textentry('40-017-00020', args=wargs))
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        datalist += [params.snapshot_table()]
+        namelist += ['PARAM_TABLE']
+        headerlist += [None]
     # write image to file
     resfile.write_multi(data_list=datalist, header_list=headerlist,
                         name_list=namelist,
@@ -2070,7 +2080,7 @@ def hc_write_resmap_master(params, recipe, llprops, infile, wavefile, fiber):
 # =============================================================================
 def generate_shifted_wave_map(params, props, **kwargs):
     # set function name
-    func_name = display_func(params, 'generate_shifted_wave_map', __NAME__)
+    func_name = display_func('generate_shifted_wave_map', __NAME__)
     # get constants from p
     pixel_shift_inter = pcheck(params, 'WAVE_PIXEL_SHIFT_INTER', 'pixelshifti',
                                kwargs, func_name)
@@ -2111,7 +2121,7 @@ def find_hc_gauss_peaks(params, recipe, iprops, e2dsfile, fiber, **kwargs):
     :return:
     """
     # set function name
-    func_name = display_func(params, 'find_hc_gauss_peaks', __NAME__)
+    func_name = display_func('find_hc_gauss_peaks', __NAME__)
     # get constants from params/kwargs
     wsize = pcheck(params, 'WAVE_HC_FITBOX_SIZE', 'wsize', kwargs,
                    func_name)
@@ -2280,7 +2290,7 @@ def load_hc_init_linelist(params, recipe, e2dsfile, fiber, **kwargs):
     :return:
     """
     # set function name
-    func_name = display_func(params, 'load_hc_init_linelist', __NAME__)
+    func_name = display_func('load_hc_init_linelist', __NAME__)
     # get parameters from params/kwargs
     filefmt = pcheck(params, 'WAVE_HCLL_FILE_FMT', 'filefmt', kwargs, func_name)
 
@@ -2363,7 +2373,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
     :return:
     """
     # set function name
-    func_name = display_func(params, 'fit_gaussian_triplets', __NAME__)
+    func_name = display_func('fit_gaussian_triplets', __NAME__)
     # get constants from params/kwargs
     nmax_bright = pcheck(params, 'WAVE_HC_NMAX_BRIGHT', 'nmax_bright', kwargs,
                          func_name)
@@ -2853,7 +2863,7 @@ def fit_gaussian_triplets(params, recipe, llprops, iprops, wavell, ampll,
 
 def wave_lmfit(params, orders, xgau, wave_catalog, order_fit_cont, nbo):
     # set function name
-    _ = display_func(params, 'wave_lmfit', __NAME__)
+    _ = display_func('wave_lmfit', __NAME__)
     # set up an empty set of coefficents
     coeffs = np.zeros([nbo, len(order_fit_cont)])
     # get degree from order fit continuum
@@ -2898,7 +2908,7 @@ def wave_lmfit(params, orders, xgau, wave_catalog, order_fit_cont, nbo):
 
 def generate_resolution_map(params, recipe, llprops, e2dsfile, **kwargs):
     # set function name
-    func_name = display_func(params, 'generate_resolution_map', __NAME__)
+    func_name = display_func('generate_resolution_map', __NAME__)
     # get constants from params / kwargs
     resmap_size = pcheck(params, 'WAVE_HC_RESMAP_SIZE', 'resmap_size',
                          kwargs, func_name, mapf='list', dtype=int)
@@ -3241,7 +3251,7 @@ def generate_res_files(params: ParamDict, llprops: ParamDict,
 # =============================================================================
 def littrow(params, recipe, llprops, start, end, wavell, infile, blaze,
             iteration=1, fiber=None, **kwargs):
-    func_name = display_func(params, 'littrow', __NAME__)
+    func_name = display_func('littrow', __NAME__)
     # get parameters from params/kwargs
     t_order_start = pcheck(params, 'WAVE_T_ORDER_START', 't_order_start',
                            kwargs, func_name)
@@ -3367,7 +3377,7 @@ def calculate_littrow_sol(params, llprops, echelle_order, wavell, infile,
                         gparams[7] = output weights for the pixel position
     """
     # set function name
-    func_name = display_func(params, 'calculate_littrow_sol', __NAME__)
+    func_name = display_func('calculate_littrow_sol', __NAME__)
     # get parameters from params/kwrags
     remove_orders = pcheck(params, 'WAVE_LITTROW_REMOVE_ORDERS',
                            'remove_orders', kwargs, func_name, mapf='list',
@@ -4669,7 +4679,7 @@ def get_d_for_each_hcline(params, recipe, llprops, fp_order, fp_xx, m_vec,
                           blaze, n_init, n_fin, wave_blaze_thres, dv_max,
                           ll_fit_degree):
     # set function name
-    _ = display_func(params, 'get_d_for_each_hcline', __NAME__)
+    _ = display_func('get_d_for_each_hcline', __NAME__)
     # set up storage
     # m(x) fit coefficients
     coeff_xm_all = []
@@ -4825,7 +4835,7 @@ def update_fp_peak_wavelengths(params, recipe, llprops, fit_ll_d, m_vec,
                                fp_order, fp_xx, fp_amp, fp_cavfit_mode,
                                n_init, n_fin):
     # set function name
-    func_name = display_func(params, 'update_fp_peak_wavelengths', __NAME__)
+    func_name = display_func('update_fp_peak_wavelengths', __NAME__)
     # define storage
     fp_ll_new = []
     # deal with different ways to calculate cavity fit
@@ -5448,9 +5458,18 @@ def fp_write_wavesol_master(params, recipe, llprops, hcfile, fpfile, fiber,
     # log that we are saving rotated image
     wargs = [fiber, wavefile.filename]
     WLOG(params, '', textentry('40-017-00037', args=wargs))
+    # define multi lists
+    data_list = [wave_table]
+    datatype_list = ['table']
+    name_list = ['COEFF_TABLE']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table()]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
     # write image to file
-    wavefile.write_multi(data_list=[wave_table], datatype_list=['table'],
-                         name_list=['COEFF_TABLE'],
+    wavefile.write_multi(data_list=data_list, name_list=name_list,
+                         datatype_list=datatype_list,
                          kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(wavefile)
@@ -5541,7 +5560,7 @@ def fpm_write_linelist_table(params, recipe, llprops, hcfile, fiber):
 # =============================================================================
 def process_fibers(params, recipe, mprops, mfpl, mhcl, fp_outputs, hc_outputs):
     # set function name
-    _ = display_func(params, 'process_fibers', __NAME__)
+    _ = display_func('process_fibers', __NAME__)
     # get wave master file (controller fiber)
     master_fiber = params['WAVE_MASTER_FIBER']
     plot_order = params['WAVE_FIBER_COMP_PLOT_ORD']
@@ -5595,7 +5614,7 @@ def process_fibers(params, recipe, mprops, mfpl, mhcl, fp_outputs, hc_outputs):
 
 def process_other_fibers(params, recipe, mprops, mfpl, fp_outputs):
     # set function name
-    func_name = display_func(params, 'process_other_fibers', __NAME__)
+    func_name = display_func('process_other_fibers', __NAME__)
     # get the fiber types from a list parameter (or from inputs)
     fiber_types = drs_image.get_fiber_types(params)
     # get psuedo constants
@@ -5713,7 +5732,7 @@ def process_other_fibers(params, recipe, mprops, mfpl, fp_outputs):
 
 def update_smart_fp_mask(params, **kwargs):
     # set function name
-    func_name = display_func(params, 'update_smart_fp_mask', __NAME__)
+    func_name = display_func('update_smart_fp_mask', __NAME__)
     # get constants from params
     update_mask = pcheck(params, 'WAVE_CCF_UPDATE_MASK', 'update_mask', kwargs,
                          func_name)
@@ -5812,7 +5831,7 @@ def update_smart_fp_mask(params, **kwargs):
 def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, mwave,
                        wavefile, fiber, indcavity=None, **kwargs):
     # set function name
-    func_name = display_func(params, 'night_wavesolution', __NAME__)
+    func_name = display_func('night_wavesolution', __NAME__)
     # ----------------------------------------------------------------------
     # get parameters from params/kwargs
     niterations1 = pcheck(params, 'WAVE_NIGHT_NITERATIONS1', 'niterations1',
@@ -6052,7 +6071,7 @@ def night_wavesolution(params, recipe, hce2ds, fpe2ds, mhcl, mfpl, mwave,
 
 
 def night_quality_control(params, nprops):
-    _ = display_func(params, 'night_quality_control', __NAME__)
+    _ = display_func('night_quality_control', __NAME__)
     # set passed variable and fail message list
     fail_msg = []
     qc_values, qc_names, qc_logic, qc_pass = [], [], [], []

@@ -75,7 +75,7 @@ def get_relative_folder(params: ParamDict, package: str, folder: str) -> str:
                   file
     """
     # set function
-    _ = display_func(params, 'get_relative_folder', __NAME__)
+    _ = display_func('get_relative_folder', __NAME__)
     # try to get relative directory
     try:
         data_folder = drs_break.get_relative_folder(package, folder)
@@ -102,7 +102,7 @@ def get_uncommon_path(path1: str, path2: str) -> str:
     :return uncommon_path: string, the uncommon path between path1 and path2
     """
     # set function
-    _ = display_func(None, 'get_uncommon_path', __NAME__)
+    _ = display_func('get_uncommon_path', __NAME__)
     # return result from drs_misc.get_uncommon_path
     return drs_misc.get_uncommon_path(path1, path2)
 
@@ -126,7 +126,7 @@ def get_nightname(params: ParamDict, filepath: str,
     :rtype: str
     """
     # set function
-    _ = display_func(params, 'get_nightname', __NAME__)
+    _ = display_func('get_nightname', __NAME__)
     # deal with no root
     if root is None:
         root = params['INPATH']
@@ -164,7 +164,7 @@ def group_files_by_time(params: ParamDict, times: np.ndarray,
              'times'
     """
     # set function
-    func_name = display_func(params, 'group_files_by_time', __NAME__)
+    func_name = display_func('group_files_by_time', __NAME__)
     # make sure time units are correct
     cond1 = not isinstance(time_unit, str)
     cond2 = isinstance(time_thres, uu.Quantity)
@@ -218,7 +218,7 @@ def get_most_recent(filelist: List[str]) -> Union[float, None]:
     :return: float the modified time of the most recent file
     """
     # set function
-    _ = display_func(None, 'get_most_recent', __NAME__)
+    _ = display_func('get_most_recent', __NAME__)
     # set most recent time to None to start
     most_recent = None
     # loop around file list
@@ -244,7 +244,7 @@ def makedirs(params: ParamDict, path: str):
     :return: None - just makes the 'path'
     """
     # set function name
-    func_name = display_func(params, 'makedirs', __NAME__)
+    func_name = display_func('makedirs', __NAME__)
     # test if path does not already exist
     if not os.path.exists(path):
         # try to make directories
@@ -267,7 +267,7 @@ def copytree(src: Union[str, Path], dst: Union[str, Path]):
     :return: None - just copies directories
     """
     # set function name
-    _ = display_func(None, 'makedirs', __NAME__)
+    _ = display_func('makedirs', __NAME__)
     # loop around src path and go to every directory/sub-directory/file
     for root, dirs, files in os.walk(src, followlinks=True):
         # out root
@@ -299,7 +299,7 @@ def copyfile(params: ParamDict, src: str, dst: str, log: bool = True):
     :return: None - just copies file
     """
     # set function name
-    func_name = display_func(params, 'copyfile', __NAME__)
+    func_name = display_func('copyfile', __NAME__)
     # only copy if we have the source file
     if os.path.exists(src):
         # if logging then log
@@ -328,7 +328,7 @@ def numpy_load(filename: str) -> Any:
     :return: the return from np.load for 'filename'
     """
     # set function name
-    func_name = display_func(None, 'numpy_load', __NAME__)
+    func_name = display_func('numpy_load', __NAME__)
     # try the original load function
     # noinspection PyBroadException
     try:

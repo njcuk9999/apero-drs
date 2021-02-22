@@ -50,6 +50,10 @@ DRS_PLOT.value = 0
 DRS_DEBUG = DRS_DEBUG.copy(__NAME__)
 DRS_DEBUG.value = 0
 
+# Add snapshot parameter table to reduced outputs
+PARAMETER_SNAPSHOT = PARAMETER_SNAPSHOT.copy(__NAME__)
+PARAMETER_SNAPSHOT.value = True
+
 # -----------------------------------------------------------------------------
 # path settings
 # -----------------------------------------------------------------------------

@@ -96,7 +96,7 @@ class DatabaseManager:
         # save class name
         self.classname = 'DatabaseManager'
         # set function
-        _ = display_func(params, '__init__', __NAME__, self.classname)
+        _ = display_func('__init__', __NAME__, self.classname)
         # save params for use throughout
         self.params = params
         self.instrument = base.IPARAMS['INSTRUMENT']
@@ -128,7 +128,7 @@ class DatabaseManager:
         :return:
         """
         # set function
-        func_name = display_func(self.params, 'set_path', __NAME__,
+        func_name = display_func('set_path', __NAME__,
                                  self.classname)
 
         # deal with no instrument (i.e. no database)
@@ -201,7 +201,7 @@ class DatabaseManager:
         :return:
         """
         # set function
-        _ = display_func(self.params, 'load_db', __NAME__, self.classname)
+        _ = display_func('load_db', __NAME__, self.classname)
         # if we already have database do nothing
         if (self.database is not None) and (not check):
             return
@@ -220,7 +220,7 @@ class DatabaseManager:
         :return:
         """
         # set function
-        _ = display_func(self.params, '__str__', __NAME__, self.classname)
+        _ = display_func('__str__', __NAME__, self.classname)
         # return string representation
         return '{0}[{1}]'.format(self.classname, self.path)
 
@@ -230,7 +230,7 @@ class DatabaseManager:
         :return:
         """
         # set function
-        _ = display_func(self.params, '__repr__', __NAME__, self.classname)
+        _ = display_func('__repr__', __NAME__, self.classname)
         # return string representation
         return self.__str__()
 
@@ -275,7 +275,7 @@ class CalibrationDatabase(DatabaseManager):
         # save class name
         self.classname = 'CalibrationDatabaseManager'
         # set function
-        _ = display_func(params, '__init__', __NAME__, self.classname)
+        _ = display_func('__init__', __NAME__, self.classname)
         # construct super class
         DatabaseManager.__init__(self, params)
         # set name
@@ -298,7 +298,7 @@ class CalibrationDatabase(DatabaseManager):
         :return: None
         """
         # set function
-        _ = display_func(self.params, 'add_calib_file', __NAME__,
+        _ = display_func('add_calib_file', __NAME__,
                          self.classname)
         # deal with no database
         if self.database is None:
@@ -372,7 +372,7 @@ class CalibrationDatabase(DatabaseManager):
                  a np.ndarray, else returns a pandas table
         """
         # set function
-        _ = display_func(self.params, 'get_calib_entry', __NAME__,
+        _ = display_func('get_calib_entry', __NAME__,
                          self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
@@ -494,7 +494,7 @@ class CalibrationDatabase(DatabaseManager):
         :return:
         """
         # set function
-        func_name = display_func(self.params, 'get_calib_file', __NAME__,
+        func_name = display_func('get_calib_file', __NAME__,
                                  self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
@@ -573,7 +573,7 @@ class CalibrationDatabase(DatabaseManager):
 
     def remove_entries(self, condition):
         # set function
-        _ = display_func(self.params, 'remove_entries', __NAME__,
+        _ = display_func('remove_entries', __NAME__,
                          self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
@@ -600,7 +600,7 @@ class TelluricDatabase(DatabaseManager):
         # save class name
         self.classname = 'TelluricDatabaseManager'
         # set function
-        _ = display_func(params, '__init__', __NAME__, self.classname)
+        _ = display_func('__init__', __NAME__, self.classname)
         # construct super class
         DatabaseManager.__init__(self, params)
         # set name
@@ -640,7 +640,7 @@ class TelluricDatabase(DatabaseManager):
                         copy_files=True)
         """
         # set function
-        _ = display_func(self.params, 'add_tellu_file', __NAME__,
+        _ = display_func('add_tellu_file', __NAME__,
                          self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
@@ -747,7 +747,7 @@ class TelluricDatabase(DatabaseManager):
                  a np.ndarray, else returns a pandas table
         """
         # set function
-        _ = display_func(self.params, 'get_tellu_entry', __NAME__,
+        _ = display_func('get_tellu_entry', __NAME__,
                          self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
@@ -897,7 +897,7 @@ class TelluricDatabase(DatabaseManager):
         :return:
         """
         # set function
-        func_name = display_func(self.params, 'get_calib_file', __NAME__,
+        func_name = display_func('get_calib_file', __NAME__,
                                  self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
@@ -979,7 +979,7 @@ class TelluricDatabase(DatabaseManager):
 
     def remove_entries(self, condition):
         # set function
-        _ = display_func(self.params, 'remove_entries', __NAME__,
+        _ = display_func('remove_entries', __NAME__,
                          self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
@@ -1006,7 +1006,7 @@ def _get_dbkey(params: ParamDict, drsfile: DrsFileTypes, dbmname: str) -> str:
     :return: str, the dbkey
     """
     # set function
-    func_name = display_func(params, '_get_dbkey', __NAME__)
+    func_name = display_func('_get_dbkey', __NAME__)
     # get dbname from drsfile
     if hasattr(drsfile, 'dbkey') and hasattr(drsfile, 'get_dbkey'):
         return drsfile.get_dbkey()
@@ -1027,7 +1027,7 @@ def _get_dbname(params: ParamDict, drsfile: DrsFileTypes, dbmname: str) -> bool:
     :return: bool, True if passed (raises exception otherwise)
     """
     # set function
-    func_name = display_func(params, '_get_dbname', __NAME__)
+    func_name = display_func('_get_dbname', __NAME__)
     # get dbname from drsfile
     if hasattr(drsfile, 'dbname'):
         dbname = drsfile.dbname.upper()
@@ -1062,7 +1062,7 @@ def _get_hkey(params: ParamDict, pkey: str,
     :return: Any, the value for pkey (None if not found)
     """
     # set function
-    func_name = display_func(params, '_get_hkey', __NAME__)
+    func_name = display_func('_get_hkey', __NAME__)
     # gey key from params
     key = params[pkey][0]
     # set fiber to None
@@ -1121,7 +1121,7 @@ def _copy_db_file(params: ParamDict, drsfile: DrsFileTypes,
     :return: None
     """
     # set function
-    func_name = display_func(params, '_copy_db_file', __NAME__)
+    func_name = display_func('_copy_db_file', __NAME__)
     # construct in path
     inpath = drsfile.filename
     # construct out path
@@ -1163,7 +1163,7 @@ def _get_hdict(params: ParamDict, dbname: str, drsfile: DrsFileTypes = None,
     :return: hdict (None if not found) and header (None if not found)
     """
     # set function name
-    func_name = display_func(params, '_get_hdict', __NAME__)
+    func_name = display_func('_get_hdict', __NAME__)
     # deal with having hdict input
     if hdict is not None:
         return hdict, None
@@ -1200,7 +1200,7 @@ def _get_time(params: ParamDict, dbname: str,
     :return:
     """
     # set function name
-    func_name = display_func(params, '_get_time', __NAME__)
+    func_name = display_func('_get_time', __NAME__)
     # ----------------------------------------------------------------------
     # get raw time from hdict / header
     if hdict is not None:
@@ -1232,7 +1232,7 @@ class IndexDatabase(DatabaseManager):
         # save class name
         self.classname = 'IndexDatabaseManager'
         # set function
-        _ = display_func(params, '__init__', __NAME__, self.classname)
+        _ = display_func('__init__', __NAME__, self.classname)
         # construct super class
         DatabaseManager.__init__(self, params)
         # set name
@@ -1280,7 +1280,7 @@ class IndexDatabase(DatabaseManager):
         :return: None - adds entry to index database
         """
         # set function
-        func_name = display_func(self.params, 'add_entry', __NAME__,
+        func_name = display_func('add_entry', __NAME__,
                                  self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
@@ -1368,7 +1368,7 @@ class IndexDatabase(DatabaseManager):
 
     def remove_entries(self, condition):
         # set function
-        _ = display_func(self.params, 'remove_entries', __NAME__,
+        _ = display_func('remove_entries', __NAME__,
                          self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
@@ -1408,7 +1408,7 @@ class IndexDatabase(DatabaseManager):
                  a np.ndarray, else returns a pandas table
         """
         # set function
-        func_name = display_func(self.params, 'get_entries', __NAME__,
+        func_name = display_func('get_entries', __NAME__,
                                  self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
@@ -1542,7 +1542,7 @@ class IndexDatabase(DatabaseManager):
         :return: None - updates the index database
         """
         # set function
-        _ = display_func(self.params, 'update_entries', __NAME__,
+        _ = display_func('update_entries', __NAME__,
                          self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
@@ -1653,7 +1653,7 @@ class IndexDatabase(DatabaseManager):
 
     def update_header_fix(self, recipe):
         # set function name
-        _ = display_func(self.params, 'update_objname', __NAME__,
+        _ = display_func('update_objname', __NAME__,
                          self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
@@ -1809,7 +1809,7 @@ def _deal_with_filename(params: ParamDict, name: str, kind: str,
     # ------------------------------------------------------------------
     # deal with function name
     if func is None:
-        func_name = display_func(params, '_deal_with_filename', __NAME__)
+        func_name = display_func('_deal_with_filename', __NAME__)
     else:
         func_name = str(func)
     # ------------------------------------------------------------------
@@ -1976,7 +1976,7 @@ class LogDatabase(DatabaseManager):
         # save class name
         self.classname = 'LogDatabaseManager'
         # set function
-        _ = display_func(params, '__init__', __NAME__, self.classname)
+        _ = display_func('__init__', __NAME__, self.classname)
         # construct super class
         DatabaseManager.__init__(self, params)
         # set name
@@ -2128,7 +2128,7 @@ class LogDatabase(DatabaseManager):
                  a np.ndarray, else returns a pandas table
         """
         # set function
-        _ = display_func(self.params, 'get_entries', __NAME__, self.classname)
+        _ = display_func('get_entries', __NAME__, self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
             return None
@@ -2212,7 +2212,7 @@ class LogDatabase(DatabaseManager):
 
     def remove_entries(self, condition):
         # set function
-        _ = display_func(self.params, 'remove_entries', __NAME__,
+        _ = display_func('remove_entries', __NAME__,
                          self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
@@ -2267,7 +2267,7 @@ class ObjectDatabase(DatabaseManager):
         # save class name
         self.classname = 'ObjectDatabaseManager'
         # set function
-        _ = display_func(params, '__init__', __NAME__, self.classname)
+        _ = display_func('__init__', __NAME__, self.classname)
         # construct super class
         DatabaseManager.__init__(self, params)
         # set name
@@ -2294,7 +2294,7 @@ class ObjectDatabase(DatabaseManager):
                  a np.ndarray, else returns a pandas table
         """
         # set function
-        _ = display_func(self.params, 'get_entries', __NAME__, self.classname)
+        _ = display_func('get_entries', __NAME__, self.classname)
         # deal with no instrument set
         if self.instrument == 'None':
             return None

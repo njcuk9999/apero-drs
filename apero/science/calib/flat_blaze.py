@@ -454,11 +454,18 @@ def flat_blaze_write(params, recipe, infile, eprops, fiber, rawfiles, combine,
     # log that we are saving rotated image
     WLOG(params, '',
          textentry('40-015-00005', args=[e2dsllfile.filename]))
+    # define multi lists
+    data_list, name_list = [eprops['E2DSCC']], ['E2DSLL', 'E2DSCC']
+    datatype_list = ['image']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table()]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
     # write image to file
-    e2dsllfile.write_multi(data_list=[eprops['E2DSCC']],
-                           name_list=['E2DSLL', 'E2DSCC'],
-                           datatype_list=['image'], kind=recipe.outputtype,
-                           runstring=recipe.runstring)
+    e2dsllfile.write_multi(data_list=data_list, name_list=name_list,
+                           datatype_list=datatype_list,
+                           kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(e2dsllfile)
     # return out file

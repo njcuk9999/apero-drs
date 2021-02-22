@@ -105,7 +105,7 @@ class PolarObj:
 # =============================================================================
 def validate_polar_files(params, infiles, **kwargs):
     # set function name
-    func_name = display_func(params, 'validate_polar_files', __NAME__)
+    func_name = display_func('validate_polar_files', __NAME__)
 
     # get parameters from params
     valid_fibers = pcheck(params, 'POLAR_VALID_FIBERS', 'valid_fibers', kwargs,
@@ -217,7 +217,7 @@ def validate_polar_files(params, infiles, **kwargs):
 
 def calculate_polarimetry(params, pobjs, props, **kwargs):
     # set function name
-    func_name = display_func(params, 'calculate_polarimetry', __NAME__)
+    func_name = display_func('calculate_polarimetry', __NAME__)
     # get parameters from params/kwargs
     method = pcheck(params, 'POLAR_METHOD', 'method', kwargs, func_name)
     # if method is not a string then break here
@@ -253,7 +253,7 @@ def calculate_stokes_i(params, pobjs, pprops):
                         shape as DATA
     """
     # set the function
-    func_name = display_func(params, 'calculate_stokes_i', __NAME__)
+    func_name = display_func('calculate_stokes_i', __NAME__)
     # log start of polarimetry calculations
     WLOG(params, '', textentry('40-021-00003'))
     # get parameters from props
@@ -331,7 +331,7 @@ def calculate_continuum(params, pprops, wprops, **kwargs):
             CONT_YBIN: numpy array (1D), continuum in y polarization samples
     """
     # set the function
-    func_name = display_func(params, 'calculate_continuum', __NAME__)
+    func_name = display_func('calculate_continuum', __NAME__)
     # get constants from params/kwargs
     pol_binsize = pcheck(params, 'POLAR_CONT_BINSIZE', 'pol_binsize', kwargs,
                          func_name)
@@ -516,10 +516,16 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
     # ----------------------------------------------------------------------
     # log that we are saving pol file
     WLOG(params, '', textentry('40-021-00005', args=[polfile.filename]))
+    # define multi lists
+    data_list = [pprops['POLERR']]
+    name_list = ['POL_ERR']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table()]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    polfile.write_multi(data_list=[pprops['POLERR']], kind=recipe.outputtype,
-                        name_list=['POL_ERR'],
-                        runstring=recipe.runstring)
+    polfile.write_multi(data_list=data_list, name_list=name_list,
+                        kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(polfile)
 
@@ -580,9 +586,15 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
     stokesfile.data = pprops['STOKESI']
     # log that we are saving pol file
     WLOG(params, '', textentry('40-021-00008', args=[stokesfile.filename]))
+    # define multi lists
+    data_list = [pprops['STOKESIERR']]
+    name_list = ['STOKES_I_ERR']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table()]
+        name_list += ['PARAM_TABLE']
     # write image to file
-    stokesfile.write_multi(data_list=[pprops['STOKESIERR']],
-                           name_list=['STOKES_I_ERR'],
+    stokesfile.write_multi(data_list=data_list, name_list=name_list,
                            kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)STOKES_I
     recipe.add_output_file(stokesfile)
@@ -694,7 +706,7 @@ def write_files(params, recipe, pobjects, rawfiles, pprops, lprops, wprops,
 
 def generate_statistics(params, pobjects):
     # set function name
-    func_name = display_func(params, 'sort_polar_outputs', __NAME__)
+    func_name = display_func('sort_polar_outputs', __NAME__)
     # storage
     files, exps, mjds, mjdends = [], [], [], []
     bjds, bervs, bervmaxs = [], [], []
@@ -793,7 +805,7 @@ def valid_polar_file(params, infile, **kwargs):
     :return:
     """
     # set function name
-    func_name = display_func(params, 'read_cmmtseq', __NAME__)
+    func_name = display_func('read_cmmtseq', __NAME__)
     # assume valid at first
     valid = True
     # get values from parameters
@@ -883,7 +895,7 @@ def polar_diff_method(params, pobjs, props):
     :return: ParamDict of polar outputs (pol, pol_err, null1, null2, method)
     """
     # set function name
-    func_name = display_func(params, 'polar_diff_method', __NAME__)
+    func_name = display_func('polar_diff_method', __NAME__)
     # log start of polarimetry calculations
     WLOG(params, '', textentry('40-021-00002', args=['difference']))
     # get parameters from props
@@ -1023,7 +1035,7 @@ def polar_ratio_method(params, pobjs, props):
     :return: ParamDict of polar outputs (pol, pol_err, null1, null2, method)
     """
     # set function name
-    func_name = display_func(params, 'polar_ratio_method', __NAME__)
+    func_name = display_func('polar_ratio_method', __NAME__)
     # log start of polarimetry calculations
     WLOG(params, '', textentry('40-021-00002', args=['difference']))
     # get parameters from props

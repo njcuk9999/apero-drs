@@ -117,7 +117,7 @@ def deal_with_clean(params) -> bool:
     :return: bool, success - whether we cleaned constants (True/False)
     """
     # set function name
-    func_name = display_func(params, 'deal_with_clean', __NAME__)
+    func_name = display_func('deal_with_clean', __NAME__)
     # warn user this could screw things up
     WLOG(params, 'warning', 'Cleaning constants changes core python files')
     uinput = input('Do you wish to continue? [Y]es or [N]o:\t')
@@ -323,7 +323,7 @@ def format_lines(entry, length=78):
 # =============================================================================
 def create_glossary(params):
     # set function name
-    func_name = display_func(params, 'create_glossary', __NAME__)
+    func_name = display_func('create_glossary', __NAME__)
     # set output filename
     out_filename = 'glossary.txt'
     # -------------------------------------------------------------------------

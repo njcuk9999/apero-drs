@@ -334,13 +334,18 @@ def debug_file(recipe, params, infile, dlist):
     debug_back.data = dlist[0]
     # print progress: saving file
     WLOG(params, '', textentry('40-013-00025', args=debug_back.filename))
+    # define name of extensions
+    name_list = ['CORRECTED', 'ORIGINAL', 'LOCAL_CORR',
+                 'LC_NAN_FILLED', 'LC_BKGRD', 'GLOB_BKGRD',
+                 'GLOB_BINNED']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        ptable = params.snapshot_table()
+        dlist += [ptable]
+        name_list += ['PARAM_TABLE']
     # write multiple to file
-    debug_back.write_multi(kind=recipe.outputtype,
-                           name_list=['CORRECTED', 'ORIGINAL', 'LOCAL_CORR',
-                                      'LC_NAN_FILLED', 'LC_BKGRD', 'GLOB_BKGRD',
-                                      'GLOB_BINNED'],
-                           data_list=dlist[1:],
-                           runstring=recipe.runstring)
+    debug_back.write_multi(kind=recipe.outputtype, name_list=name_list,
+                           data_list=dlist[1:], runstring=recipe.runstring)
 
 
 # =============================================================================

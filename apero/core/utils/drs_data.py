@@ -96,7 +96,7 @@ def load_linelist(params: ParamDict,
     """
     # set function name
     if func is None:
-        func_name = display_func(params, 'load_linelist', __NAME__)
+        func_name = display_func('load_linelist', __NAME__)
     else:
         func_name = func
     # get parameters from params (or override)
@@ -162,7 +162,7 @@ def load_cavity_files(params: ParamDict,
     :return:
     """
     # set function name
-    func_name = display_func(params, 'load_cavity_files', __NAME__)
+    func_name = display_func('load_cavity_files', __NAME__)
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'DRS_DATA_ASSETS', func=func_name,
                       override=assetsdir)
@@ -212,7 +212,7 @@ def save_cavity_files(params: ParamDict, fit_1m_d: np.ndarray,
     :return:
     """
     # set function name
-    func_name = display_func(params, 'save_cavity_files', __NAME__)
+    func_name = display_func('save_cavity_files', __NAME__)
     # get parameters from params/kwargs
     assetdir = pcheck(params, 'DRS_DATA_ASSETS', func=func_name,
                       override=assetsdir)
@@ -255,7 +255,7 @@ def load_full_flat_badpix(params: ParamDict,
     """
     # set function name
     if func is None:
-        func_name = display_func(params, 'load_full_flat_badpix', __NAME__)
+        func_name = display_func('load_full_flat_badpix', __NAME__)
     else:
         func_name = func
     # set parameters from params (or override)
@@ -303,7 +303,7 @@ def load_hotpix(params: ParamDict,
     """
     # set function name
     if func is None:
-        func_name = display_func(params, 'load_full_flat_badpix', __NAME__)
+        func_name = display_func('load_full_flat_badpix', __NAME__)
     else:
         func_name = func
     # set parameters from params (or override)
@@ -351,7 +351,7 @@ def load_tapas(params: ParamDict,
     """
     # set function name
     if func is None:
-        func_name = display_func(params, 'load_tapas', __NAME__)
+        func_name = display_func('load_tapas', __NAME__)
     else:
         func_name = func
     # get parameters from params/kwargs
@@ -399,7 +399,7 @@ def load_object_list(params: ParamDict,
     """
     # set function name
     if func is None:
-        func_name = display_func(params, 'load_object_list', __NAME__)
+        func_name = display_func('load_object_list', __NAME__)
     else:
         func_name = func
     # get parameters from params/kwargs
@@ -449,7 +449,7 @@ def load_ccf_mask(params: ParamDict,
     """
     # set function name
     if func is None:
-        func_name = display_func(params, 'load_ccf_mask', __NAME__)
+        func_name = display_func('load_ccf_mask', __NAME__)
     else:
         func_name = func
     # get parameters from params/kwargs
@@ -504,7 +504,7 @@ def load_sp_mask_lsd(params: ParamDict, temperature: float,
     """
     # set function name
     if func is None:
-        func_name = display_func(params, 'load_sp_mask_lsd', __NAME__)
+        func_name = display_func('load_sp_mask_lsd', __NAME__)
     else:
         func_name = func
     # get parameters from params/kwargs
@@ -590,7 +590,7 @@ def load_order_mask(params: ParamDict,
     """
     # set function name
     if func is None:
-        func_name = display_func(params, 'load_order_mask', __NAME__)
+        func_name = display_func('load_order_mask', __NAME__)
     else:
         func_name = func
     # get parameters from params/kwargs
@@ -649,7 +649,7 @@ def get_file_from_inputs(params: ParamDict, dbmname: str,
              1. The filename from inputs (path/str/None)
              2. The source of the filename
     """
-    func_name = display_func(params, 'get_file_from_inputs', __NAME__)
+    func_name = display_func('get_file_from_inputs', __NAME__)
     # set source
     strsource, source = None, None
     value = None
@@ -715,7 +715,7 @@ def read_db_file(params: ParamDict, abspath: Union[str, Path],
                     2. the header or None (if get_image=False)
     """
     # set function
-    func_name = display_func(params, 'load_calib_file', __NAME__)
+    func_name = display_func('load_calib_file', __NAME__)
     # ------------------------------------------------------------------
     # deal with npy files
     if str(abspath).endswith('.npy'):
@@ -763,7 +763,7 @@ def load_fits_file(params: ParamDict, filename: str,
     """
     # set function name
     if func_name is None:
-        func_name = display_func(params, 'load_fits_file', __NAME__)
+        func_name = display_func('load_fits_file', __NAME__)
     # check that filepath exists and log an error if it was not found
     if not os.path.exists(filename):
         # generate error
@@ -795,7 +795,7 @@ def load_table_file(params: ParamDict, filename: str,
     """
     # set function name
     if func_name is None:
-        func_name = display_func(params, 'load_table_file', __NAME__)
+        func_name = display_func('load_table_file', __NAME__)
     # check that filepath exists and log an error if it was not found
     if not os.path.exists(filename):
         # raise exception
@@ -825,7 +825,7 @@ def load_text_file(params: ParamDict, filename: str,
     """
     # set function name
     if func_name is None:
-        func_name = display_func(params, 'load_text_file', __NAME__)
+        func_name = display_func('load_text_file', __NAME__)
     # check that filepath exists and log an error if it was not found
     if not os.path.exists(filename):
         eargs = [filename, func_name]
@@ -857,7 +857,7 @@ def save_text_file(params: ParamDict, filename: str, array: np.ndarray,
     """
     # set function name
     if func_name is None:
-        func_name = display_func(params, 'save_text_file', __NAME__)
+        func_name = display_func('save_text_file', __NAME__)
     # save text file
     try:
         drs_text.save_text_file(filename, array, func_name)
@@ -884,7 +884,7 @@ def construct_path(params: ParamDict, filename: Union[str, None] = None,
     """
     # set function name
     if func_name is None:
-        func_name = display_func(params, 'construct_path', __NAME__)
+        func_name = display_func('construct_path', __NAME__)
     # deal with no filename
     if filename is None:
         filename = ''

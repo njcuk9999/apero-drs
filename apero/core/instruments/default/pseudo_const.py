@@ -53,7 +53,7 @@ class PseudoConstants:
         :param instrument: str, the drs instrument name
         """
         # set function name
-        _ = display_func(None, '__init__', __NAME__, self.class_name)
+        _ = display_func('__init__', __NAME__, self.class_name)
         # set instrument name
         self.instrument = instrument
 
@@ -63,7 +63,7 @@ class PseudoConstants:
         :return:
         """
         # set function name
-        _ = display_func(None, '__getstate__', __NAME__, self.class_name)
+        _ = display_func('__getstate__', __NAME__, self.class_name)
         # set state to __dict__
         state = dict(self.__dict__)
         # return dictionary state
@@ -77,7 +77,7 @@ class PseudoConstants:
         :return:
         """
         # set function name
-        _ = display_func(None, '__setstate__', __NAME__, self.class_name)
+        _ = display_func('__setstate__', __NAME__, self.class_name)
         # update dict with state
         self.__dict__.update(state)
 
@@ -87,7 +87,7 @@ class PseudoConstants:
         :return:
         """
         # set function name
-        _ = display_func(None, '__str__', __NAME__, self.class_name)
+        _ = display_func('__str__', __NAME__, self.class_name)
         # return string representation
         return self.__repr__()
 
@@ -97,7 +97,7 @@ class PseudoConstants:
         :return:
         """
         # set function name
-        _ = display_func(None, '__repr__', __NAME__, self.class_name)
+        _ = display_func('__repr__', __NAME__, self.class_name)
         # return string representation
         return '{0}[{1}]'.format(self.class_name, self.instrument)
 
@@ -111,7 +111,7 @@ class PseudoConstants:
         :return: file_definitions
         """
         # set function name
-        func_name = display_func(None, 'FILEMOD', __NAME__, self.class_name)
+        func_name = display_func('FILEMOD', __NAME__, self.class_name)
         # set module name
         module_name = 'apero.core.instruments.default.file_definitions'
         # try to import module
@@ -133,7 +133,7 @@ class PseudoConstants:
         :return: file_definitions
         """
         # set function name
-        func_name = display_func(None, 'RECIPEMOD', __NAME__, self.class_name)
+        func_name = display_func('RECIPEMOD', __NAME__, self.class_name)
         # set module name
         module_name = 'apero.core.instruments.default.recipe_definitions'
         # try to import module
@@ -158,7 +158,7 @@ class PseudoConstants:
         :return: a list of strings of valid extensions
         """
         # set function name
-        _ = display_func(None, 'VALID_RAW_FILES', __NAME__, self.class_name)
+        _ = display_func('VALID_RAW_FILES', __NAME__, self.class_name)
         # set valid extentions
         valid = ['.fits']
         return valid
@@ -168,7 +168,7 @@ class PseudoConstants:
         Post process do not check these duplicate keys
         """
         # set function name
-        _ = display_func(None, 'NON_CHECK_DUPLICATE_KEYS', __NAME__,
+        _ = display_func('NON_CHECK_DUPLICATE_KEYS', __NAME__,
                          self.class_name)
         # set forbidden keys
         keys = ['SIMPLE', 'EXTEND', 'NEXTEND']
@@ -180,7 +180,7 @@ class PseudoConstants:
         Post process primary extension should not have these keys
         """
         # set function name
-        _ = display_func(None, 'FORBIDDEN_OUT_KEYS', __NAME__, self.class_name)
+        _ = display_func('FORBIDDEN_OUT_KEYS', __NAME__, self.class_name)
         # set forbidden keys
         forbidden_keys = []
         # return forbiiden keys
@@ -196,7 +196,7 @@ class PseudoConstants:
                                 to copy from and old fits file
         """
         # set function name
-        _ = display_func(None, 'FORBIDDEN_COPY_KEYS', __NAME__, self.class_name)
+        _ = display_func('FORBIDDEN_COPY_KEYS', __NAME__, self.class_name)
         # set forbidden keys
         forbidden_keys = []
         # return keys
@@ -211,7 +211,7 @@ class PseudoConstants:
         :return keys:
         """
         # set function name
-        _ = display_func(None, 'FORBIDDEN_HEADER_PREFIXES', __NAME__,
+        _ = display_func('FORBIDDEN_HEADER_PREFIXES', __NAME__,
                          self.class_name)
         # set qc prefixes
         prefixes = ['QCC', 'INF1', 'INF2', 'INF3', 'INP1']
@@ -227,7 +227,7 @@ class PseudoConstants:
         :return: list of strings, the header keys to not be copied
         """
         # set function name
-        _ = display_func(None, 'FORBIDDEN_DRS_KEY', __NAME__, self.class_name)
+        _ = display_func('FORBIDDEN_DRS_KEY', __NAME__, self.class_name)
         # DRS OUTPUT KEYS
         forbidden_keys = ['WAVELOC', 'REFRFILE', 'DRSPID', 'VERSION',
                           'DRSOUTID']
@@ -252,7 +252,7 @@ class PseudoConstants:
         :return: the fixed header
         """
         # set function name
-        _ = display_func(params, 'HEADER_FIXES', __NAME__, self.class_name)
+        _ = display_func('HEADER_FIXES', __NAME__, self.class_name)
         # do nothing
         _ = recipe
         _ = hdict
@@ -271,7 +271,7 @@ class PseudoConstants:
         :return:
         """
         # set function name
-        _ = display_func(None, 'DRS_OBJ_NAME', __NAME__, self.class_name)
+        _ = display_func('DRS_OBJ_NAME', __NAME__, self.class_name)
         # clean object name
         rawobjname = str(objname)
         objectname = rawobjname.strip()
@@ -331,7 +331,7 @@ class PseudoConstants:
         :return: str, the index output filename
         """
         # set function name
-        _ = display_func(None, 'INDEX_OUTPUT_FILENAME', __NAME__,
+        _ = display_func('INDEX_OUTPUT_FILENAME', __NAME__,
                          self.class_name)
         # set index file name
         filename = 'index.fits'
@@ -346,7 +346,7 @@ class PseudoConstants:
         :return:
         """
         # set function name
-        _ = display_func(params, 'INDEX_LOCK_FILENAME', __NAME__,
+        _ = display_func('INDEX_LOCK_FILENAME', __NAME__,
                          self.class_name)
         # set night name to unknown initially (change after)
         night_name = 'UNKNOWN'
@@ -374,7 +374,7 @@ class PseudoConstants:
         :return: list of strings, the output file header keys
         """
         # set function name
-        _ = display_func(None, 'OUTPUT_FILE_HEADER_KEYS', __NAME__,
+        _ = display_func('OUTPUT_FILE_HEADER_KEYS', __NAME__,
                          self.class_name)
         # Get required header keys from spirouKeywords.py (via p)
         output_keys = ['KW_DATE_OBS', 'KW_UTC_OBS', 'KW_ACQTIME',
@@ -427,7 +427,7 @@ class PseudoConstants:
         :return: int,  the maximum length of characters
         """
         # set function name
-        _ = display_func(None, 'CHARACTER_LOG_LENGTH', __NAME__,
+        _ = display_func('CHARACTER_LOG_LENGTH', __NAME__,
                          self.class_name)
         # set default log character length
         length = 80
@@ -451,7 +451,7 @@ class PseudoConstants:
                              http://ozzmaker.com/add-colour-to-text-in-python/
         """
         # set function name
-        _ = display_func(params, 'COLOUREDLEVELS', __NAME__, self.class_name)
+        _ = display_func('COLOUREDLEVELS', __NAME__, self.class_name)
         # reference:
         colors = drs_misc.Colors()
         if params is not None:
@@ -477,7 +477,7 @@ class PseudoConstants:
         :return my_exit: function
         """
         # set function name
-        _ = display_func(None, 'EXIT', __NAME__, self.class_name)
+        _ = display_func('EXIT', __NAME__, self.class_name)
         # try to key exit type
         my_exit = params.get('DRS_LOG_EXIT_TYPE', 'sys')
         if my_exit == 'sys':
@@ -502,7 +502,7 @@ class PseudoConstants:
                              after they are logged
         """
         # set function name
-        _ = display_func(None, 'EXIT_LEVELS', __NAME__, self.class_name)
+        _ = display_func('EXIT_LEVELS', __NAME__, self.class_name)
         # set exit levels
         exit_levels = ['error']
         return exit_levels
@@ -534,7 +534,7 @@ class PseudoConstants:
         :return lpath: string, the full path and file name for the log file
         """
         # set function name
-        _ = display_func(params, 'LOG_FILE_NAME', __NAME__, self.class_name)
+        _ = display_func('LOG_FILE_NAME', __NAME__, self.class_name)
         # deal with no dir_data_msg
         if dir_data_msg is None:
             dir_data_msg = str(params['DRS_DATA_MSG'])
@@ -565,7 +565,7 @@ class PseudoConstants:
                  params[KEY] to save them to
         """
         # set function name
-        _ = display_func(None, 'LOG_STORAGE_KEYS', __NAME__, self.class_name)
+        _ = display_func('LOG_STORAGE_KEYS', __NAME__, self.class_name)
         # The storage key to use for each key
         storekey = dict(all='LOGGER_ALL', error='LOGGER_ERROR',
                         warning='LOGGER_WARNING', info='LOGGER_INFO',
@@ -583,7 +583,7 @@ class PseudoConstants:
         :return warn: bool, if True reports warnings, if False does not
         """
         # set function name
-        _ = display_func(None, 'LOG_CAUGHT_WARNINGS', __NAME__, self.class_name)
+        _ = display_func('LOG_CAUGHT_WARNINGS', __NAME__, self.class_name)
         # Define whether we warn
         warn = True
         return warn
@@ -608,7 +608,7 @@ class PseudoConstants:
                           same as spirouConst.WRITE_LEVELS()
         """
         # set function name
-        _ = display_func(None, 'LOG_TRIG_KEYS', __NAME__, self.class_name)
+        _ = display_func('LOG_TRIG_KEYS', __NAME__, self.class_name)
         # The trigger character to display for each
         trig_key = dict(all=' ', error='!', warning='@', info='*', graph='~',
                         debug='+')
@@ -639,7 +639,7 @@ class PseudoConstants:
                              spirouConst.LOG_TRIG_KEYS()
         """
         # set function name
-        _ = display_func(None, 'WRITE_LEVEL', __NAME__, self.class_name)
+        _ = display_func('WRITE_LEVEL', __NAME__, self.class_name)
         # set the write levels
         write_level = dict(error=3, warning=2, info=1, graph=0, all=0,
                            debug=0)
@@ -657,7 +657,7 @@ class PseudoConstants:
         :returns: dictionary of True and False for each level
         """
         # set function name
-        _ = display_func(None, 'REPORT_KEYS', __NAME__, self.class_name)
+        _ = display_func('REPORT_KEYS', __NAME__, self.class_name)
         # set the report level
         report_level = dict(error=True, warning=True, info=False, graph=False,
                             all=False, debug=False)
@@ -670,7 +670,7 @@ class PseudoConstants:
         :return:
         """
         # set function name
-        _ = display_func(None, 'SPLASH', __NAME__, self.class_name)
+        _ = display_func('SPLASH', __NAME__, self.class_name)
         # set the logo
         logo = [r" .----------------.  .----------------.  .----------------.   ",
                 r" | .--------------. || .--------------. || .--------------. | ",
@@ -701,7 +701,7 @@ class PseudoConstants:
         :return:
         """
         # set function name
-        _ = display_func(None, 'LOGO', __NAME__, self.class_name)
+        _ = display_func('LOGO', __NAME__, self.class_name)
 
         # logo = ["  █████╗ ██████╗ ███████╗██████╗  ██████╗  ",
         #         " ██╔══██╗██╔══██╗██╔════╝██╔══██╗██╔═══██╗ ",
@@ -776,7 +776,7 @@ class PseudoConstants:
         :return:
         """
         # set function name
-        func_name = display_func(None, 'FIBER_SETTINGS', __NAME__,
+        func_name = display_func('FIBER_SETTINGS', __NAME__,
                                  self.class_name)
         # do nothing
         _ = params
@@ -794,7 +794,7 @@ class PseudoConstants:
         :return: str, the fiber to use for input fiber
         """
         # set function name
-        _ = display_func(None, 'FIBER_LOC_TYPES', __NAME__, self.class_name)
+        _ = display_func('FIBER_LOC_TYPES', __NAME__, self.class_name)
         # return input fiber
         return fiber
 
@@ -809,7 +809,7 @@ class PseudoConstants:
         :return: str, the fiber to use for input fiber
         """
         # set function name
-        _ = display_func(None, 'FIBER_WAVE_TYPES', __NAME__, self.class_name)
+        _ = display_func('FIBER_WAVE_TYPES', __NAME__, self.class_name)
         # return input fiber
         return fiber
 
@@ -825,7 +825,7 @@ class PseudoConstants:
         :return:
         """
         # set function name
-        func_name = display_func(None, 'FIBER_DPR_POS', __NAME__,
+        func_name = display_func('FIBER_DPR_POS', __NAME__,
                                  self.class_name)
         # do nothing
         _ = dprtype
@@ -845,7 +845,7 @@ class PseudoConstants:
         :returns: the update coefficients and the number of orders
         """
         # set function name
-        func_name = display_func(None, 'FIBER_LOC_COEFF_EXT', __NAME__,
+        func_name = display_func('FIBER_LOC_COEFF_EXT', __NAME__,
                                  self.class_name)
         # do nothing
         _ = coeffs
@@ -866,7 +866,7 @@ class PseudoConstants:
         :return:
         """
         # set function name
-        func_name = display_func(None, 'FIBER_DATA_TYPE', __NAME__,
+        func_name = display_func('FIBER_DATA_TYPE', __NAME__,
                                  self.class_name)
         # do nothing
         _ = dprtype
@@ -881,7 +881,7 @@ class PseudoConstants:
         :return: the science and reference fiber
         """
         # set function name
-        func_name = display_func(None, 'FIBER_CCF', __NAME__, self.class_name)
+        func_name = display_func('FIBER_CCF', __NAME__, self.class_name)
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
     # noinspection PyPep8Naming
@@ -893,7 +893,7 @@ class PseudoConstants:
         :return: list of science fibers and the reference fiber
         """
         # set function name
-        func_name = display_func(None, 'FIBER_KINDS', __NAME__, self.class_name)
+        func_name = display_func('FIBER_KINDS', __NAME__, self.class_name)
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
     def FIBER_LOC(self, fiber: str) -> Any:
@@ -907,7 +907,7 @@ class PseudoConstants:
         """
         _ = fiber
         # set function name
-        func_name = display_func(None, 'FIBER_KINDS', __NAME__, self.class_name)
+        func_name = display_func('FIBER_KINDS', __NAME__, self.class_name)
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
     # noinspection PyPep8Naming
@@ -918,7 +918,7 @@ class PseudoConstants:
         :return: list of strings, the individual fiber names
         """
         # set function name
-        func_name = display_func(None, 'INDIVIDUAL_FIBERS', __NAME__,
+        func_name = display_func('INDIVIDUAL_FIBERS', __NAME__,
                                  self.class_name)
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
@@ -943,7 +943,7 @@ class PseudoConstants:
         :return: dictionary of list with above format
         """
         # set function name
-        func_name = display_func(None, 'BERV_INKEYS', __NAME__, self.class_name)
+        func_name = display_func('BERV_INKEYS', __NAME__, self.class_name)
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
     # noinspection PyPep8Naming
@@ -964,7 +964,7 @@ class PseudoConstants:
         :return: dictionary of list with above format
         """
         # set function name
-        func_name = display_func(None, 'BERV_OUTKEYS', __NAME__,
+        func_name = display_func('BERV_OUTKEYS', __NAME__,
                                  self.class_name)
         raise NotImplementedError(NOT_IMPLEMENTED.format(__NAME__, func_name))
 
@@ -986,7 +986,7 @@ class PseudoConstants:
           https://matplotlib.org/api/matplotlib_configuration_api.html#matplotlib.rc
         """
         # set function name
-        _ = display_func(None, 'FONT_DICT', __NAME__, self.class_name)
+        _ = display_func('FONT_DICT', __NAME__, self.class_name)
         # set up font storage
         font = dict()
         if params['DRS_PLOT_FONT_FAMILY'] != 'None':
@@ -1007,7 +1007,7 @@ class PseudoConstants:
         :return: list of columns (strings)
         """
         # set function name
-        _ = display_func(None, 'CALIBRATION_DB_COLUMNS', __NAME__,
+        _ = display_func('CALIBRATION_DB_COLUMNS', __NAME__,
                          self.class_name)
         # set columns
         calib_columns = dict()
@@ -1032,7 +1032,7 @@ class PseudoConstants:
         :return: list of columns (strings)
         """
         # set function name
-        _ = display_func(None, 'TELLURIC_DB_COLUMNS', __NAME__,
+        _ = display_func('TELLURIC_DB_COLUMNS', __NAME__,
                          self.class_name)
         # set columns
         tellu_columns = dict()
@@ -1073,7 +1073,7 @@ class PseudoConstants:
         :return: list of columns (strings)
         """
         # set function name
-        _ = display_func(None, 'INDEX_DB_COLUMNS', __NAME__,
+        _ = display_func('INDEX_DB_COLUMNS', __NAME__,
                          self.class_name)
         # get header keys
         hkeys, htypes = self.INDEX_HEADER_KEYS()
@@ -1104,7 +1104,7 @@ class PseudoConstants:
         :return: list of columns (strings)
         """
         # set function name
-        _ = display_func(None, 'LOG_DB_COLUMNS', __NAME__,
+        _ = display_func('LOG_DB_COLUMNS', __NAME__,
                          self.class_name)
         # set columns (dictionary form for clarity
         log_columns = dict()
@@ -1151,7 +1151,7 @@ class PseudoConstants:
         :return: list of columns (strings)
         """
         # set function name
-        _ = display_func(None, 'OBJECT_DB_COLUMNS', __NAME__,
+        _ = display_func('OBJECT_DB_COLUMNS', __NAME__,
                          self.class_name)
         # set columns
         obj_columns = dict()

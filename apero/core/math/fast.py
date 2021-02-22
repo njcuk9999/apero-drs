@@ -69,7 +69,7 @@ def nanargmax(a: Union[list, np.ndarray],
     :return: the argument maximum of array `a` (int, float or np.ndarray)
     """
     # set function name
-    _ = display_func(None, 'nanargmax', __NAME__)
+    _ = display_func('nanargmax', __NAME__)
     # check bottleneck functionality
     if HAS_BOTTLENECK:
         # return bottleneck function
@@ -97,7 +97,7 @@ def nanargmin(a: Union[list, np.ndarray],
     :return: the argument minimum of array `a` (int, float or np.ndarray)
     """
     # set function name
-    _ = display_func(None, 'nanargmin', __NAME__)
+    _ = display_func('nanargmin', __NAME__)
     # check bottleneck functionality
     if HAS_BOTTLENECK:
         # return bottleneck function
@@ -126,7 +126,7 @@ def nanmax(a: Union[list, np.ndarray],
     :return: the maximum of array `a` (int, float or np.ndarray)
     """
     # set function name
-    _ = display_func(None, 'nanmax', __NAME__)
+    _ = display_func('nanmax', __NAME__)
     # check bottleneck functionality
     if HAS_BOTTLENECK and len(kwargs) == 0:
         # return bottleneck function
@@ -155,7 +155,7 @@ def nanmin(a: Union[list, np.ndarray],
     :return: the minimum of array `a` (int, float or np.ndarray)
     """
     # set function name
-    _ = display_func(None, 'nanmin', __NAME__)
+    _ = display_func('nanmin', __NAME__)
     # check bottleneck functionality
     if HAS_BOTTLENECK and len(kwargs) == 0:
         # return bottleneck function
@@ -184,7 +184,7 @@ def nanmean(a: Union[list, np.ndarray],
     :return: the mean of array `a` (int, float or np.ndarray)
     """
     # set function name
-    _ = display_func(None, 'nanmin', __NAME__)
+    _ = display_func('nanmin', __NAME__)
     # check bottleneck functionality
     if HAS_BOTTLENECK and len(kwargs) == 0:
         # return bottleneck function
@@ -213,7 +213,7 @@ def nanmedian(a: Union[list, np.ndarray],
     :return: the median of array `a` (int, float or np.ndarray)
     """
     # set function name
-    _ = display_func(None, 'nanmedian', __NAME__)
+    _ = display_func('nanmedian', __NAME__)
     # check bottleneck functionality
     if HAS_BOTTLENECK and len(kwargs) == 0:
         # return bottleneck function
@@ -246,7 +246,7 @@ def nanstd(a: Union[list, np.ndarray],
     :return: the standard deviation of array `a` (int, float or np.ndarray)
     """
     # set function name
-    _ = display_func(None, 'nanstd', __NAME__)
+    _ = display_func('nanstd', __NAME__)
     # check bottleneck functionality
     if HAS_BOTTLENECK and len(kwargs) == 0:
         # return bottleneck function
@@ -275,7 +275,7 @@ def nansum(a: Union[list, np.ndarray],
     :return: the sum of array `a` (int, float or np.ndarray)
     """
     # set function name
-    _ = display_func(None, 'nansum', __NAME__)
+    _ = display_func('nansum', __NAME__)
     # check bottleneck functionality
     if HAS_BOTTLENECK and len(kwargs) == 0:
         # make sure a is an array
@@ -310,7 +310,7 @@ def median(a: Union[list, np.ndarray],
     :return: the median of array `a` (int, float or np.ndarray)
     """
     # set function name
-    _ = display_func(None, 'nansum', __NAME__)
+    _ = display_func('nansum', __NAME__)
     # check bottleneck functionality
     if HAS_BOTTLENECK and len(kwargs) == 0:
         # return bottleneck function
@@ -335,7 +335,7 @@ def medfilt_1d(a: Union[list, np.ndarray],
     :return: the 1D median filtered array of `a` (int, float or np.ndarray)
     """
     # set function name
-    _ = display_func(None, 'medfilt_1d', __NAME__)
+    _ = display_func('medfilt_1d', __NAME__)
     # check bottleneck functionality
     if HAS_BOTTLENECK:
         # get half window size

@@ -1036,9 +1036,18 @@ def fit_tellu_write_corrected(params, recipe, infile, rawfiles, fiber, combine,
     # ------------------------------------------------------------------
     # log that we are saving rotated image
     WLOG(params, '', textentry('40-019-00023', args=[corrfile.filename]))
+    # define multi lists
+    data_list = [trans_table]
+    datatype_list = ['table']
+    name_list = ['TRANS_TABLE']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table()]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
     # write image to file
-    corrfile.write_multi(data_list=[trans_table], datatype_list=['table'],
-                         name_list=['TRANS_TABLE'],
+    corrfile.write_multi(data_list=data_list, name_list=name_list,
+                         datatype_list=datatype_list,
                          kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(corrfile)

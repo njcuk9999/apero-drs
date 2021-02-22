@@ -74,7 +74,7 @@ class RecipeLog:
         # set class name
         self.class_name = 'RecipeLog'
         # set function name
-        _ = drs_misc.display_func(None, '__init__', __NAME__, self.class_name)
+        _ = drs_misc.display_func('__init__', __NAME__, self.class_name)
         # get a database instance
         if isinstance(database, LogDatabase):
             self.logdbm = database
@@ -172,7 +172,7 @@ class RecipeLog:
         :return:
         """
         # set function name
-        _ = drs_misc.display_func(None, '__str__', __NAME__, self.class_name)
+        _ = drs_misc.display_func('__str__', __NAME__, self.class_name)
         # return string representation of RecipeLOg
         return 'RecipeLog[{0}]'.format(self.name)
 
@@ -184,7 +184,7 @@ class RecipeLog:
         :return:
         """
         # set function name
-        _ = drs_misc.display_func(None, 'copy', __NAME__, self.class_name)
+        _ = drs_misc.display_func('copy', __NAME__, self.class_name)
         # copy parameters
         self.name = str(rlog.name)
         self.sname = str(rlog.sname)
@@ -214,7 +214,7 @@ class RecipeLog:
         :return:
         """
         # set function name
-        _ = drs_misc.display_func(None, 'set_log_file', __NAME__,
+        _ = drs_misc.display_func('set_log_file', __NAME__,
                                   self.class_name)
         # set the log file
         self.log_file = str(logfile)
@@ -231,7 +231,7 @@ class RecipeLog:
         :return:
         """
         # set function name
-        _ = drs_misc.display_func(None, 'set_plot_dir', __NAME__,
+        _ = drs_misc.display_func('set_plot_dir', __NAME__,
                                   self.class_name)
         # deal with location being set
         if location is not None:
@@ -268,7 +268,7 @@ class RecipeLog:
                  all children are stored inside a parent
         """
         # set function name
-        _ = drs_misc.display_func(None, 'add_level', __NAME__, self.class_name)
+        _ = drs_misc.display_func('add_level', __NAME__, self.class_name)
         # get new level
         level = self.level + 1
         # create new log
@@ -308,7 +308,7 @@ class RecipeLog:
         :return:
         """
         # set function name
-        _ = drs_misc.display_func(None, 'add_qc', __NAME__, self.class_name)
+        _ = drs_misc.display_func('add_qc', __NAME__, self.class_name)
         # update passed
         if passed in [1, True, '1']:
             self.passed_qc = True
@@ -347,7 +347,7 @@ class RecipeLog:
         :return:
         """
         # set function name
-        _ = drs_misc.display_func(None, 'no_qc', __NAME__, self.class_name)
+        _ = drs_misc.display_func('no_qc', __NAME__, self.class_name)
         # set passed_qc to True (no qc means automatic pass)
         self.passed_qc = True
         # whether to write (update) recipe log file
@@ -370,7 +370,7 @@ class RecipeLog:
         :return:
         """
         # set function name
-        _ = drs_misc.display_func(None, 'add_error', __NAME__, self.class_name)
+        _ = drs_misc.display_func('add_error', __NAME__, self.class_name)
         # add errors in form ErrorType: ErrorMessage ||
         self.errors += '"{0}":"{1}"||'.format(errortype, errormsg)
         # whether to write (update) recipe log file
@@ -386,7 +386,7 @@ class RecipeLog:
         :return:
         """
         # set function name
-        _ = drs_misc.display_func(None, 'end', __NAME__, self.class_name)
+        _ = drs_misc.display_func('end', __NAME__, self.class_name)
         # set the ended parameter to True
         self.ended = True
         # whether to write (update) recipe log file
@@ -403,7 +403,7 @@ class RecipeLog:
         :return: None
         """
         # set function name
-        _ = drs_misc.display_func(None, 'write_logfile', __NAME__,
+        _ = drs_misc.display_func('write_logfile', __NAME__,
                                   self.class_name)
         # ---------------------------------------------------------------------
         # remove all entries with this pid
@@ -453,7 +453,7 @@ class RecipeLog:
         :return: OrderedDict the row entry where each key is a column name
         """
         # set function name
-        _ = drs_misc.display_func(None, '_make_row', __NAME__, self.class_name)
+        _ = drs_misc.display_func('_make_row', __NAME__, self.class_name)
         # set rows
         row = OrderedDict()
         row['RECIPE'] = self.name
@@ -500,7 +500,7 @@ class RecipeLog:
         :return:
         """
         # set function name
-        _ = drs_misc.display_func(None, '_get_rows', __NAME__, self.class_name)
+        _ = drs_misc.display_func('_get_rows', __NAME__, self.class_name)
         # set rows storage
         rows = []
         # case where we have no sets

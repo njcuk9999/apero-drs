@@ -81,7 +81,7 @@ def get_masterwave_filename(params: ParamDict, fiber: str,
     :return:
     """
     # set function name
-    func_name = display_func(params, 'get_masterwave_filename', __NAME__)
+    func_name = display_func('get_masterwave_filename', __NAME__)
     # get pseudo constants
     pconst = constants.pload()
     # deal with fibers that we don't have
@@ -232,7 +232,7 @@ def get_wave_solution_from_inheader(params: ParamDict, recipe: DrsRecipe,
                                     header: drs_fits.Header,
                                     usefiber: str) -> WaveReturn:
     # set function
-    func_name = display_func(params, 'get_wave_solution_from_inheader',
+    func_name = display_func('get_wave_solution_from_inheader',
                              __NAME__)
     # ------------------------------------------------------------------------
     # type 1: just from header
@@ -329,7 +329,7 @@ def get_wavesolution(params: ParamDict, recipe: DrsRecipe,
     :return:
     """
     # set function name
-    func_name = display_func(params, 'get_wavesolution', __NAME__)
+    func_name = display_func('get_wavesolution', __NAME__)
     # get parameters from params/kwargs
     inwavefile = kwargs.get('filename', None)
     force = pcheck(params, 'CALIB_DB_FORCE_WAVESOL', 'force', kwargs,
@@ -548,7 +548,7 @@ def calc_wave_lines(params: ParamDict, recipe: DrsRecipe,
                     fplines: Union[Table, None] = None,
                     iteration: Union[int, None] = None):
     # set the function name
-    func_name = display_func(params, 'get_master_lines', __NAME__)
+    func_name = display_func('get_master_lines', __NAME__)
     # -------------------------------------------------------------------------
     # get parameters from params and kwargs
     # -------------------------------------------------------------------------
@@ -907,7 +907,7 @@ def calc_wave_sol(params: ParamDict, recipe: DrsRecipe,
     :return: ParamDict, the wave properties
     """
     # set function name
-    func_name = display_func(params, 'calc_wave_sol', __NAME__)
+    func_name = display_func('calc_wave_sol', __NAME__)
     # -------------------------------------------------------------------------
     # get parameters from params / inputs
     # -------------------------------------------------------------------------
@@ -1400,7 +1400,7 @@ def process_fibers(params: ParamDict, recipe: DrsRecipe,
     :return: Dict of wave properties (ParamDict) for each fiber
     """
     # set function name
-    func_name = display_func(params, 'process_fibers', __NAME__)
+    func_name = display_func('process_fibers', __NAME__)
     # set up storage
     solutions = dict()
     # get wave master file (controller fiber)
@@ -1478,7 +1478,7 @@ def process_fibers(params: ParamDict, recipe: DrsRecipe,
 
 def update_smart_fp_mask(params: ParamDict, cavity: np.ndarray, **kwargs):
     # set function name
-    func_name = display_func(params, 'update_smart_fp_mask', __NAME__)
+    func_name = display_func('update_smart_fp_mask', __NAME__)
     # get constants from params
     update_mask = pcheck(params, 'WAVE_CCF_UPDATE_MASK', 'update_mask', kwargs,
                          func_name)
@@ -1583,7 +1583,7 @@ def wave_quality_control(params: ParamDict, solutions: Dict[str, ParamDict],
              qc_values, qc_logic, qc_pass)
     """
     # set function name
-    func_name = display_func(params, 'wave_quality_control', __NAME__)
+    func_name = display_func('wave_quality_control', __NAME__)
     # get parameters from params / inputs
     master_fiber = pcheck(params, 'WAVE_MASTER_FIBER', func=func_name)
     rv_thres = pcheck(params, 'WAVE_CCF_RV_THRES_QC', func=func_name)
@@ -1737,9 +1737,18 @@ def write_wave_sol(params: ParamDict, recipe: DrsRecipe, fiber: str,
     # log that we are saving rotated image
     wargs = [fiber, wavefile.filename]
     WLOG(params, '', textentry('40-017-00037', args=wargs))
+    # define multi lists
+    data_list = [wave_table]
+    datatype_list = ['table']
+    name_list = ['COEFF_TABLE']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table()]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
     # write image to file
-    wavefile.write_multi(data_list=[wave_table], datatype_list=['table'],
-                         name_list=['COEFF_TABLE'],
+    wavefile.write_multi(data_list=data_list, name_list=name_list,
+                         datatype_list=datatype_list,
                          kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(wavefile)
@@ -1750,7 +1759,7 @@ def write_wave_sol(params: ParamDict, recipe: DrsRecipe, fiber: str,
 
 def add_wave_keys(params, infile, props):
     # set function name
-    _ = display_func(params, 'add_wave_keys', __NAME__)
+    _ = display_func('add_wave_keys', __NAME__)
     # add wave parameters
     infile.add_hkey('KW_WAVEFILE', value=props['WAVEFILE'])
     infile.add_hkey('KW_WAVETIME', value=props['WAVETIME'])
@@ -1801,7 +1810,7 @@ def write_wave_lines(params: ParamDict, recipe: DrsRecipe,
     :return: None - writes to file
     """
     # set function name
-    _ = display_func(params, 'write_master_lines', __NAME__)
+    _ = display_func('write_master_lines', __NAME__)
     # ------------------------------------------------------------------
     # write hc lines
     # ------------------------------------------------------------------
@@ -1876,7 +1885,7 @@ def write_cavity_file(params: ParamDict, recipe: DrsRecipe,
     :return: DrsFitsFile, the cavity file instance
     """
     # set function name
-    _ = display_func(params, 'write_cavity_file', __NAME__)
+    _ = display_func('write_cavity_file', __NAME__)
     # ------------------------------------------------------------------
     # write hc lines
     # ------------------------------------------------------------------

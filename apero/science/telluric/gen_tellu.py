@@ -237,7 +237,7 @@ def get_tellu_objs(params: ParamDict, key: str,
     :return: list of strings, the absolute filenames for database entries of
              KEY == 'key' and OBJECT in 'objnames'
     """
-    _ = display_func(params, 'get_tellu_objs', __NAME__)
+    _ = display_func('get_tellu_objs', __NAME__)
     # ----------------------------------------------------------------------
     # deal with objnames
     if objnames is None:
@@ -1115,7 +1115,7 @@ def get_abso_expo(params, wavemap, expo_others, expo_water, spl_others,
     :return:
     """
     # set the function name
-    _ = display_func(params, 'get_abso_expo', __NAME__)
+    _ = display_func('get_abso_expo', __NAME__)
     # ----------------------------------------------------------------------
     # for some test one may give 0 as exponents and for this we just return
     #    a flat vector
@@ -1444,10 +1444,17 @@ def tellu_preclean_write(params, recipe, infile, rawfiles, fiber, combine,
     # ----------------------------------------------------------------------
     # print progress
     WLOG(params, '', textentry('40-019-00044', args=[tpclfile.filename]))
+    # define multi lists
+    data_list = dimages[1:]
+    name_list = names
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table()]
+        name_list += ['PARAM_TABLE']
     # write to file
     tpclfile.data = dimages[0]
-    tpclfile.write_multi(data_list=dimages[1:], kind=recipe.outputtype,
-                         name_list=names, runstring=recipe.runstring)
+    tpclfile.write_multi(data_list=data_list, name_list=name_list,
+                         kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(tpclfile)
     # ----------------------------------------------------------------------
@@ -1742,7 +1749,7 @@ def load_tellu_file(params: ParamDict, key: str,
 
     """
     # set function
-    _ = display_func(params, 'load_tellu_file', __NAME__)
+    _ = display_func('load_tellu_file', __NAME__)
     # ------------------------------------------------------------------------
     # first try to get file from inputs
     fout = drs_data.get_file_from_inputs(params, 'telluric', userinputkey,
@@ -1923,7 +1930,7 @@ def load_templates(params: ParamDict,
     :return:
     """
     # set function name
-    func_name = display_func(params, 'load_templates', __NAME__)
+    func_name = display_func('load_templates', __NAME__)
     # get file definition
     out_temp = drs_startup.get_file_definition('TELLU_TEMP',
                                                params['INSTRUMENT'],

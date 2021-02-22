@@ -65,7 +65,7 @@ def lsd_analysis_wrapper(params, pobjects, pprops, wprops, **kwargs):
     :return:
     """
     # set function name
-    func_name = display_func(params, 'lsd_analysis', __NAME__)
+    func_name = display_func('lsd_analysis', __NAME__)
     # get parameters from params/kwargs
     do_lsd = pcheck(params, 'POLAR_LSD_ANALYSIS', 'do_lsd', kwargs, func_name)
     wl_lower = pcheck(params, 'POLAR_LSD_WL_LOWER', 'wl_lower', kwargs,
@@ -262,7 +262,7 @@ def load_lsd_spectral_lines(params, temperature, wl_lower, wl_upper,
                                      depth * lande * wlc
     """
     # set function name
-    func_name = display_func(params, 'load_lsd_spectral_lines', __NAME__)
+    func_name = display_func('load_lsd_spectral_lines', __NAME__)
     # ----------------------------------------------------------------------
     # get temperature data
     sp_data, sp_filename = drs_data.load_sp_mask_lsd(params, temperature,

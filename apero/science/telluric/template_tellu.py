@@ -67,7 +67,7 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
                         calibdb: Union[CalibrationDatabase, None] = None,
                         **kwargs) -> ParamDict:
     # set function mame
-    func_name = display_func(params, 'make_template_cubes', __NAME__)
+    func_name = display_func('make_template_cubes', __NAME__)
     # get parameters from params/kwargs
     qc_snr_order = pcheck(params, 'MKTEMPLATE_SNR_ORDER', 'qc_snr_order',
                           kwargs, func_name)
@@ -372,7 +372,7 @@ def make_template_cubes(params: ParamDict, recipe: DrsRecipe,
 
 def make_1d_template_cube(params, recipe, filenames, reffile, fiber, **kwargs):
     # set function mame
-    func_name = display_func(params, 'make_1d_template_cube', __NAME__)
+    func_name = display_func('make_1d_template_cube', __NAME__)
     # get parameters from params/kwargs
     qc_snr_order = pcheck(params, 'MKTEMPLATE_SNR_ORDER', 'qc_snr_order',
                           kwargs, func_name)
@@ -812,10 +812,18 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     template_file.data = cprops['MEDIAN']
     # log that we are saving s1d table
     WLOG(params, '', textentry('40-019-00029', args=[template_file.filename]))
+    # define multi lists
+    data_list = [bigtable, berv_cov_table]
+    datatype_list = ['table', 'table']
+    name_list = ['TEMPLATE_TABLE', 'BERV_TABLE']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table()]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
     # write multi
-    template_file.write_multi(data_list=[bigtable, berv_cov_table],
-                              datatype_list=['table', 'table'],
-                              name_list=['TEMPLATE_TABLE', 'BERV_TABLE'],
+    template_file.write_multi(data_list=data_list, name_list=name_list,
+                              datatype_list=datatype_list,
                               kind=recipe.outputtype,
                               runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -838,9 +846,8 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # log that we are saving s1d table
     WLOG(params, '', textentry('40-019-00030', args=[bigcubefile.filename]))
     # write multi
-    bigcubefile.write_multi(data_list=[bigtable, berv_cov_table],
-                            datatype_list=['table', 'table'],
-                            name_list=['TEMPLATE_TABLE', 'BERV_TABLE'],
+    bigcubefile.write_multi(data_list=data_list, name_list=name_list,
+                            datatype_list=datatype_list,
                             kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(bigcubefile)
@@ -862,9 +869,8 @@ def mk_template_write(params, recipe, infile, cprops, filetype,
     # log that we are saving s1d table
     WLOG(params, '', textentry('40-019-00031', args=[bigcubefile0.filename]))
     # write multi
-    bigcubefile0.write_multi(data_list=[bigtable, berv_cov_table],
-                             datatype_list=['table', 'table'],
-                             name_list=['TEMPLATE_TABLE', 'BERV_TABLE'],
+    bigcubefile0.write_multi(data_list=data_list, name_list=name_list,
+                             datatype_list=datatype_list,
                              kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(bigcubefile0)
@@ -927,9 +933,18 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     template_file.data = s1dtable
     # log that we are saving s1d table
     WLOG(params, '', textentry('40-019-00036', args=[template_file.filename]))
+    # define multi lists
+    data_list = [bigtable]
+    datatype_list = ['table'],
+    name_list = ['TEMPLATE_TABLE']
+    # snapshot of parameters
+    if params['PARAMETER_SNAPSHOT']:
+        data_list += [params.snapshot_table()]
+        name_list += ['PARAM_TABLE']
+        datatype_list += ['table']
     # write multi
-    template_file.write_multi(data_list=[bigtable], datatype_list=['table'],
-                              name_list=['TEMPLATE_TABLE'],
+    template_file.write_multi(data_list=data_list, name_list=name_list,
+                              datatype_list=datatype_list,
                               kind=recipe.outputtype,
                               runstring=recipe.runstring)
     # add to output files (for indexing)
@@ -952,8 +967,8 @@ def mk_1d_template_write(params, recipe, infile, props, filetype, fiber,
     # log that we are saving s1d table
     WLOG(params, '', textentry('40-019-00037', args=[bigcubefile.filename]))
     # write multi
-    bigcubefile.write_multi(data_list=[bigtable], datatype_list=['table'],
-                            name_list=['TEMPLATE_TABLE'],
+    bigcubefile.write_multi(data_list=data_list, name_list=name_list,
+                            datatype_list=datatype_list,
                             kind=recipe.outputtype, runstring=recipe.runstring)
     # add to output files (for indexing)
     recipe.add_output_file(bigcubefile)

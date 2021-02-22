@@ -449,7 +449,7 @@ def load_calib_file(params: ParamDict, key: str,
 
     """
     # set function
-    _ = display_func(params, 'load_calib_file', __NAME__)
+    _ = display_func('load_calib_file', __NAME__)
     # ------------------------------------------------------------------------
     # first try to get file from inputs
     fout = drs_data.get_file_from_inputs(params, 'calibration', userinputkey,

@@ -97,7 +97,7 @@ def make_table(params: ParamDict, columns: List[str],
     :rtype: astropy.table.Table
     """
     # set function
-    func_name = display_func(params, 'make_table', __NAME__)
+    func_name = display_func('make_table', __NAME__)
     # make empty table
     table = Table()
     # get variables
@@ -182,7 +182,7 @@ def write_table(params: ParamDict, table: Table, filename: str,
 
     """
     # set function
-    func_name = display_func(params, 'write_table', __NAME__)
+    func_name = display_func('write_table', __NAME__)
     # get format table
     ftable = list_of_formats()
     # check that format in format_table
@@ -267,7 +267,7 @@ def merge_table(params: ParamDict, table: Table, filename: str,
     astropy.table writeable formats are as follows:
     """
     # set function
-    func_name = display_func(params, 'merge_table', __NAME__)
+    func_name = display_func('merge_table', __NAME__)
     # first try to open table
     if os.path.exists(filename):
         # read old table
@@ -318,7 +318,7 @@ def read_table(params: ParamDict, filename: str, fmt: str,
 
     """
     # set function
-    func_name = display_func(params, 'read_table', __NAME__)
+    func_name = display_func('read_table', __NAME__)
     # get format table
     ftable = list_of_formats()
     # don't let format be None
@@ -381,7 +381,7 @@ def print_full_table(params: ParamDict, table: Table):
     :return: None - prints the table (up to 9999)
     """
     # set function
-    _ = display_func(params, 'print_full_table', __NAME__)
+    _ = display_func('print_full_table', __NAME__)
     # print table
     tablestrings = table.pformat(max_lines=len(table)*10,
                                  max_width=9999)
@@ -407,7 +407,7 @@ def make_fits_table(dictionary: Union[dict, None] = None) -> Table:
     :rtype: astropy.table.Table
     """
     # set function
-    _ = display_func(None, 'make_fits_table', __NAME__)
+    _ = display_func('make_fits_table', __NAME__)
     # if dictionary is None return empty astropy table
     if dictionary is None:
         return Table()
@@ -443,7 +443,7 @@ def read_fits_table(params: ParamDict, filename: str,
     :rtype: astropy.table.Table | dict
     """
     # set function
-    func_name = display_func(params, 'read_fits_table', __NAME__)
+    func_name = display_func('read_fits_table', __NAME__)
     # check that filename exists
     if not os.path.exists(filename):
         eargs = [filename, func_name]
@@ -491,7 +491,7 @@ def write_fits_table(params: ParamDict, astropy_table: Table,
     :returns: None -> writes 'astropy_table' to 'output_filename'
     """
     # set function
-    func_name = display_func(params, 'write_fits_table', __NAME__)
+    func_name = display_func('write_fits_table', __NAME__)
     # get directory name
     dir_name = os.path.dirname(output_filename)
     # check directory exists
@@ -563,7 +563,7 @@ def deal_with_missing_end_card(params: ParamDict, filename: str,
     :rtype: astropy.table.Table
     """
     # set function
-    func_name = display_func(params, 'deal_with_missing_end_card', __NAME__)
+    func_name = display_func('deal_with_missing_end_card', __NAME__)
     if func is not None:
         func_name += '(via {0})'.format(func)
     # open fits file
@@ -612,7 +612,7 @@ def vstack_cols(params: ParamDict,
     :return:
     """
     # set function
-    _ = display_func(params, 'vstack_cols', __NAME__)
+    _ = display_func('vstack_cols', __NAME__)
     # deal with empty list
     if len(tablelist) == 0:
         # append a None
@@ -667,7 +667,7 @@ def force_dtype_col(column: Union[np.ndarray, list, Column],
                     2. the dtype forced to (None if not recognised/not forced)
     """
     # set function
-    _ = display_func(None, 'force_dtype_col', __NAME__)
+    _ = display_func('force_dtype_col', __NAME__)
     # if we have no columns don't do anything
     if len(column) == 0:
         return column, None
@@ -745,7 +745,7 @@ def prep_merge(params: ParamDict, filename: str, table: Table,
     :rtype: astropy.table.Table
     """
     # set function
-    func_name = display_func(params, 'prep_merge', __NAME__)
+    func_name = display_func('prep_merge', __NAME__)
     # set up new table to store prepped data
     newtable = Table()
     # loop around all columns
@@ -778,7 +778,7 @@ def list_of_formats() -> Table:
     :rtype: astropy.table.Table
     """
     # set function
-    _ = display_func(None, 'list_of_formats', __NAME__)
+    _ = display_func('list_of_formats', __NAME__)
     # get table formats
     ftable = get_formats(Table)
     # push read and write into this table

@@ -73,7 +73,7 @@ class Lock:
         # set class name
         self.classname = 'Lock'
         # set function
-        func_name = display_func(params, '__init__', __NAME__, self.classname)
+        func_name = display_func('__init__', __NAME__, self.classname)
         # set params
         self.params = params
         # set the bad characters to clean
@@ -133,7 +133,7 @@ class Lock:
         :return:
         """
         # set function
-        _ = display_func(self.params, '__makelockdir', __NAME__, self.classname)
+        _ = display_func('__makelockdir', __NAME__, self.classname)
         # set up a timer
         timer = 0
         # keep trying to create the folder
@@ -171,7 +171,7 @@ class Lock:
         :return: None - writes lock file to disk
         """
         # set function
-        _ = display_func(self.params, '__makelockfile', __NAME__,
+        _ = display_func('__makelockfile', __NAME__,
                          self.classname)
         # check that path exists
         if not os.path.exists(self.path):
@@ -220,7 +220,7 @@ class Lock:
         :returns: str, the first item in the lock queue 
         """
         # set function
-        _ = display_func(self.params, '__getfirst', __NAME__, self.classname)
+        _ = display_func('__getfirst', __NAME__, self.classname)
         # set path from self.path
         path = self.path
         # check path exists - if it doesn't then create it
@@ -266,7 +266,7 @@ class Lock:
         :return: None
         """
         # set function
-        _ = display_func(self.params, '__remove_file', __NAME__, self.classname)
+        _ = display_func('__remove_file', __NAME__, self.classname)
         # clean name
         name = self.__clean_name(name)
         # get the absolute path
@@ -306,7 +306,7 @@ class Lock:
         :return: str, the cleaned name of the item in lock queue
         """
         # set function
-        _ = display_func(self.params, '__clean_name', __NAME__, self.classname)
+        _ = display_func('__clean_name', __NAME__, self.classname)
         # loop around bad characters and replace them
         for char in self.bad_chars:
             name = name.replace(char, '_')
@@ -322,7 +322,7 @@ class Lock:
         :return: None - writes name.lock to disk (and waits a short time)
         """
         # set function
-        _ = display_func(self.params, '__clean_name', __NAME__, self.classname)
+        _ = display_func('__clean_name', __NAME__, self.classname)
         # clean name
         name = self.__clean_name(name)
         # log progress: lock file added to queue
@@ -345,7 +345,7 @@ class Lock:
                         2. None or exception (to be handled elsewhere)
         """
         # set function
-        _ = display_func(self.params, 'myturn', __NAME__, self.classname)
+        _ = display_func('myturn', __NAME__, self.classname)
         # clean name
         name = self.__clean_name(name)
         filename = name + '.lock'
@@ -376,7 +376,7 @@ class Lock:
                  unlocked
         """
         # set function
-        _ = display_func(self.params, 'dequeue', __NAME__, self.classname)
+        _ = display_func('dequeue', __NAME__, self.classname)
         # log that lock file has been removed from the queue
         filename = name + '.lock'
         abspath = os.path.join(self.path, filename)
@@ -391,7 +391,7 @@ class Lock:
         :return: None - remove lock file and all items in it (reset lock queue)
         """
         # set function
-        _ = display_func(self.params, 'reset', __NAME__, self.classname)
+        _ = display_func('reset', __NAME__, self.classname)
         # log that lock is deactivated
         WLOG(self.params, 'debug', textentry('40-101-00005', args=[self.path]))
         # get the raw list
@@ -548,7 +548,7 @@ def locker(params: ParamDict, lockfile: str, my_func: Any, *args, **kwargs):
     :return: the return of 'my_func' for args, kwargs
     """
     # set function
-    _ = display_func(params, 'locker', __NAME__)
+    _ = display_func('locker', __NAME__)
     # define lock file
     lock = Lock(params, lockfile)
 
@@ -582,7 +582,7 @@ def reset_lock_dir(params: ParamDict, log: bool = False):
     :return: None - just removes lock directory
     """
     # set function
-    _ = display_func(params, 'locker', __NAME__)
+    _ = display_func('locker', __NAME__)
     # get the lock path
     lockpath = os.path.join(params['DRS_DATA_MSG_FULL'], 'lock')
     if not os.path.exists(lockpath):
@@ -606,7 +606,7 @@ def __remove_empty__(params: ParamDict, path: str, remove_head: bool = True,
     :return: None - just removes directories
     """
     # set function
-    _ = display_func(params, '__remove_empty__', __NAME__)
+    _ = display_func('__remove_empty__', __NAME__)
     # define function name
     func_name = __NAME__ + '.__remove_empty__()'
     # check if path is not a directory or if path is link

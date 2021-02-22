@@ -1254,7 +1254,7 @@ def get_reject_list(params: ParamDict, column: str = 'PP') -> np.ndarray:
     :return: list of strings, the list of odometer codes for kind
     """
     # set function name
-    func_name = display_func(params, 'get_reject_list', __NAME__)
+    func_name = display_func('get_reject_list', __NAME__)
     # get sheet id and worksheet number
     sheet_id = params['ODOCODE_REJECT_GSHEET_ID']
     workbook_id = params['ODOCODE_REJECT_GSHEET_NUM']
